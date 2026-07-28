@@ -1,0 +1,1 @@
+FEDOMEGA bridge consumer CI proof trigger
