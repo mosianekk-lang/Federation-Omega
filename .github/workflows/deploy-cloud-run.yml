@@ -1,0 +1,83 @@
+name: Deploy Superior Logic to Cloud Run
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'superior_logic/**'
+      - 'Dockerfile'
+      - 'requirements.txt'
+      - '.github/workflows/deploy-cloud-run.yml'
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  REGION: africa-south1
+  SERVICE: architron9
+  REPOSITORY: federation-omega
+  IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/architron9:${{ github.sha }}
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        env:
+          WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          DEPLOYER_SA: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+        run: |
+          if [ -n "$WIF_PROVIDER" ] && [ -n "$DEPLOYER_SA" ]; then
+            echo "ready=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "ready=false" >> "$GITHUB_OUTPUT"
+            echo "Missing GCP_WORKLOAD_IDENTITY_PROVIDER or GCP_DEPLOYER_SERVICE_ACCOUNT repository secret."
+          fi
+
+  deploy:
+    needs: preflight
+    if: needs.preflight.outputs.ready == 'true'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Configure Docker
+        run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
+      - name: Build and push
+        run: |
+          docker build -t "$IMAGE" .
+          docker push "$IMAGE"
+      - name: Deploy
+        run: |
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE" \
+            --service-account superior-logic-runtime@${PROJECT_ID}.iam.gserviceaccount.com \
+            --platform managed \
+            --quiet
+      - name: Verify revision and health
+        run: |
+          CREATED=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestCreatedRevisionName)')
+          READY=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')
+          URL=$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
+          test -n "$CREATED"
+          test "$CREATED" = "$READY"
+          TOKEN=$(gcloud auth print-identity-token)
+          RESPONSE=$(curl --fail --silent --show-error -H "Authorization: Bearer $TOKEN" "$URL/health")
+          echo "$RESPONSE"
+          python - "$RESPONSE" <<'PY'
+          import json, sys
+          payload=json.loads(sys.argv[1])
+          assert payload.get('status') == 'HEALTHY'
+          assert payload.get('event_chain_valid') is True
+          PY
