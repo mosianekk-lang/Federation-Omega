@@ -16,40 +16,32 @@ permissions:
 
 env:
   PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
   REGION: africa-south1
   SERVICE: architron9
   REPOSITORY: federation-omega
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/architron9:${{ github.sha }}
 
 jobs:
-  preflight:
-    runs-on: ubuntu-latest
-    outputs:
-      ready: ${{ steps.check.outputs.ready }}
-    steps:
-      - id: check
-        env:
-          WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          DEPLOYER_SA: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
-        run: |
-          if [ -n "$WIF_PROVIDER" ] && [ -n "$DEPLOYER_SA" ]; then
-            echo "ready=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "ready=false" >> "$GITHUB_OUTPUT"
-            echo "Missing GCP_WORKLOAD_IDENTITY_PROVIDER or GCP_DEPLOYER_SERVICE_ACCOUNT repository secret."
-          fi
-
   deploy:
-    needs: preflight
-    if: needs.preflight.outputs.ready == 'true'
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
-      - uses: google-github-actions/auth@v2
+      - name: Authenticate to Google Cloud through keyless OIDC
+        uses: google-github-actions/auth@v2
         with:
-          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER }}
-          service_account: ${{ secrets.GCP_DEPLOYER_SERVICE_ACCOUNT }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
       - uses: google-github-actions/setup-gcloud@v2
+      - name: Confirm authenticated project authority
+        run: |
+          gcloud projects describe "$PROJECT_ID" --format='value(projectId,projectNumber)'
+      - name: Ensure Artifact Registry repository
+        run: |
+          gcloud artifacts repositories describe "$REPOSITORY" --project "$PROJECT_ID" --location "$REGION" >/dev/null 2>&1 || \
+            gcloud artifacts repositories create "$REPOSITORY" --project "$PROJECT_ID" --location "$REGION" --repository-format=docker --description='Federation Omega runtime images'
       - name: Configure Docker
         run: gcloud auth configure-docker ${{ env.REGION }}-docker.pkg.dev --quiet
       - name: Build and push
