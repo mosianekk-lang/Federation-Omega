@@ -1,0 +1,2 @@
+Signed fleet-admin deadman wake proof for generation 3671.
+Target queue command: CMD-FEDOMEGA-DEADMAN-WAKE-20260728-001
