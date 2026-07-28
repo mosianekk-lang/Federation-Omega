@@ -1,0 +1,1 @@
+Activation script CI proof canary.
