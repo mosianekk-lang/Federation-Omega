@@ -12,7 +12,15 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
       - name: Validate operational shell scripts
         run: bash -n ops/*.sh
+      - name: Validate Apps Script source and manifest
+        run: |
+          cp apps_script/sentinel_processor/Code.gs /tmp/sentinel_processor.js
+          node --check /tmp/sentinel_processor.js
+          node -e 'JSON.parse(require("fs").readFileSync("apps_script/sentinel_processor/appsscript.json","utf8"));'
       - name: Run runtime tests
         run: python -m unittest discover -s tests -v
