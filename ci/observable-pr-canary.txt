@@ -1,0 +1,2 @@
+SENTINEL CI observability canary
+Created to trigger a pull_request workflow visible to the current GitHub connector.
