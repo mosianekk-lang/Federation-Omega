@@ -7,15 +7,33 @@ POOL_ID="github-federation-omega"
 PROVIDER_ID="github"
 REPO="mosianekk-lang/Federation-Omega"
 DEPLOYER_SA="superior-logic-deployer@${PROJECT_ID}.iam.gserviceaccount.com"
+PROVIDER_RESOURCE="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
+PRINCIPAL="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/attribute.repository/${REPO}"
 
 # Enable required APIs.
-gcloud services enable iamcredentials.googleapis.com sts.googleapis.com run.googleapis.com artifactregistry.googleapis.com --project "$PROJECT_ID"
+gcloud services enable \
+  iamcredentials.googleapis.com \
+  sts.googleapis.com \
+  run.googleapis.com \
+  artifactregistry.googleapis.com \
+  --project "$PROJECT_ID"
 
-# Create pool/provider if absent.
-gcloud iam workload-identity-pools describe "$POOL_ID" --location=global --project "$PROJECT_ID" >/dev/null 2>&1 || \
-  gcloud iam workload-identity-pools create "$POOL_ID" --location=global --project "$PROJECT_ID" --display-name="Federation Omega GitHub"
+# Create or reactivate the workload identity pool.
+if ! gcloud iam workload-identity-pools describe "$POOL_ID" \
+  --location=global --project "$PROJECT_ID" >/dev/null 2>&1; then
+  gcloud iam workload-identity-pools create "$POOL_ID" \
+    --location=global \
+    --project "$PROJECT_ID" \
+    --display-name="Federation Omega GitHub"
+else
+  gcloud iam workload-identity-pools undelete "$POOL_ID" \
+    --location=global --project "$PROJECT_ID" >/dev/null 2>&1 || true
+fi
 
-gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" --workload-identity-pool="$POOL_ID" --location=global --project "$PROJECT_ID" >/dev/null 2>&1 || \
+# Create or reactivate the OIDC provider.
+if ! gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
+  --workload-identity-pool="$POOL_ID" \
+  --location=global --project "$PROJECT_ID" >/dev/null 2>&1; then
   gcloud iam workload-identity-pools providers create-oidc "$PROVIDER_ID" \
     --workload-identity-pool="$POOL_ID" \
     --location=global \
@@ -23,13 +41,34 @@ gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" --workload-
     --issuer-uri="https://token.actions.githubusercontent.com" \
     --attribute-mapping="google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.ref=assertion.ref" \
     --attribute-condition="assertion.repository=='${REPO}'"
+else
+  gcloud iam workload-identity-pools providers undelete "$PROVIDER_ID" \
+    --workload-identity-pool="$POOL_ID" \
+    --location=global --project "$PROJECT_ID" >/dev/null 2>&1 || true
+fi
 
 # Bind only this repository to the deployer identity.
 gcloud iam service-accounts add-iam-policy-binding "$DEPLOYER_SA" \
   --project "$PROJECT_ID" \
   --role="roles/iam.workloadIdentityUser" \
-  --member="principalSet://iam.googleapis.com/projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/attribute.repository/${REPO}"
+  --member="$PRINCIPAL" >/dev/null
 
-PROVIDER="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}/providers/${PROVIDER_ID}"
-printf 'GCP_WORKLOAD_IDENTITY_PROVIDER=%s\n' "$PROVIDER"
-printf 'GCP_DEPLOYER_SERVICE_ACCOUNT=%s\n' "$DEPLOYER_SA"
+# Destination-side verification.
+POOL_STATE=$(gcloud iam workload-identity-pools describe "$POOL_ID" \
+  --location=global --project "$PROJECT_ID" --format='value(state)')
+PROVIDER_STATE=$(gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
+  --workload-identity-pool="$POOL_ID" \
+  --location=global --project "$PROJECT_ID" --format='value(state)')
+POLICY_MATCH=$(gcloud iam service-accounts get-iam-policy "$DEPLOYER_SA" \
+  --project "$PROJECT_ID" \
+  --flatten='bindings[].members' \
+  --filter="bindings.role:roles/iam.workloadIdentityUser AND bindings.members:${PRINCIPAL}" \
+  --format='value(bindings.role)' | head -n1)
+
+test "$POOL_STATE" = "ACTIVE"
+test "$PROVIDER_STATE" = "ACTIVE"
+test "$POLICY_MATCH" = "roles/iam.workloadIdentityUser"
+
+cat <<EOF
+{"receipt":"FEDOMEGA-WIF-CLOUD-VERIFIED","project":"${PROJECT_ID}","pool":"${POOL_ID}","pool_state":"${POOL_STATE}","provider":"${PROVIDER_RESOURCE}","provider_state":"${PROVIDER_STATE}","deployer_service_account":"${DEPLOYER_SA}","repository":"${REPO}","binding_verified":true,"github_secrets_required":false}
+EOF
