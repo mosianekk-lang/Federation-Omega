@@ -4,6 +4,11 @@ on:
   push:
     paths:
       - '.github/workflows/deadman-wake-3671.yml'
+      - 'ops/deadman-wake-3671.txt'
+  pull_request:
+    paths:
+      - '.github/workflows/deadman-wake-3671.yml'
+      - 'ops/deadman-wake-3671.txt'
   workflow_dispatch:
 
 jobs:
