@@ -1,0 +1,22 @@
+name: WIF Live Probe
+
+on:
+  pull_request:
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+          service_account: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Verify project access
+        run: |
+          gcloud projects describe sov-hybrid-suite --format='value(projectId,projectNumber)'
+          gcloud run services describe architron9 --project sov-hybrid-suite --region africa-south1 --format='value(metadata.name,status.latestCreatedRevisionName,status.latestReadyRevisionName,status.url)'
