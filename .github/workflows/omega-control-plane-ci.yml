@@ -1,0 +1,28 @@
+name: Omega Control Plane CI
+
+on:
+  pull_request:
+    paths:
+      - 'omega_control_plane/**'
+      - '.github/workflows/omega-control-plane-ci.yml'
+  workflow_dispatch:
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+      - name: Validate syntax and policy tests
+        working-directory: omega_control_plane
+        run: |
+          npm run check
+          npm test
+      - name: Verify exact Scheduler lock
+        run: |
+          grep -F 'sov-hybrid-suite' omega_control_plane/src/policy.js
+          grep -F 'europe-west1' omega_control_plane/src/policy.js
+          grep -F 'fo-apps-script-queue-deadman' omega_control_plane/src/policy.js
+          grep -F 'RUN_EXACT_EXISTING_DEADMAN_JOB' omega_control_plane/src/policy.js
