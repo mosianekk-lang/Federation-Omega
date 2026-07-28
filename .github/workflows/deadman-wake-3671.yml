@@ -1,0 +1,24 @@
+name: Deadman Wake 3671
+
+on:
+  push:
+    paths:
+      - '.github/workflows/deadman-wake-3671.yml'
+  workflow_dispatch:
+
+jobs:
+  wake:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Post signed deadman generation 3671
+        run: |
+          set -euo pipefail
+          body='{"version":"FO_SIGNED_DEADMAN_RECEIPTS_V2_20260719","action":"QUEUE_DEADMAN_TICK","jobName":"projects/sov-hybrid-suite/locations/europe-west1/jobs/fo-apps-script-queue-deadman","generation":3671,"signature":"Ctzd3Nrxei2_VhIRbKZcY1va9o2S0SZy4YzatvlnGPo"}'
+          code=$(curl -sS -L -o response.json -w '%{http_code}' \
+            -H 'Content-Type: application/json' \
+            --data "$body" \
+            'https://script.google.com/macros/s/AKfycbyexLOXcQw0kdXnw2XJIplln2HZpzouQcsiOw6v9-RWtSZI1sPHFSXW1OL0RpjI0taLjQ/exec')
+          cat response.json
+          echo "HTTP $code"
+          test "$code" -ge 200
+          test "$code" -lt 300
