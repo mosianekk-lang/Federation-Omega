@@ -17,10 +17,16 @@ jobs:
           node-version: "22"
       - name: Validate operational shell scripts
         run: bash -n ops/*.sh
-      - name: Validate Apps Script source and manifest
+      - name: Validate all Apps Script source and manifests
         run: |
-          cp apps_script/sentinel_processor/Code.gs /tmp/sentinel_processor.js
-          node --check /tmp/sentinel_processor.js
-          node -e 'JSON.parse(require("fs").readFileSync("apps_script/sentinel_processor/appsscript.json","utf8"));'
+          set -euo pipefail
+          while IFS= read -r -d '' file; do
+            tmp="/tmp/$(echo "$file" | tr '/ ' '__').js"
+            cp "$file" "$tmp"
+            node --check "$tmp"
+          done < <(find apps_script -name '*.gs' -print0)
+          while IFS= read -r -d '' file; do
+            node -e 'JSON.parse(require("fs").readFileSync(process.argv[1],"utf8"));' "$file"
+          done < <(find apps_script -name 'appsscript.json' -print0)
       - name: Run runtime tests
         run: python -m unittest discover -s tests -v
