@@ -1,0 +1,51 @@
+name: PFRD Omega Materialize Binary
+
+on:
+  push:
+    branches: ["pfrd-omega-deploy-20260729"]
+    paths:
+      - ".github/workflows/pfrd-omega-materialize-binary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pfrd-omega-materialize-binary
+  cancel-in-progress: true
+
+env:
+  ARCHIVE_NAME: PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0.zip
+
+jobs:
+  materialize:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: pfrd-omega-deploy-20260729
+
+      - name: Reconstruct and verify exact binary
+        shell: bash
+        run: |
+          set -euo pipefail
+          OUT="systems/pfrd-omega/${ARCHIVE_NAME}"
+          cat systems/pfrd-omega/${ARCHIVE_NAME}.b64.part* | base64 --decode > "$OUT"
+          cd systems/pfrd-omega
+          sha256sum --check PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0_SHA256.txt
+          unzip -tq "$ARCHIVE_NAME" >/dev/null
+
+      - name: Commit exact binary to isolated branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "pfrd-omega-materializer[bot]"
+          git config user.email "pfrd-omega-materializer[bot]@users.noreply.github.com"
+          git add "systems/pfrd-omega/${ARCHIVE_NAME}"
+          if git diff --cached --quiet; then
+            echo "Exact binary already present"
+          else
+            git commit -m "Materialize exact PFRD Omega source binary"
+            git push origin HEAD:pfrd-omega-deploy-20260729
+          fi
