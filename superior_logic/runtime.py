@@ -10,6 +10,7 @@ from pathlib import Path
 from typing import Any
 
 from .ecasp import ECASPRequest, ECASPResult, evaluate_ecasp
+from .operations import OperationJournal, normalize_operation_id
 from .slrk import (
     ActivationState,
     CapabilityAssessment,
@@ -19,6 +20,7 @@ from .slrk import (
     EnginePromotionResult,
     FaultRecord,
     PreservationState,
+    PromotionDecision,
     ProofLevel,
     RouteState,
     assess_capabilities,
@@ -97,11 +99,16 @@ class SuperiorLogicRuntime:
             );
             """
         )
+        self.operation_journal = OperationJournal(self.db)
         self.db.commit()
 
     def close(self) -> None:
         with self._lock:
             self.db.close()
+
+    @staticmethod
+    def _operation_id(operation_id: str | None) -> str:
+        return normalize_operation_id(operation_id) if operation_id else uuid.uuid4().hex
 
     def _insert_event_locked(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
         """Insert one proof event using the caller's open transaction and lock."""
@@ -126,16 +133,53 @@ class SuperiorLogicRuntime:
             with self.db:
                 return self._insert_event_locked(event_type, payload)
 
-    def create_mission(self, owner: str, instruction: str) -> str:
-        mission_id = str(uuid.uuid4())
+    def operation_receipt(self, operation_id: str) -> dict[str, Any] | None:
+        with self._lock:
+            receipt = self.operation_journal.get(operation_id)
+        return receipt.to_dict() if receipt else None
+
+    def create_mission(
+        self,
+        owner: str,
+        instruction: str,
+        *,
+        operation_id: str | None = None,
+        principal: str = "system",
+    ) -> str:
+        operation_id = self._operation_id(operation_id)
+        request_payload = {"owner": owner, "instruction": instruction}
+        operation_type = "MISSION_CREATE"
         with self._lock:
             with self.db:
+                replay = self.operation_journal.replay(
+                    operation_id, operation_type, request_payload
+                )
+                if replay:
+                    return str(replay.result["mission_id"])
+
+                mission_id = str(uuid.uuid4())
                 self.db.execute(
                     "INSERT INTO missions(mission_id,owner,instruction,state,created_at) VALUES(?,?,?,?,?)",
                     (mission_id, owner, instruction, "RECEIVED", utcnow()),
                 )
-                self._insert_event_locked(
-                    "MISSION_CREATED", {"mission_id": mission_id, "owner": owner}
+                event_payload = {
+                    "mission_id": mission_id,
+                    "owner": owner,
+                    "operation_id": operation_id,
+                    "principal": principal,
+                    "target": mission_id,
+                    "previous_state": "ABSENT",
+                    "new_state": "RECEIVED",
+                }
+                event = self._insert_event_locked("MISSION_CREATED", event_payload)
+                self.operation_journal.record(
+                    operation_id=operation_id,
+                    operation_type=operation_type,
+                    request_payload=request_payload,
+                    principal=principal,
+                    target=mission_id,
+                    event_id=event["event_id"],
+                    result={"mission_id": mission_id},
                 )
         return mission_id
 
@@ -160,23 +204,60 @@ class SuperiorLogicRuntime:
         )
         return result
 
-    def register_capability(self, contract: CapabilityContract) -> None:
+    def register_capability(
+        self,
+        contract: CapabilityContract,
+        *,
+        operation_id: str | None = None,
+        principal: str = "system",
+    ) -> None:
+        operation_id = self._operation_id(operation_id)
         payload = contract.to_dict()
-        event_payload = {
-            "capability_id": contract.capability_id,
-            "state": contract.state.value,
-            "preservation_state": contract.preservation_state.value,
-            "activation_state": contract.activation_state.value,
-            "permanent_exclusion_requested": contract.permanent_exclusion_requested,
-        }
+        operation_type = "CAPABILITY_REGISTER"
         with self._lock:
             with self.db:
+                replay = self.operation_journal.replay(operation_id, operation_type, payload)
+                if replay:
+                    return
+                previous = self.db.execute(
+                    "SELECT contract_json FROM capability_contracts WHERE capability_id=?",
+                    (contract.capability_id,),
+                ).fetchone()
+                previous_state = (
+                    json.loads(previous["contract_json"]).get("state", "UNKNOWN")
+                    if previous
+                    else "ABSENT"
+                )
                 self.db.execute(
                     "INSERT INTO capability_contracts(capability_id,contract_json,updated_at) VALUES(?,?,?) "
                     "ON CONFLICT(capability_id) DO UPDATE SET contract_json=excluded.contract_json,updated_at=excluded.updated_at",
                     (contract.capability_id, canonical_json(payload), utcnow()),
                 )
-                self._insert_event_locked("CAPABILITY_REGISTERED", event_payload)
+                event_payload = {
+                    "capability_id": contract.capability_id,
+                    "state": contract.state.value,
+                    "preservation_state": contract.preservation_state.value,
+                    "activation_state": contract.activation_state.value,
+                    "permanent_exclusion_requested": contract.permanent_exclusion_requested,
+                    "operation_id": operation_id,
+                    "principal": principal,
+                    "target": contract.capability_id,
+                    "previous_state": previous_state,
+                    "new_state": contract.state.value,
+                }
+                event = self._insert_event_locked("CAPABILITY_REGISTERED", event_payload)
+                self.operation_journal.record(
+                    operation_id=operation_id,
+                    operation_type=operation_type,
+                    request_payload=payload,
+                    principal=principal,
+                    target=contract.capability_id,
+                    event_id=event["event_id"],
+                    result={
+                        "status": "CAPABILITY_REGISTERED",
+                        "capability_id": contract.capability_id,
+                    },
+                )
 
     def _capability_contracts(self) -> list[CapabilityContract]:
         with self._lock:
@@ -221,10 +302,25 @@ class SuperiorLogicRuntime:
         self.append_event("CLAIM_GOVERNED", result.to_dict())
         return result
 
-    def register_fault(self, record: FaultRecord) -> None:
+    def register_fault(
+        self,
+        record: FaultRecord,
+        *,
+        operation_id: str | None = None,
+        principal: str = "system",
+    ) -> None:
+        operation_id = self._operation_id(operation_id)
         payload = {**record.__dict__, "severity": record.severity.value}
+        operation_type = "FAULT_REGISTER"
         with self._lock:
             with self.db:
+                replay = self.operation_journal.replay(operation_id, operation_type, payload)
+                if replay:
+                    return
+                previous_fault = self.db.execute(
+                    "SELECT status FROM fault_records WHERE fault_id=?", (record.fault_id,)
+                ).fetchone()
+                previous_route = self.route_state(record.route_id) if record.route_id else None
                 self.db.execute(
                     "INSERT INTO fault_records(fault_id,record_json,status,created_at) VALUES(?,?,?,?) "
                     "ON CONFLICT(fault_id) DO UPDATE SET record_json=excluded.record_json,status=excluded.status,created_at=excluded.created_at",
@@ -236,11 +332,39 @@ class SuperiorLogicRuntime:
                         "ON CONFLICT(route_id) DO UPDATE SET state=excluded.state,reason=excluded.reason,updated_at=excluded.updated_at",
                         (record.route_id, RouteState.BANNED_UNLESS_CLEARED.value, record.detected_problem, utcnow()),
                     )
-                self._insert_event_locked(
-                    "FAULT_REGISTERED", {"fault_id": record.fault_id, "route_id": record.route_id}
+                event_payload = {
+                    "fault_id": record.fault_id,
+                    "route_id": record.route_id,
+                    "operation_id": operation_id,
+                    "principal": principal,
+                    "target": record.fault_id,
+                    "previous_state": {
+                        "fault": previous_fault["status"] if previous_fault else "ABSENT",
+                        "route": previous_route["state"] if previous_route else "NOT_APPLICABLE",
+                    },
+                    "new_state": {
+                        "fault": "ACTIVE",
+                        "route": (
+                            RouteState.BANNED_UNLESS_CLEARED.value
+                            if record.route_id
+                            else "NOT_APPLICABLE"
+                        ),
+                    },
+                }
+                event = self._insert_event_locked("FAULT_REGISTERED", event_payload)
+                self.operation_journal.record(
+                    operation_id=operation_id,
+                    operation_type=operation_type,
+                    request_payload=payload,
+                    principal=principal,
+                    target=record.fault_id,
+                    event_id=event["event_id"],
+                    result={"status": "FAULT_REGISTERED", "fault_id": record.fault_id},
                 )
 
-    def route_state(self, route_id: str) -> dict[str, str]:
+    def route_state(self, route_id: str | None) -> dict[str, str]:
+        if not route_id:
+            return {"route_id": "", "state": RouteState.AVAILABLE.value, "reason": "", "updated_at": ""}
         with self._lock:
             row = self.db.execute(
                 "SELECT route_id,state,reason,updated_at FROM route_memory WHERE route_id=?", (route_id,)
@@ -249,30 +373,113 @@ class SuperiorLogicRuntime:
             return {"route_id": route_id, "state": RouteState.AVAILABLE.value, "reason": "", "updated_at": ""}
         return dict(row)
 
-    def clear_route(self, route_id: str, reason: str, *, conditions_changed: bool) -> dict[str, str]:
+    def clear_route(
+        self,
+        route_id: str,
+        reason: str,
+        *,
+        conditions_changed: bool,
+        operation_id: str | None = None,
+        principal: str = "system",
+    ) -> dict[str, str]:
         if not conditions_changed:
             raise ValueError("A banned route may be cleared only after material conditions change.")
+        operation_id = self._operation_id(operation_id)
+        request_payload = {
+            "route_id": route_id,
+            "reason": reason,
+            "conditions_changed": conditions_changed,
+        }
+        operation_type = "ROUTE_CLEAR"
         with self._lock:
             with self.db:
+                replay = self.operation_journal.replay(
+                    operation_id, operation_type, request_payload
+                )
+                if replay:
+                    return dict(replay.result["route"])
+                previous = self.route_state(route_id)
                 self.db.execute(
                     "INSERT INTO route_memory(route_id,state,reason,updated_at) VALUES(?,?,?,?) "
                     "ON CONFLICT(route_id) DO UPDATE SET state=excluded.state,reason=excluded.reason,updated_at=excluded.updated_at",
                     (route_id, RouteState.AVAILABLE.value, reason, utcnow()),
                 )
-                self._insert_event_locked("ROUTE_CLEARED", {"route_id": route_id, "reason": reason})
-        return self.route_state(route_id)
+                current = dict(
+                    self.db.execute(
+                        "SELECT route_id,state,reason,updated_at FROM route_memory WHERE route_id=?",
+                        (route_id,),
+                    ).fetchone()
+                )
+                event_payload = {
+                    "route_id": route_id,
+                    "reason": reason,
+                    "operation_id": operation_id,
+                    "principal": principal,
+                    "target": route_id,
+                    "previous_state": previous["state"],
+                    "new_state": current["state"],
+                }
+                event = self._insert_event_locked("ROUTE_CLEARED", event_payload)
+                self.operation_journal.record(
+                    operation_id=operation_id,
+                    operation_type=operation_type,
+                    request_payload=request_payload,
+                    principal=principal,
+                    target=route_id,
+                    event_id=event["event_id"],
+                    result={"route": current},
+                )
+        return current
 
-    def evaluate_engine_promotion(self, request: EnginePromotionRequest) -> EnginePromotionResult:
+    @staticmethod
+    def _promotion_from_dict(value: dict[str, Any]) -> EnginePromotionResult:
+        return EnginePromotionResult(
+            decision=PromotionDecision(value["decision"]),
+            missing_gates=tuple(value["missing_gates"]),
+            claim_language=value["claim_language"],
+        )
+
+    def evaluate_engine_promotion(
+        self,
+        request: EnginePromotionRequest,
+        *,
+        operation_id: str | None = None,
+        principal: str = "system",
+    ) -> EnginePromotionResult:
+        operation_id = self._operation_id(operation_id)
         result = evaluate_engine_promotion(request)
         request_payload = {**request.__dict__, "target_environment": request.target_environment.value}
-        event_payload = {"engine_id": request.engine_id, **result.to_dict()}
+        operation_type = "ENGINE_PROMOTION_EVALUATE"
         with self._lock:
             with self.db:
+                replay = self.operation_journal.replay(
+                    operation_id, operation_type, request_payload
+                )
+                if replay:
+                    return self._promotion_from_dict(replay.result["promotion"])
                 self.db.execute(
                     "INSERT INTO engine_promotions(engine_id,request_json,result_json,created_at) VALUES(?,?,?,?)",
                     (request.engine_id, canonical_json(request_payload), canonical_json(result.to_dict()), utcnow()),
                 )
-                self._insert_event_locked("ENGINE_PROMOTION_EVALUATED", event_payload)
+                event_payload = {
+                    "engine_id": request.engine_id,
+                    **result.to_dict(),
+                    "operation_id": operation_id,
+                    "principal": principal,
+                    "target": request.engine_id,
+                    "previous_state": "NO_EVALUATION_FOR_OPERATION",
+                    "new_state": result.decision.value,
+                }
+                event = self._insert_event_locked("ENGINE_PROMOTION_EVALUATED", event_payload)
+                self.operation_journal.record(
+                    operation_id=operation_id,
+                    operation_type=operation_type,
+                    request_payload=request_payload,
+                    principal=principal,
+                    target=request.engine_id,
+                    event_id=event["event_id"],
+                    result={"promotion": result.to_dict()},
+                )
         return result
 
     def verify_event_chain(self) -> bool:
@@ -299,6 +506,7 @@ class SuperiorLogicRuntime:
             event_count = self.db.execute("SELECT COUNT(*) FROM events").fetchone()[0]
             mission_count = self.db.execute("SELECT COUNT(*) FROM missions").fetchone()[0]
             capability_count = self.db.execute("SELECT COUNT(*) FROM capability_contracts").fetchone()[0]
+            operation_count = self.db.execute("SELECT COUNT(*) FROM operation_receipts").fetchone()[0]
             active_fault_count = self.db.execute("SELECT COUNT(*) FROM fault_records WHERE status='ACTIVE'").fetchone()[0]
             banned_route_count = self.db.execute(
                 "SELECT COUNT(*) FROM route_memory WHERE state=?", (RouteState.BANNED_UNLESS_CLEARED.value,)
@@ -307,6 +515,7 @@ class SuperiorLogicRuntime:
             "event_count": event_count,
             "mission_count": mission_count,
             "capability_count": capability_count,
+            "operation_count": operation_count,
             "active_fault_count": active_fault_count,
             "banned_route_count": banned_route_count,
             "event_chain_valid": self.verify_event_chain(),
