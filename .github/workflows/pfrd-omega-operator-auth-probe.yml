@@ -116,3 +116,5 @@ jobs:
           if-no-files-found: error
           retention-days: 30
           path: /tmp/pfrd-operator/OPERATOR_AUTH_PROBE_RECEIPT.json
+
+# Rerun marker: 2026-07-29T11:56:00Z
