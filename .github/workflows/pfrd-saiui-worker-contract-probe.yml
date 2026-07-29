@@ -1,0 +1,88 @@
+name: PFRD SAIUI Worker Contract Probe
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/pfrd-saiui-worker-contract-probe.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Probe read-only worker contract
+        shell: bash
+        env:
+          BASE_URL: https://super-ai-ui-agent-worker-7ujkyf136q-uc.a.run.app
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pfrd-worker deployments/pfrd-omega
+          python - <<'PY'
+          import json, os, urllib.error, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          base = os.environ['BASE_URL'].rstrip('/')
+          paths = ['/', '/health', '/status', '/openapi.json', '/openapi.yaml', '/docs', '/api-docs', '/run-queue']
+          results = {}
+          for path in paths:
+              entry = {}
+              for method in ('GET', 'OPTIONS'):
+                  req = urllib.request.Request(base + path, headers={'accept':'application/json'}, method=method)
+                  try:
+                      with urllib.request.urlopen(req, timeout=20) as response:
+                          raw = response.read().decode('utf-8','replace')
+                          entry[method] = {
+                              'http_status': response.status,
+                              'content_type': response.headers.get('content-type'),
+                              'allow': response.headers.get('allow'),
+                              'body': raw[:8000],
+                          }
+                  except urllib.error.HTTPError as exc:
+                      raw = exc.read().decode('utf-8','replace')
+                      entry[method] = {
+                          'http_status': exc.code,
+                          'content_type': exc.headers.get('content-type'),
+                          'allow': exc.headers.get('allow'),
+                          'body': raw[:4000],
+                      }
+                  except Exception as exc:
+                      entry[method] = {'transport_error': type(exc).__name__, 'message': str(exc)[:500]}
+              results[path] = entry
+          receipt = {
+              'receipt':'PFRD-SAIUI-WORKER-CONTRACT-PROBE',
+              'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'base_url':base,
+              'mutation_attempted':False,
+              'queue_execution_attempted':False,
+              'results':results,
+          }
+          out=Path('deployments/pfrd-omega/SAIUI_WORKER_CONTRACT_PROBE.json')
+          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          Path('/tmp/pfrd-worker/SAIUI_WORKER_CONTRACT_PROBE.json').write_text(out.read_text(),encoding='utf-8')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+      - name: Persist contract receipt
+        run: |
+          set -euo pipefail
+          git config user.name "pfrd-worker-probe[bot]"
+          git config user.email "pfrd-worker-probe[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add deployments/pfrd-omega/SAIUI_WORKER_CONTRACT_PROBE.json
+          if git diff --cached --quiet; then echo unchanged; else
+            git commit -m "Record PFRD SAIUI worker contract probe"
+            git push origin HEAD:main
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pfrd-saiui-worker-contract-probe
+          if-no-files-found: error
+          retention-days: 30
+          path: /tmp/pfrd-worker/SAIUI_WORKER_CONTRACT_PROBE.json
