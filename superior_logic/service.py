@@ -13,6 +13,14 @@ from .ecasp import (
     CorpusPreservationState,
     ECASPRequest,
 )
+from .oops_acme import (
+    ActionClass,
+    ContinuationContext,
+    ExternalActionAuthorization,
+    ExternalActionPayload,
+    evaluate_continuation,
+    evaluate_external_action,
+)
 from .runtime import SuperiorLogicRuntime
 from .slrk import (
     ActivationState,
@@ -142,6 +150,50 @@ class EnginePromotionModel(BaseModel):
     live_readback_plan_ready: bool = False
 
 
+class ExternalActionPayloadModel(BaseModel):
+    action: str = Field(min_length=1)
+    account: str = Field(min_length=1)
+    targets: tuple[str, ...] = ()
+    subject: str = ""
+    body_hash: str = ""
+    attachment_hashes: tuple[str, ...] = ()
+    consequences: tuple[str, ...] = ()
+    action_class: ActionClass = ActionClass.EXTERNAL_CONSEQUENTIAL
+
+
+class ExternalActionAuthorizationModel(BaseModel):
+    approval_reference: str = ""
+    authorized: bool = False
+    action: str = Field(min_length=1)
+    account: str = Field(min_length=1)
+    targets: tuple[str, ...] = ()
+    subject: str = ""
+    body_hash: str = ""
+    attachment_hashes: tuple[str, ...] = ()
+    consequences: tuple[str, ...] = ()
+    prohibitions: tuple[str, ...] = ()
+
+
+class ExternalActionEvaluateModel(BaseModel):
+    payload: ExternalActionPayloadModel
+    authorization: ExternalActionAuthorizationModel | None = None
+    connector_available: bool = False
+
+
+class ContinuationEvaluateModel(BaseModel):
+    work_authorized: bool
+    material_work_available: bool
+    authority_available: bool = True
+    material_risk_approval_needed: bool = False
+    outcome_choice_needed: bool = False
+    essential_unknown: bool = False
+    nondelegable_personal_act: bool = False
+    credible_routes_remaining: bool = True
+    mission_complete: bool = False
+    current_turn_active: bool = True
+    persistent_runtime_proven: bool = False
+
+
 def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
     api = FastAPI(title="Federation Omega Superior Logic", version=SERVICE_VERSION)
 
@@ -161,6 +213,8 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
                 "FAULT_ROUTE_MEMORY",
                 "ENGINE_PROMOTION_GATE",
                 "NON_DILUTION_PRESERVATION",
+                "OOPS_EXTERNAL_ACTION_GATE",
+                "ACME_CONTINUATION_GATE",
             ],
         }
 
@@ -249,6 +303,28 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
     def evaluate_promotion(request: EnginePromotionModel) -> dict:
         internal = EnginePromotionRequest(**request.model_dump())
         return active_runtime.evaluate_engine_promotion(internal).to_dict()
+
+    @api.post("/actions/evaluate-authorization")
+    def evaluate_action_authorization(request: ExternalActionEvaluateModel) -> dict:
+        payload = ExternalActionPayload(**request.payload.model_dump())
+        authorization = (
+            ExternalActionAuthorization(**request.authorization.model_dump())
+            if request.authorization is not None
+            else None
+        )
+        result = evaluate_external_action(
+            payload,
+            authorization,
+            connector_available=request.connector_available,
+        )
+        active_runtime.append_event("EXTERNAL_ACTION_GOVERNED", result.to_dict())
+        return result.to_dict()
+
+    @api.post("/continuation/evaluate")
+    def evaluate_mission_continuation(request: ContinuationEvaluateModel) -> dict:
+        result = evaluate_continuation(ContinuationContext(**request.model_dump()))
+        active_runtime.append_event("CONTINUATION_EVALUATED", result.to_dict())
+        return result.to_dict()
 
     return api
 
