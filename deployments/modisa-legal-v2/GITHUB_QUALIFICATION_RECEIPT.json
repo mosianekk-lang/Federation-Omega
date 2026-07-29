@@ -1,1 +1,80 @@
-{}
+{
+  "receipt_id": "GITHUB-QUAL-MODISA-LEGAL-V2-20260729-0002",
+  "supersedes_receipt_id": "GITHUB-QUAL-MODISA-LEGAL-V2-20260729-0001",
+  "issued_at": "2026-07-29T01:57:16Z",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "deployment_branch": "modisa-legal-v2-deploy-20260729",
+  "qualified_source_head": "9386804713512313f6aaa7cc0912d22dcc3135c0",
+  "draft_pull_request": {
+    "number": 12,
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "mergeable": true,
+    "base": "main"
+  },
+  "qualification_workflow": {
+    "run_id": 30413821927,
+    "job_id": 90455795109,
+    "name": "MODISA Legal V2 Qualification",
+    "conclusion": "success",
+    "all_steps_successful": true
+  },
+  "repository_workflow": {
+    "run_id": 30413821955,
+    "job_id": 90455795315,
+    "name": "Superior Logic CI",
+    "conclusion": "success"
+  },
+  "verified_results": {
+    "official_agents_sdk_installed_in_ci": true,
+    "official_openai_sdk_installed_in_ci": true,
+    "portable_tests_passed": 26,
+    "confidential_local_only_tests_skipped": 1,
+    "portable_behavioural_cases_passed": 19,
+    "portable_behavioural_cases_total": 19,
+    "http_health": "HTTP 200",
+    "database_ready": true,
+    "proof_ledger_ready": true,
+    "evidence_encryption_ready": true,
+    "authentication_ready": true,
+    "durable_workflow_ready": true,
+    "external_actions_enabled": false
+  },
+  "confidential_evidence_boundary": {
+    "actual_council_eml_canary_executed_in_authorised_local_runtime": true,
+    "actual_council_eml_canary_executed_in_github_ci": false,
+    "github_ci_classification": "EXPLICITLY_SKIPPED_LOCAL_ONLY",
+    "reason": "Confidential native legal evidence was deliberately not committed to the public repository."
+  },
+  "live_model_boundary": {
+    "openai_api_key_repository_secret_configured": false,
+    "model_canary_executed": false,
+    "model_trace_id": null,
+    "chief_counsel_live_output": null,
+    "seven_chamber_live_output": null,
+    "reason": "OPENAI_API_KEY is not configured as a GitHub Actions secret."
+  },
+  "artifact": {
+    "artifact_id": 8709407372,
+    "name": "modisa-legal-v2-qualification",
+    "github_reported_digest": "sha256:b9be70c1e1f3201dc06be3ae4ea39867832b90a60197417d43a816372452c157"
+  },
+  "autopilot": {
+    "workflow_path": ".github/workflows/modisa-legal-v2-autopilot.yml",
+    "controller_commit_on_main": "4f89389f46fdacb9767d9719fad991714fdc33cc",
+    "schedule": "hourly at minute 17 UTC",
+    "self_stopping_receipt": "deployments/modisa-legal-v2/LIVE_OPERATIONAL_RECEIPT.json",
+    "missing_secret_behaviour": "No dependency installation or model call is attempted.",
+    "success_behaviour": "Runs qualification once, validates Chief Counsel plus seven chambers and commits a live receipt to the deployment branch."
+  },
+  "correction_history": [
+    {
+      "event": "Receipt file was accidentally reduced to an empty JSON object during metadata maintenance.",
+      "commit": "9d82ad39bf250b604fefd33510f5c0103dfb79f1",
+      "effect": "Qualification metadata only; no source code, test, evidence, secret, workflow or live runtime state was altered.",
+      "repair": "Restored this corrected receipt immediately in the same session before further material work."
+    }
+  ],
+  "classification": "PERSISTENT_SOURCE_AND_CI_QUALIFIED / AUTOPILOT_ACTIVE / LIVE_MODEL_CANARY_WAITING_FOR_REPOSITORY_SECRET / MAIN_CODE_UNCHANGED / NOT_PRODUCTION_LIVE"
+}
