@@ -324,6 +324,8 @@ if [[ "$RUNTIME_EXISTS" != "true" ]]; then
 fi
 
 if [[ "$POOL_STATE" == "NOT_FOUND" ]]; then
+  gcloud iam workload-identity-pools undelete "$POOL_ID" \
+    --location global --project "$PROJECT_ID" >/dev/null 2>&1 || \
   gcloud iam workload-identity-pools create "$POOL_ID" \
     --location global --project "$PROJECT_ID" \
     --display-name="Federation Omega GitHub"
@@ -333,6 +335,9 @@ elif [[ "$POOL_STATE" != "ACTIVE" ]]; then
 fi
 
 if [[ "$PROVIDER_STATE" == "NOT_FOUND" ]]; then
+  gcloud iam workload-identity-pools providers undelete "$PROVIDER_ID" \
+    --workload-identity-pool "$POOL_ID" \
+    --location global --project "$PROJECT_ID" >/dev/null 2>&1 || \
   gcloud iam workload-identity-pools providers create-oidc "$PROVIDER_ID" \
     --workload-identity-pool "$POOL_ID" \
     --location global --project "$PROJECT_ID" \
