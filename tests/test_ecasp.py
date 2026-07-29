@@ -1,7 +1,9 @@
 import unittest
 
 from superior_logic.ecasp import (
+    CorpusActivationState,
     CorpusObject,
+    CorpusPreservationState,
     CorpusStatus,
     ECASPRequest,
     ecasp_triggered,
@@ -25,6 +27,8 @@ def complete_object(object_id: str) -> CorpusObject:
         requirement_coverage_tested=True,
         selected_or_rejected=True,
         verified=True,
+        preservation_state=CorpusPreservationState.FULL_PRESERVED,
+        activation_state=CorpusActivationState.ACTIVE_VALIDATED,
     )
 
 
@@ -52,8 +56,9 @@ class ECASPRegressionTests(unittest.TestCase):
         self.assertNotIn("G1_INVENTORY", result.missing_gates)
         self.assertIn("G2_BODY_COVERAGE", result.missing_gates)
         self.assertIn("G10_CLAIM_LANGUAGE", result.missing_gates)
+        self.assertNotIn("G11_NON_DILUTION_PRESERVATION", result.missing_gates)
 
-    def test_unrelated_complete_code_archive_can_release_exhaustive_final(self):
+    def test_complete_code_archive_can_release_only_when_non_dilution_gate_passes(self):
         objects = tuple(complete_object(f"module-{i}") for i in range(7))
         result = evaluate_ecasp(
             ECASPRequest(
@@ -72,8 +77,44 @@ class ECASPRegressionTests(unittest.TestCase):
         self.assertTrue(result.allow_exhaustive_final)
         self.assertEqual(CorpusStatus.EXHAUSTIVE_FINAL, result.status)
         self.assertEqual((), result.missing_gates)
+        self.assertEqual(7, result.object_counts["non_dilution_compliant"])
 
-    def test_unrelated_legal_corpus_can_release_only_bounded_selection(self):
+    def test_permanent_exclusion_without_owner_and_backup_fails_g11(self):
+        item = complete_object("module-delete")
+        item = CorpusObject(**{
+            **item.__dict__,
+            "permanent_exclusion_requested": True,
+            "owner_decision_reference": None,
+            "preservation_copy_reference": None,
+        })
+        result = evaluate_ecasp(
+            ECASPRequest(
+                instruction="Audit everything",
+                intended_claim="complete",
+                expected_object_count=1,
+                objects=(item,),
+                capability_universe_mapped=True,
+                lineage_map_complete=True,
+                conflict_dependency_matrix_complete=True,
+                requirement_coverage_complete=True,
+                counterexample_search_complete=True,
+                independent_readback_complete=True,
+            )
+        )
+        self.assertIn("G11_NON_DILUTION_PRESERVATION", result.missing_gates)
+        self.assertFalse(result.allow_exhaustive_final)
+
+    def test_duplicate_carrier_can_be_archived_without_deletion(self):
+        item = complete_object("duplicate-carrier")
+        item = CorpusObject(**{
+            **item.__dict__,
+            "preservation_state": CorpusPreservationState.ARCHIVED_QUERYABLE,
+            "activation_state": CorpusActivationState.PRESERVED_DORMANT,
+        })
+        self.assertTrue(item.non_dilution_compliant())
+        self.assertTrue(item.analytical_chain_complete())
+
+    def test_legal_corpus_can_release_only_bounded_selection(self):
         analysed = complete_object("policy-a")
         unresolved = CorpusObject(object_id="scan-b", discovered=True, indexed=True)
         result = evaluate_ecasp(

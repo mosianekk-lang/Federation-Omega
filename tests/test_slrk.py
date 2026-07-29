@@ -4,6 +4,7 @@ from pathlib import Path
 
 from superior_logic.runtime import SuperiorLogicRuntime
 from superior_logic.slrk import (
+    ActivationState,
     AssessmentState,
     CapabilityContract,
     CapabilityState,
@@ -11,6 +12,7 @@ from superior_logic.slrk import (
     EnginePromotionRequest,
     FaultRecord,
     FaultSeverity,
+    PreservationState,
     ProofLevel,
     PromotionDecision,
     RouteState,
@@ -32,10 +34,7 @@ class SLRKTests(unittest.TestCase):
         self.assertIn("No required capabilities", result.claim_limit)
 
     def test_incomplete_does_not_trigger_complete_claim_rule(self):
-        result = self.runtime.govern_claim(
-            "The archive analysis is incomplete.",
-            ProofLevel.NONE,
-        )
+        result = self.runtime.govern_claim("The archive analysis is incomplete.", ProofLevel.NONE)
         self.assertTrue(result.allowed)
         self.assertEqual((), result.blocked_terms)
 
@@ -52,11 +51,82 @@ class SLRKTests(unittest.TestCase):
                 state=CapabilityState.AUTHORITY_REQUIRED,
                 authority_required=True,
                 fallback_route="authority-pack",
+                activation_state=ActivationState.EXECUTION_HELD,
             )
         )
         result = self.runtime.assess_capabilities(("CAP-IAM",))
         self.assertEqual(AssessmentState.AUTHORITY_REQUIRED, result.state)
         self.assertIn("authority", result.claim_limit.lower())
+        self.assertEqual(("CAP-IAM",), result.preserved_capabilities)
+
+    def test_quarantined_capability_is_preserved_but_not_executable(self):
+        self.runtime.register_capability(
+            CapabilityContract(
+                capability_id="CAP-NEGATIVE-CONTROL",
+                name="False-completion simulator",
+                state=CapabilityState.EXECUTABLE_NOW,
+                can_execute=True,
+                preservation_state=PreservationState.RESTRICTED_TEST_ONLY,
+                activation_state=ActivationState.EXECUTION_HELD,
+                carrier_ids=("gmail-1", "fixture-1"),
+            )
+        )
+        result = self.runtime.assess_capabilities(("CAP-NEGATIVE-CONTROL",))
+        self.assertEqual(AssessmentState.PARTIAL, result.state)
+        self.assertEqual(("CAP-NEGATIVE-CONTROL",), result.preserved_capabilities)
+        self.assertIn("preserved", result.claim_limit.lower())
+        self.assertIn("RESTRICTED_TEST_ONLY", result.preservation_warnings[0])
+
+    def test_superseded_capability_remains_archived_and_queryable(self):
+        contract = CapabilityContract(
+            capability_id="CAP-OLD",
+            name="Older implementation",
+            state=CapabilityState.DESIGN_ONLY,
+            preservation_state=PreservationState.ARCHIVED_QUERYABLE,
+            activation_state=ActivationState.PRESERVED_DORMANT,
+            carrier_ids=("message-a", "message-b"),
+            superseded_by="CAP-NEW",
+        )
+        self.runtime.register_capability(contract)
+        loaded = self.runtime._capability_contracts()[0]
+        self.assertEqual(PreservationState.ARCHIVED_QUERYABLE, loaded.preservation_state)
+        self.assertEqual(("message-a", "message-b"), loaded.carrier_ids)
+        self.assertEqual("CAP-NEW", loaded.superseded_by)
+
+    def test_permanent_exclusion_requires_owner_decision_and_preservation_copy(self):
+        with self.assertRaises(ValueError):
+            CapabilityContract(
+                capability_id="CAP-DELETE",
+                name="Delete candidate",
+                state=CapabilityState.UNSUPPORTED,
+                permanent_exclusion_requested=True,
+            )
+
+    def test_permanent_exclusion_contract_can_be_registered_only_with_both_receipts(self):
+        contract = CapabilityContract(
+            capability_id="CAP-EXCLUDE-REVIEW",
+            name="Owner-reviewed exclusion candidate",
+            state=CapabilityState.UNSUPPORTED,
+            preservation_state=PreservationState.ARCHIVED_QUERYABLE,
+            activation_state=ActivationState.PRESERVED_DORMANT,
+            permanent_exclusion_requested=True,
+            owner_decision_reference="OWNER-DECISION-001",
+            preservation_copy_reference="BACKUP-001",
+        )
+        self.runtime.register_capability(contract)
+        loaded = self.runtime._capability_contracts()[0]
+        self.assertTrue(loaded.permanent_exclusion_requested)
+        self.assertTrue(loaded.preserved)
+
+    def test_secret_metadata_cannot_be_activated(self):
+        with self.assertRaises(ValueError):
+            CapabilityContract(
+                capability_id="CAP-SECRET",
+                name="Exposed credential metadata",
+                state=CapabilityState.UNSUPPORTED,
+                preservation_state=PreservationState.METADATA_ONLY_SECRET,
+                activation_state=ActivationState.ACTIVE_VALIDATED,
+            )
 
     def test_claim_governor_blocks_ledger_only_live_claim(self):
         result = self.runtime.govern_claim(
@@ -73,8 +143,7 @@ class SLRKTests(unittest.TestCase):
 
     def test_claim_governor_allows_scoped_verified_readback(self):
         result = self.runtime.govern_claim(
-            "The selected sheet range is verified.",
-            ProofLevel.CONNECTOR_READBACK,
+            "The selected sheet range is verified.", ProofLevel.CONNECTOR_READBACK
         )
         self.assertTrue(result.allowed)
 
@@ -97,14 +166,10 @@ class SLRKTests(unittest.TestCase):
         )
         with self.assertRaises(ValueError):
             self.runtime.clear_route(
-                "gcloud-source-deploy",
-                "no change",
-                conditions_changed=False,
+                "gcloud-source-deploy", "no change", conditions_changed=False
             )
         cleared = self.runtime.clear_route(
-            "gcloud-source-deploy",
-            "builder repaired",
-            conditions_changed=True,
+            "gcloud-source-deploy", "builder repaired", conditions_changed=True
         )
         self.assertEqual(RouteState.AVAILABLE.value, cleared["state"])
 

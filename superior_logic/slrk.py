@@ -15,6 +15,22 @@ class CapabilityState(StrEnum):
     UNSUPPORTED = "UNSUPPORTED"
 
 
+class PreservationState(StrEnum):
+    FULL_PRESERVED = "FULL_PRESERVED"
+    ARCHIVED_QUERYABLE = "ARCHIVED_QUERYABLE"
+    RESTRICTED_TEST_ONLY = "RESTRICTED_TEST_ONLY"
+    METADATA_ONLY_SECRET = "METADATA_ONLY_SECRET"
+
+
+class ActivationState(StrEnum):
+    ACTIVE_VALIDATED = "ACTIVE_VALIDATED"
+    ACTIVE_BOUNDED = "ACTIVE_BOUNDED"
+    PRESERVED_DORMANT = "PRESERVED_DORMANT"
+    STAGED_NOT_RUNNING = "STAGED_NOT_RUNNING"
+    EXECUTION_HELD = "EXECUTION_HELD"
+    MATTER_TRANSFER_HELD = "MATTER_TRANSFER_HELD"
+
+
 class AssessmentState(StrEnum):
     EXECUTABLE = "EXECUTABLE"
     PARTIAL = "PARTIAL"
@@ -78,6 +94,54 @@ class CapabilityContract:
     external_effect: bool = False
     proof_required: str = ""
     fallback_route: str = ""
+    preservation_state: PreservationState = PreservationState.FULL_PRESERVED
+    activation_state: ActivationState = ActivationState.PRESERVED_DORMANT
+    carrier_ids: tuple[str, ...] = ()
+    superseded_by: str = ""
+    permanent_exclusion_requested: bool = False
+    owner_decision_reference: str = ""
+    preservation_copy_reference: str = ""
+
+    def __post_init__(self) -> None:
+        if not self.capability_id.strip():
+            raise ValueError("capability_id is required")
+        if not self.name.strip():
+            raise ValueError("name is required")
+        if self.permanent_exclusion_requested and not (
+            self.owner_decision_reference.strip() and self.preservation_copy_reference.strip()
+        ):
+            raise ValueError(
+                "Permanent exclusion requires an item-specific owner decision reference "
+                "and a preservation-copy reference."
+            )
+        if self.preservation_state == PreservationState.METADATA_ONLY_SECRET and self.activation_state not in {
+            ActivationState.EXECUTION_HELD,
+            ActivationState.PRESERVED_DORMANT,
+        }:
+            raise ValueError(
+                "Secret-bearing records may preserve metadata only and cannot be activated."
+            )
+
+    @property
+    def preserved(self) -> bool:
+        return self.preservation_state in set(PreservationState)
+
+    @property
+    def activation_allows_execution(self) -> bool:
+        return self.activation_state in {
+            ActivationState.ACTIVE_VALIDATED,
+            ActivationState.ACTIVE_BOUNDED,
+        }
+
+    def to_dict(self) -> dict[str, Any]:
+        value = asdict(self)
+        value["state"] = self.state.value
+        value["preservation_state"] = self.preservation_state.value
+        value["activation_state"] = self.activation_state.value
+        value["carrier_ids"] = list(self.carrier_ids)
+        value["preserved"] = self.preserved
+        value["activation_allows_execution"] = self.activation_allows_execution
+        return value
 
 
 @dataclass(frozen=True)
@@ -88,6 +152,8 @@ class CapabilityAssessment:
     gated_capabilities: tuple[str, ...]
     selected_routes: tuple[str, ...]
     claim_limit: str
+    preserved_capabilities: tuple[str, ...] = ()
+    preservation_warnings: tuple[str, ...] = ()
 
     def to_dict(self) -> dict[str, Any]:
         value = asdict(self)
@@ -193,10 +259,17 @@ def assess_capabilities(required: Iterable[str], contracts: Iterable[CapabilityC
 
     selected = tuple(by_id[item].fallback_route or by_id[item].name for item in required_ids)
     states = {by_id[item].state for item in required_ids}
+    preserved = tuple(item for item in required_ids if by_id[item].preserved)
+    preservation_warnings = tuple(
+        f"{item}:{by_id[item].preservation_state.value}:{by_id[item].activation_state.value}"
+        for item in required_ids
+        if not by_id[item].activation_allows_execution
+    )
     gated = tuple(
         item
         for item in required_ids
         if by_id[item].state not in {CapabilityState.EXECUTABLE_NOW, CapabilityState.VERIFY_ONLY}
+        or not by_id[item].activation_allows_execution
     )
 
     if CapabilityState.UNSUPPORTED in states:
@@ -212,7 +285,13 @@ def assess_capabilities(required: Iterable[str], contracts: Iterable[CapabilityC
         limit = "Runtime integration is required; design or queue state is not execution proof."
     elif CapabilityState.DESIGN_ONLY in states:
         state = AssessmentState.DESIGN_ONLY
-        limit = "Only the design layer is supported."
+        limit = "Only the design layer is supported; the implementation remains preserved."
+    elif any(not by_id[item].activation_allows_execution for item in required_ids):
+        state = AssessmentState.PARTIAL
+        limit = (
+            "The required capability is preserved, but execution or matter transfer is held "
+            "until its proof, authority, safety or scope gate passes."
+        )
     elif all(
         by_id[item].state == CapabilityState.EXECUTABLE_NOW and by_id[item].can_execute
         for item in required_ids
@@ -223,7 +302,16 @@ def assess_capabilities(required: Iterable[str], contracts: Iterable[CapabilityC
         state = AssessmentState.PARTIAL
         limit = "The route can verify or partially act, but cannot claim end-to-end execution."
 
-    return CapabilityAssessment(state, required_ids, (), gated, selected, limit)
+    return CapabilityAssessment(
+        state,
+        required_ids,
+        (),
+        gated,
+        selected,
+        limit,
+        preserved,
+        preservation_warnings,
+    )
 
 
 def govern_claim(
