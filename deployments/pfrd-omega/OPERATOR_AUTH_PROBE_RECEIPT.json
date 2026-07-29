@@ -11,7 +11,7 @@
         "DEPLOY_SOLUTION5_LOCKED",
         "READ_BUILD"
       ],
-      "checkedAt": "2026-07-29T09:23:38.471Z",
+      "checkedAt": "2026-07-29T11:57:47.052Z",
       "ok": true,
       "service": "federation-omega-operator",
       "targetService": "architron9",
@@ -21,7 +21,7 @@
   },
   "health": {
     "body": {
-      "checkedAt": "2026-07-29T09:23:38.003Z",
+      "checkedAt": "2026-07-29T11:57:46.740Z",
       "noGmail": true,
       "ok": true,
       "service": "federation-omega-operator",
@@ -34,7 +34,7 @@
   "mutation_attempted": false,
   "operator_url": "https://federation-omega-operator-257649435135.africa-south1.run.app",
   "receipt": "PFRD-OMEGA-OPERATOR-AUTH-PROBE",
-  "recorded_at": "2026-07-29T09:23:38.580491+00:00",
+  "recorded_at": "2026-07-29T11:57:47.176880+00:00",
   "token_present": false,
   "token_value_recorded": false
 }
