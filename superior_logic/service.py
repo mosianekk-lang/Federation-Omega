@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import atexit
 import os
+import uuid
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -21,6 +22,7 @@ from .oops_acme import (
     evaluate_continuation,
     evaluate_external_action,
 )
+from .operations import OperationConflictError, normalize_operation_id
 from .runtime import SuperiorLogicRuntime
 from .slrk import (
     ActivationState,
@@ -35,9 +37,14 @@ from .slrk import (
 )
 
 SERVICE_VERSION = "3.2.0"
+API_PRINCIPAL = "API_CALLER_UNAUTHENTICATED"
 
 
-class MissionCreate(BaseModel):
+class OperationMixin(BaseModel):
+    operation_id: str | None = Field(default=None, min_length=8, max_length=128)
+
+
+class MissionCreate(OperationMixin):
     owner: str = "Kim Kagiso Mosiane"
     instruction: str = Field(min_length=1)
 
@@ -82,7 +89,7 @@ class ECASPEvaluateModel(BaseModel):
     unresolved_material_objects_disclosed: bool = False
 
 
-class CapabilityContractModel(BaseModel):
+class CapabilityContractModel(OperationMixin):
     capability_id: str = Field(min_length=1)
     name: str = Field(min_length=1)
     state: CapabilityState
@@ -115,7 +122,7 @@ class ClaimGovernModel(BaseModel):
     lifecycle_complete: bool = False
 
 
-class FaultRecordModel(BaseModel):
+class FaultRecordModel(OperationMixin):
     fault_id: str = Field(min_length=1)
     layer_type: str = Field(min_length=1)
     detected_problem: str = Field(min_length=1)
@@ -126,12 +133,12 @@ class FaultRecordModel(BaseModel):
     route_id: str | None = None
 
 
-class RouteClearModel(BaseModel):
+class RouteClearModel(OperationMixin):
     reason: str = Field(min_length=1)
     conditions_changed: bool = False
 
 
-class EnginePromotionModel(BaseModel):
+class EnginePromotionModel(OperationMixin):
     engine_id: str = Field(min_length=1)
     target_environment: EngineEnvironment
     objective: str = Field(min_length=1)
@@ -194,6 +201,17 @@ class ContinuationEvaluateModel(BaseModel):
     persistent_runtime_proven: bool = False
 
 
+def resolve_operation_id(value: str | None) -> str:
+    try:
+        return normalize_operation_id(value) if value else uuid.uuid4().hex
+    except ValueError as exc:
+        raise HTTPException(status_code=422, detail=str(exc)) from exc
+
+
+def raise_operation_conflict(exc: ValueError) -> None:
+    raise HTTPException(status_code=409, detail=str(exc)) from exc
+
+
 def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
     api = FastAPI(title="Federation Omega Superior Logic", version=SERVICE_VERSION)
 
@@ -205,6 +223,7 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
             "version": SERVICE_VERSION,
             "event_chain_valid": state["event_chain_valid"],
             "event_count": state["event_count"],
+            "operation_count": state["operation_count"],
             "ecasp_algorithm": "ALG-ECASP-001",
             "non_dilution_policy": state["non_dilution_policy"],
             "slrk_controls": [
@@ -215,17 +234,41 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
                 "NON_DILUTION_PRESERVATION",
                 "OOPS_EXTERNAL_ACTION_GATE",
                 "ACME_CONTINUATION_GATE",
+                "ATOMIC_STATE_EVENT",
+                "OPERATION_IDEMPOTENCY",
             ],
+            "application_authentication": "UNIMPLEMENTED",
         }
 
     @api.get("/state")
     def state() -> dict:
         return active_runtime.snapshot()
 
+    @api.get("/operations/{operation_id}")
+    def operation_receipt(operation_id: str) -> dict:
+        operation_id = resolve_operation_id(operation_id)
+        receipt = active_runtime.operation_receipt(operation_id)
+        if receipt is None:
+            raise HTTPException(status_code=404, detail="Operation receipt not found.")
+        return receipt
+
     @api.post("/missions")
     def create_mission(request: MissionCreate) -> dict:
-        mission_id = active_runtime.create_mission(request.owner, request.instruction)
-        return {"status": "MISSION_CREATED", "mission_id": mission_id}
+        operation_id = resolve_operation_id(request.operation_id)
+        try:
+            mission_id = active_runtime.create_mission(
+                request.owner,
+                request.instruction,
+                operation_id=operation_id,
+                principal=API_PRINCIPAL,
+            )
+        except OperationConflictError as exc:
+            raise_operation_conflict(exc)
+        return {
+            "status": "MISSION_CREATED_OR_REPLAYED",
+            "mission_id": mission_id,
+            "operation_id": operation_id,
+        }
 
     @api.post("/ecasp/evaluate")
     def evaluate_corpus(request: ECASPEvaluateModel) -> dict:
@@ -249,13 +292,21 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
 
     @api.post("/capabilities/register")
     def register_capability(request: CapabilityContractModel) -> dict:
+        operation_id = resolve_operation_id(request.operation_id)
         try:
-            contract = CapabilityContract(**request.model_dump())
+            contract = CapabilityContract(
+                **request.model_dump(exclude={"operation_id"})
+            )
+            active_runtime.register_capability(
+                contract,
+                operation_id=operation_id,
+                principal=API_PRINCIPAL,
+            )
         except ValueError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
-        active_runtime.register_capability(contract)
+            raise_operation_conflict(exc)
         return {
-            "status": "CAPABILITY_REGISTERED",
+            "status": "CAPABILITY_REGISTERED_OR_REPLAYED",
+            "operation_id": operation_id,
             "capability_id": contract.capability_id,
             "capability_state": contract.state.value,
             "preservation_state": contract.preservation_state.value,
@@ -279,9 +330,21 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
 
     @api.post("/faults")
     def register_fault(request: FaultRecordModel) -> dict:
-        record = FaultRecord(**request.model_dump())
-        active_runtime.register_fault(record)
-        response = {"status": "FAULT_REGISTERED", "fault_id": record.fault_id}
+        operation_id = resolve_operation_id(request.operation_id)
+        try:
+            record = FaultRecord(**request.model_dump(exclude={"operation_id"}))
+            active_runtime.register_fault(
+                record,
+                operation_id=operation_id,
+                principal=API_PRINCIPAL,
+            )
+        except ValueError as exc:
+            raise_operation_conflict(exc)
+        response = {
+            "status": "FAULT_REGISTERED_OR_REPLAYED",
+            "fault_id": record.fault_id,
+            "operation_id": operation_id,
+        }
         if record.route_id:
             response["route"] = active_runtime.route_state(record.route_id)
         return response
@@ -292,17 +355,34 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
 
     @api.post("/routes/{route_id}/clear")
     def clear_route(route_id: str, request: RouteClearModel) -> dict:
+        operation_id = resolve_operation_id(request.operation_id)
         try:
-            return active_runtime.clear_route(
-                route_id, request.reason, conditions_changed=request.conditions_changed
+            result = active_runtime.clear_route(
+                route_id,
+                request.reason,
+                conditions_changed=request.conditions_changed,
+                operation_id=operation_id,
+                principal=API_PRINCIPAL,
             )
         except ValueError as exc:
-            raise HTTPException(status_code=409, detail=str(exc)) from exc
+            raise_operation_conflict(exc)
+        return {**result, "operation_id": operation_id}
 
     @api.post("/engines/evaluate-promotion")
     def evaluate_promotion(request: EnginePromotionModel) -> dict:
-        internal = EnginePromotionRequest(**request.model_dump())
-        return active_runtime.evaluate_engine_promotion(internal).to_dict()
+        operation_id = resolve_operation_id(request.operation_id)
+        try:
+            internal = EnginePromotionRequest(
+                **request.model_dump(exclude={"operation_id"})
+            )
+            result = active_runtime.evaluate_engine_promotion(
+                internal,
+                operation_id=operation_id,
+                principal=API_PRINCIPAL,
+            )
+        except ValueError as exc:
+            raise_operation_conflict(exc)
+        return {**result.to_dict(), "operation_id": operation_id}
 
     @api.post("/actions/evaluate-authorization")
     def evaluate_action_authorization(request: ExternalActionEvaluateModel) -> dict:
