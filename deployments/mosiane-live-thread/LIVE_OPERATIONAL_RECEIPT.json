@@ -1,0 +1,13 @@
+{
+  "classification": "DEPLOYMENT_FAILED_OR_CANCELLED",
+  "issued_at": "2026-07-29T07:40:02.032439+00:00",
+  "manual_link_update_required": null,
+  "manual_refresh_required": null,
+  "read_tracking_enabled": false,
+  "receipt": "MOSIANE-LIVE-THREAD-DEPLOYMENT-NOT-VERIFIED",
+  "source_commit": "70fdc9e391fa21316909882f93418b2195a56eae",
+  "workflow_conclusion": "failure",
+  "workflow_run_id": "30432466229",
+  "workflow_run_number": "3",
+  "workflow_url": "https://github.com/mosianekk-lang/Federation-Omega/actions/runs/30432466229"
+}
