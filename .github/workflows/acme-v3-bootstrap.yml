@@ -1,0 +1,21 @@
+name: ACME v3 Bootstrap CI
+
+on:
+  pull_request:
+    paths:
+      - 'bootstrap/**'
+      - 'tests/test_acme_v3_bootstrap.py'
+      - '.github/workflows/acme-v3-bootstrap.yml'
+
+jobs:
+  validate:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Run bootstrap tests
+        run: python -m pytest -q tests/test_acme_v3_bootstrap.py
