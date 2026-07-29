@@ -1,0 +1,426 @@
+name: Recover and Deploy Mosiane Live Thread
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/live-thread-key-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: mosiane-live-thread-production
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  REGION: africa-south1
+  SERVICE: mosiane-live-thread
+  REPOSITORY: federation-omega
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/mosiane-live-thread:${{ github.sha }}
+  RECEIPT_PATH: deployments/mosiane-live-thread/LIVE_OPERATIONAL_RECEIPT.json
+
+jobs:
+  recover-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 40
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Requalify the application
+        run: |
+          set -euo pipefail
+          echo REQUALIFY_APPLICATION > /tmp/live-thread-stage
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+          python -m pytest -q tests/test_live_thread.py
+
+      - name: Authenticate to Google Cloud through keyless OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify deployment identity
+        run: |
+          set -euo pipefail
+          echo VERIFY_DEPLOYMENT_IDENTITY > /tmp/live-thread-stage
+          ./ops/bootstrap_github_wif.sh --verify | tee /tmp/wif-receipt.json
+          python - <<'PY'
+          import json
+          payload = json.load(open('/tmp/wif-receipt.json', encoding='utf-8'))
+          assert payload['receipt'] == 'FEDOMEGA-WIF-CLOUD-VERIFIED', payload
+          assert payload['state'] == 'VERIFIED', payload
+          assert payload['mutation_performed'] is False, payload
+          PY
+
+      - name: Recover an existing OpenAI key into Secret Manager
+        id: key
+        env:
+          GITHUB_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          echo RECOVER_OPENAI_KEY > /tmp/live-thread-stage
+          key_file=/tmp/recovered-openai-api-key
+          secret_name=''
+          rm -f "$key_file"
+          umask 077
+
+          gcloud services enable secretmanager.googleapis.com \
+            --project "$PROJECT_ID" --quiet >/dev/null 2>&1 || true
+
+          for candidate in \
+            mosiane-live-thread-openai-api-key \
+            OPENAI_API_KEY \
+            openai-api-key \
+            openai_api_key; do
+            if gcloud secrets describe "$candidate" --project "$PROJECT_ID" >/dev/null 2>&1; then
+              secret_name="$candidate"
+              break
+            fi
+          done
+
+          if [[ -z "$secret_name" && -n "${GITHUB_OPENAI_API_KEY:-}" ]]; then
+            printf '%s' "$GITHUB_OPENAI_API_KEY" > "$key_file"
+          fi
+
+          if [[ -z "$secret_name" && ! -s "$key_file" ]]; then
+            while IFS= read -r service_name; do
+              [[ -n "$service_name" ]] || continue
+              gcloud run services describe "$service_name" \
+                --project "$PROJECT_ID" --region "$REGION" --format=json \
+                > /tmp/cloud-run-service.json
+
+              discovery=$(python - /tmp/cloud-run-service.json "$key_file" <<'PY'
+          import json, os, sys
+          source, key_path = sys.argv[1:]
+          payload = json.load(open(source, encoding='utf-8'))
+          containers = (
+              payload.get('spec', {})
+              .get('template', {})
+              .get('spec', {})
+              .get('containers', [])
+          )
+          for container in containers:
+              for env in container.get('env', []):
+                  if env.get('name') != 'OPENAI_API_KEY':
+                      continue
+                  direct = env.get('value')
+                  if direct:
+                      with open(key_path, 'w', encoding='utf-8') as handle:
+                          handle.write(direct)
+                      os.chmod(key_path, 0o600)
+                      print('DIRECT')
+                      raise SystemExit
+                  ref = (
+                      env.get('valueFrom', {}).get('secretKeyRef', {}).get('name')
+                      or env.get('valueSource', {}).get('secretKeyRef', {}).get('secret')
+                  )
+                  if ref:
+                      print('SECRET:' + str(ref).split('/')[-1])
+                      raise SystemExit
+          print('NONE')
+          PY
+              )
+
+              if [[ "$discovery" == SECRET:* ]]; then
+                secret_name="${discovery#SECRET:}"
+                break
+              fi
+              if [[ "$discovery" == DIRECT && -s "$key_file" ]]; then
+                break
+              fi
+            done < <(gcloud run services list \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --format='value(metadata.name)')
+          fi
+
+          if [[ -z "$secret_name" && -s "$key_file" ]]; then
+            secret_name='mosiane-live-thread-openai-api-key'
+            if ! gcloud secrets describe "$secret_name" --project "$PROJECT_ID" >/dev/null 2>&1; then
+              gcloud secrets create "$secret_name" \
+                --project "$PROJECT_ID" \
+                --replication-policy=automatic \
+                --quiet
+            fi
+            gcloud secrets versions add "$secret_name" \
+              --project "$PROJECT_ID" \
+              --data-file="$key_file" \
+              --quiet >/dev/null
+          fi
+
+          if [[ -z "$secret_name" ]]; then
+            echo OPENAI_KEY_SOURCE_NOT_FOUND > /tmp/live-thread-stage
+            exit 41
+          fi
+
+          gcloud secrets add-iam-policy-binding "$secret_name" \
+            --project "$PROJECT_ID" \
+            --member "serviceAccount:${RUNTIME_SA}" \
+            --role roles/secretmanager.secretAccessor \
+            --quiet >/dev/null
+
+          rm -f "$key_file"
+          echo "secret_name=$secret_name" >> "$GITHUB_OUTPUT"
+          echo "OpenAI key source recovered into Secret Manager without exposing the key."
+
+      - name: Ensure Firestore persistence in Johannesburg
+        run: |
+          set -euo pipefail
+          echo ENSURE_FIRESTORE > /tmp/live-thread-stage
+          if ! gcloud services list --enabled --project "$PROJECT_ID" \
+            --filter='config.name:firestore.googleapis.com' \
+            --format='value(config.name)' | grep -qx 'firestore.googleapis.com'; then
+            gcloud services enable firestore.googleapis.com --project "$PROJECT_ID" --quiet
+          fi
+          if ! gcloud firestore databases describe --project "$PROJECT_ID" >/dev/null 2>&1; then
+            gcloud firestore databases create \
+              --project "$PROJECT_ID" \
+              --location africa-south1 \
+              --type firestore-native \
+              --delete-protection \
+              --quiet
+          fi
+          gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+            --member "serviceAccount:${RUNTIME_SA}" \
+            --role roles/datastore.user \
+            --condition=None \
+            --quiet >/dev/null
+
+      - name: Capture current production revision
+        id: baseline
+        run: |
+          set -euo pipefail
+          echo CAPTURE_BASELINE > /tmp/live-thread-stage
+          if gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            previous=$(gcloud run services describe "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --format='value(status.latestReadyRevisionName)')
+          else
+            previous=''
+          fi
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push immutable image
+        run: |
+          set -euo pipefail
+          echo BUILD_AND_PUSH_IMAGE > /tmp/live-thread-stage
+          gcloud artifacts repositories describe "$REPOSITORY" \
+            --project "$PROJECT_ID" --location "$REGION" >/dev/null
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build --pull -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Deploy zero-traffic canary with Secret Manager binding
+        id: canary
+        env:
+          SECRET_NAME: ${{ steps.key.outputs.secret_name }}
+        run: |
+          set -euo pipefail
+          echo DEPLOY_CANARY > /tmp/live-thread-stage
+          tag="recovery-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE" \
+            --service-account "$RUNTIME_SA" \
+            --allow-unauthenticated \
+            --port 8080 \
+            --concurrency 80 \
+            --max-instances 3 \
+            --timeout 300 \
+            --tag "$tag" \
+            --no-traffic \
+            --set-env-vars "^@^APP_MODULE=superior_logic.live_service:app@LIVE_THREAD_ENABLED=1@LIVE_THREAD_STORE=firestore@LIVE_THREAD_MODEL=gpt-5-mini@GCP_PROJECT=${PROJECT_ID}" \
+            --set-secrets "OPENAI_API_KEY=${SECRET_NAME}:latest" \
+            --quiet
+
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > /tmp/live-thread-service.json
+          python - /tmp/live-thread-service.json "$tag" <<'PY' > /tmp/canary.env
+          import json, sys
+          service = json.load(open(sys.argv[1], encoding='utf-8'))
+          tag = sys.argv[2]
+          status = service.get('status', {})
+          created = status.get('latestCreatedRevisionName', '')
+          ready = status.get('latestReadyRevisionName', '')
+          tagged = next((x for x in status.get('traffic', []) if x.get('tag') == tag), {})
+          url = tagged.get('url', '')
+          if not created or created != ready or not url:
+              raise SystemExit(f'Canary not ready: created={created!r} ready={ready!r} url={url!r}')
+          print(f'CANARY_REVISION={created}')
+          print(f'CANARY_URL={url}')
+          PY
+          source /tmp/canary.env
+          echo "revision=$CANARY_REVISION" >> "$GITHUB_OUTPUT"
+          echo "url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify persistence, integrity and a live shared AI reply
+        env:
+          CANARY_URL: ${{ steps.canary.outputs.url }}
+        run: |
+          set -euo pipefail
+          echo VERIFY_LIVE_CANARY > /tmp/live-thread-stage
+          health=$(curl --fail --silent --show-error "$CANARY_URL/live/health")
+          python - "$health" <<'PY'
+          import json, sys
+          payload = json.loads(sys.argv[1])
+          assert payload['status'] == 'HEALTHY', payload
+          assert payload['store']['store'] == 'firestore', payload
+          assert payload['store']['ready'] is True, payload
+          assert payload['ai_ready'] is True, payload
+          assert payload['privacy']['read_tracking'] is False, payload
+          assert payload['privacy']['presence_tracking'] is False, payload
+          assert payload['privacy']['canonical_content_hashes'] is True, payload
+          PY
+
+          room="recovery_${GITHUB_SHA:0:24}"
+          curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            -d '{"sender":"Deployment verifier","content":"Reply with a concise confirmation that this canonical shared room is operational.","request_ai":true}' \
+            "$CANARY_URL/live/api/rooms/$room/messages" > /tmp/live-thread-post.json
+
+          success=0
+          for _ in $(seq 1 90); do
+            curl --fail --silent --show-error \
+              "$CANARY_URL/live/api/rooms/$room/messages" > /tmp/live-thread-room.json
+            if python - <<'PY'
+          import json
+          payload = json.load(open('/tmp/live-thread-room.json', encoding='utf-8'))
+          messages = payload.get('messages', [])
+          ok = (
+              payload.get('chain_valid') is True
+              and len(messages) >= 2
+              and messages[-1].get('role') == 'assistant'
+              and bool(messages[-1].get('content_hash'))
+              and bool(messages[-1].get('content'))
+          )
+          raise SystemExit(0 if ok else 1)
+          PY
+            then
+              success=1
+              break
+            fi
+            sleep 2
+          done
+          test "$success" -eq 1
+
+      - name: Promote canary with automatic rollback
+        env:
+          CANARY_REVISION: ${{ steps.canary.outputs.revision }}
+          PREVIOUS_READY: ${{ steps.baseline.outputs.previous }}
+        run: |
+          set -euo pipefail
+          echo PROMOTE_CANARY > /tmp/live-thread-stage
+          rollback() {
+            if [[ -n "${PREVIOUS_READY:-}" ]]; then
+              gcloud run services update-traffic "$SERVICE" \
+                --project "$PROJECT_ID" --region "$REGION" \
+                --to-revisions "${PREVIOUS_READY}=100" --quiet || true
+            fi
+          }
+          trap rollback ERR
+          gcloud run services update-traffic "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${CANARY_REVISION}=100" --quiet
+
+          url=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.url)')
+          ready=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.latestReadyRevisionName)')
+          test "$ready" = "$CANARY_REVISION"
+          curl --fail --silent --show-error "$url/live/health" > /tmp/live-thread-final-health.json
+          trap - ERR
+
+          python - "$url" "$CANARY_REVISION" "$IMAGE" <<'PY' > /tmp/live-thread-final-receipt.json
+          import json, sys
+          from datetime import datetime, timezone
+          health = json.load(open('/tmp/live-thread-final-health.json', encoding='utf-8'))
+          receipt = {
+              'receipt': 'MOSIANE-LIVE-THREAD-DEPLOYED-AND-VERIFIED',
+              'issued_at': datetime.now(timezone.utc).isoformat(),
+              'url': sys.argv[1],
+              'revision': sys.argv[2],
+              'image': sys.argv[3],
+              'health': health,
+              'manual_refresh_required': False,
+              'manual_link_update_required': False,
+              'read_tracking_enabled': False,
+              'presence_tracking_enabled': False,
+              'canonical_content_hashes': True,
+              'openai_key_storage': 'GOOGLE_SECRET_MANAGER',
+          }
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+
+      - name: Persist definitive proof state
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_NUMBER: ${{ github.run_number }}
+          RUN_URL: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          stage=$(cat /tmp/live-thread-stage 2>/dev/null || echo UNKNOWN_STAGE)
+          if [[ "$JOB_STATUS" == success && -s /tmp/live-thread-final-receipt.json ]]; then
+            cp /tmp/live-thread-final-receipt.json /tmp/live-thread-proof-to-commit.json
+          else
+            python - /tmp/live-thread-proof-to-commit.json "$stage" <<'PY'
+          import json, os, sys
+          from datetime import datetime, timezone
+          payload = {
+              'receipt': 'MOSIANE-LIVE-THREAD-DEPLOYMENT-NOT-VERIFIED',
+              'issued_at': datetime.now(timezone.utc).isoformat(),
+              'classification': 'RECOVERY_DEPLOYMENT_FAILED_OR_CANCELLED',
+              'failed_stage': sys.argv[2],
+              'workflow_run_id': os.environ['RUN_ID'],
+              'workflow_run_number': os.environ['RUN_NUMBER'],
+              'workflow_url': os.environ['RUN_URL'],
+              'source_commit': os.environ['SOURCE_COMMIT'],
+              'workflow_conclusion': os.environ['JOB_STATUS'],
+              'manual_refresh_required': None,
+              'manual_link_update_required': None,
+              'read_tracking_enabled': False,
+              'presence_tracking_enabled': False,
+          }
+          with open(sys.argv[1], 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, indent=2, sort_keys=True)
+              handle.write('\n')
+          PY
+          fi
+
+          git fetch origin main
+          git reset --hard origin/main
+          mkdir -p "$(dirname "$RECEIPT_PATH")"
+          cp /tmp/live-thread-proof-to-commit.json "$RECEIPT_PATH"
+          python -m json.tool "$RECEIPT_PATH"
+          git config user.name 'Mosiane Live Thread Recovery'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$RECEIPT_PATH"
+          if ! git diff --cached --quiet; then
+            git commit -m "Record Mosiane Live Thread recovery proof from run ${RUN_ID}"
+            git push origin HEAD:main
+          fi
