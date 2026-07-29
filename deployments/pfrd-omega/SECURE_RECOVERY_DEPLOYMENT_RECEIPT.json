@@ -1,0 +1,80 @@
+{
+  "activation_mode_requested": "POLICY_ONLY",
+  "active_gcloud_account": null,
+  "active_gcloud_account_present": false,
+  "artifact": {
+    "drive_id": "11IQSUWThWuZwwCwevSffqP1gsgs2nvr9",
+    "name": "PFRD_OMEGA_Deployable_Source_Tree_v2.1.0.zip",
+    "sha256": "04422e9cf3b6a4937f10202a7d498577108b734e1b04e5c6449ffa225c1911c4"
+  },
+  "authenticated_status": null,
+  "automatic_retry_performed": false,
+  "baseline_readback": null,
+  "build_readback": null,
+  "classification": "BLOCKED_NO_TRUSTED_SECRET_ROUTE",
+  "credential_alias_presence": {
+    "FO_ADMIN_TOKEN": false,
+    "GCP_CREDENTIALS": false,
+    "GCP_SA_KEY": false,
+    "GCP_SERVICE_ACCOUNT_KEY": false,
+    "GCP_WIF_PAIR": false,
+    "GENERIC_WIF_PAIR": false,
+    "GOOGLE_CLOUD_CREDENTIALS": false,
+    "GOOGLE_CREDENTIALS": false,
+    "GOOGLE_GHA_CREDS_JSON": false,
+    "GOOGLE_SERVICE_ACCOUNT_KEY": false
+  },
+  "deployment_mode": "reversible_new_service",
+  "deployment_response": null,
+  "endpoint_health": null,
+  "mutation_attempted": false,
+  "not_claimed": [
+    "PRODUCTION_SEALED",
+    "KERNEL_ENFORCED",
+    "production traffic promotion",
+    "persistent database durability",
+    "distributed trust-domain deployment"
+  ],
+  "project": "sov-hybrid-suite",
+  "public_contract": {
+    "body": {
+      "allowedActions": [
+        "STATUS",
+        "READ_CLOUD_RUN_SERVICE",
+        "VERIFY_ARCHITRON_HEALTH",
+        "DEPLOY_SOLUTION5_LOCKED",
+        "READ_BUILD"
+      ],
+      "checkedAt": "2026-07-29T12:11:08.698Z",
+      "ok": true,
+      "service": "federation-omega-operator",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "public_health": {
+    "body": {
+      "checkedAt": "2026-07-29T12:11:08.173Z",
+      "noGmail": true,
+      "ok": true,
+      "service": "federation-omega-operator",
+      "status": "OPERATOR_READY",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "receipt": "PFRD-OMEGA-SECURE-RECOVERY-DEPLOYMENT-RECEIPT",
+  "recorded_at": "2026-07-29T12:11:07.687185+00:00",
+  "region": "africa-south1",
+  "secret_acquisition_error": null,
+  "secret_values_recorded": false,
+  "service": "pfrd-omega-gateway-canary",
+  "service_account": "fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com",
+  "target_after": null,
+  "target_before": null,
+  "token_present": false,
+  "token_source": "none",
+  "token_value_recorded": false
+}
