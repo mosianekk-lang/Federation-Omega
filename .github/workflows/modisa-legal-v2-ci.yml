@@ -8,6 +8,12 @@ on:
     paths:
       - 'deployments/modisa-legal-v2/source/**'
       - '.github/workflows/modisa-legal-v2-ci.yml'
+  pull_request:
+    branches:
+      - main
+    paths:
+      - 'deployments/modisa-legal-v2/source/**'
+      - '.github/workflows/modisa-legal-v2-ci.yml'
 
 permissions:
   contents: read
