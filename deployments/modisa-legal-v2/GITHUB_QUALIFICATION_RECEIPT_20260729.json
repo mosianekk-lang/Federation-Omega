@@ -1,0 +1,77 @@
+{
+  "receipt_id": "GITHUB-QUAL-MODISA-LEGAL-V2-20260729-0001",
+  "issued_at": "2026-07-29T01:18:30Z",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "branch": "modisa-legal-v2-deploy-20260729",
+  "qualified_head_commit": "6f240178685337316abbee6b5d13b2850b11cff2",
+  "draft_pull_request": {
+    "number": 12,
+    "url": "https://github.com/mosianekk-lang/Federation-Omega/pull/12",
+    "state": "open",
+    "draft": true,
+    "merged": false,
+    "mergeable": true,
+    "base": "main"
+  },
+  "qualification_workflow": {
+    "run_id": 30413549413,
+    "name": "MODISA Legal V2 Qualification",
+    "conclusion": "success",
+    "job_id": 90454928268,
+    "all_steps_successful": true
+  },
+  "existing_repository_workflow": {
+    "run_id": 30413549412,
+    "name": "Superior Logic CI",
+    "conclusion": "success",
+    "job_id": 90454928243
+  },
+  "verified_results": {
+    "official_agents_sdk_installed_in_ci": true,
+    "official_openai_sdk_installed_in_ci": true,
+    "tests": "27/27 passed",
+    "behavioural_evaluations": "20/20 passed",
+    "http_health": "HTTP 200",
+    "database_ready": true,
+    "proof_ledger_ready": true,
+    "evidence_encryption_ready": true,
+    "authentication_ready": true,
+    "durable_workflow_ready": true,
+    "external_actions_enabled": false
+  },
+  "live_model_boundary": {
+    "openai_api_key_repository_secret_configured": false,
+    "model_canary_executed": false,
+    "model_trace_id": null,
+    "chief_counsel_live_output": null,
+    "seven_chamber_live_output": null,
+    "reason": "OPENAI_API_KEY repository secret is not configured. The secure ChatGPT key flow did not expose or transfer the plaintext key into GitHub Actions."
+  },
+  "artifact": {
+    "artifact_id": 8709310919,
+    "name": "modisa-legal-v2-qualification",
+    "github_reported_digest": "sha256:b4ae69898411f9dc53f36c9a2e9e0c815de02fa57a59a7fb9c00d3dc22ffc260",
+    "contains": [
+      "evals/results/latest.json",
+      "state/ci-health.json",
+      "state/ci-server.log",
+      "state/live-canary-boundary.txt"
+    ]
+  },
+  "external_effects": [
+    "Created an isolated GitHub branch.",
+    "Created draft pull request #12 for observable qualification.",
+    "Ran GitHub Actions qualification and produced an artifact."
+  ],
+  "excluded_effects": [
+    "No merge into main.",
+    "No email sent.",
+    "No legal filing.",
+    "No settlement acceptance.",
+    "No evidence deletion or mutation.",
+    "No financial commitment.",
+    "No credential value copied into chat, source code, logs or artifacts."
+  ],
+  "classification": "PERSISTENT_SOURCE_AND_CI_QUALIFIED / LIVE_MODEL_CANARY_BLOCKED_BY_REPOSITORY_SECRET / NOT_PRODUCTION_LIVE",
+  "next_gate": "Configure OPENAI_API_KEY as a GitHub repository or environment secret, then rerun MODISA Legal V2 Qualification and require a non-null model trace plus a proof-bound Chief Counsel and seven-chamber result before live-runtime promotion."
+}
