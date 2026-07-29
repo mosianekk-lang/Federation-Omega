@@ -103,34 +103,40 @@ class SuperiorLogicRuntime:
         with self._lock:
             self.db.close()
 
-    def append_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+    def _insert_event_locked(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+        """Insert one proof event using the caller's open transaction and lock."""
         payload_json = canonical_json(payload)
-        with self._lock:
-            previous = self.db.execute(
-                "SELECT payload_hash FROM events ORDER BY seq DESC LIMIT 1"
-            ).fetchone()
-            predecessor_hash = previous["payload_hash"] if previous else None
-            envelope = canonical_json(
-                {"event_type": event_type, "payload": payload, "predecessor_hash": predecessor_hash}
-            )
-            payload_hash = sha256_text(envelope)
-            event_id = str(uuid.uuid4())
-            self.db.execute(
-                "INSERT INTO events(event_id,event_type,payload_json,payload_hash,predecessor_hash,created_at) VALUES(?,?,?,?,?,?)",
-                (event_id, event_type, payload_json, payload_hash, predecessor_hash, utcnow()),
-            )
-            self.db.commit()
+        previous = self.db.execute(
+            "SELECT payload_hash FROM events ORDER BY seq DESC LIMIT 1"
+        ).fetchone()
+        predecessor_hash = previous["payload_hash"] if previous else None
+        envelope = canonical_json(
+            {"event_type": event_type, "payload": payload, "predecessor_hash": predecessor_hash}
+        )
+        payload_hash = sha256_text(envelope)
+        event_id = str(uuid.uuid4())
+        self.db.execute(
+            "INSERT INTO events(event_id,event_type,payload_json,payload_hash,predecessor_hash,created_at) VALUES(?,?,?,?,?,?)",
+            (event_id, event_type, payload_json, payload_hash, predecessor_hash, utcnow()),
+        )
         return {"event_id": event_id, "payload_hash": payload_hash}
+
+    def append_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
+        with self._lock:
+            with self.db:
+                return self._insert_event_locked(event_type, payload)
 
     def create_mission(self, owner: str, instruction: str) -> str:
         mission_id = str(uuid.uuid4())
         with self._lock:
-            self.db.execute(
-                "INSERT INTO missions(mission_id,owner,instruction,state,created_at) VALUES(?,?,?,?,?)",
-                (mission_id, owner, instruction, "RECEIVED", utcnow()),
-            )
-            self.db.commit()
-        self.append_event("MISSION_CREATED", {"mission_id": mission_id, "owner": owner})
+            with self.db:
+                self.db.execute(
+                    "INSERT INTO missions(mission_id,owner,instruction,state,created_at) VALUES(?,?,?,?,?)",
+                    (mission_id, owner, instruction, "RECEIVED", utcnow()),
+                )
+                self._insert_event_locked(
+                    "MISSION_CREATED", {"mission_id": mission_id, "owner": owner}
+                )
         return mission_id
 
     def derive_done(self, predicates: dict[str, bool]) -> tuple[bool, list[str]]:
@@ -156,23 +162,21 @@ class SuperiorLogicRuntime:
 
     def register_capability(self, contract: CapabilityContract) -> None:
         payload = contract.to_dict()
+        event_payload = {
+            "capability_id": contract.capability_id,
+            "state": contract.state.value,
+            "preservation_state": contract.preservation_state.value,
+            "activation_state": contract.activation_state.value,
+            "permanent_exclusion_requested": contract.permanent_exclusion_requested,
+        }
         with self._lock:
-            self.db.execute(
-                "INSERT INTO capability_contracts(capability_id,contract_json,updated_at) VALUES(?,?,?) "
-                "ON CONFLICT(capability_id) DO UPDATE SET contract_json=excluded.contract_json,updated_at=excluded.updated_at",
-                (contract.capability_id, canonical_json(payload), utcnow()),
-            )
-            self.db.commit()
-        self.append_event(
-            "CAPABILITY_REGISTERED",
-            {
-                "capability_id": contract.capability_id,
-                "state": contract.state.value,
-                "preservation_state": contract.preservation_state.value,
-                "activation_state": contract.activation_state.value,
-                "permanent_exclusion_requested": contract.permanent_exclusion_requested,
-            },
-        )
+            with self.db:
+                self.db.execute(
+                    "INSERT INTO capability_contracts(capability_id,contract_json,updated_at) VALUES(?,?,?) "
+                    "ON CONFLICT(capability_id) DO UPDATE SET contract_json=excluded.contract_json,updated_at=excluded.updated_at",
+                    (contract.capability_id, canonical_json(payload), utcnow()),
+                )
+                self._insert_event_locked("CAPABILITY_REGISTERED", event_payload)
 
     def _capability_contracts(self) -> list[CapabilityContract]:
         with self._lock:
@@ -220,19 +224,21 @@ class SuperiorLogicRuntime:
     def register_fault(self, record: FaultRecord) -> None:
         payload = {**record.__dict__, "severity": record.severity.value}
         with self._lock:
-            self.db.execute(
-                "INSERT INTO fault_records(fault_id,record_json,status,created_at) VALUES(?,?,?,?) "
-                "ON CONFLICT(fault_id) DO UPDATE SET record_json=excluded.record_json,status=excluded.status,created_at=excluded.created_at",
-                (record.fault_id, canonical_json(payload), "ACTIVE", utcnow()),
-            )
-            if record.route_id:
+            with self.db:
                 self.db.execute(
-                    "INSERT INTO route_memory(route_id,state,reason,updated_at) VALUES(?,?,?,?) "
-                    "ON CONFLICT(route_id) DO UPDATE SET state=excluded.state,reason=excluded.reason,updated_at=excluded.updated_at",
-                    (record.route_id, RouteState.BANNED_UNLESS_CLEARED.value, record.detected_problem, utcnow()),
+                    "INSERT INTO fault_records(fault_id,record_json,status,created_at) VALUES(?,?,?,?) "
+                    "ON CONFLICT(fault_id) DO UPDATE SET record_json=excluded.record_json,status=excluded.status,created_at=excluded.created_at",
+                    (record.fault_id, canonical_json(payload), "ACTIVE", utcnow()),
                 )
-            self.db.commit()
-        self.append_event("FAULT_REGISTERED", {"fault_id": record.fault_id, "route_id": record.route_id})
+                if record.route_id:
+                    self.db.execute(
+                        "INSERT INTO route_memory(route_id,state,reason,updated_at) VALUES(?,?,?,?) "
+                        "ON CONFLICT(route_id) DO UPDATE SET state=excluded.state,reason=excluded.reason,updated_at=excluded.updated_at",
+                        (record.route_id, RouteState.BANNED_UNLESS_CLEARED.value, record.detected_problem, utcnow()),
+                    )
+                self._insert_event_locked(
+                    "FAULT_REGISTERED", {"fault_id": record.fault_id, "route_id": record.route_id}
+                )
 
     def route_state(self, route_id: str) -> dict[str, str]:
         with self._lock:
@@ -247,25 +253,26 @@ class SuperiorLogicRuntime:
         if not conditions_changed:
             raise ValueError("A banned route may be cleared only after material conditions change.")
         with self._lock:
-            self.db.execute(
-                "INSERT INTO route_memory(route_id,state,reason,updated_at) VALUES(?,?,?,?) "
-                "ON CONFLICT(route_id) DO UPDATE SET state=excluded.state,reason=excluded.reason,updated_at=excluded.updated_at",
-                (route_id, RouteState.AVAILABLE.value, reason, utcnow()),
-            )
-            self.db.commit()
-        self.append_event("ROUTE_CLEARED", {"route_id": route_id, "reason": reason})
+            with self.db:
+                self.db.execute(
+                    "INSERT INTO route_memory(route_id,state,reason,updated_at) VALUES(?,?,?,?) "
+                    "ON CONFLICT(route_id) DO UPDATE SET state=excluded.state,reason=excluded.reason,updated_at=excluded.updated_at",
+                    (route_id, RouteState.AVAILABLE.value, reason, utcnow()),
+                )
+                self._insert_event_locked("ROUTE_CLEARED", {"route_id": route_id, "reason": reason})
         return self.route_state(route_id)
 
     def evaluate_engine_promotion(self, request: EnginePromotionRequest) -> EnginePromotionResult:
         result = evaluate_engine_promotion(request)
         request_payload = {**request.__dict__, "target_environment": request.target_environment.value}
+        event_payload = {"engine_id": request.engine_id, **result.to_dict()}
         with self._lock:
-            self.db.execute(
-                "INSERT INTO engine_promotions(engine_id,request_json,result_json,created_at) VALUES(?,?,?,?)",
-                (request.engine_id, canonical_json(request_payload), canonical_json(result.to_dict()), utcnow()),
-            )
-            self.db.commit()
-        self.append_event("ENGINE_PROMOTION_EVALUATED", {"engine_id": request.engine_id, **result.to_dict()})
+            with self.db:
+                self.db.execute(
+                    "INSERT INTO engine_promotions(engine_id,request_json,result_json,created_at) VALUES(?,?,?,?)",
+                    (request.engine_id, canonical_json(request_payload), canonical_json(result.to_dict()), utcnow()),
+                )
+                self._insert_event_locked("ENGINE_PROMOTION_EVALUATED", event_payload)
         return result
 
     def verify_event_chain(self) -> bool:
