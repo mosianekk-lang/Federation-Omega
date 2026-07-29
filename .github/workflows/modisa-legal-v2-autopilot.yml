@@ -137,12 +137,12 @@ jobs:
           GITHUB_RUN_ID_VALUE: ${{ github.run_id }}
           GITHUB_RUN_ATTEMPT_VALUE: ${{ github.run_attempt }}
           GITHUB_REPOSITORY_VALUE: ${{ github.repository }}
-          GITHUB_SHA_VALUE: ${{ github.sha }}
           DEPLOYMENT_BRANCH_VALUE: ${{ env.DEPLOYMENT_BRANCH }}
         run: |
           python - <<'PY'
           import json
           import os
+          import subprocess
           from datetime import datetime, timezone
           from pathlib import Path
 
@@ -162,6 +162,9 @@ jobs:
           release = output.get('release') or {}
           if not release.get('decision'):
               raise SystemExit('No proof-bound release decision was returned.')
+          deployment_source_commit = subprocess.check_output(
+              ['git', 'rev-parse', 'HEAD'], text=True
+          ).strip()
 
           receipt = {
               'receipt_id': 'MODISA-LIVE-' + result['mission_id'],
@@ -170,7 +173,7 @@ jobs:
               'deployment_branch': os.environ['DEPLOYMENT_BRANCH_VALUE'],
               'workflow_run_id': os.environ['GITHUB_RUN_ID_VALUE'],
               'workflow_run_attempt': os.environ['GITHUB_RUN_ATTEMPT_VALUE'],
-              'checked_out_commit': os.environ['GITHUB_SHA_VALUE'],
+              'deployment_source_commit': deployment_source_commit,
               'status': result['status'],
               'mission_id': result['mission_id'],
               'trace_id': result['trace_id'],
