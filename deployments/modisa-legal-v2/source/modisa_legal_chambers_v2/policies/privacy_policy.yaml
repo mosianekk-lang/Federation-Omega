@@ -1,0 +1,12 @@
+version: 2.0.0
+tiers:
+  P0: public
+  P1: internal
+  P2: confidential
+  P3: legally_privileged_only_when_established
+  P4: secret_reference_only
+rules:
+  - legal_subject_matter_is_not_automatically_privileged
+  - AI_communication_is_not_automatically_privileged
+  - secrets_may_not_enter_prompt_proof_or_audit_payloads
+  - matter_access_is_explicitly_authorised

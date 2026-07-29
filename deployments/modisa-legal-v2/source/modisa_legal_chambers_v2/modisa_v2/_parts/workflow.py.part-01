@@ -1,0 +1,119 @@
+  conn.execute(
+                """UPDATE workflows SET status=?,attempts=?,lease_owner=?,lease_expires_at=?,updated_at=?
+                   WHERE workflow_id=?""",
+                (
+                    WorkflowStatus.RUNNING.value,
+                    attempts,
+                    worker_id,
+                    lease_until.isoformat(),
+                    now.isoformat(),
+                    row["workflow_id"],
+                ),
+            )
+        self._event(row["workflow_id"], "LEASE_ACQUIRED", {"worker_id": worker_id, "lease_until": lease_until.isoformat()})
+        return self.get(row["workflow_id"])
+
+    def heartbeat(self, workflow_id: str, worker_id: str, lease_seconds: int = 120) -> WorkflowRecord:
+        record = self.get(workflow_id)
+        if record is None:
+            raise ValueError("Unknown workflow")
+        if record.lease_owner != worker_id or record.status != WorkflowStatus.RUNNING:
+            raise ValueError("Worker does not hold the workflow lease")
+        lease_until = datetime.now(UTC) + timedelta(seconds=lease_seconds)
+        self.repo.execute(
+            "UPDATE workflows SET lease_expires_at=?,updated_at=? WHERE workflow_id=?",
+            (lease_until.isoformat(), self.repo.now(), workflow_id),
+        )
+        self._event(workflow_id, "HEARTBEAT", {"worker_id": worker_id, "lease_until": lease_until.isoformat()})
+        updated = self.get(workflow_id)
+        assert updated is not None
+        return updated
+
+    def update_state(self, workflow_id: str, worker_id: str, state: dict[str, Any]) -> WorkflowRecord:
+        record = self.get(workflow_id)
+        if record is None:
+            raise ValueError("Unknown workflow")
+        if record.lease_owner != worker_id:
+            raise ValueError("Worker does not hold the workflow lease")
+        self.repo.execute(
+            "UPDATE workflows SET state_json=?,updated_at=? WHERE workflow_id=?",
+            (self.repo.dumps(state), self.repo.now(), workflow_id),
+        )
+        self._event(workflow_id, "STATE_UPDATED", {"state_keys": sorted(state)})
+        updated = self.get(workflow_id)
+        assert updated is not None
+        return updated
+
+    def wait_for_approval(self, workflow_id: str, worker_id: str, state: dict[str, Any]) -> WorkflowRecord:
+        record = self.get(workflow_id)
+        if record is None or record.lease_owner != worker_id:
+            raise ValueError("Worker does not hold the workflow lease")
+        now = self.repo.now()
+        self.repo.execute(
+            """UPDATE workflows SET status=?,state_json=?,lease_owner=NULL,lease_expires_at=NULL,updated_at=?
+               WHERE workflow_id=?""",
+            (WorkflowStatus.WAITING_APPROVAL.value, self.repo.dumps(state), now, workflow_id),
+        )
+        self._event(workflow_id, "WAITING_APPROVAL", state)
+        updated = self.get(workflow_id)
+        assert updated is not None
+        return updated
+
+    def resume_after_approval(self, workflow_id: str, actor_id: str) -> WorkflowRecord:
+        record = self.get(workflow_id)
+        if record is None:
+            raise ValueError("Unknown workflow")
+        if record.status != WorkflowStatus.WAITING_APPROVAL:
+            raise ValueError("Workflow is not waiting for approval")
+        now = self.repo.now()
+        self.repo.execute(
+            """UPDATE workflows SET status=?,next_run_at=?,updated_at=? WHERE workflow_id=?""",
+            (WorkflowStatus.PENDING.value, now, now, workflow_id),
+        )
+        self._event(workflow_id, "APPROVAL_RESUME", {"actor_id": actor_id})
+        updated = self.get(workflow_id)
+        assert updated is not None
+        return updated
+
+    def complete(self, workflow_id: str, worker_id: str, state: dict[str, Any]) -> WorkflowRecord:
+        record = self.get(workflow_id)
+        if record is None or record.lease_owner != worker_id:
+            raise ValueError("Worker does not hold the workflow lease")
+        now = self.repo.now()
+        self.repo.execute(
+            """UPDATE workflows SET status=?,state_json=?,lease_owner=NULL,lease_expires_at=NULL,
+               updated_at=? WHERE workflow_id=?""",
+            (WorkflowStatus.COMPLETED.value, self.repo.dumps(state), now, workflow_id),
+        )
+        self._event(workflow_id, "WORKFLOW_COMPLETED", state)
+        updated = self.get(workflow_id)
+        assert updated is not None
+        return updated
+
+    def block(self, workflow_id: str, worker_id: str, reason: str) -> WorkflowRecord:
+        """Terminally block a workflow on a non-retryable authority or configuration gate."""
+        record = self.get(workflow_id)
+        if record is None or record.lease_owner != worker_id:
+            raise ValueError("Worker does not hold the workflow lease")
+        now = self.repo.now()
+        self.repo.execute(
+            """UPDATE workflows SET status=?,lease_owner=NULL,lease_expires_at=NULL,
+               last_error=?,updated_at=? WHERE workflow_id=?""",
+            (WorkflowStatus.BLOCKED.value, reason[:4000], now, workflow_id),
+        )
+        self._event(workflow_id, "WORKFLOW_BLOCKED", {"reason": reason})
+        updated = self.get(workflow_id)
+        assert updated is not None
+        return updated
+
+    def fail(self, workflow_id: str, worker_id: str, error: str, retry_delay_seconds: int = 60) -> WorkflowRecord:
+        record = self.get(workflow_id)
+        if record is None or record.lease_owner != worker_id:
+            raise ValueError("Worker does not hold the workflow lease")
+        terminal = record.attempts >= record.max_attempts
+        status = WorkflowStatus.FAILED if terminal else WorkflowStatus.PENDING
+        next_run = datetime.now(UTC) + timedelta(seconds=retry_delay_seconds)
+        self.repo.execute(
+            """UPDATE workflows SET status=?,lease_owner=NULL,lease_expires_at=NULL,next_run_at=?,
+               last_error=?,updated_at=? WHERE workflow_id=?""",
+            (status.value, next_run.isoformat(), error[:4000], self.repo.now(), work

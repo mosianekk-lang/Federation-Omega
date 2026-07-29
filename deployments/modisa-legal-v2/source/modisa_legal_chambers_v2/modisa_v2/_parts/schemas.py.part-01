@@ -1,0 +1,211 @@
+TATUTE", "REGULATION", "RULE", "JUDGMENT", "POLICY", "DIRECTIVE"]
+    jurisdiction: str = "South Africa"
+    source_url: str
+    proposition: str
+    binding_level: Literal["BINDING", "PERSUASIVE", "INTERNAL"]
+    effective_from: str | None = None
+    effective_to: str | None = None
+    content_hash: str
+    superseded_by: str | None = None
+
+
+class AuthorityRecord(BaseModel):
+    authority_id: str
+    matter_id: str
+    citation: str
+    title: str
+    authority_type: str
+    jurisdiction: str
+    source_url: str
+    source_domain: str
+    proposition: str
+    binding_level: str
+    effective_from: str | None
+    effective_to: str | None
+    content_hash: str
+    superseded_by: str | None
+    created_at: datetime
+
+
+class ReleaseRequirements(BaseModel):
+    legal_analysis: bool = True
+    current_law_required: bool = True
+    forum_power_required: bool = True
+    deadline_analysis_required: bool = False
+    recursive_inventory_required: bool = False
+    privacy_review_required: bool = True
+    write_performed: bool = False
+    external_action_id: str | None = None
+    council_required: bool = True
+
+
+class ReleaseRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    risk_level: RiskLevel = RiskLevel.HIGH
+    claim_ids: list[str] = Field(default_factory=list)
+    proof_ids: list[str] = Field(default_factory=list)
+    requirements: ReleaseRequirements = Field(default_factory=ReleaseRequirements)
+    noncritical_unknowns: list[str] = Field(default_factory=list)
+
+
+class ReleaseResult(BaseModel):
+    decision: ReleaseDecision
+    release_receipt_id: str | None = None
+    verified_proof_ids: list[str] = Field(default_factory=list)
+    failed_requirements: list[str] = Field(default_factory=list)
+    caveats: list[str] = Field(default_factory=list)
+    proof_chain_head: str | None = None
+    checked_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class ApprovalCreateRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    action_type: ExternalActionType
+    exact_parameters: dict[str, Any]
+    requested_by: str
+    expires_at: datetime | None = None
+
+
+class ApprovalRecord(BaseModel):
+    approval_id: str
+    matter_id: str
+    mission_id: str
+    action_type: ExternalActionType
+    action_digest: str
+    exact_parameters: dict[str, Any]
+    status: ApprovalStatus
+    requested_by: str
+    decided_by: str | None = None
+    decision_reason: str | None = None
+    expires_at: datetime | None = None
+    created_at: datetime
+    decided_at: datetime | None = None
+
+
+class ApprovalDecisionRequest(BaseModel):
+    approve: bool
+    decided_by: str
+    reason: str
+
+
+class ActionExecuteRequest(BaseModel):
+    approval_id: str
+    action_type: ExternalActionType
+    exact_parameters: dict[str, Any]
+    executor_id: str
+
+
+class ActionReceipt(BaseModel):
+    action_receipt_id: str
+    approval_id: str
+    matter_id: str
+    mission_id: str
+    action_type: ExternalActionType
+    action_digest: str
+    provider_action_id: str
+    provider_status: str
+    readback_status: str
+    execution_proof_id: str
+    readback_proof_id: str
+    created_at: datetime
+
+
+class WorkflowCreateRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    workflow_type: str
+    input_payload: dict[str, Any]
+    max_attempts: int = Field(default=3, ge=1, le=20)
+
+
+class WorkflowRecord(BaseModel):
+    workflow_id: str
+    matter_id: str
+    mission_id: str
+    workflow_type: str
+    status: WorkflowStatus
+    input_payload: dict[str, Any]
+    state_payload: dict[str, Any]
+    attempts: int
+    max_attempts: int
+    lease_owner: str | None
+    lease_expires_at: datetime | None
+    next_run_at: datetime
+    last_error: str | None
+    created_at: datetime
+    updated_at: datetime
+
+
+class CouncilOpinion(BaseModel):
+    opinion_id: str
+    matter_id: str
+    mission_id: str
+    role: CouncilRole
+    disposition: Literal["SUPPORT", "OPPOSE", "QUALIFY", "HOLD"]
+    conclusion: str
+    supported_claim_ids: list[str] = Field(default_factory=list)
+    challenged_claim_ids: list[str] = Field(default_factory=list)
+    proof_ids: list[str] = Field(default_factory=list)
+    material_risks: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0.0, le=1.0)
+    created_at: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class CouncilDecisionRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    risk_level: RiskLevel
+    opinions: list[CouncilOpinion]
+
+
+class CouncilDecision(BaseModel):
+    complete: bool
+    disposition: Literal["SUPPORT", "OPPOSE", "QUALIFY", "HOLD"]
+    missing_roles: list[CouncilRole] = Field(default_factory=list)
+    conflicts: list[str] = Field(default_factory=list)
+    proof_ids: list[str] = Field(default_factory=list)
+    summary: str
+
+
+class MissionRequest(BaseModel):
+    mission: str = Field(min_length=3)
+    matter_id: str = "MAT-KIM-V-TUT"
+    session_id: str
+    jurisdiction: str = "South Africa"
+    forum: str = "UNKNOWN"
+    risk_level: RiskLevel = RiskLevel.HIGH
+    source_paths: list[str] = Field(default_factory=list)
+    requested_work_product: str | None = None
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class MissionResponse(BaseModel):
+    status: Literal["completed", "approval_required", "blocked", "error"]
+    mission_id: str
+    output: dict[str, Any] | None = None
+    approval_ids: list[str] = Field(default_factory=list)
+    trace_id: str | None = None
+    reason: str | None = None
+
+
+class HealthResponse(BaseModel):
+    status: Literal["ok", "degraded"]
+    version: str
+    sdk_installed: bool
+    api_key_present: bool
+    database_ready: bool
+    proof_ledger_ready: bool
+    evidence_encryption_ready: bool
+    authentication_ready: bool
+    external_actions_enabled: bool
+    durable_workflow_ready: bool
+    primary_model: str
+    limitations: list[str] = Field(default_factory=list)
+    timestamp: datetime = Field(default_factory=lambda: datetime.now(UTC))
+
+
+class InventoryItem(BaseModel):
+    occurrence_id: str
+    pare

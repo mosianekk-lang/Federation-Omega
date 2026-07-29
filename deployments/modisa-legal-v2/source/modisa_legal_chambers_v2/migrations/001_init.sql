@@ -1,0 +1,3 @@
+-- The executable schema is maintained in modisa_v2/db.py for the verified SQLite runtime.
+-- Production deployment should translate the same constraints to PostgreSQL migrations,
+-- preserving unique identifiers, foreign keys, append-only proof records and audit chains.

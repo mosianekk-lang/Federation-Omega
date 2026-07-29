@@ -1,0 +1,51 @@
+version: 2.0.0
+policy: proof_bound_release
+self_certification_allowed: false
+risk_requirements:
+  LOW:
+    - MISSION_SCOPE
+    - FACT_CLASSIFICATION
+  MEDIUM:
+    - MISSION_SCOPE
+    - SOURCE_COMPLETENESS
+    - FACT_CLASSIFICATION
+    - CONTRARY_SEARCH
+    - PRIVACY_CLASSIFICATION
+  HIGH:
+    - MISSION_SCOPE
+    - SOURCE_COMPLETENESS
+    - SOURCE_READ
+    - EVIDENCE_HASH
+    - FACT_CLASSIFICATION
+    - CONTRARY_SEARCH
+    - LAW_CHECK
+    - AUTHORITY_TREATMENT
+    - FORUM_POWER
+    - DEADLINE_CHARACTERISATION
+    - PRIVACY_CLASSIFICATION
+    - COUNCIL_REVIEW
+  CRITICAL:
+    - MISSION_SCOPE
+    - SOURCE_COMPLETENESS
+    - SOURCE_READ
+    - EVIDENCE_HASH
+    - FACT_CLASSIFICATION
+    - CONTRARY_SEARCH
+    - LAW_CHECK
+    - AUTHORITY_TREATMENT
+    - FORUM_POWER
+    - DEADLINE_CHARACTERISATION
+    - PRIVACY_CLASSIFICATION
+    - PROMPT_INJECTION_SCAN
+    - COUNCIL_REVIEW
+conditional_requirements:
+  recursive_container_claim:
+    - INVENTORY_RECONCILIATION
+  material_write_claim:
+    - WRITE_READBACK
+  external_action_claim:
+    - APPROVAL
+    - ACTION_EXECUTION
+    - ACTION_READBACK
+  stability_or_restore_claim:
+    - RESTORE_CANARY

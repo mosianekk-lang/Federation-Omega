@@ -1,0 +1,12 @@
+.env
+.env.local
+.venv/
+__pycache__/
+.pytest_cache/
+*.pyc
+state/*.sqlite3
+state/*.db
+evidence_vault/*
+!evidence_vault/.gitkeep
+evals/results/*.json
+!evals/results/.gitignore

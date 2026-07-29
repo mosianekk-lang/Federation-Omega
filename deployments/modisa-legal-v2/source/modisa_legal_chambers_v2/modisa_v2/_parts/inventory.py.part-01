@@ -1,0 +1,143 @@
+eeds configured maximum file size")
+    message = BytesParser(policy=policy.default).parsebytes(path.read_bytes())
+    items: list[InventoryItem] = []
+    budget = _Budget(limits)
+    _walk_message(
+        message,
+        parent_id=None,
+        depth=1,
+        items=items,
+        top_message=True,
+        budget=budget,
+    )
+    top_level_count = sum(item.top_level for item in items)
+    unique_content_count = len({item.sha256 for item in items})
+    recursive_count = len(items)
+    native_inline_count = sum(item.inline for item in items)
+    native_attachment_count = recursive_count - native_inline_count
+    duplicate_count = recursive_count - unique_content_count
+
+    if application_visible_count is None and (
+        application_attachment_count is not None or application_inline_count is not None
+    ):
+        if application_attachment_count is not None and application_inline_count is not None:
+            application_visible_count = application_attachment_count + application_inline_count
+
+    comparisons: list[bool] = []
+    if application_attachment_count is not None:
+        comparisons.append(application_attachment_count == native_attachment_count)
+    if application_inline_count is not None:
+        comparisons.append(application_inline_count == native_inline_count)
+    if application_visible_count is not None and application_attachment_count is None and application_inline_count is None:
+        comparisons.append(application_visible_count == recursive_count)
+
+    if comparisons:
+        category_match = all(comparisons)
+        total_match = application_visible_count == recursive_count if application_visible_count is not None else category_match
+        content_id_attachment_images = sum(
+            item.content_type.startswith("image/") and item.content_id is not None and not item.inline
+            for item in items
+        )
+        if category_match:
+            completeness = "VERIFIED"
+            category_note = "category counts match"
+        elif total_match:
+            completeness = "VERIFIED_WITH_CATEGORY_DIFFERENCE"
+            category_note = (
+                "total counts match while category labels differ; "
+                f"{content_id_attachment_images} native content-ID image part(s) may be surfaced inline by the application. "
+                "This is a representation difference, not proof of loss, omission or alteration"
+            )
+        else:
+            completeness = "UNVERIFIED"
+            category_note = "total counts do not match; complete reconciliation has not been established"
+        reconciliation = (
+            f"Native MIME: {top_level_count} top-level, {native_attachment_count} recursive attachment-designated "
+            f"instances and {native_inline_count} inline-designated instances ({recursive_count} total); application: "
+            f"{application_attachment_count if application_attachment_count is not None else 'not supplied'} attachments "
+            f"and {application_inline_count if application_inline_count is not None else 'not supplied'} inline items "
+            f"({application_visible_count if application_visible_count is not None else 'total not supplied'} total); "
+            f"{category_note}."
+        )
+    else:
+        reconciliation = (
+            f"Native MIME: {top_level_count} top-level, {native_attachment_count} recursive attachment instances and "
+            f"{native_inline_count} inline instances ({recursive_count} total), with {unique_content_count} unique contents. "
+            "Application-visible category counts were not supplied, so cross-platform reconciliation remains untested."
+        )
+        completeness = "VERIFIED"
+
+    return InventoryResult(
+        carrier_path=str(path),
+        carrier_type="message/rfc822",
+        top_level_count=top_level_count,
+        recursive_instance_count=recursive_count,
+        native_attachment_instance_count=native_attachment_count,
+        native_inline_instance_count=native_inline_count,
+        application_visible_count=application_visible_count,
+        application_attachment_count=application_attachment_count,
+        application_inline_count=application_inline_count,
+        unique_content_count=unique_content_count,
+        duplicate_instance_count=duplicate_count,
+        items=items,
+        count_reconciliation=reconciliation,
+        completeness_state=completeness,
+        limits_applied=limits.as_dict(),
+    )
+
+
+def inventory_zip(path: Path, *, limits: InventoryLimits | None = None) -> InventoryResult:
+    limits = limits or InventoryLimits()
+    if path.stat().st_size > limits.max_file_bytes:
+        raise InventoryLimitExceeded("ZIP carrier exceeds configured maximum file size")
+    items: list[InventoryItem] = []
+    expanded = 0
+    with zipfile.ZipFile(path) as archive:
+        members = [member for member in archive.infolist() if not member.is_dir()]
+        if len(members) > limits.max_zip_entries:
+            raise InventoryLimitExceeded("ZIP entry count limit exceeded")
+        for member in members:
+            expanded += int(member.file_size)
+            if expanded > limits.max_zip_expanded_bytes:
+                raise InventoryLimitExceeded("ZIP expanded-byte limit exceeded")
+            compressed = max(int(member.compress_size), 1)
+            ratio = float(member.file_size) / compressed
+            if ratio > limits.max_zip_ratio:
+                raise InventoryLimitExceeded("ZIP expansion-ratio limit exceeded")
+            depth = len(Path(member.filename).parts)
+            if depth > limits.max_depth:
+                raise InventoryLimitExceeded("ZIP path depth limit exceeded")
+            data = archive.read(member)
+            content_type = mimetypes.guess_type(member.filename)[0] or "application/octet-stream"
+            items.append(
+                InventoryItem(
+                    occurrence_id=f"occ-{uuid4().hex}",
+                    depth=depth,
+                    filename=member.filename,
+                    content_type=content_type,
+                    size_bytes=len(data),
+                    sha256=sha256_bytes(data),
+                    top_level=depth == 1,
+                )
+            )
+    unique = len({item.sha256 for item in items})
+    return InventoryResult(
+        carrier_path=str(path),
+        carrier_type="application/zip",
+        top_level_count=sum(item.top_level for item in items),
+        recursive_instance_count=len(items),
+        native_attachment_instance_count=len(items),
+        native_inline_instance_count=0,
+        unique_content_count=unique,
+        duplicate_instance_count=len(items) - unique,
+        items=items,
+        count_reconciliation=(
+            f"ZIP: {sum(item.top_level for item in items)} top-level files, {len(items)} recursive instances, "
+            f"{unique} unique contents and {expanded} expanded bytes."
+        ),
+        completeness_state="VERIFIED",
+        limits_applied=limits.as_dict(),
+    )
+
+
+def inventory_directory

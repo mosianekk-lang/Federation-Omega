@@ -1,0 +1,66 @@
+[project]
+name = "modisa-sovereign-legal-os"
+version = "2.0.0"
+description = "Proof-bound, human-governed sovereign legal intelligence OS using OpenAI Agents SDK and deterministic legal controls."
+readme = "README.md"
+requires-python = ">=3.11"
+dependencies = [
+  "openai-agents>=0.17.4,<0.18",
+  "openai>=2.0.0",
+  "fastapi>=0.116.0",
+  "uvicorn[standard]>=0.35.0",
+  "pydantic>=2.11.0",
+  "pydantic-settings>=2.10.0",
+  "cryptography>=43.0.0",
+  "PyJWT>=2.9.0",
+  "python-dotenv>=1.1.0",
+  "httpx>=0.28.0",
+  "PyYAML>=6.0.0",
+]
+
+[project.optional-dependencies]
+dev = [
+  "pytest>=8.4.0",
+  "pytest-asyncio>=1.1.0",
+  "ruff>=0.12.0",
+  "mypy>=1.17.0",
+]
+production = [
+  "openai-agents[sqlalchemy]>=0.17.4,<0.18",
+  "SQLAlchemy>=2.0.0",
+  "asyncpg>=0.30.0",
+  "psycopg[binary]>=3.2.0",
+  "temporalio>=1.16.0",
+  "redis>=6.0.0",
+]
+
+[project.scripts]
+modisa-legal-v2 = "main:cli"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S"]
+ignore = ["E501", "S101", "S608"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+
+[tool.setuptools]
+py-modules = ["main", "agent"]
+
+[tool.setuptools.packages.find]
+include = ["modisa_v2*"]
+
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"

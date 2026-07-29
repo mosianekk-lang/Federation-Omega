@@ -1,0 +1,11 @@
+openai-agents>=0.17.4,<0.18
+openai>=2.0.0
+fastapi>=0.116.0
+uvicorn[standard]>=0.35.0
+pydantic>=2.11.0
+pydantic-settings>=2.10.0
+cryptography>=43.0.0
+PyJWT>=2.9.0
+python-dotenv>=1.1.0
+httpx>=0.28.0
+PyYAML>=6.0.0

@@ -1,0 +1,77 @@
+_json: str,
+            actor_id: str,
+            amendment_sources_json: str,
+            subsequent_treatment_sources_json: str,
+            conclusion: str,
+        ) -> str:
+            """Bind amendment and subsequent-treatment checks to registered authorities."""
+            proof_id = self.research.record_treatment_check(
+                matter_id=matter_id,
+                mission_id=mission_id,
+                authority_ids=json.loads(authority_ids_json),
+                actor_id=actor_id,
+                amendment_sources=json.loads(amendment_sources_json),
+                subsequent_treatment_sources=json.loads(subsequent_treatment_sources_json),
+                conclusion=conclusion,
+            )
+            return json.dumps({"proof_id": proof_id})
+
+        @function_tool
+        def record_contrary_search(
+            matter_id: str,
+            mission_id: str,
+            actor_id: str,
+            query: str,
+            searched_source_ids_json: str,
+            contrary_items_json: str,
+            search_scope: str,
+        ) -> str:
+            """Record a bounded contrary-evidence search over identified sources."""
+            proof_id = self.research.record_contrary_search(
+                matter_id=matter_id,
+                mission_id=mission_id,
+                actor_id=actor_id,
+                query=query,
+                searched_source_ids=json.loads(searched_source_ids_json),
+                contrary_items=json.loads(contrary_items_json),
+                search_scope=search_scope,
+            )
+            return json.dumps({"proof_id": proof_id})
+
+        @function_tool
+        def classify_claims(
+            matter_id: str, mission_id: str, actor_id: str, claim_ids_json: str
+        ) -> str:
+            """Verify that registered claims separate facts, allegations, inferences and unknowns."""
+            proof_id = self.proofs.fact_classification(
+                matter_id=matter_id,
+                mission_id=mission_id,
+                actor_id=actor_id,
+                claim_ids=json.loads(claim_ids_json),
+            )
+            return json.dumps({"proof_id": proof_id})
+
+        @function_tool
+        def request_external_action_approval(input_json: str) -> str:
+            """Create an exact-parameter owner approval request; this does not execute the action."""
+            approval = self.approvals.create(ApprovalCreateRequest.model_validate_json(input_json))
+            return approval.model_dump_json()
+
+        @function_tool
+        def evaluate_proof_bound_release(input_json: str, actor_id: str) -> str:
+            """Run the proof-bound release engine. The model cannot override its decision."""
+            result = self.release_engine.evaluate(ReleaseRequest.model_validate_json(input_json), actor_id)
+            return result.model_dump_json()
+
+        return [
+            ingest_evidence,
+            inspect_recursive_container,
+            create_claim,
+            link_claim,
+            retrieve_primary_authority,
+            record_authority_treatment,
+            record_contrary_search,
+            classify_claims,
+            request_external_action_approval,
+            evaluate_proof_bound_release,
+        ]

@@ -1,0 +1,20 @@
+{"case_id":"proof-chain-tamper","pytest_node":"tests/test_proof_ledger.py","behaviour":"Signed proof chain accepts valid records and detects tampering."}
+{"case_id":"encrypted-evidence","pytest_node":"tests/test_evidence_vault.py::test_encrypted_evidence_ingest_and_readback","behaviour":"Evidence encrypts, hashes and reads back exactly."}
+{"case_id":"hostile-document","pytest_node":"tests/test_evidence_vault.py::test_prompt_injection_is_tainted_not_executed","behaviour":"Prompt injection is classified as untrusted evidence, not executed."}
+{"case_id":"recursive-inventory","pytest_node":"tests/test_inventory_v2.py::test_three_level_inventory_reconciles","behaviour":"Top-level, recursive and application-visible inventories reconcile."}
+{"case_id":"mime-limit","pytest_node":"tests/test_inventory_v2.py::test_mime_part_limit_fails_closed","behaviour":"MIME resource limit fails closed."}
+{"case_id":"zip-bomb","pytest_node":"tests/test_inventory_v2.py::test_zip_bomb_ratio_is_blocked","behaviour":"Archive expansion abuse is blocked."}
+{"case_id":"fabricated-link","pytest_node":"tests/test_legal_graph.py::test_claim_link_rejects_invented_evidence","behaviour":"A fabricated evidence identifier cannot support a claim."}
+{"case_id":"exact-approval","pytest_node":"tests/test_approvals_actions.py::test_exact_approval_execution_and_readback","behaviour":"Approval, execution and readback parameter digests match."}
+{"case_id":"approval-drift","pytest_node":"tests/test_approvals_actions.py::test_parameter_drift_is_rejected","behaviour":"Changed action parameters invalidate approval."}
+{"case_id":"uncertain-execution","pytest_node":"tests/test_approvals_actions.py::test_uncertain_execution_cannot_be_silently_retried","behaviour":"Provider uncertainty prevents silent duplicate execution."}
+{"case_id":"connector-canary","pytest_node":"tests/test_connectors.py","behaviour":"Connector contract and current canary are mandatory."}
+{"case_id":"workflow-recovery","pytest_node":"tests/test_workflow.py","behaviour":"Workflow state survives restart and nonretryable gates block cleanly."}
+{"case_id":"independent-council","pytest_node":"tests/test_council.py","behaviour":"Missing chambers hold; full verified council completes."}
+{"case_id":"proof-bound-release","pytest_node":"tests/test_release_engine.py","behaviour":"Boolean assertions cannot replace required proof objects."}
+{"case_id":"restore-canary","pytest_node":"tests/test_backup_restore.py","behaviour":"Snapshot restore verifies files, proof chain and audit chain."}
+{"case_id":"primary-law-knowledge","pytest_node":"tests/test_knowledge.py","behaviour":"Legal text is hash-bound to a registered authority before search."}
+{"case_id":"security-boundary","pytest_node":"tests/test_security.py","behaviour":"Secrets are redacted and JWT matter scope is enforced."}
+{"case_id":"actual-council-eml","pytest_node":"tests/test_actual_council_canary.py","behaviour":"Actual Council EML reconciles without a false missing-attachment conclusion."}
+{"case_id":"api-health","pytest_node":"tests/test_api_v2.py","behaviour":"Health endpoint reports verified offline planes and live limitations honestly."}
+{"case_id":"openapi-contract","pytest_node":"tests/test_api_v2.py::test_openapi_schema_builds","behaviour":"The complete FastAPI OpenAPI contract generates successfully."}

@@ -1,0 +1,134 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime, timedelta
+from typing import Any
+
+from .audit import AuditLog
+from .db import Repository
+from .ids import new_id
+from .schemas import WorkflowCreateRequest, WorkflowRecord, WorkflowStatus
+
+
+class DurableWorkflowStore:
+    """Database-backed leases and retries for crash-safe local orchestration.
+
+    This is the verified local durable runtime. A Temporal/Restate/Dapr adapter may replace
+    the scheduler while preserving these mission and proof contracts.
+    """
+
+    def __init__(self, repo: Repository, audit: AuditLog):
+        self.repo = repo
+        self.audit = audit
+
+    @staticmethod
+    def _from_row(repo: Repository, row: Any) -> WorkflowRecord:
+        return WorkflowRecord(
+            workflow_id=row["workflow_id"],
+            matter_id=row["matter_id"],
+            mission_id=row["mission_id"],
+            workflow_type=row["workflow_type"],
+            status=WorkflowStatus(row["status"]),
+            input_payload=repo.loads(row["input_json"], {}),
+            state_payload=repo.loads(row["state_json"], {}),
+            attempts=int(row["attempts"]),
+            max_attempts=int(row["max_attempts"]),
+            lease_owner=row["lease_owner"],
+            lease_expires_at=datetime.fromisoformat(row["lease_expires_at"]) if row["lease_expires_at"] else None,
+            next_run_at=datetime.fromisoformat(row["next_run_at"]),
+            last_error=row["last_error"],
+            created_at=datetime.fromisoformat(row["created_at"]),
+            updated_at=datetime.fromisoformat(row["updated_at"]),
+        )
+
+    def create(self, request: WorkflowCreateRequest, actor_id: str) -> WorkflowRecord:
+        self.repo.ensure_matter(request.matter_id)
+        workflow_id = new_id("WF")
+        now = datetime.now(UTC)
+        self.repo.execute(
+            """INSERT INTO workflows(
+               workflow_id,matter_id,mission_id,workflow_type,status,input_json,state_json,
+               attempts,max_attempts,next_run_at,created_at,updated_at
+               ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?)""",
+            (
+                workflow_id,
+                request.matter_id,
+                request.mission_id,
+                request.workflow_type,
+                WorkflowStatus.PENDING.value,
+                self.repo.dumps(request.input_payload),
+                self.repo.dumps({}),
+                0,
+                request.max_attempts,
+                now.isoformat(),
+                now.isoformat(),
+                now.isoformat(),
+            ),
+        )
+        self._event(workflow_id, "WORKFLOW_CREATED", request.input_payload)
+        self.audit.append(
+            actor_id=actor_id,
+            event_type="WORKFLOW_CREATED",
+            matter_id=request.matter_id,
+            object_id=workflow_id,
+            payload={"mission_id": request.mission_id, "workflow_type": request.workflow_type},
+        )
+        record = self.get(workflow_id)
+        assert record is not None
+        return record
+
+    def _event(self, workflow_id: str, event_type: str, payload: dict[str, Any]) -> str:
+        event_id = new_id("WFE")
+        self.repo.execute(
+            "INSERT INTO workflow_events(event_id,workflow_id,event_type,payload_json,created_at) VALUES(?,?,?,?,?)",
+            (event_id, workflow_id, event_type, self.repo.dumps(payload), self.repo.now()),
+        )
+        return event_id
+
+    def get(self, workflow_id: str) -> WorkflowRecord | None:
+        row = self.repo.fetch_one("SELECT * FROM workflows WHERE workflow_id=?", (workflow_id,))
+        return self._from_row(self.repo, row) if row else None
+
+    def lease(self, workflow_id: str, worker_id: str, lease_seconds: int = 120) -> WorkflowRecord:
+        now = datetime.now(UTC)
+        lease_until = now + timedelta(seconds=lease_seconds)
+        with self.repo.connect(immediate=True) as conn:
+            row = conn.execute("SELECT * FROM workflows WHERE workflow_id=?", (workflow_id,)).fetchone()
+            if row is None:
+                raise ValueError("Unknown workflow")
+            if row["status"] not in {WorkflowStatus.PENDING.value, WorkflowStatus.RUNNING.value}:
+                raise ValueError("Workflow is not leaseable")
+            if row["lease_expires_at"] and datetime.fromisoformat(row["lease_expires_at"]) > now and row["lease_owner"] != worker_id:
+                raise ValueError("Workflow is already leased")
+            attempts = int(row["attempts"]) + 1
+            if attempts > int(row["max_attempts"]):
+                raise ValueError("Workflow attempts exhausted")
+            conn.execute(
+                """UPDATE workflows SET status=?,attempts=?,lease_owner=?,lease_expires_at=?,updated_at=?
+                   WHERE workflow_id=?""",
+                (WorkflowStatus.RUNNING.value, attempts, worker_id, lease_until.isoformat(), now.isoformat(), workflow_id),
+            )
+        self._event(workflow_id, "LEASE_ACQUIRED", {"worker_id": worker_id, "lease_until": lease_until.isoformat()})
+        record = self.get(workflow_id)
+        assert record is not None
+        return record
+
+    def lease_next(self, worker_id: str, lease_seconds: int = 120) -> WorkflowRecord | None:
+        now = datetime.now(UTC)
+        lease_until = now + timedelta(seconds=lease_seconds)
+        with self.repo.connect(immediate=True) as conn:
+            row = conn.execute(
+                """
+                SELECT * FROM workflows
+                WHERE status IN (?,?)
+                  AND next_run_at<=?
+                  AND (lease_expires_at IS NULL OR lease_expires_at<=?)
+                  AND attempts<max_attempts
+                ORDER BY next_run_at, created_at
+                LIMIT 1
+                """,
+                (WorkflowStatus.PENDING.value, WorkflowStatus.RUNNING.value, now.isoformat(), now.isoformat()),
+            ).fetchone()
+            if row is None:
+                return None
+            attempts = int(row["attempts"]) + 1
+          

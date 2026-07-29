@@ -1,0 +1,203 @@
+from __future__ import annotations
+
+import base64
+import hashlib
+import mimetypes
+import zipfile
+from dataclasses import dataclass
+from email import policy
+from email.message import Message
+from email.parser import BytesParser
+from pathlib import Path
+from uuid import uuid4
+
+from .schemas import InventoryItem, InventoryResult, ProofAppendRequest, ProofType
+
+
+class InventoryLimitExceeded(ValueError):
+    pass
+
+
+@dataclass(frozen=True)
+class InventoryLimits:
+    max_file_bytes: int = 250 * 1024 * 1024
+    max_parts: int = 20_000
+    max_depth: int = 32
+    max_decoded_bytes: int = 2 * 1024 * 1024 * 1024
+    max_zip_entries: int = 20_000
+    max_zip_expanded_bytes: int = 4 * 1024 * 1024 * 1024
+    max_zip_ratio: float = 200.0
+
+    def as_dict(self) -> dict[str, int | float]:
+        return {
+            "max_file_bytes": self.max_file_bytes,
+            "max_parts": self.max_parts,
+            "max_depth": self.max_depth,
+            "max_decoded_bytes": self.max_decoded_bytes,
+            "max_zip_entries": self.max_zip_entries,
+            "max_zip_expanded_bytes": self.max_zip_expanded_bytes,
+            "max_zip_ratio": self.max_zip_ratio,
+        }
+
+
+@dataclass
+class _Budget:
+    limits: InventoryLimits
+    parts: int = 0
+    decoded_bytes: int = 0
+
+    def consume(self, *, size: int, depth: int) -> None:
+        self.parts += 1
+        self.decoded_bytes += size
+        if self.parts > self.limits.max_parts:
+            raise InventoryLimitExceeded("MIME part limit exceeded")
+        if self.decoded_bytes > self.limits.max_decoded_bytes:
+            raise InventoryLimitExceeded("Decoded-byte limit exceeded")
+        if depth > self.limits.max_depth:
+            raise InventoryLimitExceeded("MIME nesting depth exceeded")
+
+
+def sha256_bytes(data: bytes) -> str:
+    return hashlib.sha256(data).hexdigest()
+
+
+def sha256_file(path: Path, chunk_size: int = 1024 * 1024) -> str:
+    digest = hashlib.sha256()
+    with path.open("rb") as handle:
+        while chunk := handle.read(chunk_size):
+            digest.update(chunk)
+    return digest.hexdigest()
+
+
+def _payload_bytes(part: Message) -> bytes:
+    payload = part.get_payload(decode=True)
+    if isinstance(payload, bytes):
+        return payload
+    raw = part.get_payload()
+    if isinstance(raw, str):
+        return raw.encode(part.get_content_charset() or "utf-8", errors="replace")
+    return part.as_bytes(policy=policy.default)
+
+
+def _nested_messages_and_raw(part: Message) -> tuple[list[Message], bytes]:
+    payload = part.get_payload()
+    cte = (part.get("Content-Transfer-Encoding") or "").lower()
+    if isinstance(payload, list):
+        nested = [item for item in payload if isinstance(item, Message)]
+        if cte == "base64" and len(nested) == 1:
+            encoded = nested[0].get_payload()
+            if isinstance(encoded, str):
+                try:
+                    raw = base64.b64decode("".join(encoded.split()), validate=False)
+                    return [BytesParser(policy=policy.default).parsebytes(raw)], raw
+                except Exception:
+                    pass
+        raw = b"\n".join(item.as_bytes(policy=policy.default) for item in nested)
+        return nested, raw
+    if isinstance(payload, str):
+        raw = payload.encode(part.get_content_charset() or "utf-8", errors="replace")
+        if cte == "base64":
+            try:
+                raw = base64.b64decode("".join(payload.split()), validate=False)
+            except Exception:
+                pass
+        try:
+            return [BytesParser(policy=policy.default).parsebytes(raw)], raw
+        except Exception:
+            return [], raw
+    raw = part.as_bytes(policy=policy.default)
+    return [], raw
+
+
+def _walk_message(
+    message: Message,
+    *,
+    parent_id: str | None,
+    depth: int,
+    items: list[InventoryItem],
+    top_message: bool,
+    budget: _Budget,
+) -> None:
+    if depth > budget.limits.max_depth:
+        raise InventoryLimitExceeded("MIME nesting depth exceeded")
+    parts = list(message.iter_parts()) if message.is_multipart() else []
+    for index, part in enumerate(parts):
+        content_type = part.get_content_type()
+        disposition = part.get_content_disposition()
+        filename = part.get_filename()
+        content_id = part.get("Content-ID")
+        is_inline = disposition == "inline" or (content_id is not None and disposition != "attachment")
+
+        if content_type == "message/rfc822":
+            nested_messages, raw = _nested_messages_and_raw(part)
+            budget.consume(size=len(raw), depth=depth)
+            item_id = f"occ-{uuid4().hex}"
+            items.append(
+                InventoryItem(
+                    occurrence_id=item_id,
+                    parent_id=parent_id,
+                    depth=depth,
+                    filename=filename or f"nested-message-{index + 1}.eml",
+                    content_type=content_type,
+                    size_bytes=len(raw),
+                    sha256=sha256_bytes(raw),
+                    disposition=disposition,
+                    content_id=content_id,
+                    top_level=top_message,
+                    inline=is_inline,
+                )
+            )
+            for nested in nested_messages:
+                _walk_message(
+                    nested,
+                    parent_id=item_id,
+                    depth=depth + 1,
+                    items=items,
+                    top_message=False,
+                    budget=budget,
+                )
+            continue
+
+        is_file_bearing = bool(filename) or disposition == "attachment" or is_inline
+        if is_file_bearing:
+            raw = _payload_bytes(part)
+            budget.consume(size=len(raw), depth=depth)
+            item_id = f"occ-{uuid4().hex}"
+            items.append(
+                InventoryItem(
+                    occurrence_id=item_id,
+                    parent_id=parent_id,
+                    depth=depth,
+                    filename=filename or f"inline-{index + 1}",
+                    content_type=content_type,
+                    size_bytes=len(raw),
+                    sha256=sha256_bytes(raw),
+                    disposition=disposition,
+                    content_id=content_id,
+                    top_level=top_message,
+                    inline=is_inline,
+                )
+            )
+
+        if part.is_multipart():
+            _walk_message(
+                part,
+                parent_id=parent_id,
+                depth=depth,
+                items=items,
+                top_message=top_message,
+                budget=budget,
+            )
+
+
+def inventory_eml(
+    path: Path,
+    application_visible_count: int | None = None,
+    application_attachment_count: int | None = None,
+    application_inline_count: int | None = None,
+    *,
+    limits: InventoryLimits | None = None,
+) -> InventoryResult:
+    limits = limits or InventoryLimits()
+    if path.stat().st_size > limits.max_file_bytes:
+        raise InventoryLimitExceeded("Carrier exc

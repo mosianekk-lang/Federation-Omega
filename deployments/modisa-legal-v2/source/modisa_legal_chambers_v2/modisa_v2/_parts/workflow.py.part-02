@@ -1,0 +1,42 @@
+flow_id),
+        )
+        self._event(workflow_id, "WORKFLOW_FAILED" if terminal else "WORKFLOW_RETRY_SCHEDULED", {"error": error, "next_run_at": next_run.isoformat()})
+        updated = self.get(workflow_id)
+        assert updated is not None
+        return updated
+
+    def save_agent_run_state(
+        self,
+        *,
+        mission_id: str,
+        matter_id: str,
+        session_id: str,
+        run_state_json: str,
+        approval_items: list[dict[str, Any]],
+    ) -> None:
+        now = self.repo.now()
+        self.repo.execute(
+            """INSERT INTO pending_agent_runs(
+               mission_id,matter_id,session_id,run_state_json,approval_items_json,created_at,updated_at
+               ) VALUES(?,?,?,?,?,?,?)
+               ON CONFLICT(mission_id) DO UPDATE SET
+                 run_state_json=excluded.run_state_json,
+                 approval_items_json=excluded.approval_items_json,
+                 updated_at=excluded.updated_at""",
+            (mission_id, matter_id, session_id, run_state_json, self.repo.dumps(approval_items), now, now),
+        )
+
+    def load_agent_run_state(self, mission_id: str) -> dict[str, Any] | None:
+        row = self.repo.fetch_one("SELECT * FROM pending_agent_runs WHERE mission_id=?", (mission_id,))
+        if row is None:
+            return None
+        return {
+            "mission_id": row["mission_id"],
+            "matter_id": row["matter_id"],
+            "session_id": row["session_id"],
+            "run_state_json": row["run_state_json"],
+            "approval_items": self.repo.loads(row["approval_items_json"], []),
+        }
+
+    def delete_agent_run_state(self, mission_id: str) -> None:
+        self.repo.execute("DELETE FROM pending_agent_runs WHERE mission_id=?", (mission_id,))

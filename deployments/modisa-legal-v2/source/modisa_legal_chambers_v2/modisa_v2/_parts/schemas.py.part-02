@@ -1,0 +1,119 @@
+nt_id: str | None = None
+    depth: int
+    filename: str
+    content_type: str
+    size_bytes: int
+    sha256: str
+    disposition: str | None = None
+    content_id: str | None = None
+    top_level: bool = False
+    inline: bool = False
+
+
+class InventoryResult(BaseModel):
+    carrier_path: str
+    carrier_type: str
+    top_level_count: int
+    recursive_instance_count: int
+    native_attachment_instance_count: int
+    native_inline_instance_count: int
+    application_visible_count: int | None = None
+    application_attachment_count: int | None = None
+    application_inline_count: int | None = None
+    unique_content_count: int
+    duplicate_instance_count: int
+    items: list[InventoryItem]
+    count_reconciliation: str
+    completeness_state: Literal["VERIFIED", "VERIFIED_WITH_CATEGORY_DIFFERENCE", "UNVERIFIED"]
+    limits_applied: dict[str, Any] = Field(default_factory=dict)
+
+
+class AuthPrincipal(BaseModel):
+    subject: str
+    roles: list[str]
+    matter_ids: list[str]
+    scopes: list[str]
+
+
+class CompletionClaim(BaseModel):
+    external_action_taken: bool
+    action_receipt_id: str | None = None
+
+    @model_validator(mode="after")
+    def action_requires_receipt(self) -> "CompletionClaim":
+        if self.external_action_taken and not self.action_receipt_id:
+            raise ValueError("external_action_taken=true requires an action receipt")
+        return self
+
+
+class CouncilDraft(BaseModel):
+    disposition: Literal["SUPPORT", "OPPOSE", "QUALIFY", "HOLD"]
+    conclusion: str
+    supported_claim_ids: list[str] = Field(default_factory=list)
+    challenged_claim_ids: list[str] = Field(default_factory=list)
+    proof_ids: list[str] = Field(default_factory=list)
+    material_risks: list[str] = Field(default_factory=list)
+    confidence: float = Field(ge=0.0, le=1.0)
+
+
+class ChiefSynthesis(BaseModel):
+    conclusion: str
+    verified_claim_ids: list[str] = Field(default_factory=list)
+    disputed_claim_ids: list[str] = Field(default_factory=list)
+    material_unknowns: list[str] = Field(default_factory=list)
+    recommended_action: str
+    approval_required: bool = False
+    requested_release_requirements: ReleaseRequirements = Field(default_factory=ReleaseRequirements)
+
+
+class InventoryRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    subject_id: str
+    path: str
+    source_ids: list[str] = Field(default_factory=list)
+    application_visible_count: int | None = None
+    application_attachment_count: int | None = None
+    application_inline_count: int | None = None
+
+
+class WorkflowLeaseRequest(BaseModel):
+    worker_id: str
+    lease_seconds: int = Field(default=120, ge=30, le=3600)
+
+
+class WorkflowStateRequest(BaseModel):
+    worker_id: str
+    state: dict[str, Any]
+
+
+class WorkflowFailureRequest(BaseModel):
+    worker_id: str
+    error: str
+    retry_delay_seconds: int = Field(default=60, ge=0, le=86400)
+
+
+class BackupCreateRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    destination: str
+
+
+class RestoreCanaryRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    snapshot_dir: str
+
+
+class KnowledgeIngestRequest(BaseModel):
+    authority_id: str
+    matter_id: str
+    mission_id: str
+    text: str
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class KnowledgeSearchRequest(BaseModel):
+    matter_id: str
+    query: str
+    top_k: int = Field(default=8, ge=1, le=50)

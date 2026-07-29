@@ -1,0 +1,222 @@
+from __future__ import annotations
+
+from datetime import UTC, datetime
+from enum import StrEnum
+from typing import Any, Literal
+
+from pydantic import BaseModel, Field, model_validator
+
+
+class RiskLevel(StrEnum):
+    LOW = "LOW"
+    MEDIUM = "MEDIUM"
+    HIGH = "HIGH"
+    CRITICAL = "CRITICAL"
+
+
+class ProofType(StrEnum):
+    MISSION_SCOPE = "MISSION_SCOPE"
+    SOURCE_READ = "SOURCE_READ"
+    SOURCE_COMPLETENESS = "SOURCE_COMPLETENESS"
+    EVIDENCE_HASH = "EVIDENCE_HASH"
+    INVENTORY_RECONCILIATION = "INVENTORY_RECONCILIATION"
+    FACT_CLASSIFICATION = "FACT_CLASSIFICATION"
+    CONTRARY_SEARCH = "CONTRARY_SEARCH"
+    LAW_CHECK = "LAW_CHECK"
+    AUTHORITY_TREATMENT = "AUTHORITY_TREATMENT"
+    FORUM_POWER = "FORUM_POWER"
+    DEADLINE_CHARACTERISATION = "DEADLINE_CHARACTERISATION"
+    PRIVACY_CLASSIFICATION = "PRIVACY_CLASSIFICATION"
+    PROMPT_INJECTION_SCAN = "PROMPT_INJECTION_SCAN"
+    COUNCIL_REVIEW = "COUNCIL_REVIEW"
+    APPROVAL = "APPROVAL"
+    ACTION_EXECUTION = "ACTION_EXECUTION"
+    ACTION_READBACK = "ACTION_READBACK"
+    WRITE_READBACK = "WRITE_READBACK"
+    RELEASE_DECISION = "RELEASE_DECISION"
+    RESTORE_CANARY = "RESTORE_CANARY"
+
+
+class ProofState(StrEnum):
+    FACT_NATIVE_VERIFIED = "FACT_NATIVE_VERIFIED"
+    FACT_PLATFORM_VERIFIED = "FACT_PLATFORM_VERIFIED"
+    FACT_CROSS_VERIFIED = "FACT_CROSS_VERIFIED"
+    FACT_CORROBORATED = "FACT_CORROBORATED"
+    ALLEGATION_USER = "ALLEGATION_USER"
+    ALLEGATION_OTHER = "ALLEGATION_OTHER"
+    INFERENCE_STRONG = "INFERENCE_STRONG"
+    INFERENCE_TENTATIVE = "INFERENCE_TENTATIVE"
+    DISPUTED = "DISPUTED"
+    UNKNOWN = "UNKNOWN"
+    UNVERIFIED_INCOMPLETE_SOURCE = "UNVERIFIED_INCOMPLETE_SOURCE"
+    LEGAL_PROPOSITION_CURRENT = "LEGAL_PROPOSITION_CURRENT"
+    LEGAL_PROPOSITION_UNVERIFIED = "LEGAL_PROPOSITION_UNVERIFIED"
+    SUPERSEDED = "SUPERSEDED"
+
+
+class ClaimKind(StrEnum):
+    FACT = "FACT"
+    LEGAL = "LEGAL"
+    PROCEDURAL = "PROCEDURAL"
+    DEADLINE = "DEADLINE"
+    REMEDY = "REMEDY"
+    CAUSATION = "CAUSATION"
+    PRIVILEGE = "PRIVILEGE"
+    COMPLETION = "COMPLETION"
+
+
+class LinkType(StrEnum):
+    SUPPORTS = "SUPPORTS"
+    CONTRADICTS = "CONTRADICTS"
+    QUALIFIES = "QUALIFIES"
+    AUTHORITY_SUPPORTS = "AUTHORITY_SUPPORTS"
+    SATISFIES_ELEMENT = "SATISFIES_ELEMENT"
+
+
+class ReleaseDecision(StrEnum):
+    RELEASE = "RELEASE"
+    RELEASE_WITH_BOUNDED_CAVEAT = "RELEASE_WITH_BOUNDED_CAVEAT"
+    HOLD_FOR_EVIDENCE = "HOLD_FOR_EVIDENCE"
+    HOLD_FOR_APPROVAL = "HOLD_FOR_APPROVAL"
+    HOLD_FOR_COUNCIL = "HOLD_FOR_COUNCIL"
+    REJECT_FALSE_CERTAINTY = "REJECT_FALSE_CERTAINTY"
+
+
+class ExternalActionType(StrEnum):
+    EMAIL_SEND = "EMAIL_SEND"
+    FILE_SHARE = "FILE_SHARE"
+    LEGAL_FILING = "LEGAL_FILING"
+    SETTLEMENT_ACCEPTANCE = "SETTLEMENT_ACCEPTANCE"
+    EVIDENCE_DELETE = "EVIDENCE_DELETE"
+    CREDENTIAL_CHANGE = "CREDENTIAL_CHANGE"
+    FINANCIAL_COMMITMENT = "FINANCIAL_COMMITMENT"
+    PRODUCTION_DEPLOYMENT = "PRODUCTION_DEPLOYMENT"
+
+
+class ApprovalStatus(StrEnum):
+    PENDING = "PENDING"
+    APPROVED = "APPROVED"
+    REJECTED = "REJECTED"
+    EXPIRED = "EXPIRED"
+    EXECUTING = "EXECUTING"
+    EXECUTION_UNCERTAIN = "EXECUTION_UNCERTAIN"
+    CONSUMED = "CONSUMED"
+
+
+class WorkflowStatus(StrEnum):
+    PENDING = "PENDING"
+    RUNNING = "RUNNING"
+    WAITING_APPROVAL = "WAITING_APPROVAL"
+    COMPLETED = "COMPLETED"
+    FAILED = "FAILED"
+    BLOCKED = "BLOCKED"
+    CANCELLED = "CANCELLED"
+
+
+class CouncilRole(StrEnum):
+    APPLICANT = "APPLICANT"
+    RESPONDENT = "RESPONDENT"
+    NEUTRAL_ADJUDICATOR = "NEUTRAL_ADJUDICATOR"
+    EVIDENCE_EXAMINER = "EVIDENCE_EXAMINER"
+    AUTHORITY_VERIFIER = "AUTHORITY_VERIFIER"
+    PROCEDURAL_AUDITOR = "PROCEDURAL_AUDITOR"
+    INSPECTOR_GENERAL = "INSPECTOR_GENERAL"
+
+
+class ProofRecord(BaseModel):
+    proof_id: str
+    matter_id: str
+    mission_id: str
+    proof_type: ProofType
+    subject_id: str
+    actor_id: str
+    source_ids: list[str] = Field(default_factory=list)
+    payload: dict[str, Any]
+    payload_hash: str
+    chain_index: int
+    previous_hash: str
+    chain_hash: str
+    signature: str
+    created_at: datetime
+
+
+class ProofAppendRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    proof_type: ProofType
+    subject_id: str
+    actor_id: str
+    source_ids: list[str] = Field(default_factory=list)
+    payload: dict[str, Any]
+
+
+class ChainVerificationResult(BaseModel):
+    valid: bool
+    matter_id: str
+    checked_count: int
+    head_hash: str | None = None
+    failed_proof_id: str | None = None
+    reason: str | None = None
+
+
+class EvidenceObject(BaseModel):
+    evidence_id: str
+    matter_id: str
+    sha256: str
+    byte_size: int
+    media_type: str
+    original_name: str
+    storage_path: str
+    encrypted: bool
+    parent_evidence_id: str | None = None
+    nested_depth: int = 0
+    metadata: dict[str, Any] = Field(default_factory=dict)
+    tainted_untrusted_content: bool = False
+    created_at: datetime
+
+
+class EvidenceIngestRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    path: str
+    parent_evidence_id: str | None = None
+    nested_depth: int = 0
+    metadata: dict[str, Any] = Field(default_factory=dict)
+
+
+class ClaimCreateRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    kind: ClaimKind
+    proposition: str = Field(min_length=3)
+    proof_state: ProofState = ProofState.UNKNOWN
+    materiality: Literal["HIGH", "MEDIUM", "LOW"] = "MEDIUM"
+
+
+class ClaimRecord(BaseModel):
+    claim_id: str
+    matter_id: str
+    mission_id: str
+    kind: ClaimKind
+    proposition: str
+    proof_state: ProofState
+    materiality: str
+    status: str
+    created_at: datetime
+
+
+class ClaimLinkRequest(BaseModel):
+    claim_id: str
+    object_id: str
+    object_type: Literal["EVIDENCE", "AUTHORITY", "CLAIM", "PROOF", "ELEMENT"]
+    link_type: LinkType
+    weight: float = Field(default=1.0, ge=0.0, le=1.0)
+    notes: str | None = None
+
+
+class AuthorityRegisterRequest(BaseModel):
+    matter_id: str
+    mission_id: str
+    citation: str
+    title: str
+    authority_type: Literal["S

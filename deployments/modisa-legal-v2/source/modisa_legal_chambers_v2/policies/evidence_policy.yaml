@@ -1,0 +1,21 @@
+version: 2.0.0
+native_preservation: true
+hash: SHA-256
+encryption: AES-256-GCM
+container_reconciliation:
+  separate_counts:
+    - top_level_carriers
+    - recursive_attachments
+    - recursive_inline_items
+    - application_visible_attachments
+    - application_visible_inline_items
+    - unique_contents
+    - occurrence_counts
+  fail_closed_state: UNVERIFIED_COMPLETE_INVENTORY_NOT_ESTABLISHED
+limits:
+  max_mime_depth: 32
+  max_mime_parts: 20000
+  max_decoded_bytes: 2147483648
+  max_zip_entries: 20000
+  max_zip_expanded_bytes: 4294967296
+  max_zip_ratio: 200

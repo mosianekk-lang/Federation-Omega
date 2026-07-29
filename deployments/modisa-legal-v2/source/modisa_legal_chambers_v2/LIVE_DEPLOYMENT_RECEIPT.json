@@ -1,0 +1,58 @@
+{
+  "receipt_id": "DEPLOY-KVT-LEGAL-V2-20260729-0001",
+  "issued_at": "2026-07-29T00:29:29.523776+00:00",
+  "deployment_scope": "SESSION_LOCAL_AUTHENTICATED_RUNTIME_AND_PERSISTENT_GITHUB_DEPLOYMENT_PACKAGE",
+  "project_version": "2.0.0+live-smoke-entrypoint-fix",
+  "deterministic_tests": {
+    "pytest": "27/27 passed",
+    "behavioural_evals": "20/20 passed"
+  },
+  "http_service": {
+    "status": "degraded",
+    "version": "2.0.0",
+    "sdk_installed": false,
+    "api_key_present": false,
+    "database_ready": true,
+    "proof_ledger_ready": true,
+    "evidence_encryption_ready": true,
+    "authentication_ready": true,
+    "external_actions_enabled": false,
+    "durable_workflow_ready": true,
+    "primary_model": "gpt-5.6-sol",
+    "limitations": [
+      "OpenAI Agents SDK not installed",
+      "OPENAI_API_KEY not injected into this runtime",
+      "External action execution disabled"
+    ],
+    "timestamp": "2026-07-29T00:25:18.483836Z"
+  },
+  "approval_canaries": {
+    "rejection": "REJECTED",
+    "approval": "APPROVED",
+    "external_execution": "BLOCKED_EXTERNAL_ACTIONS_DISABLED"
+  },
+  "workflow_restart_canary": {
+    "workflow_id": "WF-f6ac18c341cc458393d3fb639a370aa2",
+    "status": "COMPLETED",
+    "attempts": 2,
+    "state_json": "{\"approval_resume\":\"verified\",\"external_action\":\"not executed\",\"restart_persistence\":\"verified\"}"
+  },
+  "restore_canary": "PASSED",
+  "proof_chain": "VALID",
+  "live_agents_smoke": {
+    "status": "blocked",
+    "mission_id": "MIS-278e1368e86d48838feffac4b1f6b6bf",
+    "output": null,
+    "approval_ids": [],
+    "trace_id": null,
+    "reason": "openai-agents is not installed"
+  },
+  "model_trace_id": null,
+  "external_effects": [],
+  "blocking_dependencies": [
+    "OPENAI_API_KEY was created in the ChatGPT secure flow but is not injected into this runtime",
+    "openai-agents and openai packages are not installed in this restricted host",
+    "No provider connector is enabled for external legal actions"
+  ],
+  "claim_boundary": "NO_LIVE_MODEL_OR_AGENTS_TRACE_COMPLETION_CLAIM"
+}

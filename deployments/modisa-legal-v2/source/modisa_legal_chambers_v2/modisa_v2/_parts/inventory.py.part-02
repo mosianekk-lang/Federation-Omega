@@ -1,0 +1,142 @@
+(path: Path, *, limits: InventoryLimits | None = None) -> InventoryResult:
+    limits = limits or InventoryLimits()
+    files = sorted(p for p in path.rglob("*") if p.is_file())
+    if len(files) > limits.max_parts:
+        raise InventoryLimitExceeded("Directory file-count limit exceeded")
+    items: list[InventoryItem] = []
+    total = 0
+    for file_path in files:
+        relative = file_path.relative_to(path)
+        depth = len(relative.parts)
+        if depth > limits.max_depth:
+            raise InventoryLimitExceeded("Directory depth limit exceeded")
+        size = file_path.stat().st_size
+        total += size
+        if total > limits.max_decoded_bytes:
+            raise InventoryLimitExceeded("Directory total-byte limit exceeded")
+        content_type = mimetypes.guess_type(file_path.name)[0] or "application/octet-stream"
+        items.append(
+            InventoryItem(
+                occurrence_id=f"occ-{uuid4().hex}",
+                depth=depth,
+                filename=str(relative),
+                content_type=content_type,
+                size_bytes=size,
+                sha256=sha256_file(file_path),
+                top_level=depth == 1,
+            )
+        )
+    unique = len({item.sha256 for item in items})
+    return InventoryResult(
+        carrier_path=str(path),
+        carrier_type="inode/directory",
+        top_level_count=sum(item.top_level for item in items),
+        recursive_instance_count=len(items),
+        native_attachment_instance_count=len(items),
+        native_inline_instance_count=0,
+        unique_content_count=unique,
+        duplicate_instance_count=len(items) - unique,
+        items=items,
+        count_reconciliation=(
+            f"Directory: {sum(item.top_level for item in items)} top-level files, {len(items)} recursive instances, "
+            f"{unique} unique contents and {total} bytes."
+        ),
+        completeness_state="VERIFIED",
+        limits_applied=limits.as_dict(),
+    )
+
+
+def inventory_path(
+    path: Path,
+    application_visible_count: int | None = None,
+    application_attachment_count: int | None = None,
+    application_inline_count: int | None = None,
+    *,
+    limits: InventoryLimits | None = None,
+) -> InventoryResult:
+    path = path.resolve()
+    if not path.exists():
+        raise FileNotFoundError(path)
+    limits = limits or InventoryLimits()
+    if path.is_dir():
+        return inventory_directory(path, limits=limits)
+    suffix = path.suffix.lower()
+    if suffix == ".eml":
+        return inventory_eml(
+            path,
+            application_visible_count=application_visible_count,
+            application_attachment_count=application_attachment_count,
+            application_inline_count=application_inline_count,
+            limits=limits,
+        )
+    if suffix == ".zip":
+        return inventory_zip(path, limits=limits)
+    if path.stat().st_size > limits.max_file_bytes:
+        raise InventoryLimitExceeded("File exceeds configured maximum")
+    item = InventoryItem(
+        occurrence_id=f"occ-{uuid4().hex}",
+        depth=1,
+        filename=path.name,
+        content_type=mimetypes.guess_type(path.name)[0] or "application/octet-stream",
+        size_bytes=path.stat().st_size,
+        sha256=sha256_file(path),
+        top_level=True,
+    )
+    return InventoryResult(
+        carrier_path=str(path),
+        carrier_type=item.content_type,
+        top_level_count=1,
+        recursive_instance_count=1,
+        native_attachment_instance_count=1,
+        native_inline_instance_count=0,
+        unique_content_count=1,
+        duplicate_instance_count=0,
+        items=[item],
+        count_reconciliation="Single native file; top-level and recursive counts are both 1.",
+        completeness_state="VERIFIED",
+        limits_applied=limits.as_dict(),
+    )
+
+
+def inventory_proof_payload(result: InventoryResult) -> dict[str, object]:
+    return {
+        "carrier_path": result.carrier_path,
+        "carrier_type": result.carrier_type,
+        "top_level_count": result.top_level_count,
+        "recursive_instance_count": result.recursive_instance_count,
+        "native_attachment_instance_count": result.native_attachment_instance_count,
+        "native_inline_instance_count": result.native_inline_instance_count,
+        "application_visible_count": result.application_visible_count,
+        "application_attachment_count": result.application_attachment_count,
+        "application_inline_count": result.application_inline_count,
+        "unique_content_count": result.unique_content_count,
+        "duplicate_instance_count": result.duplicate_instance_count,
+        "completeness_state": result.completeness_state,
+        "item_hashes": [item.sha256 for item in result.items],
+        "count_reconciliation": result.count_reconciliation,
+        "limits_applied": result.limits_applied,
+    }
+
+
+def append_inventory_proof(
+    ledger: object,
+    *,
+    matter_id: str,
+    mission_id: str,
+    subject_id: str,
+    actor_id: str,
+    source_ids: list[str],
+    result: InventoryResult,
+) -> str:
+    proof = ledger.append(
+        ProofAppendRequest(
+            matter_id=matter_id,
+            mission_id=mission_id,
+            proof_type=ProofType.INVENTORY_RECONCILIATION,
+            subject_id=subject_id,
+            actor_id=actor_id,
+            source_ids=source_ids,
+            payload=inventory_proof_payload(result),
+        )
+    )
+    return proof.proof_id
