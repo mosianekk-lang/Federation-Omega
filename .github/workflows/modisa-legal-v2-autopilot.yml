@@ -1,0 +1,215 @@
+name: MODISA Legal V2 Autopilot
+
+on:
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/modisa-legal-v2-autopilot.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: modisa-legal-v2-autopilot
+  cancel-in-progress: false
+
+env:
+  DEPLOYMENT_BRANCH: modisa-legal-v2-deploy-20260729
+  PROJECT_ROOT: deployments/modisa-legal-v2/source/modisa_legal_chambers_v2
+  RECEIPT_PATH: deployments/modisa-legal-v2/LIVE_OPERATIONAL_RECEIPT.json
+
+jobs:
+  autopilot:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Evaluate completion and secret gates
+        id: gate
+        env:
+          GH_TOKEN: ${{ github.token }}
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt_api="repos/${GITHUB_REPOSITORY}/contents/${RECEIPT_PATH}?ref=${DEPLOYMENT_BRANCH}"
+          if gh api "$receipt_api" >/dev/null 2>&1; then
+            echo 'completed=true' >> "$GITHUB_OUTPUT"
+            echo 'secret_ready=false' >> "$GITHUB_OUTPUT"
+            echo 'A verified live operational receipt already exists. No further run is required.'
+            exit 0
+          fi
+          echo 'completed=false' >> "$GITHUB_OUTPUT"
+          if [[ -n "${OPENAI_API_KEY:-}" ]]; then
+            echo 'secret_ready=true' >> "$GITHUB_OUTPUT"
+            echo 'The OpenAI secret is available. Full live qualification will run.'
+          else
+            echo 'secret_ready=false' >> "$GITHUB_OUTPUT"
+            echo 'Waiting for the encrypted GitHub Actions secret OPENAI_API_KEY. No installation or model call was attempted.'
+          fi
+
+      - name: Check out the isolated deployment branch
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ env.DEPLOYMENT_BRANCH }}
+          fetch-depth: 0
+          persist-credentials: true
+
+      - name: Set up Python
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Reconstruct truncation-safe modules
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          root="${PROJECT_ROOT}/modisa_v2"
+          for module in inventory schemas toolkit workflow; do
+            cat "$root/_parts/$module.py.part-"* > "$root/$module.py"
+          done
+          python -m py_compile "$root/inventory.py" "$root/schemas.py" "$root/toolkit.py" "$root/workflow.py"
+
+      - name: Install official runtime dependencies
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'openai-agents>=0.17.4,<0.18' 'openai>=2.36,<3'
+          python -m pip install -e "${PROJECT_ROOT}[dev]"
+
+      - name: Initialise non-OpenAI control secrets
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        working-directory: ${{ env.PROJECT_ROOT }}
+        run: python scripts/init_secrets.py --target .env.local
+
+      - name: Run deterministic qualification
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        working-directory: ${{ env.PROJECT_ROOT }}
+        run: |
+          python -m pytest -q
+          python evals/run_local.py
+
+      - name: Start and verify the authenticated service
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        working-directory: ${{ env.PROJECT_ROOT }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          nohup python main.py --host 127.0.0.1 --port 8421 > state/autopilot-server.log 2>&1 &
+          ready=0
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8421/health > state/autopilot-health.json; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          python -m json.tool state/autopilot-health.json
+
+      - name: Execute Chief Counsel and seven-chamber live canary
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        working-directory: ${{ env.PROJECT_ROOT }}
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python scripts/live_smoke.py \
+            --matter MAT-MODISA-LIVE-CANARY \
+            --mission 'Verify live runtime capability, proof controls, independent seven-role council completion and bounded release behaviour. Do not perform any external legal action.' \
+            --jurisdiction 'South Africa' \
+            --forum 'INTERNAL QUALIFICATION' \
+            --risk HIGH \
+            --session modisa-live-autopilot \
+            | tee state/live-autopilot.json
+
+      - name: Validate live result and build operational receipt
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        working-directory: ${{ env.PROJECT_ROOT }}
+        env:
+          GITHUB_RUN_ID_VALUE: ${{ github.run_id }}
+          GITHUB_RUN_ATTEMPT_VALUE: ${{ github.run_attempt }}
+          GITHUB_REPOSITORY_VALUE: ${{ github.repository }}
+          GITHUB_SHA_VALUE: ${{ github.sha }}
+          DEPLOYMENT_BRANCH_VALUE: ${{ env.DEPLOYMENT_BRANCH }}
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          result_path = Path('state/live-autopilot.json')
+          result = json.loads(result_path.read_text(encoding='utf-8'))
+          if result.get('status') != 'completed':
+              raise SystemExit(f"Live mission did not complete: {result.get('status')} — {result.get('reason')}")
+          if not result.get('trace_id'):
+              raise SystemExit('Live mission completed without a trace_id.')
+          output = result.get('output') or {}
+          opinions = output.get('opinions') or []
+          if len(opinions) != 7:
+              raise SystemExit(f'Expected seven independent chamber opinions; received {len(opinions)}.')
+          council = output.get('council') or {}
+          if council.get('complete') is not True:
+              raise SystemExit(f"Council is not complete: {council}")
+          release = output.get('release') or {}
+          if not release.get('decision'):
+              raise SystemExit('No proof-bound release decision was returned.')
+
+          receipt = {
+              'receipt_id': 'MODISA-LIVE-' + result['mission_id'],
+              'issued_at': datetime.now(timezone.utc).isoformat(),
+              'repository': os.environ['GITHUB_REPOSITORY_VALUE'],
+              'deployment_branch': os.environ['DEPLOYMENT_BRANCH_VALUE'],
+              'workflow_run_id': os.environ['GITHUB_RUN_ID_VALUE'],
+              'workflow_run_attempt': os.environ['GITHUB_RUN_ATTEMPT_VALUE'],
+              'checked_out_commit': os.environ['GITHUB_SHA_VALUE'],
+              'status': result['status'],
+              'mission_id': result['mission_id'],
+              'trace_id': result['trace_id'],
+              'chief_counsel_completed': True,
+              'independent_chamber_count': len(opinions),
+              'council_complete': council.get('complete'),
+              'council_disposition': council.get('disposition'),
+              'release_decision': release.get('decision'),
+              'release_receipt_id': release.get('release_receipt_id'),
+              'external_actions_enabled': False,
+              'external_action_taken': False,
+              'classification': 'LIVE_OPENAI_AGENTS_CANARY_VERIFIED / EXTERNAL_ACTIONS_DISABLED / PRODUCTION_PROMOTION_STILL_GATED',
+          }
+          receipt_path = Path('../../LIVE_OPERATIONAL_RECEIPT.json').resolve()
+          receipt_path.write_text(json.dumps(receipt, indent=2, ensure_ascii=False) + '\n', encoding='utf-8')
+          print(json.dumps(receipt, indent=2, ensure_ascii=False))
+          PY
+
+      - name: Commit the self-stopping live receipt
+        if: steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f "$RECEIPT_PATH"
+          git config user.name 'MODISA Legal Autopilot'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$RECEIPT_PATH"
+          git commit -m 'Record verified MODISA Legal V2 live operational canary'
+          git push origin "HEAD:${DEPLOYMENT_BRANCH}"
+
+      - name: Upload live qualification records
+        if: always() && steps.gate.outputs.completed != 'true' && steps.gate.outputs.secret_ready == 'true'
+        uses: actions/upload-artifact@v4
+        with:
+          name: modisa-legal-v2-live-autopilot-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            ${{ env.PROJECT_ROOT }}/evals/results/latest.json
+            ${{ env.PROJECT_ROOT }}/state/autopilot-health.json
+            ${{ env.PROJECT_ROOT }}/state/autopilot-server.log
+            ${{ env.PROJECT_ROOT }}/state/live-autopilot.json
+            ${{ env.RECEIPT_PATH }}
