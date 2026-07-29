@@ -230,7 +230,7 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
     return api
 
 
-DB_PATH = os.getenv("SUPERIOR_LOGIC_DB", "/data/superior_logic.db")
+DB_PATH = os.getenv("SUPERIOR_LOGIC_DB", "/tmp/superior_logic.db")
 Path(DB_PATH).parent.mkdir(parents=True, exist_ok=True)
 runtime = SuperiorLogicRuntime(DB_PATH)
 atexit.register(runtime.close)
