@@ -93,3 +93,19 @@ def test_live_page_states_no_read_tracking():
     assert response.status_code == 200
     assert "No read or presence tracking" in response.text
     assert "same canonical message IDs and hashes" in response.text
+
+
+def test_live_health_declares_automatic_sync_without_surveillance(monkeypatch):
+    monkeypatch.delenv("OPENAI_API_KEY", raising=False)
+    store = InMemoryLiveThreadStore()
+    app = FastAPI()
+    app.include_router(create_live_thread_router(store=store, responder=NoopResponder()))
+    client = TestClient(app)
+
+    response = client.get("/live/health")
+    assert response.status_code == 200
+    payload = response.json()
+    assert payload["status"] == "HEALTHY"
+    assert payload["privacy"]["read_tracking"] is False
+    assert payload["privacy"]["presence_tracking"] is False
+    assert payload["privacy"]["canonical_content_hashes"] is True
