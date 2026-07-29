@@ -7,15 +7,22 @@ from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel, Field
 
-from .ecasp import CorpusObject, ECASPRequest
+from .ecasp import (
+    CorpusActivationState,
+    CorpusObject,
+    CorpusPreservationState,
+    ECASPRequest,
+)
 from .runtime import SuperiorLogicRuntime
 from .slrk import (
+    ActivationState,
     CapabilityContract,
     CapabilityState,
     EngineEnvironment,
     EnginePromotionRequest,
     FaultRecord,
     FaultSeverity,
+    PreservationState,
     ProofLevel,
 )
 
@@ -44,6 +51,11 @@ class CorpusObjectModel(BaseModel):
     verified: bool = False
     excluded_as_immaterial: bool = False
     exclusion_reason: str | None = None
+    preservation_state: CorpusPreservationState = CorpusPreservationState.FULL_PRESERVED
+    activation_state: CorpusActivationState = CorpusActivationState.PRESERVED_DORMANT
+    permanent_exclusion_requested: bool = False
+    owner_decision_reference: str | None = None
+    preservation_copy_reference: str | None = None
 
 
 class ECASPEvaluateModel(BaseModel):
@@ -74,6 +86,13 @@ class CapabilityContractModel(BaseModel):
     external_effect: bool = False
     proof_required: str = ""
     fallback_route: str = ""
+    preservation_state: PreservationState = PreservationState.FULL_PRESERVED
+    activation_state: ActivationState = ActivationState.PRESERVED_DORMANT
+    carrier_ids: tuple[str, ...] = ()
+    superseded_by: str = ""
+    permanent_exclusion_requested: bool = False
+    owner_decision_reference: str = ""
+    preservation_copy_reference: str = ""
 
 
 class CapabilityAssessModel(BaseModel):
@@ -135,11 +154,13 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
             "event_chain_valid": state["event_chain_valid"],
             "event_count": state["event_count"],
             "ecasp_algorithm": "ALG-ECASP-001",
+            "non_dilution_policy": state["non_dilution_policy"],
             "slrk_controls": [
                 "CAPABILITY_TRUTH",
                 "CLAIM_GOVERNOR",
                 "FAULT_ROUTE_MEMORY",
                 "ENGINE_PROMOTION_GATE",
+                "NON_DILUTION_PRESERVATION",
             ],
         }
 
@@ -174,19 +195,23 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
 
     @api.post("/capabilities/register")
     def register_capability(request: CapabilityContractModel) -> dict:
-        contract = CapabilityContract(**request.model_dump())
+        try:
+            contract = CapabilityContract(**request.model_dump())
+        except ValueError as exc:
+            raise HTTPException(status_code=409, detail=str(exc)) from exc
         active_runtime.register_capability(contract)
         return {
             "status": "CAPABILITY_REGISTERED",
             "capability_id": contract.capability_id,
             "capability_state": contract.state.value,
+            "preservation_state": contract.preservation_state.value,
+            "activation_state": contract.activation_state.value,
+            "preserved": contract.preserved,
         }
 
     @api.post("/capabilities/assess")
     def assess_capability_set(request: CapabilityAssessModel) -> dict:
-        return active_runtime.assess_capabilities(
-            tuple(request.required_capabilities)
-        ).to_dict()
+        return active_runtime.assess_capabilities(tuple(request.required_capabilities)).to_dict()
 
     @api.post("/claims/govern")
     def govern_claim(request: ClaimGovernModel) -> dict:
@@ -215,9 +240,7 @@ def create_app(active_runtime: SuperiorLogicRuntime) -> FastAPI:
     def clear_route(route_id: str, request: RouteClearModel) -> dict:
         try:
             return active_runtime.clear_route(
-                route_id,
-                request.reason,
-                conditions_changed=request.conditions_changed,
+                route_id, request.reason, conditions_changed=request.conditions_changed
             )
         except ValueError as exc:
             raise HTTPException(status_code=409, detail=str(exc)) from exc
