@@ -1,0 +1,38 @@
+{
+  "activation_mode": "POLICY_ONLY",
+  "artifact_registry_digest": null,
+  "artifact_registry_image": null,
+  "artifact_registry_immutable_ref": null,
+  "baseline_state": null,
+  "classification": "CLOUD_RUN_DEPLOYMENT_NOT_PROVEN",
+  "distributed_mode": false,
+  "existing_services_modified": false,
+  "not_claimed": [
+    "PRODUCTION_SEALED",
+    "KERNEL_ENFORCED on Cloud Run",
+    "persistent database durability",
+    "live OpenAI model execution",
+    "production traffic promotion"
+  ],
+  "openai_key_injected": false,
+  "project": "sov-hybrid-suite",
+  "provider_state": {},
+  "qualified_runtime_evidence": {
+    "ci_classification": "CI_DISTRIBUTED_KERNEL_QUALIFIED",
+    "github_distributed_kernel_run": 30437804050,
+    "github_qualification_artifact_sha256": "a0ef580f60e08fcd6eccb5b462472ad1ca5a6c88138987d31f9625958d470791"
+  },
+  "receipt": "PFRD-OMEGA-CLOUDRUN-CANARY-RECEIPT",
+  "recorded_at": "2026-07-29T09:09:53.561279+00:00",
+  "region": "africa-south1",
+  "service": "pfrd-omega-gateway-canary",
+  "source_archive_sha256": "dea38b047eb6ebfd5983d31bd1d4c94e0d7e2c9af1eb264d9ca8864c89b8d19e",
+  "source_image": "ghcr.io/mosianekk-lang/federation-omega-pfrd-omega@sha256:37cd7b0a90e07772958c277ee26847c7373c194e06f469752990a8dbf0ff5d75",
+  "source_image_digest": "sha256:37cd7b0a90e07772958c277ee26847c7373c194e06f469752990a8dbf0ff5d75",
+  "traffic_promoted": false,
+  "version": "2.1.0",
+  "wif_receipt": {},
+  "workflow_job_status": "failure",
+  "workflow_run_id": "30438486055",
+  "workflow_sha": "96dce24c2d6f8fb7afd33142996d65bd06e3aea3"
+}
