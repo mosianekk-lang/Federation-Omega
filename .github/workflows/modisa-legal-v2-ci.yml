@@ -47,15 +47,37 @@ jobs:
         working-directory: deployments/modisa-legal-v2/source/modisa_legal_chambers_v2
         run: |
           nohup python main.py --host 127.0.0.1 --port 8421 > state/ci-server.log 2>&1 &
-          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8421/health && break; sleep 1; done
-      - name: Run live OpenAI canary
-        if: ${{ secrets.OPENAI_API_KEY != '' }}
+          ready=0
+          for i in $(seq 1 30); do
+            if curl -fsS http://127.0.0.1:8421/health > state/ci-health.json; then
+              ready=1
+              break
+            fi
+            sleep 1
+          done
+          test "$ready" -eq 1
+          python -m json.tool state/ci-health.json
+      - name: Run or bound the live OpenAI canary
         working-directory: deployments/modisa-legal-v2/source/modisa_legal_chambers_v2
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        shell: bash
         run: |
-          printf '\nOPENAI_API_KEY=%s\n' "$OPENAI_API_KEY" >> .env.local
-          python scripts/live_smoke.py --matter MAT-CI-SMOKE --mission 'Report verified runtime capability only.' --risk HIGH
-      - name: Record live-key boundary
-        if: ${{ secrets.OPENAI_API_KEY == '' }}
-        run: echo 'Live model canary skipped because OPENAI_API_KEY is not configured as a repository secret.'
+          set -euo pipefail
+          if [[ -z "${OPENAI_API_KEY:-}" ]]; then
+            printf '%s\n' 'Live model canary skipped: OPENAI_API_KEY repository secret is not configured.' | tee state/live-canary-boundary.txt
+            exit 0
+          fi
+          python scripts/live_smoke.py --matter MAT-CI-SMOKE --mission 'Report verified runtime capability only.' --risk HIGH | tee state/live-canary.json
+      - name: Upload bounded qualification records
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: modisa-legal-v2-qualification
+          if-no-files-found: warn
+          path: |
+            deployments/modisa-legal-v2/source/modisa_legal_chambers_v2/evals/results/latest.json
+            deployments/modisa-legal-v2/source/modisa_legal_chambers_v2/state/ci-health.json
+            deployments/modisa-legal-v2/source/modisa_legal_chambers_v2/state/live-canary.json
+            deployments/modisa-legal-v2/source/modisa_legal_chambers_v2/state/live-canary-boundary.txt
+            deployments/modisa-legal-v2/source/modisa_legal_chambers_v2/state/ci-server.log
