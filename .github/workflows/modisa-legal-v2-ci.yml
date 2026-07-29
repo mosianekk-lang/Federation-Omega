@@ -1,0 +1,62 @@
+name: MODISA Legal V2 Qualification
+
+on:
+  workflow_dispatch:
+  push:
+    branches:
+      - modisa-legal-v2-deploy-20260729
+    paths:
+      - 'deployments/modisa-legal-v2/**'
+      - '.github/workflows/modisa-legal-v2-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+      - name: Reconstruct and verify package
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd deployments/modisa-legal-v2
+          cat archive.parts/part-* | base64 --decode > MODISA_EvidenceOps_Sovereign_Legal_Intelligence_OS_v2.0.1-deployment.zip
+          sha256sum -c SHA256.txt
+          rm -rf work
+          mkdir work
+          unzip -q MODISA_EvidenceOps_Sovereign_Legal_Intelligence_OS_v2.0.1-deployment.zip -d work
+      - name: Install official runtime dependencies
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install 'openai-agents>=0.17.4,<0.18' 'openai>=2.36,<3'
+          python -m pip install -e 'deployments/modisa-legal-v2/work/modisa_legal_chambers_v2[dev]'
+      - name: Initialise non-OpenAI control secrets
+        working-directory: deployments/modisa-legal-v2/work/modisa_legal_chambers_v2
+        run: python scripts/init_secrets.py --target .env.local
+      - name: Run deterministic tests and behavioural evaluations
+        working-directory: deployments/modisa-legal-v2/work/modisa_legal_chambers_v2
+        run: |
+          python -m pytest -q
+          python evals/run_local.py
+      - name: Start service and verify bounded health
+        working-directory: deployments/modisa-legal-v2/work/modisa_legal_chambers_v2
+        run: |
+          nohup python main.py --host 127.0.0.1 --port 8421 > state/ci-server.log 2>&1 &
+          for i in $(seq 1 30); do curl -fsS http://127.0.0.1:8421/health && break; sleep 1; done
+      - name: Inject OpenAI key for live canary
+        if: ${{ secrets.OPENAI_API_KEY != '' }}
+        working-directory: deployments/modisa-legal-v2/work/modisa_legal_chambers_v2
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          printf '\nOPENAI_API_KEY=%s\n' "$OPENAI_API_KEY" >> .env.local
+          python scripts/live_smoke.py --matter MAT-CI-SMOKE --mission 'Report verified runtime capability only.' --risk HIGH
+      - name: Record live-key boundary
+        if: ${{ secrets.OPENAI_API_KEY == '' }}
+        run: echo 'Live model canary skipped because OPENAI_API_KEY is not configured as a repository secret.'
