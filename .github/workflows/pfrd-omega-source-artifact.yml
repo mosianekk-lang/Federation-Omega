@@ -33,11 +33,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/pfrd-source
+          mkdir -p /tmp/pfrd-source /tmp/pfrd-deploy-tree
           cat systems/pfrd-omega/${ARCHIVE_NAME}.b64.part* | base64 --decode > "/tmp/pfrd-source/${ARCHIVE_NAME}"
           cd /tmp/pfrd-source
           sha256sum --check "$GITHUB_WORKSPACE/systems/pfrd-omega/PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0_SHA256.txt"
           unzip -tq "${ARCHIVE_NAME}" >/dev/null
+          unzip -q "${ARCHIVE_NAME}" -d /tmp/pfrd-deploy-tree
+          test -f /tmp/pfrd-deploy-tree/Dockerfile
+          test -f /tmp/pfrd-deploy-tree/pyproject.toml
+          test -f /tmp/pfrd-deploy-tree/MANIFEST_SHA256.json
 
       - name: Upload exact source archive
         uses: actions/upload-artifact@v4
@@ -47,3 +51,13 @@ jobs:
           retention-days: 30
           compression-level: 0
           path: /tmp/pfrd-source/PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0.zip
+
+      - name: Upload deployable source-tree ZIP
+        uses: actions/upload-artifact@v4
+        with:
+          name: pfrd-omega-v2-deploy-tree
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+          include-hidden-files: true
+          path: /tmp/pfrd-deploy-tree/*
