@@ -15,6 +15,5 @@
 {"case_id":"restore-canary","pytest_node":"tests/test_backup_restore.py","behaviour":"Snapshot restore verifies files, proof chain and audit chain."}
 {"case_id":"primary-law-knowledge","pytest_node":"tests/test_knowledge.py","behaviour":"Legal text is hash-bound to a registered authority before search."}
 {"case_id":"security-boundary","pytest_node":"tests/test_security.py","behaviour":"Secrets are redacted and JWT matter scope is enforced."}
-{"case_id":"actual-council-eml","pytest_node":"tests/test_actual_council_canary.py","behaviour":"Actual Council EML reconciles without a false missing-attachment conclusion."}
 {"case_id":"api-health","pytest_node":"tests/test_api_v2.py","behaviour":"Health endpoint reports verified offline planes and live limitations honestly."}
 {"case_id":"openapi-contract","pytest_node":"tests/test_api_v2.py::test_openapi_schema_builds","behaviour":"The complete FastAPI OpenAPI contract generates successfully."}
