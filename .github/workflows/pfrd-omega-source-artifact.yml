@@ -1,0 +1,49 @@
+name: PFRD Omega Sealed Source Artifact
+
+on:
+  push:
+    branches: ["pfrd-omega-deploy-20260729"]
+    paths:
+      - ".github/workflows/pfrd-omega-source-artifact.yml"
+      - "systems/pfrd-omega/PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0.zip.b64.part*"
+      - "systems/pfrd-omega/PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0_SHA256.txt"
+  pull_request:
+    paths:
+      - ".github/workflows/pfrd-omega-source-artifact.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: pfrd-omega-source-artifact-${{ github.ref }}
+  cancel-in-progress: true
+
+env:
+  ARCHIVE_NAME: PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0.zip
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Reconstruct and verify sealed archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pfrd-source
+          cat systems/pfrd-omega/${ARCHIVE_NAME}.b64.part* | base64 --decode > "/tmp/pfrd-source/${ARCHIVE_NAME}"
+          cd /tmp/pfrd-source
+          sha256sum --check "$GITHUB_WORKSPACE/systems/pfrd-omega/PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0_SHA256.txt"
+          unzip -tq "${ARCHIVE_NAME}" >/dev/null
+
+      - name: Upload exact source archive
+        uses: actions/upload-artifact@v4
+        with:
+          name: pfrd-omega-v2-sealed-source
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+          path: /tmp/pfrd-source/PFRD_OMEGA_Model_Independent_Prevention_Kernel_v2.1.0.zip
