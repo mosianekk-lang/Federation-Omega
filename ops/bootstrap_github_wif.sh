@@ -211,7 +211,7 @@ PY
   [[ "$PROVIDER_MAPPING" == "$sorted_expected_mapping" ]] || MISSING+=("provider_attribute_mapping")
   [[ "$WIF_BINDING" == "true" ]] || MISSING+=("workload_identity_user_binding")
   [[ "$PROJECT_SERVICE_USAGE" == "true" ]] || MISSING+=("service_usage_consumer_role")
-  [[ "$SERVICE_RUN_DEVELOPER" == "true" ]] || MISSING+=(("cloud_run_developer_role"))
+  [[ "$SERVICE_RUN_DEVELOPER" == "true" ]] || MISSING+=("cloud_run_developer_role")
   [[ "$SERVICE_RUN_INVOKER" == "true" ]] || MISSING+=("cloud_run_invoker_role")
   [[ "$REPO_WRITER" == "true" ]] || MISSING+=("artifact_registry_writer_role")
   [[ "$RUNTIME_SA_USER" == "true" ]] || MISSING+=("runtime_service_account_user_role")
