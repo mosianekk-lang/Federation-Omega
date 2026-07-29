@@ -1,0 +1,391 @@
+name: PFRD Omega Operator Deployment
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/pfrd-omega-operator-deploy.yml"
+  workflow_run:
+    workflows: ["PFRD Omega Operator Auth Probe"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: pfrd-omega-operator-deployment
+  cancel-in-progress: false
+
+env:
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  PROJECT_ID: sov-hybrid-suite
+  REGION: africa-south1
+  SERVICE: pfrd-omega-gateway-canary
+  SERVICE_ACCOUNT: fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_DRIVE_ID: 11IQSUWThWuZwwCwevSffqP1gsgs2nvr9
+  ARTIFACT_NAME: PFRD_OMEGA_Deployable_Source_Tree_v2.1.0.zip
+  ARTIFACT_SHA256: 04422e9cf3b6a4937f10202a7d498577108b734e1b04e5c6449ffa225c1911c4
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    env:
+      FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Execute proof-gated operator deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pfrd-deploy deployments/pfrd-omega
+          python - <<'PY'
+          from __future__ import annotations
+
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from typing import Any
+
+          base = os.environ['OPERATOR_URL'].rstrip('/')
+          token = os.environ.get('FO_ADMIN_TOKEN', '')
+          project = os.environ['PROJECT_ID']
+          region = os.environ['REGION']
+          service = os.environ['SERVICE']
+          service_account = os.environ['SERVICE_ACCOUNT']
+          artifact_drive_id = os.environ['ARTIFACT_DRIVE_ID']
+          artifact_name = os.environ['ARTIFACT_NAME']
+          artifact_sha256 = os.environ['ARTIFACT_SHA256']
+
+          def redact(value: Any) -> Any:
+              if isinstance(value, dict):
+                  result = {}
+                  for key, item in value.items():
+                      lowered = str(key).lower()
+                      if any(word in lowered for word in ('secret', 'token', 'authorization', 'credential', 'api_key')):
+                          result[key] = '[REDACTED]'
+                      else:
+                          result[key] = redact(item)
+                  return result
+              if isinstance(value, list):
+                  return [redact(item) for item in value]
+              if isinstance(value, str) and token and token in value:
+                  return value.replace(token, '[REDACTED]')
+              return value
+
+          def request(path: str, *, body: dict | None = None, authenticated: bool = False, timeout: int = 60) -> dict:
+              headers = {'accept': 'application/json'}
+              data = None
+              if body is not None:
+                  headers['content-type'] = 'application/json'
+                  data = json.dumps(body, separators=(',', ':')).encode('utf-8')
+              if authenticated:
+                  headers['x-fo-admin-token'] = token
+              req = urllib.request.Request(
+                  base + path,
+                  data=data,
+                  headers=headers,
+                  method='POST' if body is not None else 'GET',
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as response:
+                      raw = response.read().decode('utf-8', 'replace')
+                      try:
+                          parsed = json.loads(raw)
+                      except Exception:
+                          parsed = {'text': raw[:4000]}
+                      return {'http_status': response.status, 'body': redact(parsed)}
+              except urllib.error.HTTPError as exc:
+                  raw = exc.read().decode('utf-8', 'replace')
+                  try:
+                      parsed = json.loads(raw)
+                  except Exception:
+                      parsed = {'text': raw[:4000]}
+                  return {'http_status': exc.code, 'body': redact(parsed)}
+              except Exception as exc:
+                  return {
+                      'transport_error': type(exc).__name__,
+                      'message': str(exc)[:500],
+                      'execution_uncertain': body is not None,
+                  }
+
+          def all_text(value: Any) -> str:
+              if isinstance(value, dict):
+                  return ' '.join(all_text(item) for item in value.values())
+              if isinstance(value, list):
+                  return ' '.join(all_text(item) for item in value)
+              return str(value)
+
+          def first_value(value: Any, keys: set[str]) -> str | None:
+              if isinstance(value, dict):
+                  for key, item in value.items():
+                      if str(key).lower() in keys and item not in (None, '', [], {}):
+                          return str(item)
+                  for item in value.values():
+                      found = first_value(item, keys)
+                      if found:
+                          return found
+              elif isinstance(value, list):
+                  for item in value:
+                      found = first_value(item, keys)
+                      if found:
+                          return found
+              return None
+
+          def body_ok(response: dict) -> bool:
+              return response.get('http_status') == 200 and response.get('body', {}).get('ok') is True
+
+          def action_specific_cloud_read(response: dict, expected_service: str) -> bool:
+              if not body_ok(response):
+                  return False
+              body = response.get('body', {})
+              text = all_text(body).lower()
+              has_service = expected_service.lower() in text
+              has_project = project.lower() in text
+              has_region = region.lower() in text
+              has_revision = first_value(body, {
+                  'latestreadyrevision', 'latest_ready_revision', 'latestreadyrevisionname',
+                  'revision', 'revisionname', 'latest_revision'
+              }) is not None
+              has_url = first_value(body, {'url', 'service_url', 'serviceurl', 'uri'}) is not None
+              return has_service and has_project and has_region and (has_revision or has_url)
+
+          now = datetime.now(timezone.utc).isoformat()
+          receipt: dict[str, Any] = {
+              'receipt': 'PFRD-OMEGA-OPERATOR-DEPLOYMENT-RECEIPT',
+              'recorded_at': now,
+              'operator_url': base,
+              'project': project,
+              'region': region,
+              'service': service,
+              'service_account': service_account,
+              'artifact': {
+                  'drive_id': artifact_drive_id,
+                  'name': artifact_name,
+                  'sha256': artifact_sha256,
+              },
+              'activation_mode_requested': 'POLICY_ONLY',
+              'deployment_mode': 'reversible_new_service',
+              'token_present': bool(token),
+              'token_value_recorded': False,
+              'secret_values_recorded': False,
+              'mutation_attempted': False,
+              'automatic_retry_performed': False,
+              'public_health': None,
+              'public_contract': None,
+              'authenticated_status': None,
+              'baseline_readback': None,
+              'deployment_response': None,
+              'provider_readback': None,
+              'build_readback': None,
+              'endpoint_health': None,
+              'classification': 'NOT_EVALUATED',
+              'not_claimed': [
+                  'PRODUCTION_SEALED',
+                  'KERNEL_ENFORCED',
+                  'persistent database durability',
+                  'distributed trust-domain deployment',
+                  'production traffic promotion',
+              ],
+          }
+
+          health = request('/health')
+          contract = request('/')
+          receipt['public_health'] = health
+          receipt['public_contract'] = contract
+          allowed = set(contract.get('body', {}).get('allowedActions', []))
+
+          if not token:
+              receipt['classification'] = 'BLOCKED_MISSING_FO_ADMIN_TOKEN_REPOSITORY_SECRET'
+          elif not {'STATUS', 'READ_CLOUD_RUN_SERVICE', 'DEPLOY_SOLUTION5_LOCKED', 'READ_BUILD'}.issubset(allowed):
+              receipt['classification'] = 'BLOCKED_LIVE_OPERATOR_ALLOWLIST_MISMATCH'
+          else:
+              status = request(
+                  '/execute',
+                  body={
+                      'action': 'STATUS',
+                      'payload': {
+                          'purpose': 'PFRD Omega deployment authority preflight',
+                          'mutation': 'NONE',
+                      },
+                  },
+                  authenticated=True,
+              )
+              baseline = request(
+                  '/execute',
+                  body={
+                      'action': 'READ_CLOUD_RUN_SERVICE',
+                      'payload': {
+                          'project': project,
+                          'region': region,
+                          'service': 'architron9',
+                          'purpose': 'PFRD Omega authenticated baseline preflight',
+                      },
+                  },
+                  authenticated=True,
+              )
+              receipt['authenticated_status'] = status
+              receipt['baseline_readback'] = baseline
+
+              if not body_ok(status):
+                  receipt['classification'] = 'BLOCKED_AUTHENTICATED_STATUS_FAILED'
+              elif not action_specific_cloud_read(baseline, 'architron9'):
+                  receipt['classification'] = 'BLOCKED_ACTION_SPECIFIC_CLOUD_READ_FAILED'
+              else:
+                  deployment_payload = {
+                      'approvalKey': 'APPROVED',
+                      'project': project,
+                      'region': region,
+                      'service': service,
+                      'artifactDriveId': artifact_drive_id,
+                      'artifactName': artifact_name,
+                      'artifactSha256': artifact_sha256,
+                      'sourceService': 'architron9',
+                      'serviceAccount': service_account,
+                      'deploymentMode': 'reversible_new_service',
+                      'activationMode': 'POLICY_ONLY',
+                      'idempotencyKey': f'PFRD-OMEGA-2.1.0-{artifact_sha256[:16]}',
+                      'requiredSecrets': [
+                          'OPENAI_API_KEY',
+                          'PFRD_PUBLIC_API_KEY',
+                          'PFRD_ADMIN_API_KEY',
+                          'PFRD_SERVICE_TOKEN',
+                          'PFRD_PROOF_SIGNING_KEY',
+                          'PFRD_APPROVAL_SIGNING_KEY',
+                          'PFRD_CAPABILITY_SIGNING_KEY',
+                          'PFRD_RELEASE_SIGNING_KEY',
+                          'DATABASE_URL',
+                      ],
+                      'proofRequired': [
+                          'artifact_sha256_match',
+                          'build_id',
+                          'build_status_SUCCESS',
+                          'service_url',
+                          'latest_ready_revision',
+                          'service_account',
+                          'health',
+                          'rollback_ref',
+                      ],
+                  }
+                  receipt['mutation_attempted'] = True
+                  deploy = request(
+                      '/execute',
+                      body={
+                          'action': 'DEPLOY_SOLUTION5_LOCKED',
+                          'payload': deployment_payload,
+                      },
+                      authenticated=True,
+                      timeout=900,
+                  )
+                  receipt['deployment_response'] = deploy
+
+                  if deploy.get('execution_uncertain'):
+                      receipt['classification'] = 'EXECUTION_UNCERTAIN_NO_AUTOMATIC_RETRY'
+                  elif not body_ok(deploy):
+                      receipt['classification'] = 'PROVIDER_REJECTED_DEPLOYMENT'
+                  else:
+                      readback = request(
+                          '/execute',
+                          body={
+                              'action': 'READ_CLOUD_RUN_SERVICE',
+                              'payload': {
+                                  'project': project,
+                                  'region': region,
+                                  'service': service,
+                                  'purpose': 'PFRD Omega provider-native deployment readback',
+                              },
+                          },
+                          authenticated=True,
+                      )
+                      build = request(
+                          '/execute',
+                          body={
+                              'action': 'READ_BUILD',
+                              'payload': {
+                                  'project': project,
+                                  'region': region,
+                                  'service': service,
+                                  'artifactSha256': artifact_sha256,
+                                  'purpose': 'PFRD Omega immutable build readback',
+                              },
+                          },
+                          authenticated=True,
+                      )
+                      receipt['provider_readback'] = readback
+                      receipt['build_readback'] = build
+
+                      service_url = first_value(
+                          readback.get('body', {}),
+                          {'url', 'service_url', 'serviceurl', 'uri'},
+                      )
+                      endpoint_health = None
+                      if service_url and service_url.startswith('https://'):
+                          endpoint_health = request(service_url.removeprefix(base) + '/health') if service_url.startswith(base) else None
+                          if endpoint_health is None:
+                              try:
+                                  req = urllib.request.Request(service_url.rstrip('/') + '/health', headers={'accept': 'application/json'})
+                                  with urllib.request.urlopen(req, timeout=30) as response:
+                                      raw = response.read().decode('utf-8', 'replace')
+                                      try: parsed = json.loads(raw)
+                                      except Exception: parsed = {'text': raw[:4000]}
+                                      endpoint_health = {'http_status': response.status, 'body': redact(parsed)}
+                              except urllib.error.HTTPError as exc:
+                                  raw = exc.read().decode('utf-8', 'replace')
+                                  endpoint_health = {'http_status': exc.code, 'body': {'text': raw[:1000]}}
+                              except Exception as exc:
+                                  endpoint_health = {'transport_error': type(exc).__name__, 'message': str(exc)[:500]}
+                      receipt['endpoint_health'] = endpoint_health
+
+                      readback_ok = action_specific_cloud_read(readback, service)
+                      build_text = all_text(build.get('body', {})).lower()
+                      build_ok = body_ok(build) and (
+                          artifact_sha256.lower() in build_text
+                          or 'success' in build_text
+                          or 'succeeded' in build_text
+                      )
+                      health_ok = bool(
+                          endpoint_health
+                          and endpoint_health.get('http_status') == 200
+                          and str(endpoint_health.get('body', {}).get('status', '')).lower() in {'ok', 'healthy'}
+                      )
+
+                      if readback_ok and build_ok and health_ok:
+                          receipt['classification'] = 'CLOUD_RUN_POLICY_CANARY_DEPLOYED_AND_HEALTH_VERIFIED'
+                      elif readback_ok and build_ok:
+                          receipt['classification'] = 'CLOUD_RUN_DEPLOYED_BUILD_VERIFIED_HEALTH_INCOMPLETE'
+                      else:
+                          receipt['classification'] = 'DEPLOYMENT_RESPONSE_RECEIVED_PROVIDER_READBACK_INCOMPLETE'
+
+          path = Path('deployments/pfrd-omega/OPERATOR_DEPLOYMENT_RECEIPT.json')
+          path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          Path('/tmp/pfrd-deploy/OPERATOR_DEPLOYMENT_RECEIPT.json').write_text(path.read_text(), encoding='utf-8')
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+
+      - name: Persist deployment receipt
+        run: |
+          set -euo pipefail
+          git config user.name "pfrd-omega-deployment[bot]"
+          git config user.email "pfrd-omega-deployment[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add deployments/pfrd-omega/OPERATOR_DEPLOYMENT_RECEIPT.json
+          if git diff --cached --quiet; then
+            echo "Receipt unchanged"
+          else
+            git commit -m "Record PFRD Omega operator deployment receipt"
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pfrd-omega-operator-deployment
+          if-no-files-found: error
+          retention-days: 30
+          path: /tmp/pfrd-deploy/OPERATOR_DEPLOYMENT_RECEIPT.json
