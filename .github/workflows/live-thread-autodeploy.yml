@@ -1,0 +1,274 @@
+name: Deploy Mosiane Live Thread
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - 'superior_logic/live_thread.py'
+      - 'superior_logic/live_thread_ui.py'
+      - 'superior_logic/live_service.py'
+      - 'tests/test_live_thread.py'
+      - 'requirements.txt'
+      - 'Dockerfile'
+      - '.github/workflows/live-thread-autodeploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: mosiane-live-thread-production
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  SERVICE: mosiane-live-thread
+  REPOSITORY: federation-omega
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/mosiane-live-thread:${{ github.sha }}
+
+jobs:
+  qualify-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install and test
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+          python -m pytest -q tests/test_live_thread.py
+
+      - name: Require the encrypted OpenAI key
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          test -n "${OPENAI_API_KEY:-}"
+
+      - name: Authenticate to Google Cloud through keyless OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify deployment identity
+        run: |
+          set -euo pipefail
+          ./ops/bootstrap_github_wif.sh --verify | tee /tmp/wif-receipt.json
+          python - <<'PY'
+          import json
+          payload = json.load(open('/tmp/wif-receipt.json', encoding='utf-8'))
+          assert payload['receipt'] == 'FEDOMEGA-WIF-CLOUD-VERIFIED', payload
+          assert payload['state'] == 'VERIFIED', payload
+          assert payload['mutation_performed'] is False, payload
+          PY
+
+      - name: Ensure Firestore persistence in Johannesburg
+        run: |
+          set -euo pipefail
+          if ! gcloud services list --enabled --project "$PROJECT_ID" \
+            --filter='config.name:firestore.googleapis.com' \
+            --format='value(config.name)' | grep -qx 'firestore.googleapis.com'; then
+            gcloud services enable firestore.googleapis.com --project "$PROJECT_ID" --quiet
+          fi
+          if ! gcloud firestore databases describe --project "$PROJECT_ID" >/dev/null 2>&1; then
+            gcloud firestore databases create \
+              --project "$PROJECT_ID" \
+              --location africa-south1 \
+              --type firestore-native \
+              --delete-protection \
+              --quiet
+          fi
+          gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+            --member "serviceAccount:${RUNTIME_SA}" \
+            --role roles/datastore.user \
+            --condition=None \
+            --quiet >/dev/null
+
+      - name: Capture previous production revision
+        id: baseline
+        run: |
+          set -euo pipefail
+          if gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            previous=$(gcloud run services describe "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --format='value(status.latestReadyRevisionName)')
+          else
+            previous=''
+          fi
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push immutable image
+        run: |
+          set -euo pipefail
+          gcloud artifacts repositories describe "$REPOSITORY" \
+            --project "$PROJECT_ID" --location "$REGION" >/dev/null
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build --pull -t "$IMAGE" .
+          docker push "$IMAGE"
+
+      - name: Deploy zero-traffic canary
+        id: canary
+        env:
+          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+        run: |
+          set -euo pipefail
+          tag="live-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE" \
+            --service-account "$RUNTIME_SA" \
+            --allow-unauthenticated \
+            --port 8080 \
+            --concurrency 80 \
+            --max-instances 3 \
+            --timeout 300 \
+            --tag "$tag" \
+            --no-traffic \
+            --set-env-vars "^@^APP_MODULE=superior_logic.live_service:app@LIVE_THREAD_ENABLED=1@LIVE_THREAD_STORE=firestore@LIVE_THREAD_MODEL=gpt-5-mini@GCP_PROJECT=${PROJECT_ID}@OPENAI_API_KEY=${OPENAI_API_KEY}" \
+            --quiet
+
+          service_json=$(mktemp)
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > "$service_json"
+          python - "$service_json" "$tag" <<'PY' > /tmp/canary.env
+          import json, sys
+          service = json.load(open(sys.argv[1], encoding='utf-8'))
+          tag = sys.argv[2]
+          status = service.get('status', {})
+          created = status.get('latestCreatedRevisionName', '')
+          ready = status.get('latestReadyRevisionName', '')
+          tagged = next((x for x in status.get('traffic', []) if x.get('tag') == tag), {})
+          url = tagged.get('url', '')
+          if not created or created != ready or not url:
+              raise SystemExit(f'Canary not ready: created={created!r} ready={ready!r} url={url!r}')
+          print(f'CANARY_REVISION={created}')
+          print(f'CANARY_URL={url}')
+          PY
+          source /tmp/canary.env
+          echo "revision=$CANARY_REVISION" >> "$GITHUB_OUTPUT"
+          echo "url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify canary persistence, integrity and shared AI
+        env:
+          CANARY_URL: ${{ steps.canary.outputs.url }}
+        run: |
+          set -euo pipefail
+          health=$(curl --fail --silent --show-error "$CANARY_URL/live/health")
+          echo "$health"
+          python - "$health" <<'PY'
+          import json, sys
+          payload = json.loads(sys.argv[1])
+          assert payload['status'] == 'HEALTHY', payload
+          assert payload['store']['store'] == 'firestore', payload
+          assert payload['store']['ready'] is True, payload
+          assert payload['ai_ready'] is True, payload
+          assert payload['privacy']['read_tracking'] is False, payload
+          assert payload['privacy']['canonical_content_hashes'] is True, payload
+          PY
+
+          room="ci_${GITHUB_SHA:0:24}"
+          curl --fail --silent --show-error \
+            -H 'Content-Type: application/json' \
+            -d '{"sender":"Deployment verifier","content":"Reply with a concise confirmation that this shared thread is operational.","request_ai":true}' \
+            "$CANARY_URL/live/api/rooms/$room/messages" > /tmp/post.json
+
+          success=0
+          for _ in $(seq 1 90); do
+            curl --fail --silent --show-error \
+              "$CANARY_URL/live/api/rooms/$room/messages" > /tmp/room.json
+            if python - <<'PY'
+          import json
+          payload = json.load(open('/tmp/room.json', encoding='utf-8'))
+          messages = payload.get('messages', [])
+          ok = (
+              payload.get('chain_valid') is True
+              and len(messages) >= 2
+              and messages[-1].get('role') == 'assistant'
+              and bool(messages[-1].get('content_hash'))
+          )
+          raise SystemExit(0 if ok else 1)
+          PY
+            then
+              success=1
+              break
+            fi
+            sleep 2
+          done
+          test "$success" -eq 1
+          python -m json.tool /tmp/room.json
+
+      - name: Promote canary with automatic rollback
+        env:
+          CANARY_REVISION: ${{ steps.canary.outputs.revision }}
+          PREVIOUS_READY: ${{ steps.baseline.outputs.previous }}
+        run: |
+          set -euo pipefail
+          rollback() {
+            if [[ -n "${PREVIOUS_READY:-}" ]]; then
+              gcloud run services update-traffic "$SERVICE" \
+                --project "$PROJECT_ID" --region "$REGION" \
+                --to-revisions "${PREVIOUS_READY}=100" --quiet || true
+            fi
+          }
+          trap rollback ERR
+          gcloud run services update-traffic "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${CANARY_REVISION}=100" --quiet
+
+          url=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.url)')
+          ready=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.latestReadyRevisionName)')
+          test "$ready" = "$CANARY_REVISION"
+          curl --fail --silent --show-error "$url/live/health" > /tmp/final-health.json
+          trap - ERR
+
+          python - "$url" "$CANARY_REVISION" "$IMAGE" <<'PY' | tee /tmp/live-thread-deployment-receipt.json
+          import json, sys
+          from datetime import datetime, timezone
+          health = json.load(open('/tmp/final-health.json', encoding='utf-8'))
+          receipt = {
+              'receipt': 'MOSIANE-LIVE-THREAD-DEPLOYED-AND-VERIFIED',
+              'issued_at': datetime.now(timezone.utc).isoformat(),
+              'url': sys.argv[1],
+              'revision': sys.argv[2],
+              'image': sys.argv[3],
+              'health': health,
+              'manual_refresh_required': False,
+              'manual_link_update_required': False,
+              'read_tracking_enabled': False,
+          }
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload deployment proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: mosiane-live-thread-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            /tmp/live-thread-deployment-receipt.json
+            /tmp/final-health.json
+            /tmp/room.json
