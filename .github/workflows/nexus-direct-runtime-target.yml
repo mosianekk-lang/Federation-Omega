@@ -1,11 +1,6 @@
 name: NEXUS Direct Runtime Target Executor
 
 on:
-  pull_request_target:
-    types: [opened, synchronize, reopened]
-    branches: ["main"]
-    paths:
-      - "deployments/nexus/trigger-direct-runtime.txt"
   workflow_dispatch:
 
 permissions:
