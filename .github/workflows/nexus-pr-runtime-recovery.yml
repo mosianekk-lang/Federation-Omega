@@ -1,0 +1,194 @@
+name: NEXUS PR Runtime Recovery
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/nexus-pr-runtime-recovery.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  TARGET_SERVICE: nexus-codex-runtime
+  SOURCE_SERVICE: architron9
+  ARTIFACT_DRIVE_ID: 1_r1qlRHeEcF7Xl-BSJpfWUWIRYs4C_Pm
+  ARTIFACT_NAME: nexus-codex-runtime-v3.1.1.zip
+  ARTIFACT_SHA256: fabbdf9ec89c1ea4468515ba1659cc0019719c5bc5747084795148a354dc1518
+  WHEEL_DRIVE_ID: 1Ur3FEOPCjQ54gumvBDTSbWJpDse6o86p
+  SERVICE_ACCOUNT: fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate through Workload Identity Federation
+        id: auth
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute secret-safe authenticated recovery chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/nexus-pr
+          ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | head -n1 || true)"
+          TOKEN=""
+          TOKEN_ERROR=""
+          if [[ -n "$ACCOUNT" ]]; then
+            set +e
+            TOKEN="$(gcloud secrets versions access latest --secret=fo-operator-admin-token --project="$PROJECT_ID" 2>/tmp/nexus-pr/token-error.txt)"
+            RC=$?
+            set -e
+            if [[ $RC -ne 0 ]]; then
+              TOKEN=""
+              TOKEN_ERROR="$(tail -c 1600 /tmp/nexus-pr/token-error.txt 2>/dev/null || true)"
+            fi
+          fi
+          if [[ -n "$TOKEN" ]]; then echo "::add-mask::$TOKEN"; fi
+          export NEXUS_TOKEN="$TOKEN"
+          export NEXUS_ACCOUNT="$ACCOUNT"
+          export NEXUS_TOKEN_ERROR="$TOKEN_ERROR"
+          python - <<'PY'
+          import json, os, time, urllib.error, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          base=os.environ['OPERATOR_URL'].rstrip('/')
+          token=os.environ.get('NEXUS_TOKEN','')
+          project=os.environ['PROJECT_ID']; region=os.environ['REGION']
+          target=os.environ['TARGET_SERVICE']; source=os.environ['SOURCE_SERVICE']
+
+          def redact(v):
+              if isinstance(v, dict):
+                  return {k: ('[REDACTED]' if any(s in str(k).lower() for s in ('token','secret','authorization','credential','api_key')) else redact(x)) for k,x in v.items()}
+              if isinstance(v, list): return [redact(x) for x in v]
+              if isinstance(v, str) and token: return v.replace(token,'[REDACTED]')
+              return v
+
+          def call(path, body=None, auth=False, timeout=90):
+              headers={'accept':'application/json'}; data=None
+              if body is not None:
+                  headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
+              if auth and token: headers['x-fo-admin-token']=token
+              req=urllib.request.Request(base+path,data=data,headers=headers,method='POST' if body is not None else 'GET')
+              try:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
+                      raw=r.read().decode('utf-8','replace')
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={'text':raw[:5000]}
+                      return {'http_status':r.status,'body':redact(parsed)}
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={'text':raw[:5000]}
+                  return {'http_status':e.code,'body':redact(parsed)}
+              except Exception as e:
+                  return {'transport_error':type(e).__name__,'message':str(e)[:700]}
+
+          def ok(r): return r.get('http_status')==200 and r.get('body',{}).get('ok') is True
+          def find(v,names):
+              if isinstance(v,dict):
+                  for k,x in v.items():
+                      if str(k).lower() in names and x not in (None,'',[],{}): return str(x)
+                  for x in v.values():
+                      y=find(x,names)
+                      if y:return y
+              elif isinstance(v,list):
+                  for x in v:
+                      y=find(x,names)
+                      if y:return y
+              return None
+
+          health=call('/health'); contract=call('/')
+          receipt={
+              'receipt':'NEXUS-PR-RUNTIME-RECOVERY',
+              'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'event':os.environ.get('GITHUB_EVENT_NAME'),
+              'ref':os.environ.get('GITHUB_REF'),
+              'sha':os.environ.get('GITHUB_SHA'),
+              'active_gcloud_account':os.environ.get('NEXUS_ACCOUNT') or None,
+              'token_present':bool(token),'token_value_recorded':False,
+              'token_error':os.environ.get('NEXUS_TOKEN_ERROR')[:1600] or None,
+              'public_health':health,'public_contract':contract,
+              'authenticated_status':None,'baseline_read':None,'deployment':None,
+              'build_readbacks':[],'target_read':None,'endpoint_health':None,
+              'mutation_attempted':False,'classification':'BLOCKED_NO_TRUSTED_SECRET_ROUTE'
+          }
+          allowed=set(contract.get('body',{}).get('allowedActions',[]))
+          required={'STATUS','READ_CLOUD_RUN_SERVICE','DEPLOY_SOLUTION5_LOCKED','READ_BUILD'}
+          if token and required.issubset(allowed):
+              status=call('/execute',{'action':'STATUS','payload':{'purpose':'NEXUS v3.1.1 PR recovery preflight','mutation':'NONE'}},True)
+              baseline=call('/execute',{'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':source}},True)
+              receipt['authenticated_status']=status; receipt['baseline_read']=baseline
+              if ok(status) and ok(baseline):
+                  payload={
+                      'approvalKey':'APPROVED','project':project,'region':region,'service':target,
+                      'artifactDriveId':os.environ['ARTIFACT_DRIVE_ID'],'artifactName':os.environ['ARTIFACT_NAME'],
+                      'artifactSha256':os.environ['ARTIFACT_SHA256'],'wheelDriveId':os.environ['WHEEL_DRIVE_ID'],
+                      'sourceService':source,'serviceAccount':os.environ['SERVICE_ACCOUNT'],
+                      'deploymentMode':'reversible_new_service','requiredSecrets':['OPENAI_API_KEY'],
+                      'proofRequired':['build_id','build_status_SUCCESS','service_url','latest_ready_revision','health','rollback_ref','doc_write_readback','sheet_write_readback']
+                  }
+                  receipt['mutation_attempted']=True
+                  dep=call('/execute',{'action':'DEPLOY_SOLUTION5_LOCKED','payload':payload},True,180)
+                  receipt['deployment']=dep
+                  build_id=find(dep.get('body',{}),{'build_id','buildid','id'})
+                  if ok(dep) and build_id:
+                      for _ in range(12):
+                          br=call('/execute',{'action':'READ_BUILD','payload':{'project':project,'buildId':build_id}},True)
+                          receipt['build_readbacks'].append(br)
+                          text=json.dumps(br).upper()
+                          if 'SUCCESS' in text or any(x in text for x in ('FAILURE','CANCELLED','TIMEOUT')): break
+                          time.sleep(15)
+                      tr=call('/execute',{'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':target}},True)
+                      receipt['target_read']=tr
+                      service_url=find(tr,{'service_url','serviceurl','url','uri'})
+                      if service_url:
+                          try:
+                              with urllib.request.urlopen(service_url.rstrip('/')+'/health',timeout=30) as r:
+                                  raw=r.read().decode('utf-8','replace')
+                                  try: parsed=json.loads(raw)
+                                  except Exception: parsed={'text':raw[:3000]}
+                                  receipt['endpoint_health']={'http_status':r.status,'body':redact(parsed)}
+                          except Exception as e:
+                              receipt['endpoint_health']={'error':type(e).__name__,'message':str(e)[:500]}
+                      receipt['classification']='DEPLOYMENT_AND_ENDPOINT_HEALTH_PROVEN' if ok(tr) and receipt.get('endpoint_health',{}).get('http_status')==200 else 'DEPLOYMENT_EXECUTED_PROOF_INCOMPLETE'
+                  else:
+                      receipt['classification']='DEPLOYMENT_ACTION_FAILED_OR_NO_BUILD_ID'
+              else:
+                  receipt['classification']='AUTHENTICATED_PREFLIGHT_FAILED'
+          elif token:
+              receipt['classification']='BLOCKED_LIVE_ALLOWLIST_MISMATCH'
+
+          out=Path('/tmp/nexus-pr/NEXUS_PR_RUNTIME_RECOVERY_RECEIPT.json')
+          out.write_text(json.dumps(redact(receipt),indent=2,sort_keys=True)+'\n')
+          print(out.read_text())
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-pr-runtime-recovery
+          path: /tmp/nexus-pr/NEXUS_PR_RUNTIME_RECOVERY_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30
