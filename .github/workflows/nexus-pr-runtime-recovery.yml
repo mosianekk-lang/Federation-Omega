@@ -11,60 +11,64 @@ permissions:
   contents: read
 
 env:
-  DEADMAN_URL: https://script.google.com/macros/s/AKfycbyexLOXcQw0kdXnw2XJIplln2HZpzouQcsiOw6v9-RWtSZI1sPHFSXW1OL0RpjI0taLjQ/exec
+  G44_URL: https://federation-g44-autorun-max-257649435135.africa-south1.run.app
+  FO_OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
 
 jobs:
   recover:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Resolve deployment route and execute one-time signed request
+      - name: Probe alternate runtime carrier without credentials
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/nexus-recovery
-          printf '%s' 'eyJ2ZXJzaW9uIjoiRk9fU0lHTkVEX0RFQURNQU5fUkVDRUlQVFNfVjJfMjAyNjA3MTkiLCJhY3Rpb24iOiJRVUVVRV9ERUFETUFOX1RJQ0siLCJqb2JOYW1lIjoicHJvamVjdHMvc292LWh5YnJpZC1zdWl0ZS9sb2NhdGlvbnMvZXVyb3BlLXdlc3QxL2pvYnMvZm8tYXBwcy1zY3JpcHQtcXVldWUtZGVhZG1hbiIsImdlbmVyYXRpb24iOjM2NzEsInNpZ25hdHVyZSI6IkN0emQzTnJ4ZWkyX1ZoSVJiS1pjWTF2YTlvMlMwU1p5NFl6YXR2bG5HUG8ifQ==' | base64 -d > /tmp/nexus-recovery/request.json
-          set +e
-          curl --silent --show-error --dump-header /tmp/nexus-recovery/headers.txt \
-            --output /tmp/nexus-recovery/initial-body.txt --max-redirs 0 \
-            --request POST --header 'Content-Type: application/json' \
-            --data-binary @/tmp/nexus-recovery/request.json "$DEADMAN_URL"
-          rc=$?
-          set -e
-          python - "$rc" <<'PY'
-          import json, re, sys, urllib.error, urllib.request
+          python - <<'PY'
+          import json, os, urllib.error, urllib.request
           from pathlib import Path
-          rc=int(sys.argv[1])
-          headers=Path('/tmp/nexus-recovery/headers.txt').read_text(encoding='utf-8',errors='replace')
-          initial=Path('/tmp/nexus-recovery/initial-body.txt').read_text(encoding='utf-8',errors='replace')
-          m=re.search(r'(?im)^location:\s*(\S+)',headers)
-          location=m.group(1).strip() if m else None
-          request_body=Path('/tmp/nexus-recovery/request.json').read_bytes()
-          result={'receipt':'NEXUS-APPS-SCRIPT-ROUTE-RESOLUTION','curl_rc':rc,'initial_headers':headers[:4000],
-                  'initial_body':initial[:2000],'redirect_location_present':bool(location),
-                  'redirect_host':None,'redirect_response':None,'secret_values_recorded':False}
-          if location:
-              from urllib.parse import urlparse
-              result['redirect_host']=urlparse(location).netloc
-              req=urllib.request.Request(location,data=request_body,headers={'content-type':'application/json'},method='POST')
+
+          def call(url, method='GET', body=None):
+              headers={'accept':'application/json'}
+              data=None
+              if body is not None:
+                  headers['content-type']='application/json'
+                  data=json.dumps(body,separators=(',',':')).encode()
+              req=urllib.request.Request(url,data=data,headers=headers,method=method)
               try:
                   with urllib.request.urlopen(req,timeout=30) as r:
                       raw=r.read().decode('utf-8','replace')
-                      try: body=json.loads(raw)
-                      except Exception: body={'text':raw[:3000]}
-                      result['redirect_response']={'http_status':r.status,'body':body}
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={'text':raw[:5000]}
+                      return {'http_status':r.status,'headers':dict(r.headers.items()),'body':parsed}
               except urllib.error.HTTPError as e:
                   raw=e.read().decode('utf-8','replace')
-                  result['redirect_response']={'http_status':e.code,'body_text':raw[:3000]}
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={'text':raw[:5000]}
+                  return {'http_status':e.code,'headers':dict(e.headers.items()),'body':parsed}
               except Exception as e:
-                  result['redirect_response']={'error':type(e).__name__,'message':str(e)[:500]}
-          Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          print(json.dumps(result,indent=2,sort_keys=True))
+                  return {'error':type(e).__name__,'message':str(e)[:700]}
+
+          g44=os.environ['G44_URL'].rstrip('/')
+          fo=os.environ['FO_OPERATOR_URL'].rstrip('/')
+          probes={
+              'g44_root':call(g44+'/'),
+              'g44_health':call(g44+'/health'),
+              'g44_ping':call(g44+'/orchestrate','POST',{'action':'PING','source':'NEXUS_RUNTIME_RECOVERY','mutation':'NONE'}),
+              'g44_operator_status_request':call(g44+'/orchestrate','POST',{
+                  'action':'FO_OPERATOR_STATUS','payload':{'operatorUrl':fo,'purpose':'secret-safe NEXUS carrier discovery','mutation':'NONE'}
+              }),
+              'fo_public_health':call(fo+'/health'),
+              'fo_public_contract':call(fo+'/')
+          }
+          receipt={'receipt':'NEXUS-G44-ALTERNATE-CARRIER-PROBE','secret_values_recorded':False,'mutation_attempted':False,'probes':probes}
+          Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nexus-apps-script-route-resolution
+          name: nexus-g44-alternate-carrier-probe
           path: /tmp/nexus-recovery/receipt.json
           if-no-files-found: error
           retention-days: 7
