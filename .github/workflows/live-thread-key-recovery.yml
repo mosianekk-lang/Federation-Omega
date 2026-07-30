@@ -1,11 +1,6 @@
 name: Recover and Deploy Mosiane Live Thread
 
 on:
-  push:
-    branches:
-      - main
-    paths:
-      - '.github/workflows/live-thread-key-recovery.yml'
   workflow_dispatch:
 
 permissions:
