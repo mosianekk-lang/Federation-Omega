@@ -1,0 +1,215 @@
+name: NEXUS Operator Authentication Canary
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/nexus-operator-auth-canary.yml"
+      - "ops/bootstrap_nexus_operator_wif.sh"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: nexus-operator-auth-canary
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  SOURCE_SERVICE: architron9
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  SECRET_ID: fo-operator-admin-token
+
+jobs:
+  auth-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud through WIF
+        id: auth
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Configure gcloud
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Run authentication-only acceptance chain
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p deployments/nexus /tmp/nexus
+
+          ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | head -n1 || true)"
+          VERIFY_RC=0
+          VERIFY_JSON=""
+          if [[ -n "$ACCOUNT" ]]; then
+            set +e
+            VERIFY_JSON="$(bash ops/bootstrap_nexus_operator_wif.sh --verify 2>/tmp/nexus/wif-verify-error.txt)"
+            VERIFY_RC=$?
+            set -e
+          else
+            VERIFY_RC=91
+          fi
+
+          TOKEN=""
+          TOKEN_ERROR=""
+          if [[ -n "$ACCOUNT" ]]; then
+            set +e
+            TOKEN="$(gcloud secrets versions access latest --secret="$SECRET_ID" --project="$PROJECT_ID" 2>/tmp/nexus/token-error.txt)"
+            TOKEN_RC=$?
+            set -e
+            if [[ $TOKEN_RC -ne 0 ]]; then
+              TOKEN=""
+              TOKEN_ERROR="$(tail -c 1600 /tmp/nexus/token-error.txt 2>/dev/null || true)"
+            fi
+          fi
+          if [[ -n "$TOKEN" ]]; then echo "::add-mask::$TOKEN"; fi
+
+          export NEXUS_ACCOUNT="$ACCOUNT"
+          export NEXUS_VERIFY_RC="$VERIFY_RC"
+          export NEXUS_VERIFY_JSON="$VERIFY_JSON"
+          export NEXUS_VERIFY_ERROR="$(tail -c 1600 /tmp/nexus/wif-verify-error.txt 2>/dev/null || true)"
+          export NEXUS_TOKEN="$TOKEN"
+          export NEXUS_TOKEN_ERROR="$TOKEN_ERROR"
+
+          python - <<'PY'
+          from __future__ import annotations
+          import json, os, urllib.error, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from typing import Any
+
+          base=os.environ['OPERATOR_URL'].rstrip('/')
+          token=os.environ.get('NEXUS_TOKEN','')
+
+          def redact(value: Any) -> Any:
+              if isinstance(value, dict):
+                  out={}
+                  for key,item in value.items():
+                      if any(term in str(key).lower() for term in ('token','secret','authorization','credential','api_key')):
+                          out[key]='[REDACTED]'
+                      else:
+                          out[key]=redact(item)
+                  return out
+              if isinstance(value, list):
+                  return [redact(item) for item in value]
+              if isinstance(value, str) and token:
+                  return value.replace(token,'[REDACTED]')
+              return value
+
+          def call(path: str, body: dict|None=None, auth: bool=False) -> dict:
+              headers={'accept':'application/json'}
+              data=None
+              if body is not None:
+                  headers['content-type']='application/json'
+                  data=json.dumps(body,separators=(',',':')).encode()
+              if auth and token:
+                  headers['x-fo-admin-token']=token
+              req=urllib.request.Request(base+path,data=data,headers=headers,method='POST' if body is not None else 'GET')
+              try:
+                  with urllib.request.urlopen(req,timeout=60) as response:
+                      raw=response.read().decode('utf-8','replace')
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={'text':raw[:5000]}
+                      return {'http_status':response.status,'body':redact(parsed)}
+              except urllib.error.HTTPError as exc:
+                  raw=exc.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={'text':raw[:5000]}
+                  return {'http_status':exc.code,'body':redact(parsed)}
+              except Exception as exc:
+                  return {'transport_error':type(exc).__name__,'message':str(exc)[:700]}
+
+          try:
+              verify_payload=json.loads(os.environ.get('NEXUS_VERIFY_JSON') or '{}')
+          except Exception:
+              verify_payload={'raw':(os.environ.get('NEXUS_VERIFY_JSON') or '')[:3000]}
+
+          public_health=call('/health')
+          public_contract=call('/')
+          authenticated_status=None
+          baseline_read=None
+          classification='BLOCKED_NO_TRUSTED_SECRET_ROUTE'
+
+          if token:
+              authenticated_status=call('/execute',{
+                  'action':'STATUS',
+                  'payload':{'purpose':'NEXUS authentication-only canary','mutation':'NONE'}
+              },True)
+              baseline_read=call('/execute',{
+                  'action':'READ_CLOUD_RUN_SERVICE',
+                  'payload':{
+                      'project':os.environ['PROJECT_ID'],
+                      'region':os.environ['REGION'],
+                      'service':os.environ['SOURCE_SERVICE'],
+                      'purpose':'NEXUS authentication-only baseline'
+                  }
+              },True)
+              if authenticated_status.get('http_status')==200 and authenticated_status.get('body',{}).get('ok') is True and baseline_read.get('http_status')==200 and baseline_read.get('body',{}).get('ok') is True:
+                  classification='AUTHENTICATED_OPERATOR_PREFLIGHT_PROVEN'
+              else:
+                  classification='AUTHENTICATED_OPERATOR_PREFLIGHT_FAILED'
+
+          receipt={
+              'receipt':'NEXUS-OPERATOR-AUTH-CANARY',
+              'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'project':os.environ['PROJECT_ID'],
+              'region':os.environ['REGION'],
+              'source_service':os.environ['SOURCE_SERVICE'],
+              'operator_url':base,
+              'active_gcloud_account':os.environ.get('NEXUS_ACCOUNT') or None,
+              'wif_verify_exit_code':int(os.environ.get('NEXUS_VERIFY_RC','99')),
+              'wif_verify':redact(verify_payload),
+              'wif_verify_error':os.environ.get('NEXUS_VERIFY_ERROR')[:1600] or None,
+              'token_present':bool(token),
+              'token_value_recorded':False,
+              'token_error':os.environ.get('NEXUS_TOKEN_ERROR')[:1600] or None,
+              'public_health':public_health,
+              'public_contract':public_contract,
+              'authenticated_status':authenticated_status,
+              'baseline_read':baseline_read,
+              'mutation_attempted':False,
+              'deployment_attempted':False,
+              'classification':classification
+          }
+          path=Path('deployments/nexus/NEXUS_OPERATOR_AUTH_CANARY_RECEIPT.json')
+          path.write_text(json.dumps(redact(receipt),indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(redact(receipt),indent=2,sort_keys=True))
+          PY
+
+      - name: Persist redacted receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "nexus-operator-auth-canary[bot]"
+          git config user.email "nexus-operator-auth-canary[bot]@users.noreply.github.com"
+          git add deployments/nexus/NEXUS_OPERATOR_AUTH_CANARY_RECEIPT.json
+          if git diff --cached --quiet; then
+            echo "Receipt unchanged"
+          else
+            git commit -m "Record NEXUS operator authentication canary"
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nexus-operator-auth-canary
+          if-no-files-found: error
+          retention-days: 30
+          path: deployments/nexus/NEXUS_OPERATOR_AUTH_CANARY_RECEIPT.json
