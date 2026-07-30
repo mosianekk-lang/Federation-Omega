@@ -18,53 +18,68 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Probe live ARCHITRON execution contract
+      - name: Run ARCHITRON action-semantic differential canary
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/nexus-recovery
           python - <<'PY'
-          import json, os, urllib.error, urllib.request
+          import copy, hashlib, json, os, urllib.error, urllib.request
           from datetime import datetime, timezone
           from pathlib import Path
 
           base=os.environ['ARCHITRON_URL'].rstrip('/')
-          def call(path, method='GET', body=None):
-              headers={'accept':'application/json'}; data=None
-              if body is not None:
-                  headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
-              req=urllib.request.Request(base+path,data=data,headers=headers,method=method)
+          nonce='NEXUS-SEMANTIC-CANARY-20260730-0139'
+          def call(body):
+              data=json.dumps(body,separators=(',',':')).encode()
+              req=urllib.request.Request(base+'/execute',data=data,headers={'accept':'application/json','content-type':'application/json'},method='POST')
               try:
                   with urllib.request.urlopen(req,timeout=60) as r:
                       raw=r.read().decode('utf-8','replace')
                       try: parsed=json.loads(raw)
                       except Exception: parsed={'text':raw[:16000]}
-                      return {'http_status':r.status,'final_url':r.geturl(),'body':parsed}
+                      return {'http_status':r.status,'body':parsed}
               except urllib.error.HTTPError as e:
                   raw=e.read().decode('utf-8','replace')
                   try: parsed=json.loads(raw)
                   except Exception: parsed={'text':raw[:16000]}
-                  return {'http_status':e.code,'final_url':e.geturl(),'body':parsed}
+                  return {'http_status':e.code,'body':parsed}
               except Exception as e:
                   return {'error':type(e).__name__,'message':str(e)[:1000]}
 
-          probes={
-              'health':call('/health'),
-              'root':call('/'),
-              'status_execute':call('/execute','POST',{'action':'STATUS','approvalKey':'APPROVED','payload':{'purpose':'NEXUS v3.1.1 runtime recovery','mutation':'NONE'}}),
-              'list_cloud_run':call('/execute','POST',{'action':'LIST_CLOUD_RUN','approvalKey':'APPROVED','payload':{'project':'sov-hybrid-suite','region':'us-central1','purpose':'discover current worker endpoint','mutation':'NONE'}}),
-              'get_direct_worker':call('/execute','POST',{'action':'GET_CLOUD_RUN','approvalKey':'APPROVED','payload':{'project':'sov-hybrid-suite','region':'us-central1','service':'super-ai-ui-agent-worker','purpose':'discover current worker endpoint','mutation':'NONE'}}),
-              'get_architron':call('/execute','POST',{'action':'GET_CLOUD_RUN','approvalKey':'APPROVED','payload':{'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9','purpose':'baseline readback','mutation':'NONE'}})
+          requests={
+              'status':{'action':'STATUS','approvalKey':'APPROVED','payload':{'purpose':nonce,'mutation':'NONE'}},
+              'invalid':{'action':'NEXUS_ACTION_MUST_NOT_EXIST_7F3A','approvalKey':'APPROVED','payload':{'nonce':nonce,'mutation':'NONE'}},
+              'self_verify':{'action':'SELF_VERIFY_RUNTIME','approvalKey':'APPROVED','payload':{'nonce':nonce,'mutation':'NONE'}},
+              'deploy_dry_run':{'action':'DEPLOY_SOLUTION5_LOCKED','approvalKey':'APPROVED','payload':{'nonce':nonce,'dryRun':True,'project':'sov-hybrid-suite','region':'africa-south1','service':'nexus-codex-runtime','mutation':'NONE'}}
           }
-          receipt={'receipt':'NEXUS-ARCHITRON-FRESH-CONTRACT','recorded_at':datetime.now(timezone.utc).isoformat(),
-                   'mutation_attempted':False,'secret_values_recorded':False,'probes':probes}
+          responses={k:call(v) for k,v in requests.items()}
+          def normalized(v):
+              x=copy.deepcopy(v)
+              def scrub(z):
+                  if isinstance(z,dict):
+                      return {k:('[VOLATILE]' if k in {'checkedAt','timestamp','startedAt'} else scrub(val)) for k,val in z.items()}
+                  if isinstance(z,list): return [scrub(i) for i in z]
+                  return z
+              return scrub(x)
+          normalized_responses={k:normalized(v) for k,v in responses.items()}
+          hashes={k:hashlib.sha256(json.dumps(v,sort_keys=True,separators=(',',':')).encode()).hexdigest() for k,v in normalized_responses.items()}
+          distinct=len(set(hashes.values()))
+          invalid_rejected=responses['invalid'].get('http_status',0)>=400 or responses['invalid'].get('body',{}).get('ok') is False
+          nonce_echoed=nonce in json.dumps(responses,sort_keys=True)
+          semantic=invalid_rejected and distinct>=2
+          receipt={'receipt':'NEXUS-ARCHITRON-ACTION-SEMANTIC-DIFFERENTIAL','recorded_at':datetime.now(timezone.utc).isoformat(),
+                   'mutation_attempted':False,'secret_values_recorded':False,'requests':requests,'responses':responses,
+                   'normalized_hashes':hashes,'distinct_normalized_response_count':distinct,
+                   'invalid_action_rejected':invalid_rejected,'nonce_echoed':nonce_echoed,
+                   'classification':'ACTION_SEMANTICS_PROVEN' if semantic else 'ACTION_INSENSITIVE_HEALTH_ECHO_ONLY'}
           Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           print(json.dumps(receipt,indent=2,sort_keys=True))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nexus-architron-fresh-contract
+          name: nexus-architron-semantic-differential
           path: /tmp/nexus-recovery/receipt.json
           if-no-files-found: error
           retention-days: 7
