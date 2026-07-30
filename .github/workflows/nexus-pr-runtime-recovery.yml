@@ -12,14 +12,13 @@ permissions:
 
 env:
   G44_URL: https://federation-g44-autorun-max-257649435135.africa-south1.run.app
-  FO_OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
 
 jobs:
   recover:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Probe alternate runtime carrier without credentials
+      - name: Discover alternate carrier contract and semantic depth
         shell: bash
         run: |
           set -euo pipefail
@@ -29,46 +28,49 @@ jobs:
           from pathlib import Path
 
           def call(url, method='GET', body=None):
-              headers={'accept':'application/json'}
-              data=None
+              headers={'accept':'application/json'}; data=None
               if body is not None:
-                  headers['content-type']='application/json'
-                  data=json.dumps(body,separators=(',',':')).encode()
+                  headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
               req=urllib.request.Request(url,data=data,headers=headers,method=method)
               try:
                   with urllib.request.urlopen(req,timeout=30) as r:
                       raw=r.read().decode('utf-8','replace')
                       try: parsed=json.loads(raw)
                       except Exception: parsed={'text':raw[:5000]}
-                      return {'http_status':r.status,'headers':dict(r.headers.items()),'body':parsed}
+                      return {'http_status':r.status,'body':parsed}
               except urllib.error.HTTPError as e:
                   raw=e.read().decode('utf-8','replace')
                   try: parsed=json.loads(raw)
                   except Exception: parsed={'text':raw[:5000]}
-                  return {'http_status':e.code,'headers':dict(e.headers.items()),'body':parsed}
+                  return {'http_status':e.code,'body':parsed}
               except Exception as e:
                   return {'error':type(e).__name__,'message':str(e)[:700]}
 
           g44=os.environ['G44_URL'].rstrip('/')
-          fo=os.environ['FO_OPERATOR_URL'].rstrip('/')
-          probes={
-              'g44_root':call(g44+'/'),
-              'g44_health':call(g44+'/health'),
-              'g44_ping':call(g44+'/orchestrate','POST',{'action':'PING','source':'NEXUS_RUNTIME_RECOVERY','mutation':'NONE'}),
-              'g44_operator_status_request':call(g44+'/orchestrate','POST',{
-                  'action':'FO_OPERATOR_STATUS','payload':{'operatorUrl':fo,'purpose':'secret-safe NEXUS carrier discovery','mutation':'NONE'}
-              }),
-              'fo_public_health':call(fo+'/health'),
-              'fo_public_contract':call(fo+'/')
-          }
-          receipt={'receipt':'NEXUS-G44-ALTERNATE-CARRIER-PROBE','secret_values_recorded':False,'mutation_attempted':False,'probes':probes}
+          endpoint_paths=['/health','/status','/capabilities','/actions','/contract','/openapi.json','/.well-known/openapi.json']
+          actions=['STATUS','CAPABILITIES','LIST_ACTIONS','DESCRIBE','HELP','READ_CLOUD_RUN_SERVICE','HTTP_GET','HTTP_PROXY','SECRET_STATUS','GCP_IDENTITY_STATUS']
+          probes={p:call(g44+p) for p in endpoint_paths}
+          for action in actions:
+              probes['action_'+action]=call(g44+'/orchestrate','POST',{
+                  'action':action,
+                  'payload':{
+                      'purpose':'NEXUS alternate-carrier read-only capability discovery',
+                      'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9',
+                      'url':'https://federation-omega-operator-257649435135.africa-south1.run.app/health',
+                      'mutation':'NONE','dryRun':True
+                  }
+              })
+          bodies={k:json.dumps(v.get('body'),sort_keys=True) for k,v in probes.items() if isinstance(v,dict)}
+          distinct=len(set(bodies.values()))
+          receipt={'receipt':'NEXUS-G44-CAPABILITY-DISCOVERY','secret_values_recorded':False,
+                   'mutation_attempted':False,'distinct_response_body_count':distinct,'probes':probes}
           Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           print(json.dumps(receipt,indent=2,sort_keys=True))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nexus-g44-alternate-carrier-probe
+          name: nexus-g44-capability-discovery
           path: /tmp/nexus-recovery/receipt.json
           if-no-files-found: error
           retention-days: 7
