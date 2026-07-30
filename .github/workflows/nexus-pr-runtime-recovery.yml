@@ -11,14 +11,14 @@ permissions:
   contents: read
 
 env:
-  WORKER_URL: https://super-ai-ui-agent-worker-7ujkyf136q-uc.a.run.app
+  ARCHITRON_URL: https://architron9-7ujkyfl36q-bq.a.run.app
 
 jobs:
   recover:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Probe recovered direct worker contract
+      - name: Probe live ARCHITRON execution contract
         shell: bash
         run: |
           set -euo pipefail
@@ -28,39 +28,43 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          base=os.environ['WORKER_URL'].rstrip('/')
+          base=os.environ['ARCHITRON_URL'].rstrip('/')
           def call(path, method='GET', body=None):
               headers={'accept':'application/json'}; data=None
               if body is not None:
                   headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
               req=urllib.request.Request(base+path,data=data,headers=headers,method=method)
               try:
-                  with urllib.request.urlopen(req,timeout=40) as r:
+                  with urllib.request.urlopen(req,timeout=60) as r:
                       raw=r.read().decode('utf-8','replace')
                       try: parsed=json.loads(raw)
-                      except Exception: parsed={'text':raw[:12000]}
-                      return {'http_status':r.status,'final_url':r.geturl(),'headers':dict(r.headers.items()),'body':parsed}
+                      except Exception: parsed={'text':raw[:16000]}
+                      return {'http_status':r.status,'final_url':r.geturl(),'body':parsed}
               except urllib.error.HTTPError as e:
                   raw=e.read().decode('utf-8','replace')
                   try: parsed=json.loads(raw)
-                  except Exception: parsed={'text':raw[:12000]}
-                  return {'http_status':e.code,'final_url':e.geturl(),'headers':dict(e.headers.items()),'body':parsed}
+                  except Exception: parsed={'text':raw[:16000]}
+                  return {'http_status':e.code,'final_url':e.geturl(),'body':parsed}
               except Exception as e:
                   return {'error':type(e).__name__,'message':str(e)[:1000]}
 
-          probes={}
-          for path in ['/','/health','/status','/openapi.json','/docs','/run-queue']:
-              probes['GET '+path]=call(path)
-          probes['POST /run-queue']=call('/run-queue','POST',{'source':'NEXUS_RUNTIME_RECOVERY','mode':'dry_run','mutation':'NONE'})
-          receipt={'receipt':'NEXUS-DIRECT-WORKER-DISCOVERY','recorded_at':datetime.now(timezone.utc).isoformat(),
-                   'worker_url':base,'mutation_attempted':False,'secret_values_recorded':False,'probes':probes}
+          probes={
+              'health':call('/health'),
+              'root':call('/'),
+              'status_execute':call('/execute','POST',{'action':'STATUS','approvalKey':'APPROVED','payload':{'purpose':'NEXUS v3.1.1 runtime recovery','mutation':'NONE'}}),
+              'list_cloud_run':call('/execute','POST',{'action':'LIST_CLOUD_RUN','approvalKey':'APPROVED','payload':{'project':'sov-hybrid-suite','region':'us-central1','purpose':'discover current worker endpoint','mutation':'NONE'}}),
+              'get_direct_worker':call('/execute','POST',{'action':'GET_CLOUD_RUN','approvalKey':'APPROVED','payload':{'project':'sov-hybrid-suite','region':'us-central1','service':'super-ai-ui-agent-worker','purpose':'discover current worker endpoint','mutation':'NONE'}}),
+              'get_architron':call('/execute','POST',{'action':'GET_CLOUD_RUN','approvalKey':'APPROVED','payload':{'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9','purpose':'baseline readback','mutation':'NONE'}})
+          }
+          receipt={'receipt':'NEXUS-ARCHITRON-FRESH-CONTRACT','recorded_at':datetime.now(timezone.utc).isoformat(),
+                   'mutation_attempted':False,'secret_values_recorded':False,'probes':probes}
           Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           print(json.dumps(receipt,indent=2,sort_keys=True))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nexus-direct-worker-discovery
+          name: nexus-architron-fresh-contract
           path: /tmp/nexus-recovery/receipt.json
           if-no-files-found: error
           retention-days: 7
