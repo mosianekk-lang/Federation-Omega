@@ -80,32 +80,37 @@ PY
 emit() {
   local receipt="$1" state="$2"
   missing_json="$(printf '%s\n' "${MISSING[@]:-}" | python3 -c 'import json,sys; print(json.dumps([x.strip() for x in sys.stdin if x.strip()]))')"
-  python3 - <<PY
-import json
+  RECEIPT="$receipt" STATE="$state" MISSING_JSON="$missing_json" \
+  WIF_BINDING_VALUE="$WIF_BINDING" SECRET_ACCESS_VALUE="$SECRET_ACCESS" \
+  MUTATION_VALUE="${MUTATION_PERFORMED:-false}" python3 - <<'PY'
+import json, os
+as_bool=lambda name: os.environ.get(name,'false').lower() == 'true'
 print(json.dumps({
-  'receipt':'${receipt}',
-  'state':'${state}',
-  'mode':'${MODE}',
-  'project':'${PROJECT_ID}',
-  'project_number_expected':'${PROJECT_NUMBER}',
-  'project_number_observed':'${ACTUAL_PROJECT_NUMBER}',
-  'active_account':'${ACTIVE_ACCOUNT}',
-  'repository':'${GITHUB_REPOSITORY}',
-  'provider':'${PROVIDER_RESOURCE}',
-  'provider_state':'${PROVIDER_STATE}',
-  'provider_condition':'${PROVIDER_CONDITION}',
-  'provider_condition_expected':'${EXPECTED_CONDITION}',
-  'deployer_service_account':'${DEPLOYER_SA}',
-  'operator_secret':'${SECRET_ID}',
-  'wif_binding': ${WIF_BINDING},
-  'secret_accessor_binding': ${SECRET_ACCESS},
-  'missing_controls': ${missing_json},
-  'mutation_performed': ${MUTATION_PERFORMED:-false}
+  'receipt':os.environ['RECEIPT'],
+  'state':os.environ['STATE'],
+  'mode':os.environ['MODE'],
+  'project':os.environ['PROJECT_ID'],
+  'project_number_expected':os.environ['PROJECT_NUMBER'],
+  'project_number_observed':os.environ.get('ACTUAL_PROJECT_NUMBER',''),
+  'active_account':os.environ.get('ACTIVE_ACCOUNT',''),
+  'repository':os.environ['GITHUB_REPOSITORY'],
+  'provider':os.environ['PROVIDER_RESOURCE'],
+  'provider_state':os.environ.get('PROVIDER_STATE',''),
+  'provider_condition':os.environ.get('PROVIDER_CONDITION',''),
+  'provider_condition_expected':os.environ['EXPECTED_CONDITION'],
+  'deployer_service_account':os.environ['DEPLOYER_SA'],
+  'operator_secret':os.environ['SECRET_ID'],
+  'wif_binding':as_bool('WIF_BINDING_VALUE'),
+  'secret_accessor_binding':as_bool('SECRET_ACCESS_VALUE'),
+  'missing_controls':json.loads(os.environ['MISSING_JSON']),
+  'mutation_performed':as_bool('MUTATION_VALUE')
 }, sort_keys=True))
 PY
 }
 
+export MODE PROJECT_ID PROJECT_NUMBER GITHUB_REPOSITORY PROVIDER_RESOURCE EXPECTED_CONDITION DEPLOYER_SA SECRET_ID
 collect_state
+export ACTIVE_ACCOUNT ACTUAL_PROJECT_NUMBER PROVIDER_STATE PROVIDER_CONDITION
 MUTATION_PERFORMED=false
 
 case "$MODE" in
@@ -141,6 +146,7 @@ case "$MODE" in
     gcloud iam service-accounts add-iam-policy-binding "$DEPLOYER_SA" --project "$PROJECT_ID" --role roles/iam.workloadIdentityUser --member "$PRINCIPAL" >/dev/null
     gcloud secrets add-iam-policy-binding "$SECRET_ID" --project "$PROJECT_ID" --role roles/secretmanager.secretAccessor --member "serviceAccount:${DEPLOYER_SA}" >/dev/null
     collect_state
+    export ACTIVE_ACCOUNT ACTUAL_PROJECT_NUMBER PROVIDER_STATE PROVIDER_CONDITION
     if ((${#MISSING[@]})); then emit NEXUS-OPERATOR-WIF-APPLY-INCOMPLETE APPLIED_BUT_VERIFICATION_FAILED; exit 6; fi
     emit NEXUS-OPERATOR-WIF-CLOUD-VERIFIED APPLIED_AND_VERIFIED
     ;;
