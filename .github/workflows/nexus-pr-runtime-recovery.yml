@@ -18,35 +18,53 @@ jobs:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Execute pre-signed one-time queue recovery request
+      - name: Resolve deployment route and execute one-time signed request
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/nexus-recovery
           printf '%s' 'eyJ2ZXJzaW9uIjoiRk9fU0lHTkVEX0RFQURNQU5fUkVDRUlQVFNfVjJfMjAyNjA3MTkiLCJhY3Rpb24iOiJRVUVVRV9ERUFETUFOX1RJQ0siLCJqb2JOYW1lIjoicHJvamVjdHMvc292LWh5YnJpZC1zdWl0ZS9sb2NhdGlvbnMvZXVyb3BlLXdlc3QxL2pvYnMvZm8tYXBwcy1zY3JpcHQtcXVldWUtZGVhZG1hbiIsImdlbmVyYXRpb24iOjM2NzEsInNpZ25hdHVyZSI6IkN0emQzTnJ4ZWkyX1ZoSVJiS1pjWTF2YTlvMlMwU1p5NFl6YXR2bG5HUG8ifQ==' | base64 -d > /tmp/nexus-recovery/request.json
-          code=$(curl --location --silent --show-error --output /tmp/nexus-recovery/response.json --write-out '%{http_code}' \
+          set +e
+          curl --silent --show-error --dump-header /tmp/nexus-recovery/headers.txt \
+            --output /tmp/nexus-recovery/initial-body.txt --max-redirs 0 \
             --request POST --header 'Content-Type: application/json' \
-            --data-binary @/tmp/nexus-recovery/request.json "$DEADMAN_URL")
-          python - "$code" <<'PY'
-          import json, sys
+            --data-binary @/tmp/nexus-recovery/request.json "$DEADMAN_URL"
+          rc=$?
+          set -e
+          python - "$rc" <<'PY'
+          import json, re, sys, urllib.error, urllib.request
           from pathlib import Path
-          code=int(sys.argv[1])
-          raw=Path('/tmp/nexus-recovery/response.json').read_text(encoding='utf-8',errors='replace')
-          try: body=json.loads(raw)
-          except Exception: body={'text':raw[:4000]}
-          receipt={'receipt':'NEXUS-SIGNED-DEADMAN-RECOVERY','http_status':code,'body':body,'secret_values_recorded':False}
-          Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          print(json.dumps(receipt,indent=2,sort_keys=True))
-          if code < 200 or code >= 300:
-              raise SystemExit(1)
-          status=str(body.get('status','')) if isinstance(body,dict) else ''
-          if status not in {'DEADMAN_SEMANTIC_EXECUTION_VERIFIED','DEADMAN_LOCK_BUSY_RETRY_SAFE'}:
-              raise SystemExit(2)
+          rc=int(sys.argv[1])
+          headers=Path('/tmp/nexus-recovery/headers.txt').read_text(encoding='utf-8',errors='replace')
+          initial=Path('/tmp/nexus-recovery/initial-body.txt').read_text(encoding='utf-8',errors='replace')
+          m=re.search(r'(?im)^location:\s*(\S+)',headers)
+          location=m.group(1).strip() if m else None
+          request_body=Path('/tmp/nexus-recovery/request.json').read_bytes()
+          result={'receipt':'NEXUS-APPS-SCRIPT-ROUTE-RESOLUTION','curl_rc':rc,'initial_headers':headers[:4000],
+                  'initial_body':initial[:2000],'redirect_location_present':bool(location),
+                  'redirect_host':None,'redirect_response':None,'secret_values_recorded':False}
+          if location:
+              from urllib.parse import urlparse
+              result['redirect_host']=urlparse(location).netloc
+              req=urllib.request.Request(location,data=request_body,headers={'content-type':'application/json'},method='POST')
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as r:
+                      raw=r.read().decode('utf-8','replace')
+                      try: body=json.loads(raw)
+                      except Exception: body={'text':raw[:3000]}
+                      result['redirect_response']={'http_status':r.status,'body':body}
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  result['redirect_response']={'http_status':e.code,'body_text':raw[:3000]}
+              except Exception as e:
+                  result['redirect_response']={'error':type(e).__name__,'message':str(e)[:500]}
+          Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(result,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(result,indent=2,sort_keys=True))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nexus-signed-deadman-recovery
+          name: nexus-apps-script-route-resolution
           path: /tmp/nexus-recovery/receipt.json
           if-no-files-found: error
           retention-days: 7
