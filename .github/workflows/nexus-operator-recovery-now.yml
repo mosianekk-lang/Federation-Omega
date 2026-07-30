@@ -1,10 +1,6 @@
 name: NEXUS Operator Recovery Now
 
 on:
-  push:
-    branches: ["main"]
-    paths:
-      - ".github/workflows/nexus-operator-recovery-now.yml"
   workflow_dispatch:
 
 permissions:
