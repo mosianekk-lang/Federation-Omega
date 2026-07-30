@@ -11,14 +11,14 @@ permissions:
   contents: read
 
 env:
-  G44_URL: https://federation-g44-autorun-max-257649435135.africa-south1.run.app
+  ARCHON_URL: https://archon-admin-plane-7ujkyfl36q-bq.a.run.app
 
 jobs:
   recover:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Discover alternate carrier contract and semantic depth
+      - name: Probe ARCHON Admin Plane public contract
         shell: bash
         run: |
           set -euo pipefail
@@ -27,50 +27,40 @@ jobs:
           import json, os, urllib.error, urllib.request
           from pathlib import Path
 
-          def call(url, method='GET', body=None):
-              headers={'accept':'application/json'}; data=None
+          def call(url, method='GET', body=None, headers=None):
+              h={'accept':'application/json'}
+              if headers: h.update(headers)
+              data=None
               if body is not None:
-                  headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
-              req=urllib.request.Request(url,data=data,headers=headers,method=method)
+                  h['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
+              req=urllib.request.Request(url,data=data,headers=h,method=method)
               try:
                   with urllib.request.urlopen(req,timeout=30) as r:
                       raw=r.read().decode('utf-8','replace')
                       try: parsed=json.loads(raw)
-                      except Exception: parsed={'text':raw[:5000]}
-                      return {'http_status':r.status,'body':parsed}
+                      except Exception: parsed={'text':raw[:12000]}
+                      return {'http_status':r.status,'headers':dict(r.headers.items()),'body':parsed}
               except urllib.error.HTTPError as e:
                   raw=e.read().decode('utf-8','replace')
                   try: parsed=json.loads(raw)
-                  except Exception: parsed={'text':raw[:5000]}
-                  return {'http_status':e.code,'body':parsed}
+                  except Exception: parsed={'text':raw[:12000]}
+                  return {'http_status':e.code,'headers':dict(e.headers.items()),'body':parsed}
               except Exception as e:
                   return {'error':type(e).__name__,'message':str(e)[:700]}
 
-          g44=os.environ['G44_URL'].rstrip('/')
-          endpoint_paths=['/health','/status','/capabilities','/actions','/contract','/openapi.json','/.well-known/openapi.json']
-          actions=['STATUS','CAPABILITIES','LIST_ACTIONS','DESCRIBE','HELP','READ_CLOUD_RUN_SERVICE','HTTP_GET','HTTP_PROXY','SECRET_STATUS','GCP_IDENTITY_STATUS']
-          probes={p:call(g44+p) for p in endpoint_paths}
-          for action in actions:
-              probes['action_'+action]=call(g44+'/orchestrate','POST',{
-                  'action':action,
-                  'payload':{
-                      'purpose':'NEXUS alternate-carrier read-only capability discovery',
-                      'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9',
-                      'url':'https://federation-omega-operator-257649435135.africa-south1.run.app/health',
-                      'mutation':'NONE','dryRun':True
-                  }
-              })
-          bodies={k:json.dumps(v.get('body'),sort_keys=True) for k,v in probes.items() if isinstance(v,dict)}
-          distinct=len(set(bodies.values()))
-          receipt={'receipt':'NEXUS-G44-CAPABILITY-DISCOVERY','secret_values_recorded':False,
-                   'mutation_attempted':False,'distinct_response_body_count':distinct,'probes':probes}
+          base=os.environ['ARCHON_URL'].rstrip('/')
+          paths=['/','/health','/status','/openapi.yaml','/openapi.json','/.well-known/openapi.json','/api/admin/command']
+          probes={p:call(base+p) for p in paths}
+          probes['post_health_no_token']=call(base+'/api/admin/command','POST',{'command':'health_check','payload':{},'source':'nexus-public-contract-probe'})
+          probes['post_project_no_token']=call(base+'/api/admin/command','POST',{'command':'project_info','payload':{},'source':'nexus-public-contract-probe'})
+          receipt={'receipt':'NEXUS-ARCHON-ADMIN-PLANE-PUBLIC-CONTRACT','secret_values_recorded':False,'mutation_attempted':False,'probes':probes}
           Path('/tmp/nexus-recovery/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           print(json.dumps(receipt,indent=2,sort_keys=True))
           PY
 
       - uses: actions/upload-artifact@v4
         with:
-          name: nexus-g44-capability-discovery
+          name: nexus-archon-admin-plane-contract
           path: /tmp/nexus-recovery/receipt.json
           if-no-files-found: error
           retention-days: 7
