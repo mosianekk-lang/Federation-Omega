@@ -1,0 +1,3 @@
+NEXUS-DIRECT-RUNTIME-PREFLIGHT-20260730-001
+Canonical release: v3.1.1
+Mode: proof-only preflight
