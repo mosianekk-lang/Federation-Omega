@@ -1,0 +1,59 @@
+{
+  "contract": "NEXUS_CODEX_APPS_SCRIPT_DEPLOYER_RELEASE_V1",
+  "release": "v3.1.1",
+  "builtAt": "2026-07-30T05:02:06Z",
+  "target": {
+    "projectId": "sov-hybrid-suite",
+    "projectNumber": "257649435135",
+    "region": "africa-south1",
+    "service": "nexus-codex-runtime",
+    "runtimeServiceAccount": "fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com"
+  },
+  "canonicalArtifact": {
+    "driveFileId": "1_r1qlRHeEcF7Xl-BSJpfWUWIRYs4C_Pm",
+    "name": "nexus-codex-runtime-v3.1.1.zip",
+    "size": 28998,
+    "sha256": "fabbdf9ec89c1ea4468515ba1659cc0019719c5bc5747084795148a354dc1518"
+  },
+  "files": [
+    {
+      "path": "NexusCodexDeployer.gs",
+      "sha256": "2eeab691bf3c86a0047e2936087c4d38aa608ba2b70a00d8bf8eaab45f2e3022"
+    },
+    {
+      "path": "appsscript.fragment.json",
+      "sha256": "54cd6b5f2e3b085266e25e929808f338f089b76c661ea1b49c09d272acd1f408"
+    },
+    {
+      "path": "package.json",
+      "sha256": "3865cc902bb8bfc54ae3cd5554702254433a912fd1bfded71d80c63886f3197c"
+    },
+    {
+      "path": "README.md",
+      "sha256": "0f3d0446af09c1a10e6ddee2d8134ad3924a5231c6615bfb82fc0adb1eedb1b6"
+    },
+    {
+      "path": "tests/nexus_deployer.test.mjs",
+      "sha256": "b4f5741ddc5e25fb056a12b2af56ce7ad92c38e0087db65c5afcae94d8e3ce27"
+    }
+  ],
+  "verification": {
+    "testCommand": "npm test",
+    "tests": 8,
+    "passed": 8,
+    "failed": 0,
+    "appsScriptSyntax": "PASS",
+    "manifestJson": "PASS",
+    "cloudBuildShellSyntax": "PASS",
+    "secretStaticScan": "PASS"
+  },
+  "releasePolicy": {
+    "recurringScheduleRequired": false,
+    "initialTrafficPercent": 0,
+    "promoteAfterCanaryOnly": true,
+    "rollbackTrafficCaptured": true,
+    "incrementalRecurringCost": 0
+  },
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}
