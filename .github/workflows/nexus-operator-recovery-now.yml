@@ -20,8 +20,8 @@ env:
   PROJECT_NUMBER: "257649435135"
   REGION: africa-south1
   OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
-  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
-  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  DEFAULT_WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEFAULT_DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   TARGET_SERVICE: nexus-codex-runtime
   SOURCE_SERVICE: architron9
   ARTIFACT_DRIVE_ID: 1_r1qlRHeEcF7Xl-BSJpfWUWIRYs4C_Pm
@@ -29,6 +29,16 @@ env:
   ARTIFACT_SHA256: fabbdf9ec89c1ea4468515ba1659cc0019719c5bc5747084795148a354dc1518
   WHEEL_DRIVE_ID: 1Ur3FEOPCjQ54gumvBDTSbWJpDse6o86p
   SERVICE_ACCOUNT: fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com
+  HAS_DIRECT_TOKEN: ${{ secrets.FO_ADMIN_TOKEN != '' }}
+  HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+  HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
+  HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
+  HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
+  HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
+  HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
+  HAS_GENERIC_WIF_PAIR: ${{ (secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '') && (secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '') }}
 
 jobs:
   recover-and-deploy:
@@ -36,15 +46,84 @@ jobs:
     timeout-minutes: 40
     steps:
       - uses: actions/checkout@v4
+        with:
+          ref: main
 
-      - name: Authenticate to Google Cloud through WIF
-        id: auth
+      - name: Authenticate with GCP_SA_KEY when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_SA_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate with GCP_SERVICE_ACCOUNT_KEY when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Authenticate with GOOGLE_CREDENTIALS when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Authenticate with GOOGLE_SERVICE_ACCOUNT_KEY when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Authenticate with GCP_CREDENTIALS when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Authenticate with GOOGLE_GHA_CREDS_JSON when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_GHA_CREDS_JSON == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
+
+      - name: Authenticate with GOOGLE_CLOUD_CREDENTIALS when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_CLOUD_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+
+      - name: Authenticate with repository-defined GCP WIF pair when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_WIF_PAIR == 'true' }}
         continue-on-error: true
         uses: google-github-actions/auth@v3
         with:
           project_id: ${{ env.PROJECT_ID }}
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.DEPLOYER_SA }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Authenticate with generic WIF pair when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GENERIC_WIF_PAIR == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER || vars.WIF_PROVIDER }}
+          service_account: ${{ secrets.DEPLOYER_SA || vars.DEPLOYER_SA }}
+
+      - name: Authenticate with canonical WIF as final federation probe
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_SA_KEY != 'true' && env.HAS_GCP_SERVICE_ACCOUNT_KEY != 'true' && env.HAS_GOOGLE_CREDENTIALS != 'true' && env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY != 'true' && env.HAS_GCP_CREDENTIALS != 'true' && env.HAS_GOOGLE_GHA_CREDS_JSON != 'true' && env.HAS_GOOGLE_CLOUD_CREDENTIALS != 'true' && env.HAS_GCP_WIF_PAIR != 'true' && env.HAS_GENERIC_WIF_PAIR != 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.DEFAULT_WIF_PROVIDER }}
+          service_account: ${{ env.DEFAULT_DEPLOYER_SA }}
 
       - uses: google-github-actions/setup-gcloud@v2
         with:
@@ -52,25 +131,33 @@ jobs:
 
       - name: Acquire token and execute reversible acceptance chain
         shell: bash
+        env:
+          DIRECT_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
         run: |
           set -euo pipefail
           set +x
           mkdir -p deployments/nexus /tmp/nexus
           ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | head -n1 || true)"
-          TOKEN=""
+          TOKEN="$DIRECT_FO_ADMIN_TOKEN"
+          TOKEN_SOURCE=""
           TOKEN_ERROR=""
-          if [[ -n "$ACCOUNT" ]]; then
+          if [[ -n "$TOKEN" ]]; then
+            TOKEN_SOURCE="github_actions_secret"
+          elif [[ -n "$ACCOUNT" ]]; then
             set +e
             TOKEN="$(gcloud secrets versions access latest --secret=fo-operator-admin-token --project="$PROJECT_ID" 2>/tmp/nexus/token-error.txt)"
             RC=$?
             set -e
-            if [[ $RC -ne 0 ]]; then
+            if [[ $RC -eq 0 && -n "$TOKEN" ]]; then
+              TOKEN_SOURCE="google_secret_manager"
+            else
               TOKEN=""
               TOKEN_ERROR="$(tail -c 1600 /tmp/nexus/token-error.txt 2>/dev/null || true)"
             fi
           fi
           if [[ -n "$TOKEN" ]]; then echo "::add-mask::$TOKEN"; fi
           export NEXUS_OPERATOR_TOKEN="$TOKEN"
+          export NEXUS_TOKEN_SOURCE="$TOKEN_SOURCE"
           export NEXUS_ACTIVE_ACCOUNT="$ACCOUNT"
           export NEXUS_TOKEN_ERROR="$TOKEN_ERROR"
           python - <<'PY'
@@ -113,14 +200,42 @@ jobs:
                   return {'transport_error':type(e).__name__,'message':str(e)[:700]}
 
           def ok(r): return r.get('http_status')==200 and r.get('body',{}).get('ok') is True
+          def find(v, names):
+              if isinstance(v,dict):
+                  for k,x in v.items():
+                      if str(k).lower() in names and x not in (None,'',[],{}): return str(x)
+                  for x in v.values():
+                      y=find(x,names)
+                      if y:return y
+              if isinstance(v,list):
+                  for x in v:
+                      y=find(x,names)
+                      if y:return y
+              return None
+
           health=call('/health'); contract=call('/')
           allowed=set(contract.get('body',{}).get('allowedActions',[]))
+          presence={
+              'FO_ADMIN_TOKEN':os.environ.get('HAS_DIRECT_TOKEN')=='true',
+              'GCP_SA_KEY':os.environ.get('HAS_GCP_SA_KEY')=='true',
+              'GCP_SERVICE_ACCOUNT_KEY':os.environ.get('HAS_GCP_SERVICE_ACCOUNT_KEY')=='true',
+              'GOOGLE_CREDENTIALS':os.environ.get('HAS_GOOGLE_CREDENTIALS')=='true',
+              'GOOGLE_SERVICE_ACCOUNT_KEY':os.environ.get('HAS_GOOGLE_SERVICE_ACCOUNT_KEY')=='true',
+              'GCP_CREDENTIALS':os.environ.get('HAS_GCP_CREDENTIALS')=='true',
+              'GOOGLE_GHA_CREDS_JSON':os.environ.get('HAS_GOOGLE_GHA_CREDS_JSON')=='true',
+              'GOOGLE_CLOUD_CREDENTIALS':os.environ.get('HAS_GOOGLE_CLOUD_CREDENTIALS')=='true',
+              'GCP_WIF_PAIR':os.environ.get('HAS_GCP_WIF_PAIR')=='true',
+              'GENERIC_WIF_PAIR':os.environ.get('HAS_GENERIC_WIF_PAIR')=='true',
+          }
           receipt={
               'receipt':'NEXUS-OPERATOR-RECOVERY-NOW',
               'recorded_at':datetime.now(timezone.utc).isoformat(),
-              'project':project,'region':region,'target_service':target,
+              'project':project,'region':region,'target_service':target,'source_service':source,
+              'artifact':{'drive_id':os.environ['ARTIFACT_DRIVE_ID'],'name':os.environ['ARTIFACT_NAME'],'sha256':os.environ['ARTIFACT_SHA256'],'wheel_drive_id':os.environ['WHEEL_DRIVE_ID']},
+              'credential_alias_presence':presence,
               'active_gcloud_account':os.environ.get('NEXUS_ACTIVE_ACCOUNT') or None,
-              'token_present':bool(token),'token_value_recorded':False,
+              'token_source':os.environ.get('NEXUS_TOKEN_SOURCE') or 'none',
+              'token_present':bool(token),'token_value_recorded':False,'secret_values_recorded':False,
               'token_error':os.environ.get('NEXUS_TOKEN_ERROR')[:1600] or None,
               'public_health':health,'public_contract':contract,
               'authenticated_status':None,'baseline_read':None,'deployment':None,
@@ -129,11 +244,7 @@ jobs:
               'classification':'BLOCKED_NO_TRUSTED_SECRET_ROUTE'
           }
           required={'STATUS','READ_CLOUD_RUN_SERVICE','DEPLOY_SOLUTION5_LOCKED','READ_BUILD'}
-          if not token:
-              pass
-          elif not required.issubset(allowed):
-              receipt['classification']='BLOCKED_LIVE_ALLOWLIST_MISMATCH'
-          else:
+          if token and required.issubset(allowed):
               status=call('/execute',{'action':'STATUS','payload':{'purpose':'NEXUS v3.1.1 authenticated acceptance','mutation':'NONE'}},True)
               baseline=call('/execute',{'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':source,'purpose':'NEXUS reversible deployment baseline'}},True)
               receipt['authenticated_status']=status; receipt['baseline_read']=baseline
@@ -149,22 +260,8 @@ jobs:
                   receipt['mutation_attempted']=True
                   dep=call('/execute',{'action':'DEPLOY_SOLUTION5_LOCKED','payload':payload},True,180)
                   receipt['deployment']=dep
-                  body=dep.get('body',{})
-                  build_id=None
-                  def find(v, names):
-                      if isinstance(v,dict):
-                          for k,x in v.items():
-                              if str(k).lower() in names and x not in (None,'',[],{}): return str(x)
-                          for x in v.values():
-                              y=find(x,names)
-                              if y:return y
-                      if isinstance(v,list):
-                          for x in v:
-                              y=find(x,names)
-                              if y:return y
-                      return None
-                  build_id=find(body,{'build_id','buildid','id'})
-                  receipt['rollback_ref']=find(body,{'rollback_ref','rollback','previous_revision','previousrevision'})
+                  build_id=find(dep.get('body',{}),{'build_id','buildid','id'})
+                  receipt['rollback_ref']=find(dep.get('body',{}),{'rollback_ref','rollback','previous_revision','previousrevision'})
                   if ok(dep) and build_id:
                       for _ in range(12):
                           br=call('/execute',{'action':'READ_BUILD','payload':{'project':project,'buildId':build_id}},True)
@@ -192,6 +289,8 @@ jobs:
                       receipt['classification']='DEPLOYMENT_ACTION_FAILED_OR_NO_BUILD_ID'
               else:
                   receipt['classification']='AUTHENTICATED_PREFLIGHT_FAILED'
+          elif token:
+              receipt['classification']='BLOCKED_LIVE_ALLOWLIST_MISMATCH'
           Path('deployments/nexus/NEXUS_OPERATOR_RECOVERY_NOW_RECEIPT.json').write_text(json.dumps(redact(receipt),indent=2,sort_keys=True)+'\n')
           print(json.dumps(redact(receipt),indent=2,sort_keys=True))
           PY
