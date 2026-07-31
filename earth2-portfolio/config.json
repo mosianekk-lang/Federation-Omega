@@ -1,0 +1,29 @@
+{
+  "max_advances_per_cycle": 5,
+  "founder_escalation_only": [
+    "external sale commitment",
+    "public pricing publication",
+    "contract acceptance",
+    "confidential evidence release",
+    "IP assignment",
+    "exclusive learning rights",
+    "irreversible action"
+  ],
+  "automatic_actions": [
+    "prioritise",
+    "assign expert council",
+    "advance maturity",
+    "generate next action",
+    "write status",
+    "issue receipt",
+    "preserve portfolio state"
+  ],
+  "commercial_priority_order": [
+    "immediate revenue",
+    "income protection",
+    "recurring revenue",
+    "reusable IP",
+    "platform growth",
+    "standards and federation"
+  ]
+}
