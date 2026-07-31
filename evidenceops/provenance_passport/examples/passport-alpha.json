@@ -1,0 +1,39 @@
+{
+  "algorithm": {
+    "domain_separation": "EPP_LEAF_V1/EPP_NODE_V1/EPP_RECEIPT_V1",
+    "hash": "sha256",
+    "odd_node_rule": "duplicate_last",
+    "record_order": "record_id_ascending"
+  },
+  "corpus_id": "EPP-CONFORMANCE-ALPHA",
+  "merkle_root": "a2b43ad358a81585e5cd620bdd450022f97ffbcdf3dcb5acefff45b0258c3502",
+  "receipt_sha256": "7cbc3019e462e1360faa24a6e67817bdcde5875899d5272ec85aa64a0b8f77e4",
+  "record_count": 3,
+  "records": [
+    {
+      "leaf_sha256": "55f029123f809009478d0b0171b02fbe8b3ca749c5bdb0a94b30e282e4f8a3b7",
+      "proof": [
+        {"sha256": "972453635b690e6cc95ca439ab69b031b66fa6d166769ee5ab942e1a047cce95", "side": "right"},
+        {"sha256": "81b57d14694ea10ce6cb49f49b411f15e7de75045c2fcfc0697661bb625f0844", "side": "right"}
+      ],
+      "record": {"record_id": "alpha-001", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"}
+    },
+    {
+      "leaf_sha256": "972453635b690e6cc95ca439ab69b031b66fa6d166769ee5ab942e1a047cce95",
+      "proof": [
+        {"sha256": "55f029123f809009478d0b0171b02fbe8b3ca749c5bdb0a94b30e282e4f8a3b7", "side": "left"},
+        {"sha256": "81b57d14694ea10ce6cb49f49b411f15e7de75045c2fcfc0697661bb625f0844", "side": "right"}
+      ],
+      "record": {"record_id": "alpha-002", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"}
+    },
+    {
+      "leaf_sha256": "5709b43acd1b42de1659533a5312d436bac25f694b3226e9f1b5d0b1060d74b1",
+      "proof": [
+        {"sha256": "5709b43acd1b42de1659533a5312d436bac25f694b3226e9f1b5d0b1060d74b1", "side": "right"},
+        {"sha256": "a75e0cdfef4fd0ae6d26a46b7bd7b454a940583db95c00fc4196963e7fc3604a", "side": "left"}
+      ],
+      "record": {"record_id": "alpha-003", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}
+    }
+  ],
+  "schema_version": "evidenceops.provenance-passport/v1"
+}
