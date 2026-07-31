@@ -1,47 +1,173 @@
 {
-  "registry_version": "1.1",
-  "updated_at": "2026-07-31T21:16:30+00:00",
+  "registry_version": "1.2",
+  "updated_at": "2026-07-31T21:23:01+00:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "ROOTED",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
-  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260731-001.json",
+  "identity_drift": "NONE_DETECTED",
+  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260731-002.json",
   "maintenance_owner": "mosianekk-lang",
   "monitoring": {
     "external_scheduler": "GitHub Actions",
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
-    "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only"
+    "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only",
+    "workflow_execution_readback": "PENDING"
   },
   "promotion_gate": {
     "first_useful_child_capability": "PASSED",
     "external_maturity_workflow_readback": "PENDING",
-    "next_candidate_stage": "SPROUT"
+    "next_candidate_stage": "SPROUT",
+    "root_promotion": "NOT_AUTHORISED"
   },
   "child_lanes": [
     {
       "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
-      "state": "SEED",
-      "blocker": "External acquisition runtime not yet proven"
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": {
+        "github_repository": "VERIFIED",
+        "external_acquisition_runtime": "UNVERIFIED"
+      },
+      "required_nutrients": {
+        "licensed_or_authorised_source_corpus": "UNVERIFIED",
+        "acquisition_runtime": "UNVERIFIED",
+        "ingestion_pipeline": "UNVERIFIED",
+        "proof_receipt": "ABSENT",
+        "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED"
+      },
+      "dependencies": [
+        "Authorised nature-intelligence source acquisition",
+        "Corpus ingestion and indexing runtime",
+        "Source rights and provenance record"
+      ],
+      "proof_gates": [
+        "Authorised acquisition readback",
+        "First corpus ingestion receipt",
+        "Source integrity and rights record"
+      ],
+      "tests": "NOT_RUN",
+      "deployment_surfaces": [
+        "GitHub registry only"
+      ],
+      "monitoring_data": "Registry checkpoint only",
+      "blocker": "External acquisition runtime and corpus-ingestion proof remain unverified",
+      "owner_decision_required": false
     },
     {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
-      "state": "RESUMABLE",
-      "blocker": "Reference connector implementation and conformance report not yet proven"
+      "verified_stage": "SEED",
+      "operational_state": "RESUMABLE",
+      "authorised_environment": {
+        "github_repository": "VERIFIED",
+        "google_drive_connector": "VERIFIED_READ_WRITE"
+      },
+      "required_nutrients": {
+        "reference_connector_implementation": "PENDING",
+        "deterministic_conformance_tests": "PENDING",
+        "ects_report": "PENDING",
+        "proof_receipt": "ABSENT",
+        "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED"
+      },
+      "dependencies": [
+        "Minimal local-runtime connector",
+        "Conformance harness",
+        "Readback and ECTS report"
+      ],
+      "proof_gates": [
+        "Reference connector executes",
+        "Conformance tests pass",
+        "Result is read back from an authorised surface"
+      ],
+      "tests": "NOT_RUN",
+      "deployment_surfaces": [
+        "GitHub",
+        "Google Drive connector surface"
+      ],
+      "monitoring_data": "Registry checkpoint only",
+      "blocker": "Reference connector implementation, conformance tests and ECTS report remain unverified",
+      "owner_decision_required": false
     },
     {
       "lane_id": "LANE-PROVENANCE-PASSPORT",
-      "state": "TEST_PASSED",
-      "proof": {
+      "verified_stage": "SPROUT",
+      "operational_state": "TEST_PASSED",
+      "authorised_environment": {
+        "google_drive": "VERIFIED_READBACK",
+        "github_registry": "VERIFIED"
+      },
+      "required_nutrients": {
+        "source_manifest": "VERIFIED",
+        "sha256_hashes": "VERIFIED",
+        "merkle_construction": "INDEPENDENTLY_RECALCULATED",
+        "durable_private_storage": "VERIFIED",
+        "proof_receipt": "VERIFIED_PRESENT",
+        "maintenance_owner": "mosianekk-lang"
+      },
+      "dependencies": {
+        "manifest_drive_file_id": "1UIl64TqEU3Tv3fAz17BuXatOzMoDGB-c",
+        "passport_drive_file_id": "11c0QaaV6NEDVBVdDfsm2G3yFkZd6-tBW"
+      },
+      "proof_gates": {
         "passport_id": "EPP-BUILDING43-AUDIO-20260731-001",
+        "leaf_count": 5,
         "merkle_root": "17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa",
-        "receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4",
-        "drive_readback": "PASSED"
-      }
+        "merkle_root_independent_recalculation": "PASSED",
+        "drive_readback": "PASSED",
+        "passport_receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4"
+      },
+      "tests": [
+        "Five-leaf Merkle root independently recalculated from passport source hashes",
+        "Passport file fetched from authorised Drive surface",
+        "Passport identity, root and proof-verification state read back"
+      ],
+      "deployment_surfaces": [
+        "Private Google Drive EvidenceOps provenance-passport file",
+        "EvidenceOps Innovation Engine live lane registry",
+        "IPEP Innovation Bible"
+      ],
+      "monitoring_data": {
+        "current": "Registry and Bible checkpoint",
+        "gap": "No reusable passport health monitor or repeated-corpus execution history yet"
+      },
+      "next_gate": "SAPLING requires reusable validator/verification CLI, repeated successful execution on multiple corpora, persistent monitoring and maintenance evidence.",
+      "owner_decision_required": false
     },
     {
       "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
-      "state": "DORMANT",
-      "blocker": "Authorised provider credential not bound to runtime"
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": {
+        "github_repository": "VERIFIED",
+        "provider_runtime": "UNVERIFIED",
+        "google_speech_binding": "UNVERIFIED",
+        "private_worker_health": "UNVERIFIED"
+      },
+      "required_nutrients": {
+        "provider_credential": "NOT_VERIFIED",
+        "google_speech_binding": "NOT_VERIFIED",
+        "private_worker": "NOT_VERIFIED",
+        "proof_receipt": "ABSENT",
+        "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED"
+      },
+      "dependencies": [
+        "Authorised provider credential",
+        "Google Speech runtime binding",
+        "Private worker deployment and health readback"
+      ],
+      "proof_gates": [
+        "Chunk-001 canary",
+        "Transcript readback",
+        "Integrity and QA receipt"
+      ],
+      "tests": "NOT_RUN",
+      "deployment_surfaces": [
+        "GitHub adapter scaffold only"
+      ],
+      "monitoring_data": "Registry blocker state only",
+      "blocker": "Authorised provider credential, Google Speech binding and private worker health readback remain unverified",
+      "owner_decision_required": false
     }
-  ]
+  ],
+  "lesson": "A child seed can advance independently when its own environment, proof, tests and readback are verified; the root seed must still satisfy its separate external-workflow readback gate."
 }
