@@ -1,0 +1,53 @@
+{
+  "receipt_id": "EOPS-OFFER-FACTORY-20260801-001",
+  "created_at": "2026-08-01T00:02:25+02:00",
+  "lane_id": "ORG-REVENUE-001",
+  "release": "0.1",
+  "state": "TEST_PASSED_INTERNAL_RELEASE_CANDIDATE",
+  "artifacts": {
+    "OFFER_CATALOGUE.md": {
+      "sha256": "5ff6ec91f9e43ef05e7323d319a9bb93350c5393f59b8841452b9dbeb57ed052",
+      "github_commit": "3ff0691f7870d8f64acad3f83dfb2ee8c2be1237",
+      "github_blob_sha": "09bb8c25209c4fc710bdd946f5e41398eec7b1b8",
+      "readback": "PASSED"
+    },
+    "service-passports.json": {
+      "sha256": "3862e6fa8f7d7dae2cf01fa620db50dbf712bd610c3fcd78559f792a9f15a4f3",
+      "github_commit": "addb7025fd7490b3e3747a38738b1216eb4dc4d7",
+      "github_blob_sha": "5bffc3d74f98ba7eb18946243acab5793ba5b229",
+      "readback": "PASSED"
+    },
+    "validate_service_passports.py": {
+      "sha256": "bd1526692f225ab659a4cef95f3e9512f032190f8e0836c4aae362ea7c2a594c",
+      "github_commit": "3a9ce89276fec719b6a9410c554804911739ecd3"
+    },
+    "test_validate_service_passports.py": {
+      "sha256": "3f7a0a151f2459015c70b8f4aeef55f858babec02d452edbc043cfa34f221dc5",
+      "github_commit": "bb1f0c5b54d891ad12530fcb48c0bda13f0460de"
+    }
+  },
+  "validation": {
+    "validator": "PASS",
+    "unittest_count": 4,
+    "unittest_result": "PASS",
+    "service_count": 4,
+    "service_ids": [
+      "EOPS-PROV-001",
+      "EOPS-MATTER-001",
+      "EOPS-WORKSPACE-001",
+      "EOPS-AUDIO-READY-001"
+    ],
+    "safety_gates": [
+      "external_approval_required",
+      "internal_nonbinding_pricing",
+      "unique_service_ids",
+      "required_claim_boundaries"
+    ]
+  },
+  "truth_boundary": {
+    "external_market_validation": "PENDING",
+    "external_quote_approval": "REQUIRED",
+    "live_transcription": "BLOCKED_UNVERIFIED_RUNTIME",
+    "cloud_run_wif_secret_manager": "NOT_VERIFIED_FOR_IPEP_PRODUCTION"
+  }
+}
