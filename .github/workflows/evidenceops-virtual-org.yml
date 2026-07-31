@@ -4,6 +4,12 @@ on:
   schedule:
     - cron: '0 * * * *'
   workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'virtual-org/operate.py'
+      - 'virtual-org/lane-registry.json'
+      - '.github/workflows/evidenceops-virtual-org.yml'
 
 permissions:
   contents: write
