@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.4",
-  "updated_at": "2026-07-31T23:32:10+02:00",
+  "registry_version": "1.5",
+  "updated_at": "2026-08-01T00:02:25+02:00",
   "proof_note": "States describe verified repository and connector observations. They do not imply unverified external execution.",
   "priority_model": {
     "scale": "0-100",
@@ -12,14 +12,16 @@
       "risk_exposure"
     ],
     "factor_range": "0-20",
-    "rule": "Higher total is worked first among safe executable lanes; blocked lanes remain visible but cannot displace executable work."
+    "rule": "Higher total is worked first among safe executable lanes; blocked and approval-checkpointed lanes remain visible but cannot displace executable work."
   },
   "dependency_snapshot": {
     "github_repository_access": "VERIFIED_READ_WRITE",
+    "github_latest_reviewed_commit_before_offer_factory": "e6acf18902df06333076af2e6114cba2f91fef0d",
     "pr_39": "MERGED",
     "pr_39_merge_sha": "e5dc2f143cebb6528485a60be9ed6f2b9e318be5",
     "drive_connector_access": "VERIFIED_READ_WRITE",
-    "ipep_bible_access": "VERIFIED",
+    "gmail_connector_access": "VERIFIED_READ",
+    "ipep_bible_access": "VERIFIED_READ_WRITE_READBACK",
     "verified_audio_manifest_available": true,
     "kimmie_maturity_workflow_readback": "PASSED",
     "kimmie_latest_assessment": "PASS_AT_SPROUT",
@@ -28,7 +30,13 @@
     "google_cloud_wif": "BLOCKED_INVALID_TARGET",
     "secret_manager_binding": "ACCESS_DENIED_NOT_BOUND",
     "private_cloud_worker_deployment": "NOT_VERIFIED",
-    "required_external_approval_change": "NONE_OBSERVED"
+    "cloudops_command_center_modified_at": "2026-07-31T22:00:41.717Z",
+    "fresh_cloud_runtime_proof": "BLOCKED_STALE_QUEUE_NO_FRESH_OUTPUT",
+    "cloud_run_access_path": "ROUTE_OR_INGRESS_CONSTRAINT_UNRESOLVED",
+    "recent_drive_snapshot": "REVIEWED_NO_IPEP_BLOCKER_CLOSURE",
+    "gmail_credential_or_approval_change": "NONE_OBSERVED_AFTER_2026_07_31",
+    "required_external_approval_change": "OFFER_RELEASE_APPROVAL_REQUIRED; NO_CLOUD_APPROVAL_CHANGE",
+    "offer_factory_release": "TEST_PASSED_INTERNAL_RELEASE_CANDIDATE"
   },
   "lanes": [
     {
@@ -49,7 +57,30 @@
         "merkle_root": "17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa",
         "passport_receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4"
       },
-      "next_action": "Generalise the passport builder into a reusable schema validator and verification CLI, then prove repeated execution across multiple corpora."
+      "next_action": "Generalise the passport builder into a reusable multi-corpus schema validator and verification CLI, then prove repeated execution across multiple corpora."
+    },
+    {
+      "lane_id": "LANE-REVENUE-OFFER-FACTORY",
+      "state": "CHECKPOINTED",
+      "priority": 95,
+      "priority_factors": {
+        "urgency": 20,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 20,
+        "risk_exposure": 15
+      },
+      "proof_state": "TEST_PASSED_INTERNAL_RELEASE_CANDIDATE; FOUR_SERVICE_PASSPORTS; VALIDATOR_PASS; FOUR_SAFETY_TESTS_PASS; GITHUB_READBACK_PASS; EXTERNAL_MARKET_VALIDATION_PENDING",
+      "proof_receipt": {
+        "receipt_id": "EOPS-OFFER-FACTORY-20260801-001",
+        "repository_path": "virtual-org/revenue/offer-factory/release-receipt.json",
+        "release_receipt_sha256": "50f5de09413471437d07de1decfef6761a1a862c9bd72ae02e7a512353136784",
+        "release_commit": "de6023a8935cd121b7cdf4aa524eaf9631976b74",
+        "bible_receipt_sha256": "9ab21b8b85a998d8210d380034019b42bc5568f6885dece73f2eed18f64593e1",
+        "bible_revision_id": "AIroW372ouOOdy1WFJabXrEf0oU8kMjxcwuyLPcad21ZmXIqAzuaDcsYFm-X1aleEXBuzrrcGQhw4ZM3cQlshj-te2WcGZfENJQtRTPdDu0"
+      },
+      "approval_gate": "FOUNDER_APPROVAL_REQUIRED_BEFORE_EXTERNAL_QUOTE_PUBLICATION_OUTREACH_OR_CONTRACT",
+      "next_action": "Founder review of pricing and external-release posture; no external quote, publication or outreach is authorised by this checkpoint."
     },
     {
       "lane_id": "LANE-INNOVATION-ENGINE",
@@ -110,19 +141,19 @@
     {
       "lane_id": "LANE-IPEP-BIBLE",
       "state": "CHECKPOINTED",
-      "priority": 81,
+      "priority": 82,
       "priority_factors": {
-        "urgency": 10,
+        "urgency": 11,
         "dependency_closure": 20,
         "completion_proximity": 20,
         "reuse_value": 17,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; KIMMIE_MATURITY_CHECKPOINT_003_APPENDED_AND_READ_BACK",
+      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; LANE_WATCH_RECEIPT_005_APPENDED_AND_READ_BACK",
       "next_action": "Append only when a subsequent verified lane transition, blocker change or maturity event occurs.",
       "proof_receipt": {
-        "receipt_sha256": "d4ce1c7248be42c358fb2ef2a29262386a15292a617e6854e73547b509eadcda",
-        "document_revision_id": "AIroW35HBNgboVqXlL6pzLxIah03e1pKPzsVk7teF07kGgOOGH9c413IVc6QYAnmJOR1kOoPE6lj-Q_3z5R0NVKyDICrPKRKCvpz9XLrixc"
+        "receipt_sha256": "9ab21b8b85a998d8210d380034019b42bc5568f6885dece73f2eed18f64593e1",
+        "document_revision_id": "AIroW372ouOOdy1WFJabXrEf0oU8kMjxcwuyLPcad21ZmXIqAzuaDcsYFm-X1aleEXBuzrrcGQhw4ZM3cQlshj-te2WcGZfENJQtRTPdDu0"
       }
     },
     {
@@ -136,13 +167,15 @@
         "reuse_value": 20,
         "risk_exposure": 20
       },
-      "proof_state": "REPOSITORY_SCAFFOLD_MERGED; PRIVATE_GOOGLE_CLOUD_DEPLOYMENT_NOT_VERIFIED; WIF_INVALID_TARGET; SECRET_MANAGER_ACCESS_DENIED",
+      "proof_state": "REPOSITORY_SCAFFOLD_MERGED; RECENT_CLOUDOPS_READBACK_STILL_HAS_NO_FRESH_RUNTIME_OUTPUT; WIF_INVALID_TARGET; SECRET_MANAGER_ACCESS_DENIED; PRIVATE_DEPLOYMENT_NOT_VERIFIED",
       "blockers": [
         "Canonical Google Workload Identity Federation target is invalid or unavailable",
         "Secret Manager credential binding is not verified",
-        "Private Cloud Run worker deployment and authenticated health readback are not verified"
+        "Private Cloud Run worker deployment and authenticated health readback are not verified",
+        "CloudOps queue runner is stale or not processing the queued fresh health check",
+        "Cloud Run route or ingress contract remains unresolved"
       ],
-      "next_action": "Resume only after WIF audience/provider and least-privilege Secret Manager access are independently verified."
+      "next_action": "Resume only after WIF audience/provider, least-privilege Secret Manager access and authenticated worker health are independently verified."
     },
     {
       "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
