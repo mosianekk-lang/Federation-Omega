@@ -1,0 +1,60 @@
+{
+  "registry_version": "1.2",
+  "updated_at": "2026-07-31T22:12:00+02:00",
+  "proof_note": "States describe verified repository and connector observations. They do not imply unverified external execution.",
+  "lanes": [
+    {
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "state": "VERIFYING",
+      "priority": 100,
+      "proof_state": "PERSISTENT_REGISTRY_IMPLEMENTED; REGRESSION_TESTS_PASSED; PR_READY_FOR_REVIEW",
+      "next_action": "Review and merge PR #39, then verify persistence in the default branch before any production claim."
+    },
+    {
+      "lane_id": "LANE-PLATFORM-SETUP",
+      "state": "VERIFYING",
+      "priority": 99,
+      "proof_state": "PR_39_OPEN_NON_DRAFT_MERGEABLE; SUPERIOR_LOGIC_CI_SUCCESS_ON_8517D02D",
+      "next_action": "Complete repository review, then separately verify private Google Cloud deployment and runtime health."
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "state": "READY",
+      "priority": 98,
+      "proof_state": "SCHEMA_READY; REAL_PASSPORT_NOT_YET_GENERATED",
+      "next_action": "Generate a real passport and Merkle proof from the verified audio manifests."
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "state": "RESUMABLE",
+      "priority": 97,
+      "proof_state": "DESIGN_AND_TRUST_STANDARD_READY; REFERENCE_CONNECTORS_NOT_YET_IMPLEMENTED",
+      "next_action": "Implement local-runtime and Google Drive reference connectors."
+    },
+    {
+      "lane_id": "LANE-KIMMIE-SEED",
+      "state": "READY",
+      "priority": 96,
+      "proof_state": "GENOME_AND_GERMINATION_SCAFFOLD_READY",
+      "next_action": "Generate the first authorised environment nutrient map and germination decision."
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "state": "BLOCKED",
+      "priority": 100,
+      "proof_state": "ADAPTER_READY; LIVE_EXECUTION_NOT_PROVEN",
+      "blockers": [
+        "No verified provider credential available to this execution runtime",
+        "No verified Google Speech runtime binding"
+      ],
+      "next_action": "Execute chunk-001 canary immediately after an authorised runtime credential is independently verified."
+    },
+    {
+      "lane_id": "LANE-IPEP-BIBLE",
+      "state": "ACTIVE",
+      "priority": 95,
+      "proof_state": "CANONICAL_LEDGER_CREATED_IN_DRIVE_CONTROL_FOLDER; RECEIPT_001_APPENDED",
+      "next_action": "Append the CI repair and PR-ready transition receipt."
+    }
+  ]
+}
