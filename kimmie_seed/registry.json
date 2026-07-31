@@ -1,0 +1,37 @@
+{
+  "registry_version": "1.0",
+  "updated_at": "2026-07-31T20:16:06+00:00",
+  "seed_id": "KIMMIE-IPEP-001",
+  "current_verified_stage": "ROOTED",
+  "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
+  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260731-001.json",
+  "maintenance_owner": "mosianekk-lang",
+  "monitoring": {
+    "external_scheduler": "GitHub Actions",
+    "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
+    "cadence": "every 6 hours",
+    "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only"
+  },
+  "child_lanes": [
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "state": "SEED",
+      "blocker": "External acquisition runtime not yet proven"
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "state": "SEED",
+      "blocker": "Reference connector runtime and conformance report not yet proven"
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "state": "SEED",
+      "blocker": "Real passport and Merkle proof not yet produced"
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "state": "DORMANT",
+      "blocker": "Authorised provider credential not bound to runtime"
+    }
+  ]
+}
