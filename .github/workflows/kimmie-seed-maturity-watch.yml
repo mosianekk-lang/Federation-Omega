@@ -1,0 +1,34 @@
+name: Kimmie Seed Maturity Watch
+
+on:
+  schedule:
+    - cron: '17 */6 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kimmie-seed-maturity-watch
+  cancel-in-progress: false
+
+jobs:
+  assess:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout run revision
+        uses: actions/checkout@v4
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Verify seed maturity
+        run: python kimmie_seed/maturity_assessor.py
+      - name: Upload proof assessment
+        uses: actions/upload-artifact@v4
+        with:
+          name: kimmie-seed-maturity-assessment
+          path: kimmie_seed/monitoring/latest_assessment.json
+          if-no-files-found: error
+          retention-days: 30
