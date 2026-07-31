@@ -1,0 +1,73 @@
+{
+  "assessment_id": "KSA-20260801-004",
+  "seed_id": "KIMMIE-IPEP-001",
+  "observed_at": "2026-08-01T00:11:05+02:00",
+  "current_verified_stage": "SPROUT",
+  "identity_drift": "NONE_DETECTED",
+  "new_owner_decision_required": false,
+  "material_change": false,
+  "repository_evidence": {
+    "current_head": "3ff0691f7870d8f64acad3f83dfb2ee8c2be1237",
+    "previous_kimmie_head": "e6acf18902df06333076af2e6114cba2f91fef0d",
+    "diff": "Only virtual-org/revenue/offer-factory/OFFER_CATALOGUE.md changed; no Kimmie lane file changed."
+  },
+  "root_seed": {
+    "stage": "SPROUT",
+    "authorised_environment": "GitHub admin read/write; canonical Google Drive Bible read/write; GitHub Actions configured",
+    "nutrients": "Verified for SPROUT",
+    "proof_gates": "Useful child, workflow receipt, authorised readback and identity integrity passed",
+    "tests": "Latest assessment PASS",
+    "monitoring": "One successful maturity cycle; SAPLING repeatability gate not met",
+    "maintenance_owner": "mosianekk-lang",
+    "promotion": "NO_PROMOTION"
+  },
+  "child_lanes": [
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "stage": "SEED",
+      "state": "BLOCKED",
+      "environment": "GitHub verified; external acquisition runtime unverified",
+      "nutrients_and_dependencies": "Authorised corpus, acquisition runtime, ingestion pipeline and proof receipt absent",
+      "tests": "NOT_RUN",
+      "monitoring": "CHECKPOINT_ONLY",
+      "owner": "ROOT_OWNER_INHERITED_BOUNDED",
+      "promotion": "NO_PROMOTION"
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "stage": "SEED",
+      "state": "RESUMABLE",
+      "environment": "GitHub and Google Drive connector verified",
+      "nutrients_and_dependencies": "Reference connector, conformance tests, ECTS report and proof receipt pending",
+      "tests": "NOT_RUN",
+      "monitoring": "CHECKPOINT_ONLY",
+      "owner": "ROOT_OWNER_INHERITED_BOUNDED",
+      "promotion": "NO_PROMOTION"
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "stage": "SPROUT",
+      "state": "TEST_PASSED",
+      "environment": "Manifest and passport remain accessible and unchanged on private Google Drive; GitHub registry verified",
+      "proof_gates": "Drive readback and Merkle recalculation passed; reusable validator, multi-corpus repetition, health monitor and recovery proof not verified",
+      "tests": "NO_NEW_TEST_EXECUTION",
+      "monitoring": "NO_NEW_REPEATED_CYCLE",
+      "owner": "mosianekk-lang",
+      "promotion": "NO_PROMOTION"
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "stage": "SEED",
+      "state": "BLOCKED",
+      "environment": "GitHub scaffold verified; provider runtime, Google Speech binding and private worker health unverified",
+      "nutrients_and_dependencies": "Credential, runtime binding, worker and proof receipt absent",
+      "tests": "NOT_RUN",
+      "monitoring": "BLOCKER_STATE_ONLY",
+      "owner": "ROOT_OWNER_INHERITED_BOUNDED",
+      "promotion": "NO_PROMOTION"
+    }
+  ],
+  "lesson": "Repository activity outside the Kimmie lane does not count as growth. SAPLING requires lane-specific repeated execution, reusable capability evidence, monitoring readback, maintenance and recovery proof.",
+  "notification": "SUPPRESS",
+  "checkpoint_sha256": "909c47df1c851d439bff533c43135bfdd9de4e1c1f6e10c2495b9657f805422e"
+}
