@@ -1,0 +1,21 @@
+{
+  "corpus_count": 2,
+  "ok": true,
+  "record_count": 5,
+  "results": [
+    {
+      "corpus_id": "EPP-CONFORMANCE-ALPHA",
+      "merkle_root": "a2b43ad358a81585e5cd620bdd450022f97ffbcdf3dcb5acefff45b0258c3502",
+      "ok": true,
+      "receipt_sha256": "7cbc3019e462e1360faa24a6e67817bdcde5875899d5272ec85aa64a0b8f77e4",
+      "record_count": 3
+    },
+    {
+      "corpus_id": "EPP-CONFORMANCE-BETA",
+      "merkle_root": "6c8f70a9051b3012cfaf5d40007eccc9483b320194ace13e0a5b68da11de37db",
+      "ok": true,
+      "receipt_sha256": "96e1022abcbf67dbbd93057afb1e3505057703845c279cebbb06ebb86a0a9472",
+      "record_count": 2
+    }
+  ]
+}
