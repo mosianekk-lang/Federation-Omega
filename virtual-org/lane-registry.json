@@ -1,0 +1,10 @@
+{
+  "generated_at": "2026-07-31T23:05:15.392007+02:00",
+  "lanes": [
+    {"lane_id":"ORG-REVENUE-001","title":"First Revenue Offer Factory","state":"READY","priority":100,"next_action":"Package Legal Audio Lab, Matter Sprint and Workspace Automation Sprint into buyer-ready offers."},
+    {"lane_id":"ORG-AUDIO-001","title":"Live Audio Transcription","state":"BLOCKED","priority":100,"next_action":"Bind runtime credential and execute chunk-001 canary."},
+    {"lane_id":"ORG-PROOF-001","title":"Evidence Provenance Passport","state":"READY","priority":98,"next_action":"Generate first real passport and Merkle proof from the verified audio corpus."},
+    {"lane_id":"ORG-CONNECTOR-001","title":"Reference Connectors","state":"RESUMABLE","priority":97,"next_action":"Implement local-runtime and Google Drive reference connectors."},
+    {"lane_id":"ORG-MARKET-001","title":"Opportunity Gravity","state":"READY","priority":96,"next_action":"Build public proof, machine-readable service passports and inbound qualification."}
+  ]
+}
