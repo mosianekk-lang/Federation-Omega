@@ -1,60 +1,153 @@
 {
-  "registry_version": "1.2",
-  "updated_at": "2026-07-31T22:12:00+02:00",
+  "registry_version": "1.3",
+  "updated_at": "2026-07-31T23:14:50+02:00",
   "proof_note": "States describe verified repository and connector observations. They do not imply unverified external execution.",
+  "priority_model": {
+    "scale": "0-100",
+    "factors": [
+      "urgency",
+      "dependency_closure",
+      "completion_proximity",
+      "reuse_value",
+      "risk_exposure"
+    ],
+    "factor_range": "0-20",
+    "rule": "Higher total is worked first among safe executable lanes; blocked lanes remain visible but cannot displace executable work."
+  },
+  "dependency_snapshot": {
+    "github_repository_access": "VERIFIED_READ_WRITE",
+    "pr_39": "MERGED",
+    "pr_39_merge_sha": "e5dc2f143cebb6528485a60be9ed6f2b9e318be5",
+    "drive_connector_access": "VERIFIED_READ_WRITE",
+    "ipep_bible_access": "VERIFIED",
+    "verified_audio_manifest_available": true,
+    "provider_transcription_credential": "NOT_VERIFIED",
+    "google_speech_binding": "NOT_VERIFIED",
+    "google_cloud_wif": "BLOCKED_INVALID_TARGET",
+    "secret_manager_binding": "ACCESS_DENIED_NOT_BOUND",
+    "private_cloud_worker_deployment": "NOT_VERIFIED",
+    "required_external_approval_change": "NONE_OBSERVED"
+  },
   "lanes": [
     {
-      "lane_id": "LANE-INNOVATION-ENGINE",
-      "state": "VERIFYING",
-      "priority": 100,
-      "proof_state": "PERSISTENT_REGISTRY_IMPLEMENTED; REGRESSION_TESTS_PASSED; PR_READY_FOR_REVIEW",
-      "next_action": "Review and merge PR #39, then verify persistence in the default branch before any production claim."
-    },
-    {
-      "lane_id": "LANE-PLATFORM-SETUP",
-      "state": "VERIFYING",
-      "priority": 99,
-      "proof_state": "PR_39_OPEN_NON_DRAFT_MERGEABLE; SUPERIOR_LOGIC_CI_SUCCESS_ON_8517D02D",
-      "next_action": "Complete repository review, then separately verify private Google Cloud deployment and runtime health."
-    },
-    {
       "lane_id": "LANE-PROVENANCE-PASSPORT",
-      "state": "READY",
-      "priority": 98,
-      "proof_state": "SCHEMA_READY; REAL_PASSPORT_NOT_YET_GENERATED",
-      "next_action": "Generate a real passport and Merkle proof from the verified audio manifests."
+      "state": "TEST_PASSED",
+      "priority": 96,
+      "priority_factors": {
+        "urgency": 18,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 20,
+        "risk_exposure": 18
+      },
+      "proof_state": "FIRST_REAL_PRIVATE_PASSPORT_GENERATED; FIVE_LEAVES; MERKLE_PROOFS_VERIFIED; DRIVE_READBACK_PASSED",
+      "proof_receipt": {
+        "passport_id": "EPP-BUILDING43-AUDIO-20260731-001",
+        "drive_file_id": "11c0QaaV6NEDVBVdDfsm2G3yFkZd6-tBW",
+        "merkle_root": "17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa",
+        "passport_receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4"
+      },
+      "next_action": "Generalise the passport builder into a reusable schema validator and verification CLI without exposing private evidence metadata."
+    },
+    {
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "state": "TEST_PASSED",
+      "priority": 93,
+      "priority_factors": {
+        "urgency": 16,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 20,
+        "risk_exposure": 17
+      },
+      "proof_state": "PERSISTENT_REGISTRY_MERGED_TO_MAIN; REGRESSION_TESTS_PASSED; DEFAULT_BRANCH_READBACK_PASSED",
+      "proof_receipt": {
+        "pr": 39,
+        "merge_sha": "e5dc2f143cebb6528485a60be9ed6f2b9e318be5",
+        "ci_run": 345,
+        "ci_conclusion": "success"
+      },
+      "next_action": "Run default-branch registry regression and create a durable backup/restore receipt before production promotion."
     },
     {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
       "state": "RESUMABLE",
-      "priority": 97,
-      "proof_state": "DESIGN_AND_TRUST_STANDARD_READY; REFERENCE_CONNECTORS_NOT_YET_IMPLEMENTED",
-      "next_action": "Implement local-runtime and Google Drive reference connectors."
+      "priority": 89,
+      "priority_factors": {
+        "urgency": 15,
+        "dependency_closure": 17,
+        "completion_proximity": 17,
+        "reuse_value": 20,
+        "risk_exposure": 20
+      },
+      "proof_state": "GOOGLE_DRIVE_CONNECTOR_READ_WRITE_AND_READBACK_VERIFIED; REFERENCE_CONNECTOR_IMPLEMENTATION_AND_ECTS_REPORT_PENDING",
+      "next_action": "Implement a minimal local-runtime reference connector plus deterministic conformance tests and readback."
     },
     {
       "lane_id": "LANE-KIMMIE-SEED",
-      "state": "READY",
-      "priority": 96,
-      "proof_state": "GENOME_AND_GERMINATION_SCAFFOLD_READY",
-      "next_action": "Generate the first authorised environment nutrient map and germination decision."
-    },
-    {
-      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
-      "state": "BLOCKED",
-      "priority": 100,
-      "proof_state": "ADAPTER_READY; LIVE_EXECUTION_NOT_PROVEN",
-      "blockers": [
-        "No verified provider credential available to this execution runtime",
-        "No verified Google Speech runtime binding"
-      ],
-      "next_action": "Execute chunk-001 canary immediately after an authorised runtime credential is independently verified."
+      "state": "CHECKPOINTED",
+      "priority": 85,
+      "priority_factors": {
+        "urgency": 13,
+        "dependency_closure": 15,
+        "completion_proximity": 17,
+        "reuse_value": 20,
+        "risk_exposure": 20
+      },
+      "proof_state": "ROOTED; EXTERNAL_MATURITY_WORKFLOW_PRESENT; FIRST_USEFUL_CHILD_CAPABILITY_NOW_PROVEN_BY_PROVENANCE_PASSPORT",
+      "next_action": "Read back a successful external maturity workflow run and reassess the SPROUT promotion gate."
     },
     {
       "lane_id": "LANE-IPEP-BIBLE",
       "state": "ACTIVE",
-      "priority": 95,
-      "proof_state": "CANONICAL_LEDGER_CREATED_IN_DRIVE_CONTROL_FOLDER; RECEIPT_001_APPENDED",
-      "next_action": "Append the CI repair and PR-ready transition receipt."
+      "priority": 84,
+      "priority_factors": {
+        "urgency": 17,
+        "dependency_closure": 18,
+        "completion_proximity": 18,
+        "reuse_value": 17,
+        "risk_exposure": 14
+      },
+      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; RECEIPTS_001_002_AND_KIMMIE_CHECKPOINT_PRESENT; CURRENT_RECEIPT_PENDING_APPEND",
+      "next_action": "Append Lane Watch Receipt 003 with PR merge, passport proof and unchanged blocker evidence."
+    },
+    {
+      "lane_id": "LANE-PLATFORM-SETUP",
+      "state": "BLOCKED",
+      "priority": 80,
+      "priority_factors": {
+        "urgency": 18,
+        "dependency_closure": 7,
+        "completion_proximity": 15,
+        "reuse_value": 20,
+        "risk_exposure": 20
+      },
+      "proof_state": "REPOSITORY_SCAFFOLD_MERGED; PRIVATE_GOOGLE_CLOUD_DEPLOYMENT_NOT_VERIFIED; WIF_INVALID_TARGET; SECRET_MANAGER_ACCESS_DENIED",
+      "blockers": [
+        "Canonical Google Workload Identity Federation target is invalid or unavailable",
+        "Secret Manager credential binding is not verified",
+        "Private Cloud Run worker deployment and authenticated health readback are not verified"
+      ],
+      "next_action": "Resume only after WIF audience/provider and least-privilege Secret Manager access are independently verified."
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "state": "BLOCKED",
+      "priority": 80,
+      "priority_factors": {
+        "urgency": 20,
+        "dependency_closure": 4,
+        "completion_proximity": 16,
+        "reuse_value": 20,
+        "risk_exposure": 20
+      },
+      "proof_state": "ADAPTER_SCAFFOLD_READY; PROVIDER_CREDENTIAL_AND_GOOGLE_SPEECH_BINDING_NOT_VERIFIED; LIVE_EXECUTION_NOT_PROVEN",
+      "blockers": [
+        "No verified provider credential available to the authorised execution runtime",
+        "No verified Google Speech runtime binding",
+        "Cloud worker deployment remains unverified"
+      ],
+      "next_action": "Execute chunk-001 canary immediately after an authorised runtime credential and provider binding are independently verified."
     }
   ]
 }
