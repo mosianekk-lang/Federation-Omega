@@ -1,0 +1,60 @@
+{
+  "registry_version": "1.1",
+  "updated_at": "2026-07-31T22:05:17+02:00",
+  "proof_note": "States describe verified repository and connector observations. They do not imply unverified external execution.",
+  "lanes": [
+    {
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "state": "ACTIVE",
+      "priority": 100,
+      "proof_state": "PERSISTENT_REGISTRY_IMPLEMENTED_ON_BRANCH",
+      "next_action": "Run CI and verify deterministic transition tests."
+    },
+    {
+      "lane_id": "LANE-PLATFORM-SETUP",
+      "state": "VERIFYING",
+      "priority": 99,
+      "proof_state": "PR_39_OPEN_DRAFT_MERGEABLE; PRIOR_CI_SUCCESS",
+      "next_action": "Verify CI for the new Innovation Engine commits, then prepare the draft PR for review."
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "state": "READY",
+      "priority": 98,
+      "proof_state": "SCHEMA_READY; REAL_PASSPORT_NOT_YET_GENERATED",
+      "next_action": "Generate a real passport and Merkle proof from the verified audio manifests."
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "state": "RESUMABLE",
+      "priority": 97,
+      "proof_state": "DESIGN_AND_TRUST_STANDARD_READY; REFERENCE_CONNECTORS_NOT_YET_IMPLEMENTED",
+      "next_action": "Implement local-runtime and Google Drive reference connectors."
+    },
+    {
+      "lane_id": "LANE-KIMMIE-SEED",
+      "state": "READY",
+      "priority": 96,
+      "proof_state": "GENOME_AND_GERMINATION_SCAFFOLD_READY",
+      "next_action": "Generate the first authorised environment nutrient map and germination decision."
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "state": "BLOCKED",
+      "priority": 100,
+      "proof_state": "ADAPTER_READY; LIVE_EXECUTION_NOT_PROVEN",
+      "blockers": [
+        "No verified provider credential available to this execution runtime",
+        "No verified Google Speech runtime binding"
+      ],
+      "next_action": "Execute chunk-001 canary immediately after an authorised runtime credential is independently verified."
+    },
+    {
+      "lane_id": "LANE-IPEP-BIBLE",
+      "state": "ACTIVE",
+      "priority": 95,
+      "proof_state": "DRIVE_CONTROL_FOLDER_VERIFIED; CANONICAL_BIBLE_DOCUMENT_NOT_FOUND_BY_SEARCH",
+      "next_action": "Create or locate the canonical IPEP Bible and append this run receipt."
+    }
+  ]
+}
