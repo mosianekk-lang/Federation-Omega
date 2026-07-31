@@ -1,13 +1,8 @@
 # EvidenceOps Virtual Organization Status
 
-Updated: 2026-08-01T00:02:25+02:00
+Updated: 2026-07-31T22:57:06.790361+00:00
 
-- Completed this cycle: ORG-REVENUE-001 internal buyer-ready offer package
-- Offer state: CHECKPOINTED; validator and 4/4 safety tests passed
-- External release: not authorised; Founder approval required
-- Safe executable lanes: 2
-- Approval-checkpointed lanes: 2
+- Active/resumable lanes: 3
 - Blocked lanes: 1
-- Highest-value safe executable lane: ORG-PROOF-001
-- Next action: Generalise the Provenance Passport into a reusable multi-corpus validator and verification CLI.
-- Cloud/transcription blocker change: none verified
+- Highest-value lane: ORG-REVENUE-001
+- Next action: Founder review of internal pricing bands and external-release posture.
