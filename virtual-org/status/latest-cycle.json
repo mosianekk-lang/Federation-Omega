@@ -1,8 +1,16 @@
 {
-  "timestamp": "2026-07-31T21:16:14.693943+00:00",
-  "active_count": 3,
+  "timestamp": "2026-08-01T00:02:25+02:00",
+  "review_scope": "all active, ready, resumable, blocked and checkpointed core and virtual-organization lanes",
+  "completed_lane": "ORG-REVENUE-001",
+  "completed_action": "Packaged four truth-bounded buyer-ready internal offers and machine-readable service passports.",
+  "completed_state": "CHECKPOINTED_TEST_PASSED_INTERNAL_RELEASE_CANDIDATE",
+  "proof_receipt_sha256": "50f5de09413471437d07de1decfef6761a1a862c9bd72ae02e7a512353136784",
+  "bible_receipt_sha256": "9ab21b8b85a998d8210d380034019b42bc5568f6885dece73f2eed18f64593e1",
+  "safe_executable_count": 2,
+  "approval_checkpoint_count": 2,
   "blocked_count": 1,
-  "top_lane": "ORG-REVENUE-001",
-  "top_next_action": "Package Legal Audio Lab, Matter Sprint, the verified Provenance Passport and Workspace Automation Sprint into buyer-ready offers.",
+  "top_safe_lane": "ORG-PROOF-001",
+  "top_next_action": "Generalise the Provenance Passport into a reusable multi-corpus validator and verification CLI.",
+  "blocker_change": "NONE_VERIFIED",
   "state": "CYCLE_COMPLETE"
 }
