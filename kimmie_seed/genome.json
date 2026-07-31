@@ -48,5 +48,5 @@
     "identity drift"
   ],
   "promotion_rule": "No promotion on design alone; require environment evidence, proof receipt, readback and rollback appropriate to the stage.",
-  "genome_sha256": "bb2a74dafedb79f7f9118f83f85d2b9a1ec175d1964d8f76373bce51a4ab05a3"
+  "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9"
 }
