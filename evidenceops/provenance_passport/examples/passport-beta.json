@@ -1,0 +1,29 @@
+{
+  "algorithm": {
+    "domain_separation": "EPP_LEAF_V1/EPP_NODE_V1/EPP_RECEIPT_V1",
+    "hash": "sha256",
+    "odd_node_rule": "duplicate_last",
+    "record_order": "record_id_ascending"
+  },
+  "corpus_id": "EPP-CONFORMANCE-BETA",
+  "merkle_root": "6c8f70a9051b3012cfaf5d40007eccc9483b320194ace13e0a5b68da11de37db",
+  "receipt_sha256": "96e1022abcbf67dbbd93057afb1e3505057703845c279cebbb06ebb86a0a9472",
+  "record_count": 2,
+  "records": [
+    {
+      "leaf_sha256": "fc1bd56f0a7d507c1bd798f6cbc15a7120148e9f66d3346a90c0a7357ba60082",
+      "proof": [
+        {"sha256": "e002dd3c9fd13927787af1c5bb45935d426f699eefecf4a13aeab0314085ab4e", "side": "right"}
+      ],
+      "record": {"record_id": "beta-001", "sha256": "dddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd"}
+    },
+    {
+      "leaf_sha256": "e002dd3c9fd13927787af1c5bb45935d426f699eefecf4a13aeab0314085ab4e",
+      "proof": [
+        {"sha256": "fc1bd56f0a7d507c1bd798f6cbc15a7120148e9f66d3346a90c0a7357ba60082", "side": "left"}
+      ],
+      "record": {"record_id": "beta-002", "sha256": "eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee"}
+    }
+  ],
+  "schema_version": "evidenceops.provenance-passport/v1"
+}
