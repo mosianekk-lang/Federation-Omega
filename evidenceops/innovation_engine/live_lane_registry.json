@@ -1,6 +1,6 @@
 {
   "registry_version": "1.3",
-  "updated_at": "2026-07-31T23:14:50+02:00",
+  "updated_at": "2026-07-31T23:16:00+02:00",
   "proof_note": "States describe verified repository and connector observations. They do not imply unverified external execution.",
   "priority_model": {
     "scale": "0-100",
@@ -99,17 +99,21 @@
     },
     {
       "lane_id": "LANE-IPEP-BIBLE",
-      "state": "ACTIVE",
-      "priority": 84,
+      "state": "CHECKPOINTED",
+      "priority": 81,
       "priority_factors": {
-        "urgency": 17,
-        "dependency_closure": 18,
-        "completion_proximity": 18,
+        "urgency": 10,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
         "reuse_value": 17,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; RECEIPTS_001_002_AND_KIMMIE_CHECKPOINT_PRESENT; CURRENT_RECEIPT_PENDING_APPEND",
-      "next_action": "Append Lane Watch Receipt 003 with PR merge, passport proof and unchanged blocker evidence."
+      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; LANE_WATCH_RECEIPT_003_APPENDED_AND_READ_BACK",
+      "next_action": "Append only when a subsequent verified lane transition, blocker change or maturity event occurs.",
+      "proof_receipt": {
+        "receipt_sha256": "ded40d0f5a640c728b4b95b39d54c190b687bde0ef0c3bada1464c4f4073ada5",
+        "document_revision_id": "AIroW36qSPfH1yJ1DnZp0RtVpgp5y9L5kgkpge3DtSixpxCImiOjZzkaFIvRRCWEiXaK5IyHVnJ-cRVVi2rGqgddkIZVZziZ18cd3gkgdSU"
+      }
     },
     {
       "lane_id": "LANE-PLATFORM-SETUP",
