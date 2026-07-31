@@ -1,0 +1,8 @@
+{
+  "corpus_id": "EPP-CONFORMANCE-ALPHA",
+  "records": [
+    {"record_id": "alpha-001", "sha256": "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"},
+    {"record_id": "alpha-002", "sha256": "bbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbbb"},
+    {"record_id": "alpha-003", "sha256": "cccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccccc"}
+  ]
+}
