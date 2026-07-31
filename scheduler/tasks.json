@@ -1,0 +1,100 @@
+{
+  "version": "1.0",
+  "timezone": "Africa/Johannesburg",
+  "proof_rule": "DISPATCHED is not execution proof; completion requires readback or a proof receipt.",
+  "tasks": [
+    {
+      "task_id": "EXT-001",
+      "title": "Lane dependency and blocker watch",
+      "cadence": "hourly",
+      "priority": 100,
+      "state": "READY",
+      "action": "Inspect all lane states and external dependencies; promote only verified unblocked work.",
+      "proof_gate": "Updated lane state plus dependency evidence"
+    },
+    {
+      "task_id": "EXT-002",
+      "title": "Kimmie Seed maturity watch",
+      "cadence": "every_6_hours",
+      "priority": 99,
+      "state": "READY",
+      "action": "Assess authorised environment, nutrients, growth gates, identity drift, dormancy and promotion evidence.",
+      "proof_gate": "Signed or hashed maturity assessment"
+    },
+    {
+      "task_id": "EXT-003",
+      "title": "Innovation scan",
+      "cadence": "daily_0800_sast",
+      "priority": 96,
+      "state": "READY",
+      "action": "Identify new technical, legal, scientific, privacy, commercial and workflow opportunities.",
+      "proof_gate": "New opportunity record with rationale, test and rollback"
+    },
+    {
+      "task_id": "EXT-004",
+      "title": "Continuity checkpoint",
+      "cadence": "daily_2200_sast",
+      "priority": 97,
+      "state": "READY",
+      "action": "Verify lane registry, manifests, hashes, proof receipts and exact next actions.",
+      "proof_gate": "Checkpoint manifest and SHA-256"
+    },
+    {
+      "task_id": "EXT-005",
+      "title": "Connector conformance review",
+      "cadence": "weekly_monday_0700_sast",
+      "priority": 95,
+      "state": "READY",
+      "action": "Assess connector health, schema drift, authority envelopes, rollback and ECTS conformance.",
+      "proof_gate": "Versioned conformance report"
+    },
+    {
+      "task_id": "EXT-006",
+      "title": "Evidence Provenance Passport build",
+      "cadence": "dependency_driven",
+      "priority": 98,
+      "state": "READY",
+      "action": "Generate the first real provenance passport, Merkle proof and integrity score from verified manifests.",
+      "proof_gate": "Passport validates and Merkle inclusion proof verifies"
+    },
+    {
+      "task_id": "EXT-007",
+      "title": "Reference connector implementation",
+      "cadence": "dependency_driven",
+      "priority": 98,
+      "state": "READY",
+      "action": "Implement and test local-runtime and Google Drive sovereign reference connectors.",
+      "proof_gate": "Deterministic tests, readback and ECTS report"
+    },
+    {
+      "task_id": "EXT-008",
+      "title": "Private Google Cloud worker deployment",
+      "cadence": "dependency_driven",
+      "priority": 97,
+      "state": "BLOCKED",
+      "action": "Deploy private worker and verify health, identity, Secret Manager access and proof receipts.",
+      "proof_gate": "Live private endpoint readback and deployment receipt",
+      "blocker": "Google Cloud deployment credentials and workload identity must be verified"
+    },
+    {
+      "task_id": "EXT-009",
+      "title": "Audio transcription canary",
+      "cadence": "dependency_driven",
+      "priority": 100,
+      "state": "BLOCKED",
+      "action": "Execute one verified audio chunk through an authorised transcription provider.",
+      "proof_gate": "Raw response, source hash match, non-empty transcript and receipt",
+      "blocker": "Provider credential must be bound to an authorised runtime"
+    },
+    {
+      "task_id": "EXT-010",
+      "title": "Nature intelligence corpus acquisition",
+      "cadence": "dependency_driven",
+      "priority": 93,
+      "state": "BLOCKED",
+      "action": "Acquire lawful public-domain nature works, hash them and begin mechanism extraction.",
+      "proof_gate": "Source manifest, rights note and file hashes",
+      "blocker": "Run acquisition in authorised external compute"
+    }
+  ]
+}
