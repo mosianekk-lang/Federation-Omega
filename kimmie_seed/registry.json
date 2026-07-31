@@ -1,11 +1,11 @@
 {
-  "registry_version": "1.3",
-  "updated_at": "2026-07-31T21:29:30+00:00",
+  "registry_version": "1.4",
+  "updated_at": "2026-08-01T01:11:03+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SPROUT",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
   "identity_drift": "NONE_DETECTED",
-  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260731-003.json",
+  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260801-005.json",
   "maintenance_owner": "mosianekk-lang",
   "monitoring": {
     "external_scheduler": "GitHub Actions",
@@ -20,6 +20,14 @@
       "receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
       "github_readback": "PASSED",
       "receipt_hash_recalculation": "PASSED"
+    },
+    "last_review": {
+      "assessment_id": "KSA-20260801-005",
+      "observed_at": "2026-08-01T01:11:03+02:00",
+      "repository_head": "8f3eacdd2a88b2c03d11231a70390a47eaf025f4",
+      "material_change": false,
+      "notification": "SUPPRESS",
+      "checkpoint_sha256": "37ac860bf9bfac8248abd57c741954ee8cc2acc9b0da47fde7af60357fb58a26"
     }
   },
   "promotion_gate": {
@@ -27,7 +35,14 @@
     "external_maturity_workflow_readback": "PASSED",
     "current_verified_stage": "SPROUT",
     "next_candidate_stage": "SAPLING",
-    "root_promotion": "VERIFIED"
+    "root_promotion": "VERIFIED",
+    "sapling_requirements": {
+      "repeated_successful_maturity_cycles": "NOT_VERIFIED",
+      "reusable_capability_multiple_corpora_or_environments": "NOT_VERIFIED",
+      "persistent_monitoring": "PARTIAL",
+      "maintenance_evidence": "PARTIAL",
+      "recovery_evidence": "NOT_VERIFIED"
+    }
   },
   "child_lanes": [
     {
@@ -136,10 +151,10 @@
         "IPEP Innovation Bible"
       ],
       "monitoring_data": {
-        "current": "Registry and Bible checkpoint",
+        "current": "Registry, Bible checkpoint and current Drive accessibility readback",
         "gap": "No reusable passport health monitor or repeated-corpus execution history yet"
       },
-      "next_gate": "SAPLING requires reusable validator/verification CLI, repeated successful execution on multiple corpora, persistent monitoring and maintenance evidence.",
+      "next_gate": "SAPLING requires reusable validator/verification CLI, repeated successful execution on multiple corpora, persistent monitoring and maintenance/recovery evidence.",
       "owner_decision_required": false
     },
     {
@@ -178,5 +193,5 @@
       "owner_decision_required": false
     }
   ],
-  "lesson": "A root seed is promoted only when a useful child capability, independent proof readback and successful external maturity-workflow evidence converge."
+  "lesson": "Monitoring liveness is not capability growth. Promote to SAPLING only after repeated lane-specific execution, reusable multi-corpus proof, persistent monitoring and verified maintenance/recovery evidence."
 }
