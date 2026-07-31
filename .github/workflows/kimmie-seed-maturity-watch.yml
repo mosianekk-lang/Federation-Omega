@@ -87,11 +87,12 @@ jobs:
           if-no-files-found: error
           retention-days: 30
 
-      - name: Persist first successful workflow readback
+      - name: Persist durable workflow readback
         run: |
           git config user.name "kimmie-seed-maturity-watch"
           git config user.email "actions@users.noreply.github.com"
+          git add kimmie_seed/monitoring/latest_assessment.json
           git add kimmie_seed/monitoring/first_successful_workflow_receipt.json
-          git diff --cached --quiet || git commit -m "Record first successful Kimmie Seed maturity workflow receipt"
+          git diff --cached --quiet || git commit -m "Record Kimmie Seed maturity workflow assessment"
           git pull --rebase
           git push
