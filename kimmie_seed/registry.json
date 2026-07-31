@@ -1,24 +1,33 @@
 {
-  "registry_version": "1.2",
-  "updated_at": "2026-07-31T21:23:01+00:00",
+  "registry_version": "1.3",
+  "updated_at": "2026-07-31T21:29:30+00:00",
   "seed_id": "KIMMIE-IPEP-001",
-  "current_verified_stage": "ROOTED",
+  "current_verified_stage": "SPROUT",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
   "identity_drift": "NONE_DETECTED",
-  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260731-002.json",
+  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260731-003.json",
   "maintenance_owner": "mosianekk-lang",
   "monitoring": {
     "external_scheduler": "GitHub Actions",
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
     "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only",
-    "workflow_execution_readback": "PENDING"
+    "workflow_execution_readback": "PASSED",
+    "first_successful_workflow_receipt": {
+      "workflow_run_id": "30666696792",
+      "source_sha": "360958c4b9140aed1cbf952210467c0c3a749de6",
+      "executed_at": "2026-07-31T21:28:39.157893+00:00",
+      "receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
+      "github_readback": "PASSED",
+      "receipt_hash_recalculation": "PASSED"
+    }
   },
   "promotion_gate": {
     "first_useful_child_capability": "PASSED",
-    "external_maturity_workflow_readback": "PENDING",
-    "next_candidate_stage": "SPROUT",
-    "root_promotion": "NOT_AUTHORISED"
+    "external_maturity_workflow_readback": "PASSED",
+    "current_verified_stage": "SPROUT",
+    "next_candidate_stage": "SAPLING",
+    "root_promotion": "VERIFIED"
   },
   "child_lanes": [
     {
@@ -169,5 +178,5 @@
       "owner_decision_required": false
     }
   ],
-  "lesson": "A child seed can advance independently when its own environment, proof, tests and readback are verified; the root seed must still satisfy its separate external-workflow readback gate."
+  "lesson": "A root seed is promoted only when a useful child capability, independent proof readback and successful external maturity-workflow evidence converge."
 }
