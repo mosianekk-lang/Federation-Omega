@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.3",
-  "updated_at": "2026-07-31T23:16:00+02:00",
+  "registry_version": "1.4",
+  "updated_at": "2026-07-31T23:32:10+02:00",
   "proof_note": "States describe verified repository and connector observations. They do not imply unverified external execution.",
   "priority_model": {
     "scale": "0-100",
@@ -21,6 +21,8 @@
     "drive_connector_access": "VERIFIED_READ_WRITE",
     "ipep_bible_access": "VERIFIED",
     "verified_audio_manifest_available": true,
+    "kimmie_maturity_workflow_readback": "PASSED",
+    "kimmie_latest_assessment": "PASS_AT_SPROUT",
     "provider_transcription_credential": "NOT_VERIFIED",
     "google_speech_binding": "NOT_VERIFIED",
     "google_cloud_wif": "BLOCKED_INVALID_TARGET",
@@ -40,14 +42,14 @@
         "reuse_value": 20,
         "risk_exposure": 18
       },
-      "proof_state": "FIRST_REAL_PRIVATE_PASSPORT_GENERATED; FIVE_LEAVES; MERKLE_PROOFS_VERIFIED; DRIVE_READBACK_PASSED",
+      "proof_state": "SPROUT; FIRST_REAL_PRIVATE_PASSPORT_GENERATED; FIVE_LEAVES; MERKLE_PROOFS_VERIFIED; DRIVE_READBACK_PASSED",
       "proof_receipt": {
         "passport_id": "EPP-BUILDING43-AUDIO-20260731-001",
         "drive_file_id": "11c0QaaV6NEDVBVdDfsm2G3yFkZd6-tBW",
         "merkle_root": "17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa",
         "passport_receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4"
       },
-      "next_action": "Generalise the passport builder into a reusable schema validator and verification CLI without exposing private evidence metadata."
+      "next_action": "Generalise the passport builder into a reusable schema validator and verification CLI, then prove repeated execution across multiple corpora."
     },
     {
       "lane_id": "LANE-INNOVATION-ENGINE",
@@ -94,8 +96,16 @@
         "reuse_value": 20,
         "risk_exposure": 20
       },
-      "proof_state": "ROOTED; EXTERNAL_MATURITY_WORKFLOW_PRESENT; FIRST_USEFUL_CHILD_CAPABILITY_NOW_PROVEN_BY_PROVENANCE_PASSPORT",
-      "next_action": "Read back a successful external maturity workflow run and reassess the SPROUT promotion gate."
+      "proof_state": "SPROUT; FIRST_USEFUL_CHILD_CAPABILITY_PROVEN; DEDICATED_MATURITY_WORKFLOW_PASSED; DURABLE_GITHUB_READBACK_PASSED; IDENTITY_DRIFT_NONE",
+      "proof_receipt": {
+        "checkpoint": "kimmie_seed/checkpoints/KSA-20260731-003.json",
+        "workflow_run_id": "30666696792",
+        "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
+        "latest_assessment_sha256": "84d61ae41e93c96c378d7c9e718267dbb6d73db688eee075c860e4581d64fbb8",
+        "registry_stage": "SPROUT",
+        "assessment_status": "PASS"
+      },
+      "next_action": "Advance toward SAPLING through repeated successful maturity cycles, reusable multi-corpus child execution, persistent monitoring, maintenance and recovery evidence."
     },
     {
       "lane_id": "LANE-IPEP-BIBLE",
@@ -108,11 +118,11 @@
         "reuse_value": 17,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; LANE_WATCH_RECEIPT_003_APPENDED_AND_READ_BACK",
+      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; KIMMIE_MATURITY_CHECKPOINT_003_APPENDED_AND_READ_BACK",
       "next_action": "Append only when a subsequent verified lane transition, blocker change or maturity event occurs.",
       "proof_receipt": {
-        "receipt_sha256": "ded40d0f5a640c728b4b95b39d54c190b687bde0ef0c3bada1464c4f4073ada5",
-        "document_revision_id": "AIroW36qSPfH1yJ1DnZp0RtVpgp5y9L5kgkpge3DtSixpxCImiOjZzkaFIvRRCWEiXaK5IyHVnJ-cRVVi2rGqgddkIZVZziZ18cd3gkgdSU"
+        "receipt_sha256": "d4ce1c7248be42c358fb2ef2a29262386a15292a617e6854e73547b509eadcda",
+        "document_revision_id": "AIroW35HBNgboVqXlL6pzLxIah03e1pKPzsVk7teF07kGgOOGH9c413IVc6QYAnmJOR1kOoPE6lj-Q_3z5R0NVKyDICrPKRKCvpz9XLrixc"
       }
     },
     {
