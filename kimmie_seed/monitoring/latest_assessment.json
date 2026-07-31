@@ -1,0 +1,13 @@
+{
+  "seed_id": "KIMMIE-IPEP-001",
+  "verified_stage": "SPROUT",
+  "registry_stage": "SPROUT",
+  "identity_drift": "NONE_DETECTED",
+  "missing_required_nutrients": [],
+  "useful_child_capability_verified": true,
+  "workflow_receipt_validation": "PASSED",
+  "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
+  "next_gate": "SAPLING requires repeated successful maturity cycles, a reusable child capability across multiple corpora or environments, persistent monitoring, maintenance and recovery evidence",
+  "status": "PASS",
+  "assessment_sha256": "84d61ae41e93c96c378d7c9e718267dbb6d73db688eee075c860e4581d64fbb8"
+}
