@@ -1,4 +1,16 @@
 {
-  "concepts": [],
-  "updated_at": "2026-07-31T22:18:41.571183+00:00"
+  "portfolio_id": "EARTH2-PORTFOLIO-001",
+  "version": "1.0",
+  "concepts": [
+    {"id":"E2K-0001","domain":"Trust Infrastructure","name":"Trusted Institution Node","maturity":"COMMERCIAL_CANDIDATE","scores":{"revenue_potential":98,"urgency":95,"defensibility":91,"network_effect":94,"implementation_feasibility":88},"dependencies":[],"next_action":"prepare buyer-ready offer"},
+    {"id":"E2K-0002","domain":"Anti-Corruption Systems","name":"Corruption Oxygen Index","maturity":"PROTOTYPE_BUILT","scores":{"revenue_potential":90,"urgency":96,"defensibility":87,"network_effect":83,"implementation_feasibility":92},"dependencies":[],"next_action":"benchmark against real workflows"},
+    {"id":"E2K-0003","domain":"AI-Agent Society","name":"AI-Agent University Operating System","maturity":"GENOME_READY","scores":{"revenue_potential":95,"urgency":85,"defensibility":96,"network_effect":98,"implementation_feasibility":74},"dependencies":[],"next_action":"define first curriculum and certification path"},
+    {"id":"E2K-0004","domain":"Institutional Memory","name":"Founder Intelligence Preservation","maturity":"PILOT_CANDIDATE","scores":{"revenue_potential":92,"urgency":99,"defensibility":89,"network_effect":78,"implementation_feasibility":94},"dependencies":[],"next_action":"deploy canonical live capture with verified master sync"},
+    {"id":"E2K-0005","domain":"Justice and Rights","name":"Burden Transfer Detector","maturity":"PROTOTYPE_CANDIDATE","scores":{"revenue_potential":86,"urgency":94,"defensibility":88,"network_effect":81,"implementation_feasibility":89},"dependencies":["E2K-0002"],"next_action":"build detection rules and evidence rubric"},
+    {"id":"E2K-0006","domain":"Governance","name":"Proof-Carrying Decision Engine","maturity":"PROTOTYPE_CANDIDATE","scores":{"revenue_potential":94,"urgency":91,"defensibility":93,"network_effect":95,"implementation_feasibility":82},"dependencies":[],"next_action":"build decision packet API"},
+    {"id":"E2K-0007","domain":"Markets and Finance","name":"Integrity Underwriting Feed","maturity":"CONCEPT_DEFINED","scores":{"revenue_potential":97,"urgency":80,"defensibility":92,"network_effect":91,"implementation_feasibility":67},"dependencies":["E2K-0002","E2K-0006"],"next_action":"define insurer data model"},
+    {"id":"E2K-0008","domain":"Sovereignty and Federation","name":"Federated Accountability Mesh","maturity":"GENOME_READY","scores":{"revenue_potential":89,"urgency":79,"defensibility":97,"network_effect":100,"implementation_feasibility":60},"dependencies":["E2K-0006"],"next_action":"define node verification protocol"},
+    {"id":"E2K-0009","domain":"Education and Human Development","name":"Kim Value Algorithm","maturity":"PROTOTYPE_BUILT","scores":{"revenue_potential":88,"urgency":87,"defensibility":95,"network_effect":86,"implementation_feasibility":84},"dependencies":[],"next_action":"calibrate against observed outcomes"},
+    {"id":"E2K-0010","domain":"AI-Agent Society","name":"Expert Genome Agent Foundry","maturity":"GENOME_READY","scores":{"revenue_potential":93,"urgency":90,"defensibility":98,"network_effect":97,"implementation_feasibility":79},"dependencies":["E2K-0003"],"next_action":"build first three benchmarked expert councils"}
+  ]
 }
