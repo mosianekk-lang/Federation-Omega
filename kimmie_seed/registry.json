@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.0",
-  "updated_at": "2026-07-31T20:16:06+00:00",
+  "registry_version": "1.1",
+  "updated_at": "2026-07-31T21:16:30+00:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "ROOTED",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
@@ -12,6 +12,11 @@
     "cadence": "every 6 hours",
     "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only"
   },
+  "promotion_gate": {
+    "first_useful_child_capability": "PASSED",
+    "external_maturity_workflow_readback": "PENDING",
+    "next_candidate_stage": "SPROUT"
+  },
   "child_lanes": [
     {
       "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
@@ -20,13 +25,18 @@
     },
     {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
-      "state": "SEED",
-      "blocker": "Reference connector runtime and conformance report not yet proven"
+      "state": "RESUMABLE",
+      "blocker": "Reference connector implementation and conformance report not yet proven"
     },
     {
       "lane_id": "LANE-PROVENANCE-PASSPORT",
-      "state": "SEED",
-      "blocker": "Real passport and Merkle proof not yet produced"
+      "state": "TEST_PASSED",
+      "proof": {
+        "passport_id": "EPP-BUILDING43-AUDIO-20260731-001",
+        "merkle_root": "17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa",
+        "receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4",
+        "drive_readback": "PASSED"
+      }
     },
     {
       "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
