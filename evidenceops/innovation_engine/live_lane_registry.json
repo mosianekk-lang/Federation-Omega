@@ -1,21 +1,21 @@
 {
-  "registry_version": "1.1",
-  "updated_at": "2026-07-31T22:05:17+02:00",
+  "registry_version": "1.2",
+  "updated_at": "2026-07-31T22:12:00+02:00",
   "proof_note": "States describe verified repository and connector observations. They do not imply unverified external execution.",
   "lanes": [
     {
       "lane_id": "LANE-INNOVATION-ENGINE",
-      "state": "ACTIVE",
+      "state": "VERIFYING",
       "priority": 100,
-      "proof_state": "PERSISTENT_REGISTRY_IMPLEMENTED_ON_BRANCH",
-      "next_action": "Run CI and verify deterministic transition tests."
+      "proof_state": "PERSISTENT_REGISTRY_IMPLEMENTED; REGRESSION_TESTS_PASSED; PR_READY_FOR_REVIEW",
+      "next_action": "Review and merge PR #39, then verify persistence in the default branch before any production claim."
     },
     {
       "lane_id": "LANE-PLATFORM-SETUP",
       "state": "VERIFYING",
       "priority": 99,
-      "proof_state": "PR_39_OPEN_DRAFT_MERGEABLE; PRIOR_CI_SUCCESS",
-      "next_action": "Verify CI for the new Innovation Engine commits, then prepare the draft PR for review."
+      "proof_state": "PR_39_OPEN_NON_DRAFT_MERGEABLE; SUPERIOR_LOGIC_CI_SUCCESS_ON_8517D02D",
+      "next_action": "Complete repository review, then separately verify private Google Cloud deployment and runtime health."
     },
     {
       "lane_id": "LANE-PROVENANCE-PASSPORT",
@@ -53,8 +53,8 @@
       "lane_id": "LANE-IPEP-BIBLE",
       "state": "ACTIVE",
       "priority": 95,
-      "proof_state": "DRIVE_CONTROL_FOLDER_VERIFIED; CANONICAL_BIBLE_DOCUMENT_NOT_FOUND_BY_SEARCH",
-      "next_action": "Create or locate the canonical IPEP Bible and append this run receipt."
+      "proof_state": "CANONICAL_LEDGER_CREATED_IN_DRIVE_CONTROL_FOLDER; RECEIPT_001_APPENDED",
+      "next_action": "Append the CI repair and PR-ready transition receipt."
     }
   ]
 }
