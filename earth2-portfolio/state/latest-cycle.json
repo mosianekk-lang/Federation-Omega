@@ -1,9 +1,45 @@
 {
-  "advanced_count": 0,
-  "advances": [],
-  "blocked_count": 0,
-  "eligible_candidates": 0,
-  "portfolio_size": 0,
+  "advanced_count": 5,
+  "advances": [
+    {
+      "from": "COMMERCIAL_CANDIDATE",
+      "id": "E2K-0001",
+      "name": "Trusted Institution Node",
+      "priority": 93.7,
+      "to": "OFFER_READY"
+    },
+    {
+      "from": "PROTOTYPE_CANDIDATE",
+      "id": "E2K-0006",
+      "name": "Proof-Carrying Decision Engine",
+      "priority": 91.6,
+      "to": "PROTOTYPE_BUILT"
+    },
+    {
+      "from": "GENOME_READY",
+      "id": "E2K-0003",
+      "name": "AI-Agent University Operating System",
+      "priority": 90.65,
+      "to": "PROTOTYPE_CANDIDATE"
+    },
+    {
+      "from": "PILOT_CANDIDATE",
+      "id": "E2K-0004",
+      "name": "Founder Intelligence Preservation",
+      "priority": 90.3,
+      "to": "PILOT_ACTIVE"
+    },
+    {
+      "from": "PROTOTYPE_BUILT",
+      "id": "E2K-0002",
+      "name": "Corruption Oxygen Index",
+      "priority": 89.5,
+      "to": "BENCHMARKED"
+    }
+  ],
+  "blocked_count": 3,
+  "eligible_candidates": 7,
+  "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-07-31T22:18:41.571183+00:00"
+  "timestamp": "2026-07-31T22:19:28.516738+00:00"
 }
