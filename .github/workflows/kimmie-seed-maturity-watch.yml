@@ -1,6 +1,11 @@
 name: Kimmie Seed Maturity Watch
 
 on:
+  push:
+    branches: [main]
+    paths:
+      - 'kimmie_seed/**'
+      - '.github/workflows/kimmie-seed-maturity-watch.yml'
   schedule:
     - cron: '17 */6 * * *'
   workflow_dispatch:
