@@ -25,7 +25,7 @@
       "tests_passed": 6,
       "tests_failed": 0
     },
-    "repository_readback": "PENDING_FINAL_READBACK",
+    "repository_readback": "PASS",
     "github_actions": "NOT_YET_READ_BACK",
     "real_corpora": [
       {
@@ -55,5 +55,5 @@
     "External GitHub Actions conclusion must be read back before claiming CI completion.",
     "SAPLING promotion remains blocked on persistent monitoring plus maintenance and recovery evidence."
   ],
-  "release_receipt_sha256": "0e65c0b3f7f911586f7feb0cad2d97e0bfd06dffcf89512ac472ef27cb0c30da"
+  "release_receipt_sha256": "2c59af33d56fd6d6f4aff41dffcc817db63d674f8a758168a579894135ab7461"
 }
