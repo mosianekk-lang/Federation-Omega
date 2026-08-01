@@ -1,21 +1,45 @@
 from pathlib import Path
-import json, importlib.util
+import json
+import importlib.util
+import sys
 
 spec = importlib.util.spec_from_file_location(
     "ipaudit_engine",
     Path(__file__).parents[1] / "in_place_audit_omega" / "engine.py"
 )
 mod = importlib.util.module_from_spec(spec)
+assert spec.loader is not None
+# Python 3.12 dataclasses and postponed annotations require the dynamically
+# loaded module to be registered before decorators evaluate class metadata.
+sys.modules[spec.name] = mod
 spec.loader.exec_module(mod)
+
 
 class Adapter:
     source_id = "test-source"
+
     def iter_records(self):
-        yield mod.EvidenceRecord("R1", self.source_id, "action", "2026-01-01T00:00:00+00:00", {"status":"executed"}, {"approved":False})
-        yield mod.EvidenceRecord("R2", self.source_id, "status", "2026-01-01T01:00:00+00:00", {"status":"complete"}, {"references":["R1"]})
-        yield mod.EvidenceRecord("R3", self.source_id, "claim", None, {"subject":"X","predicate":"owner","value":"Kim"}, {})
-        yield mod.EvidenceRecord("R4", self.source_id, "claim", None, {"subject":"X","predicate":"owner","value":"Other"}, {})
-        yield mod.EvidenceRecord("R5", self.source_id, "status", None, {"status":"queued"}, {"references":["MISSING"]})
+        yield mod.EvidenceRecord(
+            "R1", self.source_id, "action", "2026-01-01T00:00:00+00:00",
+            {"status": "executed"}, {"approved": False}
+        )
+        yield mod.EvidenceRecord(
+            "R2", self.source_id, "status", "2026-01-01T01:00:00+00:00",
+            {"status": "complete"}, {"references": ["R1"]}
+        )
+        yield mod.EvidenceRecord(
+            "R3", self.source_id, "claim", None,
+            {"subject": "X", "predicate": "owner", "value": "Kim"}, {}
+        )
+        yield mod.EvidenceRecord(
+            "R4", self.source_id, "claim", None,
+            {"subject": "X", "predicate": "owner", "value": "Other"}, {}
+        )
+        yield mod.EvidenceRecord(
+            "R5", self.source_id, "status", None,
+            {"status": "queued"}, {"references": ["MISSING"]}
+        )
+
 
 def test_audit_produces_proof_bundle(tmp_path):
     receipt = mod.InPlaceAuditOmega(tmp_path).run(Adapter(), "AUDIT-TEST")
