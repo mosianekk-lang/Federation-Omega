@@ -88,7 +88,7 @@
         "persistent_provider_monitoring": "PASSED_TWO_INDEPENDENT_SCHEDULED_CYCLES"
       },
       "monitoring_receipt": {
-        "prior_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168f70cb7",
+        "prior_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168eb92f243f70cb7",
         "later_payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
         "exact_readback": "PASSED_BOTH_CYCLES",
         "parent_confinement": "PASSED_LATER_CYCLE",
