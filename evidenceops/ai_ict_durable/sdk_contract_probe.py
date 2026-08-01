@@ -4,7 +4,7 @@ import inspect
 import json
 from importlib.metadata import version
 
-from agents import RunConfig, RunState
+from agents import RunConfig, RunState, flush_traces
 from agents.tracing import gen_trace_id
 
 EXPECTED_VERSION = "0.19.2"
@@ -15,9 +15,10 @@ from_json_signature = inspect.signature(RunState.from_json)
 for required in ("initial_agent", "state_json", "strict_context"):
     assert required in from_json_signature.parameters
 assert inspect.iscoroutinefunction(RunState.from_json)
+assert callable(flush_traces)
 
 trace_id = gen_trace_id()
-assert trace_id.startswith("trace_") and len(trace_id) >= 16
+assert trace_id.startswith("trace_") and len(trace_id) == 38
 config = RunConfig(
     tracing={"api_key": "contract-probe-placeholder"},
     trace_include_sensitive_data=False,
@@ -35,5 +36,6 @@ print(json.dumps({
         "initial_agent", "state_json", "strict_context"
     ],
     "tracing_config_type": "MAPPING",
-    "trace_id_format_verified": True
+    "trace_id_format_verified": True,
+    "flush_traces_available": True
 }, indent=2))
