@@ -1,0 +1,136 @@
+{
+  "receipt_id": "LANE-WATCH-RECEIPT-021",
+  "observed_at": "2026-08-01T15:16:44+02:00",
+  "owner": "Kim Kagiso Mosiane",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "lane_id": "LANE-AI-ICT-MODEL-RUNTIME",
+  "review_scope": [
+    "all active, ready, resumable, blocked and checkpointed EvidenceOps lanes",
+    "credential availability and approvals",
+    "GitHub pull requests, commits and workflow conclusions",
+    "Google Drive canonical Bible access and artifact state",
+    "Google Cloud WIF, Secret Manager and Cloud Run proof",
+    "provider runtime and live transcription bindings"
+  ],
+  "material_change": {
+    "detected": true,
+    "summary": "The AI ICT durable runtime overlay reached a fully passing reviewed head and became safely mergeable.",
+    "dependency_closed": "NON_SECRET_DURABLE_RUNSTATE_APPROVAL_PAUSE_RESUME_AND_EXTERNAL_CI_MERGE_GATE",
+    "superseded_failures": [
+      "Earlier Public Repository Leak Guard failures on intermediate PR heads were superseded by a later clean head."
+    ]
+  },
+  "execution": {
+    "selected_lane": "LANE-AI-ICT-MODEL-RUNTIME",
+    "prior_state": "VERIFYING",
+    "result_state": "VERIFYING",
+    "action": "MERGE_REVIEWED_DURABLE_RUNTIME_OVERLAY_TO_MAIN",
+    "pull_request": 47,
+    "pull_request_head": "1354fab4ea0681d4f6dbcad88a22b5b5e84167ea",
+    "merge_commit": "6257bfe58a082525bdfe3feacdd9b651acda8179",
+    "merge_result": "SUCCESS"
+  },
+  "github_checks": [
+    {
+      "name": "Public Repository Leak Guard",
+      "run_id": 30701371136,
+      "conclusion": "success"
+    },
+    {
+      "name": "Superior Logic CI",
+      "run_id": 30701371140,
+      "conclusion": "success"
+    },
+    {
+      "name": "EvidenceOps AI ICT durable runtime",
+      "run_id": 30701371141,
+      "conclusion": "success"
+    }
+  ],
+  "verified_capabilities": [
+    "encrypted-at-rest serialized agent RunState boundary",
+    "secret-like state rejection before persistence",
+    "run-scoped model and tracing credential contract without process-global mutation",
+    "approval-aware pause, durable idempotent decision storage and resume contract",
+    "explicit trace, response, token-usage, interruption and state-version receipt fields",
+    "strict exact-output model canary validator",
+    "PostgreSQL production schema plus local SQLite verification",
+    "OpenAI Agents SDK 0.19.2 contract probe",
+    "seven deterministic durable-overlay tests passed"
+  ],
+  "priority_order": [
+    {
+      "priority": 100,
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "state": "VERIFYING",
+      "executable_now": false
+    },
+    {
+      "priority": 99,
+      "lane_id": "LANE-AI-ICT-MODEL-RUNTIME",
+      "state": "VERIFYING",
+      "executable_now": false
+    },
+    {
+      "priority": 98,
+      "lane_id": "LANE-IPEP-BIBLE",
+      "state": "CHECKPOINTED",
+      "executable_now": true
+    },
+    {
+      "priority": 97,
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "state": "TEST_PASSED",
+      "executable_now": false
+    },
+    {
+      "priority": 96,
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "state": "TEST_PASSED",
+      "executable_now": false
+    },
+    {
+      "priority": 95,
+      "lane_id": "LANE-KIMMIE-SEED",
+      "state": "TEST_PASSED",
+      "executable_now": false
+    },
+    {
+      "priority": 94,
+      "lane_id": "LANE-SOVEREIGN-RUNTIME",
+      "state": "VERIFYING",
+      "executable_now": false
+    },
+    {
+      "priority": 93,
+      "lane_id": "LANE-REVENUE-OFFER-FACTORY",
+      "state": "CHECKPOINTED",
+      "executable_now": false
+    },
+    {
+      "priority": 84,
+      "lane_id": "LANE-PLATFORM-SETUP",
+      "state": "BLOCKED",
+      "executable_now": false
+    },
+    {
+      "priority": 80,
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "state": "BLOCKED",
+      "executable_now": false
+    }
+  ],
+  "unchanged_boundaries": [
+    "No authorised usable model credential was found.",
+    "No WIF identity proof was found.",
+    "No least-privilege Secret Manager binding was found.",
+    "No current private authenticated Cloud Run health proof was found.",
+    "No managed KMS StateProtector binding was found.",
+    "No private PostgreSQL deployment or canonical outbox write/readback was found.",
+    "No current transcription-provider or Google Speech runtime binding was found.",
+    "No external Revenue Offer Factory release approval was found.",
+    "No independent schedule-triggered Provenance Passport durable readback was found."
+  ],
+  "truth_boundary": "This receipt proves reviewed repository implementation, passing GitHub checks and merge to main. It does not prove live model execution, provider credentials, Google Cloud deployment, managed secrets, private database persistence, canonical outbox write-through, live transcription readiness or external commercial approval.",
+  "receipt_sha256": "d0939b69c3afcb54ce6529c28fb8c964bf99025e9c712936457f003c1a2c8036"
+}
