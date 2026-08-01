@@ -6,13 +6,12 @@
   "missing_required_nutrients": [],
   "useful_child_capability_verified": true,
   "verified_useful_child_lanes": [
-    "LANE-CONNECTOR-FOUNDRY",
-    "LANE-PROVENANCE-PASSPORT"
+    "LANE-CONNECTOR-FOUNDRY"
   ],
   "workflow_receipt_validation": "PASSED",
   "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
   "sapling_gate_verified": false,
   "next_gate": "SAPLING requires repeated successful maturity cycles, reusable execution, persistent monitoring, maintenance and recovery evidence",
   "status": "PASS",
-  "assessment_sha256": "c76645e685a445b3c65779517bf57fc58430fbc2978ad092dea7d5fc1b3f7f73"
+  "assessment_sha256": "c100fe1a54fa04f73fe7049fc41d07dcf9441d716894974c48a1f09a3694cfc2"
 }
