@@ -20,6 +20,10 @@ on:
   schedule:
     - cron: '17 * * * *'
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 permissions:
   contents: read
 
@@ -48,18 +52,30 @@ jobs:
         run: |
           mkdir -p alignment-receipt
           python - <<'PY'
-          import dataclasses, importlib.util, json, pathlib, time
+          import dataclasses
+          import importlib.util
+          import json
+          import pathlib
+          import sys
+          import time
+          import uuid
+
           root = pathlib.Path('.')
           path = root / 'evidenceops/runtime/in_place_alignment_loader.py'
-          spec = importlib.util.spec_from_file_location('loader', path)
+          name = f'loader_{uuid.uuid4().hex}'
+          spec = importlib.util.spec_from_file_location(name, path)
           module = importlib.util.module_from_spec(spec)
+          if spec.loader is None:
+              raise RuntimeError('Alignment loader module spec has no loader')
+          sys.modules[spec.name] = module
           spec.loader.exec_module(module)
           _, receipt = module.load_active_translator(root)
           payload = dataclasses.asdict(receipt)
           payload['generated_at'] = int(time.time())
           payload['state'] = 'IN_PLACE_ALIGNMENT_VERIFIED'
+          payload['private_values_persisted'] = False
           pathlib.Path('alignment-receipt/in-place-receipt.json').write_text(
-              json.dumps(payload, indent=2), encoding='utf-8'
+              json.dumps(payload, indent=2, sort_keys=True), encoding='utf-8'
           )
           PY
 
