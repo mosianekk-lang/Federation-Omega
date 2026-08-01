@@ -1,0 +1,98 @@
+{
+  "assessment_id": "KSA-20260801-010",
+  "observed_at": "2026-08-01T05:10:00+02:00",
+  "seed_id": "KIMMIE-IPEP-001",
+  "root_verified_stage": "SPROUT",
+  "root_promotion": "NO_PROMOTION",
+  "identity_drift": "NONE_DETECTED",
+  "owner_decision_required": false,
+  "material_change": true,
+  "qualifying_notification_event": false,
+  "notification": "SUPPRESS",
+  "environment_verification": {
+    "github_repository": "VERIFIED_READ_WRITE",
+    "google_drive_connector": "VERIFIED_CREATE_WRITE_READBACK_DELETE",
+    "canonical_bible": "VERIFIED_READ_WRITE",
+    "provenance_private_passport": "VERIFIED_ACCESSIBLE",
+    "retired_connector_canary": "CONFIRMED_UNAVAILABLE_AFTER_RETIREMENT"
+  },
+  "maintenance_and_recovery_cycle": {
+    "lane_id": "LANE-CONNECTOR-FOUNDRY",
+    "operation_id": "ECTS-GDRIVE-RECOVERY-CANARY-20260801-001",
+    "create": "PASSED",
+    "write": "PASSED",
+    "readback": "PASSED",
+    "payload_sha256": "5d43635c743964d36de2830d01e39328eb1636decfc95ff1702cb6377c79097a",
+    "delete": "PASSED",
+    "post_delete_absence_readback": "PASSED",
+    "sensitive_identifier_persisted_publicly": false
+  },
+  "lane_review": [
+    {
+      "lane_id": "KIMMIE-IPEP-001",
+      "verified_stage": "SPROUT",
+      "authorised_environment": "VERIFIED_GITHUB_DRIVE_ACTIONS",
+      "required_nutrients": "FOUNDATIONAL_NUTRIENTS_VERIFIED",
+      "dependencies": "PERSISTENT_MONITORING_GATE_OPEN",
+      "proof_gates": "SPROUT_CHAIN_VALID; SAPLING_GATE_NOT_VERIFIED",
+      "tests": "ASSESSOR_REGRESSIONS_PREVIOUSLY_PASSED; CONNECTOR_RECOVERY_CANARY_PASSED",
+      "deployment_surfaces": ["GitHub", "Google Drive", "GitHub Actions"],
+      "monitoring_data": "LATEST_ASSESSMENT_PASS; PERSISTENT_SCHEDULED_CYCLE_READBACK_PARTIAL",
+      "maintenance_owner": "mosianekk-lang"
+    },
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": "GITHUB_ONLY",
+      "required_nutrients": "CORPUS_ACQUISITION_INGESTION_RIGHTS_AND_RECEIPT_UNVERIFIED",
+      "dependencies": "OPEN",
+      "proof_gates": "NOT_PASSED",
+      "tests": "NOT_RUN",
+      "deployment_surfaces": ["GitHub registry"],
+      "monitoring_data": "CHECKPOINT_ONLY",
+      "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED"
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "verified_stage": "SPROUT",
+      "operational_state": "RECOVERY_CANARY_PASSED",
+      "authorised_environment": "VERIFIED_GITHUB_AND_GOOGLE_DRIVE",
+      "required_nutrients": "SPROUT_NUTRIENTS_AND_CONTROLLED_RECOVERY_VERIFIED",
+      "dependencies": "PERSISTENT_PROVIDER_MONITORING_OPEN",
+      "proof_gates": "SPROUT_PASSED; REPEATED_PROVIDER_CYCLE_PASSED; RECOVERY_PASSED; SAPLING_NOT_PASSED",
+      "tests": "LOCAL_6_OF_6; PROVIDER_CANARY; SECOND_CREATE_WRITE_READBACK_DELETE_CANARY_PASSED",
+      "deployment_surfaces": ["GitHub", "Local runtime", "Google Drive", "IPEP Bible"],
+      "monitoring_data": "ACTIVE_CONNECTOR_ACCESS_AND_RECOVERY_CONFIRMED; PERSISTENT_MONITOR_OPEN",
+      "maintenance_owner": "mosianekk-lang"
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "verified_stage": "SPROUT",
+      "operational_state": "VERIFYING_SPROUT_PLUS",
+      "authorised_environment": "VERIFIED_GITHUB_AND_PRIVATE_GOOGLE_DRIVE",
+      "required_nutrients": "REUSABLE_VALIDATOR_CLI_TWO_CORPORA_AND_RECEIPTS_VERIFIED",
+      "dependencies": "EXTERNAL_CI_PERSISTENT_MONITORING_AND_RECOVERY_OPEN",
+      "proof_gates": "SPROUT_PASSED; SAPLING_NOT_PASSED",
+      "tests": "6_LOCAL_REGRESSIONS_AND_16_INCLUSION_PROOFS_PASSED",
+      "deployment_surfaces": ["GitHub package/CLI", "Private Drive passports", "IPEP Bible"],
+      "monitoring_data": "PRIVATE_PASSPORT_ACCESS_RECONFIRMED",
+      "maintenance_owner": "mosianekk-lang"
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": "GITHUB_ONLY",
+      "required_nutrients": "PROVIDER_CREDENTIAL_SPEECH_BINDING_PRIVATE_WORKER_AND_RECEIPT_UNVERIFIED",
+      "dependencies": "OPEN",
+      "proof_gates": "NOT_PASSED",
+      "tests": "NOT_RUN",
+      "deployment_surfaces": ["GitHub adapter scaffold"],
+      "monitoring_data": "BLOCKER_STATE_ONLY",
+      "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED"
+    }
+  ],
+  "lesson": "Retiring a provider canary must not erase historical proof, but current environment access and recovery must be re-verified without persisting live provider identifiers in a public repository. A successful create/write/readback/delete cycle proves maintenance and recovery, not persistent monitoring.",
+  "checkpoint_sha256": "f4444d78b8686e4a7f3d390fa159a92db1630ef37851bf9e9f7dca00d1b7a9c6"
+}
