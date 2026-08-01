@@ -19,7 +19,12 @@ def test_boundaries_are_workforce_owned_and_not_report_only():
     for boundary in _state()["boundaries"]:
         assert boundary["owner"] == "WORKFORCE"
         assert boundary["report_only_terminal_allowed"] is False
-        assert boundary["state"] in {"ACTIVE_REPAIR", "RESOLVED_IN_PLACE", "RESOLVED"}
+        assert boundary["state"] in {
+            "ACTIVE_REPAIR",
+            "PARTIALLY_RESOLVED",
+            "RESOLVED_IN_PLACE",
+            "RESOLVED",
+        }
 
 
 def test_kim_dataverse_in_place_bridge_is_verified():
@@ -35,10 +40,13 @@ def test_kim_dataverse_in_place_bridge_is_verified():
     assert evaluation["receipt_id"] == "RCP-KDV-INPLACE-001"
 
 
-def test_chat_alignment_remains_actionable_without_bridge(monkeypatch):
+def test_chat_alignment_distribution_is_recorded_but_live_bridge_remains_actionable(monkeypatch):
     monkeypatch.delenv("EVIDENCEOPS_CHAT_BRIDGE_URL", raising=False)
     routes = module.discover_routes()
     boundary = next(b for b in _state()["boundaries"] if b["boundary_id"] == "BND-CHAT-ALIGNMENT")
+    assert boundary["state"] == "PARTIALLY_RESOLVED"
+    assert boundary["distribution_receipt_id"] == "RCP-CHAT-DISTRIBUTION-001"
+
     evaluation = module.evaluate_boundary(boundary, routes)
     assert evaluation["resolved"] is False
     assert evaluation["status"] == "WAITING_CAPABILITY"
