@@ -1,16 +1,17 @@
 {
-  "receipt_id": "RCP-KDV-INPLACE-001",
+  "receipt_id": "PUBLIC-REDACTED-CANONICAL-BRIDGE-RECEIPT",
   "boundary_id": "BND-KIM-DATAVERSE",
   "owner": "Kim Kagiso Mosiane",
   "contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
-  "action": "CREATE_POPULATE_READBACK_RECONCILE_CANONICAL_BRIDGE",
-  "backend": "GOOGLE_DRIVE_GOOGLE_SHEETS_IN_PLACE_BRIDGE",
-  "spreadsheet_id": "1TS64KmgGS30Hr9yHry3kQPzXMtWVMV22utJxhDXd7o8",
-  "parent_folder_id": "1C0QwWOQCocY9cnTOPBNo-13gULPg1DIT",
-  "write_result": "VERIFIED",
-  "readback_result": "VERIFIED",
-  "receipt_row": "RECEIPTS!A3:G3",
+  "action": "VERIFY_PRIVATE_CANONICAL_BRIDGE",
+  "backend": "PRIVATE_IN_PLACE_CANONICAL_BRIDGE",
+  "spreadsheet_id": "PRIVATE_RUNTIME_CONFIG",
+  "parent_folder_id": "PRIVATE_RUNTIME_CONFIG",
+  "write_result": "VERIFIED_IN_PRIVATE_CONTROL_PLANE",
+  "readback_result": "VERIFIED_IN_PRIVATE_CONTROL_PLANE",
+  "receipt_row": "PRIVATE_RUNTIME_CONFIG",
   "boundary_state": "RESOLVED_IN_PLACE",
-  "verified_at": "2026-08-01T04:07:00+02:00",
-  "truth_boundary": "Native Microsoft Dataverse is not claimed as bound; the canonical Kim Dataverse is operating through the authorised in-place Google Drive/Sheets backend."
+  "verified_at": "2026-08-01T04:49:28+02:00",
+  "public_repository_safe": true,
+  "truth_boundary": "The live receipt and backend identifiers are retained only in the private EvidenceOps control plane. This public record proves policy state, not the sensitive identifiers themselves."
 }
