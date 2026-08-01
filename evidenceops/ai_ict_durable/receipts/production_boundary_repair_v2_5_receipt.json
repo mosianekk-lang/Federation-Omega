@@ -1,0 +1,42 @@
+{
+  "receipt_id": "RCP-EO-AI-ICT-PRODUCTION-BOUNDARY-REPAIR-010",
+  "version": "2.5.0",
+  "verified_at": "2026-08-01T13:14:37.851897+00:00",
+  "platform_api_key_target": "ATTEMPTED_REJECTED",
+  "usable_openai_credential": "UNAVAILABLE",
+  "live_model_canary": "NOT_CLAIMED",
+  "local_tests": 7,
+  "verification": "PASS",
+  "material_route": "ENCRYPTED_DURABLE_RUNSTATE_AND_HITL_APPROVAL_RESUME",
+  "resolved_boundaries": [
+    "PLAINTEXT_PAUSED_RUNSTATE_PERSISTENCE",
+    "TRACING_KEY_STATE_SERIALIZATION",
+    "PROCESS_GLOBAL_CREDENTIAL_MUTATION",
+    "INCORRECT_TRACING_CONFIG_CONSTRUCTION",
+    "INCORRECT_SYNCHRONOUS_RUNSTATE_RESTORE",
+    "MISSING_EXPLICIT_TRACE_ID_RECEIPT",
+    "NON_IDEMPOTENT_APPROVAL_DECISION_STORAGE"
+  ],
+  "unresolved_owner": "WORKFORCE",
+  "unresolved_state": "ACTIVE_REPAIR",
+  "remaining_boundaries": [
+    "AUTHORISED_USABLE_OPENAI_CREDENTIAL",
+    "LIVE_MODEL_CANARY_AND_TRACE_RESPONSE_READBACK",
+    "MANAGED_KMS_STATE_PROTECTOR_BINDING",
+    "PRIVATE_POSTGRESQL_HOSTING",
+    "WIF_AND_SECRET_MANAGER_BINDING",
+    "PRIVATE_CLOUD_RUN_DEPLOYMENT",
+    "DEPLOYED_CANONICAL_OUTBOX_WRITE_READBACK"
+  ],
+  "official_agents_sdk": "0.19.2",
+  "official_wheel_sha256": "ea2d7e306731c73a5e340bf23ca98326088bdfe8c61cd8e171a307adcd2957d0",
+  "local_sdk_install": "ATTEMPTED_RESTRICTED_MIRROR_UNAVAILABLE",
+  "external_sdk_contract_ci": "VERIFIED_SUCCESS",
+  "github_pull_request": 47,
+  "github_head_commit": "389d1b9b83012d9aef47eaefe572e56f50d72d4c",
+  "github_checks": {
+    "EvidenceOps AI ICT durable runtime": "SUCCESS",
+    "Public Repository Leak Guard": "SUCCESS",
+    "Superior Logic CI": "SUCCESS"
+  }
+}
