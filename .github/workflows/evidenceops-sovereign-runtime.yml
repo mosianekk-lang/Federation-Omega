@@ -5,7 +5,10 @@ on:
     paths:
       - 'evidenceops/runtime_service/**'
       - 'evidenceops/runtime/ACTIVE_SOVEREIGN_TRANSLATOR.json'
+      - 'evidenceops/runtime/kim_dataverse_inplace_bridge.json'
+      - 'evidenceops/runtime/boundary_resolution_state.json'
       - 'evidenceops/tests/test_runtime_service.py'
+      - 'evidenceops/tests/test_sovereign_runtime_production_readiness.py'
       - '.github/workflows/evidenceops-sovereign-runtime.yml'
   workflow_dispatch:
   schedule:
@@ -27,15 +30,82 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.12'
-      - run: pip install -r evidenceops/runtime_service/requirements.txt
-      - run: pytest -q evidenceops/tests/test_runtime_service.py
+      - name: Install runtime dependencies
+        run: pip install -r evidenceops/runtime_service/requirements.txt
+      - name: Run runtime and canonical-bridge regressions
+        run: |
+          pytest -q \
+            evidenceops/tests/test_runtime_service.py \
+            evidenceops/tests/test_sovereign_runtime_production_readiness.py
       - name: Build container
         run: docker build -t evidenceops-sovereign-runtime:canary evidenceops/runtime_service
+      - name: Run container canary and verify health
+        shell: bash
+        run: |
+          set -euo pipefail
+          docker run --rm -d --name evidenceops-runtime-canary -p 8080:8080 evidenceops-sovereign-runtime:canary
+          trap 'docker rm -f evidenceops-runtime-canary >/dev/null 2>&1 || true' EXIT
+          for attempt in $(seq 1 20); do
+            if curl --fail --silent http://127.0.0.1:8080/health > health.json; then
+              break
+            fi
+            sleep 2
+          done
+          python - <<'PY'
+          import json
+          data = json.load(open('health.json', encoding='utf-8'))
+          assert data['status'] == 'ok'
+          assert data['active_contract'] == 'EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2'
+          assert data['mission_delta_owner'] == 'WORKFORCE'
+          assert data['canonical_backend']['verified'] is True
+          assert data['canonical_backend']['receipt_id'] == 'RCP-KDV-INPLACE-001'
+          print(json.dumps(data, indent=2, sort_keys=True))
+          PY
+      - name: Persist test receipt
+        shell: bash
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib, time
+          paths = [
+              'evidenceops/runtime_service/main.py',
+              'evidenceops/runtime_service/active_manifest.json',
+              'evidenceops/runtime_service/Dockerfile',
+              'evidenceops/tests/test_runtime_service.py',
+              'evidenceops/tests/test_sovereign_runtime_production_readiness.py',
+          ]
+          receipt = {
+              'receipt_id': 'RCP-SOV-RUNTIME-CI-' + os.environ['GITHUB_RUN_ID'],
+              'commit': os.environ['GITHUB_SHA'],
+              'result': 'TESTS_CONTAINER_AND_HEALTH_VERIFIED',
+              'canonical_backend_receipt': 'RCP-KDV-INPLACE-001',
+              'files': {
+                  path: hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
+                  for path in paths
+              },
+              'verified_at_epoch': int(time.time()),
+          }
+          pathlib.Path('sovereign-runtime-ci-receipt.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sovereign-runtime-ci-receipt
+          path: |
+            health.json
+            sovereign-runtime-ci-receipt.json
 
   deploy:
     needs: test
     runs-on: ubuntu-latest
-    if: ${{ vars.GCP_PROJECT_ID != '' && vars.GCP_WIF_PROVIDER != '' && vars.GCP_SERVICE_ACCOUNT != '' }}
+    if: >-
+      ${{
+        vars.GCP_RUNTIME_DEPLOY_ENABLED == 'true' &&
+        vars.GCP_PROJECT_ID != '' &&
+        vars.GCP_WIF_PROVIDER != '' &&
+        vars.GCP_SERVICE_ACCOUNT != ''
+      }}
     steps:
       - uses: actions/checkout@v4
       - id: auth
@@ -44,7 +114,7 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Deploy to Cloud Run
+      - name: Deploy private Cloud Run service
         shell: bash
         run: |
           set -euo pipefail
@@ -62,18 +132,30 @@ jobs:
             --project='${{ vars.GCP_PROJECT_ID }}' \
             --region="$GCP_REGION" \
             --source=evidenceops/runtime_service \
-            --allow-unauthenticated \
+            --no-allow-unauthenticated \
             --quiet \
             "${EXTRA_ARGS[@]}"
-      - name: Verify service and Dataverse state
+      - name: Verify private service and canonical backend
+        shell: bash
         run: |
           set -euo pipefail
-          URL=$(gcloud run services describe "$SERVICE_NAME" --project='${{ vars.GCP_PROJECT_ID }}' --region="$GCP_REGION" --format='value(status.url)')
-          curl --fail --retry 10 --retry-delay 6 "$URL/health" | tee health.json
+          URL=$(gcloud run services describe "$SERVICE_NAME" \
+            --project='${{ vars.GCP_PROJECT_ID }}' \
+            --region="$GCP_REGION" \
+            --format='value(status.url)')
+          TOKEN=$(gcloud auth print-identity-token --audiences="$URL")
+          curl --fail --retry 10 --retry-delay 6 \
+            -H "Authorization: Bearer $TOKEN" \
+            "$URL/health" | tee deployed-health.json
           python - <<'PY'
           import json
-          data=json.load(open('health.json'))
-          assert data['status']=='ok'
-          assert data['active_contract']=='EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2'
-          print(json.dumps(data, indent=2))
+          data = json.load(open('deployed-health.json', encoding='utf-8'))
+          assert data['status'] == 'ok'
+          assert data['active_contract'] == 'EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2'
+          assert data['canonical_backend']['verified'] is True
+          print(json.dumps(data, indent=2, sort_keys=True))
           PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sovereign-runtime-deployment-readback
+          path: deployed-health.json
