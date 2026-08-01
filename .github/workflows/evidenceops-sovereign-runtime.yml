@@ -1,0 +1,56 @@
+name: EvidenceOps Sovereign Runtime
+
+on:
+  push:
+    paths:
+      - 'evidenceops/runtime_service/**'
+      - 'evidenceops/runtime/ACTIVE_SOVEREIGN_TRANSLATOR.json'
+      - 'evidenceops/tests/test_runtime_service.py'
+      - '.github/workflows/evidenceops-sovereign-runtime.yml'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+  id-token: write
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: pip install -r evidenceops/runtime_service/requirements.txt
+      - run: pytest -q evidenceops/tests/test_runtime_service.py
+      - name: Build container
+        run: docker build -f evidenceops/runtime_service/Dockerfile -t evidenceops-sovereign-runtime:canary .
+
+  deploy:
+    needs: test
+    runs-on: ubuntu-latest
+    if: ${{ vars.GCP_PROJECT_ID != '' && vars.GCP_WIF_PROVIDER != '' && vars.GCP_SERVICE_ACCOUNT != '' }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Deploy to Cloud Run from source
+        run: |
+          gcloud run deploy evidenceops-sovereign-runtime \
+            --project='${{ vars.GCP_PROJECT_ID }}' \
+            --region='${{ vars.GCP_REGION || 'africa-south1' }}' \
+            --source=. \
+            --allow-unauthenticated \
+            --set-env-vars=EVIDENCEOPS_ACTIVE_MANIFEST=/workspace/evidenceops/runtime/ACTIVE_SOVEREIGN_TRANSLATOR.json \
+            --quiet
+      - name: Verify service
+        run: |
+          URL=$(gcloud run services describe evidenceops-sovereign-runtime --project='${{ vars.GCP_PROJECT_ID }}' --region='${{ vars.GCP_REGION || 'africa-south1' }}' --format='value(status.url)')
+          curl --fail --retry 10 --retry-delay 6 "$URL/health"
+          echo "service_url=$URL" >> "$GITHUB_OUTPUT"
