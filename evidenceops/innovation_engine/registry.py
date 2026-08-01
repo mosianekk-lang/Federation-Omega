@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import hashlib
 import json
+import os
 import sqlite3
 import uuid
 from dataclasses import dataclass
@@ -41,6 +42,16 @@ class TransitionReceipt:
     created_at: str
     previous_hash: str | None
     receipt_hash: str
+
+
+@dataclass(frozen=True)
+class BackupReceipt:
+    database_sha256: str
+    lane_count: int
+    event_count: int
+    chain_verified: bool
+    integrity_check: str
+    created_at: str
 
 
 class InnovationRegistry:
@@ -86,6 +97,14 @@ class InnovationRegistry:
     def _canonical_hash(payload: Mapping[str, object]) -> str:
         encoded = json.dumps(payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
         return hashlib.sha256(encoded).hexdigest()
+
+    @staticmethod
+    def _file_sha256(path: str | Path) -> str:
+        digest = hashlib.sha256()
+        with Path(path).open("rb") as handle:
+            for chunk in iter(lambda: handle.read(1024 * 1024), b""):
+                digest.update(chunk)
+        return digest.hexdigest()
 
     def upsert_lane(
         self,
@@ -209,3 +228,76 @@ class InnovationRegistry:
                 "SELECT * FROM lanes WHERE state NOT IN (?,?,?) ORDER BY priority DESC, updated_at ASC",
                 terminal,
             ).fetchall()
+
+    def backup(self, destination: str | Path) -> BackupReceipt:
+        """Create a transactionally consistent SQLite backup and verify it."""
+        destination_path = Path(destination)
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary_path = destination_path.with_suffix(destination_path.suffix + ".tmp")
+        temporary_path.unlink(missing_ok=True)
+
+        with self._connect() as source, sqlite3.connect(temporary_path) as target:
+            source.backup(target)
+            target.commit()
+
+        with sqlite3.connect(temporary_path) as connection:
+            integrity_check = connection.execute("PRAGMA integrity_check").fetchone()[0]
+            lane_count = connection.execute("SELECT COUNT(*) FROM lanes").fetchone()[0]
+            event_count = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
+        if integrity_check != "ok":
+            temporary_path.unlink(missing_ok=True)
+            raise RuntimeError(f"Backup integrity check failed: {integrity_check}")
+
+        backup_registry = InnovationRegistry(temporary_path)
+        chain_verified = backup_registry.verify_chain()
+        if not chain_verified:
+            temporary_path.unlink(missing_ok=True)
+            raise RuntimeError("Backup receipt chain verification failed")
+
+        os.replace(temporary_path, destination_path)
+        return BackupReceipt(
+            database_sha256=self._file_sha256(destination_path),
+            lane_count=lane_count,
+            event_count=event_count,
+            chain_verified=chain_verified,
+            integrity_check=integrity_check,
+            created_at=datetime.now(timezone.utc).isoformat(),
+        )
+
+    @classmethod
+    def restore(
+        cls,
+        source: str | Path,
+        destination: str | Path,
+        expected_sha256: str | None = None,
+    ) -> "InnovationRegistry":
+        """Verify a backup before atomically restoring it to a new database."""
+        source_path = Path(source)
+        if not source_path.is_file():
+            raise FileNotFoundError(source_path)
+        actual_sha256 = cls._file_sha256(source_path)
+        if expected_sha256 and actual_sha256 != expected_sha256:
+            raise ValueError("Backup SHA-256 mismatch")
+
+        with sqlite3.connect(source_path) as source_connection:
+            integrity_check = source_connection.execute("PRAGMA integrity_check").fetchone()[0]
+        if integrity_check != "ok":
+            raise RuntimeError(f"Source integrity check failed: {integrity_check}")
+        source_registry = cls(source_path)
+        if not source_registry.verify_chain():
+            raise RuntimeError("Source receipt chain verification failed")
+
+        destination_path = Path(destination)
+        destination_path.parent.mkdir(parents=True, exist_ok=True)
+        temporary_path = destination_path.with_suffix(destination_path.suffix + ".restore.tmp")
+        temporary_path.unlink(missing_ok=True)
+        with sqlite3.connect(source_path) as source_connection, sqlite3.connect(temporary_path) as target:
+            source_connection.backup(target)
+            target.commit()
+        os.replace(temporary_path, destination_path)
+
+        restored = cls(destination_path)
+        if not restored.verify_chain():
+            destination_path.unlink(missing_ok=True)
+            raise RuntimeError("Restored receipt chain verification failed")
+        return restored
