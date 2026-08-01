@@ -1,7 +1,7 @@
 {
   "seed_id": "KIMMIE-IPEP-001",
-  "verified_stage": "SPROUT",
-  "registry_stage": "SPROUT",
+  "verified_stage": "SAPLING",
+  "registry_stage": "SAPLING",
   "identity_drift": "NONE_DETECTED",
   "missing_required_nutrients": [],
   "useful_child_capability_verified": true,
@@ -10,8 +10,8 @@
   ],
   "workflow_receipt_validation": "PASSED",
   "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
-  "sapling_gate_verified": false,
-  "next_gate": "SAPLING requires repeated successful maturity cycles, reusable execution, persistent monitoring, maintenance and recovery evidence",
+  "sapling_gate_verified": true,
+  "next_gate": "MATURE requires sustained production use, resilience, measurable value and complete operational ownership",
   "status": "PASS",
-  "assessment_sha256": "c100fe1a54fa04f73fe7049fc41d07dcf9441d716894974c48a1f09a3694cfc2"
+  "assessment_sha256": "df23a59c43e3d8c190e2828de4b4b19e8065ad1f99d5cc226b4346ce1b5b0b8c"
 }
