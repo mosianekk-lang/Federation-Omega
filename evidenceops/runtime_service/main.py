@@ -54,27 +54,49 @@ class StateStore:
     def save_delta(self, delta: Dict[str, Any]):
         self.conn.execute(
             "INSERT OR REPLACE INTO deltas VALUES(?,?,?,?,?)",
-            (delta["delta_id"], delta["mission_id"], delta["status"], json.dumps(delta), int(time.time())),
+            (
+                delta["delta_id"],
+                delta["mission_id"],
+                delta["status"],
+                json.dumps(delta),
+                int(time.time()),
+            ),
         )
         self.conn.commit()
 
     def save_receipt(self, receipt: Dict[str, Any]):
         self.conn.execute(
             "INSERT OR REPLACE INTO receipts VALUES(?,?,?,?)",
-            (receipt["receipt_id"], receipt["mission_id"], json.dumps(receipt), int(time.time())),
+            (
+                receipt["receipt_id"],
+                receipt["mission_id"],
+                json.dumps(receipt),
+                int(time.time()),
+            ),
         )
         self.conn.commit()
 
     def open_deltas(self):
-        rows = self.conn.execute("SELECT payload FROM deltas WHERE status != 'CLOSED'").fetchall()
+        rows = self.conn.execute(
+            "SELECT payload FROM deltas WHERE status != 'CLOSED'"
+        ).fetchall()
         return [json.loads(row[0]) for row in rows]
 
 
-class DataverseAdapter:
+class NativeDataverseAdapter:
+    """Optional Microsoft Dataverse parity adapter.
+
+    The canonical current backend is declared by the active manifest. This
+    adapter is used only when a native Microsoft Dataverse URL and short-lived
+    access token are explicitly supplied to the runtime.
+    """
+
     def __init__(self):
         self.base_url = os.getenv("KIM_DATAVERSE_URL", "").rstrip("/")
         self.token = os.getenv("KIM_DATAVERSE_ACCESS_TOKEN", "")
-        self.table = os.getenv("KIM_DATAVERSE_MISSION_TABLE", "evidenceops_missions")
+        self.table = os.getenv(
+            "KIM_DATAVERSE_MISSION_TABLE", "evidenceops_missions"
+        )
         self.timeout = int(os.getenv("KIM_DATAVERSE_TIMEOUT", "20"))
 
     @property
@@ -92,10 +114,14 @@ class DataverseAdapter:
 
     def health(self):
         if not self.configured:
-            return {"configured": False, "status": "UNBOUND"}
+            return {
+                "configured": False,
+                "status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
+            }
         response = requests.get(
             f"{self.base_url}/api/data/v9.2/{self.table}?$top=1",
-            headers=self.headers(), timeout=self.timeout,
+            headers=self.headers(),
+            timeout=self.timeout,
         )
         return {
             "configured": True,
@@ -105,12 +131,23 @@ class DataverseAdapter:
 
     def upsert(self, mission_id: str, payload: Dict[str, Any]):
         if not self.configured:
-            return {"status": "SYNC_PACKAGE_CREATED", "configured": False, "payload": payload}
+            return {
+                "status": "OPTIONAL_PARITY_SYNC_PACKAGE_CREATED",
+                "configured": False,
+                "payload": payload,
+            }
         escaped = mission_id.replace("'", "''")
-        url = f"{self.base_url}/api/data/v9.2/{self.table}(evidenceops_missionid='{escaped}')"
-        write = requests.patch(url, headers=self.headers(), json=payload, timeout=self.timeout)
+        url = (
+            f"{self.base_url}/api/data/v9.2/"
+            f"{self.table}(evidenceops_missionid='{escaped}')"
+        )
+        write = requests.patch(
+            url, headers=self.headers(), json=payload, timeout=self.timeout
+        )
         if write.status_code not in (200, 204):
-            raise RuntimeError(f"Dataverse write failed: {write.status_code} {write.text[:500]}")
+            raise RuntimeError(
+                f"Dataverse write failed: {write.status_code} {write.text[:500]}"
+            )
         read = requests.get(url, headers=self.headers(), timeout=self.timeout)
         if not read.ok:
             raise RuntimeError(f"Dataverse readback failed: {read.status_code}")
@@ -137,20 +174,44 @@ def load_manifest():
     return manifest
 
 
+def canonical_backend_state(manifest: Dict[str, Any]) -> Dict[str, Any]:
+    backend = manifest.get("canonical_backend") or {}
+    required = {
+        "type",
+        "spreadsheet_id",
+        "bridge_record",
+        "status",
+        "receipt_id",
+    }
+    missing = sorted(required - set(backend))
+    verified = (
+        not missing
+        and backend.get("status") == "WRITE_AND_READBACK_VERIFIED"
+    )
+    return {
+        **backend,
+        "configured": bool(backend),
+        "verified": verified,
+        "missing_fields": missing,
+    }
+
+
 store = StateStore(STATE_DB)
-dataverse = DataverseAdapter()
-app = FastAPI(title="EvidenceOps Sovereign Runtime", version="1.0.0")
+native_dataverse = NativeDataverseAdapter()
+app = FastAPI(title="EvidenceOps Sovereign Runtime", version="1.1.0")
 
 
 @app.get("/health")
 def health():
     try:
         manifest = load_manifest()
+        backend = canonical_backend_state(manifest)
         return {
             "status": "ok",
             "active_contract": manifest["active_contract"],
             "mission_delta_owner": manifest["mission_delta_owner"],
-            "dataverse": dataverse.health(),
+            "canonical_backend": backend,
+            "native_microsoft_dataverse": native_dataverse.health(),
         }
     except Exception as exc:
         raise HTTPException(status_code=503, detail=str(exc))
@@ -159,18 +220,35 @@ def health():
 @app.get("/ready")
 def ready():
     result = health()
-    return {"ready": result["status"] == "ok", **result}
+    return {
+        "ready": (
+            result["status"] == "ok"
+            and result["canonical_backend"]["verified"]
+        ),
+        "mission_intake_ready": True,
+        "canonical_context_ready": result["canonical_backend"]["verified"],
+        "runtime_write_through_ready": (
+            result["native_microsoft_dataverse"]["status"]
+            == "READ_VERIFIED"
+        ),
+        **result,
+    }
 
 
 @app.post("/missions")
 def missions(req: MissionRequest):
     try:
         manifest = load_manifest()
-        source_hash = hashlib.sha256(req.source_input.encode("utf-8")).hexdigest()
+        backend = canonical_backend_state(manifest)
+        source_hash = hashlib.sha256(
+            req.source_input.encode("utf-8")
+        ).hexdigest()
         translated = {
             "source_directive": req.source_input,
             "founder_controlled_outcome": req.source_input,
-            "success_rule": "REQUESTED_OUTCOME_EQUALS_VERIFIED_OPERATING_OUTCOME",
+            "success_rule": (
+                "REQUESTED_OUTCOME_EQUALS_VERIFIED_OPERATING_OUTCOME"
+            ),
             "execution_policy": [
                 "PRESERVE_SOURCE",
                 "DISCOVER_CAPABILITIES",
@@ -188,29 +266,40 @@ def missions(req: MissionRequest):
             "evidenceops_sourceinput": req.source_input,
             "evidenceops_status": "ACTIVE",
         }
-        dv_result = dataverse.upsert(req.mission_id, dv_payload)
+        parity_result = native_dataverse.upsert(req.mission_id, dv_payload)
+
         delta = None
-        maturity = "DOCTRINE_ACTIVE"
-        if dv_result["status"] == "WRITE_READBACK_VERIFIED":
+        maturity = (
+            "MISSION_STATE_BOUND"
+            if backend["verified"]
+            else "DOCTRINE_ACTIVE"
+        )
+        if parity_result["status"] == "WRITE_READBACK_VERIFIED":
             maturity = "KIM_DATAVERSE_WRITE_VERIFIED"
         else:
             delta = {
                 "delta_id": f"DELTA-{uuid.uuid4().hex[:12]}",
                 "mission_id": req.mission_id,
-                "description": "Canonical Kim Dataverse write/readback is not yet verified.",
+                "description": (
+                    "The canonical in-place Kim Dataverse bridge is verified, "
+                    "but this runtime instance has not yet proved direct "
+                    "mission write-through and readback."
+                    if backend["verified"]
+                    else "Canonical Kim Dataverse availability is not verified."
+                ),
                 "owner": "WORKFORCE",
                 "status": "ACTIVE_REPAIR",
                 "next_actions": [
-                    "DISCOVER_AUTHORISED_ROUTE",
-                    "ATTEMPT_PRIMARY_ROUTE",
-                    "ATTEMPT_FALLBACK_ROUTES",
-                    "BIND_RESUME_TRIGGER",
-                    "VERIFY_RESULT",
+                    "DISCOVER_AUTHORISED_RUNTIME_WRITE_ROUTE",
+                    "BIND_RUNTIME_IDENTITY",
+                    "WRITE_MISSION_TO_CANONICAL_BACKEND",
+                    "READBACK_VERIFY",
                     "PERSIST_RECEIPT",
                 ],
                 "verified_closed": False,
             }
             store.save_delta(delta)
+
         receipt = {
             "receipt_id": f"RECEIPT-{uuid.uuid4().hex[:12]}",
             "mission_id": req.mission_id,
@@ -219,10 +308,13 @@ def missions(req: MissionRequest):
             "maturity": maturity,
             "translated_prompt": translated,
             "mission_delta": delta,
-            "dataverse": dv_result,
+            "canonical_backend": backend,
+            "native_microsoft_dataverse": parity_result,
             "runtime": {
                 "active_contract": manifest["active_contract"],
-                "report_only_terminal_allowed": manifest["report_only_terminal_allowed"],
+                "report_only_terminal_allowed": manifest[
+                    "report_only_terminal_allowed"
+                ],
             },
         }
         store.save_mission(req.mission_id, receipt)
