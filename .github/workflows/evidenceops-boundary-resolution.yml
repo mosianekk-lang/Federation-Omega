@@ -47,21 +47,28 @@ jobs:
         run: python evidenceops/runtime/boundary_resolution_controller.py
       - name: Assert receipt contains no private values
         shell: bash
+        env:
+          CHECK_CHAT_BRIDGE_URL: ${{ secrets.EVIDENCEOPS_CHAT_BRIDGE_URL }}
+          CHECK_CLOUD_RUN_URL: ${{ secrets.EVIDENCEOPS_CLOUD_RUN_URL }}
+          CHECK_CANONICAL_BACKEND_ID: ${{ secrets.KIM_CANONICAL_BACKEND_ID }}
+          CHECK_CANONICAL_RECEIPT_ID: ${{ secrets.KIM_CANONICAL_RECEIPT_ID }}
         run: |
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
 
           path = Path('evidenceops/runtime/receipts/boundary_resolution_latest.json')
           data = json.loads(path.read_text(encoding='utf-8'))
           assert data['private_values_persisted'] is False
           serialised = json.dumps(data, sort_keys=True)
-          for secret in (
-              '${{ secrets.EVIDENCEOPS_CHAT_BRIDGE_URL }}',
-              '${{ secrets.EVIDENCEOPS_CLOUD_RUN_URL }}',
-              '${{ secrets.KIM_CANONICAL_BACKEND_ID }}',
-              '${{ secrets.KIM_CANONICAL_RECEIPT_ID }}',
+          for name in (
+              'CHECK_CHAT_BRIDGE_URL',
+              'CHECK_CLOUD_RUN_URL',
+              'CHECK_CANONICAL_BACKEND_ID',
+              'CHECK_CANONICAL_RECEIPT_ID',
           ):
+              secret = os.getenv(name, '')
               if secret:
                   assert secret not in serialised
           PY
