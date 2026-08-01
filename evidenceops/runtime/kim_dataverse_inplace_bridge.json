@@ -1,0 +1,21 @@
+{
+  "bridge_id": "KDV-INPLACE-BRIDGE-v1",
+  "owner": "Kim Kagiso Mosiane",
+  "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
+  "backend": "GOOGLE_DRIVE_GOOGLE_SHEETS",
+  "spreadsheet_id": "1TS64KmgGS30Hr9yHry3kQPzXMtWVMV22utJxhDXd7o8",
+  "spreadsheet_title": "KIM DATAVERSE — Sovereign Translator Canonical Bridge v1.0",
+  "parent_folder_id": "1C0QwWOQCocY9cnTOPBNo-13gULPg1DIT",
+  "parent_folder_title": "EvidenceOps v4.0 Integrity Control Plane",
+  "status": "KIM_DATAVERSE_BOUND_IN_PLACE",
+  "write_verified": true,
+  "readback_verified": true,
+  "receipt_id": "RCP-KDV-INPLACE-001",
+  "receipt_location": "RECEIPTS!A3:G3",
+  "verified_at": "2026-08-01T04:07:00+02:00",
+  "native_microsoft_dataverse": {
+    "status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
+    "required_for_current_canonical_operation": false
+  },
+  "truth_boundary": "This resolves canonical Kim Dataverse propagation through an authorised in-place Google Drive/Sheets backend. It does not claim a native Microsoft Dataverse environment is bound."
+}
