@@ -1,0 +1,81 @@
+{
+  "checkpoint_id": "KSA-20260801-016",
+  "observed_at": "2026-08-01T10:13:24+02:00",
+  "seed_id": "KIMMIE-IPEP-001",
+  "root": {
+    "verified_stage": "SAPLING",
+    "promotion": "NONE",
+    "identity_drift": "NONE_DETECTED",
+    "owner_decision_required": false,
+    "material_change": false,
+    "qualifying_notification_event": false,
+    "next_candidate_stage": "MATURE",
+    "mature_gate": {
+      "sustained_production_use": "NOT_YET_VERIFIED",
+      "resilience_over_time": "NOT_YET_VERIFIED",
+      "measurable_operational_value": "NOT_YET_VERIFIED",
+      "complete_operational_ownership": "NOT_YET_VERIFIED"
+    }
+  },
+  "child_lanes": [
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "verified_stage": "SAPLING",
+      "authorised_environment": "VERIFIED_GITHUB_AND_GOOGLE_DRIVE",
+      "nutrients_and_dependencies": "VERIFIED_FOR_CURRENT_SAPLING_SCOPE",
+      "proof_gates": "SAPLING_PASSED_MATURE_NOT_PASSED",
+      "tests": "ECTS_6_OF_6_PROVIDER_READBACK_RECOVERY_TWO_SCHEDULED_CYCLES_PASSED",
+      "deployment_surfaces": "GITHUB_AND_GOOGLE_DRIVE_VERIFIED",
+      "monitoring": "TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES_VERIFIED",
+      "maintenance_owner": "mosianekk-lang",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "verified_stage": "SPROUT",
+      "authorised_environment": "VERIFIED_GITHUB_AND_PRIVATE_GOOGLE_DRIVE",
+      "nutrients_and_dependencies": "REUSABLE_VALIDATOR_TWO_CORPORA_EXTERNAL_CI_TAMPER_RECOVERY_VERIFIED",
+      "proof_gates": "SAPLING_NOT_PASSED_SCHEDULED_PERSISTENCE_PENDING",
+      "tests": "REGRESSIONS_BASELINE_TAMPER_RECOVERY_AND_16_INCLUSION_PROOFS_PASSED",
+      "deployment_surfaces": "GITHUB_WORKFLOW_AND_PRIVATE_DRIVE_PASSPORTS_VERIFIED",
+      "monitoring": "PUSH_TRIGGERED_DURABLE_READBACK_VERIFIED_SCHEDULED_CYCLES_NOT_YET_VERIFIED",
+      "maintenance_owner": "mosianekk-lang",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": "NOT_VERIFIED_FOR_CORPUS_ACQUISITION",
+      "nutrient_gap": "AUTHORISED_CORPUS_ACQUISITION_INGESTION_RIGHTS_AND_RECEIPT",
+      "proof_gates": "NOT_PASSED",
+      "tests": "NOT_AVAILABLE",
+      "deployment_surfaces": "NOT_VERIFIED",
+      "monitoring": "NOT_AVAILABLE",
+      "maintenance_owner": "mosianekk-lang",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": "PARTIAL_REPOSITORY_ONLY",
+      "nutrient_gap": "PROVIDER_CREDENTIAL_SPEECH_BINDING_PRIVATE_WORKER_AND_RECEIPT",
+      "proof_gates": "NOT_PASSED",
+      "tests": "SCAFFOLD_ONLY",
+      "deployment_surfaces": "PRIVATE_WORKER_NOT_VERIFIED",
+      "monitoring": "NO_LIVE_PROVIDER_HEALTH",
+      "maintenance_owner": "mosianekk-lang",
+      "owner_decision_required": false
+    }
+  ],
+  "review_evidence": {
+    "registry_version_reviewed": "1.10.3",
+    "registry_blob_sha": "ea9997f6c29bf96e16afd3c167461145fe00d9ce",
+    "latest_repository_commit_reviewed": "6f954e39a7f246f95a589bcfbbb757b67d8ff0db",
+    "latest_kimmie_related_commit_reviewed": "5fa7a96cdbf17fcbb7942bf5259827e7ff36f9c4",
+    "ipep_bible_revision_reviewed": "AIroW351XfNXuNz-86cu_QjizIMRlmVOXPjMtT4gJ_PqCgZB6d_Xjzz2t-djruXgYHITtSdos2YvNx24bb2mF4KuuZuhcSJdKGTEX1wIFfs"
+  },
+  "lesson": "A push-triggered health workflow and an automation-side integrity drill remain valid execution evidence, but they do not establish scheduled persistence. MATURE requires sustained production use, resilience over time, measurable operational value and complete operational ownership.",
+  "notification": "SUPPRESS"
+}
