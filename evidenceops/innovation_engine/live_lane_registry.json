@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.15.0",
-  "updated_at": "2026-08-01T07:35:00+02:00",
+  "registry_version": "1.15.1",
+  "updated_at": "2026-08-01T07:39:00+02:00",
   "proof_note": "Public-safe registry. No live provider, file, folder, document, message, credential or private canonical identifiers are persisted. States are limited to independently verified evidence.",
   "priority_model": {
     "scale": "0-100",
@@ -16,8 +16,8 @@
   },
   "dependency_snapshot": {
     "github_repository_access": "VERIFIED_READ_WRITE",
-    "github_latest_reviewed_commit": "18e282feb4ee10e02fb138932f720584b1f881ea",
-    "lane_watch_receipt_commit": "18e282feb4ee10e02fb138932f720584b1f881ea",
+    "github_latest_reviewed_commit": "3dfc6cbaa4771b6c358d7d798419f2e5be8c5e87",
+    "lane_watch_receipt_commit": "3dfc6cbaa4771b6c358d7d798419f2e5be8c5e87",
     "drive_connector_access": "VERIFIED_READ_WRITE_EXACT_READBACK_DELETE_ABSENCE",
     "gmail_connector_access": "VERIFIED_READ",
     "gmail_credential_or_approval_change": "NONE_OBSERVED",
@@ -26,9 +26,9 @@
     "canonical_backend": "PRIVATE_IN_PLACE_BRIDGE_WRITE_AND_READBACK_VERIFIED",
     "connector_foundry_repeated_provider_cycle": "PASSED",
     "connector_foundry_controlled_recovery": "PASSED",
-    "connector_foundry_scheduled_provider_monitoring": "PASSED_THIS_CYCLE",
-    "external_scheduler_repair": "CODE_AND_CI_VERIFIED; SCHEDULED_DRIVE_PROVIDER_CANARY_PASS",
-    "kimmie_maturity_workflow": "PASS_ON_MAIN_BEFORE_CHILD_SAPLING; RECONCILIATION_REQUIRED",
+    "connector_foundry_scheduled_provider_monitoring": "CURRENT_SCHEDULED_CYCLE_PASS; PERSISTENT_MULTI_CYCLE_GATE_OPEN",
+    "external_scheduler_repair": "CODE_AND_CI_VERIFIED; CURRENT_SCHEDULED_DRIVE_PROVIDER_CANARY_PASS",
+    "kimmie_maturity_workflow": "PASS_ON_MAIN_BEFORE_CURRENT_CANARY; RECONCILIATION_REQUIRED_AFTER_LATER_INDEPENDENT_SCHEDULED_CYCLE",
     "innovation_engine_backup_restore": "LOCAL_DRILL_PASS_3_OF_3; CI_AND_LEAK_GUARD_PASS; MERGED_TO_MAIN",
     "innovation_engine_durable_external_backup": "NOT_VERIFIED",
     "sovereign_runtime_repository_service": "COMMITTED",
@@ -41,18 +41,19 @@
     "cloudops_queue_processor": "FRESH_PROVIDER_NATIVE_SHEET_WRITE_OBSERVED; NO_CURRENT_LANE_SPECIFIC_CLOUD_RECEIPT",
     "cloud_run_access_path": "PRIVATE_AUTHENTICATED_ROUTE_NOT_VERIFIED_FOR_CURRENT_RUNTIME",
     "ipep_bible_access": "VERIFIED_READ_WRITE_READBACK",
-    "ipep_bible_latest_receipt": "LANE_WATCH_RECEIPT_013",
-    "ipep_bible_latest_receipt_sha256": "c8a5ecda40f69c77dcb038fd0c159a74d7407320bb6a7ef49872fc1fdcdaed4a",
+    "ipep_bible_latest_receipt": "LANE_WATCH_RECEIPT_013A",
+    "ipep_bible_latest_receipt_sha256": "64ce030b06e7154396852f54499732d44f2a275f35e7609fde7e375624d9d60b",
     "ipep_bible_receipt_012_readback": "VERIFIED_EXACT_HEADING",
-    "ipep_bible_receipt_013_readback": "PENDING_APPEND_AND_READBACK",
+    "ipep_bible_receipt_013_status": "SUPERSEDED_BY_013A",
+    "ipep_bible_receipt_013A_readback": "PENDING_APPEND_AND_READBACK",
     "kimmie_root_stage": "SPROUT",
-    "kimmie_sapling_gate": "PENDING_INDEPENDENT_REASSESSMENT"
+    "kimmie_sapling_gate": "PERSISTENT_MULTI_CYCLE_MONITORING_NOT_VERIFIED"
   },
   "lanes": [
     {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
-      "state": "TEST_PASSED",
-      "maturity": "SAPLING",
+      "state": "VERIFYING",
+      "maturity": "SPROUT_PLUS",
       "priority": 100,
       "priority_factors": {
         "urgency": 20,
@@ -61,13 +62,14 @@
         "reuse_value": 20,
         "risk_exposure": 20
       },
-      "proof_state": "LOCAL_REFERENCE_MERGED; ECTS_1_0_PASS_6_OF_6; MULTIPLE_PROVIDER_CYCLES; CONTROLLED_RECOVERY; SCHEDULED_PROVIDER_HEALTH_READBACK_PASS; EXACT_READBACK_AND_POST_DELETE_ABSENCE_PASS",
+      "proof_state": "LOCAL_REFERENCE_MERGED; ECTS_1_0_PASS_6_OF_6; MULTIPLE_PROVIDER_CYCLES; CONTROLLED_RECOVERY; CURRENT_SCHEDULED_PROVIDER_HEALTH_CANARY_PASS; EXACT_READBACK_AND_POST_DELETE_ABSENCE_PASS; PERSISTENT_MULTI_CYCLE_MONITORING_OPEN",
       "proof_receipt": {
-        "receipt_id": "LANE-WATCH-RECEIPT-013",
-        "receipt_sha256": "c8a5ecda40f69c77dcb038fd0c159a74d7407320bb6a7ef49872fc1fdcdaed4a",
-        "receipt_commit": "18e282feb4ee10e02fb138932f720584b1f881ea"
+        "receipt_id": "LANE-WATCH-RECEIPT-013A",
+        "receipt_sha256": "64ce030b06e7154396852f54499732d44f2a275f35e7609fde7e375624d9d60b",
+        "receipt_commit": "3dfc6cbaa4771b6c358d7d798419f2e5be8c5e87",
+        "supersedes": "LANE-WATCH-RECEIPT-013"
       },
-      "next_action": "Maintain scheduled provider monitoring and add a second provider adapter before any broader cross-provider maturity claim."
+      "next_action": "Complete at least one later independent scheduled Google Drive provider-monitor cycle with durable readback, then run the maturity workflow before any SAPLING claim."
     },
     {
       "lane_id": "LANE-KIMMIE-SEED",
@@ -81,8 +83,8 @@
         "reuse_value": 20,
         "risk_exposure": 19
       },
-      "proof_state": "IDENTITY_DRIFT_NONE; MAIN_BRANCH_MATURITY_WORKFLOW_PASS_PRE_CHILD_SAPLING; USEFUL_CONNECTOR_CHILD_NOW_SAPLING; ROOT_REASSESSMENT_PENDING",
-      "next_action": "Run independent maturity workflow against child SAPLING proof; do not promote root before readback."
+      "proof_state": "IDENTITY_DRIFT_NONE; MAIN_BRANCH_MATURITY_WORKFLOW_PASS; USEFUL_CONNECTOR_CHILD_SP ROUT_PLUS; ROOT_PERSISTENT_MULTI_CYCLE_GATE_OPEN",
+      "next_action": "Wait for a later independent scheduled provider-monitor cycle and then run independent maturity reconciliation; do not promote root before readback."
     },
     {
       "lane_id": "LANE-INNOVATION-ENGINE",
@@ -153,8 +155,8 @@
         "reuse_value": 18,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; LANE_WATCH_RECEIPT_012_EXACT_READBACK_VERIFIED; RECEIPT_013_APPEND_AND_READBACK_PENDING",
-      "next_action": "Append Lane Watch Receipt 013 and perform exact heading and hash readback."
+      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; LANE_WATCH_RECEIPT_012_EXACT_READBACK_VERIFIED; RECEIPT_013A_APPEND_AND_READBACK_PENDING",
+      "next_action": "Append corrective Lane Watch Receipt 013A and perform exact heading and hash readback."
     },
     {
       "lane_id": "LANE-PLATFORM-SETUP",
