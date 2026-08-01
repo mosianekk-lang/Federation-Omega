@@ -7,7 +7,7 @@
       "boundary_id": "BND-CHAT-ALIGNMENT",
       "description": "Already-running chats may not be aligned because they do not load or poll the active sovereign-translator manifest.",
       "owner": "WORKFORCE",
-      "state": "ACTIVE_REPAIR",
+      "state": "PARTIALLY_RESOLVED",
       "resolution_requirements": [
         "DISCOVER_AUTHORISED_CHAT_BRIDGES",
         "DISCOVER_CHAT_BOOTSTRAP_LOADERS",
@@ -18,11 +18,17 @@
       "attempted_routes": [
         "GITHUB_MANIFEST_LOADER",
         "GOOGLE_DRIVE_CANONICAL_BRIDGE",
-        "GMAIL_SELF_ARCHIVE_DISCOVERY",
+        "GMAIL_MANIFEST_DISTRIBUTION",
         "PLUGIN_MARKETPLACE_SEARCH"
       ],
-      "current_best_route": "GITHUB_MANIFEST_LOADER_FOR_COMPLIANT_WORKERS",
-      "next_action": "DISCOVER_AUTHORISED_LIVE_CHAT_MESSAGE_OR_POLLING_BRIDGE",
+      "verified_routes": [
+        "GITHUB_MANIFEST_LOADER_FOR_COMPLIANT_WORKERS",
+        "GMAIL_MANIFEST_DISTRIBUTION_WITH_READBACK"
+      ],
+      "distribution_receipt_id": "RCP-CHAT-DISTRIBUTION-001",
+      "gmail_message_id": "19fbb0ce6ae8e1ae",
+      "unresolved_scope": "ALREADY_OPEN_NON_POLLING_CHATS_WITHOUT_AUTHORISED_MESSAGE_BRIDGE",
+      "next_action": "DISCOVER_AUTHORISED_NON_POLLING_LIVE_CHAT_BRIDGE",
       "report_only_terminal_allowed": false
     },
     {
