@@ -1,34 +1,25 @@
 {
-  "registry_version": "1.10.0",
-  "updated_at": "2026-08-01T08:13:00+02:00",
+  "registry_version": "1.10.1",
+  "updated_at": "2026-08-01T08:26:00+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SAPLING",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
   "identity_drift": "NONE_DETECTED",
   "maintenance_owner": "mosianekk-lang",
   "latest_assessment": {
-    "path": "kimmie_seed/checkpoints/KSA-20260801-012A.json",
-    "assessment_sha256": "c100fe1a54fa04f73fe7049fc41d07dcf9441d716894974c48a1f09a3694cfc2",
-    "checkpoint_sha256": "53a426292452bff5ae3eca7d83b1698763c125dd2d21db3c79c8f63230a49591",
-    "root_promotion": "NO_PROMOTION",
-    "qualifying_notification_event": false
+    "path": "kimmie_seed/checkpoints/KSA-20260801-014.json",
+    "assessment_sha256": "df23a59c43e3d8c190e2828de4b4b19e8065ad1f99d5cc226b4346ce1b5b0b8c",
+    "checkpoint_sha256": "aa260d75a3eab96da60c3bb3e71c49efc8078f834c144856e3a35ce20df326b1",
+    "root_promotion": "SPROUT_TO_SAPLING",
+    "qualifying_notification_event": true
   },
   "monitoring": {
     "external_scheduler": "GitHub Actions",
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
-    "workflow_execution_readback": "PENDING_PUSH_REASSESSMENT",
-    "persistent_monitoring": "VERIFIED_TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES_WITH_EXACT_READBACK_AND_CLEANUP",
-    "provider_monitor_canary": {
-      "provider": "google_drive",
-      "state": "PASSED_LATER_INDEPENDENT_SCHEDULED_CYCLE",
-      "payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
-      "exact_readback": "PASSED",
-      "parent_confinement": "PASSED",
-      "cleanup": "PASSED_POST_DELETE_ABSENCE",
-      "public_provider_identifier_persisted": false
-    },
-    "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only",
+    "workflow_execution_readback": "PASSED_AT_SAPLING",
+    "workflow_readback_commit": "e466890697aa4932cbcabb092349df73a3a61653",
+    "persistent_monitoring": "VERIFIED_TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES",
     "provider_monitor_cycles": [
       {
         "cycle": "prior_independent_scheduled_cycle",
@@ -45,7 +36,8 @@
         "parent_confinement": "PASSED",
         "cleanup": "PASSED_POST_DELETE_ABSENCE"
       }
-    ]
+    ],
+    "public_provider_identifier_persisted": false
   },
   "promotion_gate": {
     "next_candidate_stage": "MATURE",
@@ -67,56 +59,24 @@
   },
   "child_lanes": [
     {
-      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
-      "verified_stage": "SEED",
-      "operational_state": "BLOCKED",
-      "environment": "GITHUB_ONLY",
-      "nutrient_gap": "AUTHORISED_CORPUS_ACQUISITION_INGESTION_RIGHTS_AND_RECEIPT",
-      "proof_gates": "NOT_PASSED",
-      "tests": "NOT_RUN",
-      "deployment_surfaces": [
-        "GitHub registry"
-      ],
-      "monitoring": "CHECKPOINT_ONLY",
-      "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED",
-      "owner_decision_required": false
-    },
-    {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
       "verified_stage": "SAPLING",
-      "operational_state": "PERSISTENT_PROVIDER_MONITORING_VERIFIED",
-      "environment": "VERIFIED_GITHUB_AND_GOOGLE_DRIVE",
+      "operational_state": "TEST_PASSED_PERSISTENT_PROVIDER_MONITORING_VERIFIED",
       "authorised_environment": {
         "github_repository": "VERIFIED_READ_WRITE",
         "google_drive_connector": "VERIFIED_CREATE_WRITE_MOVE_READBACK_DELETE"
       },
-      "nutrients": "IMPLEMENTATION_CONFORMANCE_CI_PROVIDER_EXECUTION_READBACK_MAINTENANCE_RECOVERY_AND_CURRENT_ACCESS_VERIFIED",
       "required_nutrients": {
         "proof_receipt": "VERIFIED_PRESENT",
         "maintenance_owner": "mosianekk-lang"
       },
       "proof_gates": {
-        "spout": "PASSED",
-        "repeated_provider_execution": "PASSED",
+        "ects_conformance": "PASSED_6_OF_6",
+        "provider_specific_execution": "PASSED_GOOGLE_DRIVE",
+        "independent_provider_readback": "PASSED",
         "controlled_recovery": "PASSED",
-        "fresh_provider_monitor_canary": "PASSED",
-        "persistent_provider_monitoring": "PASSED"
+        "persistent_provider_monitoring": "PASSED_TWO_INDEPENDENT_SCHEDULED_CYCLES"
       },
-      "tests": [
-        "ECTS 6/6",
-        "Provider create/write/readback",
-        "Tamper rejection",
-        "Second create/write/readback/delete recovery canary",
-        "Fresh authorised create/write/move/readback/delete provider-monitor canary",
-        "Later independent scheduled create/write/move/readback/delete provider-monitor canary"
-      ],
-      "deployment_surfaces": [
-        "GitHub",
-        "Local runtime",
-        "Google Drive",
-        "IPEP Bible"
-      ],
-      "monitoring": "TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES_PASSED_WITH_DURABLE_PUBLIC_SAFE_RECEIPTS",
       "monitoring_receipt": {
         "prior_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168eb92f243f70cb7",
         "later_payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
@@ -132,48 +92,43 @@
       "lane_id": "LANE-PROVENANCE-PASSPORT",
       "verified_stage": "SPROUT",
       "operational_state": "VERIFYING_SPROUT_PLUS",
-      "environment": "VERIFIED_GITHUB_AND_PRIVATE_GOOGLE_DRIVE",
-      "nutrients": "VALIDATOR_CLI_TWO_CORPORA_16_PROOFS_DURABLE_STORAGE_RECEIPTS_VERIFIED",
+      "authorised_environment": {
+        "github_repository": "VERIFIED_READ_WRITE",
+        "private_google_drive": "VERIFIED_READBACK"
+      },
+      "required_nutrients": {
+        "proof_receipt": "VERIFIED_PRESENT",
+        "maintenance_owner": "mosianekk-lang"
+      },
       "proof_gates": {
-        "spout": "PASSED",
+        "multi_corpus_execution": "PASSED_TWO_CORPORA",
+        "inclusion_proofs": "PASSED_16_OF_16",
         "external_ci": "NOT_PASSED",
         "persistent_monitoring": "NOT_PASSED",
         "controlled_recovery": "NOT_PASSED"
       },
-      "tests": [
-        "6 local regressions",
-        "16 inclusion proofs"
-      ],
-      "deployment_surfaces": [
-        "GitHub package/CLI",
-        "Private Drive passports",
-        "IPEP Bible"
-      ],
-      "monitoring": "PRIVATE_PASSPORT_ACCESS_RECONFIRMED; EXTERNAL_CI_PERSISTENT_MONITORING_AND_RECOVERY_OPEN",
-      "maintenance_owner": "mosianekk-lang",
-      "owner_decision_required": false
+      "maintenance_owner": "mosianekk-lang"
+    },
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "nutrient_gap": "AUTHORISED_CORPUS_ACQUISITION_INGESTION_RIGHTS_AND_RECEIPT",
+      "maintenance_owner": "mosianekk-lang"
     },
     {
       "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
       "verified_stage": "SEED",
       "operational_state": "BLOCKED",
-      "environment": "GITHUB_ONLY",
       "nutrient_gap": "PROVIDER_CREDENTIAL_SPEECH_BINDING_PRIVATE_WORKER_AND_RECEIPT",
-      "proof_gates": "NOT_PASSED",
-      "tests": "NOT_RUN",
-      "deployment_surfaces": [
-        "GitHub adapter scaffold"
-      ],
-      "monitoring": "BLOCKER_STATE_ONLY",
-      "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED",
-      "owner_decision_required": false
+      "maintenance_owner": "mosianekk-lang"
     }
   ],
   "ipep_bible": {
-    "receipt": "KIMMIE SEED REGISTRY RECONCILIATION 012A",
-    "revision_id": "AIroW34pIHOJbDlncEnnpBFZKy1iq-2iI83e99Rtpuk820NnBEtQTaOg4LjGKITsn9QCSyPNFpBG8Nq1E4rrIvHKbnP_SZF1ptk9GtHuo5I",
-    "readback": "PASSED",
-    "evidence_note_sha256": "e7bb98ccc3b7b565c27375f2350149544562144e57ebb8ffb9a480f8d04223ce"
+    "receipt": "LANE WATCH RECEIPT 014",
+    "revision_id": "AIroW358f5Ji8uPcwLzRWZdPl5e2jizUk9lGyh5EKR04Oa1XSd7mSVtXmfB8sBQ0PzLI9mj4uY03uEj1Yk4OqVZabQLTqnGxabDy1iw4VbM",
+    "readback": "PASSED_EXACT_HEADING",
+    "evidence_note_sha256": "38a863fffa55d7b2d748e175074015cf43c93bf6b24ebf3bc9b2053cb27dc797"
   },
-  "lesson": "Two distinct scheduled provider-monitor cycles with exact readback and cleanup satisfy the bounded persistent-monitoring gate. Promotion remains proof-gated by the dedicated maturity workflow and must not imply cloud, secret or transcription readiness."
+  "truth_boundary": "SAPLING is bounded to verified GitHub and Google Drive provider monitoring, maintenance and recovery. It does not prove Workload Identity Federation, Secret Manager binding, private authenticated Cloud Run health, live transcription readiness or external commercial approval."
 }
