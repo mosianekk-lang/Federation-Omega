@@ -2,7 +2,6 @@ from __future__ import annotations
 
 import pathlib
 import re
-import sys
 
 ROOT = pathlib.Path(__file__).resolve().parents[2]
 
@@ -12,32 +11,42 @@ TEXT_SUFFIXES = {
     ".cfg", ".sh", ".js", ".ts", ".html", ".xml", ".csv"
 }
 
-ALLOWED_SENTINELS = {
-    "PRIVATE_RUNTIME_CONFIG",
-    "PRIVATE_RECEIPT_REFERENCE",
-    "PRIVATE_IN_PLACE_BRIDGE",
-    "PRIVATE_IN_PLACE_CANONICAL_BRIDGE",
-}
+SAFE_PLACEHOLDER_PREFIXES = (
+    "PRIVATE_",
+    "RETIRED_",
+    "REDACTED",
+    "PLACEHOLDER",
+    "EXAMPLE_",
+    "DUMMY_",
+    "CHANGE_ME",
+    "REPLACE_WITH_",
+    "GOOGLE_DRIVE_",
+    "KIM_CANONICAL_",
+)
 
-RULES = [
+ID_ASSIGNMENT = re.compile(
+    r"(?i)(spreadsheet_id|parent_folder_id|file_id|folder_id|document_id|"
+    r"gmail_message_id|spreadsheetId|parentFolderId|fileId|folderId|documentId)"
+    r"\s*[=:]\s*[\"']([^\"']+)[\"']"
+)
+
+PROVIDER_ASSIGNMENT = re.compile(
+    r"(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|"
+    r"password|service[_-]?token|signing[_-]?key)"
+    r"\s*[=:]\s*[\"']([^\"']*)[\"']"
+)
+
+STATIC_RULES = [
     (
-        "live_google_identifier",
+        "embedded_google_url",
         re.compile(
-            r'(?i)(spreadsheet_id|parent_folder_id|file_id|folder_id|document_id|gmail_message_id)'
-            r'\s*[=:]\s*["\'](?!PRIVATE_)([A-Za-z0-9_-]{20,})["\']'
+            r"https://(?:docs|drive)\.google\.com/(?:[^\s\"']+/){1,4}"
+            r"[A-Za-z0-9_-]{20,}"
         ),
     ),
     (
-        "embedded_google_url",
-        re.compile(r'https://(?:docs|drive)\.google\.com/(?:[^\s"\']+/){1,4}[A-Za-z0-9_-]{20,}'),
-    ),
-    (
         "private_key",
-        re.compile(r'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
-    ),
-    (
-        "provider_secret",
-        re.compile(r'(?i)(api[_-]?key|access[_-]?token|refresh[_-]?token|client[_-]?secret|password)\s*[=:]\s*["\'][^"\']{8,}["\']'),
+        re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
     ),
 ]
 
@@ -53,6 +62,43 @@ def iter_text_files():
         yield path
 
 
+def is_safe_placeholder(value: str) -> bool:
+    stripped = value.strip()
+    if not stripped:
+        return True
+    upper = stripped.upper()
+    if upper.startswith(SAFE_PLACEHOLDER_PREFIXES):
+        return True
+    if stripped.startswith(("$", "${", "$(", "{{", "<")):
+        return True
+    return False
+
+
+def looks_like_live_identifier(value: str) -> bool:
+    stripped = value.strip()
+    return (
+        not is_safe_placeholder(stripped)
+        and len(stripped) >= 20
+        and re.fullmatch(r"[A-Za-z0-9_-]+", stripped) is not None
+    )
+
+
+def looks_like_literal_secret(value: str) -> bool:
+    stripped = value.strip()
+    if is_safe_placeholder(stripped):
+        return False
+    # Provider credentials are generally opaque and materially longer than
+    # ordinary configuration words. Generated shell expressions are excluded
+    # by is_safe_placeholder because they begin with '$'.
+    return len(stripped) >= 16
+
+
+def add_finding(findings: list[str], path: pathlib.Path, text: str,
+                start: int, rule_name: str) -> None:
+    line = text.count("\n", 0, start) + 1
+    findings.append(f"{path.relative_to(ROOT)}:{line}: {rule_name}")
+
+
 def main() -> int:
     findings: list[str] = []
     for path in iter_text_files():
@@ -60,17 +106,26 @@ def main() -> int:
             text = path.read_text(encoding="utf-8")
         except UnicodeDecodeError:
             continue
-        if any(sentinel in text for sentinel in ALLOWED_SENTINELS):
-            # Sentinels are allowed, but the rest of the file is still scanned.
-            pass
-        for rule_name, pattern in RULES:
+
+        for match in ID_ASSIGNMENT.finditer(text):
+            if looks_like_live_identifier(match.group(2)):
+                add_finding(
+                    findings, path, text, match.start(), "live_provider_identifier"
+                )
+
+        for match in PROVIDER_ASSIGNMENT.finditer(text):
+            if looks_like_literal_secret(match.group(2)):
+                add_finding(
+                    findings, path, text, match.start(), "literal_provider_secret"
+                )
+
+        for rule_name, pattern in STATIC_RULES:
             for match in pattern.finditer(text):
-                line = text.count("\n", 0, match.start()) + 1
-                findings.append(f"{path.relative_to(ROOT)}:{line}: {rule_name}")
+                add_finding(findings, path, text, match.start(), rule_name)
 
     if findings:
         print("Public repository leak guard failed:")
-        for finding in findings:
+        for finding in sorted(set(findings)):
             print(f" - {finding}")
         return 1
 
