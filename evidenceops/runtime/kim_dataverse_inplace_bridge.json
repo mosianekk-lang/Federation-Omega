@@ -1,27 +1,24 @@
 {
-  "bridge_id": "KDV-INPLACE-BRIDGE-v2",
+  "bridge_id": "KDV-PRIVATE-BRIDGE-DESCRIPTOR-v3",
   "owner": "Kim Kagiso Mosiane",
   "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
   "backend": "PRIVATE_IN_PLACE_CANONICAL_BRIDGE",
-  "spreadsheet_id": "PRIVATE_RUNTIME_CONFIG",
-  "spreadsheet_title": "PRIVATE_CANONICAL_CONTROL_PLANE",
-  "parent_folder_id": "PRIVATE_RUNTIME_CONFIG",
-  "parent_folder_title": "PRIVATE_CONTROL_PLANE",
-  "status": "KIM_DATAVERSE_BOUND_IN_PLACE",
-  "write_verified": true,
-  "readback_verified": true,
-  "receipt_id": "PRIVATE_RECEIPT_REFERENCE",
-  "receipt_location": "PRIVATE_RUNTIME_CONFIG",
-  "verified_at": "2026-08-01T04:49:28+02:00",
+  "identifier_ref": "KIM_CANONICAL_BACKEND_ID",
+  "parent_ref": "KIM_CANONICAL_PARENT_ID",
+  "receipt_ref": "KIM_CANONICAL_RECEIPT_ID",
+  "status_ref": "KIM_CANONICAL_BACKEND_STATUS",
+  "private_control_plane_status": "WRITE_AND_READBACK_VERIFIED",
+  "public_runtime_default": "PRIVATE_REFERENCE_UNRESOLVED",
   "public_repository_safe": true,
   "private_reference_rotation": {
     "status": "COMPLETED",
-    "reason": "Remove active operational identifiers from public repository",
-    "resolved_at_runtime": true
+    "reason": "Remove active operational identifiers from the public repository",
+    "old_identifier_invalidated": true,
+    "live_values_resolved_at_runtime": true
   },
   "native_microsoft_dataverse": {
     "status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
     "required_for_current_canonical_operation": false
   },
-  "truth_boundary": "The public repository contains only redacted bridge metadata. Live backend identifiers and receipts are resolved from the private EvidenceOps control plane at runtime."
+  "truth_boundary": "The public repository contains no live backend, folder, message or receipt identifier. Private values are supplied at runtime and must never be echoed by health or readiness endpoints."
 }
