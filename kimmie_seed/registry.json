@@ -1,8 +1,8 @@
 {
-  "registry_version": "1.9.5",
-  "updated_at": "2026-08-01T07:29:10+02:00",
+  "registry_version": "1.10.0",
+  "updated_at": "2026-08-01T08:13:00+02:00",
   "seed_id": "KIMMIE-IPEP-001",
-  "current_verified_stage": "SPROUT",
+  "current_verified_stage": "SAPLING",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
   "identity_drift": "NONE_DETECTED",
   "maintenance_owner": "mosianekk-lang",
@@ -17,36 +17,53 @@
     "external_scheduler": "GitHub Actions",
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
-    "workflow_execution_readback": "PASSED_AFTER_PROVIDER_CANARY_REGISTRY_RECONCILIATION",
-    "persistent_monitoring": "PARTIAL_ONE_SCHEDULED_POST_REPAIR_CYCLE_PLUS_CHANGE_TRIGGERED_REASSESSMENT_AND_PROVIDER_CANARY",
+    "workflow_execution_readback": "PENDING_PUSH_REASSESSMENT",
+    "persistent_monitoring": "VERIFIED_TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES_WITH_EXACT_READBACK_AND_CLEANUP",
     "provider_monitor_canary": {
       "provider": "google_drive",
-      "state": "PASSED",
-      "payload_sha256": "9f6f167de2f6fdb9742d5e22a4e2d48397f535a28a4d53cd1f293cde2ab868d9",
+      "state": "PASSED_LATER_INDEPENDENT_SCHEDULED_CYCLE",
+      "payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
       "exact_readback": "PASSED",
       "parent_confinement": "PASSED",
-      "cleanup": "PASSED_404_NOT_FOUND",
+      "cleanup": "PASSED_POST_DELETE_ABSENCE",
       "public_provider_identifier_persisted": false
     },
-    "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only"
+    "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only",
+    "provider_monitor_cycles": [
+      {
+        "cycle": "prior_independent_scheduled_cycle",
+        "payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168eb92f243f70cb7",
+        "result": "PASSED",
+        "exact_readback": "PASSED",
+        "cleanup": "PASSED"
+      },
+      {
+        "cycle": "later_independent_scheduled_cycle",
+        "payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
+        "result": "PASSED",
+        "exact_readback": "PASSED",
+        "parent_confinement": "PASSED",
+        "cleanup": "PASSED_POST_DELETE_ABSENCE"
+      }
+    ]
   },
   "promotion_gate": {
-    "next_candidate_stage": "SAPLING",
+    "next_candidate_stage": "MATURE",
     "requirements": {
       "repeated_successful_maturity_cycles": "VERIFIED",
       "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
-      "persistent_monitoring": "PARTIAL_ONE_SCHEDULED_POST_REPAIR_CYCLE_PLUS_CHANGE_TRIGGERED_REASSESSMENT_AND_PROVIDER_CANARY",
+      "persistent_monitoring": "VERIFIED_TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES",
       "maintenance_evidence": "VERIFIED",
       "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY_AND_LOCAL_REGISTRY_DRILL"
     },
     "sapling_requirements": {
       "repeated_successful_maturity_cycles": "VERIFIED",
       "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
-      "persistent_monitoring": "PARTIAL_ONE_SCHEDULED_POST_REPAIR_CYCLE_PLUS_CHANGE_TRIGGERED_REASSESSMENT_AND_PROVIDER_CANARY",
+      "persistent_monitoring": "VERIFIED_TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES",
       "maintenance_evidence": "VERIFIED",
       "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY_AND_LOCAL_REGISTRY_DRILL"
     },
-    "result": "NOT_PASSED"
+    "result": "PASSED"
   },
   "child_lanes": [
     {
@@ -66,8 +83,8 @@
     },
     {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
-      "verified_stage": "SPROUT",
-      "operational_state": "PROVIDER_MONITOR_CANARY_PASSED",
+      "verified_stage": "SAPLING",
+      "operational_state": "PERSISTENT_PROVIDER_MONITORING_VERIFIED",
       "environment": "VERIFIED_GITHUB_AND_GOOGLE_DRIVE",
       "authorised_environment": {
         "github_repository": "VERIFIED_READ_WRITE",
@@ -83,14 +100,15 @@
         "repeated_provider_execution": "PASSED",
         "controlled_recovery": "PASSED",
         "fresh_provider_monitor_canary": "PASSED",
-        "persistent_provider_monitoring": "PARTIAL_NOT_PASSED"
+        "persistent_provider_monitoring": "PASSED"
       },
       "tests": [
         "ECTS 6/6",
         "Provider create/write/readback",
         "Tamper rejection",
         "Second create/write/readback/delete recovery canary",
-        "Fresh authorised create/write/move/readback/delete provider-monitor canary"
+        "Fresh authorised create/write/move/readback/delete provider-monitor canary",
+        "Later independent scheduled create/write/move/readback/delete provider-monitor canary"
       ],
       "deployment_surfaces": [
         "GitHub",
@@ -98,12 +116,13 @@
         "Google Drive",
         "IPEP Bible"
       ],
-      "monitoring": "FRESH_PROVIDER_MONITOR_CANARY_PASSED; MULTI_CYCLE_PROVIDER_PERSISTENCE_OPEN",
+      "monitoring": "TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES_PASSED_WITH_DURABLE_PUBLIC_SAFE_RECEIPTS",
       "monitoring_receipt": {
-        "payload_sha256": "9f6f167de2f6fdb9742d5e22a4e2d48397f535a28a4d53cd1f293cde2ab868d9",
-        "exact_readback": "PASSED",
-        "parent_confinement": "PASSED",
-        "cleanup": "PASSED_404_NOT_FOUND",
+        "prior_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168eb92f243f70cb7",
+        "later_payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
+        "exact_readback": "PASSED_BOTH_CYCLES",
+        "parent_confinement": "PASSED_LATER_CYCLE",
+        "cleanup": "PASSED_BOTH_CYCLES",
         "public_provider_identifier_persisted": false
       },
       "maintenance_owner": "mosianekk-lang",
@@ -156,5 +175,5 @@
     "readback": "PASSED",
     "evidence_note_sha256": "e7bb98ccc3b7b565c27375f2350149544562144e57ebb8ffb9a480f8d04223ce"
   },
-  "lesson": "Keep workflow-generated maturity output canonical. Provider-monitor canaries and change-triggered reassessments prove access and contract continuity, but SAPLING still requires repeated durable scheduled root and provider monitoring cycles without schema drift."
+  "lesson": "Two distinct scheduled provider-monitor cycles with exact readback and cleanup satisfy the bounded persistent-monitoring gate. Promotion remains proof-gated by the dedicated maturity workflow and must not imply cloud, secret or transcription readiness."
 }
