@@ -1,7 +1,8 @@
 {
-  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v1",
+  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v2",
   "owner": "Kim Kagiso Mosiane",
   "status": "ACTIVE",
+  "public_repository_safe": true,
   "boundaries": [
     {
       "boundary_id": "BND-CHAT-ALIGNMENT",
@@ -17,23 +18,23 @@
       ],
       "attempted_routes": [
         "GITHUB_MANIFEST_LOADER",
-        "GOOGLE_DRIVE_CANONICAL_BRIDGE",
-        "GMAIL_MANIFEST_DISTRIBUTION",
+        "PRIVATE_CANONICAL_BRIDGE",
+        "AUTHORISED_DISTRIBUTION_ROUTE",
         "PLUGIN_MARKETPLACE_SEARCH"
       ],
       "verified_routes": [
         "GITHUB_MANIFEST_LOADER_FOR_COMPLIANT_WORKERS",
-        "GMAIL_MANIFEST_DISTRIBUTION_WITH_READBACK"
+        "AUTHORISED_DISTRIBUTION_WITH_READBACK"
       ],
-      "distribution_receipt_id": "RCP-CHAT-DISTRIBUTION-001",
-      "gmail_message_id": "19fbb0ce6ae8e1ae",
+      "distribution_receipt_id": "PRIVATE_RECEIPT_REFERENCE",
+      "gmail_message_id": "PRIVATE_RUNTIME_CONFIG",
       "unresolved_scope": "ALREADY_OPEN_NON_POLLING_CHATS_WITHOUT_AUTHORISED_MESSAGE_BRIDGE",
       "next_action": "DISCOVER_AUTHORISED_NON_POLLING_LIVE_CHAT_BRIDGE",
       "report_only_terminal_allowed": false
     },
     {
       "boundary_id": "BND-KIM-DATAVERSE",
-      "description": "Canonical Kim Dataverse propagation through an authorised in-place backend.",
+      "description": "Canonical Kim Dataverse propagation through an authorised private in-place backend.",
       "owner": "WORKFORCE",
       "state": "RESOLVED_IN_PLACE",
       "resolution_requirements": [
@@ -46,11 +47,11 @@
         "ISSUE_RECEIPT",
         "RECONCILE_REPOSITORY_MIRROR"
       ],
-      "resolved_route": "GOOGLE_DRIVE_GOOGLE_SHEETS_IN_PLACE_BRIDGE",
+      "resolved_route": "PRIVATE_IN_PLACE_CANONICAL_BRIDGE",
       "bridge_record": "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
-      "spreadsheet_id": "1TS64KmgGS30Hr9yHry3kQPzXMtWVMV22utJxhDXd7o8",
-      "receipt_id": "RCP-KDV-INPLACE-001",
-      "verified_at": "2026-08-01T04:07:00+02:00",
+      "spreadsheet_id": "PRIVATE_RUNTIME_CONFIG",
+      "receipt_id": "PRIVATE_RECEIPT_REFERENCE",
+      "verified_at": "2026-08-01T04:49:28+02:00",
       "native_microsoft_dataverse_status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
       "report_only_terminal_allowed": false
     }
