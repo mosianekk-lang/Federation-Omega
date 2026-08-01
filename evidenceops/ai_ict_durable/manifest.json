@@ -1,0 +1,22 @@
+{
+  "version": "2.5.0",
+  "files": [
+    {"path": ".github/workflows/evidenceops-ai-ict-durable-runtime.yml", "sha256": "492b975ad2fad7c50b26c71ba8d81dc881973355b9c8d4ca3c38213968c7f79c"},
+    {"path": "README.md", "sha256": "5a80b54eff0ad029469936858faf472d783715a371e6f0015dd7aef5fba87385"},
+    {"path": "evidenceops_ai_ict_durable/__init__.py", "sha256": "6fd41cf77319728d83e6cc02a3da863b2108dced21a99b0d6579081c6830eebb"},
+    {"path": "evidenceops_ai_ict_durable/bridge.py", "sha256": "a4d9a5dc03155d25fc867cd191a22afc48c26994014a318f1c230ae32958ddd0"},
+    {"path": "evidenceops_ai_ict_durable/store.py", "sha256": "c26f5957132db027bbf8a04546a5ba155275d3fbb4d8e470ebd10ffe5730492c"},
+    {"path": "migrations/0001_durable_agent_runs.sql", "sha256": "40f20ba3a70a26a51472073b05c37a32dc781b7354a0ab4aae9e452cb85ff53d"},
+    {"path": "receipts/production_boundary_repair_v2_5_receipt.json", "sha256": "e26ba28e31cd80dc9a4299ab606c1be02cee092d81c04ca756b9b40a16faf15f"},
+    {"path": "receipts/test_output.txt", "sha256": "b80ba1d69baa3a1c7b7bbc6d73a5ceebd956b478fc60919d6502804b6b00908f"},
+    {"path": "receipts/verification.json", "sha256": "14544e9d5982c5ad7cffd19a7e4e86184618f8324d86593fe55ebd1035897b0c"},
+    {"path": "requirements-sdk.txt", "sha256": "d5c11715981ca223ca856902b5dfd2a2552db335e620b7364d15a125a8761144"},
+    {"path": "sdk_contract_probe.py", "sha256": "d04565495420a32d3a9720793b9ad0b771bcd165aa94005f85afb2a30f04a264"},
+    {"path": "tests/test_durable_overlay.py", "sha256": "a091db05c97e78f75194daf28a1add70b167f583054ae94217b87bc03a2c4513"},
+    {"path": "verify_overlay.py", "sha256": "13ed132a8ccdf40b6c8981ee3fcf487c4c5aa01bfbac06e618d93bae6e31c7cd"}
+  ],
+  "owner": "WORKFORCE",
+  "state": "ACTIVE_REPAIR",
+  "github_pr": 47,
+  "verified_ci_head": "389d1b9b83012d9aef47eaefe572e56f50d72d4c"
+}
