@@ -1,5 +1,5 @@
 {
-  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v3",
+  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v4",
   "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
   "owner": "Kim Kagiso Mosiane",
   "status": "CONTROLLING",
@@ -16,17 +16,20 @@
   "canonical_intelligence_target": "KIM_DATAVERSE",
   "canonical_backend": {
     "type": "PRIVATE_IN_PLACE_BRIDGE",
-    "spreadsheet_id": "PRIVATE_RUNTIME_CONFIG",
+    "identifier_ref": "KIM_CANONICAL_BACKEND_ID",
     "bridge_record": "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
-    "status": "WRITE_AND_READBACK_VERIFIED",
-    "receipt_id": "PRIVATE_RECEIPT_REFERENCE"
+    "status_ref": "KIM_CANONICAL_BACKEND_STATUS",
+    "receipt_ref": "KIM_CANONICAL_RECEIPT_ID",
+    "private_control_plane_status": "WRITE_AND_READBACK_VERIFIED",
+    "public_runtime_default": "PRIVATE_REFERENCE_UNRESOLVED"
   },
   "public_repository_policy": {
     "live_identifiers_allowed": false,
     "private_backend_ids_allowed": false,
     "gmail_message_ids_allowed": false,
     "folder_ids_allowed": false,
-    "secrets_allowed": false
+    "secrets_allowed": false,
+    "runtime_may_echo_private_identifiers": false
   },
   "canonical_alignment_claim_requires": [
     "PRIVATE_BACKEND_REFERENCE_RESOLVED_AT_RUNTIME",
@@ -43,5 +46,5 @@
     "status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
     "required_for_current_canonical_operation": false
   },
-  "version": 3
+  "version": 4
 }
