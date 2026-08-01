@@ -1,0 +1,52 @@
+version: 1
+owner: Kim Kagiso Mosiane
+policy:
+  chatgpt_scheduling_allowed: false
+  external_runtime_required: true
+  proof_before_claim: true
+  secret_values_in_logs: false
+runtimes:
+  github_actions:
+    priority: 1
+    use_for: [repository, ci, release, deployment, code_state]
+  google_cloud:
+    priority: 2
+    use_for: [durable_jobs, queues, databases, provider_checks, long_running_processing]
+  google_apps_script:
+    priority: 3
+    use_for: [drive, docs, sheets, gmail, workspace_triggers]
+  google_calendar:
+    priority: 4
+    use_for: [human_reminders, meetings]
+executions:
+  - id: EXT-WATCH-001
+    name: WIF provider boundary watch
+    runtime: github_actions
+    trigger: "cron 17 * * * *"
+    status: DEPLOYED_FIRST_RUN_UNVERIFIED
+    receipt: evidenceops-provider-boundary-watch-state
+  - id: EXT-WATCH-002
+    name: Kimmie Seed maturity watch
+    runtime: google_cloud
+    trigger: hourly_condition
+    status: MIGRATION_REQUIRED
+  - id: EXT-WATCH-003
+    name: EvidenceOps lane watch
+    runtime: google_cloud
+    trigger: hourly_condition
+    status: MIGRATION_REQUIRED
+  - id: EXT-WATCH-004
+    name: IPEP innovation scan
+    runtime: github_actions_or_google_cloud
+    trigger: daily
+    status: MIGRATION_REQUIRED
+  - id: EXT-WATCH-005
+    name: IPEP Bible capture
+    runtime: google_apps_script_or_google_cloud
+    trigger: hourly_or_event
+    status: MIGRATION_REQUIRED
+  - id: EXT-WATCH-006
+    name: Audio run learning loop
+    runtime: google_apps_script_plus_google_cloud
+    trigger: hourly_drive_scan
+    status: MIGRATION_REQUIRED
