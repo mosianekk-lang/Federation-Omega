@@ -47,11 +47,15 @@ jobs:
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           INPUT_MODE: ${{ inputs.mode }}
         run: |
+          set -euo pipefail
+          mkdir -p scheduler/runtime
           MODE="${INPUT_MODE:-auto}"
           python scheduler/run_scheduler.py \
             --mode "$MODE" \
             --cron "$EVENT_SCHEDULE" \
             --output scheduler/runtime/latest-report.json | tee scheduler/runtime/summary.txt
+          test -s scheduler/runtime/latest-report.json
+          test -s scheduler/runtime/summary.txt
 
       - name: Publish workflow summary
         run: cat scheduler/runtime/summary.txt >> "$GITHUB_STEP_SUMMARY"

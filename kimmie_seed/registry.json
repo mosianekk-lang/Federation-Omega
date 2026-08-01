@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.9.1",
-  "updated_at": "2026-08-01T05:12:00+02:00",
+  "registry_version": "1.9.2",
+  "updated_at": "2026-08-01T06:03:29+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SPROUT",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
@@ -17,13 +17,20 @@
     "external_scheduler": "GitHub Actions",
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
-    "workflow_execution_readback": "PASSED",
+    "workflow_execution_readback": "FAILED_SCHEMA_DRIFT_DETECTED",
     "persistent_monitoring": "PARTIAL",
     "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only"
   },
   "promotion_gate": {
     "next_candidate_stage": "SAPLING",
     "requirements": {
+      "repeated_successful_maturity_cycles": "VERIFIED",
+      "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
+      "persistent_monitoring": "PARTIAL",
+      "maintenance_evidence": "VERIFIED",
+      "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY"
+    },
+    "sapling_requirements": {
       "repeated_successful_maturity_cycles": "VERIFIED",
       "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
       "persistent_monitoring": "PARTIAL",
@@ -41,7 +48,9 @@
       "nutrient_gap": "AUTHORISED_CORPUS_ACQUISITION_INGESTION_RIGHTS_AND_RECEIPT",
       "proof_gates": "NOT_PASSED",
       "tests": "NOT_RUN",
-      "deployment_surfaces": ["GitHub registry"],
+      "deployment_surfaces": [
+        "GitHub registry"
+      ],
       "monitoring": "CHECKPOINT_ONLY",
       "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED",
       "owner_decision_required": false
@@ -51,15 +60,33 @@
       "verified_stage": "SPROUT",
       "operational_state": "RECOVERY_CANARY_PASSED",
       "environment": "VERIFIED_GITHUB_AND_GOOGLE_DRIVE",
+      "authorised_environment": {
+        "github_repository": "VERIFIED_READ_WRITE",
+        "google_drive_connector": "VERIFIED_CREATE_WRITE_READBACK_DELETE"
+      },
       "nutrients": "IMPLEMENTATION_CONFORMANCE_CI_PROVIDER_EXECUTION_READBACK_MAINTENANCE_RECOVERY_VERIFIED",
+      "required_nutrients": {
+        "proof_receipt": "VERIFIED_PRESENT",
+        "maintenance_owner": "mosianekk-lang"
+      },
       "proof_gates": {
         "spout": "PASSED",
         "repeated_provider_execution": "PASSED",
         "controlled_recovery": "PASSED",
         "persistent_provider_monitoring": "NOT_PASSED"
       },
-      "tests": ["ECTS 6/6", "Provider create/write/readback", "Tamper rejection", "Second create/write/readback/delete recovery canary"],
-      "deployment_surfaces": ["GitHub", "Local runtime", "Google Drive", "IPEP Bible"],
+      "tests": [
+        "ECTS 6/6",
+        "Provider create/write/readback",
+        "Tamper rejection",
+        "Second create/write/readback/delete recovery canary"
+      ],
+      "deployment_surfaces": [
+        "GitHub",
+        "Local runtime",
+        "Google Drive",
+        "IPEP Bible"
+      ],
       "monitoring": "ACTIVE_ACCESS_AND_RECOVERY_VERIFIED; PERSISTENT_MONITOR_OPEN",
       "maintenance_owner": "mosianekk-lang",
       "owner_decision_required": false
@@ -76,8 +103,15 @@
         "persistent_monitoring": "NOT_PASSED",
         "controlled_recovery": "NOT_PASSED"
       },
-      "tests": ["6 local regressions", "16 inclusion proofs"],
-      "deployment_surfaces": ["GitHub package/CLI", "Private Drive passports", "IPEP Bible"],
+      "tests": [
+        "6 local regressions",
+        "16 inclusion proofs"
+      ],
+      "deployment_surfaces": [
+        "GitHub package/CLI",
+        "Private Drive passports",
+        "IPEP Bible"
+      ],
       "monitoring": "PRIVATE_PASSPORT_ACCESS_RECONFIRMED",
       "maintenance_owner": "mosianekk-lang",
       "owner_decision_required": false
@@ -90,7 +124,9 @@
       "nutrient_gap": "PROVIDER_CREDENTIAL_SPEECH_BINDING_PRIVATE_WORKER_AND_RECEIPT",
       "proof_gates": "NOT_PASSED",
       "tests": "NOT_RUN",
-      "deployment_surfaces": ["GitHub adapter scaffold"],
+      "deployment_surfaces": [
+        "GitHub adapter scaffold"
+      ],
       "monitoring": "BLOCKER_STATE_ONLY",
       "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED",
       "owner_decision_required": false
@@ -102,5 +138,5 @@
     "readback": "PASSED",
     "evidence_note_sha256": "be0e433f9c5664f588b55560fc7ffb6220b2a38b89e8ed37247597d08fbd646f"
   },
-  "lesson": "Historical proof survives canary retirement, but current environment access and recovery must be re-verified without publishing live provider identifiers. Recovery proof does not substitute for persistent monitoring."
+  "lesson": "Historical proof survives canary retirement, but current environment access and recovery must be re-verified without publishing live provider identifiers. Recovery proof does not substitute for persistent monitoring. Live registry aliases must remain compatible with the maturity assessor contract."
 }
