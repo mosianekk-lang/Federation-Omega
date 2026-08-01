@@ -15,6 +15,10 @@ permissions:
   contents: read
   id-token: write
 
+env:
+  GCP_REGION: ${{ vars.GCP_REGION || 'africa-south1' }}
+  SERVICE_NAME: evidenceops-sovereign-runtime
+
 jobs:
   test:
     runs-on: ubuntu-latest
@@ -26,7 +30,7 @@ jobs:
       - run: pip install -r evidenceops/runtime_service/requirements.txt
       - run: pytest -q evidenceops/tests/test_runtime_service.py
       - name: Build container
-        run: docker build -f evidenceops/runtime_service/Dockerfile -t evidenceops-sovereign-runtime:canary .
+        run: docker build -t evidenceops-sovereign-runtime:canary evidenceops/runtime_service
 
   deploy:
     needs: test
@@ -40,17 +44,36 @@ jobs:
           workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
           service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
-      - name: Deploy to Cloud Run from source
+      - name: Deploy to Cloud Run
+        shell: bash
         run: |
-          gcloud run deploy evidenceops-sovereign-runtime \
+          set -euo pipefail
+          EXTRA_ARGS=()
+          if [[ -n "${{ vars.KIM_DATAVERSE_URL }}" ]]; then
+            EXTRA_ARGS+=(--set-env-vars="KIM_DATAVERSE_URL=${{ vars.KIM_DATAVERSE_URL }}")
+          fi
+          if [[ -n "${{ vars.KIM_DATAVERSE_MISSION_TABLE }}" ]]; then
+            EXTRA_ARGS+=(--set-env-vars="KIM_DATAVERSE_MISSION_TABLE=${{ vars.KIM_DATAVERSE_MISSION_TABLE }}")
+          fi
+          if [[ -n "${{ vars.KIM_DATAVERSE_SECRET_NAME }}" ]]; then
+            EXTRA_ARGS+=(--set-secrets="KIM_DATAVERSE_ACCESS_TOKEN=${{ vars.KIM_DATAVERSE_SECRET_NAME }}:latest")
+          fi
+          gcloud run deploy "$SERVICE_NAME" \
             --project='${{ vars.GCP_PROJECT_ID }}' \
-            --region='${{ vars.GCP_REGION || 'africa-south1' }}' \
-            --source=. \
+            --region="$GCP_REGION" \
+            --source=evidenceops/runtime_service \
             --allow-unauthenticated \
-            --set-env-vars=EVIDENCEOPS_ACTIVE_MANIFEST=/workspace/evidenceops/runtime/ACTIVE_SOVEREIGN_TRANSLATOR.json \
-            --quiet
-      - name: Verify service
+            --quiet \
+            "${EXTRA_ARGS[@]}"
+      - name: Verify service and Dataverse state
         run: |
-          URL=$(gcloud run services describe evidenceops-sovereign-runtime --project='${{ vars.GCP_PROJECT_ID }}' --region='${{ vars.GCP_REGION || 'africa-south1' }}' --format='value(status.url)')
-          curl --fail --retry 10 --retry-delay 6 "$URL/health"
-          echo "service_url=$URL" >> "$GITHUB_OUTPUT"
+          set -euo pipefail
+          URL=$(gcloud run services describe "$SERVICE_NAME" --project='${{ vars.GCP_PROJECT_ID }}' --region="$GCP_REGION" --format='value(status.url)')
+          curl --fail --retry 10 --retry-delay 6 "$URL/health" | tee health.json
+          python - <<'PY'
+          import json
+          data=json.load(open('health.json'))
+          assert data['status']=='ok'
+          assert data['active_contract']=='EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2'
+          print(json.dumps(data, indent=2))
+          PY
