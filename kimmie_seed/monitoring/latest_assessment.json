@@ -1,13 +1,1 @@
-{
-  "seed_id": "KIMMIE-IPEP-001",
-  "verified_stage": "SPROUT",
-  "registry_stage": "SPROUT",
-  "identity_drift": "NONE_DETECTED",
-  "missing_required_nutrients": [],
-  "useful_child_capability_verified": true,
-  "workflow_receipt_validation": "PASSED",
-  "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
-  "next_gate": "SAPLING requires repeated successful maturity cycles, a reusable child capability across multiple corpora or environments, persistent monitoring, maintenance and recovery evidence",
-  "status": "PASS",
-  "assessment_sha256": "84d61ae41e93c96c378d7c9e718267dbb6d73db688eee075c860e4581d64fbb8"
-}
+{"seed_id":"KIMMIE-IPEP-001","verified_stage":"SPROUT","registry_stage":"SPROUT","identity_drift":"NONE_DETECTED","missing_required_nutrients":[],"useful_child_capability_verified":true,"reusable_multi_corpus_child_execution":"PASSED","workflow_receipt_validation":"PASSED","workflow_receipt_sha256":"37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c","toolkit_release_id":"EPP-TOOLKIT-20260801-001","toolkit_release_receipt_sha256":"2c59af33d56fd6d6f4aff41dffcc817db63d674f8a758168a579894135ab7461","toolkit_local_regression_tests":{"passed":6,"failed":0},"verified_real_corpora":2,"total_inclusion_proofs_checked":16,"persistent_monitoring":"PARTIAL","maintenance_evidence":"PARTIAL","recovery_evidence":"NOT_VERIFIED","next_gate":"SAPLING requires persistent lane-specific monitoring, verified maintenance operation, controlled recovery evidence and external CI readback for the reusable child capability.","status":"PASS_AT_SPROUT","observed_at":"2026-08-01T02:08:58+02:00","assessment_id":"KSA-20260801-006","assessment_sha256":"8ce3c975aa177b349ddd9f100e7c09c052521d224f7e54d76d2832dc228049b6"}
