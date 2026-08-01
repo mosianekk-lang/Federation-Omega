@@ -31,6 +31,12 @@ SAPLING_REQUIREMENTS = {
     "maintenance_evidence",
     "recovery_evidence",
 }
+MATURE_REQUIREMENTS = {
+    "sustained_production_use",
+    "resilience_over_time",
+    "measurable_operational_value",
+    "complete_operational_ownership",
+}
 
 
 def canonical_hash(obj: Any) -> str:
@@ -114,6 +120,23 @@ def all_gate_requirements_verified(requirements: dict[str, Any], required_keys: 
     )
 
 
+def stage_requirements(
+    registry: dict[str, Any],
+    candidate_stage: str,
+    explicit_key: str,
+) -> dict[str, Any]:
+    """Resolve the named stage gate while preserving the active-gate compatibility alias."""
+    gate = registry.get("promotion_gate", {})
+    requirements = gate.get(explicit_key, {})
+    if requirements:
+        return requirements
+    if gate.get("next_candidate_stage") == candidate_stage:
+        active_requirements = gate.get("requirements", {})
+        if isinstance(active_requirements, dict):
+            return active_requirements
+    return {}
+
+
 def assess(genome: dict[str, Any], environment: dict[str, Any], registry: dict[str, Any],
            receipt_valid: bool, receipt_state: str, receipt: dict[str, Any] | None) -> dict[str, Any]:
     states = {item["type"]: item["state"] for item in environment["nutrients"]}
@@ -136,11 +159,13 @@ def assess(genome: dict[str, Any], environment: dict[str, Any], registry: dict[s
     if stage == "SPROUT" and all_gate_requirements_verified(sapling, SAPLING_REQUIREMENTS):
         stage = "SAPLING"
 
-    for candidate, key in (("MATURE", "mature_requirements"), ("FEDERATED", "federated_requirements")):
-        requirements = registry.get("promotion_gate", {}).get(key, {})
-        if requirements and STAGE_RANK[stage] + 1 == STAGE_RANK[candidate]:
-            if all(is_verified(value) for value in flatten_states(requirements)):
-                stage = candidate
+    mature = stage_requirements(registry, "MATURE", "mature_requirements")
+    if stage == "SAPLING" and all_gate_requirements_verified(mature, MATURE_REQUIREMENTS):
+        stage = "MATURE"
+
+    federated = stage_requirements(registry, "FEDERATED", "federated_requirements")
+    if stage == "MATURE" and federated and all(is_verified(value) for value in flatten_states(federated)):
+        stage = "FEDERATED"
 
     next_gate = {
         "SEED": "GERMINATED requires verified access to an authorised environment and required foundational nutrients",
@@ -162,6 +187,7 @@ def assess(genome: dict[str, Any], environment: dict[str, Any], registry: dict[s
         "workflow_receipt_validation": receipt_state,
         "workflow_receipt_sha256": receipt.get("receipt_sha256") if receipt else None,
         "sapling_gate_verified": all_gate_requirements_verified(sapling, SAPLING_REQUIREMENTS),
+        "mature_gate_verified": all_gate_requirements_verified(mature, MATURE_REQUIREMENTS),
         "next_gate": next_gate,
         "status": "PASS" if stage == registry["current_verified_stage"] else "STAGE_DRIFT",
     }
