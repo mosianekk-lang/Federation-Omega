@@ -1,0 +1,70 @@
+name: EvidenceOps In-Place Alignment
+
+on:
+  push:
+    paths:
+      - 'evidenceops/runtime/**'
+      - 'evidenceops/doctrine/**'
+      - 'evidenceops/contracts/**'
+      - 'evidenceops/bootstrap/**'
+      - 'evidenceops/tests/test_in_place_alignment_loader.py'
+      - '.github/workflows/evidenceops-in-place-alignment.yml'
+  pull_request:
+    paths:
+      - 'evidenceops/runtime/**'
+      - 'evidenceops/doctrine/**'
+      - 'evidenceops/contracts/**'
+      - 'evidenceops/bootstrap/**'
+      - 'evidenceops/tests/test_in_place_alignment_loader.py'
+  workflow_dispatch:
+  schedule:
+    - cron: '17 * * * *'
+
+permissions:
+  contents: read
+
+jobs:
+  verify-in-place-alignment:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install pytest
+        run: python -m pip install --upgrade pytest
+
+      - name: Run alignment tests
+        run: |
+          python -m pytest -q \
+            evidenceops/tests/test_sovereign_translator_alignment.py \
+            evidenceops/tests/test_in_place_alignment_loader.py
+
+      - name: Generate in-place receipt
+        run: |
+          mkdir -p alignment-receipt
+          python - <<'PY'
+          import dataclasses, importlib.util, json, pathlib, time
+          root = pathlib.Path('.')
+          path = root / 'evidenceops/runtime/in_place_alignment_loader.py'
+          spec = importlib.util.spec_from_file_location('loader', path)
+          module = importlib.util.module_from_spec(spec)
+          spec.loader.exec_module(module)
+          _, receipt = module.load_active_translator(root)
+          payload = dataclasses.asdict(receipt)
+          payload['generated_at'] = int(time.time())
+          payload['state'] = 'IN_PLACE_ALIGNMENT_VERIFIED'
+          pathlib.Path('alignment-receipt/in-place-receipt.json').write_text(
+              json.dumps(payload, indent=2), encoding='utf-8'
+          )
+          PY
+
+      - name: Upload receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-in-place-alignment-receipt
+          path: alignment-receipt/in-place-receipt.json
