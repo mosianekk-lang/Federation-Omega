@@ -1,0 +1,179 @@
+name: EvidenceOps Provider Boundary Watch
+
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: read
+  issues: write
+  pull-requests: read
+
+env:
+  WATCH_ISSUE: '52'
+  WATCH_PR: '50'
+  INVENTORY_WORKFLOW: 'EvidenceOps Infrastructure Inventory'
+
+jobs:
+  watch:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Inspect provider-boundary state
+        id: inspect
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GCP_PROJECT_ID_SET: ${{ vars.GCP_PROJECT_ID != '' }}
+          GCP_REGION_SET: ${{ vars.GCP_REGION != '' }}
+          GCP_WIF_PROVIDER_SET: ${{ vars.GCP_WIF_PROVIDER != '' }}
+          GCP_SERVICE_ACCOUNT_SET: ${{ vars.GCP_SERVICE_ACCOUNT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+
+          issue_json=$(gh api "repos/${GITHUB_REPOSITORY}/issues/${WATCH_ISSUE}")
+          pr_json=$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${WATCH_PR}")
+          comments_json=$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${WATCH_ISSUE}/comments?per_page=100")
+          runs_json=$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?event=pull_request&per_page=100")
+
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+
+          issue = json.loads(os.environ['ISSUE_JSON'])
+          pr = json.loads(os.environ['PR_JSON'])
+          comments = json.loads(os.environ['COMMENTS_JSON'])
+          runs = json.loads(os.environ['RUNS_JSON']).get('workflow_runs', [])
+
+          latest = {}
+          for run in runs:
+              name = run.get('name')
+              if name not in latest:
+                  latest[name] = {
+                      'status': run.get('status'),
+                      'conclusion': run.get('conclusion'),
+                      'id': run.get('id'),
+                      'head_sha': run.get('head_sha'),
+                  }
+
+          comment_text = '\n'.join(c.get('body', '') for c in comments)
+          wif_verified = 'FEDOMEGA-WIF-CLOUD-VERIFIED' in comment_text
+          vars_state = {
+              'GCP_PROJECT_ID': os.environ['GCP_PROJECT_ID_SET'] == 'true',
+              'GCP_REGION': os.environ['GCP_REGION_SET'] == 'true',
+              'GCP_WIF_PROVIDER': os.environ['GCP_WIF_PROVIDER_SET'] == 'true',
+              'GCP_SERVICE_ACCOUNT': os.environ['GCP_SERVICE_ACCOUNT_SET'] == 'true',
+          }
+          all_vars_set = all(vars_state.values())
+          inventory = latest.get(os.environ['INVENTORY_WORKFLOW'], {})
+          inventory_success = inventory.get('conclusion') == 'success'
+
+          state = {
+              'issue_state': issue.get('state'),
+              'pr_state': pr.get('state'),
+              'pr_head_sha': pr.get('head', {}).get('sha'),
+              'wif_verified': wif_verified,
+              'variables': vars_state,
+              'all_required_variables_set': all_vars_set,
+              'inventory': inventory,
+              'inventory_success': inventory_success,
+          }
+          canonical = json.dumps(state, sort_keys=True, separators=(',', ':'))
+          fingerprint = hashlib.sha256(canonical.encode()).hexdigest()
+          state['fingerprint'] = fingerprint
+          pathlib.Path('provider-boundary-state.json').write_text(
+              json.dumps(state, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+
+          previous = ''
+          marker = '<!-- evidenceops-provider-watch-state:'
+          for comment in reversed(comments):
+              body = comment.get('body', '')
+              if marker in body:
+                  previous = body.split(marker, 1)[1].split('-->', 1)[0].strip()
+                  break
+
+          material = fingerprint != previous
+          notify = material and (wif_verified or all_vars_set or inventory_success or issue.get('state') == 'closed')
+          pathlib.Path('watch.env').write_text(
+              f'FINGERPRINT={fingerprint}\nPREVIOUS={previous}\nMATERIAL={str(material).lower()}\nNOTIFY={str(notify).lower()}\n',
+              encoding='utf-8',
+          )
+          PY
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GCP_PROJECT_ID_SET: ${{ vars.GCP_PROJECT_ID != '' }}
+          GCP_REGION_SET: ${{ vars.GCP_REGION != '' }}
+          GCP_WIF_PROVIDER_SET: ${{ vars.GCP_WIF_PROVIDER != '' }}
+          GCP_SERVICE_ACCOUNT_SET: ${{ vars.GCP_SERVICE_ACCOUNT != '' }}
+          ISSUE_JSON: ${{ toJson(fromJson(steps.issue.outputs.result || '{}')) }}
+        continue-on-error: false
+
+      - name: Re-inspect with shell-owned JSON inputs
+        env:
+          GH_TOKEN: ${{ github.token }}
+          GCP_PROJECT_ID_SET: ${{ vars.GCP_PROJECT_ID != '' }}
+          GCP_REGION_SET: ${{ vars.GCP_REGION != '' }}
+          GCP_WIF_PROVIDER_SET: ${{ vars.GCP_WIF_PROVIDER != '' }}
+          GCP_SERVICE_ACCOUNT_SET: ${{ vars.GCP_SERVICE_ACCOUNT != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          export ISSUE_JSON="$(gh api "repos/${GITHUB_REPOSITORY}/issues/${WATCH_ISSUE}")"
+          export PR_JSON="$(gh api "repos/${GITHUB_REPOSITORY}/pulls/${WATCH_PR}")"
+          export COMMENTS_JSON="$(gh api --paginate "repos/${GITHUB_REPOSITORY}/issues/${WATCH_ISSUE}/comments?per_page=100")"
+          export RUNS_JSON="$(gh api "repos/${GITHUB_REPOSITORY}/actions/runs?event=pull_request&per_page=100")"
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          issue=json.loads(os.environ['ISSUE_JSON']); pr=json.loads(os.environ['PR_JSON'])
+          comments=json.loads(os.environ['COMMENTS_JSON']); runs=json.loads(os.environ['RUNS_JSON']).get('workflow_runs',[])
+          latest={}
+          for run in runs:
+              latest.setdefault(run.get('name'), {'status':run.get('status'),'conclusion':run.get('conclusion'),'id':run.get('id'),'head_sha':run.get('head_sha')})
+          text='\n'.join(c.get('body','') for c in comments)
+          vars_state={k: os.environ[k+'_SET']=='true' for k in ['GCP_PROJECT_ID','GCP_REGION','GCP_WIF_PROVIDER','GCP_SERVICE_ACCOUNT']}
+          inventory=latest.get(os.environ['INVENTORY_WORKFLOW'],{})
+          state={'issue_state':issue.get('state'),'pr_state':pr.get('state'),'pr_head_sha':pr.get('head',{}).get('sha'),'wif_verified':'FEDOMEGA-WIF-CLOUD-VERIFIED' in text,'variables':vars_state,'all_required_variables_set':all(vars_state.values()),'inventory':inventory,'inventory_success':inventory.get('conclusion')=='success'}
+          canonical=json.dumps(state,sort_keys=True,separators=(',',':')); state['fingerprint']=hashlib.sha256(canonical.encode()).hexdigest()
+          pathlib.Path('provider-boundary-state.json').write_text(json.dumps(state,indent=2,sort_keys=True)+'\n')
+          marker='<!-- evidenceops-provider-watch-state:'; previous=''
+          for c in reversed(comments):
+              body=c.get('body','')
+              if marker in body:
+                  previous=body.split(marker,1)[1].split('-->',1)[0].strip(); break
+          material=state['fingerprint']!=previous
+          notify=material and (state['wif_verified'] or state['all_required_variables_set'] or state['inventory_success'] or state['issue_state']=='closed')
+          pathlib.Path('watch.env').write_text(f"FINGERPRINT={state['fingerprint']}\nPREVIOUS={previous}\nMATERIAL={str(material).lower()}\nNOTIFY={str(notify).lower()}\n")
+          PY
+
+      - name: Publish material provider-boundary change
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          source watch.env
+          if [[ "$NOTIFY" != "true" ]]; then
+            echo "No material provider-boundary gate changed."
+            exit 0
+          fi
+          python - <<'PY' > provider-boundary-comment.md
+          import json
+          s=json.load(open('provider-boundary-state.json'))
+          decision='MERGE-REVIEW-ELIGIBLE' if s['wif_verified'] and s['all_required_variables_set'] and s['inventory_success'] else 'NO-MERGE'
+          print(f"## Provider-boundary state change\n\nDecision: **{decision}**\n")
+          print(f"- WIF verified: `{s['wif_verified']}`")
+          print(f"- Required repository variables set: `{s['all_required_variables_set']}`")
+          print(f"- Infrastructure inventory success: `{s['inventory_success']}`")
+          print(f"- PR head: `{s['pr_head_sha']}`")
+          print("\nNo secret values are included.")
+          print(f"\n<!-- evidenceops-provider-watch-state:{s['fingerprint']} -->")
+          PY
+          gh issue comment "$WATCH_ISSUE" --repo "$GITHUB_REPOSITORY" --body-file provider-boundary-comment.md
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-provider-boundary-watch-state
+          path: provider-boundary-state.json
+          retention-days: 30
