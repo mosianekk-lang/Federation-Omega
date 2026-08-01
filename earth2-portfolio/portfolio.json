@@ -23,10 +23,10 @@
       "dependencies": [],
       "domain": "Anti-Corruption Systems",
       "id": "E2K-0002",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "DELIVERED",
+      "last_advanced_at": "2026-08-01T21:07:48.329128+00:00",
+      "maturity": "RECURRING",
       "name": "Corruption Oxygen Index",
-      "next_action": "verify fulfilment and receipt",
+      "next_action": "convert to subscription",
       "priority_score": 89.5,
       "scores": {
         "defensibility": 87,
@@ -41,10 +41,10 @@
       "dependencies": [],
       "domain": "AI-Agent Society",
       "id": "E2K-0003",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "RECURRING",
+      "last_advanced_at": "2026-08-01T21:07:48.329128+00:00",
+      "maturity": "LICENSED",
       "name": "AI-Agent University Operating System",
-      "next_action": "convert to subscription",
+      "next_action": "license or federate",
       "priority_score": 90.65,
       "scores": {
         "defensibility": 96,
@@ -73,14 +73,16 @@
       }
     },
     {
+      "assigned_council": "Justice and Rights Expert Genome Council",
       "dependencies": [
         "E2K-0002"
       ],
       "domain": "Justice and Rights",
       "id": "E2K-0005",
-      "maturity": "PROTOTYPE_CANDIDATE",
+      "last_advanced_at": "2026-08-01T21:07:48.329128+00:00",
+      "maturity": "PROTOTYPE_BUILT",
       "name": "Burden Transfer Detector",
-      "next_action": "build detection rules and evidence rubric",
+      "next_action": "build minimum runnable prototype",
       "priority_score": 87.45,
       "scores": {
         "defensibility": 88,
@@ -150,10 +152,10 @@
       "dependencies": [],
       "domain": "Education and Human Development",
       "id": "E2K-0009",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "PILOT_ACTIVE",
+      "last_advanced_at": "2026-08-01T21:07:48.329128+00:00",
+      "maturity": "PRODUCT_READY",
       "name": "Kim Value Algorithm",
-      "next_action": "operate supervised pilot",
+      "next_action": "package product and service passport",
       "priority_score": 88.2,
       "scores": {
         "defensibility": 95,
@@ -170,10 +172,10 @@
       ],
       "domain": "AI-Agent Society",
       "id": "E2K-0010",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "SOLD",
+      "last_advanced_at": "2026-08-01T21:07:48.329128+00:00",
+      "maturity": "DELIVERED",
       "name": "Expert Genome Agent Foundry",
-      "next_action": "execute approved sale",
+      "next_action": "verify fulfilment and receipt",
       "priority_score": 92.1,
       "scores": {
         "defensibility": 98,
@@ -185,6 +187,6 @@
     }
   ],
   "portfolio_id": "EARTH2-PORTFOLIO-001",
-  "updated_at": "2026-08-01T19:30:37.436198+00:00",
+  "updated_at": "2026-08-01T21:07:48.329128+00:00",
   "version": "1.0"
 }
