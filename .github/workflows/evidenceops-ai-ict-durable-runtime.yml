@@ -1,0 +1,26 @@
+name: EvidenceOps AI ICT durable runtime
+
+on:
+  push:
+    paths:
+      - "evidenceops/ai_ict_durable/**"
+      - ".github/workflows/evidenceops-ai-ict-durable-runtime.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  verify-non-secret-runtime:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run durable runtime tests
+        working-directory: evidenceops/ai_ict_durable
+        run: python -m unittest discover -s tests -v
+      - name: Verify security and persistence contract
+        working-directory: evidenceops/ai_ict_durable
+        run: python verify_overlay.py
