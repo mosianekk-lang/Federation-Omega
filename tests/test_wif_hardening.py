@@ -1,5 +1,6 @@
 import json
 import os
+import re
 import subprocess
 import tempfile
 import textwrap
@@ -105,7 +106,7 @@ class WIFHardeningTests(unittest.TestCase):
         self.assertIn("--tag \"$CANARY_TAG\"", workflow)
         self.assertIn("previous_ready_revision", workflow)
         self.assertIn("update-traffic", workflow)
-        self.assertIn("version') == '3.2.0'", workflow)
+        self.assertRegex(workflow, re.compile(r"version'\)\s*==\s*'3\.2\.0'"))
         self.assertIn("ALG-ECASP-001", workflow)
 
     def test_compatibility_wrapper_has_no_direct_deploy_path(self):
