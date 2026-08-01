@@ -15,23 +15,37 @@
         "INSTALL_OR_BIND_WHERE_AUTHORISED",
         "VERIFY_ALIGNMENT_RECEIPT"
       ],
+      "attempted_routes": [
+        "GITHUB_MANIFEST_LOADER",
+        "GOOGLE_DRIVE_CANONICAL_BRIDGE",
+        "GMAIL_SELF_ARCHIVE_DISCOVERY",
+        "PLUGIN_MARKETPLACE_SEARCH"
+      ],
+      "current_best_route": "GITHUB_MANIFEST_LOADER_FOR_COMPLIANT_WORKERS",
+      "next_action": "DISCOVER_AUTHORISED_LIVE_CHAT_MESSAGE_OR_POLLING_BRIDGE",
       "report_only_terminal_allowed": false
     },
     {
       "boundary_id": "BND-KIM-DATAVERSE",
-      "description": "Canonical Kim Dataverse propagation is unverified.",
+      "description": "Canonical Kim Dataverse propagation through an authorised in-place backend.",
       "owner": "WORKFORCE",
-      "state": "ACTIVE_REPAIR",
+      "state": "RESOLVED_IN_PLACE",
       "resolution_requirements": [
-        "DISCOVER_DATAVERSE_ENVIRONMENT",
+        "DISCOVER_CANONICAL_BACKEND",
         "VERIFY_AUTHORITY",
         "VERIFY_SCHEMA",
         "VERIFY_READ",
         "VERIFY_WRITE",
         "VERIFY_READBACK",
         "ISSUE_RECEIPT",
-        "RECONCILE_LOCAL_MIRROR"
+        "RECONCILE_REPOSITORY_MIRROR"
       ],
+      "resolved_route": "GOOGLE_DRIVE_GOOGLE_SHEETS_IN_PLACE_BRIDGE",
+      "bridge_record": "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
+      "spreadsheet_id": "1TS64KmgGS30Hr9yHry3kQPzXMtWVMV22utJxhDXd7o8",
+      "receipt_id": "RCP-KDV-INPLACE-001",
+      "verified_at": "2026-08-01T04:07:00+02:00",
+      "native_microsoft_dataverse_status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
       "report_only_terminal_allowed": false
     }
   ],
