@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.18.0",
-  "updated_at": "2026-08-01T11:14:00+02:00",
+  "registry_version": "1.18.1",
+  "updated_at": "2026-08-01T11:16:00+02:00",
   "proof_note": "Public-safe registry. No live provider, private file, folder, document, message, credential or canonical identifier is persisted. States reflect independently verified evidence only.",
   "priority_model": {
     "scale": "0-100",
@@ -44,7 +44,9 @@
     "secret_manager_binding": "UNBOUND_OR_METADATA_PROBE_ONLY",
     "provider_transcription_current_live_binding": "NOT_FRESHLY_VERIFIED",
     "revenue_external_release_approval": "NOT_GRANTED",
-    "ipep_bible_access": "VERIFIED_READ_WRITE_READBACK"
+    "ipep_bible_access": "VERIFIED_READ_WRITE_READBACK",
+    "ipep_bible_lane_watch_016_readback": "VERIFIED_EXACT_HEADING_AND_RECEIPT_HASH",
+    "ipep_bible_lane_watch_016_note_sha256": "5ca30e1daa7cd65da596caa2e7aed0062b2dc9f86537a72599219cfde7f6d0b7"
   },
   "lanes": [
     {
@@ -163,7 +165,7 @@
         "reuse_value": 18,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL LEDGER ACCESSIBLE; KIMMIE REVIEW 016 PRESENT; LANE WATCH RECEIPTS APPEND-ONLY",
+      "proof_state": "CANONICAL LEDGER ACCESSIBLE; KIMMIE REVIEW 016 PRESENT; LANE WATCH RECEIPT 016 APPENDED; EXACT HEADING AND RECEIPT HASH READBACK VERIFIED",
       "next_action": "Continue append-only receipt capture on the next material proof or lane transition."
     },
     {
@@ -207,7 +209,8 @@
     "receipt_id": "LANE-WATCH-RECEIPT-016",
     "receipt_sha256": "74642f2b46472602a3330e4bf521f2fce2c7f01a42737cdc0af1fa7b7c41fe61",
     "receipt_commit": "c064fd590207bd9e01b28587d26cd4d53096cb73",
-    "bible_readback": "PENDING"
+    "bible_readback": "PASSED_EXACT_HEADING_AND_RECEIPT_HASH",
+    "bible_note_sha256": "5ca30e1daa7cd65da596caa2e7aed0062b2dc9f86537a72599219cfde7f6d0b7"
   },
   "latest_kimmie_review": {
     "checkpoint_id": "KSA-20260801-016",
