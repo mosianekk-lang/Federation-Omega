@@ -1,0 +1,66 @@
+name: EvidenceOps Infrastructure Inventory
+
+on:
+  push:
+    branches:
+      - evidenceops/ai-ict-production-runtime-v1-4
+    paths:
+      - '.github/workflows/evidenceops-infrastructure-inventory.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  GCP_REGION: ${{ vars.GCP_REGION || 'africa-south1' }}
+
+jobs:
+  inventory:
+    runs-on: ubuntu-latest
+    if: >-
+      ${{
+        vars.GCP_PROJECT_ID != '' &&
+        vars.GCP_WIF_PROVIDER != '' &&
+        vars.GCP_SERVICE_ACCOUNT != ''
+      }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v2
+        with:
+          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
+          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v2
+      - name: Inventory existing infrastructure
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p inventory
+          PROJECT='${{ vars.GCP_PROJECT_ID }}'
+          REGION="$GCP_REGION"
+          gcloud projects describe "$PROJECT" --format=json > inventory/project.json
+          gcloud services list --enabled --project="$PROJECT" --format=json > inventory/enabled-services.json
+          gcloud artifacts repositories list --project="$PROJECT" --location="$REGION" --format=json > inventory/artifact-repositories.json
+          gcloud storage buckets list --project="$PROJECT" --format=json > inventory/buckets.json
+          gcloud pubsub topics list --project="$PROJECT" --format=json > inventory/pubsub-topics.json
+          gcloud pubsub subscriptions list --project="$PROJECT" --format=json > inventory/pubsub-subscriptions.json
+          gcloud sql instances list --project="$PROJECT" --format=json > inventory/sql-instances.json
+          gcloud run services list --project="$PROJECT" --region="$REGION" --format=json > inventory/cloud-run-services.json
+          gcloud iam service-accounts list --project="$PROJECT" --format=json > inventory/service-accounts.json
+          gcloud secrets list --project="$PROJECT" --format=json > inventory/secrets.json
+          python - <<'PY'
+          import hashlib, json, pathlib, time
+          root=pathlib.Path('inventory')
+          summary={'generated_at_epoch':int(time.time()),'files':{},'counts':{}}
+          for p in sorted(root.glob('*.json')):
+              data=json.loads(p.read_text())
+              summary['files'][p.name]=hashlib.sha256(p.read_bytes()).hexdigest()
+              summary['counts'][p.stem]=len(data) if isinstance(data,list) else 1
+          (root/'inventory-summary.json').write_text(json.dumps(summary,indent=2))
+          print(json.dumps(summary,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-infrastructure-inventory
+          path: inventory
