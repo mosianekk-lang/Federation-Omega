@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import ast
 import json
+import re
 from pathlib import Path
 
 ROOT = Path(__file__).parent
@@ -28,6 +29,18 @@ assert "protector_key_id" in store
 assert "BYTEA NOT NULL" in sql
 assert "PRIMARY KEY (mission_id, call_id)" in sql
 
+provider_key_prefix = "s" + "k-"
+secret_literal = re.compile(re.escape(provider_key_prefix) + r"[A-Za-z0-9_-]{12,}")
+for path in ROOT.rglob("*"):
+    if (
+        path.is_file()
+        and ".git" not in path.parts
+        and "__pycache__" not in path.parts
+        and path.suffix not in {".pyc", ".zip"}
+    ):
+        text = path.read_text(encoding="utf-8", errors="ignore")
+        assert not secret_literal.search(text), f"secret-like literal in {path}"
+
 print(json.dumps({
     "status": "DURABLE_OVERLAY_VERIFIED",
     "python_files_parsed": len(python_files),
@@ -37,5 +50,6 @@ print(json.dumps({
     "tracing_config_type": "MAPPING",
     "explicit_trace_id_readback": True,
     "async_runstate_restore_contract": True,
-    "approval_decisions_idempotent": True
+    "approval_decisions_idempotent": True,
+    "repository_secret_literal_scan": True
 }, indent=2))
