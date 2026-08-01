@@ -1,5 +1,5 @@
 {
-  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v3",
+  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v4",
   "owner": "Kim Kagiso Mosiane",
   "status": "ACTIVE",
   "public_repository_safe": true,
@@ -52,6 +52,7 @@
       "identifier_ref": "KIM_CANONICAL_BACKEND_ID",
       "receipt_ref": "KIM_CANONICAL_RECEIPT_ID",
       "private_control_plane_status": "WRITE_AND_READBACK_VERIFIED",
+      "authority_schema_read_write_readback": "VERIFIED",
       "public_runtime_default": "PRIVATE_REFERENCE_UNRESOLVED",
       "native_microsoft_dataverse_status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
       "report_only_terminal_allowed": false
@@ -69,7 +70,15 @@
         "HEALTH_AND_READY_READBACK_VERIFIED",
         "DIRECT_CANONICAL_MISSION_WRITE_READBACK_VERIFIED"
       ],
-      "next_action": "COMPLETE_GREEN_CI_THEN_BIND_PRIVATE_DEPLOYMENT_IDENTITY",
+      "verified_foundation": [
+        "PRIVATE_CANONICAL_AUTHORITY_VERIFIED",
+        "PRIVATE_CANONICAL_SCHEMA_VERIFIED",
+        "PRIVATE_CANONICAL_READ_VERIFIED",
+        "PRIVATE_CANONICAL_WRITE_VERIFIED",
+        "PRIVATE_CANONICAL_READBACK_VERIFIED"
+      ],
+      "canonical_receipt_ref": "KIM_CANONICAL_RECEIPT_ID",
+      "next_action": "VERIFY_FRESH_CI_AND_CONTAINER_RECEIPT_THEN_BIND_PRIVATE_CLOUD_RUN_IDENTITY_AND_DIRECT_MISSION_WRITE_ROUTE",
       "report_only_terminal_allowed": false
     }
   ],
