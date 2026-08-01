@@ -1,56 +1,80 @@
 # EvidenceOps Current Deployment Manifest
 
-Generated from the current `main` architecture and PR #50 infrastructure-recovery work.
+Status: SOURCE-CURRENT / PROVIDER-UNVERIFIED
+Owner: Kim Kagiso Mosiane
+Repository: mosianekk-lang/Federation-Omega
 
-## Canonical platform components
+## Current platform components
 
-- `evidenceops/runtime_service/` — sovereign FastAPI mission runtime
-- `evidenceops/ai_ict_durable/` — durable approval, resume-fencing, KMS and PostgreSQL overlay
-- `evidenceops/connector_foundry/` — connector contracts and ECTS conformance
-- `evidenceops/provenance_passport/` — Merkle-backed provenance toolkit
-- `evidenceops/in_place_audit_omega/` — source-local audit engine
-- `evidenceops/innovation_engine/` — proof-gated lane and innovation registry
-- `evidenceops/fevx_mcoe/` — orchestration doctrine and mission controls
-- `evidenceops-mcp-adapter/` — authenticated remote MCP adapter and Cloud Run packaging
-- `evidenceops-web-drive-bridge/` — Google Drive bridge
-- `evidenceops/security/` — public/private boundary and leak controls
-- `ops/bootstrap_github_wif.sh` — repository-scoped WIF plan/apply/verify bootstrap
-- `.github/workflows/evidenceops-infrastructure-inventory.yml` — read-only cloud inventory carrier
+- EvidenceOps sovereign runtime
+- EvidenceOps MCP adapter
+- Durable AI ICT runtime overlay
+- Connector Foundry
+- Provenance Passport
+- In-Place Audit Omega
+- Innovation Engine
+- IPEP audio worker scaffold
+- Public repository leak guard
+- WIF bootstrap and deployment controls
 
-## Required production infrastructure
+## Authoritative cloud identities
 
-- Google Cloud project: `sov-hybrid-suite`
-- Region: `africa-south1`
-- Repository-scoped GitHub OIDC Workload Identity Federation
-- Deployer service account: `superior-logic-deployer`
-- Runtime service account: `superior-logic-runtime`
+- Project: sov-hybrid-suite
+- Project number: 257649435135
+- Region: africa-south1
+- WIF pool: github-federation-omega
+- WIF provider: github
+- Deployer: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+- Superior Logic runtime: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+- EvidenceOps MCP runtime: evidenceops-mcp-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+
+## Cloud Run services referenced by source
+
+- architron9
+- evidenceops-sovereign-runtime
+- EvidenceOps MCP adapter service
+- IPEP audio-worker service
+
+## Required infrastructure classes
+
+- Workload Identity Federation
 - Cloud Run
 - Artifact Registry
 - Secret Manager
 - Cloud KMS
-- private PostgreSQL / Cloud SQL
-- structured logging, metrics and traces
+- PostgreSQL / Cloud SQL
+- task and event queues
+- encrypted object storage
+- logging, metrics and distributed tracing
 
-## Current proof boundary
+## Required proof gates
 
-- source architecture and deterministic tests: materially present
-- public leak guard: operational
-- WIF bootstrap: implemented, live provider currently unverified
-- infrastructure inventory: blocked by missing repository variables and unverified WIF
-- production Cloud Run runtime: unverified
-- OpenAI replacement runtime key: secure setup initiated, binding unverified
+1. `bootstrap_github_wif.sh --verify` returns `FEDOMEGA-WIF-CLOUD-VERIFIED`.
+2. Required repository variables are populated from provider-verified values.
+3. Infrastructure inventory workflow authenticates and produces its artifact.
+4. Artifact hashes and resource counts are read back.
+5. Each deployed runtime passes private authenticated health verification.
+6. Every secret is bound by service identity and least privilege.
+7. No production promotion occurs without an explicit owner gate and rollback route.
 
 ## Historical package boundary
 
-`IPEP_PLATFORM_SETUP_v0.1.0.zip` is a historical foundation package. It is not the current deployment package and omits later durable-runtime, provenance, connector, audit, security and infrastructure-control components.
+`IPEP_PLATFORM_SETUP_v0.1.0.zip` is a historical foundation package. It contains the original Apps Script intake, audio worker scaffold, schema, cloud build and CI files. It does not represent the current platform and must not be deployed as the authoritative release.
 
-## Promotion gate
+## Current open boundaries
 
-No deployment may be labelled production verified until:
+- GitHub Actions cloud variables are empty.
+- WIF pool/provider state is not provider-verified.
+- Cloud Run, Artifact Registry, Secret Manager, KMS, database, storage and queue resources are not yet inventoried through the repaired workflow.
+- Replacement OpenAI key creation, binding, revocation and dual canaries remain unverified.
+- Production deployment and promotion remain unverified.
 
-1. WIF verification returns `FEDOMEGA-WIF-CLOUD-VERIFIED`;
-2. the infrastructure inventory artifact is generated and reviewed;
-3. runtime secrets are bound through Secret Manager;
-4. PostgreSQL, KMS and Cloud Run are read back;
-5. a non-sensitive end-to-end canary passes;
-6. receipts and rollback proof are preserved.
+## Related controls
+
+- `docs/evidenceops/CLOUD_IDENTITY_AND_AUTHORITY_REGISTER.md`
+- `docs/evidenceops/ICT_CLOUD_COMPETENCY_AND_RUNBOOK.md`
+- `docs/evidenceops/OPENAI_RUNTIME_SECRET_BINDING_CONTRACT.md`
+- `ops/INFRASTRUCTURE_FOUNDATION_ACTIVATION.md`
+- GitHub issues #51 and #52
+
+Maturity: `SOURCE_CONSOLIDATED / FAIL_CLOSED / CLOUD_READBACK_PENDING`
