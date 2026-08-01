@@ -2,44 +2,44 @@
   "advanced_count": 5,
   "advances": [
     {
-      "from": "OFFER_READY",
+      "from": "SOLD",
       "id": "E2K-0001",
       "name": "Trusted Institution Node",
       "priority": 93.7,
-      "to": "SOLD"
+      "to": "DELIVERED"
     },
     {
-      "from": "PROTOTYPE_BUILT",
-      "id": "E2K-0006",
-      "name": "Proof-Carrying Decision Engine",
-      "priority": 91.6,
-      "to": "BENCHMARKED"
-    },
-    {
-      "from": "PROTOTYPE_CANDIDATE",
-      "id": "E2K-0003",
-      "name": "AI-Agent University Operating System",
-      "priority": 90.65,
-      "to": "PROTOTYPE_BUILT"
-    },
-    {
-      "from": "PILOT_ACTIVE",
-      "id": "E2K-0004",
-      "name": "Founder Intelligence Preservation",
-      "priority": 90.3,
-      "to": "PRODUCT_READY"
+      "from": "GENOME_READY",
+      "id": "E2K-0010",
+      "name": "Expert Genome Agent Foundry",
+      "priority": 92.1,
+      "to": "PROTOTYPE_CANDIDATE"
     },
     {
       "from": "BENCHMARKED",
-      "id": "E2K-0002",
-      "name": "Corruption Oxygen Index",
-      "priority": 89.5,
+      "id": "E2K-0006",
+      "name": "Proof-Carrying Decision Engine",
+      "priority": 91.6,
       "to": "PILOT_CANDIDATE"
+    },
+    {
+      "from": "PROTOTYPE_BUILT",
+      "id": "E2K-0003",
+      "name": "AI-Agent University Operating System",
+      "priority": 90.65,
+      "to": "BENCHMARKED"
+    },
+    {
+      "from": "PRODUCT_READY",
+      "id": "E2K-0004",
+      "name": "Founder Intelligence Preservation",
+      "priority": 90.3,
+      "to": "COMMERCIAL_CANDIDATE"
     }
   ],
-  "blocked_count": 1,
-  "eligible_candidates": 9,
+  "blocked_count": 0,
+  "eligible_candidates": 10,
   "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-08-01T00:10:12.310135+00:00"
+  "timestamp": "2026-08-01T03:46:39.285883+00:00"
 }
