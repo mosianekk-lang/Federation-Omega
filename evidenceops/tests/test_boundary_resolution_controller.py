@@ -11,21 +11,35 @@ assert spec and spec.loader
 spec.loader.exec_module(module)
 
 
+def _state():
+    return json.loads((ROOT / "evidenceops/runtime/boundary_resolution_state.json").read_text())
+
+
 def test_boundaries_are_workforce_owned_and_not_report_only():
-    state = json.loads((ROOT / "evidenceops/runtime/boundary_resolution_state.json").read_text())
-    for boundary in state["boundaries"]:
+    for boundary in _state()["boundaries"]:
         assert boundary["owner"] == "WORKFORCE"
-        assert boundary["state"] == "ACTIVE_REPAIR"
         assert boundary["report_only_terminal_allowed"] is False
+        assert boundary["state"] in {"ACTIVE_REPAIR", "RESOLVED_IN_PLACE", "RESOLVED"}
 
 
-def test_controller_emits_actionable_next_steps(monkeypatch):
-    monkeypatch.delenv("EVIDENCEOPS_CHAT_BRIDGE_URL", raising=False)
-    monkeypatch.delenv("KIM_DATAVERSE_URL", raising=False)
-    monkeypatch.delenv("KIM_DATAVERSE_CLIENT_ID", raising=False)
-    monkeypatch.delenv("KIM_DATAVERSE_SECRET_REF", raising=False)
-    state = json.loads((ROOT / "evidenceops/runtime/boundary_resolution_state.json").read_text())
+def test_kim_dataverse_in_place_bridge_is_verified():
     routes = module.discover_routes()
-    evaluations = [module.evaluate_boundary(b, routes) for b in state["boundaries"]]
-    assert all(e["status"] in {"WAITING_CAPABILITY", "READY_TO_ATTEMPT"} for e in evaluations)
-    assert all(e.get("next_action") for e in evaluations)
+    assert routes["dataverse"]["in_place"]["configured"] is True
+    assert routes["dataverse"]["in_place"]["verified"] is True
+    assert routes["dataverse"]["in_place"]["receipt_id"] == "RCP-KDV-INPLACE-001"
+
+    boundary = next(b for b in _state()["boundaries"] if b["boundary_id"] == "BND-KIM-DATAVERSE")
+    evaluation = module.evaluate_boundary(boundary, routes)
+    assert evaluation["resolved"] is True
+    assert evaluation["status"] == "RESOLVED_IN_PLACE"
+    assert evaluation["receipt_id"] == "RCP-KDV-INPLACE-001"
+
+
+def test_chat_alignment_remains_actionable_without_bridge(monkeypatch):
+    monkeypatch.delenv("EVIDENCEOPS_CHAT_BRIDGE_URL", raising=False)
+    routes = module.discover_routes()
+    boundary = next(b for b in _state()["boundaries"] if b["boundary_id"] == "BND-CHAT-ALIGNMENT")
+    evaluation = module.evaluate_boundary(boundary, routes)
+    assert evaluation["resolved"] is False
+    assert evaluation["status"] == "WAITING_CAPABILITY"
+    assert evaluation["next_action"] == "DISCOVER_OR_BIND_AUTHORISED_CHAT_BRIDGE"
