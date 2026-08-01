@@ -1,0 +1,125 @@
+{
+  "receipt_id": "LANE-WATCH-RECEIPT-014",
+  "recorded_at": "2026-08-01T08:23:00+02:00",
+  "status": "MATERIAL_LANE_ADVANCEMENT",
+  "dependency_review": {
+    "github_access": "VERIFIED_READ_WRITE",
+    "drive_access": "VERIFIED_CREATE_WRITE_MOVE_EXACT_READBACK_DELETE_ABSENCE",
+    "gmail_access": "VERIFIED_READ",
+    "new_credential_or_external_approval": "NONE_VERIFIED",
+    "google_cloud_wif": "UNCHANGED_BLOCKED_OR_UNVERIFIED",
+    "secret_manager_binding": "UNCHANGED_UNBOUND_OR_METADATA_PROBE_ONLY",
+    "private_authenticated_cloud_run_health": "UNCHANGED_NOT_VERIFIED",
+    "live_transcription_binding": "UNCHANGED_NOT_FRESHLY_VERIFIED",
+    "revenue_release_approval": "UNCHANGED_NOT_GRANTED"
+  },
+  "verified_execution": {
+    "lane_id": "LANE-CONNECTOR-FOUNDRY",
+    "provider": "google_drive",
+    "operation_class": "LATER_INDEPENDENT_SCHEDULED_PROVIDER_MONITOR_CYCLE",
+    "actions": [
+      "create",
+      "write",
+      "move_to_control_plane",
+      "exact_readback",
+      "parent_confinement",
+      "delete",
+      "post_delete_absence"
+    ],
+    "payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
+    "prior_independent_cycle_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168eb92f243f70cb7",
+    "result": "PASS",
+    "public_provider_identifier_persisted": false
+  },
+  "workflow_reconciliation": {
+    "candidate_commit": "ac1709b1bdf770a06a5b23749897a3039776c257",
+    "initial_run_id": 30687483601,
+    "initial_failure": "STALE_LIVE_CONTRACT_TEST_HARDCODED_SPROUT",
+    "repair_commit": "20bea082763861ea8b43d7056c3dec75afe47de3",
+    "workflow_readback_commit": "e466890697aa4932cbcabb092349df73a3a61653",
+    "final_assessment_sha256": "df23a59c43e3d8c190e2828de4b4b19e8065ad1f99d5cc226b4346ce1b5b0b8c",
+    "final_status": "PASS",
+    "verified_stage": "SAPLING",
+    "sapling_gate_verified": true
+  },
+  "lane_transitions": [
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "from": "VERIFYING/SPROUT_PLUS",
+      "to": "TEST_PASSED/SAPLING",
+      "reason": "Second independent scheduled provider-monitor cycle completed with durable public-safe proof, exact readback, confinement and cleanup."
+    },
+    {
+      "lane_id": "LANE-KIMMIE-SEED",
+      "from": "VERIFYING/SPROUT",
+      "to": "TEST_PASSED/SAPLING",
+      "reason": "All named SAPLING gates passed and the dedicated maturity workflow independently read back SAPLING with no identity drift."
+    }
+  ],
+  "recalculated_priority": [
+    {
+      "rank": 1,
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "priority": 100,
+      "state": "VERIFYING",
+      "maturity": "SPROUT"
+    },
+    {
+      "rank": 2,
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "priority": 99,
+      "state": "TEST_PASSED"
+    },
+    {
+      "rank": 3,
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "priority": 98,
+      "state": "TEST_PASSED",
+      "maturity": "SAPLING"
+    },
+    {
+      "rank": 4,
+      "lane_id": "LANE-KIMMIE-SEED",
+      "priority": 97,
+      "state": "TEST_PASSED",
+      "maturity": "SAPLING"
+    },
+    {
+      "rank": 5,
+      "lane_id": "LANE-SOVEREIGN-RUNTIME",
+      "priority": 96,
+      "state": "VERIFYING"
+    },
+    {
+      "rank": 6,
+      "lane_id": "LANE-REVENUE-OFFER-FACTORY",
+      "priority": 93,
+      "state": "CHECKPOINTED"
+    },
+    {
+      "rank": 7,
+      "lane_id": "LANE-IPEP-BIBLE",
+      "priority": 92,
+      "state": "CHECKPOINTED"
+    },
+    {
+      "rank": 8,
+      "lane_id": "LANE-PLATFORM-SETUP",
+      "priority": 84,
+      "state": "BLOCKED"
+    },
+    {
+      "rank": 9,
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "priority": 80,
+      "state": "BLOCKED"
+    }
+  ],
+  "proofs": {
+    "kimmie_checkpoint": "kimmie_seed/checkpoints/KSA-20260801-014.json",
+    "kimmie_checkpoint_sha256": "aa260d75a3eab96da60c3bb3e71c49efc8078f834c144856e3a35ce20df326b1",
+    "kimmie_checkpoint_commit": "1fa386afc27d214f3ef5dc6b07a057fd9cd9025f"
+  },
+  "truth_boundary": "The promotion is bounded to verified repository and Google Drive provider operation. No inference is made about Google Cloud WIF, Secret Manager, private Cloud Run, live transcription credentials or external commercial approval.",
+  "receipt_sha256": "b7c79b89b842f177a6d40f211123bc04617ee8bcf9b10ab363e187a82dc180c5"
+}
