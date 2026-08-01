@@ -17,16 +17,28 @@ permissions:
 jobs:
   verify-non-secret-runtime:
     runs-on: ubuntu-latest
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
           cache: "pip"
-          cache-dependency-path: evidenceops/ai_ict_durable/requirements-sdk.txt
-      - name: Install exact OpenAI Agents SDK contract
+          cache-dependency-path: |
+            evidenceops/ai_ict_durable/requirements-sdk.txt
+            evidenceops/ai_ict_durable/requirements-sdk-wheel.txt
+      - name: Download hash-locked OpenAI Agents SDK wheel
         working-directory: evidenceops/ai_ict_durable
-        run: python -m pip install --disable-pip-version-check -r requirements-sdk.txt
+        run: >-
+          python -m pip download --disable-pip-version-check --no-deps
+          --only-binary=:all: --require-hashes
+          -r requirements-sdk-wheel.txt -d wheelhouse
+      - name: Install attested SDK wheel and dependencies
+        working-directory: evidenceops/ai_ict_durable
+        run: |
+          python -m pip install --disable-pip-version-check --no-deps wheelhouse/openai_agents-0.19.2-py3-none-any.whl
+          python -m pip install --disable-pip-version-check -r requirements-sdk.txt
+          python -m pip check
       - name: Verify live SDK API contract without a credential
         working-directory: evidenceops/ai_ict_durable
         run: python sdk_contract_probe.py

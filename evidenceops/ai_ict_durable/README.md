@@ -1,22 +1,28 @@
-# EvidenceOps AI ICT durable runtime overlay v2.5
+# EvidenceOps AI ICT durable runtime overlay v2.6
 
-This non-secret production overlay closes a missing durability and approval boundary in the model-backed runtime.
+This non-secret production overlay strengthens the SDK supply-chain attestation and closes
+resume replay, stale approval, trace export and managed state-protection gaps.
 
 It adds:
 
-- encrypted-at-rest persistence for serialized OpenAI Agents SDK `RunState` data;
-- explicit exclusion of the tracing API key from serialized state;
-- run-scoped model and tracing credentials without process-global environment mutation;
-- SDK-correct tracing configuration as a per-run mapping;
-- an explicit SDK-generated trace ID carried into each receipt;
-- asynchronous `RunState.from_json` restoration with the required initial agent and strict context validation;
-- pause, persisted approval decision, and resume contracts for sensitive tool calls;
-- exact-output live canary validation;
-- trace, response, token-usage, interruption, and state-version receipt fields;
-- PostgreSQL migration and a local SQLite verification implementation;
-- an independent GitHub Actions gate that installs the exact `openai-agents==0.19.2` release and verifies its pause/resume and tracing API contract without using a credential.
+- an exact OpenAI Agents SDK pin of `openai-agents==0.19.2`;
+- a SHA-256-locked wheel receipt for the Trusted Publishing artifact;
+- exact SDK trace-ID validation and immediate `flush_traces()` delivery;
+- receipt-level confirmation that trace flushing completed;
+- state-version approval binding and exact approval coverage before resume;
+- atomic resume claims with unguessable fencing tokens and expiring leases;
+- stale-version, duplicate-resume and stale-worker completion rejection;
+- automatic claim release after a failed model call;
+- durable re-pause when a resumed run produces another approval interruption;
+- approval cleanup between state versions;
+- encrypted state scrubbing after successful completion to prevent replay;
+- a Google Cloud KMS `StateProtector` using ADC service identity, mission/version
+  AAD, and mandatory CRC32C request/response integrity verification;
+- PostgreSQL migration packaging for resume fencing and state-version approvals.
 
-Production remains fail-closed until a managed KMS-backed `StateProtector`, an authorised OpenAI credential, private PostgreSQL, and canonical write/readback are bound.
+Production remains fail-closed until an authorised OpenAI credential, a bound
+Cloud KMS key, private PostgreSQL, persistent Cloud Run hosting, and canonical
+write/readback access are available.
 
 Boundary owner: `WORKFORCE`  
 Boundary state: `ACTIVE_REPAIR`
