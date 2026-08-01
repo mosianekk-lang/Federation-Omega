@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.10.3",
-  "updated_at": "2026-08-01T09:12:15+02:00",
+  "registry_version": "1.10.4",
+  "updated_at": "2026-08-01T10:13:24+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SAPLING",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
@@ -16,11 +16,11 @@
     "qualifying_notification_event": true
   },
   "latest_review": {
-    "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-015.json",
-    "checkpoint_sha256": "a97d842b887ce2246b46626eca201b1778457d04556cb7d1cabdf32a16004715",
-    "checkpoint_commit": "a8caa03028c443b60a3117b90821f885def8edea",
+    "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-016.json",
+    "checkpoint_sha256": "603c8084e90391ab6c346028f72ba5335ea7fa82115dd755d635e81406bf1c44",
+    "checkpoint_commit": "495470a4d22d710113aefe42479049bcc678a4f9",
     "root_promotion": "NONE",
-    "material_change": true,
+    "material_change": false,
     "qualifying_notification_event": false,
     "notification": "SUPPRESS"
   },
@@ -179,10 +179,10 @@
     }
   ],
   "ipep_bible": {
-    "receipt": "KIMMIE SEED MATURITY REVIEW 015",
-    "revision_id": "AIroW37wslCNg6odMPFDRL4xWveHh337QtatlCTtn7lWelj6gOgOWba0g-D0YhSRzn2_Ut4P7zOpuAUu2wCwB-41ZbFIeZHAWHdPjZVPJG0",
+    "receipt": "KIMMIE SEED MATURITY REVIEW 016",
+    "revision_id": "AIroW37nwj8pHfZzhr0wzkmzo4hQrLzRuYBFpJh9lCSa3SvshOuVI7IFmsWjz-zgwStMl1Xbkz_A4OuCI11sUMxSt80FRo-ekCxs68SFSP0",
     "readback": "PASSED_EXACT_HEADING",
-    "evidence_note_sha256": "17bb7fd8624a26cc18bd5e6d1c6e9705e01396035dbf5698e2cdc5800856ae60"
+    "evidence_note_sha256": "0608d9931bdbff037f1b01c0272ee89b511675c2f18625409d2c806de13f73e7"
   },
   "truth_boundary": "SAPLING is bounded to verified GitHub and Google Drive provider monitoring, maintenance and recovery. Provenance Passport remains SPROUT until scheduled persistence is independently read back. No Google Cloud WIF, Secret Manager, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
 }
