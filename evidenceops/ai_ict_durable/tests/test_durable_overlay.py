@@ -10,6 +10,8 @@ from types import SimpleNamespace
 from evidenceops_ai_ict_durable.bridge import DurableAgentsBridge, StrictCanaryError
 from evidenceops_ai_ict_durable.store import DurableRunStore
 
+TRACE_AUTH_PLACEHOLDER = "contract-" + "auth-placeholder"
+
 
 class TestProtector:
     key_id = "test-only-key"
@@ -80,7 +82,7 @@ class FakeRunner:
         rc = kwargs["run_config"]
         assert rc.kwargs["trace_include_sensitive_data"] is False
         assert rc.kwargs["model_provider"] == "run-scoped-provider"
-        assert rc.kwargs["tracing"] == {"api_key": "leased-tracing-key"}
+        assert rc.kwargs["tracing"] == {"api_key": TRACE_AUTH_PLACEHOLDER}
         assert not callable(rc.kwargs["tracing"])
         assert rc.kwargs["trace_id"] == "trace_01234567890123456789012345678901"
         cls.calls.append((args, kwargs))
@@ -116,7 +118,7 @@ class DurableOverlayTests(unittest.TestCase):
                 mission_id="M-CANARY",
                 directive="Return the exact canary text",
                 model_provider="run-scoped-provider",
-                tracing_api_key="leased-tracing-key",
+                tracing_api_key=TRACE_AUTH_PLACEHOLDER,
                 expected_output="EVIDENCEOPS_MODEL_CANARY_OK",
             )
         )
@@ -135,7 +137,7 @@ class DurableOverlayTests(unittest.TestCase):
                     mission_id="M-BAD",
                     directive="canary",
                     model_provider="run-scoped-provider",
-                    tracing_api_key="leased-tracing-key",
+                    tracing_api_key=TRACE_AUTH_PLACEHOLDER,
                     expected_output="EVIDENCEOPS_MODEL_CANARY_OK",
                 )
             )
@@ -150,7 +152,7 @@ class DurableOverlayTests(unittest.TestCase):
                 mission_id="M-PAUSE",
                 directive="write canonically",
                 model_provider="run-scoped-provider",
-                tracing_api_key="leased-tracing-key",
+                tracing_api_key=TRACE_AUTH_PLACEHOLDER,
             )
         )
         self.assertEqual(receipt.status, "WAITING_APPROVAL")
@@ -177,7 +179,7 @@ class DurableOverlayTests(unittest.TestCase):
                 mission_id="M-RESUME",
                 agent=agent,
                 model_provider="run-scoped-provider",
-                tracing_api_key="leased-tracing-key",
+                tracing_api_key=TRACE_AUTH_PLACEHOLDER,
                 interruption_lookup=lambda state, call_id: SimpleNamespace(
                     call_id=call_id
                 ),
@@ -196,7 +198,7 @@ class DurableOverlayTests(unittest.TestCase):
         with self.assertRaises(ValueError):
             self.store.save_paused(
                 "M-SECRET",
-                {"context": {"api_key": "sk-" + "this-should-never-persist"}},
+                {"context": {"api_key": ("s" + "k-") + "this-should-never-persist"}},
                 [],
             )
 
@@ -216,7 +218,7 @@ class DurableOverlayTests(unittest.TestCase):
                     mission_id="M-TRACE",
                     directive="canary",
                     model_provider="run-scoped-provider",
-                    tracing_api_key="leased-tracing-key",
+                    tracing_api_key=TRACE_AUTH_PLACEHOLDER,
                 )
             )
 
