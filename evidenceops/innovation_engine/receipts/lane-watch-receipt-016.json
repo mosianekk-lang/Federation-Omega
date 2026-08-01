@@ -1,0 +1,40 @@
+{
+  "receipt_id": "LANE-WATCH-RECEIPT-016",
+  "observed_at": "2026-08-01T11:14:00+02:00",
+  "lane_id": "LANE-INNOVATION-ENGINE",
+  "event": "OFF_REPOSITORY_SNAPSHOT_RESTORE_DRILL",
+  "dependency_change": {
+    "durable_off_repository_storage": "VERIFIED_GOOGLE_DRIVE_SCHEDULED_SNAPSHOTS",
+    "latest_snapshot_status": "COMPLETED",
+    "latest_snapshot_registered": true,
+    "source_health": "PASS"
+  },
+  "restore_drill": {
+    "operation": "COPY_LATEST_SNAPSHOT_READBACK_COMPARE_DELETE_VERIFY_ABSENCE",
+    "sheet_count": 197,
+    "structure_parity": "PASS",
+    "sentinel_ranges_checked": 4,
+    "sentinel_readback_parity": "PASS",
+    "cleanup": "PASS",
+    "post_delete_absence": "PASS",
+    "original_mutated": false
+  },
+  "lane_result": {
+    "state": "TEST_PASSED",
+    "proof_state_added": "DURABLE_DRIVE_SNAPSHOT_AND_CONTROLLED_PRODUCTION_LIKE_RESTORE_PASS",
+    "remaining_gate": "INDEPENDENT_LATER_RESTORE_CYCLE_OR_AUTOMATED_RESTORE_MONITORING_BEFORE_ANY_HIGHER_MATURITY_CLAIM"
+  },
+  "blocker_review": {
+    "github_access": "VERIFIED_READ_WRITE",
+    "drive_access": "VERIFIED_READ_WRITE_COPY_DELETE_READBACK",
+    "gmail_new_credentials_or_approvals": "NONE_FOUND",
+    "google_cloud_wif": "BLOCKED_OR_UNVERIFIED",
+    "secret_manager_binding": "UNBOUND_OR_METADATA_PROBE_ONLY",
+    "private_authenticated_cloud_run": "NOT_FRESHLY_VERIFIED",
+    "live_transcription_binding": "NOT_FRESHLY_VERIFIED",
+    "revenue_external_approval": "NOT_GRANTED"
+  },
+  "truth_boundary": "This receipt proves a bounded Google Drive snapshot restore and cleanup drill. It does not prove Google Cloud deployment authority, Workload Identity Federation, Secret Manager binding, private authenticated Cloud Run health, live transcription readiness or external commercial approval.",
+  "private_identifiers_persisted": false,
+  "receipt_sha256": "74642f2b46472602a3330e4bf521f2fce2c7f01a42737cdc0af1fa7b7c41fe61"
+}
