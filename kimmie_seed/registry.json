@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.10.5",
-  "updated_at": "2026-08-01T13:16:20+02:00",
+  "registry_version": "1.10.6",
+  "updated_at": "2026-08-01T15:11:55+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SAPLING",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
@@ -16,9 +16,9 @@
     "qualifying_notification_event": true
   },
   "latest_review": {
-    "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-017.json",
-    "checkpoint_sha256": "8abafdd4c9048e2f54a53398728615c159a760216a7afb421550c7f94249470f",
-    "checkpoint_commit": "ed939b928aea355d1eddb353b43301b5f88f5953",
+    "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-018.json",
+    "checkpoint_sha256": "c42cac2bcf1cb1a00a7a42e8c94516f01a688dc067fc6b96652a0ac99f56260f",
+    "checkpoint_commit": "fbd27c7d18a3a609a6c50e22bb7dacb7b55b4ff7",
     "root_promotion": "NONE",
     "material_change": false,
     "qualifying_notification_event": false,
@@ -80,12 +80,22 @@
         "proof_receipt": "VERIFIED_PRESENT",
         "maintenance_owner": "mosianekk-lang"
       },
+      "dependencies": {
+        "local_reference_connector": "VERIFIED",
+        "provider_adapter": "VERIFIED_GOOGLE_DRIVE",
+        "scheduled_monitoring": "VERIFIED_TWO_INDEPENDENT_CYCLES"
+      },
       "proof_gates": {
         "ects_conformance": "PASSED_6_OF_6",
         "provider_specific_execution": "PASSED_GOOGLE_DRIVE",
         "independent_provider_readback": "PASSED",
         "controlled_recovery": "PASSED",
         "persistent_provider_monitoring": "PASSED_TWO_INDEPENDENT_SCHEDULED_CYCLES"
+      },
+      "tests": {
+        "local_conformance": "PASSED",
+        "provider_tamper_rejection": "PASSED",
+        "scheduled_monitor_cycles": "PASSED_TWO"
       },
       "monitoring_receipt": {
         "prior_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168eb92f243f70cb7",
@@ -101,7 +111,14 @@
         "google_cloud": "NOT_REQUIRED_FOR_CURRENT_SAPLING_SCOPE"
       },
       "maintenance_owner": "mosianekk-lang",
-      "owner_decision_required": false
+      "owner_decision_required": false,
+      "next_stage_gate": {
+        "stage": "MATURE",
+        "sustained_production_use": "NOT_YET_VERIFIED",
+        "resilience_over_time": "NOT_YET_VERIFIED",
+        "measurable_operational_value": "NOT_YET_VERIFIED",
+        "complete_operational_ownership": "NOT_YET_VERIFIED"
+      }
     },
     {
       "lane_id": "LANE-PROVENANCE-PASSPORT",
@@ -118,7 +135,7 @@
       "dependencies": {
         "python_standard_library": "VERIFIED",
         "github_actions": "VERIFIED_PUSH_EXECUTION",
-        "scheduled_execution": "DEFINED_NOT_YET_READ_BACK"
+        "scheduled_execution": "DUE_BUT_DURABLE_SCHEDULE_EVENT_READBACK_UNAVAILABLE"
       },
       "proof_gates": {
         "multi_corpus_execution": "PASSED_TWO_CORPORA",
@@ -156,7 +173,8 @@
       "verified_stage": "SEED",
       "operational_state": "BLOCKED",
       "authorised_environment": "NOT_VERIFIED_FOR_CORPUS_ACQUISITION",
-      "nutrient_gap": "AUTHORISED_CORPUS_ACQUISITION_INGESTION_RIGHTS_AND_RECEIPT",
+      "nutrient_gap": "AUTHORISED_CORPUS_ACQUISITION_INGESTION_RIGHTS_SOURCE_PROVENANCE_AND_RECEIPT",
+      "dependencies": "UNSATISFIED",
       "proof_gates": "NOT_PASSED",
       "tests": "NOT_AVAILABLE",
       "deployment_surfaces": "NOT_VERIFIED",
@@ -170,6 +188,7 @@
       "operational_state": "BLOCKED",
       "authorised_environment": "PARTIAL_REPOSITORY_ONLY",
       "nutrient_gap": "PROVIDER_CREDENTIAL_SPEECH_BINDING_PRIVATE_WORKER_AND_RECEIPT",
+      "dependencies": "UNSATISFIED",
       "proof_gates": "NOT_PASSED",
       "tests": "SCAFFOLD_ONLY",
       "deployment_surfaces": "PRIVATE_WORKER_NOT_VERIFIED",
@@ -184,5 +203,15 @@
     "readback": "PASSED_EXACT_HEADING",
     "evidence_note_sha256": "2472b1bf67d43882d3dee0e5e9a850b19d16a6d39770792849f73049db6aaade"
   },
-  "truth_boundary": "SAPLING is bounded to verified GitHub and Google Drive provider monitoring, maintenance and recovery. Provenance Passport remains SPROUT until scheduled persistence is independently read back. No Google Cloud WIF, Secret Manager, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
+  "latest_cross_lane_review": {
+    "lane_watch_receipt_019": {
+      "result": "AI_ICT_RUNTIME_SUPPLY_CHAIN_RECONCILED_NO_KIMMIE_MATURITY_EFFECT",
+      "receipt_sha256": "e7babda0457282e07ae6890f42d8149eb2f20d000bc4284818cb3ba668a4ba94"
+    },
+    "lane_watch_receipt_020": {
+      "result": "INNOVATION_ENGINE_RECURRING_RESTORE_HEALTH_VERIFIED_NO_KIMMIE_ROOT_MATURE_EFFECT",
+      "receipt_sha256": "fe0a6ad53def0b3b3180be752150953a3cc1125c6f30a5c1cf2780235cc8c848"
+    }
+  },
+  "truth_boundary": "SAPLING remains bounded to verified GitHub and Google Drive provider monitoring, maintenance and recovery. Provenance Passport remains SPROUT until schedule-triggered persistence is independently read back. Cross-lane restore and runtime supply-chain evidence does not satisfy Kimmie-root MATURE gates. No Google Cloud WIF, Secret Manager, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
 }
