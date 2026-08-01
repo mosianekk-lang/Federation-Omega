@@ -1,5 +1,5 @@
 {
-  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v2",
+  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v3",
   "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
   "owner": "Kim Kagiso Mosiane",
   "status": "CONTROLLING",
@@ -10,19 +10,26 @@
     "evidenceops/bootstrap/SOVEREIGN_TRANSLATOR_BOOTSTRAP.md",
     "evidenceops/runtime/kim_dataverse_inplace_bridge.json"
   ],
-  "per_input_requirement": "LOAD_OR_VERIFY_ACTIVE_MANIFEST_AND_KIM_DATAVERSE_BRIDGE_BEFORE_SUBSTANTIVE_WORK",
+  "per_input_requirement": "LOAD_OR_VERIFY_ACTIVE_MANIFEST_AND_PRIVATE_CANONICAL_BRIDGE_BEFORE_SUBSTANTIVE_WORK",
   "mission_delta_owner": "WORKFORCE",
   "report_only_terminal_allowed": false,
   "canonical_intelligence_target": "KIM_DATAVERSE",
   "canonical_backend": {
-    "type": "GOOGLE_DRIVE_GOOGLE_SHEETS_IN_PLACE_BRIDGE",
-    "spreadsheet_id": "1TS64KmgGS30Hr9yHry3kQPzXMtWVMV22utJxhDXd7o8",
+    "type": "PRIVATE_IN_PLACE_BRIDGE",
+    "spreadsheet_id": "PRIVATE_RUNTIME_CONFIG",
     "bridge_record": "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
     "status": "WRITE_AND_READBACK_VERIFIED",
-    "receipt_id": "RCP-KDV-INPLACE-001"
+    "receipt_id": "PRIVATE_RECEIPT_REFERENCE"
+  },
+  "public_repository_policy": {
+    "live_identifiers_allowed": false,
+    "private_backend_ids_allowed": false,
+    "gmail_message_ids_allowed": false,
+    "folder_ids_allowed": false,
+    "secrets_allowed": false
   },
   "canonical_alignment_claim_requires": [
-    "CANONICAL_BACKEND_VERIFIED",
+    "PRIVATE_BACKEND_REFERENCE_RESOLVED_AT_RUNTIME",
     "AUTHORITY_VERIFIED",
     "SCHEMA_VERIFIED",
     "READ_VERIFIED",
@@ -36,5 +43,5 @@
     "status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
     "required_for_current_canonical_operation": false
   },
-  "version": 2
+  "version": 3
 }
