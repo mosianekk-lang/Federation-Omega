@@ -1,39 +1,45 @@
 {
   "registry_id": "EVIDENCEOPS-LIVE-LANE-REGISTRY",
-  "registry_version": "1.21.0",
-  "updated_at": "2026-08-01T14:07:24+02:00",
+  "registry_version": "1.22.0",
+  "updated_at": "2026-08-01T15:08:01+02:00",
   "owner": "Kim Kagiso Mosiane",
   "source_repository": "mosianekk-lang/Federation-Omega",
   "canonical_reference": {
     "ipep_bible": "IPEP Innovation Bible — Canonical Live Ledger",
-    "bible_revision_id": "AIroW353tgzZWNojaVlEtlGPYToDuOvpEiBnVxj_ahWWlluQJiWkrfalxq4aohLZj0dbvG_SLs8iBgvHIRY0PoGex9yup-NQ31EExEu4qAs",
-    "latest_evidence_note": "EVIDENCE NOTE — LANE WATCH RECEIPT 019",
-    "latest_evidence_note_sha256": "56f41721af1404914c17e992c4398126c7b184b609b9adf0d067f65461d9378a"
+    "bible_revision_id": "AIroW34ID9wC1kop4QlMm8fwtUMejFqqI0LhOV9J8TseKaj1MFGAysh7WvBSK4AyJop8EgS7luU--YZ4Cf7nbiVwE6AMjfAnaScsTDtzEvk",
+    "latest_evidence_note": "LANE WATCH RECEIPT 020 — Innovation Engine recurring restore-health verification",
+    "latest_evidence_note_sha256": "3511dbc93723abfe9b1ac32637125fa3da0fb92af31b09c8e33108e2dc601c5c"
   },
   "priority_model": {
-    "dimensions": ["urgency", "dependency_closure", "completion_proximity", "reuse_value", "risk"],
+    "dimensions": [
+      "urgency",
+      "dependency_closure",
+      "completion_proximity",
+      "reuse_value",
+      "risk"
+    ],
     "maximum_score": 100,
     "scoring_note": "Each dimension is scored out of 20. Executability is evaluated separately from ranking."
   },
   "review_result": {
     "material_change_detected": true,
-    "material_change": "Fresh private-canonical AI ICT production-boundary repair receipt verified a hash-attested SDK/package/container supply-chain boundary while preserving the live-model and cloud authority truth boundary.",
-    "new_registered_lane": "LANE-AI-ICT-MODEL-RUNTIME",
-    "receipt": "LANE-WATCH-RECEIPT-019",
-    "receipt_sha256": "e7babda0457282e07ae6890f42d8149eb2f20d000bc4284818cb3ba668a4ba94",
-    "receipt_commit": "7dbf5d9edbc1c4d4221d38185663992939787b3d"
+    "material_change": "A fresh later scheduled EvidenceOps ledger snapshot became available and enabled a third independent cross-cycle restore-health verification.",
+    "dependency_closed": "LANE-INNOVATION-ENGINE recurring cross-cycle restore-health monitoring",
+    "receipt": "LANE-WATCH-RECEIPT-020",
+    "receipt_sha256": "fe0a6ad53def0b3b3180be752150953a3cc1125c6f30a5c1cf2780235cc8c848",
+    "receipt_commit": "222a1538ba33c8dc7fc99a2f520b05a6cc053597"
   },
   "execution_decision": {
     "highest_scored_lane": "LANE-PROVENANCE-PASSPORT",
     "highest_scored_lane_executable": false,
-    "highest_scored_lane_blocker": "NEXT_INDEPENDENT_SCHEDULE_TRIGGERED_HEALTH_CYCLE_NOT_DUE_AT_OBSERVATION",
-    "selected_safe_lane": "LANE-IPEP-BIBLE",
-    "selected_action": "RECONCILE_FRESH_AI_ICT_RUNTIME_SUPPLY_CHAIN_RECEIPT_IN_REGISTRY_AND_CANONICAL_BIBLE",
+    "highest_scored_lane_blocker": "SCHEDULE_TRIGGERED_CYCLE_DUE_BUT_NO_DURABLE_SCHEDULE_EVENT_READBACK_AVAILABLE",
+    "selected_safe_lane": "LANE-INNOVATION-ENGINE",
+    "selected_action": "COPY_FRESH_SNAPSHOT_VERIFY_197_SHEET_STRUCTURE_COMPARE_FOUR_SENTINELS_DELETE_AND_VERIFY_ABSENCE",
     "result": "COMPLETED"
   },
   "dependency_snapshot": {
     "github_read_write": "VERIFIED",
-    "google_drive_read_write": "VERIFIED",
+    "google_drive_read_write_copy_delete_readback": "VERIFIED",
     "gmail_new_credential_or_approval": "NONE_FOUND",
     "google_cloud_wif": "BLOCKED_OR_UNVERIFIED",
     "secret_manager": "UNBOUND_OR_METADATA_PROBE_ONLY",
@@ -45,12 +51,13 @@
     "live_transcription_provider_binding": "NOT_FRESHLY_VERIFIED",
     "google_speech_runtime_binding": "NOT_FRESHLY_VERIFIED",
     "revenue_external_release_approval": "NOT_GRANTED",
-    "provenance_independent_scheduled_cycle": "NOT_YET_DUE_AT_OBSERVATION"
+    "provenance_independent_scheduled_cycle": "DUE_BUT_NO_DURABLE_SCHEDULE_EVENT_READBACK_AVAILABLE",
+    "innovation_cross_cycle_restore_health_monitoring": "VERIFIED"
   },
   "provider_boundaries": {
-    "google_drive": "Authorised read/write, provider monitoring, maintenance and recovery verified for Connector Foundry.",
-    "github": "Authorised repository read/write verified; open runtime/deployer PRs do not provide a current safe merge or deployment proof.",
-    "google_cloud": "No verified WIF identity, least-privilege Secret Manager binding or private authenticated Cloud Run deployment.",
+    "google_drive": "Authorised read/write, provider monitoring, maintenance, recovery and repeated bounded snapshot restore-health verification are verified.",
+    "github": "Authorised repository read/write verified; no new safe cloud merge, deployment receipt or Provenance Passport scheduled readback was found.",
+    "google_cloud": "No verified WIF identity, least-privilege Secret Manager binding or current private authenticated Cloud Run deployment.",
     "openai_model_runtime": "SDK dependency and runtime supply-chain contract verified; usable model credential and live model canary remain unverified.",
     "transcription": "Historical or scaffold evidence does not establish current live provider binding."
   },
@@ -59,120 +66,264 @@
     {
       "lane_id": "LANE-PROVENANCE-PASSPORT",
       "priority": 100,
-      "score": {"urgency": 20, "dependency_closure": 20, "completion_proximity": 20, "reuse_value": 20, "risk": 20},
+      "score": {
+        "urgency": 20,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 20,
+        "risk": 20
+      },
       "state": "VERIFYING",
       "maturity": "SPROUT",
       "executable_now": false,
-      "proof_state": ["REUSABLE_VALIDATOR_AND_CLI_VERIFIED", "TWO_AUTHORISED_CORPORA_VERIFIED", "EXTERNAL_PUSH_TRIGGERED_CI_PASS", "CONTROLLED_TAMPER_DETECTION_AND_RECOVERY_PASS", "DURABLE_READBACK_VERIFIED"],
-      "blockers": ["INDEPENDENT_SCHEDULE_TRIGGERED_HEALTH_CYCLE_NOT_YET_DUE"],
-      "next_action": "Read back the next independent schedule-triggered health cycle and reconcile persistent monitoring proof."
+      "proof_state": [
+        "REUSABLE_VALIDATOR_AND_CLI_VERIFIED",
+        "TWO_AUTHORISED_CORPORA_VERIFIED",
+        "EXTERNAL_PUSH_TRIGGERED_CI_PASS",
+        "CONTROLLED_TAMPER_DETECTION_AND_RECOVERY_PASS",
+        "DURABLE_READBACK_VERIFIED"
+      ],
+      "blockers": [
+        "INDEPENDENT_SCHEDULE_TRIGGERED_HEALTH_CYCLE_DURABLE_READBACK_ABSENT"
+      ],
+      "next_action": "Read back the first durable schedule-triggered health cycle and reconcile persistent monitoring proof."
     },
     {
-      "lane_id": "LANE-IPEP-BIBLE",
+      "lane_id": "LANE-INNOVATION-ENGINE",
       "priority": 99,
-      "score": {"urgency": 20, "dependency_closure": 20, "completion_proximity": 20, "reuse_value": 19, "risk": 20},
-      "state": "CHECKPOINTED",
+      "score": {
+        "urgency": 19,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 20,
+        "risk": 20
+      },
+      "state": "TEST_PASSED",
       "maturity": "UNVERIFIED",
-      "executable_now": true,
-      "proof_state": ["CANONICAL_APPEND_ONLY_LEDGER_ACCESS_VERIFIED", "LANE_WATCH_RECEIPT_019_APPENDED", "AI_ICT_RUNTIME_SUPPLY_CHAIN_BOUNDARY_RECONCILED"],
-      "blockers": [],
-      "next_action": "Maintain append-only reconciliation when new verified lane receipts emerge."
+      "executable_now": false,
+      "proof_state": [
+        "PERSISTENT_REGISTRY_AND_HASH_CHAINED_RECEIPTS_VERIFIED",
+        "LOCAL_TRANSACTIONAL_BACKUP_AND_ATOMIC_RESTORE_VERIFIED",
+        "THREE_LATER_INDEPENDENT_197_SHEET_RESTORE_READBACK_AND_CLEANUP_CYCLES_PASS",
+        "RECURRING_CROSS_CYCLE_RESTORE_HEALTH_MONITORING_VERIFIED"
+      ],
+      "blockers": [
+        "SUSTAINED_MEASURABLE_OPERATIONAL_VALUE_EVIDENCE"
+      ],
+      "next_action": "Accumulate measurable operational-value evidence over time before any higher maturity claim."
     },
     {
       "lane_id": "LANE-AI-ICT-MODEL-RUNTIME",
       "priority": 98,
-      "score": {"urgency": 20, "dependency_closure": 18, "completion_proximity": 20, "reuse_value": 20, "risk": 20},
+      "score": {
+        "urgency": 20,
+        "dependency_closure": 18,
+        "completion_proximity": 20,
+        "reuse_value": 20,
+        "risk": 20
+      },
       "state": "VERIFYING",
       "maturity": "UNVERIFIED",
       "executable_now": false,
-      "proof_state": ["58_REGRESSION_TESTS_PASS", "65_PYTHON_FILES", "HASH_ATTESTED_OPENAI_SDK_DEPENDENCY_CONTRACT_VERIFIED", "OPENAI_WHEEL_DIGEST_CHECK_VERIFIED_IN_DOCKERFILE", "SDK_IMPORT_AND_RUNTIME_INTEGRITY_SMOKE_TESTS_PASS", "RUNTIME_SUPPLY_CHAIN_ENDPOINT_VERIFIED", "CANONICAL_PACKAGE_SHA256_266c1eafca93076216d726f043ebf6304bddae7930b442adb04f69b1ee447eb1"],
-      "blockers": ["AUTHORISED_USABLE_MODEL_CREDENTIAL_UNVERIFIED", "SECRET_MANAGER_BINDING_UNVERIFIED", "WIF_UNVERIFIED", "PRIVATE_CLOUD_RUN_DEPLOYMENT_UNVERIFIED", "STRICT_LIVE_MODEL_CANARY_UNVERIFIED", "PRIVATE_POSTGRES_AND_CANONICAL_OUTBOX_READBACK_UNVERIFIED"],
+      "proof_state": [
+        "58_REGRESSION_TESTS_PASS",
+        "65_PYTHON_FILES",
+        "HASH_ATTESTED_OPENAI_SDK_DEPENDENCY_CONTRACT_VERIFIED",
+        "OPENAI_WHEEL_DIGEST_CHECK_VERIFIED_IN_DOCKERFILE",
+        "SDK_IMPORT_AND_RUNTIME_INTEGRITY_SMOKE_TESTS_PASS",
+        "RUNTIME_SUPPLY_CHAIN_ENDPOINT_VERIFIED",
+        "CANONICAL_PACKAGE_SHA256_266c1eafca93076216d726f043ebf6304bddae7930b442adb04f69b1ee447eb1"
+      ],
+      "blockers": [
+        "AUTHORISED_USABLE_MODEL_CREDENTIAL_UNVERIFIED",
+        "SECRET_MANAGER_BINDING_UNVERIFIED",
+        "WIF_UNVERIFIED",
+        "PRIVATE_CLOUD_RUN_DEPLOYMENT_UNVERIFIED",
+        "STRICT_LIVE_MODEL_CANARY_UNVERIFIED",
+        "PRIVATE_POSTGRES_AND_CANONICAL_OUTBOX_READBACK_UNVERIFIED"
+      ],
       "next_action": "Bind an authorised managed credential through least privilege, then execute a strict model canary and private persistence/outbox readback."
     },
     {
-      "lane_id": "LANE-INNOVATION-ENGINE",
+      "lane_id": "LANE-IPEP-BIBLE",
       "priority": 97,
-      "score": {"urgency": 19, "dependency_closure": 20, "completion_proximity": 20, "reuse_value": 19, "risk": 19},
-      "state": "TEST_PASSED",
+      "score": {
+        "urgency": 20,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 18,
+        "risk": 19
+      },
+      "state": "CHECKPOINTED",
       "maturity": "UNVERIFIED",
-      "executable_now": false,
-      "proof_state": ["PERSISTENT_REGISTRY_AND_HASH_CHAINED_RECEIPTS_VERIFIED", "LOCAL_TRANSACTIONAL_BACKUP_AND_ATOMIC_RESTORE_VERIFIED", "TWO_LATER_INDEPENDENT_197_SHEET_RESTORE_READBACK_AND_CLEANUP_CYCLES_PASS"],
-      "blockers": ["RECURRING_AUTOMATED_RESTORE_HEALTH_MONITORING", "SUSTAINED_OPERATIONAL_VALUE_EVIDENCE"],
-      "next_action": "Await a later scheduled snapshot or recurring restore-health trigger; do not manufacture same-cycle persistence."
+      "executable_now": true,
+      "proof_state": [
+        "CANONICAL_APPEND_ONLY_LEDGER_ACCESS_VERIFIED",
+        "LANE_WATCH_RECEIPT_020_APPENDED",
+        "EXACT_HEADING_AND_EVIDENCE_NOTE_HASH_READBACK_VERIFIED"
+      ],
+      "blockers": [],
+      "next_action": "Maintain append-only reconciliation when new verified lane receipts emerge."
     },
     {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
       "priority": 96,
-      "score": {"urgency": 18, "dependency_closure": 20, "completion_proximity": 20, "reuse_value": 19, "risk": 19},
+      "score": {
+        "urgency": 18,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 19,
+        "risk": 19
+      },
       "state": "TEST_PASSED",
       "maturity": "SAPLING",
       "executable_now": false,
-      "proof_state": ["ECTS_6_OF_6_PASS", "GOOGLE_DRIVE_PROVIDER_EXECUTION_AND_EXACT_READBACK_VERIFIED", "CONTROLLED_RECOVERY_VERIFIED", "TWO_INDEPENDENT_SCHEDULED_PROVIDER_MONITOR_CYCLES_VERIFIED"],
-      "blockers": ["SUSTAINED_PRODUCTION_USE", "MEASURABLE_OPERATIONAL_VALUE", "RESILIENCE_OVER_TIME", "COMPLETE_OPERATIONAL_OWNERSHIP"],
+      "proof_state": [
+        "ECTS_6_OF_6_PASS",
+        "GOOGLE_DRIVE_PROVIDER_EXECUTION_AND_EXACT_READBACK_VERIFIED",
+        "CONTROLLED_RECOVERY_VERIFIED",
+        "TWO_INDEPENDENT_SCHEDULED_PROVIDER_MONITOR_CYCLES_VERIFIED"
+      ],
+      "blockers": [
+        "SUSTAINED_PRODUCTION_USE",
+        "MEASURABLE_OPERATIONAL_VALUE",
+        "RESILIENCE_OVER_TIME",
+        "COMPLETE_OPERATIONAL_OWNERSHIP"
+      ],
       "next_action": "Accumulate sustained production-use and operational-value evidence before any MATURE claim."
     },
     {
       "lane_id": "LANE-KIMMIE-SEED",
       "priority": 95,
-      "score": {"urgency": 18, "dependency_closure": 19, "completion_proximity": 20, "reuse_value": 19, "risk": 19},
+      "score": {
+        "urgency": 18,
+        "dependency_closure": 19,
+        "completion_proximity": 20,
+        "reuse_value": 19,
+        "risk": 19
+      },
       "state": "TEST_PASSED",
       "maturity": "SAPLING",
       "executable_now": false,
-      "proof_state": ["DEDICATED_MATURITY_WORKFLOW_PASS", "IDENTITY_DRIFT_NONE_DETECTED", "CONNECTOR_FOUNDRY_CHILD_AT_SAPLING", "MATURE_GATE_CONTRACT_REPAIRED_AND_VERIFIED"],
-      "blockers": ["SUSTAINED_PRODUCTION_USE", "ROOT_RESILIENCE_OVER_TIME", "MEASURABLE_OPERATIONAL_VALUE", "COMPLETE_OPERATIONAL_OWNERSHIP"],
+      "proof_state": [
+        "DEDICATED_MATURITY_WORKFLOW_PASS",
+        "IDENTITY_DRIFT_NONE_DETECTED",
+        "CONNECTOR_FOUNDRY_CHILD_AT_SAPLING",
+        "MATURE_GATE_CONTRACT_REPAIRED_AND_VERIFIED"
+      ],
+      "blockers": [
+        "SUSTAINED_PRODUCTION_USE",
+        "ROOT_RESILIENCE_OVER_TIME",
+        "MEASURABLE_OPERATIONAL_VALUE",
+        "COMPLETE_OPERATIONAL_OWNERSHIP"
+      ],
       "next_action": "Preserve monitoring and gather MATURE-gate evidence over time without premature promotion."
     },
     {
       "lane_id": "LANE-SOVEREIGN-RUNTIME",
       "priority": 94,
-      "score": {"urgency": 20, "dependency_closure": 16, "completion_proximity": 19, "reuse_value": 20, "risk": 19},
+      "score": {
+        "urgency": 20,
+        "dependency_closure": 16,
+        "completion_proximity": 19,
+        "reuse_value": 20,
+        "risk": 19
+      },
       "state": "VERIFYING",
       "maturity": "UNVERIFIED",
       "executable_now": false,
-      "proof_state": ["RUNTIME_REPOSITORY_SCAFFOLD_AND_LOCAL_REGRESSIONS_VERIFIED", "CANONICAL_BACKEND_ALIGNMENT_VERIFIED", "PRIVATE_BY_DEFAULT_DEPLOYMENT_GATE_PRESENT"],
-      "blockers": ["WIF_UNVERIFIED", "SECRET_MANAGER_BINDING_UNVERIFIED", "PRIVATE_AUTHENTICATED_CLOUD_RUN_HEALTH_UNVERIFIED", "DIRECT_CANONICAL_MISSION_WRITE_READBACK_UNVERIFIED"],
+      "proof_state": [
+        "RUNTIME_REPOSITORY_SCAFFOLD_AND_LOCAL_REGRESSIONS_VERIFIED",
+        "CANONICAL_BACKEND_ALIGNMENT_VERIFIED",
+        "PRIVATE_BY_DEFAULT_DEPLOYMENT_GATE_PRESENT"
+      ],
+      "blockers": [
+        "WIF_UNVERIFIED",
+        "SECRET_MANAGER_BINDING_UNVERIFIED",
+        "PRIVATE_AUTHENTICATED_CLOUD_RUN_HEALTH_UNVERIFIED",
+        "DIRECT_CANONICAL_MISSION_WRITE_READBACK_UNVERIFIED"
+      ],
       "next_action": "Verify least-privilege runtime identity, private authenticated health and one canonical mission write/readback."
     },
     {
       "lane_id": "LANE-REVENUE-OFFER-FACTORY",
       "priority": 93,
-      "score": {"urgency": 20, "dependency_closure": 17, "completion_proximity": 20, "reuse_value": 19, "risk": 17},
+      "score": {
+        "urgency": 20,
+        "dependency_closure": 17,
+        "completion_proximity": 20,
+        "reuse_value": 19,
+        "risk": 17
+      },
       "state": "CHECKPOINTED",
       "maturity": "UNVERIFIED",
       "executable_now": false,
-      "proof_state": ["TEST_PASSED_INTERNAL_RELEASE_CANDIDATE", "FOUR_TRUTH_BOUNDED_OFFERS_PACKAGED"],
-      "blockers": ["FOUNDER_APPROVAL_REQUIRED_BEFORE_EXTERNAL_RELEASE", "EXTERNAL_MARKET_VALIDATION_PENDING"],
+      "proof_state": [
+        "TEST_PASSED_INTERNAL_RELEASE_CANDIDATE",
+        "FOUR_TRUTH_BOUNDED_OFFERS_PACKAGED"
+      ],
+      "blockers": [
+        "FOUNDER_APPROVAL_REQUIRED_BEFORE_EXTERNAL_RELEASE",
+        "EXTERNAL_MARKET_VALIDATION_PENDING"
+      ],
       "next_action": "Do not publish, outreach, contract or bind pricing without explicit approval."
     },
     {
       "lane_id": "LANE-PLATFORM-SETUP",
       "priority": 84,
-      "score": {"urgency": 19, "dependency_closure": 12, "completion_proximity": 17, "reuse_value": 18, "risk": 18},
+      "score": {
+        "urgency": 19,
+        "dependency_closure": 12,
+        "completion_proximity": 17,
+        "reuse_value": 18,
+        "risk": 18
+      },
       "state": "BLOCKED",
       "maturity": "UNVERIFIED",
       "executable_now": false,
-      "proof_state": ["SECRET_MANAGER_METADATA_PROBE_ONLY", "CLOUDOPS_QUEUE_HEARTBEAT_WITH_ZERO_COMMANDS"],
-      "blockers": ["VALID_WIF_TARGET_UNAVAILABLE", "SECRET_MANAGER_BINDING_UNVERIFIED", "PRIVATE_CLOUD_RUN_DEPLOYMENT_UNVERIFIED"],
+      "proof_state": [
+        "SECRET_MANAGER_METADATA_PROBE_ONLY",
+        "CLOUDOPS_QUEUE_HEARTBEAT_WITH_ZERO_COMMANDS"
+      ],
+      "blockers": [
+        "VALID_WIF_TARGET_UNAVAILABLE",
+        "SECRET_MANAGER_BINDING_UNVERIFIED",
+        "PRIVATE_CLOUD_RUN_DEPLOYMENT_UNVERIFIED"
+      ],
       "next_action": "Resume only when provider-native cloud authority and identity receipts exist."
     },
     {
       "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
       "priority": 80,
-      "score": {"urgency": 20, "dependency_closure": 10, "completion_proximity": 15, "reuse_value": 18, "risk": 17},
+      "score": {
+        "urgency": 20,
+        "dependency_closure": 10,
+        "completion_proximity": 15,
+        "reuse_value": 18,
+        "risk": 17
+      },
       "state": "BLOCKED",
       "maturity": "SEED",
       "executable_now": false,
-      "proof_state": ["AUDIO_WORKER_SCAFFOLD_PRESENT", "HISTORICAL_BATCH_SPEECH_SUCCESS_NOT_CURRENT_BINDING"],
-      "blockers": ["CURRENT_PROVIDER_CREDENTIAL_UNVERIFIED", "GOOGLE_SPEECH_RUNTIME_BINDING_UNVERIFIED", "PRIVATE_WORKER_HEALTH_UNVERIFIED", "LIVE_CANARY_RECEIPT_ABSENT"],
+      "proof_state": [
+        "AUDIO_WORKER_SCAFFOLD_PRESENT",
+        "HISTORICAL_BATCH_SPEECH_SUCCESS_NOT_CURRENT_BINDING"
+      ],
+      "blockers": [
+        "CURRENT_PROVIDER_CREDENTIAL_UNVERIFIED",
+        "GOOGLE_SPEECH_RUNTIME_BINDING_UNVERIFIED",
+        "PRIVATE_WORKER_HEALTH_UNVERIFIED",
+        "LIVE_CANARY_RECEIPT_ABSENT"
+      ],
       "next_action": "Resume only after current provider binding, privacy assurance preflight and private canary proof."
     }
   ],
   "latest_receipt": {
-    "receipt_id": "LANE-WATCH-RECEIPT-019",
-    "receipt_sha256": "e7babda0457282e07ae6890f42d8149eb2f20d000bc4284818cb3ba668a4ba94",
-    "receipt_commit": "7dbf5d9edbc1c4d4221d38185663992939787b3d",
-    "bible_note_sha256": "56f41721af1404914c17e992c4398126c7b184b609b9adf0d067f65461d9378a",
-    "bible_revision_id": "AIroW353tgzZWNojaVlEtlGPYToDuOvpEiBnVxj_ahWWlluQJiWkrfalxq4aohLZj0dbvG_SLs8iBgvHIRY0PoGex9yup-NQ31EExEu4qAs"
+    "receipt_id": "LANE-WATCH-RECEIPT-020",
+    "receipt_sha256": "fe0a6ad53def0b3b3180be752150953a3cc1125c6f30a5c1cf2780235cc8c848",
+    "receipt_commit": "222a1538ba33c8dc7fc99a2f520b05a6cc053597",
+    "bible_note_sha256": "3511dbc93723abfe9b1ac32637125fa3da0fb92af31b09c8e33108e2dc601c5c",
+    "bible_revision_id": "AIroW34ID9wC1kop4QlMm8fwtUMejFqqI0LhOV9J8TseKaj1MFGAysh7WvBSK4AyJop8EgS7luU--YZ4Cf7nbiVwE6AMjfAnaScsTDtzEvk"
   },
-  "truth_boundary": "The AI ICT runtime supply-chain boundary is verified only for regression cleanliness, package/container dependency attestation, SDK import/runtime integrity and the runtime supply-chain endpoint. No usable live-model credential, live model execution, Google Cloud WIF, Secret Manager binding, private authenticated Cloud Run deployment, private PostgreSQL persistence, canonical outbox write-through, live transcription readiness or external commercial approval is inferred."
+  "truth_boundary": "The fresh snapshot and repeated scheduled lane-watch restore checks verify recurring cross-cycle restore-health monitoring only. Innovation Engine remains TEST_PASSED / UNVERIFIED until sustained measurable operational value is evidenced. No usable live-model credential, live model execution, Google Cloud WIF, Secret Manager binding, private authenticated Cloud Run deployment, private PostgreSQL persistence, canonical outbox write-through, live transcription readiness, Provenance Passport scheduled persistence or external commercial approval is inferred."
 }
