@@ -79,10 +79,10 @@
       ],
       "domain": "Justice and Rights",
       "id": "E2K-0005",
-      "last_advanced_at": "2026-08-01T22:08:51.979893+00:00",
-      "maturity": "BENCHMARKED",
+      "last_advanced_at": "2026-08-01T23:08:06.458304+00:00",
+      "maturity": "PILOT_CANDIDATE",
       "name": "Burden Transfer Detector",
-      "next_action": "run benchmark and defect repair",
+      "next_action": "prepare buyer-ready pilot",
       "priority_score": 87.45,
       "scores": {
         "defensibility": 88,
@@ -118,10 +118,10 @@
       ],
       "domain": "Markets and Finance",
       "id": "E2K-0007",
-      "last_advanced_at": "2026-08-01T22:08:51.979893+00:00",
-      "maturity": "GENOME_READY",
+      "last_advanced_at": "2026-08-01T23:08:06.458304+00:00",
+      "maturity": "PROTOTYPE_CANDIDATE",
       "name": "Integrity Underwriting Feed",
-      "next_action": "extract expert methods and buyer problem",
+      "next_action": "define architecture and acceptance tests",
       "priority_score": 86.9,
       "scores": {
         "defensibility": 92,
@@ -132,14 +132,16 @@
       }
     },
     {
+      "assigned_council": "Sovereignty and Federation Expert Genome Council",
       "dependencies": [
         "E2K-0006"
       ],
       "domain": "Sovereignty and Federation",
       "id": "E2K-0008",
-      "maturity": "GENOME_READY",
+      "last_advanced_at": "2026-08-01T23:08:06.458304+00:00",
+      "maturity": "PROTOTYPE_CANDIDATE",
       "name": "Federated Accountability Mesh",
-      "next_action": "define node verification protocol",
+      "next_action": "define architecture and acceptance tests",
       "priority_score": 86.45,
       "scores": {
         "defensibility": 97,
@@ -154,10 +156,10 @@
       "dependencies": [],
       "domain": "Education and Human Development",
       "id": "E2K-0009",
-      "last_advanced_at": "2026-08-01T22:08:51.979893+00:00",
-      "maturity": "COMMERCIAL_CANDIDATE",
+      "last_advanced_at": "2026-08-01T23:08:06.458304+00:00",
+      "maturity": "OFFER_READY",
       "name": "Kim Value Algorithm",
-      "next_action": "validate price and buyer",
+      "next_action": "prepare proposal and sales assets",
       "priority_score": 88.2,
       "scores": {
         "defensibility": 95,
@@ -174,10 +176,10 @@
       ],
       "domain": "AI-Agent Society",
       "id": "E2K-0010",
-      "last_advanced_at": "2026-08-01T22:08:51.979893+00:00",
-      "maturity": "RECURRING",
+      "last_advanced_at": "2026-08-01T23:08:06.458304+00:00",
+      "maturity": "LICENSED",
       "name": "Expert Genome Agent Foundry",
-      "next_action": "convert to subscription",
+      "next_action": "license or federate",
       "priority_score": 92.1,
       "scores": {
         "defensibility": 98,
@@ -189,6 +191,6 @@
     }
   ],
   "portfolio_id": "EARTH2-PORTFOLIO-001",
-  "updated_at": "2026-08-01T22:08:51.979893+00:00",
+  "updated_at": "2026-08-01T23:08:06.458304+00:00",
   "version": "1.0"
 }
