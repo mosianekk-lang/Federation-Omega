@@ -8,23 +8,24 @@
   "owner_decision_required": false,
   "material_change": true,
   "qualifying_notification_event": true,
+  "public_repository_safe": true,
   "child_lane_event": {
     "lane_id": "LANE-CONNECTOR-FOUNDRY",
     "previous_verified_stage": "ROOTED",
     "new_verified_stage": "SPROUT",
-    "operational_state": "PROVIDER_TEST_PASSED",
+    "operational_state": "PROVIDER_TEST_PASSED_TARGET_RETIRED",
     "proof": [
-      "Google Drive native-document canary created through authorised connector",
+      "A Google Drive native-document canary was created through an authorised connector",
       "Canonical JSON write and exact independent text readback passed",
-      "Control-plane parent-folder readback passed",
+      "Control-plane parent-location readback passed",
       "Write and readback SHA-256 values matched",
       "Google Drive provider adapter and tamper-rejection tests passed Superior Logic CI run 440",
       "PR #43 merged to main",
-      "Default-branch provider receipt readback passed"
+      "The provider target was subsequently retired after public identifier exposure"
     ],
     "provider": "google_drive",
     "operation_id": "ECTS-GDRIVE-CANARY-20260801-001",
-    "drive_file_id": "1h9UcDmmRNfrnJUwbC_AUvmA8r_TCBuaTObEqTCZOB5U",
+    "drive_file_id": "RETIRED_PRIVATE_REFERENCE",
     "pr": 43,
     "merge_sha": "742a456e77d23816ccdb03c2ee07440b1e85aa05",
     "ci_run_id": 30677400252,
@@ -41,8 +42,8 @@
     "recovery_evidence": "NOT_VERIFIED",
     "provenance_toolkit_external_ci": "NOT_VERIFIED",
     "connector_foundry_external_ci": "VERIFIED",
-    "connector_foundry_provider_execution": "VERIFIED_GOOGLE_DRIVE"
+    "connector_foundry_provider_execution": "VERIFIED_GOOGLE_DRIVE_TARGET_RETIRED"
   },
-  "lesson": "A Connector Foundry child may advance from ROOTED to SPROUT only after provider-specific execution, independent provider readback, CI, merge and default-branch receipt readback converge. One provider canary does not prove persistent monitoring or multi-provider resilience.",
-  "checkpoint_sha256": "3e71dcf75dd11d4bbf4179df83a1bd6b967a6e389b6dba1ae1ef146291f1b82d"
+  "lesson": "A Connector Foundry child may advance from ROOTED to SPROUT only after provider-specific execution, independent provider readback, CI, merge and default-branch receipt readback converge. Public receipts must retain proof without retaining live provider identifiers.",
+  "checkpoint_sha256": "SUPERSEDED_BY_PUBLIC_SAFE_REVISION"
 }
