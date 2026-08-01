@@ -12,7 +12,8 @@
   "workflow_receipt_validation": "PASSED",
   "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
   "sapling_gate_verified": true,
+  "mature_gate_verified": false,
   "next_gate": "MATURE requires sustained production use, resilience, measurable value and complete operational ownership",
   "status": "PASS",
-  "assessment_sha256": "b9bc68fe4f6d2554839ace333522ef1770103f5512f5f394fe5d6df1f7252dd7"
+  "assessment_sha256": "2b95b4dc0df46cbad82fe05b35c2237988e7b3cc95530e80bcad56b64149d14b"
 }
