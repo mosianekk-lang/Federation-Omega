@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.17.0",
-  "updated_at": "2026-08-01T09:20:00+02:00",
+  "registry_version": "1.18.0",
+  "updated_at": "2026-08-01T11:14:00+02:00",
   "proof_note": "Public-safe registry. No live provider, private file, folder, document, message, credential or canonical identifier is persisted. States reflect independently verified evidence only.",
   "priority_model": {
     "scale": "0-100",
@@ -14,38 +14,37 @@
     "factor_range": "0-20",
     "rule": "Resume the highest-value safe executable lane. Preserve blocked and approval-gated lanes without treating them as executable."
   },
+  "execution_decision": {
+    "highest_scored_lane": "LANE-PROVENANCE-PASSPORT",
+    "highest_scored_lane_executable": false,
+    "reason": "Independent schedule-triggered persistence cycle not yet available.",
+    "highest_value_safe_executable_lane": "LANE-INNOVATION-ENGINE",
+    "action": "Verified durable off-repository snapshots, executed bounded restore/readback/cleanup drill, preserved receipt and reconciled registry and Bible."
+  },
   "dependency_snapshot": {
     "github_repository_access": "VERIFIED_READ_WRITE",
-    "drive_connector_access": "VERIFIED_CREATE_WRITE_MOVE_EXACT_READBACK_DELETE_ABSENCE",
+    "drive_connector_access": "VERIFIED_READ_WRITE_COPY_EXACT_READBACK_DELETE_ABSENCE",
     "gmail_connector_access": "VERIFIED_READ",
     "credential_or_external_approval_change": "NONE_VERIFIED",
     "connector_foundry_persistent_multi_cycle_monitoring": "PASSED_TWO_INDEPENDENT_SCHEDULED_CYCLES",
-    "connector_foundry_later_cycle_payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
     "kimmie_maturity_workflow": "PASS_AT_SAPLING",
-    "kimmie_workflow_readback_commit": "56a65419508d46720a8cf66cf80bca2021d9c76f",
-    "kimmie_assessment_sha256": "b9bc68fe4f6d2554839ace333522ef1770103f5512f5f394fe5d6df1f7252dd7",
+    "kimmie_latest_review": "KSA-20260801-016_NO_MATERIAL_CHANGE",
     "kimmie_identity_drift": "NONE_DETECTED",
     "provenance_passport_multi_corpus": "TWO_AUTHORISED_CORPORA_AND_16_PROOFS_VERIFIED",
     "provenance_passport_external_ci": "PASSED_PUSH_TRIGGERED",
     "provenance_passport_tamper_recovery": "PASSED",
-    "provenance_passport_health_run_id": "30689181562",
-    "provenance_passport_health_sha256": "e55ed32742961ee8eae85df6b4e050f835700800bab24b2a47eda95fe3b4344a",
     "provenance_passport_scheduled_persistence": "NOT_YET_VERIFIED",
-    "provenance_passport_automation_supplementary_drill": "PASS_NOT_SCHEDULED_PERSISTENCE",
-    "innovation_engine_backup_restore": "LOCAL_DRILL_PASS_3_OF_3; CI_AND_LEAK_GUARD_PASS; MERGED",
-    "drive_ledger_snapshot": "NEW_OFF_REPOSITORY_SNAPSHOT_OBSERVED; PRODUCTION_RESTORE_NOT_PROVEN",
-    "cloudops_recent_modification_review": "NO_FRESH_2026_08_01_LANE_SPECIFIC_AUTHORITY_OR_RUNTIME_PROOF",
+    "innovation_engine_local_backup_restore": "PASS_3_OF_3_CI_AND_LEAK_GUARD_PASS",
+    "innovation_engine_off_repository_snapshots": "VERIFIED_REPEATED_SCHEDULED_GOOGLE_DRIVE_COPIES",
+    "innovation_engine_restore_drill": "PASS_197_SHEETS_4_SENTINEL_RANGES_CLEANUP_AND_ABSENCE",
+    "cloudops_current_review": "NO_FRESH_LANE_SPECIFIC_AUTHORITY_OR_PRIVATE_RUNTIME_PROOF",
     "sovereign_runtime_current_private_cloud_run": "NOT_VERIFIED",
     "sovereign_runtime_direct_canonical_write_through": "NOT_VERIFIED",
     "google_cloud_wif": "BLOCKED_OR_UNVERIFIED",
     "secret_manager_binding": "UNBOUND_OR_METADATA_PROBE_ONLY",
     "provider_transcription_current_live_binding": "NOT_FRESHLY_VERIFIED",
     "revenue_external_release_approval": "NOT_GRANTED",
-    "ipep_bible_access": "VERIFIED_READ_WRITE_READBACK",
-    "ipep_bible_review_015_readback": "VERIFIED_EXACT_HEADING",
-    "ipep_bible_review_015_note_sha256": "17bb7fd8624a26cc18bd5e6d1c6e9705e01396035dbf5698e2cdc5800856ae60",
-    "ipep_bible_lane_watch_015a_readback": "VERIFIED_EXACT_HEADING_AND_NOTE_HASH",
-    "ipep_bible_lane_watch_015a_note_sha256": "0c303df53eea989002d1d9d0431bdef4c46f130d2b06b95447f20ccd6d16bb45"
+    "ipep_bible_access": "VERIFIED_READ_WRITE_READBACK"
   },
   "lanes": [
     {
@@ -60,38 +59,9 @@
         "reuse_value": 20,
         "risk_exposure": 20
       },
-      "proof_state": "VALIDATOR_AND_CLI_COMMITTED; SIX_LOCAL_TESTS_PASS; TWO_AUTHORISED_CORPORA_AND_16_PROOFS_VERIFIED; EXTERNAL_PUSH_CI_PASS; CONTROLLED_TAMPER_DETECTION_AND_RECOVERY_PASS; DURABLE_HEALTH_READBACK; AUTOMATION_SIDE_SUPPLEMENTARY_DRILL_PASS",
-      "proof_receipt": {
-        "workflow_run_id": "30689181562",
-        "workflow_event": "push",
-        "workflow_definition_commit": "76c41088272a9cf66e5a26baf6a7f55239446985",
-        "durable_readback_commit": "d58d2d2395de744d35c57ca2028dad0f89a780eb",
-        "health_sha256": "e55ed32742961ee8eae85df6b4e050f835700800bab24b2a47eda95fe3b4344a",
-        "first_success_receipt_sha256": "bab3d4211e26e1584a139b0f6a5338a293573fa6db79d95cfd7671ed34b9e63a"
-      },
-      "lane_watch_reconciliation": {
-        "receipt_id": "LANE-WATCH-RECEIPT-015A",
-        "receipt_sha256": "5706d62c6d2bcdf5e2528fc2a7be26feaf43a697bee290b4012416aa363d6f37",
-        "receipt_commit": "d11f8d00dad7b231fc81c8697e83783fce598191",
-        "supersedes": "LANE-WATCH-RECEIPT-015",
-        "maturity_correction": "SPROUT_PLUS_OVERCLAIM_SUPERSEDED; REMAINS_SPROUT"
-      },
-      "remaining_gate": "Independent schedule-triggered health cycles with durable readback; push-triggered success and automation-side checks do not establish scheduled persistence.",
-      "next_action": "Allow the six-hour repository schedule to execute and read back later independent successful scheduled cycles before considering SAPLING."
-    },
-    {
-      "lane_id": "LANE-INNOVATION-ENGINE",
-      "priority": 99,
-      "state": "TEST_PASSED",
-      "priority_factors": {
-        "urgency": 19,
-        "dependency_closure": 20,
-        "completion_proximity": 20,
-        "reuse_value": 20,
-        "risk_exposure": 20
-      },
-      "proof_state": "PERSISTENT_REGISTRY_MERGED; TRANSACTIONAL_BACKUP_AND_ATOMIC_RESTORE; LOCAL_DRILL_PASS_3_OF_3; CI_PASS; LEAK_GUARD_PASS",
-      "next_action": "Bind backups to durable off-repository storage and verify a production-like restore receipt."
+      "proof_state": "VALIDATOR_AND_CLI_COMMITTED; SIX_LOCAL_TESTS_PASS; TWO_AUTHORISED_CORPORA_AND_16_PROOFS_VERIFIED; EXTERNAL_PUSH_CI_PASS; CONTROLLED_TAMPER_DETECTION_AND_RECOVERY_PASS; DURABLE_PUSH_HEALTH_READBACK",
+      "remaining_gate": "Independent schedule-triggered health cycles with durable readback.",
+      "next_action": "Read back a later successful schedule-triggered health cycle before considering promotion."
     },
     {
       "lane_id": "LANE-CONNECTOR-FOUNDRY",
@@ -106,12 +76,7 @@
         "risk_exposure": 20
       },
       "proof_state": "ECTS_1_0_PASS_6_OF_6; REPEATED_PROVIDER_EXECUTION; CONTROLLED_RECOVERY; TWO_INDEPENDENT_SCHEDULED_PROVIDER_MONITOR_CYCLES; EXACT_READBACK; CONFINEMENT; CLEANUP",
-      "proof_receipt": {
-        "receipt_id": "LANE-WATCH-RECEIPT-014",
-        "receipt_sha256": "b7c79b89b842f177a6d40f211123bc04617ee8bcf9b10ab363e187a82dc180c5",
-        "receipt_commit": "dcc01d4f68dc2952abebd9323e9814cd2fe3b5ea"
-      },
-      "next_action": "Maintain scheduled provider health and collect sustained production-value evidence before any MATURE claim."
+      "next_action": "Maintain scheduled provider health and gather sustained production-value evidence before MATURE."
     },
     {
       "lane_id": "LANE-KIMMIE-SEED",
@@ -125,16 +90,11 @@
         "reuse_value": 20,
         "risk_exposure": 19
       },
-      "proof_state": "IDENTITY_DRIFT_NONE; USEFUL_CONNECTOR_CHILD_AT_SAPLING; ALL_NAMED_SAPLING_GATES_PASSED; DEDICATED_MATURITY_WORKFLOW_PASS_AND_DURABLE_READBACK",
-      "proof_checkpoint": {
-        "checkpoint_id": "KSA-20260801-014",
-        "checkpoint_sha256": "aa260d75a3eab96da60c3bb3e71c49efc8078f834c144856e3a35ce20df326b1",
-        "checkpoint_commit": "1fa386afc27d214f3ef5dc6b07a057fd9cd9025f"
-      },
+      "proof_state": "IDENTITY_DRIFT_NONE; USEFUL_CONNECTOR_CHILD_AT_SAPLING; ALL NAMED SAPLING GATES PASSED; LATEST REVIEW FOUND NO MATERIAL CHANGE",
       "latest_review": {
-        "checkpoint_id": "KSA-20260801-015",
-        "checkpoint_sha256": "a97d842b887ce2246b46626eca201b1778457d04556cb7d1cabdf32a16004715",
-        "checkpoint_commit": "a8caa03028c443b60a3117b90821f885def8edea",
+        "checkpoint_id": "KSA-20260801-016",
+        "checkpoint_sha256": "603c8084e90391ab6c346028f72ba5335ea7fa82115dd755d635e81406bf1c44",
+        "checkpoint_commit": "495470a4d22d710113aefe42479049bcc678a4f9",
         "promotion": "NONE",
         "notification": "SUPPRESS"
       },
@@ -151,8 +111,31 @@
         "reuse_value": 20,
         "risk_exposure": 20
       },
-      "proof_state": "CANONICAL_PRIVATE_BRIDGE_VERIFIED; REPOSITORY_SERVICE_PRESENT; CURRENT_WIF_SECRET_BINDING_AND_AUTHENTICATED_HEALTH_UNVERIFIED",
+      "proof_state": "CANONICAL_PRIVATE_BRIDGE_VERIFIED; REPOSITORY_SERVICE PRESENT; CURRENT WIF, SECRET BINDING AND AUTHENTICATED PRIVATE HEALTH UNVERIFIED",
       "next_action": "Proceed only after current WIF, least-privilege Secret Manager binding and private authenticated Cloud Run proof."
+    },
+    {
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "priority": 95,
+      "state": "TEST_PASSED",
+      "priority_factors": {
+        "urgency": 15,
+        "dependency_closure": 20,
+        "completion_proximity": 20,
+        "reuse_value": 20,
+        "risk_exposure": 20
+      },
+      "proof_state": "PERSISTENT_REGISTRY_MERGED; TRANSACTIONAL BACKUP AND ATOMIC RESTORE; LOCAL DRILL PASS 3 OF 3; CI PASS; LEAK GUARD PASS; REPEATED DURABLE OFF-REPOSITORY DRIVE SNAPSHOTS VERIFIED; CONTROLLED PRODUCTION-LIKE RESTORE READBACK AND CLEANUP PASS",
+      "proof_receipt": {
+        "receipt_id": "LANE-WATCH-RECEIPT-016",
+        "receipt_sha256": "74642f2b46472602a3330e4bf521f2fce2c7f01a42737cdc0af1fa7b7c41fe61",
+        "receipt_commit": "c064fd590207bd9e01b28587d26cd4d53096cb73",
+        "sheet_count": 197,
+        "sentinel_ranges_checked": 4,
+        "cleanup": "PASS_POST_DELETE_ABSENCE"
+      },
+      "remaining_gate": "Independent later restore cycle or automated restore monitoring before any higher maturity claim.",
+      "next_action": "Collect a later independent restore receipt and establish recurring restore-health monitoring."
     },
     {
       "lane_id": "LANE-REVENUE-OFFER-FACTORY",
@@ -165,7 +148,7 @@
         "reuse_value": 20,
         "risk_exposure": 13
       },
-      "proof_state": "FOUR_INTERNAL_SERVICE_PASSPORTS; VALIDATOR_PASS; SAFETY_TESTS_PASS; EXTERNAL_RELEASE_NOT_AUTHORISED",
+      "proof_state": "FOUR INTERNAL SERVICE PASSPORTS; VALIDATOR PASS; SAFETY TESTS PASS; EXTERNAL RELEASE NOT AUTHORISED",
       "approval_gate": "FOUNDER_APPROVAL_REQUIRED_BEFORE_EXTERNAL_QUOTE_PUBLICATION_OUTREACH_OR_CONTRACT",
       "next_action": "Hold the internal release candidate pending founder approval."
     },
@@ -180,7 +163,7 @@
         "reuse_value": 18,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; KIMMIE_SEED_MATURITY_REVIEW_015_APPENDED; LANE_WATCH_RECEIPT_015_AND_CORRECTIVE_015A_APPENDED; CORRECTIVE_EXACT_HEADING_AND_NOTE_HASH_READBACK_VERIFIED",
+      "proof_state": "CANONICAL LEDGER ACCESSIBLE; KIMMIE REVIEW 016 PRESENT; LANE WATCH RECEIPTS APPEND-ONLY",
       "next_action": "Continue append-only receipt capture on the next material proof or lane transition."
     },
     {
@@ -221,19 +204,18 @@
     }
   ],
   "latest_receipt": {
-    "receipt_id": "LANE-WATCH-RECEIPT-015A",
-    "receipt_sha256": "5706d62c6d2bcdf5e2528fc2a7be26feaf43a697bee290b4012416aa363d6f37",
-    "receipt_commit": "d11f8d00dad7b231fc81c8697e83783fce598191",
-    "bible_readback": "PASSED_EXACT_HEADING_AND_NOTE_HASH",
-    "supersedes": "LANE-WATCH-RECEIPT-015"
+    "receipt_id": "LANE-WATCH-RECEIPT-016",
+    "receipt_sha256": "74642f2b46472602a3330e4bf521f2fce2c7f01a42737cdc0af1fa7b7c41fe61",
+    "receipt_commit": "c064fd590207bd9e01b28587d26cd4d53096cb73",
+    "bible_readback": "PENDING"
   },
   "latest_kimmie_review": {
-    "checkpoint_id": "KSA-20260801-015",
-    "checkpoint_sha256": "a97d842b887ce2246b46626eca201b1778457d04556cb7d1cabdf32a16004715",
-    "checkpoint_commit": "a8caa03028c443b60a3117b90821f885def8edea",
-    "bible_heading": "KIMMIE SEED MATURITY REVIEW 015",
+    "checkpoint_id": "KSA-20260801-016",
+    "checkpoint_sha256": "603c8084e90391ab6c346028f72ba5335ea7fa82115dd755d635e81406bf1c44",
+    "checkpoint_commit": "495470a4d22d710113aefe42479049bcc678a4f9",
+    "bible_heading": "KIMMIE SEED MATURITY REVIEW 016",
     "bible_readback": "PASSED_EXACT_HEADING",
     "notification": "SUPPRESS"
   },
-  "truth_boundary": "Connector Foundry and Kimmie SAPLING remain bounded to verified repository and Google Drive provider monitoring, maintenance and recovery. Provenance Passport remains SPROUT despite push-triggered external CI and tamper/recovery proof until schedule-triggered persistence is independently read back. No Google Cloud WIF, Secret Manager binding, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
+  "truth_boundary": "Connector Foundry and Kimmie SAPLING remain bounded to verified repository and Google Drive monitoring, maintenance and recovery. Provenance Passport remains SPROUT until schedule-triggered persistence is independently read back. Innovation Engine now has a bounded Google Drive restore proof, not cloud-runtime authority. No Google Cloud WIF, Secret Manager binding, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
 }
