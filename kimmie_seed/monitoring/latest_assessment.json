@@ -12,7 +12,14 @@
   "workflow_receipt_validation": "PASSED",
   "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
   "sapling_gate_verified": false,
-  "next_gate": "SAPLING requires repeated successful maturity cycles, reusable execution, persistent monitoring, maintenance and recovery evidence",
+  "sapling_requirements": {
+    "repeated_successful_maturity_cycles": "VERIFIED",
+    "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
+    "persistent_monitoring": "PARTIAL",
+    "maintenance_evidence": "VERIFIED",
+    "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY"
+  },
+  "next_gate": "SAPLING remains blocked until persistent monitoring is independently verified across repeated scheduled cycles.",
   "status": "PASS",
-  "assessment_sha256": "c76645e685a445b3c65779517bf57fc58430fbc2978ad092dea7d5fc1b3f7f73"
+  "assessment_sha256": "8bf7ff65d1461f9c45730b8813290ef5e4dddf2df56f6e73e543891bf5e11db5"
 }
