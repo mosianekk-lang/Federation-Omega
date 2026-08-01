@@ -18,10 +18,10 @@ permissions:
   id-token: write
 
 env:
-  GCP_PROJECT_ID: sov-hybrid-suite
-  GCP_REGION: africa-south1
-  GCP_WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
-  GCP_SERVICE_ACCOUNT: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  GCP_PROJECT_ID: ${{ vars.GCP_PROJECT_ID }}
+  GCP_REGION: ${{ vars.GCP_REGION }}
+  GCP_WIF_PROVIDER: ${{ vars.GCP_WIF_PROVIDER }}
+  GCP_SERVICE_ACCOUNT: ${{ vars.GCP_SERVICE_ACCOUNT }}
 
 jobs:
   inventory:
@@ -29,15 +29,39 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+
+      - name: Validate non-secret cloud configuration
+        shell: bash
+        run: |
+          set -euo pipefail
+          required=(GCP_PROJECT_ID GCP_REGION GCP_WIF_PROVIDER GCP_SERVICE_ACCOUNT)
+          for name in "${required[@]}"; do
+            value="${!name:-}"
+            if [[ -z "$value" ]]; then
+              echo "::error title=Missing repository variable::$name is not configured"
+              exit 2
+            fi
+          done
+          if [[ ! "$GCP_WIF_PROVIDER" =~ ^projects/[0-9]+/locations/global/workloadIdentityPools/[a-z0-9-]+/providers/[a-z0-9-]+$ ]]; then
+            echo "::error title=Invalid WIF reference::GCP_WIF_PROVIDER is not a canonical provider resource name"
+            exit 3
+          fi
+          if [[ ! "$GCP_SERVICE_ACCOUNT" =~ ^[a-z0-9-]+@[a-z0-9-]+\.iam\.gserviceaccount\.com$ ]]; then
+            echo "::error title=Invalid service account::GCP_SERVICE_ACCOUNT is malformed"
+            exit 4
+          fi
+
       - id: auth
         uses: google-github-actions/auth@v3
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
           workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
           service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
+
       - uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.GCP_PROJECT_ID }}
+
       - name: Inventory existing infrastructure
         shell: bash
         run: |
@@ -58,15 +82,16 @@ jobs:
           gcloud secrets list --project="$PROJECT" --format=json > inventory/secrets.json
           python - <<'PY'
           import hashlib, json, pathlib, time
-          root=pathlib.Path('inventory')
-          summary={'generated_at_epoch':int(time.time()),'files':{},'counts':{}}
-          for p in sorted(root.glob('*.json')):
-              data=json.loads(p.read_text())
-              summary['files'][p.name]=hashlib.sha256(p.read_bytes()).hexdigest()
-              summary['counts'][p.stem]=len(data) if isinstance(data,list) else 1
-          (root/'inventory-summary.json').write_text(json.dumps(summary,indent=2))
-          print(json.dumps(summary,indent=2))
+          root = pathlib.Path('inventory')
+          summary = {'generated_at_epoch': int(time.time()), 'files': {}, 'counts': {}}
+          for path in sorted(root.glob('*.json')):
+              data = json.loads(path.read_text())
+              summary['files'][path.name] = hashlib.sha256(path.read_bytes()).hexdigest()
+              summary['counts'][path.stem] = len(data) if isinstance(data, list) else 1
+          (root / 'inventory-summary.json').write_text(json.dumps(summary, indent=2))
+          print(json.dumps(summary, indent=2))
           PY
+
       - uses: actions/upload-artifact@v4
         with:
           name: evidenceops-infrastructure-inventory
