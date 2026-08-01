@@ -1,0 +1,18 @@
+{
+  "receipt_id": "RCP-CHAT-DISTRIBUTION-001",
+  "boundary_id": "BND-CHAT-ALIGNMENT",
+  "owner": "WORKFORCE",
+  "contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
+  "action": "DISTRIBUTE_ACTIVE_MANIFEST_THROUGH_AUTHORISED_GMAIL_AND_READ_BACK",
+  "routes": [
+    "GITHUB_MANIFEST_LOADER",
+    "GMAIL_MANIFEST_DISTRIBUTION"
+  ],
+  "gmail_message_id": "19fbb0ce6ae8e1ae",
+  "distribution_result": "VERIFIED",
+  "readback_result": "VERIFIED",
+  "boundary_state": "PARTIALLY_RESOLVED",
+  "unresolved_scope": "ALREADY_OPEN_NON_POLLING_CHATS_WITHOUT_AUTHORISED_MESSAGE_BRIDGE",
+  "verified_at": "2026-08-01T04:12:00+02:00",
+  "truth_boundary": "Distribution is proven, but a chat is aligned only when it loads the manifest or receives the doctrine through an authorised live bridge."
+}
