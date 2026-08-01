@@ -18,58 +18,34 @@ permissions:
   id-token: write
 
 env:
-  GCP_REGION: ${{ vars.GCP_REGION || 'africa-south1' }}
+  GCP_PROJECT_ID: sov-hybrid-suite
+  GCP_REGION: africa-south1
+  GCP_WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  GCP_SERVICE_ACCOUNT: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
 
 jobs:
-  preflight:
-    runs-on: ubuntu-latest
-    outputs:
-      ready: ${{ steps.check.outputs.ready }}
-    steps:
-      - id: check
-        shell: bash
-        env:
-          PROJECT_ID_PRESENT: ${{ vars.GCP_PROJECT_ID != '' }}
-          WIF_PROVIDER_PRESENT: ${{ vars.GCP_WIF_PROVIDER != '' }}
-          SERVICE_ACCOUNT_PRESENT: ${{ vars.GCP_SERVICE_ACCOUNT != '' }}
-        run: |
-          python - <<'PY'
-          import json, os
-          state={
-            'GCP_PROJECT_ID_present': os.environ['PROJECT_ID_PRESENT'].lower()=='true',
-            'GCP_WIF_PROVIDER_present': os.environ['WIF_PROVIDER_PRESENT'].lower()=='true',
-            'GCP_SERVICE_ACCOUNT_present': os.environ['SERVICE_ACCOUNT_PRESENT'].lower()=='true',
-          }
-          state['ready']=all(state.values())
-          print(json.dumps(state,indent=2))
-          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as f:
-            f.write('ready='+('true' if state['ready'] else 'false')+'\n')
-          open('wif-preflight.json','w',encoding='utf-8').write(json.dumps(state,indent=2))
-          PY
-      - uses: actions/upload-artifact@v4
-        with:
-          name: evidenceops-wif-preflight
-          path: wif-preflight.json
-
   inventory:
-    needs: preflight
     runs-on: ubuntu-latest
-    if: needs.preflight.outputs.ready == 'true'
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - id: auth
-        uses: google-github-actions/auth@v2
+        uses: google-github-actions/auth@v3
         with:
-          workload_identity_provider: ${{ vars.GCP_WIF_PROVIDER }}
-          service_account: ${{ vars.GCP_SERVICE_ACCOUNT }}
+          project_id: ${{ env.GCP_PROJECT_ID }}
+          workload_identity_provider: ${{ env.GCP_WIF_PROVIDER }}
+          service_account: ${{ env.GCP_SERVICE_ACCOUNT }}
       - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.GCP_PROJECT_ID }}
       - name: Inventory existing infrastructure
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p inventory
-          PROJECT='${{ vars.GCP_PROJECT_ID }}'
+          PROJECT="$GCP_PROJECT_ID"
           REGION="$GCP_REGION"
+          gcloud auth list --filter=status:ACTIVE --format=json > inventory/active-account.json
           gcloud projects describe "$PROJECT" --format=json > inventory/project.json
           gcloud services list --enabled --project="$PROJECT" --format=json > inventory/enabled-services.json
           gcloud artifacts repositories list --project="$PROJECT" --location="$REGION" --format=json > inventory/artifact-repositories.json
@@ -95,3 +71,4 @@ jobs:
         with:
           name: evidenceops-infrastructure-inventory
           path: inventory
+          retention-days: 30
