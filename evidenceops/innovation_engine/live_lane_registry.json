@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.16.2",
-  "updated_at": "2026-08-01T09:12:15+02:00",
+  "registry_version": "1.17.0",
+  "updated_at": "2026-08-01T09:20:00+02:00",
   "proof_note": "Public-safe registry. No live provider, private file, folder, document, message, credential or canonical identifier is persisted. States reflect independently verified evidence only.",
   "priority_model": {
     "scale": "0-100",
@@ -31,7 +31,10 @@
     "provenance_passport_health_run_id": "30689181562",
     "provenance_passport_health_sha256": "e55ed32742961ee8eae85df6b4e050f835700800bab24b2a47eda95fe3b4344a",
     "provenance_passport_scheduled_persistence": "NOT_YET_VERIFIED",
+    "provenance_passport_automation_supplementary_drill": "PASS_NOT_SCHEDULED_PERSISTENCE",
     "innovation_engine_backup_restore": "LOCAL_DRILL_PASS_3_OF_3; CI_AND_LEAK_GUARD_PASS; MERGED",
+    "drive_ledger_snapshot": "NEW_OFF_REPOSITORY_SNAPSHOT_OBSERVED; PRODUCTION_RESTORE_NOT_PROVEN",
+    "cloudops_recent_modification_review": "NO_FRESH_2026_08_01_LANE_SPECIFIC_AUTHORITY_OR_RUNTIME_PROOF",
     "sovereign_runtime_current_private_cloud_run": "NOT_VERIFIED",
     "sovereign_runtime_direct_canonical_write_through": "NOT_VERIFIED",
     "google_cloud_wif": "BLOCKED_OR_UNVERIFIED",
@@ -40,7 +43,9 @@
     "revenue_external_release_approval": "NOT_GRANTED",
     "ipep_bible_access": "VERIFIED_READ_WRITE_READBACK",
     "ipep_bible_review_015_readback": "VERIFIED_EXACT_HEADING",
-    "ipep_bible_review_015_note_sha256": "17bb7fd8624a26cc18bd5e6d1c6e9705e01396035dbf5698e2cdc5800856ae60"
+    "ipep_bible_review_015_note_sha256": "17bb7fd8624a26cc18bd5e6d1c6e9705e01396035dbf5698e2cdc5800856ae60",
+    "ipep_bible_lane_watch_015a_readback": "VERIFIED_EXACT_HEADING_AND_NOTE_HASH",
+    "ipep_bible_lane_watch_015a_note_sha256": "0c303df53eea989002d1d9d0431bdef4c46f130d2b06b95447f20ccd6d16bb45"
   },
   "lanes": [
     {
@@ -55,7 +60,7 @@
         "reuse_value": 20,
         "risk_exposure": 20
       },
-      "proof_state": "VALIDATOR_AND_CLI_COMMITTED; SIX_LOCAL_TESTS_PASS; TWO_AUTHORISED_CORPORA_AND_16_PROOFS_VERIFIED; EXTERNAL_PUSH_CI_PASS; CONTROLLED_TAMPER_DETECTION_AND_RECOVERY_PASS; DURABLE_HEALTH_READBACK",
+      "proof_state": "VALIDATOR_AND_CLI_COMMITTED; SIX_LOCAL_TESTS_PASS; TWO_AUTHORISED_CORPORA_AND_16_PROOFS_VERIFIED; EXTERNAL_PUSH_CI_PASS; CONTROLLED_TAMPER_DETECTION_AND_RECOVERY_PASS; DURABLE_HEALTH_READBACK; AUTOMATION_SIDE_SUPPLEMENTARY_DRILL_PASS",
       "proof_receipt": {
         "workflow_run_id": "30689181562",
         "workflow_event": "push",
@@ -64,8 +69,15 @@
         "health_sha256": "e55ed32742961ee8eae85df6b4e050f835700800bab24b2a47eda95fe3b4344a",
         "first_success_receipt_sha256": "bab3d4211e26e1584a139b0f6a5338a293573fa6db79d95cfd7671ed34b9e63a"
       },
-      "remaining_gate": "Independent scheduled health cycles with durable readback; push-triggered success does not establish persistence.",
-      "next_action": "Allow the six-hour schedule to execute and read back later independent successful scheduled cycles before considering SAPLING."
+      "lane_watch_reconciliation": {
+        "receipt_id": "LANE-WATCH-RECEIPT-015A",
+        "receipt_sha256": "5706d62c6d2bcdf5e2528fc2a7be26feaf43a697bee290b4012416aa363d6f37",
+        "receipt_commit": "d11f8d00dad7b231fc81c8697e83783fce598191",
+        "supersedes": "LANE-WATCH-RECEIPT-015",
+        "maturity_correction": "SPROUT_PLUS_OVERCLAIM_SUPERSEDED; REMAINS_SPROUT"
+      },
+      "remaining_gate": "Independent schedule-triggered health cycles with durable readback; push-triggered success and automation-side checks do not establish scheduled persistence.",
+      "next_action": "Allow the six-hour repository schedule to execute and read back later independent successful scheduled cycles before considering SAPLING."
     },
     {
       "lane_id": "LANE-INNOVATION-ENGINE",
@@ -168,7 +180,7 @@
         "reuse_value": 18,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; KIMMIE_SEED_MATURITY_REVIEW_015_APPENDED; EXACT_HEADING_READBACK_VERIFIED",
+      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; KIMMIE_SEED_MATURITY_REVIEW_015_APPENDED; LANE_WATCH_RECEIPT_015_AND_CORRECTIVE_015A_APPENDED; CORRECTIVE_EXACT_HEADING_AND_NOTE_HASH_READBACK_VERIFIED",
       "next_action": "Continue append-only receipt capture on the next material proof or lane transition."
     },
     {
@@ -209,10 +221,11 @@
     }
   ],
   "latest_receipt": {
-    "receipt_id": "LANE-WATCH-RECEIPT-014",
-    "receipt_sha256": "b7c79b89b842f177a6d40f211123bc04617ee8bcf9b10ab363e187a82dc180c5",
-    "receipt_commit": "dcc01d4f68dc2952abebd9323e9814cd2fe3b5ea",
-    "bible_readback": "PASSED_EXACT_HEADING"
+    "receipt_id": "LANE-WATCH-RECEIPT-015A",
+    "receipt_sha256": "5706d62c6d2bcdf5e2528fc2a7be26feaf43a697bee290b4012416aa363d6f37",
+    "receipt_commit": "d11f8d00dad7b231fc81c8697e83783fce598191",
+    "bible_readback": "PASSED_EXACT_HEADING_AND_NOTE_HASH",
+    "supersedes": "LANE-WATCH-RECEIPT-015"
   },
   "latest_kimmie_review": {
     "checkpoint_id": "KSA-20260801-015",
@@ -222,5 +235,5 @@
     "bible_readback": "PASSED_EXACT_HEADING",
     "notification": "SUPPRESS"
   },
-  "truth_boundary": "SAPLING is bounded to verified repository and Google Drive provider monitoring, maintenance and recovery. Provenance Passport remains SPROUT until scheduled persistence is independently read back. No Google Cloud WIF, Secret Manager binding, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
+  "truth_boundary": "Connector Foundry and Kimmie SAPLING remain bounded to verified repository and Google Drive provider monitoring, maintenance and recovery. Provenance Passport remains SPROUT despite push-triggered external CI and tamper/recovery proof until schedule-triggered persistence is independently read back. No Google Cloud WIF, Secret Manager binding, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
 }
