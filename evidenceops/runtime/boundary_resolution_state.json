@@ -1,0 +1,47 @@
+{
+  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v1",
+  "owner": "Kim Kagiso Mosiane",
+  "status": "ACTIVE",
+  "boundaries": [
+    {
+      "boundary_id": "BND-CHAT-ALIGNMENT",
+      "description": "Already-running chats may not be aligned because they do not load or poll the active sovereign-translator manifest.",
+      "owner": "WORKFORCE",
+      "state": "ACTIVE_REPAIR",
+      "resolution_requirements": [
+        "DISCOVER_AUTHORISED_CHAT_BRIDGES",
+        "DISCOVER_CHAT_BOOTSTRAP_LOADERS",
+        "DISCOVER_POLLING_OR_MESSAGE_ROUTES",
+        "INSTALL_OR_BIND_WHERE_AUTHORISED",
+        "VERIFY_ALIGNMENT_RECEIPT"
+      ],
+      "report_only_terminal_allowed": false
+    },
+    {
+      "boundary_id": "BND-KIM-DATAVERSE",
+      "description": "Canonical Kim Dataverse propagation is unverified.",
+      "owner": "WORKFORCE",
+      "state": "ACTIVE_REPAIR",
+      "resolution_requirements": [
+        "DISCOVER_DATAVERSE_ENVIRONMENT",
+        "VERIFY_AUTHORITY",
+        "VERIFY_SCHEMA",
+        "VERIFY_READ",
+        "VERIFY_WRITE",
+        "VERIFY_READBACK",
+        "ISSUE_RECEIPT",
+        "RECONCILE_LOCAL_MIRROR"
+      ],
+      "report_only_terminal_allowed": false
+    }
+  ],
+  "trigger_policy": {
+    "turn_trigger": true,
+    "hourly_trigger": true,
+    "capability_trigger": true,
+    "repair_trigger": true,
+    "retry_limit": 3,
+    "backoff": "EXPONENTIAL",
+    "auto_close_only_after_verified_receipt": true
+  }
+}
