@@ -1,0 +1,13 @@
+{
+  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v1",
+  "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
+  "owner": "Kim Kagiso Mosiane",
+  "status": "CONTROLLING",
+  "load_mode": "IN_PLACE",
+  "required_resources": [],
+  "per_input_requirement": "LOAD_OR_VERIFY_ACTIVE_MANIFEST_BEFORE_SUBSTANTIVE_WORK",
+  "mission_delta_owner": "WORKFORCE",
+  "report_only_terminal_allowed": false,
+  "canonical_intelligence_target": "KIM_DATAVERSE",
+  "version": 1
+}
