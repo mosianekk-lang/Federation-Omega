@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.10.4",
-  "updated_at": "2026-08-01T10:13:24+02:00",
+  "registry_version": "1.10.5",
+  "updated_at": "2026-08-01T13:16:20+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SAPLING",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
@@ -8,17 +8,17 @@
   "maintenance_owner": "mosianekk-lang",
   "latest_assessment": {
     "path": "kimmie_seed/monitoring/latest_assessment.json",
-    "assessment_sha256": "b9bc68fe4f6d2554839ace333522ef1770103f5512f5f394fe5d6df1f7252dd7",
-    "workflow_readback_commit": "56a65419508d46720a8cf66cf80bca2021d9c76f",
+    "assessment_sha256": "2b95b4dc0df46cbad82fe05b35c2237988e7b3cc95530e80bcad56b64149d14b",
+    "workflow_readback_commit": "d23f0a7f68e43daeaba7829bd8eedf342257a687",
     "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-014.json",
     "checkpoint_sha256": "aa260d75a3eab96da60c3bb3e71c49efc8078f834c144856e3a35ce20df326b1",
     "root_promotion": "SPROUT_TO_SAPLING",
     "qualifying_notification_event": true
   },
   "latest_review": {
-    "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-016.json",
-    "checkpoint_sha256": "603c8084e90391ab6c346028f72ba5335ea7fa82115dd755d635e81406bf1c44",
-    "checkpoint_commit": "495470a4d22d710113aefe42479049bcc678a4f9",
+    "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-017.json",
+    "checkpoint_sha256": "8abafdd4c9048e2f54a53398728615c159a760216a7afb421550c7f94249470f",
+    "checkpoint_commit": "ed939b928aea355d1eddb353b43301b5f88f5953",
     "root_promotion": "NONE",
     "material_change": false,
     "qualifying_notification_event": false,
@@ -29,7 +29,7 @@
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
     "workflow_execution_readback": "PASSED_AT_SAPLING",
-    "workflow_readback_commit": "56a65419508d46720a8cf66cf80bca2021d9c76f",
+    "workflow_readback_commit": "d23f0a7f68e43daeaba7829bd8eedf342257a687",
     "persistent_monitoring": "VERIFIED_TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES",
     "provider_monitor_cycles": [
       {
@@ -54,7 +54,7 @@
     "next_candidate_stage": "MATURE",
     "requirements": {
       "sustained_production_use": "NOT_YET_VERIFIED",
-      "resilience_over_time": "NOT_YET_VERIFIED",
+      "resilience_over_time": "NOT_YET_VERIFIED_FOR_KIMMIE_ROOT",
       "measurable_operational_value": "NOT_YET_VERIFIED",
       "complete_operational_ownership": "NOT_YET_VERIFIED"
     },
@@ -88,7 +88,7 @@
         "persistent_provider_monitoring": "PASSED_TWO_INDEPENDENT_SCHEDULED_CYCLES"
       },
       "monitoring_receipt": {
-        "prior_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168eb92f243f70cb7",
+        "prior_payload_sha256": "f822a1f588fa269c2c0eb1a9138788148f99030d6db0695168f70cb7",
         "later_payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
         "exact_readback": "PASSED_BOTH_CYCLES",
         "parent_confinement": "PASSED_LATER_CYCLE",
@@ -179,10 +179,10 @@
     }
   ],
   "ipep_bible": {
-    "receipt": "KIMMIE SEED MATURITY REVIEW 016",
-    "revision_id": "AIroW37nwj8pHfZzhr0wzkmzo4hQrLzRuYBFpJh9lCSa3SvshOuVI7IFmsWjz-zgwStMl1Xbkz_A4OuCI11sUMxSt80FRo-ekCxs68SFSP0",
+    "receipt": "KIMMIE SEED MATURITY REVIEW 017",
+    "revision_id": "AIroW35ieAl7MDkIdAHFG7yMfT6FG35KK7T5C2rb9MA2Pc5N-rMMboMRZ78Z6Rgomn9pCKjxmpNp2kvdM1gyGY0iN467cMC_1ptl5oEPV88",
     "readback": "PASSED_EXACT_HEADING",
-    "evidence_note_sha256": "0608d9931bdbff037f1b01c0272ee89b511675c2f18625409d2c806de13f73e7"
+    "evidence_note_sha256": "2472b1bf67d43882d3dee0e5e9a850b19d16a6d39770792849f73049db6aaade"
   },
   "truth_boundary": "SAPLING is bounded to verified GitHub and Google Drive provider monitoring, maintenance and recovery. Provenance Passport remains SPROUT until scheduled persistence is independently read back. No Google Cloud WIF, Secret Manager, private authenticated Cloud Run health, live transcription readiness or external commercial approval is inferred."
 }
