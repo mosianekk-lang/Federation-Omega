@@ -2,44 +2,44 @@
   "advanced_count": 5,
   "advances": [
     {
-      "from": "PILOT_ACTIVE",
+      "from": "PRODUCT_READY",
       "id": "E2K-0010",
       "name": "Expert Genome Agent Foundry",
       "priority": 92.1,
-      "to": "PRODUCT_READY"
+      "to": "COMMERCIAL_CANDIDATE"
     },
     {
-      "from": "OFFER_READY",
+      "from": "SOLD",
       "id": "E2K-0006",
       "name": "Proof-Carrying Decision Engine",
       "priority": 91.6,
+      "to": "DELIVERED"
+    },
+    {
+      "from": "OFFER_READY",
+      "id": "E2K-0003",
+      "name": "AI-Agent University Operating System",
+      "priority": 90.65,
       "to": "SOLD"
     },
     {
       "from": "COMMERCIAL_CANDIDATE",
-      "id": "E2K-0003",
-      "name": "AI-Agent University Operating System",
-      "priority": 90.65,
-      "to": "OFFER_READY"
-    },
-    {
-      "from": "RECURRING",
-      "id": "E2K-0004",
-      "name": "Founder Intelligence Preservation",
-      "priority": 90.3,
-      "to": "LICENSED"
-    },
-    {
-      "from": "PRODUCT_READY",
       "id": "E2K-0002",
       "name": "Corruption Oxygen Index",
       "priority": 89.5,
-      "to": "COMMERCIAL_CANDIDATE"
+      "to": "OFFER_READY"
+    },
+    {
+      "from": "PROTOTYPE_BUILT",
+      "id": "E2K-0009",
+      "name": "Kim Value Algorithm",
+      "priority": 88.2,
+      "to": "BENCHMARKED"
     }
   ],
-  "blocked_count": 1,
-  "eligible_candidates": 9,
+  "blocked_count": 2,
+  "eligible_candidates": 8,
   "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-08-01T15:15:33.161810+00:00"
+  "timestamp": "2026-08-01T17:11:55.989336+00:00"
 }
