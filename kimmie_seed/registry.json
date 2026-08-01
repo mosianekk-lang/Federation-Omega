@@ -1,15 +1,15 @@
 {
-  "registry_version": "1.9.4",
-  "updated_at": "2026-08-01T07:22:40+02:00",
+  "registry_version": "1.9.5",
+  "updated_at": "2026-08-01T07:29:10+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SPROUT",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
   "identity_drift": "NONE_DETECTED",
   "maintenance_owner": "mosianekk-lang",
   "latest_assessment": {
-    "path": "kimmie_seed/checkpoints/KSA-20260801-012.json",
-    "assessment_sha256": "818c12007bdc5ce37d75f251cbb0ec3fb537840fc0ac5f3ae0f158ef04ce26a3",
-    "checkpoint_sha256": "159cc14ea67ced38cb6272854ab28decf6367f822f0ce70c3b1f59896f2f7a85",
+    "path": "kimmie_seed/checkpoints/KSA-20260801-012A.json",
+    "assessment_sha256": "c100fe1a54fa04f73fe7049fc41d07dcf9441d716894974c48a1f09a3694cfc2",
+    "checkpoint_sha256": "53a426292452bff5ae3eca7d83b1698763c125dd2d21db3c79c8f63230a49591",
     "root_promotion": "NO_PROMOTION",
     "qualifying_notification_event": false
   },
@@ -17,8 +17,8 @@
     "external_scheduler": "GitHub Actions",
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
-    "workflow_execution_readback": "PASSED_AFTER_SCHEMA_REPAIR",
-    "persistent_monitoring": "PARTIAL_ROOT_ONE_POST_REPAIR_CYCLE_AND_PROVIDER_CANARY_CONTINUITY",
+    "workflow_execution_readback": "PASSED_AFTER_PROVIDER_CANARY_REGISTRY_RECONCILIATION",
+    "persistent_monitoring": "PARTIAL_ONE_SCHEDULED_POST_REPAIR_CYCLE_PLUS_CHANGE_TRIGGERED_REASSESSMENT_AND_PROVIDER_CANARY",
     "provider_monitor_canary": {
       "provider": "google_drive",
       "state": "PASSED",
@@ -35,14 +35,14 @@
     "requirements": {
       "repeated_successful_maturity_cycles": "VERIFIED",
       "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
-      "persistent_monitoring": "PARTIAL_ROOT_ONE_POST_REPAIR_CYCLE_AND_PROVIDER_CANARY_CONTINUITY",
+      "persistent_monitoring": "PARTIAL_ONE_SCHEDULED_POST_REPAIR_CYCLE_PLUS_CHANGE_TRIGGERED_REASSESSMENT_AND_PROVIDER_CANARY",
       "maintenance_evidence": "VERIFIED",
       "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY_AND_LOCAL_REGISTRY_DRILL"
     },
     "sapling_requirements": {
       "repeated_successful_maturity_cycles": "VERIFIED",
       "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
-      "persistent_monitoring": "PARTIAL_ROOT_ONE_POST_REPAIR_CYCLE_AND_PROVIDER_CANARY_CONTINUITY",
+      "persistent_monitoring": "PARTIAL_ONE_SCHEDULED_POST_REPAIR_CYCLE_PLUS_CHANGE_TRIGGERED_REASSESSMENT_AND_PROVIDER_CANARY",
       "maintenance_evidence": "VERIFIED",
       "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY_AND_LOCAL_REGISTRY_DRILL"
     },
@@ -151,10 +151,10 @@
     }
   ],
   "ipep_bible": {
-    "receipt": "KIMMIE SEED MATURITY REVIEW 012",
-    "revision_id": "AIroW35ci_LwUcNZxj9cprClM_dkkcMFW2JWnBbO7o4qZt1czCO8p3D28LxqiNZ5NPOGOrvluMpLkcW7x-UOg81eJKNF8B8K_G-3asGf8ek",
+    "receipt": "KIMMIE SEED REGISTRY RECONCILIATION 012A",
+    "revision_id": "AIroW34pIHOJbDlncEnnpBFZKy1iq-2iI83e99Rtpuk820NnBEtQTaOg4LjGKITsn9QCSyPNFpBG8Nq1E4rrIvHKbnP_SZF1ptk9GtHuo5I",
     "readback": "PASSED",
-    "evidence_note_sha256": "726cc08eddb44ace5f636d5758609cc09381c90b18f7e4f4e6cbe83e3ce58b30"
+    "evidence_note_sha256": "e7bb98ccc3b7b565c27375f2350149544562144e57ebb8ffb9a480f8d04223ce"
   },
-  "lesson": "Provider-access canaries and root maturity workflow cycles are separate proof chains. A fresh reversible provider canary verifies current access and maintenance continuity, but SAPLING still requires repeated durable root and provider monitoring cycles without schema drift."
+  "lesson": "Keep workflow-generated maturity output canonical. Provider-monitor canaries and change-triggered reassessments prove access and contract continuity, but SAPLING still requires repeated durable scheduled root and provider monitoring cycles without schema drift."
 }
