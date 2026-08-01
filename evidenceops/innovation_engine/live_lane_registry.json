@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.16.0",
-  "updated_at": "2026-08-01T08:28:00+02:00",
+  "registry_version": "1.16.1",
+  "updated_at": "2026-08-01T08:33:00+02:00",
   "proof_note": "Public-safe registry. No live provider, private file, folder, document, message, credential or canonical identifier is persisted. States reflect independently verified evidence only.",
   "priority_model": {
     "scale": "0-100",
@@ -22,8 +22,8 @@
     "connector_foundry_persistent_multi_cycle_monitoring": "PASSED_TWO_INDEPENDENT_SCHEDULED_CYCLES",
     "connector_foundry_later_cycle_payload_sha256": "535202392eb7a373afaa3ec04b105f2129c3227c168a10ebd8714776dec67e31",
     "kimmie_maturity_workflow": "PASS_AT_SAPLING",
-    "kimmie_workflow_readback_commit": "e466890697aa4932cbcabb092349df73a3a61653",
-    "kimmie_assessment_sha256": "df23a59c43e3d8c190e2828de4b4b19e8065ad1f99d5cc226b4346ce1b5b0b8c",
+    "kimmie_workflow_readback_commit": "56a65419508d46720a8cf66cf80bca2021d9c76f",
+    "kimmie_assessment_sha256": "b9bc68fe4f6d2554839ace333522ef1770103f5512f5f394fe5d6df1f7252dd7",
     "kimmie_identity_drift": "NONE_DETECTED",
     "provenance_passport_multi_corpus": "TWO_AUTHORISED_CORPORA_AND_16_PROOFS_VERIFIED",
     "innovation_engine_backup_restore": "LOCAL_DRILL_PASS_3_OF_3; CI_AND_LEAK_GUARD_PASS; MERGED",
