@@ -84,12 +84,7 @@ class StateStore:
 
 
 class NativeDataverseAdapter:
-    """Optional Microsoft Dataverse parity adapter.
-
-    The canonical current backend is declared by the active manifest. This
-    adapter is used only when a native Microsoft Dataverse URL and short-lived
-    access token are explicitly supplied to the runtime.
-    """
+    """Optional native Microsoft Dataverse parity adapter."""
 
     def __init__(self):
         self.base_url = os.getenv("KIM_DATAVERSE_URL", "").rstrip("/")
@@ -174,31 +169,58 @@ def load_manifest():
     return manifest
 
 
+def _fingerprint(value: str) -> str | None:
+    if not value:
+        return None
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()[:12]
+
+
 def canonical_backend_state(manifest: Dict[str, Any]) -> Dict[str, Any]:
+    """Resolve private backend references without returning their raw values."""
+
     backend = manifest.get("canonical_backend") or {}
-    required = {
-        "type",
-        "spreadsheet_id",
-        "bridge_record",
-        "status",
-        "receipt_id",
-    }
-    missing = sorted(required - set(backend))
-    verified = (
-        not missing
-        and backend.get("status") == "WRITE_AND_READBACK_VERIFIED"
+    identifier_ref = backend.get("identifier_ref", "")
+    receipt_ref = backend.get("receipt_ref", "")
+    status_ref = backend.get("status_ref", "")
+
+    identifier = os.getenv(identifier_ref, "") if identifier_ref else ""
+    receipt = os.getenv(receipt_ref, "") if receipt_ref else ""
+    status = os.getenv(status_ref, "") if status_ref else ""
+    expected_status = backend.get(
+        "private_control_plane_status", "WRITE_AND_READBACK_VERIFIED"
     )
+
+    missing_references = []
+    if not identifier:
+        missing_references.append(identifier_ref or "IDENTIFIER_REF_MISSING")
+    if not receipt:
+        missing_references.append(receipt_ref or "RECEIPT_REF_MISSING")
+    if not status:
+        missing_references.append(status_ref or "STATUS_REF_MISSING")
+
+    configured = not missing_references
+    verified = configured and status == expected_status
+
     return {
-        **backend,
-        "configured": bool(backend),
+        "type": backend.get("type"),
+        "bridge_record": backend.get("bridge_record"),
+        "status": status or backend.get(
+            "public_runtime_default", "PRIVATE_REFERENCE_UNRESOLVED"
+        ),
+        "configured": configured,
         "verified": verified,
-        "missing_fields": missing,
+        "identifier_present": bool(identifier),
+        "receipt_present": bool(receipt),
+        "identifier_fingerprint": _fingerprint(identifier),
+        "receipt_fingerprint": _fingerprint(receipt),
+        "missing_references": missing_references,
+        "private_values_echoed": False,
     }
 
 
 store = StateStore(STATE_DB)
 native_dataverse = NativeDataverseAdapter()
-app = FastAPI(title="EvidenceOps Sovereign Runtime", version="1.1.0")
+app = FastAPI(title="EvidenceOps Sovereign Runtime", version="1.2.0")
 
 
 @app.get("/health")
@@ -281,11 +303,10 @@ def missions(req: MissionRequest):
                 "delta_id": f"DELTA-{uuid.uuid4().hex[:12]}",
                 "mission_id": req.mission_id,
                 "description": (
-                    "The canonical in-place Kim Dataverse bridge is verified, "
-                    "but this runtime instance has not yet proved direct "
-                    "mission write-through and readback."
+                    "Private canonical context is verified for this runtime, "
+                    "but direct mission write-through and readback are not yet proven."
                     if backend["verified"]
-                    else "Canonical Kim Dataverse availability is not verified."
+                    else "Private canonical backend references are unresolved in this runtime."
                 ),
                 "owner": "WORKFORCE",
                 "status": "ACTIVE_REPAIR",
