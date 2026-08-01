@@ -2,44 +2,44 @@
   "advanced_count": 5,
   "advances": [
     {
-      "from": "SOLD",
+      "from": "DELIVERED",
       "id": "E2K-0001",
       "name": "Trusted Institution Node",
       "priority": 93.7,
-      "to": "DELIVERED"
+      "to": "RECURRING"
     },
     {
-      "from": "GENOME_READY",
+      "from": "PROTOTYPE_CANDIDATE",
       "id": "E2K-0010",
       "name": "Expert Genome Agent Foundry",
       "priority": 92.1,
-      "to": "PROTOTYPE_CANDIDATE"
+      "to": "PROTOTYPE_BUILT"
     },
     {
-      "from": "BENCHMARKED",
+      "from": "PILOT_CANDIDATE",
       "id": "E2K-0006",
       "name": "Proof-Carrying Decision Engine",
       "priority": 91.6,
-      "to": "PILOT_CANDIDATE"
+      "to": "PILOT_ACTIVE"
     },
     {
-      "from": "PROTOTYPE_BUILT",
+      "from": "BENCHMARKED",
       "id": "E2K-0003",
       "name": "AI-Agent University Operating System",
       "priority": 90.65,
-      "to": "BENCHMARKED"
+      "to": "PILOT_CANDIDATE"
     },
     {
-      "from": "PRODUCT_READY",
+      "from": "COMMERCIAL_CANDIDATE",
       "id": "E2K-0004",
       "name": "Founder Intelligence Preservation",
       "priority": 90.3,
-      "to": "COMMERCIAL_CANDIDATE"
+      "to": "OFFER_READY"
     }
   ],
   "blocked_count": 0,
   "eligible_candidates": 10,
   "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-08-01T03:46:39.285883+00:00"
+  "timestamp": "2026-08-01T06:39:06.134172+00:00"
 }
