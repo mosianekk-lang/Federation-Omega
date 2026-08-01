@@ -1,14 +1,16 @@
 {
-  "registry_version": "1.10.1",
-  "updated_at": "2026-08-01T08:26:00+02:00",
+  "registry_version": "1.10.2",
+  "updated_at": "2026-08-01T08:31:00+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SAPLING",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
   "identity_drift": "NONE_DETECTED",
   "maintenance_owner": "mosianekk-lang",
   "latest_assessment": {
-    "path": "kimmie_seed/checkpoints/KSA-20260801-014.json",
-    "assessment_sha256": "df23a59c43e3d8c190e2828de4b4b19e8065ad1f99d5cc226b4346ce1b5b0b8c",
+    "path": "kimmie_seed/monitoring/latest_assessment.json",
+    "assessment_sha256": "b9bc68fe4f6d2554839ace333522ef1770103f5512f5f394fe5d6df1f7252dd7",
+    "workflow_readback_commit": "56a65419508d46720a8cf66cf80bca2021d9c76f",
+    "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260801-014.json",
     "checkpoint_sha256": "aa260d75a3eab96da60c3bb3e71c49efc8078f834c144856e3a35ce20df326b1",
     "root_promotion": "SPROUT_TO_SAPLING",
     "qualifying_notification_event": true
@@ -18,7 +20,7 @@
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
     "workflow_execution_readback": "PASSED_AT_SAPLING",
-    "workflow_readback_commit": "e466890697aa4932cbcabb092349df73a3a61653",
+    "workflow_readback_commit": "56a65419508d46720a8cf66cf80bca2021d9c76f",
     "persistent_monitoring": "VERIFIED_TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES",
     "provider_monitor_cycles": [
       {
