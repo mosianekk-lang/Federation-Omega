@@ -1,0 +1,125 @@
+{
+  "receipt_id": "LANE-WATCH-RECEIPT-024",
+  "recorded_at": "2026-08-01T18:06:52+02:00",
+  "status": "VERIFIED_BLOCKER_REFINEMENT_AND_SAFE_RECONCILIATION",
+  "material_change": {
+    "lane_id": "LANE-PLATFORM-SETUP",
+    "change_type": "SOURCE_HARDENED_PROVIDER_EXECUTION_CARRIER_WITH_EXACT_FAIL_CLOSED_BOUNDARY",
+    "pull_request": 50,
+    "pull_request_title": "EvidenceOps infrastructure inventory carrier",
+    "pull_request_state": "OPEN_NO_MERGE",
+    "current_head_sha": "41c6fbdad7833f8f04e27cb827e1980c96a1d5d8",
+    "mechanically_mergeable": true,
+    "release_authority_granted": false
+  },
+  "verified_checks": {
+    "public_repository_leak_guard": {
+      "workflow_run_id": "30707335822",
+      "conclusion": "SUCCESS"
+    },
+    "superior_logic_ci": {
+      "workflow_run_id": "30707335851",
+      "conclusion": "SUCCESS"
+    },
+    "infrastructure_inventory": {
+      "workflow_run_id": "30707335820",
+      "conclusion": "FAILURE_EXPECTED_FAIL_CLOSED",
+      "failed_before_google_authentication": true,
+      "cloud_inventory_commands_executed": false,
+      "cloud_mutation_executed": false,
+      "inventory_artifact_created": false,
+      "missing_repository_variables": [
+        "GCP_PROJECT_ID",
+        "GCP_REGION",
+        "GCP_WIF_PROVIDER",
+        "GCP_SERVICE_ACCOUNT"
+      ]
+    },
+    "pr50_readiness_receipt": {
+      "receipt_id": "PR50-NO-MERGE-2026-08-01",
+      "evaluated_head": "af88f8553a4e28c89045318bd50cb7e2eaefb9c0",
+      "decision": "NO_MERGE",
+      "maturity": "SOURCE_HARDENED_CI_PASS_LEAK_GUARD_PASS_PROVIDER_UNVERIFIED_NO_MERGE"
+    }
+  },
+  "dependency_review": {
+    "github_read_write": "VERIFIED",
+    "github_pr50_source_carrier": "VERIFIED_CURRENT_HEAD",
+    "google_drive_bible_access": "VERIFIED",
+    "google_drive_fresh_ledger_snapshot": "EvidenceOps Ledger Snapshot 20260801-174238",
+    "gmail_new_credential_or_approval": "NONE_FOUND",
+    "google_cloud_wif_provider": "UNVERIFIED",
+    "repository_variable_binding": "NOT_APPLIED",
+    "secret_manager_binding": "UNVERIFIED",
+    "cloud_kms_key_binding": "UNVERIFIED",
+    "private_authenticated_cloud_run_health": "NOT_FRESHLY_VERIFIED",
+    "private_postgres_and_canonical_outbox": "NOT_VERIFIED",
+    "live_model_credential": "UNVERIFIED_AS_MANAGED_BINDING",
+    "live_transcription_binding": "NOT_FRESHLY_VERIFIED",
+    "revenue_external_release_approval": "NOT_GRANTED",
+    "provenance_second_schedule_cycle": "ABSENT",
+    "virtual_org_cycle": "FOUNDER_REVIEW_STILL_REQUIRED"
+  },
+  "execution_decision": {
+    "highest_scored_lane": "LANE-PROVENANCE-PASSPORT",
+    "highest_scored_lane_executable": false,
+    "highest_materially_changed_lane": "LANE-PLATFORM-SETUP",
+    "materially_changed_lane_executable": false,
+    "selected_safe_lane": "LANE-IPEP-BIBLE",
+    "selected_action": "RECONCILE_PR50_FAIL_CLOSED_PROVIDER_BOUNDARY_AND_PRESERVE_NO_MERGE_AUTHORITY_GATE",
+    "result": "COMPLETED"
+  },
+  "recalculated_priority": [
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "priority": 100
+    },
+    {
+      "lane_id": "LANE-AI-ICT-MODEL-RUNTIME",
+      "priority": 99
+    },
+    {
+      "lane_id": "LANE-IPEP-BIBLE",
+      "priority": 98
+    },
+    {
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "priority": 97
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "priority": 96
+    },
+    {
+      "lane_id": "LANE-KIMMIE-SEED",
+      "priority": 95
+    },
+    {
+      "lane_id": "LANE-SOVEREIGN-RUNTIME",
+      "priority": 94
+    },
+    {
+      "lane_id": "LANE-PLATFORM-SETUP",
+      "priority": 93
+    },
+    {
+      "lane_id": "LANE-REVENUE-OFFER-FACTORY",
+      "priority": 92
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "priority": 80
+    }
+  ],
+  "safe_release_rule": {
+    "merge_prohibited_until": [
+      "FEDOMEGA-WIF-CLOUD-VERIFIED receipt exists",
+      "repository variables are populated from provider-verified values",
+      "infrastructure inventory authenticates and succeeds",
+      "machine-readable inventory artifact is independently read back"
+    ],
+    "cloud_mutation_requires_explicit_approval": "APPLY_FEDOMEGA_WIF_LEAST_PRIVILEGE"
+  },
+  "truth_boundary": "This receipt verifies a source-hardened, non-destructive cloud inventory and deployment carrier and an exact fail-closed provider boundary. It does not verify a Google Cloud identity, WIF provider, repository-variable binding, Secret Manager or KMS binding, Cloud Run deployment, cloud inventory, usable managed model credential, current transcription binding, second Provenance Passport schedule cycle or external commercial approval. GitHub mechanical mergeability is not release authority.",
+  "receipt_sha256": "f7f4110e28ab152efe1ec000181fdc6b140deb25ec898ff0cf6b2c2ddd1a6879"
+}
