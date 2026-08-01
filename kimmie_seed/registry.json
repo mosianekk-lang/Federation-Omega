@@ -1,15 +1,15 @@
 {
-  "registry_version": "1.9.2",
-  "updated_at": "2026-08-01T06:03:29+02:00",
+  "registry_version": "1.9.3",
+  "updated_at": "2026-08-01T06:13:27+02:00",
   "seed_id": "KIMMIE-IPEP-001",
   "current_verified_stage": "SPROUT",
   "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
   "identity_drift": "NONE_DETECTED",
   "maintenance_owner": "mosianekk-lang",
   "latest_assessment": {
-    "path": "kimmie_seed/checkpoints/KSA-20260801-010.json",
-    "assessment_sha256": "8bf7ff65d1461f9c45730b8813290ef5e4dddf2df56f6e73e543891bf5e11db5",
-    "checkpoint_sha256": "f4444d78b8686e4a7f3d390fa159a92db1630ef37851bf9e9f7dca00d1b7a9c6",
+    "path": "kimmie_seed/checkpoints/KSA-20260801-011.json",
+    "assessment_sha256": "8648ef14b8c9f26645e97dcf6a3d3e220783649c4736d9f7bb47c25249834224",
+    "checkpoint_sha256": "895d4c1baae3a9cde578b72c96a8fe18ef6e30f764d81477e69f5532309d4345",
     "root_promotion": "NO_PROMOTION",
     "qualifying_notification_event": false
   },
@@ -17,8 +17,8 @@
     "external_scheduler": "GitHub Actions",
     "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
     "cadence": "every 6 hours",
-    "workflow_execution_readback": "FAILED_SCHEMA_DRIFT_DETECTED",
-    "persistent_monitoring": "PARTIAL",
+    "workflow_execution_readback": "PASSED_AFTER_SCHEMA_REPAIR",
+    "persistent_monitoring": "PARTIAL_ONE_POST_REPAIR_SUCCESSFUL_CYCLE",
     "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only"
   },
   "promotion_gate": {
@@ -26,14 +26,14 @@
     "requirements": {
       "repeated_successful_maturity_cycles": "VERIFIED",
       "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
-      "persistent_monitoring": "PARTIAL",
+      "persistent_monitoring": "PARTIAL_ONE_POST_REPAIR_SUCCESSFUL_CYCLE",
       "maintenance_evidence": "VERIFIED",
       "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY"
     },
     "sapling_requirements": {
       "repeated_successful_maturity_cycles": "VERIFIED",
       "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
-      "persistent_monitoring": "PARTIAL",
+      "persistent_monitoring": "PARTIAL_ONE_POST_REPAIR_SUCCESSFUL_CYCLE",
       "maintenance_evidence": "VERIFIED",
       "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY"
     },
@@ -48,9 +48,7 @@
       "nutrient_gap": "AUTHORISED_CORPUS_ACQUISITION_INGESTION_RIGHTS_AND_RECEIPT",
       "proof_gates": "NOT_PASSED",
       "tests": "NOT_RUN",
-      "deployment_surfaces": [
-        "GitHub registry"
-      ],
+      "deployment_surfaces": ["GitHub registry"],
       "monitoring": "CHECKPOINT_ONLY",
       "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED",
       "owner_decision_required": false
@@ -81,13 +79,8 @@
         "Tamper rejection",
         "Second create/write/readback/delete recovery canary"
       ],
-      "deployment_surfaces": [
-        "GitHub",
-        "Local runtime",
-        "Google Drive",
-        "IPEP Bible"
-      ],
-      "monitoring": "ACTIVE_ACCESS_AND_RECOVERY_VERIFIED; PERSISTENT_MONITOR_OPEN",
+      "deployment_surfaces": ["GitHub", "Local runtime", "Google Drive", "IPEP Bible"],
+      "monitoring": "ACTIVE_ACCESS_AND_RECOVERY_VERIFIED; ROOT_ASSESSOR_PASS_AFTER_REPAIR; PERSISTENT_PROVIDER_MONITOR_OPEN",
       "maintenance_owner": "mosianekk-lang",
       "owner_decision_required": false
     },
@@ -103,16 +96,9 @@
         "persistent_monitoring": "NOT_PASSED",
         "controlled_recovery": "NOT_PASSED"
       },
-      "tests": [
-        "6 local regressions",
-        "16 inclusion proofs"
-      ],
-      "deployment_surfaces": [
-        "GitHub package/CLI",
-        "Private Drive passports",
-        "IPEP Bible"
-      ],
-      "monitoring": "PRIVATE_PASSPORT_ACCESS_RECONFIRMED",
+      "tests": ["6 local regressions", "16 inclusion proofs"],
+      "deployment_surfaces": ["GitHub package/CLI", "Private Drive passports", "IPEP Bible"],
+      "monitoring": "PRIVATE_PASSPORT_ACCESS_RECONFIRMED; NOT_CURRENTLY_COUNTED_AS_SAPLING_QUALIFYING",
       "maintenance_owner": "mosianekk-lang",
       "owner_decision_required": false
     },
@@ -124,19 +110,17 @@
       "nutrient_gap": "PROVIDER_CREDENTIAL_SPEECH_BINDING_PRIVATE_WORKER_AND_RECEIPT",
       "proof_gates": "NOT_PASSED",
       "tests": "NOT_RUN",
-      "deployment_surfaces": [
-        "GitHub adapter scaffold"
-      ],
+      "deployment_surfaces": ["GitHub adapter scaffold"],
       "monitoring": "BLOCKER_STATE_ONLY",
       "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED",
       "owner_decision_required": false
     }
   ],
   "ipep_bible": {
-    "receipt": "KIMMIE SEED MATURITY REVIEW 010",
-    "revision_id": "AIroW340gohzzVP-6G9pE5bMkSfuPOjETxYNp7tKNhSffvs_kk1VG5QdjSFK5k6dqSs25qT4dZuug1Q1lSTpO4uUJ9d9JHpGUq0OiCVanY4",
+    "receipt": "KIMMIE SEED MATURITY REVIEW 011",
+    "revision_id": "AIroW36bFfc1jA6S2Kv_aeHDv0N2KOTyK3ognUk2lQKUqYbKYmEBkJyKpDmkCt8w9-2tD_58GcKW-7u7Mo_tcWY8Rn6f1oYxYTUFjM9XEE0",
     "readback": "PASSED",
-    "evidence_note_sha256": "be0e433f9c5664f588b55560fc7ffb6220b2a38b89e8ed37247597d08fbd646f"
+    "evidence_note_sha256": "fdf55625b45e179cb563d4bc18b95c3643a961ab0e70ad5b91ff5a02324d7bd5"
   },
-  "lesson": "Historical proof survives canary retirement, but current environment access and recovery must be re-verified without publishing live provider identifiers. Recovery proof does not substitute for persistent monitoring. Live registry aliases must remain compatible with the maturity assessor contract."
+  "lesson": "A repaired scheduled assessment proves monitoring execution has resumed, but one successful post-repair cycle is not persistent monitoring. Preserve SPROUT until repeated scheduled executions and durable readbacks succeed without schema drift."
 }
