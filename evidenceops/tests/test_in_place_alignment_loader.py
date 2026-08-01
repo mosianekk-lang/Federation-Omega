@@ -1,11 +1,15 @@
 from pathlib import Path
 import importlib.util
+import sys
 
 
 def _load_module(path: Path):
     spec = importlib.util.spec_from_file_location("in_place_alignment_loader", path)
     module = importlib.util.module_from_spec(spec)
     assert spec.loader is not None
+    # Python 3.12 dataclasses and postponed annotations expect the module to be
+    # present in sys.modules while the class decorators are evaluated.
+    sys.modules[spec.name] = module
     spec.loader.exec_module(module)
     return module
 
