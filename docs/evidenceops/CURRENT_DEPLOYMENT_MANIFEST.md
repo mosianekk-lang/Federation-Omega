@@ -1,6 +1,6 @@
 # EvidenceOps Current Deployment Manifest
 
-Status: SOURCE-CURRENT / PROVIDER-UNVERIFIED
+Status: SOURCE-CURRENT / PROVIDER-UNVERIFIED / NO-MERGE-GATE
 Owner: Kim Kagiso Mosiane
 Repository: mosianekk-lang/Federation-Omega
 
@@ -22,18 +22,10 @@ Repository: mosianekk-lang/Federation-Omega
 - Project: sov-hybrid-suite
 - Project number: 257649435135
 - Region: africa-south1
-- WIF pool: github-federation-omega
-- WIF provider: github
+- WIF pool/provider: apply only from provider-native verification
 - Deployer: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
 - Superior Logic runtime: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
 - EvidenceOps MCP runtime: evidenceops-mcp-runtime@sov-hybrid-suite.iam.gserviceaccount.com
-
-## Cloud Run services referenced by source
-
-- architron9
-- evidenceops-sovereign-runtime
-- EvidenceOps MCP adapter service
-- IPEP audio-worker service
 
 ## Required infrastructure classes
 
@@ -50,16 +42,18 @@ Repository: mosianekk-lang/Federation-Omega
 ## Required proof gates
 
 1. `bootstrap_github_wif.sh --verify` returns `FEDOMEGA-WIF-CLOUD-VERIFIED`.
-2. Required repository variables are populated from provider-verified values.
-3. Infrastructure inventory workflow authenticates and produces its artifact.
-4. Artifact hashes and resource counts are read back.
-5. Each deployed runtime passes private authenticated health verification.
-6. Every secret is bound by service identity and least privilege.
-7. No production promotion occurs without an explicit owner gate and rollback route.
+2. The verified receipt provider, project number and deployer exactly match repository variables.
+3. Required repository variables are populated from provider-verified values.
+4. Infrastructure inventory authenticates and produces a complete artifact.
+5. Artifact hashes and resource counts are independently read back.
+6. Every runtime secret is bound by service identity and least privilege.
+7. A zero-traffic canary passes authenticated health checks and produces a retained receipt.
+8. Production promotion requires explicit owner input and produces a separate promotion receipt.
+9. Failed promotion proves rollback to the previous ready revision.
 
 ## Historical package boundary
 
-`IPEP_PLATFORM_SETUP_v0.1.0.zip` is a historical foundation package. It contains the original Apps Script intake, audio worker scaffold, schema, cloud build and CI files. It does not represent the current platform and must not be deployed as the authoritative release.
+`IPEP_PLATFORM_SETUP_v0.1.0.zip` is a historical foundation package and is not the authoritative release.
 
 ## Current open boundaries
 
@@ -73,9 +67,23 @@ Repository: mosianekk-lang/Federation-Omega
 
 - `docs/evidenceops/CLOUD_IDENTITY_AND_AUTHORITY_REGISTER.md`
 - `docs/evidenceops/CLOUD_DEPENDENCY_MAP.md`
+- `docs/evidenceops/WORKFLOW_AND_SERVICE_REGISTER.md`
+- `docs/evidenceops/LEGACY_WORKFLOW_RETIREMENT_REGISTER.md`
 - `docs/evidenceops/ICT_CLOUD_COMPETENCY_AND_RUNBOOK.md`
 - `docs/evidenceops/OPENAI_RUNTIME_SECRET_BINDING_CONTRACT.md`
-- `ops/INFRASTRUCTURE_FOUNDATION_ACTIVATION.md`
+- `docs/evidenceops/REPOSITORY_VARIABLE_APPLICATION_MANIFEST.md`
+- `docs/evidenceops/WIF_PROVIDER_EXECUTION_PACKET.md`
+- `schemas/cloud-provider-execution-receipt.schema.json`
 - GitHub issues #51 and #52
 
-Maturity: `SOURCE_CONSOLIDATED / FAIL_CLOSED / CLOUD_READBACK_PENDING`
+## No-merge gate
+
+PR #50 must not merge until:
+
+- the latest source and leak checks pass;
+- WIF provider verification succeeds;
+- the four shared inventory variables are populated from verified values;
+- the infrastructure inventory artifact is generated and inspected;
+- no unresolved P0 security defect remains in the PR diff.
+
+Maturity: `SOURCE_CONSOLIDATED / FAIL_CLOSED / CLOUD_READBACK_PENDING / MERGE_PROHIBITED`
