@@ -1,7 +1,7 @@
 {
   "receipt_id": "RCP-EO-AI-ICT-PRODUCTION-BOUNDARY-REPAIR-010",
   "version": "2.5.0",
-  "verified_at": "2026-08-01T13:04:03.700926+00:00",
+  "verified_at": "2026-08-01T13:14:37.851897+00:00",
   "platform_api_key_target": "ATTEMPTED_REJECTED",
   "usable_openai_credential": "UNAVAILABLE",
   "live_model_canary": "NOT_CLAIMED",
@@ -27,5 +27,16 @@
     "WIF_AND_SECRET_MANAGER_BINDING",
     "PRIVATE_CLOUD_RUN_DEPLOYMENT",
     "DEPLOYED_CANONICAL_OUTBOX_WRITE_READBACK"
-  ]
+  ],
+  "official_agents_sdk": "0.19.2",
+  "official_wheel_sha256": "ea2d7e306731c73a5e340bf23ca98326088bdfe8c61cd8e171a307adcd2957d0",
+  "local_sdk_install": "ATTEMPTED_RESTRICTED_MIRROR_UNAVAILABLE",
+  "external_sdk_contract_ci": "VERIFIED_SUCCESS",
+  "github_pull_request": 47,
+  "github_head_commit": "389d1b9b83012d9aef47eaefe572e56f50d72d4c",
+  "github_checks": {
+    "EvidenceOps AI ICT durable runtime": "SUCCESS",
+    "Public Repository Leak Guard": "SUCCESS",
+    "Superior Logic CI": "SUCCESS"
+  }
 }
