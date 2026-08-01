@@ -72,6 +72,7 @@ Repository: mosianekk-lang/Federation-Omega
 ## Related controls
 
 - `docs/evidenceops/CLOUD_IDENTITY_AND_AUTHORITY_REGISTER.md`
+- `docs/evidenceops/CLOUD_DEPENDENCY_MAP.md`
 - `docs/evidenceops/ICT_CLOUD_COMPETENCY_AND_RUNBOOK.md`
 - `docs/evidenceops/OPENAI_RUNTIME_SECRET_BINDING_CONTRACT.md`
 - `ops/INFRASTRUCTURE_FOUNDATION_ACTIVATION.md`
