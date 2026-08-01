@@ -1,5 +1,5 @@
 {
-  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v2",
+  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v3",
   "owner": "Kim Kagiso Mosiane",
   "status": "ACTIVE",
   "public_repository_safe": true,
@@ -26,8 +26,8 @@
         "GITHUB_MANIFEST_LOADER_FOR_COMPLIANT_WORKERS",
         "AUTHORISED_DISTRIBUTION_WITH_READBACK"
       ],
-      "distribution_receipt_id": "PRIVATE_RECEIPT_REFERENCE",
-      "gmail_message_id": "PRIVATE_RUNTIME_CONFIG",
+      "distribution_receipt_ref": "KIM_CHAT_DISTRIBUTION_RECEIPT_ID",
+      "message_ref": "KIM_CHAT_DISTRIBUTION_MESSAGE_ID",
       "unresolved_scope": "ALREADY_OPEN_NON_POLLING_CHATS_WITHOUT_AUTHORISED_MESSAGE_BRIDGE",
       "next_action": "DISCOVER_AUTHORISED_NON_POLLING_LIVE_CHAT_BRIDGE",
       "report_only_terminal_allowed": false
@@ -49,10 +49,27 @@
       ],
       "resolved_route": "PRIVATE_IN_PLACE_CANONICAL_BRIDGE",
       "bridge_record": "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
-      "spreadsheet_id": "PRIVATE_RUNTIME_CONFIG",
-      "receipt_id": "PRIVATE_RECEIPT_REFERENCE",
-      "verified_at": "2026-08-01T04:49:28+02:00",
+      "identifier_ref": "KIM_CANONICAL_BACKEND_ID",
+      "receipt_ref": "KIM_CANONICAL_RECEIPT_ID",
+      "private_control_plane_status": "WRITE_AND_READBACK_VERIFIED",
+      "public_runtime_default": "PRIVATE_REFERENCE_UNRESOLVED",
       "native_microsoft_dataverse_status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
+      "report_only_terminal_allowed": false
+    },
+    {
+      "boundary_id": "BND-SOVEREIGN-RUNTIME",
+      "description": "Production runtime must pass CI, container health, private deployment and direct canonical write-through.",
+      "owner": "WORKFORCE",
+      "state": "ACTIVE_REPAIR",
+      "resolution_requirements": [
+        "GREEN_GITHUB_CI",
+        "CONTAINER_HEALTH_VERIFIED",
+        "PRIVATE_CLOUD_RUNTIME_IDENTITY_BOUND",
+        "CLOUD_RUN_DEPLOYMENT_VERIFIED",
+        "HEALTH_AND_READY_READBACK_VERIFIED",
+        "DIRECT_CANONICAL_MISSION_WRITE_READBACK_VERIFIED"
+      ],
+      "next_action": "COMPLETE_GREEN_CI_THEN_BIND_PRIVATE_DEPLOYMENT_IDENTITY",
       "report_only_terminal_allowed": false
     }
   ],
