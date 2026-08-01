@@ -30,14 +30,17 @@ flowchart TD
     C --> GC[Google Cloud / Cloud Run / Scheduler / Storage / Databases]
     C --> AS[Google Apps Script]
     C --> OA[OpenAI Platform and model providers]
+    C --> GAI[Google AI Studio / Gemini experimentation]
     A --> SM[Secret Manager / IAM / WIF / KMS]
     L --> GH
     L --> GD
-    P --> CV[Canva / reports / commercial assets]
+    L --> GAI
+    P --> CV[Canva / Adobe / commercial assets]
 
     GH --> R[Receipts, tests, releases and provenance]
     GC --> R
     GD --> R
+    GAI --> R
 ```
 
 ## Constitutional control
@@ -192,7 +195,35 @@ Boundary:
 - recurring work must run outside ChatGPT;
 - trigger configuration must be followed by an actual triggered-run receipt.
 
-### 5. OpenAI Platform and other AI providers
+### 5. Google AI Studio
+
+Role:
+- Gemini prompt and model experimentation;
+- rapid prototype development;
+- multimodal capability testing;
+- evaluation of prompts, model behaviour and candidate workflows before production deployment;
+- creation of candidate model configurations, system instructions and reusable experiment artefacts.
+
+Estate classification:
+- first-class capability-development and experimentation surface;
+- part of the Kim Dataverse resource pool;
+- not the canonical mission-state, evidence or production-runtime store;
+- outputs become trusted only after export, versioning, provenance capture, security review, regression testing and controlled deployment through an authorised production surface.
+
+ICT controls:
+- maintain a register of projects, experiments, models, prompts, files, API integrations and owners;
+- distinguish personal experiments from governed EvidenceOps experiments;
+- prevent raw secrets, confidential evidence and unapproved case material from being pasted into experiments;
+- record model name/version, parameters, safety settings, source inputs, outputs, evaluations and export target;
+- bind any production API use through an authorised Google Cloud project, IAM boundary and secret-management route;
+- preserve prompt and evaluation artefacts in Drive or GitHub with stable identifiers and hashes;
+- treat successful playground output as prototype evidence, not production proof.
+
+Current proof state:
+- the user confirms Google AI Studio is part of the authorised resource pool;
+- account/project inventory, access model, governed experiment register, data-handling controls and production bindings remain to be fully read back and mapped.
+
+### 6. OpenAI Platform and other AI providers
 
 Role:
 - model inference;
@@ -211,7 +242,7 @@ Security rule:
 - runtime receives secret references through Secret Manager or equivalent vault;
 - exposed credentials remain compromised until provider-native revocation and rejection are proven.
 
-### 6. Canva and Adobe
+### 7. Canva and Adobe
 
 Role:
 - reports, diagrams, hearing visuals and commercial materials;
@@ -221,7 +252,7 @@ Role:
 Boundary:
 - designs may visualise verified data but may not become the source of truth.
 
-### 7. Email and communication surfaces
+### 8. Email and communication surfaces
 
 Role:
 - source evidence;
@@ -235,7 +266,7 @@ Boundary:
 - secrets found in email must be contained, rotated and removed only after safe revocation;
 - external sending requires explicit authority where consequential.
 
-### 8. Local and user-facing surfaces
+### 9. Local and user-facing surfaces
 
 Role:
 - Windows 11 workstation;
@@ -255,6 +286,7 @@ sequenceDiagram
     participant C as ChatGPT Control Layer
     participant D as Kim Dataverse / Canonical Bridge
     participant S as Source System
+    participant X as AI Experiment Surface
     participant R as External Runtime
     participant P as Proof Store
 
@@ -262,6 +294,8 @@ sequenceDiagram
     C->>D: Retrieve mission intelligence packet
     D-->>C: Mission, doctrine, authority, dependencies
     C->>S: Resolve source pointers and minimum data
+    C->>X: Governed prompt/model experiment where required
+    X-->>C: Candidate configuration and evaluation evidence
     C->>R: Authorised scoped execution
     R->>S: Source-local processing where suitable
     R->>P: Receipt, hashes, logs and readback
@@ -280,6 +314,8 @@ sequenceDiagram
 | GitHub to Google Cloud | repository- and branch-restricted WIF |
 | Runtime to Secret Manager | service-specific least privilege |
 | Runtime to source evidence | minimum necessary access and in-place processing |
+| Google AI Studio to production | export, versioning, evaluation, security review and controlled deployment |
+| Experiment surface to confidential data | approved minimum data only; no uncontrolled evidence or secrets |
 | Public repository to private estate | aliases and redacted pointers only |
 | Local mirror to canonical bridge | transactional sync and readback |
 | Scheduled trigger to completion | actual run, artifact and receipt |
@@ -306,7 +342,7 @@ Use only the highest state supported by evidence:
 
 Current overall estate maturity:
 
-`DOCTRINE_ACTIVE / DRIVE_BRIDGE_DISCOVERED / GITHUB_CONTROL_PLANE_ACTIVE / CLOUD_PROVIDER_BOUNDARY_UNVERIFIED / DATAVERSE_FULL_BINDING_UNVERIFIED`
+`DOCTRINE_ACTIVE / DRIVE_BRIDGE_DISCOVERED / GITHUB_CONTROL_PLANE_ACTIVE / GOOGLE_AI_STUDIO_RESOURCE_CONFIRMED_INVENTORY_PENDING / CLOUD_PROVIDER_BOUNDARY_UNVERIFIED / DATAVERSE_FULL_BINDING_UNVERIFIED`
 
 ## ICT responsibilities
 
@@ -318,6 +354,7 @@ Current overall estate maturity:
 
 ### Cloud engineering
 - verify WIF, service accounts, IAM, secrets, runtime services and inventory;
+- map Google AI Studio production bindings to authorised Google Cloud projects and identities;
 - prevent broad trust and static cloud keys;
 - maintain provider-native receipts.
 
@@ -331,10 +368,12 @@ Current overall estate maturity:
 - maintain the authority ledger and vault boundaries;
 - contain exposed credentials;
 - verify revocation and old-key rejection;
+- govern AI Studio experiment data, API credentials, file uploads and production exports;
 - monitor least privilege and public/private leakage.
 
 ### Data and integration
 - map actual provider schemas to KDV logical entities;
+- register AI Studio experiments, model configurations and exported artefacts with stable IDs;
 - use stable IDs and relationship edges;
 - prevent duplicates, stale directives and orphaned pointers;
 - validate writes and readback.
@@ -349,6 +388,8 @@ Current overall estate maturity:
 
 - actual Dataverse environment, authority, schema, read and write route are not fully bound;
 - private canonical bridge exists, but a complete provider-native schema map is not yet verified;
+- Google AI Studio project, experiment, model, prompt, file, access and API-binding inventory remains incomplete;
+- Google AI Studio data-handling, export, evaluation and production-promotion controls require provider-native readback;
 - Google Cloud WIF and infrastructure inventory remain incomplete;
 - cloud service, secret, database, storage and queue readback remains incomplete;
 - exposed OpenAI keys require provider-native closure proof;
@@ -367,4 +408,4 @@ Any material addition, deletion, migration or reclassification in the estate mus
 5. the relevant regression tests;
 6. the estate revision receipt.
 
-No team may treat an undocumented system, credential, runtime, repository, datastore, scheduler or evidence surface as outside the estate.
+No team may treat an undocumented system, credential, runtime, repository, datastore, scheduler, AI experimentation surface or evidence surface as outside the estate.
