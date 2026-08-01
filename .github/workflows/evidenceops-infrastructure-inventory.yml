@@ -21,14 +21,40 @@ env:
   GCP_REGION: ${{ vars.GCP_REGION || 'africa-south1' }}
 
 jobs:
-  inventory:
+  preflight:
     runs-on: ubuntu-latest
-    if: >-
-      ${{
-        vars.GCP_PROJECT_ID != '' &&
-        vars.GCP_WIF_PROVIDER != '' &&
-        vars.GCP_SERVICE_ACCOUNT != ''
-      }}
+    outputs:
+      ready: ${{ steps.check.outputs.ready }}
+    steps:
+      - id: check
+        shell: bash
+        env:
+          PROJECT_ID_PRESENT: ${{ vars.GCP_PROJECT_ID != '' }}
+          WIF_PROVIDER_PRESENT: ${{ vars.GCP_WIF_PROVIDER != '' }}
+          SERVICE_ACCOUNT_PRESENT: ${{ vars.GCP_SERVICE_ACCOUNT != '' }}
+        run: |
+          python - <<'PY'
+          import json, os
+          state={
+            'GCP_PROJECT_ID_present': os.environ['PROJECT_ID_PRESENT'].lower()=='true',
+            'GCP_WIF_PROVIDER_present': os.environ['WIF_PROVIDER_PRESENT'].lower()=='true',
+            'GCP_SERVICE_ACCOUNT_present': os.environ['SERVICE_ACCOUNT_PRESENT'].lower()=='true',
+          }
+          state['ready']=all(state.values())
+          print(json.dumps(state,indent=2))
+          with open(os.environ['GITHUB_OUTPUT'],'a',encoding='utf-8') as f:
+            f.write('ready='+('true' if state['ready'] else 'false')+'\n')
+          open('wif-preflight.json','w',encoding='utf-8').write(json.dumps(state,indent=2))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-wif-preflight
+          path: wif-preflight.json
+
+  inventory:
+    needs: preflight
+    runs-on: ubuntu-latest
+    if: needs.preflight.outputs.ready == 'true'
     steps:
       - uses: actions/checkout@v4
       - id: auth
