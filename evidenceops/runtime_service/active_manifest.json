@@ -1,13 +1,40 @@
 {
-  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v1",
+  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v2",
   "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
   "owner": "Kim Kagiso Mosiane",
   "status": "CONTROLLING",
   "load_mode": "IN_PLACE",
-  "required_resources": [],
-  "per_input_requirement": "LOAD_OR_VERIFY_ACTIVE_MANIFEST_BEFORE_SUBSTANTIVE_WORK",
+  "required_resources": [
+    "evidenceops/doctrine/EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2.md",
+    "evidenceops/contracts/sovereign-translator-v3.2.json",
+    "evidenceops/bootstrap/SOVEREIGN_TRANSLATOR_BOOTSTRAP.md",
+    "evidenceops/runtime/kim_dataverse_inplace_bridge.json"
+  ],
+  "per_input_requirement": "LOAD_OR_VERIFY_ACTIVE_MANIFEST_AND_KIM_DATAVERSE_BRIDGE_BEFORE_SUBSTANTIVE_WORK",
   "mission_delta_owner": "WORKFORCE",
   "report_only_terminal_allowed": false,
   "canonical_intelligence_target": "KIM_DATAVERSE",
-  "version": 1
+  "canonical_backend": {
+    "type": "GOOGLE_DRIVE_GOOGLE_SHEETS_IN_PLACE_BRIDGE",
+    "spreadsheet_id": "1TS64KmgGS30Hr9yHry3kQPzXMtWVMV22utJxhDXd7o8",
+    "bridge_record": "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
+    "status": "WRITE_AND_READBACK_VERIFIED",
+    "receipt_id": "RCP-KDV-INPLACE-001"
+  },
+  "canonical_alignment_claim_requires": [
+    "CANONICAL_BACKEND_VERIFIED",
+    "AUTHORITY_VERIFIED",
+    "SCHEMA_VERIFIED",
+    "READ_VERIFIED",
+    "WRITE_VERIFIED",
+    "READBACK_VERIFIED",
+    "RECEIPT_VERIFIED"
+  ],
+  "already_running_chat_rule": "A running chat aligns only after it explicitly reloads this manifest or receives the same controlling doctrine through an authorised bridge.",
+  "fallback_when_not_loaded": "CREATE_ALIGNMENT_DELTA_AND_RELOAD_ON_NEXT_VALID_TRIGGER",
+  "native_microsoft_dataverse": {
+    "status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
+    "required_for_current_canonical_operation": false
+  },
+  "version": 2
 }
