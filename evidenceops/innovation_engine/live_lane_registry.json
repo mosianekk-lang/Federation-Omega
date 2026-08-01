@@ -1,6 +1,6 @@
 {
-  "registry_version": "1.19.0",
-  "updated_at": "2026-08-01T12:12:00+02:00",
+  "registry_version": "1.19.1",
+  "updated_at": "2026-08-01T12:14:00+02:00",
   "proof_note": "Public-safe registry. No live provider, private file, folder, document, message, credential or canonical identifier is persisted. States reflect independently verified evidence only.",
   "priority_model": {
     "scale": "0-100",
@@ -50,7 +50,9 @@
     "provider_transcription_current_live_binding": "NOT_FRESHLY_VERIFIED",
     "revenue_external_release_approval": "NOT_GRANTED",
     "ipep_bible_access": "VERIFIED_READ_WRITE",
-    "ipep_bible_lane_watch_017_readback": "PENDING_APPEND"
+    "ipep_bible_lane_watch_017_readback": "VERIFIED_EXACT_HEADING_AND_EVIDENCE_NOTE_HASH",
+    "ipep_bible_lane_watch_017_note_sha256": "183779bd91b51e5c14d208c04c38b0afda0661f6ac877645c17010d297633d69",
+    "ipep_bible_revision_id": "AIroW34-9klm396-e5nhrWA_hZyE2ZB0yiUVwFERs_3HxtZUBc6efYD4TFKe4IfB_02WfCe2okaJv7Z-U9bSrMWcaw4-QzXJyGPVVSVS9tc"
   },
   "lanes": [
     {
@@ -158,7 +160,7 @@
     {
       "lane_id": "LANE-IPEP-BIBLE",
       "priority": 92,
-      "state": "ACTIVE",
+      "state": "CHECKPOINTED",
       "priority_factors": {
         "urgency": 20,
         "dependency_closure": 20,
@@ -166,8 +168,8 @@
         "reuse_value": 18,
         "risk_exposure": 14
       },
-      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; LANE_WATCH_RECEIPT_017_APPEND_PENDING",
-      "next_action": "Append and independently read back Lane Watch Receipt 017."
+      "proof_state": "CANONICAL_LEDGER_ACCESSIBLE; LANE_WATCH_RECEIPT_017_APPENDED; EXACT_HEADING_AND_EVIDENCE_NOTE_HASH_READBACK_VERIFIED",
+      "next_action": "Continue append-only receipt capture on the next material proof or lane transition."
     },
     {
       "lane_id": "LANE-PLATFORM-SETUP",
@@ -210,8 +212,9 @@
     "receipt_id": "LANE-WATCH-RECEIPT-017",
     "receipt_sha256": "8809f7b9621e89b00f6a4fbc0d3fdc1ad555cd6534a2c9668bdc7f8a4477adb1",
     "receipt_commit": "1332e526665a582c40113ef4c9a761babf4f24ea",
-    "bible_readback": "PENDING",
-    "bible_note_sha256": null
+    "bible_readback": "PASSED_EXACT_HEADING_AND_EVIDENCE_NOTE_HASH",
+    "bible_note_sha256": "183779bd91b51e5c14d208c04c38b0afda0661f6ac877645c17010d297633d69",
+    "bible_revision_id": "AIroW34-9klm396-e5nhrWA_hZyE2ZB0yiUVwFERs_3HxtZUBc6efYD4TFKe4IfB_02WfCe2okaJv7Z-U9bSrMWcaw4-QzXJyGPVVSVS9tc"
   },
   "truth_boundary": "Kimmie Seed remains SAPLING after a verified monitoring-contract repair and main-branch PASS assessment. No MATURE promotion is claimed. Provenance Passport remains SPROUT until schedule-triggered persistence is independently read back. No Google Cloud WIF, Secret Manager binding, private authenticated Cloud Run health, direct canonical runtime write-through, live transcription readiness or external commercial approval is inferred."
 }
