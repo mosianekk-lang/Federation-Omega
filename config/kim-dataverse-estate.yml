@@ -1,0 +1,270 @@
+version: 1.1.0
+status: SOURCE_CONSOLIDATED_ESTATE_PARTIALLY_VERIFIED
+owner: Kim Kagiso Mosiane
+final_authority: Kim Kagiso Mosiane
+classification: PUBLIC_SAFE_MAP_PRIVATE_POINTERS_REDACTED
+
+constitutional_controls:
+  founder_mission_authoritative: true
+  capability_may_change_route_not_outcome: true
+  proof_before_claim: true
+  local_mirror_not_canonical_write: true
+  schedule_configuration_not_trigger_proof: true
+  chatgpt_scheduler_authorised: false
+  mission_delta_default_owner: WORKFORCE
+
+logical_entities:
+  - KDV_FOUNDER
+  - KDV_MISSION
+  - KDV_DIRECTIVE
+  - KDV_TASK
+  - KDV_DEPENDENCY
+  - KDV_DOCTRINE
+  - KDV_LESSON
+  - KDV_REGRESSION_TEST
+  - KDV_EVIDENCE
+  - KDV_EVIDENCE_RELATIONSHIP
+  - KDV_ARTIFACT
+  - KDV_CAPABILITY
+  - KDV_AUTHORITY
+  - KDV_RUNTIME
+  - KDV_TRIGGER
+  - KDV_RECEIPT
+  - KDV_INCIDENT
+  - KDV_REPAIR
+  - KDV_RISK
+  - KDV_OPPORTUNITY
+  - KDV_INNOVATION
+  - KDV_PRODUCT
+  - KDV_CUSTOMER_OR_BUYER
+  - KDV_FUTURE_OPTION
+  - KDV_VALUE_EVENT
+  - KDV_MISSION_DELTA
+  - KDV_CANONICAL_POINTER
+  - KDV_SYNC_TRANSACTION
+  - KDV_SYSTEM_HEALTH
+
+surfaces:
+  google_drive:
+    role:
+      - sovereign_source_records
+      - evidence_workspaces
+      - canonical_bridges
+      - ledgers_and_registers
+      - preservation_and_backup
+    observed_assets:
+      - KIM_DATAVERSE_PRIVATE_CANONICAL_BRIDGE_V2
+      - EVIDENCEOPS_MASTER_BIBLE_V2
+      - PSYDATAVERSE_MASTER_DOCTRINE
+      - PSYDATAVERSE_MASTER_DASHBOARD
+      - FEDERATION_OMEGA_MASTER_INDEXES
+    canonical_for:
+      - raw_evidence
+      - source_documents
+      - private_pointer_registry
+    proof_state: DISCOVERED_NOT_FULLY_SCHEMA_BOUND
+
+  github:
+    repository: mosianekk-lang/Federation-Omega
+    role:
+      - source_code
+      - tests
+      - pull_request_governance
+      - releases
+      - provenance
+      - external_scheduling
+      - deployment_carriers
+    components:
+      - evidenceops_sovereign_runtime
+      - durable_ai_ict_runtime
+      - connector_foundry
+      - provenance_passport
+      - in_place_audit_omega
+      - innovation_engine
+      - evidenceops_mcp_adapter
+      - google_drive_bridge
+      - wif_bootstrap
+      - infrastructure_inventory
+      - provider_boundary_watch
+    proof_state: CONTROL_PLANE_ACTIVE_PRODUCTION_BOUNDARY_INCOMPLETE
+
+  google_cloud:
+    role:
+      - cloud_run
+      - cloud_scheduler
+      - artifact_registry
+      - secret_manager
+      - cloud_kms
+      - postgres_or_cloud_sql
+      - pubsub_or_task_queues
+      - object_storage
+      - logging_metrics_tracing
+    identity_pattern:
+      - github_oidc
+      - workload_identity_federation
+      - deployer_service_account
+      - runtime_service_accounts
+    proof_state: SOURCE_CONTRACT_PRESENT_PROVIDER_INVENTORY_UNVERIFIED
+
+  google_apps_script:
+    role:
+      - workspace_triggers
+      - drive_intake
+      - lightweight_source_local_automation
+    proof_state: COMPONENTS_PRESENT_TRIGGER_READBACK_VARIES
+
+  google_ai_studio:
+    role:
+      - gemini_prompt_experimentation
+      - model_and_multimodal_prototyping
+      - prompt_evaluation
+      - candidate_workflow_design
+      - model_configuration_development
+      - preproduction_capability_testing
+    estate_classification:
+      - FIRST_CLASS_RESOURCE_POOL_SURFACE
+      - CAPABILITY_DEVELOPMENT_AND_EXPERIMENTATION
+      - NON_CANONICAL_FOR_MISSION_STATE
+      - NON_PRODUCTION_UNTIL_EXPORTED_TESTED_AND_DEPLOYED
+    governance_controls:
+      - project_and_experiment_register
+      - stable_experiment_ids
+      - model_name_and_version_capture
+      - prompt_and_system_instruction_versioning
+      - parameter_and_safety_setting_capture
+      - source_input_classification
+      - no_raw_secrets
+      - no_unapproved_confidential_evidence
+      - evaluation_and_regression_before_export
+      - production_binding_through_authorised_google_cloud_project
+      - artefact_export_to_drive_or_github
+      - provenance_hash_and_owner_capture
+    canonical_for: []
+    current_evidence:
+      - USER_CONFIRMED_RESOURCE_POOL_MEMBERSHIP
+    proof_state: RESOURCE_CONFIRMED_PROJECT_ACCESS_EXPERIMENT_AND_API_BINDINGS_NOT_FULLY_INVENTORIED
+
+  openai_and_ai_providers:
+    role:
+      - model_inference
+      - agents
+      - transcription
+      - analysis
+    security_controls:
+      - secret_references_only
+      - no_raw_keys_in_git
+      - runtime_vault_binding
+      - provider_native_revocation
+      - old_key_rejection_canary
+    proof_state: PROVIDER_CONTEXTS_DISCOVERED_CREDENTIAL_CLOSURE_INCOMPLETE
+
+  canva_adobe:
+    role:
+      - reports
+      - diagrams
+      - visual_outputs
+      - commercial_materials
+    canonical_for: []
+    proof_state: PRESENTATION_SURFACE_ONLY
+
+  communications:
+    systems:
+      - Gmail
+      - Microsoft_Outlook
+    role:
+      - source_evidence
+      - notifications
+      - approvals
+      - legal_and_operational_communications
+    proof_state: CONNECTED_SOURCE_SURFACES
+
+  local_user_surface:
+    systems:
+      - Windows_11
+      - Edge
+      - ChatGPT
+      - local_python
+      - local_containers
+    role:
+      - reasoning_control
+      - bounded_analysis
+      - local_testing
+    restrictions:
+      - no_chatgpt_scheduling
+      - local_output_not_canonical_without_write_and_readback
+    proof_state: ACTIVE_NON_CANONICAL_CONTROL_SURFACE
+
+trust_boundaries:
+  - id: TB_FOUNDER_SYSTEM
+    control: exact_directive_preservation_and_precedence
+  - id: TB_CHAT_EXTERNAL
+    control: scoped_capability_no_raw_secrets
+  - id: TB_GITHUB_CLOUD
+    control: repository_and_branch_restricted_wif
+  - id: TB_RUNTIME_SECRET_MANAGER
+    control: service_specific_least_privilege
+  - id: TB_RUNTIME_SOURCE
+    control: minimum_necessary_access_in_place_processing
+  - id: TB_GOOGLE_AI_STUDIO_PRODUCTION
+    control: export_version_evaluate_secure_and_deploy_through_authorised_production_route
+  - id: TB_AI_EXPERIMENT_CONFIDENTIAL_DATA
+    control: approved_minimum_data_no_raw_secrets_or_unapproved_evidence
+  - id: TB_PUBLIC_PRIVATE
+    control: redacted_aliases_private_pointer_registry
+  - id: TB_LOCAL_CANONICAL
+    control: transactional_sync_and_readback
+  - id: TB_TRIGGER_COMPLETION
+    control: actual_run_artifact_and_receipt
+
+verified_state_ladder:
+  - DOCTRINE_ACTIVE
+  - CAPABILITY_DISCOVERED
+  - KIM_DATAVERSE_DISCOVERED
+  - KIM_DATAVERSE_AUTHORITY_VERIFIED
+  - KIM_DATAVERSE_SCHEMA_BOUND
+  - KIM_DATAVERSE_READ_VERIFIED
+  - KIM_DATAVERSE_WRITE_VERIFIED
+  - KIM_DATAVERSE_BOUND
+  - CASCADE_ENGINE_VERIFIED
+  - COMPOUNDING_ENGINE_VERIFIED
+  - MISSION_STATE_BOUND
+  - SECURE_CAPABILITY_BOX_BOUND
+  - EXTERNAL_TRIGGER_BOUND
+  - LIVE_ORCHESTRATION_VERIFIED
+  - CONTINUOUS_LEARNING_VERIFIED
+
+current_maturity:
+  doctrine: ACTIVE
+  drive_bridge: DISCOVERED
+  github_control_plane: ACTIVE
+  google_ai_studio:
+    resource_pool_membership: CONFIRMED_BY_FOUNDER
+    project_inventory: PENDING
+    governed_experiment_register: PENDING
+    production_api_binding: UNVERIFIED
+  cloud_provider_boundary: UNVERIFIED
+  dataverse_full_binding: UNVERIFIED
+  external_scheduler:
+    provider_boundary_watch: DEPLOYED_FIRST_RUN_PENDING_OR_UNVERIFIED
+
+known_gaps:
+  - dataverse_environment_authority_schema_read_write_not_fully_bound
+  - private_canonical_bridge_not_yet_provider_native_schema_verified
+  - google_ai_studio_projects_access_experiments_models_prompts_files_not_fully_inventoried
+  - google_ai_studio_data_handling_evaluation_export_and_production_binding_not_read_back
+  - google_cloud_wif_and_inventory_incomplete
+  - cloud_services_secrets_databases_storage_queues_not_fully_read_back
+  - openai_exposed_key_incident_not_provider_native_closed
+  - legacy_workflow_families_pending_supersession_review
+  - recurring_tasks_pending_external_runtime_migration
+  - public_safe_map_private_pointer_registry_sync_required
+
+change_control:
+  update_targets:
+    - docs/ict/KIM_DATAVERSE_ESTATE_MAP.md
+    - config/kim-dataverse-estate.yml
+    - private_canonical_pointer_bridge
+    - dependency_and_authority_graphs
+    - regression_tests
+    - estate_revision_receipt
+  undocumented_assets_allowed: false
