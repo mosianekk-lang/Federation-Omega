@@ -5,6 +5,10 @@ on:
     paths:
       - "evidenceops/ai_ict_durable/**"
       - ".github/workflows/evidenceops-ai-ict-durable-runtime.yml"
+  pull_request:
+    paths:
+      - "evidenceops/ai_ict_durable/**"
+      - ".github/workflows/evidenceops-ai-ict-durable-runtime.yml"
   workflow_dispatch:
 
 permissions:
