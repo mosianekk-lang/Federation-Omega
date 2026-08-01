@@ -1,0 +1,98 @@
+{
+  "receipt_id": "LANE-WATCH-RECEIPT-011",
+  "recorded_at": "2026-08-01T06:12:30+02:00",
+  "scope": "EvidenceOps lane and dependency reconciliation",
+  "material_change": {
+    "detected": true,
+    "summary": "Persistent monitoring workflows on main failed because of a missing scheduler proof directory and Kimmie live-registry contract drift."
+  },
+  "dependency_review": {
+    "github_access": "VERIFIED_READ_WRITE",
+    "drive_access": "VERIFIED_READ_WRITE",
+    "gmail_access": "VERIFIED_READ",
+    "credential_or_approval_change": "NONE_OBSERVED",
+    "google_cloud_wif": "BLOCKED_OR_UNVERIFIED",
+    "secret_manager_binding": "UNBOUND_OR_METADATA_PROBE_ONLY",
+    "private_cloud_run_health": "NOT_VERIFIED",
+    "transcription_provider_credential": "NOT_VERIFIED",
+    "google_speech_binding": "NOT_VERIFIED",
+    "revenue_external_release_approval": "NOT_GRANTED"
+  },
+  "execution": {
+    "selected_lane": "LANE-KIMMIE-SEED_MONITORING_CONTROL",
+    "repair_pr": 44,
+    "repair_head_sha": "7c770382f8cb9195b54e29b99f34c143c8142585",
+    "repair_merge_sha": "0c74b8bf3ae945bdecfd0648211479c59fb2659f",
+    "superior_logic_ci": {
+      "run_id": 30683426355,
+      "conclusion": "success"
+    },
+    "public_repository_leak_guard": {
+      "run_id": 30683426353,
+      "conclusion": "success"
+    },
+    "kimmie_workflow_readback_commit": "719477bf119f589eb9b94f7292532c9f77085a42",
+    "kimmie_assessment_status": "PASS",
+    "kimmie_verified_stage": "SPROUT",
+    "kimmie_assessment_sha256": "c100fe1a54fa04f73fe7049fc41d07dcf9441d716894974c48a1f09a3694cfc2",
+    "sapling_promotion": "NOT_CLAIMED"
+  },
+  "priority_recalculation": [
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "priority": 100,
+      "state": "VERIFYING",
+      "reason": "Highest reuse and completion proximity; provider-persistent monitoring remains open."
+    },
+    {
+      "lane_id": "LANE-KIMMIE-SEED",
+      "priority": 99,
+      "state": "VERIFYING",
+      "reason": "Monitoring execution restored and read back; sustained scheduled evidence remains open."
+    },
+    {
+      "lane_id": "LANE-SOVEREIGN-RUNTIME",
+      "priority": 97,
+      "state": "VERIFYING",
+      "reason": "High reuse, but recent CI failures and cloud authority remain unresolved."
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "priority": 96,
+      "state": "VERIFYING",
+      "reason": "Near completion; external CI and recovery monitor remain open."
+    },
+    {
+      "lane_id": "LANE-INNOVATION-ENGINE",
+      "priority": 94,
+      "state": "TEST_PASSED",
+      "reason": "Stable reusable registry; backup and restore drill remains."
+    },
+    {
+      "lane_id": "LANE-REVENUE-OFFER-FACTORY",
+      "priority": 93,
+      "state": "CHECKPOINTED",
+      "reason": "Completion close but external release is approval-gated."
+    },
+    {
+      "lane_id": "LANE-IPEP-BIBLE",
+      "priority": 91,
+      "state": "CHECKPOINTED",
+      "reason": "Append and readback required after verified changes."
+    },
+    {
+      "lane_id": "LANE-PLATFORM-SETUP",
+      "priority": 84,
+      "state": "BLOCKED",
+      "reason": "WIF, Secret Manager and private Cloud Run proof absent."
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "priority": 80,
+      "state": "BLOCKED",
+      "reason": "Credential, speech binding and private worker proof absent."
+    }
+  ],
+  "truth_boundary": "The repair proves repository CI and a successful main-branch Kimmie maturity workflow readback. It does not prove provider-persistent Connector Foundry monitoring, Google Cloud deployment, WIF, Secret Manager, transcription, or SAPLING maturity.",
+  "receipt_sha256": "5eb5d64c5f8808f1d552327440c64643f24d17cc3ba725ba95edf8a5dde3f542"
+}
