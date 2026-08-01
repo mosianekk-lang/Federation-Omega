@@ -25,8 +25,9 @@ SAFE_PLACEHOLDER_PREFIXES = (
 )
 
 ID_ASSIGNMENT = re.compile(
-    r"(?i)(spreadsheet_id|parent_folder_id|file_id|folder_id|document_id|"
-    r"gmail_message_id|spreadsheetId|parentFolderId|fileId|folderId|documentId)"
+    r"(?i)(spreadsheet_id|parent_folder_id|drive_file_id|google_drive_file_id|"
+    r"file_id|folder_id|document_id|gmail_message_id|spreadsheetId|"
+    r"parentFolderId|driveFileId|googleDriveFileId|fileId|folderId|documentId)"
     r"\s*[=:]\s*[\"']([^\"']+)[\"']"
 )
 
@@ -87,9 +88,6 @@ def looks_like_literal_secret(value: str) -> bool:
     stripped = value.strip()
     if is_safe_placeholder(stripped):
         return False
-    # Provider credentials are generally opaque and materially longer than
-    # ordinary configuration words. Generated shell expressions are excluded
-    # by is_safe_placeholder because they begin with '$'.
     return len(stripped) >= 16
 
 
