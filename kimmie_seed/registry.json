@@ -1,1 +1,206 @@
-{"registry_version":"1.8","updated_at":"2026-08-01T04:17:15+02:00","seed_id":"KIMMIE-IPEP-001","current_verified_stage":"SPROUT","genome_sha256":"d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9","identity_drift":"NONE_DETECTED","latest_assessment":"kimmie_seed/checkpoints/KSA-20260801-009.json","maintenance_owner":"mosianekk-lang","monitoring":{"external_scheduler":"GitHub Actions","workflow":".github/workflows/kimmie-seed-maturity-watch.yml","cadence":"every 6 hours","notification_policy":"stage change, identity drift, owner decision, MATURE or FEDERATED only","workflow_execution_readback":"PASSED","first_successful_workflow_receipt":{"workflow_run_id":"30666696792","source_sha":"360958c4b9140aed1cbf952210467c0c3a749de6","executed_at":"2026-07-31T21:28:39.157893+00:00","receipt_sha256":"37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c","github_readback":"PASSED","receipt_hash_recalculation":"PASSED"},"last_review":{"assessment_id":"KSA-20260801-009","observed_at":"2026-08-01T04:17:15+02:00","repository_head":"09f6db0413fccdc6378cca1b813a3a38d4351611","material_change":true,"qualifying_notification_event":false,"notification":"SUPPRESS","monitoring_contract_drift":"DETECTED_AND_REPAIRED","failed_workflow_run_id":30677686282,"repair_assessment_commit":"8e0b3cc9a8bda4aa58dc55f572c05f6b543dd07d","assessment_sha256":"c76645e685a445b3c65779517bf57fc58430fbc2978ad092dea7d5fc1b3f7f73","checkpoint_sha256":"49454f0f56e8fd882854c106e3ed5318ecb8a0cce88cadaf54d229445a7211cd","ipep_bible_receipt":"KIMMIE SEED MATURITY REVIEW 009","ipep_bible_revision_id":"AIroW36oHwDO4bNUd_E3qLHq_CdPVl1kVlBx8M9G2E-W-1Z0vygv5sAa_QHf9a1xjvWZVu1oCE2ULhR02-8ZtGn5dT2lXHorVFjq73iTWYc","ipep_bible_readback":"PASSED"}},"promotion_gate":{"first_useful_child_capability":"PASSED","external_maturity_workflow_readback":"PASSED","reusable_multi_corpus_child_execution":"PASSED","connector_foundry_local_reference":"PASSED","connector_foundry_provider_execution":"VERIFIED_GOOGLE_DRIVE","current_verified_stage":"SPROUT","next_candidate_stage":"SAPLING","root_promotion":"NO_NEW_PROMOTION","sapling_requirements":{"repeated_successful_maturity_cycles":"PARTIAL","reusable_capability_multiple_corpora_or_environments":"VERIFIED","persistent_monitoring":"PARTIAL","maintenance_evidence":"VERIFIED_REPAIR_CYCLE","recovery_evidence":"NOT_VERIFIED","provenance_toolkit_external_ci_readback":"NOT_VERIFIED","connector_foundry_external_ci_readback":"VERIFIED","connector_foundry_provider_execution":"VERIFIED_GOOGLE_DRIVE"}},"child_lanes":[{"lane_id":"LANE-KIMMIE-NATURE-INTELLIGENCE","verified_stage":"SEED","operational_state":"BLOCKED","authorised_environment":{"github_repository":"VERIFIED","external_acquisition_runtime":"UNVERIFIED"},"required_nutrients":{"licensed_or_authorised_source_corpus":"UNVERIFIED","acquisition_runtime":"UNVERIFIED","ingestion_pipeline":"UNVERIFIED","proof_receipt":"ABSENT","maintenance_owner":"ROOT_OWNER_INHERITED_BOUNDED"},"dependencies":["Authorised nature-intelligence source acquisition","Corpus ingestion and indexing runtime","Source rights and provenance record"],"proof_gates":["Authorised acquisition readback","First corpus ingestion receipt","Source integrity and rights record"],"tests":"NOT_RUN","deployment_surfaces":["GitHub registry only"],"monitoring_data":"Registry checkpoint only","blocker":"External acquisition runtime and corpus-ingestion proof remain unverified","owner_decision_required":false},{"lane_id":"LANE-CONNECTOR-FOUNDRY","verified_stage":"SPROUT","operational_state":"PROVIDER_TEST_PASSED","authorised_environment":{"github_repository":"VERIFIED_READ_WRITE","google_drive_connector":"VERIFIED_READ_WRITE","provider_adapter_runtime":"VERIFIED_GOOGLE_DRIVE"},"required_nutrients":{"reference_connector_implementation":"VERIFIED_MERGED_TO_MAIN","deterministic_conformance_tests":"PASSED_6_OF_6","ects_report":"VERIFIED","proof_receipt":"VERIFIED_PRESENT","external_ci":"VERIFIED_SUCCESS","provider_adapter_execution":"VERIFIED_GOOGLE_DRIVE","independent_provider_readback":"PASSED","maintenance_owner":"mosianekk-lang"},"dependencies":{"local_reference_pr":42,"local_reference_merge_sha":"48bb66e2e4acfac7adf7179bc5061f3e9e6d1e05","provider_pr":43,"provider_merge_sha":"742a456e77d23816ccdb03c2ee07440b1e85aa05","provider_ci_run_id":30677400252,"provider_ci_run_number":440,"provider_ci_conclusion":"success","provider":"google_drive","operation_id":"ECTS-GDRIVE-CANARY-20260801-001","drive_file_id":"1h9UcDmmRNfrnJUwbC_AUvmA8r_TCBuaTObEqTCZOB5U","provider_receipt_path":"evidenceops/connector_foundry/google-drive-canary-receipt-20260801-001.json","provider_receipt_sha256":"0cc28b0f5c5d4bae831fe78ea28d7312aca5e1f23ba90d17f71c0044eef1e12b","write_readback_sha256":"84cbf88375519641c82569041910164ce2e6128a0300dadefc4b1b6189b61871"},"proof_gates":{"reference_connector_executes":"PASSED","conformance_tests":"PASSED","github_default_branch_readback":"PASSED","provider_specific_execution":"PASSED_GOOGLE_DRIVE","independent_provider_readback":"PASSED","provider_ci":"PASSED","provider_receipt_readback":"PASSED"},"tests":["PUT and readback","Idempotent replay","Conflicting replay rejection","Path boundary enforcement","Tamper detection","Receipt journal chain verification","Google Drive canonical JSON create/write/move/readback","Google Drive changed-payload and tamper rejection"],"deployment_surfaces":["GitHub default branch","Local runtime reference environment","Authorised Google Drive connector","IPEP Innovation Bible"],"monitoring_data":{"current":"Provider canary, CI, default-branch receipt and repaired maturity-assessor recognition verified","gap":"No persistent provider health monitor, controlled replay/recovery receipt, or repeated/second-provider cycle"},"next_gate":"SAPLING requires persistent provider monitoring, verified maintenance and recovery evidence, and repeated or multi-provider execution.","owner_decision_required":false},{"lane_id":"LANE-PROVENANCE-PASSPORT","verified_stage":"SPROUT","operational_state":"VERIFYING_SPROUT_PLUS","authorised_environment":{"google_drive":"VERIFIED_READBACK","github_repository":"VERIFIED_READ_WRITE"},"required_nutrients":{"source_manifest":"VERIFIED","sha256_hashes":"VERIFIED","merkle_construction":"VERIFIED","reusable_validator":"VERIFIED_COMMITTED","cli":"VERIFIED_COMMITTED","multi_corpus_execution":"VERIFIED_TWO_AUTHORISED_REAL_CORPORA","durable_private_storage":"VERIFIED","proof_receipt":"VERIFIED_PRESENT","persistent_health_monitor":"NOT_VERIFIED","maintenance_owner":"mosianekk-lang","recovery_evidence":"NOT_VERIFIED"},"dependencies":{"release_id":"EPP-TOOLKIT-20260801-001","release_commit":"390e9f31b78ee51897a28af26b0c3d7ec0c1dad6","release_receipt_sha256":"2c59af33d56fd6d6f4aff41dffcc817db63d674f8a758168a579894135ab7461","first_passport_id":"EPP-BUILDING43-AUDIO-20260731-001","first_merkle_root":"17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa","second_passport_id":"EPP-DHET-SOURCE-MANIFEST-20260801-001","second_merkle_root":"b02f40867211b8eeffa24cf9e2bc8b635228eab3d44fcf055a4648789a640340","second_receipt_sha256":"6d8b16bf5b3204269aa29e0fff4fb207d2d4e3bc0e777c0101e166f26bc57b07","second_private_drive_document_id":"1qeo3ItVPUJSO1KclZC-dsscPd-xgIORgmvMYBTrZdtE"},"proof_gates":{"six_local_regression_tests":"PASSED","two_authorised_real_corpora":"PASSED","total_inclusion_proofs_checked":16,"second_private_drive_readback":"PASSED","repository_readback":"PASSED","external_github_actions_readback":"NOT_PASSED","persistent_monitoring":"NOT_PASSED","controlled_recovery_drill":"NOT_PASSED"},"tests":["Synthetic odd-leaf validation","Odd-leaf duplicate rule and inclusion proofs","Tamper detection","Deterministic record-passport build","Batch validation","CLI build and verify"],"deployment_surfaces":["GitHub reusable package and CLI","Private Google Drive provenance passports","EvidenceOps Innovation Engine live lane registry","IPEP Innovation Bible"],"monitoring_data":{"current":"Release receipt, two-corpus verification and repaired maturity-assessor recognition verified","gap":"No toolkit-specific external CI conclusion, persistent health monitor or controlled recovery receipt"},"next_gate":"SAPLING requires persistent monitoring, verified maintenance operation and controlled recovery evidence, plus external CI readback for the reusable child capability.","owner_decision_required":false},{"lane_id":"LANE-AUDIO-LIVE-TRANSCRIPTION","verified_stage":"SEED","operational_state":"BLOCKED","authorised_environment":{"github_repository":"VERIFIED","provider_runtime":"UNVERIFIED","google_speech_binding":"UNVERIFIED","private_worker_health":"UNVERIFIED"},"required_nutrients":{"provider_credential":"NOT_VERIFIED","google_speech_binding":"NOT_VERIFIED","private_worker":"NOT_VERIFIED","proof_receipt":"ABSENT","maintenance_owner":"ROOT_OWNER_INHERITED_BOUNDED"},"dependencies":["Authorised provider credential","Google Speech runtime binding","Private worker deployment and health readback"],"proof_gates":["Chunk-001 canary","Transcript readback","Integrity and QA receipt"],"tests":"NOT_RUN","deployment_surfaces":["GitHub adapter scaffold only"],"monitoring_data":"Registry blocker state only","blocker":"Authorised provider credential, Google Speech binding and private worker health readback remain unverified","owner_decision_required":false}],"lesson":"Maturity logic now evaluates the current canonical child-lane evidence contract instead of retired field names. The repaired assessor verified Connector Foundry and Provenance Passport as useful SPROUT children, while strict SAPLING gates prevent promotion without repeated cycles, persistent monitoring and recovery evidence."}
+{
+  "registry_version": "1.9",
+  "updated_at": "2026-08-01T05:10:00+02:00",
+  "seed_id": "KIMMIE-IPEP-001",
+  "current_verified_stage": "SPROUT",
+  "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
+  "identity_drift": "NONE_DETECTED",
+  "latest_assessment": "kimmie_seed/checkpoints/KSA-20260801-010.json",
+  "maintenance_owner": "mosianekk-lang",
+  "monitoring": {
+    "external_scheduler": "GitHub Actions",
+    "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
+    "cadence": "every 6 hours",
+    "notification_policy": "stage change, identity drift, owner decision, MATURE or FEDERATED only",
+    "workflow_execution_readback": "PASSED",
+    "persistent_monitoring": "PARTIAL",
+    "last_review": {
+      "assessment_id": "KSA-20260801-010",
+      "observed_at": "2026-08-01T05:10:00+02:00",
+      "material_change": true,
+      "qualifying_notification_event": false,
+      "notification": "SUPPRESS",
+      "assessment_sha256": "8bf7ff65d1461f9c45730b8813290ef5e4dddf2df56f6e73e543891bf5e11db5",
+      "checkpoint_sha256": "f4444d78b8686e4a7f3d390fa159a92db1630ef37851bf9e9f7dca00d1b7a9c6",
+      "ipep_bible_receipt": "KIMMIE SEED MATURITY REVIEW 010",
+      "ipep_bible_readback": "PENDING_WRITE"
+    }
+  },
+  "promotion_gate": {
+    "current_verified_stage": "SPROUT",
+    "next_candidate_stage": "SAPLING",
+    "root_promotion": "NO_NEW_PROMOTION",
+    "sapling_requirements": {
+      "repeated_successful_maturity_cycles": "VERIFIED",
+      "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
+      "persistent_monitoring": "PARTIAL",
+      "maintenance_evidence": "VERIFIED",
+      "recovery_evidence": "VERIFIED_CONNECTOR_FOUNDRY"
+    }
+  },
+  "child_lanes": [
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": {
+        "github_repository": "VERIFIED",
+        "external_acquisition_runtime": "UNVERIFIED"
+      },
+      "required_nutrients": {
+        "licensed_or_authorised_source_corpus": "UNVERIFIED",
+        "acquisition_runtime": "UNVERIFIED",
+        "ingestion_pipeline": "UNVERIFIED",
+        "proof_receipt": "ABSENT",
+        "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED"
+      },
+      "dependencies": [
+        "Authorised nature-intelligence source acquisition",
+        "Corpus ingestion and indexing runtime",
+        "Source rights and provenance record"
+      ],
+      "proof_gates": [
+        "Authorised acquisition readback",
+        "First corpus ingestion receipt",
+        "Source integrity and rights record"
+      ],
+      "tests": "NOT_RUN",
+      "deployment_surfaces": [
+        "GitHub registry only"
+      ],
+      "monitoring_data": "Registry checkpoint only",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "verified_stage": "SPROUT",
+      "operational_state": "RECOVERY_CANARY_PASSED",
+      "authorised_environment": {
+        "github_repository": "VERIFIED_READ_WRITE",
+        "google_drive_connector": "VERIFIED_CREATE_WRITE_READBACK_DELETE",
+        "provider_adapter_runtime": "VERIFIED_GOOGLE_DRIVE"
+      },
+      "required_nutrients": {
+        "reference_connector_implementation": "VERIFIED",
+        "deterministic_conformance_tests": "PASSED_6_OF_6",
+        "proof_receipt": "VERIFIED_PRESENT",
+        "external_ci": "VERIFIED_SUCCESS",
+        "provider_adapter_execution": "VERIFIED_GOOGLE_DRIVE",
+        "independent_provider_readback": "PASSED",
+        "maintenance_owner": "mosianekk-lang",
+        "controlled_recovery": "VERIFIED"
+      },
+      "dependencies": {
+        "provider": "google_drive",
+        "first_provider_cycle": "VERIFIED_HISTORICAL",
+        "second_provider_cycle": "VERIFIED_EPHEMERAL_RECOVERY_CANARY",
+        "recovery_payload_sha256": "5d43635c743964d36de2830d01e39328eb1636decfc95ff1702cb6377c79097a"
+      },
+      "proof_gates": {
+        "reference_connector_executes": "PASSED",
+        "conformance_tests": "PASSED",
+        "provider_specific_execution": "PASSED_GOOGLE_DRIVE",
+        "independent_provider_readback": "PASSED",
+        "repeated_provider_execution": "PASSED",
+        "controlled_recovery": "PASSED",
+        "persistent_provider_monitoring": "NOT_PASSED"
+      },
+      "tests": [
+        "ECTS local 6/6",
+        "Provider create/write/readback",
+        "Changed-payload and tamper rejection",
+        "Second create/write/readback/delete recovery canary"
+      ],
+      "deployment_surfaces": [
+        "GitHub default branch",
+        "Local runtime reference environment",
+        "Authorised Google Drive connector",
+        "IPEP Innovation Bible"
+      ],
+      "monitoring_data": {
+        "current": "Environment access, repeated execution and controlled recovery verified",
+        "gap": "No persistent provider health monitor with repeated scheduled readback"
+      },
+      "next_gate": "SAPLING requires persistent provider monitoring with durable repeated readback.",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "verified_stage": "SPROUT",
+      "operational_state": "VERIFYING_SPROUT_PLUS",
+      "authorised_environment": {
+        "google_drive": "VERIFIED_READBACK",
+        "github_repository": "VERIFIED_READ_WRITE"
+      },
+      "required_nutrients": {
+        "source_manifest": "VERIFIED",
+        "sha256_hashes": "VERIFIED",
+        "merkle_construction": "VERIFIED",
+        "reusable_validator": "VERIFIED",
+        "cli": "VERIFIED",
+        "multi_corpus_execution": "VERIFIED_TWO_AUTHORISED_REAL_CORPORA",
+        "durable_private_storage": "VERIFIED",
+        "proof_receipt": "VERIFIED_PRESENT",
+        "persistent_health_monitor": "NOT_VERIFIED",
+        "maintenance_owner": "mosianekk-lang",
+        "recovery_evidence": "NOT_VERIFIED"
+      },
+      "proof_gates": {
+        "six_local_regression_tests": "PASSED",
+        "two_authorised_real_corpora": "PASSED",
+        "total_inclusion_proofs_checked": 16,
+        "private_drive_readback": "PASSED",
+        "repository_readback": "PASSED",
+        "external_github_actions_readback": "NOT_PASSED",
+        "persistent_monitoring": "NOT_PASSED",
+        "controlled_recovery_drill": "NOT_PASSED"
+      },
+      "deployment_surfaces": [
+        "GitHub reusable package and CLI",
+        "Private Google Drive provenance passports",
+        "IPEP Innovation Bible"
+      ],
+      "monitoring_data": {
+        "current": "Private passport access reconfirmed",
+        "gap": "No toolkit-specific external CI, persistent health monitor or controlled recovery receipt"
+      },
+      "next_gate": "SAPLING requires external CI readback, persistent monitoring and controlled recovery.",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": {
+        "github_repository": "VERIFIED",
+        "provider_runtime": "UNVERIFIED",
+        "google_speech_binding": "UNVERIFIED",
+        "private_worker_health": "UNVERIFIED"
+      },
+      "required_nutrients": {
+        "provider_credential": "NOT_VERIFIED",
+        "google_speech_binding": "NOT_VERIFIED",
+        "private_worker": "NOT_VERIFIED",
+        "proof_receipt": "ABSENT",
+        "maintenance_owner": "ROOT_OWNER_INHERITED_BOUNDED"
+      },
+      "dependencies": [
+        "Authorised provider credential",
+        "Google Speech runtime binding",
+        "Private worker deployment and health readback"
+      ],
+      "proof_gates": [
+        "Chunk-001 canary",
+        "Transcript readback",
+        "Integrity and QA receipt"
+      ],
+      "tests": "NOT_RUN",
+      "deployment_surfaces": [
+        "GitHub adapter scaffold only"
+      ],
+      "monitoring_data": "Registry blocker state only",
+      "owner_decision_required": false
+    }
+  ],
+  "lesson": "Retiring a provider canary must not erase historical proof, but current environment access and recovery must be re-verified without persisting live provider identifiers in a public repository. A successful create/write/readback/delete cycle proves maintenance and recovery, not persistent monitoring."
+}
