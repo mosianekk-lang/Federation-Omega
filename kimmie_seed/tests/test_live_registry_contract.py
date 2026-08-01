@@ -35,6 +35,9 @@ class LiveRegistryContractTests(unittest.TestCase):
         )
         self.assertTrue(assessor.child_is_useful_and_verified(connector))
 
+        expected_sapling_gate = assessor.all_gate_requirements_verified(
+            gate["sapling_requirements"], assessor.SAPLING_REQUIREMENTS
+        )
         result = assessor.assess(
             {"seed_id": self.registry["seed_id"]},
             self.environment,
@@ -43,11 +46,21 @@ class LiveRegistryContractTests(unittest.TestCase):
             "PASSED",
             {"receipt_sha256": "contract-test"},
         )
-        self.assertEqual("SPROUT", result["verified_stage"])
+        self.assertEqual(self.registry["current_verified_stage"], result["verified_stage"])
         self.assertEqual("PASS", result["status"])
         self.assertTrue(result["useful_child_capability_verified"])
         self.assertIn("LANE-CONNECTOR-FOUNDRY", result["verified_useful_child_lanes"])
-        self.assertFalse(result["sapling_gate_verified"])
+        self.assertEqual(expected_sapling_gate, result["sapling_gate_verified"])
+
+    def test_sapling_requires_every_named_gate(self):
+        requirements = self.registry["promotion_gate"]["sapling_requirements"]
+        self.assertEqual(assessor.SAPLING_REQUIREMENTS, set(requirements))
+        if self.registry["current_verified_stage"] == "SAPLING":
+            self.assertTrue(
+                assessor.all_gate_requirements_verified(
+                    requirements, assessor.SAPLING_REQUIREMENTS
+                )
+            )
 
 
 if __name__ == "__main__":
