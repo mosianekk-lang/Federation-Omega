@@ -1,0 +1,16 @@
+{
+  "receipt_id": "RCP-KDV-INPLACE-001",
+  "boundary_id": "BND-KIM-DATAVERSE",
+  "owner": "Kim Kagiso Mosiane",
+  "contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
+  "action": "CREATE_POPULATE_READBACK_RECONCILE_CANONICAL_BRIDGE",
+  "backend": "GOOGLE_DRIVE_GOOGLE_SHEETS_IN_PLACE_BRIDGE",
+  "spreadsheet_id": "1TS64KmgGS30Hr9yHry3kQPzXMtWVMV22utJxhDXd7o8",
+  "parent_folder_id": "1C0QwWOQCocY9cnTOPBNo-13gULPg1DIT",
+  "write_result": "VERIFIED",
+  "readback_result": "VERIFIED",
+  "receipt_row": "RECEIPTS!A3:G3",
+  "boundary_state": "RESOLVED_IN_PLACE",
+  "verified_at": "2026-08-01T04:07:00+02:00",
+  "truth_boundary": "Native Microsoft Dataverse is not claimed as bound; the canonical Kim Dataverse is operating through the authorised in-place Google Drive/Sheets backend."
+}
