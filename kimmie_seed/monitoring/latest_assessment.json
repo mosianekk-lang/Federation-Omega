@@ -10,8 +10,18 @@
   ],
   "workflow_receipt_validation": "PASSED",
   "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
+  "provider_monitor_canary": {
+    "provider": "google_drive",
+    "state": "PASSED",
+    "payload_sha256": "9f6f167de2f6fdb9742d5e22a4e2d48397f535a28a4d53cd1f293cde2ab868d9",
+    "exact_readback": "PASSED",
+    "parent_confinement": "PASSED",
+    "cleanup": "PASSED_404_NOT_FOUND",
+    "public_provider_identifier_persisted": false
+  },
+  "persistent_monitoring": "PARTIAL_ROOT_ONE_POST_REPAIR_CYCLE_AND_PROVIDER_CANARY_CONTINUITY",
   "sapling_gate_verified": false,
-  "next_gate": "SAPLING requires repeated successful maturity cycles, reusable execution, persistent monitoring, maintenance and recovery evidence",
+  "next_gate": "SAPLING requires repeated durable root and provider monitoring cycles, reusable execution, maintenance and recovery evidence",
   "status": "PASS",
-  "assessment_sha256": "c100fe1a54fa04f73fe7049fc41d07dcf9441d716894974c48a1f09a3694cfc2"
+  "assessment_sha256": "818c12007bdc5ce37d75f251cbb0ec3fb537840fc0ac5f3ae0f158ef04ce26a3"
 }
