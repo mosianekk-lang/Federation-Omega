@@ -1,0 +1,130 @@
+version: 1.0.0
+status: ACTIVE_REMEDIATION
+owner: Kim Kagiso Mosiane
+final_authority: Kim Kagiso Mosiane
+
+scope_control:
+  exact_directive_required: true
+  adjacent_work_allowed: false
+  fields:
+    - directive_id
+    - exact_user_wording
+    - required_output
+    - allowed_actions
+    - prohibited_actions
+    - completion_test
+    - supersession
+
+n_semantics:
+  meaning: CONTINUE_CURRENT_EXPLICIT_DIRECTIVE_ONLY
+  mission_expansion: prohibited
+  optional_improvements: prohibited
+  adjacent_work: prohibited
+
+coverage_states:
+  - NOT_DISCOVERED
+  - METADATA_ONLY
+  - TITLE_AND_SUMMARY_READ
+  - PARTIAL_CONTENT_READ
+  - FULL_CONTENT_READ
+  - PROVIDER_NATIVE_STATE_READ
+  - WRITE_AND_READBACK_VERIFIED
+  - EXPLICITLY_EXCLUDED
+  - PROVIDER_INACCESSIBLE
+
+maturity_states:
+  - DISCOVERED
+  - PARTIALLY_READ
+  - FULLY_READ
+  - MAPPED
+  - WRITTEN
+  - READBACK_VERIFIED
+  - TRIGGER_CONFIGURED
+  - TRIGGER_EXECUTED
+  - PROVIDER_BOUND
+  - CANONICAL
+  - COMPLETE
+
+non_equivalence:
+  configured_trigger_is_triggered_run: false
+  map_created_is_estate_fully_read: false
+  comment_added_is_structured_register_updated: false
+  source_present_is_provider_bound: false
+  green_ci_is_production_proof: false
+  local_output_is_canonical_write: false
+
+binding_levels:
+  - BRIDGE_BOUND
+  - SOURCE_STORE_BOUND
+  - PROVIDER_BOUND
+  - SCHEMA_BOUND
+  - MISSION_STATE_BOUND
+  - FULL_KIM_DATAVERSE_BOUND
+  unqualified_bound_term_allowed: false
+
+duplicate_control:
+  required_before_create: true
+  default_action: AMEND_EXISTING_CANONICAL_CONTROL
+  required_fields:
+    - equivalent_search
+    - canonical_status
+    - amend_or_create_decision
+    - supersession_rule
+    - duplicate_risk
+
+classification:
+  - PUBLIC_ARCHITECTURE
+  - PRIVATE_OPERATIONAL_METADATA
+  - SECRET_OR_CREDENTIAL_MATERIAL
+  public_repo_private_ids_allowed: false
+  chat_minimum_necessary_detail: true
+
+scheduling:
+  chatgpt_hosted_scheduling_authorised: false
+  external_runtime_required: true
+  first_run_readback_required: true
+  predeployment_fields:
+    - scheduler_surface
+    - trigger
+    - timezone
+    - authority
+    - output_target
+    - failure_route
+    - first_run_proof
+
+branch_discipline:
+  default_active_branches_per_mission: 1
+  default_active_prs_per_mission: 1
+  separate_pr_reasons:
+    - independent_rollback
+    - different_approval
+    - materially_different_risk
+    - deployment_isolation
+
+stale_state_checks:
+  - BROKEN_CANONICAL_POINTER
+  - SUPERSEDED_RECEIPT
+  - DUPLICATE_BRIDGE
+  - STALE_RUNTIME_STATE
+  - RECEIPT_TARGET_MISMATCH
+  - SCHEMA_DRIFT
+  - MATURITY_OVERCLAIM
+  - UNRESOLVED_TRANSACTION
+
+release_gate:
+  - exact_directive_satisfied
+  - required_reading_complete
+  - execution_complete
+  - target_readback_complete
+  - maturity_validated
+  - duplicate_check_passed
+  - stale_state_audit_passed
+  - unresolved_delta_disclosed
+  - receipt_issued
+  - stop_after_completion
+
+current_truth:
+  entire_estate_fully_read: false
+  entire_estate_reconciled: false
+  private_bridge_core_tabs_fully_read: true
+  psydataverse_register_014_fully_read: true
