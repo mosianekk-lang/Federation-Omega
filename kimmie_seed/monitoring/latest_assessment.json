@@ -1,1 +1,18 @@
-{"assessment_id":"KSA-20260801-008","assessment_sha256":"de33e6363f3145a4195af80e0075efe42ff21830de23234d9220d6369a6b1692","connector_foundry_child_stage":"SPROUT","connector_foundry_ci_run":440,"connector_foundry_provider":"google_drive","connector_foundry_provider_canary":"PASSED","connector_foundry_provider_receipt_sha256":"0cc28b0f5c5d4bae831fe78ea28d7312aca5e1f23ba90d17f71c0044eef1e12b","identity_drift":"NONE_DETECTED","maintenance_evidence":"PARTIAL","missing_required_nutrients":[],"next_gate":"SAPLING requires persistent lane-specific monitoring, verified maintenance operation, controlled recovery evidence and repeated or multi-provider execution.","observed_at":"2026-08-01T03:18:00+02:00","persistent_monitoring":"PARTIAL","recovery_evidence":"NOT_VERIFIED","registry_stage":"SPROUT","reusable_multi_corpus_child_execution":"PASSED","seed_id":"KIMMIE-IPEP-001","status":"PASS_AT_SPROUT","toolkit_local_regression_tests":{"failed":0,"passed":6},"toolkit_release_id":"EPP-TOOLKIT-20260801-001","toolkit_release_receipt_sha256":"2c59af33d56fd6d6f4aff41dffcc817db63d674f8a758168a579894135ab7461","total_inclusion_proofs_checked":16,"useful_child_capability_verified":true,"verified_real_corpora":2,"verified_stage":"SPROUT","workflow_receipt_sha256":"37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c","workflow_receipt_validation":"PASSED"}
+{
+  "seed_id": "KIMMIE-IPEP-001",
+  "verified_stage": "SPROUT",
+  "registry_stage": "SPROUT",
+  "identity_drift": "NONE_DETECTED",
+  "missing_required_nutrients": [],
+  "useful_child_capability_verified": true,
+  "verified_useful_child_lanes": [
+    "LANE-CONNECTOR-FOUNDRY",
+    "LANE-PROVENANCE-PASSPORT"
+  ],
+  "workflow_receipt_validation": "PASSED",
+  "workflow_receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
+  "sapling_gate_verified": false,
+  "next_gate": "SAPLING requires repeated successful maturity cycles, reusable execution, persistent monitoring, maintenance and recovery evidence",
+  "status": "PASS",
+  "assessment_sha256": "c76645e685a445b3c65779517bf57fc58430fbc2978ad092dea7d5fc1b3f7f73"
+}
