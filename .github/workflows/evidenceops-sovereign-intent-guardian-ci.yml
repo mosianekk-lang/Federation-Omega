@@ -1,0 +1,36 @@
+name: EvidenceOps Sovereign Intent Guardian CI
+
+on:
+  pull_request:
+    paths:
+      - "evidenceops/sovereign_intent_guardian/**"
+      - ".github/workflows/evidenceops-sovereign-intent-guardian-ci.yml"
+  push:
+    branches: [main]
+    paths:
+      - "evidenceops/sovereign_intent_guardian/**"
+      - ".github/workflows/evidenceops-sovereign-intent-guardian-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  verify-read-only-foundation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Run focused failure-first tests
+        working-directory: evidenceops/sovereign_intent_guardian
+        run: PYTHONPATH=. python -m unittest discover -s tests -v
+      - name: Verify static no-effect boundary
+        working-directory: evidenceops/sovereign_intent_guardian
+        run: python verify_guardian.py
+      - name: Validate MODISA build contract
+        working-directory: evidenceops/sovereign_intent_guardian
+        run: python validate_build_contract.py BUILD_CONTRACT.json --require-proof
+      - name: Re-run public repository boundary scan
+        run: python evidenceops/security/public_repository_leak_guard.py

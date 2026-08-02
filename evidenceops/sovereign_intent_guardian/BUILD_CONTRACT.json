@@ -1,0 +1,151 @@
+{
+  "contract_version": "3.3",
+  "classification": "PUBLIC_GENERIC_READ_ONLY_CONTROL_SOFTWARE_NO_PRIVATE_EVIDENCE",
+  "mission": {
+    "id": "KIM-DATAVERSE-SOVEREIGN-INTENT-GUARDIAN-20260802",
+    "version": 2,
+    "goal": "Deliver a separate durable, read-only owner-intent audit foundation without granting effect or owner authority.",
+    "user": "Formation-governed EvidenceOps operator requiring zero manual setup and zero new recurring cost.",
+    "workflow": "validate a hash/reference-only request against a configured complete request/action allowlist, enqueue idempotently, claim with a fenced lease, evaluate closed-enum deterministic policy, optionally validate a data-only advisory receipt, recompute before commit with stop and ledger readback, then independently recompute semantics",
+    "data": "canonical generic mission metadata, SHA-256 complete request/action bindings, value-suppressed action metadata, local SQLite task state, mission-version floors, hash-chained events, delivered-output occurrences and generic structured learning incidents",
+    "interface": "local Python API and explicit-path command-line interface",
+    "stack": "Python standard library 3.12 and SQLite",
+    "environment": "local single-host verification only; no cloud or provider runtime",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation-governed; negative-only SIG authority; OIFA review; MODISA Code-Forge v3.3",
+    "failure": "fail closed on stale sources, stop, fencing, policy, schema, secret-like, semantic and authority defects",
+    "testing": "failure-first unit, integration, adversarial, static-boundary and semantic-readback verification",
+    "deployment": "not authorised, not configured and not performed",
+    "continuity": "SQLite idempotency, configured complete request/action allowlists, version-independent active stops, persisted mission-version floors, leases, fencing, retry/dead letter, heartbeats, output ledger, event chain, governed incident learning and handoff files"
+  },
+  "assumptions": {
+    "stack": "Python 3.12 standard library; no third-party runtime dependencies",
+    "runtime": "one local worker process or bounded one-shot invocations on a single host",
+    "storage": "one explicit local SQLite file using WAL and BEGIN IMMEDIATE",
+    "authentication": "no remote interface; configured request/resume registries are exact local allowlists rather than authenticated issuer or signature proof; worker and boot IDs are liveness identifiers, not owner authority",
+    "deployment": "not deployed; future runtime integration requires a separate mission, Formation permit and live proof"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "N/A: local CLI only; no browser or remote UI",
+      "backend": "closed-enum deterministic policy engine and worker accepting only data-only advisory receipts",
+      "database": "separate sig_* SQLite schema with transactional claims and hash chains",
+      "queue": "SQLite task table with idempotency, availability and terminal states",
+      "worker": "explicit worker/boot identity, one-shot execution, heartbeat and fenced completion",
+      "scheduler": "not deployed; external invocation is a future separately proven boundary",
+      "cache": "N/A: no cache; canonical database state is authoritative",
+      "storage": "local SQLite database; runtime files excluded from version control",
+      "authentication": "local-only configured allowlists for request/action and stop-resume records; external issuer authentication, signatures and expiry validation are not implemented or claimed"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE",
+      "STOP_LATCHED",
+      "STALE_MISSION_SOURCE_OR_VERSION_FLOOR",
+      "LEASE_OR_FENCE_INVALID",
+      "SEMANTIC_READBACK_FAILED",
+      "SECRET_LIKE_CONTENT_REJECTED"
+    ],
+    "observability": {
+      "correlation_ids": "task UUID, idempotency key, mission/version, worker/boot ID and fence generation",
+      "health_checks": "schema, state counts, control generation, active stops, last heartbeat, event chain and output-ledger integrity",
+      "structured_logs": "no raw log sink; bounded structured CLI JSON and database reason codes only",
+      "audit_logs": "append-only SHA-256 event chain atomically written with transitions",
+      "metrics_alerts": "local health exposes dead-letter counts, active stops and heartbeat state; no external alert route is configured"
+    }
+  },
+  "testing": {
+    "unit": "contracts, canonicalization, closed-enum verdicts, cost/burden, configured complete request/action bindings, closed state/proof claims and advisory-receipt validation",
+    "integration": "SQLite enqueue, claim, fencing, version-independent stop/resume, persistent version floors, heartbeat, retries, dead letters, ledgers and semantic readback",
+    "e2e_or_smoke": "initialize, enqueue, run one local worker, complete a read-only audit and verify semantic receipt",
+    "fixtures_mocks": "synthetic hashes, generic mission IDs and immutable advisory receipt values only; no executable providers",
+    "failure_first": "unknown effects and maturity aliases, delete-resource bypass, self-asserted or action-unbound attestations, active-stop version bypass, stale post-resume re-entry, forged completion, secret-shaped and credential-name-shaped identifier or reason metadata, untyped transient flags, raw-advisory persistence, false health, callable provider injection, expired/ABA leases, retry denial and chain tampering",
+    "commands": [
+      "PYTHONPATH=. python -m unittest discover -s tests -v",
+      "python verify_guardian.py",
+      "python validate_build_contract.py BUILD_CONTRACT.json --require-proof"
+    ]
+  },
+  "delivery": {
+    "file_tree": [
+      ".gitignore",
+      "README.md",
+      "FORMATION_SPEC.md",
+      "PROJECT_MEMORY.md",
+      "AI_HANDOFF.md",
+      "LEARNING_LOOP.md",
+      "LEARNING_INCIDENTS.json",
+      "BUILD_CONTRACT.json",
+      "validate_build_contract.py",
+      "verify_guardian.py",
+      "sovereign_intent_guardian/__init__.py",
+      "sovereign_intent_guardian/__main__.py",
+      "sovereign_intent_guardian/cli.py",
+      "sovereign_intent_guardian/contracts.py",
+      "sovereign_intent_guardian/policy.py",
+      "sovereign_intent_guardian/provider.py",
+      "sovereign_intent_guardian/store.py",
+      "sovereign_intent_guardian/worker.py",
+      "tests/__init__.py",
+      "tests/helpers.py",
+      "tests/test_contracts_policy.py",
+      "tests/test_store.py",
+      "tests/test_worker_adversarial.py"
+    ],
+    "exact_code_files": [
+      "sovereign_intent_guardian/contracts.py",
+      "sovereign_intent_guardian/policy.py",
+      "sovereign_intent_guardian/provider.py",
+      "sovereign_intent_guardian/store.py",
+      "sovereign_intent_guardian/worker.py",
+      "sovereign_intent_guardian/cli.py",
+      "verify_guardian.py"
+      ,"validate_build_contract.py"
+    ],
+    "setup_commands": ["No dependency installation required; use Python 3.12 standard library."],
+    "run_commands": ["PYTHONPATH=. python -m sovereign_intent_guardian --database /tmp/sig-local.db init-db"],
+    "test_commands": [
+      "PYTHONPATH=. python -m unittest discover -s tests -v",
+      "python verify_guardian.py"
+      ,"python validate_build_contract.py BUILD_CONTRACT.json --require-proof"
+    ],
+    "deploy_commands": ["NOT_AUTHORISED: no deployment command exists in this foundation."],
+    "rollback_commands": ["Stop the local worker, preserve the database for audit, and remove only the isolated draft branch after separate authorisation."],
+    "debugging": "Inspect local status/readback JSON and safe reason codes; never persist stack traces, raw advisory bodies, evidence or credentials. Fingerprint every reproduced defect and patch the smallest governed control."
+  },
+  "formation": {
+    "gate_decision": "EXECUTE",
+    "single_effectful_path": true,
+    "mission_id": "KIM-DATAVERSE-SOVEREIGN-INTENT-GUARDIAN-20260802",
+    "mission_version": 2,
+    "authority_class": "A1",
+    "effectful_permit": "single-use A1 implementation permit consumed; commit, publication, merge and deployment excluded"
+  },
+  "continuity": {
+    "idempotency": "unique key plus canonical request hash; same payload joins, different payload conflicts",
+    "checkpoints": "hash-chained task events, task state, delivered-output ledger, immutable semantic receipt and deterministically fingerprinted structured learning incidents",
+    "resume_conditions": "typed transient retry only; stop clearing requires expected generation, newer mission version and an exact configured resume record, terminally quarantines older matching tasks and persists a minimum accepted version",
+    "handoff_files": ["README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md", "LEARNING_LOOP.md", "LEARNING_INCIDENTS.json", "BUILD_CONTRACT.json"],
+    "stop_switch": "active global, mission and requirement latches block all matching versions, increment the global control generation, fence all older leases and persist per-scope minimum-version floors on clear"
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": "51 focused guardian tests passed after repeated independent red-team waves, including active-stop version blocking, persistent version floors, complete request/action attestations, closed state/proof vocabularies, credential-name and secret-value identifier screening, closed reason codes, typed retry classification, raw advisory rejection and evidence-bound learning validation; repository-wide retest, fresh frozen-source review and exact-head CI remain publication gates.",
+    "semantic_verification": "local end-to-end task completed with SEMANTIC_READBACK_VERIFIED after request/result hashes, output ledger, event chain and deterministic policy recomputation matched.",
+    "deployment_readback": "NOT_APPLICABLE_NOT_DEPLOYED",
+    "unresolved_defects": []
+  }
+}
