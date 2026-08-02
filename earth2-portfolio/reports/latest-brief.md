@@ -1,9 +1,9 @@
 # EARTH 2.0 Portfolio OS Brief
 
-Updated: 2026-08-02T18:10:19.874629+00:00
+Updated: 2026-08-02T19:31:13.144633+00:00
 
 - Portfolio size: 10
 - Eligible candidates: 2
 - Advanced this cycle: 2
-- E2K-0007 Integrity Underwriting Feed: SOLD → DELIVERED
-- E2K-0008 Federated Accountability Mesh: SOLD → DELIVERED
+- E2K-0007 Integrity Underwriting Feed: DELIVERED → RECURRING
+- E2K-0008 Federated Accountability Mesh: DELIVERED → RECURRING
