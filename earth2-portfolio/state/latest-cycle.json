@@ -1,45 +1,38 @@
 {
-  "advanced_count": 5,
+  "advanced_count": 4,
   "advances": [
     {
-      "from": "RECURRING",
-      "id": "E2K-0010",
-      "name": "Expert Genome Agent Foundry",
-      "priority": 92.1,
-      "to": "LICENSED"
-    },
-    {
-      "from": "COMMERCIAL_CANDIDATE",
+      "from": "OFFER_READY",
       "id": "E2K-0009",
       "name": "Kim Value Algorithm",
       "priority": 88.2,
-      "to": "OFFER_READY"
+      "to": "SOLD"
     },
     {
-      "from": "BENCHMARKED",
+      "from": "PILOT_CANDIDATE",
       "id": "E2K-0005",
       "name": "Burden Transfer Detector",
       "priority": 87.45,
-      "to": "PILOT_CANDIDATE"
+      "to": "PILOT_ACTIVE"
     },
     {
-      "from": "GENOME_READY",
+      "from": "PROTOTYPE_CANDIDATE",
       "id": "E2K-0007",
       "name": "Integrity Underwriting Feed",
       "priority": 86.9,
-      "to": "PROTOTYPE_CANDIDATE"
+      "to": "PROTOTYPE_BUILT"
     },
     {
-      "from": "GENOME_READY",
+      "from": "PROTOTYPE_CANDIDATE",
       "id": "E2K-0008",
       "name": "Federated Accountability Mesh",
       "priority": 86.45,
-      "to": "PROTOTYPE_CANDIDATE"
+      "to": "PROTOTYPE_BUILT"
     }
   ],
-  "blocked_count": 5,
-  "eligible_candidates": 5,
+  "blocked_count": 6,
+  "eligible_candidates": 4,
   "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-08-01T23:08:06.458304+00:00"
+  "timestamp": "2026-08-02T00:09:13.587535+00:00"
 }
