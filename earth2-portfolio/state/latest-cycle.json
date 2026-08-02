@@ -2,23 +2,23 @@
   "advanced_count": 2,
   "advances": [
     {
-      "from": "DELIVERED",
+      "from": "RECURRING",
       "id": "E2K-0007",
       "name": "Integrity Underwriting Feed",
       "priority": 86.9,
-      "to": "RECURRING"
+      "to": "LICENSED"
     },
     {
-      "from": "DELIVERED",
+      "from": "RECURRING",
       "id": "E2K-0008",
       "name": "Federated Accountability Mesh",
       "priority": 86.45,
-      "to": "RECURRING"
+      "to": "LICENSED"
     }
   ],
   "blocked_count": 8,
   "eligible_candidates": 2,
   "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-08-02T19:31:13.144633+00:00"
+  "timestamp": "2026-08-02T21:08:30.399156+00:00"
 }
