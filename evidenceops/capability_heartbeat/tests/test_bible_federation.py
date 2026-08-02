@@ -29,6 +29,9 @@ class BibleFederationTests(unittest.TestCase):
         child = self.federation.make_child_genesis("NODE-EVIDENCEOPS-CHILD", self.heartbeat)
         self.assertEqual(child["parent_node_id"], self.contract["node_id"])
         self.assertFalse(child["effectful_execution_inherited"])
+        self.assertTrue(child["google_cloud_capability_inherited"])
+        self.assertEqual("FULL_PROJECT_CONTROL", child["google_cloud_control_breadth"])
+        self.assertFalse(child["raw_cloud_credentials_inherited"])
         self.assertIn("READ_BACK_REGISTRY_RECEIPT", child["required_startup_sequence"])
 
     def test_unauthorized_child_is_rejected(self):

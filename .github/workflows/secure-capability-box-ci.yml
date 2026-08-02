@@ -5,6 +5,7 @@ on:
     paths:
       - "evidenceops/secure_capability_box/**"
       - "evidenceops/build_system/**"
+      - "evidenceops/cloud_capability/**"
       - "evidenceops/security/public_repository_leak_guard.py"
       - ".github/workflows/secure-capability-box-ci.yml"
   push:
@@ -13,6 +14,7 @@ on:
     paths:
       - "evidenceops/secure_capability_box/**"
       - "evidenceops/build_system/**"
+      - "evidenceops/cloud_capability/**"
       - "evidenceops/security/public_repository_leak_guard.py"
       - ".github/workflows/secure-capability-box-ci.yml"
   workflow_dispatch:
@@ -37,6 +39,10 @@ jobs:
         run: python -W error::ResourceWarning -m unittest discover -s tests -v
       - name: Run objective-completion regression tests
         run: python -W error::ResourceWarning -m unittest discover -s evidenceops/build_system/tests -v
+      - name: Run permanent cloud-capability regression tests
+        run: python -W error::ResourceWarning -m unittest discover -s evidenceops/cloud_capability/tests -v
+      - name: Require cloud capability inheritance
+        run: python -m evidenceops.cloud_capability.inheritance --require-all-bound
       - name: Evaluate active Secure Capability Box mission
         run: |
           python -m evidenceops.build_system.objective_completion_guard \
@@ -54,6 +60,6 @@ jobs:
         working-directory: evidenceops/secure_capability_box
         run: python -m compileall -q secure_capability_box
       - name: Compile EvidenceOps build controls
-        run: python -m compileall -q evidenceops/build_system
+        run: python -m compileall -q evidenceops/build_system evidenceops/cloud_capability
       - name: Scan public repository content
         run: python evidenceops/security/public_repository_leak_guard.py

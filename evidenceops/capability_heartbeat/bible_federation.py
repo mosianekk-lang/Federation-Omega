@@ -147,6 +147,11 @@ class BibleFederation:
                 "READ_BACK_REGISTRY_RECEIPT",
             ],
             "effectful_execution_inherited": False,
+            "google_cloud_capability_inherited": True,
+            "google_cloud_control_breadth": "FULL_PROJECT_CONTROL",
+            "google_cloud_contract_ref": "evidenceops/cloud_capability/contract.json",
+            "cloud_action_requires_current_formation_permit": True,
+            "raw_cloud_credentials_inherited": False,
         }
         return {**body, "genesis_sha256": sha256_value(body)}
 

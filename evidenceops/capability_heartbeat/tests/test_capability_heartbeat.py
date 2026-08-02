@@ -18,7 +18,7 @@ class CapabilityHeartbeatTests(unittest.TestCase):
         report = CapabilityHeartbeatEngine(ROOT, REGISTRY).run(CONTEXT)
         systems = {item["system"] for item in report["heartbeats"]}
         self.assertTrue({"Federation Omega", "Secondary Brain / Kim DataVerse", "MODISA", "EvidenceOps"}.issubset(systems))
-        self.assertEqual(report["source_count"], 7)
+        self.assertEqual(report["source_count"], 8)
         self.assertFalse(report["external_execution_attempted"])
 
     def test_current_workflow_selects_primary_and_cross_system_assistants(self):

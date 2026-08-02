@@ -149,6 +149,27 @@
           "external_effect": true
         }
       ]
+    },
+    {
+      "source_id": "evidenceops-google-cloud",
+      "system": "EvidenceOps Permanent Google Cloud Capability",
+      "evidence_paths": ["evidenceops/cloud_capability/contract.json", "evidenceops/cloud_capability/capability.py", "evidenceops/cloud_control/bootstrap_evidenceops_cloud.sh"],
+      "capabilities": [
+        {
+          "capability_id": "evidenceops-full-project-control",
+          "name": "Inherited full Google Cloud project discovery, administration, automation, deployment, repair, rollback and readback",
+          "tags": ["admin", "automation", "cloud", "deploy", "discover", "iam", "integration", "readback", "recovery"],
+          "route": "evidenceops-cloud-operator-via-secure-capability-box",
+          "state": "RUNTIME_DEPENDENT",
+          "proof_level": "TESTED",
+          "quality": 0.96,
+          "safety": 0.95,
+          "reuse": 1.0,
+          "cost": 0,
+          "authority_class": "A4",
+          "external_effect": true
+        }
+      ]
     }
   ]
 }

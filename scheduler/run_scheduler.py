@@ -15,6 +15,7 @@ if str(REPOSITORY_ROOT) not in sys.path:
 from evidenceops.capability_heartbeat import CapabilityHeartbeatEngine
 from evidenceops.capability_heartbeat.system import EvidenceOpsHeartbeatSystem
 from evidenceops.build_system.objective_completion_guard import evaluate as evaluate_completion
+from evidenceops.cloud_capability.inheritance import audit_inheritance
 
 CRON_TO_MODE = {
     "17 * * * *": "hourly",
@@ -63,6 +64,10 @@ def main() -> int:
     parser.add_argument(
         "--completion-output",
         default="scheduler/runtime/objective-completion.json",
+    )
+    parser.add_argument(
+        "--cloud-capability-output",
+        default="scheduler/runtime/cloud-capability-inheritance.json",
     )
     args = parser.parse_args()
 
@@ -167,6 +172,16 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    cloud_capability = audit_inheritance(".")
+    cloud_capability["evaluatedAt"] = now
+    cloud_capability["report_sha256"] = canonical_hash(cloud_capability)
+    cloud_output = Path(args.cloud_capability_output)
+    cloud_output.parent.mkdir(parents=True, exist_ok=True)
+    cloud_output.write_text(
+        json.dumps(cloud_capability, indent=2, sort_keys=True) + "\n",
+        encoding="utf-8",
+    )
+
     print("# EvidenceOps External Scheduler")
     print(f"Mode: {mode}")
     print(f"Tasks selected: {len(assessments)}")
@@ -187,6 +202,11 @@ def main() -> int:
         f"Objective completion: {completion['decision']} | "
         f"continue={completion['mustContinue']} | "
         f"final-response={completion['finalResponsePermitted']}"
+    )
+    print(
+        f"Cloud capability inheritance: all-bound={cloud_capability['all_bound']} | "
+        f"contracts={len(cloud_capability['build_contracts_checked'])} | "
+        f"missing={len(cloud_capability['missing_bindings'])}"
     )
     return 0
 

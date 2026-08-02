@@ -131,5 +131,12 @@
       "production storage/HA decision",
       "threat model, security review and rotation/recovery drills"
     ]
+  },
+  "cloud_capability_inheritance": {
+    "required": true,
+    "contract_ref": "evidenceops/cloud_capability/contract.json",
+    "scope": "FULL_PROJECT_CONTROL",
+    "route": "CENTRAL_GOVERNED_OPERATOR_AND_SECURE_CAPABILITY_BOX",
+    "raw_credentials": false
   }
 }

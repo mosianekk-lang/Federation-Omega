@@ -99,5 +99,12 @@
     "semantic_verification": "Local turn transaction, same-response acknowledgement/assistance, privacy projection, replay protection, adapter remediation and Kimmie PRE/POST behavior verified",
     "unresolved_defects": [],
     "known_activation_obligations": ["merge to default branch", "complete hosted CI and container canary", "bind durable production SQLite-compatible storage", "bind private runtime heartbeat secret", "grant MCP runtime Cloud Run invoker", "deploy MCP adapter", "scan heartbeat tools in ChatGPT", "read back one hosted turn response and adapter delivery receipt", "verify each provider adapter before changing its surface state to LIVE_BIDIRECTIONAL_VERIFIED"]
+  },
+  "cloud_capability_inheritance": {
+    "required": true,
+    "contract_ref": "evidenceops/cloud_capability/contract.json",
+    "scope": "FULL_PROJECT_CONTROL",
+    "route": "CENTRAL_GOVERNED_OPERATOR_AND_SECURE_CAPABILITY_BOX",
+    "raw_credentials": false
   }
 }

@@ -113,6 +113,15 @@
       "state": "READY",
       "action": "Evaluate every active EvidenceOps system build; block checkpoint-only closure and select the next authorised automated action while terminal fruit remains open.",
       "proof_gate": "Objective-completion decision receipt with operational layers, terminal fruit and route state"
+    },
+    {
+      "task_id": "EXT-013",
+      "title": "Permanent Google Cloud capability inheritance",
+      "cadence": "hourly",
+      "priority": 100,
+      "state": "READY",
+      "action": "Audit every EvidenceOps system, subsystem, AI agent and governed element for inherited full-project-control binding; automatically register missing elements and require identity, provider canary and semantic readback before PROVEN.",
+      "proof_gate": "All build contracts and runtime manifests reference the canonical cloud capability plus current operator identity/canary/readback evidence"
     }
   ]
 }

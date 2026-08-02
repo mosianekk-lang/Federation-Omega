@@ -256,6 +256,74 @@ if [[ "$MODE" == "deploy" ]]; then
     --set-secrets="OMEGA_MCP_SHARED_SECRET=omega-mcp-shared-secret:latest" \
     --min-instances=0 --max-instances=3 --memory=512Mi --cpu=1 \
     --timeout=120 --quiet
+  gcloud run deploy evidenceops-cloud-control-internal \
+    --project "$PROJECT_ID" --region "$REGION" --source=omega_control_plane \
+    --service-account="$OPERATOR_SA" --no-allow-unauthenticated \
+    --set-env-vars="PROJECT_ID=${PROJECT_ID},REGION=${REGION},ALLOW_MUTATIONS=true,TRUST_CLOUD_RUN_IAM=true" \
+    --min-instances=0 --max-instances=3 --memory=512Mi --cpu=1 \
+    --timeout=120 --quiet
+  internal_operator_url="$(gcloud run services describe evidenceops-cloud-control-internal \
+    --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+  mapfile -t evidenceops_runtime_accounts < <(
+    gcloud run services list --project "$PROJECT_ID" --region "$REGION" \
+      --format='csv[no-heading](metadata.name,spec.template.spec.serviceAccountName)' | \
+      awk -F, '$1 ~ /^(evidenceops-|federation-omega|modisa-|architron|secondary-brain)/ && $2 != "" {print $2}' | \
+      sort -u
+  )
+  for runtime_account in "${evidenceops_runtime_accounts[@]}"; do
+    gcloud run services add-iam-policy-binding evidenceops-cloud-control-internal \
+      --project "$PROJECT_ID" --region "$REGION" \
+      --member="serviceAccount:${runtime_account}" --role=roles/run.invoker --quiet >/dev/null
+  done
+  python3 - "$INVENTORY_DIR/cloud-capability-binding.json" "$internal_operator_url" "$PROJECT_ID" "${#evidenceops_runtime_accounts[@]}" <<'PY'
+import hashlib, json, pathlib, sys
+path, url, project_id, count = sys.argv[1:]
+record={
+  "schema":"EVIDENCEOPS-PERMANENT-CLOUD-CAPABILITY-BINDING-1",
+  "target_project":project_id,
+  "operator_service":"evidenceops-cloud-control-internal",
+  "operator_url_sha256":hashlib.sha256(url.encode()).hexdigest(),
+  "runtime_service_identities_bound":int(count),
+  "authentication":"PRIVATE_CLOUD_RUN_IAM_AND_SERVICE_IDENTITY",
+  "control_breadth":"FULL_PROJECT_CONTROL",
+  "raw_credentials_distributed":False,
+  "semantic_readback":"PENDING_CANARY"
+}
+pathlib.Path(path).write_text(json.dumps(record,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+PY
+  internal_identity_token="$(gcloud auth print-identity-token)"
+  python3 - "$INVENTORY_DIR/cloud-capability-canary-request.json" <<'PY'
+import json, pathlib, sys
+pathlib.Path(sys.argv[1]).write_text(json.dumps({
+  "jsonrpc":"2.0","id":"permanent-cloud-capability-canary",
+  "method":"tools/call","params":{"name":"omega_inventory","arguments":{}}
+}),encoding="utf-8")
+PY
+  curl --fail --silent "${internal_operator_url}/mcp" \
+    -H "Authorization: Bearer ${internal_identity_token}" \
+    -H 'content-type: application/json' \
+    --data-binary "@$INVENTORY_DIR/cloud-capability-canary-request.json" \
+    > "$INVENTORY_DIR/cloud-capability-canary-response.json"
+  python3 - "$INVENTORY_DIR/cloud-capability-binding.json" "$INVENTORY_DIR/cloud-capability-canary-response.json" "$PROJECT_ID" <<'PY'
+import hashlib, json, pathlib, sys
+binding_path = pathlib.Path(sys.argv[1])
+response_path = pathlib.Path(sys.argv[2])
+project_id = sys.argv[3]
+response=json.loads(response_path.read_text(encoding="utf-8"))
+result=response.get("result",{}).get("structuredContent",{})
+assert result.get("projectId") == project_id, response
+assert int(result.get("resourceCount",0)) > 0, response
+binding=json.loads(binding_path.read_text(encoding="utf-8"))
+binding.update({
+  "semantic_readback":"INVENTORY_PROVIDER_READBACK_VERIFIED",
+  "resource_count":result["resourceCount"],
+  "canary_response_sha256":hashlib.sha256(response_path.read_bytes()).hexdigest()
+})
+binding_path.write_text(json.dumps(binding,indent=2,sort_keys=True)+"\n",encoding="utf-8")
+print("PERMANENT_CLOUD_CAPABILITY_IDENTITY_AND_PROVIDER_READBACK_VERIFIED")
+PY
+  unset internal_identity_token
+  rm -f "$INVENTORY_DIR/cloud-capability-canary-request.json"
   service_url="$(gcloud run services describe evidenceops-omega-control-plane \
     --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
   curl --fail --silent "$service_url/health" > "$INVENTORY_DIR/omega-health.json"
