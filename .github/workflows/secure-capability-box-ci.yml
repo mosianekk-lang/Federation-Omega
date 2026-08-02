@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "evidenceops/secure_capability_box/**"
+      - "evidenceops/build_system/**"
       - "evidenceops/security/public_repository_leak_guard.py"
       - ".github/workflows/secure-capability-box-ci.yml"
   push:
@@ -11,6 +12,7 @@ on:
       - main
     paths:
       - "evidenceops/secure_capability_box/**"
+      - "evidenceops/build_system/**"
       - "evidenceops/security/public_repository_leak_guard.py"
       - ".github/workflows/secure-capability-box-ci.yml"
   workflow_dispatch:
@@ -33,8 +35,25 @@ jobs:
       - name: Run Secure Capability Box tests
         working-directory: evidenceops/secure_capability_box
         run: python -W error::ResourceWarning -m unittest discover -s tests -v
+      - name: Run objective-completion regression tests
+        run: python -W error::ResourceWarning -m unittest discover -s evidenceops/build_system/tests -v
+      - name: Evaluate active Secure Capability Box mission
+        run: |
+          python -m evidenceops.build_system.objective_completion_guard \
+            evidenceops/secure_capability_box/objective_completion_state.json \
+            --output /tmp/objective-completion.json
+          python - <<'PY'
+          import json
+          value = json.load(open('/tmp/objective-completion.json', encoding='utf-8'))
+          assert value['mustContinue'] is True
+          assert value['completionClaimPermitted'] is False
+          assert value['finalResponsePermitted'] is False
+          assert value['ownerActionRequired'] is False
+          PY
       - name: Compile package
         working-directory: evidenceops/secure_capability_box
         run: python -m compileall -q secure_capability_box
+      - name: Compile EvidenceOps build controls
+        run: python -m compileall -q evidenceops/build_system
       - name: Scan public repository content
         run: python evidenceops/security/public_repository_leak_guard.py

@@ -3,7 +3,7 @@
   "mission": {
     "id": "EESBE-24",
     "version": 8,
-    "goal": "Reconstruct a public-safe Secure Capability Box production foundation.",
+    "goal": "Operate a deployed, authenticated Secure Capability Box with independent live readback; source completion is an internal checkpoint only.",
     "user": "EvidenceOps ICT Department and governed Kim DataVerse workloads",
     "workflow": "authorize, issue scoped handle, atomically consume, resolve exact secret version, execute one connector action, emit redacted proof",
     "data": "secret references, capability claims, metadata-only grants, digests and hash-chained audit events",
@@ -14,8 +14,8 @@
     "governance": "Formation Engine, public repository boundary and least privilege",
     "failure": "fail closed with typed, redacted errors",
     "testing": "stdlib unit/integration tests, compilation, leak guard and semantic contract validation",
-    "deployment": "not deployed in Cycle 002; private activation requires a new Formation permit",
-    "continuity": "operation idempotency, one-time handles, metadata snapshot/restore and AI handoff"
+    "deployment": "activation mission remains open until private deployment and authenticated provider readback are proven",
+    "continuity": "repository-native objective-completion guard, 24-hour rollover, operation idempotency, one-time handles, metadata snapshot/restore and AI handoff"
   },
   "classification": "PUBLIC_SAFE_SOURCE_PRIVATE_RUNTIME_BINDINGS",
   "assumptions": {
@@ -23,7 +23,7 @@
     "runtime": "isolated service identity with HTTPS egress to approved providers/connectors",
     "storage": "SQLite is local proof; production topology must be explicitly selected",
     "authentication": "workload identity plus managed secret/KMS binding",
-    "deployment": "separate governed private activation cycle"
+    "deployment": "same governed mission continues automatically through private activation and readback"
   },
   "architecture": {
     "components": {
@@ -61,6 +61,8 @@
     "failure_first": "tamper, expiry, revocation, replay, conflict, concurrency and audit mutation",
     "commands": [
       "python -m unittest discover -s tests -v",
+      "python -m unittest discover -s evidenceops/build_system/tests -v",
+      "python -m evidenceops.build_system.objective_completion_guard evidenceops/secure_capability_box/objective_completion_state.json",
       "python -m compileall -q secure_capability_box",
       "python ../security/public_repository_leak_guard.py"
     ]
@@ -81,7 +83,7 @@
     "setup_commands": ["python -m pip install -e .", "python -m pip install -e '.[google,federation]'"],
     "run_commands": ["instantiate SecureCapabilityBroker with private provider, connector and policy bindings"],
     "test_commands": ["python -m unittest discover -s tests -v"],
-    "deploy_commands": ["NOT_EXECUTED: obtain a new Formation permit and deploy through the existing Federation Omega pipeline"],
+    "deploy_commands": ["continue the active Formation-authorized deployment path; do not stop at source or CI checkpoints"],
     "rollback_commands": ["disable broker workload identity, revoke outstanding handles, restore prior deployment revision"],
     "debugging": "use typed failure class, operation_id, readiness output and verified redacted audit chain; never inspect secret payloads"
   },
@@ -102,7 +104,10 @@
     "checkpoints": "atomic grant reservation, completion receipt and hash-chained audit",
     "resume_conditions": "new valid handle and matching operation fingerprint, or verified metadata restore",
     "handoff_files": ["PROJECT_MEMORY.md", "AI_HANDOFF.md", "FORMATION_SPEC.md", "BUILD_CONTRACT.json"],
-    "stop_switch": "stop issuance, revoke outstanding handles and disable the broker workload identity"
+    "stop_switch": "stop issuance, revoke outstanding handles and disable the broker workload identity",
+    "objective_completion_guard": "evidenceops/build_system/objective_completion_guard.py",
+    "active_mission_state": "evidenceops/secure_capability_box/objective_completion_state.json",
+    "closure_rule": "completion and final-response claims require all operational layers, terminal fruit and independent live readback; otherwise continue or prove route exhaustion"
   },
   "states": {
     "designed": true,

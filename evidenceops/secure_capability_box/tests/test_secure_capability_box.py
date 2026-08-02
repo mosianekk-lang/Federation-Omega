@@ -271,9 +271,11 @@ class FakeTransport:
     def __init__(self, response):
         self.response = response
         self.headers = None
+        self.url = None
 
     def request(self, method, url, **kwargs):
         self.headers = kwargs["headers"]
+        self.url = url
         return self.response
 
 
@@ -288,7 +290,19 @@ class FederationConnectorTests(unittest.TestCase):
             correlation_id="operation-0001",
         )
         self.assertEqual(result["state"], "SUCCESS")
+        self.assertEqual(transport.url, "https://operator.example/execute")
         self.assertIsNone(transport.headers.get("x-fo-admin-token"))
+
+    def test_accepts_live_operator_ok_boolean(self):
+        transport = FakeTransport(FakeResponse(200, {"ok": True, "action": "STATUS"}))
+        connector = FederationOmegaConnector("https://operator.example", transport=transport)
+        result = connector.execute(
+            action="STATUS",
+            credential=memoryview(bytearray(b"fixture-token")),
+            payload={},
+            correlation_id="operation-0002",
+        )
+        self.assertTrue(result["ok"])
 
 
 class GoogleSecretManagerProviderTests(unittest.TestCase):
