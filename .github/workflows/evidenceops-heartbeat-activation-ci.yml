@@ -1,0 +1,229 @@
+name: EvidenceOps heartbeat activation CI (non-deploying)
+
+on:
+  pull_request:
+    paths:
+      - "evidenceops/capability_heartbeat/**"
+      - "evidenceops/heartbeat_api/**"
+      - "evidenceops-heartbeat-mcp/**"
+      - ".github/workflows/evidenceops-heartbeat-activation-ci.yml"
+  push:
+    branches:
+      - main
+    paths:
+      - "evidenceops/capability_heartbeat/**"
+      - "evidenceops/heartbeat_api/**"
+      - "evidenceops-heartbeat-mcp/**"
+      - ".github/workflows/evidenceops-heartbeat-activation-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: heartbeat-activation-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  governance-and-security:
+    name: Governance and no-deploy guards
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate activation MODISA contract
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+
+          contract = json.loads(
+              Path(
+                  "evidenceops/capability_heartbeat/ACTIVATION_BUILD_CONTRACT.json"
+              ).read_text(encoding="utf-8")
+          )
+          required_top = {
+              "contract_version", "mission", "classification", "assumptions",
+              "architecture", "testing", "delivery", "formation", "watchman",
+              "continuity", "states", "proof",
+          }
+          missing = sorted(required_top - contract.keys())
+          if missing:
+              raise SystemExit("missing contract keys: " + ", ".join(missing))
+          if contract["contract_version"] != "3.3":
+              raise SystemExit("contract_version must be 3.3")
+
+          def require_fields(container, keys, prefix):
+              absent = [key for key in keys if not container.get(key)]
+              if absent:
+                  raise SystemExit(prefix + " missing: " + ", ".join(absent))
+
+          require_fields(contract["mission"], (
+              "id", "version", "goal", "user", "workflow", "data",
+              "interface", "stack", "environment", "maturity", "governance",
+              "failure", "testing", "deployment", "continuity",
+          ), "mission")
+          if contract["mission"]["maturity"] not in {
+              "PROTOTYPE", "MVP", "PROD_FOUNDATION", "PROD_HARDENED"
+          }:
+              raise SystemExit("invalid mission maturity")
+          require_fields(contract["assumptions"], (
+              "stack", "runtime", "storage", "authentication", "deployment",
+          ), "assumptions")
+          require_fields(contract["architecture"]["components"], (
+              "frontend", "backend", "database", "queue", "worker",
+              "scheduler", "cache", "storage", "authentication",
+          ), "architecture.components")
+          required_failures = {
+              "INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT",
+              "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE",
+          }
+          if not required_failures.issubset(contract["architecture"]["failure_modes"]):
+              raise SystemExit("required failure modes are incomplete")
+          require_fields(contract["architecture"]["observability"], (
+              "correlation_ids", "health_checks", "structured_logs",
+              "audit_logs", "metrics_alerts",
+          ), "architecture.observability")
+          require_fields(contract["testing"], (
+              "unit", "integration", "e2e_or_smoke", "fixtures_mocks",
+              "failure_first", "commands",
+          ), "testing")
+          require_fields(contract["delivery"], (
+              "file_tree", "exact_code_files", "setup_commands", "run_commands",
+              "test_commands", "deploy_commands", "rollback_commands", "debugging",
+          ), "delivery")
+          require_fields(contract["continuity"], (
+              "idempotency", "checkpoints", "resume_conditions", "handoff_files",
+              "stop_switch",
+          ), "continuity")
+          states = contract["states"]
+          if not all(states.get(key) is True for key in ("designed", "implemented", "tested")):
+              raise SystemExit("local designed/implemented/tested proof is required")
+          if any(states.get(key) is not False for key in ("registered", "authorized", "ready", "deployed", "proven")):
+              raise SystemExit("all provider maturity states must remain false")
+          if not contract["proof"].get("test_results"):
+              raise SystemExit("tested=true requires test results")
+          if contract["proof"].get("unresolved_defects") != []:
+              raise SystemExit("unresolved defects must be an explicit empty list")
+          formation = contract["formation"]
+          if formation.get("gate_decision") != "EXECUTE" or formation.get("single_effectful_path") is not True:
+              raise SystemExit("Formation execution contract is invalid")
+          print("PASS: MODISA 3.3 activation contract and maturity boundary")
+          PY
+
+      - name: Verify workflow is incapable of deployment
+        shell: bash
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+
+          workflow = Path(
+              ".github/workflows/evidenceops-heartbeat-activation-ci.yml"
+          ).read_text(encoding="utf-8").lower()
+          blocked = {
+              "manual effect trigger": "workflow" + "_dispatch:",
+              "oidc write": "id-token:" + " write",
+              "repository write": "contents:" + " write",
+              "secret reference": "secrets" + ".",
+              "google auth action": "google-github-actions/" + "auth@",
+              "cloud run action": "google-github-actions/" + "deploy-cloudrun",
+              "cloud run command": "gcloud run" + " deploy",
+              "cloud build command": "gcloud builds" + " submit",
+              "container publish": "docker" + " push",
+              "infrastructure apply": "terraform" + " apply",
+          }
+          found = [name for name, value in blocked.items() if value in workflow]
+          if found:
+              raise SystemExit("deployment capability found: " + ", ".join(found))
+          print("PASS: workflow has no deploy trigger, credential route or effect command")
+          PY
+
+      - name: Public repository leak guard
+        run: >-
+          PYTHONDONTWRITEBYTECODE=1 python3
+          evidenceops/security/public_repository_leak_guard.py
+
+  private-api:
+    name: Private heartbeat API
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+          cache: pip
+          cache-dependency-path: evidenceops/heartbeat_api/requirements.txt
+
+      - name: Install pinned API dependencies
+        run: >-
+          python3 -m pip install
+          --requirement evidenceops/heartbeat_api/requirements.txt
+
+      - name: Private API tests
+        run: >-
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover
+          -s evidenceops/heartbeat_api/tests -t . -v
+
+      - name: Verified-v4 foundation regressions
+        run: >-
+          PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover
+          -s evidenceops/capability_heartbeat/foundation_tests -v
+
+      - name: Python compilation
+        run: >-
+          PYTHONDONTWRITEBYTECODE=1 python3 -m compileall -q
+          evidenceops/heartbeat_api evidenceops/capability_heartbeat
+
+      - name: Build private API container locally
+        run: >-
+          docker build
+          --file evidenceops/heartbeat_api/Dockerfile
+          --tag evidenceops-heartbeat-api:ci
+          .
+
+  public-mcp-gateway:
+    name: Public OAuth MCP gateway
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    defaults:
+      run:
+        working-directory: evidenceops-heartbeat-mcp
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: evidenceops-heartbeat-mcp/package-lock.json
+
+      - name: Install locked dependencies without lifecycle scripts
+        run: npm ci --ignore-scripts --no-audit --no-fund
+
+      - name: Type and contract checks
+        run: npm run check
+
+      - name: Gateway tests
+        run: npm test
+
+      - name: Production dependency audit
+        run: npm audit --omit=dev --audit-level=high
+
+      - name: Production build
+        run: npm run build
+
+      - name: Build public MCP gateway container locally
+        run: docker build --tag evidenceops-heartbeat-mcp:ci .

@@ -1,0 +1,211 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "KIM-DATAVERSE-HEARTBEAT-ACTIVATION-20260802",
+    "version": 1,
+    "goal": "Implement and locally verify a metadata-only private heartbeat API, a public OAuth 2.1 tool-only MCP gateway and a durable immutable storage interface around the existing VerifiedV4Authority without deploying or claiming live attachment.",
+    "user": "Kagiso Kim Mosiane as owner; bounded EvidenceOps heartbeat clients as authenticated metadata-only consumers",
+    "workflow": "an OAuth-authenticated MCP request is issuer/audience/scope checked; typed metadata is validated; the inbound token is discarded; a distinct Google service identity token targets the exact private API audience; the private API delegates policy, signing, acceptance and receipt decisions to VerifiedV4Authority; an immutable event append is exact-readback verified; a typed MCP result returns only metadata and proof fields",
+    "data": "pseudonymous owner, matter, mission, node, emitter, capability, key, correlation, event and transaction codes; classifications, enums, hashes, timestamps, counts, key fingerprints, complete signed lineages and signed receipts; raw prompts, messages, chats, documents, evidence, transcripts, legal content, personal data and credentials are prohibited",
+    "interface": "private typed HTTP heartbeat API plus public Streamable HTTP tool-only MCP gateway with Protected Resource Metadata, OAuth security schemes, standard search/fetch discovery and bounded heartbeat tools",
+    "stack": "Python 3.12 FastAPI service; existing standard-library verified-v4 heartbeat foundation; TypeScript on Node.js 22; Model Context Protocol TypeScript SDK v1 production line; Express; standards-based JWT/JWKS validation; Google service-identity client; pluggable immutable event store",
+    "environment": "local repository and GitHub pull-request CI only for this mission; Google Cloud, Secret Manager, IAM, OAuth registration, Cloud Run revisions and traffic remain unmodified",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation A1 permits one reversible code-and-test path only; VerifiedV4Authority remains the sole A0 runtime policy/signing authority; external and internal token audiences are separated; cloud effect, spend, registration, deployment and traffic changes require later permits and live readback",
+    "failure": "fail closed on forbidden raw fields, malformed metadata, missing configuration, OAuth issuer/signature/audience/expiry/scope failure, Cloud Run identity or internal-token failure, inbound token forwarding, timeout, partial write, changed replay, stale registration, forged or incomplete lineage, dependency failure, store readback mismatch, authority widening or false live-awareness claim",
+    "testing": "Python API unit and integration tests; TypeScript type, unit and gateway tests; exact audience/scope and no-token-passthrough failures; durable-store idempotency/conflict/readback tests; verified-v4 regressions; build, static security guards, MODISA contract validation and non-deploy workflow guard",
+    "deployment": "not authorized or performed; a future separately governed mission may attempt a zero-traffic canary only after exact identity, target, IAM, billing/quota, cost, secret, image, rollback and semantic-readback gates pass",
+    "continuity": "deterministic event and idempotency identities, immutable append semantics, exact readback, stop-generation fencing, bounded retry, structured metadata-only audit records, documented resume gates and exact prior-revision rollback design"
+  },
+  "classification": "METADATA_ONLY_ACTIVATION_IMPLEMENTED_TESTED_NOT_DEPLOYED",
+  "assumptions": {
+    "stack": "Python 3.12 and Node.js 22 are CI authorities; the production MCP SDK stays on the documented v1 line while v2 remains pre-alpha",
+    "runtime": "the API and gateway run as separate services with separate identities; local tests use explicit fixture identities and never satisfy production readiness",
+    "storage": "the durable-store protocol supports immutable create-if-absent, identical replay, changed-replay conflict and exact readback; a Google Cloud Storage object-per-event binding is a later runtime configuration, not a current deployment claim",
+    "authentication": "external OAuth tokens target only the public MCP resource; internal Google service identity tokens target only the exact private API URL; the public token is never forwarded; named-secret defense in depth does not replace Cloud Run IAM",
+    "deployment": "no current authenticated deployment or IAM mutation path exists in this code-only permit; GitHub CI has read-only contents permission and contains no deploy trigger or cloud credential permission"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: tool-only MCP and JSON HTTP interfaces have no UI",
+      "backend": "private FastAPI heartbeat adapter plus public TypeScript MCP gateway; both delegate policy outcomes to the existing VerifiedV4Authority and cannot create a second authority path",
+      "database": "NOT_APPLICABLE: the activation contract uses an immutable event-store protocol, not a relational database",
+      "queue": "NOT_APPLICABLE: request/response activation has no dispatch queue; invocation does not imply provider delivery",
+      "worker": "NOT_APPLICABLE: no background worker, unsolicited injection or per-chat heartbeat loop is implemented",
+      "scheduler": "NOT_APPLICABLE: existing inventory-only scheduler remains unchanged and gains no activation authority",
+      "cache": "OAuth/JWKS implementations may use bounded standards-compliant key caching; authorization decisions are revalidated and no event body is cached",
+      "storage": "typed immutable store interface with deterministic key, create-if-absent precondition, identical replay, changed-replay conflict, integrity digest, exact readback and explicit test-fixture versus production readiness separation",
+      "authentication": "OAuth 2.1 Protected Resource Metadata, strict external issuer/signature/audience/expiry/scope verification, no token passthrough, distinct Google service identity token in X-Serverless-Authorization for the exact private audience, plus independently injected internal request secret"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
+    "observability": {
+      "correlation_ids": "bounded caller correlation code plus deterministic event, envelope, receipt and idempotency hashes; raw request text is never a correlation field",
+      "health_checks": "minimal gateway liveness; private API health; fail-closed application readiness for non-fixture authority, internal auth, signer material, store health and external durability class; Cloud Run IAM enforcement and an immutable write/readback require separate provider canaries",
+      "structured_logs": "typed status, error code, route, scope, latency, count, timestamp and pseudonymous correlation hashes only",
+      "audit_logs": "authorization decision code, exact external and internal audience hashes, verified-v4 lineage/receipt identifiers, immutable append result and semantic readback digest without bearer tokens or raw content",
+      "metrics_alerts": "NOT_IMPLEMENTED: provider metrics, alert policies and notification transport are design-only future obligations; structured metadata-only logs provide the current local observation surface"
+    }
+  },
+  "testing": {
+    "unit": "metadata schema rejection, OAuth claims/scopes, audience separation, internal auth, deterministic identity, immutable append, replay, conflict, timeout and typed error mapping",
+    "integration": "MCP tool to authenticated private API contract using local fakes; API to injected VerifiedV4Authority and store; standard search/fetch shape; receipt and exact-readback behavior; no inbound token passthrough",
+    "e2e_or_smoke": "local process or in-memory synthetic gateway/API smoke only; it is not a hosted Cloud Run, provider, active-chat, emitter-coverage or live-attachment canary",
+    "fixtures_mocks": "synthetic metadata-only authority, OAuth claims/JWKS, Google identity-client boundary, internal secret and ephemeral store; every fixture is explicitly incapable of satisfying production readiness",
+    "failure_first": "raw-field rejection, bad issuer, bad external audience, bad internal audience, expired token, absent scope, forwarded token, wrong internal secret, stale/forged lineage, changed replay, store timeout, partial write and readback mismatch",
+    "commands": [
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/heartbeat_api/tests -t . -v",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/foundation_tests -v",
+      "npm --cache /tmp/evidenceops-heartbeat-npm-cache ci --ignore-scripts --no-audit --no-fund --prefix evidenceops-heartbeat-mcp",
+      "npm run check --prefix evidenceops-heartbeat-mcp",
+      "npm test --prefix evidenceops-heartbeat-mcp",
+      "npm run build --prefix evidenceops-heartbeat-mcp",
+      "npm --cache /tmp/evidenceops-heartbeat-npm-cache audit --omit=dev --audit-level=high --prefix evidenceops-heartbeat-mcp",
+      "python3 -m json.tool evidenceops/capability_heartbeat/ACTIVATION_BUILD_CONTRACT.json"
+    ]
+  },
+  "delivery": {
+    "file_tree": "existing evidenceops/capability_heartbeat verified-v4 authority; evidenceops/heartbeat_api private service and tests; evidenceops-heartbeat-mcp public OAuth MCP gateway and tests; activation architecture, build contract and non-deploy CI workflow",
+    "exact_code_files": [
+      "evidenceops/capability_heartbeat/authority.py",
+      "evidenceops/capability_heartbeat/ACTIVATION_ARCHITECTURE.md",
+      "evidenceops/capability_heartbeat/ACTIVATION_BUILD_CONTRACT.json",
+      "evidenceops/heartbeat_api/auth.py",
+      "evidenceops/heartbeat_api/errors.py",
+      "evidenceops/heartbeat_api/runtime.py",
+      "evidenceops/heartbeat_api/schemas.py",
+      "evidenceops/heartbeat_api/service.py",
+      "evidenceops/heartbeat_api/store.py",
+      "evidenceops/heartbeat_api/tests/",
+      "evidenceops/heartbeat_api/requirements.txt",
+      "evidenceops/heartbeat_api/Dockerfile",
+      "evidenceops/heartbeat_api/README.md",
+      "evidenceops-heartbeat-mcp/src/backend.ts",
+      "evidenceops-heartbeat-mcp/src/config.ts",
+      "evidenceops-heartbeat-mcp/src/index.ts",
+      "evidenceops-heartbeat-mcp/src/oauth.ts",
+      "evidenceops-heartbeat-mcp/src/server.ts",
+      "evidenceops-heartbeat-mcp/src/tool-catalog.ts",
+      "evidenceops-heartbeat-mcp/test/",
+      "evidenceops-heartbeat-mcp/package.json",
+      "evidenceops-heartbeat-mcp/package-lock.json",
+      "evidenceops-heartbeat-mcp/Dockerfile",
+      "evidenceops-heartbeat-mcp/README.md",
+      "evidenceops-heartbeat-mcp/FORMATION_SPEC.md",
+      "evidenceops-heartbeat-mcp/PROJECT_MEMORY.md",
+      "evidenceops-heartbeat-mcp/AI_HANDOFF.md",
+      ".github/workflows/evidenceops-heartbeat-activation-ci.yml"
+    ],
+    "setup_commands": [
+      "python3 -m pip install --requirement evidenceops/heartbeat_api/requirements.txt",
+      "npm --cache /tmp/evidenceops-heartbeat-npm-cache ci --ignore-scripts --no-audit --no-fund --prefix evidenceops-heartbeat-mcp"
+    ],
+    "run_commands": [
+      "uvicorn evidenceops.heartbeat_api.service:app --host 0.0.0.0 --port 8080 --proxy-headers --no-server-header",
+      "npm start --prefix evidenceops-heartbeat-mcp"
+    ],
+    "test_commands": [
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/heartbeat_api/tests -t . -v",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/foundation_tests -v",
+      "npm run check --prefix evidenceops-heartbeat-mcp && npm test --prefix evidenceops-heartbeat-mcp && npm run build --prefix evidenceops-heartbeat-mcp",
+      "npm --cache /tmp/evidenceops-heartbeat-npm-cache audit --omit=dev --audit-level=high --prefix evidenceops-heartbeat-mcp"
+    ],
+    "deploy_commands": [
+      "NOT_APPLICABLE: this contract and its CI workflow prohibit deployment, IAM mutation, secret mutation, cloud build and traffic changes"
+    ],
+    "rollback_commands": [
+      "Code-only rollback: revert only the activation API, gateway, activation governance files and non-deploy workflow; no cloud rollback exists because no cloud mutation is authorized or performed",
+      "Future canary design only: restore the exact recorded prior Cloud Run revision or traffic split, then perform health and semantic readback under a separate Formation permit"
+    ],
+    "debugging": "trace typed error and pseudonymous correlation codes across gateway, audience/scope decision, private identity gate, VerifiedV4Authority receipt and store digest/readback; never log or inspect raw content, bearer tokens, secret values or signer material"
+  },
+  "formation": {
+    "mission_id": "KIM-DATAVERSE-HEARTBEAT-ACTIVATION-20260802",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1_LOCAL_REVERSIBLE_CODE_TEST_ONLY",
+    "effectful_permit": "CONSUMED_BY_PARENT_GOVERNED_A1_CODE_ONLY_INTEGRATION_PATH",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "policy": "fail closed; A0 verified-v4 authority only; metadata-only; distinct external and internal audiences; no token passthrough; no cloud effects; no deployment, active-chat coverage, provider emitter coverage or system-wide awareness claim",
+    "release_gates": [
+      "exact Python and TypeScript tests pass",
+      "MODISA activation contract validates with proof",
+      "workflow static guard proves no deployment trigger, cloud auth action, id-token write or deploy command",
+      "raw-data and credential leak guards pass",
+      "existing verified-v4 foundation tests pass",
+      "maturity remains IMPLEMENTED_TESTED_NOT_DEPLOYED",
+      "future canary remains blocked until identity, target, billing, IAM, cost, secret, image and rollback readbacks are independently proven"
+    ]
+  },
+  "continuity": {
+    "idempotency": "the full canonical metadata payload, authority scope and control generation bind the event identity; identical replay is stable and changed replay fails closed",
+    "checkpoints": "external OAuth claim decision, distinct internal audience decision, verified-v4 envelope/receipt, immutable append precondition result, exact store readback digest and typed MCP response",
+    "resume_conditions": "current mission and permit; clean local test state; non-fixture runtime configuration for production; fresh registered signers; exact audience and scope configuration; reachable immutable store; active stop generation; later identity/IAM/cost/rollback proof before any canary",
+    "handoff_files": [
+      "evidenceops/capability_heartbeat/ACTIVATION_ARCHITECTURE.md",
+      "evidenceops/capability_heartbeat/ACTIVATION_BUILD_CONTRACT.json",
+      "evidenceops/capability_heartbeat/README.md",
+      "evidenceops/capability_heartbeat/AI_HANDOFF.md",
+      ".github/workflows/evidenceops-heartbeat-activation-ci.yml"
+    ],
+    "stop_switch": "stop-generation advancement fences earlier state; disabling the public gateway or private service remains a later provider action requiring separate authority; current code can be removed without cloud side effects"
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": false,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": "PASS_LOCAL_2026-08-02: the required activation lane passed 20/20 private API tests, 92/92 verified-v4 foundation tests and 18/18 Node.js MCP gateway tests (130 total), including 64 KiB request gating, signed key/event cross-binding, bounded indexed pagination, direct fetch, exact normalized HTTPS private audience equality, exact six-field semantic readback, OAuth issuer/signature/audience/expiry/scope failures and no inbound-token forwarding. TypeScript checking, production build and production-dependency audit with 0 vulnerabilities passed. An extended 30-test heartbeat integration suite and 81-test repository compatibility suite also passed, bringing the complete local regression count to 241. Activation JSON, generic MODISA 3.3 proof validation, workflow YAML parse, no-deploy guard, git diff check and public leak guard passed. Independent failure-first audit initially blocked release on four defects, all four were repaired and the repaired 40-file scope passed independent re-audit. No provider, deployment or container-image test was attempted.",
+    "deployment_readback": null,
+    "semantic_verification": "Local tests verify typed metadata-only request handling, external OAuth checks, strict scope and audience separation, no inbound token passthrough, the application-internal secret boundary, verified-v4 delegation, immutable append/replay/conflict/readback semantics and truthful false deployment state; they do not verify Cloud Run IAM enforcement, a hosted provider route or a production write/readback canary",
+    "unresolved_defects": [],
+    "maturity": "IMPLEMENTED_TESTED_NOT_DEPLOYED",
+    "provider_proof_missing": [
+      "no authenticated Google Cloud target readback in the implementing runtime",
+      "no verified live GitHub OIDC pool/provider binding",
+      "no verified deployer or separate gateway/API runtime identities",
+      "no verified least-privilege IAM or named-secret binding",
+      "no billing, quota or zero-recurring-cost canary approval",
+      "no zero-traffic Cloud Run revision",
+      "no live OAuth registration or Protected Resource Metadata readback",
+      "no provider-authoritative active-chat inventory or emitter reconciliation",
+      "no live end-to-end semantic readback or rollback canary"
+    ],
+    "local_execution_limitations": [
+      "the local runtime has no docker executable, so neither activation Dockerfile was built; the non-deploying CI workflow contains both container build checks but that workflow has not yet run",
+      "Cloud Run IAM enforcement cannot be proven by application tests and remains a provider canary/readback obligation",
+      "all local service tests use synthetic identities, signer material, OAuth keys and immutable-store fixtures that cannot satisfy production readiness"
+    ],
+    "prohibited_claims": [
+      "active-chat coverage",
+      "per-chat emitter coverage",
+      "unsolicited injection",
+      "system-wide awareness",
+      "provider registration",
+      "Cloud Run readiness",
+      "deployment",
+      "live attachment",
+      "universal EvidenceOps, Federation Omega, Secondary Brain, MODISA or Bible propagation"
+    ]
+  },
+  "cost_boundary": {
+    "new_recurring_cost_authorized": false,
+    "cloud_resource_creation_authorized": false,
+    "current_cycle": "local source and existing bounded CI only",
+    "future_canary": "blocked until exact billing/quota and zero-new-recurring-cost evidence is independently read back and separately authorized"
+  }
+}
