@@ -92,8 +92,8 @@
       "cadence": "hourly",
       "priority": 100,
       "state": "READY",
-      "action": "Hash and reconcile Federation Omega, Secondary Brain, MODISA, EvidenceOps and supporting capability sources against the current workflow; reuse or improve only through the governed router.",
-      "proof_gate": "Heartbeat artifact, source fingerprints, one-primary-route decisions and report SHA-256"
+      "action": "Inventory and hash synthetic local Federation Omega, Secondary Brain, MODISA, EvidenceOps and supporting capability catalogue evidence without selecting, authorizing or dispatching a route.",
+      "proof_gate": "Inventory artifact, source fingerprints, zero scheduler decisions, false live-awareness flags and report SHA-256"
     },
     {
       "task_id": "EXT-010",

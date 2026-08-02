@@ -120,9 +120,29 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(report, indent=2), encoding="utf-8")
 
-    heartbeat = CapabilityHeartbeatEngine(".", args.heartbeat_registry).run(
-        args.heartbeat_context
-    )
+    heartbeat_engine = CapabilityHeartbeatEngine(".", args.heartbeat_registry)
+    heartbeat_sources, heartbeat_candidates = heartbeat_engine.collect()
+    heartbeat = {
+        "schema": "EVIDENCEOPS-SCHEDULED-CAPABILITY-INVENTORY-2",
+        "generated_at": now,
+        "source_count": len(heartbeat_sources),
+        "candidate_count": len(heartbeat_candidates),
+        "heartbeats": heartbeat_sources,
+        "candidates": [item.to_dict() for item in heartbeat_candidates],
+        "decisions": [],
+        "scheduler_authority": False,
+        "recommendation_authority": False,
+        "ingress_authority": False,
+        "live_awareness_flags": {
+            "live_master_bible_attachment": False,
+            "active_chat_inventory": False,
+            "per_chat_emitters": False,
+            "unsolicited_injection": False,
+            "system_wide_awareness": False,
+        },
+        "truth_boundary": "Scheduled execution inventories local catalogue evidence only; verified-v4 recommendations require an explicit on-input authority session.",
+    }
+    heartbeat["report_sha256"] = canonical_hash(heartbeat)
     heartbeat_output = Path(args.heartbeat_output)
     heartbeat_output.parent.mkdir(parents=True, exist_ok=True)
     heartbeat_output.write_text(
@@ -142,11 +162,13 @@ def main() -> int:
     reconciliation = heartbeat_system.reconcile(observed_at=now)
     heartbeat_system.close()
     heartbeat_system_report = {
-        "schema": "EVIDENCEOPS-HEARTBEAT-SYSTEM-SCHEDULER-1",
+        "schema": "EVIDENCEOPS-HEARTBEAT-SYSTEM-SCHEDULER-2",
         "surface_index": surface_index,
         "reconciliation": reconciliation,
-        "runtime_state": "SCHEDULED_RECONCILIATION_SOURCE_IMPLEMENTED",
-        "truth_boundary": "This scheduled report does not prove per-turn ingress, bidirectional delivery, provider deployment or cross-run durable state.",
+        "runtime_state": "SCHEDULED_INVENTORY_ONLY",
+        "scheduler_authority": False,
+        "recommendation_authority": False,
+        "truth_boundary": "This scheduled report inventories static surfaces and local expiry state only; it cannot recommend, authorize ingress, advance remediation, dispatch, or prove live attachment.",
     }
     heartbeat_system_report["report_sha256"] = canonical_hash(
         heartbeat_system_report
@@ -190,7 +212,7 @@ def main() -> int:
         print(f"- {item['task_id']} | {item['decision']} | {item['title']}")
     print(
         f"Capability heartbeat: {heartbeat['source_count']} sources, "
-        f"{len(heartbeat['decisions'])} current-workflow decisions, "
+        f"{len(heartbeat['decisions'])} scheduler decisions, "
         f"SHA-256 {heartbeat['report_sha256']}"
     )
     print(

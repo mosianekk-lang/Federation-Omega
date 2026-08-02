@@ -1,23 +1,21 @@
 from __future__ import annotations
 
 import hashlib
-import json
 import sqlite3
 import threading
-from datetime import datetime, timedelta, timezone
+from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .authority import VerifiedV4Authority
 from .engine import CapabilityHeartbeatEngine, HeartbeatError, SAFE_ID, canonical_json, sha256_value
+from .foundation.contracts import HeartbeatEnvelope, Receipt, canonicalize, digest
+from .foundation.errors import ReplayError
+from .foundation.privacy import strict_json_loads
 
 PRIVACY_RANK = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P4": 4}
 LIVE_STATES = {"LIVE_BIDIRECTIONAL_VERIFIED"}
-ACCEPTED_INGRESS_STATES = {
-    "LIVE_BIDIRECTIONAL_VERIFIED",
-    "TURN_TRANSACTION_VERIFIED_LOCAL",
-    "SOURCE_IMPLEMENTED_NOT_HOSTED",
-    "SESSION_CONNECTOR_AVAILABLE",
-}
+ACCEPTED_INGRESS_STATES = {"TURN_TRANSACTION_VERIFIED_LOCAL"}
 
 
 def parse_timestamp(value: str) -> datetime:
@@ -43,16 +41,18 @@ class EvidenceOpsHeartbeatSystem:
         *,
         repository_root: str | Path | None = None,
         capability_registry: str = "evidenceops/capability_heartbeat/sources.json",
+        authority: VerifiedV4Authority | None = None,
     ):
         self.path = Path(database_path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.conn = sqlite3.connect(self.path, check_same_thread=False)
         self.conn.row_factory = sqlite3.Row
         self.lock = threading.RLock()
+        self.authority = authority
         self.capability_engine = None
         if repository_root:
             self.capability_engine = CapabilityHeartbeatEngine(
-                repository_root, capability_registry, bible_node_path=None
+                repository_root, capability_registry, bible_node_path=None, authority=authority
             )
         self._migrate()
 
@@ -124,11 +124,13 @@ class EvidenceOpsHeartbeatSystem:
     @staticmethod
     def load_surface_registry(path: str | Path) -> dict[str, Any]:
         try:
-            registry = json.loads(Path(path).read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
+            registry = strict_json_loads(Path(path).read_text(encoding="utf-8"), field="surface_registry")
+        except (OSError, ValueError) as exc:
             raise HeartbeatError("cannot load surface registry") from exc
-        if registry.get("schema") != "EVIDENCEOPS-HEARTBEAT-SURFACES-1":
+        if registry.get("schema") != "EVIDENCEOPS-HEARTBEAT-SURFACES-2":
             raise HeartbeatError("unsupported surface registry")
+        if registry.get("fixture_mode") != "SYNTHETIC_STATIC_CATALOGUE":
+            raise HeartbeatError("surface registry must be explicitly synthetic")
         return registry
 
     @staticmethod
@@ -143,6 +145,10 @@ class EvidenceOpsHeartbeatSystem:
         routes = surface.get("workaround_routes")
         if not isinstance(routes, list) or not routes:
             raise HeartbeatError("every surface requires at least one workaround route")
+        if any(route.get("authority_class") != "A0" for route in routes):
+            raise HeartbeatError("surface catalogue authority ceiling must be A0")
+        if any(not isinstance(route.get("route"), str) or not SAFE_ID.fullmatch(route["route"]) for route in routes):
+            raise HeartbeatError("surface route code is invalid")
 
     def index_surfaces(self, registry: dict[str, Any], *, observed_at: str) -> dict[str, Any]:
         observed = parse_timestamp(observed_at).isoformat()
@@ -178,22 +184,7 @@ class EvidenceOpsHeartbeatSystem:
         return self.surface_status()
 
     def _upsert_adapter_case(self, surface: dict[str, Any], observed: str) -> None:
-        routes = sorted(
-            surface["workaround_routes"],
-            key=lambda item: (
-                bool(item.get("effectful")),
-                -float(item.get("score", 0)),
-                int(str(item.get("authority_class", "A5"))[1:]),
-                str(item.get("route")),
-            ),
-        )
-        selected = routes[0]
-        if selected.get("effectful") or selected.get("authority_class") not in {"A0", "A1"}:
-            state = "PERMIT_OR_AUTHORITY_REQUIRED"
-        elif selected.get("proof_state") in {"IMPLEMENTED_LOCAL", "SESSION_AVAILABLE", "SOURCE_PRESENT"}:
-            state = "READY_TO_TEST"
-        else:
-            state = "DESIGN_OR_BIND_ADAPTER"
+        routes = list(surface["workaround_routes"])
         case_id = "ADP-" + sha256_value(surface["surface_id"])[:20].upper()
         self.conn.execute(
             """INSERT INTO adapter_cases VALUES(?,?,?,?,?,?,?,?,?)
@@ -201,8 +192,8 @@ class EvidenceOpsHeartbeatSystem:
             selected_strategy=excluded.selected_strategy,candidates_json=excluded.candidates_json,
             updated_at=excluded.updated_at""",
             (
-                case_id, surface["surface_id"], state, selected["route"],
-                canonical_json(routes), 0, observed, None, observed,
+                case_id, surface["surface_id"], "INVENTORY_ONLY", None,
+                canonical_json(routes), 0, None, None, observed,
             ),
         )
 
@@ -224,40 +215,27 @@ class EvidenceOpsHeartbeatSystem:
         open_count = self.conn.execute(
             "SELECT COUNT(*) FROM adapter_cases WHERE state != 'CLOSED_VERIFIED'"
         ).fetchone()[0]
-        rows = self.conn.execute(
-            """SELECT * FROM adapter_cases
-            WHERE state != 'CLOSED_VERIFIED'
-              AND (next_attempt_at IS NULL OR next_attempt_at <= ?)
-            ORDER BY surface_id""",
-            (observed.isoformat(),),
-        ).fetchall()
+        rows = self.conn.execute("SELECT * FROM adapter_cases ORDER BY surface_id").fetchall()
         cases: list[dict[str, Any]] = []
-        with self.lock, self.conn:
-            for row in rows:
-                item = dict(row)
-                candidates = json.loads(item.pop("candidates_json"))
-                selected = next(x for x in candidates if x["route"] == item["selected_strategy"])
-                item["candidates"] = candidates
-                item["next_action"] = selected.get("next_action")
-                item["automatic_action_allowed"] = (
-                    not selected.get("effectful") and selected.get("authority_class") in {"A0", "A1"}
-                )
-                next_time = observed + timedelta(seconds=int(selected.get("retry_seconds", 900)))
-                self.conn.execute(
-                    "UPDATE adapter_cases SET attempt_count=attempt_count+1,next_attempt_at=?,last_result=?,updated_at=? WHERE case_id=?",
-                    (next_time.isoformat(), "WORKAROUND_RECONCILED", observed.isoformat(), item["case_id"]),
-                )
-                item["attempt_count"] += 1
-                item["next_attempt_at"] = next_time.isoformat()
-                cases.append(item)
+        for row in rows:
+            item = dict(row)
+            item["candidates"] = strict_json_loads(item.pop("candidates_json"), field="adapter_candidates")
+            item["selected_strategy"] = None
+            item["next_action"] = None
+            item["automatic_action_allowed"] = False
+            item["scheduler_authority"] = False
+            cases.append(item)
         return {
-            "schema": "EVIDENCEOPS-ADAPTER-REMEDIATION-REPORT-1",
+            "schema": "EVIDENCEOPS-ADAPTER-INVENTORY-REPORT-2",
             "open_case_count": open_count,
             "due_case_count": len(cases),
-            "deferred_case_count": open_count - len(cases),
+            "deferred_case_count": 0,
             "cases": cases,
             "bypass_attempted": False,
-            "truth_boundary": "Remediation ranks and advances authorised workarounds; it never bypasses provider permissions or treats a planned adapter as live.",
+            "scheduler_authority": False,
+            "inventory_only": True,
+            "observed_at": observed.isoformat(),
+            "truth_boundary": "The facade inventories adapter obligations only. It does not rank, schedule, advance, retry, authorize or execute a route.",
         }
 
     def _route_requirements(self, requirements: list[dict[str, Any]]) -> list[dict[str, Any]]:
@@ -265,122 +243,167 @@ class EvidenceOpsHeartbeatSystem:
             return []
         return self.capability_engine.route_requirements(requirements)
 
-    def ingest_turn(self, event: dict[str, Any]) -> dict[str, Any]:
-        if event.get("schema") != "EVIDENCEOPS-CHAT-TURN-EVENT-1":
+    def ingest_turn(
+        self,
+        event: dict[str, Any],
+        *,
+        lineage: tuple[HeartbeatEnvelope, ...],
+    ) -> dict[str, Any]:
+        """Accept only metadata whose complete signed lineage passes v4 authority."""
+        if self.authority is None:
+            raise HeartbeatError("VERIFIED_V4_AUTHORITY_REQUIRED")
+        allowed = {
+            "schema", "event_id", "surface_id", "sequence", "observed_at",
+            "destination_node_id", "envelope_id", "idempotency_key", "fixture_only",
+        }
+        if set(event) - allowed:
+            raise HeartbeatError("raw or unknown turn event field prohibited")
+        if event.get("schema") != "EVIDENCEOPS-CHAT-TURN-EVENT-2":
             raise HeartbeatError("unsupported turn event")
-        for key in ("event_id", "chat_id", "turn_id", "surface_id"):
+        if event.get("fixture_only"):
+            raise HeartbeatError("static fixture cannot authorize ingress")
+        for key in ("event_id", "surface_id", "destination_node_id"):
             if not SAFE_ID.fullmatch(str(event.get(key, ""))):
                 raise HeartbeatError(f"invalid turn event {key}")
         sequence = event.get("sequence")
-        if not isinstance(sequence, int) or sequence < 1:
+        if isinstance(sequence, bool) or not isinstance(sequence, int) or sequence < 1:
             raise HeartbeatError("turn sequence must be positive")
-        emitted = parse_timestamp(event.get("emitted_at"))
-        surface = self.conn.execute(
+        observed = parse_timestamp(event.get("observed_at"))
+        if not isinstance(lineage, tuple) or not lineage or any(not isinstance(item, HeartbeatEnvelope) for item in lineage):
+            raise HeartbeatError("complete typed signed lineage is required")
+        envelope = lineage[-1]
+        if event.get("envelope_id") != envelope.envelope_id:
+            raise HeartbeatError("turn event envelope binding mismatch")
+        if event.get("idempotency_key") != envelope.idempotency_key:
+            raise ReplayError("turn event idempotency binding mismatch")
+        if sequence != envelope.sequence:
+            raise ReplayError("turn sequence does not match signed envelope")
+        surface_row = self.conn.execute(
             "SELECT * FROM surfaces WHERE surface_id=?", (event["surface_id"],)
         ).fetchone()
-        if not surface:
+        if not surface_row:
             raise HeartbeatError("turn surface is not indexed")
-        surface = dict(surface)
+        surface = dict(surface_row)
         if surface["heartbeat_state"] not in ACCEPTED_INGRESS_STATES:
-            raise HeartbeatError("surface adapter cannot accept turn events")
-        privacy = event.get("privacy_tier", surface["privacy_tier"])
-        if privacy not in PRIVACY_RANK or PRIVACY_RANK[privacy] < PRIVACY_RANK[surface["privacy_tier"]]:
-            raise HeartbeatError("turn privacy tier weakens the surface contract")
-        task_summary = str(event.get("task_summary", ""))[:500]
-        blockers = sorted({str(x)[:160] for x in event.get("blockers", [])})
-        risks = sorted({str(x)[:160] for x in event.get("risk_flags", [])})
-        requirements = event.get("requirements") or []
-        if not isinstance(requirements, list) or any(not isinstance(x, dict) for x in requirements):
-            raise HeartbeatError("turn requirements must be a list of objects")
+            raise HeartbeatError("unhosted or catalogue-only surface cannot accept ingress")
+        if surface["node_id"] != event["destination_node_id"]:
+            raise HeartbeatError("surface destination registration mismatch")
+
+        signed_receipt: Receipt = self.authority.accept(
+            lineage=lineage,
+            destination_node_id=event["destination_node_id"],
+            now=observed.strftime("%Y-%m-%dT%H:%M:%SZ"),
+        )
         projected = {
-            "event_id": event["event_id"], "chat_ref": event["chat_id"],
-            "turn_id": event["turn_id"], "surface_id": event["surface_id"],
-            "sequence": sequence, "emitted_at": emitted.isoformat(), "privacy_tier": privacy,
-            "task_summary": task_summary, "task_sha256": text_ref(task_summary) if task_summary else None,
-            "blockers": blockers, "risk_flags": risks, "requirements": requirements,
+            "schema": event["schema"],
+            "event_id": event["event_id"],
+            "surface_id": event["surface_id"],
+            "sequence": sequence,
+            "observed_at": observed.strftime("%Y-%m-%dT%H:%M:%SZ"),
+            "origin_node_id": envelope.origin_node_id,
+            "signing_node_id": envelope.signing_node_id,
+            "destination_node_id": event["destination_node_id"],
+            "envelope_id": envelope.envelope_id,
+            "idempotency_key": envelope.idempotency_key,
+            "owner_code": envelope.owner_code,
+            "matter_code": envelope.matter_code,
+            "classification": envelope.classification.value,
+            "control_generation": envelope.control_generation,
+            "capability_hashes": list(envelope.capability_hashes),
+            "blocker_codes": [item.value for item in envelope.blocker_codes],
+            "recommendations": [canonicalize(item) for item in envelope.recommendations],
+            "signed_receipt": canonicalize(signed_receipt),
+            "raw_content_included": False,
             "credentials_included": False,
         }
-        if PRIVACY_RANK[privacy] >= PRIVACY_RANK["P2"]:
-            projected["chat_ref"] = text_ref(event["chat_id"])
-            projected["turn_id"] = text_ref(event["turn_id"])
-            projected["task_summary"] = None
-            projected["blockers"] = [text_ref(x) for x in blockers]
-            projected["risk_flags"] = [text_ref(x) for x in risks]
-        event_sha = sha256_value(projected)
-        receipt_id = "RCP-TURN-" + event_sha[:20].upper()
-        message_id = "MSG-" + event_sha[:20].upper()
-        now = datetime.now(timezone.utc).isoformat()
-        expires = emitted + timedelta(seconds=surface["ttl_seconds"])
-        decisions = self._route_requirements(requirements)
-        kind = "ACK_WITH_ASSISTANCE" if blockers or risks or decisions else "ACKNOWLEDGEMENT"
+        event_sha = digest(projected)
+        message_id = "MSG-" + event_sha.split(":", 1)[1][:20].upper()
         response = {
             "message_id": message_id,
-            "kind": kind,
-            "chat_ref": projected["chat_ref"],
+            "kind": "VERIFIED_METADATA_RECEIPT",
             "event_id": event["event_id"],
             "acknowledged_sequence": sequence,
             "node_state": "NODE_ACTIVE_VERIFIED",
-            "capability_decisions": decisions,
-            "blocker_count": len(blockers),
-            "risk_count": len(risks),
-            "content_policy": "BOUNDED_STATE_AND_VERIFIED_ROUTES_ONLY",
+            "recommendations": projected["recommendations"],
+            "authority_source": "VERIFIED_V4_FOUNDATION",
+            "authority_ceiling": "A0",
+            "content_policy": "METADATA_CODES_HASHES_AND_SIGNED_RECEIPTS_ONLY",
+        }
+        receipt_payload = {
+            "receipt_id": signed_receipt.receipt_id,
+            "operation_id": event["event_id"],
+            "event_sha256": event_sha,
+            "node_id": envelope.origin_node_id,
+            "node_state": "NODE_ACTIVE_VERIFIED",
+            "response": response,
+            "signed_destination_receipt": canonicalize(signed_receipt),
+            "duplicate": False,
+            "transaction_state": "COMMITTED",
         }
         with self.lock:
             prior = self.conn.execute(
                 "SELECT payload_json FROM receipts WHERE operation_id=?", (event["event_id"],)
             ).fetchone()
             if prior:
-                result = json.loads(prior["payload_json"])
-                result["duplicate"] = True
-                return result
+                prior_payload = strict_json_loads(prior["payload_json"], field="prior_receipt")
+                if prior_payload.get("event_sha256") != event_sha:
+                    raise ReplayError("TURN_OPERATION_IDEMPOTENCY_CONFLICT")
+                prior_payload["duplicate"] = True
+                return prior_payload
             current = self.conn.execute(
-                "SELECT last_sequence FROM chat_nodes WHERE chat_id=?", (event["chat_id"],)
+                "SELECT last_sequence FROM chat_nodes WHERE chat_id=?", (envelope.origin_node_id,)
             ).fetchone()
             if current and sequence <= current["last_sequence"]:
-                raise HeartbeatError("stale or replayed chat sequence")
+                raise ReplayError("stale or replayed signed sequence")
             state = "NODE_ACTIVE_VERIFIED"
             if current and sequence > current["last_sequence"] + 1:
                 state = "NODE_SYNC_PENDING"
                 response["node_state"] = state
                 response["sequence_gap"] = sequence - current["last_sequence"] - 1
-            receipt = {
-                "receipt_id": receipt_id,
-                "operation_id": event["event_id"],
-                "event_sha256": event_sha,
-                "chat_ref": projected["chat_ref"],
-                "node_state": state,
-                "response": response,
-                "duplicate": False,
-                "transaction_state": "COMMITTED",
-            }
+                receipt_payload["node_state"] = state
+            destination = self.authority.registry.get(event["destination_node_id"])
             try:
                 self.conn.execute("BEGIN IMMEDIATE")
                 self.conn.execute(
                     "INSERT INTO turn_events VALUES(?,?,?,?,?,?,?,?)",
-                    (event["event_id"], event["chat_id"], event["surface_id"], event["turn_id"], sequence, event_sha, canonical_json(projected), now),
+                    (
+                        event["event_id"], envelope.origin_node_id, event["surface_id"],
+                        envelope.envelope_id, sequence, event_sha,
+                        canonical_json(projected), observed.isoformat(),
+                    ),
                 )
-                node_id = "CHAT-" + sha256_value(event["chat_id"])[:20].upper()
                 self.conn.execute(
                     """INSERT INTO chat_nodes VALUES(?,?,?,?,?,?,?,?,?,?)
                     ON CONFLICT(chat_id) DO UPDATE SET state=excluded.state,
                     last_sequence=excluded.last_sequence,last_event_at=excluded.last_event_at,
                     expires_at=excluded.expires_at,last_event_sha=excluded.last_event_sha,
                     last_receipt_id=excluded.last_receipt_id""",
-                    (event["chat_id"], node_id, event["surface_id"], privacy, state, sequence, emitted.isoformat(), expires.isoformat(), event_sha, receipt_id),
+                    (
+                        envelope.origin_node_id, envelope.origin_node_id, event["surface_id"],
+                        surface["privacy_tier"], state, sequence, envelope.observed_at,
+                        min(envelope.expires_at, destination.expires_at), event_sha, signed_receipt.receipt_id,
+                    ),
                 )
                 self.conn.execute(
                     "INSERT INTO outbox VALUES(?,?,?,?,?,?,?,?,?,?,?,?)",
-                    (message_id, event["event_id"], event["chat_id"], kind, surface["egress_mode"], canonical_json(response), "RESPONSE_BUNDLE_READY", 0, None, 0, now, None),
+                    (
+                        message_id, event["event_id"], envelope.origin_node_id,
+                        response["kind"], surface["egress_mode"], canonical_json(response),
+                        "READ_ONLY_RECEIPT_READY", 0, None, 0, observed.isoformat(), None,
+                    ),
                 )
                 self.conn.execute(
                     "INSERT INTO receipts VALUES(?,?,?,?,?)",
-                    (receipt_id, event["event_id"], "TURN_TRANSACTION", canonical_json(receipt), now),
+                    (
+                        signed_receipt.receipt_id, event["event_id"], "FOUNDATION_SIGNED_TURN",
+                        canonical_json(receipt_payload), observed.isoformat(),
+                    ),
                 )
                 self.conn.commit()
             except Exception:
                 self.conn.rollback()
                 raise
-        return receipt
+        return receipt_payload
 
     def seed_connector(
         self,
@@ -451,17 +474,16 @@ class EvidenceOpsHeartbeatSystem:
             ).fetchone()
             if not pre:
                 raise HeartbeatError("connector POST requires a committed PRE seed event")
-        projected_summary = None
         result_ref = None
         if result_summary:
             result_ref = text_ref(result_summary)
-            if PRIVACY_RANK[seed["privacy_tier"]] <= PRIVACY_RANK["P1"]:
-                projected_summary = result_summary[:500]
+        if not SAFE_ID.fullmatch(capability) or not SAFE_ID.fullmatch(status):
+            raise HeartbeatError("connector capability and status must be controlled codes")
         payload = {
             "seed_id": seed_id, "operation_id": operation_id, "phase": phase,
             "capability": capability[:160], "status": status[:80],
-            "result_ref": result_ref, "result_summary": projected_summary,
-            "credentials_included": False,
+            "result_ref": result_ref, "result_summary": None,
+            "raw_content_included": False, "credentials_included": False,
         }
         event_id = "KCE-" + sha256_value(payload)[:20].upper()
         with self.lock, self.conn:
@@ -547,6 +569,6 @@ class EvidenceOpsHeartbeatSystem:
         result = []
         for row in rows:
             item = dict(row)
-            item["payload"] = json.loads(item.pop("payload_json"))
+            item["payload"] = strict_json_loads(item.pop("payload_json"), field="outbox_payload")
             result.append(item)
         return result

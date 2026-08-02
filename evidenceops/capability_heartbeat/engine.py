@@ -1,3 +1,5 @@
+"""Read-only catalogue facade governed exclusively by verified-v4 authority."""
+
 from __future__ import annotations
 
 import hashlib
@@ -10,25 +12,27 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from .authority import VerifiedV4Authority
+from .foundation.adapters.common import Observation
+from .foundation.contracts import BlockerCode, CapabilityStatus, digest
+from .foundation.errors import ContractError, HeartbeatError
+from .foundation.privacy import strict_json_loads
+
 SAFE_ID = re.compile(r"^[A-Za-z0-9._:-]{2,128}$")
-PROOF_RANK = {
+SAFE_TAG = re.compile(r"^[a-z0-9-]{2,48}$")
+PROOF_CONFIDENCE = {
     "NONE": 0,
-    "DESIGNED": 10,
-    "TESTED": 40,
-    "LEDGER_READBACK": 55,
-    "CONNECTOR_READBACK": 60,
-    "INDEPENDENT_READBACK": 80,
-    "MULTI_SOURCE_VERIFIED": 90,
+    "DESIGNED": 2500,
+    "TESTED": 7000,
+    "LEDGER_READBACK": 7600,
+    "CONNECTOR_READBACK": 8000,
+    "INDEPENDENT_READBACK": 8800,
+    "MULTI_SOURCE_VERIFIED": 9200,
 }
-EXECUTABLE_STATES = {"EXECUTABLE_NOW", "VERIFY_ONLY"}
-
-
-class HeartbeatError(ValueError):
-    """Fail-closed validation error."""
 
 
 def canonical_json(value: Any) -> str:
-    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=False)
+    return json.dumps(value, sort_keys=True, separators=(",", ":"), ensure_ascii=True)
 
 
 def sha256_bytes(value: bytes) -> str:
@@ -40,74 +44,91 @@ def sha256_value(value: Any) -> str:
 
 
 def utcnow() -> str:
-    return datetime.now(timezone.utc).isoformat()
+    return datetime.now(timezone.utc).strftime("%Y-%m-%dT%H:%M:%SZ")
 
 
-@dataclass(frozen=True)
+def capability_code(value: str) -> str:
+    compact = re.sub(r"[^A-Z0-9]", "", value.upper())
+    if not compact:
+        raise HeartbeatError("catalogue capability code is empty")
+    return "CAP-" + compact[:40]
+
+
+@dataclass(frozen=True, slots=True)
 class Candidate:
     source_id: str
     system: str
     capability_id: str
-    name: str
+    authority_code: str
     tags: tuple[str, ...]
     route: str
     state: str
     proof_level: str
-    proof_rank: int
-    quality: float
-    safety: float
-    reuse: float
-    cost: float
     authority_class: str
     external_effect: bool
-    available: bool
+    catalogue_present: bool
     source_fingerprint: str
     solution_fingerprint: str
+    confidence_bp: int
+    evidence_count: int
 
     def to_dict(self) -> dict[str, Any]:
         return {
             "source_id": self.source_id,
             "system": self.system,
             "capability_id": self.capability_id,
-            "name": self.name,
+            "authority_code": self.authority_code,
             "tags": list(self.tags),
             "route": self.route,
             "state": self.state,
             "proof_level": self.proof_level,
-            "proof_rank": self.proof_rank,
-            "quality": self.quality,
-            "safety": self.safety,
-            "reuse": self.reuse,
-            "cost": self.cost,
             "authority_class": self.authority_class,
             "external_effect": self.external_effect,
-            "available": self.available,
+            "catalogue_present": self.catalogue_present,
             "source_fingerprint": self.source_fingerprint,
             "solution_fingerprint": self.solution_fingerprint,
+            "confidence_bp": self.confidence_bp,
+            "evidence_count": self.evidence_count,
+            "ingress_authorized": False,
         }
 
 
 class CapabilityHeartbeatEngine:
-    """Read-only discovery and routing; it never executes a candidate route."""
+    """Inventory facade; all recommendations come from ``VerifiedV4Authority``."""
 
     def __init__(
         self,
         root: str | Path,
         registry_path: str | Path,
-        bible_node_path: str | Path | None = "evidenceops/capability_heartbeat/bible_node.json",
+        bible_node_path: str | Path | None = None,
+        *,
+        authority: VerifiedV4Authority | None = None,
     ):
-        self.root = Path(root).resolve()
+        self.root = Path(root).resolve(strict=True)
         self.registry_path = self._resolve_path(registry_path)
         self.registry = self._load_json(self.registry_path)
         self.bible_node_path = self._resolve_path(bible_node_path) if bible_node_path else None
+        self.authority = authority
         self._validate_registry()
 
     def _resolve_path(self, path: str | Path) -> Path:
         candidate = Path(path)
         if candidate.is_absolute():
-            resolved = candidate.resolve()
+            unresolved = candidate
         else:
-            resolved = (self.root / candidate).resolve()
+            unresolved = self.root / candidate
+        try:
+            unresolved.relative_to(self.root)
+        except ValueError as exc:
+            raise HeartbeatError("path escapes repository root") from exc
+        current = self.root
+        for segment in unresolved.relative_to(self.root).parts:
+            if segment in {"", ".", ".."}:
+                raise HeartbeatError("unsafe repository path segment")
+            current = current / segment
+            if current.is_symlink():
+                raise HeartbeatError("symlink repository path prohibited")
+        resolved = unresolved.resolve()
         try:
             resolved.relative_to(self.root)
         except ValueError as exc:
@@ -117,21 +138,26 @@ class CapabilityHeartbeatEngine:
     @staticmethod
     def _load_json(path: Path) -> dict[str, Any]:
         try:
-            value = json.loads(path.read_text(encoding="utf-8"))
-        except (OSError, json.JSONDecodeError) as exc:
-            raise HeartbeatError(f"cannot load JSON contract: {path.name}") from exc
+            value = strict_json_loads(path.read_text(encoding="utf-8"), field=path.name)
+        except (OSError, ValueError, ContractError) as exc:
+            raise HeartbeatError(f"cannot load strict JSON contract: {path.name}") from exc
         if not isinstance(value, dict):
             raise HeartbeatError("JSON contract must be an object")
         return value
 
     def _validate_registry(self) -> None:
-        if self.registry.get("schema") != "EVIDENCEOPS-CAPABILITY-HEARTBEAT-1":
+        if self.registry.get("schema") != "EVIDENCEOPS-CAPABILITY-HEARTBEAT-2":
             raise HeartbeatError("unsupported heartbeat registry schema")
+        if self.registry.get("fixture_mode") != "SYNTHETIC_STATIC_CATALOGUE":
+            raise HeartbeatError("static catalogue must be explicitly synthetic")
+        for field in ("owner_code", "matter_code"):
+            if not isinstance(self.registry.get(field), str):
+                raise HeartbeatError(f"catalogue {field} is required")
         sources = self.registry.get("sources")
         if not isinstance(sources, list) or not sources:
             raise HeartbeatError("heartbeat sources are required")
         seen_sources: set[str] = set()
-        seen_capabilities: set[tuple[str, str]] = set()
+        seen_codes: set[str] = set()
         for source in sources:
             source_id = source.get("source_id", "")
             if not SAFE_ID.fullmatch(source_id) or source_id in seen_sources:
@@ -146,22 +172,19 @@ class CapabilityHeartbeatEngine:
             capabilities = source.get("capabilities")
             if not isinstance(capabilities, list) or not capabilities:
                 raise HeartbeatError(f"capabilities are required for {source_id}")
-            for capability in capabilities:
-                capability_id = capability.get("capability_id", "")
-                key = (source_id, capability_id)
-                if not SAFE_ID.fullmatch(capability_id) or key in seen_capabilities:
-                    raise HeartbeatError("capability_id is invalid or duplicated within a source")
-                seen_capabilities.add(key)
-                proof = capability.get("proof_level")
-                if proof not in PROOF_RANK:
+            for item in capabilities:
+                capability_id = item.get("capability_id", "")
+                code = capability_code(capability_id)
+                if not SAFE_ID.fullmatch(capability_id) or code in seen_codes:
+                    raise HeartbeatError("capability identifier is invalid or collides after normalization")
+                seen_codes.add(code)
+                if item.get("proof_level") not in PROOF_CONFIDENCE:
                     raise HeartbeatError(f"unknown proof level for {capability_id}")
-                for score in ("quality", "safety", "reuse"):
-                    value = capability.get(score)
-                    if not isinstance(value, (int, float)) or not 0 <= float(value) <= 1:
-                        raise HeartbeatError(f"{score} must be between zero and one")
-                cost = capability.get("cost", 0)
-                if not isinstance(cost, (int, float)) or float(cost) < 0:
-                    raise HeartbeatError("cost must be non-negative")
+                if item.get("authority_class") != "A0":
+                    raise HeartbeatError("catalogue authority ceiling must be A0")
+                tags = item.get("tags")
+                if not isinstance(tags, list) or any(not isinstance(tag, str) or not SAFE_TAG.fullmatch(tag) for tag in tags):
+                    raise HeartbeatError("catalogue tags must be controlled codes")
 
     def _repository_version(self) -> str:
         value = os.getenv("GITHUB_SHA", "").strip()
@@ -191,210 +214,186 @@ class CapabilityHeartbeatEngine:
                 present = path.is_file()
                 all_present = all_present and present
                 evidence.append({
-                    "path": relative,
+                    "path_code": "PATH-" + sha256_bytes(relative.encode("utf-8"))[:16].upper(),
                     "present": present,
-                    "sha256": sha256_bytes(path.read_bytes()) if present else None,
+                    "sha256": "sha256:" + sha256_bytes(path.read_bytes()) if present else None,
                 })
-            source_fingerprint = sha256_value(evidence)
-            heartbeat = {
+            source_fingerprint = digest(evidence)
+            heartbeats.append({
                 "source_id": source["source_id"],
-                "system": source["system"],
+                "system_code": source["system_code"],
                 "status": "CURRENT" if all_present else "DEGRADED",
                 "source_fingerprint": source_fingerprint,
                 "evidence": evidence,
+                "catalogue_only": True,
+                "ingress_authorized": False,
                 "private_values_persisted": False,
-            }
-            heartbeats.append(heartbeat)
+            })
             for item in source["capabilities"]:
                 tags = tuple(sorted(set(item.get("tags") or [])))
-                solution_fingerprint = sha256_value({
+                code = capability_code(item["capability_id"])
+                solution_fingerprint = digest({
+                    "authority_code": code,
                     "tags": tags,
-                    "route": item["route"],
+                    "route_code": item["route_code"],
                     "external_effect": bool(item.get("external_effect")),
                 })
                 candidates.append(Candidate(
                     source_id=source["source_id"],
-                    system=source["system"],
+                    system=source["system_code"],
                     capability_id=item["capability_id"],
-                    name=item["name"],
+                    authority_code=code,
                     tags=tags,
-                    route=item["route"],
+                    route=item["route_code"],
                     state=item["state"],
                     proof_level=item["proof_level"],
-                    proof_rank=PROOF_RANK[item["proof_level"]],
-                    quality=float(item["quality"]),
-                    safety=float(item["safety"]),
-                    reuse=float(item["reuse"]),
-                    cost=float(item.get("cost", 0)),
-                    authority_class=item.get("authority_class", "A0"),
+                    authority_class="A0",
                     external_effect=bool(item.get("external_effect")),
-                    available=all_present and item["state"] in EXECUTABLE_STATES,
+                    catalogue_present=all_present,
                     source_fingerprint=source_fingerprint,
                     solution_fingerprint=solution_fingerprint,
+                    confidence_bp=PROOF_CONFIDENCE[item["proof_level"]],
+                    evidence_count=sum(1 for value in evidence if value["present"]),
                 ))
         return heartbeats, candidates
 
-    @staticmethod
-    def _score(candidate: Candidate, required_tags: set[str]) -> float:
-        fit = len(required_tags.intersection(candidate.tags)) / max(1, len(required_tags))
-        proof = candidate.proof_rank / 90
-        cost_penalty = min(candidate.cost, 1.0)
-        return round(
-            0.28 * fit
-            + 0.24 * proof
-            + 0.22 * candidate.safety
-            + 0.16 * candidate.quality
-            + 0.10 * candidate.reuse
-            - 0.10 * cost_penalty,
-            6,
+    def _observation(self, candidate: Candidate, *, now: str) -> Observation:
+        eligible = (
+            candidate.catalogue_present
+            and candidate.state in {"EXECUTABLE_NOW", "VERIFY_ONLY"}
+            and not candidate.external_effect
+            and candidate.authority_class == "A0"
+        )
+        blocker = BlockerCode.NONE if eligible else (
+            BlockerCode.AUTHORITY_UNAVAILABLE if candidate.external_effect else BlockerCode.CAPABILITY_ABSENT
+        )
+        status = CapabilityStatus.AVAILABLE if eligible else CapabilityStatus.UNAVAILABLE
+        semantic = {
+            "source_fingerprint": candidate.source_fingerprint,
+            "solution_fingerprint": candidate.solution_fingerprint,
+            "catalogue_present": candidate.catalogue_present,
+            "state": candidate.state,
+            "external_effect": candidate.external_effect,
+        }
+        return Observation(
+            source_code="LOCAL_REPO",
+            node_id=self.authority.policy.root_node_id if self.authority else "NODE-ROOT",
+            owner_code=self.registry["owner_code"],
+            matter_code=self.registry["matter_code"],
+            capability_code=candidate.authority_code,
+            status=status,
+            confidence_bp=candidate.confidence_bp,
+            freshness_seconds=0,
+            evidence_count=candidate.evidence_count,
+            blocker_code=blocker,
+            capability_hash=digest({"capability": candidate.authority_code, "semantic": semantic}),
+            observed_at=now,
+            semantic_receipt=digest({"observed_at": now, "semantic": semantic}),
         )
 
-    def _route_requirement(self, requirement: dict[str, Any], candidates: list[Candidate]) -> dict[str, Any]:
+    def _route_requirement(self, requirement: dict[str, Any], candidates: list[Candidate], *, now: str) -> dict[str, Any]:
+        if self.authority is None:
+            raise HeartbeatError("VERIFIED_V4_AUTHORITY_REQUIRED")
+        allowed = {
+            "requirement_id", "tags", "minimum_proof", "maximum_authority",
+            "baseline_score", "baseline_safety", "improvement_threshold", "effectful_permit",
+        }
+        if set(requirement) - allowed:
+            raise HeartbeatError("unknown requirement field")
         requirement_id = requirement.get("requirement_id", "")
         if not SAFE_ID.fullmatch(requirement_id):
             raise HeartbeatError("requirement_id is invalid")
         tags = requirement.get("tags")
-        if not isinstance(tags, list) or not tags or any(not isinstance(tag, str) or not tag for tag in tags):
-            raise HeartbeatError("requirement tags are required")
-        required_tags = set(tags)
-        minimum_proof = requirement.get("minimum_proof", "TESTED")
-        if minimum_proof not in PROOF_RANK:
-            raise HeartbeatError("minimum_proof is invalid")
-        maximum_authority = requirement.get("maximum_authority", "A1")
-        if maximum_authority not in {"A0", "A1", "A2", "A3", "A4", "A5"}:
-            raise HeartbeatError("maximum_authority is invalid")
-        effectful_permit = bool(requirement.get("effectful_permit"))
-        baseline_score = float(requirement.get("baseline_score", 0))
-        baseline_safety = float(requirement.get("baseline_safety", 0))
-        improvement_threshold = float(requirement.get("improvement_threshold", 0.05))
-        if not 0 <= baseline_score <= 1 or not 0 <= baseline_safety <= 1:
-            raise HeartbeatError("baseline values must be between zero and one")
-
-        eligible: list[tuple[Candidate, float]] = []
-        held: list[dict[str, Any]] = []
-        for candidate in candidates:
-            if not required_tags.intersection(candidate.tags):
-                continue
-            reasons: list[str] = []
-            if not candidate.available:
-                reasons.append("NOT_EXECUTABLE_IN_CURRENT_RUNTIME")
-            if candidate.proof_rank < PROOF_RANK[minimum_proof]:
-                reasons.append("PROOF_BELOW_REQUIREMENT")
-            if int(candidate.authority_class[1:]) > int(maximum_authority[1:]):
-                reasons.append("AUTHORITY_EXCEEDS_ENVELOPE")
-            if candidate.external_effect and not effectful_permit:
-                reasons.append("EFFECTFUL_PERMIT_REQUIRED")
-            if candidate.cost > 0:
-                reasons.append("NON_ZERO_COST")
-            if candidate.safety < baseline_safety:
-                reasons.append("SAFETY_REGRESSION")
-            if reasons:
-                held.append({
-                    "source_id": candidate.source_id,
-                    "capability_id": candidate.capability_id,
-                    "reasons": reasons,
-                })
-                continue
-            eligible.append((candidate, self._score(candidate, required_tags)))
-
-        deduped: dict[str, tuple[Candidate, float]] = {}
-        for candidate, score in eligible:
-            prior = deduped.get(candidate.solution_fingerprint)
-            if prior is None or (score, candidate.proof_rank, candidate.source_id) > (
-                prior[1], prior[0].proof_rank, prior[0].source_id
-            ):
-                deduped[candidate.solution_fingerprint] = (candidate, score)
-        ranked = sorted(
-            deduped.values(),
-            key=lambda item: (-item[1], -item[0].proof_rank, item[0].source_id, item[0].capability_id),
-        )
-        if not ranked:
-            return {
-                "requirement_id": requirement_id,
-                "decision": "GAP_OR_HELD",
-                "primary": None,
-                "assistants": [],
-                "held": held,
-                "duplicate_candidates_removed": len(eligible),
-                "effectful_path_count": 0,
+        if not isinstance(tags, list) or not tags or any(not isinstance(tag, str) or not SAFE_TAG.fullmatch(tag) for tag in tags):
+            raise HeartbeatError("requirement tags are required controlled codes")
+        if requirement.get("maximum_authority", "A0") != "A0" or requirement.get("effectful_permit", False):
+            raise HeartbeatError("heartbeat recommendation authority is A0 only")
+        matches = [item for item in candidates if set(tags).intersection(item.tags)]
+        observations = tuple(self._observation(item, now=now) for item in matches)
+        result = self.authority.recommend(observations=observations, now=now)
+        by_code = {item.authority_code: item for item in matches}
+        mapped = []
+        for recommendation in result.recommendations:
+            candidate = by_code[recommendation.capability_code]
+            mapped.append({
+                **candidate.to_dict(),
+                "score": recommendation.score,
+                "role": recommendation.role.value,
+                "blocker_code": recommendation.blocker_code.value,
+                "authority_source": "VERIFIED_V4_FOUNDATION",
+            })
+        primary = next((item for item in mapped if item["role"] == "PREFERRED"), None)
+        assistants = [item for item in mapped if item["role"] == "BACKUP"]
+        escalation = next((item for item in mapped if item["role"] == "ESCALATION"), None)
+        held = [
+            {
+                "source_id": item.source_id,
+                "capability_id": item.capability_id,
+                "reasons": [
+                    "CATALOGUE_ONLY_CANNOT_AUTHORIZE_INGRESS",
+                    "EFFECTFUL_ROUTE_PROHIBITED" if item.external_effect else "FOUNDATION_SCORE_BELOW_THRESHOLD",
+                ],
             }
-
-        primary, primary_score = ranked[0]
-        assistants = []
-        for candidate, score in ranked[1:]:
-            if candidate.external_effect:
-                continue
-            if candidate.source_id == primary.source_id:
-                continue
-            assistants.append({**candidate.to_dict(), "score": score, "mode": "VERIFY_OR_ADVISE"})
-            if len(assistants) == 3:
-                break
-        if primary_score >= baseline_score + improvement_threshold:
-            decision = "ADOPT_SUPERIOR_VERIFIED_ROUTE"
-        else:
-            decision = "REUSE_CURRENT_VERIFIED_ROUTE"
+            for item in matches
+            if item.authority_code not in {value["authority_code"] for value in mapped}
+        ]
         return {
             "requirement_id": requirement_id,
-            "decision": decision,
-            "primary": {**primary.to_dict(), "score": primary_score, "mode": "PRIMARY"},
+            "decision": "FOUNDATION_RECOMMENDATION" if primary else "GAP_OR_HELD",
+            "primary": primary,
             "assistants": assistants,
+            "escalation": escalation,
             "held": held,
-            "duplicate_candidates_removed": len(eligible) - len(deduped),
-            "effectful_path_count": 1 if primary.external_effect else 0,
+            "effectful_path_count": 0,
+            "authority_ceiling": "A0",
+            "policy_hash": self.authority.policy.policy_hash,
+            "input_digest": result.input_digest,
         }
 
-    def route_requirements(self, requirements: list[dict[str, Any]]) -> list[dict[str, Any]]:
-        """Route dynamic turn requirements without executing the selected route."""
+    def route_requirements(self, requirements: list[dict[str, Any]], *, now: str | None = None) -> list[dict[str, Any]]:
         if not isinstance(requirements, list):
             raise HeartbeatError("requirements must be a list")
         _, candidates = self.collect()
-        decisions = [self._route_requirement(requirement, candidates) for requirement in requirements]
-        if any(item["effectful_path_count"] > 1 for item in decisions):
-            raise HeartbeatError("multiple effectful paths are prohibited")
-        return decisions
+        observed_at = now or utcnow()
+        return [self._route_requirement(item, candidates, now=observed_at) for item in requirements]
 
-    def run(self, context_path: str | Path) -> dict[str, Any]:
+    def run(self, context_path: str | Path, *, now: str | None = None) -> dict[str, Any]:
         context = self._load_json(self._resolve_path(context_path))
-        if context.get("schema") != "EVIDENCEOPS-CURRENT-WORKFLOW-1":
+        if context.get("schema") != "EVIDENCEOPS-CURRENT-WORKFLOW-2":
             raise HeartbeatError("unsupported current-workflow schema")
+        if context.get("fixture_mode") != "SYNTHETIC_STATIC_WORKFLOW":
+            raise HeartbeatError("workflow fixture must be explicitly synthetic")
         requirements = context.get("requirements")
         if not isinstance(requirements, list) or not requirements:
             raise HeartbeatError("current workflow requirements are required")
+        observed_at = now or utcnow()
         heartbeats, candidates = self.collect()
-        decisions = [self._route_requirement(requirement, candidates) for requirement in requirements]
-        if any(item["effectful_path_count"] > 1 for item in decisions):
-            raise HeartbeatError("multiple effectful paths are prohibited")
+        decisions = [self._route_requirement(item, candidates, now=observed_at) for item in requirements]
         body = {
-            "schema": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-REPORT-1",
-            "workflow_id": context.get("workflow_id"),
+            "schema": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-REPORT-2",
+            "workflow_code": context.get("workflow_code"),
             "workflow_version": context.get("workflow_version"),
             "repository_version": self._repository_version(),
-            "runtime_state": "ON_DEMAND_GOVERNED",
+            "runtime_state": "ON_INPUT_READ_ONLY_RECOMMENDATION",
             "source_count": len(heartbeats),
             "candidate_count": len(candidates),
             "heartbeats": heartbeats,
             "decisions": decisions,
-            "single_effectful_path_enforced": True,
+            "authority_ceiling": "A0",
+            "authority_source": "VERIFIED_V4_FOUNDATION",
+            "scheduler_authority": False,
             "external_execution_attempted": False,
             "private_values_persisted": False,
+            "live_awareness_flags": self.authority.live_awareness_flags if self.authority else {},
             "truth_boundary": (
-                "The heartbeat discovers and ranks current verified repository capabilities. "
-                "It does not grant authority, execute external effects, or inject messages into an inactive chat."
+                "The facade inventories local catalogue evidence and delegates every recommendation to "
+                "verified-v4. It does not authorize ingress, execute routes, schedule work, or infer live chats."
             ),
         }
-        generated_at = utcnow()
-        result = {
-            **body,
-            "generated_at": generated_at,
-            "report_sha256": sha256_value(body),
-        }
-        if self.bible_node_path and self.bible_node_path.is_file():
-            from .bible_federation import BibleFederation
+        return {**body, "generated_at": observed_at, "report_sha256": digest(body)}
 
-            federation = BibleFederation(self._load_json(self.bible_node_path))
-            result["bible_node_heartbeat"] = federation.make_heartbeat(
-                f"report:{result['report_sha256']}",
-                emitted_at=generated_at,
-                active_workflow_ids=[str(context.get("workflow_id"))],
-            )
-        return result
+
+__all__ = [
+    "Candidate", "CapabilityHeartbeatEngine", "HeartbeatError", "SAFE_ID",
+    "canonical_json", "sha256_value", "utcnow",
+]

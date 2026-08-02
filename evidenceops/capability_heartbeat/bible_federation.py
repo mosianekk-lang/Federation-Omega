@@ -1,213 +1,130 @@
+"""Master Bible facade over the single verified-v4 authority."""
+
 from __future__ import annotations
 
-import fnmatch
-from datetime import datetime, timedelta, timezone
+from dataclasses import dataclass
 from typing import Any
 
-from .engine import HeartbeatError, SAFE_ID, sha256_value
-
-NODE_STATES = {
-    "NODE_ACTIVE_VERIFIED",
-    "NODE_STALE",
-    "NODE_SYNC_PENDING",
-    "NODE_CONFLICT",
-    "NODE_QUARANTINED",
-    "NODE_ARCHIVED",
-}
-PRIVACY_RANK = {"P0": 0, "P1": 1, "P2": 2, "P3": 3, "P4": 4}
+from .authority import VerifiedV4Authority
+from .foundation.adapters.common import Observation
+from .foundation.aggregator import AggregationResult
+from .foundation.contracts import HeartbeatEnvelope, Receipt, canonicalize
+from .foundation.errors import ContractError, HeartbeatError
+from .foundation.ledger import ImmutableEventLedger
+from .foundation.respawn import RespawnManifest, RespawnReadback, verify_respawn
 
 
-def parse_time(value: str) -> datetime:
-    try:
-        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except (TypeError, ValueError) as exc:
-        raise HeartbeatError("invalid Bible node timestamp") from exc
-    if parsed.tzinfo is None:
-        raise HeartbeatError("Bible node timestamps must be timezone-aware")
-    return parsed.astimezone(timezone.utc)
-
-
+@dataclass(frozen=True, slots=True)
 class BibleFederation:
-    """Builds and verifies privacy-safe Master Bible node heartbeats."""
+    """Compatibility facade; it owns no policy, score, signer or scheduler."""
 
-    def __init__(self, contract: dict[str, Any]):
-        self.contract = contract
-        self._validate_contract()
+    authority: VerifiedV4Authority
 
-    def _validate_contract(self) -> None:
-        if self.contract.get("schema") != "EVIDENCEOPS-BIBLE-NODE-1":
-            raise HeartbeatError("unsupported Bible node contract")
-        for key in ("node_id", "parent_node_id", "contract_version"):
-            if not SAFE_ID.fullmatch(str(self.contract.get(key, ""))):
-                raise HeartbeatError(f"invalid Bible node {key}")
-        if self.contract.get("privacy_tier") not in PRIVACY_RANK:
-            raise HeartbeatError("invalid Bible node privacy tier")
-        if not isinstance(self.contract.get("branch_version"), int) or self.contract["branch_version"] < 1:
-            raise HeartbeatError("Bible node branch_version must be positive")
-        if not isinstance(self.contract.get("ttl_seconds"), int) or self.contract["ttl_seconds"] < 60:
-            raise HeartbeatError("Bible node ttl_seconds must be at least 60")
-        max_hops = self.contract.get("max_hops")
-        if not isinstance(max_hops, int) or not 1 <= max_hops <= 32:
-            raise HeartbeatError("Bible node max_hops must be between 1 and 32")
-        patterns = self.contract.get("authorized_child_patterns")
-        if not isinstance(patterns, list) or any(not isinstance(item, str) or not item for item in patterns):
-            raise HeartbeatError("authorized child patterns must be a list")
-
-    def _workflow_refs(self, workflow_ids: list[str]) -> list[str]:
-        if any(not isinstance(value, str) or not value for value in workflow_ids):
-            raise HeartbeatError("active workflow identifiers must be non-empty strings")
-        if PRIVACY_RANK[self.contract["privacy_tier"]] <= PRIVACY_RANK["P1"]:
-            return sorted(set(workflow_ids))
-        return sorted({f"sha256:{sha256_value(value)}" for value in workflow_ids})
+    def __post_init__(self) -> None:
+        if not isinstance(self.authority, VerifiedV4Authority):
+            raise ContractError("VERIFIED_V4_AUTHORITY_REQUIRED")
 
     def make_heartbeat(
         self,
-        capability_report_sha: str,
         *,
-        emitted_at: str,
-        active_workflow_ids: list[str] | None = None,
-        path: list[str] | None = None,
-        last_merge_receipt_ref: str | None = None,
-    ) -> dict[str, Any]:
-        if not SAFE_ID.fullmatch(capability_report_sha):
-            raise HeartbeatError("invalid capability report reference")
-        emitted = parse_time(emitted_at)
-        route = list(path or [self.contract["parent_node_id"], self.contract["node_id"]])
-        if route[-1] != self.contract["node_id"] or len(route) != len(set(route)):
-            raise HeartbeatError("Bible node propagation path is invalid or cyclic")
-        if len(route) - 1 > self.contract["max_hops"]:
-            raise HeartbeatError("Bible node propagation exceeds max_hops")
-        body = {
-            "schema": "EVIDENCEOPS-BIBLE-NODE-HEARTBEAT-1",
-            "node_id": self.contract["node_id"],
-            "parent_node_id": self.contract["parent_node_id"],
-            "contract_version": self.contract["contract_version"],
-            "branch_version": self.contract["branch_version"],
-            "privacy_tier": self.contract["privacy_tier"],
-            "status": "NODE_ACTIVE_VERIFIED",
-            "active_workflow_refs": self._workflow_refs(active_workflow_ids or self.contract.get("active_workflow_ids", [])),
-            "capability_report_sha": capability_report_sha,
-            "last_merge_receipt_ref": last_merge_receipt_ref,
-            "emitted_at": emitted.isoformat(),
-            "expires_at": (emitted + timedelta(seconds=self.contract["ttl_seconds"])).isoformat(),
-            "propagation_path": route,
-            "hop_count": len(route) - 1,
-            "max_hops": self.contract["max_hops"],
-            "details_included": False,
-            "credentials_included": False,
-        }
-        return {**body, "heartbeat_sha256": sha256_value(body)}
-
-    @staticmethod
-    def verify_heartbeat(envelope: dict[str, Any]) -> None:
-        if envelope.get("schema") != "EVIDENCEOPS-BIBLE-NODE-HEARTBEAT-1":
-            raise HeartbeatError("unsupported Bible node heartbeat")
-        body = {key: value for key, value in envelope.items() if key != "heartbeat_sha256"}
-        if envelope.get("heartbeat_sha256") != sha256_value(body):
-            raise HeartbeatError("Bible node heartbeat hash mismatch")
-        if envelope.get("status") not in NODE_STATES:
-            raise HeartbeatError("invalid Bible node status")
-        path = envelope.get("propagation_path")
-        if not isinstance(path, list) or len(path) != len(set(path)):
-            raise HeartbeatError("Bible node propagation loop detected")
-        if envelope.get("hop_count") != len(path) - 1 or envelope["hop_count"] > envelope.get("max_hops", -1):
-            raise HeartbeatError("invalid Bible node hop count")
-        if envelope.get("credentials_included") or envelope.get("details_included"):
-            raise HeartbeatError("Bible node heartbeat contains prohibited detail")
-        parse_time(envelope.get("emitted_at"))
-        parse_time(envelope.get("expires_at"))
-
-    def make_child_genesis(self, child_id: str, parent_heartbeat: dict[str, Any]) -> dict[str, Any]:
-        self.verify_heartbeat(parent_heartbeat)
-        if not SAFE_ID.fullmatch(child_id):
-            raise HeartbeatError("invalid child node id")
-        if not any(fnmatch.fnmatchcase(child_id, pattern) for pattern in self.contract["authorized_child_patterns"]):
-            raise HeartbeatError("child node is outside the delegated namespace")
-        parent_path = list(parent_heartbeat["propagation_path"])
-        if child_id in parent_path:
-            raise HeartbeatError("child propagation would create a loop")
-        if parent_heartbeat["hop_count"] + 1 > self.contract["max_hops"]:
-            raise HeartbeatError("child propagation exceeds max_hops")
-        body = {
-            "schema": "EVIDENCEOPS-BIBLE-CHILD-GENESIS-1",
-            "node_id": child_id,
-            "parent_node_id": self.contract["node_id"],
-            "contract_version": self.contract["contract_version"],
-            "minimum_branch_version": self.contract["branch_version"],
-            "privacy_tier_ceiling": self.contract["privacy_tier"],
-            "propagation_path": [*parent_path, child_id],
-            "hop_count": parent_heartbeat["hop_count"] + 1,
-            "max_hops": self.contract["max_hops"],
-            "parent_heartbeat_sha256": parent_heartbeat["heartbeat_sha256"],
-            "required_startup_sequence": [
-                "VERIFY_GENESIS_HASH",
-                "REGISTER_NODE",
-                "SCAN_CURRENT_CAPABILITIES",
-                "EMIT_NODE_ACTIVE_HEARTBEAT",
-                "READ_BACK_REGISTRY_RECEIPT",
-            ],
-            "effectful_execution_inherited": False,
-            "google_cloud_capability_inherited": True,
-            "google_cloud_control_breadth": "FULL_PROJECT_CONTROL",
-            "google_cloud_contract_ref": "evidenceops/cloud_capability/contract.json",
-            "cloud_action_requires_current_formation_permit": True,
-            "raw_cloud_credentials_inherited": False,
-        }
-        return {**body, "genesis_sha256": sha256_value(body)}
-
-    @staticmethod
-    def reconcile(
-        registered_node_ids: set[str],
-        envelopes: list[dict[str, Any]],
-        *,
+        observations: tuple[Observation, ...],
         observed_at: str,
-    ) -> dict[str, Any]:
-        observed = parse_time(observed_at)
-        latest: dict[str, dict[str, Any]] = {}
-        conflicts: set[str] = set()
-        quarantined: list[str] = []
-        rejected_replays: list[str] = []
-        for envelope in envelopes:
-            BibleFederation.verify_heartbeat(envelope)
-            node_id = envelope["node_id"]
-            if node_id not in registered_node_ids:
-                quarantined.append(node_id)
-                continue
-            prior = latest.get(node_id)
-            if prior is None:
-                latest[node_id] = envelope
-                continue
-            prior_time = parse_time(prior["emitted_at"])
-            current_time = parse_time(envelope["emitted_at"])
-            if current_time == prior_time and envelope["heartbeat_sha256"] != prior["heartbeat_sha256"]:
-                conflicts.add(node_id)
-            elif current_time > prior_time and envelope["branch_version"] >= prior["branch_version"]:
-                latest[node_id] = envelope
-            elif current_time < prior_time or envelope["branch_version"] < prior["branch_version"]:
-                rejected_replays.append(envelope["heartbeat_sha256"])
+        expires_at: str,
+        trace_id: str,
+        root_transaction_id: str,
+        mission_code: str,
+        sequence: int,
+    ) -> tuple[AggregationResult, HeartbeatEnvelope]:
+        return self.authority.build_root_envelope(
+            observations=observations,
+            now=observed_at,
+            expires_at=expires_at,
+            trace_id=trace_id,
+            root_transaction_id=root_transaction_id,
+            mission_code=mission_code,
+            sequence=sequence,
+        )
 
-        nodes: list[dict[str, Any]] = []
-        for node_id in sorted(registered_node_ids):
-            envelope = latest.get(node_id)
-            if node_id in conflicts:
-                state = "NODE_CONFLICT"
-            elif envelope is None:
-                state = "NODE_SYNC_PENDING"
-            elif parse_time(envelope["expires_at"]) < observed:
-                state = "NODE_STALE"
-            else:
-                state = "NODE_ACTIVE_VERIFIED"
-            nodes.append({
-                "node_id": node_id,
-                "state": state,
-                "last_heartbeat_sha256": envelope.get("heartbeat_sha256") if envelope else None,
-            })
+    def forward(
+        self,
+        *,
+        lineage: tuple[HeartbeatEnvelope, ...],
+        forwarding_node_id: str,
+        observed_at: str,
+    ) -> HeartbeatEnvelope:
+        return self.authority.forward(
+            lineage=lineage,
+            forwarding_node_id=forwarding_node_id,
+            now=observed_at,
+        )
+
+    def accept(
+        self,
+        *,
+        lineage: tuple[HeartbeatEnvelope, ...],
+        destination_node_id: str,
+        observed_at: str,
+    ) -> Receipt:
+        return self.authority.accept(
+            lineage=lineage,
+            destination_node_id=destination_node_id,
+            now=observed_at,
+        )
+
+    def child_scaffold(self, node_id: str) -> dict[str, Any]:
+        """Describe an already registered child without creating authority."""
+        record = self.authority.registry.get(node_id)
+        if record.parent_node_id is None:
+            raise ContractError("CHILD_NODE_REQUIRED")
         return {
-            "schema": "EVIDENCEOPS-BIBLE-NODE-RECONCILIATION-1",
-            "observed_at": observed.isoformat(),
-            "nodes": nodes,
-            "quarantined_unregistered_nodes": sorted(set(quarantined)),
-            "rejected_replay_heartbeats": sorted(set(rejected_replays)),
-            "active_node_count": sum(item["state"] == "NODE_ACTIVE_VERIFIED" for item in nodes),
-            "truth_boundary": "Only registered nodes with a current, hash-valid heartbeat are known active.",
+            "schema": "EVIDENCEOPS-BIBLE-CHILD-SCAFFOLD-2",
+            "node_id": record.node_id,
+            "parent_node_id": record.parent_node_id,
+            "generation": record.generation,
+            "owner_code": record.owner_code,
+            "matter_code": record.matter_code,
+            "classification": record.classification.value,
+            "authority_ceiling": record.authority_ceiling.value,
+            "control_generation": record.control_generation,
+            "registration_receipt": record.registration_receipt,
+            "signer_identity": canonicalize(record.signer_identity),
+            "max_hops": self.authority.policy.max_hops,
+            "effectful_execution_inherited": False,
+            "live_awareness_flags": self.authority.live_awareness_flags,
+            "truth_boundary": "This is a read-only view of prior verified registration, not a child-creation action.",
         }
+
+    def reconcile(self, *, observed_at: str) -> dict[str, Any]:
+        readback = self.authority.authority_readback(now=observed_at)
+        return {
+            "schema": "EVIDENCEOPS-BIBLE-NODE-RECONCILIATION-2",
+            "observed_at": observed_at,
+            "authority_readback": readback,
+            "registered_node_count": len(self.authority.registry.records),
+            "active_chat_count": 0,
+            "scheduler_authority": False,
+            "live_awareness_flags": self.authority.live_awareness_flags,
+            "truth_boundary": (
+                "Fresh registered nodes are known to the injected local authority. No provider-authoritative "
+                "active-chat inventory, per-chat emitter coverage, or live attachment is inferred."
+            ),
+        }
+
+    def verify_respawn(
+        self,
+        *,
+        manifest: RespawnManifest,
+        ledger: ImmutableEventLedger,
+        observed_at: str,
+    ) -> RespawnReadback:
+        return verify_respawn(
+            manifest=manifest,
+            policy=self.authority.policy,
+            registry=self.authority.registry,
+            ledger=ledger,
+            stop_control=self.authority.stop_control,
+            now=observed_at,
+        )
+
+
+__all__ = ["BibleFederation", "HeartbeatError"]

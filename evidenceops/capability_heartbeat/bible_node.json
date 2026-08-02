@@ -1,12 +1,18 @@
 {
-  "schema": "EVIDENCEOPS-BIBLE-NODE-1",
-  "node_id": "NODE-EVIDENCEOPS-CAPABILITY-HEARTBEAT",
-  "parent_node_id": "CENTRAL-MASTER",
-  "contract_version": "MB-HB-1.0",
-  "branch_version": 1,
-  "privacy_tier": "P1",
-  "ttl_seconds": 900,
-  "max_hops": 8,
-  "active_workflow_ids": ["CURRENT-CHAT-WORKFLOW"],
-  "authorized_child_patterns": ["NODE-EVIDENCEOPS-*", "NODE-BIBLE-*"]
+  "schema": "EVIDENCEOPS-MASTER-BIBLE-POLICY-FIXTURE-2",
+  "fixture_only": true,
+  "root_node_id": "NODE-ROOT",
+  "owner_code": "OWNER-A1B2C3D4",
+  "matter_code": "MATTER-B1C2D3E4",
+  "classification": "INTERNAL_META",
+  "authority_ceiling": "A0",
+  "control_generation": 0,
+  "max_hops": 3,
+  "recommendation_only": true,
+  "live_master_bible_attachment": false,
+  "active_chat_inventory": false,
+  "per_chat_emitters": false,
+  "unsolicited_injection": false,
+  "system_wide_awareness": false,
+  "signing_material_included": false
 }

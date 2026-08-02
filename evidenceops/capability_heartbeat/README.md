@@ -1,30 +1,76 @@
-# EvidenceOps Heartbeat System
+# EvidenceOps Capability Heartbeat — verified-v4 integration
 
-This package is the EvidenceOps heartbeat control plane for documented Kim DataVerse surfaces, participating chats, capability sources, response outboxes, adapter-remediation cases and connector-use Kimmie Seeds.
+This package is a local, read-only, recommendation-only heartbeat foundation with compatibility facades for the existing EvidenceOps catalogue, SQLite system, Master Bible federation, CLI and scheduler.
 
-For every participating turn it:
+Its truthful maturity is **`DURABLE_FOUNDATION_IMPLEMENTED_NOT_ATTACHED`**. It has no provider-authoritative active-chat inventory, per-chat emitter coverage, unsolicited injection, system-wide awareness, hosted heartbeat API, or heartbeat MCP tool. Source files, catalogues, manifests and session connector labels do not prove those capabilities.
 
-1. hashes and checks the registered source evidence;
-2. rejects missing, unproven, unsafe, costly or over-authority routes;
-3. deduplicates semantically equivalent solutions;
-4. selects one primary route;
-5. admits up to three non-effectful cross-system assistants for verification or advice;
-6. adopts an alternative only when its verified score exceeds the declared baseline without reducing safety;
-7. preserves one effectful path and requires an external Formation permit before that path can be executed.
-8. commits the turn, node state, response bundle and receipt atomically;
-9. returns an acknowledgement or bounded assistance through the same authorised adapter;
-10. opens and persistently reconciles a ranked workaround case for every unbound surface;
-11. binds a Kimmie Seed PRE and POST receipt to connector calls routed through a participating adapter.
+## One authority
 
-Run from the repository root:
+`VerifiedV4Authority` is the only component allowed to:
 
-```bash
-python -m evidenceops.capability_heartbeat \
-  --output scheduler/runtime/capability-heartbeat.json
+- apply heartbeat recommendation policy;
+- bind owner, matter, classification, authority and control generation;
+- create or forward a signed envelope;
+- verify complete root-to-current lineage;
+- accept ingress and issue a destination-signed receipt;
+- perform registry or respawn semantic readback.
+
+`CapabilityHeartbeatEngine`, `BibleFederation`, `EvidenceOpsHeartbeatSystem`, the standalone CLI and the external scheduler are facades. They cannot create authority from catalogue availability, an unhosted source, a session connector label, a scheduled run, a static fixture, an MCP declaration or an API route claim.
+
+```text
+explicit on-input caller
+  -> synthetic/local catalogue observation
+  -> verified-v4 A0 aggregator
+  -> registered runtime signer
+  -> complete signed lineage (maximum 3 hops)
+  -> fresh destination registration
+  -> destination-signed receipt
+  -> atomic metadata-only local record
 ```
 
-The CLI is read-only except for its explicit report output. It does not execute a suggested route, expose private identifiers, grant authority, or inject messages into an inactive ChatGPT conversation. The current chat uses the generated intake during active turns; GitHub Actions supplies durable scheduled discovery artifacts for later readback.
+## Non-negotiable controls
 
-The authenticated runtime exposes `/heartbeat/turn`, `/heartbeat/surfaces`, `/heartbeat/reconcile`, `/heartbeat/delivery`, `/heartbeat/connectors/seed`, `/heartbeat/connectors/cycle` and `/heartbeat/connectors/seeds`. The tool-only MCP adapter exposes matching ChatGPT tools.
+- Heartbeat authority is exactly `A0`; no effectful route can be selected or executed.
+- Children inherit owner code, matter code, classification floor, schema, adapter version, signing version, control generation and an authority ceiling that cannot widen.
+- Runtime signers are injected and must exactly match every fresh registry record, including signing version, key fingerprint and rotation generation.
+- Forwarded ingress requires the complete signed lineage. A digest-only or child-only envelope is insufficient.
+- Stop advances generation and fences earlier registrations, envelopes, receipts, leases and delegations.
+- Envelope identity and idempotency bind the complete canonical payload. Identical replay is stable; conflicting replay fails closed.
+- Receipt verification binds the exact accepted envelope, scope, generation, destination signer, registration window and explicit current time.
+- Respawn verifies policy, every fresh registry record, ledger tail, parent transaction, receipts and false live-awareness flags.
+- No turn payload may contain task summaries, prompts, messages, chats, documents, evidence, transcripts, personal data, legal content or credentials. Only codes, hashes, enums, timestamps, counts and signed receipts cross the boundary.
+- JSON rejects duplicate keys. Local paths reject escapes and symlink traversal.
+- Static JSON is marked `SYNTHETIC_STATIC_*` or `fixture_only`; it never authorizes ingress.
+- Scheduler and adapter-remediation methods are inventory-only. They do not rank, advance, retry, authorize, dispatch or execute work.
 
-Kimmie Seeds are policy envelopes, not credentials or executable implants. A PRE event must commit before a participating connector call and a POST receipt must bind its result hash afterward. Direct calls through unrelated connector paths cannot be intercepted; the affected surface remains `ADAPTER_REQUIRED` and its remediation case develops the supported proxy, webhook or polling route.
+Namespaced pseudonymous syntax constrains representation but cannot prove caller intent or guarantee that semantics were never embedded in a syntactically valid code.
+
+## Preserved scaffolding
+
+- `engine.py` inventories existing Federation Omega, Secondary Brain, MODISA, EvidenceOps and supporting catalogue evidence. It needs an injected `VerifiedV4Authority` before returning recommendations.
+- `system.py` retains local SQLite transactions, outbox receipts, connector PRE/POST records and surface inventory. Turn ingress additionally requires a complete typed signed lineage.
+- `bible_federation.py` exposes child readback, signed heartbeat, forwarding, acceptance and respawn facades; it owns no independent policy.
+- `scheduler/run_scheduler.py` emits catalogue and surface inventory only, with zero recommendation or ingress authority.
+- `system_cli.py` and `python -m evidenceops.capability_heartbeat` are inventory/readback tools. The static turn example cannot be ingested.
+
+The repository currently contains no implemented heartbeat endpoints in `evidenceops/runtime_service/main.py` and no implemented heartbeat tools in `evidenceops-mcp-adapter/src/server.ts`. Authentication, API schemas, MCP tools, durable production storage, deployment, provider-backed canaries and live attachment remain explicit later obligations.
+
+## Verification
+
+From the repository root:
+
+```text
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/tests -v
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s tests -v
+PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_atomic_transactions tests.test_connector_foundry tests.test_connector_foundry_google_drive tests.test_ecasp tests.test_innovation_engine_registry tests.test_operation_idempotency tests.test_provenance_passport tests.test_runtime tests.test_slrk tests.test_wif_hardening
+PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/capability_heartbeat/static_verify.py
+PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/capability_heartbeat/validate_build_contract.py evidenceops/capability_heartbeat/BUILD_CONTRACT.json --require-proof
+PYTHONDONTWRITEBYTECODE=1 python3 -m compileall -q evidenceops/capability_heartbeat scheduler/run_scheduler.py
+PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/security/public_repository_leak_guard.py
+```
+
+The original 24-test behavior audit is recorded in `TEST_COVERAGE_MAP.md`.
+
+## Activation closure
+
+Live attachment is a separate Formation mission. It requires implemented authenticated runtime and MCP contracts, injected non-static signers, provider-authoritative inventory, registered current emitters, exact reconciliation, privacy/stop/rotation tests, durable storage, two later clean cycles, a real respawn canary and provider-backed round-trip readback. Until then, all live-awareness flags remain false.

@@ -1,25 +1,14 @@
 {
-  "schema": "EVIDENCEOPS-CHAT-TURN-EVENT-1",
-  "event_id": "CURRENT-CHAT-HEARTBEAT-SYSTEM-BUILD-001",
-  "chat_id": "CURRENT-CHAT-WORKFLOW",
-  "turn_id": "TURN-HEARTBEAT-SYSTEM-CANARY-001",
-  "surface_id": "chatgpt",
+  "schema": "EVIDENCEOPS-CHAT-TURN-EVENT-2",
+  "fixture_only": true,
+  "event_id": "EVENT-SYNTHETIC-0001",
+  "surface_id": "evidenceops",
   "sequence": 1,
-  "emitted_at": "2026-08-02T19:50:00+00:00",
-  "privacy_tier": "P1",
-  "task_summary": "Build the complete EvidenceOps Heartbeat System with per-turn cross-surface assistance, persistent adapter workarounds and Kimmie Seeds on connector use.",
-  "blockers": ["Provider event and message adapters require individual hosted readback."],
-  "risk_flags": ["False universal visibility must remain fail-closed."],
-  "requirements": [
-    {
-      "requirement_id": "HEARTBEAT-SYSTEM-BUILD",
-      "tags": ["architecture", "continuity", "heartbeat", "integration", "quality", "test", "verify"],
-      "minimum_proof": "TESTED",
-      "maximum_authority": "A1",
-      "baseline_score": 0.5,
-      "baseline_safety": 0.8,
-      "improvement_threshold": 0.05,
-      "effectful_permit": false
-    }
-  ]
+  "observed_at": "2026-08-02T12:00:10Z",
+  "destination_node_id": "NODE-EVIDENCEOPS",
+  "envelope_id": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "idempotency_key": "sha256:0000000000000000000000000000000000000000000000000000000000000000",
+  "authorization_state": "STATIC_EXAMPLE_NOT_AUTHORIZED_FOR_INGRESS",
+  "raw_content_included": false,
+  "credentials_included": false
 }

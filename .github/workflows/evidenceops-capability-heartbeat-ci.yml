@@ -1,0 +1,46 @@
+name: EvidenceOps capability heartbeat CI
+
+on:
+  push:
+    paths:
+      - "evidenceops/capability_heartbeat/**"
+      - "scheduler/run_scheduler.py"
+      - "scheduler/tasks.json"
+      - ".github/workflows/evidenceops-capability-heartbeat-ci.yml"
+  pull_request:
+    paths:
+      - "evidenceops/capability_heartbeat/**"
+      - "scheduler/run_scheduler.py"
+      - "scheduler/tasks.json"
+      - ".github/workflows/evidenceops-capability-heartbeat-ci.yml"
+
+permissions:
+  contents: read
+
+concurrency:
+  group: capability-heartbeat-${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Corrected current and integration tests
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/tests -v
+      - name: Complete verified-v4 foundation tests
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/foundation_tests -v
+      - name: Existing standard-library compatibility tests
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_atomic_transactions tests.test_connector_foundry tests.test_connector_foundry_google_drive tests.test_ecasp tests.test_innovation_engine_registry tests.test_operation_idempotency tests.test_provenance_passport tests.test_runtime tests.test_slrk tests.test_wif_hardening
+      - name: Static no-network foundation and one-authority integration verification
+        run: PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/capability_heartbeat/static_verify.py
+      - name: MODISA build contract
+        run: PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/capability_heartbeat/validate_build_contract.py evidenceops/capability_heartbeat/BUILD_CONTRACT.json --require-proof
+      - name: Python compilation
+        run: PYTHONDONTWRITEBYTECODE=1 python3 -m compileall -q evidenceops/capability_heartbeat scheduler/run_scheduler.py
+      - name: Public repository leak guard
+        run: PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/security/public_repository_leak_guard.py

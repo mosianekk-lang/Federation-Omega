@@ -1,0 +1,133 @@
+{
+  "cycle": {
+    "id": "KDV-HEARTBEAT-DOC-CYCLE-004",
+    "missionId": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-VERIFIED-V4-INTEGRATION",
+    "missionVersion": 4,
+    "inputHash": "sha256:e40e5face7b93b2aa6dcf7d45dd249b1ec6293eae0b51b61bc502472d525359b",
+    "selectedRoute": "python-3.12-verified-v4-one-authority-local-integration",
+    "routeCapabilities": [
+      {
+        "name": "formation_governance",
+        "applicable": true,
+        "requiredDocumentationCategories": ["governance"]
+      },
+      {
+        "name": "modisa_python_foundation",
+        "applicable": true,
+        "requiredDocumentationCategories": ["architecture", "build_contract"]
+      },
+      {
+        "name": "public_safe_local_operation",
+        "applicable": true,
+        "requiredDocumentationCategories": ["surface_safety"]
+      },
+      {
+        "name": "documentation_gate",
+        "applicable": true,
+        "requiredDocumentationCategories": ["documentation_governance"]
+      }
+    ],
+    "routeCapabilityBindingComplete": true,
+    "routeCapabilitySnapshotHash": "sha256:be498ce2acdaceac7ad58e5283a382a4b770b307d7b7c2f7cfae8d0558502ea9",
+    "preflightRouteCapabilitySnapshotHash": "sha256:be498ce2acdaceac7ad58e5283a382a4b770b307d7b7c2f7cfae8d0558502ea9",
+    "firstTaskActionStarted": false
+  },
+  "requirements": [
+    {"category": "governance", "applicable": true},
+    {"category": "architecture", "applicable": true},
+    {"category": "build_contract", "applicable": true},
+    {"category": "surface_safety", "applicable": true},
+    {"category": "documentation_governance", "applicable": true}
+  ],
+  "documents": [
+    {
+      "id": "FORMATION-GOVERNANCE",
+      "title": "Govern With Formation Engine and governed action contract",
+      "category": "governance",
+      "source": "local-skill://govern-with-formation-engine",
+      "versionOrDate": "sha256:3292c57ef6f52aef1c3749d1924124e4d4e0cac952c01c7d6c50f31aaea074fe;contract:sha256:d4cffca735e46897b4c3eb2caf4cd33f6cd6903a3e703a1c2d77ec9cbe192a0e",
+      "state": "READ_COMPLETE",
+      "totalUnits": 319,
+      "readUnits": 319,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:3292c57ef6f52aef1c3749d1924124e4d4e0cac952c01c7d6c50f31aaea074fe",
+      "temporallyUnstable": false,
+      "applicable": true
+    },
+    {
+      "id": "MODISA-CODE-FORGE",
+      "title": "Forge MODISA Systems and Code-Forge v3.3 contract",
+      "category": "architecture",
+      "source": "local-skill://forge-modisa-systems",
+      "versionOrDate": "3.3;sha256:ea16ba1410b1845808d853dfa68a3223425666b313da4709ac027e7fd2991d31",
+      "state": "READ_COMPLETE",
+      "totalUnits": 172,
+      "readUnits": 172,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:ea16ba1410b1845808d853dfa68a3223425666b313da4709ac027e7fd2991d31",
+      "temporallyUnstable": false,
+      "applicable": true
+    },
+    {
+      "id": "BUILD-CONTRACT-SCHEMA",
+      "title": "Validate MODISA Build Contracts and BUILD_CONTRACT schema",
+      "category": "build_contract",
+      "source": "local-skill://validate-modisa-build-contracts",
+      "versionOrDate": "3.3;sha256:8ac0a9ece313164da2f529011dc99946eff4723837b28729e342245e3b09e129",
+      "state": "READ_COMPLETE",
+      "totalUnits": 142,
+      "readUnits": 142,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:8ac0a9ece313164da2f529011dc99946eff4723837b28729e342245e3b09e129",
+      "temporallyUnstable": false,
+      "applicable": true
+    },
+    {
+      "id": "EVIDENCEOPS-SURFACE-LESSONS",
+      "title": "EvidenceOps surface lessons",
+      "category": "surface_safety",
+      "source": "local-skill://apply-evidenceops-surface-lessons",
+      "versionOrDate": "1.2;sha256:c6eb6090828751e570378a76aee65e0a76675d38a681750738ec757947543cd3",
+      "state": "READ_COMPLETE",
+      "totalUnits": 84,
+      "readUnits": 84,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:c6eb6090828751e570378a76aee65e0a76675d38a681750738ec757947543cd3",
+      "temporallyUnstable": false,
+      "applicable": true
+    },
+    {
+      "id": "DOCUMENTATION-FIRST",
+      "title": "Documentation-First Proficiency and doctrine",
+      "category": "documentation_governance",
+      "source": "local-skill://enforce-documentation-first-proficiency",
+      "versionOrDate": "sha256:e962bea97b6cd6397d1e83dc0eb69798d8fb197c265fdbf9d1a33dbe16f1153d",
+      "state": "READ_COMPLETE",
+      "totalUnits": 81,
+      "readUnits": 81,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:e962bea97b6cd6397d1e83dc0eb69798d8fb197c265fdbf9d1a33dbe16f1153d",
+      "temporallyUnstable": false,
+      "applicable": true
+    }
+  ],
+  "competencyAssessment": {
+    "performed": true,
+    "decision": "NO_CHANGE",
+    "authorityExpansion": false,
+    "recurringCost": 0,
+    "reason": "The mission integrates an already verified foundation as the sole authority, hardens bounded compatibility facades and adds failure-first integration proof; it does not modify a reusable governance skill or widen runtime authority."
+  },
+  "coverage": {
+    "claim": "Finite local governance, Code-Forge, build-contract, surface-safety and documentation-first corpus fully reviewed; no external API route is implemented or claimed by this local integration.",
+    "claimsExhaustive": false,
+    "finiteCorpusFullyEnumerated": true,
+    "externalApiDocumentationRequired": false,
+    "unresolvedCriticalGaps": []
+  }
+}

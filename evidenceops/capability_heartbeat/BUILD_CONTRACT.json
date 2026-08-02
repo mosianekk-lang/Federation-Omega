@@ -1,110 +1,188 @@
 {
   "contract_version": "3.3",
   "mission": {
-    "id": "EVIDENCEOPS-CAPABILITY-HEARTBEAT",
-    "version": 3,
-    "goal": "Operate a transactional EvidenceOps Heartbeat System for documented surfaces, participating chat turns, bidirectional response bundles, persistent adapter remediation and Kimmie Seed connector binding.",
-    "user": "Kim Kagiso Mosiane and governed EvidenceOps workflows",
-    "workflow": "index surfaces, ingest each supported turn, privacy-project, route capabilities, atomically commit node/outbox/receipt, return acknowledgement or assistance, reconcile stale nodes and adapter gaps, bind connector PRE/POST receipts",
-    "data": "SQLite transactional state, public-safe surface contracts, hashed private references, capability metadata, outbox response bundles, remediation cases and connector receipts",
-    "interface": "Python CLI, authenticated FastAPI endpoints, tool-only remote MCP tools, scheduler artifact and JSON contracts",
-    "stack": "Python 3.11+, SQLite, FastAPI, TypeScript MCP SDK, Cloud Run and GitHub Actions",
-    "environment": "Federation-Omega repository, private sovereign runtime, MCP adapter and supported ChatGPT turn adapters",
+    "id": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-VERIFIED-V4-INTEGRATION",
+    "version": 4,
+    "goal": "Integrate the verified-v4 heartbeat foundation as the sole policy and recommendation authority while preserving the existing catalogue, SQLite, Bible, runtime, MCP, CLI and scheduler surfaces only as truthful bounded facades or scaffolding.",
+    "user": "OWNER-A1B2C3D4 and governed metadata-only EvidenceOps consumers",
+    "workflow": "explicit input produces local metadata observations; verified-v4 applies A0 policy; a registered runtime signer creates complete lineage; a fresh registered destination signs acceptance; the SQLite facade atomically records only codes, hashes, enums, timestamps and receipts; scheduled paths inventory only",
+    "data": "field-bound pseudonymous owner, matter, mission, node, capability, key and transaction codes; classifications, state codes, capability hashes, complete signed lineages, fresh receipts, immutable ledgers, synthetic catalogues and metadata-only local SQLite records",
+    "interface": "Python library and inventory CLIs; SQLite compatibility facade; runtime API and MCP heartbeat contracts are explicit unimplemented activation obligations",
+    "stack": "Python 3.12 standard library and local SQLite only",
+    "environment": "Federation Omega source tree and caller-injected local runtime signers; no network, provider, cloud, secret, API, MCP or deployment route",
     "maturity": "PROD_FOUNDATION",
-    "governance": "Formation Engine, MODISA Code-Forge, zero-cost and single-effectful-path controls",
-    "failure": "fail closed on invalid input, missing evidence, insufficient proof, authority excess, safety regression or external effect without permit",
-    "testing": "unit, transaction, API authentication, privacy, replay, PRE/POST, TypeScript compile, scheduler, container and hosted round-trip gates",
-    "deployment": "merge to default branch, deploy private runtime and MCP adapter, bind identities and secrets, then prove one hosted turn and delivery round trip",
-    "continuity": "SQLite receipts, source fingerprints, immutable workflow artifacts, current manifest binding, idempotent event IDs and deterministic reruns"
+    "governance": "Formation A1 controls one bounded reversible local integration; runtime heartbeat authority is exactly A0; verified-v4 is the only policy, signing, receipt and respawn authority",
+    "failure": "fail closed on raw or unknown input, duplicate JSON, path escape, missing authority, scope or classification drift, A1-A5 runtime authority, effectful route, unregistered or stale node, forged or incomplete lineage, hop overflow, rotation mismatch, stale receipt, replay conflict, stop fence, fixture ingress or false live-awareness claim",
+    "testing": "30 corrected integration regressions with a complete 24-test legacy map, 92 verified-v4 foundation regressions, the exact 55-test compatibility suite, static integrity verification, MODISA validators, documentation gate, compilation and public leak guard",
+    "deployment": "not published, registered, attached, deployed or proven; runtime API, MCP tools, durable production storage and provider-backed activation are later Formation missions",
+    "continuity": "deterministic policy and event identities, immutable foundation values, SQLite atomic metadata receipts, full-payload idempotency, stop generation, respawn semantic readback, six handoff/control documents and inventory-only scheduler readback"
   },
-  "classification": "AUTOMATION_AND_CONTROL_PLANE_EXTENSION",
+  "classification": "PUBLIC_SAFE_METADATA_ONLY_VERIFIED_V4_INTEGRATION_IMPLEMENTED_NOT_ATTACHED",
   "assumptions": {
-    "stack": "Python 3.11 or newer",
-    "runtime": "repository checkout or GitHub-hosted Actions runner",
-    "storage": "SQLite for transaction state plus immutable GitHub artifacts for public-safe reports",
-    "authentication": "application-layer heartbeat bearer token plus Cloud Run service identity for private runtime ingress",
-    "deployment": "default-branch GitHub Actions, private Cloud Run runtime and remote MCP adapter"
+    "stack": "Python 3.12 behavior is the local test authority; CI selects Python 3.12",
+    "runtime": "an explicit caller injects a complete verified-v4 authority session; standalone CLIs and scheduler remain inventory-only",
+    "storage": "immutable foundation state plus a local SQLite compatibility facade that stores metadata-only atomic receipts; durable multi-instance production storage is not implemented",
+    "authentication": "caller-injected runtime HMAC verifiers exactly bound to fresh registry records; no static key, key discovery, IAM, token, API or MCP authentication implementation",
+    "deployment": "no publication, deployment or live attachment authority or route is included"
   },
   "architecture": {
     "components": {
-      "frontend": "NOT_APPLICABLE: JSON and workflow-summary surfaces are sufficient",
-      "backend": "EvidenceOpsHeartbeatSystem plus deterministic CapabilityHeartbeatEngine",
-      "database": "SQLite transactions for surfaces, chat nodes, turns, outbox, receipts, adapter cases and connector seeds",
-      "queue": "transactional response outbox plus GitHub Actions scheduled queue with concurrency fencing",
-      "worker": "FastAPI runtime, MCP adapter and Python heartbeat CLI in the existing scheduler job",
-      "scheduler": "existing EvidenceOps External Scheduler",
-      "cache": "NOT_APPLICABLE: every run hashes current source bytes",
-      "storage": "repository contracts plus immutable workflow artifact",
-      "authentication": "heartbeat token, Cloud Run service identity and separate Formation permit for provider effects"
+      "frontend": "NOT_APPLICABLE: JSON and Python readback surfaces only",
+      "backend": "VerifiedV4Authority over the complete foundation; engine, Bible and system compatibility facades cannot own policy",
+      "database": "local SQLite transactions retain surface inventory, node metadata, signed turn receipts, outbox metadata and connector PRE/POST hashes; not production multi-instance storage",
+      "queue": "local transactional outbox is a metadata receipt queue only; it cannot dispatch or prove delivery",
+      "worker": "NOT_APPLICABLE: no heartbeat worker, background loop or hosted runtime implementation",
+      "scheduler": "existing scheduler emits catalogue and surface inventory only; recommendation, remediation, ingress and dispatch authority are false",
+      "cache": "NOT_APPLICABLE: deterministic computation has no cache",
+      "storage": "strict duplicate-key JSON, immutable hash-chained ledger, semantic readback and metadata-only local SQLite records",
+      "authentication": "injected registry-bound HMAC-0.1 signers with key fingerprint, signing version and rotation/control generation; fresh destination-signed receipts; no credentials in static files"
     },
-    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE"],
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
     "observability": {
-      "correlation_ids": "event_id, chat node hash, turn_id hash, sequence, message_id, seed_id and operation_id",
-      "health_checks": "surface index, authenticated ingress configuration, source status and current-turn canary",
-      "structured_logs": "canonical JSON heartbeat, reconciliation and connector receipts",
-      "audit_logs": "transaction receipts, response hashes, connector result hashes and per-source evidence hashes",
-      "metrics_alerts": "active/stale/sync-pending nodes, open adapter cases, outbox state, PRE/POST counts and degraded sources"
+      "correlation_ids": "trace hash, envelope ID, root transaction hash, full-payload idempotency hash, event code, destination receipt ID and registry hash",
+      "health_checks": "policy/registry authority readback, ledger semantic readback, respawn readback, surface inventory and local transaction state",
+      "structured_logs": "canonical metadata-only reports and receipts; no raw chats, tasks, evidence, legal content, personal data or credentials",
+      "audit_logs": "signed envelope lineage, destination-signed receipts, SQLite transaction receipts and immutable ledger event chain",
+      "metrics_alerts": "local counts and typed failure codes only; provider metrics and notification transport are not implemented"
     }
   },
   "testing": {
-    "unit": "registry validation, scoring, deduplication, safety and proof gates",
-    "integration": "all named systems attach to current_workflow.json; every documented surface receives a node and remediation case",
-    "e2e_or_smoke": "authenticated API commits a turn and same-response assistance; scheduler emits public-safe reports; MCP adapter compiles",
-    "fixtures_mocks": "temporary registries, evidence files and workflow contexts",
-    "failure_first": "path escape, missing evidence, replay, sequence gaps, expired nodes, unbound surfaces, unauthorised API use, POST without PRE, unsafe improvement and effect without permit",
-    "commands": ["python -m unittest discover -s evidenceops/capability_heartbeat/tests -v", "python -m pytest -q evidenceops/tests/test_runtime_service.py evidenceops/tests/test_sovereign_runtime_production_readiness.py", "npm run check --prefix evidenceops-mcp-adapter", "python -m evidenceops.capability_heartbeat --output scheduler/runtime/capability-heartbeat.json"]
+    "unit": "field-bound privacy, contracts, A0 policy, scoring, signatures, rotation, stop generation, immutable values, ledger and strict JSON",
+    "integration": "sole-authority engine, Bible and SQLite facades; signed ingress; fresh destination receipt; full-payload replay conflicts; inventory-only scheduler; respawn semantic readback; legacy behavior mapping",
+    "e2e_or_smoke": "synthetic root-to-destination signed input and local atomic receipt only; no hosted API, MCP, provider or deployment smoke is claimed",
+    "fixtures_mocks": "explicit SYNTHETIC_STATIC catalogues and workflow plus in-memory deterministic HMAC material created only inside tests",
+    "failure_first": "forged, future, stale, raw, duplicate-key, path-escape, replay-conflict, unhosted ingress, fixture ingress, effectful route, authority widening, lineage mutation, receipt freshness, respawn drift and false-attachment cases",
+    "compatibility_command": "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_atomic_transactions tests.test_connector_foundry tests.test_connector_foundry_google_drive tests.test_ecasp tests.test_innovation_engine_registry tests.test_operation_idempotency tests.test_provenance_passport tests.test_runtime tests.test_slrk tests.test_wif_hardening",
+    "commands": [
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/tests -v",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/foundation_tests -v",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_atomic_transactions tests.test_connector_foundry tests.test_connector_foundry_google_drive tests.test_ecasp tests.test_innovation_engine_registry tests.test_operation_idempotency tests.test_provenance_passport tests.test_runtime tests.test_slrk tests.test_wif_hardening",
+      "PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/capability_heartbeat/static_verify.py",
+      "PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/capability_heartbeat/validate_build_contract.py evidenceops/capability_heartbeat/BUILD_CONTRACT.json --require-proof",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m compileall -q evidenceops/capability_heartbeat scheduler/run_scheduler.py",
+      "PYTHONDONTWRITEBYTECODE=1 python3 evidenceops/security/public_repository_leak_guard.py"
+    ]
   },
   "delivery": {
-    "file_tree": "capability_heartbeat package, sovereign runtime endpoints, MCP tools, scheduler/workflows and governing manifests",
-    "exact_code_files": ["evidenceops/capability_heartbeat/engine.py", "evidenceops/capability_heartbeat/system.py", "evidenceops/capability_heartbeat/system_cli.py", "evidenceops/runtime_service/main.py", "evidenceops-mcp-adapter/src/server.ts", "scheduler/run_scheduler.py"],
-    "setup_commands": ["pip install -r evidenceops/runtime_service/requirements.txt", "npm install --prefix evidenceops-mcp-adapter"],
-    "run_commands": ["python -m evidenceops.capability_heartbeat.system_cli index", "uvicorn evidenceops.runtime_service.main:app", "npm start --prefix evidenceops-mcp-adapter"],
-    "test_commands": ["python -m unittest discover -s evidenceops/capability_heartbeat/tests -v", "python -m pytest -q evidenceops/tests/test_runtime_service.py evidenceops/tests/test_sovereign_runtime_production_readiness.py", "npm run check --prefix evidenceops-mcp-adapter"],
-    "deploy_commands": ["Merge validated changes to default branch", "Deploy private sovereign runtime with heartbeat token", "Grant MCP runtime Cloud Run invoker", "Deploy MCP adapter with runtime URL and heartbeat token", "Run provider-backed turn and delivery readback"],
-    "rollback_commands": ["Revert the heartbeat merge commit; existing scheduler remains independently usable"],
-    "debugging": "Inspect source status, held reasons, proof level, authority envelope, safety baseline and report hash; never inspect secret values"
+    "file_tree": "verified-v4 foundation and tests, one-authority facade, hardened current engine/Bible/SQLite system, synthetic fixtures, inventory-only scheduler, CI, validators and merged control documents",
+    "exact_code_files": [
+      "evidenceops/capability_heartbeat/authority.py",
+      "evidenceops/capability_heartbeat/engine.py",
+      "evidenceops/capability_heartbeat/bible_federation.py",
+      "evidenceops/capability_heartbeat/system.py",
+      "evidenceops/capability_heartbeat/foundation/",
+      "scheduler/run_scheduler.py",
+      "evidenceops/capability_heartbeat/static_verify.py",
+      "evidenceops/capability_heartbeat/validate_build_contract.py"
+    ],
+    "setup_commands": ["NOT_APPLICABLE: standard-library source runs directly from the repository root"],
+    "run_commands": ["python3 -m evidenceops.capability_heartbeat for inventory only; an on-input recommendation requires caller-injected VerifiedV4Authority"],
+    "test_commands": [
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/tests -v",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest discover -s evidenceops/capability_heartbeat/foundation_tests -v",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest tests.test_atomic_transactions tests.test_connector_foundry tests.test_connector_foundry_google_drive tests.test_ecasp tests.test_innovation_engine_registry tests.test_operation_idempotency tests.test_provenance_passport tests.test_runtime tests.test_slrk tests.test_wif_hardening"
+    ],
+    "deploy_commands": ["NOT_APPLICABLE: no publication, runtime API, MCP, deployment or live attachment is authorized or implemented in this integration"],
+    "rollback_commands": ["NOT_APPLICABLE: abandon the uncommitted local integration; runtime stop generation separately fences prior signed state"],
+    "debugging": "use typed error code, policy hash, registry hash, node record, lineage, receipt, control generation, SQLite transaction and semantic readback; never inspect raw source bodies or secret material"
   },
   "formation": {
-    "mission_id": "EVIDENCEOPS-CAPABILITY-HEARTBEAT",
-    "mission_version": 3,
+    "mission_id": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-VERIFIED-V4-INTEGRATION",
+    "mission_version": 4,
     "gate_decision": "EXECUTE",
-    "authority_class": "A1",
-    "effectful_permit": "CONSUMED_IN_FORMATION_LEDGER_NOT_PERSISTED",
+    "authority_class": "A1_LOCAL_REVERSIBLE_INTEGRATION_ONLY",
+    "effectful_permit": "CONSUMED_AND_PERSISTED_IN_GOVERNED_FORMATION_STATE",
     "single_effectful_path": true
   },
   "watchman": {
-    "policy": "hold unproven, unavailable, unsafe, non-zero-cost or over-authority candidates; never execute from discovery",
-    "release_gates": ["documentation preflight", "unit tests", "current-workflow canary", "MODISA validation", "repository CI", "scheduled artifact readback"]
+    "policy": "fail closed; verified-v4 is sole authority; runtime ceiling A0; catalogues and scheduled inventory cannot authorize ingress; all live-awareness flags remain false",
+    "release_gates": [
+      "30 corrected integration tests and 24-test coverage map",
+      "92 verified-v4 foundation tests",
+      "exact enumerated 55-test compatibility suite",
+      "static one-authority and no-network foundation verification",
+      "package and canonical MODISA validators",
+      "documentation gate",
+      "public repository leak guard",
+      "compile and exact-diff checks"
+    ]
   },
   "continuity": {
-    "idempotency": "report content hash excludes generation time and binds repository version, source hashes and workflow contract",
-    "checkpoints": "source heartbeat, routing decision, report hash and immutable workflow artifact",
-    "resume_conditions": "rerun after source, workflow context, authority or proof state changes",
-    "handoff_files": ["README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md", "BUILD_CONTRACT.json"],
-    "stop_switch": "remove scheduler heartbeat invocation and active-manifest heartbeat requirement"
+    "idempotency": "foundation envelope identity and SQLite operation identity bind the complete canonical metadata payload; identical replay is stable and changed replay conflicts",
+    "checkpoints": "policy, immutable registry, complete signed lineage, fresh destination receipt, ledger, respawn manifest, SQLite transaction and inventory report",
+    "resume_conditions": "current owner/matter/classification, active stop generation, complete fresh registry, valid runtime signers, unexpired lineage and receipts, exact semantic readback and false live-awareness flags",
+    "handoff_files": ["README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md", "TEST_COVERAGE_MAP.md", "BUILD_CONTRACT.json"],
+    "stop_switch": "StopControl advances generation and fences earlier signed state; scheduler inventory can be removed independently without changing authority"
   },
   "states": {
     "designed": true,
     "implemented": true,
     "tested": true,
-    "registered": true,
-    "authorized": true,
+    "registered": false,
+    "authorized": false,
     "ready": false,
     "deployed": false,
     "proven": false
   },
   "proof": {
-    "test_results": "24 heartbeat unit/integration tests passed; 5 sovereign-runtime/API tests passed; MCP TypeScript no-emit compile passed",
+    "test_results": "PASS on 2026-08-02: 30 corrected current/integration tests with all 24 legacy behaviors mapped; 92 complete verified-v4 foundation tests; exact 55-test Federation Omega compatibility suite; and 81 repository-wide tests in an isolated environment created from requirements.txt",
     "deployment_readback": null,
-    "semantic_verification": "Local turn transaction, same-response acknowledgement/assistance, privacy projection, replay protection, adapter remediation and Kimmie PRE/POST behavior verified",
+    "semantic_verification": "Local tests prove one verified-v4 authority, A0-only recommendations, owner/matter/classification inheritance, registry-bound signing and rotation, complete lineage, maximum three hops, stop generation, fresh destination-signed receipts, full-payload conflict rejection, no raw turn content, inventory-only scheduler, false live-awareness flags and respawn semantic readback",
     "unresolved_defects": [],
-    "known_activation_obligations": ["merge to default branch", "complete hosted CI and container canary", "bind durable production SQLite-compatible storage", "bind private runtime heartbeat secret", "grant MCP runtime Cloud Run invoker", "deploy MCP adapter", "scan heartbeat tools in ChatGPT", "read back one hosted turn response and adapter delivery receipt", "verify each provider adapter before changing its surface state to LIVE_BIDIRECTIONAL_VERIFIED"]
+    "resolved_defects": [
+      "HB-AUTH-001", "HB-CLASS-001", "HB-RESPAWN-001", "HB-PATH-001", "HB-PRIV-001", "HB-PUBLIC-001", "HB-CONTRACT-001",
+      "HB-LINEAGE-002", "HB-RECEIPT-ATTR-002", "HB-RESPAWN-SCOPE-002", "HB-PRIV-OBS-002", "HB-INHERIT-002", "HB-PROOF-002",
+      "HB-PRIV-CODE-003", "HB-REPO-PATH-003", "HB-RECEIPT-FRESH-003", "HB-RESPAWN-FRESH-003", "HB-POLICY-HASH-003", "HB-GEN-MONOTONIC-003", "HB-JSON-DUPKEY-003", "HB-IMMUTABILITY-003"
+    ],
+    "adversarial_controls": [
+      "HB-AUTH-001", "HB-CLASS-001", "HB-RESPAWN-001", "HB-PATH-001", "HB-PRIV-001", "HB-PUBLIC-001", "HB-CONTRACT-001",
+      "HB-LINEAGE-002", "HB-RECEIPT-ATTR-002", "HB-RESPAWN-SCOPE-002", "HB-PRIV-OBS-002", "HB-INHERIT-002", "HB-PROOF-002",
+      "HB-PRIV-CODE-003", "HB-REPO-PATH-003", "HB-RECEIPT-FRESH-003", "HB-RESPAWN-FRESH-003", "HB-POLICY-HASH-003", "HB-GEN-MONOTONIC-003", "HB-JSON-DUPKEY-003", "HB-IMMUTABILITY-003"
+    ],
+    "integration_controls": [
+      "HB-ONE-AUTHORITY-004",
+      "HB-A0-ONLY-004",
+      "HB-RAW-TURN-PROHIBITED-004",
+      "HB-FULL-PAYLOAD-IDEMPOTENCY-004",
+      "HB-CATALOGUE-NO-INGRESS-004",
+      "HB-SCHEDULER-INVENTORY-ONLY-004",
+      "HB-API-MCP-TRUTH-004",
+      "HB-LEGACY-COVERAGE-MAP-004"
+    ],
+    "maturity": "DURABLE_FOUNDATION_IMPLEMENTED_NOT_ATTACHED",
+    "known_limitations": [
+      "no live Master Bible attachment",
+      "no provider-authoritative active-chat inventory",
+      "no per-chat emitters",
+      "no unsolicited injection",
+      "no system-wide awareness",
+      "no implemented heartbeat runtime API",
+      "no implemented heartbeat MCP tools",
+      "no durable multi-instance production storage",
+      "no deployment or provider-backed round-trip canary",
+      "namespaces constrain representation but cannot prove caller intent or guarantee absence of embedded semantics"
+    ],
+    "known_activation_obligations": [
+      "implement and authenticate a typed heartbeat runtime API against injected verified-v4 authority",
+      "implement matching tool-only MCP schemas without a second policy path",
+      "bind durable transactional production storage",
+      "register provider-backed emitters and reconcile an authoritative inventory",
+      "run privacy, stop, rotation, replay and receipt canaries",
+      "prove deployment and bidirectional semantic readback in a separate Formation mission"
+    ]
   },
-  "cloud_capability_inheritance": {
-    "required": true,
-    "contract_ref": "evidenceops/cloud_capability/contract.json",
-    "scope": "FULL_PROJECT_CONTROL",
-    "route": "CENTRAL_GOVERNED_OPERATOR_AND_SECURE_CAPABILITY_BOX",
-    "raw_credentials": false
+  "cloud_capability_facade": {
+    "catalogue_ref": "evidenceops/cloud_capability/contract.json",
+    "heartbeat_authority": false,
+    "ingress_authority": false,
+    "raw_credentials": false,
+    "truth_boundary": "A cloud capability catalogue entry is inventory only and cannot widen the A0 heartbeat authority."
   }
 }

@@ -52,16 +52,31 @@
     "required_for_current_canonical_operation": false
   },
   "capability_heartbeat": {
-    "mode": "CURRENT_INPUT_ON_DEMAND_PLUS_DURABLE_SCHEDULED_DISCOVERY",
-    "single_primary_router": true,
+    "mode": "EXPLICIT_ON_INPUT_VERIFIED_V4_AUTHORITY_PLUS_SCHEDULED_INVENTORY_ONLY",
+    "single_policy_authority": "evidenceops.capability_heartbeat.authority.VerifiedV4Authority",
+    "runtime_authority_ceiling": "A0",
     "effectful_execution_from_heartbeat": false,
     "inactive_chat_direct_delivery": false,
     "report_path": "scheduler/runtime/capability-heartbeat.json",
-    "master_bible_node_heartbeat_required": true,
+    "master_bible_signed_lineage_required": true,
     "registered_nodes_only": true,
     "per_turn_ingress_required_for_live_chat_claim": true,
-    "adapter_gap_remediation_required": true,
-    "kimmie_connector_seed_required": true
+    "adapter_gap_mode": "INVENTORY_ONLY",
+    "kimmie_connector_seed_mode": "LOCAL_METADATA_SCAFFOLD",
+    "runtime_api_implemented": false,
+    "mcp_tools_implemented": false,
+    "durable_production_storage_implemented": false,
+    "live_master_bible_attachment": false,
+    "provider_authoritative_active_chat_inventory": false,
+    "per_chat_emitters": false,
+    "system_wide_awareness": false,
+    "activation_obligations": [
+      "IMPLEMENT_AUTHENTICATED_TYPED_RUNTIME_API",
+      "IMPLEMENT_TOOL_ONLY_MCP_CONTRACTS",
+      "BIND_DURABLE_TRANSACTIONAL_STORAGE",
+      "REGISTER_PROVIDER_BACKED_EMITTERS",
+      "PROVE_BIDIRECTIONAL_SEMANTIC_READBACK"
+    ]
   },
   "google_cloud_capability": {
     "contract_ref": "evidenceops/cloud_capability/contract.json",
@@ -71,5 +86,5 @@
     "readiness_fails_when_unbound": true,
     "raw_credentials": false
   },
-  "version": 6
+  "version": 7
 }

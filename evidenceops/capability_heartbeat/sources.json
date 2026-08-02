@@ -1,39 +1,41 @@
 {
-  "schema": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-1",
-  "version": 1,
-  "owner": "Kim Kagiso Mosiane",
+  "schema": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-2",
+  "version": 2,
+  "fixture_mode": "SYNTHETIC_STATIC_CATALOGUE",
+  "owner_code": "OWNER-A1B2C3D4",
+  "matter_code": "MATTER-B1C2D3E4",
   "sources": [
     {
       "source_id": "federation-omega",
-      "system": "Federation Omega",
+      "system_code": "SYSTEM-FEDERATION-OMEGA",
       "evidence_paths": ["ops/WIF_ACTIVATION_EDGE.md", "evidenceops/secure_capability_box/secure_capability_box/connectors/federation_omega.py"],
       "capabilities": [
         {
           "capability_id": "federation-omega-operator",
           "name": "Federation Omega governed operator route",
           "tags": ["external-execution", "integration", "readback", "deploy"],
-          "route": "federation-omega-operator",
+          "route_code": "ROUTE-FEDERATION-OMEGA-OPERATOR",
           "state": "RUNTIME_DEPENDENT",
           "proof_level": "CONNECTOR_READBACK",
           "quality": 0.90,
           "safety": 0.92,
           "reuse": 0.86,
           "cost": 0,
-          "authority_class": "A1",
+          "authority_class": "A0",
           "external_effect": true
         }
       ]
     },
     {
       "source_id": "secondary-brain",
-      "system": "Secondary Brain / Kim DataVerse",
+      "system_code": "SYSTEM-SECONDARY-BRAIN",
       "evidence_paths": ["evidenceops/runtime/kim_dataverse_inplace_bridge.json", "evidenceops/runtime_service/active_manifest.json"],
       "capabilities": [
         {
           "capability_id": "secondary-brain-context",
           "name": "Canonical context and prior-solution discovery",
           "tags": ["context", "discover", "provenance", "reuse"],
-          "route": "kim-dataverse-in-place-bridge",
+          "route_code": "ROUTE-KDV-IN-PLACE-BRIDGE",
           "state": "VERIFY_ONLY",
           "proof_level": "LEDGER_READBACK",
           "quality": 0.91,
@@ -47,35 +49,35 @@
     },
     {
       "source_id": "modisa",
-      "system": "MODISA",
+      "system_code": "SYSTEM-MODISA",
       "evidence_paths": [".github/workflows/modisa-legal-v2-autopilot.yml", "evidenceops/fevx_mcoe/POLICY.yaml"],
       "capabilities": [
         {
           "capability_id": "modisa-system-forge",
           "name": "Complete system architecture and build repair",
           "tags": ["architecture", "improve", "quality", "recovery", "test"],
-          "route": "modisa-code-forge",
+          "route_code": "ROUTE-MODISA-CODE-FORGE",
           "state": "EXECUTABLE_NOW",
           "proof_level": "TESTED",
           "quality": 0.95,
           "safety": 0.94,
           "reuse": 0.90,
           "cost": 0,
-          "authority_class": "A1",
+          "authority_class": "A0",
           "external_effect": false
         }
       ]
     },
     {
       "source_id": "evidenceops",
-      "system": "EvidenceOps",
+      "system_code": "SYSTEM-EVIDENCEOPS",
       "evidence_paths": ["evidenceops/innovation_engine/live_lane_registry.json", "evidenceops/fevx_mcoe/POLICY.yaml"],
       "capabilities": [
         {
           "capability_id": "evidenceops-proof-router",
           "name": "Evidence, provenance, continuity and semantic verification",
           "tags": ["compare", "continuity", "discover", "heartbeat", "provenance", "readback", "reuse", "verify"],
-          "route": "evidenceops-proof-router",
+          "route_code": "ROUTE-EVIDENCEOPS-PROOF",
           "state": "EXECUTABLE_NOW",
           "proof_level": "INDEPENDENT_READBACK",
           "quality": 0.94,
@@ -89,14 +91,14 @@
     },
     {
       "source_id": "superior-logic",
-      "system": "Superior Logic",
+      "system_code": "SYSTEM-SUPERIOR-LOGIC",
       "evidence_paths": ["superior_logic/slrk.py", "superior_logic/runtime.py"],
       "capabilities": [
         {
           "capability_id": "superior-logic-router",
           "name": "Capability assessment and claim-versus-proof routing",
           "tags": ["compare", "discover", "quality", "rank", "reuse", "verify"],
-          "route": "superior-logic-runtime",
+          "route_code": "ROUTE-SUPERIOR-LOGIC",
           "state": "EXECUTABLE_NOW",
           "proof_level": "TESTED",
           "quality": 0.93,
@@ -110,14 +112,14 @@
     },
     {
       "source_id": "connector-foundry",
-      "system": "EvidenceOps Connector Foundry",
+      "system_code": "SYSTEM-CONNECTOR-FOUNDRY",
       "evidence_paths": ["evidenceops/connector_foundry/conformance.py", "evidenceops/connector_foundry/ects-report-20260801-001.json"],
       "capabilities": [
         {
           "capability_id": "connector-foundry-reuse",
           "name": "Existing connector discovery and conformance verification",
           "tags": ["discover", "integration", "readback", "reuse", "verify"],
-          "route": "connector-foundry",
+          "route_code": "ROUTE-CONNECTOR-FOUNDRY",
           "state": "EXECUTABLE_NOW",
           "proof_level": "CONNECTOR_READBACK",
           "quality": 0.91,
@@ -131,42 +133,42 @@
     },
     {
       "source_id": "secure-capability-box",
-      "system": "Secure Capability Box",
+      "system_code": "SYSTEM-SECURE-CAPABILITY-BOX",
       "evidence_paths": ["evidenceops/secure_capability_box/BUILD_CONTRACT.json", "evidenceops/secure_capability_box/secure_capability_box/broker.py"],
       "capabilities": [
         {
           "capability_id": "secure-capability-broker",
           "name": "Short-lived least-privilege credential capability route",
           "tags": ["authentication", "integration", "security", "secrets"],
-          "route": "secure-capability-broker",
+          "route_code": "ROUTE-SECURE-CAPABILITY-BROKER",
           "state": "RUNTIME_DEPENDENT",
           "proof_level": "TESTED",
           "quality": 0.91,
           "safety": 0.98,
           "reuse": 0.90,
           "cost": 0,
-          "authority_class": "A1",
+          "authority_class": "A0",
           "external_effect": true
         }
       ]
     },
     {
       "source_id": "evidenceops-google-cloud",
-      "system": "EvidenceOps Permanent Google Cloud Capability",
+      "system_code": "SYSTEM-GOOGLE-CLOUD-CATALOGUE",
       "evidence_paths": ["evidenceops/cloud_capability/contract.json", "evidenceops/cloud_capability/capability.py", "evidenceops/cloud_control/bootstrap_evidenceops_cloud.sh"],
       "capabilities": [
         {
           "capability_id": "evidenceops-full-project-control",
           "name": "Inherited full Google Cloud project discovery, administration, automation, deployment, repair, rollback and readback",
           "tags": ["admin", "automation", "cloud", "deploy", "discover", "iam", "integration", "readback", "recovery"],
-          "route": "evidenceops-cloud-operator-via-secure-capability-box",
+          "route_code": "ROUTE-GOOGLE-CLOUD-OPERATOR",
           "state": "RUNTIME_DEPENDENT",
           "proof_level": "TESTED",
           "quality": 0.96,
           "safety": 0.95,
           "reuse": 1.0,
           "cost": 0,
-          "authority_class": "A4",
+          "authority_class": "A0",
           "external_effect": true
         }
       ]

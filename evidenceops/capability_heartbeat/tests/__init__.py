@@ -1,0 +1,1 @@
+"""Capability heartbeat integration tests."""

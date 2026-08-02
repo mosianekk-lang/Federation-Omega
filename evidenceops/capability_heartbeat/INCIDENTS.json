@@ -1,0 +1,237 @@
+{
+  "schema_version": "HEARTBEAT-INCIDENTS-0.1",
+  "incidents": [
+    {
+      "incident_code": "INCIDENT-BIBLE-SEMANTIC-DRIFT",
+      "claim_code": "LATEST-TRANSACTION-ALIGNED",
+      "fruit_code": "HEADER-TRANSACTION-MISMATCH",
+      "fault_code": "HASH-ONLY-GUARD",
+      "rule_code": "SEMANTIC-LATEST-READBACK-REQUIRED",
+      "regression_code": "TEST-LOCAL-BIBLE-SEMANTIC-DRIFT",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-CROSS-CHAT-COVERAGE-UNPROVEN",
+      "claim_code": "SYSTEM-WIDE-AWARENESS",
+      "fruit_code": "INVENTORY-AND-EMITTERS-ABSENT",
+      "fault_code": "SOURCE-AS-LIVE-FRUIT",
+      "rule_code": "LIVE-FLAGS-FAIL-CLOSED",
+      "regression_code": "TEST-RESPAWN-LIVE-CLAIM-REJECTED",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-FORWARD-PARENT-UNPROVEN",
+      "claim_code": "COMPLETE-SIGNED-LINEAGE",
+      "fruit_code": "CHILD-SIGNATURE-ACCEPTED-ARBITRARY-PARENT",
+      "fault_code": "CURRENT-ENVELOPE-ONLY-VERIFICATION",
+      "rule_code": "ROOT-TO-CURRENT-LINEAGE-REQUIRED",
+      "regression_code": "TEST-FORWARDED-ENVELOPE-COMPLETE-LINEAGE",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-RECEIPT-SCOPE-UNBOUND",
+      "claim_code": "DESTINATION-ATTRIBUTION",
+      "fruit_code": "RESIGNED-SCOPE-MUTATION-PASSED",
+      "fault_code": "RECEIPT-NOT-CROSS-BOUND",
+      "rule_code": "EXACT-ENVELOPE-SCOPE-TIME-BINDING",
+      "regression_code": "TEST-RECEIPT-SCOPE-AND-TIME",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-RESPAWN-ROOT-SCOPE-DRIFT",
+      "claim_code": "POLICY-ROOT-CONTINUITY",
+      "fruit_code": "PARTIAL-ROOT-COMPARISON",
+      "fault_code": "HASH-WITHOUT-FULL-SCOPE-READBACK",
+      "rule_code": "COMPLETE-POLICY-ROOT-CROSS-BINDING",
+      "regression_code": "TEST-RESPAWN-COMPLETE-POLICY-ROOT-SCOPE",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-OBSERVATION-PROSE-HASHED",
+      "claim_code": "METADATA-ONLY-OBSERVATION",
+      "fruit_code": "ARBITRARY-SEMANTIC-VALUE-HASHED",
+      "fault_code": "NO-SOURCE-SCHEMA-DISPATCH",
+      "rule_code": "VALIDATE-ADAPTER-SCHEMA-BEFORE-HASH",
+      "regression_code": "TEST-OBSERVATION-SOURCE-SCHEMA",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-SIGNING-VERSION-DRIFT",
+      "claim_code": "INHERITED-SIGNING-VERSION",
+      "fruit_code": "CHILD-VERSION-DIFFERED",
+      "fault_code": "REGISTRY-INHERITANCE-GAP",
+      "rule_code": "CLOSED-ROOT-VERSION-AND-EXACT-CHILD-INHERITANCE",
+      "regression_code": "TEST-SIGNING-VERSION-INHERITANCE",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-COMPATIBILITY-PROOF-UNREPRODUCIBLE",
+      "claim_code": "FIFTY-FIVE-COMPATIBILITY-TESTS-PASSED",
+      "fruit_code": "EXACT-COMMAND-ABSENT",
+      "fault_code": "COUNT-WITHOUT-MODULE-MANIFEST",
+      "rule_code": "PUBLISH-AND-EXECUTE-EXACT-COMPATIBILITY-COMMAND",
+      "regression_code": "TEST-COMPATIBILITY-COMMAND-REQUIRED",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-GENERIC-CODE-PRIVACY-GAP",
+      "claim_code": "PSEUDONYMOUS-CODES-ONLY",
+      "fruit_code": "WRONG-NAMESPACE-CREDENTIAL-OR-PROBE-CODE-PASSED",
+      "fault_code": "GENERIC-CODE-REGEX",
+      "rule_code": "FIELD-BOUND-NAMESPACE-OR-CLOSED-VOCABULARY",
+      "regression_code": "TEST-FIELD-BOUND-CODE-PRIVACY-AND-VALID-LEAF-TABLE",
+      "control_code": "HB-PRIV-CODE-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-GIT-REFERENCE-CONTAINMENT-GAP",
+      "claim_code": "BOUNDED-LOCAL-GIT-READ",
+      "fruit_code": "DOT-PARENT-EMPTY-OR-SYMLINK-SEGMENT-REACHED",
+      "fault_code": "LEXICAL-PATH-CHECK-ONLY",
+      "rule_code": "REAL-GIT-ROOT-COMPONENT-CONTAINMENT",
+      "regression_code": "TEST-GIT-REFERENCE-COMPONENT-CONTAINMENT",
+      "control_code": "HB-REPO-PATH-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-RECEIPT-REGISTRATION-STALE",
+      "claim_code": "FRESH-DESTINATION-ATTRIBUTION",
+      "fruit_code": "VALID-RECEIPT-USED-FUTURE-OR-EXPIRED-REGISTRATION",
+      "fault_code": "REGISTRATION-FRESHNESS-NOT-REVERIFIED",
+      "rule_code": "EXPLICIT-NOW-AND-ACCEPTANCE-WITHIN-REGISTRATION-WINDOW",
+      "regression_code": "TEST-RECEIPT-DESTINATION-REGISTRATION-FRESHNESS",
+      "control_code": "HB-RECEIPT-FRESH-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-RESPAWN-STALE-REGISTRY-RECORD",
+      "claim_code": "FRESH-REGISTRY-RESPAWN",
+      "fruit_code": "ONE-STALE-RECORD-DID-NOT-BLOCK-READBACK",
+      "fault_code": "ROOT-ONLY-FRESHNESS",
+      "rule_code": "EVERY-RESPAWN-REGISTRY-RECORD-FRESH-AT-NOW",
+      "regression_code": "TEST-RESPAWN-ALL-RECORD-FRESHNESS",
+      "control_code": "HB-RESPAWN-FRESH-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-POLICY-HASH-CALLER-TRUST",
+      "claim_code": "CANONICAL-MASTER-BIBLE-POLICY",
+      "fruit_code": "MUTATED-FIELD-RETAINED-CALLER-HASH",
+      "fault_code": "HASH-NOT-RECOMPUTED",
+      "rule_code": "SINGLE-ALL-FIELD-POLICY-HASH-BUILDER",
+      "regression_code": "TEST-POLICY-HASH-DETERMINISTIC-RECOMPUTATION",
+      "control_code": "HB-POLICY-HASH-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-LEDGER-GENERATION-ROLLBACK",
+      "claim_code": "STOP-GENERATION-FENCING",
+      "fruit_code": "LOWER-GENERATION-APPENDED-OR-VERIFIED",
+      "fault_code": "HASH-CHAIN-WITHOUT-GENERATION-ORDER",
+      "rule_code": "NONDECREASING-GENERATION-APPEND-VERIFY-READBACK",
+      "regression_code": "TEST-LEDGER-CONTROL-GENERATION-MONOTONICITY",
+      "control_code": "HB-GEN-MONOTONIC-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-DUPLICATE-JSON-KEY",
+      "claim_code": "UNAMBIGUOUS-GOVERNED-STATE",
+      "fruit_code": "LAST-KEY-WINS-DECODING-ACCEPTED",
+      "fault_code": "PERMISSIVE-JSON-DECODER",
+      "rule_code": "SHARED-RECURSIVE-DUPLICATE-KEY-REJECTION",
+      "regression_code": "TEST-STRICT-JSON-AT-LEDGER-AND-ADAPTER-BOUNDARIES",
+      "control_code": "HB-JSON-DUPKEY-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-FROZEN-CONTRACT-MUTABLE-ALIAS",
+      "claim_code": "IMMUTABLE-CONTRACT-STATE",
+      "fruit_code": "CALLER-LIST-MUTATION-ALTERED-FROZEN-OBJECT",
+      "fault_code": "FROZEN-DATACLASS-STORED-MUTABLE-REFERENCE",
+      "rule_code": "SNAPSHOT-LIST-OR-TUPLE-INTO-TUPLE",
+      "regression_code": "TEST-FROZEN-CONTAINER-SNAPSHOT",
+      "control_code": "HB-IMMUTABILITY-003",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-MULTIPLE-HEARTBEAT-AUTHORITIES",
+      "claim_code": "ONE-POLICY-AUTHORITY",
+      "fruit_code": "LEGACY-ENGINE-SCORED-INDEPENDENTLY",
+      "fault_code": "FACADE-RETAINED-AUTHORITY",
+      "rule_code": "VERIFIED-V4-SOLE-AUTHORITY",
+      "regression_code": "TEST-VERIFIED-V4-ONLY-RECOMMENDATION-AUTHORITY",
+      "control_code": "HB-ONE-AUTHORITY-004",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-HEARTBEAT-AUTHORITY-WIDENING",
+      "claim_code": "RECOMMENDATION-ONLY",
+      "fruit_code": "A1-A4-AND-EFFECTFUL-CATALOGUE-ROUTES-PRESENT",
+      "fault_code": "PERMIT-AWARE-LEGACY-ROUTER",
+      "rule_code": "A0-ONLY-ZERO-EFFECT-PATH",
+      "regression_code": "TEST-EXTERNAL-CATALOGUE-ROUTES-NEVER-SELECTED",
+      "control_code": "HB-A0-ONLY-004",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-RAW-TURN-PERSISTENCE",
+      "claim_code": "METADATA-ONLY",
+      "fruit_code": "TASK-BLOCKER-RISK-AND-RESULT-TEXT-STORED",
+      "fault_code": "HASH-AFTER-RAW-ACCEPTANCE",
+      "rule_code": "PROHIBIT-RAW-CONTENT-AT-INGRESS",
+      "regression_code": "TEST-RAW-TURN-AND-STATIC-FIXTURE-REJECTED",
+      "control_code": "HB-RAW-TURN-PROHIBITED-004",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-IDEMPOTENCY-OPERATION-ALIAS",
+      "claim_code": "ATOMIC-IDEMPOTENT-TURN",
+      "fruit_code": "CHANGED-PAYLOAD-COULD-RETURN-PRIOR-RECEIPT",
+      "fault_code": "OPERATION-ID-ONLY-REPLAY",
+      "rule_code": "FULL-CANONICAL-PAYLOAD-CONFLICT-CHECK",
+      "regression_code": "TEST-OPERATION-ID-CHANGED-PAYLOAD-FAILS",
+      "control_code": "HB-FULL-PAYLOAD-IDEMPOTENCY-004",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-CATALOGUE-STATE-AUTHORIZED-INGRESS",
+      "claim_code": "REGISTERED-INGRESS-ONLY",
+      "fruit_code": "SESSION-OR-UNHOSTED-STATE-ACCEPTED-TURN",
+      "fault_code": "AVAILABILITY-AS-AUTHORITY",
+      "rule_code": "COMPLETE-SIGNED-LINEAGE-ONLY",
+      "regression_code": "TEST-UNHOSTED-CATALOGUE-CANNOT-INGRESS",
+      "control_code": "HB-CATALOGUE-NO-INGRESS-004",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-SCHEDULER-SECOND-ROUTER",
+      "claim_code": "ON-INPUT-SINGLE-ROUTER",
+      "fruit_code": "SCHEDULED-RANKING-AND-REMEDIATION-ADVANCEMENT",
+      "fault_code": "SCHEDULER-RECOMMENDATION-AUTHORITY",
+      "rule_code": "SCHEDULER-INVENTORY-ONLY",
+      "regression_code": "TEST-SURFACE-AND-SCHEDULER-INVENTORY-ONLY",
+      "control_code": "HB-SCHEDULER-INVENTORY-ONLY-004",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-API-MCP-DOCUMENTATION-CLAIM",
+      "claim_code": "HEARTBEAT-API-AND-MCP-EXPOSED",
+      "fruit_code": "ENDPOINT-AND-TOOL-CODE-ABSENT",
+      "fault_code": "MANIFEST-AS-IMPLEMENTATION",
+      "rule_code": "MARK-API-MCP-AS-ACTIVATION-OBLIGATIONS",
+      "regression_code": "STATIC-API-MCP-TRUTH-GATE",
+      "control_code": "HB-API-MCP-TRUTH-004",
+      "authority_expansion": false
+    },
+    {
+      "incident_code": "INCIDENT-LEGACY-TEST-COVERAGE-DILUTION",
+      "claim_code": "SAFE-RECONCILIATION",
+      "fruit_code": "TWENTY-FOUR-LEGACY-TESTS-REDUCED-WITHOUT-MAP",
+      "fault_code": "UNMAPPED-UNSAFE-EXPECTATION-REMOVAL",
+      "rule_code": "ONE-TO-ONE-PRESERVE-OR-STRENGTHEN-MAP",
+      "regression_code": "TEST-COVERAGE-MAP-AND-THIRTY-INTEGRATION-TESTS",
+      "control_code": "HB-LEGACY-COVERAGE-MAP-004",
+      "authority_expansion": false
+    }
+  ]
+}

@@ -1,100 +1,96 @@
 from __future__ import annotations
 
 import unittest
+from dataclasses import replace
 
 from evidenceops.capability_heartbeat.bible_federation import BibleFederation
-from evidenceops.capability_heartbeat.engine import CapabilityHeartbeatEngine, HeartbeatError
+from evidenceops.capability_heartbeat.foundation.contracts import Authority, EventType
+from evidenceops.capability_heartbeat.foundation.errors import ContractError
+from evidenceops.capability_heartbeat.foundation.ledger import ImmutableEventLedger
+from evidenceops.capability_heartbeat.foundation.respawn import RespawnManifest
+from evidenceops.capability_heartbeat.tests.integration_helpers import (
+    EXPIRES,
+    NOW,
+    OBSERVED,
+    authority,
+    envelope,
+)
 
 
-class BibleFederationTests(unittest.TestCase):
+class BibleFederationIntegrationTests(unittest.TestCase):
     def setUp(self):
-        self.contract = {
-            "schema": "EVIDENCEOPS-BIBLE-NODE-1",
-            "node_id": "NODE-EVIDENCEOPS-PARENT",
-            "parent_node_id": "CENTRAL-MASTER",
-            "contract_version": "MB-HB-1.0",
-            "branch_version": 2,
-            "privacy_tier": "P1",
-            "ttl_seconds": 300,
-            "max_hops": 3,
-            "active_workflow_ids": ["CHAT-A"],
-            "authorized_child_patterns": ["NODE-EVIDENCEOPS-*"],
-        }
-        self.federation = BibleFederation(self.contract)
-        self.heartbeat = self.federation.make_heartbeat(
-            "report:abc123", emitted_at="2026-08-02T12:00:00+00:00"
-        )
+        self.authority = authority()
+        self.federation = BibleFederation(self.authority)
 
-    def test_authorized_child_inherits_verified_contract(self):
-        child = self.federation.make_child_genesis("NODE-EVIDENCEOPS-CHILD", self.heartbeat)
-        self.assertEqual(child["parent_node_id"], self.contract["node_id"])
+    def test_registered_child_scaffold_inherits_scope_and_a0(self):
+        child = self.federation.child_scaffold("NODE-EVIDENCEOPS")
+        self.assertEqual(child["parent_node_id"], "NODE-ROOT")
+        self.assertEqual(child["owner_code"], self.authority.policy.owner_code)
+        self.assertEqual(child["matter_code"], self.authority.policy.matter_code)
+        self.assertEqual(child["classification"], self.authority.policy.classification.value)
+        self.assertEqual(child["authority_ceiling"], "A0")
+        self.assertEqual(child["max_hops"], 3)
         self.assertFalse(child["effectful_execution_inherited"])
-        self.assertTrue(child["google_cloud_capability_inherited"])
-        self.assertEqual("FULL_PROJECT_CONTROL", child["google_cloud_control_breadth"])
-        self.assertFalse(child["raw_cloud_credentials_inherited"])
-        self.assertIn("READ_BACK_REGISTRY_RECEIPT", child["required_startup_sequence"])
+        self.assertFalse(any(child["live_awareness_flags"].values()))
 
-    def test_unauthorized_child_is_rejected(self):
-        with self.assertRaises(HeartbeatError):
-            self.federation.make_child_genesis("NODE-ROGUE-CHILD", self.heartbeat)
+    def test_unregistered_child_has_no_scaffold_or_inherited_capability(self):
+        with self.assertRaisesRegex(ContractError, "NODE_NOT_REGISTERED"):
+            self.federation.child_scaffold("NODE-ROGUE")
 
-    def test_propagation_loop_is_rejected(self):
-        with self.assertRaises(HeartbeatError):
-            self.federation.make_child_genesis("CENTRAL-MASTER", self.heartbeat)
-
-    def test_private_workflow_identifiers_are_hashed(self):
-        private = {**self.contract, "privacy_tier": "P3"}
-        envelope = BibleFederation(private).make_heartbeat(
-            "report:abc123", emitted_at="2026-08-02T12:00:00+00:00"
+    def test_complete_signed_lineage_produces_fresh_destination_receipt(self):
+        _, result, signed = envelope(self.authority)
+        receipt = self.federation.accept(
+            lineage=(signed,),
+            destination_node_id="NODE-EVIDENCEOPS",
+            observed_at=NOW,
         )
-        self.assertNotIn("CHAT-A", envelope["active_workflow_refs"])
-        self.assertTrue(envelope["active_workflow_refs"][0].startswith("sha256:"))
+        self.assertEqual(receipt.envelope_id, signed.envelope_id)
+        self.assertEqual(receipt.owner_code, self.authority.policy.owner_code)
+        self.assertEqual(receipt.matter_code, self.authority.policy.matter_code)
+        self.assertEqual(result.recommendations[0].role.value, "PREFERRED")
 
-    def test_reconciliation_distinguishes_active_stale_missing_and_unregistered(self):
-        stale = self.federation.make_heartbeat(
-            "report:stale", emitted_at="2026-08-02T11:00:00+00:00"
-        )
-        rogue_contract = {**self.contract, "node_id": "NODE-EVIDENCEOPS-ROGUE"}
-        rogue = BibleFederation(rogue_contract).make_heartbeat(
-            "report:rogue", emitted_at="2026-08-02T12:00:00+00:00"
-        )
-        result = BibleFederation.reconcile(
-            {"NODE-EVIDENCEOPS-PARENT", "NODE-EVIDENCEOPS-MISSING"},
-            [stale, rogue],
-            observed_at="2026-08-02T12:00:00+00:00",
-        )
-        states = {item["node_id"]: item["state"] for item in result["nodes"]}
-        self.assertEqual(states["NODE-EVIDENCEOPS-PARENT"], "NODE_STALE")
-        self.assertEqual(states["NODE-EVIDENCEOPS-MISSING"], "NODE_SYNC_PENDING")
-        self.assertEqual(result["quarantined_unregistered_nodes"], ["NODE-EVIDENCEOPS-ROGUE"])
+    def test_reconciliation_is_registry_readback_not_live_chat_claim(self):
+        report = self.federation.reconcile(observed_at=NOW)
+        self.assertEqual(report["registered_node_count"], 2)
+        self.assertEqual(report["active_chat_count"], 0)
+        self.assertFalse(report["scheduler_authority"])
+        self.assertFalse(any(report["live_awareness_flags"].values()))
 
-    def test_hash_tampering_is_rejected(self):
-        changed = {**self.heartbeat, "status": "NODE_ARCHIVED"}
-        with self.assertRaises(HeartbeatError):
-            BibleFederation.verify_heartbeat(changed)
+    def test_false_live_attachment_policy_is_rejected(self):
+        with self.assertRaises(ContractError):
+            replace(self.authority.policy, live_attachment=True)
 
-    def test_older_heartbeat_replay_is_rejected(self):
-        newer = self.federation.make_heartbeat(
-            "report:newer", emitted_at="2026-08-02T12:02:00+00:00"
+    def test_respawn_semantic_readback_cross_binds_policy_registry_and_ledger(self):
+        ledger = ImmutableEventLedger().append(
+            event_type=EventType.NODE_REGISTERED,
+            entity_code="NODE-ROOT",
+            occurred_at=OBSERVED,
+            control_generation=0,
+            payload={"node_code": "NODE-ROOT", "state_code": "REGISTERED"},
         )
-        result = BibleFederation.reconcile(
-            {"NODE-EVIDENCEOPS-PARENT"},
-            [newer, self.heartbeat],
-            observed_at="2026-08-02T12:03:00+00:00",
+        manifest = RespawnManifest(
+            manifest_code="RESPAWN-SYNTHETIC",
+            master_node_id="NODE-ROOT",
+            parent_transaction_id=ledger.tail_hash,
+            policy_hash=self.authority.policy.policy_hash,
+            registry_hash=self.authority.registry.registry_hash,
+            ledger_tail_hash=ledger.tail_hash,
+            ledger_event_count=1,
+            root_node_generation=0,
+            control_generation=0,
+            authority_ceiling=Authority.A0,
+            registration_receipts=tuple(
+                sorted(item.registration_receipt for item in self.authority.registry.records)
+            ),
+            generated_at=NOW,
+            expires_at="2026-08-02T12:04:00Z",
         )
-        self.assertEqual(result["rejected_replay_heartbeats"], [self.heartbeat["heartbeat_sha256"]])
-        self.assertEqual(result["active_node_count"], 1)
-
-    def test_current_report_contains_bible_node_envelope(self):
-        root = __import__("pathlib").Path(__file__).resolve().parents[3]
-        report = CapabilityHeartbeatEngine(
-            root,
-            "evidenceops/capability_heartbeat/sources.json",
-            "evidenceops/capability_heartbeat/bible_node.json",
-        ).run("evidenceops/capability_heartbeat/current_workflow.json")
-        self.assertEqual(report["bible_node_heartbeat"]["node_id"], "NODE-EVIDENCEOPS-CAPABILITY-HEARTBEAT")
-        self.assertEqual(report["bible_node_heartbeat"]["status"], "NODE_ACTIVE_VERIFIED")
-        self.assertFalse(report["bible_node_heartbeat"]["credentials_included"])
+        readback = self.federation.verify_respawn(
+            manifest=manifest, ledger=ledger, observed_at=NOW
+        )
+        self.assertTrue(readback.valid)
+        with self.assertRaises(ContractError):
+            replace(manifest, system_wide_awareness=True)
 
 
 if __name__ == "__main__":
