@@ -2,30 +2,30 @@
   "advanced_count": 3,
   "advances": [
     {
-      "from": "SOLD",
+      "from": "DELIVERED",
       "id": "E2K-0005",
       "name": "Burden Transfer Detector",
       "priority": 87.45,
-      "to": "DELIVERED"
+      "to": "RECURRING"
     },
     {
-      "from": "PRODUCT_READY",
+      "from": "COMMERCIAL_CANDIDATE",
       "id": "E2K-0007",
       "name": "Integrity Underwriting Feed",
       "priority": 86.9,
-      "to": "COMMERCIAL_CANDIDATE"
+      "to": "OFFER_READY"
     },
     {
-      "from": "PRODUCT_READY",
+      "from": "COMMERCIAL_CANDIDATE",
       "id": "E2K-0008",
       "name": "Federated Accountability Mesh",
       "priority": 86.45,
-      "to": "COMMERCIAL_CANDIDATE"
+      "to": "OFFER_READY"
     }
   ],
   "blocked_count": 7,
   "eligible_candidates": 3,
   "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-08-02T13:50:57.919287+00:00"
+  "timestamp": "2026-08-02T15:16:26.728384+00:00"
 }
