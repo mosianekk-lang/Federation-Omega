@@ -118,10 +118,10 @@
       ],
       "domain": "Markets and Finance",
       "id": "E2K-0007",
-      "last_advanced_at": "2026-08-02T17:12:37.481261+00:00",
-      "maturity": "SOLD",
+      "last_advanced_at": "2026-08-02T18:10:19.874629+00:00",
+      "maturity": "DELIVERED",
       "name": "Integrity Underwriting Feed",
-      "next_action": "execute approved sale",
+      "next_action": "verify fulfilment and receipt",
       "priority_score": 86.9,
       "scores": {
         "defensibility": 92,
@@ -138,10 +138,10 @@
       ],
       "domain": "Sovereignty and Federation",
       "id": "E2K-0008",
-      "last_advanced_at": "2026-08-02T17:12:37.481261+00:00",
-      "maturity": "SOLD",
+      "last_advanced_at": "2026-08-02T18:10:19.874629+00:00",
+      "maturity": "DELIVERED",
       "name": "Federated Accountability Mesh",
-      "next_action": "execute approved sale",
+      "next_action": "verify fulfilment and receipt",
       "priority_score": 86.45,
       "scores": {
         "defensibility": 97,
@@ -191,6 +191,6 @@
     }
   ],
   "portfolio_id": "EARTH2-PORTFOLIO-001",
-  "updated_at": "2026-08-02T17:12:37.481261+00:00",
+  "updated_at": "2026-08-02T18:10:19.874629+00:00",
   "version": "1.0"
 }
