@@ -79,10 +79,10 @@
       ],
       "domain": "Justice and Rights",
       "id": "E2K-0005",
-      "last_advanced_at": "2026-08-02T06:43:16.542887+00:00",
-      "maturity": "COMMERCIAL_CANDIDATE",
+      "last_advanced_at": "2026-08-02T09:18:58.060834+00:00",
+      "maturity": "OFFER_READY",
       "name": "Burden Transfer Detector",
-      "next_action": "validate price and buyer",
+      "next_action": "prepare proposal and sales assets",
       "priority_score": 87.45,
       "scores": {
         "defensibility": 88,
@@ -118,10 +118,10 @@
       ],
       "domain": "Markets and Finance",
       "id": "E2K-0007",
-      "last_advanced_at": "2026-08-02T06:43:16.542887+00:00",
-      "maturity": "PILOT_CANDIDATE",
+      "last_advanced_at": "2026-08-02T09:18:58.060834+00:00",
+      "maturity": "PILOT_ACTIVE",
       "name": "Integrity Underwriting Feed",
-      "next_action": "prepare buyer-ready pilot",
+      "next_action": "operate supervised pilot",
       "priority_score": 86.9,
       "scores": {
         "defensibility": 92,
@@ -138,10 +138,10 @@
       ],
       "domain": "Sovereignty and Federation",
       "id": "E2K-0008",
-      "last_advanced_at": "2026-08-02T06:43:16.542887+00:00",
-      "maturity": "PILOT_CANDIDATE",
+      "last_advanced_at": "2026-08-02T09:18:58.060834+00:00",
+      "maturity": "PILOT_ACTIVE",
       "name": "Federated Accountability Mesh",
-      "next_action": "prepare buyer-ready pilot",
+      "next_action": "operate supervised pilot",
       "priority_score": 86.45,
       "scores": {
         "defensibility": 97,
@@ -156,10 +156,10 @@
       "dependencies": [],
       "domain": "Education and Human Development",
       "id": "E2K-0009",
-      "last_advanced_at": "2026-08-02T06:43:16.542887+00:00",
-      "maturity": "RECURRING",
+      "last_advanced_at": "2026-08-02T09:18:58.060834+00:00",
+      "maturity": "LICENSED",
       "name": "Kim Value Algorithm",
-      "next_action": "convert to subscription",
+      "next_action": "license or federate",
       "priority_score": 88.2,
       "scores": {
         "defensibility": 95,
@@ -191,6 +191,6 @@
     }
   ],
   "portfolio_id": "EARTH2-PORTFOLIO-001",
-  "updated_at": "2026-08-02T06:43:16.542887+00:00",
+  "updated_at": "2026-08-02T09:18:58.060834+00:00",
   "version": "1.0"
 }
