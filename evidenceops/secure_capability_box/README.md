@@ -1,6 +1,6 @@
 # EvidenceOps Secure Capability Box
 
-Version 0.4 reconstructs the missing Secure Capability Box as a public-safe production foundation. It does not contain credentials and does not grant broad access. It provides the control path through which an approved workload may receive a short-lived, exact-purpose capability and use one credential without receiving or persisting the credential itself.
+Version 1.0 adds the private service and deployment path to the public-safe Secure Capability Box foundation. It does not contain credentials. It provides the control path through which an approved workload may receive a short-lived, exact-purpose capability and use one credential without receiving or persisting the credential itself.
 
 ## Security contract
 
@@ -48,6 +48,14 @@ python ../security/public_repository_leak_guard.py
 
 No network service is started and no cloud resource is changed by those commands.
 
+## Private service and deployment
+
+`secure_capability_box.service` exposes health, authenticated readiness, issue, execute, revoke, audit and reconciliation endpoints. Runtime identity, provider resource and action allowlist come only from deployment configuration; callers cannot select a different credential, subject, audience or connector. `SCB_SECRET_VERSION` must be numeric and exact.
+
+The Cloud control bootstrap creates a dedicated service identity and managed API/signing secrets, grants exact Secret Manager access, deploys the container privately with one instance/concurrent request, and performs an issue-to-Federation-Omega execution canary. Credential material is fetched at runtime and is not written into the proof artifacts.
+
+The repository-native objective-completion guard evaluates every operational layer and terminal fruit. A source build, passing tests, a report, or expiry of a 24-hour cycle cannot close this mission.
+
 ## Recovery
 
 `SecureBoxStore.snapshot()` exports grants, operation receipts and the audit chain only. `SecureBoxStore.restore()` accepts a verified snapshot into an empty database and rejects a broken hash chain. Provider payloads and the token signing key are intentionally excluded; production recovery must restore those independently from the managed secret/KMS control plane.
@@ -56,4 +64,4 @@ No network service is started and no cloud resource is changed by those commands
 
 ## Current maturity
 
-The package is implemented and locally tested as a `PROD_FOUNDATION`. It is not deployed, not connected to live credentials and not production-proven. Promotion requires private runtime configuration, workload identity, least-privilege IAM, live health/readback, rotation/revocation drills, deployment rollback proof and an external security review.
+The package and automated private activation path are implemented and locally tested. The checked-in mission state remains open until the deployment workflow records private runtime configuration, workload identity, live health/readback, recovery proof and monitoring. Source or CI success alone is never promoted to operational completion.

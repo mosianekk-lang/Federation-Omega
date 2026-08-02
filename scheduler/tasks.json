@@ -87,6 +87,15 @@
       "blocker": "Provider credential must be bound to an authorised runtime"
     },
     {
+      "task_id": "EXT-011",
+      "title": "Cross-system capability heartbeat",
+      "cadence": "hourly",
+      "priority": 100,
+      "state": "READY",
+      "action": "Hash and reconcile Federation Omega, Secondary Brain, MODISA, EvidenceOps and supporting capability sources against the current workflow; reuse or improve only through the governed router.",
+      "proof_gate": "Heartbeat artifact, source fingerprints, one-primary-route decisions and report SHA-256"
+    },
+    {
       "task_id": "EXT-010",
       "title": "Nature intelligence corpus acquisition",
       "cadence": "dependency_driven",
@@ -95,6 +104,24 @@
       "action": "Acquire lawful public-domain nature works, hash them and begin mechanism extraction.",
       "proof_gate": "Source manifest, rights note and file hashes",
       "blocker": "Run acquisition in authorised external compute"
+    },
+    {
+      "task_id": "EXT-012",
+      "title": "Objective completion continuity enforcement",
+      "cadence": "hourly",
+      "priority": 100,
+      "state": "READY",
+      "action": "Evaluate every active EvidenceOps system build; block checkpoint-only closure and select the next authorised automated action while terminal fruit remains open.",
+      "proof_gate": "Objective-completion decision receipt with operational layers, terminal fruit and route state"
+    },
+    {
+      "task_id": "EXT-013",
+      "title": "Permanent Google Cloud capability inheritance",
+      "cadence": "hourly",
+      "priority": 100,
+      "state": "READY",
+      "action": "Audit every EvidenceOps system, subsystem, AI agent and governed element for inherited full-project-control binding; automatically register missing elements and require identity, provider canary and semantic readback before PROVEN.",
+      "proof_gate": "All build contracts and runtime manifests reference the canonical cloud capability plus current operator identity/canary/readback evidence"
     }
   ]
 }

@@ -1,5 +1,5 @@
 {
-  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v4",
+  "runtime_manifest_id": "EVIDENCEOPS-SOVEREIGN-TRANSLATOR-ACTIVE-v6",
   "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
   "owner": "Kim Kagiso Mosiane",
   "status": "CONTROLLING",
@@ -8,9 +8,14 @@
     "evidenceops/doctrine/EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2.md",
     "evidenceops/contracts/sovereign-translator-v3.2.json",
     "evidenceops/bootstrap/SOVEREIGN_TRANSLATOR_BOOTSTRAP.md",
-    "evidenceops/runtime/kim_dataverse_inplace_bridge.json"
+    "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
+    "evidenceops/capability_heartbeat/sources.json",
+    "evidenceops/capability_heartbeat/current_workflow.json",
+    "evidenceops/capability_heartbeat/bible_node.json",
+    "evidenceops/capability_heartbeat/surface_registry.json",
+    "evidenceops/cloud_capability/contract.json"
   ],
-  "per_input_requirement": "LOAD_OR_VERIFY_ACTIVE_MANIFEST_AND_PRIVATE_CANONICAL_BRIDGE_BEFORE_SUBSTANTIVE_WORK",
+  "per_input_requirement": "LOAD_OR_VERIFY_ACTIVE_MANIFEST_PRIVATE_CANONICAL_BRIDGE_AND_CURRENT_CAPABILITY_HEARTBEAT_BEFORE_SUBSTANTIVE_WORK",
   "mission_delta_owner": "WORKFORCE",
   "report_only_terminal_allowed": false,
   "canonical_intelligence_target": "KIM_DATAVERSE",
@@ -46,5 +51,25 @@
     "status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
     "required_for_current_canonical_operation": false
   },
-  "version": 4
+  "capability_heartbeat": {
+    "mode": "CURRENT_INPUT_ON_DEMAND_PLUS_DURABLE_SCHEDULED_DISCOVERY",
+    "single_primary_router": true,
+    "effectful_execution_from_heartbeat": false,
+    "inactive_chat_direct_delivery": false,
+    "report_path": "scheduler/runtime/capability-heartbeat.json",
+    "master_bible_node_heartbeat_required": true,
+    "registered_nodes_only": true,
+    "per_turn_ingress_required_for_live_chat_claim": true,
+    "adapter_gap_remediation_required": true,
+    "kimmie_connector_seed_required": true
+  },
+  "google_cloud_capability": {
+    "contract_ref": "evidenceops/cloud_capability/contract.json",
+    "inheritance": "MANDATORY_FOR_ALL_SYSTEMS_SUBSYSTEMS_AI_AGENTS_WORKERS_NODES_AND_ELEMENTS",
+    "control_breadth": "FULL_PROJECT_CONTROL",
+    "execution_route": "CENTRAL_GOVERNED_OPERATOR_AND_SECURE_CAPABILITY_BOX",
+    "readiness_fails_when_unbound": true,
+    "raw_credentials": false
+  },
+  "version": 6
 }

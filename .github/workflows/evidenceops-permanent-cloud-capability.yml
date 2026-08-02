@@ -1,0 +1,215 @@
+name: EvidenceOps Permanent Cloud Capability
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "evidenceops/cloud_capability/**"
+      - "evidenceops/cloud_control/**"
+      - "evidenceops/secure_capability_box/**"
+      - "omega_control_plane/**"
+      - ".github/workflows/evidenceops-permanent-cloud-capability.yml"
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: evidenceops-permanent-cloud-capability
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  AR_REPOSITORY: federation-omega
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  OPERATOR_SA: evidenceops-cloud-operator@sov-hybrid-suite.iam.gserviceaccount.com
+  SCB_SA: evidenceops-secure-capability-box@sov-hybrid-suite.iam.gserviceaccount.com
+  INTERNAL_SERVICE: evidenceops-cloud-control-internal
+  SCB_SERVICE: evidenceops-secure-capability-box
+  OWNER_DIRECTIVE: FULL_PROJECT_CONTROL_FOR_ALL_EVIDENCEOPS_ELEMENTS
+
+jobs:
+  activate-and-prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Validate source inheritance before cloud access
+        run: |
+          set -euo pipefail
+          python -m evidenceops.cloud_capability.inheritance --require-all-bound
+          python -m unittest discover -s evidenceops/cloud_capability/tests -v
+          test "$OWNER_DIRECTIVE" = "FULL_PROJECT_CONTROL_FOR_ALL_EVIDENCEOPS_ELEMENTS"
+
+      - name: Authenticate through established keyless WIF
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify WIF and exact project before mutation
+        run: |
+          set -euo pipefail
+          SERVICE=architron9 ./ops/bootstrap_github_wif.sh --verify | tee /tmp/wif-receipt.json
+          python - <<'PY'
+          import json
+          value=json.load(open('/tmp/wif-receipt.json',encoding='utf-8'))
+          assert value['receipt']=='FEDOMEGA-WIF-CLOUD-VERIFIED', value
+          assert value['state']=='VERIFIED', value
+          assert value['mutation_performed'] is False, value
+          PY
+          test "$(gcloud config get-value project)" = "$PROJECT_ID"
+
+      - name: Build and push immutable containers without Cloud Build
+        if: github.event_name != 'schedule'
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          INTERNAL_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/evidenceops-cloud-control:${GITHUB_SHA}"
+          SCB_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/evidenceops-secure-capability-box:${GITHUB_SHA}"
+          docker build --pull -t "$INTERNAL_IMAGE" omega_control_plane
+          docker build --pull -t "$SCB_IMAGE" evidenceops/secure_capability_box
+          docker push "$INTERNAL_IMAGE"
+          docker push "$SCB_IMAGE"
+          printf 'INTERNAL_IMAGE=%s\nSCB_IMAGE=%s\n' "$INTERNAL_IMAGE" "$SCB_IMAGE" >> "$GITHUB_ENV"
+
+      - name: Establish permanent project-control identities and managed secrets
+        if: github.event_name != 'schedule'
+        run: |
+          set -euo pipefail
+          for pair in "evidenceops-cloud-operator|EvidenceOps full project cloud operator" "evidenceops-secure-capability-box|EvidenceOps Secure Capability Box"; do
+            name="${pair%%|*}"; display="${pair#*|}"
+            gcloud iam service-accounts describe "${name}@${PROJECT_ID}.iam.gserviceaccount.com" --project "$PROJECT_ID" >/dev/null 2>&1 || \
+              gcloud iam service-accounts create "$name" --project "$PROJECT_ID" --display-name="$display"
+          done
+          gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+            --member="serviceAccount:${OPERATOR_SA}" --role=roles/owner --condition=None --quiet >/dev/null
+          for service_account in "$OPERATOR_SA" "$SCB_SA"; do
+            gcloud iam service-accounts add-iam-policy-binding "$service_account" \
+              --project "$PROJECT_ID" --member="serviceAccount:${DEPLOYER_SA}" \
+              --role=roles/iam.serviceAccountUser --quiet >/dev/null
+          done
+          for secret in secure-capability-box-api-token secure-capability-box-signing-key; do
+            gcloud secrets describe "$secret" --project "$PROJECT_ID" >/dev/null 2>&1 || \
+              gcloud secrets create "$secret" --project "$PROJECT_ID" --replication-policy=automatic
+            if [[ -z "$(gcloud secrets versions list "$secret" --project "$PROJECT_ID" --filter='state=ENABLED' --format='value(name)' --limit=1)" ]]; then
+              openssl rand -base64 48 | tr '+/' '-_' | tr -d '\n=' | \
+                gcloud secrets versions add "$secret" --project "$PROJECT_ID" --data-file=- >/dev/null
+            fi
+            gcloud secrets add-iam-policy-binding "$secret" --project "$PROJECT_ID" \
+              --member="serviceAccount:${SCB_SA}" --role=roles/secretmanager.secretAccessor --quiet >/dev/null
+          done
+          gcloud secrets add-iam-policy-binding fo-operator-admin-token --project "$PROJECT_ID" \
+            --member="serviceAccount:${SCB_SA}" --role=roles/secretmanager.secretAccessor --quiet >/dev/null
+
+      - name: Deploy private internal operator and Secure Capability Box
+        if: github.event_name != 'schedule'
+        run: |
+          set -euo pipefail
+          gcloud run deploy "$INTERNAL_SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --image "$INTERNAL_IMAGE" --service-account "$OPERATOR_SA" --no-allow-unauthenticated \
+            --set-env-vars="PROJECT_ID=${PROJECT_ID},REGION=${REGION},ALLOW_MUTATIONS=true,TRUST_CLOUD_RUN_IAM=true" \
+            --min-instances=0 --max-instances=3 --memory=512Mi --cpu=1 --timeout=120 --quiet
+          FO_URL="$(gcloud run services describe federation-omega-operator --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+          FO_VERSION="$(gcloud secrets versions list fo-operator-admin-token --project "$PROJECT_ID" --filter='state=ENABLED' --format='value(name)' --limit=1)"
+          test -n "$FO_URL"; test -n "$FO_VERSION"
+          gcloud run deploy "$SCB_SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --image "$SCB_IMAGE" --service-account "$SCB_SA" --no-allow-unauthenticated \
+            --set-env-vars="^@^SCB_KEY_ID=scb-runtime-v1@SCB_SUBJECT=evidenceops-runtime@SCB_AUDIENCE=federation-omega@SCB_AUTHORITY=A1@SCB_SECRET_PROJECT=${PROJECT_ID}@SCB_SECRET_NAME=fo-operator-admin-token@SCB_SECRET_VERSION=${FO_VERSION}@SCB_ALLOWED_ACTIONS=STATUS,READ_BUILD,READ_CLOUD_RUN_SERVICE,VERIFY_ARCHITRON_HEALTH@FO_OPERATOR_URL=${FO_URL}@SCB_DB_PATH=/tmp/secure-capability-box.sqlite" \
+            --set-secrets="SCB_API_TOKEN=secure-capability-box-api-token:latest,SCB_SIGNING_KEY=secure-capability-box-signing-key:latest" \
+            --min-instances=0 --max-instances=1 --concurrency=1 --memory=512Mi --cpu=1 --timeout=120 --quiet
+
+      - name: Bind every current EvidenceOps runtime identity
+        if: github.event_name != 'schedule'
+        run: |
+          set -euo pipefail
+          mapfile -t accounts < <(
+            gcloud run services list --project "$PROJECT_ID" --region "$REGION" \
+              --format='csv[no-heading](metadata.name,spec.template.spec.serviceAccountName)' | \
+              awk -F, '$1 ~ /^(evidenceops-|federation-omega|modisa-|architron|secondary-brain)/ && $2 != "" {print $2}' | sort -u
+          )
+          printf '%s\n' "$DEPLOYER_SA" "${accounts[@]}" | sort -u > /tmp/evidenceops-runtime-identities.txt
+          while IFS= read -r account; do
+            test -n "$account" || continue
+            gcloud run services add-iam-policy-binding "$INTERNAL_SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+              --member="serviceAccount:${account}" --role=roles/run.invoker --quiet >/dev/null
+            gcloud run services add-iam-policy-binding "$SCB_SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+              --member="serviceAccount:${account}" --role=roles/run.invoker --quiet >/dev/null
+          done < /tmp/evidenceops-runtime-identities.txt
+
+      - name: Prove private IAM, full-control identity and provider readback
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cloud-proof
+          INTERNAL_URL="$(gcloud run services describe "$INTERNAL_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+          SCB_URL="$(gcloud run services describe "$SCB_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+          gcloud run services get-iam-policy "$INTERNAL_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/cloud-proof/internal-iam.json
+          gcloud projects get-iam-policy "$PROJECT_ID" --flatten='bindings[].members' \
+            --filter="bindings.role:roles/owner AND bindings.members:serviceAccount:${OPERATOR_SA}" \
+            --format=json > /tmp/cloud-proof/operator-owner.json
+          python - <<'PY'
+          import json
+          iam=json.load(open('/tmp/cloud-proof/internal-iam.json',encoding='utf-8'))
+          members={m for b in iam.get('bindings',[]) for m in b.get('members',[])}
+          assert 'allUsers' not in members and 'allAuthenticatedUsers' not in members, iam
+          owner=json.load(open('/tmp/cloud-proof/operator-owner.json',encoding='utf-8'))
+          assert owner, 'operator Owner binding absent'
+          PY
+          TOKEN="$(gcloud auth print-identity-token --audiences="$INTERNAL_URL")"
+          curl --fail --silent "${INTERNAL_URL}/mcp" -H "Authorization: Bearer ${TOKEN}" \
+            -H 'content-type: application/json' \
+            --data '{"jsonrpc":"2.0","id":"permanent-canary","method":"tools/call","params":{"name":"omega_inventory","arguments":{}}}' \
+            > /tmp/cloud-proof/inventory.json
+          API_TOKEN="$(gcloud secrets versions access latest --secret=secure-capability-box-api-token --project="$PROJECT_ID")"
+          SCB_TOKEN="$(gcloud auth print-identity-token --audiences="$SCB_URL")"
+          OPERATION="cloud-capability-$(date -u +%Y%m%dT%H%M%SZ)-${RANDOM}"
+          printf '{"mission_id":"EVIDENCEOPS-PERMANENT-GOOGLE-CLOUD-CAPABILITY","mission_version":11,"operation_id":"%s","action":"STATUS","ttl_seconds":120}\n' "$OPERATION" > /tmp/cloud-proof/issue-request.json
+          curl --fail --silent "${SCB_URL}/v1/capabilities/issue" -H "Authorization: Bearer ${SCB_TOKEN}" \
+            -H "x-scb-api-token: ${API_TOKEN}" -H 'content-type: application/json' \
+            --data-binary @/tmp/cloud-proof/issue-request.json > /tmp/cloud-proof/issued.json
+          python - <<'PY'
+          import json
+          value=json.load(open('/tmp/cloud-proof/issued.json',encoding='utf-8'))
+          json.dump({'handle':value['handle'],'payload':{}},open('/tmp/cloud-proof/execute-request.json','w',encoding='utf-8'))
+          PY
+          curl --fail --silent "${SCB_URL}/v1/capabilities/execute" -H "Authorization: Bearer ${SCB_TOKEN}" \
+            -H "x-scb-api-token: ${API_TOKEN}" -H 'content-type: application/json' \
+            --data-binary @/tmp/cloud-proof/execute-request.json > /tmp/cloud-proof/secure-box-receipt.json
+          unset API_TOKEN TOKEN SCB_TOKEN
+          rm -f /tmp/cloud-proof/issued.json /tmp/cloud-proof/execute-request.json
+          python - <<'PY'
+          import hashlib,json,pathlib
+          root=pathlib.Path('/tmp/cloud-proof')
+          inv=json.load(open(root/'inventory.json',encoding='utf-8'))['result']['structuredContent']
+          receipt=json.load(open(root/'secure-box-receipt.json',encoding='utf-8'))
+          assert inv['projectId']=='sov-hybrid-suite' and inv['resourceCount']>0, inv
+          assert receipt['state']=='COMPLETED' and receipt['result_digest'], receipt
+          proof={
+            'schema':'EVIDENCEOPS-PERMANENT-CLOUD-CAPABILITY-PROOF-1',
+            'target_project':'sov-hybrid-suite','control_breadth':'FULL_PROJECT_CONTROL',
+            'private_iam_verified':True,'operator_owner_binding_verified':True,
+            'inventory_provider_readback_verified':True,
+            'secure_capability_box_execution_verified':True,
+            'raw_credentials_persisted':False,
+            'scheduled_reverification':True,
+            'run_id':'${{ github.run_id }}',
+            'hashes':{p.name:hashlib.sha256(p.read_bytes()).hexdigest() for p in root.iterdir() if p.is_file()}
+          }
+          pathlib.Path('permanent-cloud-capability-proof.json').write_text(json.dumps(proof,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: permanent-cloud-capability-proof-${{ github.run_id }}
+          path: permanent-cloud-capability-proof.json
+          retention-days: 90

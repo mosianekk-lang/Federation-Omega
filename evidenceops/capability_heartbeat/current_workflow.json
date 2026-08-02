@@ -1,0 +1,37 @@
+{
+  "schema": "EVIDENCEOPS-CURRENT-WORKFLOW-1",
+  "workflow_id": "CURRENT-CHAT-WORKFLOW",
+  "workflow_version": 1,
+  "requirements": [
+    {
+      "requirement_id": "DISCOVER-EXISTING",
+      "tags": ["discover", "reuse", "context"],
+      "minimum_proof": "TESTED",
+      "maximum_authority": "A1",
+      "baseline_score": 0.50,
+      "baseline_safety": 0.80,
+      "improvement_threshold": 0.05,
+      "effectful_permit": false
+    },
+    {
+      "requirement_id": "IMPROVE-SOLUTION",
+      "tags": ["architecture", "compare", "improve", "quality", "test"],
+      "minimum_proof": "TESTED",
+      "maximum_authority": "A1",
+      "baseline_score": 0.50,
+      "baseline_safety": 0.80,
+      "improvement_threshold": 0.05,
+      "effectful_permit": false
+    },
+    {
+      "requirement_id": "VERIFY-AND-CONTINUE",
+      "tags": ["continuity", "heartbeat", "provenance", "readback", "verify"],
+      "minimum_proof": "TESTED",
+      "maximum_authority": "A1",
+      "baseline_score": 0.50,
+      "baseline_safety": 0.80,
+      "improvement_threshold": 0.05,
+      "effectful_permit": false
+    }
+  ]
+}

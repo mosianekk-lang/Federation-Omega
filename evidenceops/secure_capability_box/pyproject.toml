@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "evidenceops-secure-capability-box"
-version = "0.4.0"
+version = "1.0.0"
 description = "Short-lived, policy-scoped secret capability broker for EvidenceOps"
 requires-python = ">=3.11"
 dependencies = []
@@ -12,6 +12,7 @@ dependencies = []
 [project.optional-dependencies]
 google = ["google-cloud-secret-manager>=2.20,<3", "google-crc32c>=1.5,<2"]
 federation = ["httpx>=0.28,<1"]
+service = ["fastapi>=0.116,<1", "uvicorn[standard]>=0.35,<1", "httpx>=0.28,<1", "google-cloud-secret-manager>=2.20,<3", "google-crc32c>=1.5,<2"]
 test = []
 
 [tool.setuptools.packages.find]

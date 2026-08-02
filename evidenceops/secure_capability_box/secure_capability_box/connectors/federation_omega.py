@@ -42,12 +42,12 @@ class FederationOmegaConnector:
         if not action or not isinstance(payload, dict):
             raise InvalidRequest("operator action and object payload are required")
         body = {"action": action, "payload": payload, "correlation_id": correlation_id}
-        result = self._request("POST", "/operator", credential=credential, body=body)
+        result = self._request("POST", "/execute", credential=credential, body=body)
         returned_action = result.get("action")
         if returned_action is not None and returned_action != action:
             raise ConnectorFailure("operator response action mismatch")
         state = result.get("state") or result.get("status")
-        if state not in {"OK", "READY", "COMPLETED", "SUCCESS"}:
+        if result.get("ok") is not True and state not in {"OK", "READY", "COMPLETED", "SUCCESS"}:
             raise ConnectorFailure("operator response did not prove success")
         return redact(result)
 

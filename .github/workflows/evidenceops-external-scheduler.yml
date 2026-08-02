@@ -56,6 +56,10 @@ jobs:
             --output scheduler/runtime/latest-report.json | tee scheduler/runtime/summary.txt
           test -s scheduler/runtime/latest-report.json
           test -s scheduler/runtime/summary.txt
+          test -s scheduler/runtime/capability-heartbeat.json
+          test -s scheduler/runtime/heartbeat-system.json
+          test -s scheduler/runtime/objective-completion.json
+          test -s scheduler/runtime/cloud-capability-inheritance.json
 
       - name: Publish workflow summary
         run: cat scheduler/runtime/summary.txt >> "$GITHUB_STEP_SUMMARY"
@@ -67,6 +71,10 @@ jobs:
           path: |
             scheduler/runtime/latest-report.json
             scheduler/runtime/summary.txt
+            scheduler/runtime/capability-heartbeat.json
+            scheduler/runtime/heartbeat-system.json
+            scheduler/runtime/objective-completion.json
+            scheduler/runtime/cloud-capability-inheritance.json
           retention-days: 90
 
       - name: Comment on scheduler control issue
