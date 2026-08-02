@@ -23,10 +23,10 @@
       "dependencies": [],
       "domain": "Anti-Corruption Systems",
       "id": "E2K-0002",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "DELIVERED",
+      "last_advanced_at": "2026-08-01T22:08:51.979893+00:00",
+      "maturity": "LICENSED",
       "name": "Corruption Oxygen Index",
-      "next_action": "verify fulfilment and receipt",
+      "next_action": "license or federate",
       "priority_score": 89.5,
       "scores": {
         "defensibility": 87,
@@ -41,10 +41,10 @@
       "dependencies": [],
       "domain": "AI-Agent Society",
       "id": "E2K-0003",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "RECURRING",
+      "last_advanced_at": "2026-08-01T21:07:48.329128+00:00",
+      "maturity": "LICENSED",
       "name": "AI-Agent University Operating System",
-      "next_action": "convert to subscription",
+      "next_action": "license or federate",
       "priority_score": 90.65,
       "scores": {
         "defensibility": 96,
@@ -73,14 +73,16 @@
       }
     },
     {
+      "assigned_council": "Justice and Rights Expert Genome Council",
       "dependencies": [
         "E2K-0002"
       ],
       "domain": "Justice and Rights",
       "id": "E2K-0005",
-      "maturity": "PROTOTYPE_CANDIDATE",
+      "last_advanced_at": "2026-08-02T15:16:26.728384+00:00",
+      "maturity": "RECURRING",
       "name": "Burden Transfer Detector",
-      "next_action": "build detection rules and evidence rubric",
+      "next_action": "convert to subscription",
       "priority_score": 87.45,
       "scores": {
         "defensibility": 88,
@@ -109,15 +111,17 @@
       }
     },
     {
+      "assigned_council": "Markets and Finance Expert Genome Council",
       "dependencies": [
         "E2K-0002",
         "E2K-0006"
       ],
       "domain": "Markets and Finance",
       "id": "E2K-0007",
-      "maturity": "CONCEPT_DEFINED",
+      "last_advanced_at": "2026-08-02T15:16:26.728384+00:00",
+      "maturity": "OFFER_READY",
       "name": "Integrity Underwriting Feed",
-      "next_action": "define insurer data model",
+      "next_action": "prepare proposal and sales assets",
       "priority_score": 86.9,
       "scores": {
         "defensibility": 92,
@@ -128,14 +132,16 @@
       }
     },
     {
+      "assigned_council": "Sovereignty and Federation Expert Genome Council",
       "dependencies": [
         "E2K-0006"
       ],
       "domain": "Sovereignty and Federation",
       "id": "E2K-0008",
-      "maturity": "GENOME_READY",
+      "last_advanced_at": "2026-08-02T15:16:26.728384+00:00",
+      "maturity": "OFFER_READY",
       "name": "Federated Accountability Mesh",
-      "next_action": "define node verification protocol",
+      "next_action": "prepare proposal and sales assets",
       "priority_score": 86.45,
       "scores": {
         "defensibility": 97,
@@ -150,10 +156,10 @@
       "dependencies": [],
       "domain": "Education and Human Development",
       "id": "E2K-0009",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "PILOT_ACTIVE",
+      "last_advanced_at": "2026-08-02T09:18:58.060834+00:00",
+      "maturity": "LICENSED",
       "name": "Kim Value Algorithm",
-      "next_action": "operate supervised pilot",
+      "next_action": "license or federate",
       "priority_score": 88.2,
       "scores": {
         "defensibility": 95,
@@ -170,10 +176,10 @@
       ],
       "domain": "AI-Agent Society",
       "id": "E2K-0010",
-      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
-      "maturity": "SOLD",
+      "last_advanced_at": "2026-08-01T23:08:06.458304+00:00",
+      "maturity": "LICENSED",
       "name": "Expert Genome Agent Foundry",
-      "next_action": "execute approved sale",
+      "next_action": "license or federate",
       "priority_score": 92.1,
       "scores": {
         "defensibility": 98,
@@ -185,6 +191,6 @@
     }
   ],
   "portfolio_id": "EARTH2-PORTFOLIO-001",
-  "updated_at": "2026-08-01T19:30:37.436198+00:00",
+  "updated_at": "2026-08-02T15:16:26.728384+00:00",
   "version": "1.0"
 }

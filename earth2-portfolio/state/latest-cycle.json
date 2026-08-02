@@ -1,45 +1,31 @@
 {
-  "advanced_count": 5,
+  "advanced_count": 3,
   "advances": [
     {
-      "from": "OFFER_READY",
-      "id": "E2K-0010",
-      "name": "Expert Genome Agent Foundry",
-      "priority": 92.1,
-      "to": "SOLD"
-    },
-    {
-      "from": "RECURRING",
-      "id": "E2K-0006",
-      "name": "Proof-Carrying Decision Engine",
-      "priority": 91.6,
-      "to": "LICENSED"
-    },
-    {
       "from": "DELIVERED",
-      "id": "E2K-0003",
-      "name": "AI-Agent University Operating System",
-      "priority": 90.65,
+      "id": "E2K-0005",
+      "name": "Burden Transfer Detector",
+      "priority": 87.45,
       "to": "RECURRING"
     },
     {
-      "from": "SOLD",
-      "id": "E2K-0002",
-      "name": "Corruption Oxygen Index",
-      "priority": 89.5,
-      "to": "DELIVERED"
+      "from": "COMMERCIAL_CANDIDATE",
+      "id": "E2K-0007",
+      "name": "Integrity Underwriting Feed",
+      "priority": 86.9,
+      "to": "OFFER_READY"
     },
     {
-      "from": "PILOT_CANDIDATE",
-      "id": "E2K-0009",
-      "name": "Kim Value Algorithm",
-      "priority": 88.2,
-      "to": "PILOT_ACTIVE"
+      "from": "COMMERCIAL_CANDIDATE",
+      "id": "E2K-0008",
+      "name": "Federated Accountability Mesh",
+      "priority": 86.45,
+      "to": "OFFER_READY"
     }
   ],
-  "blocked_count": 2,
-  "eligible_candidates": 8,
+  "blocked_count": 7,
+  "eligible_candidates": 3,
   "portfolio_size": 10,
   "state": "PORTFOLIO_CYCLE_COMPLETE",
-  "timestamp": "2026-08-01T19:30:37.436198+00:00"
+  "timestamp": "2026-08-02T15:16:26.728384+00:00"
 }
