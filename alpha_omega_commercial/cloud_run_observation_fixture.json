@@ -1,0 +1,31 @@
+{
+  "content_sha256": "18a0cdadb1d3a300d122ac21c54713d87fec2a262eb00db7c30e5bee6442d908",
+  "locator": "projects/sov-hybrid-suite/locations/africa-south1/services/fo-transcription-bridge",
+  "metadata": {
+    "private": true,
+    "project": "sov-hybrid-suite",
+    "region": "africa-south1",
+    "revision": "fo-transcription-bridge-00001-abc",
+    "service": "fo-transcription-bridge",
+    "tag_removed": true
+  },
+  "observation_id": "cloud-run-fixture-001",
+  "observed_at": "2026-08-03T21:55:00Z",
+  "proofs": {
+    "execution": true,
+    "health": true,
+    "persistence": true,
+    "private_invocation": true,
+    "readback": true,
+    "rollback": true
+  },
+  "provider": "google_cloud_run",
+  "provider_native": true,
+  "scopes": [
+    "authenticated_invoke",
+    "service_readback",
+    "health_readback",
+    "persistence_readback",
+    "reversible_tag_rollback"
+  ]
+}
