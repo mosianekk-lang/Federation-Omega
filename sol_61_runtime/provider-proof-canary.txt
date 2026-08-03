@@ -1,0 +1,4 @@
+SOL 6.1 provider-proof canary
+purpose: trigger pull-request GitHub Actions verification
+expected_effects: CI execution and proof artifact only
+forbidden_effects: cloud deployment, Apps Script mutation, external communication
