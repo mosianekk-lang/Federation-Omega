@@ -10,28 +10,28 @@
     "source_count_expected": 7,
     "source_count_observed": 7
   },
-  "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+  "observed_at_utc": "2026-08-03T22:58:44.552940Z",
   "programme_id": "OMEGAMAX-SOL-EVIDENCEOPS-FULL-MATURITY-V722",
   "provider_event": {
     "event_name": "push",
     "ref": "refs/heads/main",
     "repository": "mosianekk-lang/Federation-Omega",
     "run_attempt": "1",
-    "run_id": "30860426933",
-    "sha": "a6d4feec71ab68d7723bc9c519e84b21470fa884",
+    "run_id": "30860628186",
+    "sha": "702adf997c1e7db10fdbd69b034631eb24ee4cbc",
     "workflow": "EvidenceOps v7.2.2 P13 Raw Provider Freshness"
   },
-  "receipt_id": "RCP-V722-P13-RAW-30860426933-1",
-  "receipt_sha256": "d33a10d5c7e3f01397f17dfc78bea2bd55fc47f4f8bb444b3b7590d7ffd891db",
+  "receipt_id": "RCP-V722-P13-RAW-30860628186-1",
+  "receipt_sha256": "fda1426d78a80136d8f9c0d94cba0a1bee067e391c1eb8a2df5a4eace6be9d86",
   "results": [
     {
       "document_url": "https://www.ccma.org.za/wp-content/uploads/2025/07/CCMA-Rules-Info-Sheet-2025-01.pdf",
       "download_success": false,
-      "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)>",
+      "error": "SSLError: HTTPSConnectionPool(host='www.ccma.org.za', port=443): Max retries exceeded with url: /wp-content/uploads/2025/07/CCMA-Rules-Info-Sheet-2025-01.pdf (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)')))",
       "filename": "ccma_rules_info_sheet_2025_01.pdf",
       "listing_url": "https://www.ccma.org.za/resources/ccma-rules-info-sheet-2025-01/",
       "maturity": "RAW_PROVIDER_BYTE_RETRIEVAL_FAILED",
-      "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+      "observed_at_utc": "2026-08-03T22:58:44.552940Z",
       "raw_provider_bytes_verified": false,
       "source_class": "CURRENT_SECONDARY_RESOURCE",
       "source_id": "SRC-SA-CCMA-RULES-INFO-2025-01"
@@ -39,31 +39,33 @@
     {
       "document_url": "https://www.ccma.org.za/wp-content/uploads/2025/08/Unfair-Labour-Practice-Disputes-Info-Sheet-2025-01.pdf",
       "download_success": false,
-      "error": "URLError: <urlopen error [SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)>",
+      "error": "SSLError: HTTPSConnectionPool(host='www.ccma.org.za', port=443): Max retries exceeded with url: /wp-content/uploads/2025/08/Unfair-Labour-Practice-Disputes-Info-Sheet-2025-01.pdf (Caused by SSLError(SSLCertVerificationError(1, '[SSL: CERTIFICATE_VERIFY_FAILED] certificate verify failed: unable to get local issuer certificate (_ssl.c:1016)')))",
       "filename": "ccma_ulp_info_sheet_2025_01.pdf",
       "listing_url": "https://www.ccma.org.za/resources/unfair-labour-practice-disputes-info-sheet-2025-01/",
       "maturity": "RAW_PROVIDER_BYTE_RETRIEVAL_FAILED",
-      "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+      "observed_at_utc": "2026-08-03T22:58:44.552940Z",
       "raw_provider_bytes_verified": false,
       "source_class": "CURRENT_SECONDARY_RESOURCE",
       "source_id": "SRC-SA-CCMA-ULP-INFO-2025-01"
     },
     {
       "document_http": {
-        "elapsed_seconds": 4.635491,
+        "elapsed_seconds": 5.734845,
         "final_url": "https://www.gov.za/sites/default/files/gcis_document/201409/a25-02.pdf",
         "headers": {
           "accept-ranges": "bytes",
           "content-length": "2717594",
           "content-type": "application/pdf",
-          "date": "Mon, 03 Aug 2026 22:55:31 GMT",
+          "date": "Mon, 03 Aug 2026 22:58:46 GMT",
           "etag": "\"5c0d7f60-29779a\"",
           "last-modified": "Sun, 09 Dec 2018 20:47:28 GMT",
           "server": "CWAF"
         },
         "reason": "OK",
+        "redirect_chain": [],
         "requested_url": "https://www.gov.za/sites/default/files/gcis_document/201409/a25-02.pdf",
-        "status": 200
+        "status": 200,
+        "tls_verification": "CERTIFI_DEFAULT_VERIFIED"
       },
       "document_sha256": "0e13f57752f7efda55fb03fabb8b48dc88043d5e3163fb95fcfe638086cf13c0",
       "document_size_bytes": 2717594,
@@ -77,22 +79,23 @@
       "filename": "ecta_25_2002_base.pdf",
       "listing_error": null,
       "listing_http": {
-        "elapsed_seconds": 1.355819,
+        "elapsed_seconds": 1.44498,
         "final_url": "https://www.gov.za/documents/electronic-communications-and-transactions-act",
         "headers": {
           "cache-control": "max-age=3600, public",
-          "content-length": "40735",
           "content-type": "text/html; charset=UTF-8",
           "date": "Mon, 03 Aug 2026 16:32:07 GMT",
-          "etag": "\"1785774727\"",
+          "etag": "\"1785774727-gzip\"",
           "expires": "Sun, 19 Nov 1978 05:00:00 GMT",
           "last-modified": "Mon, 03 Aug 2026 16:32:07 GMT",
           "server": "CWAF",
           "x-content-type-options": "nosniff"
         },
         "reason": "OK",
+        "redirect_chain": [],
         "requested_url": "https://www.gov.za/documents/electronic-communications-and-transactions-act",
-        "status": 200
+        "status": 200,
+        "tls_verification": "CERTIFI_DEFAULT_VERIFIED"
       },
       "listing_marker_results": {
         "Electronic Communications and Transactions Act 25 of 2002": true,
@@ -102,7 +105,7 @@
       "listing_url": "https://www.gov.za/documents/electronic-communications-and-transactions-act",
       "listing_verified": true,
       "maturity": "OFFICIAL_BASE_ACT_RAW_BYTES_VERIFIED_CONSOLIDATED_CURRENTNESS_UNVERIFIED",
-      "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+      "observed_at_utc": "2026-08-03T22:58:44.552940Z",
       "pdf_extraction_error": null,
       "pdf_magic_verified": true,
       "pdf_page_count": 41,
@@ -112,20 +115,22 @@
     },
     {
       "document_http": {
-        "elapsed_seconds": 3.091628,
+        "elapsed_seconds": 4.447069,
         "final_url": "https://www.justice.gov.za/legislation/rules/Rules-LabourAppealCourt-GG50608-GN4775-20240503-SAFLII.pdf",
         "headers": {
           "accept-ranges": "bytes",
           "content-length": "194270",
           "content-type": "application/pdf",
-          "date": "Mon, 03 Aug 2026 22:55:30 GMT",
+          "date": "Mon, 03 Aug 2026 22:58:44 GMT",
           "etag": "\"0c562ee6a2cdc1:0\"",
           "last-modified": "Tue, 23 Sep 2025 09:17:49 GMT",
           "server": "Microsoft-IIS/7.5"
         },
         "reason": "OK",
+        "redirect_chain": [],
         "requested_url": "https://www.justice.gov.za/legislation/rules/Rules-LabourAppealCourt-GG50608-GN4775-20240503-SAFLII.pdf",
-        "status": 200
+        "status": 200,
+        "tls_verification": "CERTIFI_DEFAULT_VERIFIED"
       },
       "document_sha256": "07f72a0c4a1887715770d43d699dfa02a558c80dad4974e3a038fcaebae3a351",
       "document_size_bytes": 194270,
@@ -141,20 +146,22 @@
       "filename": "labour_appeal_court_rules_2024.pdf",
       "listing_error": null,
       "listing_http": {
-        "elapsed_seconds": 2.155638,
+        "elapsed_seconds": 1.447466,
         "final_url": "https://www.justice.gov.za/legislation/rules/rules.htm",
         "headers": {
           "accept-ranges": "bytes",
-          "content-length": "13405",
+          "content-length": "5466",
           "content-type": "text/html",
-          "date": "Mon, 03 Aug 2026 22:55:33 GMT",
+          "date": "Mon, 03 Aug 2026 22:58:47 GMT",
           "etag": "\"a21ebbd41220dd1:0\"",
           "last-modified": "Thu, 30 Jul 2026 11:01:54 GMT",
           "server": "Microsoft-IIS/7.5"
         },
         "reason": "OK",
+        "redirect_chain": [],
         "requested_url": "https://www.justice.gov.za/legislation/rules/rules.htm",
-        "status": 200
+        "status": 200,
+        "tls_verification": "CERTIFI_DEFAULT_VERIFIED"
       },
       "listing_marker_results": {
         "Rules-LabourAppealCourt-GG50608-GN4775-20240503-SAFLII.pdf": true
@@ -163,7 +170,7 @@
       "listing_url": "https://www.justice.gov.za/legislation/rules/rules.htm",
       "listing_verified": true,
       "maturity": "CURRENT_OFFICIAL_RULES_DOCUMENT_IDENTITY_VERIFIED",
-      "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+      "observed_at_utc": "2026-08-03T22:58:44.552940Z",
       "pdf_extraction_error": null,
       "pdf_magic_verified": true,
       "pdf_page_count": 13,
@@ -173,20 +180,22 @@
     },
     {
       "document_http": {
-        "elapsed_seconds": 3.735328,
+        "elapsed_seconds": 4.783263,
         "final_url": "https://www.justice.gov.za/legislation/rules/Rules-LabourCourt-GG50608-GN4775-20240503-SAFLII.pdf",
         "headers": {
           "accept-ranges": "bytes",
           "content-length": "411424",
           "content-type": "application/pdf",
-          "date": "Mon, 03 Aug 2026 22:55:30 GMT",
+          "date": "Mon, 03 Aug 2026 22:58:44 GMT",
           "etag": "\"83557fee6a2cdc1:0\"",
           "last-modified": "Tue, 23 Sep 2025 09:17:49 GMT",
           "server": "Microsoft-IIS/7.5"
         },
         "reason": "OK",
+        "redirect_chain": [],
         "requested_url": "https://www.justice.gov.za/legislation/rules/Rules-LabourCourt-GG50608-GN4775-20240503-SAFLII.pdf",
-        "status": 200
+        "status": 200,
+        "tls_verification": "CERTIFI_DEFAULT_VERIFIED"
       },
       "document_sha256": "8f64ecdcc928f443159cd62c6c72b79f34a74495a81a658cc05f9e0fa0b8209a",
       "document_size_bytes": 411424,
@@ -202,20 +211,22 @@
       "filename": "labour_court_rules_2024.pdf",
       "listing_error": null,
       "listing_http": {
-        "elapsed_seconds": 1.512551,
+        "elapsed_seconds": 2.467473,
         "final_url": "https://www.justice.gov.za/legislation/rules/rules.htm",
         "headers": {
           "accept-ranges": "bytes",
-          "content-length": "13405",
+          "content-length": "4506",
           "content-type": "text/html",
-          "date": "Mon, 03 Aug 2026 22:55:33 GMT",
-          "etag": "\"a21ebbd41220dd1:0\"",
+          "date": "Mon, 03 Aug 2026 22:58:50 GMT",
+          "etag": "\"0fda3d41220dd1:0\"",
           "last-modified": "Thu, 30 Jul 2026 11:01:54 GMT",
           "server": "Microsoft-IIS/7.5"
         },
         "reason": "OK",
+        "redirect_chain": [],
         "requested_url": "https://www.justice.gov.za/legislation/rules/rules.htm",
-        "status": 200
+        "status": 200,
+        "tls_verification": "CERTIFI_DEFAULT_VERIFIED"
       },
       "listing_marker_results": {
         "Rules-LabourCourt-GG50608-GN4775-20240503-SAFLII.pdf": true
@@ -224,7 +235,7 @@
       "listing_url": "https://www.justice.gov.za/legislation/rules/rules.htm",
       "listing_verified": true,
       "maturity": "CURRENT_OFFICIAL_RULES_DOCUMENT_IDENTITY_VERIFIED",
-      "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+      "observed_at_utc": "2026-08-03T22:58:44.552940Z",
       "pdf_extraction_error": null,
       "pdf_magic_verified": true,
       "pdf_page_count": 59,
@@ -234,20 +245,22 @@
     },
     {
       "document_http": {
-        "elapsed_seconds": 22.299083,
+        "elapsed_seconds": 4.206988,
         "final_url": "https://www.gov.za/sites/default/files/gcis_document/201409/act66-1995labourrelations.pdf",
         "headers": {
           "accept-ranges": "bytes",
           "content-length": "706290",
           "content-type": "application/pdf",
-          "date": "Mon, 03 Aug 2026 22:55:50 GMT",
+          "date": "Mon, 03 Aug 2026 22:58:46 GMT",
           "etag": "\"5c0d7e1b-ac6f2\"",
           "last-modified": "Sun, 09 Dec 2018 20:42:03 GMT",
           "server": "CWAF"
         },
         "reason": "OK",
+        "redirect_chain": [],
         "requested_url": "https://www.gov.za/sites/default/files/gcis_document/201409/act66-1995labourrelations.pdf",
-        "status": 200
+        "status": 200,
+        "tls_verification": "CERTIFI_DEFAULT_VERIFIED"
       },
       "document_sha256": "309a8fcb0e8001d9b34c04480ccd1003c1c194ec5bfa57b9c573cd0c4a7a72cd",
       "document_size_bytes": 706290,
@@ -259,34 +272,14 @@
       },
       "expected_markers_verified": true,
       "filename": "lra_66_1995_base.pdf",
-      "listing_error": null,
-      "listing_http": {
-        "elapsed_seconds": 20.781359,
-        "final_url": "https://www.gov.za/documents/labour-relations-act",
-        "headers": {
-          "cache-control": "max-age=3600, public",
-          "content-length": "44206",
-          "content-type": "text/html; charset=UTF-8",
-          "date": "Mon, 03 Aug 2026 21:57:16 GMT",
-          "etag": "\"1785794236\"",
-          "expires": "Sun, 19 Nov 1978 05:00:00 GMT",
-          "last-modified": "Mon, 03 Aug 2026 21:57:16 GMT",
-          "server": "CWAF",
-          "x-content-type-options": "nosniff"
-        },
-        "reason": "OK",
-        "requested_url": "https://www.gov.za/documents/labour-relations-act",
-        "status": 200
-      },
-      "listing_marker_results": {
-        "Labour Relations Act 66 of 1995": true,
-        "act66-1995labourrelations.pdf": true
-      },
-      "listing_sha256": "e75cf3e17ebbcc6b23be61c4eecaf0660b32b7114139d235e8f6b862ed0f9a66",
+      "listing_error": "ConnectTimeout: HTTPSConnectionPool(host='www.gov.za', port=443): Max retries exceeded with url: /documents/labour-relations-act (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.gov.za', port=443) at 0x7fc65859d0d0>, 'Connection to www.gov.za timed out. (connect timeout=12)'))",
+      "listing_http": null,
+      "listing_marker_results": {},
+      "listing_sha256": null,
       "listing_url": "https://www.gov.za/documents/labour-relations-act",
-      "listing_verified": true,
+      "listing_verified": false,
       "maturity": "OFFICIAL_BASE_ACT_RAW_BYTES_VERIFIED_CONSOLIDATED_CURRENTNESS_UNVERIFIED",
-      "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+      "observed_at_utc": "2026-08-03T22:58:44.552940Z",
       "pdf_extraction_error": null,
       "pdf_magic_verified": true,
       "pdf_page_count": 222,
@@ -297,17 +290,17 @@
     {
       "document_url": "https://www.gov.za/sites/default/files/gcis_document/202605/54627gon7440.pdf",
       "download_success": false,
-      "error": "URLError: <urlopen error timed out>",
+      "error": "ConnectTimeout: HTTPSConnectionPool(host='www.gov.za', port=443): Max retries exceeded with url: /sites/default/files/gcis_document/202605/54627gon7440.pdf (Caused by ConnectTimeoutError(<HTTPSConnection(host='www.gov.za', port=443) at 0x7fc65983cc50>, 'Connection to www.gov.za timed out. (connect timeout=12)'))",
       "filename": "lra_representations_notice_2026.pdf",
       "listing_url": "https://www.gov.za/documents/notices/labour-relations-act-66-1995-amended-notice-representations-invited-08-may-2026",
       "maturity": "RAW_PROVIDER_BYTE_RETRIEVAL_FAILED",
-      "observed_at_utc": "2026-08-03T22:55:30.365166Z",
+      "observed_at_utc": "2026-08-03T22:58:44.552940Z",
       "raw_provider_bytes_verified": false,
       "source_class": "PROPOSED_OR_CONSULTATIVE_NON_CURRENT",
       "source_id": "SRC-SA-LRA-AMENDMENT-NOTICE-2026"
     }
   ],
-  "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V2",
+  "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V3",
   "stage_id": "P13-FRESHNESS-RAW-PROVIDER-BYTES",
   "state": "RAW_PROVIDER_RETRIEVAL_PARTIAL_OR_IDENTITY_GAPS",
   "truth_boundary": "This receipt proves byte-level retrieval, HTTP metadata capture, SHA-256 identity, PDF structure and bounded text-marker checks for observed official-provider files. It does not prove that base statutes are consolidated/current, replace proposition-level legal research, establish a case outcome, or grant consequential authority.",
