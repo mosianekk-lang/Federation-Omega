@@ -1,0 +1,59 @@
+{
+  "provider": "google_drive_binary",
+  "proof": {
+    "receipt_id": "RCP-GDRIVE-BINARY-BLOCKED-20260803-1010",
+    "drive_file_id": null,
+    "github_run_id": 30804245278,
+    "github_artifact_id": 8852076539,
+    "github_artifact_digest": "sha256:77743995e5bc773c9209fbdcc97ee63c2e0966267da98a88ea6bc940f195bc4b",
+    "destination_folder_id": "1cjCJCwZNwNcVGvbPuEFIdUVExuzw5xYT"
+  },
+  "discover": {
+    "available": true,
+    "provider_profile_read": true,
+    "destination_folder_found": true
+  },
+  "authority": {
+    "authorised": true,
+    "scope": "reversible Drive binary create, metadata readback and rollback canary"
+  },
+  "snapshot": {
+    "state": "DESTINATION_INVENTORY_CAPTURED",
+    "destination_folder_id": "1cjCJCwZNwNcVGvbPuEFIdUVExuzw5xYT"
+  },
+  "deploy": {
+    "state": "PROVIDER_BLOCKED_FILE_EGRESS",
+    "error": "BLOCKED_FILE_REFERENCE",
+    "attempts": [
+      "structured GitHub connector file reference rejected by schema type boundary",
+      "GitHub file_id rejected as unavailable for connector egress",
+      "mounted runtime file rejected as unavailable for connector egress"
+    ]
+  },
+  "execute": {
+    "state": "NOT_EXECUTED"
+  },
+  "readback": {
+    "pass": false,
+    "reason": "No Drive file was created"
+  },
+  "health": {
+    "pass": false,
+    "reason": "No deployed Drive file exists to inspect"
+  },
+  "persistence": {
+    "pass": false,
+    "reason": "No deployed Drive file exists to re-read"
+  },
+  "rollback": {
+    "target_absent": true,
+    "state": "NO_MUTATION_TO_ROLL_BACK"
+  },
+  "state": "PROVIDER_BLOCKED_FILE_EGRESS",
+  "repair_classification": {
+    "category": "CONTRACT_BOUNDARY",
+    "retryable_without_new_route": false,
+    "next_route": "Use a provider-supported egress-compatible file reference or a native Drive upload carrier; do not repeat unchanged GitHub-to-Drive transfer attempts"
+  },
+  "truth_boundary": "Drive authority is valid, but the exact GitHub-hosted artifact could not cross the connector file-egress boundary. No Drive binary deployment is claimed."
+}
