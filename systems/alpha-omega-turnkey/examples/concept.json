@@ -1,0 +1,8 @@
+{
+  "title": "Campus ICT Operations Dashboard",
+  "description": "Build a dashboard and workflow system that consolidates service data, reports, evidence, maintenance and operational health.",
+  "users": ["ICT Team Lead", "Campus Rector"],
+  "outcomes": ["quarterly reporting", "operational visibility", "maintenance alerts"],
+  "constraints": ["proof before claim", "no destructive deployment"],
+  "preferred_surfaces": ["google_drive", "github", "cloud_run"]
+}
