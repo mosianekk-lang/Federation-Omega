@@ -1,0 +1,98 @@
+name: Sol EvidenceOps v7.2 Exact Release Proof
+
+on:
+  pull_request:
+    paths:
+      - "sol_evidenceops_v720/**"
+      - ".github/workflows/sol-evidenceops-v720-proof.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  exact-release-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Reconstruct exact release archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat sol_evidenceops_v720/archive_chunks/part-*.b64 > sol_evidenceops_v720/archive.b64
+          base64 --decode sol_evidenceops_v720/archive.b64 > sol_evidenceops_v720/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0.zip
+          rm sol_evidenceops_v720/archive.b64
+      - name: Verify archive, manifest and wheel hashes
+        run: python sol_evidenceops_v720/verify_release.py
+      - name: Extract exact archive
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/extracted"
+          unzip -q sol_evidenceops_v720/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0.zip -d "$RUNNER_TEMP/extracted"
+          echo "RUNTIME_ROOT=$RUNNER_TEMP/extracted/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0" >> "$GITHUB_ENV"
+      - name: Install test tooling
+        run: python -m pip install --upgrade pip pytest
+      - name: Execute exact source test suite
+        working-directory: ${{ env.RUNTIME_ROOT }}
+        run: pytest -q
+      - name: Install embedded wheel
+        shell: bash
+        run: python -m pip install "$RUNTIME_ROOT"/dist/*.whl
+      - name: Execute installed full canary
+        run: omx-runtime full-canary > "$RUNNER_TEMP/full_canary.json"
+      - name: Execute local programme and first-adopter release paths
+        working-directory: ${{ env.RUNTIME_ROOT }}
+        run: python scripts/execute_local_release.py --output-dir "$RUNNER_TEMP/release" --skip-source-tests
+      - name: Verify deterministic rebuild and proof boundaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -s "$RUNNER_TEMP/release/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_ACCEPTANCE.json"
+          test -s "$RUNNER_TEMP/release/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_EVIDENCEOPS_FIRST_ADOPTER.json"
+          test -s "$RUNNER_TEMP/release/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_PROGRAMME_EXECUTION.json"
+          echo "826a7cb7f5dcdc597e5ded1105f1d6c03d4b6bea56681b4a3e6644e23f0d906c  $RUNNER_TEMP/release/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0.zip" | sha256sum -c -
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          root = Path(os.environ['RUNNER_TEMP']) / 'release'
+          acc = json.loads((root / 'OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_ACCEPTANCE.json').read_text())
+          ev = json.loads((root / 'OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_EVIDENCEOPS_FIRST_ADOPTER.json').read_text())
+          tr = json.loads((root / 'OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_TRADING_FIRST_ADOPTER.json').read_text())
+          programme = json.loads((root / 'OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_PROGRAMME_EXECUTION.json').read_text())
+          assert acc['accepted']
+          assert acc['tests']['passed'] == 178 and acc['tests']['failed'] == 0
+          assert ev['passed'] and ev['advanced_evidenceops_system_count'] == 20
+          assert ev['system_operation_count'] == 25
+          assert ev['litigation_readiness_state'] == 'FULL_LITIGATION_READINESS_VERIFIED'
+          assert ev['task_state'] == 'COMPLETE_VERIFIED'
+          assert ev['restart_state'] == 'COMPLETE_VERIFIED'
+          assert ev['side_effects_executed'] is False
+          assert tr['passed'] and tr['side_effects_executed'] is False
+          counts = programme['counts']
+          assert counts['COMPLETE_VERIFIED'] >= 11
+          assert counts['HELD_PROVIDER_DEPENDENCY'] == 1
+          assert counts['HELD_PROVIDER_AND_LONGITUDINAL_EVIDENCE'] == 1
+          print(json.dumps({'state':'HOSTED_EXACT_RELEASE_AND_FIRST_ADOPTER_PROOF_PASSED','counts':counts}, indent=2))
+          PY
+      - name: Collect provider proof package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/proof"
+          cp "$RUNNER_TEMP/full_canary.json" "$RUNNER_TEMP/proof/"
+          cp "$RUNNER_TEMP/release"/*.json "$RUNNER_TEMP/proof/"
+          sha256sum sol_evidenceops_v720/OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0.zip > "$RUNNER_TEMP/proof/hosted_archive.sha256"
+          cat > "$RUNNER_TEMP/proof/TRUTH_BOUNDARY.txt" <<'TXT'
+          GitHub-hosted execution proves the exact release archive, tests, deterministic rebuild and bounded first-adopter paths. It does not prove an unattended production service, Temporal/NATS/OPA/PostgreSQL deployment, legal filing authority, real-case legal correctness or live financial execution.
+          TXT
+      - uses: actions/upload-artifact@v4
+        with:
+          name: sol-evidenceops-v720-exact-release-proof
+          path: ${{ runner.temp }}/proof/
+          if-no-files-found: error
+          retention-days: 90
