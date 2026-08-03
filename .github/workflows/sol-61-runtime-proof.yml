@@ -28,7 +28,7 @@ jobs:
         run: python -m compileall -q sol_61_runtime
       - name: Unit tests
         working-directory: sol_61_runtime
-        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
@@ -37,31 +37,38 @@ jobs:
         run: python sol_61_runtime/prove_coordinator.py --output sol_61_runtime/artifacts/coordination-proof
       - name: Execute adaptive execution proof
         run: python sol_61_runtime/prove_adaptive.py --output sol_61_runtime/artifacts/adaptive-proof
+      - name: Execute semantic memory proof
+        run: python sol_61_runtime/prove_semantic_memory.py --output sol_61_runtime/artifacts/semantic-proof
       - name: Validate proof gates and boundaries
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          runtime_root = Path('sol_61_runtime/artifacts/proof')
-          worker_root = Path('sol_61_runtime/artifacts/worker-proof')
-          coordination_root = Path('sol_61_runtime/artifacts/coordination-proof')
-          adaptive_root = Path('sol_61_runtime/artifacts/adaptive-proof')
-          receipt = json.loads((runtime_root / 'sol-61-runtime-receipt.json').read_text())
-          worker = json.loads((worker_root / 'sol-61-worker-receipt.json').read_text())
-          coordination = json.loads((coordination_root / 'sol-61-coordination-receipt.json').read_text())
-          adaptive = json.loads((adaptive_root / 'sol-61-adaptive-receipt.json').read_text())
-          assert receipt['status'] == 'REFERENCE_RUNTIME_VERIFIED'
-          assert all(receipt['gates'].values())
-          assert worker['status'] == 'DURABLE_WORKER_REFERENCE_VERIFIED'
-          assert all(worker['gates'].values())
-          assert coordination['status'] == 'DISTRIBUTED_COORDINATION_VERIFIED'
-          assert all(coordination['gates'].values())
-          assert adaptive['status'] == 'ADAPTIVE_EXECUTION_VERIFIED'
-          assert all(adaptive['gates'].values())
-          assert adaptive['truth_boundary']['github_actions_execution']
-          assert not adaptive['truth_boundary']['live_cloud_autoscaling']
-          assert not adaptive['truth_boundary']['live_provider_failover']
-          assert not adaptive['truth_boundary']['continuous_capacity_control']
+          roots = {
+            'runtime': Path('sol_61_runtime/artifacts/proof'),
+            'worker': Path('sol_61_runtime/artifacts/worker-proof'),
+            'coordination': Path('sol_61_runtime/artifacts/coordination-proof'),
+            'adaptive': Path('sol_61_runtime/artifacts/adaptive-proof'),
+            'semantic': Path('sol_61_runtime/artifacts/semantic-proof'),
+          }
+          receipt = json.loads((roots['runtime'] / 'sol-61-runtime-receipt.json').read_text())
+          worker = json.loads((roots['worker'] / 'sol-61-worker-receipt.json').read_text())
+          coordination = json.loads((roots['coordination'] / 'sol-61-coordination-receipt.json').read_text())
+          adaptive = json.loads((roots['adaptive'] / 'sol-61-adaptive-receipt.json').read_text())
+          semantic = json.loads((roots['semantic'] / 'sol-61-semantic-memory-receipt.json').read_text())
+          assert receipt['status'] == 'REFERENCE_RUNTIME_VERIFIED' and all(receipt['gates'].values())
+          assert worker['status'] == 'DURABLE_WORKER_REFERENCE_VERIFIED' and all(worker['gates'].values())
+          assert coordination['status'] == 'DISTRIBUTED_COORDINATION_VERIFIED' and all(coordination['gates'].values())
+          assert adaptive['status'] == 'ADAPTIVE_EXECUTION_VERIFIED' and all(adaptive['gates'].values())
+          assert semantic['status'] == 'SEMANTIC_MEMORY_VERIFIED' and all(semantic['gates'].values())
+          assert semantic['truth_boundary']['github_actions_execution']
+          assert semantic['truth_boundary']['provider_neutral_semantic_memory']
+          assert not semantic['truth_boundary']['external_vector_database_live']
+          assert not semantic['truth_boundary']['cross_chat_live_memory_sync']
+          assert not semantic['truth_boundary']['model_embedding_provider_live']
+          assert (roots['semantic'] / 'compiled-context.json').is_file()
+          assert (roots['semantic'] / 'semantic-runtime' / 'memory-events.jsonl').is_file()
+          assert (roots['semantic'] / 'semantic-runtime' / 'memory-records.json').is_file()
           PY
       - name: Upload proof package
         uses: actions/upload-artifact@v4
@@ -72,5 +79,6 @@ jobs:
             sol_61_runtime/artifacts/worker-proof
             sol_61_runtime/artifacts/coordination-proof
             sol_61_runtime/artifacts/adaptive-proof
+            sol_61_runtime/artifacts/semantic-proof
           retention-days: 90
           if-no-files-found: error
