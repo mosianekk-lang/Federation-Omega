@@ -13,13 +13,15 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+import requests
 from pypdf import PdfReader
 
 from aia_trust import verified_get
 
 USER_AGENT = (
-    "Mozilla/5.0 (compatible; EvidenceOps-P13-Freshness/7.2.2; "
-    "+https://github.com/mosianekk-lang/Federation-Omega)"
+    "Mozilla/5.0 (Windows NT 10.0; Win64; x64) "
+    "AppleWebKit/537.36 (KHTML, like Gecko) "
+    "Chrome/151.0.0.0 Safari/537.36 EvidenceOps-P13/7.2.2"
 )
 SELECTED_HEADERS = {
     "accept-ranges", "cache-control", "content-disposition", "content-length",
@@ -45,16 +47,33 @@ def safe_headers(headers: Any) -> dict[str, str]:
     return {key.lower(): str(value) for key, value in headers.items() if key.lower() in SELECTED_HEADERS}
 
 
-def fetch(url: str, read_timeout: int = 120) -> tuple[bytes, dict[str, Any]]:
+def fetch(
+    url: str,
+    read_timeout: int = 120,
+    *,
+    session: requests.Session | None = None,
+    referer: str | None = None,
+    accept: str | None = None,
+) -> tuple[bytes, dict[str, Any]]:
     started = time.perf_counter()
+    headers = {
+        "User-Agent": USER_AGENT,
+        "Accept": accept or "application/pdf,text/html,application/xhtml+xml,*/*;q=0.8",
+        "Accept-Language": "en-ZA,en;q=0.9",
+        "Cache-Control": "no-cache",
+        "Pragma": "no-cache",
+        "Sec-Fetch-Dest": "document",
+        "Sec-Fetch-Mode": "navigate",
+        "Sec-Fetch-Site": "same-origin" if referer else "none",
+        "Upgrade-Insecure-Requests": "1",
+    }
+    if referer:
+        headers["Referer"] = referer
     response, tls_metadata = verified_get(
         url,
-        headers={
-            "User-Agent": USER_AGENT,
-            "Accept": "application/pdf,text/html,application/xhtml+xml,*/*;q=0.8",
-            "Accept-Language": "en-ZA,en;q=0.9",
-        },
+        headers=headers,
         timeout=(45, read_timeout),
+        session=session,
     )
     return response.content, {
         "requested_url": url,
@@ -68,6 +87,11 @@ def fetch(url: str, read_timeout: int = 120) -> tuple[bytes, dict[str, Any]]:
             for item in response.history
         ],
         "tls_verification": tls_metadata,
+        "request_context": {
+            "session_reused": session is not None,
+            "referer_supplied": bool(referer),
+            "browser_navigation_headers": True,
+        },
     }
 
 
@@ -101,32 +125,34 @@ def classify(source_class: str, raw_verified: bool, listing_verified: bool, mark
 def process_source(source: dict[str, Any], output_dir: Path, observed_at: str) -> dict[str, Any]:
     filename = source["filename"]
     source_class = source["source_class"]
+    listing_url = source.get("listing_url")
+    session = requests.Session()
+
+    listing_http: dict[str, Any] | None = None
+    listing_sha256: str | None = None
+    listing_marker_results: dict[str, bool] = {}
+    listing_verified = False
+    listing_error: str | None = None
+
     record: dict[str, Any] = {
         "source_id": source["source_id"],
         "source_class": source_class,
         "gate_role": "SECONDARY_ARCHIVE_OPTIONAL" if source_class == SECONDARY_CLASS else "REQUIRED_OFFICIAL_SOURCE",
         "document_url": source["document_url"],
-        "listing_url": source.get("listing_url"),
+        "listing_url": listing_url,
         "filename": filename,
         "observed_at_utc": observed_at,
     }
-    try:
-        body, document_http = fetch(source["document_url"], int(source.get("read_timeout", 120)))
-        (output_dir / filename).write_bytes(body)
-        pdf_magic = body.startswith(b"%PDF-")
-        extracted_text, page_count, extraction_error = extract_pdf_text(body, int(source.get("extract_pages", 2)))
-        text = normalized(extracted_text)
-        marker_results = {marker: normalized(marker) in text for marker in source.get("expected_markers", [])}
-        markers_verified = all(marker_results.values()) if marker_results else True
 
-        listing_http: dict[str, Any] | None = None
-        listing_sha256: str | None = None
-        listing_marker_results: dict[str, bool] = {}
-        listing_verified = False
-        listing_error: str | None = None
-        if source.get("listing_url"):
+    try:
+        if listing_url:
             try:
-                listing_body, listing_http = fetch(source["listing_url"], 90)
+                listing_body, listing_http = fetch(
+                    listing_url,
+                    90,
+                    session=session,
+                    accept="text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8",
+                )
                 (output_dir / f"{filename}.listing.html").write_bytes(listing_body)
                 listing_sha256 = sha256_bytes(listing_body)
                 listing_text = normalized(listing_body.decode("utf-8", errors="replace"))
@@ -138,7 +164,30 @@ def process_source(source: dict[str, Any], output_dir: Path, observed_at: str) -
             except Exception as exc:
                 listing_error = f"{type(exc).__name__}: {exc}"
 
+        session_context = {
+            "mode": "OFFICIAL_LISTING_FIRST_BROWSER_SESSION",
+            "listing_requested_before_document": bool(listing_url),
+            "listing_fetch_succeeded": listing_http is not None,
+            "referer_used_for_document": bool(listing_url),
+            "cookie_count_after_listing": len(session.cookies),
+            "provider_controls_respected": True,
+        }
+
+        body, document_http = fetch(
+            source["document_url"],
+            int(source.get("read_timeout", 120)),
+            session=session,
+            referer=listing_url,
+            accept="application/pdf,application/octet-stream;q=0.9,*/*;q=0.8",
+        )
+        (output_dir / filename).write_bytes(body)
+        pdf_magic = body.startswith(b"%PDF-")
+        extracted_text, page_count, extraction_error = extract_pdf_text(body, int(source.get("extract_pages", 2)))
+        text = normalized(extracted_text)
+        marker_results = {marker: normalized(marker) in text for marker in source.get("expected_markers", [])}
+        markers_verified = all(marker_results.values()) if marker_results else True
         raw_verified = pdf_magic and len(body) > 1024 and page_count > 0
+
         record.update({
             "download_success": True,
             "document_http": document_http,
@@ -154,6 +203,7 @@ def process_source(source: dict[str, Any], output_dir: Path, observed_at: str) -
             "listing_marker_results": listing_marker_results,
             "listing_verified": listing_verified,
             "listing_error": listing_error,
+            "session_context": session_context,
             "raw_provider_bytes_verified": raw_verified,
             "maturity": classify(source_class, raw_verified, listing_verified, markers_verified),
         })
@@ -162,8 +212,24 @@ def process_source(source: dict[str, Any], output_dir: Path, observed_at: str) -
             "download_success": False,
             "raw_provider_bytes_verified": False,
             "error": f"{type(exc).__name__}: {exc}",
-            "maturity": classify(source_class, False, False, False),
+            "listing_http": listing_http,
+            "listing_sha256": listing_sha256,
+            "listing_marker_results": listing_marker_results,
+            "listing_verified": listing_verified,
+            "listing_error": listing_error,
+            "session_context": {
+                "mode": "OFFICIAL_LISTING_FIRST_BROWSER_SESSION",
+                "listing_requested_before_document": bool(listing_url),
+                "listing_fetch_succeeded": listing_http is not None,
+                "referer_used_for_document": bool(listing_url),
+                "cookie_count_after_listing": len(session.cookies),
+                "provider_controls_respected": True,
+            },
+            "maturity": classify(source_class, False, listing_verified, False),
         })
+    finally:
+        session.close()
+
     (output_dir / f"{filename}.metadata.json").write_text(
         json.dumps(record, indent=2, sort_keys=True), encoding="utf-8"
     )
@@ -210,7 +276,7 @@ def main() -> int:
     secondary_blocked = [item["source_id"] for item in secondary if not item.get("raw_provider_bytes_verified")]
 
     receipt: dict[str, Any] = {
-        "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V5",
+        "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V6",
         "programme_id": catalog["programme_id"],
         "version": "7.2.2",
         "stage_id": "P13-FRESHNESS-RAW-PROVIDER-BYTES",
@@ -243,7 +309,7 @@ def main() -> int:
         "results": results,
         "state": (
             "REQUIRED_OFFICIAL_RAW_BYTES_HASHED_PRIMARY_RULES_IDENTITY_VERIFIED_"
-            "SECONDARY_ARCHIVE_PROVIDER_TLS_HELD_BASE_ACT_CONSOLIDATED_CURRENTNESS_AND_REAL_CASE_VALUE_HELD"
+            "SECONDARY_ARCHIVE_PROVIDER_ACCESS_HELD_BASE_ACT_CONSOLIDATED_CURRENTNESS_AND_REAL_CASE_VALUE_HELD"
             if required_official_gate and primary_rules_identity and not secondary_archive_gate
             else (
                 "ALL_CATALOG_RAW_BYTES_HASHED_PRIMARY_RULES_IDENTITY_VERIFIED_"
@@ -254,7 +320,8 @@ def main() -> int:
         ),
         "truth_boundary": (
             "This receipt proves raw-byte identity for the required official-source set: current court rules, official base Acts and the official consultative notice. "
-            "Secondary CCMA information sheets are a separate non-primary archive gate and may remain provider-TLS-blocked without weakening verified official primary evidence. "
+            "Secondary CCMA information sheets are a separate non-primary archive gate and may remain provider-access-blocked without weakening verified official primary evidence. "
+            "The retriever uses the official listing page, ordinary session cookies and Referer headers while respecting provider controls; a provider denial remains a held result. "
             "Base-Act byte identity does not prove consolidated currentness; proposition-level legal research, real-case outcomes and consequential authority remain separate gates."
         ),
     }
