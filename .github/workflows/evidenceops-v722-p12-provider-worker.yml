@@ -84,3 +84,94 @@ jobs:
             git commit -m "Persist EvidenceOps v7.2.2 P12 provider-worker proof [skip p12-worker]"
             git push origin HEAD:main
           fi
+
+  source-freshness:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip p13-freshness]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Install bounded PDF reader
+        run: python -m pip install --disable-pip-version-check pypdf==5.9.0
+
+      - name: Retrieve and hash exact official-provider bytes
+        id: retrieve
+        continue-on-error: true
+        run: |
+          rm -rf p13_raw_provider_output
+          python runtime/evidenceops_v722/p13_source_freshness/run_raw_provider_cycle.py \
+            --catalog runtime/evidenceops_v722/p13_source_freshness/raw_provider_catalog.json \
+            --output p13_raw_provider_output \
+            --state-output runtime/evidenceops_v722/state/p13_raw_provider_latest.json
+
+      - name: Verify diagnostic receipt integrity and authority boundary
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          path = Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json')
+          assert path.exists(), 'freshness runner did not write a diagnostic receipt'
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          supplied = payload.pop('receipt_sha256')
+          observed = hashlib.sha256(
+              json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
+          ).hexdigest()
+          assert observed == supplied, (observed, supplied)
+          assert payload['controls']['external_effects'] == 0
+          assert payload['controls']['authority_ceiling'] == 'A1'
+          print(json.dumps({
+              'receipt_id': payload['receipt_id'],
+              'receipt_sha256': supplied,
+              'state': payload['state'],
+              'raw_provider_byte_gate_passed': payload['controls']['raw_provider_byte_gate_passed'],
+              'current_primary_rules_document_identity_verified': payload['controls']['current_primary_rules_document_identity_verified'],
+          }, indent=2))
+          PY
+
+      - name: Upload immutable raw-provider proof and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-v722-p13-raw-provider-${{ github.run_id }}-${{ github.run_attempt }}
+          path: p13_raw_provider_output/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Persist exact provider diagnostic readback on main
+        if: always() && github.event_name != 'pull_request'
+        run: |
+          git config user.name 'Federation Omega Runtime'
+          git config user.email 'actions@users.noreply.github.com'
+          git add runtime/evidenceops_v722/state/p13_raw_provider_latest.json
+          if git diff --cached --quiet; then
+            echo 'No freshness state change to persist.'
+            exit 0
+          fi
+          git commit -m 'Persist EvidenceOps v7.2.2 P13 raw-provider proof [skip p12-worker] [skip p13-freshness]'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep $((attempt * 2))
+          done
+          exit 1
+
+      - name: Enforce raw-byte and current-rules identity gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json').read_text(encoding='utf-8'))
+          assert payload['controls']['raw_provider_byte_gate_passed'] is True
+          assert payload['controls']['current_primary_rules_document_identity_verified'] is True
+          PY
