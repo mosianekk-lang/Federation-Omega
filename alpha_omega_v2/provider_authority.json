@@ -1,0 +1,28 @@
+{
+  "version": "2.4.0-candidate",
+  "checked_at": "2026-08-03T09:59:00Z",
+  "providers": {
+    "local": {
+      "state": "AUTHORISED_A1",
+      "evidence": "workspace write/read/delete probe"
+    },
+    "github_actions": {
+      "state": "AUTHORISED_SCOPED",
+      "scope": ["source read", "CI execution", "workflow artifact upload"],
+      "evidence": "existing provider-native successful runs and repository write permission",
+      "fresh_canary": "PENDING_PR_RUN"
+    },
+    "google_drive_direct_connector": {
+      "state": "AUTHORISED_SCOPED",
+      "scope": ["binary file create", "metadata readback", "reversible rollback canary"],
+      "evidence": "Omega-Max v6.3.1 canonical direct-connector binary publication proof",
+      "fresh_canary": "PENDING_ALPHA_OMEGA_V2_ARTIFACT"
+    },
+    "cloud_run": {
+      "state": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+      "evidence": "Google STS invalid_target on the configured WIF provider; no fresh token issuance or Cloud Run execution proof",
+      "retry_policy": "suppress unchanged retries until provider-native authority state changes"
+    }
+  },
+  "truth_boundary": "GitHub and Drive authority is limited to the listed reversible scopes. Cloud Run remains blocked; no cloud mutation is authorised or claimed."
+}
