@@ -4,13 +4,13 @@
     {
       "id": "B01",
       "name": "Local release integrity",
-      "proof": "v1.0.0 ZIP SHA-256 831e09693d39bbf54d93df1e2e02d4d01145f9a003a962cc659ecf772027f22e preserved; v1.0.1 rebuilt with exact manifest and clean acceptance",
+      "proof": "ZIP SHA 831e... source v1.0.0; rebuilt v1.0.1 manifest and clean acceptance",
       "state": "RESOLVED_VERIFIED"
     },
     {
       "id": "B02",
       "name": "GitHub publication",
-      "proof": "PR 107 merged as 7b232c524fcb1eb4fae2b7d2f925dfc6721679cd after three successful checks",
+      "proof": "PR 107 merged as 7b232c524fcb1eb4fae2b7d2f925dfc6721679cd after 3 successful checks",
       "state": "RESOLVED_VERIFIED"
     },
     {
@@ -28,7 +28,7 @@
     {
       "id": "B05",
       "name": "Provider-hosted worker",
-      "proof": "EvidenceOps P12 scheduled GitHub Actions run 30862582227; persistence, crash-resume, policy and rollback proof",
+      "proof": "EvidenceOps P12 scheduled GitHub Actions run 30862582227; persistence/crash-resume/policy/rollback",
       "state": "RESOLVED_SCOPED"
     },
     {
@@ -52,25 +52,25 @@
     {
       "id": "B09",
       "name": "Longitudinal owner value",
-      "proof": "Thirty-day measurement contract and scheduled worker; sustained value requires elapsed observations",
+      "proof": "30-day measurement contract and scheduled worker; cannot be honestly compressed into one session",
       "state": "MEASUREMENT_ACTIVE_TIME_BOUND"
     },
     {
       "id": "B10",
       "name": "Consequential actions",
-      "proof": "Legal, financial, credential, secret, external-send and destructive actions require separate action-specific authority",
+      "proof": "Legal, financial, credential, secret and destructive actions require separate action-specific authority",
       "state": "PERMANENT_GUARDRAIL_ACTIVE_BY_DESIGN"
     },
     {
       "id": "B11",
       "name": "Stale PR sprawl",
-      "proof": "PRs 8, 12, 35, 37, 50, 54, 64 and 67 closed with history preserved; active domain drafts remain open intentionally",
+      "proof": "PRs 8,12,35,37,50,54,64,67 closed with history preserved; active domain drafts remain open intentionally",
       "state": "RESOLVED_SCOPED"
     },
     {
       "id": "B12",
-      "name": "v1.0.0 archive-manifest mismatch",
-      "proof": "v1.0.1 clean manifest excludes itself and matches all 41 packaged files; archive has 42 entries including the manifest",
+      "name": "v1.0.0 archive/manifest mismatch",
+      "proof": "v1.0.1 clean manifest excludes itself and matches every packaged file",
       "state": "RESOLVED_BY_V1_0_1_REBUILD"
     }
   ],
@@ -79,6 +79,6 @@
   "programme_id": "AO-FED-CONSOLIDATE-24H-001",
   "receipt_id": "RCP-FO-BOUNDARY-RESOLUTION-V101-20260804",
   "state": "ALL_CURRENT_COMPLETION_BOUNDARIES_RESOLVED_SCOPED",
-  "truth_boundary": "No claim of universal provider authority or completed sustained longitudinal value. Optional routes remain closed until selected and freshly proven.",
+  "truth_boundary": "No claim of universal provider authority or sustained longitudinal value. Optional routes remain closed until selected and freshly proven.",
   "version": "1.0.1"
 }
