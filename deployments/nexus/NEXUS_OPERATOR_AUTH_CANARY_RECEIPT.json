@@ -16,7 +16,7 @@
         "DEPLOY_SOLUTION5_LOCKED",
         "READ_BUILD"
       ],
-      "checkedAt": "2026-07-30T00:53:31.682Z",
+      "checkedAt": "2026-08-03T01:47:56.905Z",
       "ok": true,
       "service": "federation-omega-operator",
       "targetService": "architron9",
@@ -26,7 +26,7 @@
   },
   "public_health": {
     "body": {
-      "checkedAt": "2026-07-30T00:53:31.220Z",
+      "checkedAt": "2026-08-03T01:47:56.437Z",
       "noGmail": true,
       "ok": true,
       "service": "federation-omega-operator",
@@ -37,11 +37,12 @@
     "http_status": 200
   },
   "receipt": "NEXUS-OPERATOR-AUTH-CANARY",
-  "recorded_at": "2026-07-30T00:53:31.793009+00:00",
+  "recorded_at": "2026-08-03T01:47:57.019341+00:00",
   "region": "africa-south1",
   "source_service": "architron9",
   "token_error": "[REDACTED]",
   "token_present": "[REDACTED]",
+  "token_source": "[REDACTED]",
   "token_value_recorded": "[REDACTED]",
   "wif_verify": {
     "active_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
