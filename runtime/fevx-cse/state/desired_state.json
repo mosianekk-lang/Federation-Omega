@@ -1,0 +1,12 @@
+{
+  "service": "fevx-cognitive-sovereignty-ecology",
+  "version": "1.1.0",
+  "provider": "github_actions",
+  "runtime_state": "OPERATIONAL",
+  "maturity_state": "AUTONOMOUS_RUNTIME_VERIFIED_SHADOW",
+  "current_verified_level": 4,
+  "level_5_eligible": false,
+  "module_count": 10,
+  "external_effect": false,
+  "real_workflow_evidence": false
+}
