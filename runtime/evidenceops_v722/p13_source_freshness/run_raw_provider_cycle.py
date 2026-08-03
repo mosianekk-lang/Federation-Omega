@@ -13,8 +13,9 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
-import requests
 from pypdf import PdfReader
+
+from aia_trust import verified_get
 
 USER_AGENT = (
     "Mozilla/5.0 (compatible; EvidenceOps-P13-Freshness/7.2.2; "
@@ -43,19 +44,17 @@ def safe_headers(headers: Any) -> dict[str, str]:
     return {key.lower(): str(value) for key, value in headers.items() if key.lower() in SELECTED_HEADERS}
 
 
-def fetch(url: str, read_timeout: int = 60) -> tuple[bytes, dict[str, Any]]:
+def fetch(url: str, read_timeout: int = 120) -> tuple[bytes, dict[str, Any]]:
     started = time.perf_counter()
-    response = requests.get(
+    response, tls_metadata = verified_get(
         url,
         headers={
             "User-Agent": USER_AGENT,
             "Accept": "application/pdf,text/html,application/xhtml+xml,*/*;q=0.8",
             "Accept-Language": "en-ZA,en;q=0.9",
         },
-        timeout=(12, read_timeout),
-        allow_redirects=True,
+        timeout=(45, read_timeout),
     )
-    response.raise_for_status()
     return response.content, {
         "requested_url": url,
         "final_url": response.url,
@@ -67,7 +66,7 @@ def fetch(url: str, read_timeout: int = 60) -> tuple[bytes, dict[str, Any]]:
             {"status": item.status_code, "url": item.url, "location": item.headers.get("location")}
             for item in response.history
         ],
-        "tls_verification": "CERTIFI_DEFAULT_VERIFIED",
+        "tls_verification": tls_metadata,
     }
 
 
@@ -107,7 +106,7 @@ def process_source(source: dict[str, Any], output_dir: Path, observed_at: str) -
         "observed_at_utc": observed_at,
     }
     try:
-        body, document_http = fetch(source["document_url"], int(source.get("read_timeout", 60)))
+        body, document_http = fetch(source["document_url"], int(source.get("read_timeout", 120)))
         (output_dir / filename).write_bytes(body)
         pdf_magic = body.startswith(b"%PDF-")
         extracted_text, page_count, extraction_error = extract_pdf_text(body, int(source.get("extract_pages", 2)))
@@ -122,7 +121,7 @@ def process_source(source: dict[str, Any], output_dir: Path, observed_at: str) -
         listing_error: str | None = None
         if source.get("listing_url"):
             try:
-                listing_body, listing_http = fetch(source["listing_url"], 45)
+                listing_body, listing_http = fetch(source["listing_url"], 90)
                 (output_dir / f"{filename}.listing.html").write_bytes(listing_body)
                 listing_sha256 = sha256_bytes(listing_body)
                 listing_text = normalized(listing_body.decode("utf-8", errors="replace"))
@@ -201,7 +200,7 @@ def main() -> int:
     proposed = [item for item in results if item["source_class"] == "PROPOSED_OR_CONSULTATIVE_NON_CURRENT"]
 
     receipt: dict[str, Any] = {
-        "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V3",
+        "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V4",
         "programme_id": catalog["programme_id"],
         "version": "7.2.2",
         "stage_id": "P13-FRESHNESS-RAW-PROVIDER-BYTES",
@@ -233,7 +232,7 @@ def main() -> int:
             else "RAW_PROVIDER_RETRIEVAL_PARTIAL_OR_IDENTITY_GAPS"
         ),
         "truth_boundary": (
-            "This receipt proves byte-level retrieval, HTTP metadata capture, SHA-256 identity, PDF structure and bounded text-marker checks for observed official-provider files. "
+            "This receipt proves byte-level retrieval, verified TLS chain metadata, HTTP metadata capture, SHA-256 identity, PDF structure and bounded text-marker checks for observed official-provider files. "
             "It does not prove that base statutes are consolidated/current, replace proposition-level legal research, establish a case outcome, or grant consequential authority."
         ),
     }
