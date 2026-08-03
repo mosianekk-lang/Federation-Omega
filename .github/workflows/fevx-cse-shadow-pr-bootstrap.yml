@@ -8,7 +8,7 @@ on:
       - "runtime/fevx-cse/queue/bootstrap-trigger.json"
 
 permissions:
-  contents: read
+  contents: write
 
 concurrency:
   group: fevx-cse-pr-shadow-${{ github.event.pull_request.number }}
@@ -32,7 +32,7 @@ jobs:
         with:
           ref: main
           fetch-depth: 0
-          persist-credentials: false
+          persist-credentials: true
 
       - uses: actions/setup-python@v5
         with:
@@ -143,6 +143,21 @@ jobs:
           assert actual['current_verified_level']==4, actual
           assert actual['level_5_eligible'] is False, actual
           PY
+
+      - name: Persist exact verified shadow state to canonical main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "fevx-cse-pr-shadow[bot]"
+          git config user.email "fevx-cse-pr-shadow[bot]@users.noreply.github.com"
+          git add runtime/fevx-cse
+          if git diff --cached --quiet; then
+            echo "Verified provider state already canonical"
+          else
+            git commit -m "Persist recurring FEVX CSE provider shadow proof [skip cse-pr-shadow]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
 
       - name: Upload complete shadow evidence
         uses: actions/upload-artifact@v4
