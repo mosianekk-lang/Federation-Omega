@@ -1,14 +1,15 @@
 {
-  "trigger_id": "CSE-SHADOW-BOOTSTRAP-003",
+  "trigger_id": "CSE-SHADOW-BOOTSTRAP-004",
   "candidate_version": "1.1.0",
   "requested_runtime": "github_actions_shadow",
   "authority": "A1",
   "synthetic_data_only": true,
   "external_effect": false,
   "provider_mutation": false,
-  "trigger_reason": "rerun after exact carrier repair and per-blob hash verification",
+  "trigger_reason": "rerun after exact carrier and wheel-distribution filename repair",
   "expected_proof": [
     "exact_wheel_sha256",
+    "valid_wheel_distribution_metadata",
     "ten_module_execution",
     "semantic_readback",
     "bounded_evolution",
