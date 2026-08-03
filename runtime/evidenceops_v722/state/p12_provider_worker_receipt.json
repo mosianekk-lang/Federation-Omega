@@ -1,13 +1,13 @@
 {
   "artifacts": {
-    "health_sha256": "a3820d783c41c7e184274384f7f922a710400701b2e006316690468125c06ca5",
-    "policy_log_sha256": "fae05545abb3cfc21579d6716ffd260cf4b652d1c11c27c84b2dd7eee7c99047",
-    "replica_sha256": "80b2a5183dd2df6738d3611d551539da6b1c95a36386a8598de924dd3b2a543b",
-    "rollback_snapshot_sha256": "a977a54efea6035f6f2bd77687ec3b89201e2a35f61e5c85de111c21f4b08f8f",
-    "state_sha256": "80b2a5183dd2df6738d3611d551539da6b1c95a36386a8598de924dd3b2a543b"
+    "health_sha256": "eb020babb9ff6e7b2c628c123c0e825028bb2e1ab7f8051170ef56985d8561a9",
+    "policy_log_sha256": "1b3e13287e98f1d605a5a2079459f9be0095218490eaa92c12fa824d18c2135f",
+    "replica_sha256": "66332c5089dec286b6a4f8d314e531804683d94dfe312652d7188e75fe89ef72",
+    "rollback_snapshot_sha256": "c72b6d6e6ca06dcb8e013bced48bd50f5898f5f87c704050ca98ba7a92a9a3ae",
+    "state_sha256": "66332c5089dec286b6a4f8d314e531804683d94dfe312652d7188e75fe89ef72"
   },
   "maturity": "OPERATIONAL_VERIFIED_SCOPED_GITHUB_ACTIONS_WORKER",
-  "observed_at_utc": "2026-08-03T23:09:32.002505Z",
+  "observed_at_utc": "2026-08-03T23:32:08.111565Z",
   "proof": {
     "checkpoint_integrity": true,
     "consequential_action_denied": true,
@@ -23,16 +23,16 @@
     "simulated_crash_exit": 75
   },
   "provider_event": {
-    "event_name": "push",
+    "event_name": "schedule",
     "ref": "refs/heads/main",
     "repository": "mosianekk-lang/Federation-Omega",
     "run_attempt": "1",
-    "run_id": "30861266748",
-    "sha": "b2efe8534ec5301fe4e805c75bf4e24e7392080d",
+    "run_id": "30862582227",
+    "sha": "7b232c524fcb1eb4fae2b7d2f925dfc6721679cd",
     "workflow": "EvidenceOps v7.2.2 P12 Provider Worker"
   },
-  "receipt_id": "RCP-V722-P12-30861266748-1",
-  "receipt_sha256": "6c945a91e5d58f1ef572c504376a51b69c5ca86859a64ee65dd0c8431fd2112e",
+  "receipt_id": "RCP-V722-P12-30862582227-1",
+  "receipt_sha256": "af0917899225b6d129098ff1bfd2ed902e1bfaac03728395c6036f5ba642f33b",
   "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P12_PROVIDER_WORKER_V1",
   "stage_id": "P12-SCOPED-GITHUB-WORKER",
   "truth_boundary": "This receipt proves a scoped hosted GitHub Actions worker for reversible A0/A1 state operations. It does not prove production Temporal/NATS/OPA/PostgreSQL/KMS infrastructure, external send, legal filing, live recording, financial action, provider administration, or other consequential authority.",
