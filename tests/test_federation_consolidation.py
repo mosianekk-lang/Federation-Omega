@@ -59,12 +59,31 @@ def test_reconciliation_canary():
         assert result["valid"]
         assert result["persistence_verified"]
 
-def test_succession_truth_boundary_remains_held_for_drive_until_readback():
+def test_drive_publication_receipt_is_verified():
+    result = engine().validate_drive_publication()
+    assert result.valid, result.errors
+    assert result.metrics["sheet_count"] == 8
+    assert result.metrics["readback_verified"] is True
+
+def test_drive_receipt_tamper_fails_closed():
+    import shutil
+    with tempfile.TemporaryDirectory() as tmp:
+        target = Path(tmp) / "data"
+        shutil.copytree(DATA, target)
+        receipt_path = target / "drive_publication_receipt.json"
+        receipt = json.loads(receipt_path.read_text())
+        receipt["readback_verified"] = False
+        receipt_path.write_text(json.dumps(receipt))
+        result = FederationConsolidator(target).validate_drive_publication()
+        assert not result.valid
+        assert "DRIVE_READBACK_NOT_VERIFIED" in result.errors
+
+def test_succession_closes_after_drive_readback():
     with tempfile.TemporaryDirectory() as tmp:
         result = engine().succession_bundle("TEST-COMMIT", Path(tmp) / "bundle.json")
         bundle = result["bundle"]
-        assert bundle["maturity_status"] == "READINESS_VERIFIED_INSTITUTIONAL_COMPLETION_BLOCKED"
-        assert "P3:DRIVE_READBACK_REQUIRED" in bundle["blockers"]
+        assert bundle["maturity_status"] == "INSTITUTIONAL_COMPLETION_VERIFIED"
+        assert bundle["blockers"] == []
         assert result["persisted"]["readback_verified"]
 
 def test_health_score_matches_audit():
