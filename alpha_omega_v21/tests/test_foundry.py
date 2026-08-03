@@ -1,4 +1,11 @@
-from alpha_omega_foundry import OperationsFabric, SolutionFoundry
+import json
+from pathlib import Path
+
+from alpha_omega_foundry import (
+    GoogleDriveManifestAdapter,
+    OperationsFabric,
+    SolutionFoundry,
+)
 
 
 def test_operational_release(tmp_path):
@@ -46,3 +53,32 @@ def test_portfolio_order(tmp_path):
         ]
     )
     assert ranked[0]["idea"]["title"] == "B"
+
+
+def test_google_drive_manifest_adapter_receipt():
+    receipt_path = Path("provider_receipts/google_drive_manifest_20260803.json")
+    adapter = GoogleDriveManifestAdapter(receipt_path)
+    assert adapter.discover()["available"]
+    assert adapter.validate_authority()["authorised"]
+    assert adapter.snapshot()["state"] == "INVENTORY_CAPTURED"
+    assert adapter.deploy()["state"] == "DOCUMENT_CREATED"
+    assert adapter.execute()["state"] == "CONTENT_WRITTEN"
+    assert adapter.read_back()["pass"]
+    assert adapter.health_check()["pass"]
+    assert adapter.persistence_check()["pass"]
+    assert adapter.rollback()["target_absent"]
+    proof = adapter.proof_receipt()
+    assert proof["state"] == "OPERATIONAL_VERIFIED_MANIFEST"
+    assert all(proof["gates"].values())
+    assert proof["binary_package_state"] == "PROVIDER_BLOCKED_FILE_EGRESS"
+
+
+def test_google_drive_manifest_adapter_rejects_failed_gate(tmp_path):
+    source = Path("provider_receipts/google_drive_manifest_20260803.json")
+    receipt = json.loads(source.read_text(encoding="utf-8"))
+    receipt["readback"]["pass"] = False
+    failed = tmp_path / "failed_drive_receipt.json"
+    failed.write_text(json.dumps(receipt), encoding="utf-8")
+    proof = GoogleDriveManifestAdapter(failed).proof_receipt()
+    assert proof["state"] == "FAILED"
+    assert proof["gates"]["readback"] is False

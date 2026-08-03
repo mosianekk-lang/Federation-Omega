@@ -113,3 +113,75 @@ class ReleaseArtifactAdapter:
             "manifest": str(manifest_path),
             **manifest,
         }
+
+
+@dataclass
+class GoogleDriveManifestAdapter:
+    """Validate provider-native Google Drive manifest deployment receipts.
+
+    Google Drive mutations are executed by an authorised provider connector. This
+    adapter imports the resulting immutable receipt, exposes the standard provider
+    contract, and refuses promotion when any provider-native gate is absent.
+    """
+
+    receipt_path: Path
+    name: str = "google_drive_manifest"
+
+    def _receipt(self) -> dict:
+        if not self.receipt_path.exists():
+            raise FileNotFoundError(self.receipt_path)
+        data = json.loads(self.receipt_path.read_text(encoding="utf-8"))
+        if data.get("provider") != self.name:
+            raise ValueError("receipt provider does not match google_drive_manifest")
+        return data
+
+    def discover(self) -> dict:
+        receipt = self._receipt()
+        return receipt["discover"]
+
+    def validate_authority(self) -> dict:
+        return self._receipt()["authority"]
+
+    def snapshot(self, source: Path | None = None) -> dict:
+        return self._receipt()["snapshot"]
+
+    def deploy(self, source: Path | None = None, target: Path | None = None) -> dict:
+        return self._receipt()["deploy"]
+
+    def execute(self, target: Path | None = None) -> dict:
+        return self._receipt()["execute"]
+
+    def read_back(self, target: Path | None = None) -> dict:
+        return self._receipt()["readback"]
+
+    def health_check(self, target: Path | None = None) -> dict:
+        return self._receipt()["health"]
+
+    def persistence_check(self, target: Path | None = None) -> dict:
+        return self._receipt()["persistence"]
+
+    def rollback(self, target: Path | None = None) -> dict:
+        return self._receipt()["rollback"]
+
+    def proof_receipt(self) -> dict:
+        receipt = self._receipt()
+        gates = {
+            "discover": bool(receipt["discover"].get("available")),
+            "authority": bool(receipt["authority"].get("authorised")),
+            "snapshot": receipt["snapshot"].get("state") == "INVENTORY_CAPTURED",
+            "deploy": receipt["deploy"].get("state") == "DOCUMENT_CREATED",
+            "execute": receipt["execute"].get("state") == "CONTENT_WRITTEN",
+            "readback": bool(receipt["readback"].get("pass")),
+            "health": bool(receipt["health"].get("pass")),
+            "persistence": bool(receipt["persistence"].get("pass")),
+            "rollback": bool(receipt["rollback"].get("target_absent")),
+        }
+        digest = hashlib.sha256(self.receipt_path.read_bytes()).hexdigest()
+        return {
+            "provider": self.name,
+            "state": "OPERATIONAL_VERIFIED_MANIFEST" if all(gates.values()) else "FAILED",
+            "gates": gates,
+            "receipt_sha256": digest,
+            "receipt_id": receipt["proof"]["receipt_id"],
+            "binary_package_state": receipt["proof"]["binary_package_state"],
+        }
