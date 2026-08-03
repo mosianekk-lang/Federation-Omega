@@ -8,6 +8,7 @@ on:
       - 'alpha_omega_commercial/canonical_authority_reconciliation.py'
       - 'alpha_omega_commercial/prove_canonical_authority_reconciliation.py'
       - 'alpha_omega_commercial/test_canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/canonical_authority_reconciliation_receipt.json'
       - 'alpha_omega_commercial/provider_authority_requirements.json'
       - 'alpha_omega_commercial/programme.json'
       - 'sol_61_runtime/canonical_live_authority_manifest.json'
@@ -18,6 +19,7 @@ on:
       - 'alpha_omega_commercial/canonical_authority_reconciliation.py'
       - 'alpha_omega_commercial/prove_canonical_authority_reconciliation.py'
       - 'alpha_omega_commercial/test_canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/canonical_authority_reconciliation_receipt.json'
       - 'alpha_omega_commercial/provider_authority_requirements.json'
       - 'alpha_omega_commercial/programme.json'
       - 'sol_61_runtime/canonical_live_authority_manifest.json'
@@ -59,7 +61,7 @@ jobs:
           python prove_canonical_authority_reconciliation.py \
             --output artifacts/canonical-authority-reconciliation-proof
 
-      - name: Verify fail-closed provider and commercial boundaries
+      - name: Verify persisted receipt and fail-closed boundaries
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -67,15 +69,28 @@ jobs:
           from pathlib import Path
           root=Path('alpha_omega_commercial/artifacts/canonical-authority-reconciliation-proof')
           receipt=json.loads((root/'canonical-authority-reconciliation-receipt.json').read_text())
-          programme=json.loads((root/'programme.updated.json').read_text())
+          projection=json.loads((root/'programme.updated.json').read_text())
+          programme=json.loads(Path('alpha_omega_commercial/programme.json').read_text())
+          persisted=json.loads(Path('alpha_omega_commercial/canonical_authority_reconciliation_receipt.json').read_text())
           assert receipt['status'] == 'CANONICAL_PROVIDER_ROUTE_ALIGNED_IDENTITY_AUTHORITY_UNAVAILABLE'
           assert all(receipt['gates'].values())
           assert receipt['cloud_run']['service'] == 'federation-omega-operator'
           assert receipt['cloud_run']['path'] == '/execute'
           assert not receipt['cloud_run']['live_invocation_proven']
           assert not receipt['cloud_run']['cloud_mutation_performed']
+          assert projection['external_gate_evidence'] == {}
           assert programme['external_gate_evidence'] == {}
-          assert not programme['canonical_authority_reconciliation']['full_commercial_maturity']
+          checkpoint=programme['canonical_authority_reconciliation']
+          assert checkpoint['status'] == receipt['status']
+          assert checkpoint['receipt_sha256'] == receipt['receipt_sha256']
+          assert checkpoint['receipt_file'] == 'alpha_omega_commercial/canonical_authority_reconciliation_receipt.json'
+          assert checkpoint['provider_proof']['workflow_run'] == 30861303534
+          assert checkpoint['provider_proof']['artifact_id'] == 8874423157
+          assert checkpoint['provider_proof']['artifact_digest'] == 'sha256:6ba9dd485b177b6889ae5e21c2e53e6f44ba2f8c363c4d7f0f033f8edaad1fbd'
+          assert persisted['receipt_sha256'] == receipt['receipt_sha256']
+          assert persisted['provider_proof'] == checkpoint['provider_proof']
+          assert persisted['verified_revenue_events'] == 0
+          assert not persisted['full_commercial_maturity']
           truth=receipt['truth_boundary']
           assert truth['service_enabled_platform_priority_preserved']
           for key in (
