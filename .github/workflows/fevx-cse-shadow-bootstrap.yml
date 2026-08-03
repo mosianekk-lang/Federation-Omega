@@ -1,0 +1,110 @@
+name: FEVX CSE Trusted Shadow Bootstrap
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - "runtime/fevx-cse/queue/bootstrap-trigger.json"
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fevx-cse-trusted-shadow-bootstrap
+  cancel-in-progress: false
+
+env:
+  CSE_WHEEL_SHA256: 8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022
+
+jobs:
+  trusted-shadow:
+    if: >-
+      github.event.pull_request.user.login == 'mosianekk-lang' &&
+      github.event.pull_request.head.repo.full_name == github.repository &&
+      github.event.pull_request.head.ref == 'cse-github-shadow-bootstrap'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Checkout trusted main only
+        uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore exact CSE wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(find systems/fevx-cse-runtime/vendor -maxdepth 1 -name 'wheel.part.*' | wc -l)" -eq 8
+          cat systems/fevx-cse-runtime/vendor/wheel.part.* | \
+            base64 --decode > /tmp/fevx_cse-1.1.0-py3-none-any.whl
+          observed="$(sha256sum /tmp/fevx_cse-1.1.0-py3-none-any.whl | awk '{print $1}')"
+          test "$observed" = "$CSE_WHEEL_SHA256"
+          python -m pip install --disable-pip-version-check /tmp/fevx_cse-1.1.0-py3-none-any.whl
+
+      - name: Execute trusted provider-native shadow
+        shell: bash
+        env:
+          CSE_BOOTSTRAP_PR: ${{ github.event.pull_request.number }}
+          CSE_BOOTSTRAP_HEAD_SHA: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          python systems/fevx-cse-runtime/run_shadow.py \
+            --repo-root . \
+            --mission systems/fevx-cse-runtime/mission.json \
+            --genome systems/fevx-cse-runtime/intent_genome.json
+
+      - name: Enforce proof gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('runtime/fevx-cse')
+          result = json.loads((root/'results/latest.json').read_text())
+          heartbeat = json.loads((root/'heartbeat/latest.json').read_text())
+          drift = json.loads((root/'drift/latest.json').read_text())
+          actual = json.loads((root/'state/actual_state.json').read_text())
+          assert result['status'] == 'VERIFIED', result
+          assert result['provider'] == 'github_actions', result
+          assert result['semantic_readback'] is True, result
+          assert result['rollback_test'] is True, result
+          assert result['reapply_test'] is True, result
+          assert result['analysis']['module_count'] == 10, result
+          assert result['external_effect'] is False, result
+          assert heartbeat['runtime_state'] == 'OPERATIONAL', heartbeat
+          assert heartbeat['verified'] is True, heartbeat
+          assert drift['classification'] == 'IN_SYNC', drift
+          assert actual['maturity_state'] == 'AUTONOMOUS_RUNTIME_VERIFIED_SHADOW', actual
+          assert actual['current_verified_level'] == 4, actual
+          assert actual['level_5_eligible'] is False, actual
+          PY
+
+      - name: Persist provider-native proof on main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "fevx-cse-shadow-bootstrap[bot]"
+          git config user.email "fevx-cse-shadow-bootstrap[bot]@users.noreply.github.com"
+          git add runtime/fevx-cse
+          if git diff --cached --quiet; then
+            echo "No proof-state change"
+          else
+            git commit -m "Persist trusted FEVX CSE shadow bootstrap receipt [skip cse-bootstrap]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fevx-cse-trusted-shadow-bootstrap
+          path: runtime/fevx-cse/
+          if-no-files-found: error
+          retention-days: 30
