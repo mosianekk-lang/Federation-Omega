@@ -1,0 +1,366 @@
+name: Deploy FO Transcription Bridge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/fo_transcription_bridge/**'
+      - 'ops/fo_transcription_client.sh'
+      - '.github/workflows/fo-transcription-bridge-deploy.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: fo-transcription-bridge-production
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  SPEECH_LOCATION: eu
+  SERVICE: fo-transcription-bridge
+  REPOSITORY: federation-omega
+  TASK_QUEUE: fo-transcription-bridge
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  INPUT_BUCKET: fo-transcription-input-sov-hybrid-suite-257649435135
+  OUTPUT_BUCKET: fo-transcription-output-sov-hybrid-suite-257649435135
+  DRIVE_OUTPUT_DOCUMENT_ID: 1vwmpZ9O9-S7prsrmWs1VeGxsiBc0KNk2O0_RBUib5Y4
+  IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/fo-transcription-bridge:${{ github.sha }}
+
+jobs:
+  test-build-deploy-verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 55
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize reviewed bridge source
+        working-directory: services/fo_transcription_bridge
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, gzip
+          from pathlib import Path
+          Path('app.py').write_bytes(gzip.decompress(base64.b64decode(Path('app.py.gz.b64').read_text().strip())))
+          PY
+
+      - name: Install and test bridge
+        working-directory: services/fo_transcription_bridge
+        run: |
+          set -euo pipefail
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+          python -m pytest -q
+          python -m py_compile app.py transcript.py
+
+      - name: Authenticate to Google Cloud through keyless OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify identity and project boundary
+        run: |
+          set -euo pipefail
+          account="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          project_number="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$account" = "$DEPLOYER_SA"
+          test "$project_number" = "$PROJECT_NUMBER"
+          python - "$account" "$project_number" <<'PY' | tee /tmp/identity-receipt.json
+          import json, sys
+          print(json.dumps({
+              'receipt': 'FO-TRANSCRIPTION-WIF-IDENTITY-VERIFIED',
+              'account': sys.argv[1],
+              'project_number': sys.argv[2],
+              'mutation_performed': False,
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Enable required APIs
+        run: |
+          set -euo pipefail
+          gcloud services enable \
+            run.googleapis.com \
+            artifactregistry.googleapis.com \
+            speech.googleapis.com \
+            storage.googleapis.com \
+            firestore.googleapis.com \
+            cloudtasks.googleapis.com \
+            docs.googleapis.com \
+            drive.googleapis.com \
+            iamcredentials.googleapis.com \
+            sts.googleapis.com \
+            --project "$PROJECT_ID" --quiet
+
+      - name: Ensure private evidence buckets
+        run: |
+          set -euo pipefail
+          for bucket in "$INPUT_BUCKET" "$OUTPUT_BUCKET"; do
+            if ! gcloud storage buckets describe "gs://$bucket" --project "$PROJECT_ID" >/dev/null 2>&1; then
+              gcloud storage buckets create "gs://$bucket" \
+                --project "$PROJECT_ID" \
+                --location EU \
+                --uniform-bucket-level-access \
+                --public-access-prevention \
+                --quiet
+            fi
+            gcloud storage buckets update "gs://$bucket" --versioning --quiet
+            gcloud storage buckets add-iam-policy-binding "gs://$bucket" \
+              --member "serviceAccount:${RUNTIME_SA}" \
+              --role roles/storage.objectAdmin \
+              --quiet >/dev/null
+            gcloud storage buckets add-iam-policy-binding "gs://$bucket" \
+              --member "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-speech.iam.gserviceaccount.com" \
+              --role roles/storage.objectAdmin \
+              --quiet >/dev/null
+          done
+
+      - name: Ensure runtime permissions and task queue
+        run: |
+          set -euo pipefail
+          for role in roles/speech.client roles/cloudtasks.enqueuer roles/datastore.user; do
+            gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+              --member "serviceAccount:${RUNTIME_SA}" \
+              --role "$role" \
+              --condition=None \
+              --quiet >/dev/null
+          done
+          if ! gcloud tasks queues describe "$TASK_QUEUE" \
+            --project "$PROJECT_ID" --location "$REGION" >/dev/null 2>&1; then
+            gcloud tasks queues create "$TASK_QUEUE" \
+              --project "$PROJECT_ID" --location "$REGION" --quiet
+          fi
+          gcloud iam service-accounts add-iam-policy-binding "$RUNTIME_SA" \
+            --project "$PROJECT_ID" \
+            --member "serviceAccount:service-${PROJECT_NUMBER}@gcp-sa-cloudtasks.iam.gserviceaccount.com" \
+            --role roles/iam.serviceAccountTokenCreator \
+            --quiet >/dev/null
+
+      - name: Capture previous production revision
+        id: baseline
+        run: |
+          set -euo pipefail
+          if gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            previous="$(gcloud run services describe "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --format='value(status.latestReadyRevisionName)')"
+            existed=true
+          else
+            previous=''
+            existed=false
+          fi
+          echo "previous=$previous" >> "$GITHUB_OUTPUT"
+          echo "existed=$existed" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push immutable image
+        run: |
+          set -euo pipefail
+          gcloud artifacts repositories describe "$REPOSITORY" \
+            --project "$PROJECT_ID" --location "$REGION" >/dev/null
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build --pull -t "$IMAGE" services/fo_transcription_bridge
+          docker push "$IMAGE"
+
+      - name: Deploy zero-traffic private canary
+        id: canary
+        run: |
+          set -euo pipefail
+          tag="bridge-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE" \
+            --service-account "$RUNTIME_SA" \
+            --no-allow-unauthenticated \
+            --port 8080 \
+            --execution-environment gen2 \
+            --cpu 2 \
+            --memory 2Gi \
+            --concurrency 2 \
+            --max-instances 3 \
+            --timeout 1800 \
+            --tag "$tag" \
+            --no-traffic \
+            --set-env-vars "^@^PROJECT_ID=${PROJECT_ID}@PROJECT_NUMBER=${PROJECT_NUMBER}@REGION=${REGION}@SPEECH_LOCATION=${SPEECH_LOCATION}@SPEECH_MODEL=chirp_3@INPUT_BUCKET=${INPUT_BUCKET}@OUTPUT_BUCKET=${OUTPUT_BUCKET}@TASK_QUEUE=${TASK_QUEUE}@RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA}@DRIVE_OUTPUT_DOCUMENT_ID=${DRIVE_OUTPUT_DOCUMENT_ID}@CHUNK_SECONDS=900@POLL_SECONDS=30" \
+            --quiet
+
+          gcloud run services add-iam-policy-binding "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --member "serviceAccount:${RUNTIME_SA}" \
+            --role roles/run.invoker --quiet >/dev/null
+          gcloud run services add-iam-policy-binding "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --member "serviceAccount:${DEPLOYER_SA}" \
+            --role roles/run.invoker --quiet >/dev/null
+
+          service_json="$(mktemp)"
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > "$service_json"
+          python - "$service_json" "$tag" <<'PY' > /tmp/canary.env
+          import json, sys
+          service=json.load(open(sys.argv[1], encoding='utf-8'))
+          tag=sys.argv[2]
+          status=service.get('status', {})
+          created=status.get('latestCreatedRevisionName', '')
+          ready=status.get('latestReadyRevisionName', '')
+          tagged=next((x for x in status.get('traffic', []) if x.get('tag') == tag), {})
+          url=tagged.get('url', '')
+          if not created or created != ready or not url:
+              raise SystemExit(f'Canary not ready: created={created!r} ready={ready!r} url={url!r}')
+          print(f'CANARY_REVISION={created}')
+          print(f'CANARY_URL={url}')
+          PY
+          source /tmp/canary.env
+          echo "revision=$CANARY_REVISION" >> "$GITHUB_OUTPUT"
+          echo "url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify canary dependencies
+        env:
+          CANARY_URL: ${{ steps.canary.outputs.url }}
+        run: |
+          set -euo pipefail
+          token="$(gcloud auth print-identity-token --audiences="$CANARY_URL")"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $token" \
+            "$CANARY_URL/health" | tee /tmp/canary-health.json
+          python - <<'PY'
+          import json
+          payload=json.load(open('/tmp/canary-health.json', encoding='utf-8'))
+          assert payload['status'] == 'HEALTHY', payload
+          assert payload['checks']['ready'] is True, payload
+          assert payload['checks']['drive_document'] is True, payload
+          PY
+
+      - name: Run end-to-end transcription canary
+        env:
+          CANARY_URL: ${{ steps.canary.outputs.url }}
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq espeak-ng
+          espeak-ng -w /tmp/bridge-smoke.wav \
+            'This is a Federation Omega transcription bridge deployment test.'
+          size="$(stat -c%s /tmp/bridge-smoke.wav)"
+          token="$(gcloud auth print-identity-token --audiences="$CANARY_URL")"
+          create="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' \
+            -d "{\"case_id\":\"DEPLOYMENT-CANARY\",\"filename\":\"bridge-smoke.wav\",\"content_type\":\"audio/wav\",\"size_bytes\":${size},\"language_codes\":[\"en-US\"],\"model\":\"chirp_3\"}" \
+            "$CANARY_URL/v1/uploads")"
+          python - "$create" <<'PY' > /tmp/upload.env
+          import json, sys
+          obj=json.loads(sys.argv[1])
+          print(f"JOB_ID={obj['job_id']}")
+          print(f"UPLOAD_URL={obj['upload']['url']}")
+          PY
+          source /tmp/upload.env
+          curl --fail --silent --show-error \
+            -X PUT -H 'Content-Type: audio/wav' \
+            --data-binary @/tmp/bridge-smoke.wav "$UPLOAD_URL" >/dev/null
+          token="$(gcloud auth print-identity-token --audiences="$CANARY_URL")"
+          curl --fail --silent --show-error \
+            -X POST -H "Authorization: Bearer $token" \
+            -H 'Content-Type: application/json' -d '{}' \
+            "$CANARY_URL/v1/jobs/$JOB_ID/start" > /tmp/start.json
+
+          success=0
+          for _ in $(seq 1 45); do
+            sleep 30
+            token="$(gcloud auth print-identity-token --audiences="$CANARY_URL")"
+            curl --fail --silent --show-error \
+              -H "Authorization: Bearer $token" \
+              "$CANARY_URL/v1/jobs/$JOB_ID" > /tmp/job.json
+            status="$(python - <<'PY'
+          import json
+          print(json.load(open('/tmp/job.json', encoding='utf-8')).get('status', 'UNKNOWN'))
+          PY
+            )"
+            echo "Canary job status: $status"
+            if [[ "$status" == COMPLETED ]]; then success=1; break; fi
+            if [[ "$status" == FAILED ]]; then cat /tmp/job.json; exit 1; fi
+          done
+          test "$success" -eq 1
+          python - <<'PY'
+          import json
+          job=json.load(open('/tmp/job.json', encoding='utf-8'))
+          assert job['status'] == 'COMPLETED', job
+          assert job['artifacts']['txt'].startswith('gs://'), job
+          assert job['artifacts']['manifest'].startswith('gs://'), job
+          assert job['source_sha256'], job
+          assert job['drive_output'] == 'WRITTEN', job
+          PY
+
+      - name: Promote canary with automatic rollback
+        env:
+          CANARY_REVISION: ${{ steps.canary.outputs.revision }}
+          PREVIOUS_READY: ${{ steps.baseline.outputs.previous }}
+          SERVICE_EXISTED: ${{ steps.baseline.outputs.existed }}
+        run: |
+          set -euo pipefail
+          rollback() {
+            if [[ -n "${PREVIOUS_READY:-}" ]]; then
+              gcloud run services update-traffic "$SERVICE" \
+                --project "$PROJECT_ID" --region "$REGION" \
+                --to-revisions "${PREVIOUS_READY}=100" --quiet || true
+            elif [[ "$SERVICE_EXISTED" == false ]]; then
+              gcloud run services delete "$SERVICE" \
+                --project "$PROJECT_ID" --region "$REGION" --quiet || true
+            fi
+          }
+          trap rollback ERR
+          gcloud run services update-traffic "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${CANARY_REVISION}=100" --quiet
+          service_url="$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+          ready="$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.latestReadyRevisionName)')"
+          test "$ready" = "$CANARY_REVISION"
+          token="$(gcloud auth print-identity-token --audiences="$service_url")"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $token" "$service_url/health" \
+            > /tmp/final-health.json
+          trap - ERR
+          python - "$service_url" "$CANARY_REVISION" "$IMAGE" <<'PY' \
+            | tee /tmp/fo-transcription-deployment-receipt.json
+          import json, sys
+          from datetime import datetime, timezone
+          print(json.dumps({
+              'receipt': 'FO-TRANSCRIPTION-BRIDGE-DEPLOYED-AND-VERIFIED',
+              'issued_at': datetime.now(timezone.utc).isoformat(),
+              'service_url': sys.argv[1],
+              'revision': sys.argv[2],
+              'image': sys.argv[3],
+              'private_invocation': True,
+              'end_to_end_canary': json.load(open('/tmp/job.json', encoding='utf-8')),
+              'health': json.load(open('/tmp/final-health.json', encoding='utf-8')),
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload deployment proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: fo-transcription-bridge-${{ github.run_id }}
+          if-no-files-found: error
+          path: |
+            /tmp/identity-receipt.json
+            /tmp/canary-health.json
+            /tmp/job.json
+            /tmp/final-health.json
+            /tmp/fo-transcription-deployment-receipt.json

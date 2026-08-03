@@ -1,0 +1,76 @@
+openapi: 3.1.0
+info:
+  title: Federation Omega Transcription Bridge
+  version: 1.0.0
+  description: Private evidence-aware audio transcription bridge. Cloud Run IAM authentication is required.
+servers:
+  - url: https://SERVICE_URL
+security:
+  - googleOidc: []
+paths:
+  /health:
+    get:
+      operationId: health
+      responses:
+        '200':
+          description: All required dependencies are ready.
+        '503':
+          description: One or more required dependencies are degraded.
+  /v1/uploads:
+    post:
+      operationId: createUpload
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [filename, content_type, size_bytes]
+              properties:
+                case_id:
+                  type: string
+                  default: MPMB298-26
+                filename:
+                  type: string
+                content_type:
+                  type: string
+                size_bytes:
+                  type: integer
+                  minimum: 1
+                language_codes:
+                  type: array
+                  items: {type: string}
+                model:
+                  type: string
+                  default: chirp_3
+      responses:
+        '201':
+          description: Resumable upload session created.
+  /v1/jobs/{job_id}/start:
+    post:
+      operationId: startJob
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: {type: string}
+      responses:
+        '202':
+          description: Job queued.
+  /v1/jobs/{job_id}:
+    get:
+      operationId: getJob
+      parameters:
+        - in: path
+          name: job_id
+          required: true
+          schema: {type: string}
+      responses:
+        '200':
+          description: Current job state and artifact references.
+components:
+  securitySchemes:
+    googleOidc:
+      type: http
+      scheme: bearer
+      bearerFormat: Google OIDC identity token
