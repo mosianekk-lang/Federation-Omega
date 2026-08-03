@@ -1,0 +1,256 @@
+{
+  "corpus_sha256": "c32a761727b436922e7cf09b65ac1dc64fb8d548ed4575a09be80b27a7354320",
+  "identity_drift": "NONE_DETECTED",
+  "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+  "manifest_version": "0.1.0",
+  "mechanism_count": 12,
+  "proof_boundary": "This output proves deterministic translation of registered mechanism hypotheses into bounded engineering candidates. It does not prove that any candidate is useful, deployed, mature, or causally validated.",
+  "records": [
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "generate more than one bounded candidate",
+        "hold promotion until evidence gates pass",
+        "retain rejected candidates with reasons"
+      ],
+      "engineering_pattern": "candidate_portfolio_before_promotion",
+      "failure_modes": [
+        "single-candidate lock-in",
+        "selection without comparable evidence"
+      ],
+      "hypothesis": "variation supplies alternatives before selection",
+      "mechanism_id": "NAT-MECH-6ca5ec99d950847d",
+      "proof_gate": "At least two candidates are evaluated under the same deterministic test contract.",
+      "record_sha256": "4ba736895420d10a795844d74e37508aa3c845a114d22a6691dc6113564733cc",
+      "source_id": "NAT-SRC-001",
+      "source_title": "The Origin of Species by Means of Natural Selection",
+      "target_domain": "decision_systems"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "use repeatable test conditions",
+        "record every cycle result",
+        "promote only after repeated passes"
+      ],
+      "engineering_pattern": "repeated_evidence_filtering",
+      "failure_modes": [
+        "one-shot success treated as maturity",
+        "test environment drift"
+      ],
+      "hypothesis": "environmental pressure filters alternatives over repeated cycles",
+      "mechanism_id": "NAT-MECH-15e8e0cc44888ff2",
+      "proof_gate": "Two distinct cycles pass with durable readback and stable identity.",
+      "record_sha256": "81296f769950d27250e43bc97932a26100e7b3bfe7209f282a21970546085d4b",
+      "source_id": "NAT-SRC-001",
+      "source_title": "The Origin of Species by Means of Natural Selection",
+      "target_domain": "continuous_validation"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "preserve prior versions",
+        "record context with every lesson",
+        "do not generalise beyond observed conditions"
+      ],
+      "engineering_pattern": "versioned_context_learning",
+      "failure_modes": [
+        "context-free lesson reuse",
+        "silent overwrite of prior learning"
+      ],
+      "hypothesis": "adaptation is cumulative and context-dependent",
+      "mechanism_id": "NAT-MECH-6f980345a7e8dfbd",
+      "proof_gate": "A later version improves a measured outcome without losing provenance.",
+      "record_sha256": "52c0cc6e6afa76d22045fbe0214d5634b8e0d4f47420be39915fb96c147b51de",
+      "source_id": "NAT-SRC-001",
+      "source_title": "The Origin of Species by Means of Natural Selection",
+      "target_domain": "learning_systems"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "isolate specialist workstreams",
+        "use collision keys and leases",
+        "merge only after independent verification"
+      ],
+      "engineering_pattern": "isolated_specialist_branches",
+      "failure_modes": [
+        "cross-lane contamination",
+        "premature branch convergence"
+      ],
+      "hypothesis": "branching preserves diversity while enabling specialization",
+      "mechanism_id": "NAT-MECH-2a9aa09e5afc3e2c",
+      "proof_gate": "Parallel branches produce non-colliding artifacts and a verified merge.",
+      "record_sha256": "97606859a2e3b062d97f4d61164ef0ad28e05db97277fea78a597810bbc01f0f",
+      "source_id": "NAT-SRC-001",
+      "source_title": "The Origin of Species by Means of Natural Selection",
+      "target_domain": "workstream_orchestration"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "define a strict objective boundary",
+        "exclude nonessential dependencies",
+        "measure whether each component contributes to the objective"
+      ],
+      "engineering_pattern": "minimum_sufficient_build",
+      "failure_modes": [
+        "feature accumulation",
+        "dependency inflation"
+      ],
+      "hypothesis": "deliberate constraints reduce waste and reveal essential function",
+      "mechanism_id": "NAT-MECH-dc4da8fef12a1d1f",
+      "proof_gate": "Removing nonessential components does not reduce required test coverage.",
+      "record_sha256": "e2f5f05219c34bb26f526c8dbd9d041f46a7225ce3fff88555c42ac818627c2d",
+      "source_id": "NAT-SRC-002",
+      "source_title": "Walden, and On The Duty Of Civil Disobedience",
+      "target_domain": "system_design"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "read results from the execution provider",
+        "separate observed state from expected state",
+        "store exact identifiers and hashes"
+      ],
+      "engineering_pattern": "provider_native_readback",
+      "failure_modes": [
+        "claiming execution from design",
+        "relying only on local expectations"
+      ],
+      "hypothesis": "direct observation produces stronger feedback than inherited assumption",
+      "mechanism_id": "NAT-MECH-f6d1f419f3229f34",
+      "proof_gate": "Destination-native state is read back and matches the expected artifact hash.",
+      "record_sha256": "ab37082cc2b5aa8883933425a49edb774d99d0255c51b24a010de3c3f98eb52f",
+      "source_id": "NAT-SRC-002",
+      "source_title": "Walden, and On The Duty Of Civil Disobedience",
+      "target_domain": "evidence_operations"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "prefer standard-library paths where sufficient",
+        "make optional dependencies explicit",
+        "test degraded operation"
+      ],
+      "engineering_pattern": "dependency_minimisation",
+      "failure_modes": [
+        "hidden dependency",
+        "fragile transitive dependency chain"
+      ],
+      "hypothesis": "simplicity can increase resilience by lowering dependency load",
+      "mechanism_id": "NAT-MECH-97f4373cb919f186",
+      "proof_gate": "The capability passes its core test contract with the minimum declared dependencies.",
+      "record_sha256": "125508e8ce6bc09f0afebdd0263faf0ed771708115fdc50da710d169f289b949",
+      "source_id": "NAT-SRC-002",
+      "source_title": "Walden, and On The Duty Of Civil Disobedience",
+      "target_domain": "reliability_engineering"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "pause at defined checkpoints",
+        "reconcile current state against mission",
+        "record lessons before continuing"
+      ],
+      "engineering_pattern": "checkpoint_and_reflection_cycle",
+      "failure_modes": [
+        "continuous action without reconciliation",
+        "lesson loss"
+      ],
+      "hypothesis": "periodic withdrawal creates space for system-level reflection",
+      "mechanism_id": "NAT-MECH-7d6b0fdf1dfe2ff5",
+      "proof_gate": "A checkpoint detects or prevents at least one material drift or defect.",
+      "record_sha256": "ca3ad9b03c30e791a110519a5d2d049a42735361bab70df880be5be40df6d7fa",
+      "source_id": "NAT-SRC-002",
+      "source_title": "Walden, and On The Duty Of Civil Disobedience",
+      "target_domain": "operations_governance"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "give every role a unique packet",
+        "bound authority per role",
+        "require leases and collision keys"
+      ],
+      "engineering_pattern": "packet_bound_distributed_roles",
+      "failure_modes": [
+        "role ambiguity",
+        "duplicate ownership",
+        "unbounded authority"
+      ],
+      "hypothesis": "distributed coordination can emerge from local role rules",
+      "mechanism_id": "NAT-MECH-a5d43743f71883f1",
+      "proof_gate": "All roles are uniquely packet-bound and no collision key is duplicated.",
+      "record_sha256": "f641754668803857fbb320679a707936242ffa7a6008bb20a991ef7aed623a45",
+      "source_id": "NAT-SRC-003",
+      "source_title": "The Life of the Bee",
+      "target_domain": "multi_agent_orchestration"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "specialise role responsibilities",
+        "share canonical health signals",
+        "stop local optimisation that harms root objectives"
+      ],
+      "engineering_pattern": "specialist_squads_shared_health",
+      "failure_modes": [
+        "local optimum harms system",
+        "siloed monitoring"
+      ],
+      "hypothesis": "specialization raises throughput but requires shared survival signals",
+      "mechanism_id": "NAT-MECH-17358ec63b03b431",
+      "proof_gate": "Specialist outputs improve throughput while root health gates remain passing.",
+      "record_sha256": "87464eee6ae50d26aca6586c61563044d692a2b83bbf1dd08dd3ccfa95c38118",
+      "source_id": "NAT-SRC-003",
+      "source_title": "The Life of the Bee",
+      "target_domain": "operational_scaling"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "maintain a recoverable canonical baseline",
+        "detect corruption before use",
+        "prove exact restoration"
+      ],
+      "engineering_pattern": "verified_failover_and_recovery",
+      "failure_modes": [
+        "silent corruption",
+        "backup without tested restoration"
+      ],
+      "hypothesis": "redundancy and replacement protect collective continuity",
+      "mechanism_id": "NAT-MECH-a15e7c6cec1bcebc",
+      "proof_gate": "A controlled corruption is rejected and deterministic recovery restores the baseline hash.",
+      "record_sha256": "183daa71fb4e8463272ac986fc5b742b045627468d77765be291692389ef9f0f",
+      "source_id": "NAT-SRC-003",
+      "source_title": "The Life of the Bee",
+      "target_domain": "resilience_engineering"
+    },
+    {
+      "claim_state": "ENGINEERING_CANDIDATE_NOT_DEPLOYED",
+      "design_constraints": [
+        "separate producer and verifier roles",
+        "aggregate evidence rather than votes alone",
+        "retain dissent and defect records"
+      ],
+      "engineering_pattern": "ensemble_with_independent_verification",
+      "failure_modes": [
+        "groupthink",
+        "majority vote without evidence"
+      ],
+      "hypothesis": "collective adaptation may outperform isolated optimization",
+      "mechanism_id": "NAT-MECH-e7270533eea9c551",
+      "proof_gate": "Independent verification catches a defect or confirms the same result through a separate route.",
+      "record_sha256": "4e610efe711e76ee2b7943340a44b63ba8d8edd3ce8eac0f981f13638d6a1292",
+      "source_id": "NAT-SRC-003",
+      "source_title": "The Life of the Bee",
+      "target_domain": "quality_assurance"
+    }
+  ],
+  "schema_version": "1.0.0",
+  "source_health_sha256": "b68fe5a0b5b3109c18852405a999778b8d98605c6798a8aa031ab13a7532124c",
+  "source_manifest_sha256": "3046b0114921e91b314f769bbc74259d1daa1097a7d7234a80e258c228f1ea2a",
+  "translation_sha256": "1238d656cc4ada81f613c42e3a47953c7bdc033afe6d79b8aa66e89718e9d617",
+  "translation_state": "STABLE_DETERMINISTIC_RUNTIME_OUTPUT"
+}

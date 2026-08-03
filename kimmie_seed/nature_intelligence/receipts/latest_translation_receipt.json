@@ -1,0 +1,13 @@
+{
+  "corpus_sha256": "c32a761727b436922e7cf09b65ac1dc64fb8d548ed4575a09be80b27a7354320",
+  "identity_drift": "NONE_DETECTED",
+  "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+  "mechanism_count": 12,
+  "proof_boundary": "This output proves deterministic translation of registered mechanism hypotheses into bounded engineering candidates. It does not prove that any candidate is useful, deployed, mature, or causally validated.",
+  "receipt_id": "NATURE-TRANSLATION-1238d656cc4ada81f613",
+  "receipt_sha256": "c1c0b87682b630d7da3d9d5be97abb7248188978a33a7bd7391d065dece7306f",
+  "schema_version": "1.0.0",
+  "source_health_sha256": "b68fe5a0b5b3109c18852405a999778b8d98605c6798a8aa031ab13a7532124c",
+  "translation_sha256": "1238d656cc4ada81f613c42e3a47953c7bdc033afe6d79b8aa66e89718e9d617",
+  "validation": "PASS"
+}
