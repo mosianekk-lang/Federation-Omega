@@ -1,0 +1,23 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "owner": "Kim Kagiso Mosiane",
+  "objective": "Turn Alpha→Omega into a commercially viable service-enabled platform and mature SaaS product",
+  "execution_rule": "Continue automatically in dependency order. No stage is complete without operational proof appropriate to that stage.",
+  "stages": [
+    {"id":"C01","name":"Commercial Product Definition","depends_on":[],"maturity_gate":"validated offer catalogue, ICP, pricing and sales assets"},
+    {"id":"C02","name":"Tenant and Identity Foundation","depends_on":["C01"],"maturity_gate":"tenant isolation, RBAC, audit and data-boundary tests"},
+    {"id":"C03","name":"Secrets and Provider Authority","depends_on":["C02"],"maturity_gate":"secure credential contract, scoped authority and rotation proof"},
+    {"id":"C04","name":"Customer Onboarding and Workspace Provisioning","depends_on":["C02","C03"],"maturity_gate":"zero-touch workspace creation and onboarding receipt"},
+    {"id":"C05","name":"Billing, Metering and Cost Governance","depends_on":["C02"],"maturity_gate":"usage ledger, plan enforcement, invoice-ready export and budget controls"},
+    {"id":"C06","name":"Managed Operations and SLA Fabric","depends_on":["C03","C04"],"maturity_gate":"health, incident, backup, restore, SLA and support proof"},
+    {"id":"C07","name":"Provider Adapter Expansion","depends_on":["C03"],"maturity_gate":"at least three provider adapters with deploy, readback and rollback proof"},
+    {"id":"C08","name":"Solution Catalogue and Capability Marketplace","depends_on":["C01","C05","C07"],"maturity_gate":"reusable offers, versioned capabilities, entitlement and licensing proof"},
+    {"id":"C09","name":"Partner and White-Label Programme","depends_on":["C05","C08"],"maturity_gate":"partner tenant, branding, licence and revenue-share controls"},
+    {"id":"C10","name":"Security, Privacy and Enterprise Assurance","depends_on":["C02","C03","C06"],"maturity_gate":"security pack, privacy controls, retention, DR and enterprise audit evidence"},
+    {"id":"C11","name":"Customer Portal and Self-Service SaaS","depends_on":["C04","C05","C06","C08","C10"],"maturity_gate":"customer-facing portal, subscription, provisioning and lifecycle management"},
+    {"id":"C12","name":"Case Studies and Commercial Proof","depends_on":["C01","C06","C08"],"maturity_gate":"verified savings, time reduction, reliability and customer outcome evidence"},
+    {"id":"C13","name":"Sales and Revenue Operations","depends_on":["C01","C05","C12"],"maturity_gate":"lead funnel, quoting, contract, renewal and revenue dashboards"},
+    {"id":"C14","name":"Scale, Reliability and Unit Economics","depends_on":["C05","C06","C07","C11"],"maturity_gate":"load, margin, support burden, churn and recovery targets proven"},
+    {"id":"C15","name":"Commercial Maturity and Succession","depends_on":["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14"],"maturity_gate":"repeatable acquisition, delivery, recurring revenue, governance and succession drill"}
+  ]
+}
