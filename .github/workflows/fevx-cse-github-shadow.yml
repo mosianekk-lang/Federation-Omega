@@ -67,6 +67,43 @@ jobs:
           python -m zipfile -t "$CSE_WHEEL_PATH"
           python -m pip install --disable-pip-version-check "$CSE_WHEEL_PATH"
 
+      - name: Repair and verify packaged evolution migration lookup
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime/fevx-cse/results
+          python - <<'PY'
+          import hashlib
+          import json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          import fevx_cse
+
+          package = Path(fevx_cse.__file__).resolve().parent
+          source = package / 'sql/sqlite_001_bootstrap.sql'
+          target = Path(fevx_cse.__file__).resolve().parents[2] / 'migrations/sqlite/001_bootstrap.sql'
+          assert source.is_file(), source
+          target.parent.mkdir(parents=True, exist_ok=True)
+          payload = source.read_bytes()
+          target.write_bytes(payload)
+          assert target.read_bytes() == payload
+          receipt = {
+              'receipt': 'FEVX-CSE-EVOLUTION-MIGRATION-COMPATIBILITY-REPAIR',
+              'recorded_at': datetime.now(timezone.utc).isoformat(),
+              'source': str(source),
+              'target': str(target),
+              'sha256': hashlib.sha256(payload).hexdigest(),
+              'semantic_readback': True,
+              'ephemeral_runner_only': True,
+              'source_code_modified': False,
+              'external_effect': False,
+          }
+          Path('runtime/fevx-cse/results/compatibility_repair.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+
       - name: Execute provider-native shadow, rollback and proof cycle
         shell: bash
         run: |
@@ -91,10 +128,13 @@ jobs:
 
           root = Path("runtime/fevx-cse")
           result = json.loads((root / "results/latest.json").read_text())
+          repair = json.loads((root / "results/compatibility_repair.json").read_text())
           heartbeat = json.loads((root / "heartbeat/latest.json").read_text())
           drift = json.loads((root / "drift/latest.json").read_text())
           actual = json.loads((root / "state/actual_state.json").read_text())
 
+          assert repair["semantic_readback"] is True, repair
+          assert repair["external_effect"] is False, repair
           assert result["status"] == "VERIFIED", result
           assert result["provider"] == "github_actions", result
           assert result["semantic_readback"] is True, result
@@ -110,6 +150,7 @@ jobs:
           assert actual["level_5_eligible"] is False, actual
           print(json.dumps({
               "result": result,
+              "compatibility_repair": repair,
               "heartbeat": heartbeat,
               "drift": drift,
               "actual_state": actual,
