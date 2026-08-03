@@ -1,0 +1,14 @@
+{
+  "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V720_GITHUB_SOURCE_DESCRIPTOR_V1",
+  "version": "7.2.0",
+  "source_archive": "OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0_SOURCE.tar.xz",
+  "source_archive_sha256": "74f870bfd642c3131eaf3f53dbfb21bb0a542164a18d01af958c2b26a8b04acd",
+  "source_file_count": 97,
+  "expected_release_archive": "OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0.zip",
+  "expected_release_archive_sha256": "826a7cb7f5dcdc597e5ded1105f1d6c03d4b6bea56681b4a3e6644e23f0d906c",
+  "expected_source_manifest_sha256": "9628c101f4d1f975bcc529c03d5c3ad2c1801f0eac5c5778328064d5e5529dff",
+  "expected_wheel_sha256": "f8e29e8bc622d6826e0eedd66952b50406ba1b80016de4106472643b7f6788ac",
+  "expected_source_tests": 178,
+  "expected_archive_tests": 178,
+  "truth_boundary": "Hosted CI reconstructs exact deterministic source, produces the canonical release archive and validates bounded first-adopter paths. It does not establish an unattended provider control plane or consequential authority."
+}
