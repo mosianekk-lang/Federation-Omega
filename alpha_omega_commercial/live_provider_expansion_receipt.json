@@ -1,0 +1,56 @@
+{
+  "artifact": {
+    "artifact_id": 8873094913,
+    "digest": "sha256:b8d997d5daa622feb56a38a955b0c5d2d04098652324ebcfc62aff610c4816cf",
+    "expires_at": "2026-11-01T22:11:18Z",
+    "name": "alpha-omega-commercial-live-provider-expansion-proof"
+  },
+  "cloud_run": {
+    "block_id": "cloud-run-wif-30857687941-1",
+    "mutation_performed": false,
+    "previous_exact_error": "invalid_target",
+    "reason": "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED",
+    "state": "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED",
+    "workload_identity_provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github"
+  },
+  "external_gate_effect": "UNCHANGED",
+  "owner_authority_effect": "UNCHANGED",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "proof_scope": "C03_C06_C07_C11_C14_C15_REVERSIBLE_PROVIDER_EXPANSION",
+  "provider_states": {
+    "canva_transaction": "FRESH_VERIFIED_OPERATIONAL",
+    "github": "FRESH_VERIFIED_OPERATIONAL",
+    "gmail_draft": "FRESH_VERIFIED_OPERATIONAL",
+    "google_calendar": "FRESH_VERIFIED_OPERATIONAL",
+    "google_cloud_run": "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED",
+    "google_drive": "FRESH_VERIFIED_OPERATIONAL",
+    "outlook_draft": "FRESH_VERIFIED_OPERATIONAL"
+  },
+  "receipt_sha256": "c676dcbfb6a6d7de98cdc4231b1e30382c309967a9fe7f396b1911560c0ed7ac",
+  "rollback": {
+    "ledger_integrity": true,
+    "rollback_sha256": "51002736244d297b4c7d7e31c4d99ca90764c23b3bbf58fc69d360df62e0e17e",
+    "status": "ROLLBACK_RESTORED"
+  },
+  "status": "REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_PROVIDER_BLOCKED",
+  "truth_boundary": {
+    "bounded_live_cloud_operation_verified": false,
+    "cloud_mutation_performed_when_blocked": false,
+    "customer_demand_proven": false,
+    "enterprise_attestation_proven": false,
+    "external_case_study_proven": false,
+    "owner_reserved_authority_bypassed": false,
+    "partner_adoption_proven": false,
+    "payment_or_revenue_proven": false,
+    "production_scale_proven": false,
+    "signed_contract_proven": false,
+    "six_reversible_provider_operations_verified": true,
+    "subscription_or_invoice_proven": false
+  },
+  "verified_at": "2026-08-03T22:11:30Z",
+  "workflow": {
+    "head_sha": "568ea4a7a46913794ac58bb95b13eadd91164fb6",
+    "job_id": 91832420487,
+    "run_id": 30857687941
+  }
+}
