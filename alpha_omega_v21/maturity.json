@@ -1,6 +1,6 @@
 {
-  "version": "2.2.0",
-  "updated_at": "2026-08-03T09:17:00Z",
+  "version": "2.2.1",
+  "updated_at": "2026-08-03T09:22:00Z",
   "maturity": {
     "local_provider_contract": "OPERATIONAL_VERIFIED",
     "local_release_artifact": "OPERATIONAL_VERIFIED",
@@ -15,7 +15,8 @@
     "repair_rule_selection": "OPERATIONAL_VERIFIED_WORKFLOW",
     "learning_ledger": "OPERATIONAL_VERIFIED_WORKFLOW",
     "retirement_controls": "OPERATIONAL_VERIFIED_WORKFLOW",
-    "scheduled_maintenance": "NOT_YET_VERIFIED",
+    "scheduled_maintenance": "CONFIGURED_PENDING_SCHEDULE_EVENT",
+    "scheduled_provider_event_receipt": "CONFIGURED_PENDING_SCHEDULE_EVENT",
     "google_drive_manifest_publish": "OPERATIONAL_VERIFIED",
     "google_drive_manifest_adapter": "OPERATIONAL_VERIFIED",
     "google_drive_manifest_rollback": "OPERATIONAL_VERIFIED",
@@ -34,18 +35,20 @@
     "heartbeat_file_sha256": "ae768d5f51a6f0399197c8f27c2fbb957e6fe0e55f19a68914a099212f52226d",
     "learning_ledger_file_sha256": "dab30f02e4961de92c4968156fcd8e34c4942f25899d062f8b8e8cba514caafa",
     "maintenance_state": "MAINTENANCE_HEALTHY",
-    "drift": false,
-    "failure_category": "NONE",
-    "repair_action": "NO_ACTION",
     "lesson_id": "LRN-594fd09c6a62",
-    "retirement": false,
-    "superior_logic_ci_run_id": 30800592364,
-    "public_leak_guard_run_id": 30800591727,
     "maintenance_pr": 71,
     "maintenance_merge_commit": "fbdb4f6f9f8dd89afde0b2ef461b5d2a3d189c21",
+    "schedule_cron_utc": "17 * * * *",
+    "schedule_configuration_pr": 72,
+    "schedule_configuration_validation_run_id": 30800937646,
+    "schedule_configuration_validation_job_id": 91645083408,
+    "schedule_configuration_superior_logic_run_id": 30800937352,
+    "schedule_configuration_leak_guard_run_id": 30800937672,
+    "schedule_configuration_merge_commit": "c589d8a98d536afac6ac6ee67612082513586b27",
+    "schedule_event_name_observed": false,
     "drive_manifest_provider_receipt_id": "RCP-GDRIVE-MANIFEST-20260803-0905",
     "drive_binary_upload_error": "BLOCKED_FILE_REFERENCE",
     "cloud_authority_state": "Google WIF AUTHORITY_REQUIRED; no fresh Cloud Run execution authority"
   },
-  "truth_boundary": "This release proves an on-demand GitHub Actions maintenance cycle and durable workflow artifacts. It does not prove schedule-triggered maintenance, Google Drive binary ZIP publishing, or Cloud Run deployment."
+  "truth_boundary": "The hourly GitHub schedule and provider-event receipt writer are deployed and CI-validated. A real event_name=schedule run has not yet been observed, so unattended scheduled maintenance is not yet promoted to operational verified. Google Drive binary ZIP publishing and Cloud Run remain provider-blocked."
 }
