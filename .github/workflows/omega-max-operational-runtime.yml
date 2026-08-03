@@ -1,0 +1,102 @@
+name: Omega-Max Operational Runtime
+
+on:
+  pull_request:
+    paths:
+      - 'systems/omega-max-runtime/**'
+      - 'runtime/omega-max/queue/**'
+      - 'runtime/omega-max/state/**'
+      - '.github/workflows/omega-max-operational-runtime.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'systems/omega-max-runtime/**'
+      - 'runtime/omega-max/queue/**'
+      - 'runtime/omega-max/state/**'
+      - '.github/workflows/omega-max-operational-runtime.yml'
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: omega-max-operational-runtime
+  cancel-in-progress: false
+
+jobs:
+  runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install runtime
+        run: python -m pip install -e systems/omega-max-runtime pytest
+
+      - name: Run regression and rollback suite
+        run: pytest -q systems/omega-max-runtime/tests
+
+      - name: Execute queue consumer
+        run: omega-max-runtime --repo-root . process
+
+      - name: Execute digital-twin drift sentinel
+        run: |
+          omega-max-runtime --repo-root . drift \
+            --desired runtime/omega-max/state/desired_state.json \
+            --actual runtime/omega-max/state/canary_state.json
+
+      - name: Verify operational proof contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f runtime/omega-max/results/CANARY-OMX-GHA-001.json
+          test -f runtime/omega-max/proofs/PRF-CANARY-OMX-GHA-001.json
+          test -f runtime/omega-max/heartbeat/latest.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          result=json.loads(Path('runtime/omega-max/results/CANARY-OMX-GHA-001.json').read_text())
+          heartbeat=json.loads(Path('runtime/omega-max/heartbeat/latest.json').read_text())
+          drift=json.loads(Path('runtime/omega-max/drift/latest.json').read_text())
+          assert result['status']=='VERIFIED'
+          assert result['semantic_readback'] is True
+          assert result['rollback_test'] is True
+          assert heartbeat['runtime_state']=='OPERATIONAL'
+          assert drift['classification']=='IN_SYNC'
+          print(json.dumps({'result':result,'heartbeat':heartbeat,'drift':drift},indent=2))
+          PY
+
+      - name: Upload execution receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: omega-max-operational-runtime-receipt
+          path: |
+            runtime/omega-max/results/
+            runtime/omega-max/proofs/
+            runtime/omega-max/heartbeat/
+            runtime/omega-max/drift/
+            runtime/omega-max/snapshots/
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Persist runtime state on main
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "omega-max-runtime[bot]"
+          git config user.email "omega-max-runtime[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add runtime/omega-max/results runtime/omega-max/proofs runtime/omega-max/heartbeat runtime/omega-max/drift runtime/omega-max/snapshots runtime/omega-max/state
+          if git diff --cached --quiet; then
+            echo "No runtime state change"
+          else
+            git commit -m "Persist Omega-Max operational runtime receipt [skip omega-runtime]"
+            git push origin HEAD:main
+          fi
