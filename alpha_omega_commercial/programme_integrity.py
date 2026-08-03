@@ -11,14 +11,16 @@ CANONICAL_INTEGRITY_STATUS = "CANONICAL_RECEIPT_INTEGRITY_VERIFIED"
 EXTERNAL_EVIDENCE_ADMISSION_STATUS = "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED"
 AUTHORITY_FRESHNESS_STATUS = "PROVIDER_AUTHORITY_FRESHNESS_RECONCILIATION_VERIFIED"
 LIVE_EXPANSION_STATUS = "REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_PROVIDER_BLOCKED"
-C03_STATUS = "LIVE_REVERSIBLE_PROVIDER_AUTHORITY_VERIFIED_CLOUD_RUN_WIF_BLOCK_RECORDED_OWNER_RESERVED_DOMAINS_HELD"
-C06_STATUS = "REVERSIBLE_PROVIDER_OPERATIONS_VERIFIED_CLOUD_RUN_PROVIDER_BLOCKED"
-C07_STATUS = "SIX_LIVE_REVERSIBLE_PROVIDER_ADAPTERS_VERIFIED_EXTERNAL_PROVIDER_EXPANSION_OPEN"
-C11_STATUS = "SERVICE_ENABLED_REVERSIBLE_PROVIDER_OPERATIONS_VERIFIED_SELF_SERVICE_SEND_PAYMENT_AND_CLOUD_HELD"
+CANONICAL_RECONCILIATION_STATUS = "CANONICAL_PROVIDER_ROUTE_ALIGNED_IDENTITY_AUTHORITY_UNAVAILABLE"
+
+C03_STATUS = "CANONICAL_PROVIDER_ROUTE_ALIGNED_SIX_REVERSIBLE_PROVIDERS_VERIFIED_IDENTITY_AUTHORITY_UNAVAILABLE"
+C06_STATUS = "REVERSIBLE_PROVIDER_OPERATIONS_VERIFIED_CANONICAL_CLOUD_ROUTE_ALIGNED_LIVE_SLA_BLOCKED"
+C07_STATUS = "SIX_REVERSIBLE_PROVIDER_ADAPTERS_VERIFIED_CANONICAL_CLOUD_ADAPTER_PACKAGED_AUTHORITY_BLOCKED"
+C11_STATUS = "SERVICE_ENABLED_PLATFORM_VERIFIED_CANONICAL_CLOUD_ROUTE_ALIGNED_SELF_SERVICE_HELD"
 C12_STATUS = "EVIDENCE_FRAMEWORK_AND_EXTERNAL_ADMISSION_VERIFIED_MARKET_PROOF_REQUIRED"
 C13_STATUS = "REFERENCE_REVOPS_AND_PAYMENT_EVIDENCE_ADMISSION_VERIFIED_OWNER_APPROVAL_AND_REVENUE_PROOF_REQUIRED"
-C14_STATUS = "REFERENCE_RELIABILITY_VERIFIED_CLOUD_RUN_AND_PRODUCTION_SCALE_PROOF_REQUIRED"
-C15_STATUS = "COMMERCIAL_READINESS_VERIFIED_REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_WIF_BLOCK_RECORDED_EXTERNAL_MATURITY_GATES_OPEN"
+C14_STATUS = "REFERENCE_RELIABILITY_VERIFIED_CANONICAL_CLOUD_ROUTE_ALIGNED_PRODUCTION_PROOF_REQUIRED"
+C15_STATUS = "COMMERCIAL_READINESS_VERIFIED_CANONICAL_PROVIDER_ROUTE_ALIGNED_EXTERNAL_MATURITY_GATES_OPEN"
 
 EXPECTED_STAGE_IDS = [f"C{index:02d}" for index in range(1, 16)]
 EXPECTED_OWNER_RESERVED = {
@@ -42,12 +44,12 @@ EXPECTED_PROVIDER_AUTHORITY = {
     "github_actions": "FRESH_VERIFIED",
     "google_drive_document_release": "FRESH_VERIFIED_READBACK",
     "google_drive_binary_artifact_transfer": "PROVIDER_BLOCKED_FILE_EGRESS",
-    "cloud_run": "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
     "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
     "customer_market": "MARKET_PROOF_REQUIRED",
     "partner_market": "MARKET_PROOF_REQUIRED",
     "external_attestation": "UNVERIFIED",
-    "live_cloud_operations": "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED",
+    "live_cloud_operations": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
     "github_reversible_operations": "FRESH_VERIFIED_OPERATIONAL",
     "google_drive_reversible_operations": "FRESH_VERIFIED_OPERATIONAL",
     "gmail_draft": "FRESH_VERIFIED_OPERATIONAL",
@@ -55,6 +57,7 @@ EXPECTED_PROVIDER_AUTHORITY = {
     "outlook_draft": "FRESH_VERIFIED_OPERATIONAL",
     "canva_transaction": "FRESH_VERIFIED_OPERATIONAL",
 }
+# Historical snapshots remain valid evidence and must not be rewritten as current authority.
 EXPECTED_FRESHNESS_BLOCKED = {
     "google_drive_binary_artifact_transfer": "PROVIDER_BLOCKED_FILE_EGRESS",
     "cloud_run": "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED",
@@ -73,6 +76,29 @@ EXPECTED_LIVE_PROVIDER_STATES = {
     "canva_transaction": "FRESH_VERIFIED_OPERATIONAL",
     "google_cloud_run": "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED",
 }
+EXPECTED_CANONICAL_ROUTE = {
+    "project_id": "sov-hybrid-suite",
+    "region": "africa-south1",
+    "service": "federation-omega-operator",
+    "path": "/execute",
+}
+EXPECTED_CANONICAL_IDENTITIES = ["fo-automation-agent", "fo-operator"]
+EXPECTED_CANONICAL_SEQUENCE = [
+    "AUTHENTICATED_STATUS",
+    "READ_CLOUD_RUN_SERVICE",
+    "REVERSIBLE_CANARY",
+    "SEMANTIC_READBACK",
+    "ROLLBACK_RECEIPT",
+]
+EXPECTED_CANONICAL_RECEIPTS = [
+    "provider_revision",
+    "request_id",
+    "authenticated_principal",
+    "response_status",
+    "response_body_sha256",
+    "readback_match",
+    "rollback_receipt",
+]
 
 
 def utc_now() -> str:
@@ -85,7 +111,10 @@ def digest(value: Any) -> str:
 
 
 def read_json(path: str | Path) -> dict[str, Any]:
-    return json.loads(Path(path).read_text(encoding="utf-8"))
+    value = json.loads(Path(path).read_text(encoding="utf-8"))
+    if not isinstance(value, dict):
+        raise ValueError(f"{path} must contain a JSON object")
+    return value
 
 
 def _valid_sha256(value: Any) -> bool:
@@ -100,13 +129,22 @@ def _valid_sha256(value: Any) -> bool:
 
 def _stage_index(programme: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], bool]:
     stages = programme.get("stages", [])
-    stage_ids = [stage.get("id") for stage in stages]
-    by_id = {stage.get("id"): stage for stage in stages if stage.get("id")}
+    if not isinstance(stages, list):
+        return {}, False
+    stage_ids = [stage.get("id") for stage in stages if isinstance(stage, dict)]
+    by_id = {stage.get("id"): stage for stage in stages if isinstance(stage, dict) and stage.get("id")}
     valid = stage_ids == EXPECTED_STAGE_IDS
     positions = {stage_id: index for index, stage_id in enumerate(stage_ids)}
     for stage in stages:
+        if not isinstance(stage, dict):
+            valid = False
+            continue
         current = positions.get(stage.get("id"), -1)
-        for dependency in stage.get("depends_on", []):
+        dependencies = stage.get("depends_on", [])
+        if not isinstance(dependencies, list):
+            valid = False
+            continue
+        for dependency in dependencies:
             if dependency not in positions or positions[dependency] >= current:
                 valid = False
     return by_id, valid
@@ -126,13 +164,16 @@ def verify_programme_register(
     declared_gate_labels = set(programme.get("external_maturity_gates", []))
     declared_evidence = programme.get("external_gate_evidence", {})
     admission = programme.get("external_evidence_admission", {})
-    authority = admission.get("provider_authority", {})
+    authority = admission.get("provider_authority", {}) if isinstance(admission, dict) else {}
     freshness = programme.get("provider_authority_freshness", {})
-    latest_verified = freshness.get("latest_verified", {})
-    github_latest = latest_verified.get("github_actions", {})
-    drive_latest = latest_verified.get("google_drive_document_release", {})
+    latest_verified = freshness.get("latest_verified", {}) if isinstance(freshness, dict) else {}
+    github_latest = latest_verified.get("github_actions", {}) if isinstance(latest_verified, dict) else {}
+    drive_latest = latest_verified.get("google_drive_document_release", {}) if isinstance(latest_verified, dict) else {}
     expansion = programme.get("live_provider_expansion", {})
-    expansion_cloud = expansion.get("cloud_run_block", {})
+    expansion_cloud = expansion.get("cloud_run_block", {}) if isinstance(expansion, dict) else {}
+    canonical = programme.get("canonical_authority_reconciliation", {})
+    canonical_cloud = canonical.get("cloud_run", {}) if isinstance(canonical, dict) else {}
+    canonical_provider_proof = canonical.get("provider_proof", {}) if isinstance(canonical, dict) else {}
 
     gate_evidence_valid = True
     for key in EXTERNAL_GATE_LABELS.values():
@@ -146,6 +187,7 @@ def verify_programme_register(
     c13_proof = commercial_receipt.get("stages", {}).get("C13", {}).get("proof", {})
     old_cloud_boundary = commercial_receipt.get("truth_boundaries", {}).get("cloud_run")
 
+    canonical_route = {key: canonical_cloud.get(key) for key in EXPECTED_CANONICAL_ROUTE}
     checks = {
         "programme_identity": programme.get("programme_id") == "AO-COMMERCIAL-MATURITY-V1",
         "service_enabled_priority_preserved": (
@@ -185,7 +227,7 @@ def verify_programme_register(
             and _valid_sha256(drive_latest.get("content_sha256"))
         ),
         "authority_freshness_blocked_domains_preserved": freshness.get("blocked_or_unverified") == EXPECTED_FRESHNESS_BLOCKED,
-        "live_provider_expansion_verified": (
+        "historical_live_provider_expansion_verified": (
             expansion.get("status") == LIVE_EXPANSION_STATUS
             and expansion.get("proof_scope") == "C03_C06_C07_C11_C14_C15_REVERSIBLE_PROVIDER_EXPANSION"
             and expansion.get("receipt_file") == "alpha_omega_commercial/live_provider_expansion_receipt.json"
@@ -199,12 +241,43 @@ def verify_programme_register(
             and expansion.get("verified_revenue_events") == 0
             and not expansion.get("full_commercial_maturity")
         ),
-        "live_provider_states_precise": expansion.get("provider_states") == EXPECTED_LIVE_PROVIDER_STATES,
-        "cloud_run_wif_block_precise": (
+        "historical_live_provider_states_precise": expansion.get("provider_states") == EXPECTED_LIVE_PROVIDER_STATES,
+        "historical_cloud_run_wif_block_precise": (
             expansion_cloud.get("reason") == "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED"
             and expansion_cloud.get("previous_exact_error") == "invalid_target"
             and expansion_cloud.get("mutation_performed") is False
             and bool(expansion_cloud.get("workload_identity_provider"))
+        ),
+        "canonical_authority_reconciliation_verified": (
+            canonical.get("status") == CANONICAL_RECONCILIATION_STATUS
+            and canonical.get("manifest_id") == "FO-CLAM-2026-08-04-v1"
+            and canonical.get("proof_scope") == "C03_C06_C07_C11_C14_C15_CANONICAL_PROVIDER_AUTHORITY_RECONCILIATION"
+            and canonical.get("external_gate_effect") == "UNCHANGED"
+            and canonical.get("owner_authority_effect") == "UNCHANGED"
+            and not canonical.get("full_commercial_maturity")
+            and canonical.get("receipt_file") == "alpha_omega_commercial/canonical_authority_reconciliation_receipt.json"
+            and _valid_sha256(canonical.get("receipt_sha256"))
+        ),
+        "canonical_cloud_route_precise": canonical_route == EXPECTED_CANONICAL_ROUTE,
+        "canonical_cloud_identity_and_proof_contract_precise": (
+            canonical_cloud.get("candidate_identities") == EXPECTED_CANONICAL_IDENTITIES
+            and canonical_cloud.get("required_sequence") == EXPECTED_CANONICAL_SEQUENCE
+            and canonical_cloud.get("required_receipts") == EXPECTED_CANONICAL_RECEIPTS
+            and canonical_cloud.get("provider_state") == "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE"
+            and canonical_cloud.get("identity_authority") == "OWNER_OR_PROVIDER_CONFIGURATION_REQUIRED"
+            and canonical_cloud.get("live_invocation_proven") is False
+            and canonical_cloud.get("cloud_mutation_performed") is False
+        ),
+        "canonical_provider_proof_persisted": (
+            canonical_provider_proof.get("pull_request") == 111
+            and isinstance(canonical_provider_proof.get("head_sha"), str)
+            and len(canonical_provider_proof.get("head_sha", "")) == 40
+            and isinstance(canonical_provider_proof.get("workflow_run"), int)
+            and isinstance(canonical_provider_proof.get("workflow_job"), int)
+            and isinstance(canonical_provider_proof.get("artifact_id"), int)
+            and canonical_provider_proof.get("artifact_name") == "alpha-omega-commercial-canonical-authority-reconciliation-proof"
+            and str(canonical_provider_proof.get("artifact_digest", "")).startswith("sha256:")
+            and canonical_provider_proof.get("conclusion") == "success"
         ),
         "c03_status_verified": c03.get("status") == C03_STATUS,
         "c06_status_verified": c06.get("status") == C06_STATUS,
@@ -225,6 +298,10 @@ def verify_programme_register(
         "cloud_run_not_claimed": (
             old_cloud_boundary == "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
             and expansion.get("provider_states", {}).get("google_cloud_run") == "PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED"
+            and authority.get("cloud_run") == "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE"
+            and authority.get("live_cloud_operations") == "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE"
+            and canonical_cloud.get("live_invocation_proven") is False
+            and canonical_cloud.get("cloud_mutation_performed") is False
         ),
         "canonical_artifact_reference_matches": (
             canonical_reference.get("pull_request") == 93
@@ -246,14 +323,16 @@ def verify_programme_register(
         "external_evidence_admission": admission.get("status"),
         "provider_authority_freshness": freshness.get("status"),
         "live_provider_expansion": expansion.get("status"),
+        "canonical_authority_reconciliation": canonical.get("status"),
         "checks": checks,
         "external_gates": maturity_gates,
         "provider_authority": authority,
         "owner_reserved_authority": sorted(EXPECTED_OWNER_RESERVED),
         "truth_boundary": (
-            "This receipt proves programme-register consistency, six reversible provider operations, exact Cloud Run WIF blocking before mutation, "
-            "provider freshness, persistence and rollback. It does not establish customer demand, a signed contract, payment-provider revenue, "
-            "Cloud Run operation, enterprise attestation, partner adoption, an external case study or production-scale evidence."
+            "This receipt proves programme-register consistency, six reversible provider operations, canonical Cloud Run route alignment, "
+            "provider freshness, persistence and rollback while identity authority remains unavailable. It does not establish customer demand, "
+            "a signed contract, payment-provider revenue, Cloud Run operation, enterprise attestation, partner adoption, an external case study "
+            "or production-scale evidence."
         ),
     }
     result["receipt_sha256"] = digest(result)
