@@ -19,6 +19,7 @@ def main() -> int:
             "routes": engine.validate_routes().__dict__,
             "triage": engine.validate_pr_triage().__dict__,
             "lineage": engine.validate_lineage().__dict__,
+            "drive": engine.validate_drive_publication().__dict__,
         }
         payload["valid"] = all(item["valid"] for item in payload.values() if isinstance(item, dict) and "valid" in item)
     elif args.command == "canary":
