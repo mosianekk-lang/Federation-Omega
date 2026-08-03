@@ -6,16 +6,20 @@ on:
       - "alpha_omega_commercial/commercial_assurance.py"
       - "alpha_omega_commercial/receipt_integrity.py"
       - "alpha_omega_commercial/programme_integrity.py"
+      - "alpha_omega_commercial/external_evidence.py"
       - "alpha_omega_commercial/test_commercial_assurance.py"
       - "alpha_omega_commercial/test_receipt_integrity.py"
       - "alpha_omega_commercial/test_programme_integrity.py"
+      - "alpha_omega_commercial/test_external_evidence.py"
       - "alpha_omega_commercial/prove_c10_c15.py"
       - "alpha_omega_commercial/prove_receipt_integrity.py"
       - "alpha_omega_commercial/prove_programme_integrity.py"
+      - "alpha_omega_commercial/prove_external_evidence.py"
       - "alpha_omega_commercial/programme.json"
       - "alpha_omega_commercial/README.md"
       - "alpha_omega_commercial/C15_CANONICAL_RECEIPT_INTEGRITY.md"
       - "alpha_omega_commercial/C15_PROGRAMME_REGISTER_INTEGRITY.md"
+      - "alpha_omega_commercial/C15_EXTERNAL_EVIDENCE_ADMISSION.md"
       - ".github/workflows/alpha-omega-commercial-c10-c15.yml"
   push:
     branches: [main]
@@ -23,16 +27,20 @@ on:
       - "alpha_omega_commercial/commercial_assurance.py"
       - "alpha_omega_commercial/receipt_integrity.py"
       - "alpha_omega_commercial/programme_integrity.py"
+      - "alpha_omega_commercial/external_evidence.py"
       - "alpha_omega_commercial/test_commercial_assurance.py"
       - "alpha_omega_commercial/test_receipt_integrity.py"
       - "alpha_omega_commercial/test_programme_integrity.py"
+      - "alpha_omega_commercial/test_external_evidence.py"
       - "alpha_omega_commercial/prove_c10_c15.py"
       - "alpha_omega_commercial/prove_receipt_integrity.py"
       - "alpha_omega_commercial/prove_programme_integrity.py"
+      - "alpha_omega_commercial/prove_external_evidence.py"
       - "alpha_omega_commercial/programme.json"
       - "alpha_omega_commercial/README.md"
       - "alpha_omega_commercial/C15_CANONICAL_RECEIPT_INTEGRITY.md"
       - "alpha_omega_commercial/C15_PROGRAMME_REGISTER_INTEGRITY.md"
+      - "alpha_omega_commercial/C15_EXTERNAL_EVIDENCE_ADMISSION.md"
       - ".github/workflows/alpha-omega-commercial-c10-c15.yml"
   workflow_dispatch:
 
@@ -52,7 +60,7 @@ jobs:
         run: python -m compileall -q alpha_omega_commercial
       - name: Run commercial regression tests
         working-directory: alpha_omega_commercial
-        run: python -m unittest -v test_commercial_platform.py test_commercial_expansion.py test_commercial_assurance.py test_receipt_integrity.py test_programme_integrity.py
+        run: python -m unittest -v test_commercial_platform.py test_commercial_expansion.py test_commercial_assurance.py test_receipt_integrity.py test_programme_integrity.py test_external_evidence.py
       - name: Execute reversible C10-C15 proof
         run: python alpha_omega_commercial/prove_c10_c15.py --output alpha_omega_commercial/artifacts/c10-c15
       - name: Reconcile and prove canonical receipt integrity
@@ -63,6 +71,10 @@ jobs:
           --programme alpha_omega_commercial/programme.json
           --artifact-root alpha_omega_commercial/artifacts/c10-c15
           --output alpha_omega_commercial/artifacts/c10-c15/programme-register-integrity.json
+      - name: Execute external commercial evidence admission proof
+        run: >-
+          python alpha_omega_commercial/prove_external_evidence.py
+          --output alpha_omega_commercial/artifacts/c10-c15/external-evidence
       - name: Validate stage gates and truth boundaries
         run: |
           python - <<'PY'
@@ -77,6 +89,10 @@ jobs:
           rollback = json.loads((root / 'canonical-receipt-rollback-proof.json').read_text())
           programme = json.loads(Path('alpha_omega_commercial/programme.json').read_text())
           programme_integrity = json.loads((root / 'programme-register-integrity.json').read_text())
+          external_root = root / 'external-evidence'
+          admission = json.loads((external_root / 'external-evidence-admission-receipt.json').read_text())
+          authority = json.loads((external_root / 'commercial-provider-authority.json').read_text())
+          projection = json.loads((external_root / 'external-maturity-projection.json').read_text())
           package_id = receipt['stages']['C15']['proof']['package_id']
           package = json.loads((root / 'reference-state' / 'receipts' / f'succession-{package_id}.json').read_text())
 
@@ -113,10 +129,25 @@ jobs:
 
           assert programme['canonical_status'] == maturity['canonical_status']
           assert programme['canonical_receipt_integrity'] == integrity['status']
-          assert programme['stages'][-1]['status'] == 'COMMERCIAL_READINESS_VERIFIED_CANONICAL_RECEIPT_INTEGRITY_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN'
+          assert programme['external_evidence_admission']['status'] == 'EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED'
+          assert programme['stages'][-1]['status'] == 'COMMERCIAL_READINESS_VERIFIED_CANONICAL_RECEIPT_INTEGRITY_VERIFIED_EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN'
           assert programme_integrity['status'] == 'PROGRAMME_REGISTER_INTEGRITY_VERIFIED'
           assert all(programme_integrity['checks'].values())
           assert not any(programme_integrity['external_gates'].values())
+
+          assert admission['status'] == 'EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED'
+          assert all(admission['gates'].values())
+          assert not any(projection['external_gates'].values())
+          assert not projection['full_commercial_maturity']
+          assert projection['ledger_integrity']
+          assert authority['github_actions']['state'] == 'FRESH_VERIFIED'
+          assert authority['google_drive_document_release']['state'] == 'FRESH_VERIFIED_READBACK'
+          assert authority['google_drive_document_release']['file_id'] == '1L4ysPqtf8x2c9E-3dwVi4KDt5QwR53Oc4suFZXqSe2Q'
+          assert authority['google_drive_binary_artifact_transfer']['state'] == 'PROVIDER_BLOCKED_FILE_EGRESS'
+          assert authority['cloud_run']['state'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          assert authority['payment_provider']['state'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          assert (external_root / 'external-evidence-runtime' / 'external-evidence-ledger.jsonl').is_file()
+          assert (external_root / 'external-evidence-runtime' / 'external-evidence-state.json').is_file()
           PY
       - name: Verify no secret-shaped values are present
         run: |
