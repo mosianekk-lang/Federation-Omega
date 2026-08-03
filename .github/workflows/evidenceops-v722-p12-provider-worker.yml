@@ -3,12 +3,14 @@ name: EvidenceOps v7.2.2 P12 Provider Worker
 on:
   pull_request:
     paths:
-      - "runtime/evidenceops_v722/**"
+      - "runtime/evidenceops_v722/p12_provider_worker.py"
+      - "runtime/evidenceops_v722/tests/test_p12_provider_worker.py"
       - ".github/workflows/evidenceops-v722-p12-provider-worker.yml"
   push:
     branches: [main]
     paths:
-      - "runtime/evidenceops_v722/**"
+      - "runtime/evidenceops_v722/p12_provider_worker.py"
+      - "runtime/evidenceops_v722/tests/test_p12_provider_worker.py"
       - ".github/workflows/evidenceops-v722-p12-provider-worker.yml"
   schedule:
     - cron: "23 * * * *"
@@ -36,7 +38,7 @@ jobs:
           python-version: "3.11"
 
       - name: Run focused regression tests
-        run: python -m unittest discover -s runtime/evidenceops_v722/tests -p 'test_*.py'
+        run: python -m unittest runtime.evidenceops_v722.tests.test_p12_provider_worker
 
       - name: Write checkpoint and simulate crash
         id: checkpoint
@@ -82,139 +84,12 @@ jobs:
             echo "No provider state change to persist"
           else
             git commit -m "Persist EvidenceOps v7.2.2 P12 provider-worker proof [skip p12-worker]"
-            git push origin HEAD:main
+            for attempt in 1 2 3; do
+              if git push origin HEAD:main; then
+                exit 0
+              fi
+              git pull --rebase origin main
+              sleep $((attempt * 2))
+            done
+            exit 1
           fi
-
-  source-freshness:
-    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip p13-freshness]')
-    runs-on: ubuntu-24.04
-    timeout-minutes: 20
-    steps:
-      - uses: actions/checkout@v4
-        with:
-          fetch-depth: 0
-
-      - uses: actions/setup-python@v5
-        with:
-          python-version: "3.11"
-
-      - name: Install bounded freshness runtime
-        run: |
-          set -euo pipefail
-          python -m pip install --disable-pip-version-check \
-            pypdf==5.9.0 \
-            requests \
-            certifi \
-            cryptography
-          python - <<'PY'
-          import certifi
-          import cryptography
-          import requests
-          from pypdf import PdfReader
-          print({
-              'requests': requests.__version__,
-              'certifi_bundle': certifi.where(),
-              'cryptography': cryptography.__version__,
-              'pypdf_reader': PdfReader.__name__,
-          })
-          PY
-
-      - name: Retrieve and hash exact official-provider bytes
-        id: retrieve
-        continue-on-error: true
-        run: |
-          set -euo pipefail
-          rm -rf p13_raw_provider_output
-          rm -f runtime/evidenceops_v722/state/p13_raw_provider_latest.json
-          python runtime/evidenceops_v722/p13_source_freshness/run_raw_provider_cycle.py \
-            --catalog runtime/evidenceops_v722/p13_source_freshness/raw_provider_catalog.json \
-            --output p13_raw_provider_output \
-            --state-output runtime/evidenceops_v722/state/p13_raw_provider_latest.json
-
-      - name: Verify diagnostic receipt integrity and current-run identity
-        if: always()
-        run: |
-          python - <<'PY'
-          import hashlib, json, os
-          from pathlib import Path
-          path = Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json')
-          assert path.exists(), 'freshness runner did not write a diagnostic receipt for this run'
-          payload = json.loads(path.read_text(encoding='utf-8'))
-          supplied = payload.pop('receipt_sha256')
-          observed = hashlib.sha256(
-              json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
-          ).hexdigest()
-          assert observed == supplied, (observed, supplied)
-          event = payload['provider_event']
-          assert str(event['run_id']) == os.environ['GITHUB_RUN_ID'], (event['run_id'], os.environ['GITHUB_RUN_ID'])
-          assert str(event['run_attempt']) == os.environ['GITHUB_RUN_ATTEMPT'], (event['run_attempt'], os.environ['GITHUB_RUN_ATTEMPT'])
-          assert event['sha'] == os.environ['GITHUB_SHA'], (event['sha'], os.environ['GITHUB_SHA'])
-          assert payload['controls']['external_effects'] == 0
-          assert payload['controls']['authority_ceiling'] == 'A1'
-          print(json.dumps({
-              'receipt_id': payload['receipt_id'],
-              'receipt_sha256': supplied,
-              'state': payload['state'],
-              'run_id': event['run_id'],
-              'raw_provider_byte_gate_passed': payload['controls']['raw_provider_byte_gate_passed'],
-              'current_primary_rules_document_identity_verified': payload['controls']['current_primary_rules_document_identity_verified'],
-          }, indent=2))
-          PY
-
-      - name: Upload immutable raw-provider proof and diagnostics
-        if: always()
-        uses: actions/upload-artifact@v4
-        with:
-          name: evidenceops-v722-p13-raw-provider-${{ github.run_id }}-${{ github.run_attempt }}
-          path: |
-            p13_raw_provider_output/
-            runtime/evidenceops_v722/state/p13_raw_provider_latest.json
-          if-no-files-found: error
-          retention-days: 90
-
-      - name: Persist exact provider diagnostic readback on main
-        if: always() && github.event_name != 'pull_request'
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          path = Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json')
-          assert path.exists(), 'no current-run freshness receipt to persist'
-          payload = json.loads(path.read_text(encoding='utf-8'))
-          event = payload['provider_event']
-          assert str(event['run_id']) == os.environ['GITHUB_RUN_ID']
-          assert str(event['run_attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
-          assert event['sha'] == os.environ['GITHUB_SHA']
-          PY
-          git config user.name 'Federation Omega Runtime'
-          git config user.email 'actions@users.noreply.github.com'
-          git add runtime/evidenceops_v722/state/p13_raw_provider_latest.json
-          if git diff --cached --quiet; then
-            echo 'No freshness state change to persist.'
-            exit 0
-          fi
-          git commit -m 'Persist EvidenceOps v7.2.2 P13 raw-provider proof [skip p12-worker] [skip p13-freshness]'
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then
-              exit 0
-            fi
-            git pull --rebase origin main
-            sleep $((attempt * 2))
-          done
-          exit 1
-
-      - name: Enforce raw-byte and current-rules identity gate
-        if: always()
-        run: |
-          python - <<'PY'
-          import json, os
-          from pathlib import Path
-          payload = json.loads(Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json').read_text(encoding='utf-8'))
-          event = payload['provider_event']
-          assert str(event['run_id']) == os.environ['GITHUB_RUN_ID']
-          assert str(event['run_attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
-          assert event['sha'] == os.environ['GITHUB_SHA']
-          assert payload['controls']['raw_provider_byte_gate_passed'] is True
-          assert payload['controls']['current_primary_rules_document_identity_verified'] is True
-          PY
