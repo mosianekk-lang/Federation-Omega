@@ -6,7 +6,7 @@
   },
   "actual_hash": "98fcaa29b9b665249c7c3590502409d8712d4b1975f585a0d06b12f7c6fb1947",
   "actual_path": "runtime/omega-max/state/canary_state.json",
-  "checked_at": "2026-08-03T15:18:36.426659+00:00",
+  "checked_at": "2026-08-03T18:07:33.852413+00:00",
   "classification": "IN_SYNC",
   "desired": {
     "generation": 1,
