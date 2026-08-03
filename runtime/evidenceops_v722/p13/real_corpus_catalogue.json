@@ -1,0 +1,44 @@
+{
+  "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_REAL_CORPUS_CATALOGUE_V1",
+  "programme_id": "OMEGAMAX-SOL-EVIDENCEOPS-FULL-MATURITY-V722",
+  "source_snapshot": {
+    "filename": "SA_LEGAL_SOURCE_SNAPSHOT_2026-08-03.json",
+    "sha256": "d452253aa6fc673aada1946163c914cc8fb845443f3d74c387afbff015de88eb",
+    "observation_record_sha256": "a75a6869d711f94f4373c68075a682c6e8e86ed7203b124da92cee828d961eed",
+    "observed_at_utc": "2026-08-03T16:56:40Z"
+  },
+  "source_registry": {
+    "filename": "SA_LEGAL_SOURCE_REGISTRY.json",
+    "sha256": "5c6429f868157054c708a6d296eb897a6f0f2d8b5167319e508c574de77b077e",
+    "snapshot_observation_record_sha256": "a75a6869d711f94f4373c68075a682c6e8e86ed7203b124da92cee828d961eed"
+  },
+  "sources": [
+    {"source_id":"SRC-SA-LABOUR-COURT-RULES-2024","primary_source":true,"lex_currentness_state":"CURRENT","expected_assessment":"LEGAL_PROPOSITION_VALIDATED"},
+    {"source_id":"SRC-SA-LABOUR-APPEAL-COURT-RULES-2024","primary_source":true,"lex_currentness_state":"CURRENT","expected_assessment":"LEGAL_PROPOSITION_VALIDATED"},
+    {"source_id":"SRC-SA-LRA-ACT-66-1995","primary_source":true,"lex_currentness_state":"UNVERIFIED","expected_assessment":"LEGAL_PROPOSITION_BLOCKED"},
+    {"source_id":"SRC-SA-ECTA-ACT-25-2002","primary_source":true,"lex_currentness_state":"UNVERIFIED","expected_assessment":"LEGAL_PROPOSITION_BLOCKED"},
+    {"source_id":"SRC-SA-CCMA-RULES-INFO-2025-01","primary_source":false,"lex_currentness_state":"CURRENT","expected_assessment":"LEGAL_PROPOSITION_BLOCKED"},
+    {"source_id":"SRC-SA-CCMA-ULP-INFO-2025-01","primary_source":false,"lex_currentness_state":"CURRENT","expected_assessment":"LEGAL_PROPOSITION_BLOCKED"},
+    {"source_id":"SRC-SA-LRA-AMENDMENT-BILLS-2025-2026","primary_source":true,"lex_currentness_state":"PROPOSED","expected_assessment":"LEGAL_PROPOSITION_BLOCKED"}
+  ],
+  "authority_boundary": {
+    "authority_ceiling": "A1",
+    "external_send": false,
+    "legal_filing": false,
+    "live_hearing_recording": false,
+    "live_financial_action": false,
+    "destructive_action": false,
+    "provider_admin": false,
+    "external_effects": 0
+  },
+  "baseline_receipt": {
+    "receipt_id": "RCP-V722-P13-REAL-CORPUS-20260804",
+    "receipt_sha256": "3afea4819580e74a7d1957d85172daef4d97e8856d1cb1de184723ed1a47b709",
+    "automated_control_checks": 23,
+    "execution_seconds": 0.2884,
+    "sources_classified": 7,
+    "provider_currentness_blocks_exercised": 5,
+    "external_effects": 0
+  },
+  "truth_boundary": "This catalogue is a normalized, hash-linked control fixture derived from the verified P13 real-corpus canary. Scheduled ledger cycles measure classification and operational stability; they do not refresh the underlying law, prove a legal proposition, or establish case outcomes."
+}
