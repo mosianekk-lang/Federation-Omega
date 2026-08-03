@@ -1,0 +1,93 @@
+name: Alpha Omega Commercial C10-C15 Proof
+
+on:
+  pull_request:
+    paths:
+      - "alpha_omega_commercial/commercial_assurance.py"
+      - "alpha_omega_commercial/test_commercial_assurance.py"
+      - "alpha_omega_commercial/prove_c10_c15.py"
+      - "alpha_omega_commercial/programme.json"
+      - "alpha_omega_commercial/README.md"
+      - ".github/workflows/alpha-omega-commercial-c10-c15.yml"
+  push:
+    branches: [main]
+    paths:
+      - "alpha_omega_commercial/commercial_assurance.py"
+      - "alpha_omega_commercial/test_commercial_assurance.py"
+      - "alpha_omega_commercial/prove_c10_c15.py"
+      - "alpha_omega_commercial/programme.json"
+      - "alpha_omega_commercial/README.md"
+      - ".github/workflows/alpha-omega-commercial-c10-c15.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile commercial package
+        run: python -m compileall -q alpha_omega_commercial
+      - name: Run commercial regression tests
+        working-directory: alpha_omega_commercial
+        run: python -m unittest -v test_commercial_platform.py test_commercial_expansion.py test_commercial_assurance.py
+      - name: Execute reversible C10-C15 proof
+        run: python alpha_omega_commercial/prove_c10_c15.py --output alpha_omega_commercial/artifacts/c10-c15
+      - name: Validate stage gates and truth boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('alpha_omega_commercial/artifacts/c10-c15')
+          receipt = json.loads((root / 'commercial-c10-c15-receipt.json').read_text())
+          maturity = json.loads((root / 'commercial-maturity.json').read_text())
+          dashboard = json.loads((root / 'revenue-operations-dashboard.json').read_text())
+
+          assert receipt['stages']['C10']['status'] == 'REFERENCE_ASSURANCE_VERIFIED_ENTERPRISE_ATTESTATION_REQUIRED'
+          assert receipt['stages']['C10']['proof']['control_coverage_pass']
+          assert receipt['stages']['C10']['dr']['pass']
+          assert receipt['stages']['C11']['status'] == 'REFERENCE_EXECUTION_VERIFIED_AND_ROLLED_BACK'
+          assert receipt['stages']['C11']['owner_reserved'] == 'OWNER_APPROVAL_REQUIRED'
+          assert receipt['stages']['C12']['status'] == 'MARKET_PROOF_REQUIRED'
+          assert not receipt['stages']['C12']['proof']['publication_allowed']
+          assert receipt['stages']['C13']['status'] == 'REFERENCE_REVOPS_VERIFIED_ZERO_REVENUE'
+          assert receipt['stages']['C13']['quote_status'] == 'DRAFT_OWNER_APPROVAL_REQUIRED'
+          assert dashboard['verified_revenue_events'] == 0
+          assert dashboard['verified_revenue_by_currency'] == {}
+          assert receipt['stages']['C14']['status'] == 'REFERENCE_SCALE_VERIFIED_PRODUCTION_LOAD_REQUIRED'
+          assert all(receipt['stages']['C14']['proof']['gates'].values())
+          assert receipt['ledger']['pass']
+          assert maturity['technical_reference_ready']
+          assert not maturity['full_commercial_maturity']
+          assert maturity['canonical_status'] == 'COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN'
+          assert not maturity['external_gates']['payment_provider_revenue']
+          assert not maturity['external_gates']['customer_demand']
+          assert not maturity['external_gates']['live_cloud_provider']
+          assert receipt['truth_boundaries']['cloud_run'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          PY
+      - name: Verify no secret-shaped values are present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          root = Path('alpha_omega_commercial/artifacts/c10-c15')
+          forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for path in root.rglob('*'):
+              if path.is_file():
+                  text = path.read_text(errors='ignore')
+                  assert not forbidden.search(text), f'credential-shaped material in {path}'
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-commercial-c10-c15-proof
+          path: alpha_omega_commercial/artifacts/c10-c15
+          retention-days: 90
+          if-no-files-found: error

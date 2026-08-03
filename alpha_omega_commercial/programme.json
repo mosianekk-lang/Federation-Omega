@@ -3,7 +3,24 @@
   "owner": "Kim Kagiso Mosiane",
   "objective": "Turn Alpha→Omega into a commercially viable service-enabled platform before promoting self-service SaaS",
   "execution_rule": "Execute and promote stages in dependency order. Technical reference-provider proof may advance implementation, but market, payment, cloud, customer and legal claims require fresh external evidence.",
-  "canonical_status": "C01_C09_REFERENCE_PLATFORM_VERIFIED_EXTERNAL_PROVIDER_AND_MARKET_GATES_OPEN",
+  "canonical_status": "C01_C15_REFERENCE_PLATFORM_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+  "owner_reserved_authority": [
+    "financial commitments",
+    "contracts",
+    "external communications",
+    "consequential releases",
+    "revenue recognition confirmation"
+  ],
+  "external_maturity_gates": [
+    "customer demand and price acceptance",
+    "signed customer contract",
+    "payment-provider revenue receipt",
+    "live cloud-provider execution",
+    "enterprise assurance or certification",
+    "partner adoption",
+    "external customer case study",
+    "production scale and recovery evidence"
+  ],
   "stages": [
     {"id":"C01","name":"Commercial Product Definition","depends_on":[],"status":"OPERATIONAL_FOUNDATION_VERIFIED_MARKET_PROOF_REQUIRED","maturity_gate":"offer catalogue, ICP, pricing and sales assets pass deterministic contract tests; external demand remains unproven"},
     {"id":"C02","name":"Tenant and Identity Foundation","depends_on":["C01"],"status":"REFERENCE_PROVIDER_VERIFIED","maturity_gate":"tenant isolation, RBAC, hash-chained audit and data-boundary tests"},
@@ -14,11 +31,11 @@
     {"id":"C07","name":"Provider Adapter Expansion","depends_on":["C03"],"status":"THREE_REFERENCE_ADAPTERS_VERIFIED_EXTERNAL_PROVIDER_EXPANSION_REQUIRED","maturity_gate":"filesystem, SQLite and deterministic archive adapters pass deploy, readback, health, persistence and rollback; external provider breadth remains open"},
     {"id":"C08","name":"Solution Catalogue and Capability Marketplace","depends_on":["C01","C05","C07"],"status":"REFERENCE_MARKETPLACE_VERIFIED","maturity_gate":"immutable releases, lineage, tenant entitlement and licensing controls verified; no marketplace sale claimed"},
     {"id":"C09","name":"Partner and White-Label Programme","depends_on":["C05","C08"],"status":"REFERENCE_PARTNER_TENANT_VERIFIED_OWNER_APPROVAL_AND_ADOPTION_REQUIRED","maturity_gate":"partner tenant, branding, draft licence and revenue-share calculation verified; partner contract and adoption required"},
-    {"id":"C10","name":"Security, Privacy and Enterprise Assurance","depends_on":["C02","C03","C06"],"status":"ELIGIBLE_FOR_REFERENCE_ASSURANCE_IMPLEMENTATION","maturity_gate":"security pack, privacy controls, retention, DR and enterprise audit evidence"},
-    {"id":"C11","name":"Customer Portal and Self-Service SaaS","depends_on":["C04","C05","C06","C08","C10"],"status":"BLOCKED_UNTIL_C10_REFERENCE_ASSURANCE_SERVICE_ENABLED_PLATFORM_FIRST","maturity_gate":"customer-facing portal, subscription, provisioning and lifecycle management"},
-    {"id":"C12","name":"Case Studies and Commercial Proof","depends_on":["C01","C06","C08"],"status":"EVIDENCE_FRAMEWORK_ELIGIBLE_MARKET_PROOF_REQUIRED","maturity_gate":"verified savings, time reduction, reliability and customer outcome evidence"},
-    {"id":"C13","name":"Sales and Revenue Operations","depends_on":["C01","C05","C12"],"status":"BLOCKED_BY_EXTERNAL_CASE_STUDY_EVIDENCE","maturity_gate":"lead funnel, quoting, contract, renewal and revenue dashboards"},
-    {"id":"C14","name":"Scale, Reliability and Unit Economics","depends_on":["C05","C06","C07","C11"],"status":"NOT_YET_ELIGIBLE","maturity_gate":"load, margin, support burden, churn and recovery targets proven"},
-    {"id":"C15","name":"Commercial Maturity and Succession","depends_on":["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14"],"status":"COMMERCIAL_COMPLETION_BLOCKED","maturity_gate":"repeatable acquisition, delivery, recurring revenue, governance and succession drill"}
+    {"id":"C10","name":"Security, Privacy and Enterprise Assurance","depends_on":["C02","C03","C06"],"status":"REFERENCE_ASSURANCE_VERIFIED_ENTERPRISE_ATTESTATION_REQUIRED","maturity_gate":"evidence-bound access, audit, privacy, retention and recovery controls; completed privacy workflow; integrity and RTO-passing DR drill; external attestation remains open"},
+    {"id":"C11","name":"Customer Portal and Self-Service SaaS","depends_on":["C04","C05","C06","C08","C10"],"status":"SERVICE_ENABLED_REFERENCE_PLATFORM_VERIFIED_EXTERNAL_PROVIDER_AND_SUBSCRIPTION_BLOCKED","maturity_gate":"effect-bounded service requests pass execution, exact readback, health and rollback; owner-reserved subscription and consequential actions remain held; no self-service SaaS or payment claim"},
+    {"id":"C12","name":"Case Studies and Commercial Proof","depends_on":["C01","C06","C08"],"status":"EVIDENCE_FRAMEWORK_VERIFIED_MARKET_PROOF_REQUIRED","maturity_gate":"baseline, outcome, provenance and publication gates are operational; internal or synthetic evidence cannot establish customer outcomes"},
+    {"id":"C13","name":"Sales and Revenue Operations","depends_on":["C01","C05","C12"],"status":"REFERENCE_REVOPS_VERIFIED_OWNER_APPROVAL_AND_REVENUE_PROOF_REQUIRED","maturity_gate":"lead funnel, qualification, draft quotation, owner approval, draft contract and payment-receipt recognition controls are operational; verified revenue remains zero"},
+    {"id":"C14","name":"Scale, Reliability and Unit Economics","depends_on":["C05","C06","C07","C11"],"status":"REFERENCE_SCALE_RELIABILITY_ECONOMICS_VERIFIED_PRODUCTION_PROOF_REQUIRED","maturity_gate":"deterministic load, latency, error, recovery, margin and support-burden gates pass in the reference provider; production load and churn evidence remain open"},
+    {"id":"C15","name":"Commercial Maturity and Succession","depends_on":["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14"],"status":"COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN","maturity_gate":"portable state, hash-chained ledger, runbooks, authority boundaries, readback and succession package verified; full maturity requires every external gate"}
   ]
 }
