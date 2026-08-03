@@ -1,0 +1,59 @@
+name: Alpha Omega v3 P06-P08 Provider Proof
+
+on:
+  pull_request:
+    paths:
+      - "alpha_omega_v30/sandbox_fleet.py"
+      - "alpha_omega_v30/capability_market.py"
+      - "alpha_omega_v30/chaos_factory.py"
+      - "alpha_omega_v30/prove_p06_p08.py"
+      - "alpha_omega_v30/test_p06_p08.py"
+      - ".github/workflows/alpha-omega-v30-p06-p08.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p06-p08-provider-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test runtime
+        run: python -m pip install pytest
+      - name: Run phase tests
+        run: pytest -q alpha_omega_v30/test_p06_p08.py
+      - name: Execute provider proof
+        run: python -m alpha_omega_v30.prove_p06_p08 --workspace ./p06_p08_workspace
+      - name: Verify exact proof outputs
+        run: |
+          test -s ./p06_p08_workspace/p06_p08_receipt.json
+          test -s ./p06_p08_workspace/sandbox_ledger.jsonl
+          test -s ./p06_p08_workspace/capability_registry.jsonl
+          test -s ./p06_p08_workspace/chaos_report.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('p06_p08_workspace')
+          receipt = json.loads((root / 'p06_p08_receipt.json').read_text())
+          assert receipt['phases']['P06']['status'] == 'OPERATIONAL_VERIFIED_GITHUB_ACTIONS'
+          assert receipt['phases']['P06']['execution']
+          assert receipt['phases']['P06']['readback']
+          assert receipt['phases']['P06']['health']
+          assert receipt['phases']['P06']['persistence']
+          assert receipt['phases']['P06']['rollback']
+          assert receipt['phases']['P07']['registry']['valid']
+          assert receipt['phases']['P08']['chaos']['valid']
+          assert receipt['phases']['P08']['chaos']['recovery_score'] == 1.0
+          PY
+      - name: Upload immutable proof package
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-v30-p06-p08-proof
+          path: p06_p08_workspace/
+          if-no-files-found: error
+          retention-days: 90

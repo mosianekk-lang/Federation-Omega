@@ -1,4 +1,4 @@
-from institution import (
+from alpha_omega_v30.institution import (
     ActionContract,
     AlphaOmegaInstitution,
     CausalMultiversePlanner,
