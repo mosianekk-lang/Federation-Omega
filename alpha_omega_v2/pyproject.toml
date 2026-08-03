@@ -1,0 +1,16 @@
+[project]
+name = "alpha-omega-solution-foundry"
+version = "2.0.0"
+description = "Autonomous concept-to-operational-system solution foundry"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+ao-foundry = "alpha_omega_foundry.cli:main"
+
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[tool.setuptools.packages.find]
+where = ["src"]
