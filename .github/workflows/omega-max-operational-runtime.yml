@@ -92,11 +92,11 @@ jobs:
           set -euo pipefail
           git config user.name "omega-max-runtime[bot]"
           git config user.email "omega-max-runtime[bot]@users.noreply.github.com"
-          git pull --rebase origin main
           git add runtime/omega-max/results runtime/omega-max/proofs runtime/omega-max/heartbeat runtime/omega-max/drift runtime/omega-max/snapshots runtime/omega-max/state
           if git diff --cached --quiet; then
             echo "No runtime state change"
           else
             git commit -m "Persist Omega-Max operational runtime receipt [skip omega-runtime]"
+            git pull --rebase origin main
             git push origin HEAD:main
           fi
