@@ -1,24 +1,24 @@
 {
-  "trigger_id": "CSE-SHADOW-BOOTSTRAP-006",
+  "trigger_id": "CSE-SHADOW-BOOTSTRAP-007",
   "candidate_version": "1.1.0",
   "requested_runtime": "github_actions_shadow",
   "authority": "A1",
   "synthetic_data_only": true,
   "external_effect": false,
   "provider_mutation": false,
-  "trigger_reason": "produce second successful provider artifact for trusted canonical persistence and recurrence proof",
+  "trigger_reason": "third provider cycle proving direct canonical persistence after proof gate",
   "expected_proof": [
     "exact_wheel_sha256",
     "valid_wheel_distribution_metadata",
     "migration_compatibility_readback",
-    "ten_module_execution",
+    "state_restore_from_canonical_main",
+    "ten_module_exactly_once_execution",
     "semantic_readback",
-    "bounded_evolution",
+    "bounded_evolution_plateau",
     "rollback_reapply",
-    "hash_linked_proof",
-    "durable_repository_state",
+    "hash_linked_proof_extension",
+    "canonical_main_persistence",
     "heartbeat",
-    "drift_in_sync",
-    "workflow_run_canonical_persistence"
+    "drift_in_sync"
   ]
 }
