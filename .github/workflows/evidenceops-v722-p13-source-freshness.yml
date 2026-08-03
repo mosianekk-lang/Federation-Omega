@@ -1,4 +1,4 @@
-# Single-writer ownership verification revision: 2026-08-04T01:43:00+02:00
+# Single-writer and reproducible-dependency verification: 2026-08-04T01:49:00+02:00
 name: EvidenceOps v7.2.2 P13 Raw Provider Freshness
 
 on:
@@ -41,15 +41,19 @@ jobs:
           python -m pip install --disable-pip-version-check \
             pypdf==5.9.0 \
             requests==2.32.5 \
-            certifi \
-            cryptography
+            certifi==2026.7.22 \
+            cryptography==50.0.0
           python - <<'PY'
           import certifi
           import cryptography
           import requests
           from pypdf import PdfReader
+          assert requests.__version__ == '2.32.5'
+          assert cryptography.__version__ == '50.0.0'
+          assert certifi.__version__ == '2026.07.22'
           print({
               'requests': requests.__version__,
+              'certifi': certifi.__version__,
               'certifi_bundle': certifi.where(),
               'cryptography': cryptography.__version__,
               'pypdf_reader': PdfReader.__name__,
