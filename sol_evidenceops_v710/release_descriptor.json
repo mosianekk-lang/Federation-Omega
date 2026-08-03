@@ -1,0 +1,14 @@
+{
+  "archive_bytes": 298542,
+  "archive_sha256": "9bab32edd3af554f033932e2e8d5a984922ff596c1efd3d3a4e1f56a9d29a8b7",
+  "artifact": "OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.1.0.zip",
+  "authority_ceiling": "A1",
+  "expected_external_effects": 0,
+  "expected_source_tests": 148,
+  "schema": "OMEGAMAX_GITHUB_EXACT_RELEASE_DESCRIPTOR_V1",
+  "source_manifest_sha256": "8782d8b78fd2caf44bec70aabe463e98d96208b5c9f389ceda47fccca283630f",
+  "truth_boundary": "GitHub-hosted validation of the exact archive is not a long-running distributed control plane, legal effect, provider account proof or live financial execution.",
+  "version": "7.1.0",
+  "wheel_name": "omegamax_sol61_formation_runtime-7.1.0-py3-none-any.whl",
+  "wheel_sha256": "6b007d31f5e2ecadf76fc8e8bdd7e95e6ccc7d8d3f130b9a8090014f072b49f3"
+}
