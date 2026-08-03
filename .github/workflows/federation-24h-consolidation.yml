@@ -1,0 +1,65 @@
+name: Federation Omega 24H Consolidation Proof
+
+on:
+  pull_request:
+    paths:
+      - "federation_consolidation/**"
+      - "tests/test_federation_consolidation.py"
+      - "docs/FEDERATION_24H_IMPLEMENTATION_PLAN.md"
+      - ".github/workflows/federation-24h-consolidation.yml"
+      - "pyproject.toml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install
+        run: python -m pip install -e . pytest
+      - name: Tests
+        run: pytest -q tests/test_federation_consolidation.py
+      - name: Validate canonical state
+        run: python -m federation_consolidation.cli validate > federation-validation.json
+      - name: Alpha Omega release gate
+        run: python -m federation_consolidation.cli release-gate > federation-alpha-omega-gate.json
+      - name: E2E readback restart rollback canary
+        run: python -m federation_consolidation.cli canary --workspace runtime/federation-consolidation > federation-canary.json
+      - name: Succession bundle
+        run: python -m federation_consolidation.cli succession --source-commit "${GITHUB_SHA}" --workspace runtime/federation-consolidation > federation-succession.json
+      - name: Integrity manifest
+        run: |
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          files = sorted(
+              [p for p in Path("federation_consolidation").rglob("*") if p.is_file()]
+              + [Path("README.md"), Path("pyproject.toml")]
+              + sorted(Path("docs").glob("*.md"))
+              + [Path("tests/test_federation_consolidation.py")]
+          )
+          manifest = {}
+          for path in files:
+              manifest[str(path)] = hashlib.sha256(path.read_bytes()).hexdigest()
+          Path("federation-integrity-manifest.json").write_text(
+              json.dumps(manifest, indent=2, sort_keys=True), encoding="utf-8"
+          )
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: federation-24h-consolidation-proof
+          retention-days: 90
+          path: |
+            federation-validation.json
+            federation-alpha-omega-gate.json
+            federation-canary.json
+            federation-succession.json
+            federation-integrity-manifest.json
+            runtime/federation-consolidation/
