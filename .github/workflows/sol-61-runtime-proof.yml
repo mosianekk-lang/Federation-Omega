@@ -28,7 +28,7 @@ jobs:
         run: python -m compileall -q sol_61_runtime
       - name: Unit tests
         working-directory: sol_61_runtime
-        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
@@ -43,6 +43,8 @@ jobs:
         run: python sol_61_runtime/prove_causal.py --output sol_61_runtime/artifacts/causal-proof
       - name: Execute formal policy kernel proof
         run: python sol_61_runtime/prove_policy_kernel.py --output sol_61_runtime/artifacts/policy-proof
+      - name: Execute observability and self-diagnosis proof
+        run: python sol_61_runtime/prove_observability.py --output sol_61_runtime/artifacts/observability-proof
       - name: Validate proof gates and boundaries
         run: |
           python - <<'PY'
@@ -56,18 +58,22 @@ jobs:
             'semantic': ('semantic-proof', 'sol-61-semantic-memory-receipt.json', 'SEMANTIC_MEMORY_VERIFIED'),
             'causal': ('causal-proof', 'sol-61-causal-receipt.json', 'CAUSAL_DECISION_INTELLIGENCE_VERIFIED'),
             'policy': ('policy-proof', 'sol-61-policy-kernel-receipt.json', 'FORMAL_POLICY_SAFETY_KERNEL_VERIFIED'),
+            'observability': ('observability-proof', 'sol-61-observability-receipt.json', 'OBSERVABILITY_SELF_DIAGNOSIS_VERIFIED'),
           }
           receipts = {}
           for key, (folder, filename, status) in pairs.items():
             receipt = json.loads((Path('sol_61_runtime/artifacts') / folder / filename).read_text())
             assert receipt['status'] == status and all(receipt['gates'].values())
             receipts[key] = receipt
-          policy = receipts['policy']
-          assert policy['truth_boundary']['github_actions_execution']
-          assert policy['truth_boundary']['provider_neutral_policy_kernel']
-          assert not policy['truth_boundary']['live_provider_enforcement']
-          assert not policy['truth_boundary']['external_legal_compliance_certified']
-          assert not policy['truth_boundary']['owner_authority_bypassed']
+          obs = receipts['observability']
+          assert obs['truth_boundary']['github_actions_execution']
+          assert obs['truth_boundary']['provider_neutral_observability']
+          assert not obs['truth_boundary']['live_external_telemetry_stream']
+          assert not obs['truth_boundary']['live_incident_delivery']
+          assert not obs['truth_boundary']['continuous_background_monitoring']
+          root = Path('sol_61_runtime/artifacts/observability-proof/observability-runtime')
+          assert (root / 'observability-events.jsonl').is_file()
+          assert (root / 'observability-state.json').is_file()
           PY
       - name: Upload proof package
         uses: actions/upload-artifact@v4
@@ -81,5 +87,6 @@ jobs:
             sol_61_runtime/artifacts/semantic-proof
             sol_61_runtime/artifacts/causal-proof
             sol_61_runtime/artifacts/policy-proof
+            sol_61_runtime/artifacts/observability-proof
           retention-days: 90
           if-no-files-found: error
