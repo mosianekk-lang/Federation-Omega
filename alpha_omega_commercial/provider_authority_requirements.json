@@ -1,0 +1,115 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "requirements": [
+    {
+      "domain": "github_actions",
+      "stage": "C03",
+      "provider": "github-actions",
+      "purpose": "Execute provider-native commercial proof workflows and inspect immutable artifacts.",
+      "required_scopes": ["artifact_upload", "ci_execution", "job_step_readback", "source_read"],
+      "required_proofs": ["provider_identity", "execution", "readback", "persistence"],
+      "max_age_seconds": 86400,
+      "owner_reserved_actions": [],
+      "depends_on": []
+    },
+    {
+      "domain": "google_drive_document_release",
+      "stage": "C03",
+      "provider": "google-drive",
+      "purpose": "Publish and read back private commercial release receipts without exposing secret material.",
+      "required_scopes": ["content_export", "document_release_readback", "modified_time_readback"],
+      "required_proofs": ["provider_identity", "readback", "persistence"],
+      "max_age_seconds": 604800,
+      "owner_reserved_actions": [],
+      "depends_on": ["github_actions"]
+    },
+    {
+      "domain": "cloud_run",
+      "stage": "C03",
+      "provider": "google-cloud-run",
+      "purpose": "Establish keyless deploy, service identity and rollback authority for live commercial workloads.",
+      "required_scopes": ["deploy", "service_identity_readback", "traffic_readback", "revision_readback", "rollback"],
+      "required_proofs": ["provider_identity", "execution", "readback", "health", "persistence", "rollback"],
+      "max_age_seconds": 86400,
+      "owner_reserved_actions": ["consequential releases"],
+      "depends_on": ["google_drive_document_release"]
+    },
+    {
+      "domain": "google_drive_binary_artifact_transfer",
+      "stage": "C07",
+      "provider": "google-drive",
+      "purpose": "Transfer the exact provider proof artifact into the authorised Drive destination and verify hash equality.",
+      "required_scopes": ["binary_upload", "binary_download", "content_hash_readback", "delete_or_restore"],
+      "required_proofs": ["provider_identity", "execution", "readback", "persistence", "rollback"],
+      "max_age_seconds": 604800,
+      "owner_reserved_actions": ["consequential releases"],
+      "depends_on": ["google_drive_document_release"]
+    },
+    {
+      "domain": "partner_market",
+      "stage": "C09",
+      "provider": "external-partner",
+      "purpose": "Admit externally verified partner adoption only after contract and communication authority are confirmed.",
+      "required_scopes": ["partner_identity", "agreement_readback", "adoption_readback"],
+      "required_proofs": ["provider_identity", "readback", "persistence"],
+      "max_age_seconds": 2592000,
+      "owner_reserved_actions": ["contracts", "external communications"],
+      "depends_on": ["google_drive_binary_artifact_transfer"]
+    },
+    {
+      "domain": "external_attestation",
+      "stage": "C10",
+      "provider": "external-assurance-provider",
+      "purpose": "Admit independent assurance evidence with issuer identity, scope, validity and revocation readback.",
+      "required_scopes": ["issuer_identity", "attestation_scope", "validity_readback", "revocation_readback"],
+      "required_proofs": ["provider_identity", "readback", "persistence"],
+      "max_age_seconds": 7776000,
+      "owner_reserved_actions": ["external communications"],
+      "depends_on": ["partner_market"]
+    },
+    {
+      "domain": "live_cloud_operations",
+      "stage": "C11",
+      "provider": "live-operations-provider",
+      "purpose": "Operate the service-enabled platform with health, persistence, incident and rollback evidence.",
+      "required_scopes": ["service_execute", "health_readback", "state_readback", "incident_readback", "rollback"],
+      "required_proofs": ["provider_identity", "execution", "readback", "health", "persistence", "rollback"],
+      "max_age_seconds": 86400,
+      "owner_reserved_actions": ["consequential releases"],
+      "depends_on": ["cloud_run", "external_attestation"]
+    },
+    {
+      "domain": "customer_market",
+      "stage": "C12",
+      "provider": "external-customer",
+      "purpose": "Admit customer demand, price acceptance and customer outcome evidence from an external source.",
+      "required_scopes": ["customer_identity", "demand_readback", "price_acceptance_readback", "outcome_readback"],
+      "required_proofs": ["provider_identity", "readback", "persistence"],
+      "max_age_seconds": 2592000,
+      "owner_reserved_actions": ["external communications"],
+      "depends_on": ["live_cloud_operations"]
+    },
+    {
+      "domain": "payment_provider",
+      "stage": "C13",
+      "provider": "payment-provider",
+      "purpose": "Admit settled payment evidence and recognise revenue only after owner confirmation.",
+      "required_scopes": ["payment_event_readback", "settlement_readback", "currency_amount_readback", "refund_readback"],
+      "required_proofs": ["provider_identity", "execution", "readback", "persistence", "rollback"],
+      "max_age_seconds": 86400,
+      "owner_reserved_actions": ["financial commitments", "revenue recognition confirmation"],
+      "depends_on": ["customer_market"]
+    },
+    {
+      "domain": "production_scale",
+      "stage": "C14",
+      "provider": "production-observability-provider",
+      "purpose": "Admit production-scale latency, error, recovery, margin and support-burden evidence.",
+      "required_scopes": ["latency_readback", "error_readback", "recovery_readback", "cost_readback", "support_readback"],
+      "required_proofs": ["provider_identity", "execution", "readback", "health", "persistence"],
+      "max_age_seconds": 604800,
+      "owner_reserved_actions": [],
+      "depends_on": ["payment_provider"]
+    }
+  ]
+}
