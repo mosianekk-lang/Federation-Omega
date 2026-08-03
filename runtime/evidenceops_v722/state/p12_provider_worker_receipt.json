@@ -1,13 +1,13 @@
 {
   "artifacts": {
-    "health_sha256": "80981e562bd542cc6c53656601865211a74aad0276dd803aad5da83f9f68b1a4",
-    "policy_log_sha256": "e211a54fe0271f37433f20e00cca7b1c37a93611ca5999f2ea46ec3b6e98b96a",
-    "replica_sha256": "cfe7429107fa2b1536b41440f2bf84bdc9bbe139c3e3fabf710adc63d8bb7d0a",
-    "rollback_snapshot_sha256": "472545e6cd2d8fe034f920637939df0711d424d36c14441a008e944cccc7b45a",
-    "state_sha256": "cfe7429107fa2b1536b41440f2bf84bdc9bbe139c3e3fabf710adc63d8bb7d0a"
+    "health_sha256": "c65eca4a5a57533409e30e9971553a1d9b89b11fdf057f8ba9a2b6b1ff3b7f34",
+    "policy_log_sha256": "985c35c9a3541e438e502c3c2aa7d7a8a52352bf32fbc682d748d3b8af2d2373",
+    "replica_sha256": "5c231ef28c21ea551ec703cb2d5374e971414ecc33a8d083540969e631d09b8a",
+    "rollback_snapshot_sha256": "ebf43df97cf93209bc2f5e6f283f511e84dfc6b57138bbc15ec3ac3761b48a14",
+    "state_sha256": "5c231ef28c21ea551ec703cb2d5374e971414ecc33a8d083540969e631d09b8a"
   },
   "maturity": "OPERATIONAL_VERIFIED_SCOPED_GITHUB_ACTIONS_WORKER",
-  "observed_at_utc": "2026-08-03T23:03:58.950312Z",
+  "observed_at_utc": "2026-08-03T23:06:56.534766Z",
   "proof": {
     "checkpoint_integrity": true,
     "consequential_action_denied": true,
@@ -27,12 +27,12 @@
     "ref": "refs/heads/main",
     "repository": "mosianekk-lang/Federation-Omega",
     "run_attempt": "1",
-    "run_id": "30860953239",
-    "sha": "e7cbc8a6139e36db53cd9380d36b8b12221fae5d",
+    "run_id": "30861132558",
+    "sha": "fb9103a7c86601b4aeacc8e31c07894e03e3410c",
     "workflow": "EvidenceOps v7.2.2 P12 Provider Worker"
   },
-  "receipt_id": "RCP-V722-P12-30860953239-1",
-  "receipt_sha256": "a5f206c969c198dbc8bf333ddb9f350799f2ca2996c5190e00a1628ea4548f0a",
+  "receipt_id": "RCP-V722-P12-30861132558-1",
+  "receipt_sha256": "4da1d99450f28341a598da4f177578f18cae22fb7c79620709706ab299260140",
   "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P12_PROVIDER_WORKER_V1",
   "stage_id": "P12-SCOPED-GITHUB-WORKER",
   "truth_boundary": "This receipt proves a scoped hosted GitHub Actions worker for reversible A0/A1 state operations. It does not prove production Temporal/NATS/OPA/PostgreSQL/KMS infrastructure, external send, legal filing, live recording, financial action, provider administration, or other consequential authority.",
