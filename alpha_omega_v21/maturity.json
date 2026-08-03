@@ -1,0 +1,28 @@
+{
+  "version": "2.1.0",
+  "updated_at": "2026-08-03T08:10:00Z",
+  "maturity": {
+    "local_provider_contract": "OPERATIONAL_VERIFIED",
+    "local_release_artifact": "OPERATIONAL_VERIFIED",
+    "maintenance_heartbeat": "OPERATIONAL_VERIFIED_LOCAL",
+    "drift_detection": "TESTED",
+    "failure_classification": "TESTED",
+    "repair_rule_selection": "TESTED",
+    "learning_ledger": "TESTED",
+    "retirement_controls": "TESTED",
+    "github_source_deployment": "PROVIDER_READBACK_VERIFIED",
+    "github_ci_workflow_deployment": "PROVIDER_READBACK_VERIFIED",
+    "github_actions_run": "UNVERIFIED",
+    "github_hosted_artifact": "UNVERIFIED",
+    "google_drive_manifest_publish": "PROVIDER_READBACK_VERIFIED",
+    "google_drive_binary_package_publish": "NOT_IMPLEMENTED",
+    "cloud_run": "PROVIDER_BLOCKED"
+  },
+  "proof": {
+    "local_tests": "3 passed",
+    "source_package_sha256": "a0cb3b7dda3d2fb7795470df808108e48206a54a53b326bbd8c8da21460fe367",
+    "operational_artifact_sha256": "48826cfda1e12e43fcf2ea4f0ac8d82d63b3cf2dd773f188c8df52d8ca511553",
+    "receipt_id": "RCP-21d78a1fa8c1",
+    "drive_manifest_id": "1QpyuvGVEawPofhtmLKDbHW5q-VpS6iQA6Kyt35IQSQk"
+  }
+}
