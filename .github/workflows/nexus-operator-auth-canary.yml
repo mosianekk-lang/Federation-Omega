@@ -50,6 +50,8 @@ jobs:
 
       - name: Run authentication-only acceptance chain
         shell: bash
+        env:
+          DIRECT_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
         run: |
           set -euo pipefail
           set +x
@@ -67,9 +69,12 @@ jobs:
             VERIFY_RC=91
           fi
 
-          TOKEN=""
+          TOKEN="$DIRECT_FO_ADMIN_TOKEN"
+          TOKEN_SOURCE=""
           TOKEN_ERROR=""
-          if [[ -n "$ACCOUNT" ]]; then
+          if [[ -n "$TOKEN" ]]; then
+            TOKEN_SOURCE="github_actions_secret"
+          elif [[ -n "$ACCOUNT" ]]; then
             set +e
             TOKEN="$(gcloud secrets versions access latest --secret="$SECRET_ID" --project="$PROJECT_ID" 2>/tmp/nexus/token-error.txt)"
             TOKEN_RC=$?
@@ -86,6 +91,7 @@ jobs:
           export NEXUS_VERIFY_JSON="$VERIFY_JSON"
           export NEXUS_VERIFY_ERROR="$(tail -c 1600 /tmp/nexus/wif-verify-error.txt 2>/dev/null || true)"
           export NEXUS_TOKEN="$TOKEN"
+          export NEXUS_TOKEN_SOURCE="$TOKEN_SOURCE"
           export NEXUS_TOKEN_ERROR="$TOKEN_ERROR"
 
           python - <<'PY'
@@ -178,6 +184,7 @@ jobs:
               'wif_verify':redact(verify_payload),
               'wif_verify_error':os.environ.get('NEXUS_VERIFY_ERROR')[:1600] or None,
               'token_present':bool(token),
+              'token_source':os.environ.get('NEXUS_TOKEN_SOURCE') or 'none',
               'token_value_recorded':False,
               'token_error':os.environ.get('NEXUS_TOKEN_ERROR')[:1600] or None,
               'public_health':public_health,
