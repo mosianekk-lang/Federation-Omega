@@ -4,6 +4,7 @@
   "objective": "Turn Alpha→Omega into a commercially viable service-enabled platform before promoting self-service SaaS",
   "execution_rule": "Execute and promote stages in dependency order. Technical reference-provider proof may advance implementation, but market, payment, cloud, customer and legal claims require fresh external evidence.",
   "canonical_status": "C01_C15_REFERENCE_PLATFORM_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+  "canonical_receipt_integrity": "C15_SELF_CONSISTENCY_READBACK_AND_ROLLBACK_PROOF_REQUIRED",
   "owner_reserved_authority": [
     "financial commitments",
     "contracts",
@@ -36,6 +37,6 @@
     {"id":"C12","name":"Case Studies and Commercial Proof","depends_on":["C01","C06","C08"],"status":"EVIDENCE_FRAMEWORK_VERIFIED_MARKET_PROOF_REQUIRED","maturity_gate":"baseline, outcome, provenance and publication gates are operational; internal or synthetic evidence cannot establish customer outcomes"},
     {"id":"C13","name":"Sales and Revenue Operations","depends_on":["C01","C05","C12"],"status":"REFERENCE_REVOPS_VERIFIED_OWNER_APPROVAL_AND_REVENUE_PROOF_REQUIRED","maturity_gate":"lead funnel, qualification, draft quotation, owner approval, draft contract and payment-receipt recognition controls are operational; verified revenue remains zero"},
     {"id":"C14","name":"Scale, Reliability and Unit Economics","depends_on":["C05","C06","C07","C11"],"status":"REFERENCE_SCALE_RELIABILITY_ECONOMICS_VERIFIED_PRODUCTION_PROOF_REQUIRED","maturity_gate":"deterministic load, latency, error, recovery, margin and support-burden gates pass in the reference provider; production load and churn evidence remain open"},
-    {"id":"C15","name":"Commercial Maturity and Succession","depends_on":["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14"],"status":"COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN","maturity_gate":"portable state, hash-chained ledger, runbooks, authority boundaries, readback and succession package verified; full maturity requires every external gate"}
+    {"id":"C15","name":"Commercial Maturity and Succession","depends_on":["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14"],"status":"COMMERCIAL_READINESS_VERIFIED_CANONICAL_RECEIPT_INTEGRITY_GATE_ACTIVE_EXTERNAL_MATURITY_GATES_OPEN","maturity_gate":"portable state, hash-chained ledger, runbooks, authority boundaries, self-consistent embedded maturity, exact readback and rollback package verified; full maturity requires every external gate"}
   ]
 }
