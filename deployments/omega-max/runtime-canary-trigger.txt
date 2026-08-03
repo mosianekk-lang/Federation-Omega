@@ -1,2 +1,4 @@
-triggered_at=2026-08-03T09:05:00+02:00
-purpose=non-destructive provider identity, Cloud Run state, health and proof canary
+triggered_at=2026-08-03T14:19:57+02:00
+purpose=non-destructive provider identity, Cloud Run state, health and proof canary for FEVX CSE W5 shadow gate
+requested_by=FEVX-CSE-autonomous-continuation
+mutation_scope=GitHub trigger file only; provider canary is read-only
