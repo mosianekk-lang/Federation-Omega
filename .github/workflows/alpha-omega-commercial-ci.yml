@@ -1,0 +1,46 @@
+name: Alpha Omega Commercial Maturity CI
+
+on:
+  push:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-ci.yml'
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-ci.yml'
+  schedule:
+    - cron: '41 * * * *'
+
+jobs:
+  commercial-proof:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: alpha_omega_commercial
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install pytest
+      - run: pytest -q
+      - run: |
+          python - <<'PY'
+          import json
+          from commercial_kernel import CommercialKernel
+          kernel = CommercialKernel()
+          receipt = {
+              'state': 'COMMERCIAL_KERNEL_OPERATIONAL',
+              'catalogue': kernel.catalogue(),
+              'pilot_quote': kernel.quote('AO-PILOT', 12),
+              'pilot_economics': kernel.unit_economics('AO-PILOT', 12000),
+          }
+          open('commercial_receipt.json','w').write(json.dumps(receipt, indent=2))
+          PY
+      - run: test -f commercial_receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-commercial-proof
+          path: alpha_omega_commercial/commercial_receipt.json
+          if-no-files-found: error
