@@ -28,7 +28,7 @@ jobs:
         run: python -m compileall -q sol_61_runtime
       - name: Unit tests
         working-directory: sol_61_runtime
-        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
@@ -41,35 +41,33 @@ jobs:
         run: python sol_61_runtime/prove_semantic_memory.py --output sol_61_runtime/artifacts/semantic-proof
       - name: Execute causal intelligence proof
         run: python sol_61_runtime/prove_causal.py --output sol_61_runtime/artifacts/causal-proof
+      - name: Execute formal policy kernel proof
+        run: python sol_61_runtime/prove_policy_kernel.py --output sol_61_runtime/artifacts/policy-proof
       - name: Validate proof gates and boundaries
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
-          roots = {
-            'runtime': Path('sol_61_runtime/artifacts/proof'),
-            'worker': Path('sol_61_runtime/artifacts/worker-proof'),
-            'coordination': Path('sol_61_runtime/artifacts/coordination-proof'),
-            'adaptive': Path('sol_61_runtime/artifacts/adaptive-proof'),
-            'semantic': Path('sol_61_runtime/artifacts/semantic-proof'),
-            'causal': Path('sol_61_runtime/artifacts/causal-proof'),
+          pairs = {
+            'runtime': ('proof', 'sol-61-runtime-receipt.json', 'REFERENCE_RUNTIME_VERIFIED'),
+            'worker': ('worker-proof', 'sol-61-worker-receipt.json', 'DURABLE_WORKER_REFERENCE_VERIFIED'),
+            'coordination': ('coordination-proof', 'sol-61-coordination-receipt.json', 'DISTRIBUTED_COORDINATION_VERIFIED'),
+            'adaptive': ('adaptive-proof', 'sol-61-adaptive-receipt.json', 'ADAPTIVE_EXECUTION_VERIFIED'),
+            'semantic': ('semantic-proof', 'sol-61-semantic-memory-receipt.json', 'SEMANTIC_MEMORY_VERIFIED'),
+            'causal': ('causal-proof', 'sol-61-causal-receipt.json', 'CAUSAL_DECISION_INTELLIGENCE_VERIFIED'),
+            'policy': ('policy-proof', 'sol-61-policy-kernel-receipt.json', 'FORMAL_POLICY_SAFETY_KERNEL_VERIFIED'),
           }
-          receipt = json.loads((roots['runtime'] / 'sol-61-runtime-receipt.json').read_text())
-          worker = json.loads((roots['worker'] / 'sol-61-worker-receipt.json').read_text())
-          coordination = json.loads((roots['coordination'] / 'sol-61-coordination-receipt.json').read_text())
-          adaptive = json.loads((roots['adaptive'] / 'sol-61-adaptive-receipt.json').read_text())
-          semantic = json.loads((roots['semantic'] / 'sol-61-semantic-memory-receipt.json').read_text())
-          causal = json.loads((roots['causal'] / 'sol-61-causal-receipt.json').read_text())
-          assert receipt['status'] == 'REFERENCE_RUNTIME_VERIFIED' and all(receipt['gates'].values())
-          assert worker['status'] == 'DURABLE_WORKER_REFERENCE_VERIFIED' and all(worker['gates'].values())
-          assert coordination['status'] == 'DISTRIBUTED_COORDINATION_VERIFIED' and all(coordination['gates'].values())
-          assert adaptive['status'] == 'ADAPTIVE_EXECUTION_VERIFIED' and all(adaptive['gates'].values())
-          assert semantic['status'] == 'SEMANTIC_MEMORY_VERIFIED' and all(semantic['gates'].values())
-          assert causal['status'] == 'CAUSAL_DECISION_INTELLIGENCE_VERIFIED' and all(causal['gates'].values())
-          assert causal['truth_boundary']['github_actions_execution']
-          assert causal['truth_boundary']['provider_neutral_causal_model']
-          assert not causal['truth_boundary']['live_intervention_execution']
-          assert not causal['truth_boundary']['automatic_real_world_causality_proven']
+          receipts = {}
+          for key, (folder, filename, status) in pairs.items():
+            receipt = json.loads((Path('sol_61_runtime/artifacts') / folder / filename).read_text())
+            assert receipt['status'] == status and all(receipt['gates'].values())
+            receipts[key] = receipt
+          policy = receipts['policy']
+          assert policy['truth_boundary']['github_actions_execution']
+          assert policy['truth_boundary']['provider_neutral_policy_kernel']
+          assert not policy['truth_boundary']['live_provider_enforcement']
+          assert not policy['truth_boundary']['external_legal_compliance_certified']
+          assert not policy['truth_boundary']['owner_authority_bypassed']
           PY
       - name: Upload proof package
         uses: actions/upload-artifact@v4
@@ -82,5 +80,6 @@ jobs:
             sol_61_runtime/artifacts/adaptive-proof
             sol_61_runtime/artifacts/semantic-proof
             sol_61_runtime/artifacts/causal-proof
+            sol_61_runtime/artifacts/policy-proof
           retention-days: 90
           if-no-files-found: error
