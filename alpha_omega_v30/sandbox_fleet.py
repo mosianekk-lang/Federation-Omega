@@ -8,7 +8,7 @@ import subprocess
 import tempfile
 from dataclasses import asdict, dataclass, field
 from pathlib import Path, PurePosixPath
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 
 def _canonical(value: Any) -> bytes:
@@ -78,9 +78,9 @@ class ReceiptLedger:
         with self.path.open("a", encoding="utf-8") as handle:
             handle.write(json.dumps(entry, sort_keys=True) + "\n")
         readback = json.loads(self.path.read_text(encoding="utf-8").splitlines()[-1])
-        if readback != entry:
+        if _canonical(readback) != _canonical(entry):
             raise IOError("receipt readback mismatch")
-        return entry
+        return readback
 
     def verify(self) -> dict[str, Any]:
         previous = "GENESIS"
@@ -173,7 +173,7 @@ class OperationalSandbox:
                 status = "READBACK_MISSING"
             if artifact_total > self.policy.max_artifact_bytes:
                 status = "ARTIFACT_LIMIT"
-        except Exception as exc:  # deterministic receipt for validation and OS failures
+        except Exception as exc:
             error = f"{type(exc).__name__}: {exc}"
             status = "ERROR"
         finally:
