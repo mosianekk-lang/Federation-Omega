@@ -28,7 +28,7 @@ jobs:
         run: python -m compileall -q sol_61_runtime
       - name: Unit tests
         working-directory: sol_61_runtime
-        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py test_mission_autonomy.py
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
@@ -47,6 +47,8 @@ jobs:
         run: python sol_61_runtime/prove_observability.py --output sol_61_runtime/artifacts/observability-proof
       - name: Execute autonomous repair and recovery proof
         run: python sol_61_runtime/prove_repair.py --output sol_61_runtime/artifacts/repair-proof
+      - name: Execute end-to-end mission autonomy proof
+        run: python sol_61_runtime/prove_mission_autonomy.py --output sol_61_runtime/artifacts/mission-autonomy-proof
       - name: Validate proof gates and boundaries
         run: |
           python - <<'PY'
@@ -62,20 +64,21 @@ jobs:
             'policy': ('policy-proof', 'sol-61-policy-kernel-receipt.json', 'FORMAL_POLICY_SAFETY_KERNEL_VERIFIED'),
             'observability': ('observability-proof', 'sol-61-observability-receipt.json', 'OBSERVABILITY_SELF_DIAGNOSIS_VERIFIED'),
             'repair': ('repair-proof', 'sol-61-repair-receipt.json', 'AUTONOMOUS_REPAIR_RECOVERY_VERIFIED'),
+            'mission': ('mission-autonomy-proof', 'sol-61-mission-autonomy-receipt.json', 'END_TO_END_MISSION_AUTONOMY_VERIFIED'),
           }
           receipts = {}
           for key, (folder, filename, status) in pairs.items():
             receipt = json.loads((Path('sol_61_runtime/artifacts') / folder / filename).read_text())
             assert receipt['status'] == status and all(receipt['gates'].values())
             receipts[key] = receipt
-          repair = receipts['repair']
-          assert repair['truth_boundary']['github_actions_execution']
-          assert repair['truth_boundary']['provider_neutral_repair_fabric']
-          assert not repair['truth_boundary']['live_provider_repair_execution']
-          assert not repair['truth_boundary']['continuous_autonomous_repair']
-          assert not repair['truth_boundary']['controller_self_modification_without_owner']
-          root = Path('sol_61_runtime/artifacts/repair-proof')
-          assert (root / 'promotion-receipt.json').is_file()
+          mission = receipts['mission']
+          assert mission['truth_boundary']['github_actions_execution']
+          assert mission['truth_boundary']['provider_neutral_mission_engine']
+          assert not mission['truth_boundary']['continuous_external_execution']
+          assert not mission['truth_boundary']['live_provider_actions']
+          assert not mission['truth_boundary']['owner_reserved_actions_bypassed']
+          root = Path('sol_61_runtime/artifacts/mission-autonomy-proof')
+          assert (root / 'mission-closure-receipt.json').is_file()
           PY
       - name: Upload proof package
         uses: actions/upload-artifact@v4
@@ -91,5 +94,6 @@ jobs:
             sol_61_runtime/artifacts/policy-proof
             sol_61_runtime/artifacts/observability-proof
             sol_61_runtime/artifacts/repair-proof
+            sol_61_runtime/artifacts/mission-autonomy-proof
           retention-days: 90
           if-no-files-found: error
