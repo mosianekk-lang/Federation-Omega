@@ -61,6 +61,10 @@ class ProgrammeRegisterIntegrityTests(unittest.TestCase):
         result = self.verify()
         self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_VERIFIED")
         self.assertTrue(all(result["checks"].values()))
+        self.assertEqual(
+            result["external_evidence_admission"],
+            "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED",
+        )
 
     def test_stale_integrity_gate_is_rejected(self) -> None:
         programme = copy.deepcopy(self.programme)
@@ -82,6 +86,20 @@ class ProgrammeRegisterIntegrityTests(unittest.TestCase):
         result = self.verify(programme=programme)
         self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_FAILED")
         self.assertFalse(result["checks"]["dependency_order_valid"])
+
+    def test_external_evidence_admission_status_drift_is_rejected(self) -> None:
+        programme = copy.deepcopy(self.programme)
+        programme["external_evidence_admission"]["status"] = "PENDING"
+        result = self.verify(programme=programme)
+        self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_FAILED")
+        self.assertFalse(result["checks"]["external_evidence_admission_verified"])
+
+    def test_provider_authority_scope_drift_is_rejected(self) -> None:
+        programme = copy.deepcopy(self.programme)
+        programme["external_evidence_admission"]["provider_authority"]["cloud_run"] = "FRESH_VERIFIED"
+        result = self.verify(programme=programme)
+        self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_FAILED")
+        self.assertFalse(result["checks"]["provider_authority_scopes_precise"])
 
 
 if __name__ == "__main__":
