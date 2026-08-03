@@ -1,0 +1,49 @@
+name: Alpha Omega Commercial C06-C09 Proof
+
+on:
+  pull_request:
+    paths:
+      - "alpha_omega_commercial/commercial_expansion.py"
+      - "alpha_omega_commercial/test_commercial_expansion.py"
+      - "alpha_omega_commercial/prove_c06_c09.py"
+      - "alpha_omega_commercial/programme.json"
+      - ".github/workflows/alpha-omega-commercial-c06-c09.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile
+        run: python -m compileall -q alpha_omega_commercial
+      - name: Tests
+        working-directory: alpha_omega_commercial
+        run: python -m unittest -v test_commercial_expansion.py
+      - name: Execute reversible C06-C09 proof
+        run: python alpha_omega_commercial/prove_c06_c09.py --output alpha_omega_commercial/artifacts/c06-c09
+      - name: Validate boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('alpha_omega_commercial/artifacts/c06-c09/commercial-c06-c09-receipt.json').read_text())
+          assert r['stages']['C06']['proof']['sla']['pass']
+          assert len(r['stages']['C07']['proof']) == 3
+          assert all(p['gates']['rollback'] for p in r['stages']['C07']['proof'])
+          assert r['stages']['C08']['proof']['entitlement']['entitled']
+          assert r['stages']['C09']['proof']['revenue_share']['status'] == 'CALCULATION_ONLY_NO_REVENUE_RECEIVED'
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-commercial-c06-c09-proof
+          path: alpha_omega_commercial/artifacts/c06-c09
+          retention-days: 90
+          if-no-files-found: error
