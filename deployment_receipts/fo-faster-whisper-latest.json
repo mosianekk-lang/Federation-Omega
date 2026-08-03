@@ -1,0 +1,18 @@
+{
+  "artifacts": [
+    {
+      "created_at": "2026-08-03T22:53:09Z",
+      "expired": false,
+      "expires_at": "2026-08-10T22:53:04Z",
+      "id": 8874066273,
+      "name": "fo-faster-whisper-base-en-30860275723",
+      "size_in_bytes": 272326352
+    }
+  ],
+  "conclusion": "success",
+  "observed_at": "2026-08-03T22:53:20.237662+00:00",
+  "receipt": "FO-FASTER-WHISPER-OBSERVATION",
+  "run_id": 30860275723,
+  "run_url": "https://github.com/mosianekk-lang/Federation-Omega/actions/runs/30860275723",
+  "source_sha": "016e404f4a33bcdf81c6759e04b9c1e355dde680"
+}
