@@ -43,9 +43,11 @@ def main() -> None:
     gates["fair_tenant_scheduling"] = first["tenant_id"] == "tenant-a" and second["tenant_id"] == "tenant-b"
 
     plane.submit_job("job-c1", tenant_id="tenant-c", workstream_id="ws-c", capability="audit", priority=50)
+    plane.submit_job("job-d1", tenant_id="tenant-d", workstream_id="ws-d", capability="build", priority=50)
+    plane.submit_job("job-e1", tenant_id="tenant-e", workstream_id="ws-e", capability="build", priority=50)
     backpressure = False
     try:
-        plane.submit_job("job-d1", tenant_id="tenant-d", workstream_id="ws-d", capability="build", priority=50)
+        plane.submit_job("job-f1", tenant_id="tenant-f", workstream_id="ws-f", capability="build", priority=50)
     except RuntimeError as exc:
         backpressure = str(exc) == "QUEUE_BACKPRESSURE"
     gates["queue_backpressure"] = backpressure
