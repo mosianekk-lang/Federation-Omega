@@ -1,0 +1,178 @@
+{
+  "base_modules": [
+    "TELOS",
+    "KAIROS",
+    "GALILEO",
+    "PARALLAX",
+    "SOCIUS",
+    "PACTUM",
+    "SEMIOTICA",
+    "ARGUS",
+    "PROMETHEUS",
+    "PRAXIS"
+  ],
+  "baseline_proof_hash": "78d498b4d92a796707fa40e0e459f90cd3a90b189cd8ae5f68e6eaaf44b9fa0a",
+  "current_verified_level": 5,
+  "database_dump_sha256": "81260646e29a8a2ec1850250c19f43985744c95989815ceaa68bf95a4238dc8a",
+  "evolution": {
+    "constitutional_change": false,
+    "external_effect": false,
+    "final_score": 1.0,
+    "final_version": "2.0.6",
+    "promotion_count": 6,
+    "promotions": [
+      {
+        "config": {
+          "gap_sensitivity": 0.72
+        },
+        "score": 0.5,
+        "version": "2.0.1"
+      },
+      {
+        "config": {
+          "failure_hold_threshold": 0.64,
+          "gap_sensitivity": 0.72
+        },
+        "score": 0.6,
+        "version": "2.0.2"
+      },
+      {
+        "config": {
+          "failure_hold_threshold": 0.64,
+          "gap_sensitivity": 0.72,
+          "memory_antibody_repeat": 2
+        },
+        "score": 0.7,
+        "version": "2.0.3"
+      },
+      {
+        "config": {
+          "causal_confidence_floor": 0.55,
+          "failure_hold_threshold": 0.64,
+          "gap_sensitivity": 0.72,
+          "memory_antibody_repeat": 2
+        },
+        "score": 0.8,
+        "version": "2.0.4"
+      },
+      {
+        "config": {
+          "causal_confidence_floor": 0.55,
+          "diversity_floor": 3,
+          "failure_hold_threshold": 0.64,
+          "gap_sensitivity": 0.72,
+          "memory_antibody_repeat": 2
+        },
+        "score": 0.9,
+        "version": "2.0.5"
+      },
+      {
+        "config": {
+          "causal_confidence_floor": 0.55,
+          "diversity_floor": 3,
+          "failure_hold_threshold": 0.64,
+          "gap_sensitivity": 0.72,
+          "joint_lead_delta": 0.2,
+          "memory_antibody_repeat": 2
+        },
+        "score": 1.0,
+        "version": "2.0.6"
+      }
+    ],
+    "state": "BOUNDED_EVOLUTION_PROMOTED"
+  },
+  "external_effect": false,
+  "frontier_modules": [
+    "NOESIS",
+    "LUCID",
+    "MNEMOSYNE",
+    "MORPHOS",
+    "POLIS",
+    "CHIMERA",
+    "ARGONAUT",
+    "POLYLOGUE",
+    "JANUS",
+    "SYMBIOSIS"
+  ],
+  "integrity": {
+    "errors": [],
+    "event_count": 7,
+    "head_hash": "8fbdf958231306f965f12e5f4c8ce5d3f47c42494b034008f3b6b6bafc5179b3",
+    "status": "PASSED"
+  },
+  "ledger_head_hash": "8fbdf958231306f965f12e5f4c8ce5d3f47c42494b034008f3b6b6bafc5179b3",
+  "level_6_eligible": false,
+  "maturity_state": "VERIFIED_SOVEREIGN_MISSION_ECOLOGY_SCOPED",
+  "module_count": 20,
+  "next_gate": "WORKFLOW_SPECIFIC_TRUSTED_AUTONOMY_DESIGN",
+  "proof_hash": "47867bef47b6b6e8100c0b2f71608f71dd044f55e951ca78f962d4e0f37d2f77",
+  "proof_id": "PRF-FRONTIER-CSE-V2-30836164482-1",
+  "provider": "github_actions",
+  "real_workflows": [
+    {
+      "evidence": {
+        "drift": "IN_SYNC",
+        "ledger_head": "1d544dd21ae8b8851d19dae7a72dd381c270740b4af9c1664556f79722abcf8a",
+        "proof_hash": "78d498b4d92a796707fa40e0e459f90cd3a90b189cd8ae5f68e6eaaf44b9fa0a"
+      },
+      "external_effect": false,
+      "passed": true,
+      "workflow_id": "REAL-GITHUB-CANONICAL-RUNTIME"
+    },
+    {
+      "evidence": {
+        "candidate": {
+          "file_id": "1AIe6rpeJhRYY-MWUIPVo17kmT-Q6kxfb",
+          "reader_service_accounts": [
+            "fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com",
+            "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com"
+          ],
+          "sha256": "94a4099f02fa2df6faf1ad94f4cadbfea76958f316aefdfce1c804b772fde609",
+          "size": 413425
+        },
+        "wheel": {
+          "file_id": "1_tWmTRPeTgn4arJh6e_A5b9YLPW6i1js",
+          "reader_service_accounts": [
+            "fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com",
+            "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com"
+          ],
+          "sha256": "07c2bfaaf3330d65c8b8bd37d052d2088f3df0ac38fbb1099a17905e5cfeabad",
+          "size": 81493
+        }
+      },
+      "external_effect": false,
+      "passed": true,
+      "workflow_id": "REAL-DRIVE-ARTIFACT-PROVENANCE"
+    },
+    {
+      "evidence": {
+        "candidate_sha256": "94a4099f02fa2df6faf1ad94f4cadbfea76958f316aefdfce1c804b772fde609",
+        "module_count": 20,
+        "release_gates_passed": 11,
+        "tests_passed": 76,
+        "version": "2.0.0",
+        "wheel_sha256": "07c2bfaaf3330d65c8b8bd37d052d2088f3df0ac38fbb1099a17905e5cfeabad"
+      },
+      "external_effect": false,
+      "passed": true,
+      "workflow_id": "REAL-CSE-V2-RELEASE-INTEGRITY"
+    }
+  ],
+  "reapply_test": true,
+  "recorded_at": "2026-08-03T17:18:47.352146Z",
+  "rollback_test": true,
+  "run_id": "CSE-V2-30836164482-1",
+  "scope": [
+    "REAL-GITHUB-CANONICAL-RUNTIME",
+    "REAL-DRIVE-ARTIFACT-PROVENANCE",
+    "REAL-CSE-V2-RELEASE-INTEGRITY"
+  ],
+  "semantic_hash": "a132abca674cea7114abea22ad82797c2c693fabdbecfcc3f42c03efb130c3f9",
+  "semantic_readback": true,
+  "status": "VERIFIED",
+  "v1_sql_inspection": {
+    "available": true,
+    "module_rows": 10,
+    "sha256": "b7ee288d500be59d93924ee2193fa000e4730d9bcc28fdc75826bc527ac9a0fd"
+  }
+}

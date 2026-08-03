@@ -1,0 +1,21 @@
+{
+  "current_verified_level": 5,
+  "database_dump_sha256": "81260646e29a8a2ec1850250c19f43985744c95989815ceaa68bf95a4238dc8a",
+  "external_effect": false,
+  "ledger_head_hash": "8fbdf958231306f965f12e5f4c8ce5d3f47c42494b034008f3b6b6bafc5179b3",
+  "level_6_eligible": false,
+  "maturity_state": "VERIFIED_SOVEREIGN_MISSION_ECOLOGY_SCOPED",
+  "module_count": 20,
+  "proof_hash": "47867bef47b6b6e8100c0b2f71608f71dd044f55e951ca78f962d4e0f37d2f77",
+  "provider": "github_actions",
+  "runtime_state": "OPERATIONAL",
+  "service": "fevx-cognitive-sovereignty-ecology",
+  "updated_at": "2026-08-03T17:18:47.352146Z",
+  "verified_workflow_count": 3,
+  "version": "2.0.0",
+  "workflow_scope": [
+    "REAL-GITHUB-CANONICAL-RUNTIME",
+    "REAL-DRIVE-ARTIFACT-PROVENANCE",
+    "REAL-CSE-V2-RELEASE-INTEGRITY"
+  ]
+}
