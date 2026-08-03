@@ -1,0 +1,68 @@
+name: Nature Intelligence Proof Reconciliation 026A
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'kimmie_seed/nature_intelligence/reconcile_026a.py'
+      - '.github/workflows/nature-proof-reconcile-026a.yml'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nature-proof-reconcile-026a
+  cancel-in-progress: false
+
+jobs:
+  reconcile:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout current default branch
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Reconcile immutable maturity proof
+        run: python kimmie_seed/nature_intelligence/reconcile_026a.py
+
+      - name: Verify reconciled files
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          registry = json.loads(Path('kimmie_seed/registry.json').read_text())
+          checkpoint = json.loads(Path('kimmie_seed/checkpoints/KSA-20260803-022.json').read_text())
+          receipt = json.loads(Path('evidenceops/innovation_engine/receipts/lane-watch-receipt-026.json').read_text())
+          child = next(x for x in registry['child_lanes'] if x['lane_id'] == 'LANE-KIMMIE-NATURE-INTELLIGENCE')
+          assert registry['registry_version'] == '1.12.1'
+          assert registry['current_verified_stage'] == 'SAPLING'
+          assert child['verified_stage'] == 'GERMINATED'
+          assert child['monitoring']['immutable_health_snapshot_path'].endswith('NATURE-ACQ-20260803T052836-health.json')
+          assert child['monitoring']['scheduled_cycles_verified'] == 0
+          assert checkpoint['checkpoint_sha256'] == receipt['checkpoint_sha256']
+          assert receipt['integrity_reconciliation'] == '026A_IMMUTABLE_POINTERS_VERIFIED'
+          assert registry['identity_drift'] == 'NONE_DETECTED'
+          print(json.dumps({'status': 'PASS', 'registry_version': registry['registry_version']}))
+          PY
+
+      - name: Persist reconciled proof state
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kimmie_seed/registry.json
+          git add kimmie_seed/checkpoints/KSA-20260803-022.json
+          git add evidenceops/innovation_engine/receipts/lane-watch-receipt-026.json
+          if git diff --cached --quiet; then
+            echo 'Proof state already reconciled.'
+          else
+            git commit -m 'Reconcile Nature Intelligence germination to immutable proof snapshots'
+            git push
+          fi
