@@ -1,0 +1,86 @@
+name: Observe FO Transcription Bridge Deployment
+
+on:
+  workflow_run:
+    workflows: ['Deploy FO Transcription Bridge']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish-status:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Capture deployment run and step results
+        env:
+          GH_TOKEN: ${{ github.token }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}" > /tmp/run.json
+          gh api --paginate "repos/${REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" > /tmp/jobs-pages.json
+          python - <<'PY' > deployment_receipts/fo-transcription-bridge-latest.json
+          import json, os
+          from datetime import datetime, timezone
+          run = json.load(open('/tmp/run.json', encoding='utf-8'))
+          pages = json.load(open('/tmp/jobs-pages.json', encoding='utf-8'))
+          if isinstance(pages, dict):
+              jobs = pages.get('jobs', [])
+          else:
+              jobs = []
+              for page in pages:
+                  jobs.extend(page.get('jobs', []))
+          compact_jobs = []
+          for job in jobs:
+              compact_jobs.append({
+                  'id': job.get('id'),
+                  'name': job.get('name'),
+                  'status': job.get('status'),
+                  'conclusion': job.get('conclusion'),
+                  'html_url': job.get('html_url'),
+                  'started_at': job.get('started_at'),
+                  'completed_at': job.get('completed_at'),
+                  'steps': [{
+                      'number': step.get('number'),
+                      'name': step.get('name'),
+                      'status': step.get('status'),
+                      'conclusion': step.get('conclusion'),
+                      'started_at': step.get('started_at'),
+                      'completed_at': step.get('completed_at'),
+                  } for step in job.get('steps', [])],
+              })
+          payload = {
+              'receipt': 'FO-TRANSCRIPTION-BRIDGE-WORKFLOW-OBSERVATION',
+              'observed_at': datetime.now(timezone.utc).isoformat(),
+              'run_id': int(os.environ['RUN_ID']),
+              'run_url': os.environ['RUN_URL'],
+              'conclusion': os.environ['RUN_CONCLUSION'],
+              'source_sha': os.environ['SOURCE_SHA'],
+              'run_attempt': run.get('run_attempt'),
+              'created_at': run.get('created_at'),
+              'updated_at': run.get('updated_at'),
+              'jobs': compact_jobs,
+          }
+          print(json.dumps(payload, indent=2, sort_keys=True))
+          PY
+
+      - name: Publish status receipt to main
+        run: |
+          set -euo pipefail
+          git config user.name 'federation-omega-deployment-observer'
+          git config user.email 'actions@users.noreply.github.com'
+          git pull --rebase origin main
+          git add deployment_receipts/fo-transcription-bridge-latest.json
+          git commit -m 'Record FO transcription deployment observation [skip ci]' || exit 0
+          git push origin HEAD:main
