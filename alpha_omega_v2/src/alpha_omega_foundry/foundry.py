@@ -1,152 +1,237 @@
 from __future__ import annotations
-import json, hashlib, datetime, shutil
-from pathlib import Path
 
-class LocalProviderAdapter:
-    name = "local"
-    def deploy(self, package_dir: Path, target_dir: Path) -> dict:
-        if target_dir.exists():
-            shutil.rmtree(target_dir)
-        shutil.copytree(package_dir, target_dir)
-        return {"provider":"local","state":"DEPLOYED","target":str(target_dir)}
-    def execute(self, target_dir: Path) -> dict:
-        manifest = json.loads((target_dir/"solution_genome.json").read_text())
-        return {"provider":"local","state":"EXECUTED","system_id":manifest["system_id"]}
-    def readback(self, target_dir: Path) -> dict:
-        required = ["solution_genome.json","product_spec.json","maintenance_plan.json","health.json"]
-        present = {name:(target_dir/name).exists() for name in required}
-        return {"provider":"local","state":"READBACK","present":present,"pass":all(present.values())}
-    def rollback(self, target_dir: Path) -> dict:
-        if target_dir.exists():
-            shutil.rmtree(target_dir)
-        return {"provider":"local","state":"ROLLED_BACK","target_absent":not target_dir.exists()}
+from pathlib import Path
+from typing import Mapping
+import datetime
+import hashlib
+import json
+
+from .operations import OperationsFabric
+from .providers import GitHubReleaseArtifactAdapter, LocalProviderAdapter
+
 
 class SolutionFoundry:
-    def __init__(self, workspace: str|Path):
+    def __init__(self, workspace: str | Path):
         self.workspace = Path(workspace)
         self.workspace.mkdir(parents=True, exist_ok=True)
+        self.operations = OperationsFabric(self.workspace / "operations")
 
     def _id(self, prefix: str, value: str) -> str:
-        return f"{prefix}-{hashlib.sha256(value.encode()).hexdigest()[:12]}"
+        return f"{prefix}-{hashlib.sha256(value.encode('utf-8')).hexdigest()[:12]}"
 
     def compile_product_spec(self, idea: dict) -> dict:
-        title = str(idea.get("title","")).strip()
-        description = str(idea.get("description","")).strip()
+        title = str(idea.get("title", "")).strip()
+        description = str(idea.get("description", "")).strip()
         if not title or not description:
             raise ValueError("title and description are required")
         return {
             "product_id": self._id("PRD", title),
             "title": title,
             "problem": description,
-            "target_users": list(idea.get("users",[])),
-            "success_measures": list(idea.get("outcomes",[])) or ["operational build verified"],
-            "functional_requirements": list(idea.get("functional_requirements",[])) or [
-                "accept concept","compile specification","build package","deploy","verify","maintain"
+            "target_users": list(idea.get("users", [])),
+            "success_measures": list(idea.get("outcomes", []))
+            or ["operational build verified"],
+            "functional_requirements": list(idea.get("functional_requirements", []))
+            or [
+                "accept concept",
+                "compile specification",
+                "build package",
+                "deploy",
+                "execute",
+                "read back",
+                "health check",
+                "persistence check",
+                "rollback",
+                "maintain",
             ],
             "non_functional_requirements": [
-                "proof before claim","rollback required","health monitoring","provider truth boundary"
+                "proof before claim",
+                "rollback required",
+                "health monitoring",
+                "provider truth boundary",
+                "minimum reversible action",
             ],
-            "constraints": list(idea.get("constraints",[])),
+            "constraints": list(idea.get("constraints", [])),
         }
 
     def score_portfolio(self, ideas: list[dict]) -> list[dict]:
-        scored = []
+        ranked = []
         for idea in ideas:
             score = (
-                int(idea.get("value",5))*3 +
-                int(idea.get("urgency",5))*2 +
-                int(idea.get("reuse",5))*2 -
-                int(idea.get("risk",5)) -
-                int(idea.get("complexity",5))
+                int(idea.get("value", 5)) * 3
+                + int(idea.get("urgency", 5)) * 2
+                + int(idea.get("reuse", 5)) * 2
+                - int(idea.get("risk", 5))
+                - int(idea.get("complexity", 5))
             )
-            scored.append({"idea":idea,"score":score})
-        return sorted(scored,key=lambda x:x["score"],reverse=True)
+            ranked.append({"idea": idea, "score": score})
+        return sorted(ranked, key=lambda item: item["score"], reverse=True)
 
-    def capability_marketplace(self, spec: dict) -> list[dict]:
+    def capability_marketplace(self) -> list[dict]:
         capabilities = [
-            ("CAP-INTAKE","concept intake"),
-            ("CAP-SPEC","product specification"),
-            ("CAP-BUILD","artifact construction"),
-            ("CAP-TEST","test orchestration"),
-            ("CAP-DEPLOY","provider deployment"),
-            ("CAP-HEALTH","health and drift"),
-            ("CAP-ROLLBACK","rollback"),
-            ("CAP-LEARN","learning ledger"),
+            ("CAP-INTAKE", "concept intake"),
+            ("CAP-SPEC", "product specification"),
+            ("CAP-BUILD", "artifact construction"),
+            ("CAP-TEST", "test orchestration"),
+            ("CAP-DEPLOY", "provider deployment"),
+            ("CAP-HEALTH", "health and drift"),
+            ("CAP-ROLLBACK", "rollback"),
+            ("CAP-LEARN", "learning ledger"),
+            ("CAP-RETIRE", "retirement control"),
+            ("CAP-COST", "outcome and cost governance"),
         ]
-        return [{"capability_id":i,"purpose":p,"maturity":"OPERATIONAL_LOCAL"} for i,p in capabilities]
+        return [
+            {"capability_id": identifier, "purpose": purpose, "maturity": "OPERATIONAL_LOCAL"}
+            for identifier, purpose in capabilities
+        ]
 
     def compile_solution_genome(self, spec: dict, capabilities: list[dict]) -> dict:
         return {
             "system_id": self._id("SYS", spec["product_id"]),
             "product_id": spec["product_id"],
-            "components": [c["capability_id"] for c in capabilities],
-            "interfaces": ["concept.json","product_spec.json","solution_genome.json"],
-            "deployment_routes": ["local","github","google_drive","cloud_run"],
-            "proof_gates": ["build","test","deploy","execute","readback","health","persistence","rollback"],
+            "components": [item["capability_id"] for item in capabilities],
+            "interfaces": ["concept.json", "product_spec.json", "solution_genome.json"],
+            "deployment_routes": [
+                "local",
+                "github_actions_artifact",
+                "google_drive_binary",
+                "cloud_run",
+            ],
+            "provider_contract": [
+                "discover",
+                "validate_authority",
+                "snapshot",
+                "deploy",
+                "execute",
+                "read_back",
+                "health_check",
+                "persistence_check",
+                "rollback",
+                "proof_receipt",
+            ],
             "authority_boundaries": {
-                "local":"A1",
-                "github":"provider-authorised",
-                "google_drive":"provider-authorised",
-                "cloud_run":"provider-authorised"
-            }
+                "local": "A1",
+                "github_actions_artifact": "provider_authorised",
+                "google_drive_binary": "provider_authorised_direct_connector",
+                "cloud_run": "provider_blocked_no_fresh_authority",
+            },
         }
 
     def build_solution(self, idea: dict) -> dict:
         spec = self.compile_product_spec(idea)
-        caps = self.capability_marketplace(spec)
-        genome = self.compile_solution_genome(spec,caps)
-        package = self.workspace/genome["system_id"]
-        package.mkdir(exist_ok=True)
-        health = {"availability":1.0,"integrity":1.0,"freshness":1.0,"recoverability":1.0}
-        maintenance = {
-            "heartbeat":"hourly",
-            "drift_checks":["schema","permissions","dependencies","provider_config"],
-            "repair_modes":["repair_in_place","forward_fix","rollback","failover"]
-        }
+        capabilities = self.capability_marketplace()
+        genome = self.compile_solution_genome(spec, capabilities)
+        package = self.workspace / "builds" / genome["system_id"]
+        package.mkdir(parents=True, exist_ok=True)
         files = {
-            "product_spec.json":spec,
-            "capability_marketplace.json":caps,
-            "solution_genome.json":genome,
-            "health.json":health,
-            "maintenance_plan.json":maintenance,
+            "product_spec.json": spec,
+            "capability_marketplace.json": capabilities,
+            "solution_genome.json": genome,
+            "health.json": {
+                "availability": 1.0,
+                "integrity": 1.0,
+                "freshness": 1.0,
+                "recoverability": 1.0,
+            },
+            "maintenance_plan.json": {
+                "heartbeat": "hourly",
+                "drift_checks": ["schema", "permissions", "dependencies", "provider_config"],
+                "failure_classes": [
+                    "NONE",
+                    "AUTHORITY",
+                    "TRANSIENT",
+                    "CONTRACT",
+                    "INTEGRITY",
+                    "RESOURCE",
+                    "UNKNOWN",
+                ],
+                "repair_modes": [
+                    "no_action",
+                    "retry_with_backoff",
+                    "throttle_and_retry",
+                    "forward_fix_and_retest",
+                    "rollback_and_rebuild",
+                    "quarantine_and_diagnose",
+                ],
+                "learning_ledger": True,
+                "retirement_controls": True,
+            },
         }
-        for name,data in files.items():
-            (package/name).write_text(json.dumps(data,indent=2),encoding="utf-8")
-        return {"package_dir":str(package),"spec":spec,"genome":genome}
+        for name, data in files.items():
+            (package / name).write_text(json.dumps(data, indent=2), encoding="utf-8")
+        return {"package_dir": str(package), "spec": spec, "genome": genome}
 
     def operational_release(self, idea: dict) -> dict:
         build = self.build_solution(idea)
-        package = Path(build["package_dir"])
-        target = self.workspace/"operational"/build["genome"]["system_id"]
-        adapter = LocalProviderAdapter()
-        deploy = adapter.deploy(package,target)
+        source = Path(build["package_dir"])
+        target = self.workspace / "operational" / build["genome"]["system_id"]
+        adapter = LocalProviderAdapter(self.workspace / "provider_state")
+        discover = adapter.discover()
+        authority = adapter.validate_authority()
+        snapshot = adapter.snapshot(source)
+        deploy = adapter.deploy(source, target)
         execute = adapter.execute(target)
-        readback = adapter.readback(target)
-        persistence = {"pass":target.exists() and all(readback["present"].values())}
-        health = json.loads((target/"health.json").read_text())
-        health_check = {"pass":all(v >= .99 for v in health.values()),"health":health}
-        rollback_probe = self.workspace/"rollback_probe"/build["genome"]["system_id"]
-        adapter.deploy(package,rollback_probe)
+        readback = adapter.read_back(target)
+        health = adapter.health_check(target)
+        persistence = adapter.persistence_check(target)
+        rollback_probe = self.workspace / "rollback_probe" / build["genome"]["system_id"]
+        adapter.deploy(source, rollback_probe)
         rollback = adapter.rollback(rollback_probe)
-        operational = all([
-            deploy["state"]=="DEPLOYED",
-            execute["state"]=="EXECUTED",
-            readback["pass"],
-            persistence["pass"],
-            health_check["pass"],
-            rollback["target_absent"],
-        ])
+        maintenance = self.operations.maintenance_cycle(
+            build["genome"]["system_id"],
+            expected={"provider": "local", "state": "RUNNING"},
+            actual={"provider": "local", "state": "RUNNING"},
+        )
+        operational = all(
+            [
+                discover["available"],
+                authority["authorised"],
+                snapshot["state"] == "SNAPSHOT_CREATED",
+                deploy["state"] == "DEPLOYED",
+                execute["state"] == "EXECUTED",
+                readback["pass"],
+                health["pass"],
+                persistence["pass"],
+                rollback["target_absent"],
+                maintenance["state"] == "MAINTENANCE_HEALTHY",
+            ]
+        )
         receipt = {
-            "receipt_id":self._id("RCP",build["genome"]["system_id"]+datetime.datetime.utcnow().isoformat()),
-            "state":"OPERATIONAL_VERIFIED_LOCAL" if operational else "FAILED",
-            "deploy":deploy,"execute":execute,"readback":readback,
-            "persistence":persistence,"health":health_check,"rollback":rollback,
-            "truth_boundary":{
-                "local_operational":operational,
-                "github_deployed":False,
-                "google_drive_deployed":False,
-                "cloud_run_deployed":False
-            }
+            "receipt_id": self._id(
+                "RCP",
+                build["genome"]["system_id"]
+                + datetime.datetime.now(datetime.UTC).isoformat(),
+            ),
+            "state": "OPERATIONAL_VERIFIED_LOCAL" if operational else "FAILED",
+            "discover": discover,
+            "authority": authority,
+            "snapshot": snapshot,
+            "deploy": deploy,
+            "execute": execute,
+            "readback": readback,
+            "health": health,
+            "persistence": persistence,
+            "rollback": rollback,
+            "maintenance": maintenance,
+            "truth_boundary": {
+                "local_operational": operational,
+                "github_hosted_artifact": False,
+                "google_drive_binary_published": False,
+                "cloud_run_deployed": False,
+            },
         }
-        (target/"operational_receipt.json").write_text(json.dumps(receipt,indent=2),encoding="utf-8")
+        (target / "operational_receipt.json").write_text(
+            json.dumps(receipt, indent=2), encoding="utf-8"
+        )
         return receipt
+
+    def github_release_artifact(
+        self, idea: dict, environment: Mapping[str, str] | None = None
+    ) -> dict:
+        build = self.build_solution(idea)
+        source = Path(build["package_dir"])
+        adapter = GitHubReleaseArtifactAdapter(
+            self.workspace,
+            environment=environment if environment is not None else __import__("os").environ,
+        )
+        return adapter.run_contract(source, self.workspace / "github_release")

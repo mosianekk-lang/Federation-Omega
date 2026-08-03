@@ -1,6 +1,6 @@
 [project]
 name = "alpha-omega-solution-foundry"
-version = "2.0.0"
+version = "2.4.0"
 description = "Autonomous concept-to-operational-system solution foundry"
 requires-python = ">=3.11"
 dependencies = []

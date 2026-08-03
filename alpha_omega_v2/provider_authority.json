@@ -1,0 +1,35 @@
+{
+  "version": "2.4.0",
+  "checked_at": "2026-08-03T10:10:00Z",
+  "providers": {
+    "local": {
+      "state": "AUTHORISED_A1_VERIFIED",
+      "evidence": "workspace discover, write/read/delete authority probe, snapshot, deploy, execute, readback, health, persistence and rollback completed in CI"
+    },
+    "github_actions": {
+      "state": "AUTHORISED_SCOPED_VERIFIED",
+      "scope": ["source read", "CI execution", "workflow artifact upload"],
+      "evidence": {
+        "run_id": 30804245278,
+        "job_id": 91655781039,
+        "artifact_id": 8852076539,
+        "artifact_digest": "sha256:77743995e5bc773c9209fbdcc97ee63c2e0966267da98a88ea6bc940f195bc4b"
+      },
+      "fresh_canary": "PASS"
+    },
+    "google_drive_direct_connector": {
+      "state": "AUTHORISED_SCOPED_BUT_TRANSFER_BLOCKED",
+      "scope": ["binary file create", "metadata readback", "reversible rollback canary"],
+      "authority_evidence": "Google Drive profile and destination folder readback; Omega-Max v6.3.1 direct-connector publication proof",
+      "transfer_evidence": "BLOCKED_FILE_REFERENCE for the GitHub artifact reference, connector file_id and mounted runtime file",
+      "fresh_canary": "PROVIDER_BLOCKED_FILE_EGRESS",
+      "retry_policy": "Do not repeat unchanged transfer route; require an egress-compatible provider file reference"
+    },
+    "cloud_run": {
+      "state": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+      "evidence": "Google STS invalid_target on the configured WIF provider; no fresh token issuance or Cloud Run execution proof",
+      "retry_policy": "suppress unchanged retries until provider-native authority state changes"
+    }
+  },
+  "truth_boundary": "GitHub authority is freshly provider-verified. Drive authority exists but the exact artifact transfer is blocked at file egress, so no Drive binary deployment is claimed. Cloud Run remains blocked and untouched."
+}
