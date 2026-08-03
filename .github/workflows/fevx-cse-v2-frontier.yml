@@ -1,0 +1,130 @@
+name: FEVX CSE v2 Frontier Runtime
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "systems/fevx-frontier-v2-bundle/**"
+      - "runtime/fevx-frontier/queue/**"
+      - "runtime/fevx-frontier/state/desired_state.json"
+      - ".github/workflows/fevx-cse-v2-frontier.yml"
+  schedule:
+    - cron: "31 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: fevx-cse-v2-frontier-runtime
+  cancel-in-progress: false
+
+env:
+  CSE_V2_PAYLOAD_SHA256: a11681743e0c415c2f3ed7ead74019e682dc30b2b8cacbbf2f539048c43e6930
+  CSE_V2_WHEEL_SHA256: 07c2bfaaf3330d65c8b8bd37d052d2088f3df0ac38fbb1099a17905e5cfeabad
+  CSE_V2_WHEEL_PATH: /tmp/fevx_cognitive_sovereignty_ecology-2.0.0-py3-none-any.whl
+
+jobs:
+  frontier-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+          persist-credentials: true
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Restore and verify the sealed provider payload
+        shell: bash
+        run: |
+          set -euo pipefail
+          parts=(
+            systems/fevx-frontier-v2-bundle/payload.part.00
+            systems/fevx-frontier-v2-bundle/payload.part.01
+            systems/fevx-frontier-v2-bundle/payload.part.02
+            systems/fevx-frontier-v2-bundle/payload.part.03
+            systems/fevx-frontier-v2-bundle/payload.part.04
+          )
+          for part in "${parts[@]}"; do test -s "$part"; done
+          cat "${parts[@]}" | base64 --decode > /tmp/fevx-frontier-v2-payload.tar.gz
+          test "$(sha256sum /tmp/fevx-frontier-v2-payload.tar.gz | awk '{print $1}')" = "$CSE_V2_PAYLOAD_SHA256"
+          tar -tzf /tmp/fevx-frontier-v2-payload.tar.gz >/dev/null
+          tar -xzf /tmp/fevx-frontier-v2-payload.tar.gz -C .
+
+      - name: Restore and verify the digest-pinned CSE v2 wheel
+        shell: bash
+        run: |
+          set -euo pipefail
+          parts=(
+            systems/fevx-frontier-v2/vendor/wheel.part.00
+            systems/fevx-frontier-v2/vendor/wheel.part.01
+            systems/fevx-frontier-v2/vendor/wheel.part.02
+            systems/fevx-frontier-v2/vendor/wheel.part.03
+          )
+          for part in "${parts[@]}"; do test -s "$part"; done
+          cat "${parts[@]}" | base64 --decode > "$CSE_V2_WHEEL_PATH"
+          test "$(sha256sum "$CSE_V2_WHEEL_PATH" | awk '{print $1}')" = "$CSE_V2_WHEEL_SHA256"
+          python -m zipfile -t "$CSE_V2_WHEEL_PATH"
+          python -m pip install --disable-pip-version-check "$CSE_V2_WHEEL_PATH"
+
+      - name: Execute 20-module frontier runtime and three real workflow canaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          python systems/fevx-frontier-v2/run_provider.py \
+            --repo-root . \
+            --wheel "$CSE_V2_WHEEL_PATH"
+
+      - name: Enforce scoped Level 5 proof gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root=Path('runtime/fevx-frontier')
+          result=json.loads((root/'results/latest.json').read_text())
+          heartbeat=json.loads((root/'heartbeat/latest.json').read_text())
+          drift=json.loads((root/'drift/latest.json').read_text())
+          actual=json.loads((root/'state/actual_state.json').read_text())
+          assert result['status']=='VERIFIED', result
+          assert result['provider']=='github_actions', result
+          assert result['synthetic']['module_count']==20, result
+          assert result['semantic_readback'] is True, result
+          assert result['rollback_test'] is True and result['reapply_test'] is True, result
+          assert len(result['real_workflows'])==3 and all(x['passed'] for x in result['real_workflows']), result
+          assert result['current_verified_level']==5 and result['level_6_eligible'] is False, result
+          assert result['external_effect'] is False, result
+          assert heartbeat['runtime_state']=='OPERATIONAL' and heartbeat['verified'] is True, heartbeat
+          assert drift['classification']=='IN_SYNC', drift
+          assert actual['maturity_state']=='VERIFIED_SOVEREIGN_MISSION_ECOLOGY_SCOPED', actual
+          assert actual['current_verified_level']==5 and actual['module_count']==20, actual
+          PY
+
+      - name: Persist verified frontier state to canonical main
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "fevx-frontier-v2[bot]"
+          git config user.email "fevx-frontier-v2[bot]@users.noreply.github.com"
+          git add runtime/fevx-frontier
+          if git diff --cached --quiet; then
+            echo "Verified state already canonical"
+          else
+            git commit -m "Persist FEVX CSE v2 frontier runtime proof [skip cse-v2]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fevx-cse-v2-frontier-runtime
+          path: runtime/fevx-frontier/
+          if-no-files-found: error
+          retention-days: 90
