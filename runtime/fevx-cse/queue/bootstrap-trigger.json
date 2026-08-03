@@ -1,0 +1,19 @@
+{
+  "trigger_id": "CSE-SHADOW-BOOTSTRAP-001",
+  "candidate_version": "1.1.0",
+  "requested_runtime": "github_actions_shadow",
+  "authority": "A1",
+  "synthetic_data_only": true,
+  "external_effect": false,
+  "provider_mutation": false,
+  "expected_proof": [
+    "ten_module_execution",
+    "semantic_readback",
+    "bounded_evolution",
+    "rollback_reapply",
+    "hash_linked_proof",
+    "durable_repository_state",
+    "heartbeat",
+    "drift_in_sync"
+  ]
+}
