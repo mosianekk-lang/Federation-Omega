@@ -1,1 +1,0 @@
-SOL 6.1 reversible GitHub live-adapter certification canary. This file must be deleted after readback verification.
