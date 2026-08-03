@@ -29,6 +29,11 @@ SELECTED_HEADERS = {
     "x-content-type-options",
 }
 SECONDARY_CLASS = "CURRENT_SECONDARY_RESOURCE"
+CONSULTATIVE_CLASS = "PROPOSED_OR_CONSULTATIVE_NON_CURRENT"
+CORE_OFFICIAL_CLASSES = {
+    "CURRENT_PRIMARY_RULES",
+    "BASE_ACT_CONSOLIDATED_CURRENTNESS_UNVERIFIED",
+}
 
 
 def canonical_bytes(value: Any) -> bytes:
@@ -45,6 +50,16 @@ def normalized(value: str) -> str:
 
 def safe_headers(headers: Any) -> dict[str, str]:
     return {key.lower(): str(value) for key, value in headers.items() if key.lower() in SELECTED_HEADERS}
+
+
+def gate_role(source_class: str) -> str:
+    if source_class == SECONDARY_CLASS:
+        return "SECONDARY_ARCHIVE_OPTIONAL"
+    if source_class == CONSULTATIVE_CLASS:
+        return "CONSULTATIVE_WATCH_OPTIONAL_NONCURRENT"
+    if source_class in CORE_OFFICIAL_CLASSES:
+        return "CORE_OFFICIAL_EVIDENCE"
+    return "UNCLASSIFIED_FAIL_CLOSED"
 
 
 def fetch(
@@ -108,7 +123,11 @@ def classify(source_class: str, raw_verified: bool, listing_verified: bool, mark
     if not raw_verified:
         if source_class == SECONDARY_CLASS:
             return "SECONDARY_RESOURCE_RAW_ARCHIVE_PROVIDER_BLOCKED"
-        return "REQUIRED_OFFICIAL_RAW_PROVIDER_BYTE_RETRIEVAL_FAILED"
+        if source_class == CONSULTATIVE_CLASS:
+            return "CONSULTATIVE_NOTICE_PROVIDER_UNAVAILABLE_NONCURRENT"
+        if source_class in CORE_OFFICIAL_CLASSES:
+            return "CORE_OFFICIAL_RAW_PROVIDER_BYTE_RETRIEVAL_FAILED"
+        return "UNCLASSIFIED_SOURCE_RETRIEVAL_FAILED"
     if source_class == "CURRENT_PRIMARY_RULES":
         if listing_verified and markers_verified:
             return "CURRENT_OFFICIAL_RULES_DOCUMENT_IDENTITY_VERIFIED"
@@ -117,7 +136,7 @@ def classify(source_class: str, raw_verified: bool, listing_verified: bool, mark
         return "OFFICIAL_BASE_ACT_RAW_BYTES_VERIFIED_CONSOLIDATED_CURRENTNESS_UNVERIFIED"
     if source_class == SECONDARY_CLASS:
         return "OFFICIAL_SECONDARY_RESOURCE_RAW_BYTES_VERIFIED_PRIMARY_AUTHORITY_REQUIRED"
-    if source_class == "PROPOSED_OR_CONSULTATIVE_NON_CURRENT":
+    if source_class == CONSULTATIVE_CLASS:
         return "OFFICIAL_PROPOSED_OR_CONSULTATIVE_RAW_BYTES_VERIFIED_NON_CURRENT"
     return "RAW_PROVIDER_BYTES_VERIFIED_UNCLASSIFIED"
 
@@ -137,7 +156,7 @@ def process_source(source: dict[str, Any], output_dir: Path, observed_at: str) -
     record: dict[str, Any] = {
         "source_id": source["source_id"],
         "source_class": source_class,
-        "gate_role": "SECONDARY_ARCHIVE_OPTIONAL" if source_class == SECONDARY_CLASS else "REQUIRED_OFFICIAL_SOURCE",
+        "gate_role": gate_role(source_class),
         "document_url": source["document_url"],
         "listing_url": listing_url,
         "filename": filename,
@@ -258,13 +277,15 @@ def main() -> int:
             results.append(future.result())
     results.sort(key=lambda item: item["source_id"])
 
-    required_official = [item for item in results if item["source_class"] != SECONDARY_CLASS]
+    core_official = [item for item in results if item["source_class"] in CORE_OFFICIAL_CLASSES]
+    consultative = [item for item in results if item["source_class"] == CONSULTATIVE_CLASS]
     secondary = [item for item in results if item["source_class"] == SECONDARY_CLASS]
     primary_rules = [item for item in results if item["source_class"] == "CURRENT_PRIMARY_RULES"]
     base_acts = [item for item in results if item["source_class"] == "BASE_ACT_CONSOLIDATED_CURRENTNESS_UNVERIFIED"]
-    proposed = [item for item in results if item["source_class"] == "PROPOSED_OR_CONSULTATIVE_NON_CURRENT"]
 
-    required_official_gate = all(item.get("raw_provider_bytes_verified") for item in required_official)
+    core_official_gate = all(item.get("raw_provider_bytes_verified") for item in core_official)
+    consultative_watch_gate = all(item.get("raw_provider_bytes_verified") for item in consultative)
+    secondary_archive_gate = all(item.get("raw_provider_bytes_verified") for item in secondary)
     all_catalog_gate = all(item.get("raw_provider_bytes_verified") for item in results)
     primary_rules_identity = all(
         item.get("raw_provider_bytes_verified")
@@ -272,11 +293,31 @@ def main() -> int:
         and item.get("listing_verified")
         for item in primary_rules
     )
-    secondary_archive_gate = all(item.get("raw_provider_bytes_verified") for item in secondary)
     secondary_blocked = [item["source_id"] for item in secondary if not item.get("raw_provider_bytes_verified")]
+    consultative_blocked = [item["source_id"] for item in consultative if not item.get("raw_provider_bytes_verified")]
+
+    if core_official_gate and primary_rules_identity:
+        state_parts = ["CORE_OFFICIAL_RAW_BYTES_HASHED", "PRIMARY_RULES_IDENTITY_VERIFIED"]
+        state_parts.append(
+            "CONSULTATIVE_WATCH_VERIFIED_NONCURRENT"
+            if consultative_watch_gate
+            else "CONSULTATIVE_WATCH_PROVIDER_HELD"
+        )
+        state_parts.append(
+            "SECONDARY_ARCHIVE_VERIFIED"
+            if secondary_archive_gate
+            else "SECONDARY_ARCHIVE_PROVIDER_ACCESS_HELD"
+        )
+        state_parts.extend([
+            "BASE_ACT_CONSOLIDATED_CURRENTNESS_HELD",
+            "REAL_CASE_VALUE_HELD",
+        ])
+        state = "_".join(state_parts)
+    else:
+        state = "CORE_OFFICIAL_RAW_PROVIDER_RETRIEVAL_OR_IDENTITY_GAPS"
 
     receipt: dict[str, Any] = {
-        "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V6",
+        "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P13_RAW_PROVIDER_RECEIPT_V7",
         "programme_id": catalog["programme_id"],
         "version": "7.2.2",
         "stage_id": "P13-FRESHNESS-RAW-PROVIDER-BYTES",
@@ -293,35 +334,31 @@ def main() -> int:
         "controls": {
             "source_count_expected": len(sources),
             "source_count_observed": len(results),
-            "required_official_source_count": len(required_official),
-            "secondary_archive_source_count": len(secondary),
-            "required_official_source_raw_byte_gate_passed": required_official_gate,
+            "core_official_source_count": len(core_official),
+            "core_official_source_raw_byte_gate_passed": core_official_gate,
+            "required_official_source_count": len(core_official),
+            "required_official_source_raw_byte_gate_passed": core_official_gate,
             "current_primary_rules_document_identity_verified": primary_rules_identity,
             "base_act_raw_bytes_verified": all(item.get("raw_provider_bytes_verified") for item in base_acts),
-            "proposed_or_consultative_raw_bytes_verified_and_noncurrent": all(item.get("raw_provider_bytes_verified") for item in proposed),
+            "consultative_watch_source_count": len(consultative),
+            "consultative_watch_gate_passed": consultative_watch_gate,
+            "consultative_watch_provider_blocked_ids": consultative_blocked,
+            "proposed_or_consultative_raw_bytes_verified_and_noncurrent": consultative_watch_gate,
+            "secondary_archive_source_count": len(secondary),
             "secondary_resource_archive_gate_passed": secondary_archive_gate,
             "secondary_resource_provider_blocked_ids": secondary_blocked,
             "all_catalog_raw_provider_byte_gate_passed": all_catalog_gate,
-            "raw_provider_byte_gate_passed": required_official_gate,
+            "raw_provider_byte_gate_passed": core_official_gate,
             "external_effects": 0,
             "authority_ceiling": catalog["authority_ceiling"],
         },
         "results": results,
-        "state": (
-            "REQUIRED_OFFICIAL_RAW_BYTES_HASHED_PRIMARY_RULES_IDENTITY_VERIFIED_"
-            "SECONDARY_ARCHIVE_PROVIDER_ACCESS_HELD_BASE_ACT_CONSOLIDATED_CURRENTNESS_AND_REAL_CASE_VALUE_HELD"
-            if required_official_gate and primary_rules_identity and not secondary_archive_gate
-            else (
-                "ALL_CATALOG_RAW_BYTES_HASHED_PRIMARY_RULES_IDENTITY_VERIFIED_"
-                "BASE_ACT_CONSOLIDATED_CURRENTNESS_AND_REAL_CASE_VALUE_HELD"
-                if required_official_gate and primary_rules_identity and secondary_archive_gate
-                else "REQUIRED_OFFICIAL_RAW_PROVIDER_RETRIEVAL_OR_IDENTITY_GAPS"
-            )
-        ),
+        "state": state,
         "truth_boundary": (
-            "This receipt proves raw-byte identity for the required official-source set: current court rules, official base Acts and the official consultative notice. "
-            "Secondary CCMA information sheets are a separate non-primary archive gate and may remain provider-access-blocked without weakening verified official primary evidence. "
-            "The retriever uses the official listing page, ordinary session cookies and Referer headers while respecting provider controls; a provider denial remains a held result. "
+            "This receipt proves raw-byte identity for the core official evidence set: current Labour Court and Labour Appeal Court rules plus official base Acts. "
+            "The official consultative notice is non-current and is tracked through a separate optional consultative-watch gate; temporary provider unavailability does not negate the verified core evidence set. "
+            "Secondary CCMA information sheets remain a separate non-primary archive gate and may remain provider-access-blocked without weakening verified official primary evidence. "
+            "The retriever uses official listing pages, ordinary session cookies and Referer headers while respecting provider controls; a provider denial remains a held result. "
             "Base-Act byte identity does not prove consolidated currentness; proposition-level legal research, real-case outcomes and consequential authority remain separate gates."
         ),
     }
@@ -334,11 +371,12 @@ def main() -> int:
         "receipt_id": receipt["receipt_id"],
         "receipt_sha256": receipt["receipt_sha256"],
         "state": receipt["state"],
-        "required_official_source_raw_byte_gate_passed": required_official_gate,
+        "core_official_source_raw_byte_gate_passed": core_official_gate,
+        "consultative_watch_gate_passed": consultative_watch_gate,
         "secondary_resource_archive_gate_passed": secondary_archive_gate,
         "current_primary_rules_document_identity_verified": primary_rules_identity,
     }, indent=2))
-    return 0 if required_official_gate and primary_rules_identity else 2
+    return 0 if core_official_gate and primary_rules_identity else 2
 
 
 if __name__ == "__main__":
