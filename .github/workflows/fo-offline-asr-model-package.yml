@@ -1,0 +1,39 @@
+name: Package FO Offline ASR Model
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fo-offline-asr-model-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-model:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Download official torchaudio Wav2Vec2 ASR weights
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fo-offline-asr
+          URL='https://download.pytorch.org/torchaudio/models/wav2vec2_fairseq_base_ls960_asr_ls960.pth'
+          curl --fail --location --retry 4 --retry-delay 3 \
+            --output /tmp/fo-offline-asr/wav2vec2_fairseq_base_ls960_asr_ls960.pth "$URL"
+          test -s /tmp/fo-offline-asr/wav2vec2_fairseq_base_ls960_asr_ls960.pth
+          stat -c '%s' /tmp/fo-offline-asr/wav2vec2_fairseq_base_ls960_asr_ls960.pth \
+            | tee /tmp/fo-offline-asr/model.size
+          sha256sum /tmp/fo-offline-asr/wav2vec2_fairseq_base_ls960_asr_ls960.pth \
+            | tee /tmp/fo-offline-asr/model.sha256
+          printf '%s\n' "$URL" > /tmp/fo-offline-asr/source-url.txt
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fo-offline-asr-wav2vec2-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          path: /tmp/fo-offline-asr/
