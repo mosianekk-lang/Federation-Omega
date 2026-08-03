@@ -1,0 +1,16 @@
+{
+  "checkpoint_integrity": true,
+  "crash_resume": true,
+  "external_effects": 0,
+  "health_sha256": "5490d502e0060bc3d40addb8fe86f58f00fd375bc4377da2293ea18ac42df285",
+  "liveness": true,
+  "observed_at_utc": "2026-08-03T22:17:13.583173Z",
+  "persistence": true,
+  "policy_allow_and_deny": true,
+  "readiness": true,
+  "replication": true,
+  "rollback": true,
+  "schema": "OMEGAMAX_WORKER_HEALTH_V1",
+  "semantic_readback": true,
+  "state": "OPERATIONAL_VERIFIED_SCOPED"
+}

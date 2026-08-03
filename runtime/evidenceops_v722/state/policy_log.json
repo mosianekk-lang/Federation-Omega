@@ -1,0 +1,17 @@
+{
+  "allow_decision": {
+    "action": "internal_state_write",
+    "decision": "ALLOW"
+  },
+  "authority_ceiling": "A1",
+  "deny_decision": {
+    "action": "external_send",
+    "decision": "DENY",
+    "reason": "A2 authority absent"
+  },
+  "external_effects": 0,
+  "observed_at_utc": "2026-08-03T22:17:13.583052Z",
+  "policy_log_sha256": "e04ee01fb10f667923e977136aecc2584dd254f262287a7f717cc5e9ea0d2c62",
+  "schema": "OMEGAMAX_POLICY_LOG_V1",
+  "stage_id": "P12-SCOPED-GITHUB-WORKER"
+}
