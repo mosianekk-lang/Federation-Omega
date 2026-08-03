@@ -18,7 +18,7 @@ class Constitution:
 @dataclass(frozen=True)
 class PolicyRule:
     rule_id: str
-    effect: str  # ALLOW, DENY, REQUIRE_OWNER, REQUIRE_REVIEW
+    effect: str
     priority: int
     action_types: tuple[str, ...] = ()
     min_risk: str = "LOW"
@@ -59,10 +59,7 @@ class PolicyKernel:
         self.rules = sorted(rules, key=lambda r: (-r.priority, r.rule_id))
 
     def evaluate(self, mandate: ActionMandate, observed_preconditions: set[str]) -> Decision:
-        reasons: list[str] = []
-        matched: list[str] = []
         required_proofs = sorted(set(mandate.proof_requirements))
-
         if mandate.risk not in RISK_ORDER:
             return Decision("DENIED", ["UNKNOWN_RISK_TIER"])
         if len({mandate.proposer_role, mandate.executor_role, mandate.certifier_role}) < 3:
@@ -78,30 +75,35 @@ class PolicyKernel:
         if RISK_ORDER[mandate.risk] >= RISK_ORDER["HIGH"] and not mandate.rollback_available:
             return Decision("DENIED", ["HIGH_RISK_ACTION_REQUIRES_ROLLBACK"])
 
-        applicable = [
-            rule for rule in self.rules
-            if (not rule.action_types or mandate.action_type in rule.action_types)
-            and RISK_ORDER[mandate.risk] >= RISK_ORDER[rule.min_risk]
-        ]
+        matched: list[str] = []
         effects: list[str] = []
-        for rule in applicable:
-            rule_missing = sorted(set(rule.required_preconditions) - observed_preconditions)
-            rule_forbidden = sorted(set(rule.forbidden_effects) & set(mandate.intended_effects))
-            missing_roles = sorted(set(rule.required_roles) - set(mandate.review_roles))
-            if rule_missing or rule_forbidden or missing_roles:
+        review_missing = False
+        for rule in self.rules:
+            if rule.action_types and mandate.action_type not in rule.action_types:
+                continue
+            if RISK_ORDER[mandate.risk] < RISK_ORDER[rule.min_risk]:
+                continue
+            if set(rule.required_preconditions) - observed_preconditions:
+                continue
+            effect_overlap = set(rule.forbidden_effects) & set(mandate.intended_effects)
+            if rule.effect == "DENY" and rule.forbidden_effects and not effect_overlap:
+                continue
+            if rule.effect != "DENY" and rule.forbidden_effects and effect_overlap:
                 continue
             matched.append(rule.rule_id)
             effects.append(rule.effect)
+            if rule.effect == "REQUIRE_REVIEW" and set(rule.required_roles) - set(mandate.review_roles):
+                review_missing = True
 
         if "DENY" in effects:
             return Decision("DENIED", ["DENY_POLICY_PRECEDENCE"], matched, required_proofs)
         if "REQUIRE_OWNER" in effects and not mandate.owner_authorised:
             return Decision("OWNER_AUTHORITY_REQUIRED", ["POLICY_REQUIRES_OWNER"], matched, required_proofs)
-        if "REQUIRE_REVIEW" in effects and not mandate.review_roles:
+        if review_missing:
             return Decision("REVIEW_REQUIRED", ["INDEPENDENT_REVIEW_REQUIRED"], matched, required_proofs)
         if "ALLOW" not in effects:
             return Decision("DENIED", ["NO_ALLOW_RULE_FAIL_CLOSED"], matched, required_proofs)
-        return Decision("ELIGIBLE", reasons or ["POLICY_AND_CONSTITUTION_SATISFIED"], matched, required_proofs)
+        return Decision("ELIGIBLE", ["POLICY_AND_CONSTITUTION_SATISFIED"], matched, required_proofs)
 
     @staticmethod
     def verify_proof_bundle(decision: Decision, proofs: dict[str, Any]) -> dict[str, Any]:
