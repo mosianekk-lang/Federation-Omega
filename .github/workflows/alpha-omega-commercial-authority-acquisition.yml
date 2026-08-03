@@ -56,7 +56,8 @@ jobs:
           assert receipt['operational_domains'] == ['github_actions', 'google_drive_document_release']
           assert projection['states']['github_actions'] == 'FRESH_VERIFIED'
           assert projection['states']['google_drive_document_release'] == 'FRESH_VERIFIED_READBACK'
-          assert projection['states']['cloud_run'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          assert projection['states']['cloud_run'] == 'PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED'
+          assert projection['states']['live_cloud_operations'] == 'PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED'
           assert projection['states']['payment_provider'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
           assert projection['states']['customer_market'] == 'MARKET_PROOF_REQUIRED'
           assert projection['states']['partner_market'] == 'MARKET_PROOF_REQUIRED'
@@ -72,7 +73,7 @@ jobs:
           assert acquisition['status'] == receipt['status']
           assert acquisition['external_gate_effect'] == 'UNCHANGED'
           assert acquisition['owner_authority_effect'] == 'UNCHANGED'
-          assert stages['C03']['status'] == 'SECRET_REFERENCE_AND_AUTHORITY_ACQUISITION_PACKAGE_VERIFIED_PROVIDER_AUTHORITY_REQUIRED'
+          assert stages['C03']['status'] == 'LIVE_REVERSIBLE_PROVIDER_AUTHORITY_VERIFIED_CLOUD_RUN_WIF_BLOCK_RECORDED_OWNER_RESERVED_DOMAINS_HELD'
           assert not programme['external_gate_evidence']
           assert (root / 'authority-acquisition-runtime' / 'provider-authority-acquisition-ledger.jsonl').is_file()
           assert (root / 'authority-acquisition-runtime' / 'provider-authority-acquisition-state.json').is_file()
