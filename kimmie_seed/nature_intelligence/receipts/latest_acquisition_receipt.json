@@ -1,12 +1,12 @@
 {
   "corpus_sha256": "c32a761727b436922e7cf09b65ac1dc64fb8d548ed4575a09be80b27a7354320",
-  "health_sha256": "1a7ba4899798138deb57dca951df6e983c5c27d811253b73faad4daba3cf8310",
+  "health_sha256": "066f458c25b525d41ddf4c032ddc16cbca21314b352d687aa65db10f4d870fa8",
   "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
   "manifest_sha256": "3046b0114921e91b314f769bbc74259d1daa1097a7d7234a80e258c228f1ea2a",
-  "observed_at": "2026-08-03T05:22:57.559051+00:00",
+  "observed_at": "2026-08-03T05:26:41.077547+00:00",
   "proof_boundary": "Proves transient acquisition, provenance validation, hashing and bounded signal extraction. Does not prove a useful deployed capability or higher maturity.",
-  "receipt_id": "NATURE-ACQ-20260803T052257.559051_0000",
-  "receipt_sha256": "5a5996177760ab231cdb2f946d74141e6c2e9c1bec7b2cc13ef8a35ce9ca5120",
+  "receipt_id": "NATURE-ACQ-20260803T052641.077547_0000",
+  "receipt_sha256": "dc568edf0ff0cf6325ab8f6702c35ad6e93ca531401092cd52411d424eadb06e",
   "source_hashes": [
     {
       "sha256": "27c02feed0b90e0163811a35a7565d03611dc1d3f86703d6bec4ae73d2d612b8",
