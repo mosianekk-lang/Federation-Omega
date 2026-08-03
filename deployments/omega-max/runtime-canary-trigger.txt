@@ -1,0 +1,2 @@
+triggered_at=2026-08-03T09:05:00+02:00
+purpose=non-destructive provider identity, Cloud Run state, health and proof canary
