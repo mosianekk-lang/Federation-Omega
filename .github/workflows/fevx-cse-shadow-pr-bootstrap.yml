@@ -16,6 +16,7 @@ concurrency:
 
 env:
   CSE_WHEEL_SHA256: 8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022
+  CSE_WHEEL_PATH: /tmp/fevx_cognitive_sovereignty_ecology-1.1.0-py3-none-any.whl
 
 jobs:
   provider-shadow:
@@ -61,11 +62,11 @@ jobs:
             systems/fevx-cse-runtime/vendor/wheel.part.07
           )
           for part in "${parts[@]}"; do test -s "$part"; done
-          cat "${parts[@]}" | base64 --decode > /tmp/fevx_cse-1.1.0-py3-none-any.whl
-          observed="$(sha256sum /tmp/fevx_cse-1.1.0-py3-none-any.whl | awk '{print $1}')"
+          cat "${parts[@]}" | base64 --decode > "$CSE_WHEEL_PATH"
+          observed="$(sha256sum "$CSE_WHEEL_PATH" | awk '{print $1}')"
           test "$observed" = "$CSE_WHEEL_SHA256"
-          python -m zipfile -t /tmp/fevx_cse-1.1.0-py3-none-any.whl
-          python -m pip install --disable-pip-version-check /tmp/fevx_cse-1.1.0-py3-none-any.whl
+          python -m zipfile -t "$CSE_WHEEL_PATH"
+          python -m pip install --disable-pip-version-check "$CSE_WHEEL_PATH"
 
       - name: Execute provider-native shadow and proof cycle
         shell: bash
