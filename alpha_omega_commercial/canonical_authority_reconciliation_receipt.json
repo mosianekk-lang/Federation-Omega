@@ -1,0 +1,84 @@
+{
+  "certified_reversible_surfaces": [
+    "canva_transaction",
+    "github",
+    "gmail_draft",
+    "google_calendar",
+    "google_drive",
+    "outlook_draft"
+  ],
+  "cloud_run": {
+    "candidate_identities": [
+      "fo-automation-agent",
+      "fo-operator"
+    ],
+    "cloud_mutation_performed": false,
+    "identity_authority": "OWNER_OR_PROVIDER_CONFIGURATION_REQUIRED",
+    "live_invocation_proven": false,
+    "path": "/execute",
+    "project_id": "sov-hybrid-suite",
+    "provider_state": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "region": "africa-south1",
+    "required_receipts": [
+      "provider_revision",
+      "request_id",
+      "authenticated_principal",
+      "response_status",
+      "response_body_sha256",
+      "readback_match",
+      "rollback_receipt"
+    ],
+    "required_sequence": [
+      "AUTHENTICATED_STATUS",
+      "READ_CLOUD_RUN_SERVICE",
+      "REVERSIBLE_CANARY",
+      "SEMANTIC_READBACK",
+      "ROLLBACK_RECEIPT"
+    ],
+    "service": "federation-omega-operator"
+  },
+  "external_gate_effect": "UNCHANGED",
+  "full_commercial_maturity": false,
+  "gates": {
+    "canonical_manifest_present": true,
+    "canonical_target_route_aligned": true,
+    "certified_reversible_surfaces_read_back": true,
+    "commercial_cloud_proof_contract_complete": true,
+    "external_maturity_gates_unchanged": true,
+    "owner_reserved_authority_preserved": true,
+    "programme_dependency_order": true,
+    "unsupported_live_cloud_claim_rejected": true
+  },
+  "manifest_id": "FO-CLAM-2026-08-04-v1",
+  "owner_authority_effect": "UNCHANGED",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "proof_scope": "C03_C06_C07_C11_C14_C15_CANONICAL_PROVIDER_AUTHORITY_RECONCILIATION",
+  "provider_proof": {
+    "artifact_digest": "sha256:6ba9dd485b177b6889ae5e21c2e53e6f44ba2f8c363c4d7f0f033f8edaad1fbd",
+    "artifact_id": 8874423157,
+    "artifact_name": "alpha-omega-commercial-canonical-authority-reconciliation-proof",
+    "conclusion": "success",
+    "created_at": "2026-08-03T23:09:51Z",
+    "expires_at": "2026-11-01T23:09:44Z",
+    "head_sha": "c74fd35549bbedc87226cab07b02f126b367dd09",
+    "pull_request": 111,
+    "workflow_job": 91843650948,
+    "workflow_run": 30861303534
+  },
+  "receipt_sha256": "65019a501d43f901c0a3daddb119d930281fbb234d4ecf13c11cd407e1567d5d",
+  "status": "CANONICAL_PROVIDER_ROUTE_ALIGNED_IDENTITY_AUTHORITY_UNAVAILABLE",
+  "truth_boundary": {
+    "cloud_run_operation_proven": false,
+    "customer_demand_proven": false,
+    "enterprise_attestation_proven": false,
+    "external_case_study_proven": false,
+    "owner_reserved_authority_bypassed": false,
+    "partner_adoption_proven": false,
+    "payment_or_revenue_proven": false,
+    "production_scale_proven": false,
+    "service_enabled_platform_priority_preserved": true,
+    "signed_contract_proven": false,
+    "subscription_or_invoice_proven": false
+  },
+  "verified_revenue_events": 0
+}
