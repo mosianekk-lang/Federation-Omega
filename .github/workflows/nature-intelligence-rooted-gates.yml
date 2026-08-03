@@ -11,7 +11,7 @@ on:
       - 'evidenceops/runtime/MAX_TECHNICAL_CAPABILITY_KIMMIE.json'
       - '.github/workflows/nature-intelligence-rooted-gates.yml'
   schedule:
-    - cron: '53 2 * * *'
+    - cron: '53 * * * *'
 
 permissions:
   contents: write
