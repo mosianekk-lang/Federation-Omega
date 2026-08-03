@@ -1,0 +1,24 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "owner": "Kim Kagiso Mosiane",
+  "objective": "Turn Alpha→Omega into a commercially viable service-enabled platform before promoting self-service SaaS",
+  "execution_rule": "Execute and promote stages in dependency order. Technical reference-provider proof may advance implementation, but market, payment, cloud, customer and legal claims require fresh external evidence.",
+  "canonical_status": "C01_C05_REFERENCE_FOUNDATION_READY_PROVIDER_AND_MARKET_GATES_OPEN",
+  "stages": [
+    {"id":"C01","name":"Commercial Product Definition","depends_on":[],"status":"OPERATIONAL_FOUNDATION_VERIFIED_MARKET_PROOF_REQUIRED","maturity_gate":"offer catalogue, ICP, pricing and sales assets pass deterministic contract tests; external demand remains unproven"},
+    {"id":"C02","name":"Tenant and Identity Foundation","depends_on":["C01"],"status":"REFERENCE_PROVIDER_VERIFIED","maturity_gate":"tenant isolation, RBAC, hash-chained audit and data-boundary tests"},
+    {"id":"C03","name":"Secrets and Provider Authority","depends_on":["C02"],"status":"SECRET_REFERENCE_CONTRACT_VERIFIED_PROVIDER_AUTHORITY_REQUIRED","maturity_gate":"secret-reference contract and rotation semantics verified; live secret provider proof required"},
+    {"id":"C04","name":"Customer Onboarding and Workspace Provisioning","depends_on":["C02","C03"],"status":"REFERENCE_PROVIDER_VERIFIED_LIVE_PROVIDER_BLOCKED","maturity_gate":"idempotent local reference workspace creation, receipt, rollback and restore verified; live customer provider required"},
+    {"id":"C05","name":"Billing, Metering and Cost Governance","depends_on":["C02"],"status":"INVOICE_READY_REFERENCE_PROVIDER_VERIFIED_PAYMENT_PROVIDER_BLOCKED","maturity_gate":"usage ledger, plan enforcement, invoice-ready export and budget controls verified; no invoice or payment claim"},
+    {"id":"C06","name":"Managed Operations and SLA Fabric","depends_on":["C03","C04"],"status":"BLOCKED_BY_LIVE_PROVIDER_AUTHORITY","maturity_gate":"health, incident, backup, restore, SLA and support proof"},
+    {"id":"C07","name":"Provider Adapter Expansion","depends_on":["C03"],"status":"ELIGIBLE_FOR_SAFE_ADAPTER_IMPLEMENTATION_PROVIDER_PROOF_REQUIRED","maturity_gate":"at least three provider adapters with deploy, readback and rollback proof"},
+    {"id":"C08","name":"Solution Catalogue and Capability Marketplace","depends_on":["C01","C05","C07"],"status":"NOT_YET_ELIGIBLE","maturity_gate":"reusable offers, versioned capabilities, entitlement and licensing proof"},
+    {"id":"C09","name":"Partner and White-Label Programme","depends_on":["C05","C08"],"status":"NOT_YET_ELIGIBLE","maturity_gate":"partner tenant, branding, licence and revenue-share controls"},
+    {"id":"C10","name":"Security, Privacy and Enterprise Assurance","depends_on":["C02","C03","C06"],"status":"NOT_YET_ELIGIBLE","maturity_gate":"security pack, privacy controls, retention, DR and enterprise audit evidence"},
+    {"id":"C11","name":"Customer Portal and Self-Service SaaS","depends_on":["C04","C05","C06","C08","C10"],"status":"NOT_YET_ELIGIBLE_SERVICE_ENABLED_PLATFORM_FIRST","maturity_gate":"customer-facing portal, subscription, provisioning and lifecycle management"},
+    {"id":"C12","name":"Case Studies and Commercial Proof","depends_on":["C01","C06","C08"],"status":"MARKET_PROOF_REQUIRED","maturity_gate":"verified savings, time reduction, reliability and customer outcome evidence"},
+    {"id":"C13","name":"Sales and Revenue Operations","depends_on":["C01","C05","C12"],"status":"NOT_YET_ELIGIBLE","maturity_gate":"lead funnel, quoting, contract, renewal and revenue dashboards"},
+    {"id":"C14","name":"Scale, Reliability and Unit Economics","depends_on":["C05","C06","C07","C11"],"status":"NOT_YET_ELIGIBLE","maturity_gate":"load, margin, support burden, churn and recovery targets proven"},
+    {"id":"C15","name":"Commercial Maturity and Succession","depends_on":["C01","C02","C03","C04","C05","C06","C07","C08","C09","C10","C11","C12","C13","C14"],"status":"COMMERCIAL_COMPLETION_BLOCKED","maturity_gate":"repeatable acquisition, delivery, recurring revenue, governance and succession drill"}
+  ]
+}
