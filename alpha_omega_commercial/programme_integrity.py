@@ -8,9 +8,15 @@ from typing import Any
 
 CANONICAL_STATUS = "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
 CANONICAL_INTEGRITY_STATUS = "CANONICAL_RECEIPT_INTEGRITY_VERIFIED"
+EXTERNAL_EVIDENCE_ADMISSION_STATUS = "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED"
+C12_STATUS = "EVIDENCE_FRAMEWORK_AND_EXTERNAL_ADMISSION_VERIFIED_MARKET_PROOF_REQUIRED"
+C13_STATUS = (
+    "REFERENCE_REVOPS_AND_PAYMENT_EVIDENCE_ADMISSION_VERIFIED_"
+    "OWNER_APPROVAL_AND_REVENUE_PROOF_REQUIRED"
+)
 C15_STATUS = (
     "COMMERCIAL_READINESS_VERIFIED_CANONICAL_RECEIPT_INTEGRITY_VERIFIED_"
-    "EXTERNAL_MATURITY_GATES_OPEN"
+    "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
 )
 
 EXPECTED_STAGE_IDS = [f"C{index:02d}" for index in range(1, 16)]
@@ -30,6 +36,17 @@ EXTERNAL_GATE_LABELS = {
     "partner adoption": "partner_adoption",
     "external customer case study": "external_case_study",
     "production scale and recovery evidence": "production_scale",
+}
+EXPECTED_PROVIDER_AUTHORITY = {
+    "github_actions": "FRESH_VERIFIED",
+    "google_drive_document_release": "FRESH_VERIFIED_READBACK",
+    "google_drive_binary_artifact_transfer": "PROVIDER_BLOCKED_FILE_EGRESS",
+    "cloud_run": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "live_cloud_operations": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
 }
 
 
@@ -68,10 +85,14 @@ def verify_programme_register(
 ) -> dict[str, Any]:
     stages, dependency_order_valid = _stage_index(programme)
     c11 = stages.get("C11", {})
+    c12 = stages.get("C12", {})
+    c13 = stages.get("C13", {})
     c15 = stages.get("C15", {})
     maturity_gates = maturity.get("external_gates", {})
     declared_gate_labels = set(programme.get("external_maturity_gates", []))
     declared_evidence = programme.get("external_gate_evidence", {})
+    admission = programme.get("external_evidence_admission", {})
+    authority = admission.get("provider_authority", {})
 
     gate_evidence_valid = True
     for label, key in EXTERNAL_GATE_LABELS.items():
@@ -102,6 +123,14 @@ def verify_programme_register(
             == receipt_integrity.get("status")
             == CANONICAL_INTEGRITY_STATUS
         ),
+        "external_evidence_admission_verified": (
+            admission.get("status") == EXTERNAL_EVIDENCE_ADMISSION_STATUS
+            and admission.get("proof_scope") == "C12_C13_C15_EXTERNAL_EVIDENCE_ADMISSION"
+            and "external provider-native evidence" in admission.get("admission_rule", "").lower()
+        ),
+        "provider_authority_scopes_precise": authority == EXPECTED_PROVIDER_AUTHORITY,
+        "c12_admission_status_verified": c12.get("status") == C12_STATUS,
+        "c13_admission_status_verified": c13.get("status") == C13_STATUS,
         "c15_register_status_verified": c15.get("status") == C15_STATUS,
         "integrity_checks_pass": bool(integrity.get("checks")) and all(integrity.get("checks", {}).values()),
         "technical_reference_ready": bool(maturity.get("technical_reference_ready")),
@@ -132,13 +161,16 @@ def verify_programme_register(
         "programme_id": programme.get("programme_id"),
         "canonical_status": programme.get("canonical_status"),
         "canonical_receipt_integrity": programme.get("canonical_receipt_integrity"),
+        "external_evidence_admission": admission.get("status"),
         "checks": checks,
         "external_gates": maturity_gates,
+        "provider_authority": authority,
         "owner_reserved_authority": sorted(EXPECTED_OWNER_RESERVED),
         "truth_boundary": (
-            "This receipt proves machine-readable programme-register consistency with the verified C15 artifact. "
-            "It does not establish customer demand, a signed contract, payment-provider revenue, Cloud Run operation, "
-            "enterprise attestation, partner adoption, an external case study or production-scale evidence."
+            "This receipt proves machine-readable programme-register consistency, exact provider-authority scope and "
+            "fail-closed external-evidence admission readiness. It does not establish customer demand, a signed contract, "
+            "payment-provider revenue, Cloud Run operation, enterprise attestation, partner adoption, an external case "
+            "study or production-scale evidence."
         ),
     }
     result["receipt_sha256"] = digest(result)
