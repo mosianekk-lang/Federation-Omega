@@ -1,0 +1,32 @@
+{
+  "acquisition_receipt_path": "kimmie_seed/nature_intelligence/receipts/latest_acquisition_receipt.json",
+  "acquisition_receipt_sha256": "7c35ab5a56983c6ff8536938e24c325d9833de5b1cc73fd4f9bdfafccc35abef",
+  "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260803-022.json",
+  "checkpoint_sha256": "9ff51bb5af403bbb425944c8f43dccbb2d3790354ab0912b5b7b0cbf8f6c9350",
+  "health_path": "kimmie_seed/nature_intelligence/monitoring/latest_health.json",
+  "health_sha256": "e8e1a2366735f20478b68c608b6887653796ed2fbc5fdf23ed5046799ef2fc31",
+  "identity_drift": "NONE_DETECTED",
+  "ipep_bible": {
+    "evidence_note_sha256": "0e5e00fac67dbfd2973a3e4c41bab22dfd80a5807f05bd2307f6c0810bdc93f0",
+    "hash_readback": {
+      "end_index": 110214,
+      "start_index": 110150,
+      "tab_id": "t.0"
+    },
+    "heading_readback": {
+      "end_index": 107752,
+      "start_index": 107681,
+      "tab_id": "t.0"
+    },
+    "revision_id": "AIroW36Jri7dyy9JjE25cy_E8DpCnL_cuu0LWwV7QU0XEgW-xxVnUgN2H6BIxWhI5JAfsDr74KetR5vNUpUxBaC_Rz1VWa4Y2-kWxX3YBqc"
+  },
+  "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+  "observed_at": "2026-08-03T07:23:00+02:00",
+  "owner_decision_required": false,
+  "proof_commit": "2963edd9f5ee6213ff1d06622fd903cad4565d83",
+  "receipt_id": "LANE-WATCH-RECEIPT-026",
+  "receipt_sha256": "689d073e9afa9e066333bf92fa4d502c1cb0826f30c12af55b838a7464acf8fa",
+  "root_promotion": "NONE",
+  "status": "PASS",
+  "transition": "SEED_TO_GERMINATED"
+}
