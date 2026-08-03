@@ -129,7 +129,8 @@ jobs:
           assert live_receipt['truth_boundary']['six_reversible_provider_operations_verified']
           assert not live_receipt['truth_boundary']['bounded_live_cloud_operation_verified']
           assert not live_receipt['truth_boundary']['cloud_mutation_performed_when_blocked']
-          assert live_receipt['truth_boundary']['cloud_run_provider_blocked']
+          assert live_receipt['provider_states']['google_cloud_run'] == 'PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED'
+          assert not live_receipt['cloud_run']['mutation_performed']
 
           assert programme_integrity['status'] == 'PROGRAMME_REGISTER_INTEGRITY_VERIFIED'
           assert all(programme_integrity['checks'].values())
