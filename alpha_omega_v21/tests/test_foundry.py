@@ -37,6 +37,41 @@ def test_operations_fabric(tmp_path):
     )["retire"]
 
 
+def test_maintenance_cycle_writes_operational_proof(tmp_path):
+    operations = OperationsFabric(tmp_path)
+    report = operations.maintenance_cycle(
+        "SYS-MAINT-001",
+        expected={"version": "2.2.0", "provider": "github_actions"},
+        actual={"version": "2.2.0", "provider": "github_actions"},
+    )
+    assert report["state"] == "MAINTENANCE_HEALTHY"
+    assert report["drift"]["drift"] is False
+    assert report["failure"]["category"] == "NONE"
+    assert report["repair"]["action"] == "NO_ACTION"
+    assert report["retirement"]["retire"] is False
+    assert operations.maintenance_report_file.exists()
+    assert operations.learning_file.exists()
+    assert len(operations.heartbeat_file.read_text(encoding="utf-8").splitlines()) == 2
+    persisted = json.loads(operations.maintenance_report_file.read_text(encoding="utf-8"))
+    assert persisted["report_sha256"] == report["report_sha256"]
+
+
+def test_maintenance_cycle_routes_integrity_repair_and_retirement(tmp_path):
+    report = OperationsFabric(tmp_path).maintenance_cycle(
+        "SYS-MAINT-002",
+        expected={"schema": "v2"},
+        actual={"schema": "v1"},
+        error="checksum corrupt",
+        metrics={"value_score": 0.1, "failure_rate": 0.5, "replacement_ready": True},
+    )
+    assert report["state"] == "MAINTENANCE_ACTION_REQUIRED"
+    assert report["drift"]["drift"] is True
+    assert report["failure"]["category"] == "INTEGRITY"
+    assert report["repair"]["action"] == "ROLLBACK_AND_REBUILD"
+    assert report["repair"]["automatic"] is True
+    assert report["retirement"]["retire"] is True
+
+
 def test_portfolio_order(tmp_path):
     ranked = SolutionFoundry(tmp_path).score_portfolio(
         [
