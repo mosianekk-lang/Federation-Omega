@@ -1,0 +1,27 @@
+{
+  "version": "2.4.0-candidate",
+  "updated_at": "2026-08-03T09:59:00Z",
+  "canonical_path": "alpha_omega_v2",
+  "maturity": {
+    "local_provider_contract": "IMPLEMENTED_PENDING_CI",
+    "local_operational_release": "IMPLEMENTED_PENDING_CI",
+    "github_release_artifact_adapter": "IMPLEMENTED_PENDING_PROVIDER_RUN",
+    "github_hosted_artifact": "PENDING_PROVIDER_RUN",
+    "google_drive_binary_adapter": "IMPLEMENTED_PENDING_PROVIDER_RECEIPT",
+    "google_drive_binary_publish": "PENDING_GITHUB_ARTIFACT",
+    "maintenance_heartbeat": "IMPLEMENTED_PENDING_CI",
+    "drift_detection": "IMPLEMENTED_PENDING_CI",
+    "failure_classification": "IMPLEMENTED_PENDING_CI",
+    "repair_rules": "IMPLEMENTED_PENDING_CI",
+    "learning_ledger": "IMPLEMENTED_PENDING_CI",
+    "retirement_controls": "IMPLEMENTED_PENDING_CI",
+    "cloud_run": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
+  },
+  "proof": {
+    "branch": "alpha-omega-v2-canonical-provider-v24",
+    "ci_workflow": ".github/workflows/alpha-omega-foundry-ci.yml",
+    "provider_contract": "discover -> validate_authority -> snapshot -> deploy -> execute -> read_back -> health_check -> persistence_check -> rollback -> proof_receipt",
+    "cloud_authority_state": "Google WIF AUTHORITY_REQUIRED after STS invalid_target; unchanged retries suppressed"
+  },
+  "truth_boundary": "Source and tests are staged on a branch. No GitHub hosted artifact or Drive binary publication is promoted until provider-native run and metadata readback complete."
+}
