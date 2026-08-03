@@ -13,73 +13,15 @@
   ],
   "baseline_proof_hash": "78d498b4d92a796707fa40e0e459f90cd3a90b189cd8ae5f68e6eaaf44b9fa0a",
   "current_verified_level": 5,
-  "database_dump_sha256": "81260646e29a8a2ec1850250c19f43985744c95989815ceaa68bf95a4238dc8a",
+  "database_dump_sha256": "1bc08fa52b9fe1ed5845e3ccd2facec315d476e6532e8981b015aca29aa89fb4",
   "evolution": {
     "constitutional_change": false,
     "external_effect": false,
     "final_score": 1.0,
     "final_version": "2.0.6",
-    "promotion_count": 6,
-    "promotions": [
-      {
-        "config": {
-          "gap_sensitivity": 0.72
-        },
-        "score": 0.5,
-        "version": "2.0.1"
-      },
-      {
-        "config": {
-          "failure_hold_threshold": 0.64,
-          "gap_sensitivity": 0.72
-        },
-        "score": 0.6,
-        "version": "2.0.2"
-      },
-      {
-        "config": {
-          "failure_hold_threshold": 0.64,
-          "gap_sensitivity": 0.72,
-          "memory_antibody_repeat": 2
-        },
-        "score": 0.7,
-        "version": "2.0.3"
-      },
-      {
-        "config": {
-          "causal_confidence_floor": 0.55,
-          "failure_hold_threshold": 0.64,
-          "gap_sensitivity": 0.72,
-          "memory_antibody_repeat": 2
-        },
-        "score": 0.8,
-        "version": "2.0.4"
-      },
-      {
-        "config": {
-          "causal_confidence_floor": 0.55,
-          "diversity_floor": 3,
-          "failure_hold_threshold": 0.64,
-          "gap_sensitivity": 0.72,
-          "memory_antibody_repeat": 2
-        },
-        "score": 0.9,
-        "version": "2.0.5"
-      },
-      {
-        "config": {
-          "causal_confidence_floor": 0.55,
-          "diversity_floor": 3,
-          "failure_hold_threshold": 0.64,
-          "gap_sensitivity": 0.72,
-          "joint_lead_delta": 0.2,
-          "memory_antibody_repeat": 2
-        },
-        "score": 1.0,
-        "version": "2.0.6"
-      }
-    ],
-    "state": "BOUNDED_EVOLUTION_PROMOTED"
+    "promotion_count": 0,
+    "promotions": [],
+    "state": "BOUNDED_EVOLUTION_PLATEAU"
   },
   "external_effect": false,
   "frontier_modules": [
@@ -96,17 +38,17 @@
   ],
   "integrity": {
     "errors": [],
-    "event_count": 7,
-    "head_hash": "8fbdf958231306f965f12e5f4c8ce5d3f47c42494b034008f3b6b6bafc5179b3",
+    "event_count": 8,
+    "head_hash": "c1011424803502599dfaa88f4d10efa82fbac8aba67da5b306073945ee00f39b",
     "status": "PASSED"
   },
-  "ledger_head_hash": "8fbdf958231306f965f12e5f4c8ce5d3f47c42494b034008f3b6b6bafc5179b3",
+  "ledger_head_hash": "c1011424803502599dfaa88f4d10efa82fbac8aba67da5b306073945ee00f39b",
   "level_6_eligible": false,
   "maturity_state": "VERIFIED_SOVEREIGN_MISSION_ECOLOGY_SCOPED",
   "module_count": 20,
   "next_gate": "WORKFLOW_SPECIFIC_TRUSTED_AUTONOMY_DESIGN",
-  "proof_hash": "47867bef47b6b6e8100c0b2f71608f71dd044f55e951ca78f962d4e0f37d2f77",
-  "proof_id": "PRF-FRONTIER-CSE-V2-30836164482-1",
+  "proof_hash": "75d1976bbc4c836df2b76149aefe25a25410ec08d07f5b63d4518f81d0c2e92a",
+  "proof_id": "PRF-FRONTIER-CSE-V2-30836261179-1",
   "provider": "github_actions",
   "real_workflows": [
     {
@@ -159,9 +101,9 @@
     }
   ],
   "reapply_test": true,
-  "recorded_at": "2026-08-03T17:18:47.352146Z",
+  "recorded_at": "2026-08-03T17:20:06.445065Z",
   "rollback_test": true,
-  "run_id": "CSE-V2-30836164482-1",
+  "run_id": "CSE-V2-30836261179-1",
   "scope": [
     "REAL-GITHUB-CANONICAL-RUNTIME",
     "REAL-DRIVE-ARTIFACT-PROVENANCE",
