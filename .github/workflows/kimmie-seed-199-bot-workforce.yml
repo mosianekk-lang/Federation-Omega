@@ -5,7 +5,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'kimmie_seed/workforce/**'
+      - 'kimmie_seed/workforce/bot_manifest_199.json'
+      - 'kimmie_seed/workforce/coordinator.py'
+      - 'kimmie_seed/workforce/test_coordinator.py'
+      - 'kimmie_seed/workforce/README.md'
       - '.github/workflows/kimmie-seed-199-bot-workforce.yml'
   schedule:
     - cron: '11 3 * * *'
