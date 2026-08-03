@@ -28,7 +28,7 @@ jobs:
         run: python -m compileall -q sol_61_runtime
       - name: Unit tests
         working-directory: sol_61_runtime
-        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py test_mission_autonomy.py test_provider_bridge.py test_provider_authority.py test_operator_activation.py
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py test_mission_autonomy.py test_provider_bridge.py test_provider_authority.py test_operator_activation.py test_live_authority.py
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
@@ -55,6 +55,8 @@ jobs:
         run: python sol_61_runtime/prove_provider_authority.py --output sol_61_runtime/artifacts/provider-authority-proof
       - name: Execute operator activation packaging proof
         run: python sol_61_runtime/prove_operator_activation.py --output sol_61_runtime/artifacts/operator-activation-proof
+      - name: Execute canonical live authority manifest proof
+        run: python sol_61_runtime/prove_live_authority.py --output sol_61_runtime/artifacts/live-authority-proof
       - name: Validate proof gates and boundaries
         run: |
           python - <<'PY'
@@ -74,20 +76,21 @@ jobs:
             'bridge': ('provider-bridge-proof', 'sol-61-provider-bridge-receipt.json', 'PROVIDER_EXECUTION_BRIDGE_VERIFIED'),
             'authority': ('provider-authority-proof', 'sol-61-provider-authority-receipt.json', 'CLOUDRUN_APPS_SCRIPT_AUTHORITY_GATE_VERIFIED'),
             'activation': ('operator-activation-proof', 'sol-61-operator-activation-receipt.json', 'OPERATOR_ACTIVATION_PACKAGE_VERIFIED'),
+            'live_authority': ('live-authority-proof', 'canonical-live-authority-receipt.json', 'CANONICAL_LIVE_AUTHORITY_MANIFEST_VERIFIED'),
           }
           receipts = {}
           for key, (folder, filename, status) in pairs.items():
             receipt = json.loads((Path('sol_61_runtime/artifacts') / folder / filename).read_text())
             assert receipt['status'] == status and all(receipt['gates'].values())
             receipts[key] = receipt
-          activation = receipts['activation']
-          assert activation['truth_boundary']['github_actions_execution']
-          assert not activation['truth_boundary']['cloud_run_live_invocation_performed']
-          assert not activation['truth_boundary']['apps_script_live_source_authority_proven']
-          assert activation['truth_boundary']['owner_consent_required']
-          root = Path('sol_61_runtime/artifacts/operator-activation-proof')
-          assert (root / 'cloud-run-activation-manifest.json').is_file()
-          assert (root / 'apps-script-activation-manifest.json').is_file()
+          live = receipts['live_authority']
+          assert live['truth_boundary']['github_actions_execution']
+          assert live['truth_boundary']['manifest_consolidated']
+          assert not live['truth_boundary']['cloud_run_live_invocation_certified']
+          assert not live['truth_boundary']['apps_script_live_source_authority_certified']
+          assert not live['truth_boundary']['owner_reserved_actions_bypassed']
+          root = Path('sol_61_runtime/artifacts/live-authority-proof')
+          assert (root / 'canonical-live-authority-manifest.json').is_file()
           PY
       - name: Upload proof package
         uses: actions/upload-artifact@v4
@@ -107,5 +110,6 @@ jobs:
             sol_61_runtime/artifacts/provider-bridge-proof
             sol_61_runtime/artifacts/provider-authority-proof
             sol_61_runtime/artifacts/operator-activation-proof
+            sol_61_runtime/artifacts/live-authority-proof
           retention-days: 90
           if-no-files-found: error
