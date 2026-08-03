@@ -1,0 +1,86 @@
+name: EvidenceOps v7.2.2 P12 Provider Worker
+
+on:
+  pull_request:
+    paths:
+      - "runtime/evidenceops_v722/**"
+      - ".github/workflows/evidenceops-v722-p12-provider-worker.yml"
+  push:
+    branches: [main]
+    paths:
+      - "runtime/evidenceops_v722/**"
+      - ".github/workflows/evidenceops-v722-p12-provider-worker.yml"
+  schedule:
+    - cron: "23 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: evidenceops-v722-p12-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  provider-worker:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip p12-worker]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+
+      - name: Run focused regression tests
+        run: python -m unittest discover -s runtime/evidenceops_v722/tests -p 'test_*.py'
+
+      - name: Write checkpoint and simulate crash
+        id: checkpoint
+        shell: bash
+        run: |
+          set +e
+          python runtime/evidenceops_v722/p12_provider_worker.py checkpoint --workspace p12_workspace
+          rc=$?
+          echo "exit_code=$rc" >> "$GITHUB_OUTPUT"
+          test "$rc" -eq 75
+
+      - name: Resume from persisted checkpoint
+        run: python runtime/evidenceops_v722/p12_provider_worker.py resume --workspace p12_workspace
+
+      - name: Verify provider-worker proof
+        run: python runtime/evidenceops_v722/p12_provider_worker.py verify --workspace p12_workspace
+
+      - name: Upload immutable proof artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-v722-p12-provider-worker-${{ github.run_id }}-${{ github.run_attempt }}
+          path: p12_workspace
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Persist exact provider readback on main
+        if: github.event_name != 'pull_request'
+        shell: bash
+        run: |
+          set -euo pipefail
+          target=runtime/evidenceops_v722/state
+          mkdir -p "$target"
+          cp p12_workspace/state/worker_state.json "$target/worker_state.json"
+          cp p12_workspace/replica/worker_state.replica.json "$target/worker_state.replica.json"
+          cp p12_workspace/reports/provider_event_receipt.json "$target/provider_event_receipt.json"
+          cp p12_workspace/reports/policy_log.json "$target/policy_log.json"
+          cp p12_workspace/reports/health.json "$target/health.json"
+          cp p12_workspace/reports/p12_provider_worker_receipt.json "$target/p12_provider_worker_receipt.json"
+          git config user.name "federation-omega-provider-worker"
+          git config user.email "actions@users.noreply.github.com"
+          git add "$target"
+          if git diff --cached --quiet; then
+            echo "No provider state change to persist"
+          else
+            git commit -m "Persist EvidenceOps v7.2.2 P12 provider-worker proof [skip p12-worker]"
+            git push origin HEAD:main
+          fi
