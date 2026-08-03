@@ -41,6 +41,7 @@ jobs:
           test_authority_refresh.py
           test_live_provider_expansion.py
           test_live_provider_block.py
+          test_canonical_authority_reconciliation.py
 
       - name: Execute reversible C10-C15 proof
         run: python alpha_omega_commercial/prove_c10_c15.py --output alpha_omega_commercial/artifacts/c10-c15
@@ -86,6 +87,7 @@ jobs:
           freshness = json.loads((root / 'provider-authority-freshness' / 'provider-authority-freshness-receipt.json').read_text())
           authority_projection = json.loads((root / 'provider-authority-freshness' / 'provider-authority-projection.json').read_text())
           live_receipt = json.loads(Path('alpha_omega_commercial/live_provider_expansion_receipt.json').read_text())
+          canonical_receipt = json.loads(Path('alpha_omega_commercial/canonical_authority_reconciliation_receipt.json').read_text())
 
           assert receipt['stages']['C10']['status'] == 'REFERENCE_ASSURANCE_VERIFIED_ENTERPRISE_ATTESTATION_REQUIRED'
           assert receipt['stages']['C10']['proof']['control_coverage_pass']
@@ -118,12 +120,29 @@ jobs:
           assert programme['canonical_receipt_integrity'] == integrity['status']
           assert programme['external_evidence_admission']['status'] == 'EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED'
           assert programme['provider_authority_freshness']['status'] == 'PROVIDER_AUTHORITY_FRESHNESS_RECONCILIATION_VERIFIED'
-          assert programme['stages'][-1]['status'] == 'COMMERCIAL_READINESS_VERIFIED_REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_WIF_BLOCK_RECORDED_EXTERNAL_MATURITY_GATES_OPEN'
+          assert programme['stages'][-1]['status'] == 'COMMERCIAL_READINESS_VERIFIED_CANONICAL_PROVIDER_ROUTE_ALIGNED_EXTERNAL_MATURITY_GATES_OPEN'
           assert programme['live_provider_expansion']['status'] == 'REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_PROVIDER_BLOCKED'
           assert programme['live_provider_expansion']['provider_states']['google_cloud_run'] == 'PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED'
           assert programme['live_provider_expansion']['verified_revenue_events'] == 0
           assert not programme['live_provider_expansion']['full_commercial_maturity']
           assert not programme['live_provider_expansion']['cloud_run_block']['mutation_performed']
+
+          checkpoint = programme['canonical_authority_reconciliation']
+          assert checkpoint['status'] == 'CANONICAL_PROVIDER_ROUTE_ALIGNED_IDENTITY_AUTHORITY_UNAVAILABLE'
+          assert checkpoint['cloud_run']['project_id'] == 'sov-hybrid-suite'
+          assert checkpoint['cloud_run']['region'] == 'africa-south1'
+          assert checkpoint['cloud_run']['service'] == 'federation-omega-operator'
+          assert checkpoint['cloud_run']['path'] == '/execute'
+          assert checkpoint['cloud_run']['provider_state'] == 'PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE'
+          assert not checkpoint['cloud_run']['live_invocation_proven']
+          assert not checkpoint['cloud_run']['cloud_mutation_performed']
+          assert checkpoint['external_gate_effect'] == 'UNCHANGED'
+          assert checkpoint['owner_authority_effect'] == 'UNCHANGED'
+          assert not checkpoint['full_commercial_maturity']
+          assert canonical_receipt['status'] == checkpoint['status']
+          assert canonical_receipt['receipt_sha256'] == checkpoint['receipt_sha256']
+          assert canonical_receipt['verified_revenue_events'] == 0
+          assert not canonical_receipt['full_commercial_maturity']
 
           assert live_receipt['status'] == 'REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_PROVIDER_BLOCKED'
           assert live_receipt['truth_boundary']['six_reversible_provider_operations_verified']
@@ -134,6 +153,7 @@ jobs:
 
           assert programme_integrity['status'] == 'PROGRAMME_REGISTER_INTEGRITY_VERIFIED'
           assert all(programme_integrity['checks'].values())
+          assert programme_integrity['canonical_authority_reconciliation'] == checkpoint['status']
           assert not any(programme_integrity['external_gates'].values())
 
           assert admission['status'] == 'EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED'

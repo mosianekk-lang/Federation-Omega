@@ -3,48 +3,43 @@ name: Alpha Omega Commercial Live Provider Expansion
 on:
   push:
     branches:
-      - alpha-omega-commercial-live-provider-expansion
+      - alpha-omega-commercial-canonical-authority-reconciliation
     paths:
-      - 'alpha_omega_commercial/live_provider_expansion.py'
-      - 'alpha_omega_commercial/live_provider_block.py'
-      - 'alpha_omega_commercial/test_live_provider_expansion.py'
-      - 'alpha_omega_commercial/test_live_provider_block.py'
-      - 'alpha_omega_commercial/prove_live_provider_expansion_v2.py'
+      - 'alpha_omega_commercial/canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/prove_canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/test_canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/canonical_authority_reconciliation_receipt.json'
+      - 'alpha_omega_commercial/provider_authority_requirements.json'
       - 'alpha_omega_commercial/programme.json'
+      - 'sol_61_runtime/canonical_live_authority_manifest.json'
       - 'sol_61_runtime/provider_certification_register.json'
       - '.github/workflows/alpha-omega-commercial-live-provider-expansion.yml'
   pull_request:
     paths:
-      - 'alpha_omega_commercial/live_provider_expansion.py'
-      - 'alpha_omega_commercial/live_provider_block.py'
-      - 'alpha_omega_commercial/test_live_provider_expansion.py'
-      - 'alpha_omega_commercial/test_live_provider_block.py'
-      - 'alpha_omega_commercial/prove_live_provider_expansion_v2.py'
+      - 'alpha_omega_commercial/canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/prove_canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/test_canonical_authority_reconciliation.py'
+      - 'alpha_omega_commercial/canonical_authority_reconciliation_receipt.json'
+      - 'alpha_omega_commercial/provider_authority_requirements.json'
       - 'alpha_omega_commercial/programme.json'
+      - 'sol_61_runtime/canonical_live_authority_manifest.json'
       - 'sol_61_runtime/provider_certification_register.json'
       - '.github/workflows/alpha-omega-commercial-live-provider-expansion.yml'
   workflow_dispatch:
 
 permissions:
   contents: read
-  id-token: write
-
-concurrency:
-  group: alpha-omega-commercial-live-provider-${{ github.ref }}
-  cancel-in-progress: false
 
 env:
   PROJECT_ID: sov-hybrid-suite
-  PROJECT_NUMBER: '257649435135'
   REGION: africa-south1
-  SERVICE: fo-transcription-bridge
-  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
-  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  SERVICE: federation-omega-operator
+  SERVICE_PATH: /execute
 
 jobs:
   provider-proof:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
 
@@ -52,281 +47,66 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Compile and run complete commercial regression suite
+      - name: Compile and run commercial regression tests
         working-directory: alpha_omega_commercial
         run: |
           set -euo pipefail
           python -m compileall -q .
           python -m unittest discover -p 'test_*.py' -v
 
-      - name: Attempt keyless Google Cloud authority
-        id: auth
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.DEPLOYER_SA }}
-
-      - name: Set up Google Cloud CLI
-        if: steps.auth.outcome == 'success'
-        uses: google-github-actions/setup-gcloud@v2
-
-      - name: Verify provider identity and current private service
-        if: steps.auth.outcome == 'success'
-        id: baseline
-        run: |
-          set -euo pipefail
-          account="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
-          project_number="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-          test "$account" = "$DEPLOYER_SA"
-          test "$project_number" = "$PROJECT_NUMBER"
-
-          gcloud run services describe "$SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-before.json
-          gcloud run services get-iam-policy "$SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-policy.json
-
-          python - <<'PY' > /tmp/baseline.env
-          import json
-          service=json.load(open('/tmp/service-before.json', encoding='utf-8'))
-          policy=json.load(open('/tmp/service-policy.json', encoding='utf-8'))
-          status=service.get('status', {})
-          spec=service.get('spec', {})
-          template=spec.get('template', {}).get('spec', {})
-          revision=status.get('latestReadyRevisionName', '')
-          url=status.get('url', '')
-          image=(template.get('containers') or [{}])[0].get('image', '')
-          service_account=template.get('serviceAccountName', '')
-          members=[member for binding in policy.get('bindings', []) for member in binding.get('members', [])]
-          assert revision and url and image and service_account, (revision, url, image, service_account)
-          assert 'allUsers' not in members and 'allAuthenticatedUsers' not in members, members
-          print(f'REVISION={revision}')
-          print(f'SERVICE_URL={url}')
-          print(f'IMAGE={image}')
-          print(f'RUNTIME_SA={service_account}')
-          PY
-          source /tmp/baseline.env
-          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
-          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
-          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
-          echo "runtime_sa=$RUNTIME_SA" >> "$GITHUB_OUTPUT"
-
-          token="$(gcloud auth print-identity-token --audiences="$SERVICE_URL")"
-          curl --fail --silent --show-error \
-            -H "Authorization: Bearer $token" "$SERVICE_URL/health" > /tmp/health-before.json
-          python - <<'PY'
-          import json
-          health=json.load(open('/tmp/health-before.json', encoding='utf-8'))
-          assert health.get('status') == 'HEALTHY', health
-          assert health.get('checks', {}).get('ready') is True, health
-          PY
-
-      - name: Execute reversible zero-allocation tag and rollback drill
-        if: steps.auth.outcome == 'success'
-        id: rollback
-        env:
-          REVISION: ${{ steps.baseline.outputs.revision }}
-        run: |
-          set -euo pipefail
-          TAG="ao-commercial-${GITHUB_RUN_ID}"
-          cleanup() {
-            gcloud run services update-traffic "$SERVICE" \
-              --project "$PROJECT_ID" --region "$REGION" \
-              --remove-tags "$TAG" --quiet >/dev/null 2>&1 || true
-          }
-          trap cleanup EXIT
-
-          gcloud run services update-traffic "$SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" \
-            --update-tags "${TAG}=${REVISION}" --quiet >/dev/null
-          gcloud run services describe "$SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-tagged.json
-          python - "$TAG" "$REVISION" <<'PY' > /tmp/tag.env
-          import json, sys
-          service=json.load(open('/tmp/service-tagged.json', encoding='utf-8'))
-          tag, revision=sys.argv[1:3]
-          row=next((x for x in service.get('status', {}).get('traffic', []) if x.get('tag') == tag), None)
-          assert row and row.get('revisionName') == revision and row.get('url'), row
-          assert not row.get('percent'), row
-          print(f"TAG_URL={row['url']}")
-          PY
-          source /tmp/tag.env
-          token="$(gcloud auth print-identity-token --audiences="$TAG_URL")"
-          curl --fail --silent --show-error \
-            -H "Authorization: Bearer $token" "$TAG_URL/health" > /tmp/health-tagged.json
-          python - <<'PY'
-          import json
-          health=json.load(open('/tmp/health-tagged.json', encoding='utf-8'))
-          assert health.get('status') == 'HEALTHY', health
-          assert health.get('checks', {}).get('ready') is True, health
-          PY
-
-          sleep 3
-          gcloud run services describe "$SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-persisted.json
-          python - "$TAG" "$REVISION" <<'PY'
-          import json, sys
-          service=json.load(open('/tmp/service-persisted.json', encoding='utf-8'))
-          tag, revision=sys.argv[1:3]
-          row=next((x for x in service.get('status', {}).get('traffic', []) if x.get('tag') == tag), None)
-          assert row and row.get('revisionName') == revision, row
-          PY
-
-          gcloud run services update-traffic "$SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" \
-            --remove-tags "$TAG" --quiet >/dev/null
-          gcloud run services describe "$SERVICE" \
-            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-restored.json
-          python - "$TAG" "$REVISION" <<'PY'
-          import json, sys
-          service=json.load(open('/tmp/service-restored.json', encoding='utf-8'))
-          tag, revision=sys.argv[1:3]
-          assert service.get('status', {}).get('latestReadyRevisionName') == revision, service.get('status', {})
-          assert not any(x.get('tag') == tag for x in service.get('status', {}).get('traffic', [])), service.get('status', {}).get('traffic', [])
-          PY
-          trap - EXIT
-          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
-          echo "tag_url=$TAG_URL" >> "$GITHUB_OUTPUT"
-
-      - name: Build fresh provider-native Cloud Run observation
-        if: steps.auth.outcome == 'success'
-        env:
-          REVISION: ${{ steps.baseline.outputs.revision }}
-          SERVICE_URL: ${{ steps.baseline.outputs.service_url }}
-          IMAGE: ${{ steps.baseline.outputs.image }}
-          RUNTIME_SA: ${{ steps.baseline.outputs.runtime_sa }}
-          TAG: ${{ steps.rollback.outputs.tag }}
-          TAG_URL: ${{ steps.rollback.outputs.tag_url }}
-        run: |
-          set -euo pipefail
-          PYTHONPATH=alpha_omega_commercial python - <<'PY'
-          import hashlib, json, os
-          from datetime import datetime, timezone
-          from live_provider_expansion import digest
-
-          def file_sha(path):
-              return hashlib.sha256(open(path, 'rb').read()).hexdigest()
-
-          metadata={
-              'project': os.environ['PROJECT_ID'],
-              'project_number': os.environ['PROJECT_NUMBER'],
-              'region': os.environ['REGION'],
-              'service': os.environ['SERVICE'],
-              'service_url': os.environ['SERVICE_URL'],
-              'revision': os.environ['REVISION'],
-              'image': os.environ['IMAGE'],
-              'runtime_service_account': os.environ['RUNTIME_SA'],
-              'private_invocation': True,
-              'tag': os.environ['TAG'],
-              'tag_url': os.environ['TAG_URL'],
-              'tag_removed': True,
-              'health_before_sha256': file_sha('/tmp/health-before.json'),
-              'health_tagged_sha256': file_sha('/tmp/health-tagged.json'),
-              'service_before_sha256': file_sha('/tmp/service-before.json'),
-              'service_persisted_sha256': file_sha('/tmp/service-persisted.json'),
-              'service_restored_sha256': file_sha('/tmp/service-restored.json'),
-              'iam_policy_sha256': file_sha('/tmp/service-policy.json'),
-          }
-          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
-          observation={
-              'observation_id': f"cloud-run-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}",
-              'provider': 'google_cloud_run',
-              'provider_native': True,
-              'scopes': ['authenticated_invoke','service_readback','health_readback','persistence_readback','reversible_tag_rollback'],
-              'proofs': {'execution': True,'readback': True,'health': True,'persistence': True,'rollback': True,'private_invocation': True},
-              'observed_at': now,
-              'locator': f"projects/{os.environ['PROJECT_ID']}/locations/{os.environ['REGION']}/services/{os.environ['SERVICE']}",
-              'content_sha256': digest(metadata),
-              'metadata': metadata,
-          }
-          open('/tmp/cloud-run-observation.json','w',encoding='utf-8').write(json.dumps(observation,indent=2,sort_keys=True)+'\n')
-          PY
-
-      - name: Record fresh fail-closed Cloud Run authority block
-        if: steps.auth.outcome == 'failure'
-        run: |
-          set -euo pipefail
-          PYTHONPATH=alpha_omega_commercial python - <<'PY'
-          import json, os
-          from datetime import datetime, timezone
-          from live_provider_expansion import digest
-          metadata={
-              'repository': os.environ['GITHUB_REPOSITORY'],
-              'workflow_run': int(os.environ['GITHUB_RUN_ID']),
-              'workflow_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
-              'commit_sha': os.environ['GITHUB_SHA'],
-              'failed_step': 'Attempt keyless Google Cloud authority',
-              'auth_action_outcome': 'failure',
-              'workload_identity_provider': os.environ['WIF_PROVIDER'],
-              'deployer_service_account': os.environ['DEPLOYER_SA'],
-              'previous_exact_failure_run': 30857451510,
-              'previous_exact_failure_job': 91831656941,
-              'previous_exact_error': 'invalid_target',
-              'cloud_setup_steps_skipped': True,
-              'cloud_mutation_performed': False,
-          }
-          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
-          block={
-              'block_id': f"cloud-run-wif-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}",
-              'provider': 'google_cloud_run',
-              'reason': 'PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED',
-              'provider_native': True,
-              'observed_at': now,
-              'locator': f"github-actions://{os.environ['GITHUB_REPOSITORY']}/runs/{os.environ['GITHUB_RUN_ID']}",
-              'attempted_scope': ['oidc_token_exchange','cloud_run_readback'],
-              'mutation_performed': False,
-              'content_sha256': digest(metadata),
-              'metadata': metadata,
-          }
-          open('/tmp/cloud-run-block.json','w',encoding='utf-8').write(json.dumps(block,indent=2,sort_keys=True)+'\n')
-          PY
-
-      - name: Execute fail-closed commercial provider proof
+      - name: Reconcile canonical provider authority
         working-directory: alpha_omega_commercial
         run: |
           set -euo pipefail
-          if [[ -f /tmp/cloud-run-observation.json ]]; then
-            python prove_live_provider_expansion_v2.py \
-              --output artifacts/live-provider-expansion-proof \
-              --provider-register ../sol_61_runtime/provider_certification_register.json \
-              --cloud-observation /tmp/cloud-run-observation.json
-          else
-            test -f /tmp/cloud-run-block.json
-            python prove_live_provider_expansion_v2.py \
-              --output artifacts/live-provider-expansion-proof \
-              --provider-register ../sol_61_runtime/provider_certification_register.json \
-              --cloud-block /tmp/cloud-run-block.json
-          fi
+          python prove_canonical_authority_reconciliation.py \
+            --output artifacts/canonical-authority-reconciliation-proof
 
-      - name: Validate proof gates and truth boundaries
+      - name: Verify persisted receipt and fail-closed boundaries
         run: |
           set -euo pipefail
           python - <<'PY'
           import json
           from pathlib import Path
-          receipt=json.loads(Path('alpha_omega_commercial/artifacts/live-provider-expansion-proof/live-provider-expansion-receipt.json').read_text())
-          assert receipt['status'] in {
-              'LIVE_PROVIDER_EXPANSION_VERIFIED_EXTERNAL_GATES_UNCHANGED',
-              'REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_PROVIDER_BLOCKED',
-          }, receipt
-          assert all(receipt['gates'].values()), receipt['gates']
+          root=Path('alpha_omega_commercial/artifacts/canonical-authority-reconciliation-proof')
+          receipt=json.loads((root/'canonical-authority-reconciliation-receipt.json').read_text())
+          projection=json.loads((root/'programme.updated.json').read_text())
+          programme=json.loads(Path('alpha_omega_commercial/programme.json').read_text())
+          persisted=json.loads(Path('alpha_omega_commercial/canonical_authority_reconciliation_receipt.json').read_text())
+          assert receipt['status'] == 'CANONICAL_PROVIDER_ROUTE_ALIGNED_IDENTITY_AUTHORITY_UNAVAILABLE'
+          assert all(receipt['gates'].values())
+          assert receipt['cloud_run']['service'] == 'federation-omega-operator'
+          assert receipt['cloud_run']['path'] == '/execute'
+          assert not receipt['cloud_run']['live_invocation_proven']
+          assert not receipt['cloud_run']['cloud_mutation_performed']
+          assert projection['external_gate_evidence'] == {}
+          assert programme['external_gate_evidence'] == {}
+          checkpoint=programme['canonical_authority_reconciliation']
+          assert checkpoint['status'] == receipt['status']
+          assert checkpoint['receipt_sha256'] == receipt['receipt_sha256']
+          assert checkpoint['receipt_file'] == 'alpha_omega_commercial/canonical_authority_reconciliation_receipt.json'
+          assert checkpoint['provider_proof']['workflow_run'] == 30861303534
+          assert checkpoint['provider_proof']['artifact_id'] == 8874423157
+          assert checkpoint['provider_proof']['artifact_digest'] == 'sha256:6ba9dd485b177b6889ae5e21c2e53e6f44ba2f8c363c4d7f0f033f8edaad1fbd'
+          assert persisted['receipt_sha256'] == receipt['receipt_sha256']
+          assert persisted['provider_proof'] == checkpoint['provider_proof']
+          assert persisted['verified_revenue_events'] == 0
+          assert not persisted['full_commercial_maturity']
           truth=receipt['truth_boundary']
-          assert truth['six_reversible_provider_operations_verified']
-          assert truth['bounded_live_cloud_operation_verified'] != truth['cloud_run_provider_blocked']
-          assert not truth['cloud_mutation_performed_when_blocked']
+          assert truth['service_enabled_platform_priority_preserved']
           for key in (
               'customer_demand_proven','signed_contract_proven','payment_or_revenue_proven',
-              'subscription_or_invoice_proven','enterprise_attestation_proven','partner_adoption_proven',
-              'external_case_study_proven','production_scale_proven','owner_reserved_authority_bypassed',
+              'subscription_or_invoice_proven','cloud_run_operation_proven',
+              'enterprise_attestation_proven','partner_adoption_proven',
+              'external_case_study_proven','production_scale_proven',
+              'owner_reserved_authority_bypassed',
           ):
               assert not truth[key], (key, truth)
           PY
 
-      - name: Upload proof package
+      - name: Upload canonical authority proof
         uses: actions/upload-artifact@v4
         with:
-          name: alpha-omega-commercial-live-provider-expansion-proof
-          path: alpha_omega_commercial/artifacts/live-provider-expansion-proof
+          name: alpha-omega-commercial-canonical-authority-reconciliation-proof
+          path: alpha_omega_commercial/artifacts/canonical-authority-reconciliation-proof
           retention-days: 90
           if-no-files-found: error
