@@ -1,6 +1,6 @@
 {
-  "version": "2.1.1",
-  "updated_at": "2026-08-03T09:04:00Z",
+  "version": "2.1.2",
+  "updated_at": "2026-08-03T09:09:00Z",
   "maturity": {
     "local_provider_contract": "OPERATIONAL_VERIFIED",
     "local_release_artifact": "OPERATIONAL_VERIFIED",
@@ -16,26 +16,29 @@
     "github_hosted_artifact": "OPERATIONAL_VERIFIED",
     "github_repository_wide_ci": "OPERATIONAL_VERIFIED",
     "github_public_leak_guard": "OPERATIONAL_VERIFIED",
-    "google_drive_manifest_publish": "PROVIDER_READBACK_VERIFIED",
+    "google_drive_manifest_publish": "OPERATIONAL_VERIFIED",
+    "google_drive_manifest_adapter": "OPERATIONAL_VERIFIED",
+    "google_drive_manifest_rollback": "OPERATIONAL_VERIFIED",
     "google_drive_ci_proof_publish": "PROVIDER_READBACK_VERIFIED",
     "google_drive_binary_package_publish": "PROVIDER_BLOCKED_FILE_EGRESS",
     "cloud_run": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
   },
   "proof": {
-    "local_tests": "3 passed",
+    "provider_adapter_tests": "5 passed",
     "source_package_sha256": "a0cb3b7dda3d2fb7795470df808108e48206a54a53b326bbd8c8da21460fe367",
     "earlier_local_operational_artifact_sha256": "48826cfda1e12e43fcf2ea4f0ac8d82d63b3cf2dd773f188c8df52d8ca511553",
-    "github_actions_run_id": 30799411219,
-    "github_actions_job_id": 91640275539,
-    "github_actions_artifact_id": 8850189751,
-    "github_actions_artifact_archive_digest": "f7b4d5ca308fb8634a90ac1cd23461de9c1048c6bd4f57a3fb8326065e454007",
-    "github_hosted_system_artifact_sha256": "5c3b6c92e2f8c58a66f6515670a625679793b0af68fa4f4ce340a50cda5ee491",
-    "github_hosted_receipt_id": "RCP-8d77cacec36b",
-    "ci_proof_pr": 69,
-    "ci_proof_merge_commit": "99bc849a2c53530d22f8b5351a1d4305a253bc76",
-    "drive_manifest_id": "1QpyuvGVEawPofhtmLKDbHW5q-VpS6iQA6Kyt35IQSQk",
-    "drive_ci_proof_id": "1GuMLAuk8KZNWp2BJ7-1qeBKl8z4pMmnucuxEg9_8tVg",
-    "drive_releases_folder_id": "1EdIw0GhI8XlJTptsq7JErzQJW1CPEled",
-    "drive_binary_upload_error": "BLOCKED_FILE_REFERENCE"
+    "initial_ci_run_id": 30799411219,
+    "initial_ci_artifact_id": 8850189751,
+    "drive_adapter_ci_run_id": 30800079006,
+    "drive_adapter_ci_job_id": 91642386106,
+    "drive_adapter_ci_artifact_id": 8850443947,
+    "drive_adapter_ci_artifact_archive_digest": "70c7cae43c268d2a0d602c476917fe15a519bb6d674a2e163e3d4c03b894bc38",
+    "drive_manifest_provider_receipt_id": "RCP-GDRIVE-MANIFEST-20260803-0905",
+    "drive_manifest_provider_receipt_sha256": "af60103e1d5bb0347cc3cc94e4398f3c6a7b6b5b0774f08ae46095688c5938ff",
+    "drive_adapter_pr": 70,
+    "drive_adapter_merge_commit": "db8bea8a2f77587e68f09bab149c5fd4c7ce339c",
+    "drive_document_text_sha256": "c45bf6142bd410da316e2c496bb709c283e20f124bb148714aa60f19bab174fa",
+    "drive_binary_upload_error": "BLOCKED_FILE_REFERENCE",
+    "cloud_authority_state": "Google WIF AUTHORITY_REQUIRED; no fresh Cloud Run execution authority"
   }
 }
