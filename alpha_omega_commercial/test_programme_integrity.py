@@ -43,9 +43,7 @@ class ProgrammeRegisterIntegrityTests(unittest.TestCase):
         }
         self.receipt = {
             "canonical_receipt_integrity": {"status": "CANONICAL_RECEIPT_INTEGRITY_VERIFIED"},
-            "stages": {
-                "C13": {"proof": {"verified_revenue_events": 0}},
-            },
+            "stages": {"C13": {"proof": {"verified_revenue_events": 0}}},
             "truth_boundaries": {"cloud_run": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"},
         }
 
@@ -61,10 +59,7 @@ class ProgrammeRegisterIntegrityTests(unittest.TestCase):
         result = self.verify()
         self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_VERIFIED")
         self.assertTrue(all(result["checks"].values()))
-        self.assertEqual(
-            result["external_evidence_admission"],
-            "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED",
-        )
+        self.assertEqual(result["provider_authority_freshness"], "PROVIDER_AUTHORITY_FRESHNESS_RECONCILIATION_VERIFIED")
 
     def test_stale_integrity_gate_is_rejected(self) -> None:
         programme = copy.deepcopy(self.programme)
@@ -100,6 +95,20 @@ class ProgrammeRegisterIntegrityTests(unittest.TestCase):
         result = self.verify(programme=programme)
         self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_FAILED")
         self.assertFalse(result["checks"]["provider_authority_scopes_precise"])
+
+    def test_provider_authority_freshness_drift_is_rejected(self) -> None:
+        programme = copy.deepcopy(self.programme)
+        programme["provider_authority_freshness"]["latest_verified"]["google_drive_document_release"]["content_sha256"] = "bad"
+        result = self.verify(programme=programme)
+        self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_FAILED")
+        self.assertFalse(result["checks"]["authority_freshness_operational_evidence_complete"])
+
+    def test_blocked_provider_promotion_is_rejected(self) -> None:
+        programme = copy.deepcopy(self.programme)
+        programme["provider_authority_freshness"]["blocked_or_unverified"]["cloud_run"] = "FRESH_VERIFIED"
+        result = self.verify(programme=programme)
+        self.assertEqual(result["status"], "PROGRAMME_REGISTER_INTEGRITY_FAILED")
+        self.assertFalse(result["checks"]["authority_freshness_blocked_domains_preserved"])
 
 
 if __name__ == "__main__":

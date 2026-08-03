@@ -9,6 +9,7 @@ from typing import Any
 CANONICAL_STATUS = "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
 CANONICAL_INTEGRITY_STATUS = "CANONICAL_RECEIPT_INTEGRITY_VERIFIED"
 EXTERNAL_EVIDENCE_ADMISSION_STATUS = "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED"
+AUTHORITY_FRESHNESS_STATUS = "PROVIDER_AUTHORITY_FRESHNESS_RECONCILIATION_VERIFIED"
 C12_STATUS = "EVIDENCE_FRAMEWORK_AND_EXTERNAL_ADMISSION_VERIFIED_MARKET_PROOF_REQUIRED"
 C13_STATUS = (
     "REFERENCE_REVOPS_AND_PAYMENT_EVIDENCE_ADMISSION_VERIFIED_"
@@ -16,7 +17,8 @@ C13_STATUS = (
 )
 C15_STATUS = (
     "COMMERCIAL_READINESS_VERIFIED_CANONICAL_RECEIPT_INTEGRITY_VERIFIED_"
-    "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+    "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_PROVIDER_AUTHORITY_FRESHNESS_VERIFIED_"
+    "EXTERNAL_MATURITY_GATES_OPEN"
 )
 
 EXPECTED_STAGE_IDS = [f"C{index:02d}" for index in range(1, 16)]
@@ -48,6 +50,11 @@ EXPECTED_PROVIDER_AUTHORITY = {
     "external_attestation": "UNVERIFIED",
     "live_cloud_operations": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
 }
+EXPECTED_BLOCKED_OR_UNVERIFIED = {
+    key: value
+    for key, value in EXPECTED_PROVIDER_AUTHORITY.items()
+    if value not in {"FRESH_VERIFIED", "FRESH_VERIFIED_READBACK"}
+}
 
 
 def utc_now() -> str:
@@ -61,6 +68,16 @@ def digest(value: Any) -> str:
 
 def read_json(path: str | Path) -> dict[str, Any]:
     return json.loads(Path(path).read_text(encoding="utf-8"))
+
+
+def _valid_sha256(value: Any) -> bool:
+    if not isinstance(value, str) or len(value) != 64:
+        return False
+    try:
+        int(value, 16)
+    except ValueError:
+        return False
+    return True
 
 
 def _stage_index(programme: dict[str, Any]) -> tuple[dict[str, dict[str, Any]], bool]:
@@ -93,9 +110,13 @@ def verify_programme_register(
     declared_evidence = programme.get("external_gate_evidence", {})
     admission = programme.get("external_evidence_admission", {})
     authority = admission.get("provider_authority", {})
+    freshness = programme.get("provider_authority_freshness", {})
+    latest_verified = freshness.get("latest_verified", {})
+    github_latest = latest_verified.get("github_actions", {})
+    drive_latest = latest_verified.get("google_drive_document_release", {})
 
     gate_evidence_valid = True
-    for label, key in EXTERNAL_GATE_LABELS.items():
+    for _, key in EXTERNAL_GATE_LABELS.items():
         achieved = bool(maturity_gates.get(key))
         evidence = declared_evidence.get(key)
         if achieved and not evidence:
@@ -129,6 +150,22 @@ def verify_programme_register(
             and "external provider-native evidence" in admission.get("admission_rule", "").lower()
         ),
         "provider_authority_scopes_precise": authority == EXPECTED_PROVIDER_AUTHORITY,
+        "provider_authority_freshness_verified": (
+            freshness.get("status") == AUTHORITY_FRESHNESS_STATUS
+            and freshness.get("proof_scope") == "C03_C10_C12_C13_C15_PROVIDER_AUTHORITY_FRESHNESS"
+            and freshness.get("source_observations_file") == "alpha_omega_commercial/provider_authority_observations.json"
+            and freshness.get("external_gate_effect") == "UNCHANGED"
+            and freshness.get("owner_authority_effect") == "UNCHANGED"
+        ),
+        "authority_freshness_operational_evidence_complete": (
+            github_latest.get("state") == "FRESH_VERIFIED"
+            and isinstance(github_latest.get("workflow_run"), int)
+            and isinstance(github_latest.get("artifact_id"), int)
+            and drive_latest.get("state") == "FRESH_VERIFIED_READBACK"
+            and bool(drive_latest.get("file_id"))
+            and _valid_sha256(drive_latest.get("content_sha256"))
+        ),
+        "authority_freshness_blocked_domains_preserved": freshness.get("blocked_or_unverified") == EXPECTED_BLOCKED_OR_UNVERIFIED,
         "c12_admission_status_verified": c12.get("status") == C12_STATUS,
         "c13_admission_status_verified": c13.get("status") == C13_STATUS,
         "c15_register_status_verified": c15.get("status") == C15_STATUS,
@@ -162,25 +199,23 @@ def verify_programme_register(
         "canonical_status": programme.get("canonical_status"),
         "canonical_receipt_integrity": programme.get("canonical_receipt_integrity"),
         "external_evidence_admission": admission.get("status"),
+        "provider_authority_freshness": freshness.get("status"),
         "checks": checks,
         "external_gates": maturity_gates,
         "provider_authority": authority,
         "owner_reserved_authority": sorted(EXPECTED_OWNER_RESERVED),
         "truth_boundary": (
-            "This receipt proves machine-readable programme-register consistency, exact provider-authority scope and "
-            "fail-closed external-evidence admission readiness. It does not establish customer demand, a signed contract, "
-            "payment-provider revenue, Cloud Run operation, enterprise attestation, partner adoption, an external case "
-            "study or production-scale evidence."
+            "This receipt proves machine-readable programme-register consistency, exact provider-authority scope, "
+            "provider-authority freshness/expiry controls and fail-closed external-evidence admission readiness. "
+            "It does not establish customer demand, a signed contract, payment-provider revenue, Cloud Run operation, "
+            "enterprise attestation, partner adoption, an external case study or production-scale evidence."
         ),
     }
     result["receipt_sha256"] = digest(result)
     return result
 
 
-def verify_from_paths(
-    programme_path: str | Path,
-    artifact_root: str | Path,
-) -> dict[str, Any]:
+def verify_from_paths(programme_path: str | Path, artifact_root: str | Path) -> dict[str, Any]:
     root = Path(artifact_root)
     return verify_programme_register(
         read_json(programme_path),
