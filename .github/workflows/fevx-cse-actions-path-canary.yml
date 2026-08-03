@@ -1,0 +1,50 @@
+name: FEVX CSE Actions Path Canary
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - "deployments/fevx-cse/pr-canary-trigger.txt"
+
+permissions:
+  contents: read
+
+jobs:
+  canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - name: Write execution receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments/fevx-cse
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          receipt = {
+              "receipt": "FEVX-CSE-ACTIONS-PATH-CANARY",
+              "recorded_at": datetime.now(timezone.utc).isoformat(),
+              "event_name": os.environ.get("GITHUB_EVENT_NAME"),
+              "repository": os.environ.get("GITHUB_REPOSITORY"),
+              "ref": os.environ.get("GITHUB_REF"),
+              "sha": os.environ.get("GITHUB_SHA"),
+              "runner": "github-hosted",
+              "mutation_attempted": False,
+              "provider_contact_attempted": False,
+              "status": "EXECUTED",
+          }
+          Path("deployments/fevx-cse/ACTIONS_PATH_CANARY_RECEIPT.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fevx-cse-actions-path-canary
+          path: deployments/fevx-cse/ACTIONS_PATH_CANARY_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 7
