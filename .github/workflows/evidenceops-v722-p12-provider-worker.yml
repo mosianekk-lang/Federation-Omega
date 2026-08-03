@@ -19,7 +19,7 @@ permissions:
 
 concurrency:
   group: evidenceops-v722-p12-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   provider-worker:
