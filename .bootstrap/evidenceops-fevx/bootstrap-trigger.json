@@ -1,0 +1,7 @@
+{
+  "trigger_id": "EVIDENCEOPS-FEVX-BOOTSTRAP-001",
+  "reason": "all eleven digest-pinned overlay parts are present",
+  "expected_overlay_sha256": "1e8d3755a388d8138b6a1d838f897e4185bc1ff2f830c3f151f1094f7c358aef",
+  "authority": "A1_INTERNAL",
+  "external_effect": false
+}
