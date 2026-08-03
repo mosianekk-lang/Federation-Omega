@@ -1,0 +1,37 @@
+{
+  "programme_id": "AO-V30-SELF-VERIFYING-INSTITUTION",
+  "checkpoint": "2026-08-03T12:17:04Z",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "status": "READINESS_VERIFIED_INSTITUTIONAL_COMPLETION_BLOCKED",
+  "phases": [
+    {"id":"P01","status":"KERNEL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8854722629"],"blockers":[]},
+    {"id":"P02","status":"KERNEL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8854722629"],"blockers":[]},
+    {"id":"P03","status":"KERNEL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8854722629"],"blockers":[]},
+    {"id":"P04","status":"KERNEL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8854722629"],"blockers":[]},
+    {"id":"P05","status":"KERNEL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8854722629"],"blockers":[]},
+    {"id":"P06","status":"OPERATIONAL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8855261514"],"blockers":[]},
+    {"id":"P07","status":"OPERATIONAL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8855261514"],"blockers":[]},
+    {"id":"P08","status":"OPERATIONAL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8855261514"],"blockers":[]},
+    {"id":"P09","status":"REFERENCE_PROVIDER_VERIFIED","evidence":["artifact:8855371809"],"blockers":["CLOUD_RUN_PROVIDER_AUTHORITY"]},
+    {"id":"P10","status":"EXPERIMENT_ENGINE_VERIFIED_MARKET_PROOF_REQUIRED","evidence":["artifact:8855371809"],"blockers":["EXTERNAL_MARKET_PROOF"]},
+    {"id":"P11","status":"KERNEL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8854722629"],"blockers":[]},
+    {"id":"P12","status":"KERNEL_VERIFIED_GITHUB_ACTIONS","evidence":["artifact:8854722629"],"blockers":[]},
+    {"id":"P13","status":"REFERENCE_RECONCILIATION_VERIFIED_PROVIDER_WRITEBACK_REQUIRED","evidence":["artifact:8855499185"],"blockers":["LIVE_CROSS_SYSTEM_PROVIDER_WRITEBACK"]},
+    {"id":"P14","status":"SYMBOLIC_CORE_VERIFIED","evidence":["artifact:8855371809"],"blockers":[]},
+    {"id":"P15","status":"READINESS_VERIFIED_INSTITUTIONAL_COMPLETION_BLOCKED","evidence":["artifact:8855499185"],"blockers":["CLOUD_RUN_PROVIDER_AUTHORITY","EXTERNAL_MARKET_PROOF","LIVE_CROSS_SYSTEM_PROVIDER_WRITEBACK","GOOGLE_DRIVE_V3_WRITE_AUTHORITY"]}
+  ],
+  "verified_merges": [
+    {"pull_request":76,"commit":"828d3e780f7b704406464d7c1b02489f86b33a80","artifact":8854722629,"digest":"sha256:892bfe639e4eeffb337d4317e346f67cd721504b1c8b05996e142c4b1b4e8e83"},
+    {"pull_request":78,"commit":"9082b477f7cc378bfb9dc31fbc67162e3517ed2b","artifact":8855261514,"digest":"sha256:222f525c3618ce7872c4824d0d9d033fd38ea4815ef379cbfcf19ac807bce450"},
+    {"pull_request":79,"commit":"77c7af304886d2b994f1783d73161d8b5bb702e4","artifact":8855371809,"digest":"sha256:9ed96c9e85b906bc4966e862c4ea5c88693b07ea5a15b45475a8df743aba15c0"},
+    {"pull_request":80,"commit":"77be50a9ceb21001536271e50415750c9e5a58db","artifact":8855499185,"digest":"sha256:f03f33fc4172331e6a998ff60fc0191a6f52f0e6553ed3d03d75becfb728bd57"}
+  ],
+  "provider_authority": {
+    "github":"FRESH_VERIFIED",
+    "google_drive_read":"FRESH_VERIFIED",
+    "google_drive_write":"UNVERIFIED",
+    "cloud_run":"PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "external_market":"MARKET_PROOF_REQUIRED"
+  },
+  "truth_boundary": "The GitHub-hosted kernels, reference providers, proofs and readiness package are verified. A Cloud Run service, live multi-provider writeback, v3 Google Drive publication and external customer validation are not claimed."
+}
