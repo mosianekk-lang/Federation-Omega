@@ -2,7 +2,7 @@ name: FEVX CSE Trusted Shadow Bootstrap
 
 on:
   pull_request_target:
-    types: [opened, synchronize, reopened]
+    types: [opened, synchronize, reopened, ready_for_review]
     paths:
       - "runtime/fevx-cse/queue/bootstrap-trigger.json"
 
