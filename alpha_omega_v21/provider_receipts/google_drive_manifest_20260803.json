@@ -1,0 +1,76 @@
+{
+  "provider": "google_drive_manifest",
+  "captured_at": "2026-08-03T09:05:00Z",
+  "discover": {
+    "provider": "google_drive_manifest",
+    "available": true,
+    "release_folder_ref_sha256": "5e50716c0d27a9f9ef5516f138da425dee36004eb7945fddba93d635d3c40381",
+    "pre_deploy_item_count": 1
+  },
+  "authority": {
+    "provider": "google_drive_manifest",
+    "authorised": true,
+    "scope": [
+      "create_document",
+      "write_document",
+      "move_document",
+      "read_document",
+      "delete_canary"
+    ],
+    "authority_evidence": "provider actions succeeded under the connected owner account"
+  },
+  "snapshot": {
+    "provider": "google_drive_manifest",
+    "state": "INVENTORY_CAPTURED",
+    "release_folder_ref_sha256": "5e50716c0d27a9f9ef5516f138da425dee36004eb7945fddba93d635d3c40381",
+    "item_count": 1
+  },
+  "deploy": {
+    "provider": "google_drive_manifest",
+    "state": "DOCUMENT_CREATED",
+    "document_ref_sha256": "7560eae612d80c468a288dbeeccdb4c942fc354818fc965e5fde1040f5534f72",
+    "title": "Alpha Omega Foundry v2.1 CI and Hosted Artifact Proof"
+  },
+  "execute": {
+    "provider": "google_drive_manifest",
+    "state": "CONTENT_WRITTEN",
+    "revision_ref_sha256": "d4c179d07347565e5c2118935860ce0a7d5a492fb9c5551f09a609de19e02426"
+  },
+  "readback": {
+    "provider": "google_drive_manifest",
+    "pass": true,
+    "document_text_sha256": "c45bf6142bd410da316e2c496bb709c283e20f124bb148714aa60f19bab174fa",
+    "required_markers": {
+      "github_actions_run": true,
+      "hosted_artifact_digest": true,
+      "operational_receipt": true,
+      "truth_boundary": true
+    }
+  },
+  "health": {
+    "provider": "google_drive_manifest",
+    "pass": true,
+    "mime_type": "application/vnd.google-apps.document",
+    "correct_parent": true,
+    "readable": true
+  },
+  "persistence": {
+    "provider": "google_drive_manifest",
+    "pass": true,
+    "post_move_readback": true,
+    "content_preserved": true
+  },
+  "rollback": {
+    "provider": "google_drive_manifest",
+    "state": "ROLLED_BACK",
+    "canary_ref_sha256": "2c588cff9466b0ce266aaca2185c21d33b41bd665530a0f80009ea5c9eab3c4b",
+    "target_absent": true,
+    "search_after_delete_empty": true
+  },
+  "proof": {
+    "receipt_id": "RCP-GDRIVE-MANIFEST-20260803-0905",
+    "manifest_state": "OPERATIONAL_VERIFIED",
+    "binary_package_state": "PROVIDER_BLOCKED_FILE_EGRESS",
+    "cloud_run_state": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
+  }
+}
