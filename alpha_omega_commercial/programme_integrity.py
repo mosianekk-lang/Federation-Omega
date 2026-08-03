@@ -113,10 +113,16 @@ def verify_programme_register(
         "zero_revenue_preserved": c13_proof.get("verified_revenue_events") == 0,
         "cloud_run_not_claimed": commercial_receipt.get("truth_boundaries", {}).get("cloud_run") == "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
         "canonical_artifact_reference_matches": (
-            canonical_reference.get("artifact_id") == 8864581266
+            canonical_reference.get("pull_request") == 93
+            and canonical_reference.get("merge_commit") == "a897cb4788da76f11702b12dc0c5ed06c8b9acfa"
+            and canonical_reference.get("workflow_run") == 30835362760
+            and canonical_reference.get("artifact_id") == 8864581266
             and canonical_reference.get("artifact_digest")
             == "sha256:f011a0c70c979de6a714bef5d582c4d0c9c96e8cda9879fc09154195e5b1725d"
-            and canonical_reference.get("integrity_receipt_sha256") == integrity.get("integrity_receipt_sha256")
+            and canonical_reference.get("integrity_receipt_sha256")
+            == "1908449a171078d4592199cddabdc8187df2d2069776df838a0b027e56f6a7e0"
+            and canonical_reference.get("google_drive_release_file_id")
+            == "1L4ysPqtf8x2c9E-3dwVi4KDt5QwR53Oc4suFZXqSe2Q"
         ),
     }
 
