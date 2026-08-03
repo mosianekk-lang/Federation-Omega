@@ -55,15 +55,21 @@ jobs:
           print(json.dumps({'health_sha256': health['health_sha256'], 'receipt_sha256': receipt['receipt_sha256']}))
           PY
 
-      - name: Persist durable acquisition readback
+      - name: Reconcile verified germination stage
+        run: python kimmie_seed/nature_intelligence/promote.py
+
+      - name: Persist durable acquisition and maturity readback
         run: |
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add kimmie_seed/nature_intelligence/monitoring/latest_health.json
           git add kimmie_seed/nature_intelligence/receipts/latest_acquisition_receipt.json
+          git add kimmie_seed/registry.json
+          git add kimmie_seed/checkpoints/KSA-20260803-022.json
+          git add evidenceops/innovation_engine/receipts/lane-watch-receipt-026.json
           if git diff --cached --quiet; then
             echo 'No proof-state change to persist.'
           else
-            git commit -m 'Record Nature Intelligence acquisition proof [skip nature-watch]'
+            git commit -m 'Promote Nature Intelligence to GERMINATED after verified acquisition [skip nature-watch]'
             git push
           fi
