@@ -1,6 +1,6 @@
 # EARTH 2.0 Portfolio OS Brief
 
-Updated: 2026-08-03T19:54:25.497529+00:00
+Updated: 2026-08-03T21:19:20.381199+00:00
 
 - Portfolio size: 10
 - Eligible candidates: 0
