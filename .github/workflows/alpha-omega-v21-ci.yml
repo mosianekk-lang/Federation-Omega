@@ -4,9 +4,11 @@ on:
   push:
     paths:
       - 'alpha_omega_v21/**'
+      - '.github/workflows/alpha-omega-v21-ci.yml'
   pull_request:
     paths:
       - 'alpha_omega_v21/**'
+      - '.github/workflows/alpha-omega-v21-ci.yml'
 
 jobs:
   operational-test:
@@ -23,6 +25,11 @@ jobs:
       - run: pytest -q
       - run: ao-foundry examples/concept.json --workspace ./ci_workspace > operational-output.json
       - run: test -f ./ci_workspace/operational/*/operational_receipt.json
+      - run: ao-foundry examples/concept.json --workspace ./ci_workspace --maintenance-cycle > maintenance-output.json
+      - run: |
+          test -f ./ci_workspace/operations/maintenance_report.json
+          test -f ./ci_workspace/operations/heartbeat.jsonl
+          test -f ./ci_workspace/operations/learning_ledger.jsonl
       - uses: actions/upload-artifact@v4
         with:
           name: alpha-omega-foundry-v21-operational-release
@@ -30,4 +37,7 @@ jobs:
             alpha_omega_v21/ci_workspace/releases/*.zip
             alpha_omega_v21/ci_workspace/releases/*.manifest.json
             alpha_omega_v21/ci_workspace/operational/*/operational_receipt.json
+            alpha_omega_v21/ci_workspace/operations/*.json
+            alpha_omega_v21/ci_workspace/operations/*.jsonl
+            alpha_omega_v21/maintenance-output.json
           if-no-files-found: error
