@@ -40,11 +40,13 @@ def request_with_retries(
     timeout: tuple[int, int],
     verify: str,
     attempts: int = 3,
+    session: requests.Session | None = None,
 ) -> requests.Response:
     last_error: Exception | None = None
+    client = session if session is not None else requests
     for attempt in range(1, attempts + 1):
         try:
-            response = requests.get(
+            response = client.get(
                 url,
                 headers=headers,
                 timeout=timeout,
@@ -214,6 +216,7 @@ def verified_get(
     *,
     headers: dict[str, str],
     timeout: tuple[int, int],
+    session: requests.Session | None = None,
 ) -> tuple[requests.Response, dict[str, Any]]:
     try:
         response = request_with_retries(
@@ -222,6 +225,7 @@ def verified_get(
             timeout=timeout,
             verify=certifi.where(),
             attempts=3,
+            session=session,
         )
         return response, {"mode": "CERTIFI_DEFAULT_VERIFIED"}
     except requests.exceptions.SSLError as initial_error:
@@ -232,6 +236,7 @@ def verified_get(
             timeout=timeout,
             verify=bundle,
             attempts=3,
+            session=session,
         )
         chain_metadata["initial_ssl_error"] = str(initial_error)
         return response, chain_metadata
