@@ -5,7 +5,10 @@ on:
   push:
     branches: [main]
     paths:
-      - 'kimmie_seed/nature_intelligence/**'
+      - 'kimmie_seed/nature_intelligence/source_manifest.json'
+      - 'kimmie_seed/nature_intelligence/acquire.py'
+      - 'kimmie_seed/nature_intelligence/test_acquire.py'
+      - 'kimmie_seed/nature_intelligence/README.md'
       - '.github/workflows/nature-intelligence-acquisition.yml'
   schedule:
     - cron: '37 2 * * 2'
@@ -70,6 +73,6 @@ jobs:
           if git diff --cached --quiet; then
             echo 'No proof-state change to persist.'
           else
-            git commit -m 'Promote Nature Intelligence to GERMINATED after verified acquisition [skip nature-watch]'
+            git commit -m 'Record Nature Intelligence acquisition cycle [skip nature-watch]'
             git push
           fi
