@@ -1,0 +1,29 @@
+{
+  "profile_id": "MAX-TECHNICAL-CAPABILITY-KIMMIE-001",
+  "version": "1.0.0",
+  "activated_at": "2026-08-03T08:46:00+02:00",
+  "owner": "Kim Kagiso Mosiane",
+  "maintenance_owner": "mosianekk-lang",
+  "scope": "KIMMIE-IPEP-001 and authorised child lanes",
+  "state": "ACTIVE_VERIFIED_EXECUTION_PROFILE",
+  "capabilities": [
+    "deterministic architecture and code generation",
+    "schema and contract validation",
+    "cryptographic integrity receipts",
+    "provider-native workflow execution",
+    "tamper detection and controlled recovery",
+    "trigger isolation and loop prevention",
+    "199 packet-bound specialist roles with independent verification",
+    "checkpoint, registry and IPEP Bible reconciliation"
+  ],
+  "quality_gates": [
+    "tests before promotion",
+    "provider execution before execution claim",
+    "destination readback before completion credit",
+    "immutable event evidence for maturity decisions",
+    "identity-drift detection",
+    "no stage promotion from design alone"
+  ],
+  "authority_boundary": "A0 and reversible A1 unless a separately verified owner mandate authorises a specific higher-impact action",
+  "truth_boundary": "This profile activates the maximum technical methods available on connected authorised surfaces. It does not create hidden credentials, unlimited compute, independent consciousness, or provider capabilities that are not actually connected."
+}
