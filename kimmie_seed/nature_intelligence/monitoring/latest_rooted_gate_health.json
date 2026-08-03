@@ -1,7 +1,7 @@
 {
   "controlled_recovery": "PASS",
   "exact_restoration": "PASS",
-  "health_sha256": "2609c77f5772bfa85d5c5dea139151efb86da7f39e0db808e8f3f276e4dc7bf5",
+  "health_sha256": "32ae1d3c05daa358c4c61f4bfa30bad93cb34c862a7464670d6f8d50273294d7",
   "identity_drift": "NONE_DETECTED",
   "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
   "proof_boundary": "A push or manual run proves stable translation and controlled recovery. Only a provider event_name of schedule can satisfy the schedule-triggered monitoring gate.",
@@ -12,6 +12,6 @@
   "translation_receipt_sha256": "c1c0b87682b630d7da3d9d5be97abb7248188978a33a7bd7391d065dece7306f",
   "translation_sha256": "1238d656cc4ada81f613c42e3a47953c7bdc033afe6d79b8aa66e89718e9d617",
   "workflow_event": "schedule",
-  "workflow_run_id": "30837029836",
-  "workflow_sha": "52a258f410bf434a10cc2fd9533a3bf44ca7f048"
+  "workflow_run_id": "30844688375",
+  "workflow_sha": "b4213a6879d27a95752bd15f412d0ff5e5fc48ed"
 }
