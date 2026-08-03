@@ -1,0 +1,17 @@
+{
+  "analysis_output_hash": "32e92d62560ec8c4eb40809ea52fb3644b35313ea4ff0562466472df2bdd1b99",
+  "analysis_semantic_hash": "39180159b3a1666ff6c8722e59dfb15df4d4853273b6d04b5420a2895556afff",
+  "current_verified_level": 4,
+  "database_dump_sha256": "a119c6df74ffa6b24461ca6610470842acbf6d4a289dab352ef42eea32652bb4",
+  "external_effect": false,
+  "ledger_head_hash": "d5fc804ca0a237601f0fbe79ddf8a87ee8152ee5dc79eca296aed85c4b44f61e",
+  "level_5_eligible": false,
+  "maturity_state": "AUTONOMOUS_RUNTIME_VERIFIED_SHADOW",
+  "module_count": 10,
+  "provider": "github_actions",
+  "real_workflow_evidence": false,
+  "runtime_state": "OPERATIONAL",
+  "service": "fevx-cognitive-sovereignty-ecology",
+  "updated_at": "2026-08-03T14:55:52.978077Z",
+  "version": "1.1.0"
+}

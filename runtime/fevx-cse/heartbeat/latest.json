@@ -1,0 +1,15 @@
+{
+  "database_dump_sha256": "a119c6df74ffa6b24461ca6610470842acbf6d4a289dab352ef42eea32652bb4",
+  "external_effect": false,
+  "heartbeat_id": "HB-FEVX-CSE-GITHUB-SHADOW",
+  "ledger_head_hash": "d5fc804ca0a237601f0fbe79ddf8a87ee8152ee5dc79eca296aed85c4b44f61e",
+  "module_count": 10,
+  "next_gate": "SUPERVISED_REAL_WORKFLOW_CANARIES",
+  "proof_hash": "6bce2cde1dfab55ea7280d622a3f2afcd1754f2ee342ad7eb1f6c1911c344c08",
+  "proof_id": "PRF-CSE-GHA-30825025062-1",
+  "provider": "github_actions",
+  "recorded_at": "2026-08-03T14:55:52.978077Z",
+  "runtime_state": "OPERATIONAL",
+  "verified": true,
+  "version": "1.1.0"
+}
