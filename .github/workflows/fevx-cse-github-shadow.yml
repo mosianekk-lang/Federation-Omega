@@ -40,11 +40,30 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test "$(find systems/fevx-cse-runtime/vendor -maxdepth 1 -name 'wheel.part.*' | wc -l)" -eq 8
-          cat systems/fevx-cse-runtime/vendor/wheel.part.* | \
-            base64 --decode > /tmp/fevx_cse-1.1.0-py3-none-any.whl
+          parts=(
+            systems/fevx-cse-runtime/vendor/wheel.part.00
+            systems/fevx-cse-runtime/vendor/wheel.part.01
+            systems/fevx-cse-runtime/vendor/wheel.part.02
+            systems/fevx-cse-runtime/vendor/wheel.part.03.00
+            systems/fevx-cse-runtime/vendor/wheel.part.03.01
+            systems/fevx-cse-runtime/vendor/wheel.part.03.02
+            systems/fevx-cse-runtime/vendor/wheel.part.03.03
+            systems/fevx-cse-runtime/vendor/wheel.part.04.00
+            systems/fevx-cse-runtime/vendor/wheel.part.04.01
+            systems/fevx-cse-runtime/vendor/wheel.part.04.02
+            systems/fevx-cse-runtime/vendor/wheel.part.04.03
+            systems/fevx-cse-runtime/vendor/wheel.part.05
+            systems/fevx-cse-runtime/vendor/wheel.part.06.00
+            systems/fevx-cse-runtime/vendor/wheel.part.06.01
+            systems/fevx-cse-runtime/vendor/wheel.part.06.02
+            systems/fevx-cse-runtime/vendor/wheel.part.06.03
+            systems/fevx-cse-runtime/vendor/wheel.part.07
+          )
+          for part in "${parts[@]}"; do test -s "$part"; done
+          cat "${parts[@]}" | base64 --decode > /tmp/fevx_cse-1.1.0-py3-none-any.whl
           observed="$(sha256sum /tmp/fevx_cse-1.1.0-py3-none-any.whl | awk '{print $1}')"
           test "$observed" = "$CSE_WHEEL_SHA256"
+          python -m zipfile -t /tmp/fevx_cse-1.1.0-py3-none-any.whl
           python -m pip install --disable-pip-version-check /tmp/fevx_cse-1.1.0-py3-none-any.whl
 
       - name: Execute provider-native shadow, rollback and proof cycle
