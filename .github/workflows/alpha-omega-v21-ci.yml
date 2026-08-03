@@ -1,0 +1,33 @@
+name: Alpha Omega Foundry v2.1 CI and Release Artifact
+
+on:
+  push:
+    paths:
+      - 'alpha_omega_v21/**'
+  pull_request:
+    paths:
+      - 'alpha_omega_v21/**'
+
+jobs:
+  operational-test:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: alpha_omega_v21
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e . pytest
+      - run: pytest -q
+      - run: ao-foundry examples/concept.json --workspace ./ci_workspace > operational-output.json
+      - run: test -f ./ci_workspace/operational/*/operational_receipt.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-foundry-v21-operational-release
+          path: |
+            alpha_omega_v21/ci_workspace/releases/*.zip
+            alpha_omega_v21/ci_workspace/releases/*.manifest.json
+            alpha_omega_v21/ci_workspace/operational/*/operational_receipt.json
+          if-no-files-found: error
