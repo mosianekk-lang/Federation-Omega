@@ -28,11 +28,13 @@ jobs:
         run: python -m compileall -q sol_61_runtime
       - name: Unit tests
         working-directory: sol_61_runtime
-        run: python -m unittest -v test_runtime.py test_worker.py
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
         run: python sol_61_runtime/prove_worker.py --output sol_61_runtime/artifacts/worker-proof
+      - name: Execute distributed coordination proof
+        run: python sol_61_runtime/prove_coordinator.py --output sol_61_runtime/artifacts/coordination-proof
       - name: Validate proof gates and boundaries
         run: |
           python - <<'PY'
@@ -40,8 +42,10 @@ jobs:
           from pathlib import Path
           runtime_root = Path('sol_61_runtime/artifacts/proof')
           worker_root = Path('sol_61_runtime/artifacts/worker-proof')
+          coordination_root = Path('sol_61_runtime/artifacts/coordination-proof')
           receipt = json.loads((runtime_root / 'sol-61-runtime-receipt.json').read_text())
           worker = json.loads((worker_root / 'sol-61-worker-receipt.json').read_text())
+          coordination = json.loads((coordination_root / 'sol-61-coordination-receipt.json').read_text())
           assert receipt['status'] == 'REFERENCE_RUNTIME_VERIFIED'
           assert all(receipt['gates'].values())
           assert receipt['truth_boundary']['github_actions_execution']
@@ -52,12 +56,17 @@ jobs:
           assert all(worker['gates'].values())
           assert worker['truth_boundary']['github_actions_worker_execution']
           assert not worker['truth_boundary']['continuous_external_worker']
-          assert not worker['truth_boundary']['cloud_run_live']
-          assert not worker['truth_boundary']['apps_script_live']
+          assert coordination['status'] == 'DISTRIBUTED_COORDINATION_VERIFIED'
+          assert all(coordination['gates'].values())
+          assert coordination['truth_boundary']['github_actions_execution']
+          assert not coordination['truth_boundary']['cloud_distributed_runtime']
+          assert not coordination['truth_boundary']['always_on_leader']
           assert (runtime_root / 'events.jsonl').is_file()
           assert (runtime_root / 'state.json').is_file()
           assert (worker_root / 'worker-events.jsonl').is_file()
           assert (worker_root / 'worker-state.json').is_file()
+          assert (coordination_root / 'coordination-runtime' / 'coordination-events.jsonl').is_file()
+          assert (coordination_root / 'coordination-runtime' / 'coordination-state.json').is_file()
           PY
       - name: Upload proof package
         uses: actions/upload-artifact@v4
@@ -66,5 +75,6 @@ jobs:
           path: |
             sol_61_runtime/artifacts/proof
             sol_61_runtime/artifacts/worker-proof
+            sol_61_runtime/artifacts/coordination-proof
           retention-days: 90
           if-no-files-found: error
