@@ -1,0 +1,115 @@
+name: FEVX CSE Scheduled Provider Preflight
+
+on:
+  schedule:
+    - cron: "*/5 * * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: fevx-cse-scheduled-provider-preflight
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  SERVICE: fevx-cse-shadow
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  DEFAULT_WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEFAULT_DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_REPOSITORY: fo-runtime
+  DATABASE_SECRET: NEXUS_DATABASE_URL
+  ARCHIVE_SHA256: f4da04ac026628e022814f306acfe9e5303ee89a107359ab50a91fa04442ac50
+  WHEEL_SHA256: 8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+      HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
+      OPERATOR_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Authenticate with service-account key when present
+        if: ${{ env.HAS_GCP_SA_KEY == 'true' }}
+        id: auth_key
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate with repository WIF pair when present
+        if: ${{ env.HAS_GCP_SA_KEY != 'true' && env.HAS_GCP_WIF_PAIR == 'true' }}
+        id: auth_repo_wif
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Authenticate with canonical WIF fallback
+        if: ${{ env.HAS_GCP_SA_KEY != 'true' && env.HAS_GCP_WIF_PAIR != 'true' }}
+        id: auth_default_wif
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.DEFAULT_WIF_PROVIDER }}
+          service_account: ${{ env.DEFAULT_DEPLOYER_SA }}
+
+      - name: Install gcloud
+        id: setup_gcloud
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute read-only provider preflight
+        if: always()
+        shell: bash
+        env:
+          AUTH_KEY_OUTCOME: ${{ steps.auth_key.outcome }}
+          AUTH_REPO_WIF_OUTCOME: ${{ steps.auth_repo_wif.outcome }}
+          AUTH_DEFAULT_WIF_OUTCOME: ${{ steps.auth_default_wif.outcome }}
+          SETUP_GCLOUD_OUTCOME: ${{ steps.setup_gcloud.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          [[ -z "${OPERATOR_TOKEN:-}" ]] || echo "::add-mask::$OPERATOR_TOKEN"
+          python ops/fevx_cse_provider_preflight.py
+
+      - name: Persist redacted receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "fevx-cse-preflight[bot]"
+          git config user.email "fevx-cse-preflight[bot]@users.noreply.github.com"
+          git add deployments/fevx-cse/SCHEDULED_PROVIDER_PREFLIGHT_RECEIPT.json
+          if git diff --cached --quiet; then
+            echo "Receipt unchanged"
+          else
+            git commit -m "Record scheduled FEVX CSE provider preflight [skip cse-scheduled-preflight]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fevx-cse-scheduled-provider-preflight
+          path: deployments/fevx-cse/SCHEDULED_PROVIDER_PREFLIGHT_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30
