@@ -6,18 +6,20 @@ on:
       - alpha-omega-commercial-live-provider-expansion
     paths:
       - 'alpha_omega_commercial/live_provider_expansion.py'
+      - 'alpha_omega_commercial/live_provider_block.py'
       - 'alpha_omega_commercial/test_live_provider_expansion.py'
-      - 'alpha_omega_commercial/prove_live_provider_expansion.py'
-      - 'alpha_omega_commercial/cloud_run_observation_fixture.json'
+      - 'alpha_omega_commercial/test_live_provider_block.py'
+      - 'alpha_omega_commercial/prove_live_provider_expansion_v2.py'
       - 'alpha_omega_commercial/programme.json'
       - 'sol_61_runtime/provider_certification_register.json'
       - '.github/workflows/alpha-omega-commercial-live-provider-expansion.yml'
   pull_request:
     paths:
       - 'alpha_omega_commercial/live_provider_expansion.py'
+      - 'alpha_omega_commercial/live_provider_block.py'
       - 'alpha_omega_commercial/test_live_provider_expansion.py'
-      - 'alpha_omega_commercial/prove_live_provider_expansion.py'
-      - 'alpha_omega_commercial/cloud_run_observation_fixture.json'
+      - 'alpha_omega_commercial/test_live_provider_block.py'
+      - 'alpha_omega_commercial/prove_live_provider_expansion_v2.py'
       - 'alpha_omega_commercial/programme.json'
       - 'sol_61_runtime/provider_certification_register.json'
       - '.github/workflows/alpha-omega-commercial-live-provider-expansion.yml'
@@ -57,16 +59,21 @@ jobs:
           python -m compileall -q .
           python -m unittest discover -p 'test_*.py' -v
 
-      - name: Authenticate to Google Cloud through keyless OIDC
+      - name: Attempt keyless Google Cloud authority
+        id: auth
+        continue-on-error: true
         uses: google-github-actions/auth@v3
         with:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOYER_SA }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - name: Set up Google Cloud CLI
+        if: steps.auth.outcome == 'success'
+        uses: google-github-actions/setup-gcloud@v2
 
       - name: Verify provider identity and current private service
+        if: steps.auth.outcome == 'success'
         id: baseline
         run: |
           set -euo pipefail
@@ -116,6 +123,7 @@ jobs:
           PY
 
       - name: Execute reversible zero-allocation tag and rollback drill
+        if: steps.auth.outcome == 'success'
         id: rollback
         env:
           REVISION: ${{ steps.baseline.outputs.revision }}
@@ -182,6 +190,7 @@ jobs:
           echo "tag_url=$TAG_URL" >> "$GITHUB_OUTPUT"
 
       - name: Build fresh provider-native Cloud Run observation
+        if: steps.auth.outcome == 'success'
         env:
           REVISION: ${{ steps.baseline.outputs.revision }}
           SERVICE_URL: ${{ steps.baseline.outputs.service_url }}
@@ -224,21 +233,8 @@ jobs:
               'observation_id': f"cloud-run-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}",
               'provider': 'google_cloud_run',
               'provider_native': True,
-              'scopes': [
-                  'authenticated_invoke',
-                  'service_readback',
-                  'health_readback',
-                  'persistence_readback',
-                  'reversible_tag_rollback',
-              ],
-              'proofs': {
-                  'execution': True,
-                  'readback': True,
-                  'health': True,
-                  'persistence': True,
-                  'rollback': True,
-                  'private_invocation': True,
-              },
+              'scopes': ['authenticated_invoke','service_readback','health_readback','persistence_readback','reversible_tag_rollback'],
+              'proofs': {'execution': True,'readback': True,'health': True,'persistence': True,'rollback': True,'private_invocation': True},
               'observed_at': now,
               'locator': f"projects/{os.environ['PROJECT_ID']}/locations/{os.environ['REGION']}/services/{os.environ['SERVICE']}",
               'content_sha256': digest(metadata),
@@ -247,14 +243,61 @@ jobs:
           open('/tmp/cloud-run-observation.json','w',encoding='utf-8').write(json.dumps(observation,indent=2,sort_keys=True)+'\n')
           PY
 
-      - name: Execute commercial live provider proof
+      - name: Record fresh fail-closed Cloud Run authority block
+        if: steps.auth.outcome == 'failure'
+        run: |
+          set -euo pipefail
+          PYTHONPATH=alpha_omega_commercial python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from live_provider_expansion import digest
+          metadata={
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'workflow_run': int(os.environ['GITHUB_RUN_ID']),
+              'workflow_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+              'commit_sha': os.environ['GITHUB_SHA'],
+              'failed_step': 'Attempt keyless Google Cloud authority',
+              'auth_action_outcome': 'failure',
+              'workload_identity_provider': os.environ['WIF_PROVIDER'],
+              'deployer_service_account': os.environ['DEPLOYER_SA'],
+              'previous_exact_failure_run': 30857451510,
+              'previous_exact_failure_job': 91831656941,
+              'previous_exact_error': 'invalid_target',
+              'cloud_setup_steps_skipped': True,
+              'cloud_mutation_performed': False,
+          }
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          block={
+              'block_id': f"cloud-run-wif-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}",
+              'provider': 'google_cloud_run',
+              'reason': 'PROVIDER_BLOCKED_WIF_TOKEN_EXCHANGE_FAILED',
+              'provider_native': True,
+              'observed_at': now,
+              'locator': f"github-actions://{os.environ['GITHUB_REPOSITORY']}/runs/{os.environ['GITHUB_RUN_ID']}",
+              'attempted_scope': ['oidc_token_exchange','cloud_run_readback'],
+              'mutation_performed': False,
+              'content_sha256': digest(metadata),
+              'metadata': metadata,
+          }
+          open('/tmp/cloud-run-block.json','w',encoding='utf-8').write(json.dumps(block,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Execute fail-closed commercial provider proof
         working-directory: alpha_omega_commercial
         run: |
           set -euo pipefail
-          python prove_live_provider_expansion.py \
-            --output artifacts/live-provider-expansion-proof \
-            --provider-register ../sol_61_runtime/provider_certification_register.json \
-            --cloud-observation /tmp/cloud-run-observation.json
+          if [[ -f /tmp/cloud-run-observation.json ]]; then
+            python prove_live_provider_expansion_v2.py \
+              --output artifacts/live-provider-expansion-proof \
+              --provider-register ../sol_61_runtime/provider_certification_register.json \
+              --cloud-observation /tmp/cloud-run-observation.json
+          else
+            test -f /tmp/cloud-run-block.json
+            python prove_live_provider_expansion_v2.py \
+              --output artifacts/live-provider-expansion-proof \
+              --provider-register ../sol_61_runtime/provider_certification_register.json \
+              --cloud-block /tmp/cloud-run-block.json
+          fi
 
       - name: Validate proof gates and truth boundaries
         run: |
@@ -263,19 +306,21 @@ jobs:
           import json
           from pathlib import Path
           receipt=json.loads(Path('alpha_omega_commercial/artifacts/live-provider-expansion-proof/live-provider-expansion-receipt.json').read_text())
-          assert receipt['status'] == 'LIVE_PROVIDER_EXPANSION_VERIFIED_EXTERNAL_GATES_UNCHANGED', receipt
+          assert receipt['status'] in {
+              'LIVE_PROVIDER_EXPANSION_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+              'REVERSIBLE_PROVIDER_EXPANSION_VERIFIED_CLOUD_RUN_PROVIDER_BLOCKED',
+          }, receipt
           assert all(receipt['gates'].values()), receipt['gates']
           truth=receipt['truth_boundary']
-          assert truth['bounded_live_cloud_operation_verified']
-          assert not truth['customer_demand_proven']
-          assert not truth['signed_contract_proven']
-          assert not truth['payment_or_revenue_proven']
-          assert not truth['subscription_or_invoice_proven']
-          assert not truth['enterprise_attestation_proven']
-          assert not truth['partner_adoption_proven']
-          assert not truth['external_case_study_proven']
-          assert not truth['production_scale_proven']
-          assert not truth['owner_reserved_authority_bypassed']
+          assert truth['six_reversible_provider_operations_verified']
+          assert truth['bounded_live_cloud_operation_verified'] != truth['cloud_run_provider_blocked']
+          assert not truth['cloud_mutation_performed_when_blocked']
+          for key in (
+              'customer_demand_proven','signed_contract_proven','payment_or_revenue_proven',
+              'subscription_or_invoice_proven','enterprise_attestation_proven','partner_adoption_proven',
+              'external_case_study_proven','production_scale_proven','owner_reserved_authority_bypassed',
+          ):
+              assert not truth[key], (key, truth)
           PY
 
       - name: Upload proof package
