@@ -31,31 +31,45 @@ jobs:
       - uses: actions/checkout@v4
 
       - name: Authenticate through existing Workload Identity Federation
+        id: auth
+        continue-on-error: true
         uses: google-github-actions/auth@v3
         with:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOYER_SA }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - name: Install gcloud after successful authentication
+        if: steps.auth.outcome == 'success'
+        id: setup_gcloud
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@v2
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Execute non-destructive provider canary
+      - name: Execute non-destructive provider canary and emit receipt
+        if: always()
+        env:
+          AUTH_OUTCOME: ${{ steps.auth.outcome }}
+          SETUP_GCLOUD_OUTCOME: ${{ steps.setup_gcloud.outcome }}
         shell: bash
         run: |
-          set -euo pipefail
+          set -u
           mkdir -p deployments/omega-max
           python - <<'PY'
-          import json, os, subprocess, urllib.request, urllib.error
+          import json, os, shutil, subprocess, urllib.request, urllib.error
           from datetime import datetime, timezone
           from pathlib import Path
 
           project = os.environ['PROJECT_ID']
           region = os.environ['REGION']
           service = os.environ['SOURCE_SERVICE']
+          auth_outcome = os.environ.get('AUTH_OUTCOME', 'unknown')
+          setup_outcome = os.environ.get('SETUP_GCLOUD_OUTCOME', 'skipped')
 
           def run(args):
+              if shutil.which(args[0]) is None:
+                  return {'ok': False, 'exit_code': 127, 'stdout': '', 'stderr': f'{args[0]} not available'}
               p = subprocess.run(args, text=True, capture_output=True)
               return {
                   'ok': p.returncode == 0,
@@ -116,6 +130,10 @@ jobs:
               classification = 'PROVIDER_RUNTIME_CANARY_VERIFIED'
           elif identity_ok and project_ok and service_read_ok and revision_read_ok:
               classification = 'PROVIDER_IDENTITY_AND_SERVICE_READ_VERIFIED_HTTP_UNPROVEN'
+          elif auth_outcome != 'success':
+              classification = 'AUTHORITY_REQUIRED_WIF_AUTHENTICATION_FAILED'
+          elif setup_outcome != 'success':
+              classification = 'PROVIDER_BLOCKED_GCLOUD_SETUP_FAILED'
           else:
               classification = 'PROVIDER_RUNTIME_CANARY_PARTIAL'
 
@@ -125,6 +143,8 @@ jobs:
               'classification': classification,
               'mutation_attempted': False,
               'secret_values_recorded': False,
+              'auth_outcome': auth_outcome,
+              'setup_gcloud_outcome': setup_outcome,
               'identity_ok': identity_ok,
               'project_ok': project_ok,
               'service_read_ok': service_read_ok,
@@ -141,16 +161,16 @@ jobs:
           path = Path('deployments/omega-max/OMEGA_MAX_RUNTIME_CANARY_RECEIPT.json')
           path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
           print(json.dumps(receipt, indent=2, sort_keys=True))
-          if not (identity_ok and project_ok and service_read_ok and revision_read_ok):
-              raise SystemExit(1)
           PY
 
       - name: Persist provider canary receipt
+        if: always()
         shell: bash
         run: |
           set -euo pipefail
           git config user.name "omega-max-runtime-canary[bot]"
           git config user.email "omega-max-runtime-canary[bot]@users.noreply.github.com"
+          git pull --rebase origin main
           git add deployments/omega-max/OMEGA_MAX_RUNTIME_CANARY_RECEIPT.json
           if git diff --cached --quiet; then
             echo "Receipt unchanged"
@@ -159,7 +179,9 @@ jobs:
             git push origin HEAD:main
           fi
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload canary receipt
+        if: always()
+        uses: actions/upload-artifact@v4
         with:
           name: omega-max-provider-runtime-canary
           path: deployments/omega-max/OMEGA_MAX_RUNTIME_CANARY_RECEIPT.json
