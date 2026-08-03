@@ -1,0 +1,68 @@
+name: Alpha Omega v3 P13-P15 Readiness Proof
+
+on:
+  pull_request:
+    paths:
+      - "alpha_omega_v30/cross_system_reconciliation.py"
+      - "alpha_omega_v30/succession.py"
+      - "alpha_omega_v30/checkpoint_20260803.json"
+      - "alpha_omega_v30/prove_p13_p15.py"
+      - "alpha_omega_v30/test_p13_p15.py"
+      - ".github/workflows/alpha-omega-v30-p13-p15.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p13-p15-readiness-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test runtime
+        run: python -m pip install pytest
+      - name: Run reconciliation and succession tests
+        run: pytest -q alpha_omega_v30/test_p13_p15.py
+      - name: Execute readiness proof
+        run: python -m alpha_omega_v30.prove_p13_p15 --workspace ./p13_p15_workspace
+      - name: Verify exact maturity boundary
+        run: |
+          test -s ./p13_p15_workspace/p13_p15_receipt.json
+          test -s ./p13_p15_workspace/cross_system_ledger.jsonl
+          test -s ./p13_p15_workspace/succession_bundle.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('p13_p15_workspace')
+          receipt = json.loads((root / 'p13_p15_receipt.json').read_text())
+          p13 = receipt['phases']['P13']
+          p15 = receipt['phases']['P15']
+          assert p13['status'] == 'REFERENCE_RECONCILIATION_VERIFIED_PROVIDER_WRITEBACK_REQUIRED'
+          assert p13['reconciliation']['valid']
+          assert p13['reconciliation']['persistence_verified']
+          assert p13['conflict_detection']['valid']
+          assert p15['status'] == 'READINESS_VERIFIED_INSTITUTIONAL_COMPLETION_BLOCKED'
+          assert p15['persistence']['readback_verified']
+          blockers = set(p15['succession']['blockers'])
+          required = {
+              'P09:CLOUD_RUN_PROVIDER_AUTHORITY',
+              'P10:EXTERNAL_MARKET_PROOF',
+              'P13:LIVE_CROSS_SYSTEM_PROVIDER_WRITEBACK',
+              'PROVIDER:cloud_run:PROVIDER_BLOCKED_NO_FRESH_AUTHORITY',
+              'PROVIDER:external_market:MARKET_PROOF_REQUIRED',
+              'PROVIDER:google_drive_write:UNVERIFIED',
+          }
+          assert required <= blockers
+          assert 'No v3 Google Drive publication' in receipt['truth_boundary']
+          PY
+      - name: Upload readiness proof package
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-v30-p13-p15-readiness-proof
+          path: p13_p15_workspace/
+          if-no-files-found: error
+          retention-days: 90
