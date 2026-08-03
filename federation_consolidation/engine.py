@@ -146,12 +146,81 @@ class FederationConsolidator:
             {"known_systems": len(known), "lineage_children": len(child_owner)}
         )
 
+    def validate_drive_publication(self) -> ConsolidationResult:
+        receipt = self.load("drive_publication_receipt.json")
+        errors: list[str] = []
+        warnings: list[str] = []
+        expected_spreadsheet = "1XThhZmYI7FpphUFaM9aep3E0KG-criq4HV74C5aH534"
+        expected_sheets = {
+            "Canonical State v1": 20,
+            "24H Programme": 7,
+            "Route Authority v1": 5,
+            "Value Licences v1": 20,
+            "PR Triage v1": 19,
+            "Maturity Standard v1": 29,
+            "Lineage v1": 18,
+            "24H Receipts": 0,
+        }
+        if receipt.get("spreadsheet_id") != expected_spreadsheet:
+            errors.append("WRONG_SPREADSHEET_ID")
+        if receipt.get("readback_verified") is not True:
+            errors.append("DRIVE_READBACK_NOT_VERIFIED")
+        if len(str(receipt.get("export_sha256", ""))) != 64:
+            errors.append("INVALID_EXPORT_HASH")
+        sheets = {item.get("title"): item for item in receipt.get("sheets", [])}
+        if set(sheets) != set(expected_sheets):
+            errors.append("DRIVE_SHEET_SET_MISMATCH")
+        for title, expected_records in expected_sheets.items():
+            item = sheets.get(title, {})
+            if item.get("readback") is not True:
+                errors.append(f"{title}:READBACK_MISSING")
+            if item.get("expected_records") != expected_records:
+                errors.append(f"{title}:RECORD_COUNT_MISMATCH")
+
+        collision = receipt.get("evidenceops_collision_control", {})
+        if collision.get("owner_workstream") != "HB-CHAT-OMX-EOPS-001":
+            errors.append("EVIDENCEOPS_P09_OWNER_DRIFT")
+        if collision.get("policy") != "REFERENCE_ONLY_NO_DUPLICATE_P09":
+            errors.append("EVIDENCEOPS_P09_COLLISION_POLICY_DRIFT")
+        if collision.get("passed") is not True:
+            errors.append("EVIDENCEOPS_P09_COLLISION_CHECK_FAILED")
+
+        source_hashes = receipt.get("source_canonical_hashes", {})
+        for filename, expected_hash in sorted(source_hashes.items()):
+            source_path = self.data_dir / filename
+            if not source_path.exists():
+                errors.append(f"MISSING_SOURCE:{filename}")
+                continue
+            actual_hash = digest(json.loads(source_path.read_text(encoding="utf-8")))
+            if actual_hash != expected_hash:
+                errors.append(f"SOURCE_HASH_MISMATCH:{filename}")
+
+        provider = receipt.get("github_provider_proof", {})
+        if provider.get("conclusion") != "success":
+            errors.append("GITHUB_PROVIDER_PROOF_NOT_SUCCESS")
+        if provider.get("artifact_digest") != "sha256:919747430a9f83f1484c0daeb575e26c41acd7a344122edee259cbec29f02751":
+            warnings.append("GITHUB_ARTIFACT_DIGEST_CHANGED")
+
+        return ConsolidationResult(
+            not errors,
+            tuple(errors),
+            tuple(warnings),
+            {
+                "spreadsheet_id": receipt.get("spreadsheet_id"),
+                "sheet_count": len(sheets),
+                "readback_verified": receipt.get("readback_verified", False),
+                "export_sha256": receipt.get("export_sha256"),
+                "receipt_hash": receipt.get("receipt_hash"),
+            },
+        )
+
     def alpha_omega_release_gate(self) -> dict[str, Any]:
         results = {
             "registry": asdict(self.validate_registry()),
             "routes": asdict(self.validate_routes()),
             "triage": asdict(self.validate_pr_triage()),
             "lineage": asdict(self.validate_lineage()),
+            "drive": asdict(self.validate_drive_publication()),
         }
         local_valid = all(result["valid"] for result in results.values())
         reality = RealityState(
@@ -164,7 +233,7 @@ class FederationConsolidator:
         contract = ActionContract(
             action_id="FO-CONSOLIDATION-RELEASE",
             intent="Publish A1 canonical-state consolidation controls",
-            preconditions=["registry_valid", "routes_valid", "lineage_valid", "triage_valid"],
+            preconditions=["registry_valid", "routes_valid", "lineage_valid", "triage_valid", "drive_valid"],
             allowed_effects=["repository_source", "proof_artifact", "drive_control_tabs"],
             forbidden_effects=["external_message", "cloud_iam_mutation", "secret_access", "legal_filing", "financial_action"],
             success_evidence=["tests", "semantic_readback", "rollback"],
@@ -174,6 +243,7 @@ class FederationConsolidator:
             "routes_valid": results["routes"]["valid"],
             "lineage_valid": results["lineage"]["valid"],
             "triage_valid": results["triage"]["valid"],
+            "drive_valid": results["drive"]["valid"],
         }
         state = {
             "authority": "A1",
@@ -284,11 +354,19 @@ class FederationConsolidator:
         gate = self.alpha_omega_release_gate()
         canary_workspace = Path(output_path).parent / "canary"
         canary = self.e2e_canary(canary_workspace)
+        drive = self.validate_drive_publication()
         phases = [
             PhaseStatus("P0", "CANONICAL_REGISTRY", ("canonical_state.json",), "GitHub", gate["eligible"], ()),
             PhaseStatus("P1", "ROUTE_AND_MATURITY_STANDARD", ("route_registry.json", "maturity_model.json"), "GitHub", gate["eligible"], ()),
             PhaseStatus("P2", "E2E_CANARY", ("canary/receipt.json",), "GitHub", canary["passed"], ()),
-            PhaseStatus("P3", "DRIVE_PUBLICATION", ("Drive operating-surface index",), "Google Drive", False, ("DRIVE_READBACK_REQUIRED",)),
+            PhaseStatus(
+                "P3",
+                "DRIVE_PUBLICATION",
+                ("drive_publication_receipt.json",),
+                "Google Drive",
+                drive.valid,
+                () if drive.valid else tuple(drive.errors) or ("DRIVE_READBACK_REQUIRED",),
+            ),
         ]
         contract = SuccessionContract(
             source_commit=source_commit,
@@ -297,7 +375,7 @@ class FederationConsolidator:
             recovery_runbook="docs/RECOVERY_AND_ROLLBACK.md",
             rollback_runbook="docs/RECOVERY_AND_ROLLBACK.md",
             authority_model="A1 fail-closed; owner reserved A2",
-            proof_index=("canonical_state.json", "health_snapshot.json", "canary/receipt.json"),
+            proof_index=("canonical_state.json", "health_snapshot.json", "canary/receipt.json", "drive_publication_receipt.json"),
         )
         bundle = InstitutionalSuccessionPlanner().evaluate(
             phases, contract,
