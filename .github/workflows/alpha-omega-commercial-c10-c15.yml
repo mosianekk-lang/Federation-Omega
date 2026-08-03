@@ -5,26 +5,34 @@ on:
     paths:
       - "alpha_omega_commercial/commercial_assurance.py"
       - "alpha_omega_commercial/receipt_integrity.py"
+      - "alpha_omega_commercial/programme_integrity.py"
       - "alpha_omega_commercial/test_commercial_assurance.py"
       - "alpha_omega_commercial/test_receipt_integrity.py"
+      - "alpha_omega_commercial/test_programme_integrity.py"
       - "alpha_omega_commercial/prove_c10_c15.py"
       - "alpha_omega_commercial/prove_receipt_integrity.py"
+      - "alpha_omega_commercial/prove_programme_integrity.py"
       - "alpha_omega_commercial/programme.json"
       - "alpha_omega_commercial/README.md"
       - "alpha_omega_commercial/C15_CANONICAL_RECEIPT_INTEGRITY.md"
+      - "alpha_omega_commercial/C15_PROGRAMME_REGISTER_INTEGRITY.md"
       - ".github/workflows/alpha-omega-commercial-c10-c15.yml"
   push:
     branches: [main]
     paths:
       - "alpha_omega_commercial/commercial_assurance.py"
       - "alpha_omega_commercial/receipt_integrity.py"
+      - "alpha_omega_commercial/programme_integrity.py"
       - "alpha_omega_commercial/test_commercial_assurance.py"
       - "alpha_omega_commercial/test_receipt_integrity.py"
+      - "alpha_omega_commercial/test_programme_integrity.py"
       - "alpha_omega_commercial/prove_c10_c15.py"
       - "alpha_omega_commercial/prove_receipt_integrity.py"
+      - "alpha_omega_commercial/prove_programme_integrity.py"
       - "alpha_omega_commercial/programme.json"
       - "alpha_omega_commercial/README.md"
       - "alpha_omega_commercial/C15_CANONICAL_RECEIPT_INTEGRITY.md"
+      - "alpha_omega_commercial/C15_PROGRAMME_REGISTER_INTEGRITY.md"
       - ".github/workflows/alpha-omega-commercial-c10-c15.yml"
   workflow_dispatch:
 
@@ -44,11 +52,17 @@ jobs:
         run: python -m compileall -q alpha_omega_commercial
       - name: Run commercial regression tests
         working-directory: alpha_omega_commercial
-        run: python -m unittest -v test_commercial_platform.py test_commercial_expansion.py test_commercial_assurance.py test_receipt_integrity.py
+        run: python -m unittest -v test_commercial_platform.py test_commercial_expansion.py test_commercial_assurance.py test_receipt_integrity.py test_programme_integrity.py
       - name: Execute reversible C10-C15 proof
         run: python alpha_omega_commercial/prove_c10_c15.py --output alpha_omega_commercial/artifacts/c10-c15
       - name: Reconcile and prove canonical receipt integrity
         run: python alpha_omega_commercial/prove_receipt_integrity.py --output alpha_omega_commercial/artifacts/c10-c15
+      - name: Verify canonical programme register
+        run: >-
+          python alpha_omega_commercial/prove_programme_integrity.py
+          --programme alpha_omega_commercial/programme.json
+          --artifact-root alpha_omega_commercial/artifacts/c10-c15
+          --output alpha_omega_commercial/artifacts/c10-c15/programme-register-integrity.json
       - name: Validate stage gates and truth boundaries
         run: |
           python - <<'PY'
@@ -61,6 +75,8 @@ jobs:
           dashboard = json.loads((root / 'revenue-operations-dashboard.json').read_text())
           integrity = json.loads((root / 'canonical-receipt-integrity.json').read_text())
           rollback = json.loads((root / 'canonical-receipt-rollback-proof.json').read_text())
+          programme = json.loads(Path('alpha_omega_commercial/programme.json').read_text())
+          programme_integrity = json.loads((root / 'programme-register-integrity.json').read_text())
           package_id = receipt['stages']['C15']['proof']['package_id']
           package = json.loads((root / 'reference-state' / 'receipts' / f'succession-{package_id}.json').read_text())
 
@@ -82,9 +98,7 @@ jobs:
           assert maturity['technical_gates']['C15_succession_ready']
           assert not maturity['full_commercial_maturity']
           assert maturity['canonical_status'] == 'COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN'
-          assert not maturity['external_gates']['payment_provider_revenue']
-          assert not maturity['external_gates']['customer_demand']
-          assert not maturity['external_gates']['live_cloud_provider']
+          assert not any(maturity['external_gates'].values())
           assert receipt['truth_boundaries']['cloud_run'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
 
           assert integrity['status'] == 'CANONICAL_RECEIPT_INTEGRITY_VERIFIED'
@@ -96,6 +110,13 @@ jobs:
           assert package['receipt_integrity']['status'] == 'CANONICAL_RECEIPT_SELF_CONSISTENT'
           assert receipt['canonical_receipt_integrity']['status'] == 'CANONICAL_RECEIPT_INTEGRITY_VERIFIED'
           assert (root / 'receipt-integrity-backup' / 'manifest.json').is_file()
+
+          assert programme['canonical_status'] == maturity['canonical_status']
+          assert programme['canonical_receipt_integrity'] == integrity['status']
+          assert programme['stages'][-1]['status'] == 'COMMERCIAL_READINESS_VERIFIED_CANONICAL_RECEIPT_INTEGRITY_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN'
+          assert programme_integrity['status'] == 'PROGRAMME_REGISTER_INTEGRITY_VERIFIED'
+          assert all(programme_integrity['checks'].values())
+          assert not any(programme_integrity['external_gates'].values())
           PY
       - name: Verify no secret-shaped values are present
         run: |
