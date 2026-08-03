@@ -1,4 +1,4 @@
-# trigger: 2026-08-04T00:46:00+02:00
+# diagnostic-first revision: 2026-08-04T00:50:00+02:00
 name: EvidenceOps v7.2.2 P13 Raw Provider Freshness
 
 on:
@@ -17,7 +17,7 @@ permissions:
 
 concurrency:
   group: evidenceops-v722-p13-source-freshness
-  cancel-in-progress: false
+  cancel-in-progress: true
 
 jobs:
   raw-provider-freshness:
@@ -38,6 +38,8 @@ jobs:
         run: python -m pip install --disable-pip-version-check pypdf==5.9.0
 
       - name: Retrieve and hash exact official-provider bytes
+        id: retrieve
+        continue-on-error: true
         run: |
           rm -rf p13_raw_provider_output
           python runtime/evidenceops_v722/p13_source_freshness/run_raw_provider_cycle.py \
@@ -45,30 +47,33 @@ jobs:
             --output p13_raw_provider_output \
             --state-output runtime/evidenceops_v722/state/p13_raw_provider_latest.json
 
-      - name: Verify receipt hash and authority boundary
+      - name: Verify diagnostic receipt integrity and authority boundary
+        if: always()
         run: |
           python - <<'PY'
           import hashlib, json
           from pathlib import Path
           path = Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json')
+          assert path.exists(), 'freshness runner did not write a diagnostic receipt'
           payload = json.loads(path.read_text(encoding='utf-8'))
           supplied = payload.pop('receipt_sha256')
           observed = hashlib.sha256(
               json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
           ).hexdigest()
           assert observed == supplied, (observed, supplied)
-          assert payload['controls']['raw_provider_byte_gate_passed'] is True
-          assert payload['controls']['current_primary_rules_document_identity_verified'] is True
           assert payload['controls']['external_effects'] == 0
           assert payload['controls']['authority_ceiling'] == 'A1'
           print(json.dumps({
               'receipt_id': payload['receipt_id'],
               'receipt_sha256': supplied,
               'state': payload['state'],
+              'raw_provider_byte_gate_passed': payload['controls']['raw_provider_byte_gate_passed'],
+              'current_primary_rules_document_identity_verified': payload['controls']['current_primary_rules_document_identity_verified'],
           }, indent=2))
           PY
 
-      - name: Upload immutable raw-provider proof
+      - name: Upload immutable raw-provider proof and diagnostics
+        if: always()
         uses: actions/upload-artifact@v4
         with:
           name: evidenceops-v722-p13-raw-provider-${{ github.run_id }}-${{ github.run_attempt }}
@@ -76,7 +81,8 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Persist exact provider readback on main
+      - name: Persist exact provider diagnostic readback on main
+        if: always()
         run: |
           git config user.name 'Federation Omega Runtime'
           git config user.email 'actions@users.noreply.github.com'
@@ -94,3 +100,14 @@ jobs:
             sleep $((attempt * 2))
           done
           exit 1
+
+      - name: Enforce raw-byte and current-rules identity gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json').read_text(encoding='utf-8'))
+          assert payload['controls']['raw_provider_byte_gate_passed'] is True
+          assert payload['controls']['current_primary_rules_document_identity_verified'] is True
+          PY
