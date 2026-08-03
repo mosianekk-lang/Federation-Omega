@@ -1,0 +1,17 @@
+{
+  "schema": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-SOURCE-1",
+  "capability_id": "evidenceops-pst-corpus-v2",
+  "name": "MosianeKK PST extraction, preservation and searchable-corpus capability",
+  "case_id": "Kim-v-TUT",
+  "state": "QUEUED_PENDING_PROVIDER_EXECUTION",
+  "proof_level": "PACKAGE_TESTED_COMMANDS_QUEUED",
+  "source_drive_file_id": "1wRZyIhlFy5bECTccmfXHzWH5b4hTN7xN",
+  "package_drive_file_id": "18PJ5jDIbG69pclgBYr3ehf9YD8WIS3uk",
+  "apps_script_deployer_drive_file_id": "1fXKafnrsAoGiC8CT-oDsql29cCT0Wgpv",
+  "mission_control_spreadsheet_id": "1Fdyl6St_9lYTZ-s3dw102mARBQ5ce941mJWIEpCyHos",
+  "command_queue_spreadsheet_id": "1LSVjK9YK6u2CMrvetOcXpun4VQnOh5cE6b3w6z_KTHg",
+  "queued_command_rows": "Commands!16062:16066",
+  "completion_gate": "Drive corpus 00_CONTROL/COMPLETION.json status COMPLETE_VERIFIED",
+  "target_deadline_sast": "2026-08-05T01:48:00+02:00",
+  "last_updated_sast": "2026-08-04T01:58:17+02:00"
+}
