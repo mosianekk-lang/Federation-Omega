@@ -1,0 +1,81 @@
+name: Package FO Transcription Bridge
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'services/fo_transcription_bridge/**'
+      - '.github/workflows/fo-transcription-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Materialize reviewed source and run tests
+        working-directory: services/fo_transcription_bridge
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, gzip
+          from pathlib import Path
+          Path('app.py').write_bytes(gzip.decompress(base64.b64decode(Path('app.py.gz.b64').read_text().strip())))
+          PY
+          python -m pip install --upgrade pip
+          python -m pip install -r requirements.txt pytest
+          python -m pytest -q
+          python -m py_compile app.py transcript.py
+
+      - name: Create immutable source package and manifest
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/fo-transcription-package
+          mkdir -p /tmp/fo-transcription-package/source
+          cp services/fo_transcription_bridge/app.py /tmp/fo-transcription-package/source/
+          cp services/fo_transcription_bridge/transcript.py /tmp/fo-transcription-package/source/
+          cp services/fo_transcription_bridge/requirements.txt /tmp/fo-transcription-package/source/
+          cp services/fo_transcription_bridge/Dockerfile /tmp/fo-transcription-package/source/
+          cp services/fo_transcription_bridge/openapi.yaml /tmp/fo-transcription-package/source/
+          cp services/fo_transcription_bridge/README.md /tmp/fo-transcription-package/source/
+          python - <<'PY'
+          import hashlib, json
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root = Path('/tmp/fo-transcription-package/source')
+          files = []
+          for path in sorted(root.iterdir()):
+              data = path.read_bytes()
+              files.append({'name': path.name, 'size': len(data), 'sha256': hashlib.sha256(data).hexdigest()})
+          manifest = {
+              'contract': 'FO_TRANSCRIPTION_BRIDGE_SOURCE_PACKAGE_V1',
+              'source_commit': '${{ github.sha }}',
+              'created_at': datetime.now(timezone.utc).isoformat(),
+              'files': files,
+          }
+          (root / 'source-manifest.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          PY
+          cd /tmp/fo-transcription-package/source
+          zip -X -r ../fo-transcription-bridge-source.zip .
+          cd ..
+          sha256sum fo-transcription-bridge-source.zip | tee fo-transcription-bridge-source.zip.sha256
+          stat -c '%s' fo-transcription-bridge-source.zip | tee fo-transcription-bridge-source.zip.size
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fo-transcription-bridge-source-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 30
+          path: |
+            /tmp/fo-transcription-package/fo-transcription-bridge-source.zip
+            /tmp/fo-transcription-package/fo-transcription-bridge-source.zip.sha256
+            /tmp/fo-transcription-package/fo-transcription-bridge-source.zip.size
