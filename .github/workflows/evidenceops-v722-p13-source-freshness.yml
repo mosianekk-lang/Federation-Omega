@@ -1,4 +1,4 @@
-# Single-writer and reproducible-dependency verification: 2026-08-04T01:50:00+02:00
+# Single-writer, reproducible dependencies and gate-role regression: 2026-08-04T01:52:00+02:00
 name: EvidenceOps v7.2.2 P13 Raw Provider Freshness
 
 on:
@@ -8,6 +8,7 @@ on:
       - runtime/evidenceops_v722/p13_source_freshness/raw_provider_catalog.json
       - runtime/evidenceops_v722/p13_source_freshness/run_raw_provider_cycle.py
       - runtime/evidenceops_v722/p13_source_freshness/aia_trust.py
+      - runtime/evidenceops_v722/tests/test_p13_gate_roles.py
       - .github/workflows/evidenceops-v722-p13-source-freshness.yml
   workflow_dispatch:
   schedule:
@@ -56,6 +57,9 @@ jobs:
           })
           PY
 
+      - name: Run P13 gate-role regression tests
+        run: python -m unittest runtime.evidenceops_v722.tests.test_p13_gate_roles
+
       - name: Retrieve and hash exact official-provider bytes
         id: retrieve
         continue-on-error: true
@@ -95,6 +99,7 @@ jobs:
               'run_id': event['run_id'],
               'raw_provider_byte_gate_passed': payload['controls']['raw_provider_byte_gate_passed'],
               'current_primary_rules_document_identity_verified': payload['controls']['current_primary_rules_document_identity_verified'],
+              'consultative_watch_gate_passed': payload['controls'].get('consultative_watch_gate_passed'),
               'secondary_resource_archive_gate_passed': payload['controls'].get('secondary_resource_archive_gate_passed'),
           }, indent=2))
           PY
@@ -142,7 +147,7 @@ jobs:
           done
           exit 1
 
-      - name: Enforce raw-byte and current-rules identity gate
+      - name: Enforce core raw-byte and current-rules identity gate
         if: always()
         run: |
           python - <<'PY'
@@ -154,5 +159,6 @@ jobs:
           assert str(event['run_attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
           assert event['sha'] == os.environ['GITHUB_SHA']
           assert payload['controls']['raw_provider_byte_gate_passed'] is True
+          assert payload['controls']['core_official_source_raw_byte_gate_passed'] is True
           assert payload['controls']['current_primary_rules_document_identity_verified'] is True
           PY
