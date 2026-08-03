@@ -1,0 +1,287 @@
+name: Alpha Omega Commercial Live Provider Expansion
+
+on:
+  push:
+    branches:
+      - alpha-omega-commercial-live-provider-expansion
+    paths:
+      - 'alpha_omega_commercial/live_provider_expansion.py'
+      - 'alpha_omega_commercial/test_live_provider_expansion.py'
+      - 'alpha_omega_commercial/prove_live_provider_expansion.py'
+      - 'alpha_omega_commercial/cloud_run_observation_fixture.json'
+      - 'alpha_omega_commercial/programme.json'
+      - 'sol_61_runtime/provider_certification_register.json'
+      - '.github/workflows/alpha-omega-commercial-live-provider-expansion.yml'
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/live_provider_expansion.py'
+      - 'alpha_omega_commercial/test_live_provider_expansion.py'
+      - 'alpha_omega_commercial/prove_live_provider_expansion.py'
+      - 'alpha_omega_commercial/cloud_run_observation_fixture.json'
+      - 'alpha_omega_commercial/programme.json'
+      - 'sol_61_runtime/provider_certification_register.json'
+      - '.github/workflows/alpha-omega-commercial-live-provider-expansion.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: alpha-omega-commercial-live-provider-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  SERVICE: fo-transcription-bridge
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+
+jobs:
+  provider-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Compile and run complete commercial regression suite
+        working-directory: alpha_omega_commercial
+        run: |
+          set -euo pipefail
+          python -m compileall -q .
+          python -m unittest discover -p 'test_*.py' -v
+
+      - name: Authenticate to Google Cloud through keyless OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify provider identity and current private service
+        id: baseline
+        run: |
+          set -euo pipefail
+          account="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          project_number="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$account" = "$DEPLOYER_SA"
+          test "$project_number" = "$PROJECT_NUMBER"
+
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-before.json
+          gcloud run services get-iam-policy "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-policy.json
+
+          python - <<'PY' > /tmp/baseline.env
+          import json
+          service=json.load(open('/tmp/service-before.json', encoding='utf-8'))
+          policy=json.load(open('/tmp/service-policy.json', encoding='utf-8'))
+          status=service.get('status', {})
+          spec=service.get('spec', {})
+          template=spec.get('template', {}).get('spec', {})
+          revision=status.get('latestReadyRevisionName', '')
+          url=status.get('url', '')
+          image=(template.get('containers') or [{}])[0].get('image', '')
+          service_account=template.get('serviceAccountName', '')
+          members=[member for binding in policy.get('bindings', []) for member in binding.get('members', [])]
+          assert revision and url and image and service_account, (revision, url, image, service_account)
+          assert 'allUsers' not in members and 'allAuthenticatedUsers' not in members, members
+          print(f'REVISION={revision}')
+          print(f'SERVICE_URL={url}')
+          print(f'IMAGE={image}')
+          print(f'RUNTIME_SA={service_account}')
+          PY
+          source /tmp/baseline.env
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+          echo "runtime_sa=$RUNTIME_SA" >> "$GITHUB_OUTPUT"
+
+          token="$(gcloud auth print-identity-token --audiences="$SERVICE_URL")"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $token" "$SERVICE_URL/health" > /tmp/health-before.json
+          python - <<'PY'
+          import json
+          health=json.load(open('/tmp/health-before.json', encoding='utf-8'))
+          assert health.get('status') == 'HEALTHY', health
+          assert health.get('checks', {}).get('ready') is True, health
+          PY
+
+      - name: Execute reversible zero-allocation tag and rollback drill
+        id: rollback
+        env:
+          REVISION: ${{ steps.baseline.outputs.revision }}
+        run: |
+          set -euo pipefail
+          TAG="ao-commercial-${GITHUB_RUN_ID}"
+          cleanup() {
+            gcloud run services update-traffic "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --remove-tags "$TAG" --quiet >/dev/null 2>&1 || true
+          }
+          trap cleanup EXIT
+
+          gcloud run services update-traffic "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --update-tags "${TAG}=${REVISION}" --quiet >/dev/null
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-tagged.json
+          python - "$TAG" "$REVISION" <<'PY' > /tmp/tag.env
+          import json, sys
+          service=json.load(open('/tmp/service-tagged.json', encoding='utf-8'))
+          tag, revision=sys.argv[1:3]
+          row=next((x for x in service.get('status', {}).get('traffic', []) if x.get('tag') == tag), None)
+          assert row and row.get('revisionName') == revision and row.get('url'), row
+          assert not row.get('percent'), row
+          print(f"TAG_URL={row['url']}")
+          PY
+          source /tmp/tag.env
+          token="$(gcloud auth print-identity-token --audiences="$TAG_URL")"
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $token" "$TAG_URL/health" > /tmp/health-tagged.json
+          python - <<'PY'
+          import json
+          health=json.load(open('/tmp/health-tagged.json', encoding='utf-8'))
+          assert health.get('status') == 'HEALTHY', health
+          assert health.get('checks', {}).get('ready') is True, health
+          PY
+
+          sleep 3
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-persisted.json
+          python - "$TAG" "$REVISION" <<'PY'
+          import json, sys
+          service=json.load(open('/tmp/service-persisted.json', encoding='utf-8'))
+          tag, revision=sys.argv[1:3]
+          row=next((x for x in service.get('status', {}).get('traffic', []) if x.get('tag') == tag), None)
+          assert row and row.get('revisionName') == revision, row
+          PY
+
+          gcloud run services update-traffic "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --remove-tags "$TAG" --quiet >/dev/null
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service-restored.json
+          python - "$TAG" "$REVISION" <<'PY'
+          import json, sys
+          service=json.load(open('/tmp/service-restored.json', encoding='utf-8'))
+          tag, revision=sys.argv[1:3]
+          assert service.get('status', {}).get('latestReadyRevisionName') == revision, service.get('status', {})
+          assert not any(x.get('tag') == tag for x in service.get('status', {}).get('traffic', [])), service.get('status', {}).get('traffic', [])
+          PY
+          trap - EXIT
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "tag_url=$TAG_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Build fresh provider-native Cloud Run observation
+        env:
+          REVISION: ${{ steps.baseline.outputs.revision }}
+          SERVICE_URL: ${{ steps.baseline.outputs.service_url }}
+          IMAGE: ${{ steps.baseline.outputs.image }}
+          RUNTIME_SA: ${{ steps.baseline.outputs.runtime_sa }}
+          TAG: ${{ steps.rollback.outputs.tag }}
+          TAG_URL: ${{ steps.rollback.outputs.tag_url }}
+        run: |
+          set -euo pipefail
+          PYTHONPATH=alpha_omega_commercial python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from live_provider_expansion import digest
+
+          def file_sha(path):
+              return hashlib.sha256(open(path, 'rb').read()).hexdigest()
+
+          metadata={
+              'project': os.environ['PROJECT_ID'],
+              'project_number': os.environ['PROJECT_NUMBER'],
+              'region': os.environ['REGION'],
+              'service': os.environ['SERVICE'],
+              'service_url': os.environ['SERVICE_URL'],
+              'revision': os.environ['REVISION'],
+              'image': os.environ['IMAGE'],
+              'runtime_service_account': os.environ['RUNTIME_SA'],
+              'private_invocation': True,
+              'tag': os.environ['TAG'],
+              'tag_url': os.environ['TAG_URL'],
+              'tag_removed': True,
+              'health_before_sha256': file_sha('/tmp/health-before.json'),
+              'health_tagged_sha256': file_sha('/tmp/health-tagged.json'),
+              'service_before_sha256': file_sha('/tmp/service-before.json'),
+              'service_persisted_sha256': file_sha('/tmp/service-persisted.json'),
+              'service_restored_sha256': file_sha('/tmp/service-restored.json'),
+              'iam_policy_sha256': file_sha('/tmp/service-policy.json'),
+          }
+          now=datetime.now(timezone.utc).replace(microsecond=0).isoformat().replace('+00:00','Z')
+          observation={
+              'observation_id': f"cloud-run-{os.environ['GITHUB_RUN_ID']}-{os.environ['GITHUB_RUN_ATTEMPT']}",
+              'provider': 'google_cloud_run',
+              'provider_native': True,
+              'scopes': [
+                  'authenticated_invoke',
+                  'service_readback',
+                  'health_readback',
+                  'persistence_readback',
+                  'reversible_tag_rollback',
+              ],
+              'proofs': {
+                  'execution': True,
+                  'readback': True,
+                  'health': True,
+                  'persistence': True,
+                  'rollback': True,
+                  'private_invocation': True,
+              },
+              'observed_at': now,
+              'locator': f"projects/{os.environ['PROJECT_ID']}/locations/{os.environ['REGION']}/services/{os.environ['SERVICE']}",
+              'content_sha256': digest(metadata),
+              'metadata': metadata,
+          }
+          open('/tmp/cloud-run-observation.json','w',encoding='utf-8').write(json.dumps(observation,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Execute commercial live provider proof
+        working-directory: alpha_omega_commercial
+        run: |
+          set -euo pipefail
+          python prove_live_provider_expansion.py \
+            --output artifacts/live-provider-expansion-proof \
+            --provider-register ../sol_61_runtime/provider_certification_register.json \
+            --cloud-observation /tmp/cloud-run-observation.json
+
+      - name: Validate proof gates and truth boundaries
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.loads(Path('alpha_omega_commercial/artifacts/live-provider-expansion-proof/live-provider-expansion-receipt.json').read_text())
+          assert receipt['status'] == 'LIVE_PROVIDER_EXPANSION_VERIFIED_EXTERNAL_GATES_UNCHANGED', receipt
+          assert all(receipt['gates'].values()), receipt['gates']
+          truth=receipt['truth_boundary']
+          assert truth['bounded_live_cloud_operation_verified']
+          assert not truth['customer_demand_proven']
+          assert not truth['signed_contract_proven']
+          assert not truth['payment_or_revenue_proven']
+          assert not truth['subscription_or_invoice_proven']
+          assert not truth['enterprise_attestation_proven']
+          assert not truth['partner_adoption_proven']
+          assert not truth['external_case_study_proven']
+          assert not truth['production_scale_proven']
+          assert not truth['owner_reserved_authority_bypassed']
+          PY
+
+      - name: Upload proof package
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-commercial-live-provider-expansion-proof
+          path: alpha_omega_commercial/artifacts/live-provider-expansion-proof
+          retention-days: 90
+          if-no-files-found: error
