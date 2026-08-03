@@ -1,0 +1,19 @@
+{
+  "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V720_GITHUB_DESCRIPTOR_V1",
+  "version": "7.2.0",
+  "archive": "OmegaMax_Sol61_Autonomous_EvidenceOps_Runtime_v7.2.0.zip",
+  "archive_sha256": "826a7cb7f5dcdc597e5ded1105f1d6c03d4b6bea56681b4a3e6644e23f0d906c",
+  "source_manifest_sha256": "9628c101f4d1f975bcc529c03d5c3ad2c1801f0eac5c5778328064d5e5529dff",
+  "wheel_sha256": "f8e29e8bc622d6826e0eedd66952b50406ba1b80016de4106472643b7f6788ac",
+  "source_tests": 178,
+  "archive_tests": 178,
+  "evidenceops_system_count": 20,
+  "evidenceops_first_adopter_operations": 25,
+  "default_authority_ceiling": "A1",
+  "legal_authority": false,
+  "filing_authority": false,
+  "send_authority": false,
+  "recording_authority": false,
+  "live_financial_authority": false,
+  "truth_boundary": "Hosted CI proves the exact archive and bounded runtime paths only. Provider-backed distributed operation, real-case legal conclusions and consequential actions require separate proof and authority."
+}
