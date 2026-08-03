@@ -43,16 +43,39 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          shopt -s nullglob
           parts=(.bootstrap/evidenceops-fevx/overlay.part.*)
-          test "${#parts[@]}" -eq 11
+          printf 'overlay_part_count=%s\n' "${#parts[@]}"
+          for part in "${parts[@]}"; do
+            printf 'part=%s size=%s sha256=%s\n' \
+              "$part" "$(wc -c < "$part")" "$(sha256sum "$part" | awk '{print $1}')"
+          done
+          if [[ "${#parts[@]}" -ne 11 ]]; then
+            echo 'ERROR: expected exactly 11 overlay parts' >&2
+            exit 1
+          fi
           cat "${parts[@]}" | base64 --decode > /tmp/evidenceops-fevx-overlay.tar.gz
           observed="$(sha256sum /tmp/evidenceops-fevx-overlay.tar.gz | awk '{print $1}')"
-          test "$observed" = "$OVERLAY_SHA256"
-          tar -tzf /tmp/evidenceops-fevx-overlay.tar.gz >/tmp/evidenceops-fevx-overlay.list
+          printf 'overlay_observed_sha256=%s\noverlay_expected_sha256=%s\n' "$observed" "$OVERLAY_SHA256"
+          if [[ "$observed" != "$OVERLAY_SHA256" ]]; then
+            echo 'ERROR: overlay digest mismatch' >&2
+            exit 1
+          fi
+          tar -tzf /tmp/evidenceops-fevx-overlay.tar.gz | tee /tmp/evidenceops-fevx-overlay.list >/dev/null
+          printf 'overlay_member_count=%s\n' "$(wc -l < /tmp/evidenceops-fevx-overlay.list)"
           tar -xzf /tmp/evidenceops-fevx-overlay.tar.gz -C .
-          test -s evidenceops/fevx_mcoe/POLICY.yaml
-          test -s evidenceops/fevx_mcoe/evidenceops_fevx_adapter/adapter.py
-          test -s .github/workflows/evidenceops-fevx-adapter.yml
+          required=(
+            evidenceops/fevx_mcoe/POLICY.yaml
+            evidenceops/fevx_mcoe/evidenceops_fevx_adapter/adapter.py
+            .github/workflows/evidenceops-fevx-adapter.yml
+          )
+          for path in "${required[@]}"; do
+            if [[ ! -s "$path" ]]; then
+              echo "ERROR: missing required extracted file: $path" >&2
+              exit 1
+            fi
+            printf 'verified_extracted_file=%s size=%s\n' "$path" "$(wc -c < "$path")"
+          done
 
       - name: Restore and verify exact CSE v2 wheel
         shell: bash
