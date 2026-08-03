@@ -1,0 +1,19 @@
+{
+  "actual": {
+    "generation": 1,
+    "runtime": "github-actions",
+    "status": "operational"
+  },
+  "actual_hash": "98fcaa29b9b665249c7c3590502409d8712d4b1975f585a0d06b12f7c6fb1947",
+  "actual_path": "runtime/omega-max/state/canary_state.json",
+  "checked_at": "2026-08-03T07:21:28.926096+00:00",
+  "classification": "IN_SYNC",
+  "desired": {
+    "generation": 1,
+    "runtime": "github-actions",
+    "status": "operational"
+  },
+  "desired_hash": "98fcaa29b9b665249c7c3590502409d8712d4b1975f585a0d06b12f7c6fb1947",
+  "desired_path": "runtime/omega-max/state/desired_state.json",
+  "drift": false
+}

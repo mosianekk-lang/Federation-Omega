@@ -1,0 +1,14 @@
+{
+  "after_hash": "6ac0859bbf3f14d53b0c66d8d342ae67f26214e66e62e1001a112f9a3f3c24bb",
+  "before_hash": "74234e98afe7498fb5daf1f36ac2d78acc339464f950703b8c019892f982b90b",
+  "contract_fingerprint": "2f10b1576aff5b386e9e60f50931ec0d1d4cec21de6d3e7f8a011d6df488ebbc",
+  "contract_id": "RUNTIME-PROBE-OMX-GHA-002",
+  "previous_hash": "02738ad7fe920c130841c443890d86c0f857526c6f2302cc3519d6c8b95c6541",
+  "proof_id": "PRF-RUNTIME-PROBE-OMX-GHA-002",
+  "record_hash": "fa8f454d1bf6bf4ebfbdcd57d28de8139e7d13e28f2859a58b1696215b4a0470",
+  "recorded_at": "2026-08-03T07:21:28.863159+00:00",
+  "rollback_test": true,
+  "semantic_readback": true,
+  "status": "VERIFIED",
+  "target": "runtime/omega-max/state/runtime_probe.json"
+}
