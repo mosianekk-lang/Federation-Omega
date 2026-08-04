@@ -1,0 +1,60 @@
+{
+  "projection_id": "AO-COMMERCIAL-PROGRAMME-MATURITY-EFFECTIVE-V20",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "predecessor_projection": "alpha_omega_commercial/programme_maturity_effective_v19.json",
+  "dependency_order": ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C15"],
+  "dependency_order_preserved": true,
+  "advanced_internal_slice": {
+    "capability_revision": "AO-COMMERCIAL-PHOENIX-CUTOVER-AUTHORIZATION-V20",
+    "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+    "status": "IMPLEMENTED_PENDING_PROVIDER_NATIVE_PROOF",
+    "authorization_verifier": "phoenix/provider_cutover_authorization.py",
+    "provider_mutation_performed": false,
+    "credential_value_recorded": false,
+    "owner_authorization_capsule_committed": false
+  },
+  "stage_projection": {
+    "C01": "OPERATIONAL_FOUNDATION_VERIFIED_MARKET_PROOF_REQUIRED",
+    "C02": "REFERENCE_PROVIDER_VERIFIED",
+    "C03": "PHOENIX_EXACT_OWNER_AUTHORIZATION_GATE_IMPLEMENTED_PROVIDER_APPLY_BLOCKED",
+    "C04": "REFERENCE_PROVIDER_VERIFIED_LIVE_PROVIDER_BLOCKED",
+    "C05": "INVOICE_READY_REFERENCE_PROVIDER_VERIFIED_PAYMENT_PROVIDER_BLOCKED",
+    "C06": "MANAGED_OPERATIONS_EXECUTION_PLANE_AUTHORIZATION_BOUND_LIVE_SLA_BLOCKED",
+    "C07": "PROVIDER_ADAPTER_AND_PRIVATE_OPS_PACKAGE_VERIFIED_LIVE_PROVIDER_BLOCKED",
+    "C08": "REFERENCE_MARKETPLACE_VERIFIED",
+    "C09": "REFERENCE_PARTNER_TENANT_VERIFIED_OWNER_APPROVAL_AND_ADOPTION_REQUIRED",
+    "C10": "REFERENCE_ASSURANCE_VERIFIED_ENTERPRISE_ATTESTATION_REQUIRED",
+    "C11": "SERVICE_ENABLED_PLATFORM_VERIFIED_SELF_SERVICE_HELD_EXECUTION_PLANE_APPLY_BLOCKED",
+    "C12": "EVIDENCE_FRAMEWORK_AND_EXTERNAL_ADMISSION_VERIFIED_MARKET_PROOF_REQUIRED",
+    "C13": "REFERENCE_REVOPS_AND_PAYMENT_EVIDENCE_ADMISSION_VERIFIED_OWNER_APPROVAL_AND_REVENUE_PROOF_REQUIRED",
+    "C14": "SOURCE_CLEAN_CORE_AND_PRIVATE_OPS_EXPORT_BOUND_TO_OWNER_AUTHORIZATION_PRODUCTION_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_INTERNAL_AUTHORIZATION_GATE_IMPLEMENTED_EXTERNAL_GATES_OPEN"
+  },
+  "service_enabled_platform_first": true,
+  "self_service_saas_held": true,
+  "provider_execution_plane_cutover": "PROVIDER_BLOCKED_FRESH_AUTHORISED_APPLY_REQUIRED",
+  "external_gates": {
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run_operation": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "external_customer_case_study": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "institution_scope": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "verified_live_revenue_events": 0,
+  "full_commercial_maturity": false,
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED",
+    "execution_plane_cutover": "OWNER_RESERVED_SHORT_LIVED_EXACT_AUTHORIZATION_REQUIRED"
+  }
+}
