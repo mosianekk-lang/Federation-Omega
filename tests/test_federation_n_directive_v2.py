@@ -55,13 +55,24 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
 
     def test_governance_contracts_bind_the_policy(self) -> None:
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
-        copilot = (
-            ROOT / ".github" / "copilot-instructions.md"
-        ).read_text(encoding="utf-8")
-        for text in (agents, copilot):
-            self.assertIn("FEDOMEGA-N-DIRECTIVE-V2", text)
-            self.assertIn("n = proceed", text)
-            self.assertIn("complete next-best automated pathway", text)
+        required = (
+            "FEDOMEGA-N-DIRECTIVE-V2",
+            "n = proceed",
+            "complete next-best automated pathway",
+        )
+        for phrase in required:
+            with self.subTest(contract="AGENTS.md", phrase=phrase):
+                self.assertIn(phrase, agents)
+
+        # Phoenix Core exports intentionally exclude .github source-control files.
+        # Validate Copilot binding in the full repository when the file is present,
+        # without making the independently runnable Core archive depend on it.
+        copilot_path = ROOT / ".github" / "copilot-instructions.md"
+        if copilot_path.exists():
+            copilot = copilot_path.read_text(encoding="utf-8")
+            for phrase in required:
+                with self.subTest(contract="copilot-instructions.md", phrase=phrase):
+                    self.assertIn(phrase, copilot)
 
     def test_policy_does_not_expand_consequential_authority(self) -> None:
         policy = POLICY.read_text(encoding="utf-8")
