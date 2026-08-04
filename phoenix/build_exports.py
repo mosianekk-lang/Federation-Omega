@@ -48,6 +48,15 @@ def matches_prefix(path: str, prefixes: list[str]) -> bool:
     return any(path == item.rstrip("/") or path.startswith(item) for item in prefixes)
 
 
+def is_github_workflow_path(path: str) -> bool:
+    """Return true for a GitHub Actions workflow directory at any depth."""
+    parts = path.split("/")
+    return any(
+        part == ".github" and index + 1 < len(parts) and parts[index + 1] == "workflows"
+        for index, part in enumerate(parts)
+    )
+
+
 def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
     rel = path.relative_to(root).as_posix()
     parts = set(path.relative_to(root).parts)
@@ -55,6 +64,8 @@ def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
 
     if path.is_symlink():
         return False, "SYMLINK_PROHIBITED"
+    if is_github_workflow_path(rel):
+        return False, "GITHUB_WORKFLOW_NOT_CORE_SOURCE"
     if matches_prefix(rel, core["excluded_prefixes"]):
         return False, "EXCLUDED_PREFIX"
     if rel.startswith("phoenix/"):
@@ -153,9 +164,13 @@ def stage_core(root: Path, stage: Path, policy: dict) -> tuple[list[FileRecord],
 
     if not included:
         raise RuntimeError("Core export contains no source files")
-    if any(item.path.startswith(".github/workflows/") for item in included):
+    if any(is_github_workflow_path(item.path) for item in included):
         raise RuntimeError("Core export contains a GitHub Actions workflow")
-    if any(item.reason.startswith("SECRET_MARKER:") and item.classification == "CORE_INCLUDED" for item in included):
+    if any(
+        item.reason.startswith("SECRET_MARKER:")
+        and item.classification == "CORE_INCLUDED"
+        for item in included
+    ):
         raise RuntimeError("Core export contains a secret marker")
     return included, excluded
 
@@ -194,7 +209,7 @@ def stage_ops(root: Path, stage: Path, policy: dict) -> list[FileRecord]:
     missing = sorted(set(policy["ops"]["required_files"]) - actual)
     if missing:
         raise RuntimeError(f"Ops export missing required files: {missing}")
-    if any(item.path.startswith(".github/workflows/") for item in records):
+    if any(is_github_workflow_path(item.path) for item in records):
         raise RuntimeError("Ops export unexpectedly contains an active workflow")
     return records
 
@@ -232,6 +247,7 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
             "invariants": {
                 "workflow_count": 0,
                 "runtime_state_count": 0,
+                "migration_control_test_count": 0,
                 "secret_marker_count": 0,
             },
         }
