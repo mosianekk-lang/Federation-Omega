@@ -1,0 +1,43 @@
+{
+  "api_id": "AO-COMMERCIAL-EFFECTIVE-CANONICAL-API-V13",
+  "capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-FENCING-V13",
+  "effective_canonical_class": "FencedProviderDispatchCommercialControlPlane",
+  "predecessor_class": "LeasedProviderDispatchOutboxCommercialControlPlane",
+  "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "service_model": "SERVICE_ENABLED_PLATFORM_FIRST",
+  "self_service_saas": "HELD",
+  "provider_dispatch": {
+    "prepared_v11_dispatch_required": true,
+    "v12_claim_lease_required": true,
+    "lease_renewal_supported": true,
+    "renewal_requires_current_unexpired_claim": true,
+    "renewal_must_extend_current_lease": true,
+    "one_started_attempt_per_claim": true,
+    "monotonic_fencing_epoch_per_claim_attempt": true,
+    "attempt_envelope_hash_bound": true,
+    "receipt_bound_to_current_fenced_attempt": true,
+    "stale_fencing_receipt_rejected": true,
+    "terminal_failure_releases_claim": true,
+    "mock_provider_fencing_conformance": "IMPLEMENTED_PROVIDER_CI_PENDING",
+    "provider_native_fencing": "PROVIDER_PROOF_REQUIRED",
+    "live_provider_receipt_admission": "PROVIDER_PROOF_REQUIRED",
+    "distributed_provider_exactly_once": "NOT_PROVEN"
+  },
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "institution_projection": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "verified_live_revenue_events": 0,
+  "external_maturity_gates_advanced": false,
+  "institution_state_preserved": true,
+  "owner_reserved_authority_preserved": true,
+  "full_commercial_maturity": false
+}
