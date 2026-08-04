@@ -7,6 +7,7 @@ on:
       - 'runtime/omega-max/queue/**'
       - 'runtime/omega-max/state/**'
       - '.github/workflows/omega-max-operational-runtime.yml'
+  merge_group:
   push:
     branches: [main]
     paths:
@@ -14,25 +15,25 @@ on:
       - 'runtime/omega-max/queue/**'
       - 'runtime/omega-max/state/**'
       - '.github/workflows/omega-max-operational-runtime.yml'
-  schedule:
-    - cron: '17 * * * *'
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: omega-max-operational-runtime
-  cancel-in-progress: false
+  group: omega-max-operational-runtime-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   runtime:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
 
-      - uses: actions/setup-python@v5
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.11'
 
@@ -42,7 +43,7 @@ jobs:
       - name: Run regression and rollback suite
         run: pytest -q systems/omega-max-runtime/tests
 
-      - name: Execute queue consumer
+      - name: Execute queue consumer in ephemeral workspace
         run: omega-max-runtime --repo-root . process
 
       - name: Execute digital-twin drift sentinel
@@ -72,10 +73,10 @@ jobs:
           print(json.dumps({'result':result,'heartbeat':heartbeat,'drift':drift},indent=2))
           PY
 
-      - name: Upload execution receipt
-        uses: actions/upload-artifact@v4
+      - name: Upload immutable execution receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: omega-max-operational-runtime-receipt
+          name: omega-max-operational-runtime-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             runtime/omega-max/results/
             runtime/omega-max/proofs/
@@ -84,19 +85,3 @@ jobs:
             runtime/omega-max/snapshots/
           if-no-files-found: error
           retention-days: 30
-
-      - name: Persist runtime state on main
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "omega-max-runtime[bot]"
-          git config user.email "omega-max-runtime[bot]@users.noreply.github.com"
-          git add runtime/omega-max/results runtime/omega-max/proofs runtime/omega-max/heartbeat runtime/omega-max/drift runtime/omega-max/snapshots runtime/omega-max/state
-          if git diff --cached --quiet; then
-            echo "No runtime state change"
-          else
-            git commit -m "Persist Omega-Max operational runtime receipt [skip omega-runtime]"
-            git pull --rebase origin main
-            git push origin HEAD:main
-          fi
