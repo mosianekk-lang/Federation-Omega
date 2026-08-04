@@ -40,8 +40,8 @@
       "bytes": 201
     },
     "live_bible_fabric/fabric.py": {
-      "sha256": "78fdff7834a692de4fd70244b2c4f88fba2f84b69f74e26b52175835f5e47c93",
-      "bytes": 35495
+      "sha256": "711dc310c550e3e9f6a4403fd327f16a62ee0b2eee8b46e88c7e1f5c2ef2ed4f",
+      "bytes": 36944
     },
     "pyproject.toml": {
       "sha256": "78e78e0fe4daf30323f66612d7d3d4337245974c7448b7753bd571c46893b83d",
@@ -52,8 +52,8 @@
       "bytes": 681
     },
     "tests/test_fabric.py": {
-      "sha256": "081c488ccebdc0a9bade6496ddb9ae3ec352ae1e9155bcdf67dba9a086f50875",
-      "bytes": 6660
+      "sha256": "e1a464dbb610381bd3eedbeb099ad99352149c8ff8c34023330e6495b607360b",
+      "bytes": 7402
     },
     "verify_release.py": {
       "sha256": "7ecb1ddd73ed5a4b7fad134bb67ee171cbe2921ca8b9f050da68c3e63421e60e",
