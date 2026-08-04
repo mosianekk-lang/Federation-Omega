@@ -1,0 +1,59 @@
+{
+  "schema": "EVIDENCEOPS-LIVE-BIBLE-CAPTURE-CONTRACT-2",
+  "capture_version": 2,
+  "node_id": "NODE-AI-TRADING-CHAT-20260803-0726",
+  "privacy_tier": "P2",
+  "max_seen_fingerprints": 4096,
+  "sources": [
+    {
+      "source_id": "SRC-ACTIVE-CHAT-TURN",
+      "kind": "CHATGPT_ACTIVE_TURN",
+      "allowed_modes": ["ACTIVE_TURN", "RECOVERY_REPLAY"],
+      "supports_between_turn": false,
+      "provider_receipt_required": false,
+      "privacy_ceiling": "P2",
+      "materiality_threshold": 0.35,
+      "master_promotion_allowed": false
+    },
+    {
+      "source_id": "SRC-GITHUB-FEDERATION",
+      "kind": "GITHUB_REPOSITORY",
+      "allowed_modes": ["SCHEDULED_RECONCILIATION", "PROVIDER_EVENT", "RECOVERY_REPLAY"],
+      "supports_between_turn": true,
+      "provider_receipt_required": true,
+      "privacy_ceiling": "P1",
+      "materiality_threshold": 0.5,
+      "master_promotion_allowed": true
+    },
+    {
+      "source_id": "SRC-GOOGLE-DRIVE",
+      "kind": "GOOGLE_DRIVE",
+      "allowed_modes": ["SCHEDULED_RECONCILIATION", "PROVIDER_EVENT", "RECOVERY_REPLAY"],
+      "supports_between_turn": true,
+      "provider_receipt_required": true,
+      "privacy_ceiling": "P2",
+      "materiality_threshold": 0.55,
+      "master_promotion_allowed": false
+    },
+    {
+      "source_id": "SRC-GMAIL",
+      "kind": "GMAIL",
+      "allowed_modes": ["SCHEDULED_RECONCILIATION", "PROVIDER_EVENT", "RECOVERY_REPLAY"],
+      "supports_between_turn": true,
+      "provider_receipt_required": true,
+      "privacy_ceiling": "P2",
+      "materiality_threshold": 0.6,
+      "master_promotion_allowed": false
+    },
+    {
+      "source_id": "SRC-LOCAL-RUNTIME",
+      "kind": "LOCAL_RUNTIME",
+      "allowed_modes": ["ACTIVE_TURN", "SCHEDULED_RECONCILIATION", "RECOVERY_REPLAY"],
+      "supports_between_turn": true,
+      "provider_receipt_required": true,
+      "privacy_ceiling": "P2",
+      "materiality_threshold": 0.5,
+      "master_promotion_allowed": false
+    }
+  ]
+}
