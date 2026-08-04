@@ -1,0 +1,44 @@
+json")
+    import_cmd = commands.add_parser("import-export")
+    import_cmd.add_argument("path")
+    import_cmd.add_argument("--source-id", default="chat-export")
+    outbox = commands.add_parser("process-outbox")
+    outbox.add_argument("path")
+    verify = commands.add_parser("verify")
+    verify.add_argument("conversation_id")
+    project = commands.add_parser("project")
+    project.add_argument("conversation_id")
+    args = parser.parse_args(argv)
+    state_dir = _state_dir(args.state_dir)
+    token = ensure_token(state_dir)
+    if args.command == "init":
+        EventStore(state_dir / "live_bible.sqlite3")
+        (state_dir / "projections").mkdir(parents=True, exist_ok=True)
+        print(json.dumps({"state_dir": str(state_dir), "token_path": str(_token_file(state_dir)), "database_quick_check": "ok"}, indent=2))
+        return 0
+    if args.command == "pairing-code":
+        if not args.show:
+            print(f"Pairing token exists at {_token_file(state_dir)}. Add --show to print it intentionally.")
+        else:
+            print(token)
+        return 0
+    if args.command == "serve":
+        serve(state_dir, args.host, args.port)
+        return 0
+    store = EventStore(state_dir / "live_bible.sqlite3")
+    engine = LiveBibleEngine(store, state_dir / "projections")
+    if args.command == "ingest":
+        print(json.dumps(engine.ingest(json.loads(args.event_json)), indent=2))
+    elif args.command == "import-export":
+        print(json.dumps(engine.import_export(args.path, args.source_id), indent=2))
+    elif args.command == "process-outbox":
+        print(json.dumps(engine.process_outbox(args.path), indent=2))
+    elif args.command == "verify":
+        print(json.dumps(store.verify_chain(args.conversation_id), indent=2))
+    elif args.command == "project":
+        print(json.dumps(engine.project(args.conversation_id), indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
