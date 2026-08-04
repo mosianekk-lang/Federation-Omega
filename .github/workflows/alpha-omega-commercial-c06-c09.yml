@@ -3,10 +3,7 @@ name: Alpha Omega Commercial C06-C09 Proof
 on:
   pull_request:
     paths:
-      - "alpha_omega_commercial/commercial_expansion.py"
-      - "alpha_omega_commercial/test_commercial_expansion.py"
-      - "alpha_omega_commercial/prove_c06_c09.py"
-      - "alpha_omega_commercial/programme.json"
+      - "alpha_omega_commercial/**"
       - ".github/workflows/alpha-omega-commercial-c06-c09.yml"
   workflow_dispatch:
 
