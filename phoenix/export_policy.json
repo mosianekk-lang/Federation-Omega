@@ -49,7 +49,9 @@
       "provider_cutover_candidate.py",
       "provider_cutover_guarded.py",
       "provider_cutover_v3_live_guard.py",
-      "provider_cutover.py",
+      "provider_cutover.py"
+    ],
+    "required_v3_files": [
       "provider_cutover_authorization_use.py",
       "provider_cutover_v3_1.py",
       "provider_cutover_v3_base.py",
