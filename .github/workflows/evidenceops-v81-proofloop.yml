@@ -1,0 +1,100 @@
+name: EvidenceOps v8.1 ProofLoop Living Matter Twin
+
+on:
+  push:
+    branches:
+      - main
+      - release/evidenceops-v8.1-proofloop-24h
+    paths:
+      - "runtime/evidenceops_v81/**"
+      - ".github/workflows/evidenceops-v81-proofloop.yml"
+  pull_request:
+    paths:
+      - "runtime/evidenceops_v81/**"
+      - ".github/workflows/evidenceops-v81-proofloop.yml"
+  schedule:
+    - cron: "17 */6 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: evidenceops-v81-proofloop-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  proofloop:
+    if: github.event_name != 'push' || !contains(github.event.head_commit.message, '[skip proofloop]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Compile source
+        run: python -m compileall -q runtime/evidenceops_v81
+
+      - name: Run adversarial and control tests
+        run: python -m unittest discover -s runtime/evidenceops_v81/tests -v
+
+      - name: Execute bounded ProofLoop cycle
+        env:
+          EVIDENCEOPS_CYCLE_SUFFIX: proofloop
+        run: |
+          mkdir -p runtime/evidenceops_v81/state
+          python runtime/evidenceops_v81/run_cycle.py run \
+            --manifest runtime/evidenceops_v81/config/mpmb1435_26_control_manifest.json \
+            --state-dir runtime/evidenceops_v81/state
+
+      - name: Verify exact state readback
+        run: |
+          python runtime/evidenceops_v81/run_cycle.py verify \
+            --state-dir runtime/evidenceops_v81/state
+
+      - name: Enforce maturity and authority truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('runtime/evidenceops_v81/state')
+          receipt = json.loads((root / 'release_receipt.json').read_text())
+          dashboard = json.loads((root / 'dashboard.json').read_text())
+          assert receipt['engineering_state'] == 'EVIDENCEOPS_V81_ENGINEERING_COMPLETE_VERIFIED'
+          assert receipt['longitudinal_state'] == 'ACTIVE_EVIDENCE_ACCUMULATING'
+          assert receipt['value_gate'] == 'NOT_YET_MATURE'
+          assert receipt['consequential_authority'] == 'HELD'
+          assert receipt['external_effects'] == 0
+          assert all(receipt['checks'].values())
+          assert dashboard['release_gate']['state'] == 'INTERNAL_HOLD_DISPLAYED_FOR_REVIEW'
+          assert dashboard['authority']['external_effects'] == 0
+          PY
+
+      - name: Upload immutable ProofLoop receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-v81-proofloop-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime/evidenceops_v81/state/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Persist recurring state on main
+        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "evidenceops-proofloop[bot]"
+          git config user.email "evidenceops-proofloop[bot]@users.noreply.github.com"
+          git add runtime/evidenceops_v81/state
+          if git diff --cached --quiet; then
+            echo "No ProofLoop state change"
+          else
+            git commit -m "Persist EvidenceOps v8.1 ProofLoop cycle [skip proofloop]"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          fi
