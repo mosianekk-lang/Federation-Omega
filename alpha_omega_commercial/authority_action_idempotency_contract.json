@@ -1,0 +1,50 @@
+{
+  "control_id": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "depends_on": {
+    "pull_request": 135,
+    "merge_commit": "bc0982c176ea543799b9a12b98e136b3f0fc0285",
+    "capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-COORDINATION-V9",
+    "google_drive_release_file_id": "18vFykuY7E6okU33SJuOxn4hg9z-Cnh-pDCg6xhiZyEw",
+    "google_drive_release_readback_verified": true
+  },
+  "canonical_candidate": {
+    "class": "IdempotentCoordinatedAuthoritySnapshotCommercialControlPlane",
+    "predecessor_class": "CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane"
+  },
+  "idempotency_rules": {
+    "object_identity_is_idempotency_key": true,
+    "canonical_intent_hash_required": true,
+    "exact_retry_returns_committed_record": true,
+    "exact_retry_consumes_owner_authority_again": false,
+    "exact_retry_creates_new_transaction": false,
+    "conflicting_object_identity_reuse_rejected": true,
+    "idempotency_seal_transaction_bound": true,
+    "idempotency_seal_snapshot_bound": true,
+    "idempotency_seal_acceptance_bound": true,
+    "idempotency_seal_committed_inside_atomic_action": true,
+    "restart_safe": true,
+    "historical_unsealed_commit_replayed": false,
+    "tampered_seal_fails_closed": true,
+    "distributed_provider_exactly_once_proven": false
+  },
+  "strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "self_service_saas": "HELD",
+  "verified_live_revenue_events": 0,
+  "external_gate_effect": "UNCHANGED",
+  "full_commercial_maturity": false,
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
