@@ -1,0 +1,14 @@
+{
+  "architecture_gate": true,
+  "compile_pass": true,
+  "conclusion": "success",
+  "credentials_included": false,
+  "evidence_included": false,
+  "package_sha256": "9f6630181978ca0977ecd4915a5c0552df6801a61a7ee5bd7c14f13f39247c21",
+  "quotation_gate": true,
+  "receipt": "EVIDENCEOPS-CONSENSUS-TRANSCRIPTION-V3.1-CI",
+  "recorded_at": "2026-08-04T19:05:21.570182+00:00",
+  "run_id": 30941636912,
+  "source_sha": "0dd036bc7a4e1d9dc6b59612742c7d2935abe6b2",
+  "tests_passed": 10
+}
