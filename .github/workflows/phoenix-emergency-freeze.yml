@@ -8,6 +8,7 @@ on:
 permissions:
   actions: write
   contents: read
+  statuses: write
 
 concurrency:
   group: phoenix-emergency-execution-freeze
@@ -16,10 +17,30 @@ concurrency:
 jobs:
   freeze:
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 30
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Verify Phoenix export controls
+        run: python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
+
+      - name: Build source-clean Core and private Ops exports
+        run: |
+          set -euo pipefail
+          rm -rf phoenix-export-output
+          python phoenix/build_exports.py \
+            --repo-root . \
+            --output phoenix-export-output
+
       - name: Quarantine legacy workflow execution
         shell: bash
         run: |
@@ -144,7 +165,7 @@ jobs:
           verified = bool(after) and not errors and not unexpected_active and not missing_required
 
           payload = {
-              'schema': 'FEDOMEGA-PHOENIX-EXECUTION-FREEZE-2',
+              'schema': 'FEDOMEGA-PHOENIX-EXECUTION-FREEZE-3',
               'repository': os.environ['GITHUB_REPOSITORY'],
               'source_sha': os.environ['GITHUB_SHA'],
               'run_id': int(os.environ['GITHUB_RUN_ID']),
@@ -185,3 +206,38 @@ jobs:
           path: phoenix-freeze-output/phoenix-execution-freeze.json
           if-no-files-found: error
           retention-days: 90
+
+      - name: Upload Core, Ops and provider cutover package
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: phoenix-cutover-package-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            phoenix-export-output/Federation-Omega-Core.tar.gz
+            phoenix-export-output/Federation-Omega-Ops.tar.gz
+            phoenix-export-output/phoenix-export-receipt.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Publish verified Phoenix commit status
+        if: always()
+        shell: bash
+        run: |
+          set -uo pipefail
+          state=failure
+          description='Phoenix quarantine or export verification failed'
+          if jq -e '.status == "VERIFIED"' \
+               phoenix-freeze-output/phoenix-execution-freeze.json >/dev/null 2>&1 \
+             && jq -e '.status == "VERIFIED"' \
+               phoenix-export-output/phoenix-export-receipt.json >/dev/null 2>&1; then
+            state=success
+            description='Phoenix quarantine and Core/Ops exports verified'
+          fi
+          gh api -X POST \
+            "/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
+            -f state="$state" \
+            -f context='phoenix-freeze/verified' \
+            -f description="$description" \
+            -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
+            >/dev/null
+          test "$state" = success
