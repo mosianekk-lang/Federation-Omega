@@ -1,6 +1,7 @@
 {
   "programme_id": "AO-COMMERCIAL-MATURITY-V1",
-  "api_id": "AO-COMMERCIAL-CANONICAL-API-V4",
+  "api_id": "AO-COMMERCIAL-CANONICAL-API-V3",
+  "capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
   "canonical_module": "alpha_omega_commercial",
   "canonical_class": "AuthoritySnapshotCommercialControlPlane",
   "predecessor_module": "alpha_omega_commercial/governed_commercial_assurance.py",
