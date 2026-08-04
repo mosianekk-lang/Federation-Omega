@@ -34,9 +34,10 @@ jobs:
           mkdir -p deployment_receipts
           gh api "repos/${REPOSITORY}/actions/workflows/ipep-parakeet-ctc-cpu-runtime.yml/runs?per_page=5" > /tmp/cpu-runs.json
           gh api "repos/${REPOSITORY}/actions/workflows/ipep-parakeet-ctc-cli-runtime.yml/runs?per_page=5" > /tmp/cli-runs.json
+          gh api "repos/${REPOSITORY}/actions/workflows/ipep-parakeet-ctc-cli-runtime-v2.yml/runs?per_page=5" > /tmp/cli-v2-runs.json
           python - <<'PY' > /tmp/run_ids.txt
           import json
-          for path in ['/tmp/cpu-runs.json','/tmp/cli-runs.json']:
+          for path in ['/tmp/cpu-runs.json','/tmp/cli-runs.json','/tmp/cli-v2-runs.json']:
               data=json.load(open(path,encoding='utf-8'))
               for run in data.get('workflow_runs',[]):
                   print(run['id'])
@@ -107,6 +108,7 @@ jobs:
               'observed_at':datetime.now(timezone.utc).isoformat(),
               'cpu_runs':compact('/tmp/cpu-runs.json','ipep-parakeet-ctc-cpu-runtime.yml'),
               'cli_runs':compact('/tmp/cli-runs.json','ipep-parakeet-ctc-cli-runtime.yml'),
+              'cli_v2_runs':compact('/tmp/cli-v2-runs.json','ipep-parakeet-ctc-cli-runtime-v2.yml'),
           }
           print(json.dumps(payload,indent=2,sort_keys=True))
           PY
