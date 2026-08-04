@@ -34,12 +34,13 @@ jobs:
         run: |
           python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
+          python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3.py' -v
 
       - name: Build source-clean Core and private Ops exports
         run: |
           set -euo pipefail
           rm -rf phoenix-export-output
-          python phoenix/build_exports_v2.py \
+          python phoenix/build_exports_v3.py \
             --repo-root . \
             --output phoenix-export-output
 
@@ -213,7 +214,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: phoenix-cutover-package-${{ github.run_id }}-${{ github.run_attempt }}
+          name: phoenix-cutover-package-v3-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
             phoenix-export-output/Federation-Omega-Core.tar.gz
             phoenix-export-output/Federation-Omega-Ops.tar.gz
