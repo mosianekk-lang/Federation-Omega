@@ -1,0 +1,27 @@
+{
+  "schema": "FEDERATION-OMEGA-V2-PHASE3-ACCEPTANCE-1",
+  "version": "0.3.0",
+  "accepted": true,
+  "selected_matter": "MATTER-TUT-DISCIPLINARY-21-AUGUST-2026",
+  "node_id": "NODE-TUT-DISCIPLINARY-HEARING-20260730",
+  "source_tests": 26,
+  "clean_tests": 26,
+  "stage_count": 10,
+  "source_control_count": 5,
+  "registered_units": 54,
+  "processed_units": 30,
+  "remaining_units": 24,
+  "readiness_comparison": {
+    "baseline": "NOT_COMPLETE",
+    "generated": "NOT_COMPLETE",
+    "hearing_readiness_claimed": false,
+    "match": true
+  },
+  "restart_reconstruction": "PASS",
+  "sqlite_quick_check": "ok",
+  "resource_warning_gate": "PASS",
+  "raw_evidence_imported": false,
+  "authority_class": "A1",
+  "external_effects": 0,
+  "local_source_manifest_sha256": "8fe7026cafee874aaa07b87821ca1aae48c24280945e7249220557645624562d"
+}
