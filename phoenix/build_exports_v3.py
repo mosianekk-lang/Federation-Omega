@@ -132,7 +132,9 @@ def stage_ops_v3_4(
     )
 
     actual = {item.path for item in records}
-    missing = sorted(set(policy["ops"]["required_files"]) - actual)
+    required = set(policy["ops"]["required_files"])
+    required.update(policy["ops"].get("required_v3_files", []))
+    missing = sorted(required - actual)
     if missing:
         raise RuntimeError(f"Ops export missing required files: {missing}")
     if any(V2.BASE.is_github_workflow_path(item.path) for item in records):
