@@ -85,6 +85,26 @@ class ResolveTests(unittest.TestCase):
             self.assertTrue(result["ok"])
             self.assertEqual(result["counts"]["messages"], 1)
 
+    def test_verified_job_is_idempotent_on_replay(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            calls = {"count": 0}
+
+            def execute(job):
+                calls["count"] += 1
+                return LaneResult(AttemptStatus.SUCCESS, {"provider_id": "once"})
+
+            engine = ResolveEngine(tmp)
+            engine.register_lane(ExecutionLane("single", execute))
+            gates = [
+                CompletionGate("provider_readback", "Provider"),
+                CompletionGate("independent_readback", "Independent"),
+            ]
+            job = EvidenceJob("job-replay", "publish", {"id": "s"}, [{"name": "o"}], gates, "stable-key")
+            first = engine.execute(job, verifier=lambda job, result: {"ok": True})
+            second = engine.execute(job, verifier=lambda job, result: {"ok": True})
+            self.assertEqual(first, second)
+            self.assertEqual(calls["count"], 1)
+
     def test_ledger_is_valid_jsonl(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             engine = ResolveEngine(tmp)
