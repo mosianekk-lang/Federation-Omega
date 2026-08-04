@@ -1,0 +1,63 @@
+{
+  "schema": "FEDERATION-LIVE-BIBLE-FABRIC-MANIFEST-2",
+  "version": "2.0.0",
+  "file_count": 14,
+  "files": {
+    ".gitignore": {
+      "sha256": "6766099807dfbb9c292890ba0e120447068449865b0a10d52e4e683ba45c171a",
+      "bytes": 97
+    },
+    "README.md": {
+      "sha256": "c0b5623965795e918568ddd3b12b26f5df841937fff5b84eab911b49be54ad64",
+      "bytes": 3140
+    },
+    "browser_extension/background.js": {
+      "sha256": "1739bc36d732a0e58e568a864822329e79bf78cedf88579c43af2d7e0675f340",
+      "bytes": 1452
+    },
+    "browser_extension/content.js": {
+      "sha256": "cb534246314b4ea503c5ca0661c9b74eedda9e8a37b433b963f53a1561bb5305",
+      "bytes": 2184
+    },
+    "browser_extension/manifest.json": {
+      "sha256": "d59e33475a9a121420c4e5e6e333553f82b81dc2a2e40ff75ecfe053345b2bad",
+      "bytes": 677
+    },
+    "browser_extension/popup.html": {
+      "sha256": "99cdd3e7cdf6dae6e7430b7995ee521e820802cccd011449883875966f64b311",
+      "bytes": 661
+    },
+    "browser_extension/popup.js": {
+      "sha256": "eef0068abf30097b1407985d534b39abcc6f46d64384da909b93db883b6b4d62",
+      "bytes": 848
+    },
+    "docs/ARCHITECTURE.md": {
+      "sha256": "4914c88b50fa8116881b4a6748c8329164340d49ab1de13974ccf0899b7ca700",
+      "bytes": 1703
+    },
+    "live_bible_fabric/__init__.py": {
+      "sha256": "2b954e93beb0289263e94104a2efec34c57cb24cb4555d0dcd56beea14a46055",
+      "bytes": 201
+    },
+    "live_bible_fabric/fabric.py": {
+      "sha256": "78fdff7834a692de4fd70244b2c4f88fba2f84b69f74e26b52175835f5e47c93",
+      "bytes": 35495
+    },
+    "pyproject.toml": {
+      "sha256": "78e78e0fe4daf30323f66612d7d3d4337245974c7448b7753bd571c46893b83d",
+      "bytes": 457
+    },
+    "release_descriptor.json": {
+      "sha256": "adde2861e33230b852862e648cbbca88530d7cd68c5275c7578658c4d3b4f095",
+      "bytes": 681
+    },
+    "tests/test_fabric.py": {
+      "sha256": "081c488ccebdc0a9bade6496ddb9ae3ec352ae1e9155bcdf67dba9a086f50875",
+      "bytes": 6660
+    },
+    "verify_release.py": {
+      "sha256": "7ecb1ddd73ed5a4b7fad134bb67ee171cbe2921ca8b9f050da68c3e63421e60e",
+      "bytes": 1031
+    }
+  }
+}
