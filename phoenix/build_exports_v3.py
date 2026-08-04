@@ -7,6 +7,7 @@ import argparse
 import hashlib
 import importlib.util
 import json
+import os
 import sys
 from pathlib import Path
 
@@ -35,6 +36,32 @@ def _include(
         classification="OPS_INCLUDED",
         reason=reason,
     )
+
+
+def _publish_pst_scratch_root() -> dict[str, object]:
+    """Publish a writable scratch root for later Phoenix workflow steps.
+
+    GitHub-hosted runners do not allow the unprivileged job user to create a new
+    root beneath ``/mnt``.  ``GITHUB_ENV`` is the provider-native channel for
+    exporting environment values to subsequent steps.  Local builds and tests
+    remain side-effect free because they do not expose that file path.
+    """
+
+    scratch_root = os.environ.get(
+        "PST_VERIFY_ROOT", "/tmp/pst-composite-verify"
+    )
+    github_env = os.environ.get("GITHUB_ENV")
+    published = False
+    if github_env:
+        env_path = Path(github_env)
+        with env_path.open("a", encoding="utf-8") as handle:
+            handle.write(f"PST_VERIFY_ROOT={scratch_root}\n")
+        published = True
+    return {
+        "scratch_root": scratch_root,
+        "github_env_published": published,
+        "source_mutation_attempted": False,
+    }
 
 
 def stage_ops_v3_1(
@@ -99,6 +126,7 @@ def main() -> int:
     policy = args.policy if args.policy.is_absolute() else root / args.policy
     output = args.output if args.output.is_absolute() else root / args.output
 
+    pst_runtime = _publish_pst_scratch_root()
     V2.BASE.stage_ops = stage_ops_v3_1
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
@@ -119,6 +147,7 @@ def main() -> int:
         "temporary_template_state_restoration": "REQUIRED_DURING_APPLY",
         "credential_value_recorded": False,
     }
+    receipt["pst_verifier_runtime"] = pst_runtime
     receipt["source_mutation_attempted"] = False
     receipt.pop("receipt_sha256", None)
     canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
