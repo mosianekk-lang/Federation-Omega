@@ -57,7 +57,7 @@ A removed workflow may return to `.github/workflows` only when:
 
 ## Current truth state
 
-- Repository workflow exposure: `CONTAINED_IN_BRANCH`
+- Repository workflow exposure: `CONTAINED_ON_MAIN`
 - Raw credential printed or copied during containment: `FALSE`
 - Replacement key created: `UNVERIFIED`
 - Replacement key bound to runtime vault: `UNVERIFIED`
