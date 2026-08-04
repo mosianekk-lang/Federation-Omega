@@ -1,0 +1,195 @@
+from __future__ import annotations
+
+import argparse
+import hashlib
+import hmac
+import json
+import os
+import re
+import secrets
+import shutil
+import sqlite3
+import sys
+import threading
+from dataclasses import dataclass, field, replace
+from datetime import datetime, timezone
+from http import HTTPStatus
+from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+from pathlib import Path
+from typing import Any, Iterable
+from urllib.parse import urlparse
+
+SCHEMA = "FEDERATION-LIVE-BIBLE-CAPTURE-EVENT-2"
+RECEIPT_SCHEMA = "FEDERATION-LIVE-BIBLE-CAPTURE-RECEIPT-2"
+ZERO_HASH = "0" * 64
+ALLOWED_ROLES = {"user", "assistant", "system", "tool", "observer"}
+ALLOWED_SOURCES = {
+    "TURN_CONNECTOR",
+    "CHAT_EXPORT",
+    "BROWSER_CAPTURE",
+    "PROVIDER_WEBHOOK",
+    "SCHEDULED_RECONCILIATION",
+    "MANUAL_IMPORT",
+}
+ALLOWED_PRIVACY = {"P0_PUBLIC", "P1_INTERNAL", "P2_CONFIDENTIAL", "P3_RESTRICTED"}
+SAFE_ID = re.compile(r"^[A-Za-z0-9._:@/-]{1,256}$")
+SECRET_PATTERNS = [
+    re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH |DSA )?PRIVATE KEY-----"),
+    re.compile(r"\bsk-(?:proj-)?[A-Za-z0-9_-]{20,}\b"),
+    re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
+    re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}\b"),
+    re.compile(r"(?i)\b(?:bearer|authorization)\s*[:=]\s*[A-Za-z0-9._~+/-]{16,}"),
+    re.compile(r"(?i)\b(?:password|passwd|secret|api[_ -]?key|access[_ -]?token)\s*[:=]\s*[^\s]{8,}"),
+]
+
+
+class CaptureError(ValueError):
+    """Fail-closed capture validation error."""
+
+
+def utcnow() -> str:
+    return datetime.now(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def canonical_json(value: Any) -> str:
+    return json.dumps(value, ensure_ascii=False, sort_keys=True, separators=(",", ":"))
+
+
+def sha256_text(value: str) -> str:
+    return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def sha256_value(value: Any) -> str:
+    return sha256_text(canonical_json(value))
+
+
+def _safe_id(name: str, value: str) -> str:
+    value = value.strip()
+    if not value or not SAFE_ID.fullmatch(value):
+        raise CaptureError(f"{name} is invalid")
+    return value
+
+
+def _iso(name: str, value: str) -> str:
+    try:
+        parsed = datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except (TypeError, ValueError) as exc:
+        raise CaptureError(f"{name} must be ISO-8601") from exc
+    if parsed.tzinfo is None:
+        raise CaptureError(f"{name} must include a timezone")
+    return parsed.astimezone(timezone.utc).replace(microsecond=0).isoformat()
+
+
+def _redact_secrets(content: str) -> tuple[str, bool, list[str]]:
+    redacted = content
+    matches: list[str] = []
+    for index, pattern in enumerate(SECRET_PATTERNS, start=1):
+        if pattern.search(redacted):
+            matches.append(f"SECRET_PATTERN_{index}")
+            redacted = pattern.sub(lambda m: f"[REDACTED_SECRET:{sha256_text(m.group(0))[:12]}]", redacted)
+    return redacted, bool(matches), matches
+
+
+@dataclass(frozen=True)
+class CaptureEvent:
+    source_id: str
+    conversation_id: str
+    message_id: str
+    role: str
+    content: str
+    occurred_at: str
+    source_type: str = "TURN_CONNECTOR"
+    privacy_tier: str = "P2_CONFIDENTIAL"
+    sequence: int | None = None
+    observed_at: str = field(default_factory=utcnow)
+    authority_class: str = "A1"
+    case_wall: str = "GENERAL"
+    metadata: dict[str, Any] = field(default_factory=dict)
+    schema: str = SCHEMA
+
+    def normalized(self) -> "CaptureEvent":
+        if self.schema != SCHEMA:
+            raise CaptureError("unsupported capture-event schema")
+        source_id = _safe_id("source_id", self.source_id)
+        conversation_id = _safe_id("conversation_id", self.conversation_id)
+        message_id = _safe_id("message_id", self.message_id)
+        if self.role not in ALLOWED_ROLES:
+            raise CaptureError("role is invalid")
+        if self.source_type not in ALLOWED_SOURCES:
+            raise CaptureError("source_type is invalid")
+        if self.privacy_tier not in ALLOWED_PRIVACY:
+            raise CaptureError("privacy_tier is invalid")
+        if not re.fullmatch(r"A[0-5]", self.authority_class):
+            raise CaptureError("authority_class is invalid")
+        case_wall = _safe_id("case_wall", self.case_wall)
+        content = self.content.replace("\r\n", "\n").replace("\r", "\n").strip()
+        if not content:
+            raise CaptureError("content is required")
+        if len(content.encode("utf-8")) > 2_000_000:
+            raise CaptureError("content exceeds two-megabyte event limit")
+        sequence = self.sequence
+        if sequence is not None and (not isinstance(sequence, int) or sequence < 1):
+            raise CaptureError("sequence must be a positive integer")
+        if not isinstance(self.metadata, dict):
+            raise CaptureError("metadata must be an object")
+        redacted, quarantined, patterns = _redact_secrets(content)
+        metadata = dict(self.metadata)
+        if quarantined:
+            metadata["secret_redaction"] = {"applied": True, "patterns": patterns}
+        return replace(
+            self,
+            source_id=source_id,
+            conversation_id=conversation_id,
+            message_id=message_id,
+            content=redacted,
+            occurred_at=_iso("occurred_at", self.occurred_at),
+            observed_at=_iso("observed_at", self.observed_at),
+            case_wall=case_wall,
+            metadata=metadata,
+        )
+
+    @property
+    def deterministic_id(self) -> str:
+        event = self.normalized()
+        return sha256_value(
+            {
+                "schema": event.schema,
+                "source_id": event.source_id,
+                "conversation_id": event.conversation_id,
+                "message_id": event.message_id,
+                "role": event.role,
+                "content_sha256": sha256_text(event.content),
+                "occurred_at": event.occurred_at,
+            }
+        )
+
+    def to_dict(self) -> dict[str, Any]:
+        event = self.normalized()
+        return {
+            "schema": event.schema,
+            "event_id": event.deterministic_id,
+            "source_id": event.source_id,
+            "source_type": event.source_type,
+            "conversation_id": event.conversation_id,
+            "message_id": event.message_id,
+            "sequence": event.sequence,
+            "role": event.role,
+            "content": event.content,
+            "content_sha256": sha256_text(event.content),
+            "occurred_at": event.occurred_at,
+            "observed_at": event.observed_at,
+            "privacy_tier": event.privacy_tier,
+            "authority_class": event.authority_class,
+            "case_wall": event.case_wall,
+            "metadata": event.metadata,
+        }
+
+    @classmethod
+    def from_dict(cls, value: dict[str, Any]) -> "CaptureEvent":
+        if not isinstance(value, dict):
+            raise CaptureError("capture event must be an object")
+        accepted = {
+            "schema",
+            "source_id",
+            "source_type",
+            "co
