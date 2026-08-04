@@ -1,0 +1,48 @@
+{
+  "architecture_family": "nvidia_fastconformer_ctc",
+  "canary": {
+    "contract": "IPEP_PARAKEET_CTC_CLI_CANARY_V3",
+    "diagnostics_tail": "CLI=/tmp/ipep-parakeet-cli-v3/runtime/wheel/sherpa_onnx_bin-1.13.2.data/data/bin/sherpa-onnx-offline\nWAV=/tmp/ipep-parakeet-cli-v3/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/test_wavs/1.wav\nLD_LIBRARY_PATH=/tmp/ipep-parakeet-cli-v3/runtime/wheel/sherpa_onnx/lib:/opt/hostedtoolcache/Python/3.12.13/x64/lib\n--- ldd ---\n\tlinux-vdso.so.1 (0x00007fb6af543000)\n\tlibpthread.so.0 => /lib/x86_64-linux-gnu/libpthread.so.0 (0x00007fb6af52a000)\n\tlibonnxruntime.so => /tmp/ipep-parakeet-cli-v3/runtime/wheel/sherpa_onnx_bin-1.13.2.data/data/bin/../../../sherpa_onnx/lib/libonnxruntime.so (0x00007fb6ae200000)\n\tlibdl.so.2 => /lib/x86_64-linux-gnu/libdl.so.2 (0x00007fb6af525000)\n\tlibm.so.6 => /lib/x86_64-linux-gnu/libm.so.6 (0x00007fb6ae117000)\n\tlibstdc++.so.6 => /lib/x86_64-linux-gnu/libstdc++.so.6 (0x00007fb6ade00000)\n\tlibgcc_s.so.1 => /lib/x86_64-linux-gnu/libgcc_s.so.1 (0x00007fb6af4f5000)\n\tlibc.so.6 => /lib/x86_64-linux-gnu/libc.so.6 (0x00007fb6ada00000)\n\t/lib64/ld-linux-x86-64.so.2 (0x00007fb6af545000)\n\tlibrt.so.1 => /lib/x86_64-linux-gnu/librt.so.1 (0x00007fb6af4f0000)\n",
+    "elapsed_seconds": 1.045,
+    "log_tail": "/workspace/sherpa-onnx/csrc/parse-options.cc:Read:373 /tmp/ipep-parakeet-cli-v3/runtime/wheel/sherpa_onnx_bin-1.13.2.data/data/bin/sherpa-onnx-offline --nemo-ctc-model=/tmp/ipep-parakeet-cli-v3/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/model.int8.onnx --tokens=/tmp/ipep-parakeet-cli-v3/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/tokens.txt --num-threads=2 --decoding-method=greedy_search --debug=false /tmp/ipep-parakeet-cli-v3/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/test_wavs/1.wav \n\nOfflineRecognizerConfig(feat_config=FeatureExtractorConfig(sampling_rate=16000, feature_dim=80, low_freq=20, high_freq=-400, dither=0, normalize_samples=True, snip_edges=False), model_config=OfflineModelConfig(transducer=OfflineTransducerModelConfig(encoder_filename=\"\", decoder_filename=\"\", joiner_filename=\"\"), paraformer=OfflineParaformerModelConfig(model=\"\"), nemo_ctc=OfflineNemoEncDecCtcModelConfig(model=\"/tmp/ipep-parakeet-cli-v3/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/model.int8.onnx\"), whisper=OfflineWhisperModelConfig(encoder=\"\", decoder=\"\", language=\"\", task=\"transcribe\", tail_paddings=-1, enable_token_timestamps=False, enable_segment_timestamps=False), fire_red_asr=OfflineFireRedAsrModelConfig(encoder=\"\", decoder=\"\"), tdnn=OfflineTdnnModelConfig(model=\"\"), zipformer_ctc=OfflineZipformerCtcModelConfig(model=\"\"), wenet_ctc=OfflineWenetCtcModelConfig(model=\"\"), sense_voice=OfflineSenseVoiceModelConfig(model=\"\", language=\"auto\", use_itn=False), moonshine=OfflineMoonshineModelConfig(preprocessor=\"\", encoder=\"\", uncached_decoder=\"\", cached_decoder=\"\", merged_decoder=\"\"), dolphin=OfflineDolphinModelConfig(model=\"\"), canary=OfflineCanaryModelConfig(encoder=\"\", decoder=\"\", src_lang=\"\", tgt_lang=\"\", use_pnc=True), cohere_transcribe=OfflineCohereTranscribeModelConfig(encoder=\"\", decoder=\"\", language=\"\", use_punct=True, use_itn=True), omnilingual=OfflineOmnilingualAsrCtcModelConfig(model=\"\"), funasr_nano=OfflineFunASRNanoModelConfig(encoder_adaptor=\"\", llm=\"\", embedding=\"\", tokenizer=\"\", system_prompt=\"You are a helpful assistant.\", user_prompt=\"\u8bed\u97f3\u8f6c\u5199\uff1a\", max_new_tokens=512, temperature=1e-06, top_p=0.8, seed=42, language=\"\", itn=True, hotwords=\"\"), medasr=OfflineMedAsrCtcModelConfig(model=\"\"), fire_red_asr_ctc=OfflineFireRedAsrCtcModelConfig(model=\"\"), qwen3_asr=OfflineQwen3ASRModelConfig(conv_frontend=\"\", encoder=\"\", decoder=\"\", tokenizer=\"\", hotwords=\"\", max_total_len=512, max_new_tokens=128, temperature=1e-06, top_p=0.8, seed=42), telespeech_ctc=\"\", tokens=\"/tmp/ipep-parakeet-cli-v3/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/tokens.txt\", num_threads=2, debug=False, provider=\"cpu\", model_type=\"\", modeling_unit=\"cjkchar\", bpe_vocab=\"\"), lm_config=OfflineLMConfig(model=\"\", scale=0.5, lodr_scale=0.01, lodr_fst=\"\", lodr_backoff_id=-1), ctc_fst_decoder_config=OfflineCtcFstDecoderConfig(graph=\"\", max_active=3000), decoding_method=\"greedy_search\", max_active_paths=4, hotwords_file=\"\", hotwords_score=1.5, blank_penalty=0, rule_fsts=\"\", rule_fars=\"\", hr=HomophoneReplacerConfig(lexicon=\"\", rule_fsts=\"\"))\nCreating recognizer ...\nrecognizer created in 0.981 s\nStarted\nDone!\n\n/tmp/ipep-parakeet-cli-v3/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/test_wavs/1.wav\n----\nnum threads: 2\ndecoding method: greedy_search\nElapsed seconds: 0.031 s\nReal time factor (RTF): 0.031 / 0.993 = 0.031\n{\"lang\": \"\", \"emotion\": \"\", \"event\": \"\", \"text\": \"I love you\", \"timestamps\": [0.16, 0.32, 0.56], \"durations\": [], \"tokens\":[\" I\", \" love\", \" you\"], \"ys_log_probs\": [], \"words\": []}\n",
+    "passed": true,
+    "process_exit_code": 0,
+    "sample_file": "1.wav"
+  },
+  "contract": "IPEP_PARAKEET_CTC_CLI_RUNTIME_V3",
+  "created_at": "2026-08-04T19:38:10.910104+00:00",
+  "credentials_included": false,
+  "evidence_included": false,
+  "files": [
+    {
+      "path": "wheel/sherpa_onnx_bin-1.13.2.data/data/bin/sherpa-onnx-offline",
+      "sha256": "f94a82b6dc8cb1908a6481645a055c3605497d10a96fbd27dab404a69ff8b301",
+      "size": 2467376
+    },
+    {
+      "path": "wheel/sherpa_onnx/lib/libonnxruntime.so",
+      "sha256": "88468d42d3381c18a7bd3f99a01f07293ff8c9e38f71fd5bcc5fa08c101d31bf",
+      "size": 25008897
+    },
+    {
+      "path": "model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8.tar.bz2",
+      "sha256": "17f945007b52ccd8b7200ffc7c5652e9e8e961dfdf479cefcabd06cf5703630b",
+      "size": 104337827
+    },
+    {
+      "path": "model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/model.int8.onnx",
+      "sha256": "9177a9146cf32ee0cc8152276ef95116f312018d316be37ccf57f7efea81fc1a",
+      "size": 131652171
+    },
+    {
+      "path": "model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8/tokens.txt",
+      "sha256": "450e56bd2f036fe5b6aa821865838cc5aa9d8b0106134ce9a9ba0664abe6cd10",
+      "size": 9953
+    }
+  ],
+  "official_model_url": "https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8.tar.bz2",
+  "run_id": 30944157679,
+  "sherpa_onnx_version": "1.13.2",
+  "source_commit": "941ec5b4fddca08191c0e6d9dfce62a473b98ef5",
+  "truth_boundary": "Complete official binary/core runtime and public model only; no hearing transcription claim."
+}
