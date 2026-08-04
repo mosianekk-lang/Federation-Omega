@@ -1,4 +1,0 @@
-triggered_at=2026-08-04T20:46:01+02:00
-purpose=Observed Python-independent Parakeet CLI runtime build for EvidenceOps v3.1
-source_evidence_included=false
-credentials_included=false
