@@ -92,7 +92,7 @@ jobs:
               '.github/workflows/phoenix-emergency-freeze.yml',
           }
 
-          def rows(path: str):
+          def workflow_rows(path: str):
               result = []
               file = Path(path)
               if not file.exists():
@@ -109,10 +109,22 @@ jobs:
                       })
               return result
 
-          before = rows('/tmp/phoenix-workflows-before.tsv')
-          after = rows('/tmp/phoenix-workflows-after.tsv')
-          disabled = rows('/tmp/phoenix-freeze-disabled.txt')
-          enabled = rows('/tmp/phoenix-freeze-enabled.txt')
+          def mutation_rows(path: str):
+              result = []
+              file = Path(path)
+              if not file.exists():
+                  return result
+              for line in file.read_text(encoding='utf-8').splitlines():
+                  fields = line.split('\t', 1)
+                  if len(fields) == 2:
+                      workflow_id, workflow_path = fields
+                      result.append({'id': int(workflow_id), 'path': workflow_path})
+              return result
+
+          before = workflow_rows('/tmp/phoenix-workflows-before.tsv')
+          after = workflow_rows('/tmp/phoenix-workflows-after.tsv')
+          disabled = mutation_rows('/tmp/phoenix-freeze-disabled.txt')
+          enabled = mutation_rows('/tmp/phoenix-freeze-enabled.txt')
           errors_path = Path('/tmp/phoenix-freeze-errors.txt')
           errors = errors_path.read_text(encoding='utf-8').splitlines() if errors_path.exists() else []
 
@@ -132,7 +144,9 @@ jobs:
               'workflow_count_before': len(before),
               'workflow_count_after': len(after),
               'disabled_count': len(disabled),
+              'disabled_paths': sorted(row['path'] for row in disabled),
               'enabled_count': len(enabled),
+              'enabled_paths': sorted(row['path'] for row in enabled),
               'active_after': active_after,
               'unexpected_active': unexpected_active,
               'missing_required': missing_required,
