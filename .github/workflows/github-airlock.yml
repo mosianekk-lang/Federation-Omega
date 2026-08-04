@@ -32,9 +32,10 @@ jobs:
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
 
-      - name: Resolve admission comparison
+      - name: Resolve admission comparison and provider provenance
         id: refs
         env:
+          GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
@@ -45,13 +46,18 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          pr_count=0
           case "$EVENT_NAME" in
             pull_request)
-              base="$PR_BASE"; head="$PR_HEAD" ;;
+              base="$PR_BASE"; head="$PR_HEAD"; pr_count=1 ;;
             merge_group)
-              base="$MERGE_BASE"; head="$MERGE_HEAD" ;;
+              base="$MERGE_BASE"; head="$MERGE_HEAD"; pr_count=1 ;;
             push)
-              base="$PUSH_BASE"; head="$PUSH_HEAD" ;;
+              base="$PUSH_BASE"; head="$PUSH_HEAD"
+              pr_count="$(gh api \
+                -H 'Accept: application/vnd.github+json' \
+                "/repos/${GITHUB_REPOSITORY}/commits/${head}/pulls" \
+                --jq 'length')" ;;
             workflow_dispatch)
               base="$(git rev-parse HEAD^)"; head="$(git rev-parse HEAD)" ;;
             *)
@@ -59,6 +65,7 @@ jobs:
           esac
           echo "base=$base" >> "$GITHUB_OUTPUT"
           echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "associated_pr_count=$pr_count" >> "$GITHUB_OUTPUT"
 
       - name: Enforce default-deny admission policy
         shell: bash
@@ -69,6 +76,7 @@ jobs:
             --base '${{ steps.refs.outputs.base }}' \
             --head '${{ steps.refs.outputs.head }}' \
             --event '${{ github.event_name }}' \
+            --associated-pr-count '${{ steps.refs.outputs.associated_pr_count }}' \
             --report airlock-output/github-airlock-report.json
 
       - name: Publish Airlock result
