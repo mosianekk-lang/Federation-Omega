@@ -30,18 +30,18 @@
     "ref": "refs/heads/main",
     "repository": "mosianekk-lang/Federation-Omega",
     "run_attempt": "1",
-    "run_id": "30899119840",
-    "sha": "ced79a1779c01842082124a570917b80c1a804e9",
+    "run_id": "30908789402",
+    "sha": "5c7f19d1b486b1a79bb889c226fc644843516143",
     "workflow": "EvidenceOps v7.2.2 P12 Provider Worker"
   },
   "resume_count": 1,
-  "resumed_from_sha256": "22a05b9deea6ea7a10aa559642f5202534f81907387dc6ebc38cdd213e23fb70",
+  "resumed_from_sha256": "b01bb69d73021a58783da53ae668557a98c7715d0c05bfb1f78e609bdc7492b7",
   "rollback_verified": true,
   "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P12_PROVIDER_WORKER_V1",
   "sequence": 3,
   "stage_id": "P12-SCOPED-GITHUB-WORKER",
-  "state_sha256": "b41ce67506d47b0ebf6809536d1abd85792ea61c7e5a7c7a34d8931b7e78e8b7",
+  "state_sha256": "5617d8365ae21eed01595c7fe864597392524ae15c2045b00a7fc6337574b800",
   "status": "OPERATIONAL_VERIFIED_SCOPED",
-  "updated_at_utc": "2026-08-04T10:05:04.482112Z",
+  "updated_at_utc": "2026-08-04T12:22:19.952624Z",
   "version": "7.2.2"
 }

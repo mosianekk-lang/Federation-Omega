@@ -10,8 +10,8 @@
     "reason": "A2 authority absent"
   },
   "external_effects": 0,
-  "observed_at_utc": "2026-08-04T10:05:04.557248Z",
-  "policy_log_sha256": "080213a9457c06b3d0fd29a860b4c09d63b6afd12db3d2f29578ecd7bbfa7e59",
+  "observed_at_utc": "2026-08-04T12:22:19.953247Z",
+  "policy_log_sha256": "4d5b247dcfe5534b9450cf147b19c6282c1c71388d69e8e83575b189179a38ca",
   "schema": "OMEGAMAX_POLICY_LOG_V1",
   "stage_id": "P12-SCOPED-GITHUB-WORKER"
 }
