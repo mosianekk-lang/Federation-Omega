@@ -1,0 +1,45 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-COMPLETION-V18",
+  "status": "PROVIDER_RECONCILIATION_RECOVERY_COMPLETION_V18_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "dependency_order": ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C15"],
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "predecessor_release": {
+    "pull_request": 159,
+    "merge_commit": "90339ce7c23aa48a59f9ef9ee02fffc3facd3ed5",
+    "implementation_pull_request": 158,
+    "implementation_merge_commit": "03e2c9c096d3b4eee846992f2f723f6f36ed602c",
+    "google_drive_release_file_id": "18SwQIrE6KL39qkKKlvxM_aTxXzZLoWac82LLLX5qf1M",
+    "google_drive_release_modified_time": "2026-08-04T16:11:53.471Z",
+    "google_drive_readback_verified": true
+  },
+  "smallest_complete_operational_slice": {
+    "post_resolution_recovery_receipt_gap_detected": true,
+    "content_addressed_completion_receipt": true,
+    "atomic_receipt_publication": true,
+    "restart_receipt_repair": true,
+    "exact_retry_idempotency": true,
+    "tamper_detection": true,
+    "reconciliation_reexecution_on_receipt_repair": false,
+    "external_mutation_performed": false
+  },
+  "provider_native_ci": "PENDING",
+  "repository_safety_checks": "PENDING",
+  "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+  "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
+  "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+  "cloud_run_operation": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+  "customer_demand": "MARKET_PROOF_REQUIRED",
+  "partner_adoption": "MARKET_PROOF_REQUIRED",
+  "enterprise_assurance": "UNVERIFIED",
+  "production_scale": "PRODUCTION_PROOF_REQUIRED",
+  "verified_live_revenue_events": 0,
+  "full_commercial_maturity": false,
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
