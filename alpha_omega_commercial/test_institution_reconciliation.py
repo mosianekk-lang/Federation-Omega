@@ -77,23 +77,23 @@ class InstitutionReconciliationTests(unittest.TestCase):
     def test_external_gate_promotion_is_rejected(self) -> None:
         release = copy.deepcopy(self.release)
         release["external_gates"]["customer_demand"] = True
-        self._rehash_release(release)
+        checkpoint = self._rehash_and_bind(release)
         with self.assertRaisesRegex(ReconciliationError, "external maturity gate"):
-            self.reconcile(release=release)
+            self.reconcile(release=release, governed_checkpoint=checkpoint)
 
     def test_unverified_revenue_claim_is_rejected(self) -> None:
         release = copy.deepcopy(self.release)
         release["truth_boundary"]["verified_live_revenue_events"] = 1
-        self._rehash_release(release)
+        checkpoint = self._rehash_and_bind(release)
         with self.assertRaisesRegex(ReconciliationError, "live revenue"):
-            self.reconcile(release=release)
+            self.reconcile(release=release, governed_checkpoint=checkpoint)
 
     def test_cloud_run_promotion_is_rejected(self) -> None:
         release = copy.deepcopy(self.release)
         release["truth_boundary"]["cloud_run_operation_proven"] = True
-        self._rehash_release(release)
+        checkpoint = self._rehash_and_bind(release)
         with self.assertRaisesRegex(ReconciliationError, "Cloud Run"):
-            self.reconcile(release=release)
+            self.reconcile(release=release, governed_checkpoint=checkpoint)
 
     def test_cross_scope_drive_promotion_is_rejected(self) -> None:
         checkpoint = copy.deepcopy(self.institution_checkpoint)
@@ -122,16 +122,16 @@ class InstitutionReconciliationTests(unittest.TestCase):
     def test_owner_authority_drift_is_rejected(self) -> None:
         release = copy.deepcopy(self.release)
         release["owner_authority"]["contracts"] = "AUTOMATED"
-        self._rehash_release(release)
-        checkpoint = copy.deepcopy(self.governed_checkpoint)
-        checkpoint["release_receipt"]["receipt_sha256"] = release["receipt_sha256"]
+        checkpoint = self._rehash_and_bind(release)
         with self.assertRaisesRegex(ReconciliationError, "owner-reserved authority"):
             self.reconcile(release=release, governed_checkpoint=checkpoint)
 
-    @staticmethod
-    def _rehash_release(release: dict) -> None:
+    def _rehash_and_bind(self, release: dict) -> dict:
         release.pop("receipt_sha256", None)
         release["receipt_sha256"] = digest(release)
+        checkpoint = copy.deepcopy(self.governed_checkpoint)
+        checkpoint["release_receipt"]["receipt_sha256"] = release["receipt_sha256"]
+        return checkpoint
 
 
 if __name__ == "__main__":
