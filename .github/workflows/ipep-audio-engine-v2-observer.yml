@@ -1,0 +1,52 @@
+name: Observe IPEP Audio Engine v2 CI
+
+on:
+  workflow_run:
+    workflows: ['IPEP Audio Engine v2 CI']
+    types: [completed]
+
+permissions:
+  contents: write
+
+jobs:
+  publish-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Write workflow observation
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          python - <<'PY' > deployment_receipts/ipep-audio-engine-v2-observation.json
+          import json, os
+          from datetime import datetime, timezone
+          print(json.dumps({
+            'receipt':'IPEP-AUDIO-ENGINE-V2-WORKFLOW-OBSERVATION',
+            'observed_at':datetime.now(timezone.utc).isoformat(),
+            'run_id':int(os.environ['RUN_ID']),
+            'run_url':os.environ['RUN_URL'],
+            'conclusion':os.environ['RUN_CONCLUSION'],
+            'source_sha':os.environ['SOURCE_SHA'],
+          },indent=2,sort_keys=True))
+          PY
+
+      - name: Publish observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'ipep-audio-observer[bot]'
+          git config user.email 'ipep-audio-observer[bot]@users.noreply.github.com'
+          git pull --rebase origin main
+          git add deployment_receipts/ipep-audio-engine-v2-observation.json
+          git commit -m 'Record IPEP Audio Engine v2 workflow observation [skip ci]' || exit 0
+          git push origin HEAD:main
