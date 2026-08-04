@@ -42,6 +42,30 @@ class SourceProvenanceTests(unittest.TestCase):
         report = MODULE.build_report("owner/repo", "d" * 40, [])
         self.assertEqual("UNADMITTED_HISTORY", report["status"])
 
+    def test_agent_governance_contract_is_present_and_fail_closed(self):
+        agent_contract = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
+        copilot_contract = (
+            ROOT / ".github" / "copilot-instructions.md"
+        ).read_text(encoding="utf-8")
+        for phrase in (
+            "Never commit or push directly to `main`.",
+            "New workflows are default-deny.",
+            "Do not commit generated runtime receipts",
+            "require exact provider readback",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, agent_contract)
+        for phrase in (
+            "Follow the root `AGENTS.md` governance contract",
+            "commit or push directly to `main`",
+            "Runtime outputs belong in immutable artifacts",
+            "merge-result readback",
+        ):
+            with self.subTest(phrase=phrase):
+                self.assertIn(phrase, copilot_contract)
+        self.assertIn("provider protection is not yet active", copilot_contract)
+        self.assertNotIn("branch protection is active", agent_contract.lower())
+
 
 if __name__ == "__main__":
     unittest.main()
