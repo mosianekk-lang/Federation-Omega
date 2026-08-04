@@ -1,0 +1,21 @@
+{
+  "schema": "EVIDENCEOPS-LIVE-BIBLE-RELEASE-PROMOTION-CHECKPOINT-1",
+  "mission_id": "LBV2-RELEASE-CURRENT-MAIN-20260804",
+  "source_pr": 149,
+  "source_head": "ab228213163d4b2840a05116a272909b33dded28",
+  "source_release": "v2.0.0",
+  "target_release": "v2.0.1",
+  "target_branch": "live-bible-v2-release-current-main-20260804",
+  "base_merge": "fc0553026bed27b2ed66e955de3a200a3136b336",
+  "source_release_zip_sha256": "7b4fe8e89db7b22db712233a6ce518d04a3b4d9d249934a926522819db869572",
+  "source_manifest_sha256": "81f5cdb33e5d2e05fd2cd8193edaffd5bc3530a018e8bc9fd5d301f6f3102af9",
+  "source_wheel_sha256": "2939740b27483aaeabe0fba9454a8b46c50be3df95d931b4962a6c747bf19de6",
+  "authority_class": "A1",
+  "external_effects": 0,
+  "workflow_changes_allowed": false,
+  "runtime_state_commits_allowed": false,
+  "browser_installation_in_scope": false,
+  "status": "BRANCH_CREATED_CANONICAL_FILES_MIGRATION_PENDING",
+  "next_gate": "COPY_CANONICAL_RELEASE_FILES_REBUILD_MANIFEST_TEST_AIRLOCK_LEAK_GUARD",
+  "truth_boundary": "The branch and checkpoint are real. Release v2.0.1 is not complete until canonical files are copied, the manifest and hashes are rebuilt, clean tests pass, provider checks pass, merge completes and main readback succeeds."
+}
