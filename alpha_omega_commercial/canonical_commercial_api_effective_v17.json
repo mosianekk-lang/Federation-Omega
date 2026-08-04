@@ -1,6 +1,6 @@
 {
   "projection_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V17",
-  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_RECOVERY_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_RECOVERY_PROVIDER_PROOF_VERIFIED",
   "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-V17",
   "canonical_class": "RecoverableVaultedProviderDispatchCommercialControlPlane",
   "predecessor_class": "VaultedProviderDispatchCommercialControlPlane",
@@ -28,12 +28,17 @@
     "distributed_provider_exactly_once": "NOT_PROVEN"
   },
   "implementation_provider_proof": {
-    "state": "PENDING"
+    "state": "PROVIDER_PROOF_VERIFIED",
+    "workflow_run": 30927745566,
+    "workflow_job": 92054345687,
+    "artifact_id": 8899813315,
+    "artifact_digest": "sha256:c9b05412459ca2e8c07df162aad8bc535715d26b86e82078d50d9707888c010e",
+    "checks": "12/12",
+    "regression_tests": "59/59"
   },
-  "predecessor_google_drive_release": {
-    "file_id": "1BaghI8fHt42GTehodoXo0IJoRmYD0j-7NYMkmhS5gW0",
-    "latest_readback_modified_time": "2026-08-04T15:15:05.991Z",
-    "export_sha256": "88b43753d53d5291a89da26962b911d51265654492651c7086483e9c2223f578",
+  "google_drive_release": {
+    "file_id": "18SwQIrE6KL39qkKKlvxM_aTxXzZLoWac82LLLX5qf1M",
+    "export_sha256": "f7153ebf0c82920e5f67f501bb2a35c7c0d8e96c2390f545b77bad99ac8e2ffc",
     "readback_verified": true,
     "shared": false
   },
