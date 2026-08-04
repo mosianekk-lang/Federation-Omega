@@ -68,8 +68,8 @@
     "job_steps_inspected": "VERIFIED",
     "production_code": "VERIFIED",
     "provider_native_ci": "VERIFIED",
-    "release_merge_allowed": false,
-    "release_reconciliation_ci": "REQUIRED",
+    "release_merge_allowed": true,
+    "release_reconciliation_ci": "VERIFIED",
     "repository_safety_checks": "VERIFIED"
   },
   "owner_authority": {
@@ -98,6 +98,18 @@
     "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
     "production_scale": "PRODUCTION_PROOF_REQUIRED"
   },
+  "release_reconciliation": {
+    "artifact_digest": "sha256:f6d3d73c58edb5c18194d5e438161a55cb9aa79bf0af66116d366eaba30bfe32",
+    "artifact_id": 8883946695,
+    "checks_failed": 0,
+    "checks_required": 18,
+    "final_head_sha": "7f7a43acf9486426dc1fa55b0c475b5fb540e154",
+    "merge_commit": "0fecbab0cf07313b9f937242895df0cdc5b8608d",
+    "proof_file_sha256": "68e60d978b505bc310bc75b46e85d74f29dedfc7686f5bf46761f360744c60a8",
+    "proof_sha256": "c6005ac004de9ec674527bf589e510f1670fb3f513910e9e97fef03f86a266ea",
+    "pull_request": 132,
+    "workflow_run": 30888276566
+  },
   "stage_scope": [
     "C03",
     "C11",
@@ -105,5 +117,5 @@
     "C13",
     "C15"
   ],
-  "status": "AUTHORITY_ACTION_JOURNAL_RELEASE_RECONCILIATION_IMPLEMENTED_PROVIDER_PROOF_REQUIRED"
+  "status": "AUTHORITY_ACTION_JOURNAL_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED"
 }
