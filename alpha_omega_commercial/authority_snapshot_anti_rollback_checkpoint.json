@@ -1,0 +1,64 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-ANTI-ROLLBACK-V4",
+  "status": "AUTHORITY_SNAPSHOT_ANTI_ROLLBACK_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "dependency_checkpoint": {
+    "preceding_pull_request": 123,
+    "preceding_merge_commit": "bf7c1031cf3ac3e42448d54d8ef6522744c3a2f6",
+    "preceding_status": "AUTHORITY_SNAPSHOT_RELEASE_RECONCILIATION_VERIFIED_EXTERNAL_GATES_UNCHANGED"
+  },
+  "stage_projection": {
+    "C03": "PROVIDER_AUTHORITY_SNAPSHOT_MONOTONIC_ACCEPTANCE_VERIFIED",
+    "C11": "SERVICE_ENABLED_PLATFORM_SUPERSEDED_AUTHORITY_REJECTION_VERIFIED_SELF_SERVICE_HELD",
+    "C12": "EXTERNAL_EVIDENCE_SUPERSEDED_AUTHORITY_REJECTION_VERIFIED_MARKET_PROOF_REQUIRED",
+    "C13": "REVOPS_SUPERSEDED_OWNER_AND_PAYMENT_AUTHORITY_REJECTION_VERIFIED_REVENUE_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_ANTI_ROLLBACK_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "provider_proof": {
+    "state": "PR_HEAD_PROVIDER_NATIVE_CI_VERIFIED",
+    "workflow_name": "Alpha Omega Commercial Authority Anti-Rollback Proof",
+    "workflow_run": 30879968837,
+    "workflow_job": 91899004144,
+    "proof_head_sha": "fd1dc7179d27190ba1481a4c1dd1d92b48090fd8",
+    "artifact_id": 8880897302,
+    "artifact_name": "alpha-omega-commercial-authority-anti-rollback-proof",
+    "artifact_digest": "sha256:247858eefac18a2892cd7cffc1384e243b611293d362dd44f5c0dd1e4a5a88d1",
+    "receipt_sha256": "912e7dd15c842df1bb6025e0d4450cdd2fb8932e4884b83d2f4bebcd76e02aa3",
+    "receipt_file_sha256": "129b3041874b3139b1f854a775ac45bac3b9529d4735b65e756ceec7ca668a2f",
+    "ledger_file_sha256": "56134c40c6a9253fb85be73580512a89a64c16b46f6046206642c8b33fddbb6d",
+    "checks_required": 10,
+    "checks_failed": 0,
+    "artifact_expires_at": "2026-11-02T05:12:20Z"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "provider_boundaries": {
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "payment_provider_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}

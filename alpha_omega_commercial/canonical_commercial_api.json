@@ -26,9 +26,21 @@
     "explicit_scope_required": true,
     "freshness_and_expiry_required": true,
     "authority_class_required": "LIVE_PROVIDER_NATIVE",
-    "stale_state": "STALE_REVALIDATION_REQUIRED"
+    "stale_state": "STALE_REVALIDATION_REQUIRED",
+    "monotonic_acceptance_required": true,
+    "same_snapshot_hash_idempotent": true,
+    "snapshot_id_conflict_rejected": true,
+    "equal_time_equivocation_rejected": true,
+    "superseded_snapshot_replay_rejected": true,
+    "superseded_source_ledger_head_rejected": true
   },
   "governed_methods": {
+    "accept_authority_snapshot": {
+      "internal_state_transition_only": true,
+      "external_effects_allowed": false,
+      "hash_linked_acceptance_ledger_required": true,
+      "restart_safe": true
+    },
     "submit_service_request": {
       "owner_reserved_receipt_required_for": [
         "subscription.change",
@@ -67,6 +79,7 @@
     "owner_receipt_consumption": "HASH_LINKED_RESTART_SAFE",
     "external_evidence_admission": "HASH_LINKED_RESTART_SAFE",
     "authority_snapshot": "HASH_BOUND_FAIL_CLOSED",
+    "authority_snapshot_acceptance": "HASH_LINKED_MONOTONIC_RESTART_SAFE",
     "tamper_policy": "FAIL_CLOSED"
   },
   "service_first_strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",

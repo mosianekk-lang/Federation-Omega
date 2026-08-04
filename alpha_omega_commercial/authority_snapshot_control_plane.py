@@ -7,6 +7,7 @@ from authority_snapshot import (
     CommercialAuthoritySnapshot,
     CommercialAuthoritySnapshotValidator,
 )
+from authority_snapshot_acceptance import AuthoritySnapshotAcceptanceLedger
 from governed_commercial_assurance import (
     GovernedCommercialAssuranceControlPlane,
     LIVE_AUTHORITY_CLASS,
@@ -26,9 +27,10 @@ REQUIRED_SCOPE = {
 class AuthoritySnapshotCommercialControlPlane(GovernedCommercialAssuranceControlPlane):
     """Canonical commercial control plane with evidence-bound authority freshness.
 
-    The v2 governed control plane removed caller-set approval shortcuts. This v3
-    wrapper closes the remaining raw-authority-state gap: live authority is admitted
-    only through a hash-valid, scope-complete, non-expired authority snapshot.
+    The v2 governed control plane removed caller-set approval shortcuts. This v4
+    wrapper closes both remaining authority-state gaps: live authority is admitted
+    only through a hash-valid, scope-complete, non-expired authority snapshot, and
+    an older valid snapshot cannot be replayed after a newer snapshot was accepted.
     """
 
     def __init__(
@@ -43,6 +45,9 @@ class AuthoritySnapshotCommercialControlPlane(GovernedCommercialAssuranceControl
         self.authority_snapshot_validator = CommercialAuthoritySnapshotValidator(
             authority_snapshot
         )
+        self.authority_snapshot_acceptance = AuthoritySnapshotAcceptanceLedger(
+            Path(state_dir) / "authority_snapshot_acceptance"
+        )
         self.raw_authority_input = dict(authority or {})
         if authority_profile == LIVE_PROFILE:
             governed_authority = self.authority_snapshot_validator.authority_view(
@@ -55,6 +60,21 @@ class AuthoritySnapshotCommercialControlPlane(GovernedCommercialAssuranceControl
             authority=governed_authority,
             owner_receipts=owner_receipts,
             authority_profile=authority_profile,
+        )
+
+    def accept_authority_snapshot(self, *, now: str | None = None) -> dict[str, Any]:
+        """Persist one monotonic provider-native authority-snapshot acceptance.
+
+        The operation is internal and reversible only through state restoration. It
+        does not perform a customer, payment, cloud, communication or contract action.
+        """
+
+        current = now or utc_now()
+        return self.authority_snapshot_acceptance.accept(
+            self.authority_snapshot_validator.snapshot,
+            self.authority_snapshot_validator,
+            required_scope=REQUIRED_SCOPE,
+            now=current,
         )
 
     def authority_snapshot_readback(self, *, now: str | None = None) -> dict[str, Any]:
@@ -82,11 +102,18 @@ class AuthoritySnapshotCommercialControlPlane(GovernedCommercialAssuranceControl
             "snapshot_id": snapshot.snapshot_id if snapshot else None,
             "snapshot_sha256": snapshot.snapshot_sha256 if snapshot else None,
             "domains": domains,
+            "acceptance": self.authority_snapshot_acceptance.readback(
+                snapshot,
+                self.authority_snapshot_validator,
+                required_scope=REQUIRED_SCOPE,
+                now=current,
+            ),
             "raw_authority_input_grants_live_authority": False,
             "truth_boundary": (
                 "A raw authority dictionary cannot grant live commercial authority. "
                 "Each consequential domain requires a fresh provider-native authority "
-                "snapshot with exact scope, source-ledger integrity and hash-valid evidence."
+                "snapshot with exact scope, source-ledger integrity and hash-valid "
+                "evidence. A previously superseded snapshot cannot be replayed."
             ),
         }
 
@@ -133,12 +160,22 @@ class AuthoritySnapshotCommercialControlPlane(GovernedCommercialAssuranceControl
                 "authority snapshot validation failed: "
                 + ",".join(decision.reasons)
             )
+        self.accept_authority_snapshot(now=now)
 
     def _live_authority_verified(self, domain: str) -> bool:
         if self.authority_profile != LIVE_PROFILE:
             return super()._live_authority_verified(domain)
-        decision = self._snapshot_decision(domain, now=utc_now())
-        return bool(decision.valid)
+        current = utc_now()
+        decision = self._snapshot_decision(domain, now=current)
+        if not decision.valid:
+            return False
+        snapshot_decision = self.authority_snapshot_acceptance.preview(
+            self.authority_snapshot_validator.snapshot,
+            self.authority_snapshot_validator,
+            required_scope=REQUIRED_SCOPE,
+            now=current,
+        )
+        return bool(snapshot_decision.valid)
 
     def _require_owner_decision(
         self,

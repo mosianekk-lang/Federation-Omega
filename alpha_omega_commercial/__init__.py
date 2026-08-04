@@ -21,6 +21,10 @@ from authority_snapshot import (  # noqa: E402
     CommercialAuthoritySnapshotValidator,
     build_authority_snapshot,
 )
+from authority_snapshot_acceptance import (  # noqa: E402
+    AuthoritySnapshotAcceptanceDecision,
+    AuthoritySnapshotAcceptanceLedger,
+)
 from authority_snapshot_control_plane import (  # noqa: E402
     AuthoritySnapshotCommercialControlPlane,
 )
@@ -32,6 +36,8 @@ from governed_commercial_assurance import (  # noqa: E402
 
 __all__ = [
     "AuthoritySnapshotCommercialControlPlane",
+    "AuthoritySnapshotAcceptanceDecision",
+    "AuthoritySnapshotAcceptanceLedger",
     "AuthorityDomainLease",
     "CommercialAuthoritySnapshot",
     "CommercialAuthoritySnapshotValidator",
