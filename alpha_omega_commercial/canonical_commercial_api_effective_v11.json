@@ -1,0 +1,28 @@
+{
+  "api_id": "AO-COMMERCIAL-EFFECTIVE-CANONICAL-API-V11",
+  "capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTBOX-V11",
+  "effective_canonical_class": "ProviderDispatchOutboxCommercialControlPlane",
+  "predecessor_class": "IdempotentCoordinatedAuthoritySnapshotCommercialControlPlane",
+  "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "service_model": "SERVICE_ENABLED_PLATFORM_FIRST",
+  "self_service_saas": "HELD",
+  "provider_dispatch": {
+    "committed_v10_action_required": true,
+    "stable_provider_idempotency_key": true,
+    "mock_provider_conformance": "VERIFIED_BY_REFERENCE_TESTS",
+    "live_provider_receipt_admission": "PROVIDER_PROOF_REQUIRED",
+    "distributed_provider_exactly_once": "NOT_PROVEN"
+  },
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "verified_live_revenue_events": 0,
+  "external_maturity_gates_advanced": false,
+  "institution_state_preserved": true,
+  "owner_reserved_authority_preserved": true,
+  "full_commercial_maturity": false
+}
