@@ -1,0 +1,196 @@
+{
+  "capability_revision": "AO-COMMERCIAL-PHOENIX-AUTHORIZED-EXECUTION-V25",
+  "checkpoint_sha256": "956a9edcf6fb6cb7e0546138b3241917f749b4a4fa3e3e559a8caa1979f7f01d",
+  "commercial_truth": {
+    "cloud_run_operation": "NOT_PROVEN",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "external_customer_case_study": "MARKET_PROOF_REQUIRED",
+    "full_commercial_maturity": false,
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "self_service_saas": "HELD",
+    "service_enabled_platform": "VERIFIED_AND_PRIORITISED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "verified_live_revenue_events": 0
+  },
+  "dependency_path": [
+    "C03",
+    "C06",
+    "C07",
+    "C11",
+    "C14",
+    "C15"
+  ],
+  "execution_freeze_receipt": {
+    "disabled_total_after": 140,
+    "missing_required": [],
+    "provider_managed_active": [
+      "dynamic/dependabot/dependabot-updates"
+    ],
+    "receipt_file_sha256": "aba9bf8c395138e06fbf560ebd22f6035054655fe50d9691217b02db5366c542",
+    "receipt_sha256": "10ba3cf5f975765f60a2400e4b6f160bf38bea6e4369db6dfd2a4a3b676ca6f4",
+    "run_id": 30949262846,
+    "schema": "FEDOMEGA-PHOENIX-EXECUTION-FREEZE-3",
+    "source_mutation_attempted": false,
+    "source_sha": "3a715d0ac00501c045b856569c81242fdc05bca6",
+    "status": "VERIFIED",
+    "unexpected_active": []
+  },
+  "export_receipt": {
+    "core": {
+      "archive_sha256": "5141dbfaad0e0d059ff1aa8dc9d7919f0a9008f90afad0b02dd988014510e368",
+      "excluded_count": 450,
+      "included_count": 909,
+      "migration_control_test_count": 0,
+      "retained_test_count": 135,
+      "retained_test_result": "PASS",
+      "runtime_state_count": 0,
+      "secret_marker_count": 0,
+      "size_bytes": 969327,
+      "workflow_count": 0
+    },
+    "ops": {
+      "active_workflow_count": 0,
+      "archive_sha256": "72184d5235e09019017af49314239c950de12853e133f36017d8f6113b6166b0",
+      "included_count": 8,
+      "required_authorized_execution_files": [
+        "provider_cutover.py",
+        "provider_cutover_authorization_use.py",
+        "provider_cutover_v3_1.py",
+        "provider_cutover_v3_base.py"
+      ],
+      "size_bytes": 16443
+    },
+    "policy_version": "1.0.7",
+    "provider_cutover_engine": {
+      "authorization_decision_required": true,
+      "authorization_execution_gate": "V22",
+      "credential_value_recorded": false,
+      "one_time_authorization_consumption_required": true,
+      "provider_apply_performed": false,
+      "provider_controller_version": "3.1",
+      "unknown_outcome_automatic_retry": false,
+      "version": "3.2"
+    },
+    "receipt_file_sha256": "7155dce57558e986c0ac49dd3ddbe4b1a1c75a424e6f704593f6d5e5fa66b492",
+    "receipt_sha256": "01e59233b647ed907b70d3254946ca49fc67fed071fc9e44275f400b7c8f936f",
+    "schema": "FEDOMEGA-PHOENIX-EXPORT-MANIFEST-1",
+    "source_mutation_attempted": false,
+    "source_sha": "3a715d0ac00501c045b856569c81242fdc05bca6",
+    "status": "VERIFIED"
+  },
+  "google_drive_release": {
+    "created_at": "2026-08-04T20:43:15.098Z",
+    "file_id": "1AIfd_i_LbF_rhhTOUC8GLEGNRoR8XRbrIQgxzVQ0dGY",
+    "modified_at": "2026-08-04T20:43:39.430Z",
+    "owner": "mosianekk@gmail.com",
+    "readback": "VERIFIED",
+    "shared": false,
+    "text_export_sha256": "4dce6469d1c4e8297ed1adfcaa9b885f28122e8b719e88f12d10c1aa66c61aa7",
+    "text_export_size_bytes": 4562,
+    "title": "Alpha Omega Phoenix Authorized Execution v25 Release"
+  },
+  "implementation_lineage": {
+    "failed_provider_native_run": 30948670295,
+    "failure_classification": "BASE_EXPORT_FIXTURE_CONTRACT_OVER_STRICT",
+    "implementation_commits": [
+      "770c683da661d2acc07527304ab6afbd862b61db",
+      "578eb1f65514ef07b0962c92380668a93fb5518b",
+      "ed8b2edada736dbfd351b774088e8100cdd5b610",
+      "03c3501d11ec9a55982d6e7c15d8969670a7a30f",
+      "c7a80a4ff6468b109203ee353b54e93e9938b6e2",
+      "3524ade1e12280f9afb1a4bb2cff9e98e818e696"
+    ],
+    "repair_head_sha": "b1bede861d46a3d3590a5b20119f7513b829267b",
+    "repair_merge_commit": "90248d6f95f28b0cafce359405665f1c78724450",
+    "repair_pull_request": 225,
+    "source_provenance_truth": "DIRECT_MAIN_WRITES_DETECTED_AND_REPAIRED_NO_RETROACTIVE_AIRLOCK_ADMISSION_CLAIMED",
+    "stale_base_gate_merge_commit": "3a715d0ac00501c045b856569c81242fdc05bca6",
+    "stale_base_gate_pull_request": 226,
+    "workflow_change_count": 0
+  },
+  "institution_scope": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED",
+    "institution_v3_google_drive_publication": "UNVERIFIED_SCOPE_HELD"
+  },
+  "next_gate": "FRESH_OWNER_AUTHORISED_PROVIDER_APPLY_WITH_PROVIDER_NATIVE_CORE_OPS_READBACK",
+  "operational_proof_gate": {
+    "authorization_enforced_entrypoint_packaged": "VERIFIED",
+    "cloud_run_operation_proven": false,
+    "cross_execution_replay_rejection": "VERIFIED",
+    "exact_source_and_archive_binding": "VERIFIED",
+    "existing_receipt_reconciliation_after_authorization_expiry": "VERIFIED",
+    "external_repository_created": false,
+    "one_time_authorization_consumption": "VERIFIED",
+    "provider_apply_performed": false,
+    "provider_authority_checked_before_authorization_consumption": "VERIFIED",
+    "provider_receipt_integrity_and_semantic_verification": "VERIFIED",
+    "unknown_provider_outcome_automatic_retry": "DISABLED_VERIFIED"
+  },
+  "owner_authority": {
+    "consequential_releases": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "execution_plane_cutover": "OWNER_RESERVED_FRESH_EXACT_AUTHORIZATION_REQUIRED",
+    "external_communications": "OWNER_RESERVED",
+    "financial_commitments": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "predecessor": {
+    "checkpoint_file": "alpha_omega_commercial/phoenix_core_runtime_purity_checkpoint_v24.json",
+    "checkpoint_sha256": "f618119c6973c10896310a93ce1ab86dd2091eca4c8361f8d7adbf041985bb27",
+    "programme_projection_file": "alpha_omega_commercial/programme_maturity_effective_v24.json",
+    "programme_projection_sha256": "85895fcc2a6f8722215752c2ba07b123374f9613abb9ad3d386e909125251431"
+  },
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "provider_native_admission": {
+    "admitted_commit_count": 1,
+    "airlock_artifact_digest": "sha256:f01b4082c80b194d5a07ee05e05927145ca418700417d5b2889bf8b3ea6db70b",
+    "airlock_artifact_id": 8908231758,
+    "airlock_findings": [],
+    "airlock_job": 92125528862,
+    "airlock_run": 30948840842,
+    "airlock_status": "PASS",
+    "provider_control_regressions": {
+      "authorized_executor_tests": 11,
+      "export_result": "PASS",
+      "export_tests": 6,
+      "v3_family_result": "PASS",
+      "v3_family_tests": 52
+    },
+    "public_repository_leak_guard": "SUCCESS",
+    "source_provenance_receipt_sha256": "d92a2e1c450d61838ea792b35ef58412e8079ff90ec95e7a2dbb249c3c3772c1",
+    "unadmitted_commit_count_for_repair_pr": 0
+  },
+  "provider_native_final_head": {
+    "commit_status": "phoenix-freeze/verified",
+    "conclusion": "success",
+    "cutover_artifact": {
+      "artifact_digest": "sha256:1fef9271987dab8b2c4c925d201a87cb0deff3ebcab73f4cadb926e2cf37e366",
+      "artifact_id": 8908396862,
+      "artifact_name": "phoenix-cutover-package-v3-30949262846-1",
+      "size_bytes": 987230
+    },
+    "freeze_artifact": {
+      "artifact_digest": "sha256:12a1d3214b402abfbb6f39742211474ba3055b2aa7d23091f4a075d9033fed1d",
+      "artifact_id": 8908396404,
+      "artifact_name": "phoenix-execution-freeze-30949262846-1",
+      "size_bytes": 760
+    },
+    "source_sha": "3a715d0ac00501c045b856569c81242fdc05bca6",
+    "workflow_job": 92126950928,
+    "workflow_run": 30949262846,
+    "workflow_steps": {
+      "core_ops_export_build": "success",
+      "immutable_artifact_publication": "success",
+      "legacy_execution_quarantine": "success",
+      "provider_and_export_regressions": "success",
+      "pst_composite_verification": "skipped_not_requested",
+      "verified_commit_status_publication": "success"
+    }
+  },
+  "schema": "AO-COMMERCIAL-PHOENIX-AUTHORIZED-EXECUTION-CHECKPOINT-25",
+  "status": "AUTHORIZATION_ENFORCED_PROVIDER_EXECUTION_COORDINATOR_PROVIDER_PROOF_VERIFIED_PROVIDER_APPLY_OWNER_RESERVED"
+}
