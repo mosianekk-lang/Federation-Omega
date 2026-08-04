@@ -35,6 +35,9 @@ jobs:
       - name: Run provider cutover v2 regression tests
         run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
 
+      - name: Run provider cutover v3 regression tests
+        run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3.py' -v
+
       - name: Resolve admission comparison and provider provenance
         id: refs
         env:
