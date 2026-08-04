@@ -1,6 +1,6 @@
 {
   "projection_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V18",
-  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_RECOVERY_COMPLETION_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_RECOVERY_COMPLETION_PROVIDER_PROOF_VERIFIED",
   "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-COMPLETION-V18",
   "canonical_class": "ReceiptJournaledRecoverableProviderDispatchCommercialControlPlane",
   "predecessor_class": "RecoverableVaultedProviderDispatchCommercialControlPlane",
@@ -16,7 +16,16 @@
     "distributed_provider_exactly_once": "NOT_PROVEN"
   },
   "implementation_provider_proof": {
-    "state": "PENDING"
+    "state": "PROVIDER_PROOF_VERIFIED",
+    "head_sha": "89c389cbbae6e9b5345df55f0ca1d1413c61b30a",
+    "workflow_run": 30932556333,
+    "workflow_job": 92070577496,
+    "artifact_id": 8901730423,
+    "artifact_digest": "sha256:2a4996498ded42ace64ca161dd69e717038010f2fbcb39a15f0783b7c1b502df",
+    "proof_receipt_sha256": "889f1eee3a597d2c1d147aa33707d00146bcf4c64a05a484083d3e461e69fb0e",
+    "checks": "14/14",
+    "regression_tests": "66/66",
+    "triggered_workflows": "31/31"
   },
   "predecessor_google_drive_release": {
     "file_id": "18SwQIrE6KL39qkKKlvxM_aTxXzZLoWac82LLLX5qf1M",
