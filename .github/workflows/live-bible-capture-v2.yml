@@ -19,8 +19,8 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
-      - name: Install test runner
-        run: python -m pip install pytest
+      - name: Install build and test tooling
+        run: python -m pip install pytest setuptools wheel
       - name: Verify and test exact source release
         run: python live_bible_capture/releases/v2.0.0/verify_release.py --run-tests
       - name: Enforce authority and truth boundary
