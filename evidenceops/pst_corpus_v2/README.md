@@ -30,6 +30,12 @@ Every raw message and attachment remains preserved inside the retrieval shards. 
 - Package SHA-256: `ca28275cfb96bfb47c8a3cc88be3dce769d42e4183a39099260f16087736db4d`
 - Apps Script deployer Drive ID: `1fXKafnrsAoGiC8CT-oDsql29cCT0Wgpv`
 
+## Provider-independent GitHub lane
+
+When WIF, Cloud Run deployment authority, or Apps Script timers are unavailable, `.github/workflows/evidenceops-pst-corpus-v2-extract.yml` runs the same reviewed extractor on a GitHub-hosted runner. It downloads the publicly shared, size-locked PST, produces the searchable corpus and raw retrieval shards, uploads short-lived workflow artifacts, and always commits a provider receipt to `deployment_receipts/evidenceops-pst-corpus-v2-latest.json`.
+
+A GitHub artifact is an intermediate transport, not final completion. Its searchable files and raw shards must be transferred into the Evidence Operations Vault and independently verified there.
+
 ## Success rule
 
 The mission is complete only when the independent verifier writes `00_CONTROL/COMPLETION.json` in the Drive corpus folder with `status: COMPLETE_VERIFIED` after re-downloading and reconciling every published object.
@@ -39,4 +45,4 @@ The mission is complete only when the independent verifier writes `00_CONTROL/CO
 Start: `2026-08-04 01:48 SAST`  
 Target gate: `2026-08-05 01:48 SAST`
 
-The critical path is: package deployment → ingest job → compact Drive publication → independent verifier → completion readback.
+The critical path is: extraction provider → compact Drive publication → independent verifier → completion readback.
