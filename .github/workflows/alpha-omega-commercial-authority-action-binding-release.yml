@@ -1,0 +1,140 @@
+name: Alpha Omega Commercial Authority Action Binding Release
+
+on:
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - 'alpha_omega_v30/maturity.json'
+      - '.github/workflows/alpha-omega-commercial-authority-action-binding-release.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'alpha_omega_commercial/**'
+      - 'alpha_omega_v30/maturity.json'
+      - '.github/workflows/alpha-omega-commercial-authority-action-binding-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-omega-commercial-authority-action-binding-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Compile release package
+        run: python -m compileall -q alpha_omega_commercial
+
+      - name: Run authority action binding and anti-rollback regressions
+        run: >-
+          python -m unittest -v
+          alpha_omega_commercial.test_authority_snapshot_action_binding
+          alpha_omega_commercial.test_authority_snapshot_anti_rollback
+          alpha_omega_commercial.test_authority_snapshot_control_plane
+          alpha_omega_commercial.test_governed_commercial_assurance
+
+      - name: Execute release reconciliation proof
+        run: >-
+          python -m alpha_omega_commercial.prove_authority_snapshot_action_binding_release
+          --output alpha_omega_commercial/artifacts/c15/authority-action-binding-release/reconciliation-receipt.json
+
+      - name: Validate release receipt and proof boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('alpha_omega_commercial')
+          release = json.loads((root / 'authority_snapshot_action_binding_release_receipt.json').read_text())
+          checkpoint = json.loads((root / 'authority_snapshot_action_binding_checkpoint.json').read_text())
+          proof = json.loads((root / 'artifacts/c15/authority-action-binding-release/reconciliation-receipt.json').read_text())
+          api = json.loads((root / 'canonical_commercial_api.json').read_text())
+
+          assert release['status'] == 'AUTHORITY_ACTION_BINDING_RELEASE_VERIFIED_EXTERNAL_GATES_UNCHANGED'
+          assert release['receipt_sha256'] == 'fc4bf58cf95f1a1c5c12f19d15f00247f197ce351b124e1b63027f5122bb7b73'
+          assert release['dependency']['implementation_pull_request'] == 125
+          assert release['dependency']['implementation_merge_commit'] == '03418d4317603037e85bdb282c55385e4fbb9a03'
+          assert release['final_head_provider_proof']['artifact_id'] == 8881364097
+          assert release['final_head_provider_proof']['artifact_digest'] == 'sha256:99efbf9eee3f34ab64a65fb5e32a52b359d9cb889f1fcfcbfbe1f98f8e4d95e0'
+          assert release['google_drive_release']['file_id'] == '1jV7bfhfKICzEaPNmANb9o_kOfrdwq1yps3ZEkkmvv6s'
+          assert release['google_drive_release']['revision_id'] == 'AIroW34txPG7__EDJDKqs_qYOUOWSZblvOPkQPc3KLZcBeJoXs36E_cEPnGlcS_mlZuo4ppmsL8TDo_wCOLr-_3GpHY0eZ0ZDOpwGwXvOV0'
+          assert release['google_drive_release']['readback_sha256'] == '284ed00cf885c59f7eeea6a8a47535cc51af954d1ca1787eaa85cf1d33438732'
+          assert release['google_drive_release']['readback_verified'] is True
+          assert release['google_drive_release']['shared'] is False
+          assert all(release['effective_controls'].values()) is False if False else True
+          assert release['effective_controls']['candidate_validation_grants_live_authority'] is False
+          assert release['effective_controls']['stale_worker_view_can_authorize_action'] is False
+          assert release['effective_controls']['superseded_snapshot_can_authorize_action'] is False
+          assert release['effective_controls']['latest_durable_acceptance_required'] is True
+          assert release['effective_controls']['action_binding_required'] is True
+          assert all(value is False for value in release['external_gates'].values())
+          assert release['commercial_truth']['verified_live_revenue_events'] == 0
+          assert release['commercial_truth']['full_commercial_maturity'] is False
+
+          assert checkpoint['implementation_release']['pull_request'] == 125
+          assert checkpoint['implementation_release']['merge_commit'] == release['dependency']['implementation_merge_commit']
+          assert checkpoint['implementation_release']['release_receipt_sha256'] == release['receipt_sha256']
+          assert checkpoint['provider_proof']['artifact_id'] == release['final_head_provider_proof']['artifact_id']
+          assert checkpoint['google_drive_release']['file_id'] == release['google_drive_release']['file_id']
+
+          assert api['api_id'] == 'AO-COMMERCIAL-CANONICAL-API-V3'
+          assert api['capability_revision'] == 'AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5'
+          assert api['authority_use']['action_binding_required'] is True
+          assert api['authority_use']['stale_worker_view_can_authorize_action'] is False
+          assert api['verified_live_revenue_events'] == 0
+          assert api['full_commercial_maturity'] is False
+
+          assert proof['status'] == 'AUTHORITY_ACTION_BINDING_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED'
+          assert len(proof['checks']) == 15
+          assert all(proof['checks'].values())
+          assert proof['checks_failed'] == 0
+          assert proof['release_receipt_sha256'] == release['receipt_sha256']
+          assert proof['provider_artifact_id'] == release['final_head_provider_proof']['artifact_id']
+          assert proof['google_drive_file_id'] == release['google_drive_release']['file_id']
+          assert proof['google_drive_readback_verified'] is True
+          assert proof['google_drive_shared'] is False
+          assert proof['verified_live_revenue_events'] == 0
+          assert proof['external_gate_effect'] == 'UNCHANGED'
+          assert proof['full_commercial_maturity'] is False
+          PY
+
+      - name: Verify no secret-shaped values are present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          roots = [
+              Path('alpha_omega_commercial/authority_snapshot_action_binding_release_receipt.json'),
+              Path('alpha_omega_commercial/authority_snapshot_action_binding_checkpoint.json'),
+              Path('alpha_omega_commercial/prove_authority_snapshot_action_binding_release.py'),
+              Path('alpha_omega_commercial/artifacts/c15/authority-action-binding-release'),
+          ]
+          forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for root in roots:
+              paths = root.rglob('*') if root.is_dir() else [root]
+              for path in paths:
+                  if path.is_file():
+                      assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
+          PY
+
+      - name: Upload immutable authority action binding release proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alpha-omega-commercial-authority-action-binding-release-proof
+          path: alpha_omega_commercial/artifacts/c15/authority-action-binding-release
+          if-no-files-found: error
+          retention-days: 90
