@@ -11,9 +11,9 @@
     "PROMETHEUS",
     "PRAXIS"
   ],
-  "baseline_proof_hash": "318b37c82b7baf23135438bf561f6da6e972d95a4af5d92b8af149b560b1c44b",
+  "baseline_proof_hash": "09edd98ab041722109701dc9ef86a482dc8444fcefbe9b77b71bb20365d6fae5",
   "current_verified_level": 5,
-  "database_dump_sha256": "6aa982d9af53edd84b1942b5c0c2ff86a2608974418b47625010530b3c2ebe21",
+  "database_dump_sha256": "6184d6481cbb4cbeb76d31e9634eee6f84c235be29a9f1a4fb8114938b09bb9a",
   "evolution": {
     "constitutional_change": false,
     "external_effect": false,
@@ -38,24 +38,24 @@
   ],
   "integrity": {
     "errors": [],
-    "event_count": 10,
-    "head_hash": "82a81427f3ec233907a13d42b3d70be85f690e6f3022faeaa07a8e4a8014c259",
+    "event_count": 11,
+    "head_hash": "9cf6d11db00f44ff3bee351e4698063f3f822ba14eca9cc8cfb6026a70b8fb25",
     "status": "PASSED"
   },
-  "ledger_head_hash": "82a81427f3ec233907a13d42b3d70be85f690e6f3022faeaa07a8e4a8014c259",
+  "ledger_head_hash": "9cf6d11db00f44ff3bee351e4698063f3f822ba14eca9cc8cfb6026a70b8fb25",
   "level_6_eligible": false,
   "maturity_state": "VERIFIED_SOVEREIGN_MISSION_ECOLOGY_SCOPED",
   "module_count": 20,
   "next_gate": "WORKFLOW_SPECIFIC_TRUSTED_AUTONOMY_DESIGN",
-  "proof_hash": "59dfca7330a4d64bbf34485d4c586706f11014d611a53a2d0766f73953a5baef",
-  "proof_id": "PRF-FRONTIER-CSE-V2-30875823170-1",
+  "proof_hash": "aea48706fe20f3bee879ab29068ebd35f150ea41870d0ce89ed5f8eed2c4dcae",
+  "proof_id": "PRF-FRONTIER-CSE-V2-30895945439-1",
   "provider": "github_actions",
   "real_workflows": [
     {
       "evidence": {
         "drift": "IN_SYNC",
-        "ledger_head": "e5052ce2f75aa8c44118b64467a4892d339959f17e5ebeeebc02c51d6ff8229b",
-        "proof_hash": "318b37c82b7baf23135438bf561f6da6e972d95a4af5d92b8af149b560b1c44b"
+        "ledger_head": "e879e8b521ca2f6b0aabac6b69c4b4b5aa803c36a6460813fa14827f42356079",
+        "proof_hash": "09edd98ab041722109701dc9ef86a482dc8444fcefbe9b77b71bb20365d6fae5"
       },
       "external_effect": false,
       "passed": true,
@@ -101,9 +101,9 @@
     }
   ],
   "reapply_test": true,
-  "recorded_at": "2026-08-04T03:49:17.281443Z",
+  "recorded_at": "2026-08-04T09:21:21.740675Z",
   "rollback_test": true,
-  "run_id": "CSE-V2-30875823170-1",
+  "run_id": "CSE-V2-30895945439-1",
   "scope": [
     "REAL-GITHUB-CANONICAL-RUNTIME",
     "REAL-DRIVE-ARTIFACT-PROVENANCE",
@@ -115,6 +115,6 @@
   "v1_sql_inspection": {
     "available": true,
     "module_rows": 10,
-    "sha256": "940e6e7192c4eef1bed706c116c6eeb2afb6616e4a039637ab17b822b830c45e"
+    "sha256": "f07e8ff50aceb242f70f1123eb812927caa503ab7bcb97b1aa66f2a43de4aed4"
   }
 }
