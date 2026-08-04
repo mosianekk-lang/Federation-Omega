@@ -1,0 +1,20 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-EVIDENCE-VAULT-V16-RELEASE-CHECKPOINT",
+  "status": "PROVIDER_RECONCILIATION_EVIDENCE_VAULT_V16_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED",
+  "implementation_checkpoint_id": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-EVIDENCE-VAULT-V16-CHECKPOINT",
+  "implementation_pull_request": 156,
+  "implementation_merge_commit": "3f0764da59a9a96bd7a11f77bb5ef1720baea5cb",
+  "provider_proof_run": 30922901781,
+  "provider_proof_job": 92037777846,
+  "provider_proof_artifact_id": 8897842921,
+  "provider_proof_artifact_digest": "sha256:639663bfda09ea790237ca9b6e59dbadbaec205dfeb0f12f5d7455fe8286b91f",
+  "google_drive_file_id": "1BaghI8fHt42GTehodoXo0IJoRmYD0j-7NYMkmhS5gW0",
+  "google_drive_export_sha256": "88b43753d53d5291a89da26962b911d51265654492651c7086483e9c2223f578",
+  "release_receipt_sha256": "85b170cdbda11d903898b2106356641505283512b85548abbe79c1321ccecbe4",
+  "programme_dependency_order_verified": true,
+  "institution_state_preserved": true,
+  "owner_authority_effect": "UNCHANGED",
+  "external_gate_effect": "UNCHANGED",
+  "verified_live_revenue_events": 0,
+  "full_commercial_maturity": false
+}
