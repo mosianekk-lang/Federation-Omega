@@ -56,7 +56,7 @@ jobs:
           --artifact-root alpha_omega_commercial/artifacts/c10-c15
           --output alpha_omega_commercial/artifacts/c10-c15/programme-register-integrity.json
 
-      - name: Execute external commercial evidence admission proof
+      - name: Execute external commercial evidence and owner authority proof
         run: >-
           python alpha_omega_commercial/prove_external_evidence.py
           --output alpha_omega_commercial/artifacts/c10-c15/external-evidence
@@ -156,10 +156,15 @@ jobs:
           assert programme_integrity['canonical_authority_reconciliation'] == checkpoint['status']
           assert not any(programme_integrity['external_gates'].values())
 
-          assert admission['status'] == 'EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED'
+          assert admission['status'] == 'OWNER_AUTHORITY_RECEIPT_CONTROL_VERIFIED_GATES_UNCHANGED'
           assert all(admission['gates'].values())
+          assert admission['gates']['boolean_owner_confirmation_rejected']
+          assert admission['gates']['owner_decision_receipt_required']
+          assert admission['gates']['external_case_study_owner_receipt_required']
+          assert admission['provider_authority']['owner_decision']['state'] == 'OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED'
           assert not any(projection['external_gates'].values())
           assert not projection['full_commercial_maturity']
+          assert projection['consumed_owner_receipts'] == {}
           assert projection['ledger_integrity']
 
           assert freshness['status'] == 'PROVIDER_AUTHORITY_FRESHNESS_RECONCILIATION_VERIFIED'

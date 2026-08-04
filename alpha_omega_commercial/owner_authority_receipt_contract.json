@@ -1,0 +1,60 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-OWNER-AUTHORITY-RECEIPTS-V1",
+  "scope": [
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "owner_reserved_gates": [
+    "signed_customer_contract",
+    "payment_provider_revenue",
+    "partner_adoption",
+    "external_case_study"
+  ],
+  "admission_rule": "A caller-set confirmation boolean has no authority. An owner-reserved gate requires a fresh provider-backed owner decision receipt bound to the exact gate, evidence ID and evidence content SHA-256.",
+  "required_receipt_fields": [
+    "receipt_id",
+    "owner_id",
+    "gate",
+    "evidence_id",
+    "evidence_content_sha256",
+    "decision",
+    "issued_at",
+    "expires_at",
+    "provider",
+    "locator",
+    "provider_class",
+    "nonce",
+    "receipt_sha256"
+  ],
+  "provider_authority": {
+    "domain": "owner_decision",
+    "required_state": "FRESH_VERIFIED",
+    "current_state": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "freshness": {
+    "maximum_validity_days": 30,
+    "future_dated_receipts_rejected": true,
+    "expired_receipts_rejected": true
+  },
+  "integrity": {
+    "algorithm": "SHA-256",
+    "exact_evidence_binding": true,
+    "exact_gate_binding": true,
+    "one_receipt_one_evidence_identity": true,
+    "hash_linked_admission_ledger": true,
+    "restart_safe_consumption_readback": true
+  },
+  "truth_boundary": {
+    "external_maturity_gates_advanced": false,
+    "verified_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "customer_demand_proven": false,
+    "signed_contract_proven": false,
+    "payment_proven": false,
+    "partner_adoption_proven": false,
+    "external_case_study_proven": false,
+    "production_scale_proven": false
+  }
+}

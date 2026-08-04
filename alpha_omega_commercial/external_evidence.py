@@ -7,6 +7,8 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
 
+from owner_authority import OwnerAuthorityValidator, OwnerDecisionReceipt
+
 
 EXTERNAL_GATE_KEYS = (
     "customer_demand",
@@ -98,6 +100,7 @@ class EvidenceEnvelope:
     evidence_class: str
     claims: dict[str, Any] = field(default_factory=dict)
     owner_confirmed: bool = False
+    owner_decision_receipt_id: str | None = None
 
 
 class ExternalEvidenceAdmissionController:
@@ -105,20 +108,35 @@ class ExternalEvidenceAdmissionController:
 
     Evidence may advance a maturity gate only when it is external provider-native,
     current, complete for the relevant gate and backed by fresh provider authority.
-    Owner-reserved gates additionally require an explicit owner confirmation.
+    Owner-reserved gates require a provider-backed, hash-valid, evidence-bound owner
+    decision receipt. A caller-set boolean is retained only for compatibility and is
+    never accepted as owner authority.
     """
 
-    def __init__(self, root: str | Path, authority: dict[str, dict[str, Any]]) -> None:
+    def __init__(
+        self,
+        root: str | Path,
+        authority: dict[str, dict[str, Any]],
+        *,
+        owner_receipts: dict[str, OwnerDecisionReceipt] | None = None,
+        expected_owner_id: str = "Kim Kagiso Mosiane",
+    ) -> None:
         self.root = Path(root)
         self.root.mkdir(parents=True, exist_ok=True)
         self.ledger_file = self.root / "external-evidence-ledger.jsonl"
         self.state_file = self.root / "external-evidence-state.json"
         self.authority = authority
+        self.owner_validator = OwnerAuthorityValidator(
+            owner_receipts,
+            expected_owner_id=expected_owner_id,
+        )
         self.decisions: dict[str, dict[str, Any]] = {}
         self.admitted_by_gate: dict[str, list[str]] = {key: [] for key in EXTERNAL_GATE_KEYS}
+        self.consumed_owner_receipts: dict[str, str] = {}
         self._replay()
 
     def admit(self, evidence: EvidenceEnvelope, *, now: str | None = None) -> dict[str, Any]:
+        current_time = now or utc_now()
         evidence_hash = digest(asdict(evidence))
         existing = self.decisions.get(evidence.evidence_id)
         if existing:
@@ -136,6 +154,7 @@ class ExternalEvidenceAdmissionController:
             return conflict
 
         reasons: list[str] = []
+        owner_receipt_sha256: str | None = None
         policy = GATE_POLICIES.get(evidence.gate)
         if not policy:
             reasons.append("UNKNOWN_EXTERNAL_GATE")
@@ -176,12 +195,24 @@ class ExternalEvidenceAdmissionController:
                     request_count = 0
                 if request_count < 1000:
                     reasons.append("PRODUCTION_SCALE_SAMPLE_TOO_SMALL")
-            if evidence.gate in OWNER_RESERVED_GATES and not evidence.owner_confirmed:
-                reasons.append("OWNER_CONFIRMATION_REQUIRED")
+            if evidence.gate in OWNER_RESERVED_GATES:
+                if evidence.owner_confirmed:
+                    reasons.append("BOOLEAN_OWNER_CONFIRMATION_NOT_ACCEPTED")
+                validation = self.owner_validator.validate(
+                    receipt_id=evidence.owner_decision_receipt_id,
+                    gate=evidence.gate,
+                    evidence_id=evidence.evidence_id,
+                    evidence_content_sha256=evidence.content_sha256,
+                    authority=self.authority,
+                    now=current_time,
+                    consumed_by=self.consumed_owner_receipts,
+                )
+                reasons.extend(validation.reasons)
+                owner_receipt_sha256 = validation.receipt_sha256
 
             try:
                 observed = parse_utc(evidence.observed_at)
-                current = parse_utc(now or utc_now())
+                current = parse_utc(current_time)
                 age_seconds = (current - observed).total_seconds()
                 if age_seconds < 0:
                     reasons.append("EVIDENCE_FROM_FUTURE")
@@ -201,6 +232,8 @@ class ExternalEvidenceAdmissionController:
             "provider": evidence.provider,
             "locator": evidence.locator,
             "observed_at": evidence.observed_at,
+            "owner_decision_receipt_id": evidence.owner_decision_receipt_id,
+            "owner_decision_receipt_sha256": owner_receipt_sha256,
         }
         self._append("EVIDENCE_EVALUATED", decision)
         return decision
@@ -223,12 +256,15 @@ class ExternalEvidenceAdmissionController:
                 else "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
             ),
             "ledger_integrity": self.verify_ledger(),
+            "consumed_owner_receipts": dict(sorted(self.consumed_owner_receipts.items())),
         }
         result["projection_sha256"] = digest(result)
         return result
 
     def authority_readback(self) -> dict[str, Any]:
-        required_domains = sorted({policy["authority_domain"] for policy in GATE_POLICIES.values()})
+        required_domains = sorted(
+            {policy["authority_domain"] for policy in GATE_POLICIES.values()} | {"owner_decision"}
+        )
         states = {domain: self.authority.get(domain, {}).get("state", "UNVERIFIED") for domain in required_domains}
         return {
             "required_domains": required_domains,
@@ -282,6 +318,9 @@ class ExternalEvidenceAdmissionController:
             ids = self.admitted_by_gate.setdefault(decision["gate"], [])
             if decision["evidence_id"] not in ids:
                 ids.append(decision["evidence_id"])
+            receipt_id = decision.get("owner_decision_receipt_id")
+            if receipt_id:
+                self.consumed_owner_receipts[receipt_id] = decision["evidence_id"]
 
     def _replay(self) -> None:
         for event in self._events():
@@ -292,6 +331,7 @@ class ExternalEvidenceAdmissionController:
         state = {
             "decisions": self.decisions,
             "admitted_by_gate": self.admitted_by_gate,
+            "consumed_owner_receipts": self.consumed_owner_receipts,
             "ledger_head": self._events()[-1]["event_hash"] if self._events() else "GENESIS",
         }
         self.state_file.write_text(json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8")

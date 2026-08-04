@@ -9,7 +9,7 @@ from pathlib import Path
 from external_evidence import EvidenceEnvelope, ExternalEvidenceAdmissionController, digest
 
 
-PROOF_NOW = "2026-08-03T18:58:49Z"
+PROOF_NOW = "2026-08-04T00:05:00Z"
 
 
 def sha(label: str) -> str:
@@ -35,8 +35,8 @@ def execute(output: Path) -> dict:
         "google_drive_document_release": {
             "state": "FRESH_VERIFIED_READBACK",
             "scope": ["document_release_readback"],
-            "file_id": "1L4ysPqtf8x2c9E-3dwVi4KDt5QwR53Oc4suFZXqSe2Q",
-            "modified_at": "2026-08-03T17:12:20.507Z",
+            "file_id": "1UYV6hyyR68v_WPSfZIEP7mzMGJ07-XKKTyAJsSTW2-c",
+            "modified_at": "2026-08-03T23:18:35.544Z",
         },
         "google_drive_binary_artifact_transfer": {
             "state": "PROVIDER_BLOCKED_FILE_EGRESS",
@@ -44,10 +44,11 @@ def execute(output: Path) -> dict:
         },
         "customer_market": {"state": "MARKET_PROOF_REQUIRED"},
         "payment_provider": {"state": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"},
-        "cloud_run": {"state": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"},
+        "cloud_run": {"state": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE"},
         "external_attestation": {"state": "UNVERIFIED"},
         "partner_market": {"state": "MARKET_PROOF_REQUIRED"},
-        "live_cloud_operations": {"state": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"},
+        "live_cloud_operations": {"state": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE"},
+        "owner_decision": {"state": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"},
     }
 
     runtime = output / "external-evidence-runtime"
@@ -59,7 +60,7 @@ def execute(output: Path) -> dict:
             gate="customer_demand",
             provider="github-actions-reference",
             locator="artifact://commercial/mock-demand-001",
-            observed_at="2026-08-03T18:40:00Z",
+            observed_at="2026-08-03T23:40:00Z",
             content_sha256=sha("mock-demand-001"),
             evidence_class="MOCK_CONFORMANCE",
             claims={"customer_identity_verified": True, "price_accepted": True},
@@ -69,18 +70,18 @@ def execute(output: Path) -> dict:
             gate="payment_provider_revenue",
             provider="payment-provider",
             locator="provider://payment/blocked-payment-001",
-            observed_at="2026-08-03T18:40:00Z",
+            observed_at="2026-08-03T23:40:00Z",
             content_sha256=sha("blocked-payment-001"),
             evidence_class="EXTERNAL_PROVIDER_NATIVE",
             claims={"settled": True, "currency": "ZAR", "amount": 1000.0},
-            owner_confirmed=False,
+            owner_confirmed=True,
         ),
         EvidenceEnvelope(
             evidence_id="blocked-cloud-001",
             gate="live_cloud_provider",
             provider="cloud-run",
             locator="provider://cloud-run/blocked-cloud-001",
-            observed_at="2026-08-03T18:40:00Z",
+            observed_at="2026-08-03T23:40:00Z",
             content_sha256=sha("blocked-cloud-001"),
             evidence_class="EXTERNAL_PROVIDER_NATIVE",
             claims={
@@ -96,7 +97,7 @@ def execute(output: Path) -> dict:
             gate="external_case_study",
             provider="github-actions-reference",
             locator="artifact://commercial/internal-case-study-001",
-            observed_at="2026-08-03T18:40:00Z",
+            observed_at="2026-08-03T23:40:00Z",
             content_sha256=sha("internal-case-study-001"),
             evidence_class="REFERENCE_PROVIDER",
             claims={
@@ -114,9 +115,14 @@ def execute(output: Path) -> dict:
     gates = {
         "all_unverified_candidates_rejected": all(item["status"] == "REJECTED" for item in decisions),
         "synthetic_evidence_rejected": "NON_EXTERNAL_OR_SYNTHETIC_EVIDENCE" in decisions[0]["reasons"],
-        "payment_authority_and_owner_boundary_enforced": (
+        "payment_provider_authority_enforced": (
             "PROVIDER_AUTHORITY_NOT_VERIFIED:payment_provider" in decisions[1]["reasons"]
-            and "OWNER_CONFIRMATION_REQUIRED" in decisions[1]["reasons"]
+        ),
+        "boolean_owner_confirmation_rejected": (
+            "BOOLEAN_OWNER_CONFIRMATION_NOT_ACCEPTED" in decisions[1]["reasons"]
+        ),
+        "owner_decision_receipt_required": (
+            "OWNER_DECISION_RECEIPT_REQUIRED" in decisions[1]["reasons"]
         ),
         "cloud_provider_authority_enforced": (
             "PROVIDER_AUTHORITY_NOT_VERIFIED:cloud_run" in decisions[2]["reasons"]
@@ -124,27 +130,32 @@ def execute(output: Path) -> dict:
         "external_case_study_origin_enforced": (
             "NON_EXTERNAL_OR_SYNTHETIC_EVIDENCE" in decisions[3]["reasons"]
         ),
+        "external_case_study_owner_receipt_required": (
+            "OWNER_DECISION_RECEIPT_REQUIRED" in decisions[3]["reasons"]
+        ),
         "external_maturity_gates_unchanged": not any(projection["external_gates"].values()),
         "full_commercial_maturity_not_claimed": not projection["full_commercial_maturity"],
         "ledger_integrity": controller.verify_ledger() and projection["ledger_integrity"],
         "state_persistence": (runtime / "external-evidence-state.json").is_file(),
+        "owner_receipt_consumption_empty": projection["consumed_owner_receipts"] == {},
         "drive_release_scope_exact": (
             authority["google_drive_document_release"]["state"] == "FRESH_VERIFIED_READBACK"
             and authority["google_drive_binary_artifact_transfer"]["state"] == "PROVIDER_BLOCKED_FILE_EGRESS"
         ),
-        "cloud_and_payment_remain_blocked": (
-            authority["cloud_run"]["state"] == "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
+        "cloud_payment_and_owner_decision_remain_blocked": (
+            authority["cloud_run"]["state"] == "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE"
             and authority["payment_provider"]["state"] == "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
+            and authority["owner_decision"]["state"] == "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
         ),
     }
 
     receipt = {
         "programme_id": "AO-COMMERCIAL-MATURITY-V1",
-        "proof_scope": "C12_C13_C15_EXTERNAL_EVIDENCE_ADMISSION",
+        "proof_scope": "C12_C13_C15_EXTERNAL_EVIDENCE_AND_OWNER_AUTHORITY_RECEIPTS",
         "status": (
-            "EXTERNAL_EVIDENCE_ADMISSION_VERIFIED_GATES_UNCHANGED"
+            "OWNER_AUTHORITY_RECEIPT_CONTROL_VERIFIED_GATES_UNCHANGED"
             if all(gates.values())
-            else "EXTERNAL_EVIDENCE_ADMISSION_FAILED"
+            else "OWNER_AUTHORITY_RECEIPT_CONTROL_FAILED"
         ),
         "verified_at": PROOF_NOW,
         "gates": gates,
@@ -160,9 +171,11 @@ def execute(output: Path) -> dict:
             "revenue recognition confirmation",
         ],
         "truth_boundary": (
-            "This proof verifies fail-closed external-evidence admission, persistence and exact provider-scope readback. "
-            "No customer demand, contract, payment, revenue, subscription, Cloud Run service, enterprise attestation, "
-            "partner adoption, external case study or production-scale operation is established."
+            "This proof verifies fail-closed external-evidence admission and rejects caller-set owner "
+            "confirmation booleans. Owner-reserved gates require a fresh provider-backed, hash-valid, "
+            "evidence-bound owner decision receipt. No owner decision, customer demand, contract, payment, "
+            "revenue, subscription, Cloud Run operation, enterprise attestation, partner adoption, external "
+            "case study or production-scale operation is established."
         ),
     }
     receipt["receipt_sha256"] = digest(receipt)
