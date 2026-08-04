@@ -1,0 +1,69 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V10-CHECKPOINT",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "status": "CANONICAL_API_EFFECTIVE_V10_RECONCILIATION_IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency_checkpoint": {
+    "programme_dependency_order_verified": true,
+    "preceding_release_pull_request": 137,
+    "preceding_release_merge_commit": "c3a1f14f2da79901c3d8e2d628f914f0beaf5a7d",
+    "preceding_release_checkpoint": "alpha_omega_commercial/authority_action_idempotency_release_checkpoint.json",
+    "preceding_drive_file_id": "14pySl3BSQqgi0XIeuJYks6_y2EwW-Mu4mTyYCAKiR38",
+    "preceding_drive_readback_verified": true,
+    "institution_state_preserved": true
+  },
+  "effective_api": {
+    "compatibility_descriptor": "AO-COMMERCIAL-CANONICAL-API-V3",
+    "compatibility_descriptor_state": "HISTORICAL_PROVIDER_PROOF_ANCHOR_PRESERVED",
+    "capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10",
+    "canonical_class": "IdempotentCoordinatedAuthoritySnapshotCommercialControlPlane",
+    "predecessor_class": "CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane",
+    "package_export_verified": true,
+    "distributed_provider_exactly_once_proven": false
+  },
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED"
+  },
+  "external_gates": {
+    "customer_demand_and_price_acceptance": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue_receipt": false,
+    "live_cloud_provider_execution": false,
+    "enterprise_assurance_or_certification": false,
+    "partner_adoption": false,
+    "external_customer_case_study": false,
+    "production_scale_and_recovery_evidence": false
+  },
+  "commercial_truth": {
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true,
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "payment_provider_operation_proven": false,
+    "distributed_provider_exactly_once_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "provider_proof": {
+    "workflow": ".github/workflows/alpha-omega-commercial-canonical-api-reconciliation.yml",
+    "state": "PROVIDER_PROOF_REQUIRED",
+    "artifact_name": "alpha-omega-commercial-canonical-api-v10-reconciliation-proof"
+  },
+  "promotion_rule": "Promote only after the pull-request head passes the canonical API reconciliation proof, all triggered C01-C15 commercial and authority regressions, GitHub control-plane enforcement, Superior Logic CI and repository leak guard, and after the retained artifact and job steps are inspected."
+}
