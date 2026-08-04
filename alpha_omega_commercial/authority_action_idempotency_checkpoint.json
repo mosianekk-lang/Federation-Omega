@@ -1,7 +1,7 @@
 {
   "checkpoint_id": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10-CHECKPOINT",
   "programme_id": "AO-COMMERCIAL-MATURITY-V1",
-  "status": "AUTHORITY_ACTION_IDEMPOTENCY_IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "status": "AUTHORITY_ACTION_IDEMPOTENCY_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED",
   "stage_scope": [
     "C03",
     "C11",
@@ -27,13 +27,17 @@
     "self_service_saas_held": true
   },
   "provider_proof": {
-    "state": "PROVIDER_PROOF_REQUIRED",
-    "workflow_run": null,
-    "workflow_job": null,
-    "artifact_id": null,
-    "artifact_digest": null,
+    "state": "PROVIDER_PROOF_VERIFIED",
+    "head_sha": "e79b5d85d4db65af82325bbf4152c4b413a2640e",
+    "workflow_run": 30895158457,
+    "workflow_job": 91946192880,
+    "artifact_id": 8886688739,
+    "artifact_name": "alpha-omega-commercial-authority-action-idempotency-proof",
+    "artifact_digest": "sha256:7eae1286da138137180052a83ffd4e02a7f25ae407dd961aee6f8e887f898c75",
+    "receipt_sha256": "f61dc9632881d3c34363d6113516b18804264056cec7110bc0faa66284892786",
     "checks_required": 10,
-    "checks_failed": null
+    "checks_failed": 0,
+    "expires_at": "2026-11-02T09:10:34Z"
   },
   "provider_boundaries": {
     "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
