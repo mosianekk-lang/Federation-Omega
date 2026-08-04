@@ -1,0 +1,121 @@
+{
+  "commercial_truth": {
+    "cloud_run_operation_proven": false,
+    "customer_demand_proven": false,
+    "distributed_provider_exactly_once_proven": false,
+    "enterprise_attestation_proven": false,
+    "external_customer_case_study_proven": false,
+    "full_commercial_maturity": false,
+    "partner_adoption_proven": false,
+    "payment_provider_operation_proven": false,
+    "production_scale_proven": false,
+    "signed_customer_contract_proven": false,
+    "verified_live_revenue_events": 0
+  },
+  "dependency": {
+    "implementation_final_head": "4528ca39cf4a55cea12fbf89810048bb7916be14",
+    "implementation_merge_commit": "31e06053764b9900f6edb8fe89a773737f1af264",
+    "implementation_pull_request": 136,
+    "preceding_release_merge_commit": "bc0982c176ea543799b9a12b98e136b3f0fc0285",
+    "preceding_release_pull_request": 135
+  },
+  "effective_controls": {
+    "canonical_intent_hash_required": true,
+    "conflicting_object_identity_reuse_rejected": true,
+    "distributed_provider_exactly_once_proven": false,
+    "exact_retry_creates_new_transaction": false,
+    "exact_retry_returns_committed_record": true,
+    "historical_unsealed_commit_replayed": false,
+    "idempotency_seal_transaction_bound": true,
+    "restart_safe": true,
+    "retry_consumes_owner_authority_again": false,
+    "tampered_seal_fails_closed": true
+  },
+  "external_gate_effect": "UNCHANGED",
+  "external_gates": {
+    "customer_demand_and_price_acceptance": false,
+    "enterprise_assurance_or_certification": false,
+    "external_customer_case_study": false,
+    "live_cloud_provider_execution": false,
+    "partner_adoption": false,
+    "payment_provider_revenue_receipt": false,
+    "production_scale_and_recovery_evidence": false,
+    "signed_customer_contract": false
+  },
+  "final_head_provider_proof": {
+    "artifact_digest": "sha256:34611bb614558ea8218e8268deb3ccb75b33206c1d25978afaadf3c368a963da",
+    "artifact_id": 8886777639,
+    "artifact_name": "alpha-omega-commercial-authority-action-idempotency-proof",
+    "checks_failed": 0,
+    "checks_required": 10,
+    "expires_at": "2026-11-02T09:13:21Z",
+    "receipt_sha256": "f61dc9632881d3c34363d6113516b18804264056cec7110bc0faa66284892786",
+    "workflow_job": 91946871070,
+    "workflow_run": 30895364093
+  },
+  "final_head_workflows": {
+    "C01_C05": 30895363860,
+    "C06_C09": 30895364052,
+    "C10_C15": 30895363763,
+    "authority_action_atomicity": 30895364526,
+    "authority_action_binding": 30895363917,
+    "authority_action_binding_release": 30895364069,
+    "authority_action_coordination": 30895366270,
+    "authority_action_coordination_release": 30895364110,
+    "authority_action_crash_recovery": 30895363828,
+    "authority_action_crash_recovery_release": 30895364073,
+    "authority_action_idempotency": 30895364093,
+    "authority_action_journal": 30895366463,
+    "authority_action_journal_release": 30895364223,
+    "authority_anti_rollback": 30895364621,
+    "authority_snapshot": 30895363811,
+    "authority_snapshot_release": 30895366359,
+    "effective_programme_state": 30895364749,
+    "github_control_plane": 30895366467,
+    "governed_authority": 30895363745,
+    "institution_reconciliation": 30895364079,
+    "provider_authority_acquisition": 30895366376,
+    "repository_leak_guard": 30895364070,
+    "superior_logic_ci": 30895364071
+  },
+  "google_drive_release": {
+    "created_at": "2026-08-04T09:16:09.264Z",
+    "file_id": "14pySl3BSQqgi0XIeuJYks6_y2EwW-Mu4mTyYCAKiR38",
+    "modified_at": "2026-08-04T09:16:52.129Z",
+    "owner": "mosianekk@gmail.com",
+    "readback_length": 4498,
+    "readback_sha256": "a70a6d6d938ec8769dfd25e35a8b8174be50355c5ad9f80cf425a8d7a9e019a8",
+    "readback_verified": true,
+    "shared": false,
+    "title": "Alpha Omega Commercial Authority Action Idempotency v10 Release — 2026-08-04"
+  },
+  "owner_authority": {
+    "consequential_releases": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "financial_commitments": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "receipt_sha256": "8df7776a820ab2f73aac789bbf938a5a84e56376565277887c484102e53be625",
+  "release_id": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10-RELEASE",
+  "self_service_saas": "HELD",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "status": "AUTHORITY_ACTION_IDEMPOTENCY_RELEASE_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS"
+}
