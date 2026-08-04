@@ -77,6 +77,15 @@ class ResolveEngine:
         self.ledger.append("CAPABILITY_LEARNED", {"rule_id": key, **self.learned_rules[key]})
 
     def execute(self, job: EvidenceJob, verifier: IndependentVerifier | None = None) -> dict[str, Any]:
+        previous = self.load_receipt(job.job_id)
+        if (
+            previous
+            and previous.get("idempotency_key") == job.idempotency_key
+            and previous.get("status") == "COMPLETE_VERIFIED"
+        ):
+            self.ledger.append("IDEMPOTENT_REPLAY", {"job_id": job.job_id, "receipt_status": previous["status"]})
+            return previous
+
         self.ledger.append("JOB_STARTED", job.to_dict())
         attempts = []
         provider_result: dict[str, Any] | None = None
@@ -181,6 +190,12 @@ class ResolveEngine:
             "gates": [asdict(gate) for gate in job.gates],
             "learned_rules": self.learned_rules,
         }
+
+    def load_receipt(self, job_id: str) -> dict[str, Any] | None:
+        path = self.workspace / "receipts" / f"{job_id}.json"
+        if not path.exists():
+            return None
+        return json.loads(path.read_text(encoding="utf-8"))
 
     def _write_receipt(self, job_id: str, receipt: dict[str, Any]) -> None:
         path = self.workspace / "receipts" / f"{job_id}.json"
