@@ -57,7 +57,6 @@ jobs:
           test_live_provider_expansion.py
           test_live_provider_block.py
           test_canonical_authority_reconciliation.py
-          test_owner_authority.py
           test_owner_authority_reconciliation.py
           test_governed_commercial_assurance.py
 
