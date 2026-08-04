@@ -17,7 +17,8 @@
     "receipt_requires_current_unexpired_claim": true,
     "hash_chained_claim_history": true,
     "local_duplicate_dispatch_prevented": true,
-    "mock_provider_conformance": "PROVIDER_NATIVE_CI_PENDING",
+    "mock_provider_conformance": "PROVIDER_NATIVE_CI_VERIFIED",
+    "local_dispatch_claim_lease": "PROVIDER_NATIVE_CI_VERIFIED",
     "live_provider_receipt_admission": "PROVIDER_PROOF_REQUIRED",
     "distributed_provider_exactly_once": "NOT_PROVEN"
   },
@@ -27,6 +28,15 @@
     "customer_market": "MARKET_PROOF_REQUIRED",
     "partner_market": "MARKET_PROOF_REQUIRED",
     "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "provider_proof": {
+    "implementation_evidence_head_sha": "55ea41b8bba4111b5b8c9d5573c39e502898f348",
+    "workflow_run": 30903772387,
+    "workflow_job": 91973971011,
+    "artifact_id": 8890156297,
+    "artifact_digest": "sha256:8529723e47a4167db6bd61f131af1cfaffc6dc8737195f51dec7ec7ee4c75e74",
+    "checks_required": 12,
+    "checks_failed": 0
   },
   "verified_live_revenue_events": 0,
   "external_maturity_gates_advanced": false,
