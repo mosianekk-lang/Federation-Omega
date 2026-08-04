@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import json
+import os
 import subprocess
 import sys
 import tarfile
@@ -18,6 +19,16 @@ assert SPEC and SPEC.loader
 EXPORTS = importlib.util.module_from_spec(SPEC)
 sys.modules[SPEC.name] = EXPORTS
 SPEC.loader.exec_module(EXPORTS)
+
+SOURCE_REPOSITORY_CONTROL_TESTS = (
+    "test_phoenix_provider_cutover_v2.py",
+    "test_phoenix_provider_cutover_v3.py",
+    "test_phoenix_provider_cutover_v3_1.py",
+    "test_provider_airlock_activate.py",
+    "test_agent_governance_contract.py",
+    "test_pst_composite_runtime_contract.py",
+    "test_wif_hardening.py",
+)
 
 
 class PhoenixExportTests(unittest.TestCase):
@@ -44,14 +55,9 @@ class PhoenixExportTests(unittest.TestCase):
             "example ghp_not_a_real_token\n", encoding="utf-8"
         )
         (self.root / "tests").mkdir()
-        for name in (
-            "test_phoenix_provider_cutover_v2.py",
-            "test_phoenix_provider_cutover_v3.py",
-            "test_phoenix_provider_cutover_v3_1.py",
-            "test_provider_airlock_activate.py",
-        ):
+        for name in SOURCE_REPOSITORY_CONTROL_TESTS:
             (self.root / "tests" / name).write_text(
-                "raise RuntimeError('migration controller is intentionally absent from Core')\n",
+                "raise RuntimeError('source-repository control is intentionally absent from Core')\n",
                 encoding="utf-8",
             )
         (self.root / "tests" / "test_core_example.py").write_text(
@@ -98,6 +104,9 @@ class PhoenixExportTests(unittest.TestCase):
                 "excluded_test_globs": [
                     "tests/test_phoenix_*",
                     "tests/test_provider_airlock_activate.py",
+                    "tests/test_agent_governance_contract.py",
+                    "tests/test_pst_composite_runtime_contract.py",
+                    "tests/test_wif_hardening.py",
                 ],
                 "excluded_segments": [
                     "credentials",
@@ -129,7 +138,63 @@ class PhoenixExportTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_export_excludes_all_workflows_runtime_secrets_and_migration_tests(self):
+    @staticmethod
+    def run_exported_tests(
+        core_archive: Path,
+        extracted: Path,
+        *,
+        install_requirements: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
+        extracted.mkdir()
+        with tarfile.open(core_archive, "r:gz") as archive:
+            archive.extractall(extracted, filter="data")
+        env = os.environ.copy()
+        env.setdefault("TERM", "dumb")
+        if install_requirements:
+            requirements = extracted / "requirements.txt"
+            if not requirements.is_file():
+                return subprocess.CompletedProcess(
+                    args=["requirements.txt"],
+                    returncode=1,
+                    stdout="",
+                    stderr="exported Core is missing requirements.txt",
+                )
+            installation = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--disable-pip-version-check",
+                    "-r",
+                    str(requirements),
+                ],
+                cwd=extracted,
+                env=env,
+                text=True,
+                capture_output=True,
+            )
+            if installation.returncode != 0:
+                return installation
+        return subprocess.run(
+            [
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests",
+                "-p",
+                "test*.py",
+                "-v",
+            ],
+            cwd=extracted,
+            env=env,
+            text=True,
+            capture_output=True,
+        )
+
+    def test_export_excludes_workflows_runtime_secrets_and_source_control_tests(self):
         output = self.root / "output"
         receipt = EXPORTS.build(self.root, output, self.policy)
         self.assertEqual("VERIFIED", receipt["status"])
@@ -138,7 +203,9 @@ class PhoenixExportTests(unittest.TestCase):
 
         with tarfile.open(output / "Federation-Omega-Core.tar.gz", "r:gz") as archive:
             names = set(archive.getnames())
-            manifest = json.load(archive.extractfile("PHOENIX_CORE_MANIFEST.json"))
+            manifest_file = archive.extractfile("PHOENIX_CORE_MANIFEST.json")
+            assert manifest_file is not None
+            manifest = json.load(manifest_file)
         self.assertIn("systems/example/app.py", names)
         self.assertIn("README.md", names)
         self.assertIn("tests/test_core_example.py", names)
@@ -153,24 +220,38 @@ class PhoenixExportTests(unittest.TestCase):
                 for name in names
             )
         )
-        self.assertNotIn("tests/test_provider_airlock_activate.py", names)
+        for name in SOURCE_REPOSITORY_CONTROL_TESTS:
+            self.assertNotIn(f"tests/{name}", names)
         self.assertEqual(0, manifest["invariants"]["migration_control_test_count"])
 
-    def test_exported_core_test_suite_is_independently_runnable(self):
+    def test_exported_synthetic_core_test_suite_is_independently_runnable(self):
         output = self.root / "output"
         EXPORTS.build(self.root, output, self.policy)
-        extracted = self.root / "extracted-core"
-        extracted.mkdir()
-        with tarfile.open(output / "Federation-Omega-Core.tar.gz", "r:gz") as archive:
-            archive.extractall(extracted, filter="data")
-        process = subprocess.run(
-            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
-            cwd=extracted,
-            text=True,
-            capture_output=True,
+        process = self.run_exported_tests(
+            output / "Federation-Omega-Core.tar.gz",
+            self.root / "extracted-core",
         )
         self.assertEqual(0, process.returncode, process.stdout + process.stderr)
         self.assertIn("test_core_is_runnable", process.stderr)
+
+    def test_repository_core_archive_test_suite_is_independently_runnable(self):
+        with tempfile.TemporaryDirectory(prefix="phoenix-real-core-") as temporary:
+            temporary_root = Path(temporary)
+            output = temporary_root / "output"
+            receipt = EXPORTS.build(
+                ROOT,
+                output,
+                ROOT / "phoenix" / "export_policy.json",
+            )
+            self.assertEqual("VERIFIED", receipt["status"])
+            process = self.run_exported_tests(
+                output / "Federation-Omega-Core.tar.gz",
+                temporary_root / "extracted-core",
+                install_requirements=True,
+            )
+        self.assertEqual(0, process.returncode, process.stdout + process.stderr)
+        self.assertIn("Ran ", process.stderr)
+        self.assertIn("OK", process.stderr)
 
     def test_ops_export_has_no_active_workflow(self):
         output = self.root / "output"
