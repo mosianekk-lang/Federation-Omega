@@ -6,6 +6,7 @@ import unittest
 from pathlib import Path
 
 from programme_integrity import verify_programme_register
+from test_owner_authority_reconciliation import OwnerAuthorityProgrammeReconciliationTests
 
 
 class ProgrammeRegisterIntegrityTests(unittest.TestCase):
