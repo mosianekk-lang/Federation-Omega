@@ -114,10 +114,12 @@ def run(output: Path) -> dict[str, Any]:
         ),
         "canonical_api_revision_bound": (
             api["api_id"] == "AO-COMMERCIAL-CANONICAL-API-V3"
-            and api["current_capability_revision"]
-            == "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7"
-            and api["current_canonical_class"]
-            == "CrashSafeAtomicAuthoritySnapshotCommercialControlPlane"
+            and "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7"
+            in api["capability_lineage"]
+            and "CrashSafeAtomicAuthoritySnapshotCommercialControlPlane"
+            in api["canonical_lineage"]
+            and api["current_capability_revision"] in api["capability_lineage"]
+            and api["current_canonical_class"] in api["canonical_lineage"]
             and api["authority_use"]["durable_recovery_bundle_required"] is True
             and api["authority_use"]["restart_recovery_before_new_action"] is True
             and api["authority_use"]["process_crash_partial_state_visible"]
