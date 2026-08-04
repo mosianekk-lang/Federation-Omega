@@ -1,0 +1,82 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-EFFECTIVE-STATE-V1",
+  "status": "EFFECTIVE_PROGRAMME_STATE_PROVIDER_VERIFIED",
+  "scope": [
+    "C11",
+    "C12",
+    "C13",
+    "C15",
+    "P13",
+    "P15"
+  ],
+  "dependency_checkpoint": {
+    "governed_authority_pull_request": 118,
+    "governed_authority_merge_commit": "3102a12f4fa5e54d70c9eeeca493a006e9c7cdae",
+    "governed_release_reconciliation_pull_request": 119,
+    "governed_release_reconciliation_merge_commit": "fc945d53f0dab009828ac0aaaa0547f2bcef6ddf",
+    "institution_reconciliation_pull_request": 120,
+    "institution_reconciliation_merge_commit": "1c4ee76ecc8d93b6d4c57f57c11596db582e76cf",
+    "institution_reconciliation_artifact_id": 8878260625,
+    "institution_reconciliation_artifact_digest": "sha256:723fcf11265db7f038f228f1d01a25a4c44925bf043b2e7271130e0706d52b6f",
+    "institution_reconciliation_drive_file_id": "1ZLPaEwlNT2BggIjum5yAg523vmvum-v4bDfXoCpwBrA"
+  },
+  "programme_projection": {
+    "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+    "effective_state_status": "EFFECTIVE_PROGRAMME_STATE_VERIFIED_C15_INSTITUTION_RECONCILED_EXTERNAL_GATES_OPEN",
+    "effective_state_sha256": "4aa1f763a0d6b1fe3d1e94bfc91c3202bd4035eb58daa8c91980679fb6ff2bc0",
+    "service_enabled_platform_first": true,
+    "self_service_saas_held": true
+  },
+  "provider_proof": {
+    "state": "PULL_REQUEST_HEAD_PROVIDER_NATIVE_CI_VERIFIED",
+    "implementation_evidence_head_sha": "08743da82c7bbe7df0df25108c742acb0db94e62",
+    "workflow": ".github/workflows/alpha-omega-commercial-effective-state.yml",
+    "workflow_run": 30873914749,
+    "workflow_job": 91881349603,
+    "artifact_id": 8878818844,
+    "artifact_name": "alpha-omega-commercial-effective-state-proof",
+    "artifact_digest": "sha256:d6db52c9521c0ba4861d3add5f0815771a2dff9b5fadd40dadb3f1aabc7bafcd",
+    "artifact_created_at": "2026-08-04T03:09:20Z",
+    "artifact_expires_at": "2026-11-02T03:09:09Z",
+    "receipt_sha256": "f1acf2afa30bc498952d3f5620484d9d7c5ae68ecb7611069659f5f1a60c52ba",
+    "effective_state_sha256": "4aa1f763a0d6b1fe3d1e94bfc91c3202bd4035eb58daa8c91980679fb6ff2bc0",
+    "implementation_regression_runs": {
+      "C01_C05": 30873914736,
+      "C06_C09": 30873914714,
+      "C10_C15": 30873914720,
+      "provider_authority": 30873914713,
+      "governed_authority": 30873914695,
+      "institution_reconciliation": 30873914766,
+      "effective_state": 30873914749,
+      "github_control_plane": 30873914705,
+      "superior_logic_ci": 30873914727,
+      "repository_leak_guard": 30873914721
+    },
+    "all_conclusions": "success",
+    "checkpoint_promotion_rule": "The pull-request head containing this checkpoint must independently pass all required commercial, effective-state, institution-reconciliation, control-plane, Superior Logic and repository-safety workflows before merge."
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "truth_boundary": "This provider-verified checkpoint proves deterministic effective-state reconciliation and exact provider readback for the commercial release. It does not prove customer demand, a signed contract, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise attestation, partner adoption, an external customer case study, production scale or a v3 institution Google Drive publication."
+}

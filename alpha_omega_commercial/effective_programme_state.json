@@ -1,0 +1,79 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "status": "EFFECTIVE_PROGRAMME_STATE_VERIFIED_C15_INSTITUTION_RECONCILED_EXTERNAL_GATES_OPEN",
+  "strategy": {
+    "service_enabled_platform_first": true,
+    "self_service_saas_held": true
+  },
+  "base_register": {
+    "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+    "canonical_receipt_integrity": "CANONICAL_RECEIPT_INTEGRITY_VERIFIED",
+    "base_c15_status": "COMMERCIAL_READINESS_VERIFIED_CANONICAL_PROVIDER_ROUTE_ALIGNED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "control_chain": {
+    "governed_authority": {
+      "pull_request": 118,
+      "merge_commit": "3102a12f4fa5e54d70c9eeeca493a006e9c7cdae",
+      "release_receipt_sha256": "7c11adc24b0e3cd45acee72b73fc2b8c2f4a4ba6b96b7e6426c5bd50a9c645b1"
+    },
+    "governed_release_reconciliation": {
+      "pull_request": 119,
+      "merge_commit": "fc945d53f0dab009828ac0aaaa0547f2bcef6ddf"
+    },
+    "institution_reconciliation": {
+      "pull_request": 120,
+      "merge_commit": "1c4ee76ecc8d93b6d4c57f57c11596db582e76cf",
+      "workflow_run": 30872211661,
+      "artifact_id": 8878260625,
+      "artifact_name": "alpha-omega-commercial-institution-reconciliation-proof",
+      "artifact_digest": "sha256:723fcf11265db7f038f228f1d01a25a4c44925bf043b2e7271130e0706d52b6f",
+      "receipt_sha256": "99f6974e21e077d8bab51fcb1d565bf1dd2f1b939947cf8933510b720b148705"
+    },
+    "google_drive_release": {
+      "file_id": "1ZLPaEwlNT2BggIjum5yAg523vmvum-v4bDfXoCpwBrA",
+      "title": "Alpha Omega Commercial Institution Reconciliation Release — 2026-08-04",
+      "created_at": "2026-08-04T02:36:39.640Z",
+      "modified_at": "2026-08-04T02:37:00.737Z",
+      "readback_verified": true,
+      "release_scope": "COMMERCIAL_ONLY"
+    }
+  },
+  "effective_stage_projection": {
+    "C11": "SERVICE_ENABLED_PLATFORM_GOVERNED_AUTHORITY_VERIFIED_SELF_SERVICE_HELD",
+    "C12": "EXTERNAL_EVIDENCE_ADMISSION_AND_GOVERNED_CASE_STUDY_CONTROLS_VERIFIED_MARKET_PROOF_REQUIRED",
+    "C13": "GOVERNED_REVOPS_OWNER_RECEIPT_AND_PAYMENT_ADMISSION_VERIFIED_REVENUE_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_VERIFIED_INSTITUTION_RECONCILED_EXTERNAL_MATURITY_GATES_OPEN",
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "provider_authority": {
+    "commercial_google_drive_release": "FRESH_VERIFIED_READBACK",
+    "institution_v3_google_drive_publication": "UNVERIFIED_SCOPE_HELD",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "truth_boundary": "This effective-state projection reconciles the stable C01-C15 programme register with provider-verified governed-authority and institution-reconciliation receipts. It does not prove customer demand, a signed contract, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise attestation, partner adoption, an external customer case study, production scale or a v3 institution Google Drive publication.",
+  "state_sha256": "4aa1f763a0d6b1fe3d1e94bfc91c3202bd4035eb58daa8c91980679fb6ff2bc0"
+}

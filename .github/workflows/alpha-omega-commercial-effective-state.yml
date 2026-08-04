@@ -1,0 +1,115 @@
+name: Alpha Omega Commercial Effective State Proof
+
+on:
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - 'alpha_omega_v30/checkpoint_20260803.json'
+      - '.github/workflows/alpha-omega-commercial-effective-state.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'alpha_omega_commercial/**'
+      - 'alpha_omega_v30/checkpoint_20260803.json'
+      - '.github/workflows/alpha-omega-commercial-effective-state.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-omega-commercial-effective-state-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Compile effective-state package
+        run: python -m compileall -q alpha_omega_commercial alpha_omega_v30
+
+      - name: Run effective-state regression tests
+        run: >-
+          python -m unittest -v
+          alpha_omega_commercial.test_effective_state
+
+      - name: Execute effective-state proof
+        run: >-
+          python -m alpha_omega_commercial.prove_effective_state
+          --output alpha_omega_commercial/artifacts/c15/effective-state/effective-state-receipt.json
+
+      - name: Validate effective state and truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('alpha_omega_commercial')
+          state = json.loads((root / 'effective_programme_state.json').read_text())
+          receipt = json.loads((root / 'artifacts/c15/effective-state/effective-state-receipt.json').read_text())
+          checkpoint = json.loads((root / 'effective_state_checkpoint.json').read_text())
+
+          assert state['status'] == 'EFFECTIVE_PROGRAMME_STATE_VERIFIED_C15_INSTITUTION_RECONCILED_EXTERNAL_GATES_OPEN'
+          assert state['strategy']['service_enabled_platform_first'] is True
+          assert state['strategy']['self_service_saas_held'] is True
+          assert state['effective_stage_projection']['C15'] == 'COMMERCIAL_READINESS_VERIFIED_INSTITUTION_RECONCILED_EXTERNAL_MATURITY_GATES_OPEN'
+          assert state['provider_authority']['cloud_run'] == 'PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE'
+          assert state['provider_authority']['payment_provider'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          assert all(value is False for value in state['external_gates'].values())
+          assert state['commercial_truth']['verified_live_revenue_events'] == 0
+          assert state['commercial_truth']['cloud_run_operation_proven'] is False
+          assert state['commercial_truth']['full_commercial_maturity'] is False
+          assert receipt['status'] == 'EFFECTIVE_PROGRAMME_STATE_PROVIDER_PROOF_VERIFIED'
+          assert all(receipt['checks'].values())
+          assert receipt['effective_state_sha256'] == state['state_sha256']
+          assert checkpoint['status'] in {
+              'IMPLEMENTED_PROVIDER_PROOF_REQUIRED',
+              'EFFECTIVE_PROGRAMME_STATE_PROVIDER_VERIFIED',
+          }
+          assert checkpoint['programme_projection']['service_enabled_platform_first'] is True
+          assert checkpoint['programme_projection']['self_service_saas_held'] is True
+          assert all(value is False for value in checkpoint['external_gates'].values())
+          assert checkpoint['commercial_truth']['verified_live_revenue_events'] == 0
+          assert checkpoint['commercial_truth']['full_commercial_maturity'] is False
+          PY
+
+      - name: Verify no secret-shaped values are present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          roots = [
+              Path('alpha_omega_commercial/effective_state.py'),
+              Path('alpha_omega_commercial/prove_effective_state.py'),
+              Path('alpha_omega_commercial/test_effective_state.py'),
+              Path('alpha_omega_commercial/effective_programme_state.json'),
+              Path('alpha_omega_commercial/effective_state_checkpoint.json'),
+              Path('alpha_omega_commercial/institution_reconciliation_drive_observation.json'),
+              Path('alpha_omega_commercial/artifacts/c15/effective-state'),
+          ]
+          forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for root in roots:
+              paths = root.rglob('*') if root.is_dir() else [root]
+              for path in paths:
+                  if path.is_file():
+                      assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
+          PY
+
+      - name: Upload immutable effective-state proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alpha-omega-commercial-effective-state-proof
+          path: alpha_omega_commercial/artifacts/c15/effective-state
+          if-no-files-found: error
+          retention-days: 90
