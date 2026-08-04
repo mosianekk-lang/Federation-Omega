@@ -1,10 +1,10 @@
 """Canonical Alpha→Omega commercial maturity API.
 
-The provider-reconciliation evidence vault is the newest service-platform
-candidate. It preserves the V15 one-time challenge boundary and durably publishes
-the complete verified reconciliation evidence before outcome resolution. Earlier
-control planes remain exported for historical regression and reference-provider
-conformance.
+The provider-reconciliation recovery control is the newest service-platform
+candidate. It preserves the V16 content-addressed evidence vault, protects valid
+pre-resolution evidence from pruning, and permits deterministic restart replay.
+Earlier control planes remain exported for historical regression and reference-
+provider conformance.
 """
 
 from __future__ import annotations
@@ -16,6 +16,10 @@ _PACKAGE_DIR = str(Path(__file__).resolve().parent)
 if _PACKAGE_DIR not in sys.path:
     sys.path.insert(0, _PACKAGE_DIR)
 
+from provider_reconciliation_recovery import (  # noqa: E402
+    RECONCILIATION_RECOVERY_CLASS,
+    RecoverableVaultedProviderDispatchCommercialControlPlane,
+)
 from provider_reconciliation_evidence_vault import (  # noqa: E402
     RECONCILIATION_EVIDENCE_PACKAGE_CLASS,
     VaultedProviderDispatchCommercialControlPlane,
@@ -81,6 +85,8 @@ from governed_commercial_assurance import (  # noqa: E402
 )
 
 __all__ = [
+    "RecoverableVaultedProviderDispatchCommercialControlPlane",
+    "RECONCILIATION_RECOVERY_CLASS",
     "VaultedProviderDispatchCommercialControlPlane",
     "RECONCILIATION_EVIDENCE_PACKAGE_CLASS",
     "ChallengeBoundProviderDispatchCommercialControlPlane",
