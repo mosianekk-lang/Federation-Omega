@@ -82,6 +82,10 @@ def has_actions_write(text: str) -> bool:
     return has_permission(text, "actions", "write")
 
 
+def has_statuses_write(text: str) -> bool:
+    return has_permission(text, "statuses", "write")
+
+
 def has_concurrency(text: str) -> bool:
     return bool(re.search(r"(?m)^concurrency\s*:", text))
 
@@ -111,6 +115,7 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     active = set(policy["active_workflow_allowlist"])
     oidc_allowed = set(policy.get("oidc_workflow_allowlist", []))
     actions_write_allowed = set(policy.get("actions_write_workflow_allowlist", []))
+    statuses_write_allowed = set(policy.get("statuses_write_workflow_allowlist", []))
 
     if path not in active:
         findings.append(Finding(
@@ -145,9 +150,15 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
             "workflow can mutate the Actions registry but is not the quarantine controller",
         ))
 
-    exceptions = set(
-        policy.get("forbidden_pattern_exceptions", {}).get(path, [])
-    )
+    if has_statuses_write(text) and path not in statuses_write_allowed:
+        findings.append(Finding(
+            path,
+            "UNAUTHORISED_STATUSES_WRITE",
+            "CRITICAL",
+            "workflow can publish commit status but is not an approved proof publisher",
+        ))
+
+    exceptions = set(policy.get("forbidden_pattern_exceptions", {}).get(path, []))
     for pattern in policy["forbidden_repository_mutations"]:
         if pattern in lower and pattern not in exceptions:
             findings.append(Finding(
@@ -209,7 +220,23 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
                 path,
                 "QUARANTINE_CONTROLLER_ENDPOINT_DRIFT",
                 "CRITICAL",
-                "privileged controller is not limited to the workflow-disable endpoint",
+                "privileged controller is not limited to the workflow registry boundary",
+            ))
+
+    if path in statuses_write_allowed:
+        if not has_statuses_write(text):
+            findings.append(Finding(
+                path,
+                "PROOF_PUBLISHER_MISSING_STATUSES_WRITE",
+                "CRITICAL",
+                "approved proof publisher lacks statuses: write",
+            ))
+        if "/statuses/" not in lower or "phoenix-freeze/verified" not in lower:
+            findings.append(Finding(
+                path,
+                "PROOF_STATUS_ENDPOINT_DRIFT",
+                "CRITICAL",
+                "proof publisher does not target the approved Phoenix status context",
             ))
 
     return findings
