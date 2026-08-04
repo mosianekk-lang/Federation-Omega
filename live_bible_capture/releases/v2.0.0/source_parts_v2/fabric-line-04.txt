@@ -1,0 +1,111 @@
+    def project(self, conversation_id: str) -> dict[str, str]:
+        conversation_id = _safe_id("conversation_id", conversation_id)
+        rows = self.store.events(conversation_id)
+        directory = self.output_dir / conversation_id.replace("/", "_")
+        directory.mkdir(parents=True, exist_ok=True)
+        jsonl_path = directory / "events.jsonl"
+        md_path = directory / "LIVE_BIBLE.md"
+        state_path = directory / "CURRENT_STATE.json"
+        jsonl = "\n".join(canonical_json(row) for row in rows) + ("\n" if rows else "")
+        jsonl_path.write_text(jsonl, encoding="utf-8")
+        lines = [f"# LIVE BIBLE — {conversation_id}", "", f"Generated: {utcnow()}", ""]
+        for row in rows:
+            marker = " [QUARANTINED/REDACTED]" if row["quarantined"] else ""
+            lines.extend(
+                [
+                    f"## {row['sequence']:06d} · {row['role'].upper()}{marker}",
+                    "",
+                    f"- Occurred: `{row['occurred_at']}`",
+                    f"- Source: `{row['source_type']} / {row['source_id']}`",
+                    f"- Message ID: `{row['message_id']}`",
+                    f"- Event ID: `{row['event_id']}`",
+                    f"- Privacy: `{row['privacy_tier']}`",
+                    f"- Case wall: `{row['case_wall']}`",
+                    "",
+                    row["content"],
+                    "",
+                ]
+            )
+        md_path.write_text("\n".join(lines), encoding="utf-8")
+        verification = self.store.verify_chain(conversation_id)
+        state = {
+            "schema": "FEDERATION-LIVE-BIBLE-STATE-2",
+            "conversation_id": conversation_id,
+            "event_count": len(rows),
+            "head_chain_hash": verification["head_chain_hash"],
+            "chain_valid": verification["valid"],
+            "unresolved_gaps": verification["unresolved_gaps"],
+            "database_quick_check": verification["database_quick_check"],
+            "updated_at": utcnow(),
+            "truth_boundary": (
+                "This projection contains only events received through configured source adapters. "
+                "It does not imply invisible access to messages that no adapter supplied."
+            ),
+        }
+        state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        return {"markdown": str(md_path), "jsonl": str(jsonl_path), "state": str(state_path)}
+
+    def import_export(self, path: str | Path, source_id: str = "chat-export") -> list[dict[str, Any]]:
+        source_path = Path(path).expanduser().resolve()
+        try:
+            value = json.loads(source_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise CaptureError("cannot read chat export") from exc
+        if isinstance(value, dict):
+            conversation_id = str(value.get("conversation_id") or value.get("id") or source_path.stem)
+            messages = value.get("messages") or value.get("events")
+        else:
+            conversation_id = source_path.stem
+            messages = value
+        if not isinstance(messages, list):
+            raise CaptureError("chat export must contain a messages list")
+        events: list[CaptureEvent] = []
+        for index, message in enumerate(messages, start=1):
+            if not isinstance(message, dict):
+                raise CaptureError("chat export message must be an object")
+            content = message.get("content")
+            if isinstance(content, list):
+                content = "\n".join(str(part.get("text", part)) if isinstance(part, dict) else str(part) for part in content)
+            occurred = message.get("occurred_at") or message.get("created_at") or message.get("timestamp") or utcnow()
+            events.append(
+                CaptureEvent(
+                    source_id=source_id,
+                    source_type="CHAT_EXPORT",
+                    conversation_id=conversation_id,
+                    message_id=str(message.get("message_id") or message.get("id") or f"export-{index}"),
+                    sequence=int(message.get("sequence") or index),
+                    role=str(message.get("role") or "observer"),
+                    content=str(content or ""),
+                    occurred_at=str(occurred),
+                    privacy_tier=str(message.get("privacy_tier") or "P2_CONFIDENTIAL"),
+                    case_wall=str(message.get("case_wall") or "GENERAL"),
+                    metadata={"import_file": source_path.name},
+                )
+            )
+        return self.ingest_many(events)
+
+    def process_outbox(self, outbox: str | Path) -> dict[str, Any]:
+        outbox_path = Path(outbox).expanduser().resolve()
+        processed = outbox_path / "processed"
+        rejected = outbox_path / "dead_letter"
+        processed.mkdir(parents=True, exist_ok=True)
+        rejected.mkdir(parents=True, exist_ok=True)
+        accepted_count = 0
+        rejected_count = 0
+        for path in sorted(p for p in outbox_path.iterdir() if p.is_file() and p.suffix in {".json", ".jsonl"}):
+            try:
+                if path.suffix == ".jsonl":
+                    payloads = [json.loads(line) for line in path.read_text(encoding="utf-8").splitlines() if line.strip()]
+                else:
+                    value = json.loads(path.read_text(encoding="utf-8"))
+                    payloads = value if isinstance(value, list) else [value]
+                self.ingest_many(payloads)
+                destination = processed / path.name
+                if destination.exists():
+                    destination = processed / f"{path.stem}-{sha256_text(path.read_text(encoding='utf-8'))[:12]}{path.suffix}"
+                shutil.move(str(path), str(destination))
+                accepted_count += len(payloads)
+            except Exception as exc:  # fail closed and preserve payload hash
+                try:
+                    payload = path.read_text(encoding="utf-8")
+                except OSError:
