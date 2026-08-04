@@ -46,7 +46,7 @@ jobs:
           set -euo pipefail
           git config user.name 'ipep-audio-observer[bot]'
           git config user.email 'ipep-audio-observer[bot]@users.noreply.github.com'
-          git pull --rebase origin main
           git add deployment_receipts/ipep-audio-engine-v2-observation.json
           git commit -m 'Record IPEP Audio Engine v2 workflow observation [skip ci]' || exit 0
+          git pull --rebase origin main
           git push origin HEAD:main
