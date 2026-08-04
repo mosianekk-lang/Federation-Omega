@@ -1,6 +1,10 @@
 name: IPEP Audio Engine v2 CI
 
 on:
+  pull_request:
+    paths:
+      - 'ipep/audio_engine_v2/**'
+      - '.github/workflows/ipep-audio-engine-v2-ci.yml'
   push:
     branches: [main]
     paths:
@@ -9,11 +13,11 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: ipep-audio-engine-v2-ci
-  cancel-in-progress: false
+  group: ipep-audio-engine-v2-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test-package-prove:
@@ -21,6 +25,8 @@ jobs:
     timeout-minutes: 15
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
@@ -72,27 +78,18 @@ jobs:
             'truth_boundary': {
               'source_built': True,
               'provider_deployed': False,
-              'transcript_created': False
+              'transcript_created': False,
+              'repository_mutation_attempted': False
             }
           }, indent=2, sort_keys=True))
           PY
 
-      - uses: actions/upload-artifact@v4
+      - name: Upload immutable source and proof
+        uses: actions/upload-artifact@v4
         with:
-          name: ipep-audio-engine-v2-source-${{ github.run_id }}
+          name: ipep-audio-engine-v2-source-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: error
-          retention-days: 30
+          retention-days: 90
           path: |
             /tmp/ipep-audio-engine-v2/ipep-audio-engine-v2-source.zip
             deployment_receipts/ipep-audio-engine-v2-latest.json
-
-      - name: Publish redacted CI receipt
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name 'ipep-audio-engine-ci[bot]'
-          git config user.email 'ipep-audio-engine-ci[bot]@users.noreply.github.com'
-          git add deployment_receipts/ipep-audio-engine-v2-latest.json
-          git commit -m 'Record IPEP Audio Engine v2 CI receipt [skip ci]' || exit 0
-          git pull --rebase origin main
-          git push origin HEAD:main
