@@ -1,0 +1,41 @@
+{
+  "schema": "EVIDENCEOPS-CAPABILITY-HEARTBEAT-SOURCE-1",
+  "source_id": "evidenceops-resolve",
+  "system": "EvidenceOps RESOLVE",
+  "version": "1.0.0",
+  "evidence_paths": [
+    "evidenceops/resolve/METHOD.md",
+    "evidenceops/resolve/SYSTEM_CONTRACT.json",
+    "evidenceops/resolve/feature_manifest.json",
+    "evidenceops/resolve/resolve/engine.py",
+    "evidenceops/resolve/tests/test_resolve.py",
+    ".github/workflows/evidenceops-resolve-ci.yml"
+  ],
+  "capabilities": [
+    {
+      "capability_id": "evidenceops-resolve-engine",
+      "name": "Constraint-adaptive evidence execution and independent verification",
+      "tags": [
+        "continuity",
+        "circuit-breaker",
+        "failure-learning",
+        "hash",
+        "independent-readback",
+        "large-files",
+        "provenance",
+        "recovery",
+        "segmentation",
+        "verification"
+      ],
+      "route": "evidenceops-resolve",
+      "state": "EXECUTABLE_NOW",
+      "proof_level": "LOCALLY_TESTED_PENDING_PROVIDER_CI_READBACK",
+      "quality": 0.96,
+      "safety": 0.98,
+      "reuse": 1.0,
+      "cost": 0,
+      "authority_class": "A1",
+      "external_effect": false
+    }
+  ]
+}
