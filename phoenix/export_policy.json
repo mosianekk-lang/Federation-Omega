@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.3",
+  "version": "1.0.4",
   "core": {
     "include_extensions": [
       ".css", ".csv", ".html", ".js", ".json", ".md", ".proto",
@@ -14,6 +14,10 @@
       ".bootstrap/", ".git/", ".github/", "deployment_receipts/",
       "phoenix-export-output/", "phoenix-freeze-output/", "runtime/",
       "tests/test_phoenix_"
+    ],
+    "excluded_test_globs": [
+      "tests/test_phoenix_*",
+      "tests/test_provider_airlock_activate.py"
     ],
     "excluded_segments": [
       "__pycache__", "credentials", "drift", "heartbeat", "keys", "proofs",
