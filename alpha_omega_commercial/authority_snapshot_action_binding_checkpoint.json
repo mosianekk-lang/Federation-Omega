@@ -11,7 +11,7 @@
     "pull_request": 125,
     "merge_commit": "03418d4317603037e85bdb282c55385e4fbb9a03",
     "release_receipt": "authority_snapshot_action_binding_release_receipt.json",
-    "release_receipt_sha256": "fc4bf58cf95f1a1c5c12f19d15f00247f197ce351b124e1b63027f5122bb7b73"
+    "release_receipt_sha256": "56e6764e3bd5082f8da07e3c8c8e9be9d71171f13b19a7c897d97db7c6f91e28"
   },
   "stage_projection": {
     "C03": "LATEST_ACCEPTED_PROVIDER_AUTHORITY_USE_AND_DURABLE_REFRESH_VERIFIED",
