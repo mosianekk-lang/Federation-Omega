@@ -25,34 +25,6 @@ jobs:
           fetch-depth: 0
           persist-credentials: false
 
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
-        with:
-          python-version: '3.12'
-
-      - name: Run Airlock regression tests
-        run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
-
-      - name: Run source provenance regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_source_provenance.py' -v
-
-      - name: Run provider Airlock activator regression tests
-        run: python -m unittest discover -s tests -p 'test_provider_airlock_activate.py' -v
-
-      - name: Run provider cutover v2 regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
-
-      - name: Run provider cutover v3 regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3*.py' -v
-
-      - name: Run Phoenix export purity regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
-
-      - name: Run OpenAI rotation semantic proof regression tests
-        run: python -m unittest discover -s tests -p 'test_openai_rotation_contract.py' -v
-
-      - name: Run Apps Script authorization regression tests
-        run: python -m unittest discover -s tests -p 'test_apps_script_authorization_gate.py' -v
-
       - name: Resolve admission comparison and provider provenance
         id: refs
         env:
@@ -87,6 +59,52 @@ jobs:
           echo "base=$base" >> "$GITHUB_OUTPUT"
           echo "head=$head" >> "$GITHUB_OUTPUT"
           echo "associated_pr_count=$pr_count" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce pull-request head ancestry
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        env:
+          BASE_SHA: ${{ steps.refs.outputs.base }}
+          HEAD_SHA: ${{ steps.refs.outputs.head }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"
+          if ! git merge-base --is-ancestor "$BASE_SHA" "$HEAD_SHA"; then
+            echo "STALE_BASE_HEAD_REJECTED: head $HEAD_SHA does not descend from base $BASE_SHA" >&2
+            exit 1
+          fi
+          echo "HEAD_ANCESTRY_VERIFIED: $BASE_SHA is an ancestor of $HEAD_SHA"
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run Airlock regression tests
+        run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
+
+      - name: Run stale-base ancestry regression tests
+        run: python -m unittest discover -s tests -p 'test_airlock_stale_base_guard.py' -v
+
+      - name: Run source provenance regression tests
+        run: python -m unittest discover -s tests -p 'test_phoenix_source_provenance.py' -v
+
+      - name: Run provider Airlock activator regression tests
+        run: python -m unittest discover -s tests -p 'test_provider_airlock_activate.py' -v
+
+      - name: Run provider cutover v2 regression tests
+        run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
+
+      - name: Run provider cutover v3 regression tests
+        run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3*.py' -v
+
+      - name: Run Phoenix export purity regression tests
+        run: python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
+
+      - name: Run OpenAI rotation semantic proof regression tests
+        run: python -m unittest discover -s tests -p 'test_openai_rotation_contract.py' -v
+
+      - name: Run Apps Script authorization regression tests
+        run: python -m unittest discover -s tests -p 'test_apps_script_authorization_gate.py' -v
 
       - name: Build source provenance receipt
         env:
@@ -160,7 +178,7 @@ jobs:
           fi
 
       - name: Upload immutable Airlock and provenance reports
-        if: always()
+        if: always() && hashFiles('airlock-output/*.json') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: federation-omega-airlock-${{ github.run_id }}-${{ github.run_attempt }}
