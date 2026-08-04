@@ -1,0 +1,23 @@
+{
+  "schema": "EVIDENCEOPS-PST-V2-DRIVE-DIRECT-ID-MAP-1",
+  "objects": [
+    {"logical_relpath":"00_CONTROL/FINALIZATION_VERIFICATION.json","drive_file_id":"1vWh5h4xMS6lN3__KgOf0ed8WVFQXIkb0"},
+    {"logical_relpath":"00_CONTROL/GITHUB_PUBLICATION_MANIFEST.json","drive_file_id":"1ZciBKAfSXeR8xL69U-CEQYfL30Uxs78H"},
+    {"logical_relpath":"00_CONTROL/LOCAL_VERIFICATION.json","drive_file_id":"1j-cm_fMfATshbpgWD0ZLkH3a6lLYcaFm"},
+    {"logical_relpath":"00_CONTROL/RUN_STATE.json","drive_file_id":"1vYrdBA2D2jOf8l6k0Sm4XI0ky7aAyC9a"},
+    {"logical_relpath":"00_CONTROL/SOURCE.json","drive_file_id":"16OTTAg6rFH2xm2H9MUEpx7P-wUs5ukhs"},
+    {"logical_relpath":"04_INDEX/attachments.csv","drive_file_id":"1KSSHdxvLfCTXgwYlIDbO0OD0m3pP8gHi"},
+    {"logical_relpath":"04_INDEX/attachments.jsonl","drive_file_id":"1Tl6nveW1oOuoeocTE4E1A2pYKRJjpVJS"},
+    {"logical_relpath":"04_INDEX/messages.csv","drive_file_id":"1TVut7heK43pNetYqkxYNQBQjCiZxH61f"},
+    {"logical_relpath":"04_INDEX/messages.jsonl","drive_file_id":"1H9H0osyzT9j-S9jJ1-CryV503_XCrT7f"},
+    {"logical_relpath":"04_INDEX/retrieval_map.csv","drive_file_id":"1Gwg6vmWHxKcEKh-yHO1cT-O5kEeD7AXT"},
+    {"logical_relpath":"04_INDEX/retrieval_map.jsonl","drive_file_id":"1omOkBvf3RgT23JWbRW84K6_ZtrtltiQm"},
+    {"logical_relpath":"04_INDEX/search_packs.json","drive_file_id":"1SwVVYNuKNjI6P80jn3J4Jx4yiuwe3JiD"},
+    {"logical_relpath":"04_INDEX/shards.json","drive_file_id":"1MKqxOwQNolrTCNAUKlDszyESP9z-V0L7"},
+    {"logical_relpath":"05_SEARCH_PACKS/Corpus_Search_Pack_0001.txt","drive_file_id":"1R0-E5NC0ZGOR0TKb-KnlJyuwPllKphwb"},
+    {"logical_relpath":"05_SEARCH_PACKS/Corpus_Search_Pack_0002.txt","drive_file_id":"1yLFHvyx857JpQY9zWm-ziAcKHpWEeodh"},
+    {"logical_relpath":"05_SEARCH_PACKS/Corpus_Search_Pack_0003.txt","drive_file_id":"1kFsBp14HNaT8dpOaqk0qGx4rdK7R51l-"},
+    {"logical_relpath":"07_LOGS/parser.stderr.log","drive_file_id":"1RExK5mQPsZWtgkqB-tcH-3-k41NY4SCY"},
+    {"logical_relpath":"07_LOGS/parser.stdout.log","drive_file_id":"1b84Yp8oAQc7rYiucs-i1g2p-oJhpQJUz"}
+  ]
+}
