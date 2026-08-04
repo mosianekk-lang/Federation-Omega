@@ -1,0 +1,14 @@
+{
+  "schema": "FEDOMEGA-PHOENIX-OPS-APPLY-ENTRYPOINT-1",
+  "canonical_apply_entrypoint": "provider_cutover_guarded.py",
+  "guarded_provider_controller": "provider_cutover_v3_live_guard.py",
+  "legacy_entrypoint": "provider_cutover.py",
+  "legacy_entrypoint_status": "DEPRECATED_NON_CANONICAL_DO_NOT_APPLY_DIRECTLY",
+  "legacy_entrypoint_technically_blocked": false,
+  "pre_reservation_live_source_check": true,
+  "post_apply_started_live_source_recheck": true,
+  "pre_mutation_provider_head_check": true,
+  "provider_receipt_source_sha_binding": true,
+  "stale_source_apply": "FAIL_CLOSED_ON_CANONICAL_ROUTE",
+  "credential_value_recorded": false
+}
