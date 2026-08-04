@@ -1,0 +1,17 @@
+{
+  "artifacts": [
+    {
+      "digest": "sha256:d9eab303df3f1a93aefa7351029e9d98c441e7192c340d64d63ea5eb6f873dea",
+      "expired": false,
+      "id": 8891937502,
+      "name": "ipep-whisper-offline-runtime-30908252863",
+      "size_in_bytes": 191265571
+    }
+  ],
+  "conclusion": "success",
+  "observed_at": "2026-08-04T12:15:28.796669+00:00",
+  "receipt": "IPEP-OFFLINE-WHISPER-RUNTIME-WORKFLOW-OBSERVATION",
+  "run_id": 30908252863,
+  "run_url": "https://github.com/mosianekk-lang/Federation-Omega/actions/runs/30908252863",
+  "source_sha": "95bfc15704674165d24128eedec1754558f1a91a"
+}
