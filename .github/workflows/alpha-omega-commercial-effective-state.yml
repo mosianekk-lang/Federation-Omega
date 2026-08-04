@@ -45,7 +45,7 @@ jobs:
 
       - name: Execute effective-state proof
         run: >-
-          python alpha_omega_commercial/prove_effective_state.py
+          python -m alpha_omega_commercial.prove_effective_state
           --output alpha_omega_commercial/artifacts/c15/effective-state/effective-state-receipt.json
 
       - name: Validate effective state and truth boundary
