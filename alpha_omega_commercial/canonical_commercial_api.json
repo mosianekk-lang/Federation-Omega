@@ -1,0 +1,54 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "api_id": "AO-COMMERCIAL-CANONICAL-API-V2",
+  "canonical_module": "alpha_omega_commercial",
+  "canonical_class": "GovernedCommercialAssuranceControlPlane",
+  "legacy_module": "alpha_omega_commercial/commercial_assurance.py",
+  "legacy_class": "CommercialAssuranceControlPlane",
+  "legacy_state": "REFERENCE_ONLY_NOT_CANONICAL",
+  "stage_scope": [
+    "C10",
+    "C11",
+    "C12",
+    "C13",
+    "C14",
+    "C15"
+  ],
+  "governed_methods": {
+    "submit_service_request": {
+      "owner_reserved_receipt_required_for": [
+        "subscription.change",
+        "tenant.suspend"
+      ],
+      "external_effects_allowed": false
+    },
+    "approve_quote": {
+      "owner_receipt_required": true,
+      "external_send_performed": false,
+      "financial_commitment": false
+    },
+    "register_outcome_study": {
+      "direct_external_label_accepted": false,
+      "external_admission_required": true
+    },
+    "register_verified_revenue_event": {
+      "caller_boolean_accepted": false,
+      "payment_provider_authority_required": true,
+      "settlement_evidence_required": true,
+      "owner_receipt_required": true,
+      "mock_conformance_counted_as_revenue": false
+    }
+  },
+  "forbidden_public_parameters": [
+    "owner_confirmed",
+    "owner_approved",
+    "owner_approval_reference"
+  ],
+  "persistence": {
+    "owner_receipt_consumption": "HASH_LINKED_RESTART_SAFE",
+    "external_evidence_admission": "HASH_LINKED_RESTART_SAFE",
+    "tamper_policy": "FAIL_CLOSED"
+  },
+  "service_first_strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "external_gate_effect": "UNCHANGED"
+}

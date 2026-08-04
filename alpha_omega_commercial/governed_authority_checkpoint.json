@@ -1,0 +1,82 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-GOVERNED-AUTHORITY-V2",
+  "status": "GOVERNED_COMMERCIAL_AUTHORITY_V2_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "scope": [
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency_checkpoint": {
+    "canonical_programme_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+    "preceding_pull_request": 117,
+    "preceding_merge_commit": "3ae8952729b9071850f17542d94c245ee464157a",
+    "preceding_drive_release_file_id": "1AQ-NBYasOtKraoSYinZvFl3stPLOs74nFE6zerPOSJM",
+    "preceding_drive_release_modified_at": "2026-08-04T01:11:51.143Z"
+  },
+  "implementation": {
+    "canonical_class": "GovernedCommercialAssuranceControlPlane",
+    "legacy_class_state": "REFERENCE_ONLY_NOT_CANONICAL",
+    "caller_set_approval_shortcuts_removed": true,
+    "owner_receipt_consumption_ledger": "HASH_LINKED_VERIFIED",
+    "restart_safe_readback": "VERIFIED",
+    "tamper_fail_closed": "VERIFIED",
+    "mock_provider_truth_boundary": "VERIFIED"
+  },
+  "provider_proof": {
+    "state": "PROVIDER_NATIVE_CI_VERIFIED",
+    "pull_request": 118,
+    "evidence_commit": "92e8a5c2ac7df0494337f4841a26564158e5483d",
+    "workflow_run": 30871253104,
+    "workflow_conclusion": "success",
+    "artifact_id": 8877948495,
+    "artifact_name": "alpha-omega-commercial-governed-authority-v2-proof",
+    "artifact_digest": "sha256:ee07d988a76818472e594b5563474f799d02ff524beb4172b3ff51077a46a461",
+    "artifact_expires_at": "2026-11-02T02:15:37Z",
+    "receipt_sha256": "440d2d6856a735c116f1f3f3bca7eaa444756dc310aa20334ef3af64025d3465",
+    "receipt_file_sha256": "7e130a1a7028d51fa4f1430f0d1a9d47b6d9be5d0dda5717c6ad30ef69634397",
+    "canonical_readback_file_sha256": "56767db786b93cdfc7260a17355b8f1b849b97183bf9f3ddf3ad649175fbf798",
+    "candidate_head_commercial_runs": {
+      "C01_C05": 30871253080,
+      "C06_C09": 30871253082,
+      "C10_C15": 30871253090,
+      "provider_authority": 30871253077,
+      "github_control_plane": 30871253089,
+      "superior_logic_ci": 30871253091,
+      "repository_leak_guard": 30871253074
+    },
+    "checkpoint_reconciliation_requires_final_head_ci": true
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "truth_boundary": {
+    "verified_revenue_events": 0,
+    "mock_provider_conformance_events": 1,
+    "mock_provider_conformance_is_revenue": false,
+    "customer_demand_proven": false,
+    "signed_contract_proven": false,
+    "payment_proven": false,
+    "cloud_run_operation_proven": false,
+    "enterprise_attestation_proven": false,
+    "partner_adoption_proven": false,
+    "external_case_study_proven": false,
+    "production_scale_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
