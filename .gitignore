@@ -39,6 +39,8 @@ runtime-state/
 local-receipts/
 local-artifacts/
 control-plane-output/
+federation-learning-output/
+learning-artifacts/
 
 # IDE and OS
 .vscode/
