@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Phoenix exports with the dual-authority v3.1 exact-lease engine."""
+"""Build Phoenix exports with the v22 authorization-enforced cutover plane."""
 
 from __future__ import annotations
 
@@ -42,7 +42,7 @@ def _publish_pst_runtime() -> dict[str, object]:
     """Publish bounded verifier runtime settings for later Phoenix steps.
 
     ``GITHUB_ENV`` is the provider-native channel for exporting values to later
-    steps.  The scratch root uses writable ``/tmp``.  ``PYTHONPATH`` exposes a
+    steps. The scratch root uses writable ``/tmp``. ``PYTHONPATH`` exposes a
     narrow bootstrap that strips GitHub bearer authorization only when an
     artifact download redirect crosses from api.github.com to blob storage.
     Local builds and tests remain side-effect free when ``GITHUB_ENV`` is absent.
@@ -74,7 +74,7 @@ def _publish_pst_runtime() -> dict[str, object]:
     }
 
 
-def stage_ops_v3_1(
+def stage_ops_v3_2(
     root: Path, stage: Path, policy: dict
 ) -> list[V2.BASE.FileRecord]:
     template = root / policy["ops"]["template_prefix"]
@@ -88,28 +88,51 @@ def stage_ops_v3_1(
         rel = path.relative_to(template).as_posix()
         records.append(_include(path, stage, rel, "APPROVED_OPS_TEMPLATE"))
 
-    entrypoint = root / "phoenix" / "provider_cutover_v3_1.py"
-    base = root / "phoenix" / "provider_cutover_v3.py"
-    if not entrypoint.is_file():
-        raise RuntimeError(f"Provider cutover v3.1 missing: {entrypoint}")
-    if not base.is_file():
-        raise RuntimeError(f"Provider cutover v3 base missing: {base}")
-
-    records.append(
-        _include(
-            entrypoint,
-            stage,
-            "provider_cutover.py",
-            "DUAL_AUTHORITY_PROVIDER_CUTOVER_V3_1_EXACT_LEASE",
-        )
+    authorized_entrypoint = (
+        root / "phoenix" / "provider_cutover_authorized_executor.py"
     )
-    records.append(
-        _include(
-            base,
-            stage,
-            "provider_cutover_v3_base.py",
-            "VERIFIED_PROVIDER_CUTOVER_V3_BASE",
-        )
+    authorization_use = (
+        root / "phoenix" / "provider_cutover_authorization_use.py"
+    )
+    controller = root / "phoenix" / "provider_cutover_v3_1.py"
+    base = root / "phoenix" / "provider_cutover_v3.py"
+    required_sources = {
+        "authorized cutover entrypoint": authorized_entrypoint,
+        "authorization-use state machine": authorization_use,
+        "provider cutover v3.1": controller,
+        "provider cutover v3 base": base,
+    }
+    for label, path in required_sources.items():
+        if not path.is_file():
+            raise RuntimeError(f"{label} missing: {path}")
+
+    records.extend(
+        [
+            _include(
+                authorized_entrypoint,
+                stage,
+                "provider_cutover.py",
+                "AUTHORIZATION_ENFORCED_PROVIDER_CUTOVER_V22",
+            ),
+            _include(
+                authorization_use,
+                stage,
+                "provider_cutover_authorization_use.py",
+                "ONE_TIME_AUTHORIZATION_CONSUMPTION_V21",
+            ),
+            _include(
+                controller,
+                stage,
+                "provider_cutover_v3_1.py",
+                "DUAL_AUTHORITY_PROVIDER_CUTOVER_V3_1_EXACT_LEASE",
+            ),
+            _include(
+                base,
+                stage,
+                "provider_cutover_v3_base.py",
+                "VERIFIED_PROVIDER_CUTOVER_V3_BASE",
+            ),
+        ]
     )
 
     actual = {item.path for item in records}
@@ -137,14 +160,19 @@ def main() -> int:
     output = args.output if args.output.is_absolute() else root / args.output
 
     pst_runtime = _publish_pst_runtime()
-    V2.BASE.stage_ops = stage_ops_v3_1
+    V2.BASE.stage_ops = stage_ops_v3_2
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
-        "version": "3.1",
+        "version": "3.2",
+        "authorization_execution_gate": "V22",
+        "provider_controller_version": "3.1",
         "authority_models": [
             "INSTALLATION_TEMPLATE",
             "USER_SCOPED",
         ],
+        "authorization_decision_required": True,
+        "one_time_authorization_consumption_required": True,
+        "unknown_outcome_automatic_retry": False,
         "installation_template_endpoint": (
             "/repos/mosianekk-lang/Federation-Omega/generate"
         ),
@@ -152,6 +180,10 @@ def main() -> int:
             "EXACT_PROVIDER_BOUND_FORCE_WITH_LEASE"
         ),
         "entrypoint": "provider_cutover.py",
+        "authorization_state_machine": (
+            "provider_cutover_authorization_use.py"
+        ),
+        "provider_controller": "provider_cutover_v3_1.py",
         "base_controller": "provider_cutover_v3_base.py",
         "provider_apply_performed": False,
         "temporary_template_state_restoration": "REQUIRED_DURING_APPLY",
