@@ -1,0 +1,21 @@
+{
+  "manifest_version": 3,
+  "name": "Federation Live Bible Capture",
+  "version": "2.0.0",
+  "description": "Opt-in local capture of visible ChatGPT conversation messages into the Federation Live Bible receiver.",
+  "permissions": ["storage"],
+  "host_permissions": [
+    "http://127.0.0.1:8770/*",
+    "https://chatgpt.com/*",
+    "https://chat.openai.com/*"
+  ],
+  "background": {"service_worker": "background.js"},
+  "content_scripts": [
+    {
+      "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {"default_popup": "popup.html", "default_title": "Live Bible Capture"}
+}
