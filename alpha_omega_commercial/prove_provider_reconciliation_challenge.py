@@ -5,7 +5,7 @@ import json
 from pathlib import Path
 from typing import Any
 
-from provider_reconciliation_challenge import (
+from provider_reconciliation_challenge_safe import (
     ChallengeBoundProviderDispatchCommercialControlPlane,
 )
 
