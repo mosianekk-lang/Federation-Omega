@@ -5,6 +5,7 @@ import json
 import unittest
 from pathlib import Path
 
+from ops.openai_callable_route_gate import validate_complete_rotation
 from ops.openai_rotation_contract import (
     RotationContractError,
     build_redacted_plan,
@@ -19,6 +20,40 @@ MANIFEST_PATH = ROOT / "governance" / "openai_credential_rotation_manifest.json"
 
 def load_manifest() -> dict:
     return json.loads(MANIFEST_PATH.read_text(encoding="utf-8"))
+
+
+def complete_receipt() -> tuple[dict, dict]:
+    manifest = load_manifest()
+    receipt = receipt_template(manifest)
+    route_types = {
+        "mosiane-live-thread": "DIRECT_GOOGLE_CLOUD_API",
+        "modisa-legal-v2": "AUTHENTICATED_APPS_SCRIPT_WEB_APP",
+    }
+    for destination in receipt["destinations"]:
+        destination.update(
+            {
+                "secret_reference_readback": True,
+                "least_privilege_identity_readback": True,
+                "canary_health_verified": True,
+                "semantic_probe_verified": True,
+                "rollback_target_captured": True,
+                "production_promotion": "VERIFIED_REVISION_ONLY",
+                "execution_route": {
+                    "route_type": route_types[destination["destination_id"]],
+                    "depends_on_api_write_trigger": False,
+                    "callable_provider_readback": True,
+                    "provider_proof_ref": f"provider://{destination['destination_id']}/proof",
+                    "executed_at": "2026-08-04T18:45:00Z",
+                    "generic_health_response": False,
+                },
+            }
+        )
+    receipt["provider_closure"] = {
+        "exposed_key_revoked": True,
+        "exposed_key_rejection_verified": True,
+    }
+    receipt["completion_state"] = "COMPLETE_REDACTED_AND_VERIFIED"
+    return manifest, receipt
 
 
 class OpenAIRotationContractTests(unittest.TestCase):
@@ -60,26 +95,34 @@ class OpenAIRotationContractTests(unittest.TestCase):
             validate_receipt(manifest, receipt)
 
     def test_complete_redacted_receipt_passes(self) -> None:
-        manifest = load_manifest()
-        receipt = receipt_template(manifest)
-        for destination in receipt["destinations"]:
-            destination.update(
-                {
-                    "secret_reference_readback": True,
-                    "least_privilege_identity_readback": True,
-                    "canary_health_verified": True,
-                    "semantic_probe_verified": True,
-                    "rollback_target_captured": True,
-                    "production_promotion": "VERIFIED_REVISION_ONLY",
-                }
-            )
-        receipt["provider_closure"] = {
-            "exposed_key_revoked": True,
-            "exposed_key_rejection_verified": True,
-        }
-        receipt["completion_state"] = "COMPLETE_REDACTED_AND_VERIFIED"
+        manifest, receipt = complete_receipt()
         validated = validate_receipt(manifest, receipt)
         self.assertEqual(validated["completion_state"], "COMPLETE_REDACTED_AND_VERIFIED")
+
+    def test_complete_rotation_requires_callable_routes(self) -> None:
+        manifest, receipt = complete_receipt()
+        validated = validate_complete_rotation(manifest, receipt)
+        self.assertEqual(validated["completion_state"], "COMPLETE_REDACTED_AND_VERIFIED")
+
+    def test_api_write_trigger_route_is_rejected(self) -> None:
+        manifest, receipt = complete_receipt()
+        route = receipt["destinations"][0]["execution_route"]
+        route["route_type"] = "SHEET_API_EDIT_TRIGGER"
+        route["depends_on_api_write_trigger"] = True
+        with self.assertRaisesRegex(RotationContractError, "Non-execution route rejected"):
+            validate_complete_rotation(manifest, receipt)
+
+    def test_generic_health_response_is_rejected_as_execution(self) -> None:
+        manifest, receipt = complete_receipt()
+        receipt["destinations"][1]["execution_route"]["generic_health_response"] = True
+        with self.assertRaisesRegex(RotationContractError, "Generic runtime health"):
+            validate_complete_rotation(manifest, receipt)
+
+    def test_missing_callable_route_is_rejected(self) -> None:
+        manifest, receipt = complete_receipt()
+        del receipt["destinations"][0]["execution_route"]
+        with self.assertRaisesRegex(RotationContractError, "Callable execution route missing"):
+            validate_complete_rotation(manifest, receipt)
 
     def test_completion_claim_cannot_be_set_in_manifest(self) -> None:
         manifest = copy.deepcopy(load_manifest())
