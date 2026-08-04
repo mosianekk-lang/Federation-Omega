@@ -25,6 +25,14 @@ def ruleset() -> dict:
     )
 
 
+def activation_state() -> dict:
+    return json.loads(
+        (ROOT / "governance" / "provider_airlock_activation_state.json").read_text(
+            encoding="utf-8"
+        )
+    )
+
+
 class ProviderAirlockActivatorTests(unittest.TestCase):
     def test_canonical_ruleset_passes_validation(self):
         payload = ruleset()
@@ -90,6 +98,50 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
         self.assertFalse(saved["credential_value_recorded"])
         self.assertNotIn("token", json.dumps(saved).lower().replace("gh_admin_token", ""))
         self.assertEqual(64, len(saved["receipt_sha256"]))
+
+    def test_activation_state_is_truthful_and_fail_closed(self):
+        state = activation_state()
+        self.assertEqual(
+            "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-STATE-1", state["schema"]
+        )
+        self.assertEqual("READY_TOOL_SURFACE_BLOCKED", state["state"])
+        self.assertFalse(state["provider_state"]["provider_apply_performed"])
+        self.assertEqual("ABSENT", state["provider_state"]["provider_receipt_status"])
+        self.assertEqual("UNVERIFIED", state["provider_state"]["main_ruleset_active"])
+        self.assertEqual(
+            "NOT_RUN", state["provider_state"]["direct_update_rejection_canary"]
+        )
+        self.assertFalse(
+            state["connected_authority"]["connector_ruleset_mutation_exposed"]
+        )
+        self.assertTrue(
+            state["connected_authority"]["repository_admin_standing_reported"]
+        )
+        self.assertEqual("VERIFIED", state["allowed_next_state"])
+        gate = state["verification_gate"]
+        self.assertEqual("FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-1", gate["required_receipt_schema"])
+        self.assertEqual("VERIFIED", gate["required_receipt_status"])
+        self.assertIn("provider_readback.ruleset_exact", gate["required_checks"])
+        self.assertIn("provider_readback.main_sha_unchanged", gate["required_checks"])
+        self.assertNotIn("provider prevention is active", state["truth_boundary"].lower())
+
+    def test_verified_state_requires_provider_receipt_evidence(self):
+        state = activation_state()
+        if state["state"] == "VERIFIED":
+            self.assertTrue(state["provider_state"]["provider_apply_performed"])
+            self.assertEqual(
+                "VERIFIED", state["provider_state"]["provider_receipt_status"]
+            )
+            self.assertEqual(
+                "VERIFIED", state["provider_state"]["main_ruleset_active"]
+            )
+            self.assertEqual(
+                "REJECTED", state["provider_state"]["direct_update_rejection_canary"]
+            )
+            self.assertIsInstance(state["provider_state"].get("provider_receipt_sha256"), str)
+            self.assertEqual(
+                64, len(state["provider_state"]["provider_receipt_sha256"])
+            )
 
 
 if __name__ == "__main__":
