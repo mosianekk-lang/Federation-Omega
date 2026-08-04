@@ -43,7 +43,7 @@ jobs:
                 .github/workflows/public-repository-leak-guard.yml|\
                 .github/workflows/phoenix-emergency-freeze.yml)
                   if [[ "$workflow_state" != "active" ]]; then
-                    if gh api --method PUT \
+                    if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
                       >/dev/null; then
                       printf '%s\t%s\n' "$workflow_id" "$workflow_path" \
@@ -56,7 +56,7 @@ jobs:
                   ;;
                 *)
                   if [[ "$workflow_state" != "disabled_manually" ]]; then
-                    if gh api --method PUT \
+                    if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/disable" \
                       >/dev/null; then
                       printf '%s\t%s\n' "$workflow_id" "$workflow_path" \
