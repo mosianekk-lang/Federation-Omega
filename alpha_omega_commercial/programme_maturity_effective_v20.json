@@ -1,0 +1,67 @@
+{
+  "projection_id": "AO-COMMERCIAL-PROGRAMME-MATURITY-EFFECTIVE-V20",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+  "dependency_order": ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C15"],
+  "advanced_internal_slice": {
+    "status": "PHOENIX_V3_1_EXPORT_PURITY_AND_FINAL_RECEIPT_INTEGRITY_VERIFIED",
+    "capability_revision": "AO-COMMERCIAL-PROVIDER-EXECUTION-PLANE-EXPORT-INTEGRITY-V20",
+    "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+    "predecessor_projection": "alpha_omega_commercial/programme_maturity_effective_v18.json",
+    "implementation_pull_request": 180,
+    "implementation_head": "bc1e8d99a46d8397422d4fda452168bd5da2c08a",
+    "implementation_merge_commit": "a14ac09e0beea83944afa8f397e309fe51fe3101",
+    "provider_proof_run": 30938774541,
+    "provider_proof_job": 92091524109,
+    "provider_proof_artifact_id": 8904217522,
+    "provider_proof_artifact_digest": "sha256:a2ce5e65da4dcf0587a5393adade9c41b8ff5aa1f0db1c0c902d0875b44c2319",
+    "provider_proof_receipt_sha256": "6b41bc861e71363b706af890a6332f495a89e7b6b9c8c3b7ccd145cf79eb7f91",
+    "private_google_drive_release_file_id": "1bxLZ6XKdtRu_QoeiSly7SLzFogiS5gmp0fXdHmoFcdE",
+    "private_google_drive_release_modified_time": "2026-08-04T18:35:24.859Z",
+    "private_google_drive_export_sha256": "97afa8956d43f077ed88dd24af947776ab66f2fd21dd40f5939ee6342fa2baa9"
+  },
+  "stage_projection": {
+    "C03": "EXECUTION_PLANE_EXPORT_AUTHORITY_BOUNDARY_VERIFIED_PROVIDER_APPLY_BLOCKED",
+    "C06": "MANAGED_OPERATIONS_EXPORT_PACKAGE_PURITY_AND_RECEIPT_INTEGRITY_VERIFIED",
+    "C07": "DUAL_AUTHORITY_V3_1_ADAPTER_PACKAGE_VERIFIED_LIVE_PROVIDER_BLOCKED",
+    "C11": "SERVICE_ENABLED_PLATFORM_VERIFIED_SELF_SERVICE_HELD",
+    "C14": "SOURCE_CLEAN_CORE_AND_PRIVATE_OPS_ARTIFACTS_VERIFIED_PRODUCTION_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_VERIFIED_PRIVATE_EXECUTION_PLANE_PREPARED_OWNER_APPLY_REQUIRED"
+  },
+  "release_reconciliation": {
+    "status": "PROVIDER_BLOCKED_FRESH_AUTHORIZED_PRIVATE_EXECUTION_PLANE_APPLY_REQUIRED",
+    "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
+    "required_execution_plane": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+    "verified_cutover_package": "alpha_omega_commercial/provider_execution_plane_export_integrity_checkpoint_v20.json",
+    "provider_apply_performed": false,
+    "consequential_release_performed": false
+  },
+  "service_enabled_platform_first": true,
+  "self_service_saas_held": true,
+  "external_gates": {
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run_operation": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "external_customer_case_study": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "institution_scope": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "verified_live_revenue_events": 0,
+  "full_commercial_maturity": false,
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED",
+    "execution_plane_cutover": "OWNER_RESERVED"
+  }
+}
