@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import importlib.util
 import json
 import sys
@@ -61,7 +62,7 @@ def stage_ops_v3(
     missing = sorted(set(policy["ops"]["required_files"]) - actual)
     if missing:
         raise RuntimeError(f"Ops export missing required files: {missing}")
-    if any(item.path.startswith(".github/workflows/") for item in records):
+    if any(V2.BASE.is_github_workflow_path(item.path) for item in records):
         raise RuntimeError("Ops export unexpectedly contains an active workflow")
     return records
 
@@ -93,12 +94,15 @@ def main() -> int:
             f"/repos/{receipt.get('source_repository', 'mosianekk-lang/Federation-Omega')}"
             "/generate"
         ),
-        "temporary_template_state_restored": True,
+        "provider_apply_performed": False,
+        "temporary_template_state_restoration": "REQUIRED_DURING_APPLY",
         "credential_value_recorded": False,
     }
-    receipt["pst_remote_verifier_dispatch"] = (
-        V2.maybe_dispatch_pst_remote_verifier(root)
-    )
+    receipt["source_mutation_attempted"] = False
+    receipt.pop("receipt_sha256", None)
+    canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+    receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
+
     receipt_path = output / "phoenix-export-receipt.json"
     receipt_path.write_text(
         json.dumps(receipt, indent=2, sort_keys=True) + "\n",
