@@ -65,7 +65,7 @@ def _publish_pst_runtime() -> dict[str, object]:
     }
 
 
-def stage_ops_v3_3(
+def stage_ops_v3_4(
     root: Path, stage: Path, policy: dict
 ) -> list[V2.BASE.FileRecord]:
     template = root / policy["ops"]["template_prefix"]
@@ -80,7 +80,7 @@ def stage_ops_v3_3(
         records.append(_include(path, stage, rel, "APPROVED_OPS_TEMPLATE"))
 
     sources = {
-        "authorized cutover entrypoint": (
+        "authorized cutover base coordinator": (
             root / "phoenix" / "provider_cutover_authorized_executor.py"
         ),
         "authorization-use state machine": (
@@ -99,10 +99,10 @@ def stage_ops_v3_3(
     records.extend(
         [
             _include(
-                sources["authorized cutover entrypoint"],
+                sources["authorized cutover base coordinator"],
                 stage,
                 "provider_cutover.py",
-                "AUTHORIZATION_ENFORCED_PROVIDER_CUTOVER_V22",
+                "AUTHORIZATION_ENFORCED_PROVIDER_CUTOVER_BASE_V22",
             ),
             _include(
                 sources["authorization-use state machine"],
@@ -132,7 +132,9 @@ def stage_ops_v3_3(
     )
 
     actual = {item.path for item in records}
-    missing = sorted(set(policy["ops"]["required_files"]) - actual)
+    required = set(policy["ops"]["required_files"])
+    required.update(policy["ops"].get("required_v3_files", []))
+    missing = sorted(required - actual)
     if missing:
         raise RuntimeError(f"Ops export missing required files: {missing}")
     if any(V2.BASE.is_github_workflow_path(item.path) for item in records):
@@ -156,7 +158,7 @@ def main() -> int:
     output = args.output if args.output.is_absolute() else root / args.output
 
     pst_runtime = _publish_pst_runtime()
-    V2.BASE.stage_ops = stage_ops_v3_3
+    V2.BASE.stage_ops = stage_ops_v3_4
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
         "version": "3.3",
@@ -164,6 +166,9 @@ def main() -> int:
         "provider_controller_version": "3.1",
         "authority_models": ["INSTALLATION_TEMPLATE", "USER_SCOPED"],
         "authorization_decision_required": True,
+        "provider_authority_receipt_required": True,
+        "provider_authority_probe_get_only": True,
+        "provider_authority_mode_must_match_decision": True,
         "one_time_authorization_consumption_required": True,
         "unknown_outcome_automatic_retry": False,
         "read_only_outcome_reconciliation": True,
@@ -173,7 +178,11 @@ def main() -> int:
         "template_generated_main_replacement": (
             "EXACT_PROVIDER_BOUND_FORCE_WITH_LEASE"
         ),
-        "entrypoint": "provider_cutover.py",
+        "entrypoint": "provider_cutover_authority_bound.py",
+        "provider_authority_probe": "provider_authority_probe.py",
+        "candidate_validator": "provider_cutover_candidate.py",
+        "live_source_guard": "provider_cutover_guarded.py",
+        "authorization_base_coordinator": "provider_cutover.py",
         "authorization_state_machine": "provider_cutover_authorization_use.py",
         "provider_controller": "provider_cutover_v3_1.py",
         "base_controller": "provider_cutover_v3_base.py",
