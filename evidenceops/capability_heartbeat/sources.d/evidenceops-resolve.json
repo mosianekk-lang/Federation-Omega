@@ -21,6 +21,7 @@
         "circuit-breaker",
         "failure-learning",
         "hash",
+        "idempotency",
         "independent-readback",
         "large-files",
         "provenance",
@@ -38,8 +39,9 @@
       "authority_class": "A1",
       "external_effect": false,
       "provider_receipt": {
-        "workflow_run_id": 30906745578,
-        "tests_passed": 5,
+        "workflow_run_id": 30907208279,
+        "source_commit": "74c2c3729ab0f2ba7870a7bce50f4fb8c617cf37",
+        "tests_passed": 6,
         "status": "PASS"
       }
     }
