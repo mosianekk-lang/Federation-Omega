@@ -67,13 +67,16 @@ jobs:
           assert contract['verified_live_revenue_events'] == 0
           assert contract['full_commercial_maturity'] is False
 
-          assert api['api_id'] == 'AO-COMMERCIAL-CANONICAL-API-V4'
+          assert api['api_id'] == 'AO-COMMERCIAL-CANONICAL-API-V3'
+          assert api['capability_revision'] == 'AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5'
           assert api['canonical_class'] == 'AuthoritySnapshotCommercialControlPlane'
+          assert api['authority_snapshot']['durable_refresh_before_every_decision'] is True
           assert api['authority_use']['preview_validation_grants_live_authority'] is False
           assert api['authority_use']['latest_durable_acceptance_required'] is True
           assert api['authority_use']['exact_snapshot_hash_match_required'] is True
           assert api['authority_use']['acceptance_entry_hash_binding_required'] is True
           assert api['authority_use']['action_binding_required'] is True
+          assert api['authority_use']['stale_worker_view_can_authorize_action'] is False
           assert api['authority_use']['superseded_snapshot_can_authorize_action'] is False
           assert api['persistence']['authority_action_binding'] == 'HASH_BOUND_TO_LATEST_ACCEPTANCE_RESTART_SAFE'
           assert api['service_first_strategy'] == 'SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS'
