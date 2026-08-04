@@ -111,7 +111,7 @@ jobs:
           assert provider['all_conclusions_success'] is True
           assert drive['file_id'] == '1Rfh7-yqKhlzKPlnzhpJc1jLX8OFKvZBMbrWd_Yn56jA'
           assert drive['created_time'] == '2026-08-04T14:24:44.316Z'
-          assert drive['modified_time'] == '2026-08-04T14:25:28.085Z'
+          assert drive['modified_time'] == '2026-08-04T14:27:04.722Z'
           assert drive['readback_verified'] is True and drive['shared'] is False
           assert drive['owner'] == 'mosianekk@gmail.com'
           assert drive['export_size_bytes'] == 7878
