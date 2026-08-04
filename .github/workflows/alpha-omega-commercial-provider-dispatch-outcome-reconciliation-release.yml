@@ -1,0 +1,64 @@
+name: Alpha Omega Commercial Provider Dispatch Outcome Reconciliation Release
+on:
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-provider-dispatch-outcome-reconciliation-release.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: alpha-omega-commercial-provider-dispatch-outcome-reconciliation-release-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  release-proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with: {persist-credentials: false}
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with: {python-version: '3.13'}
+      - name: Compile commercial package
+        run: python -m compileall -q alpha_omega_commercial
+      - name: Run v14 release and inherited regressions
+        run: >-
+          python -m unittest -v
+          alpha_omega_commercial.test_provider_dispatch_outcome_reconciliation_release
+          alpha_omega_commercial.test_provider_dispatch_outcome_reconciliation
+          alpha_omega_commercial.test_provider_dispatch_fencing
+          alpha_omega_commercial.test_provider_dispatch_claim_lease
+          alpha_omega_commercial.test_provider_dispatch_outbox
+      - name: Execute deterministic release reconciliation proof
+        run: python -m alpha_omega_commercial.prove_provider_dispatch_outcome_reconciliation_release --output artifacts
+      - name: Validate release receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          r=json.loads(Path('artifacts/provider-dispatch-outcome-reconciliation-release-receipt.json').read_text())
+          assert r['control_id']=='AO-COMMERCIAL-PROVIDER-DISPATCH-OUTCOME-RECONCILIATION-V14-RELEASE'
+          assert r['checks_required']==15 and r['checks_failed']==0 and all(r['checks'].values())
+          assert r['provider_proof']['artifact_id']==8894094769
+          assert r['google_drive_release']['readback_verified'] is True
+          assert r['commercial_truth']['verified_live_revenue_events']==0
+          assert r['commercial_truth']['full_commercial_maturity'] is False
+          assert r['external_gate_effect']=='UNCHANGED'
+          PY
+      - name: Verify no secret-shaped values
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+          forbidden=re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for root in [Path('alpha_omega_commercial/provider_dispatch_outcome_reconciliation_checkpoint.json'),Path('alpha_omega_commercial/programme_effective_v14.json'),Path('alpha_omega_commercial/prove_provider_dispatch_outcome_reconciliation_release.py'),Path('artifacts')]:
+              for p in ([root] if root.is_file() else root.rglob('*')):
+                  if p.is_file(): assert not forbidden.search(p.read_text(errors='ignore')), f'credential-shaped material in {p}'
+          PY
+      - name: Upload immutable release proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alpha-omega-commercial-provider-dispatch-outcome-reconciliation-release-proof
+          path: artifacts
+          if-no-files-found: error
+          retention-days: 90
