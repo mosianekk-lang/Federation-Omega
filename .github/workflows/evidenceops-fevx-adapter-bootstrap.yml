@@ -5,19 +5,21 @@ on:
     paths:
       - ".bootstrap/evidenceops-fevx/**"
       - ".github/workflows/evidenceops-fevx-adapter-bootstrap.yml"
+      - "evidenceops/fevx_mcoe/**"
   push:
     branches: ["main"]
     paths:
       - ".bootstrap/evidenceops-fevx/**"
       - ".github/workflows/evidenceops-fevx-adapter-bootstrap.yml"
+      - "evidenceops/fevx_mcoe/**"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: evidenceops-fevx-adapter-bootstrap
-  cancel-in-progress: false
+  group: evidenceops-fevx-adapter-bootstrap-${{ github.ref }}
+  cancel-in-progress: true
 
 env:
   OVERLAY_SHA256: 1e8d3755a388d8138b6a1d838f897e4185bc1ff2f830c3f151f1094f7c358aef
@@ -26,32 +28,47 @@ env:
   PYTHONWARNINGS: ignore::ResourceWarning
 
 jobs:
-  install-verify-and-persist:
+  install-verify-and-prove:
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: true
+          persist-credentials: false
 
       - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
 
+      - name: Initialize bootstrap diagnostics
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime/evidenceops-fevx/bootstrap
+          printf '{"receipt":"EVIDENCEOPS-FEVX-BOOTSTRAP","run_id":"%s","source_sha":"%s","repository_mutation_attempted":false}\n' \
+            "$GITHUB_RUN_ID" "$GITHUB_SHA" \
+            > runtime/evidenceops-fevx/bootstrap/run.json
+
       - name: Restore and verify integration overlay
         shell: bash
         run: |
           set -euo pipefail
-          shopt -s nullglob
-          parts=(.bootstrap/evidenceops-fevx/overlay.part.*)
+          mapfile -t parts < <(
+            find .bootstrap/evidenceops-fevx \
+              -maxdepth 1 \
+              -type f \
+              -regextype posix-extended \
+              -regex '.*/overlay\.part\.[0-9]{2}' \
+              -print | LC_ALL=C sort
+          )
           printf 'overlay_part_count=%s\n' "${#parts[@]}"
           for part in "${parts[@]}"; do
             printf 'part=%s size=%s sha256=%s\n' \
               "$part" "$(wc -c < "$part")" "$(sha256sum "$part" | awk '{print $1}')"
           done
           if [[ "${#parts[@]}" -ne 11 ]]; then
-            echo 'ERROR: expected exactly 11 overlay parts' >&2
+            echo 'ERROR: expected exactly 11 canonical overlay parts' >&2
             exit 1
           fi
           cat "${parts[@]}" | base64 --decode > /tmp/evidenceops-fevx-overlay.tar.gz
@@ -81,7 +98,14 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          parts=(evidenceops/fevx_mcoe/vendor/cse-wheel.part.*)
+          mapfile -t parts < <(
+            find evidenceops/fevx_mcoe/vendor \
+              -maxdepth 1 \
+              -type f \
+              -regextype posix-extended \
+              -regex '.*/cse-wheel\.part\.[0-9]{2}' \
+              -print | LC_ALL=C sort
+          )
           test "${#parts[@]}" -eq 7
           cat "${parts[@]}" | base64 --decode > "$CSE_WHEEL_PATH"
           observed="$(sha256sum "$CSE_WHEEL_PATH" | awk '{print $1}')"
@@ -100,10 +124,10 @@ jobs:
           import json
           from pathlib import Path
           import yaml
-          root=Path('evidenceops/fevx_mcoe')
+          root = Path('evidenceops/fevx_mcoe')
           for path in root.rglob('*.json'):
               json.loads(path.read_text(encoding='utf-8'))
-          yaml.safe_load((root/'POLICY.yaml').read_text(encoding='utf-8'))
+          yaml.safe_load((root / 'POLICY.yaml').read_text(encoding='utf-8'))
           PY
 
       - name: Run all boundary and integrity tests
@@ -126,14 +150,14 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-          root=Path('runtime/evidenceops-fevx')
-          result=json.loads((root/'results/latest.json').read_text())
-          heartbeat=json.loads((root/'heartbeat/latest.json').read_text())
-          drift=json.loads((root/'drift/latest.json').read_text())
-          actual=json.loads((root/'state/actual_state.json').read_text())
-          assert result['status']=='VERIFIED', result
-          assert result['provider']=='github_actions', result
-          assert result['module_count']==20 and all(result['checks'].values()), result
+          root = Path('runtime/evidenceops-fevx')
+          result = json.loads((root / 'results/latest.json').read_text())
+          heartbeat = json.loads((root / 'heartbeat/latest.json').read_text())
+          drift = json.loads((root / 'drift/latest.json').read_text())
+          actual = json.loads((root / 'state/actual_state.json').read_text())
+          assert result['status'] == 'VERIFIED', result
+          assert result['provider'] == 'github_actions', result
+          assert result['module_count'] == 20 and all(result['checks'].values()), result
           assert result['semantic_readback'] is True, result
           assert result['rollback_test'] is True and result['reapply_test'] is True, result
           assert result['external_effect'] is False, result
@@ -143,71 +167,15 @@ jobs:
           assert actual['source_mutation_authority'] is False, actual
           assert actual['case_wall_crossing_authority'] is False, actual
           assert actual['legal_authority'] is False, actual
-          assert heartbeat['runtime_state']=='OPERATIONAL' and heartbeat['verified'] is True, heartbeat
-          assert drift['classification']=='IN_SYNC' and not drift['differences'], drift
+          assert heartbeat['runtime_state'] == 'OPERATIONAL' and heartbeat['verified'] is True, heartbeat
+          assert drift['classification'] == 'IN_SYNC' and not drift['differences'], drift
           PY
 
-      - name: Promote only the proven synthetic adapter scope in registries
-        shell: bash
-        run: |
-          set -euo pipefail
-          python - <<'PY'
-          import json
-          from pathlib import Path
-          result=json.loads(Path('runtime/evidenceops-fevx/results/latest.json').read_text())
-          member_path=Path('evidenceops/fevx_mcoe/federation_member.json')
-          member=json.loads(member_path.read_text())
-          member.update({
-              'current_level':'WORKFLOW_VERIFIED',
-              'maturity_state':'WORKFLOW_VERIFIED_SYNTHETIC_CASE_WALLED_READ_ONLY',
-              'trust_scope':['SYNTHETIC_CASE_WALLED_READ_ONLY_ANALYSIS'],
-              'health_state':'OPERATIONAL',
-              'last_verified_timestamp':result['recorded_at'],
-              'known_failures':[],
-              'active_blockers':['REAL_MATTER_CANARY_NOT_EXECUTED','WORKFLOW_SPECIFIC_AUTONOMY_NOT_GRANTED'],
-              'federation_status':'SUPERVISED_FEDERATION',
-              'proof_id':result['proof_id'],
-              'proof_hash':result['proof_hash'],
-          })
-          member_path.write_text(json.dumps(member,indent=2,sort_keys=True)+'\n')
-
-          sources_path=Path('evidenceops/capability_heartbeat/sources.json')
-          sources=json.loads(sources_path.read_text())
-          for source in sources['sources']:
-              if source.get('source_id')=='fevx-cse':
-                  capability=source['capabilities'][0]
-                  capability['state']='EXECUTABLE_NOW'
-                  capability['proof_level']='PROVIDER_WORKFLOW_VERIFIED'
-                  capability['provider_proof_id']=result['proof_id']
-                  capability['provider_proof_hash']=result['proof_hash']
-                  capability['real_matter_autonomy']=False
-          sources_path.write_text(json.dumps(sources,indent=2,sort_keys=True)+'\n')
-          PY
-
-      - name: Persist installed source, proof and canonical registration
-        if: github.event_name != 'pull_request' && github.ref == 'refs/heads/main'
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "evidenceops-fevx-bootstrap[bot]"
-          git config user.email "evidenceops-fevx-bootstrap[bot]@users.noreply.github.com"
-          git rm -r .bootstrap/evidenceops-fevx
-          git rm .github/workflows/evidenceops-fevx-adapter-bootstrap.yml
-          git add \
-            .github/workflows/evidenceops-fevx-adapter.yml \
-            evidenceops/fevx_mcoe \
-            evidenceops/runtime/ACTIVE_SOVEREIGN_TRANSLATOR.json \
-            evidenceops/runtime_service/active_manifest.json \
-            evidenceops/capability_heartbeat/sources.json \
-            runtime/evidenceops-fevx
-          git commit -m "Install verified EvidenceOps FEVX read-only adapter [skip evidenceops-fevx-bootstrap]"
-          git pull --rebase origin main
-          git push origin HEAD:main
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload immutable bootstrap proof
         if: always()
+        uses: actions/upload-artifact@v4
         with:
-          name: evidenceops-fevx-bootstrap-proof
+          name: evidenceops-fevx-bootstrap-proof-${{ github.run_id }}-${{ github.run_attempt }}
           path: runtime/evidenceops-fevx/
           if-no-files-found: error
           retention-days: 90
