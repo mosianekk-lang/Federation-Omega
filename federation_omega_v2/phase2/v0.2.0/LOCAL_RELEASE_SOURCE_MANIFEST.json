@@ -1,0 +1,17 @@
+{
+  "schema": "FEDERATION-OMEGA-V2-PHASE2-SOURCE-MANIFEST-1",
+  "version": "0.2.0",
+  "file_count": 8,
+  "files": [
+    {"path":"ARCHITECTURE.md","size":317,"sha256":"1970bb96ddb4a413032c4ffc0f97ffbccb95fec22d7ba0f229dda2f7928e4a77"},
+    {"path":"CANONICAL_SYSTEM_REGISTER.json","size":8045,"sha256":"cb9bad7e95851c0c0e43bb7ccfd102694726aa8694251c0c49a5232c1c396fdf"},
+    {"path":"README.md","size":442,"sha256":"9b015dc7db2ec82f54df1ebb513a6d5dced596cca8504a6411f7deefb0e65070"},
+    {"path":"federation_omega_v2/__init__.py","size":317,"sha256":"7dc62a0cbd020a16306e2d1906c187e61c606ca894ef926f643e526f3b0147aa"},
+    {"path":"federation_omega_v2/cli.py","size":1221,"sha256":"38921275bdf5dd967936ca9a7655c28de8ed815ab2fcc46190efb1bfc5df29f7"},
+    {"path":"federation_omega_v2/core.py","size":11311,"sha256":"51f6f7908ce224471e10b0a9e6081fc17984d22f9cce7575760b26be1cae1406"},
+    {"path":"pyproject.toml","size":432,"sha256":"13fdc917d6e0af2410cfca4c51957967fd171c1f13586a906a0ef103e90629de"},
+    {"path":"tests/test_phase2.py","size":4010,"sha256":"61dd0c4b4db3bd9127bb4a48ded9419e33aa97df85b0c12641318a4b34a0579a"}
+  ],
+  "manifest_sha256": "b414174c7f7abe7f18e124f6ddd2dabb275fa2d12614a5903eaaec1b0799915a",
+  "truth_boundary": "This manifest is exact for the governed local source ZIP. The repository stores a readable source projection and canonical register; binary identity remains governed by the Library release hashes."
+}
