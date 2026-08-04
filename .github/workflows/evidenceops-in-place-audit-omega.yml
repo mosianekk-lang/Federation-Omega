@@ -43,7 +43,7 @@ jobs:
           }
           pathlib.Path('audit-receipt/receipt.json').write_text(json.dumps(receipt, indent=2))
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: evidenceops-in-place-audit-omega-receipt
           path: audit-receipt/receipt.json

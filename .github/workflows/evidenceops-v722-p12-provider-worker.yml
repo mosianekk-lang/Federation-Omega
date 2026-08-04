@@ -57,7 +57,7 @@ jobs:
         run: python runtime/evidenceops_v722/p12_provider_worker.py verify --workspace p12_workspace
 
       - name: Upload immutable proof artifact
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidenceops-v722-p12-provider-worker-${{ github.run_id }}-${{ github.run_attempt }}
           path: p12_workspace

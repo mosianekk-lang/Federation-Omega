@@ -51,7 +51,7 @@ jobs:
           assert receipt['phases']['P08']['chaos']['recovery_score'] == 1.0
           PY
       - name: Upload immutable proof package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: alpha-omega-v30-p06-p08-proof
           path: p06_p08_workspace/

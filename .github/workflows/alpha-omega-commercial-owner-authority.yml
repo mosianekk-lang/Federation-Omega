@@ -85,7 +85,7 @@ jobs:
                   assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
           PY
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: alpha-omega-commercial-owner-authority-receipts-proof
           path: alpha_omega_commercial/artifacts/owner-authority-receipts

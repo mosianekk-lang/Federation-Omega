@@ -63,7 +63,7 @@ jobs:
             git commit -m "Record PFRD SAIUI worker URL recovery"
             git push origin HEAD:main
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: pfrd-saiui-worker-url-recovery
           if-no-files-found: error

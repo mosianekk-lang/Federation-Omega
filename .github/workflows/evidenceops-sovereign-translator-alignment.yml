@@ -62,7 +62,7 @@ jobs:
           PY
 
       - name: Upload alignment receipt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidenceops-sovereign-translator-alignment
           path: alignment-receipt/receipt.json

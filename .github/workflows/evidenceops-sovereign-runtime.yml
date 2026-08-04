@@ -105,7 +105,7 @@ jobs:
               encoding='utf-8',
           )
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sovereign-runtime-ci-receipt
           path: |
@@ -179,7 +179,7 @@ jobs:
           assert data['canonical_backend']['private_values_echoed'] is False
           print(json.dumps(data, indent=2, sort_keys=True))
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: sovereign-runtime-deployment-readback
           path: deployed-health.json

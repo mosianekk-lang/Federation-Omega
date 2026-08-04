@@ -53,7 +53,7 @@ jobs:
           assert receipt['phases']['P14']['planning']['valid']
           PY
       - name: Upload proof package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: alpha-omega-v30-p09-p10-p14-proof
           path: p09_p10_p14_workspace/

@@ -70,7 +70,7 @@ jobs:
           sha256sum fo-transcription-bridge-source.zip | tee fo-transcription-bridge-source.zip.sha256
           stat -c '%s' fo-transcription-bridge-source.zip | tee fo-transcription-bridge-source.zip.size
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: fo-transcription-bridge-source-${{ github.run_id }}
           if-no-files-found: error

@@ -42,7 +42,7 @@ jobs:
           open('institution_receipt.json','w').write(json.dumps(receipt, indent=2))
           PY
       - run: test -f institution_receipt.json
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: alpha-omega-v30-institution-proof
           path: |

@@ -285,7 +285,7 @@ jobs:
           PY
 
       - name: Upload verification receipts
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidenceops-pst-v2-drive-verification-receipts
           path: |

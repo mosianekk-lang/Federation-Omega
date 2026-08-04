@@ -36,7 +36,7 @@ jobs:
           PY
           find "$ROOT" -type f -print0 | sort -z | xargs -0 sha256sum > "$ROOT/SHA256SUMS.txt"
           du -sh "$ROOT"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: fo-faster-whisper-small-en-${{ github.run_id }}
           if-no-files-found: error

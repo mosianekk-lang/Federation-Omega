@@ -31,7 +31,7 @@ jobs:
       - run: test -f ./maintenance_workspace/maintenance_receipt.json
       - run: test -f ./maintenance_workspace/heartbeat.jsonl
       - run: test -f ./maintenance_workspace/learning_ledger.jsonl
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: alpha-omega-maintenance-proof
           path: |

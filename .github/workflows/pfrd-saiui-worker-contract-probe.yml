@@ -80,7 +80,7 @@ jobs:
             git commit -m "Record PFRD SAIUI worker contract probe"
             git push origin HEAD:main
           fi
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: pfrd-saiui-worker-contract-probe
           if-no-files-found: error

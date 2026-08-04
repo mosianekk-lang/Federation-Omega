@@ -44,7 +44,7 @@ jobs:
             --summary runtime/evidenceops_v722/state/p13_longitudinal_value_latest.json
 
       - name: Upload immutable cycle proof
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidenceops-v722-p13-longitudinal-${{ github.run_id }}-${{ github.run_attempt }}
           path: |

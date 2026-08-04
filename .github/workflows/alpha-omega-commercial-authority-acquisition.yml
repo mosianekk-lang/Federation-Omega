@@ -104,7 +104,7 @@ jobs:
                   if path.is_file():
                       assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
           PY
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: alpha-omega-commercial-provider-authority-acquisition-proof
           path: alpha_omega_commercial/artifacts/provider-authority-acquisition

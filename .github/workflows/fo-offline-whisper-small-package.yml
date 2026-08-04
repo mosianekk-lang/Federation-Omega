@@ -37,7 +37,7 @@ jobs:
           sha256sum "$ROOT/small.en.pt" > "$ROOT/model.sha256"
           stat -c '%s' "$ROOT/small.en.pt" > "$ROOT/model.size"
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: fo-offline-whisper-small-en-${{ github.run_id }}
           if-no-files-found: error

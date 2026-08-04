@@ -93,7 +93,7 @@ jobs:
           assert (root / 'canonical-live-authority-manifest.json').is_file()
           PY
       - name: Upload proof package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: sol-61-runtime-proof
           path: |

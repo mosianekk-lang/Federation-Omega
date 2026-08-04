@@ -73,7 +73,7 @@ jobs:
                   assert secret not in serialised
           PY
       - name: Upload boundary receipt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidenceops-boundary-resolution
           path: evidenceops/runtime/receipts/boundary_resolution_latest.json

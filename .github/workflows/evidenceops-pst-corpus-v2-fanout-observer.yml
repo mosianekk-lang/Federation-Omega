@@ -58,7 +58,7 @@ jobs:
           PY
 
       - name: Upload immutable observer receipt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidenceops-pst-v2-fanout-observer-${{ github.run_id }}-${{ github.run_attempt }}
           path: deployment_receipts/evidenceops-pst-corpus-v2-fanout-observer.json

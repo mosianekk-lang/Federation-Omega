@@ -97,7 +97,7 @@ jobs:
           tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner -czf ipep-whisper-offline-runtime.tar.gz runtime
           sha256sum ipep-whisper-offline-runtime.tar.gz | tee ipep-whisper-offline-runtime.tar.gz.sha256
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: ipep-whisper-offline-runtime-${{ github.run_id }}
           if-no-files-found: error

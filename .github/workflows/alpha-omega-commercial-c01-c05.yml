@@ -40,7 +40,7 @@ jobs:
           assert receipt['stages']['C05']['proof']['invoice']['status'] == 'INVOICE_READY_NOT_ISSUED'
           PY
       - name: Upload proof package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: alpha-omega-commercial-c01-c05-proof
           path: alpha_omega_commercial/artifacts/c01-c05

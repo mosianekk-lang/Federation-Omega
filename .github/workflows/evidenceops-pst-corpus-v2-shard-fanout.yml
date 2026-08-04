@@ -74,55 +74,55 @@ jobs:
           PY
       - name: Upload shard 0001
         id: s01
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0001-30865146610, path: /mnt/raw/**/Corpus_Shard_0001.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0002
         id: s02
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0002-30865146610, path: /mnt/raw/**/Corpus_Shard_0002.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0003
         id: s03
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0003-30865146610, path: /mnt/raw/**/Corpus_Shard_0003.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0004
         id: s04
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0004-30865146610, path: /mnt/raw/**/Corpus_Shard_0004.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0005
         id: s05
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0005-30865146610, path: /mnt/raw/**/Corpus_Shard_0005.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0006
         id: s06
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0006-30865146610, path: /mnt/raw/**/Corpus_Shard_0006.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0007
         id: s07
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0007-30865146610, path: /mnt/raw/**/Corpus_Shard_0007.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0008
         id: s08
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0008-30865146610, path: /mnt/raw/**/Corpus_Shard_0008.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0009
         id: s09
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0009-30865146610, path: /mnt/raw/**/Corpus_Shard_0009.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0010
         id: s10
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0010-30865146610, path: /mnt/raw/**/Corpus_Shard_0010.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0011
         id: s11
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0011-30865146610, path: /mnt/raw/**/Corpus_Shard_0011.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0012
         id: s12
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0012-30865146610, path: /mnt/raw/**/Corpus_Shard_0012.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Upload shard 0013
         id: s13
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with: {name: evidenceops-pst-v2-shard-0013-30865146610, path: /mnt/raw/**/Corpus_Shard_0013.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
       - name: Commit fanout receipt
         env:

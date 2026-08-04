@@ -80,7 +80,7 @@ jobs:
           PY
 
       - name: Upload receipt
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: evidenceops-in-place-alignment-receipt
           path: alignment-receipt/in-place-receipt.json

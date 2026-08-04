@@ -49,7 +49,7 @@ jobs:
           PY
 
       - name: Upload immutable observation
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v7
         with:
           name: ipep-audio-engine-v2-observation-${{ github.run_id }}-${{ github.run_attempt }}
           path: deployment_receipts/ipep-audio-engine-v2-observation.json

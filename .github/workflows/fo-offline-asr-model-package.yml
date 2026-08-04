@@ -30,7 +30,7 @@ jobs:
             | tee /tmp/fo-offline-asr/model.sha256
           printf '%s\n' "$URL" > /tmp/fo-offline-asr/source-url.txt
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@v7
         with:
           name: fo-offline-asr-wav2vec2-${{ github.run_id }}
           if-no-files-found: error
