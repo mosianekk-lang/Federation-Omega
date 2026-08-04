@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "owner": "Kagiso Kim Mosiane",
   "required_before_substantive_work": true,
   "inherited_policies": [
@@ -9,30 +9,67 @@
   ],
   "n_directive": {
     "input": "n",
-    "action": "MONOTONIC_CONTINUATION",
+    "action": "FORMATION_ALPHA_OMEGA_MONOTONIC_INNOVATION_CONTINUATION",
+    "required_engines": {
+      "formation_engine": "REQUIRED",
+      "alpha_omega_foundry": "REQUIRED",
+      "innovation_frontier": "REQUIRED",
+      "continuous_learning": "REQUIRED"
+    },
     "required_sequence": [
       "LOAD_LATEST_VERIFIED_CHECKPOINT",
       "LOAD_HEARTBEAT_CAPABILITIES_LESSONS_TRIGGERS_BLOCKERS_CORRECTIONS",
+      "FORMATION_INTENT_LOCK_AND_OBJECTIVE_MEANS_SEPARATION",
+      "FORMATION_SOURCE_EVIDENCE_AUTHORITY_DEPENDENCY_AND_PROOF_MAP",
+      "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
+      "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
+      "ALPHA_OMEGA_REUSE_COMPOSITION_AND_MINIMUM_COMPLETE_BUILD",
+      "GENERATE_BOUNDED_INNOVATION_FRONTIER",
       "SELECT_HIGHEST_VALUE_ELIGIBLE_PACKET",
       "EXECUTE_SAFE_AUTHORISED_WORK",
-      "RECORD_TERMINAL_LEARNING_EVENT",
-      "ACTIVATE_REPAIR_FALLBACK_AND_REGRESSION_TRIGGERS",
-      "VALIDATE_READBACK_RECONCILE_AND_VERIFY_ROLLBACK",
+      "VALIDATE_SIMULATE_RED_TEAM_AND_FAILURE_INJECT_WHERE_MATERIAL",
+      "READBACK_HEALTH_PERSISTENCE_ROLLBACK_AND_PROOF",
+      "RECORD_TERMINAL_LEARNING_AND_INNOVATION_EVENT",
+      "ACTIVATE_REPAIR_FALLBACK_REGRESSION_AND_OPPORTUNITY_TRIGGERS",
+      "GENERALISE_VERIFIED_LEARNING_INTO_REUSABLE_CAPABILITY",
       "ASSESS_MATURITY_AND_PROMOTE_ONLY_PROVEN_SCOPE",
-      "BEGIN_NEXT_JUSTIFIED_ADVANCEMENT"
+      "BEGIN_NEXT_JUSTIFIED_EXPERIMENT_OR_ADVANCEMENT"
     ]
   },
+  "full_power": {
+    "definition": "all relevant capabilities that are available, authorised, safe and evidence-matched",
+    "invented_capabilities": false,
+    "authority_expansion": false,
+    "trust_transfer": false,
+    "reuse_before_rebuild": true,
+    "multi_stream_safe_parallelism": true,
+    "effectful_mutations_serialized": true
+  },
   "output_contract": {
+    "formation_engine_result": true,
+    "alpha_omega_foundry_result": true,
+    "solution_alternatives_considered": true,
+    "reuse_vs_build_decision": true,
+    "innovation_delta": true,
+    "learning_delta": true,
+    "next_experiment_or_opportunity": true,
     "complete_next_best_automated_pathway": true,
     "explicit_continuation_line": "n = proceed",
     "status_only_closure_with_safe_work": false
   },
   "learning_contract": {
     "required_terminal_events": ["SUCCESS", "FAILURE", "CONSTRAINT"],
-    "required_when_applicable": ["CORRECTION", "RECOVERY"],
+    "required_when_applicable": [
+      "CORRECTION",
+      "RECOVERY",
+      "INNOVATION_CANDIDATE",
+      "EXPERIMENT_RESULT",
+      "NEGATIVE_RESULT"
+    ],
     "append_only": true,
     "hash_linked": true,
-    "trigger_state_derived_from_ledger": true
+    "trigger_state_derived_from_ledger": true,
+    "measured_performance_delta_required_for_intelligence_claim": true
   },
   "authority": {
     "ceiling": "A1_INTERNAL",
@@ -42,14 +79,19 @@
   },
   "master_state": {
     "chapter": "CH-073",
-    "minimum_compatible_cycle": "CYC-CBR-20260804-031",
-    "policy_sha256": "39f589d6e1f2b935f432b203fe9426eb4fbb8919493a3ced23d693f1d143d41a"
+    "minimum_compatible_cycle": "CYC-CBR-20260805-032",
+    "policy_id": "FEDOMEGA-N-DIRECTIVE-V2",
+    "policy_version": "2.1.0",
+    "policy_contract_sha256": "2f9fcacb5c1c0a2d336668742c787706c9854dba5fb0df6868d4f3c232fe3ed8"
   },
   "bootstrap_pass_conditions": [
     "policy file parses",
-    "policy id and hash match the Master record",
-    "output contract requires the complete pathway and explicit n line",
-    "learning contract requires terminal event capture",
+    "policy id, version and contract hash match the Master record",
+    "Formation Engine is mandatory",
+    "Alpha-to-Omega Foundry is mandatory",
+    "bounded innovation frontier is mandatory",
+    "output contract requires Formation, Foundry, alternatives, innovation, learning, pathway and explicit n line",
+    "learning contract requires terminal and innovation-event capture",
     "authority ceiling remains A1_INTERNAL",
     "external effect remains false",
     "no trust transfer is enabled"
