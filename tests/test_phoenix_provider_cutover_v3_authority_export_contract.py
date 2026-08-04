@@ -14,6 +14,7 @@ class AuthorityExportContractTests(unittest.TestCase):
         )
         self.assertEqual("1.0.9", policy["version"])
         required = set(policy["ops"]["required_files"])
+        required.update(policy["ops"].get("required_v3_files", []))
         expected = {
             "provider_authority_probe.py",
             "provider_cutover_authority_bound.py",
@@ -31,6 +32,19 @@ class AuthorityExportContractTests(unittest.TestCase):
             "governance/OPS_CONTRACT.json",
         }
         self.assertTrue(expected.issubset(required), sorted(expected - required))
+        self.assertIn(
+            "provider_cutover_authorization_use.py",
+            policy["ops"]["required_v3_files"],
+        )
+
+    def test_v3_builder_enforces_base_and_v3_requirements(self):
+        source = (ROOT / "phoenix" / "build_exports_v3.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            'required.update(policy["ops"].get("required_v3_files", []))',
+            source,
+        )
 
     def test_export_receipt_metadata_names_true_canonical_route(self):
         source = (ROOT / "phoenix" / "build_exports_v3.py").read_text(
