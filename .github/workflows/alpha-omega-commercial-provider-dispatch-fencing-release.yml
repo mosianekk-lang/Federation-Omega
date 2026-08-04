@@ -1,4 +1,4 @@
-name: Alpha Omega Commercial Provider Dispatch Outcome Reconciliation Release
+name: Alpha Omega Commercial Provider Reconciliation Challenge v15
 
 on:
   pull_request:
@@ -16,11 +16,11 @@ permissions:
   contents: read
 
 concurrency:
-  group: alpha-omega-commercial-provider-dispatch-outcome-release-${{ github.ref }}
+  group: alpha-omega-commercial-provider-reconciliation-challenge-v15-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
-  release-proof:
+  provider-proof:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -36,10 +36,10 @@ jobs:
       - name: Compile commercial package
         run: python -m compileall -q alpha_omega_commercial
 
-      - name: Run release and inherited regressions
+      - name: Run v15 and inherited regressions
         run: >-
           python -m unittest -v
-          alpha_omega_commercial.test_provider_dispatch_outcome_reconciliation_release
+          alpha_omega_commercial.test_provider_reconciliation_challenge
           alpha_omega_commercial.test_provider_dispatch_outcome_reconciliation
           alpha_omega_commercial.test_provider_dispatch_fencing
           alpha_omega_commercial.test_provider_dispatch_claim_lease
@@ -48,87 +48,91 @@ jobs:
           alpha_omega_commercial.test_authority_action_coordination
           alpha_omega_commercial.test_governed_commercial_assurance
 
-      - name: Execute release reconciliation proof
+      - name: Execute deterministic v15 proof
         run: >-
-          python -m alpha_omega_commercial.prove_provider_dispatch_outcome_reconciliation_release
+          python -m alpha_omega_commercial.prove_provider_reconciliation_challenge
           --root .
           --output artifacts
 
-      - name: Validate release proof and truth boundary
+      - name: Validate proof receipt and commercial truth boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
-          proof = json.loads(Path('artifacts/provider-dispatch-outcome-reconciliation-release-proof.json').read_text())
-          assert proof['control_id'] == 'AO-COMMERCIAL-PROVIDER-DISPATCH-OUTCOME-RECONCILIATION-V14-RELEASE-PROOF'
-          assert proof['status'] == 'PROVIDER_DISPATCH_OUTCOME_RECONCILIATION_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED'
-          assert proof['stage_scope'] == ['C03', 'C06', 'C07', 'C11', 'C14', 'C15']
-          assert proof['checks_required'] == 20
-          assert proof['checks_failed'] == 0
-          assert all(proof['checks'].values())
-          truth = proof['commercial_truth']
+          receipt = json.loads(Path('artifacts/provider-reconciliation-challenge-receipt.json').read_text())
+          assert receipt['control_id'] == 'AO-COMMERCIAL-PROVIDER-RECONCILIATION-CHALLENGE-V15'
+          assert receipt['status'] == 'PROVIDER_RECONCILIATION_CHALLENGE_BINDING_CONFORMANCE_VERIFIED_PROVIDER_NATIVE_RECONCILIATION_BLOCKED'
+          assert receipt['stage_scope'] == ['C03', 'C06', 'C07', 'C11', 'C14', 'C15']
+          assert receipt['checks_required'] == 12
+          assert receipt['checks_failed'] == 0
+          assert all(receipt['checks'].values())
+          operational = receipt['operational_slice']
+          assert operational['durable_hash_chained_challenge_history'] is True
+          assert operational['exact_unknown_attempt_binding'] is True
+          assert operational['bounded_challenge_freshness'] is True
+          assert operational['one_time_challenge_consumption'] is True
+          assert operational['mock_provider_conformance'] is True
+          assert operational['provider_native_reconciliation_authority'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          assert operational['provider_native_reconciliation_proven'] is False
+          assert operational['external_mutation_performed'] is False
+          truth = receipt['commercial_truth']
           assert truth['service_enabled_platform_prioritised'] is True
           assert truth['self_service_saas_held'] is True
           assert truth['verified_live_revenue_events'] == 0
-          assert truth['provider_native_reconciliation_proven'] is False
           assert truth['payment_provider_operation_proven'] is False
           assert truth['cloud_run_operation_proven'] is False
           assert truth['full_commercial_maturity'] is False
-          assert proof['external_gate_effect'] == 'UNCHANGED'
-          assert proof['owner_authority']['financial_commitments'] == 'OWNER_RESERVED'
-          assert proof['owner_authority']['contracts'] == 'OWNER_RESERVED'
-          assert proof['owner_authority']['external_communications'] == 'OWNER_RESERVED'
-          assert proof['owner_authority']['consequential_releases'] == 'OWNER_RESERVED'
-          assert proof['owner_authority']['revenue_recognition'] == 'OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED'
+          assert receipt['external_gate_effect'] == 'UNCHANGED'
+          assert receipt['owner_authority']['financial_commitments'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['contracts'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['external_communications'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['consequential_releases'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['revenue_recognition'] == 'OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED'
           PY
 
-      - name: Validate exact provider proof and Drive readback
+      - name: Validate checkpoint, predecessor proof and maturity projection
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
           root = Path('alpha_omega_commercial')
-          checkpoint = json.loads((root / 'provider_dispatch_outcome_reconciliation_checkpoint.json').read_text())
-          receipt = json.loads((root / 'provider_dispatch_outcome_reconciliation_release_receipt.json').read_text())
-          release = json.loads((root / 'provider_dispatch_outcome_reconciliation_release_checkpoint.json').read_text())
-          maturity = json.loads((root / 'programme_maturity_effective_v14.json').read_text())
-          api = json.loads((root / 'canonical_commercial_api_effective_v14.json').read_text())
-          gate = checkpoint['operational_proof_gate']
-          drive = checkpoint['google_drive_release']
-          assert checkpoint['status'] == 'PROVIDER_DISPATCH_UNKNOWN_OUTCOME_QUARANTINE_AND_MOCK_RECONCILIATION_PROVIDER_PROOF_VERIFIED'
-          assert checkpoint['implementation_release']['pull_request'] == 150
-          assert checkpoint['implementation_release']['merge_commit'] == '6afd09e31dcea910f4e64de59ca776aae834d261'
-          assert gate['workflow_run'] == 30913614473
-          assert gate['workflow_job'] == 92006113662
-          assert gate['artifact_id'] == 8894094769
-          assert gate['checks_required'] == 12 and gate['checks_failed'] == 0
-          assert drive['file_id'] == '1RkHNK4WDim8BKjEvd-_lUF_EIeA6zqrMAcFhNZGF-30'
-          assert drive['modified_time'] == '2026-08-04T13:28:37.044Z'
-          assert drive['readback_verified'] is True and drive['shared'] is False
-          assert drive['export_size_bytes'] == 7731
-          assert drive['export_sha256'] == 'd43584cebbd41f3ac6c36c2a2ab1557c502ec6725c03e29573f4e0837f29336f'
-          assert receipt['receipt_sha256'] == release['release_receipt_sha256']
+          checkpoint = json.loads((root / 'provider_reconciliation_challenge_checkpoint.json').read_text())
+          api = json.loads((root / 'canonical_commercial_api_effective_v15.json').read_text())
+          maturity = json.loads((root / 'programme_maturity_effective_v15.json').read_text())
+          predecessor = json.loads((root / 'provider_dispatch_outcome_reconciliation_release_checkpoint.json').read_text())
+          assert checkpoint['status'] in {
+              'IMPLEMENTED_PROVIDER_NATIVE_CI_PENDING',
+              'PROVIDER_RECONCILIATION_CHALLENGE_BINDING_PROVIDER_PROOF_VERIFIED',
+          }
+          assert checkpoint['dependency_predecessor']['pull_request'] == 151
+          assert checkpoint['dependency_predecessor']['merge_commit'] == 'd61219cc28806e4d08bc46a5243b4ee72b3190f1'
+          assert checkpoint['dependency_predecessor']['google_drive_file_id'] == '1RkHNK4WDim8BKjEvd-_lUF_EIeA6zqrMAcFhNZGF-30'
+          assert checkpoint['dependency_predecessor']['google_drive_readback_verified'] is True
+          assert 'PROVIDER_PROOF_VERIFIED' in predecessor['status']
+          assert api['canonical_class'] == 'ChallengeBoundProviderDispatchCommercialControlPlane'
+          assert api['controls']['provider_native_reconciliation'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          assert api['external_maturity_gates_advanced'] is False
           assert maturity['verified_live_revenue_events'] == 0
           assert maturity['full_commercial_maturity'] is False
-          assert api['canonical_class'] == 'OutcomeReconciledProviderDispatchCommercialControlPlane'
-          assert api['external_maturity_gates_advanced'] is False
+          assert maturity['service_enabled_platform_first'] is True
+          assert maturity['self_service_saas_held'] is True
           PY
 
-      - name: Verify no secret-shaped values are present
+      - name: Verify no credential-shaped material is present
         run: |
           python - <<'PY'
           from pathlib import Path
           import re
 
           roots = [
-              Path('alpha_omega_commercial/provider_dispatch_outcome_reconciliation_checkpoint.json'),
-              Path('alpha_omega_commercial/provider_dispatch_outcome_reconciliation_release_receipt.json'),
-              Path('alpha_omega_commercial/provider_dispatch_outcome_reconciliation_release_checkpoint.json'),
-              Path('alpha_omega_commercial/canonical_commercial_api_effective_v14.json'),
-              Path('alpha_omega_commercial/programme_maturity_effective_v14.json'),
-              Path('alpha_omega_commercial/prove_provider_dispatch_outcome_reconciliation_release.py'),
+              Path('alpha_omega_commercial/provider_reconciliation_challenge.py'),
+              Path('alpha_omega_commercial/test_provider_reconciliation_challenge.py'),
+              Path('alpha_omega_commercial/prove_provider_reconciliation_challenge.py'),
+              Path('alpha_omega_commercial/provider_reconciliation_challenge_checkpoint.json'),
+              Path('alpha_omega_commercial/canonical_commercial_api_effective_v15.json'),
+              Path('alpha_omega_commercial/programme_maturity_effective_v15.json'),
               Path('artifacts'),
           ]
           forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
@@ -139,10 +143,10 @@ jobs:
                       assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
           PY
 
-      - name: Upload immutable release reconciliation proof
+      - name: Upload immutable v15 provider proof
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: alpha-omega-commercial-provider-dispatch-outcome-reconciliation-release-proof
+          name: alpha-omega-commercial-provider-reconciliation-challenge-v15-proof
           path: artifacts
           if-no-files-found: error
           retention-days: 90
