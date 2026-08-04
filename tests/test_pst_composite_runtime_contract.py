@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "phoenix-emergency-freeze.yml"
 VERIFIER = ROOT / "ops" / "evidenceops_pst_v2_composite_verify.py"
+BIBLE_BOUNDARY = ROOT / "phoenix" / "LOCAL_BIBLE_RECOVERY_EXTERNALIZATION.md"
 
 
 class PstCompositeRuntimeContractTests(unittest.TestCase):
@@ -26,31 +27,32 @@ class PstCompositeRuntimeContractTests(unittest.TestCase):
         self.assertIn("id: pst_closure", text)
         self.assertIn("if: steps.pst_closure.outputs.requested == 'true'", text)
 
-    def test_local_bible_rebuild_has_independent_isolated_lane(self):
+    def test_local_bible_rebuild_is_externalized_from_source_workflow(self):
         text = WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("startsWith(github.event.head_commit.message, '[BIBLE-REBUILD]')", text)
-        self.assertIn("'phoenix-local-bible-rebuild'", text)
-        self.assertIn("id: bible_rebuild", text)
-        self.assertIn("if: steps.bible_rebuild.outputs.requested == 'true'", text)
-        self.assertIn(
-            "steps.bible_rebuild.outputs.requested == 'true'",
-            text,
-        )
+        boundary = BIBLE_BOUNDARY.read_text(encoding="utf-8")
+        for forbidden in (
+            "[BIBLE-REBUILD]",
+            "id: bible_rebuild",
+            "steps.bible_rebuild.outputs.requested",
+            "id-token: write",
+            "google-github-actions/auth@",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, text)
+        self.assertIn("PRIVATE_OPS_PLANE_REQUIRED", boundary)
+        self.assertIn("not executable from the legacy public source repository", boundary)
 
-    def test_passive_runs_do_not_require_pst_or_bible_completion(self):
+    def test_passive_runs_require_only_pst_completion_contract(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("pst_ok=true", text)
-        self.assertIn("bible_ok=true", text)
-        self.assertIn('pst_requested="${{ steps.pst_closure.outputs.requested }}"', text)
-        self.assertIn('bible_requested="${{ steps.bible_rebuild.outputs.requested }}"', text)
+        self.assertIn('requested="${{ steps.pst_closure.outputs.requested }}"', text)
+        self.assertIn('if [[ "${requested}" != "true" ]]; then', text)
         self.assertIn(
-            'if [[ "${pst_requested}" != "true" && "${bible_requested}" != "true" ]]; then',
+            "Phoenix quarantine and exports verified; PST not requested",
             text,
         )
-        self.assertIn(
-            "Phoenix quarantine and exports verified; no marked rebuild requested",
-            text,
-        )
+        self.assertNotIn("bible_ok", text)
+        self.assertNotIn("bible_requested", text)
 
     def test_verifier_honours_explicit_root_override(self):
         previous = os.environ.get("PST_VERIFY_ROOT")
