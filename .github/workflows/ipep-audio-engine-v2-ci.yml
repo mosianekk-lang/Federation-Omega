@@ -92,7 +92,7 @@ jobs:
           set -euo pipefail
           git config user.name 'ipep-audio-engine-ci[bot]'
           git config user.email 'ipep-audio-engine-ci[bot]@users.noreply.github.com'
-          git pull --rebase origin main
           git add deployment_receipts/ipep-audio-engine-v2-latest.json
           git commit -m 'Record IPEP Audio Engine v2 CI receipt [skip ci]' || exit 0
+          git pull --rebase origin main
           git push origin HEAD:main
