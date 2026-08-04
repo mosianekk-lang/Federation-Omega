@@ -1,0 +1,15 @@
+{
+  "commit": "a024294cb0203b85cd7551f21cc7ee1245411796",
+  "compile": "PASS",
+  "package": "ipep-audio-engine-v2-source.zip",
+  "package_sha256": "26f761339e701c331e5af085bfce58168e9c111304a7e0a8df3989731ae387fc",
+  "package_size_bytes": 12675,
+  "receipt": "IPEP-AUDIO-ENGINE-V2-CI",
+  "recorded_at": "2026-08-04T00:10:05.565375+00:00",
+  "tests": "7/7 PASS",
+  "truth_boundary": {
+    "provider_deployed": false,
+    "source_built": true,
+    "transcript_created": false
+  }
+}
