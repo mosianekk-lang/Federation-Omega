@@ -32,7 +32,9 @@
     "snapshot_id_conflict_rejected": true,
     "equal_time_equivocation_rejected": true,
     "superseded_snapshot_replay_rejected": true,
-    "superseded_source_ledger_head_rejected": true
+    "superseded_source_ledger_head_rejected": true,
+    "durable_refresh_before_every_decision": true,
+    "cross_worker_serialization": "POSIX_FILE_LOCK_WITH_PROCESS_LOCAL_FALLBACK"
   },
   "authority_use": {
     "preview_validation_grants_live_authority": false,
@@ -44,6 +46,7 @@
     "binding_domains_are_explicit": true,
     "binding_provider_evidence_hashes_required": true,
     "restart_safe_readback_required": true,
+    "stale_worker_view_can_authorize_action": false,
     "superseded_snapshot_can_authorize_action": false
   },
   "governed_methods": {
@@ -51,7 +54,8 @@
       "internal_state_transition_only": true,
       "external_effects_allowed": false,
       "hash_linked_acceptance_ledger_required": true,
-      "restart_safe": true
+      "restart_safe": true,
+      "cross_worker_serialized": true
     },
     "submit_service_request": {
       "owner_reserved_receipt_required_for": [
@@ -96,7 +100,7 @@
     "owner_receipt_consumption": "HASH_LINKED_RESTART_SAFE",
     "external_evidence_admission": "HASH_LINKED_RESTART_SAFE",
     "authority_snapshot": "HASH_BOUND_FAIL_CLOSED",
-    "authority_snapshot_acceptance": "HASH_LINKED_MONOTONIC_RESTART_SAFE",
+    "authority_snapshot_acceptance": "HASH_LINKED_MONOTONIC_RESTART_SAFE_CROSS_WORKER_SERIALIZED",
     "authority_action_binding": "HASH_BOUND_TO_LATEST_ACCEPTANCE_RESTART_SAFE",
     "tamper_policy": "FAIL_CLOSED"
   },
