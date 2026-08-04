@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-OPS-CONTRACT-1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "repository_role": "PRIVATE_EXECUTION_PLANE",
   "canonical_source_repository": "mosianekk-lang/Federation-Omega-Core",
   "default_permissions": {
@@ -12,6 +12,9 @@
     "self_promotion": false,
     "source_repository_mutation": false,
     "provider_mutation_requires_readback": true,
+    "unknown_provider_outcome_automatic_retry": false,
+    "outcome_reconciliation_get_only": true,
+    "outcome_reconciliation_exact_archive_match_required": true,
     "rollback_required": true
   },
   "proof_destination": [

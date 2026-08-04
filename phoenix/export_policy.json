@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.7",
+  "version": "1.0.8",
   "core": {
     "include_extensions": [
       ".css", ".csv", ".html", ".js", ".json", ".md", ".proto",
@@ -38,7 +38,10 @@
     "template_prefix": "phoenix/ops-template/",
     "required_files": [
       "README.md", ".gitignore", ".github/CODEOWNERS",
-      "governance/OPS_CONTRACT.json", "provider_cutover.py"
+      "governance/OPS_CONTRACT.json", "provider_cutover.py",
+      "provider_cutover_authorization_use.py", "provider_cutover_v3_1.py",
+      "provider_cutover_v3_base.py",
+      "provider_cutover_outcome_reconciler.py"
     ]
   },
   "invariants": {
