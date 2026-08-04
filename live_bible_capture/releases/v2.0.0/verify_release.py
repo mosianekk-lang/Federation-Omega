@@ -27,15 +27,24 @@ def main() -> int:
     assembled = Path(tempfile.mkdtemp(prefix="lbf-v2-source-"))
     shutil.copytree(ROOT / descriptor["source_root"], assembled, dirs_exist_ok=True)
     for target, parts in descriptor.get("split_files", {}).items():
+        chunks = []
+        for part in parts:
+            part_path = ROOT / part["path"]
+            actual_bytes = part_path.stat().st_size
+            actual_sha = sha256(part_path)
+            assert actual_bytes == part["bytes"], f"split part bytes: {part['path']} {actual_bytes} != {part['bytes']}"
+            assert actual_sha == part["sha256"], f"split part sha256: {part['path']} {actual_sha} != {part['sha256']}"
+            chunks.append(part_path.read_text())
         target_path = assembled / target
         target_path.parent.mkdir(parents=True, exist_ok=True)
-        target_path.write_text("".join((ROOT / part).read_text() for part in parts))
+        target_path.write_text("".join(chunks))
     assert manifest["version"] == descriptor["version"]
     assert manifest["file_count"] == len(manifest["files"])
     for relative, expected in manifest["files"].items():
         path = assembled / relative
         assert path.is_file(), relative
-        assert sha256(path) == expected["sha256"], relative
+        actual_sha = sha256(path)
+        assert actual_sha == expected["sha256"], f"source sha256: {relative} {actual_sha} != {expected['sha256']}"
         assert path.stat().st_size == expected["bytes"], relative
     acceptance = json.loads((ROOT / "ACCEPTANCE.json").read_text())
     receipt = json.loads((ROOT / "RELEASE_RECEIPT.json").read_text())
