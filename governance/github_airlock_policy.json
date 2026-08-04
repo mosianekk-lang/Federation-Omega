@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -24,7 +24,9 @@
     ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"]
   },
-  "oidc_workflow_allowlist": [],
+  "oidc_workflow_allowlist": [
+    ".github/workflows/phoenix-emergency-freeze.yml"
+  ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
   ],
@@ -77,5 +79,15 @@
     "all_other_workflows": "DISABLED_MANUALLY",
     "provider_readback_required": true,
     "verified_commit_status": "phoenix-freeze/verified"
+  },
+  "oidc_boundary": {
+    "workflow": ".github/workflows/phoenix-emergency-freeze.yml",
+    "purpose": "SHORT_LIVED_READ_ONLY_PRIVATE_DRIVE_RECOVERY",
+    "trigger_marker": "[BIBLE-REBUILD]",
+    "service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "scope": "https://www.googleapis.com/auth/drive.readonly",
+    "repository_write_authority": false,
+    "public_link_allowed": false,
+    "provider_readback_required": true
   }
 }
