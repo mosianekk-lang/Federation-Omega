@@ -1,6 +1,6 @@
 # OpenAI Credential Containment — 4 August 2026
 
-Status: `REPOSITORY_CONTAINED / REPLACEMENT_UNVERIFIED / REVOCATION_UNVERIFIED`
+Status: `REPOSITORY_CONTAINED / REPLACEMENT_OWNER_ASSERTED / BINDING_UNVERIFIED / REVOCATION_UNVERIFIED`
 
 Owner and final authority: Kim Kagiso Mosiane
 
@@ -28,12 +28,40 @@ Complete source and history remain recoverable through Git. Removal from `.githu
 4. Added deterministic regression tests for project-scoped and legacy key formats without embedding a usable credential.
 5. Prohibited reactivation through an unchanged secret alias.
 
+## Owner-completed secure setup event
+
+At approximately `2026-08-04T20:13:00+02:00`, the owner reported completion of the authorised OpenAI Platform key-creation flow for the display name:
+
+`Federation Omega Rotation 2026-08-04`
+
+The connected OpenAI Platform tool does not expose key enumeration, raw key readback or revocation readback. The event is therefore classified as:
+
+`OWNER_ASSERTED_CREATED_NOT_PROVIDER_READ_BACK`
+
+The raw key was not returned to repository tooling or chat content.
+
+## Rotation contract added
+
+The following redacted, fail-closed controls now define the remaining work:
+
+- `governance/openai_credential_rotation_manifest.json`
+- `ops/openai_rotation_contract.py`
+- `tests/test_openai_rotation_contract.py`
+- `docs/security/OPENAI_ROTATION_EXECUTION_PLAN_20260804.md`
+
+The contract assigns distinct vault references:
+
+- `openai-mosiane-live-thread-20260804`
+- `openai-modisa-legal-v2-20260804`
+
+It rejects raw key patterns, shared destination aliases, literal runtime injection, missing secret-reference readback, missing least-privilege identity proof, incomplete canaries, absent rollback evidence, unproven revocation, unproven old-key rejection and premature completion claims.
+
 ## Provider and runtime closure sequence
 
 Credential remediation is complete only after this exact sequence passes:
 
-1. Create a new project-scoped OpenAI API key through the authorised OpenAI Platform account.
-2. Bind the replacement to a new destination-specific secret name in an approved vault. Never reuse the compromised alias as proof of rotation.
+1. Create or verify the replacement project-scoped OpenAI API key through the authorised OpenAI Platform account.
+2. Bind the replacement to new destination-specific secret names in an approved vault. Never reuse the compromised alias as proof of rotation.
 3. Identify every confirmed dependent runtime and bind it by secret reference, not a literal environment value.
 4. Deploy each runtime through a zero-traffic or otherwise isolated canary.
 5. Verify provider call success, application health, semantic behaviour, runtime identity and secret-reference configuration.
@@ -59,11 +87,12 @@ A removed workflow may return to `.github/workflows` only when:
 
 - Repository workflow exposure: `CONTAINED_ON_MAIN`
 - Raw credential printed or copied during containment: `FALSE`
-- Replacement key created: `UNVERIFIED`
+- Replacement key created: `OWNER_ASSERTED / NOT PROVIDER READ BACK`
+- Rotation manifest and validator: `BUILT_ON_REVIEW_BRANCH`
 - Replacement key bound to runtime vault: `UNVERIFIED`
 - Dependent runtimes migrated: `UNVERIFIED`
 - Exposed key revoked: `UNVERIFIED`
 - Exposed key rejection proven: `UNVERIFIED`
-- Owner action currently required: `PROVIDER_SECURE_KEY_SETUP_AND_BINDING_BOUNDARY`
+- Current external authority boundary: `GOOGLE_SECRET_MANAGER_BINDING / CLOUD_RUN_READBACK / OPENAI_REVOCATION`
 
-No service is classified as production-operational merely because source, configuration or a historical workflow exists.
+No service is classified as production-operational merely because source, configuration, an owner assertion or a historical workflow exists.
