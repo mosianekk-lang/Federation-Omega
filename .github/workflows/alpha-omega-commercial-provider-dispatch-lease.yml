@@ -97,6 +97,7 @@ jobs:
           assert checkpoint['status'] in {
               'PROVIDER_DISPATCH_LOCAL_LEASE_IMPLEMENTED_PROVIDER_CI_PENDING_EXTERNAL_GATES_UNCHANGED',
               'PROVIDER_DISPATCH_LOCAL_LEASE_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+              'PROVIDER_DISPATCH_LOCAL_LEASE_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED',
           }
           assert checkpoint['candidate_projection']['capability_revision'] == 'AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12'
           assert checkpoint['candidate_projection']['canonical_class'] == 'LeasedProviderDispatchOutboxCommercialControlPlane'
