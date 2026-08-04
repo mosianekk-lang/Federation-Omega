@@ -1,122 +1,37 @@
 {
-  "api_id": "AO-COMMERCIAL-CANONICAL-API-V3",
-  "authority_snapshot": {
-    "authority_class_required": "LIVE_PROVIDER_NATIVE",
-    "cross_worker_serialization": "POSIX_FILE_LOCK_WITH_PROCESS_LOCAL_FALLBACK",
-    "durable_refresh_before_every_decision": true,
-    "equal_time_equivocation_rejected": true,
-    "explicit_scope_required": true,
-    "freshness_and_expiry_required": true,
-    "monotonic_acceptance_required": true,
-    "provider_evidence_hash_required": true,
-    "raw_authority_dictionary_grants_live_authority": false,
-    "same_snapshot_hash_idempotent": true,
-    "snapshot_hash_required": true,
-    "snapshot_id_conflict_rejected": true,
-    "source_ledger_integrity_required": true,
-    "stale_state": "STALE_REVALIDATION_REQUIRED",
-    "superseded_snapshot_replay_rejected": true,
-    "superseded_source_ledger_head_rejected": true
-  },
-  "authority_use": {
-    "acceptance_entry_hash_binding_required": true,
-    "action_binding_required": true,
-    "atomic_action_commit_required": true,
-    "binding_domains_are_explicit": true,
-    "binding_provider_evidence_hashes_required": true,
-    "binding_state": "EXACT_LATEST_ACCEPTED_SNAPSHOT",
-    "exact_snapshot_hash_match_required": true,
-    "exact_state_restoration_on_failure": true,
-    "latest_durable_acceptance_required": true,
-    "owner_receipt_consumption_restored_on_failure": true,
-    "partial_state_visible_after_failure": false,
-    "preview_validation_grants_live_authority": false,
-    "provider_authority_held_for_full_action": true,
-    "restart_safe_readback_required": true,
-    "stale_worker_view_can_authorize_action": false,
-    "superseded_snapshot_can_authorize_action": false,
-    "transaction_ledger_hash_linked": true
-  },
-  "canonical_class": "AtomicAuthoritySnapshotCommercialControlPlane",
-  "canonical_module": "alpha_omega_commercial",
-  "capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6",
-  "external_gate_effect": "UNCHANGED",
-  "forbidden_public_parameters": [
-    "owner_confirmed",
-    "owner_approved",
-    "owner_approval_reference"
-  ],
-  "full_commercial_maturity": false,
-  "governed_methods": {
-    "accept_authority_snapshot": {
-      "cross_worker_serialized": true,
-      "external_effects_allowed": false,
-      "hash_linked_acceptance_ledger_required": true,
-      "internal_state_transition_only": true,
-      "restart_safe": true
-    },
-    "admit_external_evidence": {
-      "atomic_action_commit_required": true,
-      "provider_authority_snapshot_required": true,
-      "rejected_evidence_can_advance_gate": false
-    },
-    "approve_quote": {
-      "atomic_action_commit_required": true,
-      "external_send_performed": false,
-      "financial_commitment": false,
-      "latest_acceptance_binding_required": true,
-      "owner_authority_snapshot_required": true,
-      "owner_receipt_required": true
-    },
-    "register_outcome_study": {
-      "atomic_action_commit_required": true,
-      "customer_market_snapshot_required_for_external_promotion": true,
-      "direct_external_label_accepted": false,
-      "external_admission_required": true,
-      "latest_acceptance_binding_required": true,
-      "owner_authority_snapshot_required_for_external_promotion": true
-    },
-    "register_verified_revenue_event": {
-      "atomic_action_commit_required": true,
-      "caller_boolean_accepted": false,
-      "latest_acceptance_binding_required": true,
-      "mock_conformance_counted_as_revenue": false,
-      "owner_authority_snapshot_required": true,
-      "owner_receipt_required": true,
-      "payment_authority_snapshot_required": true,
-      "payment_provider_authority_required": true,
-      "settlement_evidence_required": true
-    },
-    "submit_service_request": {
-      "atomic_action_commit_required": true,
-      "external_effects_allowed": false,
-      "latest_acceptance_binding_required": true,
-      "owner_authority_snapshot_required": true,
-      "owner_reserved_receipt_required_for": [
-        "subscription.change",
-        "tenant.suspend"
-      ]
-    }
-  },
-  "legacy_class": "GovernedCommercialAssuranceControlPlane",
-  "legacy_module": "alpha_omega_commercial/governed_commercial_assurance.py",
-  "legacy_state": "REFERENCE_AND_MOCK_CONFORMANCE_ONLY",
-  "persistence": {
-    "action_failure_restoration": "BYTE_EXACT_LOCAL_STATE_AND_LEDGER_RESTORE",
-    "authority_action_binding": "HASH_BOUND_TO_LATEST_ACCEPTANCE_RESTART_SAFE",
-    "authority_action_transaction": "HASH_LINKED_PREPARE_COMMIT_ROLLBACK_RESTART_SAFE",
-    "authority_snapshot": "HASH_BOUND_FAIL_CLOSED",
-    "authority_snapshot_acceptance": "HASH_LINKED_MONOTONIC_RESTART_SAFE",
-    "authority_snapshot_acceptance_serialization": "POSIX_FILE_LOCK_WITH_PROCESS_LOCAL_FALLBACK",
-    "external_evidence_admission": "HASH_LINKED_RESTART_SAFE",
-    "owner_receipt_consumption": "HASH_LINKED_RESTART_SAFE",
-    "tamper_policy": "FAIL_CLOSED"
-  },
-  "predecessor_class": "AuthoritySnapshotCommercialControlPlane",
-  "predecessor_module": "alpha_omega_commercial/authority_snapshot_control_plane.py",
-  "predecessor_state": "REFERENCE_AND_V5_REGRESSION_ONLY",
   "programme_id": "AO-COMMERCIAL-MATURITY-V1",
-  "service_first_strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "api_id": "AO-COMMERCIAL-CANONICAL-API-V3",
+  "capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
+  "canonical_module": "alpha_omega_commercial",
+  "canonical_class": "AuthoritySnapshotCommercialControlPlane",
+  "predecessor_module": "alpha_omega_commercial/governed_commercial_assurance.py",
+  "predecessor_class": "GovernedCommercialAssuranceControlPlane",
+  "predecessor_state": "REFERENCE_AND_MOCK_CONFORMANCE_ONLY",
+  "legacy_module": "alpha_omega_commercial/commercial_assurance.py",
+  "legacy_class": "CommercialAssuranceControlPlane",
+  "legacy_state": "REFERENCE_ONLY_NOT_CANONICAL",
+  "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6",
+  "current_canonical_class": "AtomicAuthoritySnapshotCommercialControlPlane",
+  "current_canonical_module": "alpha_omega_commercial",
+  "current_predecessor_class": "AuthoritySnapshotCommercialControlPlane",
+  "compatibility_anchor": {
+    "reason": "Historical provider-proof workflows remain pinned to the v5 canonical descriptor while the current supported live entry point advances through an additive, regression-compatible v6 class.",
+    "canonical_descriptor_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
+    "current_operational_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6"
+  },
+  "canonical_lineage": [
+    "AtomicAuthoritySnapshotCommercialControlPlane",
+    "AuthoritySnapshotCommercialControlPlane",
+    "GovernedCommercialAssuranceControlPlane",
+    "CommercialAssuranceControlPlane"
+  ],
+  "capability_lineage": [
+    "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6",
+    "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
+    "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-ANTI-ROLLBACK-V4",
+    "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-V3",
+    "AO-COMMERCIAL-GOVERNED-AUTHORITY-V2"
+  ],
   "stage_scope": [
     "C03",
     "C10",
@@ -126,5 +41,112 @@
     "C14",
     "C15"
   ],
-  "verified_live_revenue_events": 0
+  "authority_snapshot": {
+    "raw_authority_dictionary_grants_live_authority": false,
+    "snapshot_hash_required": true,
+    "source_ledger_integrity_required": true,
+    "provider_evidence_hash_required": true,
+    "explicit_scope_required": true,
+    "freshness_and_expiry_required": true,
+    "authority_class_required": "LIVE_PROVIDER_NATIVE",
+    "stale_state": "STALE_REVALIDATION_REQUIRED",
+    "monotonic_acceptance_required": true,
+    "same_snapshot_hash_idempotent": true,
+    "snapshot_id_conflict_rejected": true,
+    "equal_time_equivocation_rejected": true,
+    "superseded_snapshot_replay_rejected": true,
+    "superseded_source_ledger_head_rejected": true,
+    "durable_refresh_before_every_decision": true,
+    "cross_worker_serialization": "POSIX_FILE_LOCK_WITH_PROCESS_LOCAL_FALLBACK"
+  },
+  "authority_use": {
+    "preview_validation_grants_live_authority": false,
+    "latest_durable_acceptance_required": true,
+    "exact_snapshot_hash_match_required": true,
+    "acceptance_entry_hash_binding_required": true,
+    "action_binding_required": true,
+    "binding_state": "EXACT_LATEST_ACCEPTED_SNAPSHOT",
+    "binding_domains_are_explicit": true,
+    "binding_provider_evidence_hashes_required": true,
+    "restart_safe_readback_required": true,
+    "stale_worker_view_can_authorize_action": false,
+    "superseded_snapshot_can_authorize_action": false,
+    "atomic_action_commit_required": true,
+    "provider_authority_held_for_full_action": true,
+    "partial_state_visible_after_failure": false,
+    "exact_state_restoration_on_failure": true,
+    "owner_receipt_consumption_restored_on_failure": true,
+    "transaction_ledger_hash_linked": true
+  },
+  "governed_methods": {
+    "accept_authority_snapshot": {
+      "internal_state_transition_only": true,
+      "external_effects_allowed": false,
+      "hash_linked_acceptance_ledger_required": true,
+      "restart_safe": true,
+      "cross_worker_serialized": true
+    },
+    "submit_service_request": {
+      "owner_reserved_receipt_required_for": [
+        "subscription.change",
+        "tenant.suspend"
+      ],
+      "owner_authority_snapshot_required": true,
+      "latest_acceptance_binding_required": true,
+      "atomic_action_commit_required": true,
+      "external_effects_allowed": false
+    },
+    "approve_quote": {
+      "owner_receipt_required": true,
+      "owner_authority_snapshot_required": true,
+      "latest_acceptance_binding_required": true,
+      "atomic_action_commit_required": true,
+      "external_send_performed": false,
+      "financial_commitment": false
+    },
+    "admit_external_evidence": {
+      "provider_authority_snapshot_required": true,
+      "atomic_action_commit_required": true,
+      "rejected_evidence_can_advance_gate": false
+    },
+    "register_outcome_study": {
+      "direct_external_label_accepted": false,
+      "external_admission_required": true,
+      "customer_market_snapshot_required_for_external_promotion": true,
+      "owner_authority_snapshot_required_for_external_promotion": true,
+      "latest_acceptance_binding_required": true,
+      "atomic_action_commit_required": true
+    },
+    "register_verified_revenue_event": {
+      "caller_boolean_accepted": false,
+      "payment_provider_authority_required": true,
+      "payment_authority_snapshot_required": true,
+      "settlement_evidence_required": true,
+      "owner_receipt_required": true,
+      "owner_authority_snapshot_required": true,
+      "latest_acceptance_binding_required": true,
+      "atomic_action_commit_required": true,
+      "mock_conformance_counted_as_revenue": false
+    }
+  },
+  "forbidden_public_parameters": [
+    "owner_confirmed",
+    "owner_approved",
+    "owner_approval_reference"
+  ],
+  "persistence": {
+    "owner_receipt_consumption": "HASH_LINKED_RESTART_SAFE",
+    "external_evidence_admission": "HASH_LINKED_RESTART_SAFE",
+    "authority_snapshot": "HASH_BOUND_FAIL_CLOSED",
+    "authority_snapshot_acceptance": "HASH_LINKED_MONOTONIC_RESTART_SAFE",
+    "authority_snapshot_acceptance_serialization": "POSIX_FILE_LOCK_WITH_PROCESS_LOCAL_FALLBACK",
+    "authority_action_binding": "HASH_BOUND_TO_LATEST_ACCEPTANCE_RESTART_SAFE",
+    "authority_action_transaction": "HASH_LINKED_PREPARE_COMMIT_ROLLBACK_RESTART_SAFE",
+    "action_failure_restoration": "BYTE_EXACT_LOCAL_STATE_AND_LEDGER_RESTORE",
+    "tamper_policy": "FAIL_CLOSED"
+  },
+  "service_first_strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "external_gate_effect": "UNCHANGED",
+  "verified_live_revenue_events": 0,
+  "full_commercial_maturity": false
 }
