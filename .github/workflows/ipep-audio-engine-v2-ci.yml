@@ -40,6 +40,7 @@ jobs:
           rm -rf /tmp/ipep-audio-engine-v2
           mkdir -p /tmp/ipep-audio-engine-v2/source deployment_receipts
           cp -R ipep/audio_engine_v2/README.md \
+                ipep/audio_engine_v2/ARCHITECTURE.md \
                 ipep/audio_engine_v2/pyproject.toml \
                 ipep/audio_engine_v2/evidenceops_audio \
                 ipep/audio_engine_v2/tests \
@@ -59,6 +60,12 @@ jobs:
             'commit': '${GITHUB_SHA}',
             'tests': '7/7 PASS',
             'compile': 'PASS',
+            'providers': [
+              'google_speech_v2',
+              'openai_audio_transcriptions',
+              'gemini_files_api',
+              'local_whisper_cpp'
+            ],
             'package': 'ipep-audio-engine-v2-source.zip',
             'package_sha256': '${SHA}',
             'package_size_bytes': int('${SIZE}'),
