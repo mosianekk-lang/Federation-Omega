@@ -10,16 +10,17 @@
   "legacy_module": "alpha_omega_commercial/commercial_assurance.py",
   "legacy_class": "CommercialAssuranceControlPlane",
   "legacy_state": "REFERENCE_ONLY_NOT_CANONICAL",
-  "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8",
-  "current_canonical_class": "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane",
+  "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-COORDINATION-V9",
+  "current_canonical_class": "CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane",
   "current_canonical_module": "alpha_omega_commercial",
-  "current_predecessor_class": "CrashSafeAtomicAuthoritySnapshotCommercialControlPlane",
+  "current_predecessor_class": "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane",
   "compatibility_anchor": {
-    "reason": "Historical provider-proof workflows remain pinned to the v5 canonical descriptor while the current supported live entry point advances through additive, regression-compatible v6 atomicity, v7 durable restart recovery and v8 atomic transaction-event publication classes.",
+    "reason": "Historical provider-proof workflows remain pinned to the v5 canonical descriptor while the current supported live entry point advances through additive, regression-compatible v6 atomicity, v7 durable restart recovery, v8 atomic transaction-event publication and v9 provider-process coordination classes.",
     "canonical_descriptor_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
-    "current_operational_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8"
+    "current_operational_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-COORDINATION-V9"
   },
   "canonical_lineage": [
+    "CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane",
     "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane",
     "CrashSafeAtomicAuthoritySnapshotCommercialControlPlane",
     "AtomicAuthoritySnapshotCommercialControlPlane",
@@ -28,6 +29,7 @@
     "CommercialAssuranceControlPlane"
   ],
   "capability_lineage": [
+    "AO-COMMERCIAL-AUTHORITY-ACTION-COORDINATION-V9",
     "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8",
     "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7",
     "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6",
@@ -94,7 +96,14 @@
     "transaction_event_file_fsync_required": true,
     "transaction_journal_directory_fsync_required": true,
     "incomplete_event_publication_removed_before_recovery": true,
-    "torn_transaction_event_visible_after_process_crash": false
+    "torn_transaction_event_visible_after_process_crash": false,
+    "provider_process_coordination_required": true,
+    "startup_cleanup_serialized_with_actions": true,
+    "startup_recovery_serialized_with_actions": true,
+    "integrity_readback_serialized_with_actions": true,
+    "concurrent_startup_can_rollback_live_transaction": false,
+    "process_crash_releases_coordination_lock": true,
+    "new_action_blocked_until_recovery_complete": true
   },
   "governed_methods": {
     "accept_authority_snapshot": {
@@ -114,6 +123,7 @@
       "atomic_action_commit_required": true,
       "durable_restart_recovery_required": true,
       "atomic_transaction_event_publication_required": true,
+      "provider_process_coordination_required": true,
       "external_effects_allowed": false
     },
     "approve_quote": {
@@ -123,6 +133,7 @@
       "atomic_action_commit_required": true,
       "durable_restart_recovery_required": true,
       "atomic_transaction_event_publication_required": true,
+      "provider_process_coordination_required": true,
       "external_send_performed": false,
       "financial_commitment": false
     },
@@ -131,6 +142,7 @@
       "atomic_action_commit_required": true,
       "durable_restart_recovery_required": true,
       "atomic_transaction_event_publication_required": true,
+      "provider_process_coordination_required": true,
       "rejected_evidence_can_advance_gate": false
     },
     "register_outcome_study": {
@@ -141,7 +153,8 @@
       "latest_acceptance_binding_required": true,
       "atomic_action_commit_required": true,
       "durable_restart_recovery_required": true,
-      "atomic_transaction_event_publication_required": true
+      "atomic_transaction_event_publication_required": true,
+      "provider_process_coordination_required": true
     },
     "register_verified_revenue_event": {
       "caller_boolean_accepted": false,
@@ -154,6 +167,7 @@
       "atomic_action_commit_required": true,
       "durable_restart_recovery_required": true,
       "atomic_transaction_event_publication_required": true,
+      "provider_process_coordination_required": true,
       "mock_conformance_counted_as_revenue": false
     }
   },
@@ -172,6 +186,7 @@
     "authority_action_transaction": "HASH_LINKED_PREPARE_COMMIT_ROLLBACK_RESTART_SAFE",
     "authority_action_recovery": "HASH_BOUND_DURABLE_BUNDLE_RESTART_ROLLBACK",
     "authority_action_transaction_journal": "ATOMIC_HASH_BOUND_EVENT_FILES_WITH_FROZEN_LEGACY_PREFIX",
+    "authority_action_process_coordination": "PROVIDER_PROCESS_LOCK_SERIALIZES_STARTUP_RECOVERY_ACTIONS_AND_READBACK",
     "action_failure_restoration": "BYTE_EXACT_LOCAL_STATE_AND_LEDGER_RESTORE_IN_PROCESS_AND_AFTER_RESTART",
     "tamper_policy": "FAIL_CLOSED"
   },

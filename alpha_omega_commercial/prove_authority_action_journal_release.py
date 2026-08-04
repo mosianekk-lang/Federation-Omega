@@ -32,6 +32,8 @@ def run(output: Path) -> dict[str, Any]:
     receipt_payload = dict(release)
     recorded_receipt_sha = receipt_payload.pop("receipt_sha256")
     workflows = release["final_head_workflows"]
+    journal_revision = "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8"
+    journal_class = "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane"
     checks = {
         "release_receipt_integrity": digest(receipt_payload)
         == recorded_receipt_sha,
@@ -130,10 +132,16 @@ def run(output: Path) -> dict[str, Any]:
         ),
         "canonical_api_revision_bound": (
             api["api_id"] == "AO-COMMERCIAL-CANONICAL-API-V3"
-            and api["current_capability_revision"]
-            == "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8"
-            and api["current_canonical_class"]
-            == "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane"
+            and journal_revision in api["capability_lineage"]
+            and journal_class in api["canonical_lineage"]
+            and api["current_capability_revision"] in api["capability_lineage"]
+            and api["current_canonical_class"] in api["canonical_lineage"]
+            and api["capability_lineage"].index(
+                api["current_capability_revision"]
+            )
+            <= api["capability_lineage"].index(journal_revision)
+            and api["canonical_lineage"].index(api["current_canonical_class"])
+            <= api["canonical_lineage"].index(journal_class)
             and api["authority_use"][
                 "atomic_transaction_event_publication_required"
             ]
