@@ -1,11 +1,22 @@
 {
   "programme_id": "AO-COMMERCIAL-MATURITY-V1",
   "checkpoint_id": "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7-RELEASE-CHECKPOINT",
-  "status": "AUTHORITY_ACTION_CRASH_RECOVERY_RELEASE_RECONCILIATION_IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "status": "AUTHORITY_ACTION_CRASH_RECOVERY_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED",
   "implementation_release": {
     "pull_request": 128,
     "merge_commit": "ac6314279de32ffbc220e75c8c01c9b636e9c83c",
     "release_receipt_sha256": "8c71342eb3e3b81bbe4783d59f6663638cd458c2852f0788996e8626b3c849dd"
+  },
+  "release_reconciliation": {
+    "pull_request": 129,
+    "merge_commit": "95270bd8798cbb47131f7f71b6a5301cb6c503c9",
+    "final_head_sha": "87aa9b8881ab5376e9723f532160aa1b448f5794",
+    "workflow_run": 30884983699,
+    "artifact_id": 8882709696,
+    "artifact_digest": "sha256:04cee6e5840150f1b9f878e55837ea87892f749b9dad014b8e03670100c6747e",
+    "proof_sha256": "4e4f5cbaf535ac6574eecd7661c570ef3df00e1253e4498f8dda84e12a78db3c",
+    "checks_required": 18,
+    "checks_failed": 0
   },
   "stage_scope": [
     "C03",
@@ -60,11 +71,11 @@
     "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
   },
   "operational_proof_gate": {
-    "provider_native_ci": "REQUIRED",
-    "release_receipt_integrity": "REQUIRED",
-    "drive_readback_binding": "REQUIRED",
-    "repository_safety_checks": "REQUIRED",
-    "merge_allowed": false
+    "provider_native_ci": "VERIFIED",
+    "release_receipt_integrity": "VERIFIED",
+    "drive_readback_binding": "VERIFIED",
+    "repository_safety_checks": "VERIFIED",
+    "merge_allowed": true
   },
   "external_gate_effect": "UNCHANGED"
 }
