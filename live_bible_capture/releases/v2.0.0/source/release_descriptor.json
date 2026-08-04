@@ -1,0 +1,18 @@
+{
+  "schema": "FEDERATION-LIVE-BIBLE-FABRIC-RELEASE-2",
+  "version": "2.0.0",
+  "authority_ceiling": "A1_REVERSIBLE_INTERNAL",
+  "external_effects": 0,
+  "capture_modes": [
+    "TURN_CONNECTOR",
+    "CHAT_EXPORT",
+    "BROWSER_CAPTURE",
+    "PROVIDER_WEBHOOK",
+    "SCHEDULED_RECONCILIATION",
+    "MANUAL_IMPORT"
+  ],
+  "active_now": ["TURN_CONNECTOR"],
+  "implemented_not_installed": ["BROWSER_CAPTURE_LOCAL_EXTENSION"],
+  "provider_gated": ["CONTINUOUS_CHAT_SOURCE_FEED", "CLOUD_PROJECTION_SINK"],
+  "truth_boundary": "The fabric handles events supplied by configured adapters. It does not create hidden access to ChatGPT conversations or install a browser adapter by itself."
+}
