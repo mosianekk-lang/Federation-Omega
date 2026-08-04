@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "federation-live-bible-fabric"
+version = "2.0.0"
+description = "Event-sourced, source-agnostic, privacy-aware Live Bible capture fabric"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+live-bible-fabric = "live_bible_fabric.fabric:main"
+
+[tool.setuptools]
+packages = ["live_bible_fabric"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
