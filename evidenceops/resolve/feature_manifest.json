@@ -1,0 +1,30 @@
+{
+  "feature_id": "evidenceops-resolve-engine",
+  "feature_name": "EvidenceOps RESOLVE Engine",
+  "version": "1.0.0",
+  "status": "EXECUTABLE_NOW",
+  "methodology": "RESOLVE",
+  "independent_system": "EvidenceOps RESOLVE",
+  "capabilities": [
+    "constraint classification",
+    "adaptive execution-lane routing",
+    "circuit breaking",
+    "idempotent resumable execution",
+    "large-object segmented transport",
+    "hash-locked reconstruction",
+    "independent provider readback",
+    "ZIP CRC and SQLite integrity verification",
+    "append-only evidence receipts",
+    "failure-to-capability learning"
+  ],
+  "entrypoints": [
+    "python -m resolve.cli",
+    "resolve.engine.ResolveEngine"
+  ],
+  "evidence_paths": [
+    "evidenceops/resolve/METHOD.md",
+    "evidenceops/resolve/SYSTEM_CONTRACT.json",
+    "evidenceops/resolve/resolve/engine.py",
+    "evidenceops/resolve/tests/test_resolve.py"
+  ]
+}
