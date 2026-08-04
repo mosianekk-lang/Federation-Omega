@@ -1,0 +1,68 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10-RELEASE-CHECKPOINT",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "status": "AUTHORITY_ACTION_IDEMPOTENCY_RELEASE_RECONCILIATION_PROVIDER_PROOF_REQUIRED",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "implementation_release": {
+    "pull_request": 136,
+    "merge_commit": "31e06053764b9900f6edb8fe89a773737f1af264",
+    "release_receipt_sha256": "8df7776a820ab2f73aac789bbf938a5a84e56376565277887c484102e53be625"
+  },
+  "provider_proof": {
+    "head_sha": "4528ca39cf4a55cea12fbf89810048bb7916be14",
+    "workflow_run": 30895364093,
+    "workflow_job": 91946871070,
+    "artifact_id": 8886777639,
+    "artifact_digest": "sha256:34611bb614558ea8218e8268deb3ccb75b33206c1d25978afaadf3c368a963da",
+    "receipt_sha256": "f61dc9632881d3c34363d6113516b18804264056cec7110bc0faa66284892786",
+    "checks_required": 10,
+    "checks_failed": 0
+  },
+  "google_drive_release": {
+    "file_id": "14pySl3BSQqgi0XIeuJYks6_y2EwW-Mu4mTyYCAKiR38",
+    "modified_at": "2026-08-04T09:16:52.129Z",
+    "readback_sha256": "a70a6d6d938ec8769dfd25e35a8b8174be50355c5ad9f80cf425a8d7a9e019a8",
+    "readback_length": 4498,
+    "readback_verified": true,
+    "shared": false,
+    "owner": "mosianekk@gmail.com"
+  },
+  "effective_state": {
+    "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10",
+    "current_supported_class": "IdempotentCoordinatedAuthoritySnapshotCommercialControlPlane",
+    "predecessor_class": "CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane",
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true,
+    "distributed_provider_exactly_once_proven": false
+  },
+  "external_gates": {
+    "customer_demand_and_price_acceptance": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue_receipt": false,
+    "live_cloud_provider_execution": false,
+    "enterprise_assurance_or_certification": false,
+    "partner_adoption": false,
+    "external_customer_case_study": false,
+    "production_scale_and_recovery_evidence": false
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "payment_provider_operation_proven": false,
+    "distributed_provider_exactly_once_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
