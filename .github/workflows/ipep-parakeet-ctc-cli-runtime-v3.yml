@@ -1,0 +1,187 @@
+name: Package IPEP Parakeet CTC CLI Runtime v3
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ipep-parakeet-ctc-cli-runtime-v3.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ipep-parakeet-ctc-cli-runtime-v3
+  cancel-in-progress: false
+
+env:
+  SHERPA_ONNX_VERSION: '1.13.2'
+  MODEL_ARCHIVE: sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8.tar.bz2
+  MODEL_URL: https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8.tar.bz2
+
+jobs:
+  package-cli-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Acquire official binary, core runtime and model
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=/tmp/ipep-parakeet-cli-v3
+          mkdir -p "$ROOT/wheels" "$ROOT/runtime/wheel" "$ROOT/runtime/model" deployment_receipts
+          python -m pip download --only-binary=:all: --no-deps --dest "$ROOT/wheels" \
+            "sherpa-onnx-bin==${SHERPA_ONNX_VERSION}" \
+            "sherpa-onnx-core==${SHERPA_ONNX_VERSION}"
+          for WHEEL in "$ROOT"/wheels/*.whl; do unzip -q -o "$WHEEL" -d "$ROOT/runtime/wheel"; done
+          CLI=$(find "$ROOT/runtime/wheel" -type f -name 'sherpa-onnx-offline' -print -quit)
+          ORT=$(find "$ROOT/runtime/wheel" -type f -name 'libonnxruntime.so*' -print -quit)
+          test -n "$CLI" -a -n "$ORT"
+          chmod +x "$CLI"
+          curl --fail --location --retry 5 --retry-delay 5 "$MODEL_URL" -o "$ROOT/runtime/model/${MODEL_ARCHIVE}"
+          tar -xjf "$ROOT/runtime/model/${MODEL_ARCHIVE}" -C "$ROOT/runtime/model"
+          printf '%s\n' "$CLI" > /tmp/cli-v3-path.txt
+          printf '%s\n' "$ORT" > /tmp/ort-v3-path.txt
+
+      - name: Run official model sample canary
+        id: canary
+        shell: bash
+        run: |
+          set -uo pipefail
+          ROOT=/tmp/ipep-parakeet-cli-v3
+          CLI=$(cat /tmp/cli-v3-path.txt)
+          MODEL_DIR="$ROOT/runtime/model/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8"
+          WAV=$(find "$MODEL_DIR/test_wavs" -type f -name '*.wav' -print -quit)
+          SO_DIRS=$(find "$ROOT/runtime/wheel" -type f \( -name '*.so' -o -name '*.so.*' \) -printf '%h\n' | sort -u | paste -sd: -)
+          export LD_LIBRARY_PATH="${SO_DIRS}${LD_LIBRARY_PATH:+:${LD_LIBRARY_PATH}}"
+          {
+            echo "CLI=$CLI"
+            echo "WAV=$WAV"
+            echo "LD_LIBRARY_PATH=$LD_LIBRARY_PATH"
+            echo "--- ldd ---"
+            ldd "$CLI" || true
+          } > /tmp/cli-v3-diagnostics.log 2>&1
+          START=$(date +%s%N)
+          "$CLI" \
+            --nemo-ctc-model="$MODEL_DIR/model.int8.onnx" \
+            --tokens="$MODEL_DIR/tokens.txt" \
+            --num-threads=2 \
+            --decoding-method=greedy_search \
+            --debug=false \
+            "$WAV" > /tmp/cli-v3-canary.log 2>&1
+          STATUS=$?
+          END=$(date +%s%N)
+          export START END WAV STATUS
+          python - <<'PY' > /tmp/cli-v3-canary.json
+          import json, os
+          from pathlib import Path
+          log=Path('/tmp/cli-v3-canary.log').read_text(errors='replace')
+          diagnostics=Path('/tmp/cli-v3-diagnostics.log').read_text(errors='replace')
+          status=int(os.environ['STATUS'])
+          print(json.dumps({
+              'contract':'IPEP_PARAKEET_CTC_CLI_CANARY_V3',
+              'passed':status==0 and 'love you' in log.lower(),
+              'process_exit_code':status,
+              'elapsed_seconds':round((int(os.environ['END'])-int(os.environ['START']))/1e9,3),
+              'sample_file':Path(os.environ['WAV']).name,
+              'log_tail':log[-8000:],
+              'diagnostics_tail':diagnostics[-12000:],
+          },indent=2,sort_keys=True))
+          PY
+          echo "status=$STATUS" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Build immutable runtime and manifest
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=/tmp/ipep-parakeet-cli-v3
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          root=Path('/tmp/ipep-parakeet-cli-v3/runtime')
+          cli=Path('/tmp/cli-v3-path.txt').read_text().strip(); cli=Path(cli)
+          ort=Path('/tmp/ort-v3-path.txt').read_text().strip(); ort=Path(ort)
+          archive=root/'model'/os.environ['MODEL_ARCHIVE']
+          model=root/'model'/'sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8'/'model.int8.onnx'
+          tokens=model.parent/'tokens.txt'
+          def sha(path):
+              h=hashlib.sha256()
+              with path.open('rb') as f:
+                  for chunk in iter(lambda:f.read(1024*1024),b''):
+                      h.update(chunk)
+              return h.hexdigest()
+          canary=json.loads(Path('/tmp/cli-v3-canary.json').read_text())
+          files=[]
+          for path in [cli,ort,archive,model,tokens]:
+              files.append({'path':str(path.relative_to(root)),'size':path.stat().st_size,'sha256':sha(path)})
+          manifest={
+              'contract':'IPEP_PARAKEET_CTC_CLI_RUNTIME_V3',
+              'created_at':datetime.now(timezone.utc).isoformat(),
+              'source_commit':'${{ github.sha }}',
+              'run_id':${{ github.run_id }},
+              'sherpa_onnx_version':os.environ['SHERPA_ONNX_VERSION'],
+              'architecture_family':'nvidia_fastconformer_ctc',
+              'official_model_url':os.environ['MODEL_URL'],
+              'canary':canary,
+              'files':files,
+              'evidence_included':False,
+              'credentials_included':False,
+              'truth_boundary':'Complete official binary/core runtime and public model only; no hearing transcription claim.',
+          }
+          (root/'runtime-manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
+          Path('deployment_receipts/ipep-parakeet-ctc-cli-runtime-v3-latest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
+          PY
+          tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner \
+            -C "$ROOT" -czf /tmp/IPEP_Parakeet_CTC_CLI_Runtime_v3.tar.gz runtime
+          sha256sum /tmp/IPEP_Parakeet_CTC_CLI_Runtime_v3.tar.gz > /tmp/IPEP_Parakeet_CTC_CLI_Runtime_v3.tar.gz.sha256
+
+      - name: Publish runtime and diagnostics artifact
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipep-parakeet-ctc-cli-runtime-v3-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+          path: |
+            /tmp/IPEP_Parakeet_CTC_CLI_Runtime_v3.tar.gz
+            /tmp/IPEP_Parakeet_CTC_CLI_Runtime_v3.tar.gz.sha256
+            /tmp/ipep-parakeet-cli-v3/runtime/runtime-manifest.json
+            /tmp/cli-v3-canary.json
+            /tmp/cli-v3-canary.log
+            /tmp/cli-v3-diagnostics.log
+
+      - name: Publish redacted receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          git config user.name 'ipep-parakeet-cli-v3[bot]'
+          git config user.email 'ipep-parakeet-cli-v3[bot]@users.noreply.github.com'
+          git add deployment_receipts/ipep-parakeet-ctc-cli-runtime-v3-latest.json
+          git commit -m 'Record Parakeet CTC CLI v3 runtime receipt [skip ci]' || exit 0
+          git push origin HEAD:main
+
+      - name: Enforce sample canary
+        if: always()
+        shell: bash
+        run: |
+          test "${{ steps.canary.outputs.status }}" = "0"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          data=json.loads(Path('/tmp/cli-v3-canary.json').read_text())
+          assert data['passed'], data
+          PY
