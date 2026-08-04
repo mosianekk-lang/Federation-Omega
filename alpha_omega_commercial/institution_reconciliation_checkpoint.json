@@ -55,8 +55,8 @@
   },
   "proof": {
     "workflow": ".github/workflows/alpha-omega-commercial-institution-reconciliation.yml",
-    "provider_state": "PROVIDER_NATIVE_CI_VERIFIED",
-    "evidence_head_sha": "fc3b0b80c09a8101ef6680cd682994fb652e6504",
+    "provider_state": "PROVIDER_NATIVE_IMPLEMENTATION_PROOF_VERIFIED",
+    "implementation_evidence_head_sha": "fc3b0b80c09a8101ef6680cd682994fb652e6504",
     "institution_reconciliation_run": 30872049697,
     "institution_reconciliation_job": 91875879902,
     "artifact_id": 8878210008,
@@ -72,7 +72,7 @@
       "institution_checkpoint": "240bf8330dbcb5ffe529df945a193c1580f84228e2b93db0cc60daec400e07be",
       "institution_programme": "daa9af13b323e91e475f9b458c6acaa3674a1c948d08303fdb5779ed32d65b0f"
     },
-    "final_head_regression_runs": {
+    "implementation_regression_runs": {
       "C01_C05": 30872049693,
       "C06_C09": 30872049706,
       "C10_C15": 30872049703,
@@ -83,7 +83,8 @@
       "superior_logic_ci": 30872049696,
       "repository_leak_guard": 30872049708
     },
-    "all_conclusions": "success"
+    "checkpoint_promotion_rule": "The pull-request head containing this checkpoint must independently pass all required commercial, institution-reconciliation, control-plane, Superior Logic and repository-safety workflows before merge.",
+    "all_implementation_conclusions": "success"
   },
   "truth_boundary": "This provider-verified checkpoint proves exact C15/P13/P15 cross-programme consistency and scope separation. It does not prove customer demand, a signed contract, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise attestation, partner adoption, an external customer case study, production scale or a v3 institution Google Drive publication."
 }
