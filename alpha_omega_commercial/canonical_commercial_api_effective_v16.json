@@ -1,6 +1,6 @@
 {
   "projection_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V16",
-  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_EVIDENCE_VAULT_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_EVIDENCE_VAULT_PROVIDER_PROOF_VERIFIED",
   "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-EVIDENCE-VAULT-V16",
   "canonical_class": "VaultedProviderDispatchCommercialControlPlane",
   "predecessor_class": "ChallengeBoundProviderDispatchCommercialControlPlane",
@@ -23,12 +23,18 @@
     "distributed_provider_exactly_once": "NOT_PROVEN"
   },
   "implementation_provider_proof": {
-    "state": "PENDING_PROVIDER_NATIVE_CI",
-    "workflow_run": null,
-    "workflow_job": null,
-    "artifact_id": null,
-    "artifact_digest": null,
-    "checks": "PENDING"
+    "state": "PROVIDER_PROOF_VERIFIED",
+    "workflow_run": 30922901781,
+    "workflow_job": 92037777846,
+    "artifact_id": 8897842921,
+    "artifact_digest": "sha256:639663bfda09ea790237ca9b6e59dbadbaec205dfeb0f12f5d7455fe8286b91f",
+    "checks": "12/12"
+  },
+  "google_drive_release": {
+    "file_id": "1BaghI8fHt42GTehodoXo0IJoRmYD0j-7NYMkmhS5gW0",
+    "export_sha256": "88b43753d53d5291a89da26962b911d51265654492651c7086483e9c2223f578",
+    "readback_verified": true,
+    "shared": false
   },
   "verified_live_revenue_events": 0,
   "external_maturity_gates_advanced": false,
