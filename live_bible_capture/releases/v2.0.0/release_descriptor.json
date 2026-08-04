@@ -27,12 +27,13 @@
   "binary_reconstruction_in_github": false,
   "split_files": {
     "live_bible_fabric/fabric.py": [
-      {"path": "source_parts/fabric-00.txt", "bytes": 7000, "sha256": "fc3e9f198fcb6c5d6112404c8fb3ace118fa7c708c107ed1fc4230372ee7f63f"},
-      {"path": "source_parts/fabric-01.txt", "bytes": 7000, "sha256": "2bbe06cabc44ffe16d6096ed994dbf5a2318197ca135f91c10437747a51300e4"},
-      {"path": "source_parts/fabric-02.txt", "bytes": 7000, "sha256": "0d78af8eee90afd0203b3064f519e394c43c6e2458451070c6c7efa7bd68660e"},
-      {"path": "source_parts/fabric-03.txt", "bytes": 7003, "sha256": "91a3bd2a98435e85eebcbfa6be61f65aba1e31fca690ae9bdfbe092d41f443bf"},
-      {"path": "source_parts/fabric-04.txt", "bytes": 7000, "sha256": "56d97a486bcced524f60f9d322cbf114105662f75eed254c2d9959db1fdf5ece"},
-      {"path": "source_parts/fabric-05.txt", "bytes": 1941, "sha256": "d29f264de860024d08e206d3d6952b03748faa85af3fb81d0950057521f4f95e"}
+      {"path": "source_parts_v2/fabric-line-00.txt", "bytes": 5977, "sha256": "ed76d3ab9545b94acad79af50c2bf79cd156ab80af79437cd80997e199afe14c"},
+      {"path": "source_parts_v2/fabric-line-01.txt", "bytes": 5946, "sha256": "a6135474dcb0dbe5a5185742cd6ec7f681f6806885cf31f8f962cc689a0747b5"},
+      {"path": "source_parts_v2/fabric-line-02.txt", "bytes": 5926, "sha256": "a04109789a4ef50b98a29cd1327ebf8ce958807f8217cb6bb0fb9afb9ddccdb5"},
+      {"path": "source_parts_v2/fabric-line-03.txt", "bytes": 5993, "sha256": "b92571f923247dda1ddf8b81d26a2be7a83e3d640d8bdd0ee22e5bb81759689c"},
+      {"path": "source_parts_v2/fabric-line-04.txt", "bytes": 5998, "sha256": "73b75866b793c05e0aa8fe034d6d7311a7d34756112a75230f01e9efd9e93a22"},
+      {"path": "source_parts_v2/fabric-line-05.txt", "bytes": 5993, "sha256": "203d4e21d7becba125da7d61b5d5556f05ce982cc1547ca293df6ca7817b55b8"},
+      {"path": "source_parts_v2/fabric-line-06.txt", "bytes": 1111, "sha256": "2bd8c0cbd262b8d6613258028ef931c11e0eb4c34ae047c7148328734be87075"}
     ]
   }
 }
