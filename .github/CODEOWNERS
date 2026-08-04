@@ -3,7 +3,9 @@
 /.github/CODEOWNERS @mosianekk-lang
 /governance/ @mosianekk-lang
 /tools/github_control_plane.py @mosianekk-lang
+/tools/github_airlock.py @mosianekk-lang
 /tests/test_github_control_plane.py @mosianekk-lang
+/tests/test_github_airlock.py @mosianekk-lang
 /SECURITY.md @mosianekk-lang
 /ops/ @mosianekk-lang
 /deployment_receipts/ @mosianekk-lang
