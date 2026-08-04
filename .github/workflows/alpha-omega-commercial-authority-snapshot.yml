@@ -41,8 +41,10 @@ jobs:
           python -m unittest -v
           alpha_omega_commercial.test_authority_snapshot_control_plane
           alpha_omega_commercial.test_governed_commercial_assurance
-          alpha_omega_commercial.test_owner_authority
-          alpha_omega_commercial.test_authority_refresh
+
+      - name: Run provider-authority freshness regression tests
+        working-directory: alpha_omega_commercial
+        run: python -m unittest -v test_authority_refresh.py
 
       - name: Execute authority-snapshot proof
         run: python -m alpha_omega_commercial.prove_authority_snapshot_control
@@ -58,6 +60,8 @@ jobs:
 
           assert api['api_id'] == 'AO-COMMERCIAL-CANONICAL-API-V3'
           assert api['canonical_class'] == 'AuthoritySnapshotCommercialControlPlane'
+          assert api['predecessor_class'] == 'GovernedCommercialAssuranceControlPlane'
+          assert api['predecessor_state'] == 'REFERENCE_AND_MOCK_CONFORMANCE_ONLY'
           assert api['authority_snapshot']['raw_authority_dictionary_grants_live_authority'] is False
           assert api['authority_snapshot']['snapshot_hash_required'] is True
           assert api['authority_snapshot']['source_ledger_integrity_required'] is True
