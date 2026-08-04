@@ -38,10 +38,7 @@
     "template_prefix": "phoenix/ops-template/",
     "required_files": [
       "README.md", ".gitignore", ".github/CODEOWNERS",
-      "governance/OPS_CONTRACT.json", "provider_cutover.py",
-      "provider_cutover_authorization_use.py", "provider_cutover_v3_1.py",
-      "provider_cutover_v3_base.py",
-      "provider_cutover_outcome_reconciler.py"
+      "governance/OPS_CONTRACT.json", "provider_cutover.py"
     ]
   },
   "invariants": {
