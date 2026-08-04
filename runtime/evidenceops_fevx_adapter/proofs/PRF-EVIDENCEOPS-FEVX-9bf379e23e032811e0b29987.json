@@ -1,0 +1,18 @@
+{
+  "adapter_proof_hash": "c1e7afb22508337a459e93c36c27744020d8de28f6f4c75aa35d68cdb6a24490",
+  "checks_sha256": "8598991590e300220daf01d2b1cf792e6fa0cc0a5e328d4f7dc7fc4d236bb2af",
+  "cross_case_access": false,
+  "database_dump_sha256": "87655eb2300d87649af50668e2069964d8c22a4eae806f24ab68478c64317b4d",
+  "external_effect": false,
+  "input_packet_sha256": "25c1d44babca13f6de9ab400a434d2ea818805503c934cdb4ec8aa14c943cda9",
+  "previous_hash": "fb679700337b24a3a720dba754d1b2962dc4077462131aece3f60a459a77a31a",
+  "proof_id": "PRF-EVIDENCEOPS-FEVX-9bf379e23e032811e0b29987",
+  "provider": "github_actions",
+  "record_hash": "8dc6562dbf0ae01373970e94d44146d95841d4d87ddcc3a49846b4387beec70a",
+  "recorded_at": "2026-08-04T15:11:19.461961Z",
+  "result_id": "RESULT-8ca0467bd041f159bdd2b775",
+  "semantic_hash": "0412b9a80579669378f15ee666083dc541123bbb2d801061b883edc58f8969b1",
+  "source_write": false,
+  "status": "VERIFIED",
+  "verified_fact_write": false
+}
