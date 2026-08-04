@@ -1,0 +1,152 @@
+name: Alpha Omega Commercial Authority Action Binding Proof
+
+on:
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-authority-action-binding.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-authority-action-binding.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-omega-commercial-authority-action-binding-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Compile commercial package
+        run: python -m compileall -q alpha_omega_commercial
+
+      - name: Run authority action binding regression suite
+        run: >-
+          python -m unittest -v
+          alpha_omega_commercial.test_authority_snapshot_action_binding
+          alpha_omega_commercial.test_authority_snapshot_anti_rollback
+          alpha_omega_commercial.test_authority_snapshot_control_plane
+          alpha_omega_commercial.test_governed_commercial_assurance
+
+      - name: Execute authority action binding proof
+        run: >-
+          python -m alpha_omega_commercial.prove_authority_snapshot_action_binding
+          --output artifacts
+
+      - name: Validate contract checkpoint API and truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('alpha_omega_commercial')
+          contract = json.loads((root / 'authority_snapshot_action_binding_contract.json').read_text())
+          checkpoint = json.loads((root / 'authority_snapshot_action_binding_checkpoint.json').read_text())
+          api = json.loads((root / 'canonical_commercial_api.json').read_text())
+          receipt = json.loads(Path('artifacts/authority-snapshot-action-binding-receipt.json').read_text())
+
+          assert contract['control_id'] == 'AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5'
+          assert contract['stage_scope'] == ['C03', 'C11', 'C12', 'C13', 'C15']
+          assert all(contract['authority_use_rules'].values())
+          assert contract['verified_live_revenue_events'] == 0
+          assert contract['full_commercial_maturity'] is False
+
+          assert api['api_id'] == 'AO-COMMERCIAL-CANONICAL-API-V4'
+          assert api['canonical_class'] == 'AuthoritySnapshotCommercialControlPlane'
+          assert api['authority_use']['preview_validation_grants_live_authority'] is False
+          assert api['authority_use']['latest_durable_acceptance_required'] is True
+          assert api['authority_use']['exact_snapshot_hash_match_required'] is True
+          assert api['authority_use']['acceptance_entry_hash_binding_required'] is True
+          assert api['authority_use']['action_binding_required'] is True
+          assert api['authority_use']['superseded_snapshot_can_authorize_action'] is False
+          assert api['persistence']['authority_action_binding'] == 'HASH_BOUND_TO_LATEST_ACCEPTANCE_RESTART_SAFE'
+          assert api['service_first_strategy'] == 'SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS'
+          assert api['verified_live_revenue_events'] == 0
+          assert api['full_commercial_maturity'] is False
+
+          assert checkpoint['dependency_checkpoint']['preceding_pull_request'] == 124
+          assert checkpoint['dependency_checkpoint']['preceding_merge_commit'] == 'a13ba8838f79b009d7b690bbe74d6963db1dffb8'
+          assert checkpoint['status'] in {
+              'AUTHORITY_ACTION_BINDING_IMPLEMENTED_PROVIDER_PROOF_REQUIRED',
+              'AUTHORITY_ACTION_BINDING_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+          }
+          assert all(value is False for value in checkpoint['external_gates'].values())
+          assert checkpoint['commercial_truth']['verified_live_revenue_events'] == 0
+          assert checkpoint['commercial_truth']['full_commercial_maturity'] is False
+          if checkpoint['status'].endswith('EXTERNAL_GATES_UNCHANGED'):
+              proof = checkpoint['provider_proof']
+              assert proof['state'] == 'PR_HEAD_PROVIDER_NATIVE_CI_VERIFIED'
+              assert isinstance(proof['workflow_run'], int)
+              assert isinstance(proof['artifact_id'], int)
+              assert proof['artifact_name'] == 'alpha-omega-commercial-authority-action-binding-proof'
+              assert proof['artifact_digest'].startswith('sha256:')
+              assert len(proof['artifact_digest']) == 71
+              assert len(proof['receipt_sha256']) == 64
+              assert proof['checks_required'] == 12
+              assert proof['checks_failed'] == 0
+
+          assert receipt['status'] == 'AUTHORITY_ACTION_BINDING_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED'
+          assert len(receipt['checks']) == 12
+          assert all(receipt['checks'].values())
+          assert receipt['authority_use']['candidate_validation_grants_live_authority'] is False
+          assert receipt['authority_use']['latest_durable_acceptance_required'] is True
+          assert receipt['authority_use']['action_binding_required'] is True
+          assert receipt['commercial_truth']['verified_live_revenue_events'] == 0
+          assert receipt['commercial_truth']['cloud_run_operation_proven'] is False
+          assert receipt['commercial_truth']['payment_provider_operation_proven'] is False
+          assert receipt['commercial_truth']['full_commercial_maturity'] is False
+          assert receipt['external_gate_effect'] == 'UNCHANGED'
+          assert receipt['owner_authority']['financial_commitments'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['contracts'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['external_communications'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['consequential_releases'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['revenue_recognition'] == 'OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED'
+          PY
+
+      - name: Verify no secret-shaped values are present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          roots = [
+              Path('alpha_omega_commercial/authority_snapshot_acceptance.py'),
+              Path('alpha_omega_commercial/authority_snapshot_control_plane.py'),
+              Path('alpha_omega_commercial/prove_authority_snapshot_action_binding.py'),
+              Path('alpha_omega_commercial/test_authority_snapshot_action_binding.py'),
+              Path('alpha_omega_commercial/authority_snapshot_action_binding_contract.json'),
+              Path('alpha_omega_commercial/authority_snapshot_action_binding_checkpoint.json'),
+              Path('alpha_omega_commercial/canonical_commercial_api.json'),
+              Path('artifacts'),
+          ]
+          forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for root in roots:
+              paths = root.rglob('*') if root.is_dir() else [root]
+              for path in paths:
+                  if path.is_file():
+                      assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
+          PY
+
+      - name: Upload immutable authority action binding proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alpha-omega-commercial-authority-action-binding-proof
+          path: artifacts
+          if-no-files-found: error
+          retention-days: 90
