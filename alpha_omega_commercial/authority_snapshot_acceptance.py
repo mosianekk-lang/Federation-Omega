@@ -269,6 +269,61 @@ class AuthoritySnapshotAcceptanceLedger:
         self.entries.append(entry)
         return dict(entry)
 
+    def latest_accepted(
+        self,
+        snapshot: CommercialAuthoritySnapshot | None,
+        validator: CommercialAuthoritySnapshotValidator,
+        *,
+        required_scope: Mapping[str, tuple[str, ...]],
+        now: str,
+    ) -> dict[str, Any]:
+        """Return the exact latest acceptance or fail closed.
+
+        A cryptographically valid candidate is not live authority merely because it
+        could be accepted. Consequential use requires the candidate hash to match the
+        latest durable acceptance entry exactly.
+        """
+
+        decision = self.preview(
+            snapshot,
+            validator,
+            required_scope=required_scope,
+            now=now,
+        )
+        if not decision.valid:
+            raise PermissionError(
+                "authority snapshot use failed: " + ",".join(decision.reasons)
+            )
+        if snapshot is None or not self.entries:
+            raise PermissionError(
+                "authority snapshot use failed: AUTHORITY_SNAPSHOT_NOT_ACCEPTED"
+            )
+        latest = self.entries[-1]
+        if latest["snapshot_sha256"] != snapshot.snapshot_sha256:
+            raise PermissionError(
+                "authority snapshot use failed: AUTHORITY_SNAPSHOT_NOT_LATEST_ACCEPTED"
+            )
+        return dict(latest)
+
+    def is_latest_accepted(
+        self,
+        snapshot: CommercialAuthoritySnapshot | None,
+        validator: CommercialAuthoritySnapshotValidator,
+        *,
+        required_scope: Mapping[str, tuple[str, ...]],
+        now: str,
+    ) -> bool:
+        try:
+            self.latest_accepted(
+                snapshot,
+                validator,
+                required_scope=required_scope,
+                now=now,
+            )
+        except PermissionError:
+            return False
+        return True
+
     def readback(
         self,
         snapshot: CommercialAuthoritySnapshot | None,
@@ -284,6 +339,12 @@ class AuthoritySnapshotAcceptanceLedger:
             now=now,
         )
         latest = self.entries[-1] if self.entries else None
+        candidate_latest_accepted = bool(
+            decision.valid
+            and snapshot is not None
+            and latest is not None
+            and latest["snapshot_sha256"] == snapshot.snapshot_sha256
+        )
         return {
             "ledger_file": self.FILE_NAME,
             "integrity": "VERIFIED" if self.entries or not self.path.exists() else "EMPTY",
@@ -293,8 +354,11 @@ class AuthoritySnapshotAcceptanceLedger:
             "latest_entry_sha256": latest["entry_sha256"] if latest else "GENESIS",
             "candidate_valid": decision.valid,
             "candidate_idempotent": decision.idempotent,
+            "candidate_latest_accepted": candidate_latest_accepted,
             "candidate_reasons": list(decision.reasons),
             "anti_rollback_enforced": True,
             "snapshot_id_conflict_rejected": True,
             "source_ledger_rollback_rejected": True,
+            "preview_validation_grants_live_authority": False,
+            "consequential_use_requires_latest_acceptance": True,
         }
