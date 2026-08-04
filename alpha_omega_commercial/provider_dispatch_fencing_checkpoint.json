@@ -12,6 +12,12 @@
     "programme_dependency_order_verified": true,
     "institution_state_preserved": true
   },
+  "delivery_control": {
+    "implementation_head": "8d6080a34cd95138ac72f07a0b5eadbb366c28ff",
+    "provider_proof_pull_request_required": true,
+    "promotion_before_provider_proof_permitted": false,
+    "release_reconciliation_required": true
+  },
   "candidate_projection": {
     "capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-FENCING-V13",
     "canonical_class": "FencedProviderDispatchCommercialControlPlane",
