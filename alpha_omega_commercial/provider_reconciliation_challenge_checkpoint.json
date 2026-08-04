@@ -1,6 +1,6 @@
 {
   "checkpoint_id": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-CHALLENGE-V15-CHECKPOINT",
-  "status": "IMPLEMENTED_PROVIDER_NATIVE_CI_PENDING",
+  "status": "PROVIDER_RECONCILIATION_CHALLENGE_BINDING_PROVIDER_PROOF_VERIFIED",
   "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
   "dependency_predecessor": {
     "release": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTCOME-RECONCILIATION-V14",
@@ -19,6 +19,7 @@
     "expired_challenge_supersession": true,
     "one_time_atomic_challenge_consumption": true,
     "unchallenged_evidence_rejected": true,
+    "restart_safe_state_verification": true,
     "mock_provider_conformance": true,
     "provider_native_reconciliation_authority": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
     "provider_native_reconciliation_proven": false,
@@ -26,12 +27,15 @@
   },
   "provider_native_ci": {
     "workflow": ".github/workflows/alpha-omega-commercial-provider-dispatch-fencing-release.yml",
-    "workflow_run": null,
-    "workflow_job": null,
-    "artifact_id": null,
-    "artifact_digest": null,
+    "workflow_run": 30918336416,
+    "workflow_job": 92022106243,
+    "artifact_id": 8895992684,
+    "artifact_digest": "sha256:7590efea353a1f891dda829022434dc136b9141a0caf03474d95d0952a713118",
+    "artifact_size_bytes": 1024,
     "checks_required": 12,
-    "checks_failed": null
+    "checks_failed": 0,
+    "all_job_steps_passed": true,
+    "artifact_inspected": true
   },
   "commercial_truth": {
     "service_enabled_platform_prioritised": true,
