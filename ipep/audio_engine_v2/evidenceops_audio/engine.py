@@ -6,7 +6,10 @@ from pathlib import Path
 
 from .common import redact, sha256_file, utc_now
 from .manifest import AudioManifest, ChunkRecord, ManifestError
-from .providers import GeminiFilesProvider, GoogleSpeechV2Provider, LocalWhisperCppProvider
+from .providers import (
+    GeminiFilesProvider, GoogleSpeechV2Provider, LocalWhisperCppProvider,
+)
+from .openai_provider import OpenAITranscriptionProvider
 
 
 class EvidenceOpsAudioEngine:
@@ -23,7 +26,12 @@ class EvidenceOpsAudioEngine:
         self.chunk_output_dir.mkdir(parents=True, exist_ok=True)
 
     def providers(self):
-        return [LocalWhisperCppProvider(), GoogleSpeechV2Provider(), GeminiFilesProvider()]
+        return [
+            GoogleSpeechV2Provider(),
+            OpenAITranscriptionProvider(),
+            GeminiFilesProvider(),
+            LocalWhisperCppProvider(),
+        ]
 
     def preflight(self):
         provider_results = [dataclasses.asdict(provider.preflight()) for provider in self.providers()]
