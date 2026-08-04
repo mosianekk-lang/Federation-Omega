@@ -1,0 +1,27 @@
+        return 0
+    if args.command == "pairing-code":
+        if not args.show:
+            print(f"Pairing token exists at {_token_file(state_dir)}. Add --show to print it intentionally.")
+        else:
+            print(token)
+        return 0
+    if args.command == "serve":
+        serve(state_dir, args.host, args.port)
+        return 0
+    store = EventStore(state_dir / "live_bible.sqlite3")
+    engine = LiveBibleEngine(store, state_dir / "projections")
+    if args.command == "ingest":
+        print(json.dumps(engine.ingest(json.loads(args.event_json)), indent=2))
+    elif args.command == "import-export":
+        print(json.dumps(engine.import_export(args.path, args.source_id), indent=2))
+    elif args.command == "process-outbox":
+        print(json.dumps(engine.process_outbox(args.path), indent=2))
+    elif args.command == "verify":
+        print(json.dumps(store.verify_chain(args.conversation_id), indent=2))
+    elif args.command == "project":
+        print(json.dumps(engine.project(args.conversation_id), indent=2))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(main())
