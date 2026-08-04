@@ -8,12 +8,11 @@ on:
 permissions:
   actions: write
   contents: read
-  id-token: write
   statuses: write
 
 concurrency:
-  group: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, '[PST-CLOSE]') && 'phoenix-emergency-execution-freeze' || github.event_name == 'push' && startsWith(github.event.head_commit.message, '[BIBLE-REBUILD]') && 'phoenix-local-bible-rebuild' || 'phoenix-emergency-passive' }}
-  cancel-in-progress: ${{ github.event_name == 'push' && (startsWith(github.event.head_commit.message, '[PST-CLOSE]') || startsWith(github.event.head_commit.message, '[BIBLE-REBUILD]')) }}
+  group: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, '[PST-CLOSE]') && 'phoenix-emergency-execution-freeze' || 'phoenix-emergency-passive' }}
+  cancel-in-progress: ${{ github.event_name == 'push' && startsWith(github.event.head_commit.message, '[PST-CLOSE]') }}
 
 jobs:
   freeze:
@@ -44,26 +43,12 @@ jobs:
           echo "requested=${requested}" >> "${GITHUB_OUTPUT}"
           echo "PST closure requested: ${requested}"
 
-      - name: Resolve Local Bible rebuild execution
-        id: bible_rebuild
-        env:
-          HEAD_COMMIT_MESSAGE: ${{ github.event.head_commit.message }}
-        run: |
-          set -euo pipefail
-          requested=false
-          if [[ "${GITHUB_EVENT_NAME}" == "push" && "${HEAD_COMMIT_MESSAGE}" == "[BIBLE-REBUILD]"* ]]; then
-            requested=true
-          fi
-          echo "requested=${requested}" >> "${GITHUB_OUTPUT}"
-          echo "Local Bible rebuild requested: ${requested}"
-
       - name: Verify Phoenix export and provider controls
         run: |
           python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3.py' -v
           python -m unittest discover -s tests -p 'test_pst_composite_runtime_contract.py' -v
-          python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3_local_bible_rebuild.py' -v
 
       - name: Build source-clean Core and private Ops exports
         run: |
@@ -257,34 +242,6 @@ jobs:
           test "$(python -c "import json; print(json.load(open('phoenix-export-output/pst-completion/evidenceops-pst-corpus-v2-drive-completion.json'))['status'])")" = "COMPLETE_VERIFIED"
           df -h
 
-      - name: Authenticate private Local Bible recovery
-        id: bible_auth
-        if: steps.bible_rebuild.outputs.requested == 'true'
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
-        with:
-          project_id: sov-hybrid-suite
-          workload_identity_provider: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
-          service_account: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
-          token_format: access_token
-          access_token_lifetime: 900s
-          access_token_scopes: https://www.googleapis.com/auth/drive.readonly
-          create_credentials_file: false
-          export_environment_variables: false
-          request_reason: FEDOMEGA-LBRF-20260804-001
-
-      - name: Rebuild private Local Bible Event 13
-        if: steps.bible_rebuild.outputs.requested == 'true'
-        timeout-minutes: 20
-        env:
-          GOOGLE_ACCESS_TOKEN: ${{ steps.bible_auth.outputs.access_token }}
-        run: |
-          set -euo pipefail
-          rm -rf /tmp/local-bible-event13-rebuild phoenix-export-output/local-bible-rebuild
-          python ops/evidenceops_local_bible_event13_rebuild.py \
-            --work /tmp/local-bible-event13-rebuild \
-            --output phoenix-export-output/local-bible-rebuild
-          test "$(python -c "import json; print(json.load(open('phoenix-export-output/local-bible-rebuild/PACKAGE_VERIFICATION.json'))['status'])")" = "PROVIDER_PACKAGE_REBUILD_VERIFIED_PENDING_LIBRARY_WRITEBACK"
-
       - name: Upload immutable quarantine receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -294,7 +251,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Upload Core, Ops, provider cutover, PST completion and Local Bible package
+      - name: Upload Core, Ops, provider cutover and PST completion package
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -304,7 +261,6 @@ jobs:
             phoenix-export-output/Federation-Omega-Ops.tar.gz
             phoenix-export-output/phoenix-export-receipt.json
             phoenix-export-output/pst-completion/*.json
-            phoenix-export-output/local-bible-rebuild/*
           if-no-files-found: error
           retention-days: 90
 
@@ -313,13 +269,11 @@ jobs:
         shell: bash
         run: |
           set -uo pipefail
-          pst_requested="${{ steps.pst_closure.outputs.requested }}"
-          bible_requested="${{ steps.bible_rebuild.outputs.requested }}"
+          requested="${{ steps.pst_closure.outputs.requested }}"
           state=failure
           description='Phoenix quarantine or export failed'
           pst_ok=true
-          bible_ok=true
-          if [[ "${pst_requested}" == "true" ]]; then
+          if [[ "${requested}" == "true" ]]; then
             pst_ok=false
             description='Phoenix PST closure verification failed'
             if jq -e '.status == "COMPLETE_VERIFIED"' \
@@ -328,24 +282,14 @@ jobs:
               description='Phoenix quarantine, exports and PST completion verified'
             fi
           fi
-          if [[ "${bible_requested}" == "true" ]]; then
-            bible_ok=false
-            description='Phoenix Local Bible rebuild failed'
-            if jq -e '.status == "PROVIDER_PACKAGE_REBUILD_VERIFIED_PENDING_LIBRARY_WRITEBACK"' \
-                 phoenix-export-output/local-bible-rebuild/PACKAGE_VERIFICATION.json >/dev/null 2>&1; then
-              bible_ok=true
-              description='Phoenix quarantine, exports and Local Bible rebuild verified'
-            fi
-          fi
           if jq -e '.status == "VERIFIED"' \
                phoenix-freeze-output/phoenix-execution-freeze.json >/dev/null 2>&1 \
              && jq -e '.status == "VERIFIED"' \
                phoenix-export-output/phoenix-export-receipt.json >/dev/null 2>&1 \
-             && [[ "${pst_ok}" == "true" ]] \
-             && [[ "${bible_ok}" == "true" ]]; then
+             && [[ "${pst_ok}" == "true" ]]; then
             state=success
-            if [[ "${pst_requested}" != "true" && "${bible_requested}" != "true" ]]; then
-              description='Phoenix quarantine and exports verified; no marked rebuild requested'
+            if [[ "${requested}" != "true" ]]; then
+              description='Phoenix quarantine and exports verified; PST not requested'
             fi
           fi
           gh api -X POST \
