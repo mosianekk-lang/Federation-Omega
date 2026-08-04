@@ -1,9 +1,8 @@
 """Canonical Alpha→Omega commercial maturity API.
 
-The provider-reconciliation challenge control plane is the newest
-service-platform candidate. It preserves V14 durable submission and unknown
-outcome quarantine, and requires one current, hash-chained, attempt-bound and
-single-use challenge before reconciliation evidence can be admitted. Earlier
+The provider-reconciliation evidence vault is the newest service-platform
+candidate. It preserves the V15 one-time challenge boundary and durably publishes
+the complete verified reconciliation evidence before outcome resolution. Earlier
 control planes remain exported for historical regression and reference-provider
 conformance.
 """
@@ -17,6 +16,10 @@ _PACKAGE_DIR = str(Path(__file__).resolve().parent)
 if _PACKAGE_DIR not in sys.path:
     sys.path.insert(0, _PACKAGE_DIR)
 
+from provider_reconciliation_evidence_vault import (  # noqa: E402
+    RECONCILIATION_EVIDENCE_PACKAGE_CLASS,
+    VaultedProviderDispatchCommercialControlPlane,
+)
 from provider_reconciliation_challenge_safe import (  # noqa: E402
     ChallengeBoundMockProviderAdapter,
     ChallengeBoundProviderDispatchCommercialControlPlane,
@@ -78,6 +81,8 @@ from governed_commercial_assurance import (  # noqa: E402
 )
 
 __all__ = [
+    "VaultedProviderDispatchCommercialControlPlane",
+    "RECONCILIATION_EVIDENCE_PACKAGE_CLASS",
     "ChallengeBoundProviderDispatchCommercialControlPlane",
     "ChallengeBoundMockProviderAdapter",
     "RECONCILIATION_CHALLENGE_CLASS",
