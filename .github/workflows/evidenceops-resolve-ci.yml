@@ -48,7 +48,7 @@ jobs:
               'version': '1.0.0',
               'status': 'PASS',
               'proof_level': 'PROVIDER_READBACK',
-              'tests_passed': 5,
+              'tests_passed': 6,
               'source_commit': os.environ['GITHUB_SHA'],
               'workflow_run_id': int(os.environ['GITHUB_RUN_ID']),
               'recorded_at': datetime.now(timezone.utc).isoformat(),
