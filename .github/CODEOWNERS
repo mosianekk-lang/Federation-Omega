@@ -1,0 +1,11 @@
+# Federation Omega authority and safety ownership
+/.github/workflows/ @mosianekk-lang
+/.github/CODEOWNERS @mosianekk-lang
+/governance/ @mosianekk-lang
+/tools/github_control_plane.py @mosianekk-lang
+/tests/test_github_control_plane.py @mosianekk-lang
+/SECURITY.md @mosianekk-lang
+/ops/ @mosianekk-lang
+/deployment_receipts/ @mosianekk-lang
+/evidenceops/security/ @mosianekk-lang
+/evidenceops/secure_capability_box/ @mosianekk-lang
