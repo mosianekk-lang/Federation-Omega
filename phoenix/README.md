@@ -9,9 +9,11 @@ This package migrates the quarantined legacy repository into two clean repositor
 
 A successful Phoenix freeze run creates a source-clean Core archive, a private Ops archive, an export receipt and an execution-freeze receipt. Both receipts contain hashes and source commit identifiers.
 
-Core excludes GitHub Actions workflows, runtime state, generated receipts, credential-bearing paths, private-key formats and migration-control code. Tests whose names start with `tests/test_phoenix_` are migration-control tests and are also excluded because their required controller is intentionally placed only in Ops. The Phoenix source workflow runs those tests before export; the exported Core test set must remain independently runnable without Phoenix migration files.
+Core excludes GitHub Actions workflows at every directory depth, runtime state, generated receipts, credential-bearing paths, private-key formats and migration-control code. Tests whose names start with `tests/test_phoenix_` are migration-control tests and are also excluded because their required controller is intentionally placed only in Ops. The Phoenix source workflow runs those tests before export; the exported Core test set must remain independently runnable without Phoenix migration files.
 
 Ops contains only its governance template and the provider cutover controller.
+
+Export generation is side-effect free. `build_exports.py` and `build_exports_v2.py` may read source files and write the requested local artifacts, but they must not enable, disable or dispatch workflows, call provider mutation endpoints, or access provider credentials. Provider execution belongs only to the exported Ops controller after the owner-reserved cutover decision.
 
 ## Provider cutover
 
@@ -29,6 +31,7 @@ Archiving the legacy repository is a separate explicit gate using `--archive-leg
 - No legacy history is rewritten.
 - No newly created repository is automatically deleted after a later failure.
 - The initial Ops repository contains no schedule, deployment workflow or provider credential.
-- Core contains no Phoenix migration controller or migration-only test that depends on it.
+- Core contains no GitHub Actions workflow, Phoenix migration controller or migration-only test that depends on it.
+- Export generation does not dispatch unrelated work or mutate a provider surface.
 
 The connected repository surface cannot create repositories or change repository rulesets/settings. Final completion is therefore established only by a `VERIFIED` receipt from the exported `provider_cutover.py` under user-scoped provider administration authority.
