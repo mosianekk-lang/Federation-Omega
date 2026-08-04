@@ -1,0 +1,62 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-INSTITUTION-RECONCILIATION-V1",
+  "status": "IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "scope": [
+    "C15",
+    "P13",
+    "P15"
+  ],
+  "dependency_checkpoint": {
+    "commercial_governed_authority_pull_request": 118,
+    "commercial_governed_authority_merge_commit": "3102a12f4fa5e54d70c9eeeca493a006e9c7cdae",
+    "commercial_release_reconciliation_pull_request": 119,
+    "commercial_release_reconciliation_merge_commit": "fc945d53f0dab009828ac0aaaa0547f2bcef6ddf",
+    "commercial_release_receipt_sha256": "7c11adc24b0e3cd45acee72b73fc2b8c2f4a4ba6b96b7e6426c5bd50a9c645b1",
+    "institution_checkpoint_id": "AO-V30-20260803-VERIFIED"
+  },
+  "programme_projection": {
+    "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+    "C15": "COMMERCIAL_READINESS_VERIFIED_INSTITUTION_RECONCILED_EXTERNAL_MATURITY_GATES_OPEN",
+    "service_enabled_platform_first": true,
+    "self_service_saas_held": true
+  },
+  "institution_projection": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "provider_scope": {
+    "commercial_google_drive_release": "FRESH_VERIFIED_READBACK_OWNER_ONLY",
+    "institution_v3_google_drive_publication": "UNVERIFIED_SCOPE_HELD",
+    "canonical_cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "proof": {
+    "workflow": ".github/workflows/alpha-omega-commercial-institution-reconciliation.yml",
+    "artifact_name": "alpha-omega-commercial-institution-reconciliation-proof",
+    "provider_state": "PROVIDER_PROOF_REQUIRED"
+  },
+  "truth_boundary": "This checkpoint records a safe C15/P13/P15 reconciliation design. It does not prove customer demand, a signed contract, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise attestation, partner adoption, an external customer case study, production scale or a v3 institution Google Drive publication."
+}
