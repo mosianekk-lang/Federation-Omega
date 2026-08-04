@@ -1,0 +1,21 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-V17-RELEASE-CHECKPOINT",
+  "status": "PROVIDER_RECONCILIATION_RECOVERY_V17_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED",
+  "implementation_pull_request": 158,
+  "implementation_merge_commit": "03e2c9c096d3b4eee846992f2f723f6f36ed602c",
+  "provider_proof_run": 30927745566,
+  "provider_proof_job": 92054345687,
+  "provider_proof_artifact_id": 8899813315,
+  "provider_proof_artifact_digest": "sha256:c9b05412459ca2e8c07df162aad8bc535715d26b86e82078d50d9707888c010e",
+  "provider_proof_sha256": "3c879130e32a9a78800e416178f87d8e24f34612b1564c67713e620a7ecda56e",
+  "google_drive_file_id": "18SwQIrE6KL39qkKKlvxM_aTxXzZLoWac82LLLX5qf1M",
+  "google_drive_export_sha256": "f7153ebf0c82920e5f67f501bb2a35c7c0d8e96c2390f545b77bad99ac8e2ffc",
+  "google_drive_readback_verified": true,
+  "google_drive_shared": false,
+  "release_receipt_sha256": "791ec5dc2b8aa4ab233c98d716587758f9ca94dd717e6bb56ef3205aa4c26a7f",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "verified_live_revenue_events": 0,
+  "external_gate_effect": "UNCHANGED",
+  "owner_authority_effect": "UNCHANGED",
+  "full_commercial_maturity": false
+}

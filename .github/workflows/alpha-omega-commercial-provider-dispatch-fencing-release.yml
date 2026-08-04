@@ -1,4 +1,4 @@
-name: Alpha Omega Commercial Provider Reconciliation Recovery v17
+name: Alpha Omega Commercial Provider Reconciliation Recovery v17 Release
 
 on:
   pull_request:
@@ -16,7 +16,7 @@ permissions:
   contents: read
 
 concurrency:
-  group: alpha-omega-commercial-provider-reconciliation-recovery-v17-${{ github.ref }}
+  group: alpha-omega-commercial-provider-reconciliation-recovery-v17-release-${{ github.ref }}
   cancel-in-progress: true
 
 jobs:
@@ -36,9 +36,10 @@ jobs:
       - name: Compile commercial package
         run: python -m compileall -q alpha_omega_commercial
 
-      - name: Run v17 and inherited regressions
+      - name: Run v17 release and inherited regressions
         run: >-
           python -m unittest -v
+          alpha_omega_commercial.test_provider_reconciliation_recovery_release
           alpha_omega_commercial.test_provider_reconciliation_recovery
           alpha_omega_commercial.test_provider_reconciliation_evidence_vault_release
           alpha_omega_commercial.test_provider_reconciliation_evidence_vault
@@ -52,7 +53,13 @@ jobs:
           alpha_omega_commercial.test_authority_action_coordination
           alpha_omega_commercial.test_governed_commercial_assurance
 
-      - name: Execute v17 implementation proof
+      - name: Execute v17 release reconciliation proof
+        run: >-
+          python -m alpha_omega_commercial.prove_provider_reconciliation_recovery_release
+          --root .
+          --output artifacts
+
+      - name: Revalidate v17 implementation proof
         run: >-
           python -m alpha_omega_commercial.prove_provider_reconciliation_recovery
           --root .
@@ -64,29 +71,25 @@ jobs:
           --root .
           --output artifacts
 
-      - name: Validate v17 truth boundary
+      - name: Validate release truth boundary
         run: |
           python - <<'PY'
           import json
           from pathlib import Path
 
-          proof = json.loads(Path('artifacts/provider-reconciliation-recovery-v17-receipt.json').read_text())
-          assert proof['control_id'] == 'AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-V17'
-          assert proof['checks_required'] == 12 and proof['checks_failed'] == 0
+          proof = json.loads(Path('artifacts/provider-reconciliation-recovery-v17-release-proof.json').read_text())
+          assert proof['control_id'] == 'AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-V17-RELEASE-PROOF'
+          assert proof['checks_required'] == 19 and proof['checks_failed'] == 0
           assert all(proof['checks'].values())
-          operational = proof['operational_slice']
-          assert operational['valid_pre_resolution_evidence_classified_recoverable'] is True
-          assert operational['recoverable_evidence_prune_protected'] is True
-          assert operational['invalid_or_rejected_evidence_prunable'] is True
-          assert operational['deterministic_vault_replay'] is True
-          assert operational['challenge_observation_time_replay_binding'] is True
-          assert operational['exact_replay_idempotency'] is True
-          assert operational['provider_native_reconciliation_proven'] is False
-          assert operational['external_mutation_performed'] is False
+          assert proof['provider_proof']['all_triggered_workflows'] == 31
+          assert proof['provider_proof']['regression_tests_passed'] == 59
+          assert proof['google_drive_release']['readback_verified'] is True
+          assert proof['google_drive_release']['shared'] is False
           truth = proof['commercial_truth']
           assert truth['verified_live_revenue_events'] == 0
           assert truth['payment_provider_operation_proven'] is False
           assert truth['cloud_run_operation_proven'] is False
+          assert truth['provider_native_reconciliation_proven'] is False
           assert truth['full_commercial_maturity'] is False
           PY
 
@@ -99,8 +102,12 @@ jobs:
           roots = [
               Path('alpha_omega_commercial/provider_reconciliation_recovery.py'),
               Path('alpha_omega_commercial/test_provider_reconciliation_recovery.py'),
+              Path('alpha_omega_commercial/test_provider_reconciliation_recovery_release.py'),
               Path('alpha_omega_commercial/prove_provider_reconciliation_recovery.py'),
+              Path('alpha_omega_commercial/prove_provider_reconciliation_recovery_release.py'),
               Path('alpha_omega_commercial/provider_reconciliation_recovery_checkpoint.json'),
+              Path('alpha_omega_commercial/provider_reconciliation_recovery_release_checkpoint.json'),
+              Path('alpha_omega_commercial/provider_reconciliation_recovery_release_receipt.json'),
               Path('alpha_omega_commercial/canonical_commercial_api_effective_v17.json'),
               Path('alpha_omega_commercial/programme_maturity_effective_v17.json'),
               Path('alpha_omega_commercial/C15_PROVIDER_RECONCILIATION_RECOVERY_V17.md'),
@@ -114,10 +121,10 @@ jobs:
                       assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
           PY
 
-      - name: Upload immutable v17 provider proof
+      - name: Upload immutable v17 release proof
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: alpha-omega-commercial-provider-reconciliation-recovery-v17-proof
+          name: alpha-omega-commercial-provider-reconciliation-recovery-v17-release-proof
           path: artifacts
           if-no-files-found: error
           retention-days: 90
