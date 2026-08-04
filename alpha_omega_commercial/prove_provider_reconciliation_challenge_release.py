@@ -109,7 +109,7 @@ def validate(root: Path) -> tuple[dict[str, bool], dict[str, Any]]:
         "regression_register_bound": len(receipt["regression_runs"]) == 31,
         "drive_identity": drive["file_id"]
         == "1Rfh7-yqKhlzKPlnzhpJc1jLX8OFKvZBMbrWd_Yn56jA"
-        and drive["modified_time"] == "2026-08-04T14:25:28.085Z",
+        and drive["modified_time"] == "2026-08-04T14:27:04.722Z",
         "drive_private_readback": drive["readback_verified"]
         and not drive["shared"]
         and drive["owner"] == "mosianekk@gmail.com",
