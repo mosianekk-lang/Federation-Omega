@@ -4,13 +4,6 @@
   "archive_name": "Federation_Live_Bible_Capture_Fabric_v2.0.0.zip",
   "archive_sha256": "7b4fe8e89db7b22db712233a6ce518d04a3b4d9d249934a926522819db869572",
   "archive_bytes": 59190,
-  "chunk_count": 4,
-  "chunk_paths": [
-    "chunks/part-00.b64",
-    "chunks/part-01.b64",
-    "chunks/part-02.b64",
-    "chunks/part-03.b64"
-  ],
   "manifest_sha256": "81f5cdb33e5d2e05fd2cd8193edaffd5bc3530a018e8bc9fd5d301f6f3102af9",
   "acceptance_sha256": "a9f47ce67771aa17cd1c8e7716e28d1802b62b8a33e1bc56b5379a6589c53311",
   "release_receipt_sha256": "47d7ca0aa52d72f8c9a57089b55406c1d521d7144ffdd1394660566e6b2d3b8a",
@@ -46,5 +39,8 @@
       "state": "IMPLEMENTED_TESTED"
     }
   ],
-  "truth_boundary": "No source adapter means no message capture. The system does not claim invisible ChatGPT access."
+  "truth_boundary": "No source adapter means no message capture. The system does not claim invisible ChatGPT access.",
+  "source_root": "source",
+  "binary_storage": "USER_LIBRARY_AND_SANDBOX_ARTIFACT",
+  "binary_reconstruction_in_github": false
 }
