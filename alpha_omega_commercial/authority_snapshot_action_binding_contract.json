@@ -16,6 +16,8 @@
   "authority_use_rules": {
     "candidate_validation_alone_is_insufficient": true,
     "latest_durable_acceptance_required": true,
+    "durable_refresh_before_every_decision": true,
+    "cross_worker_serialization_required": true,
     "exact_snapshot_hash_match_required": true,
     "acceptance_entry_sha256_required": true,
     "explicit_domain_binding_required": true,
