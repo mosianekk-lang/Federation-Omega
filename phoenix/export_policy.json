@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.2",
+  "version": "1.0.3",
   "core": {
     "include_extensions": [
       ".css", ".csv", ".html", ".js", ".json", ".md", ".proto",
@@ -35,9 +35,11 @@
   },
   "invariants": {
     "core_workflow_count": 0,
+    "core_nested_workflow_count": 0,
     "core_runtime_state_count": 0,
     "core_migration_control_test_count": 0,
     "ops_legacy_workflow_count": 0,
+    "export_provider_dispatch_count": 0,
     "symlinks_allowed": false,
     "secret_marker_files_allowed": 0,
     "private_key_suffixes_allowed": 0
