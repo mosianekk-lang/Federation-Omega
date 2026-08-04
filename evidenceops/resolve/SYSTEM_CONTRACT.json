@@ -1,0 +1,24 @@
+{
+  "system": "EvidenceOps RESOLVE",
+  "version": "1.0.0",
+  "method": "RESOLVE",
+  "expanded_name": "Resilient Evidence Systems Orchestration, Verification, Learning and Execution",
+  "owner": "Kim Kagiso Mosiane",
+  "system_class": "independent evidence continuity and execution system",
+  "completion_rule": "No COMPLETE_VERIFIED receipt without independent readback and all mandatory gates passing.",
+  "invariants": [
+    "never delete or alter original evidence",
+    "append-only execution and discrepancy records",
+    "deterministic idempotency and object identities",
+    "no repeated failed lane unless conditions change",
+    "exact byte reconstruction for multipart transport",
+    "facts, inferences and unknowns remain distinguishable"
+  ],
+  "proof_levels": [
+    "DECLARED",
+    "LOCALLY_TESTED",
+    "PROVIDER_READBACK",
+    "INDEPENDENT_READBACK",
+    "COMPLETE_VERIFIED"
+  ]
+}
