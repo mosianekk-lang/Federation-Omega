@@ -14,9 +14,10 @@ Every transition is supported by an immutable JSON receipt. Failed preconditions
 
 ## Providers
 
-1. `local_whisper_cpp` — offline, requires `whisper-cli` and a local model.
-2. `google_speech_v2` — dedicated long-form STT; requires Google ADC, a controlled GCS prefix and project authority.
-3. `gemini_files_api` — uploads audio through the Gemini Files API and requests a forensic transcript; requires an API key.
+1. `google_speech_v2` — primary long-form STT route; requires Google ADC, a controlled GCS prefix and project authority.
+2. `openai_audio_transcriptions` — diarised transcription through the Audio Transcriptions endpoint; requires `OPENAI_API_KEY` through an ephemeral or secret-backed binding.
+3. `gemini_files_api` — file-upload transcription and forensic verification; requires a paid-project Gemini API key.
+4. `local_whisper_cpp` — offline fallback; requires `whisper-cli` and a local model.
 
 No credentials are stored in source, manifests, transcript files or receipts.
 
@@ -39,5 +40,6 @@ python -m evidenceops_audio.cli --manifest AUDIO_PROCESSING_MANIFEST.json --work
 - provider preflight and fail-closed routing;
 - recursive credential redaction;
 - transcript hashes and assembly receipt;
+- absolute hearing timestamps for diarised OpenAI segments;
 - no source mutation;
 - no transcript claim unless an output file and digest exist.
