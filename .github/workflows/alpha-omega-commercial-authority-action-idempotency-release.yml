@@ -1,0 +1,123 @@
+name: Alpha Omega Commercial Authority Action Idempotency Release
+
+on:
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-authority-action-idempotency-release.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-authority-action-idempotency-release.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-omega-commercial-authority-action-idempotency-release-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Compile commercial package
+        run: python -m compileall -q alpha_omega_commercial
+
+      - name: Run release reconciliation tests
+        run: >-
+          python -m unittest -v
+          alpha_omega_commercial.test_authority_action_idempotency_release
+          alpha_omega_commercial.test_authority_action_idempotency
+          alpha_omega_commercial.test_authority_action_coordination
+
+      - name: Execute idempotency release reconciliation proof
+        run: >-
+          python -m alpha_omega_commercial.prove_authority_action_idempotency_release
+          --output artifacts/authority-action-idempotency-release-reconciliation-receipt.json
+
+      - name: Validate release truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          receipt = json.loads(Path('alpha_omega_commercial/authority_action_idempotency_release_receipt.json').read_text())
+          checkpoint = json.loads(Path('alpha_omega_commercial/authority_action_idempotency_release_checkpoint.json').read_text())
+          proof = json.loads(Path('artifacts/authority-action-idempotency-release-reconciliation-receipt.json').read_text())
+
+          assert receipt['release_id'] == 'AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10-RELEASE'
+          assert receipt['dependency']['implementation_pull_request'] == 136
+          assert receipt['dependency']['implementation_merge_commit'] == '31e06053764b9900f6edb8fe89a773737f1af264'
+          assert receipt['final_head_provider_proof']['artifact_id'] == 8886777639
+          assert receipt['final_head_provider_proof']['checks_failed'] == 0
+          assert len(receipt['final_head_workflows']) == 23
+          assert receipt['google_drive_release']['file_id'] == '14pySl3BSQqgi0XIeuJYks6_y2EwW-Mu4mTyYCAKiR38'
+          assert receipt['google_drive_release']['readback_sha256'] == 'a70a6d6d938ec8769dfd25e35a8b8174be50355c5ad9f80cf425a8d7a9e019a8'
+          assert receipt['google_drive_release']['readback_length'] == 4498
+          assert receipt['google_drive_release']['readback_verified'] is True
+          assert receipt['google_drive_release']['shared'] is False
+          assert receipt['effective_controls']['exact_retry_returns_committed_record'] is True
+          assert receipt['effective_controls']['retry_consumes_owner_authority_again'] is False
+          assert receipt['effective_controls']['distributed_provider_exactly_once_proven'] is False
+          assert all(value is False for value in receipt['external_gates'].values())
+          assert receipt['commercial_truth']['verified_live_revenue_events'] == 0
+          assert receipt['commercial_truth']['full_commercial_maturity'] is False
+          assert all(value.startswith('OWNER_RESERVED') for value in receipt['owner_authority'].values())
+
+          assert checkpoint['status'] in {
+              'AUTHORITY_ACTION_IDEMPOTENCY_RELEASE_RECONCILIATION_PROVIDER_PROOF_REQUIRED',
+              'AUTHORITY_ACTION_IDEMPOTENCY_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED',
+          }
+          assert checkpoint['implementation_release']['release_receipt_sha256'] == receipt['receipt_sha256']
+          assert checkpoint['google_drive_release']['readback_verified'] is True
+          assert checkpoint['commercial_truth']['verified_live_revenue_events'] == 0
+          assert checkpoint['commercial_truth']['full_commercial_maturity'] is False
+
+          assert proof['status'] == 'AUTHORITY_ACTION_IDEMPOTENCY_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED'
+          assert proof['checks_required'] == len(proof['checks'])
+          assert proof['checks_failed'] == 0
+          assert all(proof['checks'].values())
+          assert proof['verified_live_revenue_events'] == 0
+          assert proof['full_commercial_maturity'] is False
+          PY
+
+      - name: Verify no secret-shaped values are present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          roots = [
+              Path('alpha_omega_commercial/authority_action_idempotency_release_receipt.json'),
+              Path('alpha_omega_commercial/authority_action_idempotency_release_checkpoint.json'),
+              Path('alpha_omega_commercial/prove_authority_action_idempotency_release.py'),
+              Path('artifacts'),
+          ]
+          forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for root in roots:
+              paths = root.rglob('*') if root.is_dir() else [root]
+              for path in paths:
+                  if path.is_file():
+                      assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
+          PY
+
+      - name: Upload immutable idempotency release proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alpha-omega-commercial-authority-action-idempotency-release-proof
+          path: artifacts
+          if-no-files-found: error
+          retention-days: 90
