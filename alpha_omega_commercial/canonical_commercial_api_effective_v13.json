@@ -18,7 +18,8 @@
     "receipt_bound_to_current_fenced_attempt": true,
     "stale_fencing_receipt_rejected": true,
     "terminal_failure_releases_claim": true,
-    "mock_provider_fencing_conformance": "IMPLEMENTED_PROVIDER_CI_PENDING",
+    "mock_provider_fencing_conformance": "PROVIDER_NATIVE_CI_VERIFIED",
+    "local_lease_renewal_and_fencing": "PROVIDER_NATIVE_CI_VERIFIED",
     "provider_native_fencing": "PROVIDER_PROOF_REQUIRED",
     "live_provider_receipt_admission": "PROVIDER_PROOF_REQUIRED",
     "distributed_provider_exactly_once": "NOT_PROVEN"
@@ -34,6 +35,21 @@
   "institution_projection": {
     "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
     "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "provider_proof": {
+    "final_head_sha": "9b3dd3912104add4f696a08d489dcdbd77145ece",
+    "workflow_run": 30908421554,
+    "workflow_job": 91988902372,
+    "artifact_id": 8892003824,
+    "artifact_digest": "sha256:93cc9cc29dca88d2ed883e5784f3065b566d260417931c31436d056af028fa60",
+    "checks_required": 12,
+    "checks_failed": 0
+  },
+  "google_drive_release": {
+    "file_id": "1fHoNNFkbk4lQR220g46nF89Lf_LcicVYMCT9sTaHGrE",
+    "readback_verified": true,
+    "shared": false,
+    "export_sha256": "83d3b14e3151be44e513addbc967d6c2588df76a768dfc158958cc3602839a50"
   },
   "verified_live_revenue_events": 0,
   "external_maturity_gates_advanced": false,
