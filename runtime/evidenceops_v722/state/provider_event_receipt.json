@@ -1,12 +1,12 @@
 {
-  "event_name": "push",
-  "event_receipt_sha256": "2bd2fcc310e033c8e241cc8c688a00bf2a82ff4ee5d4a95bc479a9295fedf842",
-  "observed_at_utc": "2026-08-03T23:42:22.248003Z",
+  "event_name": "schedule",
+  "event_receipt_sha256": "ed515bc6d5f43215f7693ead71579d349664e4a7fc27cb9a0e8517398296878f",
+  "observed_at_utc": "2026-08-04T03:44:33.042107Z",
   "ref": "refs/heads/main",
   "repository": "mosianekk-lang/Federation-Omega",
   "run_attempt": "1",
-  "run_id": "30863153311",
+  "run_id": "30875614559",
   "schema": "PROVIDER_EVENT_RECEIPT_V1",
-  "sha": "d284db71e25891779310597f7ebf16eb4b447d98",
+  "sha": "fd98da44117d7cdc010eef21f22d2555bf315f7d",
   "workflow": "EvidenceOps v7.2.2 P12 Provider Worker"
 }
