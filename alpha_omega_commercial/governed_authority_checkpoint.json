@@ -1,0 +1,49 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-GOVERNED-AUTHORITY-V2",
+  "status": "IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "scope": [
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency_checkpoint": {
+    "canonical_programme_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+    "preceding_pull_request": 117,
+    "preceding_merge_commit": "3ae8952729b9071850f17542d94c245ee464157a",
+    "preceding_drive_release_file_id": "1AQ-NBYasOtKraoSYinZvFl3stPLOs74nFE6zerPOSJM",
+    "preceding_drive_release_modified_at": "2026-08-04T01:11:51.143Z"
+  },
+  "implementation": {
+    "canonical_class": "GovernedCommercialAssuranceControlPlane",
+    "legacy_class_state": "REFERENCE_ONLY_NOT_CANONICAL",
+    "caller_set_approval_shortcuts_removed": true,
+    "owner_receipt_consumption_ledger": "IMPLEMENTED",
+    "restart_safe_readback": "IMPLEMENTED",
+    "mock_provider_truth_boundary": "IMPLEMENTED"
+  },
+  "provider_proof": {
+    "state": "PENDING_PROVIDER_NATIVE_CI",
+    "pull_request": null,
+    "workflow_run": null,
+    "artifact_id": null,
+    "artifact_digest": null
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "truth_boundary": {
+    "verified_revenue_events": 0,
+    "mock_provider_conformance_is_revenue": false,
+    "cloud_run_operation_proven": false,
+    "full_commercial_maturity": false
+  }
+}
