@@ -1,0 +1,37 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-ANTI-ROLLBACK-V4",
+  "canonical_class": "AuthoritySnapshotCommercialControlPlane",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "acceptance_rules": {
+    "snapshot_hash_required": true,
+    "domain_hash_required": true,
+    "provider_evidence_hash_required": true,
+    "scope_required": true,
+    "freshness_required": true,
+    "source_ledger_integrity_required": true,
+    "monotonic_generated_at_required": true,
+    "same_snapshot_hash_idempotent": true,
+    "snapshot_id_conflict_rejected": true,
+    "equal_time_equivocation_rejected": true,
+    "superseded_source_ledger_head_rejected": true,
+    "hash_linked_restart_safe_ledger": true
+  },
+  "service_first_strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "external_gate_effect": "UNCHANGED",
+  "verified_live_revenue_events": 0,
+  "full_commercial_maturity": false,
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
