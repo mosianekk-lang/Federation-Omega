@@ -76,6 +76,24 @@ class ProviderDispatchOutboxTests(unittest.TestCase):
         )
         self.assertFalse(receipt["external_mutation_performed"])
 
+    def test_changed_payload_for_same_provider_command_is_rejected(self) -> None:
+        object_id = "QUOTE-DISPATCH-CONFLICT"
+        plane, _ = self.plane_with_local_commit(object_id)
+        prepared = self.prepare(plane, object_id)
+        with self.assertRaisesRegex(ValueError, "provider dispatch conflict"):
+            plane.prepare_provider_dispatch(
+                action="quote_approval",
+                object_id=object_id,
+                provider_domain="reference_provider",
+                operation="dry_run_provider_contract",
+                payload={"object_id": object_id, "mode": "changed-command"},
+                now=NOW,
+            )
+        self.assertEqual(
+            list(plane._read_state()["provider_dispatches"]),
+            [prepared["dispatch_id"]],
+        )
+
     def test_receipt_survives_restart(self) -> None:
         plane, owner = self.plane_with_local_commit("QUOTE-DISPATCH-RESTART")
         prepared = self.prepare(plane, "QUOTE-DISPATCH-RESTART")
