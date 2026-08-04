@@ -42,9 +42,7 @@ def changed_paths(base: str, head: str) -> list[tuple[str, str]]:
     result: list[tuple[str, str]] = []
     for line in proc.stdout.splitlines():
         fields = line.split("\t")
-        status = fields[0]
-        path = fields[-1]
-        result.append((status, path))
+        result.append((fields[0], fields[-1]))
     return result
 
 
@@ -54,11 +52,10 @@ def workflow_events(text: str) -> set[str]:
         "workflow_run", "workflow_dispatch", "workflow_call", "merge_group",
         "issues", "issue_comment", "repository_dispatch",
     }
-    found: set[str] = set()
-    for event in known:
-        if re.search(rf"(?m)^\s{{0,4}}{re.escape(event)}\s*:", text):
-            found.add(event)
-    return found
+    return {
+        event for event in known
+        if re.search(rf"(?m)^\s{{0,4}}{re.escape(event)}\s*:", text)
+    }
 
 
 def has_contents_write(text: str) -> bool:
@@ -96,8 +93,7 @@ def action_reference_findings(path: str, text: str) -> list[Finding]:
 
 def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     findings: list[Finding] = []
-    allowlist = set(policy["active_workflow_allowlist"])
-    if path not in allowlist:
+    if path not in set(policy["active_workflow_allowlist"]):
         findings.append(Finding(
             path, "WORKFLOW_NOT_ALLOWLISTED", "CRITICAL",
             "new or modified workflow is outside the active Airlock allowlist",
@@ -152,7 +148,13 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     return findings
 
 
-def evaluate(base: str, head: str, event_name: str, policy: dict) -> dict:
+def evaluate(
+    base: str,
+    head: str,
+    event_name: str,
+    policy: dict,
+    associated_pr_count: int = 0,
+) -> dict:
     changes = changed_paths(base, head)
     findings: list[Finding] = []
     changed_workflows: list[str] = []
@@ -183,10 +185,10 @@ def evaluate(base: str, head: str, event_name: str, policy: dict) -> dict:
     protected_change = bool(changed_workflows) or any(
         path.startswith(tuple(policy["forbidden_source_paths"])) for _, path in changes
     )
-    if event_name == "push" and protected_change:
+    if event_name == "push" and protected_change and associated_pr_count < 1:
         findings.append(Finding(
-            "main", "DIRECT_PUSH_REACHED_POST_COMMIT_AUDIT", "CRITICAL",
-            "platform ruleset must reject this change before it reaches main",
+            "main", "UNASSOCIATED_DIRECT_PUSH", "CRITICAL",
+            "protected changes reached main without an associated pull request",
         ))
 
     unique = {(f.path, f.rule, f.detail): f for f in findings}
@@ -197,6 +199,7 @@ def evaluate(base: str, head: str, event_name: str, policy: dict) -> dict:
         "base": base,
         "head": head,
         "event": event_name,
+        "associated_pr_count": associated_pr_count,
         "change_count": len(changes),
         "changed_workflow_count": len(changed_workflows),
         "status": "PASS" if not ordered else "FAIL",
@@ -209,11 +212,18 @@ def main() -> int:
     parser.add_argument("--base", required=True)
     parser.add_argument("--head", required=True)
     parser.add_argument("--event", required=True)
+    parser.add_argument("--associated-pr-count", type=int, default=0)
     parser.add_argument("--policy", type=Path, default=DEFAULT_POLICY)
     parser.add_argument("--report", type=Path)
     args = parser.parse_args()
 
-    report = evaluate(args.base, args.head, args.event, load_policy(args.policy))
+    report = evaluate(
+        args.base,
+        args.head,
+        args.event,
+        load_policy(args.policy),
+        args.associated_pr_count,
+    )
     rendered = json.dumps(report, indent=2, sort_keys=True)
     print(rendered)
     if args.report:
