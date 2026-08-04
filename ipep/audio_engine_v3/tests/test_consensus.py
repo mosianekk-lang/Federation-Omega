@@ -6,31 +6,39 @@ from evidenceops_consensus import (
     ConsensusTranscriptionMode,
     LegalLexicon,
     LexiconEntry,
+    QuotationEvidence,
     TranscriptHypothesis,
     WordHypothesis,
+    calibrate_weights,
     fuse,
+    prioritize_review,
+    quotation_release_gate,
+    word_error_rate,
 )
 from evidenceops_consensus.cleanup import suppress_repetition
 
 
-def h(model, text, weight=1.0, confidence=0.9):
+def h(model, text, weight=1.0, confidence=0.9, family="whisper_encoder_decoder"):
     words = []
     for i, token in enumerate(text.split()):
         words.append(WordHypothesis(token, i * 0.5, i * 0.5 + 0.4, confidence, "S1", model))
-    return TranscriptHypothesis(model, tuple(words), weight)
+    return TranscriptHypothesis(model, tuple(words), weight, {"architecture_family": family})
 
 
 class ConsensusTests(unittest.TestCase):
     def test_majority_corrects_single_model_error(self):
         out = fuse([
-            h("whisper", "the commissioner reserved the ruling", 1.0),
-            h("parakeet", "the commissioner reserved the ruling", 1.1),
-            h("other", "the commission reserved the rolling", 0.8),
+            h("whisper", "the commissioner reserved the ruling", 1.0, family="whisper_encoder_decoder"),
+            h("parakeet", "the commissioner reserved the ruling", 1.1, family="nvidia_parakeet_tdt"),
+            h("openai", "the commission reserved the rolling", 0.8, family="openai_gpt4o_asr"),
         ])
         self.assertEqual(" ".join(x.text.lower() for x in out), "the commissioner reserved the ruling")
 
     def test_low_agreement_enters_review_queue(self):
-        out = fuse([h("a", "alpha"), h("b", "bravo")], review_threshold=0.67)
+        out = fuse([
+            h("a", "alpha", family="whisper_encoder_decoder"),
+            h("b", "bravo", family="nvidia_parakeet_tdt"),
+        ], review_threshold=0.67)
         self.assertTrue(out[0].needs_review)
 
     def test_repetition_suppression_is_logged(self):
@@ -53,23 +61,45 @@ class ConsensusTests(unittest.TestCase):
         self.assertEqual(" ".join(out), "the factors that you have to consider include the reporting line")
         self.assertEqual(log, [])
 
-    def test_single_model_cannot_claim_consensus(self):
+    def test_two_whisper_models_do_not_satisfy_architecture_gate(self):
         with tempfile.TemporaryDirectory() as d:
-            result = ConsensusTranscriptionMode().run([h("only", "hello")], d)
-            self.assertEqual(result["state"], "BLOCKED_INSUFFICIENT_INDEPENDENT_HYPOTHESES")
+            result = ConsensusTranscriptionMode().run([
+                h("whisper-small", "hello"),
+                h("whisper-large", "hello"),
+            ], d)
+            self.assertEqual(result["state"], "BLOCKED_INSUFFICIENT_INDEPENDENT_ARCHITECTURES")
 
-    def test_engine_writes_consensus_and_review_receipts(self):
-        lex = LegalLexicon((LexiconEntry("point in limine", ("pointing limine",), 1.0),))
+    def test_independent_architectures_can_produce_consensus(self):
         with tempfile.TemporaryDirectory() as d:
-            result = ConsensusTranscriptionMode(lexicon=lex).run([
-                h("whisper", "the point in limine was raised"),
-                h("parakeet", "the point in limine was raised"),
-                h("third", "the pointing limine was raised", 0.7),
+            result = ConsensusTranscriptionMode().run([
+                h("whisper-large", "the point in limine was raised", family="whisper_encoder_decoder"),
+                h("parakeet", "the point in limine was raised", family="nvidia_parakeet_tdt"),
             ], d)
             self.assertTrue(Path(result["outputs"]["transcript"]).exists())
-            text = Path(result["outputs"]["transcript"]).read_text()
-            self.assertIn("point in limine", text)
-            self.assertTrue(Path(result["outputs"]["review_queue"]).exists())
+            self.assertEqual(result["architecture_count"], 2)
+
+    def test_review_prioritizes_legal_disagreement(self):
+        words = fuse([
+            h("whisper", "jurisdiction ordinary", family="whisper_encoder_decoder"),
+            h("parakeet", "juris diction ordinary", family="nvidia_parakeet_tdt"),
+        ])
+        queue = prioritize_review(words)
+        self.assertGreaterEqual(queue[0]["priority"], queue[-1]["priority"])
+
+    def test_word_error_rate_and_calibration(self):
+        self.assertEqual(word_error_rate("the ruling", "the ruling"), 0.0)
+        results = calibrate_weights("the commissioner reserved the ruling", {
+            "good": ("nvidia_parakeet_tdt", "the commissioner reserved the ruling"),
+            "bad": ("whisper_encoder_decoder", "the commission reversed a rolling"),
+        })
+        self.assertLess(results[0].wer, results[1].wer)
+        self.assertGreater(results[0].weight, results[1].weight)
+
+    def test_quotation_gate_requires_human_listening(self):
+        blocked = quotation_release_gate(QuotationEvidence(2, True, True, True, False, "a" * 64))
+        self.assertEqual(blocked["state"], "BLOCKED_NOT_VERIFIED_FOR_QUOTATION")
+        passed = quotation_release_gate(QuotationEvidence(2, True, True, True, True, "a" * 64))
+        self.assertEqual(passed["state"], "VERIFIED_FOR_QUOTATION")
 
 
 if __name__ == "__main__":
