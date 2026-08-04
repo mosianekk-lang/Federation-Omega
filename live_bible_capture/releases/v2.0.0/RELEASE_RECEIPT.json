@@ -1,0 +1,20 @@
+{
+  "schema": "FEDERATION-LIVE-BIBLE-FABRIC-RELEASE-RECEIPT-2",
+  "version": "2.0.0",
+  "zip": "Federation_Live_Bible_Capture_Fabric_v2.0.0.zip",
+  "zip_sha256": "7b4fe8e89db7b22db712233a6ce518d04a3b4d9d249934a926522819db869572",
+  "zip_bytes": 59190,
+  "zip_entries": 14,
+  "source_manifest_sha256": "81f5cdb33e5d2e05fd2cd8193edaffd5bc3530a018e8bc9fd5d301f6f3102af9",
+  "wheel": "federation_live_bible_fabric-2.0.0-py3-none-any.whl",
+  "wheel_sha256": "2939740b27483aaeabe0fba9454a8b46c50be3df95d931b4962a6c747bf19de6",
+  "source_tests": "18 passed",
+  "compile": "passed",
+  "release_verifier": "passed",
+  "authority_ceiling": "A1_REVERSIBLE_INTERNAL",
+  "external_effects": 0,
+  "active_capture": "TURN_CONNECTOR",
+  "browser_adapter": "IMPLEMENTED_NOT_INSTALLED",
+  "continuous_background_chat_source": "HELD_SOURCE_ADAPTER",
+  "truth_boundary": "The fabric captures only events supplied by configured adapters; it does not create hidden access to ChatGPT conversations."
+}
