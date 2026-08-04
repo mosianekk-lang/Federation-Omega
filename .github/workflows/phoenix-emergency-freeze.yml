@@ -35,6 +35,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3.py' -v
+          python -m unittest discover -s tests -p 'test_pst_composite_runtime_contract.py' -v
 
       - name: Build source-clean Core and private Ops exports
         run: |
@@ -205,12 +206,13 @@ jobs:
         timeout-minutes: 300
         env:
           GITHUB_TOKEN: ${{ github.token }}
+          PST_VERIFY_ROOT: /tmp/pst-composite-verify
         run: |
           set -euo pipefail
           sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
           sudo docker system prune --all --force --volumes || true
           sudo apt-get clean
-          rm -rf /tmp/pst-composite-run /mnt/pst-composite-verify
+          rm -rf /tmp/pst-composite-run /tmp/pst-composite-verify
           mkdir -p \
             /tmp/pst-composite-run/deployment_manifests \
             /tmp/pst-composite-run/deployment_receipts \
