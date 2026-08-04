@@ -1,0 +1,65 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-EFFECTIVE-STATE-V1",
+  "status": "IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "scope": [
+    "C11",
+    "C12",
+    "C13",
+    "C15",
+    "P13",
+    "P15"
+  ],
+  "dependency_checkpoint": {
+    "governed_authority_pull_request": 118,
+    "governed_authority_merge_commit": "3102a12f4fa5e54d70c9eeeca493a006e9c7cdae",
+    "governed_release_reconciliation_pull_request": 119,
+    "governed_release_reconciliation_merge_commit": "fc945d53f0dab009828ac0aaaa0547f2bcef6ddf",
+    "institution_reconciliation_pull_request": 120,
+    "institution_reconciliation_merge_commit": "1c4ee76ecc8d93b6d4c57f57c11596db582e76cf",
+    "institution_reconciliation_artifact_id": 8878260625,
+    "institution_reconciliation_artifact_digest": "sha256:723fcf11265db7f038f228f1d01a25a4c44925bf043b2e7271130e0706d52b6f",
+    "institution_reconciliation_drive_file_id": "1ZLPaEwlNT2BggIjum5yAg523vmvum-v4bDfXoCpwBrA"
+  },
+  "programme_projection": {
+    "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+    "effective_state_status": "EFFECTIVE_PROGRAMME_STATE_VERIFIED_C15_INSTITUTION_RECONCILED_EXTERNAL_GATES_OPEN",
+    "effective_state_sha256": "4aa1f763a0d6b1fe3d1e94bfc91c3202bd4035eb58daa8c91980679fb6ff2bc0",
+    "service_enabled_platform_first": true,
+    "self_service_saas_held": true
+  },
+  "provider_proof": {
+    "state": "PENDING_PULL_REQUEST_HEAD_PROVIDER_NATIVE_CI",
+    "workflow": ".github/workflows/alpha-omega-commercial-effective-state.yml",
+    "workflow_run": null,
+    "workflow_job": null,
+    "artifact_id": null,
+    "artifact_name": "alpha-omega-commercial-effective-state-proof",
+    "artifact_digest": null,
+    "receipt_sha256": null,
+    "all_conclusions": null
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "truth_boundary": "This checkpoint records implementation only until the pull-request head passes provider-native commercial, effective-state, control-plane, Superior Logic and repository-safety workflows and the retained artifact is inspected."
+}
