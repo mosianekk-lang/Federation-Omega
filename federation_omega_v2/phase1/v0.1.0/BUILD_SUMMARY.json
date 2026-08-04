@@ -1,0 +1,12 @@
+{
+  "release_zip_sha256": "1ae98d2b11d343c637740b65d078648c8d0b97bb8338addee76d59e862cffd2f",
+  "source_zip_sha256": "fc1cc90495f85b24a146a3d7e2ef061590e0dc63c7c49f257fa2c9dcd6117682",
+  "source_manifest_sha256": "2d789c1ed49bf696fe389582dd1e039eb354fbe555759d0ee537e0e6bd16edb3",
+  "wheel_sha256": "c619371b6114fd45ebc23a3e1b510d4d7d9b0b495252a1dfe9eae5685fad7ea2",
+  "source_tests": 16,
+  "clean_tests": 16,
+  "resource_warning_gate": "PASS",
+  "sqlite_quick_check": "ok",
+  "installed_cli_canary": "PASS",
+  "external_effects": 0
+}
