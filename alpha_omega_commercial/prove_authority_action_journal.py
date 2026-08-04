@@ -89,6 +89,12 @@ def prove(output: Path) -> dict:
             now=NOW,
         )
         success_readback = success_plane.authority_action_transaction_readback()
+        success_authority_readback = success_plane.governed_authority_readback()
+        success_canonical_class = success_authority_readback["canonical_class"]
+        successful_action_sealed = (
+            quote["authority_action_commit"]["state"]
+            == "ATOMIC_AUTHORITY_ACTION_COMMITTED"
+        )
 
     with tempfile.TemporaryDirectory() as recovery_tmp:
         recovery_root = Path(recovery_tmp)
@@ -126,6 +132,29 @@ def prove(output: Path) -> dict:
         )
         recovery_readback = restarted.authority_action_transaction_readback()
         recovery_events = restarted._transaction_events()
+        recovery_state_restored = restarted._read_state() == before_state
+        recovery_governance_restored = (
+            restarted._read_governance_state() == before_governance
+        )
+        torn_terminal_removed = (
+            not temporary.exists()
+            and recovery_readback["transaction_journal"][
+                "incomplete_publications"
+            ]
+            == []
+        )
+        verified_revenue_zero = (
+            restarted.governed_authority_readback()["revenue"][
+                "live_verified_revenue_events"
+            ]
+            == 0
+        )
+        recovery_terminal_recorded = (
+            recovery_events[-1].get("failure_class")
+            == "PROCESS_RESTART_RECOVERY"
+            and recovery_events[-1].get("transaction_id")
+            == transaction["transaction_id"]
+        )
 
     with tempfile.TemporaryDirectory() as legacy_tmp:
         legacy_root = Path(legacy_tmp)
@@ -170,18 +199,22 @@ def prove(output: Path) -> dict:
         )
         legacy_readback = journal_plane.authority_action_journal_readback()
         legacy_events = journal_plane._transaction_events()
+        legacy_chain_verified = (
+            legacy_readback["legacy_jsonl_events"] == 2
+            and legacy_readback["atomically_published_events"] == 2
+            and [event["sequence"] for event in legacy_events] == [1, 2, 3, 4]
+            and legacy_events[2]["previous_event_sha256"]
+            == legacy_events[1]["event_sha256"]
+        )
 
     journal = success_readback["transaction_journal"]
     checks = {
         "canonical_journal_safe_class": (
-            success_plane.governed_authority_readback()["canonical_class"]
+            success_canonical_class
             == "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane"
         ),
         "successful_action_committed": success_readback["committed"] == 1,
-        "successful_action_sealed": (
-            quote["authority_action_commit"]["state"]
-            == "ATOMIC_AUTHORITY_ACTION_COMMITTED"
-        ),
+        "successful_action_sealed": successful_action_sealed,
         "successful_events_atomically_published": (
             journal["atomically_published_events"] == 2
         ),
@@ -192,36 +225,12 @@ def prove(output: Path) -> dict:
             journal["event_filename_hash_bound"]
             and journal["event_file_hash_bound"]
         ),
-        "restart_state_restored_exactly": restarted._read_state() == before_state,
-        "restart_governance_restored_exactly": (
-            restarted._read_governance_state() == before_governance
-        ),
-        "torn_terminal_publication_removed": (
-            not temporary.exists()
-            and recovery_readback["transaction_journal"][
-                "incomplete_publications"
-            ]
-            == []
-        ),
-        "restart_recovery_terminal_recorded": (
-            recovery_events[-1].get("failure_class")
-            == "PROCESS_RESTART_RECOVERY"
-            and recovery_events[-1].get("transaction_id")
-            == transaction["transaction_id"]
-        ),
-        "legacy_prefix_and_new_journal_chain_verified": (
-            legacy_readback["legacy_jsonl_events"] == 2
-            and legacy_readback["atomically_published_events"] == 2
-            and [event["sequence"] for event in legacy_events] == [1, 2, 3, 4]
-            and legacy_events[2]["previous_event_sha256"]
-            == legacy_events[1]["event_sha256"]
-        ),
-        "verified_live_revenue_remains_zero": (
-            restarted.governed_authority_readback()["revenue"][
-                "live_verified_revenue_events"
-            ]
-            == 0
-        ),
+        "restart_state_restored_exactly": recovery_state_restored,
+        "restart_governance_restored_exactly": recovery_governance_restored,
+        "torn_terminal_publication_removed": torn_terminal_removed,
+        "restart_recovery_terminal_recorded": recovery_terminal_recorded,
+        "legacy_prefix_and_new_journal_chain_verified": legacy_chain_verified,
+        "verified_live_revenue_remains_zero": verified_revenue_zero,
     }
 
     receipt = {
