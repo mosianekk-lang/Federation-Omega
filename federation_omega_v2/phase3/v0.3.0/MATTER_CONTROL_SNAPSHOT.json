@@ -1,0 +1,139 @@
+{
+  "schema": "FEDERATION-OMEGA-V2-EVIDENCEOPS-MATTER-CONTROL-1",
+  "version": "0.3.0",
+  "matter_id": "MATTER-TUT-DISCIPLINARY-21-AUGUST-2026",
+  "node_id": "NODE-TUT-DISCIPLINARY-HEARING-20260730",
+  "title": "TUT 21 August Disciplinary — Read-Only Phase 3 Adapter",
+  "privacy_tier": "P2_CONFIDENTIAL",
+  "authority_ceiling": "A1",
+  "communication_state": "NO_SEND",
+  "external_effects_allowed": false,
+  "canonical_master_id": "1XUTvGXIeHQ49rejdUwzN1gj0xYxvk7uQya9zmfLEAog",
+  "canonical_registry_id": "1m-OFZWwcxrBoV-552FTZdpFSERPEFRi4qP50-129K-8",
+  "case_wall": {
+    "primary_route": "TUT_DISCIPLINARY",
+    "separated_from": ["MPMB298-26", "DHET_GOVERNANCE"],
+    "linked_source_extensions": [
+      {
+        "matter": "MPMB1435-26",
+        "relationship": "SAME_MATTER_SOURCE_EXTENSION",
+        "rule": "NO_ROUTE_MIGRATION_WITHOUT_EXPLICIT_CROSSWALK"
+      }
+    ]
+  },
+  "source_controls": [
+    {
+      "source_id": "SRC-CBR-TUT-20260804-001",
+      "kind": "LIBRARY_LOCAL_BIBLE_BRANCH",
+      "reference": "TUT_21_August_Disciplinary_Local_Live_Bible.md",
+      "verification": "C4_BRANCH_FULL_TEXT_READBACK",
+      "privacy": "P2"
+    },
+    {
+      "source_id": "SRC-CBR-TUT-HB-20260804-001",
+      "kind": "DRIVE_HEARTBEAT",
+      "reference": "1xA_wwSQvW1yNpoUu1S_XCj4VuKa8i07HsTwkYRBoSRo",
+      "revision": "AIroW34veyrpd5sDiTaTC69tPaIIRiuy3rBUOKnFzUWDN9kJKAOArGG5dKuwm0nKFUW48eNz_eRVm4JJ_sWRofobWPV2l5gdFnuMGwqJnMc",
+      "verification": "C4_DOCUMENT_METADATA_REVISION_AND_TEXT_READBACK",
+      "privacy": "P2"
+    },
+    {
+      "source_id": "SRC-TUT-NODE-CHAIN-20260730",
+      "kind": "LOCAL_BIBLE_HASH_CHAIN",
+      "reference": "verification_report(1).json",
+      "master_snapshot_sha256": "51491559cca155428d518f7e49c35c72b66401ae33074153266fb63aaab4c93b",
+      "local_chain_head": "290ae2cf539d761b0f23084f865e70e04c2bdc00de0383318746ac04e926c813",
+      "verification": "CHAIN_VERIFIED_2_EVENTS",
+      "privacy": "P1_CONTROL"
+    },
+    {
+      "source_id": "PKT-TUT-DISC-20260804-0001",
+      "kind": "CENTRAL_DELTA_PACKET",
+      "reference": "MRG-TUT-DISC-20260804-0001",
+      "verification": "MERGED_READBACK_VERIFIED",
+      "privacy": "P2_MINIMUM_NECESSARY"
+    },
+    {
+      "source_id": "PKT-TUT-HB-20260804-0001",
+      "kind": "CENTRAL_DELTA_PACKET",
+      "reference": "MRG-TUT-HB-20260804-0001",
+      "verification": "MERGED_READBACK_VERIFIED",
+      "privacy": "P2_MINIMUM_NECESSARY"
+    }
+  ],
+  "processing_state": {
+    "registered_units": 54,
+    "processed_units": 30,
+    "remaining_units": 24,
+    "root_inventory": "CLOSED",
+    "nested_inventory": "ACTIVE",
+    "minimum_pdfs_remaining": 2,
+    "completion_state": "NOT_COMPLETE"
+  },
+  "charge_controls": [
+    {
+      "charge": 1,
+      "control": "IDENTIFY_EXACT_DATES_AND_PHYSICAL_ATTENDANCE_FACTS",
+      "required_foundation": ["dates", "attendance expectation", "receipt", "leave or accommodation context"]
+    },
+    {
+      "charge": 2,
+      "control": "IDENTIFY_PRECISE_INSTRUCTION_AND_AUTHORITY",
+      "required_foundation": ["instruction", "issuer", "authority", "date", "deadline", "receipt", "complete response", "grossness basis"]
+    },
+    {
+      "charge": 3,
+      "control": "AUTHENTICATE_OPERATIVE_REMOTE_WORK_POLICY",
+      "required_foundation": ["policy version", "operative date", "exact clause", "individual applicability", "communication"]
+    },
+    {
+      "charge": 4,
+      "control": "IDENTIFY_EXACT_DUTY_AND_CULPABLE_OMISSION",
+      "required_foundation": ["duty", "source", "allocation date", "deadline", "resources", "access", "omission", "prejudice", "culpability"]
+    }
+  ],
+  "evidence_streams": [
+    "REMOTE_WORK_APPROVAL_AND_REVIEW_HISTORY",
+    "INSTRUCTIONS_AND_COMMUNICATIONS",
+    "LEAVE_MEDICAL_AND_ACCOMMODATION",
+    "WORK_ACTIVITY_AND_PERFORMANCE",
+    "ACCESS_RESOURCES_STAFFING_AND_EMPLOYER_CONSTRAINTS"
+  ],
+  "controlled_contradictions": [
+    {
+      "id": "CONTRADICTION-LEAVE-REASON",
+      "summary": "Leave rejection reasons record no explanation or no reason while the stored application and surrounding communications contain explanatory content.",
+      "state": "INTERNAL_CONTRADICTION_REQUIRES_COMPLETE_WORKFLOW_AND_AUDIT_HISTORY"
+    },
+    {
+      "id": "CONTRADICTION-TEMPORAL-SEQUENCE",
+      "summary": "Formal grievance preceded later attendance escalation and role reallocation.",
+      "state": "TEMPORAL_RELEVANCE_ONLY_RETALIATION_NOT_PROVEN"
+    },
+    {
+      "id": "CONTRADICTION-NOTICE-EFFECT",
+      "summary": "Written notice proves delivery or placement on notice only.",
+      "state": "READING_ACCEPTANCE_MOTIVE_AND_CAUSATION_NOT_PROVEN"
+    }
+  ],
+  "open_gaps": [
+    "COMPLETE_PARTICULARS_PER_CHARGE",
+    "OPERATIVE_POLICY_VERSION_AND_CLAUSE",
+    "PRECISE_INSTRUCTIONS_AND_RECEIPT",
+    "VENUE_AND_HEARING_CONTROL_RECORD",
+    "MEDICAL_ACCOMMODATION_DECISION_RECORDS",
+    "SUSPENSION_RECONSIDERATION_RECORDS",
+    "ASSET_CUSTODY_AND_HANDOVER_RECORDS",
+    "ACCOUNT_RESTRICTION_AND_ACCESS_LOGS",
+    "RECORD_PRESERVATION_AND_CONTROLLED_ACCESS",
+    "EMPLOYER_BUNDLE_AND_EXCULPATORY_RECORDS",
+    "REMAINING_24_REGISTERED_UNITS",
+    "PERSONAL_SUSPENSION_LETTER_STATUS_REQUIRES_CURRENT_CROSSWALK"
+  ],
+  "claims_not_proven": [
+    "RETALIATION", "ACTUAL_BIAS", "MOTIVE", "READING", "ACCEPTANCE",
+    "CAUSATION", "POLICY_BREACH", "LEGAL_INCORRECTNESS", "GUILT", "HEARING_READINESS"
+  ],
+  "next_controlled_action": "PROCESS_REMAINING_REGISTERED_UNITS_AND_COMPLETE_CURRENT_SOURCE_CROSSWALKS",
+  "truth_boundary": "This snapshot contains source identities and control metadata only. It excludes raw P2 evidence, message bodies, attachments, medical details, legal conclusions and external-action authority."
+}
