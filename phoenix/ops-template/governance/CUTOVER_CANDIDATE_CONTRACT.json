@@ -1,0 +1,19 @@
+{
+  "candidate_generated_after_merge": true,
+  "candidate_manifest_schema": "FEDOMEGA-PHOENIX-CUTOVER-CANDIDATE-1",
+  "candidate_stored_outside_source": true,
+  "candidate_validity_schema": "FEDOMEGA-PHOENIX-CUTOVER-CANDIDATE-VALIDITY-1",
+  "canonical_apply_entrypoint": "provider_cutover_candidate.py",
+  "core_archive_drift_invalidates": true,
+  "credential_value_recorded": false,
+  "decision_binding_required": true,
+  "guarded_apply_component": "provider_cutover_guarded.py",
+  "invalid_candidate_authorization_state_created": false,
+  "invalid_candidate_provider_apply_allowed": false,
+  "legacy_guarded_entrypoint_status": "INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY",
+  "legacy_unguarded_entrypoint_status": "DEPRECATED_NON_CANONICAL_DO_NOT_APPLY_DIRECTLY",
+  "ops_archive_drift_invalidates": true,
+  "schema": "FEDOMEGA-PHOENIX-CUTOVER-CANDIDATE-CONTRACT-1",
+  "source_drift_invalidates": true,
+  "validity_computed_not_stored": true
+}

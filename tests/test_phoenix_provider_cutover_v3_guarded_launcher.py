@@ -125,7 +125,12 @@ class GuardedLauncherTests(unittest.TestCase):
         contract = json.loads(
             (TEMPLATE / "governance" / "APPLY_ENTRYPOINT.json").read_text(encoding="utf-8")
         )
-        self.assertEqual("provider_cutover_guarded.py", contract["canonical_apply_entrypoint"])
+        self.assertEqual("provider_cutover_candidate.py", contract["canonical_apply_entrypoint"])
+        self.assertEqual("provider_cutover_guarded.py", contract["guarded_entrypoint"])
+        self.assertEqual(
+            "INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY",
+            contract["guarded_entrypoint_status"],
+        )
         self.assertEqual(
             "DEPRECATED_NON_CANONICAL_DO_NOT_APPLY_DIRECTLY",
             contract["legacy_entrypoint_status"],
