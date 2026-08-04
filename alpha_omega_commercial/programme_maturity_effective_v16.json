@@ -1,0 +1,51 @@
+{
+  "projection_id": "AO-COMMERCIAL-MATURITY-EFFECTIVE-V16",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+  "dependency_order": ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C15"],
+  "advanced_internal_slice": {
+    "status": "PROVIDER_RECONCILIATION_EVIDENCE_VAULT_CANDIDATE_PROVIDER_PROOF_PENDING",
+    "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-EVIDENCE-VAULT-V16",
+    "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+    "predecessor_pull_request": 155,
+    "predecessor_merge_commit": "b123a4415bb14d12a1c5c9de8f5a5f04d27bf2bd",
+    "predecessor_drive_release_file_id": "1Rfh7-yqKhlzKPlnzhpJc1jLX8OFKvZBMbrWd_Yn56jA",
+    "provider_proof_run": null,
+    "provider_proof_job": null,
+    "provider_proof_artifact_id": null,
+    "provider_proof_artifact_digest": null
+  },
+  "stage_projection": {
+    "C03": "RECONCILIATION_EVIDENCE_AUTHORITY_BOUNDARY_PROVIDER_PROOF_PENDING_PROVIDER_AUTHORITY_BLOCKED",
+    "C06": "MANAGED_OPERATIONS_RECONCILIATION_EVIDENCE_DURABILITY_CANDIDATE",
+    "C07": "MOCK_PROVIDER_EVIDENCE_VAULT_CONFORMANCE_CANDIDATE_LIVE_PROVIDER_BLOCKED",
+    "C11": "SERVICE_ENABLED_PLATFORM_VERIFIED_SELF_SERVICE_HELD",
+    "C14": "LOCAL_RECONCILIATION_PROOF_RETENTION_CANDIDATE_PRODUCTION_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "service_enabled_platform_first": true,
+  "self_service_saas_held": true,
+  "verified_live_revenue_events": 0,
+  "external_gates": {
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "external_case_study": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "full_commercial_maturity": false,
+  "institution_state_preserved": true,
+  "source_checkpoint": "alpha_omega_commercial/provider_reconciliation_evidence_vault_checkpoint.json"
+}
