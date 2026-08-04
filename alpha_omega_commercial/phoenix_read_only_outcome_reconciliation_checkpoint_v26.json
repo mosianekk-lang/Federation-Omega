@@ -1,0 +1,202 @@
+{
+  "capability_revision": "AO-COMMERCIAL-PHOENIX-READ-ONLY-OUTCOME-RECONCILIATION-V26",
+  "checkpoint_sha256": "aeeb83de6a9a6acde553984d86240991cb416ddd1a41fc1aada12b7d44c8aa6f",
+  "commercial_truth": {
+    "cloud_run_operation": "NOT_PROVEN",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "external_customer_case_study": "MARKET_PROOF_REQUIRED",
+    "full_commercial_maturity": false,
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "self_service_saas": "HELD",
+    "service_enabled_platform": "VERIFIED_AND_PRIORITISED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "verified_live_revenue_events": 0
+  },
+  "dependency_path": [
+    "C03",
+    "C06",
+    "C07",
+    "C11",
+    "C14",
+    "C15"
+  ],
+  "execution_freeze_receipt": {
+    "disabled_total_after": 140,
+    "missing_required": [],
+    "provider_managed_active": [
+      "dynamic/dependabot/dependabot-updates"
+    ],
+    "receipt_sha256": "be54a9b834ab43433b4443b1cf610e9d33ef8ffde84083e1baf476dc36840907",
+    "run_id": 30956275861,
+    "schema": "FEDOMEGA-PHOENIX-EXECUTION-FREEZE-3",
+    "source_mutation_attempted": false,
+    "source_sha": "c6354d9379dd0abc1f2d0035dec27e21fde6da93",
+    "status": "VERIFIED",
+    "unexpected_active": [],
+    "workflow_count_after": 144,
+    "workflow_count_before": 144
+  },
+  "export_receipt": {
+    "core": {
+      "archive_sha256": "c8d533526cea1746ee8ac85401238a8ab02cb35c3c511486a5e568cdf85a564e",
+      "excluded_count": 458,
+      "included_count": 916,
+      "size_bytes": 978967,
+      "workflow_count": 0
+    },
+    "ops": {
+      "active_workflow_count": 0,
+      "archive_sha256": "83f4e0c34f93253e933db369e4298cbe008011e9a8e281948b5841fd62031a7e",
+      "included_count": 12,
+      "required_execution_and_recovery_files": [
+        "provider_cutover.py",
+        "provider_cutover_authorization_use.py",
+        "provider_cutover_guarded.py",
+        "provider_cutover_outcome_reconciler.py",
+        "provider_cutover_v3_1.py",
+        "provider_cutover_v3_base.py",
+        "provider_cutover_v3_live_guard.py"
+      ],
+      "size_bytes": 22375
+    },
+    "policy_version": "1.0.8",
+    "provider_cutover_engine": {
+      "authorization_decision_required": true,
+      "authorization_execution_gate": "V22",
+      "credential_value_recorded": false,
+      "one_time_authorization_consumption_required": true,
+      "outcome_reconciliation_entrypoint": "provider_cutover_outcome_reconciler.py",
+      "outcome_reconciliation_mutation_allowed": false,
+      "provider_apply_performed": false,
+      "provider_controller_version": "3.1",
+      "read_only_outcome_reconciliation": true,
+      "unknown_outcome_automatic_retry": false,
+      "version": "3.3"
+    },
+    "receipt_sha256": "d9e27d20a0cd3a012e3a81f1c7ffce1e85a328b9de42a3738b8c6747a998b3f9",
+    "schema": "FEDOMEGA-PHOENIX-EXPORT-MANIFEST-1",
+    "source_mutation_attempted": false,
+    "source_sha": "c6354d9379dd0abc1f2d0035dec27e21fde6da93",
+    "status": "VERIFIED"
+  },
+  "google_drive_release": {
+    "created_at": "2026-08-04T22:30:00.761Z",
+    "file_id": "1TFzWiLVqx0RJ0Y9kjwzZuMiIp25aryHSNNc6SV2VyqA",
+    "modified_at": "2026-08-04T22:30:41.255Z",
+    "owner": "mosianekk@gmail.com",
+    "readback": "VERIFIED",
+    "shared": false,
+    "text_export_sha256": "dcc9621a4d25f1ab68cc4d3602606ab75df207869fbb4b4bf88f751af0c5183c",
+    "text_export_size_bytes": 4147,
+    "title": "Alpha Omega Phoenix Read-Only Outcome Reconciliation v26 Release"
+  },
+  "implementation_lineage": {
+    "base_sha": "a6171ea1722b21fe8c1b54af00aaaa69080a8d4b",
+    "commercial_gate_effect": "UNCHANGED",
+    "implementation_head_sha": "ade5ef5da89f1bb1afae1cfc5936655dff14722a",
+    "implementation_merge_commit": "c6354d9379dd0abc1f2d0035dec27e21fde6da93",
+    "implementation_pull_request": 232,
+    "provider_mutation_performed": false,
+    "workflow_change_count": 0
+  },
+  "institution_scope": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED",
+    "institution_v3_google_drive_publication": "UNVERIFIED_SCOPE_HELD"
+  },
+  "next_gate": "FRESH_OWNER_AUTHORISED_PROVIDER_APPLY_WITH_EXACT_PROVIDER_NATIVE_CORE_OPS_READBACK; IF_OUTCOME_UNKNOWN_USE_GET_ONLY_RECONCILER_WITHOUT_RETRY",
+  "operational_proof_gate": {
+    "active_branch_ruleset_required": "REFERENCE_PROVIDER_VERIFIED",
+    "atomic_receipt_write": "VERIFIED",
+    "coordinator_compatible_receipt_reconstruction": "REFERENCE_PROVIDER_VERIFIED",
+    "exact_authorized_archive_binding": "VERIFIED",
+    "external_repository_created": "NOT_PROVEN",
+    "get_only_provider_client_surface": "VERIFIED",
+    "git_blob_inventory_equality": "REFERENCE_PROVIDER_VERIFIED",
+    "legacy_source_quarantine_required": "REFERENCE_PROVIDER_VERIFIED",
+    "live_provider_outcome_reconciliation": "PROVIDER_PROOF_REQUIRED_AFTER_OWNER_AUTHORISED_APPLY",
+    "main_tree_exact_content_match": "REFERENCE_PROVIDER_VERIFIED",
+    "provider_actions_disabled": "REFERENCE_PROVIDER_VERIFIED",
+    "provider_apply_performed": false,
+    "provider_workflow_files_absent": "REFERENCE_PROVIDER_VERIFIED",
+    "repository_identity_and_visibility_controls": "REFERENCE_PROVIDER_VERIFIED",
+    "unknown_provider_outcome_automatic_retry": "DISABLED_VERIFIED",
+    "workflow_permissions_read_only": "REFERENCE_PROVIDER_VERIFIED"
+  },
+  "owner_authority": {
+    "consequential_releases": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "execution_plane_cutover": "OWNER_RESERVED_FRESH_SHORT_LIVED_EXACT_AUTHORIZATION_REQUIRED",
+    "external_communications": "OWNER_RESERVED",
+    "financial_commitments": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "predecessor": {
+    "checkpoint_file": "alpha_omega_commercial/phoenix_authorized_execution_checkpoint_v25.json",
+    "checkpoint_sha256": "5a534f37b16c2d0f5eee614d9a5b3a5bd1d677cfca79478c7f90ebb36de28410",
+    "programme_projection_file": "alpha_omega_commercial/programme_maturity_effective_v25.json",
+    "programme_projection_sha256": "27913b8e4666a0208fca6d5d317e1470e9ad18b2b055fc9bce38bd9dc456463f"
+  },
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "provider_native_admission": {
+    "admitted_commit_count": 1,
+    "airlock_artifact_digest": "sha256:3a18c8d27cc6a431052edf88c581c65784742477a2178d5ad254b6057db5970a",
+    "airlock_artifact_id": 8911112188,
+    "airlock_artifact_name": "federation-omega-airlock-30956205046-1",
+    "airlock_findings": [],
+    "airlock_job": 92149720882,
+    "airlock_run": 30956205046,
+    "airlock_status": "PASS",
+    "changed_workflow_count": 0,
+    "public_repository_leak_guard": "SUCCESS",
+    "public_repository_leak_guard_run": 30956205034,
+    "regressions": {
+      "airlock_tests": 12,
+      "apps_script_authorization_tests": 4,
+      "openai_semantic_tests": 17,
+      "phoenix_export_tests": 6,
+      "provider_activator_tests": 8,
+      "provider_cutover_v2_tests": 10,
+      "provider_cutover_v3_family_tests": 74,
+      "result": "PASS",
+      "source_provenance_tests": 5,
+      "stale_base_tests": 6,
+      "v26_outcome_reconciler_tests": 9
+    },
+    "source_provenance_receipt_sha256": "a8fe36779b1a7ae1fdf666cea12761515aaa54eaf26dfc1e9f771e1c3cf32697",
+    "source_provenance_status": "VERIFIED",
+    "unadmitted_commit_count": 0
+  },
+  "provider_native_final_head": {
+    "commit_status": "phoenix-freeze/verified",
+    "conclusion": "success",
+    "cutover_artifact": {
+      "artifact_digest": "sha256:aebaf8e678bb92ec5e1fc78f2a13b2f1a21cbd6f0d168b945f7423aeb43f01e9",
+      "artifact_id": 8911138573,
+      "artifact_name": "phoenix-cutover-package-v3-30956275861-1",
+      "size_bytes": 1003015
+    },
+    "freeze_artifact": {
+      "artifact_digest": "sha256:32b4bc04cbd59b972369addf981799d486054d6b7a13e4e28f37133a22f7fdcc",
+      "artifact_id": 8911138304,
+      "artifact_name": "phoenix-execution-freeze-30956275861-1",
+      "size_bytes": 759
+    },
+    "source_sha": "c6354d9379dd0abc1f2d0035dec27e21fde6da93",
+    "workflow_job": 92149950357,
+    "workflow_run": 30956275861,
+    "workflow_steps": {
+      "core_ops_export_build": "success",
+      "immutable_artifact_publication": "success",
+      "legacy_execution_quarantine": "success",
+      "provider_and_export_regressions": "success",
+      "pst_composite_verification": "skipped_not_requested",
+      "verified_commit_status_publication": "success"
+    }
+  },
+  "schema": "AO-COMMERCIAL-PHOENIX-READ-ONLY-OUTCOME-RECONCILIATION-CHECKPOINT-26",
+  "status": "READ_ONLY_PROVIDER_OUTCOME_RECONCILIATION_PROVIDER_PROOF_VERIFIED_PROVIDER_APPLY_OWNER_RESERVED"
+}
