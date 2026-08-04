@@ -17,7 +17,7 @@ concurrency:
 jobs:
   freeze:
     runs-on: ubuntu-24.04
-    timeout-minutes: 30
+    timeout-minutes: 355
     env:
       GH_TOKEN: ${{ github.token }}
     steps:
@@ -201,6 +201,31 @@ jobs:
               raise SystemExit(1)
           PY
 
+      - name: Run authorised PST composite verification
+        timeout-minutes: 300
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          sudo docker system prune --all --force --volumes || true
+          sudo apt-get clean
+          rm -rf /tmp/pst-composite-run /mnt/pst-composite-verify
+          mkdir -p \
+            /tmp/pst-composite-run/deployment_manifests \
+            /tmp/pst-composite-run/deployment_receipts \
+            phoenix-export-output/pst-completion
+          cp deployment_manifests/evidenceops-pst-v2-composite-proof.json \
+            /tmp/pst-composite-run/deployment_manifests/
+          (
+            cd /tmp/pst-composite-run
+            python "${GITHUB_WORKSPACE}/ops/evidenceops_pst_v2_composite_verify.py"
+          )
+          cp /tmp/pst-composite-run/deployment_receipts/*.json \
+            phoenix-export-output/pst-completion/
+          test "$(python -c "import json; print(json.load(open('phoenix-export-output/pst-completion/evidenceops-pst-corpus-v2-drive-completion.json'))['status'])")" = "COMPLETE_VERIFIED"
+          df -h
+
       - name: Upload immutable quarantine receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -210,7 +235,7 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Upload Core, Ops and provider cutover package
+      - name: Upload Core, Ops, provider cutover and PST completion package
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -219,6 +244,7 @@ jobs:
             phoenix-export-output/Federation-Omega-Core.tar.gz
             phoenix-export-output/Federation-Omega-Ops.tar.gz
             phoenix-export-output/phoenix-export-receipt.json
+            phoenix-export-output/pst-completion/*.json
           if-no-files-found: error
           retention-days: 90
 
@@ -228,13 +254,15 @@ jobs:
         run: |
           set -uo pipefail
           state=failure
-          description='Phoenix quarantine or export verification failed'
+          description='Phoenix quarantine, export or PST verification failed'
           if jq -e '.status == "VERIFIED"' \
                phoenix-freeze-output/phoenix-execution-freeze.json >/dev/null 2>&1 \
              && jq -e '.status == "VERIFIED"' \
-               phoenix-export-output/phoenix-export-receipt.json >/dev/null 2>&1; then
+               phoenix-export-output/phoenix-export-receipt.json >/dev/null 2>&1 \
+             && jq -e '.status == "COMPLETE_VERIFIED"' \
+               phoenix-export-output/pst-completion/evidenceops-pst-corpus-v2-drive-completion.json >/dev/null 2>&1; then
             state=success
-            description='Phoenix quarantine and Core/Ops exports verified'
+            description='Phoenix quarantine, exports and PST completion verified'
           fi
           gh api -X POST \
             "/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
