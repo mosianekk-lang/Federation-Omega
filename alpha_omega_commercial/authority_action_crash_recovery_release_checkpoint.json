@@ -5,7 +5,7 @@
   "implementation_release": {
     "pull_request": 128,
     "merge_commit": "ac6314279de32ffbc220e75c8c01c9b636e9c83c",
-    "release_receipt_sha256": "53bc422d3ffd7b1f99bea79809b7a194fcb1a6eaba1500a64f2319a12c19376e"
+    "release_receipt_sha256": "8c71342eb3e3b81bbe4783d59f6663638cd458c2852f0788996e8626b3c849dd"
   },
   "stage_scope": [
     "C03",
