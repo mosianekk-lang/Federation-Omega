@@ -42,8 +42,29 @@
     "all_triggered_workflows": 31,
     "all_conclusions_success": true
   },
-  "provider_native_ci": "VERIFIED",
-  "repository_safety_checks": "VERIFIED",
+  "implementation_release": {
+    "pull_request": 161,
+    "merge_commit": "e58b03e21e9ff7767a9d7ebade9f4ead4a87d170",
+    "google_drive_release_file_id": "1fLa7bzRlfa1bF-sjpmFyYgt0q_D7DovXNRaEiTelcto",
+    "google_drive_release_modified_time": "2026-08-04T17:16:17.948Z",
+    "google_drive_export_size_bytes": 4441,
+    "google_drive_export_sha256": "b2ea61d6ab9c53f1e4d69ef04ea7e101a77081b226dd7c351bca720000f2342d",
+    "google_drive_readback_verified": true,
+    "google_drive_shared": false
+  },
+  "release_reconciliation": {
+    "status": "PROVIDER_BLOCKED_EXECUTION_QUARANTINE_PRIVATE_EXECUTION_PLANE_REQUIRED",
+    "phoenix_policy_commit": "93501aa49332989a77d9a0c22307dac4b52b8957",
+    "phoenix_policy_version": "2.1.2",
+    "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
+    "required_execution_plane": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+    "fresh_final_head_commercial_provider_ci": "NOT_EXECUTED_PROVIDER_BLOCKED",
+    "safe_transition_contract": "alpha_omega_commercial/provider_execution_plane_transition_v18.json",
+    "owner_reserved_decision": "EXECUTION_PLANE_CUTOVER_OR_NARROW_AIRLOCK_ROUTE",
+    "consequential_release_performed": false
+  },
+  "provider_native_ci": "VERIFIED_FOR_IMPLEMENTATION_HEAD",
+  "repository_safety_checks": "VERIFIED_FOR_FINAL_PULL_REQUEST_HEAD",
   "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
   "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
   "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
@@ -59,6 +80,7 @@
     "contracts": "OWNER_RESERVED",
     "external_communications": "OWNER_RESERVED",
     "consequential_releases": "OWNER_RESERVED",
-    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED",
+    "execution_plane_cutover": "OWNER_RESERVED"
   }
 }
