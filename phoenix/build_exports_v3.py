@@ -48,9 +48,7 @@ def stage_ops_v3_1(
         if not path.is_file():
             continue
         rel = path.relative_to(template).as_posix()
-        records.append(
-            _include(path, stage, rel, "APPROVED_OPS_TEMPLATE")
-        )
+        records.append(_include(path, stage, rel, "APPROVED_OPS_TEMPLATE"))
 
     entrypoint = root / "phoenix" / "provider_cutover_v3_1.py"
     base = root / "phoenix" / "provider_cutover_v3.py"
@@ -80,25 +78,13 @@ def stage_ops_v3_1(
     missing = sorted(set(policy["ops"]["required_files"]) - actual)
     if missing:
         raise RuntimeError(f"Ops export missing required files: {missing}")
-    if any(item.path.startswith(".github/workflows/") for item in records):
+    if any(V2.BASE.is_github_workflow_path(item.path) for item in records):
         raise RuntimeError("Ops export unexpectedly contains an active workflow")
     return records
 
 
-def main() -> int:
-    parser = argparse.ArgumentParser()
-    parser.add_argument("--repo-root", type=Path, default=Path("."))
-    parser.add_argument(
-        "--policy", type=Path, default=Path("phoenix/export_policy.json")
-    )
-    parser.add_argument(
-        "--output", type=Path, default=Path("phoenix-export-output")
-    )
-    args = parser.parse_args()
-
-    root = args.repo_root.resolve()
-    policy = args.policy if args.policy.is_absolute() else root / args.policy
-    output = args.output if args.output.is_absolute() else root / args.output
+def build_v3(root: Path, output: Path, policy: Path) -> dict:
+    """Create a side-effect-free v3.1 export and complete receipt."""
 
     V2.BASE.stage_ops = stage_ops_v3_1
     receipt = V2.BASE.build(root, output, policy)
@@ -116,17 +102,37 @@ def main() -> int:
         ),
         "entrypoint": "provider_cutover.py",
         "base_controller": "provider_cutover_v3_base.py",
-        "temporary_template_state_restored": True,
+        "provider_apply_performed": False,
+        "temporary_template_state_restored": False,
+        "template_state_restoration_required_on_apply": True,
         "credential_value_recorded": False,
     }
-    receipt["pst_remote_verifier_dispatch"] = (
-        V2.maybe_dispatch_pst_remote_verifier(root)
+    receipt["export_generation"] = {
+        "side_effect_free": True,
+        "provider_dispatch_performed": False,
+        "provider_mutation_performed": False,
+    }
+    return V2.BASE.publish_receipt(
+        output / "phoenix-export-receipt.json", receipt
     )
-    receipt_path = output / "phoenix-export-receipt.json"
-    receipt_path.write_text(
-        json.dumps(receipt, indent=2, sort_keys=True) + "\n",
-        encoding="utf-8",
+
+
+def main() -> int:
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--repo-root", type=Path, default=Path("."))
+    parser.add_argument(
+        "--policy", type=Path, default=Path("phoenix/export_policy.json")
     )
+    parser.add_argument(
+        "--output", type=Path, default=Path("phoenix-export-output")
+    )
+    args = parser.parse_args()
+
+    root = args.repo_root.resolve()
+    policy = args.policy if args.policy.is_absolute() else root / args.policy
+    output = args.output if args.output.is_absolute() else root / args.output
+
+    receipt = build_v3(root, output, policy)
     print(json.dumps(receipt, indent=2, sort_keys=True))
     return 0
 
