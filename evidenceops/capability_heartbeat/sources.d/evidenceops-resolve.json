@@ -9,7 +9,8 @@
     "evidenceops/resolve/feature_manifest.json",
     "evidenceops/resolve/resolve/engine.py",
     "evidenceops/resolve/tests/test_resolve.py",
-    ".github/workflows/evidenceops-resolve-ci.yml"
+    ".github/workflows/evidenceops-resolve-ci.yml",
+    "deployment_receipts/evidenceops-resolve-ci.json"
   ],
   "capabilities": [
     {
@@ -29,13 +30,18 @@
       ],
       "route": "evidenceops-resolve",
       "state": "EXECUTABLE_NOW",
-      "proof_level": "LOCALLY_TESTED_PENDING_PROVIDER_CI_READBACK",
-      "quality": 0.96,
+      "proof_level": "PROVIDER_READBACK",
+      "quality": 0.97,
       "safety": 0.98,
       "reuse": 1.0,
       "cost": 0,
       "authority_class": "A1",
-      "external_effect": false
+      "external_effect": false,
+      "provider_receipt": {
+        "workflow_run_id": 30906745578,
+        "tests_passed": 5,
+        "status": "PASS"
+      }
     }
   ]
 }
