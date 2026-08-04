@@ -139,14 +139,55 @@ class PhoenixExportTests(unittest.TestCase):
         self.temp.cleanup()
 
     @staticmethod
-    def run_exported_tests(core_archive: Path, extracted: Path) -> subprocess.CompletedProcess[str]:
+    def run_exported_tests(
+        core_archive: Path,
+        extracted: Path,
+        *,
+        install_requirements: bool = False,
+    ) -> subprocess.CompletedProcess[str]:
         extracted.mkdir()
         with tarfile.open(core_archive, "r:gz") as archive:
             archive.extractall(extracted, filter="data")
         env = os.environ.copy()
         env.setdefault("TERM", "dumb")
+        if install_requirements:
+            requirements = extracted / "requirements.txt"
+            if not requirements.is_file():
+                return subprocess.CompletedProcess(
+                    args=["requirements.txt"],
+                    returncode=1,
+                    stdout="",
+                    stderr="exported Core is missing requirements.txt",
+                )
+            installation = subprocess.run(
+                [
+                    sys.executable,
+                    "-m",
+                    "pip",
+                    "install",
+                    "--disable-pip-version-check",
+                    "-r",
+                    str(requirements),
+                ],
+                cwd=extracted,
+                env=env,
+                text=True,
+                capture_output=True,
+            )
+            if installation.returncode != 0:
+                return installation
         return subprocess.run(
-            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test*.py", "-v"],
+            [
+                sys.executable,
+                "-m",
+                "unittest",
+                "discover",
+                "-s",
+                "tests",
+                "-p",
+                "test*.py",
+                "-v",
+            ],
             cwd=extracted,
             env=env,
             text=True,
@@ -206,6 +247,7 @@ class PhoenixExportTests(unittest.TestCase):
             process = self.run_exported_tests(
                 output / "Federation-Omega-Core.tar.gz",
                 temporary_root / "extracted-core",
+                install_requirements=True,
             )
         self.assertEqual(0, process.returncode, process.stdout + process.stderr)
         self.assertIn("Ran ", process.stderr)
