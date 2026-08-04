@@ -47,7 +47,7 @@ class AuthoritySnapshotReleaseTests(unittest.TestCase):
 
     def test_verified_release(self) -> None:
         checks = AuthoritySnapshotReleaseVerifier(self.root).require_verified()
-        self.assertEqual(len(checks), 16)
+        self.assertEqual(len(checks), 17)
         self.assertTrue(all(checks.values()))
 
     def test_receipt_tampering_is_rejected(self) -> None:
