@@ -27,6 +27,29 @@
     "regression_tests": "66/66",
     "triggered_workflows": "31/31"
   },
+  "implementation_release": {
+    "pull_request": 161,
+    "merge_commit": "e58b03e21e9ff7767a9d7ebade9f4ead4a87d170",
+    "private_google_drive_release_file_id": "1fLa7bzRlfa1bF-sjpmFyYgt0q_D7DovXNRaEiTelcto",
+    "private_google_drive_release_modified_time": "2026-08-04T17:16:17.948Z",
+    "private_google_drive_export_size_bytes": 4441,
+    "private_google_drive_export_sha256": "b2ea61d6ab9c53f1e4d69ef04ea7e101a77081b226dd7c351bca720000f2342d",
+    "private_google_drive_readback_verified": true,
+    "private_google_drive_shared": false
+  },
+  "repository_execution_authority": {
+    "status": "PROVIDER_BLOCKED_EXECUTION_QUARANTINE_PRIVATE_EXECUTION_PLANE_REQUIRED",
+    "airlock_policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
+    "airlock_policy_version": "2.1.2",
+    "policy_commit": "93501aa49332989a77d9a0c22307dac4b52b8957",
+    "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
+    "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+    "legacy_commercial_workflow_state": "DISABLED_MANUALLY",
+    "fresh_final_head_commercial_provider_ci": "NOT_EXECUTED_PROVIDER_BLOCKED",
+    "transition_contract": "alpha_omega_commercial/provider_execution_plane_transition_v18.json",
+    "owner_reserved_decision": "EXECUTION_PLANE_CUTOVER_OR_NARROW_AIRLOCK_ROUTE",
+    "consequential_release_performed": false
+  },
   "predecessor_google_drive_release": {
     "file_id": "18SwQIrE6KL39qkKKlvxM_aTxXzZLoWac82LLLX5qf1M",
     "modified_time": "2026-08-04T16:11:53.471Z",
@@ -54,6 +77,7 @@
     "contracts": "OWNER_RESERVED",
     "external_communications": "OWNER_RESERVED",
     "consequential_releases": "OWNER_RESERVED",
-    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED",
+    "execution_plane_cutover": "OWNER_RESERVED"
   }
 }
