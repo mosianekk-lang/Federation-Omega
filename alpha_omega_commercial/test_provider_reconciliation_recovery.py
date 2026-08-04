@@ -90,6 +90,13 @@ class ProviderReconciliationRecoveryTests(unittest.TestCase):
             claim_token=claim["claim_token"],
             now=shift(2),
         )
+        with self.assertRaisesRegex(RuntimeError, "reconciliation required"):
+            plane.claim_provider_dispatch(
+                prepared["dispatch_id"],
+                worker_id="worker-b",
+                lease_seconds=60,
+                now=shift(6),
+            )
         challenge = plane.issue_provider_reconciliation_challenge(
             prepared["dispatch_id"],
             ttl_seconds=10,
