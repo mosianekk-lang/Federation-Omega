@@ -12,7 +12,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -48,6 +48,18 @@ def matches_prefix(path: str, prefixes: list[str]) -> bool:
     return any(path == item.rstrip("/") or path.startswith(item) for item in prefixes)
 
 
+def is_github_workflow_path(path: str) -> bool:
+    """Return true for a GitHub Actions workflow directory at any depth."""
+
+    parts = path.split("/")
+    return any(
+        part == ".github"
+        and index + 1 < len(parts)
+        and parts[index + 1] == "workflows"
+        for index, part in enumerate(parts)
+    )
+
+
 def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
     rel = path.relative_to(root).as_posix()
     parts = set(path.relative_to(root).parts)
@@ -55,6 +67,8 @@ def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
 
     if path.is_symlink():
         return False, "SYMLINK_PROHIBITED"
+    if is_github_workflow_path(rel):
+        return False, "GITHUB_WORKFLOW_NOT_CORE_SOURCE"
     if matches_prefix(rel, core["excluded_prefixes"]):
         return False, "EXCLUDED_PREFIX"
     if rel.startswith("phoenix/"):
@@ -121,7 +135,29 @@ def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def stage_core(root: Path, stage: Path, policy: dict) -> tuple[list[FileRecord], list[FileRecord]]:
+def receipt_sha256(payload: dict) -> str:
+    """Hash the complete final receipt payload, excluding only its own digest."""
+
+    canonical_payload = dict(payload)
+    canonical_payload.pop("receipt_sha256", None)
+    canonical = json.dumps(
+        canonical_payload, sort_keys=True, separators=(",", ":")
+    ).encode()
+    return hashlib.sha256(canonical).hexdigest()
+
+
+def publish_receipt(path: Path, payload: dict) -> dict:
+    """Publish a receipt whose digest covers the complete final payload."""
+
+    payload.pop("receipt_sha256", None)
+    payload["receipt_sha256"] = receipt_sha256(payload)
+    write_json(path, payload)
+    return payload
+
+
+def stage_core(
+    root: Path, stage: Path, policy: dict
+) -> tuple[list[FileRecord], list[FileRecord]]:
     included: list[FileRecord] = []
     excluded: list[FileRecord] = []
     markers = policy["core"]["secret_markers"]
@@ -153,9 +189,13 @@ def stage_core(root: Path, stage: Path, policy: dict) -> tuple[list[FileRecord],
 
     if not included:
         raise RuntimeError("Core export contains no source files")
-    if any(item.path.startswith(".github/workflows/") for item in included):
+    if any(is_github_workflow_path(item.path) for item in included):
         raise RuntimeError("Core export contains a GitHub Actions workflow")
-    if any(item.reason.startswith("SECRET_MARKER:") and item.classification == "CORE_INCLUDED" for item in included):
+    if any(
+        item.reason.startswith("SECRET_MARKER:")
+        and item.classification == "CORE_INCLUDED"
+        for item in included
+    ):
         raise RuntimeError("Core export contains a secret marker")
     return included, excluded
 
@@ -171,30 +211,34 @@ def stage_ops(root: Path, stage: Path, policy: dict) -> list[FileRecord]:
             continue
         rel = path.relative_to(template).as_posix()
         copy_file(path, stage / rel)
-        records.append(FileRecord(
-            path=rel,
-            size=path.stat().st_size,
-            sha256=sha256_file(path),
-            classification="OPS_INCLUDED",
-            reason="APPROVED_OPS_TEMPLATE",
-        ))
+        records.append(
+            FileRecord(
+                path=rel,
+                size=path.stat().st_size,
+                sha256=sha256_file(path),
+                classification="OPS_INCLUDED",
+                reason="APPROVED_OPS_TEMPLATE",
+            )
+        )
 
     cutover = root / "phoenix" / "provider_cutover.py"
     if cutover.is_file():
         copy_file(cutover, stage / "provider_cutover.py")
-        records.append(FileRecord(
-            path="provider_cutover.py",
-            size=cutover.stat().st_size,
-            sha256=sha256_file(cutover),
-            classification="OPS_INCLUDED",
-            reason="PROVIDER_CUTOVER_CONTROLLER",
-        ))
+        records.append(
+            FileRecord(
+                path="provider_cutover.py",
+                size=cutover.stat().st_size,
+                sha256=sha256_file(cutover),
+                classification="OPS_INCLUDED",
+                reason="PROVIDER_CUTOVER_CONTROLLER",
+            )
+        )
 
     actual = {item.path for item in records}
     missing = sorted(set(policy["ops"]["required_files"]) - actual)
     if missing:
         raise RuntimeError(f"Ops export missing required files: {missing}")
-    if any(item.path.startswith(".github/workflows/") for item in records):
+    if any(is_github_workflow_path(item.path) for item in records):
         raise RuntimeError("Ops export unexpectedly contains an active workflow")
     return records
 
@@ -232,6 +276,7 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
             "invariants": {
                 "workflow_count": 0,
                 "runtime_state_count": 0,
+                "migration_control_test_count": 0,
                 "secret_marker_count": 0,
             },
         }
@@ -272,11 +317,9 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
                 "included_count": len(ops_included),
             },
             "source_mutation_attempted": False,
+            "provider_dispatch_performed": False,
         }
-        canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
-        receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
-        write_json(output / "phoenix-export-receipt.json", receipt)
-        return receipt
+        return publish_receipt(output / "phoenix-export-receipt.json", receipt)
 
 
 def main() -> int:
