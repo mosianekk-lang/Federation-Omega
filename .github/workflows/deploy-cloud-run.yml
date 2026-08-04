@@ -53,7 +53,7 @@ jobs:
       canary_url: ${{ steps.canary.outputs.canary_url }}
       previous_ready_revision: ${{ steps.baseline.outputs.previous_ready_revision }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud through keyless OIDC
         uses: google-github-actions/auth@v3
@@ -164,7 +164,7 @@ jobs:
     needs: deploy-canary
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Authenticate to Google Cloud through keyless OIDC
         uses: google-github-actions/auth@v3

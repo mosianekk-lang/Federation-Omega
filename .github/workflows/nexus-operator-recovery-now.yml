@@ -43,7 +43,7 @@ jobs:
       HAS_GENERIC_WIF_PAIR: ${{ (secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '') && (secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '') }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
 

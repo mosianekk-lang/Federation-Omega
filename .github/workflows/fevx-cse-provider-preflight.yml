@@ -37,7 +37,7 @@ jobs:
       HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
 
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
         with:
           ref: main
 
