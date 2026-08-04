@@ -32,6 +32,9 @@ jobs:
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
 
+      - name: Run stale-base ancestry regression tests
+        run: python -m unittest discover -s tests -p 'test_airlock_stale_base_guard.py' -v
+
       - name: Run source provenance regression tests
         run: python -m unittest discover -s tests -p 'test_phoenix_source_provenance.py' -v
 
@@ -87,6 +90,21 @@ jobs:
           echo "base=$base" >> "$GITHUB_OUTPUT"
           echo "head=$head" >> "$GITHUB_OUTPUT"
           echo "associated_pr_count=$pr_count" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce pull-request head ancestry
+        if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
+        env:
+          BASE_SHA: ${{ steps.refs.outputs.base }}
+          HEAD_SHA: ${{ steps.refs.outputs.head }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"
+          if ! git merge-base --is-ancestor "$BASE_SHA" "$HEAD_SHA"; then
+            echo "STALE_BASE_HEAD_REJECTED: head $HEAD_SHA does not descend from base $BASE_SHA" >&2
+            exit 1
+          fi
+          echo "HEAD_ANCESTRY_VERIFIED: $BASE_SHA is an ancestor of $HEAD_SHA"
 
       - name: Build source provenance receipt
         env:
