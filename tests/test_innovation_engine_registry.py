@@ -1,4 +1,7 @@
+import gc
+import sqlite3
 import tempfile
+import warnings
 import unittest
 from pathlib import Path
 
@@ -55,6 +58,34 @@ class InnovationEngineRegistryTests(unittest.TestCase):
             )
             self.assertEqual(receipt.target_state, "PILOT_APPROVED")
             self.assertTrue(registry.verify_chain())
+
+    def test_connections_close_across_registry_backup_and_restore(self) -> None:
+        with warnings.catch_warnings(record=True) as caught:
+            warnings.simplefilter("always", ResourceWarning)
+            with tempfile.TemporaryDirectory() as directory:
+                registry = self.make_registry(directory)
+                registry.transition(
+                    "LANE-TEST", "ACTIVE", ["owner_authority"], "exercise connection lifecycle"
+                )
+                backup = Path(directory) / "backup.db"
+                receipt = registry.backup(backup)
+                restored = InnovationRegistry.restore(
+                    backup, Path(directory) / "restored.db", receipt.database_sha256
+                )
+                self.assertTrue(restored.verify_chain())
+                with registry._connect() as connection:
+                    self.assertEqual(1, connection.execute("SELECT 1").fetchone()[0])
+                with self.assertRaises(sqlite3.ProgrammingError):
+                    connection.execute("SELECT 1")
+                del restored
+                del registry
+                gc.collect()
+            unclosed = [
+                warning for warning in caught
+                if issubclass(warning.category, ResourceWarning)
+                and "unclosed database" in str(warning.message)
+            ]
+        self.assertEqual([], unclosed)
 
 
 if __name__ == "__main__":
