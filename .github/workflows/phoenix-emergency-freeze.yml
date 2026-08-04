@@ -28,6 +28,7 @@ jobs:
           : > /tmp/phoenix-freeze-errors.txt
           : > /tmp/phoenix-freeze-disabled.txt
           : > /tmp/phoenix-freeze-enabled.txt
+          : > /tmp/phoenix-freeze-provider-managed.txt
 
           if ! gh api --paginate \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \
@@ -53,6 +54,10 @@ jobs:
                         >> /tmp/phoenix-freeze-errors.txt
                     fi
                   fi
+                  ;;
+                dynamic/dependabot/dependabot-updates)
+                  printf '%s\t%s\t%s\n' "$workflow_id" "$workflow_path" "$workflow_state" \
+                    >> /tmp/phoenix-freeze-provider-managed.txt
                   ;;
                 *)
                   if [[ "$workflow_state" != "disabled_manually" ]]; then
@@ -91,6 +96,7 @@ jobs:
               '.github/workflows/public-repository-leak-guard.yml',
               '.github/workflows/phoenix-emergency-freeze.yml',
           }
+          provider_managed = {'dynamic/dependabot/dependabot-updates'}
 
           def workflow_rows(path: str):
               result = []
@@ -129,24 +135,32 @@ jobs:
           errors = errors_path.read_text(encoding='utf-8').splitlines() if errors_path.exists() else []
 
           active_after = sorted(row['path'] for row in after if row['state'] == 'active')
-          unexpected_active = sorted(path for path in active_after if path not in keep)
+          provider_managed_active = sorted(path for path in active_after if path in provider_managed)
+          unexpected_active = sorted(
+              path for path in active_after
+              if path not in keep and path not in provider_managed
+          )
           missing_required = sorted(path for path in keep if path not in active_after)
           verified = bool(after) and not errors and not unexpected_active and not missing_required
 
           payload = {
-              'schema': 'FEDOMEGA-PHOENIX-EXECUTION-FREEZE-1',
+              'schema': 'FEDOMEGA-PHOENIX-EXECUTION-FREEZE-2',
               'repository': os.environ['GITHUB_REPOSITORY'],
               'source_sha': os.environ['GITHUB_SHA'],
               'run_id': int(os.environ['GITHUB_RUN_ID']),
               'run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
               'recorded_at': datetime.now(timezone.utc).isoformat(),
               'required_active_workflows': sorted(keep),
+              'provider_managed_allowlist': sorted(provider_managed),
+              'provider_managed_active': provider_managed_active,
+              'provider_managed_control_plane': 'DEPENDABOT_REPOSITORY_SETTINGS',
               'workflow_count_before': len(before),
               'workflow_count_after': len(after),
-              'disabled_count': len(disabled),
-              'disabled_paths': sorted(row['path'] for row in disabled),
-              'enabled_count': len(enabled),
-              'enabled_paths': sorted(row['path'] for row in enabled),
+              'disabled_count_this_run': len(disabled),
+              'disabled_paths_this_run': sorted(row['path'] for row in disabled),
+              'disabled_total_after': sum(1 for row in after if row['state'] == 'disabled_manually'),
+              'enabled_count_this_run': len(enabled),
+              'enabled_paths_this_run': sorted(row['path'] for row in enabled),
               'active_after': active_after,
               'unexpected_active': unexpected_active,
               'missing_required': missing_required,
