@@ -1,6 +1,8 @@
-# FO Transcription Bridge
+# FO Transcription Bridge — IPEP Runtime Adapter
 
-Private, evidence-aware audio transcription service for Federation Omega.
+Private, evidence-aware runtime adapter for the canonical `ipep/audio_engine_v2` EvidenceOps Audio Processing Solution.
+
+This is no longer a separate top-level transcription system. Its Cloud Run, Cloud Storage, Cloud Tasks and Speech-to-Text components are the Google provider/runtime lane beneath the IPEP v2 state machine, manifest validator, provider router, proof receipts and release gates.
 
 ## Deployment target
 
@@ -10,25 +12,35 @@ Private, evidence-aware audio transcription service for Federation Omega.
 - Service: `fo-transcription-bridge`
 - Authentication: Cloud Run IAM only; anonymous invocation is disabled
 - Runtime identity: `superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com`
-- Output document: `FO Transcription Bridge — MPMB298-26 — Controlled Transcript Output`
 
-## Processing
+## Canonical processing contract
 
-1. `POST /v1/uploads` creates a private GCS object and a resumable upload session.
-2. The caller uploads the original audio directly to Cloud Storage.
-3. `POST /v1/jobs/{job_id}/start` queues preparation.
-4. Audio longer than 15 minutes is converted into 16 kHz mono FLAC chunks with `ffmpeg`.
-5. Each chunk is submitted to Speech-to-Text V2 batch recognition using Chirp 3, punctuation, diarization and word offsets.
-6. Cloud Tasks polls the operations without holding an HTTP request open.
-7. The service emits TXT, SRT, VTT, structured JSON, an evidence manifest and a completion receipt.
-8. The readable transcript is appended to the controlled Google Doc shared with the runtime service account.
+1. IPEP validates source/preservation metadata and the chunk manifest.
+2. The runtime receives only a controlled derivative or a provider-authorised object reference.
+3. Each chunk is hash-verified before transcription.
+4. The provider adapter submits and polls the selected transcription operation.
+5. TXT, structured JSON, SRT and VTT are generated with chunk and absolute timestamps.
+6. IPEP writes redacted receipts and refuses release while any mandatory chunk or QA gate is missing.
+7. Google Speech output may be verified against OpenAI, Gemini or offline whisper.cpp without changing the source evidence.
+
+## Existing runtime capabilities retained
+
+- private GCS/resumable upload sessions;
+- 16 kHz mono FLAC preparation;
+- Speech-to-Text V2 batch recognition;
+- Cloud Tasks polling;
+- word-to-speaker-turn segmentation;
+- TXT/SRT/VTT rendering;
+- controlled Google Doc write-back;
+- evidence manifest and completion receipts.
 
 ## Evidence limitations
 
-- The output is an automated working transcript, not a certified verbatim transcript.
-- Speaker labels are machine-generated. Identity must be independently authenticated.
-- Speaker continuity across separately processed chunks is explicitly marked `UNVERIFIED`.
+- Automated output is a working transcript, not a certified transcript.
+- Speaker identity is unverified until independently supported.
+- Speaker continuity across chunks must be reconciled and logged.
 - Material passages must be checked against the original recording.
+- No deployment, provider execution or transcript completion is claimed without provider-native readback and output hashes.
 
 ## Local tests
 
@@ -39,4 +51,4 @@ pytest -q
 
 ## Authenticated client
 
-Use `ops/fo_transcription_client.sh` from an authenticated Google Cloud Shell or a workstation with `gcloud` configured for `sov-hybrid-suite`.
+Use `ops/fo_transcription_client.sh` from an authenticated environment. Provider credentials and approval material must remain in Secret Manager or ephemeral environment bindings, never in the repository or command sheets.
