@@ -25,6 +25,7 @@ SOURCE_REPOSITORY_CONTROL_TESTS = (
     "test_phoenix_provider_cutover_v3.py",
     "test_phoenix_provider_cutover_v3_1.py",
     "test_phoenix_provider_cutover_v3_authorized_executor.py",
+    "test_phoenix_provider_cutover_v3_outcome_reconciler.py",
     "test_provider_airlock_activate.py",
     "test_agent_governance_contract.py",
     "test_pst_composite_runtime_contract.py",
@@ -84,14 +85,10 @@ class PhoenixExportTests(unittest.TestCase):
             "print('dry-run')\n", encoding="utf-8"
         )
         (
-            self.root
-            / "phoenix"
-            / "provider_cutover_authorized_executor.py"
+            self.root / "phoenix" / "provider_cutover_authorized_executor.py"
         ).write_text("print('authorized v22')\n", encoding="utf-8")
         (
-            self.root
-            / "phoenix"
-            / "provider_cutover_authorization_use.py"
+            self.root / "phoenix" / "provider_cutover_authorization_use.py"
         ).write_text("print('authorization use')\n", encoding="utf-8")
         (self.root / "phoenix" / "provider_cutover_v3.py").write_text(
             "print('v3 base')\n", encoding="utf-8"
@@ -99,6 +96,9 @@ class PhoenixExportTests(unittest.TestCase):
         (self.root / "phoenix" / "provider_cutover_v3_1.py").write_text(
             "print('v3.1 entrypoint')\n", encoding="utf-8"
         )
+        (
+            self.root / "phoenix" / "provider_cutover_outcome_reconciler.py"
+        ).write_text("print('read-only reconciler')\n", encoding="utf-8")
 
         policy = {
             "version": "test",
@@ -281,7 +281,7 @@ class PhoenixExportTests(unittest.TestCase):
             self.assertNotIn("/dispatches", source)
             self.assertNotIn("maybe_dispatch", source)
 
-    def test_v22_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
+    def test_v26_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
         output = self.root / "v3-output"
         process = subprocess.run(
             [
@@ -306,13 +306,19 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(canonical).hexdigest(), claimed)
         self.assertFalse(receipt["source_mutation_attempted"])
         engine = receipt["provider_cutover_engine"]
-        self.assertEqual("3.2", engine["version"])
+        self.assertEqual("3.3", engine["version"])
         self.assertEqual("V22", engine["authorization_execution_gate"])
         self.assertEqual("3.1", engine["provider_controller_version"])
         self.assertTrue(engine["authorization_decision_required"])
         self.assertTrue(engine["one_time_authorization_consumption_required"])
         self.assertFalse(engine["unknown_outcome_automatic_retry"])
+        self.assertTrue(engine["read_only_outcome_reconciliation"])
+        self.assertFalse(engine["outcome_reconciliation_mutation_allowed"])
         self.assertFalse(engine["provider_apply_performed"])
+        self.assertEqual(
+            "provider_cutover_outcome_reconciler.py",
+            engine["outcome_reconciliation_entrypoint"],
+        )
         self.assertEqual(
             "REQUIRED_DURING_APPLY",
             engine["temporary_template_state_restoration"],
@@ -323,6 +329,7 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertIn("provider_cutover_authorization_use.py", names)
         self.assertIn("provider_cutover_v3_1.py", names)
         self.assertIn("provider_cutover_v3_base.py", names)
+        self.assertIn("provider_cutover_outcome_reconciler.py", names)
         self.assertNotIn("pst_remote_verifier_dispatch", receipt)
 
 
