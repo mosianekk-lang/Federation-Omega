@@ -18,7 +18,9 @@ concurrency:
 env:
   WHISPER_CPP_VERSION: v1.9.1
   WHISPER_BINARY_SHA256: f3bf3b4369a99b54665b0f19b88483b30de27f25963b0414235dea03198515c5
-  MODEL_NAME: ggml-small.en-q5_1.bin
+  MODEL_NAME: ggml-base.en-q5_1.bin
+  MODEL_SHA256: 4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f
+  VAD_NAME: ggml-silero-v6.2.0.bin
 
 jobs:
   package-runtime:
@@ -33,21 +35,21 @@ jobs:
           set -euo pipefail
           mkdir -p /tmp/ipep-whisper/runtime/bin /tmp/ipep-whisper/runtime/models deployment_receipts
           BINARY_URL="https://github.com/ggml-org/whisper.cpp/releases/download/${WHISPER_CPP_VERSION}/whisper-bin-ubuntu-x64.tar.gz"
-          curl --fail --location --retry 4 --retry-delay 3 \
-            "$BINARY_URL" -o /tmp/whisper-bin.tar.gz
+          curl --fail --location --retry 4 --retry-delay 3 "$BINARY_URL" -o /tmp/whisper-bin.tar.gz
           echo "${WHISPER_BINARY_SHA256}  /tmp/whisper-bin.tar.gz" | sha256sum -c -
           tar -xzf /tmp/whisper-bin.tar.gz -C /tmp/ipep-whisper/runtime/bin
           test -n "$(find /tmp/ipep-whisper/runtime/bin -type f -name whisper-cli -print -quit)"
 
-      - name: Download official quantized English model
+      - name: Download verified base English model and Silero VAD
         shell: bash
         run: |
           set -euo pipefail
-          MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/main/${MODEL_NAME}?download=true"
-          curl --fail --location --retry 4 --retry-delay 3 \
-            "$MODEL_URL" -o "/tmp/ipep-whisper/runtime/models/${MODEL_NAME}"
-          test "$(stat -c '%s' "/tmp/ipep-whisper/runtime/models/${MODEL_NAME}")" -gt 100000000
-          sha256sum "/tmp/ipep-whisper/runtime/models/${MODEL_NAME}" | tee /tmp/model.sha256
+          MODEL_URL="https://huggingface.co/ggerganov/whisper.cpp/resolve/c521a4b02f422512d734391fdf08bb08c0862f68/${MODEL_NAME}?download=true"
+          VAD_URL="https://huggingface.co/ggml-org/whisper-vad/resolve/main/${VAD_NAME}?download=true"
+          curl --fail --location --retry 4 --retry-delay 3 "$MODEL_URL" -o "/tmp/ipep-whisper/runtime/models/${MODEL_NAME}"
+          echo "${MODEL_SHA256}  /tmp/ipep-whisper/runtime/models/${MODEL_NAME}" | sha256sum -c -
+          curl --fail --location --retry 4 --retry-delay 3 "$VAD_URL" -o "/tmp/ipep-whisper/runtime/models/${VAD_NAME}"
+          test "$(stat -c '%s' "/tmp/ipep-whisper/runtime/models/${VAD_NAME}")" -gt 500000
 
       - name: Build immutable runtime package and receipt
         shell: bash
@@ -60,9 +62,9 @@ jobs:
           import hashlib, json, os
           from datetime import datetime, timezone
           from pathlib import Path
-
           root=Path('/tmp/ipep-whisper/runtime')
           model=root/'models'/os.environ['MODEL_NAME']
+          vad=root/'models'/os.environ['VAD_NAME']
           cli=next(root.glob('bin/**/whisper-cli'))
           def sha(path):
               h=hashlib.sha256()
@@ -71,7 +73,7 @@ jobs:
                       h.update(chunk)
               return h.hexdigest()
           manifest={
-              'contract':'IPEP_OFFLINE_WHISPER_RUNTIME_V1',
+              'contract':'IPEP_OFFLINE_WHISPER_RUNTIME_V2',
               'created_at':datetime.now(timezone.utc).isoformat(),
               'whisper_cpp_version':os.environ['WHISPER_CPP_VERSION'],
               'binary_archive_sha256':os.environ['WHISPER_BINARY_SHA256'],
@@ -80,16 +82,18 @@ jobs:
               'model_name':model.name,
               'model_size_bytes':model.stat().st_size,
               'model_sha256':sha(model),
+              'vad_name':vad.name,
+              'vad_size_bytes':vad.stat().st_size,
+              'vad_sha256':sha(vad),
               'evidence_included':False,
               'credentials_included':False,
-              'truth_boundary':'Runtime and model package only; no transcript or provider execution claim.'
+              'truth_boundary':'Runtime, base English model and VAD only; no transcript or provider execution claim.'
           }
           (root/'runtime-manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
           Path('deployment_receipts/ipep-whisper-offline-runtime-latest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
           PY
           cd /tmp/ipep-whisper
-          tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner \
-            -czf ipep-whisper-offline-runtime.tar.gz runtime
+          tar --sort=name --mtime='UTC 2020-01-01' --owner=0 --group=0 --numeric-owner -czf ipep-whisper-offline-runtime.tar.gz runtime
           sha256sum ipep-whisper-offline-runtime.tar.gz | tee ipep-whisper-offline-runtime.tar.gz.sha256
 
       - uses: actions/upload-artifact@v4
