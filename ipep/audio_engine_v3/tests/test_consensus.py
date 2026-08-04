@@ -39,10 +39,19 @@ class ConsensusTests(unittest.TestCase):
         self.assertEqual(log[0].kind, "REPETITION_SUPPRESSION")
 
     def test_legal_lexicon_correction_is_auditable(self):
-        lex = LegalLexicon((LexiconEntry("functus officio", ("factors official", "functus official"), 0.72),))
+        lex = LegalLexicon((LexiconEntry("functus officio", ("factors official", "functus official"), 1.0),))
         out, log = lex.apply("the ccma is factors official".split())
         self.assertIn("functus", out)
         self.assertEqual(log[0].after, "functus officio")
+
+    def test_legal_lexicon_does_not_overcorrect_ordinary_language(self):
+        lex = LegalLexicon((
+            LexiconEntry("functus officio", ("factors official",), 1.0),
+            LexiconEntry("point in limine", ("pointing limine",), 1.0),
+        ))
+        out, log = lex.apply("the factors that you have to consider include the reporting line".split())
+        self.assertEqual(" ".join(out), "the factors that you have to consider include the reporting line")
+        self.assertEqual(log, [])
 
     def test_single_model_cannot_claim_consensus(self):
         with tempfile.TemporaryDirectory() as d:
@@ -50,7 +59,7 @@ class ConsensusTests(unittest.TestCase):
             self.assertEqual(result["state"], "BLOCKED_INSUFFICIENT_INDEPENDENT_HYPOTHESES")
 
     def test_engine_writes_consensus_and_review_receipts(self):
-        lex = LegalLexicon((LexiconEntry("point in limine", ("pointing limine",), 0.7),))
+        lex = LegalLexicon((LexiconEntry("point in limine", ("pointing limine",), 1.0),))
         with tempfile.TemporaryDirectory() as d:
             result = ConsensusTranscriptionMode(lexicon=lex).run([
                 h("whisper", "the point in limine was raised"),
