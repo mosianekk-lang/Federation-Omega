@@ -1,11 +1,11 @@
 {
   "proof_level": "PROVIDER_READBACK",
-  "recorded_at": "2026-08-04T11:54:12.405511+00:00",
+  "recorded_at": "2026-08-04T11:59:13.664717+00:00",
   "schema": "EVIDENCEOPS-RESOLVE-CI-RECEIPT-1",
-  "source_commit": "ba37d816bd5d3b553a7499c35e959d79367d3902",
+  "source_commit": "9af026199b3e7ced727f8678a78bb56771e80b56",
   "status": "PASS",
   "system": "EvidenceOps RESOLVE",
   "tests_passed": 5,
   "version": "1.0.0",
-  "workflow_run_id": 30906745578
+  "workflow_run_id": 30907095018
 }
