@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -65,6 +66,28 @@ class SourceProvenanceTests(unittest.TestCase):
                 self.assertIn(phrase, copilot_contract)
         self.assertIn("provider protection is not yet active", copilot_contract)
         self.assertNotIn("branch protection is active", agent_contract.lower())
+
+    def test_main_airlock_ruleset_is_sole_owner_safe_and_requires_admission(self):
+        ruleset = json.loads(
+            (
+                ROOT
+                / "governance"
+                / "federation_omega_main_airlock.ruleset.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual("active", ruleset["enforcement"])
+        self.assertEqual([], ruleset["bypass_actors"])
+        by_type = {rule["type"]: rule for rule in ruleset["rules"]}
+        pull_request = by_type["pull_request"]["parameters"]
+        self.assertEqual(0, pull_request["required_approving_review_count"])
+        self.assertFalse(pull_request["require_code_owner_review"])
+        self.assertFalse(pull_request["require_last_push_approval"])
+        self.assertTrue(pull_request["required_review_thread_resolution"])
+        checks = by_type["required_status_checks"]["parameters"]
+        self.assertTrue(checks["strict_required_status_checks_policy"])
+        self.assertEqual(
+            [{"context": "admission"}], checks["required_status_checks"]
+        )
 
 
 if __name__ == "__main__":
