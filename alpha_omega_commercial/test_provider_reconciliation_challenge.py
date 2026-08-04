@@ -6,7 +6,7 @@ from datetime import timedelta
 from pathlib import Path
 
 from authority_snapshot import parse_utc
-from provider_reconciliation_challenge import (
+from provider_reconciliation_challenge_safe import (
     ChallengeBoundMockProviderAdapter,
     ChallengeBoundProviderDispatchCommercialControlPlane,
 )
