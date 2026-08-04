@@ -24,6 +24,7 @@ SOURCE_REPOSITORY_CONTROL_TESTS = (
     "test_phoenix_provider_cutover_v2.py",
     "test_phoenix_provider_cutover_v3.py",
     "test_phoenix_provider_cutover_v3_1.py",
+    "test_phoenix_provider_cutover_v3_authorized_executor.py",
     "test_provider_airlock_activate.py",
     "test_agent_governance_contract.py",
     "test_pst_composite_runtime_contract.py",
@@ -82,6 +83,16 @@ class PhoenixExportTests(unittest.TestCase):
         (self.root / "phoenix" / "provider_cutover.py").write_text(
             "print('dry-run')\n", encoding="utf-8"
         )
+        (
+            self.root
+            / "phoenix"
+            / "provider_cutover_authorized_executor.py"
+        ).write_text("print('authorized v22')\n", encoding="utf-8")
+        (
+            self.root
+            / "phoenix"
+            / "provider_cutover_authorization_use.py"
+        ).write_text("print('authorization use')\n", encoding="utf-8")
         (self.root / "phoenix" / "provider_cutover_v3.py").write_text(
             "print('v3 base')\n", encoding="utf-8"
         )
@@ -126,6 +137,9 @@ class PhoenixExportTests(unittest.TestCase):
                     ".github/CODEOWNERS",
                     "governance/OPS_CONTRACT.json",
                     "provider_cutover.py",
+                    "provider_cutover_authorization_use.py",
+                    "provider_cutover_v3_1.py",
+                    "provider_cutover_v3_base.py",
                 ],
             },
         }
@@ -253,12 +267,15 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertIn("Ran ", process.stderr)
         self.assertIn("OK", process.stderr)
 
-    def test_ops_export_has_no_active_workflow(self):
+    def test_ops_export_has_authorized_cutover_package_and_no_active_workflow(self):
         output = self.root / "output"
         EXPORTS.build(self.root, output, self.policy)
         with tarfile.open(output / "Federation-Omega-Ops.tar.gz", "r:gz") as archive:
             names = set(archive.getnames())
         self.assertIn("provider_cutover.py", names)
+        self.assertIn("provider_cutover_authorization_use.py", names)
+        self.assertIn("provider_cutover_v3_1.py", names)
+        self.assertIn("provider_cutover_v3_base.py", names)
         self.assertIn("governance/OPS_CONTRACT.json", names)
         self.assertFalse(any(EXPORTS.is_github_workflow_path(name) for name in names))
 
@@ -270,7 +287,7 @@ class PhoenixExportTests(unittest.TestCase):
             self.assertNotIn("/dispatches", source)
             self.assertNotIn("maybe_dispatch", source)
 
-    def test_v3_1_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
+    def test_v22_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
         output = self.root / "v3-output"
         process = subprocess.run(
             [
@@ -295,7 +312,12 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(canonical).hexdigest(), claimed)
         self.assertFalse(receipt["source_mutation_attempted"])
         engine = receipt["provider_cutover_engine"]
-        self.assertEqual("3.1", engine["version"])
+        self.assertEqual("3.2", engine["version"])
+        self.assertEqual("V22", engine["authorization_execution_gate"])
+        self.assertEqual("3.1", engine["provider_controller_version"])
+        self.assertTrue(engine["authorization_decision_required"])
+        self.assertTrue(engine["one_time_authorization_consumption_required"])
+        self.assertFalse(engine["unknown_outcome_automatic_retry"])
         self.assertFalse(engine["provider_apply_performed"])
         self.assertEqual(
             "REQUIRED_DURING_APPLY",
