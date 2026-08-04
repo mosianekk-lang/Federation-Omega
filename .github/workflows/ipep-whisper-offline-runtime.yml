@@ -18,8 +18,8 @@ concurrency:
 env:
   WHISPER_CPP_VERSION: v1.9.1
   WHISPER_BINARY_SHA256: f3bf3b4369a99b54665b0f19b88483b30de27f25963b0414235dea03198515c5
-  MODEL_NAME: ggml-base.en-q5_1.bin
-  MODEL_SHA256: 4baf70dd0d7c4247ba2b81fafd9c01005ac77c2f9ef064e00dcf195d0e2fdd2f
+  MODEL_NAME: ggml-tiny.en-q5_1.bin
+  MODEL_SHA256: c77c5766f1cef09b6b7d47f21b546cbddd4157886b3b5d6d4f709e91e66c7c2b
   VAD_NAME: ggml-silero-v6.2.0.bin
 
 jobs:
@@ -40,7 +40,7 @@ jobs:
           tar -xzf /tmp/whisper-bin.tar.gz -C /tmp/ipep-whisper/runtime/bin
           test -n "$(find /tmp/ipep-whisper/runtime/bin -type f -name whisper-cli -print -quit)"
 
-      - name: Download verified base English model and Silero VAD
+      - name: Download verified tiny English model and Silero VAD
         shell: bash
         run: |
           set -euo pipefail
@@ -73,7 +73,7 @@ jobs:
                       h.update(chunk)
               return h.hexdigest()
           manifest={
-              'contract':'IPEP_OFFLINE_WHISPER_RUNTIME_V2',
+              'contract':'IPEP_OFFLINE_WHISPER_RUNTIME_V3',
               'created_at':datetime.now(timezone.utc).isoformat(),
               'whisper_cpp_version':os.environ['WHISPER_CPP_VERSION'],
               'binary_archive_sha256':os.environ['WHISPER_BINARY_SHA256'],
@@ -85,9 +85,10 @@ jobs:
               'vad_name':vad.name,
               'vad_size_bytes':vad.stat().st_size,
               'vad_sha256':sha(vad),
+              'intended_use':'bulk first-pass transcription; re-transcribe material passages with base or small model',
               'evidence_included':False,
               'credentials_included':False,
-              'truth_boundary':'Runtime, base English model and VAD only; no transcript or provider execution claim.'
+              'truth_boundary':'Runtime, tiny English model and VAD only; no transcript or provider execution claim.'
           }
           (root/'runtime-manifest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
           Path('deployment_receipts/ipep-whisper-offline-runtime-latest.json').write_text(json.dumps(manifest,indent=2,sort_keys=True)+'\n')
