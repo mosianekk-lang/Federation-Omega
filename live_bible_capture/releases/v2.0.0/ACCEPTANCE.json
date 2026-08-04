@@ -1,0 +1,26 @@
+{
+  "schema": "FEDERATION-LIVE-BIBLE-FABRIC-ACCEPTANCE-2",
+  "version": "2.0.0",
+  "accepted": true,
+  "source_tests": "17 passed",
+  "clean_extracted_tests": ".................                                                        [100%]\n17 passed in 0.79s",
+  "clean_wheel_install": "passed",
+  "installed_cli_init": "passed",
+  "installed_cli_ingest": "passed",
+  "installed_cli_chain_verification": {
+    "conversation_id": "acceptance-chat",
+    "event_count": 1,
+    "valid": true,
+    "failures": [],
+    "head_chain_hash": "b5dc3d171605972ca44a6411484c38e0b18dccdc98eeb17f49ec91e215d645b5",
+    "unresolved_gaps": [],
+    "database_quick_check": "ok"
+  },
+  "zip_integrity": "ok",
+  "zip_entries": 14,
+  "zip_sha256": "a9690c24309b3b6ef463e1dea733833e35bd26f22547d29a8060e440910265c3",
+  "manifest_sha256": "681ecd6709e46f8eb420dd9dedabab001fb96d6cb5e79ce14fb615955957f7ab",
+  "wheel_sha256": "4bf70de9b0ac5e2e8ac5f39b563fca55a263f9f1b2c921496a2a2da3064a7e07",
+  "external_effects": 0,
+  "truth_boundary": "The fabric captures only events supplied by configured adapters; it does not create hidden access to ChatGPT conversations."
+}
