@@ -1,0 +1,51 @@
+{
+  "projection_id": "AO-COMMERCIAL-MATURITY-EFFECTIVE-V15",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+  "dependency_order": ["C01", "C02", "C03", "C04", "C05", "C06", "C07", "C08", "C09", "C10", "C11", "C12", "C13", "C14", "C15"],
+  "advanced_internal_slice": {
+    "status": "PROVIDER_RECONCILIATION_CHALLENGE_BINDING_PROVIDER_PROOF_VERIFIED",
+    "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-CHALLENGE-V15",
+    "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+    "predecessor_pull_request": 151,
+    "predecessor_merge_commit": "d61219cc28806e4d08bc46a5243b4ee72b3190f1",
+    "predecessor_drive_release_file_id": "1RkHNK4WDim8BKjEvd-_lUF_EIeA6zqrMAcFhNZGF-30",
+    "provider_proof_run": 30918336416,
+    "provider_proof_job": 92022106243,
+    "provider_proof_artifact_id": 8895992684,
+    "provider_proof_artifact_digest": "sha256:7590efea353a1f891dda829022434dc136b9141a0caf03474d95d0952a713118"
+  },
+  "stage_projection": {
+    "C03": "RECONCILIATION_CHALLENGE_AUTHORITY_BOUNDARY_PROVIDER_PROOF_VERIFIED_PROVIDER_AUTHORITY_BLOCKED",
+    "C06": "MANAGED_OPERATIONS_UNKNOWN_OUTCOME_CHALLENGE_CONTROL_PROVIDER_PROOF_VERIFIED",
+    "C07": "MOCK_PROVIDER_CHALLENGE_CONFORMANCE_PROVIDER_PROOF_VERIFIED_LIVE_PROVIDER_BLOCKED",
+    "C11": "SERVICE_ENABLED_PLATFORM_VERIFIED_SELF_SERVICE_HELD",
+    "C14": "LOCAL_RECONCILIATION_REPLAY_CONTROL_PROVIDER_PROOF_VERIFIED_PRODUCTION_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "service_enabled_platform_first": true,
+  "self_service_saas_held": true,
+  "verified_live_revenue_events": 0,
+  "external_gates": {
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "external_case_study": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "full_commercial_maturity": false,
+  "institution_state_preserved": true,
+  "source_checkpoint": "alpha_omega_commercial/provider_reconciliation_challenge_checkpoint.json"
+}

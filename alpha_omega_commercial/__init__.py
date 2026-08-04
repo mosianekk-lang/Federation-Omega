@@ -1,10 +1,11 @@
 """Canonical Alpha→Omega commercial maturity API.
 
-The provider-dispatch outcome-reconciliation control plane is the newest
-service-platform candidate. It preserves V13 renewable lease and fencing
-controls, adds a durable provider-submission boundary, quarantines unknown
-outcomes and requires exact reconciliation before retry. Earlier control planes
-remain exported for historical regression and reference-provider conformance.
+The provider-reconciliation challenge control plane is the newest
+service-platform candidate. It preserves V14 durable submission and unknown
+outcome quarantine, and requires one current, hash-chained, attempt-bound and
+single-use challenge before reconciliation evidence can be admitted. Earlier
+control planes remain exported for historical regression and reference-provider
+conformance.
 """
 
 from __future__ import annotations
@@ -16,6 +17,13 @@ _PACKAGE_DIR = str(Path(__file__).resolve().parent)
 if _PACKAGE_DIR not in sys.path:
     sys.path.insert(0, _PACKAGE_DIR)
 
+from provider_reconciliation_challenge_safe import (  # noqa: E402
+    ChallengeBoundMockProviderAdapter,
+    ChallengeBoundProviderDispatchCommercialControlPlane,
+    MAX_CHALLENGE_TTL_SECONDS,
+    MIN_CHALLENGE_TTL_SECONDS,
+    RECONCILIATION_CHALLENGE_CLASS,
+)
 from provider_dispatch_outcome_reconciliation import (  # noqa: E402
     MOCK_PROVIDER_RECONCILIATION_CLASS,
     LIVE_PROVIDER_RECONCILIATION_CLASS,
@@ -70,6 +78,11 @@ from governed_commercial_assurance import (  # noqa: E402
 )
 
 __all__ = [
+    "ChallengeBoundProviderDispatchCommercialControlPlane",
+    "ChallengeBoundMockProviderAdapter",
+    "RECONCILIATION_CHALLENGE_CLASS",
+    "MIN_CHALLENGE_TTL_SECONDS",
+    "MAX_CHALLENGE_TTL_SECONDS",
     "OutcomeReconciledProviderDispatchCommercialControlPlane",
     "ReconciliationConformantMockProviderAdapter",
     "MOCK_PROVIDER_RECONCILIATION_CLASS",
