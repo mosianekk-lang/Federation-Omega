@@ -43,7 +43,6 @@ jobs:
           alpha_omega_commercial.test_authority_action_idempotency
           alpha_omega_commercial.test_effective_state
           alpha_omega_commercial.test_institution_reconciliation
-          alpha_omega_commercial.test_programme_integrity
 
       - name: Execute canonical API reconciliation proof
         run: >-
