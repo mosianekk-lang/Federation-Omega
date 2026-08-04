@@ -159,7 +159,7 @@ def main() -> int:
     V2.BASE.stage_ops = stage_ops_v3_4
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
-        "version": "3.4",
+        "version": "3.3",
         "authorization_execution_gate": "V22",
         "provider_controller_version": "3.1",
         "authority_models": ["INSTALLATION_TEMPLATE", "USER_SCOPED"],
