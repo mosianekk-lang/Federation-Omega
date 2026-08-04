@@ -77,8 +77,8 @@ jobs:
           assert contract['full_commercial_maturity'] is False
 
           assert api['api_id'] == 'AO-COMMERCIAL-CANONICAL-API-V3'
-          assert api['current_capability_revision'] == 'AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7'
-          assert api['current_canonical_class'] == 'CrashSafeAtomicAuthoritySnapshotCommercialControlPlane'
+          assert 'AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7' in api['capability_lineage']
+          assert 'CrashSafeAtomicAuthoritySnapshotCommercialControlPlane' in api['canonical_lineage']
           assert api['current_canonical_class'] in api['canonical_lineage']
           assert api['current_capability_revision'] in api['capability_lineage']
           assert api['authority_use']['durable_recovery_bundle_required'] is True

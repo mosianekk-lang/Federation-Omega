@@ -1,0 +1,76 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "checkpoint_id": "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8-CHECKPOINT",
+  "status": "AUTHORITY_ACTION_JOURNAL_IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "dependency_checkpoint": {
+    "preceding_pull_request": 130,
+    "preceding_merge_commit": "ad135c04c0f1353b7b17476cbcb0b30faec22526",
+    "preceding_status": "AUTHORITY_ACTION_CRASH_RECOVERY_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED",
+    "preceding_drive_release_file_id": "18jpciwkXdRXwqAH-9OWn30wSVjFnaRIPe05GHCqZ-rA",
+    "preceding_drive_readback_verified": true
+  },
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "smallest_complete_operational_slice": {
+    "defect": "The v7 recovery bundle protects local commercial state after an interrupted action, but its single append-only transaction JSONL can expose a torn final event when a process exits during append.",
+    "implementation": "Freeze the verified legacy JSONL prefix and atomically publish every new transaction event as a separately fsynced, filename-and-content hash-bound file.",
+    "recovery_rule": "An incomplete event publication is removed before recovery. A durable ACTION_PREPARED without a durable terminal event restores the v7 recovery bundle and records ACTION_ROLLED_BACK before new work.",
+    "external_effect": "NONE"
+  },
+  "canonical_api_candidate": {
+    "api_id": "AO-COMMERCIAL-CANONICAL-API-V3",
+    "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8",
+    "current_canonical_class": "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane",
+    "promotion_state": "PROVIDER_PROOF_REQUIRED"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "commercial_truth": {
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true,
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "payment_provider_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "provider_states": {
+    "github_actions": "FRESH_VERIFICATION_REQUIRED_FOR_V8",
+    "google_drive_document_release": "PRECEDING_RELEASE_READBACK_VERIFIED_NEW_RELEASE_NOT_YET_CREATED",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "operational_proof_gate": {
+    "production_code": "IMPLEMENTED",
+    "adversarial_tests": "IMPLEMENTED",
+    "contract": "IMPLEMENTED",
+    "provider_native_ci": "REQUIRED",
+    "repository_safety_checks": "REQUIRED",
+    "artifact_inspection": "REQUIRED",
+    "merge_allowed": false
+  },
+  "external_gate_effect": "UNCHANGED"
+}
