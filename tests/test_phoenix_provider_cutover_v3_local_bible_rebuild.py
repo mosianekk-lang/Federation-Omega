@@ -88,7 +88,10 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertIn("https://www.googleapis.com/drive/v3/files/", self.script)
         self.assertIn('headers={"Authorization": f"Bearer {token}"}', self.script)
         self.assertIn("P2_PRIVATE_DRIVE_READ_ONLY_NO_PUBLIC_SOURCE_CONTENT", self.script)
-        self.assertIn("pending Library writeback", self.script)
+        self.assertIn(
+            "PROVIDER_PACKAGE_REBUILD_VERIFIED_PENDING_LIBRARY_WRITEBACK",
+            self.script,
+        )
 
     def test_failure_success_constraint_learning_ids_are_bound(self) -> None:
         required = (
