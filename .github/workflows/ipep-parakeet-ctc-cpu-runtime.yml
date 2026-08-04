@@ -1,0 +1,160 @@
+name: Package IPEP Parakeet CTC CPU Runtime
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ipep-parakeet-ctc-cpu-runtime.yml'
+      - 'ipep/audio_engine_v3/parakeet-runtime-trigger.txt'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: ipep-parakeet-ctc-cpu-runtime
+  cancel-in-progress: false
+
+env:
+  SHERPA_ONNX_VERSION: '1.13.2'
+  MODEL_ARCHIVE: sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8.tar.bz2
+  MODEL_URL: https://github.com/k2-fsa/sherpa-onnx/releases/download/asr-models/sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8.tar.bz2
+
+jobs:
+  package-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Acquire official CPU wheels and model
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/ipep-parakeet/wheelhouse /tmp/ipep-parakeet/runtime deployment_receipts
+          python -m pip download --only-binary=:all: --dest /tmp/ipep-parakeet/wheelhouse \
+            "sherpa-onnx==${SHERPA_ONNX_VERSION}" soundfile numpy
+          curl --fail --location --retry 5 --retry-delay 5 \
+            "$MODEL_URL" -o "/tmp/ipep-parakeet/runtime/${MODEL_ARCHIVE}"
+          sha256sum /tmp/ipep-parakeet/runtime/${MODEL_ARCHIVE} | tee /tmp/model-archive.sha256
+          tar -xjf "/tmp/ipep-parakeet/runtime/${MODEL_ARCHIVE}" -C /tmp/ipep-parakeet/runtime
+
+      - name: Install from packaged wheels and run official sample canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --no-index --find-links /tmp/ipep-parakeet/wheelhouse \
+            "sherpa-onnx==${SHERPA_ONNX_VERSION}" soundfile numpy
+          MODEL_DIR=$(find /tmp/ipep-parakeet/runtime -maxdepth 1 -type d -name 'sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8' -print -quit)
+          test -n "$MODEL_DIR"
+          export MODEL_DIR
+          python - <<'PY' | tee /tmp/sample-canary.json
+          import json, os, time
+          import numpy as np
+          import soundfile as sf
+          import sherpa_onnx
+          from pathlib import Path
+
+          root=Path(os.environ['MODEL_DIR'])
+          wav=next((root/'test_wavs').glob('*.wav'))
+          audio, sr=sf.read(wav, dtype='float32', always_2d=True)
+          audio=np.ascontiguousarray(audio[:,0])
+          recognizer=sherpa_onnx.OfflineRecognizer.from_nemo_ctc(
+              model=str(root/'model.int8.onnx'),
+              tokens=str(root/'tokens.txt'),
+              num_threads=2,
+              debug=False,
+          )
+          stream=recognizer.create_stream()
+          stream.accept_waveform(sr, audio)
+          started=time.time()
+          recognizer.decode_stream(stream)
+          elapsed=time.time()-started
+          result=stream.result
+          text=str(getattr(result,'text','')).strip()
+          payload={
+              'contract':'IPEP_PARAKEET_CTC_CPU_SAMPLE_CANARY_V1',
+              'model':'sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8',
+              'architecture_family':'nvidia_fastconformer_ctc',
+              'sample_file':wav.name,
+              'sample_rate':sr,
+              'duration_seconds':round(len(audio)/sr,3),
+              'elapsed_seconds':round(elapsed,3),
+              'text':text,
+              'passed':bool(text),
+          }
+          print(json.dumps(payload,indent=2,sort_keys=True))
+          if not text:
+              raise SystemExit('sample canary returned empty transcript')
+          PY
+
+      - name: Build immutable runtime manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root=Path('/tmp/ipep-parakeet')
+          runtime=root/'runtime'
+          wheelhouse=root/'wheelhouse'
+          model_dir=runtime/'sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8'
+          def sha(path):
+              h=hashlib.sha256()
+              with path.open('rb') as f:
+                  for chunk in iter(lambda:f.read(1024*1024),b''):
+                      h.update(chunk)
+              return h.hexdigest()
+          files=[]
+          for path in sorted([runtime/os.environ['MODEL_ARCHIVE'], model_dir/'model.int8.onnx', model_dir/'tokens.txt', *wheelhouse.iterdir()]):
+              files.append({'path':str(path.relative_to(root)),'size':path.stat().st_size,'sha256':sha(path)})
+          receipt={
+              'contract':'IPEP_PARAKEET_CTC_CPU_RUNTIME_V1',
+              'created_at':datetime.now(timezone.utc).isoformat(),
+              'source_commit':'${{ github.sha }}',
+              'run_id':${{ github.run_id }},
+              'sherpa_onnx_version':os.environ['SHERPA_ONNX_VERSION'],
+              'model':'sherpa-onnx-nemo-parakeet_tdt_ctc_110m-en-36000-int8',
+              'architecture_family':'nvidia_fastconformer_ctc',
+              'official_model_url':os.environ['MODEL_URL'],
+              'sample_canary':json.loads(Path('/tmp/sample-canary.json').read_text()),
+              'files':files,
+              'evidence_included':False,
+              'credentials_included':False,
+              'truth_boundary':'Runtime and public model only; no hearing transcription claim.',
+          }
+          (root/'runtime-manifest.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          Path('deployment_receipts/ipep-parakeet-ctc-cpu-runtime-latest.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Publish runtime artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipep-parakeet-ctc-cpu-runtime-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 30
+          compression-level: 0
+          path: |
+            /tmp/ipep-parakeet/runtime/${{ env.MODEL_ARCHIVE }}
+            /tmp/ipep-parakeet/wheelhouse/
+            /tmp/ipep-parakeet/runtime-manifest.json
+            /tmp/sample-canary.json
+
+      - name: Publish redacted receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git pull --rebase origin main
+          git config user.name 'ipep-parakeet-runtime[bot]'
+          git config user.email 'ipep-parakeet-runtime[bot]@users.noreply.github.com'
+          git add deployment_receipts/ipep-parakeet-ctc-cpu-runtime-latest.json
+          git commit -m 'Record Parakeet CTC CPU runtime receipt [skip ci]' || exit 0
+          git push origin HEAD:main
