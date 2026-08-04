@@ -33,6 +33,10 @@ class PhoenixExportTests(unittest.TestCase):
         (self.root / ".github" / "workflows" / "unsafe.yml").write_text(
             "name: unsafe\n", encoding="utf-8"
         )
+        (self.root / "ipep" / ".github" / "workflows").mkdir(parents=True)
+        (self.root / "ipep" / ".github" / "workflows" / "ci.yml").write_text(
+            "name: nested unsafe\n", encoding="utf-8"
+        )
         (self.root / "docs").mkdir()
         (self.root / "docs" / "credential.md").write_text(
             "example ghp_not_a_real_token\n", encoding="utf-8"
@@ -89,7 +93,7 @@ class PhoenixExportTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_export_excludes_workflows_runtime_secret_markers_and_migration_tests(self):
+    def test_export_excludes_all_workflows_runtime_secrets_and_migration_tests(self):
         output = self.root / "output"
         receipt = EXPORTS.build(self.root, output, self.policy)
         self.assertEqual("VERIFIED", receipt["status"])
@@ -102,6 +106,8 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertIn("README.md", names)
         self.assertNotIn("runtime/state.json", names)
         self.assertNotIn(".github/workflows/unsafe.yml", names)
+        self.assertNotIn("ipep/.github/workflows/ci.yml", names)
+        self.assertFalse(any(EXPORTS.is_github_workflow_path(name) for name in names))
         self.assertNotIn("docs/credential.md", names)
         self.assertNotIn("tests/test_phoenix_provider_cutover_v2.py", names)
 
@@ -112,7 +118,14 @@ class PhoenixExportTests(unittest.TestCase):
             names = set(archive.getnames())
         self.assertIn("provider_cutover.py", names)
         self.assertIn("governance/OPS_CONTRACT.json", names)
-        self.assertFalse(any(name.startswith(".github/workflows/") for name in names))
+        self.assertFalse(any(EXPORTS.is_github_workflow_path(name) for name in names))
+
+    def test_v2_export_builder_contains_no_provider_dispatch_path(self):
+        source = (ROOT / "phoenix" / "build_exports_v2.py").read_text(encoding="utf-8")
+        self.assertNotIn("GH_TOKEN", source)
+        self.assertNotIn("workflow_dispatch", source)
+        self.assertNotIn("/dispatches", source)
+        self.assertNotIn("maybe_dispatch", source)
 
 
 if __name__ == "__main__":
