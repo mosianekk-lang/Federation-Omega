@@ -1,0 +1,75 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10-CHECKPOINT",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "status": "AUTHORITY_ACTION_IDEMPOTENCY_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency_checkpoint": {
+    "preceding_pull_request": 135,
+    "preceding_merge_commit": "bc0982c176ea543799b9a12b98e136b3f0fc0285",
+    "preceding_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-COORDINATION-V9",
+    "preceding_drive_file_id": "18vFykuY7E6okU33SJuOxn4hg9z-Cnh-pDCg6xhiZyEw",
+    "preceding_drive_modified_at": "2026-08-04T08:18:49.639Z",
+    "preceding_drive_readback_verified": true,
+    "programme_dependency_order_verified": true,
+    "institution_state_preserved": true
+  },
+  "candidate_projection": {
+    "capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10",
+    "canonical_class": "IdempotentCoordinatedAuthoritySnapshotCommercialControlPlane",
+    "predecessor_class": "CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane",
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true
+  },
+  "provider_proof": {
+    "state": "PROVIDER_PROOF_VERIFIED",
+    "head_sha": "e79b5d85d4db65af82325bbf4152c4b413a2640e",
+    "workflow_run": 30895158457,
+    "workflow_job": 91946192880,
+    "artifact_id": 8886688739,
+    "artifact_name": "alpha-omega-commercial-authority-action-idempotency-proof",
+    "artifact_digest": "sha256:7eae1286da138137180052a83ffd4e02a7f25ae407dd961aee6f8e887f898c75",
+    "receipt_sha256": "f61dc9632881d3c34363d6113516b18804264056cec7110bc0faa66284892786",
+    "checks_required": 10,
+    "checks_failed": 0,
+    "expires_at": "2026-11-02T09:10:34Z"
+  },
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED"
+  },
+  "external_gates": {
+    "customer_demand_and_price_acceptance": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue_receipt": false,
+    "live_cloud_provider_execution": false,
+    "enterprise_assurance_or_certification": false,
+    "partner_adoption": false,
+    "external_customer_case_study": false,
+    "production_scale_and_recovery_evidence": false
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "payment_provider_operation_proven": false,
+    "distributed_provider_exactly_once_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
