@@ -8,9 +8,9 @@
   "sqlite_quick_check": "ok",
   "cli_compile_canary": "PASS",
   "installed_wheel_canary": "PASS",
-  "source_manifest_sha256": "2d789c1ed49bf696fe389582dd1e039eb354fbe555759d0ee537e0e6bd16edb3",
-  "source_zip_sha256": "fc1cc90495f85b24a146a3d7e2ef061590e0dc63c7c49f257fa2c9dcd6117682",
-  "wheel_sha256": "c619371b6114fd45ebc23a3e1b510d4d7d9b0b495252a1dfe9eae5685fad7ea2",
+  "source_manifest_sha256": "106b6db2b004e1574d31095f0c3e7371195082e9571fc3bf9ce160bb3bf5f815",
+  "source_zip_sha256": "7c44325247b2845fc7b9e1d53556c4998f4221163554c79bc51044a877b8c452",
+  "wheel_sha256": "94d1b2835c4dc223a8a3f53f044bf695f9cd8a19901361b81ef19260e227c378",
   "authority_class": "A1",
   "external_effects": 0,
   "truth_boundary": "Phase 1 provides an internal event store, deterministic mission compiler and canonical query service. It does not grant external legal, financial, credential, communication or provider-mutation authority."
