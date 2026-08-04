@@ -17,6 +17,20 @@ class PstCompositeRuntimeContractTests(unittest.TestCase):
         self.assertIn("PST_VERIFY_ROOT: /tmp/pst-composite-verify", text)
         self.assertIn("evidenceops_pst_v2_composite_verify.py", text)
 
+    def test_marked_closure_run_isolates_and_cancels_stale_queue(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("startsWith(github.event.head_commit.message, '[PST-CLOSE]')", text)
+        self.assertIn("'phoenix-emergency-execution-freeze' || 'phoenix-emergency-passive'", text)
+        self.assertIn("cancel-in-progress: ${{ github.event_name == 'push'", text)
+        self.assertIn("id: pst_closure", text)
+        self.assertIn("if: steps.pst_closure.outputs.requested == 'true'", text)
+
+    def test_passive_runs_do_not_require_pst_completion(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("pst_ok=true", text)
+        self.assertIn("PST not requested", text)
+        self.assertIn("requested=\"${{ steps.pst_closure.outputs.requested }}\"", text)
+
     def test_verifier_honours_explicit_root_override(self):
         previous = os.environ.get("PST_VERIFY_ROOT")
         os.environ["PST_VERIFY_ROOT"] = "/tmp/pst-runtime-contract-test"
