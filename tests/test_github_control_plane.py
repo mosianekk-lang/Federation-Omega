@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import sys
 import tempfile
 import unittest
 from pathlib import Path
@@ -10,6 +11,7 @@ MODULE_PATH = ROOT / "tools" / "github_control_plane.py"
 SPEC = importlib.util.spec_from_file_location("github_control_plane", MODULE_PATH)
 assert SPEC and SPEC.loader
 CONTROL = importlib.util.module_from_spec(SPEC)
+sys.modules[SPEC.name] = CONTROL
 SPEC.loader.exec_module(CONTROL)
 POLICY = CONTROL.load_policy(ROOT / "governance" / "github_control_plane_policy.json")
 
