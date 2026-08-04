@@ -1,0 +1,24 @@
+{
+  "job_id": "example-pst-corpus",
+  "operation": "extract-index-publish-verify",
+  "source": {
+    "provider": "google-drive",
+    "file_id": "SOURCE_FILE_ID",
+    "expected_size": 0,
+    "expected_sha256": "UNVERIFIED"
+  },
+  "expected_outputs": [
+    {"name": "message-index", "required": true},
+    {"name": "attachment-index", "required": true},
+    {"name": "search-database", "required": true},
+    {"name": "retrieval-shards", "required": true}
+  ],
+  "completion_gates": [
+    "source_identity",
+    "provider_readback",
+    "occurrence_reconciliation",
+    "independent_readback",
+    "format_integrity",
+    "completion_receipt"
+  ]
+}
