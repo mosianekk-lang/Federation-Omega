@@ -1,0 +1,73 @@
+name: Inspect Parakeet CLI v2 Once
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/ipep-parakeet-cli-v2-inspect-once.yml'
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  inspect:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Inspect latest CLI v2 run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          gh api "repos/${REPOSITORY}/actions/workflows/ipep-parakeet-ctc-cli-runtime-v2.yml/runs?per_page=5" > /tmp/runs.json
+          RUN_ID=$(jq -r '.workflow_runs[0].id // empty' /tmp/runs.json)
+          test -n "$RUN_ID"
+          gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/jobs?per_page=100" > /tmp/jobs.json
+          gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" > /tmp/artifacts.json
+          export RUN_ID
+          python - <<'PY' > deployment_receipts/ipep-parakeet-cli-v2-inspection.json
+          import json, os
+          from datetime import datetime, timezone
+          runs=json.load(open('/tmp/runs.json',encoding='utf-8'))
+          jobs=json.load(open('/tmp/jobs.json',encoding='utf-8'))
+          artifacts=json.load(open('/tmp/artifacts.json',encoding='utf-8'))
+          run=runs['workflow_runs'][0]
+          payload={
+              'receipt':'IPEP-PARAKEET-CLI-V2-ONE-TIME-INSPECTION',
+              'observed_at':datetime.now(timezone.utc).isoformat(),
+              'run':{
+                  'id':run.get('id'),
+                  'status':run.get('status'),
+                  'conclusion':run.get('conclusion'),
+                  'head_sha':run.get('head_sha'),
+                  'created_at':run.get('created_at'),
+                  'updated_at':run.get('updated_at'),
+                  'html_url':run.get('html_url'),
+              },
+              'jobs':[{
+                  'id':j.get('id'),
+                  'name':j.get('name'),
+                  'status':j.get('status'),
+                  'conclusion':j.get('conclusion'),
+                  'steps':[{'number':s.get('number'),'name':s.get('name'),'status':s.get('status'),'conclusion':s.get('conclusion')} for s in j.get('steps',[])]
+              } for j in jobs.get('jobs',[])],
+              'artifacts':[{
+                  'id':a.get('id'),'name':a.get('name'),'size_in_bytes':a.get('size_in_bytes'),'digest':a.get('digest'),'expired':a.get('expired')
+              } for a in artifacts.get('artifacts',[])],
+          }
+          print(json.dumps(payload,indent=2,sort_keys=True))
+          PY
+      - name: Publish inspection
+        run: |
+          set -euo pipefail
+          git config user.name 'ipep-parakeet-v2-inspector[bot]'
+          git config user.email 'ipep-parakeet-v2-inspector[bot]@users.noreply.github.com'
+          git add deployment_receipts/ipep-parakeet-cli-v2-inspection.json
+          git commit -m 'Record Parakeet CLI v2 inspection [skip ci]'
+          git pull --rebase origin main
+          git push origin HEAD:main
