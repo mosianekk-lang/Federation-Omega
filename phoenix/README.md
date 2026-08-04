@@ -9,7 +9,9 @@ This package migrates the quarantined legacy repository into two clean repositor
 
 A successful Phoenix freeze run creates a source-clean Core archive, a private Ops archive, an export receipt and an execution-freeze receipt. Both receipts contain hashes and source commit identifiers.
 
-Core excludes GitHub Actions workflows at every directory depth, runtime state, generated receipts, credential-bearing paths, private-key formats and migration-control code. Tests whose names start with `tests/test_phoenix_` are migration-control tests and are also excluded because their required controllers are intentionally placed only in Ops. The Phoenix source workflow runs those tests before export; the exported Core test set must remain independently runnable without Phoenix migration files.
+Core excludes GitHub Actions workflows at every directory depth, runtime state, generated receipts, credential-bearing paths, private-key formats and migration-control code. Migration-only tests are classified through `core.excluded_test_globs` in `phoenix/export_policy.json`; this includes the Phoenix cutover test family and the provider Airlock activation test. These tests are excluded because their required controllers are intentionally placed outside Core. The Phoenix source workflow runs them before export; the exported Core test set must remain independently runnable without Phoenix or provider-activation control files.
+
+The exporter computes the resulting migration-control-test count from the actual included file set, fails closed if the count is non-zero, and records the verified value in `PHOENIX_CORE_MANIFEST.json`. The export regression suite extracts the generated Core archive and runs its retained tests as an independent execution canary.
 
 Ops contains only its governance template and the current provider cutover controller.
 
@@ -31,7 +33,7 @@ Archiving the legacy repository is a separate explicit gate using `--archive-leg
 - No legacy history is rewritten.
 - No newly created repository is automatically deleted after a later failure.
 - The initial Ops repository contains no schedule, deployment workflow or provider credential.
-- Core contains no GitHub Actions workflow, Phoenix migration controller or migration-only test that depends on it.
+- Core contains no GitHub Actions workflow, Phoenix migration controller, provider Airlock activator or migration-only test that depends on those controls.
 - Export generation does not dispatch unrelated work or mutate a provider surface.
 - A receipt is not valid unless its SHA-256 covers the complete final payload.
 
