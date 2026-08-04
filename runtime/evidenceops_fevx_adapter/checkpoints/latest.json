@@ -1,9 +1,9 @@
 {
-  "checkpoint_id": "CHK-EVIDENCEOPS-FEVX-0b5bd9dbe5f75677e2e9a586",
+  "checkpoint_id": "CHK-EVIDENCEOPS-FEVX-9fd292f44a107910d585bd3f",
   "database_dump_sha256": "87655eb2300d87649af50668e2069964d8c22a4eae806f24ab68478c64317b4d",
   "ledger_event_count": 1,
-  "provider_proof_hash": "bdfed81f85e16c89865045498a30197670f4e6ea8189dfb70eaee765bad5d2d9",
+  "provider_proof_hash": "fb679700337b24a3a720dba754d1b2962dc4077462131aece3f60a459a77a31a",
   "recommendation_count": 1,
-  "recorded_at": "2026-08-04T00:59:08.795659Z",
+  "recorded_at": "2026-08-04T09:30:55.888397Z",
   "semantic_hash": "0412b9a80579669378f15ee666083dc541123bbb2d801061b883edc58f8969b1"
 }

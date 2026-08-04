@@ -13,7 +13,7 @@
   "runtime_state": "OPERATIONAL",
   "service": "evidenceops-fevx-adapter",
   "source_write": false,
-  "updated_at": "2026-08-04T00:59:08.795659Z",
+  "updated_at": "2026-08-04T09:30:55.888397Z",
   "verified_fact_write": false,
   "version": "1.0.0"
 }
