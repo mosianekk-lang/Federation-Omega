@@ -11,7 +11,7 @@ A successful Phoenix freeze run creates a source-clean Core archive, a private O
 
 Core excludes GitHub Actions workflows at every directory depth, runtime state, generated receipts, credential-bearing paths, private-key formats and migration-control code. Tests that depend on intentionally excluded source-repository controls are classified through `core.excluded_test_globs` in `phoenix/export_policy.json`. This includes the Phoenix cutover family, provider Airlock activation, repository agent-governance, emergency-freeze runtime and WIF workflow-control tests. Their controllers, active workflows or repository-only instructions do not belong in Core, so the corresponding tests do not belong there either.
 
-The source Airlock runs these controls before export. It also builds a Core archive from the exact repository head, extracts it in isolation and executes every retained `test*.py` module. Promotion fails unless that real exported suite completes successfully. The exporter separately computes the excluded-control-test count from the actual included file set, fails closed if the count is non-zero, and records the verified zero in `PHOENIX_CORE_MANIFEST.json`.
+The source Airlock runs these controls before export. It also builds a Core archive from the exact repository head, extracts it in isolation, installs the dependency contract exported in `requirements.txt`, and executes every retained `test*.py` module. Promotion fails unless dependency installation and the real exported suite both complete successfully. The exporter separately computes the excluded-control-test count from the actual included file set, fails closed if the count is non-zero, and records the verified zero in `PHOENIX_CORE_MANIFEST.json`.
 
 Ops contains only its governance template and the current provider cutover controller.
 
@@ -34,7 +34,7 @@ Archiving the legacy repository is a separate explicit gate using `--archive-leg
 - No newly created repository is automatically deleted after a later failure.
 - The initial Ops repository contains no schedule, deployment workflow or provider credential.
 - Core contains no GitHub Actions workflow, Phoenix migration controller, provider Airlock activator or source-repository-only test that depends on excluded controls.
-- The complete retained Core test suite is executed from the generated archive before admission.
+- The complete retained Core test suite is executed from the generated archive under its exported dependency contract before admission.
 - Export generation does not dispatch unrelated work or mutate a provider surface.
 - A receipt is not valid unless its SHA-256 covers the complete final payload.
 
