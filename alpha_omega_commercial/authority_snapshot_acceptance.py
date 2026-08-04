@@ -2,7 +2,7 @@ from __future__ import annotations
 
 import json
 import os
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
@@ -153,24 +153,29 @@ class AuthoritySnapshotAcceptanceLedger:
             now=now,
         )
         if not reasons:
-            same_hash = next(
-                (
-                    entry
-                    for entry in self.entries
-                    if entry["snapshot_sha256"] == snapshot.snapshot_sha256
-                ),
-                None,
-            )
-            if same_hash is not None:
+            # Exact replay is idempotent only while that snapshot is still the
+            # latest accepted authority state. Once superseded, replaying it is a
+            # rollback even though its cryptographic and freshness checks may pass.
+            if (
+                latest is not None
+                and latest["snapshot_sha256"] == snapshot.snapshot_sha256
+            ):
                 return AuthoritySnapshotAcceptanceDecision(
                     valid=True,
                     idempotent=True,
                     reasons=(),
                     snapshot_id=snapshot.snapshot_id,
                     snapshot_sha256=snapshot.snapshot_sha256,
-                    latest_snapshot_id=latest.get("snapshot_id") if latest else None,
-                    latest_snapshot_sha256=latest.get("snapshot_sha256") if latest else None,
+                    latest_snapshot_id=latest.get("snapshot_id"),
+                    latest_snapshot_sha256=latest.get("snapshot_sha256"),
                 )
+
+            prior_same_hash = any(
+                entry["snapshot_sha256"] == snapshot.snapshot_sha256
+                for entry in self.entries[:-1]
+            )
+            if prior_same_hash:
+                reasons.append("AUTHORITY_SNAPSHOT_ROLLBACK_DETECTED")
 
             same_id = next(
                 (
@@ -234,11 +239,8 @@ class AuthoritySnapshotAcceptanceLedger:
                 "authority snapshot acceptance failed: " + ",".join(decision.reasons)
             )
         if decision.idempotent:
-            return next(
-                dict(entry)
-                for entry in self.entries
-                if entry["snapshot_sha256"] == decision.snapshot_sha256
-            )
+            assert self.entries
+            return dict(self.entries[-1])
         assert snapshot is not None
 
         previous = self.entries[-1]["entry_sha256"] if self.entries else "GENESIS"
