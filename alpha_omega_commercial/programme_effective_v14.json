@@ -1,0 +1,39 @@
+{
+  "canonical_programme_file": "alpha_omega_commercial/programme.json",
+  "canonical_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+  "dependency_order_verified": true,
+  "external_maturity_gates_advanced": false,
+  "latest_operational_receipt": {
+    "artifact_digest": "sha256:8674a3e2a53e046270a1b4ee1b9ec2fb6c6e88a0430c53fc8f97960d3a6d27a4",
+    "artifact_id": 8894094769,
+    "google_drive_export_sha256": "6fe1f422eebbafc762028b8bcbeb003b20200b245d4f8cdd9c13d95054f63641",
+    "google_drive_release_file_id": "1t41v-CbmN4yALeo-NsENCMWQNF_LdGw5vOBrINLm4UA",
+    "implementation_pull_request": 150,
+    "merge_commit": "6afd09e31dcea910f4e64de59ca776aae834d261",
+    "workflow_job": 92006113662,
+    "workflow_run": 30913614473
+  },
+  "latest_verified_capability": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTCOME-RECONCILIATION-V14",
+  "owner_authority_effect": "UNCHANGED",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "projection_id": "AO-COMMERCIAL-PROGRAMME-EFFECTIVE-V14",
+  "self_service_saas_held": true,
+  "service_enabled_platform_prioritised": true,
+  "stage_maturity": {
+    "C03": "LOCAL_PROVIDER_SUBMISSION_AND_RECONCILIATION_CONTROL_VERIFIED_LIVE_AUTHORITY_BLOCKED",
+    "C06": "MANAGED_DISPATCH_UNKNOWN_OUTCOME_QUARANTINE_VERIFIED_LIVE_SLA_BLOCKED",
+    "C07": "MOCK_RECONCILIATION_ADAPTER_CONFORMANCE_VERIFIED_LIVE_PROVIDER_PROOF_REQUIRED",
+    "C11": "SERVICE_ENABLED_PLATFORM_VERIFIED_SELF_SERVICE_HELD",
+    "C14": "LOCAL_RETRY_SAFETY_VERIFIED_PRODUCTION_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "stage_scope": [
+    "C03",
+    "C06",
+    "C07",
+    "C11",
+    "C14",
+    "C15"
+  ],
+  "verified_live_revenue_events": 0
+}
