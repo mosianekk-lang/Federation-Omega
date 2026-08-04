@@ -101,7 +101,8 @@
     "owner_receipt_consumption": "HASH_LINKED_RESTART_SAFE",
     "external_evidence_admission": "HASH_LINKED_RESTART_SAFE",
     "authority_snapshot": "HASH_BOUND_FAIL_CLOSED",
-    "authority_snapshot_acceptance": "HASH_LINKED_MONOTONIC_RESTART_SAFE_CROSS_WORKER_SERIALIZED",
+    "authority_snapshot_acceptance": "HASH_LINKED_MONOTONIC_RESTART_SAFE",
+    "authority_snapshot_acceptance_serialization": "POSIX_FILE_LOCK_WITH_PROCESS_LOCAL_FALLBACK",
     "authority_action_binding": "HASH_BOUND_TO_LATEST_ACCEPTANCE_RESTART_SAFE",
     "tamper_policy": "FAIL_CLOSED"
   },
