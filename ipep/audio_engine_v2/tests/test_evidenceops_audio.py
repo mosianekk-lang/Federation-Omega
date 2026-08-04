@@ -69,7 +69,15 @@ class EvidenceOpsAudioTests(unittest.TestCase):
             engine = EvidenceOpsAudioEngine(root / "work", AudioManifest.from_dict(raw))
             receipt = engine.preflight()
             self.assertFalse(receipt["truth_boundary"]["transcript_created"])
-            self.assertEqual({p["provider"] for p in receipt["providers"]}, {"local_whisper_cpp", "google_speech_v2", "gemini_files_api"})
+            self.assertEqual(
+                {p["provider"] for p in receipt["providers"]},
+                {
+                    "local_whisper_cpp",
+                    "google_speech_v2",
+                    "openai_audio_transcriptions",
+                    "gemini_files_api",
+                },
+            )
 
     def test_resume_plan(self):
         with tempfile.TemporaryDirectory() as d:
