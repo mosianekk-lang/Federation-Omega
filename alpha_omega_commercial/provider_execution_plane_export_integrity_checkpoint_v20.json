@@ -1,0 +1,119 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-PROVIDER-EXECUTION-PLANE-EXPORT-INTEGRITY-V20",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "status": "PHOENIX_V3_1_EXPORT_PURITY_AND_FINAL_RECEIPT_INTEGRITY_VERIFIED",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "dependency_order_verified": true,
+  "implementation_release": {
+    "pull_request": 180,
+    "implementation_head": "bc1e8d99a46d8397422d4fda452168bd5da2c08a",
+    "merge_commit": "a14ac09e0beea83944afa8f397e309fe51fe3101",
+    "predecessor_provider_execution_plane_transition_pull_request": 163,
+    "release_reconciliation_pull_request": "TO_BE_BOUND_AFTER_PR_CREATION"
+  },
+  "operational_slice": {
+    "nested_github_workflows_excluded_at_any_depth": true,
+    "phoenix_migration_tests_excluded_from_core": true,
+    "export_generation_side_effect_free": true,
+    "unrelated_provider_dispatch_removed": true,
+    "provider_apply_performed": false,
+    "template_state_restoration": "REQUIRED_DURING_AUTHORISED_APPLY",
+    "complete_final_receipt_payload_hash_verified": true,
+    "v3_1_exact_provider_bound_force_with_lease_preserved": true
+  },
+  "provider_native_final_head_proof": {
+    "workflow": "Phoenix Emergency Execution Freeze",
+    "workflow_run": 30938774541,
+    "workflow_job": 92091524109,
+    "source_sha": "a14ac09e0beea83944afa8f397e309fe51fe3101",
+    "job_conclusion": "success",
+    "commit_status_context": "phoenix-freeze/verified",
+    "commit_status_state": "success",
+    "tests": {
+      "phoenix_exports": "4/4 PASS",
+      "provider_cutover_v2": "10/10 PASS",
+      "provider_cutover_v3": "10/10 PASS"
+    },
+    "execution_quarantine": {
+      "status": "VERIFIED",
+      "required_active_source_workflows": 3,
+      "unexpected_active_ordinary_workflows": 0,
+      "disabled_ordinary_workflows_after_readback": 140,
+      "provider_managed_dependabot_route": "SEPARATELY_CLASSIFIED",
+      "receipt_sha256": "ebc3b46f6c434b205e5b3aa358a20644c6ba6e2360f9f54ae77174d7f1b4b782"
+    }
+  },
+  "immutable_artifacts": {
+    "cutover_package": {
+      "artifact_id": 8904217522,
+      "artifact_name": "phoenix-cutover-package-v3-30938774541-1",
+      "artifact_digest": "sha256:a2ce5e65da4dcf0587a5393adade9c41b8ff5aa1f0db1c0c902d0875b44c2319",
+      "artifact_size_bytes": 892198,
+      "created_at": "2026-08-04T18:28:41Z",
+      "expires_at": "2026-11-02T18:28:28Z",
+      "core_archive_sha256": "1f1a35582ec9929bd049ddc1c3ad4c255e53e3e67551eef2f9995a8247d03ef2",
+      "core_archive_size_bytes": 880676,
+      "core_included_count": 831,
+      "core_excluded_count": 426,
+      "nested_workflow_count": 0,
+      "phoenix_migration_test_count": 0,
+      "ops_archive_sha256": "d483dc07db7d7d94ad45a2cfc2b270dca07e197e96d0612a8757dd4112235fe3",
+      "ops_archive_size_bytes": 10170,
+      "ops_included_count": 6,
+      "export_receipt_sha256": "6b41bc861e71363b706af890a6332f495a89e7b6b9c8c3b7ccd145cf79eb7f91",
+      "independent_hash_and_archive_readback": "VERIFIED"
+    },
+    "execution_freeze": {
+      "artifact_id": 8904216886,
+      "artifact_name": "phoenix-execution-freeze-30938774541-1",
+      "artifact_digest": "sha256:cfd70f34eee020cbec01a91bcf23bf0ad1758b606ba6026adc278159c771dd09",
+      "artifact_size_bytes": 760,
+      "receipt_sha256": "ebc3b46f6c434b205e5b3aa358a20644c6ba6e2360f9f54ae77174d7f1b4b782"
+    }
+  },
+  "repository_safety": {
+    "pull_request_airlock_run": 30938687108,
+    "pull_request_airlock_status": "SUCCESS",
+    "pull_request_leak_guard_run": 30938685553,
+    "pull_request_leak_guard_status": "SUCCESS",
+    "final_head_job_steps": "ALL_SUCCESS"
+  },
+  "private_google_drive_release": {
+    "file_id": "1bxLZ6XKdtRu_QoeiSly7SLzFogiS5gmp0fXdHmoFcdE",
+    "title": "Alpha Omega Provider Execution-Plane Export Integrity v20 — Verified Implementation Release — 2026-08-04",
+    "created_at": "2026-08-04T18:34:55.810Z",
+    "modified_at": "2026-08-04T18:35:24.859Z",
+    "export_mime_type": "text/plain",
+    "export_size_bytes": 4316,
+    "export_sha256": "97afa8956d43f077ed88dd24af947776ab66f2fd21dd40f5939ee6342fa2baa9",
+    "readback_verified": true,
+    "shared": false,
+    "owner": "mosianekk@gmail.com"
+  },
+  "institution_scope": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "commercial_truth": {
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true,
+    "private_execution_plane_cutover": "PROVIDER_BLOCKED_FRESH_AUTHORIZED_APPLY_REQUIRED",
+    "cloud_run_operation": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "verified_live_revenue_events": 0,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "private_execution_plane_provider_apply": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
