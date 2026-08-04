@@ -64,7 +64,7 @@ jobs:
           api = json.loads((root / 'canonical_commercial_api.json').read_text())
 
           assert release['status'] == 'AUTHORITY_ACTION_BINDING_RELEASE_VERIFIED_EXTERNAL_GATES_UNCHANGED'
-          assert release['receipt_sha256'] == 'fc4bf58cf95f1a1c5c12f19d15f00247f197ce351b124e1b63027f5122bb7b73'
+          assert release['receipt_sha256'] == '56e6764e3bd5082f8da07e3c8c8e9be9d71171f13b19a7c897d97db7c6f91e28'
           assert release['dependency']['implementation_pull_request'] == 125
           assert release['dependency']['implementation_merge_commit'] == '03418d4317603037e85bdb282c55385e4fbb9a03'
           assert release['final_head_provider_proof']['artifact_id'] == 8881364097
@@ -74,11 +74,12 @@ jobs:
           assert release['google_drive_release']['readback_sha256'] == '284ed00cf885c59f7eeea6a8a47535cc51af954d1ca1787eaa85cf1d33438732'
           assert release['google_drive_release']['readback_verified'] is True
           assert release['google_drive_release']['shared'] is False
-          assert all(release['effective_controls'].values()) is False if False else True
           assert release['effective_controls']['candidate_validation_grants_live_authority'] is False
           assert release['effective_controls']['stale_worker_view_can_authorize_action'] is False
           assert release['effective_controls']['superseded_snapshot_can_authorize_action'] is False
           assert release['effective_controls']['latest_durable_acceptance_required'] is True
+          assert release['effective_controls']['durable_refresh_before_every_decision'] is True
+          assert release['effective_controls']['cross_worker_serialization'] is True
           assert release['effective_controls']['action_binding_required'] is True
           assert all(value is False for value in release['external_gates'].values())
           assert release['commercial_truth']['verified_live_revenue_events'] == 0
