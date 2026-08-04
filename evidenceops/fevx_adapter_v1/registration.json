@@ -1,0 +1,22 @@
+{
+  "adapter_id": "evidenceops_fevx_adapter_v1",
+  "canonical_owner": "Federation Omega",
+  "canonical_runtime_state": "runtime/evidenceops_fevx_adapter/state/actual_state.json",
+  "cross_case_access": false,
+  "destructive_authority": false,
+  "domain_consumer": "EvidenceOps",
+  "external_effect_default": false,
+  "external_send_authority": false,
+  "financial_authority": false,
+  "initial_operation": "SUPERVISED_READ_ONLY_ANALYTICAL_SERVICE",
+  "integration_role": "SHARED_COGNITIVE_GOVERNANCE_AND_ASSURANCE_SERVICE",
+  "legal_authority": false,
+  "level_6_autonomy_granted": false,
+  "provider_result": "runtime/evidenceops_fevx_adapter/results/latest.json",
+  "registration_id": "FEDERATION-OMEGA-EVIDENCEOPS-FEVX-ADAPTER-V1",
+  "runtime_substrate": "GitHub Actions / Omega-Max SOL",
+  "source_write_authority": false,
+  "subsystem_id": "FEVX-CSE",
+  "trust_inheritance": false,
+  "verified_fact_write_authority": false
+}

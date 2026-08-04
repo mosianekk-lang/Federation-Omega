@@ -1,0 +1,13 @@
+{
+  "adapter_version": "1.0.0",
+  "branch_validation": "PASSED",
+  "combined_module_count": 20,
+  "external_effect": false,
+  "integration_state": "READY_FOR_PROVIDER_PR_CANARY",
+  "level_6_eligible": false,
+  "provider_verification": "PENDING",
+  "release_state": "CANDIDATE_NOT_CANONICAL",
+  "source_write": false,
+  "trust_inheritance": false,
+  "verified_fact_write": false
+}

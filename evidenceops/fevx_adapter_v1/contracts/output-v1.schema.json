@@ -1,0 +1,37 @@
+{
+  "$id": "https://federation-omega.local/evidenceops/fevx-adapter/output-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "properties": {
+    "authority": {
+      "properties": {
+        "cross_case_access": {"const": false},
+        "destructive_action": {"const": false},
+        "external_effect": {"const": false},
+        "external_send": {"const": false},
+        "financial_action": {"const": false},
+        "legal_filing": {"const": false},
+        "source_write": {"const": false},
+        "verified_fact_write": {"const": false}
+      },
+      "required": [
+        "external_effect", "source_write", "verified_fact_write",
+        "cross_case_access", "legal_filing", "external_send",
+        "financial_action", "destructive_action"
+      ],
+      "type": "object"
+    },
+    "combined_module_count": {"const": 20},
+    "fact_status": {"const": "DERIVED_NOT_FACT"},
+    "level_6_eligible": {"const": false},
+    "record_type": {"const": "DERIVED_ANALYTICAL_RECORD"},
+    "release_state": {"const": "HELD_FOR_EVIDENCEOPS_REVIEW"},
+    "schema": {"const": "EVIDENCEOPS_FEVX_DERIVED_OUTPUT_V1"}
+  },
+  "required": [
+    "schema", "record_type", "matter_id", "case_wall_id", "release_state",
+    "fact_status", "authority", "combined_module_count", "next_gate",
+    "level_6_eligible", "truth_boundary"
+  ],
+  "title": "EvidenceOps FEVX Derived Advisory Output",
+  "type": "object"
+}

@@ -1,0 +1,29 @@
+{
+  "current_state": "CANDIDATE_BRANCH_VALIDATED",
+  "external_effect": false,
+  "gate": "GITHUB_ACTIONS_PROVIDER_CANARY",
+  "held_functions": [
+    "external sending",
+    "legal filing",
+    "payments",
+    "public publishing",
+    "destructive actions",
+    "sensitive-data disclosure",
+    "material production deployment",
+    "source mutation",
+    "verified-fact write"
+  ],
+  "level_6_eligible": false,
+  "required_proof": [
+    "actual 20-module execution",
+    "20/20 provider checks",
+    "case-wall rejection",
+    "immutable source and fact manifests",
+    "idempotent recurrence",
+    "tamper detection",
+    "rollback and reapply",
+    "drift IN_SYNC",
+    "canonical provider receipt"
+  ],
+  "state": "READY_FOR_PROVIDER_EXECUTION"
+}

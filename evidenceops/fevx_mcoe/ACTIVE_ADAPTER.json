@@ -1,0 +1,15 @@
+{
+  "adapter": "evidenceops/fevx_adapter_v1",
+  "adapter_policy": "evidenceops/fevx_adapter_v1/POLICY.yaml",
+  "canonical_registration": "evidenceops/fevx_adapter_v1/registration.json",
+  "controlling_doctrine": "evidenceops/fevx_mcoe/POLICY.yaml",
+  "cross_case_access": false,
+  "external_effect": false,
+  "fact_write": false,
+  "integration_state": "PROVIDER_RECEIPT_REQUIRED",
+  "level_6_autonomy_granted": false,
+  "provider_result": "runtime/evidenceops_fevx_adapter/results/latest.json",
+  "source_write": false,
+  "trust_inheritance": false,
+  "version": 1
+}
