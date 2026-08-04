@@ -8,9 +8,12 @@ from .models import ConsensusWord, TranscriptHypothesis, WordHypothesis
 from .normalize import normalize_token, similarity
 
 
+Vote = tuple[WordHypothesis, float, str]
+
+
 @dataclass
 class _Slot:
-    votes: list[tuple[WordHypothesis, float]]
+    votes: list[Vote]
 
 
 def _align(anchor: tuple[WordHypothesis, ...], other: tuple[WordHypothesis, ...]) -> list[tuple[int | None, int | None]]:
@@ -73,12 +76,14 @@ def fuse(hypotheses: list[TranscriptHypothesis], review_threshold: float = 0.67)
     if not hypotheses:
         return []
     anchor_h = max(hypotheses, key=lambda h: (h.weight, len(h.words)))
-    slots = [_Slot([(word, anchor_h.weight * max(0.05, word.confidence))]) for word in anchor_h.words]
-    insertion_buckets: dict[int, list[tuple[WordHypothesis, float]]] = defaultdict(list)
+    anchor_family = anchor_h.architecture_family
+    slots = [_Slot([(word, anchor_h.weight * max(0.05, word.confidence), anchor_family)]) for word in anchor_h.words]
+    insertion_buckets: dict[int, list[Vote]] = defaultdict(list)
 
     for hypothesis in hypotheses:
         if hypothesis is anchor_h:
             continue
+        family = hypothesis.architecture_family
         pairs = _align(anchor_h.words, hypothesis.words)
         cursor = 0
         for ai, bi in pairs:
@@ -86,53 +91,54 @@ def fuse(hypotheses: list[TranscriptHypothesis], review_threshold: float = 0.67)
                 cursor = ai
             if ai is not None and bi is not None:
                 word = hypothesis.words[bi]
-                slots[ai].votes.append((word, hypothesis.weight * max(0.05, word.confidence)))
+                slots[ai].votes.append((word, hypothesis.weight * max(0.05, word.confidence), family))
             elif ai is None and bi is not None:
                 word = hypothesis.words[bi]
-                insertion_buckets[cursor].append((word, hypothesis.weight * max(0.05, word.confidence)))
+                insertion_buckets[cursor].append((word, hypothesis.weight * max(0.05, word.confidence), family))
 
     result: list[ConsensusWord] = []
+    total_hypothesis_weight = sum(h.weight for h in hypotheses)
     for index, slot in enumerate(slots):
         if index in insertion_buckets:
-            grouped: dict[str, list[tuple[WordHypothesis, float]]] = defaultdict(list)
-            for word, weight in insertion_buckets[index]:
-                grouped[normalize_token(word.text)].append((word, weight))
+            grouped: dict[str, list[Vote]] = defaultdict(list)
+            for word, weight, family in insertion_buckets[index]:
+                grouped[normalize_token(word.text)].append((word, weight, family))
             for key, votes in grouped.items():
                 if not key:
                     continue
-                support_models = {word.source for word, _ in votes if word.source}
-                weight = sum(v for _, v in votes)
-                total_hypothesis_weight = sum(h.weight for h in hypotheses)
-                if len(support_models) >= 2 or weight >= total_hypothesis_weight * 0.5:
+                support_families = {family for _, _, family in votes if family != "unknown"}
+                weight = sum(v for _, v, _ in votes)
+                if len(support_families) >= 2 or weight >= total_hypothesis_weight * 0.5:
                     result.append(_consensus_word(votes, review_threshold))
         result.append(_consensus_word(slot.votes, review_threshold))
     return result
 
 
-def _consensus_word(votes: list[tuple[WordHypothesis, float]], review_threshold: float) -> ConsensusWord:
-    grouped: dict[str, list[tuple[WordHypothesis, float]]] = defaultdict(list)
-    for word, weight in votes:
+def _consensus_word(votes: list[Vote], review_threshold: float) -> ConsensusWord:
+    grouped: dict[str, list[Vote]] = defaultdict(list)
+    for word, weight, family in votes:
         key = normalize_token(word.text)
         if key:
-            grouped[key].append((word, weight))
+            grouped[key].append((word, weight, family))
     if not grouped:
         fallback = votes[0][0]
-        return ConsensusWord(fallback.text, fallback.start, fallback.end, fallback.speaker, 0.0, (), (), True)
-    totals = {key: sum(weight for _, weight in items) for key, items in grouped.items()}
+        return ConsensusWord(fallback.text, fallback.start, fallback.end, fallback.speaker, 0.0, (), (), (), True)
+    totals = {key: sum(weight for _, weight, _ in items) for key, items in grouped.items()}
     winner_key = max(totals, key=totals.get)
     winner_votes = grouped[winner_key]
     total_weight = sum(totals.values())
     agreement = totals[winner_key] / total_weight if total_weight else 0.0
     representative = max(winner_votes, key=lambda item: item[1])[0]
     speaker_totals: dict[str, float] = defaultdict(float)
-    for word, weight in winner_votes:
+    for word, weight, _ in winner_votes:
         if word.speaker:
             speaker_totals[word.speaker] += weight
     speaker = max(speaker_totals, key=speaker_totals.get) if speaker_totals else representative.speaker
-    starts = [(word.start, weight) for word, weight in winner_votes if word.start is not None]
-    ends = [(word.end, weight) for word, weight in winner_votes if word.end is not None]
+    starts = [(word.start, weight) for word, weight, _ in winner_votes if word.start is not None]
+    ends = [(word.end, weight) for word, weight, _ in winner_votes if word.end is not None]
     alternatives = tuple(sorted(((key, value / total_weight) for key, value in totals.items()), key=lambda x: x[1], reverse=True))
-    sources = tuple(sorted({word.source for word, _ in winner_votes if word.source}))
+    sources = tuple(sorted({word.source for word, _, _ in winner_votes if word.source}))
+    families = tuple(sorted({family for _, _, family in winner_votes if family != "unknown"}))
     return ConsensusWord(
         text=representative.text,
         start=_weighted_median(starts),
@@ -141,5 +147,6 @@ def _consensus_word(votes: list[tuple[WordHypothesis, float]], review_threshold:
         agreement=round(agreement, 6),
         alternatives=alternatives,
         sources=sources,
-        needs_review=agreement < review_threshold or len(sources) < 2,
+        architecture_families=families,
+        needs_review=agreement < review_threshold or len(families) < 2,
     )
