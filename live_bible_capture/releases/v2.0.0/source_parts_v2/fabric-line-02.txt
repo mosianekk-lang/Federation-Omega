@@ -1,0 +1,126 @@
+        return sha256_text(previous + canonical_json(event_body))
+
+    def append(self, event: CaptureEvent) -> dict[str, Any]:
+        value = event.to_dict()
+        event_id = value["event_id"]
+        now = utcnow()
+        with self.connect() as db:
+            db.execute("BEGIN IMMEDIATE")
+            existing = db.execute("SELECT receipt_json FROM receipts WHERE event_id=?", (event_id,)).fetchone()
+            if existing:
+                db.execute("COMMIT")
+                receipt = json.loads(existing[0])
+                receipt["idempotent_replay"] = True
+                return receipt
+
+            equivalent = db.execute(
+                """
+                SELECT r.receipt_json
+                FROM events e
+                JOIN receipts r ON r.event_id=e.event_id
+                WHERE e.source_id=? AND e.conversation_id=? AND e.message_id=? AND e.content_sha256=?
+                """,
+                (
+                    value["source_id"],
+                    value["conversation_id"],
+                    value["message_id"],
+                    value["content_sha256"],
+                ),
+            ).fetchone()
+            if equivalent:
+                db.execute("COMMIT")
+                receipt = json.loads(equivalent[0])
+                receipt["idempotent_replay"] = True
+                receipt["equivalent_source_event"] = True
+                return receipt
+
+            head = db.execute(
+                "SELECT head_chain_hash,max_sequence,event_count FROM conversation_heads WHERE conversation_id=?",
+                (value["conversation_id"],),
+            ).fetchone()
+            previous_hash = head["head_chain_hash"] if head else ZERO_HASH
+            max_sequence = int(head["max_sequence"]) if head else 0
+            requested_sequence = value["sequence"]
+            sequence = int(requested_sequence) if requested_sequence is not None else max_sequence + 1
+            out_of_order = int(sequence <= max_sequence)
+            if sequence > max_sequence + 1:
+                for missing in range(max_sequence + 1, sequence):
+                    db.execute(
+                        "INSERT OR IGNORE INTO gaps(conversation_id,missing_sequence,detected_at) VALUES(?,?,?)",
+                        (value["conversation_id"], missing, now),
+                    )
+            db.execute(
+                "UPDATE gaps SET resolved_at=? WHERE conversation_id=? AND missing_sequence=? AND resolved_at IS NULL",
+                (now, value["conversation_id"], sequence),
+            )
+            value["sequence"] = sequence
+            event_body = {k: value[k] for k in value if k not in {"event_id"}}
+            event_body["sequence"] = sequence
+            chain_hash = self._chain_hash(previous_hash, event_body)
+            quarantined = int(bool(value["metadata"].get("secret_redaction", {}).get("applied")))
+            try:
+                db.execute(
+                    """
+                    INSERT INTO events(
+                      event_id,source_id,source_type,conversation_id,message_id,sequence,role,content,
+                      content_sha256,occurred_at,observed_at,privacy_tier,authority_class,case_wall,
+                      metadata_json,previous_chain_hash,chain_hash,out_of_order,quarantined,inserted_at
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        event_id,
+                        value["source_id"],
+                        value["source_type"],
+                        value["conversation_id"],
+                        value["message_id"],
+                        sequence,
+                        value["role"],
+                        value["content"],
+                        value["content_sha256"],
+                        value["occurred_at"],
+                        value["observed_at"],
+                        value["privacy_tier"],
+                        value["authority_class"],
+                        value["case_wall"],
+                        canonical_json(value["metadata"]),
+                        previous_hash,
+                        chain_hash,
+                        out_of_order,
+                        quarantined,
+                        now,
+                    ),
+                )
+            except sqlite3.IntegrityError as exc:
+                db.execute("ROLLBACK")
+                raise CaptureError("conflicting duplicate event detected") from exc
+            new_max = max(max_sequence, sequence)
+            event_count = (int(head["event_count"]) if head else 0) + 1
+            db.execute(
+                """
+                INSERT INTO conversation_heads(conversation_id,head_chain_hash,max_sequence,event_count,updated_at)
+                VALUES(?,?,?,?,?)
+                ON CONFLICT(conversation_id) DO UPDATE SET
+                  head_chain_hash=excluded.head_chain_hash,
+                  max_sequence=excluded.max_sequence,
+                  event_count=excluded.event_count,
+                  updated_at=excluded.updated_at
+                """,
+                (value["conversation_id"], chain_hash, new_max, event_count, now),
+            )
+            receipt_body = {
+                "schema": RECEIPT_SCHEMA,
+                "receipt_id": f"RCP-LBF-{event_id[:24]}",
+                "event_id": event_id,
+                "conversation_id": value["conversation_id"],
+                "sequence": sequence,
+                "content_sha256": value["content_sha256"],
+                "previous_chain_hash": previous_hash,
+                "chain_hash": chain_hash,
+                "state": "CAPTURED_LOCAL",
+                "out_of_order": bool(out_of_order),
+                "quarantined": bool(quarantined),
+                "external_effects": 0,
+                "created_at": now,
+            }
+            receipt_body["receipt_sha256"] = sha256_value(receipt_body)
+            db.execute(
