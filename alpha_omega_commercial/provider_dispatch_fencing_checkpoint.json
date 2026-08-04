@@ -1,6 +1,6 @@
 {
   "checkpoint_id": "AO-COMMERCIAL-PROVIDER-DISPATCH-FENCING-V13-CHECKPOINT",
-  "status": "PROVIDER_DISPATCH_RENEWAL_AND_FENCING_IMPLEMENTED_PROVIDER_CI_PENDING_EXTERNAL_GATES_UNCHANGED",
+  "status": "PROVIDER_DISPATCH_RENEWAL_AND_FENCING_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED",
   "dependency_checkpoint": {
     "preceding_pull_request": 142,
     "preceding_merge_commit": "45a4a9108039067491d3646e0c5168e57ab6ded8",
@@ -12,10 +12,12 @@
     "programme_dependency_order_verified": true,
     "institution_state_preserved": true
   },
-  "delivery_control": {
+  "implementation_release": {
     "implementation_head": "8d6080a34cd95138ac72f07a0b5eadbb366c28ff",
-    "provider_proof_pull_request_required": true,
-    "promotion_before_provider_proof_permitted": false,
+    "provider_proof_pull_request": 144,
+    "final_pull_request_head": "9b3dd3912104add4f696a08d489dcdbd77145ece",
+    "merge_commit": "e4f2eb27e6e32289dd2ab759f760c6c2ad7046bf",
+    "merged": true,
     "release_reconciliation_required": true
   },
   "candidate_projection": {
@@ -28,14 +30,69 @@
   },
   "operational_proof_gate": {
     "production_code": "IMPLEMENTED",
-    "tests": "PROVIDER_NATIVE_CI_PENDING",
+    "tests": "PROVIDER_NATIVE_CI_VERIFIED",
     "documentation": "IMPLEMENTED",
-    "mock_provider_fencing_conformance": "PROVIDER_NATIVE_CI_PENDING",
-    "lease_renewal": "PROVIDER_NATIVE_CI_PENDING",
-    "monotonic_dispatch_fencing": "PROVIDER_NATIVE_CI_PENDING",
+    "mock_provider_fencing_conformance": "PROVIDER_NATIVE_CI_VERIFIED",
+    "lease_renewal": "PROVIDER_NATIVE_CI_VERIFIED",
+    "monotonic_dispatch_fencing": "PROVIDER_NATIVE_CI_VERIFIED",
     "provider_native_fencing": "PROVIDER_PROOF_REQUIRED",
     "live_provider_receipt": "PROVIDER_PROOF_REQUIRED",
-    "external_mutation_performed": false
+    "external_mutation_performed": false,
+    "final_head_sha": "9b3dd3912104add4f696a08d489dcdbd77145ece",
+    "workflow_run": 30908421554,
+    "workflow_job": 91988902372,
+    "artifact_id": 8892003824,
+    "artifact_name": "alpha-omega-commercial-provider-dispatch-fencing-proof",
+    "artifact_digest": "sha256:93cc9cc29dca88d2ed883e5784f3065b566d260417931c31436d056af028fa60",
+    "artifact_created_at": "2026-08-04T12:17:30Z",
+    "artifact_expires_at": "2026-11-02T12:17:11Z",
+    "proof_receipt_file_sha256": "937a8f80db646d9af604b38d639f897dadff8744004382888354dcfef77a5dec",
+    "proof_receipt_sha256": "281d8fa441e7620411e5ab6a683af97958ae0c529d014dc3a9cce5000e2e8354",
+    "checks_required": 12,
+    "checks_failed": 0,
+    "job_steps_readback_verified": true
+  },
+  "final_head_regression_runs": {
+    "C01_C05": 30908421230,
+    "C06_C09": 30908421386,
+    "C10_C15": 30908425064,
+    "provider_authority": 30908421484,
+    "governed_authority": 30908421060,
+    "authority_snapshot": 30908421287,
+    "authority_snapshot_release": 30908421473,
+    "authority_anti_rollback": 30908421223,
+    "authority_action_binding": 30908421543,
+    "authority_action_binding_release": 30908421369,
+    "authority_action_atomicity": 30908421190,
+    "authority_crash_recovery": 30908421222,
+    "authority_crash_recovery_release": 30908421211,
+    "authority_journal": 30908421339,
+    "authority_journal_release": 30908421224,
+    "authority_coordination": 30908421274,
+    "authority_coordination_release": 30908421679,
+    "authority_idempotency": 30908421579,
+    "authority_idempotency_release": 30908421185,
+    "provider_dispatch_outbox": 30908421321,
+    "provider_dispatch_lease": 30908421232,
+    "provider_dispatch_lease_release": 30908421148,
+    "provider_dispatch_fencing": 30908421554,
+    "effective_programme_state": 30908421288,
+    "institution_reconciliation": 30908421285,
+    "canonical_api_reconciliation": 30908421687,
+    "superior_logic_ci": 30908423704,
+    "repository_leak_guard": 30908423726
+  },
+  "google_drive_release": {
+    "file_id": "1fHoNNFkbk4lQR220g46nF89Lf_LcicVYMCT9sTaHGrE",
+    "title": "Alpha Omega Commercial Provider Dispatch Renewal and Fencing v13 — Verified Release — 2026-08-04",
+    "created_time": "2026-08-04T12:18:57.605Z",
+    "modified_time": "2026-08-04T12:19:48.873Z",
+    "readback_verified": true,
+    "shared": false,
+    "owner": "mosianekk@gmail.com",
+    "export_mime_type": "text/plain",
+    "export_size_bytes": 6345,
+    "export_sha256": "83d3b14e3151be44e513addbc967d6c2588df76a768dfc158958cc3602839a50"
   },
   "institution_projection": {
     "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
@@ -81,5 +138,6 @@
     "external_communications": "OWNER_RESERVED",
     "consequential_releases": "OWNER_RESERVED",
     "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
-  }
+  },
+  "truth_boundary": "This checkpoint verifies the v13 local renewal and monotonic fencing control plane, provider-native GitHub Actions proof, immutable artifact and private Google Drive release readback. It does not prove provider-native fencing, external mutation, customer demand, contracts, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise assurance, partner adoption, an external customer case study, distributed provider exactly-once execution, production scale or full commercial maturity."
 }

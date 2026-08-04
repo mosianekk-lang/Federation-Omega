@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.0.0",
+  "version": "2.0.1",
   "mode": "DEFAULT_DENY",
   "required_platform_controls": {
     "target_branch": "main",
@@ -21,7 +21,8 @@
     ".github/workflows/superior-logic-ci.yml",
     ".github/workflows/evidenceops-fevx-adapter-verify.yml",
     ".github/workflows/ipep-audio-engine-v2-ci.yml",
-    ".github/workflows/evidenceops-pst-corpus-v2-fanout-observer.yml"
+    ".github/workflows/evidenceops-pst-corpus-v2-fanout-observer.yml",
+    ".github/workflows/alpha-omega-commercial-provider-dispatch-fencing-release.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
@@ -30,7 +31,8 @@
     ".github/workflows/superior-logic-ci.yml": ["pull_request", "push"],
     ".github/workflows/evidenceops-fevx-adapter-verify.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/ipep-audio-engine-v2-ci.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
-    ".github/workflows/evidenceops-pst-corpus-v2-fanout-observer.yml": ["workflow_run", "workflow_dispatch"]
+    ".github/workflows/evidenceops-pst-corpus-v2-fanout-observer.yml": ["workflow_run", "workflow_dispatch"],
+    ".github/workflows/alpha-omega-commercial-provider-dispatch-fencing-release.yml": ["pull_request", "push", "workflow_dispatch"]
   },
   "oidc_workflow_allowlist": [],
   "forbidden_repository_mutations": [
