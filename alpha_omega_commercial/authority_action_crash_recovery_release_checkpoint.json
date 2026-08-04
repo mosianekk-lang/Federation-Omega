@@ -1,0 +1,70 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "checkpoint_id": "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7-RELEASE-CHECKPOINT",
+  "status": "AUTHORITY_ACTION_CRASH_RECOVERY_RELEASE_RECONCILIATION_IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "implementation_release": {
+    "pull_request": 128,
+    "merge_commit": "ac6314279de32ffbc220e75c8c01c9b636e9c83c",
+    "release_receipt_sha256": "8c71342eb3e3b81bbe4783d59f6663638cd458c2852f0788996e8626b3c849dd"
+  },
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "provider_proof": {
+    "workflow_run": 30884518082,
+    "artifact_id": 8882538570,
+    "artifact_digest": "sha256:1fe56ab8b12f88b691230748b3b9a550b321423a734ca2a210b11f5cb797baae",
+    "checks_required": 14,
+    "checks_failed": 0
+  },
+  "google_drive_release": {
+    "file_id": "18jpciwkXdRXwqAH-9OWn30wSVjFnaRIPe05GHCqZ-rA",
+    "revision_id": "AIroW36fIabzWJPC2E4DtjvDrWeAsAM4L1E4hqhQEn770J2Td7ctDwBvy2D6h186YSt2lXnoezftcIiHC1EvUnTrIlt-EnUqlMwXN2c0PLQ",
+    "readback_sha256": "0a937afcbf4ab1c385296b6b99c53541bb3c814e17f6b009278da566e876bd12",
+    "readback_length": 4057,
+    "readback_verified": true,
+    "shared": false
+  },
+  "canonical_api": {
+    "api_id": "AO-COMMERCIAL-CANONICAL-API-V3",
+    "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7",
+    "current_canonical_class": "CrashSafeAtomicAuthoritySnapshotCommercialControlPlane"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "commercial_truth": {
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true,
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "payment_provider_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "operational_proof_gate": {
+    "provider_native_ci": "REQUIRED",
+    "release_receipt_integrity": "REQUIRED",
+    "drive_readback_binding": "REQUIRED",
+    "repository_safety_checks": "REQUIRED",
+    "merge_allowed": false
+  },
+  "external_gate_effect": "UNCHANGED"
+}
