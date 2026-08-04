@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Phoenix exports with the dual-authority provider cutover v3 engine."""
+"""Build Phoenix exports with the dual-authority v3.1 exact-lease engine."""
 
 from __future__ import annotations
 
@@ -20,7 +20,23 @@ sys.modules[V2_SPEC.name] = V2
 V2_SPEC.loader.exec_module(V2)
 
 
-def stage_ops_v3(
+def _include(
+    source: Path,
+    destination: Path,
+    export_path: str,
+    reason: str,
+) -> V2.BASE.FileRecord:
+    V2.BASE.copy_file(source, destination / export_path)
+    return V2.BASE.FileRecord(
+        path=export_path,
+        size=source.stat().st_size,
+        sha256=V2.BASE.sha256_file(source),
+        classification="OPS_INCLUDED",
+        reason=reason,
+    )
+
+
+def stage_ops_v3_1(
     root: Path, stage: Path, policy: dict
 ) -> list[V2.BASE.FileRecord]:
     template = root / policy["ops"]["template_prefix"]
@@ -32,28 +48,31 @@ def stage_ops_v3(
         if not path.is_file():
             continue
         rel = path.relative_to(template).as_posix()
-        V2.BASE.copy_file(path, stage / rel)
         records.append(
-            V2.BASE.FileRecord(
-                path=rel,
-                size=path.stat().st_size,
-                sha256=V2.BASE.sha256_file(path),
-                classification="OPS_INCLUDED",
-                reason="APPROVED_OPS_TEMPLATE",
-            )
+            _include(path, stage, rel, "APPROVED_OPS_TEMPLATE")
         )
 
-    cutover = root / "phoenix" / "provider_cutover_v3.py"
-    if not cutover.is_file():
-        raise RuntimeError(f"Provider cutover v3 missing: {cutover}")
-    V2.BASE.copy_file(cutover, stage / "provider_cutover.py")
+    entrypoint = root / "phoenix" / "provider_cutover_v3_1.py"
+    base = root / "phoenix" / "provider_cutover_v3.py"
+    if not entrypoint.is_file():
+        raise RuntimeError(f"Provider cutover v3.1 missing: {entrypoint}")
+    if not base.is_file():
+        raise RuntimeError(f"Provider cutover v3 base missing: {base}")
+
     records.append(
-        V2.BASE.FileRecord(
-            path="provider_cutover.py",
-            size=cutover.stat().st_size,
-            sha256=V2.BASE.sha256_file(cutover),
-            classification="OPS_INCLUDED",
-            reason="DUAL_AUTHORITY_PROVIDER_CUTOVER_V3",
+        _include(
+            entrypoint,
+            stage,
+            "provider_cutover.py",
+            "DUAL_AUTHORITY_PROVIDER_CUTOVER_V3_1_EXACT_LEASE",
+        )
+    )
+    records.append(
+        _include(
+            base,
+            stage,
+            "provider_cutover_v3_base.py",
+            "VERIFIED_PROVIDER_CUTOVER_V3_BASE",
         )
     )
 
@@ -81,18 +100,22 @@ def main() -> int:
     policy = args.policy if args.policy.is_absolute() else root / args.policy
     output = args.output if args.output.is_absolute() else root / args.output
 
-    V2.BASE.stage_ops = stage_ops_v3
+    V2.BASE.stage_ops = stage_ops_v3_1
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
-        "version": "3",
+        "version": "3.1",
         "authority_models": [
             "INSTALLATION_TEMPLATE",
             "USER_SCOPED",
         ],
         "installation_template_endpoint": (
-            f"/repos/{receipt.get('source_repository', 'mosianekk-lang/Federation-Omega')}"
-            "/generate"
+            "/repos/mosianekk-lang/Federation-Omega/generate"
         ),
+        "template_generated_main_replacement": (
+            "EXACT_PROVIDER_BOUND_FORCE_WITH_LEASE"
+        ),
+        "entrypoint": "provider_cutover.py",
+        "base_controller": "provider_cutover_v3_base.py",
         "temporary_template_state_restored": True,
         "credential_value_recorded": False,
     }
