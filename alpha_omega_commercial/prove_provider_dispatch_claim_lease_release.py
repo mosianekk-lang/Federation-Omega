@@ -18,6 +18,7 @@ def prove(output: Path) -> dict:
     projection = load(root / "canonical_commercial_api_effective_v12.json")
     programme = load(root / "programme.json")
     institution = load(root / "institution_reconciliation_checkpoint.json")
+    stages = {stage["id"]: stage for stage in programme["stages"]}
 
     release = checkpoint["implementation_release"]
     proof = checkpoint["operational_proof_gate"]
@@ -72,12 +73,17 @@ def prove(output: Path) -> dict:
         == "PROVIDER_NATIVE_CI_VERIFIED",
         "service_platform_first_is_preserved": projection["service_model"]
         == "SERVICE_ENABLED_PLATFORM_FIRST"
-        and projection["self_service_saas"] == "HELD",
+        and projection["self_service_saas"] == "HELD"
+        and "service-enabled platform" in programme["objective"]
+        and "before promoting self-service SaaS" in programme["objective"],
         "canonical_programme_external_gates_remain_open_not_promoted": programme[
             "canonical_status"
         ]
         == "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
-        and programme["strategy"]["service_enabled_platform_first"] is True,
+        and stages["C11"]["status"]
+        == "SERVICE_ENABLED_PLATFORM_VERIFIED_CANONICAL_CLOUD_ROUTE_ALIGNED_SELF_SERVICE_HELD"
+        and stages["C15"]["status"]
+        == "COMMERCIAL_READINESS_VERIFIED_CANONICAL_PROVIDER_ROUTE_ALIGNED_EXTERNAL_MATURITY_GATES_OPEN",
         "institution_scope_is_preserved": checkpoint["dependency_checkpoint"][
             "institution_state_preserved"
         ]
