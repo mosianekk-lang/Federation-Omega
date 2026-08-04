@@ -1,0 +1,25 @@
+{
+  "schema": "FEDOMEGA-PHOENIX-PROVIDER-AUTHORITY-PROBE-CONTRACT-1",
+  "probe_entrypoint": "provider_authority_probe.py",
+  "probe_get_only": true,
+  "credential_source": "GH_ADMIN_TOKEN_PRIVATE_PROCESS_ONLY",
+  "credential_value_recorded": false,
+  "provider_mutation_performed": false,
+  "user_scoped_route": {
+    "identity_endpoint": "/user",
+    "repository_creation_endpoint": "/user/repos",
+    "owner_identity_required": true,
+    "legacy_admin_required": true
+  },
+  "installation_template_route": {
+    "identity_endpoint": "/installation",
+    "repository_selection_required": "all",
+    "administration_permission_required": "write",
+    "contents_permission_required": "write",
+    "metadata_permission_required": "read",
+    "source_repository_access_required": true
+  },
+  "selected_repository_installation_status": "AUTHORITY_BLOCKED_EXACT_REMEDIATION_REQUIRED",
+  "owner_authorization_still_required": true,
+  "authority_receipt_required_before_apply": true
+}

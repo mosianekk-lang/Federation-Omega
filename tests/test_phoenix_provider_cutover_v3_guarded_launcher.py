@@ -39,7 +39,9 @@ class GuardedLauncherTests(unittest.TestCase):
 
     def load_launcher(self, stage: Path):
         name = f"guarded_launcher_test_{id(stage)}"
-        spec = importlib.util.spec_from_file_location(name, stage / "provider_cutover_guarded.py")
+        spec = importlib.util.spec_from_file_location(
+            name, stage / "provider_cutover_guarded.py"
+        )
         assert spec and spec.loader
         module = importlib.util.module_from_spec(spec)
         sys.modules[name] = module
@@ -71,7 +73,9 @@ class GuardedLauncherTests(unittest.TestCase):
             core.write_bytes(b"core")
             ops.write_bytes(b"ops")
             state = Path(directory) / "state"
-            with self.assertRaisesRegex(launcher.GuardError, "moved after authorization"):
+            with self.assertRaisesRegex(
+                launcher.GuardError, "moved after authorization"
+            ):
                 launcher.execute_guarded_cutover(
                     self.decision(core, ops),
                     state_dir=state,
@@ -97,7 +101,11 @@ class GuardedLauncherTests(unittest.TestCase):
                 return types.SimpleNamespace(returncode=0)
 
             launcher.subprocess.run = fake_run
-            command = [sys.executable, str(stage / "provider_cutover_v3_1.py"), "--apply"]
+            command = [
+                sys.executable,
+                str(stage / "provider_cutover_v3_1.py"),
+                "--apply",
+            ]
             result = launcher.guarded_runner(
                 SOURCE_SHA,
                 "mosianekk-lang",
@@ -107,12 +115,16 @@ class GuardedLauncherTests(unittest.TestCase):
             self.assertEqual(0, result)
             self.assertEqual(1, len(calls))
             guarded, environment = calls[0]
-            self.assertEqual("provider_cutover_v3_live_guard.py", Path(guarded[1]).name)
+            self.assertEqual(
+                "provider_cutover_v3_live_guard.py", Path(guarded[1]).name
+            )
             self.assertEqual(["--expected-source-sha", SOURCE_SHA], guarded[-2:])
             self.assertEqual("1", environment["FEDOMEGA_GUARDED_APPLY"])
 
     def test_provider_controller_checks_head_after_authority_before_mutation(self) -> None:
-        text = (TEMPLATE / "provider_cutover_v3_live_guard.py").read_text(encoding="utf-8")
+        text = (TEMPLATE / "provider_cutover_v3_live_guard.py").read_text(
+            encoding="utf-8"
+        )
         authority = text.index("authority = ORIGINAL_DETECT")
         live_ref = text.index("/git/ref/heads/main")
         dispatch = text.index("return V31.main()")
@@ -123,14 +135,22 @@ class GuardedLauncherTests(unittest.TestCase):
 
     def test_contract_names_canonical_route_without_false_block_claim(self) -> None:
         contract = json.loads(
-            (TEMPLATE / "governance" / "APPLY_ENTRYPOINT.json").read_text(encoding="utf-8")
+            (TEMPLATE / "governance" / "APPLY_ENTRYPOINT.json").read_text(
+                encoding="utf-8"
+            )
         )
-        self.assertEqual("provider_cutover_candidate.py", contract["canonical_apply_entrypoint"])
-        self.assertEqual("provider_cutover_guarded.py", contract["guarded_entrypoint"])
+        self.assertEqual(
+            "provider_cutover_authority_bound.py",
+            contract["canonical_apply_entrypoint"],
+        )
+        self.assertEqual(
+            "provider_cutover_candidate.py", contract["candidate_entrypoint"]
+        )
         self.assertEqual(
             "INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY",
-            contract["guarded_entrypoint_status"],
+            contract["candidate_entrypoint_status"],
         )
+        self.assertTrue(contract["provider_authority_receipt_required"])
         self.assertEqual(
             "DEPRECATED_NON_CANONICAL_DO_NOT_APPLY_DIRECTLY",
             contract["legacy_entrypoint_status"],
@@ -142,9 +162,15 @@ class GuardedLauncherTests(unittest.TestCase):
         self.assertTrue(contract["provider_receipt_source_sha_binding"])
 
     def test_guarded_receipt_requires_authorized_source_sha(self) -> None:
-        text = (TEMPLATE / "provider_cutover_guarded.py").read_text(encoding="utf-8")
-        self.assertIn('receipt.get("source_sha") != preflight.get("source_sha")', text)
-        self.assertIn("provider receipt source_sha does not match authorized source", text)
+        text = (TEMPLATE / "provider_cutover_guarded.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn(
+            'receipt.get("source_sha") != preflight.get("source_sha")', text
+        )
+        self.assertIn(
+            "provider receipt source_sha does not match authorized source", text
+        )
 
 
 if __name__ == "__main__":

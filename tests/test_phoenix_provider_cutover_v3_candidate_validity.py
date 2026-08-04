@@ -23,10 +23,13 @@ class CandidateValidityTests(unittest.TestCase):
         stage = Path(directory) / "ops"
         (stage / "governance").mkdir(parents=True)
         copies = {
+            TEMPLATE / "provider_cutover_authority_bound.py": stage / "provider_cutover_authority_bound.py",
+            TEMPLATE / "provider_authority_probe.py": stage / "provider_authority_probe.py",
             TEMPLATE / "provider_cutover_candidate.py": stage / "provider_cutover_candidate.py",
             TEMPLATE / "provider_cutover_guarded.py": stage / "provider_cutover_guarded.py",
             TEMPLATE / "provider_cutover_v3_live_guard.py": stage / "provider_cutover_v3_live_guard.py",
             TEMPLATE / "governance" / "CUTOVER_CANDIDATE_CONTRACT.json": stage / "governance" / "CUTOVER_CANDIDATE_CONTRACT.json",
+            TEMPLATE / "governance" / "PROVIDER_AUTHORITY_PROBE_CONTRACT.json": stage / "governance" / "PROVIDER_AUTHORITY_PROBE_CONTRACT.json",
             TEMPLATE / "governance" / "APPLY_ENTRYPOINT.json": stage / "governance" / "APPLY_ENTRYPOINT.json",
             PHOENIX / "provider_cutover_authorized_executor.py": stage / "provider_cutover.py",
             PHOENIX / "provider_cutover_authorization_use.py": stage / "provider_cutover_authorization_use.py",
@@ -41,7 +44,9 @@ class CandidateValidityTests(unittest.TestCase):
 
     def load_candidate(self, stage: Path):
         name = f"candidate_validity_test_{id(stage)}"
-        spec = importlib.util.spec_from_file_location(name, stage / "provider_cutover_candidate.py")
+        spec = importlib.util.spec_from_file_location(
+            name, stage / "provider_cutover_candidate.py"
+        )
         assert spec and spec.loader
         module = importlib.util.module_from_spec(spec)
         sys.modules[name] = module
@@ -56,7 +61,9 @@ class CandidateValidityTests(unittest.TestCase):
             "core": {"sha256": hashlib.sha256(core.read_bytes()).hexdigest()},
             "ops": {"sha256": hashlib.sha256(ops.read_bytes()).hexdigest()},
         }
-        canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+        canonical = json.dumps(
+            receipt, sort_keys=True, separators=(",", ":")
+        ).encode()
         receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
         path = directory / "export-receipt.json"
         path.write_text(json.dumps(receipt), encoding="utf-8")
@@ -103,7 +110,9 @@ class CandidateValidityTests(unittest.TestCase):
             candidate = self.make_candidate(module, Path(directory), core, ops)
             module.verify_candidate_integrity(candidate)
             self.assertEqual("COMPUTED_NOT_STORED", candidate["validity_semantics"])
-            self.assertEqual("PROPOSED_FOR_PROVIDER_APPLY", candidate["candidate_state"])
+            self.assertEqual(
+                "PROPOSED_FOR_PROVIDER_APPLY", candidate["candidate_state"]
+            )
             self.assertFalse(candidate["provider_apply_performed"])
 
     def test_source_drift_invalidates_before_authorization_state(self):
@@ -129,7 +138,10 @@ class CandidateValidityTests(unittest.TestCase):
                 source_head_reader=lambda _owner, _legacy: MOVED_SHA,
             )
             self.assertEqual("CANDIDATE_INVALIDATED", result["status"])
-            self.assertEqual("SUPERSEDED_SOURCE_CHANGED", result["candidate_validity"]["status"])
+            self.assertEqual(
+                "SUPERSEDED_SOURCE_CHANGED",
+                result["candidate_validity"]["status"],
+            )
             self.assertFalse(state.exists())
             self.assertFalse(result["provider_apply_invoked"])
 
@@ -143,7 +155,12 @@ class CandidateValidityTests(unittest.TestCase):
             ops.write_bytes(b"ops")
             candidate = self.make_candidate(module, Path(directory), core, ops)
             core.write_bytes(b"changed")
-            validity = module.validate_candidate(candidate, core_archive=core, ops_archive=ops, decision=self.decision(candidate))
+            validity = module.validate_candidate(
+                candidate,
+                core_archive=core,
+                ops_archive=ops,
+                decision=self.decision(candidate),
+            )
             self.assertEqual("SUPERSEDED_CORE_ARCHIVE_CHANGED", validity["status"])
             self.assertFalse(validity["provider_apply_allowed"])
 
@@ -158,7 +175,9 @@ class CandidateValidityTests(unittest.TestCase):
             candidate = self.make_candidate(module, Path(directory), core, ops)
             decision = self.decision(candidate)
             decision["ops_archive_sha256"] = "f" * 64
-            validity = module.validate_candidate(candidate, core_archive=core, ops_archive=ops, decision=decision)
+            validity = module.validate_candidate(
+                candidate, core_archive=core, ops_archive=ops, decision=decision
+            )
             self.assertEqual("INVALID_DECISION_OPS_BINDING", validity["status"])
 
     def test_candidate_tamper_is_rejected(self):
@@ -174,14 +193,39 @@ class CandidateValidityTests(unittest.TestCase):
             with self.assertRaisesRegex(module.CandidateValidityError, "embedded SHA"):
                 module.verify_candidate_integrity(candidate)
 
-    def test_contract_names_candidate_launcher_as_canonical(self):
-        contract = json.loads((TEMPLATE / "governance" / "CUTOVER_CANDIDATE_CONTRACT.json").read_text())
-        entrypoint = json.loads((TEMPLATE / "governance" / "APPLY_ENTRYPOINT.json").read_text())
-        self.assertEqual("provider_cutover_candidate.py", contract["canonical_apply_entrypoint"])
+    def test_contract_names_authority_bound_launcher_as_canonical(self):
+        contract = json.loads(
+            (
+                TEMPLATE / "governance" / "CUTOVER_CANDIDATE_CONTRACT.json"
+            ).read_text()
+        )
+        entrypoint = json.loads(
+            (TEMPLATE / "governance" / "APPLY_ENTRYPOINT.json").read_text()
+        )
+        self.assertEqual(
+            "provider_cutover_authority_bound.py",
+            contract["canonical_apply_entrypoint"],
+        )
+        self.assertEqual(
+            "provider_cutover_candidate.py",
+            contract["candidate_validator_entrypoint"],
+        )
         self.assertTrue(contract["candidate_generated_after_merge"])
         self.assertTrue(contract["validity_computed_not_stored"])
-        self.assertEqual("provider_cutover_candidate.py", entrypoint["canonical_apply_entrypoint"])
-        self.assertEqual("INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY", entrypoint["guarded_entrypoint_status"])
+        self.assertTrue(contract["provider_authority_receipt_required"])
+        self.assertEqual(
+            "provider_cutover_authority_bound.py",
+            entrypoint["canonical_apply_entrypoint"],
+        )
+        self.assertEqual(
+            "provider_cutover_candidate.py",
+            entrypoint["candidate_entrypoint"],
+        )
+        self.assertTrue(entrypoint["provider_authority_receipt_required"])
+        self.assertEqual(
+            "INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY",
+            entrypoint["guarded_entrypoint_status"],
+        )
 
 
 if __name__ == "__main__":

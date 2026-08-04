@@ -1,8 +1,10 @@
 {
   "candidate_contract": "governance/CUTOVER_CANDIDATE_CONTRACT.json",
+  "candidate_entrypoint": "provider_cutover_candidate.py",
+  "candidate_entrypoint_status": "INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY",
   "candidate_manifest_required": true,
   "candidate_validity_computed_not_stored": true,
-  "canonical_apply_entrypoint": "provider_cutover_candidate.py",
+  "canonical_apply_entrypoint": "provider_cutover_authority_bound.py",
   "core_archive_drift_invalidates": true,
   "credential_value_recorded": false,
   "guarded_entrypoint": "provider_cutover_guarded.py",
@@ -15,7 +17,12 @@
   "post_apply_started_live_source_recheck": true,
   "pre_mutation_provider_head_check": true,
   "pre_reservation_live_source_check": true,
+  "provider_authority_probe": "provider_authority_probe.py",
+  "provider_authority_probe_contract": "governance/PROVIDER_AUTHORITY_PROBE_CONTRACT.json",
+  "provider_authority_probe_get_only": true,
+  "provider_authority_receipt_required": true,
+  "provider_authority_selected_repository_installation_blocked": true,
   "provider_receipt_source_sha_binding": true,
-  "schema": "FEDOMEGA-PHOENIX-OPS-APPLY-ENTRYPOINT-2",
+  "schema": "FEDOMEGA-PHOENIX-OPS-APPLY-ENTRYPOINT-3",
   "source_drift_invalidates": true
 }
