@@ -14,9 +14,9 @@
     {"logical_relpath":"04_INDEX/retrieval_map.jsonl","drive_file_id":"1omOkBvf3RgT23JWbRW84K6_ZtrtltiQm"},
     {"logical_relpath":"04_INDEX/search_packs.json","drive_file_id":"1SwVVYNuKNjI6P80jn3J4Jx4yiuwe3JiD"},
     {"logical_relpath":"04_INDEX/shards.json","drive_file_id":"1MKqxOwQNolrTCNAUKlDszyESP9z-V0L7"},
-    {"logical_relpath":"05_SEARCH_PACKS/Corpus_Search_Pack_0001.txt","drive_file_id":"1R0-E5NC0ZGOR0TKb-KnlJyuwPllKphwb"},
-    {"logical_relpath":"05_SEARCH_PACKS/Corpus_Search_Pack_0002.txt","drive_file_id":"1yLFHvyx857JpQY9zWm-ziAcKHpWEeodh"},
-    {"logical_relpath":"05_SEARCH_PACKS/Corpus_Search_Pack_0003.txt","drive_file_id":"1kFsBp14HNaT8dpOaqk0qGx4rdK7R51l-"},
+    {"logical_relpath":"05_SEARCH_PACKS/Search_Pack_0001.txt","drive_file_id":"1R0-E5NC0ZGOR0TKb-KnlJyuwPllKphwb"},
+    {"logical_relpath":"05_SEARCH_PACKS/Search_Pack_0002.txt","drive_file_id":"1yLFHvyx857JpQY9zWm-ziAcKHpWEeodh"},
+    {"logical_relpath":"05_SEARCH_PACKS/Search_Pack_0003.txt","drive_file_id":"1kFsBp14HNaT8dpOaqk0qGx4rdK7R51l-"},
     {"logical_relpath":"07_LOGS/parser.stderr.log","drive_file_id":"1RExK5mQPsZWtgkqB-tcH-3-k41NY4SCY"},
     {"logical_relpath":"07_LOGS/parser.stdout.log","drive_file_id":"1b84Yp8oAQc7rYiucs-i1g2p-oJhpQJUz"}
   ]
