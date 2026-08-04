@@ -43,7 +43,7 @@ jobs:
         if: steps.auth.outcome == 'success'
         id: setup_gcloud
         continue-on-error: true
-        uses: google-github-actions/setup-gcloud@v2
+        uses: google-github-actions/setup-gcloud@v3
         with:
           project_id: ${{ env.PROJECT_ID }}
 
