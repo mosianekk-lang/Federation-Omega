@@ -1,11 +1,17 @@
 {
-  "commit": "a024294cb0203b85cd7551f21cc7ee1245411796",
+  "commit": "53d4fc2a87e3965f8a310e74b420ea674485b131",
   "compile": "PASS",
   "package": "ipep-audio-engine-v2-source.zip",
-  "package_sha256": "26f761339e701c331e5af085bfce58168e9c111304a7e0a8df3989731ae387fc",
-  "package_size_bytes": 12675,
+  "package_sha256": "3cdc2b9442d874204dae04d3f0c2db693b36fb6cb9dc9767e01655bcbfbd5c72",
+  "package_size_bytes": 16523,
+  "providers": [
+    "google_speech_v2",
+    "openai_audio_transcriptions",
+    "gemini_files_api",
+    "local_whisper_cpp"
+  ],
   "receipt": "IPEP-AUDIO-ENGINE-V2-CI",
-  "recorded_at": "2026-08-04T00:10:05.565375+00:00",
+  "recorded_at": "2026-08-04T00:32:15.081795+00:00",
   "tests": "7/7 PASS",
   "truth_boundary": {
     "provider_deployed": false,
