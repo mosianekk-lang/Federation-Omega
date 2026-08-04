@@ -1,0 +1,143 @@
+ "privacy_tier": row["privacy_tier"],
+                "authority_class": row["authority_class"],
+                "case_wall": row["case_wall"],
+                "metadata": row["metadata"],
+            }
+            expected = self._chain_hash(previous, body)
+            if row["previous_chain_hash"] != previous or row["chain_hash"] != expected:
+                failures.append(
+                    {
+                        "event_id": row["event_id"],
+                        "stored_previous": row["previous_chain_hash"],
+                        "expected_previous": previous,
+                        "stored_chain": row["chain_hash"],
+                        "expected_chain": expected,
+                    }
+                )
+            previous = row["chain_hash"]
+        return {
+            "conversation_id": conversation_id,
+            "event_count": len(rows),
+            "valid": not failures,
+            "failures": failures,
+            "head_chain_hash": previous,
+            "unresolved_gaps": self.unresolved_gaps(conversation_id),
+            "database_quick_check": self.quick_check(),
+        }
+
+    def record_dead_letter(self, source_ref: str, payload: Any, error: str) -> str:
+        now = utcnow()
+        payload_hash = sha256_value(payload)
+        dead_id = sha256_value({"source_ref": source_ref, "payload_sha256": payload_hash, "error": error, "at": now})
+        with self.connect() as db:
+            db.execute(
+                "INSERT INTO dead_letters(dead_letter_id,source_ref,error,payload_sha256,created_at) VALUES(?,?,?,?,?)",
+                (dead_id, source_ref, error[:2000], payload_hash, now),
+            )
+        return dead_id
+
+
+class LiveBibleEngine:
+    def __init__(self, store: EventStore, output_dir: str | Path):
+        self.store = store
+        self.output_dir = Path(output_dir).expanduser().resolve()
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(self.output_dir, 0o700)
+        except OSError:
+            pass
+
+    def ingest(self, payload: CaptureEvent | dict[str, Any]) -> dict[str, Any]:
+        event = payload if isinstance(payload, CaptureEvent) else CaptureEvent.from_dict(payload)
+        receipt = self.store.append(event)
+        self.project(event.conversation_id)
+        return receipt
+
+    def ingest_many(self, payloads: Iterable[CaptureEvent | dict[str, Any]]) -> list[dict[str, Any]]:
+        receipts = []
+        conversations: set[str] = set()
+        for payload in payloads:
+            event = payload if isinstance(payload, CaptureEvent) else CaptureEvent.from_dict(payload)
+            receipts.append(self.store.append(event))
+            conversations.add(event.conversation_id)
+        for conversation_id in sorted(conversations):
+            self.project(conversation_id)
+        return receipts
+
+    def project(self, conversation_id: str) -> dict[str, str]:
+        conversation_id = _safe_id("conversation_id", conversation_id)
+        rows = self.store.events(conversation_id)
+        directory = self.output_dir / conversation_id.replace("/", "_")
+        directory.mkdir(parents=True, exist_ok=True)
+        jsonl_path = directory / "events.jsonl"
+        md_path = directory / "LIVE_BIBLE.md"
+        state_path = directory / "CURRENT_STATE.json"
+        jsonl = "\n".join(canonical_json(row) for row in rows) + ("\n" if rows else "")
+        jsonl_path.write_text(jsonl, encoding="utf-8")
+        lines = [f"# LIVE BIBLE — {conversation_id}", "", f"Generated: {utcnow()}", ""]
+        for row in rows:
+            marker = " [QUARANTINED/REDACTED]" if row["quarantined"] else ""
+            lines.extend(
+                [
+                    f"## {row['sequence']:06d} · {row['role'].upper()}{marker}",
+                    "",
+                    f"- Occurred: `{row['occurred_at']}`",
+                    f"- Source: `{row['source_type']} / {row['source_id']}`",
+                    f"- Message ID: `{row['message_id']}`",
+                    f"- Event ID: `{row['event_id']}`",
+                    f"- Privacy: `{row['privacy_tier']}`",
+                    f"- Case wall: `{row['case_wall']}`",
+                    "",
+                    row["content"],
+                    "",
+                ]
+            )
+        md_path.write_text("\n".join(lines), encoding="utf-8")
+        verification = self.store.verify_chain(conversation_id)
+        state = {
+            "schema": "FEDERATION-LIVE-BIBLE-STATE-2",
+            "conversation_id": conversation_id,
+            "event_count": len(rows),
+            "head_chain_hash": verification["head_chain_hash"],
+            "chain_valid": verification["valid"],
+            "unresolved_gaps": verification["unresolved_gaps"],
+            "database_quick_check": verification["database_quick_check"],
+            "updated_at": utcnow(),
+            "truth_boundary": (
+                "This projection contains only events received through configured source adapters. "
+                "It does not imply invisible access to messages that no adapter supplied."
+            ),
+        }
+        state_path.write_text(json.dumps(state, indent=2), encoding="utf-8")
+        return {"markdown": str(md_path), "jsonl": str(jsonl_path), "state": str(state_path)}
+
+    def import_export(self, path: str | Path, source_id: str = "chat-export") -> list[dict[str, Any]]:
+        source_path = Path(path).expanduser().resolve()
+        try:
+            value = json.loads(source_path.read_text(encoding="utf-8"))
+        except (OSError, json.JSONDecodeError) as exc:
+            raise CaptureError("cannot read chat export") from exc
+        if isinstance(value, dict):
+            conversation_id = str(value.get("conversation_id") or value.get("id") or source_path.stem)
+            messages = value.get("messages") or value.get("events")
+        else:
+            conversation_id = source_path.stem
+            messages = value
+        if not isinstance(messages, list):
+            raise CaptureError("chat export must contain a messages list")
+        events: list[CaptureEvent] = []
+        for index, message in enumerate(messages, start=1):
+            if not isinstance(message, dict):
+                raise CaptureError("chat export message must be an object")
+            content = message.get("content")
+            if isinstance(content, list):
+                content = "\n".join(str(part.get("text", part)) if isinstance(part, dict) else str(part) for part in content)
+            occurred = message.get("occurred_at") or message.get("created_at") or message.get("timestamp") or utcnow()
+            events.append(
+                CaptureEvent(
+                    source_id=source_id,
+                    source_type="CHAT_EXPORT",
+                    conversation_id=conversation_id,
+                    message_id=str(message.get("message_id") or message.get("id") or f"export-{index}"),
+                    sequence=int(message.get("sequence") or index),
+                    role=str(mes
