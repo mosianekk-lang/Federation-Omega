@@ -102,18 +102,26 @@ jobs:
           api = json.loads((root / 'canonical_commercial_api_effective_v15.json').read_text())
           maturity = json.loads((root / 'programme_maturity_effective_v15.json').read_text())
           predecessor = json.loads((root / 'provider_dispatch_outcome_reconciliation_release_checkpoint.json').read_text())
-          assert checkpoint['status'] in {
-              'IMPLEMENTED_PROVIDER_NATIVE_CI_PENDING',
-              'PROVIDER_RECONCILIATION_CHALLENGE_BINDING_PROVIDER_PROOF_VERIFIED',
-          }
+          assert checkpoint['status'] == 'PROVIDER_RECONCILIATION_CHALLENGE_BINDING_PROVIDER_PROOF_VERIFIED'
           assert checkpoint['dependency_predecessor']['pull_request'] == 151
           assert checkpoint['dependency_predecessor']['merge_commit'] == 'd61219cc28806e4d08bc46a5243b4ee72b3190f1'
           assert checkpoint['dependency_predecessor']['google_drive_file_id'] == '1RkHNK4WDim8BKjEvd-_lUF_EIeA6zqrMAcFhNZGF-30'
           assert checkpoint['dependency_predecessor']['google_drive_readback_verified'] is True
           assert 'PROVIDER_PROOF_VERIFIED' in predecessor['status']
+          provider = checkpoint['provider_native_ci']
+          assert provider['workflow_run'] == 30918336416
+          assert provider['workflow_job'] == 92022106243
+          assert provider['artifact_id'] == 8895992684
+          assert provider['artifact_digest'] == 'sha256:7590efea353a1f891dda829022434dc136b9141a0caf03474d95d0952a713118'
+          assert provider['checks_required'] == 12 and provider['checks_failed'] == 0
+          assert provider['all_job_steps_passed'] is True
+          assert provider['artifact_inspected'] is True
+          assert api['status'] == 'SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_CHALLENGE_PROVIDER_PROOF_VERIFIED'
           assert api['canonical_class'] == 'ChallengeBoundProviderDispatchCommercialControlPlane'
+          assert api['controls']['restart_safe_state_verification'] is True
           assert api['controls']['provider_native_reconciliation'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
           assert api['external_maturity_gates_advanced'] is False
+          assert maturity['advanced_internal_slice']['status'] == 'PROVIDER_RECONCILIATION_CHALLENGE_BINDING_PROVIDER_PROOF_VERIFIED'
           assert maturity['verified_live_revenue_events'] == 0
           assert maturity['full_commercial_maturity'] is False
           assert maturity['service_enabled_platform_first'] is True
@@ -128,6 +136,7 @@ jobs:
 
           roots = [
               Path('alpha_omega_commercial/provider_reconciliation_challenge.py'),
+              Path('alpha_omega_commercial/provider_reconciliation_challenge_safe.py'),
               Path('alpha_omega_commercial/test_provider_reconciliation_challenge.py'),
               Path('alpha_omega_commercial/prove_provider_reconciliation_challenge.py'),
               Path('alpha_omega_commercial/provider_reconciliation_challenge_checkpoint.json'),
