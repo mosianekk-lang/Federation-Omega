@@ -1,0 +1,43 @@
+{
+  "atomic_action_rules": {
+    "commercial_ledger_restored_on_failure": true,
+    "commercial_state_restored_on_failure": true,
+    "external_evidence_state_restored_on_failure": true,
+    "governed_owner_receipt_state_restored_on_failure": true,
+    "nested_transactions_rejected": true,
+    "partial_state_visible_after_failure": false,
+    "provider_authority_held_for_full_action": true,
+    "successful_action_sealed_to_transaction": true,
+    "transaction_ledger_hash_linked": true,
+    "transaction_ledger_restart_safe": true
+  },
+  "canonical_class": "AtomicAuthoritySnapshotCommercialControlPlane",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6",
+  "depends_on": [
+    "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5"
+  ],
+  "external_gate_effect": "UNCHANGED",
+  "full_commercial_maturity": false,
+  "owner_authority_effect": "UNCHANGED",
+  "predecessor_class": "AuthoritySnapshotCommercialControlPlane",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "provider_boundary": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY"
+  },
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "transaction_events": [
+    "ACTION_PREPARED",
+    "ACTION_COMMITTED",
+    "ACTION_ROLLED_BACK"
+  ],
+  "verified_live_revenue_events": 0
+}
