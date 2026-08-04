@@ -1,0 +1,71 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12-CHECKPOINT",
+  "status": "PROVIDER_DISPATCH_LOCAL_LEASE_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "dependency_checkpoint": {
+    "preceding_pull_request": 140,
+    "preceding_merge_commit": "65e19e2643e4b6aa50bb5b9aba111f66d15cb814",
+    "preceding_capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTBOX-V11",
+    "preceding_drive_file_id": "12eJAEZ288nj5z6TZNz1F_tzgQjvZwHyzRPWAl8sZb24",
+    "preceding_drive_readback_verified": true,
+    "programme_dependency_order_verified": true,
+    "institution_state_preserved": true
+  },
+  "candidate_projection": {
+    "capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12",
+    "canonical_class": "LeasedProviderDispatchOutboxCommercialControlPlane",
+    "predecessor_class": "ProviderDispatchOutboxCommercialControlPlane",
+    "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true
+  },
+  "operational_proof_gate": {
+    "production_code": "VERIFIED",
+    "tests": "PROVIDER_NATIVE_CI_VERIFIED",
+    "documentation": "VERIFIED",
+    "mock_provider_conformance": "PROVIDER_NATIVE_CI_VERIFIED",
+    "local_dispatch_claim_lease": "PROVIDER_NATIVE_CI_VERIFIED",
+    "live_provider_receipt": "PROVIDER_PROOF_REQUIRED",
+    "external_mutation_performed": false,
+    "implementation_evidence_head_sha": "55ea41b8bba4111b5b8c9d5573c39e502898f348",
+    "workflow_run": 30903772387,
+    "workflow_job": 91973971011,
+    "artifact_id": 8890156297,
+    "artifact_name": "alpha-omega-commercial-provider-dispatch-lease-proof",
+    "artifact_digest": "sha256:8529723e47a4167db6bd61f131af1cfaffc6dc8737195f51dec7ec7ee4c75e74",
+    "artifact_created_at": "2026-08-04T11:11:29Z",
+    "artifact_expires_at": "2026-11-02T11:11:21Z",
+    "checks_required": 12,
+    "checks_failed": 0,
+    "all_job_steps_conclusion": "success"
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "customer_demand_proven": false,
+    "signed_customer_contract_proven": false,
+    "payment_provider_operation_proven": false,
+    "cloud_run_operation_proven": false,
+    "enterprise_attestation_proven": false,
+    "partner_adoption_proven": false,
+    "external_customer_case_study_proven": false,
+    "production_scale_proven": false,
+    "distributed_provider_exactly_once_proven": false,
+    "full_commercial_maturity": false
+  },
+  "external_gates": {
+    "customer_demand_and_price_acceptance": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue_receipt": false,
+    "live_cloud_provider_execution": false,
+    "enterprise_assurance_or_certification": false,
+    "partner_adoption": false,
+    "external_customer_case_study": false,
+    "production_scale_and_recovery_evidence": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}

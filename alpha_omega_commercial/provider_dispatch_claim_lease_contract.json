@@ -1,0 +1,34 @@
+{
+  "control_id": "AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "depends_on": {
+    "pull_request": 140,
+    "merge_commit": "65e19e2643e4b6aa50bb5b9aba111f66d15cb814",
+    "capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTBOX-V11",
+    "google_drive_release_file_id": "12eJAEZ288nj5z6TZNz1F_tzgQjvZwHyzRPWAl8sZb24",
+    "google_drive_release_readback_verified": true
+  },
+  "claim_rules": {
+    "prepared_v11_dispatch_required": true,
+    "one_active_local_worker_per_dispatch": true,
+    "same_worker_claim_retry_is_idempotent": true,
+    "competing_worker_blocked_until_expiry_or_abandonment": true,
+    "bounded_lease_required": true,
+    "minimum_lease_seconds": 5,
+    "maximum_lease_seconds": 900,
+    "expired_claim_takeover_supported": true,
+    "stale_claim_token_rejected": true,
+    "receipt_requires_current_unexpired_claim": true,
+    "hash_chained_claim_history_required": true,
+    "local_duplicate_dispatch_prevented": true,
+    "live_provider_receipt_requires_concrete_native_verifier": true,
+    "distributed_provider_exactly_once_proven": false
+  },
+  "service_enabled_platform_prioritised": true,
+  "self_service_saas_held": true,
+  "verified_live_revenue_events": 0,
+  "external_maturity_gates_advanced": false,
+  "institution_state_preserved": true,
+  "owner_reserved_authority_preserved": true,
+  "full_commercial_maturity": false
+}
