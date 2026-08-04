@@ -11,7 +11,7 @@ permissions:
   statuses: write
 
 concurrency:
-  group: phoenix-emergency-execution-freeze
+  group: federation-omega-airlock-${{ github.ref }}
   cancel-in-progress: false
 
 jobs:
@@ -36,6 +36,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3.py' -v
           python -m unittest discover -s tests -p 'test_pst_composite_runtime_contract.py' -v
+          python -m unittest discover -s tests -p 'test_pst_artifact_redirect_boundary.py' -v
 
       - name: Build source-clean Core and private Ops exports
         run: |
@@ -221,7 +222,7 @@ jobs:
             /tmp/pst-composite-run/deployment_manifests/
           (
             cd /tmp/pst-composite-run
-            python "${GITHUB_WORKSPACE}/ops/evidenceops_pst_v2_composite_verify.py"
+            python "${GITHUB_WORKSPACE}/ops/run_evidenceops_pst_v2_composite_verify.py"
           )
           cp /tmp/pst-composite-run/deployment_receipts/*.json \
             phoenix-export-output/pst-completion/
