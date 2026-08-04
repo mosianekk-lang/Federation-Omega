@@ -1,0 +1,50 @@
+{
+  "projection_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V18",
+  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_RECOVERY_COMPLETION_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-COMPLETION-V18",
+  "canonical_class": "ReceiptJournaledRecoverableProviderDispatchCommercialControlPlane",
+  "predecessor_class": "RecoverableVaultedProviderDispatchCommercialControlPlane",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "controls": {
+    "content_addressed_recovery_completion_receipt": true,
+    "atomic_recovery_completion_receipt_publication": true,
+    "post_resolution_receipt_repair": true,
+    "exact_retry_returns_verified_receipt": true,
+    "completion_receipt_tamper_detection": true,
+    "reconciliation_reexecution_on_receipt_repair": false,
+    "provider_native_reconciliation": "NOT_PROVEN",
+    "distributed_provider_exactly_once": "NOT_PROVEN"
+  },
+  "implementation_provider_proof": {
+    "state": "PENDING"
+  },
+  "predecessor_google_drive_release": {
+    "file_id": "18SwQIrE6KL39qkKKlvxM_aTxXzZLoWac82LLLX5qf1M",
+    "modified_time": "2026-08-04T16:11:53.471Z",
+    "readback_verified": true,
+    "shared": false
+  },
+  "service_enabled_platform_prioritised": true,
+  "self_service_saas_held": true,
+  "verified_live_revenue_events": 0,
+  "external_gates": {
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run_operation": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "external_customer_case_study": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "full_commercial_maturity": false,
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}
