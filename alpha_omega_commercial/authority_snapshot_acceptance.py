@@ -2,9 +2,16 @@ from __future__ import annotations
 
 import json
 import os
+import threading
+from contextlib import contextmanager
 from dataclasses import dataclass
 from pathlib import Path
-from typing import Any, Mapping
+from typing import Any, Iterator, Mapping
+
+try:
+    import fcntl
+except ImportError:  # pragma: no cover - POSIX is used by provider runtimes
+    fcntl = None
 
 from authority_snapshot import (
     CommercialAuthoritySnapshot,
@@ -32,16 +39,42 @@ class AuthoritySnapshotAcceptanceLedger:
     Snapshot validity alone is not enough: an older, still-unexpired snapshot must
     not be replayed after a newer snapshot has already been accepted. This ledger
     maintains a hash-linked, restart-safe acceptance history and rejects temporal
-    rollback, snapshot-ID equivocation and source-ledger rollback.
+    rollback, snapshot-ID equivocation and source-ledger rollback. Every decision
+    refreshes from durable state under a provider-process file lock so a long-lived
+    worker cannot authorize against a stale in-memory ledger view.
     """
 
     FILE_NAME = "authority_snapshot_acceptance_ledger.jsonl"
+    LOCK_FILE_NAME = "authority_snapshot_acceptance.lock"
+    _fallback_locks: dict[str, threading.RLock] = {}
+    _fallback_locks_guard = threading.Lock()
 
     def __init__(self, state_dir: str | Path) -> None:
         self.state_dir = Path(state_dir)
         self.state_dir.mkdir(parents=True, exist_ok=True)
         self.path = self.state_dir / self.FILE_NAME
-        self.entries = self._load_entries()
+        self.lock_path = self.state_dir / self.LOCK_FILE_NAME
+        lock_key = str(self.lock_path.resolve())
+        with self._fallback_locks_guard:
+            self._fallback_lock = self._fallback_locks.setdefault(
+                lock_key, threading.RLock()
+            )
+        with self._locked():
+            self.entries = self._load_entries()
+
+    @contextmanager
+    def _locked(self) -> Iterator[None]:
+        """Serialize refresh/decision/write across workers sharing the state path."""
+
+        with self._fallback_lock:
+            with self.lock_path.open("a+", encoding="utf-8") as handle:
+                if fcntl is not None:
+                    fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+                try:
+                    yield
+                finally:
+                    if fcntl is not None:
+                        fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
 
     @staticmethod
     def _entry_payload(entry: Mapping[str, Any]) -> dict[str, Any]:
@@ -104,6 +137,9 @@ class AuthoritySnapshotAcceptanceLedger:
             entries.append(entry)
         return entries
 
+    def _refresh(self) -> None:
+        self.entries = self._load_entries()
+
     def _validate_snapshot(
         self,
         snapshot: CommercialAuthoritySnapshot,
@@ -126,7 +162,7 @@ class AuthoritySnapshotAcceptanceLedger:
             reasons.extend(decision.reasons)
         return sorted(set(reasons))
 
-    def preview(
+    def _preview_current(
         self,
         snapshot: CommercialAuthoritySnapshot | None,
         validator: CommercialAuthoritySnapshotValidator,
@@ -220,6 +256,23 @@ class AuthoritySnapshotAcceptanceLedger:
             latest_snapshot_sha256=latest.get("snapshot_sha256") if latest else None,
         )
 
+    def preview(
+        self,
+        snapshot: CommercialAuthoritySnapshot | None,
+        validator: CommercialAuthoritySnapshotValidator,
+        *,
+        required_scope: Mapping[str, tuple[str, ...]],
+        now: str,
+    ) -> AuthoritySnapshotAcceptanceDecision:
+        with self._locked():
+            self._refresh()
+            return self._preview_current(
+                snapshot,
+                validator,
+                required_scope=required_scope,
+                now=now,
+            )
+
     def accept(
         self,
         snapshot: CommercialAuthoritySnapshot | None,
@@ -228,46 +281,52 @@ class AuthoritySnapshotAcceptanceLedger:
         required_scope: Mapping[str, tuple[str, ...]],
         now: str,
     ) -> dict[str, Any]:
-        decision = self.preview(
-            snapshot,
-            validator,
-            required_scope=required_scope,
-            now=now,
-        )
-        if not decision.valid:
-            raise PermissionError(
-                "authority snapshot acceptance failed: " + ",".join(decision.reasons)
+        with self._locked():
+            self._refresh()
+            decision = self._preview_current(
+                snapshot,
+                validator,
+                required_scope=required_scope,
+                now=now,
             )
-        if decision.idempotent:
-            assert self.entries
-            return dict(self.entries[-1])
-        assert snapshot is not None
+            if not decision.valid:
+                raise PermissionError(
+                    "authority snapshot acceptance failed: "
+                    + ",".join(decision.reasons)
+                )
+            if decision.idempotent:
+                assert self.entries
+                return dict(self.entries[-1])
+            assert snapshot is not None
 
-        previous = self.entries[-1]["entry_sha256"] if self.entries else "GENESIS"
-        entry: dict[str, Any] = {
-            "sequence": len(self.entries) + 1,
-            "event": "AUTHORITY_SNAPSHOT_ACCEPTED",
-            "snapshot_id": snapshot.snapshot_id,
-            "snapshot_sha256": snapshot.snapshot_sha256,
-            "generated_at": snapshot.generated_at,
-            "expires_at": snapshot.expires_at,
-            "source_projection_sha256": snapshot.source_projection_sha256,
-            "source_ledger_head": snapshot.source_ledger_head,
-            "domain_evidence_sha256": {
-                domain: lease.evidence_sha256
-                for domain, lease in sorted(snapshot.domains.items())
-            },
-            "accepted_at": now,
-            "previous_entry_sha256": previous,
-        }
-        entry["entry_sha256"] = self._expected_entry_sha256(entry)
+            previous = self.entries[-1]["entry_sha256"] if self.entries else "GENESIS"
+            entry: dict[str, Any] = {
+                "sequence": len(self.entries) + 1,
+                "event": "AUTHORITY_SNAPSHOT_ACCEPTED",
+                "snapshot_id": snapshot.snapshot_id,
+                "snapshot_sha256": snapshot.snapshot_sha256,
+                "generated_at": snapshot.generated_at,
+                "expires_at": snapshot.expires_at,
+                "source_projection_sha256": snapshot.source_projection_sha256,
+                "source_ledger_head": snapshot.source_ledger_head,
+                "domain_evidence_sha256": {
+                    domain: lease.evidence_sha256
+                    for domain, lease in sorted(snapshot.domains.items())
+                },
+                "accepted_at": now,
+                "previous_entry_sha256": previous,
+            }
+            entry["entry_sha256"] = self._expected_entry_sha256(entry)
 
-        with self.path.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(entry, sort_keys=True, separators=(",", ":")) + "\n")
-            handle.flush()
-            os.fsync(handle.fileno())
-        self.entries.append(entry)
-        return dict(entry)
+            with self.path.open("a", encoding="utf-8") as handle:
+                handle.write(
+                    json.dumps(entry, sort_keys=True, separators=(",", ":"))
+                    + "\n"
+                )
+                handle.flush()
+                os.fsync(handle.fileno())
+            self.entries.append(entry)
+            return dict(entry)
 
     def latest_accepted(
         self,
@@ -284,26 +343,29 @@ class AuthoritySnapshotAcceptanceLedger:
         latest durable acceptance entry exactly.
         """
 
-        decision = self.preview(
-            snapshot,
-            validator,
-            required_scope=required_scope,
-            now=now,
-        )
-        if not decision.valid:
-            raise PermissionError(
-                "authority snapshot use failed: " + ",".join(decision.reasons)
+        with self._locked():
+            self._refresh()
+            decision = self._preview_current(
+                snapshot,
+                validator,
+                required_scope=required_scope,
+                now=now,
             )
-        if snapshot is None or not self.entries:
-            raise PermissionError(
-                "authority snapshot use failed: AUTHORITY_SNAPSHOT_NOT_ACCEPTED"
-            )
-        latest = self.entries[-1]
-        if latest["snapshot_sha256"] != snapshot.snapshot_sha256:
-            raise PermissionError(
-                "authority snapshot use failed: AUTHORITY_SNAPSHOT_NOT_LATEST_ACCEPTED"
-            )
-        return dict(latest)
+            if not decision.valid:
+                raise PermissionError(
+                    "authority snapshot use failed: " + ",".join(decision.reasons)
+                )
+            if snapshot is None or not self.entries:
+                raise PermissionError(
+                    "authority snapshot use failed: AUTHORITY_SNAPSHOT_NOT_ACCEPTED"
+                )
+            latest = self.entries[-1]
+            if latest["snapshot_sha256"] != snapshot.snapshot_sha256:
+                raise PermissionError(
+                    "authority snapshot use failed: "
+                    "AUTHORITY_SNAPSHOT_NOT_LATEST_ACCEPTED"
+                )
+            return dict(latest)
 
     def is_latest_accepted(
         self,
@@ -332,33 +394,46 @@ class AuthoritySnapshotAcceptanceLedger:
         required_scope: Mapping[str, tuple[str, ...]],
         now: str,
     ) -> dict[str, Any]:
-        decision = self.preview(
-            snapshot,
-            validator,
-            required_scope=required_scope,
-            now=now,
-        )
-        latest = self.entries[-1] if self.entries else None
-        candidate_latest_accepted = bool(
-            decision.valid
-            and snapshot is not None
-            and latest is not None
-            and latest["snapshot_sha256"] == snapshot.snapshot_sha256
-        )
-        return {
-            "ledger_file": self.FILE_NAME,
-            "integrity": "VERIFIED" if self.entries or not self.path.exists() else "EMPTY",
-            "entries": len(self.entries),
-            "latest_snapshot_id": latest["snapshot_id"] if latest else None,
-            "latest_snapshot_sha256": latest["snapshot_sha256"] if latest else None,
-            "latest_entry_sha256": latest["entry_sha256"] if latest else "GENESIS",
-            "candidate_valid": decision.valid,
-            "candidate_idempotent": decision.idempotent,
-            "candidate_latest_accepted": candidate_latest_accepted,
-            "candidate_reasons": list(decision.reasons),
-            "anti_rollback_enforced": True,
-            "snapshot_id_conflict_rejected": True,
-            "source_ledger_rollback_rejected": True,
-            "preview_validation_grants_live_authority": False,
-            "consequential_use_requires_latest_acceptance": True,
-        }
+        with self._locked():
+            self._refresh()
+            decision = self._preview_current(
+                snapshot,
+                validator,
+                required_scope=required_scope,
+                now=now,
+            )
+            latest = self.entries[-1] if self.entries else None
+            candidate_latest_accepted = bool(
+                decision.valid
+                and snapshot is not None
+                and latest is not None
+                and latest["snapshot_sha256"] == snapshot.snapshot_sha256
+            )
+            return {
+                "ledger_file": self.FILE_NAME,
+                "lock_file": self.LOCK_FILE_NAME,
+                "integrity": (
+                    "VERIFIED" if self.entries or not self.path.exists() else "EMPTY"
+                ),
+                "entries": len(self.entries),
+                "latest_snapshot_id": latest["snapshot_id"] if latest else None,
+                "latest_snapshot_sha256": (
+                    latest["snapshot_sha256"] if latest else None
+                ),
+                "latest_entry_sha256": (
+                    latest["entry_sha256"] if latest else "GENESIS"
+                ),
+                "candidate_valid": decision.valid,
+                "candidate_idempotent": decision.idempotent,
+                "candidate_latest_accepted": candidate_latest_accepted,
+                "candidate_reasons": list(decision.reasons),
+                "anti_rollback_enforced": True,
+                "snapshot_id_conflict_rejected": True,
+                "source_ledger_rollback_rejected": True,
+                "durable_refresh_before_decision": True,
+                "cross_worker_serialization": (
+                    "POSIX_FILE_LOCK" if fcntl is not None else "PROCESS_LOCAL_LOCK"
+                ),
+                "preview_validation_grants_live_authority": False,
+                "consequential_use_requires_latest_acceptance": True,
+            }
