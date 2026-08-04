@@ -1,0 +1,138 @@
+                "INSERT INTO receipts(receipt_id,event_id,state,receipt_json,created_at) VALUES(?,?,?,?,?)",
+                (
+                    receipt_body["receipt_id"],
+                    event_id,
+                    receipt_body["state"],
+                    canonical_json(receipt_body),
+                    now,
+                ),
+            )
+            db.execute("COMMIT")
+            return receipt_body
+
+    def events(self, conversation_id: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT * FROM events"
+        params: tuple[Any, ...] = ()
+        if conversation_id:
+            query += " WHERE conversation_id=?"
+            params = (conversation_id,)
+        query += " ORDER BY conversation_id,sequence,occurred_at,event_id"
+        with self.connect() as db:
+            rows = db.execute(query, params).fetchall()
+        output: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["metadata"] = json.loads(item.pop("metadata_json"))
+            item["out_of_order"] = bool(item["out_of_order"])
+            item["quarantined"] = bool(item["quarantined"])
+            output.append(item)
+        return output
+
+    def _chain_events(self, conversation_id: str) -> list[dict[str, Any]]:
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT rowid AS append_index,* FROM events WHERE conversation_id=? ORDER BY rowid",
+                (conversation_id,),
+            ).fetchall()
+        output: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["metadata"] = json.loads(item.pop("metadata_json"))
+            item["out_of_order"] = bool(item["out_of_order"])
+            item["quarantined"] = bool(item["quarantined"])
+            output.append(item)
+        return output
+
+    def unresolved_gaps(self, conversation_id: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT conversation_id,missing_sequence,detected_at FROM gaps WHERE resolved_at IS NULL"
+        params: tuple[Any, ...] = ()
+        if conversation_id:
+            query += " AND conversation_id=?"
+            params = (conversation_id,)
+        query += " ORDER BY conversation_id,missing_sequence"
+        with self.connect() as db:
+            return [dict(row) for row in db.execute(query, params).fetchall()]
+
+    def verify_chain(self, conversation_id: str) -> dict[str, Any]:
+        rows = self._chain_events(conversation_id)
+        previous = ZERO_HASH
+        failures: list[dict[str, Any]] = []
+        for row in rows:
+            body = {
+                "schema": SCHEMA,
+                "source_id": row["source_id"],
+                "source_type": row["source_type"],
+                "conversation_id": row["conversation_id"],
+                "message_id": row["message_id"],
+                "sequence": row["sequence"],
+                "role": row["role"],
+                "content": row["content"],
+                "content_sha256": row["content_sha256"],
+                "occurred_at": row["occurred_at"],
+                "observed_at": row["observed_at"],
+                "privacy_tier": row["privacy_tier"],
+                "authority_class": row["authority_class"],
+                "case_wall": row["case_wall"],
+                "metadata": row["metadata"],
+            }
+            expected = self._chain_hash(previous, body)
+            if row["previous_chain_hash"] != previous or row["chain_hash"] != expected:
+                failures.append(
+                    {
+                        "event_id": row["event_id"],
+                        "stored_previous": row["previous_chain_hash"],
+                        "expected_previous": previous,
+                        "stored_chain": row["chain_hash"],
+                        "expected_chain": expected,
+                    }
+                )
+            previous = row["chain_hash"]
+        return {
+            "conversation_id": conversation_id,
+            "event_count": len(rows),
+            "valid": not failures,
+            "failures": failures,
+            "head_chain_hash": previous,
+            "unresolved_gaps": self.unresolved_gaps(conversation_id),
+            "database_quick_check": self.quick_check(),
+        }
+
+    def record_dead_letter(self, source_ref: str, payload: Any, error: str) -> str:
+        now = utcnow()
+        payload_hash = sha256_value(payload)
+        dead_id = sha256_value({"source_ref": source_ref, "payload_sha256": payload_hash, "error": error, "at": now})
+        with self.connect() as db:
+            db.execute(
+                "INSERT INTO dead_letters(dead_letter_id,source_ref,error,payload_sha256,created_at) VALUES(?,?,?,?,?)",
+                (dead_id, source_ref, error[:2000], payload_hash, now),
+            )
+        return dead_id
+
+
+class LiveBibleEngine:
+    def __init__(self, store: EventStore, output_dir: str | Path):
+        self.store = store
+        self.output_dir = Path(output_dir).expanduser().resolve()
+        self.output_dir.mkdir(parents=True, exist_ok=True)
+        try:
+            os.chmod(self.output_dir, 0o700)
+        except OSError:
+            pass
+
+    def ingest(self, payload: CaptureEvent | dict[str, Any]) -> dict[str, Any]:
+        event = payload if isinstance(payload, CaptureEvent) else CaptureEvent.from_dict(payload)
+        receipt = self.store.append(event)
+        self.project(event.conversation_id)
+        return receipt
+
+    def ingest_many(self, payloads: Iterable[CaptureEvent | dict[str, Any]]) -> list[dict[str, Any]]:
+        receipts = []
+        conversations: set[str] = set()
+        for payload in payloads:
+            event = payload if isinstance(payload, CaptureEvent) else CaptureEvent.from_dict(payload)
+            receipts.append(self.store.append(event))
+            conversations.add(event.conversation_id)
+        for conversation_id in sorted(conversations):
+            self.project(conversation_id)
+        return receipts
+
