@@ -3,8 +3,10 @@ from __future__ import annotations
 import argparse
 import hashlib
 import json
+import shutil
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parent
@@ -22,11 +24,16 @@ def main() -> int:
     args = parser.parse_args()
     descriptor = json.loads((ROOT / "release_descriptor.json").read_text())
     manifest = json.loads((ROOT / "SOURCE_MANIFEST.json").read_text())
-    source = ROOT / descriptor["source_root"]
+    assembled = Path(tempfile.mkdtemp(prefix="lbf-v2-source-"))
+    shutil.copytree(ROOT / descriptor["source_root"], assembled, dirs_exist_ok=True)
+    for target, parts in descriptor.get("split_files", {}).items():
+        target_path = assembled / target
+        target_path.parent.mkdir(parents=True, exist_ok=True)
+        target_path.write_text("".join((ROOT / part).read_text() for part in parts))
     assert manifest["version"] == descriptor["version"]
     assert manifest["file_count"] == len(manifest["files"])
     for relative, expected in manifest["files"].items():
-        path = source / relative
+        path = assembled / relative
         assert path.is_file(), relative
         assert sha256(path) == expected["sha256"], relative
         assert path.stat().st_size == expected["bytes"], relative
@@ -37,9 +44,9 @@ def main() -> int:
     assert receipt["zip_sha256"] == descriptor["archive_sha256"]
     assert descriptor["binary_reconstruction_in_github"] is False
     if args.run_tests:
-        subprocess.run([sys.executable, "-m", "compileall", "-q", str(source / "live_bible_fabric")], check=True)
-        subprocess.run([sys.executable, "-m", "pip", "install", "--no-build-isolation", "-e", str(source)], check=True)
-        subprocess.run([sys.executable, "-m", "pytest", "-q", str(source / "tests")], check=True)
+        subprocess.run([sys.executable, "-m", "compileall", "-q", str(assembled / "live_bible_fabric")], check=True)
+        subprocess.run([sys.executable, "-m", "pip", "install", "--no-build-isolation", "-e", str(assembled)], check=True)
+        subprocess.run([sys.executable, "-m", "pytest", "-q", str(assembled / "tests")], check=True)
     print("LIVE_BIBLE_CAPTURE_FABRIC_V2_OK")
     return 0
 
