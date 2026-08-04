@@ -1,0 +1,55 @@
+name: Observe IPEP Consensus Transcription v3 CI
+
+on:
+  workflow_run:
+    workflows: ['IPEP Consensus Transcription v3 CI']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Write observation receipt
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+          REPOSITORY: ${{ github.repository }}
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" > /tmp/artifacts.json
+          python - <<'PY' > deployment_receipts/ipep-consensus-transcription-v3-observation.json
+          import json, os
+          from datetime import datetime, timezone
+          artifacts=json.load(open('/tmp/artifacts.json')).get('artifacts', [])
+          print(json.dumps({
+            'receipt':'IPEP-CONSENSUS-TRANSCRIPTION-V3-WORKFLOW-OBSERVATION',
+            'observed_at':datetime.now(timezone.utc).isoformat(),
+            'run_id':int(os.environ['RUN_ID']),
+            'run_url':os.environ['RUN_URL'],
+            'conclusion':os.environ['RUN_CONCLUSION'],
+            'source_sha':os.environ['SOURCE_SHA'],
+            'artifacts':[{
+              'id':a.get('id'),'name':a.get('name'),'size_in_bytes':a.get('size_in_bytes'),
+              'digest':a.get('digest'),'expired':a.get('expired')
+            } for a in artifacts]
+          },indent=2,sort_keys=True))
+          PY
+      - name: Publish observation
+        run: |
+          set -euo pipefail
+          git config user.name 'ipep-consensus-observer[bot]'
+          git config user.email 'ipep-consensus-observer[bot]@users.noreply.github.com'
+          git add deployment_receipts/ipep-consensus-transcription-v3-observation.json
+          git commit -m 'Record IPEP consensus transcription v3 observation [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main
