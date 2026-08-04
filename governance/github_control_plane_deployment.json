@@ -1,0 +1,22 @@
+{
+  "deployment_id": "FEDOMEGA-GHCP-20260804-001",
+  "system": "Federation Omega GitHub Control Plane v1",
+  "engines": [
+    "Alpha-Omega Turnkey Build Engine",
+    "Formation Innovation Engine"
+  ],
+  "base_sha": "e00f1f24063feab9a15313544555617c16811aa1",
+  "branch": "formation/github-control-plane-v1",
+  "pull_request": 115,
+  "state": "BUILT_PENDING_PROVIDER_CI_READBACK",
+  "repository_mutation_scope": "dedicated remediation branch only",
+  "external_provider_mutation": false,
+  "promotion_gates": [
+    "control-plane regression tests",
+    "changed-workflow policy",
+    "IPEP proof suite",
+    "FEVX deterministic bootstrap",
+    "mergeability readback"
+  ],
+  "truth_boundary": "No permanent-resolution claim until provider-native GitHub Actions checks and post-merge readback pass."
+}
