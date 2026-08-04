@@ -37,6 +37,12 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
         payload.pop("event_sha256", None)
         return payload
 
+    @staticmethod
+    def _public_claim(event: dict[str, Any]) -> dict[str, Any]:
+        public = dict(event)
+        public["claim_token"] = public["claim_reference"]
+        return public
+
     @classmethod
     def _verify_claim_history(cls, events: Any, dispatch_id: str) -> list[dict[str, Any]]:
         if events is None:
@@ -94,8 +100,10 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                     (
                         later
                         for later in events[event["sequence"] :]
-                        if later.get("claim_token") == event.get("claim_token")
-                        and later.get("event_type") in {"COMPLETED", "EXPIRED", "ABANDONED"}
+                        if later.get("claim_reference")
+                        == event.get("claim_reference")
+                        and later.get("event_type")
+                        in {"COMPLETED", "EXPIRED", "ABANDONED"}
                     ),
                     None,
                 )
@@ -132,7 +140,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
             if active is not None:
                 if current_dt < parse_utc(str(active["lease_expires_at"])):
                     if active.get("worker_id") == worker_id:
-                        return dict(active)
+                        return self._public_claim(active)
                     raise RuntimeError("provider dispatch already claimed by another worker")
                 self._append_claim_event(
                     events,
@@ -141,7 +149,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                     event_at=current,
                     details={
                         "worker_id": active["worker_id"],
-                        "claim_token": active["claim_token"],
+                        "claim_reference": active["claim_reference"],
                         "attempt": active["attempt"],
                     },
                 )
@@ -151,7 +159,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                 "+00:00", "Z"
             )
             previous = events[-1]["event_sha256"] if events else ""
-            claim_token = digest(
+            claim_reference = digest(
                 {
                     "dispatch_id": dispatch_id,
                     "dispatch_record_sha256": dispatch["record_sha256"],
@@ -173,13 +181,13 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                     "claimed_at": current,
                     "lease_expires_at": lease_expires_at,
                     "dispatch_record_sha256": dispatch["record_sha256"],
-                    "claim_token": claim_token,
+                    "claim_reference": claim_reference,
                 },
             )
             histories[dispatch_id] = events
             self._write_state(state)
             self._ledger("C06", "provider_dispatch.claimed", dispatch_id, claimed)
-            return dict(claimed)
+            return self._public_claim(claimed)
 
     def abandon_provider_dispatch_claim(
         self,
@@ -196,7 +204,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                 dispatch_id,
             )
             active = self._latest_claim(events)
-            if active is None or active.get("claim_token") != claim_token:
+            if active is None or active.get("claim_reference") != claim_token:
                 raise RuntimeError("provider dispatch claim token is not current")
             abandoned = self._append_claim_event(
                 events,
@@ -205,7 +213,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                 event_at=current,
                 details={
                     "worker_id": active["worker_id"],
-                    "claim_token": claim_token,
+                    "claim_reference": claim_token,
                     "attempt": active["attempt"],
                 },
             )
@@ -243,7 +251,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                 )
                 completed = any(
                     event.get("event_type") == "COMPLETED"
-                    and event.get("claim_token") == claim_token
+                    and event.get("claim_reference") == claim_token
                     for event in events
                 )
                 if not completed:
@@ -255,7 +263,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                 dispatch_id,
             )
             active = self._latest_claim(events)
-            if active is None or active.get("claim_token") != claim_token:
+            if active is None or active.get("claim_reference") != claim_token:
                 raise RuntimeError("provider dispatch claim token is not current")
             if current_dt >= parse_utc(str(active["lease_expires_at"])):
                 raise RuntimeError("provider dispatch claim lease expired")
@@ -297,7 +305,7 @@ class LeasedProviderDispatchOutboxCommercialControlPlane(
                 event_at=current,
                 details={
                     "worker_id": active["worker_id"],
-                    "claim_token": claim_token,
+                    "claim_reference": claim_token,
                     "attempt": active["attempt"],
                     "provider_receipt_sha256": receipt["provider_receipt_sha256"],
                     "completed_dispatch_record_sha256": updated["record_sha256"],
