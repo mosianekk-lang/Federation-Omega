@@ -1,0 +1,24 @@
+{
+  "schema": "LIVE-BIBLE-SOURCE-MANIFEST-2",
+  "version": "2.0.1",
+  "file_count": 17,
+  "files": [
+    {"path":"README.md","size":589,"sha256":"188d9efbfb0f5985617314bc78de44d6a809b35df7cb84750c38e2428476dbdd"},
+    {"path":"browser_extension/background.js","size":1065,"sha256":"726451fad0252c884f4dd255ace104ed93c0eeaaf44c0eb179988488ce33d98c"},
+    {"path":"browser_extension/content.js","size":1155,"sha256":"aab5f72d87acdee4676b72f3fd68368b727d1bb87e06cb3e347a5bd5836a857e"},
+    {"path":"browser_extension/manifest.json","size":594,"sha256":"e2360aff9635607f60679e1f6d7ea5d3b64b7af54e3ac099de5f319cd966dfb4"},
+    {"path":"browser_extension/popup.html","size":282,"sha256":"d0e7f7ac4abdf8982877e389cce6ec62a556927d2b545035b7cd6ce624a14fed"},
+    {"path":"browser_extension/popup.js","size":241,"sha256":"1a7fb8b4c557d04009364bd2e431edd835f0542bc397380219af8095d7cdc8d2"},
+    {"path":"docs/ARCHITECTURE.md","size":639,"sha256":"93c9ae2a73988b612bdb8181bebc2eda42bae4ee7bf4c86984c059e611cd7c66"},
+    {"path":"live_bible_capture_contract.json","size":2126,"sha256":"017845d48b17b3963dac64d2cd279eecf03882ba753d611593e28288feb4228c"},
+    {"path":"live_bible_fabric/__init__.py","size":381,"sha256":"984608286a19690e0d5446306c461dff1a603c84ae29a1d92038f9fa05825090"},
+    {"path":"live_bible_fabric/cli.py","size":1629,"sha256":"1185f993368bf24c581079e733cfc445c79c9d77c1b56875dadd94e46523c86b"},
+    {"path":"live_bible_fabric/engine.py","size":459,"sha256":"fa43d31ef7ccbf8a0a926b1f1b18e96a0e88fbcf26fbe9aa207e281988b8f46c"},
+    {"path":"live_bible_fabric/fabric.py","size":17781,"sha256":"0dff211dff65607253c84abdcc5cff26585469a6b1de483dc9b3ae7c845eca74"},
+    {"path":"live_bible_fabric/redaction.py","size":548,"sha256":"8a1d71c31c5db8be63129536fd405d53c7201897ed1f89b36f70618e3f63cc3f"},
+    {"path":"live_bible_fabric/storage.py","size":5065,"sha256":"07c4befda5d1ed74d8b5ec3a8c613bbc4a69d31e31be265c87360bfa0120e106"},
+    {"path":"pyproject.toml","size":481,"sha256":"293f1d2ff2480b0f72585b4b132deda441dba3dea765653da296597e1c0e27d9"},
+    {"path":"release_descriptor.json","size":452,"sha256":"a28d7f9cd0755d9379962e949e40a7e01c3e4504b27106d8b519d391724c3307"},
+    {"path":"tests/test_fabric.py","size":6072,"sha256":"80971ce952ca4db8cf6f9d4e618566f9702c23dcde7926d2bae7f73d9ca27241"}
+  ]
+}
