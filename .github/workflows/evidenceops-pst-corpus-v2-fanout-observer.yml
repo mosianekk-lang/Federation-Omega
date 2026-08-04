@@ -1,15 +1,19 @@
 name: EvidenceOps PST v2 Fanout Observer
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - '.github/workflows/evidenceops-pst-corpus-v2-fanout-observer.yml'
+  workflow_run:
+    workflows:
+      - EvidenceOps PST v2 Shard Fanout
+    types: [completed]
   workflow_dispatch:
 
 permissions:
   actions: read
-  contents: write
+  contents: read
+
+concurrency:
+  group: evidenceops-pst-v2-fanout-observer
+  cancel-in-progress: true
 
 jobs:
   observe:
@@ -17,6 +21,9 @@ jobs:
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
       - name: Capture fanout workflow state
         env:
           GH_TOKEN: ${{ github.token }}
@@ -25,22 +32,35 @@ jobs:
           mkdir -p deployment_receipts
           gh api "/repos/${GITHUB_REPOSITORY}/actions/workflows/evidenceops-pst-corpus-v2-shard-fanout.yml/runs?per_page=10" > /tmp/runs.json
           python - <<'PY'
-          import json, os
+          import json
           from datetime import datetime, timezone
           from pathlib import Path
-          payload=json.load(open('/tmp/runs.json',encoding='utf-8'))
-          rows=[]
-          for r in payload.get('workflow_runs',[]):
-              rows.append({k:r.get(k) for k in ('id','run_number','run_attempt','event','status','conclusion','head_sha','created_at','updated_at','html_url')})
-          receipt={'receipt':'EVIDENCEOPS-PST-V2-FANOUT-OBSERVER','recorded_at':datetime.now(timezone.utc).isoformat(),'runs':rows}
-          Path('deployment_receipts/evidenceops-pst-corpus-v2-fanout-observer.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-          print(json.dumps(receipt,indent=2,sort_keys=True))
+
+          payload = json.loads(Path('/tmp/runs.json').read_text(encoding='utf-8'))
+          rows = [
+              {key: run.get(key) for key in (
+                  'id', 'run_number', 'run_attempt', 'event', 'status',
+                  'conclusion', 'head_sha', 'created_at', 'updated_at', 'html_url'
+              )}
+              for run in payload.get('workflow_runs', [])
+          ]
+          receipt = {
+              'receipt': 'EVIDENCEOPS-PST-V2-FANOUT-OBSERVER',
+              'recorded_at': datetime.now(timezone.utc).isoformat(),
+              'repository': '${{ github.repository }}',
+              'observer_run_id': '${{ github.run_id }}',
+              'runs': rows,
+              'repository_mutation_attempted': False,
+          }
+          output = Path('deployment_receipts/evidenceops-pst-corpus-v2-fanout-observer.json')
+          output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(output.read_text(encoding='utf-8'))
           PY
-      - name: Commit observer receipt
-        run: |
-          set -euo pipefail
-          git config user.name 'evidenceops-pst-bot'
-          git config user.email 'evidenceops-pst-bot@users.noreply.github.com'
-          git add deployment_receipts/evidenceops-pst-corpus-v2-fanout-observer.json
-          git commit -m 'Record EvidenceOps PST shard fanout state [skip ci]'
-          git push origin HEAD:main
+
+      - name: Upload immutable observer receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-pst-v2-fanout-observer-${{ github.run_id }}-${{ github.run_attempt }}
+          path: deployment_receipts/evidenceops-pst-corpus-v2-fanout-observer.json
+          if-no-files-found: error
+          retention-days: 90
