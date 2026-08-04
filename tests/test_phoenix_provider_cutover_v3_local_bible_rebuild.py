@@ -10,7 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "phoenix-emergency-freeze.yml"
 POLICY = ROOT / "governance" / "github_airlock_policy.json"
 SCRIPT = ROOT / "ops" / "evidenceops_local_bible_event13_rebuild.py"
-BOUNDARY = ROOT / "phoenix" / "LOCAL_BIBLE_RECOVERY_EXTERNALIZATION.md"
+AUTH_SHA = "7c6bc770dae815cd3e89ee6cdf493a5fab2cc093"
 EXPECTED_PREVIOUS_HASH = "e58ba00136022251976051a041b3664fd51418aaabf2c840c8bf2c5d7903cf21"
 EVENT_ID = "EVT-20260804-PST-REMOTE-CLOSURE-FEDERATION-LEARNING-AND-PACKAGE-REBUILD"
 
@@ -21,39 +21,47 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.script = SCRIPT.read_text(encoding="utf-8")
-        cls.boundary = BOUNDARY.read_text(encoding="utf-8")
 
-    def test_legacy_source_workflow_has_zero_oidc(self) -> None:
-        forbidden = (
-            "[BIBLE-REBUILD]",
-            "id-token: write",
-            "google-github-actions/auth@",
-            "GOOGLE_ACCESS_TOKEN",
-            "phoenix-export-output/local-bible-rebuild",
-            "Authenticate private Local Bible recovery",
-            "Rebuild private Local Bible Event 13",
+    def test_workflow_uses_marked_read_only_wif_route(self) -> None:
+        self.assertIn("[BIBLE-REBUILD]", self.workflow)
+        self.assertIn("id-token: write", self.workflow)
+        self.assertIn(f"google-github-actions/auth@{AUTH_SHA}", self.workflow)
+        self.assertIn("token_format: access_token", self.workflow)
+        self.assertIn(
+            "access_token_scopes: https://www.googleapis.com/auth/drive.readonly",
+            self.workflow,
         )
-        for value in forbidden:
-            with self.subTest(value=value):
-                self.assertNotIn(value, self.workflow)
-        self.assertIn("PST not requested", self.workflow)
+        self.assertIn(
+            "service_account: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+            self.workflow,
+        )
+        self.assertIn("create_credentials_file: false", self.workflow)
+        self.assertIn("export_environment_variables: false", self.workflow)
+
+    def test_workflow_has_no_source_write_or_runtime_commit_path(self) -> None:
+        self.assertNotIn("contents: write", self.workflow)
+        self.assertNotIn("git commit", self.workflow)
+        self.assertNotIn("git push", self.workflow)
+        self.assertNotIn("actions/checkout@v", self.workflow)
         self.assertIn("persist-credentials: false", self.workflow)
-
-    def test_airlock_oidc_allowlist_is_empty(self) -> None:
-        self.assertEqual([], self.policy["oidc_workflow_allowlist"])
-        self.assertNotIn("oidc_boundary", self.policy)
-        self.assertEqual(
-            "SEPARATE_PRIVATE_EXECUTION_PLANE",
-            self.policy["automation_repository_role"],
+        self.assertIn("phoenix-export-output/local-bible-rebuild/*", self.workflow)
+        self.assertIn(
+            "PROVIDER_PACKAGE_REBUILD_VERIFIED_PENDING_LIBRARY_WRITEBACK",
+            self.workflow,
         )
 
-    def test_rebuild_is_packaged_capability_not_active_source_runtime(self) -> None:
-        self.assertTrue(SCRIPT.exists())
-        self.assertTrue(BOUNDARY.exists())
-        self.assertIn("PRIVATE_OPS_PLANE_REQUIRED", self.boundary)
-        self.assertIn("not executable from the legacy public source repository", self.boundary)
-        self.assertIn("oidc_workflow_allowlist` is empty", self.boundary)
-        self.assertIn("no provider rebuild or Library writeback is claimed", self.boundary)
+    def test_airlock_oidc_exception_is_exact_and_read_only(self) -> None:
+        expected = [".github/workflows/phoenix-emergency-freeze.yml"]
+        self.assertEqual(expected, self.policy["oidc_workflow_allowlist"])
+        boundary = self.policy["oidc_boundary"]
+        self.assertEqual(expected[0], boundary["workflow"])
+        self.assertEqual("[BIBLE-REBUILD]", boundary["trigger_marker"])
+        self.assertEqual(
+            "https://www.googleapis.com/auth/drive.readonly", boundary["scope"]
+        )
+        self.assertFalse(boundary["repository_write_authority"])
+        self.assertFalse(boundary["public_link_allowed"])
+        self.assertTrue(boundary["provider_readback_required"])
 
     def test_rebuild_anchors_to_exact_predecessor_and_original_writer(self) -> None:
         self.assertIn(EXPECTED_PREVIOUS_HASH, self.script)
@@ -65,7 +73,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertIn("Event 13 previous hash", self.script)
         self.assertIn("ZIP CRC failed", self.script)
 
-    def test_rebuild_is_private_and_source_write_free(self) -> None:
+    def test_rebuild_is_private_and_artifact_only(self) -> None:
         forbidden = (
             "drive.google.com/uc",
             "export=download",
@@ -76,8 +84,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             "contents: write",
         )
         for value in forbidden:
-            with self.subTest(value=value):
-                self.assertNotIn(value, self.script)
+            self.assertNotIn(value, self.script)
         self.assertIn("https://www.googleapis.com/drive/v3/files/", self.script)
         self.assertIn('headers={"Authorization": f"Bearer {token}"}', self.script)
         self.assertIn("P2_PRIVATE_DRIVE_READ_ONLY_NO_PUBLIC_SOURCE_CONTENT", self.script)
