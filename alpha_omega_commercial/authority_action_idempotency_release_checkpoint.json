@@ -12,7 +12,7 @@
   "implementation_release": {
     "pull_request": 136,
     "merge_commit": "31e06053764b9900f6edb8fe89a773737f1af264",
-    "release_receipt_sha256": "8df7776a820ab2f73aac789bbf938a5a84e56376565277887c484102e53be625"
+    "release_receipt_sha256": "405cf24d05f7cc6e9d20752ad1c097eaec0b237d6a9ea3d7a9bcab96f48c94b3"
   },
   "provider_proof": {
     "head_sha": "4528ca39cf4a55cea12fbf89810048bb7916be14",
