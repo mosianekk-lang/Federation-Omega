@@ -1,0 +1,58 @@
+{
+  "schema": "FEDOMEGA-NODE-BOOTSTRAP-V2",
+  "version": "2.0.0",
+  "owner": "Kagiso Kim Mosiane",
+  "required_before_substantive_work": true,
+  "inherited_policies": [
+    "FEDOMEGA-N-DIRECTIVE-V2",
+    "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1"
+  ],
+  "n_directive": {
+    "input": "n",
+    "action": "MONOTONIC_CONTINUATION",
+    "required_sequence": [
+      "LOAD_LATEST_VERIFIED_CHECKPOINT",
+      "LOAD_HEARTBEAT_CAPABILITIES_LESSONS_TRIGGERS_BLOCKERS_CORRECTIONS",
+      "SELECT_HIGHEST_VALUE_ELIGIBLE_PACKET",
+      "EXECUTE_SAFE_AUTHORISED_WORK",
+      "RECORD_TERMINAL_LEARNING_EVENT",
+      "ACTIVATE_REPAIR_FALLBACK_AND_REGRESSION_TRIGGERS",
+      "VALIDATE_READBACK_RECONCILE_AND_VERIFY_ROLLBACK",
+      "ASSESS_MATURITY_AND_PROMOTE_ONLY_PROVEN_SCOPE",
+      "BEGIN_NEXT_JUSTIFIED_ADVANCEMENT"
+    ]
+  },
+  "output_contract": {
+    "complete_next_best_automated_pathway": true,
+    "explicit_continuation_line": "n = proceed",
+    "status_only_closure_with_safe_work": false
+  },
+  "learning_contract": {
+    "required_terminal_events": ["SUCCESS", "FAILURE", "CONSTRAINT"],
+    "required_when_applicable": ["CORRECTION", "RECOVERY"],
+    "append_only": true,
+    "hash_linked": true,
+    "trigger_state_derived_from_ledger": true
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "external_effect_default": false,
+    "trust_inheritance": false,
+    "consequential_actions_owner_reserved": true
+  },
+  "master_state": {
+    "chapter": "CH-073",
+    "minimum_compatible_cycle": "CYC-CBR-20260804-031",
+    "policy_sha256": "39f589d6e1f2b935f432b203fe9426eb4fbb8919493a3ced23d693f1d143d41a"
+  },
+  "bootstrap_pass_conditions": [
+    "policy file parses",
+    "policy id and hash match the Master record",
+    "output contract requires the complete pathway and explicit n line",
+    "learning contract requires terminal event capture",
+    "authority ceiling remains A1_INTERNAL",
+    "external effect remains false",
+    "no trust transfer is enabled"
+  ],
+  "failure_state": "BOOTSTRAP_BLOCKED_FAIL_CLOSED"
+}

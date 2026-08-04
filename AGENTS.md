@@ -44,6 +44,16 @@ These instructions apply to every automated coding agent, bot, assistant, local 
 - Learning or trigger updates must never expand authority, write verified facts, mutate evidence, cross case walls or activate consequential external action.
 - Generated learning ledgers and trigger-state artifacts must not be committed to canonical source.
 
+## Durable n-directive and node inheritance
+
+- Load and apply `governance/federation_n_directive_v2.yaml` (`FEDOMEGA-N-DIRECTIVE-V2`) whenever the exact input `n` is received or a substantive output is about to close.
+- Interpret `n` as: proceed, improve, close the current critical dependency, execute available safe authorised work, discover and build stronger internal capabilities, validate, read back, repair, assess maturity, promote only proven functions, and begin the next justified advancement without a status-only pause.
+- Every substantive output must include the complete next-best automated pathway and the explicit reusable line `n = proceed`.
+- A new Federation or Master-Bible-governed node must pass `governance/federation_node_bootstrap_v2.json` before substantive work. The bootstrap must inherit the n-directive, the terminal learning-event contract, the `A1_INTERNAL` ceiling, no-external-effect default and no-trust-transfer rule.
+- Current registered nodes inherit the policy through the Master Bible Node Policy Inheritance register and apply it when next activated or synchronized through an authorised route.
+- The directive does not create invisible access to closed chats, a hidden background runtime, consequential external authority or trust transfer.
+- Omission of the complete next-best automated pathway, omission of `n = proceed`, a status-only pause while eligible work remains, or failure to capture a material terminal event is a fail-closed `OUTPUT_CONTRACT` defect that must be repaired and retested.
+
 ## Credentials and external authority
 
 - Never print, persist, upload, email or commit credentials, private keys, tokens or secret values.

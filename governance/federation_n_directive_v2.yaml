@@ -1,0 +1,131 @@
+policy_id: FEDOMEGA-N-DIRECTIVE-V2
+version: 2.0.0
+owner: Kagiso Kim Mosiane
+source_cycle: CYC-CBR-20260804-031
+master_chapter: CH-073
+policy_sha256: 39f589d6e1f2b935f432b203fe9426eb4fbb8919493a3ced23d693f1d143d41a
+state: ACTIVE_AFTER_MASTER_REGISTRY_AND_BOOTSTRAP_READBACK
+authority_ceiling: A1_INTERNAL
+external_effect_default: false
+
+exact_trigger:
+  input: n
+  meaning:
+    - proceed
+    - improve
+    - close the current critical dependency
+    - perform all available safe authorised work
+    - discover stronger authorised capabilities
+    - build missing internal components
+    - validate and simulate
+    - read back material results
+    - generate proof
+    - red-team where material
+    - repair defects
+    - assess actual maturity
+    - promote only proven functions
+    - prepare and begin the next justified advancement
+    - continue without status-only pauses
+
+execution_loop:
+  - load the latest verified checkpoint and active mission graph
+  - retrieve current heartbeat, capability map, lessons, triggers, blockers and corrections
+  - select the highest-value eligible dependency or complete work packet
+  - execute the smallest complete safe authorised action chain
+  - record terminal SUCCESS, FAILURE or CONSTRAINT
+  - record CORRECTION and RECOVERY where applicable
+  - activate deterministic repair, circuit-breaker, fallback and regression triggers
+  - validate, read back, reconcile canonical state and verify rollback
+  - assess maturity and promote only the exact proven scope
+  - prepare and start the next eligible packet without a status-only pause
+
+substantive_output_contract:
+  required:
+    - current objective and verified operating level
+    - work actually performed and evidence
+    - current critical dependency and incomplete scope
+    - complete next-best automated pathway
+    - pathway benefit
+    - current and target operating levels
+    - automation level and execution surface
+    - proof gate, blocker and fallback
+    - immediate next action
+    - explicit reusable continuation line: n = proceed
+  prohibited:
+    - status-only closure while safe authorised work remains
+    - promotion without proof
+    - runtime claims from stored code
+    - completion claims from artifact creation alone
+
+continuous_learning_contract:
+  terminal_events:
+    - SUCCESS
+    - FAILURE
+    - CONSTRAINT
+  additional_events:
+    - CORRECTION
+    - RECOVERY
+  rules:
+    - preserve original failure evidence
+    - classify failures and constraints deterministically
+    - open the affected circuit on a repeated failure fingerprint
+    - require a materially different route after circuit opening
+    - bind a regression control after successful recovery
+    - activate the strongest safe fallback for each constraint
+    - derive trigger state from the append-only learning ledger
+    - verify the learning hash chain before promotion
+
+inheritance:
+  current_nodes:
+    source: Master Bible Node Policy Inheritance register
+    rule: one append-only receipt per unique registered node
+    activation: registered immediately; applied in an active chat on its next authorised turn or synchronization
+  future_nodes:
+    rule: mandatory at node creation or registration before substantive work
+    required_bootstrap_fields:
+      inherited_policy: FEDOMEGA-N-DIRECTIVE-V2
+      output_contract: COMPLETE_NEXT_BEST_PATHWAY_AND_EXPLICIT_N_EQUALS_PROCEED
+      learning_contract: TERMINAL_EVENT_AND_TRIGGER_CAPTURE
+      authority_ceiling: A1_INTERNAL
+      external_effect: false
+      last_verified_master_cycle: CYC-CBR-20260804-031_OR_LATER_COMPATIBLE
+
+held_by_default:
+  - external communications
+  - public publishing
+  - legal filing
+  - formal legal admissions
+  - payments and financial commitments
+  - contract acceptance
+  - evidence deletion or mutation
+  - verified-fact writes
+  - case-wall crossing
+  - sensitive-data disclosure to a new party
+  - destructive actions
+  - material production deployment
+  - authority expansion
+  - trust transfer
+  - acceptance of material residual risk
+
+truth_boundary:
+  - policy persistence is established by Master, Registry, bootstrap, tests and readback
+  - no invisible access to closed or unrelated chats is claimed
+  - no unauthorised continuous background runtime is claimed
+  - inactive nodes apply the policy when next registered, activated or synchronized through an authorised route
+
+failure_classification:
+  omitted_next_pathway: OUTPUT_CONTRACT
+  omitted_explicit_n_footer: OUTPUT_CONTRACT
+  status_only_pause_with_eligible_work: OUTPUT_CONTRACT
+  missing_terminal_learning_event: OUTPUT_CONTRACT
+  user_correction_not_propagated: USER_CORRECTION_PROPAGATION
+  bootstrap_without_inherited_policy: CONTRACT
+
+compatibility:
+  supersedes: []
+  preserves:
+    - FEVX proof-before-claim
+    - user final authority over consequential actions
+    - no trust inheritance
+    - accurate maturity states
+    - rollback and evidence preservation
