@@ -1,0 +1,153 @@
+ce):
+                    db.execute(
+                        "INSERT OR IGNORE INTO gaps(conversation_id,missing_sequence,detected_at) VALUES(?,?,?)",
+                        (value["conversation_id"], missing, now),
+                    )
+            db.execute(
+                "UPDATE gaps SET resolved_at=? WHERE conversation_id=? AND missing_sequence=? AND resolved_at IS NULL",
+                (now, value["conversation_id"], sequence),
+            )
+            value["sequence"] = sequence
+            event_body = {k: value[k] for k in value if k not in {"event_id"}}
+            event_body["sequence"] = sequence
+            chain_hash = self._chain_hash(previous_hash, event_body)
+            quarantined = int(bool(value["metadata"].get("secret_redaction", {}).get("applied")))
+            try:
+                db.execute(
+                    """
+                    INSERT INTO events(
+                      event_id,source_id,source_type,conversation_id,message_id,sequence,role,content,
+                      content_sha256,occurred_at,observed_at,privacy_tier,authority_class,case_wall,
+                      metadata_json,previous_chain_hash,chain_hash,out_of_order,quarantined,inserted_at
+                    ) VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)
+                    """,
+                    (
+                        event_id,
+                        value["source_id"],
+                        value["source_type"],
+                        value["conversation_id"],
+                        value["message_id"],
+                        sequence,
+                        value["role"],
+                        value["content"],
+                        value["content_sha256"],
+                        value["occurred_at"],
+                        value["observed_at"],
+                        value["privacy_tier"],
+                        value["authority_class"],
+                        value["case_wall"],
+                        canonical_json(value["metadata"]),
+                        previous_hash,
+                        chain_hash,
+                        out_of_order,
+                        quarantined,
+                        now,
+                    ),
+                )
+            except sqlite3.IntegrityError as exc:
+                db.execute("ROLLBACK")
+                raise CaptureError("conflicting duplicate event detected") from exc
+            new_max = max(max_sequence, sequence)
+            event_count = (int(head["event_count"]) if head else 0) + 1
+            db.execute(
+                """
+                INSERT INTO conversation_heads(conversation_id,head_chain_hash,max_sequence,event_count,updated_at)
+                VALUES(?,?,?,?,?)
+                ON CONFLICT(conversation_id) DO UPDATE SET
+                  head_chain_hash=excluded.head_chain_hash,
+                  max_sequence=excluded.max_sequence,
+                  event_count=excluded.event_count,
+                  updated_at=excluded.updated_at
+                """,
+                (value["conversation_id"], chain_hash, new_max, event_count, now),
+            )
+            receipt_body = {
+                "schema": RECEIPT_SCHEMA,
+                "receipt_id": f"RCP-LBF-{event_id[:24]}",
+                "event_id": event_id,
+                "conversation_id": value["conversation_id"],
+                "sequence": sequence,
+                "content_sha256": value["content_sha256"],
+                "previous_chain_hash": previous_hash,
+                "chain_hash": chain_hash,
+                "state": "CAPTURED_LOCAL",
+                "out_of_order": bool(out_of_order),
+                "quarantined": bool(quarantined),
+                "external_effects": 0,
+                "created_at": now,
+            }
+            receipt_body["receipt_sha256"] = sha256_value(receipt_body)
+            db.execute(
+                "INSERT INTO receipts(receipt_id,event_id,state,receipt_json,created_at) VALUES(?,?,?,?,?)",
+                (
+                    receipt_body["receipt_id"],
+                    event_id,
+                    receipt_body["state"],
+                    canonical_json(receipt_body),
+                    now,
+                ),
+            )
+            db.execute("COMMIT")
+            return receipt_body
+
+    def events(self, conversation_id: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT * FROM events"
+        params: tuple[Any, ...] = ()
+        if conversation_id:
+            query += " WHERE conversation_id=?"
+            params = (conversation_id,)
+        query += " ORDER BY conversation_id,sequence,occurred_at,event_id"
+        with self.connect() as db:
+            rows = db.execute(query, params).fetchall()
+        output: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["metadata"] = json.loads(item.pop("metadata_json"))
+            item["out_of_order"] = bool(item["out_of_order"])
+            item["quarantined"] = bool(item["quarantined"])
+            output.append(item)
+        return output
+
+    def _chain_events(self, conversation_id: str) -> list[dict[str, Any]]:
+        with self.connect() as db:
+            rows = db.execute(
+                "SELECT rowid AS append_index,* FROM events WHERE conversation_id=? ORDER BY rowid",
+                (conversation_id,),
+            ).fetchall()
+        output: list[dict[str, Any]] = []
+        for row in rows:
+            item = dict(row)
+            item["metadata"] = json.loads(item.pop("metadata_json"))
+            item["out_of_order"] = bool(item["out_of_order"])
+            item["quarantined"] = bool(item["quarantined"])
+            output.append(item)
+        return output
+
+    def unresolved_gaps(self, conversation_id: str | None = None) -> list[dict[str, Any]]:
+        query = "SELECT conversation_id,missing_sequence,detected_at FROM gaps WHERE resolved_at IS NULL"
+        params: tuple[Any, ...] = ()
+        if conversation_id:
+            query += " AND conversation_id=?"
+            params = (conversation_id,)
+        query += " ORDER BY conversation_id,missing_sequence"
+        with self.connect() as db:
+            return [dict(row) for row in db.execute(query, params).fetchall()]
+
+    def verify_chain(self, conversation_id: str) -> dict[str, Any]:
+        rows = self._chain_events(conversation_id)
+        previous = ZERO_HASH
+        failures: list[dict[str, Any]] = []
+        for row in rows:
+            body = {
+                "schema": SCHEMA,
+                "source_id": row["source_id"],
+                "source_type": row["source_type"],
+                "conversation_id": row["conversation_id"],
+                "message_id": row["message_id"],
+                "sequence": row["sequence"],
+                "role": row["role"],
+                "content": row["content"],
+                "content_sha256": row["content_sha256"],
+                "occurred_at": row["occurred_at"],
+                "observed_at": row["observed_at"],
+                
