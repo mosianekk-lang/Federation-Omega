@@ -1,0 +1,11 @@
+{
+  "authority": "A1_INTERNAL",
+  "cross_case_access": false,
+  "external_effect": false,
+  "level_6_grant": false,
+  "requested_state": "PROVIDER_VERIFIED_SUPERVISED_READ_ONLY_ANALYTICAL_SERVICE",
+  "source_write": false,
+  "synthetic_case_only": true,
+  "trigger_id": "EVIDENCEOPS-FEVX-ADAPTER-DEPLOY-V1",
+  "verified_fact_write": false
+}
