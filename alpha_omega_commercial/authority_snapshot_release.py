@@ -76,14 +76,17 @@ class AuthoritySnapshotReleaseVerifier:
                 and api.get("predecessor_class") == "GovernedCommercialAssuranceControlPlane"
                 and api.get("authority_snapshot", {}).get("raw_authority_dictionary_grants_live_authority") is False
             ),
-            "implementation_checkpoint_preserved": (
+            "release_checkpoint_exact": (
                 checkpoint.get("status")
-                in {
-                    "AUTHORITY_SNAPSHOT_IMPLEMENTATION_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED",
-                    "AUTHORITY_SNAPSHOT_RELEASE_RECONCILIATION_VERIFIED_EXTERNAL_GATES_UNCHANGED",
-                }
+                == "AUTHORITY_SNAPSHOT_RELEASE_RECONCILIATION_VERIFIED_EXTERNAL_GATES_UNCHANGED"
                 and checkpoint.get("implementation", {}).get("pull_request") == 122
-                and checkpoint.get("provider_proof", {}).get("artifact_id") == 8879825940
+                and checkpoint.get("implementation", {}).get("merge_commit")
+                == "c48f7db758895389fa12f3476efbe19aa2169535"
+                and checkpoint.get("provider_proof", {}).get("artifact_id") == 8879850560
+                and checkpoint.get("provider_proof", {}).get("implementation_proof_artifact_id") == 8879825940
+                and checkpoint.get("release_receipt", {}).get("receipt_sha256") == recorded_hash
+                and checkpoint.get("release_receipt", {}).get("google_drive_export_sha256")
+                == drive.get("export_sha256")
             ),
             "final_head_provider_proof_exact": (
                 proof.get("head_sha") == "273409929e85ecdf7202c36595270004451d1b92"
