@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -30,7 +30,8 @@
   ],
   "forbidden_pattern_exceptions": {
     ".github/workflows/phoenix-emergency-freeze.yml": [
-      "gh api --method put"
+      "gh api --method put",
+      "gh api -x put"
     ]
   },
   "forbidden_repository_mutations": [
@@ -40,7 +41,11 @@
     "gh api --method post",
     "gh api --method put",
     "gh api --method patch",
-    "gh api --method delete"
+    "gh api --method delete",
+    "gh api -x post",
+    "gh api -x put",
+    "gh api -x patch",
+    "gh api -x delete"
   ],
   "forbidden_source_paths": [
     "deployment_receipts/",
