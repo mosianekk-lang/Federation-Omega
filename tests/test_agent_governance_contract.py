@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import unittest
 from pathlib import Path
 
@@ -16,6 +17,9 @@ class AgentGovernanceContractTests(unittest.TestCase):
             "Do not commit generated runtime receipts",
             "require exact provider readback",
             "fully preventative only when GitHub platform rulesets require",
+            "Every material runtime or tool path must emit a terminal `SUCCESS`, `FAILURE` or `CONSTRAINT` event",
+            "A repeated failure fingerprint must open the affected circuit",
+            "Generated learning ledgers and trigger-state artifacts must not be committed to canonical source",
         )
         for phrase in required:
             with self.subTest(phrase=phrase):
@@ -30,6 +34,8 @@ class AgentGovernanceContractTests(unittest.TestCase):
             "commit or push directly to `main`",
             "Runtime outputs belong in immutable artifacts",
             "merge-result readback",
+            "append-only learning ledger",
+            "without recording its success, failure or constraint",
         )
         for phrase in required:
             with self.subTest(phrase=phrase):
@@ -41,6 +47,26 @@ class AgentGovernanceContractTests(unittest.TestCase):
             ROOT / ".github" / "copilot-instructions.md"
         ).read_text(encoding="utf-8"))
         self.assertNotIn("branch protection is active", contract.lower())
+
+    def test_learning_policy_is_fail_closed(self) -> None:
+        policy = json.loads(
+            (
+                ROOT / "governance" / "federation_learning_policy.json"
+            ).read_text(encoding="utf-8")
+        )
+        self.assertEqual(
+            "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1",
+            policy["policy_id"],
+        )
+        self.assertEqual("A1_INTERNAL", policy["authority_ceiling"])
+        self.assertFalse(policy["external_effect"])
+        self.assertEqual(
+            "FORBIDDEN", policy["source_repository_runtime_output"]
+        )
+        controls = set(policy["non_negotiable_controls"])
+        self.assertIn("NO_AUTHORITY_EXPANSION_FROM_LEARNING", controls)
+        self.assertIn("NO_TRUST_TRANSFER_BETWEEN_WORKFLOWS", controls)
+        self.assertIn("NO_RUNTIME_RECEIPTS_IN_CANONICAL_SOURCE", controls)
 
 
 if __name__ == "__main__":
