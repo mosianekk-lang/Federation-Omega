@@ -73,18 +73,32 @@ jobs:
           assert api['verified_live_revenue_events'] == 0
           assert api['full_commercial_maturity'] is False
 
-          assert checkpoint['status'] == 'AUTHORITY_SNAPSHOT_IMPLEMENTATION_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED'
+          assert checkpoint['status'] in {
+              'AUTHORITY_SNAPSHOT_IMPLEMENTATION_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+              'AUTHORITY_SNAPSHOT_RELEASE_RECONCILIATION_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+          }
           assert checkpoint['dependency_checkpoint']['preceding_pull_request'] == 121
           assert checkpoint['implementation']['pull_request'] == 122
           assert checkpoint['implementation']['canonical_class'] == api['canonical_class']
           assert checkpoint['implementation']['raw_authority_dictionary_grants_live_authority'] is False
-          assert checkpoint['provider_proof']['state'] == 'IMPLEMENTATION_HEAD_PROVIDER_NATIVE_CI_VERIFIED'
-          assert checkpoint['provider_proof']['workflow_run'] == 30876838414
-          assert checkpoint['provider_proof']['artifact_id'] == 8879825940
-          assert checkpoint['provider_proof']['artifact_digest'] == 'sha256:90c183dff2bcf98f2f0ca44ce27990a9f02cc1e77477142859f10efdd6c26b64'
-          assert checkpoint['provider_proof']['receipt_sha256'] == '8cebbcf7f815dbade89c7c1c6fe0e604f4d9cb205525a92fdef49ba80f316aba'
           assert checkpoint['provider_proof']['checks_passed'] == 9
           assert checkpoint['provider_proof']['checks_failed'] == 0
+          if checkpoint['status'].startswith('AUTHORITY_SNAPSHOT_RELEASE_'):
+              assert checkpoint['provider_proof']['state'] == 'FINAL_HEAD_PROVIDER_NATIVE_CI_VERIFIED'
+              assert checkpoint['provider_proof']['workflow_run'] == 30876921201
+              assert checkpoint['provider_proof']['artifact_id'] == 8879850560
+              assert checkpoint['provider_proof']['artifact_digest'] == 'sha256:493811eeb57d4272b06244bb7c81cb2f91fc412fb8e508440eb0ee8d2e3a8f5c'
+              assert checkpoint['provider_proof']['implementation_proof_artifact_id'] == 8879825940
+              assert checkpoint['provider_proof']['implementation_proof_receipt_sha256'] == '8cebbcf7f815dbade89c7c1c6fe0e604f4d9cb205525a92fdef49ba80f316aba'
+              assert checkpoint['release_receipt']['receipt_sha256'] == '8eb6acd0ce3ed3307a01de470d0d5377fc8a4b2dcc903e834362fdf403c1141c'
+              assert checkpoint['release_receipt']['google_drive_readback_verified'] is True
+              assert checkpoint['release_receipt']['google_drive_shared'] is False
+          else:
+              assert checkpoint['provider_proof']['state'] == 'IMPLEMENTATION_HEAD_PROVIDER_NATIVE_CI_VERIFIED'
+              assert checkpoint['provider_proof']['workflow_run'] == 30876838414
+              assert checkpoint['provider_proof']['artifact_id'] == 8879825940
+              assert checkpoint['provider_proof']['artifact_digest'] == 'sha256:90c183dff2bcf98f2f0ca44ce27990a9f02cc1e77477142859f10efdd6c26b64'
+              assert checkpoint['provider_proof']['receipt_sha256'] == '8cebbcf7f815dbade89c7c1c6fe0e604f4d9cb205525a92fdef49ba80f316aba'
           assert all(value is False for value in checkpoint['external_gates'].values())
           assert checkpoint['commercial_truth']['verified_live_revenue_events'] == 0
           assert checkpoint['commercial_truth']['full_commercial_maturity'] is False
