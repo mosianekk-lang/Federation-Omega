@@ -21,16 +21,15 @@ class GitHubAirlockTests(unittest.TestCase):
         return {finding.rule for finding in findings}
 
     def test_read_only_pinned_workflow_passes(self):
-        text = """name: EvidenceOps RESOLVE CI
+        text = """name: Public Repository Leak Guard
 on:
   pull_request:
-  merge_group:
   push:
   workflow_dispatch:
 permissions:
   contents: read
 concurrency:
-  group: resolve-${{ github.ref }}
+  group: guard-${{ github.ref }}
   cancel-in-progress: true
 jobs:
   test:
@@ -40,7 +39,7 @@ jobs:
           persist-credentials: false
 """
         findings = AIRLOCK.analyse_workflow(
-            ".github/workflows/evidenceops-resolve-ci.yml", text, POLICY
+            ".github/workflows/public-repository-leak-guard.yml", text, POLICY
         )
         self.assertEqual([], findings)
 
@@ -54,43 +53,94 @@ jobs:
 
     def test_contents_write_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
-            ".github/workflows/evidenceops-resolve-ci.yml",
-            "name: EvidenceOps RESOLVE CI\non:\n  pull_request:\npermissions:\n  contents: write\nconcurrency:\n  group: x\n",
+            ".github/workflows/public-repository-leak-guard.yml",
+            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: write\nconcurrency:\n  group: x\n",
             POLICY,
         )
         self.assertIn("REPOSITORY_WRITE_AUTHORITY", self.rules(findings))
 
+    def test_actions_write_is_rejected_for_normal_workflow(self):
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/public-repository-leak-guard.yml",
+            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: read\n  actions: write\nconcurrency:\n  group: x\n",
+            POLICY,
+        )
+        self.assertIn("UNAUTHORISED_ACTIONS_WRITE", self.rules(findings))
+
     def test_git_push_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
-            ".github/workflows/evidenceops-resolve-ci.yml",
-            "name: EvidenceOps RESOLVE CI\non:\n  pull_request:\npermissions:\n  contents: read\nconcurrency:\n  group: x\njobs:\n  x:\n    steps:\n      - run: git push origin HEAD:main\n",
+            ".github/workflows/public-repository-leak-guard.yml",
+            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: read\nconcurrency:\n  group: x\njobs:\n  x:\n    steps:\n      - run: git push origin HEAD:main\n",
             POLICY,
         )
         self.assertIn("FORBIDDEN_REPOSITORY_MUTATION", self.rules(findings))
 
     def test_mutable_action_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
-            ".github/workflows/evidenceops-resolve-ci.yml",
-            "name: EvidenceOps RESOLVE CI\non:\n  pull_request:\npermissions:\n  contents: read\nconcurrency:\n  group: x\njobs:\n  x:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          persist-credentials: false\n",
+            ".github/workflows/public-repository-leak-guard.yml",
+            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: read\nconcurrency:\n  group: x\njobs:\n  x:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          persist-credentials: false\n",
             POLICY,
         )
         self.assertIn("MUTABLE_ACTION_REFERENCE", self.rules(findings))
 
     def test_unapproved_oidc_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
-            ".github/workflows/evidenceops-resolve-ci.yml",
-            "name: EvidenceOps RESOLVE CI\non:\n  pull_request:\npermissions:\n  contents: read\n  id-token: write\nconcurrency:\n  group: x\n",
+            ".github/workflows/public-repository-leak-guard.yml",
+            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: read\n  id-token: write\nconcurrency:\n  group: x\n",
             POLICY,
         )
         self.assertIn("UNAUTHORISED_OIDC", self.rules(findings))
 
     def test_unapproved_trigger_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
-            ".github/workflows/evidenceops-resolve-ci.yml",
-            "name: EvidenceOps RESOLVE CI\non:\n  schedule:\n    - cron: '0 * * * *'\npermissions:\n  contents: read\nconcurrency:\n  group: x\n",
+            ".github/workflows/public-repository-leak-guard.yml",
+            "name: Guard\non:\n  schedule:\n    - cron: '0 * * * *'\npermissions:\n  contents: read\nconcurrency:\n  group: x\n",
             POLICY,
         )
         self.assertIn("UNAUTHORISED_TRIGGER", self.rules(findings))
+
+    def test_quarantine_controller_contract_passes(self):
+        text = """name: Phoenix Emergency Execution Freeze
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+concurrency:
+  group: phoenix-freeze
+  cancel-in-progress: false
+jobs:
+  freeze:
+    steps:
+      - run: gh api --method PUT /repos/x/y/actions/workflows/1/disable
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/phoenix-emergency-freeze.yml", text, POLICY
+        )
+        self.assertEqual([], findings)
+
+    def test_quarantine_controller_cannot_mutate_source(self):
+        text = """name: Phoenix Emergency Execution Freeze
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: write
+concurrency:
+  group: phoenix-freeze
+jobs:
+  freeze:
+    steps:
+      - run: gh api --method PUT /repos/x/y/actions/workflows/1/disable
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/phoenix-emergency-freeze.yml", text, POLICY
+        )
+        rules = self.rules(findings)
+        self.assertIn("REPOSITORY_WRITE_AUTHORITY", rules)
+        self.assertIn("QUARANTINE_CONTROLLER_SOURCE_AUTHORITY", rules)
 
 
 if __name__ == "__main__":

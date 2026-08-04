@@ -1,7 +1,7 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.0.1",
-  "mode": "DEFAULT_DENY",
+  "version": "2.1.1",
+  "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
     "require_pull_request": true,
@@ -16,25 +16,24 @@
   },
   "active_workflow_allowlist": [
     ".github/workflows/github-airlock.yml",
-    ".github/workflows/evidenceops-resolve-ci.yml",
     ".github/workflows/public-repository-leak-guard.yml",
-    ".github/workflows/superior-logic-ci.yml",
-    ".github/workflows/evidenceops-fevx-adapter-verify.yml",
-    ".github/workflows/ipep-audio-engine-v2-ci.yml",
-    ".github/workflows/evidenceops-pst-corpus-v2-fanout-observer.yml",
-    ".github/workflows/alpha-omega-commercial-provider-dispatch-fencing-release.yml"
+    ".github/workflows/phoenix-emergency-freeze.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
-    ".github/workflows/evidenceops-resolve-ci.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
     ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/superior-logic-ci.yml": ["pull_request", "push"],
-    ".github/workflows/evidenceops-fevx-adapter-verify.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/ipep-audio-engine-v2-ci.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
-    ".github/workflows/evidenceops-pst-corpus-v2-fanout-observer.yml": ["workflow_run", "workflow_dispatch"],
-    ".github/workflows/alpha-omega-commercial-provider-dispatch-fencing-release.yml": ["pull_request", "push", "workflow_dispatch"]
+    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"]
   },
   "oidc_workflow_allowlist": [],
+  "actions_write_workflow_allowlist": [
+    ".github/workflows/phoenix-emergency-freeze.yml"
+  ],
+  "forbidden_pattern_exceptions": {
+    ".github/workflows/phoenix-emergency-freeze.yml": [
+      "gh api --method put",
+      "gh api -x put"
+    ]
+  },
   "forbidden_repository_mutations": [
     "git push",
     "git commit",
@@ -42,7 +41,11 @@
     "gh api --method post",
     "gh api --method put",
     "gh api --method patch",
-    "gh api --method delete"
+    "gh api --method delete",
+    "gh api -x post",
+    "gh api -x put",
+    "gh api -x patch",
+    "gh api -x delete"
   ],
   "forbidden_source_paths": [
     "deployment_receipts/",
@@ -54,6 +57,15 @@
   "require_checkout_credentials_disabled": true,
   "require_concurrency": true,
   "proof_destination": "GITHUB_ACTIONS_ARTIFACT_OR_EXTERNAL_APPEND_ONLY_STORE",
-  "source_repository_role": "SOURCE_CODE_ONLY",
-  "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE"
+  "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
+  "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+  "execution_quarantine": {
+    "keep_active": [
+      ".github/workflows/github-airlock.yml",
+      ".github/workflows/public-repository-leak-guard.yml",
+      ".github/workflows/phoenix-emergency-freeze.yml"
+    ],
+    "all_other_workflows": "DISABLED_MANUALLY",
+    "provider_readback_required": true
+  }
 }
