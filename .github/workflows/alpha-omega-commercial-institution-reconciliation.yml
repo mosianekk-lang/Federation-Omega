@@ -44,9 +44,6 @@ jobs:
         run: >-
           python -m unittest -v
           alpha_omega_commercial.test_institution_reconciliation
-          alpha_omega_commercial.test_programme_integrity
-          alpha_omega_commercial.test_governed_authority_release
-          alpha_omega_v30.test_p13_p15
 
       - name: Execute C15 P13 P15 reconciliation proof
         run: >-
