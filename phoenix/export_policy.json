@@ -1,0 +1,43 @@
+{
+  "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
+  "version": "1.0.1",
+  "core": {
+    "include_extensions": [
+      ".css", ".csv", ".html", ".js", ".json", ".md", ".proto",
+      ".ps1", ".py", ".sh", ".sql", ".toml", ".ts", ".txt",
+      ".xml", ".yaml", ".yml"
+    ],
+    "include_root_files": [
+      ".gitignore", "LICENSE", "README.md", "SECURITY.md", "pyproject.toml"
+    ],
+    "excluded_prefixes": [
+      ".bootstrap/", ".git/", ".github/", "deployment_receipts/",
+      "phoenix-export-output/", "phoenix-freeze-output/", "runtime/"
+    ],
+    "excluded_segments": [
+      "__pycache__", "credentials", "drift", "heartbeat", "keys", "proofs",
+      "queue", "receipts", "results", "secrets", "snapshots", "state", "vendor"
+    ],
+    "excluded_suffixes": [
+      ".crt", ".der", ".jks", ".key", ".p12", ".pem", ".pfx", ".pyc"
+    ],
+    "secret_markers": [
+      "github_pat_", "ghp_", "sk-proj-"
+    ]
+  },
+  "ops": {
+    "template_prefix": "phoenix/ops-template/",
+    "required_files": [
+      "README.md", ".gitignore", ".github/CODEOWNERS",
+      "governance/OPS_CONTRACT.json", "provider_cutover.py"
+    ]
+  },
+  "invariants": {
+    "core_workflow_count": 0,
+    "core_runtime_state_count": 0,
+    "ops_legacy_workflow_count": 0,
+    "symlinks_allowed": false,
+    "secret_marker_files_allowed": 0,
+    "private_key_suffixes_allowed": 0
+  }
+}

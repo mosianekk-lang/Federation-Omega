@@ -1,0 +1,23 @@
+{
+  "schema": "FEDOMEGA-PHOENIX-OPS-CONTRACT-1",
+  "version": "1.0.0",
+  "repository_role": "PRIVATE_EXECUTION_PLANE",
+  "canonical_source_repository": "mosianekk-lang/Federation-Omega-Core",
+  "default_permissions": {
+    "contents": "read"
+  },
+  "authority_rules": {
+    "long_lived_credentials": false,
+    "self_approval": false,
+    "self_promotion": false,
+    "source_repository_mutation": false,
+    "provider_mutation_requires_readback": true,
+    "rollback_required": true
+  },
+  "proof_destination": [
+    "IMMUTABLE_GITHUB_ACTIONS_ARTIFACT",
+    "EXTERNAL_APPEND_ONLY_EVIDENCE_STORE"
+  ],
+  "initial_active_workflows": 0,
+  "module_admission_required": true
+}
