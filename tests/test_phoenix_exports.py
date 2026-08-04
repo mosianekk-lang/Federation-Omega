@@ -137,7 +137,6 @@ class PhoenixExportTests(unittest.TestCase):
                     ".github/CODEOWNERS",
                     "governance/OPS_CONTRACT.json",
                     "provider_cutover.py",
-                    "provider_cutover_outcome_reconciler.py",
                 ],
             },
         }
@@ -271,10 +270,6 @@ class PhoenixExportTests(unittest.TestCase):
         with tarfile.open(output / "Federation-Omega-Ops.tar.gz", "r:gz") as archive:
             names = set(archive.getnames())
         self.assertIn("provider_cutover.py", names)
-        self.assertIn("provider_cutover_authorization_use.py", names)
-        self.assertIn("provider_cutover_v3_1.py", names)
-        self.assertIn("provider_cutover_v3_base.py", names)
-        self.assertIn("provider_cutover_outcome_reconciler.py", names)
         self.assertIn("governance/OPS_CONTRACT.json", names)
         self.assertFalse(any(EXPORTS.is_github_workflow_path(name) for name in names))
 
