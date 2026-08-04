@@ -1,7 +1,7 @@
 {
   "checkpoint_id": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10-RELEASE-CHECKPOINT",
   "programme_id": "AO-COMMERCIAL-MATURITY-V1",
-  "status": "AUTHORITY_ACTION_IDEMPOTENCY_RELEASE_RECONCILIATION_PROVIDER_PROOF_REQUIRED",
+  "status": "AUTHORITY_ACTION_IDEMPOTENCY_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED",
   "stage_scope": [
     "C03",
     "C11",
@@ -23,6 +23,17 @@
     "receipt_sha256": "f61dc9632881d3c34363d6113516b18804264056cec7110bc0faa66284892786",
     "checks_required": 10,
     "checks_failed": 0
+  },
+  "release_reconciliation_proof": {
+    "head_sha": "a16fb12597c4ffa4caa1e7f56242cf37372507ee",
+    "workflow_run": 30896077266,
+    "workflow_job": 91949166874,
+    "artifact_id": 8887064668,
+    "artifact_digest": "sha256:dd52dc2badeba633294f988d40df90fb371377d373941bcda8e1b9c46e76b881",
+    "proof_sha256": "e7ca51a516b388575d1c2a0b24005c726909c0d133b68378cf70cfbd72a90354",
+    "checks_required": 15,
+    "checks_failed": 0,
+    "expires_at": "2026-11-02T09:23:05Z"
   },
   "google_drive_release": {
     "file_id": "14pySl3BSQqgi0XIeuJYks6_y2EwW-Mu4mTyYCAKiR38",
