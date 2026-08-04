@@ -20,16 +20,37 @@ class PstCompositeRuntimeContractTests(unittest.TestCase):
     def test_marked_closure_run_isolates_and_cancels_stale_queue(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("startsWith(github.event.head_commit.message, '[PST-CLOSE]')", text)
-        self.assertIn("'phoenix-emergency-execution-freeze' || 'phoenix-emergency-passive'", text)
+        self.assertIn("'phoenix-emergency-execution-freeze'", text)
+        self.assertIn("'phoenix-emergency-passive'", text)
         self.assertIn("cancel-in-progress: ${{ github.event_name == 'push'", text)
         self.assertIn("id: pst_closure", text)
         self.assertIn("if: steps.pst_closure.outputs.requested == 'true'", text)
 
-    def test_passive_runs_do_not_require_pst_completion(self):
+    def test_local_bible_rebuild_has_independent_isolated_lane(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("startsWith(github.event.head_commit.message, '[BIBLE-REBUILD]')", text)
+        self.assertIn("'phoenix-local-bible-rebuild'", text)
+        self.assertIn("id: bible_rebuild", text)
+        self.assertIn("if: steps.bible_rebuild.outputs.requested == 'true'", text)
+        self.assertIn(
+            "steps.bible_rebuild.outputs.requested == 'true'",
+            text,
+        )
+
+    def test_passive_runs_do_not_require_pst_or_bible_completion(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("pst_ok=true", text)
-        self.assertIn("PST not requested", text)
-        self.assertIn("requested=\"${{ steps.pst_closure.outputs.requested }}\"", text)
+        self.assertIn("bible_ok=true", text)
+        self.assertIn('pst_requested="${{ steps.pst_closure.outputs.requested }}"', text)
+        self.assertIn('bible_requested="${{ steps.bible_rebuild.outputs.requested }}"', text)
+        self.assertIn(
+            'if [[ "${pst_requested}" != "true" && "${bible_requested}" != "true" ]]; then',
+            text,
+        )
+        self.assertIn(
+            "Phoenix quarantine and exports verified; no marked rebuild requested",
+            text,
+        )
 
     def test_verifier_honours_explicit_root_override(self):
         previous = os.environ.get("PST_VERIFY_ROOT")
