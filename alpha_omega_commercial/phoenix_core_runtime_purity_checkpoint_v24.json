@@ -1,0 +1,161 @@
+{
+  "capability_revision": "AO-COMMERCIAL-PHOENIX-CORE-RUNTIME-PURITY-V24",
+  "checkpoint_sha256": "f618119c6973c10896310a93ce1ab86dd2091eca4c8361f8d7adbf041985bb27",
+  "commercial_truth": {
+    "cloud_run_operation": "NOT_PROVEN",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "external_customer_case_study": "MARKET_PROOF_REQUIRED",
+    "full_commercial_maturity": false,
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "self_service_saas": "HELD",
+    "service_enabled_platform": "VERIFIED_AND_PRIORITISED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "verified_live_revenue_events": 0
+  },
+  "dependency_path": [
+    "C03",
+    "C06",
+    "C07",
+    "C11",
+    "C14",
+    "C15"
+  ],
+  "execution_freeze_receipt": {
+    "disabled_total_after": 140,
+    "missing_required": [],
+    "provider_managed_active": [
+      "dynamic/dependabot/dependabot-updates"
+    ],
+    "receipt_file_sha256": "a01ad62d41268c954e3d637f2287f13a3c3e5dea536e1b1901e56300d4eb9146",
+    "receipt_sha256": "53cd8f77d618a5f78966181b3b7220a0272f36611e7ad9fcfbcbeea65db7c6dc",
+    "required_active_workflows": [
+      ".github/workflows/github-airlock.yml",
+      ".github/workflows/phoenix-emergency-freeze.yml",
+      ".github/workflows/public-repository-leak-guard.yml"
+    ],
+    "source_mutation_attempted": false,
+    "status": "VERIFIED",
+    "unexpected_active": []
+  },
+  "export_receipt": {
+    "core": {
+      "archive_sha256": "e35a48d0ac6221120d68d42b9a2be687150af37d6e882032a0c714ba88663693",
+      "excluded_count": 446,
+      "included_count": 905,
+      "migration_control_test_count": 0,
+      "retained_test_count": 135,
+      "retained_test_result": "PASS",
+      "runtime_state_count": 0,
+      "secret_marker_count": 0,
+      "size_bytes": 963347,
+      "workflow_count": 0
+    },
+    "credential_value_recorded": false,
+    "ops": {
+      "archive_sha256": "5e6e0066f5370f6b26ef16907a83808b26b4b73e58b242bbc6f95466da5cfc17",
+      "included_count": 6,
+      "size_bytes": 10167
+    },
+    "policy_version": "1.0.5",
+    "provider_apply_performed": false,
+    "provider_cutover_engine": "3.1",
+    "receipt_file_sha256": "c73612786e921efa67fc7b12bafe248f81d5ecf410351da50cb54a209b863ab0",
+    "receipt_sha256": "67133229fa9bb09f95cd0c37ca4e8e9cf4e7e730a353a260f5febc7a13baad68",
+    "source_mutation_attempted": false,
+    "status": "VERIFIED"
+  },
+  "google_drive_release": {
+    "created_at": "2026-08-04T20:27:47.407Z",
+    "file_id": "1qU5Ax4fWOsCm63qop2KngDKfT4Ja12GgNtSCQZUaV1Y",
+    "modified_at": "2026-08-04T20:28:15.496Z",
+    "owner": "mosianekk@gmail.com",
+    "readback": "VERIFIED",
+    "shared": false,
+    "text_export_sha256": "e08efa036e9846302625165fac35fe1213972a47456dc43888dd05bdbfe08ce8",
+    "text_export_size_bytes": 4868,
+    "title": "Alpha Omega Phoenix Core Runtime Purity v24 Release — 2026-08-04"
+  },
+  "implementation_chain": [
+    {
+      "head_sha": "138d6034c9ecfcc984f07c51d4b5b88459c2c51b",
+      "merge_commit": "34e1205e6d2f2195f7a2766cc471b8b52c8661dc",
+      "pull_request": 209,
+      "purpose": "RULESET_ONLY_PROVIDER_AIRLOCK_ACTIVATOR"
+    },
+    {
+      "head_sha": "e1a1391c27d8294628b9658288bb5c3bc3cb2d84",
+      "merge_commit": "d155c620b745cfba0336f780268e94be3ddd61ef",
+      "pull_request": 212,
+      "purpose": "CORE_EXPORT_TEST_PURITY_AND_COMPUTED_ZERO_CONTROL_TEST_GATE"
+    },
+    {
+      "head_sha": "1fbc1f3bae9e02988dc08e82750e7a40be771cac",
+      "merge_commit": "a1cdcb5659c1ba81e6d1529aa5c0aceb9be8ec7f",
+      "pull_request": 215,
+      "purpose": "REAL_EXPORTED_CORE_DEPENDENCY_INSTALL_AND_COMPLETE_TEST_EXECUTION_GATE"
+    },
+    {
+      "head_sha": "d1c17e949d6b779e3266573fc23833bf61af0b2d",
+      "merge_commit": "8e844204d906c5de7aee80a423aae8411f6e980a",
+      "pull_request": 221,
+      "purpose": "ZERO_OIDC_PST_RUNTIME_CONTRACT_RECONCILIATION"
+    }
+  ],
+  "institution_scope": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED",
+    "institution_v3_google_drive_publication": "UNVERIFIED_SCOPE_HELD"
+  },
+  "next_gate": "FRESH_OWNER_AUTHORISED_PROVIDER_APPLY_WITH_PROVIDER_NATIVE_CORE_OPS_READBACK",
+  "operational_proof_gate": {
+    "cloud_run_operation_proven": false,
+    "external_repository_created": false,
+    "local_bible_provider_recovery": "PRIVATE_OPS_PLANE_REQUIRED",
+    "provider_apply_performed": false,
+    "real_exported_core_complete_test_suite": "135_OF_135_PASS",
+    "real_exported_core_dependency_contract_installed": "VERIFIED",
+    "source_repository_control_tests_excluded_fail_closed": "VERIFIED",
+    "zero_oidc_legacy_source_plane": "VERIFIED"
+  },
+  "owner_authority": {
+    "consequential_releases": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "execution_plane_cutover": "OWNER_RESERVED_FRESH_EXACT_AUTHORIZATION_REQUIRED",
+    "external_communications": "OWNER_RESERVED",
+    "financial_commitments": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "provider_native_proof": {
+    "commit_status": "phoenix-freeze/verified",
+    "conclusion": "success",
+    "cutover_artifact": {
+      "artifact_digest": "sha256:81495be2abab231cb6919e4d3750572da85ba926a85c870f1ed466490014b4e9",
+      "artifact_id": 8907794843,
+      "artifact_name": "phoenix-cutover-package-v3-30947774350-1",
+      "size_bytes": 974993
+    },
+    "freeze_artifact": {
+      "artifact_digest": "sha256:942f5f94885711c36c126b0d83948770f951eb6aba729a9e34703d9334f70beb",
+      "artifact_id": 8907794516,
+      "artifact_name": "phoenix-execution-freeze-30947774350-1",
+      "size_bytes": 760
+    },
+    "source_sha": "8e844204d906c5de7aee80a423aae8411f6e980a",
+    "workflow_job": 92121940441,
+    "workflow_run": 30947774350,
+    "workflow_steps": {
+      "core_ops_export_build": "success",
+      "immutable_artifact_publication": "success",
+      "legacy_execution_quarantine": "success",
+      "provider_and_export_regressions": "success",
+      "pst_composite_verification": "skipped_not_requested",
+      "verified_commit_status_publication": "success"
+    }
+  },
+  "schema": "AO-COMMERCIAL-PHOENIX-CORE-RUNTIME-PURITY-CHECKPOINT-24",
+  "status": "PROVIDER_PROOF_VERIFIED_ZERO_OIDC_SOURCE_PLANE_CORE_RUNTIME_PURITY_VERIFIED_PROVIDER_APPLY_OWNER_RESERVED"
+}
