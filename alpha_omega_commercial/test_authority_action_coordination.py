@@ -204,10 +204,11 @@ class AuthorityActionCoordinationTests(unittest.TestCase):
         )
 
     def test_invalid_coordination_lock_path_fails_closed(self) -> None:
-        lock_path = self.root / (
-            CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane.
-            COORDINATION_LOCK_FILE
+        lock_file = (
+            CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane
+            .COORDINATION_LOCK_FILE
         )
+        lock_path = self.root / lock_file
         lock_path.mkdir(parents=True)
         with self.assertRaises(OSError):
             CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane(
