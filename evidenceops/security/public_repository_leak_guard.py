@@ -37,6 +37,12 @@ PROVIDER_ASSIGNMENT = re.compile(
     r"\s*[=:]\s*[\"']([^\"']*)[\"']"
 )
 
+# Build the prefix in separate fragments so this detector does not match its
+# own source text. The generic form covers project-scoped and legacy key forms.
+OPENAI_KEY_PATTERN = re.compile(
+    r"\b" + r"sk" + r"-(?:proj-)?[A-Za-z0-9_-]{20,}\b"
+)
+
 STATIC_RULES = [
     (
         "embedded_google_url",
@@ -48,6 +54,10 @@ STATIC_RULES = [
     (
         "private_key",
         re.compile(r"-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----"),
+    ),
+    (
+        "openai_api_key",
+        OPENAI_KEY_PATTERN,
     ),
 ]
 
