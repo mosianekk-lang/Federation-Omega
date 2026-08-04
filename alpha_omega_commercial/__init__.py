@@ -1,13 +1,11 @@
 """Canonical Alpha→Omega commercial maturity API.
 
-The idempotent process-coordinated journal-safe atomic authority-snapshot
-control plane is the newest managed-service candidate. Live authority requires
-a provider-native snapshot, monotonic durable acceptance, exact action-level
-binding, atomic prepare/commit/rollback, durable recovery, atomically published
-transaction events and provider-process coordination. V10 additionally binds a
-canonical request intent to the committed object so exact retries do not consume
-owner authority or create another transaction. Earlier control planes remain
-exported for historical regression and mock-provider conformance.
+The provider-dispatch-outbox control plane is the newest service-platform
+candidate. It preserves the V10 crash-safe exact-request boundary and adds a
+hash-bound provider command outbox with a stable provider idempotency key,
+restart-safe mock-provider receipt admission and a fail-closed live-provider
+proof boundary. Earlier control planes remain exported for historical
+regression and reference-provider conformance.
 """
 
 from __future__ import annotations
@@ -19,6 +17,10 @@ _PACKAGE_DIR = str(Path(__file__).resolve().parent)
 if _PACKAGE_DIR not in sys.path:
     sys.path.insert(0, _PACKAGE_DIR)
 
+from provider_dispatch_outbox import (  # noqa: E402
+    ConformantMockProviderAdapter,
+    ProviderDispatchOutboxCommercialControlPlane,
+)
 from authority_action_idempotency import (  # noqa: E402
     IdempotentCoordinatedAuthoritySnapshotCommercialControlPlane,
 )
@@ -54,6 +56,8 @@ from governed_commercial_assurance import (  # noqa: E402
 )
 
 __all__ = [
+    "ProviderDispatchOutboxCommercialControlPlane",
+    "ConformantMockProviderAdapter",
     "IdempotentCoordinatedAuthoritySnapshotCommercialControlPlane",
     "CoordinatedJournalSafeAuthoritySnapshotCommercialControlPlane",
     "JournalSafeAtomicAuthoritySnapshotCommercialControlPlane",
