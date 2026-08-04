@@ -1,0 +1,19 @@
+{
+  "schema": "FEDERATION-OMEGA-V2-PHASE2-ACCEPTANCE-1",
+  "version": "0.2.0",
+  "accepted": true,
+  "source_tests": 20,
+  "clean_tests": 20,
+  "resource_warning_gate": "PASS",
+  "canonical_system_count": 20,
+  "relationship_count": 22,
+  "reference_mission_stages": 10,
+  "restart_reconstruction": "PASS",
+  "sqlite_quick_check": "ok",
+  "local_release_source_manifest_sha256": "b414174c7f7abe7f18e124f6ddd2dabb275fa2d12614a5903eaaec1b0799915a",
+  "local_release_source_zip_sha256": "50335f143a36b56a136868dcf5dc109b8ba282601258494b1a6e6e7f5d50748d",
+  "wheel_sha256": "6af622edd02b297900035338f9d9176da842be9806d82a85cd0f990d7a84ea9f",
+  "authority_class": "A1",
+  "external_effects": 0,
+  "truth_boundary": "Acceptance applies to the governed local release package. The repository contains a source projection and canonical register; binary distribution remains in Library storage. The synthetic EvidenceOps mission contains no real case evidence or legal effect."
+}
