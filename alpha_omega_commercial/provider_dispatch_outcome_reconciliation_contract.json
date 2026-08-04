@@ -1,0 +1,42 @@
+{
+  "contract_id": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTCOME-RECONCILIATION-V14",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "canonical_class": "OutcomeReconciledProviderDispatchCommercialControlPlane",
+  "predecessor_class": "FencedProviderDispatchCommercialControlPlane",
+  "service_strategy": "SERVICE_ENABLED_PLATFORM_FIRST_SELF_SERVICE_SAAS_HELD",
+  "submission_boundary": {
+    "durable_before_transport": true,
+    "one_submission_per_claim": true,
+    "hash_bound_to_attempt_envelope": true
+  },
+  "unknown_outcome_policy": {
+    "submitted_lease_expiry": "QUARANTINE_AND_BLOCK_RETRY",
+    "ordinary_retryable_failure_after_submission": "REJECTED",
+    "resolution_required": true
+  },
+  "reconciliation": {
+    "mock_no_effect": "CONFORMANCE_ONLY_RETRY_RELEASED",
+    "mock_completed": "CONFORMANCE_ONLY_ORIGINAL_RECEIPT_ADMITTED",
+    "live_provider": "PROVIDER_PROOF_REQUIRED",
+    "distributed_exactly_once": "NOT_PROVEN"
+  },
+  "external_claims": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_operation": false,
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation": false,
+    "enterprise_assurance": false,
+    "partner_adoption": false,
+    "external_customer_case_study": false,
+    "production_scale": false,
+    "full_commercial_maturity": false
+  },
+  "owner_reserved": [
+    "financial commitments",
+    "contracts",
+    "external communications",
+    "consequential releases",
+    "revenue recognition"
+  ]
+}

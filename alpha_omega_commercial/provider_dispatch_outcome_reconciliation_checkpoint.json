@@ -1,0 +1,70 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTCOME-RECONCILIATION-V14-CHECKPOINT",
+  "status": "IMPLEMENTED_PROVIDER_NATIVE_CI_PENDING",
+  "dependency_checkpoint": {
+    "preceding_pull_request": 147,
+    "preceding_merge_commit": "2847964546eaa59b4a96236dcd1db56a9e61b9dd",
+    "preceding_capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-FENCING-V13",
+    "preceding_drive_file_id": "1fHoNNFkbk4lQR220g46nF89Lf_LcicVYMCT9sTaHGrE",
+    "preceding_drive_modified_at": "2026-08-04T12:19:48.873Z",
+    "preceding_drive_readback_verified": true,
+    "preceding_drive_owner_only": true,
+    "programme_dependency_order_verified": true,
+    "institution_state_preserved": true
+  },
+  "candidate_projection": {
+    "capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTCOME-RECONCILIATION-V14",
+    "canonical_class": "OutcomeReconciledProviderDispatchCommercialControlPlane",
+    "predecessor_class": "FencedProviderDispatchCommercialControlPlane",
+    "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true
+  },
+  "operational_proof_gate": {
+    "production_code": "IMPLEMENTED",
+    "tests": "PROVIDER_NATIVE_CI_PENDING",
+    "documentation": "IMPLEMENTED",
+    "durable_submission_boundary": "IMPLEMENTED_PROVIDER_CI_PENDING",
+    "unknown_outcome_quarantine": "IMPLEMENTED_PROVIDER_CI_PENDING",
+    "mock_provider_reconciliation_conformance": "IMPLEMENTED_PROVIDER_CI_PENDING",
+    "provider_native_reconciliation": "PROVIDER_PROOF_REQUIRED",
+    "live_provider_receipt": "PROVIDER_PROOF_REQUIRED",
+    "external_mutation_performed": false
+  },
+  "institution_projection": {
+    "P13": "CROSS_PROGRAMME_RECONCILIATION_VERIFIED_NO_PROVIDER_WRITEBACK",
+    "P15": "INSTITUTIONAL_READINESS_PRESERVED_EXTERNAL_COMPLETION_BLOCKED"
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "customer_demand_proven": false,
+    "signed_customer_contract_proven": false,
+    "payment_provider_operation_proven": false,
+    "cloud_run_operation_proven": false,
+    "enterprise_attestation_proven": false,
+    "partner_adoption_proven": false,
+    "external_customer_case_study_proven": false,
+    "production_scale_proven": false,
+    "provider_native_reconciliation_proven": false,
+    "distributed_provider_exactly_once_proven": false,
+    "full_commercial_maturity": false
+  },
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "provider_native_reconciliation": "PROVIDER_PROOF_REQUIRED",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED"
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "truth_boundary": "This candidate implements local unknown-provider-outcome quarantine and mock-provider reconciliation conformance. It does not prove provider-native reconciliation, external mutation, customer demand, contracts, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise assurance, partner adoption, an external customer case study, distributed provider exactly-once execution, production scale or full commercial maturity."
+}
