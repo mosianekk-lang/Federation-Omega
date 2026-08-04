@@ -25,66 +25,49 @@ jobs:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api \
-            -H 'Accept: application/vnd.github+json' \
-            "/repos/${GITHUB_REPOSITORY}/actions/workflows/evidenceops-pst-corpus-v2-extract.yml/runs?per_page=20" \
-            > /tmp/runs-before.json
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/workflows/evidenceops-pst-corpus-v2-extract.yml/runs?per_page=20" > /tmp/runs-before.json
           python - <<'PY' > /tmp/cancel-ids.txt
           import json, os
           payload=json.load(open('/tmp/runs-before.json', encoding='utf-8'))
           canonical=int(os.environ['CANONICAL_EXTRACTION_RUN_ID'])
-          cancellable={'queued','requested','waiting','pending'}
           for row in payload.get('workflow_runs', []):
               run_id=int(row.get('id') or 0)
-              if run_id and run_id != canonical and row.get('status') in cancellable:
+              if run_id and run_id != canonical and row.get('status') in {'queued','requested','waiting','pending'}:
                   print(run_id)
           PY
           while read -r run_id; do
             [[ -z "$run_id" ]] && continue
             gh api --method POST "/repos/${GITHUB_REPOSITORY}/actions/runs/${run_id}/cancel" || true
-            echo "cancelled queued duplicate: $run_id"
           done < /tmp/cancel-ids.txt
-      - name: Capture extraction workflow state
+      - name: Capture extraction and fanout workflow state
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
           mkdir -p deployment_receipts
-          gh api \
-            -H 'Accept: application/vnd.github+json' \
-            "/repos/${GITHUB_REPOSITORY}/actions/workflows/evidenceops-pst-corpus-v2-extract.yml/runs?per_page=20" \
-            > /tmp/runs.json
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/workflows/evidenceops-pst-corpus-v2-extract.yml/runs?per_page=20" > /tmp/extraction.json
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/workflows/evidenceops-pst-corpus-v2-shard-fanout.yml/runs?per_page=20" > /tmp/fanout.json
           python - <<'PY'
           import json, os
           from datetime import datetime, timezone
           from pathlib import Path
-          payload=json.load(open('/tmp/runs.json', encoding='utf-8'))
           canonical=int(os.environ['CANONICAL_EXTRACTION_RUN_ID'])
-          runs=[]
-          for row in payload.get('workflow_runs', []):
-              runs.append({
-                  'id': row.get('id'),
-                  'canonical': row.get('id') == canonical,
-                  'run_number': row.get('run_number'),
-                  'run_attempt': row.get('run_attempt'),
-                  'event': row.get('event'),
-                  'status': row.get('status'),
-                  'conclusion': row.get('conclusion'),
-                  'head_sha': row.get('head_sha'),
-                  'created_at': row.get('created_at'),
-                  'updated_at': row.get('updated_at'),
-                  'html_url': row.get('html_url'),
-              })
+          def compact(path):
+              payload=json.load(open(path,encoding='utf-8'))
+              rows=[]
+              for r in payload.get('workflow_runs',[]):
+                  rows.append({k:r.get(k) for k in ('id','run_number','run_attempt','event','status','conclusion','head_sha','created_at','updated_at','html_url')})
+              return rows
           receipt={
               'receipt':'EVIDENCEOPS-PST-CORPUS-V2-ACTIONS-OBSERVER',
               'recorded_at':datetime.now(timezone.utc).isoformat(),
               'repository':os.environ['GITHUB_REPOSITORY'],
-              'canonical_run_id':canonical,
-              'runs':runs,
+              'canonical_extraction_run_id':canonical,
+              'extraction_runs':compact('/tmp/extraction.json'),
+              'fanout_runs':compact('/tmp/fanout.json'),
           }
-          Path('deployment_receipts/evidenceops-pst-corpus-v2-observer.json').write_text(
-              json.dumps(receipt, indent=2, sort_keys=True)+'\n', encoding='utf-8')
-          print(json.dumps(receipt, indent=2, sort_keys=True))
+          Path('deployment_receipts/evidenceops-pst-corpus-v2-observer.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
           PY
       - name: Commit observer receipt
         run: |
