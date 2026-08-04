@@ -1,69 +1,86 @@
 name: EvidenceOps RESOLVE CI
 
 on:
+  pull_request:
+    paths:
+      - 'evidenceops/resolve/**'
+      - '.github/workflows/evidenceops-resolve-ci.yml'
+  merge_group:
   push:
     branches: [main]
     paths:
       - 'evidenceops/resolve/**'
       - '.github/workflows/evidenceops-resolve-ci.yml'
-  pull_request:
-    paths:
-      - 'evidenceops/resolve/**'
+  workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
+
+concurrency:
+  group: evidenceops-resolve-ci-${{ github.ref }}
+  cancel-in-progress: true
 
 jobs:
   test:
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
+
       - name: Compile
         working-directory: evidenceops/resolve
         run: python -m compileall -q resolve tests
+
       - name: Test
         working-directory: evidenceops/resolve
         run: python -m unittest discover -s tests -v
+
       - name: CLI smoke test
         working-directory: evidenceops/resolve
         run: |
+          set -euo pipefail
           python -m resolve.cli init /tmp/resolve-smoke
           python -m resolve.cli audit /tmp/resolve-smoke
-      - name: Commit provider CI receipt
-        if: github.event_name == 'push'
+
+      - name: Generate immutable provider receipt
+        shell: bash
         run: |
           set -euo pipefail
-          mkdir -p deployment_receipts
+          mkdir -p resolve-proof
           python - <<'PY'
-          import json, os
+          import hashlib, json, os
           from datetime import datetime, timezone
           from pathlib import Path
-          receipt = {
-              'schema': 'EVIDENCEOPS-RESOLVE-CI-RECEIPT-1',
+
+          payload = {
+              'schema': 'EVIDENCEOPS-RESOLVE-CI-RECEIPT-2',
               'system': 'EvidenceOps RESOLVE',
               'version': '1.0.0',
               'status': 'PASS',
-              'proof_level': 'PROVIDER_READBACK',
-              'tests_passed': 5,
+              'proof_level': 'IMMUTABLE_ACTIONS_ARTIFACT',
               'source_commit': os.environ['GITHUB_SHA'],
               'workflow_run_id': int(os.environ['GITHUB_RUN_ID']),
+              'workflow_run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
               'recorded_at': datetime.now(timezone.utc).isoformat(),
+              'repository_mutation_attempted': False,
           }
-          Path('deployment_receipts/evidenceops-resolve-ci.json').write_text(
-              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          canonical = json.dumps(payload, sort_keys=True, separators=(',', ':')).encode()
+          payload['receipt_sha256'] = hashlib.sha256(canonical).hexdigest()
+          Path('resolve-proof/evidenceops-resolve-ci.json').write_text(
+              json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8'
           )
           PY
-          git config user.name 'evidenceops-resolve-bot'
-          git config user.email 'evidenceops-resolve-bot@users.noreply.github.com'
-          git add deployment_receipts/evidenceops-resolve-ci.json
-          git commit -m 'Record EvidenceOps RESOLVE CI receipt [skip ci]'
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then exit 0; fi
-            git pull --rebase origin main
-            sleep $((attempt * 3))
-          done
-          exit 1
+
+      - name: Upload immutable provider receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: evidenceops-resolve-ci-${{ github.run_id }}-${{ github.run_attempt }}
+          path: resolve-proof/evidenceops-resolve-ci.json
+          if-no-files-found: error
+          retention-days: 90
