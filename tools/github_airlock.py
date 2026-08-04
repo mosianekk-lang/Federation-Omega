@@ -256,15 +256,17 @@ def evaluate(
     for status, path in changes:
         deleted = status.startswith("D")
         if path.startswith(WORKFLOW_PREFIX) and path.endswith((".yml", ".yaml")):
-            if not deleted:
-                changed_workflows.append(path)
-                findings.extend(
-                    analyse_workflow(
-                        path,
-                        (ROOT / path).read_text(encoding="utf-8"),
-                        policy,
-                    )
+            workflow_file = ROOT / path
+            if deleted or not workflow_file.is_file():
+                continue
+            changed_workflows.append(path)
+            findings.extend(
+                analyse_workflow(
+                    path,
+                    workflow_file.read_text(encoding="utf-8"),
+                    policy,
                 )
+            )
 
         for prefix in policy["forbidden_source_paths"]:
             if path.startswith(prefix) and not deleted:
