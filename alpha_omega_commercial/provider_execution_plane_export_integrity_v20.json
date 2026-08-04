@@ -1,0 +1,49 @@
+{
+  "schema": "AO-COMMERCIAL-PROVIDER-EXECUTION-PLANE-EXPORT-INTEGRITY-V20",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "owner": "Kim Kagiso Mosiane",
+  "status": "IMPLEMENTATION_CANDIDATE_CI_PENDING",
+  "dependency_order": [
+    "C03",
+    "C06",
+    "C07",
+    "C11",
+    "C14",
+    "C15"
+  ],
+  "strategy": {
+    "service_enabled_platform": "PRIORITISED",
+    "self_service_saas": "HELD"
+  },
+  "operational_slice": {
+    "nested_github_workflows_excluded_at_any_depth": true,
+    "export_generation_side_effect_free": true,
+    "provider_dispatch_during_export": false,
+    "provider_mutation_during_export": false,
+    "complete_final_receipt_payload_hash_required": true,
+    "v3_1_provider_apply_performed": false,
+    "template_state_restoration_claimed_without_apply": false,
+    "provider_cutover_preparation": "COMPLETE_PENDING_PROVIDER_AUTHORITY"
+  },
+  "external_boundaries": {
+    "private_execution_plane_cutover": "PROVIDER_BLOCKED_FRESH_AUTHORIZED_APPLY_REQUIRED",
+    "cloud_run_operation": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "verified_live_revenue_events": 0,
+    "full_commercial_maturity": false
+  },
+  "owner_reserved_authority": [
+    "financial commitments",
+    "contracts",
+    "external communications",
+    "consequential releases",
+    "private execution-plane provider apply",
+    "revenue recognition confirmation"
+  ],
+  "promotion_rule": "Promote only after Federation Omega Airlock, Public Repository Leak Guard, Phoenix export regressions and final artifact inspection pass on the exact candidate head."
+}
