@@ -106,7 +106,7 @@
     "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
     "production_scale": "PRODUCTION_PROOF_REQUIRED"
   },
-  "receipt_sha256": "8df7776a820ab2f73aac789bbf938a5a84e56376565277887c484102e53be625",
+  "receipt_sha256": "405cf24d05f7cc6e9d20752ad1c097eaec0b237d6a9ea3d7a9bcab96f48c94b3",
   "release_id": "AO-COMMERCIAL-AUTHORITY-ACTION-IDEMPOTENCY-V10-RELEASE",
   "self_service_saas": "HELD",
   "stage_scope": [
