@@ -38,28 +38,38 @@ def _include(
     )
 
 
-def _publish_pst_scratch_root() -> dict[str, object]:
-    """Publish a writable scratch root for later Phoenix workflow steps.
+def _publish_pst_runtime() -> dict[str, object]:
+    """Publish bounded verifier runtime settings for later Phoenix steps.
 
-    GitHub-hosted runners do not allow the unprivileged job user to create a new
-    root beneath ``/mnt``.  ``GITHUB_ENV`` is the provider-native channel for
-    exporting environment values to subsequent steps.  Local builds and tests
-    remain side-effect free because they do not expose that file path.
+    ``GITHUB_ENV`` is the provider-native channel for exporting values to later
+    steps.  The scratch root uses writable ``/tmp``.  ``PYTHONPATH`` exposes a
+    narrow bootstrap that strips GitHub bearer authorization only when an
+    artifact download redirect crosses from api.github.com to blob storage.
+    Local builds and tests remain side-effect free when ``GITHUB_ENV`` is absent.
     """
 
     scratch_root = os.environ.get(
         "PST_VERIFY_ROOT", "/tmp/pst-composite-verify"
     )
+    bootstrap_dir = ROOT / "runtime_bootstrap"
+    existing_pythonpath = os.environ.get("PYTHONPATH", "")
+    pythonpath = str(bootstrap_dir)
+    if existing_pythonpath:
+        pythonpath = f"{pythonpath}{os.pathsep}{existing_pythonpath}"
+
     github_env = os.environ.get("GITHUB_ENV")
     published = False
     if github_env:
         env_path = Path(github_env)
         with env_path.open("a", encoding="utf-8") as handle:
             handle.write(f"PST_VERIFY_ROOT={scratch_root}\n")
+            handle.write(f"PYTHONPATH={pythonpath}\n")
         published = True
     return {
         "scratch_root": scratch_root,
+        "pythonpath_bootstrap": str(bootstrap_dir),
         "github_env_published": published,
+        "cross_host_authorization_guard": True,
         "source_mutation_attempted": False,
     }
 
@@ -126,7 +136,7 @@ def main() -> int:
     policy = args.policy if args.policy.is_absolute() else root / args.policy
     output = args.output if args.output.is_absolute() else root / args.output
 
-    pst_runtime = _publish_pst_scratch_root()
+    pst_runtime = _publish_pst_runtime()
     V2.BASE.stage_ops = stage_ops_v3_1
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
