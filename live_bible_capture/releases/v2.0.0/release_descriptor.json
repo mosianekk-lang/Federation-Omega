@@ -27,12 +27,12 @@
   "binary_reconstruction_in_github": false,
   "split_files": {
     "live_bible_fabric/fabric.py": [
-      "source_parts/fabric-00.txt",
-      "source_parts/fabric-01.txt",
-      "source_parts/fabric-02.txt",
-      "source_parts/fabric-03.txt",
-      "source_parts/fabric-04.txt",
-      "source_parts/fabric-05.txt"
+      {"path": "source_parts/fabric-00.txt", "bytes": 7000, "sha256": "fc3e9f198fcb6c5d6112404c8fb3ace118fa7c708c107ed1fc4230372ee7f63f"},
+      {"path": "source_parts/fabric-01.txt", "bytes": 7000, "sha256": "2bbe06cabc44ffe16d6096ed994dbf5a2318197ca135f91c10437747a51300e4"},
+      {"path": "source_parts/fabric-02.txt", "bytes": 7000, "sha256": "0d78af8eee90afd0203b3064f519e394c43c6e2458451070c6c7efa7bd68660e"},
+      {"path": "source_parts/fabric-03.txt", "bytes": 7003, "sha256": "91a3bd2a98435e85eebcbfa6be61f65aba1e31fca690ae9bdfbe092d41f443bf"},
+      {"path": "source_parts/fabric-04.txt", "bytes": 7000, "sha256": "56d97a486bcced524f60f9d322cbf114105662f75eed254c2d9959db1fdf5ece"},
+      {"path": "source_parts/fabric-05.txt", "bytes": 1941, "sha256": "d29f264de860024d08e206d3d6952b03748faa85af3fb81d0950057521f4f95e"}
     ]
   }
 }
