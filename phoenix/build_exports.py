@@ -4,6 +4,7 @@
 from __future__ import annotations
 
 import argparse
+import fnmatch
 import gzip
 import hashlib
 import json
@@ -12,7 +13,7 @@ import shutil
 import subprocess
 import tarfile
 import tempfile
-from dataclasses import dataclass, asdict
+from dataclasses import asdict, dataclass
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -48,6 +49,15 @@ def matches_prefix(path: str, prefixes: list[str]) -> bool:
     return any(path == item.rstrip("/") or path.startswith(item) for item in prefixes)
 
 
+def matches_glob(path: str, patterns: list[str]) -> bool:
+    """Match a repository-relative POSIX path against fail-closed policy globs."""
+    return any(fnmatch.fnmatchcase(path, pattern) for pattern in patterns)
+
+
+def is_migration_control_test(path: str, policy: dict) -> bool:
+    return matches_glob(path, policy["core"].get("excluded_test_globs", []))
+
+
 def is_github_workflow_path(path: str) -> bool:
     """Return true for a GitHub Actions workflow directory at any depth."""
     parts = path.split("/")
@@ -66,6 +76,8 @@ def classify_core(path: Path, root: Path, policy: dict) -> tuple[bool, str]:
         return False, "SYMLINK_PROHIBITED"
     if is_github_workflow_path(rel):
         return False, "GITHUB_WORKFLOW_NOT_CORE_SOURCE"
+    if is_migration_control_test(rel, policy):
+        return False, "MIGRATION_CONTROL_TEST_NOT_CORE_SOURCE"
     if matches_prefix(rel, core["excluded_prefixes"]):
         return False, "EXCLUDED_PREFIX"
     if rel.startswith("phoenix/"):
@@ -132,7 +144,9 @@ def write_json(path: Path, payload: dict) -> None:
     path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
 
 
-def stage_core(root: Path, stage: Path, policy: dict) -> tuple[list[FileRecord], list[FileRecord]]:
+def stage_core(
+    root: Path, stage: Path, policy: dict
+) -> tuple[list[FileRecord], list[FileRecord]]:
     included: list[FileRecord] = []
     excluded: list[FileRecord] = []
     markers = policy["core"]["secret_markers"]
@@ -166,6 +180,8 @@ def stage_core(root: Path, stage: Path, policy: dict) -> tuple[list[FileRecord],
         raise RuntimeError("Core export contains no source files")
     if any(is_github_workflow_path(item.path) for item in included):
         raise RuntimeError("Core export contains a GitHub Actions workflow")
+    if any(is_migration_control_test(item.path, policy) for item in included):
+        raise RuntimeError("Core export contains a migration-control test")
     if any(
         item.reason.startswith("SECRET_MARKER:")
         and item.classification == "CORE_INCLUDED"
@@ -186,24 +202,28 @@ def stage_ops(root: Path, stage: Path, policy: dict) -> list[FileRecord]:
             continue
         rel = path.relative_to(template).as_posix()
         copy_file(path, stage / rel)
-        records.append(FileRecord(
-            path=rel,
-            size=path.stat().st_size,
-            sha256=sha256_file(path),
-            classification="OPS_INCLUDED",
-            reason="APPROVED_OPS_TEMPLATE",
-        ))
+        records.append(
+            FileRecord(
+                path=rel,
+                size=path.stat().st_size,
+                sha256=sha256_file(path),
+                classification="OPS_INCLUDED",
+                reason="APPROVED_OPS_TEMPLATE",
+            )
+        )
 
     cutover = root / "phoenix" / "provider_cutover.py"
     if cutover.is_file():
         copy_file(cutover, stage / "provider_cutover.py")
-        records.append(FileRecord(
-            path="provider_cutover.py",
-            size=cutover.stat().st_size,
-            sha256=sha256_file(cutover),
-            classification="OPS_INCLUDED",
-            reason="PROVIDER_CUTOVER_CONTROLLER",
-        ))
+        records.append(
+            FileRecord(
+                path="provider_cutover.py",
+                size=cutover.stat().st_size,
+                sha256=sha256_file(cutover),
+                classification="OPS_INCLUDED",
+                reason="PROVIDER_CUTOVER_CONTROLLER",
+            )
+        )
 
     actual = {item.path for item in records}
     missing = sorted(set(policy["ops"]["required_files"]) - actual)
@@ -226,6 +246,13 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
 
         core_included, core_excluded = stage_core(root, core_stage, policy)
         ops_included = stage_ops(root, ops_stage, policy)
+        migration_control_test_count = sum(
+            1 for item in core_included if is_migration_control_test(item.path, policy)
+        )
+        if migration_control_test_count:
+            raise RuntimeError(
+                f"Core export contains {migration_control_test_count} migration-control tests"
+            )
 
         common = {
             "schema": "FEDOMEGA-PHOENIX-EXPORT-MANIFEST-1",
@@ -247,7 +274,7 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
             "invariants": {
                 "workflow_count": 0,
                 "runtime_state_count": 0,
-                "migration_control_test_count": 0,
+                "migration_control_test_count": migration_control_test_count,
                 "secret_marker_count": 0,
             },
         }
