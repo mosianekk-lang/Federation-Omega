@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Federation Omega GitHub Airlock v2 admission validator."""
+"""Federation Omega GitHub Airlock admission and quarantine validator."""
 
 from __future__ import annotations
 
@@ -31,19 +31,19 @@ def load_policy(path: Path) -> dict:
 
 
 def changed_paths(base: str, head: str) -> list[tuple[str, str]]:
-    proc = subprocess.run(
+    process = subprocess.run(
         ["git", "diff", "--name-status", "--find-renames", base, head],
         cwd=ROOT,
         text=True,
         capture_output=True,
     )
-    if proc.returncode:
-        raise RuntimeError(proc.stderr.strip() or "git diff failed")
-    result: list[tuple[str, str]] = []
-    for line in proc.stdout.splitlines():
+    if process.returncode:
+        raise RuntimeError(process.stderr.strip() or "git diff failed")
+    rows: list[tuple[str, str]] = []
+    for line in process.stdout.splitlines():
         fields = line.split("\t")
-        result.append((fields[0], fields[-1]))
-    return result
+        rows.append((fields[0], fields[-1]))
+    return rows
 
 
 def workflow_events(text: str) -> set[str]:
@@ -53,20 +53,33 @@ def workflow_events(text: str) -> set[str]:
         "issues", "issue_comment", "repository_dispatch",
     }
     return {
-        event for event in known
+        event
+        for event in known
         if re.search(rf"(?m)^\s{{0,4}}{re.escape(event)}\s*:", text)
     }
 
 
-def has_contents_write(text: str) -> bool:
+def has_permission(text: str, permission: str, level: str) -> bool:
     return bool(
-        re.search(r"(?mi)^\s*contents\s*:\s*write\s*$", text)
-        or re.search(r"(?mi)^\s*permissions\s*:\s*write-all\s*$", text)
+        re.search(
+            rf"(?mi)^\s*{re.escape(permission)}\s*:\s*{re.escape(level)}\s*$",
+            text,
+        )
+    )
+
+
+def has_contents_write(text: str) -> bool:
+    return has_permission(text, "contents", "write") or bool(
+        re.search(r"(?mi)^\s*permissions\s*:\s*write-all\s*$", text)
     )
 
 
 def has_oidc_write(text: str) -> bool:
-    return bool(re.search(r"(?mi)^\s*id-token\s*:\s*write\s*$", text))
+    return has_permission(text, "id-token", "write")
+
+
+def has_actions_write(text: str) -> bool:
+    return has_permission(text, "actions", "write")
 
 
 def has_concurrency(text: str) -> bool:
@@ -85,7 +98,9 @@ def action_reference_findings(path: str, text: str) -> list[Finding]:
         ref = value.rsplit("@", 1)[1]
         if not re.fullmatch(r"[0-9a-fA-F]{40}", ref):
             findings.append(Finding(
-                path, "MUTABLE_ACTION_REFERENCE", "HIGH",
+                path,
+                "MUTABLE_ACTION_REFERENCE",
+                "HIGH",
                 f"external action is not pinned to a full commit SHA: {value}",
             ))
     return findings
@@ -93,29 +108,52 @@ def action_reference_findings(path: str, text: str) -> list[Finding]:
 
 def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     findings: list[Finding] = []
-    if path not in set(policy["active_workflow_allowlist"]):
+    active = set(policy["active_workflow_allowlist"])
+    oidc_allowed = set(policy.get("oidc_workflow_allowlist", []))
+    actions_write_allowed = set(policy.get("actions_write_workflow_allowlist", []))
+
+    if path not in active:
         findings.append(Finding(
-            path, "WORKFLOW_NOT_ALLOWLISTED", "CRITICAL",
+            path,
+            "WORKFLOW_NOT_ALLOWLISTED",
+            "CRITICAL",
             "new or modified workflow is outside the active Airlock allowlist",
         ))
 
     lower = text.lower()
     if has_contents_write(text):
         findings.append(Finding(
-            path, "REPOSITORY_WRITE_AUTHORITY", "CRITICAL",
-            "source-repository workflows must use contents: read",
+            path,
+            "REPOSITORY_WRITE_AUTHORITY",
+            "CRITICAL",
+            "source-repository workflows must not receive contents: write",
         ))
 
-    if has_oidc_write(text) and path not in set(policy["oidc_workflow_allowlist"]):
+    if has_oidc_write(text) and path not in oidc_allowed:
         findings.append(Finding(
-            path, "UNAUTHORISED_OIDC", "CRITICAL",
+            path,
+            "UNAUTHORISED_OIDC",
+            "CRITICAL",
             "workflow can mint OIDC tokens but is not an approved deployment gateway",
         ))
 
+    if has_actions_write(text) and path not in actions_write_allowed:
+        findings.append(Finding(
+            path,
+            "UNAUTHORISED_ACTIONS_WRITE",
+            "CRITICAL",
+            "workflow can mutate the Actions registry but is not the quarantine controller",
+        ))
+
+    exceptions = set(
+        policy.get("forbidden_pattern_exceptions", {}).get(path, [])
+    )
     for pattern in policy["forbidden_repository_mutations"]:
-        if pattern in lower:
+        if pattern in lower and pattern not in exceptions:
             findings.append(Finding(
-                path, "FORBIDDEN_REPOSITORY_MUTATION", "CRITICAL",
+                path,
+                "FORBIDDEN_REPOSITORY_MUTATION",
+                "CRITICAL",
                 f"workflow contains forbidden mutation command: {pattern}",
             ))
 
@@ -124,13 +162,17 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     unexpected = sorted(events - allowed_events)
     if unexpected:
         findings.append(Finding(
-            path, "UNAUTHORISED_TRIGGER", "HIGH",
+            path,
+            "UNAUTHORISED_TRIGGER",
+            "HIGH",
             f"workflow contains events outside its contract: {', '.join(unexpected)}",
         ))
 
     if policy.get("require_concurrency") and not has_concurrency(text):
         findings.append(Finding(
-            path, "MISSING_CONCURRENCY", "HIGH",
+            path,
+            "MISSING_CONCURRENCY",
+            "HIGH",
             "active workflow must define top-level concurrency",
         ))
 
@@ -138,12 +180,37 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
         if re.search(r"(?m)^\s*-?\s*uses\s*:\s*actions/checkout@", text):
             if "persist-credentials: false" not in lower:
                 findings.append(Finding(
-                    path, "CHECKOUT_CREDENTIALS_PERSISTED", "HIGH",
+                    path,
+                    "CHECKOUT_CREDENTIALS_PERSISTED",
+                    "HIGH",
                     "checkout must set persist-credentials: false",
                 ))
 
     if policy.get("require_immutable_action_shas"):
         findings.extend(action_reference_findings(path, text))
+
+    if path in actions_write_allowed:
+        if not has_actions_write(text):
+            findings.append(Finding(
+                path,
+                "QUARANTINE_CONTROLLER_MISSING_ACTIONS_WRITE",
+                "CRITICAL",
+                "quarantine controller cannot disable workflows without actions: write",
+            ))
+        if not has_permission(text, "contents", "read") or has_contents_write(text):
+            findings.append(Finding(
+                path,
+                "QUARANTINE_CONTROLLER_SOURCE_AUTHORITY",
+                "CRITICAL",
+                "quarantine controller must have contents: read and no source-write authority",
+            ))
+        if "/actions/workflows/" not in lower or "/disable" not in lower:
+            findings.append(Finding(
+                path,
+                "QUARANTINE_CONTROLLER_ENDPOINT_DRIFT",
+                "CRITICAL",
+                "privileged controller is not limited to the workflow-disable endpoint",
+            ))
 
     return findings
 
@@ -164,38 +231,50 @@ def evaluate(
         if path.startswith(WORKFLOW_PREFIX) and path.endswith((".yml", ".yaml")):
             if not deleted:
                 changed_workflows.append(path)
-                findings.extend(analyse_workflow(
-                    path, (ROOT / path).read_text(encoding="utf-8"), policy
-                ))
+                findings.extend(
+                    analyse_workflow(
+                        path,
+                        (ROOT / path).read_text(encoding="utf-8"),
+                        policy,
+                    )
+                )
 
         for prefix in policy["forbidden_source_paths"]:
             if path.startswith(prefix) and not deleted:
                 findings.append(Finding(
-                    path, "RUNTIME_PROOF_IN_SOURCE_REPOSITORY", "CRITICAL",
+                    path,
+                    "RUNTIME_PROOF_IN_SOURCE_REPOSITORY",
+                    "CRITICAL",
                     f"runtime proof belongs in an artifact or append-only store, not {prefix}",
                 ))
 
     limit = int(policy["maximum_workflow_files_changed_per_pull_request"])
     if len(changed_workflows) > limit:
         findings.append(Finding(
-            ".github/workflows", "WORKFLOW_CHANGE_BUDGET_EXCEEDED", "HIGH",
+            ".github/workflows",
+            "WORKFLOW_CHANGE_BUDGET_EXCEEDED",
+            "HIGH",
             f"{len(changed_workflows)} workflow files changed; maximum is {limit}",
         ))
 
     protected_change = bool(changed_workflows) or any(
-        path.startswith(tuple(policy["forbidden_source_paths"])) for _, path in changes
+        path.startswith(tuple(policy["forbidden_source_paths"]))
+        for _, path in changes
     )
     if event_name == "push" and protected_change and associated_pr_count < 1:
         findings.append(Finding(
-            "main", "UNASSOCIATED_DIRECT_PUSH", "CRITICAL",
+            "main",
+            "UNASSOCIATED_DIRECT_PUSH",
+            "CRITICAL",
             "protected changes reached main without an associated pull request",
         ))
 
     unique = {(f.path, f.rule, f.detail): f for f in findings}
-    ordered = sorted(unique.values(), key=lambda x: (x.severity, x.path, x.rule))
+    ordered = sorted(unique.values(), key=lambda item: (item.severity, item.path, item.rule))
     return {
         "schema": "FEDOMEGA-GITHUB-AIRLOCK-REPORT-2",
         "policy_id": policy["policy_id"],
+        "policy_version": policy["version"],
         "base": base,
         "head": head,
         "event": event_name,
