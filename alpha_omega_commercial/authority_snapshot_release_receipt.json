@@ -1,0 +1,119 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-RELEASE-V1",
+  "status": "AUTHORITY_SNAPSHOT_RELEASE_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency_checkpoint": {
+    "pull_request": 122,
+    "merge_commit": "c48f7db758895389fa12f3476efbe19aa2169535",
+    "implementation_checkpoint_status": "AUTHORITY_SNAPSHOT_IMPLEMENTATION_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED"
+  },
+  "final_head_provider_proof": {
+    "head_sha": "273409929e85ecdf7202c36595270004451d1b92",
+    "workflow_run": 30876921201,
+    "workflow_job": 91890168491,
+    "artifact_id": 8879850560,
+    "artifact_name": "alpha-omega-commercial-authority-snapshot-proof",
+    "artifact_digest": "sha256:493811eeb57d4272b06244bb7c81cb2f91fc412fb8e508440eb0ee8d2e3a8f5c",
+    "artifact_expires_at": "2026-11-02T04:11:14Z",
+    "job_steps_all_success": true
+  },
+  "required_workflows": {
+    "c01_c05": {
+      "run": 30876921211,
+      "conclusion": "success"
+    },
+    "c06_c09": {
+      "run": 30876921227,
+      "conclusion": "success"
+    },
+    "c10_c15": {
+      "run": 30876921220,
+      "conclusion": "success"
+    },
+    "provider_authority_acquisition": {
+      "run": 30876921229,
+      "conclusion": "success"
+    },
+    "governed_authority": {
+      "run": 30876921333,
+      "conclusion": "success"
+    },
+    "institution_reconciliation": {
+      "run": 30876921241,
+      "conclusion": "success"
+    },
+    "effective_state": {
+      "run": 30876921262,
+      "conclusion": "success"
+    },
+    "github_control_plane": {
+      "run": 30876921202,
+      "conclusion": "success"
+    },
+    "superior_logic_ci": {
+      "run": 30876921248,
+      "conclusion": "success"
+    },
+    "repository_leak_guard": {
+      "run": 30876921246,
+      "conclusion": "success"
+    }
+  },
+  "google_drive_release": {
+    "file_id": "1cTzy5o0kn4SzDBYm5cZRGKh6_kgZb-392H0dSMPSzRY",
+    "title": "Alpha Omega Commercial Authority Snapshot v3 Release — 2026-08-04",
+    "created_at": "2026-08-04T04:12:29.317Z",
+    "modified_at": "2026-08-04T04:12:55.323Z",
+    "export_mime_type": "text/plain",
+    "export_size_bytes": 4501,
+    "export_sha256": "6e9f729df19691bcc08a0432365c9d5dbaa98a79aaad49621cd816a53c7508f2",
+    "readback_verified": true,
+    "shared": false,
+    "owner": "mosianekk@gmail.com"
+  },
+  "stage_projection": {
+    "C03": "PROVIDER_AUTHORITY_SNAPSHOT_CONTRACT_VERIFIED_LIVE_PROVIDER_AUTHORITY_BLOCKED",
+    "C11": "SERVICE_ENABLED_PLATFORM_AUTHORITY_SNAPSHOT_GOVERNED_SELF_SERVICE_HELD",
+    "C12": "EXTERNAL_EVIDENCE_AUTHORITY_SNAPSHOT_GOVERNED_MARKET_PROOF_REQUIRED",
+    "C13": "REVOPS_AUTHORITY_SNAPSHOT_GOVERNED_PAYMENT_AND_REVENUE_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_AUTHORITY_SNAPSHOT_RELEASE_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "customer_demand_proven": false,
+    "signed_contract_proven": false,
+    "payment_proven": false,
+    "cloud_run_operation_proven": false,
+    "enterprise_attestation_proven": false,
+    "partner_adoption_proven": false,
+    "external_case_study_proven": false,
+    "production_scale_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "truth_boundary": "The release receipt proves repository merge, final-head provider-native CI, retained artifact identity, Google Drive publication/readback and unchanged commercial gates. It does not establish customer demand, a signed contract, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise assurance, partner adoption, an external customer case study or production scale.",
+  "receipt_sha256": "8eb6acd0ce3ed3307a01de470d0d5377fc8a4b2dcc903e834362fdf403c1141c"
+}
