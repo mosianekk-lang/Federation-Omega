@@ -1,9 +1,11 @@
 """Canonical Alpha→Omega commercial maturity API.
 
 The authority-snapshot control plane is the supported live-authority entry point.
-The v2 governed control plane remains exported for historical regression and
-mock-provider conformance only. The legacy assurance class remains in its original
-module for historical regression only.
+Live authority requires a provider-native snapshot, monotonic durable acceptance and
+an exact action-level binding to the latest acceptance entry. The v2 governed
+control plane remains exported for historical regression and mock-provider
+conformance only. The legacy assurance class remains in its original module for
+historical regression only.
 """
 
 from __future__ import annotations
