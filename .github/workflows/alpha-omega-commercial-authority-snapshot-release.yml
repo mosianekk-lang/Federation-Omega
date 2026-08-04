@@ -81,7 +81,7 @@ jobs:
           assert checkpoint['release_receipt']['google_drive_shared'] is False
 
           assert proof['status'] == 'AUTHORITY_SNAPSHOT_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED'
-          assert len(proof['checks']) == 16
+          assert len(proof['checks']) == 17
           assert all(proof['checks'].values())
           assert proof['release_receipt_sha256'] == release['receipt_sha256']
           assert proof['google_drive_readback_verified'] is True
