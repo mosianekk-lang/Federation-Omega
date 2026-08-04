@@ -1,11 +1,16 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-CONTROL-PLANE-V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "mode": "RATCHET_TO_ZERO_WRITERS",
   "default_workflow_permissions": {
     "contents": "read"
   },
   "allowed_contents_write_workflows": [],
+  "forbidden_pattern_exceptions": {
+    ".github/workflows/phoenix-emergency-freeze.yml": [
+      "gh api --method PUT"
+    ]
+  },
   "forbidden_shell_patterns": [
     "git push",
     "git commit",
