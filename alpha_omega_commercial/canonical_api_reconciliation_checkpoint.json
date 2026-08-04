@@ -1,7 +1,7 @@
 {
   "checkpoint_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V10-CHECKPOINT",
   "programme_id": "AO-COMMERCIAL-MATURITY-V1",
-  "status": "CANONICAL_API_EFFECTIVE_V10_RECONCILIATION_IMPLEMENTED_PROVIDER_PROOF_REQUIRED",
+  "status": "CANONICAL_API_EFFECTIVE_V10_PROVIDER_PROOF_VERIFIED",
   "stage_scope": [
     "C03",
     "C11",
@@ -62,8 +62,18 @@
   },
   "provider_proof": {
     "workflow": ".github/workflows/alpha-omega-commercial-canonical-api-reconciliation.yml",
-    "state": "PROVIDER_PROOF_REQUIRED",
-    "artifact_name": "alpha-omega-commercial-canonical-api-v10-reconciliation-proof"
+    "state": "PROVIDER_NATIVE_PROOF_VERIFIED",
+    "head_sha": "d59661ceb43e2a31a453901776137f74f4a51d0e",
+    "workflow_run": 30897357833,
+    "workflow_job": 91953341380,
+    "artifact_id": 8887575302,
+    "artifact_name": "alpha-omega-commercial-canonical-api-v10-reconciliation-proof",
+    "artifact_digest": "sha256:ddcd1a1ccaf330ad13abe7b7591d40e236ac133a3cf152cccc20bd1a28d0c9cd",
+    "proof_sha256": "5fb545dd4b8262e09c46ef44ce86e18b95b5694d643e61d50eccfbb8902f24b9",
+    "checks_required": 15,
+    "checks_failed": 0,
+    "job_steps_all_success": true,
+    "expires_at": "2026-11-02T09:40:38Z"
   },
-  "promotion_rule": "Promote only after the pull-request head passes the canonical API reconciliation proof, all triggered C01-C15 commercial and authority regressions, GitHub control-plane enforcement, Superior Logic CI and repository leak guard, and after the retained artifact and job steps are inspected."
+  "promotion_rule": "Promote only after the final pull-request head independently passes the canonical API reconciliation proof, all triggered C01-C15 commercial and authority regressions, GitHub control-plane enforcement, Superior Logic CI and repository leak guard, and after the retained artifact and job steps are inspected."
 }
