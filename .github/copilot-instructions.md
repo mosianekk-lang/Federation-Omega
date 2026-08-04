@@ -7,6 +7,7 @@ Before editing:
 - Read `AGENTS.md`.
 - Treat `main` as protected even when provider protection is not yet active.
 - Work only on a purpose-specific branch and submit a pull request.
+- Initialise the Federation learning fabric for any material runtime, integration or repair task.
 
 Never:
 
@@ -18,6 +19,8 @@ Never:
 - commit runtime receipts, trigger files, queue state, snapshots or generated execution output;
 - re-enable a Phoenix-disabled workflow;
 - store or expose credentials;
-- claim provider activation without exact provider readback.
+- claim provider activation without exact provider readback;
+- finish a material execution path without recording its success, failure or constraint;
+- let learning or trigger updates expand authority or transfer trust.
 
-Workflow changes are default-deny. Runtime outputs belong in immutable artifacts or the approved external evidence plane. Completion requires green Airlock admission, source-provenance tests, leak guard and merge-result readback on the exact pull-request head.
+Workflow changes are default-deny. Runtime outputs belong in immutable artifacts or the approved external evidence plane. Material successes, failures, constraints, corrections and recoveries must update the append-only learning ledger and derived algorithm-trigger state. Completion requires green Airlock admission, source-provenance tests, leak guard and merge-result readback on the exact pull-request head.

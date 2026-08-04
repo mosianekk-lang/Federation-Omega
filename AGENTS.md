@@ -32,6 +32,18 @@ These instructions apply to every automated coding agent, bot, assistant, local 
 - A source file describing a contract is not proof that the contract executed.
 - Claims of deployment, ruleset activation, repository creation, credential rotation or provider mutation require exact provider readback.
 
+## Continuous learning and algorithm-trigger capture
+
+- Every material runtime or tool path must emit a terminal `SUCCESS`, `FAILURE` or `CONSTRAINT` event; material corrections and recoveries must emit `CORRECTION` and `RECOVERY` events.
+- Learning events must be append-only, hash-linked, evidence-referenced and stored in an immutable artifact or the approved external append-only evidence plane.
+- Every failure must preserve the original failure evidence, receive a deterministic classification, select the smallest safe repair, and bind a regression test after successful recovery.
+- A repeated failure fingerprint must open the affected circuit and require a materially different route.
+- Every success must record proof and measurable value; repeated success may create a route-confidence candidate but must never transfer trust to another workflow.
+- Every constraint must update the constraint register and activate the strongest safe fallback route.
+- Algorithm-trigger state must be derived from the learning ledger, versioned, reversible and limited to `A1_INTERNAL`.
+- Learning or trigger updates must never expand authority, write verified facts, mutate evidence, cross case walls or activate consequential external action.
+- Generated learning ledgers and trigger-state artifacts must not be committed to canonical source.
+
 ## Credentials and external authority
 
 - Never print, persist, upload, email or commit credentials, private keys, tokens or secret values.

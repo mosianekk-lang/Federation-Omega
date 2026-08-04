@@ -28,9 +28,23 @@ FEVX is not absorbed into the EvidenceOps evidence kernel. EvidenceOps supplies 
 
 ## Runtime
 
-The provider workflow reconstructs the exact digest-pinned CSE v1.1 wheel for the base ten modules and imports the source-native CSE v2 frontier ten modules from `systems/fevx-frontier-v2`. The provider canary therefore executes twenty modules.
+The verified reference implementation reconstructs the exact digest-pinned CSE v1.1 wheel for the base ten modules and imports the source-native CSE v2 frontier ten modules from `systems/fevx-frontier-v2`. The adapter therefore executes twenty modules when invoked from an authorised runtime.
 
-The synthetic provider canary proves the integration controls. It does not prove legal correctness or a real case outcome.
+The earlier synthetic provider canary proves its named integration controls. It does not prove legal correctness or a real case outcome.
+
+Phoenix now treats this public repository as a quarantined source plane. Legacy adapter workflows must not be re-enabled or used to commit generated runtime receipts. Current or future execution belongs in the separate private execution plane or another authorised runtime, with proof retained as immutable artifacts or in the approved external append-only evidence store.
+
+## Continuous learning integration
+
+`learning_integration.py` translates every adapter terminal result and exception into the Federation learning fabric:
+
+- successful runs record proof, value and reusability candidates;
+- failed checks preserve evidence and activate repair and regression triggers;
+- missing real-case accuracy remains an explicit `UNSUPPORTED_CLAIM` constraint;
+- Level 6 ineligibility remains an `AUTHORITY` constraint;
+- no learning event can mutate evidence, write verified facts, cross a case wall or create an external effect.
+
+The runtime must supply an artifact or external-evidence workspace. Generated ledgers and trigger state must never be committed to canonical source.
 
 ## Commands
 
@@ -38,18 +52,19 @@ The synthetic provider canary proves the integration controls. It does not prove
 PYTHONPATH=".:systems/fevx-frontier-v2" \
 python -m unittest discover -s evidenceops/fevx_adapter_v1/tests -v
 
-PYTHONPATH=".:systems/fevx-frontier-v2" \
-python evidenceops/fevx_adapter_v1/run_provider_canary.py \
-  --repo-root . \
-  --runtime-root runtime/evidenceops_fevx_adapter
+python -m federation_learning \
+  --workspace local-artifacts/evidenceops-fevx-learning \
+  --policy governance/federation_learning_policy.json \
+  verify
 ```
 
-## Canonical state
+## Canonical source and evidence separation
+
+Source contracts remain in the repository:
 
 - Registration: `evidenceops/fevx_adapter_v1/registration.json`
 - Policy: `evidenceops/fevx_adapter_v1/POLICY.yaml`
-- Desired state: `runtime/evidenceops_fevx_adapter/state/desired_state.json`
-- Actual state: `runtime/evidenceops_fevx_adapter/state/actual_state.json`
-- Provider result: `runtime/evidenceops_fevx_adapter/results/latest.json`
-- Provider proof chain: `runtime/evidenceops_fevx_adapter/proofs/`
-- Workflow: `.github/workflows/evidenceops-fevx-adapter-v1.yml`
+- Learning integration: `evidenceops/fevx_adapter_v1/learning_integration.py`
+- Learning policy: `governance/federation_learning_policy.json`
+
+Historical runtime records under `runtime/evidenceops_fevx_adapter/` are legacy evidence. New runtime results, learning ledgers, trigger-state snapshots and provider receipts belong in immutable workflow artifacts or the approved external evidence plane, not new source commits.
