@@ -1,0 +1,37 @@
+{
+  "projection_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V16",
+  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_EVIDENCE_VAULT_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-EVIDENCE-VAULT-V16",
+  "canonical_class": "VaultedProviderDispatchCommercialControlPlane",
+  "predecessor_class": "ChallengeBoundProviderDispatchCommercialControlPlane",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "service_enabled_platform_prioritised": true,
+  "self_service_saas_held": true,
+  "controls": {
+    "durable_submission_marker": true,
+    "unknown_outcome_quarantine": true,
+    "challenge_history_hash_chain": true,
+    "challenge_attempt_binding": true,
+    "challenge_freshness_and_single_use": true,
+    "content_addressed_evidence_package": true,
+    "atomic_evidence_publication_before_resolution": true,
+    "resolution_event_evidence_hash_binding": true,
+    "restart_requires_referenced_evidence": true,
+    "orphan_evidence_prune": true,
+    "mock_provider_reconciliation_conformance": true,
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "NOT_PROVEN"
+  },
+  "implementation_provider_proof": {
+    "state": "PENDING_PROVIDER_NATIVE_CI",
+    "workflow_run": null,
+    "workflow_job": null,
+    "artifact_id": null,
+    "artifact_digest": null,
+    "checks": "PENDING"
+  },
+  "verified_live_revenue_events": 0,
+  "external_maturity_gates_advanced": false,
+  "institution_state_preserved": true,
+  "owner_authority_effect": "UNCHANGED"
+}

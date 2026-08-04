@@ -1,0 +1,58 @@
+{
+  "checkpoint_id": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-EVIDENCE-VAULT-V16-CHECKPOINT",
+  "status": "PROVIDER_RECONCILIATION_EVIDENCE_VAULT_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "dependency_predecessor": {
+    "release": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-CHALLENGE-V15-RELEASE-CHECKPOINT",
+    "release_status": "PROVIDER_RECONCILIATION_CHALLENGE_V15_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED",
+    "repair_pull_request": 155,
+    "repair_merge_commit": "b123a4415bb14d12a1c5c9de8f5a5f04d27bf2bd",
+    "provider_proof_run": 30918576351,
+    "provider_proof_artifact_id": 8896084562,
+    "google_drive_file_id": "1Rfh7-yqKhlzKPlnzhpJc1jLX8OFKvZBMbrWd_Yn56jA",
+    "google_drive_export_sha256": "de1a63a9b771da83d3dacab30dea0eab6a5bf7661d8ebc451fbb83fcf9fdfd88",
+    "google_drive_readback_verified": true
+  },
+  "operational_slice": {
+    "content_addressed_evidence_package": true,
+    "complete_reconciliation_evidence_retained": true,
+    "atomic_publish_before_outcome_resolution": true,
+    "resolution_event_sha256_binding": true,
+    "restart_requires_referenced_evidence": true,
+    "package_tamper_rejected": true,
+    "missing_referenced_evidence_rejected": true,
+    "orphan_quarantine_and_prune": true,
+    "mock_provider_conformance": true,
+    "provider_native_reconciliation_authority": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "provider_native_reconciliation_proven": false,
+    "external_mutation_performed": false
+  },
+  "provider_native_ci": {
+    "workflow": ".github/workflows/alpha-omega-commercial-provider-dispatch-fencing-release.yml",
+    "workflow_run": null,
+    "workflow_job": null,
+    "artifact_id": null,
+    "artifact_digest": null,
+    "checks_required": 12,
+    "checks_failed": null,
+    "all_job_steps_passed": false,
+    "artifact_inspected": false
+  },
+  "commercial_truth": {
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true,
+    "verified_live_revenue_events": 0,
+    "customer_demand_proven": false,
+    "signed_customer_contract_proven": false,
+    "payment_provider_operation_proven": false,
+    "cloud_run_operation_proven": false,
+    "enterprise_assurance_proven": false,
+    "partner_adoption_proven": false,
+    "external_customer_case_study_proven": false,
+    "production_scale_proven": false,
+    "full_commercial_maturity": false
+  },
+  "institution_state_preserved": true,
+  "external_gate_effect": "UNCHANGED",
+  "owner_authority_effect": "UNCHANGED"
+}
