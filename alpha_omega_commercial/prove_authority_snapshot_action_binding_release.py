@@ -103,8 +103,8 @@ def run(output: Path) -> dict[str, Any]:
             for value in release["owner_authority"].values()
         ),
         "institution_external_completion_still_blocked": (
-            institution["stages"][-1]["id"] == "P15"
-            and "BLOCKED" in institution["stages"][-1]["maturity"]
+            institution["phases"][-1]["id"] == "P15"
+            and "BLOCKED" in institution["phases"][-1]["status"]
         ),
         "full_commercial_maturity_not_claimed": (
             release["commercial_truth"]["full_commercial_maturity"] is False
