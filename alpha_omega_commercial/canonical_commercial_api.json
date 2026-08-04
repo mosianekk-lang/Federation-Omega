@@ -10,22 +10,24 @@
   "legacy_module": "alpha_omega_commercial/commercial_assurance.py",
   "legacy_class": "CommercialAssuranceControlPlane",
   "legacy_state": "REFERENCE_ONLY_NOT_CANONICAL",
-  "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6",
-  "current_canonical_class": "AtomicAuthoritySnapshotCommercialControlPlane",
+  "current_capability_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7",
+  "current_canonical_class": "CrashSafeAtomicAuthoritySnapshotCommercialControlPlane",
   "current_canonical_module": "alpha_omega_commercial",
-  "current_predecessor_class": "AuthoritySnapshotCommercialControlPlane",
+  "current_predecessor_class": "AtomicAuthoritySnapshotCommercialControlPlane",
   "compatibility_anchor": {
-    "reason": "Historical provider-proof workflows remain pinned to the v5 canonical descriptor while the current supported live entry point advances through an additive, regression-compatible v6 class.",
+    "reason": "Historical provider-proof workflows remain pinned to the v5 canonical descriptor while the current supported live entry point advances through additive, regression-compatible v6 atomicity and v7 durable restart recovery classes.",
     "canonical_descriptor_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
-    "current_operational_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6"
+    "current_operational_revision": "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7"
   },
   "canonical_lineage": [
+    "CrashSafeAtomicAuthoritySnapshotCommercialControlPlane",
     "AtomicAuthoritySnapshotCommercialControlPlane",
     "AuthoritySnapshotCommercialControlPlane",
     "GovernedCommercialAssuranceControlPlane",
     "CommercialAssuranceControlPlane"
   ],
   "capability_lineage": [
+    "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7",
     "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6",
     "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
     "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-ANTI-ROLLBACK-V4",
@@ -76,7 +78,13 @@
     "partial_state_visible_after_failure": false,
     "exact_state_restoration_on_failure": true,
     "owner_receipt_consumption_restored_on_failure": true,
-    "transaction_ledger_hash_linked": true
+    "transaction_ledger_hash_linked": true,
+    "durable_recovery_bundle_required": true,
+    "recovery_manifest_hash_bound": true,
+    "recovery_content_hash_verified": true,
+    "restart_recovery_before_new_action": true,
+    "process_crash_partial_state_visible": false,
+    "tampered_recovery_bundle_fails_closed": true
   },
   "governed_methods": {
     "accept_authority_snapshot": {
@@ -94,6 +102,7 @@
       "owner_authority_snapshot_required": true,
       "latest_acceptance_binding_required": true,
       "atomic_action_commit_required": true,
+      "durable_restart_recovery_required": true,
       "external_effects_allowed": false
     },
     "approve_quote": {
@@ -101,12 +110,14 @@
       "owner_authority_snapshot_required": true,
       "latest_acceptance_binding_required": true,
       "atomic_action_commit_required": true,
+      "durable_restart_recovery_required": true,
       "external_send_performed": false,
       "financial_commitment": false
     },
     "admit_external_evidence": {
       "provider_authority_snapshot_required": true,
       "atomic_action_commit_required": true,
+      "durable_restart_recovery_required": true,
       "rejected_evidence_can_advance_gate": false
     },
     "register_outcome_study": {
@@ -115,7 +126,8 @@
       "customer_market_snapshot_required_for_external_promotion": true,
       "owner_authority_snapshot_required_for_external_promotion": true,
       "latest_acceptance_binding_required": true,
-      "atomic_action_commit_required": true
+      "atomic_action_commit_required": true,
+      "durable_restart_recovery_required": true
     },
     "register_verified_revenue_event": {
       "caller_boolean_accepted": false,
@@ -126,6 +138,7 @@
       "owner_authority_snapshot_required": true,
       "latest_acceptance_binding_required": true,
       "atomic_action_commit_required": true,
+      "durable_restart_recovery_required": true,
       "mock_conformance_counted_as_revenue": false
     }
   },
@@ -142,7 +155,8 @@
     "authority_snapshot_acceptance_serialization": "POSIX_FILE_LOCK_WITH_PROCESS_LOCAL_FALLBACK",
     "authority_action_binding": "HASH_BOUND_TO_LATEST_ACCEPTANCE_RESTART_SAFE",
     "authority_action_transaction": "HASH_LINKED_PREPARE_COMMIT_ROLLBACK_RESTART_SAFE",
-    "action_failure_restoration": "BYTE_EXACT_LOCAL_STATE_AND_LEDGER_RESTORE",
+    "authority_action_recovery": "HASH_BOUND_DURABLE_BUNDLE_RESTART_ROLLBACK",
+    "action_failure_restoration": "BYTE_EXACT_LOCAL_STATE_AND_LEDGER_RESTORE_IN_PROCESS_AND_AFTER_RESTART",
     "tamper_policy": "FAIL_CLOSED"
   },
   "service_first_strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",

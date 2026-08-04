@@ -1,0 +1,59 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency": {
+    "preceding_pull_request": 127,
+    "preceding_merge_commit": "04d8677e07df8b2cf66d2e586defe0898c303f96",
+    "preceding_control": "AO-COMMERCIAL-AUTHORITY-ACTION-ATOMICITY-V6"
+  },
+  "crash_recovery_rules": {
+    "durable_bundle_before_action": true,
+    "manifest_hash_bound": true,
+    "content_hash_verified": true,
+    "state_paths_restricted_to_control_plane_root": true,
+    "prepared_event_binds_recovery_manifest": true,
+    "restart_recovery_before_new_action": true,
+    "restart_rollback_idempotent": true,
+    "unterminated_transaction_without_bundle_fails_closed": true,
+    "tampered_recovery_bundle_fails_closed": true,
+    "successful_bundle_cleanup": true,
+    "orphan_bundle_cleanup_without_authority_promotion": true,
+    "partial_state_visible_after_process_crash": false
+  },
+  "covered_local_surfaces": [
+    "commercial_state",
+    "commercial_ledger",
+    "governed_owner_authority_state",
+    "governed_owner_authority_ledger",
+    "external_evidence_state",
+    "external_evidence_ledger"
+  ],
+  "strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "self_service_saas": "HELD",
+  "proof_limitation": "This control verifies local durable rollback after process restart. It does not establish distributed provider atomicity, customer demand, contracts, payment, revenue, Cloud Run operation, enterprise assurance, partner adoption, customer outcomes or production scale.",
+  "provider_boundaries": {
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "external_gate_effect": "UNCHANGED",
+  "verified_live_revenue_events": 0,
+  "full_commercial_maturity": false
+}
