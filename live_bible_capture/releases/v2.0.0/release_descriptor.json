@@ -14,33 +14,25 @@
   "authority_ceiling": "A1_REVERSIBLE_INTERNAL",
   "external_effects": 0,
   "capture_modes": [
-    {
-      "mode": "TURN_CONNECTOR",
-      "state": "OPERATIONAL_VERIFIED"
-    },
-    {
-      "mode": "CHAT_EXPORT",
-      "state": "IMPLEMENTED_TESTED"
-    },
-    {
-      "mode": "BROWSER_CAPTURE",
-      "state": "IMPLEMENTED_CLIENT_INSTALL_REQUIRED"
-    },
-    {
-      "mode": "PROVIDER_WEBHOOK",
-      "state": "ADAPTER_CONTRACT_READY_SOURCE_REQUIRED"
-    },
-    {
-      "mode": "SCHEDULED_RECONCILIATION",
-      "state": "ADAPTER_CONTRACT_READY_SOURCE_REQUIRED"
-    },
-    {
-      "mode": "MANUAL_IMPORT",
-      "state": "IMPLEMENTED_TESTED"
-    }
+    {"mode": "TURN_CONNECTOR", "state": "OPERATIONAL_VERIFIED"},
+    {"mode": "CHAT_EXPORT", "state": "IMPLEMENTED_TESTED"},
+    {"mode": "BROWSER_CAPTURE", "state": "IMPLEMENTED_CLIENT_INSTALL_REQUIRED"},
+    {"mode": "PROVIDER_WEBHOOK", "state": "ADAPTER_CONTRACT_READY_SOURCE_REQUIRED"},
+    {"mode": "SCHEDULED_RECONCILIATION", "state": "ADAPTER_CONTRACT_READY_SOURCE_REQUIRED"},
+    {"mode": "MANUAL_IMPORT", "state": "IMPLEMENTED_TESTED"}
   ],
   "truth_boundary": "No source adapter means no message capture. The system does not claim invisible ChatGPT access.",
   "source_root": "source",
   "binary_storage": "USER_LIBRARY_AND_SANDBOX_ARTIFACT",
-  "binary_reconstruction_in_github": false
+  "binary_reconstruction_in_github": false,
+  "split_files": {
+    "live_bible_fabric/fabric.py": [
+      "source_parts/fabric-00.txt",
+      "source_parts/fabric-01.txt",
+      "source_parts/fabric-02.txt",
+      "source_parts/fabric-03.txt",
+      "source_parts/fabric-04.txt",
+      "source_parts/fabric-05.txt"
+    ]
+  }
 }
