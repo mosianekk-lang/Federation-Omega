@@ -56,12 +56,13 @@ def prove(output: Path) -> dict:
     with tempfile.TemporaryDirectory() as temporary:
         root = Path(temporary)
         plane, owner, value, quote_id = build_plane(root)
+        command = {"object_id": quote_id, "mode": "conformance-only"}
         prepared = plane.prepare_provider_dispatch(
             action="quote_approval",
             object_id=quote_id,
             provider_domain="reference_provider",
             operation="dry_run_provider_contract",
-            payload={"object_id": quote_id, "mode": "conformance-only"},
+            payload=command,
             now=NOW,
         )
         prepared_retry = plane.prepare_provider_dispatch(
@@ -69,9 +70,21 @@ def prove(output: Path) -> dict:
             object_id=quote_id,
             provider_domain="reference_provider",
             operation="dry_run_provider_contract",
-            payload={"object_id": quote_id, "mode": "conformance-only"},
+            payload=command,
             now=NOW,
         )
+        conflicting_command_rejected = False
+        try:
+            plane.prepare_provider_dispatch(
+                action="quote_approval",
+                object_id=quote_id,
+                provider_domain="reference_provider",
+                operation="dry_run_provider_contract",
+                payload={"object_id": quote_id, "mode": "changed-command"},
+                now=NOW,
+            )
+        except ValueError as exc:
+            conflicting_command_rejected = "provider dispatch conflict" in str(exc)
         adapter = ConformantMockProviderAdapter("reference_provider")
         provider_receipt = adapter.execute(prepared)
         provider_retry = adapter.execute(prepared)
@@ -101,6 +114,7 @@ def prove(output: Path) -> dict:
             prepared["provider_idempotency_key"]
         )
         == 64,
+        "conflicting_provider_command_is_rejected": conflicting_command_rejected,
         "mock_provider_exact_retry_is_idempotent": provider_receipt
         == provider_retry,
         "receipt_admission_is_idempotent": admitted == admitted_retry,
@@ -134,6 +148,7 @@ def prove(output: Path) -> dict:
             "stable_provider_idempotency_key": True,
             "dispatch_bound_to_committed_v10_action": True,
             "exact_prepare_retry_returns_original_record": True,
+            "conflicting_command_rejected": True,
             "mock_provider_contract_conformance_verified": True,
             "mock_receipt_replay_is_idempotent": True,
             "restart_safe": True,
