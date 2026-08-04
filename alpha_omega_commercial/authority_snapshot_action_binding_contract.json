@@ -1,0 +1,67 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency": {
+    "preceding_pull_request": 124,
+    "preceding_merge_commit": "a13ba8838f79b009d7b690bbe74d6963db1dffb8",
+    "preceding_control": "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-ANTI-ROLLBACK-V4"
+  },
+  "authority_use_rules": {
+    "candidate_validation_alone_is_insufficient": true,
+    "latest_durable_acceptance_required": true,
+    "exact_snapshot_hash_match_required": true,
+    "acceptance_entry_sha256_required": true,
+    "explicit_domain_binding_required": true,
+    "domain_evidence_sha256_required": true,
+    "binding_sha256_required": true,
+    "restart_safe_readback_required": true,
+    "superseded_snapshot_use_rejected": true
+  },
+  "bound_operations": {
+    "C11": [
+      "owner_reserved_service_request"
+    ],
+    "C12": [
+      "externally_admitted_outcome_study"
+    ],
+    "C13": [
+      "owner_approved_quote_presentation",
+      "verified_live_revenue_event"
+    ]
+  },
+  "external_effects": {
+    "snapshot_acceptance": false,
+    "action_binding": false,
+    "quote_send": false,
+    "contract_execution": false,
+    "payment_execution": false,
+    "cloud_run_operation": false,
+    "customer_publication": false
+  },
+  "strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS",
+  "provider_boundaries": {
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "verified_live_revenue_events": 0,
+  "external_gate_effect": "UNCHANGED",
+  "full_commercial_maturity": false
+}
