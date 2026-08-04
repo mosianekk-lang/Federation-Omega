@@ -19,7 +19,7 @@ import os
 import shutil
 import tarfile
 import tempfile
-import urllib.error
+import urllib.parse
 import urllib.request
 import zipfile
 from pathlib import Path, PurePosixPath
@@ -237,6 +237,11 @@ def restore_previous_artifact(
         )[0]
         payload = _request_bytes(artifact["archive_download_url"], token)
         observed_archive_sha256 = sha256_bytes(payload)
+        api_digest = str(artifact.get("digest") or "")
+        if api_digest.startswith("sha256:"):
+            expected_archive_sha256 = api_digest.split(":", 1)[1]
+            if observed_archive_sha256 != expected_archive_sha256:
+                raise RuntimeError("artifact archive digest mismatch")
         _restore_zip(payload, state_dir)
         restored_release = guard_state(state_dir)
         receipt: dict[str, Any] = {
@@ -303,7 +308,7 @@ def rollback_drill(state_dir: Path) -> dict[str, Any]:
                     raise RuntimeError(
                         f"unsafe rollback member: {member.name}"
                     )
-            archive.extractall(state_dir)
+            archive.extractall(state_dir, filter="data")
     release_after = guard_state(state_dir)
     manifest_after = tree_manifest(state_dir, excluded)
     tree_after = digest(manifest_after)
