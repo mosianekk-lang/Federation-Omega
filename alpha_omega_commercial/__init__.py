@@ -17,7 +17,7 @@ _PACKAGE_DIR = str(Path(__file__).resolve().parent)
 if _PACKAGE_DIR not in sys.path:
     sys.path.insert(0, _PACKAGE_DIR)
 
-from provider_reconciliation_challenge import (  # noqa: E402
+from provider_reconciliation_challenge_safe import (  # noqa: E402
     ChallengeBoundMockProviderAdapter,
     ChallengeBoundProviderDispatchCommercialControlPlane,
     MAX_CHALLENGE_TTL_SECONDS,
