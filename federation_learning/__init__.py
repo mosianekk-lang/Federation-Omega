@@ -7,6 +7,10 @@ from .fabric import (
     PolicyError,
     TriggerActivation,
 )
+from .integrations import (
+    capture_alpha_omega_maintenance,
+    capture_resolve_receipt,
+)
 
 __all__ = [
     "EventType",
@@ -14,6 +18,8 @@ __all__ = [
     "LearningFabricError",
     "PolicyError",
     "TriggerActivation",
+    "capture_alpha_omega_maintenance",
+    "capture_resolve_receipt",
 ]
 
 __version__ = "1.0.0"
