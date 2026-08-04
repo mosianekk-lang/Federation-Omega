@@ -1,0 +1,92 @@
+name: Federation Omega Airlock
+
+on:
+  pull_request:
+  merge_group:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pull-requests: read
+
+concurrency:
+  group: federation-omega-airlock-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  admission:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run Airlock regression tests
+        run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
+
+      - name: Resolve admission comparison
+        id: refs
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          PR_BASE: ${{ github.event.pull_request.base.sha }}
+          PR_HEAD: ${{ github.event.pull_request.head.sha }}
+          MERGE_BASE: ${{ github.event.merge_group.base_sha }}
+          MERGE_HEAD: ${{ github.event.merge_group.head_sha }}
+          PUSH_BASE: ${{ github.event.before }}
+          PUSH_HEAD: ${{ github.sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          case "$EVENT_NAME" in
+            pull_request)
+              base="$PR_BASE"; head="$PR_HEAD" ;;
+            merge_group)
+              base="$MERGE_BASE"; head="$MERGE_HEAD" ;;
+            push)
+              base="$PUSH_BASE"; head="$PUSH_HEAD" ;;
+            workflow_dispatch)
+              base="$(git rev-parse HEAD^)"; head="$(git rev-parse HEAD)" ;;
+            *)
+              echo "Unsupported event: $EVENT_NAME" >&2; exit 1 ;;
+          esac
+          echo "base=$base" >> "$GITHUB_OUTPUT"
+          echo "head=$head" >> "$GITHUB_OUTPUT"
+
+      - name: Enforce default-deny admission policy
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p airlock-output
+          python tools/github_airlock.py \
+            --base '${{ steps.refs.outputs.base }}' \
+            --head '${{ steps.refs.outputs.head }}' \
+            --event '${{ github.event_name }}' \
+            --report airlock-output/github-airlock-report.json
+
+      - name: Publish Airlock result
+        if: always()
+        shell: bash
+        run: |
+          if [[ -f airlock-output/github-airlock-report.json ]]; then
+            echo '## Federation Omega Airlock' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat airlock-output/github-airlock-report.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+
+      - name: Upload immutable Airlock report
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: federation-omega-airlock-${{ github.run_id }}-${{ github.run_attempt }}
+          path: airlock-output/github-airlock-report.json
+          if-no-files-found: error
+          retention-days: 90
