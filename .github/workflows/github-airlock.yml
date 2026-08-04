@@ -32,6 +32,9 @@ jobs:
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
 
+      - name: Run source provenance regression tests
+        run: python -m unittest discover -s tests -p 'test_phoenix_source_provenance.py' -v
+
       - name: Run provider cutover v2 regression tests
         run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
 
@@ -73,6 +76,48 @@ jobs:
           echo "head=$head" >> "$GITHUB_OUTPUT"
           echo "associated_pr_count=$pr_count" >> "$GITHUB_OUTPUT"
 
+      - name: Build source provenance receipt
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ steps.refs.outputs.base }}
+          HEAD_SHA: ${{ steps.refs.outputs.head }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p airlock-output
+          if [[ "$EVENT_NAME" == "pull_request" || "$EVENT_NAME" == "merge_group" ]]; then
+            printf '[{"sha":"%s","associated_pr_count":1}]\n' "$HEAD_SHA" \
+              > airlock-output/source-provenance-input.json
+          else
+            if [[ -n "$BASE_SHA" && ! "$BASE_SHA" =~ ^0+$ ]]; then
+              mapfile -t commits < <(gh api \
+                "/repos/${GITHUB_REPOSITORY}/compare/${BASE_SHA}...${HEAD_SHA}" \
+                --jq '.commits[].sha')
+            else
+              commits=("$HEAD_SHA")
+            fi
+            printf '[' > airlock-output/source-provenance-input.json
+            separator=''
+            for sha in "${commits[@]}"; do
+              count="$(gh api \
+                -H 'Accept: application/vnd.github+json' \
+                "/repos/${GITHUB_REPOSITORY}/commits/${sha}/pulls" \
+                --jq 'length')"
+              printf '%s{"sha":"%s","associated_pr_count":%s}' \
+                "$separator" "$sha" "$count" \
+                >> airlock-output/source-provenance-input.json
+              separator=','
+            done
+            printf ']\n' >> airlock-output/source-provenance-input.json
+          fi
+          python phoenix/source_provenance.py \
+            --repository "$GITHUB_REPOSITORY" \
+            --head "$HEAD_SHA" \
+            --input airlock-output/source-provenance-input.json \
+            --output airlock-output/source-provenance-report.json
+          test "$(python -c "import json; print(json.load(open('airlock-output/source-provenance-report.json'))['status'])")" = "VERIFIED"
+
       - name: Enforce default-deny admission policy
         shell: bash
         run: |
@@ -95,12 +140,20 @@ jobs:
             cat airlock-output/github-airlock-report.json >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
+          if [[ -f airlock-output/source-provenance-report.json ]]; then
+            echo '## Source Provenance' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat airlock-output/source-provenance-report.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      - name: Upload immutable Airlock report
+      - name: Upload immutable Airlock and provenance reports
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: federation-omega-airlock-${{ github.run_id }}-${{ github.run_attempt }}
-          path: airlock-output/github-airlock-report.json
+          path: |
+            airlock-output/github-airlock-report.json
+            airlock-output/source-provenance-report.json
           if-no-files-found: error
           retention-days: 90
