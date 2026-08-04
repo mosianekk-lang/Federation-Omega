@@ -48,11 +48,19 @@ class PhoenixExportTests(unittest.TestCase):
             "test_phoenix_provider_cutover_v2.py",
             "test_phoenix_provider_cutover_v3.py",
             "test_phoenix_provider_cutover_v3_1.py",
+            "test_provider_airlock_activate.py",
         ):
             (self.root / "tests" / name).write_text(
                 "raise RuntimeError('migration controller is intentionally absent from Core')\n",
                 encoding="utf-8",
             )
+        (self.root / "tests" / "test_core_example.py").write_text(
+            "import unittest\n\n"
+            "class CoreExampleTests(unittest.TestCase):\n"
+            "    def test_core_is_runnable(self):\n"
+            "        self.assertEqual(2, 1 + 1)\n",
+            encoding="utf-8",
+        )
 
         template = self.root / "phoenix" / "ops-template"
         (template / ".github").mkdir(parents=True)
@@ -81,11 +89,22 @@ class PhoenixExportTests(unittest.TestCase):
                 "include_extensions": [".py", ".md", ".json", ".yml"],
                 "include_root_files": ["README.md"],
                 "excluded_prefixes": [
-                    ".git/", ".github/", "runtime/", "deployment_receipts/",
-                    "tests/test_phoenix_"
+                    ".git/",
+                    ".github/",
+                    "runtime/",
+                    "deployment_receipts/",
+                    "tests/test_phoenix_",
+                ],
+                "excluded_test_globs": [
+                    "tests/test_phoenix_*",
+                    "tests/test_provider_airlock_activate.py",
                 ],
                 "excluded_segments": [
-                    "credentials", "receipts", "proofs", "queue", "state"
+                    "credentials",
+                    "receipts",
+                    "proofs",
+                    "queue",
+                    "state",
                 ],
                 "excluded_suffixes": [".key", ".pem", ".pyc"],
                 "secret_markers": ["ghp_", "github_pat_", "sk-proj-"],
@@ -93,11 +112,15 @@ class PhoenixExportTests(unittest.TestCase):
             "ops": {
                 "template_prefix": "phoenix/ops-template/",
                 "required_files": [
-                    "README.md", ".gitignore", ".github/CODEOWNERS",
-                    "governance/OPS_CONTRACT.json", "provider_cutover.py"
+                    "README.md",
+                    ".gitignore",
+                    ".github/CODEOWNERS",
+                    "governance/OPS_CONTRACT.json",
+                    "provider_cutover.py",
                 ],
             },
         }
+        self.policy_payload = policy
         self.policy = self.root / "phoenix" / "export_policy.json"
         self.policy.write_text(
             json.dumps(policy, indent=2) + "\n", encoding="utf-8"
@@ -115,14 +138,39 @@ class PhoenixExportTests(unittest.TestCase):
 
         with tarfile.open(output / "Federation-Omega-Core.tar.gz", "r:gz") as archive:
             names = set(archive.getnames())
+            manifest = json.load(archive.extractfile("PHOENIX_CORE_MANIFEST.json"))
         self.assertIn("systems/example/app.py", names)
         self.assertIn("README.md", names)
+        self.assertIn("tests/test_core_example.py", names)
         self.assertNotIn("runtime/state.json", names)
         self.assertNotIn(".github/workflows/unsafe.yml", names)
         self.assertNotIn("ipep/.github/workflows/ci.yml", names)
         self.assertFalse(any(EXPORTS.is_github_workflow_path(name) for name in names))
         self.assertNotIn("docs/credential.md", names)
-        self.assertFalse(any(name.startswith("tests/test_phoenix_") for name in names))
+        self.assertFalse(
+            any(
+                EXPORTS.is_migration_control_test(name, self.policy_payload)
+                for name in names
+            )
+        )
+        self.assertNotIn("tests/test_provider_airlock_activate.py", names)
+        self.assertEqual(0, manifest["invariants"]["migration_control_test_count"])
+
+    def test_exported_core_test_suite_is_independently_runnable(self):
+        output = self.root / "output"
+        EXPORTS.build(self.root, output, self.policy)
+        extracted = self.root / "extracted-core"
+        extracted.mkdir()
+        with tarfile.open(output / "Federation-Omega-Core.tar.gz", "r:gz") as archive:
+            archive.extractall(extracted, filter="data")
+        process = subprocess.run(
+            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
+            cwd=extracted,
+            text=True,
+            capture_output=True,
+        )
+        self.assertEqual(0, process.returncode, process.stdout + process.stderr)
+        self.assertIn("test_core_is_runnable", process.stderr)
 
     def test_ops_export_has_no_active_workflow(self):
         output = self.root / "output"
