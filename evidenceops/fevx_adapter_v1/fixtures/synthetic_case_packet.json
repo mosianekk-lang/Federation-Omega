@@ -1,0 +1,213 @@
+{
+  "authority": {
+    "cross_case_access": false,
+    "destructive_action": false,
+    "external_effect": false,
+    "external_send": false,
+    "fact_write": false,
+    "financial_action": false,
+    "legal_filing": false,
+    "requested_actions": [
+      "ANALYSE",
+      "GENERATE_INTERNAL_RECOMMENDATION"
+    ],
+    "source_write": false,
+    "tier": "A1_INTERNAL"
+  },
+  "case_wall_id": "CASE-WALL-CANARY-001",
+  "chronology": [
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "date": "2026-06-18",
+      "event_id": "EVT-001",
+      "fact_refs": [
+        "FACT-001"
+      ],
+      "matter_id": "CANARY-MATTER-001"
+    }
+  ],
+  "claims": [
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "claim_id": "CLAIM-001",
+      "fact_refs": [
+        "FACT-001"
+      ],
+      "matter_id": "CANARY-MATTER-001",
+      "statement": "The notice was procedurally defective.",
+      "support_state": "PARTIALLY_SUPPORTED"
+    },
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "claim_id": "CLAIM-002",
+      "fact_refs": [
+        "FACT-002"
+      ],
+      "matter_id": "CANARY-MATTER-001",
+      "statement": "The response was received.",
+      "support_state": "SUPPORTED"
+    }
+  ],
+  "contradictions": [
+    {
+      "affected_claim_id": "CLAIM-001",
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "confidence": 0.7,
+      "contradiction_id": "CON-001",
+      "matter_id": "CANARY-MATTER-001",
+      "possible_cause": "missing_decision_record",
+      "strength": -0.4
+    }
+  ],
+  "matter_id": "CANARY-MATTER-001",
+  "missing_records": [
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "decision_sensitivity": "HIGH",
+      "matter_id": "CANARY-MATTER-001",
+      "record_id": "MISSING-DECISION-RECORD"
+    }
+  ],
+  "mission": {
+    "anti_goals": [
+      "Do not mutate evidence.",
+      "Do not write verified facts.",
+      "Do not take external action."
+    ],
+    "objective": "Identify the highest-value missing evidence and produce an internal case-intelligence recommendation.",
+    "requested_outcome": "A proof-linked, advisory EvidenceOps case-intelligence pack held for owner review."
+  },
+  "outcome_chain": [
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "description": "Evidence packet created.",
+      "matter_id": "CANARY-MATTER-001",
+      "step_id": "OUT-1",
+      "verified": true
+    },
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "description": "Missing decision record obtained.",
+      "matter_id": "CANARY-MATTER-001",
+      "step_id": "OUT-2",
+      "verified": false
+    }
+  ],
+  "packet_id": "PKT-EVIDENCEOPS-CANARY-001",
+  "schema": "EVIDENCEOPS_FEVX_INPUT_V1",
+  "sources": [
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "classification": "RESTRICTED_SYNTHETIC",
+      "custodian": "Synthetic Employer",
+      "matter_id": "CANARY-MATTER-001",
+      "sha256": "1111111111111111111111111111111111111111111111111111111111111111",
+      "source_id": "SRC-001",
+      "title": "Synthetic suspension notice"
+    },
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "classification": "RESTRICTED_SYNTHETIC",
+      "custodian": "Synthetic Applicant",
+      "matter_id": "CANARY-MATTER-001",
+      "sha256": "2222222222222222222222222222222222222222222222222222222222222222",
+      "source_id": "SRC-002",
+      "title": "Synthetic response"
+    }
+  ],
+  "stakeholders": [
+    {
+      "alignment": 0.8,
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "constraint": 0.2,
+      "influence": 0.6,
+      "intervention_alignment_delta": 0.0,
+      "matter_id": "CANARY-MATTER-001",
+      "represented_by_evidence": true,
+      "stakeholder_id": "ACTOR-APPLICANT"
+    },
+    {
+      "alignment": -0.4,
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "constraint": 0.3,
+      "influence": 0.8,
+      "intervention_alignment_delta": 0.1,
+      "matter_id": "CANARY-MATTER-001",
+      "represented_by_evidence": true,
+      "stakeholder_id": "ACTOR-EMPLOYER"
+    },
+    {
+      "alignment": 0.0,
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "constraint": 0.4,
+      "influence": 0.9,
+      "intervention_alignment_delta": 0.0,
+      "matter_id": "CANARY-MATTER-001",
+      "represented_by_evidence": false,
+      "stakeholder_id": "ACTOR-FORUM"
+    }
+  ],
+  "strategies": [
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "cost": 0.1,
+      "information_gain": 0.7,
+      "matter_id": "CANARY-MATTER-001",
+      "option_value": 0.4,
+      "owner_attention": 0.1,
+      "probability": 0.75,
+      "reversibility": 1.0,
+      "risk": 0.05,
+      "strategy_id": "STRATEGY-EVIDENCE-PROBE",
+      "value": 0.85
+    },
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "cost": 0.02,
+      "information_gain": 0.1,
+      "matter_id": "CANARY-MATTER-001",
+      "option_value": 0.5,
+      "owner_attention": 0.02,
+      "probability": 0.8,
+      "reversibility": 1.0,
+      "risk": 0.05,
+      "strategy_id": "STRATEGY-HOLD",
+      "value": 0.35
+    },
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "cost": 0.1,
+      "information_gain": 0.4,
+      "matter_id": "CANARY-MATTER-001",
+      "option_value": 0.3,
+      "owner_attention": 0.15,
+      "probability": 0.7,
+      "reversibility": 1.0,
+      "risk": 0.05,
+      "strategy_id": "STRATEGY-INTERNAL-REVIEW",
+      "value": 0.65
+    }
+  ],
+  "verified_facts": [
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "fact_id": "FACT-001",
+      "matter_id": "CANARY-MATTER-001",
+      "source_refs": [
+        "SRC-001"
+      ],
+      "statement": "A synthetic notice was issued on 18 June 2026.",
+      "verification_state": "VERIFIED"
+    },
+    {
+      "case_wall_id": "CASE-WALL-CANARY-001",
+      "fact_id": "FACT-002",
+      "matter_id": "CANARY-MATTER-001",
+      "source_refs": [
+        "SRC-002"
+      ],
+      "statement": "A synthetic response disputed the stated basis.",
+      "verification_state": "VERIFIED"
+    }
+  ]
+}
