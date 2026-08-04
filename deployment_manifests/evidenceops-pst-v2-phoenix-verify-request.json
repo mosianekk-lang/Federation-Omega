@@ -1,0 +1,10 @@
+{
+  "schema": "FEDOMEGA-PST-PHOENIX-VERIFY-REQUEST-1",
+  "status": "REQUESTED",
+  "request_nonce": "PST-REMOTE-CLOSURE-20260804-1959-SAST",
+  "workflow_path": ".github/workflows/evidenceops-pst-v2-drive-remote-verify.yml",
+  "reason": "Complete the outstanding independent Drive re-download, hash, reconstruction, ZIP CRC, SQLite and FTS verification without reactivating the legacy workflow estate.",
+  "completion_gate": "deployment_receipts/evidenceops-pst-corpus-v2-drive-completion.json status COMPLETE_VERIFIED",
+  "owner": "Kim Kagiso Mosiane",
+  "communication_state": "NO_SEND"
+}
