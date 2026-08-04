@@ -13,7 +13,11 @@
     "implementation_pull_request": 156,
     "release_pull_request": 157,
     "implementation_merge_commit": "3f0764da59a9a96bd7a11f77bb5ef1720baea5cb",
-    "release_merge_commit": "781e7b56485cea14715821c2ef33ae576690a1f7"
+    "release_merge_commit": "781e7b56485cea14715821c2ef33ae576690a1f7",
+    "google_drive_file_id": "1BaghI8fHt42GTehodoXo0IJoRmYD0j-7NYMkmhS5gW0",
+    "google_drive_export_sha256": "88b43753d53d5291a89da26962b911d51265654492651c7086483e9c2223f578",
+    "google_drive_latest_readback_modified_time": "2026-08-04T15:15:05.991Z",
+    "google_drive_readback_verified": true
   },
   "operational_slice": {
     "valid_pre_resolution_evidence_classified_recoverable": true,
