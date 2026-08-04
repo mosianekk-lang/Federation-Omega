@@ -1,10 +1,10 @@
 """Canonical Alpha→Omega commercial maturity API.
 
-The provider-dispatch-fencing control plane is the newest service-platform
-candidate. It preserves the V12 claim and lease boundary and adds renewable
-leases, durable attempt starts, monotonic fencing epochs and attempt-bound mock
-provider receipts. Earlier control planes remain exported for historical
-regression and reference-provider conformance.
+The provider-dispatch outcome-reconciliation control plane is the newest
+service-platform candidate. It preserves V13 renewable lease and fencing
+controls, adds a durable provider-submission boundary, quarantines unknown
+outcomes and requires exact reconciliation before retry. Earlier control planes
+remain exported for historical regression and reference-provider conformance.
 """
 
 from __future__ import annotations
@@ -16,6 +16,14 @@ _PACKAGE_DIR = str(Path(__file__).resolve().parent)
 if _PACKAGE_DIR not in sys.path:
     sys.path.insert(0, _PACKAGE_DIR)
 
+from provider_dispatch_outcome_reconciliation import (  # noqa: E402
+    MOCK_PROVIDER_RECONCILIATION_CLASS,
+    LIVE_PROVIDER_RECONCILIATION_CLASS,
+    OUTCOME_COMPLETED,
+    OUTCOME_NO_EFFECT,
+    OutcomeReconciledProviderDispatchCommercialControlPlane,
+    ReconciliationConformantMockProviderAdapter,
+)
 from provider_dispatch_fencing import (  # noqa: E402
     FencedConformantMockProviderAdapter,
     FencedProviderDispatchCommercialControlPlane,
@@ -62,6 +70,12 @@ from governed_commercial_assurance import (  # noqa: E402
 )
 
 __all__ = [
+    "OutcomeReconciledProviderDispatchCommercialControlPlane",
+    "ReconciliationConformantMockProviderAdapter",
+    "MOCK_PROVIDER_RECONCILIATION_CLASS",
+    "LIVE_PROVIDER_RECONCILIATION_CLASS",
+    "OUTCOME_NO_EFFECT",
+    "OUTCOME_COMPLETED",
     "FencedProviderDispatchCommercialControlPlane",
     "FencedConformantMockProviderAdapter",
     "LeasedProviderDispatchOutboxCommercialControlPlane",
