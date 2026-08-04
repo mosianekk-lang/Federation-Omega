@@ -73,9 +73,9 @@ class ProviderDispatchOutboxCommercialControlPlane(
     V10 makes local owner-reserved action retries exact and crash-safe. V11 adds
     a durable provider dispatch outbox whose stable provider idempotency key is
     cryptographically derived from the committed V10 action, accepted provider
-    authority snapshot and exact provider command. A deterministic mock adapter
-    proves contract conformance. Live provider receipt admission remains held
-    until a concrete provider-native verifier and fresh external proof exist.
+    authority snapshot and exact provider command identity. A deterministic mock
+    adapter proves contract conformance. Live provider receipt admission remains
+    held until a concrete provider-native verifier and fresh external proof exist.
     """
 
     CAPABILITY_REVISION = "AO-COMMERCIAL-PROVIDER-DISPATCH-OUTBOX-V11"
@@ -125,7 +125,6 @@ class ProviderDispatchOutboxCommercialControlPlane(
                 "acceptance_entry_sha256": seal["acceptance_entry_sha256"],
                 "provider_domain": provider_domain,
                 "operation": operation,
-                "payload_sha256": payload_sha256,
             }
         )
         dispatch_id = "DISPATCH-" + provider_idempotency_key[:24]
@@ -216,11 +215,10 @@ class ProviderDispatchOutboxCommercialControlPlane(
             existing = dispatches.get(dispatch_id)
             if existing is not None:
                 self._verify_dispatch_record(existing)
-                comparable = dict(existing)
-                comparable.pop("record_sha256", None)
-                candidate_without_hash = dict(candidate)
-                if comparable != candidate_without_hash:
-                    raise ValueError("provider dispatch conflict for stable idempotency key")
+                if existing.get("payload_sha256") != candidate["payload_sha256"]:
+                    raise ValueError(
+                        "provider dispatch conflict for stable idempotency key"
+                    )
                 return dict(existing)
             candidate["record_sha256"] = digest(candidate)
             dispatches[dispatch_id] = candidate
@@ -306,7 +304,7 @@ class ProviderDispatchOutboxCommercialControlPlane(
                 "mock_conformance_receipts": sum(
                     1
                     for record in records
-                    if record.get("provider_receipt", {}).get("receipt_class")
+                    if (record.get("provider_receipt") or {}).get("receipt_class")
                     == MOCK_PROVIDER_RECEIPT_CLASS
                 ),
                 "live_provider_receipts": 0,
