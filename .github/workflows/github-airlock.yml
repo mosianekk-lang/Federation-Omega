@@ -35,6 +35,9 @@ jobs:
       - name: Run source provenance regression tests
         run: python -m unittest discover -s tests -p 'test_phoenix_source_provenance.py' -v
 
+      - name: Run provider Airlock activator regression tests
+        run: python -m unittest discover -s tests -p 'test_provider_airlock_activate.py' -v
+
       - name: Run provider cutover v2 regression tests
         run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
 
