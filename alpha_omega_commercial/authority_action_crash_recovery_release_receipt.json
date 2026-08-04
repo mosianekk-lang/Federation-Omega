@@ -98,7 +98,7 @@
     "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
     "production_scale": "PRODUCTION_PROOF_REQUIRED"
   },
-  "receipt_sha256": "53bc422d3ffd7b1f99bea79809b7a194fcb1a6eaba1500a64f2319a12c19376e",
+  "receipt_sha256": "8c71342eb3e3b81bbe4783d59f6663638cd458c2852f0788996e8626b3c849dd",
   "release_id": "AO-COMMERCIAL-AUTHORITY-ACTION-CRASH-RECOVERY-V7-RELEASE",
   "self_service_saas": "HELD",
   "stage_scope": [
