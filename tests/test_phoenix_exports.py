@@ -37,6 +37,11 @@ class PhoenixExportTests(unittest.TestCase):
         (self.root / "docs" / "credential.md").write_text(
             "example ghp_not_a_real_token\n", encoding="utf-8"
         )
+        (self.root / "tests").mkdir()
+        (self.root / "tests" / "test_phoenix_provider_cutover_v2.py").write_text(
+            "raise RuntimeError('migration controller is intentionally absent from Core')\n",
+            encoding="utf-8",
+        )
 
         template = self.root / "phoenix" / "ops-template"
         (template / ".github").mkdir(parents=True)
@@ -59,7 +64,8 @@ class PhoenixExportTests(unittest.TestCase):
                 "include_extensions": [".py", ".md", ".json", ".yml"],
                 "include_root_files": ["README.md"],
                 "excluded_prefixes": [
-                    ".git/", ".github/", "runtime/", "deployment_receipts/"
+                    ".git/", ".github/", "runtime/", "deployment_receipts/",
+                    "tests/test_phoenix_"
                 ],
                 "excluded_segments": [
                     "credentials", "receipts", "proofs", "queue", "state"
@@ -83,7 +89,7 @@ class PhoenixExportTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
-    def test_export_excludes_workflows_runtime_and_secret_markers(self):
+    def test_export_excludes_workflows_runtime_secret_markers_and_migration_tests(self):
         output = self.root / "output"
         receipt = EXPORTS.build(self.root, output, self.policy)
         self.assertEqual("VERIFIED", receipt["status"])
@@ -97,6 +103,7 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertNotIn("runtime/state.json", names)
         self.assertNotIn(".github/workflows/unsafe.yml", names)
         self.assertNotIn("docs/credential.md", names)
+        self.assertNotIn("tests/test_phoenix_provider_cutover_v2.py", names)
 
     def test_ops_export_has_no_active_workflow(self):
         output = self.root / "output"
