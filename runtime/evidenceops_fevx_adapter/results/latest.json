@@ -1,0 +1,88 @@
+{
+  "adapter_proof_hash": "c1e7afb22508337a459e93c36c27744020d8de28f6f4c75aa35d68cdb6a24490",
+  "adapter_proof_id": "PRF-acb03ee6bd9ee64c073e8fb4",
+  "base_module_count": 10,
+  "check_count": 20,
+  "checks": {
+    "base_modules_10": true,
+    "case_wall_intact": true,
+    "combined_modules_20": true,
+    "derived_only_schema": true,
+    "external_effect_rejected": true,
+    "frontier_modules_10": true,
+    "held_action_rejected": true,
+    "idempotent_recurrence": true,
+    "ledger_integrity": true,
+    "nested_case_wall_rejected": true,
+    "no_execution_endpoint": true,
+    "output_held_and_advisory": true,
+    "provider_native_execution": true,
+    "reapply_test": true,
+    "record_integrity": true,
+    "rollback_test": true,
+    "source_manifest_immutable": true,
+    "source_packet_immutable": true,
+    "tamper_detected": true,
+    "verified_facts_immutable": true
+  },
+  "checks_passed": 20,
+  "combined_module_count": 20,
+  "cross_case_access": false,
+  "cse_provider_level": 5,
+  "database_dump_sha256": "87655eb2300d87649af50668e2069964d8c22a4eae806f24ab68478c64317b4d",
+  "drift": "IN_SYNC",
+  "evidenceops_adapter_level": 4,
+  "external_effect": false,
+  "frontier_module_count": 10,
+  "idempotent_recurrence": true,
+  "input_packet_sha256": "25c1d44babca13f6de9ab400a434d2ea818805503c934cdb4ec8aa14c943cda9",
+  "integration_state": "PROVIDER_VERIFIED_SUPERVISED_READ_ONLY_ANALYTICAL_SERVICE",
+  "integrity": {
+    "ledger": {
+      "errors": [],
+      "event_count": 1,
+      "ledger_head_hash": "be60d1089c39d23237055daea040e9e7e17b669ce05cf521e1cc638db0eced5e",
+      "status": "PASSED"
+    },
+    "records": {
+      "errors": [],
+      "status": "PASSED"
+    },
+    "schema_boundary": {
+      "prohibited_tables": [],
+      "status": "PASSED",
+      "tables": [
+        "checkpoints",
+        "ledger",
+        "proofs",
+        "recommendations"
+      ],
+      "unexpected_tables": []
+    },
+    "status": "PASSED"
+  },
+  "level_6_eligible": false,
+  "next_gate": "SUPERVISED_REAL_CASE_CANARY_WITH_OWNER_REVIEW",
+  "provider": "github_actions",
+  "provider_event": {
+    "commit_sha": "ffe6142f324cf98e169877d2598a82816298c1da",
+    "event_name": "push",
+    "execution_id": "30867291420",
+    "repository": "mosianekk-lang/Federation-Omega",
+    "run_attempt": "1"
+  },
+  "provider_proof_hash": "bdfed81f85e16c89865045498a30197670f4e6ea8189dfb70eaee765bad5d2d9",
+  "provider_proof_id": "PRF-EVIDENCEOPS-FEVX-de0da8787d0f093964ec9daa",
+  "real_case_accuracy_evidence": false,
+  "reapply_test": true,
+  "recommendation_id": "REC-975d4553f813851efb3796a8",
+  "recorded_at": "2026-08-04T00:59:08.795659Z",
+  "result_id": "RESULT-cd4b0a37ec3dfa0336972f98",
+  "rollback_test": true,
+  "schema": "EVIDENCEOPS_FEVX_PROVIDER_RESULT_V1",
+  "semantic_hash": "0412b9a80579669378f15ee666083dc541123bbb2d801061b883edc58f8969b1",
+  "source_write": false,
+  "status": "VERIFIED",
+  "truth_boundary": "This provider canary proves the read-only EvidenceOps-to-FEVX integration controls using a synthetic case fixture and the actual 20-module CSE runtime. It does not prove legal accuracy, a real case outcome, or authority for any external action.",
+  "verified_fact_write": false
+}
