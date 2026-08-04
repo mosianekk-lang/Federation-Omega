@@ -1,10 +1,10 @@
 """Canonical Alpha→Omega commercial maturity API.
 
-The provider-dispatch-claim-lease control plane is the newest service-platform
-candidate. It preserves the V11 durable provider command identity and adds one
-active local worker claim per dispatch, bounded lease expiry, restart-safe
-claim history and claim-bound receipt admission. Earlier control planes remain
-exported for historical regression and reference-provider conformance.
+The provider-dispatch-fencing control plane is the newest service-platform
+candidate. It preserves the V12 claim and lease boundary and adds renewable
+leases, durable attempt starts, monotonic fencing epochs and attempt-bound mock
+provider receipts. Earlier control planes remain exported for historical
+regression and reference-provider conformance.
 """
 
 from __future__ import annotations
@@ -16,6 +16,10 @@ _PACKAGE_DIR = str(Path(__file__).resolve().parent)
 if _PACKAGE_DIR not in sys.path:
     sys.path.insert(0, _PACKAGE_DIR)
 
+from provider_dispatch_fencing import (  # noqa: E402
+    FencedConformantMockProviderAdapter,
+    FencedProviderDispatchCommercialControlPlane,
+)
 from provider_dispatch_claim_lease import (  # noqa: E402
     LeasedProviderDispatchOutboxCommercialControlPlane,
 )
@@ -58,6 +62,8 @@ from governed_commercial_assurance import (  # noqa: E402
 )
 
 __all__ = [
+    "FencedProviderDispatchCommercialControlPlane",
+    "FencedConformantMockProviderAdapter",
     "LeasedProviderDispatchOutboxCommercialControlPlane",
     "ProviderDispatchOutboxCommercialControlPlane",
     "ConformantMockProviderAdapter",
