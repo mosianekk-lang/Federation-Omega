@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.1.1",
+  "version": "2.1.2",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -65,6 +65,10 @@
       ".github/workflows/public-repository-leak-guard.yml",
       ".github/workflows/phoenix-emergency-freeze.yml"
     ],
+    "provider_managed_active": [
+      "dynamic/dependabot/dependabot-updates"
+    ],
+    "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",
     "all_other_workflows": "DISABLED_MANUALLY",
     "provider_readback_required": true
   }
