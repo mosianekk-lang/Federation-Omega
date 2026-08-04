@@ -47,6 +47,12 @@ jobs:
       - name: Run Phoenix export purity regression tests
         run: python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
 
+      - name: Run OpenAI rotation semantic proof regression tests
+        run: python -m unittest discover -s tests -p 'test_openai_rotation_contract.py' -v
+
+      - name: Run Apps Script authorization regression tests
+        run: python -m unittest discover -s tests -p 'test_apps_script_authorization_gate.py' -v
+
       - name: Resolve admission comparison and provider provenance
         id: refs
         env:
