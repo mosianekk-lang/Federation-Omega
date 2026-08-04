@@ -1,0 +1,15 @@
+{
+  "cross_case_access": false,
+  "cse_provider_level": 5,
+  "evidenceops_adapter_level": 4,
+  "external_effect": false,
+  "integration_state": "PROVIDER_VERIFIED_SUPERVISED_READ_ONLY_ANALYTICAL_SERVICE",
+  "level_6_eligible": false,
+  "module_count": 20,
+  "real_case_accuracy_evidence": false,
+  "runtime_state": "OPERATIONAL",
+  "service": "evidenceops-fevx-adapter",
+  "source_write": false,
+  "verified_fact_write": false,
+  "version": "1.0.0"
+}
