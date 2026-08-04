@@ -1,0 +1,44 @@
+{
+  "projection_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V17",
+  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_RECOVERY_CANDIDATE_PROVIDER_PROOF_PENDING",
+  "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-RECOVERY-V17",
+  "canonical_class": "RecoverableVaultedProviderDispatchCommercialControlPlane",
+  "predecessor_class": "VaultedProviderDispatchCommercialControlPlane",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "service_enabled_platform_prioritised": true,
+  "self_service_saas_held": true,
+  "controls": {
+    "durable_submission_marker": true,
+    "unknown_outcome_quarantine": true,
+    "challenge_history_hash_chain": true,
+    "challenge_attempt_binding": true,
+    "challenge_freshness_and_single_use": true,
+    "content_addressed_evidence_package": true,
+    "atomic_evidence_publication_before_resolution": true,
+    "resolution_event_evidence_hash_binding": true,
+    "restart_requires_referenced_evidence": true,
+    "recoverable_evidence_classification": true,
+    "recoverable_evidence_prune_protection": true,
+    "invalid_orphan_evidence_prune": true,
+    "deterministic_vault_replay": true,
+    "challenge_observation_time_replay_binding": true,
+    "exact_replay_idempotency": true,
+    "mock_provider_reconciliation_conformance": true,
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "NOT_PROVEN"
+  },
+  "implementation_provider_proof": {
+    "state": "PENDING"
+  },
+  "predecessor_google_drive_release": {
+    "file_id": "1BaghI8fHt42GTehodoXo0IJoRmYD0j-7NYMkmhS5gW0",
+    "latest_readback_modified_time": "2026-08-04T15:15:05.991Z",
+    "export_sha256": "88b43753d53d5291a89da26962b911d51265654492651c7086483e9c2223f578",
+    "readback_verified": true,
+    "shared": false
+  },
+  "verified_live_revenue_events": 0,
+  "external_maturity_gates_advanced": false,
+  "institution_state_preserved": true,
+  "owner_authority_effect": "UNCHANGED"
+}
