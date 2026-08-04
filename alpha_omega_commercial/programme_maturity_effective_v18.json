@@ -12,19 +12,36 @@
     "predecessor_google_drive_release_file_id": "18SwQIrE6KL39qkKKlvxM_aTxXzZLoWac82LLLX5qf1M",
     "predecessor_google_drive_release_modified_time": "2026-08-04T16:11:53.471Z",
     "implementation_head": "89c389cbbae6e9b5345df55f0ca1d1413c61b30a",
+    "implementation_pull_request": 161,
+    "implementation_merge_commit": "e58b03e21e9ff7767a9d7ebade9f4ead4a87d170",
     "provider_proof_run": 30932556333,
     "provider_proof_job": 92070577496,
     "provider_proof_artifact_id": 8901730423,
     "provider_proof_artifact_digest": "sha256:2a4996498ded42ace64ca161dd69e717038010f2fbcb39a15f0783b7c1b502df",
-    "provider_proof_receipt_sha256": "889f1eee3a597d2c1d147aa33707d00146bcf4c64a05a484083d3e461e69fb0e"
+    "provider_proof_receipt_sha256": "889f1eee3a597d2c1d147aa33707d00146bcf4c64a05a484083d3e461e69fb0e",
+    "private_google_drive_release_file_id": "1fLa7bzRlfa1bF-sjpmFyYgt0q_D7DovXNRaEiTelcto",
+    "private_google_drive_release_modified_time": "2026-08-04T17:16:17.948Z",
+    "private_google_drive_export_sha256": "b2ea61d6ab9c53f1e4d69ef04ea7e101a77081b226dd7c351bca720000f2342d"
+  },
+  "release_reconciliation": {
+    "status": "PROVIDER_BLOCKED_EXECUTION_QUARANTINE_PRIVATE_EXECUTION_PLANE_REQUIRED",
+    "phoenix_policy_pull_request": 162,
+    "phoenix_policy_commit": "93501aa49332989a77d9a0c22307dac4b52b8957",
+    "airlock_policy_version": "2.1.2",
+    "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
+    "required_execution_plane": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+    "safe_transition_contract": "alpha_omega_commercial/provider_execution_plane_transition_v18.json",
+    "fresh_final_head_commercial_provider_ci": "NOT_EXECUTED_PROVIDER_BLOCKED",
+    "owner_reserved_decision": "EXECUTION_PLANE_CUTOVER_OR_NARROW_AIRLOCK_ROUTE",
+    "consequential_release_performed": false
   },
   "stage_projection": {
-    "C03": "RECOVERY_COMPLETION_AUTHORITY_BOUNDARY_PROVIDER_PROOF_VERIFIED_PROVIDER_AUTHORITY_BLOCKED",
+    "C03": "RECOVERY_COMPLETION_AUTHORITY_BOUNDARY_PROVIDER_PROOF_VERIFIED_EXECUTION_PLANE_BLOCKED",
     "C06": "MANAGED_OPERATIONS_RECOVERY_COMPLETION_RECEIPT_REPAIR_PROVIDER_PROOF_VERIFIED",
     "C07": "MOCK_PROVIDER_RECOVERY_COMPLETION_CONFORMANCE_PROVIDER_PROOF_VERIFIED_LIVE_PROVIDER_BLOCKED",
     "C11": "SERVICE_ENABLED_PLATFORM_VERIFIED_SELF_SERVICE_HELD",
     "C14": "LOCAL_RECOVERY_COMPLETION_DURABILITY_PROVIDER_PROOF_VERIFIED_PRODUCTION_PROOF_REQUIRED",
-    "C15": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+    "C15": "COMMERCIAL_READINESS_VERIFIED_RELEASE_RECONCILIATION_PROVIDER_BLOCKED_EXECUTION_QUARANTINE"
   },
   "service_enabled_platform_first": true,
   "self_service_saas_held": true,
@@ -51,6 +68,7 @@
     "contracts": "OWNER_RESERVED",
     "external_communications": "OWNER_RESERVED",
     "consequential_releases": "OWNER_RESERVED",
-    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED",
+    "execution_plane_cutover": "OWNER_RESERVED"
   }
 }
