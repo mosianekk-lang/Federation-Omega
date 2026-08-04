@@ -14,6 +14,8 @@ This release evolves the Local Live Bible from active-turn-only persistence into
 
 - append-only SQLite WAL event store;
 - deterministic event IDs and per-conversation hash chains;
+- append-order chain verification even when late messages repair sequence gaps;
+- source-equivalent duplicate replay detection;
 - sequence-gap detection and late-gap repair;
 - secret-shaped content redaction before persistence;
 - P0-P3 privacy and case-wall metadata;
@@ -24,11 +26,11 @@ This release evolves the Local Live Bible from active-turn-only persistence into
 ## Exact release
 
 ```text
-ZIP SHA-256: a9690c24309b3b6ef463e1dea733833e35bd26f22547d29a8060e440910265c3
-Manifest SHA-256: 681ecd6709e46f8eb420dd9dedabab001fb96d6cb5e79ce14fb615955957f7ab
-Wheel SHA-256: 4bf70de9b0ac5e2e8ac5f39b563fca55a263f9f1b2c921496a2a2da3064a7e07
-Source tests: 17 passed
-Clean extraction tests: 17 passed
+ZIP SHA-256: 7b4fe8e89db7b22db712233a6ce518d04a3b4d9d249934a926522819db869572
+Manifest SHA-256: 81f5cdb33e5d2e05fd2cd8193edaffd5bc3530a018e8bc9fd5d301f6f3102af9
+Wheel SHA-256: 2939740b27483aaeabe0fba9454a8b46c50be3df95d931b4962a6c747bf19de6
+Source tests: 18 passed
+Clean extraction tests: 18 passed
 Database quick_check: ok
 ```
 
