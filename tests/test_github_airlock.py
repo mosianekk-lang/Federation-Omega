@@ -67,6 +67,14 @@ jobs:
         )
         self.assertIn("UNAUTHORISED_ACTIONS_WRITE", self.rules(findings))
 
+    def test_statuses_write_is_rejected_for_normal_workflow(self):
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/public-repository-leak-guard.yml",
+            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: read\n  statuses: write\nconcurrency:\n  group: x\n",
+            POLICY,
+        )
+        self.assertIn("UNAUTHORISED_STATUSES_WRITE", self.rules(findings))
+
     def test_git_push_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/public-repository-leak-guard.yml",
@@ -107,13 +115,15 @@ on:
 permissions:
   actions: write
   contents: read
+  statuses: write
 concurrency:
   group: phoenix-freeze
   cancel-in-progress: false
 jobs:
   freeze:
     steps:
-      - run: gh api --method PUT /repos/x/y/actions/workflows/1/disable
+      - run: gh api -X PUT /repos/x/y/actions/workflows/1/disable
+      - run: gh api -X POST /repos/x/y/statuses/abc -f context=phoenix-freeze/verified
 """
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/phoenix-emergency-freeze.yml", text, POLICY
@@ -128,12 +138,14 @@ on:
 permissions:
   actions: write
   contents: write
+  statuses: write
 concurrency:
   group: phoenix-freeze
 jobs:
   freeze:
     steps:
-      - run: gh api --method PUT /repos/x/y/actions/workflows/1/disable
+      - run: gh api -X PUT /repos/x/y/actions/workflows/1/disable
+      - run: gh api -X POST /repos/x/y/statuses/abc -f context=phoenix-freeze/verified
 """
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/phoenix-emergency-freeze.yml", text, POLICY
@@ -141,6 +153,27 @@ jobs:
         rules = self.rules(findings)
         self.assertIn("REPOSITORY_WRITE_AUTHORITY", rules)
         self.assertIn("QUARANTINE_CONTROLLER_SOURCE_AUTHORITY", rules)
+
+    def test_quarantine_controller_requires_proof_context(self):
+        text = """name: Phoenix Emergency Execution Freeze
+on:
+  push:
+  workflow_dispatch:
+permissions:
+  actions: write
+  contents: read
+  statuses: write
+concurrency:
+  group: phoenix-freeze
+jobs:
+  freeze:
+    steps:
+      - run: gh api -X PUT /repos/x/y/actions/workflows/1/disable
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/phoenix-emergency-freeze.yml", text, POLICY
+        )
+        self.assertIn("PROOF_STATUS_ENDPOINT_DRIFT", self.rules(findings))
 
 
 if __name__ == "__main__":
