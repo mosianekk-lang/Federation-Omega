@@ -1,11 +1,11 @@
 {
   "lane_id": "LANE-PROVENANCE-PASSPORT",
   "workflow": ".github/workflows/provenance-passport-watch.yml",
-  "workflow_run_id": "30849571344",
+  "workflow_run_id": "30876059088",
   "workflow_run_attempt": "1",
   "workflow_event": "schedule",
-  "source_sha": "7972d34957141a7dc498de461468178bbce35c72",
-  "observed_at": "2026-08-03T20:17:56.790501+00:00",
+  "source_sha": "9081689c3d1cf634a30a1e5ad5ffbdd637d9ca24",
+  "observed_at": "2026-08-04T03:54:18.129975+00:00",
   "regression_tests": "PASSED",
   "baseline_validation": "PASSED",
   "controlled_tamper_detection": "PASSED",
@@ -14,5 +14,5 @@
   "receipt_status": "VERIFIED",
   "public_provider_identifier_persisted": false,
   "status": "PASS",
-  "health_sha256": "f81225be828e31cf3f607b03804e9bc6f5bb8b00ca44feb2e6e6ebc5d5cb6e03"
+  "health_sha256": "2a21259d45be868f6622c6383f8438b688da05c3f7f375348078b05884fa8196"
 }
