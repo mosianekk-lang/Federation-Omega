@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import hashlib
+from contextlib import closing, contextmanager
 import json
 import os
 import sqlite3
@@ -8,7 +9,7 @@ import uuid
 from dataclasses import dataclass
 from datetime import datetime, timezone
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Iterator, Mapping, Sequence
 
 STATES = {
     "CAPTURED", "TRIAGED", "READY", "ACTIVE", "CHECKPOINTED", "PAUSED",
@@ -59,10 +60,15 @@ class InnovationRegistry:
         self.database = str(database)
         self._initialize()
 
-    def _connect(self) -> sqlite3.Connection:
+    @contextmanager
+    def _connect(self) -> Iterator[sqlite3.Connection]:
         connection = sqlite3.connect(self.database)
         connection.row_factory = sqlite3.Row
-        return connection
+        try:
+            with connection:
+                yield connection
+        finally:
+            connection.close()
 
     def _initialize(self) -> None:
         with self._connect() as connection:
@@ -236,11 +242,11 @@ class InnovationRegistry:
         temporary_path = destination_path.with_suffix(destination_path.suffix + ".tmp")
         temporary_path.unlink(missing_ok=True)
 
-        with self._connect() as source, sqlite3.connect(temporary_path) as target:
+        with self._connect() as source, closing(sqlite3.connect(temporary_path)) as target:
             source.backup(target)
             target.commit()
 
-        with sqlite3.connect(temporary_path) as connection:
+        with closing(sqlite3.connect(temporary_path)) as connection:
             integrity_check = connection.execute("PRAGMA integrity_check").fetchone()[0]
             lane_count = connection.execute("SELECT COUNT(*) FROM lanes").fetchone()[0]
             event_count = connection.execute("SELECT COUNT(*) FROM events").fetchone()[0]
@@ -279,7 +285,7 @@ class InnovationRegistry:
         if expected_sha256 and actual_sha256 != expected_sha256:
             raise ValueError("Backup SHA-256 mismatch")
 
-        with sqlite3.connect(source_path) as source_connection:
+        with closing(sqlite3.connect(source_path)) as source_connection:
             integrity_check = source_connection.execute("PRAGMA integrity_check").fetchone()[0]
         if integrity_check != "ok":
             raise RuntimeError(f"Source integrity check failed: {integrity_check}")
@@ -291,7 +297,7 @@ class InnovationRegistry:
         destination_path.parent.mkdir(parents=True, exist_ok=True)
         temporary_path = destination_path.with_suffix(destination_path.suffix + ".restore.tmp")
         temporary_path.unlink(missing_ok=True)
-        with sqlite3.connect(source_path) as source_connection, sqlite3.connect(temporary_path) as target:
+        with closing(sqlite3.connect(source_path)) as source_connection, closing(sqlite3.connect(temporary_path)) as target:
             source_connection.backup(target)
             target.commit()
         os.replace(temporary_path, destination_path)
