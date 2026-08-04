@@ -2,7 +2,7 @@
   "ephemeral_runner_only": true,
   "external_effect": false,
   "receipt": "FEVX-CSE-EVOLUTION-MIGRATION-COMPATIBILITY-REPAIR",
-  "recorded_at": "2026-08-04T09:10:08.266949+00:00",
+  "recorded_at": "2026-08-04T14:40:54.812388+00:00",
   "semantic_readback": true,
   "sha256": "11c057bb35e7267347b09a607a3ded8b02265380547b65e102b0df6c4fef27b8",
   "source": "/opt/hostedtoolcache/Python/3.12.13/x64/lib/python3.12/site-packages/fevx_cse/sql/sqlite_001_bootstrap.sql",
