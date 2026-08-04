@@ -1,12 +1,8 @@
 {
-  "canonical_run_id": 30865146610,
-  "receipt": "EVIDENCEOPS-PST-CORPUS-V2-ACTIONS-OBSERVER",
-  "recorded_at": "2026-08-04T00:25:28.779575+00:00",
-  "repository": "mosianekk-lang/Federation-Omega",
-  "runs": [
+  "canonical_extraction_run_id": 30865146610,
+  "extraction_runs": [
     {
-      "canonical": false,
-      "conclusion": null,
+      "conclusion": "cancelled",
       "created_at": "2026-08-04T00:24:44Z",
       "event": "push",
       "head_sha": "9fb99e1ea4ab9d387ff7389413ae6bcedaec3db8",
@@ -14,12 +10,11 @@
       "id": 30865486855,
       "run_attempt": 1,
       "run_number": 2,
-      "status": "pending",
-      "updated_at": "2026-08-04T00:25:28Z"
+      "status": "completed",
+      "updated_at": "2026-08-04T00:25:29Z"
     },
     {
-      "canonical": true,
-      "conclusion": null,
+      "conclusion": "success",
       "created_at": "2026-08-04T00:18:18Z",
       "event": "push",
       "head_sha": "1c14393fcd555fddae1aaaa405a7d41010c917c8",
@@ -27,8 +22,25 @@
       "id": 30865146610,
       "run_attempt": 1,
       "run_number": 1,
-      "status": "in_progress",
-      "updated_at": "2026-08-04T00:18:22Z"
+      "status": "completed",
+      "updated_at": "2026-08-04T00:30:17Z"
     }
-  ]
+  ],
+  "fanout_runs": [
+    {
+      "conclusion": null,
+      "created_at": "2026-08-04T00:32:23Z",
+      "event": "push",
+      "head_sha": "042fee9b5139e84022e020d1c0c931d83f8b6664",
+      "html_url": "https://github.com/mosianekk-lang/Federation-Omega/actions/runs/30865892461",
+      "id": 30865892461,
+      "run_attempt": 1,
+      "run_number": 1,
+      "status": "in_progress",
+      "updated_at": "2026-08-04T00:32:26Z"
+    }
+  ],
+  "receipt": "EVIDENCEOPS-PST-CORPUS-V2-ACTIONS-OBSERVER",
+  "recorded_at": "2026-08-04T00:36:48.732542+00:00",
+  "repository": "mosianekk-lang/Federation-Omega"
 }
