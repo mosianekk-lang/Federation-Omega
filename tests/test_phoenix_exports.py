@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import importlib.util
 import json
 import sys
@@ -9,13 +10,24 @@ import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
-SPEC = importlib.util.spec_from_file_location(
-    "phoenix_build_exports", ROOT / "phoenix" / "build_exports.py"
+
+
+def load_module(name: str, path: Path):
+    spec = importlib.util.spec_from_file_location(name, path)
+    assert spec and spec.loader
+    module = importlib.util.module_from_spec(spec)
+    sys.modules[spec.name] = module
+    spec.loader.exec_module(module)
+    return module
+
+
+EXPORTS = load_module("phoenix_build_exports", ROOT / "phoenix" / "build_exports.py")
+EXPORTS_V2 = load_module(
+    "phoenix_build_exports_v2_tests", ROOT / "phoenix" / "build_exports_v2.py"
 )
-assert SPEC and SPEC.loader
-EXPORTS = importlib.util.module_from_spec(SPEC)
-sys.modules[SPEC.name] = EXPORTS
-SPEC.loader.exec_module(EXPORTS)
+EXPORTS_V3 = load_module(
+    "phoenix_build_exports_v3_tests", ROOT / "phoenix" / "build_exports_v3.py"
+)
 
 
 class PhoenixExportTests(unittest.TestCase):
@@ -32,6 +44,10 @@ class PhoenixExportTests(unittest.TestCase):
         (self.root / ".github" / "workflows").mkdir(parents=True)
         (self.root / ".github" / "workflows" / "unsafe.yml").write_text(
             "name: unsafe\n", encoding="utf-8"
+        )
+        (self.root / "ipep" / ".github" / "workflows").mkdir(parents=True)
+        (self.root / "ipep" / ".github" / "workflows" / "ci.yml").write_text(
+            "name: nested-unsafe\n", encoding="utf-8"
         )
         (self.root / "docs").mkdir()
         (self.root / "docs" / "credential.md").write_text(
@@ -54,9 +70,15 @@ class PhoenixExportTests(unittest.TestCase):
         (template / "governance" / "OPS_CONTRACT.json").write_text(
             "{}\n", encoding="utf-8"
         )
-        (self.root / "phoenix" / "provider_cutover.py").write_text(
-            "print('dry-run')\n", encoding="utf-8"
-        )
+        for name in (
+            "provider_cutover.py",
+            "provider_cutover_v2.py",
+            "provider_cutover_v3.py",
+            "provider_cutover_v3_1.py",
+        ):
+            (self.root / "phoenix" / name).write_text(
+                "print('dry-run')\n", encoding="utf-8"
+            )
 
         policy = {
             "version": "test",
@@ -64,11 +86,18 @@ class PhoenixExportTests(unittest.TestCase):
                 "include_extensions": [".py", ".md", ".json", ".yml"],
                 "include_root_files": ["README.md"],
                 "excluded_prefixes": [
-                    ".git/", ".github/", "runtime/", "deployment_receipts/",
-                    "tests/test_phoenix_"
+                    ".git/",
+                    ".github/",
+                    "runtime/",
+                    "deployment_receipts/",
+                    "tests/test_phoenix_",
                 ],
                 "excluded_segments": [
-                    "credentials", "receipts", "proofs", "queue", "state"
+                    "credentials",
+                    "receipts",
+                    "proofs",
+                    "queue",
+                    "state",
                 ],
                 "excluded_suffixes": [".key", ".pem", ".pyc"],
                 "secret_markers": ["ghp_", "github_pat_", "sk-proj-"],
@@ -76,8 +105,11 @@ class PhoenixExportTests(unittest.TestCase):
             "ops": {
                 "template_prefix": "phoenix/ops-template/",
                 "required_files": [
-                    "README.md", ".gitignore", ".github/CODEOWNERS",
-                    "governance/OPS_CONTRACT.json", "provider_cutover.py"
+                    "README.md",
+                    ".gitignore",
+                    ".github/CODEOWNERS",
+                    "governance/OPS_CONTRACT.json",
+                    "provider_cutover.py",
                 ],
             },
         }
@@ -89,10 +121,22 @@ class PhoenixExportTests(unittest.TestCase):
     def tearDown(self):
         self.temp.cleanup()
 
+    def assert_complete_receipt_hash(self, output: Path, receipt: dict) -> None:
+        stored = json.loads(
+            (output / "phoenix-export-receipt.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual(receipt, stored)
+        claimed = stored.pop("receipt_sha256")
+        canonical = json.dumps(
+            stored, sort_keys=True, separators=(",", ":")
+        ).encode()
+        self.assertEqual(hashlib.sha256(canonical).hexdigest(), claimed)
+
     def test_export_excludes_workflows_runtime_secret_markers_and_migration_tests(self):
         output = self.root / "output"
         receipt = EXPORTS.build(self.root, output, self.policy)
         self.assertEqual("VERIFIED", receipt["status"])
+        self.assertFalse(receipt["provider_dispatch_performed"])
         self.assertTrue((output / "Federation-Omega-Core.tar.gz").is_file())
         self.assertTrue((output / "Federation-Omega-Ops.tar.gz").is_file())
 
@@ -102,8 +146,17 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertIn("README.md", names)
         self.assertNotIn("runtime/state.json", names)
         self.assertNotIn(".github/workflows/unsafe.yml", names)
+        self.assertNotIn("ipep/.github/workflows/ci.yml", names)
         self.assertNotIn("docs/credential.md", names)
         self.assertNotIn("tests/test_phoenix_provider_cutover_v2.py", names)
+        self.assert_complete_receipt_hash(output, receipt)
+
+    def test_workflow_detector_rejects_any_directory_depth(self):
+        self.assertTrue(EXPORTS.is_github_workflow_path(".github/workflows/ci.yml"))
+        self.assertTrue(
+            EXPORTS.is_github_workflow_path("ipep/.github/workflows/ci.yml")
+        )
+        self.assertFalse(EXPORTS.is_github_workflow_path("docs/workflows/ci.yml"))
 
     def test_ops_export_has_no_active_workflow(self):
         output = self.root / "output"
@@ -112,7 +165,41 @@ class PhoenixExportTests(unittest.TestCase):
             names = set(archive.getnames())
         self.assertIn("provider_cutover.py", names)
         self.assertIn("governance/OPS_CONTRACT.json", names)
-        self.assertFalse(any(name.startswith(".github/workflows/") for name in names))
+        self.assertFalse(EXPORTS.is_github_workflow_path("/".join(names)))
+        self.assertFalse(
+            any(EXPORTS.is_github_workflow_path(name) for name in names)
+        )
+
+    def test_v2_export_is_side_effect_free_and_hashes_final_payload(self):
+        output = self.root / "output-v2"
+        receipt = EXPORTS_V2.build_v2(self.root, output, self.policy)
+        self.assertTrue(receipt["export_generation"]["side_effect_free"])
+        self.assertFalse(receipt["export_generation"]["provider_dispatch_performed"])
+        self.assertFalse(receipt["provider_cutover_engine"]["provider_apply_performed"])
+        self.assert_complete_receipt_hash(output, receipt)
+
+    def test_v3_export_truthfully_records_no_apply_or_restoration(self):
+        output = self.root / "output-v3"
+        receipt = EXPORTS_V3.build_v3(self.root, output, self.policy)
+        engine = receipt["provider_cutover_engine"]
+        self.assertEqual("3.1", engine["version"])
+        self.assertFalse(engine["provider_apply_performed"])
+        self.assertFalse(engine["temporary_template_state_restored"])
+        self.assertTrue(engine["template_state_restoration_required_on_apply"])
+        self.assertFalse(receipt["export_generation"]["provider_dispatch_performed"])
+        self.assert_complete_receipt_hash(output, receipt)
+
+    def test_export_builders_contain_no_provider_dispatch_hook(self):
+        v2_source = (ROOT / "phoenix" / "build_exports_v2.py").read_text(
+            encoding="utf-8"
+        )
+        v3_source = (ROOT / "phoenix" / "build_exports_v3.py").read_text(
+            encoding="utf-8"
+        )
+        for source in (v2_source, v3_source):
+            self.assertNotIn("maybe_dispatch_pst_remote_verifier", source)
+            self.assertNotIn('"gh", "api"', source)
+            self.assertNotIn("workflow_id}/dispatches", source)
 
 
 if __name__ == "__main__":
