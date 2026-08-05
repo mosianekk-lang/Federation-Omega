@@ -1,8 +1,13 @@
 from __future__ import annotations
 
 import json
+import sys
 import unittest
 from pathlib import Path
+
+PACKAGE_ROOT = Path(__file__).resolve().parents[1]
+if str(PACKAGE_ROOT) not in sys.path:
+    sys.path.insert(0, str(PACKAGE_ROOT))
 
 from omega_cybernetic_v11.audio_v4_binding import AudioV4Snapshot, assess_audio_v4_snapshot
 from omega_cybernetic_v11.canary import run_privacy_safe_canary
