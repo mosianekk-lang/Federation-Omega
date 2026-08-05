@@ -1,0 +1,8 @@
+{
+  "external_effects": 0,
+  "iam_changes": 0,
+  "live_handles": 0,
+  "provider_mutations": 0,
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-NO-EFFECT-1",
+  "secret_payload_reads": 0
+}
