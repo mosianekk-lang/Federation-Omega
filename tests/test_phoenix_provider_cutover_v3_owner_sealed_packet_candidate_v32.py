@@ -151,6 +151,20 @@ class OwnerSealedPacketCandidateV32Tests(unittest.TestCase):
         with self.assertRaises(PACKET.OwnerSealedPacketError):
             PACKET.inspect_archive(symlink.read_bytes(), target="Federation-Omega-Ops")
 
+    def test_ops_export_excludes_packet_builder_runtime_bytecode(self):
+        source = (ROOT / "phoenix" / "build_exports_v3.py").read_text(
+            encoding="utf-8"
+        )
+        self.assertIn("sys.dont_write_bytecode = True", source)
+        self.assertIn(
+            'if "__pycache__" in path.parts or path.suffix == ".pyc":',
+            source,
+        )
+        self.assertIn(
+            '"owner_sealed_packet_candidate_runtime_bytecode_included": False',
+            source,
+        )
+
     def test_checkpoint_projection_hashes_dependency_order_and_truth(self):
         checkpoint = json.loads(CHECKPOINT.read_text())
         projection = json.loads(PROJECTION.read_text())
