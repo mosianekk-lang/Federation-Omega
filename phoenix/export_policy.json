@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.18",
+  "version": "1.0.19",
   "core": {
     "include_extensions": [
       ".css",
@@ -95,6 +95,7 @@
       "governance/PROVIDER_ATTESTED_AUTHORIZATION_CONTRACT.json",
       "governance/OWNER_EXECUTION_HANDOFF_CONTRACT.json",
       "governance/OWNER_EXECUTION_EVIDENCE_INTAKE_CONTRACT.json",
+      "governance/OWNER_EXECUTION_STEP1_BINDING_CONTRACT.json",
       "provider_authority_probe.py",
       "provider_cutover_owner_authority_bound.py",
       "provider_cutover_authority_bound.py",
@@ -108,6 +109,7 @@
       "provider_attested_authorization.py",
       "owner_execution_handoff.py",
       "owner_execution_evidence_intake.py",
+      "owner_execution_step1_binding.py",
       "provider_cutover.py"
     ],
     "required_v3_files": [
