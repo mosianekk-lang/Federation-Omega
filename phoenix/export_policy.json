@@ -1,18 +1,41 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.12",
+  "version": "1.0.13",
   "core": {
     "include_extensions": [
-      ".css", ".csv", ".html", ".js", ".json", ".md", ".proto",
-      ".ps1", ".py", ".sh", ".sql", ".toml", ".ts", ".txt",
-      ".xml", ".yaml", ".yml"
+      ".css",
+      ".csv",
+      ".html",
+      ".js",
+      ".json",
+      ".md",
+      ".proto",
+      ".ps1",
+      ".py",
+      ".sh",
+      ".sql",
+      ".toml",
+      ".ts",
+      ".txt",
+      ".xml",
+      ".yaml",
+      ".yml"
     ],
     "include_root_files": [
-      ".gitignore", "LICENSE", "README.md", "SECURITY.md", "pyproject.toml"
+      ".gitignore",
+      "LICENSE",
+      "README.md",
+      "SECURITY.md",
+      "pyproject.toml"
     ],
     "excluded_prefixes": [
-      ".bootstrap/", ".git/", ".github/", "deployment_receipts/",
-      "phoenix-export-output/", "phoenix-freeze-output/", "runtime/",
+      ".bootstrap/",
+      ".git/",
+      ".github/",
+      "deployment_receipts/",
+      "phoenix-export-output/",
+      "phoenix-freeze-output/",
+      "runtime/",
       "tests/test_phoenix_"
     ],
     "excluded_test_globs": [
@@ -25,14 +48,34 @@
       "tests/test_ao_cra_federation_inheritance.py"
     ],
     "excluded_segments": [
-      "__pycache__", "credentials", "drift", "heartbeat", "keys", "proofs",
-      "queue", "receipts", "results", "secrets", "snapshots", "state", "vendor"
+      "__pycache__",
+      "credentials",
+      "drift",
+      "heartbeat",
+      "keys",
+      "proofs",
+      "queue",
+      "receipts",
+      "results",
+      "secrets",
+      "snapshots",
+      "state",
+      "vendor"
     ],
     "excluded_suffixes": [
-      ".crt", ".der", ".jks", ".key", ".p12", ".pem", ".pfx", ".pyc"
+      ".crt",
+      ".der",
+      ".jks",
+      ".key",
+      ".p12",
+      ".pem",
+      ".pfx",
+      ".pyc"
     ],
     "secret_markers": [
-      "github_pat_", "ghp_", "sk-proj-"
+      "github_pat_",
+      "ghp_",
+      "sk-proj-"
     ]
   },
   "ops": {
@@ -46,6 +89,7 @@
       "governance/CUTOVER_CANDIDATE_CONTRACT.json",
       "governance/PROVIDER_AUTHORITY_PROBE_CONTRACT.json",
       "governance/OWNER_SEALED_PACKET_CANDIDATE_CONTRACT.json",
+      "governance/OWNER_CUSTODY_CEREMONY_CONTRACT.json",
       "provider_authority_probe.py",
       "provider_cutover_owner_authority_bound.py",
       "provider_cutover_authority_bound.py",
@@ -53,6 +97,7 @@
       "provider_cutover_guarded.py",
       "provider_cutover_v3_live_guard.py",
       "owner_sealed_packet.py",
+      "owner_custody_ceremony.py",
       "provider_cutover.py"
     ],
     "required_v3_files": [
