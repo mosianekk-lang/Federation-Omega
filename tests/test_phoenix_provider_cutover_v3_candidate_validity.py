@@ -23,6 +23,7 @@ class CandidateValidityTests(unittest.TestCase):
         stage = Path(directory) / "ops"
         (stage / "governance").mkdir(parents=True)
         copies = {
+            TEMPLATE / "provider_cutover_owner_authority_bound.py": stage / "provider_cutover_owner_authority_bound.py",
             TEMPLATE / "provider_cutover_authority_bound.py": stage / "provider_cutover_authority_bound.py",
             TEMPLATE / "provider_authority_probe.py": stage / "provider_authority_probe.py",
             TEMPLATE / "provider_cutover_candidate.py": stage / "provider_cutover_candidate.py",
@@ -193,7 +194,7 @@ class CandidateValidityTests(unittest.TestCase):
             with self.assertRaisesRegex(module.CandidateValidityError, "embedded SHA"):
                 module.verify_candidate_integrity(candidate)
 
-    def test_contract_names_authority_bound_launcher_as_canonical(self):
+    def test_contract_names_owner_authority_bound_launcher_as_canonical(self):
         contract = json.loads(
             (
                 TEMPLATE / "governance" / "CUTOVER_CANDIDATE_CONTRACT.json"
@@ -203,7 +204,7 @@ class CandidateValidityTests(unittest.TestCase):
             (TEMPLATE / "governance" / "APPLY_ENTRYPOINT.json").read_text()
         )
         self.assertEqual(
-            "provider_cutover_authority_bound.py",
+            "provider_cutover_owner_authority_bound.py",
             contract["canonical_apply_entrypoint"],
         )
         self.assertEqual(
@@ -213,8 +214,14 @@ class CandidateValidityTests(unittest.TestCase):
         self.assertTrue(contract["candidate_generated_after_merge"])
         self.assertTrue(contract["validity_computed_not_stored"])
         self.assertTrue(contract["provider_authority_receipt_required"])
+        self.assertTrue(
+            contract["owner_authorization_provider_receipt_hash_binding_required"]
+        )
+        self.assertTrue(
+            contract["owner_authorization_repository_creation_endpoint_binding_required"]
+        )
         self.assertEqual(
-            "provider_cutover_authority_bound.py",
+            "provider_cutover_owner_authority_bound.py",
             entrypoint["canonical_apply_entrypoint"],
         )
         self.assertEqual(
@@ -222,6 +229,12 @@ class CandidateValidityTests(unittest.TestCase):
             entrypoint["candidate_entrypoint"],
         )
         self.assertTrue(entrypoint["provider_authority_receipt_required"])
+        self.assertTrue(
+            entrypoint["owner_authorization_provider_receipt_hash_binding"]
+        )
+        self.assertTrue(
+            entrypoint["owner_authorization_repository_creation_endpoint_binding"]
+        )
         self.assertEqual(
             "INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY",
             entrypoint["guarded_entrypoint_status"],
