@@ -67,45 +67,48 @@ jobs:
           : > /tmp/phoenix-freeze-disabled.txt
           : > /tmp/phoenix-freeze-enabled.txt
           : > /tmp/phoenix-freeze-provider-managed.txt
+          : > /tmp/phoenix-required-readback.tsv
 
           if ! gh api --paginate \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \
             --jq '.workflows[] | [.id, .path, .state, .name] | @tsv' \
             > /tmp/phoenix-workflows-before.tsv; then
-            echo 'Unable to list workflows before quarantine' >> /tmp/phoenix-freeze-errors.txt
+            echo 'Unable to list workflows before quarantine' \
+              >> /tmp/phoenix-freeze-errors.txt
           fi
 
           if [[ -s /tmp/phoenix-workflows-before.tsv ]]; then
             while IFS=$'\t' read -r workflow_id workflow_path workflow_state workflow_name; do
-              case "$workflow_path" in
+              case "${workflow_path}" in
                 .github/workflows/github-airlock.yml|\
                 .github/workflows/public-repository-leak-guard.yml|\
                 .github/workflows/phoenix-emergency-freeze.yml)
-                  if [[ "$workflow_state" != "active" ]]; then
+                  if [[ "${workflow_state}" != "active" ]]; then
                     if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
                       >/dev/null; then
-                      printf '%s\t%s\n' "$workflow_id" "$workflow_path" \
+                      printf '%s\t%s\n' "${workflow_id}" "${workflow_path}" \
                         >> /tmp/phoenix-freeze-enabled.txt
                     else
-                      printf 'Failed to enable required workflow: %s\n' "$workflow_path" \
+                      printf 'Failed to enable required workflow: %s\n' "${workflow_path}" \
                         >> /tmp/phoenix-freeze-errors.txt
                     fi
                   fi
                   ;;
                 dynamic/dependabot/dependabot-updates)
-                  printf '%s\t%s\t%s\n' "$workflow_id" "$workflow_path" "$workflow_state" \
+                  printf '%s\t%s\t%s\n' \
+                    "${workflow_id}" "${workflow_path}" "${workflow_state}" \
                     >> /tmp/phoenix-freeze-provider-managed.txt
                   ;;
                 *)
-                  if [[ "$workflow_state" != "disabled_manually" ]]; then
+                  if [[ "${workflow_state}" != "disabled_manually" ]]; then
                     if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/disable" \
                       >/dev/null; then
-                      printf '%s\t%s\n' "$workflow_id" "$workflow_path" \
+                      printf '%s\t%s\n' "${workflow_id}" "${workflow_path}" \
                         >> /tmp/phoenix-freeze-disabled.txt
                     else
-                      printf 'Failed to disable legacy workflow: %s\n' "$workflow_path" \
+                      printf 'Failed to disable legacy workflow: %s\n' "${workflow_path}" \
                         >> /tmp/phoenix-freeze-errors.txt
                     fi
                   fi
@@ -114,106 +117,70 @@ jobs:
             done < /tmp/phoenix-workflows-before.tsv
           fi
 
-          sleep 2
+          required_specs=(
+            "github-airlock.yml|.github/workflows/github-airlock.yml"
+            "public-repository-leak-guard.yml|.github/workflows/public-repository-leak-guard.yml"
+            "phoenix-emergency-freeze.yml|.github/workflows/phoenix-emergency-freeze.yml"
+          )
+
+          for attempt in 1 2 3 4 5 6; do
+            : > /tmp/phoenix-required-readback.tsv
+            all_required_active=true
+            for spec in "${required_specs[@]}"; do
+              workflow_file="${spec%%|*}"
+              expected_path="${spec#*|}"
+              payload="$(
+                gh api \
+                  "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}" \
+                  2>/dev/null || true
+              )"
+              workflow_id="$(jq -r '.id // 0' <<< "${payload:-{}}")"
+              workflow_path="$(jq -r '.path // empty' <<< "${payload:-{}}")"
+              workflow_state="$(jq -r '.state // "READ_FAILED"' <<< "${payload:-{}}")"
+              if [[ -z "${workflow_path}" ]]; then
+                workflow_path="${expected_path}"
+              elif [[ "${workflow_path}" != "${expected_path}" ]]; then
+                workflow_state="PATH_MISMATCH"
+              fi
+              printf '%s\t%s\t%s\t%s\n' \
+                "${workflow_id}" "${workflow_path}" "${workflow_state}" "${attempt}" \
+                >> /tmp/phoenix-required-readback.tsv
+
+              if [[ "${workflow_state}" != "active" ]]; then
+                all_required_active=false
+                if [[ "${workflow_id}" =~ ^[0-9]+$ && "${workflow_id}" != "0" ]]; then
+                  if gh api -X PUT \
+                    "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
+                    >/dev/null 2>&1; then
+                    printf '%s\t%s\n' "${workflow_id}" "${workflow_path}" \
+                      >> /tmp/phoenix-freeze-enabled.txt
+                  fi
+                fi
+              fi
+            done
+
+            if [[ "${all_required_active}" == "true" ]]; then
+              break
+            fi
+            sleep $((attempt * 2))
+          done
+
           if ! gh api --paginate \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \
             --jq '.workflows[] | [.id, .path, .state, .name] | @tsv' \
             > /tmp/phoenix-workflows-after.tsv; then
-            echo 'Unable to list workflows after quarantine' >> /tmp/phoenix-freeze-errors.txt
+            echo 'Unable to list workflows after quarantine' \
+              >> /tmp/phoenix-freeze-errors.txt
           fi
 
-          python - <<'PY'
-          import hashlib
-          import json
-          import os
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          keep = {
-              '.github/workflows/github-airlock.yml',
-              '.github/workflows/public-repository-leak-guard.yml',
-              '.github/workflows/phoenix-emergency-freeze.yml',
-          }
-          provider_managed = {'dynamic/dependabot/dependabot-updates'}
-
-          def workflow_rows(path: str):
-              result = []
-              file = Path(path)
-              if not file.exists():
-                  return result
-              for line in file.read_text(encoding='utf-8').splitlines():
-                  fields = line.split('\t', 3)
-                  if len(fields) == 4:
-                      workflow_id, workflow_path, state, name = fields
-                      result.append({
-                          'id': int(workflow_id),
-                          'path': workflow_path,
-                          'state': state,
-                          'name': name,
-                      })
-              return result
-
-          def mutation_rows(path: str):
-              result = []
-              file = Path(path)
-              if not file.exists():
-                  return result
-              for line in file.read_text(encoding='utf-8').splitlines():
-                  fields = line.split('\t', 1)
-                  if len(fields) == 2:
-                      workflow_id, workflow_path = fields
-                      result.append({'id': int(workflow_id), 'path': workflow_path})
-              return result
-
-          before = workflow_rows('/tmp/phoenix-workflows-before.tsv')
-          after = workflow_rows('/tmp/phoenix-workflows-after.tsv')
-          disabled = mutation_rows('/tmp/phoenix-freeze-disabled.txt')
-          enabled = mutation_rows('/tmp/phoenix-freeze-enabled.txt')
-          errors_path = Path('/tmp/phoenix-freeze-errors.txt')
-          errors = errors_path.read_text(encoding='utf-8').splitlines() if errors_path.exists() else []
-
-          active_after = sorted(row['path'] for row in after if row['state'] == 'active')
-          provider_managed_active = sorted(path for path in active_after if path in provider_managed)
-          unexpected_active = sorted(
-              path for path in active_after
-              if path not in keep and path not in provider_managed
-          )
-          missing_required = sorted(path for path in keep if path not in active_after)
-          verified = bool(after) and not errors and not unexpected_active and not missing_required
-
-          payload = {
-              'schema': 'FEDOMEGA-PHOENIX-EXECUTION-FREEZE-3',
-              'repository': os.environ['GITHUB_REPOSITORY'],
-              'source_sha': os.environ['GITHUB_SHA'],
-              'run_id': int(os.environ['GITHUB_RUN_ID']),
-              'run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
-              'recorded_at': datetime.now(timezone.utc).isoformat(),
-              'required_active_workflows': sorted(keep),
-              'provider_managed_allowlist': sorted(provider_managed),
-              'provider_managed_active': provider_managed_active,
-              'provider_managed_control_plane': 'DEPENDABOT_REPOSITORY_SETTINGS',
-              'workflow_count_before': len(before),
-              'workflow_count_after': len(after),
-              'disabled_count_this_run': len(disabled),
-              'disabled_paths_this_run': sorted(row['path'] for row in disabled),
-              'disabled_total_after': sum(1 for row in after if row['state'] == 'disabled_manually'),
-              'enabled_count_this_run': len(enabled),
-              'enabled_paths_this_run': sorted(row['path'] for row in enabled),
-              'active_after': active_after,
-              'unexpected_active': unexpected_active,
-              'missing_required': missing_required,
-              'errors': errors,
-              'source_mutation_attempted': False,
-              'status': 'VERIFIED' if verified else 'READBACK_FAILED',
-          }
-          canonical = json.dumps(payload, sort_keys=True, separators=(',', ':')).encode()
-          payload['receipt_sha256'] = hashlib.sha256(canonical).hexdigest()
-          output = Path('phoenix-freeze-output/phoenix-execution-freeze.json')
-          output.write_text(json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-          print(json.dumps(payload, indent=2, sort_keys=True))
-          if not verified:
-              raise SystemExit(1)
-          PY
+          python phoenix/workflow_freeze_convergence.py \
+            --before /tmp/phoenix-workflows-before.tsv \
+            --after /tmp/phoenix-workflows-after.tsv \
+            --required-readback /tmp/phoenix-required-readback.tsv \
+            --disabled /tmp/phoenix-freeze-disabled.txt \
+            --enabled /tmp/phoenix-freeze-enabled.txt \
+            --errors /tmp/phoenix-freeze-errors.txt \
+            --output phoenix-freeze-output/phoenix-execution-freeze.json
 
       - name: Run authorised PST composite verification
         if: steps.pst_closure.outputs.requested == 'true'
@@ -294,9 +261,9 @@ jobs:
           fi
           gh api -X POST \
             "/repos/${GITHUB_REPOSITORY}/statuses/${GITHUB_SHA}" \
-            -f state="$state" \
+            -f state="${state}" \
             -f context='phoenix-freeze/verified' \
-            -f description="$description" \
+            -f description="${description}" \
             -f target_url="${GITHUB_SERVER_URL}/${GITHUB_REPOSITORY}/actions/runs/${GITHUB_RUN_ID}" \
             >/dev/null
-          test "$state" = success
+          test "${state}" = success
