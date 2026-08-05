@@ -1,0 +1,17 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "omega-cybernetic-living-bible-v11"
+version = "11.0.0"
+description = "Deterministic turn-driven cybernetic control kernel for Federation Omega working memory"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+omega-cybernetic-v11 = "omega_cybernetic_v11.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["omega_cybernetic_v11*"]
