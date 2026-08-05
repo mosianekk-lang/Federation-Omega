@@ -1,0 +1,9 @@
+.git
+.github
+test
+coverage
+node_modules
+.env*
+*.log
+docs
+BUILD_CONTRACT.json
