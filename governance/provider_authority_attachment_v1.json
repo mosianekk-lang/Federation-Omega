@@ -1,0 +1,37 @@
+{
+  "authority_ceiling": "A1_PROVIDER_READ_ONLY_AFTER_NATIVE_AUTH",
+  "controls": {
+    "default_mode": "PLAN_OR_VERIFY",
+    "maximum_handle_seconds": 600,
+    "provider_mutation_performed_by_source": false,
+    "raw_environment_recording_prohibited": true,
+    "readback_required": true,
+    "revocation_required": true,
+    "secret_payload_access_prohibited": true,
+    "service_account_key_files_prohibited": true,
+    "service_enablement_requires_exact_apply_marker": true
+  },
+  "current_source_baseline": "5555f8384fb851466f907830089e1370d9883502",
+  "implementation": "federation_consolidation/provider_authority_attachment.py",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Consume provider-native Google Cloud identity and metadata receipts, verify the sealed packet, issue one opaque read-only capability handle for at most ten minutes, and revoke it without exposing credentials.",
+  "required_identity": {
+    "account": "mosianekk@gmail.com",
+    "project_id": "sov-hybrid-suite",
+    "project_number": "257649435135"
+  },
+  "required_services": [
+    "serviceusage.googleapis.com",
+    "secretmanager.googleapis.com",
+    "run.googleapis.com",
+    "cloudbuild.googleapis.com"
+  ],
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-CONTRACT-1",
+  "truth_boundary": {
+    "cloud_shell_requires_provider_authenticated_user": true,
+    "openai_key_deletion_remains_official_provider_action": true,
+    "owner_intent_grants_google_authority": false,
+    "source_code_grants_google_authority": false
+  },
+  "version": "1.0.0"
+}
