@@ -30,6 +30,7 @@ SOURCE_REPOSITORY_CONTROL_TESTS = (
     "test_agent_governance_contract.py",
     "test_pst_composite_runtime_contract.py",
     "test_wif_hardening.py",
+    "test_ao_cra_federation_inheritance.py",
 )
 
 
@@ -118,6 +119,7 @@ class PhoenixExportTests(unittest.TestCase):
                     "tests/test_agent_governance_contract.py",
                     "tests/test_pst_composite_runtime_contract.py",
                     "tests/test_wif_hardening.py",
+                    "tests/test_ao_cra_federation_inheritance.py",
                 ],
                 "excluded_segments": [
                     "credentials",
