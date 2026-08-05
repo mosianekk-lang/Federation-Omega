@@ -26,6 +26,7 @@ V37_RELEASE = ROOT / "alpha_omega_commercial" / "phoenix_owner_execution_handoff
 V36_RELEASE = ROOT / "alpha_omega_commercial" / "phoenix_provider_attested_authorization_release_receipt_v36.json"
 CHECKPOINT = ROOT / "alpha_omega_commercial" / "phoenix_owner_execution_step2_custody_packet_checkpoint_v40.json"
 PROJECTION = ROOT / "alpha_omega_commercial" / "programme_maturity_effective_v40.json"
+RELEASE = ROOT / "alpha_omega_commercial" / "phoenix_owner_execution_step2_custody_packet_release_receipt_v40.json"
 POLICY = ROOT / "phoenix" / "export_policy.json"
 SOURCE_SHA = "36916cb0e26813e1bfb57a3c1a2993d82e7fd425"
 
@@ -162,25 +163,30 @@ class OwnerExecutionStep2CustodyPacketV40Tests(unittest.TestCase):
         with self.assertRaises(MODULE.OwnerExecutionStep2CustodyPacketError):
             MODULE.verify_step2_custody_packet(result)
 
-    def test_contract_checkpoint_projection_and_export_truth(self):
+    def test_contract_checkpoint_projection_release_and_export_truth(self):
         contract = load(V40_CONTRACT)
         checkpoint = load(CHECKPOINT)
         projection = load(PROJECTION)
+        release = load(RELEASE)
         policy = load(POLICY)
         MODULE._verify_self_hash(checkpoint, "checkpoint_sha256", "checkpoint")
         MODULE._verify_self_hash(projection, "projection_sha256", "projection")
+        MODULE._verify_self_hash(release, "receipt_sha256", "release receipt")
         self.assertEqual("NON_EXECUTING_OWNER_HANDOFF_ONLY", contract["status"])
         self.assertFalse(contract["controls"]["owner_action_allowed"])
         self.assertFalse(contract["controls"]["provider_apply_allowed"])
-        self.assertEqual(
-            "OWNER_EXECUTION_STEP2_CUSTODY_PACKET_IMPLEMENTED_PROVIDER_PROOF_REQUIRED_OWNER_EXECUTION_REQUIRED",
-            checkpoint["status"],
-        )
+        expected = "OWNER_EXECUTION_STEP2_CUSTODY_PACKET_PROVIDER_PROOF_VERIFIED_OWNER_EXECUTION_REQUIRED"
+        self.assertEqual(expected, checkpoint["status"])
+        self.assertEqual(expected, release["status"])
+        self.assertEqual(checkpoint["checkpoint_sha256"], release["checkpoint_sha256"])
+        self.assertEqual(projection["projection_sha256"], release["projection_sha256"])
         self.assertTrue(projection["dependency_order_preserved"])
         self.assertTrue(projection["service_enabled_platform_first"])
         self.assertTrue(projection["self_service_saas_held"])
         self.assertEqual(0, projection["verified_live_revenue_events"])
         self.assertFalse(projection["full_commercial_maturity"])
+        self.assertFalse(release["attestation_truth"]["owner_execution_present"])
+        self.assertFalse(release["provider_proof"]["provider_apply_performed"])
         required = set(policy["ops"]["required_files"])
         self.assertEqual("1.0.20", policy["version"])
         self.assertIn("owner_execution_step2_custody_packet.py", required)
