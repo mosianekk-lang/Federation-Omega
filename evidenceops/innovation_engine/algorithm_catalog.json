@@ -1,0 +1,115 @@
+{
+  "algorithms": [
+    {
+      "algorithm_id": "ALG-EOPS-AOM-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Algorithm Opportunity Miner",
+      "purpose": "Convert repeated lessons, failures, constraints and gaps into scored source-backed algorithm build opportunities."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-DEC-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Directive Execution Compiler",
+      "purpose": "Preserve action verbs and compile intended outcome, artefact, execution, verification and completion as separate gates."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-CPDG-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Claim-Proof Distance Guard",
+      "purpose": "Measure the distance between a claim and its source, execution, readback and independent-verification layers."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-UFP-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Unknown Frontier Prioritizer",
+      "purpose": "Rank unknowns and evidence gaps by decision impact, uncertainty, learnability, reuse and investigation burden."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-IGRS-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Information-Gain Route Selector",
+      "purpose": "Select the smallest safe reversible experiment expected to change the decision most efficiently."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-TFR-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Terminal Finality Resolver",
+      "purpose": "Prevent passive pending or unknown states from entering a final certificate without a controlled recovery packet."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-CSIE-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Corpus Selection Integrity Evaluator",
+      "purpose": "Apply ECASP G1-G10 before exhaustive, best, final, complete or full-corpus language is released."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-CPIG-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Control-Plane Integrity Guard",
+      "purpose": "Fail closed on schema defects, identifier collisions, dangling references, revision drift, lease-epoch mismatch and case-wall crossover."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-ASPV-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Action-Specific Proof Validator",
+      "purpose": "Reject generic health, queue or HTTP success as proof of the requested provider action."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-FEGC-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Failure-to-Engineering-Gene Compiler",
+      "purpose": "Compile a verified failure, repair, readback and regression into a reusable prevention gene while preserving negative results."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-PSTG-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Proof-State Transition Guard",
+      "purpose": "Block maturity and proof-state promotion when target-specific evidence is missing, a state jump is unjustified or runtime is inferred from design."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-EDP-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Epistemic Debt Prioritizer",
+      "purpose": "Rank weak evidence, untested assumptions, missing baselines, unreplicated findings and causal uncertainty by decision impact and cost of closure."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-OBRO-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Owner-Burden Route Optimizer",
+      "purpose": "Select the strongest authorised route while penalising avoidable owner intervention, cost, latency, maintenance and risk."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-CIRE-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Cross-Implementation Replication Evaluator",
+      "purpose": "Compare independent implementations, expose material divergence and advance reproducibility without transferring trust."
+    },
+    {
+      "algorithm_id": "ALG-EOPS-EVG-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "EvidenceOps Evolution Governor",
+      "purpose": "Promote only measurable parameter improvements that do not regress factual accuracy, proof completeness, security or reversibility and retain a tested rollback version."
+    }
+  ],
+  "authority_ceiling": "A1_INTERNAL",
+  "evolution_rule": "Only parameter/configuration changes with measurable improvement and no hard-guard regression may be promoted; source code and authority do not self-modify.",
+  "external_effect": false,
+  "owner": "Kagiso Kim Mosiane",
+  "promotion_rule": "No algorithm becomes a trusted workflow capability until the named workflow passes its own evidence, evaluation, rollback and readback gates.",
+  "replication_rule": "Independent implementations may corroborate a result but never transfer trust; material divergence blocks stronger promotion.",
+  "schema": "EVIDENCEOPS_ALGORITHM_CATALOG_V1",
+  "source_basis": [
+    "Master Bible CH-006 Unknown Mapper",
+    "Master Bible CH-013 Epistemic Debt",
+    "Master Bible CH-014 Failure Laboratory",
+    "Master Bible CH-046 Recursive Intelligence Ascension",
+    "Master Bible CH-054 Externalised Learning Kernel",
+    "Master Bible CH-061 Directive Execution Cascade",
+    "Master Bible CH-063 Terminal Finality",
+    "Master Bible CH-065 EvidenceOps Formation Innovation Fabric",
+    "Master Bible CH-072 Alpha-to-Omega Autonomous Solution Foundry",
+    "Secondary Brain Capability Map and Improvements register"
+  ],
+  "truth_boundary": "Source implementation and local deterministic tests do not prove provider-hosted or consequential operation.",
+  "version": "1.2.0"
+}

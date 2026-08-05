@@ -3,7 +3,7 @@ from __future__ import annotations
 import json
 import tempfile
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable
 
 from .base_runner import ActualCSEBaseRunner, BaseRunner
 from .contracts import validate_packet
@@ -34,10 +34,12 @@ class EvidenceOpsFEVXAdapter:
         store: DerivedStore,
         repo_root: str | Path,
         base_runner: BaseRunner | None = None,
+        algorithm_foundry_runner: Callable[[dict[str, Any]], dict[str, Any]] | None = None,
     ):
         self.store = store
         self.repo_root = Path(repo_root).resolve()
         self.base_runner = base_runner or ActualCSEBaseRunner()
+        self.algorithm_foundry_runner = algorithm_foundry_runner
 
     @staticmethod
     def _frontier_runner(context: dict[str, Any]) -> list[dict[str, Any]]:
@@ -77,12 +79,38 @@ class EvidenceOpsFEVXAdapter:
         input_hash_before = digest(pristine_packet)
         facts_hash_before = digest(pristine_packet["verified_facts"])
         sources_hash_before = digest(pristine_packet["sources"])
+        algorithm_foundry_identity: dict[str, Any] = {
+            "runner_id": "NOT_INVOKED",
+            "authority_ceiling": "A1_INTERNAL",
+            "external_effect": False,
+        }
+        if self.algorithm_foundry_runner is not None:
+            identity_method = getattr(self.algorithm_foundry_runner, "identity", None)
+            if callable(identity_method):
+                candidate_identity = identity_method()
+                if not isinstance(candidate_identity, dict):
+                    raise RuntimeError("algorithm foundry identity must be a dictionary")
+                algorithm_foundry_identity = clone(candidate_identity)
+            else:
+                algorithm_foundry_identity = {
+                    "runner_id": (
+                        f"{self.algorithm_foundry_runner.__class__.__module__}."
+                        f"{self.algorithm_foundry_runner.__class__.__qualname__}"
+                    ),
+                    "authority_ceiling": "A1_INTERNAL",
+                    "external_effect": False,
+                }
+            if algorithm_foundry_identity.get("authority_ceiling") != "A1_INTERNAL":
+                raise RuntimeError("algorithm foundry identity attempted authority expansion")
+            if algorithm_foundry_identity.get("external_effect") is not False:
+                raise RuntimeError("algorithm foundry identity declared external effect")
         idempotency_key = digest(
             {
                 "adapter_version": ADAPTER_VERSION,
                 "matter_id": packet["matter_id"],
                 "case_wall_id": packet["case_wall_id"],
                 "input_hash": input_hash_before,
+                "algorithm_foundry_identity": algorithm_foundry_identity,
             }
         )
         existing = self.store.get_by_idempotency(idempotency_key)
@@ -100,6 +128,29 @@ class EvidenceOpsFEVXAdapter:
                 temporary_path / "base",
             )
             frontier = self._frontier_runner(build_frontier_context(pristine_packet))
+
+        algorithm_foundry: dict[str, Any] = {
+            "state": "NOT_INVOKED",
+            "authority_ceiling": "A1_INTERNAL",
+            "external_effect": False,
+            "source_write": False,
+            "verified_fact_write": False,
+            "case_wall_crossing": False,
+        }
+        if self.algorithm_foundry_runner is not None:
+            algorithm_foundry = self.algorithm_foundry_runner(clone(pristine_packet))
+            for key in (
+                "external_effect",
+                "source_write",
+                "verified_fact_write",
+                "case_wall_crossing",
+            ):
+                if algorithm_foundry.get(key) is not False:
+                    raise RuntimeError(
+                        f"algorithm foundry violated read-only boundary: {key}"
+                    )
+            if algorithm_foundry.get("authority_ceiling") != "A1_INTERNAL":
+                raise RuntimeError("algorithm foundry attempted authority expansion")
 
         if base.get("module_count") != 10:
             raise RuntimeError("base CSE module count is not ten")
@@ -156,6 +207,8 @@ class EvidenceOpsFEVXAdapter:
                 "summary": self._summarise_frontier(frontier),
             },
             "combined_module_count": module_count,
+            "algorithm_foundry_identity": algorithm_foundry_identity,
+            "algorithm_foundry": algorithm_foundry,
             "next_gate": "EVIDENCEOPS_CASE_OWNER_REVIEW",
             "level_6_eligible": False,
             "truth_boundary": (
@@ -186,6 +239,8 @@ class EvidenceOpsFEVXAdapter:
             "output_hash": output_hash,
             "semantic_hash": semantic_hash,
             "combined_module_count": module_count,
+            "algorithm_foundry_identity_hash": digest(algorithm_foundry_identity),
+            "algorithm_foundry_hash": digest(algorithm_foundry),
             "source_packet_immutable": digest(pristine_packet) == input_hash_before,
             "source_manifest_immutable": (
                 digest(pristine_packet["sources"]) == sources_hash_before

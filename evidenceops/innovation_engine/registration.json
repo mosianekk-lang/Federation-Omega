@@ -1,0 +1,50 @@
+{
+  "algorithm_catalog": "evidenceops/innovation_engine/algorithm_catalog.json",
+  "algorithm_count": 15,
+  "authority_ceiling": "A1_INTERNAL",
+  "components": [
+    "algorithms.py",
+    "evolution.py",
+    "foundry.py",
+    "registry.py",
+    "evidenceops_adapter.py",
+    "replication.py",
+    "reference_replica.py",
+    "fevx_bridge.py",
+    "cli.py"
+  ],
+  "continuous_learning": {
+    "events": [
+      "SUCCESS",
+      "FAILURE",
+      "CONSTRAINT",
+      "CORRECTION",
+      "RECOVERY",
+      "INNOVATION_CANDIDATE",
+      "EXPERIMENT_RESULT",
+      "NEGATIVE_RESULT"
+    ],
+    "ledger": "append-only hash-linked Federation learning fabric",
+    "promotion": "measurable non-regressing evaluation plus rollback",
+    "runtime_output": "immutable artifact or approved external append-only store only"
+  },
+  "current_maturity": "SOURCE_IMPLEMENTED_LOCAL_DETERMINISTIC_EVOLUTION_AND_REPLICATION_TESTS_PASSED_PENDING_PROVIDER_ADMISSION",
+  "enforced_boundaries": [
+    "no source-evidence mutation",
+    "no Verified Facts Register write",
+    "no cross-case trust transfer",
+    "no external send, filing, payment, publication or destructive action",
+    "no algorithm promotion without measurable non-regressing evaluation",
+    "no runtime claim from source or local test evidence"
+  ],
+  "external_effect": false,
+  "learning_policy": "governance/federation_learning_policy.json",
+  "owner": "Kagiso Kim Mosiane",
+  "placement": "EvidenceOps shared internal capability under Federation Omega and FEVX governance",
+  "runtime_evidence_destination": "IMMUTABLE_ARTIFACT_OR_APPROVED_EXTERNAL_APPEND_ONLY_STORE",
+  "schema": "EVIDENCEOPS_ALGORITHM_FOUNDRY_REGISTRATION_V1",
+  "source_repository_runtime_output": "FORBIDDEN",
+  "system_id": "EVIDENCEOPS-ALGORITHM-FOUNDRY",
+  "target_maturity": "GITHUB_SOURCE_ADMITTED_AND_PROVIDER_CI_READBACK_VERIFIED",
+  "version": "1.1.0"
+}

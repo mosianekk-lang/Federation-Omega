@@ -7,7 +7,7 @@ from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any, Iterator
 
-ADAPTER_VERSION = "1.0.0"
+ADAPTER_VERSION = "1.1.0"
 INPUT_SCHEMA = "EVIDENCEOPS_FEVX_INPUT_V1"
 OUTPUT_SCHEMA = "EVIDENCEOPS_FEVX_DERIVED_OUTPUT_V1"
 PROOF_SCHEMA = "EVIDENCEOPS_FEVX_PROOF_V1"
