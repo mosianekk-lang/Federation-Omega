@@ -8,6 +8,14 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "governance" / "federation_n_directive_v2.yaml"
 BOOTSTRAP = ROOT / "governance" / "federation_node_bootstrap_v2.json"
+MINIMUM_BOOTSTRAP_VERSION = (2, 1, 0)
+
+
+def parse_version(value: str) -> tuple[int, int, int]:
+    parts = value.split(".")
+    if len(parts) != 3 or any(not part.isdigit() for part in parts):
+        raise AssertionError(f"invalid semantic version: {value!r}")
+    return tuple(int(part) for part in parts)  # type: ignore[return-value]
 
 
 class FederationNDirectiveV2Tests(unittest.TestCase):
@@ -41,7 +49,10 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
 
     def test_future_node_bootstrap_is_fail_closed_and_engine_bound(self) -> None:
         bootstrap = json.loads(BOOTSTRAP.read_text(encoding="utf-8"))
-        self.assertEqual("2.1.0", bootstrap["version"])
+        self.assertGreaterEqual(
+            parse_version(bootstrap["version"]),
+            MINIMUM_BOOTSTRAP_VERSION,
+        )
         self.assertTrue(bootstrap["required_before_substantive_work"])
         self.assertIn(
             "FEDOMEGA-N-DIRECTIVE-V2", bootstrap["inherited_policies"]

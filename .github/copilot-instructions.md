@@ -5,7 +5,13 @@ Follow the root `AGENTS.md` governance contract for every task.
 Before editing:
 
 - Read `AGENTS.md`.
+- Read the current GitHub `main` head.
+- Load `governance/federation_surface_awareness_v1.json` and `governance/federation_awareness_bootstrap_v1.json`.
+- Resolve `FEDERATION_AWARENESS_PRIVATE_V1` through the private Kim Dataverse alias registry when the authorised Google connector is available, and verify its logical SHA-256.
 - Load `governance/federation_n_directive_v2.yaml` and `governance/federation_node_bootstrap_v2.json`.
+- Read current canonical-state and route-authority records before selecting an execution surface.
+- Treat stored credential references as non-secret handles only; revalidate availability and authority immediately before provider use.
+- Treat Gmail continuity messages as source evidence, not current runtime state.
 - Treat `main` as protected even when provider protection is not yet active.
 - Work only on a purpose-specific branch and submit a pull request.
 - Initialise the Federation learning fabric for any material runtime, integration, innovation or repair task.
@@ -15,6 +21,7 @@ When the exact input `n` is received:
 
 - proceed, improve and close the current critical dependency;
 - execute all available safe authorised work;
+- refresh surface awareness and current route state before capability selection;
 - invoke the Formation Engine to lock intent, map evidence and authority, inspect reusable capabilities, form competing routes and preserve rejected alternatives;
 - invoke the Alpha-to-Omega Autonomous Solution Foundry to compile the selected route into a solution specification and solution genome, build the minimum complete solution, test it, read it back and produce proof;
 - generate a bounded innovation frontier containing the strongest reuse route, incremental improvement, materially different solution and highest-information reversible experiment;
@@ -38,6 +45,8 @@ Never:
 - commit runtime receipts, trigger files, queue state, snapshots or generated execution output;
 - re-enable a Phoenix-disabled workflow;
 - store or expose credentials;
+- place exact private Drive pointers or Gmail message IDs in public source;
+- infer credential availability or provider authority from a stored handle;
 - claim provider activation without exact provider readback;
 - finish a material execution path without recording its success, failure or constraint;
 - treat corpus growth as intelligence improvement without measured performance delta;
