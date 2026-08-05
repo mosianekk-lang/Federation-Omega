@@ -161,11 +161,17 @@ def main() -> int:
     V2.BASE.stage_ops = stage_ops_v3_4
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
-        "version": "3.4",
-        "authorization_execution_gate": "V22",
+        "version": "3.5",
+        "authorization_execution_gate": "V30_OWNER_PROVIDER_AUTHORITY_BINDING",
         "provider_controller_version": "3.1",
         "authority_models": ["INSTALLATION_TEMPLATE", "USER_SCOPED"],
         "authorization_decision_required": True,
+        "authorization_decision_schema": (
+            "FEDOMEGA-PHOENIX-CUTOVER-AUTHORIZATION-DECISION-2"
+        ),
+        "owner_authorization_provider_receipt_hash_binding_required": True,
+        "owner_authorization_repository_creation_endpoint_binding_required": True,
+        "owner_authorization_external_commercial_gate_advancement_allowed": False,
         "provider_authority_receipt_required": True,
         "provider_authority_receipt_max_age_seconds": 300,
         "provider_authority_receipt_max_future_skew_seconds": 30,
@@ -189,7 +195,8 @@ def main() -> int:
         "template_generated_main_replacement": (
             "EXACT_PROVIDER_BOUND_FORCE_WITH_LEASE"
         ),
-        "entrypoint": "provider_cutover_authority_bound.py",
+        "entrypoint": "provider_cutover_owner_authority_bound.py",
+        "authority_bound_internal_entrypoint": "provider_cutover_authority_bound.py",
         "provider_authority_probe": "provider_authority_probe.py",
         "candidate_validator": "provider_cutover_candidate.py",
         "live_source_guard": "provider_cutover_guarded.py",

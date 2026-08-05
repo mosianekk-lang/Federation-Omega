@@ -4,7 +4,7 @@
   "candidate_entrypoint_status": "INTERNAL_COMPONENT_DO_NOT_INVOKE_DIRECTLY",
   "candidate_manifest_required": true,
   "candidate_validity_computed_not_stored": true,
-  "canonical_apply_entrypoint": "provider_cutover_authority_bound.py",
+  "canonical_apply_entrypoint": "provider_cutover_owner_authority_bound.py",
   "core_archive_drift_invalidates": true,
   "credential_value_recorded": false,
   "guarded_entrypoint": "provider_cutover_guarded.py",
@@ -13,6 +13,10 @@
   "legacy_entrypoint": "provider_cutover.py",
   "legacy_entrypoint_status": "DEPRECATED_NON_CANONICAL_DO_NOT_APPLY_DIRECTLY",
   "legacy_entrypoint_technically_blocked": false,
+  "owner_authorization_decision_schema": "FEDOMEGA-PHOENIX-CUTOVER-AUTHORIZATION-DECISION-2",
+  "owner_authorization_provider_receipt_hash_binding": true,
+  "owner_authorization_repository_creation_endpoint_binding": true,
+  "owner_authorization_external_commercial_gate_advancement_allowed": false,
   "ops_archive_drift_invalidates": true,
   "post_apply_started_live_source_recheck": true,
   "pre_mutation_provider_head_check": true,
@@ -28,6 +32,6 @@
   "provider_authority_continuity_drift_invalidates": true,
   "provider_authority_selected_repository_installation_blocked": true,
   "provider_receipt_source_sha_binding": true,
-  "schema": "FEDOMEGA-PHOENIX-OPS-APPLY-ENTRYPOINT-4",
+  "schema": "FEDOMEGA-PHOENIX-OPS-APPLY-ENTRYPOINT-5",
   "source_drift_invalidates": true
 }

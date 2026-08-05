@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.10",
+  "version": "1.0.11",
   "core": {
     "include_extensions": [
       ".css", ".csv", ".html", ".js", ".json", ".md", ".proto",
@@ -46,6 +46,7 @@
       "governance/CUTOVER_CANDIDATE_CONTRACT.json",
       "governance/PROVIDER_AUTHORITY_PROBE_CONTRACT.json",
       "provider_authority_probe.py",
+      "provider_cutover_owner_authority_bound.py",
       "provider_cutover_authority_bound.py",
       "provider_cutover_candidate.py",
       "provider_cutover_guarded.py",

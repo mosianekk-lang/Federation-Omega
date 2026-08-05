@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-OPS-CONTRACT-1",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "repository_role": "PRIVATE_EXECUTION_PLANE",
   "canonical_source_repository": "mosianekk-lang/Federation-Omega-Core",
   "default_permissions": {
@@ -12,6 +12,10 @@
     "self_promotion": false,
     "source_repository_mutation": false,
     "owner_authorization_required": true,
+    "owner_authorization_decision_schema": "FEDOMEGA-PHOENIX-CUTOVER-AUTHORIZATION-DECISION-2",
+    "owner_authorization_provider_receipt_hash_binding_required": true,
+    "owner_authorization_repository_creation_endpoint_binding_required": true,
+    "owner_authorization_external_commercial_gate_advancement_allowed": false,
     "candidate_validity_required": true,
     "provider_authority_receipt_required": true,
     "provider_authority_receipt_max_age_seconds": 300,
@@ -25,7 +29,7 @@
     "outcome_reconciliation_exact_archive_match_required": true,
     "rollback_required": true
   },
-  "canonical_apply_entrypoint": "provider_cutover_authority_bound.py",
+  "canonical_apply_entrypoint": "provider_cutover_owner_authority_bound.py",
   "proof_destination": [
     "IMMUTABLE_GITHUB_ACTIONS_ARTIFACT",
     "EXTERNAL_APPEND_ONLY_EVIDENCE_STORE"
