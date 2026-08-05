@@ -62,6 +62,20 @@ These instructions apply to every automated coding agent, bot, assistant, local 
 - The directive does not create invisible access to closed chats, a hidden background runtime, consequential external authority or trust transfer.
 - Omission of either engine, the bounded innovation scan, the complete next-best automated pathway, `n = proceed`, or material learning capture is a fail-closed defect that must be repaired and retested.
 
+## AO-CRA federation-wide boundary-to-build inheritance
+
+- Load and apply `governance/ao_cra_federation_inheritance_v1.json` (`AO-CRA-FEDERATION-INHERITANCE-V1`) in every Federation engine and every Federation operation.
+- Treat any missing tool, API, connector, permission, runtime, provider action, event source, context capacity, UI action, schema, credential binding, proof route or automation capability as an `UNRESOLVED_ENGINEERING_BUILD`, not a terminal excuse.
+- Every material boundary must create or update a stable build record with the gap, desired capability, owning engine, dependencies, workaround, implementation tasks, security and privacy limits, tests, acceptance criteria, next executable action, capability-change trigger and closure proof.
+- A workaround keeps the mission moving but remains `WORKAROUND_ACTIVE_BUILD_OPEN`; it is never the deployed target capability.
+- A blocked dependency remains active. Preserve partial progress, continue unaffected work, search existing Federation capabilities, form materially different routes and circuit-break unchanged failures.
+- Formation Engine preserves the objective and forms repair routes. Alpha-to-Omega Foundry compiles and builds the selected solution. Omega-Max, EvidenceOps, MODISA, Secondary Brain, ARCHON/KDL, CloudOps, AIU, NEXUS-CODEX, FEVX, Aegis, heartbeat, multi-path, trigger, workstream, proof and learning engines must consume the same canonical AO-CRA contract through engine-specific adapters.
+- AO-CRA applies to mission intake, planning, retrieval, evidence and document processing, software build, testing, deployment, provider integration, scheduling, queues, monitoring, backup, recovery, cross-chat continuity, legal work, audio work, security handling, registry publication and gated communications.
+- `VERIFIED` requires an executable implementation, completed tests, passed acceptance criteria and independent or provider-native readback. `DEPLOYED` additionally requires a target runtime receipt, health, persistence and rollback proof.
+- AO-CRA may not expand authority, transfer trust, extract secrets, bypass provider controls or convert source/configuration existence into a runtime claim.
+- Capability discovery, provider changes, schema changes, permission changes and failed invocations must re-evaluate affected open builds and run the shortest reversible canary.
+- A boundary statement without a build identity, state, workaround, next action and proof gate is a fail-closed `BOUNDARY_WITHOUT_BUILD_TRIGGER` defect.
+
 ## Credentials and external authority
 
 - Never print, persist, upload, email or commit credentials, private keys, tokens or secret values.
