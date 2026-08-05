@@ -1,0 +1,200 @@
+{
+  "authority": "A1_INTERNAL_READ_ONLY",
+  "baseline_controls": [
+    "SOURCE_DIGEST_IDENTITY",
+    "IMMUTABLE_BUILD_PROVENANCE",
+    "DURABLE_STATE",
+    "HEALTH_READINESS_READBACK",
+    "ROLLBACK_RECOVERY"
+  ],
+  "destructive_action": false,
+  "domain": "ict_system_build",
+  "experiment_id": "EXP-N-V21-REAL-READONLY-001-ICT-SYSTEM-BUILD",
+  "external_effect": false,
+  "gaps": [
+    {
+      "gap_id": "GAP-ICT-001",
+      "promotion_effect": "Provider identity may be classified without mutation.",
+      "requirement": "authenticated project and active principal readback",
+      "safe_action": "Run the existing GET-only preflight and preserve exact identity metadata.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-002",
+      "promotion_effect": "Provider authority route may be classified.",
+      "requirement": "valid WIF identity or authenticated operator token",
+      "safe_action": "Read the canonical WIF and operator authority state; do not infer from public health.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-003",
+      "promotion_effect": "Least-privilege preflight may be satisfied.",
+      "requirement": "runtime service account, required APIs, artifact repository and database secret metadata/version/accessor",
+      "safe_action": "Read metadata and IAM bindings only; never retrieve secret values.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-004",
+      "promotion_effect": "Immutable provenance may be promoted to provider scope.",
+      "requirement": "approved archive and wheel digests equal build inputs and deployed image digest",
+      "safe_action": "Compare build substitutions, image metadata and runtime proof.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-005",
+      "promotion_effect": "Private shadow deployment may be verified.",
+      "requirement": "private zero-production-traffic Cloud Run revision and named service account",
+      "safe_action": "Read service, traffic, revision and service-account state.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-006",
+      "promotion_effect": "Runtime service state may be verified.",
+      "requirement": "authenticated health, readiness and runtime-proof responses",
+      "safe_action": "Run the external identity-token canary with one request ID.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-007",
+      "promotion_effect": "Provider durability may be verified.",
+      "requirement": "PostgreSQL migration, connection and persistent state readback",
+      "safe_action": "Read migration ledger, backend readiness and state across restart.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-008",
+      "promotion_effect": "Provider functional canary may be verified.",
+      "requirement": "ten-module synthetic canary and bounded evolution result",
+      "safe_action": "Read the provider canary receipt and compare all module results.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-009",
+      "promotion_effect": "Action semantics and observability may be verified.",
+      "requirement": "request-ID provider log correlation and revision readback",
+      "safe_action": "Read correlated Cloud Run logs and exact revision metadata.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    },
+    {
+      "gap_id": "GAP-ICT-010",
+      "promotion_effect": "Recovery may be verified.",
+      "requirement": "rollback execution and post-rollback provider readback",
+      "safe_action": "Run one reversible rollback test only after a private shadow exists.",
+      "state": "UNVERIFIED_PENDING_PROVIDER_READBACK"
+    }
+  ],
+  "production_traffic_change": false,
+  "provider_mutation": false,
+  "schema": "FEDOMEGA-N-V21-ICT-REAL-READONLY-PACKET-1",
+  "sources": [
+    {
+      "claims": [
+        {"field": "manifest_id", "value": "FEVX-CSE-V1.1.0-MANIFEST"},
+        {"field": "payload_files", "value": 102},
+        {"field": "archive_sha256", "value": "f4da04ac026628e022814f306acfe9e5303ee89a107359ab50a91fa04442ac50"},
+        {"field": "wheel_sha256", "value": "8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022"}
+      ],
+      "files": [{"path": "MANIFEST.json", "sha256": "f79aa56b2a81924c3774957a1de3a570cca26a7aaa58bf6808d2de15807ad429"}],
+      "fingerprint": "2530f6655ce6fdaf201dca46fe71249604777808276407ea9fda1017c187e2af",
+      "id": "SRC-ICT-CSE-V110-ARCHIVE-MANIFEST",
+      "title": "FEVX CSE v1.1.0 archive and manifest identity",
+      "type": "ARCHIVE_MANIFEST"
+    },
+    {
+      "claims": [
+        {"classification": "FACT", "field": "non_root_uid", "statement": "The Docker carrier runs as non-root UID 65532.", "value": 65532},
+        {"field": "dependencies_installed", "value": true},
+        {"field": "digest_build_args", "value": true}
+      ],
+      "files": [
+        {"path": "Dockerfile", "sha256": "bf81305c7ba84ec8c94060d08018991acc081bf45e60223d4c5c8d16b12797e3"},
+        {"path": "deployment/cloudbuild.yaml", "sha256": "b589a2ce69ff89e837595a26210f52e5842bd5c97e0178e58ab4c1d3bf0d35ab"}
+      ],
+      "fingerprint": "96a2faf82482065032b9a3040785c2ecf10d1e46cb98511b0bd34fd0bad46ec7",
+      "id": "SRC-ICT-CSE-V110-BUILD-CARRIER",
+      "title": "Docker and Cloud Build carrier",
+      "type": "BUILD"
+    },
+    {
+      "claims": [
+        {"field": "preflight_mutation", "value": false},
+        {"field": "secret_values_recorded", "value": false},
+        {"field": "mandate_state", "value": "TEMPLATE_NOT_ACTIVE"},
+        {"field": "reuse_existing", "value": true}
+      ],
+      "files": [
+        {"path": "deployment/provider_preflight.sh", "sha256": "dec16320b6ce8b7b055b6c1637b684d0946aadeb1bd1e756cf25a17ebb4c1cbf"},
+        {"path": "config/deployment_mandate.template.yaml", "sha256": "fb628458b061506480f0d7b83a5105dd12526b328ef0bcbaaaa88806a4a92f0b"}
+      ],
+      "fingerprint": "45c2f7532277f792037dc78edd10ddda0716646b77867c0243bc89d3a7c6653c",
+      "id": "SRC-ICT-CSE-V110-AUTHORITY-PREFLIGHT",
+      "title": "Provider preflight and deployment mandate",
+      "type": "PREFLIGHT_MANDATE"
+    },
+    {
+      "claims": [
+        {"field": "private_auth", "value": true},
+        {"field": "named_service_account", "value": true},
+        {"field": "zero_traffic", "value": true},
+        {"field": "durable_required", "value": true}
+      ],
+      "files": [{"path": "deployment/deploy_shadow_gcp.sh", "sha256": "3368890b235f91b94aa28e96110a811cb0e88ae1ca862193cc8c1685637ac68b"}],
+      "fingerprint": "a0c5f182eb879fd0de729e48a17763394d78f0bdfcfaea8dfcc3ff46f99f54f4",
+      "id": "SRC-ICT-CSE-V110-PRIVATE-DEPLOYMENT",
+      "title": "Private zero-traffic deployment carrier",
+      "type": "DEPLOYMENT"
+    },
+    {
+      "claims": [
+        {"field": "authenticated_canary", "value": true},
+        {"field": "request_log_correlation", "value": true},
+        {"field": "self_certification_blocked", "value": true},
+        {"field": "rollback_default_hold", "value": true}
+      ],
+      "files": [
+        {"path": "deployment/provider_canary.sh", "sha256": "96ca065de8ec02f9f93aa9f6bb41071b2c153a2421f0575ca32d68aad4a0224a"},
+        {"path": "deployment/rollback_shadow_gcp.sh", "sha256": "3858c9d038d9700db2009ed059f905e9f3eab734e3ad2802acfad526b2f9cf7b"}
+      ],
+      "fingerprint": "7341e1f100f15eba52673b90d69d4ec4a18255e0ae7a88c9bd5e38c772bb095e",
+      "id": "SRC-ICT-CSE-V110-CANARY-ROLLBACK",
+      "title": "Authenticated provider canary and fail-closed rollback",
+      "type": "CANARY_ROLLBACK"
+    },
+    {
+      "claims": [
+        {"field": "postgresql_schema", "value": "fevx_cse"},
+        {"field": "idempotency_constraints", "value": true},
+        {"field": "hash_chain_checkpoints", "value": true},
+        {"field": "provider_connection", "value": false},
+        {"field": "cloud_run_deployed", "value": false},
+        {"field": "cloud_sql_mutated", "value": false},
+        {"field": "provider_state", "value": "PROVIDER_AUTHORITY_REPAIR_REQUIRED"},
+        {"field": "operator_health", "value": "OPERATOR_READY"},
+        {"field": "operator_token", "value": "UNAVAILABLE_IN_EXISTING_RECEIPTS"},
+        {"field": "wif_state", "value": "NOT_FOUND_INVALID_TARGET"}
+      ],
+      "files": [
+        {"path": "migrations/postgresql/001_bootstrap.sql", "sha256": "ec93bade047dfb8b51c9dcba43267d0b94afe9bee41e22ac15be8b15a0129e84"},
+        {"path": "reports/V1_1_VALIDATION_REPORT.md", "sha256": "15d6966670edb412c687dfa1006d9cec1fd1838061eb9e4a2705d366a213566d"},
+        {"path": "reports/AUTONOMOUS_PROGRAMME_REPORT.json", "sha256": "163ef345f085ce69da01e7b7f2fb3f9e19a3fe69078381aa1a74256738de570c"},
+        {"path": "reports/PROVIDER_AUTHORITY_DISCOVERY.json", "sha256": "828e3083990d631e3f41bb7a3cc6fcacb7473edee8690e90913c120e47edb67e"}
+      ],
+      "fingerprint": "6fd931da254906b50352931da23a154a02c881e5aacd27d496a2a620876238ee",
+      "id": "SRC-ICT-CSE-V110-DURABLE-VALIDATION",
+      "title": "PostgreSQL state model, validation and provider boundary",
+      "type": "STATE_VALIDATION"
+    }
+  ],
+  "treatment_controls": [
+    "SOURCE_DIGEST_IDENTITY",
+    "REUSE_EXISTING_INFRASTRUCTURE",
+    "LEAST_PRIVILEGE_PREFLIGHT",
+    "IMMUTABLE_BUILD_PROVENANCE",
+    "DURABLE_STATE",
+    "PRIVATE_ZERO_TRAFFIC",
+    "IDEMPOTENCY_STATE_CONSTRAINTS",
+    "HEALTH_READINESS_READBACK",
+    "FAIL_CLOSED",
+    "ROLLBACK_RECOVERY"
+  ]
+}
