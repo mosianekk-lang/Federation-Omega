@@ -134,9 +134,13 @@ jobs:
                   "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}" \
                   2>/dev/null || true
               )"
-              workflow_id="$(jq -r '.id // 0' <<< "${payload:-{}}")"
-              workflow_path="$(jq -r '.path // empty' <<< "${payload:-{}}")"
-              workflow_state="$(jq -r '.state // "READ_FAILED"' <<< "${payload:-{}}")"
+              if [[ -z "${payload}" ]] || ! jq -e 'type == "object"' \
+                >/dev/null 2>&1 <<< "${payload}"; then
+                payload='{}'
+              fi
+              workflow_id="$(jq -r '.id // 0' <<< "${payload}")"
+              workflow_path="$(jq -r '.path // empty' <<< "${payload}")"
+              workflow_state="$(jq -r '.state // "READ_FAILED"' <<< "${payload}")"
               if [[ -z "${workflow_path}" ]]; then
                 workflow_path="${expected_path}"
               elif [[ "${workflow_path}" != "${expected_path}" ]]; then
