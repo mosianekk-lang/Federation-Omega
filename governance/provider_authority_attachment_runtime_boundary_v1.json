@@ -1,0 +1,7 @@
+{
+  "provider_receipt_required": true,
+  "runtime_authority_inferred_from_source": false,
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-RUNTIME-BOUNDARY-1",
+  "semantic_readback_required": true,
+  "source_admission_is_not_provider_execution": true
+}
