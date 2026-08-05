@@ -8,6 +8,8 @@ ROOT = Path(__file__).resolve().parents[1]
 IMPLEMENTATION = ROOT / "federation_consolidation" / "awareness_readback_reconciler.py"
 CONTRACT = ROOT / "governance" / "federation_awareness_readback_reconciler_v1.json"
 FOUNDRY = ROOT / "governance" / "federation_awareness_opportunity_foundry_v1.json"
+EXPORT_POLICY = ROOT / "phoenix" / "export_policy.json"
+THIS_TEST = "tests/test_awareness_readback_reconciler_contract.py"
 
 
 class ReadbackReconcilerContractTests(unittest.TestCase):
@@ -15,6 +17,7 @@ class ReadbackReconcilerContractTests(unittest.TestCase):
     def setUpClass(cls):
         cls.contract = json.loads(CONTRACT.read_text(encoding="utf-8"))
         cls.foundry = json.loads(FOUNDRY.read_text(encoding="utf-8"))
+        cls.export_policy = json.loads(EXPORT_POLICY.read_text(encoding="utf-8"))
 
     def test_contract_binds_implementation_and_foundry(self):
         self.assertEqual(
@@ -32,6 +35,27 @@ class ReadbackReconcilerContractTests(unittest.TestCase):
             binding["contract"],
         )
         self.assertTrue(binding["required_after_provider_readback"])
+
+    def test_source_control_governance_is_explicitly_not_core_runtime(self):
+        classification = self.contract["export_classification"]
+        self.assertEqual(
+            "SOURCE_CONTROL_GOVERNANCE_NOT_CORE_RUNTIME",
+            classification["class"],
+        )
+        self.assertTrue(
+            classification["repository_contract_test_excluded_from_standalone_core_archive"]
+        )
+        self.assertTrue(classification["full_repository_tests_required"])
+        self.assertTrue(
+            classification["standalone_core_archive_must_remain_independently_runnable"]
+        )
+        self.assertIn(
+            THIS_TEST,
+            self.export_policy["core"]["excluded_test_globs"],
+        )
+        self.assertFalse(
+            self.contract["truth_boundary"]["source_control_governance_is_product_runtime"]
+        )
 
     def test_read_proof_advances_without_authority_expansion(self):
         lifecycle = self.contract["lifecycle_contract"]
