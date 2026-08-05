@@ -1,0 +1,6 @@
+{
+  "base": "main",
+  "head": "federation/provider-authority-attachment-v1",
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-PR-INTENT-1",
+  "title": "Federation: add provider authority attachment and read-only handle lifecycle"
+}
