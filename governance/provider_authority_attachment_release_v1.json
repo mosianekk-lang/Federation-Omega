@@ -1,0 +1,12 @@
+{
+  "authority_ceiling": "A1_INTERNAL_SOURCE_ADMISSION",
+  "branch": "federation/provider-authority-attachment-v1",
+  "expected_tests": 6,
+  "live_handle_issued": false,
+  "owner": "Kim Kagiso Mosiane",
+  "provider_mutation_performed": false,
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-RELEASE-1",
+  "secret_values_recorded": false,
+  "source_baseline": "7393f25f781a45fa4b29c48b0ab542f6c0683bb4",
+  "status": "SOURCE_READY_FOR_AIRLOCK"
+}
