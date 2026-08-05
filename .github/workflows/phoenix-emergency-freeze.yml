@@ -114,13 +114,40 @@ jobs:
             done < /tmp/phoenix-workflows-before.tsv
           fi
 
-          sleep 2
-          if ! gh api --paginate \
-            "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \
-            --jq '.workflows[] | [.id, .path, .state, .name] | @tsv' \
-            > /tmp/phoenix-workflows-after.tsv; then
-            echo 'Unable to list workflows after quarantine' >> /tmp/phoenix-freeze-errors.txt
-          fi
+          required_paths=(
+            '.github/workflows/github-airlock.yml'
+            '.github/workflows/public-repository-leak-guard.yml'
+            '.github/workflows/phoenix-emergency-freeze.yml'
+          )
+          convergence_attempts=0
+          convergence_max_attempts=10
+          while (( convergence_attempts < convergence_max_attempts )); do
+            convergence_attempts=$((convergence_attempts + 1))
+            if ! gh api --paginate \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \
+              --jq '.workflows[] | [.id, .path, .state, .name] | @tsv' \
+              > /tmp/phoenix-workflows-after.tsv; then
+              echo 'Unable to list workflows after quarantine' >> /tmp/phoenix-freeze-errors.txt
+              break
+            fi
+
+            missing_required=()
+            for required_path in "${required_paths[@]}"; do
+              if ! awk -F '\t' -v target="$required_path" \
+                '$2 == target && $3 == "active" { found = 1 } END { exit found ? 0 : 1 }' \
+                /tmp/phoenix-workflows-after.tsv; then
+                missing_required+=("$required_path")
+              fi
+            done
+
+            if (( ${#missing_required[@]} == 0 )); then
+              break
+            fi
+            if (( convergence_attempts < convergence_max_attempts )); then
+              sleep $((convergence_attempts * 2))
+            fi
+          done
+          printf '%s\n' "$convergence_attempts" > /tmp/phoenix-freeze-readback-attempts.txt
 
           python - <<'PY'
           import hashlib
@@ -171,6 +198,8 @@ jobs:
           enabled = mutation_rows('/tmp/phoenix-freeze-enabled.txt')
           errors_path = Path('/tmp/phoenix-freeze-errors.txt')
           errors = errors_path.read_text(encoding='utf-8').splitlines() if errors_path.exists() else []
+          attempts_path = Path('/tmp/phoenix-freeze-readback-attempts.txt')
+          readback_attempts = int(attempts_path.read_text(encoding='utf-8').strip()) if attempts_path.exists() else 0
 
           active_after = sorted(row['path'] for row in after if row['state'] == 'active')
           provider_managed_active = sorted(path for path in active_after if path in provider_managed)
@@ -199,6 +228,9 @@ jobs:
               'disabled_total_after': sum(1 for row in after if row['state'] == 'disabled_manually'),
               'enabled_count_this_run': len(enabled),
               'enabled_paths_this_run': sorted(row['path'] for row in enabled),
+              'readback_attempts': readback_attempts,
+              'readback_max_attempts': 10,
+              'workflow_state_convergence_wait_seconds_max': 90,
               'active_after': active_after,
               'unexpected_active': unexpected_active,
               'missing_required': missing_required,
