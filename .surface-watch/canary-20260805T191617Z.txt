@@ -1,0 +1,3 @@
+Kim Dataverse Surface Watch reversible authority canary.
+Timestamp: 2026-08-05T21:16:17+02:00
+No secrets. Delete after provider-native readback.
