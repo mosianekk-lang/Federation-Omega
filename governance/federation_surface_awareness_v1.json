@@ -1,8 +1,8 @@
 {
   "schema": "FEDOMEGA-SURFACE-AWARENESS-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "owner": "Kim Kagiso Mosiane",
-  "state": "ACTIVE_AFTER_PRIVATE_MANIFEST_AND_GITHUB_READBACK",
+  "state": "ACTIVE_AFTER_PRIVATE_MANIFEST_GITHUB_AND_OPPORTUNITY_FOUNDRY_READBACK",
   "authority_ceiling": "A1_INTERNAL",
   "private_manifest": {
     "alias": "FEDERATION_AWARENESS_PRIVATE_V1",
@@ -11,6 +11,16 @@
     "logical_sha256": "8961706e5d0e9d1e379ce24b89bb7cf8546cf126adc88e1c93c152d2a979f438",
     "exact_pointer_location": "KIM_DATAVERSE_PRIVATE_CANONICAL_BRIDGE_V2.ALIAS_POINTER_MAP",
     "exact_pointer_publicly_stored": false,
+    "runtime_readback_required": true
+  },
+  "opportunity_foundry": {
+    "contract": "governance/federation_awareness_opportunity_foundry_v1.json",
+    "implementation": "federation_consolidation/awareness_opportunity_foundry.py",
+    "private_registry_alias": "FEDERATION_OPPORTUNITY_REGISTRY_PRIVATE_V1",
+    "private_registry_exact_pointer_publicly_stored": false,
+    "safe_internal_builds_automatic": true,
+    "provider_gated_builds_registered_not_mutated": true,
+    "ao_cra_contract": "governance/ao_cra_federation_inheritance_v1.json",
     "runtime_readback_required": true
   },
   "startup_block": "NCB-002",
@@ -28,6 +38,7 @@
     "FEDERATION_OMEGA_CONTROL_PLANE",
     "KIM_DATAVERSE_PRIVATE_CANONICAL_BRIDGE_V2",
     "FEDERATION_AWARENESS_PRIVATE_V1",
+    "FEDERATION_OPPORTUNITY_REGISTRY_PRIVATE_V1",
     "FEDERATION_FULL_OPERATING_SURFACE_INDEX",
     "FEDERATION_STARTUP_REGISTER",
     "FEDERATION_DIRECT_RUNTIME",
@@ -58,6 +69,8 @@
     "Gmail": "MISSION_SCOPED_SOURCE_EVIDENCE_ONLY",
     "Formation Innovation Engine": "MANDATORY_INTENT_EVIDENCE_ROUTE_AND_INNOVATION_ENGINE",
     "Alpha-to-Omega Foundry": "MANDATORY_SOLUTION_GENOME_BUILD_TEST_AND_PROOF_ENGINE",
+    "AO-CRA": "MANDATORY_BOUNDARY_TO_BUILD_TRIGGER_AND_LIFECYCLE_ENGINE",
+    "Awareness Opportunity Foundry": "AUTOMATIC_SAFE_INTERNAL_BUILD_AND_PROVIDER_GATE_REGISTRATION",
     "Kim Dataverse": "PRIVATE_EXACT_POINTER_POLICY_AND_RECEIPT_PLANE"
   },
   "runtime_resolution": [
@@ -67,18 +80,21 @@
     "RESOLVE_FEDERATION_AWARENESS_PRIVATE_V1_THROUGH_KIM_DATAVERSE",
     "VERIFY_PRIVATE_MANIFEST_LOGICAL_SHA256",
     "READ_CURRENT_CANONICAL_STATE_AND_ROUTE_AUTHORITY",
-    "LOAD_CURRENT_NODE_AND_N_DIRECTIVE_POLICIES",
+    "LOAD_CURRENT_NODE_N_DIRECTIVE_AND_AO_CRA_POLICIES",
     "INITIALISE_FORMATION_INNOVATION_ENGINE_AND_ALPHA_TO_OMEGA_FOUNDRY",
     "LOAD_CURRENT_STARTUP_POINTER_NCB_002",
     "LOAD_RELEVANT_DIRECT_RUNTIME_CLOUDOPS_AND_LEARNING_STATE",
     "RESOLVE_GMAIL_CONTINUITY_ONLY_WHEN_MISSION_REQUIRES",
     "REVALIDATE_SELECTED_CONNECTOR_IDENTITY_TARGET_SCOPE_ACTION_AND_READBACK",
     "RESOLVE_CREDENTIALS_BY_NON_SECRET_HANDLE_ONLY",
+    "RUN_AWARENESS_OPPORTUNITY_FOUNDRY_AND_REGISTER_AO_CRA_BUILDS",
+    "EXECUTE_SAFE_INTERNAL_BUILDS_AND_HOLD_PROVIDER_GATED_EFFECTS",
     "RECORD_TERMINAL_SUCCESS_FAILURE_OR_CONSTRAINT"
   ],
   "freshness_contract": {
     "github_main": "EVERY_INVOCATION",
     "private_awareness_manifest": "EVERY_INVOCATION",
+    "private_opportunity_registry": "BEFORE_AND_AFTER_MATERIAL_FOUNDry_RUN",
     "kim_dataverse_control_and_boundaries": "EVERY_INVOCATION",
     "selected_provider_authority": "IMMEDIATELY_BEFORE_USE",
     "owner_authorization": "MAXIMUM_1800_SECONDS_WHEN_REQUIRED",
@@ -92,6 +108,7 @@
     "stored_code_proves_execution": false,
     "gmail_message_proves_current_runtime": false,
     "bridge_bound_means_all_providers_bound": false,
+    "internal_build_completion_proves_external_provider_readiness": false,
     "provider_activation_requires_native_readback": true,
     "private_exact_pointers_must_remain_out_of_public_source": true
   },
@@ -99,6 +116,9 @@
     "public_contract_missing": "BOOTSTRAP_BLOCKED_AWARENESS_CONTRACT",
     "private_alias_unresolved": "BOOTSTRAP_BLOCKED_PRIVATE_POINTER",
     "private_hash_mismatch": "BOOTSTRAP_BLOCKED_PRIVATE_MANIFEST_INTEGRITY",
+    "opportunity_registry_unresolved": "BOOTSTRAP_BLOCKED_OPPORTUNITY_REGISTRY",
+    "opportunity_foundry_missing": "BOOTSTRAP_BLOCKED_OPPORTUNITY_FOUNDRY",
+    "boundary_without_build_trigger": "BOUNDARY_WITHOUT_BUILD_TRIGGER",
     "canonical_route_state_unread": "BOOTSTRAP_BLOCKED_ROUTE_STATE",
     "credential_handle_unavailable": "AUTHORITY_BLOCKED_NO_PRIVATE_HANDLE",
     "provider_authority_unverified": "ROUTE_BLOCKED_EXACT_REMEDIATION_REQUIRED",
