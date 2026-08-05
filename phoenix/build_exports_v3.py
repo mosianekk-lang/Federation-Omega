@@ -21,6 +21,15 @@ V2 = importlib.util.module_from_spec(V2_SPEC)
 sys.modules[V2_SPEC.name] = V2
 V2_SPEC.loader.exec_module(V2)
 
+PACKET_SPEC = importlib.util.spec_from_file_location(
+    "phoenix_owner_sealed_packet",
+    ROOT / "phoenix" / "ops-template" / "owner_sealed_packet.py",
+)
+assert PACKET_SPEC and PACKET_SPEC.loader
+PACKET = importlib.util.module_from_spec(PACKET_SPEC)
+sys.modules[PACKET_SPEC.name] = PACKET
+PACKET_SPEC.loader.exec_module(PACKET)
+
 
 def _include(
     source: Path,
@@ -211,9 +220,29 @@ def main() -> int:
         "provider_apply_performed": False,
         "temporary_template_state_restoration": "REQUIRED_DURING_APPLY",
         "credential_value_recorded": False,
+        "owner_sealed_packet_candidate_builder": "owner_sealed_packet.py",
+        "owner_sealed_packet_candidate_grants_authority": False,
+        "owner_sealed_packet_candidate_proves_custody": False,
+        "owner_sealed_packet_candidate_proves_confidentiality": False,
     }
     receipt["pst_verifier_runtime"] = pst_runtime
     receipt["source_mutation_attempted"] = False
+
+    packet_output = output / "pst-completion" / "owner-sealed-packet-candidate.json"
+    packet_summary = PACKET.build_packet_candidate(
+        core_archive=output / "Federation-Omega-Core.tar.gz",
+        ops_archive=output / "Federation-Omega-Ops.tar.gz",
+        output=packet_output,
+        metadata={
+            "source_repository": receipt["source_repository"],
+            "source_sha": receipt["source_sha"],
+            "export_policy_version": receipt["policy_version"],
+            "core": receipt["core"],
+            "ops": receipt["ops"],
+        },
+    )
+    receipt["owner_sealed_packet_candidate"] = packet_summary
+
     receipt.pop("receipt_sha256", None)
     canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
     receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
