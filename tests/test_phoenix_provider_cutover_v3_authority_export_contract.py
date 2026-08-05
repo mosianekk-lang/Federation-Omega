@@ -12,7 +12,7 @@ class AuthorityExportContractTests(unittest.TestCase):
         policy = json.loads(
             (ROOT / "phoenix" / "export_policy.json").read_text(encoding="utf-8")
         )
-        self.assertEqual("1.0.19", policy["version"])
+        self.assertEqual("1.0.20", policy["version"])
         required = set(policy["ops"]["required_files"])
         required.update(policy["ops"].get("required_v3_files", []))
         expected = {
