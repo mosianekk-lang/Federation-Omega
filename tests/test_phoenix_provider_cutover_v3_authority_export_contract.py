@@ -12,11 +12,12 @@ class AuthorityExportContractTests(unittest.TestCase):
         policy = json.loads(
             (ROOT / "phoenix" / "export_policy.json").read_text(encoding="utf-8")
         )
-        self.assertEqual("1.0.10", policy["version"])
+        self.assertEqual("1.0.11", policy["version"])
         required = set(policy["ops"]["required_files"])
         required.update(policy["ops"].get("required_v3_files", []))
         expected = {
             "provider_authority_probe.py",
+            "provider_cutover_owner_authority_bound.py",
             "provider_cutover_authority_bound.py",
             "provider_cutover_candidate.py",
             "provider_cutover_guarded.py",
@@ -50,9 +51,13 @@ class AuthorityExportContractTests(unittest.TestCase):
         source = (ROOT / "phoenix" / "build_exports_v3.py").read_text(
             encoding="utf-8"
         )
-        self.assertIn('"version": "3.4"', source)
+        self.assertIn('"version": "3.5"', source)
         self.assertIn(
-            '"entrypoint": "provider_cutover_authority_bound.py"', source
+            '"entrypoint": "provider_cutover_owner_authority_bound.py"', source
+        )
+        self.assertIn(
+            '"authority_bound_internal_entrypoint": "provider_cutover_authority_bound.py"',
+            source,
         )
         self.assertIn(
             '"provider_authority_probe": "provider_authority_probe.py"', source
@@ -69,6 +74,14 @@ class AuthorityExportContractTests(unittest.TestCase):
             '"provider_authority_just_in_time_reprobe_required": True', source
         )
         self.assertIn('"provider_authority_probe_get_only": True', source)
+        self.assertIn(
+            '"owner_authorization_provider_receipt_hash_binding_required": True',
+            source,
+        )
+        self.assertIn(
+            '"owner_authorization_repository_creation_endpoint_binding_required": True',
+            source,
+        )
         self.assertNotIn('"entrypoint": "provider_cutover.py"', source)
 
     def test_ops_contract_matches_apply_contract(self):
@@ -78,9 +91,9 @@ class AuthorityExportContractTests(unittest.TestCase):
         authority = json.loads(
             (governance / "PROVIDER_AUTHORITY_PROBE_CONTRACT.json").read_text()
         )
-        self.assertEqual("1.3.0", ops["version"])
+        self.assertEqual("1.4.0", ops["version"])
         self.assertEqual(
-            "provider_cutover_authority_bound.py",
+            "provider_cutover_owner_authority_bound.py",
             ops["canonical_apply_entrypoint"],
         )
         self.assertEqual(
@@ -88,10 +101,16 @@ class AuthorityExportContractTests(unittest.TestCase):
             entrypoint["canonical_apply_entrypoint"],
         )
         rules = ops["authority_rules"]
+        self.assertTrue(rules["owner_authorization_provider_receipt_hash_binding_required"])
+        self.assertTrue(rules["owner_authorization_repository_creation_endpoint_binding_required"])
+        self.assertFalse(rules["owner_authorization_external_commercial_gate_advancement_allowed"])
         self.assertTrue(rules["provider_authority_receipt_required"])
         self.assertEqual(300, rules["provider_authority_receipt_max_age_seconds"])
         self.assertTrue(rules["provider_authority_just_in_time_reprobe_required"])
         self.assertTrue(rules["provider_authority_continuity_required"])
+        self.assertTrue(entrypoint["owner_authorization_provider_receipt_hash_binding"])
+        self.assertTrue(entrypoint["owner_authorization_repository_creation_endpoint_binding"])
+        self.assertFalse(entrypoint["owner_authorization_external_commercial_gate_advancement_allowed"])
         self.assertTrue(entrypoint["provider_authority_receipt_required"])
         self.assertEqual(300, entrypoint["provider_authority_receipt_max_age_seconds"])
         self.assertTrue(entrypoint["provider_authority_just_in_time_reprobe_required"])
