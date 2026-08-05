@@ -112,12 +112,12 @@
   },
   "master_state": {
     "chapter": "CH-073",
-    "minimum_compatible_cycle": "CYC-CBR-20260805-033",
+    "minimum_compatible_cycle": "CYC-CBR-20260805-034",
     "policy_id": "FEDOMEGA-N-DIRECTIVE-V2",
     "policy_version": "2.1.0",
     "ao_cra_policy_id": "AO-CRA-FEDERATION-INHERITANCE-V1",
     "ao_cra_policy_version": "1.0.0",
-    "ao_cra_contract_sha256": "5ee8c544851e188903c21de727053925e1ab6312515189572bb8f2290d46148c"
+    "ao_cra_contract_sha256": "8311ab3fb0dae7224048a0878a81729dc4370217fd05f4db4ff4acbf30c569f1"
   },
   "bootstrap_pass_conditions": [
     "policy files parse",
