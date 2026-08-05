@@ -1,0 +1,23 @@
+{
+  "account": "mosianekk@gmail.com",
+  "apply_marker": "ATTACH_GCP_READ_ONLY_V1",
+  "default_mode": "PLAN_OR_VERIFY",
+  "expected_provider_receipt": "FEDOMEGA-GCP-METADATA-PROBE-1",
+  "handle_lifetime_max_seconds": 600,
+  "project_id": "sov-hybrid-suite",
+  "project_number": "257649435135",
+  "provider_mutation_performed": false,
+  "required_services": [
+    "serviceusage.googleapis.com",
+    "secretmanager.googleapis.com",
+    "run.googleapis.com",
+    "cloudbuild.googleapis.com",
+    "iam.googleapis.com",
+    "iamcredentials.googleapis.com",
+    "sts.googleapis.com"
+  ],
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-OWNER-ACTION-1",
+  "secret_payload_access": false,
+  "service_account_key_creation": false,
+  "status": "PROVIDER_AUTHENTICATION_REQUIRED"
+}
