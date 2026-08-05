@@ -281,7 +281,7 @@ class PhoenixExportTests(unittest.TestCase):
             self.assertNotIn("/dispatches", source)
             self.assertNotIn("maybe_dispatch", source)
 
-    def test_v29_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
+    def test_v30_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
         output = self.root / "v3-output"
         process = subprocess.run(
             [
@@ -306,10 +306,33 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(canonical).hexdigest(), claimed)
         self.assertFalse(receipt["source_mutation_attempted"])
         engine = receipt["provider_cutover_engine"]
-        self.assertEqual("3.4", engine["version"])
-        self.assertEqual("V22", engine["authorization_execution_gate"])
+        self.assertEqual("3.5", engine["version"])
+        self.assertEqual(
+            "V30_OWNER_PROVIDER_AUTHORITY_BINDING",
+            engine["authorization_execution_gate"],
+        )
         self.assertEqual("3.1", engine["provider_controller_version"])
         self.assertTrue(engine["authorization_decision_required"])
+        self.assertEqual(
+            "FEDOMEGA-PHOENIX-CUTOVER-AUTHORIZATION-DECISION-2",
+            engine["authorization_decision_schema"],
+        )
+        self.assertTrue(
+            engine["owner_authorization_provider_receipt_hash_binding_required"]
+        )
+        self.assertTrue(
+            engine["owner_authorization_repository_creation_endpoint_binding_required"]
+        )
+        self.assertFalse(
+            engine["owner_authorization_external_commercial_gate_advancement_allowed"]
+        )
+        self.assertEqual(
+            "provider_cutover_owner_authority_bound.py", engine["entrypoint"]
+        )
+        self.assertEqual(
+            "provider_cutover_authority_bound.py",
+            engine["authority_bound_internal_entrypoint"],
+        )
         self.assertTrue(engine["one_time_authorization_consumption_required"])
         self.assertEqual(300, engine["provider_authority_receipt_max_age_seconds"])
         self.assertEqual(30, engine["provider_authority_receipt_max_future_skew_seconds"])
@@ -339,6 +362,8 @@ class PhoenixExportTests(unittest.TestCase):
         )
         with tarfile.open(output / "Federation-Omega-Ops.tar.gz", "r:gz") as archive:
             names = set(archive.getnames())
+        self.assertIn("provider_cutover_owner_authority_bound.py", names)
+        self.assertIn("provider_cutover_authority_bound.py", names)
         self.assertIn("provider_cutover.py", names)
         self.assertIn("provider_cutover_authorization_use.py", names)
         self.assertIn("provider_cutover_v3_1.py", names)
