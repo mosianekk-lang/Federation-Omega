@@ -243,7 +243,7 @@ class OwnerExecutionStep1BindingV39Tests(unittest.TestCase):
         self.assertFalse(contract["controls"]["owner_action_allowed"])
         self.assertFalse(contract["controls"]["provider_apply_allowed"])
         self.assertEqual(
-            "OWNER_EXECUTION_STEP1_BINDING_IMPLEMENTED_PROVIDER_PROOF_REQUIRED_"
+            "OWNER_EXECUTION_STEP1_BINDING_PROVIDER_PROOF_VERIFIED_"
             "OWNER_CUSTODY_ACTION_REQUIRED",
             checkpoint["status"],
         )
