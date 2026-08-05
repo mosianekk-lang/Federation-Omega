@@ -12,7 +12,7 @@ class AuthorityExportContractTests(unittest.TestCase):
         policy = json.loads(
             (ROOT / "phoenix" / "export_policy.json").read_text(encoding="utf-8")
         )
-        self.assertEqual("1.0.14", policy["version"])
+        self.assertEqual("1.0.15", policy["version"])
         required = set(policy["ops"]["required_files"])
         required.update(policy["ops"].get("required_v3_files", []))
         expected = {
@@ -25,6 +25,7 @@ class AuthorityExportContractTests(unittest.TestCase):
             "owner_sealed_packet.py",
             "owner_custody_ceremony.py",
             "owner_custody_attestation.py",
+            "provider_authenticated_owner_attestation.py",
             "provider_cutover.py",
             "provider_cutover_authorization_use.py",
             "provider_cutover_v3_1.py",
@@ -36,6 +37,7 @@ class AuthorityExportContractTests(unittest.TestCase):
             "governance/OWNER_SEALED_PACKET_CANDIDATE_CONTRACT.json",
             "governance/OWNER_CUSTODY_CEREMONY_CONTRACT.json",
             "governance/OWNER_CUSTODY_ATTESTATION_CONTRACT.json",
+            "governance/PROVIDER_AUTHENTICATED_OWNER_ATTESTATION_CONTRACT.json",
             "governance/OPS_CONTRACT.json",
         }
         self.assertTrue(expected.issubset(required), sorted(expected - required))
@@ -111,23 +113,47 @@ class AuthorityExportContractTests(unittest.TestCase):
             entrypoint["canonical_apply_entrypoint"],
         )
         rules = ops["authority_rules"]
-        self.assertTrue(rules["owner_authorization_provider_receipt_hash_binding_required"])
-        self.assertTrue(rules["owner_authorization_repository_creation_endpoint_binding_required"])
-        self.assertFalse(rules["owner_authorization_external_commercial_gate_advancement_allowed"])
+        self.assertTrue(
+            rules["owner_authorization_provider_receipt_hash_binding_required"]
+        )
+        self.assertTrue(
+            rules[
+                "owner_authorization_repository_creation_endpoint_binding_required"
+            ]
+        )
+        self.assertFalse(
+            rules["owner_authorization_external_commercial_gate_advancement_allowed"]
+        )
         self.assertTrue(rules["provider_authority_receipt_required"])
         self.assertEqual(300, rules["provider_authority_receipt_max_age_seconds"])
         self.assertTrue(rules["provider_authority_just_in_time_reprobe_required"])
         self.assertTrue(rules["provider_authority_continuity_required"])
-        self.assertTrue(entrypoint["owner_authorization_provider_receipt_hash_binding"])
-        self.assertTrue(entrypoint["owner_authorization_repository_creation_endpoint_binding"])
-        self.assertFalse(entrypoint["owner_authorization_external_commercial_gate_advancement_allowed"])
+        self.assertTrue(
+            entrypoint["owner_authorization_provider_receipt_hash_binding"]
+        )
+        self.assertTrue(
+            entrypoint["owner_authorization_repository_creation_endpoint_binding"]
+        )
+        self.assertFalse(
+            entrypoint[
+                "owner_authorization_external_commercial_gate_advancement_allowed"
+            ]
+        )
         self.assertTrue(entrypoint["provider_authority_receipt_required"])
-        self.assertEqual(300, entrypoint["provider_authority_receipt_max_age_seconds"])
-        self.assertTrue(entrypoint["provider_authority_just_in_time_reprobe_required"])
-        self.assertTrue(entrypoint["provider_authority_continuity_drift_invalidates"])
+        self.assertEqual(
+            300, entrypoint["provider_authority_receipt_max_age_seconds"]
+        )
+        self.assertTrue(
+            entrypoint["provider_authority_just_in_time_reprobe_required"]
+        )
+        self.assertTrue(
+            entrypoint["provider_authority_continuity_drift_invalidates"]
+        )
         self.assertTrue(authority["probe_get_only"])
         self.assertEqual(300, authority["authority_receipt_max_age_seconds"])
-        self.assertTrue(authority["just_in_time_reprobe_required_before_authorization_state"])
+        self.assertTrue(
+            authority["just_in_time_reprobe_required_before_authorization_state"]
+        )
         self.assertFalse(authority["credential_value_recorded"])
         self.assertFalse(authority["provider_mutation_performed"])
 
