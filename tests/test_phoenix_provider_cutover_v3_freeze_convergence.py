@@ -1,10 +1,13 @@
 from __future__ import annotations
 
 from datetime import datetime, timezone
+from pathlib import Path
 import unittest
 
 from phoenix.workflow_freeze_convergence import build_receipt, canonical_sha256
 
+ROOT = Path(__file__).resolve().parents[1]
+WORKFLOW = ROOT / ".github" / "workflows" / "phoenix-emergency-freeze.yml"
 NOW = datetime(2026, 8, 5, 3, 0, tzinfo=timezone.utc)
 REQUIRED = [
     ".github/workflows/github-airlock.yml",
@@ -94,6 +97,13 @@ class FreezeConvergenceTests(unittest.TestCase):
     def test_no_source_mutation_claim(self):
         result = self.receipt()
         self.assertFalse(result["source_mutation_attempted"])
+
+    def test_workflow_uses_unambiguous_empty_json_fallback(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertNotIn("${payload:-{}}", text)
+        self.assertIn('if [[ -z "${payload}" ]]; then', text)
+        self.assertIn("payload='{}'", text)
+        self.assertIn("<<< \"${payload}\"", text)
 
 
 if __name__ == "__main__":
