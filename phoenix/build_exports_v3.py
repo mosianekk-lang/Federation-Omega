@@ -28,7 +28,12 @@ PACKET_SPEC = importlib.util.spec_from_file_location(
 assert PACKET_SPEC and PACKET_SPEC.loader
 PACKET = importlib.util.module_from_spec(PACKET_SPEC)
 sys.modules[PACKET_SPEC.name] = PACKET
-PACKET_SPEC.loader.exec_module(PACKET)
+_previous_dont_write_bytecode = sys.dont_write_bytecode
+sys.dont_write_bytecode = True
+try:
+    PACKET_SPEC.loader.exec_module(PACKET)
+finally:
+    sys.dont_write_bytecode = _previous_dont_write_bytecode
 
 
 def _include(
@@ -83,6 +88,8 @@ def stage_ops_v3_4(
 
     records: list[V2.BASE.FileRecord] = []
     for path in sorted(template.rglob("*"), key=lambda item: item.as_posix()):
+        if "__pycache__" in path.parts or path.suffix == ".pyc":
+            continue
         if not path.is_file():
             continue
         rel = path.relative_to(template).as_posix()
@@ -148,6 +155,8 @@ def stage_ops_v3_4(
         raise RuntimeError(f"Ops export missing required files: {missing}")
     if any(V2.BASE.is_github_workflow_path(item.path) for item in records):
         raise RuntimeError("Ops export unexpectedly contains an active workflow")
+    if any("__pycache__" in Path(item.path).parts or item.path.endswith(".pyc") for item in records):
+        raise RuntimeError("Ops export unexpectedly contains Python runtime bytecode")
     return records
 
 
@@ -224,6 +233,7 @@ def main() -> int:
         "owner_sealed_packet_candidate_grants_authority": False,
         "owner_sealed_packet_candidate_proves_custody": False,
         "owner_sealed_packet_candidate_proves_confidentiality": False,
+        "owner_sealed_packet_candidate_runtime_bytecode_included": False,
     }
     receipt["pst_verifier_runtime"] = pst_runtime
     receipt["source_mutation_attempted"] = False
