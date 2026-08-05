@@ -1,0 +1,10 @@
+{
+  "google_cloud_authority": "PROVIDER_AUTHENTICATION_REQUIRED",
+  "internal_engineering": "COMPLETE",
+  "live_handle_issued": false,
+  "openai_existing_key_management": "OFFICIAL_PROVIDER_ACTION_REQUIRED",
+  "provider_mutation_performed": false,
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-STATUS-1",
+  "secret_values_recorded": false,
+  "source_admission": "PENDING_AIRLOCK"
+}
