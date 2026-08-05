@@ -1,0 +1,215 @@
+{
+  "schema": "FEDOMEGA-N-DIRECTIVE-DOMAIN-PROFILES-1",
+  "suite_id": "SUITE-N-V21-CROSS-DOMAIN-001",
+  "version": "1.0.0",
+  "profiles": [
+    {
+      "domain_id": "evidenceops",
+      "profile_version": "1.0.0",
+      "node_id": "NODE-N-V21-DOMAIN-EVIDENCEOPS-001",
+      "mission_id": "MISSION-N-V21-EVIDENCEOPS-001",
+      "objective": "Prove that the n-directive forms and compiles a synthetic EvidenceOps control-state mission while preserving source identity, epistemic labels, contradictions, gaps, privacy and proof-before-claim.",
+      "success_criteria": [
+        "source identity lock",
+        "fact inference unknown separation",
+        "contradiction scan",
+        "gap schedule",
+        "privacy-preserving proof receipt",
+        "readback before completion"
+      ],
+      "constraints": [
+        "A1 internal only",
+        "synthetic evidence only",
+        "no legal finding",
+        "no external send",
+        "no case-wall crossing",
+        "no evidence mutation"
+      ],
+      "available_capabilities": [
+        "EvidenceOps source-control and proof-routing patterns",
+        "Formation Engine objective and evidence map",
+        "Alpha-to-Omega solution genome",
+        "ECASP exhaustive-analysis gate",
+        "terminal-finality state model",
+        "Python standard library"
+      ],
+      "proof_requirements": [
+        "source and evidence map",
+        "contradiction and gap outputs",
+        "complete canary receipt",
+        "zero external effect",
+        "deterministic replay"
+      ],
+      "required_controls": [
+        "source identity lock",
+        "fact inference unknown separation",
+        "contradiction scan",
+        "gap schedule",
+        "privacy-preserving proof receipt",
+        "readback before completion"
+      ],
+      "prohibited_outcomes": [
+        "no legal finding",
+        "no external send",
+        "no case-wall crossing",
+        "no evidence mutation"
+      ]
+    },
+    {
+      "domain_id": "legal_forensic",
+      "profile_version": "1.0.0",
+      "node_id": "NODE-N-V21-DOMAIN-LEGAL-FORENSIC-001",
+      "mission_id": "MISSION-N-V21-LEGAL-FORENSIC-001",
+      "objective": "Prove that the n-directive forms and compiles a synthetic legal-forensic proposition mission with route separation, adverse evidence, authority limits, safe wording and no consequential legal action.",
+      "success_criteria": [
+        "route separation",
+        "adverse evidence preservation",
+        "authority separation",
+        "safe wording",
+        "source-specific contradiction record",
+        "proof-state classification"
+      ],
+      "constraints": [
+        "A1 internal only",
+        "synthetic propositions only",
+        "no legal filing",
+        "no external communication",
+        "no formal legal admission",
+        "no merits finality claim"
+      ],
+      "available_capabilities": [
+        "MODISA proof-bound legal controls",
+        "Formation Engine intent and authority map",
+        "Alpha-to-Omega solution genome",
+        "claim and evidence graph patterns",
+        "recursive carrier integrity controls",
+        "Python standard library"
+      ],
+      "proof_requirements": [
+        "supporting and contrary proposition map",
+        "authority and remedy separation",
+        "safe and prohibited wording",
+        "complete canary receipt",
+        "deterministic replay"
+      ],
+      "required_controls": [
+        "route separation",
+        "adverse evidence preservation",
+        "authority separation",
+        "safe wording",
+        "source-specific contradiction record",
+        "proof-state classification"
+      ],
+      "prohibited_outcomes": [
+        "no legal filing",
+        "no external communication",
+        "no formal legal admission",
+        "no merits finality claim"
+      ]
+    },
+    {
+      "domain_id": "ict_system_build",
+      "profile_version": "1.0.0",
+      "node_id": "NODE-N-V21-DOMAIN-ICT-SYSTEM-BUILD-001",
+      "mission_id": "MISSION-N-V21-ICT-SYSTEM-BUILD-001",
+      "objective": "Prove that the n-directive forms and compiles a synthetic ICT automation mission using reuse-before-rebuild, least privilege, idempotency, health readback and rollback without production deployment.",
+      "success_criteria": [
+        "reuse before rebuild",
+        "least privilege",
+        "idempotency",
+        "rollback",
+        "health readback",
+        "failure-path test"
+      ],
+      "constraints": [
+        "A1 internal only",
+        "synthetic service only",
+        "no production deployment",
+        "no credential value",
+        "no destructive mutation",
+        "no new operating cost"
+      ],
+      "available_capabilities": [
+        "Omega-Max in-place evolution patterns",
+        "Formation Engine route ranking",
+        "Alpha-to-Omega provider contract",
+        "bounded retry and circuit-breaker genes",
+        "health and rollback canary patterns",
+        "Python standard library"
+      ],
+      "proof_requirements": [
+        "reuse-versus-build decision",
+        "least-privilege boundary",
+        "idempotency and rollback tests",
+        "health readback",
+        "complete canary receipt"
+      ],
+      "required_controls": [
+        "reuse before rebuild",
+        "least privilege",
+        "idempotency",
+        "rollback",
+        "health readback",
+        "failure-path test"
+      ],
+      "prohibited_outcomes": [
+        "no production deployment",
+        "no credential value",
+        "no destructive mutation",
+        "no new operating cost"
+      ]
+    },
+    {
+      "domain_id": "federation_evolution",
+      "profile_version": "1.0.0",
+      "node_id": "NODE-N-V21-DOMAIN-FEDERATION-EVOLUTION-001",
+      "mission_id": "MISSION-N-V21-FEDERATION-EVOLUTION-001",
+      "objective": "Prove that the n-directive forms and compiles a synthetic Federation evolution mission with lineage preservation, exact maturity, regression proof, rollback and no trust or authority expansion.",
+      "success_criteria": [
+        "lineage preservation",
+        "no trust transfer",
+        "exact maturity",
+        "regression test",
+        "rollback pointer",
+        "supersession receipt"
+      ],
+      "constraints": [
+        "A1 internal only",
+        "synthetic Federation node only",
+        "no authority expansion",
+        "no hidden runtime claim",
+        "no external effect",
+        "no destructive retirement"
+      ],
+      "available_capabilities": [
+        "Federation Omega event and proof patterns",
+        "Formation Engine non-dilution controls",
+        "Alpha-to-Omega foundry and retirement decisions",
+        "NEXUS-CODEX append-only lineage",
+        "Phoenix Airlock admission patterns",
+        "Python standard library"
+      ],
+      "proof_requirements": [
+        "lineage and supersession map",
+        "maturity and authority proof",
+        "regression and rollback receipt",
+        "complete canary receipt",
+        "deterministic replay"
+      ],
+      "required_controls": [
+        "lineage preservation",
+        "no trust transfer",
+        "exact maturity",
+        "regression test",
+        "rollback pointer",
+        "supersession receipt"
+      ],
+      "prohibited_outcomes": [
+        "no authority expansion",
+        "no hidden runtime claim",
+        "no external effect",
+        "no destructive retirement"
+      ]
+    }
+  ]
+}
