@@ -1,0 +1,66 @@
+{
+  "schema": "FEDOMEGA-AWARENESS-READBACK-RECONCILER-CONTRACT-1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "SOURCE_IMPLEMENTED_PROVIDER_EFFECTS_HELD",
+  "authority_ceiling": "A1_INTERNAL",
+  "implementation": "federation_consolidation/awareness_readback_reconciler.py",
+  "required_inputs": [
+    "HASH_BOUND_FOUNDRY_RECEIPT",
+    "CURRENT_GITHUB_MAIN_HEAD",
+    "PRIVATE_MAIN_POINTERS",
+    "MERGE_RESULT_SOURCE_PROOF",
+    "PROVIDER_READBACK_RECEIPTS"
+  ],
+  "capabilities": [
+    "VERIFY_FOUNDRY_RECEIPT_HASH",
+    "VERIFY_READBACK_NO_SECRET_AND_NO_MUTATION_BOUNDARY",
+    "CLOSE_SATISFIED_PROVIDER_READ_PROBES",
+    "CREATE_SEPARATE_EFFECTFUL_CAPABILITY_BUILDS",
+    "DETECT_PRIVATE_POINTER_DRIFT",
+    "CREATE_STABLE_AO_CRA_DRIFT_REPAIR_BUILDS",
+    "PRESERVE_INTERNAL_RUNTIME_PROOF_GAPS",
+    "PRODUCE_DETERMINISTIC_RECONCILIATION_RECEIPT"
+  ],
+  "provider_readback_statuses": [
+    "READ_PROBE_VERIFIED",
+    "EFFECTFUL_CAPABILITY_VERIFIED",
+    "AUTHORITY_BLOCKED",
+    "LOGIN_APPROVAL_GATED"
+  ],
+  "lifecycle_contract": {
+    "read_probe_verified_closes_original_probe": true,
+    "read_probe_verified_creates_effectful_successor": true,
+    "effectful_capability_verified_creates_no_successor": true,
+    "internal_source_implementation_does_not_close_runtime_proof": true,
+    "stale_private_pointer_creates_drift_repair_build": true,
+    "duplicate_readbacks_fail_closed": true,
+    "merge_result_airlock_required": true,
+    "merge_result_leak_guard_required": true,
+    "merge_result_phoenix_freeze_required": true
+  },
+  "truth_boundary": {
+    "read_access_proves_write_authority": false,
+    "source_merge_proves_provider_deployment": false,
+    "provider_mutation_performed": false,
+    "external_effect_performed": false,
+    "credential_value_recorded": false,
+    "provider_effects_require_fresh_authority_and_native_readback": true
+  },
+  "outputs": [
+    "CLOSED_PROBE_OPPORTUNITY_IDS",
+    "SUCCESSOR_EFFECTFUL_BUILD_IDS",
+    "PRIVATE_POINTER_DRIFTS",
+    "DRIFT_REPAIR_BUILD_IDS",
+    "ACTIVE_RECONCILED_OPPORTUNITIES",
+    "HASH_BOUND_RECONCILIATION_RECEIPT"
+  ],
+  "failure_states": {
+    "foundry_hash_invalid": "RECONCILIATION_BLOCKED_FOUNDRY_INTEGRITY",
+    "readback_secret_detected": "SECURITY_BOUNDARY_VIOLATION",
+    "readback_mutation_claimed": "READBACK_BOUNDARY_VIOLATION",
+    "duplicate_provider_readback": "RECONCILIATION_BLOCKED_DUPLICATE_READBACK",
+    "merge_result_proof_missing": "RECONCILIATION_BLOCKED_SOURCE_PROOF",
+    "private_pointer_stale": "DRIFT_REPAIR_REQUIRED"
+  }
+}
