@@ -1,18 +1,20 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V2",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "owner": "Kagiso Kim Mosiane",
   "required_before_substantive_work": true,
   "inherited_policies": [
     "FEDOMEGA-N-DIRECTIVE-V2",
-    "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1"
+    "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1",
+    "AO-CRA-FEDERATION-INHERITANCE-V1"
   ],
   "n_directive": {
     "input": "n",
-    "action": "FORMATION_ALPHA_OMEGA_MONOTONIC_INNOVATION_CONTINUATION",
+    "action": "FORMATION_ALPHA_OMEGA_AO_CRA_MONOTONIC_INNOVATION_CONTINUATION",
     "required_engines": {
       "formation_engine": "REQUIRED",
       "alpha_omega_foundry": "REQUIRED",
+      "ao_cra": "REQUIRED",
       "innovation_frontier": "REQUIRED",
       "continuous_learning": "REQUIRED"
     },
@@ -21,6 +23,7 @@
       "LOAD_HEARTBEAT_CAPABILITIES_LESSONS_TRIGGERS_BLOCKERS_CORRECTIONS",
       "FORMATION_INTENT_LOCK_AND_OBJECTIVE_MEANS_SEPARATION",
       "FORMATION_SOURCE_EVIDENCE_AUTHORITY_DEPENDENCY_AND_PROOF_MAP",
+      "AO_CRA_BOUNDARY_TO_BUILD_PREFLIGHT",
       "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
       "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
       "ALPHA_OMEGA_REUSE_COMPOSITION_AND_MINIMUM_COMPLETE_BUILD",
@@ -29,11 +32,34 @@
       "EXECUTE_SAFE_AUTHORISED_WORK",
       "VALIDATE_SIMULATE_RED_TEAM_AND_FAILURE_INJECT_WHERE_MATERIAL",
       "READBACK_HEALTH_PERSISTENCE_ROLLBACK_AND_PROOF",
+      "AO_CRA_CREATE_OR_UPDATE_BUILD_FOR_EVERY_RESIDUAL_CAPABILITY_GAP",
       "RECORD_TERMINAL_LEARNING_AND_INNOVATION_EVENT",
-      "ACTIVATE_REPAIR_FALLBACK_REGRESSION_AND_OPPORTUNITY_TRIGGERS",
+      "ACTIVATE_REPAIR_FALLBACK_REGRESSION_CAPABILITY_RECHECK_AND_OPPORTUNITY_TRIGGERS",
       "GENERALISE_VERIFIED_LEARNING_INTO_REUSABLE_CAPABILITY",
       "ASSESS_MATURITY_AND_PROMOTE_ONLY_PROVEN_SCOPE",
       "BEGIN_NEXT_JUSTIFIED_EXPERIMENT_OR_ADVANCEMENT"
+    ]
+  },
+  "ao_cra": {
+    "policy_id": "AO-CRA-FEDERATION-INHERITANCE-V1",
+    "policy_version": "1.0.0",
+    "mandatory_for_all_engines": true,
+    "mandatory_for_all_operations": true,
+    "gap_classification": "UNRESOLVED_ENGINEERING_BUILD",
+    "workaround_is_not_deployment": true,
+    "terminal_boundary_without_build_record": false,
+    "build_registry_id": "18KFPijLGgHsxJMhR3TGPrcEVxohLtIK_eYzi7ayWbBU",
+    "required_outputs": [
+      "build_identity",
+      "classification",
+      "workaround",
+      "owning_engine",
+      "dependencies",
+      "test_harness",
+      "acceptance_criteria",
+      "next_executable_action",
+      "capability_recheck_trigger",
+      "proof_and_closure_state"
     ]
   },
   "full_power": {
@@ -48,6 +74,7 @@
   "output_contract": {
     "formation_engine_result": true,
     "alpha_omega_foundry_result": true,
+    "ao_cra_result_when_boundary_exists": true,
     "solution_alternatives_considered": true,
     "reuse_vs_build_decision": true,
     "innovation_delta": true,
@@ -55,16 +82,22 @@
     "next_experiment_or_opportunity": true,
     "complete_next_best_automated_pathway": true,
     "explicit_continuation_line": "n = proceed",
-    "status_only_closure_with_safe_work": false
+    "status_only_closure_with_safe_work": false,
+    "terminal_limitation_without_build_trigger": false
   },
   "learning_contract": {
-    "required_terminal_events": ["SUCCESS", "FAILURE", "CONSTRAINT"],
+    "required_terminal_events": [
+      "SUCCESS",
+      "FAILURE",
+      "CONSTRAINT"
+    ],
     "required_when_applicable": [
       "CORRECTION",
       "RECOVERY",
       "INNOVATION_CANDIDATE",
       "EXPERIMENT_RESULT",
-      "NEGATIVE_RESULT"
+      "NEGATIVE_RESULT",
+      "CAPABILITY_REDISCOVERY_TRIGGER"
     ],
     "append_only": true,
     "hash_linked": true,
@@ -79,19 +112,25 @@
   },
   "master_state": {
     "chapter": "CH-073",
-    "minimum_compatible_cycle": "CYC-CBR-20260805-032",
+    "minimum_compatible_cycle": "CYC-CBR-20260805-033",
     "policy_id": "FEDOMEGA-N-DIRECTIVE-V2",
     "policy_version": "2.1.0",
-    "policy_contract_sha256": "2f9fcacb5c1c0a2d336668742c787706c9854dba5fb0df6868d4f3c232fe3ed8"
+    "ao_cra_policy_id": "AO-CRA-FEDERATION-INHERITANCE-V1",
+    "ao_cra_policy_version": "1.0.0",
+    "ao_cra_contract_sha256": "5ee8c544851e188903c21de727053925e1ab6312515189572bb8f2290d46148c"
   },
   "bootstrap_pass_conditions": [
-    "policy file parses",
-    "policy id, version and contract hash match the Master record",
+    "policy files parse",
+    "Federation n-directive policy id and compatible version are present",
+    "AO-CRA policy id, version and contract hash match the Master record",
     "Formation Engine is mandatory",
     "Alpha-to-Omega Foundry is mandatory",
+    "AO-CRA is mandatory",
     "bounded innovation frontier is mandatory",
-    "output contract requires Formation, Foundry, alternatives, innovation, learning, pathway and explicit n line",
-    "learning contract requires terminal and innovation-event capture",
+    "all capability gaps become active build records",
+    "workarounds remain separate from verified or deployed capability",
+    "output contract requires Formation, Foundry, AO-CRA when relevant, alternatives, innovation, learning, pathway and explicit n line",
+    "learning contract requires terminal, innovation and capability-change event capture",
     "authority ceiling remains A1_INTERNAL",
     "external effect remains false",
     "no trust transfer is enabled"
