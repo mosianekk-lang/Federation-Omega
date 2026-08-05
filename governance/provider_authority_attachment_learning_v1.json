@@ -1,0 +1,11 @@
+{
+  "learning": [
+    "Provider consent must be converted into deterministic redacted receipts rather than copied credentials.",
+    "Regular authenticated Cloud Shell is preferable to a credentialless temporary repository environment for authority attachment.",
+    "Service enablement and IAM grants are distinct authority classes.",
+    "Metadata proof must not call Secret Manager versions access.",
+    "A provider read handle must be short-lived and revocable."
+  ],
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-LEARNING-1",
+  "version": "1.0.0"
+}
