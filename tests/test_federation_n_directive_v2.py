@@ -41,14 +41,19 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
 
     def test_future_node_bootstrap_is_fail_closed_and_engine_bound(self) -> None:
         bootstrap = json.loads(BOOTSTRAP.read_text(encoding="utf-8"))
-        self.assertEqual("2.1.0", bootstrap["version"])
+        self.assertEqual("2.2.0", bootstrap["version"])
         self.assertTrue(bootstrap["required_before_substantive_work"])
         self.assertIn(
             "FEDOMEGA-N-DIRECTIVE-V2", bootstrap["inherited_policies"]
         )
+        self.assertIn(
+            "AO-CRA-FEDERATION-INHERITANCE-V1",
+            bootstrap["inherited_policies"],
+        )
         engines = bootstrap["n_directive"]["required_engines"]
         self.assertEqual("REQUIRED", engines["formation_engine"])
         self.assertEqual("REQUIRED", engines["alpha_omega_foundry"])
+        self.assertEqual("REQUIRED", engines["ao_cra"])
         self.assertEqual("REQUIRED", engines["innovation_frontier"])
         self.assertTrue(bootstrap["full_power"]["reuse_before_rebuild"])
         self.assertFalse(bootstrap["full_power"]["invented_capabilities"])
@@ -59,6 +64,7 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
         for field in (
             "formation_engine_result",
             "alpha_omega_foundry_result",
+            "ao_cra_result_when_boundary_exists",
             "solution_alternatives_considered",
             "innovation_delta",
             "learning_delta",
@@ -69,9 +75,18 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
         self.assertFalse(
             bootstrap["output_contract"]["status_only_closure_with_safe_work"]
         )
+        self.assertFalse(
+            bootstrap["output_contract"]["terminal_limitation_without_build_trigger"]
+        )
         self.assertEqual("A1_INTERNAL", bootstrap["authority"]["ceiling"])
         self.assertFalse(bootstrap["authority"]["external_effect_default"])
         self.assertFalse(bootstrap["authority"]["trust_inheritance"])
+        ao_cra = bootstrap["ao_cra"]
+        self.assertTrue(ao_cra["mandatory_for_all_engines"])
+        self.assertTrue(ao_cra["mandatory_for_all_operations"])
+        self.assertEqual("UNRESOLVED_ENGINEERING_BUILD", ao_cra["gap_classification"])
+        self.assertTrue(ao_cra["workaround_is_not_deployment"])
+        self.assertFalse(ao_cra["terminal_boundary_without_build_record"])
         self.assertEqual(
             "BOOTSTRAP_BLOCKED_FAIL_CLOSED", bootstrap["failure_state"]
         )
@@ -82,6 +97,7 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
             "FEDOMEGA-N-DIRECTIVE-V2",
             "Formation Engine",
             "Alpha-to-Omega",
+            "AO-CRA-FEDERATION-INHERITANCE-V1",
             "innovation frontier",
             "n = proceed",
             "complete next-best automated pathway",
