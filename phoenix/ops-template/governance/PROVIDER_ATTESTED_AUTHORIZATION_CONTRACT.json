@@ -1,0 +1,52 @@
+{
+  "controls": {
+    "authorization_consumption_state_created": false,
+    "credential_value_recorded": false,
+    "exact_short_lived_owner_decision_required": true,
+    "external_commercial_gate_advanced": false,
+    "external_communication_performed": false,
+    "fresh_provider_authority_receipt_required": true,
+    "maximum_freshness_seconds": 300,
+    "provider_apply_performed": false,
+    "provider_identity_capture_mode": "PROVIDER_NATIVE",
+    "provider_identity_receipt_required": true,
+    "provider_request_performed": false
+  },
+  "dependency": {
+    "predecessor_checkpoint": "alpha_omega_commercial/phoenix_provider_authenticated_owner_attestation_checkpoint_v35.json",
+    "predecessor_release_receipt": "alpha_omega_commercial/phoenix_provider_authenticated_owner_attestation_release_receipt_v35.json",
+    "required_files": [
+      "provider_authenticated_owner_attestation.py",
+      "provider_authority_probe.py",
+      "provider_cutover_owner_authority_bound.py"
+    ]
+  },
+  "entrypoint": "provider_attested_authorization.py",
+  "owner_reserved": [
+    "execute the custody ceremony in an owner-controlled destination",
+    "publish the exact provider attestation message",
+    "issue the exact short-lived authorization decision",
+    "approve provider apply or consequential release",
+    "make financial commitments, contracts or external commercial claims"
+  ],
+  "purpose": "Verify a provider-native owner-identity receipt, fresh provider-authority receipt and exact short-lived owner decision before any authorization consumption or provider apply.",
+  "schema": "FEDOMEGA-PHOENIX-PROVIDER-ATTESTED-AUTHORIZATION-CONTRACT-1",
+  "status": "PREPARED_NOT_EXECUTED_OWNER_RESERVED",
+  "truth_boundary": {
+    "cloud_run_operation": "NOT_PROVEN",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "full_commercial_maturity": false,
+    "owner_authorization": "NOT_PRESENT",
+    "owner_controlled_custody": "NOT_PROVEN",
+    "owner_execution": "NOT_PERFORMED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "provider_apply": "NOT_PERFORMED",
+    "provider_authority": "PROVIDER_BLOCKED_SELECTED_REPOSITORY_SCOPE",
+    "provider_native_owner_attestation": "NOT_PRESENT",
+    "signed_customer_contract": "NOT_PROVEN",
+    "verified_live_revenue_events": 0
+  }
+}
