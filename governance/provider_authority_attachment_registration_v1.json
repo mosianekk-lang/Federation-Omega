@@ -1,0 +1,13 @@
+{
+  "components": [
+    "provider_authority_attachment_validator",
+    "guarded_gcp_attachment_tool",
+    "metadata_only_provider_probe",
+    "read_only_handle_issuer",
+    "handle_revoker",
+    "openai_revocation_receipt_template"
+  ],
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-REGISTRATION-1",
+  "state": "SOURCE_IMPLEMENTED_PENDING_PROVIDER_ADMISSION",
+  "version": "1.0.0"
+}
