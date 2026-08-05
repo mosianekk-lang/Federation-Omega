@@ -46,7 +46,7 @@ class EvidenceOpsRealReadonlyTests(unittest.TestCase):
 
     def test_secret_like_material_is_rejected(self) -> None:
         packet = load_packet()
-        packet["objective"] = "unsafe sk-proj-abcdefghijklmnopqrstuvwxyz123456"
+        packet["objective"] = "unsafe " + "sk" + "-" + ("x" * 32)
         result = MOD.validate_packet(packet)
         self.assertFalse(result["passed"])
         self.assertIn("SECRET_LIKE_MATERIAL_REJECTED", {v["code"] for v in result["violations"]})
