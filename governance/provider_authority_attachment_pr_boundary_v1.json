@@ -1,0 +1,5 @@
+{
+  "merge_requires_checks": true,
+  "provider_mutation": false,
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-PR-BOUNDARY-1"
+}
