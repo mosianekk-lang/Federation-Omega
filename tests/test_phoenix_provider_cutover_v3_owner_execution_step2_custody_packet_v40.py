@@ -173,7 +173,7 @@ class OwnerExecutionStep2CustodyPacketV40Tests(unittest.TestCase):
         self.assertFalse(contract["controls"]["owner_action_allowed"])
         self.assertFalse(contract["controls"]["provider_apply_allowed"])
         self.assertEqual(
-            "OWNER_EXECUTION_STEP2_CUSTODY_PACKET_IMPLEMENTED_PROVIDER_PROOF_REQUIRED_OWNER_EXECUTION_REQUIRED",
+            "OWNER_EXECUTION_STEP2_CUSTODY_PACKET_PROVIDER_PROOF_VERIFIED_OWNER_EXECUTION_REQUIRED",
             checkpoint["status"],
         )
         self.assertTrue(projection["dependency_order_preserved"])
