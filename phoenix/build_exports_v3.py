@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Phoenix exports with authorization and read-only recovery controls."""
+"""Build Phoenix exports with authority continuity and read-only recovery controls."""
 
 from __future__ import annotations
 
@@ -161,13 +161,24 @@ def main() -> int:
     V2.BASE.stage_ops = stage_ops_v3_4
     receipt = V2.BASE.build(root, output, policy)
     receipt["provider_cutover_engine"] = {
-        "version": "3.3",
+        "version": "3.4",
         "authorization_execution_gate": "V22",
         "provider_controller_version": "3.1",
         "authority_models": ["INSTALLATION_TEMPLATE", "USER_SCOPED"],
         "authorization_decision_required": True,
         "provider_authority_receipt_required": True,
+        "provider_authority_receipt_max_age_seconds": 300,
+        "provider_authority_receipt_max_future_skew_seconds": 30,
+        "provider_authority_receipt_semantic_checks_required": True,
         "provider_authority_probe_get_only": True,
+        "provider_authority_just_in_time_reprobe_required": True,
+        "provider_authority_continuity_fields": [
+            "authority_mode",
+            "repository_creation_endpoint",
+            "legacy_main_sha",
+            "core_target_exists",
+            "ops_target_exists"
+        ],
         "provider_authority_mode_must_match_decision": True,
         "one_time_authorization_consumption_required": True,
         "unknown_outcome_automatic_retry": False,

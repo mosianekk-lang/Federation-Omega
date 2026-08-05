@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-OPS-CONTRACT-1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "repository_role": "PRIVATE_EXECUTION_PLANE",
   "canonical_source_repository": "mosianekk-lang/Federation-Omega-Core",
   "default_permissions": {
@@ -14,7 +14,10 @@
     "owner_authorization_required": true,
     "candidate_validity_required": true,
     "provider_authority_receipt_required": true,
+    "provider_authority_receipt_max_age_seconds": 300,
     "provider_authority_probe_get_only": true,
+    "provider_authority_just_in_time_reprobe_required": true,
+    "provider_authority_continuity_required": true,
     "provider_authority_mode_must_match_decision": true,
     "provider_mutation_requires_readback": true,
     "unknown_provider_outcome_automatic_retry": false,

@@ -12,7 +12,7 @@ class AuthorityExportContractTests(unittest.TestCase):
         policy = json.loads(
             (ROOT / "phoenix" / "export_policy.json").read_text(encoding="utf-8")
         )
-        self.assertEqual("1.0.9", policy["version"])
+        self.assertEqual("1.0.10", policy["version"])
         required = set(policy["ops"]["required_files"])
         required.update(policy["ops"].get("required_v3_files", []))
         expected = {
@@ -50,6 +50,7 @@ class AuthorityExportContractTests(unittest.TestCase):
         source = (ROOT / "phoenix" / "build_exports_v3.py").read_text(
             encoding="utf-8"
         )
+        self.assertIn('"version": "3.4"', source)
         self.assertIn(
             '"entrypoint": "provider_cutover_authority_bound.py"', source
         )
@@ -63,6 +64,10 @@ class AuthorityExportContractTests(unittest.TestCase):
             '"authorization_base_coordinator": "provider_cutover.py"', source
         )
         self.assertIn('"provider_authority_receipt_required": True', source)
+        self.assertIn('"provider_authority_receipt_max_age_seconds": 300', source)
+        self.assertIn(
+            '"provider_authority_just_in_time_reprobe_required": True', source
+        )
         self.assertIn('"provider_authority_probe_get_only": True', source)
         self.assertNotIn('"entrypoint": "provider_cutover.py"', source)
 
@@ -73,7 +78,7 @@ class AuthorityExportContractTests(unittest.TestCase):
         authority = json.loads(
             (governance / "PROVIDER_AUTHORITY_PROBE_CONTRACT.json").read_text()
         )
-        self.assertEqual("1.2.0", ops["version"])
+        self.assertEqual("1.3.0", ops["version"])
         self.assertEqual(
             "provider_cutover_authority_bound.py",
             ops["canonical_apply_entrypoint"],
@@ -82,9 +87,18 @@ class AuthorityExportContractTests(unittest.TestCase):
             ops["canonical_apply_entrypoint"],
             entrypoint["canonical_apply_entrypoint"],
         )
-        self.assertTrue(ops["authority_rules"]["provider_authority_receipt_required"])
+        rules = ops["authority_rules"]
+        self.assertTrue(rules["provider_authority_receipt_required"])
+        self.assertEqual(300, rules["provider_authority_receipt_max_age_seconds"])
+        self.assertTrue(rules["provider_authority_just_in_time_reprobe_required"])
+        self.assertTrue(rules["provider_authority_continuity_required"])
         self.assertTrue(entrypoint["provider_authority_receipt_required"])
+        self.assertEqual(300, entrypoint["provider_authority_receipt_max_age_seconds"])
+        self.assertTrue(entrypoint["provider_authority_just_in_time_reprobe_required"])
+        self.assertTrue(entrypoint["provider_authority_continuity_drift_invalidates"])
         self.assertTrue(authority["probe_get_only"])
+        self.assertEqual(300, authority["authority_receipt_max_age_seconds"])
+        self.assertTrue(authority["just_in_time_reprobe_required_before_authorization_state"])
         self.assertFalse(authority["credential_value_recorded"])
         self.assertFalse(authority["provider_mutation_performed"])
 

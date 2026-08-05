@@ -281,7 +281,7 @@ class PhoenixExportTests(unittest.TestCase):
             self.assertNotIn("/dispatches", source)
             self.assertNotIn("maybe_dispatch", source)
 
-    def test_v26_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
+    def test_v29_final_receipt_is_hash_bound_and_no_apply_is_claimed(self):
         output = self.root / "v3-output"
         process = subprocess.run(
             [
@@ -306,11 +306,25 @@ class PhoenixExportTests(unittest.TestCase):
         self.assertEqual(hashlib.sha256(canonical).hexdigest(), claimed)
         self.assertFalse(receipt["source_mutation_attempted"])
         engine = receipt["provider_cutover_engine"]
-        self.assertEqual("3.3", engine["version"])
+        self.assertEqual("3.4", engine["version"])
         self.assertEqual("V22", engine["authorization_execution_gate"])
         self.assertEqual("3.1", engine["provider_controller_version"])
         self.assertTrue(engine["authorization_decision_required"])
         self.assertTrue(engine["one_time_authorization_consumption_required"])
+        self.assertEqual(300, engine["provider_authority_receipt_max_age_seconds"])
+        self.assertEqual(30, engine["provider_authority_receipt_max_future_skew_seconds"])
+        self.assertTrue(engine["provider_authority_receipt_semantic_checks_required"])
+        self.assertTrue(engine["provider_authority_just_in_time_reprobe_required"])
+        self.assertEqual(
+            [
+                "authority_mode",
+                "repository_creation_endpoint",
+                "legacy_main_sha",
+                "core_target_exists",
+                "ops_target_exists",
+            ],
+            engine["provider_authority_continuity_fields"],
+        )
         self.assertFalse(engine["unknown_outcome_automatic_retry"])
         self.assertTrue(engine["read_only_outcome_reconciliation"])
         self.assertFalse(engine["outcome_reconciliation_mutation_allowed"])

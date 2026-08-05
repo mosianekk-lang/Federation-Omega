@@ -21,8 +21,13 @@
   "provider_authority_probe_contract": "governance/PROVIDER_AUTHORITY_PROBE_CONTRACT.json",
   "provider_authority_probe_get_only": true,
   "provider_authority_receipt_required": true,
+  "provider_authority_receipt_max_age_seconds": 300,
+  "provider_authority_receipt_max_future_skew_seconds": 30,
+  "provider_authority_semantic_checks_required": true,
+  "provider_authority_just_in_time_reprobe_required": true,
+  "provider_authority_continuity_drift_invalidates": true,
   "provider_authority_selected_repository_installation_blocked": true,
   "provider_receipt_source_sha_binding": true,
-  "schema": "FEDOMEGA-PHOENIX-OPS-APPLY-ENTRYPOINT-3",
+  "schema": "FEDOMEGA-PHOENIX-OPS-APPLY-ENTRYPOINT-4",
   "source_drift_invalidates": true
 }
