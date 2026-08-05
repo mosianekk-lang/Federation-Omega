@@ -140,7 +140,7 @@ class GuardedLauncherTests(unittest.TestCase):
             )
         )
         self.assertEqual(
-            "provider_cutover_authority_bound.py",
+            "provider_cutover_owner_authority_bound.py",
             contract["canonical_apply_entrypoint"],
         )
         self.assertEqual(
@@ -151,6 +151,15 @@ class GuardedLauncherTests(unittest.TestCase):
             contract["candidate_entrypoint_status"],
         )
         self.assertTrue(contract["provider_authority_receipt_required"])
+        self.assertTrue(
+            contract["owner_authorization_provider_receipt_hash_binding"]
+        )
+        self.assertTrue(
+            contract["owner_authorization_repository_creation_endpoint_binding"]
+        )
+        self.assertFalse(
+            contract["owner_authorization_external_commercial_gate_advancement_allowed"]
+        )
         self.assertEqual(
             "DEPRECATED_NON_CANONICAL_DO_NOT_APPLY_DIRECTLY",
             contract["legacy_entrypoint_status"],

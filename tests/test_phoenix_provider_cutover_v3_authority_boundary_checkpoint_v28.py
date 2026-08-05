@@ -149,10 +149,21 @@ class PhoenixProviderAuthorityBoundaryCheckpointV28Tests(unittest.TestCase):
         self.assertEqual("all", contract["installation_repository_selection_required"])
         self.assertFalse(contract["credential_value_recorded"])
 
-    def test_exported_governance_names_authority_bound_route_as_canonical(self):
+    def test_exported_governance_names_owner_authority_bound_route_as_canonical(self):
         self.assertEqual(
-            "provider_cutover_authority_bound.py",
+            "provider_cutover_owner_authority_bound.py",
             self.apply_entrypoint["canonical_apply_entrypoint"],
+        )
+        self.assertTrue(
+            self.apply_entrypoint["owner_authorization_provider_receipt_hash_binding"]
+        )
+        self.assertTrue(
+            self.apply_entrypoint["owner_authorization_repository_creation_endpoint_binding"]
+        )
+        self.assertFalse(
+            self.apply_entrypoint[
+                "owner_authorization_external_commercial_gate_advancement_allowed"
+            ]
         )
         self.assertTrue(self.apply_entrypoint["provider_authority_receipt_required"])
         self.assertTrue(self.apply_entrypoint["provider_authority_probe_get_only"])
@@ -185,10 +196,19 @@ class PhoenixProviderAuthorityBoundaryCheckpointV28Tests(unittest.TestCase):
         )
 
         self.assertEqual(
-            "provider_cutover_authority_bound.py",
+            "provider_cutover_owner_authority_bound.py",
             self.ops_contract["canonical_apply_entrypoint"],
         )
         rules = self.ops_contract["authority_rules"]
+        self.assertTrue(
+            rules["owner_authorization_provider_receipt_hash_binding_required"]
+        )
+        self.assertTrue(
+            rules["owner_authorization_repository_creation_endpoint_binding_required"]
+        )
+        self.assertFalse(
+            rules["owner_authorization_external_commercial_gate_advancement_allowed"]
+        )
         self.assertTrue(rules["provider_authority_receipt_required"])
         self.assertTrue(rules["provider_authority_probe_get_only"])
         self.assertTrue(rules["provider_authority_mode_must_match_decision"])
