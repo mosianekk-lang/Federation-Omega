@@ -1,0 +1,11 @@
+{
+  "acceptance": [
+    "six focused tests pass",
+    "no secret-shaped values",
+    "no provider mutation",
+    "no live handle issuance",
+    "fresh provider receipt required before use"
+  ],
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-ACCEPTANCE-1",
+  "status": "READY_FOR_REPOSITORY_ADMISSION"
+}
