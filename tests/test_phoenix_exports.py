@@ -81,6 +81,12 @@ class PhoenixExportTests(unittest.TestCase):
         (template / "governance" / "OPS_CONTRACT.json").write_text(
             "{}\n", encoding="utf-8"
         )
+        (template / "provider_cutover_owner_authority_bound.py").write_text(
+            "print('owner authority bound')\n", encoding="utf-8"
+        )
+        (template / "provider_cutover_authority_bound.py").write_text(
+            "print('authority bound')\n", encoding="utf-8"
+        )
         (self.root / "phoenix" / "provider_cutover.py").write_text(
             "print('dry-run')\n", encoding="utf-8"
         )
@@ -136,6 +142,8 @@ class PhoenixExportTests(unittest.TestCase):
                     ".gitignore",
                     ".github/CODEOWNERS",
                     "governance/OPS_CONTRACT.json",
+                    "provider_cutover_owner_authority_bound.py",
+                    "provider_cutover_authority_bound.py",
                     "provider_cutover.py",
                 ],
             },
