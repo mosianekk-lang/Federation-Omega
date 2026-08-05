@@ -119,7 +119,7 @@
           "value": "PROVIDER_AUTHORITY_REPAIR_REQUIRED"
         }
       ],
-      "source_fingerprint_sha256": "8a59284296ed32346b8058ac65a82345a90f3813f4a5d49d82b963cb258914b4",
+      "source_fingerprint_sha256": "c12805101aaa0cc58184fcf1230130bc6a0204a46de2497dbf06b40854b9a033",
       "source_id": "SRC-FEVX-CSE-V110-DEPLOYMENT-GATE",
       "source_type": "DEPLOYMENT_GATE_RECEIPT",
       "title": "FEVX CSE v1.1.0 deployment gate receipt"
@@ -162,7 +162,7 @@
           "value": "PROVIDER_AUTHORITY_REPAIR_REQUIRED"
         }
       ],
-      "source_fingerprint_sha256": "703e5bac03d7b06deef774824f69698333fda2b8b98d17e73dadca87b38c9af4",
+      "source_fingerprint_sha256": "3eb82a1cb5d577f5d88004499acf110c0e0676c20da52f6b6224a307f1c11def",
       "source_id": "SRC-FEVX-CSE-V110-RELEASE-NOTES",
       "source_type": "RELEASE_NOTES",
       "title": "FEVX Cognitive Sovereignty Ecology v1.1.0 deployment-hardened candidate"
@@ -233,7 +233,7 @@
           "value": "PROVIDER_AUTHORITY_REPAIR_REQUIRED"
         }
       ],
-      "source_fingerprint_sha256": "d7e888f1c6c10818861f481679ff6a0d0e56ed00d0231af32becb3a48879f800",
+      "source_fingerprint_sha256": "3cd9fd7771d6c22e4894f3fbf7c4e5102ccdeac49899cbe01bbc94c4b6a1200c",
       "source_id": "SRC-FEVX-CSE-V110-VALIDATION",
       "source_type": "VALIDATION_REPORT",
       "title": "FEVX Cognitive Sovereignty Ecology v1.1 validation report"
@@ -304,7 +304,7 @@
           "value": "STATICALLY_VALIDATED_AND_LOCAL_CANARY_PASSED"
         }
       ],
-      "source_fingerprint_sha256": "dcf55bf902f6cb53b7fbe15f17bd593f50f0bfa441d6f9ea7aca3050860b0320",
+      "source_fingerprint_sha256": "e2ab4cc2db0b68f98d3a222802976650c3bf66ce3a5f0c4e1b205f1bd480416a",
       "source_id": "SRC-FEVX-CSE-V110-ARCHIVE-RECEIPT",
       "source_type": "ARCHIVE_VERIFICATION_RECEIPT",
       "title": "FEVX CSE v1.1.0 final archive verification"
