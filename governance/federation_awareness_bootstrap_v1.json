@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-AWARENESS-BOOTSTRAP-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "owner": "Kim Kagiso Mosiane",
   "startup_block": "NCB-002",
   "mandatory_for": [
@@ -12,7 +12,10 @@
     "SUBSTANTIVE_NEW_CHAT_ACTIVATION"
   ],
   "awareness_contract": "governance/federation_surface_awareness_v1.json",
+  "opportunity_foundry_contract": "governance/federation_awareness_opportunity_foundry_v1.json",
+  "opportunity_foundry_implementation": "federation_consolidation/awareness_opportunity_foundry.py",
   "private_manifest_alias": "FEDERATION_AWARENESS_PRIVATE_V1",
+  "private_opportunity_registry_alias": "FEDERATION_OPPORTUNITY_REGISTRY_PRIVATE_V1",
   "private_manifest_hash_source": "governance/federation_surface_awareness_v1.json.private_manifest.logical_sha256",
   "bootstrap_sequence": [
     {
@@ -53,7 +56,7 @@
     },
     {
       "step": 7,
-      "action": "LOAD_FEDOMEGA_NODE_AND_N_DIRECTIVE_POLICIES",
+      "action": "LOAD_FEDOMEGA_NODE_N_DIRECTIVE_AND_AO_CRA_POLICIES",
       "required": true,
       "failure": "BOOTSTRAP_BLOCKED_POLICY"
     },
@@ -95,6 +98,18 @@
     },
     {
       "step": 14,
+      "action": "RUN_AWARENESS_OPPORTUNITY_FOUNDRY_AND_REGISTER_AO_CRA_BUILDS",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_OPPORTUNITY_FOUNDRY"
+    },
+    {
+      "step": 15,
+      "action": "EXECUTE_SAFE_INTERNAL_BUILDS_AND_HOLD_PROVIDER_GATED_EFFECTS",
+      "required": true,
+      "failure": "CYCLE_INCOMPLETE_OPEN_INTERNAL_BUILD"
+    },
+    {
+      "step": 16,
       "action": "EXECUTE_EXACT_ACTIVE_MISSION_AND_RECORD_TERMINAL_LEARNING_EVENT",
       "required": true,
       "failure": "CYCLE_INCOMPLETE_NO_TERMINAL_EVENT"
@@ -102,6 +117,7 @@
   ],
   "route_priority": [
     "FEDERATION_AWARENESS_RESOLVER",
+    "AWARENESS_OPPORTUNITY_FOUNDRY",
     "DIRECT_GOOGLE_CONNECTOR",
     "GITHUB_ACTIONS_A0_A1",
     "LOCAL_RUNTIME",
@@ -110,6 +126,7 @@
   "credential_rules": {
     "raw_values_in_public_source": false,
     "raw_values_in_private_manifest": false,
+    "raw_values_in_private_opportunity_registry": false,
     "raw_values_in_chat": false,
     "handles_may_identify_environment_variable_or_provider_vault_reference": true,
     "stored_reference_proves_availability": false,
@@ -118,6 +135,7 @@
   },
   "continuity_rules": {
     "gmail_is_source_evidence_only": true,
+    "gmail_ci_telemetry_must_be_separated_from_continuity_sources": true,
     "historical_restore_rows_are_provenance_only": true,
     "current_startup_block": "NCB-002",
     "hidden_closed_chat_access_claimed": false,
@@ -126,8 +144,12 @@
   "formation_rules": {
     "formation_engine": "REQUIRED_FOR_NON_TRIVIAL_WORK",
     "alpha_to_omega_foundry": "REQUIRED_FOR_SOLUTION_BUILD_AND_MATERIAL_INNOVATION",
+    "ao_cra": "REQUIRED_FOR_EVERY_MATERIAL_BOUNDARY",
+    "awareness_opportunity_foundry": "REQUIRED_AFTER_SURFACE_AND_ROUTE_READBACK",
     "reuse_before_rebuild": true,
     "competing_routes_required": true,
+    "safe_internal_builds_automatic": true,
+    "provider_gated_effects_held": true,
     "proof_before_promotion": true,
     "negative_results_preserved": true
   },
@@ -135,6 +157,9 @@
     "requires_private_manifest_readback": true,
     "requires_public_contract_readback": true,
     "requires_current_route_readback": true,
+    "requires_opportunity_registry_readback": true,
+    "requires_ao_cra_build_identity_for_each_open_boundary": true,
+    "requires_safe_internal_build_completion_or_exact_blocker": true,
     "requires_terminal_success_failure_or_constraint": true,
     "requires_next_best_automated_pathway": true
   }
