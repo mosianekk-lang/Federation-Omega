@@ -73,7 +73,7 @@ class OwnerExecutionStep2CustodyPacketV40Tests(unittest.TestCase):
         metadata = {
             "source_repository": "mosianekk-lang/Federation-Omega",
             "source_sha": self.v37["merged_main_sha"],
-            "export_policy_version": "1.0.20",
+            "export_policy_version": "1.0.19",
             "core": {"sha256": PACKET.sha256_file(self.core), "size": self.core.stat().st_size},
             "ops": {"sha256": PACKET.sha256_file(self.ops), "size": self.ops.stat().st_size},
         }
@@ -182,7 +182,7 @@ class OwnerExecutionStep2CustodyPacketV40Tests(unittest.TestCase):
         self.assertEqual(0, projection["verified_live_revenue_events"])
         self.assertFalse(projection["full_commercial_maturity"])
         required = set(policy["ops"]["required_files"])
-        self.assertEqual("1.0.20", policy["version"])
+        self.assertEqual("1.0.19", policy["version"])
         self.assertIn("owner_execution_step2_custody_packet.py", required)
         self.assertIn("governance/OWNER_EXECUTION_STEP2_CUSTODY_PACKET_CONTRACT.json", required)
 
