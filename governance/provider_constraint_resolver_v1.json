@@ -1,0 +1,27 @@
+{
+  "authority_ceiling": "A1_INTERNAL",
+  "controls": {
+    "credential_values_prohibited": true,
+    "just_in_time_candidate_binding": true,
+    "private_github_dependency_is_optional": true,
+    "provider_authority_is_never_invented": true,
+    "provider_mutation_performed": false,
+    "provider_native_readback_required": true,
+    "sealed_owner_artifact_route_supported": true
+  },
+  "execution_routes": [
+    "PRIVATE_GITHUB_OPS_WIF",
+    "GCP_NATIVE_SEALED_ARTIFACT",
+    "OWNER_ONLY_SEALED_PACKET"
+  ],
+  "implementation": "federation_consolidation/provider_constraint_resolver.py",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Eliminate avoidable provider dependencies, select an admissible execution plane, and isolate only provider-issued authority gates.",
+  "schema": "FEDOMEGA-PROVIDER-CONSTRAINT-RESOLVER-CONTRACT-1",
+  "truth_boundary": {
+    "alternate_route_is_not_authority": true,
+    "gcp_or_openai_provider_action_remains_external_when_unavailable": true,
+    "owner_only_artifact_is_not_a_secret_broker": true
+  },
+  "version": "1.0.0"
+}
