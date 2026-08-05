@@ -197,7 +197,7 @@ class OwnerExecutionEvidenceIntakeV38Tests(unittest.TestCase):
         self.assertEqual(0, projection["verified_live_revenue_events"])
         self.assertFalse(projection["full_commercial_maturity"])
         required = set(policy["ops"]["required_files"])
-        self.assertEqual("1.0.19", policy["version"])
+        self.assertEqual("1.0.20", policy["version"])
         self.assertIn("owner_execution_evidence_intake.py", required)
         self.assertIn(
             "governance/OWNER_EXECUTION_EVIDENCE_INTAKE_CONTRACT.json", required

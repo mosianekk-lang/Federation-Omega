@@ -110,7 +110,7 @@ class OwnerExecutionStep1BindingV39Tests(unittest.TestCase):
         metadata = {
             "source_repository": "mosianekk-lang/Federation-Omega",
             "source_sha": self.v37["merged_main_sha"],
-            "export_policy_version": "1.0.19",
+            "export_policy_version": "1.0.20",
             "core": {
                 "sha256": PACKET.sha256_file(self.core),
                 "size": self.core.stat().st_size,
@@ -253,7 +253,7 @@ class OwnerExecutionStep1BindingV39Tests(unittest.TestCase):
         self.assertEqual(0, projection["verified_live_revenue_events"])
         self.assertFalse(projection["full_commercial_maturity"])
         required = set(policy["ops"]["required_files"])
-        self.assertEqual("1.0.19", policy["version"])
+        self.assertEqual("1.0.20", policy["version"])
         self.assertIn("owner_execution_step1_binding.py", required)
         self.assertIn(
             "governance/OWNER_EXECUTION_STEP1_BINDING_CONTRACT.json", required
