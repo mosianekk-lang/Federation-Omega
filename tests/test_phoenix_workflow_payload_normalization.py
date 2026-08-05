@@ -14,7 +14,6 @@ class PhoenixWorkflowPayloadNormalizationTests(unittest.TestCase):
     def test_empty_payload_is_normalized_before_jq(self) -> None:
         empty_guard = 'if [[ -z "${payload}" ]]; then'
         fallback = "payload='{}'"
-        first_jq = 'workflow_id="$(jq -r \' .id // 0\''
         self.assertIn(empty_guard, self.workflow)
         self.assertIn(fallback, self.workflow)
         self.assertLess(self.workflow.index(empty_guard), self.workflow.index(fallback))
