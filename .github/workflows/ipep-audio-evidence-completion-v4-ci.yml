@@ -1,0 +1,42 @@
+name: IPEP Audio Evidence Completion v4 CI
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'ipep/audio_evidence_v4/**'
+      - '.github/workflows/ipep-audio-evidence-completion-v4-ci.yml'
+  pull_request:
+    paths:
+      - 'ipep/audio_evidence_v4/**'
+      - '.github/workflows/ipep-audio-evidence-completion-v4-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ipep-audio-evidence-completion-v4-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install package and tests
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pytest
+          python -m pip install -e ipep/audio_evidence_v4
+      - name: Compile
+        run: python -m compileall -q ipep/audio_evidence_v4/evidenceops_audio_v4
+      - name: Run tests
+        run: pytest -q ipep/audio_evidence_v4/tests
+      - name: Safety boundary scan
+        run: |
+          ! grep -RInE '(sk-[A-Za-z0-9_-]{20,}|OPENAI_API_KEY=|GEMINI_API_KEY=|GOOGLE_API_KEY=)' ipep/audio_evidence_v4
