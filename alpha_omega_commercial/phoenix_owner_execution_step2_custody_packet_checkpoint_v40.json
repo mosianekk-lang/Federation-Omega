@@ -1,0 +1,53 @@
+{
+  "capability_revision": "AO-COMMERCIAL-OWNER-EXECUTION-STEP2-CUSTODY-PACKET-V40",
+  "checkpoint_sha256": "acf59c8dad917bbd9054d31cdabf37ad7d79bb038f5f7554423f79eb5894e919",
+  "dependency_path": [
+    "C03",
+    "C06",
+    "C07",
+    "C11",
+    "C14",
+    "C15"
+  ],
+  "external_gates": {
+    "cloud_run_operation": "NOT_PROVEN",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "full_commercial_maturity": false,
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "verified_live_revenue_events": 0
+  },
+  "next_gate": "EXACT_HEAD_PROVIDER_PROOF_THEN_OWNER_RESERVED_CUSTODY_CEREMONY",
+  "operational_slice": {
+    "authority": "OWNER_RESERVED",
+    "external_commercial_gate_advanced": false,
+    "external_communication_performed": false,
+    "governance_contract": "phoenix/ops-template/governance/OWNER_EXECUTION_STEP2_CUSTODY_PACKET_CONTRACT.json",
+    "implementation": "phoenix/ops-template/owner_execution_step2_custody_packet.py",
+    "owner_action_performed": false,
+    "owner_input_values_recorded": false,
+    "provider_apply_performed": false,
+    "provider_request_performed": false,
+    "step_id": "EXECUTE_OWNER_CUSTODY_CEREMONY",
+    "step_sequence": 2
+  },
+  "owner_execution_truth": {
+    "owner_attestation_present": false,
+    "owner_authorization_present": false,
+    "owner_controlled_custody_proven": false,
+    "owner_execution_present": false,
+    "owner_identity_authenticity_proven": false,
+    "provider_apply_proven": false,
+    "provider_authority_proven": false,
+    "provider_native_outcome_proven": false
+  },
+  "predecessor_main_sha": "a5edaa441fe434f2518e6edbd64eb9cb5ea45f8e",
+  "predecessor_release_receipt": "alpha_omega_commercial/phoenix_owner_execution_step1_binding_release_receipt_v39.json",
+  "predecessor_release_receipt_sha256": "5d7d7226d60e1eb7f7b3cd96d9194650a3e22c4799b2832f2406c495c61632c0",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "schema": "AO-COMMERCIAL-PHOENIX-OWNER-EXECUTION-STEP2-CUSTODY-PACKET-CHECKPOINT-40",
+  "status": "OWNER_EXECUTION_STEP2_CUSTODY_PACKET_IMPLEMENTED_PROVIDER_PROOF_REQUIRED_OWNER_EXECUTION_REQUIRED"
+}
