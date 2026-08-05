@@ -1,0 +1,7 @@
+{
+  "branch": "federation/provider-authority-attachment-v1",
+  "local_tests": "6_PASS",
+  "provider_effects": 0,
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-FINAL-PREFLIGHT-1",
+  "status": "READY_TO_OPEN_PR"
+}
