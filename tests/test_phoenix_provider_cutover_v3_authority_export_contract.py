@@ -12,7 +12,7 @@ class AuthorityExportContractTests(unittest.TestCase):
         policy = json.loads(
             (ROOT / "phoenix" / "export_policy.json").read_text(encoding="utf-8")
         )
-        self.assertEqual("1.0.17", policy["version"])
+        self.assertEqual("1.0.18", policy["version"])
         required = set(policy["ops"]["required_files"])
         required.update(policy["ops"].get("required_v3_files", []))
         expected = {
@@ -28,6 +28,7 @@ class AuthorityExportContractTests(unittest.TestCase):
             "provider_authenticated_owner_attestation.py",
             "provider_attested_authorization.py",
             "owner_execution_handoff.py",
+            "owner_execution_evidence_intake.py",
             "provider_cutover.py",
             "provider_cutover_authorization_use.py",
             "provider_cutover_v3_1.py",
@@ -42,6 +43,7 @@ class AuthorityExportContractTests(unittest.TestCase):
             "governance/PROVIDER_AUTHENTICATED_OWNER_ATTESTATION_CONTRACT.json",
             "governance/PROVIDER_ATTESTED_AUTHORIZATION_CONTRACT.json",
             "governance/OWNER_EXECUTION_HANDOFF_CONTRACT.json",
+            "governance/OWNER_EXECUTION_EVIDENCE_INTAKE_CONTRACT.json",
             "governance/OPS_CONTRACT.json",
         }
         self.assertTrue(expected.issubset(required), sorted(expected - required))
