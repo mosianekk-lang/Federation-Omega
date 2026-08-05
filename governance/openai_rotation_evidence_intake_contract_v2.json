@@ -1,0 +1,45 @@
+{
+  "authority_ceiling": "A1_INTERNAL",
+  "controls": {
+    "completion_claim_before_all_gates": false,
+    "credential_value_recording_allowed": false,
+    "every_evidence_item_self_hash_required": true,
+    "external_effect_allowed": false,
+    "freshness_enforced_for_runtime_and_canary_evidence": true,
+    "plaintext_observation_allowed": false,
+    "provider_mutation_allowed": false,
+    "provider_native_required_except_key_creation_owner_attestation": true,
+    "provider_reference_unique": true,
+    "provider_request_allowed": false,
+    "semantic_fingerprint_unique_per_destination": true
+  },
+  "implementation": "ops/openai_rotation_evidence_intake.py",
+  "manifest": "governance/openai_credential_rotation_manifest.json",
+  "outputs": [
+    "HASH_BOUND_EVIDENCE_INTAKE_RECEIPT",
+    "OPEN_GATE_SCHEDULE",
+    "COMPATIBLE_REDACTED_CLOSURE_RECEIPT_CANDIDATE_WHEN_COMPLETE"
+  ],
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Convert redacted provider-native rotation receipts into a hash-bound coverage matrix without accepting credential values or performing provider actions.",
+  "required_gates": [
+    "KEY_CREATION_ASSERTION",
+    "DESTINATION_SECRET_METADATA_READBACK",
+    "DESTINATION_RUNTIME_IDENTITY_READBACK",
+    "DESTINATION_SECRET_REFERENCE_BINDING_READBACK",
+    "DESTINATION_ROLLBACK_TARGET_CAPTURE",
+    "DESTINATION_CANARY_HEALTH",
+    "DESTINATION_SEMANTIC_PROBE",
+    "EXPOSED_KEY_REVOCATION",
+    "EXPOSED_KEY_REJECTION"
+  ],
+  "schema": "FEDOMEGA-OPENAI-ROTATION-EVIDENCE-INTAKE-CONTRACT-2",
+  "truth_boundary": {
+    "generic_health_proves_semantic_execution": false,
+    "local_validation_proves_key_revocation": false,
+    "owner_assertion_proves_secret_binding": false,
+    "provider_native_readback_required_for_closure": true,
+    "source_implementation_proves_provider_execution": false
+  },
+  "version": "2.0.0"
+}
