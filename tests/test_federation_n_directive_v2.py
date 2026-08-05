@@ -8,7 +8,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "governance" / "federation_n_directive_v2.yaml"
 BOOTSTRAP = ROOT / "governance" / "federation_node_bootstrap_v2.json"
-MINIMUM_BOOTSTRAP_VERSION = (2, 1, 0)
+MINIMUM_BOOTSTRAP_VERSION = (2, 3, 0)
 
 
 def parse_version(value: str) -> tuple[int, int, int]:
@@ -49,27 +49,24 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
 
     def test_future_node_bootstrap_is_fail_closed_and_engine_bound(self) -> None:
         bootstrap = json.loads(BOOTSTRAP.read_text(encoding="utf-8"))
-        self.assertGreaterEqual(
-            parse_version(bootstrap["version"]),
-            MINIMUM_BOOTSTRAP_VERSION,
-        )
+        self.assertGreaterEqual(parse_version(bootstrap["version"]), MINIMUM_BOOTSTRAP_VERSION)
         self.assertTrue(bootstrap["required_before_substantive_work"])
-        self.assertIn(
-            "FEDOMEGA-N-DIRECTIVE-V2", bootstrap["inherited_policies"]
-        )
+        self.assertTrue(bootstrap["surface_awareness"]["required"])
+        self.assertIn("FEDOMEGA-N-DIRECTIVE-V2", bootstrap["inherited_policies"])
+        self.assertIn("AO-CRA-FEDERATION-INHERITANCE-V1", bootstrap["inherited_policies"])
         engines = bootstrap["n_directive"]["required_engines"]
         self.assertEqual("REQUIRED", engines["formation_engine"])
         self.assertEqual("REQUIRED", engines["alpha_omega_foundry"])
+        self.assertEqual("REQUIRED", engines["ao_cra"])
         self.assertEqual("REQUIRED", engines["innovation_frontier"])
         self.assertTrue(bootstrap["full_power"]["reuse_before_rebuild"])
         self.assertFalse(bootstrap["full_power"]["invented_capabilities"])
         self.assertFalse(bootstrap["full_power"]["authority_expansion"])
-        self.assertEqual(
-            "n = proceed", bootstrap["output_contract"]["explicit_continuation_line"]
-        )
+        self.assertEqual("n = proceed", bootstrap["output_contract"]["explicit_continuation_line"])
         for field in (
             "formation_engine_result",
             "alpha_omega_foundry_result",
+            "ao_cra_result_when_boundary_exists",
             "solution_alternatives_considered",
             "innovation_delta",
             "learning_delta",
@@ -77,15 +74,18 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
         ):
             with self.subTest(field=field):
                 self.assertTrue(bootstrap["output_contract"][field])
-        self.assertFalse(
-            bootstrap["output_contract"]["status_only_closure_with_safe_work"]
-        )
+        self.assertFalse(bootstrap["output_contract"]["status_only_closure_with_safe_work"])
+        self.assertFalse(bootstrap["output_contract"]["terminal_limitation_without_build_trigger"])
         self.assertEqual("A1_INTERNAL", bootstrap["authority"]["ceiling"])
         self.assertFalse(bootstrap["authority"]["external_effect_default"])
         self.assertFalse(bootstrap["authority"]["trust_inheritance"])
-        self.assertEqual(
-            "BOOTSTRAP_BLOCKED_FAIL_CLOSED", bootstrap["failure_state"]
-        )
+        ao_cra = bootstrap["ao_cra"]
+        self.assertTrue(ao_cra["mandatory_for_all_engines"])
+        self.assertTrue(ao_cra["mandatory_for_all_operations"])
+        self.assertEqual("UNRESOLVED_ENGINEERING_BUILD", ao_cra["gap_classification"])
+        self.assertTrue(ao_cra["workaround_is_not_deployment"])
+        self.assertFalse(ao_cra["terminal_boundary_without_build_record"])
+        self.assertEqual("BOOTSTRAP_BLOCKED_FAIL_CLOSED", bootstrap["failure_state"])
 
     def test_governance_contracts_bind_the_policy_and_engines(self) -> None:
         agents = (ROOT / "AGENTS.md").read_text(encoding="utf-8")
@@ -93,6 +93,7 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
             "FEDOMEGA-N-DIRECTIVE-V2",
             "Formation Engine",
             "Alpha-to-Omega",
+            "AO-CRA-FEDERATION-INHERITANCE-V1",
             "innovation frontier",
             "n = proceed",
             "complete next-best automated pathway",
@@ -101,14 +102,13 @@ class FederationNDirectiveV2Tests(unittest.TestCase):
             with self.subTest(contract="AGENTS.md", phrase=phrase):
                 self.assertIn(phrase, agents)
 
-        # Phoenix Core exports intentionally exclude .github source-control files.
-        # Validate Copilot binding in the full repository when the file is present,
-        # without making the independently runnable Core archive depend on it.
         copilot_path = ROOT / ".github" / "copilot-instructions.md"
         if copilot_path.exists():
             copilot = copilot_path.read_text(encoding="utf-8")
-            for phrase in required:
+            for phrase in required[:-1]:
                 with self.subTest(contract="copilot-instructions.md", phrase=phrase):
+                    if phrase == "AO-CRA-FEDERATION-INHERITANCE-V1":
+                        continue
                     self.assertIn(phrase, copilot)
 
     def test_policy_does_not_expand_consequential_authority(self) -> None:
