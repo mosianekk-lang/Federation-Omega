@@ -3,7 +3,7 @@
   "policy_id": "AO-CRA-FEDERATION-INHERITANCE-V1",
   "version": "1.0.0",
   "owner": "Kagiso Kim Mosiane",
-  "source_cycle": "CYC-CBR-20260805-033",
+  "source_cycle": "CYC-CBR-20260805-034",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "purpose": "Convert every material capability gap or operational boundary into a governed engineering build, workaround, proof plan, learning event and capability-change trigger across all Federation engines and operations.",
