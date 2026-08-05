@@ -1,0 +1,17 @@
+{
+  "checks": [
+    "identity_exact_match",
+    "project_id_exact_match",
+    "project_number_exact_match",
+    "sealed_packet_sha256_valid",
+    "service_state_readback",
+    "metadata_only_secret_describe",
+    "cloud_run_metadata_readback",
+    "no_secret_payload_fields",
+    "handle_lifetime_max_600_seconds",
+    "handle_revocation"
+  ],
+  "provider_mutation_performed": false,
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-CHECKS-1",
+  "secret_values_recorded": false
+}
