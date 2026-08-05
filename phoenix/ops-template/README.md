@@ -15,11 +15,14 @@ This repository is created by the Phoenix cutover programme. It contains deploym
 - An unknown provider outcome is never retried automatically.
 - Outcome reconciliation is GET-only and must prove an exact match to the authorised Core and Ops archives before reconstructing a receipt.
 - Provider authority discovery is GET-only and records no credential value.
+- A provider-authority receipt is valid for at most 300 seconds and must pass semantic checks as well as hash verification.
+- Apply requires a second just-in-time GET-only authority probe before any authorization-use state is created.
+- Authority mode, repository-creation route, legacy source head and target-repository topology must remain unchanged between the admitted receipt and the just-in-time probe.
 - Candidate validity, provider authority and owner authorization must all match the same source, Core and Ops bindings before apply.
 
 ## Canonical cutover route
 
-`provider_cutover_authority_bound.py` is the only supported apply entrypoint. It requires a hash-valid provider-authority receipt and delegates through the candidate validator, live-source guard, one-time authorization-use state machine and exact provider readback.
+`provider_cutover_authority_bound.py` is the only supported apply entrypoint. It requires a hash-valid and recent provider-authority receipt, performs a just-in-time GET-only authority continuity probe, and delegates only after both proofs agree. It then passes through the candidate validator, live-source guard, one-time authorization-use state machine and exact provider readback.
 
 `provider_cutover_candidate.py` and `provider_cutover_guarded.py` are internal components and must not be invoked directly. `provider_cutover.py` is a deprecated base coordinator and is not a supported direct apply route.
 
