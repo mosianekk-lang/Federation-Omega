@@ -1,9 +1,22 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V2",
-  "version": "2.1.0",
-  "owner": "Kagiso Kim Mosiane",
+  "version": "2.2.0",
+  "owner": "Kim Kagiso Mosiane",
   "required_before_substantive_work": true,
+  "surface_awareness": {
+    "required": true,
+    "public_contract": "governance/federation_surface_awareness_v1.json",
+    "bootstrap_contract": "governance/federation_awareness_bootstrap_v1.json",
+    "private_manifest_alias": "FEDERATION_AWARENESS_PRIVATE_V1",
+    "startup_block": "NCB-002",
+    "private_exact_pointer_in_public_source": false,
+    "runtime_pointer_and_hash_readback_required": true,
+    "credential_values_recorded": false,
+    "provider_authority_revalidation_required": true
+  },
   "inherited_policies": [
+    "FEDOMEGA-SURFACE-AWARENESS-V1",
+    "FEDOMEGA-AWARENESS-BOOTSTRAP-V1",
     "FEDOMEGA-N-DIRECTIVE-V2",
     "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1"
   ],
@@ -17,6 +30,10 @@
       "continuous_learning": "REQUIRED"
     },
     "required_sequence": [
+      "LOAD_CURRENT_GITHUB_MAIN_HEAD",
+      "LOAD_SURFACE_AWARENESS_PUBLIC_CONTRACT",
+      "RESOLVE_PRIVATE_AWARENESS_ALIAS_AND_VERIFY_HASH",
+      "LOAD_CURRENT_CANONICAL_STATE_AND_ROUTE_AUTHORITY",
       "LOAD_LATEST_VERIFIED_CHECKPOINT",
       "LOAD_HEARTBEAT_CAPABILITIES_LESSONS_TRIGGERS_BLOCKERS_CORRECTIONS",
       "FORMATION_INTENT_LOCK_AND_OBJECTIVE_MEANS_SEPARATION",
@@ -26,6 +43,8 @@
       "ALPHA_OMEGA_REUSE_COMPOSITION_AND_MINIMUM_COMPLETE_BUILD",
       "GENERATE_BOUNDED_INNOVATION_FRONTIER",
       "SELECT_HIGHEST_VALUE_ELIGIBLE_PACKET",
+      "REVALIDATE_SELECTED_CONNECTOR_IDENTITY_TARGET_SCOPE_ACTION_AND_READBACK",
+      "RESOLVE_CREDENTIALS_BY_NON_SECRET_HANDLE_ONLY",
       "EXECUTE_SAFE_AUTHORISED_WORK",
       "VALIDATE_SIMULATE_RED_TEAM_AND_FAILURE_INJECT_WHERE_MATERIAL",
       "READBACK_HEALTH_PERSISTENCE_ROLLBACK_AND_PROOF",
@@ -41,6 +60,8 @@
     "invented_capabilities": false,
     "authority_expansion": false,
     "trust_transfer": false,
+    "stored_credential_reference_proves_availability": false,
+    "stored_credential_reference_proves_authority": false,
     "reuse_before_rebuild": true,
     "multi_stream_safe_parallelism": true,
     "effectful_mutations_serialized": true
@@ -75,7 +96,9 @@
     "ceiling": "A1_INTERNAL",
     "external_effect_default": false,
     "trust_inheritance": false,
-    "consequential_actions_owner_reserved": true
+    "consequential_actions_owner_reserved": true,
+    "raw_credential_retrieval_or_persistence": false,
+    "provider_native_readback_required": true
   },
   "master_state": {
     "chapter": "CH-073",
@@ -85,7 +108,13 @@
     "policy_contract_sha256": "2f9fcacb5c1c0a2d336668742c787706c9854dba5fb0df6868d4f3c232fe3ed8"
   },
   "bootstrap_pass_conditions": [
-    "policy file parses",
+    "surface awareness and bootstrap files parse",
+    "current GitHub main is read before source-bound action",
+    "private awareness alias resolves through Kim Dataverse",
+    "private manifest logical hash matches the public contract",
+    "current canonical state and route authority are read",
+    "credential references remain non-secret handles",
+    "provider availability and authority are revalidated before use",
     "policy id, version and contract hash match the Master record",
     "Formation Engine is mandatory",
     "Alpha-to-Omega Foundry is mandatory",
@@ -94,7 +123,7 @@
     "learning contract requires terminal and innovation-event capture",
     "authority ceiling remains A1_INTERNAL",
     "external effect remains false",
-    "no trust transfer is enabled"
+    "no hidden cross-chat access or trust transfer is enabled"
   ],
   "failure_state": "BOOTSTRAP_BLOCKED_FAIL_CLOSED"
 }

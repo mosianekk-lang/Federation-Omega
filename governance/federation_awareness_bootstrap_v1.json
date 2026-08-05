@@ -1,0 +1,141 @@
+{
+  "schema": "FEDOMEGA-AWARENESS-BOOTSTRAP-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "startup_block": "NCB-002",
+  "mandatory_for": [
+    "FEDERATION_OMEGA_NODES",
+    "FORMATION_INNOVATION_ENGINE",
+    "ALPHA_TO_OMEGA_FOUNDRY",
+    "SECONDARY_BRAIN",
+    "KIM_DATAVERSE_ADAPTERS",
+    "SUBSTANTIVE_NEW_CHAT_ACTIVATION"
+  ],
+  "awareness_contract": "governance/federation_surface_awareness_v1.json",
+  "private_manifest_alias": "FEDERATION_AWARENESS_PRIVATE_V1",
+  "private_manifest_hash_source": "governance/federation_surface_awareness_v1.json.private_manifest.logical_sha256",
+  "bootstrap_sequence": [
+    {
+      "step": 1,
+      "action": "READ_CURRENT_GITHUB_MAIN_HEAD",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_STALE_SOURCE"
+    },
+    {
+      "step": 2,
+      "action": "LOAD_AND_VERIFY_PUBLIC_AWARENESS_CONTRACT",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_AWARENESS_CONTRACT"
+    },
+    {
+      "step": 3,
+      "action": "RESOLVE_PRIVATE_MANIFEST_ALIAS_THROUGH_KIM_DATAVERSE",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_PRIVATE_POINTER"
+    },
+    {
+      "step": 4,
+      "action": "VERIFY_PRIVATE_MANIFEST_LOGICAL_SHA256",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_PRIVATE_MANIFEST_INTEGRITY"
+    },
+    {
+      "step": 5,
+      "action": "READ_KIM_DATAVERSE_CONTROL_BOUNDARIES_ALIASES_AND_CURRENT_RECEIPT",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_KIM_DATAVERSE_READBACK"
+    },
+    {
+      "step": 6,
+      "action": "READ_FULL_OPERATING_SURFACE_INDEX_CANONICAL_STATE_AND_ROUTE_AUTHORITY",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_ROUTE_STATE"
+    },
+    {
+      "step": 7,
+      "action": "LOAD_FEDOMEGA_NODE_AND_N_DIRECTIVE_POLICIES",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_POLICY"
+    },
+    {
+      "step": 8,
+      "action": "INITIALISE_FORMATION_INNOVATION_ENGINE_AND_ALPHA_TO_OMEGA_FOUNDRY",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_ENGINE_CONTRACT"
+    },
+    {
+      "step": 9,
+      "action": "LOAD_CURRENT_STARTUP_POINTER_NCB_002_AND_RP_AWARENESS_20260805_001",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_STARTUP_POINTER"
+    },
+    {
+      "step": 10,
+      "action": "LOAD_RELEVANT_DIRECT_RUNTIME_CLOUDOPS_AND_CONTINUOUS_LEARNING_STATE",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_LEDGER_READBACK"
+    },
+    {
+      "step": 11,
+      "action": "LOAD_GMAIL_CONTINUITY_SOURCES_ONLY_WHEN_MISSION_REQUIRES",
+      "required": false,
+      "failure": "SOURCE_UNAVAILABLE_USE_CANONICAL_DRIVE_AND_GITHUB"
+    },
+    {
+      "step": 12,
+      "action": "REVALIDATE_SELECTED_CONNECTOR_IDENTITY_TARGET_SCOPE_ACTION_AND_READBACK",
+      "required": true,
+      "failure": "ROUTE_BLOCKED_EXACT_REMEDIATION_REQUIRED"
+    },
+    {
+      "step": 13,
+      "action": "RESOLVE_CREDENTIALS_BY_NON_SECRET_HANDLE_ONLY",
+      "required": true,
+      "failure": "AUTHORITY_BLOCKED_NO_PRIVATE_HANDLE"
+    },
+    {
+      "step": 14,
+      "action": "EXECUTE_EXACT_ACTIVE_MISSION_AND_RECORD_TERMINAL_LEARNING_EVENT",
+      "required": true,
+      "failure": "CYCLE_INCOMPLETE_NO_TERMINAL_EVENT"
+    }
+  ],
+  "route_priority": [
+    "FEDERATION_AWARENESS_RESOLVER",
+    "DIRECT_GOOGLE_CONNECTOR",
+    "GITHUB_ACTIONS_A0_A1",
+    "LOCAL_RUNTIME",
+    "MISSION_SPECIFIC_OPTIONAL_PROVIDER_ROUTE"
+  ],
+  "credential_rules": {
+    "raw_values_in_public_source": false,
+    "raw_values_in_private_manifest": false,
+    "raw_values_in_chat": false,
+    "handles_may_identify_environment_variable_or_provider_vault_reference": true,
+    "stored_reference_proves_availability": false,
+    "stored_reference_proves_authority": false,
+    "fresh_provider_readback_required": true
+  },
+  "continuity_rules": {
+    "gmail_is_source_evidence_only": true,
+    "historical_restore_rows_are_provenance_only": true,
+    "current_startup_block": "NCB-002",
+    "hidden_closed_chat_access_claimed": false,
+    "current_context_must_be_loaded_through_authorised_connectors": true
+  },
+  "formation_rules": {
+    "formation_engine": "REQUIRED_FOR_NON_TRIVIAL_WORK",
+    "alpha_to_omega_foundry": "REQUIRED_FOR_SOLUTION_BUILD_AND_MATERIAL_INNOVATION",
+    "reuse_before_rebuild": true,
+    "competing_routes_required": true,
+    "proof_before_promotion": true,
+    "negative_results_preserved": true
+  },
+  "completion": {
+    "requires_private_manifest_readback": true,
+    "requires_public_contract_readback": true,
+    "requires_current_route_readback": true,
+    "requires_terminal_success_failure_or_constraint": true,
+    "requires_next_best_automated_pathway": true
+  }
+}

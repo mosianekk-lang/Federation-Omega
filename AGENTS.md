@@ -4,6 +4,22 @@ This repository is governed by Phoenix Airlock, source provenance, workflow quar
 
 These instructions apply to every automated coding agent, bot, assistant, local runner and repository-integrated AI operating anywhere in this tree.
 
+## Unified surface awareness bootstrap
+
+Before substantive work, every Federation Omega, Formation Innovation Engine, Alpha-to-Omega Foundry, Secondary Brain or Kim Dataverse-aware agent must:
+
+1. Read the current GitHub `main` head.
+2. Load `governance/federation_surface_awareness_v1.json` and `governance/federation_awareness_bootstrap_v1.json`.
+3. Resolve `FEDERATION_AWARENESS_PRIVATE_V1` through the private Kim Dataverse alias registry when the authorised Google connector is available.
+4. Verify the private logical manifest SHA-256 recorded by the public awareness contract.
+5. Read the current canonical-state and route-authority records before choosing an execution surface.
+6. Load `governance/federation_node_bootstrap_v2.json` and `governance/federation_n_directive_v2.yaml`.
+7. Resolve credentials only through non-secret capability handles and revalidate provider identity, target, scope, action and readback immediately before use.
+
+The awareness layer is a resolver, not an authority grant. A stored credential reference does not prove availability or authority. Gmail continuity messages are source evidence, not current runtime state. Historical restore rows are provenance only when `NCB-002` or a later compatible startup block exists. Exact private Drive pointers, Gmail message IDs and provider metadata must remain outside public source. No hidden access to closed chats, universal memory or background execution may be inferred from the awareness contracts.
+
+If the private manifest cannot be resolved or its hash does not match, fail closed with an awareness-bootstrap constraint and use only independently verified public-safe source until the private pointer is restored.
+
 ## Mandatory source-change route
 
 1. Never commit or push directly to `main`.
@@ -57,10 +73,10 @@ These instructions apply to every automated coding agent, bot, assistant, local 
 - Full power means all relevant capabilities that are actually available, authorised, safe and evidence-matched. It never means invented tools, hidden runtimes, authority expansion, trust transfer or bypass of owner-reserved decisions.
 - Safe discovery, evidence mapping, competing solution formation, architecture, simulation, testing, red-team review and learning extraction may run in parallel. Shared-target, provider or external-effect mutations must be serialised.
 - Every substantive output must report the Formation Engine result, Alpha-to-Omega result, alternatives considered, reuse-versus-build decision, selected solution, innovation delta, learning delta, proof, maturity, next experiment, complete next-best automated pathway and the explicit reusable line `n = proceed`.
-- A new Federation or Master-Bible-governed node must pass `governance/federation_node_bootstrap_v2.json` before substantive work. The bootstrap must inherit the Formation Engine, Alpha-to-Omega Foundry, innovation frontier, terminal learning-event contract, `A1_INTERNAL` ceiling, no-external-effect default and no-trust-transfer rule.
+- A new Federation or Master-Bible-governed node must pass `governance/federation_node_bootstrap_v2.json` before substantive work. The bootstrap must inherit the surface-awareness contracts, Formation Engine, Alpha-to-Omega Foundry, innovation frontier, terminal learning-event contract, `A1_INTERNAL` ceiling, no-external-effect default and no-trust-transfer rule.
 - Current registered nodes inherit the policy through the Master Bible Node Policy Inheritance register and apply it when next activated or synchronized through an authorised route.
 - The directive does not create invisible access to closed chats, a hidden background runtime, consequential external authority or trust transfer.
-- Omission of either engine, the bounded innovation scan, the complete next-best automated pathway, `n = proceed`, or material learning capture is a fail-closed defect that must be repaired and retested.
+- Omission of the awareness bootstrap, either engine, the bounded innovation scan, the complete next-best automated pathway, `n = proceed`, or material learning capture is a fail-closed defect that must be repaired and retested.
 
 ## Credentials and external authority
 
