@@ -105,7 +105,7 @@ class FederationSurfaceAwarenessTests(unittest.TestCase):
 
     def test_node_and_agent_bootstraps_require_awareness(self) -> None:
         awareness = self.node["surface_awareness"]
-        self.assertEqual("2.2.0", self.node["version"])
+        self.assertEqual("2.3.0", self.node["version"])
         self.assertEqual("Kim Kagiso Mosiane", self.node["owner"])
         self.assertTrue(awareness["required"])
         self.assertEqual(
