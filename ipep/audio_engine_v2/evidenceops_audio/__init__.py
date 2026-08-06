@@ -8,6 +8,11 @@ from .core import (
     ProviderResult,
     load_manifest,
 )
+from .unit_accounting import (
+    UnitAccountingError,
+    UnitReceipt,
+    reconcile_unit_accounting,
+)
 
 __all__ = [
     "AudioManifest",
@@ -16,5 +21,8 @@ __all__ = [
     "ManifestError",
     "ProviderPreflight",
     "ProviderResult",
+    "UnitAccountingError",
+    "UnitReceipt",
     "load_manifest",
+    "reconcile_unit_accounting",
 ]
