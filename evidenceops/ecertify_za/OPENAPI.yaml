@@ -1,0 +1,31 @@
+openapi: 3.1.0
+info:
+  title: EvidenceOps eCertify ZA Assurance API
+  version: 0.2.0
+  description: Provider-bound identity receipt validation and legal document assurance routing. Raw sensitive identity media is outside this API boundary.
+paths:
+  /health:
+    get:
+      responses:
+        '200': {description: Service health}
+  /v1/route:
+    post:
+      summary: Determine the minimum legally sufficient document-assurance lane
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [requested_status]
+              properties:
+                requested_status: {type: string}
+                recipient_accepts_digital_assurance: {type: boolean, default: false}
+      responses:
+        '200': {description: Route decision}
+  /v1/identity/receipt/assess:
+    post:
+      summary: Validate a signed identity-provider verification receipt
+      description: EvidenceOps does not perform biometric matching or ingest raw biometric media through this endpoint.
+      responses:
+        '200': {description: Identity receipt decision}
