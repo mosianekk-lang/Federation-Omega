@@ -88,7 +88,11 @@ class LedgerTests(unittest.TestCase):
 
 class ServiceTests(unittest.TestCase):
     def test_certified_record_remains_commissioner_gated(self):
-        auth=HMACReceiptAuthenticator({"approved-idp":b"secret"},{"approved-idp":{"k1"}},300,ReplayStore());s=ECertifyService(authenticator=auth);ident=s.assess_identity(auth.verify(envelope(),NOW),True);rec=s.create_verification_record(document_bytes=b"hello",requested_status="certified copy",identity_assessment=ident);self.assertEqual(rec.status,"COMMISSIONER_EVENT_REQUIRED");self.assertEqual(len(rec.document_sha256),64);self.assertTrue(s.ledger.verify());auth.replay_store.close()
+        auth=HMACReceiptAuthenticator({"approved-idp":b"secret"},{"approved-idp":{"k1"}},300,ReplayStore());s=ECertifyService(authenticator=auth);ident=s.assess_identity(auth.verify(envelope(),NOW),True);rec=s.create_verification_record(document_bytes=b"hello",requested_status="certified copy",identity_assessment=ident);self.assertEqual(rec.status,"COMMISSIONER_EVENT_REQUIRED");self.assertEqual(len(rec.document_sha256),64);self.assertTrue(s.ledger.verify());s.close()
+    def test_service_context_manager_closes_resources(self):
+        auth=HMACReceiptAuthenticator({"approved-idp":b"secret"},{"approved-idp":{"k1"}},300,ReplayStore())
+        with ECertifyService(authenticator=auth) as service:self.assertFalse(service._closed)
+        self.assertTrue(service._closed)
 
 class DeploymentSafetyTests(unittest.TestCase):
     def test_canary_bundle_is_isolated_and_zero_traffic(self):
