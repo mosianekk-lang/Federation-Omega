@@ -1,37 +1,14 @@
 {
-  "schema": "EVIDENCEOPS-CIOS-GENESIS-BUILD-1",
-  "version": "0.1.0",
-  "authority_ceiling": "A1_INTERNAL",
-  "external_effect_default": false,
-  "objective": "Implement a proof-oriented capital intelligence nucleus joining M&A, capital allocation and public-market intelligence under strict authority separation.",
-  "reuse": ["evidenceops/innovation_engine", "evidenceops/provenance_passport", "evidenceops/secure_capability_box", "FEDOMEGA-N-DIRECTIVE-V2", "AO-CRA-FEDERATION-INHERITANCE-V1"],
-  "builds": [
-    {
-      "build_id": "BUILD-CIOS-001",
-      "gap_statement": "No canonical executable capital-domain integration nucleus existed for M&A plus public-market intelligence.",
-      "desired_capability": "Deterministic proof graph, authority firewall, M&A lifecycle, capital ranking, bounded Autopilot and maturity controls.",
-      "lifecycle_state": "IMPLEMENTING_TESTING",
-      "acceptance_criteria": ["60-stage M&A lifecycle represented", "private-to-trading path denied", "live orders denied", "verified claims require provenance", "contradictions detected", "impact propagation deterministic", "learning hash chain verifiable", "deployment promotion blocked without runtime proof"],
-      "next_executable_action": "Run repository CI and independent source readback through governed PR.",
-      "closure_criteria": "All acceptance tests pass in governed repository CI and exact source is read back."
-    },
-    {
-      "build_id": "BUILD-CIOS-002",
-      "gap_statement": "Current working container cannot resolve external GitHub network hosts for a native git clone.",
-      "desired_capability": "Reliable source materialisation and full-repository local integration test route.",
-      "lifecycle_state": "WORKAROUND_ACTIVE_BUILD_OPEN",
-      "interim_workaround": "Use authenticated GitHub connector for source read/write and a self-contained local acceptance harness.",
-      "next_executable_action": "Use repository-hosted CI as the independent full-tree test route after PR creation.",
-      "closure_criteria": "Successful full-tree CI and/or restored native materialisation route."
-    },
-    {
-      "build_id": "BUILD-CIOS-003",
-      "gap_statement": "No target production runtime has yet supplied native health, persistence and rollback proof for CIOS.",
-      "desired_capability": "Production runtime deployment with tenant isolation, observability, persistence and rollback proof.",
-      "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
-      "interim_workaround": "Keep core provider-neutral and deployable; do not claim DEPLOYED.",
-      "next_executable_action": "After source verification, select the strongest authorised provider runtime and execute a harmless A1 canary.",
-      "closure_criteria": "Target runtime receipt plus health, persistence, rollback and security evidence."
-    }
+  "schema":"EVIDENCEOPS-CIOS-BUILD-2",
+  "version":"0.2.0",
+  "authority_ceiling":"A1_INTERNAL",
+  "external_effect_default":false,
+  "objective":"Advance CIOS to a durable replayable tenant-scoped reference runtime with privacy-gated outcome learning.",
+  "builds":[
+    {"build_id":"BUILD-CIOS-001","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"PR #301 merged; main provider readback c056aa11389db12347682b4705066cd1ff6d3a7e."},
+    {"build_id":"BUILD-CIOS-002","lifecycle_state":"WORKAROUND_ACTIVE_BUILD_OPEN","gap_statement":"Native git materialisation route unavailable in the working container.","interim_workaround":"Use authenticated GitHub connector and local acceptance harness; do not repeat unchanged DNS-failing route.","closure_criteria":"Native materialisation/full-tree execution becomes available without weakening governance."},
+    {"build_id":"BUILD-CIOS-003","lifecycle_state":"BLOCKED_DEPENDENCY_ACTIVE","gap_statement":"No authorised private product execution plane currently exposes target-runtime deployment plus health/persistence/rollback readback.","interim_workaround":"Provider-neutral source plus local durable runtime evidence; do not claim DEPLOYED.","closure_criteria":"Provider-native runtime, health, persistence, rollback, observability and security evidence."},
+    {"build_id":"BUILD-CIOS-004","lifecycle_state":"IMPLEMENTED_TESTED_LOCAL","gap_statement":"Genesis did not prove durable restart/idempotency/tenant isolation.","acceptance_criteria":["database quick_check","restart restores claims/dependencies","duplicate event creates no duplicate effect","idempotency key mismatch fails closed","failed transaction rolls back","tenant records remain scoped"],"next_executable_action":"Governed PR/provider checks."},
+    {"build_id":"BUILD-CIOS-005","lifecycle_state":"IMPLEMENTED_TESTED_REFERENCE","gap_statement":"Outcome learning and company portability needed privacy/trust controls.","acceptance_criteria":["passport tamper detection","missing/stale/conflicting facts surfaced","explicit OutcomeNet opt-in","minimum five unique tenants","equal tenant aggregate weighting"],"next_executable_action":"Governed source publication then privacy/legal/security qualification."}
   ]
 }
