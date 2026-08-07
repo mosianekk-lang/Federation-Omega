@@ -1,5 +1,5 @@
 from __future__ import annotations
-import base64,hashlib,hmac,time
+import base64,hashlib,hmac,json,time
 from dataclasses import dataclass
 from datetime import datetime,timezone
 from .provider_adapter import ProviderCapabilities
@@ -16,10 +16,9 @@ class SmileIDConfig:
 class SmileIDProviderAdapter:
     """Smile ID callback adapter based on the provider's documented callback-signature contract.
 
-    The adapter is intended for Biometric KYC / identity-authority-backed flows. It
-    verifies the provider callback before normalising only minimum EvidenceOps fields.
-    Raw image links/media in the callback are surfaced as a boundary violation rather
-    than persisted by this adapter.
+    This adapter covers identity-authority-backed Biometric KYC-style results. Device
+    integrity is intentionally not inferred from the provider callback and must be
+    assessed independently by the EvidenceOps device-trust layer.
     """
     capabilities=ProviderCapabilities(
         provider_id="smile-id",
@@ -53,8 +52,8 @@ class SmileIDProviderAdapter:
 
     @staticmethod
     def _contains_sensitive_media(callback:dict)->bool:
-        sensitive_keys={"imagelinks","image_links","images","selfie_image","id_photo_image","kycreceipt"}
-        return any(str(k).replace("_","").lower() in {x.replace("_","") for x in sensitive_keys} for k in callback)
+        compact={str(k).replace("_","").lower() for k in callback}
+        return bool(compact & {"imagelinks","images","selfieimage","idphotoimage","kycreceipt"})
 
     def authenticate_callback(self,callback:dict,now:int|None=None)->AuthenticatedReceipt:
         timestamp=str(callback.get("timestamp","")).strip();signature=str(callback.get("signature","")).strip()
@@ -86,14 +85,13 @@ class SmileIDProviderAdapter:
             "live_presence_check_passed":liveness_passed,
             "trusted_reference_match_passed":bool(id_verified and authority_compare),
             "document_check_passed":document_passed,
-            "device_attestation_passed":True,
             "provider_risk_level":"LOW" if verified else "REVIEW",
             "policy_version":"smile-id-biometric-kyc-callback-v1",
             "raw_sensitive_media_received_by_evidenceops":sensitive_media,
             "provider_result_code":result_code,
             "provider_result_text":result_text,
         }
-        digest=hashlib.sha256(repr(sorted(normalised.items())).encode()).hexdigest()
+        digest=hashlib.sha256(json.dumps(normalised,sort_keys=True,separators=(",",":"),ensure_ascii=False).encode()).hexdigest()
         return AuthenticatedReceipt("smile-id",normalised,self.config.key_id,digest)
 
     def authenticate(self,envelope:ReceiptEnvelope)->AuthenticatedReceipt:
