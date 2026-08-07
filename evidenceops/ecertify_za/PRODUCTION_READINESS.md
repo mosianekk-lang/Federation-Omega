@@ -7,11 +7,12 @@
 - Production private API fails startup when provider trust configuration or a distributed replay guard is absent.
 - Provider-specific integrations implement a common capability/evidence contract and cannot require EvidenceOps to retain raw biometric media.
 - Smile ID now has a reference provider adapter based on its published callback signature and Biometric KYC result contract. The adapter verifies callback HMAC/timestamp, replay state, liveness, ID verification and authority-photo compare; callbacks exposing image links/KYC receipts are treated as a sensitive-media boundary event.
-- Identity-provider trust and device trust are now explicitly separate domains. Final bank-grade human verification requires both verified identity proof and an independently trusted device; neither domain inherits trust from the other.
+- Identity-provider trust and device trust are explicitly separate domains. Final bank-grade human verification requires both verified identity proof and an independently trusted device; neither domain inherits trust from the other.
 - Public verification remains separated from private identity processing and exposes only verification code, status, legal label, document fingerprint and timestamps.
 - Document intake validates file signatures/type/size and cannot progress to accepted storage without separate malware/DLP controls.
 - Isolated private/public container targets and a zero-traffic Cloud Run canary bundle use dedicated `evidenceops-ecertify-za-*` service names and refuse reserved Architron targets.
-- A dedicated read-only eCertify CI workflow uses immutable pinned actions and runs only eCertify compile, shell-syntax and qualification tests.
+- eCertify compile, shell-syntax and qualification tests exist as source-controlled test surfaces. The public Federation repository remains execution-quarantined: eCertify qualification automation belongs in the separate private execution plane rather than as a new active public-repository workflow.
+- Provider-production evidence gates reject semantic placeholders such as `UNBOUND`, `PENDING`, `REFERENCE`, `TEST`, `MOCK` and `UNVERIFIED`; only a concrete provider-native evidence reference may pass the source-level proof-reference gate.
 - Commissioner authority, recipient acceptance, POPIA/DPIA, provider RFP, section 57 preliminary determination and go-live control planes exist in the private Drive workspace.
 
 ## Hard production gates — LIVE must not be claimed until all have provider-native proof
