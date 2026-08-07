@@ -19,6 +19,7 @@ class DeviceAttestationReceipt:
     device_integrity_passed:bool
     nonce_verified:bool
     issued_at:int
+    strong_platform_integrity:bool=False
     risk_signals:tuple[str,...]=()
 
 @dataclass(frozen=True)
@@ -30,8 +31,9 @@ class DeviceAssessment:
 class DeviceTrustPolicy:
     """Provider-neutral device binding/step-up policy.
 
-    Platform-specific adapters may bind Android Play Integrity or Apple App Attest
-    receipts. This layer consumes only verified attestation outcomes.
+    Hardware-backed application binding and strong platform integrity remain distinct
+    evidence signals. New-device and recovery events still require step-up even when
+    the underlying platform integrity is strong.
     """
     def __init__(self,max_age_seconds:int=300):self.max_age_seconds=max_age_seconds
     def assess(self,receipt:DeviceAttestationReceipt,*,new_device:bool=False,recovery_event:bool=False,now:int|None=None)->DeviceAssessment:
@@ -46,8 +48,10 @@ class DeviceTrustPolicy:
         if receipt.risk_signals:reasons.extend(f"RISK:{x}" for x in receipt.risk_signals)
         if reasons:
             decision=DeviceDecision.HUMAN_REVIEW_REQUIRED if any(x in reasons for x in ("ATTESTATION_NOT_VERIFIED","APP_INTEGRITY_FAILED","DEVICE_INTEGRITY_FAILED")) else DeviceDecision.STEP_UP_REQUIRED
-        elif new_device or recovery_event or not receipt.hardware_backed_key:
-            decision=DeviceDecision.STEP_UP_REQUIRED;reasons.append("HIGH_RISK_DEVICE_OR_RECOVERY_EVENT")
+        elif new_device or recovery_event:
+            decision=DeviceDecision.STEP_UP_REQUIRED;reasons.append("NEW_DEVICE_OR_RECOVERY_STEP_UP_REQUIRED")
+        elif not (receipt.hardware_backed_key or receipt.strong_platform_integrity):
+            decision=DeviceDecision.STEP_UP_REQUIRED;reasons.append("STRONG_DEVICE_BINDING_NOT_PROVED")
         else:decision=DeviceDecision.TRUSTED;reasons.append("DEVICE_ATTESTATION_ACCEPTED")
-        digest=hashlib.sha256(json.dumps({"platform":receipt.platform,"app_instance_id":receipt.app_instance_id,"device_key_id":receipt.device_key_id,"issued_at":receipt.issued_at},sort_keys=True,separators=(",",":")).encode()).hexdigest()
+        digest=hashlib.sha256(json.dumps({"platform":receipt.platform,"app_instance_id":receipt.app_instance_id,"device_key_id":receipt.device_key_id,"issued_at":receipt.issued_at,"hardware_backed_key":receipt.hardware_backed_key,"strong_platform_integrity":receipt.strong_platform_integrity},sort_keys=True,separators=(",",":")).encode()).hexdigest()
         return DeviceAssessment(decision,tuple(reasons),digest)
