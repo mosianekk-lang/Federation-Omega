@@ -1,0 +1,34 @@
+name: Capital Intelligence OS Genesis CI
+
+on:
+  pull_request:
+    paths:
+      - "evidenceops/capital_intelligence_os/**"
+      - ".github/workflows/cios-genesis-ci.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  cios-genesis:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact pull-request head
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Compile Capital Intelligence OS
+        run: python -m compileall -q evidenceops/capital_intelligence_os
+      - name: Run CIOS acceptance suite
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s evidenceops/capital_intelligence_os/tests -v
+      - name: Verify constitutional release invariants
+        env:
+          PYTHONPATH: .
+        run: python -m evidenceops.capital_intelligence_os.verify_release
