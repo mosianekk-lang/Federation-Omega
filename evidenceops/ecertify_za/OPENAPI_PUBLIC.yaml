@@ -1,0 +1,33 @@
+openapi: 3.1.0
+info:
+  title: EvidenceOps eCertify ZA Public Verification API
+  version: 0.4.0
+  description: Privacy-minimal verification endpoint. It exposes no ID number, face data, provider receipt or commissioner personal evidence.
+paths:
+  /health:
+    get:
+      responses:
+        '200': {description: Public verifier health}
+  /v1/verify/{verification_code}:
+    get:
+      summary: Verify an EvidenceOps document-assurance record
+      parameters:
+        - in: path
+          name: verification_code
+          required: true
+          schema: {type: string, minLength: 8, maxLength: 64}
+      responses:
+        '200':
+          description: Minimal verification result
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  verification_code: {type: string}
+                  status: {type: string}
+                  legal_label: {type: string}
+                  document_sha256: {type: string}
+                  issued_at: {type: integer}
+                  expires_at: {type: [integer, 'null']}
+        '404': {description: Verification code not found}
