@@ -37,13 +37,15 @@ class LegalCompletionAssessment:
     event_id:str
 
 class LegalCompletionGate:
-    """Release final legal labels only after verified authority and event evidence."""
+    """Release final legal labels only after verified authority and transaction-bound event evidence."""
     def __init__(self,max_future_skew_seconds:int=60):self.max_future_skew_seconds=max_future_skew_seconds
-    def assess(self,route:CertificationRoute,authority:CommissionerAuthorityAssessment,event:CommissionerEvent,now:int|None=None)->LegalCompletionAssessment:
+    def assess(self,route:CertificationRoute,authority:CommissionerAuthorityAssessment,event:CommissionerEvent,*,expected_document_sha256:str,expected_transaction_id:str,now:int|None=None)->LegalCompletionAssessment:
         current=int(time.time()) if now is None else int(now);reasons=[];final_label=route.final_label
         if authority.decision!=CommissionerAuthorityDecision.VERIFIED:reasons.append("COMMISSIONER_AUTHORITY_NOT_VERIFIED")
         if authority.commissioner_id!=event.commissioner_id:reasons.append("COMMISSIONER_ID_MISMATCH")
+        if event.transaction_id!=expected_transaction_id:reasons.append("LEGAL_EVENT_TRANSACTION_MISMATCH")
         if not re.fullmatch(r"[0-9a-fA-F]{64}",event.document_sha256):reasons.append("DOCUMENT_HASH_INVALID")
+        elif event.document_sha256.lower()!=expected_document_sha256.lower():reasons.append("LEGAL_EVENT_DOCUMENT_HASH_MISMATCH")
         if not is_concrete_evidence_ref(event.event_evidence_ref):reasons.append("LEGAL_EVENT_EVIDENCE_MISSING")
         if not is_concrete_evidence_ref(event.conflict_clearance_ref):reasons.append("COMMISSIONER_CONFLICT_CLEARANCE_MISSING")
         if event.event_timestamp>current+self.max_future_skew_seconds:reasons.append("LEGAL_EVENT_IN_FUTURE")
@@ -56,7 +58,6 @@ class LegalCompletionGate:
             if not event.physical_presence:reasons.append("PHYSICAL_PRESENCE_NOT_PROVED")
             if not event.deponent_signed_in_presence:reasons.append("DEPONENT_SIGNATURE_IN_PRESENCE_NOT_PROVED")
             if not reasons:final_label="COMMISSIONED_AFFIDAVIT"
-        else:
-            reasons.append("ROUTE_DOES_NOT_REQUIRE_COMMISSIONER_COMPLETION")
-        digest=hashlib.sha256(f"{authority.evidence_digest}|{event.event_id}|{event.transaction_id}|{event.commissioner_id}|{event.event_type.value}|{event.document_sha256}|{event.event_timestamp}|{event.event_evidence_ref}|{event.conflict_clearance_ref}".encode()).hexdigest()
-        return LegalCompletionAssessment(LegalCompletionDecision.HOLD if reasons else LegalCompletionDecision.VERIFIED,final_label,tuple(reasons) if reasons else ("AUTHORITY_AND_LEGAL_EVENT_VERIFIED",),digest,event.event_id)
+        else:reasons.append("ROUTE_DOES_NOT_REQUIRE_COMMISSIONER_COMPLETION")
+        digest=hashlib.sha256(f"{authority.evidence_digest}|{event.event_id}|{event.transaction_id}|{event.commissioner_id}|{event.event_type.value}|{event.document_sha256}|{event.event_timestamp}|{event.event_evidence_ref}|{event.conflict_clearance_ref}|{expected_transaction_id}|{expected_document_sha256}".encode()).hexdigest()
+        return LegalCompletionAssessment(LegalCompletionDecision.HOLD if reasons else LegalCompletionDecision.VERIFIED,final_label,tuple(reasons) if reasons else ("AUTHORITY_TRANSACTION_AND_LEGAL_EVENT_VERIFIED",),digest,event.event_id)
