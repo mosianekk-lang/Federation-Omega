@@ -1,9 +1,7 @@
-# Formation Specification — CIOS v0.4
+# Formation Specification — CIOS v0.5
 
-Objective: prove the durable core can operate through a real bounded HTTP runtime, survive backup/restore and remain deny-by-default without creating a provider or financial-effect claim.
+Objective: cross the boundary from infrastructure into a user-valued transaction decision system while keeping calculations deterministic and evidence assumptions explicit.
 
-Routes considered: public internet deployment — rejected for this gate; new GitHub execution workflow — rejected because Airlock reserves product execution for the private operations plane; loopback-only local canary — selected as the highest-information reversible proof.
+Selected vertical slice: valuation + QoE + diligence + integration/value realization + Guided Owner next-best action. These functions are tightly coupled in transactions and create a coherent decision loop rather than another disconnected feature list.
 
-Defects discovered and converted to regression rules: HTTP headers are case-insensitive and must be normalized; request-bound idempotency requires stable producer event time, so `occurred_at` is mandatory rather than regenerated on retry.
-
-Qualification experiment: start the local HTTP server, authenticate, check health/readiness/release invariants, prove forbidden-route denial, back up state, stop, reopen, and compare state digest.
+Highest-information reversible experiment: run synthetic transaction economics through DCF/comparables, normalize EBITDA and working capital, detect missing diligence evidence, compute return metrics, assess Day-1/synergy gaps and present owner-friendly next actions—all without external financial effect.
