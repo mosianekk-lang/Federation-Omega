@@ -7,6 +7,7 @@ from evidenceops.ecertify_za.ledger import HashChainLedger
 from evidenceops.ecertify_za.models import AssuranceLane
 from evidenceops.ecertify_za.provider_adapter import ProviderCapabilities,ProviderNotProductionQualified,require_production_provider
 from evidenceops.ecertify_za.receipt_auth import HMACReceiptAuthenticator,ReceiptEnvelope,ReplayStore
+from evidenceops.ecertify_za.recipient_acceptance import RecipientAcceptanceGate,RecipientAcceptanceRule
 from evidenceops.ecertify_za.replay import PostgresReplayGuard,ProductionReplayGuardRequired,SQLiteReplayGuard,require_distributed_replay
 from evidenceops.ecertify_za.service import ECertifyService
 from evidenceops.ecertify_za.verification_registry import PublicVerification,SQLiteVerificationRegistry
@@ -14,7 +15,7 @@ from evidenceops.ecertify_za.verification_registry import PublicVerification,SQL
 NOW=1700000000
 
 def payload(now=NOW,**kw):
-    base={"transaction_id":"tx-1","issued_at":datetime.fromtimestamp(now,timezone.utc).isoformat(),"verification_passed":True,"live_presence_check_passed":True,"trusted_reference_match_passed":True,"document_check_passed":True,"device_attestation_passed":True,"provider_risk_level":"LOW","policy_version":"v1","raw_sensitive_media_received_by_evidenceops":False}
+    base={"transaction_id":"tx-1","issued_at":datetime.fromtimestamp(now,timezone.utc).isoformat(),"verification_passed":True,"live_presence_check_passed":True,"trusted_reference_match_passed":True,"document_check_passed":True,"provider_risk_level":"LOW","policy_version":"v1","raw_sensitive_media_received_by_evidenceops":False}
     base.update(kw);return base
 
 def envelope(secret=b"secret",now=NOW,provider="approved-idp",key_id="k1",**kw):
@@ -87,7 +88,11 @@ class LegalTests(unittest.TestCase):
     def test_certifier_gate(self):
         x=CertificationRouteEngine().route("certified copy");self.assertEqual(x.lane,AssuranceLane.CERTIFIED_COPY);self.assertTrue(x.commissioner_required);self.assertNotEqual(x.final_label,"CERTIFIED_COPY")
     def test_affidavit_presence_default(self):self.assertTrue(CertificationRouteEngine().route("affidavit").physical_presence_default)
-    def test_acceptance_lane(self):self.assertEqual(CertificationRouteEngine().route("certified copy",True).lane,AssuranceLane.INSTITUTION_ACCEPTED)
+    def test_lane5_requires_exact_verified_recipient_evidence(self):
+        rule=RecipientAcceptanceRule("RULE-1","bank-1","account-opening","sa-id",(AssuranceLane.INSTITUTION_ACCEPTED,),"AGR-BANK-1-2026",NOW-100,NOW+1000,NOW)
+        assessment=RecipientAcceptanceGate().assess(rule,recipient_id="bank-1",use_case="account-opening",document_type="sa-id",now=NOW)
+        self.assertEqual(CertificationRouteEngine().route("certified copy",assessment).lane,AssuranceLane.INSTITUTION_ACCEPTED)
+        self.assertEqual(CertificationRouteEngine().route("certified copy").lane,AssuranceLane.CERTIFIED_COPY)
 
 class PublicVerificationTests(unittest.TestCase):
     def test_public_record_contains_minimum_fields(self):
