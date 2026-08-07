@@ -1,9 +1,11 @@
-# Formation Specification — CIOS v0.2
+# Formation Specification — CIOS v0.3
 
-Objective: make Genesis durable, replayable and tenant-scoped while preserving the A1 ceiling and M&A/public-market information barrier.
+Objective: integrate EvidenceOps market/trading intelligence without importing execution authority or creating an MNPI leakage path.
 
-Selected route: provider-neutral transactional semantics with a SQLite reference adapter. Rejected routes: staying in-memory; premature cloud microservices without provider readback; cross-tenant outcome sharing by default.
+Routes evaluated:
+1. Directly import a trading execution engine — rejected: coupling and authority inheritance risk.
+2. Rebuild a second trading stack inside M&A — rejected: duplication and drift.
+3. One-way PUBLIC evidence adapter — selected: strongest provenance, reuse and authority isolation.
+4. Live provider execution — deferred: requires separate regulated/provider authority and runtime proof.
 
-New capabilities: tenant context/guard, durable Autopilot, request-bound idempotency, restart/replay, restricted lists, Deal Passport, consented cohort OutcomeNet, ten decision/learning algorithms, and Failure-to-Route genes derived from real implementation failures.
-
-Highest-information reversible experiment: persist evidence/dependencies, restart the runtime, reproduce impact propagation, replay the same event without duplicate effects, and fail closed if an idempotency key is reused for different input.
+Highest-information reversible experiment: feed provenance-bearing PUBLIC observations through MarketTruthGate, create EvidenceOps claims/events, compute market/fundamental divergence, and simultaneously prove the bridge exposes no order/transfer method and rejects non-public observations.

@@ -8,6 +8,9 @@ from .decision_algorithms import AssumptionCriticalityRanker, DealSunkCostBiasGu
 from .durable import DurableAutopilotRuntime
 from .failure_genome import FailureToRouteGeneCompiler
 from .learning import LearningLedger
+from .market_algorithms import AnnouncementMoveDecomposer, DealFragilitySurface, LiquidityStressPenalty, PortfolioConcentrationRadar, SignalDivergenceIndex, SpreadPersistenceMonitor, TransactionWindowRadar
+from .market_intelligence import DealCompletionProbabilityEngine, ExposureImpactBridge, FinancingMarketRadar, FundamentalSignal, MarketDealTerms, MarketTruthGate, MarketTwin, PublicMarketObservation, PublicTradingIntelligenceBridge, RegimeAwareValuationEngine, RegimeScenario
+from .market_service import DealMarketAssessment, MarketIntelligenceService
 from .maturity import MaturityEvidence, MaturityGovernor
 from .mna import DealLifecycle, MNA_STAGES
 from .models import *
@@ -19,13 +22,4 @@ from .service import CapitalIntelligenceService
 from .store import SqliteStateStore
 from .tenancy import TenantBoundaryGuard, TenantContext
 
-__version__ = "0.2.0"
-__all__ = [
-    "AttentionCompressionEngine", "AuthorityGuard", "Autopilot", "CapitalIntelligenceService", "CounterfactualCapitalRegret",
-    "DecisionReversalThreshold", "DealLifecycle", "EpistemicShockIndex", "FinancingStressEngine", "FragilityCascade", "GravityEngine",
-    "LearningLedger", "MaturityEvidence", "MaturityGovernor", "MNA_STAGES", "Contradiction", "ProofGraph", "TrustDecayClock",
-    "AssumptionCriticalityRanker", "DealSunkCostBiasGuard", "EvidenceFreshnessRisk", "InformationValuePrioritizer", "NoDealDominanceTest",
-    "OutcomeCalibrationScore", "RegimeSensitivityVector", "SynergyDoubleCountDetector", "ThesisDecayIndex", "DurableAutopilotRuntime",
-    "FailureToRouteGeneCompiler", "DataUseConsent", "OutcomeNet", "OutcomeObservation", "DealPassport", "DealPassportIssuer",
-    "RestrictedEntry", "RestrictedListRegistry", "SqliteStateStore", "TenantBoundaryGuard", "TenantContext",
-]
+__version__ = "0.3.0"

@@ -1,21 +1,18 @@
-# EvidenceOps Capital Intelligence OS — v0.2 Durable Core
+# EvidenceOps Capital Intelligence OS — v0.3 Market Intelligence Core
 
-v0.2 advances the Genesis source nucleus into a replayable, tenant-scoped reference runtime without expanding financial authority.
+v0.3 integrates the EvidenceOps trading/market research estate through a **one-way PUBLIC market-evidence contract**, not through execution authority.
 
-Implemented: ProofGraph, A1 AuthorityGuard, transactional Durable AUTOPILOT, request-bound idempotency, tenant isolation, Restricted List, Deal Passport, consented/cohort-gated OutcomeNet, GRAVITY, financing stress, the 60-stage M&A lifecycle, maturity controls and ten new decision/learning algorithms.
+Core capabilities now include durable tenant-scoped AUTOPILOT, ProofGraph, Deal Passport, OutcomeNet, Restricted List, GRAVITY capital ranking, 60-stage M&A lifecycle, and public Market Twin intelligence.
 
-OutcomeNet requires explicit opt-in, at least five unique tenants (or a higher participant threshold), and equal tenant aggregate weighting. This is privacy/risk reduction, **not** a formal differential-privacy claim.
+Market capabilities include public provenance gating, market/fundamental deal-completion views, expectation-gap analysis, regime-aware valuation parameters, financing and exposure stress, deal fragility, transaction-window scoring, abnormal-return decomposition, portfolio concentration, spread persistence and liquidity stress.
 
-Deal Passport carries claim fingerprints, evidence status, freshness, missing/conflicting facts and an integrity digest. It is **not** represented as a legal or PKI signature.
+Important truth boundaries:
+- Market-implied completion probability is a simplified scenario-price proxy, not a fact or recommendation.
+- Abnormal market return is not proof that a transaction caused or created/destroyed value.
+- Private/clean-team/potentially-MNPI/restricted/privileged/unknown M&A information has no market/trading export route.
+- The public market bridge intentionally has no order, transfer or withdrawal method.
+- Live orders and autonomous financial effects remain constitutionally denied.
 
-Authority remains `A1_INTERNAL`. Live orders, withdrawals, transfers, autonomous financial effects, evidence deletion, audit erasure and disabling information barriers remain denied. Consequential external actions remain human-gated. Private/clean-team/potentially-MNPI/restricted/privileged/unknown M&A information cannot flow into public-market/trading pathways.
+Local v0.3 acceptance: **96 tests PASS**, release verifier PASS, compile PASS.
 
-SQLite is a reference persistence adapter proving atomicity, restart/replay, request-bound idempotency, tenant scoping and integrity checks. A commercial provider database must preserve those semantics and additionally prove encryption, HA, backup/restore, migrations, disaster recovery and tenant isolation.
-
-Verification:
-```bash
-PYTHONPATH=. python -m unittest discover -s evidenceops/capital_intelligence_os/tests -v
-PYTHONPATH=. python -m evidenceops.capital_intelligence_os.verify_release
-python -m compileall -q evidenceops/capital_intelligence_os
-```
-Local v0.2 acceptance: 70 tests plus release verifier and compile check.
+Production still requires an authorised private execution plane, licensed/entitled market-data adapters, provider-native health/persistence/rollback/observability and security evidence before `DEPLOYED` or `PRODUCTION_VERIFIED` can be claimed.
