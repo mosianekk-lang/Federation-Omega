@@ -2,17 +2,39 @@
 
 This file extends the repository-root `AGENTS.md` for all work inside `evidenceops/`.
 
-## Mandatory Jurisdiction-First Referral Integrity Gate
+## Mandatory LEX-OMEGA + JFRIE legal convergence fabric
 
-For every jurisdiction-sensitive legal referral, application, arbitration request, rescission request, disciplinary objection, Labour Court filing, statutory pleading or case-opening statement, load and apply:
+For every substantive legal, labour-law, CCMA, Labour Court, forensic-investigation, jurisdiction-sensitive referral, application, arbitration request, rescission request, disciplinary objection, statutory pleading, case-opening statement, cross-examination plan, legal-strategy review or filing-readiness assessment, load and apply both:
 
+- `evidenceops/lex_omega/README.md`
+- `evidenceops/lex_omega/lex_omega.py`
 - `evidenceops/jurisdiction_first_referral_integrity/README.md`
 - `evidenceops/jurisdiction_first_referral_integrity/jfrie.py`
 - `evidenceops/jurisdiction_first_referral_integrity/jfrie_v11.py`
 
-before treating the document as filing-ready.
+LEX-OMEGA supplies specialist legal, forensic, adversarial and authority-currentness analysis. JFRIE remains the mandatory evidence, jurisdiction, contamination and release gate. The combined fabric is fail closed.
 
-The gate is fail closed.
+Permanent rule: **LEX-OMEGA may strengthen JFRIE; it may never bypass, overrule, weaken or dilute a JFRIE hard gate.**
+
+### LEX-OMEGA v1.1 convergence controls
+
+1. **Legal Proposition Ledger** — every material legal proposition must have a stable identity and be linked to the exact authority records on which it depends.
+2. **Authority Revalidation Gate** — material legal authority is classified `CURRENT_VERIFIED`, `RECHECK_REQUIRED`, `SUPERSEDED`, `CONFLICTED` or `UNVERIFIED`; historical verification is not permanent currentness.
+3. **Independent Counsel Isolation** — primary analyst, employer-side red team and neutral decision-maker must form their material conclusions independently where practical before integration; disagreement is preserved, not averaged away.
+4. **Claim–Law–Evidence Triangle** — a material litigation element is not closed unless the legal proposition, factual claim and supporting primary/verified evidence are all present.
+5. **Outcome Learning Without Outcome Bias** — hearing/ruling outcomes must be classified by cause (`LEGAL_ERROR`, `EVIDENCE_FAILURE`, `PROCEDURAL_FAILURE`, `FACTUAL_FINDING`, `DISCRETIONARY_OUTCOME`, `STRATEGIC_FAILURE`, `STRATEGIC_SUCCESS`) before learning; win/loss alone never promotes doctrine.
+
+### Maturity rule
+
+LEX-OMEGA grows inside the EvidenceOps central evolution fabric only through sequential proof-gated states:
+
+`DESIGN_ONLY -> DETERMINISTIC_TESTED -> SHADOW_VALIDATED -> CANARY_VALIDATED -> WORKFLOW_VERIFIED -> OPERATIONAL_VERIFIED`
+
+Every promotion requires evidence. No state may exceed the lowest independently proven level. Candidate learning must follow the repository learning contract and may not expand authority or silently rewrite JFRIE.
+
+## Mandatory Jurisdiction-First Referral Integrity Gate
+
+Before treating a jurisdiction-sensitive document as filing-ready, the JFRIE layer must pass.
 
 ### Hard requirements
 
@@ -50,6 +72,6 @@ If the original and a derivative record conflict, preserve both, identify the co
 
 ### Release rule
 
-No EvidenceOps agent may claim a referral/application is filing-ready if any JFRIE hard gate fails. Use the engine outcome (`REFRAME`, `HOLD_FOR_AUTHORITY`, `SEPARATE_CAUSES`, `LEGAL_RESEARCH_REQUIRED`, `DO_NOT_FILE`, etc.), repair the defect, then re-run both the base gate and the v1.1 regression layer.
+No EvidenceOps agent may claim a referral/application is filing-ready if any JFRIE hard gate fails. Use the combined LEX-OMEGA/JFRIE outcome (`REFRAME`, `HOLD_FOR_AUTHORITY`, `HOLD_FOR_SOURCE`, `SEPARATE_CAUSES`, `LEGAL_RESEARCH_REQUIRED`, `DO_NOT_FILE`, etc.), repair the defect, then re-run the specialist analysis and the JFRIE integrity layer.
 
-This control is `A1_INTERNAL`; it grants no authority to send, file, pay a fee, waive rights, merge matters, or mutate verified evidence.
+This control is `A1_INTERNAL`; it grants no authority to send, file, pay a fee, waive rights, merge matters, mutate verified evidence or promote untested legal doctrine.
