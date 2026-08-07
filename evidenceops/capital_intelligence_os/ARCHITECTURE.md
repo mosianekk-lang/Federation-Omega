@@ -1,11 +1,7 @@
-# Capital Intelligence OS — Architecture v0.4
+# Capital Intelligence OS — Architecture v0.5
 
-`LOOPBACK HTTP → AUTH/TENANT CONTEXT → DEFAULT-DENY ROUTE POLICY → DURABLE AUTOPILOT → PROOFGRAPH / MARKET / M&A ENGINES → HASH-CHAINED AUDIT → IDEMPOTENT RECEIPT`
+`EVIDENCE → PROOFGRAPH → DILIGENCE/QoE → VALUATION/RETURNS → MARKET/REGIME STRESS → DECISION BRIEF → AUTHORITY GATE → INTEGRATION/OUTCOME LEARNING`
 
-Only A0/A1 internal event ingestion and verification surfaces are exposed in the local canary. Consequential route families do not exist in the API surface.
+Guided Owner mode consumes the same underlying evidence/calculation objects as professional mode; it changes presentation and next-action prioritization, not factual truth.
 
-SQLite remains the reference transactional adapter. v0.4 proves atomic writes, request-bound idempotency, restart/replay, backup `quick_check`, and restoration of tenant state digest. Production storage must separately prove HA, encryption, migrations, retention and DR.
-
-Market flow remains one way: PUBLIC market source → adapter → MarketTruthGate → analysis. There is no private-M&A-to-trading path.
-
-The local runtime binds only to loopback and uses an ephemeral in-process bearer secret; that is appropriate for qualification, not a production authentication claim.
+All transaction calculations are deterministic reference engines with visible assumptions. Market data remains one-way PUBLIC evidence. Local runtime remains A1/loopback-qualified only; provider production deployment is separate.
