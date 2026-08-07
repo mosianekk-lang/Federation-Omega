@@ -1,14 +1,11 @@
-# Capital Intelligence OS — Architecture v0.3
+# Capital Intelligence OS — Architecture v0.4
 
-## Evidence/data flow
+`LOOPBACK HTTP → AUTH/TENANT CONTEXT → DEFAULT-DENY ROUTE POLICY → DURABLE AUTOPILOT → PROOFGRAPH / MARKET / M&A ENGINES → HASH-CHAINED AUDIT → IDEMPOTENT RECEIPT`
 
-`PUBLIC MARKET PROVIDER / EVIDENCEOPS TRADING RESEARCH → PublicMarketEvidenceAdapter → MarketTruthGate → MarketTwin / Market Intelligence Service → ProofGraph / M&A Analysis`
+Only A0/A1 internal event ingestion and verification surfaces are exposed in the local canary. Consequential route families do not exist in the API surface.
 
-There is **no reverse private-M&A-to-trading path**.
+SQLite remains the reference transactional adapter. v0.4 proves atomic writes, request-bound idempotency, restart/replay, backup `quick_check`, and restoration of tenant state digest. Production storage must separately prove HA, encryption, migrations, retention and DR.
 
-Private deal data, clean-team material, potential MNPI, restricted, privileged and unknown information remain quarantined from market/trading pathways. Restricted issuers/securities deny market-facing actions even if the immediate observation is public.
+Market flow remains one way: PUBLIC market source → adapter → MarketTruthGate → analysis. There is no private-M&A-to-trading path.
 
-Durable core flow remains:
-`EVENT → TENANT/DOMAIN CHECK → TRANSACTION → PROOFGRAPH → CONTRADICTION/IMPACT → DETERMINISTIC ENGINES → ATTENTION → RESTRICTED-LIST/AUTHORITY GUARD → SAFE A0/A1 INTERNAL ACTION OR HUMAN GATE → HASH-LINKED LEARNING → IDEMPOTENT RECEIPT`.
-
-The public repository is the source/admission plane, not the commercial execution plane. Provider runtime deployment is a separate maturity gate.
+The local runtime binds only to loopback and uses an ephemeral in-process bearer secret; that is appropriate for qualification, not a production authentication claim.

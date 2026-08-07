@@ -1,0 +1,30 @@
+openapi: 3.1.0
+info:
+  title: EvidenceOps Capital Intelligence OS Local Canary API
+  version: 0.4.0
+  description: Local-only A1 reference API. This is not a production/public API contract.
+servers:
+  - url: http://127.0.0.1:{port}
+security:
+  - bearerAuth: []
+paths:
+  /health:
+    get: {responses: {"200": {description: Local runtime health}}}
+  /ready:
+    get: {responses: {"200": {description: Local runtime readiness}}}
+  /v1/verify:
+    get: {responses: {"200": {description: Constitutional release verification}}}
+  /v1/events:
+    post:
+      parameters:
+        - {in: header, name: X-Tenant-ID, required: true, schema: {type: string}}
+        - {in: header, name: X-User-ID, required: true, schema: {type: string}}
+        - {in: header, name: Idempotency-Key, required: false, schema: {type: string}}
+      responses:
+        "200": {description: Idempotent durable event receipt}
+        "400": {description: Invalid event}
+        "401": {description: Authentication/context failure}
+        "403": {description: Default-deny/authority failure}
+components:
+  securitySchemes:
+    bearerAuth: {type: http, scheme: bearer}
