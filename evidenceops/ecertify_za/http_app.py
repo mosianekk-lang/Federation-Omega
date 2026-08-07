@@ -20,7 +20,7 @@ class Handler(BaseHTTPRequestHandler):
     def _json(self,status:int,payload:dict):
         data=json.dumps(payload,default=lambda x:getattr(x,"value",str(x))).encode();self.send_response(status);self.send_header("content-type","application/json");self.send_header("content-length",str(len(data)));self.send_header("cache-control","no-store");self.send_header("x-content-type-options","nosniff");self.end_headers();self.wfile.write(data)
     def do_GET(self):
-        if self.path=="/health":return self._json(200,{"ok":True,"service":"evidenceops-ecertify-za-private","version":"0.4.0","identity_processing":"signed-provider-receipt-bound","provider_auth_configured":self.authenticator is not None,"environment":os.environ.get("ECERTIFY_ENV","development")})
+        if self.path=="/health":return self._json(200,{"ok":True,"service":"evidenceops-ecertify-za-private","version":"0.6.0","identity_processing":"signed-provider-receipt-bound","recipient_acceptance":"server-verified-evidence-only","legal_completion":"internal-authority-event-gated","provider_auth_configured":self.authenticator is not None,"environment":os.environ.get("ECERTIFY_ENV","development")})
         return self._json(404,{"error":"not_found"})
     def do_POST(self):
         try:
@@ -29,7 +29,8 @@ class Handler(BaseHTTPRequestHandler):
             body=json.loads(self.rfile.read(length) or b"{}")
         except Exception:return self._json(400,{"error":"invalid_json"})
         if self.path=="/v1/route":
-            r=self.routes.route(str(body.get("requested_status","")),bool(body.get("recipient_accepts_digital_assurance",False)))
+            if "recipient_accepts_digital_assurance" in body or "recipient_acceptance" in body:return self._json(400,{"error":"client_controlled_recipient_acceptance_not_allowed"})
+            r=self.routes.route(str(body.get("requested_status","")))
             return self._json(200,{"lane":r.lane.value,"final_label":r.final_label,"commissioner_required":r.commissioner_required,"physical_presence_default":r.physical_presence_default,"identity_requirement":r.identity_requirement,"rationale":r.rationale})
         if self.path=="/v1/identity/receipt/assess":
             if self.authenticator is None:return self._json(503,{"error":"identity_provider_auth_not_configured"})
