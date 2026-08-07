@@ -1,13 +1,13 @@
 openapi: 3.1.0
 info:
   title: EvidenceOps eCertify ZA Assurance API
-  version: 0.2.0
-  description: Provider-bound identity receipt validation and legal document assurance routing. Raw sensitive identity media is outside this API boundary.
+  version: 0.3.0
+  description: Cryptographically authenticated provider-receipt validation and legal document assurance routing. Raw sensitive identity media is outside this API boundary.
 paths:
   /health:
     get:
       responses:
-        '200': {description: Service health}
+        '200': {description: Service health and provider-auth configuration state}
   /v1/route:
     post:
       summary: Determine the minimum legally sufficient document-assurance lane
@@ -25,7 +25,22 @@ paths:
         '200': {description: Route decision}
   /v1/identity/receipt/assess:
     post:
-      summary: Validate a signed identity-provider verification receipt
-      description: EvidenceOps does not perform biometric matching or ingest raw biometric media through this endpoint.
+      summary: Authenticate and assess a signed identity-provider verification receipt
+      description: The server verifies provider allowlist, key ID, receipt signature, freshness and replay state before identity policy is evaluated. EvidenceOps does not perform biometric matching or ingest raw biometric media through this endpoint.
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required: [provider, key_id, signature_hex, payload, consent_granted]
+              properties:
+                provider: {type: string}
+                key_id: {type: string}
+                signature_hex: {type: string}
+                payload: {type: object}
+                consent_granted: {type: boolean}
       responses:
-        '200': {description: Identity receipt decision}
+        '200': {description: Authenticated identity-receipt decision}
+        '400': {description: Invalid, expired, replayed or untrusted receipt}
+        '503': {description: Identity provider authenticator not configured}
