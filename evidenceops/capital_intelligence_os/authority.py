@@ -6,6 +6,10 @@ from .models import ActionDecision, ActionDisposition, ActionRequest, AuthorityL
 class AuthorityGuard:
     """Fail-closed authority firewall for the Capital Intelligence OS."""
 
+    def __init__(self, restriction_lookup=None, tenant_id: str | None = None) -> None:
+        self.restriction_lookup = restriction_lookup
+        self.tenant_id = tenant_id
+
     HARD_DENY = {
         "LIVE_ORDER", "WITHDRAWAL", "TRANSFER", "AUTONOMOUS_FINANCIAL_EFFECT",
         "DELETE_EVIDENCE", "ERASE_AUDIT_LOG", "DISABLE_INFORMATION_BARRIER",
@@ -23,6 +27,11 @@ class AuthorityGuard:
 
     def evaluate(self, request: ActionRequest) -> ActionDecision:
         action = request.action_type.upper().strip()
+        if request.target_domain == Domain.PUBLIC_MARKETS and self.restriction_lookup is not None and self.tenant_id:
+            issuer_id = request.context.get("issuer_id")
+            security_id = request.context.get("security_id")
+            if self.restriction_lookup.is_restricted(self.tenant_id, issuer_id=issuer_id, security_id=security_id):
+                return ActionDecision(ActionDisposition.DENY, ("RESTRICTED_LIST_MATCH", "MARKET_ACTION_QUARANTINED"), AuthorityLevel.A5_SOVEREIGN_AUTHORITY)
         if action in self.HARD_DENY:
             return ActionDecision(ActionDisposition.DENY, ("CONSTITUTIONAL_HARD_DENY",), AuthorityLevel.A5_SOVEREIGN_AUTHORITY)
         if (
