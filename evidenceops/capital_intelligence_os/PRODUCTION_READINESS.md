@@ -1,15 +1,13 @@
-# Production Readiness Register — v0.5
+# Production Readiness Register — v0.6
 
 | Component | Current truth | Next production proof |
 |---|---|---|
-| Durable/M&A/market core | TESTED_LOCAL_REFERENCE | scale/load/provider adapters |
-| Local runtime | LOCAL_RUNTIME_VERIFIED | private provider runtime + hardened gateway |
-| Valuation engine | TESTED_DETERMINISTIC | benchmark against expert/reference models and real deal cases |
-| QoE / working capital / debt-like | TESTED_REFERENCE | accounting policy packs + transaction-services validation |
-| Diligence engine | TESTED_REFERENCE | sector/jurisdiction ontologies + recall/precision evaluation |
-| Integration/synergy | TESTED_REFERENCE | post-close outcome calibration |
-| Guided Owner mode | TESTED_REFERENCE | usability/customer validation |
+| Transaction decision core | TESTED_LOCAL_REFERENCE | representative-deal/expert calibration |
+| Local runtime | LOCAL_RUNTIME_VERIFIED | private provider runtime + enterprise identity |
+| Evidence vault metadata/versioning | TESTED_REFERENCE | encrypted object storage + AV/DLP/legal hold/access logs |
+| Text search | TESTED_DETERMINISTIC | production parser/index + retrieval evaluation |
+| Guided Owner / Professional UI | TESTED_STATIC_REFERENCE | interactive app + accessibility/usability/customer validation |
 | Market bridge | TESTED_REFERENCE | licensed provider adapters |
-| Provider deployment | NOT CLAIMED | runtime/identity/network/health/persistence/rollback evidence |
-| Production security | NOT CLAIMED | enterprise identity, secrets, threat model, SAST/SCA/pentest |
-| Live financial effects | DISABLED | separate regulated authority programme; never inherited |
+| OutcomeNet / Deal Passport | TESTED_REFERENCE | privacy/legal/security qualification |
+| Provider deployment | NOT CLAIMED | provider-native runtime/health/persistence/rollback evidence |
+| Production security | NOT CLAIMED | threat model, IdP, secrets, SAST/SCA/pentest/DLP |

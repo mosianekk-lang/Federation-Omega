@@ -1,7 +1,7 @@
-# Capital Intelligence OS — Architecture v0.5
+# Capital Intelligence OS — Architecture v0.6
 
-`EVIDENCE → PROOFGRAPH → DILIGENCE/QoE → VALUATION/RETURNS → MARKET/REGIME STRESS → DECISION BRIEF → AUTHORITY GATE → INTEGRATION/OUTCOME LEARNING`
+`DOCUMENT/EVIDENCE → HASH/VERSION/CLASSIFICATION → AUTHORIZED VAULT/SEARCH → DILIGENCE/QoE → VALUATION/MARKET STRESS → WORKSPACE SNAPSHOT → GUIDED OWNER or PROFESSIONAL VIEW → DECISION/AUTHORITY → OUTCOME LEARNING`
 
-Guided Owner mode consumes the same underlying evidence/calculation objects as professional mode; it changes presentation and next-action prioritization, not factual truth.
+The user modes share one evidence/decision substrate. The vault fails closed on UNKNOWN classification and enforces role-based access for confidential, clean-team, privileged and restricted content.
 
-All transaction calculations are deterministic reference engines with visible assumptions. Market data remains one-way PUBLIC evidence. Local runtime remains A1/loopback-qualified only; provider production deployment is separate.
+Production binary storage/parsing remains outside this reference layer until provider security and retention controls are proven.

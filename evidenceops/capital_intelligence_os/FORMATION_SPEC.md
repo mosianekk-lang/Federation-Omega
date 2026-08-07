@@ -1,7 +1,7 @@
-# Formation Specification — CIOS v0.5
+# Formation Specification — CIOS v0.6
 
-Objective: cross the boundary from infrastructure into a user-valued transaction decision system while keeping calculations deterministic and evidence assumptions explicit.
+Objective: make the M&A core usable as one coherent product rather than a collection of engines.
 
-Selected vertical slice: valuation + QoE + diligence + integration/value realization + Guided Owner next-best action. These functions are tightly coupled in transactions and create a coherent decision loop rather than another disconnected feature list.
+Selected slice: evidence-room metadata/versioning/search plus Guided Owner and Professional workspace rendering. The same evidence and calculation objects feed both modes; only presentation changes.
 
-Highest-information reversible experiment: run synthetic transaction economics through DCF/comparables, normalize EBITDA and working capital, detect missing diligence evidence, compute return metrics, assess Day-1/synergy gaps and present owner-friendly next actions—all without external financial effect.
+The reference vault intentionally stores metadata and extracted text, not production document binaries. Secure object storage and parsing remain provider integrations with separate maturity gates.
