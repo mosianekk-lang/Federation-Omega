@@ -1,61 +1,42 @@
 from __future__ import annotations
-import hashlib, json
-from dataclasses import asdict, dataclass
+import hashlib,json
+from dataclasses import dataclass
 from enum import Enum
+from .receipt_auth import AuthenticatedReceipt
 
-class IdentityDecision(str, Enum):
-    VERIFIED = "VERIFIED"
-    STEP_UP_REQUIRED = "STEP_UP_REQUIRED"
-    HUMAN_REVIEW_REQUIRED = "HUMAN_REVIEW_REQUIRED"
-    NON_BIOMETRIC_FALLBACK = "NON_BIOMETRIC_FALLBACK"
-
-@dataclass(frozen=True)
-class ProviderVerificationReceipt:
-    provider: str
-    transaction_id: str
-    verification_passed: bool
-    live_presence_check_passed: bool
-    trusted_reference_match_passed: bool
-    document_check_passed: bool
-    device_attestation_passed: bool
-    provider_risk_level: str
-    policy_version: str
-    issued_at: str
-    signature_verified: bool
-    raw_sensitive_media_received_by_evidenceops: bool = False
+class IdentityDecision(str,Enum):
+    VERIFIED="VERIFIED"
+    STEP_UP_REQUIRED="STEP_UP_REQUIRED"
+    HUMAN_REVIEW_REQUIRED="HUMAN_REVIEW_REQUIRED"
+    NON_BIOMETRIC_FALLBACK="NON_BIOMETRIC_FALLBACK"
 
 @dataclass(frozen=True)
 class IdentityReceiptAssessment:
-    decision: IdentityDecision
-    reasons: tuple[str, ...]
-    evidence_digest: str
-    provider_transaction_id: str
+    decision:IdentityDecision
+    reasons:tuple[str,...]
+    evidence_digest:str
+    provider_transaction_id:str
 
 class IdentityReceiptGate:
-    """Validates signed identity-provider receipts. It performs no biometric matching itself."""
-    @staticmethod
-    def _digest(receipt: ProviderVerificationReceipt) -> str:
-        return hashlib.sha256(json.dumps(asdict(receipt),sort_keys=True,separators=(",",":")).encode()).hexdigest()
-
-    def assess(self, receipt: ProviderVerificationReceipt, consent_granted: bool) -> IdentityReceiptAssessment:
-        reasons=[]
-        digest=self._digest(receipt)
+    """Consumes only cryptographically authenticated provider receipts."""
+    def assess(self,authenticated:AuthenticatedReceipt,consent_granted:bool)->IdentityReceiptAssessment:
+        p=authenticated.payload
+        tx=str(p.get("transaction_id",""))
+        digest=hashlib.sha256(json.dumps({"provider":authenticated.provider,"payload_sha256":authenticated.payload_sha256,"key_id":authenticated.key_id},sort_keys=True).encode()).hexdigest()
         if not consent_granted:
-            return IdentityReceiptAssessment(IdentityDecision.NON_BIOMETRIC_FALLBACK,("IDENTITY_PROVIDER_CONSENT_NOT_GRANTED",),digest,receipt.transaction_id)
-        if receipt.raw_sensitive_media_received_by_evidenceops:
-            return IdentityReceiptAssessment(IdentityDecision.HUMAN_REVIEW_REQUIRED,("SENSITIVE_MEDIA_BOUNDARY_VIOLATION",),digest,receipt.transaction_id)
-        if not receipt.signature_verified:
-            return IdentityReceiptAssessment(IdentityDecision.HUMAN_REVIEW_REQUIRED,("PROVIDER_RECEIPT_SIGNATURE_NOT_VERIFIED",),digest,receipt.transaction_id)
+            return IdentityReceiptAssessment(IdentityDecision.NON_BIOMETRIC_FALLBACK,("IDENTITY_PROVIDER_CONSENT_NOT_GRANTED",),digest,tx)
+        if bool(p.get("raw_sensitive_media_received_by_evidenceops",False)):
+            return IdentityReceiptAssessment(IdentityDecision.HUMAN_REVIEW_REQUIRED,("SENSITIVE_MEDIA_BOUNDARY_VIOLATION",),digest,tx)
         checks={
-            "PROVIDER_VERIFICATION_FAILED":receipt.verification_passed,
-            "LIVE_PRESENCE_CHECK_FAILED":receipt.live_presence_check_passed,
-            "TRUSTED_REFERENCE_MATCH_FAILED":receipt.trusted_reference_match_passed,
-            "DOCUMENT_CHECK_FAILED":receipt.document_check_passed,
-            "DEVICE_ATTESTATION_FAILED":receipt.device_attestation_passed,
+            "PROVIDER_VERIFICATION_FAILED":bool(p.get("verification_passed",False)),
+            "LIVE_PRESENCE_CHECK_FAILED":bool(p.get("live_presence_check_passed",False)),
+            "TRUSTED_REFERENCE_MATCH_FAILED":bool(p.get("trusted_reference_match_passed",False)),
+            "DOCUMENT_CHECK_FAILED":bool(p.get("document_check_passed",False)),
+            "DEVICE_ATTESTATION_FAILED":bool(p.get("device_attestation_passed",False)),
         }
-        reasons.extend(k for k,v in checks.items() if not v)
-        if receipt.provider_risk_level.upper() not in {"LOW","NORMAL"}:
+        reasons=[k for k,v in checks.items() if not v]
+        if str(p.get("provider_risk_level","")).upper() not in {"LOW","NORMAL"}:
             reasons.append("PROVIDER_RISK_REQUIRES_STEP_UP")
         if reasons:
-            return IdentityReceiptAssessment(IdentityDecision.STEP_UP_REQUIRED,tuple(reasons),digest,receipt.transaction_id)
-        return IdentityReceiptAssessment(IdentityDecision.VERIFIED,("SIGNED_PROVIDER_IDENTITY_RECEIPT_ACCEPTED",),digest,receipt.transaction_id)
+            return IdentityReceiptAssessment(IdentityDecision.STEP_UP_REQUIRED,tuple(reasons),digest,tx)
+        return IdentityReceiptAssessment(IdentityDecision.VERIFIED,("CRYPTOGRAPHIC_PROVIDER_RECEIPT_ACCEPTED",),digest,tx)
