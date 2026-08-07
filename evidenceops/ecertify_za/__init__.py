@@ -2,6 +2,7 @@
 from .commissioner_authority import CommissionerAuthorityAssessment,CommissionerAuthorityDecision,CommissionerAuthorityGate,CommissionerAuthorityRecord
 from .device_trust import DeviceAttestationReceipt,DeviceDecision,DeviceTrustPolicy
 from .document_intake import DocumentIntakePolicy,DocumentIntakeResult,IntakeDecision
+from .document_security import DocumentSecurityAssessment,DocumentSecurityDecision,DocumentSecurityGate,DocumentSecurityScanReceipt
 from .human_verification import HumanVerificationAssessment,HumanVerificationDecision,HumanVerificationOrchestrator
 from .identity_receipt import IdentityReceiptGate
 from .legal import CertificationRouteEngine
@@ -13,7 +14,8 @@ from .recipient_acceptance import RecipientAcceptanceAssessment,RecipientAccepta
 from .replay import PostgresReplayGuard,ReplayGuard,SQLiteReplayGuard
 from .service import ECertifyService
 from .smileid_adapter import SmileIDConfig,SmileIDProviderAdapter
+from .storage_assurance import SecureDocumentAssessment,StorageAssuranceDecision,StorageAssuranceGate,StorageCommitReceipt
 from .verification_registry import PublicVerification,SQLiteVerificationRegistry
 
-__all__=["CommissionerAuthorityAssessment","CommissionerAuthorityDecision","CommissionerAuthorityGate","CommissionerAuthorityRecord","DeviceAttestationReceipt","DeviceDecision","DeviceTrustPolicy","DocumentIntakePolicy","DocumentIntakeResult","IntakeDecision","HumanVerificationAssessment","HumanVerificationDecision","HumanVerificationOrchestrator","IdentityReceiptGate","CertificationRouteEngine","CommissionerEvent","CommissionerEventType","LegalCompletionAssessment","LegalCompletionDecision","LegalCompletionGate","HashChainLedger","IdentityProviderAdapter","ProviderCapabilities","HMACReceiptAuthenticator","ReceiptEnvelope","ReplayStore","RecipientAcceptanceAssessment","RecipientAcceptanceDecision","RecipientAcceptanceGate","RecipientAcceptanceRule","ReplayGuard","SQLiteReplayGuard","PostgresReplayGuard","SmileIDConfig","SmileIDProviderAdapter","PublicVerification","SQLiteVerificationRegistry","ECertifyService"]
-__version__="0.6.0"
+__all__=["CommissionerAuthorityAssessment","CommissionerAuthorityDecision","CommissionerAuthorityGate","CommissionerAuthorityRecord","DeviceAttestationReceipt","DeviceDecision","DeviceTrustPolicy","DocumentIntakePolicy","DocumentIntakeResult","IntakeDecision","DocumentSecurityAssessment","DocumentSecurityDecision","DocumentSecurityGate","DocumentSecurityScanReceipt","HumanVerificationAssessment","HumanVerificationDecision","HumanVerificationOrchestrator","IdentityReceiptGate","CertificationRouteEngine","CommissionerEvent","CommissionerEventType","LegalCompletionAssessment","LegalCompletionDecision","LegalCompletionGate","HashChainLedger","IdentityProviderAdapter","ProviderCapabilities","HMACReceiptAuthenticator","ReceiptEnvelope","ReplayStore","RecipientAcceptanceAssessment","RecipientAcceptanceDecision","RecipientAcceptanceGate","RecipientAcceptanceRule","ReplayGuard","SQLiteReplayGuard","PostgresReplayGuard","SmileIDConfig","SmileIDProviderAdapter","SecureDocumentAssessment","StorageAssuranceDecision","StorageAssuranceGate","StorageCommitReceipt","PublicVerification","SQLiteVerificationRegistry","ECertifyService"]
+__version__="0.7.0"
