@@ -63,9 +63,22 @@ class ProviderGateTests(unittest.TestCase):
             def authenticate(self,e):raise NotImplementedError
             def health(self):return {}
         with self.assertRaises(ProviderNotProductionQualified):require_production_provider(Adapter())
+    def test_semantic_placeholder_never_counts_as_provider_proof(self):
+        for ref in ("UNBOUND_PROVIDER_READBACK","PENDING_CONTRACT","REFERENCE_ONLY","TEST_RECEIPT","MOCK_PROOF","UNVERIFIED","PLACEHOLDER","TODO","TBD","N/A"):
+            class Adapter:
+                capabilities=ProviderCapabilities("p",True,True,True,True,True,True,False,ref)
+                def authenticate(self,e):raise NotImplementedError
+                def health(self):return {}
+            with self.subTest(ref=ref),self.assertRaises(ProviderNotProductionQualified):require_production_provider(Adapter())
+    def test_concrete_provider_evidence_reference_can_pass_gate(self):
+        class Adapter:
+            capabilities=ProviderCapabilities("p",True,True,True,True,True,True,False,"RCP-IDP-PROD-20260807-001")
+            def authenticate(self,e):raise NotImplementedError
+            def health(self):return {}
+        require_production_provider(Adapter())
     def test_rejects_raw_biometric_media_boundary(self):
         class Adapter:
-            capabilities=ProviderCapabilities("p",True,True,True,True,True,True,True,"proof")
+            capabilities=ProviderCapabilities("p",True,True,True,True,True,True,True,"RCP-IDP-PROD-20260807-001")
             def authenticate(self,e):raise NotImplementedError
             def health(self):return {}
         with self.assertRaises(ProviderNotProductionQualified):require_production_provider(Adapter())
