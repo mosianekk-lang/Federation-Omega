@@ -1,6 +1,7 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from typing import Mapping,Protocol,runtime_checkable
+from .evidence_ref import is_concrete_evidence_ref
 from .receipt_auth import AuthenticatedReceipt,ReceiptEnvelope
 
 @dataclass(frozen=True)
@@ -30,18 +31,9 @@ class IdentityProviderAdapter(Protocol):
 
 class ProviderNotProductionQualified(RuntimeError):pass
 
-_NON_PROOF_PREFIXES=("UNBOUND","PENDING","REFERENCE","TEST","MOCK","SYNTHETIC","UNVERIFIED","PLACEHOLDER","TODO","TBD")
-
-def _is_provider_native_proof(ref:str)->bool:
-    value=ref.strip()
-    if not value:return False
-    upper=value.upper()
-    if upper in {"NONE","N/A","NA","UNKNOWN"}:return False
-    return not upper.startswith(_NON_PROOF_PREFIXES)
-
 def require_production_provider(adapter:IdentityProviderAdapter)->None:
     c=adapter.capabilities
     required=(c.south_africa_supported,c.one_to_one_identity_verification,c.live_presence_check,c.signed_receipts)
     if not all(required):raise ProviderNotProductionQualified("IDENTITY_PROVIDER_CAPABILITY_GATE_FAILED")
     if c.raw_biometric_media_required_by_evidenceops:raise ProviderNotProductionQualified("RAW_BIOMETRIC_MEDIA_BOUNDARY_FAILED")
-    if not _is_provider_native_proof(c.production_evidence_ref):raise ProviderNotProductionQualified("PROVIDER_NATIVE_PRODUCTION_EVIDENCE_MISSING")
+    if not is_concrete_evidence_ref(c.production_evidence_ref):raise ProviderNotProductionQualified("PROVIDER_NATIVE_PRODUCTION_EVIDENCE_MISSING")

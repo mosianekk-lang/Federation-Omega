@@ -1,35 +1,38 @@
-# EvidenceOps eCertify ZA — Production Readiness v0.5
+# EvidenceOps eCertify ZA — Production Readiness v0.6
 
 ## Implemented source controls
-- Legal-lane separation for digital originals, source-matched copies, certified-copy gate, affidavit gate and institution-accepted digital assurance.
+- Legal lanes remain strictly separated: technical assurance cannot silently become certified/commissioned legal status.
+- Lane 5 no longer accepts a boolean or caller assertion. It requires a current `RecipientAcceptanceAssessment` bound to the exact recipient, use case, document type, accepted lane, authority evidence, effective period and freshness window.
+- The public/private route API rejects client-controlled `recipient_accepts_digital_assurance` and `recipient_acceptance` fields. Verified recipient acceptance is an internal trusted-service evidence path only.
+- Commissioner authority now has a source gate for personal/ex-officio designation, identity evidence, current ex-officio capacity, validity period and freshness.
+- Certified-copy/affidavit completion is transaction-bound: commissioner identity, authority assessment, transaction ID, document SHA-256, conflict clearance and legal-event evidence must all align.
+- `CERTIFIED_COPY` additionally requires original-document inspection evidence. `COMMISSIONED_AFFIDAVIT` requires physical presence and deponent signature in the commissioner's presence; no routine remote exception is implemented.
+- A blocked legal event leaves the original `CERTIFICATION_REQUIRED`/`COMMISSIONING_REQUIRED` label unchanged.
+- Shared semantic evidence-reference controls reject placeholder states such as `UNBOUND`, `PENDING`, `REFERENCE`, `TEST`, `MOCK`, `UNVERIFIED`, `DRAFT`, `TEMPLATE` and `HOLD` across provider, recipient and commissioner gates.
 - Identity-provider receipts pass server-side provider allowlisting, key-ID validation, signature verification, timestamp freshness and replay protection before identity policy is evaluated.
-- Replay/idempotency is an injected contract: local SQLite is explicitly non-production; PostgreSQL-compatible atomic replay is available through an externally supplied DB-API connection factory.
-- Production private API fails startup when provider trust configuration or a distributed replay guard is absent.
-- Provider-specific integrations implement a common capability/evidence contract and cannot require EvidenceOps to retain raw biometric media.
-- Smile ID now has a reference provider adapter based on its published callback signature and Biometric KYC result contract. The adapter verifies callback HMAC/timestamp, replay state, liveness, ID verification and authority-photo compare; callbacks exposing image links/KYC receipts are treated as a sensitive-media boundary event.
-- Identity-provider trust and device trust are explicitly separate domains. Final bank-grade human verification requires both verified identity proof and an independently trusted device; neither domain inherits trust from the other.
-- Public verification remains separated from private identity processing and exposes only verification code, status, legal label, document fingerprint and timestamps.
-- Document intake validates file signatures/type/size and cannot progress to accepted storage without separate malware/DLP controls.
-- Isolated private/public container targets and a zero-traffic Cloud Run canary bundle use dedicated `evidenceops-ecertify-za-*` service names and refuse reserved Architron targets.
-- eCertify compile, shell-syntax and qualification tests exist as source-controlled test surfaces. The public Federation repository remains execution-quarantined: eCertify qualification automation belongs in the separate private execution plane rather than as a new active public-repository workflow.
-- Provider-production evidence gates reject semantic placeholders such as `UNBOUND`, `PENDING`, `REFERENCE`, `TEST`, `MOCK` and `UNVERIFIED`; only a concrete provider-native evidence reference may pass the source-level proof-reference gate.
+- Identity-provider trust and device trust remain separate domains. Final bank-grade human verification requires both verified identity proof and an independently trusted device.
+- Smile ID has a reference adapter based on its published callback-signature and Biometric KYC result contract, but remains unbound to a production contract/readback.
+- Replay/idempotency is injected: SQLite is local/reference only; a PostgreSQL-compatible atomic replay guard exists for private-runtime binding.
+- Public verification remains privacy-minimal; document intake remains fail-closed pending malware/DLP; isolated zero-traffic Cloud Run canary targets remain dedicated to eCertify.
+- eCertify tests remain source-controlled while automated execution stays in the separate private execution plane under Phoenix execution-quarantine policy.
 - Commissioner authority, recipient acceptance, POPIA/DPIA, provider RFP, section 57 preliminary determination and go-live control planes exist in the private Drive workspace.
 
 ## Hard production gates — LIVE must not be claimed until all have provider-native proof
-1. Select/contract an approved identity-verification provider and bind its provider-native production semantics with live test vectors, key rotation/revocation and actual trusted-reference authority proof. The Smile ID adapter is reference-ready but remains `UNBOUND_PROVIDER_CONTRACT_AND_PRODUCTION_READBACK`.
-2. Supply the distributed PostgreSQL/managed-store connection factory through the authorised private runtime and prove atomic replay across instances and restarts.
-3. Bind managed secrets/KMS and prove identity-provider and database credential rotation without raw credentials entering public source or chat.
+1. Select/contract an approved identity-verification provider and bind provider-native production semantics, live test vectors, key rotation/revocation and trusted-reference authority proof.
+2. Supply the distributed managed-store connection factory through the authorised private runtime and prove atomic replay across instances/restarts.
+3. Bind managed secrets/KMS and prove credential/key rotation without raw credentials entering public source/chat.
 4. Complete provider-specific POPIA DPIA and written section 57 prior-authorisation determination; complete authorisation before affected processing if required.
 5. Bind encrypted object storage, malware scanning, content validation, DLP/redaction and retention/deletion evidence.
-6. Bind platform-specific Android/iOS attestation adapters and hardware-backed device keys for high-risk device activation/recovery.
-7. Onboard verified commissioners/certifiers with current authority/capacity/conflict proof; no invented or title-only authority.
-8. Sign pilot recipient acceptance rules/agreements; Lane 5 remains unbound until express recipient acceptance is proved.
-9. Deploy isolated zero-traffic private/public canaries through an authorised GCP route, prove health, service identity, secrets, distributed persistence and no production traffic.
-10. Run independent penetration testing covering signed-receipt forgery/replay, API abuse, document upload attacks, virtual-camera/injection, synthetic-media provider boundary, compromised devices and recovery/social engineering.
-11. Prove monitoring/SLOs, incident response, audit export, rollback and backup/restore.
-12. Run a closed production-like pilot, then an end-to-end provider-native canary covering citizen identity, device trust, document assurance, applicable commissioner event, recipient verification, audit and rollback.
-13. Obtain final legal/privacy/Information Officer approval of public wording, consent, terms and data flows.
-14. Only after all above gates may a public service be made unauthenticated or promoted to production traffic.
+6. Bind platform-specific Android/iOS attestation adapters and hardware-backed device keys.
+7. Populate the commissioner registry with real verified commissioners/certifiers and current authority/capacity evidence.
+8. Populate the recipient registry with real authorised acceptance rules/agreements. Lane 5 remains unavailable without exact current evidence.
+9. Bind commissioner-event authentication/capture in the private runtime and prove original-inspection/presence/conflict evidence on real pilot transactions.
+10. Deploy isolated zero-traffic private/public canaries through an authorised GCP route and prove health, service identity, secrets, distributed persistence and zero production traffic.
+11. Run independent penetration testing across identity receipts, recipient-rule abuse, commissioner-event forgery, document upload, device/recovery and public verifier surfaces.
+12. Prove monitoring/SLOs, incident response, audit export, rollback and backup/restore.
+13. Run a closed production-like pilot and end-to-end provider-native canary covering identity, device, document, recipient rule, applicable commissioner event, public verification, audit and rollback.
+14. Obtain final legal/privacy/Information Officer approval of public wording, consent, terms and data flows.
+15. Only after all above gates may public unauthenticated access or production traffic be enabled.
 
 ## Current truth
-SOURCE_V0_5_SMILE_ID_REFERENCE_ADAPTER_AND_LAYERED_HUMAN_VERIFICATION_IN_GOVERNED_BRANCH. V0_4_IS_MERGED_ON_MAIN. CLOUD_PRODUCTION_DEPLOYMENT_NOT_YET_PROVEN. IDENTITY_PROVIDER_NOT_YET_CONTRACTED_OR_BOUND. COMMISSIONER_AND_RECIPIENT_NETWORKS_NOT_YET_POPULATED. PUBLIC_LAUNCH_NOT_YET_AUTHORISED.
+SOURCE_V0_6_RECIPIENT_AND_COMMISSIONER_EVIDENCE_GATES_IN_GOVERNED_BRANCH. V0_5_IS_MERGED_ON_MAIN_AS_B7E28DB9141BD149998E01926832248ED4AE62BC. CLOUD_PRODUCTION_DEPLOYMENT_NOT_YET_PROVEN. IDENTITY_PROVIDER_NOT_YET_CONTRACTED_OR_BOUND. COMMISSIONER_AND_RECIPIENT_REGISTRIES_NOT_YET_POPULATED_WITH_LIVE_PARTNERS. PUBLIC_LAUNCH_NOT_YET_AUTHORISED.

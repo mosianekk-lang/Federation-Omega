@@ -1,12 +1,16 @@
 from __future__ import annotations
-from .models import AssuranceLane, CertificationRoute
+from .models import AssuranceLane,CertificationRoute
+from .recipient_acceptance import RecipientAcceptanceAssessment,RecipientAcceptanceDecision
 
 class CertificationRouteEngine:
-    """Separates technical identity/document assurance from legal certification labels."""
-    def route(self, requested_status:str, recipient_accepts_digital_assurance:bool=False)->CertificationRoute:
+    """Separate technical assurance, recipient acceptance and legal certification routes."""
+    def route(self,requested_status:str,recipient_acceptance:RecipientAcceptanceAssessment|None=None)->CertificationRoute:
         req=requested_status.strip().lower().replace("-","_").replace(" ","_")
-        if recipient_accepts_digital_assurance and req not in {"affidavit","sworn_statement"}:
-            return CertificationRoute(AssuranceLane.INSTITUTION_ACCEPTED,"INSTITUTION_ACCEPTED_DIGITAL_ASSURANCE",False,False,"VERIFIED_IDENTITY_OR_TRUSTED_ISSUER",("RECIPIENT_ACCEPTANCE_RULE_VERIFIED","NO_CERTIFICATION_LABEL_CREATED"))
+        if recipient_acceptance is not None:
+            if recipient_acceptance.decision!=RecipientAcceptanceDecision.VERIFIED:
+                return CertificationRoute(AssuranceLane.REQUIREMENT_VERIFICATION,"REQUIREMENT_UNVERIFIED",False,False,"NOT_DETERMINED",("RECIPIENT_ACCEPTANCE_EVIDENCE_NOT_VERIFIED",)+recipient_acceptance.reasons)
+            if req not in {"affidavit","sworn_statement","declaration"}:
+                return CertificationRoute(AssuranceLane.INSTITUTION_ACCEPTED,"INSTITUTION_ACCEPTED_DIGITAL_ASSURANCE",False,False,"VERIFIED_IDENTITY_OR_TRUSTED_ISSUER",("EXACT_RECIPIENT_ACCEPTANCE_EVIDENCE_VERIFIED","NO_CERTIFICATION_LABEL_CREATED"))
         if req in {"digital_original","electronic_original","original"}:
             return CertificationRoute(AssuranceLane.DIGITAL_ORIGINAL,"VERIFIED_DIGITAL_ORIGINAL",False,False,"RISK_BASED",("SOURCE_OR_ISSUER_VERIFICATION_REQUIRED_WHERE_AVAILABLE",))
         if req in {"copy","document_copy","scan"}:

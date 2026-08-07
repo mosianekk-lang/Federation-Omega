@@ -1,16 +1,17 @@
 openapi: 3.1.0
 info:
   title: EvidenceOps eCertify ZA Private Assurance API
-  version: 0.4.0
-  description: Private identity-receipt and legal-routing API. Production startup fails closed unless provider trust and distributed replay/idempotency are bound. Raw sensitive identity media is outside this API boundary.
+  version: 0.6.0
+  description: Private identity-receipt and legal-routing API. Recipient acceptance is server-verified evidence only; client-controlled acceptance flags are rejected. Final certified/commissioned labels are internal commissioner-authority/event completions, not public API assertions.
 paths:
   /health:
     get:
       responses:
-        '200': {description: Private service health and provider-auth state}
+        '200': {description: Private service health, provider-auth, recipient-evidence and legal-completion state}
   /v1/route:
     post:
-      summary: Determine the minimum legally sufficient document-assurance lane
+      summary: Determine the base document-assurance lane without client-supplied trust shortcuts
+      description: Lane 5 is selected only inside the trusted service path after a RecipientAcceptanceAssessment has been verified against the exact recipient/use-case/document rule. Sending recipient_accepts_digital_assurance or recipient_acceptance here is rejected.
       requestBody:
         required: true
         content:
@@ -18,11 +19,12 @@ paths:
             schema:
               type: object
               required: [requested_status]
+              additionalProperties: true
               properties:
                 requested_status: {type: string}
-                recipient_accepts_digital_assurance: {type: boolean, default: false}
       responses:
-        '200': {description: Route decision}
+        '200': {description: Base route decision}
+        '400': {description: Invalid or client-controlled recipient-acceptance assertion}
   /v1/identity/receipt/assess:
     post:
       summary: Authenticate and assess a signed identity-provider verification receipt
