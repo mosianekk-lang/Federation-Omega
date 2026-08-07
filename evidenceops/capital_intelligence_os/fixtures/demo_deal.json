@@ -1,0 +1,9 @@
+{
+  "fixture": "SYNTHETIC_ONLY",
+  "deal_id": "DEMO-001",
+  "target": "Synthetic Logistics Co",
+  "currency": "ZAR",
+  "public_market_inputs": {"policy_rate_bps_change": 200, "classification": "PUBLIC"},
+  "private_inputs": {"indicative_ebitda": 8000000, "classification": "CONFIDENTIAL"},
+  "expected_control": "private inputs must never enter a public-market trading action"
+}
