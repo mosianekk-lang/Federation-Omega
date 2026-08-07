@@ -1,37 +1,21 @@
-# EvidenceOps Capital Intelligence OS — Genesis
+# EvidenceOps Capital Intelligence OS — v0.2 Durable Core
 
-This package is the first executable vertical slice of the EvidenceOps Capital Intelligence OS. It composes existing Federation/EvidenceOps doctrine with new deterministic capital-domain primitives instead of creating another disconnected control plane.
+v0.2 advances the Genesis source nucleus into a replayable, tenant-scoped reference runtime without expanding financial authority.
 
-## Implemented in v0.1.0
+Implemented: ProofGraph, A1 AuthorityGuard, transactional Durable AUTOPILOT, request-bound idempotency, tenant isolation, Restricted List, Deal Passport, consented/cohort-gated OutcomeNet, GRAVITY, financing stress, the 60-stage M&A lifecycle, maturity controls and ten new decision/learning algorithms.
 
-- `ProofGraph`: provenance-bound claims, contradiction detection and dependency impact propagation.
-- `AuthorityGuard`: fail-closed private-M&A/public-market information firewall and A1 internal authority ceiling.
-- `Autopilot`: event → evidence → contradiction → impact → attention → authority → learning loop.
-- `GravityEngine`: transparent cross-option capital allocation ranking.
-- `DealLifecycle`: 60-stage M&A lifecycle vocabulary plus prerequisite gates for consequential stages.
-- `LearningLedger`: append-only hash-linked learning events for runtime use; generated receipts are not written into canonical source.
-- `MaturityGovernor`: blocks false promotion from code/test state to deployed/production state.
-- Six Genesis algorithms: Epistemic Shock Index, Trust Decay Clock, Attention Compression, Decision Reversal Threshold, Counterfactual Capital Regret and Fragility Cascade.
-- `CapitalIntelligenceService`: provider-neutral application facade.
+OutcomeNet requires explicit opt-in, at least five unique tenants (or a higher participant threshold), and equal tenant aggregate weighting. This is privacy/risk reduction, **not** a formal differential-privacy claim.
 
-## Constitutional boundaries
+Deal Passport carries claim fingerprints, evidence status, freshness, missing/conflicting facts and an integrity digest. It is **not** represented as a legal or PKI signature.
 
-The initial release is intentionally A1 internal. It denies live orders, withdrawals, transfers, autonomous financial effects, evidence deletion and attempts to disable information barriers. Consequential external actions are human-gated. Private, clean-team, potentially-MNPI, restricted, privileged and unknown information cannot flow from private M&A into public-market/trading pathways.
+Authority remains `A1_INTERNAL`. Live orders, withdrawals, transfers, autonomous financial effects, evidence deletion, audit erasure and disabling information barriers remain denied. Consequential external actions remain human-gated. Private/clean-team/potentially-MNPI/restricted/privileged/unknown M&A information cannot flow into public-market/trading pathways.
 
-Public information may flow into private M&A analysis when otherwise lawful and licensed.
+SQLite is a reference persistence adapter proving atomicity, restart/replay, request-bound idempotency, tenant scoping and integrity checks. A commercial provider database must preserve those semantics and additionally prove encryption, HA, backup/restore, migrations, disaster recovery and tenant isolation.
 
-## Maturity truth
-
-Source code is not deployment. Local tests can establish `TESTED`; repository CI and independent readback can support `VERIFIED`; `DEPLOYED` additionally requires a target-runtime receipt, health, persistence and rollback proof. `PRODUCTION_VERIFIED` additionally requires the required security review.
-
-## Acceptance harness
-
+Verification:
 ```bash
 PYTHONPATH=. python -m unittest discover -s evidenceops/capital_intelligence_os/tests -v
 PYTHONPATH=. python -m evidenceops.capital_intelligence_os.verify_release
 python -m compileall -q evidenceops/capital_intelligence_os
 ```
-
-## Federation reuse
-
-The production integration route composes rather than duplicates existing EvidenceOps Algorithm Foundry, Provenance Passport, Secure Capability Box, capability heartbeat, AO-CRA, Formation Engine and Alpha-to-Omega controls. Provider adapters remain replaceable.
+Local v0.2 acceptance: 70 tests plus release verifier and compile check.

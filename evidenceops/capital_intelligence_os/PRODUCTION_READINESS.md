@@ -1,17 +1,18 @@
-# Production Readiness Register — Genesis
+# Production Readiness Register — v0.2
 
-| Component | Current proven target | Production requirement |
+| Component | Current truth | Next production proof |
 |---|---|---|
-| Domain models | TESTED | CI + schema evolution policy |
-| ProofGraph | TESTED | persistence adapter, tenant isolation, load tests |
-| Authority firewall | TESTED | policy service integration + red-team suite |
-| Autopilot loop | TESTED | durable event bus, idempotency store, queue recovery |
-| Gravity Engine | TESTED | calibration data + investment committee evaluation |
-| M&A lifecycle | TESTED core gates | workflow persistence + configurable jurisdiction packs |
-| Learning ledger | TESTED in-memory | external append-only evidence plane + hash-chain monitoring |
-| Maturity governor | TESTED | release-controller integration |
-| Network/API | DESIGNED | authenticated API gateway + rate limits + audit |
-| Production runtime | NOT CLAIMED | runtime receipt, health, persistence, rollback |
-| Live financial effects | DISABLED | separate future regulated authority programme; never inherited |
+| ProofGraph / M&A lifecycle | TESTED | scale/load/schema evolution |
+| Authority + restricted list | TESTED | policy integration + external red team |
+| Durable Autopilot | TESTED_LOCAL_RUNTIME | provider event/DB + multi-worker idempotency |
+| SQLite reference store | TESTED_LOCAL_PERSISTENCE | encrypted HA provider DB + backup/restore |
+| Tenant boundaries | TESTED_REFERENCE | authenticated tenant identity + penetration/isolation tests |
+| Deal Passport | TESTED_REFERENCE | provenance/attestation adapters where justified |
+| OutcomeNet | TESTED_PRIVACY_GATED_REFERENCE | legal/privacy review + leakage attack tests + optional formal DP |
+| Decision algorithms | TESTED | calibrated historical/synthetic domain evaluation |
+| Network API/UI | DESIGNED | authenticated API/UI, rate/session/audit controls |
+| Provider runtime | NOT CLAIMED | runtime/health/persistence/rollback/observability receipt |
+| Production security | NOT CLAIMED | threat model, secrets/DLP/SAST/dependency/container/external review |
+| Live financial effects | DISABLED | separate regulated authority programme; never inherited |
 
-The Genesis vertical slice must not be represented as a finished commercial SaaS or a deployed production system. Its role is to establish the executable constitutional and domain nucleus that later modules can safely extend.
+v0.2 is an executable durable reference core, not a deployed commercial SaaS and not production-verified.
