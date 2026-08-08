@@ -2,11 +2,13 @@
 from .android_play_integrity import PlayIntegrityConfig,PlayIntegrityVerdictAdapter
 from .apple_app_attest import AppleAppAttestAdapter,AppleAppAttestConfig,AppleVerifiedAssertion
 from .commissioner_authority import CommissionerAuthorityAssessment,CommissionerAuthorityDecision,CommissionerAuthorityGate,CommissionerAuthorityRecord
+from .commissioner_dispatch import CommissionerCandidate,CommissionerDispatchEngine,DispatchDecision,DispatchRequest,DispatchResult
 from .device_trust import DeviceAttestationReceipt,DeviceDecision,DeviceTrustPolicy
 from .document_intake import DocumentIntakePolicy,DocumentIntakeResult,IntakeDecision
 from .document_security import DocumentSecurityAssessment,DocumentSecurityDecision,DocumentSecurityGate,DocumentSecurityScanReceipt
 from .human_verification import HumanVerificationAssessment,HumanVerificationDecision,HumanVerificationOrchestrator
 from .identity_receipt import IdentityReceiptGate
+from .launch_now import LaunchDecision,LaunchNowEngine,LaunchRoute
 from .legal import CertificationRouteEngine
 from .legal_completion import CommissionerEvent,CommissionerEventType,LegalCompletionAssessment,LegalCompletionDecision,LegalCompletionGate
 from .ledger import HashChainLedger
@@ -18,6 +20,7 @@ from .service import ECertifyService
 from .smileid_adapter import SmileIDConfig,SmileIDProviderAdapter
 from .storage_assurance import SecureDocumentAssessment,StorageAssuranceDecision,StorageAssuranceGate,StorageCommitReceipt
 from .verification_registry import PublicVerification,SQLiteVerificationRegistry
+from .zero_possession import IntegrityReceipt,ZeroPossessionReceiptService
 
-__all__=["PlayIntegrityConfig","PlayIntegrityVerdictAdapter","AppleAppAttestAdapter","AppleAppAttestConfig","AppleVerifiedAssertion","CommissionerAuthorityAssessment","CommissionerAuthorityDecision","CommissionerAuthorityGate","CommissionerAuthorityRecord","DeviceAttestationReceipt","DeviceDecision","DeviceTrustPolicy","DocumentIntakePolicy","DocumentIntakeResult","IntakeDecision","DocumentSecurityAssessment","DocumentSecurityDecision","DocumentSecurityGate","DocumentSecurityScanReceipt","HumanVerificationAssessment","HumanVerificationDecision","HumanVerificationOrchestrator","IdentityReceiptGate","CertificationRouteEngine","CommissionerEvent","CommissionerEventType","LegalCompletionAssessment","LegalCompletionDecision","LegalCompletionGate","HashChainLedger","IdentityProviderAdapter","ProviderCapabilities","HMACReceiptAuthenticator","ReceiptEnvelope","ReplayStore","RecipientAcceptanceAssessment","RecipientAcceptanceDecision","RecipientAcceptanceGate","RecipientAcceptanceRule","ReplayGuard","SQLiteReplayGuard","PostgresReplayGuard","SmileIDConfig","SmileIDProviderAdapter","SecureDocumentAssessment","StorageAssuranceDecision","StorageAssuranceGate","StorageCommitReceipt","PublicVerification","SQLiteVerificationRegistry","ECertifyService"]
-__version__="0.8.0"
+__all__=["PlayIntegrityConfig","PlayIntegrityVerdictAdapter","AppleAppAttestAdapter","AppleAppAttestConfig","AppleVerifiedAssertion","CommissionerAuthorityAssessment","CommissionerAuthorityDecision","CommissionerAuthorityGate","CommissionerAuthorityRecord","CommissionerCandidate","CommissionerDispatchEngine","DispatchDecision","DispatchRequest","DispatchResult","DeviceAttestationReceipt","DeviceDecision","DeviceTrustPolicy","DocumentIntakePolicy","DocumentIntakeResult","IntakeDecision","DocumentSecurityAssessment","DocumentSecurityDecision","DocumentSecurityGate","DocumentSecurityScanReceipt","HumanVerificationAssessment","HumanVerificationDecision","HumanVerificationOrchestrator","IdentityReceiptGate","LaunchDecision","LaunchNowEngine","LaunchRoute","CertificationRouteEngine","CommissionerEvent","CommissionerEventType","LegalCompletionAssessment","LegalCompletionDecision","LegalCompletionGate","HashChainLedger","IdentityProviderAdapter","ProviderCapabilities","HMACReceiptAuthenticator","ReceiptEnvelope","ReplayStore","RecipientAcceptanceAssessment","RecipientAcceptanceDecision","RecipientAcceptanceGate","RecipientAcceptanceRule","ReplayGuard","SQLiteReplayGuard","PostgresReplayGuard","SmileIDConfig","SmileIDProviderAdapter","SecureDocumentAssessment","StorageAssuranceDecision","StorageAssuranceGate","StorageCommitReceipt","PublicVerification","SQLiteVerificationRegistry","IntegrityReceipt","ZeroPossessionReceiptService","ECertifyService"]
+__version__="0.9.0"
