@@ -1,26 +1,56 @@
-# EvidenceOps eCertify ZA — Production Readiness v0.8
+# EvidenceOps eCertify ZA — Launch & Full-Assurance Readiness v0.9
 
-## Implemented source controls
-- All v0.7 identity, legal, document-security and storage gates remain enforced.
-- Android Play Integrity now has a server-verdict adapter aligned to the provider model: it consumes a server-decrypted/verified verdict, rechecks exact package name, request hash, timestamp freshness, `PLAY_RECOGNIZED`, device-integrity labels and `MEETS_STRONG_INTEGRITY` for high-risk actions.
-- Play Integrity request-hash mismatch, stale verdicts, weak high-risk integrity or placeholder provider verification evidence cannot produce a trusted-device outcome.
-- Apple App Attest now has a verified-assertion adapter. The private runtime remains responsible for Apple certificate-chain/attestation/assertion cryptographic validation; EvidenceOps rechecks app ID, one-time challenge, environment, validation category and monotonic assertion counter.
-- App Attest evidence is treated as a hardware-backed key signal only after those server-side verification semantics are satisfied.
-- Hardware-backed application binding and strong platform integrity are distinct device signals. A known device can be trusted when either a hardware-backed binding or strong platform integrity is proven; new-device and account-recovery events always step up.
-- Platform/provider evidence references still use the shared semantic placeholder gate and require provider-native/private-runtime proof before production claims.
+## Release doctrine
+Commercial launchability is no longer blocked by every full-assurance dependency.
 
-## Hard production gates — LIVE must not be claimed until all have provider-native proof
-1. Contract/bind an approved IDV provider and provider-native signed receipt route.
-2. Bind Google Play Integrity server decoding/verification and Apple App Attest cryptographic verification in the authorised private runtime, with real package/App IDs, keys/challenges, counters and provider-native receipts.
-3. Bind managed replay/database, secrets/KMS and key rotation.
-4. Complete provider-specific POPIA DPIA/section 57 determination and any required prior authorisation.
-5. Bind actual encrypted storage, malware/DLP/content validation, retention/deletion automation and readback.
-6. Populate live commissioner/certifier authority and recipient acceptance rules.
-7. Execute isolated zero-traffic Cloud Run canaries and prove identity, device, secrets, persistence, storage, health and rollback.
-8. Complete independent penetration testing, monitoring/SLOs, incident response and backup/restore.
-9. Run a closed production-like pilot and end-to-end canary covering IDV, platform device trust, secure document pipeline, recipient rule, commissioner event, public verification, audit and rollback.
-10. Obtain final legal/privacy/Information Officer launch approval.
-11. Only then may public unauthenticated access or production traffic be enabled.
+Two independently governed tracks exist:
+
+### Track A — LAUNCH-NOW / ZERO-POSSESSION
+This track can operate without an identity-verification contract, biometric processing, document storage, malware/DLP vendors or remote-commissioning claims.
+
+Citizen value available in Track A:
+- local/browser document hashing;
+- server-signed EvidenceOps Document Integrity Receipt using only the SHA-256 fingerprint and client nonce;
+- technical copy-integrity assurance clearly labelled as non-statutory;
+- verified digital-original upgrade when a concrete issuer/source proof exists;
+- recipient-approved digital assurance when an exact recipient rule has been independently verified;
+- automatic formal-certification / affidavit routing in which the platform, not the citizen, finds and assigns an authority-verified commissioner;
+- the final `CERTIFIED_COPY` or `COMMISSIONED_AFFIDAVIT` label remains impossible until the existing legal-completion gates pass.
+
+Zero-Possession principle: the integrity-receipt endpoint rejects document bytes/content. EvidenceOps can therefore provide a useful tamper-evident receipt without becoming custodian of the document file.
+
+Track A production minimum:
+1. HTTPS-hosted launch service with `ECERTIFY_MODE=launch_now`.
+2. A production integrity-signing key of at least 256 bits, private to the service, with a key ID and rotation procedure.
+3. Public verification of server-signed integrity receipts.
+4. POPIA-compliant minimal metadata/privacy notice and retention rules for receipt/contact/booking data; no claim that zero-possession eliminates POPIA.
+5. Accurate public wording: integrity assurance is not statutory certification, not issuer verification unless separately proven, and not government affiliation.
+6. For any formal certification/affidavit transaction, an authority-verified commissioner must be assigned and the transaction-specific legal event must pass before the legal label is released.
+
+### Track B — FULL ASSURANCE
+Track B activates stronger identity/source/device/document controls without changing Track A truth labels:
+- contracted IDV provider and signed provider receipts;
+- Google Play Integrity / Apple App Attest private-runtime verification;
+- managed replay/database, secrets/KMS and rotation;
+- provider-specific POPIA DPIA / section 57 determination and any required prior authorisation;
+- encrypted document storage, malware/DLP/content validation and deletion/retention proof when EvidenceOps actually possesses document bytes;
+- populated recipient and commissioner registries;
+- provider-native cloud canaries, penetration testing and end-to-end pilot.
+
+## Formal-service operating solution
+A citizen requesting a certified copy or affidavit is never told to locate a commissioner. `CommissionerDispatchEngine` owns that dependency:
+1. filter to available candidates supporting the requested service and service area;
+2. require current verified authority/capacity and conflict clearance;
+3. choose the closest eligible candidate with capacity;
+4. bind the authority snapshot to the transaction;
+5. schedule the original-inspection or physical-presence event;
+6. capture legal-event evidence;
+7. release the legal label only after `LegalCompletionGate` verifies commissioner, transaction, document hash, conflict and presence/original-inspection conditions.
+
+If no eligible commissioner exists, the platform opens a supply-expansion task for the area. The citizen is not converted into the sourcing agent.
+
+## Commercial model for Track A
+Revenue may come from platform subscriptions, institutional verification/API access, integrity receipts, recipient-rule services, fraud/risk services and lawful logistics/convenience services. Any fee associated with an oath/affirmation/attested declaration must respect the Commissioner's fee prohibition; platform pricing must keep prohibited commissioner-act charges separate from lawful technology/logistics services and remain subject to legal review.
 
 ## Current truth
-SOURCE_V0_8_PLATFORM_ATTESTATION_ADAPTERS_IN_GOVERNED_BRANCH. V0_7_IS_MERGED_ON_MAIN_AS_8F29470B339CE0068248C7245145ABE15310B395. GOOGLE_PLAY_AND_APPLE_PRIVATE_RUNTIME_VERIFICATION_NOT_YET_PROVIDER_BOUND. IDENTITY_PROVIDER_NOT_YET_CONTRACTED_OR_BOUND. SCANNER_DLP_STORAGE_PROVIDERS_NOT_YET_BOUND. COMMISSIONER_AND_RECIPIENT_REGISTRIES_NOT_YET_POPULATED_WITH_LIVE_PARTNERS. CLOUD_PRODUCTION_DEPLOYMENT_NOT_YET_PROVEN. PUBLIC_LAUNCH_NOT_YET_AUTHORISED.
+SOURCE_V0_9_LAUNCH_NOW_ZERO_POSSESSION_MODE_IN_GOVERNED_BRANCH. FULL_ASSURANCE_CONTROLS_FROM_V0_8_REMAIN_AVAILABLE_BUT_OPTIONAL_FOR_TRACK_A. TRACK_A_DOES_NOT_CREATE_STATUTORY_CERTIFICATION_WITHOUT_A_COMMISSIONER_EVENT. TRACK_A_DOES_NOT_CLAIM_IDENTITY_OR_ISSUER_VERIFICATION_WITHOUT_SEPARATE_PROOF. EXTERNAL_HOSTING_AND_LIVE_COMMISSIONER_SUPPLY_STILL_REQUIRE_PROVIDER_NATIVE_ACTIVATION, BUT THEY NO_LONGER BLOCK THE PRODUCT ARCHITECTURE OR THE SELF_SERVICE_INTEGRITY_LANE.
