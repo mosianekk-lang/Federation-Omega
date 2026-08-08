@@ -1,17 +1,19 @@
 openapi: 3.1.0
 info:
-  title: EvidenceOps eCertify ZA Private Assurance API
-  version: 0.6.0
-  description: Private identity-receipt and legal-routing API. Recipient acceptance is server-verified evidence only; client-controlled acceptance flags are rejected. Final certified/commissioned labels are internal commissioner-authority/event completions, not public API assertions.
+  title: EvidenceOps eCertify ZA Assurance API
+  version: 0.9.0
+  description: >-
+    Launch-now and full-assurance API. Launch-now mode provides zero-possession
+    document-integrity receipts and legal routing without requiring an IDV contract.
+    Statutory certified/commissioned labels remain commissioner-event gated.
 paths:
   /health:
     get:
       responses:
-        '200': {description: Private service health, provider-auth, recipient-evidence and legal-completion state}
-  /v1/route:
+        '200': {description: Service mode and capability state}
+  /v1/launch/route:
     post:
-      summary: Determine the base document-assurance lane without client-supplied trust shortcuts
-      description: Lane 5 is selected only inside the trusted service path after a RecipientAcceptanceAssessment has been verified against the exact recipient/use-case/document rule. Sending recipient_accepts_digital_assurance or recipient_acceptance here is rejected.
+      summary: Resolve the citizen request to the lowest lawful launchable route
       requestBody:
         required: true
         content:
@@ -19,30 +21,53 @@ paths:
             schema:
               type: object
               required: [requested_status]
-              additionalProperties: true
               properties:
                 requested_status: {type: string}
+                issuer_or_source_verified: {type: boolean, default: false}
       responses:
-        '200': {description: Base route decision}
-        '400': {description: Invalid or client-controlled recipient-acceptance assertion}
-  /v1/identity/receipt/assess:
+        '200': {description: Launch-now route with citizen experience and truth boundary}
+  /v1/integrity/receipt/issue:
     post:
-      summary: Authenticate and assess a signed identity-provider verification receipt
-      description: The server verifies provider allowlist, key ID, receipt signature, freshness and replay state before identity policy is evaluated. EvidenceOps does not perform biometric matching or ingest raw biometric media through this endpoint.
+      summary: Issue a server-signed zero-possession document-integrity receipt
+      description: >-
+        The client computes SHA-256 locally. This endpoint accepts the digest and a
+        client nonce only. It rejects document bytes/content and never labels the
+        result a certified copy.
       requestBody:
         required: true
         content:
           application/json:
             schema:
               type: object
-              required: [provider, key_id, signature_hex, payload, consent_granted]
+              required: [document_sha256, client_nonce]
+              additionalProperties: false
               properties:
-                provider: {type: string}
-                key_id: {type: string}
-                signature_hex: {type: string}
-                payload: {type: object}
-                consent_granted: {type: boolean}
+                document_sha256: {type: string, pattern: '^[0-9a-fA-F]{64}$'}
+                client_nonce: {type: string, minLength: 16, maxLength: 256}
+      responses:
+        '200': {description: Signed EvidenceOps Document Integrity Receipt}
+        '400': {description: Invalid hash/nonce or attempted document-byte submission}
+  /v1/integrity/receipt/verify:
+    post:
+      summary: Verify an EvidenceOps integrity receipt against the active signing key
+      responses:
+        '200': {description: Signature validity result}
+  /v1/route:
+    post:
+      summary: Determine the base legal assurance lane without client trust shortcuts
+      description: >-
+        Client-controlled recipient acceptance is rejected. Final certified/commissioned
+        labels are never emitted by this route.
+      responses:
+        '200': {description: Base route decision}
+        '400': {description: Client-controlled recipient-acceptance assertion rejected}
+  /v1/identity/receipt/assess:
+    post:
+      summary: Authenticate and assess a signed identity-provider receipt when Track B is activated
+      description: >-
+        This module is optional in launch-now mode. When configured, provider allowlist,
+        key ID, receipt signature, freshness and replay are verified before identity policy.
       responses:
         '200': {description: Authenticated identity-receipt decision}
         '400': {description: Invalid, expired, replayed or untrusted receipt}
-        '503': {description: Identity provider authenticator not configured}
+        '503': {description: Full-assurance identity module not activated; launch-now remains available}
