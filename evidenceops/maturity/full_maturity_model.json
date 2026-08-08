@@ -1,0 +1,49 @@
+{
+  "schema": "EVIDENCEOPS_FULL_MATURITY_MODEL_V1",
+  "version": "1.0.0",
+  "owner": "Kagiso Kim Mosiane",
+  "scope": "All EvidenceOps innovations, algorithms, agents, products, control planes and deployment lanes",
+  "truth_rule": "Maturity is evidence-bound. Design, source presence, local tests, documentation, issue text or intent may not be promoted as runtime, provider, production or consequential proof.",
+  "levels": [
+    {"level":"M0","name":"CONCEPT","required_evidence":["named problem","bounded objective","authority ceiling","risk classification"]},
+    {"level":"M1","name":"SOURCE_IMPLEMENTED","required_evidence":["versioned source","schema validation","threat/abuse boundaries","owner traceability"]},
+    {"level":"M2","name":"DETERMINISTIC_TESTED","required_evidence":["positive tests","negative tests","regression tests","failure-mode tests","repeatable local receipt"]},
+    {"level":"M3","name":"INTEGRATED","required_evidence":["registered capability","dependency contract","case/tenant isolation","audit events","rollback path"]},
+    {"level":"M4","name":"LIVE_CANARY_VERIFIED","required_evidence":["bounded live execution","target-specific success proof","no unintended side effect","rollback verification","canary receipt"]},
+    {"level":"M5","name":"PROVIDER_READBACK_VERIFIED","required_evidence":["provider-native readback","identity/authority proof","configuration readback","semantic action proof","drift baseline"]},
+    {"level":"M6","name":"RESILIENT_OPERATIONAL","required_evidence":["recovery test","idempotency/replay proof","degraded-mode test","observability","security controls","rollback rehearsal"]},
+    {"level":"M7","name":"REAL_WORKFLOW_CALIBRATED","required_evidence":["representative workflow trials","accuracy/quality metrics","human review where consequential","false-positive/false-negative analysis","cross-implementation or independent verification where material"]},
+    {"level":"M8","name":"PRODUCTION_MATURE","required_evidence":["SLO/SLA objectives","measured reliability","operational runbook","incident response","cost envelope","privacy/security review","data lifecycle","change governance","periodic recertification"]}
+  ],
+  "hard_guards": [
+    "proof-before-claim",
+    "no cross-case trust transfer",
+    "no runtime inference from source or local tests",
+    "no consequential external action above granted authority",
+    "no promotion on generic HTTP/queue/health success",
+    "no maturity state jump",
+    "no promotion without rollback evidence",
+    "no production-mature claim while a P0 security or provider-authority blocker materially affects the capability"
+  ],
+  "portfolio_dimensions": [
+    "evidence_integrity",
+    "legal_reasoning",
+    "forensic_processing",
+    "workflow_orchestration",
+    "continuous_learning",
+    "provider_integrations",
+    "security_and_identity",
+    "data_governance",
+    "observability_and_receipts",
+    "resilience_and_recovery",
+    "human_factors_and_usability",
+    "commercial_productization"
+  ],
+  "promotion_policy": {
+    "default": "fail_closed",
+    "required": ["current source head","target-specific evidence","non-regression result","rollback proof","authority check"],
+    "forbidden_shortcuts": ["documentation-only promotion","owner-assertion-only runtime proof","provider success inferred from repository success","stale receipt reuse","generic success substituted for requested action proof"]
+  },
+  "priority_formula": "priority = impact * reuse * decision_criticality * maturity_gap * blocker_reducibility / (risk + owner_burden + external_dependency)",
+  "completion_definition": "Every in-scope innovation is either M8 PRODUCTION_MATURE with current evidence, RETIRED with migration proof, or explicitly BLOCKED with a named external dependency and no false completion claim."
+}
