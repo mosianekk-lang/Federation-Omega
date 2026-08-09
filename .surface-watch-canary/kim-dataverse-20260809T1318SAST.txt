@@ -1,3 +1,0 @@
-Kim Dataverse reversible GitHub provider-write canary.
-Timestamp: 2026-08-09T13:18:28+02:00
-Delete after provider-native readback.
