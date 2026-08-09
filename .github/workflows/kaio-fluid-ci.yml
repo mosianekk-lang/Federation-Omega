@@ -4,7 +4,7 @@ on:
   pull_request:
     paths:
       - 'kaio_fluid/**'
-      - 'tests/test_kaio_fluid_core.py'
+      - 'tests/test_kaio_fluid_*.py'
       - 'systems/alpha-omega-turnkey/examples/kaio-fluid-intelligence.json'
       - '.github/workflows/kaio-fluid-ci.yml'
   push:
@@ -12,7 +12,7 @@ on:
       - kaio-fluid-24h-build
     paths:
       - 'kaio_fluid/**'
-      - 'tests/test_kaio_fluid_core.py'
+      - 'tests/test_kaio_fluid_*.py'
       - 'systems/alpha-omega-turnkey/examples/kaio-fluid-intelligence.json'
       - '.github/workflows/kaio-fluid-ci.yml'
 
@@ -26,8 +26,8 @@ jobs:
           python-version: '3.11'
       - name: Install pytest
         run: python -m pip install pytest
-      - name: KAIO deterministic core
-        run: python -m pytest -q tests/test_kaio_fluid_core.py
+      - name: KAIO deterministic P0 suite
+        run: python -m pytest -q tests/test_kaio_fluid_core.py tests/test_kaio_fluid_extended.py
       - name: Import and synthetic lab smoke test
         run: |
           python - <<'PY'
