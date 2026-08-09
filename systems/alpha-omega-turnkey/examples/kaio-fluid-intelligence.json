@@ -1,0 +1,36 @@
+{
+  "title": "KAIO Omega Fluid Intelligence Core",
+  "description": "Build a proof-bound adaptive cognitive kernel that detects novelty, reframes unfamiliar problems, competes hypotheses, prioritizes information gain, compiles temporary cognitive architectures, protects epistemic integrity, calibrates predictions and promotes improvements only after deterministic, shadow, canary and workflow verification.",
+  "users": [
+    "Federation Omega orchestration",
+    "EvidenceOps and TruthGrid",
+    "KIOAS",
+    "LEX-OMEGA",
+    "Kim-Advocate",
+    "Formation Innovation Engine"
+  ],
+  "outcomes": [
+    "P0 cognitive data model",
+    "fluid reasoning core",
+    "Cognitive Compiler v0.1",
+    "Cognitive Immune MVP",
+    "synthetic problem laboratory",
+    "prediction and calibration foundation",
+    "Alpha-Omega promotion receipts",
+    "Federation governance integration"
+  ],
+  "constraints": [
+    "proof before claim",
+    "hypothesis never becomes fact without qualifying evidence",
+    "authority ceiling A1_INTERNAL until separately promoted",
+    "no destructive or consequential external action",
+    "no source evidence mutation",
+    "no Verified Facts Register mutation",
+    "no provider runtime claim without exact provider readback",
+    "no self-granted authority expansion",
+    "all maturity promotions require rollback and regression evidence"
+  ],
+  "preferred_surfaces": ["github", "google_drive"],
+  "build_strategy": "PARALLEL_INDEPENDENT_LANES_WITH_PROOF_GATED_PROMOTION",
+  "target_window_hours": 24
+}
