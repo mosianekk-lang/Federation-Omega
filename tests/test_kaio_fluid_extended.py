@@ -1,7 +1,5 @@
 from datetime import datetime, timezone
 
-import pytest
-
 from kaio_fluid.abstraction import ProblemAbstractionEngine
 from kaio_fluid.causal import CausalClaim, CausalTimeLockGuard, TimedFact
 from kaio_fluid.lineage import LineageGraph, LineageNode
@@ -25,8 +23,12 @@ def test_lineage_rejects_cycle():
     graph.add_node(LineageNode("A", "PROPOSITION", "SUPPORTED"))
     graph.add_node(LineageNode("B", "PROPOSITION", "SUPPORTED"))
     graph.link("A", "B")
-    with pytest.raises(ValueError):
+    try:
         graph.link("B", "A")
+    except ValueError:
+        pass
+    else:
+        raise AssertionError("circular reasoning/evidence lineage must fail closed")
 
 
 def test_abstraction_is_deduplicated_and_explicit():
