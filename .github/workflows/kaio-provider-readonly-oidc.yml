@@ -1,0 +1,156 @@
+name: KAIO Provider Read-Only OIDC Proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/kaio-provider-readonly-oidc.yml"
+      - "governance/github_airlock_policy.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: kaio-provider-readonly-oidc
+  cancel-in-progress: false
+
+jobs:
+  provider-readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      PROJECT_ID: sov-hybrid-suite
+      PROJECT_NUMBER: "257649435135"
+      REGION: africa-south1
+      SERVICE: fevx-cse-shadow
+      WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+      DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+      DATABASE_SECRET: NEXUS_DATABASE_URL
+      ARTIFACT_REPOSITORY: fo-runtime
+    steps:
+      - name: Execute zero-mutation provider identity and readback proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p kaio-provider-proof
+          python - <<'PY'
+          from __future__ import annotations
+          import json, os, urllib.error, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          project=os.environ['PROJECT_ID']; number=os.environ['PROJECT_NUMBER']; region=os.environ['REGION']
+          service=os.environ['SERVICE']; provider=os.environ['WIF_PROVIDER']; sa=os.environ['DEPLOYER_SA']
+
+          def req(url, *, headers=None, data=None, method='GET'):
+              request=urllib.request.Request(url, headers=headers or {}, data=data, method=method)
+              try:
+                  with urllib.request.urlopen(request, timeout=30) as response:
+                      raw=response.read().decode('utf-8','replace')
+                      try: body=json.loads(raw)
+                      except Exception: body={}
+                      return response.status, body
+              except urllib.error.HTTPError as exc:
+                  return exc.code, {}
+              except Exception:
+                  return 0, {}
+
+          receipt={
+              'schema':'KAIO-PROVIDER-READONLY-OIDC-PROOF-1',
+              'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'project':project,
+              'region':region,
+              'service':service,
+              'provider_mutation_attempted':False,
+              'repository_mutation_attempted':False,
+              'secret_values_recorded':False,
+          }
+
+          audience='//iam.googleapis.com/'+provider
+          oidc_url=os.environ.get('ACTIONS_ID_TOKEN_REQUEST_URL','')
+          oidc_request_token=os.environ.get('ACTIONS_ID_TOKEN_REQUEST_TOKEN','')
+          oidc_status=0; oidc=''
+          if oidc_url and oidc_request_token:
+              joiner='&' if '?' in oidc_url else '?'
+              oidc_status, oidc_body=req(
+                  oidc_url+joiner+'audience='+urllib.parse.quote(audience, safe=''),
+                  headers={'Authorization':'Bearer '+oidc_request_token,'Accept':'application/json'},
+              )
+              oidc=str(oidc_body.get('value',''))
+          receipt['github_oidc']={'http_status':oidc_status,'token_obtained':bool(oidc)}
+
+          sts=''
+          if oidc:
+              payload=urllib.parse.urlencode({
+                  'grant_type':'urn:ietf:params:oauth:grant-type:token-exchange',
+                  'audience':audience,
+                  'scope':'https://www.googleapis.com/auth/cloud-platform',
+                  'requested_token_type':'urn:ietf:params:oauth:token-type:access_token',
+                  'subject_token':oidc,
+                  'subject_token_type':'urn:ietf:params:oauth:token-type:jwt',
+              }).encode()
+              sts_status, sts_body=req('https://sts.googleapis.com/v1/token',headers={'Content-Type':'application/x-www-form-urlencoded'},data=payload,method='POST')
+              sts=str(sts_body.get('access_token',''))
+          else:
+              sts_status=0
+          receipt['google_sts']={'http_status':sts_status,'token_obtained':bool(sts)}
+
+          access=''
+          if sts:
+              body=json.dumps({'scope':['https://www.googleapis.com/auth/cloud-platform'],'lifetime':'900s'}).encode()
+              imp_status, imp_body=req(
+                  'https://iamcredentials.googleapis.com/v1/projects/-/serviceAccounts/'+urllib.parse.quote(sa, safe='')+':generateAccessToken',
+                  headers={'Authorization':'Bearer '+sts,'Content-Type':'application/json'},data=body,method='POST')
+              access=str(imp_body.get('accessToken',''))
+          else:
+              imp_status=0
+          receipt['service_account_impersonation']={'http_status':imp_status,'token_obtained':bool(access),'service_account':sa}
+
+          def auth_get(url):
+              if not access: return 0, {}
+              return req(url,headers={'Authorization':'Bearer '+access,'Accept':'application/json'})
+
+          project_status, project_body=auth_get('https://cloudresourcemanager.googleapis.com/v3/projects/'+project)
+          service_status, service_body=auth_get(f'https://run.googleapis.com/v2/projects/{project}/locations/{region}/services/{service}')
+          secret_status, _=auth_get(f'https://secretmanager.googleapis.com/v1/projects/{project}/secrets/'+urllib.parse.quote(os.environ['DATABASE_SECRET'], safe=''))
+          repo_status, _=auth_get(f'https://artifactregistry.googleapis.com/v1/projects/{project}/locations/{region}/repositories/'+urllib.parse.quote(os.environ['ARTIFACT_REPOSITORY'], safe=''))
+
+          receipt['provider_reads']={
+              'project':{'http_status':project_status,'project_id':project_body.get('projectId')},
+              'cloud_run':{
+                  'http_status':service_status,
+                  'name':service_body.get('name'),
+                  'uri':service_body.get('uri'),
+                  'latest_ready_revision':service_body.get('latestReadyRevision'),
+                  'traffic':service_body.get('traffic',[]),
+                  'image':((service_body.get('template') or {}).get('containers') or [{}])[0].get('image'),
+              },
+              'secret_metadata':{'http_status':secret_status},
+              'artifact_repository':{'http_status':repo_status},
+          }
+          checks={
+              'github_oidc': bool(oidc),
+              'google_sts': bool(sts),
+              'service_account_impersonation': bool(access),
+              'project_read': project_status==200,
+              'cloud_run_read': service_status==200,
+              'secret_metadata_read': secret_status==200,
+              'artifact_repository_read': repo_status==200,
+          }
+          receipt['checks']=checks
+          receipt['blockers']=[k for k,v in checks.items() if not v]
+          receipt['classification']='PROVIDER_READONLY_ROUTE_VERIFIED' if not receipt['blockers'] else 'PROVIDER_READONLY_ROUTE_BLOCKED'
+          Path('kaio-provider-proof/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+
+      - name: Upload immutable provider proof artifact
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kaio-provider-readonly-oidc-${{ github.run_id }}-${{ github.run_attempt }}
+          path: kaio-provider-proof/receipt.json
+          if-no-files-found: error
+          retention-days: 90
