@@ -27,7 +27,7 @@ jobs:
       - name: Install pytest
         run: python -m pip install pytest
       - name: KAIO deterministic suite
-        run: python -m pytest -q tests/test_kaio_fluid_core.py tests/test_kaio_fluid_extended.py tests/test_kaio_fluid_advanced.py
+        run: python -m pytest -q tests/test_kaio_fluid_*.py
       - name: Import and synthetic lab smoke test
         run: |
           python - <<'PY'
