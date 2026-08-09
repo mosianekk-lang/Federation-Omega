@@ -1,0 +1,38 @@
+name: KAIO Fluid Intelligence CI
+
+on:
+  pull_request:
+    paths:
+      - 'kaio_fluid/**'
+      - 'tests/test_kaio_fluid_core.py'
+      - 'systems/alpha-omega-turnkey/examples/kaio-fluid-intelligence.json'
+      - '.github/workflows/kaio-fluid-ci.yml'
+  push:
+    branches:
+      - kaio-fluid-24h-build
+    paths:
+      - 'kaio_fluid/**'
+      - 'tests/test_kaio_fluid_core.py'
+      - 'systems/alpha-omega-turnkey/examples/kaio-fluid-intelligence.json'
+      - '.github/workflows/kaio-fluid-ci.yml'
+
+jobs:
+  deterministic:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - name: Install pytest
+        run: python -m pip install pytest
+      - name: KAIO deterministic core
+        run: python -m pytest -q tests/test_kaio_fluid_core.py
+      - name: Import and synthetic lab smoke test
+        run: |
+          python - <<'PY'
+          from kaio_fluid.lab import SyntheticProblemLaboratory
+          results = SyntheticProblemLaboratory().run()
+          assert results and all(r.passed for r in results), results
+          print('\n'.join(f'{r.name}: PASS' for r in results))
+          PY
