@@ -117,10 +117,11 @@ class KaioFluidFederationTests(unittest.TestCase):
         self.assertEqual("A1_INTERNAL", result.plan.authority_ceiling)
         self.assertEqual("substitute", result.strategy.name)
 
-    def test_synthetic_lab_baseline_passes(self):
+    def test_synthetic_lab_has_full_25_case_baseline_and_passes(self):
         results = SyntheticProblemLaboratory().run()
-        self.assertTrue(results)
-        self.assertTrue(all(result.passed for result in results))
+        self.assertEqual(25, len(results))
+        self.assertEqual(25, len({result.name for result in results}))
+        self.assertTrue(all(result.passed for result in results), results)
 
 
 if __name__ == "__main__":
