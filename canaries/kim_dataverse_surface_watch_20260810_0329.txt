@@ -1,0 +1,1 @@
+Kim Dataverse reversible GitHub provider canary. Audit-only. Remove after provider readback.
