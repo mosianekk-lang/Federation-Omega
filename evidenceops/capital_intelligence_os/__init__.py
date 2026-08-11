@@ -20,6 +20,7 @@ from .market_service import *
 from .maturity import *
 from .mna import *
 from .models import *
+from .mvp_journey import *
 from .outcomenet import *
 from .passport import *
 from .policy import RuntimePolicy,RuntimePrincipal
@@ -34,4 +35,4 @@ from .tenancy import *
 from .valuation import *
 from .vault import DocumentRecord,DocumentVault,InformationAccessPolicy
 from .workspace import *
-__version__='0.7.0'
+__version__="1.0.0-rc1"

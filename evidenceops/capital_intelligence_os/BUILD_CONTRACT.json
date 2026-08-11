@@ -1,1 +1,41 @@
-{"schema":"EVIDENCEOPS-CIOS-BUILD-7","version":"0.7.0","authority_ceiling":"A1_INTERNAL","external_effect_default":false,"builds":[{"build_id":"BUILD-CIOS-001","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"PR #301"},{"build_id":"BUILD-CIOS-004","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"PR #302"},{"build_id":"BUILD-CIOS-006","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"PR #303"},{"build_id":"BUILD-CIOS-007","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"PR #304"},{"build_id":"BUILD-CIOS-008","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"PR #305"},{"build_id":"BUILD-CIOS-009","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"PR #306"},{"build_id":"BUILD-CIOS-010","lifecycle_state":"IMPLEMENTED_TESTED_LOCAL","gap_statement":"Acquisition strategy formation and governed self-evolution were not part of the canonical CIOS release.","acceptance_criteria":["machine-testable thesis gates","target ranking","build-buy-partner comparison","strategic scarcity","white-space detection","Experiment Court","multiple-testing correction","safety veto","capability mortality","failure-driven innovation candidates","evidence-weighted Council"],"local_proof":"14/14 focused v0.7 tests PASS","next_executable_action":"Governed source PR, exact-head Airlock/leak checks, then v1.0 end-to-end deal journey."},{"build_id":"BUILD-CIOS-003","lifecycle_state":"BLOCKED_DEPENDENCY_ACTIVE","gap_statement":"Provider production execution plane remains unavailable; local runtime verification is not provider deployment."}]}
+{
+  "schema": "EVIDENCEOPS-CIOS-BUILD-10-RC1",
+  "version": "1.0.0-rc1",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "objective": "Prove one synthetic acquisition can traverse the integrated CIOS lifecycle without violating evidence, market-isolation, outcome-learning or consequential-authority invariants.",
+  "builds": [
+    {
+      "build_id": "BUILD-CIOS-010",
+      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
+      "closure_proof": "v0.7 PR #336 exact-head Airlock/leak success and merge c785492d54e59f892ec2abe7097bf597a26a18a2."
+    },
+    {
+      "build_id": "BUILD-CIOS-011",
+      "lifecycle_state": "IMPLEMENTED_TESTED_LOCAL",
+      "gap_statement": "No single acceptance journey previously proved the strategy, evidence, diligence, financial, market, decision, integration and learning layers as one transaction.",
+      "acceptance_criteria": [
+        "on-thesis target passes hard gates",
+        "document evidence drives diligence completeness",
+        "contradictory evidence remains visible",
+        "QoE and DCF/comparables produce deterministic economics",
+        "public-market assessment remains analytical only",
+        "Council recommendation remains advisory",
+        "Deal Passport integrity passes",
+        "final acquisition recommendation requires human authority",
+        "live order is denied",
+        "private-to-market export is denied",
+        "integration/synergy/value-leakage state is produced",
+        "configured outcome learning records through an explicit recorder"
+      ],
+      "local_proof": "Focused orchestration harness 6/6 PASS including missing-evidence, off-thesis and outcome-recorder failure injection.",
+      "next_executable_action": "Exact-head Airlock/leak checks, merge, then private execution-plane and production qualification."
+    },
+    {
+      "build_id": "BUILD-CIOS-003",
+      "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
+      "gap_statement": "No authorised private provider execution plane yet supplies provider-native deployment, enterprise identity, health, persistence, rollback, observability and security readback.",
+      "interim_workaround": "Keep release as MVP candidate/local reference; do not claim production deployment."
+    }
+  ]
+}
