@@ -33,7 +33,7 @@ class FakeResponses:
             raise self.error
         return SimpleNamespace(
             id="resp_caseforge_001",
-            model="gpt-provider-version-2026-08-12",
+            model="gpt-provider-returned-model",
             status="completed",
             created_at=1786490000,
             output_text=self.output_text,
@@ -49,20 +49,39 @@ class FakeClient:
 class MatchingReadback:
     def verify(self, execution):
         return ProviderReadbackEvidence(
+            provider="openai",
             provider_readback_ref="provider-readback:resp_caseforge_001",
             response_id=execution.response_id,
             response_model=execution.response_model,
             status=execution.status,
+            model_version="gpt-provider-version-2026-08-12",
+            model_version_verified=True,
         )
 
 
 class MismatchedReadback:
     def verify(self, execution):
         return ProviderReadbackEvidence(
+            provider="openai",
             provider_readback_ref="provider-readback:wrong",
             response_id="resp_wrong",
             response_model=execution.response_model,
             status=execution.status,
+            model_version="gpt-provider-version-2026-08-12",
+            model_version_verified=True,
+        )
+
+
+class UnversionedReadback:
+    def verify(self, execution):
+        return ProviderReadbackEvidence(
+            provider="openai",
+            provider_readback_ref="provider-readback:unversioned",
+            response_id=execution.response_id,
+            response_model=execution.response_model,
+            status=execution.status,
+            model_version="",
+            model_version_verified=False,
         )
 
 
@@ -81,6 +100,14 @@ class CaseForgeOpenAIProviderAdapterTests(unittest.TestCase):
                 request_options={"previous_response_id": "resp_hidden"},
             )
 
+    def test_adapter_rejects_unadmitted_provider_options(self) -> None:
+        with self.assertRaisesRegex(OpenAIProviderAdapterError, "not admitted"):
+            OpenAIResponsesTestedAgent(
+                client=FakeClient(),
+                model="gpt-test",
+                request_options={"unknown_future_option": True},
+            )
+
     def test_provider_execution_receipt_does_not_self_certify_readback(self) -> None:
         client = FakeClient()
         receipt = OpenAIProviderBlindExperiment().run(
@@ -92,9 +119,14 @@ class CaseForgeOpenAIProviderAdapterTests(unittest.TestCase):
         )
         self.assertEqual("PROVIDER_EXECUTED_UNREADBACK", receipt.provider_state)
         self.assertEqual("", receipt.provider_readback_ref)
+        self.assertEqual("", receipt.verified_model_version)
         self.assertEqual("DETERMINISTIC_TEST_ONLY", receipt.blind_run.execution_state)
+        self.assertEqual(
+            "REQUESTED_MODEL_ID_UNVERIFIED_VERSION",
+            receipt.blind_run.version,
+        )
         self.assertEqual("resp_caseforge_001", receipt.provider_execution.response_id)
-        self.assertEqual("gpt-provider-version-2026-08-12", receipt.provider_execution.response_model)
+        self.assertEqual("gpt-provider-returned-model", receipt.provider_execution.response_model)
         self.assertFalse(receipt.provider_execution.store)
 
         call = client.responses.calls[0]
@@ -120,6 +152,10 @@ class CaseForgeOpenAIProviderAdapterTests(unittest.TestCase):
             "provider-readback:resp_caseforge_001",
             receipt.provider_readback_ref,
         )
+        self.assertEqual(
+            "gpt-provider-version-2026-08-12",
+            receipt.verified_model_version,
+        )
         self.assertEqual("PROVIDER_VERIFIED", receipt.blind_run.execution_state)
         self.assertEqual("gpt-test", receipt.blind_run.model)
         self.assertEqual(
@@ -135,6 +171,16 @@ class CaseForgeOpenAIProviderAdapterTests(unittest.TestCase):
                 client=FakeClient(),
                 model="gpt-test",
                 readback_verifier=MismatchedReadback(),
+            )
+
+    def test_unverified_model_version_cannot_promote_provider_state(self) -> None:
+        with self.assertRaisesRegex(OpenAIProviderAdapterError, "model version"):
+            OpenAIProviderBlindExperiment().run(
+                run_id="RUN-OPENAI-003B",
+                blind_payload=BLIND,
+                client=FakeClient(),
+                model="gpt-test",
+                readback_verifier=UnversionedReadback(),
             )
 
     def test_provider_exception_does_not_echo_secret_bearing_error_text(self) -> None:
