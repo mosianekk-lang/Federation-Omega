@@ -1,2 +1,0 @@
-KDSW-20260811T122032+0200-GITHUB
-Reversible authority canary; safe non-main branch only.
