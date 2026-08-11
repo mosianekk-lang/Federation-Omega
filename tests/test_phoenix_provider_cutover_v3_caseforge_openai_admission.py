@@ -53,7 +53,19 @@ class CaseForgeOpenAIAdmissionTests(unittest.TestCase):
             "test_unverified_model_version_cannot_promote_provider_state",
             evidence,
         )
-        self.assertIn("Ran 8 tests", evidence)
+        self.assertIn(
+            "test_provider_storage_requires_public_synthetic_classification",
+            evidence,
+        )
+        self.assertIn(
+            "test_stored_response_and_model_resource_readback_can_verify_provider",
+            evidence,
+        )
+        self.assertIn(
+            "test_stored_readback_rejects_model_resource_mismatch",
+            evidence,
+        )
+        self.assertIn("Ran 11 tests", evidence)
         self.assertIn("OK", evidence)
 
     def test_focused_provider_adapter_suite_is_present_in_core_export(self) -> None:
