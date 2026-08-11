@@ -1,0 +1,16 @@
+{
+  "schema": "ECERTIFY-ZA-LAUNCH-NOW-CANARY-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "architect_twin": "Bubbles",
+  "mode": "launch_now",
+  "authority_ceiling": "A1_INTERNAL",
+  "objective": "Prove the smallest deployable zero-possession eCertify Track A vertical slice on an already-authorised Google Cloud runtime without activating full-assurance dependencies or public traffic.",
+  "required_runtime_inputs": ["ECERTIFY_PROJECT_ID","ECERTIFY_RUNTIME_SA","ECERTIFY_INTEGRITY_SIGNING_SECRET_NAME","ECERTIFY_INTEGRITY_KEY_ID","ECERTIFY_LAUNCH_NOW_DEPLOY_CONFIRMATION"],
+  "explicitly_not_required_for_track_a_canary": ["ECERTIFY_IDP_PROVIDER","ECERTIFY_IDP_KEY_ID","ECERTIFY_IDP_SECRET_NAME","ECERTIFY_DB_FACTORY","ECERTIFY_CLOUDSQL_INSTANCE","biometric_processing","document_storage","malware_scanner","dlp_provider","commissioner_supply"],
+  "provider_safety": {"zero_traffic":true,"allow_unauthenticated":false,"reserved_architron9_target_forbidden":true,"iam_mutation_authorised":false,"secret_payload_read_authorised":false,"public_launch_authorised":false},
+  "proof_sequence": ["provider project and artifact repository readback","integrity-signing secret metadata existence only","exact image build and push","authenticated zero-traffic tagged Cloud Run revision","provider service/revision/tag URL readback","semantic /health verification for version 0.9.0 and launch_now","zero-possession integrity receipt issue","server-signed integrity receipt verify","non-secret machine-readable canary receipt"],
+  "acceptance": {"health_ok":true,"expected_version":"0.9.0","expected_mode":"launch_now","identity_provider_required_for_launch":false,"zero_possession_integrity_receipts":true,"receipt_roundtrip_valid":true,"document_bytes_transmitted":false,"traffic_promoted":false,"public_unauthenticated":false},
+  "maturity_boundary": {"source_contract_proves_deployment":false,"successful_script_without_independent_provider_readback_proves_provider_verified":false,"successful_zero_traffic_canary_proves_public_launch":false,"full_assurance_inherits_track_a_canary":false},
+  "next_after_verified_canary": ["independent provider-native readback receipt","secret rotation procedure and rollback proof","structured logging and runtime metrics","privacy/retention notice binding","authenticated pilot user journey","separate explicit public-traffic release decision"]
+}
