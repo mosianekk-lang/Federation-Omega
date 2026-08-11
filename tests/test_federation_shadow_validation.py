@@ -51,6 +51,12 @@ REAL_INCIDENTS = (
         "QUARANTINE_REVERSE_REQUIRE_ACTUAL_RUNTIME",
         "ATT-NONCHAT-20260812-001-QUARANTINE",
     ),
+    ShadowIncident(
+        "RECEIPT_BINDING_DRIFT",
+        "preliminary digest used non-identical proof strings instead of exact provider-persisted replay fields",
+        "READBACK_RECOMPUTE_EXACT_PERSISTED_RECEIPT_BEFORE_PROMOTION",
+        "RCP-FED-SHADOW-20260812-001-PRELIM-CORRECTION",
+    ),
 )
 
 
@@ -64,16 +70,16 @@ class HistoricalShadowValidatorTests(unittest.TestCase):
             source_commit="shadow-test-head",
             incidents=REAL_INCIDENTS,
         )
-        self.assertEqual(7, len(replays))
+        self.assertEqual(8, len(replays))
         self.assertTrue(all(item.matched for item in replays))
         self.assertEqual("PASS", receipt.status)
-        self.assertEqual(7, receipt.matched_count)
+        self.assertEqual(8, receipt.matched_count)
         self.assertEqual((), receipt.failed_fingerprints)
         self.assertFalse(receipt.external_effect)
         self.assertEqual(64, len(receipt.receipt_sha256))
 
     def test_false_attestation_replay_requires_quarantine_not_promotion(self) -> None:
-        replay = self.validator.replay(REAL_INCIDENTS[-1])
+        replay = self.validator.replay(REAL_INCIDENTS[6])
         self.assertEqual(
             "QUARANTINE_REVERSE_REQUIRE_ACTUAL_RUNTIME",
             replay.predicted_repair_code,
@@ -81,6 +87,16 @@ class HistoricalShadowValidatorTests(unittest.TestCase):
         self.assertIn("quarantine", replay.expected_behavior.lower())
         self.assertIn("scheduler title", replay.prohibited_behavior.lower())
         self.assertFalse(replay.external_effect)
+
+    def test_receipt_binding_drift_requires_exact_provider_readback(self) -> None:
+        replay = self.validator.replay(REAL_INCIDENTS[7])
+        self.assertTrue(replay.matched)
+        self.assertEqual(
+            "READBACK_RECOMPUTE_EXACT_PERSISTED_RECEIPT_BEFORE_PROMOTION",
+            replay.predicted_repair_code,
+        )
+        self.assertIn("exact provider-persisted", replay.expected_behavior.lower())
+        self.assertIn("semantically equivalent", replay.prohibited_behavior.lower())
 
     def test_stale_base_replay_never_forces_merge(self) -> None:
         replay = self.validator.replay(REAL_INCIDENTS[1])
@@ -129,7 +145,7 @@ class HistoricalShadowValidatorTests(unittest.TestCase):
         self.assertEqual("FAIL", receipt.status)
 
     def test_receipt_digest_is_deterministic(self) -> None:
-        _, first = self.validator.validate_suite(
+        replays, first = self.validator.validate_suite(
             system_id="FEDERATION_OMEGA",
             source_commit="same-head",
             incidents=REAL_INCIDENTS,
@@ -140,6 +156,42 @@ class HistoricalShadowValidatorTests(unittest.TestCase):
             incidents=REAL_INCIDENTS,
         )
         self.assertEqual(first.receipt_sha256, second.receipt_sha256)
+        self.assertEqual(
+            first.receipt_sha256,
+            self.validator.receipt_digest_from_persisted_replays(
+                system_id="FEDERATION_OMEGA",
+                source_commit="same-head",
+                replays=replays,
+                status="PASS",
+            ),
+        )
+
+    def test_receipt_digest_changes_if_persisted_proof_changes(self) -> None:
+        replays, first = self.validator.validate_suite(
+            system_id="FEDERATION_OMEGA",
+            source_commit="same-head",
+            incidents=REAL_INCIDENTS,
+        )
+        altered = list(replays)
+        last = altered[-1]
+        altered[-1] = type(last)(
+            fingerprint=last.fingerprint,
+            predicted_repair_code=last.predicted_repair_code,
+            historical_success_code=last.historical_success_code,
+            matched=last.matched,
+            expected_behavior=last.expected_behavior,
+            prohibited_behavior=last.prohibited_behavior,
+            repair_proof_ref=last.repair_proof_ref + "-changed",
+            policy_source=last.policy_source,
+            external_effect=last.external_effect,
+        )
+        second = self.validator.receipt_digest_from_persisted_replays(
+            system_id="FEDERATION_OMEGA",
+            source_commit="same-head",
+            replays=tuple(altered),
+            status="PASS",
+        )
+        self.assertNotEqual(first.receipt_sha256, second)
 
     def test_registered_system_and_source_commit_are_required(self) -> None:
         with self.assertRaises(ValueError):
