@@ -1,0 +1,53 @@
+{
+  "case_id": "CF-UTILITY-ZA-001",
+  "case_class": "PUBLIC_UTILITY_SHARED_INFRASTRUCTURE",
+  "domain": "South African electricity distribution",
+  "jurisdiction": "South Africa",
+  "research_question": "How should a legal/evidentiary system analyse a shared transformer failure where some affected customers are compliant and others are alleged to be in arrears, tampering or illegally connected?",
+  "observations": [
+    {
+      "observation_id": "O1",
+      "statement": "A shared distribution transformer is reported failed and multiple households are without supply.",
+      "state": "USER_SUPPLIED"
+    },
+    {
+      "observation_id": "O2",
+      "statement": "Some households are reported compliant while other households are alleged to have payment or connection contraventions.",
+      "state": "USER_SUPPLIED"
+    },
+    {
+      "observation_id": "O3",
+      "statement": "A local statement is reported to link restoration to payment or regularisation by non-compliant households.",
+      "state": "USER_SUPPLIED"
+    }
+  ],
+  "required_analysis": [
+    "identify the distributor and infrastructure owner",
+    "separate compliant and non-compliant customer positions",
+    "separate shared infrastructure obligations from individual debt or tamper enforcement",
+    "test genuine safety and technical explanations",
+    "verify the actual institutional reason for withholding restoration",
+    "retrieve current primary legal authority and later treatment",
+    "identify competent regulatory and court routes",
+    "preserve uncertainty where primary proof is missing"
+  ],
+  "required_hypothesis_families": [
+    "payment-enforcement explanation",
+    "genuine safety or technical explanation",
+    "equipment or logistics delay",
+    "wrong distributor or infrastructure ownership",
+    "local communication not representing institutional decision"
+  ],
+  "mutation_dimensions": [
+    "all customers compliant",
+    "low percentage of compliant customers",
+    "genuine energisation safety risk",
+    "different infrastructure owner",
+    "payment condition supported only by hearsay",
+    "written institutional payment condition",
+    "individual applicant in arrears",
+    "replacement equipment unavailable"
+  ],
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false
+}
