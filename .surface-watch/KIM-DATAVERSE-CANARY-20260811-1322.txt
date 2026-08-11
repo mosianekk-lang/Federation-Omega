@@ -1,0 +1,2 @@
+KIM-DATAVERSE-CANARY-1322
+No secrets. Reversible authority canary.
