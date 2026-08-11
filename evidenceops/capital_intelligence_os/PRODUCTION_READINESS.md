@@ -1,16 +1,34 @@
-# Production Readiness Register — v1.0.0-rc1
+# Production Readiness Register — v1.0.0-rc2
 
-| Component | Current truth | Next production proof |
-|---|---|---|
-| End-to-end synthetic deal journey | TESTED_LOCAL_MVP_CANDIDATE | representative multi-deal acceptance + independent replication |
-| Strategy / target intelligence | TESTED_LOCAL_REFERENCE | sourcing-provider integration + historical calibration |
-| Evidence / diligence / QoE | TESTED_LOCAL_REFERENCE | production parsing/object storage + expert calibration |
-| Valuation / return engines | TESTED_LOCAL_REFERENCE | representative-deal backtest + expert benchmark |
-| Public market intelligence | TESTED_REFERENCE | licensed provider adapters + SLA/freshness/failover |
-| Deal Passport / Outcome learning | TESTED_REFERENCE | privacy/legal/security qualification |
-| Guided Owner / Professional UI | TESTED_STATIC_REFERENCE | interactive production app + accessibility/usability pilots |
-| Local runtime | LOCAL_RUNTIME_VERIFIED | authorised private provider runtime |
-| Production VDR | NOT CLAIMED | encryption/KMS, AV, DLP/redaction, legal hold, watermark/download controls |
-| Enterprise identity | NOT CLAIMED | SSO/OIDC, MFA, SCIM, RBAC/ABAC provider proof |
-| Production security | NOT CLAIMED | threat model, SAST/SCA, pentest, secrets, rate limits, incident/DR |
-| Provider deployment | NOT CLAIMED | native health, persistence, rollback, observability and backup/restore receipts |
+## Verified or tested scope
+- v1 synthetic full-deal MVP journey: source merged and local focused acceptance passed.
+- provider qualification gate: 9/9 focused tests passed.
+- source admission and public leak controls: governed GitHub route.
+- local runtime: previously verified local canary.
+
+## Current production state
+`PROVIDER_QUALIFICATION_REQUIRED`
+
+The current connector inventory exposes no authorised private CIOS operations repository/runtime. Therefore provider production health, identity, persistence, rollback, enterprise storage, VDR controls and security qualification are not claimed.
+
+## Provider promotion controls
+Production promotion requires fresh VERIFIED evidence for:
+1. source admission;
+2. provider runtime identity;
+3. enterprise IdP/MFA;
+4. tenant isolation;
+5. encryption in transit/at rest;
+6. KMS/key management;
+7. malware scanning;
+8. DLP/redaction;
+9. immutable audit;
+10. health readback;
+11. persistence readback;
+12. rollback;
+13. backup/restore;
+14. observability;
+15. vulnerability scan;
+16. abuse/rate limiting;
+17. incident response/DR;
+18. licensed market-data entitlement/freshness when enabled;
+19. private-data residency/retention when enabled.

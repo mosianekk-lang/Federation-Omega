@@ -1,29 +1,13 @@
-# EvidenceOps Capital Intelligence OS — v1.0.0-rc1 MVP Candidate
+# EvidenceOps Capital Intelligence OS — v1.0.0-rc2 Production Qualification Candidate
 
-This release consolidates the previously verified CIOS components into one synthetic end-to-end acquisition journey.
+`rc2` preserves the v1 MVP candidate and adds a machine-enforced provider production gate.
 
-The journey composes: acquisition thesis → target screening → evidence vault and ProofGraph → diligence → quality of earnings → DCF/comparable/equity economics → PUBLIC market assessment → evidence-weighted Council → Deal Passport → Guided Owner/Professional workspace → integration/synergy/value-leakage tracking → consent-configured outcome recording.
+The gate requires fresh provider-native proof for identity, enterprise authentication, tenant isolation, encryption/KMS, malware/DLP controls, immutable audit, health, persistence, rollback, backup/restore, observability, vulnerability scanning, abuse controls, incident/DR, market-data entitlement/freshness and private-data residency/retention.
 
-## Acceptance
+Focused gate harness: **9/9 PASS**.
 
-Focused v1 orchestration harness: **6/6 PASS**.
+A complete fresh verified evidence register can qualify a provider environment. Missing, failed, unverified or expired controls prevent promotion. Production intent attempting to enable live financial effects or destructive actions is rejected before qualification.
 
-The tests include the successful full journey plus failure injection for:
-- missing evidence lowering diligence and overall transaction readiness;
-- an off-thesis target failing the journey;
-- configured outcome learning without a recorder failing closed;
-- explicitly disabled outcome learning not producing a false failure;
-- bounded Decision Completeness inputs.
+The authenticated GitHub installation currently exposes only the public `Federation-Omega` repository. No private product execution plane is connected, so current maturity remains `PROVIDER_QUALIFICATION_REQUIRED`.
 
-The v1 release verifier also calls the canonical v0.7 core verifier before evaluating the integrated journey.
-
-## Constitutional result
-
-A Council result can recommend `BUY`, but the final acquisition action remains `REQUIRE_HUMAN`.
-`LIVE_ORDER` remains `DENY`.
-Private M&A evidence to public-market export remains `DENY`.
-Contradictory evidence is surfaced, not silently resolved.
-
-## Maturity truth
-
-`1.0.0-rc1` means **MVP CANDIDATE / LOCAL INTEGRATION PROOF**. It does not mean provider production deployment, production VDR, enterprise IdP, licensed market-data entitlement, calibrated institutional valuation model, penetration-tested service or autonomous investment authority.
+This is deliberate: a green source/MVP verifier is not a production-runtime receipt.
