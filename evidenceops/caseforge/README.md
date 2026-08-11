@@ -1,6 +1,6 @@
 # CASEFORGE-Ω — EvidenceOps Scientific Benchmark & Evolution Layer
 
-Status: **candidate implementation / A1_INTERNAL / no external effect**
+Status: **DETERMINISTIC_TESTED core / blind-runner candidate / A1_INTERNAL / no external effect**
 
 CASEFORGE continuously challenges EvidenceOps with blind, diverse and adversarial legal/evidentiary benchmarks. It converts confirmed failures into candidate improvements and delegates promotion to the existing EvidenceOps evolution fabric. It does **not** replace JFRIE, LEX-OMEGA, TruthGrid, the Innovation Engine, Federation Omega governance or primary legal authority.
 
@@ -86,7 +86,7 @@ A benchmark automatically fails on fatal events such as fabricated authority/fac
 
 ## Federation-wide validation adapters
 
-CASEFORGE now exposes a common `FederationEvaluationContract` and three bounded adapters. They share the same A1 internal authority ceiling and may not create external effects.
+CASEFORGE exposes a common `FederationEvaluationContract` and three bounded adapters. They share the same A1 internal authority ceiling and may not create external effects.
 
 ### ContinuityForge
 
@@ -110,13 +110,34 @@ All three adapters report a common structure:
 
 This enables Federation-wide comparison without creating a second promotion authority.
 
+## Isolated blind-runner contract
+
+`blind_runner.py` supplies the deterministic tested-agent/scorer separation required before CASEFORGE may call a legal/evidentiary model run genuinely blind.
+
+The tested-agent interface receives only:
+
+- a detached canonical JSON blind payload;
+- case/run identity;
+- blind-input hash;
+- provider/model/version identity;
+- configuration hash;
+- execution-state and provider-readback reference.
+
+It does **not** receive the hidden control pack, scoring rubric, expected outcome, answer key, fatal-test list or control path. Reserved hidden-control keys and a control-leak marker fail closed before execution. A tested agent that mutates its blind input also fails the run.
+
+The hidden scorer separately holds the control pack, binds it by SHA-256, verifies case identity, evaluates the existing CASEFORGE benchmark metrics/fatal events, and verifies that scoring did not alter the tested output.
+
+A model binding may claim `PROVIDER_VERIFIED` only when a non-empty provider-native readback reference exists. Otherwise the deterministic harness remains `DETERMINISTIC_TEST_ONLY`.
+
+This source boundary does not by itself prove process/container isolation or a real OpenAI/Google AI Studio blind run. Those stronger claims require the provider-bound canary and independent receipts tracked under `CF-AOCRA-BLIND-RUNNER-001` / issue #329.
+
 ## Maturity
 
 This implementation must move sequentially through:
 
 `DESIGNED → DETERMINISTIC_TESTED → SHADOW_VALIDATED → ADVERSARIALLY_VALIDATED → CANARY_VALIDATED → LIMITED_WORKFLOW_VERIFIED → CROSS_DOMAIN_VERIFIED → OPERATIONAL_VERIFIED`
 
-Source existence is only `DESIGNED` until test evidence proves more.
+Source existence is only `DESIGNED` until test evidence proves more. A deterministic isolation harness may reach `DETERMINISTIC_TESTED` after repository regression/Airlock evidence, but provider-bound blind execution requires separate proof.
 
 ## No-background-execution boundary
 
