@@ -55,7 +55,8 @@ def select_minimum_sufficient_capabilities(
     eligible = [
         item
         for item in capabilities
-        if item.state in VERIFIED_STATES and item.authority_ceiling in {"A0_READ_ONLY", "A1_INTERNAL"}
+        if item.state in VERIFIED_STATES
+        and item.authority_ceiling in {"A0_READ_ONLY", "A1_INTERNAL"}
     ]
 
     while uncovered:
@@ -92,7 +93,7 @@ def build_innovation_frontier(
     strongest_incremental_improvement: str,
     strongest_materially_different_solution: str,
     highest_information_reversible_experiment: str,
-) -> Mapping[str, str]:
+) -> Mapping[str, object]:
     frontier = {
         "verified_reuse": strongest_verified_reuse.strip(),
         "incremental_improvement": strongest_incremental_improvement.strip(),
@@ -105,7 +106,7 @@ def build_innovation_frontier(
     return {
         **frontier,
         "authority_ceiling": "A1_INTERNAL",
-        "external_effect": "false",
+        "external_effect": False,
     }
 
 
