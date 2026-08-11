@@ -1,6 +1,6 @@
 # CASEFORGE-Ω — EvidenceOps Scientific Benchmark & Evolution Layer
 
-Status: **DETERMINISTIC_TESTED core / blind-runner candidate / A1_INTERNAL / no external effect**
+Status: **DETERMINISTIC_TESTED core / blind-runner admitted / OpenAI provider adapter candidate / A1_INTERNAL / no external effect**
 
 CASEFORGE continuously challenges EvidenceOps with blind, diverse and adversarial legal/evidentiary benchmarks. It converts confirmed failures into candidate improvements and delegates promotion to the existing EvidenceOps evolution fabric. It does **not** replace JFRIE, LEX-OMEGA, TruthGrid, the Innovation Engine, Federation Omega governance or primary legal authority.
 
@@ -121,6 +121,14 @@ The hidden scorer separately holds the control pack, binds it by SHA-256, verifi
 A model binding may claim `PROVIDER_VERIFIED` only when a non-empty provider-native readback reference exists. Otherwise the harness remains `DETERMINISTIC_TEST_ONLY`.
 
 This source boundary does not by itself prove process/container isolation or a real OpenAI/Google AI Studio blind run. Those stronger claims require the provider-bound canary and independent receipts tracked under `CF-AOCRA-BLIND-RUNNER-001` / issue #329.
+
+## OpenAI provider adapter candidate
+
+`openai_provider_adapter.py` reuses the repository's existing OpenAI Responses API pattern rather than creating a second provider stack. The tested model receives only canonical blind-case JSON and fixed control-free instructions. Provider tools, prompt references, conversations, previous-response references and any caller override of the model/input/instructions/store fields are rejected before invocation.
+
+A successful provider response creates `ProviderResponseEvidence` containing only non-secret execution metadata and hashes. It is deliberately classified `PROVIDER_EXECUTED_UNREADBACK` unless an independent `ProviderReadbackVerifier` returns matching response ID, provider-returned model and status evidence. Only then may the combined blind receipt be promoted to `PROVIDER_VERIFIED`.
+
+`openai_blind_canary.py` is a callable tested-agent-side canary for an already-authorised runtime. It never loads the hidden scoring/control pack, requires the model ID to be supplied at runtime, defaults to `store=False`, emits no credential values, and leaves scoring to a separate hidden scorer. No workflow is created or enabled by this source candidate, and source existence does not prove an OpenAI model was invoked.
 
 ## Maturity
 

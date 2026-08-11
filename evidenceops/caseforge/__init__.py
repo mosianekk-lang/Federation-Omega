@@ -110,6 +110,17 @@ from .federation_validation import (
     promote_contract,
 )
 from .federation_validation_evolution import to_evolution_governor_metrics
+from .openai_provider_adapter import (
+    ALLOWED_PROVIDER_OPTIONS,
+    FORBIDDEN_PROVIDER_OPTIONS,
+    OpenAIProviderAdapterError,
+    OpenAIProviderBlindExperiment,
+    OpenAIResponsesTestedAgent,
+    ProviderBoundBlindRunReceipt,
+    ProviderReadbackEvidence,
+    ProviderReadbackVerifier,
+    ProviderResponseEvidence,
+)
 from .scientia import (
     EpistemicState,
     Hypothesis,
@@ -119,9 +130,11 @@ from .scientia import (
 
 __all__ = [
     "ALL_STAGES",
+    "ALLOWED_PROVIDER_OPTIONS",
     "BENCHMARK_WEIGHTS",
     "COMMON_RUNTIME_STAGES",
     "FATAL_FAILURES",
+    "FORBIDDEN_PROVIDER_OPTIONS",
     "AgentContext",
     "AutomationClass",
     "AutoFixLaboratory",
@@ -170,9 +183,16 @@ __all__ = [
     "MissionExecutionState",
     "ModelBinding",
     "NegativeProofReceipt",
+    "OpenAIProviderAdapterError",
+    "OpenAIProviderBlindExperiment",
+    "OpenAIResponsesTestedAgent",
     "OperationalMemory",
     "PredictiveCapabilityPreloader",
     "PreloadPlan",
+    "ProviderBoundBlindRunReceipt",
+    "ProviderReadbackEvidence",
+    "ProviderReadbackVerifier",
+    "ProviderResponseEvidence",
     "ReadbackState",
     "RecoveryTrace",
     "RepairDecision",
