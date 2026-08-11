@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
+from hashlib import sha256
 from typing import Mapping, Sequence
 
 from evidenceops.innovation_engine.evolution import EvolutionGovernor
@@ -150,8 +151,9 @@ class AutonomousRegressionPlanner:
                 "repeat the unchanged failure or declare false completion",
             ),
         )
+        digest = sha256(entry.fingerprint.encode("utf-8")).hexdigest()[:8]
         return RegressionCase(
-            regression_id=f"REG-{abs(hash(entry.fingerprint)) & 0xFFFFFFFF:08x}",
+            regression_id=f"REG-{digest}",
             failure_fingerprint=entry.fingerprint,
             injected_condition=entry.fingerprint,
             expected_behavior=expected,
