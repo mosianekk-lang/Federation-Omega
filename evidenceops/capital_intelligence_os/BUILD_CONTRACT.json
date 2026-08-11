@@ -1,11 +1,11 @@
 {
-  "schema":"EVIDENCEOPS-CIOS-BUILD-13-RC3",
-  "version":"1.0.0-rc3",
+  "schema":"EVIDENCEOPS-CIOS-BUILD-14-RC4",
+  "version":"1.0.0-rc4",
   "authority_ceiling":"A1_INTERNAL",
   "external_effect_default":false,
   "builds":[
-    {"build_id":"BUILD-CIOS-012","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"Provider qualification gate PR #339 merged; main readback 81fb8642df9cb7577d64305b07ac64d6e7463271."},
-    {"build_id":"BUILD-CIOS-013","lifecycle_state":"IMPLEMENTED_TESTED_LOCAL","gap_statement":"The provider qualification gate had no bounded executable runtime canary for source identity, persistence/reopen and authority denial proof.","acceptance_criteria":["persistent path required","runtime source SHA equals expected source SHA","prior merged release verifier must pass","event persists after store reopen","tenant state digest remains stable after reopen","learning chain survives reopen","live order remains denied","private-to-market export remains denied","receipt has non-secret digest"],"local_proof":"Focused provider-canary harness 5/5 PASS.","next_executable_action":"Run the canary inside an authorised private runtime and store the receipt outside public source."},
-    {"build_id":"BUILD-CIOS-003","lifecycle_state":"BLOCKED_DEPENDENCY_ACTIVE","gap_statement":"No authorised private CIOS product runtime is connected to this session.","interim_workaround":"Provider canary and production gate make the remaining provider action explicit and fail-closed."}
+    {"build_id":"BUILD-CIOS-013","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"Provider canary PR #346 merged; canonical main readback ddc68729e0aea387243ff8674ff096d97a99d76e."},
+    {"build_id":"BUILD-CIOS-014","lifecycle_state":"IMPLEMENTED_TESTED_LOCAL","gap_statement":"Provider-bound enterprise controls existed only as production-gate requirements; no adapter-level preflight compiled their runtime evidence into the qualification vocabulary.","acceptance_criteria":["enterprise MFA required","identity tenant must match","stale or unhealthy probes fail","market-data entitlement conditional on market intelligence","private-data residency conditional on private M&A","secret-shaped evidence fails","healthy probes compile to validated ProviderEvidence","empty data plane fails closed"],"local_proof":"Production data-plane focused harness 11/11 PASS against canonical production-gate rules.","next_executable_action":"Bind real provider adapters, execute the rc3 canary, compile provider-native receipts and run ProductionQualificationGate."},
+    {"build_id":"BUILD-CIOS-003","lifecycle_state":"BLOCKED_DEPENDENCY_ACTIVE","gap_statement":"No authorised private CIOS product runtime/provider control plane is connected to this session.","interim_workaround":"rc3 canary + rc4 adapter preflight + rc2 qualification gate reduce the remaining work to provider binding/readback rather than source design."}
   ]
 }

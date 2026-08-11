@@ -1,13 +1,13 @@
-# EvidenceOps Capital Intelligence OS — v1.0.0-rc3 Provider Canary Ready
+# EvidenceOps Capital Intelligence OS — v1.0.0-rc4 Provider Binding Ready
 
-`rc3` adds a harmless A1 provider canary on top of the merged MVP candidate and production qualification gate.
+`rc4` preserves the merged MVP, production qualification gate and harmless provider canary, then adds a provider-neutral production data-plane preflight.
 
-The canary is intended to run only inside an authorised private runtime. It validates exact source identity, the already-merged rc2 release verifier, persistent database health, event persistence after reopen, stable tenant-state digest, learning-chain integrity, and the continuing denial of live orders and private-M&A→public-market export.
+The preflight verifies enterprise identity/MFA, tenant matching, runtime identity, tenant isolation, encryption/KMS, malware scanning, DLP/redaction, immutable audit, observability, rate/abuse controls, private-data residency/retention and market-data entitlement/freshness when those domains are enabled.
 
-Focused canary harness: **5/5 PASS**.
+Healthy, fresh probes are compiled into validated `ProviderEvidence` objects for the existing `ProductionQualificationGate`. Stale, unhealthy, secret-shaped or invalid evidence fails closed.
 
-The canary receipt is digestible and non-secret. Runtime receipts must be stored in an immutable private evidence plane or provider artifact—not committed into public canonical source.
+Focused rc4 harness: **11/11 PASS** against the canonical rc2 production-gate validation rules.
 
-A canary pass is **not** full production verification. Enterprise IdP/MFA, encryption/KMS, malware/DLP, production VDR controls, market-data entitlement, observability, vulnerability/pentest and DR still require provider-native evidence through the rc2 production gate.
+The preflight does not provision infrastructure, create credentials or grant authority. It only evaluates already-provisioned provider adapters. Full production status still requires provider-native runtime/recovery/security evidence plus an authorised private execution plane.
 
-Current connected state: `PROVIDER_CANARY_READY`; no authorised private runtime is connected, so no provider canary execution is claimed.
+Current connected maturity: `PROVIDER_BINDING_READY`; production deployment is not claimed.
