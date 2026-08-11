@@ -8,6 +8,7 @@ from evidenceops.caseforge.openai_provider_adapter import (
     OpenAIProviderAdapterError,
     OpenAIProviderBlindExperiment,
     OpenAIResponsesTestedAgent,
+    OpenAIStoredResponseReadbackVerifier,
     ProviderReadbackEvidence,
 )
 
@@ -19,6 +20,11 @@ BLIND = {
         {"id": "O1", "state": "USER_SUPPLIED", "text": "A shared service is interrupted."}
     ],
 }
+PUBLIC_BLIND = {
+    **BLIND,
+    "provider_storage_classification": "PUBLIC_SYNTHETIC",
+    "external_effect": False,
+}
 
 
 class FakeResponses:
@@ -26,6 +32,7 @@ class FakeResponses:
         self.output_text = output_text or json.dumps({"hypotheses": ["H1", "H2"]})
         self.error = error
         self.calls: list[dict[str, object]] = []
+        self.retrieve_calls: list[str] = []
 
     def create(self, **kwargs):
         self.calls.append(dict(kwargs))
@@ -40,10 +47,46 @@ class FakeResponses:
             _request_id="req_caseforge_001",
         )
 
+    def retrieve(self, response_id: str):
+        self.retrieve_calls.append(response_id)
+        return SimpleNamespace(
+            id=response_id,
+            model="gpt-provider-returned-model",
+            status="completed",
+        )
+
+
+class FakeModels:
+    def __init__(
+        self,
+        *,
+        model_id: str = "gpt-provider-returned-model",
+        created: int = 1786400000,
+        owned_by: str = "openai",
+    ) -> None:
+        self.model_id = model_id
+        self.created = created
+        self.owned_by = owned_by
+        self.retrieve_calls: list[str] = []
+
+    def retrieve(self, model_id: str):
+        self.retrieve_calls.append(model_id)
+        return SimpleNamespace(
+            id=self.model_id,
+            object="model",
+            created=self.created,
+            owned_by=self.owned_by,
+        )
+
 
 class FakeClient:
-    def __init__(self, responses: FakeResponses | None = None):
+    def __init__(
+        self,
+        responses: FakeResponses | None = None,
+        models: FakeModels | None = None,
+    ):
         self.responses = responses or FakeResponses()
+        self.models = models or FakeModels()
 
 
 class MatchingReadback:
@@ -211,6 +254,55 @@ class CaseForgeOpenAIProviderAdapterTests(unittest.TestCase):
             },
             receipt.blind_run.tested_output,
         )
+
+    def test_provider_storage_requires_public_synthetic_classification(self) -> None:
+        client = FakeClient()
+        with self.assertRaisesRegex(OpenAIProviderAdapterError, "public/synthetic"):
+            OpenAIProviderBlindExperiment().run(
+                run_id="RUN-OPENAI-006",
+                blind_payload=BLIND,
+                client=client,
+                model="gpt-test",
+                store=True,
+            )
+        self.assertEqual([], client.responses.calls)
+
+    def test_stored_response_and_model_resource_readback_can_verify_provider(self) -> None:
+        client = FakeClient()
+        verifier = OpenAIStoredResponseReadbackVerifier(client=client)
+        receipt = OpenAIProviderBlindExperiment().run(
+            run_id="RUN-OPENAI-007",
+            blind_payload=PUBLIC_BLIND,
+            client=client,
+            model="gpt-test",
+            store=True,
+            readback_verifier=verifier,
+        )
+        self.assertEqual("PROVIDER_VERIFIED", receipt.provider_state)
+        self.assertTrue(receipt.provider_execution.store)
+        self.assertEqual(["resp_caseforge_001"], client.responses.retrieve_calls)
+        self.assertEqual(["gpt-provider-returned-model"], client.models.retrieve_calls)
+        self.assertEqual(
+            "openai-model-resource:gpt-provider-returned-model:created=1786400000:owned_by=openai",
+            receipt.verified_model_version,
+        )
+        self.assertEqual(
+            "openai:response:resp_caseforge_001|model:gpt-provider-returned-model|created:1786400000",
+            receipt.provider_readback_ref,
+        )
+
+    def test_stored_readback_rejects_model_resource_mismatch(self) -> None:
+        client = FakeClient(models=FakeModels(model_id="different-provider-model"))
+        verifier = OpenAIStoredResponseReadbackVerifier(client=client)
+        with self.assertRaisesRegex(OpenAIProviderAdapterError, "model-resource id mismatch"):
+            OpenAIProviderBlindExperiment().run(
+                run_id="RUN-OPENAI-008",
+                blind_payload=PUBLIC_BLIND,
+                client=client,
+                model="gpt-test",
+                store=True,
+                readback_verifier=verifier,
+            )
 
 
 if __name__ == "__main__":
