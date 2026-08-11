@@ -111,6 +111,7 @@ from .federation_validation import (
 )
 from .federation_validation_evolution import to_evolution_governor_metrics
 from .openai_provider_adapter import (
+    ALLOWED_PROVIDER_OPTIONS,
     FORBIDDEN_PROVIDER_OPTIONS,
     OpenAIProviderAdapterError,
     OpenAIProviderBlindExperiment,
@@ -129,6 +130,7 @@ from .scientia import (
 
 __all__ = [
     "ALL_STAGES",
+    "ALLOWED_PROVIDER_OPTIONS",
     "BENCHMARK_WEIGHTS",
     "COMMON_RUNTIME_STAGES",
     "FATAL_FAILURES",
