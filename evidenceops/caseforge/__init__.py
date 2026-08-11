@@ -1,5 +1,15 @@
 """CASEFORGE-Ω scientific benchmark and evolution layer for EvidenceOps."""
 
+from .blind_runner import (
+    AgentContext,
+    BlindIsolationError,
+    BlindRunReceipt,
+    HiddenControlScorer,
+    IsolatedBlindRunner,
+    ModelBinding,
+    ScoringReceipt,
+    assert_blind_payload,
+)
 from .core import (
     BENCHMARK_WEIGHTS,
     FATAL_FAILURES,
@@ -40,8 +50,11 @@ from .scientia import (
 __all__ = [
     "BENCHMARK_WEIGHTS",
     "FATAL_FAILURES",
+    "AgentContext",
     "AutoFixLaboratory",
     "BenchmarkEvaluation",
+    "BlindIsolationError",
+    "BlindRunReceipt",
     "CandidatePromotionDecision",
     "Capability",
     "CapabilityForge",
@@ -52,12 +65,17 @@ __all__ = [
     "ContinuityProbe",
     "EpistemicState",
     "FederationEvaluationContract",
+    "HiddenControlScorer",
     "Hypothesis",
+    "IsolatedBlindRunner",
     "MaturityState",
+    "ModelBinding",
     "RecoveryTrace",
     "ScientiaKernel",
     "ScientificObservation",
+    "ScoringReceipt",
     "SurfaceState",
+    "assert_blind_payload",
     "build_innovation_frontier",
     "evaluate_benchmark",
     "evaluate_candidate_promotion",
