@@ -84,6 +84,32 @@ The initial aggregate score uses:
 
 A benchmark automatically fails on fatal events such as fabricated authority/fact/quotation, answer-key leakage, material wrong-forum errors, binding-authority omission, remedy-forum mismatch, case-wall contamination or presenting inference as proved fact.
 
+## Federation-wide validation adapters
+
+CASEFORGE now exposes a common `FederationEvaluationContract` and three bounded adapters. They share the same A1 internal authority ceiling and may not create external effects.
+
+### ContinuityForge
+
+ContinuityForge tests ChatBridge, heartbeat, Secondary Brain and Kim Dataverse continuity against explicit expected state. It measures context recovery, canonical-state accuracy, provenance fidelity, correction retention, stale-state rejection, route separation and contradiction detection. A corrected or superseded fact reappearing as current state is a permanent failure fingerprint rather than a harmless memory difference.
+
+### CapabilityForge
+
+CapabilityForge evaluates current capability rather than architectural intent. A surface is eligible only when its heartbeat state, freshness, semantic behaviour, readback and authority are verified for the current probe. Stale or adapter-only capabilities are degraded and emit AO-CRA engineering build identifiers. The existing heartbeat `surface_registry.json` is the intended source for provider state and TTL inputs.
+
+### AutoFIX Laboratory
+
+AutoFIX Laboratory stress-tests RESOLVE/AutoFIX recovery traces. It checks preservation of the original failure, deterministic classification, circuit breaking, continuation of unaffected lanes, repair reversibility, state integrity, independent readback and rollback. Repeating an unchanged broken route, losing failure evidence, corrupting state or declaring recovery without readback produces explicit failure fingerprints.
+
+### Common evolution contract
+
+All three adapters report a common structure:
+
+`mission → hypothesis → baseline → metrics → failure fingerprints → red-team state → regression state → proof receipt → maturity`
+
+`federation_validation_evolution.to_evolution_governor_metrics()` maps validated adapter results into the existing EvidenceOps `EvolutionGovernor` metric contract. Reuse, cost efficiency and owner-burden reduction must be supplied as measured values; CASEFORGE does not infer them from technical quality scores.
+
+This enables Federation-wide comparison without creating a second promotion authority.
+
 ## Maturity
 
 This implementation must move sequentially through:
