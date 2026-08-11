@@ -59,9 +59,58 @@ A result is classified by what actually happened rather than by win/loss alone:
 
 No outcome automatically promotes doctrine.
 
-## Maturity ladder
+## Current EvidenceOps mainline alignment — 11 August 2026
 
-LEX-OMEGA grows inside the EvidenceOps central evolution fabric through sequential proof-gated states:
+LEX-OMEGA now uses `alignment.py` to bind the August 7 convergence controls to the current EvidenceOps mainline without duplicating newer engines.
+
+Current responsibility split:
+
+```text
+TruthGrid vNext
+  -> evidentiary finality / TruthState / decision readiness
+
+LEX-OMEGA
+  -> specialist legal, labour-law and forensic reasoning
+
+JFRIE / EACIA
+  -> fail-closed jurisdiction, contamination and release integrity
+
+CASEFORGE-Ω / SCIENTIA
+  -> competing hypotheses, falsification, blind benchmarking and governed evolution
+
+CapabilityResolutionGate
+  -> proof burden before CAN / CANNOT / DONE terminal claims
+```
+
+The engines must remain separate. LEX-OMEGA may consume their results but may not silently reimplement, override or weaken them.
+
+### TruthGrid alignment
+
+Where a workflow requires evidentiary finality, the current `CompletionVector` and `DecisionReadiness` control the claim of readiness. `NOT_READY` blocks unqualified release; `CONDITIONAL` forces limitations; unresolved external production gaps do not become internal completion.
+
+### SCIENTIA alignment
+
+Material hypothesis-driven legal/evidentiary analysis may require competing hypotheses, testable predictions and falsifiers. A preferred theory is not promoted merely because it is plausible or owner-favourable. CASEFORGE remains the benchmark/evolution layer and the existing EvidenceOps EvolutionGovernor remains the promotion authority.
+
+### Capability-resolution alignment
+
+Any system-level statement that an objective **CAN**, **CANNOT** or is **DONE** must pass the current CASEFORGE `CapabilityResolutionGate`. Route failure, invalid arguments, missing authentication or a transient blocker are not objective incapability. `DONE` requires objective-complete state, zero executable internal dependencies and readback proof.
+
+### Blind-evaluation alignment
+
+A deterministic isolated blind-runner is not automatically a provider-verified blind model experiment. Provider-blind claims require `PROVIDER_VERIFIED` execution state and a provider-native readback reference. Otherwise the result remains deterministic-test evidence only.
+
+### Mainline maturity vocabulary
+
+The alignment adapter maps legacy LEX maturity into the richer current CASEFORGE-compatible ladder without silent promotion:
+
+`DESIGNED -> DETERMINISTIC_TESTED -> SHADOW_VALIDATED -> ADVERSARIALLY_VALIDATED -> CANARY_VALIDATED -> LIMITED_WORKFLOW_VERIFIED -> CROSS_DOMAIN_VERIFIED -> OPERATIONAL_VERIFIED`
+
+The legacy enum is retained for compatibility. Extra current-mainline stages are represented in `MainlineMaturityStage` and require their own proof.
+
+## Legacy LEX maturity ladder
+
+LEX-OMEGA's original internal ladder remains preserved for compatibility:
 
 1. `DESIGN_ONLY`
 2. `DETERMINISTIC_TESTED`

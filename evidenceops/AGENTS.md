@@ -8,6 +8,7 @@ For every substantive legal, labour-law, CCMA, Labour Court, forensic-investigat
 
 - `evidenceops/lex_omega/README.md`
 - `evidenceops/lex_omega/lex_omega.py`
+- `evidenceops/lex_omega/alignment.py`
 - `evidenceops/jurisdiction_first_referral_integrity/README.md`
 - `evidenceops/jurisdiction_first_referral_integrity/jfrie.py`
 - `evidenceops/jurisdiction_first_referral_integrity/jfrie_v11.py`
@@ -15,6 +16,22 @@ For every substantive legal, labour-law, CCMA, Labour Court, forensic-investigat
 LEX-OMEGA supplies specialist legal, forensic, adversarial and authority-currentness analysis. JFRIE remains the mandatory evidence, jurisdiction, contamination and release gate. The combined fabric is fail closed.
 
 Permanent rule: **LEX-OMEGA may strengthen JFRIE; it may never bypass, overrule, weaken or dilute a JFRIE hard gate.**
+
+### Current-mainline EvidenceOps assurance inheritance
+
+For material legal/evidentiary work, the LEX/JFRIE fabric must consume—not duplicate—the current EvidenceOps assurance controls where applicable:
+
+1. **TruthGrid vNext** (`evidenceops/truthgrid/vnext.py`) controls TruthState, completion separation, material contradiction closure and decision readiness. A `NOT_READY` state may not be represented as evidence-complete or decision-ready; `CONDITIONAL` must remain qualified.
+2. **CASEFORGE-Ω / SCIENTIA** (`evidenceops/caseforge/`) supplies competing-hypothesis, falsifier, blind-benchmark, fatal-integrity and scientific-evolution controls. It does not replace JFRIE, LEX-OMEGA, TruthGrid or the existing EvolutionGovernor.
+3. **CapabilityResolutionGate** (`evidenceops/caseforge/capability_decision.py`) is mandatory before terminal capability/completion statements such as `CAN`, `CANNOT` or `DONE`. Route failure is not objective incapability. `DONE` requires objective-complete state, zero executable internal dependencies and readback proof.
+4. **CASEFORGE blind runner** (`evidenceops/caseforge/blind_runner.py`) distinguishes deterministic interface isolation from provider-verified blind execution. Do not claim provider-blind testing without provider-native readback.
+5. **EvidenceOps evolution governance** remains the promotion authority. LEX/JFRIE/CASEFORGE learning may generate candidates but may not self-promote doctrine or maturity.
+
+The current mainline maturity vocabulary for new alignment work is:
+
+`DESIGNED -> DETERMINISTIC_TESTED -> SHADOW_VALIDATED -> ADVERSARIALLY_VALIDATED -> CANARY_VALIDATED -> LIMITED_WORKFLOW_VERIFIED -> CROSS_DOMAIN_VERIFIED -> OPERATIONAL_VERIFIED`
+
+Legacy component maturity labels remain historical compatibility fields and must not be silently translated into a higher current-mainline state.
 
 ### LEX-OMEGA v1.1 convergence controls
 
@@ -26,11 +43,7 @@ Permanent rule: **LEX-OMEGA may strengthen JFRIE; it may never bypass, overrule,
 
 ### Maturity rule
 
-LEX-OMEGA grows inside the EvidenceOps central evolution fabric only through sequential proof-gated states:
-
-`DESIGN_ONLY -> DETERMINISTIC_TESTED -> SHADOW_VALIDATED -> CANARY_VALIDATED -> WORKFLOW_VERIFIED -> OPERATIONAL_VERIFIED`
-
-Every promotion requires evidence. No state may exceed the lowest independently proven level. Candidate learning must follow the repository learning contract and may not expand authority or silently rewrite JFRIE.
+LEX-OMEGA grows inside the EvidenceOps central evolution fabric only through proof-gated maturity. Every promotion requires evidence. No state may exceed the lowest independently proven level. Candidate learning must follow the repository learning contract and may not expand authority or silently rewrite JFRIE.
 
 ## Mandatory Jurisdiction-First Referral Integrity Gate
 
