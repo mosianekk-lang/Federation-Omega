@@ -1,8 +1,9 @@
 {
   "schema": "FEDOMEGA-AWARENESS-BOOTSTRAP-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "owner": "Kim Kagiso Mosiane",
   "startup_block": "NCB-002",
+  "capability_resolution_startup_block": "NCB-003",
   "mandatory_for": [
     "FEDERATION_OMEGA_NODES",
     "FORMATION_INNOVATION_ENGINE",
@@ -14,6 +15,7 @@
   "awareness_contract": "governance/federation_surface_awareness_v1.json",
   "opportunity_foundry_contract": "governance/federation_awareness_opportunity_foundry_v1.json",
   "opportunity_foundry_implementation": "federation_consolidation/awareness_opportunity_foundry.py",
+  "capability_resolution_source_gate": "evidenceops.caseforge.capability_decision.CapabilityResolutionGate",
   "private_manifest_alias": "FEDERATION_AWARENESS_PRIVATE_V1",
   "private_opportunity_registry_alias": "FEDERATION_OPPORTUNITY_REGISTRY_PRIVATE_V1",
   "private_manifest_hash_source": "governance/federation_surface_awareness_v1.json.private_manifest.logical_sha256",
@@ -74,42 +76,48 @@
     },
     {
       "step": 10,
+      "action": "LOAD_CAPABILITY_RESOLUTION_NCB_003_AND_CURRENT_CAPABILITY_RESOLUTION_STATE",
+      "required": true,
+      "failure": "BOOTSTRAP_BLOCKED_CAPABILITY_RESOLUTION"
+    },
+    {
+      "step": 11,
       "action": "LOAD_RELEVANT_DIRECT_RUNTIME_CLOUDOPS_AND_CONTINUOUS_LEARNING_STATE",
       "required": true,
       "failure": "BOOTSTRAP_BLOCKED_LEDGER_READBACK"
     },
     {
-      "step": 11,
+      "step": 12,
       "action": "LOAD_GMAIL_CONTINUITY_SOURCES_ONLY_WHEN_MISSION_REQUIRES",
       "required": false,
       "failure": "SOURCE_UNAVAILABLE_USE_CANONICAL_DRIVE_AND_GITHUB"
     },
     {
-      "step": 12,
+      "step": 13,
       "action": "REVALIDATE_SELECTED_CONNECTOR_IDENTITY_TARGET_SCOPE_ACTION_AND_READBACK",
       "required": true,
       "failure": "ROUTE_BLOCKED_EXACT_REMEDIATION_REQUIRED"
     },
     {
-      "step": 13,
+      "step": 14,
       "action": "RESOLVE_CREDENTIALS_BY_NON_SECRET_HANDLE_ONLY",
       "required": true,
       "failure": "AUTHORITY_BLOCKED_NO_PRIVATE_HANDLE"
     },
     {
-      "step": 14,
+      "step": 15,
       "action": "RUN_AWARENESS_OPPORTUNITY_FOUNDRY_AND_REGISTER_AO_CRA_BUILDS",
       "required": true,
       "failure": "BOOTSTRAP_BLOCKED_OPPORTUNITY_FOUNDRY"
     },
     {
-      "step": 15,
+      "step": 16,
       "action": "EXECUTE_SAFE_INTERNAL_BUILDS_AND_HOLD_PROVIDER_GATED_EFFECTS",
       "required": true,
       "failure": "CYCLE_INCOMPLETE_OPEN_INTERNAL_BUILD"
     },
     {
-      "step": 16,
+      "step": 17,
       "action": "EXECUTE_EXACT_ACTIVE_MISSION_AND_RECORD_TERMINAL_LEARNING_EVENT",
       "required": true,
       "failure": "CYCLE_INCOMPLETE_NO_TERMINAL_EVENT"
@@ -117,6 +125,7 @@
   ],
   "route_priority": [
     "FEDERATION_AWARENESS_RESOLVER",
+    "CAPABILITY_RESOLUTION_GATE",
     "AWARENESS_OPPORTUNITY_FOUNDRY",
     "DIRECT_GOOGLE_CONNECTOR",
     "GITHUB_ACTIONS_A0_A1",
@@ -138,8 +147,43 @@
     "gmail_ci_telemetry_must_be_separated_from_continuity_sources": true,
     "historical_restore_rows_are_provenance_only": true,
     "current_startup_block": "NCB-002",
+    "capability_resolution_startup_block": "NCB-003",
     "hidden_closed_chat_access_claimed": false,
     "current_context_must_be_loaded_through_authorised_connectors": true
+  },
+  "capability_resolution_rules": {
+    "terminal_claims": [
+      "CAN",
+      "CANNOT",
+      "UNAVAILABLE",
+      "IMPOSSIBLE",
+      "DONE",
+      "DEPLOYED",
+      "LIVE",
+      "COMPLETE"
+    ],
+    "state_lattice": [
+      "UNKNOWN",
+      "TOOL_SCHEMA_KNOWN",
+      "CONNECTOR_DISCOVERED",
+      "AUTH_OR_SESSION_VALID",
+      "ROUTE_CALLABLE",
+      "ROUTE_EXECUTED",
+      "READBACK_VERIFIED",
+      "OBJECTIVE_COMPLETE"
+    ],
+    "typed_blockers_required": true,
+    "route_specific_failure_is_not_objective_incapability": true,
+    "platform_limit_must_be_exact_scope": true,
+    "platform_limit_requires_equivalent_route_check": true,
+    "manual_user_action_is_last_resort": true,
+    "can_requires_readback": true,
+    "done_requires_readback": true,
+    "done_requires_zero_executable_internal_dependencies": true,
+    "cannot_requires_hard_boundary_or_authorized_route_exhaustion": true,
+    "safety_policy_boundaries_must_not_be_routed_around": true,
+    "success_route_memory_checked_before_negative_capability_claim": true,
+    "capability_state_is_time_and_scope_bound": true
   },
   "formation_rules": {
     "formation_engine": "REQUIRED_FOR_NON_TRIVIAL_WORK",
@@ -157,6 +201,7 @@
     "requires_private_manifest_readback": true,
     "requires_public_contract_readback": true,
     "requires_current_route_readback": true,
+    "requires_capability_resolution_before_terminal_capability_claim": true,
     "requires_opportunity_registry_readback": true,
     "requires_ao_cra_build_identity_for_each_open_boundary": true,
     "requires_safe_internal_build_completion_or_exact_blocker": true,
