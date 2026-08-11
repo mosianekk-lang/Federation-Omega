@@ -1,34 +1,11 @@
 {
-  "schema": "EVIDENCEOPS-CIOS-BUILD-12-RC2",
-  "version": "1.0.0-rc2",
-  "authority_ceiling": "A1_INTERNAL",
-  "external_effect_default": false,
-  "builds": [
-    {
-      "build_id": "BUILD-CIOS-011",
-      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "closure_proof": "MVP candidate PR #338 merged; main readback 11a4da603274c0dfad47d5e81299ba43d50a11c0."
-    },
-    {
-      "build_id": "BUILD-CIOS-012",
-      "lifecycle_state": "IMPLEMENTED_TESTED_LOCAL",
-      "gap_statement": "Production promotion previously depended on prose/checklists rather than a machine-enforced provider-evidence gate.",
-      "acceptance_criteria": [
-        "empty evidence fails",
-        "complete fresh verified register qualifies",
-        "failed or expired control blocks",
-        "market entitlement required only when market intelligence enabled",
-        "unsafe live financial/destructive production intent rejected",
-        "secret-like receipt references rejected"
-      ],
-      "local_proof": "Production qualification focused harness 9/9 PASS.",
-      "next_executable_action": "Bind an authorised private runtime and populate provider-native evidence controls."
-    },
-    {
-      "build_id": "BUILD-CIOS-003",
-      "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
-      "gap_statement": "Authenticated GitHub installation exposes only public Federation-Omega; no private CIOS operations repository/runtime is connected.",
-      "interim_workaround": "Provider-neutral qualification gate and deployment contracts are source-ready; production remains unclaimed."
-    }
+  "schema":"EVIDENCEOPS-CIOS-BUILD-13-RC3",
+  "version":"1.0.0-rc3",
+  "authority_ceiling":"A1_INTERNAL",
+  "external_effect_default":false,
+  "builds":[
+    {"build_id":"BUILD-CIOS-012","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"Provider qualification gate PR #339 merged; main readback 81fb8642df9cb7577d64305b07ac64d6e7463271."},
+    {"build_id":"BUILD-CIOS-013","lifecycle_state":"IMPLEMENTED_TESTED_LOCAL","gap_statement":"The provider qualification gate had no bounded executable runtime canary for source identity, persistence/reopen and authority denial proof.","acceptance_criteria":["persistent path required","runtime source SHA equals expected source SHA","prior merged release verifier must pass","event persists after store reopen","tenant state digest remains stable after reopen","learning chain survives reopen","live order remains denied","private-to-market export remains denied","receipt has non-secret digest"],"local_proof":"Focused provider-canary harness 5/5 PASS.","next_executable_action":"Run the canary inside an authorised private runtime and store the receipt outside public source."},
+    {"build_id":"BUILD-CIOS-003","lifecycle_state":"BLOCKED_DEPENDENCY_ACTIVE","gap_statement":"No authorised private CIOS product runtime is connected to this session.","interim_workaround":"Provider canary and production gate make the remaining provider action explicit and fail-closed."}
   ]
 }

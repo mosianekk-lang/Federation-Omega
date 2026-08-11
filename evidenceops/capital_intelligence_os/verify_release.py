@@ -1,31 +1,15 @@
 from __future__ import annotations
-from .production_gate import DeploymentIntent, ProductionQualificationGate
-from .verify_mvp_rc1 import verify as verify_mvp_rc1
+from .provider_canary import ProviderCanarySpec
+from .verify_rc2 import verify as verify_rc2
 
 def verify() -> dict[str, object]:
-    mvp=verify_mvp_rc1()
-    gate=ProductionQualificationGate()
-    intent=DeploymentIntent("PRODUCTION","UNBOUND")
-    decision=gate.evaluate(intent,[])
-    unsafe_intent_denied=False
-    try:
-        DeploymentIntent("PRODUCTION","UNBOUND",live_financial_effects_enabled=True).validate()
-    except PermissionError:
-        unsafe_intent_denied=True
-    checks={
-        "mvp_rc1_regression": bool(mvp.get("passed")),
-        "production_gate_fails_closed_without_provider_proof": not decision.qualified and len(decision.missing_controls)>=len(gate.BASE_CONTROLS),
-        "maturity_not_overpromoted": decision.maturity=="PROVIDER_QUALIFICATION_REQUIRED",
-        "unsafe_financial_effect_intent_denied": unsafe_intent_denied,
-    }
-    return {
-        "passed": all(checks.values()),
-        "release": "1.0.0-rc2",
-        "maturity": decision.maturity,
-        "checks": checks,
-        "missing_provider_controls": list(decision.missing_controls),
-    }
+    rc2=verify_rc2(); memory_rejected=False; mismatch_rejected=False
+    try: ProviderCanarySpec("a"*40,"a"*40,"runtime","tenant",":memory:").validate()
+    except ValueError: memory_rejected=True
+    try: ProviderCanarySpec("a"*40,"b"*40,"runtime","tenant","/tmp/cios-canary.db").validate()
+    except ValueError: mismatch_rejected=True
+    checks={"rc2_regression":bool(rc2.get("passed")),"provider_canary_requires_persistent_storage":memory_rejected,"provider_canary_requires_exact_source_identity":mismatch_rejected,"production_still_requires_provider_native_proof":rc2.get("maturity")=="PROVIDER_QUALIFICATION_REQUIRED"}
+    return {"passed":all(checks.values()),"release":"1.0.0-rc3","maturity":"PROVIDER_CANARY_READY","checks":checks}
 
 if __name__=="__main__":
-    import json
-    print(json.dumps(verify(),indent=2,sort_keys=True))
+    import json; print(json.dumps(verify(),indent=2,sort_keys=True))
