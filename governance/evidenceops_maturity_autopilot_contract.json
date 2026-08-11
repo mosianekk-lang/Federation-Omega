@@ -1,0 +1,43 @@
+{
+  "schema": "EVIDENCEOPS_MATURITY_AUTOPILOT_CONTRACT_V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "maturity_scale": "M0-M11",
+  "canonical_rule": "derived maturity is the highest contiguous gate supported by current target-specific proof",
+  "anti_theatre": [
+    "source is not runtime",
+    "local tests are not provider deployment",
+    "generic health is not action-specific proof",
+    "documentation does not promote maturity",
+    "issue or PR text does not promote maturity",
+    "expired or drifted proof automatically lowers derived maturity"
+  ],
+  "autonomous_internal_actions": [
+    "inventory",
+    "evidence normalization",
+    "maturity derivation",
+    "truth-drift detection",
+    "dependency prioritization",
+    "bounded deterministic testing",
+    "safe reversible internal repair recommendation",
+    "recertification scheduling recommendation"
+  ],
+  "approval_or_external_gate_required": [
+    "provider mutation",
+    "destructive action",
+    "external publication or send",
+    "legal filing",
+    "payment or financial execution",
+    "consequential decision authority",
+    "credential or secret handling outside approved secret-management paths"
+  ],
+  "portfolio_exit_states": [
+    "M11_CONTINUOUSLY_CERTIFIED",
+    "RETIRED_WITH_PROOF",
+    "BLOCKED_EXTERNAL_EXACT"
+  ],
+  "supersedes": [
+    "unmerged M0-M8 portfolio maturity proposal in PR #317 where inconsistent"
+  ],
+  "truth_boundary": "This contract establishes source-level maturity governance only. It does not prove portfolio runtime, provider deployment or M11 attainment."
+}
