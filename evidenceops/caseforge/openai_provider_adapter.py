@@ -47,6 +47,13 @@ FORBIDDEN_PROVIDER_OPTIONS = frozenset(
     }
 )
 
+PUBLIC_PROVIDER_STORAGE_CLASSES = frozenset(
+    {
+        "PUBLIC_SYNTHETIC",
+        "PUBLIC_SOURCE_DERIVED_SYNTHETIC",
+    }
+)
+
 
 def _canonical_json(value: Any) -> str:
     return json.dumps(
@@ -59,6 +66,24 @@ def _canonical_json(value: Any) -> str:
 
 def _sha256_text(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _storage_classification(blind_payload: Mapping[str, Any]) -> str:
+    return str(blind_payload.get("provider_storage_classification", "")).strip().upper()
+
+
+def _validate_provider_storage(blind_payload: Mapping[str, Any], *, store: bool) -> None:
+    if not store:
+        return
+    classification = _storage_classification(blind_payload)
+    if classification not in PUBLIC_PROVIDER_STORAGE_CLASSES:
+        raise OpenAIProviderAdapterError(
+            "provider storage is restricted to explicitly public/synthetic benchmark data"
+        )
+    if bool(blind_payload.get("external_effect", False)):
+        raise OpenAIProviderAdapterError(
+            "provider-stored CASEFORGE benchmark must remain A1_INTERNAL/no-external-effect"
+        )
 
 
 @dataclass(frozen=True)
@@ -115,6 +140,72 @@ class ProviderReadbackEvidence:
 
 class ProviderReadbackVerifier(Protocol):
     def verify(self, execution: ProviderResponseEvidence) -> ProviderReadbackEvidence: ...
+
+
+class OpenAIStoredResponseReadbackVerifier:
+    """Provider-native readback for public/synthetic stored Responses canaries.
+
+    The verifier retrieves the provider-stored Response by ID and independently
+    retrieves the provider model resource. It records only non-secret identity,
+    state and model-resource metadata. It never reads or emits credential values,
+    and it does not treat a model alias alone as a verified version.
+    """
+
+    def __init__(self, *, client: Any) -> None:
+        self.client = client
+
+    @staticmethod
+    def _value(obj: Any, name: str) -> Any:
+        if isinstance(obj, Mapping):
+            return obj.get(name)
+        return getattr(obj, name, None)
+
+    def verify(self, execution: ProviderResponseEvidence) -> ProviderReadbackEvidence:
+        execution.validate()
+        if not execution.store:
+            raise OpenAIProviderAdapterError(
+                "stored-response provider readback requires a provider-stored execution"
+            )
+        try:
+            response = self.client.responses.retrieve(execution.response_id)
+            response_id = str(self._value(response, "id") or "").strip()
+            response_model = str(self._value(response, "model") or "").strip()
+            status = str(self._value(response, "status") or "").strip()
+            model_resource = self.client.models.retrieve(response_model)
+        except Exception as exc:
+            raise OpenAIProviderAdapterError(
+                f"OpenAI provider readback failed: {type(exc).__name__}"
+            ) from exc
+
+        model_id = str(self._value(model_resource, "id") or "").strip()
+        model_created = self._value(model_resource, "created")
+        model_owner = str(self._value(model_resource, "owned_by") or "").strip()
+
+        if not response_id or not response_model or not status:
+            raise OpenAIProviderAdapterError("provider response readback is incomplete")
+        if model_id != response_model:
+            raise OpenAIProviderAdapterError("provider model-resource id mismatch")
+        if not isinstance(model_created, (int, float)) or model_created <= 0:
+            raise OpenAIProviderAdapterError("provider model-resource creation metadata missing")
+        if not model_owner:
+            raise OpenAIProviderAdapterError("provider model-resource owner metadata missing")
+
+        created = int(model_created)
+        model_version = (
+            f"openai-model-resource:{model_id}:created={created}:owned_by={model_owner}"
+        )
+        readback_ref = (
+            f"openai:response:{response_id}|model:{model_id}|created:{created}"
+        )
+        return ProviderReadbackEvidence(
+            provider="openai",
+            provider_readback_ref=readback_ref,
+            response_id=response_id,
+            response_model=response_model,
+            status=status,
+            model_version=model_version,
+            model_version_verified=True,
+        ).validate_against(execution)
 
 
 @dataclass(frozen=True)
@@ -203,6 +294,7 @@ class OpenAIResponsesTestedAgent:
             raise OpenAIProviderAdapterError("agent context provider must be openai")
         if context.model != self.model:
             raise OpenAIProviderAdapterError("agent context model does not match adapter model")
+        _validate_provider_storage(blind_payload, store=self.store)
 
         prompt = _canonical_json(blind_payload)
         try:
@@ -281,6 +373,7 @@ class OpenAIProviderBlindExperiment:
                 "store": bool(store),
                 "request_options": options,
                 "blind_tools_allowed": False,
+                "provider_storage_classification": _storage_classification(blind_payload),
             },
             execution_state="DETERMINISTIC_TEST_ONLY",
         )
@@ -319,9 +412,11 @@ class OpenAIProviderBlindExperiment:
 __all__ = [
     "ALLOWED_PROVIDER_OPTIONS",
     "FORBIDDEN_PROVIDER_OPTIONS",
+    "PUBLIC_PROVIDER_STORAGE_CLASSES",
     "OpenAIProviderAdapterError",
     "OpenAIProviderBlindExperiment",
     "OpenAIResponsesTestedAgent",
+    "OpenAIStoredResponseReadbackVerifier",
     "ProviderBoundBlindRunReceipt",
     "ProviderReadbackEvidence",
     "ProviderReadbackVerifier",
