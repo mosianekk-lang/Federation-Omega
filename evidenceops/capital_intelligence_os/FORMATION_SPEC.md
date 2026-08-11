@@ -1,9 +1,20 @@
-# Formation Specification — CIOS v0.7
+# Formation Specification — CIOS v1.0.0-rc1
 
-Objective: close the strategy and controlled-evolution gaps without expanding financial or external authority.
+Objective: prove vertical completion before further feature expansion.
 
-Selected slice: deterministic acquisition-thesis compilation and target ranking plus a governed Experiment Court, capability mortality, failure-to-innovation candidate generation and evidence-weighted Council.
+Selected route: add one thin orchestration layer over already verified CIOS primitives. Do not rebuild valuation, diligence, evidence, market, UI, authority or learning engines.
 
-Rejected routes: free-form agent voting as truth; self-promotion from learning; statistical promotion without multiple-testing correction; capability retention based on sunk cost; direct trading/external authority inheritance.
+The journey must preserve one transaction identity and prove the following chain:
 
-Promotion rule: learning may generate candidates; Experiment Court must qualify them; any safety regression vetoes promotion. Authority ceiling remains A1 internal.
+`OBJECTIVE → THESIS → TARGET → EVIDENCE → DILIGENCE/QoE → VALUATION → PUBLIC MARKET CONTEXT → COUNCIL → HUMAN AUTHORITY → INTEGRATION → OUTCOME LEARNING`.
+
+Fail-closed invariants:
+- off-thesis target prevents successful journey completion;
+- evidence gaps reduce diligence/readiness rather than disappearing;
+- contradictions are surfaced;
+- private/MNPI information cannot flow into trading;
+- live orders are denied;
+- final acquisition recommendation is human-gated;
+- configured outcome learning requires an explicit recorder/consented implementation.
+
+This release intentionally stops at MVP-candidate proof. Provider production deployment remains a separate engineering build.

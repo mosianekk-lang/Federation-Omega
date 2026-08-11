@@ -1,15 +1,16 @@
-# Production Readiness Register — v0.7
+# Production Readiness Register — v1.0.0-rc1
 
 | Component | Current truth | Next production proof |
 |---|---|---|
-| Strategy/target intelligence | TESTED_LOCAL_REFERENCE | representative-deal calibration and sourcing-provider integration |
-| Governed evolution / Experiment Court | TESTED_LOCAL_REFERENCE | longitudinal experiments, independent replication and drift monitoring |
-| Transaction decision core | TESTED_LOCAL_REFERENCE | representative-deal/expert calibration |
-| Local runtime | LOCAL_RUNTIME_VERIFIED | private provider runtime + enterprise identity |
-| Evidence vault metadata/versioning | TESTED_REFERENCE | encrypted object storage + AV/DLP/legal hold/access logs |
-| Guided Owner / Professional UI | TESTED_STATIC_REFERENCE | interactive app + accessibility/usability/customer validation |
-| Market bridge | TESTED_REFERENCE | licensed provider adapters |
-| OutcomeNet / Deal Passport | TESTED_REFERENCE | privacy/legal/security qualification |
-| v1.0 end-to-end deal journey | NOT YET VERIFIED | synthetic full-lifecycle orchestration and failure injection |
-| Provider deployment | NOT CLAIMED | provider-native runtime/health/persistence/rollback evidence |
-| Production security | NOT CLAIMED | threat model, IdP, secrets, SAST/SCA/pentest/DLP |
+| End-to-end synthetic deal journey | TESTED_LOCAL_MVP_CANDIDATE | representative multi-deal acceptance + independent replication |
+| Strategy / target intelligence | TESTED_LOCAL_REFERENCE | sourcing-provider integration + historical calibration |
+| Evidence / diligence / QoE | TESTED_LOCAL_REFERENCE | production parsing/object storage + expert calibration |
+| Valuation / return engines | TESTED_LOCAL_REFERENCE | representative-deal backtest + expert benchmark |
+| Public market intelligence | TESTED_REFERENCE | licensed provider adapters + SLA/freshness/failover |
+| Deal Passport / Outcome learning | TESTED_REFERENCE | privacy/legal/security qualification |
+| Guided Owner / Professional UI | TESTED_STATIC_REFERENCE | interactive production app + accessibility/usability pilots |
+| Local runtime | LOCAL_RUNTIME_VERIFIED | authorised private provider runtime |
+| Production VDR | NOT CLAIMED | encryption/KMS, AV, DLP/redaction, legal hold, watermark/download controls |
+| Enterprise identity | NOT CLAIMED | SSO/OIDC, MFA, SCIM, RBAC/ABAC provider proof |
+| Production security | NOT CLAIMED | threat model, SAST/SCA, pentest, secrets, rate limits, incident/DR |
+| Provider deployment | NOT CLAIMED | native health, persistence, rollback, observability and backup/restore receipts |
