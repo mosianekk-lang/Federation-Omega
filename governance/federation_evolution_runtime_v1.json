@@ -1,0 +1,68 @@
+{
+  "schema": "FEDERATION-EVOLUTION-RUNTIME-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "evolution_program": "governance/federation_evolution_program_v1.json",
+  "runtime_source": "evidenceops.caseforge.federation_evolution_runtime",
+  "strict_maturity_source": "evidenceops.caseforge.federation_maturity_proof.StrictMaturityGate",
+  "implemented_stages": [
+    "03_CAPABILITY_DEPENDENCY_GRAPH",
+    "04_AUTONOMOUS_ROUTE_SYNTHESIZER",
+    "05_ROUTE_PORTFOLIO_OPTIMIZER",
+    "06_SEMANTIC_FAILURE_CLASSIFIER",
+    "07_SELF_HEALING_ROUTE_ENGINE",
+    "08_SUCCESS_ROUTE_MEMORY",
+    "09_FAILURE_FINGERPRINT_MEMORY",
+    "10_PREDICTIVE_CAPABILITY_PRELOADING",
+    "11_TERMINAL_STATE_FIREWALL",
+    "12_NEGATIVE_PROOF_ENGINE",
+    "13_COUNTERFACTUAL_ENGINE",
+    "14_MISSION_CONTINUATION_KERNEL",
+    "15_EXECUTABLE_WORK_ZERO_ENGINE"
+  ],
+  "runtime_invariants": [
+    "dependency_failure_affects_only_transitive_required_dependents",
+    "unaffected_lanes_continue",
+    "route_synthesis_produces_direct_specialized_composite_and_reversible_experiment_paths",
+    "route_selection_scores_success_proof_authority_reversibility_cost_owner_burden_and_information_gain",
+    "failure_classification_is_typed_and_evidence_bound",
+    "self_healing_does_not_repeat_unchanged_broken_routes_without_bounded_transient_retry_policy",
+    "approval_holds_only_the_gated_action",
+    "external_dependencies_are_separated_from_internal_executable_work",
+    "successful_routes_and_failure_fingerprints_are_preserved_as_operational_memory",
+    "predictive_preloading_revalidates_stale_or_unresolved_capability_twins",
+    "terminal_capability_language_uses_the_admitted CapabilityResolutionGate",
+    "negative_claims_require bounded search or route receipts",
+    "platform_hard_limit_triggers objective-equivalent counterfactual route search",
+    "response_completion_does_not_end_a mission with executable internal dependencies",
+    "mission internal completion requires executable internal work equals zero"
+  ],
+  "maturity_control": {
+    "controlling_gate": "StrictMaturityGate",
+    "stage_count_alone_proves_maturity": false,
+    "deterministic_test_ref_required_after_stage_8": true,
+    "shadow_validation_ref_required_after_stage_12": true,
+    "adversarial_validation_ref_required_after_stage_14": true,
+    "canary_validation_ref_required_after_stage_15": true,
+    "limited_workflow_runtime_attestation_required_after_stage_16": true,
+    "cross_domain_and_regression_required_after_stage_18": true,
+    "operational_readback_and_rollback_required_after_stage_19": true,
+    "provider_readback_regression_and_rollback_required_for_stage_20_dominance_candidate": true,
+    "critical_failures_veto_high_maturity": true
+  },
+  "specialization_rule": {
+    "common_runtime_applies_to_all_registered_profiles": true,
+    "domain_specific_algorithms_may_replace_or augment implementation detail": true,
+    "domain_specific_path_may_weaken_common_invariants": false,
+    "domain_specific_path_may_skip_common_stages": false
+  },
+  "completion_boundary": {
+    "source_and_regression_admission_is_not_shadow_validation": true,
+    "source_and_regression_admission_is_not_canary_validation": true,
+    "source_and_regression_admission_is_not_provider_runtime proof": true,
+    "stage16_requires_empirical_new_or_restored_runtime attestation": true,
+    "provider_external_effects_remain_separately authorized": true
+  }
+}
