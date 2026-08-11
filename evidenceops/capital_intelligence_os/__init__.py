@@ -9,6 +9,7 @@ from .decision_algorithms import *
 from .demo_product import build_demo_dashboard
 from .diligence import *
 from .durable import DurableAutopilotRuntime
+from .evolution import *
 from .failure_genome import FailureToRouteGeneCompiler
 from .integration import *
 from .learning import LearningLedger
@@ -28,8 +29,9 @@ from .qoe import *
 from .restricted import *
 from .service import CapitalIntelligenceService
 from .store import SqliteStateStore
+from .strategy import *
 from .tenancy import *
 from .valuation import *
 from .vault import DocumentRecord,DocumentVault,InformationAccessPolicy
 from .workspace import *
-__version__='0.6.0'
+__version__='0.7.0'
