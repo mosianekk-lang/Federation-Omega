@@ -1,41 +1,34 @@
 {
-  "schema": "EVIDENCEOPS-CIOS-BUILD-10-RC1",
-  "version": "1.0.0-rc1",
+  "schema": "EVIDENCEOPS-CIOS-BUILD-12-RC2",
+  "version": "1.0.0-rc2",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
-  "objective": "Prove one synthetic acquisition can traverse the integrated CIOS lifecycle without violating evidence, market-isolation, outcome-learning or consequential-authority invariants.",
   "builds": [
     {
-      "build_id": "BUILD-CIOS-010",
+      "build_id": "BUILD-CIOS-011",
       "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "closure_proof": "v0.7 PR #336 exact-head Airlock/leak success and merge c785492d54e59f892ec2abe7097bf597a26a18a2."
+      "closure_proof": "MVP candidate PR #338 merged; main readback 11a4da603274c0dfad47d5e81299ba43d50a11c0."
     },
     {
-      "build_id": "BUILD-CIOS-011",
+      "build_id": "BUILD-CIOS-012",
       "lifecycle_state": "IMPLEMENTED_TESTED_LOCAL",
-      "gap_statement": "No single acceptance journey previously proved the strategy, evidence, diligence, financial, market, decision, integration and learning layers as one transaction.",
+      "gap_statement": "Production promotion previously depended on prose/checklists rather than a machine-enforced provider-evidence gate.",
       "acceptance_criteria": [
-        "on-thesis target passes hard gates",
-        "document evidence drives diligence completeness",
-        "contradictory evidence remains visible",
-        "QoE and DCF/comparables produce deterministic economics",
-        "public-market assessment remains analytical only",
-        "Council recommendation remains advisory",
-        "Deal Passport integrity passes",
-        "final acquisition recommendation requires human authority",
-        "live order is denied",
-        "private-to-market export is denied",
-        "integration/synergy/value-leakage state is produced",
-        "configured outcome learning records through an explicit recorder"
+        "empty evidence fails",
+        "complete fresh verified register qualifies",
+        "failed or expired control blocks",
+        "market entitlement required only when market intelligence enabled",
+        "unsafe live financial/destructive production intent rejected",
+        "secret-like receipt references rejected"
       ],
-      "local_proof": "Focused orchestration harness 6/6 PASS including missing-evidence, off-thesis and outcome-recorder failure injection.",
-      "next_executable_action": "Exact-head Airlock/leak checks, merge, then private execution-plane and production qualification."
+      "local_proof": "Production qualification focused harness 9/9 PASS.",
+      "next_executable_action": "Bind an authorised private runtime and populate provider-native evidence controls."
     },
     {
       "build_id": "BUILD-CIOS-003",
       "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
-      "gap_statement": "No authorised private provider execution plane yet supplies provider-native deployment, enterprise identity, health, persistence, rollback, observability and security readback.",
-      "interim_workaround": "Keep release as MVP candidate/local reference; do not claim production deployment."
+      "gap_statement": "Authenticated GitHub installation exposes only public Federation-Omega; no private CIOS operations repository/runtime is connected.",
+      "interim_workaround": "Provider-neutral qualification gate and deployment contracts are source-ready; production remains unclaimed."
     }
   ]
 }

@@ -1,31 +1,31 @@
-
 from __future__ import annotations
-import json
-from pathlib import Path
-from .mvp_journey import MVPJourneyOrchestrator
-from .verify_core_v07 import verify as verify_core_v07
-
-class _VerificationRecorder:
-    def __init__(self) -> None: self.rows=[]
-    def record(self, **kwargs) -> None: self.rows.append(dict(kwargs))
+from .production_gate import DeploymentIntent, ProductionQualificationGate
+from .verify_mvp_rc1 import verify as verify_mvp_rc1
 
 def verify() -> dict[str, object]:
-    core=verify_core_v07()
-    payload=json.loads((Path(__file__).parent/"fixtures"/"synthetic_mvp_deal_v1.json").read_text())
-    recorder=_VerificationRecorder()
-    journey=MVPJourneyOrchestrator(outcome_recorder=recorder).run(payload)
+    mvp=verify_mvp_rc1()
+    gate=ProductionQualificationGate()
+    intent=DeploymentIntent("PRODUCTION","UNBOUND")
+    decision=gate.evaluate(intent,[])
+    unsafe_intent_denied=False
+    try:
+        DeploymentIntent("PRODUCTION","UNBOUND",live_financial_effects_enabled=True).validate()
+    except PermissionError:
+        unsafe_intent_denied=True
     checks={
-        "core_v07_regression": bool(core.get("passed")),
-        "synthetic_full_deal_journey": journey.passed,
-        "human_final_authority": journey.final_recommendation_disposition=="REQUIRE_HUMAN",
-        "live_order_denied": journey.live_order_disposition=="DENY",
-        "private_to_market_denied": journey.private_to_market_disposition=="DENY",
-        "contradiction_surfaced": journey.contradiction_count>=1,
-        "outcome_learning_recorded": journey.outcome_recorded and len(recorder.rows)==1,
-        "passport_integrity": bool(journey.checks.get("passport_integrity")),
-        "learning_chain_valid": journey.learning_chain_valid,
+        "mvp_rc1_regression": bool(mvp.get("passed")),
+        "production_gate_fails_closed_without_provider_proof": not decision.qualified and len(decision.missing_controls)>=len(gate.BASE_CONTROLS),
+        "maturity_not_overpromoted": decision.maturity=="PROVIDER_QUALIFICATION_REQUIRED",
+        "unsafe_financial_effect_intent_denied": unsafe_intent_denied,
     }
-    return {"passed":all(checks.values()),"release":"1.0.0-rc1","checks":checks,"journey":journey.deal_id}
+    return {
+        "passed": all(checks.values()),
+        "release": "1.0.0-rc2",
+        "maturity": decision.maturity,
+        "checks": checks,
+        "missing_provider_controls": list(decision.missing_controls),
+    }
 
 if __name__=="__main__":
+    import json
     print(json.dumps(verify(),indent=2,sort_keys=True))

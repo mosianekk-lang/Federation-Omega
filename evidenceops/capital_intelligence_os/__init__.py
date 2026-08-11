@@ -24,6 +24,7 @@ from .mvp_journey import *
 from .outcomenet import *
 from .passport import *
 from .policy import RuntimePolicy,RuntimePrincipal
+from .production_gate import *
 from .product_ui import WorkspaceSnapshot,WorkspaceComposer,DashboardRenderer
 from .proofgraph import *
 from .qoe import *
@@ -35,4 +36,4 @@ from .tenancy import *
 from .valuation import *
 from .vault import DocumentRecord,DocumentVault,InformationAccessPolicy
 from .workspace import *
-__version__="1.0.0-rc1"
+__version__="1.0.0-rc2"
