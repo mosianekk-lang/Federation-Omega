@@ -27,7 +27,8 @@ class ECertifyLaunchNowCanaryContractTests(unittest.TestCase):
     def test_integrity_signing_secret_is_required_without_reading_payload(self) -> None:
         self.assertIn("ECERTIFY_INTEGRITY_SIGNING_SECRET_NAME", self.script)
         self.assertIn("gcloud secrets describe", self.script)
-        self.assertIn("ECERTIFY_INTEGRITY_SIGNING_KEY=", self.script)
+        self.assertIn("--set-secrets=", self.script)
+        self.assertIn("${SIGNING_SECRET_NAME}:latest", self.script)
         self.assertNotIn("gcloud secrets versions access", self.script)
 
     def test_canary_is_zero_traffic_and_authenticated(self) -> None:
