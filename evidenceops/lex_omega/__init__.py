@@ -1,5 +1,11 @@
 """LEX-OMEGA legal and forensic convergence controls for EvidenceOps."""
 
+from .alignment import (
+    EvidenceOpsLegalAlignmentGate,
+    EvidenceOpsLegalAlignmentResult,
+    LEGACY_MATURITY_MAP,
+    MainlineMaturityStage,
+)
 from .lex_omega import (
     AuthorityRecord,
     AuthorityState,
@@ -24,11 +30,15 @@ __all__ = [
     "AuthorityState",
     "ClaimLawEvidenceTriangle",
     "CounselRole",
+    "EvidenceOpsLegalAlignmentGate",
+    "EvidenceOpsLegalAlignmentResult",
     "IndependentCounselPanel",
+    "LEGACY_MATURITY_MAP",
     "LegalProposition",
     "LegalPropositionLedger",
     "LexOmegaCouncil",
     "LexOmegaResult",
+    "MainlineMaturityStage",
     "MaturityLevel",
     "MaturityTracker",
     "OutcomeClass",
