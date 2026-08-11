@@ -9,7 +9,7 @@ from .federation_autonomous_controller import AutonomousRegressionPlanner
 from .federation_evolution_program import AUTHORITY_CEILING, SYSTEM_PROFILES
 
 
-SHADOW_VALIDATOR_VERSION = "1.0.0"
+SHADOW_VALIDATOR_VERSION = "1.0.1"
 
 
 @dataclass(frozen=True)
@@ -61,12 +61,7 @@ class ShadowValidationReceipt:
 
 
 class ShadowRegressionPlanner(AutonomousRegressionPlanner):
-    """Stricter shadow-only planner that incorporates learned real-world failures.
-
-    The base Stage-17 planner is preserved. Shadow validation extends it with the
-    two provenance/drift failures learned during the Federation-wide rollout.
-    No provider action or external effect is permitted by this class.
-    """
+    """Stricter shadow planner incorporating real learned governance failures."""
 
     learned_behavior_map: Mapping[str, tuple[str, str]] = {
         "CONTROLLER_SOURCE_ADMISSION_DRIFT": (
@@ -77,6 +72,10 @@ class ShadowRegressionPlanner(AutonomousRegressionPlanner):
             "quarantine the unsupported attestation, reverse any premature maturity promotion, and require an actual qualifying runtime iteration with fresh bootstrap/current-main/private/twin readback",
             "infer runtime execution from a scheduler title, planned time, invocation label, private row, or controller source existence",
         ),
+        "RECEIPT_BINDING_DRIFT": (
+            "read back the exact provider-persisted replay fields, canonicalize those exact bound fields, recompute the receipt digest, supersede any preliminary digest, and block maturity promotion until the binding is proven",
+            "treat semantically equivalent strings, pre-write payloads, or successful persistence alone as proof that a hash-bound receipt matches the persisted state",
+        ),
     }
 
     behavior_map = dict(AutonomousRegressionPlanner.behavior_map) | dict(learned_behavior_map)
@@ -85,10 +84,9 @@ class ShadowRegressionPlanner(AutonomousRegressionPlanner):
 class HistoricalShadowValidator:
     """Replay preserved real incidents against the current safe-repair policy.
 
-    This is an A1 internal/no-effect validator. It does not execute repairs. It
-    qualifies shadow behavior only when every known incident has an explicit
-    current policy and the predicted repair family matches the historically
-    successful repair family. Unknown policies and divergences fail closed.
+    A1 internal/no-effect only. Unknown policies and divergences fail closed.
+    Receipt generation must use the exact repair-proof strings read back from the
+    provider-persisted replay state; semantic equivalence is insufficient.
     """
 
     repair_code_map: Mapping[str, str] = {
@@ -99,6 +97,7 @@ class HistoricalShadowValidator:
         "DIAGNOSIS_SUBSTITUTION": "DEFECT_TO_REPAIR_CONTINUE",
         "CONTROLLER_SOURCE_ADMISSION_DRIFT": "RECUT_CURRENT_MAIN_REAPPLY_DELTA_RERUN",
         "SCHEDULED_ATTESTATION_WITHOUT_EXECUTION_PROOF": "QUARANTINE_REVERSE_REQUIRE_ACTUAL_RUNTIME",
+        "RECEIPT_BINDING_DRIFT": "READBACK_RECOMPUTE_EXACT_PERSISTED_RECEIPT_BEFORE_PROMOTION",
     }
 
     def __init__(self) -> None:
@@ -139,25 +138,15 @@ class HistoricalShadowValidator:
             ),
         )
 
-    def validate_suite(
+    def canonical_receipt_body(
         self,
         *,
         system_id: str,
         source_commit: str,
-        incidents: Sequence[ShadowIncident],
-    ) -> tuple[tuple[ShadowReplay, ...], ShadowValidationReceipt]:
-        if system_id not in SYSTEM_PROFILES:
-            raise ValueError("shadow validation system must be registered")
-        if not str(source_commit).strip():
-            raise ValueError("source_commit is required")
-        if not incidents:
-            raise ValueError("shadow validation requires at least one real incident")
-
-        replays = tuple(self.replay(incident) for incident in incidents)
-        matched_count = sum(1 for replay in replays if replay.matched)
-        failed = tuple(sorted(replay.fingerprint for replay in replays if not replay.matched))
-        status = "PASS" if matched_count == len(replays) and not failed else "FAIL"
-        body = {
+        replays: Sequence[ShadowReplay],
+        status: str,
+    ) -> dict[str, object]:
+        return {
             "system_id": system_id,
             "validator_version": SHADOW_VALIDATOR_VERSION,
             "source_commit": source_commit,
@@ -176,7 +165,42 @@ class HistoricalShadowValidator:
                 for replay in replays
             ],
         }
+
+    def receipt_digest_from_persisted_replays(
+        self,
+        *,
+        system_id: str,
+        source_commit: str,
+        replays: Sequence[ShadowReplay],
+        status: str,
+    ) -> str:
+        body = self.canonical_receipt_body(
+            system_id=system_id,
+            source_commit=source_commit,
+            replays=replays,
+            status=status,
+        )
         canonical = json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        return sha256(canonical).hexdigest()
+
+    def validate_suite(
+        self,
+        *,
+        system_id: str,
+        source_commit: str,
+        incidents: Sequence[ShadowIncident],
+    ) -> tuple[tuple[ShadowReplay, ...], ShadowValidationReceipt]:
+        if system_id not in SYSTEM_PROFILES:
+            raise ValueError("shadow validation system must be registered")
+        if not str(source_commit).strip():
+            raise ValueError("source_commit is required")
+        if not incidents:
+            raise ValueError("shadow validation requires at least one real incident")
+
+        replays = tuple(self.replay(incident) for incident in incidents)
+        matched_count = sum(1 for replay in replays if replay.matched)
+        failed = tuple(sorted(replay.fingerprint for replay in replays if not replay.matched))
+        status = "PASS" if matched_count == len(replays) and not failed else "FAIL"
         receipt = ShadowValidationReceipt(
             system_id=system_id,
             validator_version=SHADOW_VALIDATOR_VERSION,
@@ -185,7 +209,12 @@ class HistoricalShadowValidator:
             matched_count=matched_count,
             status=status,
             failed_fingerprints=failed,
-            receipt_sha256=sha256(canonical).hexdigest(),
+            receipt_sha256=self.receipt_digest_from_persisted_replays(
+                system_id=system_id,
+                source_commit=source_commit,
+                replays=replays,
+                status=status,
+            ),
         )
         return replays, receipt
 
