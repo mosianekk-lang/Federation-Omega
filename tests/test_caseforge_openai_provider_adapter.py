@@ -183,8 +183,9 @@ class CaseForgeOpenAIProviderAdapterTests(unittest.TestCase):
                 readback_verifier=UnversionedReadback(),
             )
 
-    def test_provider_exception_does_not_echo_secret_bearing_error_text(self) -> None:
-        client = FakeClient(FakeResponses(error=RuntimeError("sk-secret-should-not-escape")))
+    def test_provider_exception_does_not_echo_sensitive_error_text(self) -> None:
+        sensitive_marker = "PRIVATE-CREDENTIAL-VALUE-MUST-NOT-ESCAPE"
+        client = FakeClient(FakeResponses(error=RuntimeError(sensitive_marker)))
         with self.assertRaises(OpenAIProviderAdapterError) as caught:
             OpenAIProviderBlindExperiment().run(
                 run_id="RUN-OPENAI-004",
@@ -192,7 +193,7 @@ class CaseForgeOpenAIProviderAdapterTests(unittest.TestCase):
                 client=client,
                 model="gpt-test",
             )
-        self.assertNotIn("sk-secret", str(caught.exception))
+        self.assertNotIn(sensitive_marker, str(caught.exception))
         self.assertIn("RuntimeError", str(caught.exception))
 
     def test_non_json_model_output_is_preserved_as_unparsed_analysis(self) -> None:
