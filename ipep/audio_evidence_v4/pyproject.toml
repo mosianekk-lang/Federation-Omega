@@ -4,13 +4,14 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "evidenceops-audio-evidence-v4"
-version = "4.0.0"
+version = "4.1.0"
 description = "Governed evidence audio collection, transcription, translation, verification and retrieval"
 requires-python = ">=3.11"
 dependencies = []
 
 [project.scripts]
 evidenceops-audio-v4 = "evidenceops_audio_v4.cli:main"
+evidenceops-audio-v4-serve = "evidenceops_audio_v4.service:main"
 
 [tool.setuptools.packages.find]
 where = ["."]
