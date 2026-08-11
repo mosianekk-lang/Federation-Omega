@@ -1,0 +1,72 @@
+{
+  "schema": "FEDERATION-AUTONOMOUS-CONTROLLER-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "source": "evidenceops.caseforge.federation_autonomous_controller",
+  "strict_maturity_gate": "evidenceops.caseforge.federation_maturity_proof.StrictMaturityGate",
+  "stages": {
+    "16_CROSS_CHAT_RUNTIME_ATTESTATION": {
+      "source": "RuntimeAttestation",
+      "requires_activation_kind": ["NEW_CHAT", "RESTORED_CHAT", "NON_CHAT_RUNTIME"],
+      "current_chat_can_preprove_stage": false,
+      "required_controls": [
+        "NCB-003",
+        "CAPABILITY_RESOLUTION_GATE",
+        "FEDERATION_EVOLUTION_PROGRAM_V1",
+        "FEDERATION_EVOLUTION_RUNTIME_V1",
+        "STRICT_MATURITY_GATE",
+        "SYSTEM_EVOLUTION_PROFILE",
+        "CAPABILITY_DIGITAL_TWIN",
+        "ROUTE_AND_FAILURE_MEMORY"
+      ],
+      "restored_chat_requires_restore_receipt": true,
+      "capability_twin_ref_required": true
+    },
+    "17_AUTONOMOUS_REGRESSION_LAB": {
+      "source": "AutonomousRegressionPlanner",
+      "input": "FEDERATION_FAILURE_MEMORY",
+      "preserve_failure_evidence": true,
+      "may_disable_existing_guard": false,
+      "rollback_required": true
+    },
+    "18_EVOLUTION_GOVERNOR": {
+      "source": "EvolutionGovernorBridge",
+      "final_promotion_authority": "evidenceops.innovation_engine.evolution.EvolutionGovernor",
+      "parallel_promotion_authority_created": false,
+      "hard_metric_regression_allowed": false,
+      "regression_proof_required": true,
+      "rollback_required": true
+    },
+    "19_CAPABILITY_FORMATION_ENGINE": {
+      "source": "CapabilityFormationEngine",
+      "input": "CAPABILITY_DIGITAL_TWIN_GAP",
+      "output_prefix": "AO-CRA:CAPABILITY",
+      "provider_mutation_by_planner": false,
+      "authority_expansion_by_planner": false,
+      "qualification_sequence_required": true,
+      "rollback_required": true,
+      "provider_effects_separately_authorized": true
+    },
+    "20_AUTONOMOUS_MATURITY_DOMINANCE_CONTROLLER": {
+      "source": "AutonomousMaturityDominanceController",
+      "durable_scheduler_claimed": false,
+      "select_highest_priority_weakness": true,
+      "internal_mission_work_precedes_optional_evolution": true,
+      "dominance_claim_source": "StrictMaturityGate only",
+      "provider_readback_required_for_provider_level_dominance": true,
+      "regression_and_rollback_required": true
+    }
+  },
+  "maturity_truth": {
+    "source_implementation_proves_stage16": false,
+    "source_implementation_proves_stage17_to_20_runtime_operation": false,
+    "source_implementation_proves_dominance": false,
+    "stage16_requires_empirical_activation_receipt": true,
+    "stage17_requires_regression_execution_receipt": true,
+    "stage18_requires_existing_governor_receipt": true,
+    "stage19_requires_build_qualification_and_rollback_receipts": true,
+    "stage20_requires strict maturity proof envelope": true
+  }
+}
