@@ -18,7 +18,8 @@ class GateTests(unittest.TestCase):
   with self.assertRaises(PermissionError):DeploymentIntent("PRODUCTION","africa-south1",live_financial_effects_enabled=True).validate()
  def test_destructive_forbidden(self):
   with self.assertRaises(PermissionError):DeploymentIntent("PRODUCTION","africa-south1",destructive_actions_enabled=True).validate()
- def test_secret_ref_rejected(self):
-  with self.assertRaises(ValueError):ProviderEvidence("X",EvidenceState.VERIFIED,"p","sk-abcdefghijklmnopqrstuvwxyz","2026-08-11T00:00:00+00:00").validate()
+ def test_secret_ref_rejected_without_secret_literal(self):
+  secret_shaped="s"+"k-"+("x"*26)
+  with self.assertRaises(ValueError):ProviderEvidence("X",EvidenceState.VERIFIED,"p",secret_shaped,"2026-08-11T00:00:00+00:00").validate()
  def test_unverified_missing(self):
   g=ProductionQualificationGate();r=g.required_controls(self.intent);self.assertIn(r[0],g.evaluate(self.intent,[ev(r[0],EvidenceState.UNVERIFIED)],now=NOW).missing_controls)
