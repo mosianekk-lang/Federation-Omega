@@ -1,0 +1,79 @@
+{
+  "active_gcloud_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+  "authenticated_status": null,
+  "baseline_read": null,
+  "classification": "BLOCKED_NO_TRUSTED_SECRET_ROUTE",
+  "deployment_attempted": false,
+  "mutation_attempted": false,
+  "operator_url": "https://federation-omega-operator-257649435135.africa-south1.run.app",
+  "project": "sov-hybrid-suite",
+  "public_contract": {
+    "body": {
+      "allowedActions": [
+        "STATUS",
+        "READ_CLOUD_RUN_SERVICE",
+        "VERIFY_ARCHITRON_HEALTH",
+        "DEPLOY_SOLUTION5_LOCKED",
+        "READ_BUILD"
+      ],
+      "checkedAt": "2026-08-03T01:47:56.905Z",
+      "ok": true,
+      "service": "federation-omega-operator",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "public_health": {
+    "body": {
+      "checkedAt": "2026-08-03T01:47:56.437Z",
+      "noGmail": true,
+      "ok": true,
+      "service": "federation-omega-operator",
+      "status": "OPERATOR_READY",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "receipt": "NEXUS-OPERATOR-AUTH-CANARY",
+  "recorded_at": "2026-08-03T01:47:57.019341+00:00",
+  "region": "africa-south1",
+  "source_service": "architron9",
+  "token_error": "[REDACTED]",
+  "token_present": "[REDACTED]",
+  "token_source": "[REDACTED]",
+  "token_value_recorded": "[REDACTED]",
+  "wif_verify": {
+    "active_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "deployer_service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "missing_controls": [
+      "project_number_match",
+      "deployer_service_account",
+      "operator_secret",
+      "wif_pool_active",
+      "wif_provider_active",
+      "provider_attribute_condition",
+      "provider_attribute_mapping",
+      "workload_identity_user_binding",
+      "secret_accessor_binding"
+    ],
+    "mode": "--verify",
+    "mutation_performed": false,
+    "operator_secret": "[REDACTED]",
+    "project": "sov-hybrid-suite",
+    "project_number_expected": "257649435135",
+    "project_number_observed": "",
+    "provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+    "provider_condition": "",
+    "provider_condition_expected": "assertion.repository=='mosianekk-lang/Federation-Omega' && assertion.ref=='refs/heads/main'",
+    "provider_state": "NOT_FOUND",
+    "receipt": "NEXUS-OPERATOR-WIF-VERIFICATION-FAILED",
+    "repository": "mosianekk-lang/Federation-Omega",
+    "secret_accessor_binding": "[REDACTED]",
+    "state": "NOT_VERIFIED",
+    "wif_binding": false
+  },
+  "wif_verify_error": null,
+  "wif_verify_exit_code": 1
+}

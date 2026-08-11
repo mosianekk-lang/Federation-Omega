@@ -1,0 +1,60 @@
+{
+  "algorithm_catalog": "evidenceops/innovation_engine/algorithm_catalog.json",
+  "algorithm_count": 15,
+  "authority_ceiling": "A1_INTERNAL",
+  "components": [
+    "algorithms.py",
+    "evolution.py",
+    "foundry.py",
+    "registry.py",
+    "evidenceops_adapter.py",
+    "replication.py",
+    "reference_replica.py",
+    "fevx_bridge.py",
+    "cli.py"
+  ],
+  "continuous_learning": {
+    "events": [
+      "SUCCESS",
+      "FAILURE",
+      "CONSTRAINT",
+      "CORRECTION",
+      "RECOVERY",
+      "INNOVATION_CANDIDATE",
+      "EXPERIMENT_RESULT",
+      "NEGATIVE_RESULT"
+    ],
+    "ledger": "append-only hash-linked Federation learning fabric",
+    "promotion": "measurable non-regressing evaluation plus rollback",
+    "runtime_output": "immutable artifact or approved external append-only store only"
+  },
+  "current_maturity": "GITHUB_SOURCE_ADMITTED_AIRLOCK_AND_LEAK_GUARD_READBACK_VERIFIED_LOCAL_DETERMINISTIC_EVOLUTION_AND_REPLICATION_TESTS_PASSED",
+  "enforced_boundaries": [
+    "no source-evidence mutation",
+    "no Verified Facts Register write",
+    "no cross-case trust transfer",
+    "no external send, filing, payment, publication or destructive action",
+    "no algorithm promotion without measurable non-regressing evaluation",
+    "no runtime claim from source or local test evidence"
+  ],
+  "external_effect": false,
+  "learning_policy": "governance/federation_learning_policy.json",
+  "owner": "Kagiso Kim Mosiane",
+  "placement": "EvidenceOps shared internal capability under Federation Omega and FEVX governance",
+  "provider_admission": {
+    "airlock_conclusion": "success",
+    "airlock_run_id": 30969035712,
+    "leak_guard_conclusion": "success",
+    "leak_guard_run_id": 30969035710,
+    "merged_commit": "5cf6c4ab0661d9b71ecb3b03c23091706dfb081d",
+    "pull_request": 256,
+    "source_head": "cf522bf2b9ccee8bb925f2214f652bb268ab8f44"
+  },
+  "runtime_evidence_destination": "IMMUTABLE_ARTIFACT_OR_APPROVED_EXTERNAL_APPEND_ONLY_STORE",
+  "schema": "EVIDENCEOPS_ALGORITHM_FOUNDRY_REGISTRATION_V1",
+  "source_repository_runtime_output": "FORBIDDEN",
+  "system_id": "EVIDENCEOPS-ALGORITHM-FOUNDRY",
+  "target_maturity": "PROVIDER_INDEPENDENT_RUNTIME_REPLICATION_AND_REAL_WORKFLOW_CALIBRATION",
+  "truth_boundary": "Provider source admission proves governed source entry, not recurring foundry execution, real-matter accuracy, legal correctness or consequential authority.",
+  "version": "1.2.0"
+}

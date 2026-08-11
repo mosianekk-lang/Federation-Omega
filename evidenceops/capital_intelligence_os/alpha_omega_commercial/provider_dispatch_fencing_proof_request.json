@@ -1,0 +1,21 @@
+{
+  "request_id": "AO-COMMERCIAL-PROVIDER-DISPATCH-FENCING-V13-PROOF-REQUEST",
+  "implementation_head": "8d6080a34cd95138ac72f07a0b5eadbb366c28ff",
+  "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "required_workflow": ".github/workflows/alpha-omega-commercial-provider-dispatch-fencing.yml",
+  "required_checks": [
+    "package_compilation",
+    "fencing_and_authority_regressions",
+    "deterministic_operational_proof",
+    "contract_checkpoint_projection_validation",
+    "repository_secret_safety_scan",
+    "immutable_artifact_publication",
+    "job_step_readback"
+  ],
+  "promotion_state": "PROVIDER_NATIVE_CI_REQUIRED",
+  "external_gate_effect": "UNCHANGED",
+  "verified_live_revenue_events": 0,
+  "provider_native_fencing_proven": false,
+  "distributed_provider_exactly_once_proven": false,
+  "full_commercial_maturity": false
+}

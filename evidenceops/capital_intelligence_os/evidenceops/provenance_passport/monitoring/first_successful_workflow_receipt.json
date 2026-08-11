@@ -1,0 +1,10 @@
+{
+  "lane_id": "LANE-PROVENANCE-PASSPORT",
+  "workflow": ".github/workflows/provenance-passport-watch.yml",
+  "first_successful_run_id": "30689181562",
+  "source_sha": "76c41088272a9cf66e5a26baf6a7f55239446985",
+  "observed_at": "2026-08-01T07:09:56.679404+00:00",
+  "health_sha256": "e55ed32742961ee8eae85df6b4e050f835700800bab24b2a47eda95fe3b4344a",
+  "result": "EXTERNAL_CI_TAMPER_RECOVERY_VERIFIED",
+  "receipt_sha256": "bab3d4211e26e1584a139b0f6a5338a293573fa6db79d95cfd7671ed34b9e63a"
+}

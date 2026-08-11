@@ -1,0 +1,13 @@
+{
+  "baseline_translation_sha256": "1238d656cc4ada81f613c42e3a47953c7bdc033afe6d79b8aa66e89718e9d617",
+  "controlled_recovery": "PASS",
+  "corruption_injected": "records[0].engineering_pattern",
+  "exact_restoration": "PASS",
+  "identity_drift": "NONE_DETECTED",
+  "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+  "proof_boundary": "Proves that a controlled translation-output corruption is rejected and the deterministic runtime restores the exact baseline hash. It does not prove recovery from every infrastructure or provider failure.",
+  "receipt_id": "NATURE-RECOVERY-1238d656cc4ada81f613",
+  "receipt_sha256": "1419c2ad9f3a36c847a130311bcd9e2d1a1c2c8b2ed6cb637d966f0694ea7a61",
+  "recovered_translation_sha256": "1238d656cc4ada81f613c42e3a47953c7bdc033afe6d79b8aa66e89718e9d617",
+  "tamper_rejection": "PASS:record_digest_mismatch:NAT-MECH-6ca5ec99d950847d"
+}

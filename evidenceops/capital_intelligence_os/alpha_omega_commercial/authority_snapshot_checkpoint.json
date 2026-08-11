@@ -1,0 +1,102 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-SNAPSHOT-V3",
+  "status": "AUTHORITY_SNAPSHOT_RELEASE_RECONCILIATION_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency_checkpoint": {
+    "effective_programme_status": "EFFECTIVE_PROGRAMME_STATE_VERIFIED_C15_INSTITUTION_RECONCILED_EXTERNAL_GATES_OPEN",
+    "preceding_pull_request": 121,
+    "preceding_merge_commit": "1100b092359f9b2e09fff79d4c0b27792f816682",
+    "preceding_drive_release_file_id": "1ie20SDNfzI-YeArgVyrotlRYosQtir-bDA0FDRii8n4",
+    "preceding_drive_release_modified_at": "2026-08-04T03:12:17.456Z"
+  },
+  "implementation": {
+    "pull_request": 122,
+    "merge_commit": "c48f7db758895389fa12f3476efbe19aa2169535",
+    "provider_tested_head_sha": "273409929e85ecdf7202c36595270004451d1b92",
+    "canonical_class": "AuthoritySnapshotCommercialControlPlane",
+    "predecessor_class": "GovernedCommercialAssuranceControlPlane",
+    "raw_authority_dictionary_grants_live_authority": false,
+    "snapshot_hash_required": true,
+    "source_ledger_integrity_required": true,
+    "provider_evidence_hash_required": true,
+    "explicit_scope_required": true,
+    "freshness_and_expiry_required": true,
+    "tamper_fail_closed": "VERIFIED",
+    "stale_fail_closed": "VERIFIED"
+  },
+  "provider_proof": {
+    "state": "FINAL_HEAD_PROVIDER_NATIVE_CI_VERIFIED",
+    "workflow_run": 30876921201,
+    "workflow_job": 91890168491,
+    "workflow_conclusion": "success",
+    "artifact_id": 8879850560,
+    "artifact_name": "alpha-omega-commercial-authority-snapshot-proof",
+    "artifact_digest": "sha256:493811eeb57d4272b06244bb7c81cb2f91fc412fb8e508440eb0ee8d2e3a8f5c",
+    "artifact_expires_at": "2026-11-02T04:11:14Z",
+    "implementation_proof_run": 30876838414,
+    "implementation_proof_artifact_id": 8879825940,
+    "implementation_proof_receipt_sha256": "8cebbcf7f815dbade89c7c1c6fe0e604f4d9cb205525a92fdef49ba80f316aba",
+    "checks_passed": 9,
+    "checks_failed": 0
+  },
+  "release_receipt": {
+    "status": "AUTHORITY_SNAPSHOT_RELEASE_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+    "receipt_sha256": "8eb6acd0ce3ed3307a01de470d0d5377fc8a4b2dcc903e834362fdf403c1141c",
+    "google_drive_file_id": "1cTzy5o0kn4SzDBYm5cZRGKh6_kgZb-392H0dSMPSzRY",
+    "google_drive_modified_at": "2026-08-04T04:12:55.323Z",
+    "google_drive_export_sha256": "6e9f729df19691bcc08a0432365c9d5dbaa98a79aaad49621cd816a53c7508f2",
+    "google_drive_readback_verified": true,
+    "google_drive_shared": false
+  },
+  "stage_projection": {
+    "C03": "PROVIDER_AUTHORITY_SNAPSHOT_CONTRACT_VERIFIED_LIVE_PROVIDER_AUTHORITY_BLOCKED",
+    "C11": "SERVICE_ENABLED_PLATFORM_AUTHORITY_SNAPSHOT_GOVERNED_SELF_SERVICE_HELD",
+    "C12": "EXTERNAL_EVIDENCE_AUTHORITY_SNAPSHOT_GOVERNED_MARKET_PROOF_REQUIRED",
+    "C13": "REVOPS_AUTHORITY_SNAPSHOT_GOVERNED_PAYMENT_AND_REVENUE_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_AUTHORITY_SNAPSHOT_RELEASE_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "provider_boundary": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED"
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "customer_demand_proven": false,
+    "signed_contract_proven": false,
+    "payment_proven": false,
+    "cloud_run_operation_proven": false,
+    "enterprise_attestation_proven": false,
+    "partner_adoption_proven": false,
+    "external_case_study_proven": false,
+    "production_scale_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "truth_boundary": "This checkpoint verifies the authority-snapshot implementation, final-head provider-native CI artifact, repository merge and private Google Drive publication/readback. It does not grant provider authority or prove customer demand, a signed contract, payment, revenue, subscriptions, invoices, Cloud Run operation, enterprise assurance, partner adoption, an external customer case study or production scale."
+}

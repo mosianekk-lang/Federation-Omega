@@ -1,0 +1,125 @@
+name: Omega-Max Inspectable Provider Canary
+
+on:
+  pull_request_target:
+    types: [opened, synchronize, reopened]
+    paths:
+      - 'deployments/omega-max/pr-canary-trigger.txt'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: omega-max-inspectable-provider-canary
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  SOURCE_SERVICE: architron9
+
+jobs:
+  provider-read-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Authenticate through existing Workload Identity Federation
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute read-only provider canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p canary-output
+          python - <<'PY'
+          import json, os, subprocess, urllib.request, urllib.error
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          project = os.environ['PROJECT_ID']
+          region = os.environ['REGION']
+          service = os.environ['SOURCE_SERVICE']
+
+          def run(args):
+              p = subprocess.run(args, text=True, capture_output=True)
+              return {'ok': p.returncode == 0, 'exit_code': p.returncode,
+                      'stdout': p.stdout.strip()[:8000], 'stderr': p.stderr.strip()[:3000]}
+          def gcloud(*args):
+              return run(['gcloud', *args, '--project', project])
+
+          account = run(['gcloud','auth','list','--filter=status:ACTIVE','--format=value(account)'])
+          project_info = gcloud('projects','describe',project,'--format=json(projectId,projectNumber,lifecycleState)')
+          service_info = gcloud('run','services','describe',service,'--region',region,
+                                '--format=json(metadata.name,status.url,status.latestReadyRevisionName,status.traffic,spec.template.spec.serviceAccountName)')
+          revisions = gcloud('run','revisions','list','--service',service,'--region',region,'--limit=5',
+                             '--format=json(metadata.name,status.conditions,status.logUrl)')
+
+          service_json = {}
+          if service_info['ok'] and service_info['stdout']:
+              try: service_json = json.loads(service_info['stdout'])
+              except json.JSONDecodeError: pass
+          service_url = ((service_json.get('status') or {}).get('url') or '').strip()
+          http_checks = []
+          for suffix in ['/health','/']:
+              if not service_url: break
+              url = service_url.rstrip('/') + suffix
+              item = {'url':url,'ok':False,'status':None,'body_prefix':''}
+              try:
+                  with urllib.request.urlopen(url, timeout=20) as response:
+                      body=response.read(1000).decode('utf-8',errors='replace')
+                      item.update(ok=200 <= response.status < 400,status=response.status,body_prefix=body)
+              except urllib.error.HTTPError as exc:
+                  item.update(status=exc.code,body_prefix=exc.read(1000).decode('utf-8',errors='replace'))
+              except Exception as exc:
+                  item['error']=f'{type(exc).__name__}: {exc}'
+              http_checks.append(item)
+
+          identity_ok = account['ok'] and os.environ['DEPLOYER_SA'] in account['stdout']
+          project_ok = project_info['ok'] and os.environ['PROJECT_NUMBER'] in project_info['stdout']
+          service_read_ok = service_info['ok'] and bool(service_url)
+          revision_read_ok = revisions['ok']
+          http_ok = any(x.get('ok') for x in http_checks)
+          classification = ('PROVIDER_RUNTIME_CANARY_VERIFIED' if identity_ok and project_ok and service_read_ok and revision_read_ok and http_ok
+                            else 'PROVIDER_IDENTITY_AND_SERVICE_READ_VERIFIED_HTTP_UNPROVEN' if identity_ok and project_ok and service_read_ok and revision_read_ok
+                            else 'PROVIDER_RUNTIME_CANARY_PARTIAL')
+          receipt = {
+              'receipt_id':'RCP-OMX-PROVIDER-RUNTIME-CANARY-PRTARGET',
+              'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'classification':classification,
+              'mutation_attempted':False,
+              'secret_values_recorded':False,
+              'identity_ok':identity_ok,
+              'project_ok':project_ok,
+              'service_read_ok':service_read_ok,
+              'revision_read_ok':revision_read_ok,
+              'http_ok':http_ok,
+              'active_account':account,
+              'project':project_info,
+              'service':service_info,
+              'revisions':revisions,
+              'http_checks':http_checks,
+          }
+          Path('canary-output/OMEGA_MAX_RUNTIME_CANARY_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          if not (identity_ok and project_ok and service_read_ok and revision_read_ok):
+              raise SystemExit(1)
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: omega-max-inspectable-provider-canary
+          path: canary-output/OMEGA_MAX_RUNTIME_CANARY_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30

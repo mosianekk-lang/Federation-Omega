@@ -1,0 +1,53 @@
+{
+  "receipt_id": "LANE-WATCH-RECEIPT-015A",
+  "recorded_at": "2026-08-01T09:18:00+02:00",
+  "status": "CORRECTIVE_RECONCILIATION",
+  "supersedes": "LANE-WATCH-RECEIPT-015",
+  "correction": {
+    "reason": "A concurrent repository-native workflow completed after the initial dependency snapshot and before registry reconciliation.",
+    "initial_overclaim": "The lane-watch receipt treated one automation-side health cycle as sufficient for SPROUT_PLUS.",
+    "correct_state": "LANE-PROVENANCE-PASSPORT remains VERIFYING / SPROUT until later independent schedule-triggered repository workflow cycles are durably read back.",
+    "external_ci_change": "Push-triggered GitHub Actions verification and durable health readback are now independently verified.",
+    "supplementary_local_drill": "The automation-side pristine/tamper/restore drill remains valid supplemental proof but does not satisfy the repository scheduled-persistence gate."
+  },
+  "verified_external_execution": {
+    "workflow_run_id": "30689181562",
+    "workflow_event": "push",
+    "workflow_definition_commit": "76c41088272a9cf66e5a26baf6a7f55239446985",
+    "durable_readback_commit": "d58d2d2395de744d35c57ca2028dad0f89a780eb",
+    "job_name": "verify",
+    "job_conclusion": "success",
+    "regression_tests": "PASSED",
+    "controlled_tamper_detection": "PASSED",
+    "controlled_recovery": "PASSED",
+    "durable_monitoring_readback": "PASSED",
+    "health_sha256": "e55ed32742961ee8eae85df6b4e050f835700800bab24b2a47eda95fe3b4344a",
+    "first_success_receipt_sha256": "bab3d4211e26e1584a139b0f6a5338a293573fa6db79d95cfd7671ed34b9e63a"
+  },
+  "automation_side_supplementary_execution": {
+    "fixture_sha256": "6e962f1dcaea57b95698a2ec7f225d3f0cb8d764a3d459838aa279c2167b4f95",
+    "proofs_checked": 5,
+    "computed_merkle_root": "a6337b39bd331113d867d368d5a0bec13fbc59aea2fda22dc76ad889f043b779",
+    "computed_receipt_sha256": "dab007fbe06496a925283bbff368fcc368e12a257150782ddce28aefd41331e4",
+    "pristine_validation": "PASS",
+    "tamper_rejection": "PASS",
+    "canonical_restore": "PASS"
+  },
+  "dependency_review": {
+    "credential_or_external_approval_change": "NONE_VERIFIED",
+    "google_cloud_wif": "UNCHANGED_BLOCKED_OR_UNVERIFIED",
+    "secret_manager_binding": "UNCHANGED_UNBOUND_OR_METADATA_PROBE_ONLY",
+    "private_authenticated_cloud_run_health": "UNCHANGED_NOT_VERIFIED",
+    "live_transcription_binding": "UNCHANGED_NOT_FRESHLY_VERIFIED",
+    "revenue_release_approval": "UNCHANGED_NOT_GRANTED"
+  },
+  "lane_state": {
+    "lane_id": "LANE-PROVENANCE-PASSPORT",
+    "priority": 100,
+    "state": "VERIFYING",
+    "maturity": "SPROUT",
+    "remaining_gate": "Later independent schedule-triggered Provenance Passport workflow cycles with durable readback."
+  },
+  "truth_boundary": "This receipt verifies push-triggered external CI, controlled tamper detection, controlled recovery and durable readback. It does not establish scheduled persistence, source-byte verification, Google Cloud authority, WIF, Secret Manager, private Cloud Run health, live transcription readiness or external commercial approval.",
+  "receipt_sha256": "5706d62c6d2bcdf5e2528fc2a7be26feaf43a697bee290b4012416aa363d6f37"
+}

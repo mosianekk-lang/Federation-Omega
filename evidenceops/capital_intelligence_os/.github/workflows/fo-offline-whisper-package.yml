@@ -1,0 +1,67 @@
+name: Package FO Offline Whisper
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/fo-offline-whisper-package.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  package-whisper:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.13'
+
+      - name: Download Whisper source, runtime wheels and base.en weights
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=/tmp/fo-offline-whisper
+          mkdir -p "$ROOT/source-download" "$ROOT/package/wheels"
+          python -m pip download --no-deps --dest "$ROOT/source-download" openai-whisper
+          ARCHIVE="$(find "$ROOT/source-download" -maxdepth 1 -type f | head -n1)"
+          test -n "$ARCHIVE"
+          mkdir -p "$ROOT/package/source"
+          tar -xf "$ARCHIVE" -C "$ROOT/package/source"
+          python -m pip download --only-binary=:all: --no-deps \
+            --dest "$ROOT/package/wheels" tiktoken more-itertools
+
+          python - <<'PY' > /tmp/whisper_model_url.txt
+          import ast
+          from pathlib import Path
+          roots=list(Path('/tmp/fo-offline-whisper/package/source').glob('*/whisper/__init__.py'))
+          if not roots:
+              raise SystemExit('whisper __init__.py not found')
+          tree=ast.parse(roots[0].read_text(encoding='utf-8'))
+          for node in tree.body:
+              if isinstance(node,(ast.Assign,ast.AnnAssign)):
+                  targets=node.targets if isinstance(node,ast.Assign) else [node.target]
+                  if any(isinstance(t,ast.Name) and t.id=='_MODELS' for t in targets):
+                      models=ast.literal_eval(node.value)
+                      print(models['base.en'])
+                      break
+          else:
+              raise SystemExit('_MODELS not found')
+          PY
+          MODEL_URL="$(cat /tmp/whisper_model_url.txt)"
+          curl --fail --location --retry 4 --retry-delay 3 \
+            --output "$ROOT/package/base.en.pt" "$MODEL_URL"
+          printf '%s\n' "$MODEL_URL" > "$ROOT/package/model-source-url.txt"
+          find "$ROOT/package" -type f -print0 | sort -z | xargs -0 sha256sum \
+            > "$ROOT/package/SHA256SUMS.txt"
+          du -sh "$ROOT/package"
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fo-offline-whisper-base-en-${{ github.run_id }}
+          if-no-files-found: error
+          retention-days: 7
+          compression-level: 0
+          path: /tmp/fo-offline-whisper/package/

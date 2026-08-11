@@ -1,0 +1,40 @@
+{
+  "artifacts": {
+    "health_sha256": "8bc56e37e88cdcf1956fe5a224dcd18a1b33df0c6385bdf2e2522c806db5439a",
+    "policy_log_sha256": "35cb4b1e1a3715ce7591d275f185bf82afb7ab2672d8ca2285ef14f180c0c338",
+    "replica_sha256": "39ce3a6376182532a91d85464d8303e1916fc327f9fa12908a162744fabf4866",
+    "rollback_snapshot_sha256": "8f8f1f4131122974cf0c43c7b31d50e7b4448ff8a0ef0c33dfc93ee37a4bd2a0",
+    "state_sha256": "39ce3a6376182532a91d85464d8303e1916fc327f9fa12908a162744fabf4866"
+  },
+  "maturity": "OPERATIONAL_VERIFIED_SCOPED_GITHUB_ACTIONS_WORKER",
+  "observed_at_utc": "2026-08-04T17:09:33.881443Z",
+  "proof": {
+    "checkpoint_integrity": true,
+    "consequential_action_denied": true,
+    "crash_resume": true,
+    "external_effects": 0,
+    "persistent_primary_state": true,
+    "policy_log": true,
+    "provider_native_execution": true,
+    "replicated_state": true,
+    "rollback_canary": true,
+    "semantic_readback": true,
+    "service_health": "OPERATIONAL",
+    "simulated_crash_exit": 75
+  },
+  "provider_event": {
+    "event_name": "schedule",
+    "ref": "refs/heads/main",
+    "repository": "mosianekk-lang/Federation-Omega",
+    "run_attempt": "1",
+    "run_id": "30932577699",
+    "sha": "90339ce7c23aa48a59f9ef9ee02fffc3facd3ed5",
+    "workflow": "EvidenceOps v7.2.2 P12 Provider Worker"
+  },
+  "receipt_id": "RCP-V722-P12-30932577699-1",
+  "receipt_sha256": "4e4b242cde7e9f75de497ce5477750777ba5ffdea216c6f3867fbf0e149c7218",
+  "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P12_PROVIDER_WORKER_V1",
+  "stage_id": "P12-SCOPED-GITHUB-WORKER",
+  "truth_boundary": "This receipt proves a scoped hosted GitHub Actions worker for reversible A0/A1 state operations. It does not prove production Temporal/NATS/OPA/PostgreSQL/KMS infrastructure, external send, legal filing, live recording, financial action, provider administration, or other consequential authority.",
+  "version": "7.2.2"
+}

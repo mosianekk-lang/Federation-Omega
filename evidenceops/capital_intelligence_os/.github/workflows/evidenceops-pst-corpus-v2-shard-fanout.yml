@@ -1,0 +1,166 @@
+name: EvidenceOps PST Corpus v2 Shard Fanout
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/evidenceops-pst-corpus-v2-shard-fanout.yml'
+  workflow_dispatch:
+
+permissions:
+  actions: read
+  contents: write
+
+env:
+  SOURCE_RUN_ID: '30865146610'
+  RAW_ARTIFACT_NAME: evidenceops-pst-v2-raw-shards-30865146610
+  SEARCH_ARTIFACT_NAME: evidenceops-pst-v2-searchable-30865146610
+
+jobs:
+  verify-and-fanout:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+      - name: Recover runner disk capacity
+        run: |
+          set -euo pipefail
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          sudo docker system prune --all --force --volumes || true
+          sudo apt-get clean
+          sudo mkdir -p /mnt/raw /mnt/search
+          sudo chown -R "$USER":"$USER" /mnt/raw /mnt/search
+          df -h
+      - name: Download production artifacts inside GitHub
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          gh run download "$SOURCE_RUN_ID" --name "$RAW_ARTIFACT_NAME" --dir /mnt/raw
+          gh run download "$SOURCE_RUN_ID" --name "$SEARCH_ARTIFACT_NAME" --dir /mnt/search
+          find /mnt/raw -type f -printf '%P %s\n' | sort
+          df -h
+      - name: Verify every raw shard against production manifest
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, zipfile
+          from pathlib import Path
+          raw=Path('/mnt/raw')
+          search=Path('/mnt/search')
+          manifest_path=next(search.rglob('04_INDEX/shards.json'))
+          manifest=json.loads(manifest_path.read_text(encoding='utf-8'))
+          by_name={row['name']:row for row in manifest}
+          found=[]
+          for path in sorted(raw.rglob('Corpus_Shard_*.zip')):
+              expected=by_name.get(path.name)
+              if not expected:
+                  raise SystemExit(f'unexpected shard {path.name}')
+              h=hashlib.sha256()
+              with path.open('rb') as f:
+                  for block in iter(lambda:f.read(8*1024*1024),b''): h.update(block)
+              if path.stat().st_size != expected['size_bytes'] or h.hexdigest() != expected['sha256']:
+                  raise SystemExit(f'shard mismatch {path.name}')
+              with zipfile.ZipFile(path) as zf:
+                  bad=zf.testzip()
+              if bad:
+                  raise SystemExit(f'CRC failure {path.name}:{bad}')
+              found.append(path.name)
+          if sorted(found) != sorted(by_name):
+              raise SystemExit({'missing':sorted(set(by_name)-set(found))})
+          receipt={'status':'SHARDS_VERIFIED_FOR_FANOUT','source_run_id':30865146610,'shard_count':len(found),'shards':manifest}
+          Path('/mnt/search/00_CONTROL/SHARD_FANOUT_VERIFICATION.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+      - name: Upload shard 0001
+        id: s01
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0001-30865146610, path: /mnt/raw/**/Corpus_Shard_0001.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0002
+        id: s02
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0002-30865146610, path: /mnt/raw/**/Corpus_Shard_0002.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0003
+        id: s03
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0003-30865146610, path: /mnt/raw/**/Corpus_Shard_0003.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0004
+        id: s04
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0004-30865146610, path: /mnt/raw/**/Corpus_Shard_0004.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0005
+        id: s05
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0005-30865146610, path: /mnt/raw/**/Corpus_Shard_0005.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0006
+        id: s06
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0006-30865146610, path: /mnt/raw/**/Corpus_Shard_0006.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0007
+        id: s07
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0007-30865146610, path: /mnt/raw/**/Corpus_Shard_0007.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0008
+        id: s08
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0008-30865146610, path: /mnt/raw/**/Corpus_Shard_0008.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0009
+        id: s09
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0009-30865146610, path: /mnt/raw/**/Corpus_Shard_0009.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0010
+        id: s10
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0010-30865146610, path: /mnt/raw/**/Corpus_Shard_0010.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0011
+        id: s11
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0011-30865146610, path: /mnt/raw/**/Corpus_Shard_0011.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0012
+        id: s12
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0012-30865146610, path: /mnt/raw/**/Corpus_Shard_0012.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Upload shard 0013
+        id: s13
+        uses: actions/upload-artifact@v4
+        with: {name: evidenceops-pst-v2-shard-0013-30865146610, path: /mnt/raw/**/Corpus_Shard_0013.zip, compression-level: 0, retention-days: 7, if-no-files-found: error}
+      - name: Commit fanout receipt
+        env:
+          S01: ${{ steps.s01.outputs.artifact-id }}
+          S02: ${{ steps.s02.outputs.artifact-id }}
+          S03: ${{ steps.s03.outputs.artifact-id }}
+          S04: ${{ steps.s04.outputs.artifact-id }}
+          S05: ${{ steps.s05.outputs.artifact-id }}
+          S06: ${{ steps.s06.outputs.artifact-id }}
+          S07: ${{ steps.s07.outputs.artifact-id }}
+          S08: ${{ steps.s08.outputs.artifact-id }}
+          S09: ${{ steps.s09.outputs.artifact-id }}
+          S10: ${{ steps.s10.outputs.artifact-id }}
+          S11: ${{ steps.s11.outputs.artifact-id }}
+          S12: ${{ steps.s12.outputs.artifact-id }}
+          S13: ${{ steps.s13.outputs.artifact-id }}
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          artifacts=[]
+          for number in range(1,14):
+              key=f'S{number:02d}'
+              artifacts.append({'shard_number':number,'artifact_id':int(os.environ[key]),'name':f'evidenceops-pst-v2-shard-{number:04d}-30865146610'})
+          receipt={'receipt':'EVIDENCEOPS-PST-V2-SHARD-FANOUT','status':'COMPLETE_VERIFIED','recorded_at':datetime.now(timezone.utc).isoformat(),'source_run_id':30865146610,'fanout_run_id':int(os.environ['GITHUB_RUN_ID']),'artifacts':artifacts}
+          Path('deployment_receipts/evidenceops-pst-corpus-v2-shard-fanout.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+          git config user.name 'evidenceops-pst-bot'
+          git config user.email 'evidenceops-pst-bot@users.noreply.github.com'
+          git add deployment_receipts/evidenceops-pst-corpus-v2-shard-fanout.json
+          git commit -m 'Record EvidenceOps PST shard fanout [skip ci]'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+            sleep $((attempt * 5))
+          done
+          exit 1

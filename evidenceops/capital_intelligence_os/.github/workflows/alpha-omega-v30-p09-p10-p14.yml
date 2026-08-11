@@ -1,0 +1,61 @@
+name: Alpha Omega v3 P09-P10-P14 Proof
+
+on:
+  pull_request:
+    paths:
+      - "alpha_omega_v30/progressive_delivery.py"
+      - "alpha_omega_v30/product_discovery.py"
+      - "alpha_omega_v30/neuro_symbolic.py"
+      - "alpha_omega_v30/prove_p09_p10_p14.py"
+      - "alpha_omega_v30/test_p09_p10_p14.py"
+      - ".github/workflows/alpha-omega-v30-p09-p10-p14.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  p09-p10-p14-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Install test runtime
+        run: python -m pip install pytest
+      - name: Run phase tests
+        run: pytest -q alpha_omega_v30/test_p09_p10_p14.py
+      - name: Execute provider proof
+        run: python -m alpha_omega_v30.prove_p09_p10_p14 --workspace ./p09_p10_p14_workspace
+      - name: Verify proof boundaries
+        run: |
+          test -s ./p09_p10_p14_workspace/p09_p10_p14_receipt.json
+          test -s ./p09_p10_p14_workspace/delivery/delivery_state.json
+          test -s ./p09_p10_p14_workspace/delivery/delivery_ledger.jsonl
+          test -s ./p09_p10_p14_workspace/product_experiment_ledger.jsonl
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('p09_p10_p14_workspace')
+          receipt = json.loads((root / 'p09_p10_p14_receipt.json').read_text())
+          p09 = receipt['phases']['P09']
+          assert p09['status'] == 'REFERENCE_PROVIDER_VERIFIED'
+          assert p09['candidate']['status'] == 'PROMOTED'
+          assert p09['candidate']['readback_verified']
+          assert p09['candidate']['health_verified']
+          assert p09['candidate']['persistence_verified']
+          assert p09['candidate']['rollback_verified']
+          assert p09['failed_candidate']['status'] == 'ROLLED_BACK'
+          assert p09['cloud_run'] == 'PROVIDER_BLOCKED_NO_FRESH_AUTHORITY'
+          assert receipt['phases']['P10']['status'].endswith('MARKET_PROOF_REQUIRED')
+          assert receipt['phases']['P14']['planning']['valid']
+          PY
+      - name: Upload proof package
+        uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-v30-p09-p10-p14-proof
+          path: p09_p10_p14_workspace/
+          if-no-files-found: error
+          retention-days: 90

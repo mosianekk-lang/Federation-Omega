@@ -1,0 +1,82 @@
+{
+  "$id": "urn:federation-omega:receipt:v1",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "action_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "authority": {
+      "enum": [
+        "A0",
+        "A1",
+        "A2"
+      ]
+    },
+    "inputs_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "output_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "previous_receipt_hash": {
+      "type": [
+        "string",
+        "null"
+      ]
+    },
+    "programme_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "proof_state": {
+      "enum": [
+        "DESIGN",
+        "SOURCE_READY",
+        "TESTED",
+        "READBACK_VERIFIED",
+        "ROLLED_BACK",
+        "HELD"
+      ]
+    },
+    "readback": {
+      "type": "boolean"
+    },
+    "receipt_hash": {
+      "pattern": "^[0-9a-f]{64}$",
+      "type": "string"
+    },
+    "receipt_id": {
+      "minLength": 1,
+      "type": "string"
+    },
+    "rollback": {
+      "type": "boolean"
+    },
+    "timestamp": {
+      "type": "string"
+    },
+    "truth_boundary": {
+      "type": "string"
+    }
+  },
+  "required": [
+    "receipt_id",
+    "programme_id",
+    "action_id",
+    "authority",
+    "inputs_hash",
+    "output_hash",
+    "proof_state",
+    "readback",
+    "rollback",
+    "timestamp",
+    "previous_receipt_hash",
+    "receipt_hash"
+  ],
+  "title": "Federation Omega Proof Receipt",
+  "type": "object"
+}

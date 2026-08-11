@@ -1,0 +1,46 @@
+{
+  "api_id": "AO-COMMERCIAL-EFFECTIVE-CANONICAL-API-V12",
+  "capability_revision": "AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12",
+  "effective_canonical_class": "LeasedProviderDispatchOutboxCommercialControlPlane",
+  "predecessor_class": "ProviderDispatchOutboxCommercialControlPlane",
+  "stage_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "service_model": "SERVICE_ENABLED_PLATFORM_FIRST",
+  "self_service_saas": "HELD",
+  "provider_dispatch": {
+    "prepared_v11_dispatch_required": true,
+    "one_active_local_worker_per_dispatch": true,
+    "same_worker_claim_retry_is_idempotent": true,
+    "competing_worker_blocked_during_active_lease": true,
+    "bounded_lease_required": true,
+    "expired_claim_takeover_supported": true,
+    "stale_claim_token_rejected": true,
+    "receipt_requires_current_unexpired_claim": true,
+    "hash_chained_claim_history": true,
+    "local_duplicate_dispatch_prevented": true,
+    "mock_provider_conformance": "PROVIDER_NATIVE_CI_VERIFIED",
+    "local_dispatch_claim_lease": "PROVIDER_NATIVE_CI_VERIFIED",
+    "live_provider_receipt_admission": "PROVIDER_PROOF_REQUIRED",
+    "distributed_provider_exactly_once": "NOT_PROVEN"
+  },
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "provider_proof": {
+    "implementation_evidence_head_sha": "55ea41b8bba4111b5b8c9d5573c39e502898f348",
+    "workflow_run": 30903772387,
+    "workflow_job": 91973971011,
+    "artifact_id": 8890156297,
+    "artifact_digest": "sha256:8529723e47a4167db6bd61f131af1cfaffc6dc8737195f51dec7ec7ee4c75e74",
+    "checks_required": 12,
+    "checks_failed": 0
+  },
+  "verified_live_revenue_events": 0,
+  "external_maturity_gates_advanced": false,
+  "institution_state_preserved": true,
+  "owner_reserved_authority_preserved": true,
+  "full_commercial_maturity": false
+}

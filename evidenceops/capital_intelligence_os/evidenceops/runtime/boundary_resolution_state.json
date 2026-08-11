@@ -1,0 +1,94 @@
+{
+  "controller_id": "EVIDENCEOPS-BOUNDARY-RESOLUTION-v4",
+  "owner": "Kim Kagiso Mosiane",
+  "status": "ACTIVE",
+  "public_repository_safe": true,
+  "boundaries": [
+    {
+      "boundary_id": "BND-CHAT-ALIGNMENT",
+      "description": "Already-running chats may not be aligned because they do not load or poll the active sovereign-translator manifest.",
+      "owner": "WORKFORCE",
+      "state": "PARTIALLY_RESOLVED",
+      "resolution_requirements": [
+        "DISCOVER_AUTHORISED_CHAT_BRIDGES",
+        "DISCOVER_CHAT_BOOTSTRAP_LOADERS",
+        "DISCOVER_POLLING_OR_MESSAGE_ROUTES",
+        "INSTALL_OR_BIND_WHERE_AUTHORISED",
+        "VERIFY_ALIGNMENT_RECEIPT"
+      ],
+      "attempted_routes": [
+        "GITHUB_MANIFEST_LOADER",
+        "PRIVATE_CANONICAL_BRIDGE",
+        "AUTHORISED_DISTRIBUTION_ROUTE",
+        "PLUGIN_MARKETPLACE_SEARCH"
+      ],
+      "verified_routes": [
+        "GITHUB_MANIFEST_LOADER_FOR_COMPLIANT_WORKERS",
+        "AUTHORISED_DISTRIBUTION_WITH_READBACK"
+      ],
+      "distribution_receipt_ref": "KIM_CHAT_DISTRIBUTION_RECEIPT_ID",
+      "message_ref": "KIM_CHAT_DISTRIBUTION_MESSAGE_ID",
+      "unresolved_scope": "ALREADY_OPEN_NON_POLLING_CHATS_WITHOUT_AUTHORISED_MESSAGE_BRIDGE",
+      "next_action": "DISCOVER_AUTHORISED_NON_POLLING_LIVE_CHAT_BRIDGE",
+      "report_only_terminal_allowed": false
+    },
+    {
+      "boundary_id": "BND-KIM-DATAVERSE",
+      "description": "Canonical Kim Dataverse propagation through an authorised private in-place backend.",
+      "owner": "WORKFORCE",
+      "state": "RESOLVED_IN_PLACE",
+      "resolution_requirements": [
+        "DISCOVER_CANONICAL_BACKEND",
+        "VERIFY_AUTHORITY",
+        "VERIFY_SCHEMA",
+        "VERIFY_READ",
+        "VERIFY_WRITE",
+        "VERIFY_READBACK",
+        "ISSUE_RECEIPT",
+        "RECONCILE_REPOSITORY_MIRROR"
+      ],
+      "resolved_route": "PRIVATE_IN_PLACE_CANONICAL_BRIDGE",
+      "bridge_record": "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
+      "identifier_ref": "KIM_CANONICAL_BACKEND_ID",
+      "receipt_ref": "KIM_CANONICAL_RECEIPT_ID",
+      "private_control_plane_status": "WRITE_AND_READBACK_VERIFIED",
+      "authority_schema_read_write_readback": "VERIFIED",
+      "public_runtime_default": "PRIVATE_REFERENCE_UNRESOLVED",
+      "native_microsoft_dataverse_status": "OPTIONAL_PARITY_ROUTE_UNBOUND",
+      "report_only_terminal_allowed": false
+    },
+    {
+      "boundary_id": "BND-SOVEREIGN-RUNTIME",
+      "description": "Production runtime must pass CI, container health, private deployment and direct canonical write-through.",
+      "owner": "WORKFORCE",
+      "state": "ACTIVE_REPAIR",
+      "resolution_requirements": [
+        "GREEN_GITHUB_CI",
+        "CONTAINER_HEALTH_VERIFIED",
+        "PRIVATE_CLOUD_RUNTIME_IDENTITY_BOUND",
+        "CLOUD_RUN_DEPLOYMENT_VERIFIED",
+        "HEALTH_AND_READY_READBACK_VERIFIED",
+        "DIRECT_CANONICAL_MISSION_WRITE_READBACK_VERIFIED"
+      ],
+      "verified_foundation": [
+        "PRIVATE_CANONICAL_AUTHORITY_VERIFIED",
+        "PRIVATE_CANONICAL_SCHEMA_VERIFIED",
+        "PRIVATE_CANONICAL_READ_VERIFIED",
+        "PRIVATE_CANONICAL_WRITE_VERIFIED",
+        "PRIVATE_CANONICAL_READBACK_VERIFIED"
+      ],
+      "canonical_receipt_ref": "KIM_CANONICAL_RECEIPT_ID",
+      "next_action": "VERIFY_FRESH_CI_AND_CONTAINER_RECEIPT_THEN_BIND_PRIVATE_CLOUD_RUN_IDENTITY_AND_DIRECT_MISSION_WRITE_ROUTE",
+      "report_only_terminal_allowed": false
+    }
+  ],
+  "trigger_policy": {
+    "turn_trigger": true,
+    "hourly_trigger": true,
+    "capability_trigger": true,
+    "repair_trigger": true,
+    "retry_limit": 3,
+    "backoff": "EXPONENTIAL",
+    "auto_close_only_after_verified_receipt": true
+  }
+}

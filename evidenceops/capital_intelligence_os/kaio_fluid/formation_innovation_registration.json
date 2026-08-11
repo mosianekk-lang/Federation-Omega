@@ -1,0 +1,27 @@
+{
+  "schema": "KAIO_FLUID_FORMATION_REGISTRATION_V1",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "source_foundry": "evidenceops/innovation_engine",
+  "alpha_omega_intake": "systems/alpha-omega-turnkey/examples/kaio-fluid-intelligence.json",
+  "capabilities": [
+    {"id": "KAIO-FI-001", "name": "Novelty Detector", "phase": 2, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-002", "name": "Problem Abstraction Engine", "phase": 2, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-003", "name": "Reframing Engine", "phase": 2, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-004", "name": "Hypothesis Competition Engine", "phase": 2, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-005", "name": "Information-Gain Planner", "phase": 2, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-006", "name": "Constraint Inversion", "phase": 2, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-007", "name": "Causal + Time-Lock Guard", "phase": 3, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-008", "name": "Cognitive Compiler", "phase": 4, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-009", "name": "Discovery Engine", "phase": 5, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-010", "name": "Cognitive Morphogenesis", "phase": 6, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-011", "name": "Robust Strategy Engine", "phase": 7, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-012", "name": "Prediction + Calibration Ledger", "phase": 8, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-013", "name": "Cognitive Immune System", "phase": 9, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-014", "name": "Governed Evolution", "phase": 10, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-015", "name": "Epistemic Engineering", "phase": 11, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"},
+    {"id": "KAIO-FI-016", "name": "Promotion Governor", "phase": 12, "maturity": "SOURCE_IMPLEMENTED_PENDING_CI"}
+  ],
+  "promotion_rule": "No capability may advance beyond deterministic source validation without the named shadow, canary, workflow, readback and rollback evidence required by its target maturity state.",
+  "truth_boundary": "Fluid cognition generates hypotheses and strategies; only existing proof-governed truth systems may promote factual state."
+}

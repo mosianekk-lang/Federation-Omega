@@ -1,0 +1,125 @@
+name: Nature Intelligence ROOTED Gates
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'kimmie_seed/nature_intelligence/translate.py'
+      - 'kimmie_seed/nature_intelligence/recovery.py'
+      - 'kimmie_seed/nature_intelligence/test_translation.py'
+      - 'evidenceops/runtime/MAX_TECHNICAL_CAPABILITY_KIMMIE.json'
+      - '.github/workflows/nature-intelligence-rooted-gates.yml'
+  schedule:
+    - cron: '53 * * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: nature-intelligence-rooted-gates
+  cancel-in-progress: false
+
+jobs:
+  verify-rooted-gates:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip nature-rooted]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run acquisition regression suite
+        run: python -m unittest kimmie_seed/nature_intelligence/test_acquire.py -v
+
+      - name: Run translation and recovery regression suite
+        run: python -m unittest kimmie_seed/nature_intelligence/test_translation.py -v
+
+      - name: Generate deterministic translation
+        run: python kimmie_seed/nature_intelligence/translate.py
+
+      - name: Run controlled recovery drill
+        run: python kimmie_seed/nature_intelligence/recovery.py
+
+      - name: Produce ROOTED gate health receipt
+        env:
+          WORKFLOW_EVENT_NAME: ${{ github.event_name }}
+          WORKFLOW_RUN_ID: ${{ github.run_id }}
+          WORKFLOW_SHA: ${{ github.sha }}
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          def canonical(value):
+              return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(',', ':')).encode()).hexdigest()
+
+          root = Path('kimmie_seed/nature_intelligence')
+          translation = json.loads((root / 'monitoring/latest_translation.json').read_text())
+          translation_receipt = json.loads((root / 'receipts/latest_translation_receipt.json').read_text())
+          recovery = json.loads((root / 'recovery/latest_recovery_receipt.json').read_text())
+          event = os.environ['WORKFLOW_EVENT_NAME']
+          health = {
+              'lane_id': 'LANE-KIMMIE-NATURE-INTELLIGENCE',
+              'workflow_event': event,
+              'workflow_run_id': os.environ['WORKFLOW_RUN_ID'],
+              'workflow_sha': os.environ['WORKFLOW_SHA'],
+              'stable_translation_runtime': 'PASS',
+              'translation_sha256': translation['translation_sha256'],
+              'translation_receipt_sha256': translation_receipt['receipt_sha256'],
+              'controlled_recovery': recovery['controlled_recovery'],
+              'recovery_receipt_sha256': recovery['receipt_sha256'],
+              'exact_restoration': recovery['exact_restoration'],
+              'schedule_triggered_monitoring': 'PASS' if event == 'schedule' else 'NOT_YET_VERIFIED',
+              'identity_drift': 'NONE_DETECTED',
+              'rooted_gate_result': 'PASS' if event == 'schedule' else 'PARTIAL_PASS',
+              'proof_boundary': 'A push or manual run proves stable translation and controlled recovery. Only a provider event_name of schedule can satisfy the schedule-triggered monitoring gate.'
+          }
+          health['health_sha256'] = canonical(health)
+          path = root / 'monitoring/latest_rooted_gate_health.json'
+          path.write_text(json.dumps(health, indent=2, sort_keys=True) + '\n')
+          print(json.dumps(health))
+          PY
+
+      - name: Verify proof outputs
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          root = Path('kimmie_seed/nature_intelligence')
+          translation = json.loads((root / 'monitoring/latest_translation.json').read_text())
+          recovery = json.loads((root / 'recovery/latest_recovery_receipt.json').read_text())
+          health = json.loads((root / 'monitoring/latest_rooted_gate_health.json').read_text())
+          assert translation['mechanism_count'] == 12
+          assert translation['identity_drift'] == 'NONE_DETECTED'
+          assert recovery['controlled_recovery'] == 'PASS'
+          assert recovery['exact_restoration'] == 'PASS'
+          assert health['stable_translation_runtime'] == 'PASS'
+          assert health['controlled_recovery'] == 'PASS'
+          assert health['schedule_triggered_monitoring'] in {'PASS', 'NOT_YET_VERIFIED'}
+          print(json.dumps({'translation_sha256': translation['translation_sha256'], 'recovery_receipt_sha256': recovery['receipt_sha256'], 'rooted_gate_health_sha256': health['health_sha256'], 'workflow_event': health['workflow_event']}))
+          PY
+
+      - name: Persist durable gate evidence
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kimmie_seed/nature_intelligence/monitoring/latest_translation.json
+          git add kimmie_seed/nature_intelligence/monitoring/latest_rooted_gate_health.json
+          git add kimmie_seed/nature_intelligence/receipts/latest_translation_receipt.json
+          git add kimmie_seed/nature_intelligence/recovery/latest_recovery_receipt.json
+          if git diff --cached --quiet; then
+            echo 'No ROOTED gate proof-state change.'
+          else
+            git commit -m 'Record Nature Intelligence ROOTED gate evidence [skip nature-rooted]'
+            git push
+          fi

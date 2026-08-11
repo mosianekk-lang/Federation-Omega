@@ -1,0 +1,100 @@
+{
+  "checkpoint_id": "KSA-20260803-021",
+  "identity_drift": "NONE_DETECTED",
+  "lane_review": {
+    "LANE-AUDIO-LIVE-TRANSCRIPTION": {
+      "blockers": [
+        "CURRENT_PROVIDER_CREDENTIAL_UNVERIFIED",
+        "GOOGLE_SPEECH_RUNTIME_BINDING_UNVERIFIED",
+        "PRIVATE_WORKER_HEALTH_UNVERIFIED",
+        "LIVE_CANARY_RECEIPT_ABSENT"
+      ],
+      "material_change": false,
+      "operational_state": "BLOCKED",
+      "stage": "SEED"
+    },
+    "LANE-CONNECTOR-FOUNDRY": {
+      "blockers": [
+        "SUSTAINED_PRODUCTION_USE",
+        "RESILIENCE_OVER_TIME",
+        "MEASURABLE_OPERATIONAL_VALUE",
+        "COMPLETE_OPERATIONAL_OWNERSHIP"
+      ],
+      "material_change": false,
+      "next_gate": "MATURE",
+      "stage": "SAPLING"
+    },
+    "LANE-KIMMIE-NATURE-INTELLIGENCE": {
+      "blockers": [
+        "AUTHORISED_CORPUS_ACQUISITION_ENVIRONMENT_UNVERIFIED",
+        "INGESTION_RIGHTS_UNVERIFIED",
+        "SOURCE_PROVENANCE_UNVERIFIED",
+        "CORPUS_INGESTION_RECEIPT_ABSENT"
+      ],
+      "material_change": false,
+      "operational_state": "BLOCKED",
+      "stage": "SEED"
+    },
+    "LANE-PROVENANCE-PASSPORT": {
+      "blockers": [
+        "SUSTAINED_PRODUCTION_USE",
+        "RESILIENCE_OVER_TIME",
+        "MEASURABLE_OPERATIONAL_VALUE",
+        "COMPLETE_OPERATIONAL_OWNERSHIP"
+      ],
+      "material_change": true,
+      "next_gate": "MATURE",
+      "stage": "SAPLING"
+    }
+  },
+  "lesson": "A scheduled-monitoring gate is satisfied only by distinct schedule-triggered runs with successful tests, controlled recovery, and durable readback; repeated design or push-triggered CI is insufficient.",
+  "maintenance_owner": "mosianekk-lang",
+  "notification_event": "LANE_PROVENANCE_PASSPORT_SPROUT_TO_SAPLING",
+  "observed_at": "2026-08-03T07:04:12+02:00",
+  "owner_decision_required": false,
+  "review_scope": "ROOT_AND_ALL_CHILD_LANES",
+  "root_promotion": "NONE",
+  "root_stage_after": "SAPLING",
+  "root_stage_before": "SAPLING",
+  "seed_id": "KIMMIE-IPEP-001",
+  "verified_promotions": [
+    {
+      "basis": [
+        "MULTI_CORPUS_EXECUTION_VERIFIED",
+        "TWO_INDEPENDENT_SCHEDULE_TRIGGERED_WORKFLOW_CYCLES_VERIFIED",
+        "REGRESSION_TESTS_PASSED_BOTH_CYCLES",
+        "CONTROLLED_TAMPER_DETECTION_PASSED_BOTH_CYCLES",
+        "CONTROLLED_RECOVERY_PASSED_BOTH_CYCLES",
+        "DURABLE_MONITORING_READBACK_VERIFIED_BOTH_CYCLES",
+        "MAINTENANCE_OWNER_VERIFIED"
+      ],
+      "from": "SPROUT",
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "to": "SAPLING"
+    }
+  ],
+  "workflow_evidence": {
+    "first_independent_cycle": {
+      "conclusion": "success",
+      "durable_readback_commit": "1b418c29a757c05b7f9b9aadaa8c4c042600a0df",
+      "event": "schedule",
+      "health_sha256": "943d0cc0cf50e64336e64ad03b11141dfb9c14a9d010ad972e2b999f0aaa55a2",
+      "workflow_run_id": "30703313078"
+    },
+    "second_independent_cycle": {
+      "conclusion": "success",
+      "durable_readback_commit": "56b09a43f0580b3a7675092dc5a86e9564f827bc",
+      "event": "schedule",
+      "health_sha256": "9240060c5baed63fdc9de1ccc9da65d8e80b1668c101342c968f61942d4d8dda",
+      "observed_at": "2026-08-03T04:20:24.292998+00:00",
+      "source_sha": "201c95e642d50dfc6bc52d072a1b92d7db0ec3d7",
+      "workflow_run_id": "30784135107"
+    },
+    "verified_steps": [
+      "REGRESSION_TESTS",
+      "CONTROLLED_TAMPER_AND_RECOVERY_DRILL",
+      "HEALTH_EVIDENCE_UPLOAD",
+      "DURABLE_MONITORING_READBACK"
+    ]
+  }
+}

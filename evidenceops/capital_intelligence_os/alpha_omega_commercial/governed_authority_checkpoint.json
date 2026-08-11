@@ -1,0 +1,100 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-GOVERNED-AUTHORITY-V2",
+  "status": "GOVERNED_COMMERCIAL_AUTHORITY_V2_RELEASE_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "scope": [
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "dependency_checkpoint": {
+    "canonical_programme_status": "COMMERCIAL_READINESS_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN",
+    "preceding_pull_request": 117,
+    "preceding_merge_commit": "3ae8952729b9071850f17542d94c245ee464157a",
+    "preceding_drive_release_file_id": "1AQ-NBYasOtKraoSYinZvFl3stPLOs74nFE6zerPOSJM",
+    "preceding_drive_release_modified_at": "2026-08-04T01:11:51.143Z"
+  },
+  "implementation": {
+    "pull_request": 118,
+    "head_sha": "3f9512e721c3e573f5531c98320c55f72a927506",
+    "merge_commit": "3102a12f4fa5e54d70c9eeeca493a006e9c7cdae",
+    "canonical_class": "GovernedCommercialAssuranceControlPlane",
+    "legacy_class_state": "REFERENCE_ONLY_NOT_CANONICAL",
+    "caller_set_approval_shortcuts_removed": true,
+    "owner_receipt_consumption_ledger": "HASH_LINKED_VERIFIED",
+    "restart_safe_readback": "VERIFIED",
+    "tamper_fail_closed": "VERIFIED",
+    "mock_provider_truth_boundary": "VERIFIED"
+  },
+  "provider_proof": {
+    "state": "FINAL_HEAD_PROVIDER_NATIVE_CI_VERIFIED",
+    "workflow_run": 30871321933,
+    "workflow_conclusion": "success",
+    "artifact_id": 8877970163,
+    "artifact_name": "alpha-omega-commercial-governed-authority-v2-proof",
+    "artifact_digest": "sha256:56248bb522eaa736b03282da8b51c4a4dfd139e79874cb158e912e43dd765445",
+    "artifact_expires_at": "2026-11-02T02:17:03Z",
+    "receipt_sha256": "440d2d6856a735c116f1f3f3bca7eaa444756dc310aa20334ef3af64025d3465",
+    "receipt_file_sha256": "7e130a1a7028d51fa4f1430f0d1a9d47b6d9be5d0dda5717c6ad30ef69634397",
+    "canonical_readback_file_sha256": "56767db786b93cdfc7260a17355b8f1b849b97183bf9f3ddf3ad649175fbf798",
+    "final_head_commercial_runs": {
+      "C01_C05": 30871321897,
+      "C06_C09": 30871321925,
+      "C10_C15": 30871321894,
+      "provider_authority": 30871321903,
+      "governed_authority": 30871321933,
+      "github_control_plane": 30871321899,
+      "superior_logic_ci": 30871321901,
+      "repository_leak_guard": 30871321893
+    },
+    "all_conclusions": "success"
+  },
+  "google_drive_release": {
+    "file_id": "1MlRXCSMtnW5okJVTtxRlTrP3u8wdl_ehWhMw4s3md5k",
+    "title": "Alpha Omega Commercial Governed Authority v2 Release — 2026-08-04",
+    "created_at": "2026-08-04T02:18:52.190Z",
+    "modified_at": "2026-08-04T02:19:13.356Z",
+    "mime_type": "application/vnd.google-apps.document",
+    "exported_text_size_bytes": 4088,
+    "exported_text_sha256": "d880979bd256e4352a65b4b06258469e8bbbbb8a98d3e1ca76940b166a371773",
+    "readback_verified": true,
+    "shared": false,
+    "owner": "mosianekk@gmail.com"
+  },
+  "release_receipt": {
+    "file": "alpha_omega_commercial/governed_authority_release_receipt.json",
+    "receipt_sha256": "7c11adc24b0e3cd45acee72b73fc2b8c2f4a4ba6b96b7e6426c5bd50a9c645b1"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "truth_boundary": {
+    "verified_revenue_events": 0,
+    "mock_provider_conformance_events": 1,
+    "mock_provider_conformance_is_revenue": false,
+    "customer_demand_proven": false,
+    "signed_contract_proven": false,
+    "payment_proven": false,
+    "cloud_run_operation_proven": false,
+    "enterprise_attestation_proven": false,
+    "partner_adoption_proven": false,
+    "external_case_study_proven": false,
+    "production_scale_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}

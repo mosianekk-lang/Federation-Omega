@@ -1,0 +1,19 @@
+{
+  "authority": "A1_INTERNAL",
+  "case_wall_required": true,
+  "contract_id": "EVIDENCEOPS-FEVX-ADAPTER-V1-DEPLOY",
+  "external_effect": false,
+  "level_6_grant": false,
+  "provider_gate": {
+    "combined_module_count": 20,
+    "negative_boundary_tests": true,
+    "proof_check_count": 20,
+    "rollback_and_reapply": true,
+    "semantic_readback": true
+  },
+  "requested_state": "PROVIDER_VERIFIED_SUPERVISED_READ_ONLY_ANALYTICAL_SERVICE",
+  "source_write": false,
+  "synthetic_canary_only": true,
+  "trust_inheritance": false,
+  "verified_fact_write": false
+}

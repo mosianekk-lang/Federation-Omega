@@ -1,0 +1,51 @@
+{
+  "programme": "SOL-6.1-LIVE-ADAPTER-CERTIFICATION",
+  "generated_at": "2026-08-03T23:45:00+02:00",
+  "status": "REVERSIBLE_PROVIDER_ADAPTERS_CERTIFIED",
+  "providers": {
+    "github": {
+      "status": "VERIFIED_OPERATIONAL",
+      "scope": ["create_file", "readback", "delete_file"],
+      "create_commit": "ed7c6c6a19f7706469f8924406de0bef9d83227d",
+      "delete_commit": "d1606c68c334dbd69130151574c9ed1474ea8f32"
+    },
+    "google_drive": {
+      "status": "VERIFIED_OPERATIONAL",
+      "scope": ["create_native_doc", "fetch_readback", "permanent_delete"],
+      "canary_file_id": "1howYZNrLFC1KkJMug4VNsACQzaX8syIaXe7ob_qtEMY"
+    },
+    "gmail_draft": {
+      "status": "VERIFIED_OPERATIONAL",
+      "scope": ["create_draft", "list_readback", "trash_message"],
+      "draft_id": "r1153076900235907041",
+      "message_id": "19fc980dbea71c0d",
+      "send_performed": false
+    },
+    "google_calendar": {
+      "status": "VERIFIED_OPERATIONAL",
+      "scope": ["create_private_event", "provider_readback", "delete_event"],
+      "event_id": "e33fvlafllkv97gcmug5q42if8"
+    },
+    "outlook_draft": {
+      "status": "VERIFIED_OPERATIONAL",
+      "scope": ["create_draft", "provider_readback", "move_to_deleted_items"],
+      "send_performed": false
+    },
+    "canva_transaction": {
+      "status": "VERIFIED_OPERATIONAL",
+      "scope": ["start_transaction", "temporary_title_edit", "cancel_transaction"],
+      "design_id": "DAHQnhPKYdA",
+      "transaction_id": "4576168794503923317",
+      "persistent_change": false
+    }
+  },
+  "truth_boundary": {
+    "gmail_send_certified": false,
+    "outlook_send_certified": false,
+    "apps_script_source_mutation_certified": false,
+    "apps_script_owner_consent_required": true,
+    "cloud_run_invocation_certified": false,
+    "canva_permanent_commit_certified": false,
+    "external_consequential_actions_owner_reserved": true
+  }
+}

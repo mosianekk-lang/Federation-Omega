@@ -1,0 +1,112 @@
+[
+  {
+    "evidence_refs": ["Master Bible CH-061"],
+    "impact": 1.0,
+    "implementation_cost": 0.2,
+    "repetition": 3,
+    "reuse_potential": 1.0,
+    "signal_id": "MB-CH061-ACTION-VERB",
+    "summary": "Artifact action collapse and tool routing omission allowed an email text to replace the requested send action.",
+    "uncertainty": 0.2
+  },
+  {
+    "evidence_refs": ["Secondary Brain CAP-026 through CAP-039"],
+    "impact": 1.0,
+    "implementation_cost": 0.35,
+    "repetition": 8,
+    "reuse_potential": 1.0,
+    "signal_id": "SB-CONTROL-PLANE",
+    "summary": "Cycle ID collision, packet key, revision drift, lease epoch and dangling foreign key repairs recurred across the EvidenceOps control plane.",
+    "uncertainty": 0.25
+  },
+  {
+    "evidence_refs": ["Master Bible CH-054"],
+    "impact": 0.95,
+    "implementation_cost": 0.35,
+    "repetition": 4,
+    "reuse_potential": 1.0,
+    "signal_id": "MB-CH054-LEARNING",
+    "summary": "Continuous learning must create measurable performance delta, reusable code, regression tests and preserved negative results.",
+    "uncertainty": 0.4
+  },
+  {
+    "evidence_refs": ["Master Bible CH-063"],
+    "impact": 0.95,
+    "implementation_cost": 0.2,
+    "repetition": 5,
+    "reuse_potential": 0.95,
+    "signal_id": "MB-CH063-FINALITY",
+    "summary": "Terminal finality requires every pending, blocked or unknown item to have a packet, recovery route, next test and terminal condition.",
+    "uncertainty": 0.25
+  },
+  {
+    "evidence_refs": ["Master Bible CH-055"],
+    "impact": 0.9,
+    "implementation_cost": 0.25,
+    "repetition": 3,
+    "reuse_potential": 0.9,
+    "signal_id": "MB-CH055-ECASP",
+    "summary": "Inventory complete but body-level analysis incomplete must not become exhaustive, best, final or full-corpus selection.",
+    "uncertainty": 0.2
+  },
+  {
+    "evidence_refs": ["Secondary Brain IMP-DIR018-PROOF-SEMANTICS"],
+    "impact": 1.0,
+    "implementation_cost": 0.15,
+    "repetition": 7,
+    "reuse_potential": 1.0,
+    "signal_id": "SB-PROOF-SEMANTICS",
+    "summary": "Generic health, HTTP 200, queued and dispatched state cannot satisfy action-specific provider proof without semantic readback.",
+    "uncertainty": 0.15
+  },
+  {
+    "evidence_refs": ["Master Bible CH-006 and CH-046"],
+    "impact": 0.8,
+    "implementation_cost": 0.3,
+    "repetition": 2,
+    "reuse_potential": 1.0,
+    "signal_id": "MB-CH046-UNKNOWN",
+    "summary": "The Unknown Mapper and information gain programme require high-value unknowns and reversible experiments to be prioritized.",
+    "uncertainty": 0.7
+  },
+  {
+    "evidence_refs": ["Master Bible CH-002, CH-033, CH-046 and FEVX maturity doctrine"],
+    "impact": 1.0,
+    "implementation_cost": 0.2,
+    "repetition": 6,
+    "reuse_potential": 1.0,
+    "signal_id": "MB-CH004-MATURITY-PROOF",
+    "summary": "Design, storage and staging must not be promoted into runtime or verified maturity without target-specific proof-state transitions.",
+    "uncertainty": 0.2
+  },
+  {
+    "evidence_refs": ["Master Bible CH-013 and CH-046"],
+    "impact": 0.95,
+    "implementation_cost": 0.25,
+    "repetition": 5,
+    "reuse_potential": 1.0,
+    "signal_id": "MB-CH013-EPISTEMIC-DEBT",
+    "summary": "Epistemic debt from weak evidence, untested assumptions, missing baselines, unreplicated findings and causal uncertainty must be visible and prioritised.",
+    "uncertainty": 0.7
+  },
+  {
+    "evidence_refs": ["Master Bible CH-036, CH-039 and CH-054"],
+    "impact": 1.0,
+    "implementation_cost": 0.2,
+    "repetition": 8,
+    "reuse_potential": 1.0,
+    "signal_id": "MB-CH036-OWNER-BURDEN",
+    "summary": "Owner-burden elimination and route economics require choosing authorised routes that minimise avoidable manual handoff and owner intervention.",
+    "uncertainty": 0.3
+  },
+  {
+    "evidence_refs": ["Master Bible CH-010, CH-011 and CH-046"],
+    "impact": 0.85,
+    "implementation_cost": 0.35,
+    "repetition": 3,
+    "reuse_potential": 1.0,
+    "signal_id": "MB-CH010-REPLICATION",
+    "summary": "Replication and independent implementation are required before reusable findings receive stronger cross-domain confidence.",
+    "uncertainty": 0.5
+  }
+]

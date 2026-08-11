@@ -1,0 +1,12 @@
+{
+  "status": "DURABLE_OVERLAY_VERIFIED",
+  "python_files_parsed": 5,
+  "plaintext_run_state_persistence": false,
+  "process_global_credential_mutation": false,
+  "tracing_key_serialization": false,
+  "tracing_config_type": "MAPPING",
+  "explicit_trace_id_readback": true,
+  "async_runstate_restore_contract": true,
+  "approval_decisions_idempotent": true,
+  "repository_secret_literal_scan": true
+}

@@ -1,0 +1,84 @@
+{
+  "authority_ceiling": "A1_REVERSIBLE_INTERNAL",
+  "boundaries": [
+    {
+      "id": "B01",
+      "name": "Local release integrity",
+      "proof": "ZIP SHA 831e... source v1.0.0; rebuilt v1.0.1 manifest and clean acceptance",
+      "state": "RESOLVED_VERIFIED"
+    },
+    {
+      "id": "B02",
+      "name": "GitHub publication",
+      "proof": "PR 107 merged as 7b232c524fcb1eb4fae2b7d2f925dfc6721679cd after 3 successful checks",
+      "state": "RESOLVED_VERIFIED"
+    },
+    {
+      "id": "B03",
+      "name": "Drive canonical state",
+      "proof": "Operating-surface workbook control tabs written and read back",
+      "state": "RESOLVED_VERIFIED"
+    },
+    {
+      "id": "B04",
+      "name": "EvidenceOps P09",
+      "proof": "HB-ECHM-20260804-OMXEOPS-V722-001 and RCP-OMEGAMAX-SOL-EVIDENCEOPS-V722-20260804",
+      "state": "RESOLVED_VERIFIED"
+    },
+    {
+      "id": "B05",
+      "name": "Provider-hosted worker",
+      "proof": "EvidenceOps P12 scheduled GitHub Actions run 30862582227; persistence/crash-resume/policy/rollback",
+      "state": "RESOLVED_SCOPED"
+    },
+    {
+      "id": "B06",
+      "name": "Apps Script / FO-GAS",
+      "proof": "Direct Google and GitHub routes meet current completion; route remains action-specific",
+      "state": "NOT_REQUIRED_CURRENT_MATURITY"
+    },
+    {
+      "id": "B07",
+      "name": "Cloud Run / WIF",
+      "proof": "GitHub Actions selected as canonical hosted worker; route remains action-specific",
+      "state": "NOT_REQUIRED_CURRENT_MATURITY"
+    },
+    {
+      "id": "B08",
+      "name": "Drive duplicate concern",
+      "proof": "Title and modified-time searches found no matching consolidation control document",
+      "state": "RESOLVED_NO_DUPLICATE_FOUND"
+    },
+    {
+      "id": "B09",
+      "name": "Longitudinal owner value",
+      "proof": "30-day measurement contract and scheduled worker; cannot be honestly compressed into one session",
+      "state": "MEASUREMENT_ACTIVE_TIME_BOUND"
+    },
+    {
+      "id": "B10",
+      "name": "Consequential actions",
+      "proof": "Legal, financial, credential, secret and destructive actions require separate action-specific authority",
+      "state": "PERMANENT_GUARDRAIL_ACTIVE_BY_DESIGN"
+    },
+    {
+      "id": "B11",
+      "name": "Stale PR sprawl",
+      "proof": "PRs 8,12,35,37,50,54,64,67 closed with history preserved; active domain drafts remain open intentionally",
+      "state": "RESOLVED_SCOPED"
+    },
+    {
+      "id": "B12",
+      "name": "v1.0.0 archive/manifest mismatch",
+      "proof": "v1.0.1 clean manifest excludes itself and matches every packaged file",
+      "state": "RESOLVED_BY_V1_0_1_REBUILD"
+    }
+  ],
+  "external_effects": 0,
+  "observed_at": "2026-08-03T23:52:33+00:00",
+  "programme_id": "AO-FED-CONSOLIDATE-24H-001",
+  "receipt_id": "RCP-FO-BOUNDARY-RESOLUTION-V101-20260804",
+  "state": "ALL_CURRENT_COMPLETION_BOUNDARIES_RESOLVED_SCOPED",
+  "truth_boundary": "No claim of universal provider authority or sustained longitudinal value. Optional routes remain closed until selected and freshly proven.",
+  "version": "1.0.1"
+}

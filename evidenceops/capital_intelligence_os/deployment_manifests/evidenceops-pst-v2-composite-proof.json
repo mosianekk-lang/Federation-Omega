@@ -1,0 +1,100 @@
+{
+  "schema": "EVIDENCEOPS-PST-V2-COMPOSITE-PROOF-1",
+  "status": "READY_FOR_COMPOSITE_VERIFICATION",
+  "owner": "Kim Kagiso Mosiane",
+  "matter": "Kim v TUT",
+  "source": {
+    "drive_file_id": "1wRZyIhlFy5bECTccmfXHzWH5b4hTN7xN",
+    "size_bytes": 3501253632,
+    "sha256": "14d280e593795253f81c375df671782d62d15349dfc241a791d6f974485b338b"
+  },
+  "searchable_artifact": {
+    "workflow_run_id": 30865146610,
+    "artifact_id": 8876002439,
+    "name": "evidenceops-pst-v2-searchable-30865146610",
+    "archive_size_bytes": 200529213,
+    "archive_sha256": "a6f083c530079326d2c576d7b29d141108e96961c519ef9092cc7dbd1c5d0ada",
+    "source_commit": "1c14393fcd555fddae1aaaa405a7d41010c917c8"
+  },
+  "finalization": {
+    "drive_file_id": "1vWh5h4xMS6lN3__KgOf0ed8WVFQXIkb0",
+    "status": "FINALIZATION_COMPLETE_VERIFIED",
+    "message_occurrences": 2885,
+    "attachment_occurrences": 5203,
+    "required_member_references": 12102,
+    "shard_count": 13,
+    "shard_member_count": 12102,
+    "problems": []
+  },
+  "drive_transport_readback": {
+    "status": "DRIVE_TRANSPORT_PARTS_COMPLETE_VERIFIED",
+    "verification_type": "PRIOR_AUTHENTICATED_PROVIDER_REDOWNLOAD_SHA256",
+    "fanout_workflow_run_id": 30865892461,
+    "part_count": 60,
+    "verified_part_count": 60,
+    "max_part_size_bytes": 94371840,
+    "source_local_bible_event": "EVT-20260804-RETRO-CONSTRAINT-ADAPTIVE-FANOUT-AND-TRANSPORT",
+    "source_event_hash": "371505f6370eaddf0aa267cf149e7783c700053c5c9a8e03629e4dc783ab4ee5",
+    "drive_publication_event": "EVT-20260804-RETRO-DRIVE-PUBLICATION-AND-REMOTE-BOUNDARY",
+    "drive_publication_event_hash": "e78642ff5d4389438e82cd68922b71cbb6619f92273eb871e6e31ccae03f9453",
+    "final_database": {
+      "logical_relpath": "04_INDEX/corpus_search.db",
+      "size_bytes": 137629696,
+      "sha256": "9713e415610a33f3bf8550c62625168aede9418d358e3f1ce6077901a59a927f",
+      "parts": [
+        {"drive_file_id":"1Iyoy6gvIIoM4EmaT7XnPYVBnBjLITnw1","part_number":1,"size_bytes":94371840,"sha256":"0a51ab697503fcde5fc24aa7e360f96e35ae33977e956115bb2fea127a53820d"},
+        {"drive_file_id":"1tnPNyYqOxiXdiNJCoP3RpsMmGrkUygLo","part_number":2,"size_bytes":43257856,"sha256":"f56ed5df0bc5afdfb42d1ba73f45a65dd2abb64a9cfb6995ee9573b8165c94f0"}
+      ]
+    }
+  },
+  "drive_direct_inventory": {
+    "authenticated_at": "2026-08-04T20:18:00+02:00",
+    "corpus_root_id": "1H5ftrZqEGl3aNGR6qDKQqghK4zTD7yYt",
+    "expected_count": 18,
+    "objects": [
+      {"logical_relpath":"00_CONTROL/FINALIZATION_VERIFICATION.json","drive_file_id":"1vWh5h4xMS6lN3__KgOf0ed8WVFQXIkb0","size_bytes":279},
+      {"logical_relpath":"00_CONTROL/GITHUB_PUBLICATION_MANIFEST.json","drive_file_id":"1ZciBKAfSXeR8xL69U-CEQYfL30Uxs78H","size_bytes":5551},
+      {"logical_relpath":"00_CONTROL/LOCAL_VERIFICATION.json","drive_file_id":"1j-cm_fMfATshbpgWD0ZLkH3a6lLYcaFm","size_bytes":392},
+      {"logical_relpath":"00_CONTROL/RUN_STATE.json","drive_file_id":"1vYrdBA2D2jOf8l6k0Sm4XI0ky7aAyC9a","size_bytes":189},
+      {"logical_relpath":"00_CONTROL/SOURCE.json","drive_file_id":"16OTTAg6rFH2xm2H9MUEpx7P-wUs5ukhs","size_bytes":173},
+      {"logical_relpath":"04_INDEX/attachments.csv","drive_file_id":"1KSSHdxvLfCTXgwYlIDbO0OD0m3pP8gHi","size_bytes":1433775},
+      {"logical_relpath":"04_INDEX/attachments.jsonl","drive_file_id":"1Tl6nveW1oOuoeocTE4E1A2pYKRJjpVJS","size_bytes":2417007},
+      {"logical_relpath":"04_INDEX/messages.csv","drive_file_id":"1TVut7heK43pNetYqkxYNQBQjCiZxH61f","size_bytes":2655670},
+      {"logical_relpath":"04_INDEX/messages.jsonl","drive_file_id":"1H9H0osyzT9j-S9jJ1-CryV503_XCrT7f","size_bytes":3728325},
+      {"logical_relpath":"04_INDEX/retrieval_map.csv","drive_file_id":"1Gwg6vmWHxKcEKh-yHO1cT-O5kEeD7AXT","size_bytes":1273270},
+      {"logical_relpath":"04_INDEX/retrieval_map.jsonl","drive_file_id":"1omOkBvf3RgT23JWbRW84K6_ZtrtltiQm","size_bytes":2459193},
+      {"logical_relpath":"04_INDEX/search_packs.json","drive_file_id":"1SwVVYNuKNjI6P80jn3J4Jx4yiuwe3JiD","size_bytes":543},
+      {"logical_relpath":"04_INDEX/shards.json","drive_file_id":"1MKqxOwQNolrTCNAUKlDszyESP9z-V0L7","size_bytes":2995},
+      {"logical_relpath":"05_SEARCH_PACKS/Search_Pack_0001.txt","drive_file_id":"1R0-E5NC0ZGOR0TKb-KnlJyuwPllKphwb","size_bytes":25830146},
+      {"logical_relpath":"05_SEARCH_PACKS/Search_Pack_0002.txt","drive_file_id":"1yLFHvyx857JpQY9zWm-ziAcKHpWEeodh","size_bytes":26046043},
+      {"logical_relpath":"05_SEARCH_PACKS/Search_Pack_0003.txt","drive_file_id":"1kFsBp14HNaT8dpOaqk0qGx4rdK7R51l-","size_bytes":5478918},
+      {"logical_relpath":"07_LOGS/parser.stderr.log","drive_file_id":"1RExK5mQPsZWtgkqB-tcH-3-k41NY4SCY","size_bytes":0},
+      {"logical_relpath":"07_LOGS/parser.stdout.log","drive_file_id":"1b84Yp8oAQc7rYiucs-i1g2p-oJhpQJUz","size_bytes":3706}
+    ]
+  },
+  "final_shard_artifacts": [
+    {"number":1,"artifact_id":8876143398,"archive_sha256":"0470c013e5904c7ad2f009864026377e298c11294ffcf55aea5a4a2c036ba605","logical_size_bytes":348398462,"logical_sha256":"1a1262b50f1f639f52cdb52754414811eb53b2ee8ff8ad274b9db65f2b5f9a37"},
+    {"number":2,"artifact_id":8876144896,"archive_sha256":"f8b74df9613effb5842d938ca9ee9a23fbb222326e43565dd3b51470a4d41469","logical_size_bytes":344503705,"logical_sha256":"b01bbe7577fac3b9d31607ff4f3b0d131b51b93b5c2aba86d024b2b60e70d770"},
+    {"number":3,"artifact_id":8876146552,"archive_sha256":"2fd02cba85b4d06d70db166badb27c58a9430f65465a856a29f830ed27354bc2","logical_size_bytes":357110124,"logical_sha256":"491bcf0491ae9860bb7b1837d1844b2d28ff7f6dad430bf2f61a374646beb5ab"},
+    {"number":4,"artifact_id":8876148038,"archive_sha256":"b16ddfbaf35b2490037f4a6bf7484fcf93d961a281f76920babcd3427fffc2ee","logical_size_bytes":351209721,"logical_sha256":"cb595f323ba55b0f5fb5c6f3905e6777ec070312e33855bcaeab17003d24e372"},
+    {"number":5,"artifact_id":8876149555,"archive_sha256":"a63d14adf903187cfc7dbc11e1668c1a76bce0d8ef61d59b6f8429d1bf5c732d","logical_size_bytes":346739510,"logical_sha256":"33ec6ebf48b0f2af24dd8d156a4bbeabb288742133dea52f5288f4d404bd734c"},
+    {"number":6,"artifact_id":8876151141,"archive_sha256":"b6f14326b49f4887d5ded4e62121aea2b3e52f7c3b76d48f541025fe457ea11b","logical_size_bytes":350961217,"logical_sha256":"f524affc241b700a5284b88bb0ae60ab38ecf11194342e946f5d58ca4377a2e3"},
+    {"number":7,"artifact_id":8876152566,"archive_sha256":"f76717214b060ede58019fca6ccafcd5394a201a8c8d58c6165556202e5f521a","logical_size_bytes":349000177,"logical_sha256":"7c57e6bdeed93406822133d7ed7aa54527aa205779b219de432df2ba1def76bd"},
+    {"number":8,"artifact_id":8876154208,"archive_sha256":"f0c40de1374f60df6f8c33dbdb8a8bef4e1d26ebc15314a079eb3e62386774ea","logical_size_bytes":423727183,"logical_sha256":"af98718158886930e5ce144f86491304f8bf17b5dc2b9703b316e2de65189134"},
+    {"number":9,"artifact_id":8876155964,"archive_sha256":"64b4d45410ddda68affbb92835d04341e1dc99ddfc95e615e542fdfba1693808","logical_size_bytes":463255138,"logical_sha256":"0f8cbf1a5b78eb2a39f87aba570aac12ca0a4c7b32070c8450ae2872ba3ea61e"},
+    {"number":10,"artifact_id":8876157778,"archive_sha256":"dc9f265dcd0b02754f358912761d9a7cf88f1a4948e354b3608ab09b62070177","logical_size_bytes":470982032,"logical_sha256":"19a775866df5b9a131369edae08cb60a00e2c0d8bb9d281771e1d8b26cc949d7"},
+    {"number":11,"artifact_id":8876159515,"archive_sha256":"9123e355cb84314b659f51ee46beb60b809134cf07bd569dbda6a069f45b131e","logical_size_bytes":458153554,"logical_sha256":"bb6931ff9a9b1f4f9c242ec98056f91f3777e3e9bf6754203fe599c0569fb1b5"},
+    {"number":12,"artifact_id":8876161169,"archive_sha256":"41c2039842ac02386bf5e8dd5c6262722949f77db4d128e643cd7162afb594b0","logical_size_bytes":473789220,"logical_sha256":"bf7aac69260a475a5e05ddd6d2285398d0e41a5dcdfde343c8fd20a09e97e302"},
+    {"number":13,"artifact_id":8876162397,"archive_sha256":"aca9d5af95e6bb27f90638968cc4aaa4467504fce893ccb2a03168e0aeffdc69","logical_size_bytes":329460591,"logical_sha256":"7876cc24cc6ccfdfe144655295778c1d65afb8f30f617e85247038f35a42224f"}
+  ],
+  "required_counts": {
+    "messages_meta": 2885,
+    "attachments_meta": 5203,
+    "message_retrieval": 2885,
+    "attachment_retrieval": 5203,
+    "occurrence_retrieval": 12102,
+    "search_packs": 3,
+    "shards": 13
+  },
+  "communication_state": "NO_SEND"
+}

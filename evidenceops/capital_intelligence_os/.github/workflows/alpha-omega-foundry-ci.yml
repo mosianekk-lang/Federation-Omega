@@ -1,0 +1,54 @@
+name: Alpha Omega Foundry CI
+
+on:
+  workflow_dispatch:
+  push:
+    paths:
+      - 'alpha_omega_v2/**'
+      - '.github/workflows/alpha-omega-foundry-ci.yml'
+  pull_request:
+    paths:
+      - 'alpha_omega_v2/**'
+      - '.github/workflows/alpha-omega-foundry-ci.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  test-and-provider-artifact:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: alpha_omega_v2
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+      - run: python -m pip install -e . pytest
+      - run: pytest -q
+      - run: ao-foundry examples/concept.json --workspace ./ci_workspace > local-operational-output.json
+      - run: test -f ./ci_workspace/operational/*/operational_receipt.json
+      - run: ao-foundry examples/concept.json --workspace ./ci_workspace --github-artifact > github-artifact-output.json
+      - run: test -f ./ci_workspace/provider_receipts/github_release_artifact_receipt.json
+      - name: Verify staged provider receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('ci_workspace/provider_receipts/github_release_artifact_receipt.json').read_text())
+          assert receipt['state'] == 'PROVIDER_STAGED_VERIFIED', receipt
+          assert all(receipt['gates'].values()), receipt['gates']
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: alpha-omega-v2-provider-release
+          path: |
+            alpha_omega_v2/ci_workspace/github_release/*.zip
+            alpha_omega_v2/ci_workspace/github_release/*.manifest.json
+            alpha_omega_v2/ci_workspace/provider_receipts/github_release_artifact_receipt.json
+            alpha_omega_v2/ci_workspace/operational/*/operational_receipt.json
+            alpha_omega_v2/ci_workspace/operations/maintenance_report.json
+            alpha_omega_v2/ci_workspace/operations/heartbeat.jsonl
+            alpha_omega_v2/ci_workspace/operations/learning_ledger.jsonl
+          if-no-files-found: error

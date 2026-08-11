@@ -1,0 +1,19 @@
+{
+  "verification_id": "FEDOMEGA-CI-INDEPENDENT-20260728-001",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "tested_commit": "49a14641b675482fb92fd10e8bad98eae003f026",
+  "runtime_blob_sha": "60a4bfe5bbe0994c4bb2c1e478d9b72443a30b28",
+  "test_blob_sha": "1af450b87dbcc4d460f88d4d3c8573f22d78e344",
+  "tests_run": 3,
+  "failures": 0,
+  "errors": 0,
+  "result": "PASS",
+  "verified_behaviours": [
+    "mission creation",
+    "hash-chained event integrity",
+    "completion rejection when source readback is absent",
+    "completion acceptance only when every predicate is true"
+  ],
+  "hosted_actions_status": "NO_STATUS_CHECK_OBSERVED",
+  "claim_limit": "Repository source passes independent execution. GitHub Actions hosted execution is not yet evidenced."
+}

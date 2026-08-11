@@ -1,0 +1,115 @@
+name: SOL 6.1 Runtime Proof
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "sol_61_runtime/**"
+      - ".github/workflows/sol-61-runtime-proof.yml"
+  pull_request:
+    paths:
+      - "sol_61_runtime/**"
+      - ".github/workflows/sol-61-runtime-proof.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: Compile
+        run: python -m compileall -q sol_61_runtime
+      - name: Unit tests
+        working-directory: sol_61_runtime
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py test_mission_autonomy.py test_provider_bridge.py test_provider_authority.py test_operator_activation.py test_live_authority.py
+      - name: Execute provider-neutral runtime proof
+        run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
+      - name: Execute durable worker proof
+        run: python sol_61_runtime/prove_worker.py --output sol_61_runtime/artifacts/worker-proof
+      - name: Execute distributed coordination proof
+        run: python sol_61_runtime/prove_coordinator.py --output sol_61_runtime/artifacts/coordination-proof
+      - name: Execute adaptive execution proof
+        run: python sol_61_runtime/prove_adaptive.py --output sol_61_runtime/artifacts/adaptive-proof
+      - name: Execute semantic memory proof
+        run: python sol_61_runtime/prove_semantic_memory.py --output sol_61_runtime/artifacts/semantic-proof
+      - name: Execute causal intelligence proof
+        run: python sol_61_runtime/prove_causal.py --output sol_61_runtime/artifacts/causal-proof
+      - name: Execute formal policy kernel proof
+        run: python sol_61_runtime/prove_policy_kernel.py --output sol_61_runtime/artifacts/policy-proof
+      - name: Execute observability and self-diagnosis proof
+        run: python sol_61_runtime/prove_observability.py --output sol_61_runtime/artifacts/observability-proof
+      - name: Execute autonomous repair and recovery proof
+        run: python sol_61_runtime/prove_repair.py --output sol_61_runtime/artifacts/repair-proof
+      - name: Execute end-to-end mission autonomy proof
+        run: python sol_61_runtime/prove_mission_autonomy.py --output sol_61_runtime/artifacts/mission-autonomy-proof
+      - name: Execute provider execution bridge proof
+        run: python sol_61_runtime/prove_provider_bridge.py --output sol_61_runtime/artifacts/provider-bridge-proof
+      - name: Execute Cloud Run and Apps Script authority proof
+        run: python sol_61_runtime/prove_provider_authority.py --output sol_61_runtime/artifacts/provider-authority-proof
+      - name: Execute operator activation packaging proof
+        run: python sol_61_runtime/prove_operator_activation.py --output sol_61_runtime/artifacts/operator-activation-proof
+      - name: Execute canonical live authority manifest proof
+        run: python sol_61_runtime/prove_live_authority.py --output sol_61_runtime/artifacts/live-authority-proof
+      - name: Validate proof gates and boundaries
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          pairs = {
+            'runtime': ('proof', 'sol-61-runtime-receipt.json', 'REFERENCE_RUNTIME_VERIFIED'),
+            'worker': ('worker-proof', 'sol-61-worker-receipt.json', 'DURABLE_WORKER_REFERENCE_VERIFIED'),
+            'coordination': ('coordination-proof', 'sol-61-coordination-receipt.json', 'DISTRIBUTED_COORDINATION_VERIFIED'),
+            'adaptive': ('adaptive-proof', 'sol-61-adaptive-receipt.json', 'ADAPTIVE_EXECUTION_VERIFIED'),
+            'semantic': ('semantic-proof', 'sol-61-semantic-memory-receipt.json', 'SEMANTIC_MEMORY_VERIFIED'),
+            'causal': ('causal-proof', 'sol-61-causal-receipt.json', 'CAUSAL_DECISION_INTELLIGENCE_VERIFIED'),
+            'policy': ('policy-proof', 'sol-61-policy-kernel-receipt.json', 'FORMAL_POLICY_SAFETY_KERNEL_VERIFIED'),
+            'observability': ('observability-proof', 'sol-61-observability-receipt.json', 'OBSERVABILITY_SELF_DIAGNOSIS_VERIFIED'),
+            'repair': ('repair-proof', 'sol-61-repair-receipt.json', 'AUTONOMOUS_REPAIR_RECOVERY_VERIFIED'),
+            'mission': ('mission-autonomy-proof', 'sol-61-mission-autonomy-receipt.json', 'END_TO_END_MISSION_AUTONOMY_VERIFIED'),
+            'bridge': ('provider-bridge-proof', 'sol-61-provider-bridge-receipt.json', 'PROVIDER_EXECUTION_BRIDGE_VERIFIED'),
+            'authority': ('provider-authority-proof', 'sol-61-provider-authority-receipt.json', 'CLOUDRUN_APPS_SCRIPT_AUTHORITY_GATE_VERIFIED'),
+            'activation': ('operator-activation-proof', 'sol-61-operator-activation-receipt.json', 'OPERATOR_ACTIVATION_PACKAGE_VERIFIED'),
+            'live_authority': ('live-authority-proof', 'canonical-live-authority-receipt.json', 'CANONICAL_LIVE_AUTHORITY_MANIFEST_VERIFIED'),
+          }
+          receipts = {}
+          for key, (folder, filename, status) in pairs.items():
+            receipt = json.loads((Path('sol_61_runtime/artifacts') / folder / filename).read_text())
+            assert receipt['status'] == status and all(receipt['gates'].values())
+            receipts[key] = receipt
+          live = receipts['live_authority']
+          assert live['truth_boundary']['github_actions_execution']
+          assert live['truth_boundary']['manifest_consolidated']
+          assert not live['truth_boundary']['cloud_run_live_invocation_certified']
+          assert not live['truth_boundary']['apps_script_live_source_authority_certified']
+          assert not live['truth_boundary']['owner_reserved_actions_bypassed']
+          root = Path('sol_61_runtime/artifacts/live-authority-proof')
+          assert (root / 'canonical-live-authority-manifest.json').is_file()
+          PY
+      - name: Upload proof package
+        uses: actions/upload-artifact@v4
+        with:
+          name: sol-61-runtime-proof
+          path: |
+            sol_61_runtime/artifacts/proof
+            sol_61_runtime/artifacts/worker-proof
+            sol_61_runtime/artifacts/coordination-proof
+            sol_61_runtime/artifacts/adaptive-proof
+            sol_61_runtime/artifacts/semantic-proof
+            sol_61_runtime/artifacts/causal-proof
+            sol_61_runtime/artifacts/policy-proof
+            sol_61_runtime/artifacts/observability-proof
+            sol_61_runtime/artifacts/repair-proof
+            sol_61_runtime/artifacts/mission-autonomy-proof
+            sol_61_runtime/artifacts/provider-bridge-proof
+            sol_61_runtime/artifacts/provider-authority-proof
+            sol_61_runtime/artifacts/operator-activation-proof
+            sol_61_runtime/artifacts/live-authority-proof
+          retention-days: 90
+          if-no-files-found: error

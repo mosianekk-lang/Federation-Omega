@@ -1,0 +1,4 @@
+Alpha Omega Foundry v2.1 CI canary
+Timestamp: 2026-08-03T10:45:00+02:00
+Purpose: trigger operational-test workflow and release-artifact proof.
+No runtime or provider claim is valid until the workflow run completes and artifacts are read back.

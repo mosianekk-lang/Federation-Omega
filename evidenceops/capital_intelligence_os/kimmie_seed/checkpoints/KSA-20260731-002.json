@@ -1,0 +1,92 @@
+{
+  "seed_id": "KIMMIE-IPEP-001",
+  "assessment_id": "KSA-20260731-002",
+  "assessed_at": "2026-07-31T21:18:30+00:00",
+  "root_seed": {
+    "previous_verified_stage": "ROOTED",
+    "verified_stage": "ROOTED",
+    "promotion": "NO_PROMOTION",
+    "reason": "First useful child capability is proven, but successful external maturity-workflow execution and persistent readback remain unverified.",
+    "identity_drift": "NONE_DETECTED",
+    "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
+    "owner_decision_required": false
+  },
+  "child_seed_changes": [
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "previous_verified_stage": "SEED",
+      "verified_stage": "SPROUT",
+      "promotion_path": [
+        "SEED",
+        "GERMINATED",
+        "ROOTED",
+        "SPROUT"
+      ],
+      "authorised_environment": {
+        "google_drive": "VERIFIED_READBACK",
+        "github_registry": "VERIFIED"
+      },
+      "required_nutrients": {
+        "source_manifest": "VERIFIED",
+        "sha256_hashes": "VERIFIED",
+        "merkle_construction": "INDEPENDENTLY_RECALCULATED",
+        "durable_private_storage": "VERIFIED",
+        "proof_receipt": "VERIFIED_PRESENT",
+        "maintenance_owner": "mosianekk-lang"
+      },
+      "dependencies": {
+        "manifest_drive_file_id": "1UIl64TqEU3Tv3fAz17BuXatOzMoDGB-c",
+        "passport_drive_file_id": "11c0QaaV6NEDVBVdDfsm2G3yFkZd6-tBW"
+      },
+      "proof_gates": {
+        "passport_id": "EPP-BUILDING43-AUDIO-20260731-001",
+        "leaf_count": 5,
+        "merkle_root": "17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa",
+        "merkle_root_independent_recalculation": "PASSED",
+        "drive_readback": "PASSED",
+        "passport_receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4"
+      },
+      "tests": [
+        "Five-leaf Merkle root independently recalculated from passport source hashes",
+        "Passport file fetched from authorised Drive surface",
+        "Passport identity, root and proof-verification state read back"
+      ],
+      "deployment_surfaces": [
+        "Private Google Drive EvidenceOps provenance-passport file",
+        "EvidenceOps Innovation Engine live lane registry",
+        "IPEP Innovation Bible"
+      ],
+      "monitoring": {
+        "current": "Registry and Bible checkpoint",
+        "gap": "No reusable passport health monitor or repeated-corpus execution history yet"
+      },
+      "next_gate": "SAPLING requires reusable validator/verification CLI, successful repeated execution on multiple corpora, persistent monitoring and maintenance evidence.",
+      "limitations": [
+        "This run did not independently re-download and hash original source audio bytes",
+        "Current proof verifies consistency of supplied source hashes and Merkle inclusion"
+      ]
+    }
+  ],
+  "unchanged_child_seeds": [
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "verified_stage": "SEED",
+      "blocker": "External acquisition runtime and corpus-ingestion proof remain unverified"
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "verified_stage": "SEED",
+      "blocker": "Reference connector implementation, conformance tests and ECTS report remain unverified"
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "blocker": "Authorised provider credential, Google Speech binding and private worker health readback remain unverified",
+      "owner_decision_required": false
+    }
+  ],
+  "lesson": "A generated artifact becomes a maturity signal only after authorised-surface readback and independent integrity verification; design or file presence alone is insufficient.",
+  "notification_reason": "CHILD_SEED_NEW_VERIFIED_STAGE",
+  "assessment_sha256": "c6f2dedeaefb111928226054c60b907c8dbc177d3885197418d3bee28c7357d3"
+}

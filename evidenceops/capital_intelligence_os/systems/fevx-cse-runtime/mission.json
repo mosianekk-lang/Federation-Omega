@@ -1,0 +1,282 @@
+{
+  "adversary_hypotheses": [
+    {
+      "benign": true,
+      "disconfirmation_test": "Check whether comparable requests face similar delay.",
+      "evidence": [
+        {
+          "evidence_id": "EV-1",
+          "likelihood_ratio": 1.15
+        }
+      ],
+      "hypothesis_id": "HYP-BENIGN-PROCESS",
+      "prior": 0.55,
+      "title": "Ordinary process delay"
+    },
+    {
+      "benign": false,
+      "disconfirmation_test": "Test whether delay persists after the stated dependency is removed.",
+      "evidence": [
+        {
+          "evidence_id": "EV-2",
+          "likelihood_ratio": 1.4
+        }
+      ],
+      "hypothesis_id": "HYP-STRATEGIC-DELAY",
+      "prior": 0.25,
+      "title": "Strategic delay"
+    },
+    {
+      "benign": true,
+      "disconfirmation_test": "Check workload and service-level evidence.",
+      "evidence": [
+        {
+          "evidence_id": "EV-3",
+          "likelihood_ratio": 0.9
+        }
+      ],
+      "hypothesis_id": "HYP-RESOURCE-CONSTRAINT",
+      "prior": 0.2,
+      "title": "Resource constraint"
+    }
+  ],
+  "alignment_tags": [
+    "evidence",
+    "user_control",
+    "reversibility",
+    "realised_outcome",
+    "low_owner_burden"
+  ],
+  "analogy_proposals": [
+    {
+      "breakpoints": [
+        "Institutions have strategic actors; biological control loops do not"
+      ],
+      "mechanism_id": "MECH-HOMEOSTASIS",
+      "minimum_prototype": "Three-cycle synthetic feedback loop",
+      "structural_mapping": {
+        "feedback": "bounded corrective packets",
+        "sensor": "record and deadline checks",
+        "target state": "verified service decision"
+      },
+      "testable_prediction": "A bounded feedback cadence will reduce unresolved dependency age without increasing duplicate actions."
+    }
+  ],
+  "anti_goal_tags": [],
+  "authority_ceiling": "A1",
+  "communications": [
+    {
+      "audiences": [
+        "NEUTRAL_READER",
+        "HOSTILE_READER",
+        "DECISION_MAKER"
+      ],
+      "communication_id": "COMM-DRAFT-001",
+      "evidence_ids": [
+        "SYNTHETIC-EVIDENCE-001"
+      ],
+      "text": "Please confirm whether the identified record exists and whether it affects the documented decision path.",
+      "title": "Neutral evidence request"
+    }
+  ],
+  "constraints": [
+    "No external send",
+    "No legal filing",
+    "Use synthetic data"
+  ],
+  "data_classification": "INTERNAL",
+  "declared_violations": [],
+  "directive_text": "Design the safest high-value route to resolve a delayed internal service decision.",
+  "domain": "institutional_strategy",
+  "experiment_candidates": [
+    {
+      "cost": 0.08,
+      "decision_sensitivity": 0.92,
+      "expected_information_gain": 0.86,
+      "expected_observation": "Whether the missing record exists and changes the next action.",
+      "experiment_id": "EXP-READBACK-001",
+      "external_effect": false,
+      "owner_attention": 0.04,
+      "resolution_probability": 0.88,
+      "reversibility": 1.0,
+      "risk": 0.05,
+      "time": 0.1,
+      "title": "Run one controlled record readback"
+    },
+    {
+      "approval_present": false,
+      "cost": 0.25,
+      "decision_sensitivity": 0.8,
+      "expected_information_gain": 0.92,
+      "experiment_id": "EXP-BROAD-ESCALATION-001",
+      "external_effect": true,
+      "owner_attention": 0.5,
+      "resolution_probability": 0.65,
+      "reversibility": 0.2,
+      "risk": 0.78,
+      "time": 0.2,
+      "title": "Escalate broadly to observe reactions"
+    }
+  ],
+  "forecasts": [
+    {
+      "assumptions": [
+        "The missing record is not fatal"
+      ],
+      "forecast_id": "FC-BASE-001",
+      "forecaster_id": "FORECASTER-BASE-RATE",
+      "model_family": "base_rate",
+      "probability": 0.62,
+      "resolution_condition": "A documented decision is issued.",
+      "time_horizon": "14 days"
+    },
+    {
+      "assumptions": [
+        "The evidence check removes the main blocker"
+      ],
+      "forecast_id": "FC-CAUSAL-001",
+      "forecaster_id": "FORECASTER-CAUSAL",
+      "model_family": "causal",
+      "probability": 0.72,
+      "resolution_condition": "A documented decision is issued.",
+      "time_horizon": "14 days"
+    },
+    {
+      "assumptions": [
+        "Delay may be strategically useful to another actor"
+      ],
+      "forecast_id": "FC-ADVERSARIAL-001",
+      "forecaster_id": "FORECASTER-ADVERSARIAL",
+      "model_family": "adversarial",
+      "probability": 0.48,
+      "resolution_condition": "A documented decision is issued.",
+      "time_horizon": "14 days"
+    }
+  ],
+  "mission_id": "MISSION-CSE-DIGITAL-TWIN-001",
+  "negotiation_issues": [
+    {
+      "cost_to_them": 0.25,
+      "cost_to_us": 0.1,
+      "implementation_mechanism": "Written milestones and status readback",
+      "issue_id": "ISSUE-TIMING",
+      "title": "Decision timetable",
+      "value_to_them": 0.45,
+      "value_to_us": 0.85
+    },
+    {
+      "cost_to_them": 0.05,
+      "cost_to_us": 0.2,
+      "implementation_mechanism": "Agreed index and response template",
+      "issue_id": "ISSUE-FORMAT",
+      "title": "Evidence submission format",
+      "value_to_them": 0.8,
+      "value_to_us": 0.4
+    }
+  ],
+  "objective": "Resolve a delayed internal service decision with evidence, user control, reversibility, and a measurable realised outcome.",
+  "outcome_chain": {
+    "chain_id": "OUTCOME-CSE-001",
+    "intended_outcome": "A documented, implemented, and verified service decision.",
+    "steps": [
+      {
+        "evidence": [
+          "SYNTHETIC-DECISION"
+        ],
+        "required": true,
+        "state": "VERIFIED",
+        "step_id": "OUT-1",
+        "title": "Decision artifact exists",
+        "verification": {
+          "readback": "MATCH"
+        }
+      },
+      {
+        "evidence": [],
+        "required": true,
+        "state": "EVIDENCE_PENDING",
+        "step_id": "OUT-2",
+        "title": "Correct recipient receives it",
+        "verification": {}
+      },
+      {
+        "evidence": [],
+        "required": true,
+        "state": "NOT_STARTED",
+        "step_id": "OUT-3",
+        "title": "Required process is implemented",
+        "verification": {}
+      },
+      {
+        "evidence": [],
+        "required": true,
+        "state": "NOT_STARTED",
+        "step_id": "OUT-4",
+        "title": "Benefit persists through observation window",
+        "verification": {}
+      }
+    ],
+    "sustainment_required": true
+  },
+  "owner": "Kagiso Kim Mosiane",
+  "risk_class": "MEDIUM",
+  "stakeholders": [
+    {
+      "constraints": [
+        "Requires documented basis"
+      ],
+      "evidence_updates": [
+        {
+          "direction": 0.2,
+          "source": "Observed willingness to receive evidence",
+          "weight": 0.4
+        }
+      ],
+      "formal_authority": 0.95,
+      "informal_influence": 0.7,
+      "role": "Formal decision maker",
+      "stakeholder_id": "STK-DECISION-MAKER",
+      "stance_prior": 0.05
+    },
+    {
+      "constraints": [
+        "Reputation and workload"
+      ],
+      "evidence_updates": [
+        {
+          "direction": -0.35,
+          "source": "Repeated procedural delay",
+          "weight": 0.45
+        }
+      ],
+      "formal_authority": 0.55,
+      "informal_influence": 0.75,
+      "role": "Process gatekeeper",
+      "stakeholder_id": "STK-PROCESS-GATE",
+      "stance_prior": -0.5
+    }
+  ],
+  "target_features": [
+    "target state",
+    "continuous sensing",
+    "feedback correction",
+    "bounded deviation",
+    "stability"
+  ],
+  "timing_options": [
+    {
+      "delay_loss": 0.35,
+      "information_value": 0.12,
+      "option_id": "TIME-PREPARE",
+      "option_value": 0.08,
+      "preparation_value": 0.3,
+      "reversibility_benefit": 0.04,
+      "title": "Prepare now and act after one evidence check"
+    }
+  ],
+  "ultimate_outcome": "A documented, implemented, and verified service decision with low owner burden.",
+  "uncertainties": [
+    "Decision maker's current position",
+    "Whether a missing record changes the route"
+  ]
+}

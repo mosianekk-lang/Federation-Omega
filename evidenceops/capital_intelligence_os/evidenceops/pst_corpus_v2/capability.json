@@ -1,0 +1,44 @@
+{
+  "schema": "EVIDENCEOPS-PERMANENT-CAPABILITY-1",
+  "capability_id": "evidenceops-pst-corpus-v2",
+  "name": "Large PST extraction, preservation and searchable-corpus publication",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "EXECUTING_FIRST_PRODUCTION_MISSION",
+  "authority_class": "A1",
+  "external_effect": true,
+  "source_types": ["pst", "mbox", "zip"],
+  "routes": {
+    "primary": ".github/workflows/evidenceops-pst-corpus-v2-extract.yml",
+    "canary": ".github/workflows/evidenceops-pst-corpus-v2-canary.yml",
+    "observer": ".github/workflows/evidenceops-pst-corpus-v2-observer.yml",
+    "google_cloud_compatibility": "EvidenceOps_PST_Cloud_Deployer_v2_compat_v1.gs"
+  },
+  "evidence_paths": [
+    "evidenceops/pst_corpus_v2/README.md",
+    "evidenceops/pst_corpus_v2/extractor.py.gz.b64",
+    "evidenceops/pst_corpus_v2/test_controls.py.gz.b64",
+    "deployment_receipts/evidenceops-pst-corpus-v2-canary.json",
+    "deployment_receipts/evidenceops-pst-corpus-v2-observer.json",
+    "deployment_receipts/evidenceops-pst-corpus-v2-latest.json"
+  ],
+  "outputs": [
+    "occurrence-preserving EML and attachment shards",
+    "CSV and JSONL indexes",
+    "SQLite FTS5 search database",
+    "Drive-indexable text packs",
+    "parser and integrity logs",
+    "independent completion receipt"
+  ],
+  "completion_gate": {
+    "path": "00_CONTROL/COMPLETION.json",
+    "required_status": "COMPLETE_VERIFIED",
+    "rule": "No completion claim until every Drive-published object is independently reconciled."
+  },
+  "quality": 0.96,
+  "safety": 0.98,
+  "reuse": 1.0,
+  "tags": [
+    "email", "evidence", "pst", "preservation", "provenance",
+    "search", "sqlite", "sharding", "verification", "drive"
+  ]
+}

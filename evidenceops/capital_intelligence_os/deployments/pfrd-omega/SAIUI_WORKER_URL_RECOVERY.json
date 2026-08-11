@@ -1,0 +1,58 @@
+{
+  "mutation_attempted": false,
+  "receipt": "PFRD-SAIUI-WORKER-URL-RECOVERY",
+  "recorded_at": "2026-07-29T13:11:42.624719+00:00",
+  "results": {
+    "https://super-ai-ui-agent-worker-257649435135.us-central1.run.app": {
+      "/health": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>403 Forbidden</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Forbidden</h1>\n<h2>Your client does not have permission to get URL <code>/health</code> from this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 403
+      },
+      "/run-queue": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>403 Forbidden</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Forbidden</h1>\n<h2>Your client does not have permission to get URL <code>/run-queue</code> from this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 403
+      },
+      "/status": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>403 Forbidden</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Forbidden</h1>\n<h2>Your client does not have permission to get URL <code>/status</code> from this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 403
+      }
+    },
+    "https://super-ai-ui-agent-worker-7ujkyf136q-uc.a.run.app": {
+      "/health": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "/run-queue": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "/status": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "https://super-ai-ui-agent-worker-7ujkyfl36q-uc.a.run.app": {
+      "/health": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>403 Forbidden</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Forbidden</h1>\n<h2>Your client does not have permission to get URL <code>/health</code> from this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 403
+      },
+      "/run-queue": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>403 Forbidden</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Forbidden</h1>\n<h2>Your client does not have permission to get URL <code>/run-queue</code> from this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 403
+      },
+      "/status": {
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>403 Forbidden</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Forbidden</h1>\n<h2>Your client does not have permission to get URL <code>/status</code> from this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 403
+      }
+    }
+  }
+}

@@ -1,0 +1,149 @@
+name: Alpha Omega Commercial Authority Snapshot Proof
+
+on:
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-authority-snapshot.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-authority-snapshot.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-omega-commercial-authority-snapshot-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Compile authority-snapshot package
+        run: python -m compileall -q alpha_omega_commercial
+
+      - name: Run authority-snapshot and governed-authority regression tests
+        run: >-
+          python -m unittest -v
+          alpha_omega_commercial.test_authority_snapshot_control_plane
+          alpha_omega_commercial.test_governed_commercial_assurance
+
+      - name: Run provider-authority freshness regression tests
+        working-directory: alpha_omega_commercial
+        run: python -m unittest -v test_authority_refresh.py
+
+      - name: Execute authority-snapshot proof
+        run: python -m alpha_omega_commercial.prove_authority_snapshot_control
+
+      - name: Validate canonical API, checkpoint and commercial truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('alpha_omega_commercial')
+          api = json.loads((root / 'canonical_commercial_api.json').read_text())
+          checkpoint = json.loads((root / 'authority_snapshot_checkpoint.json').read_text())
+          receipt = json.loads(Path('artifacts/authority-snapshot-receipt.json').read_text())
+
+          assert api['api_id'] == 'AO-COMMERCIAL-CANONICAL-API-V3'
+          assert api['canonical_class'] == 'AuthoritySnapshotCommercialControlPlane'
+          assert api['predecessor_class'] == 'GovernedCommercialAssuranceControlPlane'
+          assert api['predecessor_state'] == 'REFERENCE_AND_MOCK_CONFORMANCE_ONLY'
+          assert api['authority_snapshot']['raw_authority_dictionary_grants_live_authority'] is False
+          assert api['authority_snapshot']['snapshot_hash_required'] is True
+          assert api['authority_snapshot']['source_ledger_integrity_required'] is True
+          assert api['authority_snapshot']['explicit_scope_required'] is True
+          assert api['authority_snapshot']['freshness_and_expiry_required'] is True
+          assert api['service_first_strategy'] == 'SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS'
+          assert api['verified_live_revenue_events'] == 0
+          assert api['full_commercial_maturity'] is False
+
+          assert checkpoint['status'] in {
+              'AUTHORITY_SNAPSHOT_IMPLEMENTATION_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+              'AUTHORITY_SNAPSHOT_RELEASE_RECONCILIATION_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+          }
+          assert checkpoint['dependency_checkpoint']['preceding_pull_request'] == 121
+          assert checkpoint['implementation']['pull_request'] == 122
+          assert checkpoint['implementation']['canonical_class'] == api['canonical_class']
+          assert checkpoint['implementation']['raw_authority_dictionary_grants_live_authority'] is False
+          assert checkpoint['provider_proof']['checks_passed'] == 9
+          assert checkpoint['provider_proof']['checks_failed'] == 0
+          if checkpoint['status'].startswith('AUTHORITY_SNAPSHOT_RELEASE_'):
+              assert checkpoint['provider_proof']['state'] == 'FINAL_HEAD_PROVIDER_NATIVE_CI_VERIFIED'
+              assert checkpoint['provider_proof']['workflow_run'] == 30876921201
+              assert checkpoint['provider_proof']['artifact_id'] == 8879850560
+              assert checkpoint['provider_proof']['artifact_digest'] == 'sha256:493811eeb57d4272b06244bb7c81cb2f91fc412fb8e508440eb0ee8d2e3a8f5c'
+              assert checkpoint['provider_proof']['implementation_proof_artifact_id'] == 8879825940
+              assert checkpoint['provider_proof']['implementation_proof_receipt_sha256'] == '8cebbcf7f815dbade89c7c1c6fe0e604f4d9cb205525a92fdef49ba80f316aba'
+              assert checkpoint['release_receipt']['receipt_sha256'] == '8eb6acd0ce3ed3307a01de470d0d5377fc8a4b2dcc903e834362fdf403c1141c'
+              assert checkpoint['release_receipt']['google_drive_readback_verified'] is True
+              assert checkpoint['release_receipt']['google_drive_shared'] is False
+          else:
+              assert checkpoint['provider_proof']['state'] == 'IMPLEMENTATION_HEAD_PROVIDER_NATIVE_CI_VERIFIED'
+              assert checkpoint['provider_proof']['workflow_run'] == 30876838414
+              assert checkpoint['provider_proof']['artifact_id'] == 8879825940
+              assert checkpoint['provider_proof']['artifact_digest'] == 'sha256:90c183dff2bcf98f2f0ca44ce27990a9f02cc1e77477142859f10efdd6c26b64'
+              assert checkpoint['provider_proof']['receipt_sha256'] == '8cebbcf7f815dbade89c7c1c6fe0e604f4d9cb205525a92fdef49ba80f316aba'
+          assert all(value is False for value in checkpoint['external_gates'].values())
+          assert checkpoint['commercial_truth']['verified_live_revenue_events'] == 0
+          assert checkpoint['commercial_truth']['full_commercial_maturity'] is False
+
+          assert receipt['status'] == 'AUTHORITY_SNAPSHOT_CONTROL_PROVIDER_PROOF_VERIFIED'
+          assert all(receipt['checks'].values())
+          assert receipt['verified_live_revenue_events'] == 0
+          assert receipt['external_gate_effect'] == 'UNCHANGED'
+          assert receipt['cloud_run_operation_proven'] is False
+          assert receipt['payment_provider_operation_proven'] is False
+          assert receipt['full_commercial_maturity'] is False
+          assert receipt['owner_authority']['financial_commitments'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['contracts'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['external_communications'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['consequential_releases'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['revenue_recognition'] == 'OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED'
+          PY
+
+      - name: Verify no secret-shaped values are present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          roots = [
+              Path('alpha_omega_commercial/authority_snapshot.py'),
+              Path('alpha_omega_commercial/authority_snapshot_control_plane.py'),
+              Path('alpha_omega_commercial/prove_authority_snapshot_control.py'),
+              Path('alpha_omega_commercial/test_authority_snapshot_control_plane.py'),
+              Path('alpha_omega_commercial/canonical_commercial_api.json'),
+              Path('alpha_omega_commercial/authority_snapshot_checkpoint.json'),
+              Path('artifacts'),
+          ]
+          forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for root in roots:
+              paths = root.rglob('*') if root.is_dir() else [root]
+              for path in paths:
+                  if path.is_file():
+                      assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
+          PY
+
+      - name: Upload immutable authority-snapshot proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alpha-omega-commercial-authority-snapshot-proof
+          path: artifacts
+          if-no-files-found: error
+          retention-days: 90

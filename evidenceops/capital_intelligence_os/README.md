@@ -1,13 +1,35 @@
-# EvidenceOps Capital Intelligence OS — v1.0.0-rc2 Production Qualification Candidate
+# Federation Omega — Superior Logic Runtime
 
-`rc2` preserves the v1 MVP candidate and adds a machine-enforced provider production gate.
+This repository hosts the Superior Logic v3.2 multi-route runtime, deployment assets, recovery tooling, resolver registry and hosted CI.
 
-The gate requires fresh provider-native proof for identity, enterprise authentication, tenant isolation, encryption/KMS, malware/DLP controls, immutable audit, health, persistence, rollback, backup/restore, observability, vulnerability scanning, abuse controls, incident/DR, market-data entitlement/freshness and private-data residency/retention.
+## ECASP corpus-selection gate
 
-Focused gate harness: **9/9 PASS**.
+`ALG-ECASP-001` prevents inventory, pagination, indexing, metadata, snippets, familiar names or polished artefacts from being reported as exhaustive corpus analysis.
 
-A complete fresh verified evidence register can qualify a provider environment. Missing, failed, unverified or expired controls prevent promotion. Production intent attempting to enable live financial effects or destructive actions is rejected before qualification.
+The runtime exposes `POST /ecasp/evaluate`. It evaluates gates G1–G10 and releases only one honest state:
 
-The authenticated GitHub installation currently exposes only the public `Federation-Omega` repository. No private product execution plane is connected, so current maturity remains `PROVIDER_QUALIFICATION_REQUIRED`.
+- `DISCOVERY_INCOMPLETE`
+- `INVENTORY_COMPLETE_ANALYSIS_INCOMPLETE`
+- `PROVISIONAL_SHORTLIST`
+- `BOUNDED_SELECTION`
+- `EXHAUSTIVE_FINAL`
 
-This is deliberate: a green source/MVP verifier is not a production-runtime receipt.
+Every evaluation is written into the hash-chained Superior Logic event ledger. `EXHAUSTIVE_FINAL` is fail-closed until inventory, bodies, attachments, capability decomposition, version lineage, conflicts, requirement coverage, counterexample search, independent readback and claim-language matching all pass.
+
+## SLRK execution and claim controls
+
+The Superior Logic Runtime Kernel adds typed controls that turn the earlier Governor and engine-lifecycle doctrines into runtime-enforced state:
+
+- `POST /capabilities/register` — register an explicit capability contract.
+- `POST /capabilities/assess` — fail closed when required capabilities are missing, authority-gated, runtime-dependent or design-only.
+- `POST /claims/govern` — prevent words such as `live`, `deployed`, `complete`, `final` and `fully automated` from exceeding their proof and lifecycle gates.
+- `POST /faults` — persist a fault and automatically ban its linked route.
+- `GET /routes/{route_id}` — read the route-memory state.
+- `POST /routes/{route_id}/clear` — clear a banned route only after a material condition change.
+- `POST /engines/evaluate-promotion` — enforce sandbox, staging and production promotion gates.
+
+Capability contracts, assessments, claim decisions, faults, route changes and engine-promotion decisions are written into the hash-chained event ledger. A ledger entry is not treated as execution proof.
+
+CI runs runtime, ECASP and typed FastAPI endpoint tests, including false-completion, authority-gate, route-memory and production-promotion regressions.
+
+CI trigger checkpoint: 2026-07-29T03:10:00+02:00

@@ -1,0 +1,10 @@
+{
+  "contract_id": "CSE-V2-FRONTIER-DEPLOY",
+  "authority": "A1_INTERNAL",
+  "requested_state": "VERIFIED_SOVEREIGN_MISSION_ECOLOGY_SCOPED",
+  "synthetic_and_read_only_real_workflows": true,
+  "external_effect": false,
+  "level_6_grant": false,
+  "recurrence_cycle": 2,
+  "proof_required": ["restore_prior_state", "zero_duplicate_promotions", "rollback", "reapply", "in_sync_drift"]
+}

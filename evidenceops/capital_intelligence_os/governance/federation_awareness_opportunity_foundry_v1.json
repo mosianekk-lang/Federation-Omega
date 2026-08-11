@@ -1,0 +1,98 @@
+{
+  "schema": "FEDOMEGA-AWARENESS-OPPORTUNITY-FOUNDRY-CONTRACT-1",
+  "version": "1.1.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "SOURCE_IMPLEMENTED_PROVIDER_GATED_OUTPUTS_REQUIRE_READBACK_RECONCILIATION",
+  "authority_ceiling": "A1_INTERNAL",
+  "implementation": "federation_consolidation/awareness_opportunity_foundry.py",
+  "private_registry_alias": "FEDERATION_OPPORTUNITY_REGISTRY_PRIVATE_V1",
+  "private_registry_exact_pointer_publicly_stored": false,
+  "readback_reconciler": {
+    "contract": "governance/federation_awareness_readback_reconciler_v1.json",
+    "implementation": "federation_consolidation/awareness_readback_reconciler.py",
+    "required_after_provider_readback": true,
+    "closes_satisfied_read_probe": true,
+    "creates_effectful_successor_without_authority_expansion": true,
+    "private_pointer_drift_detection_required": true
+  },
+  "required_inputs": [
+    "governance/federation_surface_awareness_v1.json",
+    "FEDERATION_AWARENESS_PRIVATE_V1",
+    "CURRENT_GITHUB_MAIN_HEAD",
+    "SURFACE_DIRECTORY",
+    "CREDENTIAL_REFERENCES",
+    "AUTOMATION_DATA",
+    "ACTIVE_MISSION"
+  ],
+  "built_internal_capabilities": [
+    "PUBLIC_PRIVATE_AWARENESS_BINDING_VALIDATOR",
+    "OBSERVED_MAIN_DRIFT_DETECTOR",
+    "MISSION_TO_SURFACE_ROUTER",
+    "NON_SECRET_CREDENTIAL_HANDLE_PREFLIGHT",
+    "GMAIL_CONTINUITY_VS_CI_SIGNAL_FILTER",
+    "FUTURE_NODE_AWARENESS_PACKET_GENERATOR",
+    "AO_CRA_OPPORTUNITY_AND_BUILD_TRIGGER_REGISTRAR"
+  ],
+  "opportunity_classes": [
+    "DRIFT_REPAIR",
+    "INTERNAL_BUILD",
+    "INTERNAL_HARDENING",
+    "CONTINUITY_FILTER",
+    "PROVIDER_PROBE",
+    "PROVIDER_ADAPTER",
+    "PROVIDER_EFFECTFUL_CAPABILITY",
+    "MONITOR"
+  ],
+  "execution_contract": {
+    "discover_all_surface_opportunities": true,
+    "automatically_build_safe_internal_capabilities": true,
+    "automatically_register_provider_gated_builds": true,
+    "reconcile_provider_readbacks_before_next_cycle": true,
+    "provider_mutation_performed": false,
+    "owner_reserved_actions_remain_held": true,
+    "raw_credentials_accepted": false,
+    "runtime_readback_required_for_promotion": true,
+    "stable_build_ids_required": true,
+    "duplicate_builds_deduplicated": true,
+    "negative_results_preserved": true
+  },
+  "ao_cra_binding": {
+    "contract": "governance/ao_cra_federation_inheritance_v1.json",
+    "implementation": "federation_consolidation/ao_cra.py",
+    "every_unverified_surface_creates_or_updates_build_record": true,
+    "workaround_does_not_close_build": true,
+    "verified_requires_implementation_tests_acceptance_and_readback": true,
+    "deployed_requires_runtime_health_persistence_and_rollback": true
+  },
+  "outputs": [
+    "AWARENESS_BINDING_RECEIPT",
+    "DRIFT_REPORT",
+    "MISSION_ROUTE_RANKING",
+    "CREDENTIAL_PREFLIGHT",
+    "GMAIL_SIGNAL_MAP",
+    "OPPORTUNITY_REGISTRY",
+    "AO_CRA_BUILD_QUEUE",
+    "FUTURE_NODE_PACKET",
+    "HASH_BOUND_FOUNDRY_RECEIPT",
+    "HASH_BOUND_READBACK_RECONCILIATION_RECEIPT"
+  ],
+  "truth_boundary": {
+    "stored_surface_reference_proves_current_state": false,
+    "stored_credential_handle_proves_authority": false,
+    "provider_probe_source_proves_provider_execution": false,
+    "provider_read_access_proves_effectful_authority": false,
+    "gmail_message_proves_current_runtime": false,
+    "internal_build_completion_proves_external_provider_readiness": false,
+    "private_exact_pointers_must_remain_out_of_public_source": true,
+    "provider_or_external_effect_requires_fresh_authority_and_native_readback": true
+  },
+  "failure_states": {
+    "public_private_hash_mismatch": "BLOCKED_PRIVATE_BINDING",
+    "raw_secret_detected": "SECURITY_BOUNDARY_VIOLATION",
+    "stale_source_pointer": "DRIFT_REPAIR_BUILD_OPEN",
+    "provider_route_unverified": "PROVIDER_BUILD_OPEN_EXACT_REMEDIATION_REQUIRED",
+    "provider_readback_unreconciled": "READBACK_RECONCILIATION_REQUIRED",
+    "missing_terminal_receipt": "CYCLE_INCOMPLETE_NO_FOUNDRY_RECEIPT",
+    "build_without_ao_cra_identity": "BOUNDARY_WITHOUT_BUILD_TRIGGER"
+  }
+}

@@ -1,0 +1,11 @@
+{
+  "before": {
+    "generation": 0,
+    "runtime": "github-actions",
+    "status": "initial"
+  },
+  "before_hash": "ff98f30268b7a32bc8f09e5ace79725815f87c4aec189ad73f22d9e95f05a802",
+  "contract_id": "CANARY-OMX-GHA-001",
+  "created_at": "2026-08-03T07:21:28.860391+00:00",
+  "target": "runtime/omega-max/state/canary_state.json"
+}

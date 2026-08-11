@@ -1,0 +1,97 @@
+{
+  "receipt": "FEVX-CSE-V1.1-PROVIDER-AUTHORITY-REPAIR-PLAN",
+  "recorded_at": "2026-08-03T15:18:00+02:00",
+  "owner": "Kagiso Kim Mosiane",
+  "candidate_version": "1.1.0",
+  "current_state": "PROVIDER_AUTHORITY_REPAIR_REQUIRED",
+  "provider_mutation_authorised_by_this_record": false,
+  "project": "sov-hybrid-suite",
+  "project_number": "257649435135",
+  "region": "africa-south1",
+  "target_service": "fevx-cse-shadow",
+  "authority_components": {
+    "workload_identity_provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+    "deployer_service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "runtime_service_account": "fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com",
+    "operator_secret": "fo-operator-admin-token",
+    "database_secret": "NEXUS_DATABASE_URL",
+    "artifact_repository": "fo-runtime"
+  },
+  "known_blockers_before_fresh_preflight": [
+    "canonical WIF provider was previously NOT_FOUND or returned invalid_target",
+    "operator admin-token access was not proved",
+    "authenticated Cloud Run baseline readback was not proved",
+    "database secret metadata and enabled version were not freshly read back"
+  ],
+  "repair_sequence": [
+    {
+      "order": 1,
+      "action": "RUN_READ_ONLY_SCHEDULED_PREFLIGHT",
+      "artifact": ".github/workflows/fevx-cse-scheduled-provider-preflight.yml",
+      "proof": "deployments/fevx-cse/SCHEDULED_PROVIDER_PREFLIGHT_RECEIPT.json",
+      "mutation": false
+    },
+    {
+      "order": 2,
+      "action": "VERIFY_EXISTING_WIF_CONTROLS",
+      "command": "bash ops/bootstrap_nexus_operator_wif.sh --verify",
+      "mutation": false
+    },
+    {
+      "order": 3,
+      "action": "APPLY_ONLY_MISSING_WIF_CONTROLS_IF_FRESH_AUTHORITY_EXISTS",
+      "command": "NEXUS_WIF_APPLY_APPROVAL=APPLY_NEXUS_OPERATOR_WIF_LEAST_PRIVILEGE bash ops/bootstrap_nexus_operator_wif.sh --apply",
+      "mutation": true,
+      "approval_and_identity_preconditions": [
+        "fresh active Google Cloud account",
+        "observed project number equals 257649435135",
+        "action-specific apply confirmation variable",
+        "rollback and post-apply verification available"
+      ]
+    },
+    {
+      "order": 4,
+      "action": "RERUN_READ_ONLY_PREFLIGHT",
+      "required_result": "READY_FOR_PRIVATE_ZERO_TRAFFIC_SHADOW",
+      "mutation": false
+    },
+    {
+      "order": 5,
+      "action": "DEPLOY_PRIVATE_ZERO_TRAFFIC_SHADOW",
+      "allowed_only_after": [
+        "archive and wheel digest match",
+        "active WIF provider readback",
+        "deployer and runtime service-account readback",
+        "artifact repository readback",
+        "database secret metadata and enabled version readback",
+        "authenticated operator status",
+        "authenticated Cloud Run baseline",
+        "rollback reference prepared"
+      ],
+      "traffic": 0,
+      "public_access": false,
+      "promotion": false
+    }
+  ],
+  "hard_stops": [
+    "project-number mismatch",
+    "missing active identity",
+    "WIF condition or attribute-mapping mismatch",
+    "operator token unavailable",
+    "database secret unavailable",
+    "artifact digest mismatch",
+    "rollback unavailable",
+    "unexpected cost or data exposure",
+    "any provider mutation without fresh readback"
+  ],
+  "artifact_integrity": {
+    "archive_drive_id": "1UHgEUnH_gsr-tv71QYnG_7EwPvKOuMIk",
+    "archive_sha256": "f4da04ac026628e022814f306acfe9e5303ee89a107359ab50a91fa04442ac50",
+    "wheel_drive_id": "1gObI0122I3oTDtGaP_eximiiCNaUfjgj",
+    "wheel_sha256": "8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022",
+    "service_account_reader_access_read_back": true
+  },
+  "next_state_when_passed": "PRIVATE_ZERO_TRAFFIC_SHADOW_ELIGIBLE",
+  "next_state_when_failed": "BLOCKED_WITH_EXACT_PROVIDER_CONTROLS",
+  "external_effect": false
+}

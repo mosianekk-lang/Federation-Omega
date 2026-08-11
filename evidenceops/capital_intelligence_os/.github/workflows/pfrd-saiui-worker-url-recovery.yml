@@ -1,0 +1,71 @@
+name: PFRD SAIUI Worker URL Recovery
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/pfrd-saiui-worker-url-recovery.yml"
+
+permissions:
+  contents: write
+
+jobs:
+  recover:
+    runs-on: ubuntu-latest
+    timeout-minutes: 8
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+      - name: Probe candidate canonical URLs
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/pfrd-worker-url deployments/pfrd-omega
+          python - <<'PY'
+          import json, urllib.error, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          bases = [
+            'https://super-ai-ui-agent-worker-7ujkyfl36q-uc.a.run.app',
+            'https://super-ai-ui-agent-worker-257649435135.us-central1.run.app',
+            'https://super-ai-ui-agent-worker-7ujkyf136q-uc.a.run.app',
+          ]
+          paths = ['/health','/status','/run-queue']
+          results={}
+          for base in bases:
+            results[base]={}
+            for path in paths:
+              req=urllib.request.Request(base+path,headers={'accept':'application/json'},method='GET')
+              try:
+                with urllib.request.urlopen(req,timeout=20) as r:
+                  raw=r.read().decode('utf-8','replace')
+                  results[base][path]={'http_status':r.status,'content_type':r.headers.get('content-type'),'body':raw[:8000]}
+              except urllib.error.HTTPError as exc:
+                results[base][path]={'http_status':exc.code,'content_type':exc.headers.get('content-type'),'body':exc.read().decode('utf-8','replace')[:4000]}
+              except Exception as exc:
+                results[base][path]={'transport_error':type(exc).__name__,'message':str(exc)[:500]}
+          receipt={'receipt':'PFRD-SAIUI-WORKER-URL-RECOVERY','recorded_at':datetime.now(timezone.utc).isoformat(),'mutation_attempted':False,'results':results}
+          out=Path('deployments/pfrd-omega/SAIUI_WORKER_URL_RECOVERY.json')
+          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          Path('/tmp/pfrd-worker-url/SAIUI_WORKER_URL_RECOVERY.json').write_text(out.read_text(),encoding='utf-8')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+      - name: Persist URL recovery receipt
+        run: |
+          set -euo pipefail
+          git config user.name "pfrd-worker-url[bot]"
+          git config user.email "pfrd-worker-url[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add deployments/pfrd-omega/SAIUI_WORKER_URL_RECOVERY.json
+          if git diff --cached --quiet; then echo unchanged; else
+            git commit -m "Record PFRD SAIUI worker URL recovery"
+            git push origin HEAD:main
+          fi
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pfrd-saiui-worker-url-recovery
+          if-no-files-found: error
+          retention-days: 30
+          path: /tmp/pfrd-worker-url/SAIUI_WORKER_URL_RECOVERY.json

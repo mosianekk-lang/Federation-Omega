@@ -1,0 +1,91 @@
+{
+  "schema": "AO-COMMERCIAL-PHOENIX-AUTHORIZATION-CONSUMPTION-CHECKPOINT-21",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "capability_revision": "AO-COMMERCIAL-PHOENIX-AUTHORIZATION-CONSUMPTION-V21",
+  "status": "PROVIDER_PROOF_VERIFIED_PROVIDER_APPLY_OWNER_RESERVED",
+  "dependency_path": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "implementation": {
+    "pull_request": 197,
+    "head_sha": "4da6d043b10e9db2a0ae37c5533dad7b8d104fed",
+    "merge_commit": "4f75976e4df353b4079afb253603b3311f849503",
+    "files": [
+      "phoenix/provider_cutover_authorization_use.py",
+      "tests/test_phoenix_provider_cutover_v3_authorization_consumption.py",
+      "alpha_omega_commercial/C15_PHOENIX_AUTHORIZATION_CONSUMPTION_V21.md",
+      "alpha_omega_commercial/programme_maturity_effective_v21.json"
+    ]
+  },
+  "provider_native_proof": {
+    "airlock": {
+      "workflow_run": 30942569358,
+      "workflow_job": 92104397420,
+      "conclusion": "success",
+      "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
+      "policy_version": "2.2.0",
+      "changed_workflow_count": 0,
+      "findings_count": 0,
+      "artifact_id": 8905720016,
+      "artifact_name": "federation-omega-airlock-30942569358-1",
+      "artifact_digest": "sha256:6ad0acd536a05f0ad57481a3f1c37cc7a6ee9f737140bf32be0810e3f1707e06",
+      "report_content_sha256": "dce5405c359efe0934867dc94e8f05ddabb1b90678e5c20bf410699fe3024df6",
+      "retention_expires_at": "2026-11-02T19:17:07Z"
+    },
+    "public_repository_leak_guard": {
+      "workflow_run": 30942569314,
+      "workflow_job": 92104397676,
+      "conclusion": "success"
+    },
+    "tests": {
+      "airlock": {"passed": 12},
+      "provider_cutover_v2": {"passed": 10},
+      "provider_cutover_v3_family": {"passed": 34},
+      "new_authorization_consumption_tests": {"passed": 9}
+    }
+  },
+  "google_drive_release": {
+    "file_id": "1Oyo8dOPitCjPlmQPofO-ArXOyIMJvLAsJXEn9-USvsM",
+    "title": "Alpha Omega Phoenix Authorization Consumption v21 Release — 2026-08-04",
+    "created_at": "2026-08-04T19:18:58.673Z",
+    "modified_at": "2026-08-04T19:19:13.986Z",
+    "text_export_size_bytes": 3372,
+    "text_export_sha256": "1eb4996f0159e90c9964e7ce31085580d2e4eb1b4463c8bd550a9c1818ca12ad",
+    "readback": "VERIFIED",
+    "shared": false,
+    "owner": "mosianekk@gmail.com"
+  },
+  "operational_proof_gate": {
+    "one_time_authorization_reservation": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "exact_retry_idempotency": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "cross_execution_replay_rejection": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "expired_decision_rejection": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "secret_material_rejection": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "state_transition_ordering": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "provider_receipt_hash_binding": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "terminal_record_immutability": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "tamper_detection": "VERIFIED_BY_PROVIDER_NATIVE_TEST",
+    "provider_apply_performed": false,
+    "provider_mutation_performed": false
+  },
+  "commercial_truth": {
+    "service_enabled_platform": "VERIFIED_AND_PRIORITISED",
+    "self_service_saas": "HELD",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run_operation": "NOT_PROVEN",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "verified_live_revenue_events": 0,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "execution_plane_cutover": "OWNER_RESERVED_FRESH_EXACT_AUTHORIZATION_REQUIRED",
+    "revenue_recognition": "OWNER_RESERVED"
+  },
+  "next_gate": "FRESH_OWNER_AUTHORISED_PROVIDER_APPLY_WITH_ONE_TIME_CONSUMPTION_AND_PROVIDER_NATIVE_READBACK"
+}

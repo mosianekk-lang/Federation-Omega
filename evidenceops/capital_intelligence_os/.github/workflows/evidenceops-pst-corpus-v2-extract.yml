@@ -1,0 +1,263 @@
+name: EvidenceOps PST Corpus v2 Extraction
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'evidenceops/pst_corpus_v2/**'
+      - '.github/workflows/evidenceops-pst-corpus-v2-extract.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: evidenceops-pst-corpus-v2-production
+  cancel-in-progress: false
+
+env:
+  SOURCE_FILE_ID: 1wRZyIhlFy5bECTccmfXHzWH5b4hTN7xN
+  SOURCE_EXPECTED_SIZE: '3501253632'
+  SOURCE_NAME: MosianeKK@tut.ac.za.pst
+  CORPUS_NAME: MosianeKK_PST_Evidence_Case
+  SOURCE_PATH: /mnt/pst/MosianeKK@tut.ac.za.pst
+  OUTPUT_PARENT: /mnt/corpus
+  CORPUS_PATH: /mnt/corpus/MosianeKK_PST_Evidence_Case
+
+jobs:
+  extract-verify-package:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 355
+
+    steps:
+      - name: Check out Federation Omega
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Recover runner disk capacity
+        run: |
+          set -euo pipefail
+          sudo rm -rf /usr/local/lib/android /usr/share/dotnet /opt/ghc /usr/local/.ghcup /opt/hostedtoolcache/CodeQL || true
+          sudo docker system prune --all --force --volumes || true
+          sudo apt-get clean
+          df -h
+
+      - name: Install PST and Python dependencies
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo apt-get install -y -qq --no-install-recommends ca-certificates pst-utils sqlite3 zip unzip
+          python -m pip install --upgrade pip
+          python -m pip install 'gdown==5.2.0' 'pypdf==6.1.1'
+
+      - name: Materialize reviewed source
+        working-directory: evidenceops/pst_corpus_v2
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import base64, gzip
+          from pathlib import Path
+          for name in ('extractor.py', 'test_controls.py'):
+              encoded = Path(name + '.gz.b64').read_text(encoding='utf-8').strip()
+              Path(name).write_bytes(gzip.decompress(base64.b64decode(encoded)))
+          PY
+          python -m py_compile extractor.py test_controls.py
+          python -m unittest -v test_controls.py
+
+      - name: Download immutable PST source
+        id: source
+        run: |
+          set -euo pipefail
+          sudo mkdir -p /mnt/pst /mnt/corpus /mnt/receipts
+          sudo chown -R "$USER":"$USER" /mnt/pst /mnt/corpus /mnt/receipts
+          success=0
+          for attempt in 1 2 3; do
+            rm -f "$SOURCE_PATH"
+            if python -m gdown --id "$SOURCE_FILE_ID" --output "$SOURCE_PATH"; then
+              actual="$(stat -c%s "$SOURCE_PATH")"
+              if [[ "$actual" == "$SOURCE_EXPECTED_SIZE" ]]; then success=1; break; fi
+              echo "gdown size mismatch on attempt $attempt: $actual" >&2
+            fi
+            sleep $((attempt * 10))
+          done
+          if [[ "$success" != 1 ]]; then
+            rm -f "$SOURCE_PATH"
+            curl --fail --location --retry 5 --retry-all-errors \
+              "https://drive.usercontent.google.com/download?id=${SOURCE_FILE_ID}&export=download&confirm=t" \
+              --output "$SOURCE_PATH"
+          fi
+          actual="$(stat -c%s "$SOURCE_PATH")"
+          test "$actual" = "$SOURCE_EXPECTED_SIZE"
+          echo "size=$actual" >> "$GITHUB_OUTPUT"
+          df -h
+
+      - name: Extract, index, shard and locally verify
+        id: extraction
+        working-directory: evidenceops/pst_corpus_v2
+        run: |
+          set -euo pipefail
+          python extractor.py extract \
+            --source "$SOURCE_PATH" \
+            --output-parent "$OUTPUT_PARENT" \
+            --corpus-name "$CORPUS_NAME" \
+            --expected-size "$SOURCE_EXPECTED_SIZE" \
+            --source-type pst \
+            --shard-size-mib 512 \
+            --search-pack-size-mib 25 \
+            --jobs 8
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+          report_path = Path(os.environ['CORPUS_PATH']) / '00_CONTROL' / 'LOCAL_VERIFICATION.json'
+          report = json.loads(report_path.read_text(encoding='utf-8'))
+          if report.get('status') != 'LOCAL_COMPLETE_VERIFIED':
+              raise SystemExit(json.dumps(report, sort_keys=True))
+          output = Path(os.environ['GITHUB_OUTPUT'])
+          with output.open('a', encoding='utf-8') as handle:
+              handle.write(f"source_sha256={report['source_sha256']}\n")
+              handle.write(f"messages={report['message_occurrences']}\n")
+              handle.write(f"attachments={report['attachment_occurrences']}\n")
+              handle.write(f"shards={report['shard_count']}\n")
+              handle.write(f"search_packs={report['search_pack_count']}\n")
+          print(json.dumps(report, indent=2, sort_keys=True))
+          PY
+          rm -f "$SOURCE_PATH"
+          df -h
+
+      - name: Build publication manifest
+        id: manifest
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          corpus = Path(os.environ['CORPUS_PATH'])
+          publish_roots = ['00_CONTROL', '04_INDEX', '05_SEARCH_PACKS', '06_RETRIEVAL_SHARDS', '07_LOGS']
+          rows = []
+          for root in publish_roots:
+              for path in sorted((corpus / root).rglob('*')):
+                  if not path.is_file():
+                      continue
+                  digest = hashlib.sha256()
+                  with path.open('rb') as handle:
+                      for block in iter(lambda: handle.read(8 * 1024 * 1024), b''):
+                          digest.update(block)
+                  rows.append({
+                      'relpath': path.relative_to(corpus).as_posix(),
+                      'size_bytes': path.stat().st_size,
+                      'sha256': digest.hexdigest(),
+                  })
+          manifest = {
+              'schema': 'EVIDENCEOPS-PST-GITHUB-PUBLICATION-1',
+              'status': 'ARTIFACTS_READY_PENDING_DRIVE_TRANSFER',
+              'generated_at': datetime.now(timezone.utc).isoformat(),
+              'source_file_id': os.environ['SOURCE_FILE_ID'],
+              'source_size_bytes': int(os.environ['SOURCE_EXPECTED_SIZE']),
+              'source_sha256': os.environ.get('SOURCE_SHA256', ''),
+              'message_occurrences': int(os.environ.get('MESSAGES', '0')),
+              'attachment_occurrences': int(os.environ.get('ATTACHMENTS', '0')),
+              'shard_count': int(os.environ.get('SHARDS', '0')),
+              'search_pack_count': int(os.environ.get('SEARCH_PACKS', '0')),
+              'objects': rows,
+              'object_count': len(rows),
+              'total_bytes': sum(row['size_bytes'] for row in rows),
+          }
+          target = corpus / '00_CONTROL' / 'GITHUB_PUBLICATION_MANIFEST.json'
+          target.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          Path('/mnt/receipts/extraction.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps(manifest, indent=2, sort_keys=True))
+          PY
+        env:
+          SOURCE_SHA256: ${{ steps.extraction.outputs.source_sha256 }}
+          MESSAGES: ${{ steps.extraction.outputs.messages }}
+          ATTACHMENTS: ${{ steps.extraction.outputs.attachments }}
+          SHARDS: ${{ steps.extraction.outputs.shards }}
+          SEARCH_PACKS: ${{ steps.extraction.outputs.search_packs }}
+
+      - name: Upload searchable corpus artifact
+        id: searchable_artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-pst-v2-searchable-${{ github.run_id }}
+          path: |
+            ${{ env.CORPUS_PATH }}/00_CONTROL
+            ${{ env.CORPUS_PATH }}/04_INDEX
+            ${{ env.CORPUS_PATH }}/05_SEARCH_PACKS
+            ${{ env.CORPUS_PATH }}/07_LOGS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+      - name: Upload raw retrieval shards artifact
+        id: shards_artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-pst-v2-raw-shards-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS
+          if-no-files-found: error
+          compression-level: 0
+          retention-days: 7
+
+      - name: Commit provider receipt
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+          SEARCHABLE_ARTIFACT_ID: ${{ steps.searchable_artifact.outputs.artifact-id }}
+          SEARCHABLE_ARTIFACT_URL: ${{ steps.searchable_artifact.outputs.artifact-url }}
+          SHARDS_ARTIFACT_ID: ${{ steps.shards_artifact.outputs.artifact-id }}
+          SHARDS_ARTIFACT_URL: ${{ steps.shards_artifact.outputs.artifact-url }}
+          SOURCE_SHA256: ${{ steps.extraction.outputs.source_sha256 }}
+          MESSAGES: ${{ steps.extraction.outputs.messages }}
+          ATTACHMENTS: ${{ steps.extraction.outputs.attachments }}
+          SHARDS: ${{ steps.extraction.outputs.shards }}
+          SEARCH_PACKS: ${{ steps.extraction.outputs.search_packs }}
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          receipt = {
+              'schema': 'EVIDENCEOPS-PST-CORPUS-V2-GITHUB-RECEIPT-1',
+              'receipt': 'EVIDENCEOPS-PST-CORPUS-V2-GITHUB-EXTRACTION',
+              'status': 'ARTIFACTS_READY_PENDING_DRIVE_TRANSFER' if os.environ['JOB_STATUS'] == 'success' else 'FAILED',
+              'job_status': os.environ['JOB_STATUS'],
+              'recorded_at': datetime.now(timezone.utc).isoformat(),
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'workflow_run_id': int(os.environ['GITHUB_RUN_ID']),
+              'workflow_run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
+              'source_commit': os.environ['GITHUB_SHA'],
+              'source_file_id': os.environ['SOURCE_FILE_ID'],
+              'source_size_bytes': int(os.environ['SOURCE_EXPECTED_SIZE']),
+              'source_sha256': os.environ.get('SOURCE_SHA256') or None,
+              'message_occurrences': int(os.environ.get('MESSAGES') or 0),
+              'attachment_occurrences': int(os.environ.get('ATTACHMENTS') or 0),
+              'shard_count': int(os.environ.get('SHARDS') or 0),
+              'search_pack_count': int(os.environ.get('SEARCH_PACKS') or 0),
+              'artifacts': {
+                  'searchable': {'id': os.environ.get('SEARCHABLE_ARTIFACT_ID') or None, 'url': os.environ.get('SEARCHABLE_ARTIFACT_URL') or None},
+                  'raw_shards': {'id': os.environ.get('SHARDS_ARTIFACT_ID') or None, 'url': os.environ.get('SHARDS_ARTIFACT_URL') or None},
+              },
+              'drive_completion_required': True,
+              'completion_gate': 'Drive 00_CONTROL/COMPLETION.json status COMPLETE_VERIFIED',
+          }
+          Path('deployment_receipts/evidenceops-pst-corpus-v2-latest.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          PY
+          git config user.name 'evidenceops-pst-bot'
+          git config user.email 'evidenceops-pst-bot@users.noreply.github.com'
+          git add deployment_receipts/evidenceops-pst-corpus-v2-latest.json
+          if git diff --cached --quiet; then exit 0; fi
+          git commit -m "Record EvidenceOps PST v2 extraction receipt [skip ci]"
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+            sleep $((attempt * 5))
+          done
+          exit 1

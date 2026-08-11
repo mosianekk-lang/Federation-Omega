@@ -1,0 +1,40 @@
+{
+  "authenticated_cloud_read": null,
+  "authenticated_status": null,
+  "classification": "BLOCKED_MISSING_FO_ADMIN_TOKEN_REPOSITORY_SECRET",
+  "contract": {
+    "body": {
+      "allowedActions": [
+        "STATUS",
+        "READ_CLOUD_RUN_SERVICE",
+        "VERIFY_ARCHITRON_HEALTH",
+        "DEPLOY_SOLUTION5_LOCKED",
+        "READ_BUILD"
+      ],
+      "checkedAt": "2026-07-29T11:57:47.052Z",
+      "ok": true,
+      "service": "federation-omega-operator",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "health": {
+    "body": {
+      "checkedAt": "2026-07-29T11:57:46.740Z",
+      "noGmail": true,
+      "ok": true,
+      "service": "federation-omega-operator",
+      "status": "OPERATOR_READY",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "mutation_attempted": false,
+  "operator_url": "https://federation-omega-operator-257649435135.africa-south1.run.app",
+  "receipt": "PFRD-OMEGA-OPERATOR-AUTH-PROBE",
+  "recorded_at": "2026-07-29T11:57:47.176880+00:00",
+  "token_present": false,
+  "token_value_recorded": false
+}

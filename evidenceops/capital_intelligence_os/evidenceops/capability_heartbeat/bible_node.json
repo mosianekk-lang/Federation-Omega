@@ -1,0 +1,12 @@
+{
+  "schema": "EVIDENCEOPS-BIBLE-NODE-1",
+  "node_id": "NODE-EVIDENCEOPS-CAPABILITY-HEARTBEAT",
+  "parent_node_id": "CENTRAL-MASTER",
+  "contract_version": "MB-HB-1.0",
+  "branch_version": 1,
+  "privacy_tier": "P1",
+  "ttl_seconds": 900,
+  "max_hops": 8,
+  "active_workflow_ids": ["CURRENT-CHAT-WORKFLOW"],
+  "authorized_child_patterns": ["NODE-EVIDENCEOPS-*", "NODE-BIBLE-*"]
+}

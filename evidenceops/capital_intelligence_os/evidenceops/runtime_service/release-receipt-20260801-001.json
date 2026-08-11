@@ -1,0 +1,40 @@
+{
+  "receipt_id": "RCP-SOVEREIGN-RUNTIME-20260801-001",
+  "lane_id": "LANE-SOVEREIGN-RUNTIME",
+  "owner": "WORKFORCE",
+  "active_contract": "EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2",
+  "transition": "SCAFFOLDED_TO_VERIFYING",
+  "result": "LOCALLY_TESTED_PRIVATE_CANONICAL_BRIDGE_ALIGNED_RUNTIME",
+  "public_repository_safe": true,
+  "verified_facts": {
+    "canonical_backend": "PRIVATE_IN_PLACE_BRIDGE",
+    "canonical_backend_status": "WRITE_AND_READBACK_VERIFIED_IN_PRIVATE_CONTROL_PLANE",
+    "canonical_backend_receipt": "PRIVATE_RECEIPT_REFERENCE",
+    "canonical_spreadsheet_id": "PRIVATE_RUNTIME_CONFIG",
+    "local_regression_tests": "2_PASSED",
+    "mission_delta_owner": "WORKFORCE",
+    "report_only_terminal_allowed": false,
+    "container_definition_present": true,
+    "private_deployment_gate_present": true,
+    "live_identifiers_present_in_public_receipt": false
+  },
+  "repository_commits": {
+    "runtime_manifest_alignment": "f0c1f61f23e8c5381650d1b8470d130d0427dde6",
+    "runtime_alignment": "eec347abe903596652ee1084c3b0dcd96754cd32",
+    "runtime_test": "3f55a196e27a666744f18abbe062cbb5efe53419",
+    "bridge_consistency_test": "0803506e71443fa1644891092499cde26cf20830",
+    "workflow_hardening": "2281f1d894c2d8f15d12be36925c62e839bdff36"
+  },
+  "truth_boundaries": {
+    "github_actions_conclusion": "NOT_YET_READ_BACK",
+    "cloud_run_deployment": "NOT_EXECUTED",
+    "cloud_runtime_identity": "NOT_VERIFIED",
+    "runtime_direct_write_through_to_canonical_bridge": "NOT_VERIFIED",
+    "secret_manager_binding": "NOT_VERIFIED",
+    "workload_identity_federation": "BLOCKED_OR_UNVERIFIED",
+    "native_microsoft_dataverse": "OPTIONAL_PARITY_ROUTE_UNBOUND",
+    "private_identifiers": "RESOLVED_ONLY_AT_RUNTIME"
+  },
+  "next_safe_gate": "READ_BACK_GITHUB_ACTIONS_TEST_AND_CONTAINER_RESULT_THEN_BIND_AUTHORISED_PRIVATE_CLOUD_RUNTIME_IDENTITY",
+  "verified_at": "2026-08-01T04:55:00+02:00"
+}

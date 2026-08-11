@@ -1,0 +1,68 @@
+name: EvidenceOps Sovereign Translator Alignment
+
+on:
+  push:
+    paths:
+      - 'evidenceops/doctrine/**'
+      - 'evidenceops/contracts/**'
+      - 'evidenceops/bootstrap/**'
+      - 'evidenceops/tests/test_sovereign_translator_alignment.py'
+      - '.github/workflows/evidenceops-sovereign-translator-alignment.yml'
+  pull_request:
+    paths:
+      - 'evidenceops/doctrine/**'
+      - 'evidenceops/contracts/**'
+      - 'evidenceops/bootstrap/**'
+      - 'evidenceops/tests/test_sovereign_translator_alignment.py'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  validate-sovereign-translator:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install test dependency
+        run: python -m pip install --upgrade pytest
+
+      - name: Run alignment tests
+        run: python -m pytest -q evidenceops/tests/test_sovereign_translator_alignment.py
+
+      - name: Emit alignment receipt
+        run: |
+          mkdir -p alignment-receipt
+          python - <<'PY'
+          import hashlib, json, pathlib, time
+          files = [
+              pathlib.Path('evidenceops/doctrine/EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2.md'),
+              pathlib.Path('evidenceops/contracts/sovereign-translator-v3.2.json'),
+              pathlib.Path('evidenceops/bootstrap/SOVEREIGN_TRANSLATOR_BOOTSTRAP.md'),
+          ]
+          receipt = {
+              'contract': 'EMSIT-KDV-FEVX-IPFL-EVI-FPFE-v3.2',
+              'status': 'ALIGNMENT_TESTS_PASSED',
+              'generated_at': int(time.time()),
+              'files': {
+                  str(path): hashlib.sha256(path.read_bytes()).hexdigest()
+                  for path in files
+              },
+          }
+          pathlib.Path('alignment-receipt/receipt.json').write_text(
+              json.dumps(receipt, indent=2), encoding='utf-8'
+          )
+          PY
+
+      - name: Upload alignment receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-sovereign-translator-alignment
+          path: alignment-receipt/receipt.json

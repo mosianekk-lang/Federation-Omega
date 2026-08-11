@@ -1,0 +1,5 @@
+fastapi==0.116.1
+uvicorn[standard]==0.35.0
+httpx==0.28.1
+google-cloud-secret-manager==2.24.0
+google-crc32c==1.7.1

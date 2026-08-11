@@ -1,0 +1,164 @@
+# Single-writer, reproducible dependencies and gate-role regression: 2026-08-04T01:52:00+02:00
+name: EvidenceOps v7.2.2 P13 Raw Provider Freshness
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - runtime/evidenceops_v722/p13_source_freshness/raw_provider_catalog.json
+      - runtime/evidenceops_v722/p13_source_freshness/run_raw_provider_cycle.py
+      - runtime/evidenceops_v722/p13_source_freshness/aia_trust.py
+      - runtime/evidenceops_v722/tests/test_p13_gate_roles.py
+      - .github/workflows/evidenceops-v722-p13-source-freshness.yml
+  workflow_dispatch:
+  schedule:
+    - cron: '11 3 * * 1'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: evidenceops-v722-p13-source-freshness
+  cancel-in-progress: true
+
+jobs:
+  raw-provider-freshness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Check out canonical repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install bounded retrieval dependencies
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check \
+            pypdf==5.9.0 \
+            requests==2.32.5 \
+            certifi==2026.7.22
+          python - <<'PY'
+          import certifi
+          import requests
+          from pypdf import PdfReader
+          assert requests.__version__ == '2.32.5'
+          assert certifi.__version__ == '2026.07.22'
+          print({
+              'requests': requests.__version__,
+              'certifi': certifi.__version__,
+              'certifi_bundle': certifi.where(),
+              'pypdf_reader': PdfReader.__name__,
+          })
+          PY
+
+      - name: Run P13 gate-role regression tests
+        run: python -m unittest runtime.evidenceops_v722.tests.test_p13_gate_roles
+
+      - name: Retrieve and hash exact official-provider bytes
+        id: retrieve
+        continue-on-error: true
+        run: |
+          set -euo pipefail
+          rm -rf p13_raw_provider_output
+          rm -f runtime/evidenceops_v722/state/p13_raw_provider_latest.json
+          python runtime/evidenceops_v722/p13_source_freshness/run_raw_provider_cycle.py \
+            --catalog runtime/evidenceops_v722/p13_source_freshness/raw_provider_catalog.json \
+            --output p13_raw_provider_output \
+            --state-output runtime/evidenceops_v722/state/p13_raw_provider_latest.json
+
+      - name: Verify diagnostic receipt integrity and current-run identity
+        if: always()
+        run: |
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          path = Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json')
+          assert path.exists(), 'freshness runner did not write a diagnostic receipt for this run'
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          supplied = payload.pop('receipt_sha256')
+          observed = hashlib.sha256(
+              json.dumps(payload, sort_keys=True, separators=(',', ':'), ensure_ascii=False).encode('utf-8')
+          ).hexdigest()
+          assert observed == supplied, (observed, supplied)
+          event = payload['provider_event']
+          assert str(event['run_id']) == os.environ['GITHUB_RUN_ID'], (event['run_id'], os.environ['GITHUB_RUN_ID'])
+          assert str(event['run_attempt']) == os.environ['GITHUB_RUN_ATTEMPT'], (event['run_attempt'], os.environ['GITHUB_RUN_ATTEMPT'])
+          assert event['sha'] == os.environ['GITHUB_SHA'], (event['sha'], os.environ['GITHUB_SHA'])
+          assert payload['controls']['external_effects'] == 0
+          assert payload['controls']['authority_ceiling'] == 'A1'
+          print(json.dumps({
+              'receipt_id': payload['receipt_id'],
+              'receipt_sha256': supplied,
+              'state': payload['state'],
+              'run_id': event['run_id'],
+              'raw_provider_byte_gate_passed': payload['controls']['raw_provider_byte_gate_passed'],
+              'current_primary_rules_document_identity_verified': payload['controls']['current_primary_rules_document_identity_verified'],
+              'consultative_watch_gate_passed': payload['controls'].get('consultative_watch_gate_passed'),
+              'secondary_resource_archive_gate_passed': payload['controls'].get('secondary_resource_archive_gate_passed'),
+          }, indent=2))
+          PY
+
+      - name: Upload immutable raw-provider proof and diagnostics
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-v722-p13-raw-provider-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            p13_raw_provider_output/
+            runtime/evidenceops_v722/state/p13_raw_provider_latest.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Persist exact provider diagnostic readback on main
+        if: always()
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          path = Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json')
+          assert path.exists(), 'no current-run freshness receipt to persist'
+          payload = json.loads(path.read_text(encoding='utf-8'))
+          event = payload['provider_event']
+          assert str(event['run_id']) == os.environ['GITHUB_RUN_ID']
+          assert str(event['run_attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+          assert event['sha'] == os.environ['GITHUB_SHA']
+          PY
+          git config user.name 'Federation Omega Runtime'
+          git config user.email 'actions@users.noreply.github.com'
+          git add runtime/evidenceops_v722/state/p13_raw_provider_latest.json
+          if git diff --cached --quiet; then
+            echo 'No state change to persist.'
+            exit 0
+          fi
+          git commit -m 'Persist EvidenceOps v7.2.2 P13 raw-provider proof [skip p13-freshness]'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then
+              exit 0
+            fi
+            git pull --rebase origin main
+            sleep $((attempt * 2))
+          done
+          exit 1
+
+      - name: Enforce core raw-byte and current-rules identity gate
+        if: always()
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload = json.loads(Path('runtime/evidenceops_v722/state/p13_raw_provider_latest.json').read_text(encoding='utf-8'))
+          event = payload['provider_event']
+          assert str(event['run_id']) == os.environ['GITHUB_RUN_ID']
+          assert str(event['run_attempt']) == os.environ['GITHUB_RUN_ATTEMPT']
+          assert event['sha'] == os.environ['GITHUB_SHA']
+          assert payload['controls']['raw_provider_byte_gate_passed'] is True
+          assert payload['controls']['core_official_source_raw_byte_gate_passed'] is True
+          assert payload['controls']['current_primary_rules_document_identity_verified'] is True
+          PY

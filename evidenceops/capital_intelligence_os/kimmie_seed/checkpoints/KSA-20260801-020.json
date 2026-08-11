@@ -1,0 +1,119 @@
+{
+  "assessment_id": "KSA-20260801-020",
+  "observed_at": "2026-08-01T17:18:40+02:00",
+  "seed_id": "KIMMIE-IPEP-001",
+  "root_verified_stage": "SAPLING",
+  "root_promotion": "NO_PROMOTION",
+  "identity_drift": "NONE_DETECTED",
+  "owner_decision_required": false,
+  "material_change": true,
+  "qualifying_notification_event": false,
+  "notification": "SUPPRESS",
+  "new_verified_evidence": {
+    "provenance_passport_first_independent_scheduled_cycle": {
+      "workflow": ".github/workflows/provenance-passport-watch.yml",
+      "workflow_run_id": "30703313078",
+      "workflow_event": "schedule",
+      "source_sha": "08fb8a6e28b5e41e974b796f45a755ad5737b2d0",
+      "durable_readback_commit": "1b418c29a757c05b7f9b9aadaa8c4c042600a0df",
+      "regression_tests": "PASSED",
+      "baseline_validation": "PASSED",
+      "controlled_tamper_detection": "PASSED",
+      "controlled_recovery": "PASSED",
+      "proofs_checked": 5,
+      "receipt_status": "VERIFIED",
+      "health_sha256": "943d0cc0cf50e64336e64ad03b11141dfb9c14a9d010ad972e2b999f0aaa55a2",
+      "public_provider_identifier_persisted": false
+    }
+  },
+  "lane_review": [
+    {
+      "lane_id": "KIMMIE-IPEP-001",
+      "verified_stage": "SAPLING",
+      "authorised_environment": "VERIFIED_GITHUB_DRIVE_ACTIONS",
+      "required_nutrients": "SAPLING_NUTRIENTS_VERIFIED",
+      "dependencies": "MATURE_GATES_OPEN",
+      "proof_gates": "SAPLING_PASSED; MATURE_NOT_PASSED",
+      "tests": "ROOT_WORKFLOW_AND_PROVIDER_MONITORING_VERIFIED",
+      "deployment_surfaces": [
+        "GitHub",
+        "Google Drive",
+        "GitHub Actions"
+      ],
+      "monitoring_data": "TWO_INDEPENDENT_SCHEDULED_PROVIDER_CYCLES",
+      "maintenance_owner": "mosianekk-lang"
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "verified_stage": "SAPLING",
+      "authorised_environment": "VERIFIED_GITHUB_AND_GOOGLE_DRIVE",
+      "required_nutrients": "VERIFIED",
+      "dependencies": "MATURE_GATES_OPEN",
+      "proof_gates": "SAPLING_PASSED; MATURE_NOT_PASSED",
+      "tests": "ECTS_6_OF_6_AND_TWO_SCHEDULED_PROVIDER_CYCLES_PASSED",
+      "deployment_surfaces": [
+        "GitHub",
+        "Google Drive",
+        "Local runtime",
+        "IPEP Bible"
+      ],
+      "monitoring_data": "PERSISTENT_TWO_CYCLE_PROVIDER_MONITORING_VERIFIED",
+      "maintenance_owner": "mosianekk-lang"
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "verified_stage": "SPROUT",
+      "operational_state": "FIRST_INDEPENDENT_SCHEDULED_CYCLE_VERIFIED",
+      "authorised_environment": "VERIFIED_GITHUB_AND_PRIVATE_GOOGLE_DRIVE",
+      "required_nutrients": "PROOF_RECEIPT_AND_OWNER_VERIFIED",
+      "dependencies": "SECOND_LATER_INDEPENDENT_SCHEDULED_CYCLE_OPEN",
+      "proof_gates": "SPROUT_PASSED; SAPLING_NOT_PASSED",
+      "tests": "REGRESSION_BASELINE_TAMPER_RECOVERY_AND_5_PROOFS_PASSED",
+      "deployment_surfaces": [
+        "GitHub workflow",
+        "Private Google Drive passports",
+        "IPEP Bible"
+      ],
+      "monitoring_data": "ONE_SCHEDULE_TRIGGERED_CYCLE_WITH_DURABLE_READBACK_VERIFIED",
+      "maintenance_owner": "mosianekk-lang",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": "NOT_VERIFIED_FOR_CORPUS_ACQUISITION",
+      "required_nutrients": "AUTHORISED_CORPUS_RIGHTS_SOURCE_PROVENANCE_AND_RECEIPT_MISSING",
+      "dependencies": "UNSATISFIED",
+      "proof_gates": "NOT_PASSED",
+      "tests": "NOT_AVAILABLE",
+      "deployment_surfaces": "NOT_VERIFIED",
+      "monitoring_data": "NOT_AVAILABLE",
+      "maintenance_owner": "mosianekk-lang",
+      "owner_decision_required": false
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "authorised_environment": "PARTIAL_REPOSITORY_ONLY",
+      "required_nutrients": "PROVIDER_CREDENTIAL_SPEECH_BINDING_PRIVATE_WORKER_AND_RECEIPT_MISSING",
+      "dependencies": "UNSATISFIED",
+      "proof_gates": "NOT_PASSED",
+      "tests": "SCAFFOLD_ONLY",
+      "deployment_surfaces": "PRIVATE_WORKER_NOT_VERIFIED",
+      "monitoring_data": "NO_LIVE_PROVIDER_HEALTH",
+      "maintenance_owner": "mosianekk-lang",
+      "owner_decision_required": false
+    }
+  ],
+  "promotion_gate": {
+    "root_next_candidate": "MATURE",
+    "root_result": "NOT_PASSED",
+    "provenance_passport_next_candidate": "SAPLING",
+    "provenance_passport_result": "NOT_PASSED_SECOND_SCHEDULED_CYCLE_REQUIRED"
+  },
+  "lesson": "A schedule-triggered workflow only becomes maturity evidence after durable readback proves the event, tests, controlled tamper rejection, recovery and receipt integrity. One verified scheduled cycle improves confidence but does not establish persistent multi-cycle monitoring.",
+  "truth_boundary": "No seed is promoted. Root and Connector Foundry remain SAPLING; Provenance Passport remains SPROUT pending a later independent scheduled cycle; Nature Intelligence and Audio Live Transcription remain SEED with unchanged non-owner blockers.",
+  "checkpoint_sha256": "7f782129fbf722a716283c626aee51a04a7e40052689dc84f26a55b69169deed"
+}

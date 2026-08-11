@@ -1,0 +1,80 @@
+{
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "control_id": "AO-COMMERCIAL-AUTHORITY-ACTION-BINDING-V5",
+  "status": "AUTHORITY_ACTION_BINDING_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "dependency_checkpoint": {
+    "preceding_pull_request": 124,
+    "preceding_merge_commit": "a13ba8838f79b009d7b690bbe74d6963db1dffb8",
+    "preceding_status": "AUTHORITY_SNAPSHOT_ANTI_ROLLBACK_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED"
+  },
+  "implementation_release": {
+    "pull_request": 125,
+    "merge_commit": "03418d4317603037e85bdb282c55385e4fbb9a03",
+    "release_receipt": "authority_snapshot_action_binding_release_receipt.json",
+    "release_receipt_sha256": "56e6764e3bd5082f8da07e3c8c8e9be9d71171f13b19a7c897d97db7c6f91e28"
+  },
+  "stage_projection": {
+    "C03": "LATEST_ACCEPTED_PROVIDER_AUTHORITY_USE_AND_DURABLE_REFRESH_VERIFIED",
+    "C11": "SERVICE_ENABLED_ACTION_AUTHORITY_BINDING_VERIFIED_SELF_SERVICE_HELD",
+    "C12": "EXTERNAL_EVIDENCE_ACTION_AUTHORITY_BINDING_VERIFIED_MARKET_PROOF_REQUIRED",
+    "C13": "REVOPS_ACTION_AUTHORITY_BINDING_VERIFIED_REVENUE_PROOF_REQUIRED",
+    "C15": "COMMERCIAL_READINESS_AUTHORITY_USE_BINDING_VERIFIED_EXTERNAL_MATURITY_GATES_OPEN"
+  },
+  "provider_proof": {
+    "state": "PR_HEAD_PROVIDER_NATIVE_CI_VERIFIED",
+    "workflow_name": "Alpha Omega Commercial Authority Action Binding Proof",
+    "workflow_run": 30881244285,
+    "proof_head_sha": "f127b18b5a4b650ee4c4a6b4312e33f00e06a144",
+    "artifact_id": 8881364097,
+    "artifact_name": "alpha-omega-commercial-authority-action-binding-proof",
+    "artifact_digest": "sha256:99efbf9eee3f34ab64a65fb5e32a52b359d9cb889f1fcfcbfbe1f98f8e4d95e0",
+    "receipt_sha256": "cffcd26bd140138e2917b1c8f308b2195f1cb318f93e40dfd9876aae467e8529",
+    "receipt_file_sha256": "dc90fb3d1aad553aa7acb898d37ed46114deea830739db048b261053a0aee9e7",
+    "readback_file_sha256": "478b2dc4cc9e7ccf30e58fbc6c13e31fb1f2bb1c88788e230873810765fdbd44",
+    "ledger_file_sha256": "d866c2e2ff5e5714c192e9d9757b6f3902822f8ef1a0616b434c062ef00cc72a",
+    "checks_required": 12,
+    "checks_failed": 0,
+    "artifact_expires_at": "2026-11-02T05:37:00Z"
+  },
+  "google_drive_release": {
+    "file_id": "1jV7bfhfKICzEaPNmANb9o_kOfrdwq1yps3ZEkkmvv6s",
+    "title": "Alpha Omega Commercial Authority Action Binding v5 Release — 2026-08-04",
+    "revision_id": "AIroW34txPG7__EDJDKqs_qYOUOWSZblvOPkQPc3KLZcBeJoXs36E_cEPnGlcS_mlZuo4ppmsL8TDo_wCOLr-_3GpHY0eZ0ZDOpwGwXvOV0",
+    "readback_sha256": "284ed00cf885c59f7eeea6a8a47535cc51af954d1ca1787eaa85cf1d33438732",
+    "readback_length": 3778,
+    "readback_verified": true,
+    "shared": false,
+    "owner": "mosianekk@gmail.com"
+  },
+  "external_gates": {
+    "customer_demand": false,
+    "signed_customer_contract": false,
+    "payment_provider_revenue": false,
+    "live_cloud_provider": false,
+    "enterprise_attestation": false,
+    "partner_adoption": false,
+    "external_case_study": false,
+    "production_scale": false
+  },
+  "provider_boundaries": {
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "commercial_truth": {
+    "verified_live_revenue_events": 0,
+    "cloud_run_operation_proven": false,
+    "payment_provider_operation_proven": false,
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  }
+}

@@ -1,0 +1,160 @@
+{
+  "active_account": {
+    "exit_code": 0,
+    "ok": true,
+    "stderr": "",
+    "stdout": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com"
+  },
+  "artifact_pointer": {
+    "archive_receipt_drive_file_id": "1D6kLVrcpI0If-EwC3NLqVeM5cO2CwkTm",
+    "candidate_version": "1.1.0",
+    "checksum_sidecar_drive_file_id": "1vEBAMbfpAgA62-hn85VJDLsvxKH3XyoV",
+    "drive_folder_id": "1uTPPnwyI0rsmEY8iG4wFc59szhrCqx4s",
+    "external_effect": false,
+    "manifest_drive_file_id": "1HxCC8Fj8FuFLnRYSojSZPyE3NhUf0b3p",
+    "manifest_sha256": "f79aa56b2a81924c3774957a1de3a570cca26a7aaa58bf6808d2de15807ad429",
+    "owner": "Kagiso Kim Mosiane",
+    "payload_fingerprint_sha256": "bfbf7cd29c6c411097a064adb6f4552d01016e95e1950922a85a74f17783cc31",
+    "provider_mutation_attempted": false,
+    "provider_state": "PROVIDER_AUTHORITY_REPAIR_REQUIRED",
+    "reader_service_accounts": [
+      "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+      "fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com"
+    ],
+    "receipt": "FEVX-CSE-V1.1.0-ARTIFACT-POINTER",
+    "recorded_at": "2026-08-03T14:57:00+02:00",
+    "source_archive": {
+      "drive_file_id": "1UHgEUnH_gsr-tv71QYnG_7EwPvKOuMIk",
+      "file_name": "FEVX-Cognitive-Sovereignty-Ecology-v1.1.0-release.zip",
+      "sha256": "f4da04ac026628e022814f306acfe9e5303ee89a107359ab50a91fa04442ac50",
+      "size_bytes": 313012
+    },
+    "state": "STATICALLY_VALIDATED_AND_LOCAL_CANARY_PASSED",
+    "wheel": {
+      "drive_file_id": "1gObI0122I3oTDtGaP_eximiiCNaUfjgj",
+      "file_name": "fevx_cognitive_sovereignty_ecology-1.1.0-py3-none-any.whl",
+      "sha256": "8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022",
+      "size_bytes": 53720
+    }
+  },
+  "artifact_pointer_error": null,
+  "artifact_repository_read": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.artifacts.repositories.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "auth_routes": {
+    "canonical_wif": "failure",
+    "repository_wif": "skipped",
+    "service_account_key": "skipped",
+    "setup_gcloud": "failure"
+  },
+  "authenticated_baseline": null,
+  "authenticated_status": null,
+  "blockers": [
+    "project_read",
+    "project_number_match",
+    "wif_provider_active",
+    "deployer_service_account",
+    "runtime_service_account",
+    "artifact_repository",
+    "database_secret_metadata",
+    "database_secret_enabled_version",
+    "operator_token_present",
+    "authenticated_status",
+    "authenticated_baseline"
+  ],
+  "checks": {
+    "active_gcloud_identity": true,
+    "archive_digest": true,
+    "artifact_pointer": true,
+    "artifact_repository": false,
+    "authenticated_baseline": false,
+    "authenticated_status": false,
+    "database_secret_enabled_version": false,
+    "database_secret_metadata": false,
+    "deployer_service_account": false,
+    "operator_contract": true,
+    "operator_public_health": true,
+    "operator_token_present": false,
+    "project_number_match": false,
+    "project_read": false,
+    "runtime_service_account": false,
+    "wheel_digest": true,
+    "wif_provider_active": false
+  },
+  "classification": "BLOCKED_PROVIDER_AUTHORITY_PREFLIGHT",
+  "database_secret_read": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.secrets.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "database_secret_version_present": false,
+  "deployer_service_account_read": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.iam.service-accounts.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "external_effect": false,
+  "mutation_attempted": false,
+  "next_action": "repair only listed authority controls and repeat preflight",
+  "project_read": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.projects.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "public_contract": {
+    "body": {
+      "allowedActions": [
+        "STATUS",
+        "READ_CLOUD_RUN_SERVICE",
+        "VERIFY_ARCHITRON_HEALTH",
+        "DEPLOY_SOLUTION5_LOCKED",
+        "READ_BUILD"
+      ],
+      "checkedAt": "2026-08-03T13:27:59.887Z",
+      "ok": true,
+      "service": "federation-omega-operator",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "public_health": {
+    "body": {
+      "checkedAt": "2026-08-03T13:27:59.414Z",
+      "noGmail": true,
+      "ok": true,
+      "service": "federation-omega-operator",
+      "status": "OPERATOR_READY",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "receipt": "FEVX-CSE-SCHEDULED-PROVIDER-PREFLIGHT",
+  "recorded_at": "2026-08-03T13:28:07.166545+00:00",
+  "runtime_service_account_read": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.iam.service-accounts.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "secret_values_recorded": false,
+  "target_service_read": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.run.services.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "wif_provider_read": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.iam.workload-identity-pools.providers.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  }
+}

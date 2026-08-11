@@ -1,0 +1,112 @@
+{
+  "schema": "EVIDENCEOPS-HEARTBEAT-SURFACES-1",
+  "registry_version": 1,
+  "scope": "Documented Kim DataVerse surface classes; account, project and chat-instance enumeration remains provider-bound.",
+  "surfaces": [
+    {
+      "surface_id": "chatgpt", "node_id": "HB-CHATGPT", "title": "ChatGPT and Codex chats", "kind": "CHAT",
+      "privacy_tier": "P1", "ingress_mode": "MCP_TURN_TOOL", "egress_mode": "MCP_TOOL_RESPONSE",
+      "heartbeat_state": "SOURCE_IMPLEMENTED_NOT_HOSTED", "ttl_seconds": 900, "adapter_ref": "evidenceops-mcp-adapter",
+      "workaround_routes": [
+        {"route":"MCP_TURN_TOOL","authority_class":"A1","effectful":false,"score":1.0,"proof_state":"IMPLEMENTED_LOCAL","retry_seconds":300,"next_action":"Run authenticated MCP turn and returned-assistance canary, then read back adapter receipt."},
+        {"route":"FOREGROUND_GENESIS_BOOTSTRAP","authority_class":"A0","effectful":false,"score":0.7,"proof_state":"SOURCE_PRESENT","retry_seconds":900,"next_action":"Inject the Genesis contract through configured project or workspace instructions and verify the next turn calls the heartbeat tool."}
+      ]
+    },
+    {
+      "surface_id": "google-drive", "node_id": "HB-GOOGLE-DRIVE", "title": "Google Drive, Docs and Sheets", "kind": "CANONICAL_STORE",
+      "privacy_tier": "P1", "ingress_mode": "CONNECTOR_OR_POLL", "egress_mode": "SHARED_LEDGER_RELAY",
+      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 3600, "adapter_ref": "connector-foundry-google-drive",
+      "workaround_routes": [{"route":"DRIVE_SHARED_LEDGER_RELAY","authority_class":"A1","effectful":false,"score":0.95,"proof_state":"SESSION_AVAILABLE","retry_seconds":900,"next_action":"Bind the tested provider adapter to the heartbeat node ledger and verify append plus exact readback."}]
+    },
+    {
+      "surface_id": "github", "node_id": "HB-GITHUB", "title": "GitHub repositories, issues, pull requests and Actions", "kind": "CODE_AND_AUTOMATION",
+      "privacy_tier": "P1", "ingress_mode": "WEBHOOK_OR_SCHEDULE", "egress_mode": "CHECK_RUN_OR_ARTIFACT",
+      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 3600, "adapter_ref": "github-actions-scheduler",
+      "workaround_routes": [{"route":"GITHUB_ACTIONS_ARTIFACT_RELAY","authority_class":"A1","effectful":false,"score":0.9,"proof_state":"SOURCE_PRESENT","retry_seconds":1800,"next_action":"Publish the workflow, trigger one run and read back its immutable heartbeat artifact."}]
+    },
+    {
+      "surface_id": "gmail", "node_id": "HB-GMAIL", "title": "Gmail", "kind": "COMMUNICATION",
+      "privacy_tier": "P2", "ingress_mode": "CONNECTOR_OR_POLL", "egress_mode": "DRAFT_OR_MESSAGE_RELAY",
+      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 3600, "adapter_ref": "gmail-connector",
+      "workaround_routes": [{"route":"GMAIL_LABELLED_RELAY","authority_class":"A1","effectful":true,"score":0.8,"proof_state":"SESSION_AVAILABLE","retry_seconds":1800,"next_action":"Create a least-privilege labelled intake and draft-only outbound canary under a separate Formation permit."}]
+    },
+    {
+      "surface_id": "outlook", "node_id": "HB-OUTLOOK", "title": "Microsoft Outlook", "kind": "COMMUNICATION",
+      "privacy_tier": "P2", "ingress_mode": "CONNECTOR_OR_POLL", "egress_mode": "DRAFT_OR_MESSAGE_RELAY",
+      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 3600, "adapter_ref": "outlook-connector",
+      "workaround_routes": [{"route":"OUTLOOK_CATEGORY_RELAY","authority_class":"A1","effectful":true,"score":0.8,"proof_state":"SESSION_AVAILABLE","retry_seconds":1800,"next_action":"Bind a category-scoped intake and draft-only outbound canary under a separate Formation permit."}]
+    },
+    {
+      "surface_id": "google-cloud", "node_id": "HB-GOOGLE-CLOUD", "title": "Google Cloud runtime plane", "kind": "RUNTIME",
+      "privacy_tier": "P1", "ingress_mode": "EVENTARC_PUBSUB_OR_SCHEDULER", "egress_mode": "PUBSUB_OR_PRIVATE_API",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 900, "adapter_ref": "federation-omega-cloud-run",
+      "workaround_routes": [{"route":"PRIVATE_CLOUD_RUN_HEARTBEAT_API","authority_class":"A1","effectful":true,"score":0.95,"proof_state":"SOURCE_PRESENT","retry_seconds":900,"next_action":"After WIF and Secret Manager binding, deploy privately and prove authenticated turn, response and storage readback."}]
+    },
+    {
+      "surface_id": "apps-script", "node_id": "HB-APPS-SCRIPT", "title": "Google Apps Script", "kind": "AUTOMATION",
+      "privacy_tier": "P1", "ingress_mode": "INSTALLABLE_TRIGGER", "egress_mode": "SHEET_OR_HTTP_RELAY",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 900, "adapter_ref": "sentinel-processor",
+      "workaround_routes": [{"route":"APPS_SCRIPT_LEDGER_BRIDGE","authority_class":"A1","effectful":true,"score":0.85,"proof_state":"SOURCE_PRESENT","retry_seconds":900,"next_action":"Add a scoped trigger-to-ledger adapter and require an actual trigger receipt plus downstream readback."}]
+    },
+    {
+      "surface_id": "openai-platform", "node_id": "HB-OPENAI-PLATFORM", "title": "OpenAI Platform", "kind": "AI_PROVIDER",
+      "privacy_tier": "P1", "ingress_mode": "API_WEBHOOK_OR_TRACE", "egress_mode": "RESPONSES_OR_MCP",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 900, "adapter_ref": "openai-provider-adapter",
+      "workaround_routes": [{"route":"OPENAI_MCP_AND_WEBHOOK_RELAY","authority_class":"A1","effectful":true,"score":0.9,"proof_state":"DESIGNED","retry_seconds":1800,"next_action":"Bind a managed credential and verify a redacted response or webhook trace linked to one heartbeat event."}]
+    },
+    {
+      "surface_id": "google-ai-studio", "node_id": "HB-GOOGLE-AI-STUDIO", "title": "Google AI Studio and Gemini experiments", "kind": "AI_EXPERIMENT",
+      "privacy_tier": "P1", "ingress_mode": "EXPORT_OR_API", "egress_mode": "GOVERNED_EXPERIMENT_RELAY",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 3600, "adapter_ref": "gemini-experiment-register",
+      "workaround_routes": [{"route":"DRIVE_EXPERIMENT_REGISTER_RELAY","authority_class":"A1","effectful":false,"score":0.75,"proof_state":"DESIGNED","retry_seconds":3600,"next_action":"Export governed experiment metadata to the shared ledger and verify the resulting node heartbeat."}]
+    },
+    {
+      "surface_id": "microsoft-dataverse", "node_id": "HB-MICROSOFT-DATAVERSE", "title": "Microsoft Dataverse parity route", "kind": "DATA_PLATFORM",
+      "privacy_tier": "P2", "ingress_mode": "WEBHOOK_OR_ODATA", "egress_mode": "ODATA_OR_SERVICE_BUS",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 900, "adapter_ref": "native-dataverse-adapter",
+      "workaround_routes": [{"route":"DATAVERSE_WEBHOOK_PARITY","authority_class":"A1","effectful":true,"score":0.7,"proof_state":"SOURCE_PRESENT","retry_seconds":1800,"next_action":"Bind least-privilege identity and prove one heartbeat upsert plus OData readback without replacing the canonical private bridge."}]
+    },
+    {
+      "surface_id": "canva", "node_id": "HB-CANVA", "title": "Canva", "kind": "PRESENTATION",
+      "privacy_tier": "P1", "ingress_mode": "EXPORT_OR_APP", "egress_mode": "DESIGN_NOTIFICATION",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 7200, "adapter_ref": "canva-adapter-unbound",
+      "workaround_routes": [{"route":"DRIVE_EXPORT_WATCH","authority_class":"A1","effectful":false,"score":0.65,"proof_state":"DESIGNED","retry_seconds":3600,"next_action":"Watch the governed Canva export folder and use file receipts as a bounded interim heartbeat until a native app adapter exists."}]
+    },
+    {
+      "surface_id": "adobe", "node_id": "HB-ADOBE", "title": "Adobe creative surfaces", "kind": "PRESENTATION",
+      "privacy_tier": "P1", "ingress_mode": "EXPORT_OR_APP", "egress_mode": "DESIGN_NOTIFICATION",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 7200, "adapter_ref": "adobe-adapter-unbound",
+      "workaround_routes": [{"route":"DRIVE_EXPORT_WATCH","authority_class":"A1","effectful":false,"score":0.65,"proof_state":"DESIGNED","retry_seconds":3600,"next_action":"Watch governed exports and preserve hashes as interim heartbeat receipts."}]
+    },
+    {
+      "surface_id": "federation-omega", "node_id": "HB-FEDERATION-OMEGA", "title": "Federation Omega", "kind": "ORCHESTRATOR",
+      "privacy_tier": "P1", "ingress_mode": "PRIVATE_OPERATOR_API", "egress_mode": "PRIVATE_OPERATOR_API",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 300, "adapter_ref": "federation-omega-operator",
+      "workaround_routes": [{"route":"OPERATOR_ALLOWLIST_HEARTBEAT_ACTIONS","authority_class":"A1","effectful":true,"score":1.0,"proof_state":"SOURCE_PRESENT","retry_seconds":300,"next_action":"Add allowlisted heartbeat ingest, status and delivery actions, then prove private authenticated round-trip readback."}]
+    },
+    {
+      "surface_id": "secondary-brain", "node_id": "HB-SECONDARY-BRAIN", "title": "Secondary Brain and Kim DataVerse", "kind": "KNOWLEDGE_FABRIC",
+      "privacy_tier": "P2", "ingress_mode": "CANONICAL_BRIDGE", "egress_mode": "CANONICAL_BRIDGE",
+      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 900, "adapter_ref": "kim-dataverse-private-bridge",
+      "workaround_routes": [{"route":"PRIVATE_BRIDGE_NODE_LEDGER","authority_class":"A1","effectful":true,"score":1.0,"proof_state":"SESSION_AVAILABLE","retry_seconds":900,"next_action":"Bind heartbeat entities to the existing private bridge and prove transactional write plus independent readback."}]
+    },
+    {
+      "surface_id": "modisa", "node_id": "HB-MODISA", "title": "MODISA build engine", "kind": "BUILD_ENGINE",
+      "privacy_tier": "P1", "ingress_mode": "WORKFLOW_EVENT", "egress_mode": "BUILD_RECEIPT",
+      "heartbeat_state": "SOURCE_IMPLEMENTED_NOT_HOSTED", "ttl_seconds": 900, "adapter_ref": "modisa-code-forge",
+      "workaround_routes": [{"route":"BUILD_CONTRACT_EVENT_RELAY","authority_class":"A1","effectful":false,"score":0.9,"proof_state":"IMPLEMENTED_LOCAL","retry_seconds":900,"next_action":"Emit build-contract test and deployment states into the heartbeat event schema and read back the receipt."}]
+    },
+    {
+      "surface_id": "evidenceops", "node_id": "HB-EVIDENCEOPS", "title": "EvidenceOps", "kind": "EVIDENCE_AND_PROOF",
+      "privacy_tier": "P1", "ingress_mode": "NATIVE_HEARTBEAT_CORE", "egress_mode": "NATIVE_HEARTBEAT_CORE",
+      "heartbeat_state": "TURN_TRANSACTION_VERIFIED_LOCAL", "ttl_seconds": 300, "adapter_ref": "evidenceops-capability-heartbeat",
+      "workaround_routes": [{"route":"HOST_AND_VERIFY_NATIVE_CORE","authority_class":"A1","effectful":true,"score":1.0,"proof_state":"IMPLEMENTED_LOCAL","retry_seconds":300,"next_action":"Publish, run hosted CI, deploy privately and prove one provider-backed bidirectional canary."}]
+    },
+    {
+      "surface_id": "local-workstation", "node_id": "HB-LOCAL-WORKSTATION", "title": "Authorised local workstation and containers", "kind": "LOCAL_RUNTIME",
+      "privacy_tier": "P2", "ingress_mode": "LOCAL_CLI_OR_HOOK", "egress_mode": "LOCAL_NOTIFICATION_OR_RELAY",
+      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 900, "adapter_ref": "local-sovereign-runner",
+      "workaround_routes": [{"route":"LOCAL_CLI_EVENT_SPOOL","authority_class":"A1","effectful":false,"score":0.8,"proof_state":"DESIGNED","retry_seconds":900,"next_action":"Install a user-scoped event spool with secure relay and verify restart recovery; do not monitor unrelated local activity."}]
+    }
+  ]
+}

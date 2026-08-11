@@ -1,0 +1,65 @@
+name: Observe IPEP Offline Whisper Runtime
+
+on:
+  workflow_run:
+    workflows: ['Package IPEP Offline Whisper Runtime']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish-observation:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Read run and artifacts
+        env:
+          GH_TOKEN: ${{ github.token }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          gh api "repos/${REPOSITORY}/actions/runs/${RUN_ID}/artifacts?per_page=100" > /tmp/artifacts.json
+          python - <<'PY' > deployment_receipts/ipep-whisper-offline-runtime-observation.json
+          import json, os
+          from datetime import datetime, timezone
+          raw=json.load(open('/tmp/artifacts.json',encoding='utf-8'))
+          artifacts=[{
+              'id':a.get('id'),
+              'name':a.get('name'),
+              'size_in_bytes':a.get('size_in_bytes'),
+              'expired':a.get('expired'),
+              'digest':a.get('digest')
+          } for a in raw.get('artifacts',[])]
+          print(json.dumps({
+              'receipt':'IPEP-OFFLINE-WHISPER-RUNTIME-WORKFLOW-OBSERVATION',
+              'observed_at':datetime.now(timezone.utc).isoformat(),
+              'run_id':int(os.environ['RUN_ID']),
+              'run_url':os.environ['RUN_URL'],
+              'conclusion':os.environ['RUN_CONCLUSION'],
+              'source_sha':os.environ['SOURCE_SHA'],
+              'artifacts':artifacts
+          },indent=2,sort_keys=True))
+          PY
+
+      - name: Publish observation
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'ipep-whisper-observer[bot]'
+          git config user.email 'ipep-whisper-observer[bot]@users.noreply.github.com'
+          git add deployment_receipts/ipep-whisper-offline-runtime-observation.json
+          git commit -m 'Record IPEP offline Whisper runtime observation [skip ci]' || exit 0
+          git pull --rebase origin main
+          git push origin HEAD:main

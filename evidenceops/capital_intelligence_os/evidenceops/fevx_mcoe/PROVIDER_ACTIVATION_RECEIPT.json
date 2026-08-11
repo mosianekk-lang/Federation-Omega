@@ -1,0 +1,22 @@
+{
+  "activation_id": "EVIDENCEOPS-FEVX-ADAPTER-V1-PROVIDER-ACTIVATION",
+  "adapter": "evidenceops/fevx_adapter_v1",
+  "authority": "A1_INTERNAL",
+  "canonical_owner": "Federation Omega",
+  "case_wall_required": true,
+  "cse_provider_level": 5,
+  "domain_consumer": "EvidenceOps",
+  "evidenceops_adapter_level": 4,
+  "external_effect": false,
+  "integration_state": "PROVIDER_VERIFIED_SUPERVISED_READ_ONLY_ANALYTICAL_SERVICE",
+  "level_6_eligible": false,
+  "provider_heartbeat": "runtime/evidenceops_fevx_adapter/heartbeat/latest.json",
+  "provider_proof_chain": "runtime/evidenceops_fevx_adapter/proofs/proof_chain_head.json",
+  "provider_result": "runtime/evidenceops_fevx_adapter/results/latest.json",
+  "provider_state": "runtime/evidenceops_fevx_adapter/state/actual_state.json",
+  "real_case_accuracy_evidence": false,
+  "source_write": false,
+  "trust_inheritance": false,
+  "truth_boundary": "Provider activation proves the synthetic control canary and actual twenty-module CSE execution. It does not prove legal accuracy, a real case outcome, or authority for consequential action.",
+  "verified_fact_write": false
+}

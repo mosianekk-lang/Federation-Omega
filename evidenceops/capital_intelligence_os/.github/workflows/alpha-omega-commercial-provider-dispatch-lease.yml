@@ -1,0 +1,177 @@
+name: Alpha Omega Commercial Provider Dispatch Lease Proof
+
+on:
+  pull_request:
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-provider-dispatch-lease.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'alpha_omega_commercial/**'
+      - '.github/workflows/alpha-omega-commercial-provider-dispatch-lease.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: alpha-omega-commercial-provider-dispatch-lease-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Compile commercial package
+        run: python -m compileall -q alpha_omega_commercial
+
+      - name: Run provider dispatch lease and authority regression suite
+        run: >-
+          python -m unittest -v
+          alpha_omega_commercial.test_provider_dispatch_claim_lease
+          alpha_omega_commercial.test_provider_dispatch_outbox
+          alpha_omega_commercial.test_authority_action_idempotency
+          alpha_omega_commercial.test_authority_action_coordination
+          alpha_omega_commercial.test_authority_action_journal
+          alpha_omega_commercial.test_authority_action_crash_recovery
+          alpha_omega_commercial.test_authority_action_atomicity
+          alpha_omega_commercial.test_authority_snapshot_action_binding
+          alpha_omega_commercial.test_authority_snapshot_anti_rollback
+          alpha_omega_commercial.test_authority_snapshot_control_plane
+          alpha_omega_commercial.test_governed_commercial_assurance
+
+      - name: Execute provider dispatch claim lease proof
+        run: >-
+          python -m alpha_omega_commercial.prove_provider_dispatch_claim_lease
+          --output artifacts
+
+      - name: Validate contract checkpoint projection and truth boundary
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path('alpha_omega_commercial')
+          contract = json.loads((root / 'provider_dispatch_claim_lease_contract.json').read_text())
+          checkpoint = json.loads((root / 'provider_dispatch_claim_lease_checkpoint.json').read_text())
+          projection = json.loads((root / 'canonical_commercial_api_effective_v12.json').read_text())
+          receipt = json.loads(Path('artifacts/provider-dispatch-claim-lease-receipt.json').read_text())
+
+          assert contract['control_id'] == 'AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12'
+          assert contract['stage_scope'] == ['C03', 'C06', 'C07', 'C11', 'C14', 'C15']
+          assert contract['depends_on']['pull_request'] == 140
+          assert contract['depends_on']['merge_commit'] == '65e19e2643e4b6aa50bb5b9aba111f66d15cb814'
+          assert contract['depends_on']['google_drive_release_readback_verified'] is True
+          rules = contract['claim_rules']
+          assert rules['prepared_v11_dispatch_required'] is True
+          assert rules['one_active_local_worker_per_dispatch'] is True
+          assert rules['same_worker_claim_retry_is_idempotent'] is True
+          assert rules['competing_worker_blocked_until_expiry_or_abandonment'] is True
+          assert rules['minimum_lease_seconds'] == 5
+          assert rules['maximum_lease_seconds'] == 900
+          assert rules['expired_claim_takeover_supported'] is True
+          assert rules['stale_claim_token_rejected'] is True
+          assert rules['receipt_requires_current_unexpired_claim'] is True
+          assert rules['hash_chained_claim_history_required'] is True
+          assert rules['local_duplicate_dispatch_prevented'] is True
+          assert rules['distributed_provider_exactly_once_proven'] is False
+          assert contract['verified_live_revenue_events'] == 0
+          assert contract['full_commercial_maturity'] is False
+
+          dependency = checkpoint['dependency_checkpoint']
+          assert dependency['preceding_pull_request'] == 140
+          assert dependency['preceding_drive_readback_verified'] is True
+          assert dependency['programme_dependency_order_verified'] is True
+          assert dependency['institution_state_preserved'] is True
+          assert checkpoint['status'] in {
+              'PROVIDER_DISPATCH_LOCAL_LEASE_IMPLEMENTED_PROVIDER_CI_PENDING_EXTERNAL_GATES_UNCHANGED',
+              'PROVIDER_DISPATCH_LOCAL_LEASE_PROVIDER_PROOF_VERIFIED_EXTERNAL_GATES_UNCHANGED',
+              'PROVIDER_DISPATCH_LOCAL_LEASE_RELEASE_RECONCILIATION_PROVIDER_PROOF_VERIFIED',
+          }
+          assert checkpoint['candidate_projection']['capability_revision'] == 'AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12'
+          assert checkpoint['candidate_projection']['canonical_class'] == 'LeasedProviderDispatchOutboxCommercialControlPlane'
+          assert all(value is False for value in checkpoint['external_gates'].values())
+          assert checkpoint['commercial_truth']['verified_live_revenue_events'] == 0
+          assert checkpoint['commercial_truth']['distributed_provider_exactly_once_proven'] is False
+          assert checkpoint['commercial_truth']['full_commercial_maturity'] is False
+
+          assert projection['effective_canonical_class'] == 'LeasedProviderDispatchOutboxCommercialControlPlane'
+          dispatch = projection['provider_dispatch']
+          assert dispatch['one_active_local_worker_per_dispatch'] is True
+          assert dispatch['expired_claim_takeover_supported'] is True
+          assert dispatch['stale_claim_token_rejected'] is True
+          assert dispatch['receipt_requires_current_unexpired_claim'] is True
+          assert dispatch['local_duplicate_dispatch_prevented'] is True
+          assert dispatch['live_provider_receipt_admission'] == 'PROVIDER_PROOF_REQUIRED'
+          assert dispatch['distributed_provider_exactly_once'] == 'NOT_PROVEN'
+          assert projection['verified_live_revenue_events'] == 0
+          assert projection['full_commercial_maturity'] is False
+
+          assert receipt['control_id'] == 'AO-COMMERCIAL-PROVIDER-DISPATCH-LEASE-V12'
+          assert receipt['checks_required'] == len(receipt['checks'])
+          assert receipt['checks_failed'] == 0
+          assert all(receipt['checks'].values())
+          safety = receipt['provider_dispatch_claim_safety']
+          assert safety['one_active_local_worker_per_dispatch'] is True
+          assert safety['competing_worker_blocked_during_active_lease'] is True
+          assert safety['expired_claim_takeover_supported'] is True
+          assert safety['stale_claim_token_rejected'] is True
+          assert safety['receipt_requires_current_unexpired_claim'] is True
+          assert safety['hash_chained_claim_history'] is True
+          assert safety['local_duplicate_dispatch_prevented'] is True
+          assert safety['external_mutation_performed'] is False
+          assert safety['live_provider_operation_proven'] is False
+          assert safety['distributed_provider_exactly_once_proven'] is False
+          assert receipt['commercial_truth']['verified_live_revenue_events'] == 0
+          assert receipt['commercial_truth']['cloud_run_operation_proven'] is False
+          assert receipt['commercial_truth']['payment_provider_operation_proven'] is False
+          assert receipt['commercial_truth']['full_commercial_maturity'] is False
+          assert receipt['external_gate_effect'] == 'UNCHANGED'
+          assert receipt['owner_authority']['financial_commitments'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['contracts'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['external_communications'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['consequential_releases'] == 'OWNER_RESERVED'
+          assert receipt['owner_authority']['revenue_recognition'] == 'OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED'
+          PY
+
+      - name: Verify no secret-shaped values are present
+        run: |
+          python - <<'PY'
+          from pathlib import Path
+          import re
+
+          roots = [
+              Path('alpha_omega_commercial/provider_dispatch_claim_lease.py'),
+              Path('alpha_omega_commercial/prove_provider_dispatch_claim_lease.py'),
+              Path('alpha_omega_commercial/test_provider_dispatch_claim_lease.py'),
+              Path('alpha_omega_commercial/provider_dispatch_claim_lease_contract.json'),
+              Path('alpha_omega_commercial/provider_dispatch_claim_lease_checkpoint.json'),
+              Path('alpha_omega_commercial/canonical_commercial_api_effective_v12.json'),
+              Path('artifacts'),
+          ]
+          forbidden = re.compile(r'(-----BEGIN (RSA |EC |OPENSSH )?PRIVATE KEY-----|sk-[A-Za-z0-9]{20,}|AIza[0-9A-Za-z_-]{30,})')
+          for root in roots:
+              paths = root.rglob('*') if root.is_dir() else [root]
+              for path in paths:
+                  if path.is_file():
+                      assert not forbidden.search(path.read_text(errors='ignore')), f'credential-shaped material in {path}'
+          PY
+
+      - name: Upload immutable provider dispatch claim lease proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: alpha-omega-commercial-provider-dispatch-lease-proof
+          path: artifacts
+          if-no-files-found: error
+          retention-days: 90

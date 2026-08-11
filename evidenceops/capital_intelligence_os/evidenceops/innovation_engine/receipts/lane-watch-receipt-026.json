@@ -1,0 +1,38 @@
+{
+  "acquisition_receipt_path": "kimmie_seed/nature_intelligence/receipts/archive/NATURE-ACQ-20260803T052836.json",
+  "acquisition_receipt_sha256": "d1f27e43f37a4abff45eccc362aae522a61f6dc6bacd7cff43fb808d220a6ce0",
+  "acquisition_receipt_snapshot_commit": "d1806896f4c47d0b32abb64629a3d17bdfb6f15a",
+  "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260803-022.json",
+  "checkpoint_sha256": "34d41522cc0d732633a62d7f414c00d083f67d365bf4054f99fcd1e8bc63c4ec",
+  "external_acquisition_cycles_verified": 4,
+  "health_path": "kimmie_seed/nature_intelligence/monitoring/cycles/NATURE-ACQ-20260803T052836-health.json",
+  "health_sha256": "b68fe5a0b5b3109c18852405a999778b8d98605c6798a8aa031ab13a7532124c",
+  "health_snapshot_commit": "3d8c232bf4189d29f9f900db87ecab5f18d1b145",
+  "identity_drift": "NONE_DETECTED",
+  "integrity_reconciliation": "026A_IMMUTABLE_POINTERS_VERIFIED",
+  "ipep_bible": {
+    "correction_receipt": "KIMMIE SEED PROOF POINTER RECONCILIATION 026A",
+    "evidence_note_sha256": "5a3741e317d71eb553594f3ae321400a0ea81ded2ecdcecd663e541c43c30ebb",
+    "hash_readback": {
+      "end_index": 112745,
+      "start_index": 112681,
+      "tab_id": "t.0"
+    },
+    "heading_readback": {
+      "end_index": 110278,
+      "start_index": 110217,
+      "tab_id": "t.0"
+    },
+    "revision_id": "AIroW366s9nR4bblJU9WigyCiYCcOZqrrha-1RTgOiuJ0_7heKzXVm7QOQGDUjiUlLQzo5B1Q90ZsF0tsBaV-65VdPoCU7k-9tozey3-Jzg"
+  },
+  "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+  "observed_at": "2026-08-03T07:29:00+02:00",
+  "owner_decision_required": false,
+  "proof_commit": "208865474a01789b90da21612fd0e528503c5445",
+  "receipt_id": "LANE-WATCH-RECEIPT-026",
+  "receipt_sha256": "5455e96890218f8cdff7116c4e3bfac1ac454ea467f6d8ff52674ff581ceef35",
+  "root_promotion": "NONE",
+  "snapshot_commit": "d1806896f4c47d0b32abb64629a3d17bdfb6f15a",
+  "status": "PASS",
+  "transition": "SEED_TO_GERMINATED"
+}

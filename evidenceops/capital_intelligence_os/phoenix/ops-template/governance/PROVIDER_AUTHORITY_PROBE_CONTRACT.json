@@ -1,0 +1,38 @@
+{
+  "schema": "FEDOMEGA-PHOENIX-PROVIDER-AUTHORITY-PROBE-CONTRACT-2",
+  "probe_entrypoint": "provider_authority_probe.py",
+  "probe_get_only": true,
+  "credential_source": "GH_ADMIN_TOKEN_PRIVATE_PROCESS_ONLY",
+  "credential_value_recorded": false,
+  "provider_mutation_performed": false,
+  "authority_receipt_max_age_seconds": 300,
+  "authority_receipt_max_future_skew_seconds": 30,
+  "authority_receipt_semantic_checks_required": true,
+  "just_in_time_reprobe_required_before_authorization_state": true,
+  "just_in_time_reprobe_get_only": true,
+  "continuity_fields": [
+    "authority_mode",
+    "repository_creation_endpoint",
+    "legacy_main_sha",
+    "core_target_exists",
+    "ops_target_exists"
+  ],
+  "continuity_drift_status": "AUTHORITY_CONTINUITY_INVALIDATED",
+  "user_scoped_route": {
+    "identity_endpoint": "/user",
+    "repository_creation_endpoint": "/user/repos",
+    "owner_identity_required": true,
+    "legacy_admin_required": true
+  },
+  "installation_template_route": {
+    "identity_endpoint": "/installation",
+    "repository_selection_required": "all",
+    "administration_permission_required": "write",
+    "contents_permission_required": "write",
+    "metadata_permission_required": "read",
+    "source_repository_access_required": true
+  },
+  "selected_repository_installation_status": "AUTHORITY_BLOCKED_EXACT_REMEDIATION_REQUIRED",
+  "owner_authorization_still_required": true,
+  "authority_receipt_required_before_apply": true
+}

@@ -1,0 +1,32 @@
+substitutions:
+  _REGION: africa-south1
+  _SERVICE: evidenceops-mcp-adapter
+  _OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  _RUNTIME_SA: evidenceops-mcp-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/$PROJECT_ID/evidenceops/mcp-adapter:$COMMIT_SHA", "evidenceops-mcp-adapter"]
+  - name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/$PROJECT_ID/evidenceops/mcp-adapter:$COMMIT_SHA"]
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk:slim
+    entrypoint: gcloud
+    args:
+      - run
+      - deploy
+      - ${_SERVICE}
+      - --image=${_REGION}-docker.pkg.dev/$PROJECT_ID/evidenceops/mcp-adapter:$COMMIT_SHA
+      - --region=${_REGION}
+      - --platform=managed
+      - --service-account=${_RUNTIME_SA}
+      - --allow-unauthenticated
+      - --set-env-vars=FO_OPERATOR_URL=${_OPERATOR_URL}
+      - --set-secrets=FO_ADMIN_TOKEN=fo-operator-admin-token:latest,MCP_ACCESS_TOKEN=evidenceops-mcp-access-token:latest
+      - --min-instances=0
+      - --max-instances=3
+      - --memory=512Mi
+      - --cpu=1
+      - --timeout=120
+images:
+  - ${_REGION}-docker.pkg.dev/$PROJECT_ID/evidenceops/mcp-adapter:$COMMIT_SHA
+options:
+  logging: CLOUD_LOGGING_ONLY

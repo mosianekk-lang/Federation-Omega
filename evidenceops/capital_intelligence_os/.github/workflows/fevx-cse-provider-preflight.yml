@@ -1,0 +1,252 @@
+name: FEVX CSE Provider Authority Preflight
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/fevx-cse-provider-preflight.yml"
+      - "deployments/fevx-cse/provider-preflight-trigger.txt"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: fevx-cse-provider-authority-preflight
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  SERVICE: fevx-cse-shadow
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  DEFAULT_WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEFAULT_DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_REPOSITORY: fo-runtime
+  DATABASE_SECRET: NEXUS_DATABASE_URL
+
+jobs:
+  preflight:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    env:
+      HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+      HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
+
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Authenticate with service-account key when present
+        if: ${{ env.HAS_GCP_SA_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate with repository WIF pair when present
+        if: ${{ env.HAS_GCP_SA_KEY != 'true' && env.HAS_GCP_WIF_PAIR == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Authenticate with canonical WIF fallback
+        if: ${{ env.HAS_GCP_SA_KEY != 'true' && env.HAS_GCP_WIF_PAIR != 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.DEFAULT_WIF_PROVIDER }}
+          service_account: ${{ env.DEFAULT_DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute redacted read-only preflight
+        shell: bash
+        env:
+          DIRECT_OPERATOR_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p deployments/fevx-cse /tmp/fevx-cse
+          ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | head -n1 || true)"
+          TOKEN="$DIRECT_OPERATOR_TOKEN"
+          TOKEN_SOURCE=""
+          TOKEN_ERROR=""
+          if [[ -n "$TOKEN" ]]; then
+            TOKEN_SOURCE="github_actions_secret"
+          elif [[ -n "$ACCOUNT" ]]; then
+            set +e
+            TOKEN="$(gcloud secrets versions access latest --secret=fo-operator-admin-token --project="$PROJECT_ID" 2>/tmp/fevx-cse/token-error.txt)"
+            RC=$?
+            set -e
+            if [[ $RC -eq 0 && -n "$TOKEN" ]]; then
+              TOKEN_SOURCE="google_secret_manager"
+            else
+              TOKEN=""
+              TOKEN_ERROR="$(tail -c 2000 /tmp/fevx-cse/token-error.txt 2>/dev/null || true)"
+            fi
+          fi
+          [[ -z "$TOKEN" ]] || echo "::add-mask::$TOKEN"
+          export CSE_ACTIVE_ACCOUNT="$ACCOUNT" CSE_OPERATOR_TOKEN="$TOKEN" CSE_TOKEN_SOURCE="$TOKEN_SOURCE" CSE_TOKEN_ERROR="$TOKEN_ERROR"
+
+          python - <<'PY'
+          from __future__ import annotations
+          import json, os, subprocess, urllib.error, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from typing import Any
+
+          project=os.environ['PROJECT_ID']; region=os.environ['REGION']; service=os.environ['SERVICE']
+          operator=os.environ['OPERATOR_URL'].rstrip('/'); token=os.environ.get('CSE_OPERATOR_TOKEN','')
+          pointer_path=Path('deployments/fevx-cse/ARTIFACT_POINTER.json')
+
+          def redact(value: Any) -> Any:
+              sensitive={'access_token','refresh_token','id_token','authorization','private_key','client_secret','secret_value','credentials_json'}
+              if isinstance(value,dict):
+                  return {k:('[REDACTED]' if str(k).lower() in sensitive else redact(v)) for k,v in value.items()}
+              if isinstance(value,list): return [redact(v) for v in value]
+              if isinstance(value,str) and token: return value.replace(token,'[REDACTED]')
+              return value
+
+          def run(args: list[str]) -> dict[str,Any]:
+              p=subprocess.run(args,text=True,capture_output=True)
+              return {'ok':p.returncode==0,'exit_code':p.returncode,'stdout':p.stdout.strip()[:10000],'stderr':p.stderr.strip()[:3000]}
+
+          def gcloud(*args: str) -> dict[str,Any]:
+              return run(['gcloud',*args,'--project',project])
+
+          def call(path: str, body: dict|None=None, authenticated: bool=False) -> dict[str,Any]:
+              headers={'accept':'application/json'}; data=None
+              if body is not None:
+                  headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
+              if authenticated and token: headers['x-fo-admin-token']=token
+              req=urllib.request.Request(operator+path,data=data,headers=headers,method='POST' if body is not None else 'GET')
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as response:
+                      raw=response.read().decode('utf-8','replace')
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={'text':raw[:5000]}
+                      return {'http_status':response.status,'body':redact(parsed)}
+              except urllib.error.HTTPError as exc:
+                  raw=exc.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={'text':raw[:5000]}
+                  return {'http_status':exc.code,'body':redact(parsed)}
+              except Exception as exc:
+                  return {'error':f'{type(exc).__name__}: {exc}'}
+
+          pointer={}
+          pointer_error=None
+          try: pointer=json.loads(pointer_path.read_text())
+          except Exception as exc: pointer_error=f'{type(exc).__name__}: {exc}'
+
+          public_health=call('/health')
+          public_contract=call('/')
+          auth_status=call('/execute',{'action':'STATUS','payload':{'purpose':'FEVX CSE v1.1 authority preflight','mutation':'NONE'}},True) if token else None
+          baseline=call('/execute',{'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':'architron9','purpose':'read-only baseline'}},True) if token else None
+
+          project_read=gcloud('projects','describe',project,'--format=json(projectId,projectNumber,lifecycleState)')
+          wif_read=gcloud('iam','workload-identity-pools','providers','describe','github','--workload-identity-pool','github-federation-omega','--location','global','--format=json(name,state,attributeCondition,attributeMapping)')
+          deployer_read=gcloud('iam','service-accounts','describe',os.environ['DEFAULT_DEPLOYER_SA'],'--format=json(email,disabled)')
+          runtime_read=gcloud('iam','service-accounts','describe',os.environ['RUNTIME_SA'],'--format=json(email,disabled)')
+          repo_read=gcloud('artifacts','repositories','describe',os.environ['ARTIFACT_REPOSITORY'],'--location',region,'--format=json(name,format,mode)')
+          secret_read=gcloud('secrets','describe',os.environ['DATABASE_SECRET'],'--format=json(name,replication)')
+          secret_version=gcloud('secrets','versions','list',os.environ['DATABASE_SECRET'],'--filter=state=ENABLED','--limit=1','--format=value(name)')
+          target_read=gcloud('run','services','describe',service,'--region',region,'--format=json(metadata.name,status.url,status.latestReadyRevisionName,status.traffic)')
+
+          try:
+              wif_obj=json.loads(wif_read['stdout']) if wif_read['ok'] and wif_read['stdout'] else {}
+          except Exception:
+              wif_obj={}
+          expected_archive='f4da04ac026628e022814f306acfe9e5303ee89a107359ab50a91fa04442ac50'
+          expected_wheel='8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022'
+          checks={
+            'artifact_pointer': pointer_error is None,
+            'archive_digest': (pointer.get('source_archive') or {}).get('sha256')==expected_archive,
+            'wheel_digest': (pointer.get('wheel') or {}).get('sha256')==expected_wheel,
+            'operator_public_health': public_health.get('http_status')==200 and public_health.get('body',{}).get('ok') is True,
+            'operator_contract': public_contract.get('http_status')==200 and 'DEPLOY_SOLUTION5_LOCKED' in public_contract.get('body',{}).get('allowedActions',[]),
+            'active_gcloud_identity': bool(os.environ.get('CSE_ACTIVE_ACCOUNT')),
+            'project_read': project_read['ok'],
+            'wif_provider_active': wif_read['ok'] and wif_obj.get('state')=='ACTIVE',
+            'deployer_service_account': deployer_read['ok'],
+            'runtime_service_account': runtime_read['ok'],
+            'artifact_repository': repo_read['ok'],
+            'database_secret_metadata': secret_read['ok'],
+            'database_secret_enabled_version': secret_version['ok'] and bool(secret_version['stdout']),
+            'operator_token': bool(token),
+            'authenticated_status': auth_status is not None and auth_status.get('http_status')==200 and auth_status.get('body',{}).get('ok') is True,
+            'authenticated_baseline': baseline is not None and baseline.get('http_status')==200 and baseline.get('body',{}).get('ok') is True,
+          }
+          blockers=[name for name,passed in checks.items() if not passed]
+          classification='READY_FOR_FEVX_CSE_PRIVATE_SHADOW_DEPLOYMENT' if not blockers else 'BLOCKED_PROVIDER_AUTHORITY_PREFLIGHT'
+          receipt={
+            'receipt':'FEVX-CSE-PROVIDER-AUTHORITY-PREFLIGHT',
+            'recorded_at':datetime.now(timezone.utc).isoformat(),
+            'classification':classification,
+            'mutation_attempted':False,
+            'secret_values_recorded':False,
+            'project':project,
+            'region':region,
+            'service':service,
+            'active_account':os.environ.get('CSE_ACTIVE_ACCOUNT') or None,
+            'token_source':os.environ.get('CSE_TOKEN_SOURCE') or 'none',
+            'token_present':bool(token),
+            'token_error':os.environ.get('CSE_TOKEN_ERROR','')[:2000] or None,
+            'checks':checks,
+            'blockers':blockers,
+            'artifact_pointer':pointer,
+            'artifact_pointer_error':pointer_error,
+            'public_health':public_health,
+            'public_contract':public_contract,
+            'authenticated_status':auth_status,
+            'authenticated_baseline':baseline,
+            'project_read':project_read,
+            'wif_provider_read':wif_read,
+            'deployer_service_account_read':deployer_read,
+            'runtime_service_account_read':runtime_read,
+            'artifact_repository_read':repo_read,
+            'database_secret_read':secret_read,
+            'database_secret_version_present':bool(secret_version['stdout']),
+            'target_service_read':target_read,
+            'next_action':'deploy private zero-traffic shadow' if not blockers else 'repair only the listed authority controls and rerun preflight',
+            'external_effect':False,
+          }
+          out=Path('deployments/fevx-cse/PROVIDER_AUTHORITY_PREFLIGHT_RECEIPT.json')
+          out.write_text(json.dumps(redact(receipt),indent=2,sort_keys=True)+'\n')
+          print(json.dumps(redact(receipt),indent=2,sort_keys=True))
+          PY
+
+      - name: Persist redacted preflight receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "fevx-cse-provider-preflight[bot]"
+          git config user.email "fevx-cse-provider-preflight[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add deployments/fevx-cse/PROVIDER_AUTHORITY_PREFLIGHT_RECEIPT.json
+          if git diff --cached --quiet; then
+            echo "Receipt unchanged"
+          else
+            git commit -m "Record FEVX CSE provider authority preflight [skip cse-preflight]"
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: fevx-cse-provider-authority-preflight
+          path: deployments/fevx-cse/PROVIDER_AUTHORITY_PREFLIGHT_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30

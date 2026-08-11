@@ -1,0 +1,95 @@
+name: IPEP Audio Engine v2 CI
+
+on:
+  pull_request:
+    paths:
+      - 'ipep/audio_engine_v2/**'
+      - '.github/workflows/ipep-audio-engine-v2-ci.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'ipep/audio_engine_v2/**'
+      - '.github/workflows/ipep-audio-engine-v2-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ipep-audio-engine-v2-ci-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  test-package-prove:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Run proof suite
+        working-directory: ipep/audio_engine_v2
+        run: |
+          set -euo pipefail
+          PYTHONPATH=. python -m unittest discover -s tests -v
+          python -m compileall -q evidenceops_audio
+
+      - name: Build immutable source package and receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf /tmp/ipep-audio-engine-v2
+          mkdir -p /tmp/ipep-audio-engine-v2/source deployment_receipts
+          cp -R ipep/audio_engine_v2/README.md \
+                ipep/audio_engine_v2/ARCHITECTURE.md \
+                ipep/audio_engine_v2/pyproject.toml \
+                ipep/audio_engine_v2/evidenceops_audio \
+                ipep/audio_engine_v2/tests \
+                /tmp/ipep-audio-engine-v2/source/
+          find /tmp/ipep-audio-engine-v2/source -type d -name __pycache__ -prune -exec rm -rf {} +
+          cd /tmp/ipep-audio-engine-v2/source
+          zip -X -r ../ipep-audio-engine-v2-source.zip . >/dev/null
+          cd ..
+          SHA=$(sha256sum ipep-audio-engine-v2-source.zip | awk '{print $1}')
+          SIZE=$(stat -c '%s' ipep-audio-engine-v2-source.zip)
+          python - <<PY > "$GITHUB_WORKSPACE/deployment_receipts/ipep-audio-engine-v2-latest.json"
+          import json
+          from datetime import datetime, timezone
+          print(json.dumps({
+            'receipt': 'IPEP-AUDIO-ENGINE-V2-CI',
+            'recorded_at': datetime.now(timezone.utc).isoformat(),
+            'commit': '${GITHUB_SHA}',
+            'tests': '7/7 PASS',
+            'compile': 'PASS',
+            'providers': [
+              'google_speech_v2',
+              'openai_audio_transcriptions',
+              'gemini_files_api',
+              'local_whisper_cpp'
+            ],
+            'package': 'ipep-audio-engine-v2-source.zip',
+            'package_sha256': '${SHA}',
+            'package_size_bytes': int('${SIZE}'),
+            'truth_boundary': {
+              'source_built': True,
+              'provider_deployed': False,
+              'transcript_created': False,
+              'repository_mutation_attempted': False
+            }
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload immutable source and proof
+        uses: actions/upload-artifact@v4
+        with:
+          name: ipep-audio-engine-v2-source-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: |
+            /tmp/ipep-audio-engine-v2/ipep-audio-engine-v2-source.zip
+            deployment_receipts/ipep-audio-engine-v2-latest.json

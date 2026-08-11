@@ -1,0 +1,36 @@
+{
+  "assignments_path": "kimmie_seed/workforce/deployment/current_assignments.json",
+  "checkpoint_path": "kimmie_seed/checkpoints/KSA-20260803-023.json",
+  "checkpoint_sha256": "5e5e7656d783871d899348360a4af5d95a8506ca92e499b017d6989d93cb860f",
+  "child_promotion": "NONE",
+  "deployment_commit": "7beb4bdfc95f6b92c08ffc14929593958c0c3797",
+  "deployment_sha256": "4c40def99c751f2a2d4298ca34f22027e84c77d09e5fc1af12e3a7abe7e05722",
+  "event": "KIMMIE_SEED_199_BOT_WORKFORCE_DEPLOYED_AND_RECONCILED",
+  "identity_drift": "NONE_DETECTED",
+  "ipep_bible": {
+    "evidence_note_sha256": "f0b8b8c51831b6d06b595f2fa5665d95bf4402b21834b97cd0012dc950ebca74",
+    "hash_readback": {
+      "end_index": 117562,
+      "start_index": 117498,
+      "tab_id": "t.0"
+    },
+    "heading_readback": {
+      "end_index": 114983,
+      "start_index": 114912,
+      "tab_id": "t.0"
+    },
+    "receipt": "EVIDENCE NOTE \u2014 KIMMIE SEED 199-BOT WORKFORCE PROOF RECONCILIATION 027A",
+    "revision_id": "AIroW34RKg6sTgbfenJZUXjwR2RU1e0KR-2xT4tbnh1tozIyIDkq1FTDfQ7PlDpcMgZtrEUZZlzFX67Die5aP-pgPIOIM8tCYpQL-neKiQo"
+  },
+  "observed_at": "2026-08-03T08:10:51+02:00",
+  "owner_decision_required": false,
+  "receipt_id": "LANE-WATCH-RECEIPT-027",
+  "receipt_sha256": "d8574f1c5ea28588db84a22124d2aa1a7b18991aae605e4b3d176a61e0e8bb8d",
+  "root_promotion": "NONE",
+  "seed_id": "KIMMIE-IPEP-001",
+  "status": "PASS",
+  "trigger_repair_commit": "fbee376da48cd4f2068f86c69f7ba2b3888f3574",
+  "workforce_id": "KIMMIE-SEED-199",
+  "workforce_receipt_path": "kimmie_seed/workforce/receipts/latest_workforce_receipt.json",
+  "workforce_receipt_sha256": "7c200bb7d817286363bb1812c061f8c99fc52e0f5961332696ced6aa7f6443a8"
+}

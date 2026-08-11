@@ -1,0 +1,80 @@
+name: Kimmie Seed 199-Bot Workforce
+
+on:
+  workflow_dispatch:
+  push:
+    branches: [main]
+    paths:
+      - 'kimmie_seed/workforce/bot_manifest_199.json'
+      - 'kimmie_seed/workforce/coordinator.py'
+      - 'kimmie_seed/workforce/test_coordinator.py'
+      - 'kimmie_seed/workforce/README.md'
+      - '.github/workflows/kimmie-seed-199-bot-workforce.yml'
+  schedule:
+    - cron: '11 3 * * *'
+
+permissions:
+  contents: write
+
+concurrency:
+  group: kimmie-seed-199-bot-workforce
+  cancel-in-progress: false
+
+jobs:
+  deploy-workforce:
+    if: ${{ !contains(github.event.head_commit.message || '', '[skip workforce]') }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Validate 199-role manifest
+        run: python kimmie_seed/workforce/coordinator.py --validate-only
+
+      - name: Run workforce regression tests
+        run: python -m unittest kimmie_seed/workforce/test_coordinator.py -v
+
+      - name: Deploy packet-bound workforce
+        run: python kimmie_seed/workforce/coordinator.py
+
+      - name: Verify deployment receipt
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('kimmie_seed/workforce/receipts/latest_workforce_receipt.json').read_text())
+          deployment = json.loads(Path('kimmie_seed/workforce/deployment/current_assignments.json').read_text())
+          assert receipt['status'] == 'PASS'
+          assert receipt['bot_count'] == 199
+          assert receipt['assignment_count'] == 199
+          assert receipt['unique_bot_ids'] == 199
+          assert receipt['unique_collision_keys'] == 199
+          assert deployment['assignment_count'] == 199
+          assert deployment['independent_verifier_count'] >= 40
+          print(json.dumps({
+              'deployment_sha256': receipt['deployment_sha256'],
+              'receipt_sha256': receipt['receipt_sha256'],
+              'independent_verifier_count': receipt['independent_verifier_count'],
+          }))
+          PY
+
+      - name: Persist deployment proof
+        run: |
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add kimmie_seed/workforce/deployment/current_assignments.json
+          git add kimmie_seed/workforce/receipts/latest_workforce_receipt.json
+          if git diff --cached --quiet; then
+            echo 'No workforce proof-state change.'
+          else
+            git commit -m 'Record Kimmie Seed 199-bot workforce deployment [skip workforce]'
+            git push
+          fi

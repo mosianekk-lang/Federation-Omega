@@ -1,0 +1,121 @@
+{
+  "base_url": "https://super-ai-ui-agent-worker-7ujkyf136q-uc.a.run.app",
+  "mutation_attempted": false,
+  "queue_execution_attempted": false,
+  "receipt": "PFRD-SAIUI-WORKER-CONTRACT-PROBE",
+  "recorded_at": "2026-07-29T13:07:59.039726+00:00",
+  "results": {
+    "/": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "/api-docs": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "/docs": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "/health": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "/openapi.json": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "/openapi.yaml": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "/run-queue": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    },
+    "/status": {
+      "GET": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      },
+      "OPTIONS": {
+        "allow": null,
+        "body": "\n<html><head>\n<meta http-equiv=\"content-type\" content=\"text/html;charset=utf-8\">\n<title>404 Page not found</title>\n</head>\n<body text=#000000 bgcolor=#ffffff>\n<h1>Error: Page not found</h1>\n<h2>The requested URL was not found on this server.</h2>\n<h2></h2>\n</body></html>\n",
+        "content_type": "text/html; charset=UTF-8",
+        "http_status": 404
+      }
+    }
+  }
+}

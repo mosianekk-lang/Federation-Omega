@@ -1,0 +1,47 @@
+{
+  "external_effects": 0,
+  "health": "OPERATIONAL",
+  "policy": {
+    "allowed": [
+      "internal_state_write",
+      "checkpoint",
+      "health_check",
+      "replica_write",
+      "semantic_readback",
+      "rollback_canary",
+      "proof_receipt"
+    ],
+    "authority_ceiling": "A1",
+    "consequential_authority": false,
+    "denied": [
+      "external_send",
+      "legal_filing",
+      "live_hearing_recording",
+      "live_financial_action",
+      "credential_access",
+      "destructive_action",
+      "provider_admin_mutation"
+    ],
+    "external_effects_permitted": false,
+    "policy_sha256": "e728c48e1bdd2984af979992760c94941c05d10ef5e81e96441f5d863df88609"
+  },
+  "provider_event": {
+    "event_name": "schedule",
+    "ref": "refs/heads/main",
+    "repository": "mosianekk-lang/Federation-Omega",
+    "run_attempt": "1",
+    "run_id": "30932577699",
+    "sha": "90339ce7c23aa48a59f9ef9ee02fffc3facd3ed5",
+    "workflow": "EvidenceOps v7.2.2 P12 Provider Worker"
+  },
+  "resume_count": 1,
+  "resumed_from_sha256": "51f32edfcf9d64f7e4cc661e38e6a547ce815fdcac0ee3da72f72115b0712a28",
+  "rollback_verified": true,
+  "schema": "OMEGAMAX_SOL_EVIDENCEOPS_V722_P12_PROVIDER_WORKER_V1",
+  "sequence": 3,
+  "stage_id": "P12-SCOPED-GITHUB-WORKER",
+  "state_sha256": "2a26e162c18a29a22426b7352ca0528354d86f433951d548b201f2ee16d212cb",
+  "status": "OPERATIONAL_VERIFIED_SCOPED",
+  "updated_at_utc": "2026-08-04T17:09:33.880747Z",
+  "version": "7.2.2"
+}

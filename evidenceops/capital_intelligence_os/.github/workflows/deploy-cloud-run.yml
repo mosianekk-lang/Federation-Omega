@@ -1,0 +1,227 @@
+name: Deploy Superior Logic to Cloud Run
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_SLRK_V3_2_TO_ARCHITRON9"
+        required: true
+        type: string
+      wif_receipt:
+        description: "Type FEDOMEGA-WIF-CLOUD-VERIFIED after provider-native verification"
+        required: true
+        type: string
+      promote:
+        description: "Promote the verified canary revision to 100% traffic"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  SERVICE: architron9
+  REPOSITORY: federation-omega
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/architron9:${{ github.sha }}
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate explicit deployment gates
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_RECEIPT: ${{ inputs.wif_receipt }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRMATION" = "DEPLOY_SLRK_V3_2_TO_ARCHITRON9"
+          test "$WIF_RECEIPT" = "FEDOMEGA-WIF-CLOUD-VERIFIED"
+
+  deploy-canary:
+    needs: validate-request
+    runs-on: ubuntu-latest
+    outputs:
+      canary_revision: ${{ steps.canary.outputs.canary_revision }}
+      canary_url: ${{ steps.canary.outputs.canary_url }}
+      previous_ready_revision: ${{ steps.baseline.outputs.previous_ready_revision }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud through keyless OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Verify WIF and least-privilege deployment controls
+        run: |
+          set -euo pipefail
+          ./ops/bootstrap_github_wif.sh --verify | tee /tmp/wif-receipt.json
+          python - <<'PY'
+          import json
+          payload = json.load(open('/tmp/wif-receipt.json', encoding='utf-8'))
+          assert payload['receipt'] == 'FEDOMEGA-WIF-CLOUD-VERIFIED', payload
+          assert payload['state'] == 'VERIFIED', payload
+          assert payload['mutation_performed'] is False, payload
+          PY
+
+      - name: Capture current ready revision
+        id: baseline
+        run: |
+          set -euo pipefail
+          PREVIOUS_READY=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --format='value(status.latestReadyRevisionName)')
+          test -n "$PREVIOUS_READY"
+          echo "previous_ready_revision=$PREVIOUS_READY" >> "$GITHUB_OUTPUT"
+
+      - name: Require the existing Artifact Registry repository
+        run: |
+          set -euo pipefail
+          gcloud artifacts repositories describe "$REPOSITORY" \
+            --project "$PROJECT_ID" --location "$REGION" >/dev/null
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push immutable image
+        run: |
+          set -euo pipefail
+          docker build --pull -t "$IMAGE" .
+          docker push "$IMAGE"
+          DIGEST=$(gcloud artifacts docker images describe "$IMAGE" \
+            --project "$PROJECT_ID" --format='value(image_summary.digest)')
+          test -n "$DIGEST"
+          echo "$DIGEST" | tee /tmp/image-digest.txt
+
+      - name: Deploy zero-traffic tagged canary
+        id: canary
+        run: |
+          set -euo pipefail
+          CANARY_TAG="slrk-v32-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE" \
+            --service-account "$RUNTIME_SA" \
+            --platform managed \
+            --tag "$CANARY_TAG" \
+            --no-traffic \
+            --quiet
+
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service.json
+
+          python - "$CANARY_TAG" <<'PY' > /tmp/canary.env
+          import json, sys
+          tag = sys.argv[1]
+          service = json.load(open('/tmp/service.json', encoding='utf-8'))
+          status = service.get('status', {})
+          created = status.get('latestCreatedRevisionName', '')
+          ready = status.get('latestReadyRevisionName', '')
+          tagged = next((item for item in status.get('traffic', []) if item.get('tag') == tag), {})
+          url = tagged.get('url', '')
+          if not created or created != ready or not url:
+              raise SystemExit(f'Canary not ready: created={created!r} ready={ready!r} url={url!r}')
+          print(f'CANARY_REVISION={created}')
+          print(f'CANARY_URL={url}')
+          PY
+          source /tmp/canary.env
+          echo "canary_revision=$CANARY_REVISION" >> "$GITHUB_OUTPUT"
+          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify tagged canary identity and ECASP health
+        env:
+          CANARY_URL: ${{ steps.canary.outputs.canary_url }}
+        run: |
+          set -euo pipefail
+          TOKEN=$(gcloud auth print-identity-token --audiences="$CANARY_URL")
+          RESPONSE=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $TOKEN" "$CANARY_URL/health")
+          echo "$RESPONSE"
+          python - "$RESPONSE" <<'PY'
+          import json, sys
+          payload = json.loads(sys.argv[1])
+          assert payload.get('status') == 'HEALTHY', payload
+          assert payload.get('version') == '3.2.0', payload
+          assert payload.get('event_chain_valid') is True, payload
+          assert payload.get('ecasp_algorithm') == 'ALG-ECASP-001', payload
+          PY
+
+  promote:
+    if: ${{ inputs.promote }}
+    needs: deploy-canary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Authenticate to Google Cloud through keyless OIDC
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+
+      - name: Promote canary with automatic rollback on failed health
+        env:
+          CANARY_REVISION: ${{ needs.deploy-canary.outputs.canary_revision }}
+          PREVIOUS_READY: ${{ needs.deploy-canary.outputs.previous_ready_revision }}
+        run: |
+          set -euo pipefail
+          rollback() {
+            echo "Promotion verification failed; restoring $PREVIOUS_READY" >&2
+            gcloud run services update-traffic "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --to-revisions "${PREVIOUS_READY}=100" --quiet || true
+          }
+          trap rollback ERR
+
+          gcloud run services update-traffic "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${CANARY_REVISION}=100" --quiet
+
+          URL=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
+          READY=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')
+          test "$READY" = "$CANARY_REVISION"
+          TOKEN=$(gcloud auth print-identity-token --audiences="$URL")
+          RESPONSE=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $TOKEN" "$URL/health")
+          python - "$RESPONSE" <<'PY'
+          import json, sys
+          payload = json.loads(sys.argv[1])
+          assert payload.get('status') == 'HEALTHY', payload
+          assert payload.get('version') == '3.2.0', payload
+          assert payload.get('event_chain_valid') is True, payload
+          assert payload.get('ecasp_algorithm') == 'ALG-ECASP-001', payload
+          PY
+          trap - ERR
+
+          python - <<PY
+          import json
+          print(json.dumps({
+            "receipt": "FEDOMEGA-SLRK-V3.2-CLOUDRUN-VERIFIED",
+            "project": "${PROJECT_ID}",
+            "region": "${REGION}",
+            "service": "${SERVICE}",
+            "revision": "${CANARY_REVISION}",
+            "previous_ready_revision": "${PREVIOUS_READY}",
+            "url": "${URL}",
+            "image": "${IMAGE}",
+            "health": ${RESPONSE}
+          }, sort_keys=True))
+          PY

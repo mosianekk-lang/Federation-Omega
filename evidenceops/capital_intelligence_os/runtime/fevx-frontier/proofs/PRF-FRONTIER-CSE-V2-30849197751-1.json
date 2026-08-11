@@ -1,0 +1,22 @@
+{
+  "after_state_sha256": "8603fd5112dfdc69f3cc4cbc59d31e7e19c85422c1ec4a8786706712629d0683",
+  "before_state_sha256": "1bc08fa52b9fe1ed5845e3ccd2facec315d476e6532e8981b015aca29aa89fb4",
+  "current_verified_level": 5,
+  "external_effect": false,
+  "ledger_head_hash": "5e832884304e6adaa61a7b0057b06907dc55f658e5267dec68f94514c8fb6810",
+  "module_count": 20,
+  "previous_hash": "75d1976bbc4c836df2b76149aefe25a25410ec08d07f5b63d4518f81d0c2e92a",
+  "proof_id": "PRF-FRONTIER-CSE-V2-30849197751-1",
+  "provider": "github_actions",
+  "reapply_test": true,
+  "record_hash": "4259e7b54c01a80b8b56f2f426be44701638d0ca7339bcece895b44bbd185aa4",
+  "recorded_at": "2026-08-03T20:13:02.103896Z",
+  "rollback_test": true,
+  "semantic_hash": "a132abca674cea7114abea22ad82797c2c693fabdbecfcc3f42c03efb130c3f9",
+  "status": "VERIFIED",
+  "workflow_scope": [
+    "REAL-GITHUB-CANONICAL-RUNTIME",
+    "REAL-DRIVE-ARTIFACT-PROVENANCE",
+    "REAL-CSE-V2-RELEASE-INTEGRITY"
+  ]
+}

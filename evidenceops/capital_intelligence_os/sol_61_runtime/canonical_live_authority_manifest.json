@@ -1,0 +1,119 @@
+{
+  "manifest_id": "FO-CLAM-2026-08-04-v1",
+  "owner": "Kim Kagiso Mosiane",
+  "timezone": "Africa/Johannesburg",
+  "doctrine": "proof-before-claim; fail-closed; owner-reserved consequential actions",
+  "canonical_sources": {
+    "full_operating_surface_index": "1XThhZmYI7FpphUFaM9aep3E0KG-criq4HV74C5aH534",
+    "cloudops_command_center": "1OsMaGUmAfv3iszkd6hbY6H1oNznYJ84uqtAga17xpj0",
+    "federation_direct_runtime": "1kSB4iQjOQiErOvdgx2UDv0uT2XGF6SwJ1vb8Smm2RHI",
+    "fo_gas_control_plane": "1ouqoFdrd2HGyOu1NZDWTgC8cxqbq_FZ-H6eGPQA4F_U",
+    "secondary_brain_capability_map": "1a0yRjaEhPZ2LmHo3_a4HvWgt23_l8xVe_6esuEi_Akw",
+    "target_apps_script": "1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R",
+    "genesis_control_plane_script": "1r6L7UzPOg2jiVdwhe_MbFj0x6B6rzKV3x2nwRevQR2RHAWqRPLMB-wDo"
+  },
+  "cloud_run": {
+    "project_id": "sov-hybrid-suite",
+    "region": "africa-south1",
+    "service": "federation-omega-operator",
+    "path": "/execute",
+    "candidate_identities": [
+      "fo-automation-agent",
+      "fo-operator"
+    ],
+    "required_sequence": [
+      "AUTHENTICATED_STATUS",
+      "READ_CLOUD_RUN_SERVICE",
+      "REVERSIBLE_CANARY",
+      "SEMANTIC_READBACK",
+      "ROLLBACK_RECEIPT"
+    ],
+    "promotion_receipts": [
+      "provider_revision",
+      "request_id",
+      "authenticated_principal",
+      "response_status",
+      "response_body_sha256",
+      "readback_match",
+      "rollback_receipt"
+    ],
+    "status": "CONTROL_PLANE_PRESENT_LIVE_INVOCATION_UNPROVEN"
+  },
+  "apps_script": {
+    "script_id": "1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R",
+    "required_identity": "human_google_oauth_subject",
+    "required_scopes": [
+      "https://www.googleapis.com/auth/script.projects",
+      "https://www.googleapis.com/auth/script.deployments"
+    ],
+    "required_sequence": [
+      "STANDARD_CLOUD_PROJECT_BOUND",
+      "APPS_SCRIPT_API_ENABLED",
+      "SOURCE_READ",
+      "REVERSIBLE_SOURCE_WRITE",
+      "SOURCE_READBACK",
+      "SOURCE_RESTORE",
+      "IN_SCRIPT_TRIGGER_INSTALL",
+      "TRIGGER_READBACK",
+      "TRIGGER_DELETE"
+    ],
+    "promotion_receipts": [
+      "oauth_subject",
+      "scope_set",
+      "source_read_receipt",
+      "source_write_receipt",
+      "source_restore_receipt",
+      "trigger_install_receipt",
+      "trigger_delete_receipt"
+    ],
+    "service_accounts_sufficient": false,
+    "status": "OWNER_CONSENT_REQUIRED"
+  },
+  "supporting_routes": {
+    "fo_gas": {
+      "role": "queue_and_control_plane",
+      "status": "CONTROL_PLANE_ONLY"
+    },
+    "architron": {
+      "role": "script_bridge_backup_and_command_queue",
+      "status": "CONFIGURED_EXECUTION_FRESHNESS_UNPROVEN"
+    },
+    "genesis": {
+      "role": "scheduler_and_trigger_recovery",
+      "status": "CONFIGURED_EXECUTION_FRESHNESS_UNPROVEN"
+    },
+    "github_actions": {
+      "role": "proof_runner_and_provider_probe_host",
+      "status": "VERIFIED_OPERATIONAL"
+    },
+    "secure_capability_box": {
+      "role": "secret_reference_and_managed_identity_binding",
+      "status": "STAGED_OR_CODE_READY"
+    }
+  },
+  "certified_reversible_surfaces": [
+    "github",
+    "google_drive",
+    "gmail_draft",
+    "google_calendar",
+    "outlook_draft",
+    "canva_transaction"
+  ],
+  "owner_reserved": [
+    "external_send",
+    "financial_commitment",
+    "contract_execution",
+    "consequential_release",
+    "credential_mutation",
+    "controller_self_modification"
+  ],
+  "retired_or_noncanonical_routes": [
+    "duplicate_cloud_run_service_creation_without_fresh_nonexistence_proof",
+    "service_account_only_apps_script_source_authority",
+    "pending_queue_as_execution_proof",
+    "historical_heartbeat_as_current_health",
+    "schema_valid_command_without_semantic_readback",
+    "unverified_root_or_health_endpoint_as_operator_proof"
+  ],
+  "promotion_rule": "A provider may move to VERIFIED_LIVE only when every required receipt exists, is fresh, matches the canonical identity chain, and semantic readback plus rollback both pass."
+}

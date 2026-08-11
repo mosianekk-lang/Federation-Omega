@@ -1,0 +1,107 @@
+name: Mosiane Live Thread Proof Ledger
+
+on:
+  push:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/live-thread-proof-ledger.yml'
+  workflow_run:
+    workflows:
+      - 'Deploy Mosiane Live Thread'
+    types:
+      - completed
+
+permissions:
+  actions: write
+  contents: write
+
+concurrency:
+  group: mosiane-live-thread-proof-ledger
+  cancel-in-progress: false
+
+jobs:
+  bootstrap-deployment:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    steps:
+      - name: Dispatch the production deployment without user action
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: gh workflow run live-thread-autodeploy.yml --repo "$GITHUB_REPOSITORY" --ref main
+
+  persist-proof:
+    if: github.event_name == 'workflow_run'
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+          fetch-depth: 0
+
+      - name: Download successful deployment proof
+        if: github.event.workflow_run.conclusion == 'success'
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: mosiane-live-thread-*
+          merge-multiple: true
+          path: /tmp/mosiane-live-thread-proof
+
+      - name: Build the immutable operational status record
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+          RUN_NUMBER: ${{ github.event.workflow_run.run_number }}
+          RUN_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
+          RUN_URL: ${{ github.event.workflow_run.html_url }}
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        run: |
+          set -euo pipefail
+          target='deployments/mosiane-live-thread/LIVE_OPERATIONAL_RECEIPT.json'
+          mkdir -p "$(dirname "$target")"
+
+          if [[ "$RUN_CONCLUSION" == 'success' ]]; then
+            receipt=$(find /tmp/mosiane-live-thread-proof -name live-thread-deployment-receipt.json -print -quit)
+            test -n "$receipt"
+            cp "$receipt" "$target"
+          else
+            python - "$target" <<'PY'
+          import json, os, sys
+          from datetime import datetime, timezone
+          payload = {
+              'receipt': 'MOSIANE-LIVE-THREAD-DEPLOYMENT-NOT-VERIFIED',
+              'issued_at': datetime.now(timezone.utc).isoformat(),
+              'classification': 'DEPLOYMENT_FAILED_OR_CANCELLED',
+              'workflow_run_id': os.environ['RUN_ID'],
+              'workflow_run_number': os.environ['RUN_NUMBER'],
+              'workflow_conclusion': os.environ['RUN_CONCLUSION'],
+              'workflow_url': os.environ['RUN_URL'],
+              'source_commit': os.environ['HEAD_SHA'],
+              'manual_refresh_required': None,
+              'manual_link_update_required': None,
+              'read_tracking_enabled': False,
+          }
+          with open(sys.argv[1], 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, indent=2, sort_keys=True)
+              handle.write('\n')
+          PY
+          fi
+
+          python -m json.tool "$target"
+
+      - name: Commit proof state to the repository
+        env:
+          RUN_ID: ${{ github.event.workflow_run.id }}
+        run: |
+          set -euo pipefail
+          target='deployments/mosiane-live-thread/LIVE_OPERATIONAL_RECEIPT.json'
+          git config user.name 'Mosiane Live Thread Proof Ledger'
+          git config user.email 'actions@users.noreply.github.com'
+          git add "$target"
+          if git diff --cached --quiet; then
+            echo 'Proof state is unchanged.'
+            exit 0
+          fi
+          git commit -m "Record Mosiane Live Thread deployment proof from run ${RUN_ID}"
+          git push origin HEAD:main

@@ -1,0 +1,18 @@
+{
+  "artifacts": [
+    {
+      "created_at": "2026-08-03T22:37:43Z",
+      "expired": false,
+      "expires_at": "2026-08-10T22:37:38Z",
+      "id": 8873714009,
+      "name": "fo-offline-asr-wav2vec2-30859358653",
+      "size_in_bytes": 377665244
+    }
+  ],
+  "conclusion": "success",
+  "observed_at": "2026-08-03T22:38:01.047648+00:00",
+  "receipt": "FO-OFFLINE-ASR-MODEL-OBSERVATION",
+  "run_id": 30859358653,
+  "run_url": "https://github.com/mosianekk-lang/Federation-Omega/actions/runs/30859358653",
+  "source_sha": "ee3447f0fd625fa4b9d9aa599234c70ee88c74c3"
+}

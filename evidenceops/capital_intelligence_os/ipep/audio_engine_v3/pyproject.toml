@@ -1,0 +1,14 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "evidenceops-consensus-transcription"
+version = "3.1.0"
+description = "Proof-carrying multi-architecture consensus transcription for legal evidence"
+requires-python = ">=3.11"
+dependencies = []
+
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["evidenceops_consensus*"]

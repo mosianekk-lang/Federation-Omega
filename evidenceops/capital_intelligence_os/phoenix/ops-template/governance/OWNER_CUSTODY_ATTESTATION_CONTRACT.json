@@ -1,0 +1,38 @@
+{
+  "attestation_output": "OWNER_CUSTODY_SELF_ATTESTED_IDENTITY_AUTHENTICITY_REQUIRED",
+  "authorization_request_output": "OWNER_IDENTITY_PROOF_AND_EXACT_SHORT_LIVED_AUTHORIZATION_DECISION_REQUIRED",
+  "challenge_output": "OWNER_ATTESTATION_CHALLENGE_PREPARED_OWNER_RESPONSE_REQUIRED",
+  "controls": {
+    "attestation_hash_binding": true,
+    "challenge_hash_binding": true,
+    "copied_packet_round_trip_verification": true,
+    "credential_material_allowed": false,
+    "custody_receipt_round_trip_verification": true,
+    "destination_fingerprint_binding": true,
+    "exact_confirmation_required": true,
+    "execution_route_binding": true,
+    "external_commercial_gate_advanced": false,
+    "owner_authorization_created": false,
+    "owner_control_inferred_from_self_attestation": false,
+    "owner_identity_authenticity_inferred_from_self_attestation": false,
+    "provider_apply_performed": false,
+    "provider_authenticated_owner_identity_required": true,
+    "provider_authority_created": false
+  },
+  "entrypoint": "owner_custody_attestation.py",
+  "maximum_challenge_window_seconds": 900,
+  "owner_reserved": [
+    "packet custody and transfer",
+    "execution-plane cutover",
+    "consequential release",
+    "financial commitments",
+    "contracts",
+    "external communications",
+    "revenue recognition"
+  ],
+  "required_confirmation": "I ATTEST OWNER-CONTROLLED CUSTODY OF THIS EXACT PACKET",
+  "required_predecessor": "CUSTODY_COPY_INTEGRITY_VERIFIED_OWNER_CONTROL_ATTESTATION_REQUIRED",
+  "schema": "FEDOMEGA-PHOENIX-OWNER-CUSTODY-ATTESTATION-CONTRACT-1",
+  "status": "PREPARED_NOT_EXECUTED_OWNER_RESERVED",
+  "verification_output": "OWNER_ATTESTATION_CONTENT_HASH_BOUND_IDENTITY_AUTHENTICITY_AND_AUTHORIZATION_REQUIRED"
+}

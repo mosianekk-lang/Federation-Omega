@@ -1,0 +1,119 @@
+{
+  "commercial_truth": {
+    "cloud_run_operation_proven": false,
+    "customer_demand_proven": false,
+    "enterprise_attestation_proven": false,
+    "external_customer_case_study_proven": false,
+    "full_commercial_maturity": false,
+    "partner_adoption_proven": false,
+    "payment_provider_operation_proven": false,
+    "production_scale_proven": false,
+    "signed_customer_contract_proven": false,
+    "verified_live_revenue_events": 0
+  },
+  "dependency": {
+    "implementation_merge_commit": "921103b39494c7101744f55d66c3f5e37b5ec48f",
+    "implementation_pull_request": 131,
+    "preceding_merge_commit": "ad135c04c0f1353b7b17476cbcb0b30faec22526",
+    "preceding_pull_request": 130
+  },
+  "effective_controls": {
+    "atomic_rename_publication": true,
+    "distributed_provider_atomicity_proven": false,
+    "event_content_hash_bound": true,
+    "event_file_fsync": true,
+    "event_filename_hash_bound": true,
+    "incomplete_publication_removed_before_recovery": true,
+    "journal_directory_fsync": true,
+    "legacy_and_new_event_chain_continuous": true,
+    "legacy_jsonl_prefix_frozen": true,
+    "one_event_per_file": true,
+    "prepared_without_terminal_rolls_back_after_restart": true,
+    "published_event_tampering_fails_closed": true,
+    "torn_transaction_event_visible_after_process_crash": false
+  },
+  "external_gate_effect": "UNCHANGED",
+  "external_gates": {
+    "customer_demand": false,
+    "enterprise_attestation": false,
+    "external_case_study": false,
+    "live_cloud_provider": false,
+    "partner_adoption": false,
+    "payment_provider_revenue": false,
+    "production_scale": false,
+    "signed_customer_contract": false
+  },
+  "final_head_provider_proof": {
+    "artifact_digest": "sha256:730c599ebf4bdeb24838409d1bf7da3e60e317464b835776d5a1eaacb5c73c8c",
+    "artifact_id": 8883598911,
+    "artifact_name": "alpha-omega-commercial-authority-action-journal-proof",
+    "checks_failed": 0,
+    "checks_required": 12,
+    "expires_at": "2026-11-02T07:19:12Z",
+    "head_sha": "4e45e1c30852febc5f721128c577ceb8a6e7f132",
+    "receipt_file_sha256": "f4460b618c66c26c41fdb1ee354e0656e5e442ba8cb90cc3b314dfadacc4d7b0",
+    "receipt_sha256": "611d04bf8264bf4b968d2c80b96e0fa30eab4f9a1030bb40eba0841ec98044c6",
+    "workflow_run": 30887326807
+  },
+  "final_head_workflows": {
+    "C01_C05": 30887326743,
+    "C06_C09": 30887326671,
+    "C10_C15": 30887326696,
+    "authority_action_atomicity": 30887326693,
+    "authority_action_binding": 30887326758,
+    "authority_action_binding_release": 30887326864,
+    "authority_action_crash_recovery": 30887326682,
+    "authority_action_crash_recovery_release": 30887326635,
+    "authority_action_journal": 30887326807,
+    "authority_anti_rollback": 30887326664,
+    "authority_snapshot": 30887326652,
+    "authority_snapshot_release": 30887327029,
+    "effective_state": 30887326730,
+    "github_control_plane": 30887326840,
+    "governed_authority": 30887326713,
+    "institution_reconciliation": 30887326668,
+    "provider_authority_acquisition": 30887326967,
+    "repository_leak_guard": 30887326656,
+    "superior_logic_ci": 30887326936
+  },
+  "google_drive_release": {
+    "created_at": "2026-08-04T07:21:21.678Z",
+    "file_id": "1XXfR6s8g76tFlqZrEofmy4x7eSet1WsEg1sE8iGQh9Q",
+    "modified_at": "2026-08-04T07:22:09.530Z",
+    "owner": "mosianekk@gmail.com",
+    "readback_length": 4323,
+    "readback_sha256": "40f0a836a98848529df5a28a011587ca6a2a8b30dd2db4f0355764e407ff573a",
+    "readback_verified": true,
+    "revision_id": "3",
+    "shared": false,
+    "title": "Alpha Omega Commercial Authority Action Journal v8 Release — 2026-08-04"
+  },
+  "owner_authority": {
+    "consequential_releases": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "financial_commitments": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED"
+  },
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "provider_boundaries": {
+    "cloud_run": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "customer_market": "MARKET_PROOF_REQUIRED",
+    "external_attestation": "UNVERIFIED",
+    "partner_market": "MARKET_PROOF_REQUIRED",
+    "payment_provider": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED"
+  },
+  "receipt_sha256": "5dbc7e2e51d7596e509c359b73a4e3493f61901ec0df890ff0f83748a83ae9b4",
+  "release_id": "AO-COMMERCIAL-AUTHORITY-ACTION-JOURNAL-V8-RELEASE",
+  "self_service_saas": "HELD",
+  "stage_scope": [
+    "C03",
+    "C11",
+    "C12",
+    "C13",
+    "C15"
+  ],
+  "status": "AUTHORITY_ACTION_JOURNAL_RELEASE_VERIFIED_EXTERNAL_GATES_UNCHANGED",
+  "strategy": "SERVICE_ENABLED_PLATFORM_BEFORE_SELF_SERVICE_SAAS"
+}

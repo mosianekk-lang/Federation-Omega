@@ -1,0 +1,17 @@
+{
+  "database_dump_sha256": "87655eb2300d87649af50668e2069964d8c22a4eae806f24ab68478c64317b4d",
+  "drift": "IN_SYNC",
+  "external_effect": false,
+  "heartbeat_id": "HB-EVIDENCEOPS-FEVX-ADAPTER",
+  "module_count": 20,
+  "next_gate": "SUPERVISED_REAL_CASE_CANARY_WITH_OWNER_REVIEW",
+  "provider": "github_actions",
+  "provider_proof_hash": "8dc6562dbf0ae01373970e94d44146d95841d4d87ddcc3a49846b4387beec70a",
+  "provider_proof_id": "PRF-EVIDENCEOPS-FEVX-9bf379e23e032811e0b29987",
+  "recorded_at": "2026-08-04T15:11:19.461961Z",
+  "runtime_state": "OPERATIONAL",
+  "source_write": false,
+  "verified": true,
+  "verified_fact_write": false,
+  "version": "1.0.0"
+}

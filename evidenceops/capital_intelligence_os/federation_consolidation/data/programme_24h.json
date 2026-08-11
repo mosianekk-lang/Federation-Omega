@@ -1,0 +1,100 @@
+{
+  "authority_ceiling": "A1",
+  "collision_exclusions": [
+    "EvidenceOps P09 publication remains owned by HB-CHAT-OMX-EOPS-001",
+    "No external legal, financial, secret-bearing or destructive actions"
+  ],
+  "completion_predicate": {
+    "canonical_ids_unique": true,
+    "drive_publication": "PASS_OR_EXACT_HELD",
+    "end_to_end_canary": "PASS",
+    "github_publication": "PASS_OR_EXACT_HELD",
+    "maturity_axes_separated": true,
+    "open_prs_classified": true,
+    "provider_mutation": "NOT_REQUIRED",
+    "restart_readback": "PASS",
+    "rollback_rehearsal": "PASS",
+    "selected_worker_route": "GitHub Actions A0/A1",
+    "systems_have_one_system_of_record": true
+  },
+  "deadline_sast": "2026-08-05T00:04:07+02:00",
+  "execution_model": "Alpha→Omega proof-carrying staged programme",
+  "freeze_rule": "No new top-level system families during the programme; extend or consolidate existing canonical systems.",
+  "owner": "Kim Kagiso Mosiane",
+  "programme_id": "FO-24H-CONSOLIDATION-20260804",
+  "stages": [
+    {
+      "gate": "baseline hash and owner workstream recorded",
+      "id": "H00-H02",
+      "name": "Baseline and freeze",
+      "outcomes": [
+        "rollback snapshot",
+        "canonical ID policy",
+        "change freeze"
+      ]
+    },
+    {
+      "gate": "unique IDs and single system-of-record validation",
+      "id": "H02-H06",
+      "name": "Canonical truth",
+      "outcomes": [
+        "20-system canonical register",
+        "maturity standard",
+        "receipt schema"
+      ]
+    },
+    {
+      "gate": "all open PRs classified; no unowned canonical item",
+      "id": "H06-H10",
+      "name": "Lineage and repository triage",
+      "outcomes": [
+        "lineage graph",
+        "open PR classification",
+        "version-family policy"
+      ]
+    },
+    {
+      "gate": "deterministic query and route canaries pass",
+      "id": "H10-H14",
+      "name": "Kernel consolidation",
+      "outcomes": [
+        "Secondary Brain query contract",
+        "MODISA compact kernel",
+        "route authority registry"
+      ]
+    },
+    {
+      "gate": "exact semantic readback and zero duplicate effects",
+      "id": "H14-H18",
+      "name": "End-to-end execution proof",
+      "outcomes": [
+        "intake-to-receipt canary",
+        "restart readback",
+        "rollback rehearsal"
+      ]
+    },
+    {
+      "gate": "source/operational/reporting ownership separated",
+      "id": "H18-H21",
+      "name": "Control-plane rationalisation",
+      "outcomes": [
+        "CloudOps logical split",
+        "WIF truth table",
+        "recovery matrix"
+      ]
+    },
+    {
+      "gate": "provider readback or exact held state for every item",
+      "id": "H21-H24",
+      "name": "Publication and value licence",
+      "outcomes": [
+        "Drive tabs",
+        "GitHub merge",
+        "health snapshot",
+        "value licences"
+      ]
+    }
+  ],
+  "start_sast": "2026-08-04T00:04:07+02:00",
+  "title": "Federation Omega 24-Hour Alpha→Omega Consolidation Programme"
+}

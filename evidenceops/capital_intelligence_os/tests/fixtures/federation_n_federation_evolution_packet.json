@@ -1,0 +1,305 @@
+{
+  "authority_ceiling": "A1_INTERNAL_READ_ONLY",
+  "baseline": {
+    "controls_present": [
+      "SOURCE_IDENTITY",
+      "NO_TRUST_TRANSFER",
+      "EXACT_MATURITY",
+      "ANTI_OVERCLAIM_BOUNDARY"
+    ],
+    "description": "Four genuine source classes preserve source identity, no-trust-transfer, exact maturity and anti-overclaim boundaries before relational compilation.",
+    "name": "DISTRIBUTED_REGISTERED_FEDERATION_CONTROL_SOURCES"
+  },
+  "domain": "federation_evolution",
+  "experiment_id": "EXP-N-V21-REAL-READONLY-001-FEDERATION-EVOLUTION",
+  "external_effect": false,
+  "objective": "Compile real registered Federation-evolution source controls into one deterministic read-only passport without provider mutation or trust transfer.",
+  "provider_mutation_permitted": false,
+  "required_future_proof": [
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "runtime replication state can advance",
+      "proof_id": "PRF-FED-EVO-001",
+      "requirement": "provider-independent Foundry runtime replication",
+      "safe_action": "Execute the merged source through an independent read-only runtime and compare the result."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "real-workflow calibration can advance",
+      "proof_id": "PRF-FED-EVO-002",
+      "requirement": "three supervised real-workflow calibration canaries",
+      "safe_action": "Run source-bound non-consequential canaries with qualified review."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "recurring runtime state can advance",
+      "proof_id": "PRF-FED-EVO-003",
+      "requirement": "recurring provider-hosted execution receipt",
+      "safe_action": "Capture one fresh recurring run, immutable artifact and exact readback."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "provider rollback can advance",
+      "proof_id": "PRF-FED-EVO-004",
+      "requirement": "provider rollback execution and post-rollback readback",
+      "safe_action": "Run one reversible provider rollback after a qualified canary."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "federation trust boundary can advance",
+      "proof_id": "PRF-FED-EVO-005",
+      "requirement": "cross-workflow no-trust-transfer audit",
+      "safe_action": "Compare two workflow scopes and require intersection-only authority."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "lineage durability can advance",
+      "proof_id": "PRF-FED-EVO-006",
+      "requirement": "append-only supersession and lineage revalidation",
+      "safe_action": "Advance one source state and verify parents, aliases and historical records remain queryable."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "collision integrity can advance",
+      "proof_id": "PRF-FED-EVO-007",
+      "requirement": "concurrent identifier collision recovery",
+      "safe_action": "Inject a bounded duplicate identifier and require fail-closed namespaced reconciliation."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "learning integrity can advance",
+      "proof_id": "PRF-FED-EVO-008",
+      "requirement": "negative-result retention and non-promotion",
+      "safe_action": "Record a failing candidate and verify it remains evidence without becoming doctrine."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "provider effect truth can advance",
+      "proof_id": "PRF-FED-EVO-009",
+      "requirement": "provider-native readback for every runtime effect",
+      "safe_action": "Require target-specific readback rather than source or transport success."
+    },
+    {
+      "initial_state": "UNVERIFIED_PENDING_FRESH_PROOF",
+      "promotion_effect": "longitudinal value can advance",
+      "proof_id": "PRF-FED-EVO-010",
+      "requirement": "prospective longitudinal owner-value cohort",
+      "safe_action": "Measure completion time, corrections, proof quality, recovery and owner effort over repeated comparable tasks."
+    }
+  ],
+  "schema": "FEDOMEGA-N-V21-FEDERATION-EVOLUTION-REAL-READONLY-PACKET-1",
+  "sources": [
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-BRANCH-001",
+          "classification": "FACT",
+          "field": "main_sha",
+          "statement": "The current main branch points to commit 64ffa24b183d3ce71da5b3959cfdf9b417ed4d64.",
+          "value": "64ffa24b183d3ce71da5b3959cfdf9b417ed4d64"
+        },
+        {
+          "claim_id": "CLM-BRANCH-002",
+          "classification": "FACT",
+          "field": "parent_shas",
+          "statement": "The current merge preserves two parent commits.",
+          "value": [
+            "c8789a3401b5ca0367668ba06bee98ce30871b35",
+            "77a07fda9eea01985615115bfad1c3d956a61166"
+          ]
+        },
+        {
+          "claim_id": "CLM-BRANCH-003",
+          "classification": "FACT",
+          "field": "main_signature_verified",
+          "statement": "GitHub reports the current merge commit signature as verified.",
+          "value": true
+        },
+        {
+          "claim_id": "CLM-BRANCH-004",
+          "classification": "TESTED_RESULT",
+          "field": "source_admission_state",
+          "statement": "The merge message records exact-head Airlock and Public Repository Leak Guard success.",
+          "value": "EXACT_HEAD_AIRLOCK_AND_LEAK_GUARD_PASSED"
+        }
+      ],
+      "source_fingerprint_sha256": "4c79bb196666582758132841cf32602785e54058dd44a0855069e8cb8d4907d7",
+      "source_id": "SRC-FED-EVO-BRANCH-READBACK",
+      "source_type": "CANONICAL_BRANCH_READBACK",
+      "title": "Federation-Omega current main provider readback"
+    },
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-FOUNDRY-001",
+          "classification": "FACT",
+          "field": "algorithm_count",
+          "statement": "The registered Algorithm Foundry catalog contains fifteen algorithms.",
+          "value": 15
+        },
+        {
+          "claim_id": "CLM-FOUNDRY-002",
+          "classification": "TESTED_RESULT",
+          "field": "foundry_current_maturity",
+          "statement": "The Foundry is source-admitted with Airlock and leak-guard readback plus local deterministic evolution and replication tests.",
+          "value": "GITHUB_SOURCE_ADMITTED_AIRLOCK_AND_LEAK_GUARD_READBACK_VERIFIED_LOCAL_DETERMINISTIC_EVOLUTION_AND_REPLICATION_TESTS_PASSED"
+        },
+        {
+          "claim_id": "CLM-FOUNDRY-003",
+          "classification": "PROOF_REQUIREMENT",
+          "field": "foundry_target_maturity",
+          "statement": "The declared next maturity target is provider-independent runtime replication and real-workflow calibration.",
+          "value": "PROVIDER_INDEPENDENT_RUNTIME_REPLICATION_AND_REAL_WORKFLOW_CALIBRATION"
+        },
+        {
+          "claim_id": "CLM-FOUNDRY-004",
+          "classification": "BOUNDARY",
+          "field": "foundry_authority_ceiling",
+          "statement": "The Algorithm Foundry authority ceiling is A1 internal.",
+          "value": "A1_INTERNAL"
+        },
+        {
+          "claim_id": "CLM-FOUNDRY-005",
+          "classification": "BOUNDARY",
+          "field": "foundry_external_effect",
+          "statement": "The Algorithm Foundry registration records external effect as false.",
+          "value": false
+        },
+        {
+          "claim_id": "CLM-FOUNDRY-006",
+          "classification": "BOUNDARY",
+          "field": "negative_results_preserved",
+          "statement": "The Foundry learning model retains negative results as governed events.",
+          "value": true
+        }
+      ],
+      "source_fingerprint_sha256": "f442cbfa763e591841b9503820009e94af573c31d02946f761003747ccbdd703",
+      "source_id": "SRC-FED-EVO-FOUNDRY-REGISTRATION",
+      "source_type": "ALGORITHM_FOUNDRY_REGISTRATION",
+      "title": "EvidenceOps Algorithm Foundry registration v1.2.0"
+    },
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-LEARN-001",
+          "classification": "FACT",
+          "field": "learning_policy_id",
+          "statement": "The policy identifier is FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1.",
+          "value": "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1"
+        },
+        {
+          "claim_id": "CLM-LEARN-002",
+          "classification": "BOUNDARY",
+          "field": "learning_authority_ceiling",
+          "statement": "The learning policy authority ceiling is A1 internal.",
+          "value": "A1_INTERNAL"
+        },
+        {
+          "claim_id": "CLM-LEARN-003",
+          "classification": "BOUNDARY",
+          "field": "learning_external_effect",
+          "statement": "The learning policy records external effect as false.",
+          "value": false
+        },
+        {
+          "claim_id": "CLM-LEARN-004",
+          "classification": "BOUNDARY",
+          "field": "no_trust_transfer",
+          "statement": "The policy prohibits trust transfer between workflows.",
+          "value": true
+        },
+        {
+          "claim_id": "CLM-LEARN-005",
+          "classification": "FACT",
+          "field": "failure_evidence_preserved",
+          "statement": "Failure evidence must be preserved.",
+          "value": true
+        },
+        {
+          "claim_id": "CLM-LEARN-006",
+          "classification": "FACT",
+          "field": "duplicate_effect_suppression",
+          "statement": "Duplicate effects are suppressed.",
+          "value": true
+        },
+        {
+          "claim_id": "CLM-LEARN-007",
+          "classification": "FACT",
+          "field": "collision_reconciliation_required",
+          "statement": "Collision reconciliation is required.",
+          "value": true
+        }
+      ],
+      "source_fingerprint_sha256": "449b8ff67c03063c2fb816fa9da75e639a78d097e07903a0203085f721b184e9",
+      "source_id": "SRC-FED-EVO-LEARNING-POLICY",
+      "source_type": "CONTINUOUS_LEARNING_POLICY",
+      "title": "Federation continuous learning and trigger policy v1.0.0"
+    },
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-HASH-001",
+          "classification": "FACT",
+          "field": "hash_domain_version",
+          "statement": "The awareness hash-domain contract version is 2.0.0.",
+          "value": "2.0.0"
+        },
+        {
+          "claim_id": "CLM-HASH-002",
+          "classification": "BOUNDARY",
+          "field": "hash_domain_external_effect_default",
+          "statement": "The contract external-effect default is false.",
+          "value": false
+        },
+        {
+          "claim_id": "CLM-HASH-003",
+          "classification": "PROOF_REQUIREMENT",
+          "field": "rollback_plan_required",
+          "statement": "A runtime patch requires a rollback plan.",
+          "value": true
+        },
+        {
+          "claim_id": "CLM-HASH-004",
+          "classification": "BOUNDARY",
+          "field": "provider_mutation_is_not_proven_by_source",
+          "statement": "Provider mutation is not proven by source.",
+          "value": true
+        },
+        {
+          "claim_id": "CLM-HASH-005",
+          "classification": "BOUNDARY",
+          "field": "source_merge_proves_runtime_freshness",
+          "statement": "A source merge does not prove runtime freshness.",
+          "value": false
+        },
+        {
+          "claim_id": "CLM-HASH-006",
+          "classification": "BOUNDARY",
+          "field": "rollback_simulation_proves_provider_rollback",
+          "statement": "Rollback simulation does not prove provider rollback.",
+          "value": false
+        },
+        {
+          "claim_id": "CLM-HASH-007",
+          "classification": "BOUNDARY",
+          "field": "logical_hash_can_expand_authority",
+          "statement": "A logical hash cannot expand authority.",
+          "value": false
+        },
+        {
+          "claim_id": "CLM-HASH-008",
+          "classification": "FACT",
+          "field": "duplicate_readbacks_fail_closed",
+          "statement": "Duplicate provider readbacks fail closed under the linked reconciliation contract.",
+          "value": true
+        }
+      ],
+      "source_fingerprint_sha256": "f0a704a9a1cd48dc4f3e2782938960cb2bf8cc4126491e942bf50397caa94239",
+      "source_id": "SRC-FED-EVO-HASH-DOMAIN",
+      "source_type": "AWARENESS_HASH_DOMAIN_CONTRACT",
+      "title": "Federation awareness hash-domain contract v2.0.0"
+    }
+  ],
+  "trust_transfer_permitted": false,
+  "truth_boundary": "This packet measures Federation-evolution control completeness only. It may not claim recurring provider runtime, provider rollback, workflow-specific trusted autonomy, general intelligence improvement or longitudinal owner value."
+}

@@ -1,0 +1,78 @@
+{
+  "active_account": {
+    "exit_code": 0,
+    "ok": true,
+    "stderr": "WARNING: The following filter keys were not present in any resource : status",
+    "stdout": ""
+  },
+  "api_states": {
+    "artifactregistry.googleapis.com": {
+      "exit_code": 2,
+      "ok": false,
+      "stderr": "ERROR: (gcloud.services) Invalid choice: 'describe'.\nMaybe you meant:\n  gcloud run services describe\n  gcloud services api-keys describe\n  gcloud services operations describe\n  gcloud network-services agent-gateways describe\n  gcloud network-services endpoint-policies describe\n  gcloud network-services gateways describe\n  gcloud network-services grpc-routes describe\n  gcloud network-services http-routes describe\n  gcloud network-services meshes describe\n  gcloud network-services multicast-consumer-associations describe\n  gcloud services disable\n  gcloud services enable\n  gcloud services list\n  gcloud services peered-dns-domains\n  gcloud services vpc-peerings\n\nTo search the help text of gcloud commands, run:\n  gcloud help -- SEARCH_TERMS",
+      "stdout": ""
+    },
+    "cloudbuild.googleapis.com": {
+      "exit_code": 2,
+      "ok": false,
+      "stderr": "ERROR: (gcloud.services) Invalid choice: 'describe'.\nMaybe you meant:\n  gcloud run services describe\n  gcloud services api-keys describe\n  gcloud services operations describe\n  gcloud network-services agent-gateways describe\n  gcloud network-services endpoint-policies describe\n  gcloud network-services gateways describe\n  gcloud network-services grpc-routes describe\n  gcloud network-services http-routes describe\n  gcloud network-services meshes describe\n  gcloud network-services multicast-consumer-associations describe\n  gcloud services disable\n  gcloud services enable\n  gcloud services list\n  gcloud services peered-dns-domains\n  gcloud services vpc-peerings\n\nTo search the help text of gcloud commands, run:\n  gcloud help -- SEARCH_TERMS",
+      "stdout": ""
+    },
+    "docs.googleapis.com": {
+      "exit_code": 2,
+      "ok": false,
+      "stderr": "ERROR: (gcloud.services) Invalid choice: 'describe'.\nMaybe you meant:\n  gcloud run services describe\n  gcloud services api-keys describe\n  gcloud services operations describe\n  gcloud network-services agent-gateways describe\n  gcloud network-services endpoint-policies describe\n  gcloud network-services gateways describe\n  gcloud network-services grpc-routes describe\n  gcloud network-services http-routes describe\n  gcloud network-services meshes describe\n  gcloud network-services multicast-consumer-associations describe\n  gcloud services disable\n  gcloud services enable\n  gcloud services list\n  gcloud services peered-dns-domains\n  gcloud services vpc-peerings\n\nTo search the help text of gcloud commands, run:\n  gcloud help -- SEARCH_TERMS",
+      "stdout": ""
+    },
+    "drive.googleapis.com": {
+      "exit_code": 2,
+      "ok": false,
+      "stderr": "ERROR: (gcloud.services) Invalid choice: 'describe'.\nMaybe you meant:\n  gcloud run services describe\n  gcloud services api-keys describe\n  gcloud services operations describe\n  gcloud network-services agent-gateways describe\n  gcloud network-services endpoint-policies describe\n  gcloud network-services gateways describe\n  gcloud network-services grpc-routes describe\n  gcloud network-services http-routes describe\n  gcloud network-services meshes describe\n  gcloud network-services multicast-consumer-associations describe\n  gcloud services disable\n  gcloud services enable\n  gcloud services list\n  gcloud services peered-dns-domains\n  gcloud services vpc-peerings\n\nTo search the help text of gcloud commands, run:\n  gcloud help -- SEARCH_TERMS",
+      "stdout": ""
+    },
+    "run.googleapis.com": {
+      "exit_code": 2,
+      "ok": false,
+      "stderr": "ERROR: (gcloud.services) Invalid choice: 'describe'.\nMaybe you meant:\n  gcloud run multi-region-services\n  gcloud run revisions\n  gcloud run services\n  gcloud services api-keys\n  gcloud services disable\n  gcloud services enable\n  gcloud services list\n  gcloud services operations\n  gcloud services peered-dns-domains\n  gcloud services vpc-peerings\n\nTo search the help text of gcloud commands, run:\n  gcloud help -- SEARCH_TERMS",
+      "stdout": ""
+    },
+    "sheets.googleapis.com": {
+      "exit_code": 2,
+      "ok": false,
+      "stderr": "ERROR: (gcloud.services) Invalid choice: 'describe'.\nMaybe you meant:\n  gcloud run services describe\n  gcloud services api-keys describe\n  gcloud services operations describe\n  gcloud network-services agent-gateways describe\n  gcloud network-services endpoint-policies describe\n  gcloud network-services gateways describe\n  gcloud network-services grpc-routes describe\n  gcloud network-services http-routes describe\n  gcloud network-services meshes describe\n  gcloud network-services multicast-consumer-associations describe\n  gcloud services disable\n  gcloud services enable\n  gcloud services list\n  gcloud services peered-dns-domains\n  gcloud services vpc-peerings\n\nTo search the help text of gcloud commands, run:\n  gcloud help -- SEARCH_TERMS",
+      "stdout": ""
+    }
+  },
+  "auth_outcome": "failure",
+  "classification": "AUTHORITY_REQUIRED_WIF_AUTHENTICATION_FAILED",
+  "http_checks": [],
+  "http_ok": false,
+  "identity_ok": false,
+  "mutation_attempted": false,
+  "project": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.projects.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "project_ok": false,
+  "receipt_id": "RCP-OMX-PROVIDER-RUNTIME-CANARY",
+  "recorded_at": "2026-08-03T07:10:02.612349+00:00",
+  "revision_read_ok": false,
+  "revisions": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.run.revisions.list) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": "[]"
+  },
+  "rollback": "No provider mutation was performed; disable this workflow or revert its commit.",
+  "secret_values_recorded": false,
+  "service": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.run.services.describe) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+    "stdout": ""
+  },
+  "service_read_ok": false,
+  "setup_gcloud_outcome": "skipped"
+}

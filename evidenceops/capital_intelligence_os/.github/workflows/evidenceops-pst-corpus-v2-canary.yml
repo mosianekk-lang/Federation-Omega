@@ -1,0 +1,60 @@
+name: EvidenceOps PST Corpus v2 Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/evidenceops-pst-corpus-v2-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+jobs:
+  source-and-test-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Materialize and test reviewed extractor
+        working-directory: evidenceops/pst_corpus_v2
+        run: |
+          set -euo pipefail
+          python -m pip install 'pypdf==6.1.1'
+          python - <<'PY'
+          import base64, gzip
+          from pathlib import Path
+          for name in ('extractor.py', 'test_controls.py'):
+              Path(name).write_bytes(gzip.decompress(base64.b64decode(Path(name + '.gz.b64').read_text().strip())))
+          PY
+          python -m py_compile extractor.py test_controls.py
+          python -m unittest -v test_controls.py
+      - name: Commit canary receipt
+        if: always()
+        env:
+          JOB_STATUS: ${{ job.status }}
+        run: |
+          set -euo pipefail
+          mkdir -p deployment_receipts
+          python - <<'PY'
+          import json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+          receipt = {
+              'receipt': 'EVIDENCEOPS-PST-CORPUS-V2-CANARY',
+              'status': 'PASS' if os.environ['JOB_STATUS'] == 'success' else 'FAIL',
+              'job_status': os.environ['JOB_STATUS'],
+              'workflow_run_id': int(os.environ['GITHUB_RUN_ID']),
+              'source_commit': os.environ['GITHUB_SHA'],
+              'recorded_at': datetime.now(timezone.utc).isoformat(),
+          }
+          Path('deployment_receipts/evidenceops-pst-corpus-v2-canary.json').write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n')
+          PY
+          git config user.name 'evidenceops-pst-bot'
+          git config user.email 'evidenceops-pst-bot@users.noreply.github.com'
+          git add deployment_receipts/evidenceops-pst-corpus-v2-canary.json
+          git commit -m 'Record EvidenceOps PST v2 canary [skip ci]'
+          git push origin HEAD:main

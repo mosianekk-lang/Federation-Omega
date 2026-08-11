@@ -1,0 +1,64 @@
+{
+  "controls": {
+    "attestation_posting_performed": false,
+    "challenge_window_binding_required": true,
+    "credential_material_recorded": false,
+    "exact_comment_body_required": true,
+    "external_commercial_gate_advanced": false,
+    "external_communication_performed": false,
+    "injected_transport_classification": "MOCK_CONFORMANCE",
+    "mock_provider_can_prove_owner_identity": false,
+    "owner_authorization_created": false,
+    "provider_apply_performed": false,
+    "provider_authority_created": false,
+    "provider_mutation_allowed": false,
+    "provider_operations": [
+      "GET /user",
+      "GET /repos/{owner}/{repo}",
+      "GET /repos/{owner}/{repo}/issues/comments/{comment_id}"
+    ],
+    "readback_max_age_seconds": 300,
+    "repository_owner_association_required": true,
+    "unedited_comment_required": true
+  },
+  "dependency": {
+    "predecessor_checkpoint": "alpha_omega_commercial/phoenix_owner_custody_attestation_checkpoint_v34.json",
+    "required_files": [
+      "owner_custody_ceremony.py",
+      "owner_custody_attestation.py",
+      "governance/OWNER_CUSTODY_CEREMONY_CONTRACT.json",
+      "governance/OWNER_CUSTODY_ATTESTATION_CONTRACT.json"
+    ]
+  },
+  "entrypoint": "provider_authenticated_owner_attestation.py",
+  "owner_reserved": [
+    "execute the custody ceremony in an owner-controlled destination",
+    "publish the exact provider attestation message",
+    "issue any exact short-lived authorization decision",
+    "approve provider apply or consequential release",
+    "make financial commitments, contracts or external commercial claims"
+  ],
+  "provider": "github",
+  "purpose": "Provide a GET-only GitHub readback route that can authenticate an exact owner-custody attestation without posting, authorizing, applying, or advancing commercial claims.",
+  "schema": "FEDOMEGA-PHOENIX-PROVIDER-AUTHENTICATED-OWNER-ATTESTATION-CONTRACT-1",
+  "status": "PREPARED_NOT_EXECUTED_OWNER_RESERVED",
+  "truth_boundary": {
+    "cloud_run_operation": "NOT_PROVEN",
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "full_commercial_maturity": false,
+    "owner_attestation_present_in_repository": false,
+    "owner_authorization_present": false,
+    "owner_controlled_custody_proven_in_repository": false,
+    "owner_execution_proven_in_repository": false,
+    "owner_identity_authenticity_proven_in_repository": false,
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "provider_apply_performed": false,
+    "provider_authority_present": false,
+    "signed_customer_contract": "NOT_PROVEN",
+    "verified_live_revenue_events": 0
+  },
+  "version": "1.0.0"
+}

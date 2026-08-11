@@ -1,0 +1,32 @@
+{
+  "projection_id": "AO-COMMERCIAL-CANONICAL-API-EFFECTIVE-V15",
+  "status": "SERVICE_ENABLED_PLATFORM_PROVIDER_RECONCILIATION_CHALLENGE_PROVIDER_PROOF_VERIFIED",
+  "capability_revision": "AO-COMMERCIAL-PROVIDER-RECONCILIATION-CHALLENGE-V15",
+  "canonical_class": "ChallengeBoundProviderDispatchCommercialControlPlane",
+  "predecessor_class": "OutcomeReconciledProviderDispatchCommercialControlPlane",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "service_enabled_platform_prioritised": true,
+  "self_service_saas_held": true,
+  "controls": {
+    "durable_submission_marker": true,
+    "unknown_outcome_quarantine": true,
+    "challenge_history_hash_chain": true,
+    "challenge_attempt_binding": true,
+    "challenge_freshness_and_single_use": true,
+    "restart_safe_state_verification": true,
+    "mock_provider_reconciliation_conformance": true,
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "NOT_PROVEN"
+  },
+  "implementation_provider_proof": {
+    "workflow_run": 30918336416,
+    "workflow_job": 92022106243,
+    "artifact_id": 8895992684,
+    "artifact_digest": "sha256:7590efea353a1f891dda829022434dc136b9141a0caf03474d95d0952a713118",
+    "checks": "12/12"
+  },
+  "verified_live_revenue_events": 0,
+  "external_maturity_gates_advanced": false,
+  "institution_state_preserved": true,
+  "owner_authority_effect": "UNCHANGED"
+}

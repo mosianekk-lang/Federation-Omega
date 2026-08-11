@@ -1,0 +1,7 @@
+triggered_at=2026-08-09T06:16:00+02:00
+purpose=read-only provider authority and operator preflight for KAIO fluid-intelligence canary gate via FEVX CSE v1.1
+candidate_version=1.1.0
+source_archive_sha256=f4da04ac026628e022814f306acfe9e5303ee89a107359ab50a91fa04442ac50
+wheel_sha256=8c2832a9cd844af62a5fd403038bc2cebca4aa8967826295b34b6c9660c83022
+mutation_scope=NONE
+requested_by=KAIO_SUPERIOR_LOGIC_BLOCKER_RESOLUTION

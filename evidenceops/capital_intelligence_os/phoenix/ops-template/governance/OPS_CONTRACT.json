@@ -1,0 +1,39 @@
+{
+  "schema": "FEDOMEGA-PHOENIX-OPS-CONTRACT-1",
+  "version": "1.4.0",
+  "repository_role": "PRIVATE_EXECUTION_PLANE",
+  "canonical_source_repository": "mosianekk-lang/Federation-Omega-Core",
+  "default_permissions": {
+    "contents": "read"
+  },
+  "authority_rules": {
+    "long_lived_credentials": false,
+    "self_approval": false,
+    "self_promotion": false,
+    "source_repository_mutation": false,
+    "owner_authorization_required": true,
+    "owner_authorization_decision_schema": "FEDOMEGA-PHOENIX-CUTOVER-AUTHORIZATION-DECISION-2",
+    "owner_authorization_provider_receipt_hash_binding_required": true,
+    "owner_authorization_repository_creation_endpoint_binding_required": true,
+    "owner_authorization_external_commercial_gate_advancement_allowed": false,
+    "candidate_validity_required": true,
+    "provider_authority_receipt_required": true,
+    "provider_authority_receipt_max_age_seconds": 300,
+    "provider_authority_probe_get_only": true,
+    "provider_authority_just_in_time_reprobe_required": true,
+    "provider_authority_continuity_required": true,
+    "provider_authority_mode_must_match_decision": true,
+    "provider_mutation_requires_readback": true,
+    "unknown_provider_outcome_automatic_retry": false,
+    "outcome_reconciliation_get_only": true,
+    "outcome_reconciliation_exact_archive_match_required": true,
+    "rollback_required": true
+  },
+  "canonical_apply_entrypoint": "provider_cutover_owner_authority_bound.py",
+  "proof_destination": [
+    "IMMUTABLE_GITHUB_ACTIONS_ARTIFACT",
+    "EXTERNAL_APPEND_ONLY_EVIDENCE_STORE"
+  ],
+  "initial_active_workflows": 0,
+  "module_admission_required": true
+}

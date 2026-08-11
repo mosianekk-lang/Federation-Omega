@@ -1,0 +1,54 @@
+{
+  "$id": "https://federation-omega.local/evidenceops/fevx-adapter/input-v1.schema.json",
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "additionalProperties": true,
+  "properties": {
+    "authority": {
+      "properties": {
+        "cross_case_access": {"const": false},
+        "destructive_action": {"const": false},
+        "external_effect": {"const": false},
+        "external_send": {"const": false},
+        "fact_write": {"const": false},
+        "financial_action": {"const": false},
+        "legal_filing": {"const": false},
+        "source_write": {"const": false},
+        "tier": {"enum": ["A0_READ", "A1_INTERNAL"]}
+      },
+      "required": [
+        "tier", "external_effect", "source_write", "fact_write",
+        "cross_case_access", "legal_filing", "external_send",
+        "financial_action", "destructive_action"
+      ],
+      "type": "object"
+    },
+    "case_wall_id": {"minLength": 8, "type": "string"},
+    "chronology": {"type": "array"},
+    "claims": {"type": "array"},
+    "contradictions": {"type": "array"},
+    "matter_id": {"minLength": 1, "type": "string"},
+    "missing_records": {"type": "array"},
+    "mission": {
+      "properties": {
+        "objective": {"minLength": 1, "type": "string"},
+        "requested_outcome": {"minLength": 1, "type": "string"}
+      },
+      "required": ["objective", "requested_outcome"],
+      "type": "object"
+    },
+    "outcome_chain": {"type": "array"},
+    "packet_id": {"minLength": 8, "type": "string"},
+    "schema": {"const": "EVIDENCEOPS_FEVX_INPUT_V1"},
+    "sources": {"minItems": 1, "type": "array"},
+    "stakeholders": {"type": "array"},
+    "strategies": {"type": "array"},
+    "verified_facts": {"type": "array"}
+  },
+  "required": [
+    "authority", "case_wall_id", "chronology", "claims", "contradictions",
+    "matter_id", "missing_records", "mission", "outcome_chain", "packet_id",
+    "schema", "sources", "stakeholders", "strategies", "verified_facts"
+  ],
+  "title": "EvidenceOps FEVX Read-Only Input Packet",
+  "type": "object"
+}

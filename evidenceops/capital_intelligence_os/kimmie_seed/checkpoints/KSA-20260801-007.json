@@ -1,0 +1,39 @@
+{
+  "assessment_id": "KSA-20260801-007",
+  "observed_at": "2026-08-01T02:23:30+02:00",
+  "seed_id": "KIMMIE-IPEP-001",
+  "root_verified_stage": "SPROUT",
+  "root_promotion": "NO_PROMOTION",
+  "identity_drift": "NONE_DETECTED",
+  "owner_decision_required": false,
+  "material_change": true,
+  "qualifying_notification_event": false,
+  "child_lane_event": {
+    "lane_id": "LANE-CONNECTOR-FOUNDRY",
+    "previous_verified_stage": "SEED",
+    "new_verified_stage": "ROOTED",
+    "operational_state": "TEST_PASSED_LOCAL",
+    "proof": [
+      "LocalRuntimeConnector merged to main",
+      "ECTS-1.0 6/6 PASS",
+      "Superior Logic CI run 427 success",
+      "Default branch readback passed",
+      "Final release receipt present"
+    ],
+    "pr": 42,
+    "merge_sha": "48bb66e2e4acfac7adf7179bc5061f3e9e6d1e05",
+    "receipt_sha256": "071775732793cfc9e7b21a8820e1046e585ddc6a9e405bd93b59d347d348a75e",
+    "remaining_gate": "First authorised provider adapter execution and independent provider readback"
+  },
+  "sapling_gate": {
+    "repeated_successful_maturity_cycles": "PARTIAL",
+    "reusable_capability_multiple_corpora_or_environments": "VERIFIED",
+    "persistent_monitoring": "PARTIAL",
+    "maintenance_evidence": "PARTIAL",
+    "recovery_evidence": "NOT_VERIFIED",
+    "provenance_toolkit_external_ci": "NOT_VERIFIED",
+    "connector_foundry_external_ci": "VERIFIED"
+  },
+  "lesson": "A local reference connector can become ROOTED after deterministic conformance, CI, merge and default-branch readback. SPROUT requires provider-specific execution and independent provider readback.",
+  "checkpoint_sha256": "a629e8c0ab4232c0fdb461aaa5b0a6e6850fbcc30526b46a735e62d7b97a4add"
+}

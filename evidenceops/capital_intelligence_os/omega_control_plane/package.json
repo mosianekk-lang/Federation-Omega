@@ -1,0 +1,12 @@
+{
+  "name": "omega-control-plane",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node src/server.js",
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/server.js && node --check src/google.js && node --check src/policy.js"
+  },
+  "engines": { "node": ">=20" }
+}

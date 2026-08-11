@@ -1,0 +1,303 @@
+{
+  "authority_ceiling": "A1_INTERNAL_READ_ONLY",
+  "baseline": {
+    "controls_present": [
+      "SOURCE_IDENTITY",
+      "HASH_INTEGRITY",
+      "PAGE_QA",
+      "EPISTEMIC_LABELS"
+    ],
+    "description": "Four genuine source-control records independently preserve identity, hashes, page QA and epistemic labels before a unified legal authority passport.",
+    "name": "DISTRIBUTED_LEGAL_SOURCE_CONTROL_RECORDS"
+  },
+  "case_fact_import_permitted": false,
+  "domain": "legal_forensic",
+  "experiment_id": "EXP-N-V21-REAL-READONLY-001-LEGAL-FORENSIC",
+  "external_effect": false,
+  "filing_permitted": false,
+  "legal_finding_permitted": false,
+  "legal_proof_gaps": [
+    {
+      "gap_id": "GAP-LEGAL-001",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "LRA currentness may be promoted only for the exact verified provisions.",
+      "requirement": "Latest consolidated Labour Relations Act amendments and commencement notices",
+      "safe_action": "Retrieve and compare the current official amendment and commencement record before proposition-level reliance."
+    },
+    {
+      "gap_id": "GAP-LEGAL-002",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "CCMA Rules currentness may be promoted without changing the page-QA history.",
+      "requirement": "Current CCMA Rules amendments, commencement and operative consolidated text after the 2023 carrier",
+      "safe_action": "Verify the latest official Gazette and effective rules against the stored 42-page carrier."
+    },
+    {
+      "gap_id": "GAP-LEGAL-003",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "Historical Schedule 8 and current Code application can be classified for a defined issue.",
+      "requirement": "Exact transitional and subject-matter scope of the 2025 Code of Practice: Dismissal",
+      "safe_action": "Read the current official Code and commencement material for the precise issue being analysed."
+    },
+    {
+      "gap_id": "GAP-LEGAL-004",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "Source-control work can be connected to facts without importing them into this experiment.",
+      "requirement": "Matter-specific primary facts and contrary evidence",
+      "safe_action": "Use a separately authorised matter packet with native evidence, case wall and adverse-evidence schedule."
+    },
+    {
+      "gap_id": "GAP-LEGAL-005",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "A bounded procedural route may be stated; jurisdiction is not presumed.",
+      "requirement": "Jurisdiction and procedural route",
+      "safe_action": "Test the pleaded dispute, relief, timing and forum against current primary authority."
+    },
+    {
+      "gap_id": "GAP-LEGAL-006",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "Only supported element-level propositions may advance.",
+      "requirement": "Protected-disclosure elements, route, good faith or reasonableness and causation",
+      "safe_action": "Map every statutory element to primary evidence and preserve alternative causal explanations."
+    },
+    {
+      "gap_id": "GAP-LEGAL-007",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "Relief can be framed without overstating the decision-maker's competence.",
+      "requirement": "Remedy, decision authority and enforceability",
+      "safe_action": "Separate recommendation, approval, adjudicative power and implementation authority."
+    },
+    {
+      "gap_id": "GAP-LEGAL-008",
+      "initial_state": "UNVERIFIED_REQUIRES_SEPARATE_LEGAL_PROOF",
+      "promotion_effect": "Institutional-policy propositions can remain separate from national-law propositions.",
+      "requirement": "Current operative institutional disciplinary policy and relationship to national law",
+      "safe_action": "Verify the current policy version, approval, scope and conflict rule before use."
+    }
+  ],
+  "objective": "Compile genuine legal source-control records into one authority passport that separates identity, integrity, review coverage, currentness, supersession and matter application without deciding any case.",
+  "schema": "FEDOMEGA-N-V21-LEGAL-REAL-READONLY-PACKET-1",
+  "sources": [
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-P13-001",
+          "classification": "TESTED_RESULT",
+          "field": "required_official_source_count",
+          "statement": "The receipt records five required official sources.",
+          "value": 5
+        },
+        {
+          "claim_id": "CLM-P13-002",
+          "classification": "TESTED_RESULT",
+          "field": "required_official_raw_byte_gate",
+          "statement": "The required official-source raw-byte gate passed.",
+          "value": true
+        },
+        {
+          "claim_id": "CLM-P13-003",
+          "classification": "BOUNDARY",
+          "field": "secondary_archive_gate",
+          "statement": "The separate secondary-resource archive gate did not pass.",
+          "value": false
+        },
+        {
+          "claim_id": "CLM-P13-004",
+          "classification": "UNKNOWN",
+          "field": "secondary_provider_blocked_ids",
+          "statement": "Two secondary CCMA information-sheet source IDs remained provider-blocked.",
+          "value": [
+            "SRC-SA-CCMA-RULES-INFO-2025-01",
+            "SRC-SA-CCMA-ULP-INFO-2025-01"
+          ]
+        },
+        {
+          "claim_id": "CLM-P13-005",
+          "classification": "BOUNDARY",
+          "field": "official_receipt_truth_boundary",
+          "statement": "Raw-byte identity for required primary sources does not prove base-Act consolidated currentness, proposition-level legal research, real-case outcomes or consequential authority.",
+          "value": "IDENTITY_VERIFIED_CURRENTNESS_AND_CASE_VALUE_SEPARATE"
+        }
+      ],
+      "source_fingerprint_sha256": "e64c32d339935e6f378121732b60d7d99e4adc9c17524f8e4448a7f73bf2f085",
+      "source_id": "SRC-LEGAL-P13-OFFICIAL-PROVIDER-RECEIPT",
+      "source_type": "OFFICIAL_PROVIDER_RECEIPT",
+      "title": "P13 required official raw-provider receipt, 2026-08-04"
+    },
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-AUTH-001",
+          "classification": "BOUNDARY",
+          "field": "lra_register_status",
+          "statement": "The Labour Relations Act register status requires an amendment check.",
+          "value": "AMENDMENT_CHECK_REQUIRED"
+        },
+        {
+          "claim_id": "CLM-AUTH-002",
+          "classification": "BOUNDARY",
+          "field": "lra_version_note",
+          "statement": "The register notes Act 66 of 1995 with later amendments and requires verification of latest commencement and amendment notices before final reliance.",
+          "value": "Act 66 of 1995 with later amendments; verify latest commencement and amendment notices before final reliance"
+        },
+        {
+          "claim_id": "CLM-AUTH-003",
+          "classification": "FACT",
+          "field": "dismissal_code_register_status",
+          "statement": "The 2025 Code of Practice: Dismissal is registered as a current official source.",
+          "value": "CURRENT_OFFICIAL_SOURCE"
+        },
+        {
+          "claim_id": "CLM-AUTH-004",
+          "classification": "FACT",
+          "field": "dismissal_code_effective_from",
+          "statement": "The register records an effective date of 2025-09-04.",
+          "value": "2025-09-04"
+        },
+        {
+          "claim_id": "CLM-AUTH-005",
+          "classification": "FACT",
+          "field": "dismissal_code_gazette",
+          "statement": "The register identifies Government Gazette 53294, General Notice 3470.",
+          "value": "Government Gazette 53294, General Notice 3470"
+        },
+        {
+          "claim_id": "CLM-AUTH-006",
+          "classification": "FACT",
+          "field": "pda_register_status",
+          "statement": "The Protected Disclosures Act is registered as a current official source with the 2023 amendment noted.",
+          "value": "CURRENT_OFFICIAL_SOURCE_WITH_2023_AMENDMENT_NOTED"
+        },
+        {
+          "claim_id": "CLM-AUTH-007",
+          "classification": "FACT",
+          "field": "pda_version_note",
+          "statement": "The register notes Act 5 of 2017 and Judicial Matters Amendment Act 15 of 2023 effective 3 April 2024.",
+          "value": "Includes Act 5 of 2017 and Judicial Matters Amendment Act 15 of 2023 effective 3 April 2024"
+        }
+      ],
+      "source_fingerprint_sha256": "3abba4a9f93c9461ca82c939eaf527e842930d338a83e84d72c844b5eb321838",
+      "source_id": "SRC-LEGAL-AUTHORITY-REGISTER",
+      "source_type": "LEGAL_AUTHORITY_REGISTER",
+      "title": "Legal authorities register, checked 2026-08-04"
+    },
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-HASH-001",
+          "classification": "FACT",
+          "field": "ccma_rules_manifest_sha256",
+          "statement": "The 2023 CCMA Rules carrier has a recorded SHA-256.",
+          "value": "e92730dccfb309dd3ffdb558b3a959e60e34f1073e4c687876b926a7243ef99e"
+        },
+        {
+          "claim_id": "CLM-HASH-002",
+          "classification": "FACT",
+          "field": "historical_schedule8_sha256",
+          "statement": "The preserved historical Schedule 8 carrier has a recorded SHA-256.",
+          "value": "058afc1237a446ba099860ef5475ddc2d8edf27aec170b057343d8b0fec71295"
+        },
+        {
+          "claim_id": "CLM-HASH-003",
+          "classification": "BOUNDARY",
+          "field": "historical_schedule8_state",
+          "statement": "The manifest labels Schedule 8 as historical and superseded nationally in 2025.",
+          "value": "HISTORICAL_SUPERSEDED_NATIONALLY_IN_2025"
+        },
+        {
+          "claim_id": "CLM-HASH-004",
+          "classification": "FACT",
+          "field": "lra_drive_sha256",
+          "statement": "The Drive LRA source copy has a recorded SHA-256.",
+          "value": "a85686c487571fcd324f133772d8f719ee3910a752282438560b799220cb142f"
+        },
+        {
+          "claim_id": "CLM-HASH-005",
+          "classification": "FACT",
+          "field": "pda_drive_sha256",
+          "statement": "The Drive Protected Disclosures Act source copy has a recorded SHA-256.",
+          "value": "9d409a64b656fe4acd27d32bce65b9e801843914ef13b824a151a1e35d2988ac"
+        },
+        {
+          "claim_id": "CLM-HASH-006",
+          "classification": "FACT",
+          "field": "tut_disciplinary_code_sha256",
+          "statement": "The TUT signed Disciplinary Code and Procedure carrier has a recorded SHA-256.",
+          "value": "5f5ae94c72cb0d84cc4c313df8106ea693c368cc6ebc46a03fe55805ed212e2a"
+        }
+      ],
+      "source_fingerprint_sha256": "14d3a3e9a2bf72db7aa6903de2bec9c7aae93a0e19a7eb239bf8c7325bdf3a25",
+      "source_id": "SRC-LEGAL-CHECKSUM-MANIFEST",
+      "source_type": "CHECKSUM_MANIFEST",
+      "title": "National and institutional legal-authority checksum manifest"
+    },
+    {
+      "assertions": [
+        {
+          "claim_id": "CLM-QA-001",
+          "classification": "FACT",
+          "field": "ccma_rules_qa_sha256",
+          "statement": "The page ledger identifies the same CCMA Rules SHA-256 as the checksum manifest.",
+          "value": "e92730dccfb309dd3ffdb558b3a959e60e34f1073e4c687876b926a7243ef99e"
+        },
+        {
+          "claim_id": "CLM-QA-002",
+          "classification": "FACT",
+          "field": "ccma_rules_page_start",
+          "statement": "The reviewed CCMA Rules carrier begins at page 1.",
+          "value": 1
+        },
+        {
+          "claim_id": "CLM-QA-003",
+          "classification": "FACT",
+          "field": "ccma_rules_page_end",
+          "statement": "The reviewed CCMA Rules carrier ends at page 42.",
+          "value": 42
+        },
+        {
+          "claim_id": "CLM-QA-004",
+          "classification": "TESTED_RESULT",
+          "field": "ccma_rules_qa_page_count",
+          "statement": "Forty-two CCMA Rules pages are recorded as QA verified.",
+          "value": 42
+        },
+        {
+          "claim_id": "CLM-QA-005",
+          "classification": "TESTED_RESULT",
+          "field": "ccma_rules_text_read_count",
+          "statement": "All 42 pages are recorded as text-read.",
+          "value": 42
+        },
+        {
+          "claim_id": "CLM-QA-006",
+          "classification": "TESTED_RESULT",
+          "field": "ccma_rules_visual_scan_count",
+          "statement": "All 42 pages are recorded as visually scanned.",
+          "value": 42
+        },
+        {
+          "claim_id": "CLM-QA-007",
+          "classification": "BOUNDARY",
+          "field": "ccma_rules_qa_scope",
+          "statement": "Page QA establishes carrier review coverage and does not itself establish currentness, legal effect or matter application.",
+          "value": "CARRIER_QA_ONLY"
+        }
+      ],
+      "source_fingerprint_sha256": "9a5162f176315e0fd54c3ecedb3734b2e827c287135a5888d8fe529699399445",
+      "source_id": "SRC-LEGAL-CCMA-PAGE-QA-LEDGER",
+      "source_type": "PAGE_QA_LEDGER",
+      "title": "MPMB2603 full-review page ledger — CCMA Rules carrier"
+    }
+  ],
+  "treatment_controls": [
+    "SOURCE_IDENTITY",
+    "HASH_INTEGRITY",
+    "PAGE_QA",
+    "EPISTEMIC_LABELS",
+    "CURRENTNESS_SEPARATION",
+    "AUTHORITY_HIERARCHY",
+    "HISTORICAL_SUPERSESSION",
+    "ROUTE_SEPARATION",
+    "NO_MERITS_FINALITY"
+  ],
+  "truth_boundary": "This packet may measure legal source-control completeness only. It may not decide a case, determine jurisdiction, establish protected-disclosure status or causation, select a remedy, authorise a filing, or claim that all legal sources are current."
+}

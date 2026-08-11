@@ -1,0 +1,100 @@
+{
+  "transition_id": "AO-COMMERCIAL-PROVIDER-EXECUTION-PLANE-TRANSITION-V18",
+  "status": "PROVIDER_BLOCKED_EXECUTION_QUARANTINE_PRIVATE_EXECUTION_PLANE_REQUIRED",
+  "programme_id": "AO-COMMERCIAL-MATURITY-V1",
+  "stage_scope": ["C03", "C06", "C07", "C11", "C14", "C15"],
+  "implementation_release": {
+    "pull_request": 161,
+    "merge_commit": "e58b03e21e9ff7767a9d7ebade9f4ead4a87d170",
+    "provider_proof_head": "89c389cbbae6e9b5345df55f0ca1d1413c61b30a",
+    "provider_proof_run": 30932556333,
+    "provider_proof_job": 92070577496,
+    "provider_proof_artifact_id": 8901730423,
+    "provider_proof_artifact_digest": "sha256:2a4996498ded42ace64ca161dd69e717038010f2fbcb39a15f0783b7c1b502df",
+    "provider_proof_receipt_sha256": "889f1eee3a597d2c1d147aa33707d00146bcf4c64a05a484083d3e461e69fb0e",
+    "operational_checks": "14/14",
+    "regression_tests": "66/66",
+    "triggered_workflows": "31/31"
+  },
+  "repository_safety": {
+    "final_pull_request_head": "d3b65b2c179ffa97a23cc140ef3794ac9bca9dad",
+    "airlock_run": 30932974430,
+    "airlock_job": 92071968113,
+    "airlock_status": "SUCCESS",
+    "public_repository_leak_guard_run": 30932978677,
+    "public_repository_leak_guard_status": "SUCCESS"
+  },
+  "private_google_drive_release": {
+    "file_id": "1fLa7bzRlfa1bF-sjpmFyYgt0q_D7DovXNRaEiTelcto",
+    "title": "Alpha Omega Commercial Provider Reconciliation Recovery Completion v18 — Verified Implementation Release — 2026-08-04",
+    "created_at": "2026-08-04T17:15:35.582Z",
+    "modified_at": "2026-08-04T17:16:17.948Z",
+    "export_mime_type": "text/plain",
+    "export_size_bytes": 4441,
+    "export_sha256": "b2ea61d6ab9c53f1e4d69ef04ea7e101a77081b226dd7c351bca720000f2342d",
+    "readback_verified": true,
+    "shared": false,
+    "owner": "mosianekk@gmail.com"
+  },
+  "phoenix_execution_quarantine": {
+    "policy_commit": "93501aa49332989a77d9a0c22307dac4b52b8957",
+    "policy_pull_request": 162,
+    "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
+    "policy_version": "2.1.2",
+    "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
+    "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
+    "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+    "active_source_workflows": [
+      ".github/workflows/github-airlock.yml",
+      ".github/workflows/public-repository-leak-guard.yml",
+      ".github/workflows/phoenix-emergency-freeze.yml"
+    ],
+    "provider_managed_active": [
+      "dynamic/dependabot/dependabot-updates"
+    ],
+    "legacy_commercial_workflow_state": "DISABLED_MANUALLY",
+    "fresh_final_head_commercial_provider_ci": "PROVIDER_BLOCKED_EXECUTION_QUARANTINE"
+  },
+  "safe_transition_preparation": {
+    "source_commit_pin_required": true,
+    "read_only_source_checkout_required": true,
+    "persist_checkout_credentials": false,
+    "immutable_action_sha_pinning_required": true,
+    "artifact_only_proof_destination_required": true,
+    "source_repository_write_authority": "FORBIDDEN",
+    "live_provider_credentials": "NOT_REQUIRED_FOR_REFERENCE_PROOF",
+    "live_provider_mutation": "FORBIDDEN_WITHOUT_FRESH_AUTHORITY",
+    "commercial_truth_validation_required": true,
+    "owner_authority_validation_required": true,
+    "private_execution_plane_creation_performed": false,
+    "airlock_policy_exception_performed": false
+  },
+  "unblock_options": {
+    "option_a": "OWNER_AUTHORISE_SEPARATE_PRIVATE_EXECUTION_PLANE_CREATION_AND_CUTOVER",
+    "option_b": "OWNER_AUTHORISE_NARROW_AIRLOCK_POLICY_ROUTE_FOR_COMMERCIAL_PROVIDER_PROOF",
+    "automatic_selection": "PROHIBITED_OWNER_RESERVED_CONSEQUENTIAL_RELEASE"
+  },
+  "commercial_truth": {
+    "service_enabled_platform_prioritised": true,
+    "self_service_saas_held": true,
+    "verified_live_revenue_events": 0,
+    "customer_demand": "MARKET_PROOF_REQUIRED",
+    "signed_customer_contract": "NOT_PROVEN",
+    "payment_provider_operation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "cloud_run_operation": "PROVIDER_BLOCKED_CANONICAL_IDENTITY_AUTHORITY_UNAVAILABLE",
+    "provider_native_reconciliation": "PROVIDER_BLOCKED_NO_FRESH_AUTHORITY",
+    "distributed_provider_exactly_once": "PROVIDER_PROOF_REQUIRED",
+    "enterprise_assurance": "UNVERIFIED",
+    "partner_adoption": "MARKET_PROOF_REQUIRED",
+    "production_scale": "PRODUCTION_PROOF_REQUIRED",
+    "full_commercial_maturity": false
+  },
+  "owner_authority": {
+    "financial_commitments": "OWNER_RESERVED",
+    "contracts": "OWNER_RESERVED",
+    "external_communications": "OWNER_RESERVED",
+    "consequential_releases": "OWNER_RESERVED",
+    "revenue_recognition": "OWNER_RESERVED_PROVIDER_RECEIPT_REQUIRED",
+    "execution_plane_cutover": "OWNER_RESERVED"
+  }
+}

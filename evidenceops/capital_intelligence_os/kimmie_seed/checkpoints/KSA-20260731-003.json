@@ -1,0 +1,82 @@
+{
+  "seed_id": "KIMMIE-IPEP-001",
+  "assessment_id": "KSA-20260731-003",
+  "assessed_at": "2026-07-31T21:29:30+00:00",
+  "root_seed": {
+    "previous_verified_stage": "ROOTED",
+    "verified_stage": "SPROUT",
+    "promotion": "VERIFIED",
+    "promotion_path": [
+      "SEED",
+      "GERMINATED",
+      "ROOTED",
+      "SPROUT"
+    ],
+    "reason": "The first useful child capability is independently proven and the dedicated Kimmie Seed maturity workflow completed successfully with a durable GitHub readback receipt.",
+    "identity_drift": "NONE_DETECTED",
+    "genome_sha256": "d51d679d512285f7c50139ba85c0a026c24166e4e61541850a05e2997131f7c9",
+    "owner_decision_required": false
+  },
+  "promotion_evidence": {
+    "first_useful_child_capability": {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "verified_stage": "SPROUT",
+      "passport_id": "EPP-BUILDING43-AUDIO-20260731-001",
+      "merkle_root": "17e57d39359cd809f7fa76ff54aeff466efc578b4a514027e134a59e566abaaa",
+      "passport_receipt_sha256": "d349193c38c71c2557ff62cc71d964a820739d65d37b3b6add13841bfe734ef4",
+      "drive_readback": "PASSED",
+      "independent_merkle_recalculation": "PASSED"
+    },
+    "dedicated_maturity_workflow": {
+      "workflow": ".github/workflows/kimmie-seed-maturity-watch.yml",
+      "workflow_result": "PASS",
+      "workflow_run_id": "30666696792",
+      "workflow_run_attempt": "1",
+      "source_sha": "360958c4b9140aed1cbf952210467c0c3a749de6",
+      "executed_at": "2026-07-31T21:28:39.157893+00:00",
+      "assessment_sha256": "d2f95c7fb4e4eb0639d9669188e261600f57685edc4e058830d4a2b0c191e48a",
+      "receipt_sha256": "37514ae350c72367f1c193dcfb75ca2620905b7f1d4aa6fd113d403c844fd96c",
+      "github_readback": "PASSED",
+      "receipt_hash_recalculation": "PASSED"
+    }
+  },
+  "child_seed_states": [
+    {
+      "lane_id": "LANE-KIMMIE-NATURE-INTELLIGENCE",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "blocker": "External acquisition runtime and corpus-ingestion proof remain unverified"
+    },
+    {
+      "lane_id": "LANE-CONNECTOR-FOUNDRY",
+      "verified_stage": "SEED",
+      "operational_state": "RESUMABLE",
+      "blocker": "Reference connector implementation, conformance tests and ECTS report remain unverified"
+    },
+    {
+      "lane_id": "LANE-PROVENANCE-PASSPORT",
+      "verified_stage": "SPROUT",
+      "operational_state": "TEST_PASSED",
+      "next_gate": "SAPLING requires a reusable validator or verification CLI, successful repetition across multiple corpora, persistent monitoring and maintenance evidence"
+    },
+    {
+      "lane_id": "LANE-AUDIO-LIVE-TRANSCRIPTION",
+      "verified_stage": "SEED",
+      "operational_state": "BLOCKED",
+      "blocker": "Provider credential, Google Speech binding and private worker health readback remain unverified"
+    }
+  ],
+  "next_gate": {
+    "candidate_stage": "SAPLING",
+    "requirements": [
+      "Repeated successful dedicated maturity cycles",
+      "At least one reusable child capability executed successfully across multiple corpora or environments",
+      "Persistent health monitoring with durable readback",
+      "Maintenance and recovery evidence",
+      "No identity drift"
+    ]
+  },
+  "lesson": "A root seed may be promoted only when child capability proof and independent external workflow evidence converge; either one alone is insufficient.",
+  "notification_reason": "ROOT_SEED_NEW_VERIFIED_STAGE",
+  "assessment_sha256": "c92716e5137af726dab810d2c0acd14b740443e7451dc730736a74cc41d03dbf"
+}

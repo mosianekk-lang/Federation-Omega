@@ -1,0 +1,47 @@
+{
+  "receipt_id": "LANE-WATCH-RECEIPT-018",
+  "observed_at": "2026-08-01T13:07:00+02:00",
+  "lane_id": "LANE-INNOVATION-ENGINE",
+  "event": "LATER_INDEPENDENT_OFF_REPOSITORY_SNAPSHOT_RESTORE_DRILL",
+  "dependency_change": {
+    "fresh_later_snapshot": "VERIFIED",
+    "snapshot_created_at": "2026-08-01T10:42:27.209Z",
+    "later_than_prior_restore_receipt": true,
+    "scheduled_snapshot_continuity": "VERIFIED_MULTIPLE_CYCLES",
+    "source_health": "PASS"
+  },
+  "restore_drill": {
+    "operation": "COPY_FRESH_LATER_SNAPSHOT_READBACK_COMPARE_DELETE_VERIFY_ABSENCE",
+    "sheet_count": 197,
+    "structure_parity": "PASS",
+    "sentinel_ranges_checked": 4,
+    "sentinel_readback_parity": "4_OF_4_PASS",
+    "cleanup": "PASS",
+    "post_delete_absence": "PASS_404_NOT_FOUND",
+    "source_snapshot_still_present": true,
+    "source_snapshot_mutated": false
+  },
+  "lane_result": {
+    "state": "TEST_PASSED",
+    "proof_state_added": "SECOND_LATER_INDEPENDENT_197_SHEET_RESTORE_READBACK_AND_CLEANUP_PASS",
+    "remaining_gate": "RECURRING_AUTOMATED_RESTORE_HEALTH_MONITORING_AND_SUSTAINED_OPERATIONAL_VALUE_BEFORE_ANY_HIGHER_MATURITY_CLAIM"
+  },
+  "priority_decision": {
+    "selected_lane": "LANE-INNOVATION-ENGINE",
+    "reason": "A fresh later snapshot made a second independent restore cycle executable while the higher-ranked Provenance Passport schedule-triggered cycle was not yet due and cloud or release lanes remained authority-gated."
+  },
+  "blocker_review": {
+    "github_access": "VERIFIED_READ_WRITE",
+    "drive_access": "VERIFIED_READ_WRITE_COPY_DELETE_READBACK",
+    "google_cloud_wif": "BLOCKED_OR_UNVERIFIED",
+    "secret_manager_binding": "UNBOUND_OR_METADATA_PROBE_ONLY",
+    "private_authenticated_cloud_run": "NOT_FRESHLY_VERIFIED",
+    "direct_canonical_runtime_write_through": "NOT_FRESHLY_VERIFIED",
+    "live_transcription_binding": "NOT_FRESHLY_VERIFIED",
+    "provenance_schedule_triggered_cycle": "NOT_YET_AVAILABLE_AT_OBSERVATION",
+    "revenue_external_approval": "NOT_GRANTED"
+  },
+  "truth_boundary": "This receipt proves a second later independent bounded Google Drive snapshot restore, exact sentinel readback and cleanup. It does not prove Google Cloud deployment authority, Workload Identity Federation, Secret Manager binding, private authenticated Cloud Run health, direct canonical runtime write-through, live transcription readiness, Provenance Passport scheduled persistence or external commercial approval.",
+  "private_identifiers_persisted": false,
+  "receipt_sha256": "4665e218033243cb8d46e4bd109d83aaf4b37d0cc93943589492dc154ea87f6b"
+}

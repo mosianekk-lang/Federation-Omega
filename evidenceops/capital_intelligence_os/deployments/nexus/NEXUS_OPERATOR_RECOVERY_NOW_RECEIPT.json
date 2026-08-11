@@ -1,0 +1,73 @@
+{
+  "active_gcloud_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+  "artifact": {
+    "drive_id": "1_r1qlRHeEcF7Xl-BSJpfWUWIRYs4C_Pm",
+    "name": "nexus-codex-runtime-v3.1.1.zip",
+    "sha256": "fabbdf9ec89c1ea4468515ba1659cc0019719c5bc5747084795148a354dc1518",
+    "wheel_drive_id": "1Ur3FEOPCjQ54gumvBDTSbWJpDse6o86p"
+  },
+  "auth_route_selected": "CANONICAL_WIF",
+  "authenticated_status": null,
+  "baseline_read": null,
+  "build_readbacks": [],
+  "classification": "BLOCKED_CANONICAL_WIF_INVALID_TARGET",
+  "credential_alias_presence": {
+    "FO_ADMIN_TOKEN": false,
+    "GCP_CREDENTIALS": false,
+    "GCP_SA_KEY": false,
+    "GCP_SERVICE_ACCOUNT_KEY": false,
+    "GCP_WIF_PAIR": false,
+    "GENERIC_WIF_PAIR": false,
+    "GOOGLE_CLOUD_CREDENTIALS": false,
+    "GOOGLE_CREDENTIALS": false,
+    "GOOGLE_GHA_CREDS_JSON": false,
+    "GOOGLE_SERVICE_ACCOUNT_KEY": false
+  },
+  "deployment": null,
+  "endpoint_health": null,
+  "mutation_attempted": false,
+  "project": "sov-hybrid-suite",
+  "proof_matrix": {},
+  "public_contract": {
+    "body": {
+      "allowedActions": [
+        "STATUS",
+        "READ_CLOUD_RUN_SERVICE",
+        "VERIFY_ARCHITRON_HEALTH",
+        "DEPLOY_SOLUTION5_LOCKED",
+        "READ_BUILD"
+      ],
+      "checkedAt": "2026-07-30T02:10:43.054Z",
+      "ok": true,
+      "service": "federation-omega-operator",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "public_health": {
+    "body": {
+      "checkedAt": "2026-07-30T02:10:42.474Z",
+      "noGmail": true,
+      "ok": true,
+      "service": "federation-omega-operator",
+      "status": "OPERATOR_READY",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "receipt": "NEXUS-OPERATOR-RECOVERY-NOW",
+  "recorded_at": "2026-07-30T02:10:43.196165+00:00",
+  "region": "africa-south1",
+  "required_actions_missing": [],
+  "rollback_ref": null,
+  "secret_values_recorded": false,
+  "source_service": "architron9",
+  "target_read": null,
+  "target_service": "nexus-codex-runtime",
+  "token_error": "ERROR: (gcloud.secrets.versions.access) There was a problem refreshing your current auth tokens: ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')\nPlease run:\n\n  $ gcloud auth login\n\nto obtain new credentials.\n\nIf you have already logged in with a different account, run:\n\n  $ gcloud config set account ACCOUNT\n\nto select an already authenticated account to use.",
+  "token_present": false,
+  "token_source": "none",
+  "token_value_recorded": false
+}

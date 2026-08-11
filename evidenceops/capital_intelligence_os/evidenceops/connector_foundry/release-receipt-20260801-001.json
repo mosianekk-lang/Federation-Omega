@@ -1,0 +1,35 @@
+{
+  "receipt_id": "ECTS-CONNECTOR-FOUNDRY-20260801-001",
+  "observed_at": "2026-08-01T02:15:45+02:00",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "branch": "evidenceops-connector-foundry-20260801",
+  "branch_head_before_receipt": "b2bdb10cf611188b0a00c313facda8ab33a4e653",
+  "lane_id": "LANE-CONNECTOR-FOUNDRY",
+  "transition": "RESUMABLE_TO_VERIFYING",
+  "implementation_state": "IMPLEMENTED_ON_BRANCH_LOCAL_ECTS_PASSED_GITHUB_READBACK_PENDING_CI_PENDING",
+  "ects": {
+    "standard_version": "ECTS-1.0",
+    "case_count": 6,
+    "passed": 6,
+    "failed": 0,
+    "state": "PASS",
+    "report_sha256": "66e9d06b2eab8e75291f4a3d19b46957d569cf9b5cdf426fcad7a0a040a21c49",
+    "artifact_sha256": "a145856d655468b22a9c9717b77d6d91617dfe99df1ed3d69c17a45e2f370a28"
+  },
+  "artifacts": {
+    "evidenceops/connector_foundry/__init__.py": "ac2f485a104f6c40df9c7e08a934c9a48843531ab1a8444a8dcb6103502b2c93",
+    "evidenceops/connector_foundry/reference.py": "8a9ccd7737b6b9fe2fe4d8362a756084c31ab6d4bf54c5315305b96109125a5f",
+    "evidenceops/connector_foundry/conformance.py": "16fbff51f51763bb7d5850898c21f4d23e473dcb61ec0b3a0f2bf1a893e20dff",
+    "tests/test_connector_foundry.py": "3367c4619dbbe3fe865368bd4aa0d747efad29214fe788458f4b2a037251b440",
+    "evidenceops/connector_foundry/README.md": "a83d6b35202b82ccd86780f6f2365d248051299dd4ba683f28be56d004c90ab9"
+  },
+  "proof_boundaries": [
+    "No provider adapter was executed.",
+    "No Google Drive package path was executed by the reference connector.",
+    "No Google Cloud, Secret Manager, Gmail or transcription runtime was proven.",
+    "GitHub Actions conclusion remains pending.",
+    "The branch is not merged into main."
+  ],
+  "next_gate": "Read back branch artifacts, open a review pull request, verify CI and merge before advancing beyond VERIFYING.",
+  "receipt_sha256": "dbaaf2a12d8a4253f4348a5aa4f4d73b7ecfbdb7520a2222494192d6ab281693"
+}

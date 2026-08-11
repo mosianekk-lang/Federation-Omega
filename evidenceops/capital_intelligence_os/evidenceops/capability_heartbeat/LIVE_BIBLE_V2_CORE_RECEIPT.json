@@ -1,0 +1,15 @@
+{
+  "schema": "EVIDENCEOPS-LIVE-BIBLE-V2-CORE-PROMOTION-1",
+  "mission_id": "LBV2-CORE-CURRENT-MAIN-20260804",
+  "source_pr": 149,
+  "source_head": "ab228213163d4b2840a05116a272909b33dded28",
+  "target_branch": "live-bible-v2-core-current-main-20260804",
+  "base_ref": "main",
+  "authority_class": "A1",
+  "external_effects": 0,
+  "source_tests_previously_verified": 18,
+  "clean_extraction_tests_previously_verified": 18,
+  "current_main_compatibility_gate": "PENDING_PROVIDER_CHECKS",
+  "airlock_scope": "SOURCE_ONLY_NO_WORKFLOW_MUTATION_NO_RUNTIME_STATE_COMMIT",
+  "truth_boundary": "This receipt records source promotion preparation. Merge and current-main compatibility are not proven until GitHub provider checks and post-merge readback pass."
+}

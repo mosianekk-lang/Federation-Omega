@@ -1,0 +1,196 @@
+{
+  "concepts": [
+    {
+      "assigned_council": "Trust Infrastructure Expert Genome Council",
+      "dependencies": [],
+      "domain": "Trust Infrastructure",
+      "id": "E2K-0001",
+      "last_advanced_at": "2026-08-01T09:18:28.326990+00:00",
+      "maturity": "LICENSED",
+      "name": "Trusted Institution Node",
+      "next_action": "license or federate",
+      "priority_score": 93.7,
+      "scores": {
+        "defensibility": 91,
+        "implementation_feasibility": 88,
+        "network_effect": 94,
+        "revenue_potential": 98,
+        "urgency": 95
+      }
+    },
+    {
+      "assigned_council": "Anti-Corruption Systems Expert Genome Council",
+      "dependencies": [],
+      "domain": "Anti-Corruption Systems",
+      "id": "E2K-0002",
+      "last_advanced_at": "2026-08-01T22:08:51.979893+00:00",
+      "maturity": "LICENSED",
+      "name": "Corruption Oxygen Index",
+      "next_action": "license or federate",
+      "priority_score": 89.5,
+      "scores": {
+        "defensibility": 87,
+        "implementation_feasibility": 92,
+        "network_effect": 83,
+        "revenue_potential": 90,
+        "urgency": 96
+      }
+    },
+    {
+      "assigned_council": "AI-Agent Society Expert Genome Council",
+      "dependencies": [],
+      "domain": "AI-Agent Society",
+      "id": "E2K-0003",
+      "last_advanced_at": "2026-08-01T21:07:48.329128+00:00",
+      "maturity": "LICENSED",
+      "name": "AI-Agent University Operating System",
+      "next_action": "license or federate",
+      "priority_score": 90.65,
+      "scores": {
+        "defensibility": 96,
+        "implementation_feasibility": 74,
+        "network_effect": 98,
+        "revenue_potential": 95,
+        "urgency": 85
+      }
+    },
+    {
+      "assigned_council": "Institutional Memory Expert Genome Council",
+      "dependencies": [],
+      "domain": "Institutional Memory",
+      "id": "E2K-0004",
+      "last_advanced_at": "2026-08-01T15:15:33.161810+00:00",
+      "maturity": "LICENSED",
+      "name": "Founder Intelligence Preservation",
+      "next_action": "license or federate",
+      "priority_score": 90.3,
+      "scores": {
+        "defensibility": 89,
+        "implementation_feasibility": 94,
+        "network_effect": 78,
+        "revenue_potential": 92,
+        "urgency": 99
+      }
+    },
+    {
+      "assigned_council": "Justice and Rights Expert Genome Council",
+      "dependencies": [
+        "E2K-0002"
+      ],
+      "domain": "Justice and Rights",
+      "id": "E2K-0005",
+      "last_advanced_at": "2026-08-02T17:12:37.481261+00:00",
+      "maturity": "LICENSED",
+      "name": "Burden Transfer Detector",
+      "next_action": "license or federate",
+      "priority_score": 87.45,
+      "scores": {
+        "defensibility": 88,
+        "implementation_feasibility": 89,
+        "network_effect": 81,
+        "revenue_potential": 86,
+        "urgency": 94
+      }
+    },
+    {
+      "assigned_council": "Governance Expert Genome Council",
+      "dependencies": [],
+      "domain": "Governance",
+      "id": "E2K-0006",
+      "last_advanced_at": "2026-08-01T19:30:37.436198+00:00",
+      "maturity": "LICENSED",
+      "name": "Proof-Carrying Decision Engine",
+      "next_action": "license or federate",
+      "priority_score": 91.6,
+      "scores": {
+        "defensibility": 93,
+        "implementation_feasibility": 82,
+        "network_effect": 95,
+        "revenue_potential": 94,
+        "urgency": 91
+      }
+    },
+    {
+      "assigned_council": "Markets and Finance Expert Genome Council",
+      "dependencies": [
+        "E2K-0002",
+        "E2K-0006"
+      ],
+      "domain": "Markets and Finance",
+      "id": "E2K-0007",
+      "last_advanced_at": "2026-08-02T21:08:30.399156+00:00",
+      "maturity": "LICENSED",
+      "name": "Integrity Underwriting Feed",
+      "next_action": "license or federate",
+      "priority_score": 86.9,
+      "scores": {
+        "defensibility": 92,
+        "implementation_feasibility": 67,
+        "network_effect": 91,
+        "revenue_potential": 97,
+        "urgency": 80
+      }
+    },
+    {
+      "assigned_council": "Sovereignty and Federation Expert Genome Council",
+      "dependencies": [
+        "E2K-0006"
+      ],
+      "domain": "Sovereignty and Federation",
+      "id": "E2K-0008",
+      "last_advanced_at": "2026-08-02T21:08:30.399156+00:00",
+      "maturity": "LICENSED",
+      "name": "Federated Accountability Mesh",
+      "next_action": "license or federate",
+      "priority_score": 86.45,
+      "scores": {
+        "defensibility": 97,
+        "implementation_feasibility": 60,
+        "network_effect": 100,
+        "revenue_potential": 89,
+        "urgency": 79
+      }
+    },
+    {
+      "assigned_council": "Education and Human Development Expert Genome Council",
+      "dependencies": [],
+      "domain": "Education and Human Development",
+      "id": "E2K-0009",
+      "last_advanced_at": "2026-08-02T09:18:58.060834+00:00",
+      "maturity": "LICENSED",
+      "name": "Kim Value Algorithm",
+      "next_action": "license or federate",
+      "priority_score": 88.2,
+      "scores": {
+        "defensibility": 95,
+        "implementation_feasibility": 84,
+        "network_effect": 86,
+        "revenue_potential": 88,
+        "urgency": 87
+      }
+    },
+    {
+      "assigned_council": "AI-Agent Society Expert Genome Council",
+      "dependencies": [
+        "E2K-0003"
+      ],
+      "domain": "AI-Agent Society",
+      "id": "E2K-0010",
+      "last_advanced_at": "2026-08-01T23:08:06.458304+00:00",
+      "maturity": "LICENSED",
+      "name": "Expert Genome Agent Foundry",
+      "next_action": "license or federate",
+      "priority_score": 92.1,
+      "scores": {
+        "defensibility": 98,
+        "implementation_feasibility": 79,
+        "network_effect": 97,
+        "revenue_potential": 93,
+        "urgency": 90
+      }
+    }
+  ],
+  "portfolio_id": "EARTH2-PORTFOLIO-001",
+  "updated_at": "2026-08-04T15:33:26.072602+00:00",
+  "version": "1.0"
+}

@@ -1,0 +1,4 @@
+triggered_at=2026-08-04T00:35:00+02:00
+purpose=non-destructive provider identity, Cloud Run state and API-read canary for FO transcription bridge deployment
+requested_by=FO-transcription-bridge-alpha-omega
+mutation_scope=GitHub trigger file only; provider canary is read-only

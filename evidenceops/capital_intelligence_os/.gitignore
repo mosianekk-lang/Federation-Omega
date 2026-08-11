@@ -1,0 +1,49 @@
+# Secrets and local configuration
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.jks
+*.keystore
+*.credentials.json
+gha-creds-*.json
+service-account*.json
+
+# Python
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+.venv/
+venv/
+dist/
+build/
+*.egg-info/
+
+# Node and frontend
+node_modules/
+coverage/
+.nyc_output/
+
+# Local state and generated evidence
+*.log
+*.tmp
+*.sqlite
+*.sqlite3
+*.db
+runtime-state/
+local-receipts/
+local-artifacts/
+control-plane-output/
+federation-learning-output/
+learning-artifacts/
+
+# IDE and OS
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db

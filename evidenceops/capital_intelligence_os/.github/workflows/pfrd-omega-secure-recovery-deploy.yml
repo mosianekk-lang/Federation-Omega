@@ -1,0 +1,343 @@
+name: PFRD Omega Secure Credential Recovery Deployment
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/pfrd-omega-secure-recovery-deploy.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: pfrd-omega-operator-deployment
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  REGION: africa-south1
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  SERVICE: pfrd-omega-gateway-canary
+  SERVICE_ACCOUNT: fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_DRIVE_ID: 11IQSUWThWuZwwCwevSffqP1gsgs2nvr9
+  ARTIFACT_NAME: PFRD_OMEGA_Deployable_Source_Tree_v2.1.0.zip
+  ARTIFACT_SHA256: 04422e9cf3b6a4937f10202a7d498577108b734e1b04e5c6449ffa225c1911c4
+  HAS_DIRECT_TOKEN: ${{ secrets.FO_ADMIN_TOKEN != '' }}
+  HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+  HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
+  HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
+  HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
+  HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
+  HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
+  HAS_GENERIC_WIF_PAIR: ${{ (secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '') && (secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '') }}
+
+jobs:
+  recover-and-deploy:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: main
+
+      - name: Authenticate with GCP_SA_KEY when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_SA_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate with GCP_SERVICE_ACCOUNT_KEY when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Authenticate with GOOGLE_CREDENTIALS when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Authenticate with GOOGLE_SERVICE_ACCOUNT_KEY when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Authenticate with GCP_CREDENTIALS when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Authenticate with GOOGLE_GHA_CREDS_JSON when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_GHA_CREDS_JSON == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
+
+      - name: Authenticate with GOOGLE_CLOUD_CREDENTIALS when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GOOGLE_CLOUD_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+
+      - name: Authenticate with repository-defined GCP WIF pair when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GCP_WIF_PAIR == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+
+      - name: Authenticate with generic WIF pair when present
+        if: ${{ env.HAS_DIRECT_TOKEN != 'true' && env.HAS_GENERIC_WIF_PAIR == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER || vars.WIF_PROVIDER }}
+          service_account: ${{ secrets.DEPLOYER_SA || vars.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Acquire operator token without disclosure
+        shell: bash
+        env:
+          DIRECT_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/pfrd-secure-recovery
+          TOKEN="$DIRECT_FO_ADMIN_TOKEN"
+          SOURCE=""
+          ERROR=""
+          ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' 2>/dev/null | head -n1 || true)"
+          if [[ -n "$TOKEN" ]]; then
+            SOURCE="github_actions_secret"
+          elif [[ -n "$ACCOUNT" ]]; then
+            set +e
+            TOKEN="$(gcloud secrets versions access latest --secret=fo-operator-admin-token --project="$PROJECT_ID" 2>/tmp/pfrd-secure-recovery/secret-error.txt)"
+            RC=$?
+            set -e
+            if [[ $RC -eq 0 && -n "$TOKEN" ]]; then
+              SOURCE="google_secret_manager"
+            else
+              TOKEN=""
+              ERROR="$(tail -c 1200 /tmp/pfrd-secure-recovery/secret-error.txt 2>/dev/null || true)"
+            fi
+          fi
+          if [[ -n "$TOKEN" ]]; then
+            echo "::add-mask::$TOKEN"
+            {
+              echo 'FO_ADMIN_TOKEN<<PFRD_EOF'
+              printf '%s\n' "$TOKEN"
+              echo 'PFRD_EOF'
+              echo "TOKEN_SOURCE=$SOURCE"
+            } >> "$GITHUB_ENV"
+          else
+            echo "TOKEN_SOURCE=none" >> "$GITHUB_ENV"
+          fi
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          matrix = {
+              'FO_ADMIN_TOKEN': os.environ.get('HAS_DIRECT_TOKEN') == 'true',
+              'GCP_SA_KEY': os.environ.get('HAS_GCP_SA_KEY') == 'true',
+              'GCP_SERVICE_ACCOUNT_KEY': os.environ.get('HAS_GCP_SERVICE_ACCOUNT_KEY') == 'true',
+              'GOOGLE_CREDENTIALS': os.environ.get('HAS_GOOGLE_CREDENTIALS') == 'true',
+              'GOOGLE_SERVICE_ACCOUNT_KEY': os.environ.get('HAS_GOOGLE_SERVICE_ACCOUNT_KEY') == 'true',
+              'GCP_CREDENTIALS': os.environ.get('HAS_GCP_CREDENTIALS') == 'true',
+              'GOOGLE_GHA_CREDS_JSON': os.environ.get('HAS_GOOGLE_GHA_CREDS_JSON') == 'true',
+              'GOOGLE_CLOUD_CREDENTIALS': os.environ.get('HAS_GOOGLE_CLOUD_CREDENTIALS') == 'true',
+              'GCP_WIF_PAIR': os.environ.get('HAS_GCP_WIF_PAIR') == 'true',
+              'GENERIC_WIF_PAIR': os.environ.get('HAS_GENERIC_WIF_PAIR') == 'true',
+          }
+          Path('/tmp/pfrd-secure-recovery/credential-presence.json').write_text(
+              json.dumps(matrix, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          PY
+          printf '%s' "$ACCOUNT" > /tmp/pfrd-secure-recovery/active-account.txt
+          printf '%s' "$ERROR" > /tmp/pfrd-secure-recovery/secret-acquisition-error.txt
+
+      - name: Execute one-shot authenticated deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments/pfrd-omega /tmp/pfrd-secure-recovery
+          python - <<'PY'
+          from __future__ import annotations
+          import json, os, urllib.error, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from typing import Any
+
+          base = os.environ['OPERATOR_URL'].rstrip('/')
+          token = os.environ.get('FO_ADMIN_TOKEN', '')
+          project, region, service = os.environ['PROJECT_ID'], os.environ['REGION'], os.environ['SERVICE']
+          service_account = os.environ['SERVICE_ACCOUNT']
+          artifact_id, artifact_name, artifact_hash = os.environ['ARTIFACT_DRIVE_ID'], os.environ['ARTIFACT_NAME'], os.environ['ARTIFACT_SHA256']
+          presence = json.loads(Path('/tmp/pfrd-secure-recovery/credential-presence.json').read_text())
+          account = Path('/tmp/pfrd-secure-recovery/active-account.txt').read_text().strip()
+          secret_error = Path('/tmp/pfrd-secure-recovery/secret-acquisition-error.txt').read_text().strip()
+
+          def redact(value: Any) -> Any:
+              if isinstance(value, dict):
+                  return {k: ('[REDACTED]' if any(x in str(k).lower() for x in ('secret','token','credential','authorization','api_key')) else redact(v)) for k,v in value.items()}
+              if isinstance(value, list): return [redact(v) for v in value]
+              if isinstance(value, str) and token: return value.replace(token, '[REDACTED]')
+              return value
+
+          def call(path: str, body: dict | None = None, authenticated: bool = False, timeout: int = 60) -> dict:
+              headers = {'accept':'application/json'}
+              data = None
+              if body is not None:
+                  headers['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
+              if authenticated: headers['x-fo-admin-token']=token
+              req=urllib.request.Request(base+path,data=data,headers=headers,method='POST' if body is not None else 'GET')
+              try:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
+                      raw=r.read().decode('utf-8','replace')
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={'text':raw[:4000]}
+                      return {'http_status':r.status,'body':redact(parsed)}
+              except urllib.error.HTTPError as exc:
+                  raw=exc.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={'text':raw[:4000]}
+                  return {'http_status':exc.code,'body':redact(parsed)}
+              except Exception as exc:
+                  return {'transport_error':type(exc).__name__,'message':str(exc)[:500],'execution_uncertain':body is not None}
+
+          def ok(r: dict) -> bool: return r.get('http_status')==200 and r.get('body',{}).get('ok') is True
+          def flatten(v: Any) -> str:
+              if isinstance(v,dict): return ' '.join(flatten(x) for x in v.values())
+              if isinstance(v,list): return ' '.join(flatten(x) for x in v)
+              return str(v)
+          def find(v: Any, keys: set[str]) -> str | None:
+              if isinstance(v,dict):
+                  for k,x in v.items():
+                      if str(k).lower() in keys and x not in (None,'',[],{}): return str(x)
+                  for x in v.values():
+                      y=find(x,keys)
+                      if y:return y
+              elif isinstance(v,list):
+                  for x in v:
+                      y=find(x,keys)
+                      if y:return y
+              return None
+          def cloud_specific(r: dict, expected: str) -> bool:
+              if not ok(r): return False
+              text=flatten(r.get('body',{})).lower()
+              return expected.lower() in text and project.lower() in text and region.lower() in text and bool(find(r.get('body',{}),{'url','service_url','serviceurl','uri','revision','latest_ready_revision','latestreadyrevisionname'}))
+
+          receipt: dict[str,Any] = {
+              'receipt':'PFRD-OMEGA-SECURE-RECOVERY-DEPLOYMENT-RECEIPT',
+              'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'credential_alias_presence':presence,
+              'active_gcloud_account_present':bool(account),
+              'active_gcloud_account':account or None,
+              'token_source':os.environ.get('TOKEN_SOURCE','none'),
+              'token_present':bool(token),
+              'token_value_recorded':False,
+              'secret_values_recorded':False,
+              'secret_acquisition_error':secret_error[:1200] or None,
+              'project':project,'region':region,'service':service,'service_account':service_account,
+              'artifact':{'drive_id':artifact_id,'name':artifact_name,'sha256':artifact_hash},
+              'activation_mode_requested':'POLICY_ONLY','deployment_mode':'reversible_new_service',
+              'mutation_attempted':False,'automatic_retry_performed':False,
+              'public_health':None,'public_contract':None,'authenticated_status':None,
+              'baseline_readback':None,'target_before':None,'deployment_response':None,
+              'target_after':None,'build_readback':None,'endpoint_health':None,
+              'classification':'NOT_EVALUATED',
+              'not_claimed':['PRODUCTION_SEALED','KERNEL_ENFORCED','production traffic promotion','persistent database durability','distributed trust-domain deployment'],
+          }
+          receipt['public_health']=call('/health'); receipt['public_contract']=call('/')
+          allowed=set(receipt['public_contract'].get('body',{}).get('allowedActions',[]))
+          if not token:
+              receipt['classification']='BLOCKED_NO_TRUSTED_SECRET_ROUTE'
+          elif not {'STATUS','READ_CLOUD_RUN_SERVICE','DEPLOY_SOLUTION5_LOCKED','READ_BUILD'}.issubset(allowed):
+              receipt['classification']='BLOCKED_OPERATOR_ALLOWLIST_MISMATCH'
+          else:
+              status=call('/execute',{'action':'STATUS','payload':{'purpose':'PFRD secure recovery deployment preflight','mutation':'NONE'}},True)
+              baseline=call('/execute',{'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':'architron9','purpose':'authenticated baseline'}},True)
+              target_before=call('/execute',{'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':service,'purpose':'duplicate deployment check'}},True)
+              receipt['authenticated_status']=status; receipt['baseline_readback']=baseline; receipt['target_before']=target_before
+              if not ok(status): receipt['classification']='BLOCKED_AUTHENTICATED_STATUS_FAILED'
+              elif not cloud_specific(baseline,'architron9'): receipt['classification']='BLOCKED_ACTION_SPECIFIC_BASELINE_FAILED'
+              elif cloud_specific(target_before,service):
+                  receipt['classification']='TARGET_SERVICE_ALREADY_EXISTS_PROVIDER_READBACK_REQUIRED'
+              else:
+                  payload={'approvalKey':'APPROVED','project':project,'region':region,'service':service,'artifactDriveId':artifact_id,'artifactName':artifact_name,'artifactSha256':artifact_hash,'sourceService':'architron9','serviceAccount':service_account,'deploymentMode':'reversible_new_service','activationMode':'POLICY_ONLY','idempotencyKey':f'PFRD-OMEGA-2.1.0-{artifact_hash[:16]}','requiredSecrets':['OPENAI_API_KEY','PFRD_PUBLIC_API_KEY','PFRD_ADMIN_API_KEY','PFRD_SERVICE_TOKEN','PFRD_PROOF_SIGNING_KEY','PFRD_APPROVAL_SIGNING_KEY','PFRD_CAPABILITY_SIGNING_KEY','PFRD_RELEASE_SIGNING_KEY','DATABASE_URL'],'proofRequired':['artifact_sha256_match','build_id','build_status_SUCCESS','service_url','latest_ready_revision','service_account','health','rollback_ref']}
+                  receipt['mutation_attempted']=True
+                  deploy=call('/execute',{'action':'DEPLOY_SOLUTION5_LOCKED','payload':payload},True,900)
+                  receipt['deployment_response']=deploy
+                  if deploy.get('execution_uncertain'):
+                      receipt['classification']='EXECUTION_UNCERTAIN_NO_AUTOMATIC_RETRY'
+                  elif not ok(deploy):
+                      receipt['classification']='PROVIDER_REJECTED_DEPLOYMENT'
+                  else:
+                      after=call('/execute',{'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':service,'purpose':'provider-native post-deployment readback'}},True)
+                      build=call('/execute',{'action':'READ_BUILD','payload':{'project':project,'region':region,'service':service,'artifactSha256':artifact_hash,'purpose':'immutable build readback'}},True)
+                      receipt['target_after']=after; receipt['build_readback']=build
+                      url=find(after.get('body',{}),{'url','service_url','serviceurl','uri'})
+                      endpoint=None
+                      if url and url.startswith('https://'):
+                          try:
+                              req=urllib.request.Request(url.rstrip('/')+'/health',headers={'accept':'application/json'})
+                              with urllib.request.urlopen(req,timeout=30) as r:
+                                  raw=r.read().decode('utf-8','replace')
+                                  try: parsed=json.loads(raw)
+                                  except Exception: parsed={'text':raw[:4000]}
+                                  endpoint={'http_status':r.status,'body':redact(parsed)}
+                          except urllib.error.HTTPError as exc:
+                              endpoint={'http_status':exc.code,'body':{'text':exc.read().decode('utf-8','replace')[:1000]}}
+                          except Exception as exc:
+                              endpoint={'transport_error':type(exc).__name__,'message':str(exc)[:500]}
+                      receipt['endpoint_health']=endpoint
+                      read_ok=cloud_specific(after,service)
+                      btext=flatten(build.get('body',{})).lower()
+                      build_ok=ok(build) and (artifact_hash.lower() in btext or 'success' in btext or 'succeeded' in btext)
+                      health_ok=bool(endpoint and endpoint.get('http_status')==200 and str(endpoint.get('body',{}).get('status','')).lower() in {'ok','healthy'})
+                      if read_ok and build_ok and health_ok: receipt['classification']='CLOUD_RUN_POLICY_CANARY_DEPLOYED_AND_HEALTH_VERIFIED'
+                      elif read_ok and build_ok: receipt['classification']='CLOUD_RUN_DEPLOYED_BUILD_VERIFIED_HEALTH_INCOMPLETE'
+                      else: receipt['classification']='DEPLOYMENT_RESPONSE_RECEIVED_PROVIDER_READBACK_INCOMPLETE'
+
+          path=Path('deployments/pfrd-omega/SECURE_RECOVERY_DEPLOYMENT_RECEIPT.json')
+          path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          Path('/tmp/pfrd-secure-recovery/SECURE_RECOVERY_DEPLOYMENT_RECEIPT.json').write_text(path.read_text(),encoding='utf-8')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          PY
+
+      - name: Persist secure recovery receipt
+        run: |
+          set -euo pipefail
+          git config user.name "pfrd-omega-secure-recovery[bot]"
+          git config user.email "pfrd-omega-secure-recovery[bot]@users.noreply.github.com"
+          git pull --rebase origin main
+          git add deployments/pfrd-omega/SECURE_RECOVERY_DEPLOYMENT_RECEIPT.json
+          if git diff --cached --quiet; then echo "Receipt unchanged"; else
+            git commit -m "Record PFRD Omega secure credential recovery deployment receipt"
+            git push origin HEAD:main
+          fi
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: pfrd-omega-secure-recovery-deployment
+          if-no-files-found: error
+          retention-days: 30
+          path: /tmp/pfrd-secure-recovery/SECURE_RECOVERY_DEPLOYMENT_RECEIPT.json

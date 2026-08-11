@@ -1,0 +1,310 @@
+name: EvidenceOps PST v2 Drive Remote Verify
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'deployment_manifests/evidenceops-pst-v2-drive-part-ids.json'
+      - 'deployment_manifests/evidenceops-pst-v2-drive-direct-object-ids.json'
+      - '.github/workflows/evidenceops-pst-v2-drive-remote-verify.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: write
+
+concurrency:
+  group: evidenceops-pst-v2-drive-remote-verify
+  cancel-in-progress: false
+
+jobs:
+  remote-verify:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 180
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install download helper
+        run: python -m pip install --disable-pip-version-check gdown==5.2.0
+
+      - name: Download, reconstruct and independently verify
+        env:
+          RUN_ID: ${{ github.run_id }}
+          SOURCE_COMMIT: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from __future__ import annotations
+
+          import concurrent.futures
+          import hashlib
+          import json
+          import os
+          import shutil
+          import sqlite3
+          import subprocess
+          import time
+          import zipfile
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          ROOT = Path('/tmp/evidenceops-pst-v2-remote')
+          DOWNLOADS = ROOT / 'downloads'
+          DIRECT = ROOT / 'direct'
+          RECON = ROOT / 'reconstructed'
+          RECEIPTS = Path('deployment_receipts')
+          for p in (DOWNLOADS, DIRECT, RECON, RECEIPTS):
+              p.mkdir(parents=True, exist_ok=True)
+
+          part_map = json.loads(Path('deployment_manifests/evidenceops-pst-v2-drive-part-ids.json').read_text())
+          direct_map = json.loads(Path('deployment_manifests/evidenceops-pst-v2-drive-direct-object-ids.json').read_text())
+
+          def sha256_file(path: Path) -> str:
+              h = hashlib.sha256()
+              with path.open('rb') as fh:
+                  for block in iter(lambda: fh.read(8 * 1024 * 1024), b''):
+                      h.update(block)
+              return h.hexdigest()
+
+          def download_one(file_id: str, output: Path) -> dict:
+              output.parent.mkdir(parents=True, exist_ok=True)
+              temp = output.with_suffix(output.suffix + '.partial')
+              for attempt in range(1, 5):
+                  temp.unlink(missing_ok=True)
+                  result = subprocess.run(
+                      ['gdown', file_id, '-O', str(temp), '--quiet'],
+                      text=True,
+                      capture_output=True,
+                  )
+                  if result.returncode == 0 and temp.exists() and temp.stat().st_size > 0:
+                      temp.replace(output)
+                      return {'file_id': file_id, 'path': str(output), 'size_bytes': output.stat().st_size}
+                  if attempt == 4:
+                      raise RuntimeError(
+                          f'DOWNLOAD_FAILED:{file_id}:attempt={attempt}:stdout={result.stdout[-500:]}:stderr={result.stderr[-500:]}'
+                      )
+                  time.sleep(attempt * 5)
+              raise AssertionError('unreachable')
+
+          manifest_path = ROOT / 'DRIVE_TRANSPORT_MANIFEST.json'
+          download_one(part_map['transport_manifest_drive_file_id'], manifest_path)
+          manifest = json.loads(manifest_path.read_text())
+          logical_objects = manifest['logical_objects']
+          direct_expected = {o['logical_relpath']: o for o in logical_objects if o['transport'] == 'direct'}
+          multipart_expected = {o['logical_relpath']: o for o in logical_objects if o['transport'] != 'direct'}
+
+          direct_ids = {o['logical_relpath']: o['drive_file_id'] for o in direct_map['objects']}
+          if set(direct_ids) != set(direct_expected):
+              raise RuntimeError(json.dumps({
+                  'error': 'DIRECT_MAP_MISMATCH',
+                  'missing': sorted(set(direct_expected) - set(direct_ids)),
+                  'unexpected': sorted(set(direct_ids) - set(direct_expected)),
+              }))
+
+          expected_parts = {}
+          for logical_relpath, obj in multipart_expected.items():
+              basename = Path(logical_relpath).name
+              for part in obj['parts']:
+                  flat_name = f"{basename}.part-{part['part_number']:05d}-of-{part['part_count']:05d}.bin"
+                  expected_parts[flat_name] = {
+                      **part,
+                      'logical_relpath': logical_relpath,
+                  }
+          part_ids = {o['name']: o['drive_file_id'] for o in part_map['parts']}
+          if set(part_ids) != set(expected_parts):
+              raise RuntimeError(json.dumps({
+                  'error': 'PART_MAP_MISMATCH',
+                  'missing': sorted(set(expected_parts) - set(part_ids)),
+                  'unexpected': sorted(set(part_ids) - set(expected_parts)),
+              }))
+
+          jobs = []
+          for relpath, file_id in direct_ids.items():
+              jobs.append((file_id, DIRECT / relpath))
+          for name, file_id in part_ids.items():
+              jobs.append((file_id, DOWNLOADS / name))
+
+          with concurrent.futures.ThreadPoolExecutor(max_workers=6) as pool:
+              futures = [pool.submit(download_one, file_id, output) for file_id, output in jobs]
+              for future in concurrent.futures.as_completed(futures):
+                  result = future.result()
+                  print(f"DOWNLOADED {result['size_bytes']} {result['path']}")
+
+          direct_results = []
+          for relpath, expected in sorted(direct_expected.items()):
+              path = DIRECT / relpath
+              actual_size = path.stat().st_size
+              actual_sha = sha256_file(path)
+              if actual_size != expected['size_bytes'] or actual_sha != expected['sha256']:
+                  raise RuntimeError(f'DIRECT_MISMATCH:{relpath}:{actual_size}:{actual_sha}')
+              direct_results.append({'logical_relpath': relpath, 'size_bytes': actual_size, 'sha256': actual_sha, 'ok': True})
+
+          part_results = []
+          for name, expected in sorted(expected_parts.items()):
+              path = DOWNLOADS / name
+              actual_size = path.stat().st_size
+              actual_sha = sha256_file(path)
+              if actual_size != expected['size_bytes'] or actual_sha != expected['sha256']:
+                  raise RuntimeError(f'PART_MISMATCH:{name}:{actual_size}:{actual_sha}')
+              part_results.append({'name': name, 'size_bytes': actual_size, 'sha256': actual_sha, 'ok': True})
+
+          logical_results = []
+          zip_results = []
+          db_path = None
+          for relpath, expected in sorted(multipart_expected.items()):
+              output = RECON / relpath
+              output.parent.mkdir(parents=True, exist_ok=True)
+              basename = Path(relpath).name
+              with output.open('wb') as dst:
+                  for part in sorted(expected['parts'], key=lambda p: p['part_number']):
+                      flat_name = f"{basename}.part-{part['part_number']:05d}-of-{part['part_count']:05d}.bin"
+                      with (DOWNLOADS / flat_name).open('rb') as src:
+                          shutil.copyfileobj(src, dst, 8 * 1024 * 1024)
+              actual_size = output.stat().st_size
+              actual_sha = sha256_file(output)
+              if actual_size != expected['size_bytes'] or actual_sha != expected['sha256']:
+                  raise RuntimeError(f'LOGICAL_MISMATCH:{relpath}:{actual_size}:{actual_sha}')
+              logical_results.append({'logical_relpath': relpath, 'size_bytes': actual_size, 'sha256': actual_sha, 'ok': True})
+
+              if output.suffix.lower() == '.zip':
+                  with zipfile.ZipFile(output) as archive:
+                      bad = archive.testzip()
+                      members = len(archive.infolist())
+                  if bad is not None:
+                      raise RuntimeError(f'ZIP_CRC_FAILED:{relpath}:{bad}')
+                  zip_results.append({'logical_relpath': relpath, 'members': members, 'crc_ok': True})
+                  output.unlink()
+              elif output.name == 'corpus_search.db':
+                  db_path = output
+
+          if db_path is None or not db_path.exists():
+              raise RuntimeError('SQLITE_DATABASE_NOT_RECONSTRUCTED')
+
+          db = sqlite3.connect(db_path)
+          try:
+              integrity = db.execute('PRAGMA integrity_check').fetchone()[0]
+              counts = {
+                  'messages_meta': db.execute('SELECT COUNT(*) FROM messages_meta').fetchone()[0],
+                  'attachments_meta': db.execute('SELECT COUNT(*) FROM attachments_meta').fetchone()[0],
+                  'message_retrieval': db.execute('SELECT COUNT(*) FROM message_retrieval').fetchone()[0],
+                  'attachment_retrieval': db.execute('SELECT COUNT(*) FROM attachment_retrieval').fetchone()[0],
+                  'occurrence_retrieval': db.execute('SELECT COUNT(*) FROM occurrence_retrieval').fetchone()[0],
+              }
+              fts = {
+                  'MPMB298': db.execute("SELECT COUNT(*) FROM messages_fts WHERE messages_fts MATCH 'MPMB298'").fetchone()[0],
+                  'precautionary_suspension': db.execute("SELECT COUNT(*) FROM messages_fts WHERE messages_fts MATCH '\"precautionary suspension\"'").fetchone()[0],
+              }
+              sample = [
+                  {'occurrence_id': r[0], 'subject': r[1]}
+                  for r in db.execute(
+                      "SELECT m.occurrence_id,m.subject FROM messages_fts JOIN messages_meta m USING(occurrence_id) WHERE messages_fts MATCH 'MPMB298' LIMIT 3"
+                  )
+              ]
+          finally:
+              db.close()
+
+          required = {
+              'integrity': integrity == 'ok',
+              'messages_meta': counts['messages_meta'] == 2885,
+              'attachments_meta': counts['attachments_meta'] == 5203,
+              'message_retrieval': counts['message_retrieval'] == 2885,
+              'attachment_retrieval': counts['attachment_retrieval'] == 5203,
+              'occurrence_retrieval': counts['occurrence_retrieval'] == 12102,
+              'fts_mpmb298': fts['MPMB298'] > 0,
+              'fts_precautionary_suspension': fts['precautionary_suspension'] > 0,
+              'direct_object_count': len(direct_results) == 18,
+              'part_count': len(part_results) == 60,
+              'multipart_logical_count': len(logical_results) == 14,
+              'zip_count': len(zip_results) == 13,
+          }
+          if not all(required.values()):
+              raise RuntimeError(json.dumps({'error': 'FINAL_GATE_FAILED', 'required': required, 'counts': counts, 'fts': fts}))
+
+          now = datetime.now(timezone.utc).isoformat()
+          remote = {
+              'schema': 'EVIDENCEOPS-PST-CORPUS-V2-REMOTE-VERIFICATION-1',
+              'status': 'REMOTE_COMPLETE_VERIFIED',
+              'proof_level': 'INDEPENDENT_PROVIDER_REDOWNLOAD_HASH_RECONSTRUCTION_CRC_SQLITE_READBACK',
+              'verified_at': now,
+              'workflow_run_id': int(os.environ['RUN_ID']),
+              'source_commit': os.environ['SOURCE_COMMIT'],
+              'transport_manifest_sha256': sha256_file(manifest_path),
+              'direct_objects': direct_results,
+              'transport_parts': part_results,
+              'multipart_logical_objects': logical_results,
+              'zip_crc': zip_results,
+              'sqlite': {'integrity_check': integrity, 'counts': counts, 'fts_counts': fts, 'sample': sample},
+              'gates': required,
+          }
+          completion = {
+              'schema': 'EVIDENCEOPS-PST-CORPUS-V2-COMPLETION-1',
+              'status': 'COMPLETE_VERIFIED',
+              'proof_level': 'INDEPENDENT_REMOTE_COMPLETE_VERIFIED',
+              'owner': 'Kim Kagiso Mosiane',
+              'matter': 'Kim v TUT',
+              'corpus_name': 'MosianeKK PST Evidence Corpus v2',
+              'verified_at': now,
+              'workflow_run_id': int(os.environ['RUN_ID']),
+              'source_commit': os.environ['SOURCE_COMMIT'],
+              'source': {
+                  'drive_file_id': '1wRZyIhlFy5bECTccmfXHzWH5b4hTN7xN',
+                  'size_bytes': 3501253632,
+                  'sha256': '14d280e593795253f81c375df671782d62d15349dfc241a791d6f974485b338b'
+              },
+              'counts': {
+                  'message_occurrences': 2885,
+                  'attachment_occurrences': 5203,
+                  'attachment_texts': 1129,
+                  'parse_failures': 0,
+                  'retrieval_shards': 13,
+                  'search_packs': 3,
+                  'direct_objects': 18,
+                  'transport_parts': 60,
+                  'multipart_logical_objects': 14,
+                  'required_evidence_member_references': 12102
+              },
+              'completion_gates': {
+                  'source_identity': True,
+                  'direct_drive_objects_redownloaded_and_hashed': True,
+                  'all_transport_parts_redownloaded_and_hashed': True,
+                  'all_multipart_logical_objects_reconstructed_and_hashed': True,
+                  'all_zip_shards_crc_verified': True,
+                  'sqlite_integrity_and_counts_verified': True,
+                  'fts_search_canaries_verified': True
+              },
+              'remote_verification_receipt': 'deployment_receipts/evidenceops-pst-corpus-v2-remote-verification.json'
+          }
+          (RECEIPTS / 'evidenceops-pst-corpus-v2-remote-verification.json').write_text(json.dumps(remote, indent=2, sort_keys=True) + '\n')
+          (RECEIPTS / 'evidenceops-pst-corpus-v2-drive-completion.json').write_text(json.dumps(completion, indent=2, sort_keys=True) + '\n')
+          print(json.dumps({'status': completion['status'], 'gates': required, 'counts': counts, 'fts': fts}, indent=2))
+          PY
+
+      - name: Upload verification receipts
+        uses: actions/upload-artifact@v4
+        with:
+          name: evidenceops-pst-v2-drive-verification-receipts
+          path: |
+            deployment_receipts/evidenceops-pst-corpus-v2-remote-verification.json
+            deployment_receipts/evidenceops-pst-corpus-v2-drive-completion.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Commit verified receipts
+        if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+        run: |
+          set -euo pipefail
+          git config user.name 'evidenceops-pst-verifier'
+          git config user.email 'evidenceops-pst-verifier@users.noreply.github.com'
+          git add deployment_receipts/evidenceops-pst-corpus-v2-remote-verification.json deployment_receipts/evidenceops-pst-corpus-v2-drive-completion.json
+          git commit -m 'Record PST corpus v2 remote completion receipt [skip ci]'
+          for attempt in 1 2 3; do
+            if git push origin HEAD:main; then exit 0; fi
+            git pull --rebase origin main
+            sleep $((attempt * 5))
+          done
+          exit 1

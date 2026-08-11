@@ -1,0 +1,73 @@
+{
+  "after_state_sha256": "940e6e7192c4eef1bed706c116c6eeb2afb6616e4a039637ab17b822b830c45e",
+  "analysis": {
+    "maturity_state": "LOCAL_INTEGRATED_ANALYSIS_COMPLETE",
+    "mission_id": "MISSION-CSE-DIGITAL-TWIN-001",
+    "module_count": 10,
+    "output_hash": "32e92d62560ec8c4eb40809ea52fb3644b35313ea4ff0562466472df2bdd1b99",
+    "recommendation": "CLOSE_OUTCOME_BOTTLENECK:OUT-2",
+    "run_id": "CSE-GITHUB-SHADOW-CANARY-STABLE-V1",
+    "semantic_hash": "39180159b3a1666ff6c8722e59dfb15df4d4853273b6d04b5420a2895556afff"
+  },
+  "before_state_sha256": "b7ee288d500be59d93924ee2193fa000e4730d9bcc28fdc75826bc527ac9a0fd",
+  "checkpoint": {
+    "checkpoint_id": "CSE-CHK-04014650e7cb4c78bd6eed1a5cb89f15",
+    "content_hash": "03ec1a75106acc25970bc1dab6325df15b45bc99c09c71229fc1512c517f1305",
+    "event_hash": "e5052ce2f75aa8c44118b64467a4892d339959f17e5ebeeebc02c51d6ff8229b",
+    "snapshot": {
+      "analysis_runs": 1,
+      "evolution_configs": 6,
+      "evolution_runs": 5,
+      "forecast_history": 0,
+      "forecast_resolutions": 0,
+      "intent_genomes": 1,
+      "module_results": 10,
+      "outcome_chains": 1,
+      "outcome_steps": 4
+    }
+  },
+  "checks": {
+    "analysis_semantic_readback": true,
+    "bounded_evolution": true,
+    "desired_actual_state_match": true,
+    "durable_state_materialised": true,
+    "ledger_integrity": true,
+    "module_count_10": true,
+    "no_external_effect": true,
+    "provider_native_execution": true,
+    "reapply_test": true,
+    "rollback_test": true,
+    "synthetic_internal_only": true,
+    "twin_ledger_integrity": true
+  },
+  "commit_sha": "42793808c6c7335bd1696bec38c15e79b6980ea0",
+  "current_verified_level": 4,
+  "event_name": "schedule",
+  "evolution": {
+    "cycle_count": 0,
+    "score": 1.0,
+    "state": "BOUNDED_SELF_EVOLUTION_SIMULATION_PASSED",
+    "version": "1.1.5"
+  },
+  "execution_id": "30848177082",
+  "external_effect": false,
+  "integrity": {
+    "errors": [],
+    "event_count": 29,
+    "ledger_head_hash": "e5052ce2f75aa8c44118b64467a4892d339959f17e5ebeeebc02c51d6ff8229b",
+    "status": "PASSED"
+  },
+  "maturity_state": "AUTONOMOUS_RUNTIME_VERIFIED_SHADOW",
+  "next_gate": "SUPERVISED_REAL_WORKFLOW_CANARIES",
+  "proof_hash": "318b37c82b7baf23135438bf561f6da6e972d95a4af5d92b8af149b560b1c44b",
+  "proof_id": "PRF-CSE-GHA-30848177082-1",
+  "provider": "github_actions",
+  "reapply_test": true,
+  "recorded_at": "2026-08-03T19:59:44.464296Z",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "result_id": "CSE-GHA-30848177082-1",
+  "rollback_test": true,
+  "run_attempt": "1",
+  "semantic_readback": true,
+  "status": "VERIFIED"
+}
