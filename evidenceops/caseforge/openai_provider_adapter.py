@@ -7,7 +7,6 @@ from typing import Any, Mapping, Protocol
 
 from .blind_runner import (
     AgentContext,
-    BlindIsolationError,
     BlindRunReceipt,
     IsolatedBlindRunner,
     ModelBinding,
@@ -18,16 +17,30 @@ class OpenAIProviderAdapterError(RuntimeError):
     """Fail-closed provider adapter error."""
 
 
+ALLOWED_PROVIDER_OPTIONS = frozenset(
+    {
+        "max_output_tokens",
+        "reasoning",
+        "temperature",
+        "text",
+        "top_p",
+        "truncation",
+    }
+)
+
 FORBIDDEN_PROVIDER_OPTIONS = frozenset(
     {
         "conversation",
         "include",
         "input",
         "instructions",
+        "metadata",
         "model",
         "parallel_tool_calls",
         "previous_response_id",
         "prompt",
+        "safety_identifier",
+        "service_tier",
         "store",
         "tool_choice",
         "tools",
@@ -76,12 +89,17 @@ class ProviderResponseEvidence:
 
 @dataclass(frozen=True)
 class ProviderReadbackEvidence:
+    provider: str
     provider_readback_ref: str
     response_id: str
     response_model: str
     status: str
+    model_version: str
+    model_version_verified: bool
 
     def validate_against(self, execution: ProviderResponseEvidence) -> "ProviderReadbackEvidence":
+        if self.provider != execution.provider:
+            raise OpenAIProviderAdapterError("provider readback identity mismatch")
         if not self.provider_readback_ref.strip():
             raise OpenAIProviderAdapterError("provider readback reference is required")
         if self.response_id != execution.response_id:
@@ -90,6 +108,8 @@ class ProviderReadbackEvidence:
             raise OpenAIProviderAdapterError("provider readback model mismatch")
         if self.status != execution.status:
             raise OpenAIProviderAdapterError("provider readback status mismatch")
+        if not self.model_version_verified or not self.model_version.strip():
+            raise OpenAIProviderAdapterError("provider model version is not independently verified")
         return self
 
 
@@ -103,6 +123,7 @@ class ProviderBoundBlindRunReceipt:
     provider_execution: ProviderResponseEvidence
     provider_state: str
     provider_readback_ref: str = ""
+    verified_model_version: str = ""
     authority_ceiling: str = "A1_INTERNAL"
     external_effect: bool = False
 
@@ -113,8 +134,11 @@ class ProviderBoundBlindRunReceipt:
             "PROVIDER_VERIFIED",
         }:
             raise OpenAIProviderAdapterError("unsupported provider state")
-        if self.provider_state == "PROVIDER_VERIFIED" and not self.provider_readback_ref.strip():
-            raise OpenAIProviderAdapterError("provider verification requires independent readback")
+        if self.provider_state == "PROVIDER_VERIFIED":
+            if not self.provider_readback_ref.strip():
+                raise OpenAIProviderAdapterError("provider verification requires independent readback")
+            if not self.verified_model_version.strip():
+                raise OpenAIProviderAdapterError("provider verification requires verified model version")
         if self.external_effect:
             raise OpenAIProviderAdapterError("CASEFORGE provider experiments are A1_INTERNAL only")
         return self
@@ -147,6 +171,12 @@ class OpenAIResponsesTestedAgent:
         if forbidden:
             raise OpenAIProviderAdapterError(
                 "provider options would weaken blind isolation: " + ",".join(forbidden)
+            )
+        unsupported = sorted(set(self.request_options) - ALLOWED_PROVIDER_OPTIONS)
+        if unsupported:
+            raise OpenAIProviderAdapterError(
+                "provider options are not admitted by the blind canary contract: "
+                + ",".join(unsupported)
             )
         self._last_evidence: ProviderResponseEvidence | None = None
 
@@ -246,7 +276,7 @@ class OpenAIProviderBlindExperiment:
         binding = ModelBinding(
             provider="openai",
             model=model,
-            version="REQUESTED_MODEL_ID",
+            version="REQUESTED_MODEL_ID_UNVERIFIED_VERSION",
             configuration={
                 "store": bool(store),
                 "request_options": options,
@@ -273,7 +303,7 @@ class OpenAIProviderBlindExperiment:
         verified_blind_run = replace(
             blind_run,
             model=execution.requested_model,
-            version=execution.response_model,
+            version=readback.model_version,
             execution_state="PROVIDER_VERIFIED",
             provider_readback_ref=readback.provider_readback_ref,
         )
@@ -282,10 +312,12 @@ class OpenAIProviderBlindExperiment:
             provider_execution=execution,
             provider_state="PROVIDER_VERIFIED",
             provider_readback_ref=readback.provider_readback_ref,
+            verified_model_version=readback.model_version,
         ).validate()
 
 
 __all__ = [
+    "ALLOWED_PROVIDER_OPTIONS",
     "FORBIDDEN_PROVIDER_OPTIONS",
     "OpenAIProviderAdapterError",
     "OpenAIProviderBlindExperiment",
