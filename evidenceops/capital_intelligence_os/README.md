@@ -1,13 +1,13 @@
-# EvidenceOps Capital Intelligence OS — v1.0.0-rc2 Production Qualification Candidate
+# EvidenceOps Capital Intelligence OS — v1.0.0-rc3 Provider Canary Ready
 
-`rc2` preserves the v1 MVP candidate and adds a machine-enforced provider production gate.
+`rc3` adds a harmless A1 provider canary on top of the merged MVP candidate and production qualification gate.
 
-The gate requires fresh provider-native proof for identity, enterprise authentication, tenant isolation, encryption/KMS, malware/DLP controls, immutable audit, health, persistence, rollback, backup/restore, observability, vulnerability scanning, abuse controls, incident/DR, market-data entitlement/freshness and private-data residency/retention.
+The canary is intended to run only inside an authorised private runtime. It validates exact source identity, the already-merged rc2 release verifier, persistent database health, event persistence after reopen, stable tenant-state digest, learning-chain integrity, and the continuing denial of live orders and private-M&A→public-market export.
 
-Focused gate harness: **9/9 PASS**.
+Focused canary harness: **5/5 PASS**.
 
-A complete fresh verified evidence register can qualify a provider environment. Missing, failed, unverified or expired controls prevent promotion. Production intent attempting to enable live financial effects or destructive actions is rejected before qualification.
+The canary receipt is digestible and non-secret. Runtime receipts must be stored in an immutable private evidence plane or provider artifact—not committed into public canonical source.
 
-The authenticated GitHub installation currently exposes only the public `Federation-Omega` repository. No private product execution plane is connected, so current maturity remains `PROVIDER_QUALIFICATION_REQUIRED`.
+A canary pass is **not** full production verification. Enterprise IdP/MFA, encryption/KMS, malware/DLP, production VDR controls, market-data entitlement, observability, vulnerability/pentest and DR still require provider-native evidence through the rc2 production gate.
 
-This is deliberate: a green source/MVP verifier is not a production-runtime receipt.
+Current connected state: `PROVIDER_CANARY_READY`; no authorised private runtime is connected, so no provider canary execution is claimed.

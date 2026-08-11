@@ -1,34 +1,24 @@
-# Production Readiness Register — v1.0.0-rc2
+# Production Readiness Register — v1.0.0-rc3
 
-## Verified or tested scope
-- v1 synthetic full-deal MVP journey: source merged and local focused acceptance passed.
-- provider qualification gate: 9/9 focused tests passed.
-- source admission and public leak controls: governed GitHub route.
-- local runtime: previously verified local canary.
+## Current maturity
+`PROVIDER_CANARY_READY`
 
-## Current production state
-`PROVIDER_QUALIFICATION_REQUIRED`
+## Completed source-side gates
+- merged v1 synthetic full-deal MVP journey;
+- merged machine-enforced provider qualification gate;
+- provider canary implementation with 5/5 focused tests;
+- A1 authority ceiling and private→market firewall preserved.
 
-The current connector inventory exposes no authorised private CIOS operations repository/runtime. Therefore provider production health, identity, persistence, rollback, enterprise storage, VDR controls and security qualification are not claimed.
+## Exact next runtime action
+In an authorised private execution plane:
+1. materialise the expected merged CIOS source SHA;
+2. supply the runtime-read-back source SHA and non-secret runtime identity;
+3. allocate a fresh persistent canary database path;
+4. run `ProviderCanary`;
+5. store its receipt in an immutable private/provider evidence plane;
+6. independently read back runtime identity, health, persistence and rollback controls;
+7. populate `ProductionQualificationGate` with provider-native evidence;
+8. promote only if the gate returns `PRODUCTION_VERIFIED`.
 
-## Provider promotion controls
-Production promotion requires fresh VERIFIED evidence for:
-1. source admission;
-2. provider runtime identity;
-3. enterprise IdP/MFA;
-4. tenant isolation;
-5. encryption in transit/at rest;
-6. KMS/key management;
-7. malware scanning;
-8. DLP/redaction;
-9. immutable audit;
-10. health readback;
-11. persistence readback;
-12. rollback;
-13. backup/restore;
-14. observability;
-15. vulnerability scan;
-16. abuse/rate limiting;
-17. incident response/DR;
-18. licensed market-data entitlement/freshness when enabled;
-19. private-data residency/retention when enabled.
+## Still provider-bound
+Enterprise IdP/MFA, encryption/KMS, malware scanning, DLP/redaction, production VDR storage, immutable provider audit, observability/alerting, vulnerability/pentest evidence, rate/abuse controls, incident/DR, market-data entitlement/freshness and private-data residency/retention.
