@@ -180,6 +180,7 @@ class CaseForgeScientiaTests(unittest.TestCase):
             highest_information_reversible_experiment="run utility benchmark in shadow mode",
         )
         self.assertTrue(frontier["verified_reuse"].startswith("reuse"))
+        self.assertIs(frontier["external_effect"], False)
         with self.assertRaisesRegex(ValueError, "incomplete"):
             build_innovation_frontier(
                 strongest_verified_reuse="reuse",
