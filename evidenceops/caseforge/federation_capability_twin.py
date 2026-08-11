@@ -93,7 +93,7 @@ class CapabilityTwin:
             if self.readback_state != ReadbackState.PROVIDER_READBACK:
                 raise ValueError("provider verification requires provider readback state")
             if not self.provider_readback_ref.strip():
-                raise ValueError("provider verification requires provider_readback_ref")
+                raise ValueError("provider verification requires provider readback reference")
         if self.semantic_state == SemanticState.PROVIDER_SEMANTIC_VERIFIED and not self.provider_readback_ref.strip():
             raise ValueError("provider semantic state requires provider readback reference")
         return self
