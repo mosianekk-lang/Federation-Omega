@@ -61,9 +61,10 @@ class SentinelLaunchNowSecurityTests(unittest.TestCase):
 
     def test_source_contract_never_authorises_public_launch(self) -> None:
         script = DEPLOY.read_text(encoding="utf-8")
-        self.assertIn('"public_unauthenticated": False', script)
-        self.assertIn('"traffic_promoted": False', script)
-        self.assertIn("not public production launch", script)
+        compact = script.replace(" ", "")
+        self.assertIn('"public_unauthenticated":False', compact)
+        self.assertIn('"traffic_promoted":False', compact)
+        self.assertIn("notpublicproductionlaunch", compact)
 
 
 if __name__ == "__main__":
