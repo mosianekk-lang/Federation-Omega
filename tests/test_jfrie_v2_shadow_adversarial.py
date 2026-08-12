@@ -28,6 +28,11 @@ class JfrieV2ShadowAdversarialTests(unittest.TestCase):
         self.assertTrue(receipt.qualifies)
         self.assertEqual(64, len(receipt.result_sha256))
         self.assertTrue(receipt.receipt_id.startswith("JFRIE-SHADOW-VALIDATION-"))
+        print(
+            "JFRIE_VALIDATION_RECEIPT "
+            f"mode=SHADOW id={receipt.receipt_id} sha256={receipt.result_sha256} "
+            f"cases={receipt.passed_count}/{receipt.case_count} external_effect={receipt.external_effect}"
+        )
 
     def test_adversarial_replay_suite_qualifies_without_external_effect(self) -> None:
         receipt = run_adversarial_validation(source_ref=SOURCE_REF, observed_at=OBSERVED_AT)
@@ -39,6 +44,11 @@ class JfrieV2ShadowAdversarialTests(unittest.TestCase):
         self.assertTrue(receipt.qualifies)
         self.assertEqual(64, len(receipt.result_sha256))
         self.assertTrue(receipt.receipt_id.startswith("JFRIE-ADVERSARIAL-VALIDATION-"))
+        print(
+            "JFRIE_VALIDATION_RECEIPT "
+            f"mode=ADVERSARIAL id={receipt.receipt_id} sha256={receipt.result_sha256} "
+            f"cases={receipt.passed_count}/{receipt.case_count} external_effect={receipt.external_effect}"
+        )
 
     def test_receipts_are_deterministic_for_identical_replay_inputs(self) -> None:
         first = run_shadow_validation(source_ref=SOURCE_REF, observed_at=OBSERVED_AT)
