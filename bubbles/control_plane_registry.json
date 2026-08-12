@@ -1,9 +1,12 @@
 {
   "schema": "BUBBLES-CONTROL-PLANE-REGISTRY-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "authority_ceiling": "A1_INTERNAL",
   "chatgpt_ingress": {
     "preferred_write_bus": "GITHUB_NATIVE_APP",
+    "command_transport": "GITHUB_PULL_REQUEST_BODY_OR_WORKFLOW_DISPATCH",
+    "command_pr_prefix": "[BUBBLES-CMD]",
+    "command_payload_committed_to_canonical_source": false,
     "mcp_custom_route": "READ_FETCH_ONLY_ON_CURRENT_PRO_SURFACE",
     "write_smuggling_through_read_tools": false
   },
@@ -32,6 +35,13 @@
       "state": "LIVE_SELECTED_REPOSITORY_SCOPE",
       "write": true,
       "role": "BUBBLES_COMMAND_BUS_INGRESS"
+    },
+    {
+      "id": "bubbles_command_bus",
+      "route": "GITHUB_COMMAND_BUS",
+      "state": "INTERNAL_CANARY_IMPLEMENTED_AWAITING_PROVIDER_HOSTED_READBACK",
+      "write": false,
+      "role": "CHATGPT_TO_ACTIONS_INGRESS_CANARY"
     },
     {
       "id": "google_cloud",
@@ -63,6 +73,17 @@
       "write": "GATED"
     }
   ],
+  "command_bus": {
+    "workflow": ".github/workflows/bubbles-command-bus.yml",
+    "runner": "bubbles.command_bus",
+    "allowed_events": ["pull_request", "workflow_dispatch"],
+    "blocked_transport_events": ["repository_dispatch", "issue_comment"],
+    "workflow_permissions": ["contents:read", "pull-requests:read"],
+    "provider_execution_v1": false,
+    "immutable_receipt": true,
+    "receipt_storage": "GITHUB_ACTIONS_ARTIFACT",
+    "first_canary": "LOCAL_COMMAND_BUS_CANARY"
+  },
   "required_receipt_chain": [
     "INTENT",
     "ROUTE_DECISION",
@@ -71,5 +92,5 @@
     "PROVIDER_READBACK",
     "TERMINAL_SUCCESS_FAILURE_OR_CONSTRAINT"
   ],
-  "truth_boundary": "Registry describes routes and gates only. It does not prove provider execution, deployment, current credentials, or universal authority."
+  "truth_boundary": "Registry describes routes and gates only. Command-bus v1 proves internal ingress only until a provider-hosted canary and artifact readback succeed; it does not prove Google provider execution, deployment, current credentials, or universal authority."
 }
