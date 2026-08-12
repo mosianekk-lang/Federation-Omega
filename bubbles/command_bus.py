@@ -91,6 +91,33 @@ def execute_command(
             "truth_boundary": "No provider action executed.",
         }
 
+    spec = control.adapter(request.adapter_id)
+    if spec.route_kind is not RouteKind.GITHUB_COMMAND_BUS:
+        return {
+            "schema": RECEIPT_SCHEMA,
+            "state": "CONSTRAINT",
+            "actor": actor,
+            "event_name": event_name,
+            "source_ref": source_ref,
+            "command_sha256": envelope["command_sha256"],
+            "request": {
+                "adapter_id": request.adapter_id,
+                "action": request.action,
+                "effect": request.effect.value,
+                "target_alias": request.target_alias,
+            },
+            "route_decision": {
+                "state": "CONSTRAINT",
+                "route_kind": spec.route_kind.value,
+                "adapter_id": request.adapter_id,
+                "action": request.action,
+                "missing_proofs": [],
+                "reason": "Route family rejected before proof evaluation.",
+            },
+            "reason": "Command bus only executes routes classified GITHUB_COMMAND_BUS.",
+            "truth_boundary": "No provider action executed.",
+        }
+
     decision = control.decide(request)
     decision_record = {
         **asdict(decision),
@@ -119,14 +146,6 @@ def execute_command(
             "reason": decision.reason,
             "missing_proofs": list(decision.missing_proofs),
             "truth_boundary": "Route validation failed closed; no provider action executed.",
-        }
-
-    if decision.route_kind is not RouteKind.GITHUB_COMMAND_BUS:
-        return {
-            **base_receipt,
-            "state": "CONSTRAINT",
-            "reason": "Command bus only executes routes classified GITHUB_COMMAND_BUS.",
-            "truth_boundary": "No provider action executed.",
         }
 
     if request.adapter_id == "bubbles_command_bus" and request.action == "canary":
