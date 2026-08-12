@@ -31,10 +31,11 @@ jobs:
         with:
           python-version: '3.12'
 
-      - name: Verify Bubbles control-plane and command-bus contracts
+      - name: Verify Bubbles control-plane, command-bus and private-queue contracts
         run: |
           python -m unittest tests.test_bubbles_control_plane -v
           python -m unittest tests.test_bubbles_command_bus -v
+          python -m unittest tests.test_bubbles_private_queue_adapter -v
 
   command:
     needs: contract
