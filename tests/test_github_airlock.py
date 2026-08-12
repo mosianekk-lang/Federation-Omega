@@ -66,6 +66,75 @@ jobs:
         )
         self.assertEqual([], findings)
 
+    def test_bubbles_provider_worker_exact_oidc_contract_passes(self):
+        text = """name: Bubbles Provider Worker
+on:
+  workflow_run:
+permissions:
+  contents: read
+  actions: read
+concurrency:
+  group: bubbles-provider-worker
+jobs:
+  cloud:
+    permissions:
+      contents: read
+      actions: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+      - uses: google-github-actions/setup-gcloud@aa5489c8933f4cc7a4f7d45035b3b1440c9c10db
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/bubbles-provider-worker.yml", text, POLICY
+        )
+        self.assertEqual([], findings)
+
+    def test_only_provider_worker_is_allowed_bubbles_oidc(self):
+        self.assertEqual(
+            [".github/workflows/bubbles-provider-worker.yml"],
+            POLICY["oidc_workflow_allowlist"],
+        )
+
+    def test_bubbles_provider_worker_cannot_add_pull_request_or_schedule_trigger(self):
+        text = """name: Bubbles Provider Worker
+on:
+  workflow_run:
+  pull_request:
+  schedule:
+    - cron: '0 * * * *'
+permissions:
+  contents: read
+  id-token: write
+concurrency:
+  group: bubbles-provider-worker
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/bubbles-provider-worker.yml", text, POLICY
+        )
+        self.assertIn("UNAUTHORISED_TRIGGER", self.rules(findings))
+
+    def test_bubbles_provider_worker_cannot_gain_source_or_actions_write(self):
+        text = """name: Bubbles Provider Worker
+on:
+  workflow_run:
+permissions:
+  contents: write
+  actions: write
+  id-token: write
+concurrency:
+  group: bubbles-provider-worker
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/bubbles-provider-worker.yml", text, POLICY
+        )
+        rules = self.rules(findings)
+        self.assertIn("REPOSITORY_WRITE_AUTHORITY", rules)
+        self.assertIn("UNAUTHORISED_ACTIONS_WRITE", rules)
+
     def test_bubbles_command_bus_cannot_add_schedule(self):
         text = """name: Bubbles Command Bus
 on:
