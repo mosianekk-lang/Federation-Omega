@@ -123,6 +123,12 @@ from .openai_provider_adapter import (
     ProviderReadbackVerifier,
     ProviderResponseEvidence,
 )
+from .replication import (
+    IndependentReplicationGate,
+    ReplicationDecision,
+    ReplicationProofError,
+    ReplicationRun,
+)
 from .scientia import (
     EpistemicState,
     Hypothesis,
@@ -179,6 +185,7 @@ __all__ = [
     "GateDecision",
     "HiddenControlScorer",
     "Hypothesis",
+    "IndependentReplicationGate",
     "IsolatedBlindRunner",
     "MaturityProofEnvelope",
     "MaturityState",
@@ -200,6 +207,9 @@ __all__ = [
     "ReadbackState",
     "RecoveryTrace",
     "RepairDecision",
+    "ReplicationDecision",
+    "ReplicationProofError",
+    "ReplicationRun",
     "RouteAttempt",
     "RouteCandidate",
     "RouteClass",
