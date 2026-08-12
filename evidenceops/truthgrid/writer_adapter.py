@@ -1,6 +1,6 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, field
 from typing import Callable, Mapping
 
 from .guards import MutationIntent, TruthGridGuard, TruthGridViolation
@@ -33,7 +33,7 @@ class TruthGridWriterAdapter:
 
     writer: Callable[[MutationIntent], object]
     readback: Callable[[str, str], Mapping[str, object]]
-    guard: TruthGridGuard = TruthGridGuard()
+    guard: TruthGridGuard = field(default_factory=TruthGridGuard)
 
     def execute(self, intent: MutationIntent) -> WriterReceipt:
         self.guard.validate_mutation(intent)
