@@ -1,0 +1,80 @@
+{
+  "schema": "BUBBLES-LEDGER-CLAIM-PROOF-CROSSWALK-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "maturity_order": [
+    "DESIGN_ONLY",
+    "IMPLEMENTED",
+    "DETERMINISTIC_TESTED",
+    "LOCAL_RUNTIME_VERIFIED",
+    "PROVIDER_CANARY_READY",
+    "PROVIDER_EXECUTED_UNREADBACK",
+    "PROVIDER_VERIFIED",
+    "DEPLOYED",
+    "OPERATIONAL_VERIFIED",
+    "PORTFOLIO_DEMONSTRABLE"
+  ],
+  "projects": [
+    {
+      "project_id": "CIOS",
+      "evidence_state": "PROVIDER_CANARY_READY",
+      "verified_proofs": ["source", "tests", "local_runtime", "persistent_state", "audit_chain", "provider_hostable_runtime", "provider_canary_contract"],
+      "evidence_pointers": ["PR #385", "main:7d9e8640170bdbd13b332cb73315979bd4cda48f", "evidenceops/capital_intelligence_os/provider_runtime.py", "evidenceops/capital_intelligence_os/Dockerfile.runtime"],
+      "strongest_safe_claim": "Architected and implemented a tested, authenticated, persistent Capital Intelligence OS runtime with provider-hostable container and zero-effect deployment boundary, ready for provider canary execution.",
+      "forbidden_stronger_claims": ["CIOS is deployed", "CIOS is live in production", "CIOS executes live trades", "CIOS has provider-verified cloud runtime"],
+      "next_proof": "provider_execution_and_independent_readback",
+      "provider_verified": false
+    },
+    {
+      "project_id": "ECERTIFY",
+      "evidence_state": "PROVIDER_CANARY_READY",
+      "verified_proofs": ["source", "tests", "signed_integrity_receipts", "zero_possession", "launch_now_http_runtime", "cloud_run_zero_traffic_canary_contract"],
+      "evidence_pointers": ["PR #360", "evidenceops/ecertify_za/deployment/deploy_launch_now_cloud_run_canary.sh", "evidenceops/ecertify_za/PRODUCTION_READINESS.md"],
+      "strongest_safe_claim": "Designed and implemented a tested zero-possession document-integrity service with signed receipts and an admitted zero-traffic Cloud Run canary path for provider verification.",
+      "forbidden_stronger_claims": ["eCertify is publicly live", "eCertify provides statutory certification without commissioner events", "eCertify has provider-verified Cloud Run deployment", "eCertify has production biometric identity verification"],
+      "next_proof": "execute_launch_now_cloud_run_canary_and_read_back_revision",
+      "provider_verified": false
+    },
+    {
+      "project_id": "CASEFORGE",
+      "evidence_state": "DETERMINISTIC_TESTED",
+      "verified_proofs": ["source", "tests", "blind_runner", "provider_adapter_contract", "provider_readback_gate", "pulse_benchmark_harness"],
+      "evidence_pointers": ["PR #386", "main:6649755a3bd575f2df3f54c7fe0d0a375727923c", "evidenceops/caseforge/pulse_benchmark.py", "evidenceops/caseforge/benchmarks/pulse_baseline_v1.json"],
+      "strongest_safe_claim": "Built a proof-bound AI evaluation system with blind testing, maturity-safety gates, evidence/contradiction scoring and deterministic benchmark receipts.",
+      "forbidden_stronger_claims": ["CASEFORGE has proven production model accuracy", "CASEFORGE provider performance is verified", "CASEFORGE is deployed", "CASEFORGE benchmark scores represent real provider quality"],
+      "next_proof": "real_provider_execution_plus_independent_readback_and_scored_benchmark",
+      "provider_verified": false
+    },
+    {
+      "project_id": "IPEP",
+      "evidence_state": "LOCAL_RUNTIME_VERIFIED",
+      "verified_proofs": ["source", "tests", "provenance_index", "authenticated_http_runtime", "real_loopback_canary", "restart_resilience", "custody_tamper_detection"],
+      "evidence_pointers": ["PR #363", "PR #387", "main:6653734d06e3f6f67f9cf6161cb52934cbbd0507", "ipep/audio_evidence_v4/evidenceops_audio_v4/service.py", "ipep/audio_evidence_v4/evidenceops_audio_v4/resilience.py"],
+      "strongest_safe_claim": "Implemented and runtime-tested a provenance-aware evidence retrieval service with authenticated search, stable source/timestamp citations, custody controls and deterministic resilience checks.",
+      "forbidden_stronger_claims": ["IPEP is cloud deployed", "IPEP transcripts are automatically certified", "IPEP identifies speakers biometrically", "IPEP has provider-verified uptime"],
+      "next_proof": "private_provider_deployment_with_telemetry_and_readback",
+      "provider_verified": false
+    },
+    {
+      "project_id": "ARCHITRON",
+      "evidence_state": "IMPLEMENTED",
+      "verified_proofs": ["command_queue_components", "apps_script_integration_artifacts", "governed_automation_design"],
+      "evidence_pointers": ["existing ARCHITRON Apps Script command queue and Federation integration records", "GitHub issue #380"],
+      "strongest_safe_claim": "Developed governed automation and command-routing components for cross-system workflow orchestration, with semantic end-to-end execution proof still being completed.",
+      "forbidden_stronger_claims": ["ARCHITRON is fully autonomous in production", "ARCHITRON has end-to-end provider-verified action readback", "ARCHITRON runs all connected systems without human/provider authority"],
+      "next_proof": "event_queue_worker_target_readback_recovery_canary",
+      "provider_verified": false
+    },
+    {
+      "project_id": "K10",
+      "evidence_state": "IMPLEMENTED",
+      "verified_proofs": ["command_center", "creative_workflow_state", "canva_asset_and_design_routes"],
+      "evidence_pointers": ["K10 Canva Cinema Command Center", "GitHub issue #382"],
+      "strongest_safe_claim": "Designed an AI-assisted creative-production workflow spanning briefs, scene planning, asset generation and Canva-oriented composition controls; end-to-end rendered demo remains the next proof gate.",
+      "forbidden_stronger_claims": ["K10 autonomously renders production films end to end", "K10 has a provider-verified video pipeline", "K10 is commercially deployed"],
+      "next_proof": "safe_brief_to_rendered_artifact_demo",
+      "provider_verified": false
+    }
+  ],
+  "truth_boundary": "A claim is allowed only at or below the strongest verified evidence state for that project. Provider, deployment, production, accuracy, uptime and commercial claims require their own independent proof and cannot be inherited from source/test evidence."
+}
