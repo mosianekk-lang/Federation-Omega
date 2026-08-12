@@ -163,10 +163,41 @@ def execute_command(
             ),
         }
 
+    if request.adapter_id == "google_cloud_wif_plan" and request.action == "plan_wif":
+        if request.effect is not EffectClass.READ:
+            return {
+                **base_receipt,
+                "state": "CONSTRAINT",
+                "reason": "Google Cloud WIF plan handoff is READ-only.",
+                "truth_boundary": "No provider action executed.",
+            }
+        if request.target_alias != "GOOGLE_CLOUD_EXECUTION_PLANE":
+            return {
+                **base_receipt,
+                "state": "CONSTRAINT",
+                "reason": "Google Cloud WIF plan target alias mismatch.",
+                "truth_boundary": "No provider action executed.",
+            }
+        return {
+            **base_receipt,
+            "state": "PROVIDER_PENDING",
+            "execution": {
+                "kind": "DEFAULT_BRANCH_PROVIDER_WORKER_HANDOFF",
+                "provider": "Google Cloud",
+                "operation": "WIF_PLAN_READ_ONLY",
+                "mutation_requested": False,
+            },
+            "truth_boundary": (
+                "PROVIDER_PENDING proves only that the command is eligible for the separately privileged "
+                "default-branch provider worker. Google identity, WIF state and provider inventory remain "
+                "unverified until that worker returns provider-native readback."
+            ),
+        }
+
     return {
         **base_receipt,
         "state": "CONSTRAINT",
-        "reason": "Provider executor is not bound in command-bus v1.",
+        "reason": "Provider executor is not bound for this command.",
         "truth_boundary": (
             "Route readiness alone is not provider authority. External execution remains blocked until "
             "a provider-specific executor supplies fresh identity, target, scope, execution and readback proof."
@@ -221,7 +252,7 @@ def main() -> int:
     output.parent.mkdir(parents=True, exist_ok=True)
     output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(receipt, sort_keys=True))
-    return 0 if receipt["state"] == "SUCCESS" else 2
+    return 0 if receipt["state"] in {"SUCCESS", "PROVIDER_PENDING"} else 2
 
 
 if __name__ == "__main__":
