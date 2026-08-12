@@ -33,8 +33,11 @@ class ClaimGuardTests(unittest.TestCase):
         self.assertTrue(self.guard.decide("IPEP", "LOCAL_RUNTIME_VERIFIED").allowed)
         self.assertFalse(self.guard.decide("IPEP", "DEPLOYED").allowed)
 
-    def test_architron_and_k10_remain_implemented_until_next_proof(self) -> None:
-        self.assertEqual("IMPLEMENTED", self.guard.project("ARCHITRON")["evidence_state"])
+    def test_architron_advances_to_local_runtime_while_k10_remains_implemented(self) -> None:
+        self.assertEqual("LOCAL_RUNTIME_VERIFIED", self.guard.project("ARCHITRON")["evidence_state"])
+        self.assertTrue(self.guard.decide("ARCHITRON", "LOCAL_RUNTIME_VERIFIED").allowed)
+        self.assertFalse(self.guard.decide("ARCHITRON", "PROVIDER_VERIFIED").allowed)
+        self.assertFalse(self.guard.decide("ARCHITRON", "DEPLOYED").allowed)
         self.assertEqual("IMPLEMENTED", self.guard.project("K10")["evidence_state"])
         self.assertFalse(self.guard.decide("K10", "LOCAL_RUNTIME_VERIFIED").allowed)
 
