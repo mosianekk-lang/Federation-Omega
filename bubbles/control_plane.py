@@ -105,6 +105,14 @@ DEFAULT_ADAPTERS: dict[str, AdapterSpec] = {
         required_proofs=frozenset({"connector_permission_verified"}),
         notes=("GitHub is the canonical Bubbles command-bus ingress.",),
     ),
+    "bubbles_command_bus": AdapterSpec(
+        adapter_id="bubbles_command_bus",
+        route_kind=RouteKind.GITHUB_COMMAND_BUS,
+        authority_ceiling="A1_INTERNAL",
+        supports_read=True,
+        supports_write=False,
+        notes=("Internal harmless canary used to prove ChatGPT-to-Actions command ingress and immutable receipt readback.",),
+    ),
     "google_cloud": AdapterSpec(
         adapter_id="google_cloud",
         route_kind=RouteKind.GITHUB_COMMAND_BUS,

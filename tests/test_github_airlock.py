@@ -43,6 +43,75 @@ jobs:
         )
         self.assertEqual([], findings)
 
+    def test_bubbles_command_bus_exact_read_only_contract_passes(self):
+        text = """name: Bubbles Command Bus
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+  pull-requests: read
+concurrency:
+  group: bubbles-command-bus-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  command:
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/bubbles-command-bus.yml", text, POLICY
+        )
+        self.assertEqual([], findings)
+
+    def test_bubbles_command_bus_cannot_add_schedule(self):
+        text = """name: Bubbles Command Bus
+on:
+  pull_request:
+  workflow_dispatch:
+  schedule:
+    - cron: '0 * * * *'
+permissions:
+  contents: read
+concurrency:
+  group: bubbles-command-bus
+jobs:
+  command:
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/bubbles-command-bus.yml", text, POLICY
+        )
+        self.assertIn("UNAUTHORISED_TRIGGER", self.rules(findings))
+
+    def test_bubbles_command_bus_cannot_gain_oidc_or_source_write(self):
+        text = """name: Bubbles Command Bus
+on:
+  workflow_dispatch:
+permissions:
+  contents: write
+  id-token: write
+concurrency:
+  group: bubbles-command-bus
+jobs:
+  command:
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/bubbles-command-bus.yml", text, POLICY
+        )
+        rules = self.rules(findings)
+        self.assertIn("REPOSITORY_WRITE_AUTHORITY", rules)
+        self.assertIn("UNAUTHORISED_OIDC", rules)
+
     def test_unlisted_workflow_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/new-bot.yml",
