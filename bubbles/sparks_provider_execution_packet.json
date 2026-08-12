@@ -1,0 +1,114 @@
+{
+  "schema": "BUBBLES-SPARKS-PROVIDER-EXECUTION-PACKET-V1",
+  "version": "1.0.0",
+  "source_repository": "mosianekk-lang/Federation-Omega",
+  "source_main_sha": "d35a4c3047896f06a82f8de7365034a73ff1bc66",
+  "execution_state": "BLOCKED_EXTERNAL_PACKET_READY",
+  "authorized_execution_surface": false,
+  "authority_ceiling": "A1_INTERNAL_UNTIL_PROVIDER_AUTHORISED",
+  "projects": [
+    {
+      "project_id": "CIOS",
+      "source_files": [
+        "evidenceops/capital_intelligence_os/provider_runtime.py",
+        "evidenceops/capital_intelligence_os/Dockerfile.runtime",
+        "evidenceops/capital_intelligence_os/PROVIDER_RUNTIME_CONTRACT.json"
+      ],
+      "required_non_secret_bindings": [
+        "authorised_cloud_project_id",
+        "runtime_service_account_identity",
+        "bearer_token_secret_handle",
+        "persistent_database_mount_or_managed_store_binding",
+        "persistent_audit_store_binding",
+        "expected_source_sha",
+        "runtime_source_sha"
+      ],
+      "execution_sequence": [
+        "verify authorised cloud identity and exact project",
+        "bind exact source_main_sha and build immutable runtime image",
+        "deploy authenticated zero-traffic provider candidate",
+        "independently read back provider service identity, revision and image digest",
+        "call semantic authenticated health and readiness endpoints",
+        "execute harmless event and verify persistent state plus audit-chain readback",
+        "restart or create a fresh instance and verify persistence continuity",
+        "verify rollback target and execute bounded rollback drill",
+        "capture non-secret provider receipt and hand it to Ledger"
+      ],
+      "required_proof_fields": [
+        "provider_project",
+        "provider_service_identity",
+        "provider_revision",
+        "image_digest",
+        "source_sha",
+        "health_semantics_verified",
+        "readiness_semantics_verified",
+        "persistence_verified",
+        "audit_chain_verified",
+        "rollback_verified",
+        "external_effects_enabled"
+      ],
+      "acceptance": {
+        "source_sha_must_equal_packet_sha": true,
+        "health_semantics_verified": true,
+        "readiness_semantics_verified": true,
+        "persistence_verified": true,
+        "audit_chain_verified": true,
+        "rollback_verified": true,
+        "external_effects_enabled": false
+      },
+      "truth_boundary": "CIOS remains provider-unverified until an authorised provider execution occurs and Ledger independently reads back provider identity, revision, health, persistence and rollback. No trading, payments, transfers or other consequential financial effects are authorised by this packet."
+    },
+    {
+      "project_id": "ECERTIFY",
+      "source_files": [
+        "evidenceops/ecertify_za/deployment/deploy_launch_now_cloud_run_canary.sh",
+        "evidenceops/ecertify_za/deployment/LAUNCH_NOW_CANARY_CONTRACT.json",
+        "evidenceops/ecertify_za/PRODUCTION_READINESS.md"
+      ],
+      "required_non_secret_bindings": [
+        "ECERTIFY_PROJECT_ID",
+        "ECERTIFY_RUNTIME_SA",
+        "ECERTIFY_INTEGRITY_SIGNING_SECRET_NAME",
+        "ECERTIFY_INTEGRITY_KEY_ID",
+        "ECERTIFY_LAUNCH_NOW_DEPLOY_CONFIRMATION=DEPLOY_ECERTIFY_LAUNCH_NOW_ZERO_TRAFFIC_CANARY"
+      ],
+      "execution_sequence": [
+        "verify authorised Google Cloud identity and exact project",
+        "verify integrity signing secret handle metadata without reading secret payload",
+        "build immutable Launch-Now image from exact source_main_sha",
+        "deploy authenticated tagged zero-traffic revision only",
+        "independently read back service URL, tagged canary URL, revision and image",
+        "verify semantic health for version 0.9.0 and launch_now mode",
+        "issue zero-possession integrity receipt using only SHA-256 fingerprint plus nonce",
+        "verify the issued receipt through the canary endpoint",
+        "verify production traffic remains unpromoted and unauthenticated public access remains disabled",
+        "verify rollback target and capture a non-secret provider receipt for Ledger"
+      ],
+      "required_proof_fields": [
+        "provider_project",
+        "runtime_service_account",
+        "provider_revision",
+        "image_digest",
+        "source_sha",
+        "semantic_health_verified",
+        "receipt_roundtrip_verified",
+        "document_bytes_transmitted",
+        "traffic_promoted",
+        "public_unauthenticated",
+        "rollback_verified"
+      ],
+      "acceptance": {
+        "source_sha_must_equal_packet_sha": true,
+        "semantic_health_verified": true,
+        "receipt_roundtrip_verified": true,
+        "document_bytes_transmitted": false,
+        "traffic_promoted": false,
+        "public_unauthenticated": false,
+        "rollback_verified": true
+      },
+      "truth_boundary": "eCertify remains provider-unverified until this exact zero-traffic canary is executed by an authorised cloud identity and independently read back. The packet does not authorise public launch, statutory certification, biometric identity verification or secret-payload disclosure."
+    }
+  ],
+  "closure_rule": "Change execution_state to PROVIDER_VERIFIED only after every project-specific required proof is supplied by provider-native readback, source SHA matches this packet, acceptance fields pass, and Ledger independently validates the receipt. Source/test success alone cannot close the gate.",
+  "truth_boundary": "This packet completes internal provider-execution preparation. It contains no credential values, creates no provider authority and is not evidence that any cloud deployment occurred."
+}
