@@ -14,6 +14,7 @@ REQUIRED = [
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
+    ".github/workflows/bubbles-provider-worker.yml",
 ]
 
 
@@ -62,12 +63,21 @@ class FreezeConvergenceTests(unittest.TestCase):
         self.assertEqual("READBACK_FAILED", result["status"])
         self.assertEqual([REQUIRED[1]], result["missing_required"])
 
-    def test_bubbles_disabled_state_fails_convergence(self):
+    def test_bubbles_command_bus_disabled_state_fails_convergence(self):
         values = required()
-        values[-1]["state"] = "disabled_manually"
+        index = REQUIRED.index(".github/workflows/bubbles-command-bus.yml")
+        values[index]["state"] = "disabled_manually"
         result = self.receipt(required_readback=values)
         self.assertEqual("READBACK_FAILED", result["status"])
         self.assertEqual([".github/workflows/bubbles-command-bus.yml"], result["missing_required"])
+
+    def test_bubbles_provider_worker_disabled_state_fails_convergence(self):
+        values = required()
+        index = REQUIRED.index(".github/workflows/bubbles-provider-worker.yml")
+        values[index]["state"] = "disabled_manually"
+        result = self.receipt(required_readback=values)
+        self.assertEqual("READBACK_FAILED", result["status"])
+        self.assertEqual([".github/workflows/bubbles-provider-worker.yml"], result["missing_required"])
 
     def test_unexpected_active_workflow_still_fails(self):
         result = self.receipt(
@@ -113,11 +123,16 @@ class FreezeConvergenceTests(unittest.TestCase):
         self.assertIn("payload='{}'", text)
         self.assertIn("<<< \"${payload}\"", text)
 
-    def test_workflow_treats_bubbles_command_bus_as_required_active(self):
+    def test_workflow_treats_both_bubbles_workflows_as_required_active(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertGreaterEqual(text.count("bubbles-command-bus.yml"), 2)
+        self.assertGreaterEqual(text.count("bubbles-provider-worker.yml"), 2)
         self.assertIn(
             '"bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"',
+            text,
+        )
+        self.assertIn(
+            '"bubbles-provider-worker.yml|.github/workflows/bubbles-provider-worker.yml"',
             text,
         )
 
