@@ -1,0 +1,43 @@
+{
+  "schema": "BUBBLES-PRISM-DEMO-JOURNEYS-V1",
+  "version": "1.0.0",
+  "journeys": [
+    {
+      "journey_id": "DEMO-IPEP-SAFE-001",
+      "project_id": "IPEP",
+      "title": "Provenance-aware evidence search",
+      "audience": "recruiter_or_technical_interviewer",
+      "safe_data_only": true,
+      "execution_state": "LOCAL_RUNTIME_READY",
+      "steps": [
+        {"id": "I1", "action": "start authenticated local read-only service against synthetic demo workspace", "proof_required": "semantic_health_and_ready"},
+        {"id": "I2", "action": "submit a harmless synthetic search query", "proof_required": "authenticated_request_receipt"},
+        {"id": "I3", "action": "return matching segment with source item, start/end time, review state and stable citation", "proof_required": "provenance_aware_search_result"},
+        {"id": "I4", "action": "show custody/accounting readiness and resilience receipt", "proof_required": "audit_and_resilience_receipt"},
+        {"id": "I5", "action": "state limits: no transcript certification, biometric identity or provider-deployment claim", "proof_required": "ledger_approved_truth_boundary"}
+      ],
+      "completion_requirements": ["synthetic_workspace", "authenticated_http_runtime", "stable_citation", "review_state_visible", "audit_receipt", "truth_boundary_visible"],
+      "forbidden_demo_content": ["private TUT evidence", "real case audio", "personal identifiers", "unreviewed text presented as verified quotation"],
+      "truth_boundary": "The journey demonstrates the tested local IPEP service and synthetic evidence provenance. It does not demonstrate public cloud deployment or certified transcripts."
+    },
+    {
+      "journey_id": "DEMO-K10-SAFE-001",
+      "project_id": "K10",
+      "title": "AI-assisted creative production workflow",
+      "audience": "recruiter_or_product_interviewer",
+      "safe_data_only": true,
+      "execution_state": "DESIGN_VALIDATED_EXECUTION_PENDING",
+      "steps": [
+        {"id": "K1", "action": "accept a non-sensitive creative brief", "proof_required": "brief_receipt"},
+        {"id": "K2", "action": "derive structured scenes and asset requirements", "proof_required": "scene_plan"},
+        {"id": "K3", "action": "generate or bind approved visual assets", "proof_required": "asset_manifest"},
+        {"id": "K4", "action": "compose assets in Canva/design surface", "proof_required": "canva_design_reference"},
+        {"id": "K5", "action": "render or export the final supported artifact", "proof_required": "rendered_asset_ref"},
+        {"id": "K6", "action": "read back export/delivery receipt", "proof_required": "export_receipt"}
+      ],
+      "completion_requirements": ["brief_receipt", "scene_plan", "asset_manifest", "canva_design_reference", "rendered_asset_ref", "export_receipt"],
+      "forbidden_demo_content": ["claiming a rendered artifact before an actual export", "claiming autonomous video production from unsupported tooling", "private evidence assets"],
+      "truth_boundary": "This journey is validated as a demo contract. K10 remains execution-pending until a real supported rendered/exported artifact and receipt exist."
+    }
+  ]
+}
