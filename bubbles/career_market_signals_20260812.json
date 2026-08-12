@@ -1,0 +1,86 @@
+{
+  "schema": "BUBBLES-CAREER-MARKET-SIGNALS-V1",
+  "as_of": "2026-08-12",
+  "signals": [
+    {
+      "role_id": "ENKO-BTSM-20260812",
+      "employer": "Enko Education",
+      "title": "Business Technology Senior Manager",
+      "sector": "education network / pan-African schools",
+      "signal_type": "VACANCY",
+      "strategic_target": true,
+      "source_ref": "Enko Education careers listing and current job specification reviewed 2026-08-12",
+      "requirements": [
+        "three-year technology roadmap and digital transformation",
+        "technology architecture and scalable SaaS ecosystem",
+        "custom APIs and data bridges",
+        "AI and automation",
+        "business intelligence dashboards including Looker or Power BI",
+        "change management and human-centric adoption",
+        "technology vendor and partner management",
+        "ROI and cost-value decisions",
+        "OKRs and roadmap execution"
+      ]
+    },
+    {
+      "role_id": "REGENESYS-GM-SOT-20260812",
+      "employer": "Regenesys",
+      "title": "General Manager, School of Technology",
+      "sector": "higher education / school of technology",
+      "signal_type": "VACANCY",
+      "strategic_target": true,
+      "source_ref": "Regenesys official careers vacancy reviewed 2026-08-12",
+      "requirements": [
+        "higher education operational leadership",
+        "academic governance and curriculum development",
+        "assessment and examinations integrity",
+        "quality assurance",
+        "faculty allocation and academic scheduling",
+        "technology resources and laboratories",
+        "student experience and student support",
+        "strategic partnerships",
+        "project management"
+      ]
+    },
+    {
+      "role_id": "SU-IT-LEADERSHIP-BENCHMARK-20260812",
+      "employer": "Stellenbosch University",
+      "title": "University IT Leadership Capability Benchmark",
+      "sector": "higher education",
+      "signal_type": "SECTOR_BENCHMARK",
+      "strategic_target": true,
+      "source_ref": "Stellenbosch University official IT structure and digital strategy material reviewed 2026-08-12",
+      "requirements": [
+        "enterprise architecture and as-is to-be ICT architecture",
+        "institutional software and student information systems",
+        "IT governance risk and audit",
+        "cybersecurity privacy and identity access",
+        "data analytics and data quality",
+        "AI governance and institutional AI",
+        "vendor partner management and procurement",
+        "cost optimization and sustainable IT funding model",
+        "digital transformation and student experience"
+      ]
+    },
+    {
+      "role_id": "NWU-DIGITAL-AI-BENCHMARK-20260812",
+      "employer": "North-West University",
+      "title": "Operations, Digital and AI Systems Leadership Benchmark",
+      "sector": "higher education",
+      "signal_type": "SECTOR_BENCHMARK",
+      "strategic_target": true,
+      "source_ref": "North-West University official executive structure and Council material reviewed 2026-08-12",
+      "requirements": [
+        "higher education digital transformation",
+        "operations digital and AI systems",
+        "student information systems",
+        "enterprise IT governance",
+        "institutional technology strategy",
+        "AI governance",
+        "student experience",
+        "programme and portfolio leadership"
+      ]
+    }
+  ],
+  "truth_boundary": "VACANCY signals represent market requirements. SECTOR_BENCHMARK signals describe recurring institutional capability patterns and are not represented as open vacancies. Neither category is evidence of Kim Mosiane's personal experience."
+}
