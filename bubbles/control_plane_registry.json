@@ -1,6 +1,6 @@
 {
   "schema": "BUBBLES-CONTROL-PLANE-REGISTRY-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "authority_ceiling": "A1_INTERNAL",
   "chatgpt_ingress": {
     "preferred_write_bus": "GITHUB_NATIVE_APP",
@@ -39,9 +39,24 @@
     {
       "id": "bubbles_command_bus",
       "route": "GITHUB_COMMAND_BUS",
-      "state": "INTERNAL_CANARY_IMPLEMENTED_AWAITING_PROVIDER_HOSTED_READBACK",
+      "state": "LIVE_VERIFIED_CHATGPT_TO_ACTIONS_CANARY",
       "write": false,
-      "role": "CHATGPT_TO_ACTIONS_INGRESS_CANARY"
+      "role": "CHATGPT_TO_ACTIONS_INGRESS",
+      "proof": {
+        "run_id": 31621687772,
+        "artifact_id": 9151483763,
+        "artifact_digest": "sha256:c5b66058e44f88bd7484bcbc17fb04e7f780acfcfeb37f0714069b519eefa727",
+        "command_sha256": "d178517c48ecd07ecd43ed834c5613ed0cc39a63b5eb6ff29d4e0cc0c9e6d927"
+      }
+    },
+    {
+      "id": "google_cloud_wif_plan",
+      "route": "GITHUB_COMMAND_BUS_TO_DEFAULT_BRANCH_PROVIDER_WORKER",
+      "state": "SOURCE_IMPLEMENTED_AWAITING_PROVIDER_CANARY",
+      "write": false,
+      "role": "GOOGLE_CLOUD_READ_ONLY_IDENTITY_AND_INVENTORY_PROBE",
+      "worker": ".github/workflows/bubbles-provider-worker.yml",
+      "operation": "ops/bootstrap_github_wif.sh --plan"
     },
     {
       "id": "google_cloud",
@@ -79,18 +94,31 @@
     "allowed_events": ["pull_request", "workflow_dispatch"],
     "blocked_transport_events": ["repository_dispatch", "issue_comment"],
     "workflow_permissions": ["contents:read", "pull-requests:read"],
-    "provider_execution_v1": false,
+    "provider_handoff_enabled": true,
     "immutable_receipt": true,
     "receipt_storage": "GITHUB_ACTIONS_ARTIFACT",
-    "first_canary": "LOCAL_COMMAND_BUS_CANARY"
+    "internal_canary": "LIVE_VERIFIED"
+  },
+  "provider_worker": {
+    "workflow": ".github/workflows/bubbles-provider-worker.yml",
+    "trigger": "workflow_run:Bubbles Command Bus:completed",
+    "execution_ref": "DEFAULT_BRANCH",
+    "workflow_permissions": ["contents:read", "actions:read", "id-token:write"],
+    "repository_write": false,
+    "pull_request_code_execution": false,
+    "allowed_first_operation": "GOOGLE_CLOUD_WIF_PLAN_READ_ONLY",
+    "google_auth_action_sha": "7c6bc770dae815cd3e89ee6cdf493a5fab2cc093",
+    "setup_gcloud_action_sha": "aa5489c8933f4cc7a4f7d45035b3b1440c9c10db",
+    "provider_canary_state": "AWAITING_LIVE_READBACK"
   },
   "required_receipt_chain": [
     "INTENT",
     "ROUTE_DECISION",
+    "COMMAND_BUS_RECEIPT",
+    "PROVIDER_HANDOFF_VALIDATION",
     "AUTHORITY_READBACK",
-    "EXECUTION_RECEIPT",
-    "PROVIDER_READBACK",
+    "PROVIDER_INVENTORY_READBACK",
     "TERMINAL_SUCCESS_FAILURE_OR_CONSTRAINT"
   ],
-  "truth_boundary": "Registry describes routes and gates only. Command-bus v1 proves internal ingress only until a provider-hosted canary and artifact readback succeed; it does not prove Google provider execution, deployment, current credentials, or universal authority."
+  "truth_boundary": "The ChatGPT-to-Actions command bus is live-verified. The default-branch provider worker is source-implemented but remains unverified until a live Google WIF plan command returns a provider-native receipt. No Google write or deployment claim follows from source existence."
 }
