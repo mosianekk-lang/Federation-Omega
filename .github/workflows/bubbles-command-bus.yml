@@ -38,6 +38,7 @@ jobs:
           python -m unittest tests.test_bubbles_private_queue_adapter -v
           python -m unittest tests.test_fogas_v23_security_contract -v
           python -m unittest tests.test_bubbles_provider_edge_watch -v
+          python -m unittest tests.test_bubbles_heartbeat_surface_sync -v
 
   command:
     needs: contract
