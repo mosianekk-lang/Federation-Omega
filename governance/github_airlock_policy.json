@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -17,12 +17,14 @@
   "active_workflow_allowlist": [
     ".github/workflows/github-airlock.yml",
     ".github/workflows/public-repository-leak-guard.yml",
-    ".github/workflows/phoenix-emergency-freeze.yml"
+    ".github/workflows/phoenix-emergency-freeze.yml",
+    ".github/workflows/bubbles-command-bus.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
     ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"]
+    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/bubbles-command-bus.yml": ["pull_request", "workflow_dispatch"]
   },
   "oidc_workflow_allowlist": [],
   "actions_write_workflow_allowlist": [
@@ -68,7 +70,8 @@
     "keep_active": [
       ".github/workflows/github-airlock.yml",
       ".github/workflows/public-repository-leak-guard.yml",
-      ".github/workflows/phoenix-emergency-freeze.yml"
+      ".github/workflows/phoenix-emergency-freeze.yml",
+      ".github/workflows/bubbles-command-bus.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
