@@ -53,13 +53,13 @@
       "source_ref": "2026 Rosebank College digital enablement vacancy specification; listing no longer treated as live",
       "requirements": [
         "institutional digital enablement roadmap",
-        "student recruitment retention and throughput",
+        "student experience, recruitment, retention and throughput",
         "academic delivery and blended learning enablement",
         "student information system and teaching-learning platforms",
         "student lifecycle integration",
         "regulatory and accreditation compliance",
-        "digital investment value metrics",
-        "operational efficiency and cost optimisation"
+        "digital investment value metrics and business case",
+        "operational efficiency and cost optimization"
       ]
     },
     {
@@ -72,7 +72,7 @@
       "source_ref": "2026 University of Pretoria ITS vacancy specification; closing date passed",
       "requirements": [
         "middleware and system integration leadership",
-        "enterprise integration architecture",
+        "enterprise architecture and integration architecture",
         "API and interoperability engineering",
         "institutional systems reliability",
         "service management",
