@@ -1,0 +1,196 @@
+{
+  "schema": "JOBS-FOR-KIM-HIGHER-ED-LEADERSHIP-CAPABILITY-MAP-V1",
+  "as_of": "2026-08-12",
+  "owner": "Kim Kagiso Mosiane",
+  "objective": "Build a proof-bound career lane for senior higher-education ICT, digital transformation, business technology, architecture and CIO-track roles while converting recurring market gaps into Bubbles capability-development work.",
+  "positioning": "Higher Education ICT & Digital Transformation Leader | Applied AI Systems Architect",
+  "role_signals": [
+    {
+      "role_id": "LIVE-ENKO-BTSM-20260812",
+      "employer": "Enko Education",
+      "title": "Business Technology Senior Manager",
+      "state": "LIVE_VERIFIED_ON_EMPLOYER_CAREERS",
+      "source": "https://www.enkoeducation.com/careers",
+      "requirements": [
+        "three-year technology roadmap",
+        "technology and systems architecture",
+        "API development and data bridges",
+        "AI and automation",
+        "BI dashboards and data quality",
+        "human-centric change management",
+        "OKRs and team leadership",
+        "vendor ROI and delivery",
+        "multi-country education operations"
+      ]
+    },
+    {
+      "role_id": "LIVE-REGENESYS-GM-SOT-20260812",
+      "employer": "Regenesys Business School",
+      "title": "General Manager, School of Technology",
+      "state": "LIVE_VERIFIED_ON_EMPLOYER_CAREERS",
+      "source": "https://www.regenesys.net/vacancies/general-manager-school-of-technology",
+      "requirements": [
+        "technology-school operational leadership",
+        "academic administration",
+        "academic schedules and faculty allocation",
+        "assessment and examination administration",
+        "academic integrity",
+        "student and faculty support",
+        "resource management",
+        "industry and academic partnerships",
+        "curriculum and academic governance understanding"
+      ]
+    },
+    {
+      "role_id": "BENCH-ROSEBANK-DIGITAL-ENABLEMENT-20260615",
+      "employer": "Rosebank College / ADvTECH Higher Education",
+      "title": "Digital Enablement & Business Technology Manager",
+      "state": "HISTORICAL_MARKET_BENCHMARK_NOT_CURRENTLY_LIVE",
+      "source": "2026 vacancy benchmark",
+      "requirements": [
+        "institutional digital roadmap",
+        "student recruitment retention and throughput",
+        "blended learning enablement",
+        "SIS and teaching-learning platforms",
+        "student lifecycle integration",
+        "regulatory and accreditation compliance",
+        "digital investment value metrics",
+        "operational efficiency and cost optimisation"
+      ]
+    },
+    {
+      "role_id": "BENCH-UP-INTEGRATION-20260602",
+      "employer": "University of Pretoria",
+      "title": "Senior Manager: Middleware and System Integration",
+      "state": "HISTORICAL_MARKET_BENCHMARK_NOT_CURRENTLY_LIVE",
+      "source": "2026 vacancy benchmark",
+      "requirements": [
+        "middleware and system integration leadership",
+        "enterprise integration architecture",
+        "APIs and interoperability",
+        "institutional systems reliability",
+        "service management",
+        "team leadership"
+      ]
+    },
+    {
+      "role_id": "DEST-NWU-DIGITAL-AI-EXEC-2026",
+      "employer": "North-West University",
+      "title": "DVC: Operations, Digital and AI Systems / Executive IT leadership benchmark",
+      "state": "DESTINATION_ROLE_BENCHMARK",
+      "source": "NWU management and council structures",
+      "requirements": [
+        "executive digital leadership",
+        "AI systems governance",
+        "institution-wide operations",
+        "enterprise IT leadership",
+        "student information systems",
+        "strategy and transformation governance"
+      ]
+    }
+  ],
+  "capabilities": [
+    {
+      "priority": 1,
+      "capability_id": "CAP-HE-DIGITAL",
+      "name": "Higher-Education Digital Strategy & Operating Model",
+      "market_frequency": "VERY_HIGH",
+      "kim_evidence_state": "PARTIAL_CREDIBLE_UNDEREVIDENCED",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Beacon", "Bridge", "Ledger", "Prism"],
+      "proof_project": "Synthetic university digital-transformation reference operating model spanning teaching and learning, research, student lifecycle, corporate services, data, cybersecurity, AI/automation and IT service management.",
+      "career_unlocks": ["Head Digital Transformation", "Director ICT", "Chief Director IT", "CIO", "DVC Digital/AI stretch"]
+    },
+    {
+      "priority": 2,
+      "capability_id": "CAP-EA",
+      "name": "Enterprise & Business Architecture",
+      "market_frequency": "VERY_HIGH",
+      "kim_evidence_state": "PARTIAL_CREDIBLE_UNDEREVIDENCED",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Forge", "Bridge", "Ledger"],
+      "proof_project": "As-is/to-be capability, application, data, integration, risk and transition architecture for the synthetic university, with outcome-to-component traceability.",
+      "career_unlocks": ["Lead Business Architect", "Enterprise Architect", "Business Technology Senior Manager", "Director Digital Transformation"]
+    },
+    {
+      "priority": 3,
+      "capability_id": "CAP-LMS-SIS-ERP",
+      "name": "LMS / SIS / ERP & Institutional Systems Architecture",
+      "market_frequency": "VERY_HIGH",
+      "kim_evidence_state": "USER_EVIDENCE_GAP",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Forge", "Bridge", "Patch", "Ledger"],
+      "proof_project": "Synthetic student-lifecycle integration using LMS, SIS and ERP service boundaries, canonical identity, API/event contracts, retry/idempotency and semantic readback.",
+      "career_unlocks": ["Director Institutional Systems", "Head Enterprise Applications", "Digital Enablement Manager", "Integration Senior Manager"]
+    },
+    {
+      "priority": 4,
+      "capability_id": "CAP-IT-GRC",
+      "name": "IT Governance, Risk, Audit & Cyber Assurance",
+      "market_frequency": "HIGH",
+      "kim_evidence_state": "PARTIAL_CREDIBLE_UNDEREVIDENCED",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Sentinel", "Ledger", "Patch"],
+      "proof_project": "University IT governance control crosswalk with risks, controls, evidence, remediation, audit-readiness and executive reporting.",
+      "career_unlocks": ["Head IT Governance & Risk", "Director ICT Governance", "CIO", "Chief Director IT"]
+    },
+    {
+      "priority": 5,
+      "capability_id": "CAP-ACADEMIC-GOV",
+      "name": "Academic Operations & Governance",
+      "market_frequency": "HIGH_IN_EDUCATION_MANAGEMENT",
+      "kim_evidence_state": "USER_EVIDENCE_GAP",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Beacon", "Scout", "Ledger"],
+      "proof_project": "Synthetic School-of-Technology operations model covering programme lifecycle, scheduling, faculty allocation, assessments, examinations, academic integrity, student support and governance gates.",
+      "career_unlocks": ["General Manager School of Technology", "Technology School Operations", "Digital Academic Operations"]
+    },
+    {
+      "priority": 6,
+      "capability_id": "CAP-DATA-BI",
+      "name": "Institutional Data, BI & Decision Intelligence",
+      "market_frequency": "VERY_HIGH",
+      "kim_evidence_state": "PARTIAL_CREDIBLE_UNDEREVIDENCED",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Forge", "Bridge", "Pulse", "Beacon", "Ledger"],
+      "proof_project": "Executive higher-education dashboard using synthetic recruitment, retention, throughput, service, finance and academic metrics with lineage and quality controls.",
+      "career_unlocks": ["Business Technology Senior Manager", "Head Digital Enablement", "CIO", "Director Digital Transformation"]
+    },
+    {
+      "priority": 7,
+      "capability_id": "CAP-API",
+      "name": "API, Middleware & Integration Engineering",
+      "market_frequency": "VERY_HIGH",
+      "kim_evidence_state": "PARTIAL_CREDIBLE_UNDEREVIDENCED",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Forge", "Bridge", "Patch", "Sentinel", "Ledger"],
+      "proof_project": "Versioned authenticated integration service connecting synthetic institutional systems with OpenAPI, idempotency, failure semantics, retry and independent readback.",
+      "career_unlocks": ["Business Technology Senior Manager", "Senior Manager Middleware & Integration", "Enterprise Architect"]
+    },
+    {
+      "priority": 8,
+      "capability_id": "CAP-EDTECH",
+      "name": "Educational Technology & Learning Analytics",
+      "market_frequency": "HIGH",
+      "kim_evidence_state": "USER_EVIDENCE_GAP",
+      "bubbles_state": "BUILD",
+      "gap_class": "BOTH",
+      "minimum_squad": ["Bubbles", "Forge", "Pulse", "Prism", "Beacon", "Sentinel", "Ledger"],
+      "proof_project": "Privacy-safe synthetic learning analytics and digital-learning enablement prototype with measurable student-support outcomes and human oversight.",
+      "career_unlocks": ["Director Educational Technology", "Head Digital Learning", "Digital Enablement", "AI & Digital Innovation"]
+    }
+  ],
+  "first_execution_wave": [
+    "CAP-HE-DIGITAL",
+    "CAP-EA"
+  ],
+  "claim_boundary": "Bubbles organisational capability is not personal experience. Kim-facing CV/interview claims require separate evidence of Kim's own work plus Ledger approval. Synthetic higher-education proof projects demonstrate transferable architecture and leadership capability; they do not create past university-wide responsibilities that were not actually held.",
+  "next": "Implement and test the Higher-Education Digital Strategy + Enterprise Architecture reference lab; then use it to build a recruiter-demonstrable executive case study and update role-specific application positioning."
+}
