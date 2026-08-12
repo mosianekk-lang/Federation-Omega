@@ -113,6 +113,17 @@ DEFAULT_ADAPTERS: dict[str, AdapterSpec] = {
         supports_write=False,
         notes=("Internal harmless canary used to prove ChatGPT-to-Actions command ingress and immutable receipt readback.",),
     ),
+    "google_cloud_wif_plan": AdapterSpec(
+        adapter_id="google_cloud_wif_plan",
+        route_kind=RouteKind.GITHUB_COMMAND_BUS,
+        authority_ceiling="A1_READ",
+        supports_read=True,
+        supports_write=False,
+        notes=(
+            "Read-only handoff to the default-branch Bubbles provider worker.",
+            "The worker may mint short-lived OIDC credentials but may only execute ops/bootstrap_github_wif.sh --plan.",
+        ),
+    ),
     "google_cloud": AdapterSpec(
         adapter_id="google_cloud",
         route_kind=RouteKind.GITHUB_COMMAND_BUS,
