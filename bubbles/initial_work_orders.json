@@ -1,0 +1,149 @@
+{
+  "schema": "BUBBLES-APPLIED-AI-ENGINEERING-CELL-WORK-V1",
+  "version": "1.0.0",
+  "truth_boundary": "ACTIVE denotes admitted work that can be executed by the current tooling and source-control process. It is not a claim that named twins run asynchronously. BLOCKED_EXTERNAL denotes a genuine provider, credential, legal or external-authority edge.",
+  "work_orders": [
+    {
+      "work_id": "BUB-CELL-ARCH-001",
+      "project_id": "PORTFOLIO",
+      "objective": "Continuously rank flagship proof gaps and prevent new meta-framework work from displacing higher-value executable vertical slices.",
+      "primary_twin": "Bubbles",
+      "collaborators": ["Ledger", "Forge", "Sparks"],
+      "required_proofs": ["source", "tests", "runtime"],
+      "state": "ACTIVE",
+      "evidence_target": "Bubbles proof ledger + Federation-Omega mainline"
+    },
+    {
+      "work_id": "BUB-FORGE-CIOS-001",
+      "project_id": "CIOS",
+      "objective": "Harden the existing Capital Intelligence OS into the smallest provider-deployable full-stack vertical slice with deterministic API, persistence and container contracts.",
+      "primary_twin": "Forge",
+      "collaborators": ["Bubbles", "Pulse", "Patch", "Sparks"],
+      "required_proofs": ["source", "tests", "runtime"],
+      "state": "ACTIVE",
+      "evidence_target": "CIOS source/tests/local runtime and deployable image contract"
+    },
+    {
+      "work_id": "BUB-SPARKS-CIOS-001",
+      "project_id": "CIOS",
+      "objective": "Execute an exact-build zero-traffic provider canary and independently read back service identity, revision, health and rollback state.",
+      "primary_twin": "Sparks",
+      "collaborators": ["Ledger", "Patch", "Sentinel"],
+      "required_proofs": ["provider_canary_contract", "provider_execution", "provider_readback", "deployment_receipt", "health", "rollback"],
+      "state": "READY",
+      "external_authority_required": true,
+      "evidence_target": "Provider-native canary receipt"
+    },
+    {
+      "work_id": "BUB-SPARKS-ECERTIFY-001",
+      "project_id": "ECERTIFY",
+      "objective": "Run the merged Launch-Now zero-possession Cloud Run canary, preserving zero traffic and no-public-launch boundaries.",
+      "primary_twin": "Sparks",
+      "collaborators": ["Ledger", "Patch", "Sentinel"],
+      "required_proofs": ["provider_execution", "provider_readback", "deployment_receipt", "health", "rollback"],
+      "state": "READY",
+      "external_authority_required": true,
+      "evidence_target": "ECERTIFY-ZA-LAUNCH-NOW-ZERO-TRAFFIC-CANARY-VERIFIED receipt"
+    },
+    {
+      "work_id": "BUB-PULSE-CASEFORGE-001",
+      "project_id": "CASEFORGE",
+      "objective": "Establish a repeatable blind benchmark baseline for grounding, contradiction detection, maturity classification, latency and failure modes across the current provider-adapter path.",
+      "primary_twin": "Pulse",
+      "collaborators": ["Scout", "Forge", "Ledger"],
+      "required_proofs": ["tests", "runtime"],
+      "state": "ACTIVE",
+      "evidence_target": "Versioned CASEFORGE evaluation dataset + deterministic benchmark receipt"
+    },
+    {
+      "work_id": "BUB-PATCH-IPEP-001",
+      "project_id": "IPEP",
+      "objective": "Failure-test the provenance-aware read-only service for restart, malformed requests, stale indexes, duplicate calls, latency and safe recovery without weakening evidence gates.",
+      "primary_twin": "Patch",
+      "collaborators": ["Forge", "Pulse", "Ledger"],
+      "required_proofs": ["health", "rollback", "observability"],
+      "state": "ACTIVE",
+      "evidence_target": "IPEP v4.1 resilience/fault-injection test receipt"
+    },
+    {
+      "work_id": "BUB-LEDGER-PORTFOLIO-001",
+      "project_id": "PORTFOLIO",
+      "objective": "Maintain a claim-to-proof crosswalk so no CV, case study or demo claim can exceed the strongest independently verified evidence state.",
+      "primary_twin": "Ledger",
+      "collaborators": ["Bubbles", "Showcase", "Beacon"],
+      "required_proofs": ["provider_readback", "case_study"],
+      "state": "ACTIVE",
+      "evidence_target": "Bubbles proof ledger and CV claim crosswalk"
+    },
+    {
+      "work_id": "BUB-SENTINEL-ECERTIFY-001",
+      "project_id": "ECERTIFY",
+      "objective": "Threat-model the Launch-Now zero-possession lane, verify least-privilege/secret/abuse/privacy boundaries and convert findings into executable negative tests or explicit gates.",
+      "primary_twin": "Sentinel",
+      "collaborators": ["Forge", "Sparks", "Patch", "Ledger"],
+      "required_proofs": ["security", "tests"],
+      "state": "ACTIVE",
+      "evidence_target": "eCertify threat model + negative-test crosswalk"
+    },
+    {
+      "work_id": "BUB-BRIDGE-ARCHITRON-001",
+      "project_id": "ARCHITRON",
+      "objective": "Produce one boringly complete event-to-action demonstration: event → queue → worker → target mutation/readback → audit receipt → retry/recovery, with no duplicate execution.",
+      "primary_twin": "Bridge",
+      "collaborators": ["Forge", "Patch", "Sentinel", "Ledger"],
+      "required_proofs": ["integration", "runtime", "provider_readback"],
+      "state": "ACTIVE",
+      "evidence_target": "ARCHITRON end-to-end semantic execution receipt"
+    },
+    {
+      "work_id": "BUB-SCOUT-CASEFORGE-001",
+      "project_id": "CASEFORGE",
+      "objective": "Maintain a bounded candidate register of model/provider/agent approaches worth benchmarking; candidates remain hypotheses until Pulse measures them.",
+      "primary_twin": "Scout",
+      "collaborators": ["Pulse", "Bubbles"],
+      "required_proofs": ["research", "tests"],
+      "state": "ACTIVE",
+      "evidence_target": "CASEFORGE candidate-and-benchmark register"
+    },
+    {
+      "work_id": "BUB-PRISM-IPEP-001",
+      "project_id": "IPEP",
+      "objective": "Design and validate a recruiter-friendly user journey that searches a safe demo corpus and visibly returns source, segment, timestamp, review state and provenance without exposing private evidence.",
+      "primary_twin": "Prism",
+      "collaborators": ["Forge", "Showcase", "Ledger"],
+      "required_proofs": ["user_demo"],
+      "state": "ACTIVE",
+      "evidence_target": "IPEP safe demo UX journey"
+    },
+    {
+      "work_id": "BUB-BEACON-ECERTIFY-001",
+      "project_id": "ECERTIFY",
+      "objective": "Convert verified Track A capabilities into a pilot-ready product definition with user value, measurable acceptance metrics and commercially safe claims separated from statutory certification.",
+      "primary_twin": "Beacon",
+      "collaborators": ["Prism", "Ledger", "Showcase"],
+      "required_proofs": ["product", "user_demo", "case_study"],
+      "state": "ACTIVE",
+      "evidence_target": "eCertify pilot scorecard + proof-safe value proposition"
+    },
+    {
+      "work_id": "BUB-SHOWCASE-PORTFOLIO-001",
+      "project_id": "PORTFOLIO",
+      "objective": "Create a demonstrable Applied AI Systems Architect portfolio pack where every flagship has architecture, code lineage, tests, runtime proof, limitations and a claim approved by Ledger.",
+      "primary_twin": "Showcase",
+      "collaborators": ["Ledger", "Beacon", "Prism", "Bubbles"],
+      "required_proofs": ["user_demo", "case_study"],
+      "state": "ACTIVE",
+      "evidence_target": "Applied AI Systems Architect demonstrable portfolio"
+    },
+    {
+      "work_id": "BUB-PRISM-K10-001",
+      "project_id": "K10",
+      "objective": "Reduce K10 to one visible brief → structured scenes → generated assets → Canva composition → rendered/exported artifact journey suitable for demonstration.",
+      "primary_twin": "Prism",
+      "collaborators": ["Bridge", "Showcase", "Beacon"],
+      "required_proofs": ["integration", "user_demo", "case_study"],
+      "state": "ACTIVE",
+      "evidence_target": "K10 visible end-to-end demo artifact"
+    }
+  ]
+}
