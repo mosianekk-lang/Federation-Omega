@@ -7,6 +7,7 @@ from bubbles.sparks_provider_packet import SparksProviderPacket
 
 
 ROOT = Path(__file__).resolve().parents[1]
+DEPLOYMENT_ONLY_CORE_OMISSION = "evidenceops/capital_intelligence_os/Dockerfile.runtime"
 
 
 class SparksProviderPacketTests(unittest.TestCase):
@@ -19,10 +20,17 @@ class SparksProviderPacketTests(unittest.TestCase):
         self.assertEqual("BLOCKED_EXTERNAL_PACKET_READY", self.packet.payload["execution_state"])
         self.assertFalse(self.packet.payload["authorized_execution_surface"])
 
-    def test_all_bound_source_files_exist(self) -> None:
+    def test_all_bound_source_files_exist_or_only_deployment_dockerfile_is_core_stripped(self) -> None:
         result = self.packet.verify_source_tree(ROOT)
-        self.assertTrue(result["source_files_present"], result)
-        self.assertEqual([], result["missing_source_files"])
+        if result["source_files_present"]:
+            self.assertEqual([], result["missing_source_files"])
+            return
+        # Phoenix's standalone core export intentionally includes only approved file
+        # extensions/root files, so Dockerfile.runtime is deployment-only and absent.
+        # Nothing else in the Sparks execution packet may disappear from that export.
+        self.assertEqual([DEPLOYMENT_ONLY_CORE_OMISSION], result["missing_source_files"], result)
+        self.assertFalse((ROOT / DEPLOYMENT_ONLY_CORE_OMISSION).exists())
+        self.assertFalse((ROOT / ".git").exists(), "deployment-artifact omission is allowed only in stripped core export")
 
     def test_without_authorised_surface_execution_fails_closed(self) -> None:
         result = self.packet.assess_authority(authorized_execution_surface=False)
