@@ -1,0 +1,75 @@
+{
+  "schema": "BUBBLES-CONTROL-PLANE-REGISTRY-V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "chatgpt_ingress": {
+    "preferred_write_bus": "GITHUB_NATIVE_APP",
+    "mcp_custom_route": "READ_FETCH_ONLY_ON_CURRENT_PRO_SURFACE",
+    "write_smuggling_through_read_tools": false
+  },
+  "adapters": [
+    {
+      "id": "google_drive",
+      "route": "CHATGPT_NATIVE",
+      "state": "LIVE_CONNECTOR_REVALIDATE_ON_USE",
+      "write": true
+    },
+    {
+      "id": "gmail",
+      "route": "CHATGPT_NATIVE",
+      "state": "LIVE_CONNECTOR_REVALIDATE_ON_USE",
+      "write": true
+    },
+    {
+      "id": "canva",
+      "route": "CHATGPT_NATIVE",
+      "state": "LIVE_CONNECTOR_REVALIDATE_ON_USE",
+      "write": true
+    },
+    {
+      "id": "github",
+      "route": "CHATGPT_NATIVE",
+      "state": "LIVE_SELECTED_REPOSITORY_SCOPE",
+      "write": true,
+      "role": "BUBBLES_COMMAND_BUS_INGRESS"
+    },
+    {
+      "id": "google_cloud",
+      "route": "GITHUB_COMMAND_BUS",
+      "state": "SOURCE_CONTRACT_PRESENT_PROVIDER_INVENTORY_UNVERIFIED",
+      "write": "GATED",
+      "reuse": [
+        "GITHUB_ACTIONS_A0_A1",
+        "GOOGLE_CLOUD_WIF_AND_SERVICE_ACCOUNT_REFERENCES",
+        "ops/bootstrap_github_wif.sh",
+        "ops/WIF_ACTIVATION_EDGE.md"
+      ]
+    },
+    {
+      "id": "apps_script",
+      "route": "GITHUB_COMMAND_BUS",
+      "state": "OPTIONAL_SOURCE_PRESENT_RUNTIME_UNVERIFIED",
+      "write": "GATED",
+      "reuse": [
+        "APPS_SCRIPT_OAUTH_AND_PROJECT_AUTHORITY",
+        "ops/apps_script_authorization_gate.py",
+        "ops/activate_apps_script_processor.sh"
+      ]
+    },
+    {
+      "id": "google_ai_studio",
+      "route": "GITHUB_COMMAND_BUS",
+      "state": "RESOURCE_POOL_CONFIRMED_PROVIDER_INVENTORY_UNVERIFIED",
+      "write": "GATED"
+    }
+  ],
+  "required_receipt_chain": [
+    "INTENT",
+    "ROUTE_DECISION",
+    "AUTHORITY_READBACK",
+    "EXECUTION_RECEIPT",
+    "PROVIDER_READBACK",
+    "TERMINAL_SUCCESS_FAILURE_OR_CONSTRAINT"
+  ],
+  "truth_boundary": "Registry describes routes and gates only. It does not prove provider execution, deployment, current credentials, or universal authority."
+}
