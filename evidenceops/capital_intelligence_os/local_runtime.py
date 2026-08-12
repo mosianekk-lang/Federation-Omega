@@ -16,6 +16,9 @@ from .tenancy import TenantContext
 from .vault import DocumentVault
 
 
+MAX_HTTP_BODY_BYTES = 7_000_000
+
+
 class LocalRuntimeApplication:
     def __init__(
         self,
@@ -158,7 +161,7 @@ class _Handler(BaseHTTPRequestHandler):
         except ValueError:
             self.send_error(400)
             return
-        if length > 256_000:
+        if length < 0 or length > MAX_HTTP_BODY_BYTES:
             payload = {"error": "REQUEST_TOO_LARGE"}
             data = json.dumps(payload).encode()
             self.send_response(413)
