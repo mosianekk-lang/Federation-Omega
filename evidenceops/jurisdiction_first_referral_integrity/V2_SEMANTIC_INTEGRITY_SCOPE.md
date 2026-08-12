@@ -1,0 +1,3 @@
+# JFRIE v2 semantic integrity slice
+
+A1_INTERNAL, no external effect. Adds deterministic review-only claim fingerprinting, explicit citation-cycle detection, source-quality routing signals, version-conflict detection, and internal post-release drift comparison. `FULL_V2_PARITY = False` remains controlling. No legal merits, admissibility, credibility, provider deployment, filing, or authority expansion is claimed.
