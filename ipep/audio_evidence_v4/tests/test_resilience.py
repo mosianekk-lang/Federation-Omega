@@ -3,6 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 import tempfile
+import unittest
 from pathlib import Path
 
 from evidenceops_audio_v4.index import EvidenceIndex
@@ -65,44 +66,46 @@ def make_workspace(root: Path) -> Path:
     return workspace
 
 
-def test_resilience_probe_passes_and_restart_is_stable():
-    with tempfile.TemporaryDirectory() as tmp:
-        workspace = make_workspace(Path(tmp))
-        receipt = probe_workspace(workspace, token_sha256=TOKEN_SHA)
-        assert receipt.state == "PASS"
-        assert receipt.restart_stable is True
-        assert receipt.accounting_state == "PASS"
-        assert receipt.custody_state == "PASS"
-        assert receipt.index_sha256 and len(receipt.index_sha256) == 64
+class PatchResilienceTests(unittest.TestCase):
+    def test_resilience_probe_passes_and_restart_is_stable(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = make_workspace(Path(tmp))
+            receipt = probe_workspace(workspace, token_sha256=TOKEN_SHA)
+            self.assertEqual("PASS", receipt.state)
+            self.assertTrue(receipt.restart_stable)
+            self.assertEqual("PASS", receipt.accounting_state)
+            self.assertEqual("PASS", receipt.custody_state)
+            self.assertTrue(receipt.index_sha256 and len(receipt.index_sha256) == 64)
+
+    def test_missing_index_fails_closed_without_rebuilding_silently(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = make_workspace(Path(tmp))
+            (workspace / "index" / "evidence-search.sqlite3").unlink()
+            receipt = probe_workspace(workspace, token_sha256=TOKEN_SHA)
+            self.assertEqual("FAIL", receipt.state)
+            self.assertTrue(any(item.startswith("LOAD_OR_STATE_FAILURE:LedgerError") for item in receipt.failures))
+            self.assertFalse(receipt.restart_stable)
+
+    def test_tampered_custody_chain_is_detected(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = make_workspace(Path(tmp))
+            custody = workspace / "ledger" / "custody_events.jsonl"
+            lines = custody.read_text(encoding="utf-8").splitlines()
+            event = json.loads(lines[-1])
+            event["action"] = "TAMPERED_ACTION"
+            lines[-1] = json.dumps(event, sort_keys=True)
+            custody.write_text("\n".join(lines) + "\n", encoding="utf-8")
+            receipt = probe_workspace(workspace, token_sha256=TOKEN_SHA)
+            self.assertEqual("FAIL", receipt.state)
+            self.assertIn("CUSTODY_CHAIN_FAILED", receipt.failures)
+
+    def test_bad_token_digest_configuration_fails_closed(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            workspace = make_workspace(Path(tmp))
+            receipt = probe_workspace(workspace, token_sha256="not-a-digest")
+            self.assertEqual("FAIL", receipt.state)
+            self.assertTrue(any(item.startswith("LOAD_OR_STATE_FAILURE:ValueError") for item in receipt.failures))
 
 
-def test_missing_index_fails_closed_without_rebuilding_silently():
-    with tempfile.TemporaryDirectory() as tmp:
-        workspace = make_workspace(Path(tmp))
-        (workspace / "index" / "evidence-search.sqlite3").unlink()
-        receipt = probe_workspace(workspace, token_sha256=TOKEN_SHA)
-        assert receipt.state == "FAIL"
-        assert any(item.startswith("LOAD_OR_STATE_FAILURE:LedgerError") for item in receipt.failures)
-        assert receipt.restart_stable is False
-
-
-def test_tampered_custody_chain_is_detected():
-    with tempfile.TemporaryDirectory() as tmp:
-        workspace = make_workspace(Path(tmp))
-        custody = workspace / "ledger" / "custody_events.jsonl"
-        lines = custody.read_text(encoding="utf-8").splitlines()
-        event = json.loads(lines[-1])
-        event["action"] = "TAMPERED_ACTION"
-        lines[-1] = json.dumps(event, sort_keys=True)
-        custody.write_text("\n".join(lines) + "\n", encoding="utf-8")
-        receipt = probe_workspace(workspace, token_sha256=TOKEN_SHA)
-        assert receipt.state == "FAIL"
-        assert "CUSTODY_CHAIN_FAILED" in receipt.failures
-
-
-def test_bad_token_digest_configuration_fails_closed():
-    with tempfile.TemporaryDirectory() as tmp:
-        workspace = make_workspace(Path(tmp))
-        receipt = probe_workspace(workspace, token_sha256="not-a-digest")
-        assert receipt.state == "FAIL"
-        assert any(item.startswith("LOAD_OR_STATE_FAILURE:ValueError") for item in receipt.failures)
+if __name__ == "__main__":
+    unittest.main()
