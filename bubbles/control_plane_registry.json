@@ -1,12 +1,14 @@
 {
   "schema": "BUBBLES-CONTROL-PLANE-REGISTRY-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "authority_ceiling": "A1_INTERNAL",
   "chatgpt_ingress": {
     "preferred_write_bus": "GITHUB_NATIVE_APP",
+    "private_queue_write_bus": "GOOGLE_DRIVE_NATIVE_APP",
     "command_transport": "GITHUB_PULL_REQUEST_BODY_OR_WORKFLOW_DISPATCH",
     "command_pr_prefix": "[BUBBLES-CMD]",
     "command_payload_committed_to_canonical_source": false,
+    "private_exact_pointers_in_public_source": false,
     "mcp_custom_route": "READ_FETCH_ONLY_ON_CURRENT_PRO_SURFACE",
     "write_smuggling_through_read_tools": false
   },
@@ -39,36 +41,59 @@
     {
       "id": "bubbles_command_bus",
       "route": "GITHUB_COMMAND_BUS",
-      "state": "INTERNAL_CANARY_IMPLEMENTED_AWAITING_PROVIDER_HOSTED_READBACK",
+      "state": "LIVE_VERIFIED_CHATGPT_TO_ACTIONS_CANARY",
       "write": false,
-      "role": "CHATGPT_TO_ACTIONS_INGRESS_CANARY"
+      "role": "CHATGPT_TO_ACTIONS_INGRESS",
+      "proof": {
+        "run_id": 31621687772,
+        "artifact_id": 9151483763,
+        "artifact_digest": "sha256:c5b66058e44f88bd7484bcbc17fb04e7f780acfcfeb37f0714069b519eefa727",
+        "command_sha256": "d178517c48ecd07ecd43ed834c5613ed0cc39a63b5eb6ff29d4e0cc0c9e6d927"
+      }
+    },
+    {
+      "id": "kim_dataverse_private_queue",
+      "route": "CHATGPT_GOOGLE_DRIVE_TO_PRIVATE_FO_GAS",
+      "state": "LIVE_PROCESSOR_REACHABLE_AUTHORITY_HELD",
+      "write": "DRIVE_QUEUE_WRITE_ONLY",
+      "authority_ceiling": "A1_INTERNAL",
+      "public_alias": "FO_GAS_AUTHORITY_GATEWAY_PRIVATE_V2",
+      "adapter_source": "bubbles/private_queue_adapter.py",
+      "verified_contract": {
+        "intake_state": "PENDING",
+        "approval_material_in_public_adapter": false,
+        "secret_fields_rejected": true,
+        "dry_run_selftest_only_initially": true,
+        "processor_readback_observed": true,
+        "processor_readback_at": "2026-08-12T17:52:38.331Z",
+        "current_terminal_state": "AUTHORITY_HELD",
+        "current_terminal_reason": "APPROVAL_KEY_REQUIRED_OR_INVALID"
+      }
     },
     {
       "id": "google_cloud",
-      "route": "GITHUB_COMMAND_BUS",
-      "state": "SOURCE_CONTRACT_PRESENT_PROVIDER_INVENTORY_UNVERIFIED",
+      "route": "GITHUB_COMMAND_BUS_OR_PRIVATE_KDV_QUEUE_AFTER_AUTHORITY",
+      "state": "PROVIDER_MANAGEMENT_AUTHORITY_UNVERIFIED",
       "write": "GATED",
       "reuse": [
         "GITHUB_ACTIONS_A0_A1",
         "GOOGLE_CLOUD_WIF_AND_SERVICE_ACCOUNT_REFERENCES",
-        "ops/bootstrap_github_wif.sh",
-        "ops/WIF_ACTIVATION_EDGE.md"
+        "KIM_DATAVERSE_PRIVATE_CANONICAL_BRIDGE_V2"
       ]
     },
     {
       "id": "apps_script",
-      "route": "GITHUB_COMMAND_BUS",
-      "state": "OPTIONAL_SOURCE_PRESENT_RUNTIME_UNVERIFIED",
+      "route": "PRIVATE_FO_GAS_CONTROL_PLANE",
+      "state": "PROCESSOR_LIVE_PROVIDER_API_DISABLED_APPROVAL_HELD",
       "write": "GATED",
       "reuse": [
-        "APPS_SCRIPT_OAUTH_AND_PROJECT_AUTHORITY",
-        "ops/apps_script_authorization_gate.py",
-        "ops/activate_apps_script_processor.sh"
+        "FO_GAS_AUTHORITY_GATEWAY_PRIVATE_V2",
+        "APPS_SCRIPT_OAUTH_AND_PROJECT_AUTHORITY"
       ]
     },
     {
       "id": "google_ai_studio",
-      "route": "GITHUB_COMMAND_BUS",
+      "route": "CONTROL_PLANE_ONLY",
       "state": "RESOURCE_POOL_CONFIRMED_PROVIDER_INVENTORY_UNVERIFIED",
       "write": "GATED"
     }
@@ -82,15 +107,26 @@
     "provider_execution_v1": false,
     "immutable_receipt": true,
     "receipt_storage": "GITHUB_ACTIONS_ARTIFACT",
-    "first_canary": "LOCAL_COMMAND_BUS_CANARY"
+    "internal_canary": "LIVE_VERIFIED"
+  },
+  "private_queue": {
+    "pointer_source": "KIM_DATAVERSE_PRIVATE_CANONICAL_BRIDGE_V2",
+    "exact_pointer_publicly_stored": false,
+    "ingress": "GOOGLE_DRIVE_NATIVE_APP",
+    "processor": "FO_GAS_AUTHORITY_GATEWAY_PRIVATE_V2",
+    "raw_approval_values_allowed": false,
+    "opaque_provider_permit_required_for_approval_held_actions": true,
+    "retry_raw_approval_failure": false
   },
   "required_receipt_chain": [
     "INTENT",
     "ROUTE_DECISION",
+    "QUEUE_WRITE_READBACK",
+    "PROCESSOR_READBACK",
     "AUTHORITY_READBACK",
     "EXECUTION_RECEIPT",
     "PROVIDER_READBACK",
     "TERMINAL_SUCCESS_FAILURE_OR_CONSTRAINT"
   ],
-  "truth_boundary": "Registry describes routes and gates only. Command-bus v1 proves internal ingress only until a provider-hosted canary and artifact readback succeed; it does not prove Google provider execution, deployment, current credentials, or universal authority."
+  "truth_boundary": "The ChatGPT-to-Actions command bus is live-verified. The private Kim Dataverse queue is also live-reachable and its processor consumed the Bubbles canary, but current execution is authority-held at FO-GAS approval. No raw approval value is available to or accepted by the public Bubbles adapter. Google Cloud management, direct Apps Script API, deployment, and AI Studio provider mutations remain unverified/gated."
 }
