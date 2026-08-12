@@ -3,6 +3,7 @@
   "case_class": "PUBLIC_UTILITY_SHARED_INFRASTRUCTURE",
   "domain": "South African electricity distribution",
   "jurisdiction": "South Africa",
+  "provider_storage_classification": "PUBLIC_SYNTHETIC",
   "research_question": "How should a legal/evidentiary system analyse a shared transformer failure where some affected customers are compliant and others are alleged to be in arrears, tampering or illegally connected?",
   "observations": [
     {
