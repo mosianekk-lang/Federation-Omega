@@ -1,0 +1,73 @@
+{
+  "schema": "JOBS-FOR-KIM-HIGHER-ED-LEADERSHIP-PROGRESS-V1",
+  "as_of": "2026-08-12",
+  "capability_progress": [
+    {
+      "capability_id": "CAP-HE-DIGITAL",
+      "state": "DETERMINISTIC_TESTED_SYNTHETIC_DESIGN",
+      "proof": "PR #404 higher_ed_digital_strategy_lab"
+    },
+    {
+      "capability_id": "CAP-EA",
+      "state": "DETERMINISTIC_TESTED_SYNTHETIC_DESIGN",
+      "proof": "PR #404 higher_ed_digital_strategy_lab"
+    },
+    {
+      "capability_id": "CAP-LMS-SIS-ERP",
+      "state": "LOCAL_RUNTIME_VERIFIED_SYNTHETIC",
+      "proof": "PR #406 higher-ed systems integration proof lab"
+    },
+    {
+      "capability_id": "CAP-API",
+      "state": "LOCAL_RUNTIME_VERIFIED_SYNTHETIC",
+      "proof": "PR #406 higher-ed systems integration proof lab"
+    },
+    {
+      "capability_id": "CAP-DATA-BI",
+      "state": "LOCAL_RUNTIME_VERIFIED_SYNTHETIC",
+      "proof": "PR #406 higher-ed systems integration proof lab"
+    },
+    {
+      "capability_id": "CAP-IT-GRC",
+      "state": "DETERMINISTIC_TESTED_SYNTHETIC_CONTROL_MODEL_PENDING_ADMISSION",
+      "proof": "higher_ed_it_grc_lab.py on current feature branch"
+    },
+    {
+      "capability_id": "CAP-ACADEMIC-GOV",
+      "state": "NEXT_BUILD",
+      "proof": "Regenesys General Manager School of Technology live specification"
+    }
+  ],
+  "market_signals": [
+    {
+      "employer": "Enko Education",
+      "role": "Business Technology Senior Manager",
+      "state": "LIVE_VERIFIED",
+      "location": "Johannesburg, Gauteng",
+      "importance": "PRIMARY_APPLICATION_TARGET"
+    },
+    {
+      "employer": "Regenesys Business School",
+      "role": "General Manager, School of Technology",
+      "state": "LIVE_VERIFIED",
+      "location": "Johannesburg",
+      "importance": "STRETCH_APPLICATION_TARGET"
+    },
+    {
+      "employer": "University of the Western Cape",
+      "role": "Director: Information & Communication Services",
+      "state": "CLOSED_BENCHMARK",
+      "closing_date": "2026-06-01",
+      "importance": "DIRECTOR_CIO_TRACK_BENCHMARK"
+    },
+    {
+      "employer": "University of the Western Cape",
+      "role": "Deputy Director: Capability Operations",
+      "state": "CLOSED_BENCHMARK",
+      "closing_date": "2026-06-01",
+      "importance": "HIGH_FIT_ROLE_PATTERN"
+    }
+  ],
+  "truth_boundary": "Synthetic Bubbles proof demonstrates organisational design/runtime capability only. It does not create Kim personal employment history, real university production deployment, real audit authority, certification or measured institutional outcomes.",
+  "next": "Admit CAP-IT-GRC, then build CAP-ACADEMIC-GOV and convert live Enko/Regenesys targets into interview-ready packs."
+}
