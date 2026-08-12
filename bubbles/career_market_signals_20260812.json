@@ -9,7 +9,7 @@
       "sector": "education network / pan-African schools",
       "signal_type": "VACANCY",
       "strategic_target": true,
-      "source_ref": "Enko Education careers listing and current job specification reviewed 2026-08-12",
+      "source_ref": "Enko Education official careers listing verified live 2026-08-12",
       "requirements": [
         "three-year technology roadmap and digital transformation",
         "technology architecture and scalable SaaS ecosystem",
@@ -19,17 +19,18 @@
         "change management and human-centric adoption",
         "technology vendor and partner management",
         "ROI and cost-value decisions",
-        "OKRs and roadmap execution"
+        "OKRs and roadmap execution",
+        "multi-country education operations"
       ]
     },
     {
       "role_id": "REGENESYS-GM-SOT-20260812",
-      "employer": "Regenesys",
+      "employer": "Regenesys Business School",
       "title": "General Manager, School of Technology",
       "sector": "higher education / school of technology",
       "signal_type": "VACANCY",
       "strategic_target": true,
-      "source_ref": "Regenesys official careers vacancy reviewed 2026-08-12",
+      "source_ref": "Regenesys official careers vacancy verified live 2026-08-12",
       "requirements": [
         "higher education operational leadership",
         "academic governance and curriculum development",
@@ -43,13 +44,49 @@
       ]
     },
     {
+      "role_id": "ROSEBANK-DIGITAL-ENABLEMENT-BENCHMARK-20260812",
+      "employer": "Rosebank College / ADvTECH Higher Education",
+      "title": "Digital Enablement & Business Technology Manager Benchmark",
+      "sector": "private higher education",
+      "signal_type": "SECTOR_BENCHMARK",
+      "strategic_target": true,
+      "source_ref": "2026 Rosebank College digital enablement vacancy specification; listing no longer treated as live",
+      "requirements": [
+        "institutional digital enablement roadmap",
+        "student recruitment retention and throughput",
+        "academic delivery and blended learning enablement",
+        "student information system and teaching-learning platforms",
+        "student lifecycle integration",
+        "regulatory and accreditation compliance",
+        "digital investment value metrics",
+        "operational efficiency and cost optimisation"
+      ]
+    },
+    {
+      "role_id": "UP-MIDDLEWARE-INTEGRATION-BENCHMARK-20260812",
+      "employer": "University of Pretoria",
+      "title": "Senior Manager: Middleware and System Integration Benchmark",
+      "sector": "public higher education",
+      "signal_type": "SECTOR_BENCHMARK",
+      "strategic_target": true,
+      "source_ref": "2026 University of Pretoria ITS vacancy specification; closing date passed",
+      "requirements": [
+        "middleware and system integration leadership",
+        "enterprise integration architecture",
+        "API and interoperability engineering",
+        "institutional systems reliability",
+        "service management",
+        "technology team leadership"
+      ]
+    },
+    {
       "role_id": "SU-IT-LEADERSHIP-BENCHMARK-20260812",
       "employer": "Stellenbosch University",
       "title": "University IT Leadership Capability Benchmark",
       "sector": "higher education",
       "signal_type": "SECTOR_BENCHMARK",
       "strategic_target": true,
-      "source_ref": "Stellenbosch University official IT structure and digital strategy material reviewed 2026-08-12",
+      "source_ref": "Stellenbosch University official IT structure and 2026 leadership specifications reviewed 2026-08-12",
       "requirements": [
         "enterprise architecture and as-is to-be ICT architecture",
         "institutional software and student information systems",
@@ -69,7 +106,7 @@
       "sector": "higher education",
       "signal_type": "SECTOR_BENCHMARK",
       "strategic_target": true,
-      "source_ref": "North-West University official executive structure and Council material reviewed 2026-08-12",
+      "source_ref": "North-West University official management and Council material reviewed 2026-08-12",
       "requirements": [
         "higher education digital transformation",
         "operations digital and AI systems",
@@ -82,5 +119,5 @@
       ]
     }
   ],
-  "truth_boundary": "VACANCY signals represent market requirements. SECTOR_BENCHMARK signals describe recurring institutional capability patterns and are not represented as open vacancies. Neither category is evidence of Kim Mosiane's personal experience."
+  "truth_boundary": "VACANCY signals are current only when verified on an employer careers surface during the stated scan. SECTOR_BENCHMARK signals describe recurring institutional capability patterns and are not represented as open vacancies. Neither category is evidence of Kim Mosiane's personal experience."
 }
