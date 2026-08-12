@@ -7,7 +7,7 @@ workflows. It is A1 internal only and does not claim full C001-C100 parity.
 
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from enum import Enum
 from typing import Dict, Iterable, Mapping, Optional, Sequence
 
@@ -153,7 +153,11 @@ class ClaimRecord:
             raise ValueError("legal category requires authority provenance")
         if self.origin_type is ProvenanceClass.AI_ORIGIN and self.evidence_status is ClaimStatus.VERIFIED and not self.source_ids:
             raise ValueError("AI-origin proposition cannot self-verify")
-        if self.contamination_state in {ContaminationState.QUARANTINED, ContaminationState.TAINTED, ContaminationState.RECALL_REQUIRED} and self.release_eligibility:
+        if self.contamination_state in {
+            ContaminationState.QUARANTINED,
+            ContaminationState.TAINTED,
+            ContaminationState.RECALL_REQUIRED,
+        } and self.release_eligibility:
             raise ValueError("contaminated claim cannot remain release eligible")
         return self
 
@@ -288,7 +292,14 @@ class IntegrityGraph:
         values = [self.sources[source_id] for source_id in source_ids]
         if not values:
             raise ValueError("at least one source is required")
-        return min(values, key=lambda source: (SOURCE_TIER[source.provenance_class], not source.authenticated, source.source_id))
+        return min(
+            values,
+            key=lambda source: (
+                SOURCE_TIER[source.provenance_class],
+                not source.authenticated,
+                source.source_id,
+            ),
+        )
 
     def revise_claim(
         self,
@@ -318,18 +329,50 @@ class IntegrityGraph:
             last_verified_at=timestamp,
             release_eligibility=False,
         ).validate()
-        self.mutations.append(ClaimMutation(
-            claim_id=claim_id,
-            prior_text=claim.exact_text,
-            new_text=new_text,
-            prior_status=claim.evidence_status,
-            new_status=new_status,
-            actor=actor,
-            reason=reason,
-            timestamp=timestamp,
-        ))
+        self.mutations.append(
+            ClaimMutation(
+                claim_id=claim_id,
+                prior_text=claim.exact_text,
+                new_text=new_text,
+                prior_status=claim.evidence_status,
+                new_status=new_status,
+                actor=actor,
+                reason=reason,
+                timestamp=timestamp,
+            )
+        )
         self.claims[claim_id] = revised
         return revised
+
+    def mark_release_eligible(self, claim_id: str, *, timestamp: str) -> ClaimRecord:
+        """Explicitly promote a clean, source-bound claim into release eligibility.
+
+        Verification and cleanliness do not themselves imply release eligibility.
+        Any later revision or quarantine resets this flag and requires a fresh check.
+        """
+        if not timestamp.strip():
+            raise ValueError("release-eligibility decision requires timestamp")
+        claim = self.claims[claim_id]
+        blockers: list[str] = []
+        if claim.evidence_status not in RELEASABLE_CLAIM_STATES:
+            blockers.append("CLAIM_NOT_VERIFIED")
+        if claim.contamination_state is not ContaminationState.CLEAN:
+            blockers.append("CLAIM_NOT_CLEAN")
+        if claim.contradiction_ids:
+            blockers.append("UNRESOLVED_CONTRADICTIONS")
+        if not claim.source_ids:
+            blockers.append("SOURCE_PROVENANCE_MISSING")
+        if claim.legal_category and not claim.authority_ref:
+            blockers.append("LEGAL_AUTHORITY_MISSING")
+        if blockers:
+            raise ValueError("release eligibility blocked: " + ",".join(blockers))
+        eligible = replace(
+            claim,
+            release_eligibility=True,
+            last_verified_at=timestamp,
+        ).validate()
+        self.claims[claim_id] = eligible
+        return eligible
 
     def dependent_claims(self, claim_id: str) -> tuple[str, ...]:
         if claim_id not in self.claims:
@@ -347,11 +390,13 @@ class IntegrityGraph:
 
     def affected_artifacts(self, claim_ids: Iterable[str]) -> tuple[str, ...]:
         affected = set(claim_ids)
-        return tuple(sorted(
-            artifact_id
-            for artifact_id, dependencies in self.artifact_claim_dependencies.items()
-            if dependencies & affected
-        ))
+        return tuple(
+            sorted(
+                artifact_id
+                for artifact_id, dependencies in self.artifact_claim_dependencies.items()
+                if dependencies & affected
+            )
+        )
 
     def quarantine_claim(self, claim_id: str, *, reason: str, timestamp: str) -> QuarantineResult:
         if not reason.strip() or not timestamp.strip():
@@ -394,7 +439,9 @@ class JfrieV2Core:
 
         if not v1_release_allowed(baseline):
             blockers.append("V1_REFERRAL_GATE_NOT_RELEASABLE")
-        failed_mandatory = sorted(name for name, passed in request.mandatory_gates.items() if not passed)
+        failed_mandatory = sorted(
+            name for name, passed in request.mandatory_gates.items() if not passed
+        )
         if failed_mandatory:
             blockers.append("MANDATORY_GATE_FAILED:" + ",".join(failed_mandatory))
         if not request.claim_ids:
@@ -408,23 +455,30 @@ class JfrieV2Core:
         if not request.snapshot_ref.strip():
             blockers.append("VERSION_IDENTIFIABLE_RELEASE_SNAPSHOT_REQUIRED")
 
+        excluded = set(request.excluded_matter_ids)
         for claim_id in request.claim_ids:
             claim = self.graph.claims.get(claim_id)
             if claim is None:
                 blockers.append(f"UNREGISTERED_CLAIM:{claim_id}")
                 continue
-            if claim.matter_id in set(request.excluded_matter_ids):
+            if claim.matter_id in excluded:
                 blockers.append(f"EXCLUDED_MATTER_CLAIM:{claim_id}")
             if claim.evidence_status not in RELEASABLE_CLAIM_STATES:
-                blockers.append(f"CLAIM_NOT_RELEASE_VERIFIED:{claim_id}:{claim.evidence_status.value}")
+                blockers.append(
+                    f"CLAIM_NOT_RELEASE_VERIFIED:{claim_id}:{claim.evidence_status.value}"
+                )
             if claim.contamination_state is not ContaminationState.CLEAN:
-                blockers.append(f"CLAIM_CONTAMINATED:{claim_id}:{claim.contamination_state.value}")
+                blockers.append(
+                    f"CLAIM_CONTAMINATED:{claim_id}:{claim.contamination_state.value}"
+                )
             if claim.contradiction_ids:
                 blockers.append(f"UNRESOLVED_CONTRADICTION:{claim_id}")
             if claim.legal_category and not claim.authority_ref:
                 blockers.append(f"LEGAL_AUTHORITY_MISSING:{claim_id}")
             if not claim.source_ids:
                 blockers.append(f"CLAIM_PROVENANCE_MISSING:{claim_id}")
+            if not claim.release_eligibility:
+                blockers.append(f"CLAIM_RELEASE_ELIGIBILITY_FALSE:{claim_id}")
 
         allowed = not blockers
         return ReleaseDecisionV2(
@@ -437,8 +491,18 @@ class JfrieV2Core:
             snapshot_ref=request.snapshot_ref,
         )
 
-    def invalidate_and_recall(self, claim_id: str, *, reason: str, timestamp: str) -> QuarantineResult:
-        return self.graph.quarantine_claim(claim_id, reason=reason, timestamp=timestamp)
+    def invalidate_and_recall(
+        self,
+        claim_id: str,
+        *,
+        reason: str,
+        timestamp: str,
+    ) -> QuarantineResult:
+        return self.graph.quarantine_claim(
+            claim_id,
+            reason=reason,
+            timestamp=timestamp,
+        )
 
 
 __all__ = [
