@@ -13,6 +13,7 @@ REQUIRED = [
     ".github/workflows/github-airlock.yml",
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
+    ".github/workflows/bubbles-command-bus.yml",
 ]
 
 
@@ -61,6 +62,13 @@ class FreezeConvergenceTests(unittest.TestCase):
         self.assertEqual("READBACK_FAILED", result["status"])
         self.assertEqual([REQUIRED[1]], result["missing_required"])
 
+    def test_bubbles_disabled_state_fails_convergence(self):
+        values = required()
+        values[-1]["state"] = "disabled_manually"
+        result = self.receipt(required_readback=values)
+        self.assertEqual("READBACK_FAILED", result["status"])
+        self.assertEqual([".github/workflows/bubbles-command-bus.yml"], result["missing_required"])
+
     def test_unexpected_active_workflow_still_fails(self):
         result = self.receipt(
             after=[row(1, REQUIRED[0]), row(99, ".github/workflows/legacy.yml")]
@@ -104,6 +112,14 @@ class FreezeConvergenceTests(unittest.TestCase):
         self.assertIn('if [[ -z "${payload}" ]]; then', text)
         self.assertIn("payload='{}'", text)
         self.assertIn("<<< \"${payload}\"", text)
+
+    def test_workflow_treats_bubbles_command_bus_as_required_active(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertGreaterEqual(text.count("bubbles-command-bus.yml"), 2)
+        self.assertIn(
+            '"bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"',
+            text,
+        )
 
 
 if __name__ == "__main__":

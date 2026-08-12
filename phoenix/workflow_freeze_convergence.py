@@ -13,6 +13,7 @@ REQUIRED = {
     ".github/workflows/github-airlock.yml",
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
+    ".github/workflows/bubbles-command-bus.yml",
 }
 PROVIDER_MANAGED = {"dynamic/dependabot/dependabot-updates"}
 

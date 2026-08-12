@@ -82,7 +82,8 @@ jobs:
               case "${workflow_path}" in
                 .github/workflows/github-airlock.yml|\
                 .github/workflows/public-repository-leak-guard.yml|\
-                .github/workflows/phoenix-emergency-freeze.yml)
+                .github/workflows/phoenix-emergency-freeze.yml|\
+                .github/workflows/bubbles-command-bus.yml)
                   if [[ "${workflow_state}" != "active" ]]; then
                     if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
@@ -121,6 +122,7 @@ jobs:
             "github-airlock.yml|.github/workflows/github-airlock.yml"
             "public-repository-leak-guard.yml|.github/workflows/public-repository-leak-guard.yml"
             "phoenix-emergency-freeze.yml|.github/workflows/phoenix-emergency-freeze.yml"
+            "bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"
           )
 
           for attempt in 1 2 3 4 5 6; do
