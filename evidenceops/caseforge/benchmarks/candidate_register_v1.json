@@ -1,0 +1,67 @@
+{
+  "schema": "CASEFORGE-SCOUT-CANDIDATE-REGISTER-V1",
+  "version": "1.0.0",
+  "candidates": [
+    {
+      "candidate_id": "CF-CAND-001",
+      "architecture_class": "single_model_grounded",
+      "hypothesis": "A single evidence-grounded model path may provide the lowest operational complexity and latency baseline.",
+      "expected_quality_direction": "baseline",
+      "expected_latency_direction": "low",
+      "expected_cost_direction": "low",
+      "known_risks": ["single-model blind spots", "self-consistency not independently checked"],
+      "required_benchmark": "PULSE-BASELINE-V1",
+      "state": "HYPOTHESIS",
+      "provider_performance_verified": false
+    },
+    {
+      "candidate_id": "CF-CAND-002",
+      "architecture_class": "dual_model_consensus",
+      "hypothesis": "Independent model families may improve contradiction detection and reduce unsupported maturity promotion at higher cost/latency.",
+      "expected_quality_direction": "potentially_higher",
+      "expected_latency_direction": "higher",
+      "expected_cost_direction": "higher",
+      "known_risks": ["correlated errors", "consensus can mask shared unsupported assumptions"],
+      "required_benchmark": "PULSE-BASELINE-V1",
+      "state": "HYPOTHESIS",
+      "provider_performance_verified": false
+    },
+    {
+      "candidate_id": "CF-CAND-003",
+      "architecture_class": "retrieval_grounded",
+      "hypothesis": "Explicit retrieval and evidence identifiers may improve grounding precision when evidence recall is reliable.",
+      "expected_quality_direction": "potentially_higher_grounding",
+      "expected_latency_direction": "medium",
+      "expected_cost_direction": "medium",
+      "known_risks": ["retrieval misses", "stale corpus", "citation mismatch"],
+      "required_benchmark": "PULSE-BASELINE-V1",
+      "state": "HYPOTHESIS",
+      "provider_performance_verified": false
+    },
+    {
+      "candidate_id": "CF-CAND-004",
+      "architecture_class": "tool_augmented",
+      "hypothesis": "Bounded tools may improve factual verification where tool outputs are independently read back and evidence-bound.",
+      "expected_quality_direction": "task_dependent",
+      "expected_latency_direction": "higher",
+      "expected_cost_direction": "medium_to_higher",
+      "known_risks": ["tool failure", "semantic transport success without action proof", "authority confusion"],
+      "required_benchmark": "PULSE-BASELINE-V1",
+      "state": "HYPOTHESIS",
+      "provider_performance_verified": false
+    },
+    {
+      "candidate_id": "CF-CAND-005",
+      "architecture_class": "separated_judge",
+      "hypothesis": "Separating generator and judge contexts may reduce self-evaluation bias when judge evidence is blind and independently scored.",
+      "expected_quality_direction": "potentially_higher_safety",
+      "expected_latency_direction": "higher",
+      "expected_cost_direction": "higher",
+      "known_risks": ["judge bias", "shared model-family correlation", "score gaming"],
+      "required_benchmark": "PULSE-BASELINE-V1",
+      "state": "HYPOTHESIS",
+      "provider_performance_verified": false
+    }
+  ],
+  "truth_boundary": "Candidate entries are testable architecture hypotheses, not recommendations or provider-performance claims. Promotion requires a Pulse benchmark receipt; provider-specific quality requires provider execution plus independent readback."
+}
