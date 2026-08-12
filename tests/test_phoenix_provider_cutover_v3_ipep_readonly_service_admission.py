@@ -12,7 +12,7 @@ PACKAGE_ROOT = ROOT / "ipep" / "audio_evidence_v4"
 
 class IPEPReadOnlyServiceAdmissionTests(unittest.TestCase):
     def test_focused_service_suite_executes_with_real_loopback_canary(self) -> None:
-        process = subprocess.run(
+        process = subprocess.Popen(
             [
                 sys.executable,
                 "-m",
@@ -26,9 +26,11 @@ class IPEPReadOnlyServiceAdmissionTests(unittest.TestCase):
             ],
             cwd=PACKAGE_ROOT,
             text=True,
-            capture_output=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.PIPE,
         )
-        evidence = process.stdout + process.stderr
+        stdout, stderr = process.communicate(timeout=30)
+        evidence = stdout + stderr
         self.assertEqual(0, process.returncode, evidence)
         self.assertIn("test_unauthorized_requests_fail_closed", evidence)
         self.assertIn("test_health_and_readiness_are_semantic", evidence)
