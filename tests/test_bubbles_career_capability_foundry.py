@@ -37,10 +37,10 @@ class CareerCapabilityFoundryTests(unittest.TestCase):
     def assessment_map(self, **kwargs):
         return {item.capability_id: item for item in self.foundry.assess(self.roles, **kwargs)}
 
-    def test_seed_has_two_vacancies_and_two_sector_benchmarks(self) -> None:
-        self.assertEqual(4, len(self.roles))
+    def test_seed_has_two_live_vacancies_and_four_sector_benchmarks(self) -> None:
+        self.assertEqual(6, len(self.roles))
         self.assertEqual(2, sum(role.signal_type == "VACANCY" for role in self.roles))
-        self.assertEqual(2, sum(role.signal_type == "SECTOR_BENCHMARK" for role in self.roles))
+        self.assertEqual(4, sum(role.signal_type == "SECTOR_BENCHMARK" for role in self.roles))
 
     def test_enko_maps_to_reusable_business_technology_capabilities(self) -> None:
         hits = set(self.foundry.match_role(self.by_role["ENKO-BTSM-20260812"]))
@@ -62,6 +62,18 @@ class CareerCapabilityFoundryTests(unittest.TestCase):
         self.assertIn("CAP-HE-DIGITAL", hits)
         self.assertIn("CAP-DIGITAL-CAMPUS", hits)
         self.assertIn("CAP-PPM", hits)
+
+    def test_rosebank_benchmark_deepens_student_lifecycle_and_platform_signals(self) -> None:
+        hits = set(self.foundry.match_role(self.by_role["ROSEBANK-DIGITAL-ENABLEMENT-BENCHMARK-20260812"]))
+        self.assertIn("CAP-HE-DIGITAL", hits)
+        self.assertIn("CAP-LMS-SIS-ERP", hits)
+        self.assertIn("CAP-DIGITAL-CAMPUS", hits)
+        self.assertIn("CAP-IT-FIN", hits)
+
+    def test_up_benchmark_deepens_api_and_integration_signal(self) -> None:
+        hits = set(self.foundry.match_role(self.by_role["UP-MIDDLEWARE-INTEGRATION-BENCHMARK-20260812"]))
+        self.assertIn("CAP-API", hits)
+        self.assertIn("CAP-EA", hits)
 
     def test_recurring_or_strategic_gaps_are_promoted_to_build(self) -> None:
         assessments = self.assessment_map()
