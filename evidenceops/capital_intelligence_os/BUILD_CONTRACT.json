@@ -1,49 +1,55 @@
 {
-  "schema": "EVIDENCEOPS-CIOS-BUILD-15-RC5",
-  "version": "1.0.0-rc5",
+  "schema": "EVIDENCEOPS-CIOS-BUILD-16-RC6",
+  "version": "1.0.0-rc6",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
-  "internal_product_state": "INTERNAL_COMPLETION_CANDIDATE",
+  "internal_product_state": "SYNTHETIC_DETERMINISTIC_QUALIFICATION_CANDIDATE",
+  "portfolio_state": "PORTFOLIO_DEMONSTRABLE_CANDIDATE",
   "provider_maturity": "PROVIDER_BINDING_READY",
   "builds": [
     {
       "build_id": "BUILD-CIOS-013",
       "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "closure_proof": "Provider canary PR #346 merged; canonical provider-canary source and bounded authority checks admitted."
+      "closure_proof": "Provider canary source admitted under PR #346 with bounded authority checks."
     },
     {
       "build_id": "BUILD-CIOS-014",
       "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "gap_statement": "Provider-bound enterprise controls needed an adapter-level preflight that compiles runtime evidence into the production qualification vocabulary.",
-      "closure_proof": "Production data-plane rc4 admitted with focused preflight tests and preserved provider qualification boundary."
+      "closure_proof": "Production data-plane rc4 admitted with provider-evidence preflight and preserved production qualification boundary."
     },
     {
       "build_id": "BUILD-CIOS-015",
+      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
+      "gap_statement": "No coherent authenticated document-to-search-to-diligence-to-workspace route.",
+      "closure_proof": "PR #414 passed exact-head Airlock and Public Repository Leak Guard and merged as ca1de34c13e94e1a2654e1c3a3d48f8d33ececb1. rc5 added bounded multi-format ingestion, tenant workspace export, role-smuggling rejection, vault integrity and cumulative rc4 regression."
+    },
+    {
+      "build_id": "BUILD-CIOS-016",
       "lifecycle_state": "IMPLEMENTED_AWAITING_EXACT_HEAD_ADMISSION",
-      "gap_statement": "CIOS had a document vault and diligence engines but no coherent authenticated network journey from document ingestion to search, diligence progress and digest-bound workspace export.",
+      "gap_statement": "CIOS had many passing component tests and one synthetic journey but lacked a single transparent qualification court with independent numeric oracles, counterfactual checks and a proof-safe portfolio demonstration pack gated by that qualification.",
       "acceptance_criteria": [
-        "text/json/email/docx/xlsx parsing is deterministic and bounded",
-        "PDF fails closed without explicit external text extraction",
-        "document bytes are hashed, deduplicated and version-linked",
-        "confidential deal ingestion requires a configured deal_member/admin role",
-        "request headers cannot self-grant restricted or privileged roles",
-        "tenant isolation is preserved",
-        "diligence completeness derives from accessible ingested document types",
-        "workspace export omits raw/extracted document text",
-        "workspace export is digest-bound and preserves human final authority",
-        "network body ceiling can actually carry the bounded base64 document contract",
-        "trade/payment/signing routes remain denied",
-        "rc4 provider/security regression remains green"
+        "DCF and IRR pass independent analytic oracles",
+        "DCF WACC and terminal-growth monotonicity hold",
+        "QoE, working-capital and debt-like evidence thresholds behave as expected",
+        "diligence boundary states are 0/full=1 with partial between",
+        "off-thesis targets fail hard gates",
+        "final acquisition remains human-gated",
+        "live orders and private-to-market export remain denied",
+        "missing evidence reduces diligence and transaction readiness",
+        "deterministic economic/decision fields replay exactly",
+        "demo pack cannot build unless qualification and full synthetic journey pass",
+        "demo outputs are explicitly synthetic and digest-bound",
+        "case study language remains proof-safe"
       ],
-      "proof_route": "Focused rc5 tests are bound into the existing Federation Omega Airlock via test_phoenix_provider_cutover_v3_cios_finish_rc5.py.",
-      "next_executable_action": "Run exact-head Airlock and Leak Guard, merge only if admitted, then advance scientific qualification and demonstrable-product lanes."
+      "proof_route": "Focused qualification/demo tests are bound into Federation Omega Airlock through test_phoenix_provider_cutover_v3_cios_qualification_demo.py.",
+      "next_executable_action": "Admit rc6, generate the exact-source demonstration pack as a user-visible artifact, then advance representative historical/public calibration and pilot-value lanes without waiting for provider deployment."
     },
     {
       "build_id": "BUILD-CIOS-003",
       "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
-      "gap_statement": "No authorised private CIOS product runtime/provider control plane with independent provider readback is available to this chat session.",
-      "interim_workaround": "Continue all internal product/evaluation/demo work; isolate provider execution under Sparks. rc3 canary + rc4 preflight + rc2 qualification gate are ready when authority becomes available."
+      "gap_statement": "No authorised private CIOS production runtime with independent provider readback is available to this chat session.",
+      "interim_workaround": "Provider execution remains isolated under Sparks. All internal product, scientific and demonstrability work continues independently."
     }
   ],
-  "truth_boundary": "Internal product completion is separate from provider production. rc5 cannot promote deployment, enterprise IdP/KMS/VDR proof, licensed market-data operation or live financial authority."
+  "truth_boundary": "Synthetic deterministic qualification is not historical-deal calibration, investment performance, accounting assurance or provider production. Portfolio demonstrability does not inherit provider deployment maturity."
 }
