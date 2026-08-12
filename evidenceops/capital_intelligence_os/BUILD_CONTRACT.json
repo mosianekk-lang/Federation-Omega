@@ -1,11 +1,49 @@
 {
-  "schema":"EVIDENCEOPS-CIOS-BUILD-14-RC4",
-  "version":"1.0.0-rc4",
-  "authority_ceiling":"A1_INTERNAL",
-  "external_effect_default":false,
-  "builds":[
-    {"build_id":"BUILD-CIOS-013","lifecycle_state":"CLOSED_VERIFIED_SOURCE","closure_proof":"Provider canary PR #346 merged; canonical main readback ddc68729e0aea387243ff8674ff096d97a99d76e."},
-    {"build_id":"BUILD-CIOS-014","lifecycle_state":"IMPLEMENTED_TESTED_LOCAL","gap_statement":"Provider-bound enterprise controls existed only as production-gate requirements; no adapter-level preflight compiled their runtime evidence into the qualification vocabulary.","acceptance_criteria":["enterprise MFA required","identity tenant must match","stale or unhealthy probes fail","market-data entitlement conditional on market intelligence","private-data residency conditional on private M&A","secret-shaped evidence fails","healthy probes compile to validated ProviderEvidence","empty data plane fails closed"],"local_proof":"Production data-plane focused harness 11/11 PASS against canonical production-gate rules.","next_executable_action":"Bind real provider adapters, execute the rc3 canary, compile provider-native receipts and run ProductionQualificationGate."},
-    {"build_id":"BUILD-CIOS-003","lifecycle_state":"BLOCKED_DEPENDENCY_ACTIVE","gap_statement":"No authorised private CIOS product runtime/provider control plane is connected to this session.","interim_workaround":"rc3 canary + rc4 adapter preflight + rc2 qualification gate reduce the remaining work to provider binding/readback rather than source design."}
-  ]
+  "schema": "EVIDENCEOPS-CIOS-BUILD-15-RC5",
+  "version": "1.0.0-rc5",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "internal_product_state": "INTERNAL_COMPLETION_CANDIDATE",
+  "provider_maturity": "PROVIDER_BINDING_READY",
+  "builds": [
+    {
+      "build_id": "BUILD-CIOS-013",
+      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
+      "closure_proof": "Provider canary PR #346 merged; canonical provider-canary source and bounded authority checks admitted."
+    },
+    {
+      "build_id": "BUILD-CIOS-014",
+      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
+      "gap_statement": "Provider-bound enterprise controls needed an adapter-level preflight that compiles runtime evidence into the production qualification vocabulary.",
+      "closure_proof": "Production data-plane rc4 admitted with focused preflight tests and preserved provider qualification boundary."
+    },
+    {
+      "build_id": "BUILD-CIOS-015",
+      "lifecycle_state": "IMPLEMENTED_AWAITING_EXACT_HEAD_ADMISSION",
+      "gap_statement": "CIOS had a document vault and diligence engines but no coherent authenticated network journey from document ingestion to search, diligence progress and digest-bound workspace export.",
+      "acceptance_criteria": [
+        "text/json/email/docx/xlsx parsing is deterministic and bounded",
+        "PDF fails closed without explicit external text extraction",
+        "document bytes are hashed, deduplicated and version-linked",
+        "confidential deal ingestion requires a configured deal_member/admin role",
+        "request headers cannot self-grant restricted or privileged roles",
+        "tenant isolation is preserved",
+        "diligence completeness derives from accessible ingested document types",
+        "workspace export omits raw/extracted document text",
+        "workspace export is digest-bound and preserves human final authority",
+        "network body ceiling can actually carry the bounded base64 document contract",
+        "trade/payment/signing routes remain denied",
+        "rc4 provider/security regression remains green"
+      ],
+      "proof_route": "Focused rc5 tests are bound into the existing Federation Omega Airlock via test_phoenix_provider_cutover_v3_cios_finish_rc5.py.",
+      "next_executable_action": "Run exact-head Airlock and Leak Guard, merge only if admitted, then advance scientific qualification and demonstrable-product lanes."
+    },
+    {
+      "build_id": "BUILD-CIOS-003",
+      "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
+      "gap_statement": "No authorised private CIOS product runtime/provider control plane with independent provider readback is available to this chat session.",
+      "interim_workaround": "Continue all internal product/evaluation/demo work; isolate provider execution under Sparks. rc3 canary + rc4 preflight + rc2 qualification gate are ready when authority becomes available."
+    }
+  ],
+  "truth_boundary": "Internal product completion is separate from provider production. rc5 cannot promote deployment, enterprise IdP/KMS/VDR proof, licensed market-data operation or live financial authority."
 }

@@ -7,7 +7,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from .local_runtime import LocalRuntimeApplication
+from .local_runtime import LocalRuntimeApplication, MAX_HTTP_BODY_BYTES
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
 
@@ -115,7 +115,7 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
 
 
 class _ProviderHandler(BaseHTTPRequestHandler):
-    server_version = "CIOSProviderCandidate/1.0"
+    server_version = "CIOSProviderCandidate/1.0-rc5"
 
     def _dispatch(self) -> None:
         try:
@@ -123,7 +123,7 @@ class _ProviderHandler(BaseHTTPRequestHandler):
         except ValueError:
             self.send_error(400)
             return
-        if length > 256_000:
+        if length < 0 or length > MAX_HTTP_BODY_BYTES:
             payload = {"error": "REQUEST_TOO_LARGE"}
             data = json.dumps(payload).encode()
             self.send_response(413)

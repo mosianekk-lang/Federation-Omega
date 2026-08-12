@@ -5,15 +5,17 @@ from .authority import AuthorityGuard
 from .autopilot import Autopilot
 from .backup import BackupManager
 from .capital import *
+from .deal_workspace import DealWorkspaceService
 from .decision_algorithms import *
 from .demo_product import build_demo_dashboard
 from .diligence import *
 from .durable import DurableAutopilotRuntime
 from .evolution import *
 from .failure_genome import FailureToRouteGeneCompiler
+from .ingestion import *
 from .integration import *
 from .learning import LearningLedger
-from .local_runtime import LocalRuntimeApplication,LocalRuntimeServer
+from .local_runtime import LocalRuntimeApplication, LocalRuntimeServer
 from .market_algorithms import *
 from .market_intelligence import *
 from .market_service import *
@@ -23,11 +25,11 @@ from .models import *
 from .mvp_journey import *
 from .outcomenet import *
 from .passport import *
-from .policy import RuntimePolicy,RuntimePrincipal
+from .policy import RuntimePolicy, RuntimePrincipal
 from .production_dataplane import *
 from .production_gate import *
 from .provider_canary import *
-from .product_ui import WorkspaceSnapshot,WorkspaceComposer,DashboardRenderer
+from .product_ui import WorkspaceSnapshot, WorkspaceComposer, DashboardRenderer
 from .proofgraph import *
 from .qoe import *
 from .restricted import *
@@ -36,6 +38,7 @@ from .store import SqliteStateStore
 from .strategy import *
 from .tenancy import *
 from .valuation import *
-from .vault import DocumentRecord,DocumentVault,InformationAccessPolicy
+from .vault import DocumentRecord, DocumentVault, InformationAccessPolicy
 from .workspace import *
-__version__="1.0.0-rc4"
+
+__version__ = "1.0.0-rc5"
