@@ -44,6 +44,7 @@ class RoleSignal:
     source_ref: str
     requirements: tuple[str, ...]
     strategic_target: bool = False
+    signal_type: str = "VACANCY"
 
 
 @dataclass(frozen=True)
@@ -155,6 +156,26 @@ class CareerCapabilityFoundry:
     @staticmethod
     def _normalise(text: str) -> str:
         return " ".join(text.casefold().replace("/", " ").replace("-", " ").split())
+
+    @classmethod
+    def load_role_signals(cls, path: str | Path) -> tuple[RoleSignal, ...]:
+        payload = json.loads(Path(path).read_text(encoding="utf-8"))
+        records = payload.get("signals", payload if isinstance(payload, list) else [])
+        signals = []
+        for item in records:
+            signals.append(
+                RoleSignal(
+                    role_id=str(item["role_id"]),
+                    employer=str(item["employer"]),
+                    title=str(item["title"]),
+                    sector=str(item["sector"]),
+                    source_ref=str(item["source_ref"]),
+                    requirements=tuple(str(value) for value in item.get("requirements", [])),
+                    strategic_target=bool(item.get("strategic_target", False)),
+                    signal_type=str(item.get("signal_type", "VACANCY")),
+                )
+            )
+        return tuple(signals)
 
     def match_role(self, role: RoleSignal) -> tuple[str, ...]:
         blob = self._normalise(" ".join((role.title, role.sector, *role.requirements)))
