@@ -6,7 +6,10 @@ import os
 from pathlib import Path
 from typing import Any
 
-from .openai_provider_adapter import OpenAIProviderBlindExperiment
+from .openai_provider_adapter import (
+    OpenAIProviderBlindExperiment,
+    OpenAIStoredResponseReadbackVerifier,
+)
 
 
 def _load_json(path: Path) -> dict[str, Any]:
@@ -20,7 +23,7 @@ def _receipt_payload(receipt: Any) -> dict[str, Any]:
     execution = receipt.provider_execution
     blind_run = receipt.blind_run
     return {
-        "schema": "CASEFORGE-OPENAI-BLIND-CANARY-1",
+        "schema": "CASEFORGE-OPENAI-BLIND-CANARY-2",
         "run_id": blind_run.run_id,
         "case_id": blind_run.case_id,
         "blind_input_sha256": blind_run.blind_input_sha256,
@@ -34,6 +37,9 @@ def _receipt_payload(receipt: Any) -> dict[str, Any]:
         "provider_output_sha256": execution.output_text_sha256,
         "provider_state": receipt.provider_state,
         "provider_readback_ref": receipt.provider_readback_ref,
+        "provider_model_resource_version_ref": receipt.verified_model_version,
+        "request_configuration_sha256": execution.configuration_sha256,
+        "verified_configuration_sha256": receipt.verified_configuration_sha256,
         "store": execution.store,
         "authority_ceiling": receipt.authority_ceiling,
         "external_effect": receipt.external_effect,
@@ -54,6 +60,15 @@ def main() -> int:
     parser.add_argument("--model", default=os.getenv("CASEFORGE_OPENAI_MODEL", ""))
     parser.add_argument("--max-output-tokens", type=int, default=2400)
     parser.add_argument("--reasoning-effort", default="")
+    parser.add_argument(
+        "--provider-readback",
+        action="store_true",
+        help=(
+            "Store this public/synthetic provider canary long enough to retrieve the "
+            "Response and model resource for independent provider readback. Private "
+            "or unclassified blind packs fail closed before invocation."
+        ),
+    )
     args = parser.parse_args()
 
     if not args.model.strip():
@@ -68,14 +83,20 @@ def main() -> int:
         options["reasoning"] = {"effort": args.reasoning_effort.strip()}
 
     blind_payload = _load_json(args.blind_pack)
+    client = OpenAI()
+    verifier = (
+        OpenAIStoredResponseReadbackVerifier(client=client)
+        if args.provider_readback
+        else None
+    )
     receipt = OpenAIProviderBlindExperiment().run(
         run_id=args.run_id,
         blind_payload=blind_payload,
-        client=OpenAI(),
+        client=client,
         model=args.model,
         request_options=options,
-        store=False,
-        readback_verifier=None,
+        store=bool(args.provider_readback),
+        readback_verifier=verifier,
     )
     print(json.dumps(_receipt_payload(receipt), indent=2, sort_keys=True))
     return 0
