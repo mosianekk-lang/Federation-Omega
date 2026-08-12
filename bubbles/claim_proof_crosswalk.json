@@ -1,6 +1,6 @@
 {
   "schema": "BUBBLES-LEDGER-CLAIM-PROOF-CROSSWALK-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "owner": "Kim Kagiso Mosiane",
   "maturity_order": [
     "DESIGN_ONLY",
@@ -28,19 +28,19 @@
     {
       "project_id": "ECERTIFY",
       "evidence_state": "PROVIDER_CANARY_READY",
-      "verified_proofs": ["source", "tests", "signed_integrity_receipts", "zero_possession", "launch_now_http_runtime", "cloud_run_zero_traffic_canary_contract"],
-      "evidence_pointers": ["PR #360", "evidenceops/ecertify_za/deployment/deploy_launch_now_cloud_run_canary.sh", "evidenceops/ecertify_za/PRODUCTION_READINESS.md"],
-      "strongest_safe_claim": "Designed and implemented a tested zero-possession document-integrity service with signed receipts and an admitted zero-traffic Cloud Run canary path for provider verification.",
-      "forbidden_stronger_claims": ["eCertify is publicly live", "eCertify provides statutory certification without commissioner events", "eCertify has provider-verified Cloud Run deployment", "eCertify has production biometric identity verification"],
+      "verified_proofs": ["source", "tests", "signed_integrity_receipts", "zero_possession", "launch_now_http_runtime", "cloud_run_zero_traffic_canary_contract", "sentinel_negative_security_gates", "beacon_pilot_scorecard"],
+      "evidence_pointers": ["PR #360", "PR #389", "PR #393", "evidenceops/ecertify_za/deployment/deploy_launch_now_cloud_run_canary.sh", "evidenceops/ecertify_za/PRODUCTION_READINESS.md"],
+      "strongest_safe_claim": "Designed and implemented a tested zero-possession document-integrity service with signed receipts, security-negative controls, a measurable pilot scorecard and an admitted zero-traffic Cloud Run canary path for provider verification.",
+      "forbidden_stronger_claims": ["eCertify is publicly live", "eCertify provides statutory certification without commissioner events", "eCertify has provider-verified Cloud Run deployment", "eCertify has production biometric identity verification", "eCertify pilot has succeeded"],
       "next_proof": "execute_launch_now_cloud_run_canary_and_read_back_revision",
       "provider_verified": false
     },
     {
       "project_id": "CASEFORGE",
       "evidence_state": "DETERMINISTIC_TESTED",
-      "verified_proofs": ["source", "tests", "blind_runner", "provider_adapter_contract", "provider_readback_gate", "pulse_benchmark_harness"],
-      "evidence_pointers": ["PR #386", "main:6649755a3bd575f2df3f54c7fe0d0a375727923c", "evidenceops/caseforge/pulse_benchmark.py", "evidenceops/caseforge/benchmarks/pulse_baseline_v1.json"],
-      "strongest_safe_claim": "Built a proof-bound AI evaluation system with blind testing, maturity-safety gates, evidence/contradiction scoring and deterministic benchmark receipts.",
+      "verified_proofs": ["source", "tests", "blind_runner", "provider_adapter_contract", "provider_readback_gate", "pulse_benchmark_harness", "scout_candidate_register"],
+      "evidence_pointers": ["PR #386", "PR #391", "main:9b445cdfea26d11a5dc5816f10e818a9eca744db", "evidenceops/caseforge/pulse_benchmark.py", "evidenceops/caseforge/benchmarks/candidate_register_v1.json"],
+      "strongest_safe_claim": "Built a proof-bound AI evaluation system with blind testing, maturity-safety gates, evidence/contradiction scoring, deterministic benchmark receipts and benchmark-gated architecture candidates.",
       "forbidden_stronger_claims": ["CASEFORGE has proven production model accuracy", "CASEFORGE provider performance is verified", "CASEFORGE is deployed", "CASEFORGE benchmark scores represent real provider quality"],
       "next_proof": "real_provider_execution_plus_independent_readback_and_scored_benchmark",
       "provider_verified": false
@@ -48,33 +48,33 @@
     {
       "project_id": "IPEP",
       "evidence_state": "LOCAL_RUNTIME_VERIFIED",
-      "verified_proofs": ["source", "tests", "provenance_index", "authenticated_http_runtime", "real_loopback_canary", "restart_resilience", "custody_tamper_detection"],
-      "evidence_pointers": ["PR #363", "PR #387", "main:6653734d06e3f6f67f9cf6161cb52934cbbd0507", "ipep/audio_evidence_v4/evidenceops_audio_v4/service.py", "ipep/audio_evidence_v4/evidenceops_audio_v4/resilience.py"],
-      "strongest_safe_claim": "Implemented and runtime-tested a provenance-aware evidence retrieval service with authenticated search, stable source/timestamp citations, custody controls and deterministic resilience checks.",
+      "verified_proofs": ["source", "tests", "provenance_index", "authenticated_http_runtime", "real_loopback_canary", "restart_resilience", "custody_tamper_detection", "safe_demo_contract"],
+      "evidence_pointers": ["PR #363", "PR #387", "PR #392", "ipep/audio_evidence_v4/evidenceops_audio_v4/service.py", "ipep/audio_evidence_v4/evidenceops_audio_v4/resilience.py", "bubbles/demo_journeys.json"],
+      "strongest_safe_claim": "Implemented and runtime-tested a provenance-aware evidence retrieval service with authenticated search, stable source/timestamp citations, custody controls, deterministic resilience checks and a safe synthetic demonstration contract.",
       "forbidden_stronger_claims": ["IPEP is cloud deployed", "IPEP transcripts are automatically certified", "IPEP identifies speakers biometrically", "IPEP has provider-verified uptime"],
       "next_proof": "private_provider_deployment_with_telemetry_and_readback",
       "provider_verified": false
     },
     {
       "project_id": "ARCHITRON",
-      "evidence_state": "IMPLEMENTED",
-      "verified_proofs": ["command_queue_components", "apps_script_integration_artifacts", "governed_automation_design"],
-      "evidence_pointers": ["existing ARCHITRON Apps Script command queue and Federation integration records", "GitHub issue #380"],
-      "strongest_safe_claim": "Developed governed automation and command-routing components for cross-system workflow orchestration, with semantic end-to-end execution proof still being completed.",
+      "evidence_state": "LOCAL_RUNTIME_VERIFIED",
+      "verified_proofs": ["command_queue_components", "apps_script_integration_artifacts", "governed_automation_design", "local_semantic_event_queue_worker_target_readback", "exactly_once_replay", "retry_recovery", "semantic_mismatch_failure"],
+      "evidence_pointers": ["PR #390", "main:544e00fcddec95eef3a57006010f2ca6454637d5", "ops/architron_local_semantic_canary.py", "ops/architron_semantic_contract.py"],
+      "strongest_safe_claim": "Implemented and locally verified a governed event-driven automation path with durable queueing, worker execution, exactly-once behavior, target-side semantic readback, audit receipts and retry/recovery controls.",
       "forbidden_stronger_claims": ["ARCHITRON is fully autonomous in production", "ARCHITRON has end-to-end provider-verified action readback", "ARCHITRON runs all connected systems without human/provider authority"],
-      "next_proof": "event_queue_worker_target_readback_recovery_canary",
+      "next_proof": "action_specific_apps_script_cloud_run_provider_readback",
       "provider_verified": false
     },
     {
       "project_id": "K10",
       "evidence_state": "IMPLEMENTED",
-      "verified_proofs": ["command_center", "creative_workflow_state", "canva_asset_and_design_routes"],
-      "evidence_pointers": ["K10 Canva Cinema Command Center", "GitHub issue #382"],
-      "strongest_safe_claim": "Designed an AI-assisted creative-production workflow spanning briefs, scene planning, asset generation and Canva-oriented composition controls; end-to-end rendered demo remains the next proof gate.",
-      "forbidden_stronger_claims": ["K10 autonomously renders production films end to end", "K10 has a provider-verified video pipeline", "K10 is commercially deployed"],
+      "verified_proofs": ["command_center", "creative_workflow_state", "canva_asset_and_design_routes", "prism_demo_contract"],
+      "evidence_pointers": ["K10 Canva Cinema Command Center", "PR #392", "bubbles/demo_journeys.json"],
+      "strongest_safe_claim": "Designed an AI-assisted creative-production workflow spanning briefs, scene planning, asset generation and Canva-oriented composition controls, with a proof-gated end-to-end demo contract; rendered export remains the next proof gate.",
+      "forbidden_stronger_claims": ["K10 autonomously renders production films end to end", "K10 has a provider-verified video pipeline", "K10 is commercially deployed", "K10 rendered demo is complete"],
       "next_proof": "safe_brief_to_rendered_artifact_demo",
       "provider_verified": false
     }
   ],
-  "truth_boundary": "A claim is allowed only at or below the strongest verified evidence state for that project. Provider, deployment, production, accuracy, uptime and commercial claims require their own independent proof and cannot be inherited from source/test evidence."
+  "truth_boundary": "A claim is allowed only at or below the strongest verified evidence state for that project. Provider, deployment, production, accuracy, uptime, rendered-artifact and commercial claims require their own independent proof and cannot be inherited from source/test evidence."
 }
