@@ -1,7 +1,7 @@
 {
   "schema": "EVIDENCEOPS-HEARTBEAT-SURFACES-1",
-  "registry_version": 1,
-  "scope": "Documented Kim DataVerse surface classes; account, project and chat-instance enumeration remains provider-bound.",
+  "registry_version": 2,
+  "scope": "Documented Kim DataVerse surface classes; account, project and chat-instance enumeration remains provider-bound. Bubbles provider-edge states are proof-scoped and do not imply direct provider administration.",
   "surfaces": [
     {
       "surface_id": "chatgpt", "node_id": "HB-CHATGPT", "title": "ChatGPT and Codex chats", "kind": "CHAT",
@@ -20,9 +20,12 @@
     },
     {
       "surface_id": "github", "node_id": "HB-GITHUB", "title": "GitHub repositories, issues, pull requests and Actions", "kind": "CODE_AND_AUTOMATION",
-      "privacy_tier": "P1", "ingress_mode": "WEBHOOK_OR_SCHEDULE", "egress_mode": "CHECK_RUN_OR_ARTIFACT",
-      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 3600, "adapter_ref": "github-actions-scheduler",
-      "workaround_routes": [{"route":"GITHUB_ACTIONS_ARTIFACT_RELAY","authority_class":"A1","effectful":false,"score":0.9,"proof_state":"SOURCE_PRESENT","retry_seconds":1800,"next_action":"Publish the workflow, trigger one run and read back its immutable heartbeat artifact."}]
+      "privacy_tier": "P1", "ingress_mode": "CHATGPT_NATIVE_APP_OR_ACTIONS", "egress_mode": "IMMUTABLE_ACTIONS_RECEIPT_OR_KDV_POINTER",
+      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 3600, "adapter_ref": "bubbles-command-bus",
+      "workaround_routes": [
+        {"route":"BUBBLES_COMMAND_BUS","authority_class":"A1","effectful":false,"score":1.0,"proof_state":"SESSION_AVAILABLE","retry_seconds":1800,"next_action":"Reuse the live-verified ChatGPT-to-Actions command bus and require immutable receipt readback for each bounded internal command."},
+        {"route":"KDV_LAST_ADMITTED_COMMIT_POINTER","authority_class":"A0","effectful":false,"score":0.98,"proof_state":"SESSION_AVAILABLE","retry_seconds":1800,"next_action":"Use the private Kim Dataverse last-admitted-commit pointer as canonical truth until provider-native branch protection is independently verified."}
+      ]
     },
     {
       "surface_id": "gmail", "node_id": "HB-GMAIL", "title": "Gmail", "kind": "COMMUNICATION",
@@ -38,15 +41,15 @@
     },
     {
       "surface_id": "google-cloud", "node_id": "HB-GOOGLE-CLOUD", "title": "Google Cloud runtime plane", "kind": "RUNTIME",
-      "privacy_tier": "P1", "ingress_mode": "EVENTARC_PUBSUB_OR_SCHEDULER", "egress_mode": "PUBSUB_OR_PRIVATE_API",
-      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 900, "adapter_ref": "federation-omega-cloud-run",
-      "workaround_routes": [{"route":"PRIVATE_CLOUD_RUN_HEARTBEAT_API","authority_class":"A1","effectful":true,"score":0.95,"proof_state":"SOURCE_PRESENT","retry_seconds":900,"next_action":"After WIF and Secret Manager binding, deploy privately and prove authenticated turn, response and storage readback."}]
+      "privacy_tier": "P1", "ingress_mode": "BUBBLES_EDGE_RESOLVER_OR_WIF", "egress_mode": "PROVIDER_RECEIPT_OR_PRIVATE_API",
+      "heartbeat_state": "PROVIDER_AUTHORITY_REQUIRED", "ttl_seconds": 900, "adapter_ref": "bubbles-provider-edge-resolver",
+      "workaround_routes": [{"route":"FEDOMEGA_WIF_LEAST_PRIVILEGE_RECOVERY","authority_class":"A1","effectful":true,"score":1.0,"proof_state":"SOURCE_PRESENT","retry_seconds":900,"next_action":"When an authenticated GCP administration route appears, run the admitted WIF plan first; apply only exact repository/ref-bound least privilege and require FEDOMEGA-WIF-CLOUD-VERIFIED provider readback."}]
     },
     {
       "surface_id": "apps-script", "node_id": "HB-APPS-SCRIPT", "title": "Google Apps Script", "kind": "AUTOMATION",
-      "privacy_tier": "P1", "ingress_mode": "INSTALLABLE_TRIGGER", "egress_mode": "SHEET_OR_HTTP_RELAY",
-      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 900, "adapter_ref": "sentinel-processor",
-      "workaround_routes": [{"route":"APPS_SCRIPT_LEDGER_BRIDGE","authority_class":"A1","effectful":true,"score":0.85,"proof_state":"SOURCE_PRESENT","retry_seconds":900,"next_action":"Add a scoped trigger-to-ledger adapter and require an actual trigger receipt plus downstream readback."}]
+      "privacy_tier": "P1", "ingress_mode": "CHATGPT_DRIVE_PRIVATE_QUEUE", "egress_mode": "FO_GAS_PROCESSOR_READBACK",
+      "heartbeat_state": "CONTROL_PLANE_REACHABLE_PROVIDER_DEPLOYMENT_HELD", "ttl_seconds": 900, "adapter_ref": "bubbles-private-kdv-queue",
+      "workaround_routes": [{"route":"FO_GAS_V23_HARDENED_PROVIDER_DEPLOYMENT","authority_class":"A1","effectful":true,"score":1.0,"proof_state":"SOURCE_PRESENT","retry_seconds":900,"next_action":"When a provider-capable Apps Script source-update route appears, deploy only the admitted FO-GAS v2.3 hardened source, rotate ScriptProperties without revealing the secret, scrub approval columns, run a harmless dry-run selftest and require provider readback plus rollback proof."}]
     },
     {
       "surface_id": "openai-platform", "node_id": "HB-OPENAI-PLATFORM", "title": "OpenAI Platform", "kind": "AI_PROVIDER",
@@ -56,9 +59,9 @@
     },
     {
       "surface_id": "google-ai-studio", "node_id": "HB-GOOGLE-AI-STUDIO", "title": "Google AI Studio and Gemini experiments", "kind": "AI_EXPERIMENT",
-      "privacy_tier": "P1", "ingress_mode": "EXPORT_OR_API", "egress_mode": "GOVERNED_EXPERIMENT_RELAY",
-      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 3600, "adapter_ref": "gemini-experiment-register",
-      "workaround_routes": [{"route":"DRIVE_EXPERIMENT_REGISTER_RELAY","authority_class":"A1","effectful":false,"score":0.75,"proof_state":"DESIGNED","retry_seconds":3600,"next_action":"Export governed experiment metadata to the shared ledger and verify the resulting node heartbeat."}]
+      "privacy_tier": "P1", "ingress_mode": "BUBBLES_EDGE_RESOLVER_OR_EXPORT", "egress_mode": "GOVERNED_EXPERIMENT_RECEIPT",
+      "heartbeat_state": "CONTROL_PLANE_ONLY", "ttl_seconds": 3600, "adapter_ref": "bubbles-provider-edge-resolver",
+      "workaround_routes": [{"route":"GOOGLE_AI_STUDIO_PROVIDER_DISCOVERY","authority_class":"A1","effectful":false,"score":0.9,"proof_state":"SOURCE_PRESENT","retry_seconds":3600,"next_action":"Discover a genuine provider action; begin with inventory readback and a PUBLIC_SYNTHETIC no-effect canary. Do not infer provider execution from Drive registry text or model labels."}]
     },
     {
       "surface_id": "microsoft-dataverse", "node_id": "HB-MICROSOFT-DATAVERSE", "title": "Microsoft Dataverse parity route", "kind": "DATA_PLATFORM",
@@ -80,9 +83,9 @@
     },
     {
       "surface_id": "federation-omega", "node_id": "HB-FEDERATION-OMEGA", "title": "Federation Omega", "kind": "ORCHESTRATOR",
-      "privacy_tier": "P1", "ingress_mode": "PRIVATE_OPERATOR_API", "egress_mode": "PRIVATE_OPERATOR_API",
-      "heartbeat_state": "ADAPTER_REQUIRED", "ttl_seconds": 300, "adapter_ref": "federation-omega-operator",
-      "workaround_routes": [{"route":"OPERATOR_ALLOWLIST_HEARTBEAT_ACTIONS","authority_class":"A1","effectful":true,"score":1.0,"proof_state":"SOURCE_PRESENT","retry_seconds":300,"next_action":"Add allowlisted heartbeat ingest, status and delivery actions, then prove private authenticated round-trip readback."}]
+      "privacy_tier": "P1", "ingress_mode": "BUBBLES_COMMAND_BUS", "egress_mode": "IMMUTABLE_ACTIONS_RECEIPT",
+      "heartbeat_state": "SESSION_CONNECTOR_AVAILABLE", "ttl_seconds": 300, "adapter_ref": "bubbles-command-bus",
+      "workaround_routes": [{"route":"BUBBLES_COMMAND_BUS","authority_class":"A1","effectful":false,"score":1.0,"proof_state":"SESSION_AVAILABLE","retry_seconds":300,"next_action":"Use the verified Bubbles command bus for governed internal orchestration; keep privileged provider execution separate until its provider authority is independently proven."}]
     },
     {
       "surface_id": "secondary-brain", "node_id": "HB-SECONDARY-BRAIN", "title": "Secondary Brain and Kim DataVerse", "kind": "KNOWLEDGE_FABRIC",
