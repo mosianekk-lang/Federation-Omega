@@ -8,6 +8,7 @@ import json
 
 from .authority import AuthorityGuard
 from .diligence import DiligenceEngine
+from .market_algorithms import DealFragilitySurface
 from .models import (
     ActionDisposition,
     ActionRequest,
@@ -178,13 +179,29 @@ class InternalQualificationCourt:
         full_types = {item.document_type for item in profile}
         empty_score = diligence.completeness(profile, set())
         full_score = diligence.completeness(profile, full_types)
-        partial_score = diligence.completeness(profile, set(list(full_types)[:3]))
+        partial_types = set(sorted(full_types)[:3])
+        partial_score = diligence.completeness(profile, partial_types)
         checks.append(QualificationCheck(
             "DILIGENCE_BOUNDARY_ORACLE",
             empty_score == 0.0 and full_score == 1.0 and 0.0 < partial_score < 1.0,
-            [empty_score, partial_score, full_score],
-            [0.0, "between", 1.0],
+            [empty_score, partial_score, full_score, sorted(partial_types)],
+            [0.0, "between", 1.0, "stable sorted subset"],
             "DILIGENCE",
+        ))
+
+        fragility = DealFragilitySurface()
+        leverage_stress = fragility.leverage_stress_from_ratio(1.6, stress_at_ratio=5.0)
+        negative_rejected = False
+        try:
+            fragility.leverage_stress_from_ratio(-0.1)
+        except ValueError:
+            negative_rejected = True
+        checks.append(QualificationCheck(
+            "LEVERAGE_RATIO_NORMALIZATION",
+            self._close(leverage_stress, 0.32) and negative_rejected,
+            {"1.6x": leverage_stress, "negative_rejected": negative_rejected},
+            {"1.6x": 0.32, "negative_rejected": True},
+            "MARKET_MODEL",
         ))
 
         thesis = AcquisitionThesis(
