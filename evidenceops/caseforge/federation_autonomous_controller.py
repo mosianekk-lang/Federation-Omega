@@ -30,6 +30,13 @@ REQUIRED_ATTESTATION_CONTROLS = (
 )
 
 
+_AUTHORITY_LEVEL = {
+    "A0": 0,
+    "A0_READ": 0,
+    "A1_INTERNAL": 1,
+}
+
+
 class ActivationKind(str, Enum):
     NEW_CHAT = "NEW_CHAT"
     RESTORED_CHAT = "RESTORED_CHAT"
@@ -66,7 +73,9 @@ class RuntimeAttestation:
         ):
             if not str(value).strip():
                 raise ValueError("runtime attestation has missing required field")
-        if self.external_effect or self.authority_ceiling != AUTHORITY_CEILING:
+        authority_level = _AUTHORITY_LEVEL.get(self.authority_ceiling)
+        federation_max = _AUTHORITY_LEVEL[AUTHORITY_CEILING]
+        if self.external_effect or authority_level is None or authority_level > federation_max:
             raise ValueError("runtime attestation cannot expand authority or create external effects")
         return self
 
