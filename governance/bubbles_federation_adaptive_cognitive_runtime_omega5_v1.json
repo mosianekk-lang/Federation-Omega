@@ -1,0 +1,10 @@
+{
+  "components": ["project_scoped_knowledge_graph","automatic_evidence_invalidation","predictive_retrieval_planner","global_workload_scheduler","mission_convergence_detector","evidence_based_repair_planner","read_only_federation_digital_twin"],
+  "inherits": ["governance/bubbles_federation_governor_omega4_v1.json","governance/bubbles_federation_operational_learning_omega45_v1.json"],
+  "matter_walls": {"cross_project_auto_merge": false,"cross_project_edges_default": false},
+  "maturity": "DETERMINISTIC_TESTED_PENDING_REPOSITORY_ADMISSION",
+  "owner": "Kim Kagiso Mosiane",
+  "schema": "BUBBLES-FEDERATION-ADAPTIVE-COGNITIVE-RUNTIME-OMEGA5-V1",
+  "truth_boundaries": {"hidden_chat_access_claimed": false,"learned_policy_requires_operational_evidence": true,"prediction_equals_fact": false,"simulation_equals_execution": false,"universal_runtime_interception_claimed": false},
+  "version": "5.0.0"
+}

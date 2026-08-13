@@ -1,0 +1,17 @@
+{
+  "inherits": "governance/bubbles_federation_governor_omega4_v1.json",
+  "maturity": "DETERMINISTIC_TESTED_PENDING_REPOSITORY_ADMISSION",
+  "owner": "Kim Kagiso Mosiane",
+  "rules": {
+    "automatic_self_promotion_without_gate": false,
+    "confidence_gate": 0.72,
+    "minimum_samples_before_policy_promotion": 12,
+    "numeric_sanitized_telemetry_only": true,
+    "proof_completion_rate_gate": 0.8,
+    "raw_chat_text_in_learning_store": false,
+    "raw_email_document_text_in_learning_store": false,
+    "shadow_evaluation_required": true
+  },
+  "schema": "BUBBLES-FEDERATION-OPERATIONAL-LEARNING-OMEGA45-V1",
+  "version": "4.5.0"
+}
