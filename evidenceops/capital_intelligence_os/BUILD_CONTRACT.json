@@ -1,55 +1,48 @@
 {
-  "schema": "EVIDENCEOPS-CIOS-BUILD-16-RC6",
-  "version": "1.0.0-rc6",
+  "schema": "EVIDENCEOPS-CIOS-BUILD-17-RC7",
+  "version": "1.0.0-rc7",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
-  "internal_product_state": "SYNTHETIC_DETERMINISTIC_QUALIFICATION_CANDIDATE",
+  "internal_product_state": "INGESTION_RESOURCE_HARDENED_CANDIDATE",
+  "scientific_state": "SYNTHETIC_DETERMINISTIC_QUALIFIED",
   "portfolio_state": "PORTFOLIO_DEMONSTRABLE_CANDIDATE",
   "provider_maturity": "PROVIDER_BINDING_READY",
   "builds": [
     {
-      "build_id": "BUILD-CIOS-013",
-      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "closure_proof": "Provider canary source admitted under PR #346 with bounded authority checks."
-    },
-    {
-      "build_id": "BUILD-CIOS-014",
-      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "closure_proof": "Production data-plane rc4 admitted with provider-evidence preflight and preserved production qualification boundary."
-    },
-    {
       "build_id": "BUILD-CIOS-015",
       "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "gap_statement": "No coherent authenticated document-to-search-to-diligence-to-workspace route.",
-      "closure_proof": "PR #414 passed exact-head Airlock and Public Repository Leak Guard and merged as ca1de34c13e94e1a2654e1c3a3d48f8d33ececb1. rc5 added bounded multi-format ingestion, tenant workspace export, role-smuggling rejection, vault integrity and cumulative rc4 regression."
+      "closure_proof": "PR #414 admitted and merged the authenticated document-to-workspace product route."
     },
     {
       "build_id": "BUILD-CIOS-016",
+      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
+      "closure_proof": "PR #421 passed exact-head Airlock, Public Repository Leak Guard and Bubbles validation and merged as 00d2a9858dab58a799f877299497647327ba31a4. rc6 added the synthetic deterministic qualification court, leverage-normalization repair and proof-safe demo pack with facts/model outputs separated."
+    },
+    {
+      "build_id": "BUILD-CIOS-017",
       "lifecycle_state": "IMPLEMENTED_AWAITING_EXACT_HEAD_ADMISSION",
-      "gap_statement": "CIOS had many passing component tests and one synthetic journey but lacked a single transparent qualification court with independent numeric oracles, counterfactual checks and a proof-safe portfolio demonstration pack gated by that qualification.",
+      "gap_statement": "OOXML upload bytes were bounded but DOCX/XLSX ZIP entries could expand beyond safe decompressed/parser resource budgets.",
       "acceptance_criteria": [
-        "DCF and IRR pass independent analytic oracles",
-        "DCF WACC and terminal-growth monotonicity hold",
-        "QoE, working-capital and debt-like evidence thresholds behave as expected",
-        "diligence boundary states are 0/full=1 with partial between",
-        "off-thesis targets fail hard gates",
-        "final acquisition remains human-gated",
-        "live orders and private-to-market export remain denied",
-        "missing evidence reduces diligence and transaction readiness",
-        "deterministic economic/decision fields replay exactly",
-        "demo pack cannot build unless qualification and full synthetic journey pass",
-        "demo outputs are explicitly synthetic and digest-bound",
-        "case study language remains proof-safe"
+        "normal DOCX and XLSX remain parseable",
+        "archive entry count is bounded",
+        "per-entry and total uncompressed sizes are bounded before decompression",
+        "suspicious compression ratios fail closed",
+        "duplicate, unsafe-path and encrypted entries fail closed",
+        "DTD/entity XML fails closed",
+        "worksheet, shared-string, cell and paragraph counts are bounded",
+        "malformed archives fail closed",
+        "rc5 and rc6 cumulative regressions remain green",
+        "provider maturity and consequential authority remain unchanged"
       ],
-      "proof_route": "Focused qualification/demo tests are bound into Federation Omega Airlock through test_phoenix_provider_cutover_v3_cios_qualification_demo.py.",
-      "next_executable_action": "Admit rc6, generate the exact-source demonstration pack as a user-visible artifact, then advance representative historical/public calibration and pilot-value lanes without waiting for provider deployment."
+      "proof_route": "12 focused adversarial tests plus cumulative rc7 verifier, bound into existing Federation Omega Airlock through test_phoenix_provider_cutover_v3_cios_ingestion_hardening_rc7.py.",
+      "next_executable_action": "Recut on exact current main, run Airlock/Leak Guard/Bubbles, merge only on green, then advance external-data calibration and pilot-value qualification while Sparks remains provider-gated."
     },
     {
       "build_id": "BUILD-CIOS-003",
       "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
       "gap_statement": "No authorised private CIOS production runtime with independent provider readback is available to this chat session.",
-      "interim_workaround": "Provider execution remains isolated under Sparks. All internal product, scientific and demonstrability work continues independently."
+      "interim_workaround": "Isolate provider execution under Sparks; continue every internally executable product, security, scientific, demo and pilot-readiness lane."
     }
   ],
-  "truth_boundary": "Synthetic deterministic qualification is not historical-deal calibration, investment performance, accounting assurance or provider production. Portfolio demonstrability does not inherit provider deployment maturity."
+  "truth_boundary": "rc7 is internal parser/resource hardening. It is not a production VDR, malware service, enterprise IdP/KMS proof, historical deal calibration, pilot outcome or provider deployment."
 }
