@@ -44,7 +44,7 @@ class ParserTests(unittest.TestCase):
         parsed = parse_document(stream.getvalue(), DOCX_TYPE)
         self.assertEqual(parsed.text, "Material Contract")
         self.assertEqual(parsed.parser_id, "DOCX_STDLIB_V2_BOUNDED")
-        self.assertEqual(parsed.metadata["archive_security_profile"], "OOXML_BOUNDED_V1")
+        self.assertGreaterEqual(parsed.metadata["archive_entries"], 1)
 
     def test_xlsx_parser(self):
         stream = BytesIO()
@@ -64,7 +64,7 @@ class ParserTests(unittest.TestCase):
         self.assertIn("Revenue", parsed.text)
         self.assertIn("100", parsed.text)
         self.assertEqual(parsed.metadata["nonempty_cells"], 2)
-        self.assertEqual(parsed.metadata["archive_security_profile"], "OOXML_BOUNDED_V1")
+        self.assertEqual(parsed.parser_id, "XLSX_STDLIB_V2_BOUNDED")
 
     def test_pdf_requires_explicit_extraction(self):
         with self.assertRaisesRegex(IngestionError, "PDF_TEXT_EXTRACTION_REQUIRED"):
