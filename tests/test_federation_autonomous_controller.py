@@ -86,6 +86,19 @@ class RuntimeAttestationTests(unittest.TestCase):
             ).qualifies_stage16
         )
 
+    def test_lower_authority_ceiling_can_attest_without_inheritance(self) -> None:
+        self.assertTrue(
+            self.attestation(
+                system_id="VERITAS",
+                authority_ceiling="A0",
+                capability_twin_ref="TWIN:VERITAS:A0",
+            ).qualifies_stage16
+        )
+
+    def test_unknown_or_higher_authority_ceiling_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "cannot expand authority"):
+            self.attestation(authority_ceiling="A2_PROVIDER").validate()
+
 
 class AutonomousRegressionPlannerTests(unittest.TestCase):
     def test_failure_memory_becomes_deterministic_regression_contract(self) -> None:
