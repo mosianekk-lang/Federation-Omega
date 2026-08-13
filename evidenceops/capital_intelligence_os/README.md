@@ -30,7 +30,7 @@ The bounded parser now checks:
 - XLSX non-empty cell count;
 - malformed or missing required archive/XML structures.
 
-Normal DOCX/XLSX extraction remains supported. The parser metadata exposes `archive_security_profile=OOXML_BOUNDED_V1` so the hardening is inspectable.
+Normal DOCX/XLSX extraction remains supported. The security revision is inspectable through the parser identities `DOCX_STDLIB_V2_BOUNDED` / `XLSX_STDLIB_V2_BOUNDED` and bounded metadata including archive-entry count, declared uncompressed bytes and maximum compression ratio.
 
 ## Proof route
 
