@@ -1,0 +1,77 @@
+{
+  "schema": "EVIDENCEOPS-CHAT-FAILURE-RESILIENCE-CONTRACT-1",
+  "name": "CFRE Omega - Chat Failure Resilience Engine",
+  "status": "IMPLEMENTATION_CANDIDATE",
+  "purpose": "Detect chat/runtime failure signatures, preserve active mission state, diagnose likely dependency classes, and select a bounded recovery route without treating a failed response as mission completion.",
+  "extends": [
+    "evidenceops/build_system/objective_completion_guard.py",
+    "docs/ict/CHAT_AUDIT_REMEDIATION_STANDARD.md"
+  ],
+  "failureClasses": [
+    "TRANSPORT_INTERRUPTION",
+    "SERVER_GENERATION_FAILURE",
+    "STALL_TIMEOUT",
+    "CONTEXT_PRESSURE",
+    "TOOL_OR_CONNECTOR_FAILURE",
+    "FILE_OR_ATTACHMENT_FAILURE",
+    "AUTH_OR_SESSION_FAILURE",
+    "RATE_OR_CAPACITY_LIMIT",
+    "CLIENT_RESOURCE_FAILURE",
+    "USER_INTERRUPTION",
+    "UNKNOWN_CHAT_FAILURE"
+  ],
+  "mandatoryInvariants": [
+    "A chat or transport failure is never a completion receipt.",
+    "Persist directive, objective, last proven state and next pending action before recovery.",
+    "Every replayable action has a stable resume token and idempotency key.",
+    "Read back the outcome of an uncertain external/tool write before retrying it.",
+    "Isolate a failed lane rather than freezing independent executable lanes.",
+    "Use only equivalent authorized alternate routes; authority is never inferred or inherited.",
+    "Respect an explicit user stop/cancel and preserve state for later resume.",
+    "A route-exhausted state is blocked, not complete.",
+    "Do not claim control of ChatGPT client transport, provider service state or browser/network repair without native evidence."
+  ],
+  "recoveryLadder": [
+    "PERSIST_MISSION_CHECKPOINT",
+    "VERIFY_MISSION_NOT_COMPLETE",
+    "READBACK_UNCERTAIN_EFFECTS_WHEN_APPLICABLE",
+    "RETRY_SAME_ATOMIC_ACTION_WHEN_SAFE",
+    "RESUME_FROM_LAST_PROVEN_CHECKPOINT",
+    "ISOLATE_FAILED_TOOL_LANE",
+    "DISCOVER_EQUIVALENT_AUTHORIZED_ROUTE",
+    "COMPACT_CONTINUITY_STATE_AND_HANDOFF_WHEN_CONTEXT_PRESSURED",
+    "PRESERVE_BLOCKED_STATE_ONLY_AFTER_ROUTE_EXHAUSTION_PROOF"
+  ],
+  "persistence": {
+    "ledgerSchema": "EVIDENCEOPS-CHAT-FAILURE-LEDGER-1",
+    "writeMode": "ATOMIC_REPLACE",
+    "dedupeKey": "receipt_sha256",
+    "latestCheckpoint": true
+  },
+  "truthBoundary": {
+    "canDo": [
+      "classify observed failure signatures",
+      "preserve and replay mission state",
+      "generate deterministic resume/idempotency keys",
+      "select recovery routes",
+      "prevent premature completion",
+      "drive recovery when an authorized executor invokes it"
+    ],
+    "cannotByItselfDo": [
+      "repair OpenAI/ChatGPT WebSocket infrastructure",
+      "repair a user's physical network",
+      "restart or reauthenticate a browser session without an authorized client executor",
+      "guarantee a third-party provider is available",
+      "perform external effects merely because a recovery route is described"
+    ]
+  },
+  "acceptance": {
+    "focusedTest": "evidenceops/build_system/tests/test_chat_failure_resilience.py",
+    "airlockBinding": "tests/test_phoenix_provider_cutover_v3_chat_failure_resilience.py",
+    "minimumFocusedTests": 13,
+    "requiredGates": [
+      "Federation Omega Airlock",
+      "Public Repository Leak Guard"
+    ]
+  }
+}
