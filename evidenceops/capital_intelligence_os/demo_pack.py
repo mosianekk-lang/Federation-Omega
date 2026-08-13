@@ -37,17 +37,19 @@ class CIOSDemoPackBuilder:
         if not qualification.passed:
             raise RuntimeError("internal qualification court did not pass")
 
-        decision_brief = DecisionBriefBuilder().build(
+        target = payload["target"]
+        decision_brief = dict(DecisionBriefBuilder().build(
             title=f"Synthetic Investment Committee Brief — {journey.target_name}",
             verified_facts=[
-                "SYNTHETIC FIXTURE: target fits the configured acquisition thesis.",
-                f"SYNTHETIC FIXTURE: normalized EBITDA = {journey.normalized_ebitda:.2f}.",
-                f"MODEL OUTPUT: DCF enterprise value = {journey.dcf_enterprise_value:.2f}.",
-                f"MODEL OUTPUT: diligence completeness = {journey.diligence_score:.1%}.",
-                f"EVIDENCE CONTROL: {journey.contradiction_count} contradiction(s) remain visible.",
+                f"SYNTHETIC FIXTURE INPUT: target name = {target['name']}.",
+                f"SYNTHETIC FIXTURE INPUT: sector = {target['sector']}; geography = {target['geography']}.",
+                f"SYNTHETIC FIXTURE INPUT: revenue = {float(target['revenue']):.2f}; EBITDA margin = {float(target['ebitda_margin']):.1%}.",
+                f"SYNTHETIC FIXTURE INPUT: leverage = {float(target['leverage']):.2f}x; recurring revenue = {float(target['recurring_revenue']):.1%}.",
+                f"SYNTHETIC FIXTURE INPUT: {len(payload.get('documents', []))} diligence document record(s) supplied.",
             ],
             assumptions=[
                 "All company, financial, market and transaction inputs in this demo are synthetic.",
+                "Valuation, diligence, target-screen, readiness and market values are model outputs, not verified facts.",
                 "Public-market probability is a simplified model proxy, not a fact or trading signal.",
                 "The demo does not establish accounting, legal, tax or investment advice.",
             ],
@@ -61,7 +63,26 @@ class CIOSDemoPackBuilder:
                 f"Council advisory output: {journey.council_recommendation}. "
                 "Final acquisition decision remains human-gated."
             ),
-        )
+        ))
+        decision_brief["fact_scope"] = "SYNTHETIC_FIXTURE_ONLY"
+        decision_brief["evidence_findings"] = [
+            {
+                "finding": "VISIBLE_CONTRADICTIONS",
+                "count": journey.contradiction_count,
+                "status": "EVIDENCE_SYSTEM_OBSERVATION",
+                "requires_human_resolution": journey.contradiction_count > 0,
+            }
+        ]
+        decision_brief["model_outputs"] = [
+            {"name": "target_screen_score", "value": journey.target_score, "status": "MODEL_OUTPUT"},
+            {"name": "normalized_ebitda", "value": journey.normalized_ebitda, "status": "MODEL_OUTPUT"},
+            {"name": "diligence_completeness", "value": journey.diligence_score, "status": "MODEL_OUTPUT"},
+            {"name": "dcf_enterprise_value", "value": journey.dcf_enterprise_value, "status": "MODEL_OUTPUT"},
+            {"name": "comparable_ev_low", "value": journey.comparable_low, "status": "MODEL_OUTPUT"},
+            {"name": "comparable_ev_high", "value": journey.comparable_high, "status": "MODEL_OUTPUT"},
+            {"name": "market_fragility", "value": journey.market_fragility, "status": "MODEL_OUTPUT"},
+            {"name": "transaction_readiness", "value": journey.transaction_readiness, "status": "MODEL_OUTPUT"},
+        ]
 
         manifest: dict[str, object] = {
             "schema": "CIOS-SYNTHETIC-DEMO-PACK-V1",
@@ -151,14 +172,14 @@ A transaction team needs to move from acquisition thesis through evidence, dilig
 
 `THESIS → TARGET GATE → EVIDENCE/CONTRADICTIONS → DILIGENCE → QoE → DCF/COMPS → MARKET CONTEXT → COUNCIL → HUMAN GATE → INTEGRATION → OUTCOME LEARNING`
 
-## Synthetic result
+## Synthetic model result
 - Target fit score: **{journey.target_score:.2f}/100**
-- Visible contradictions: **{journey.contradiction_count}**
-- Diligence completeness: **{journey.diligence_score:.1%}**
-- Normalized EBITDA: **{journey.normalized_ebitda:.2f}**
-- DCF enterprise value: **{journey.dcf_enterprise_value:.2f}**
-- Comparable range: **{journey.comparable_low:.2f} – {journey.comparable_high:.2f}**
-- Transaction readiness: **{journey.transaction_readiness:.1%}**
+- Visible evidence-system contradictions: **{journey.contradiction_count}**
+- Diligence completeness model output: **{journey.diligence_score:.1%}**
+- Normalized EBITDA model output: **{journey.normalized_ebitda:.2f}**
+- DCF enterprise value model output: **{journey.dcf_enterprise_value:.2f}**
+- Comparable range model output: **{journey.comparable_low:.2f} – {journey.comparable_high:.2f}**
+- Transaction readiness model output: **{journey.transaction_readiness:.1%}**
 - Council advisory output: **{journey.council_recommendation}**
 
 ## Authority controls
