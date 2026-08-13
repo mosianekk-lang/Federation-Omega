@@ -26,11 +26,67 @@ class BubblesCommandBusTests(unittest.TestCase):
             source_ref="PR-CANARY",
         )
 
+    def recovery_command(self, event, **payload_overrides):
+        payload = {"event": event, **payload_overrides}
+        return self.command(
+            action="recover_chat_failure",
+            effect="READ",
+            target_alias="EVIDENCEOPS_CFRE_LOCAL",
+            payload=payload,
+        )
+
     def test_internal_canary_succeeds_without_external_provider_effect(self):
         receipt = self.run_command(self.command())
         self.assertEqual(receipt["state"], "SUCCESS")
         self.assertEqual(receipt["execution"]["kind"], "LOCAL_COMMAND_BUS_CANARY")
         self.assertIn("does not prove Google Cloud", receipt["truth_boundary"])
+
+    def test_chat_failure_recovery_invokes_cfre_for_connection_interruption(self):
+        receipt = self.run_command(self.recovery_command({
+            "message": "Connection interrupted. Waiting for the complete answer",
+            "active_directive": "continue until complete",
+            "next_pending_action": "resume current operation",
+        }))
+        self.assertEqual("SUCCESS", receipt["state"])
+        self.assertEqual("LOCAL_CHAT_FAILURE_RECOVERY", receipt["execution"]["kind"])
+        recovery = receipt["execution"]["recovery"]
+        self.assertEqual("TRANSPORT_INTERRUPTION", recovery["failure_class"])
+        self.assertTrue(recovery["must_continue"])
+        self.assertEqual("RETRY_SAME_ATOMIC_ACTION", recovery["next_automated_action"])
+        self.assertFalse(receipt["execution"]["provider_effects"])
+
+    def test_chat_failure_recovery_uses_readback_before_tool_timeout_replay(self):
+        receipt = self.run_command(self.recovery_command({
+            "message": "tool call timeout",
+            "tool_inflight": True,
+            "tool_call_id": "tool-write-1",
+            "next_pending_action": "finish provider write",
+        }))
+        recovery = receipt["execution"]["recovery"]
+        self.assertEqual("TOOL_OR_CONNECTOR_FAILURE", recovery["failure_class"])
+        self.assertEqual("READBACK_TOOL_OUTCOME_BEFORE_RETRY", recovery["next_automated_action"])
+        actions = [step["action"] for step in recovery["recovery_steps"]]
+        self.assertLess(
+            actions.index("READBACK_TOOL_OUTCOME_BEFORE_RETRY"),
+            actions.index("DISCOVER_EQUIVALENT_AUTHORIZED_ROUTE"),
+        )
+
+    def test_chat_failure_recovery_respects_explicit_user_stop(self):
+        receipt = self.run_command(self.recovery_command({"message": "user cancelled"}))
+        recovery = receipt["execution"]["recovery"]
+        self.assertEqual("USER_INTERRUPTION", recovery["failure_class"])
+        self.assertFalse(recovery["must_continue"])
+        self.assertEqual("WAIT_FOR_USER_RESUME", recovery["next_automated_action"])
+
+    def test_recovery_requires_event_object(self):
+        receipt = self.run_command(self.command(
+            action="recover_chat_failure",
+            effect="READ",
+            target_alias="EVIDENCEOPS_CFRE_LOCAL",
+            payload={"event": "not-an-object"},
+        ))
+        self.assertEqual("FAILURE", receipt["state"])
+        self.assertIn("payload.event", receipt["reason"])
 
     def test_unapproved_actor_is_blocked(self):
         receipt = self.run_command(self.command(), actor="untrusted-user")
