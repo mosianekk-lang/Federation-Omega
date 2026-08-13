@@ -41,7 +41,7 @@ READ_ONLY = ToolAnnotations(
 WRITE_NONDESTRUCTIVE = ToolAnnotations(
     readOnlyHint=False,
     destructiveHint=False,
-    idempotentHint=False,
+    idempotentHint=True,
     openWorldHint=False,
 )
 
@@ -120,9 +120,15 @@ def search_federation(query: str) -> Dict[str, Any]:
                     or item.get("conflict_id")
                     or "unknown"
                 )
+                singular = {
+                    "patterns": "pattern",
+                    "bibliography": "bibliography",
+                    "deltas": "delta",
+                    "conflicts": "conflict",
+                }[bucket]
                 results.append({
-                    "type": bucket.rstrip("s"),
-                    "id": f"{bucket}:{item_id}",
+                    "type": singular,
+                    "id": f"{singular}:{item_id}",
                     "title": item.get("work_summary") or item.get("pattern") or item.get("summary") or str(item_id),
                     "text": json.dumps(item, ensure_ascii=False),
                 })
@@ -156,9 +162,6 @@ def fetch_federation(id: str) -> Dict[str, Any]:
         "bibliography": "bibliography",
         "delta": "deltas",
         "conflict": "conflicts",
-        "patterns": "patterns",
-        "deltas": "deltas",
-        "conflicts": "conflicts",
     }
     bucket = bucket_map.get(prefix)
     if not bucket:
@@ -180,6 +183,7 @@ def fetch_federation(id: str) -> Dict[str, Any]:
 def publish_delta(
     source_system: str,
     summary: str,
+    idempotency_key: str,
     matter: Optional[str] = None,
     chat_ref: Optional[str] = None,
     problem_signature: Optional[str] = None,
@@ -189,7 +193,7 @@ def publish_delta(
     status: str = "VERIFIED",
     supersedes: Optional[List[str]] = None,
 ) -> Dict[str, Any]:
-    """Use this only after meaningful new work is complete to publish a local runtime delta and bibliography entry. Provider-side Bible writes require a configured adapter and separate proof."""
+    """Use this only after meaningful new work is complete. The idempotency key prevents accidental duplicate publication. Provider Bible writes occur only when the provider adapter is configured and explicitly write-enabled."""
     return publish_delta_impl(
         DeltaRequest(
             source_system=source_system,
@@ -202,6 +206,7 @@ def publish_delta(
             evidence_refs=evidence_refs or [],
             status=status,
             supersedes=supersedes or [],
+            idempotency_key=idempotency_key,
         )
     )
 
