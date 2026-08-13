@@ -59,6 +59,35 @@ def workflow_events(text: str) -> set[str]:
     }
 
 
+def push_branches(text: str) -> set[str] | None:
+    """Return explicitly configured push branches, or None for an unscoped push."""
+    match = re.search(
+        r"(?ms)^\s{0,4}push\s*:\s*\n(?P<body>(?:^\s{4,}.*(?:\n|$))*)",
+        text,
+    )
+    if not match:
+        return set()
+    body = match.group("body")
+    inline = re.search(r"(?m)^\s{4,}branches\s*:\s*\[(?P<items>[^\]]*)\]\s*$", body)
+    if inline:
+        return {
+            item.strip().strip("'\"")
+            for item in inline.group("items").split(",")
+            if item.strip()
+        }
+    multiline = re.search(
+        r"(?ms)^\s{4,}branches\s*:\s*\n(?P<items>(?:^\s{6,}-\s*.*(?:\n|$))+)",
+        body,
+    )
+    if multiline:
+        return {
+            item.strip().strip("'\"")
+            for item in re.findall(r"(?m)^\s{6,}-\s*([^#\n]+)", multiline.group("items"))
+            if item.strip()
+        }
+    return None
+
+
 def has_permission(text: str, permission: str, level: str) -> bool:
     return bool(
         re.search(
@@ -178,6 +207,23 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
             "HIGH",
             f"workflow contains events outside its contract: {', '.join(unexpected)}",
         ))
+
+    required_push_branches = policy.get("required_push_branches", {}).get(path)
+    if "push" in events and required_push_branches is not None:
+        observed_push_branches = push_branches(text)
+        required = set(required_push_branches)
+        if observed_push_branches != required:
+            observed = (
+                "UNSCOPED"
+                if observed_push_branches is None
+                else ",".join(sorted(observed_push_branches)) or "NONE"
+            )
+            findings.append(Finding(
+                path,
+                "UNAUTHORISED_PUSH_SCOPE",
+                "HIGH",
+                f"push branch scope must be exactly {','.join(sorted(required))}; observed {observed}",
+            ))
 
     if policy.get("require_concurrency") and not has_concurrency(text):
         findings.append(Finding(
