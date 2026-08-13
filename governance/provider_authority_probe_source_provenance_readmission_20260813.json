@@ -1,0 +1,22 @@
+{
+  "schema_version": "1.0.0",
+  "record_id": "FED-PROVIDER-AUTHORITY-PROBE-PROVENANCE-READMISSION-20260813-001",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "incident_main_sha": "3a160a23127286eedf28358b68f5933989b0505e",
+  "incident_parent_sha": "70190b8c96671cc660e21699ff4e958edaa9489d",
+  "incident_change": ".github/workflows/bubbles-provider-authority-recovery-probe.yml added by direct-main commit",
+  "incident_airlock_run": 31724339472,
+  "incident_airlock_state": "FAILED_SOURCE_PROVENANCE_RECEIPT",
+  "incident_regression_tests": "PASS_BEFORE_PROVENANCE_STEP",
+  "recovery": "READMIT_CURRENT_TREE_THROUGH_PULL_REQUEST_WITH_UNCHANGED_AIRLOCK_LEAK_GUARD_AND_BUBBLES",
+  "prior_repair_pr": 439,
+  "prior_repair_status": "SUPERSEDED_BY_NEWER_MAIN_ADVANCE",
+  "history_rewrite": false,
+  "force_merge": false,
+  "provider_execution_proven_by_this_record": false,
+  "provider_mutation": false,
+  "maturity_change_authorized": false,
+  "authority_change_authorized": false,
+  "external_effect": false,
+  "notes": "Preserves the direct-main provenance incident and authorizes only governed source readmission. The proof-only provider workflow and any provider observations remain separate evidence and cannot support maturity, authority, dominance, deployment, credential, or external-effect claims without their own provider-native readback and applicable authorization."
+}
