@@ -1,0 +1,38 @@
+{
+  "schema": "JOBS-FOR-KIM-WAVE5-EDTECH-RECEIPT-V1",
+  "capability_id": "CAP-EDTECH",
+  "capability": "Educational Technology & Learning Analytics",
+  "bubbles_state": "DETERMINISTIC_TESTED_SYNTHETIC_LOCAL",
+  "kim_personal_evidence_state": "USER_EVIDENCE_GAP",
+  "gap_class": "USER_EVIDENCE_GAP_REMAINS",
+  "proof": [
+    "bubbles/edtech_learning_analytics_lab.py",
+    "tests/test_bubbles_edtech_learning_analytics_lab.py",
+    "bubbles/EDTECH_LEARNING_ANALYTICS_CAPABILITY_NOTE.md"
+  ],
+  "controls": [
+    "synthetic pseudonymous learner keys only",
+    "explicit source lineage",
+    "no protected attributes",
+    "human review required for support recommendations",
+    "no automated grading/progression/admissions/discipline",
+    "deterministic hash-bound receipt",
+    "no real learner outcome claims"
+  ],
+  "safe_claim": "Designed and deterministically tested a privacy-safe synthetic learning-analytics reference that combines engagement/support signals, lineage, data minimisation and human-reviewed support routing.",
+  "forbidden_claims": [
+    "production learning analytics deployment",
+    "real student outcome improvement",
+    "real student data processing",
+    "automated academic decisioning",
+    "prior personal Director/Head of Educational Technology experience"
+  ],
+  "career_unlocks": [
+    "Director Educational Technology",
+    "Head Digital Learning",
+    "Digital Enablement",
+    "Learning Analytics leadership",
+    "AI & Digital Innovation"
+  ],
+  "truth_boundary": "Bubbles organisational proof does not create Kim personal experience. CV/interview use requires separate Kim evidence and Ledger approval."
+}
