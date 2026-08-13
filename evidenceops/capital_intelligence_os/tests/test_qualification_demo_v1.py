@@ -36,7 +36,7 @@ class QualificationCourtTests(unittest.TestCase):
             "DILIGENCE_BOUNDARY_ORACLE",
             "THESIS_HARD_GATE",
             "AUTHORITY_CONSTITUTION",
-            "LEVERAGE_NORMALIZATION_ORACLE",
+            "LEVERAGE_RATIO_NORMALIZATION",
             "MISSING_EVIDENCE_COUNTERFACTUAL",
             "OFF_THESIS_COUNTERFACTUAL",
             "DETERMINISTIC_ECONOMIC_REPLAY",
