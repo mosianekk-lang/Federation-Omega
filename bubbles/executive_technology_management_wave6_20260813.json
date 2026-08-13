@@ -27,9 +27,12 @@
   ],
   "trigger_roles": [
     "TMFORUM-IT-DIRECTOR-20260813",
-    "GUARDRISK-HEAD-DDT-20260813",
-    "TRUFFLE-AI-STRATEGY-DIRECTOR-20260813",
-    "ISB-AI-GOV-PROGRAM-MANAGER-20260813"
+    "GUARDRISK-HEAD-DDT-20260813"
+  ],
+  "supporting_historical_signals": [
+    "TRUFFLE-AI-STRATEGY-DIRECTOR-EXPIRED-20260813",
+    "ISB-AI-GOV-PROGRAM-MANAGER-EXPIRED-20260813",
+    "ENKO-BTSM-EXISTING-LIVE-TARGET"
   ],
   "minimum_squad": ["Bubbles", "Beacon", "Sentinel", "Ledger"],
   "proof_project": "Synthetic executive technology portfolio covering annual budget envelope, three-year TCO/value hypotheses, risk-adjusted prioritisation, workstream dependencies, vendor/SLA review, KPIs/OKRs and benefits-realisation gates.",
