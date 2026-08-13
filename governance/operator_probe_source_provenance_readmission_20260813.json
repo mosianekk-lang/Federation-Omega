@@ -1,0 +1,23 @@
+{
+  "schema_version": "1.0.0",
+  "record_id": "FED-OPERATOR-PROBE-PROVENANCE-READMISSION-20260813-001",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "incident_main_sha": "70190b8c96671cc660e21699ff4e958edaa9489d",
+  "incident_parent_sha": "0606ffa0030e27bb0949fc1aaf9beb0ba7afe048",
+  "incident_change": ".github/workflows/pfrd-omega-operator-auth-probe.yml rerun-marker-only change",
+  "incident_airlock_run": 31723424668,
+  "incident_airlock_state": "FAILED_SOURCE_PROVENANCE_RECEIPT",
+  "incident_leak_guard_run": 31723424624,
+  "incident_leak_guard_state": "PASS",
+  "incident_bubbles_run": 31723424737,
+  "incident_bubbles_state": "PASS",
+  "recovery": "READMIT_CURRENT_TREE_THROUGH_PULL_REQUEST_WITH_UNCHANGED_AIRLOCK_AND_LEAK_GUARD",
+  "history_rewrite": false,
+  "force_merge": false,
+  "provider_execution_proven": false,
+  "provider_mutation": false,
+  "maturity_change_authorized": false,
+  "authority_change_authorized": false,
+  "external_effect": false,
+  "notes": "This record preserves the direct-main provenance incident and authorizes only source-governance readmission. It is not provider, runtime, maturity, dominance, or external-effect proof."
+}
