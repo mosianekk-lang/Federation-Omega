@@ -36,6 +36,7 @@ class QualificationCourtTests(unittest.TestCase):
             "DILIGENCE_BOUNDARY_ORACLE",
             "THESIS_HARD_GATE",
             "AUTHORITY_CONSTITUTION",
+            "LEVERAGE_NORMALIZATION_ORACLE",
             "MISSING_EVIDENCE_COUNTERFACTUAL",
             "OFF_THESIS_COUNTERFACTUAL",
             "DETERMINISTIC_ECONOMIC_REPLAY",
@@ -47,6 +48,7 @@ class DemoPackTests(unittest.TestCase):
     def test_demo_pack_is_synthetic_proof_safe_and_human_gated(self):
         pack = CIOSDemoPackBuilder().build()
         manifest = pack["manifest"]
+        brief = pack["decision_brief"]
         self.assertEqual(manifest["classification"], "PUBLIC_SAFE_SYNTHETIC_DEMONSTRATION")
         self.assertTrue(manifest["journey_passed"])
         self.assertTrue(manifest["qualification_passed"])
@@ -56,6 +58,15 @@ class DemoPackTests(unittest.TestCase):
         self.assertEqual(manifest["authority"]["private_to_public_market"], "DENY")
         self.assertEqual(len(pack["pack_sha256"]), 64)
         self.assertIn("SYNTHETIC DEMONSTRATION ONLY", pack["files"]["case_study.md"])
+
+        self.assertEqual(brief["fact_scope"], "SYNTHETIC_FIXTURE_ONLY")
+        self.assertTrue(brief["verified_facts"])
+        self.assertTrue(all("SYNTHETIC FIXTURE INPUT" in fact for fact in brief["verified_facts"]))
+        self.assertNotIn("MODEL OUTPUT", "\n".join(brief["verified_facts"]))
+        self.assertTrue(brief["model_outputs"])
+        self.assertTrue(all(row["status"] == "MODEL_OUTPUT" for row in brief["model_outputs"]))
+        self.assertEqual(brief["evidence_findings"][0]["status"], "EVIDENCE_SYSTEM_OBSERVATION")
+        self.assertTrue(brief["requires_human_decision"])
 
     def test_demo_pack_writes_complete_portfolio_bundle(self):
         with tempfile.TemporaryDirectory() as temp:
@@ -73,7 +84,10 @@ class DemoPackTests(unittest.TestCase):
             self.assertEqual(len(receipt["pack_sha256"]), 64)
             self.assertFalse(receipt["external_effects"])
             self.assertGreater((root / "dashboard.html").stat().st_size, 100)
-            self.assertIn("requires_human_decision", (root / "decision_brief.json").read_text())
+            brief_text = (root / "decision_brief.json").read_text()
+            self.assertIn("requires_human_decision", brief_text)
+            self.assertIn("model_outputs", brief_text)
+            self.assertIn("SYNTHETIC_FIXTURE_ONLY", brief_text)
 
 
 if __name__ == "__main__":
