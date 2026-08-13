@@ -11,6 +11,7 @@ import urllib.request
 
 ARCHON_SCRIPT_DEPLOYMENT_ID = "AKfycbyaxovYOyaoMWFdsAZnbl2AIFU0PFY3hcGF-QRM1dmDqdtEHRFI7Ud7L_p7YCCVMG3J"
 ARCHON_SCRIPT_URL = f"https://script.google.com/macros/s/{ARCHON_SCRIPT_DEPLOYMENT_ID}/exec"
+EVIDENCE_BASIS = "USER_SUPPLIED_DEPLOYMENT_SCREENSHOT_PLUS_EXISTING_ARCHON_CONTROL_RECORDS"
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -119,6 +120,7 @@ def run_probe() -> dict[str, Any]:
 
     return {
         "schema": "BUBBLES-ARCHON-APPS-SCRIPT-DEPLOYMENT-PROBE-V1",
+        "evidence_basis": EVIDENCE_BASIS,
         "script_id": "12CrTP0YUQbUpBvLklf_tInjN_k3L5qt3Tkp-M9pIO_O4Cs8dsYRH7kPO",
         "deployment_id": ARCHON_SCRIPT_DEPLOYMENT_ID,
         "web_app_url": ARCHON_SCRIPT_URL,
