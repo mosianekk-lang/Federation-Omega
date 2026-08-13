@@ -12,6 +12,7 @@ from bubbles.control_plane import (
     EffectClass,
     RouteKind,
 )
+from evidenceops.build_system.chat_failure_resilience import evaluate_failure
 
 
 COMMAND_SCHEMA = "BUBBLES-CONTROL-COMMAND-V1"
@@ -54,6 +55,31 @@ def _request_from_command(command: Mapping[str, object]) -> ActionRequest:
         target_alias=str(command["target_alias"]),
         payload=dict(command.get("payload", {})),
     )
+
+
+def _chat_failure_recovery(request: ActionRequest) -> dict[str, object]:
+    event = request.payload.get("event")
+    if not isinstance(event, dict):
+        raise CommandBusError("recover_chat_failure requires payload.event as a JSON object")
+
+    mission = request.payload.get("mission_packet")
+    if mission is not None and not isinstance(mission, dict):
+        raise CommandBusError("payload.mission_packet must be a JSON object when supplied")
+
+    previous = request.payload.get("previous_checkpoint")
+    if previous is not None and not isinstance(previous, dict):
+        raise CommandBusError("payload.previous_checkpoint must be a JSON object when supplied")
+
+    recovery = evaluate_failure(
+        event,
+        previous_checkpoint=previous,
+        mission_packet=mission,
+    )
+    return {
+        "kind": "LOCAL_CHAT_FAILURE_RECOVERY",
+        "recovery": asdict(recovery),
+        "provider_effects": False,
+    }
 
 
 def execute_command(
@@ -160,6 +186,18 @@ def execute_command(
             "truth_boundary": (
                 "SUCCESS proves ChatGPT/GitHub command ingress, route validation and runner execution only. "
                 "It does not prove Google Cloud, Apps Script, AI Studio or any external provider mutation."
+            ),
+        }
+
+    if request.adapter_id == "bubbles_command_bus" and request.action == "recover_chat_failure":
+        execution = _chat_failure_recovery(request)
+        return {
+            **base_receipt,
+            "state": "SUCCESS",
+            "execution": execution,
+            "truth_boundary": (
+                "SUCCESS proves that the Bubbles command bus invoked CFRE and generated a recovery receipt. "
+                "It does not prove repair of the ChatGPT client, browser, network or OpenAI service, and it performs no external provider mutation."
             ),
         }
 
