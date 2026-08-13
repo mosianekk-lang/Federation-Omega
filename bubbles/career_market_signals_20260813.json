@@ -27,7 +27,7 @@
       "sector": "financial services / insurance",
       "signal_type": "VACANCY_SECONDARY_SOURCE",
       "strategic_target": true,
-      "source_ref": "Current external listing reviewed 2026-08-13; company-career verification recommended before application",
+      "source_ref": "Current LinkedIn listing reviewed 2026-08-13; Momentum Group explicitly instructs applicants to verify vacancies through its official careers channel before submitting",
       "requirements": [
         "digital data and technology leadership",
         "enterprise architecture alignment",
@@ -38,46 +38,21 @@
         "technology budgeting and financial risk",
         "adoption and benefits delivery"
       ]
-    },
+    }
+  ],
+  "excluded_after_live_state_check": [
     {
       "role_id": "TRUFFLE-AI-STRATEGY-DIRECTOR-20260813",
-      "employer": "Truffle",
-      "title": "AI Strategy Director",
-      "sector": "AI strategy / enterprise transformation",
-      "signal_type": "VACANCY_SECONDARY_SOURCE",
-      "strategic_target": true,
-      "source_ref": "Current South Africa LinkedIn vacancy reviewed 2026-08-13",
-      "requirements": [
-        "enterprise AI strategy roadmap and operating model",
-        "AI use-case portfolio prioritisation",
-        "copilots automation knowledge assistants and document intelligence",
-        "AI governance security privacy and responsible AI",
-        "change management adoption and training",
-        "benefits realisation and executive stakeholder management"
-      ]
+      "reason": "LinkedIn now states no longer accepting applications; retained only as historical capability intelligence."
     },
     {
       "role_id": "ISB-AI-GOV-PROGRAM-MANAGER-20260813",
-      "employer": "ISB Optimus",
-      "title": "Program Manager - AI Governance",
-      "sector": "technology consulting / enterprise AI governance",
-      "signal_type": "VACANCY_SECONDARY_SOURCE",
-      "strategic_target": false,
-      "source_ref": "Current South Africa LinkedIn vacancy reviewed 2026-08-13",
-      "requirements": [
-        "AI governance programme roadmap",
-        "governance councils RACI policies and controls",
-        "AI model and use-case inventory risk tiering",
-        "POPIA privacy and cross-border data governance",
-        "third-party and vendor AI governance",
-        "audit readiness Exco and Board reporting",
-        "programme budget delivery KPIs and capability building"
-      ]
+      "reason": "Direct LinkedIn job URL now redirects to expired-job search; retained only as historical capability intelligence."
     }
   ],
   "recurring_capability_trigger": {
     "capabilities": ["CAP-IT-FIN", "CAP-VENDOR", "CAP-PPM"],
-    "reason": "Technology budget/TCO/value management, vendor accountability, portfolio sequencing, KPIs/OKRs and benefits-realisation recur across multiple credible current senior technology roles and existing education-sector targets.",
+    "reason": "Technology budget/TCO/value management, vendor accountability, portfolio sequencing, KPIs/OKRs and benefits-realisation recur across two current credible senior technology roles and previously verified education-sector targets.",
     "minimum_squad": ["Bubbles", "Beacon", "Sentinel", "Ledger"],
     "proof_project": "Synthetic executive technology portfolio with budget envelope, TCO/value hypotheses, risk-adjusted prioritisation, dependencies, vendor/SLA scorecards, OKRs/KPIs and benefits-realisation gates.",
     "truth_boundary": "Market requirements trigger Bubbles organisational capability development only. They do not establish Kim's personal budget, vendor, procurement, portfolio or executive authority."
