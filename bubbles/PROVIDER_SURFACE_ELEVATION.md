@@ -20,17 +20,19 @@ The Private Canonical Bridge now carries first-class specialist rows for all fou
 `bubbles/provider_surface_probe.py` performs a no-effect discovery/readback chain:
 
 - FO Operator public `/health` and contract read;
-- FO Operator authenticated `STATUS` and `READ_CLOUD_RUN_SERVICE` only if a trusted token is already available through repository secret or authorised Secret Manager access;
+- FO Operator authenticated `STATUS` and `READ_CLOUD_RUN_SERVICE` only if a trusted `FO_ADMIN_TOKEN` repository binding is already available to the admitted `main` workflow;
 - ARCHON Admin Plane public root/OpenAPI read;
-- authenticated `capability_audit` only if a trusted token is already available;
+- authenticated `capability_audit` only if a trusted `ARCHON_ADMIN_TOKEN` repository binding is already available;
 - ARCHON Apps Script deployed `/exec` reachability/authentication-state probe;
-- AFEME public probe and IAM identity-token read probe only if the existing Google identity route can mint a valid token.
+- AFEME public reachability/auth-state probe. The probe code can also classify an existing gcloud identity when invoked from a separately authorised provider executor, but the Bubbles Command Bus itself does not request OIDC.
 
 The probe never calls a deployment action, never mutates IAM, never changes traffic, never changes Apps Script source/deployments/triggers/properties, and never records credential values.
 
 ## Main-only credential boundary
 
-The Bubbles Command Bus workflow retains its existing PR/command behavior. A new `provider-surface-readback` job is restricted to an admitted `push` on `main`. Pull-request code does not receive the provider readback job. The job may request OIDC and use already-configured repository secrets only after source admission; its only effect is provider readback plus an immutable Actions artifact receipt.
+The Bubbles Command Bus retains its enforced zero-OIDC/read-only GitHub permission contract. The `provider-surface-readback` job is restricted to an admitted `push` on `main`, uses only `contents: read`, and may consume already-configured repository secret bindings without printing them. Pull-request code does not receive the provider-readback job and cannot access those bindings. If the bindings are absent, the receipt fails closed and records the exact missing trusted-token edge.
+
+Provider WIF/Secret Manager recovery remains a distinct provider-authority lane and is not smuggled into Bubbles Command Bus.
 
 ## Apps Script correction
 
