@@ -12,6 +12,13 @@ from .federation_evolution_program import (
 )
 
 
+_AUTHORITY_LEVEL = {
+    "A0": 0,
+    "A0_READ": 0,
+    "A1_INTERNAL": 1,
+}
+
+
 class SemanticState(str, Enum):
     UNKNOWN = "UNKNOWN"
     DECLARED_CONTRACT = "DECLARED_CONTRACT"
@@ -69,7 +76,9 @@ class CapabilityTwin:
             raise ValueError(f"unregistered Federation system: {self.system_id}")
         if not self.source_ref.strip() or not self.observed_at.strip():
             raise ValueError("source_ref and observed_at are required")
-        if self.authority_ceiling != AUTHORITY_CEILING:
+        authority_level = _AUTHORITY_LEVEL.get(self.authority_ceiling)
+        federation_max = _AUTHORITY_LEVEL[AUTHORITY_CEILING]
+        if authority_level is None or authority_level > federation_max:
             raise ValueError("capability twin cannot expand authority")
         if self.ttl_seconds <= 0 or self.age_seconds < 0:
             raise ValueError("invalid freshness values")
