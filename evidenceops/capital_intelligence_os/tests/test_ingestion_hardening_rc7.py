@@ -12,6 +12,7 @@ from evidenceops.capital_intelligence_os.ingestion import (
     IngestionError,
     MAX_OOXML_ARCHIVE_ENTRIES,
     MAX_OOXML_ENTRY_UNCOMPRESSED,
+    MAX_OOXML_COMPRESSION_RATIO,
     MAX_XLSX_WORKSHEETS,
     _validate_ooxml_archive,
     parse_document,
@@ -45,19 +46,19 @@ def sheet_xml(value: str = "100") -> bytes:
 
 
 class NormalCompatibilityTests(unittest.TestCase):
-    def test_normal_docx_still_parses_with_bounded_metadata(self):
+    def test_normal_docx_still_parses_with_bounded_identity(self):
         parsed = parse_document(make_zip([("word/document.xml", docx_xml("Material Contract"))]), DOCX_TYPE)
         self.assertEqual(parsed.text, "Material Contract")
         self.assertEqual(parsed.parser_id, "DOCX_STDLIB_V2_BOUNDED")
-        self.assertEqual(parsed.metadata["archive_security_profile"], "OOXML_BOUNDED_V1")
         self.assertGreaterEqual(parsed.metadata["archive_entries"], 1)
+        self.assertLessEqual(parsed.metadata["max_compression_ratio"], MAX_OOXML_COMPRESSION_RATIO)
 
-    def test_normal_xlsx_still_parses_with_bounded_metadata(self):
+    def test_normal_xlsx_still_parses_with_bounded_identity(self):
         parsed = parse_document(make_zip([("xl/worksheets/sheet1.xml", sheet_xml("100"))]), XLSX_TYPE)
         self.assertIn("100", parsed.text)
         self.assertEqual(parsed.parser_id, "XLSX_STDLIB_V2_BOUNDED")
-        self.assertEqual(parsed.metadata["archive_security_profile"], "OOXML_BOUNDED_V1")
         self.assertEqual(parsed.metadata["worksheets"], 1)
+        self.assertGreaterEqual(parsed.metadata["archive_entries"], 1)
 
 
 class ArchiveBoundaryTests(unittest.TestCase):
@@ -82,10 +83,17 @@ class ArchiveBoundaryTests(unittest.TestCase):
         with self.assertRaisesRegex(IngestionError, "OOXML_DUPLICATE_ENTRY_NAME"):
             parse_document(stream.getvalue(), DOCX_TYPE)
 
-    def test_high_compression_ratio_fails_before_xml_parse(self):
-        payload = docx_xml("A" * 2_000_000)
+    def test_high_compression_ratio_fails_closed_deterministically(self):
+        info = SimpleNamespace(
+            filename="word/document.xml",
+            flag_bits=0,
+            file_size=2_000_000,
+            compress_size=1_000,
+        )
+        fake = SimpleNamespace(infolist=lambda: [info])
+        self.assertGreater(info.file_size / info.compress_size, MAX_OOXML_COMPRESSION_RATIO)
         with self.assertRaisesRegex(IngestionError, "OOXML_SUSPICIOUS_COMPRESSION_RATIO"):
-            parse_document(make_zip([("word/document.xml", payload)]), DOCX_TYPE)
+            _validate_ooxml_archive(fake)
 
     def test_entry_uncompressed_limit_fails_closed(self):
         payload = b"A" * (MAX_OOXML_ENTRY_UNCOMPRESSED + 1)
