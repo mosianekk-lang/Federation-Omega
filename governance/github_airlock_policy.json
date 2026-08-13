@@ -26,6 +26,9 @@
     ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
     ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"]
   },
+  "required_push_branches": {
+    ".github/workflows/bubbles-command-bus.yml": ["main"]
+  },
   "oidc_workflow_allowlist": [],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
