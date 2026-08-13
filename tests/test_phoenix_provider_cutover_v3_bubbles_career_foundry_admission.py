@@ -25,6 +25,19 @@ class BubblesCareerCapabilityFoundryAdmissionTests(unittest.TestCase):
         )
         self.assertEqual(0, process.returncode, process.stdout + process.stderr)
 
+    def test_wave6_executive_technology_management_is_airlock_bound(self) -> None:
+        self.assertTrue((ROOT / "bubbles" / "executive_technology_management_lab.py").is_file())
+        self.assertTrue((ROOT / "bubbles" / "career_market_signals_20260813.json").is_file())
+        self.assertTrue((ROOT / "bubbles" / "executive_technology_management_wave6_20260813.json").is_file())
+        process = subprocess.run(
+            [sys.executable, "-m", "unittest", "tests.test_bubbles_executive_technology_management_lab", "-v"],
+            cwd=ROOT,
+            text=True,
+            capture_output=True,
+            check=False,
+        )
+        self.assertEqual(0, process.returncode, process.stdout + process.stderr)
+
 
 if __name__ == "__main__":
     unittest.main()
