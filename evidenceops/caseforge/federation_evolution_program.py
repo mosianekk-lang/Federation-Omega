@@ -7,6 +7,12 @@ from typing import Iterable, Mapping, Sequence
 
 AUTHORITY_CEILING = "A1_INTERNAL"
 
+_AUTHORITY_LEVEL = {
+    "A0": 0,
+    "A0_READ": 0,
+    "A1_INTERNAL": 1,
+}
+
 
 class EvolutionStage(IntEnum):
     OBJECTIVE_COMPILER = 1
@@ -191,7 +197,9 @@ class SystemEvolutionProfile:
             raise ValueError("system_id and canonical_name are required")
         if tuple(self.mandatory_stages) != ALL_STAGES:
             raise ValueError("compatible systems may specialize but may not weaken or skip the 20-stage spine")
-        if self.authority_ceiling != AUTHORITY_CEILING:
+        authority_level = _AUTHORITY_LEVEL.get(self.authority_ceiling)
+        federation_max = _AUTHORITY_LEVEL[AUTHORITY_CEILING]
+        if authority_level is None or authority_level > federation_max:
             raise ValueError("unsupported authority ceiling")
         if self.external_effect_default:
             raise ValueError("Federation evolution defaults to no external effect")
@@ -392,6 +400,7 @@ def _profile(
     algorithms: Sequence[str],
     vetoes: Sequence[str],
     mode: StrategyMode = StrategyMode.SPECIALIZED,
+    authority_ceiling: str = AUTHORITY_CEILING,
 ) -> SystemEvolutionProfile:
     return SystemEvolutionProfile(
         system_id=system_id,
@@ -401,6 +410,7 @@ def _profile(
         strategy_mode=mode,
         specialized_algorithms=tuple(algorithms),
         vetoes=tuple(vetoes),
+        authority_ceiling=authority_ceiling,
     ).validate()
 
 
@@ -442,6 +452,7 @@ SYSTEM_PROFILES: Mapping[str, SystemEvolutionProfile] = {
         "Minimize unresolved contradictions and unsupported factual certainty.",
         ("CONTRADICTION_CLUSTERING", "SOURCE_SUPREMACY", "ADVERSE_EVIDENCE_SEARCH", "FALSIFICATION"),
         ("INFERENCE_AS_FACT", "NEGATIVE_SEARCH_OVERCLAIM", "CONTRADICTION_SUPPRESSION"),
+        authority_ceiling="A0",
     ),
     "EVI": _profile(
         "EVI", "EVI Force Multiplier", "PARALLEL_AMPLIFICATION",
