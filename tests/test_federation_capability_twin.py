@@ -85,6 +85,11 @@ class FederationCapabilityTwinTests(unittest.TestCase):
     def test_unknown_semantics_cannot_pass_stage_two(self) -> None:
         self.assertFalse(self.twin(semantic_state=SemanticState.UNKNOWN).resolution_complete)
 
+    def test_lower_authority_ceiling_is_allowed_without_inheritance(self) -> None:
+        twin = self.twin(system_id="VERITAS", authority_ceiling="A0")
+        self.assertEqual(TwinState.SOURCE_VERIFIED_RUNTIME_UNVERIFIED, twin.twin_state)
+        self.assertTrue(twin.resolution_complete)
+
     def test_authority_expansion_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "expand authority"):
             self.twin(authority_ceiling="A5").validate()
