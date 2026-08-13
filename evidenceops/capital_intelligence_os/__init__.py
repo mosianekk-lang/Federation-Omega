@@ -7,6 +7,7 @@ from .backup import BackupManager
 from .capital import *
 from .deal_workspace import DealWorkspaceService
 from .decision_algorithms import *
+from .demo_pack import CIOSDemoPackBuilder
 from .demo_product import build_demo_dashboard
 from .diligence import *
 from .durable import DurableAutopilotRuntime
@@ -32,6 +33,7 @@ from .provider_canary import *
 from .product_ui import WorkspaceSnapshot, WorkspaceComposer, DashboardRenderer
 from .proofgraph import *
 from .qoe import *
+from .qualification import InternalQualificationCourt, QualificationCheck, QualificationReport
 from .restricted import *
 from .service import CapitalIntelligenceService
 from .store import SqliteStateStore
@@ -41,4 +43,4 @@ from .valuation import *
 from .vault import DocumentRecord, DocumentVault, InformationAccessPolicy
 from .workspace import *
 
-__version__ = "1.0.0-rc5"
+__version__ = "1.0.0-rc6"
