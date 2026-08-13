@@ -43,6 +43,7 @@ jobs:
           python -m unittest tests.test_bubbles_heartbeat_surface_sync -v
           python -m unittest tests.test_bubbles_platform_specialist_corps -v
           python -m unittest tests.test_bubbles_provider_surface_elevation -v
+          python -m unittest tests.test_bubbles_apps_script_deployment_probe -v
 
   command:
     needs: contract
@@ -147,6 +148,7 @@ jobs:
           set -euo pipefail
           mkdir -p bubbles-provider-probe-output
           python -m bubbles.provider_surface_probe --output bubbles-provider-probe-output/receipt.json
+          python -m bubbles.apps_script_deployment_probe --receipt bubbles-provider-probe-output/receipt.json
 
       - name: Publish provider readback summary
         if: always() && hashFiles('bubbles-provider-probe-output/receipt.json') != ''
