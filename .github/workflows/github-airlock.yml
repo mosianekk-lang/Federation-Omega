@@ -118,6 +118,9 @@ jobs:
       - name: Run Federation capability twin regression tests
         run: python -m unittest discover -s tests -p 'test_federation_capability_twin.py' -v
 
+      - name: Run Federation evolution program regression tests
+        run: python -m unittest discover -s tests -p 'test_federation_evolution_program.py' -v
+
       - name: Build source provenance receipt
         env:
           GH_TOKEN: ${{ github.token }}
