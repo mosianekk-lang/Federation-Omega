@@ -1,0 +1,54 @@
+{
+  "schema_version": "1.0",
+  "owner": "Kim Kagiso Mosiane",
+  "control_plane": {
+    "drive_folder_id": "19-z50DB18x_ZeE_sFHhIg5AKTnQAQzEJ",
+    "control_doc_id": "1yymjDingDcTjHM0cOXoSN-YU-IHwdK8ZSg9Vj72JGx8",
+    "sync_bus_sheet_id": "1N9plg1P3lY0_0w2kWc4WHIH-rqK62Xq1tU5WRYtCWfo",
+    "bubbles_bible_id": "1TxeFU4mTrI5Z71NB2Gl3xMcCGygVBn4w9ph2J0drKEM",
+    "lex_bible_id": "1RaUjki4H5CoHjfMtpM0XJj5FVFzIplD7oOls6sDhhgU",
+    "bibliography_registry_id": "1Bcn7GOgrEa61v0eGIXK-Fx-6xi6GSYsFM-NHBmKrpfk"
+  },
+  "registered_systems": [
+    "Bubbles",
+    "Lex Advocate",
+    "EvidenceOps",
+    "TruthGrid",
+    "Federation Omega",
+    "Superior Logic Doctrine",
+    "KAIO Omega",
+    "KIOAS",
+    "Omega-AUTOFIX",
+    "Kim Dataverse",
+    "ChatBridge",
+    "JFRIE",
+    "Modisa Continuum",
+    "AEON-Omega",
+    "Omega-SCIENTIA",
+    "IPEP",
+    "SIF AI",
+    "CASEFORGE-Omega"
+  ],
+  "domain_authority": {
+    "systems_runtime": ["Bubbles", "Federation Omega", "Kim Dataverse"],
+    "legal": ["Lex Advocate"],
+    "evidence_truth_state": ["TruthGrid", "EvidenceOps", "JFRIE"],
+    "directive_logic": ["Superior Logic Doctrine", "KIOAS"],
+    "repair_continuity": ["Omega-AUTOFIX", "ChatBridge"],
+    "scientific_evolution": ["CASEFORGE-Omega", "KAIO Omega", "Omega-SCIENTIA"]
+  },
+  "bootstrap_order": [
+    "identify_spawn",
+    "load_own_bible",
+    "load_federation_registry",
+    "load_recent_sync_events",
+    "load_shared_learnings",
+    "load_conflicts",
+    "run_already_solved_gate",
+    "reuse_or_supersede",
+    "execute",
+    "publish_delta",
+    "publish_bibliography"
+  ],
+  "proof_rule": "No provider-side action may be marked completed without provider/tool evidence."
+}
