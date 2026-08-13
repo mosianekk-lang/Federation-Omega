@@ -42,6 +42,7 @@ jobs:
           python -m unittest tests.test_bubbles_provider_edge_watch -v
           python -m unittest tests.test_bubbles_heartbeat_surface_sync -v
           python -m unittest tests.test_bubbles_platform_specialist_corps -v
+          python -m unittest tests.test_bubbles_provider_surface_elevation -v
 
   command:
     needs: contract
@@ -118,5 +119,65 @@ jobs:
         with:
           name: bubbles-command-receipt-${{ github.run_id }}-${{ github.run_attempt }}
           path: bubbles-command-output/receipt.json
+          if-no-files-found: error
+          retention-days: 90
+
+  provider-surface-readback:
+    needs: contract
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    permissions:
+      contents: read
+      id-token: write
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Attempt canonical keyless Google Cloud identity
+        id: gcp_auth
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: sov-hybrid-suite
+          workload_identity_provider: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+          service_account: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
+      - name: Install gcloud for readback
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: sov-hybrid-suite
+
+      - name: Run Bubbles read-only provider surface probe
+        env:
+          FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+          ARCHON_ADMIN_TOKEN: ${{ secrets.ARCHON_ADMIN_TOKEN }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bubbles-provider-probe-output
+          python -m bubbles.provider_surface_probe --output bubbles-provider-probe-output/receipt.json
+
+      - name: Publish provider readback summary
+        if: always() && hashFiles('bubbles-provider-probe-output/receipt.json') != ''
+        shell: bash
+        run: |
+          echo '## Bubbles Provider Surface Readback' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat bubbles-provider-probe-output/receipt.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable provider readback receipt
+        if: always() && hashFiles('bubbles-provider-probe-output/receipt.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bubbles-provider-surface-readback-${{ github.run_id }}-${{ github.run_attempt }}
+          path: bubbles-provider-probe-output/receipt.json
           if-no-files-found: error
           retention-days: 90
