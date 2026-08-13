@@ -1,0 +1,31 @@
+{
+  "schema": "BUBBLES-FEDERATION-GOVERNOR-OMEGA4-V1",
+  "version": "4.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "kernel_source": "bubbles.federation_governor_omega4.FederationGovernor",
+  "local_execution_governor": "bubbles.chat_governor_omega3",
+  "mandatory_for_governed_activation": [
+    "FEDERATION_OMEGA_NODES",
+    "TRUTHGRID_PROJECTS",
+    "KIM_DATAVERSE_WORKSTREAMS",
+    "BUBBLES_MISSIONS"
+  ],
+  "architecture": {
+    "one_global_kernel": true,
+    "project_governors": true,
+    "thin_chat_shims": true,
+    "shim_max_bytes": 4096,
+    "shared_mission_registry": true,
+    "project_scoped_evidence_cache": true,
+    "capability_registry": true,
+    "cross_chat_dedup": true,
+    "federation_health_correlation": true
+  },
+  "matter_wall_rules": {
+    "project_id_in_dedup_fingerprint": true,
+    "evidence_project_scoped": true,
+    "cross_project_reuse_default": false
+  },
+  "scope": "registered Federation work routed through the governor plane",
+  "maturity": "DETERMINISTIC_TESTED_PENDING_REPOSITORY_ADMISSION"
+}
