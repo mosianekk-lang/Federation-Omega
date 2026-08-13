@@ -1,0 +1,1 @@
+"""Project inheritance capsule helpers."""
