@@ -36,6 +36,33 @@ class FederationEvolutionProgramTests(unittest.TestCase):
                 mandatory_stages=ALL_STAGES[:-1],
             ).validate()
 
+    def test_lower_system_authority_ceiling_is_allowed_without_inheritance(self) -> None:
+        profile = SystemEvolutionProfile(
+            system_id="VERITAS",
+            canonical_name="Veritas-Ω",
+            family="TRUTH_ASSURANCE",
+            optimization_objective="test",
+            strategy_mode=StrategyMode.SPECIALIZED,
+            specialized_algorithms=("FALSIFICATION",),
+            vetoes=("INFERENCE_AS_FACT",),
+            authority_ceiling="A0",
+        ).validate()
+        self.assertEqual("A0", profile.authority_ceiling)
+        self.assertEqual("A0", SYSTEM_PROFILES["VERITAS"].authority_ceiling)
+
+    def test_higher_or_unknown_system_authority_ceiling_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "unsupported authority ceiling"):
+            SystemEvolutionProfile(
+                system_id="VERITAS",
+                canonical_name="Veritas-Ω",
+                family="TRUTH_ASSURANCE",
+                optimization_objective="test",
+                strategy_mode=StrategyMode.SPECIALIZED,
+                specialized_algorithms=("FALSIFICATION",),
+                vetoes=("INFERENCE_AS_FACT",),
+                authority_ceiling="A2_PROVIDER",
+            ).validate()
+
     def test_next_stage_is_first_unproven_stage(self) -> None:
         state = SystemEvolutionState(
             system_id="TRUTHGRID",
