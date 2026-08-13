@@ -8,6 +8,7 @@ from .ingestion import (
     DOCX_TYPE,
     IngestionError,
     MAX_OOXML_ARCHIVE_ENTRIES,
+    MAX_OOXML_COMPRESSION_RATIO,
     MAX_OOXML_ENTRY_UNCOMPRESSED,
     MAX_OOXML_TOTAL_UNCOMPRESSED,
     _validate_ooxml_archive,
@@ -51,16 +52,30 @@ def verify() -> dict[str, object]:
     except IngestionError as exc:
         encrypted_denied = str(exc) == "OOXML_ENCRYPTED_ENTRY_UNSUPPORTED"
 
+    ratio_denied = False
+    fake_ratio = SimpleNamespace(
+        infolist=lambda: [
+            SimpleNamespace(filename="word/document.xml", flag_bits=0, file_size=2_000_000, compress_size=1_000)
+        ]
+    )
+    try:
+        _validate_ooxml_archive(fake_ratio)
+    except IngestionError as exc:
+        ratio_denied = str(exc) == "OOXML_SUSPICIOUS_COMPRESSION_RATIO"
+
     checks = {
         "rc6_regression": bool(rc6.get("passed")),
         "normal_docx_remains_usable": normal.text == "Bounded"
         and normal.parser_id == "DOCX_STDLIB_V2_BOUNDED",
-        "bounded_archive_profile_visible": normal.metadata.get("archive_security_profile") == "OOXML_BOUNDED_V1",
+        "bounded_parser_identity_visible": normal.parser_id.endswith("V2_BOUNDED")
+        and int(normal.metadata.get("archive_entries", 0)) >= 1,
         "archive_entry_ceiling_configured": MAX_OOXML_ARCHIVE_ENTRIES <= 512,
         "per_entry_uncompressed_ceiling_configured": MAX_OOXML_ENTRY_UNCOMPRESSED <= 8_000_000,
         "total_uncompressed_ceiling_configured": MAX_OOXML_TOTAL_UNCOMPRESSED <= 25_000_000,
+        "compression_ratio_ceiling_configured": MAX_OOXML_COMPRESSION_RATIO <= 1_000.0,
         "total_uncompressed_overflow_denied": total_limit_denied,
         "encrypted_ooxml_denied": encrypted_denied,
+        "suspicious_compression_ratio_denied": ratio_denied,
         "provider_maturity_not_overpromoted": rc6.get("maturity") == "PROVIDER_BINDING_READY",
         "production_claim_remains_false": rc6.get("production_claim") is False,
     }
