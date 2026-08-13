@@ -1,13 +1,13 @@
 {
-  "schema_version": "1.0",
-  "owner": "Kim Kagiso Mosiane",
+  "schema_version": "1.1",
+  "owner_alias": "federation-owner",
   "control_plane": {
-    "drive_folder_id": "19-z50DB18x_ZeE_sFHhIg5AKTnQAQzEJ",
-    "control_doc_id": "1yymjDingDcTjHM0cOXoSN-YU-IHwdK8ZSg9Vj72JGx8",
-    "sync_bus_sheet_id": "1N9plg1P3lY0_0w2kWc4WHIH-rqK62Xq1tU5WRYtCWfo",
-    "bubbles_bible_id": "1TxeFU4mTrI5Z71NB2Gl3xMcCGygVBn4w9ph2J0drKEM",
-    "lex_bible_id": "1RaUjki4H5CoHjfMtpM0XJj5FVFzIplD7oOls6sDhhgU",
-    "bibliography_registry_id": "1Bcn7GOgrEa61v0eGIXK-Fx-6xi6GSYsFM-NHBmKrpfk"
+    "drive_folder_id": "env:FEDERATION_DRIVE_FOLDER_ID",
+    "control_doc_id": "env:FEDERATION_CONTROL_DOC_ID",
+    "sync_bus_sheet_id": "env:FEDERATION_SYNC_BUS_SHEET_ID",
+    "bubbles_bible_id": "env:BUBBLES_BIBLE_ID",
+    "lex_bible_id": "env:LEX_ADVOCATE_BIBLE_ID",
+    "bibliography_registry_id": "env:FEDERATION_BIBLIOGRAPHY_REGISTRY_ID"
   },
   "registered_systems": [
     "Bubbles",
@@ -50,5 +50,6 @@
     "publish_delta",
     "publish_bibliography"
   ],
-  "proof_rule": "No provider-side action may be marked completed without provider/tool evidence."
+  "proof_rule": "No provider-side action may be marked completed without provider/tool evidence.",
+  "privacy_rule": "Provider object identifiers and credentials are runtime configuration, not public-source constants."
 }
