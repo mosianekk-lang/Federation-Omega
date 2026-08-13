@@ -27,5 +27,13 @@
     "cross_project_reuse_default": false
   },
   "scope": "registered Federation work routed through the governor plane",
-  "maturity": "DETERMINISTIC_TESTED_PENDING_REPOSITORY_ADMISSION"
+  "admission": {
+    "pr": 437,
+    "merge_commit": "09ad32c318a41107305a4f4bd6df4b821bc3fa95",
+    "federation_omega_airlock": "SUCCESS",
+    "bubbles_command_bus": "SUCCESS",
+    "public_repository_leak_guard": "SUCCESS"
+  },
+  "maturity": "MERGED_MAIN_CI_ADMITTED_PRIVATE_CONTROL_ACTIVE",
+  "next_proof_gate": "live routed Omega4-to-Omega3 mission execution metrics"
 }
