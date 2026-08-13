@@ -1,89 +1,59 @@
-# EvidenceOps Capital Intelligence OS — v1.0.0-rc6
+# EvidenceOps Capital Intelligence OS — v1.0.0-rc7
 
-CIOS rc6 advances the internally executable maturity lanes while provider production remains separately blocked and proof-gated.
+CIOS rc7 continues Ω-FINISH by hardening the already-admitted rc6 product/qualification stack rather than adding new architecture.
 
 ## Current states
 
 - Internal product route: **rc5 admitted**
-- Scientific state: **`SYNTHETIC_DETERMINISTIC_QUALIFICATION_CANDIDATE`**
+- Scientific state: **`SYNTHETIC_DETERMINISTIC_QUALIFIED`**
 - Portfolio state: **`PORTFOLIO_DEMONSTRABLE_CANDIDATE`**
+- Ingestion security state: **`INGESTION_RESOURCE_HARDENED_CANDIDATE`**
 - Provider maturity: **`PROVIDER_BINDING_READY`**
 - Production claim: **false**
 
-The states are intentionally independent. A strong synthetic qualification or portfolio demonstration cannot be used as evidence of provider deployment or real-world investment performance.
+## rc7 security objective
 
-## rc5 product route retained
+The rc5 document route bounded uploaded bytes but DOCX/XLSX are ZIP containers, so a small upload could otherwise expand into a much larger decompressed/parser workload. rc7 adds fail-closed OOXML resource controls before XML parsing.
 
-`tenant auth → bounded document ingestion → integrity hash → classified vault → dedupe/version → search → diligence → digest-bound workspace export`
+The bounded parser now checks:
 
-Reference ingestion supports text/CSV, JSON, RFC822 email, DOCX and XLSX. PDF remains fail-closed unless an explicit external extracted-text source is supplied and labelled.
+- maximum archive entry count;
+- duplicate and unsafe archive names;
+- encrypted entries;
+- maximum per-entry uncompressed size;
+- maximum total declared uncompressed size;
+- suspicious compression ratios;
+- DTD/entity declarations before XML parse;
+- DOCX paragraph count;
+- XLSX worksheet count;
+- XLSX shared-string count;
+- XLSX non-empty cell count;
+- malformed or missing required archive/XML structures.
 
-## rc6 qualification court
+Normal DOCX/XLSX extraction remains supported. The parser metadata exposes `archive_security_profile=OOXML_BOUNDED_V1` so the hardening is inspectable.
 
-`InternalQualificationCourt` applies transparent independent expected values and counterfactual checks across:
+## Proof route
 
-- DCF analytic value;
-- WACC monotonicity;
-- terminal-growth monotonicity;
-- IRR and MOIC analytic values;
-- enterprise-to-equity bridge;
-- evidence-thresholded QoE adjustments;
-- working-capital normalisation;
-- debt-like item inclusion;
-- diligence empty/partial/full boundaries;
-- acquisition-thesis hard gates;
-- final-decision/live-order/private-to-market authority controls;
-- full synthetic journey invariants;
-- missing-evidence counterfactual;
-- off-thesis counterfactual;
-- deterministic replay of economic/decision fields.
+A focused 12-test adversarial suite exercises normal compatibility plus entry-count, path, duplicate-name, compression-ratio, per-entry, total-uncompressed, encryption, DTD/entity, worksheet-count and malformed-archive cases. The suite is bound into the existing Federation Omega Airlock through `test_phoenix_provider_cutover_v3_cios_ingestion_hardening_rc7.py`.
 
-Every check is fatal for the synthetic qualification receipt. The receipt is deterministic and digest-bound.
+The rc7 cumulative verifier first requires rc6 to remain green, then verifies normal bounded DOCX operation and fail-closed archive controls. Provider maturity and consequential authority remain unchanged.
 
-### Scientific truth boundary
+## Retained product and authority chain
 
-This qualification proves transparent deterministic/synthetic behavior only. It is **not** historical-deal calibration, investment-performance validation, accounting assurance, legal/tax advice or production provider proof.
+`THESIS → TARGET → DOCUMENT INGESTION → EVIDENCE/CONTRADICTIONS → DILIGENCE → QoE → VALUATION → PUBLIC-MARKET CONTEXT → COUNCIL → HUMAN DECISION → INTEGRATION → OUTCOME LEARNING`
 
-## rc6 proof-safe demonstration pack
+Authenticated product routes remain default-deny. Trade, orders, transfers, withdrawals, payments, signing and regulatory-filing route families remain unexposed.
 
-`CIOSDemoPackBuilder` will generate a complete synthetic portfolio bundle only when both the synthetic MVP journey and qualification court pass:
+## Truth boundary
 
-- `manifest.json`
-- `decision_brief.json`
-- `qualification_receipt.json`
-- `case_study.md`
-- `dashboard.html`
-- `pack_receipt.json` when written to disk
+rc7 is internal parser/resource hardening. It is not a production VDR, malware/DLP service, enterprise IdP/MFA/KMS proof, historical-deal calibration, real pilot outcome or provider deployment.
 
-The pack is explicitly labelled `PUBLIC_SAFE_SYNTHETIC_DEMONSTRATION`. It preserves visible evidence contradictions, requires human final decision authority, denies live orders and denies private-M&A-to-public-market export.
+## Next automated completion path after rc7
 
-The case study may only describe implemented/proven software behavior. It explicitly disclaims real customer, company, transaction, investment-performance or production claims.
-
-## Runtime authority remains unchanged
-
-Authenticated/default-deny product routes remain:
-
-- `GET /health`
-- `GET /ready`
-- `GET /v1/verify`
-- `POST /v1/events`
-- `POST /v1/documents`
-- `POST /v1/search`
-- `GET /v1/diligence`
-- `GET /v1/workspace`
-
-Trade, orders, transfers, withdrawals, payments, signing and regulatory-filing route families remain unexposed.
-
-## Next finish gates after rc6
-
-Without waiting for Google/provider authority, CIOS should next pursue:
-
-1. generate/read back the exact-source demo pack as an actual user-visible artifact;
-2. build representative historical/public transaction calibration datasets with explicit source/licensing provenance;
-3. compare deterministic reference models against independently sourced deal/financial outcomes;
-4. add false-positive/false-negative and calibration-error reporting;
-5. conduct product pilot/value measurement with real consenting users when available.
-
-The separate Sparks lane remains:
-
-`authorised private provider → canary → provider readback → enterprise controls → ProductionQualificationGate → PRODUCTION_VERIFIED`
+1. exact-current-main recut and Airlock/Leak Guard/Bubbles admission;
+2. merge and canonical readback;
+3. materialize the rc6/rc7 synthetic demonstration pack for user inspection;
+4. build a provenance-controlled public/historical transaction calibration corpus;
+5. measure model error/calibration and false-positive/false-negative behavior;
+6. prepare a consenting-user pilot/value scorecard;
+7. keep Sparks' private-provider canary lane isolated until external authority becomes available.
