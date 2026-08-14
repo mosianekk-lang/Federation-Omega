@@ -115,6 +115,9 @@ jobs:
       - name: Run KAIO registered-source shadow boundary regression tests
         run: python -m unittest discover -s tests -p 'test_kaio_fluid_shadow_unittest.py' -v
 
+      - name: Run EvidenceOps proof-state transition adversarial regression tests
+        run: python -m unittest discover -s tests -p 'test_evidenceops_proof_state_transition_guard.py' -v
+
       - name: Run Federation autonomous controller regression tests
         run: python -m unittest discover -s tests -p 'test_federation_autonomous_controller.py' -v
 
