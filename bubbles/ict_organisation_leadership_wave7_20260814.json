@@ -1,0 +1,44 @@
+{
+  "schema": "JOBS-FOR-KIM-WAVE7-ICT-ORGANISATION-LEADERSHIP-V1",
+  "as_of": "2026-08-14",
+  "owner": "Kim Kagiso Mosiane",
+  "capability_id": "CAP-PEOPLE",
+  "name": "ICT People, Workforce & Organisation Leadership",
+  "gap_class": "BOTH",
+  "market_trigger": {
+    "occurrence_count": 2,
+    "role_ids": [
+      "DUT-DIR-IT-INFRA-OPS-30000032-20260814",
+      "TMFORUM-IT-DIRECTOR-20260814"
+    ],
+    "reason": "Senior technology roles repeatedly require multi-disciplinary team leadership, capability building, succession and operating-model decisions in addition to technical strategy."
+  },
+  "minimum_squad": ["Bubbles", "Beacon", "Ledger"],
+  "implemented_assets": [
+    "bubbles/ict_organisation_leadership_lab.py",
+    "tests/test_bubbles_ict_organisation_leadership_lab.py",
+    "bubbles/career_market_signals_20260814.json"
+  ],
+  "proof_project": "Synthetic higher-education ICT organisation model with role/capability mapping, service-demand versus capacity analysis, skills gaps, succession risk and bounded insource/outsource decision support.",
+  "proof_gates": [
+    "IMPLEMENTED",
+    "FOCUSED_TESTS_PASS",
+    "FEDERATION_OMEGA_AIRLOCK_PASS",
+    "PUBLIC_REPOSITORY_LEAK_GUARD_PASS",
+    "BUBBLES_COMMAND_BUS_PASS",
+    "LEDGER_APPROVED_CLAIM"
+  ],
+  "current_state": "IMPLEMENTED_AWAITING_EXACT_HEAD_ADMISSION",
+  "safe_claim_candidate": "Designed and deterministically tested a synthetic higher-education ICT organisation model covering capacity, skills, succession risk and insource/outsource decision support.",
+  "forbidden_claims": [
+    "managed the modelled university ICT headcount",
+    "personally owned the modelled workforce budget",
+    "executed real staff succession decisions",
+    "performed real procurement or outsourcing decisions",
+    "proved workforce performance improvement",
+    "held CIO people authority through this lab"
+  ],
+  "kim_personal_evidence_boundary": "The lab does not establish Kim's personal headcount, workforce-budget, performance-management, succession, procurement or CIO authority. Any CV/interview claim requires separate Kim-specific evidence plus Ledger approval.",
+  "bubbles_capability_boundary": "This is organisational capability in Bubbles. It may demonstrate transferable design and decision-model skill but does not create past personal employment experience.",
+  "next": "Run focused tests and exact-head Federation Omega admission. If all gates pass, promote this Bubbles capability to TESTED_LOCAL_DEMONSTRATION while retaining the personal-evidence gap."
+}
