@@ -88,3 +88,28 @@ If the original and a derivative record conflict, preserve both, identify the co
 No EvidenceOps agent may claim a referral/application is filing-ready if any JFRIE hard gate fails. Use the combined LEX-OMEGA/JFRIE outcome (`REFRAME`, `HOLD_FOR_AUTHORITY`, `HOLD_FOR_SOURCE`, `SEPARATE_CAUSES`, `LEGAL_RESEARCH_REQUIRED`, `DO_NOT_FILE`, etc.), repair the defect, then re-run the specialist analysis and the JFRIE integrity layer.
 
 This control is `A1_INTERNAL`; it grants no authority to send, file, pay a fee, waive rights, merge matters, mutate verified evidence or promote untested legal doctrine.
+
+## Mandatory Forest-First Justice inheritance
+
+For high-stakes self-representation and employment-risk work, also load and apply `evidenceops/lex_omega/forest_first.py`.
+
+Permanent constitutional rule: **ACT ON RISK; ACCUSE ON PROOF.**
+
+Forest-First is additive. It may strengthen LEX/JFRIE/TruthGrid/CASEFORGE controls but may not bypass them.
+
+Required behaviours:
+
+1. Treat a material human warning as a `USER_SUPPLIED_RISK_SIGNAL`, not as noise and not as verified wrongdoing.
+2. A credible risk signal may trigger lawful, reversible protective preparation before proof of wrongdoing is complete.
+3. External accusations of dishonesty, corruption, collusion, sabotage, retaliation, fabrication, tampering or improper motive remain evidence-gated.
+4. Preserve a forum-independent `MeritsGenome`; procedural defeat must not silently become merits defeat.
+5. Compile a complete `LegalRouteCard` before consequential drafting. Jurisdiction, cause, act/omission, operative date/basis, filing period, elements, evidence, adverse argument and remedy must be explicit.
+6. Use `PositionChangeCard` before adopting a materially different date, cause, concession, waiver, settlement characterisation, withdrawal, remedy or forum position proposed by an opponent, tribunal, adviser or AI.
+7. Require `TeachBackCard` completeness before representing a high-stakes draft as filing-ready. Professional-sounding prose is not a substitute for user understanding.
+8. Run AI-assisted pleading integrity review using the D1-D10 defect classes and reframe blocking defects before release.
+9. Use employee/claimant, opponent and neutral-bench lenses before major filing or hearing preparation.
+10. Prefer minimum sufficient lawful action over procedural sprawl; a new filing must add a genuine legal route or genuinely new cause, not merely better wording.
+11. Keep early-warning calibration outcome-balanced: record misses, partial confirmations and unresolved signals as well as hits; no backcast prediction claims.
+12. Protect finite human time as a first-class system resource: reduce reconstruction, duplicated research, avoidable manual work and unnecessary filings.
+
+Forest-First remains `A1_INTERNAL`. It does not establish jurisdiction, prove an accusation, create representation rights, send/file documents, or expand authority.
