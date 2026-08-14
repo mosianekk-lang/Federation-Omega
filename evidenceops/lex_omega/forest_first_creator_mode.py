@@ -5,6 +5,9 @@ from enum import Enum
 from typing import Iterable, Tuple
 
 
+CREATOR_MODE_CONTRACT_VERSION = "1.0.1"
+
+
 class WorkClass(str, Enum):
     CREATIVE = "CREATIVE"
     JUDGMENT = "JUDGMENT"
@@ -79,6 +82,10 @@ class ForestFirstCreatorMode:
     Safe, authorised, repeatable technical work belongs to the system. Kim is
     interrupted mainly for creative direction, personal facts only he can supply,
     teach-back/judgment, and consequential approvals.
+
+    This module routes burden only. It does not expand tool authority, provider
+    permissions, filing rights, or the system's ability to obtain facts that only
+    the user knows.
     """
 
     def route(self, items: Iterable[WorkItem]) -> CreatorModeReport:
@@ -165,6 +172,7 @@ class ForestFirstCreatorMode:
 
 __all__ = [
     "BurdenOwner",
+    "CREATOR_MODE_CONTRACT_VERSION",
     "CreatorModeReport",
     "ForestFirstCreatorMode",
     "RoutedWorkItem",
