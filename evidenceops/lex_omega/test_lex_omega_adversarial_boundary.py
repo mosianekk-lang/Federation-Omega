@@ -1,6 +1,7 @@
 from datetime import date
 
 from evidenceops.lex_omega.lex_omega import (
+    AuthorityLifecycle,
     AuthorityRecord,
     AuthorityState,
     AuthoritySupportClaim,
@@ -51,6 +52,7 @@ def test_proposed_amendment_source_must_not_be_current_law_without_in_force_proo
         verified_on=date(2026, 8, 14),
         later_treatment_checked=True,
         state=AuthorityState.CURRENT_VERIFIED,
+        lifecycle=AuthorityLifecycle.PROPOSED,
         supported_claims=(
             AuthoritySupportClaim(
                 "proposed-rule",
