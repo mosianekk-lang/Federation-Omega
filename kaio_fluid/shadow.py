@@ -52,30 +52,38 @@ class RegisteredSourceShadowValidator:
             raise ValueError("shadow packet must have external_effect=false")
         if packet["provider_mutation_permitted"] is not False:
             raise ValueError("shadow packet must forbid provider mutation")
-        if not str(packet["authority_ceiling"]).startswith("A1_INTERNAL"):
-            raise ValueError("shadow packet exceeds A1 internal authority")
+        if str(packet["authority_ceiling"]) != "A1_INTERNAL_READ_ONLY":
+            raise ValueError("shadow packet requires exact A1_INTERNAL_READ_ONLY authority")
 
         sources = tuple(packet["sources"])
         if not sources:
             raise ValueError("shadow packet has no registered sources")
+        source_ids = tuple(str(source.get("source_id", "")).strip() for source in sources)
+        if any(not source_id for source_id in source_ids):
+            raise ValueError("shadow packet source identities must be nonblank")
+        if len(set(source_ids)) != len(source_ids):
+            raise ValueError("shadow packet source identities must be unique")
 
         evidence = tuple(
             EvidenceItem(
-                id=str(source["source_id"]),
+                id=source_id,
                 state=EvidenceState.SUPPORTED,
                 source_identity=str(source["title"]),
-                independent_lineage=str(source["source_id"]),
+                independent_lineage=source_id,
                 reliability=0.8,
                 materiality=1.0,
             )
-            for source in sources
+            for source, source_id in zip(sources, source_ids)
         )
         provider_proofs = tuple(packet["required_provider_proof"])
-        unresolved = tuple(
-            proof
+        invalid_provider_states = tuple(
+            str(proof.get("initial_state", ""))
             for proof in provider_proofs
-            if str(proof.get("initial_state", "")).startswith("UNVERIFIED")
+            if not str(proof.get("initial_state", "")).startswith("UNVERIFIED")
         )
+        if invalid_provider_states:
+            raise ValueError("shadow packet cannot import promoted provider proof state")
+        unresolved = provider_proofs
         uncertainty = min(1.0, 0.35 + 0.05 * len(unresolved))
         novelty = min(1.0, 0.35 + 0.03 * len(unresolved))
         ctx = ProblemContext(
