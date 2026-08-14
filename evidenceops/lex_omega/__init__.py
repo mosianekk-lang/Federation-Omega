@@ -23,6 +23,14 @@ from .forest_first import (
     RiskSignalState,
     TeachBackCard,
 )
+from .forest_first_anticipatory import (
+    ActionClass,
+    AnticipatoryContext,
+    AnticipatoryCue,
+    AnticipatoryReport,
+    ForestFirstAnticipatoryEngine,
+    NeedClass,
+)
 from .forest_first_health import (
     ForestFirstHealthInputs,
     ForestFirstHealthReport,
@@ -51,6 +59,10 @@ from .lex_omega import (
 )
 
 __all__ = [
+    "ActionClass",
+    "AnticipatoryContext",
+    "AnticipatoryCue",
+    "AnticipatoryReport",
     "AuthorityLifecycle",
     "AuthorityRecord",
     "AuthorityState",
@@ -62,6 +74,7 @@ __all__ = [
     "EvidenceOpsLegalAlignmentGate",
     "EvidenceOpsLegalAlignmentResult",
     "FOREST_FIRST_DOCTRINE_ID",
+    "ForestFirstAnticipatoryEngine",
     "ForestFirstHealthInputs",
     "ForestFirstHealthReport",
     "ForestFirstHealthState",
@@ -80,6 +93,7 @@ __all__ = [
     "MeritsGenome",
     "MaturityLevel",
     "MaturityTracker",
+    "NeedClass",
     "OutcomeClass",
     "OutcomeLearningEvent",
     "PleadingIntegrityFinding",
