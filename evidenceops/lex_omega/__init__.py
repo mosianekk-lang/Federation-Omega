@@ -23,6 +23,12 @@ from .forest_first import (
     RiskSignalState,
     TeachBackCard,
 )
+from .forest_first_health import (
+    ForestFirstHealthInputs,
+    ForestFirstHealthReport,
+    ForestFirstHealthState,
+    evaluate_forest_first_health,
+)
 from .lex_omega import (
     AuthorityLifecycle,
     AuthorityRecord,
@@ -56,6 +62,9 @@ __all__ = [
     "EvidenceOpsLegalAlignmentGate",
     "EvidenceOpsLegalAlignmentResult",
     "FOREST_FIRST_DOCTRINE_ID",
+    "ForestFirstHealthInputs",
+    "ForestFirstHealthReport",
+    "ForestFirstHealthState",
     "ForestFirstJusticeGate",
     "ForestFirstRequest",
     "ForestFirstResult",
@@ -82,4 +91,5 @@ __all__ = [
     "RiskSignalState",
     "TeachBackCard",
     "TriangleState",
+    "evaluate_forest_first_health",
 ]
