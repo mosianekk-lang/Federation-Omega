@@ -237,6 +237,34 @@ class ChatBridgeOmega4OpenAIProviderTests(unittest.IsolatedAsyncioTestCase):
                 destination_session_key="process-d",
             )
 
+    async def test_clone_resets_active_provider_identity_before_branch_execution(self):
+        source = await self.provider.run_turn(
+            "omega4-canary",
+            "REMEMBER=blue-orchid",
+            destination_session_key="process-a",
+        )
+        branch = self.bridge.clone("omega4-canary", "omega4-canary-branch")
+        self.assertTrue(branch["provider_binding_reset"])
+        restored_branch = self.bridge.store.restore(
+            "omega4-canary-branch",
+            destination_session_key="branch-inspect",
+        )
+        self.assertEqual(restored_branch.provider_ref.mode, ContinuationMode.NONE)
+        source_restore = self.bridge.store.restore(
+            "omega4-canary",
+            destination_session_key="source-inspect",
+        )
+        self.assertEqual(source_restore.provider_ref.conversation_id, source["conversation_id"])
+
+        branch_provider = _FakeProvider(self.bridge, self.provider_state, model="fake-model")
+        branch_turn = await branch_provider.run_turn(
+            "omega4-canary-branch",
+            "REMEMBER=branch-token",
+            destination_session_key="branch-process",
+            allow_restore_preview=True,
+        )
+        self.assertNotEqual(branch_turn["conversation_id"], source["conversation_id"])
+
     async def test_provider_strategy_mismatch_fails_closed(self):
         other = ProviderContinuationRef(
             mode=ContinuationMode.OPENAI_PREVIOUS_RESPONSE,
