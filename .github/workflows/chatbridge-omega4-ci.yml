@@ -1,0 +1,28 @@
+name: ChatBridge Omega4 CI
+
+on:
+  pull_request:
+    paths:
+      - 'bubbles/chatbridge_omega4/**'
+      - '.github/workflows/chatbridge-omega4-ci.yml'
+  push:
+    branches:
+      - 'bubbles/chatbridge-omega4-durable-conversation-os'
+    paths:
+      - 'bubbles/chatbridge_omega4/**'
+      - '.github/workflows/chatbridge-omega4-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-core:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Run ChatBridge Omega4 deterministic suite
+        run: python -m unittest bubbles.chatbridge_omega4.test_omega4 -v
