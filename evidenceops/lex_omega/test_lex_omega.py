@@ -5,6 +5,7 @@ import pytest
 from evidenceops.lex_omega.lex_omega import (
     AuthorityRecord,
     AuthorityState,
+    AuthoritySupportClaim,
     ClaimLawEvidenceTriangle,
     CounselRole,
     CounselSubmission,
@@ -22,7 +23,7 @@ from evidenceops.lex_omega.lex_omega import (
 )
 
 
-def current_authority(authority_id="AUTH-1"):
+def current_authority(authority_id="AUTH-1", text="material proposition", support_key="material"):
     return AuthorityRecord(
         authority_id=authority_id,
         citation="Test Authority",
@@ -31,6 +32,16 @@ def current_authority(authority_id="AUTH-1"):
         later_treatment_checked=True,
         state=AuthorityState.CURRENT_VERIFIED,
         revalidation_days=30,
+        supported_claims=(AuthoritySupportClaim(support_key, text, "primary://authority#pinpoint"),),
+    )
+
+
+def verified_proposition(text="material proposition", authority_ids=("AUTH-1",), support_key="material"):
+    return LegalProposition(
+        text,
+        authority_ids,
+        proposition_state=PropositionState.VERIFIED_LAW,
+        support_key=support_key,
     )
 
 
@@ -43,9 +54,15 @@ def counsel(conclusion="supported"):
 
 
 def test_legal_proposition_id_is_stable_across_whitespace_and_authority_order():
-    p1 = LegalProposition("  This   is LAW ", ("B", "A"), matter_id="M1", legal_route="ULP")
-    p2 = LegalProposition("this is law", ("A", "B"), matter_id="M1", legal_route="ULP")
+    p1 = LegalProposition("  This   is LAW ", ("B", "A"), matter_id="M1", legal_route="ULP", support_key="rule")
+    p2 = LegalProposition("this is law", ("A", "B"), matter_id="M1", legal_route="ULP", support_key="rule")
     assert p1.proposition_id == p2.proposition_id
+
+
+def test_support_key_changes_proposition_identity():
+    p1 = LegalProposition("this is law", ("A",), support_key="rule-a")
+    p2 = LegalProposition("this is law", ("A",), support_key="rule-b")
+    assert p1.proposition_id != p2.proposition_id
 
 
 def test_authority_revalidation_expires_without_rewriting_history():
@@ -137,13 +154,10 @@ def test_stale_authority_holds_release_for_authority():
             later_treatment_checked=True,
             state=AuthorityState.CURRENT_VERIFIED,
             revalidation_days=30,
+            supported_claims=(AuthoritySupportClaim("material", "material proposition", "primary://a#pin"),),
         )
     )
-    proposition = LegalProposition(
-        "material proposition",
-        ("A",),
-        proposition_state=PropositionState.VERIFIED_LAW,
-    )
+    proposition = verified_proposition(authority_ids=("A",))
     proposition_id = ledger.add_proposition(proposition)
     council = LexOmegaCouncil(ledger)
     result = council.evaluate(
@@ -160,12 +174,7 @@ def test_stale_authority_holds_release_for_authority():
 def test_missing_evidence_side_holds_release_for_source():
     ledger = LegalPropositionLedger()
     ledger.add_authority(current_authority())
-    proposition = LegalProposition(
-        "material proposition",
-        ("AUTH-1",),
-        proposition_state=PropositionState.VERIFIED_LAW,
-    )
-    proposition_id = ledger.add_proposition(proposition)
+    proposition_id = ledger.add_proposition(verified_proposition())
     council = LexOmegaCouncil(ledger)
     result = council.evaluate(
         on_date=date.today(),
@@ -181,12 +190,7 @@ def test_missing_evidence_side_holds_release_for_source():
 def test_counsel_disagreement_is_preserved_as_limitation():
     ledger = LegalPropositionLedger()
     ledger.add_authority(current_authority())
-    proposition = LegalProposition(
-        "material proposition",
-        ("AUTH-1",),
-        proposition_state=PropositionState.VERIFIED_LAW,
-    )
-    proposition_id = ledger.add_proposition(proposition)
+    proposition_id = ledger.add_proposition(verified_proposition())
     submissions = [
         CounselSubmission(CounselRole.PRIMARY_ANALYST, "route A"),
         CounselSubmission(CounselRole.EMPLOYER_RED_TEAM, "route fails"),
@@ -203,3 +207,42 @@ def test_counsel_disagreement_is_preserved_as_limitation():
     )
     assert result.release_state == ReleaseState.PASS_WITH_LIMITATIONS
     assert len(result.counsel_conflicts) == 3
+
+
+def test_verified_law_without_explicit_support_binding_fails_closed():
+    ledger = LegalPropositionLedger()
+    ledger.add_authority(current_authority())
+    proposition = LegalProposition(
+        "material proposition",
+        ("AUTH-1",),
+        proposition_state=PropositionState.VERIFIED_LAW,
+    )
+    proposition_id = ledger.add_proposition(proposition)
+    assert ledger.proposition_authority_state(proposition_id, date.today()) == AuthorityState.SEMANTIC_SUPPORT_MISSING
+
+
+def test_current_authority_with_false_mutation_fails_semantic_support():
+    ledger = LegalPropositionLedger()
+    ledger.add_authority(current_authority(text="unfair labour practice referrals are made within 90 days", support_key="ulp-period"))
+    proposition = LegalProposition(
+        "unfair labour practice referrals are made within 30 days",
+        ("AUTH-1",),
+        proposition_state=PropositionState.VERIFIED_LAW,
+        support_key="ulp-period",
+    )
+    proposition_id = ledger.add_proposition(proposition)
+    assert ledger.proposition_authority_state(proposition_id, date.today()) == AuthorityState.SEMANTIC_SUPPORT_MISSING
+
+
+def test_correct_bound_proposition_passes_semantic_support():
+    text = "unfair labour practice referrals are made within 90 days"
+    ledger = LegalPropositionLedger()
+    ledger.add_authority(current_authority(text=text, support_key="ulp-period"))
+    proposition = LegalProposition(
+        text,
+        ("AUTH-1",),
+        proposition_state=PropositionState.VERIFIED_LAW,
+        support_key="ulp-period",
+    )
+    proposition_id = ledger.add_proposition(proposition)
+    assert ledger.proposition_authority_state(proposition_id, date.today()) == AuthorityState.CURRENT_VERIFIED

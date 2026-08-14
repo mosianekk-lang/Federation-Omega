@@ -7,12 +7,17 @@ from hashlib import sha256
 from typing import Dict, Iterable, List, Mapping, Optional, Sequence, Tuple
 
 
+def _normalize_text(value: str) -> str:
+    return " ".join(value.casefold().split())
+
+
 class AuthorityState(str, Enum):
     CURRENT_VERIFIED = "CURRENT_VERIFIED"
     RECHECK_REQUIRED = "RECHECK_REQUIRED"
     SUPERSEDED = "SUPERSEDED"
     CONFLICTED = "CONFLICTED"
     UNVERIFIED = "UNVERIFIED"
+    SEMANTIC_SUPPORT_MISSING = "SEMANTIC_SUPPORT_MISSING"
 
 
 class PropositionState(str, Enum):
@@ -71,6 +76,29 @@ class MaturityLevel(str, Enum):
 
 
 @dataclass(frozen=True)
+class AuthoritySupportClaim:
+    """Explicit proposition-to-authority support binding.
+
+    This deliberately avoids fuzzy semantic matching. A verified legal
+    proposition may rely on an authority only when an independently registered
+    support claim has the same stable key and the same normalized canonical
+    proposition text. The nonblank pinpoint is retained as proof metadata.
+    """
+
+    support_key: str
+    canonical_text: str
+    source_pinpoint: str
+
+    def __post_init__(self) -> None:
+        if not self.support_key.strip():
+            raise ValueError("authority support claim requires support_key")
+        if not self.canonical_text.strip():
+            raise ValueError("authority support claim requires canonical_text")
+        if not self.source_pinpoint.strip():
+            raise ValueError("authority support claim requires source_pinpoint")
+
+
+@dataclass(frozen=True)
 class AuthorityRecord:
     authority_id: str
     citation: str
@@ -81,6 +109,7 @@ class AuthorityRecord:
     later_treatment_checked: bool = False
     state: AuthorityState = AuthorityState.UNVERIFIED
     revalidation_days: int = 30
+    supported_claims: Tuple[AuthoritySupportClaim, ...] = ()
 
     def status_on(self, on_date: date) -> AuthorityState:
         if self.state in {AuthorityState.SUPERSEDED, AuthorityState.CONFLICTED, AuthorityState.UNVERIFIED}:
@@ -97,6 +126,17 @@ class AuthorityRecord:
             return AuthorityState.RECHECK_REQUIRED
         return AuthorityState.CURRENT_VERIFIED
 
+    def supports(self, support_key: str, proposition_text: str) -> bool:
+        if not support_key.strip():
+            return False
+        normalized = _normalize_text(proposition_text)
+        return any(
+            claim.support_key == support_key
+            and _normalize_text(claim.canonical_text) == normalized
+            and bool(claim.source_pinpoint.strip())
+            for claim in self.supported_claims
+        )
+
 
 @dataclass(frozen=True)
 class LegalProposition:
@@ -106,12 +146,19 @@ class LegalProposition:
     matter_id: Optional[str] = None
     legal_route: Optional[str] = None
     element_ids: Tuple[str, ...] = ()
+    support_key: str = ""
 
     @property
     def proposition_id(self) -> str:
-        normalized = " ".join(self.text.lower().split())
+        normalized = _normalize_text(self.text)
         payload = "|".join(
-            [normalized, *(sorted(self.authority_ids)), self.matter_id or "", self.legal_route or ""]
+            [
+                normalized,
+                *(sorted(self.authority_ids)),
+                self.matter_id or "",
+                self.legal_route or "",
+                self.support_key,
+            ]
         )
         return f"LP-{sha256(payload.encode('utf-8')).hexdigest()[:16]}"
 
@@ -133,9 +180,16 @@ class LegalPropositionLedger:
         proposition = self.propositions[proposition_id]
         if not proposition.authority_ids:
             return AuthorityState.UNVERIFIED
-        states = [self.authorities[a].status_on(on_date) for a in proposition.authority_ids if a in self.authorities]
-        if len(states) != len(proposition.authority_ids):
-            return AuthorityState.UNVERIFIED
+
+        records: List[AuthorityRecord] = []
+        states: List[AuthorityState] = []
+        for authority_id in proposition.authority_ids:
+            record = self.authorities.get(authority_id)
+            if record is None:
+                return AuthorityState.UNVERIFIED
+            records.append(record)
+            states.append(record.status_on(on_date))
+
         if AuthorityState.SUPERSEDED in states:
             return AuthorityState.SUPERSEDED
         if AuthorityState.CONFLICTED in states:
@@ -144,6 +198,16 @@ class LegalPropositionLedger:
             return AuthorityState.UNVERIFIED
         if AuthorityState.RECHECK_REQUIRED in states:
             return AuthorityState.RECHECK_REQUIRED
+
+        if proposition.proposition_state in {
+            PropositionState.VERIFIED_LAW,
+            PropositionState.VERIFIED_WITH_LIMITATION,
+        }:
+            if not proposition.support_key.strip():
+                return AuthorityState.SEMANTIC_SUPPORT_MISSING
+            if not all(record.supports(proposition.support_key, proposition.text) for record in records):
+                return AuthorityState.SEMANTIC_SUPPORT_MISSING
+
         return AuthorityState.CURRENT_VERIFIED
 
     def dependants_for_authority(self, authority_id: str) -> Tuple[str, ...]:
