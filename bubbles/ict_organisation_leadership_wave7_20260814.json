@@ -28,8 +28,17 @@
     "BUBBLES_COMMAND_BUS_PASS",
     "LEDGER_APPROVED_CLAIM"
   ],
-  "current_state": "IMPLEMENTED_AWAITING_EXACT_HEAD_ADMISSION",
+  "current_state": "TESTED_LOCAL_DEMONSTRATION_ADMITTED",
+  "admission_proof": {
+    "source_pr": 443,
+    "exact_head_sha": "79d1a87a37b030886a4d89e58a33090acab71b09",
+    "merge_sha": "ced0f4aca3f61679e9038598d846d67ce2a0faee",
+    "federation_omega_airlock": "PASS",
+    "public_repository_leak_guard": "PASS",
+    "bubbles_command_bus": "PASS"
+  },
   "safe_claim_candidate": "Designed and deterministically tested a synthetic higher-education ICT organisation model covering capacity, skills, succession risk and insource/outsource decision support.",
+  "claim_release_state": "LEDGER_APPROVAL_STILL_REQUIRED_FOR_KIM_CV_OR_INTERVIEW_USE",
   "forbidden_claims": [
     "managed the modelled university ICT headcount",
     "personally owned the modelled workforce budget",
@@ -39,6 +48,6 @@
     "held CIO people authority through this lab"
   ],
   "kim_personal_evidence_boundary": "The lab does not establish Kim's personal headcount, workforce-budget, performance-management, succession, procurement or CIO authority. Any CV/interview claim requires separate Kim-specific evidence plus Ledger approval.",
-  "bubbles_capability_boundary": "This is organisational capability in Bubbles. It may demonstrate transferable design and decision-model skill but does not create past personal employment experience.",
-  "next": "Run focused tests and exact-head Federation Omega admission. If all gates pass, promote this Bubbles capability to TESTED_LOCAL_DEMONSTRATION while retaining the personal-evidence gap."
+  "bubbles_capability_boundary": "This is organisational capability in Bubbles. It demonstrates local synthetic design and decision-model capability but does not create past personal employment experience.",
+  "next": "Retain TESTED_LOCAL_DEMONSTRATION as the Bubbles state. Pursue measured organisational/pilot evidence only if a legitimate bounded use case becomes available; keep Kim personal evidence separate."
 }
