@@ -7,8 +7,10 @@ from .alignment import (
     MainlineMaturityStage,
 )
 from .lex_omega import (
+    AuthorityLifecycle,
     AuthorityRecord,
     AuthorityState,
+    AuthoritySupportClaim,
     ClaimLawEvidenceTriangle,
     CounselRole,
     IndependentCounselPanel,
@@ -26,8 +28,10 @@ from .lex_omega import (
 )
 
 __all__ = [
+    "AuthorityLifecycle",
     "AuthorityRecord",
     "AuthorityState",
+    "AuthoritySupportClaim",
     "ClaimLawEvidenceTriangle",
     "CounselRole",
     "EvidenceOpsLegalAlignmentGate",

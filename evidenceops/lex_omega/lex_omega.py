@@ -11,13 +11,36 @@ def _normalize_text(value: str) -> str:
     return " ".join(value.casefold().split())
 
 
+def _pinpoint_belongs_to_source(source_ref: str, source_pinpoint: str) -> bool:
+    """Require pinpoint provenance to remain bound to the registered authority source.
+
+    A nonblank but unrelated pinpoint is not evidence that the registered source
+    supports the proposition. The bounded URI rule deliberately accepts only the
+    exact source reference or a fragment/query anchored to that same reference.
+    """
+
+    source = source_ref.strip()
+    pinpoint = source_pinpoint.strip()
+    if not source or not pinpoint:
+        return False
+    return pinpoint == source or pinpoint.startswith(f"{source}#") or pinpoint.startswith(f"{source}?")
+
+
 class AuthorityState(str, Enum):
     CURRENT_VERIFIED = "CURRENT_VERIFIED"
     RECHECK_REQUIRED = "RECHECK_REQUIRED"
     SUPERSEDED = "SUPERSEDED"
     CONFLICTED = "CONFLICTED"
     UNVERIFIED = "UNVERIFIED"
+    NOT_IN_FORCE = "NOT_IN_FORCE"
     SEMANTIC_SUPPORT_MISSING = "SEMANTIC_SUPPORT_MISSING"
+
+
+class AuthorityLifecycle(str, Enum):
+    IN_FORCE = "IN_FORCE"
+    PROPOSED = "PROPOSED"
+    REPEALED = "REPEALED"
+    UNKNOWN = "UNKNOWN"
 
 
 class PropositionState(str, Enum):
@@ -82,7 +105,8 @@ class AuthoritySupportClaim:
     This deliberately avoids fuzzy semantic matching. A verified legal
     proposition may rely on an authority only when an independently registered
     support claim has the same stable key and the same normalized canonical
-    proposition text. The nonblank pinpoint is retained as proof metadata.
+    proposition text. The pinpoint must also be provenance-bound to the
+    AuthorityRecord.source_ref; arbitrary nonblank pinpoint text is insufficient.
     """
 
     support_key: str
@@ -110,10 +134,17 @@ class AuthorityRecord:
     state: AuthorityState = AuthorityState.UNVERIFIED
     revalidation_days: int = 30
     supported_claims: Tuple[AuthoritySupportClaim, ...] = ()
+    lifecycle: AuthorityLifecycle = AuthorityLifecycle.IN_FORCE
 
     def status_on(self, on_date: date) -> AuthorityState:
         if self.state in {AuthorityState.SUPERSEDED, AuthorityState.CONFLICTED, AuthorityState.UNVERIFIED}:
             return self.state
+        if self.lifecycle == AuthorityLifecycle.PROPOSED:
+            return AuthorityState.NOT_IN_FORCE
+        if self.lifecycle == AuthorityLifecycle.REPEALED:
+            return AuthorityState.SUPERSEDED
+        if self.lifecycle != AuthorityLifecycle.IN_FORCE:
+            return AuthorityState.RECHECK_REQUIRED
         if self.effective_from and on_date < self.effective_from:
             return AuthorityState.RECHECK_REQUIRED
         if self.effective_to and on_date > self.effective_to:
@@ -133,7 +164,7 @@ class AuthorityRecord:
         return any(
             claim.support_key == support_key
             and _normalize_text(claim.canonical_text) == normalized
-            and bool(claim.source_pinpoint.strip())
+            and _pinpoint_belongs_to_source(self.source_ref, claim.source_pinpoint)
             for claim in self.supported_claims
         )
 
@@ -196,6 +227,8 @@ class LegalPropositionLedger:
             return AuthorityState.CONFLICTED
         if AuthorityState.UNVERIFIED in states:
             return AuthorityState.UNVERIFIED
+        if AuthorityState.NOT_IN_FORCE in states:
+            return AuthorityState.NOT_IN_FORCE
         if AuthorityState.RECHECK_REQUIRED in states:
             return AuthorityState.RECHECK_REQUIRED
 
