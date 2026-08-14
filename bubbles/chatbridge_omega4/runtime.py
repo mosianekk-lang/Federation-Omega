@@ -9,13 +9,13 @@ from .store import ChatBridgeStore
 class ChatBridgeOmega4:
     """Governed durable conversation OS kernel.
 
-    This class intentionally does not call the OpenAI API. It is the durable routing,
-    lineage, governance and restore layer. Provider adapters can bind one continuation
-    strategy to the `ProviderContinuationRef` without changing namespace semantics.
+    The core owns durable routing, lineage, governance and restore semantics. Provider
+    adapters bind one continuation strategy to `ProviderContinuationRef` without changing
+    the namespace contract.
     """
 
-    VERSION = "CHATBRIDGE-Ω4.0-SOURCE-CANDIDATE"
-    GCP_VERSION = "GCP-Ω3.0-SOURCE-CANDIDATE"
+    VERSION = "CHATBRIDGE-Ω4.1-OPENAI-PROVIDER-CANDIDATE"
+    GCP_VERSION = "GCP-Ω3.0"
 
     def __init__(self, store: ChatBridgeStore) -> None:
         self.store = store
@@ -111,10 +111,38 @@ class ChatBridgeOmega4:
         return self.store.release(namespace)
 
     def clone(self, source: str, target: str) -> Dict[str, Any]:
-        result = self.store.clone(source, target)
+        """Clone governed state while resetting the active provider continuation.
+
+        The provider-neutral store preserves the exact source checkpoint as branch
+        ancestry. The public Ω4 runtime then advances the branch to an independent active
+        generation with no provider continuation identity. This prevents two live
+        branches from silently sharing one OpenAI conversation/session lineage.
+        """
+        source_status = self.store.status(source)
+        initial = self.store.clone(source, target)
+        branch = self.store.restore(
+            target,
+            destination_session_key=f"clone-normalize:{initial['generation_id']}",
+        )
+        if branch.provider_ref != ProviderContinuationRef():
+            result = self.store.backup(
+                target,
+                branch.governance,
+                hot_state=branch.hot_state,
+                warm_pointers=branch.warm_pointers,
+                cold_pointers=branch.cold_pointers,
+                provider_ref=ProviderContinuationRef(),
+                branch_origin_namespace_id=source_status["namespace_id"],
+                branch_origin_generation_id=source_status["active_generation_id"],
+            )
+            provider_binding_reset = True
+        else:
+            result = initial
+            provider_binding_reset = False
         return {
             **result,
             "state": "BRANCH_CREATED_VERIFIED_LOCAL",
             "source_namespace": source,
             "target_namespace": target,
+            "provider_binding_reset": provider_binding_reset,
         }
