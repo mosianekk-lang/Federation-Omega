@@ -1,7 +1,5 @@
 from datetime import date, timedelta
 
-import pytest
-
 from evidenceops.lex_omega.lex_omega import (
     AuthorityLifecycle,
     AuthorityRecord,
@@ -61,8 +59,11 @@ def test_proposition_text_mutation_fails_closed():
 
 
 def test_missing_source_pinpoint_is_rejected_at_construction():
-    with pytest.raises(ValueError):
+    try:
         AuthoritySupportClaim("ulp-period", TEXT_90, "")
+    except ValueError:
+        return
+    raise AssertionError("blank source pinpoint must fail closed")
 
 
 def test_unrelated_nonblank_pinpoint_must_not_satisfy_support_binding():
