@@ -1,47 +1,91 @@
 from __future__ import annotations
 
-from .demo_pack import CIOSDemoPackBuilder
-from .qualification import InternalQualificationCourt
-from .verify_rc5 import verify as verify_rc5
+from io import BytesIO
+from types import SimpleNamespace
+import zipfile
+
+from .ingestion import (
+    DOCX_TYPE,
+    IngestionError,
+    MAX_OOXML_ARCHIVE_ENTRIES,
+    MAX_OOXML_COMPRESSION_RATIO,
+    MAX_OOXML_ENTRY_UNCOMPRESSED,
+    MAX_OOXML_TOTAL_UNCOMPRESSED,
+    _validate_ooxml_archive,
+    parse_document,
+)
+from .verify_rc6 import verify as verify_rc6
 
 
 def verify() -> dict[str, object]:
-    rc5 = verify_rc5()
-    qualification = InternalQualificationCourt().run()
-    demo = CIOSDemoPackBuilder().build()
-    manifest = demo["manifest"]
-    files = demo["files"]
+    rc6 = verify_rc6()
+
+    stream = BytesIO()
+    with zipfile.ZipFile(stream, "w", compression=zipfile.ZIP_DEFLATED) as archive:
+        archive.writestr(
+            "word/document.xml",
+            '<w:document xmlns:w="http://schemas.openxmlformats.org/wordprocessingml/2006/main">'
+            '<w:body><w:p><w:r><w:t>Bounded</w:t></w:r></w:p></w:body></w:document>',
+        )
+    normal = parse_document(stream.getvalue(), DOCX_TYPE)
+
+    total_limit_denied = False
+    fake_total = SimpleNamespace(
+        infolist=lambda: [
+            SimpleNamespace(filename=f"x/{index}.xml", flag_bits=0, file_size=7_000_000, compress_size=7_000_000)
+            for index in range(4)
+        ]
+    )
+    try:
+        _validate_ooxml_archive(fake_total)
+    except IngestionError as exc:
+        total_limit_denied = str(exc) == "OOXML_ARCHIVE_UNCOMPRESSED_LIMIT"
+
+    encrypted_denied = False
+    fake_encrypted = SimpleNamespace(
+        infolist=lambda: [
+            SimpleNamespace(filename="word/document.xml", flag_bits=1, file_size=100, compress_size=80)
+        ]
+    )
+    try:
+        _validate_ooxml_archive(fake_encrypted)
+    except IngestionError as exc:
+        encrypted_denied = str(exc) == "OOXML_ENCRYPTED_ENTRY_UNSUPPORTED"
+
+    ratio_denied = False
+    fake_ratio = SimpleNamespace(
+        infolist=lambda: [
+            SimpleNamespace(filename="word/document.xml", flag_bits=0, file_size=2_000_000, compress_size=1_000)
+        ]
+    )
+    try:
+        _validate_ooxml_archive(fake_ratio)
+    except IngestionError as exc:
+        ratio_denied = str(exc) == "OOXML_SUSPICIOUS_COMPRESSION_RATIO"
+
     checks = {
-        "rc5_regression": bool(rc5.get("passed")),
-        "qualification_passes": qualification.passed
-        and qualification.score == 1.0
-        and not qualification.fatal_failures,
-        "qualification_receipt_digest_bound": len(qualification.receipt_sha256) == 64,
-        "demo_journey_passes": manifest.get("journey_passed") is True,
-        "demo_is_explicitly_synthetic": manifest.get("classification") == "PUBLIC_SAFE_SYNTHETIC_DEMONSTRATION",
-        "demo_preserves_visible_contradictions": int(manifest.get("contradiction_count", 0)) >= 1,
-        "demo_final_decision_human_gated": manifest.get("authority", {}).get("final_acquisition") == "REQUIRE_HUMAN",
-        "demo_live_order_denied": manifest.get("authority", {}).get("live_order") == "DENY",
-        "demo_private_to_market_denied": manifest.get("authority", {}).get("private_to_public_market") == "DENY",
-        "demo_pack_complete": {
-            "manifest.json",
-            "decision_brief.json",
-            "qualification_receipt.json",
-            "case_study.md",
-            "dashboard.html",
-        }.issubset(files),
-        "demo_pack_digest_bound": len(str(demo.get("pack_sha256", ""))) == 64,
-        "provider_maturity_not_overpromoted": rc5.get("maturity") == "PROVIDER_BINDING_READY",
-        "production_claim_remains_false": rc5.get("production_claim") is False,
+        "rc6_regression": bool(rc6.get("passed")),
+        "normal_docx_remains_usable": normal.text == "Bounded"
+        and normal.parser_id == "DOCX_STDLIB_V2_BOUNDED",
+        "bounded_parser_identity_visible": normal.parser_id.endswith("V2_BOUNDED")
+        and int(normal.metadata.get("archive_entries", 0)) >= 1,
+        "archive_entry_ceiling_configured": MAX_OOXML_ARCHIVE_ENTRIES <= 512,
+        "per_entry_uncompressed_ceiling_configured": MAX_OOXML_ENTRY_UNCOMPRESSED <= 8_000_000,
+        "total_uncompressed_ceiling_configured": MAX_OOXML_TOTAL_UNCOMPRESSED <= 25_000_000,
+        "compression_ratio_ceiling_configured": MAX_OOXML_COMPRESSION_RATIO <= 1_000.0,
+        "total_uncompressed_overflow_denied": total_limit_denied,
+        "encrypted_ooxml_denied": encrypted_denied,
+        "suspicious_compression_ratio_denied": ratio_denied,
+        "provider_maturity_not_overpromoted": rc6.get("maturity") == "PROVIDER_BINDING_READY",
+        "production_claim_remains_false": rc6.get("production_claim") is False,
     }
     return {
         "passed": all(checks.values()),
-        "release": "1.0.0-rc6",
+        "release": "1.0.0-rc7",
         "maturity": "PROVIDER_BINDING_READY",
-        "internal_product_state": "SYNTHETIC_DETERMINISTIC_QUALIFIED",
-        "portfolio_state": "PORTFOLIO_DEMONSTRABLE_CANDIDATE",
-        "qualification_receipt_sha256": qualification.receipt_sha256,
-        "demo_pack_sha256": demo["pack_sha256"],
+        "internal_product_state": "INGESTION_RESOURCE_HARDENED_CANDIDATE",
+        "scientific_state": rc6.get("internal_product_state"),
+        "portfolio_state": rc6.get("portfolio_state"),
         "checks": checks,
         "production_claim": False,
     }

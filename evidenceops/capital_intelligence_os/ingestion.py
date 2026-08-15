@@ -19,6 +19,14 @@ from .vault import DocumentVault
 
 MAX_INGEST_BYTES = 5_000_000
 MAX_EXTRACTED_CHARS = 2_000_000
+MAX_OOXML_ARCHIVE_ENTRIES = 512
+MAX_OOXML_TOTAL_UNCOMPRESSED = 25_000_000
+MAX_OOXML_ENTRY_UNCOMPRESSED = 8_000_000
+MAX_OOXML_COMPRESSION_RATIO = 1_000.0
+MAX_DOCX_PARAGRAPHS = 100_000
+MAX_XLSX_WORKSHEETS = 64
+MAX_XLSX_SHARED_STRINGS = 250_000
+MAX_XLSX_NONEMPTY_CELLS = 250_000
 TEXT_TYPES = {"text/plain", "text/csv", "application/csv"}
 JSON_TYPES = {"application/json", "text/json"}
 EMAIL_TYPES = {"message/rfc822", "application/eml"}
@@ -172,45 +180,117 @@ def _parse_email(content: bytes) -> ParsedDocument:
     )
 
 
+def _safe_ooxml_name(name: str) -> bool:
+    normalized = name.replace("\\", "/")
+    if normalized.startswith("/") or re.match(r"^[A-Za-z]:/", normalized):
+        return False
+    return all(part not in {"", ".", ".."} for part in normalized.split("/"))
+
+
+def _validate_ooxml_archive(archive: zipfile.ZipFile) -> dict[str, object]:
+    infos = archive.infolist()
+    if len(infos) > MAX_OOXML_ARCHIVE_ENTRIES:
+        raise IngestionError("OOXML_ARCHIVE_TOO_MANY_ENTRIES")
+    names = [info.filename for info in infos]
+    if len(names) != len(set(names)):
+        raise IngestionError("OOXML_DUPLICATE_ENTRY_NAME")
+    total_uncompressed = 0
+    max_ratio = 1.0
+    for info in infos:
+        if not _safe_ooxml_name(info.filename):
+            raise IngestionError("OOXML_UNSAFE_ENTRY_NAME")
+        if info.flag_bits & 0x1:
+            raise IngestionError("OOXML_ENCRYPTED_ENTRY_UNSUPPORTED")
+        if info.file_size > MAX_OOXML_ENTRY_UNCOMPRESSED:
+            raise IngestionError("OOXML_ENTRY_TOO_LARGE")
+        total_uncompressed += info.file_size
+        if total_uncompressed > MAX_OOXML_TOTAL_UNCOMPRESSED:
+            raise IngestionError("OOXML_ARCHIVE_UNCOMPRESSED_LIMIT")
+        if info.file_size:
+            ratio = info.file_size / max(info.compress_size, 1)
+            max_ratio = max(max_ratio, ratio)
+            if info.file_size >= 100_000 and ratio > MAX_OOXML_COMPRESSION_RATIO:
+                raise IngestionError("OOXML_SUSPICIOUS_COMPRESSION_RATIO")
+    return {
+        "archive_entries": len(infos),
+        "total_uncompressed_bytes": total_uncompressed,
+        "max_compression_ratio": round(max_ratio, 3),
+    }
+
+
+def _safe_archive_read(archive: zipfile.ZipFile, name: str) -> bytes:
+    try:
+        info = archive.getinfo(name)
+    except KeyError as exc:
+        raise IngestionError("OOXML_REQUIRED_ENTRY_MISSING") from exc
+    if info.file_size > MAX_OOXML_ENTRY_UNCOMPRESSED:
+        raise IngestionError("OOXML_ENTRY_TOO_LARGE")
+    try:
+        raw = archive.read(info)
+    except (RuntimeError, zipfile.BadZipFile) as exc:
+        raise IngestionError("OOXML_ENTRY_READ_FAILED") from exc
+    if len(raw) != info.file_size:
+        raise IngestionError("OOXML_ENTRY_SIZE_MISMATCH")
+    return raw
+
+
+def _parse_ooxml_xml(raw: bytes, invalid_code: str) -> ET.Element:
+    upper = raw[: min(len(raw), 1_000_000)].upper()
+    if b"<!DOCTYPE" in upper or b"<!ENTITY" in upper:
+        raise IngestionError("OOXML_DTD_ENTITY_FORBIDDEN")
+    try:
+        return ET.fromstring(raw)
+    except ET.ParseError as exc:
+        raise IngestionError(invalid_code) from exc
+
+
 def _parse_docx(content: bytes) -> ParsedDocument:
     try:
-        with zipfile.ZipFile(BytesIO(content)) as archive:
-            raw = archive.read("word/document.xml")
-    except (zipfile.BadZipFile, KeyError) as exc:
+        archive = zipfile.ZipFile(BytesIO(content))
+    except zipfile.BadZipFile as exc:
         raise IngestionError("INVALID_DOCX_DOCUMENT") from exc
-    try:
-        root = ET.fromstring(raw)
-    except ET.ParseError as exc:
-        raise IngestionError("INVALID_DOCX_XML") from exc
+    with archive:
+        archive_meta = _validate_ooxml_archive(archive)
+        try:
+            raw = _safe_archive_read(archive, "word/document.xml")
+        except IngestionError as exc:
+            if str(exc) == "OOXML_REQUIRED_ENTRY_MISSING":
+                raise IngestionError("INVALID_DOCX_DOCUMENT") from exc
+            raise
+    root = _parse_ooxml_xml(raw, "INVALID_DOCX_XML")
     paragraphs: list[str] = []
+    paragraph_count = 0
     for paragraph in root.iter():
         if not paragraph.tag.endswith("}p"):
             continue
+        paragraph_count += 1
+        if paragraph_count > MAX_DOCX_PARAGRAPHS:
+            raise IngestionError("DOCX_PARAGRAPH_LIMIT")
         value = "".join(
             node.text or "" for node in paragraph.iter() if node.tag.endswith("}t")
         ).strip()
         if value:
             paragraphs.append(value)
     return ParsedDocument(
-        "DOCX_STDLIB_V1",
+        "DOCX_STDLIB_V2_BOUNDED",
         _limit_text("\n".join(paragraphs)),
-        {"paragraphs": len(paragraphs)},
+        {**archive_meta, "paragraphs": paragraph_count},
     )
 
 
 def _shared_strings(archive: zipfile.ZipFile) -> list[str]:
     try:
-        raw = archive.read("xl/sharedStrings.xml")
+        archive.getinfo("xl/sharedStrings.xml")
     except KeyError:
         return []
-    try:
-        root = ET.fromstring(raw)
-    except ET.ParseError as exc:
-        raise IngestionError("INVALID_XLSX_SHARED_STRINGS") from exc
-    return [
-        "".join(node.text or "" for node in item.iter() if node.tag.endswith("}t"))
-        for item in root
-    ]
+    raw = _safe_archive_read(archive, "xl/sharedStrings.xml")
+    root = _parse_ooxml_xml(raw, "INVALID_XLSX_SHARED_STRINGS")
+    values: list[str] = []
+    for item in root:
+        values.append("".join(node.text or "" for node in item.iter() if node.tag.endswith("}t")))
+        if len(values) > MAX_XLSX_SHARED_STRINGS:
+            raise IngestionError("XLSX_SHARED_STRING_LIMIT")
+    return values
 
 
 def _cell_value(cell: ET.Element, shared: list[str]) -> str:
@@ -239,6 +319,7 @@ def _parse_xlsx(content: bytes) -> ParsedDocument:
     except zipfile.BadZipFile as exc:
         raise IngestionError("INVALID_XLSX_DOCUMENT") from exc
     with archive:
+        archive_meta = _validate_ooxml_archive(archive)
         shared = _shared_strings(archive)
         sheets = sorted(
             name for name in archive.namelist()
@@ -246,13 +327,12 @@ def _parse_xlsx(content: bytes) -> ParsedDocument:
         )
         if not sheets:
             raise IngestionError("XLSX_WORKSHEETS_REQUIRED")
+        if len(sheets) > MAX_XLSX_WORKSHEETS:
+            raise IngestionError("XLSX_WORKSHEET_LIMIT")
         lines: list[str] = []
         cell_count = 0
         for sheet_index, name in enumerate(sheets, start=1):
-            try:
-                root = ET.fromstring(archive.read(name))
-            except ET.ParseError as exc:
-                raise IngestionError("INVALID_XLSX_WORKSHEET_XML") from exc
+            root = _parse_ooxml_xml(_safe_archive_read(archive, name), "INVALID_XLSX_WORKSHEET_XML")
             for cell in root.iter():
                 if not cell.tag.endswith("}c"):
                     continue
@@ -261,10 +341,17 @@ def _parse_xlsx(content: bytes) -> ParsedDocument:
                 if value != "":
                     lines.append(f"Sheet{sheet_index}!{ref}\t{value}")
                     cell_count += 1
+                    if cell_count > MAX_XLSX_NONEMPTY_CELLS:
+                        raise IngestionError("XLSX_CELL_LIMIT")
         return ParsedDocument(
-            "XLSX_STDLIB_V1",
+            "XLSX_STDLIB_V2_BOUNDED",
             _limit_text("\n".join(lines)),
-            {"worksheets": len(sheets), "nonempty_cells": cell_count},
+            {
+                **archive_meta,
+                "worksheets": len(sheets),
+                "nonempty_cells": cell_count,
+                "shared_strings": len(shared),
+            },
         )
 
 
@@ -294,7 +381,7 @@ def parse_document(content: bytes, content_type: str, *, extracted_text: str = "
             "EXTERNAL_TEXT_FALLBACK_V1",
             _limit_text(extracted_text),
             {"content_type": kind, "text_source": "caller_supplied_extraction"},
-            ("Unknown content type accepted only because explicit extracted text was supplied.",),
+            ("Unknown content type accepted only because explicit extracted text was supplied externally.",),
         )
     raise IngestionError(f"UNSUPPORTED_CONTENT_TYPE:{kind}")
 
