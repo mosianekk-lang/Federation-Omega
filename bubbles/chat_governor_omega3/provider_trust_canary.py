@@ -45,17 +45,6 @@ def run_canary(*, resolution_path: Path, db_path: Path) -> dict[str, Any]:
         and checkpoint.get("payload", {}).get("event") == "PROVIDER_TRUST_RECONCILED"
         and checkpoint.get("payload", {}).get("trigger") == "PRE_USER_PROMPT"
         and checkpoint.get("payload", {}).get("trust_receipt_sha256")
-        == result.checkpoint_id * 0 + resolution.get("receipt_sha256")
-    )
-
-    # The expression above deliberately avoids copying any credential-like
-    # material. Normalize it to the simple semantic comparison for the receipt.
-    checkpoint_matches = bool(
-        checkpoint
-        and checkpoint.get("checkpoint_id") == result.checkpoint_id
-        and checkpoint.get("payload", {}).get("event") == "PROVIDER_TRUST_RECONCILED"
-        and checkpoint.get("payload", {}).get("trigger") == "PRE_USER_PROMPT"
-        and checkpoint.get("payload", {}).get("trust_receipt_sha256")
         == resolution.get("receipt_sha256")
     )
 
