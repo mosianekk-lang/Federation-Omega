@@ -81,7 +81,7 @@ jobs:
           def gcloud(*args):
               return run(['gcloud', *args, '--project', project])
 
-          account = run(['gcloud', 'auth', 'list', '--filter=status:ACTIVE', '--format=value(account)'])
+          account = run(['gcloud', 'config', 'get-value', 'account'])
           project_info = gcloud('projects', 'describe', project, '--format=json(projectId,projectNumber,lifecycleState)')
           service_info = gcloud(
               'run', 'services', 'describe', service,
@@ -94,7 +94,7 @@ jobs:
           )
           api_states = {}
           for api in ['run.googleapis.com','cloudbuild.googleapis.com','artifactregistry.googleapis.com','drive.googleapis.com','docs.googleapis.com','sheets.googleapis.com']:
-              api_states[api] = gcloud('services', 'describe', api, '--format=value(state)')
+              api_states[api] = gcloud('services', 'list', '--enabled', f'--filter=config.name:{api}', '--format=value(state)')
 
           service_json = {}
           if service_info['ok'] and service_info['stdout']:
