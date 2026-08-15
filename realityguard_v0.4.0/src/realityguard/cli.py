@@ -30,6 +30,10 @@ def _parser() -> argparse.ArgumentParser:
     upgrade = sub.add_parser("upgrade", help="automatically assess a material cycle and select a governed reuse-first upgrade route")
     upgrade.add_argument("--input", required=True, type=Path)
     upgrade.add_argument("--capabilities", required=True, type=Path)
+    federation_upgrade = sub.add_parser("federation-upgrade", help="invoke the single governed upgrade adapter for a registered Federation system")
+    federation_upgrade.add_argument("--input", required=True, type=Path)
+    federation_upgrade.add_argument("--capabilities", required=True, type=Path)
+    federation_upgrade.add_argument("--adapter-contract", required=True, type=Path)
     learn = sub.add_parser("learn", help="record one governed incident in the deduplicated local learning ledger")
     learn.add_argument("--incident", required=True, type=Path)
     learn.add_argument("--ledger", required=True, type=Path)
@@ -74,6 +78,11 @@ def main(argv: list[str] | None = None) -> int:
         elif args.command == "upgrade":
             manifest = json.loads(args.capabilities.read_text(encoding="utf-8"))
             result = RealityGuard().upgrade(payload, manifest)
+        elif args.command == "federation-upgrade":
+            from .federation_adapter import FederationUpgradeAdapter
+            manifest = json.loads(args.capabilities.read_text(encoding="utf-8"))
+            adapter_contract = json.loads(args.adapter_contract.read_text(encoding="utf-8"))
+            result = FederationUpgradeAdapter().evaluate(payload, manifest, adapter_contract)
         else:
             result = RealityGuard().scan(payload).to_dict()
     except (OSError, json.JSONDecodeError, InputError) as exc:
@@ -87,7 +96,7 @@ def main(argv: list[str] | None = None) -> int:
             handle.write(json.dumps(record, sort_keys=True) + "\n")
     if args.command == "prebuild":
         return 0 if result["proposed_action_authorized"] else 4
-    if args.command == "upgrade":
+    if args.command in {"upgrade", "federation-upgrade"}:
         blocked = {
             UpgradeDecisionCode.BLOCK_DUPLICATE_UPGRADE.value,
             UpgradeDecisionCode.BLOCK_UNSAFE_UPGRADE.value,
