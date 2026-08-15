@@ -210,7 +210,7 @@ class RealityGuardTests(unittest.TestCase):
 
     def test_secret_values_do_not_affect_rule_logic(self):
         payload = base_payload()
-        payload["context"]["api_key"] = "sk-example-secret-value"
+        payload["context"]["api_key"] = "opaque-test-secret-value"
         self.assertEqual(self.scan(payload).verdict, Verdict.ALLOW_BOUNDED)
 
 
