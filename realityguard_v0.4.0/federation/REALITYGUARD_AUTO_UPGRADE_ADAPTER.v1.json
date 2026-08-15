@@ -9,6 +9,8 @@
   "foundation_model_modification": false,
   "recurring_cost": 0,
   "manual_user_tasks": [],
+  "source_adapter_implemented": true,
+  "source_adapter_path": "src/realityguard/federation_adapter.py",
   "formation_single_use_permit_required_before_execution": true,
   "promotion_authorized": false,
   "source_registration_scope": "All 20 systems in the current Federation canonical register at main commit 83ddc37586460635176eb029dd104c58226ab39b. Registration is not runtime binding.",
