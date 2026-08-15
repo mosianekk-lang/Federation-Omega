@@ -14,10 +14,11 @@ class ChatBridgeOmega4:
     The core owns durable routing, lineage, governance and restore semantics. Provider
     adapters bind one continuation strategy to `ProviderContinuationRef` without changing
     the namespace contract. Ω4.4 binds a portable OperatingProfile; Ω4.5 adds a
-    destination restore attestation and independent drift/repair contract.
+    destination restore attestation and independent drift/repair contract; Ω4.6 makes
+    pre-owner assurance and audit-before-architecture part of the restored behaviour.
     """
 
-    VERSION = "CHATBRIDGE-Ω4.5-RESTORE-ASSURANCE"
+    VERSION = "CHATBRIDGE-Ω4.6-PRE-OWNER-ASSURANCE"
     GCP_VERSION = "GCP-Ω3.3"
     OPERATING_PROFILE_KEY = "__chatbridge_operating_profile__"
 
@@ -116,6 +117,11 @@ class ChatBridgeOmega4:
             "reconcile_not_rebuild": profile.reconcile_not_rebuild,
             "creator_mode": profile.creator_mode,
             "federation_route_scan": profile.federation_route_scan,
+            "realityguard_assurance": profile.realityguard_assurance,
+            "pre_owner_assurance": profile.pre_owner_assurance,
+            "assurance_policy": profile.assurance_policy,
+            "major_change_discovery_policy": profile.major_change_discovery_policy,
+            "assurance_receipt_policy": profile.assurance_receipt_policy,
             "owner_interrupt_policy": profile.owner_interrupt_policy,
             "capture_policy": profile.capture_policy,
             "restore_policy": profile.restore_policy,
@@ -134,6 +140,7 @@ class ChatBridgeOmega4:
         payload["chatbridge_version"] = self.VERSION
         payload["gcp_version"] = self.GCP_VERSION
         payload["restore_assurance_required"] = True
+        payload["pre_owner_assurance_required"] = profile.pre_owner_assurance
         payload["restore_attestation_contract"] = RestoreAssuranceEngine.contract(payload)
         return payload
 
