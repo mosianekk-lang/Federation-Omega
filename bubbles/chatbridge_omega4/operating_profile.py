@@ -11,10 +11,14 @@ class OperatingProfile:
     The profile is intentionally provider-neutral. It records how the restored workstream
     should operate, while the GovernanceCapsule continues to own authority, approval,
     confidentiality and external-effect boundaries.
+
+    CBOP-1.1 adds a pre-owner assurance contract. The assurance fields do not replace
+    RealityGuard, FKLM, EvidenceOps or other specialist controls; they make their use a
+    restored behavioural requirement before consequential recommendations reach the owner.
     """
 
     profile_id: str
-    version: str = "CBOP-1.0"
+    version: str = "CBOP-1.1"
     execution_posture: str = "EXECUTE_VERIFY_READBACK"
     reconcile_not_rebuild: bool = True
     creator_mode: bool = True
@@ -25,6 +29,8 @@ class OperatingProfile:
     inplace_evolution: bool = False
     evidenceops_assurance: bool = False
     background_compute_fabric: bool = False
+    realityguard_assurance: bool = True
+    pre_owner_assurance: bool = True
     live_bible_ref: str = ""
     master_bible_ref: str = ""
     master_sync_ref: str = ""
@@ -34,6 +40,9 @@ class OperatingProfile:
     restore_policy: str = "DELTA_FIRST_RECONCILE_DONT_REBUILD_RESUME"
     anticipatory_policy: str = "NEXT_WHY_NOW_AND_UNLOCKS"
     packaging_policy: str = "HOT_MINIMUM_WARM_CANONICAL_POINTERS_COLD_HISTORY_POINTERS"
+    assurance_policy: str = "SYSTEM_QA_BEFORE_OWNER"
+    major_change_discovery_policy: str = "AUDIT_FIRST_BEFORE_ARCHITECTURE"
+    assurance_receipt_policy: str = "REQUIRED_FOR_CONSEQUENTIAL_RECOMMENDATIONS"
     notes: str = ""
 
     @classmethod
