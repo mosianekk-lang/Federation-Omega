@@ -19,7 +19,8 @@ revalidation never substitute for corpus completion.
 
 ## Pre-mutation guards
 
-`TruthGridGuard.validate_mutation()` fails closed on the recurring defect classes:
+`TruthGridGuard.validate_mutation()` plus `TruthGridWriterAdapter` fail closed on the
+recurring defect classes:
 
 1. raw byte/hash fields outside `INTEGRITY MANIFEST`;
 2. positional update/delete/promotion without stable-key resolution;
@@ -29,10 +30,18 @@ revalidation never substitute for corpus completion.
    appointment/delegation/authority source;
 6. release/verified/complete vocabulary without execution receipt IDs;
 7. malformed `RELEASE GATES` receipt rows not built from the named schema;
-8. missing independent/provider readback plan.
+8. mutations whose named values do not bind to a freshly read live sheet schema,
+   including unknown fields, duplicate or blank live headers, and incomplete APPEND
+   rows that could shift values under equal-width positional serialization;
+9. missing independent/provider readback plan.
 
-These map directly to the open parent defect classes recorded in TruthGrid Genesis
-work, including GEN-AUD-009..015, 018..026 and 030..036.
+The live schema reader must itself be provider-backed and current at execution time.
+The adapter reorders values to the fresh header sequence before invoking the writer;
+it does not allow a caller's dictionary insertion order to define sheet semantics.
+
+These controls map directly to the open parent defect classes recorded in TruthGrid
+Genesis work. They are preventive source behavior only until the exact operational
+writer path has been independently exercised and read back.
 
 ## Completion gate
 
@@ -45,5 +54,7 @@ and the dashboard is generated from the live matrix.
 
 Source code and tests prove only deterministic source behavior.  Operational
 promotion still requires the repository Airlock/PR checks and independent runtime or
-provider readback on the exact writer path.  The package may not self-certify global
-TruthGrid trust restoration.
+provider readback on the exact writer path.  Presence of the adapter, a passing unit
+test, or a successful proposal branch does not prove that production TruthGrid writes
+use the adapter or that a parent Genesis defect has been repaired. The package may not
+self-certify global TruthGrid trust restoration.
