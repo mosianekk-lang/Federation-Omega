@@ -128,11 +128,18 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
+      id-token: write
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
       CHATBRIDGE_LIVE_PROOF_REQUESTED: ${{ startsWith(github.event.head_commit.message, '[CHATBRIDGE-LIVE-PROOF]') }}
+      REALITYGUARD_LIVE_BINDING_REQUESTED: ${{ startsWith(github.event.head_commit.message, '[REALITYGUARD-LIVE-BINDING]') }}
       HAS_DIRECT_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
+      PROJECT_ID: sov-hybrid-suite
+      REGION: africa-south1
+      SERVICE_NAME: architron9
+      WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+      DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
       CANARY_NAMESPACE: aaa-provider-live-canary
       CANARY_BRANCH_NAMESPACE: aaa-provider-live-canary-branch
     steps:
@@ -172,6 +179,193 @@ jobs:
           path: bubbles-provider-probe-output/receipt.json
           if-no-files-found: error
           retention-days: 90
+
+      - name: Authenticate RealityGuard read-only canary through Google WIF
+        id: realityguard_gcp_auth
+        if: ${{ env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          project_id: ${{ env.PROJECT_ID }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Prepare gcloud for RealityGuard read-only canary
+        id: realityguard_gcloud
+        if: ${{ env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' && steps.realityguard_gcp_auth.outcome == 'success' }}
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Invoke RealityGuard and build live-binding receipt
+        if: ${{ always() && env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' }}
+        env:
+          GCP_AUTH_OUTCOME: ${{ steps.realityguard_gcp_auth.outcome }}
+          GCLOUD_SETUP_OUTCOME: ${{ steps.realityguard_gcloud.outcome }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p realityguard-live-binding-output
+          set +e
+          PYTHONPATH=realityguard_v0.4.0/src python -m realityguard.cli federation-upgrade \
+            --input realityguard_v0.4.0/examples/material_cycle_upgrade.json \
+            --capabilities realityguard_v0.4.0/examples/federation_capabilities.json \
+            --adapter-contract realityguard_v0.4.0/federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json \
+            > realityguard-live-binding-output/adapter.json \
+            2> realityguard-live-binding-output/adapter.stderr
+          adapter_exit=$?
+          set -e
+          export ADAPTER_EXIT="$adapter_exit"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from pathlib import Path
+
+          def safe_json(path):
+              try:
+                  return json.loads(Path(path).read_text(encoding='utf-8'))
+              except Exception:
+                  return {}
+
+          def read_only(command):
+              completed = subprocess.run(command, text=True, capture_output=True, check=False)
+              stdout = completed.stdout.strip()
+              try:
+                  parsed = json.loads(stdout) if stdout else None
+              except json.JSONDecodeError:
+                  parsed = stdout[:1000]
+              return {
+                  'ok': completed.returncode == 0,
+                  'returncode': completed.returncode,
+                  'result': parsed,
+                  'stderr': completed.stderr.strip()[:1000],
+              }
+
+          adapter = safe_json('realityguard-live-binding-output/adapter.json')
+          adapter_state = adapter.get('federation_adapter', {})
+          adapter_invoked = (
+              int(os.environ.get('ADAPTER_EXIT', '1')) == 0
+              and adapter_state.get('adapter_invocation_observed') is True
+              and adapter_state.get('system_id') == 'SYS-FEDERATION-OMEGA'
+          )
+          auth_ok = os.environ.get('GCP_AUTH_OUTCOME') == 'success'
+          setup_ok = os.environ.get('GCLOUD_SETUP_OUTCOME') == 'success'
+          provider = {}
+          if auth_ok and setup_ok:
+              provider['identity'] = read_only([
+                  'gcloud', 'config', 'get-value', 'account', '--quiet'
+              ])
+              provider['project'] = read_only([
+                  'gcloud', 'projects', 'describe', os.environ['PROJECT_ID'],
+                  '--format=json(projectId,projectNumber,lifecycleState)'
+              ])
+              provider['service'] = read_only([
+                  'gcloud', 'run', 'services', 'describe', os.environ['SERVICE_NAME'],
+                  '--region', os.environ['REGION'], '--project', os.environ['PROJECT_ID'],
+                  '--format=json(metadata.name,status.url,status.latestReadyRevisionName,status.traffic,spec.template.spec.serviceAccountName)'
+              ])
+              provider['revisions'] = read_only([
+                  'gcloud', 'run', 'revisions', 'list',
+                  '--service', os.environ['SERVICE_NAME'],
+                  '--region', os.environ['REGION'], '--project', os.environ['PROJECT_ID'],
+                  '--limit=5', '--format=json(metadata.name,status.conditions,status.serviceName)'
+              ])
+
+          identity = provider.get('identity', {})
+          project = provider.get('project', {})
+          service = provider.get('service', {})
+          revisions = provider.get('revisions', {})
+          identity_ok = identity.get('ok') is True and identity.get('result') == os.environ['DEPLOYER_SA']
+          project_result = project.get('result') if isinstance(project.get('result'), dict) else {}
+          service_result = service.get('result') if isinstance(service.get('result'), dict) else {}
+          project_ok = (
+              project.get('ok') is True
+              and project_result.get('projectId') == os.environ['PROJECT_ID']
+              and project_result.get('lifecycleState') == 'ACTIVE'
+          )
+          service_ok = (
+              service.get('ok') is True
+              and service_result.get('metadata', {}).get('name') == os.environ['SERVICE_NAME']
+              and bool(service_result.get('status', {}).get('latestReadyRevisionName'))
+          )
+          revisions_ok = revisions.get('ok') is True and isinstance(revisions.get('result'), list)
+          host_binding_verified = all((
+              adapter_invoked, identity_ok, project_ok, service_ok, revisions_ok
+          ))
+          receipt = {
+              'schema': 'REALITYGUARD-LIVE-HOST-BINDING-1',
+              'system_id': 'SYS-FEDERATION-OMEGA',
+              'host_workflow': '.github/workflows/bubbles-command-bus.yml',
+              'host_job': 'provider-surface-readback',
+              'adapter_invocation_observed': adapter_invoked,
+              'adapter_reported_integration_state': adapter_state.get('integration_state'),
+              'source_adapter_supported': adapter_state.get('source_adapter_supported') is True,
+              'gcp_auth_outcome': os.environ.get('GCP_AUTH_OUTCOME') or 'skipped',
+              'gcloud_setup_outcome': os.environ.get('GCLOUD_SETUP_OUTCOME') or 'skipped',
+              'identity_ok': identity_ok,
+              'project_ok': project_ok,
+              'service_read_ok': service_ok,
+              'revision_read_ok': revisions_ok,
+              'host_binding_verified': host_binding_verified,
+              'provider_reads': provider,
+              'provider_mutation_attempted': False,
+              'secret_values_recorded': False,
+              'manual_user_tasks': [],
+              'truth_boundary': (
+                  'This receipt proves marker-gated RealityGuard invocation inside the active '
+                  'Bubbles host and read-only access to the named Cloud Run runtime. It does not '
+                  'claim traffic mutation or binding of the other registered logical systems.'
+              ),
+          }
+          unsigned = json.dumps(receipt, sort_keys=True, separators=(',', ':'))
+          receipt['receipt_sha256'] = hashlib.sha256(unsigned.encode()).hexdigest()
+          Path('realityguard-live-binding-output/receipt.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          print(json.dumps({
+              'host_binding_verified': host_binding_verified,
+              'receipt_sha256': receipt['receipt_sha256'],
+          }, sort_keys=True))
+          PY
+
+      - name: Upload immutable RealityGuard live-binding receipt
+        if: ${{ always() && env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' && hashFiles('realityguard-live-binding-output/receipt.json') != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: realityguard-live-binding-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            realityguard-live-binding-output/adapter.json
+            realityguard-live-binding-output/adapter.stderr
+            realityguard-live-binding-output/receipt.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce RealityGuard semantic live-binding gate
+        if: ${{ always() && env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          receipt = json.load(open('realityguard-live-binding-output/receipt.json', encoding='utf-8'))
+          if receipt.get('host_binding_verified') is not True:
+              raise SystemExit(
+                  'RealityGuard live binding remains unproven: '
+                  + 'auth=' + str(receipt.get('gcp_auth_outcome'))
+                  + ' gcloud=' + str(receipt.get('gcloud_setup_outcome'))
+                  + ' identity=' + str(receipt.get('identity_ok'))
+                  + ' project=' + str(receipt.get('project_ok'))
+                  + ' service=' + str(receipt.get('service_read_ok'))
+                  + ' revisions=' + str(receipt.get('revision_read_ok'))
+              )
+          print('REALITYGUARD_LIVE_HOST_BINDING_VERIFIED')
+          PY
 
       - name: Bind approved OpenAI key for ChatBridge canary
         id: chatbridge_bind_key
