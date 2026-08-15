@@ -1,0 +1,12 @@
+{
+  "version": "KDV-CONSUMER-MAP-1.0",
+  "purpose": "Map who may read mutable KDV projections and what stronger sources must be consulted first.",
+  "consumers": [
+    {"consumer":"ChatBridge restore","reads":["CHATBRIDGE_NAMESPACE_REGISTRY","CHATBRIDGE_CHECKPOINT_GENERATIONS","CHATBRIDGE_OPERATING_PROFILES","CHATBRIDGE_CONTROL"],"must_reconcile":["latest generation/handoff fingerprint","query-time source provider read when source matters","latest provider receipts"],"risk":"stale context reintroduction"},
+    {"consumer":"Federation maturity controller","reads":["FEDERATION_CAPABILITY_TWINS","FEDERATION_STAGE_RUNTIME","FEDERATION_DOMINANCE_CONTROLLER"],"must_reconcile":["qualified runtime attestations","shadow/adversarial/canary receipts","provider proof scope"],"risk":"maturity inheritance or split-brain"},
+    {"consumer":"Master/Live Bible projection","reads":["FEDERATION_BIBLE_SYNC","append-only deltas"],"must_reconcile":["latest evidence receipts","as-of timestamps"],"risk":"human-readable projection outranking evidence"},
+    {"consumer":"Bubbles/ChatGov assurance","reads":["PRE_OWNER_ASSURANCE_GATE","ASSURANCE_RECEIPTS","ASSURANCE_METRICS","FEDERATION_FAILURE_MEMORY"],"must_reconcile":["open prospective case state","failure corrections/supersession"],"risk":"false assurance or hindsight leakage"},
+    {"consumer":"TruthGrid/EvidenceOps writers","reads":["live provider sheet schema","typed KDV schema contract","FEDERATION_FAILURE_MEMORY"],"must_reconcile":["schema version","target identity","writer readback"],"risk":"schema/type drift or wrong-target mutation"},
+    {"consumer":"Offline backup/ETL","reads":["XLSX export"],"must_reconcile":["XLSX semantic decoder","Google-to-XLSX sheet-name transform","provider checkpoint metadata"],"risk":"serialization misinterpretation or truncated sheet identity"}
+  ]
+}

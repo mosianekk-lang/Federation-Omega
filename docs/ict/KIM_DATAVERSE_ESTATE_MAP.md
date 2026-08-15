@@ -1,6 +1,6 @@
 # Kim Dataverse Estate Map — ICT Control Edition
 
-Status: SOURCE-CONSOLIDATED / ESTATE-PARTIALLY-VERIFIED / PRIVATE-POINTERS-REDACTED
+Status: SOURCE-CONSOLIDATED / ESTATE-INTEGRITY-CONTROLS-BOUND / PRIVATE-POINTERS-REDACTED
 Owner and Final Authority: Kim Kagiso Mosiane
 Audience: ICT operations, cloud, security, DevOps, data, integration, reliability and support teams
 
@@ -55,6 +55,32 @@ The estate is governed by these non-negotiable rules:
 6. A local mirror is not a canonical Dataverse update.
 7. Completion requires execution, readback, validation, red-team review, receipt and mission-equivalence review.
 8. Unresolved Mission Delta remains workforce-owned until closed, founder-amended or genuinely blocked after authorised alternatives are exhausted.
+9. A persisted source version proves only an **as-of** observation; present-tense source truth requires a fresh provider read.
+10. Source frontier, runtime-attestation frontier and provider-effect proof are independent dimensions. One may not silently inherit another's maturity or authority.
+11. Historical attestations remain exact to the source version actually tested and are never rewritten forward.
+12. Raw XLSX/OOXML serialization is not interpreted until cell type, shared-string, style, formula and sheet-identity semantics are decoded.
+
+## KDV integrity and projection layer
+
+The estate now includes an explicit integrity layer that strengthens the existing canonical bridge rather than replacing it:
+
+- `config/kim-dataverse-schema-manifest-v1.json` — public-safe sheet/block/export identity manifest;
+- private `KDV_SCHEMA_REGISTRY` — full provider-bound field/type registry;
+- `config/kim-dataverse-projection-contract-v1.json` — source/runtime/provider truth-dimension contract;
+- `config/kim-dataverse-consumer-map-v1.json` — consumers and required stronger evidence before using mutable projections;
+- `evidenceops/kim_dataverse/xlsx_semantic.py` — format-aware OOXML decoder;
+- `evidenceops/kim_dataverse/schema_contract.py` — typed field normalization and live-header validation;
+- `evidenceops/kim_dataverse/projection_contract.py` — query-time currentness and compare-and-set preconditions;
+- `evidenceops/kim_dataverse/writer_guard.py` — typed wrapper around the existing TruthGrid live-schema → mutation → independent-readback guard.
+
+Mutable status tables are projections, not independent sources of truth. Append-only evidence and provider receipts outrank copied status prose. New writes are normalized through typed contracts; historical mixed-type records are preserved rather than destructively rewritten.
+
+Excel export is a derived representation. Because XLSX worksheet names are limited to 31 characters, the current known transforms include:
+
+- `FEDERATION_ADVERSARIAL_VALIDATION` → `FEDERATION_ADVERSARIAL_VALIDATI`
+- `CHATBRIDGE_CHECKPOINT_GENERATIONS` → `CHATBRIDGE_CHECKPOINT_GENERATIO`
+
+A raw `<v>` value in a shared-string cell (`t="s"`) is an index into `sharedStrings.xml`, not the displayed value. Export analysis must pass a format-aware semantic decoder before any corruption or provenance conclusion.
 
 ## Canonical logical entity model
 
@@ -147,12 +173,14 @@ Current major platform components include:
 - EvidenceOps MCP adapter;
 - Google Drive bridge;
 - WIF bootstrap and cloud-inventory controls;
-- external provider-boundary watch.
+- external provider-boundary watch;
+- Kim DataVerse integrity/projection controls.
 
 Control state:
 - source architecture is materially present;
 - CI and leak guard operate;
-- production cloud proof remains incomplete until WIF, repository variables and inventory readback pass.
+- typed KDV integrity controls are source-governed and require provider/live readback for operational claims;
+- production cloud proof remains incomplete until its separate provider gates pass.
 
 ### 3. Google Cloud execution plane
 
@@ -178,10 +206,8 @@ Known source contracts reference:
 
 Current proof state:
 - source references exist;
-- WIF provider remains unverified;
-- required GitHub cloud variables were previously empty;
-- provider-native infrastructure inventory has not yet produced a verified artifact;
-- no production-readiness claim is authorised.
+- provider-native infrastructure inventory and runtime identity remain separately proof-gated;
+- no production-readiness claim is authorised from source alone.
 
 ### 4. Google Apps Script
 
@@ -220,7 +246,7 @@ ICT controls:
 - treat successful playground output as prototype evidence, not production proof.
 
 Current proof state:
-- the user confirms Google AI Studio is part of the authorised resource pool;
+- Google AI Studio is mapped as an authorised resource-pool surface;
 - account/project inventory, access model, governed experiment register, data-handling controls and production bindings remain to be fully read back and mapped.
 
 ### 6. OpenAI Platform and other AI providers
@@ -231,16 +257,10 @@ Role:
 - transcription and analysis where authorised;
 - provider-independent AI capability behind governed adapters.
 
-Observed structure:
-- more than one OpenAI organisation/project context exists;
-- dedicated environment separation was not fully verified;
-- historical plaintext API-key exposure was identified in email;
-- replacement-key creation, secret binding, old-key revocation and rejection canaries remain incompletely verified.
-
 Security rule:
 - raw keys never enter GitHub, Dataverse, Drive ledgers or chat outputs;
-- runtime receives secret references through Secret Manager or equivalent vault;
-- exposed credentials remain compromised until provider-native revocation and rejection are proven.
+- runtime receives approved credentials only through a governed secret path;
+- provider proof remains scoped to the exact canary/runtime/receipt that was read back.
 
 ### 7. Canva and Adobe
 
@@ -263,7 +283,7 @@ Surfaces include Gmail and Microsoft Outlook.
 
 Boundary:
 - inbox content is evidence, not automatically structured mission state;
-- secrets found in email must be contained, rotated and removed only after safe revocation;
+- secrets found in email must be contained and rotated through provider-native routes;
 - external sending requires explicit authority where consequential.
 
 ### 9. Local and user-facing surfaces
@@ -311,7 +331,7 @@ sequenceDiagram
 |---|---|
 | Founder to system | exact directive preservation and precedence |
 | Chat to external system | scoped capability, no raw secrets |
-| GitHub to Google Cloud | repository- and branch-restricted WIF |
+| GitHub to provider runtime | repository- and branch-scoped provider trust where applicable |
 | Runtime to Secret Manager | service-specific least privilege |
 | Runtime to source evidence | minimum necessary access and in-place processing |
 | Google AI Studio to production | export, versioning, evaluation, security review and controlled deployment |
@@ -319,6 +339,10 @@ sequenceDiagram
 | Public repository to private estate | aliases and redacted pointers only |
 | Local mirror to canonical bridge | transactional sync and readback |
 | Scheduled trigger to completion | actual run, artifact and receipt |
+| Persisted source snapshot to present truth | fresh query-time provider read |
+| Runtime attestation to later source | no inheritance; preserve tested source version |
+| Provider subcapability to wider system | no scope or maturity inheritance |
+| XLSX export to provider-native state | semantic decode plus sheet-identity validation |
 
 ## ICT operating states
 
@@ -340,9 +364,7 @@ Use only the highest state supported by evidence:
 14. `LIVE_ORCHESTRATION_VERIFIED`
 15. `CONTINUOUS_LEARNING_VERIFIED`
 
-Current overall estate maturity:
-
-`DOCTRINE_ACTIVE / DRIVE_BRIDGE_DISCOVERED / GITHUB_CONTROL_PLANE_ACTIVE / GOOGLE_AI_STUDIO_RESOURCE_CONFIRMED_INVENTORY_PENDING / CLOUD_PROVIDER_BOUNDARY_UNVERIFIED / DATAVERSE_FULL_BINDING_UNVERIFIED`
+The KDV integrity layer does not promote the whole estate up this ladder. Source admission, private provider schema binding, typed-writer execution, projection canary and provider constraints are independently evidenced.
 
 ## ICT responsibilities
 
@@ -353,8 +375,8 @@ Current overall estate maturity:
 - escalate broken pointers and failed readback.
 
 ### Cloud engineering
-- verify WIF, service accounts, IAM, secrets, runtime services and inventory;
-- map Google AI Studio production bindings to authorised Google Cloud projects and identities;
+- verify service accounts, IAM, secrets, runtime services and inventory;
+- map AI experimentation production bindings to authorised cloud identities;
 - prevent broad trust and static cloud keys;
 - maintain provider-native receipts.
 
@@ -362,40 +384,43 @@ Current overall estate maturity:
 - use branches and PRs;
 - keep public leak guard active;
 - treat green CI as source qualification, not production proof;
-- preserve artifacts, hashes and rollback routes.
+- preserve artifacts, hashes and rollback routes;
+- enforce required checks at the provider layer where authorised and proven.
 
 ### Security
 - maintain the authority ledger and vault boundaries;
 - contain exposed credentials;
-- verify revocation and old-key rejection;
-- govern AI Studio experiment data, API credentials, file uploads and production exports;
+- verify revocation and old-key rejection where applicable;
+- govern experiment data, API credentials, file uploads and production exports;
 - monitor least privilege and public/private leakage.
 
 ### Data and integration
 - map actual provider schemas to KDV logical entities;
-- register AI Studio experiments, model configurations and exported artefacts with stable IDs;
-- use stable IDs and relationship edges;
+- bind full field/type metadata in `KDV_SCHEMA_REGISTRY`;
+- use stable IDs and typed relationship edges;
 - prevent duplicates, stale directives and orphaned pointers;
-- validate writes and readback.
+- validate writes and readback;
+- treat mutable status tables as derived views rather than primary evidence.
 
 ### Reliability
-- distinguish configured, running and verified states;
+- distinguish configured, running, as-of and currently read-back states;
 - maintain trigger, queue and runtime health;
 - test backup/restore and failure recovery;
-- monitor Mission Delta closure and repeat failure.
+- monitor Mission Delta closure and repeat failure;
+- fail closed on source/revision compare-and-set mismatch.
 
 ## Known estate gaps
 
-- actual Dataverse environment, authority, schema, read and write route are not fully bound;
-- private canonical bridge exists, but a complete provider-native schema map is not yet verified;
+- full private field-level schema binding and readback must be maintained in `KDV_SCHEMA_REGISTRY`;
+- mutable projection consumers require progressive rebinding to the derived truth contract;
+- historical mixed physical types remain and should not be destructively normalized;
+- provider-native required-check/branch-protection enforcement is separately proof-gated;
 - Google AI Studio project, experiment, model, prompt, file, access and API-binding inventory remains incomplete;
 - Google AI Studio data-handling, export, evaluation and production-promotion controls require provider-native readback;
-- Google Cloud WIF and infrastructure inventory remain incomplete;
 - cloud service, secret, database, storage and queue readback remains incomplete;
-- exposed OpenAI keys require provider-native closure proof;
-- several historic NEXUS, PFRD and live-thread workflows remain under supersession review;
+- several historic workflow families remain under supersession review;
 - several recurring tasks still require migration from legacy/internal scheduling to external runtimes;
-- a private pointer registry must remain synchronised with this public-safe estate map.
+- the private pointer and schema registries must remain synchronised with this public-safe estate map.
 
 ## Change-control rule
 
@@ -403,7 +428,7 @@ Any material addition, deletion, migration or reclassification in the estate mus
 
 1. this human-readable map;
 2. the machine-readable estate registry;
-3. the private canonical pointer bridge;
+3. the private canonical pointer/schema bridge;
 4. dependency and authority relationships;
 5. the relevant regression tests;
 6. the estate revision receipt.

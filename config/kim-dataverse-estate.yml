@@ -1,5 +1,5 @@
-version: 1.1.0
-status: SOURCE_CONSOLIDATED_ESTATE_PARTIALLY_VERIFIED
+version: 1.2.0
+status: SOURCE_CONSOLIDATED_ESTATE_INTEGRITY_CONTROLS_BOUND_PROVIDER_PROJECTION_BINDING_SEPARATE
 owner: Kim Kagiso Mosiane
 final_authority: Kim Kagiso Mosiane
 classification: PUBLIC_SAFE_MAP_PRIVATE_POINTERS_REDACTED
@@ -12,6 +12,10 @@ constitutional_controls:
   schedule_configuration_not_trigger_proof: true
   chatgpt_scheduler_authorised: false
   mission_delta_default_owner: WORKFORCE
+  currentness_is_query_time_observation: true
+  runtime_attestations_are_immutable_exact_version_proof: true
+  provider_subcapability_scope_does_not_inherit: true
+  raw_serialization_requires_format_aware_decode: true
 
 logical_entities:
   - KDV_FOUNDER
@@ -44,6 +48,41 @@ logical_entities:
   - KDV_SYNC_TRANSACTION
   - KDV_SYSTEM_HEALTH
 
+integrity_controls:
+  source_contracts:
+    - config/kim-dataverse-schema-manifest-v1.json
+    - config/kim-dataverse-projection-contract-v1.json
+    - config/kim-dataverse-consumer-map-v1.json
+    - docs/ict/KIM_DATAVERSE_INTEGRITY_CONTROLS.md
+  runtime_components:
+    - evidenceops/kim_dataverse/schema_contract.py
+    - evidenceops/kim_dataverse/projection_contract.py
+    - evidenceops/kim_dataverse/xlsx_semantic.py
+    - evidenceops/kim_dataverse/writer_guard.py
+  private_provider_registries:
+    - KDV_SCHEMA_REGISTRY
+    - KDV_PROJECTION_CONTRACT
+    - KDV_CONSUMER_MAP
+    - KDV_PROJECTION_RECEIPTS
+    - KDV_SCHEMA_VIOLATIONS
+  projection_truth_dimensions:
+    - source_frontier
+    - runtime_attestation_frontier
+    - provider_effect_proof
+  write_protocol:
+    - fresh_provider_or_canonical_read
+    - typed_projection_compile
+    - compare_expected_source_or_revision
+    - minimum_changed_cells
+    - independent_readback
+    - immutable_projection_receipt
+  export_semantics:
+    provider_native_state_is_canonical: true
+    xlsx_is_derived_representation: true
+    xlsx_shared_string_decode_required: true
+    xlsx_sheet_name_collision_gate_required: true
+  migration_rule: PRESERVE_IDENTITIES_AND_APPEND_ONLY_PROOF_NORMALISE_NEW_WRITES_DERIVE_MUTABLE_VIEWS
+
 surfaces:
   google_drive:
     role:
@@ -62,7 +101,7 @@ surfaces:
       - raw_evidence
       - source_documents
       - private_pointer_registry
-    proof_state: DISCOVERED_NOT_FULLY_SCHEMA_BOUND
+    proof_state: DISCOVERED_SCHEMA_INTEGRITY_CONTRACT_SOURCE_BOUND_PRIVATE_FULL_FIELD_REGISTRY_PROVIDER_BINDING_SEPARATE
 
   github:
     repository: mosianekk-lang/Federation-Omega
@@ -86,6 +125,7 @@ surfaces:
       - wif_bootstrap
       - infrastructure_inventory
       - provider_boundary_watch
+      - kim_dataverse_integrity_controls
     proof_state: CONTROL_PLANE_ACTIVE_PRODUCTION_BOUNDARY_INCOMPLETE
 
   google_cloud:
@@ -215,6 +255,12 @@ trust_boundaries:
     control: transactional_sync_and_readback
   - id: TB_TRIGGER_COMPLETION
     control: actual_run_artifact_and_receipt
+  - id: TB_SOURCE_CURRENTNESS
+    control: persisted_sha_is_as_of_only_present_tense_requires_query_time_provider_read
+  - id: TB_RUNTIME_SOURCE_VERSION
+    control: attestation_remains_exact_to_tested_source_never_rewritten_forward
+  - id: TB_EXPORT_REPRESENTATION
+    control: decode_ooxml_semantics_and_sheet_identity_before_inference
 
 verified_state_ladder:
   - DOCTRINE_ACTIVE
@@ -237,6 +283,9 @@ current_maturity:
   doctrine: ACTIVE
   drive_bridge: DISCOVERED
   github_control_plane: ACTIVE
+  kdv_integrity_source_contract: BOUND_PENDING_PR_ADMISSION
+  kdv_private_schema_registry: PENDING_PROVIDER_BINDING
+  kdv_projection_compiler: SOURCE_IMPLEMENTED_PROVIDER_CANARY_PENDING
   google_ai_studio:
     resource_pool_membership: CONFIRMED_BY_FOUNDER
     project_inventory: PENDING
@@ -248,8 +297,10 @@ current_maturity:
     provider_boundary_watch: DEPLOYED_FIRST_RUN_PENDING_OR_UNVERIFIED
 
 known_gaps:
-  - dataverse_environment_authority_schema_read_write_not_fully_bound
-  - private_canonical_bridge_not_yet_provider_native_schema_verified
+  - private_field_level_schema_registry_requires_provider_binding_and_readback
+  - mutable_projection_consumers_require_progressive_rebinding_to_derived_truth_contract
+  - legacy_mixed_physical_types_remain_historical_and_must_not_be_destructively_normalised
+  - native_repository_required_check_enforcement_requires_provider_verification
   - google_ai_studio_projects_access_experiments_models_prompts_files_not_fully_inventoried
   - google_ai_studio_data_handling_evaluation_export_and_production_binding_not_read_back
   - google_cloud_wif_and_inventory_incomplete
