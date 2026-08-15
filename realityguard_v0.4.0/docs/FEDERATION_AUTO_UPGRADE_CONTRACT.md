@@ -23,4 +23,4 @@ The contract reuses the current Federation registry and deduplicator, Alpha-Omeg
 
 Automatic means the integrated host invokes the decision at a material cycle boundary without waiting for another owner prompt. It does not mean a background daemon, silent provider-wide installation, autonomous authority expansion, foundation-model modification, or permission to bypass deployment and owner-acceptance gates.
 
-`federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json` registers the source contract for every system in the current Federation canonical register. Entries marked `ADAPTER_REQUIRED` are an explicit integration queue, not a claim that those runtimes are already bound.
+`src/realityguard/federation_adapter.py` is the single executable source adapter for every system ID in `federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json`. This avoids one adapter or engine per system. Entries marked `ADAPTER_REQUIRED` are an explicit live-integration queue, not a claim that those runtimes are already bound.
