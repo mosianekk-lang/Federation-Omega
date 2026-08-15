@@ -10,11 +10,13 @@ from .runtime import ConnectorGateway
 from .state import DurableState, EvidencePointer
 from .dag import DAGExecutor, Lane, LaneState
 from .completion import ChatGovCompletionInterlock, CompletionReconcileResult
+from .provider_trust import ChatGovProviderTrustInterlock, ProviderDependencyReconcileResult
 
 __all__ = [
     "MissionCompiler", "MissionPlan", "MemoryGovernor", "ConnectorGateway",
     "DurableState", "EvidencePointer", "DAGExecutor", "Lane", "LaneState",
     "ChatGovCompletionInterlock", "CompletionReconcileResult",
+    "ChatGovProviderTrustInterlock", "ProviderDependencyReconcileResult",
 ]
 
 __version__ = "3.1.0"
