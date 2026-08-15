@@ -121,6 +121,7 @@ class ProviderTrustAAAReceivingHomesTests(unittest.TestCase):
         writer_adapter = TruthGridWriterAdapter(
             writer=writer,
             readback=lambda sheet, key: dict(observed),
+            schema_reader=lambda sheet: ("Status",),
         )
         adapter = TruthGridProviderTrustAdapter()
         live = resolution(live=True)
@@ -160,6 +161,7 @@ class ProviderTrustAAAReceivingHomesTests(unittest.TestCase):
         writer_adapter = TruthGridWriterAdapter(
             writer=lambda intent: calls.append(intent),
             readback=lambda sheet, key: {},
+            schema_reader=lambda sheet: ("Status",),
         )
         intent = MutationIntent(
             sheet="CLAIMS",
