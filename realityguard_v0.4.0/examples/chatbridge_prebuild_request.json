@@ -1,0 +1,36 @@
+{
+  "objective": "Preserve the existing ChatBridge continuity objective without creating a duplicate browser extension.",
+  "requested_capabilities": [
+    "browser_button_integration",
+    "conversation_context_capture",
+    "continuity_capsule",
+    "target_context_injection",
+    "continuation_validation",
+    "route_preservation",
+    "one_time_transfer"
+  ],
+  "proposed_component": {
+    "component_id": "CHATBRIDGE-REPLACEMENT-PROPOSAL",
+    "is_new_component": true,
+    "provides": [
+      "browser_button_integration",
+      "conversation_context_capture",
+      "continuity_capsule",
+      "target_context_injection",
+      "continuation_validation",
+      "route_preservation",
+      "one_time_transfer"
+    ]
+  },
+  "inventory": {
+    "enumerated": true,
+    "inspected_to_end": true,
+    "snapshot_current": true,
+    "snapshot_hash": "sha256:ed44c3fe3dd6f37b46fd18bbd772d6b61d8729ba6e1fe1de2fd64ececcbed116",
+    "sources": ["local:examples/federation_capabilities.json", "local:chatbridge-companion/BUILD_CONTRACT.json"]
+  },
+  "gap_proof": {},
+  "available_authority": "A2",
+  "allow_external_effects": false,
+  "maximum_recurring_cost": 0
+}
