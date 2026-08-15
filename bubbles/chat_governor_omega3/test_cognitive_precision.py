@@ -3,11 +3,18 @@ from __future__ import annotations
 import unittest
 
 from .cognitive_precision import CognitivePrecisionKernel
+from .routing import MissionCompiler
 
 
 class CognitivePrecisionTests(unittest.TestCase):
     def setUp(self) -> None:
         self.kernel = CognitivePrecisionKernel()
+
+    def test_compiler_flags_high_risk_and_competing_work(self) -> None:
+        self.assertTrue(MissionCompiler.needs_cognitive_precision("Forensic legal strategy for the disciplinary matter"))
+        self.assertTrue(MissionCompiler.needs_cognitive_precision("Choose the best route", candidate_count=3))
+        self.assertTrue(MissionCompiler.needs_cognitive_precision("Simple reversible task", risk_level="HIGH"))
+        self.assertFalse(MissionCompiler.needs_cognitive_precision("Rename a local label"))
 
     def test_contradicted_attractive_route_is_downgraded(self) -> None:
         ranked = self.kernel.rank_routes([
