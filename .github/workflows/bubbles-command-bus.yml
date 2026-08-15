@@ -128,15 +128,11 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
-      id-token: write
     runs-on: ubuntu-24.04
     timeout-minutes: 25
     env:
       CHATBRIDGE_LIVE_PROOF_REQUESTED: ${{ startsWith(github.event.head_commit.message, '[CHATBRIDGE-LIVE-PROOF]') }}
       HAS_DIRECT_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
-      PROJECT_ID: sov-hybrid-suite
-      WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
-      DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
       CANARY_NAMESPACE: aaa-provider-live-canary
       CANARY_BRANCH_NAMESPACE: aaa-provider-live-canary-branch
     steps:
@@ -177,32 +173,12 @@ jobs:
           if-no-files-found: error
           retention-days: 90
 
-      - name: Probe canonical Google WIF for OpenAI secret fallback
-        id: chatbridge_gcp_auth
-        if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && env.HAS_DIRECT_OPENAI_KEY != 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.DEPLOYER_SA }}
-
-      - name: Install gcloud for OpenAI secret fallback
-        id: chatbridge_setup_gcloud
-        if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && env.HAS_DIRECT_OPENAI_KEY != 'true' && steps.chatbridge_gcp_auth.outcome == 'success' }}
-        continue-on-error: true
-        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-
       - name: Bind approved OpenAI key for ChatBridge canary
         id: chatbridge_bind_key
         if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' }}
         shell: bash
         env:
           DIRECT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          GCP_AUTH_OUTCOME: ${{ steps.chatbridge_gcp_auth.outcome }}
-          GCLOUD_OUTCOME: ${{ steps.chatbridge_setup_gcloud.outcome }}
         run: |
           set -euo pipefail
           set +x
@@ -212,15 +188,6 @@ jobs:
           if [ -n "${DIRECT_OPENAI_API_KEY:-}" ]; then
             key="$DIRECT_OPENAI_API_KEY"
             source_kind='GITHUB_ACTIONS_SECRET'
-          elif [ "${GCP_AUTH_OUTCOME:-}" = 'success' ] && [ "${GCLOUD_OUTCOME:-}" = 'success' ]; then
-            for secret_name in OPENAI_API_KEY openai-mosiane-live-thread-20260804; do
-              candidate="$(gcloud secrets versions access latest --secret="$secret_name" --project="$PROJECT_ID" 2>/dev/null || true)"
-              if [ -n "$candidate" ]; then
-                key="$candidate"
-                source_kind="GOOGLE_SECRET_MANAGER:${secret_name}"
-                break
-              fi
-            done
           fi
           if [ -n "$key" ]; then
             echo "::add-mask::$key"
@@ -241,10 +208,10 @@ jobs:
             'key_bound':os.environ.get('KEY_BOUND_CURRENT')=='true',
             'key_source':os.environ.get('KEY_SOURCE_CURRENT') or 'NONE',
             'direct_secret_present':bool(os.environ.get('DIRECT_OPENAI_API_KEY','')),
-            'gcp_auth_outcome':os.environ.get('GCP_AUTH_OUTCOME') or 'skipped',
-            'gcloud_outcome':os.environ.get('GCLOUD_OUTCOME') or 'skipped',
+            'gcp_auth_outcome':'not_configured_in_bubbles',
+            'gcloud_outcome':'not_configured_in_bubbles',
             'secret_values_recorded':False,
-            'truth_boundary':'Key creation and runtime binding are separate proof states; provider-live maturity requires successful provider readback.'
+            'truth_boundary':'Bubbles consumes only the proven GitHub Actions secret binding. Alternate provider-secret bindings require their own separately admitted execution home and provider proof.'
           }
           Path('chatbridge-provider-live-output/binding.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
           PY
@@ -280,7 +247,6 @@ jobs:
         env:
           KEY_BOUND: ${{ steps.chatbridge_bind_key.outputs.bound }}
           CANARY_OUTCOME: ${{ steps.chatbridge_live_canary.outcome }}
-          GCP_AUTH_OUTCOME: ${{ steps.chatbridge_gcp_auth.outcome }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -293,7 +259,7 @@ jobs:
             'execution_lane':'BUBBLES_COMMAND_BUS_TRUSTED_PROVIDER_SURFACE',
             'key_bound':os.environ.get('KEY_BOUND')=='true',
             'canary_step_outcome':os.environ.get('CANARY_OUTCOME') or 'skipped',
-            'gcp_auth_outcome':os.environ.get('GCP_AUTH_OUTCOME') or 'skipped',
+            'gcp_auth_outcome':'not_configured_in_bubbles',
             'api_key_logged':False,
             'provider_live_verified':False,
           }
