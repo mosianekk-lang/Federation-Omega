@@ -1,0 +1,134 @@
+name: CASEFORGE OpenAI Provider Readback Canary
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - '.github/workflows/caseforge-provider-readback-canary.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: caseforge-openai-provider-readback-canary
+  cancel-in-progress: false
+
+jobs:
+  provider-readback:
+    if: startsWith(github.event.head_commit.message, '[CASEFORGE-PROVIDER-CANARY]')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      CASEFORGE_OPENAI_MODEL: gpt-5.4-mini
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Verify bounded public/synthetic canary preconditions
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          if [ -z "${OPENAI_API_KEY:-}" ]; then
+            echo 'OPENAI_API_KEY is not bound to this trusted runtime.' >&2
+            exit 2
+          fi
+          echo "::add-mask::$OPENAI_API_KEY"
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          path = Path('evidenceops/caseforge/benchmarks/CF-UTILITY-ZA-001.blind.json')
+          blind = json.loads(path.read_text(encoding='utf-8'))
+          assert blind['case_id'] == 'CF-UTILITY-ZA-001'
+          assert blind['provider_storage_classification'] == 'PUBLIC_SYNTHETIC'
+          assert blind['external_effect'] is False
+          assert blind['authority_ceiling'] == 'A1_INTERNAL'
+          print('CASEFORGE_PUBLIC_SYNTHETIC_PRECONDITIONS_VERIFIED')
+          PY
+
+      - name: Install admitted OpenAI client dependency
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-input 'openai>=2.36,<3'
+
+      - name: Execute CASEFORGE blind canary with provider readback
+        id: caseforge_canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p caseforge-provider-readback-output
+          python -m evidenceops.caseforge.openai_blind_canary \
+            evidenceops/caseforge/benchmarks/CF-UTILITY-ZA-001.blind.json \
+            --run-id "CF-AOCRA-BLIND-RUNNER-001-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}" \
+            --model "$CASEFORGE_OPENAI_MODEL" \
+            --provider-readback \
+            > caseforge-provider-readback-output/provider-receipt.json
+
+      - name: Enforce provider-native Response/config/model-resource readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          p = Path('caseforge-provider-readback-output/provider-receipt.json')
+          d = json.loads(p.read_text(encoding='utf-8'))
+          checks = {
+            'schema': d.get('schema') == 'CASEFORGE-OPENAI-BLIND-CANARY-2',
+            'case': d.get('case_id') == 'CF-UTILITY-ZA-001',
+            'provider_verified': d.get('provider_state') == 'PROVIDER_VERIFIED',
+            'provider_response_id': bool(d.get('provider_response_id')),
+            'provider_readback_ref': bool(d.get('provider_readback_ref')),
+            'model_resource_ref': bool(d.get('provider_model_resource_version_ref')),
+            'configuration_bound': bool(d.get('verified_configuration_sha256')),
+            'stored_for_bounded_readback': d.get('store') is True,
+            'no_external_effect': d.get('external_effect') is False,
+            'hidden_scoring_separate': d.get('scoring_state') == 'SEPARATE_HIDDEN_SCORER_REQUIRED',
+            'blind_input_bound': bool(d.get('blind_input_sha256')),
+          }
+          failed = [k for k, ok in checks.items() if not ok]
+          if failed:
+            raise SystemExit('CASEFORGE_PROVIDER_READBACK_GATE_FAILED:' + ','.join(failed))
+          raw = p.read_bytes()
+          gate = {
+            'schema': 'CASEFORGE-PROVIDER-READBACK-GATE-1',
+            'classification': 'PROVIDER_VERIFIED',
+            'case_id': d['case_id'],
+            'run_id': d['run_id'],
+            'blind_input_sha256': d['blind_input_sha256'],
+            'tested_output_sha256': d['tested_output_sha256'],
+            'provider_response_id': d['provider_response_id'],
+            'provider_response_model': d['provider_response_model'],
+            'provider_readback_ref': d['provider_readback_ref'],
+            'provider_model_resource_version_ref': d['provider_model_resource_version_ref'],
+            'request_configuration_sha256': d['request_configuration_sha256'],
+            'verified_configuration_sha256': d['verified_configuration_sha256'],
+            'provider_receipt_sha256': hashlib.sha256(raw).hexdigest(),
+            'external_effect': False,
+            'hidden_scoring_state': 'SEPARATE_NOT_EXECUTED_IN_PROVIDER_JOB',
+            'secret_values_recorded': False,
+          }
+          Path('caseforge-provider-readback-output/gate.json').write_text(
+            json.dumps(gate, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(gate, sort_keys=True))
+          PY
+
+      - name: Upload immutable CASEFORGE provider-readback receipt
+        if: always() && hashFiles('caseforge-provider-readback-output/provider-receipt.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: caseforge-provider-readback-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            caseforge-provider-readback-output/provider-receipt.json
+            caseforge-provider-readback-output/gate.json
+          if-no-files-found: warn
+          retention-days: 90
