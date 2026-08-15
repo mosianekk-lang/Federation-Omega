@@ -26,9 +26,11 @@ SIGNALS = ROOT / "evidenceops" / "innovation_engine" / "fixtures" / "master_bibl
 
 
 class EvidenceOpsAlgorithmFoundryReleaseTests(unittest.TestCase):
-    def test_catalog_registers_fifteen_algorithms(self) -> None:
+    def test_catalog_registers_sixteen_algorithms(self) -> None:
         catalog = json.loads(CATALOG.read_text(encoding="utf-8"))
-        self.assertEqual(15, len(catalog["algorithms"]))
+        self.assertEqual(16, len(catalog["algorithms"]))
+        identifiers = {item["algorithm_id"] for item in catalog["algorithms"]}
+        self.assertIn("ALG-EOPS-KUAG-001", identifiers)
         self.assertEqual("A1_INTERNAL", catalog["authority_ceiling"])
         self.assertFalse(catalog["external_effect"])
 
