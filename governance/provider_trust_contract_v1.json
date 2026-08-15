@@ -1,0 +1,85 @@
+{
+  "schema": "FEDOMEGA-PROVIDER-TRUST-CONTRACT-1",
+  "contract_id": "FEDERATION-CREDENTIAL-PROVIDER-TRUST-V1",
+  "owner": "Kim Kagiso Mosiane",
+  "design_law": [
+    "HUMANS_ESTABLISH_ROOTS_OF_TRUST",
+    "SYSTEMS_REUSE_APPROVED_REFERENCES",
+    "AI_ORCHESTRATES_ABOVE_SECRET_BOUNDARY",
+    "INNER_PROVIDER_RECEIPTS_CONTROL_MATURITY",
+    "RAW_SECRET_VALUES_NEVER_ENTER_CHAT_SOURCE_ISSUES_OR_RECEIPTS"
+  ],
+  "build_gate": [
+    "SEARCH_EXISTING_BINDING",
+    "REUSE",
+    "ADAPT",
+    "COMPOSE",
+    "OWNER_BOOTSTRAP_ONLY_IF_GENUINELY_REQUIRED",
+    "BUILD_NEW_SECRET_PATH_ONLY_AS_LAST_RESORT"
+  ],
+  "proof_ladder": [
+    "CREDENTIAL_REFERENCE_FOUND",
+    "RUNTIME_BOUND",
+    "PROVIDER_AUTHENTICATED",
+    "PROVIDER_LIVE_VERIFIED"
+  ],
+  "non_promoting_signals": [
+    "CODE_EXISTS",
+    "CODE_MERGED",
+    "CI_SUCCESS",
+    "OUTER_WORKFLOW_SUCCESS",
+    "OWNER_ASSERTED_KEY_CREATED"
+  ],
+  "capabilities": {
+    "OPENAI_PRIMARY_RUNTIME": {
+      "provider": "openai",
+      "runtime_environment_contract": "OPENAI_API_KEY",
+      "preferred_live_probe": "python -m bubbles.chatbridge_omega4.live_canary",
+      "bindings": [
+        {
+          "binding_id": "FEDOMEGA_GITHUB_ACTIONS_OPENAI_PRIMARY",
+          "binding_type": "GITHUB_ACTIONS_REPOSITORY_SECRET_REFERENCE",
+          "reference": "github-actions:mosianekk-lang/Federation-Omega:OPENAI_API_KEY",
+          "execution_lane": "BUBBLES_COMMAND_BUS_TRUSTED_PROVIDER_SURFACE",
+          "self_service_binding_available": false,
+          "owner_bootstrap_required_when_absent": true,
+          "secret_value_recorded": false,
+          "current_proof_state": "PROVIDER_LIVE_VERIFIED"
+        },
+        {
+          "binding_id": "FEDOMEGA_SCB_GSM_OPENAI_PRIMARY",
+          "binding_type": "SECURE_CAPABILITY_BOX_GOOGLE_SECRET_MANAGER_REFERENCE",
+          "reference": "google-secret-manager:projects/sov-hybrid-suite/secrets/OPENAI_API_KEY:EXACT_VERSION_REQUIRED",
+          "execution_lane": "SECURE_CAPABILITY_BOX",
+          "self_service_binding_available": true,
+          "owner_bootstrap_required_when_absent": false,
+          "secret_value_recorded": false,
+          "current_proof_state": "REFERENCE_PATH_IMPLEMENTED_PROVIDER_AUTHORITY_NOT_CURRENTLY_ATTACHED"
+        }
+      ]
+    }
+  },
+  "failure_semantics": {
+    "credit_balance_exhausted": {
+      "classification": "BLOCKED_PROVIDER_BILLING",
+      "next_action": "RESTORE_PROVIDER_BILLING",
+      "rotate_credential": false
+    },
+    "incorrect_api_key": {
+      "classification": "BLOCKED_PROVIDER_AUTH",
+      "next_action": "ROTATE_OR_REBIND_CREDENTIAL",
+      "rotate_credential": true
+    },
+    "invalid_api_key": {
+      "classification": "BLOCKED_PROVIDER_AUTH",
+      "next_action": "ROTATE_OR_REBIND_CREDENTIAL",
+      "rotate_credential": true
+    },
+    "rate_limit_exceeded": {
+      "classification": "BLOCKED_PROVIDER_TRANSIENT",
+      "next_action": "RETRY_PROVIDER_PROBE",
+      "rotate_credential": false
+    }
+  },
+  "truth_boundary": "A secret reference, runtime binding, provider authentication and provider-live proof are separate states. No earlier state may be promoted into a later state without the corresponding inner provider evidence."
+}
