@@ -50,6 +50,14 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
             "AUDIT_FIRST_BEFORE_ARCHITECTURE",
         )
         self.assertTrue(restored["pre_owner_assurance_required"])
+        self.assertEqual(
+            restored["pre_owner_assurance_contract"]["principle"],
+            "SYSTEM_QA_BEFORE_OWNER",
+        )
+        self.assertIn(
+            "estate_inventory_verified",
+            restored["pre_owner_assurance_contract"]["discovery_checks"],
+        )
         self.assertEqual(restored["operating_profile_source"], "CHECKPOINT_BOUND")
 
     def test_namespace_specific_profile_restores_working_intelligence_contract(self) -> None:
