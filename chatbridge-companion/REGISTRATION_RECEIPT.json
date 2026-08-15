@@ -19,9 +19,9 @@
     "readback": "VERIFIED_ACTIVE_LOCAL"
   },
   "gmail_backup": {
-    "recipient": "mosianekk@gmail.com",
-    "marker": "CGBK-526BB6D64BCD152517E1",
-    "status": "SUPERSEDED_PACKAGE_BACKUP; corrected receipt package requires a new deduplicated backup"
+    "scope": "OUT_OF_BAND_BACKUP_RECEIPT",
+    "included_in_source_registration": false,
+    "note": "Backup markers bind to archive hashes and are recorded in the continuity capsule, not recursively inside this source receipt."
   },
   "tests": "VERIFIED_9_OF_9",
   "windows_readiness_runtime": "NOT_EXECUTED_ON_TARGET",
