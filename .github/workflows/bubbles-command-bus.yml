@@ -128,8 +128,17 @@ jobs:
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       contents: read
+      id-token: write
     runs-on: ubuntu-24.04
-    timeout-minutes: 10
+    timeout-minutes: 25
+    env:
+      CHATBRIDGE_LIVE_PROOF_REQUESTED: ${{ startsWith(github.event.head_commit.message, '[CHATBRIDGE-LIVE-PROOF]') }}
+      HAS_DIRECT_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
+      PROJECT_ID: sov-hybrid-suite
+      WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+      DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+      CANARY_NAMESPACE: aaa-provider-live-canary
+      CANARY_BRANCH_NAMESPACE: aaa-provider-live-canary-branch
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
@@ -167,3 +176,175 @@ jobs:
           path: bubbles-provider-probe-output/receipt.json
           if-no-files-found: error
           retention-days: 90
+
+      - name: Probe canonical Google WIF for OpenAI secret fallback
+        id: chatbridge_gcp_auth
+        if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && env.HAS_DIRECT_OPENAI_KEY != 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install gcloud for OpenAI secret fallback
+        id: chatbridge_setup_gcloud
+        if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && env.HAS_DIRECT_OPENAI_KEY != 'true' && steps.chatbridge_gcp_auth.outcome == 'success' }}
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Bind approved OpenAI key for ChatBridge canary
+        id: chatbridge_bind_key
+        if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' }}
+        shell: bash
+        env:
+          DIRECT_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GCP_AUTH_OUTCOME: ${{ steps.chatbridge_gcp_auth.outcome }}
+          GCLOUD_OUTCOME: ${{ steps.chatbridge_setup_gcloud.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p chatbridge-provider-live-output
+          source_kind='NONE'
+          key=''
+          if [ -n "${DIRECT_OPENAI_API_KEY:-}" ]; then
+            key="$DIRECT_OPENAI_API_KEY"
+            source_kind='GITHUB_ACTIONS_SECRET'
+          elif [ "${GCP_AUTH_OUTCOME:-}" = 'success' ] && [ "${GCLOUD_OUTCOME:-}" = 'success' ]; then
+            for secret_name in OPENAI_API_KEY openai-mosiane-live-thread-20260804; do
+              candidate="$(gcloud secrets versions access latest --secret="$secret_name" --project="$PROJECT_ID" 2>/dev/null || true)"
+              if [ -n "$candidate" ]; then
+                key="$candidate"
+                source_kind="GOOGLE_SECRET_MANAGER:${secret_name}"
+                break
+              fi
+            done
+          fi
+          if [ -n "$key" ]; then
+            echo "::add-mask::$key"
+            printf 'OPENAI_API_KEY=%s\n' "$key" >> "$GITHUB_ENV"
+            echo 'bound=true' >> "$GITHUB_OUTPUT"
+            bound=true
+          else
+            echo 'bound=false' >> "$GITHUB_OUTPUT"
+            bound=false
+          fi
+          export KEY_BOUND_CURRENT="$bound"
+          export KEY_SOURCE_CURRENT="$source_kind"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          payload={
+            'schema':'CHATBRIDGE-PROVIDER-LIVE-BINDING-PREFLIGHT-1',
+            'key_bound':os.environ.get('KEY_BOUND_CURRENT')=='true',
+            'key_source':os.environ.get('KEY_SOURCE_CURRENT') or 'NONE',
+            'direct_secret_present':bool(os.environ.get('DIRECT_OPENAI_API_KEY','')),
+            'gcp_auth_outcome':os.environ.get('GCP_AUTH_OUTCOME') or 'skipped',
+            'gcloud_outcome':os.environ.get('GCLOUD_OUTCOME') or 'skipped',
+            'secret_values_recorded':False,
+            'truth_boundary':'Key creation and runtime binding are separate proof states; provider-live maturity requires successful provider readback.'
+          }
+          Path('chatbridge-provider-live-output/binding.json').write_text(json.dumps(payload,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Install admitted Agents SDK for ChatBridge canary
+        if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && steps.chatbridge_bind_key.outputs.bound == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m pip install --disable-pip-version-check --no-input -r evidenceops/ai_ict_durable/requirements-sdk.txt
+
+      - name: Execute existing ChatBridge provider-live canary
+        id: chatbridge_live_canary
+        if: ${{ env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && steps.chatbridge_bind_key.outputs.bound == 'true' }}
+        continue-on-error: true
+        shell: bash
+        env:
+          CHATBRIDGE_OPENAI_MODEL: gpt-5.4-mini
+          CHATBRIDGE_OWNER: Kim Kagiso Mosiane
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p .chatbridge chatbridge-provider-live-output
+          python -m bubbles.chatbridge_omega4.live_canary \
+            --db .chatbridge/aaa_provider_live_canary.sqlite3 \
+            --namespace "$CANARY_NAMESPACE" \
+            prove --branch-namespace "$CANARY_BRANCH_NAMESPACE" \
+            > chatbridge-provider-live-output/canary.json
+
+      - name: Build ChatBridge fail-closed provider-live receipt
+        if: ${{ always() && env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' }}
+        shell: bash
+        env:
+          KEY_BOUND: ${{ steps.chatbridge_bind_key.outputs.bound }}
+          CANARY_OUTCOME: ${{ steps.chatbridge_live_canary.outcome }}
+          GCP_AUTH_OUTCOME: ${{ steps.chatbridge_gcp_auth.outcome }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          base={
+            'schema':'CHATBRIDGE-AAA-PROVIDER-LIVE-PROOF-2',
+            'namespace':os.environ.get('CANARY_NAMESPACE'),
+            'branch_namespace':os.environ.get('CANARY_BRANCH_NAMESPACE'),
+            'execution_lane':'BUBBLES_COMMAND_BUS_TRUSTED_PROVIDER_SURFACE',
+            'key_bound':os.environ.get('KEY_BOUND')=='true',
+            'canary_step_outcome':os.environ.get('CANARY_OUTCOME') or 'skipped',
+            'gcp_auth_outcome':os.environ.get('GCP_AUTH_OUTCOME') or 'skipped',
+            'api_key_logged':False,
+            'provider_live_verified':False,
+          }
+          p=Path('chatbridge-provider-live-output/canary.json')
+          canary={}
+          if p.exists():
+            try: canary=json.loads(p.read_text())
+            except Exception: canary={'state':'UNREADABLE_CANARY_RECEIPT'}
+          base['canary']=canary
+          expected=(
+            base['key_bound'] and
+            base['canary_step_outcome']=='success' and
+            canary.get('state')=='PROVIDER_LIVE_CANARY_PHASES_VERIFIED' and
+            canary.get('duplicate_resume_rejected') is True and
+            canary.get('branch_provider_lineage_independent') is True and
+            bool(canary.get('conversation_id'))
+          )
+          base['provider_live_verified']=bool(expected)
+          if expected:
+            base['classification']='PROVIDER_LIVE_VERIFIED'
+          elif not base['key_bound']:
+            base['classification']='KEY_CREATION_SEPARATE__RUNTIME_KEY_BINDING_UNPROVEN'
+          else:
+            base['classification']='RUNTIME_KEY_BOUND__PROVIDER_LIVE_CANARY_FAILED_OR_INCOMPLETE'
+          unsigned=json.dumps(base,sort_keys=True,separators=(',',':'))
+          base['receipt_sha256']=hashlib.sha256(unsigned.encode()).hexdigest()
+          Path('chatbridge-provider-live-output/receipt.json').write_text(json.dumps(base,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({k:base[k] for k in ['classification','provider_live_verified','receipt_sha256']},sort_keys=True))
+          PY
+
+      - name: Upload immutable ChatBridge provider-live receipt
+        if: ${{ always() && env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && hashFiles('chatbridge-provider-live-output/receipt.json') != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: chatbridge-provider-live-proof-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            chatbridge-provider-live-output/binding.json
+            chatbridge-provider-live-output/canary.json
+            chatbridge-provider-live-output/receipt.json
+          if-no-files-found: warn
+          retention-days: 90
+
+      - name: Enforce ChatBridge semantic provider-live gate
+        if: ${{ always() && env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          d=json.load(open('chatbridge-provider-live-output/receipt.json'))
+          if d.get('provider_live_verified') is not True:
+              raise SystemExit('Provider-live proof gate remains OPEN: '+str(d.get('classification')))
+          print('PROVIDER_LIVE_VERIFIED')
+          PY
