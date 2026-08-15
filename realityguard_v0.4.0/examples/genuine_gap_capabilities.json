@@ -1,0 +1,16 @@
+{
+  "schema_version": "realityguard.capabilities.v1",
+  "source_scope": "Finite local pre-build example inventory.",
+  "capabilities": [
+    {
+      "capability_id": "EXISTING-INVENTORY",
+      "name": "Existing inventory service",
+      "provides": ["capability_inventory"],
+      "state": "VERIFIED_SCOPED",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "local:examples/genuine_gap_capabilities.json",
+      "source_hash": "example"
+    }
+  ]
+}

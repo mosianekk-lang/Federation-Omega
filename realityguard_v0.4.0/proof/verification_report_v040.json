@@ -1,0 +1,61 @@
+{
+  "schema_version": "realityguard.verification.v2",
+  "generated_at": "2026-08-15T05:16:05Z",
+  "system": "RealityGuard",
+  "version": "0.4.0",
+  "scope": "Local deterministic source, tests, saved adaptive competency and isolated GitHub source registration. No live Federation, ChatGPT or browser runtime binding is claimed.",
+  "results": {
+    "realityguard_tests": {"passed": 96, "failed": 0, "command": "PYTHONPATH=src python -m unittest discover -s tests -v"},
+    "adaptive_competency_tests": {"passed": 10, "failed": 0, "command": "python -m unittest discover -s scripts -p test_*.py -v"},
+    "compileall": {"passed": true, "command": "PYTHONPATH=src python -m compileall -q src tests"},
+    "documentation_gate": {"passed": true, "decision": "ALLOW_CYCLE", "issues": []},
+    "competency_gate": {"passed": true, "decision": "REGISTER", "promotable": true},
+    "build_contract": {"passed": true, "contract_version": "3.3", "errors": []},
+    "skill_validation": {"passed": true, "result": "Skill is valid"}
+  },
+  "semantic_canaries": {
+    "material_cycle_patch": {
+      "decision": "PATCH_EXISTING",
+      "target": "REALITYGUARD-CORE",
+      "automatic_assessment_invoked": true,
+      "automatic_execution_authorized": false,
+      "promotion_authorized": false,
+      "environment_attested": true,
+      "capability_losses": [],
+      "correction_debt_invalidated": ["FEDERATION-ADAPTER-CONTRACT", "PROJECT-MEMORY", "REALITYGUARD-BUILD-CONTRACT", "REALITYGUARD-README"],
+      "correction_repair_order": ["FEDERATION-ADAPTER-CONTRACT", "REALITYGUARD-BUILD-CONTRACT", "REALITYGUARD-README", "PROJECT-MEMORY"]
+    },
+    "unsafe_upgrade": {"decision": "BLOCK_UNSAFE_UPGRADE", "exit_code": 5},
+    "chatbridge_duplicate": {"decision": "BLOCK_DUPLICATE_BUILD", "existing_target": "CHATBRIDGE-COMPANION-0.2.0"},
+    "federation_adapter": {"canonical_system_count": 20, "source_adapter_accepts_every_system_id": true, "all_integration_states": "ADAPTER_REQUIRED", "live_binding_claimed": false}
+  },
+  "source_registration": {
+    "repository": "mosianekk-lang/Federation-Omega",
+    "branch": "realityguard/v0.4.0-governed-auto-upgrade-20260815",
+    "base_commit": "83ddc37586460635176eb029dd104c58226ab39b",
+    "initial_source_content_head": "f3fccb72a629c842dabdd08adc44eb96b7bf2cf8",
+    "prior_verification_report_commit": "57fbd495d6b2ace304863d16f1cd1e76865ec2fb",
+    "source_content_head_before_final_report": "53b9ea6809cfee700c07e16137caa3c41aeef295",
+    "registered_file_count": 45,
+    "semantic_readback": ["src/realityguard/upgrade.py", "src/realityguard/federation_adapter.py", "federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json", "BUILD_CONTRACT.json"],
+    "merged_to_main": false
+  },
+  "competency_registration": {
+    "name": "govern-adaptive-formation-loop",
+    "remote_tree_commit": "785eae2",
+    "remote_path": "skill-6a700bf4d46881918efd19c756ad9ee5",
+    "integration_contract": "realityguard.upgrade.v1",
+    "behavior_proven": false,
+    "later_forward_test_required": true
+  },
+  "failure_taxonomy": {"version": "2026.08.15-5", "count": 30, "new_codes": ["RG-028", "RG-029", "RG-030"]},
+  "boundaries": {
+    "background_daemon": false,
+    "foundation_model_modified": false,
+    "live_federation_binding": false,
+    "browser_installed": false,
+    "provider_runtime_deployed": false,
+    "owner_accepted": false,
+    "manual_user_tasks": []
+  }
+}

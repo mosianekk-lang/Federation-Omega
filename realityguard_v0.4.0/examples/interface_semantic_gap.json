@@ -1,0 +1,26 @@
+{
+  "claim": {
+    "text": "The button now says Start a new chat via ChatBridge and carries the full conversation automatically.",
+    "claimed_state": "RUNNING",
+    "subject": "ChatBridge continuation button",
+    "scope": ["label", "context_capture", "context_injection", "continuation_validation"],
+    "completion_asserted": true,
+    "ownership_asserted": false,
+    "capability_asserted": true
+  },
+  "evidence": [
+    {
+      "kind": "MOCKUP",
+      "supports_state": "BUILT",
+      "grade": "ARTIFACT",
+      "reference": "button mockup",
+      "scope": ["label"]
+    }
+  ],
+  "context": {
+    "required_scope": ["label", "context_capture", "context_injection", "continuation_validation"],
+    "observed_scope": ["label"],
+    "ui_label_changed": true,
+    "underlying_semantics_changed": false
+  }
+}

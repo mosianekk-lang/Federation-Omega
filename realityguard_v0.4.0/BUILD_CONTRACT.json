@@ -1,0 +1,129 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "MISSION-REALITYGUARD-040-GOVERNED-AUTO-UPGRADE",
+    "version": 1,
+    "goal": "Detect and block false-reality claims, preserve valid owner capability, prevent duplicate construction, and automatically select the smallest governed improvement at every integrated material lifecycle boundary.",
+    "user": "Kim Mosiane",
+    "workflow": "Structured claim and evidence enter a deterministic truth gate; a separate capability broker filters and deduplicates a provenance manifest; the pre-build gate blocks duplicate construction; and a host-invoked material-cycle upgrade gate checks environment identity, capability preservation and correction debt before routing to observe, patch, candidate or block.",
+    "data": "Caller-supplied JSON claims, evidence metadata, scope, objective and capability manifests; optional redacted audit log or atomic deduplicated learning ledger.",
+    "interface": "Python library and command-line scan, resolve, prebuild, upgrade, federation-upgrade, learn, taxonomy and health commands.",
+    "stack": "Python 3.12 standard library only.",
+    "environment": "Offline local workspace; no provider credentials or network runtime.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation mission MISSION-REALITYGUARD-040-GOVERNED-AUTO-UPGRADE; A0-A2; zero cost; host-invoked material cycles; one explicitly selected effectful path only after a separate single-use permit; no self-promotion.",
+    "failure": "Fail closed on invalid input, insufficient proof, partial scope, stale evidence, false ownership, unauthorized effects, duplicate capability, capability dilution, unverified inventory, environment inheritance, correction-debt cycles, protected-capability loss, ungoverned self-upgrade and unproven or over-broad gaps.",
+    "testing": "96 passing unit, integration, CLI, failure-first, healthy-path, redaction, reuse-ranking, pre-build, automatic-upgrade, correction-debt, universal Federation-adapter, learning-ledger and semantic regression tests; the updated adaptive competency separately passes 10/10 tests and validation.",
+    "deployment": "Not externally deployed or browser-installed. ChatBridge 0.2.0 includes a read-only Windows policy-readiness assessor and enterprise handoff, but the assessor has not run on the target work laptop and external deployment was not authorized.",
+    "continuity": "Canonical truth, solution, pre-build and upgrade IDs; idempotent learning fingerprints; deterministic reruns; dependency-ordered correction debt; project memory, handoff, documentation gate and recovery files."
+  },
+  "classification": {
+    "type": "local deterministic truth control and reuse-first solution broker",
+    "risk": "status and reality integrity",
+    "data_sensitivity": "caller-controlled; secrets redacted in optional logs"
+  },
+  "assumptions": {
+    "stack": "Python 3.11 or newer with standard library.",
+    "runtime": "Single-process CLI or imported library call.",
+    "storage": "No required storage for scan/resolve; optional append-only JSONL audit log or atomically published deduplicated JSON learning ledger.",
+    "authentication": "Not applicable to offline core; adapters must provide separate authenticated evidence.",
+    "deployment": "Local execution only in this authorized build."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "CLI JSON interface; no graphical UI.",
+      "backend": "RealityGuard deterministic truth engine, capability registry/broker, solution router, manifest-bound pre-build gate, governed material-cycle upgrade engine, universal Federation source adapter and learning ledger.",
+      "database": "Not required; inputs and outputs are stateless.",
+      "queue": "Not required; synchronous single request path.",
+      "worker": "Not required; caller process performs analysis.",
+      "scheduler": "Not required; an integrated host invokes the upgrade decision at material BUILD, FAILURE, RECOVERY, DEPLOYMENT or CANARY boundaries. No autonomous or persistent daemon is claimed.",
+      "cache": "Not required; stale proof must not be cached.",
+      "storage": "One selected optional local mutation path per invocation: secret-redacted append-only JSONL audit or atomic idempotent JSON learning ledger.",
+      "authentication": "Adapter responsibility; core accepts no credentials."
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
+    "observability": {
+      "correlation_ids": "Deterministic rg- SHA-256 prefix derived from canonical input.",
+      "health_checks": "realityguard health emits mode and external-binding truth.",
+      "structured_logs": "JSON stdout and JSON error objects.",
+      "audit_logs": "Optional redacted JSONL input/result record.",
+      "metrics_alerts": "Caller may count exit codes, upgrade decisions, recurrence and correction debt; no daemon or alerting service is claimed."
+    }
+  },
+  "testing": {
+    "unit": "Lifecycle, evidence admissibility, verdict, capability ranking/deduplication, solution action, material-cycle routing, environment attestation, capability preservation, correction-debt ordering and learning-promotion tests.",
+      "integration": "CLI subprocess, resolve, prebuild, upgrade, learn, Federation adapter, atomic ledger and audit-log redaction tests.",
+    "e2e_or_smoke": "Health plus false-ownership, interface-semantic-gap, ChatBridge duplicate-build, genuine residual-gap and RealityGuard material-cycle patch fixtures.",
+    "fixtures_mocks": "examples/false_ownership.json, examples/interface_semantic_gap.json, examples/chatbridge_solution_request.json, examples/chatbridge_prebuild_request.json, examples/genuine_gap_prebuild_request.json, examples/material_cycle_upgrade.json, examples/federation_capabilities.json and governed incident records.",
+    "failure_first": "Stale, failed, self-reported, partial, draft-only, transport-only, self-sealing, stale-live-capability, unauthorized-effect, duplicate-capability, unverified inventory, snapshot mismatch, environment inheritance, capability loss, correction cycle, background-daemon claim, authority/cost/burden expansion, lifecycle-gap replacement, over-broad gap and self-promotion paths.",
+    "commands": ["PYTHONPATH=src python -m unittest discover -s tests -v", "PYTHONPATH=src python -m compileall -q src tests"]
+  },
+  "delivery": {
+    "file_tree": "README, package source, 30-class taxonomy, tests, examples, provenance manifests, executable Federation auto-upgrade adapter and contract, documentation and competency gates, adaptive learning proof, security, recovery, memory and handoff.",
+    "exact_code_files": [
+      "src/realityguard/model.py",
+      "src/realityguard/schema.py",
+      "src/realityguard/taxonomy.py",
+      "src/realityguard/rules.py",
+      "src/realityguard/engine.py",
+      "src/realityguard/redaction.py",
+      "src/realityguard/cli.py",
+      "src/realityguard/capability.py",
+      "src/realityguard/solutions.py",
+      "src/realityguard/prebuild.py",
+      "src/realityguard/learning.py"
+      ,"src/realityguard/upgrade.py",
+      "src/realityguard/federation_adapter.py"
+    ],
+    "setup_commands": ["cd realityguard", "python -m pip install -e ."],
+    "run_commands": ["PYTHONPATH=src python -m realityguard.cli health", "PYTHONPATH=src python -m realityguard.cli scan --input examples/false_ownership.json", "PYTHONPATH=src python -m realityguard.cli resolve --input examples/chatbridge_solution_request.json --capabilities examples/federation_capabilities.json", "PYTHONPATH=src python -m realityguard.cli prebuild --input examples/chatbridge_prebuild_request.json --capabilities examples/federation_capabilities.json", "PYTHONPATH=src python -m realityguard.cli upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json", "PYTHONPATH=src python -m realityguard.cli federation-upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json --adapter-contract federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json"],
+    "test_commands": ["PYTHONPATH=src python -m unittest discover -s tests -v"],
+    "deploy_commands": ["Not authorized: create a separately permitted browser/API adapter and prove target installation, binding and readback."],
+    "rollback_commands": ["Remove RealityGuard from the caller pre-output/material-cycle hook; restore the prior source revision; preserve the optional evidence ledger; core has no remote runtime state."],
+    "debugging": "Use correlation_id, decision_id, learning_fingerprint, inventory_manifest_hash, environment scope, capability losses, correction repair order, structured findings, rejected capability reasons, provenance and optional local logs."
+  },
+  "formation": {
+    "mission_id": "MISSION-REALITYGUARD-040-GOVERNED-AUTO-UPGRADE",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A2 local build and test only",
+    "effectful_permit": "CONSUMED for local build and existing competency patch actions in the trusted runtime permit store; secret tokens intentionally excluded. Upgrade decisions never act as permits.",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "pre_output_rule": "Suppress the original status whenever verdict is not ALLOW_BOUNDED.",
+    "promotion_rule": "Never promote beyond the maximum admissible current evidence state.",
+    "owner_rule": "Only OWNER_ACCEPTED evidence may prove ACCEPTED."
+  },
+  "continuity": {
+    "idempotency": "Canonical JSON input produces stable truth, solution, pre-build and upgrade IDs; learning fingerprints increment recurrence in one record; exact semantic duplicates and explicitly superseded capabilities are suppressed.",
+    "checkpoints": ["PROJECT_MEMORY.md", "proof/verification_report_v040.json", "proof/documentation_gate_v040.json", "proof/competency_gate_v040.json", "proof/adaptive_cycle_v040.json", "proof/adaptive_learning_ledger.json", "BUILD_CONTRACT.json"],
+    "resume_conditions": "Rerun the 96-test suite and 10-test adaptive competency suite; validate documentation and competency gates; confirm capability freshness, environment attestation and inventory hash; preserve local/source-only maturity unless new target runtime readback exists.",
+    "handoff_files": ["AI_HANDOFF.md", "README.md", "docs/RECOVERY_AND_ROLLBACK.md"],
+    "stop_switch": "Terminate the process; omit --audit-log for zero writes."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": "96/96 RealityGuard tests passing plus 10/10 updated adaptive competency tests; proof/verification_report_v040.json",
+    "semantic_verification": "False-ownership and interface-semantic-gap fixtures block false reality. ChatBridge remains protected from duplicate replacement. The material-cycle fixture selects the existing RealityGuard core, preserves all declared capabilities, computes downstream repair order, requires a separate Formation permit, and leaves execution and promotion unauthorized. The Federation source adapter registers all 20 current canonical systems as ADAPTER_REQUIRED rather than claiming live binding.",
+    "deployment_readback": "NOT_APPLICABLE: external deployment not authorized or claimed.",
+    "unresolved_defects": [],
+    "scope": "Local offline deterministic truth, reuse-first solution and host-invoked automatic-upgrade foundation; Federation source-contract registration and saved adaptive competency, not live runtime or browser binding."
+  }
+}

@@ -1,0 +1,29 @@
+{
+  "claim": {
+    "text": "You are now the proud owner of a fully deployed ChatBridge system.",
+    "claimed_state": "DEPLOYED",
+    "subject": "ChatBridge",
+    "scope": ["artifact", "browser_extension", "signed_in_runtime"],
+    "completion_asserted": true,
+    "ownership_asserted": true,
+    "capability_asserted": true
+  },
+  "evidence": [
+    {
+      "kind": "LOCAL_ARTIFACT",
+      "supports_state": "BUILT",
+      "grade": "ARTIFACT",
+      "reference": "local extension source tree",
+      "scope": ["artifact"],
+      "passed": true,
+      "current": true
+    }
+  ],
+  "context": {
+    "required_scope": ["artifact", "browser_extension", "signed_in_runtime"],
+    "observed_scope": ["artifact"],
+    "authorization_missing": true,
+    "ui_label_changed": false,
+    "underlying_semantics_changed": false
+  }
+}
