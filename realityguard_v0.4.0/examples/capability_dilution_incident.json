@@ -1,0 +1,8 @@
+{
+  "failure_code": "RG-025-CAPABILITY-DILUTION",
+  "claim": "RealityGuard protects the owner without reducing useful capability or execution efficiency.",
+  "observed_fruit": "The truth gate blocked an unsupported live ChatBridge claim but did not preserve the desired button objective through an automatic reuse, adaptation or build-gap route.",
+  "desired_outcome": "Block the false status while routing the valid ChatBridge objective through existing capabilities and permitting a new build only after a verified gap.",
+  "affected_capabilities": ["truth_solution_separation", "capability_deduplication", "dependency_ordering", "browser_button_integration"],
+  "reuse_decision": "PATCH_EXISTING"
+}
