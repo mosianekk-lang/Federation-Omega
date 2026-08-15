@@ -13,6 +13,11 @@ class FederationUpgradeAdapter:
 
     Calling this adapter proves only that the source route was invoked. It does
     not prove that the named target system is deployed, bound or running.
+
+    Runtime/provider binding is an empirical property. Contract labels,
+    historical receipt references and artifact existence may declare a binding
+    candidate, but they cannot independently verify that binding in this source
+    invocation.
     """
 
     schema_version = "federation.realityguard-auto-upgrade-runtime.v1"
@@ -57,19 +62,29 @@ class FederationUpgradeAdapter:
 
         decision = GovernedUpgradeEngine().evaluate(payload, capability_manifest).to_dict()
         entry = entries[system_id]
-        live_proof = all((
+        declared_evidence = entry.get("runtime_binding_evidence")
+        contract_declares_binding = all((
             entry.get("integration_state") == "LIVE_BOUND_VERIFIED",
             entry.get("current") is True,
-            isinstance(entry.get("runtime_binding_evidence"), list),
-            bool(entry.get("runtime_binding_evidence")),
+            isinstance(declared_evidence, list),
+            bool(declared_evidence),
         ))
+
+        # No independent runtime/provider verifier is supplied to this adapter.
+        # Therefore this source invocation must never self-certify a target
+        # runtime binding from the same contract it is evaluating.
+        target_runtime_binding_proven = False
+
         decision["federation_adapter"] = {
             "schema_version": self.schema_version,
             "system_id": system_id,
             "source_adapter_supported": True,
             "adapter_invocation_observed": True,
             "integration_state": str(entry.get("integration_state", "ADAPTER_REQUIRED")),
-            "target_runtime_binding_proven": live_proof,
+            "contract_declares_binding": contract_declares_binding,
+            "runtime_binding_evidence_declared": isinstance(declared_evidence, list) and bool(declared_evidence),
+            "independent_runtime_binding_verifier_available": False,
+            "target_runtime_binding_proven": target_runtime_binding_proven,
             "all_registered_systems_use_one_contract": True,
             "manual_user_tasks": [],
             "owner_action_required": False,
