@@ -132,6 +132,7 @@ jobs:
     timeout-minutes: 25
     env:
       CHATBRIDGE_LIVE_PROOF_REQUESTED: ${{ startsWith(github.event.head_commit.message, '[CHATBRIDGE-LIVE-PROOF]') }}
+      REALITYGUARD_LIVE_BINDING_REQUESTED: ${{ startsWith(github.event.head_commit.message, '[REALITYGUARD-LIVE-BINDING]') }}
       HAS_DIRECT_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
       CANARY_NAMESPACE: aaa-provider-live-canary
       CANARY_BRANCH_NAMESPACE: aaa-provider-live-canary-branch
@@ -172,6 +173,122 @@ jobs:
           path: bubbles-provider-probe-output/receipt.json
           if-no-files-found: error
           retention-days: 90
+
+      - name: Invoke RealityGuard through the active zero-OIDC host
+        if: ${{ env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p realityguard-live-binding-output
+          set +e
+          PYTHONPATH=realityguard_v0.4.0/src python -m realityguard.cli federation-upgrade \
+            --input realityguard_v0.4.0/examples/material_cycle_upgrade.json \
+            --capabilities realityguard_v0.4.0/examples/federation_capabilities.json \
+            --adapter-contract realityguard_v0.4.0/federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json \
+            > realityguard-live-binding-output/adapter.json \
+            2> realityguard-live-binding-output/adapter.stderr
+          adapter_exit=$?
+          set -e
+          export ADAPTER_EXIT="$adapter_exit"
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          try:
+              adapter = json.loads(Path('realityguard-live-binding-output/adapter.json').read_text(encoding='utf-8'))
+          except Exception:
+              adapter = {}
+          state = adapter.get('federation_adapter', {})
+          adapter_invoked = (
+              int(os.environ.get('ADAPTER_EXIT', '1')) == 0
+              and state.get('adapter_invocation_observed') is True
+              and state.get('system_id') == 'SYS-FEDERATION-OMEGA'
+          )
+          contract_binding_proven = (
+              state.get('integration_state') == 'LIVE_BOUND_VERIFIED'
+              and state.get('target_runtime_binding_proven') is True
+          )
+          host_binding_verified = adapter_invoked and contract_binding_proven
+          if host_binding_verified:
+              truth_boundary = (
+                  'This receipt proves RealityGuard invocation inside the active Bubbles '
+                  'GitHub Actions host for SYS-FEDERATION-OMEGA. It does not prove the '
+                  'separate SYS-ARCHITRON Cloud Run binding or any other registered system.'
+              )
+          else:
+              truth_boundary = (
+                  'This receipt does not prove a live SYS-FEDERATION-OMEGA host binding. '
+                  'No adjacent runtime binding may be inferred.'
+              )
+          receipt = {
+              'schema': 'REALITYGUARD-LIVE-HOST-BINDING-2',
+              'system_id': 'SYS-FEDERATION-OMEGA',
+              'host_workflow': '.github/workflows/bubbles-command-bus.yml',
+              'host_job': 'provider-surface-readback',
+              'execution_route': 'ZERO_OIDC_EXISTING_BUBBLES_HOST',
+              'adapter_invocation_observed': adapter_invoked,
+              'adapter_reported_integration_state': state.get('integration_state'),
+              'adapter_target_runtime_binding_proven': state.get('target_runtime_binding_proven') is True,
+              'host_binding_verified': host_binding_verified,
+              'cloud_runtime_system_id': 'SYS-ARCHITRON',
+              'cloud_runtime_readback_attempted': False,
+              'cloud_runtime_readback_verified': False,
+              'cloud_runtime_readback_state': 'BLOCKED_WIF_INVALID_TARGET__NOT_RETRIED_ZERO_OIDC_ROUTE',
+              'prior_cloud_boundary_evidence': {
+                  'run_id': 31868756200,
+                  'job_id': 94973933573,
+                  'artifact_id': 9242789529,
+                  'artifact_digest': 'sha256:bfc8985f53f12dfe44213f0cdf5b028a8120c52ddd3541cba4ef6d4306ecce28',
+              },
+              'provider_mutation_attempted': False,
+              'secret_values_recorded': False,
+              'manual_user_tasks': [],
+              'truth_boundary': truth_boundary,
+          }
+          unsigned = json.dumps(receipt, sort_keys=True, separators=(',', ':'))
+          receipt['receipt_sha256'] = hashlib.sha256(unsigned.encode()).hexdigest()
+          Path('realityguard-live-binding-output/receipt.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          print(json.dumps({
+              'host_binding_verified': host_binding_verified,
+              'cloud_runtime_readback_verified': False,
+              'receipt_sha256': receipt['receipt_sha256'],
+          }, sort_keys=True))
+          PY
+
+      - name: Upload immutable RealityGuard host-binding receipt
+        if: ${{ always() && env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' && hashFiles('realityguard-live-binding-output/receipt.json') != '' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: realityguard-live-binding-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            realityguard-live-binding-output/adapter.json
+            realityguard-live-binding-output/adapter.stderr
+            realityguard-live-binding-output/receipt.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce RealityGuard host-binding truth gate
+        if: ${{ always() && env.REALITYGUARD_LIVE_BINDING_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          receipt = json.load(open('realityguard-live-binding-output/receipt.json', encoding='utf-8'))
+          if receipt.get('host_binding_verified') is not True:
+              raise SystemExit('SYS-FEDERATION-OMEGA host binding remains unproven')
+          if receipt.get('cloud_runtime_readback_verified') is not False:
+              raise SystemExit('Adjacent cloud-runtime truth boundary was diluted')
+          if receipt.get('provider_mutation_attempted') is not False:
+              raise SystemExit('Unexpected provider mutation signal')
+          print('REALITYGUARD_SYS_FEDERATION_OMEGA_HOST_BINDING_VERIFIED')
+          print('SYS_ARCHITRON_REMAINS_ADAPTER_REQUIRED')
+          PY
 
       - name: Bind approved OpenAI key for ChatBridge canary
         id: chatbridge_bind_key
