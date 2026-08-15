@@ -1,0 +1,107 @@
+{
+  "schema_version": "realityguard.capabilities.v1",
+  "source_scope": "Current GitHub source readback plus local RealityGuard proof; these records do not assert a live runtime binding.",
+  "capabilities": [
+    {
+      "capability_id": "REALITYGUARD-CORE",
+      "name": "RealityGuard deterministic truth gate",
+      "system_id": "REALITYGUARD",
+      "provides": ["claim_detection", "failure_classification", "truth_solution_separation", "reuse_before_build_preflight", "inventory_hash_binding", "supersession_control", "lifecycle_gap_separation", "governed_auto_upgrade_assessment", "automatic_material_cycle_hook", "environment_attestation", "capability_preservation_gate", "correction_debt_propagation", "learning_promotion_gate"],
+      "state": "VERIFIED_SCOPED",
+      "current": true,
+      "authority_ceiling": "A2",
+      "source_ref": "local:realityguard/proof/verification_report_v040.json; github:mosianekk-lang/Federation-Omega@realityguard/v0.4.0-governed-auto-upgrade-20260815",
+      "source_hash": "sha256-set:bbe916a328ee54883737042df860d89ecff8289a1e352047cf746ab7c441e17a+612f434ef0b48e19d578e1a0e6726237300112505d95ca04a9d8a1e6afd21a94+89fc027bcd9323fecfea852c0faff6ee0c7cfa9a93043875a861afff17a94af9+56cb63f9dde42f2d00757f2b964245f9c657d4b2766cb3cfbce41c30ce97e3ac+bbe005d0970fabe119580844787374b5519f3e1ee80e6b47b531ad3529405324",
+      "metadata": {"version": "0.4.0", "source_tests": "92/92 PASS", "automatic_mode": "HOST_INVOKED_AT_MATERIAL_CYCLE_BOUNDARY", "federation_adapter_systems": 20, "live_federation_binding": false}
+    },
+    {
+      "capability_id": "FED-CANONICAL-REGISTRY",
+      "name": "Federation Omega canonical system registry",
+      "system_id": "SYS-FEDERATION-OMEGA",
+      "provides": ["capability_inventory", "lifecycle_state_control"],
+      "state": "REFERENCE_OPERATIONAL",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "github:federation_omega_v2/phase3/v0.3.0/CANONICAL_SYSTEM_REGISTER.json",
+      "source_hash": "94a805f06c2a8ddb139b9d28fc0eab827a2dc6de"
+    },
+    {
+      "capability_id": "FED-GOVERNOR-DEDUP",
+      "name": "Federation Governor deduplicator",
+      "system_id": "SYS-FEDERATION-OMEGA",
+      "provides": ["capability_deduplication", "verified_result_reuse"],
+      "state": "SOURCE_PRESENT",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "github:bubbles/federation_governor_omega4/dedup.py",
+      "source_hash": "0e0b9bea347c94fd8adefcd8a8f5e85fbf088e39"
+    },
+    {
+      "capability_id": "AO-PROGRAMME-INTEGRITY",
+      "name": "Alpha-Omega dependency-ordered programme integrity",
+      "system_id": "SYS-ALPHA-OMEGA",
+      "provides": ["dependency_ordering", "gap_gating", "solution_plan_integrity"],
+      "state": "REFERENCE_OPERATIONAL",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "github:alpha_omega_commercial/programme_integrity.py",
+      "source_hash": "96aaf5b08a2629e3d174107e968d6b05ef9fa795"
+    },
+    {
+      "capability_id": "AO-ACTION-JOURNAL",
+      "name": "Alpha-Omega atomic action journal",
+      "system_id": "SYS-ALPHA-OMEGA",
+      "provides": ["adaptive_learning_ledger", "atomic_publication"],
+      "state": "SOURCE_PRESENT",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "github:alpha_omega_commercial/authority_action_journal.py",
+      "source_hash": "2bb8d834ac0773b4b733bee575f4c48d43d2919a"
+    },
+    {
+      "capability_id": "AO-ACTION-IDEMPOTENCY",
+      "name": "Alpha-Omega exact replay safety",
+      "system_id": "SYS-ALPHA-OMEGA",
+      "provides": ["incident_idempotency", "conflicting_replay_rejection"],
+      "state": "SOURCE_PRESENT",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "github:alpha_omega_commercial/authority_action_idempotency.py",
+      "source_hash": "02102bdcbac65394ab19fec0190a80a0b8926754"
+    },
+    {
+      "capability_id": "AO-OUTCOME-RECONCILIATION",
+      "name": "Alpha-Omega uncertain-outcome quarantine",
+      "system_id": "SYS-ALPHA-OMEGA",
+      "provides": ["uncertain_outcome_quarantine", "semantic_outcome_reconciliation"],
+      "state": "SOURCE_PRESENT",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "github:alpha_omega_commercial/provider_dispatch_outcome_reconciliation.py",
+      "source_hash": "de8d23c7a54891ae2bb92254aa56c9f9a3843d53"
+    },
+    {
+      "capability_id": "CHATBRIDGE-COMPANION-0.2.0",
+      "name": "ChatBridge Manifest V3 browser companion",
+      "system_id": "SYS-BIBLE",
+      "provides": ["browser_button_integration", "conversation_context_capture", "continuity_capsule", "target_context_injection", "continuation_validation", "route_preservation", "one_time_transfer", "windows_policy_readiness", "enterprise_managed_deployment_handoff"],
+      "state": "TESTED_LOCAL",
+      "current": true,
+      "authority_ceiling": "A1",
+      "source_ref": "local:chatbridge-companion; github:mosianekk-lang/Federation-Omega@f7756f91617588cfea288fd8188454fb47b8d129",
+      "source_hash": "sha256-set:f0ddd13ec8287375989991ce9b5d7270b659fd5fdf46ff71f19530776025a902+693c60ad67f2741523f54f584b3b2a177595dba6a7c036041d6b6128d3614489+89d91019a2dc196d56de41a570a6dd3382a1f1e2c5163b7fd8b8592b353ed329+90b08b8f9ade1ca2a06fb9c9001f65d46d704bf1319a77636a1595e2973defeb",
+      "supersedes": ["CHATBRIDGE-COMPANION-0.1.0"],
+      "metadata": {"source_tests": "9/9 PASS", "build_contract": "VALID", "source_registered": true, "executable_content_commit": "d3eefb200074fac6b04b3678498fb066c1a6727b", "branch_head": "f7756f91617588cfea288fd8188454fb47b8d129", "backup_marker": "CGBK-B0FC91DE93D29EB18006", "drive_adapter_revision": 6, "drive_registry_revision": 3, "windows_runtime_tested": false, "browser_installed": false, "provider_bound": false, "live_canary": false, "predecessor_registered_commit": "4df2ea2394930e9abc53325dd3b8c84a5cc43fbb"}
+    },
+    {
+      "capability_id": "STALE-CHATBRIDGE-LIVE-CLAIM",
+      "name": "Historical ChatBridge live-button assertion",
+      "provides": ["browser_extension_installation", "signed_in_session_binding", "live_warning_interception", "successor_chat_semantic_readback"],
+      "state": "LIVE_BOUND",
+      "current": false,
+      "authority_ceiling": "A1",
+      "source_ref": "historical-unverified",
+      "source_hash": ""
+    }
+  ]
+}
