@@ -26,6 +26,8 @@ jobs:
   prove:
     runs-on: ubuntu-24.04
     timeout-minutes: 25
+    env:
+      HAS_DIRECT_OPENAI_KEY: ${{ secrets.OPENAI_API_KEY != '' }}
     steps:
       - name: Checkout admitted source
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -34,7 +36,7 @@ jobs:
 
       - name: Probe canonical Google WIF only when needed
         id: gcp_auth
-        if: ${{ secrets.OPENAI_API_KEY == '' }}
+        if: ${{ env.HAS_DIRECT_OPENAI_KEY != 'true' }}
         continue-on-error: true
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
@@ -44,7 +46,7 @@ jobs:
 
       - name: Install gcloud for Secret Manager fallback
         id: setup_gcloud
-        if: ${{ secrets.OPENAI_API_KEY == '' && steps.gcp_auth.outcome == 'success' }}
+        if: ${{ env.HAS_DIRECT_OPENAI_KEY != 'true' && steps.gcp_auth.outcome == 'success' }}
         continue-on-error: true
         uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
         with:
@@ -80,15 +82,19 @@ jobs:
             echo "::add-mask::$key"
             printf 'OPENAI_API_KEY=%s\n' "$key" >> "$GITHUB_ENV"
             echo 'bound=true' >> "$GITHUB_OUTPUT"
+            export KEY_BOUND_CURRENT=true
           else
             echo 'bound=false' >> "$GITHUB_OUTPUT"
+            export KEY_BOUND_CURRENT=false
           fi
+          export KEY_SOURCE_CURRENT="$source_kind"
           python - <<'PY'
           import json, os
           from pathlib import Path
           payload={
             'schema':'CHATBRIDGE-PROVIDER-LIVE-BINDING-PREFLIGHT-1',
-            'key_bound':os.environ.get('OPENAI_API_KEY','') != '',
+            'key_bound':os.environ.get('KEY_BOUND_CURRENT')=='true',
+            'key_source':os.environ.get('KEY_SOURCE_CURRENT') or 'NONE',
             'direct_secret_present':bool(os.environ.get('DIRECT_OPENAI_API_KEY','')),
             'gcp_auth_outcome':os.environ.get('GCP_AUTH_OUTCOME') or 'skipped',
             'gcloud_outcome':os.environ.get('GCLOUD_OUTCOME') or 'skipped',
