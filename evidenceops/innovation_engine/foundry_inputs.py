@@ -9,9 +9,9 @@ from .algorithms import (
     AlgorithmResult, ClaimProofDistanceGuard, ControlPlaneIntegrityGuard,
     CorpusSelectionIntegrityEvaluator, DirectiveExecutionCompiler,
     FailureToEngineeringGeneCompiler, InformationGainRouteSelector,
-    TerminalFinalityResolver, UnknownFrontierPrioritizer,
-    ProofStateTransitionGuard, EpistemicDebtPrioritizer,
-    OwnerBurdenRouteOptimizer,
+    KnowledgeUtilityAdoptionGate, TerminalFinalityResolver,
+    UnknownFrontierPrioritizer, ProofStateTransitionGuard,
+    EpistemicDebtPrioritizer, OwnerBurdenRouteOptimizer,
 )
 from .replication import CrossImplementationReplicationEvaluator
 
@@ -47,6 +47,18 @@ def build_foundry_results(self: Any, payload: Mapping[str, Any], cycle_id: str, 
         results.append(OwnerBurdenRouteOptimizer().run(payload.get("route_candidates", [])))
     for pair in payload.get("replication_pairs", []):
         results.append(CrossImplementationReplicationEvaluator().run_algorithm(canonical_result=pair.get("canonical_result", {}), reference_result=pair.get("reference_result", {})))
+    for candidate in payload.get("knowledge_candidates", []):
+        if not isinstance(candidate, Mapping):
+            continue
+        results.append(
+            KnowledgeUtilityAdoptionGate().run(
+                candidate.get("knowledge", {}),
+                adoption_receipts=tuple(candidate.get("adoption_receipts", ()) or ()),
+                regression_receipts=tuple(candidate.get("regression_receipts", ()) or ()),
+                impact=candidate.get("impact"),
+                promotion_authorization=candidate.get("promotion_authorization"),
+            )
+        )
     for lesson_index, lesson in enumerate(payload.get("failure_lessons", []), start=1):
         failure = lesson.get("failure", {})
         recovery = lesson.get("recovery")
