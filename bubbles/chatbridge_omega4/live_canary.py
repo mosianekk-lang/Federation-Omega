@@ -21,12 +21,56 @@ from .store import ChatBridgeStore, NamespaceNotFound
 DEFAULT_MODEL = "gpt-5.4-mini"
 
 
+class ChildPhaseFailure(RuntimeError):
+    """Redacted child-process failure that preserves only safe phase diagnostics."""
+
+    def __init__(self, phase: str, payload: Dict[str, Any]) -> None:
+        self.phase = phase
+        self.payload = dict(payload)
+        super().__init__(
+            f"child phase failed:{phase}:{payload.get('error_type', 'UNKNOWN')}:"
+            f"{payload.get('error_sha256', '')}"
+        )
+
+
 def _digest(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
 
 
 def _json_out(payload: Dict[str, Any]) -> None:
     print(json.dumps(payload, sort_keys=True, separators=(",", ":")))
+
+
+def _safe_error(exc: Exception) -> Dict[str, Any]:
+    """Return diagnostics useful for repair without leaking raw provider content or secrets."""
+    payload: Dict[str, Any] = {
+        "state": "CANARY_FAILED",
+        "diagnostic_schema": "CHATBRIDGE-LIVE-CANARY-SAFE-DIAGNOSTIC-1",
+        "error_type": type(exc).__name__,
+        "error_sha256": _digest(str(exc)),
+        "secret_values_recorded": False,
+    }
+    status_code = getattr(exc, "status_code", None)
+    if isinstance(status_code, int):
+        payload["status_code"] = status_code
+    error_code = getattr(exc, "code", None)
+    if isinstance(error_code, (str, int)):
+        payload["error_code"] = str(error_code)
+    if isinstance(exc, ChildPhaseFailure):
+        child = exc.payload
+        payload.update(
+            {
+                "phase": exc.phase,
+                "child_state": child.get("state", ""),
+                "child_error_type": child.get("error_type", ""),
+                "child_error_sha256": child.get("error_sha256", ""),
+                "child_status_code": child.get("status_code"),
+                "child_error_code": child.get("error_code", ""),
+                "child_returncode": child.get("returncode"),
+                "child_stderr_sha256": child.get("stderr_sha256", ""),
+            }
+        )
+    return payload
 
 
 def _require_runtime_env(model: str) -> None:
@@ -259,6 +303,14 @@ def _child_base(args: argparse.Namespace) -> list[str]:
     ]
 
 
+def _child_phase(cmd: Sequence[str]) -> str:
+    phases = {"bootstrap", "continue", "pause", "resume", "branch"}
+    for token in reversed(list(cmd)):
+        if token in phases:
+            return token.upper()
+    return "UNKNOWN"
+
+
 def _run_child(cmd: Sequence[str], *, expect_success: bool = True) -> Dict[str, Any]:
     completed = subprocess.run(
         list(cmd),
@@ -277,7 +329,7 @@ def _run_child(cmd: Sequence[str], *, expect_success: bool = True) -> Dict[str, 
     payload["returncode"] = completed.returncode
     payload["stderr_sha256"] = _digest(completed.stderr)
     if expect_success and completed.returncode != 0:
-        raise RuntimeError(f"child phase failed: {payload}")
+        raise ChildPhaseFailure(_child_phase(cmd), payload)
     if not expect_success and completed.returncode == 0:
         raise RuntimeError("negative canary unexpectedly succeeded")
     return payload
@@ -378,7 +430,7 @@ def main() -> int:
         _json_out({"state": "DUPLICATE_RESUME_REJECTED", "error_type": type(exc).__name__})
         return 3
     except Exception as exc:
-        _json_out({"state": "CANARY_FAILED", "error_type": type(exc).__name__, "error_sha256": _digest(str(exc))})
+        _json_out(_safe_error(exc))
         return 2
 
 
