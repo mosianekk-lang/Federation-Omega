@@ -1,5 +1,0 @@
-triggered_at=2026-08-15T05:52:00Z
-purpose=RealityGuard 0.4.0 live-binding authority and Cloud Run read canary
-requested_by=RealityGuard-governed-auto-upgrade
-mutation_scope=GitHub trigger and workflow observability only; provider canary is read-only
-mission=MISSION-REALITYGUARD-040-GOVERNED-AUTO-UPGRADE-v2
