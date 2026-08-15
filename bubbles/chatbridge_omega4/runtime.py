@@ -3,6 +3,7 @@ from __future__ import annotations
 from typing import Any, Dict, List, Optional
 
 from .models import GovernanceCapsule, ProviderContinuationRef
+from .operating_profile import OperatingProfile
 from .store import ChatBridgeStore
 
 
@@ -11,14 +12,26 @@ class ChatBridgeOmega4:
 
     The core owns durable routing, lineage, governance and restore semantics. Provider
     adapters bind one continuation strategy to `ProviderContinuationRef` without changing
-    the namespace contract.
+    the namespace contract. Ω4.4 also binds a portable OperatingProfile so a restore
+    recovers both work state and the workstream's behavioural/intelligence contract.
     """
 
-    VERSION = "CHATBRIDGE-Ω4.1-OPENAI-PROVIDER-CANDIDATE"
-    GCP_VERSION = "GCP-Ω3.0"
+    VERSION = "CHATBRIDGE-Ω4.4-OPERATING-PROFILE"
+    GCP_VERSION = "GCP-Ω3.2"
+    OPERATING_PROFILE_KEY = "__chatbridge_operating_profile__"
 
     def __init__(self, store: ChatBridgeStore) -> None:
         self.store = store
+
+    def _pack_hot_state(
+        self,
+        hot_state: Dict[str, Any],
+        operating_profile: Optional[OperatingProfile],
+    ) -> Dict[str, Any]:
+        packed = dict(hot_state)
+        profile = operating_profile or OperatingProfile.default()
+        packed[self.OPERATING_PROFILE_KEY] = profile.to_dict()
+        return packed
 
     def backup(
         self,
@@ -29,11 +42,13 @@ class ChatBridgeOmega4:
         warm_pointers: Optional[List[str]] = None,
         cold_pointers: Optional[List[str]] = None,
         provider_ref: ProviderContinuationRef = ProviderContinuationRef(),
+        operating_profile: Optional[OperatingProfile] = None,
     ) -> Dict[str, Any]:
+        profile = operating_profile or OperatingProfile.default()
         result = self.store.backup(
             namespace,
             capsule,
-            hot_state=hot_state,
+            hot_state=self._pack_hot_state(hot_state, profile),
             warm_pointers=list(warm_pointers or []),
             cold_pointers=list(cold_pointers or []),
             provider_ref=provider_ref,
@@ -43,6 +58,7 @@ class ChatBridgeOmega4:
             "state": "NAMESPACE_BACKUP_VERIFIED_LOCAL",
             "chatbridge_version": self.VERSION,
             "gcp_version": self.GCP_VERSION,
+            "operating_profile": profile.to_dict(),
         }
 
     def refresh(
@@ -54,6 +70,7 @@ class ChatBridgeOmega4:
         warm_pointers: Optional[List[str]] = None,
         cold_pointers: Optional[List[str]] = None,
         provider_ref: ProviderContinuationRef = ProviderContinuationRef(),
+        operating_profile: Optional[OperatingProfile] = None,
     ) -> Dict[str, Any]:
         return self.backup(
             namespace,
@@ -62,6 +79,7 @@ class ChatBridgeOmega4:
             warm_pointers=warm_pointers,
             cold_pointers=cold_pointers,
             provider_ref=provider_ref,
+            operating_profile=operating_profile,
         )
 
     def restore(
@@ -81,6 +99,27 @@ class ChatBridgeOmega4:
             governance_degraded=governance_degraded,
         )
         payload = envelope.to_dict()
+        hot = dict(payload["hot_state"])
+        raw_profile = hot.pop(self.OPERATING_PROFILE_KEY, None)
+        if isinstance(raw_profile, dict):
+            profile = OperatingProfile.from_dict(raw_profile)
+            profile_source = "CHECKPOINT_BOUND"
+        else:
+            profile = OperatingProfile.default()
+            profile_source = "LEGACY_DEFAULT_SYNTHESIZED"
+        payload["hot_state"] = hot
+        payload["operating_profile"] = profile.to_dict()
+        payload["operating_profile_source"] = profile_source
+        payload["restore_directives"] = {
+            "execution_posture": profile.execution_posture,
+            "reconcile_not_rebuild": profile.reconcile_not_rebuild,
+            "creator_mode": profile.creator_mode,
+            "federation_route_scan": profile.federation_route_scan,
+            "owner_interrupt_policy": profile.owner_interrupt_policy,
+            "capture_policy": profile.capture_policy,
+            "restore_policy": profile.restore_policy,
+            "anticipatory_policy": profile.anticipatory_policy,
+        }
         payload["restore_state"] = (
             "RESTORE_PREVIEW_REQUIRED"
             if envelope.preview_required
@@ -116,7 +155,9 @@ class ChatBridgeOmega4:
         The provider-neutral store preserves the exact source checkpoint as branch
         ancestry. The public Ω4 runtime then advances the branch to an independent active
         generation with no provider continuation identity. This prevents two live
-        branches from silently sharing one OpenAI conversation/session lineage.
+        branches from silently sharing one OpenAI conversation/session lineage. The
+        operating profile remains part of HOT state and therefore follows the governed
+        branch unless a later refresh deliberately changes it.
         """
         source_status = self.store.status(source)
         initial = self.store.clone(source, target)
