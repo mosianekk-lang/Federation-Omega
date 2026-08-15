@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any, Dict, List, Optional
 
+from .assurance_gate import PreOwnerAssuranceGate
 from .models import GovernanceCapsule, ProviderContinuationRef
 from .operating_profile import OperatingProfile
 from .restore_assurance import RestoreAssuranceEngine, RestoreAttestation
@@ -141,6 +142,7 @@ class ChatBridgeOmega4:
         payload["gcp_version"] = self.GCP_VERSION
         payload["restore_assurance_required"] = True
         payload["pre_owner_assurance_required"] = profile.pre_owner_assurance
+        payload["pre_owner_assurance_contract"] = PreOwnerAssuranceGate.contract()
         payload["restore_attestation_contract"] = RestoreAssuranceEngine.contract(payload)
         return payload
 
