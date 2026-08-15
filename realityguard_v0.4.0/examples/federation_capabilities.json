@@ -6,13 +6,13 @@
       "capability_id": "REALITYGUARD-CORE",
       "name": "RealityGuard deterministic truth gate",
       "system_id": "REALITYGUARD",
-      "provides": ["claim_detection", "failure_classification", "truth_solution_separation", "reuse_before_build_preflight", "inventory_hash_binding", "supersession_control", "lifecycle_gap_separation", "governed_auto_upgrade_assessment", "automatic_material_cycle_hook", "environment_attestation", "capability_preservation_gate", "correction_debt_propagation", "learning_promotion_gate"],
+      "provides": ["claim_detection", "failure_classification", "truth_solution_separation", "reuse_before_build_preflight", "inventory_hash_binding", "supersession_control", "lifecycle_gap_separation", "governed_auto_upgrade_assessment", "automatic_material_cycle_hook", "federation_multi_system_adapter", "environment_attestation", "capability_preservation_gate", "correction_debt_propagation", "learning_promotion_gate"],
       "state": "VERIFIED_SCOPED",
       "current": true,
       "authority_ceiling": "A2",
       "source_ref": "local:realityguard/proof/verification_report_v040.json; github:mosianekk-lang/Federation-Omega@realityguard/v0.4.0-governed-auto-upgrade-20260815",
-      "source_hash": "sha256-set:bbe916a328ee54883737042df860d89ecff8289a1e352047cf746ab7c441e17a+612f434ef0b48e19d578e1a0e6726237300112505d95ca04a9d8a1e6afd21a94+89fc027bcd9323fecfea852c0faff6ee0c7cfa9a93043875a861afff17a94af9+56cb63f9dde42f2d00757f2b964245f9c657d4b2766cb3cfbce41c30ce97e3ac+bbe005d0970fabe119580844787374b5519f3e1ee80e6b47b531ad3529405324",
-      "metadata": {"version": "0.4.0", "source_tests": "92/92 PASS", "automatic_mode": "HOST_INVOKED_AT_MATERIAL_CYCLE_BOUNDARY", "federation_adapter_systems": 20, "live_federation_binding": false}
+      "source_hash": "sha256-set:bbe916a328ee54883737042df860d89ecff8289a1e352047cf746ab7c441e17a+95f7c6f88da1649cdfffa2249b546525050c05e4cf077943332dabb2ba975df3+612f434ef0b48e19d578e1a0e6726237300112505d95ca04a9d8a1e6afd21a94+89fc027bcd9323fecfea852c0faff6ee0c7cfa9a93043875a861afff17a94af9+56cb63f9dde42f2d00757f2b964245f9c657d4b2766cb3cfbce41c30ce97e3ac+8a8a552664330709a12171e8dc75cee7bc3e4a6b6c13732bb199fe6bd4ebaa74",
+      "metadata": {"version": "0.4.0", "source_tests": "96/96 PASS", "automatic_mode": "HOST_INVOKED_AT_MATERIAL_CYCLE_BOUNDARY", "federation_adapter_systems": 20, "live_federation_binding": false}
     },
     {
       "capability_id": "FED-CANONICAL-REGISTRY",
