@@ -104,6 +104,36 @@ class RestoreAssuranceTests(unittest.TestCase):
         self.assertIn("SPECIALIST_FORMATION_DRIFT", classes)
         self.assertIn("RESUME_NOT_STARTED", classes)
 
+    def test_verified_post_checkpoint_delta_supersedes_mutable_semantics_only(self) -> None:
+        current_objective = "Advance the newly verified FKLM replay programme."
+        current_next = "Run a blind second environment-fit replay."
+        self.expected["current_state_override"] = {
+            "verified": True,
+            "source": "LOCAL_LIVE_BIBLE_DELTA",
+            "source_ref": "DELTA-006",
+            "restored_objective": current_objective,
+            "restored_next_action": current_next,
+            "required_systems": list(self.expected["operating_profile"]["active_systems"]),
+            "live_bible_ref": self.expected["operating_profile"]["live_bible_ref"],
+        }
+        observed = self.attestation(
+            restored_objective=current_objective,
+            restored_next_action=current_next,
+        )
+        result = self.runtime.assess_restore_attestation(self.expected, observed)
+        self.assertEqual(result["conformance_state"], "PASS")
+        self.assertEqual(result["semantic_source"], "LOCAL_LIVE_BIBLE_DELTA")
+        self.assertEqual(result["semantic_source_ref"], "DELTA-006")
+        self.assertEqual(result["finding_count"], 0)
+
+    def test_unverified_semantic_override_is_rejected(self) -> None:
+        self.expected["current_state_override"] = {
+            "verified": False,
+            "restored_next_action": "Invent a new action",
+        }
+        with self.assertRaises(ValueError):
+            self.runtime.assess_restore_attestation(self.expected, self.attestation())
+
 
 if __name__ == "__main__":
     unittest.main()
