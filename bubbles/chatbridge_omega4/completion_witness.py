@@ -25,7 +25,7 @@ class WitnessMode(str, Enum):
 
 class ContinuationClass(str, Enum):
     SAFE_INTERNAL = "SAFE_INTERNAL"
-    CONSEQUENTAL_EXTERNAL = "CONSEQUENTIAL_EXTERNAL"
+    CONSEQUENTIAL_EXTERNAL = "CONSEQUENTIAL_EXTERNAL"
 
 
 @dataclass(frozen=True)
