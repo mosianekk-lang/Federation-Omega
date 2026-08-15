@@ -15,6 +15,12 @@ from .models import (
     RestorePreviewReason,
 )
 from .operating_profile import OperatingProfile
+from .restore_assurance import (
+    RestoreAssuranceEngine,
+    RestoreAttestation,
+    RestoreConformanceState,
+    RestoreFinding,
+)
 from .runtime import ChatBridgeOmega4
 from .store import (
     ChatBridgeStore,
@@ -37,6 +43,10 @@ __all__ = [
     "OperatingProfile",
     "PendingUserTask",
     "ProviderContinuationRef",
+    "RestoreAssuranceEngine",
+    "RestoreAttestation",
+    "RestoreConformanceState",
+    "RestoreFinding",
     "RestorePreviewReason",
     "TaskCompletionState",
     "WitnessMode",
