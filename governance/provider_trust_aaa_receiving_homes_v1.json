@@ -1,0 +1,36 @@
+{
+  "schema": "FEDOMEGA-PROVIDER-TRUST-AAA-HOMES-1",
+  "contract_id": "AAA-PROVIDER-TRUST-RECEIVING-HOMES-V1",
+  "source_capability": "OPENAI_PRIMARY_RUNTIME",
+  "source_contract": "governance/provider_trust_contract_v1.json",
+  "shared_policy": "federation_consolidation/provider_trust_policy.py",
+  "doctrine": "SHARE_INTELLIGENCE_UNIVERSALLY_INHERIT_BEHAVIOUR_SELECTIVELY",
+  "homes": {
+    "EVIDENCEOPS": {
+      "adapter": "evidenceops/provider_trust_adapter.py",
+      "provider_runtime_use": true,
+      "provider_trust_may_promote_evidence": false,
+      "provider_trust_may_promote_legal_claim": false,
+      "independent_evidence_proof_required": true,
+      "consequential_authority_inherited": false
+    },
+    "TRUTHGRID": {
+      "adapter": "evidenceops/truthgrid/provider_trust.py",
+      "provider_runtime_use": true,
+      "provider_trust_may_authorize_mutation": false,
+      "truthgrid_guard_required": true,
+      "independent_target_readback_required": true,
+      "consequential_authority_inherited": false
+    },
+    "CHATGOV": {
+      "adapter": "bubbles/chat_governor_omega3/provider_trust.py",
+      "provider_runtime_use": true,
+      "pre_user_prompt_reconciliation": true,
+      "system_action_suppresses_avoidable_owner_prompt": true,
+      "owner_only_root_of_trust_and_billing_boundaries_preserved": true,
+      "consequential_authority_inherited": false
+    }
+  },
+  "promotion_rule": "A receiving home may reuse provider-runtime trust only within its local authority and proof boundary. Provider trust never substitutes for local evidence, mutation, approval, target-readback, legal or consequential-action proof.",
+  "secret_value_recorded": false
+}
