@@ -14,6 +14,7 @@ from .models import (
     ProviderContinuationRef,
     RestorePreviewReason,
 )
+from .operating_profile import OperatingProfile
 from .runtime import ChatBridgeOmega4
 from .store import (
     ChatBridgeStore,
@@ -33,6 +34,7 @@ __all__ = [
     "GovernanceCapsule",
     "NamespaceCollision",
     "NamespaceNotFound",
+    "OperatingProfile",
     "PendingUserTask",
     "ProviderContinuationRef",
     "RestorePreviewReason",
