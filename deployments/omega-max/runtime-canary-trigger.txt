@@ -1,4 +1,5 @@
-triggered_at=2026-08-04T00:35:00+02:00
-purpose=non-destructive provider identity, Cloud Run state and API-read canary for FO transcription bridge deployment
-requested_by=FO-transcription-bridge-alpha-omega
-mutation_scope=GitHub trigger file only; provider canary is read-only
+triggered_at=2026-08-15T05:52:00Z
+purpose=RealityGuard 0.4.0 live-binding authority and Cloud Run read canary
+requested_by=RealityGuard-governed-auto-upgrade
+mutation_scope=GitHub trigger and workflow observability only; provider canary is read-only
+mission=MISSION-REALITYGUARD-040-GOVERNED-AUTO-UPGRADE-v2
