@@ -1,0 +1,32 @@
+.chatbridge-start-button {
+  appearance: none;
+  border: 1px solid rgba(16, 163, 127, .75);
+  border-radius: 999px;
+  background: #10a37f;
+  color: #fff;
+  cursor: pointer;
+  font: inherit;
+  font-weight: 650;
+  margin-inline-end: .55rem;
+  padding: .55rem .9rem;
+}
+.chatbridge-start-button:hover { background: #0d8c6d; }
+.chatbridge-start-button:focus-visible { outline: 3px solid rgba(16, 163, 127, .35); outline-offset: 2px; }
+.chatbridge-start-button:disabled { cursor: wait; opacity: .7; }
+[data-chatbridge-status] {
+  position: fixed;
+  z-index: 2147483647;
+  right: 20px;
+  bottom: 20px;
+  max-width: min(420px, calc(100vw - 40px));
+  border: 1px solid rgba(255,255,255,.2);
+  border-radius: 12px;
+  background: #17211f;
+  color: #fff;
+  box-shadow: 0 8px 30px rgba(0,0,0,.28);
+  font: 500 13px/1.4 system-ui, sans-serif;
+  padding: 10px 14px;
+}
+[data-chatbridge-status][data-kind="error"] { background: #7f1d1d; }
+[data-chatbridge-status][data-kind="ready"] { background: #065f46; }
+[data-chatbridge-status][hidden] { display: none; }
