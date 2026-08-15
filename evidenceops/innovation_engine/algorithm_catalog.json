@@ -79,6 +79,12 @@
       "purpose": "Select the strongest authorised route while penalising avoidable owner intervention, cost, latency, maintenance and risk."
     },
     {
+      "algorithm_id": "ALG-EOPS-KUAG-001",
+      "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
+      "name": "Knowledge Utility & Adoption Gate",
+      "purpose": "Separate captured learning from cross-system adoption, real execution, measured impact, Federation-wide reuse and standard promotion using hash-bound receipts and K0-K8 proof states."
+    },
+    {
       "algorithm_id": "ALG-EOPS-CIRE-001",
       "maturity": "SOURCE_IMPLEMENTED_TESTED_LOCAL",
       "name": "Cross-Implementation Replication Evaluator",
@@ -95,8 +101,9 @@
   "evolution_rule": "Only parameter/configuration changes with measurable improvement and no hard-guard regression may be promoted; source code and authority do not self-modify.",
   "external_effect": false,
   "owner": "Kagiso Kim Mosiane",
-  "promotion_rule": "No algorithm becomes a trusted workflow capability until the named workflow passes its own evidence, evaluation, rollback and readback gates.",
+  "promotion_rule": "No algorithm or learned control becomes a trusted workflow capability until the named workflow passes its own evidence, adoption, execution, impact, rollback and readback gates.",
   "replication_rule": "Independent implementations may corroborate a result but never transfer trust; material divergence blocks stronger promotion.",
+  "knowledge_adoption_rule": "A lesson copied into another surface is not proven useful. K4 requires another-system adoption, K5 real execution, K6 measured improvement, K7 multiple independent executing systems, and K8 a separately authorised standard-promotion receipt.",
   "schema": "EVIDENCEOPS_ALGORITHM_CATALOG_V1",
   "source_basis": [
     "Master Bible CH-006 Unknown Mapper",
@@ -108,8 +115,9 @@
     "Master Bible CH-063 Terminal Finality",
     "Master Bible CH-065 EvidenceOps Formation Innovation Fabric",
     "Master Bible CH-072 Alpha-to-Omega Autonomous Solution Foundry",
-    "Secondary Brain Capability Map and Improvements register"
+    "Secondary Brain Capability Map and Improvements register",
+    "Federation operational learning: distinguish capture, adoption, execution and measured utility"
   ],
-  "truth_boundary": "Source implementation and local deterministic tests do not prove provider-hosted or consequential operation.",
-  "version": "1.2.0"
+  "truth_boundary": "Source implementation and local deterministic tests do not prove provider-hosted operation, cross-system adoption, measured utility or consequential authority.",
+  "version": "1.3.0"
 }

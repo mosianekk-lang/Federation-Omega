@@ -105,12 +105,14 @@
     "every_recovery": [
       "VERIFY_REPAIR",
       "VERIFY_ROLLBACK",
-      "READBACK_RECOVERED_STATE"
+      "READBACK_RECOVERED_STATE",
+      "CAPTURE_KNOWLEDGE_CANDIDATE"
     ],
     "every_success": [
       "RECORD_PROOF",
       "MEASURE_VALUE",
-      "ASSESS_REUSABILITY"
+      "ASSESS_REUSABILITY",
+      "ASSESS_KNOWLEDGE_UTILITY_AND_ADOPTION"
     ],
     "repeated_failure": [
       "OPEN_CIRCUIT",
@@ -118,11 +120,61 @@
     ],
     "repeated_success": [
       "ROUTE_CONFIDENCE_INCREASE_CANDIDATE",
-      "NO_TRUST_TRANSFER"
+      "NO_TRUST_TRANSFER",
+      "EVALUATE_CROSS_SYSTEM_ADOPTION"
     ],
     "success_after_failure": [
       "BIND_REGRESSION_TEST",
-      "PRESERVE_BEFORE_AFTER_EVIDENCE"
+      "PRESERVE_BEFORE_AFTER_EVIDENCE",
+      "OPEN_KNOWLEDGE_ADOPTION_CANDIDATE"
+    ]
+  },
+  "knowledge_adoption": {
+    "algorithm_id": "ALG-EOPS-KUAG-001",
+    "states": [
+      "K0_OBSERVED",
+      "K1_CAPTURED",
+      "K2_HYPOTHESIS",
+      "K3_REGRESSION_TESTED",
+      "K4_ADOPTED",
+      "K5_EXECUTED",
+      "K6_IMPACT_PROVEN",
+      "K7_FEDERATED",
+      "K8_STANDARD"
+    ],
+    "capture_does_not_prove_causation": true,
+    "cross_system_adoption_requires_hash_bound_receipt": true,
+    "adopter_must_differ_from_origin_system": true,
+    "real_execution_is_separate_from_adoption": true,
+    "synthetic_samples_are_not_operational_samples": true,
+    "impact_requires_measured_before_after_evidence": true,
+    "regression_failure_requires_active_use_rollback": true,
+    "federated_state_requires_multiple_independent_executing_systems": true,
+    "standard_promotion_requires_separate_authorized_omega5_gate": true,
+    "authority_inheritance_from_knowledge": false,
+    "public_projection_fields": [
+      "knowledge_id",
+      "title",
+      "knowledge_class",
+      "knowledge_sha256",
+      "current_state",
+      "highest_evidence_state",
+      "next_state",
+      "utility_verdict",
+      "adopter_systems",
+      "real_execution_systems",
+      "operational_samples",
+      "synthetic_samples",
+      "regression_failed"
+    ],
+    "private_fields_excluded_from_shared_projection": [
+      "hypothesis",
+      "causal_mechanism",
+      "transfer_conditions",
+      "non_transfer_conditions",
+      "raw_failure_detail",
+      "raw_provider_payload",
+      "secret_or_credential_material"
     ]
   },
   "non_negotiable_controls": [
@@ -132,7 +184,10 @@
     "NO_SECRET_PERSISTENCE",
     "FAILURE_EVIDENCE_MUST_BE_PRESERVED",
     "TRIGGER_ACTIVATION_REQUIRES_EVIDENCE_LINK",
-    "PROMOTION_REQUIRES_SEPARATE_PROOF_GATE"
+    "PROMOTION_REQUIRES_SEPARATE_PROOF_GATE",
+    "COPY_IS_NOT_ADOPTION_PROOF",
+    "SYNTHETIC_IS_NOT_OPERATIONAL_PROOF",
+    "KNOWLEDGE_ADOPTION_NEVER_INHERITS_AUTHORITY"
   ],
   "owner": "Kagiso Kim Mosiane",
   "policy_id": "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1",
@@ -203,5 +258,5 @@
       "BLOCK_PROMOTION"
     ]
   },
-  "version": "1.0.0"
+  "version": "1.1.0"
 }

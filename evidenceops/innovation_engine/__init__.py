@@ -18,6 +18,7 @@ from .algorithms import (
     EpistemicDebtPrioritizer,
     OwnerBurdenRouteOptimizer,
     InformationGainRouteSelector,
+    KnowledgeUtilityAdoptionGate,
     TerminalFinalityResolver,
     UnknownFrontierPrioritizer,
 )
@@ -50,6 +51,7 @@ __all__ = [
     "FoundryCycleResult",
     "InformationGainRouteSelector",
     "IndependentEvidenceOpsReferenceReplica",
+    "KnowledgeUtilityAdoptionGate",
     "OwnerBurdenRouteOptimizer",
     "EpistemicDebtPrioritizer",
     "ProofStateTransitionGuard",
@@ -58,4 +60,4 @@ __all__ = [
     "UnknownFrontierPrioritizer",
 ]
 
-__version__ = "1.0.0"
+__version__ = "1.1.0"

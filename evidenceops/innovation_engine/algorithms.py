@@ -17,6 +17,7 @@ from .algorithm_failure_to_engineering_gene_compiler import FailureToEngineering
 from .algorithm_proof_state_transition_guard import ProofStateTransitionGuard
 from .algorithm_epistemic_debt_prioritizer import EpistemicDebtPrioritizer
 from .algorithm_owner_burden_route_optimizer import OwnerBurdenRouteOptimizer
+from .algorithm_knowledge_utility_adoption_gate import KnowledgeUtilityAdoptionGate
 
 ALGORITHM_CLASSES = {
     cls.algorithm_id: cls
@@ -34,6 +35,7 @@ ALGORITHM_CLASSES = {
         ProofStateTransitionGuard,
         EpistemicDebtPrioritizer,
         OwnerBurdenRouteOptimizer,
+        KnowledgeUtilityAdoptionGate,
     )
 }
 
@@ -54,5 +56,6 @@ __all__ = [
     "ProofStateTransitionGuard",
     "EpistemicDebtPrioritizer",
     "OwnerBurdenRouteOptimizer",
+    "KnowledgeUtilityAdoptionGate",
     "ALGORITHM_CLASSES",
 ]
