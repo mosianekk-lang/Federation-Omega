@@ -11,6 +11,8 @@ from .schema_contract import (
     SchemaContractError,
     SheetContract,
     TableBlockContract,
+    structural_schema_payload,
+    structural_schema_sha256,
 )
 from .projection_contract import (
     ProjectionContractError,
@@ -32,6 +34,8 @@ __all__ = [
     "SheetContract",
     "SourceFrontierObservation",
     "TableBlockContract",
+    "structural_schema_payload",
+    "structural_schema_sha256",
     "XlsxSemanticError",
     "XlsxSemanticWorkbook",
     "compile_projection",
