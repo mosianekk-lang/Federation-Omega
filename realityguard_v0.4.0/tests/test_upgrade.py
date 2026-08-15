@@ -220,9 +220,15 @@ class FederationAdapterTests(unittest.TestCase):
         self.assertEqual(len(value["systems"]), 20)
         self.assertEqual(len({item["system_id"] for item in value["systems"]}), 20)
 
-    def test_adapter_does_not_claim_unproven_live_binding(self):
+    def test_adapter_claims_only_independently_proven_live_binding(self):
         value = self.adapter()
-        self.assertTrue(all(item["integration_state"] == "ADAPTER_REQUIRED" for item in value["systems"]))
+        proven = [item for item in value["systems"] if item["integration_state"] == "LIVE_BOUND_VERIFIED"]
+        pending = [item for item in value["systems"] if item["integration_state"] == "ADAPTER_REQUIRED"]
+        self.assertEqual([item["system_id"] for item in proven], ["SYS-FEDERATION-OMEGA"])
+        self.assertEqual(len(pending), 19)
+        self.assertTrue(proven[0]["current"])
+        self.assertTrue(proven[0]["runtime_binding_evidence"])
+        self.assertEqual(proven[0]["binding_scope"], "FEDERATION_GITHUB_ACTIONS_ACTIVE_HOST_ONLY")
         self.assertFalse(value["background_daemon"])
         self.assertFalse(value["promotion_authorized"])
 
@@ -237,14 +243,18 @@ class FederationAdapterTests(unittest.TestCase):
                 self.assertTrue(result["federation_adapter"]["source_adapter_supported"])
                 self.assertTrue(result["federation_adapter"]["adapter_invocation_observed"])
 
-    def test_source_invocation_does_not_claim_target_runtime_binding(self):
+    def test_source_invocation_reflects_only_evidence_backed_target_runtime_binding(self):
         contract = self.adapter()
         capabilities = manifest(capability("REALITYGUARD-CORE", ["claim_detection"]))
         payload = request(capabilities)
         payload["cycle"]["system_id"] = contract["systems"][0]["system_id"]
         result = FederationUpgradeAdapter().evaluate(payload, capabilities, contract)
-        self.assertFalse(result["federation_adapter"]["target_runtime_binding_proven"])
+        self.assertTrue(result["federation_adapter"]["target_runtime_binding_proven"])
         self.assertEqual(result["federation_adapter"]["manual_user_tasks"], [])
+
+        payload["cycle"]["system_id"] = contract["systems"][1]["system_id"]
+        pending = FederationUpgradeAdapter().evaluate(payload, capabilities, contract)
+        self.assertFalse(pending["federation_adapter"]["target_runtime_binding_proven"])
 
     def test_unknown_system_fails_closed(self):
         contract = self.adapter()
