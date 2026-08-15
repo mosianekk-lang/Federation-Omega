@@ -2,10 +2,9 @@ from __future__ import annotations
 
 import hashlib
 import json
-import math
 import time
 from dataclasses import asdict, dataclass
-from typing import Any, Dict, List, Optional, Sequence
+from typing import Any, Dict, List, Mapping, Optional, Sequence
 
 from .state import DurableState
 
@@ -37,6 +36,14 @@ PROFILES: Dict[str, Dict[str, List[str]]] = {
         "excluded": [],
     },
 }
+
+
+COGNITIVE_PRECISION_SIGNALS = (
+    "legal", "disciplinary", "labour", "ccma", "arbitration", "suspension", "grievance",
+    "medical", "financial", "forensic", "evidence", "causal", "root cause", "contradiction",
+    "strategy", "architecture", "system design", "high-risk", "high risk", "irreversible",
+    "compare", "competing", "hypothesis", "falsify", "adversarial", "integrity", "provenance",
+)
 
 
 def _stable_json(value: Any) -> bytes:
@@ -74,6 +81,7 @@ class MissionPlan:
     tool_result_token_budget: int
     max_parallel_lanes: int
     created_at: str
+    cognitive_precision_required: bool = False
     plan_sha256: str = ""
 
 
@@ -109,6 +117,38 @@ class MissionCompiler:
     def __init__(self, state: DurableState) -> None:
         self.state = state
         self.budgeter = AdaptiveBudgeter(state)
+        self._cognitive_kernel = None
+
+    @staticmethod
+    def needs_cognitive_precision(
+        objective: str,
+        *,
+        candidate_count: int = 0,
+        risk_level: str = "",
+    ) -> bool:
+        text = objective.lower()
+        risk = risk_level.upper().strip()
+        return (
+            candidate_count >= 2
+            or risk in {"HIGH", "CRITICAL", "IRREVERSIBLE"}
+            or any(signal in text for signal in COGNITIVE_PRECISION_SIGNALS)
+        )
+
+    def evaluate_decision(
+        self,
+        *,
+        candidates: Sequence[Mapping[str, Any]],
+        experiments: Sequence[Mapping[str, Any]] = (),
+        context_metrics: Optional[Mapping[str, Any]] = None,
+    ) -> Dict[str, Any]:
+        if self._cognitive_kernel is None:
+            from .cognitive_precision import CognitivePrecisionKernel
+            self._cognitive_kernel = CognitivePrecisionKernel()
+        return self._cognitive_kernel.compile_decision(
+            candidates=candidates,
+            experiments=experiments,
+            context_metrics=context_metrics,
+        )
 
     def compile(
         self,
@@ -136,6 +176,7 @@ class MissionCompiler:
             "tool_result_token_budget": self.budgeter.token_budget(),
             "max_parallel_lanes": 4,
             "created_at": time.strftime("%Y-%m-%dT%H:%M:%SZ", time.gmtime()),
+            "cognitive_precision_required": self.needs_cognitive_precision(objective),
         }
         plan = MissionPlan(**base, plan_sha256=_sha(base))
         self.state.save_plan(asdict(plan))
