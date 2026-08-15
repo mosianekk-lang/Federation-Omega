@@ -8,7 +8,7 @@ import tempfile
 import unittest
 from pathlib import Path
 
-from realityguard import GovernedUpgradeEngine, RealityGuard, UpgradeDecisionCode
+from realityguard import FederationUpgradeAdapter, GovernedUpgradeEngine, RealityGuard, UpgradeDecisionCode
 from realityguard.prebuild import manifest_snapshot_hash
 from realityguard.schema import InputError
 
@@ -225,6 +225,41 @@ class FederationAdapterTests(unittest.TestCase):
         self.assertTrue(all(item["integration_state"] == "ADAPTER_REQUIRED" for item in value["systems"]))
         self.assertFalse(value["background_daemon"])
         self.assertFalse(value["promotion_authorized"])
+
+    def test_one_source_adapter_accepts_every_registered_system(self):
+        contract = self.adapter()
+        capabilities = manifest(capability("REALITYGUARD-CORE", ["claim_detection"]))
+        for entry in contract["systems"]:
+            with self.subTest(system_id=entry["system_id"]):
+                payload = request(capabilities)
+                payload["cycle"]["system_id"] = entry["system_id"]
+                result = FederationUpgradeAdapter().evaluate(payload, capabilities, contract)
+                self.assertTrue(result["federation_adapter"]["source_adapter_supported"])
+                self.assertTrue(result["federation_adapter"]["adapter_invocation_observed"])
+
+    def test_source_invocation_does_not_claim_target_runtime_binding(self):
+        contract = self.adapter()
+        capabilities = manifest(capability("REALITYGUARD-CORE", ["claim_detection"]))
+        payload = request(capabilities)
+        payload["cycle"]["system_id"] = contract["systems"][0]["system_id"]
+        result = FederationUpgradeAdapter().evaluate(payload, capabilities, contract)
+        self.assertFalse(result["federation_adapter"]["target_runtime_binding_proven"])
+        self.assertEqual(result["federation_adapter"]["manual_user_tasks"], [])
+
+    def test_unknown_system_fails_closed(self):
+        contract = self.adapter()
+        capabilities = manifest(capability("REALITYGUARD-CORE", ["claim_detection"]))
+        payload = request(capabilities)
+        payload["cycle"]["system_id"] = "SYS-NOT-REGISTERED"
+        with self.assertRaises(InputError):
+            FederationUpgradeAdapter().evaluate(payload, capabilities, contract)
+
+    def test_unsafe_adapter_contract_fails_closed(self):
+        contract = self.adapter()
+        contract["background_daemon"] = True
+        capabilities = manifest(capability("REALITYGUARD-CORE", ["claim_detection"]))
+        with self.assertRaises(InputError):
+            FederationUpgradeAdapter().evaluate(request(capabilities), capabilities, contract)
 
 
 if __name__ == "__main__":
