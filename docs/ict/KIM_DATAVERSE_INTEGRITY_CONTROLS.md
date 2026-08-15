@@ -16,6 +16,13 @@ The deep estate audit showed that the core identity graph is substantially sound
 4. **OOXML semantic decoder** — `evidenceops/kim_dataverse/xlsx_semantic.py` resolves shared-string indices and preserves OOXML type/style/formula metadata before audit interpretation.
 5. **Typed writer wrapper** — `KDVTypedWriterAdapter` reuses the existing `TruthGridWriterAdapter`, adding schema normalisation before the already admitted live-schema → mutation → independent readback sequence.
 6. **CAS projection rule** — mutable projection writers bind the expected source/revision immediately before write and fail closed when the provider has advanced.
+7. **Structural schema digest** — schema hashes include stable structure only: sheet/export identity, role, block identity, header/data-start position, key/record shape and ordered field names/types. Dynamic occupancy such as `data_end_row_1based` is recorded separately and cannot invalidate a structural hash merely because an append-only ledger gained rows.
+
+## Structural schema versus occupancy
+
+A sheet's schema and its occupancy are different facts. `KDV_SCHEMA_REGISTRY.Structural_Schema_SHA256` is deliberately occupancy-independent so that an append-only receipt, failure-memory or self-describing schema registry does not report false schema drift on every append. `Table_Blocks_JSON` may preserve the observed last-data-row as an as-of occupancy snapshot, but that value is not part of the structural digest.
+
+A structural hash must change when field order, field names/types, block identity, header position, record shape, candidate key or export identity changes. It must not change solely because the number of records changes.
 
 ## Export truth boundary
 

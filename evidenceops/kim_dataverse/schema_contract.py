@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from datetime import datetime
+import hashlib
 import json
 from pathlib import Path
 import re
@@ -70,11 +71,11 @@ class KDVSchemaRegistry:
             for raw_block in raw_sheet.get("table_blocks", []):
                 fields = tuple(
                     FieldContract(
-                        column_index_1based=int(field.get("column_index_1based", index + 1)),
+                        column_index_1based=int(field["column_index_1based"]),
                         name=str(field["name"]),
                         logical_type=str(field["logical_type"]),
                     )
-                    for index, field in enumerate(raw_block.get("fields", []))
+                    for field in raw_block.get("fields", [])
                 )
                 blocks.append(
                     TableBlockContract(
@@ -145,6 +146,49 @@ class KDVSchemaRegistry:
                 f"LIVE_HEADER_DRIFT:{sheet_name}:expected={expected!r}:observed={observed!r}"
             )
         return observed
+
+
+def structural_schema_payload(sheet: Mapping[str, Any]) -> dict[str, Any]:
+    """Return schema-only content, excluding occupancy/freshness counters.
+
+    Row occupancy is runtime state, not schema. Excluding data_end_row_1based prevents
+    append-only ledgers and self-describing registries from invalidating their
+    structural schema hash every time a row is appended.
+    """
+    blocks = []
+    for block in sheet.get("table_blocks", []):
+        blocks.append({
+            "block_id": block.get("block_id"),
+            "header_row_1based": block.get("header_row_1based"),
+            "data_start_row_1based": block.get("data_start_row_1based"),
+            "record_shape": block.get("record_shape", "table"),
+            "candidate_primary_key": block.get("candidate_primary_key"),
+            "section_key_field": block.get("section_key_field"),
+            "fields": [
+                {
+                    "column_index_1based": field.get("column_index_1based"),
+                    "name": field.get("name"),
+                    "logical_type": field.get("logical_type"),
+                }
+                for field in block.get("fields", [])
+            ],
+        })
+    return {
+        "sheet_name": sheet.get("sheet_name"),
+        "xlsx_export_name": sheet.get("xlsx_export_name", sheet.get("sheet_name")),
+        "role": sheet.get("role", "control_or_reference"),
+        "table_blocks": blocks,
+    }
+
+
+def structural_schema_sha256(sheet: Mapping[str, Any]) -> str:
+    payload = json.dumps(
+        structural_schema_payload(sheet),
+        sort_keys=True,
+        separators=(",", ":"),
+        ensure_ascii=False,
+    ).encode("utf-8")
+    return hashlib.sha256(payload).hexdigest()
 
 
 def _normalise_value(field: FieldContract, value: Any) -> Any:
