@@ -21,6 +21,7 @@ PYTHONPATH=src python -m realityguard.cli scan --input examples/false_ownership.
 PYTHONPATH=src python -m realityguard.cli resolve --input examples/chatbridge_solution_request.json --capabilities examples/federation_capabilities.json
 PYTHONPATH=src python -m realityguard.cli prebuild --input examples/chatbridge_prebuild_request.json --capabilities examples/federation_capabilities.json
 PYTHONPATH=src python -m realityguard.cli upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json
+PYTHONPATH=src python -m realityguard.cli federation-upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json --adapter-contract federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json
 ```
 
 Exit codes: `0` bounded claim/action or upgrade route emitted, `2` invalid input, `3` claim blocked or rewrite required, `4` proposed build blocked or redirected to reuse, `5` duplicate or unsafe upgrade blocked.
@@ -71,7 +72,7 @@ The learning ledger deduplicates by a stable incident fingerprint and increments
 
 Every actionable result still has `automatic_execution_authorized=false` and `promotion_authorized=false`. The integrated host must obtain and consume a separate single-use Formation permit before its selected executor acts, then pass the original-failure, healthy-case, rollback and semantic-readback gates. This separation makes improvement automatic without making authority automatic.
 
-The Federation adapter contract registers all systems in the current canonical register, but honestly marks each live host as `ADAPTER_REQUIRED` until that runtime calls and proves the hook. See `docs/FEDERATION_AUTO_UPGRADE_CONTRACT.md`.
+The single executable Federation source adapter accepts every system ID in the current canonical contract, so those systems do not need separate RealityGuard engines. It still marks each live host as `ADAPTER_REQUIRED` until that runtime calls and proves the hook. See `docs/FEDERATION_AUTO_UPGRADE_CONTRACT.md`.
 
 ## Test
 
