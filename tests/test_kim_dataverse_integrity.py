@@ -14,7 +14,11 @@ from evidenceops.kim_dataverse.projection_contract import (
     compile_projection,
     require_expected_source,
 )
-from evidenceops.kim_dataverse.schema_contract import KDVSchemaRegistry, SchemaContractError
+from evidenceops.kim_dataverse.schema_contract import (
+    KDVSchemaRegistry,
+    SchemaContractError,
+    structural_schema_sha256,
+)
 from evidenceops.kim_dataverse.xlsx_semantic import XlsxSemanticWorkbook
 
 
@@ -87,6 +91,21 @@ class SchemaContractTests(unittest.TestCase):
                 "S", {"Flag": True, "Priority": 1, "Observed_At": "2026-08-15T09:00:00"},
                 require_full_schema=True,
             )
+
+    def test_structural_schema_hash_ignores_append_occupancy(self):
+        base = {
+            "sheet_name": "L", "xlsx_export_name": "L", "role": "append_evidence",
+            "table_blocks": [{
+                "block_id": "L#R1", "header_row_1based": 1,
+                "data_start_row_1based": 2, "data_end_row_1based": 5,
+                "fields": [{"column_index_1based": 1, "name": "ID", "logical_type": "string"}],
+            }],
+        }
+        later = json.loads(json.dumps(base))
+        later["table_blocks"][0]["data_end_row_1based"] = 500
+        self.assertEqual(structural_schema_sha256(base), structural_schema_sha256(later))
+        later["table_blocks"][0]["fields"][0]["logical_type"] = "number"
+        self.assertNotEqual(structural_schema_sha256(base), structural_schema_sha256(later))
 
 
 class XlsxSemanticTests(unittest.TestCase):
