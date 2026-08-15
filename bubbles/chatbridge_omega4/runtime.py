@@ -4,6 +4,7 @@ from typing import Any, Dict, List, Optional
 
 from .models import GovernanceCapsule, ProviderContinuationRef
 from .operating_profile import OperatingProfile
+from .restore_assurance import RestoreAssuranceEngine, RestoreAttestation
 from .store import ChatBridgeStore
 
 
@@ -12,12 +13,12 @@ class ChatBridgeOmega4:
 
     The core owns durable routing, lineage, governance and restore semantics. Provider
     adapters bind one continuation strategy to `ProviderContinuationRef` without changing
-    the namespace contract. Ω4.4 also binds a portable OperatingProfile so a restore
-    recovers both work state and the workstream's behavioural/intelligence contract.
+    the namespace contract. Ω4.4 binds a portable OperatingProfile; Ω4.5 adds a
+    destination restore attestation and independent drift/repair contract.
     """
 
-    VERSION = "CHATBRIDGE-Ω4.4-OPERATING-PROFILE"
-    GCP_VERSION = "GCP-Ω3.2"
+    VERSION = "CHATBRIDGE-Ω4.5-RESTORE-ASSURANCE"
+    GCP_VERSION = "GCP-Ω3.3"
     OPERATING_PROFILE_KEY = "__chatbridge_operating_profile__"
 
     def __init__(self, store: ChatBridgeStore) -> None:
@@ -132,7 +133,17 @@ class ChatBridgeOmega4:
         )
         payload["chatbridge_version"] = self.VERSION
         payload["gcp_version"] = self.GCP_VERSION
+        payload["restore_assurance_required"] = True
+        payload["restore_attestation_contract"] = RestoreAssuranceEngine.contract(payload)
         return payload
+
+    def assess_restore_attestation(
+        self,
+        expected_restore: Dict[str, Any],
+        observed: RestoreAttestation,
+    ) -> Dict[str, Any]:
+        """Independent conformance check for a destination restore observation."""
+        return RestoreAssuranceEngine.assess(expected_restore, observed)
 
     def list(self, *, include_released: bool = False) -> List[Dict[str, Any]]:
         return self.store.list_namespaces(include_released=include_released)
