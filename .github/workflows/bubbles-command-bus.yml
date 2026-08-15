@@ -324,6 +324,21 @@ jobs:
           print(json.dumps({k:base[k] for k in ['classification','provider_live_verified','receipt_sha256']},sort_keys=True))
           PY
 
+      - name: Resolve Federation provider trust state
+        if: ${{ always() && env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && hashFiles('chatbridge-provider-live-output/receipt.json') != '' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ ! -f chatbridge-provider-live-output/canary.json ]; then
+            printf '{}\n' > chatbridge-provider-live-output/canary.json
+          fi
+          python -m federation_consolidation.provider_trust_resolver from-chatbridge \
+            --contract governance/provider_trust_contract_v1.json \
+            --binding chatbridge-provider-live-output/binding.json \
+            --canary chatbridge-provider-live-output/canary.json \
+            --provider-receipt chatbridge-provider-live-output/receipt.json \
+            --output chatbridge-provider-live-output/provider-trust-resolution.json
+
       - name: Upload immutable ChatBridge provider-live receipt
         if: ${{ always() && env.CHATBRIDGE_LIVE_PROOF_REQUESTED == 'true' && hashFiles('chatbridge-provider-live-output/receipt.json') != '' }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -333,6 +348,7 @@ jobs:
             chatbridge-provider-live-output/binding.json
             chatbridge-provider-live-output/canary.json
             chatbridge-provider-live-output/receipt.json
+            chatbridge-provider-live-output/provider-trust-resolution.json
           if-no-files-found: warn
           retention-days: 90
 
@@ -343,8 +359,13 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import json
-          d=json.load(open('chatbridge-provider-live-output/receipt.json'))
-          if d.get('provider_live_verified') is not True:
-              raise SystemExit('Provider-live proof gate remains OPEN: '+str(d.get('classification')))
-          print('PROVIDER_LIVE_VERIFIED')
+          provider=json.load(open('chatbridge-provider-live-output/receipt.json'))
+          trust=json.load(open('chatbridge-provider-live-output/provider-trust-resolution.json'))
+          provider_live=provider.get('provider_live_verified') is True
+          trust_live=trust.get('state')=='PROVIDER_LIVE_VERIFIED' and trust.get('ready') is True
+          if provider_live != trust_live:
+              raise SystemExit('Provider proof/trust resolver contradiction: provider='+str(provider.get('classification'))+' trust='+str(trust.get('state')))
+          if not provider_live:
+              raise SystemExit('Provider-live proof gate remains OPEN: '+str(provider.get('classification'))+' / TRUST='+str(trust.get('state'))+' / NEXT='+str(trust.get('next_action')))
+          print('PROVIDER_LIVE_VERIFIED / FEDERATION_PROVIDER_TRUST_VERIFIED')
           PY
