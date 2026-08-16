@@ -4,7 +4,7 @@ from dataclasses import asdict
 import re
 from typing import Mapping
 
-from ao_harmonic_v3 import AOHarmonicV3, CostClass, WorkloadCostProfile
+from ao_harmonic_v3 import AOHarmonicV3, CostClass, IntelligenceSignals, WorkloadCostProfile
 from ao_harmonic_v3.forest_omega import ForestOmegaContext
 
 EVENT_SCHEMA = "BUBBLES-FOREST-BACKGROUND-EVENT-V1"
@@ -123,18 +123,47 @@ def run_background_event(raw: Mapping[str, object]) -> dict[str, object]:
         owner_only_dependency=bool(event["owner_only"]), material_strategy_change=bool(event["material_strategy_change"]),
         trigger_refs=(event["fingerprint_sha256"],),
     ))
+
+    intelligence = runtime.intelligence.assess(IntelligenceSignals(
+        task_id=f"AIR::{event['event_id']}",
+        complexity=max(float(event["materiality"]), float(event["dependency_density"])),
+        consequence=float(event["consequence"]),
+        uncertainty=float(event["uncertainty"]),
+        dependency_density=float(event["dependency_density"]),
+        adversarial_complexity=float(event["adversarial_complexity"]),
+        evidence_volume=0.70 if event["evidence_risk"] else 0.20,
+        ambiguity=float(event["uncertainty"]),
+        irreversibility=0.75 if (event["deadline_risk"] or event["matter_class"] == "LEGAL") else 0.25,
+        long_horizon=min(1.0, float(forest.horizon["adaptive_depth"]) / 32.0),
+        required_accuracy=0.95 if event["matter_class"] == "LEGAL" else (0.90 if high_stakes else 0.80),
+        high_stakes=high_stakes,
+        legal_or_regulatory=bool(event["matter_class"] == "LEGAL"),
+        repeated_failures=1 if event["route_failure"] else 0,
+        unresolved_contradictions=0,
+    ))
+
     owner_wake = bool(event["owner_only"] or event["deadline_risk"] or event["material_strategy_change"] or event["objective_exhausted"] or event["materiality"] >= .85)
     private_wake = bool(owner_wake or event["evidence_risk"] or event["materiality"] >= .70 or event["provider_readback_missing"])
     cost_dict = asdict(cost)
     cost_dict["action"] = cost.action.value
+    intelligence_dict = runtime.intelligence.as_dict(intelligence)
     return {
         "schema": RECEIPT_SCHEMA, "state": "SUCCESS", "event": event, "cost": cost_dict,
         "forest": {"engine_id": forest.engine_id, "architecture_cycle": list(forest.architecture_cycle),
                    "adaptive_horizon_depth": forest.horizon["adaptive_depth"], "selected_path": forest.decision["selected_path"],
                    "route_recovery": forest.route_recovery, "truth_class": forest.truth_class},
+        "intelligence": {
+            "router_id": intelligence.router_id,
+            "assessment": intelligence_dict,
+            "chatgpt_ui_recommendation": intelligence.desired_tier.value,
+            "minimum_quality_floor": intelligence.minimum_tier.value,
+            "provider_execution_attempted": False,
+            "paid_escalation_authorised": False,
+            "truth_class": intelligence.truth_class,
+        },
         "private_reasoning_wake_required": private_wake, "owner_wake_required": owner_wake,
         "external_effect": False, "authority_ceiling": "A1_INTERNAL",
-        "truth_boundary": "Sanitized metadata/control signals only; no private body, provider mutation or legal-fact claim.",
+        "truth_boundary": "Sanitized metadata/control signals only; AIR recommends intelligence but performs no paid model call, private body export, provider mutation or legal-fact claim.",
     }
 
 
