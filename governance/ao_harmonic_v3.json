@@ -1,8 +1,8 @@
 {
   "schema": "AO-HARMONIC-GENOME-V3",
-  "version": "3.1.0",
+  "version": "3.1.1",
   "owner": "Kim Kagiso Mosiane",
-  "state": "SHADOW_VALIDATED_AO_HARMONIC_V3_SYSTEM_SPECIFIC_NO_EXTERNAL_EFFECT",
+  "state": "CANARY_VALIDATED_AO_HARMONIC_V3_PROVIDER_OBSERVATION_BRIDGE_NO_EXTERNAL_EFFECT",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "purpose": "Event-driven, stateful Federation cognitive operating fabric with mission, proof, resource, learning and architecture-control primitives.",
@@ -74,10 +74,21 @@
     "provider_observation_bridge": "ao_harmonic_v3/provider_canary.py"
   },
   "provider_observation_bridge": {
-    "status": "SOURCE_IMPLEMENTED_PENDING_LIVE_PROVIDER_OBSERVATION",
+    "status": "CANARY_VALIDATED_LIVE_PROVIDER_OBSERVATION_ORCHESTRATION_BOUND_NO_EFFECT",
     "test_binding": "tests/test_phoenix_provider_cutover_v3_ao_harmonic_provider_canary.py",
     "privacy_model": "SANITIZED_METADATA_ONLY",
     "external_effect": false,
+    "authority_ceiling": "A1_READ",
+    "validated_provider_class": "GMAIL_READ_ONLY_OBSERVATION",
+    "provider_object_identifier_persisted_publicly": false,
+    "private_learning_receipt": "LRN-4168b3170e46728a7cb6",
+    "source_admission_commit": "589bffcbea816c5390079acdb52b3ea3547e0bbc",
+    "source_admission_pr": 507,
+    "premerge_airlock_run": 31962655267,
+    "postmerge_airlock_run": 31962711509,
+    "postmerge_leak_guard_run": 31962711528,
+    "postmerge_bubbles_run": 31962711484,
+    "postmerge_phoenix_run": 31962711545,
     "provider_native_package_deployment_required_for_workflow_promotion": true
   },
   "inheritance": {
@@ -88,6 +99,7 @@
     "ao_cra": "governance/ao_cra_federation_inheritance_v1.json"
   },
   "truth_boundary": {
+    "provider_observation_canary_validated": true,
     "provider_deployed": false,
     "provider_runtime_verified": false,
     "hidden_cross_chat_execution_claimed": false,
