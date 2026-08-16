@@ -1,8 +1,8 @@
 {
   "schema": "AO-HARMONIC-GENOME-V3",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "owner": "Kim Kagiso Mosiane",
-  "state": "SOURCE_IMPLEMENTED_PENDING_DETERMINISTIC_AND_FEDERATION_ADMISSION",
+  "state": "SHADOW_VALIDATED_AO_HARMONIC_V3_SYSTEM_SPECIFIC_NO_EXTERNAL_EFFECT",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "purpose": "Event-driven, stateful Federation cognitive operating fabric with mission, proof, resource, learning and architecture-control primitives.",
@@ -69,7 +69,16 @@
   "source": {
     "package": "ao_harmonic_v3",
     "tests": "tests/test_ao_harmonic_v3.py",
-    "benchmark": "ao_harmonic_v3/benchmark.py"
+    "benchmark": "ao_harmonic_v3/benchmark.py",
+    "shadow": "ao_harmonic_v3/shadow.py",
+    "provider_observation_bridge": "ao_harmonic_v3/provider_canary.py"
+  },
+  "provider_observation_bridge": {
+    "status": "SOURCE_IMPLEMENTED_PENDING_LIVE_PROVIDER_OBSERVATION",
+    "test_binding": "tests/test_phoenix_provider_cutover_v3_ao_harmonic_provider_canary.py",
+    "privacy_model": "SANITIZED_METADATA_ONLY",
+    "external_effect": false,
+    "provider_native_package_deployment_required_for_workflow_promotion": true
   },
   "inheritance": {
     "surface_awareness": "governance/federation_surface_awareness_v1.json",
@@ -83,6 +92,8 @@
     "provider_runtime_verified": false,
     "hidden_cross_chat_execution_claimed": false,
     "model_weight_learning_claimed": false,
-    "authority_expansion": false
+    "authority_expansion": false,
+    "workflow_verified": false,
+    "operationally_verified": false
   }
 }
