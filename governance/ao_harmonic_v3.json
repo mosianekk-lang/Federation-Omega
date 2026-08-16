@@ -1,8 +1,8 @@
 {
   "schema": "AO-HARMONIC-GENOME-V3",
-  "version": "3.2.2",
+  "version": "3.2.3",
   "owner": "Kim Kagiso Mosiane",
-  "state": "AO_HARMONIC_BASE_PROVIDER_OBSERVATION_CANARY_VALIDATED_FOREST_FIRST_OMEGA_SHADOW_VALIDATED_NO_EXTERNAL_EFFECT",
+  "state": "AO_HARMONIC_CROSS_PROVIDER_OBSERVATION_WORKFLOW_VERIFIED_FOREST_FIRST_OMEGA_SHADOW_VALIDATED_NO_EXTERNAL_EFFECT",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "purpose": "Event-driven, stateful Federation cognitive operating fabric with Forest-First Ω strategic perception, HORIZON-Ω adaptive foresight, proof, mission, resource, learning and architecture-control primitives.",
@@ -60,10 +60,12 @@
     "synthetic_benchmark_is_not_operational_comparison": true,
     "architectural_reference_fixture_is_not_historical_runtime_measurement": true,
     "action_specific_readback_required_for_provider_claim": true,
+    "independent_observed_provider_readback_required_for_cross_provider_workflow_promotion": true,
     "rollback_required_for_consequential_runtime_promotion_where_applicable": true,
     "policy_candidate_must_outperform_incumbent_before_promotion": true,
     "new_top_level_system_requires_unique_uncovered_function_or_measured_value": true,
-    "legacy_control_may_not_be_removed_until_successor_regression_and_restore_compatibility_pass": true
+    "legacy_control_may_not_be_removed_until_successor_regression_and_restore_compatibility_pass": true,
+    "bounded_workflow_maturity_may_not_be_inherited_by_other_components": true
   },
   "source": {
     "package": "ao_harmonic_v3",
@@ -73,12 +75,15 @@
       "tests/test_ao_harmonic_v3.py",
       "tests/test_phoenix_provider_cutover_v3_forest_first_omega.py",
       "tests/test_phoenix_provider_cutover_v3_forest_first_omega_shadow.py",
-      "tests/test_phoenix_provider_cutover_v3_ao_harmonic_provider_canary.py"
+      "tests/test_phoenix_provider_cutover_v3_ao_harmonic_provider_canary.py",
+      "tests/test_phoenix_provider_cutover_v3_ao_harmonic_workflow.py"
     ],
     "benchmark": "ao_harmonic_v3/benchmark.py",
     "base_shadow": "ao_harmonic_v3/shadow.py",
     "forest_first_omega_shadow": "ao_harmonic_v3/forest_omega_shadow.py",
-    "provider_observation_bridge": "ao_harmonic_v3/provider_canary.py"
+    "provider_observation_bridge": "ao_harmonic_v3/provider_canary.py",
+    "provider_workflow_runtime": "ao_harmonic_v3/provider_workflow.py",
+    "provider_workflow_capsule": "governance/ao_harmonic_v3_workflow_capsule.json"
   },
   "provider_observation_bridge": {
     "status": "CANARY_VALIDATED_LIVE_PROVIDER_OBSERVATION_ORCHESTRATION_BOUND_NO_EFFECT",
@@ -95,8 +100,36 @@
     "postmerge_airlock_run": 31962711509,
     "postmerge_leak_guard_run": 31962711528,
     "postmerge_bubbles_run": 31962711484,
-    "postmerge_phoenix_run": 31962711545,
-    "provider_native_package_deployment_required_for_workflow_promotion": true
+    "postmerge_phoenix_run": 31962711545
+  },
+  "cross_provider_observation_workflow": {
+    "status": "WORKFLOW_VERIFIED_AO_HARMONIC_V3_CROSS_PROVIDER_OBSERVATION_NO_EFFECT",
+    "scope": "SANITIZED_GMAIL_OBSERVATION_TO_GITHUB_ACTIONS_AO_RUNTIME_TO_INDEPENDENT_GMAIL_READBACK",
+    "privacy_model": "SANITIZED_METADATA_ONLY",
+    "external_effect": false,
+    "authority_ceiling": "A1_READ",
+    "observed_provider": "GMAIL_READ_ONLY_OBSERVATION",
+    "execution_provider_runtime": "GITHUB_ACTIONS",
+    "package_runtime_executed": true,
+    "provider_runtime_execution_verified": true,
+    "event_state_proof_mission_propagation_verified": true,
+    "semantic_readback_verified": true,
+    "independent_post_run_observed_provider_readback_verified": true,
+    "provider_mutation": false,
+    "provider_object_identifier_persisted_publicly": false,
+    "capsule_id": "AO-HARMONIC-V3-WORKFLOW-CANARY-54D4E489E9F7",
+    "capsule_sha256": "65b415675706ee4995707df3aa1549c543065ca95c925b48c144ef2607fb03e9",
+    "runtime_receipt_sha256": "a5da12f16780afe1e6ad66e7152307f1fcd34acadd4ca7065fdf48a9493ecba8",
+    "private_learning_receipt": "LRN-5dd239ee43ee7eb46992",
+    "execution_source_commit": "91ea5c1147ae0c1411a59757f3a0bf2180cb629c",
+    "execution_source_pr": 515,
+    "premerge_airlock_run": 31964064218,
+    "postmerge_airlock_run": 31964186631,
+    "postmerge_leak_guard_run": 31964186644,
+    "postmerge_bubbles_run": 31964186737,
+    "postmerge_phoenix_run": 31964186719,
+    "global_workflow_verification_inherited": false,
+    "operationally_verified": false
   },
   "inheritance": {
     "surface_awareness": "governance/federation_surface_awareness_v1.json",
@@ -107,14 +140,17 @@
     "forest_first_omega": "governance/forest_first_omega_v1.json",
     "horizon_omega": "governance/horizon_omega_v1.json"
   },
-  "next_gate": "MEASURE_FOREST_FIRST_OMEGA_REAL_OPERATIONAL_OUTCOMES; ONLY ADD_A_CANARY_IF_IT_TESTS_A_DISTINCT_UNPROVEN_CAPABILITY_WITH_CLEAR_INCREMENTAL_VALUE",
+  "next_gate": "BOUNDED_OPERATIONAL_VERIFICATION_REQUIRES_MULTIPLE_INDEPENDENT_REAL_CYCLES_PLUS_AT_LEAST_ONE_MEANINGFUL_OBSERVED_PROVIDER_STATE_CHANGE_WITH_CORRECT_PROPAGATION_AND_NO_MATERIAL_REGRESSION",
   "truth_boundary": {
     "base_ao_harmonic_shadow_validated": true,
     "base_provider_observation_canary_validated": true,
+    "cross_provider_observation_workflow_verified": true,
+    "global_workflow_verified": false,
     "forest_first_omega_integration_shadow_validated": true,
     "forest_first_omega_provider_canary_validated": false,
     "provider_deployed": false,
-    "provider_runtime_verified": false,
+    "provider_runtime_verified_for_bounded_cross_provider_workflow": true,
+    "provider_runtime_verified_globally": false,
     "hidden_cross_chat_execution_claimed": false,
     "model_weight_learning_claimed": false,
     "authority_expansion": false,
