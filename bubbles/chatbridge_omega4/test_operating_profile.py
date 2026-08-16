@@ -32,6 +32,7 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
         self.runtime.backup("demo", self.capsule, hot_state={"state": "READY"})
         restored = self.runtime.restore("demo", destination_session_key="dest-default")
         self.assertEqual(restored["hot_state"], {"state": "READY"})
+        self.assertEqual(restored["operating_profile"]["version"], "CBOP-1.2")
         self.assertEqual(
             restored["operating_profile"]["execution_posture"],
             "EXECUTE_VERIFY_READBACK",
@@ -41,6 +42,25 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
         self.assertTrue(restored["restore_directives"]["federation_route_scan"])
         self.assertTrue(restored["restore_directives"]["realityguard_assurance"])
         self.assertTrue(restored["restore_directives"]["pre_owner_assurance"])
+        self.assertTrue(
+            restored["restore_directives"]["conversation_exhaustion_guard"]
+        )
+        self.assertTrue(
+            restored["restore_directives"]["continuous_write_ahead_checkpoint"]
+        )
+        self.assertTrue(restored["restore_directives"]["empirical_learning"])
+        self.assertEqual(
+            restored["restore_directives"]["checkpoint_policy"],
+            "MATERIAL_DELTA_AND_PRE_HEAVY_OPERATION",
+        )
+        self.assertEqual(
+            restored["restore_directives"]["migration_policy"],
+            "RED_PREEMPTIVE_TERMINAL_LAST_VERIFIED_RESTORE",
+        )
+        self.assertEqual(
+            restored["restore_directives"]["learning_capture_scope"],
+            "ALL_CHATBRIDGE_ACTIVE_CHATS",
+        )
         self.assertEqual(
             restored["restore_directives"]["assurance_policy"],
             "SYSTEM_QA_BEFORE_OWNER",
@@ -58,6 +78,24 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
             "estate_inventory_verified",
             restored["pre_owner_assurance_contract"]["discovery_checks"],
         )
+        self.assertTrue(restored["conversation_exhaustion_guard_required"])
+        self.assertEqual(
+            restored["conversation_exhaustion_contract"]["write_ahead_rule"],
+            "CHECKPOINT_EVERY_MATERIAL_DELTA",
+        )
+        self.assertEqual(
+            restored["conversation_exhaustion_contract"]["same_chat_terminal_checkpoint_claim"],
+            "PROHIBITED",
+        )
+        self.assertTrue(restored["empirical_learning_required"])
+        self.assertEqual(
+            restored["empirical_playbook_contract"]["native_hidden_chat_access"],
+            "NOT_CLAIMED",
+        )
+        self.assertEqual(
+            restored["empirical_playbook_contract"]["documentation_role"],
+            "SUPPLEMENTARY_REFERENCE_NOT_SOLE_PROMOTION_SOURCE",
+        )
         self.assertEqual(restored["operating_profile_source"], "CHECKPOINT_BOUND")
 
     def test_namespace_specific_profile_restores_working_intelligence_contract(self) -> None:
@@ -71,9 +109,13 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
             background_compute_fabric=True,
             realityguard_assurance=True,
             pre_owner_assurance=True,
+            conversation_exhaustion_guard=True,
+            continuous_write_ahead_checkpoint=True,
+            empirical_learning=True,
             live_bible_ref="drive:forest-first-live-bible",
             master_bible_ref="drive:omega-scientia-master",
             master_sync_ref="automation:federation-bible-sync",
+            playbook_ref="drive:chatbridge-empirical-playbook",
             active_systems=(
                 "Forest-First",
                 "EvidenceOps",
@@ -99,6 +141,12 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
         self.assertTrue(restored["operating_profile"]["background_compute_fabric"])
         self.assertTrue(restored["operating_profile"]["realityguard_assurance"])
         self.assertTrue(restored["operating_profile"]["pre_owner_assurance"])
+        self.assertTrue(restored["operating_profile"]["conversation_exhaustion_guard"])
+        self.assertTrue(restored["operating_profile"]["empirical_learning"])
+        self.assertEqual(
+            restored["operating_profile"]["playbook_ref"],
+            "drive:chatbridge-empirical-playbook",
+        )
         self.assertIn("RealityGuard", restored["operating_profile"]["active_systems"])
         self.assertEqual(restored["hot_state"]["latest_delta"], "DELTA 002")
         self.assertEqual(
@@ -108,6 +156,10 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
         self.assertEqual(
             restored["restore_directives"]["assurance_receipt_policy"],
             "REQUIRED_FOR_CONSEQUENTIAL_RECOMMENDATIONS",
+        )
+        self.assertEqual(
+            restored["restore_directives"]["learning_privacy_policy"],
+            "MINIMUM_NECESSARY_POINTERS_NOT_RAW_SENSITIVE_CONTENT",
         )
 
     def test_legacy_checkpoint_gets_safe_default_without_rewriting_history(self) -> None:
@@ -125,6 +177,8 @@ class ChatBridgeOperatingProfileTests(unittest.TestCase):
         self.assertEqual(restored["operating_profile_source"], "LEGACY_DEFAULT_SYNTHESIZED")
         self.assertEqual(restored["hot_state"], {"legacy": True})
         self.assertTrue(restored["restore_directives"]["pre_owner_assurance"])
+        self.assertTrue(restored["restore_directives"]["conversation_exhaustion_guard"])
+        self.assertTrue(restored["restore_directives"]["empirical_learning"])
 
 
 if __name__ == "__main__":
