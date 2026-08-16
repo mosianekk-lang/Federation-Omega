@@ -29,9 +29,9 @@ READ_ONLY_MARKERS = (
 )
 
 ACTION_VERBS = {
-    "send": ("send", "transmit"),
-    "send_email": ("send", "email"),
-    "send_draft": ("send", "draft"),
+    "send": ("send", "resend", "transmit"),
+    "send_email": ("send", "resend", "email"),
+    "send_draft": ("send", "resend", "draft"),
     "file": ("file", "lodge"),
     "submit": ("submit", "lodge"),
     "delete": ("delete", "remove"),
