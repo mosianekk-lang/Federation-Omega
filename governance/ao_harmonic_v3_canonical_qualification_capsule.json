@@ -1,0 +1,58 @@
+{
+  "schema": "AO_HARMONIC_V3_CANONICAL_QUALIFICATION_CAPSULE_V1",
+  "capsule_id": "AO-HARMONIC-V3-CANONICAL-QUALIFICATION-20260816-001",
+  "privacy_model": "SANITIZED_METADATA_ONLY",
+  "authority_ceiling": "A1_READ",
+  "external_effect": false,
+  "provider_mutation_caused_by_runtime": false,
+  "private_provider_object_identifier_persisted_publicly": false,
+  "transition_provider": "GoogleDrive",
+  "transition_capability": "READ_SPREADSHEET_RANGE",
+  "operational_receipt_sha256": "ff0cecec451261666e8f64d67d0ad3b2395c00f576b488484b2ee750273506fc",
+  "prior_workflow_receipt_sha256": [
+    "a5da12f16780afe1e6ad66e7152307f1fcd34acadd4ca7065fdf48a9493ecba8",
+    "2227bb222ca21308b5c5387453549f14c513e61056f2e63c04ccd90b647b3175"
+  ],
+  "adverse_recovery_sequence": [
+    {
+      "phase": "baseline",
+      "object_fingerprint": "0148bbefb1a41ff1bdd0bc3bd12e290073e34a42e25597ab60ae650586129c3c",
+      "expected_status": "FOUND",
+      "observed_status": "FOUND",
+      "observed_at": "2026-08-16T18:58:00+00:00",
+      "transport_ok": true,
+      "semantic_match": true
+    },
+    {
+      "phase": "adverse",
+      "object_fingerprint": "0148bbefb1a41ff1bdd0bc3bd12e290073e34a42e25597ab60ae650586129c3c",
+      "expected_status": "NOT_FOUND",
+      "observed_status": "NOT_FOUND",
+      "observed_at": "2026-08-16T19:00:00+00:00",
+      "transport_ok": true,
+      "semantic_match": true
+    },
+    {
+      "phase": "recovery",
+      "object_fingerprint": "0148bbefb1a41ff1bdd0bc3bd12e290073e34a42e25597ab60ae650586129c3c",
+      "expected_status": "FOUND",
+      "observed_status": "FOUND",
+      "observed_at": "2026-08-16T19:00:30+00:00",
+      "transport_ok": true,
+      "semantic_match": true
+    }
+  ],
+  "independent_provider_cycle": {
+    "provider": "Gmail",
+    "capability": "READ_EMAIL_THREAD",
+    "object_fingerprint": "9f3331f21b61edc06dfe9bef6524f2bad940b09258957d2f3fdb2d3bbc3036e3",
+    "expected_status": "FOUND",
+    "observed_status": "FOUND",
+    "observed_at": "2026-08-16T19:01:00+00:00",
+    "transport_ok": true,
+    "semantic_match": true,
+    "result_count": 1,
+    "related_count": 1
+  },
+  "timestamp_note": "Observation timestamps are sanitized control timestamps for ordered qualification; provider readback truth is established by the live connector receipts retained outside this public capsule."
+}
