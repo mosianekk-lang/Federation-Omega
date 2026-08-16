@@ -1,0 +1,60 @@
+{
+  "matter_id": "MPMB1435-26",
+  "objective": "Secure a procedurally sound path to a merits hearing of the 22 April 2026 warning dispute while preserving stronger alternate legal routes.",
+  "forum": "CCMA",
+  "stage": "jurisdiction_scope_and_enrolment_hardening",
+  "facts": [
+    {"fact": "22 April communication expressly states that it serves as a warning", "state": "VERIFIED"},
+    {"fact": "13 May referral was activated for Con/Arb", "state": "VERIFIED"},
+    {"fact": "Joel expressly knew of the grievance by 14 May", "state": "VERIFIED"}
+  ],
+  "disputed_facts": [
+    {"fact": "Whether Kim was absent from work on 20-22 April", "state": "DISPUTED"},
+    {"fact": "Whether the 22 April warning was formally recorded as disciplinary sanction", "state": "UNKNOWN"}
+  ],
+  "unknowns": [
+    {
+      "unknown_id": "U-HR-WARNING",
+      "question": "What was the formal HR/ER disciplinary status and later reliance of the 22 April warning?",
+      "decision_impact": 1.0,
+      "information_gain": 0.95,
+      "urgency": 0.9,
+      "source_hints": ["Gmail", "Google Drive", "Joel", "ER"]
+    },
+    {
+      "unknown_id": "U-APRIL-LOCATION",
+      "question": "What objective evidence establishes Kim's location, work, authority and availability on each of 20, 21 and 22 April 2026?",
+      "decision_impact": 0.95,
+      "information_gain": 1.0,
+      "urgency": 0.85,
+      "source_hints": ["PST", "Google Drive", "network", "security"]
+    },
+    {
+      "unknown_id": "U-OWNER-INTENT",
+      "question": "Which remedy does Kim prefer if multiple legally sound routes remain equally strong?",
+      "decision_impact": 0.6,
+      "information_gain": 0.3,
+      "urgency": 0.3,
+      "owner_only": true
+    }
+  ],
+  "legal_elements": [
+    "disciplinary action short of dismissal",
+    "unfairness",
+    "CCMA jurisdiction",
+    "timeliness",
+    "competent remedy"
+  ],
+  "remedies": ["withdraw/correct warning", "compensation if legally competent"],
+  "constraints": ["one-case-per-chat", "PDA route separation", "external-action firewall"],
+  "sources": [
+    {"name": "Google Drive MPMB1435 corpus", "available": true, "authority": "PRIMARY", "freshness": "CURRENT", "cost": 1, "latency": 1},
+    {"name": "Joel corpus", "available": true, "authority": "PRIMARY", "freshness": "RECENT", "cost": 1, "latency": 1},
+    {"name": "MosianeKK PST extracted corpus", "available": true, "authority": "CANONICAL", "freshness": "RECENT", "cost": 2, "latency": 2},
+    {"name": "Gmail provider corpus", "available": true, "authority": "PROVIDER", "freshness": "CURRENT", "cost": 1, "latency": 1},
+    {"name": "Security/access control logs", "available": false, "authority": "PRIMARY", "freshness": "UNKNOWN", "cost": 5, "latency": 5}
+  ],
+  "opponent_capabilities": ["jurisdiction objection", "attendance/WFH management explanation", "late primary-source production"],
+  "cross_lane_risks": ["PDA/forum contamination", "waiver/concession", "remedy incompatibility"],
+  "owner_preferences": {"owner_burden": "minimise", "screen_first": true, "proof_before_claim": true}
+}
