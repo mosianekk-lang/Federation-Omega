@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V2",
-  "version": "2.3.0",
+  "version": "2.4.0",
   "owner": "Kim Kagiso Mosiane",
   "required_before_substantive_work": true,
   "surface_awareness": {
@@ -19,7 +19,8 @@
     "FEDOMEGA-AWARENESS-BOOTSTRAP-V1",
     "FEDOMEGA-N-DIRECTIVE-V2",
     "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1",
-    "AO-CRA-FEDERATION-INHERITANCE-V1"
+    "AO-CRA-FEDERATION-INHERITANCE-V1",
+    "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1"
   ],
   "n_directive": {
     "input": "n",
@@ -29,7 +30,8 @@
       "alpha_omega_foundry": "REQUIRED",
       "ao_cra": "REQUIRED",
       "innovation_frontier": "REQUIRED",
-      "continuous_learning": "REQUIRED"
+      "continuous_learning": "REQUIRED",
+      "cost_governor": "REQUIRED_FOR_RUNTIME_OR_PROVIDER_ROUTE_SELECTION"
     },
     "required_sequence": [
       "LOAD_CURRENT_GITHUB_MAIN_HEAD",
@@ -42,6 +44,7 @@
       "FORMATION_SOURCE_EVIDENCE_AUTHORITY_DEPENDENCY_AND_PROOF_MAP",
       "AO_CRA_BOUNDARY_TO_BUILD_PREFLIGHT",
       "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
+      "PRE_REVENUE_COST_GATE_AND_CHEAPEST_VIABLE_ROUTE_CHECK",
       "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
       "ALPHA_OMEGA_REUSE_COMPOSITION_AND_MINIMUM_COMPLETE_BUILD",
       "GENERATE_BOUNDED_INNOVATION_FRONTIER",
@@ -50,7 +53,7 @@
       "RESOLVE_CREDENTIALS_BY_NON_SECRET_HANDLE_ONLY",
       "EXECUTE_SAFE_AUTHORISED_WORK",
       "VALIDATE_SIMULATE_RED_TEAM_AND_FAILURE_INJECT_WHERE_MATERIAL",
-      "READBACK_HEALTH_PERSISTENCE_ROLLBACK_AND_PROOF",
+      "READBACK_HEALTH_PERSISTENCE_ROLLBACK_PROOF_AND_COST_CONTROL_STATE",
       "AO_CRA_CREATE_OR_UPDATE_BUILD_FOR_EVERY_RESIDUAL_CAPABILITY_GAP",
       "RECORD_TERMINAL_LEARNING_AND_INNOVATION_EVENT",
       "ACTIVATE_REPAIR_FALLBACK_REGRESSION_CAPABILITY_RECHECK_AND_OPPORTUNITY_TRIGGERS",
@@ -81,8 +84,22 @@
       "proof_and_closure_state"
     ]
   },
+  "cost_governor": {
+    "policy_id": "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
+    "policy_version": "1.0.0",
+    "policy_file": "governance/pre_revenue_cost_governor_v1.json",
+    "posture": "PRE_REVENUE_ZERO_BASE",
+    "incremental_paid_budget_default": 0,
+    "currency": "ZAR",
+    "unknown_cost_fails_closed": true,
+    "cheapest_viable_route_required": true,
+    "event_driven_first": true,
+    "paid_c2_c3_owner_reserved": true,
+    "automatic_budget_expansion": false,
+    "degrade_before_scale": true
+  },
   "full_power": {
-    "definition": "all relevant capabilities that are available, authorised, safe and evidence-matched",
+    "definition": "all relevant capabilities that are available, authorised, safe, evidence-matched and cost-governed",
     "invented_capabilities": false,
     "authority_expansion": false,
     "trust_transfer": false,
@@ -90,12 +107,14 @@
     "stored_credential_reference_proves_authority": false,
     "reuse_before_rebuild": true,
     "multi_stream_safe_parallelism": true,
-    "effectful_mutations_serialized": true
+    "effectful_mutations_serialized": true,
+    "silent_paid_scale_up": false
   },
   "output_contract": {
     "formation_engine_result": true,
     "alpha_omega_foundry_result": true,
     "ao_cra_result_when_boundary_exists": true,
+    "cost_route_result_when_runtime_or_provider_cost_is_material": true,
     "solution_alternatives_considered": true,
     "reuse_vs_build_decision": true,
     "innovation_delta": true,
@@ -119,7 +138,8 @@
     "append_only": true,
     "hash_linked": true,
     "trigger_state_derived_from_ledger": true,
-    "measured_performance_delta_required_for_intelligence_claim": true
+    "measured_performance_delta_required_for_intelligence_claim": true,
+    "measured_cost_delta_required_for_cost_savings_claim": true
   },
   "authority": {
     "ceiling": "A1_INTERNAL",
@@ -127,7 +147,8 @@
     "trust_inheritance": false,
     "consequential_actions_owner_reserved": true,
     "raw_credential_retrieval_or_persistence": false,
-    "provider_native_readback_required": true
+    "provider_native_readback_required": true,
+    "paid_budget_expansion_owner_reserved": true
   },
   "master_state": {
     "chapter": "CH-073",
@@ -136,7 +157,9 @@
     "policy_version": "2.1.0",
     "policy_contract_sha256": "2f9fcacb5c1c0a2d336668742c787706c9854dba5fb0df6868d4f3c232fe3ed8",
     "ao_cra_policy_id": "AO-CRA-FEDERATION-INHERITANCE-V1",
-    "ao_cra_policy_version": "1.0.0"
+    "ao_cra_policy_version": "1.0.0",
+    "cost_governor_policy_id": "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
+    "cost_governor_policy_version": "1.0.0"
   },
   "bootstrap_pass_conditions": [
     "surface awareness and bootstrap files parse",
@@ -148,17 +171,21 @@
     "provider availability and authority are revalidated before use",
     "n-directive policy id, version and contract hash match the Master record",
     "AO-CRA policy id and version match the Master record",
+    "pre-revenue cost-governor policy is loaded for runtime/provider route selection",
+    "unknown incremental recurring cost fails closed",
+    "zero/included and cheaper equivalent routes are considered before paid routes",
     "Formation Engine is mandatory",
     "Alpha-to-Omega Foundry is mandatory",
     "AO-CRA is mandatory",
     "bounded innovation frontier is mandatory",
     "all material capability gaps become active build records",
     "workarounds remain separate from verified or deployed capability",
-    "output contract requires Formation, Foundry, AO-CRA when relevant, alternatives, innovation, learning, pathway and explicit n line",
+    "output contract requires Formation, Foundry, AO-CRA when relevant, cost route when material, alternatives, innovation, learning, pathway and explicit n line",
     "learning contract requires terminal, innovation and capability-change event capture",
     "authority ceiling remains A1_INTERNAL",
     "external effect remains false",
-    "no hidden cross-chat access or trust transfer is enabled"
+    "no hidden cross-chat access or trust transfer is enabled",
+    "no automatic paid budget expansion is enabled"
   ],
   "failure_state": "BOOTSTRAP_BLOCKED_FAIL_CLOSED"
 }
