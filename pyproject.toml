@@ -10,7 +10,7 @@ requires-python = ">=3.11"
 dependencies = []
 
 [tool.setuptools]
-packages = ["federation_consolidation", "alpha_omega_v30"]
+packages = ["federation_consolidation", "alpha_omega_v30", "ao_harmonic_v3"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
