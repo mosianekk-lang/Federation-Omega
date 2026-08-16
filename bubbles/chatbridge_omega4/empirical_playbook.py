@@ -461,6 +461,7 @@ class EmpiricalPlaybookEngine:
             for event in usable
             if event["learning_state"] == LearningState.VERIFIED_BOUNDED.value
             and bool(event.get("supports_candidate_rule", False))
+            and bool(event.get("independent_observation", False))
         ]
         qualified_contradictions = [
             event
@@ -502,7 +503,8 @@ class EmpiricalPlaybookEngine:
             state = LearningState.HOLD_INSUFFICIENT_EMPIRICAL_PROOF
 
         global_scope_allowed = (
-            requested_scope == "ALL_CHATBRIDGE_ACTIVE_CHATS"
+            state is LearningState.PROMOTED
+            and requested_scope == "ALL_CHATBRIDGE_ACTIVE_CHATS"
             and bool(qualified_support)
             and all(
                 event["share_scope"]
@@ -515,7 +517,11 @@ class EmpiricalPlaybookEngine:
             scope = requested_scope
         else:
             namespaces = sorted({event["namespace_key"] for event in usable})
-            scope = "NAMESPACE:" + ",".join(namespaces)
+            scope = (
+                "NAMESPACE:" + ",".join(namespaces)
+                if namespaces
+                else "NO_PROMOTABLE_SCOPE"
+            )
 
         confidence = 0.25
         confidence += min(0.35, len(qualified_support) * 0.12)
