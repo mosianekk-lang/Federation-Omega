@@ -35,6 +35,36 @@ class BubblesCommandBusTests(unittest.TestCase):
             payload=payload,
         )
 
+    def background_command(self, **event_overrides):
+        event = {
+            "schema": "BUBBLES-FOREST-BACKGROUND-EVENT-V1",
+            "event_id": "evt-001",
+            "source_class": "FEDERATION_STATE",
+            "event_class": "STATE_CHANGE",
+            "fingerprint_sha256": "a" * 64,
+            "matter_class": "SYSTEM",
+            "materiality": 0.2,
+            "consequence": 0.3,
+            "uncertainty": 0.2,
+            "dependency_density": 0.2,
+            "adversarial_complexity": 0.1,
+            "deadline_risk": False,
+            "evidence_risk": False,
+            "owner_only": False,
+            "provider_readback_missing": False,
+            "route_failure": False,
+            "objective_exhausted": False,
+            "material_strategy_change": False,
+            "private_content_included": False,
+        }
+        event.update(event_overrides)
+        return self.command(
+            action="forest_first_omega_event",
+            effect="READ",
+            target_alias="FOREST_FIRST_OMEGA_BACKGROUND_RUNTIME",
+            payload={"event": event},
+        )
+
     def test_internal_canary_succeeds_without_external_provider_effect(self):
         receipt = self.run_command(self.command())
         self.assertEqual(receipt["state"], "SUCCESS")
@@ -87,6 +117,47 @@ class BubblesCommandBusTests(unittest.TestCase):
         ))
         self.assertEqual("FAILURE", receipt["state"])
         self.assertIn("payload.event", receipt["reason"])
+
+    def test_background_low_materiality_event_stays_quiet_and_c0(self):
+        receipt = self.run_command(self.background_command())
+        self.assertEqual("SUCCESS", receipt["state"])
+        execution = receipt["execution"]
+        self.assertEqual("LOCAL_FOREST_FIRST_OMEGA_BACKGROUND_EVENT", execution["kind"])
+        background = execution["background_receipt"]
+        self.assertEqual("ALLOW", background["cost"]["action"])
+        self.assertEqual(0.0, background["cost"]["permitted_incremental_cost"])
+        self.assertFalse(background["owner_wake_required"])
+        self.assertFalse(background["private_reasoning_wake_required"])
+        self.assertFalse(background["external_effect"])
+
+    def test_background_material_legal_deadline_wakes_private_reasoning_and_owner(self):
+        receipt = self.run_command(self.background_command(
+            event_id="evt-deadline",
+            source_class="GMAIL_METADATA",
+            event_class="DEADLINE_CHANGE",
+            matter_class="LEGAL",
+            materiality=0.95,
+            consequence=0.95,
+            uncertainty=0.6,
+            deadline_risk=True,
+        ))
+        background = receipt["execution"]["background_receipt"]
+        self.assertTrue(background["private_reasoning_wake_required"])
+        self.assertTrue(background["owner_wake_required"])
+        self.assertGreaterEqual(background["forest"]["adaptive_horizon_depth"], 10)
+        self.assertEqual("ALLOW", background["cost"]["action"])
+
+    def test_background_rejects_private_content_from_public_event_envelope(self):
+        receipt = self.run_command(self.background_command(private_content_included=True))
+        self.assertEqual("FAILURE", receipt["state"])
+        self.assertIn("Private message/document content", receipt["reason"])
+
+    def test_background_rejects_unapproved_freeform_fields(self):
+        command = self.background_command()
+        command["payload"]["event"]["subject"] = "private subject must not enter public receipt"
+        receipt = self.run_command(command)
+        self.assertEqual("FAILURE", receipt["state"])
+        self.assertIn("unsupported fields", receipt["reason"])
 
     def test_unapproved_actor_is_blocked(self):
         receipt = self.run_command(self.command(), actor="untrusted-user")
