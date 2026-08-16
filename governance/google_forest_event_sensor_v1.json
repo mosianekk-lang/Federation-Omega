@@ -1,0 +1,71 @@
+{
+  "schema": "GOOGLE-FOREST-EVENT-SENSOR-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "SOURCE_CANDIDATE_PROVIDER_BINDING_NOT_ACTIVE",
+  "authority_ceiling": "A1_READ_WITH_PRIVATE_QUEUE_WRITE",
+  "external_effect_default": false,
+  "purpose": "Detect bounded Gmail/Drive metadata changes near the private Google data plane, queue only sanitized event envelopes privately, and dispatch them to the admitted Bubbles Forest-First Ω background runtime only after separate credential/cost/provider proof.",
+  "runtime_target": "GOOGLE_APPS_SCRIPT_INSTALLABLE_TRIGGER",
+  "cost_posture": {
+    "policy": "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
+    "target_class": "C0_INCLUDED_FREE",
+    "default_cadence": "15_MINUTES",
+    "apps_script_quota_bound": true,
+    "secret_manager_incremental_cost_must_be_verified_before_dispatch_enable": true,
+    "unknown_incremental_cost_fails_closed": true,
+    "dispatch_disabled_by_default": true,
+    "cloud_run_required": false
+  },
+  "privacy_contract": {
+    "gmail_body_exported": false,
+    "gmail_subject_exported": false,
+    "drive_content_exported": false,
+    "private_file_ids_exported_to_public_receiver": false,
+    "public_event_contains_only_allowlisted_control_metadata": true,
+    "fingerprint_is_sha256": true,
+    "queue_is_private_google_sheet": true,
+    "private_exact_provider_pointers_in_public_source": false
+  },
+  "provider_reads": {
+    "gmail": "gmail.readonly message-list identifiers only; identifiers are hashed before the event leaves Google",
+    "drive": "drive.metadata.readonly configured file modifiedTime only; configured private file IDs remain in Google-side configuration",
+    "sheets": "private queue append",
+    "script": "trigger installation and local dedupe state"
+  },
+  "dispatch_binding": {
+    "target": "Bubbles Command Bus workflow_dispatch forest_first_omega_event",
+    "state": "NOT_ACTIVE_UNTIL_PROVED",
+    "credential_storage": "GOOGLE_SECRET_MANAGER_RESOURCE_REFERENCE_ONLY",
+    "secret_value_in_source": false,
+    "secret_value_in_script_properties": false,
+    "required_before_enable": [
+      "exact Apps Script project identity verified privately",
+      "installed source hash read back",
+      "OAuth scopes verified",
+      "private queue target verified",
+      "GitHub dispatch credential scope verified least privilege",
+      "Secret Manager incremental-cost/free-envelope readback verified",
+      "one bounded dispatch canary succeeds",
+      "Bubbles receipt read back",
+      "duplicate event does not dispatch twice",
+      "no private content appears in GitHub artifact/log/receipt"
+    ]
+  },
+  "legacy_archon_boundary": {
+    "private_pointer_location": "PRIVATE_KIM_DATAVERSE_OR_AUTHORISED_PROVIDER_READBACK_ONLY",
+    "archived_source_has_public_privileged_doPost": true,
+    "current_authorization_gate_allows_restore_as_is": false,
+    "live_deployment_action_semantics_verified": false,
+    "reuse_rule": "Reuse inventory/backup knowledge, not the unsafe public web-app authorization shape. Prefer a dedicated trigger-only least-privilege sensor."
+  },
+  "truth_boundary": {
+    "source_candidate_proves_deployment": false,
+    "apps_script_quota_proves_zero_bill": false,
+    "secret_manager_free_tier_is_assumed_available": false,
+    "github_dispatch_credential_exists": false,
+    "provider_trigger_installed": false,
+    "end_to_end_event_delivery_verified": false,
+    "chatgpt_watch_can_be_reduced_yet": false
+  }
+}
