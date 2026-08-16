@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from .cost_governor import PreRevenueCostGovernor
 from .event_bus import EventBus
 from .evolution import (
     EntropyController,
@@ -88,6 +89,7 @@ class AOHarmonicV3:
         self.scientia = OmegaScientia()
         self.digital_twin = FederationDigitalTwin()
         self.horizon = HorizonOmega()
+        self.cost = PreRevenueCostGovernor()
         self.forest = ForestFirstOmega(
             horizon=self.horizon,
             scientia=self.scientia,
@@ -116,6 +118,7 @@ class AOHarmonicV3:
             "classification": self.boundary_build.classify(failure_type),
             "formation": "ROUTE_SEARCH_REQUIRED",
             "forest_first_omega": "AUTO_REROUTE_REMODEL_THEN_BUILD",
+            "cost_governor": "CHEAPEST_EQUIVALENT_ROUTE_BEFORE_PAID_ESCALATION",
             "owner_surface": "OBJECTIVE_LEVEL_ONLY",
             "unchanged_retry": "PROHIBITED_AFTER_REPEAT_FINGERPRINT",
         }
@@ -136,6 +139,7 @@ class AOHarmonicV3:
             "resource_market": "REFRESH",
             "open_builds": "RECHECK",
             "forest_first_omega": "RECOMPUTE_PATHS_AND_HORIZON",
+            "cost_governor": "RECHECK_CHEAPER_INCLUDED_OR_SCALE_TO_ZERO_ROUTE",
             "shortest_safe_canary": "REQUIRED_BEFORE_PROMOTION",
             "event_id": event.event_id,
         }
@@ -181,6 +185,7 @@ class AOHarmonicV3:
             "FOREST_FIRST_ANTICIPATORY_ENGINE",
             "FOREST_FIRST_CREATOR_MODE",
             "HORIZON_OMEGA",
+            "PRE_REVENUE_COST_GOVERNOR",
             "OMEGA_SCIENTIA",
             "LEX_DOMAIN_AUTHORITY",
             "TRUTHGRID_EVIDENCEOPS",
@@ -205,6 +210,7 @@ class AOHarmonicV3:
             "runtime_verified": False,
             "authority_ceiling": self.AUTHORITY_CEILING,
             "external_effect_default": self.EXTERNAL_EFFECT_DEFAULT,
+            "cost_posture": "PRE_REVENUE_ZERO_BASE",
             "cognitive_cycle": "ROOTS->FOREST->HORIZON->TREES->PATHS->DECISION->OMEGA->READBACK->LEARNING",
         }
 
@@ -217,6 +223,7 @@ def bootstrap() -> dict[str, object]:
         "architecture": "FEDERATION_COGNITIVE_OPERATING_FABRIC",
         "strategic_perception": "FOREST-FIRST-OMEGA",
         "foresight": "HORIZON-OMEGA",
+        "cost_governance": "PRE_REVENUE_ZERO_BASE",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "acceptance": runtime.restore_acceptance_test(),
         "truth_boundary": {
@@ -224,5 +231,6 @@ def bootstrap() -> dict[str, object]:
             "deterministic_tests_observed": False,
             "provider_deployed": False,
             "operationally_verified": False,
+            "provider_billing_caps_configured": False,
         },
     }
