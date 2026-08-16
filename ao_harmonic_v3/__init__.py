@@ -5,6 +5,7 @@ runtime, deployment, authority expansion, or operational maturity.
 """
 
 from .runtime import AOHarmonicV3, bootstrap
+from .horizon import HorizonOmega, HorizonNode, HorizonRun
 
-__all__ = ["AOHarmonicV3", "bootstrap"]
-__version__ = "3.0.0"
+__all__ = ["AOHarmonicV3", "bootstrap", "HorizonOmega", "HorizonNode", "HorizonRun"]
+__version__ = "3.1.0"
