@@ -1,0 +1,119 @@
+{
+  "schema": "FOREST-FIRST-OMEGA-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "engine_id": "FOREST-FIRST-OMEGA-V1",
+  "parent_fabric": "AO-HARMONIC-GENOME-V3",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "canonical_doctrine": "FFJOS-CANONICAL-001",
+  "canonical_name": "Forest-First Ω — Integrated Strategic Perception & Objective Protection Engine",
+  "mission": "Continuously identify the real problem, causal roots, larger system dynamics, future horizons and strongest objective-preserving path before optimising the immediate event, while keeping risk hypotheses separate from proof and keeping owner burden low.",
+  "cognitive_cycle": [
+    "ROOTS",
+    "FOREST",
+    "HORIZON",
+    "TREES",
+    "PATHS",
+    "DECISION",
+    "OMEGA",
+    "READBACK",
+    "LEARNING"
+  ],
+  "organs": {
+    "ROOTS": ["ALPHA_CAUSAL_ORIGIN", "OMEGA_SCIENTIA_COMPETING_HYPOTHESES", "FALSIFIERS"],
+    "FOREST": ["FFJOS", "MERITS_GENOME", "RISK_SIGNAL_MODEL", "OBJECTIVE_AND_SYSTEM_DYNAMICS"],
+    "HORIZON": ["HORIZON-OMEGA-V1", "MULTI_HORIZON_SIMULATION", "EVIDENCE_AHEAD", "COUNTERMOVES", "RECOVERY"],
+    "TREES": ["PRIMARY_EVIDENCE", "PROVENANCE", "FACTS", "ACTORS", "EVENTS", "LEGAL_PROPOSITIONS"],
+    "PATHS": ["FORMATION_ENGINE", "ALPHA_TO_OMEGA", "RESOURCE_MARKET", "AO_CRA"],
+    "DECISION": ["MINIMUM_SUFFICIENT_ACTION", "OPTION_VALUE", "OWNER_AUTHORITY", "CHATGOV"],
+    "OMEGA": ["DESIRED_END_STATE", "VICTORY_CONDITION", "STOP_AND_PIVOT_TRIGGERS"],
+    "READBACK": ["SEMANTIC_READBACK_FIREWALL", "PROVIDER_TARGET_READBACK", "JARVIS_ASSURANCE"],
+    "LEARNING": ["FAILURE_GENOME", "SUCCESS_MECHANISM", "REGRESSION", "MEASURED_PROMOTION"]
+  },
+  "legacy_compatibility": {
+    "forest_first_justice_gate": "PRESERVED_SPECIALIST_LEGAL_RELEASE_GATE",
+    "forest_first_anticipatory_engine": "PRESERVED_AS_NEED_SENSOR; FORESIGHT_SIMULATION_DELEGATES_TO_HORIZON_OMEGA",
+    "forest_first_creator_mode": "PRESERVED_AS_OWNER_BURDEN_ROUTER",
+    "lex_10x": "LEGACY_ALIAS_TO_HORIZON_LEX_PROFILE",
+    "lase_001": "LEGAL_AUTONOMOUS_RUNTIME_CONSUMER_OF_FOREST_FIRST_OMEGA_AND_HORIZON_LEX",
+    "old_checkpoints": "PRESERVE_AS_IMMUTABLE_HISTORY_AND_MAP_TO_SUCCESSOR_CAPABILITIES"
+  },
+  "non_negotiable_rules": [
+    "ACT_ON_RISK_ACCUSE_ON_PROOF",
+    "SOURCE_BEFORE_CLAIM",
+    "ROUTE_FAILURE_IS_NOT_OBJECTIVE_FAILURE",
+    "ACCESS_BEFORE_ASK",
+    "RETRIEVE_BEFORE_RECONSTRUCT",
+    "JURISDICTION_BEFORE_DRAFTING",
+    "UNDERSTANDING_BEFORE_FILING",
+    "ADVERSARIAL_TESTING_BEFORE_RELEASE",
+    "CONTINUITY_BEFORE_CHAT_LOSS",
+    "LEARNING_BEFORE_REPETITION",
+    "SYSTEM_FIRST_FOR_SAFE_REPEATABLE_OPERATIONAL_WORK"
+  ],
+  "failure_recovery": {
+    "sequence": [
+      "DETECT",
+      "CONTAIN",
+      "CLASSIFY",
+      "PRESERVE_INCIDENT_TRUTH",
+      "REMODEL_FOREST_AND_HORIZON_IF_MATERIAL",
+      "AUTO_REROUTE",
+      "AO_CRA_BUILD_IF_CAPABILITY_GAP",
+      "TEST",
+      "READBACK",
+      "LEARN",
+      "CONTINUE"
+    ],
+    "unchanged_retry_after_repeat_fingerprint": false,
+    "owner_blocker_reporting": "OBJECTIVE_LEVEL_ONLY_UNLESS_OWNER_ONLY_OR_MATERIAL_STRATEGY_CHANGE"
+  },
+  "learning": {
+    "successes_and_failures_symmetric": true,
+    "backcast_prediction_claims_prohibited": true,
+    "single_event_is_universal_law": false,
+    "promotion_pipeline": [
+      "OBSERVATION",
+      "LESSON_CANDIDATE",
+      "VERIFIED_LESSON",
+      "REGRESSION_OR_ADVERSARIAL_TEST",
+      "CANONICAL_RULE",
+      "EXECUTABLE_CONTROL",
+      "RESTORE_INHERITANCE",
+      "MEASURED_OPERATIONAL_LEARNING"
+    ]
+  },
+  "health": {
+    "states": [
+      "ACTIVE_VERIFIED",
+      "SYSTEM_READY_SESSION_NOT_RESTORED",
+      "DEGRADED",
+      "BLOCKED_HIGH_STAKES",
+      "NOT_LOADED"
+    ],
+    "quiet_when_healthy": true,
+    "visible_when_protection_needs_attention": true,
+    "current_head_and_restore_state_are_separate_proof_fields": true
+  },
+  "federation_relationships": {
+    "CHATGOV": "constitutional and consequential authority",
+    "FOREST_FIRST_OMEGA": "strategic perception and objective protection",
+    "HORIZON_OMEGA": "adaptive foresight organ",
+    "OMEGA_SCIENTIA": "falsification and competing hypotheses",
+    "EVIDENCEOPS_TRUTHGRID_JFRIE": "evidence truth provenance and assurance",
+    "LEX_AND_DOMAIN_ENGINES": "domain interpretation and strategy",
+    "FORMATION_ALPHA_OMEGA_AO_CRA": "route build and capability engineering",
+    "BUBBLES": "execution orchestration and tool routing",
+    "JARVIS": "cross-layer assurance and anti-drift"
+  },
+  "truth_boundary": {
+    "risk_signal_is_fact": false,
+    "simulation_is_fact": false,
+    "source_code_is_runtime": false,
+    "provider_effect_inferred": false,
+    "model_weight_learning_claimed": false,
+    "hidden_cross_chat_activation_claimed": false,
+    "external_authority_expanded": false
+  }
+}
