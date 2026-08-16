@@ -12,6 +12,7 @@ from bubbles.control_plane import (
     EffectClass,
     RouteKind,
 )
+from bubbles.forest_background import run_background_event
 from evidenceops.build_system.chat_failure_resilience import evaluate_failure
 
 
@@ -78,6 +79,18 @@ def _chat_failure_recovery(request: ActionRequest) -> dict[str, object]:
     return {
         "kind": "LOCAL_CHAT_FAILURE_RECOVERY",
         "recovery": asdict(recovery),
+        "provider_effects": False,
+    }
+
+
+def _forest_background_event(request: ActionRequest) -> dict[str, object]:
+    event = request.payload.get("event")
+    if not isinstance(event, dict):
+        raise CommandBusError("forest_first_omega_event requires payload.event as a sanitized JSON object")
+    receipt = run_background_event(event)
+    return {
+        "kind": "LOCAL_FOREST_FIRST_OMEGA_BACKGROUND_EVENT",
+        "background_receipt": receipt,
         "provider_effects": False,
     }
 
@@ -198,6 +211,18 @@ def execute_command(
             "truth_boundary": (
                 "SUCCESS proves that the Bubbles command bus invoked CFRE and generated a recovery receipt. "
                 "It does not prove repair of the ChatGPT client, browser, network or OpenAI service, and it performs no external provider mutation."
+            ),
+        }
+
+    if request.adapter_id == "bubbles_command_bus" and request.action == "forest_first_omega_event":
+        execution = _forest_background_event(request)
+        return {
+            **base_receipt,
+            "state": "SUCCESS",
+            "execution": execution,
+            "truth_boundary": (
+                "SUCCESS proves the admitted Bubbles runner processed a sanitized Forest-First Omega event and emitted a cost-governed wake decision. "
+                "It does not expose private provider content, establish legal facts, or perform any external provider mutation."
             ),
         }
 
