@@ -1,0 +1,90 @@
+{
+  "schema_version": "KDV-SCHEMA-1.1-OMEGA47",
+  "status": "CURRENT_PUBLIC_SAFE_SUCCESSOR",
+  "base_manifest": {
+    "path": "config/kim-dataverse-schema-manifest-v1.json",
+    "schema_version": "KDV-SCHEMA-1.1",
+    "base_sheet_count": 65,
+    "role": "immutable predecessor summary"
+  },
+  "current_sheet_count": 70,
+  "generated_from": "70-sheet Google Sheets provider state plus format-aware XLSX/OOXML readback and exact KDV structural-schema hashing",
+  "private_field_registry": "KDV_SCHEMA_REGISTRY",
+  "private_registry_state": "70_OF_70_BOUND",
+  "schema_hash_semantics": {
+    "algorithm": "SHA-256",
+    "scope": "stable structural schema only",
+    "excluded_dynamic_occupancy": [
+      "data_end_row_1based",
+      "row_count",
+      "last_data_row",
+      "freshness counters"
+    ],
+    "rule": "Appending rows does not change the structural schema digest; field, block, key, role or export-identity changes do."
+  },
+  "additional_sheet_summaries": [
+    {
+      "sheet_name": "CHATBRIDGE_CONTEXT_GUARD",
+      "xlsx_export_name": "CHATBRIDGE_CONTEXT_GUARD",
+      "role": "append_evidence",
+      "formula_count": 0,
+      "block_id": "CHATBRIDGE_CONTEXT_GUARD#R1",
+      "field_count": 20,
+      "candidate_primary_key": "guard_event_id",
+      "structural_schema_sha256": "8e5fe6e3dce74ab780b4e0a02631e478143948482df7bd3435ec9a4e8ab6354b"
+    },
+    {
+      "sheet_name": "CHATBRIDGE_CONTEXT_CHECKPOINTS",
+      "xlsx_export_name": "CHATBRIDGE_CONTEXT_CHECKPOINTS",
+      "role": "append_evidence",
+      "formula_count": 0,
+      "block_id": "CHATBRIDGE_CONTEXT_CHECKPOINTS#R1",
+      "field_count": 24,
+      "candidate_primary_key": "checkpoint_id",
+      "structural_schema_sha256": "758018bfafca2b712d4a9ae510f388c49b9e3e557494a4002b466e215d573398"
+    },
+    {
+      "sheet_name": "CHATBRIDGE_LEARNING_EVENTS",
+      "xlsx_export_name": "CHATBRIDGE_LEARNING_EVENTS",
+      "role": "append_evidence",
+      "formula_count": 0,
+      "block_id": "CHATBRIDGE_LEARNING_EVENTS#R1",
+      "field_count": 24,
+      "candidate_primary_key": "learning_event_id",
+      "structural_schema_sha256": "36a80499e9270b21505e52a73f19c33adc389f3487552d37c35add49d5650a9c"
+    },
+    {
+      "sheet_name": "CHATBRIDGE_PLAYBOOK_RULES",
+      "xlsx_export_name": "CHATBRIDGE_PLAYBOOK_RULES",
+      "role": "identity_registry",
+      "formula_count": 0,
+      "block_id": "CHATBRIDGE_PLAYBOOK_RULES#R1",
+      "field_count": 22,
+      "candidate_primary_key": "rule_id",
+      "structural_schema_sha256": "c35ee91a8c33702d3a88db2aa8562d675666886b0c4fe67906094981e1df554f"
+    },
+    {
+      "sheet_name": "CHATBRIDGE_PLAYBOOK_RELEASES",
+      "xlsx_export_name": "CHATBRIDGE_PLAYBOOK_RELEASES",
+      "role": "append_evidence",
+      "formula_count": 0,
+      "block_id": "CHATBRIDGE_PLAYBOOK_RELEASES#R1",
+      "field_count": 18,
+      "candidate_primary_key": "release_id",
+      "structural_schema_sha256": "3351f90c908c107a44c422af69641b08ef0c054e23cda56b9b707ce751b14916"
+    }
+  ],
+  "consumer_contract": "config/kim-dataverse-consumer-map-v1.json",
+  "source_admission": {
+    "chatbridge_source_commit": "1a41522766e4efc111e290603dcef0633c8c8121",
+    "private_registry_receipt": "KDV-PRJ-20260817-CHATBRIDGE-OMEGA47-SCHEMA-001",
+    "private_audit_receipt": "KDV-AUD-050",
+    "private_violation_record": "KDV-SV-20260817-OMEGA47-UNREGISTERED-TABLES-001"
+  },
+  "truth_boundary": [
+    "This is a public-safe structural summary, not the private full field/type registry.",
+    "It does not prove a native product-wide ChatGPT hook, exact remaining conversation quota, model-weight learning, provider-live lifecycle durability or an independent native destination-chat restore.",
+    "Matter facts, medical information, secrets and exact private provider state remain outside this file."
+  ],
+  "supersession_rule": "Use this successor together with the immutable 65-sheet base manifest. It supersedes the base manifest only for current sheet-count and ChatBridge Ω4.7 additions; it does not rewrite predecessor history."
+}
