@@ -4,6 +4,14 @@ Source implementation only. Importing this package does not establish provider
 runtime, deployment, authority expansion, or operational maturity.
 """
 
+from .cost_governor import (
+    CostAction,
+    CostClass,
+    CostDecision,
+    CostEnvelope,
+    PreRevenueCostGovernor,
+    WorkloadCostProfile,
+)
 from .forest_omega import (
     ARCHITECTURE_CYCLE,
     FOREST_FIRST_OMEGA_ID,
@@ -25,5 +33,11 @@ __all__ = [
     "ForestFirstOmega",
     "ForestOmegaContext",
     "ForestOmegaResult",
+    "CostAction",
+    "CostClass",
+    "CostDecision",
+    "CostEnvelope",
+    "PreRevenueCostGovernor",
+    "WorkloadCostProfile",
 ]
-__version__ = "3.2.0"
+__version__ = "3.3.0"
