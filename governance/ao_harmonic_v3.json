@@ -1,62 +1,52 @@
 {
   "schema": "AO-HARMONIC-GENOME-V3",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "owner": "Kim Kagiso Mosiane",
-  "state": "SHADOW_VALIDATED_AO_HARMONIC_V3_SYSTEM_SPECIFIC_NO_EXTERNAL_EFFECT",
+  "state": "AO_HARMONIC_BASE_SHADOW_VALIDATED_FOREST_FIRST_OMEGA_SOURCE_IMPLEMENTED",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
-  "purpose": "Event-driven, stateful Federation cognitive operating fabric with mission, proof, resource, learning and architecture-control primitives.",
+  "purpose": "Event-driven, stateful Federation cognitive operating fabric with Forest-First Ω strategic perception, HORIZON-Ω adaptive foresight, proof, mission, resource, learning and architecture-control primitives.",
   "constitutional_order": [
     "CHATGOV_AUTHORITY_ROOT",
     "PRIMARY_EVIDENCE_AND_PROVIDER_TRUTH",
     "TRUTHGRID_EVIDENCEOPS",
+    "FOREST_FIRST_OMEGA_STRATEGIC_PERCEPTION",
+    "HORIZON_OMEGA_ADAPTIVE_FORESIGHT",
     "DOMAIN_AUTHORITY",
-    "OMEGA_SCIENTIA",
-    "FOREST_FIRST",
+    "OMEGA_SCIENTIA_FALSIFICATION",
+    "FORMATION_ALPHA_OMEGA_ROUTE_AND_BUILD",
     "BUBBLES_EXECUTION",
     "FEDERATION_RESOURCE_MARKET",
     "JARVIS_ASSURANCE_ACROSS_ALL_LAYERS"
   ],
+  "cognitive_cycle": ["ROOTS", "FOREST", "HORIZON", "TREES", "PATHS", "DECISION", "OMEGA", "READBACK", "LEARNING"],
   "required_primitives": [
-    "EVENT_NERVOUS_SYSTEM",
-    "MISSION_GRAPH",
-    "THREE_LAYER_STATE_FABRIC",
-    "PROOF_GRAPH",
-    "FEDERATION_RESOURCE_MARKET",
-    "ADAPTIVE_SCHEDULER",
-    "FORMATION_ENGINE",
-    "OMEGA_SCIENTIA_FALSIFICATION",
-    "DIGITAL_TWIN",
-    "SEMANTIC_READBACK_FIREWALL",
-    "AO_CRA_BOUNDARY_TO_BUILD",
-    "HASH_LINKED_LEARNING",
-    "POLICY_EVOLUTION",
-    "HUMAN_ATTENTION_GOVERNOR",
-    "MARGINAL_INFORMATION_GAIN_GATE",
+    "EVENT_NERVOUS_SYSTEM", "MISSION_GRAPH", "THREE_LAYER_STATE_FABRIC", "PROOF_GRAPH",
+    "FEDERATION_RESOURCE_MARKET", "ADAPTIVE_SCHEDULER", "FOREST_FIRST_OMEGA",
+    "FOREST_FIRST_JUSTICE_GATE", "FOREST_FIRST_ANTICIPATORY_ENGINE", "FOREST_FIRST_CREATOR_MODE",
+    "HORIZON_OMEGA", "FORMATION_ENGINE", "OMEGA_SCIENTIA_FALSIFICATION", "DIGITAL_TWIN",
+    "SEMANTIC_READBACK_FIREWALL", "AO_CRA_BOUNDARY_TO_BUILD", "HASH_LINKED_LEARNING",
+    "POLICY_EVOLUTION", "HUMAN_ATTENTION_GOVERNOR", "MARGINAL_INFORMATION_GAIN_GATE",
     "ARCHITECTURAL_ENTROPY_CONTROL"
   ],
   "event_rules": {
-    "TOOL_FAILURE": ["AO_CRA_CLASSIFY", "FORMATION_ROUTE_SEARCH", "PROHIBIT_UNCHANGED_REPEAT_AFTER_CIRCUIT_BREAK"],
-    "OWNER_CORRECTION": ["FAILURE_GENOME_UPDATE", "SCIENTIFIC_REVIEW", "POLICY_CANDIDATE"],
-    "CAPABILITY_DISCOVERED": ["RESOURCE_MARKET_REFRESH", "OPEN_BUILD_RECHECK", "SHORTEST_SAFE_CANARY"],
-    "NEW_EVIDENCE": ["EVIDENCEOPS_INGEST", "TRUTHGRID_REVALIDATE", "PROOF_PROPAGATE", "MISSION_RECOMPUTE"]
+    "TOOL_FAILURE": ["AO_CRA_CLASSIFY", "FORMATION_ROUTE_SEARCH", "HORIZON_AUTO_REROUTE", "FOREST_REMODEL_IF_MATERIAL", "PROHIBIT_UNCHANGED_REPEAT_AFTER_CIRCUIT_BREAK", "SURFACE_OWNER_ONLY_AT_OBJECTIVE_LEVEL"],
+    "OWNER_CORRECTION": ["FAILURE_GENOME_UPDATE", "FOREST_REMODEL", "SCIENTIFIC_REVIEW", "REGRESSION_CANDIDATE", "POLICY_CANDIDATE"],
+    "CAPABILITY_DISCOVERED": ["RESOURCE_MARKET_REFRESH", "OPEN_BUILD_RECHECK", "FOREST_PATH_RECOMPUTE", "HORIZON_RECOMPUTE", "SHORTEST_SAFE_CANARY"],
+    "NEW_EVIDENCE": ["EVIDENCEOPS_INGEST", "TRUTHGRID_REVALIDATE", "PROOF_PROPAGATE", "ROOTS_REASSESS", "FOREST_REMODEL", "HORIZON_RECOMPUTE", "MISSION_RECOMPUTE"]
   },
-  "state_layers": [
-    "IMMUTABLE_EVENT_TRUTH",
-    "CURRENT_VERIFIED_PROJECTION",
-    "DERIVED_INTERPRETATION"
-  ],
-  "maturity_ladder": [
-    "DESIGN_ONLY",
-    "SOURCE_IMPLEMENTED",
-    "DETERMINISTIC_TESTED",
-    "ADVERSARIALLY_TESTED",
-    "SHADOW_VALIDATED",
-    "CANARY_VALIDATED",
-    "WORKFLOW_VERIFIED",
-    "OPERATIONAL_VERIFIED",
-    "CANONICAL"
-  ],
+  "forest_first_omega": {
+    "engine_id": "FOREST-FIRST-OMEGA-V1",
+    "purpose": "Identify the real problem, larger outcome, causal roots, strategic forest and decision-changing pathways before optimising the immediate tree.",
+    "prime_rule": "ACT_ON_RISK_ACCUSE_ON_PROOF",
+    "horizon_engine": "HORIZON-OMEGA-V1",
+    "legacy_controls_preserved": ["FFJOS-CANONICAL-001", "FOREST_FIRST_JUSTICE_GATE", "FOREST_FIRST_ANTICIPATORY_ENGINE", "FOREST_FIRST_CREATOR_MODE", "MERITS_GENOME", "LEGAL_ROUTE_CARD", "POSITION_CHANGE_GATE", "TEACH_BACK", "PLEADING_INTEGRITY"],
+    "route_failure_rule": "ROUTE_FAILURE_IS_NOT_OBJECTIVE_FAILURE",
+    "owner_burden_rule": "SYSTEM_FIRST_FOR_SAFE_REPEATABLE_OPERATIONAL_WORK",
+    "simulation_truth_class": "HYPOTHESIS_NOT_FACT"
+  },
+  "state_layers": ["IMMUTABLE_EVENT_TRUTH", "CURRENT_VERIFIED_PROJECTION", "DERIVED_INTERPRETATION"],
+  "maturity_ladder": ["DESIGN_ONLY", "SOURCE_IMPLEMENTED", "DETERMINISTIC_TESTED", "ADVERSARIALLY_TESTED", "SHADOW_VALIDATED", "CANARY_VALIDATED", "WORKFLOW_VERIFIED", "OPERATIONAL_VERIFIED", "CANONICAL"],
   "promotion_rules": {
     "source_is_not_runtime": true,
     "tests_are_not_provider_effect": true,
@@ -64,11 +54,14 @@
     "action_specific_readback_required_for_provider_claim": true,
     "rollback_required_for_consequential_runtime_promotion_where_applicable": true,
     "policy_candidate_must_outperform_incumbent_before_promotion": true,
-    "new_top_level_system_requires_unique_uncovered_function_or_measured_value": true
+    "new_top_level_system_requires_unique_uncovered_function_or_measured_value": true,
+    "legacy_control_may_not_be_removed_until_successor_regression_and_restore_compatibility_pass": true
   },
   "source": {
     "package": "ao_harmonic_v3",
-    "tests": "tests/test_ao_harmonic_v3.py",
+    "forest_omega": "ao_harmonic_v3/forest_omega.py",
+    "horizon": "ao_harmonic_v3/horizon.py",
+    "tests": ["tests/test_ao_harmonic_v3.py", "tests/test_phoenix_provider_cutover_v3_forest_first_omega.py"],
     "benchmark": "ao_harmonic_v3/benchmark.py",
     "shadow": "ao_harmonic_v3/shadow.py",
     "provider_observation_bridge": "ao_harmonic_v3/provider_canary.py"
@@ -85,15 +78,21 @@
     "awareness_bootstrap": "governance/federation_awareness_bootstrap_v1.json",
     "node_bootstrap": "governance/federation_node_bootstrap_v2.json",
     "n_directive": "governance/federation_n_directive_v2.yaml",
-    "ao_cra": "governance/ao_cra_federation_inheritance_v1.json"
+    "ao_cra": "governance/ao_cra_federation_inheritance_v1.json",
+    "forest_first_omega": "governance/forest_first_omega_v1.json",
+    "horizon_omega": "governance/horizon_omega_v1.json"
   },
   "truth_boundary": {
+    "base_ao_harmonic_shadow_validated": true,
+    "forest_first_omega_integration_shadow_validated": false,
     "provider_deployed": false,
     "provider_runtime_verified": false,
     "hidden_cross_chat_execution_claimed": false,
     "model_weight_learning_claimed": false,
     "authority_expansion": false,
     "workflow_verified": false,
-    "operationally_verified": false
+    "operationally_verified": false,
+    "simulation_is_fact": false,
+    "risk_signal_is_accusation": false
   }
 }
