@@ -1,0 +1,96 @@
+{
+  "schema": "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "ACTIVE_PRE_REVENUE_ZERO_BASE_POLICY",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "mission": "Prevent silent or uncontrolled infrastructure and AI cost growth before sustainable revenue exists, while preserving essential legal, evidence and system-protection capability.",
+  "default_posture": {
+    "name": "PRE_REVENUE_ZERO_BASE",
+    "incremental_monthly_paid_budget": 0,
+    "currency": "ZAR",
+    "unknown_cost_behavior": "DENY_UNTIL_COST_ESTIMATED",
+    "new_paid_recurring_workload_behavior": "HOLD_UNTIL_FINITE_OWNER_APPROVED_ENVELOPE",
+    "existing_included_or_zero_incremental_cost_behavior": "PREFER_AND_ALLOW_SUBJECT_TO_NORMAL_AUTHORITY_AND_PROOF"
+  },
+  "cost_classes": {
+    "C0_INCLUDED_FREE": "Preferred. Existing paid subscription capacity, free/included tiers, zero-incremental-cost routes and already-paid capacity.",
+    "C1_MICRO_SERVERLESS": "Potentially eligible only inside an explicit finite approved envelope with bounded runtime, scale-to-zero where available, concurrency/instance cap, timeout and telemetry.",
+    "C2_CONTROLLED_PAID": "Owner approval required while pre-revenue.",
+    "C3_EXPENSIVE_COMPUTE": "Owner approval required while pre-revenue; GPUs, always-on compute, large-model inference, bulk embeddings/crawling and comparable spend-intensive routes are deny-by-default."
+  },
+  "route_order": [
+    "already-paid or included capacity",
+    "zero-incremental-cost event-driven route",
+    "free-tier or quota-bounded route",
+    "micro-cost scale-to-zero serverless route inside approved envelope",
+    "controlled paid route with owner approval",
+    "expensive compute only with explicit owner approval and demonstrated need"
+  ],
+  "pressure_thresholds": {
+    "50_percent": "OBSERVE_AND_FORECAST",
+    "70_percent": "OPTIMIZE_BATCH_CACHE_AND_CHEAPER_ROUTE",
+    "85_percent": "DEGRADE_AND_SUSPEND_LOW_VALUE_RECURRING_WORK",
+    "95_percent": "CRITICAL_WORKLOADS_ONLY",
+    "100_percent": "STOP_NONESSENTIAL_PAID_EXECUTION_WHERE_TECHNICALLY_ENFORCEABLE"
+  },
+  "degradation_before_spend": [
+    "prefer event-driven trigger over polling",
+    "batch low-priority jobs",
+    "reuse cached and previously verified results",
+    "reduce nonessential inference frequency",
+    "switch to cheaper authorised equivalent routes",
+    "defer low-value background analysis",
+    "suspend nonessential recurring work before buying more capacity"
+  ],
+  "mandatory_workload_fields": [
+    "cost_identity",
+    "cost_class",
+    "estimated_incremental_monthly_cost",
+    "already_paid_or_included",
+    "event_driven_or_polling",
+    "scale_to_zero_capability",
+    "hard_cap_quota_or_stop_control",
+    "essentiality",
+    "owner_approval_state",
+    "cheaper_equivalent_route_check",
+    "runtime_readback"
+  ],
+  "deployment_gate": {
+    "unknown_cost_fails_closed": true,
+    "cheapest_viable_route_required": true,
+    "silent_auto_scaling_prohibited": true,
+    "new_paid_always_on_compute_prohibited_by_default": true,
+    "cost_alert_alone_is_not_treated_as_hard_cap": true,
+    "provider_native_caps_quotas_or_stop_controls_required_when_available": true,
+    "hard_stop_claim_requires_provider_readback": true,
+    "cost_estimate_is_not_actual_bill": true,
+    "cost_savings_claim_requires_measured_baseline_and_outcome": true
+  },
+  "event_driven_first": {
+    "rule": "EVENT_DRIVEN_FIRST_SCHEDULED_SECOND_CONVERSATIONAL_LAST",
+    "state_change_recompute_preferred": true,
+    "fixed_frequency_polling_requires_justification": true,
+    "chatgpt_automation_role": "THIN_FAILSAFE_USER_NOTIFICATION_OR_TRANSITIONAL_RUNTIME_ONLY_WHEN_A_BETTER_BACKGROUND_SURFACE_IS_NOT_YET_BOUND"
+  },
+  "revenue_transition": {
+    "pre_revenue": "ZERO_BASE_INCREMENTAL_PAID_SPEND_UNLESS_OWNER_APPROVES_FINITE_EXCEPTION",
+    "post_revenue_candidate": "ALLOW_REVENUE_AWARE_ENVELOPES_ONLY_AFTER_MEASURED_INCOME_OR_SAVINGS_AND_OWNER_APPROVAL",
+    "automatic_budget_expansion": false
+  },
+  "implementation": {
+    "module": "ao_harmonic_v3/cost_governor.py",
+    "runtime_binding": "ao_harmonic_v3.runtime.AOHarmonicV3.cost",
+    "test": "tests/test_phoenix_provider_cutover_v3_cost_governor.py"
+  },
+  "truth_boundary": {
+    "source_policy_proves_provider_budget_configuration": false,
+    "budget_alert_proves_hard_spend_stop": false,
+    "estimated_cost_proves_actual_cost": false,
+    "free_tier_is_assumed_unlimited": false,
+    "provider_billing_mutation_authorised": false,
+    "owner_approved_budget_exists": false,
+    "new_paid_cloud_resources_created": false
+  }
+}
