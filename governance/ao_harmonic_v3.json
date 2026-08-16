@@ -1,0 +1,88 @@
+{
+  "schema": "AO-HARMONIC-GENOME-V3",
+  "version": "3.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "SOURCE_IMPLEMENTED_PENDING_DETERMINISTIC_AND_FEDERATION_ADMISSION",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Event-driven, stateful Federation cognitive operating fabric with mission, proof, resource, learning and architecture-control primitives.",
+  "constitutional_order": [
+    "CHATGOV_AUTHORITY_ROOT",
+    "PRIMARY_EVIDENCE_AND_PROVIDER_TRUTH",
+    "TRUTHGRID_EVIDENCEOPS",
+    "DOMAIN_AUTHORITY",
+    "OMEGA_SCIENTIA",
+    "FOREST_FIRST",
+    "BUBBLES_EXECUTION",
+    "FEDERATION_RESOURCE_MARKET",
+    "JARVIS_ASSURANCE_ACROSS_ALL_LAYERS"
+  ],
+  "required_primitives": [
+    "EVENT_NERVOUS_SYSTEM",
+    "MISSION_GRAPH",
+    "THREE_LAYER_STATE_FABRIC",
+    "PROOF_GRAPH",
+    "FEDERATION_RESOURCE_MARKET",
+    "ADAPTIVE_SCHEDULER",
+    "FORMATION_ENGINE",
+    "OMEGA_SCIENTIA_FALSIFICATION",
+    "DIGITAL_TWIN",
+    "SEMANTIC_READBACK_FIREWALL",
+    "AO_CRA_BOUNDARY_TO_BUILD",
+    "HASH_LINKED_LEARNING",
+    "POLICY_EVOLUTION",
+    "HUMAN_ATTENTION_GOVERNOR",
+    "MARGINAL_INFORMATION_GAIN_GATE",
+    "ARCHITECTURAL_ENTROPY_CONTROL"
+  ],
+  "event_rules": {
+    "TOOL_FAILURE": ["AO_CRA_CLASSIFY", "FORMATION_ROUTE_SEARCH", "PROHIBIT_UNCHANGED_REPEAT_AFTER_CIRCUIT_BREAK"],
+    "OWNER_CORRECTION": ["FAILURE_GENOME_UPDATE", "SCIENTIFIC_REVIEW", "POLICY_CANDIDATE"],
+    "CAPABILITY_DISCOVERED": ["RESOURCE_MARKET_REFRESH", "OPEN_BUILD_RECHECK", "SHORTEST_SAFE_CANARY"],
+    "NEW_EVIDENCE": ["EVIDENCEOPS_INGEST", "TRUTHGRID_REVALIDATE", "PROOF_PROPAGATE", "MISSION_RECOMPUTE"]
+  },
+  "state_layers": [
+    "IMMUTABLE_EVENT_TRUTH",
+    "CURRENT_VERIFIED_PROJECTION",
+    "DERIVED_INTERPRETATION"
+  ],
+  "maturity_ladder": [
+    "DESIGN_ONLY",
+    "SOURCE_IMPLEMENTED",
+    "DETERMINISTIC_TESTED",
+    "ADVERSARIALLY_TESTED",
+    "SHADOW_VALIDATED",
+    "CANARY_VALIDATED",
+    "WORKFLOW_VERIFIED",
+    "OPERATIONAL_VERIFIED",
+    "CANONICAL"
+  ],
+  "promotion_rules": {
+    "source_is_not_runtime": true,
+    "tests_are_not_provider_effect": true,
+    "synthetic_benchmark_is_not_operational_comparison": true,
+    "action_specific_readback_required_for_provider_claim": true,
+    "rollback_required_for_consequential_runtime_promotion_where_applicable": true,
+    "policy_candidate_must_outperform_incumbent_before_promotion": true,
+    "new_top_level_system_requires_unique_uncovered_function_or_measured_value": true
+  },
+  "source": {
+    "package": "ao_harmonic_v3",
+    "tests": "tests/test_ao_harmonic_v3.py",
+    "benchmark": "ao_harmonic_v3/benchmark.py"
+  },
+  "inheritance": {
+    "surface_awareness": "governance/federation_surface_awareness_v1.json",
+    "awareness_bootstrap": "governance/federation_awareness_bootstrap_v1.json",
+    "node_bootstrap": "governance/federation_node_bootstrap_v2.json",
+    "n_directive": "governance/federation_n_directive_v2.yaml",
+    "ao_cra": "governance/ao_cra_federation_inheritance_v1.json"
+  },
+  "truth_boundary": {
+    "provider_deployed": false,
+    "provider_runtime_verified": false,
+    "hidden_cross_chat_execution_claimed": false,
+    "model_weight_learning_claimed": false,
+    "authority_expansion": false
+  }
+}
