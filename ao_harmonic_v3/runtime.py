@@ -74,7 +74,7 @@ class JarvisAssuranceMesh:
 
 
 class AOHarmonicV3:
-    VERSION = "3.3.0"
+    VERSION = "3.2.0"
     AUTHORITY_CEILING = "A1_INTERNAL"
     EXTERNAL_EFFECT_DEFAULT = False
 
