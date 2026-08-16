@@ -20,7 +20,8 @@
     "FEDOMEGA-N-DIRECTIVE-V2",
     "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1",
     "AO-CRA-FEDERATION-INHERITANCE-V1",
-    "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1"
+    "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
+    "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1"
   ],
   "n_directive": {
     "input": "n",
@@ -31,6 +32,7 @@
       "ao_cra": "REQUIRED",
       "innovation_frontier": "REQUIRED",
       "continuous_learning": "REQUIRED",
+      "adaptive_intelligence_router": "REQUIRED_BEFORE_AI_MODEL_OR_REASONING_EFFORT_SELECTION",
       "cost_governor": "REQUIRED_FOR_RUNTIME_OR_PROVIDER_ROUTE_SELECTION"
     },
     "required_sequence": [
@@ -44,6 +46,7 @@
       "FORMATION_SOURCE_EVIDENCE_AUTHORITY_DEPENDENCY_AND_PROOF_MAP",
       "AO_CRA_BOUNDARY_TO_BUILD_PREFLIGHT",
       "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
+      "ADAPTIVE_INTELLIGENCE_ROUTE_AND_MINIMUM_QUALITY_FLOOR",
       "PRE_REVENUE_COST_GATE_AND_CHEAPEST_VIABLE_ROUTE_CHECK",
       "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
       "ALPHA_OMEGA_REUSE_COMPOSITION_AND_MINIMUM_COMPLETE_BUILD",
@@ -53,9 +56,9 @@
       "RESOLVE_CREDENTIALS_BY_NON_SECRET_HANDLE_ONLY",
       "EXECUTE_SAFE_AUTHORISED_WORK",
       "VALIDATE_SIMULATE_RED_TEAM_AND_FAILURE_INJECT_WHERE_MATERIAL",
-      "READBACK_HEALTH_PERSISTENCE_ROLLBACK_PROOF_AND_COST_CONTROL_STATE",
+      "READBACK_HEALTH_PERSISTENCE_ROLLBACK_PROOF_COST_AND_INTELLIGENCE_CONTROL_STATE",
       "AO_CRA_CREATE_OR_UPDATE_BUILD_FOR_EVERY_RESIDUAL_CAPABILITY_GAP",
-      "RECORD_TERMINAL_LEARNING_AND_INNOVATION_EVENT",
+      "RECORD_TERMINAL_LEARNING_AND_INTELLIGENCE_CALIBRATION_EVENT",
       "ACTIVATE_REPAIR_FALLBACK_REGRESSION_CAPABILITY_RECHECK_AND_OPPORTUNITY_TRIGGERS",
       "GENERALISE_VERIFIED_LEARNING_INTO_REUSABLE_CAPABILITY",
       "ASSESS_MATURITY_AND_PROMOTE_ONLY_PROVEN_SCOPE",
@@ -84,6 +87,25 @@
       "proof_and_closure_state"
     ]
   },
+  "adaptive_intelligence_router": {
+    "policy_id": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
+    "policy_version": "1.0.0",
+    "policy_file": "governance/adaptive_intelligence_router_v1.json",
+    "engine": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
+    "tiers": ["INSTANT", "MEDIUM", "HIGH", "EXTRA_HIGH", "PRO"],
+    "provider_decoupled": true,
+    "horizon_signals_reused": true,
+    "minimum_quality_floor_required": true,
+    "dynamic_escalation": true,
+    "dynamic_deescalation": true,
+    "deescalation_below_minimum_floor": false,
+    "chatgpt_visible_picker_mutation": false,
+    "chatgpt_recommendation_only": true,
+    "api_provider_binding_requires_live_authority": true,
+    "paid_route_requires_cost_governor": true,
+    "automatic_policy_threshold_mutation": false,
+    "measured_quality_delta_required_for_improvement_claim": true
+  },
   "cost_governor": {
     "policy_id": "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
     "policy_version": "1.0.0",
@@ -96,10 +118,11 @@
     "event_driven_first": true,
     "paid_c2_c3_owner_reserved": true,
     "automatic_budget_expansion": false,
-    "degrade_before_scale": true
+    "degrade_before_scale": true,
+    "cannot_silently_degrade_below_air_minimum_quality_floor": true
   },
   "full_power": {
-    "definition": "all relevant capabilities that are available, authorised, safe, evidence-matched and cost-governed",
+    "definition": "all relevant capabilities that are available, authorised, safe, evidence-matched, intelligence-matched and cost-governed",
     "invented_capabilities": false,
     "authority_expansion": false,
     "trust_transfer": false,
@@ -108,12 +131,15 @@
     "reuse_before_rebuild": true,
     "multi_stream_safe_parallelism": true,
     "effectful_mutations_serialized": true,
-    "silent_paid_scale_up": false
+    "silent_paid_scale_up": false,
+    "silent_intelligence_underprovisioning": false,
+    "strongest_intelligence_merely_because_available": false
   },
   "output_contract": {
     "formation_engine_result": true,
     "alpha_omega_foundry_result": true,
     "ao_cra_result_when_boundary_exists": true,
+    "intelligence_route_result_when_ai_reasoning_is_used": true,
     "cost_route_result_when_runtime_or_provider_cost_is_material": true,
     "solution_alternatives_considered": true,
     "reuse_vs_build_decision": true,
@@ -133,7 +159,10 @@
       "INNOVATION_CANDIDATE",
       "EXPERIMENT_RESULT",
       "NEGATIVE_RESULT",
-      "CAPABILITY_REDISCOVERY_TRIGGER"
+      "CAPABILITY_REDISCOVERY_TRIGGER",
+      "INTELLIGENCE_ESCALATION",
+      "INTELLIGENCE_DEESCALATION",
+      "INTELLIGENCE_CALIBRATION_CANDIDATE"
     ],
     "append_only": true,
     "hash_linked": true,
@@ -148,7 +177,8 @@
     "consequential_actions_owner_reserved": true,
     "raw_credential_retrieval_or_persistence": false,
     "provider_native_readback_required": true,
-    "paid_budget_expansion_owner_reserved": true
+    "paid_budget_expansion_owner_reserved": true,
+    "model_picker_ui_mutation_available": false
   },
   "master_state": {
     "chapter": "CH-073",
@@ -159,7 +189,9 @@
     "ao_cra_policy_id": "AO-CRA-FEDERATION-INHERITANCE-V1",
     "ao_cra_policy_version": "1.0.0",
     "cost_governor_policy_id": "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
-    "cost_governor_policy_version": "1.0.0"
+    "cost_governor_policy_version": "1.0.0",
+    "adaptive_intelligence_router_policy_id": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
+    "adaptive_intelligence_router_policy_version": "1.0.0"
   },
   "bootstrap_pass_conditions": [
     "surface awareness and bootstrap files parse",
@@ -171,6 +203,8 @@
     "provider availability and authority are revalidated before use",
     "n-directive policy id, version and contract hash match the Master record",
     "AO-CRA policy id and version match the Master record",
+    "adaptive-intelligence-router policy is loaded before variable AI model, family, reasoning effort or Pro-mode selection",
+    "AIR minimum quality floor cannot be silently lowered by cost or availability routing",
     "pre-revenue cost-governor policy is loaded for runtime/provider route selection",
     "unknown incremental recurring cost fails closed",
     "zero/included and cheaper equivalent routes are considered before paid routes",
@@ -180,12 +214,13 @@
     "bounded innovation frontier is mandatory",
     "all material capability gaps become active build records",
     "workarounds remain separate from verified or deployed capability",
-    "output contract requires Formation, Foundry, AO-CRA when relevant, cost route when material, alternatives, innovation, learning, pathway and explicit n line",
-    "learning contract requires terminal, innovation and capability-change event capture",
+    "output contract requires Formation, Foundry, AO-CRA when relevant, intelligence route when AI reasoning is used, cost route when material, alternatives, innovation, learning, pathway and explicit n line",
+    "learning contract requires terminal, innovation, capability-change and intelligence-calibration event capture",
     "authority ceiling remains A1_INTERNAL",
     "external effect remains false",
     "no hidden cross-chat access or trust transfer is enabled",
-    "no automatic paid budget expansion is enabled"
+    "no automatic paid budget expansion is enabled",
+    "no automatic visible ChatGPT model-picker mutation is claimed"
   ],
   "failure_state": "BOOTSTRAP_BLOCKED_FAIL_CLOSED"
 }

@@ -20,6 +20,17 @@ from .forest_omega import (
     ForestOmegaResult,
 )
 from .horizon import HorizonNode, HorizonOmega, HorizonRun
+from .intelligence_router import (
+    AdaptiveIntelligenceRouter,
+    IntelligenceAssessment,
+    IntelligenceFeedback,
+    IntelligenceRouteDecision,
+    IntelligenceSignals,
+    IntelligenceTier,
+    OpenAI56BindingCatalog,
+    ProviderIntelligenceBinding,
+    RouterOutcome,
+)
 from .runtime import AOHarmonicV3, bootstrap
 
 __all__ = [
@@ -39,5 +50,14 @@ __all__ = [
     "CostEnvelope",
     "PreRevenueCostGovernor",
     "WorkloadCostProfile",
+    "AdaptiveIntelligenceRouter",
+    "IntelligenceAssessment",
+    "IntelligenceFeedback",
+    "IntelligenceRouteDecision",
+    "IntelligenceSignals",
+    "IntelligenceTier",
+    "OpenAI56BindingCatalog",
+    "ProviderIntelligenceBinding",
+    "RouterOutcome",
 ]
 __version__ = "3.2.0"

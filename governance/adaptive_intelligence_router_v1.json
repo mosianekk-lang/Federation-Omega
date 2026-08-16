@@ -1,0 +1,112 @@
+{
+  "schema": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
+  "version": "1.0.0",
+  "policy_id": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "SOURCE_IMPLEMENTED_PROVIDER_EXECUTION_SEPARATE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Select the minimum sufficient intelligence tier for each task, escalate when the cost of error warrants stronger reasoning, de-escalate after stable proof, and interlock every paid provider route with the Pre-Revenue Cost Governor.",
+  "architecture": {
+    "position": "AO-HARMONIC / FOREST-FIRST OMEGA COGNITIVE RESOURCE ROUTER",
+    "sequence": [
+      "TASK_INTAKE",
+      "HORIZON_RISK_AND_DIFFICULTY_SIGNALS",
+      "INTELLIGENCE_ASSESSMENT",
+      "MINIMUM_QUALITY_FLOOR",
+      "COST_GOVERNOR",
+      "PROVIDER_BINDING",
+      "EXECUTION_IF_AUTHORISED",
+      "QUALITY_READBACK",
+      "ESCALATE_OR_DEESCALATE",
+      "LEARNING_CALIBRATION_CANDIDATE"
+    ],
+    "duplicate_brain_created": false,
+    "horizon_reused": true,
+    "cost_governor_reused": true
+  },
+  "logical_tiers": ["INSTANT", "MEDIUM", "HIGH", "EXTRA_HIGH", "PRO"],
+  "routing_signals": {
+    "complexity": 0.18,
+    "consequence": 0.17,
+    "uncertainty": 0.12,
+    "dependency_density": 0.11,
+    "adversarial_complexity": 0.11,
+    "evidence_volume": 0.08,
+    "ambiguity": 0.08,
+    "irreversibility": 0.07,
+    "long_horizon": 0.05,
+    "required_accuracy": 0.03
+  },
+  "hard_floors": {
+    "high_stakes_or_legal": "HIGH",
+    "high_consequence_plus_high_uncertainty_irreversibility_or_adversarial_complexity": "EXTRA_HIGH",
+    "repeated_material_failures_or_contradictions": "PRO",
+    "explicit_owner_requested_tier": "MAY_RAISE_BUT_NOT_LOWER_SYSTEM_FLOOR"
+  },
+  "dynamic_feedback": {
+    "escalate_on": [
+      "quality below required accuracy",
+      "unresolved contradiction",
+      "repeated route/model failure",
+      "material new dependency",
+      "material consequence increase",
+      "failed outcome"
+    ],
+    "deescalate_on": "three or more stable high-quality outcomes when consequence is below the high-stakes floor",
+    "deescalation_below_minimum_floor": false,
+    "unchanged_retry_after_repeat_failure": false
+  },
+  "cost_interlock": {
+    "policy": "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
+    "posture": "PRE_REVENUE_ZERO_BASE",
+    "cheapest_sufficient_binding_first": true,
+    "unknown_incremental_cost_fails_closed": true,
+    "paid_budget_expansion_owner_reserved": true,
+    "silent_quality_degradation_below_minimum_floor": false,
+    "pro_merely_because_available": false,
+    "decision_rule": "USE_STRONGER_INTELLIGENCE_WHEN_EXPECTED_COST_OF_ERROR_EXCEEDS_INCREMENTAL_REASONING_COST"
+  },
+  "openai_binding": {
+    "source_checked": "2026-08-16",
+    "official_sources": [
+      "https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt/",
+      "https://developers.openai.com/api/docs/guides/latest-model",
+      "https://developers.openai.com/api/docs/models"
+    ],
+    "chatgpt": {
+      "INSTANT": "GPT-5.5 Instant",
+      "MEDIUM": "GPT-5.6 Sol / Medium",
+      "HIGH": "GPT-5.6 Sol / High",
+      "EXTRA_HIGH": "GPT-5.6 Sol / Extra High",
+      "PRO": "GPT-5.6 Sol Pro / Pro",
+      "programmatic_model_picker_mutation_by_this_router": false
+    },
+    "responses_api": {
+      "model_family": "gpt-5.6",
+      "INSTANT": {"reasoning_effort": "low"},
+      "MEDIUM": {"reasoning_effort": "medium"},
+      "HIGH": {"reasoning_effort": "high"},
+      "EXTRA_HIGH": {"reasoning_effort": "xhigh"},
+      "PRO": {"reasoning_mode": "pro"},
+      "provider_authority_and_current_model_availability_must_be_revalidated": true
+    }
+  },
+  "learning": {
+    "outcomes_recorded": ["selected_tier", "quality_score", "required_accuracy", "escalation_needed", "lower_tier_would_have_sufficed", "cost_state"],
+    "minimum_calibration_sample": 10,
+    "maximum_threshold_shift_per_candidate": 0.05,
+    "automatic_policy_mutation": false,
+    "promotion_requires": ["regression tests", "quality comparison", "cost comparison", "governed promotion if material"],
+    "successes_and_failures_both_learning_material": true
+  },
+  "truth_boundary": {
+    "router_decision_proves_output_quality": false,
+    "recommended_pro_tier_proves_pro_was_executed": false,
+    "chatgpt_recommendation_changes_visible_picker": false,
+    "api_binding_proves_api_key_or_budget": false,
+    "source_merge_proves_provider_runtime_binding": false,
+    "measured_quality_improvement_required_for_improvement_claim": true,
+    "measured_cost_delta_required_for_savings_claim": true
+  }
+}
