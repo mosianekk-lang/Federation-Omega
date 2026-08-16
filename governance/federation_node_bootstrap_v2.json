@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V2",
-  "version": "2.4.0",
+  "version": "2.3.0",
   "owner": "Kim Kagiso Mosiane",
   "required_before_substantive_work": true,
   "surface_awareness": {
