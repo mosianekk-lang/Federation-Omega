@@ -1,6 +1,5 @@
 from __future__ import annotations
 
-from dataclasses import asdict
 from datetime import datetime, timezone
 
 from .event_bus import EventBus
@@ -12,7 +11,9 @@ from .evolution import (
     MarginalInformationGainGate,
     PolicyEvolution,
 )
+from .forest_omega import ForestFirstOmega
 from .graphs import MissionGraph, ProofGraph, StateFabric
+from .horizon import HorizonOmega
 from .models import FederationEvent, Maturity, RiskClass
 from .resource_market import ResourceMarket
 from .science_and_routes import FederationDigitalTwin, FormationEngine, OmegaScientia
@@ -35,13 +36,7 @@ BOUNDARY_CLASSES = {
 
 
 class AdaptiveScheduler:
-    def choose_mode(
-        self,
-        risk_class: RiskClass,
-        *,
-        uncertainty: float = 0.0,
-        irreversibility: float = 0.0,
-    ) -> str:
+    def choose_mode(self, risk_class: RiskClass, *, uncertainty: float = 0.0, irreversibility: float = 0.0) -> str:
         if risk_class == RiskClass.CRITICAL or irreversibility >= 0.8:
             return "CRITICAL"
         if risk_class == RiskClass.HIGH or uncertainty >= 0.6:
@@ -68,14 +63,7 @@ class BoundaryBuildEngine:
 
 
 class JarvisAssuranceMesh:
-    def audit_transition(
-        self,
-        *,
-        intended_execution: bool,
-        provider_dependent: bool,
-        readback_present: bool,
-        state_changed: bool,
-    ) -> dict[str, object]:
+    def audit_transition(self, *, intended_execution: bool, provider_dependent: bool, readback_present: bool, state_changed: bool) -> dict[str, object]:
         defects: list[str] = []
         if provider_dependent and intended_execution and not readback_present:
             defects.append("PROVIDER_READBACK_MISSING")
@@ -85,7 +73,7 @@ class JarvisAssuranceMesh:
 
 
 class AOHarmonicV3:
-    VERSION = "3.0.0"
+    VERSION = "3.2.0"
     AUTHORITY_CEILING = "A1_INTERNAL"
     EXTERNAL_EFFECT_DEFAULT = False
 
@@ -99,6 +87,13 @@ class AOHarmonicV3:
         self.formation = FormationEngine()
         self.scientia = OmegaScientia()
         self.digital_twin = FederationDigitalTwin()
+        self.horizon = HorizonOmega()
+        self.forest = ForestFirstOmega(
+            horizon=self.horizon,
+            scientia=self.scientia,
+            formation=self.formation,
+            digital_twin=self.digital_twin,
+        )
         self.policy = PolicyEvolution()
         self.attention = HumanAttentionGovernor()
         self.mig = MarginalInformationGainGate()
@@ -120,6 +115,8 @@ class AOHarmonicV3:
         return {
             "classification": self.boundary_build.classify(failure_type),
             "formation": "ROUTE_SEARCH_REQUIRED",
+            "forest_first_omega": "AUTO_REROUTE_REMODEL_THEN_BUILD",
+            "owner_surface": "OBJECTIVE_LEVEL_ONLY",
             "unchanged_retry": "PROHIBITED_AFTER_REPEAT_FINGERPRINT",
         }
 
@@ -128,6 +125,7 @@ class AOHarmonicV3:
         return {
             "failure_genome": "CREATE_OR_UPDATE",
             "scientific_review": "REQUIRED",
+            "forest_first_omega": "REMODEL_AND_CREATE_LEARNING_CANDIDATE",
             "policy_candidate": "ELIGIBLE",
             "event_id": event.event_id,
         }
@@ -137,6 +135,7 @@ class AOHarmonicV3:
         return {
             "resource_market": "REFRESH",
             "open_builds": "RECHECK",
+            "forest_first_omega": "RECOMPUTE_PATHS_AND_HORIZON",
             "shortest_safe_canary": "REQUIRED_BEFORE_PROMOTION",
             "event_id": event.event_id,
         }
@@ -148,6 +147,7 @@ class AOHarmonicV3:
             "truthgrid": "REVALIDATE",
             "proof_graph": "PROPAGATE",
             "mission_graph": "RECOMPUTE",
+            "forest_first_omega": "REMODEL_ROOTS_FOREST_HORIZON_AND_PATHS",
             "event_id": event.event_id,
         }
 
@@ -162,23 +162,25 @@ class AOHarmonicV3:
         proposed_patch: str | None = None,
         fitness_score: float = 0.0,
     ) -> dict[str, object]:
-        return self.learning.append(
-            LearningEvent(
-                cycle_id=cycle_id,
-                objective=objective,
-                terminal_state=terminal_state,
-                actual_result=actual_result,
-                proof_refs=proof_refs,
-                proposed_patch=proposed_patch,
-                fitness_score=fitness_score,
-            )
-        )
+        return self.learning.append(LearningEvent(
+            cycle_id=cycle_id,
+            objective=objective,
+            terminal_state=terminal_state,
+            actual_result=actual_result,
+            proof_refs=proof_refs,
+            proposed_patch=proposed_patch,
+            fitness_score=fitness_score,
+        ))
 
     def restore_acceptance_test(self) -> dict[str, object]:
         required = {
             "CHATGOV_AUTHORITY_ROOT",
             "JARVIS_ASSURANCE_MESH",
-            "FOREST_FIRST_STRATEGY",
+            "FOREST_FIRST_OMEGA",
+            "FOREST_FIRST_JUSTICE_GATE",
+            "FOREST_FIRST_ANTICIPATORY_ENGINE",
+            "FOREST_FIRST_CREATOR_MODE",
+            "HORIZON_OMEGA",
             "OMEGA_SCIENTIA",
             "LEX_DOMAIN_AUTHORITY",
             "TRUTHGRID_EVIDENCEOPS",
@@ -203,6 +205,7 @@ class AOHarmonicV3:
             "runtime_verified": False,
             "authority_ceiling": self.AUTHORITY_CEILING,
             "external_effect_default": self.EXTERNAL_EFFECT_DEFAULT,
+            "cognitive_cycle": "ROOTS->FOREST->HORIZON->TREES->PATHS->DECISION->OMEGA->READBACK->LEARNING",
         }
 
 
@@ -212,6 +215,8 @@ def bootstrap() -> dict[str, object]:
         "runtime": "AO-HARMONIC-GENOME",
         "version": runtime.VERSION,
         "architecture": "FEDERATION_COGNITIVE_OPERATING_FABRIC",
+        "strategic_perception": "FOREST-FIRST-OMEGA",
+        "foresight": "HORIZON-OMEGA",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "acceptance": runtime.restore_acceptance_test(),
         "truth_boundary": {
