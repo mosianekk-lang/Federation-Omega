@@ -14,7 +14,9 @@ from .store import ChatBridgeStore
 class RestoreAssuranceTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
-        self.runtime = ChatBridgeOmega4(ChatBridgeStore(os.path.join(self.tmp.name, "cb.sqlite3")))
+        self.runtime = ChatBridgeOmega4(
+            ChatBridgeStore(os.path.join(self.tmp.name, "cb.sqlite3"))
+        )
         self.capsule = GovernanceCapsule(
             owner="Kim Kagiso Mosiane",
             project="Forest First",
@@ -33,6 +35,7 @@ class RestoreAssuranceTests(unittest.TestCase):
             evidenceops_assurance=True,
             background_compute_fabric=True,
             live_bible_ref="drive:local-live-bible",
+            playbook_ref="drive:chatbridge-empirical-playbook",
             active_systems=("Forest-First", "EvidenceOps", "IPEP", "Bubbles"),
         )
         self.runtime.backup(
@@ -50,20 +53,30 @@ class RestoreAssuranceTests(unittest.TestCase):
         self.tmp.cleanup()
 
     def attestation(self, **changes) -> RestoreAttestation:
+        profile = self.expected["operating_profile"]
         base = dict(
             namespace_key=self.expected["namespace_key"],
             generation_id=self.expected["generation_id"],
             handoff_id=self.expected["handoff_id"],
             destination_session_key="dest-test",
             checkpoint_fingerprint=self.expected["checkpoint_fingerprint"],
-            operating_profile_id=self.expected["operating_profile"]["profile_id"],
+            operating_profile_id=profile["profile_id"],
             governance_capsule_ref="capsule",
             restored_objective=self.expected["governance"]["objective"],
             restored_next_action=self.expected["governance"]["exact_next_action"],
-            active_systems=tuple(self.expected["operating_profile"]["active_systems"]),
-            live_bible_ref=self.expected["operating_profile"]["live_bible_ref"],
-            execution_posture=self.expected["operating_profile"]["execution_posture"],
-            reconcile_not_rebuild=self.expected["operating_profile"]["reconcile_not_rebuild"],
+            active_systems=tuple(profile["active_systems"]),
+            live_bible_ref=profile["live_bible_ref"],
+            playbook_ref=profile["playbook_ref"],
+            execution_posture=profile["execution_posture"],
+            reconcile_not_rebuild=profile["reconcile_not_rebuild"],
+            conversation_exhaustion_guard=profile["conversation_exhaustion_guard"],
+            continuous_write_ahead_checkpoint=profile[
+                "continuous_write_ahead_checkpoint"
+            ],
+            empirical_learning=profile["empirical_learning"],
+            checkpoint_policy=profile["checkpoint_policy"],
+            migration_policy=profile["migration_policy"],
+            learning_capture_scope=profile["learning_capture_scope"],
             delta_checked=True,
             resume_started=True,
             observed_state="RESTORED_AND_RESUMED",
@@ -93,6 +106,31 @@ class RestoreAssuranceTests(unittest.TestCase):
         self.assertIn("EXECUTION_POSTURE_DRIFT", classes)
         self.assertIn("DELTA_CHECK_MISSING", classes)
 
+    def test_dropped_exhaustion_guard_or_learning_requires_repair(self) -> None:
+        result = self.runtime.assess_restore_attestation(
+            self.expected,
+            self.attestation(
+                conversation_exhaustion_guard=False,
+                continuous_write_ahead_checkpoint=False,
+                empirical_learning=False,
+            ),
+        )
+        self.assertEqual(result["conformance_state"], "REPAIR_REQUIRED")
+        self.assertTrue(result["consequential_hold"])
+        classes = {item["drift_class"] for item in result["findings"]}
+        self.assertIn("CONVERSATION_EXHAUSTION_GUARD_DRIFT", classes)
+        self.assertIn("CONTINUOUS_WRITE_AHEAD_CHECKPOINT_DRIFT", classes)
+        self.assertIn("EMPIRICAL_LEARNING_DRIFT", classes)
+
+    def test_playbook_binding_drift_requires_repair(self) -> None:
+        result = self.runtime.assess_restore_attestation(
+            self.expected,
+            self.attestation(playbook_ref="drive:wrong-playbook"),
+        )
+        self.assertEqual(result["conformance_state"], "REPAIR_REQUIRED")
+        classes = {item["drift_class"] for item in result["findings"]}
+        self.assertIn("PLAYBOOK_BINDING_DRIFT", classes)
+
     def test_missing_specialist_or_resume_is_warning_when_core_state_matches(self) -> None:
         result = self.runtime.assess_restore_attestation(
             self.expected,
@@ -115,6 +153,7 @@ class RestoreAssuranceTests(unittest.TestCase):
             "restored_next_action": current_next,
             "required_systems": list(self.expected["operating_profile"]["active_systems"]),
             "live_bible_ref": self.expected["operating_profile"]["live_bible_ref"],
+            "playbook_ref": self.expected["operating_profile"]["playbook_ref"],
         }
         observed = self.attestation(
             restored_objective=current_objective,
