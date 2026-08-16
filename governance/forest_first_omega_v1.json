@@ -1,9 +1,10 @@
 {
   "schema": "FOREST-FIRST-OMEGA-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "owner": "Kim Kagiso Mosiane",
   "engine_id": "FOREST-FIRST-OMEGA-V1",
   "parent_fabric": "AO-HARMONIC-GENOME-V3",
+  "maturity": "SHADOW_VALIDATED_FOREST_FIRST_OMEGA_SYSTEM_SPECIFIC_NO_EXTERNAL_EFFECT",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "canonical_doctrine": "FFJOS-CANONICAL-001",
@@ -46,6 +47,39 @@
     "single_event_is_universal_law": false,
     "promotion_pipeline": ["OBSERVATION", "LESSON_CANDIDATE", "VERIFIED_LESSON", "REGRESSION_OR_ADVERSARIAL_TEST", "CANONICAL_RULE", "EXECUTABLE_CONTROL", "RESTORE_INHERITANCE", "MEASURED_OPERATIONAL_LEARNING"]
   },
+  "shadow_validation": {
+    "status": "PASS",
+    "shadow_id": "FOREST-FIRST-OMEGA-REAL-MISSION-CONTROL-SHADOW-001",
+    "formal_scope": "FOREST_FIRST_OMEGA_SYSTEM_SPECIFIC_REAL_MISSION_DERIVED_NO_EFFECT_SHADOW",
+    "truth_boundary": "REAL_MISSION_DERIVED_REDACTED_CONTROL_STATE_NO_PRIVATE_PAYLOAD_NO_EXTERNAL_EFFECT",
+    "reference_boundary": "FRAGMENTED_REFERENCE_POLICY_IS_ARCHITECTURAL_FIXTURE_NOT_HISTORICAL_RUNTIME_MEASUREMENT",
+    "source_commit": "4128e659e7503a602fc56ebbb7cc713ba298d04b",
+    "source_pr": 512,
+    "premerge_airlock_run": 31963377138,
+    "premerge_bubbles_run": 31963377151,
+    "premerge_leak_guard_run": 31963377111,
+    "postmerge_airlock_run": 31963431209,
+    "postmerge_bubbles_run": 31963431142,
+    "postmerge_leak_guard_run": 31963431143,
+    "acceptance_dimensions": [
+      "adaptive_horizon_beyond_fixed_floor",
+      "roots_and_falsifiers",
+      "evidence_ahead",
+      "high_information_reversible_path_first",
+      "route_failure_reroute_without_owner_blocker",
+      "creator_mode_system_work_absorption",
+      "anticipatory_safe_actions",
+      "no_avoidable_owner_interrupt",
+      "learning_candidate_on_failure_and_correction",
+      "single_integrated_strategic_loop",
+      "zero_external_effect",
+      "risk_remains_hypothesis"
+    ],
+    "provider_runtime_proved": false,
+    "legal_accuracy_proved": false,
+    "prediction_accuracy_proved": false,
+    "global_superiority_proved": false
+  },
   "health": {
     "states": ["ACTIVE_VERIFIED", "SYSTEM_READY_SESSION_NOT_RESTORED", "DEGRADED", "BLOCKED_HIGH_STAKES", "NOT_LOADED"],
     "quiet_when_healthy": true,
@@ -63,6 +97,7 @@
     "BUBBLES": "execution orchestration and tool routing",
     "JARVIS": "cross-layer assurance and anti-drift"
   },
+  "next_maturity_gate": "MEASURE_REAL_OPERATIONAL_OUTCOMES_AND_ONLY_THEN_CONSIDER_BOUNDED_CANARY_IF_INCREMENTAL_VALUE_EXISTS",
   "truth_boundary": {
     "risk_signal_is_fact": false,
     "simulation_is_fact": false,
@@ -70,6 +105,8 @@
     "provider_effect_inferred": false,
     "model_weight_learning_claimed": false,
     "hidden_cross_chat_activation_claimed": false,
-    "external_authority_expanded": false
+    "external_authority_expanded": false,
+    "workflow_verified": false,
+    "operationally_verified": false
   }
 }
