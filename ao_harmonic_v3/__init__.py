@@ -40,4 +40,4 @@ __all__ = [
     "PreRevenueCostGovernor",
     "WorkloadCostProfile",
 ]
-__version__ = "3.3.0"
+__version__ = "3.2.0"
