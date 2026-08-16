@@ -24,7 +24,8 @@
     "private_file_ids_exported_to_public_receiver": false,
     "public_event_contains_only_allowlisted_control_metadata": true,
     "fingerprint_is_sha256": true,
-    "queue_is_private_google_sheet": true
+    "queue_is_private_google_sheet": true,
+    "private_exact_provider_pointers_in_public_source": false
   },
   "provider_reads": {
     "gmail": "gmail.readonly message-list identifiers only; identifiers are hashed before the event leaves Google",
@@ -39,7 +40,7 @@
     "secret_value_in_source": false,
     "secret_value_in_script_properties": false,
     "required_before_enable": [
-      "exact Apps Script project identity verified",
+      "exact Apps Script project identity verified privately",
       "installed source hash read back",
       "OAuth scopes verified",
       "private queue target verified",
@@ -52,8 +53,7 @@
     ]
   },
   "legacy_archon_boundary": {
-    "archived_script_id": "12CrTP0YUQbUpBvLklf_tInjN_k3L5qt3Tkp-M9pIO_O4Cs8dsYRH7kPO",
-    "archived_source_hash": "5a4ec1db4fb8f5793c39a46e643a1a5a37e9473a5068fb02927e5d2b3381c9d5",
+    "private_pointer_location": "PRIVATE_KIM_DATAVERSE_OR_AUTHORISED_PROVIDER_READBACK_ONLY",
     "archived_source_has_public_privileged_doPost": true,
     "current_authorization_gate_allows_restore_as_is": false,
     "live_deployment_action_semantics_verified": false,
