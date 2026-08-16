@@ -6,13 +6,15 @@ from bubbles.control_plane import (
     EffectClass,
     RouteKind,
 )
+from governance.external_action_firewall import LEASE_PROOF
+from tests.test_external_action_firewall import ExternalActionFirewallTests  # noqa: F401
 
 
 class BubblesControlPlaneTests(unittest.TestCase):
     def setUp(self) -> None:
         self.control = BubblesControlPlane()
 
-    def test_native_drive_write_requires_connector_proof(self) -> None:
+    def test_native_drive_write_requires_connector_and_execution_lease_proof(self) -> None:
         request = ActionRequest(
             adapter_id="google_drive",
             action="update_document",
@@ -23,10 +25,18 @@ class BubblesControlPlaneTests(unittest.TestCase):
         blocked = self.control.decide(request)
         self.assertEqual(blocked.state, "CONSTRAINT")
         self.assertIn("connector_permission_verified", blocked.missing_proofs)
+        self.assertIn(LEASE_PROOF, blocked.missing_proofs)
+
+        still_blocked = self.control.decide(
+            request,
+            frozenset({"connector_permission_verified"}),
+        )
+        self.assertEqual(still_blocked.state, "CONSTRAINT")
+        self.assertEqual(still_blocked.missing_proofs, (LEASE_PROOF,))
 
         ready = self.control.decide(
             request,
-            frozenset({"connector_permission_verified"}),
+            frozenset({"connector_permission_verified", LEASE_PROOF}),
         )
         self.assertEqual(ready.state, "READY")
         self.assertEqual(ready.route_kind, RouteKind.CHATGPT_NATIVE)
@@ -45,6 +55,7 @@ class BubblesControlPlaneTests(unittest.TestCase):
                     "provider_identity_verified",
                     "target_verified",
                     "action_scope_verified",
+                    LEASE_PROOF,
                 }
             ),
         )
@@ -66,6 +77,7 @@ class BubblesControlPlaneTests(unittest.TestCase):
                     "target_verified",
                     "action_scope_verified",
                     "provider_readback_contract",
+                    LEASE_PROOF,
                 }
             ),
         )
@@ -93,7 +105,7 @@ class BubblesControlPlaneTests(unittest.TestCase):
         )
         decision = self.control.decide(
             request,
-            frozenset({"connector_permission_verified"}),
+            frozenset({"connector_permission_verified", LEASE_PROOF}),
         )
         self.assertEqual(decision.state, "CONSTRAINT")
         with self.assertRaises(ValueError):

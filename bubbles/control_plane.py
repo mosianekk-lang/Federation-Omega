@@ -6,6 +6,8 @@ from hashlib import sha256
 import json
 from typing import Mapping
 
+from governance.external_action_firewall import LEASE_PROOF
+
 
 class EffectClass(str, Enum):
     READ = "READ"
@@ -173,7 +175,8 @@ class BubblesControlPlane:
 
     The control plane selects an authorised execution route. It does not create
     provider authority and never treats source/configuration existence as proof
-    that a provider action executed.
+    that a provider action executed. Every write route additionally requires a
+    verified one-use user execution lease from the external-action firewall.
     """
 
     def __init__(self, adapters: Mapping[str, AdapterSpec] | None = None) -> None:
@@ -219,15 +222,25 @@ class BubblesControlPlane:
                 reason="Selected route is read-only for this ChatGPT surface.",
             )
 
-        missing = tuple(sorted(spec.required_proofs.difference(observed_proofs)))
+        required_proofs = set(spec.required_proofs)
+        if request.effect is not EffectClass.READ:
+            required_proofs.add(LEASE_PROOF)
+
+        missing = tuple(sorted(required_proofs.difference(observed_proofs)))
         if missing:
+            reason = "Fresh route/provider proof is required before execution."
+            if LEASE_PROOF in missing:
+                reason = (
+                    "External writes are capability-locked. A verified one-use user execution lease "
+                    "is required in addition to all route/provider proofs."
+                )
             return RouteDecision(
                 state="CONSTRAINT",
                 route_kind=spec.route_kind,
                 adapter_id=spec.adapter_id,
                 action=request.action,
                 missing_proofs=missing,
-                reason="Fresh route/provider proof is required before execution.",
+                reason=reason,
             )
 
         return RouteDecision(
@@ -235,7 +248,10 @@ class BubblesControlPlane:
             route_kind=spec.route_kind,
             adapter_id=spec.adapter_id,
             action=request.action,
-            reason="Route selected; execution still requires route-native receipt/readback.",
+            reason=(
+                "Route selected; for writes the one-use execution lease has been verified. "
+                "Execution still requires route-native receipt/readback."
+            ),
         )
 
     @staticmethod
