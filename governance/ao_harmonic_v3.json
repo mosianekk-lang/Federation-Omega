@@ -1,8 +1,8 @@
 {
   "schema": "AO-HARMONIC-GENOME-V3",
-  "version": "3.2.1",
+  "version": "3.2.2",
   "owner": "Kim Kagiso Mosiane",
-  "state": "AO_HARMONIC_BASE_PROVIDER_OBSERVATION_CANARY_VALIDATED_FOREST_FIRST_OMEGA_SOURCE_IMPLEMENTED",
+  "state": "AO_HARMONIC_BASE_PROVIDER_OBSERVATION_CANARY_VALIDATED_FOREST_FIRST_OMEGA_SHADOW_VALIDATED_NO_EXTERNAL_EFFECT",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "purpose": "Event-driven, stateful Federation cognitive operating fabric with Forest-First Ω strategic perception, HORIZON-Ω adaptive foresight, proof, mission, resource, learning and architecture-control primitives.",
@@ -37,13 +37,20 @@
   },
   "forest_first_omega": {
     "engine_id": "FOREST-FIRST-OMEGA-V1",
+    "maturity": "SHADOW_VALIDATED_FOREST_FIRST_OMEGA_SYSTEM_SPECIFIC_NO_EXTERNAL_EFFECT",
     "purpose": "Identify the real problem, larger outcome, causal roots, strategic forest and decision-changing pathways before optimising the immediate tree.",
     "prime_rule": "ACT_ON_RISK_ACCUSE_ON_PROOF",
     "horizon_engine": "HORIZON-OMEGA-V1",
     "legacy_controls_preserved": ["FFJOS-CANONICAL-001", "FOREST_FIRST_JUSTICE_GATE", "FOREST_FIRST_ANTICIPATORY_ENGINE", "FOREST_FIRST_CREATOR_MODE", "MERITS_GENOME", "LEGAL_ROUTE_CARD", "POSITION_CHANGE_GATE", "TEACH_BACK", "PLEADING_INTEGRITY"],
     "route_failure_rule": "ROUTE_FAILURE_IS_NOT_OBJECTIVE_FAILURE",
     "owner_burden_rule": "SYSTEM_FIRST_FOR_SAFE_REPEATABLE_OPERATIONAL_WORK",
-    "simulation_truth_class": "HYPOTHESIS_NOT_FACT"
+    "simulation_truth_class": "HYPOTHESIS_NOT_FACT",
+    "shadow_id": "FOREST-FIRST-OMEGA-REAL-MISSION-CONTROL-SHADOW-001",
+    "shadow_source_commit": "4128e659e7503a602fc56ebbb7cc713ba298d04b",
+    "shadow_source_pr": 512,
+    "shadow_postmerge_airlock_run": 31963431209,
+    "shadow_postmerge_bubbles_run": 31963431142,
+    "shadow_postmerge_leak_guard_run": 31963431143
   },
   "state_layers": ["IMMUTABLE_EVENT_TRUTH", "CURRENT_VERIFIED_PROJECTION", "DERIVED_INTERPRETATION"],
   "maturity_ladder": ["DESIGN_ONLY", "SOURCE_IMPLEMENTED", "DETERMINISTIC_TESTED", "ADVERSARIALLY_TESTED", "SHADOW_VALIDATED", "CANARY_VALIDATED", "WORKFLOW_VERIFIED", "OPERATIONAL_VERIFIED", "CANONICAL"],
@@ -51,6 +58,7 @@
     "source_is_not_runtime": true,
     "tests_are_not_provider_effect": true,
     "synthetic_benchmark_is_not_operational_comparison": true,
+    "architectural_reference_fixture_is_not_historical_runtime_measurement": true,
     "action_specific_readback_required_for_provider_claim": true,
     "rollback_required_for_consequential_runtime_promotion_where_applicable": true,
     "policy_candidate_must_outperform_incumbent_before_promotion": true,
@@ -64,10 +72,12 @@
     "tests": [
       "tests/test_ao_harmonic_v3.py",
       "tests/test_phoenix_provider_cutover_v3_forest_first_omega.py",
+      "tests/test_phoenix_provider_cutover_v3_forest_first_omega_shadow.py",
       "tests/test_phoenix_provider_cutover_v3_ao_harmonic_provider_canary.py"
     ],
     "benchmark": "ao_harmonic_v3/benchmark.py",
-    "shadow": "ao_harmonic_v3/shadow.py",
+    "base_shadow": "ao_harmonic_v3/shadow.py",
+    "forest_first_omega_shadow": "ao_harmonic_v3/forest_omega_shadow.py",
     "provider_observation_bridge": "ao_harmonic_v3/provider_canary.py"
   },
   "provider_observation_bridge": {
@@ -97,10 +107,12 @@
     "forest_first_omega": "governance/forest_first_omega_v1.json",
     "horizon_omega": "governance/horizon_omega_v1.json"
   },
+  "next_gate": "MEASURE_FOREST_FIRST_OMEGA_REAL_OPERATIONAL_OUTCOMES; ONLY ADD_A_CANARY_IF_IT_TESTS_A_DISTINCT_UNPROVEN_CAPABILITY_WITH_CLEAR_INCREMENTAL_VALUE",
   "truth_boundary": {
     "base_ao_harmonic_shadow_validated": true,
     "base_provider_observation_canary_validated": true,
-    "forest_first_omega_integration_shadow_validated": false,
+    "forest_first_omega_integration_shadow_validated": true,
+    "forest_first_omega_provider_canary_validated": false,
     "provider_deployed": false,
     "provider_runtime_verified": false,
     "hidden_cross_chat_execution_claimed": false,
@@ -109,6 +121,7 @@
     "workflow_verified": false,
     "operationally_verified": false,
     "simulation_is_fact": false,
-    "risk_signal_is_accusation": false
+    "risk_signal_is_accusation": false,
+    "global_superiority_proved": false
   }
 }
