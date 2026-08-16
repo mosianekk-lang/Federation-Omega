@@ -15,6 +15,7 @@ from .evolution import (
 from .forest_omega import ForestFirstOmega
 from .graphs import MissionGraph, ProofGraph, StateFabric
 from .horizon import HorizonOmega
+from .intelligence_router import AdaptiveIntelligenceRouter
 from .models import FederationEvent, Maturity, RiskClass
 from .resource_market import ResourceMarket
 from .science_and_routes import FederationDigitalTwin, FormationEngine, OmegaScientia
@@ -90,6 +91,7 @@ class AOHarmonicV3:
         self.digital_twin = FederationDigitalTwin()
         self.horizon = HorizonOmega()
         self.cost = PreRevenueCostGovernor()
+        self.intelligence = AdaptiveIntelligenceRouter(cost_governor=self.cost)
         self.forest = ForestFirstOmega(
             horizon=self.horizon,
             scientia=self.scientia,
@@ -118,6 +120,7 @@ class AOHarmonicV3:
             "classification": self.boundary_build.classify(failure_type),
             "formation": "ROUTE_SEARCH_REQUIRED",
             "forest_first_omega": "AUTO_REROUTE_REMODEL_THEN_BUILD",
+            "adaptive_intelligence_router": "REASSESS_AFTER_FAILURE_BEFORE_UNCHANGED_RETRY",
             "cost_governor": "CHEAPEST_EQUIVALENT_ROUTE_BEFORE_PAID_ESCALATION",
             "owner_surface": "OBJECTIVE_LEVEL_ONLY",
             "unchanged_retry": "PROHIBITED_AFTER_REPEAT_FINGERPRINT",
@@ -129,6 +132,7 @@ class AOHarmonicV3:
             "failure_genome": "CREATE_OR_UPDATE",
             "scientific_review": "REQUIRED",
             "forest_first_omega": "REMODEL_AND_CREATE_LEARNING_CANDIDATE",
+            "adaptive_intelligence_router": "REASSESS_AND_RAISE_TIER_IF_CORRECTION_REVEALS_MATERIAL_UNCERTAINTY",
             "policy_candidate": "ELIGIBLE",
             "event_id": event.event_id,
         }
@@ -139,6 +143,7 @@ class AOHarmonicV3:
             "resource_market": "REFRESH",
             "open_builds": "RECHECK",
             "forest_first_omega": "RECOMPUTE_PATHS_AND_HORIZON",
+            "adaptive_intelligence_router": "RECHECK_PROVIDER_MODEL_AND_REASONING_BINDINGS",
             "cost_governor": "RECHECK_CHEAPER_INCLUDED_OR_SCALE_TO_ZERO_ROUTE",
             "shortest_safe_canary": "REQUIRED_BEFORE_PROMOTION",
             "event_id": event.event_id,
@@ -152,6 +157,7 @@ class AOHarmonicV3:
             "proof_graph": "PROPAGATE",
             "mission_graph": "RECOMPUTE",
             "forest_first_omega": "REMODEL_ROOTS_FOREST_HORIZON_AND_PATHS",
+            "adaptive_intelligence_router": "REASSESS_IF_EVIDENCE_CHANGES_UNCERTAINTY_CONTRADICTIONS_OR_CONSEQUENCE",
             "event_id": event.event_id,
         }
 
@@ -185,6 +191,7 @@ class AOHarmonicV3:
             "FOREST_FIRST_ANTICIPATORY_ENGINE",
             "FOREST_FIRST_CREATOR_MODE",
             "HORIZON_OMEGA",
+            "ADAPTIVE_INTELLIGENCE_ROUTER",
             "PRE_REVENUE_COST_GOVERNOR",
             "OMEGA_SCIENTIA",
             "LEX_DOMAIN_AUTHORITY",
@@ -211,6 +218,7 @@ class AOHarmonicV3:
             "authority_ceiling": self.AUTHORITY_CEILING,
             "external_effect_default": self.EXTERNAL_EFFECT_DEFAULT,
             "cost_posture": "PRE_REVENUE_ZERO_BASE",
+            "intelligence_routing": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
             "cognitive_cycle": "ROOTS->FOREST->HORIZON->TREES->PATHS->DECISION->OMEGA->READBACK->LEARNING",
         }
 
@@ -223,6 +231,7 @@ def bootstrap() -> dict[str, object]:
         "architecture": "FEDERATION_COGNITIVE_OPERATING_FABRIC",
         "strategic_perception": "FOREST-FIRST-OMEGA",
         "foresight": "HORIZON-OMEGA",
+        "intelligence_routing": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
         "cost_governance": "PRE_REVENUE_ZERO_BASE",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "acceptance": runtime.restore_acceptance_test(),
@@ -232,5 +241,6 @@ def bootstrap() -> dict[str, object]:
             "provider_deployed": False,
             "operationally_verified": False,
             "provider_billing_caps_configured": False,
+            "model_or_reasoning_selection_executed": False,
         },
     }
