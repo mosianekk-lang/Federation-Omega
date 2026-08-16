@@ -1,0 +1,54 @@
+name: External Action Firewall
+
+on:
+  pull_request:
+    types: [opened, synchronize, reopened, edited]
+  push:
+    branches: [main]
+
+permissions:
+  contents: read
+
+concurrency:
+  group: external-action-firewall-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  firewall:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run external-action firewall and control-plane regressions
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_external_action_firewall -v
+          python -m unittest tests.test_bubbles_control_plane -v
+
+      - name: Assert fail-closed mutation policy remains wired
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from bubbles.control_plane import ActionRequest, BubblesControlPlane, EffectClass
+          from governance.external_action_firewall import LEASE_PROOF
+
+          control = BubblesControlPlane()
+          req = ActionRequest(
+              adapter_id='gmail',
+              action='send_draft',
+              effect=EffectClass.CONSEQUENTIAL_WRITE,
+              target_alias='LEGAL_EXTERNAL_SEND',
+              payload={},
+          )
+          blocked = control.decide(req, frozenset({'connector_permission_verified'}))
+          if blocked.state != 'CONSTRAINT' or LEASE_PROOF not in blocked.missing_proofs:
+              raise SystemExit('WRITE_LEASE_FAIL_CLOSED_REGRESSION')
+          print('EXTERNAL_ACTION_FIREWALL_FAIL_CLOSED_VERIFIED')
+          PY
