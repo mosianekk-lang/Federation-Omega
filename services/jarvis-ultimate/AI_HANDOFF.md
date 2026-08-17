@@ -1,6 +1,6 @@
 # AI handoff
 
-Continue from release 1.2.0. Do not rebuild the core or weaken any action schema.
+Continue from release 1.3.0. Do not rebuild the core or weaken any action schema.
 
 Before external work:
 

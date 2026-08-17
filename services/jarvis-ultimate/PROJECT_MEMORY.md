@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Release: 1.2.0 candidate.
+- Release: 1.3.0 candidate.
 - Maturity: `IMPLEMENTED_TESTED_LOCAL`.
 - Canonical runtime: deterministic JARVIS graph; ADK 2 Workflow calls the same graph.
 - Direct dependencies: `google-adk==2.1.0`, `google-genai==2.6.0`.
@@ -34,6 +34,13 @@
 - Workspace scope coverage now includes share, move, forward and archive.
 - Mathematics runs inside the chat graph with `/math`; invalid function arity fails closed.
 - The browser shell is public so a protected API token can be entered after initial navigation.
+
+## Defects repaired from the 1.2 independent challenge
+
+- Effect-completion prose now fails closed across past-tense effects, live/ready claims and “all work done” variants; action fruit still requires a separate structured executor readback.
+- Low-entropy repeated-byte HMAC keys are rejected even when they satisfy the length floor.
+- Breaker restoration now requires two valid HMAC receipts from distinct registered verifier keys; invented identifiers cannot restore a route.
+- An authenticated ledger checkpoint now blocks append after chain recomputation and detects ledger deletion or rollback before recreation.
 
 ## Open proof gates
 

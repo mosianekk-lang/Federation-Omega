@@ -47,12 +47,26 @@ def semantic_response_valid(result: ReasoningResult) -> bool:
     rejected = ("provider route failed", "generic health", "undefined", "null")
     if any(marker in lowered for marker in rejected):
         return False
-    effect_words = r"deploy(?:ed|ment)?|sent|send|delet(?:ed|ion)|grant(?:ed)?|promot(?:ed|ion)|creat(?:ed|ion)|updat(?:ed|e)|shar(?:ed|e)|archiv(?:ed|e)"
-    completion_words = r"success|successful|successfully|complete|completed|done"
-    unsupported_effect_claim = re.search(rf"\b(?:{effect_words})\b.{{0,36}}\b(?:{completion_words})\b", lowered)
-    unsupported_reverse_claim = re.search(rf"\b(?:{completion_words})\b.{{0,36}}\b(?:{effect_words})\b", lowered)
-    first_person_effect_claim = re.search(rf"\b(?:i|we)\s+(?:have\s+)?(?:{effect_words})\b", lowered)
-    return not bool(unsupported_effect_claim or unsupported_reverse_claim or first_person_effect_claim)
+    # This graph has no effectful executor or trusted provider receipt. Therefore
+    # any positive effect-completion assertion must fail closed. A future action
+    # lane must validate an action-specific structured readback outside this chat
+    # graph instead of allowing prose to stand in for fruit.
+    effect_past = re.compile(
+        r"\b(?:deployed|sent|deleted|granted|promoted|created|updated|shared|archived|moved|scheduled|forwarded|released|published|uploaded|written|executed|invoked|restored|rolled\s+back)\b"
+    )
+    effect_noun = r"deployment|rollout|release|promotion|operation|action|task|request|work|email|message|file|resource|permission|access|service"
+    completion = r"success|successful|successfully|complete|completed|done|live|ready|finished|passed"
+    for match in effect_past.finditer(lowered):
+        prefix = lowered[max(0, match.start() - 32):match.start()]
+        if not re.search(r"\b(?:not|never|no|cannot|can't|without)\b[^.!?]{0,24}$", prefix):
+            return False
+    if re.search(rf"\b(?:{effect_noun})\b[^.!?]{{0,48}}\b(?:{completion})\b", lowered):
+        return False
+    if re.search(rf"\b(?:{completion})\b[^.!?]{{0,48}}\b(?:{effect_noun})\b", lowered):
+        return False
+    if re.search(r"\b(?:all|every)\s+(?:requested\s+)?(?:task|request|action|work)\s+(?:is|was|has been)\s+(?:done|complete|completed|finished)\b", lowered):
+        return False
+    return True
 
 
 class GovernedReasoningGraph:

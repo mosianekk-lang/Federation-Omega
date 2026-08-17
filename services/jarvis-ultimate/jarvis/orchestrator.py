@@ -35,7 +35,7 @@ class Jarvis:
         return {
             "ok": self.ledger.verify(),
             "service": "jarvis-ultimate",
-            "version": "1.2.0",
+            "version": "1.3.0",
             "reasoner": self.reasoner.name,
             "providerMode": self.reasoner.provider_mode,
             "providerSessionProof": self.session_provider_proof,
@@ -100,7 +100,7 @@ class Jarvis:
             evidence_hash = semantic_fingerprint({"route": route, "state": "QUARANTINED"})
             event = self.ledger.append(route, "QUARANTINED", elapsed, evidence_hash, semantic_fruit=False)
             return {
-                "answer": "Provider route is quarantined pending two independent bounded recovery proofs.",
+                "answer": "Provider route is quarantined pending two authenticated bounded recovery receipts from distinct registered verifiers.",
                 "route": route,
                 "elapsedMs": elapsed,
                 "learningHash": event["hash"],

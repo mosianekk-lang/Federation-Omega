@@ -190,6 +190,16 @@ def semantic_fingerprint(value: Any) -> str:
     return hashlib.sha256(stable_json(value).encode()).hexdigest()
 
 
+def _strong_hmac_key(key: bytes | None) -> bool:
+    """Reject short and obviously low-entropy HMAC material.
+
+    This is only a local verifier guard. Production keys must still be generated
+    and held by an external secret authority.
+    """
+
+    return bool(key) and len(key) >= 32 and len(set(key)) >= 8
+
+
 def _b64decode(value: str) -> bytes:
     return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
 
@@ -231,7 +241,7 @@ class PermitVerifier:
 
     def __init__(self, secret: str | bytes | None, nonce_path: str | Path, clock: Callable[[], float] = time.time) -> None:
         key = secret.encode() if isinstance(secret, str) else secret
-        self.secret = key if key and len(key) >= self.MINIMUM_KEY_BYTES else None
+        self.secret = key if _strong_hmac_key(key) else None
         self.key_too_weak = bool(key) and self.secret is None
         self.nonce_path = Path(nonce_path)
         self.nonce_path.parent.mkdir(parents=True, exist_ok=True)
@@ -434,7 +444,7 @@ class LearningLedger:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
         key = checkpoint_secret.encode() if isinstance(checkpoint_secret, str) else checkpoint_secret
-        self.checkpoint_secret = key if key and len(key) >= 32 else None
+        self.checkpoint_secret = key if _strong_hmac_key(key) else None
         self.checkpoint_path = self.path.with_suffix(self.path.suffix + ".checkpoint")
 
     @staticmethod
@@ -468,16 +478,31 @@ class LearningLedger:
             os.fsync(handle.fileno())
         os.replace(temporary, self.checkpoint_path)
 
+    def _checkpoint_matches(self, head: str, count: int) -> bool:
+        if not self.checkpoint_secret:
+            return True
+        if count == 0:
+            return not self.checkpoint_path.exists()
+        try:
+            checkpoint = json.loads(self.checkpoint_path.read_text(encoding="utf-8"))
+            signature = checkpoint.pop("signature")
+            expected = hmac.new(self.checkpoint_secret, stable_json(checkpoint).encode(), hashlib.sha256).hexdigest()
+            return hmac.compare_digest(signature, expected) and checkpoint == {"version": 1, "head": head, "count": count}
+        except (OSError, json.JSONDecodeError, KeyError, TypeError):
+            return False
+
     def append(self, route: str, outcome: str, elapsed_ms: int, evidence_hash: str, semantic_fruit: bool = False) -> dict[str, Any]:
         if outcome not in {"SUCCESS", "FAILURE", "QUARANTINED", "INPUT_REJECTED"}:
             raise ValueError("OUTCOME_INVALID")
+        if self.checkpoint_secret and self.checkpoint_path.exists() and not self.path.exists():
+            raise LedgerIntegrityError("LEDGER_ROLLBACK_OR_DELETION_DETECTED")
         self.path.touch(exist_ok=True)
         with self.path.open("a+", encoding="utf-8") as handle:
             fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
             handle.seek(0)
             lines = handle.read().splitlines()
             valid, previous, count = self._validate_lines(lines)
-            if not valid:
+            if not valid or not self._checkpoint_matches(previous, count):
                 fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
                 raise LedgerIntegrityError("LEDGER_INTEGRITY_FAILED_WRITE_BLOCKED")
             event = {
@@ -502,7 +527,7 @@ class LearningLedger:
 
     def verify(self) -> bool:
         if not self.path.exists():
-            return True
+            return not self.checkpoint_path.exists()
         with self.path.open("r", encoding="utf-8") as handle:
             fcntl.flock(handle.fileno(), fcntl.LOCK_SH)
             lines = handle.read().splitlines()
@@ -512,15 +537,7 @@ class LearningLedger:
             return False
         if not self.checkpoint_secret:
             return True
-        if count == 0:
-            return not self.checkpoint_path.exists()
-        try:
-            checkpoint = json.loads(self.checkpoint_path.read_text(encoding="utf-8"))
-            signature = checkpoint.pop("signature")
-            expected = hmac.new(self.checkpoint_secret, stable_json(checkpoint).encode(), hashlib.sha256).hexdigest()
-            return hmac.compare_digest(signature, expected) and checkpoint == {"version": 1, "head": head, "count": count}
-        except (OSError, json.JSONDecodeError, KeyError, TypeError):
-            return False
+        return self._checkpoint_matches(head, count)
 
     @property
     def authenticated_checkpoint_enabled(self) -> bool:
@@ -535,16 +552,41 @@ class RecoveryProof:
     evidence_hash: str
     passed: bool
     checked_at: int
+    signature: str = ""
+    receipt_version: int = 1
+
+    def signed_body(self) -> bytes:
+        return stable_json(
+            {
+                "receiptVersion": self.receipt_version,
+                "route": self.route,
+                "proofId": self.proof_id,
+                "verifierId": self.verifier_id,
+                "evidenceHash": self.evidence_hash,
+                "passed": self.passed,
+                "checkedAt": self.checked_at,
+            }
+        ).encode()
 
 
 class CircuitBreaker:
-    def __init__(self, threshold: int = 2, clock: Callable[[], float] = time.time) -> None:
+    def __init__(
+        self,
+        threshold: int = 2,
+        clock: Callable[[], float] = time.time,
+        recovery_verifier_keys: dict[str, str | bytes] | None = None,
+    ) -> None:
         if threshold < 1:
             raise ValueError("THRESHOLD_INVALID")
         self.threshold = threshold
         self.clock = clock
         self.failures: dict[str, int] = {}
         self.quarantined: set[str] = set()
+        self.recovery_verifier_keys: dict[str, bytes] = {}
+        for verifier_id, supplied in (recovery_verifier_keys or {}).items():
+            key = supplied.encode() if isinstance(supplied, str) else supplied
+            if _strong_hmac_key(key):
+                self.recovery_verifier_keys[verifier_id] = key
 
     def allows(self, route: str) -> bool:
         return route not in self.quarantined
@@ -561,14 +603,36 @@ class CircuitBreaker:
 
     def restore_after_independent_proof(self, route: str, proofs: tuple[RecoveryProof, ...]) -> bool:
         now = int(self.clock())
-        valid = [
-            proof for proof in proofs
-            if proof.route == route and proof.passed and 0 <= now - proof.checked_at <= 900
-            and len(proof.proof_id) >= 8 and len(proof.verifier_id) >= 8 and len(proof.evidence_hash) == 64
-        ]
+        valid: list[tuple[RecoveryProof, str]] = []
+        for proof in proofs:
+            key = self.recovery_verifier_keys.get(proof.verifier_id)
+            if not key:
+                continue
+            expected = hmac.new(key, proof.signed_body(), hashlib.sha256).hexdigest()
+            try:
+                valid_hash = len(proof.evidence_hash) == 64 and int(proof.evidence_hash, 16) >= 0
+            except ValueError:
+                valid_hash = False
+            if (
+                proof.receipt_version == 1
+                and proof.route == route
+                and proof.passed
+                and 0 <= now - proof.checked_at <= 900
+                and len(proof.proof_id) >= 8
+                and len(proof.verifier_id) >= 8
+                and valid_hash
+                and hmac.compare_digest(proof.signature, expected)
+            ):
+                valid.append((proof, hashlib.sha256(key).hexdigest()))
         if len(valid) < 2:
             return False
-        if len({proof.proof_id for proof in valid}) < 2 or len({proof.verifier_id for proof in valid}) < 2 or len({proof.evidence_hash for proof in valid}) < 2:
+        receipts = [proof for proof, _ in valid]
+        if (
+            len({proof.proof_id for proof in receipts}) < 2
+            or len({proof.verifier_id for proof in receipts}) < 2
+            or len({proof.evidence_hash for proof in receipts}) < 2
+            or len({key_hash for _, key_hash in valid}) < 2
+        ):
             return False
         self.failures[route] = 0
         self.quarantined.discard(route)

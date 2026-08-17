@@ -52,6 +52,12 @@ def mint_permit(secret, mission_id, mission_version, action_id, capability, subj
     return f"{encode(body)}.{encode(signature)}"
 
 
+def signed_recovery_proof(route, proof_id, verifier_id, evidence_hash, checked_at, secret):
+    unsigned = RecoveryProof(route, proof_id, verifier_id, evidence_hash, True, checked_at)
+    signature = hmac.new(secret.encode(), unsigned.signed_body(), hashlib.sha256).hexdigest()
+    return RecoveryProof(route, proof_id, verifier_id, evidence_hash, True, checked_at, signature)
+
+
 def authority(action, resource, subject="owner"):
     scopes = WORKSPACE_MINIMUM_SCOPES.get(action, frozenset())
     return AuthorityEnvelope(
@@ -97,8 +103,11 @@ class GenericClaimReasoner:
     name = "generic-claim-route"
     provider_mode = "gemini_developer"
 
+    def __init__(self, claim="Deployment successfully completed for every requested resource."):
+        self.claim = claim
+
     def respond(self, message, context):
-        return ReasoningResult("Deployment successfully completed for every requested resource.", self.provider_mode, "m", "v1")
+        return ReasoningResult(self.claim, self.provider_mode, "m", "v1")
 
 
 class JarvisTests(unittest.TestCase):
@@ -183,6 +192,16 @@ class JarvisTests(unittest.TestCase):
         self.assertEqual(reason, "FORMATION_KEY_TOO_WEAK")
         self.assertFalse(consumed)
 
+    def test_repeated_byte_formation_key_is_rejected(self):
+        verifier = PermitVerifier("a" * 32, "/tmp/unused-repeated-key-test")
+        valid, reason, consumed = verifier.verify_and_optionally_consume(
+            "x.y", mission_id="M", mission_version=1, action_id="a", capability="c", subject_id="s",
+            resource="r", arguments_hash="h", idempotency_key="i", consume=False,
+        )
+        self.assertFalse(valid)
+        self.assertEqual(reason, "FORMATION_KEY_TOO_WEAK")
+        self.assertFalse(consumed)
+
     def test_input_validation_never_quarantines_healthy_provider(self):
         with tempfile.TemporaryDirectory() as directory:
             app = Jarvis(directory)
@@ -201,19 +220,47 @@ class JarvisTests(unittest.TestCase):
                 self.assertEqual(reasoner.calls, 2)
 
     def test_generic_effect_completion_claim_is_rejected(self):
-        with tempfile.TemporaryDirectory() as directory:
-            result = Jarvis(directory, reasoner=GenericClaimReasoner()).chat("status")
-            self.assertFalse(result["semanticFruit"])
-            self.assertEqual(result["error"], "SEMANTIC_FRUIT_INVALID")
+        claims = (
+            "Deployment successfully completed for every requested resource.",
+            "All requested work is done.",
+            "The production service is now live.",
+            "Permissions have been granted.",
+        )
+        for claim in claims:
+            with self.subTest(claim=claim), tempfile.TemporaryDirectory() as directory:
+                result = Jarvis(directory, reasoner=GenericClaimReasoner(claim)).chat("status")
+                self.assertFalse(result["semanticFruit"])
+                self.assertEqual(result["error"], "SEMANTIC_FRUIT_INVALID")
 
     def test_breaker_recovery_requires_two_independent_fresh_proofs(self):
         now = int(time.time())
-        breaker = CircuitBreaker(1, clock=lambda: now)
+        keys = {
+            "verifier-one": "0123456789abcdef0123456789abcdef",
+            "verifier-two": "fedcba9876543210fedcba9876543210",
+        }
+        breaker = CircuitBreaker(1, clock=lambda: now, recovery_verifier_keys=keys)
         breaker.record("route", False)
-        same = RecoveryProof("route", "proof-one", "verifier-one", "a" * 64, True, now)
+        same = signed_recovery_proof("route", "proof-one", "verifier-one", "a" * 64, now, keys["verifier-one"])
         self.assertFalse(breaker.restore_after_independent_proof("route", (same, same)))
-        other = RecoveryProof("route", "proof-two", "verifier-two", "b" * 64, True, now)
+        other = signed_recovery_proof("route", "proof-two", "verifier-two", "b" * 64, now, keys["verifier-two"])
         self.assertTrue(breaker.restore_after_independent_proof("route", (same, other)))
+
+    def test_breaker_recovery_rejects_fabricated_distinct_receipts(self):
+        now = int(time.time())
+        breaker = CircuitBreaker(
+            1,
+            clock=lambda: now,
+            recovery_verifier_keys={
+                "verifier-one": "0123456789abcdef0123456789abcdef",
+                "verifier-two": "fedcba9876543210fedcba9876543210",
+            },
+        )
+        breaker.record("route", False)
+        fabricated = (
+            RecoveryProof("route", "proof-one", "verifier-one", "a" * 64, True, now, "0" * 64),
+            RecoveryProof("route", "proof-two", "verifier-two", "b" * 64, True, now, "1" * 64),
+        )
+        self.assertFalse(breaker.restore_after_independent_proof("route", fabricated))
 
     def test_atomic_ledger_survives_concurrent_appends(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -236,13 +283,22 @@ class JarvisTests(unittest.TestCase):
 
     def test_authenticated_ledger_checkpoint_detects_recomputation(self):
         with tempfile.TemporaryDirectory() as directory:
-            ledger = LearningLedger(Path(directory) / "events.jsonl", "a" * 32)
+            ledger = LearningLedger(Path(directory) / "events.jsonl", "0123456789abcdef0123456789abcdef")
             ledger.append("route", "SUCCESS", 1, "proof", True)
             self.assertTrue(ledger.verify())
             checkpoint = json.loads(ledger.checkpoint_path.read_text(encoding="utf-8"))
             checkpoint["count"] = 99
             ledger.checkpoint_path.write_text(json.dumps(checkpoint), encoding="utf-8")
             self.assertFalse(ledger.verify())
+
+    def test_authenticated_ledger_detects_deletion_and_blocks_recreation(self):
+        with tempfile.TemporaryDirectory() as directory:
+            ledger = LearningLedger(Path(directory) / "events.jsonl", "0123456789abcdef0123456789abcdef")
+            ledger.append("route", "SUCCESS", 1, "proof", True)
+            ledger.path.unlink()
+            self.assertFalse(ledger.verify())
+            with self.assertRaisesRegex(LedgerIntegrityError, "LEDGER_ROLLBACK_OR_DELETION_DETECTED"):
+                ledger.append("route", "SUCCESS", 2, "proof-2", True)
 
     def test_math_engine_is_integrated_and_rejects_code_arity_and_exponents(self):
         self.assertAlmostEqual(calculate("sqrt(81) + sin(pi / 2)").value, 10.0)

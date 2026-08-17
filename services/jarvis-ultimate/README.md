@@ -1,4 +1,4 @@
-# JARVIS Ultimate Federation v1.2
+# JARVIS Ultimate Federation v1.3
 
 JARVIS is a governed interactive intelligence foundation that combines an ADK 2 workflow entrypoint, an explicitly selected Google GenAI provider, typed Formation action/resource/argument schemas, a resource-bound single-use permit verifier, a deterministic mathematics engine, a 32-principle scientific doctrine, route quarantine, and concurrency-safe learning telemetry.
 
@@ -86,7 +86,7 @@ PYTHONPATH=. python -m unittest discover -s tests -p 'test_*.py' -v
 python -m compileall -q jarvis tests
 ```
 
-The 22 tests cover provider fail-closed behavior, false-live prevention, typed action/resource/argument bypass attempts, permit binding/expiry/replay/key strength, enforced quarantine and proof-based recovery, generic effect-claim rejection, input-failure isolation, concurrent ledger writes, authenticated checkpoints, tamper write refusal, authority intersection, interactive safe mathematics, science doctrine invariants, protected browser bootstrap, and the ADK workflow entrypoint source contract.
+The 25 tests cover provider fail-closed behavior, false-live prevention, typed action/resource/argument bypass attempts, permit binding/expiry/replay/key strength, enforced quarantine, authenticated independent recovery receipts, four generic effect-claim variants, input-failure isolation, concurrent ledger writes, authenticated checkpoints, deletion/rollback and tamper write refusal, authority intersection, interactive safe mathematics, science doctrine invariants, protected browser bootstrap, and the ADK workflow entrypoint source contract.
 
 ## Deployment gate
 
