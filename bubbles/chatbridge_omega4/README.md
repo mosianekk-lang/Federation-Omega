@@ -1,88 +1,154 @@
 # ChatBridge Ω4 — Governed Durable Conversation OS
 
-ChatBridge Ω4 evolves the Drive/Kim-Dataverse continuity protocol into a source-backed
-durable conversation kernel while preserving the existing ChatGov governance contract.
+ChatBridge Ω4 is a source-backed continuity kernel for preserving and restoring governed
+conversation state without pretending that a summary is a verbatim transcript.
 
-The current source generation is **ChatBridge Ω4.8**. It retains every event that an
-authorised ChatBridge adapter can observe in a Full-Fidelity Conversation Ledger (FFCL):
+The current source generation is **ChatBridge Ω4.9**. It combines:
 
-- every user, assistant, system, developer, tool and connector event is captured in order;
-- each event has a canonical content hash and a previous-event hash;
-- the complete sequence also has a Merkle root and start/end watermarks;
-- duplicate capture is idempotent, while conflicting reuse fails closed;
-- attachments are represented by stable IDs, hashes, locators and availability state;
-- corrections append new events instead of rewriting prior history;
-- exact restore is allowed only when the complete start-to-finish range is present;
-- legacy or incomplete conversations restore with an explicit gap manifest;
-- terminal intent is never represented as successful execution; and
-- uncaptured content is never guessed or reconstructed as fact.
+- Ω4.7 Conversation Exhaustion Guard and empirical playbook;
+- Ω4.8 Full-Fidelity Conversation Ledger (FFCL); and
+- Ω4.9 Alpha→Omega multi-path / multi-stream capture assurance.
 
-Ω4.8 includes all Ω4.7 protections:
+## What Ω4.9 adds
 
-- Conversation Exhaustion Guard with continuous write-ahead checkpoints;
-- pre-heavy-operation checkpoint and readback;
-- observable Green / Amber / Red / Terminal risk states;
-- preemptive migration before likely context exhaustion;
-- fail-closed terminal recovery from the last verified checkpoint;
-- privacy-minimised empirical learning-event storage;
-- evidence-bound ChatGPT playbook rules with contradiction holds; and
-- documentation as supplementary evidence rather than ground truth.
+A single capture route can fail, truncate, misorder or contradict another route. Ω4.9
+therefore registers multiple acquisition paths and conversation streams around one exact
+source conversation identity.
+
+Capture paths include provider API/export, rendered DOM, browser archive, shared
+transcript, connector readback, attachment store and checkpoint capsule. Streams include
+user, assistant, system, developer, tool call/result, connector, attachment, decision,
+correction, checkpoint and terminal events.
+
+The runtime:
+
+- binds every path and stream to an exact `conversation_key` and namespace;
+- stages out-of-order observations until the missing earlier sequence arrives;
+- deduplicates identical observations across paths;
+- quarantines same-identity/different-payload conflicts;
+- ranks failover routes with AO-HARMONIC's `FormationEngine`;
+- appends one stable canonical event to FFCL;
+- preserves path corroboration outside the FFCL event hash so later evidence cannot mutate
+  the canonical chain;
+- verifies global and per-stream watermarks;
+- distinguishes exact single-path transcript recovery from stronger multi-path/multi-stream
+  assurance;
+- emits sequence-preserving, hash-addressed replay chunks below the configured payload
+  budget; and
+- never treats terminal-visible intent as executed work.
 
 See:
 
+- `ALPHA_OMEGA_MULTIPATH_MULTISTREAM.md`
 - `FULL_FIDELITY_CONVERSATION_LEDGER.md`
 - `CONVERSATION_EXHAUSTION_AND_EMPIRICAL_PLAYBOOK.md`
+- `governance/chatbridge_alpha_omega_multipath_multistream_v1.json`
 - `governance/chatbridge_full_fidelity_ledger_v1.json`
 
 ## Current runtime
 
-Package-level imports use Ω4.8:
+Package-level imports use Ω4.9:
 
 ```python
 from bubbles.chatbridge_omega4 import ChatBridgeOmega4
 ```
 
-The explicit classes remain available:
+Explicit versions remain available:
 
-- `ChatBridgeOmega48` — current full-fidelity runtime;
-- `ChatBridgeOmega47` — prior Ω4.7 runtime for compatibility and historical tests.
+- `ChatBridgeOmega49` — current Alpha→Omega multi-path/multi-stream runtime;
+- `ChatBridgeOmega48` — FFCL runtime;
+- `ChatBridgeOmega47` — exhaustion-guard runtime.
 
-## What this package proves
+## Restore modes
 
-This package implements a provider-neutral local core using Python's standard library only:
+Ω4.9 produces these assurance modes:
 
-- dynamic user namespaces (`chatbridge "X"` semantics);
-- immutable namespace IDs separate from human labels;
-- atomic active-generation rebinding;
-- immutable checkpoint generations;
-- exact historical restore without silently moving the active pointer;
-- clone/branch ancestry;
-- rename without rewriting generation history;
-- release/tombstone rather than deletion;
-- session-bound restore leases for idempotent reuse;
-- Governance Capsule persistence and approval-gate survival;
-- HOT/WARM/COLD state preservation;
-- provider continuation metadata with mutually exclusive persistence strategies;
-- fail-closed namespace scope collisions;
-- restore-preview reasons for historical, released, branched, materially changed or
-  governance-degraded state;
-- portable Operating Profiles and delta-aware restore assurance;
-- pre-owner assurance and audit-before-architecture controls;
-- write-ahead conversation-health checkpointing;
-- terminal-warning false-backup prevention;
-- empirical learning-event and playbook-rule persistence;
-- rule promotion that requires independent empirical support;
-- exact source-conversation identity binding;
-- append-only ordered event capture;
-- SHA-256 content and previous-event hash chaining;
-- Merkle-root transcript sealing;
-- expected first/last sequence watermarks;
-- explicit missing-range and external-dependency reporting;
-- exact versus bounded transcript restore modes;
-- terminal attempted-action versus verified-execution separation; and
-- legacy import without invented content.
+- `EXACT_MULTIPATH_MULTISTREAM_RESTORE`
+- `EXACT_SINGLE_PATH_TRANSCRIPT_RESTORE`
+- `BOUNDED_MULTIPATH_MULTISTREAM_RESTORE`
+- `REJECT_CONFLICTED`
+- `NO_ALPHA_OMEGA_CAPTURE`
 
-Run the deterministic package suites from repository root:
+The strongest mode requires:
+
+1. exact sealed FFCL coverage from declared start to finish;
+2. explicit global sequence for every event;
+3. complete required stream watermarks;
+4. at least two independent path groups supporting every canonical event;
+5. no unresolved critical conflict; and
+6. all required payloads and artifacts available.
+
+Anything weaker remains useful but is labelled precisely rather than promoted.
+
+## Identity and continuity stack
+
+```text
+Exact source conversation_key
+    ↓
+Human namespace / immutable namespace_id
+    ↓
+Generation / immutable handoff_id / checkpoint fingerprint
+    ↓
+Governance Capsule / Operating Profile
+    ↓
+HOT / WARM / COLD continuity state
+    ↓
+Conversation Exhaustion Guard checkpoint
+    ↓
+Alpha→Omega PATH_REGISTER + STREAM_REGISTER
+    ↓
+Full-Fidelity Conversation Ledger
+    ↓
+Ordered event hashes + chain head + Merkle root
+    ↓
+Stream watermarks + path corroboration + conflict/gap ledger
+    ↓
+Token-bounded replay chunks
+    ↓
+Provider continuation reference
+    ↓
+Exact next action
+```
+
+## Example
+
+```python
+from bubbles.chatbridge_omega4 import (
+    CaptureObservation,
+    CapturePath,
+    CapturePathKind,
+    ChatBridgeOmega4,
+    ConversationStream,
+    StreamExpectation,
+)
+
+runtime = ChatBridgeOmega4(store)
+runtime.register_capture_path(
+    CapturePath(
+        conversation_key="native-conversation-id",
+        path_id="provider-export",
+        kind=CapturePathKind.NATIVE_EXPORT,
+        source_provider="CHATGPT_EXPORT",
+        independent_group="provider-native",
+        authoritative=True,
+    )
+)
+
+runtime.capture_multipath_stream_events([observation])
+runtime.declare_stream_expectations(
+    "native-conversation-id",
+    [StreamExpectation(ConversationStream.USER, 1, 12)],
+)
+runtime.finalize_multipath_stream_capture(
+    "native-conversation-id",
+    "exact-namespace",
+    expected_last_sequence=37,
+)
+```
+
+## Deterministic test suites
+
+Run from repository root:
 
 ```bash
 python -m unittest \
@@ -94,111 +160,30 @@ python -m unittest \
   bubbles.chatbridge_omega4.test_empirical_playbook \
   bubbles.chatbridge_omega4.test_full_fidelity_ledger \
   bubbles.chatbridge_omega4.test_runtime_omega48 \
+  bubbles.chatbridge_omega4.test_alpha_omega_capture \
+  bubbles.chatbridge_omega4.test_runtime_omega49 \
   -v
 ```
 
-## Identity and continuity stack
-
-```text
-Exact source conversation_key
-    ↓
-Human namespace
-    ↓
-Immutable namespace_id
-    ↓
-Generation
-    ↓
-Immutable handoff_id
-    ↓
-Checkpoint fingerprint
-    ↓
-Governance Capsule
-    ↓
-Operating Profile
-    ↓
-HOT / WARM / COLD continuity state
-    ↓
-Conversation-health checkpoint
-    ↓
-Full-Fidelity Conversation Ledger checkpoint
-    ↓
-Ordered event hashes + chain head + Merkle root
-    ↓
-Attachment/provider-event manifest
-    ↓
-Empirical playbook cursor
-    ↓
-Provider continuation reference
-    ↓
-Exact next action
-```
-
-## Full-fidelity capture contract
-
-An authorised adapter should call the Ω4.8 guard for every observed event. Capture occurs
-before heavy reasoning or provider mutation. The adapter supplies:
-
-- exact source conversation key;
-- monotonic event sequence;
-- role and event type;
-- raw governed content or an explicit downgraded availability state;
-- event occurrence time and provider/source IDs where available;
-- execution state;
-- attachment references and hashes; and
-- minimum necessary metadata.
-
-A conversation is sealed with expected first and last sequence watermarks. Verification
-then produces one of four outcomes:
-
-- `EXACT_TRANSCRIPT_RESTORE`
-- `BOUNDED_TRANSCRIPT_RESTORE`
-- `REJECT_TAMPERED`
-- `NO_TRANSCRIPT`
-
-Exact means the entire declared range is present, the hash chain verifies, all payloads
-needed for context are available and all required artifact references are verified.
-Anything weaker is bounded and includes the precise reason.
-
 ## Legacy conversation recovery
 
-Ω4.8 cannot retroactively create messages that were never stored. For an older exhausted
-conversation, an adapter may import an available ChatGPT export, shared-conversation copy,
-browser archive or another primary transcript source. Imported events preserve their
-original order and provenance. Any missing sequence remains an explicit gap.
+Ω4.9 can reconcile available native exports, shared transcripts, browser archives,
+rendered DOM captures, connector readbacks, attachment stores and prior checkpoints.
+It cannot create a message that was never captured or exported. An older chat becomes exact
+only when a complete primary transcript exists and the sequence/integrity gates pass.
 
-This means:
+## Provider boundary
 
-- future ChatBridge-active conversations can be reconstructed start to finish;
-- older conversations can become exact only when a complete source transcript is supplied;
-- screenshots and checkpoints remain useful, but they do not silently become a verbatim
-  transcript.
+The code can preserve every event delivered by an authorised adapter. It does **not**
+invisibly read every native ChatGPT conversation. Browser installation, signed-in session
+binding, live warning interception and provider-wide capture remain separate gates that
+require provider-native readback.
 
-## Provider continuation modes
+Maturity is always separated:
 
-Ω4 deliberately keeps the runtime persistence mode explicit and mutually exclusive:
+```text
+BUILT → TESTED → MERGED → INSTALLED → BOUND → RUNNING → READ_BACK → ACCEPTED
+```
 
-- `CLIENT_SESSION` — a client-managed Agents SDK session/store identifier;
-- `OPENAI_CONVERSATION` — an OpenAI Conversations API conversation identifier;
-- `OPENAI_PREVIOUS_RESPONSE` — lightweight Responses API continuation;
-- `NONE` — no provider continuation binding.
-
-The provider adapter must select one strategy for a given turn rather than combining
-client-managed session history with server-managed continuation.
-
-## Truth boundaries
-
-The source and deterministic tests do not prove an invisible native ChatGPT hook or
-automatic access to every existing conversation. A connected adapter must deliver the
-events to the ledger. Full-fidelity capture therefore applies wherever ChatBridge Ω4.8 is
-actually active and bound.
-
-The implementation also does not claim:
-
-- exact visibility into a hidden provider quota;
-- automatic recovery of content never captured or exported;
-- provider deployment merely because source code exists;
-- model-weight learning;
-- external legal or operational effects without provider readback; or
-- that a hash-valid transcript proves the truth of every statement inside it.
-
-Integrity of the record and truth of the underlying claims remain separate questions.
+A hash-valid record proves record integrity, not the truth of every statement contained in
+that record. Source completeness, factual truth and provider execution remain distinct.
