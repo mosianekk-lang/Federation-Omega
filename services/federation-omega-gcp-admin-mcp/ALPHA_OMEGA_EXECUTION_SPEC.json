@@ -1,0 +1,56 @@
+{
+  "schema": "ALPHA-OMEGA-EXECUTION-SPEC-1",
+  "version": "0.2.2",
+  "mission": "MISSION-ALPHA-OMEGA-V021-20260817",
+  "operatingLevel": "ON_DEMAND_GOVERNED",
+  "durableAutonomyProven": false,
+  "stateModel": ["INTENDED", "DECLARED", "OBSERVED", "PROVEN", "OUTCOME"],
+  "streams": [
+    {"id": "S1-GOVERNANCE", "mode": "READ_ONLY", "dependsOn": []},
+    {"id": "S2-INTEGRITY", "mode": "READ_ONLY", "dependsOn": []},
+    {"id": "S3-AUTHORITY", "mode": "READ_ONLY", "dependsOn": []},
+    {"id": "S4-ASSURANCE", "mode": "READ_ONLY", "dependsOn": ["S1-GOVERNANCE", "S2-INTEGRITY", "S3-AUTHORITY"]},
+    {"id": "S5-RELEASE", "mode": "SERIALIZED_EFFECTFUL", "dependsOn": ["S4-ASSURANCE"]},
+    {"id": "S6-LEARNING", "mode": "APPEND_ONLY", "dependsOn": ["S4-ASSURANCE", "S5-RELEASE"]}
+  ],
+  "singleEffectfulPath": "S5-RELEASE",
+  "promotionGates": [
+    "SEVENTEEN_TOOL_SURFACE_MATCH",
+    "SOURCE_AND_MANIFEST_INTEGRITY",
+    "NUMERIC_GITHUB_IDENTITY_MATCH",
+    "WIF_PROVIDER_NATIVE_READBACK",
+    "LEAST_PRIVILEGE_IAM_READBACK",
+    "RELEASE_FENCE_PRESENT",
+    "IMMUTABLE_SHA256_DIGEST",
+    "ZERO_TRAFFIC_TAGGED_CANARY",
+    "UNAUTHENTICATED_401_OR_403",
+    "PRIVATE_IAM_POSTURE",
+    "AUTHENTICATED_HEALTH_VERSION",
+    "TWO_PASS_LINEAGE_ATTESTED",
+    "EXACT_PROMOTION_READBACK",
+    "EXACT_ROLLBACK_OR_ABSENCE_READBACK"
+  ],
+  "capabilitySurface": [
+    "gcp_project_info", "gcp_service_status", "gcp_enable_service",
+    "apps_script_metadata", "apps_script_get_content", "apps_script_backup",
+    "apps_script_dry_run", "apps_script_apply", "apps_script_rollback",
+    "gcp_cloud_run_service", "gcp_cloud_run_revision", "gcp_artifact_docker_image",
+    "gcp_cloud_build_info", "gcp_cloud_build_list", "gcp_cloud_run_deployment_audit",
+    "gcp_cloud_run_service_iam", "gcp_deployment_lineage_attest"
+  ],
+  "sourceLineage": {
+    "alpha_omega_v30_readme_blob": "fe83ed7c2b8a5865aca71259adaf63cdfff72ef3",
+    "maturity_blob": "69d91ba26a9904c736b1879d40f3dc8d92128c1f",
+    "sandbox_fleet_blob": "6fabf866ef68a9ff153d391b91ac315a103521e9",
+    "progressive_delivery_blob": "9d49870c424f3526b04b089089957d553bbc003e",
+    "cross_system_reconciliation_blob": "fb4b9f63398f559726f45708a02084648181e1bd",
+    "capability_market_blob": "70d2e8847d6d77707116bd6f097b82867dce6764"
+  },
+  "truthBoundary": {
+    "sourceAndLocalTestsProveLiveCloud": false,
+    "authenticatedRequestProvesPrivateIam": false,
+    "queueCompletionProvesProviderFruit": false,
+    "storedCredentialReferenceProvesAuthority": false,
+    "timeboxWaivesProof": false
+  }
+}
