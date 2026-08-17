@@ -15,7 +15,8 @@
     "higherFoundationPullRequest": 546,
     "higherFoundationVersion": "1.4.0",
     "higherFoundationHead": "9b075fc64393e3b780a863860d59a082fe41ceb0",
-    "candidateVersion": "1.5.0",
+    "candidateVersion": "1.4.0",
+    "overlayVersion": "T20-AO-OMEGA-SCIENTIST-1.1",
     "candidateBranch": "jarvis/t20-alpha-omega-governor"
   },
   "sources": [
@@ -219,6 +220,6 @@
       "No owner authorization to merge has been given.",
       "Gemini live binding, Workspace binding, production persistence and Cloud deployment remain unproven."
     ],
-    "nextBestAutomatedPathway": "Complete the stacked v1.5.0 source repair, retarget PR 548 to the v1.4.0 branch, run existing admission controls, and emit a provider-readback HOLD/MERGE/REPAIR receipt without changing main."
+    "nextBestAutomatedPathway": "Complete the stacked T20 overlay repair, keep PR 548 based on the v1.4.0 branch, run existing admission controls, and emit a provider-readback HOLD/MERGE/REPAIR receipt without changing main."
   }
 }
