@@ -1,4 +1,4 @@
-# JARVIS Ultimate Federation v1.3
+# JARVIS Ultimate Federation v1.4.0
 
 JARVIS is a governed interactive intelligence foundation that combines an ADK 2 workflow entrypoint, an explicitly selected Google GenAI provider, typed Formation action/resource/argument schemas, a resource-bound single-use permit verifier, a deterministic mathematics engine, a 32-principle scientific doctrine, route quarantine, and concurrency-safe learning telemetry.
 
@@ -10,9 +10,9 @@ This repository proves source structure and local behavior. It does **not** prov
 
 ## Execution model
 
-`intake → evidence context → credential-free advisory twin → reason → semantic verification → unpromoted learning event`
+`intake → evidence context → credential-free advisory twin → reason → response-contract verification → unpromoted learning event`
 
-The HTTP/CLI path and the ADK `Workflow` entrypoint both call the same governed JARVIS graph. No ADK node receives effectful tools. An effectful adapter may run only after typed resource/argument validation, the full effective-authority intersection, and a subject/mission-version/action/capability/resource/argument/idempotency-bound HMAC permit are satisfied in the executor transaction.
+The HTTP/CLI path and the ADK `Workflow` entrypoint both call the same governed JARVIS graph. No ADK node receives effectful tools. Chat accepts only a typed `ADVISORY` or deterministic-result envelope with `NO_EFFECTS_EXECUTED`; it always returns `effectFruit=false`. Trusted local offline/math routes may return `semanticFruit=true`. External model output is explicitly qualified as untrusted, returns only `advisoryFruit=true`, and cannot mint semantic or effect proof. An effectful adapter may run only after typed resource/argument validation, the full effective-authority intersection, and a subject/mission-version/action/capability/resource/argument/idempotency-bound Ed25519 v3 permit are satisfied in the executor transaction. The verifier contains only a public key and cannot mint permits.
 
 Provider selection never falls back across providers:
 
@@ -20,7 +20,7 @@ Provider selection never falls back across providers:
 - `JARVIS_PROVIDER=gemini_developer`: requires an explicit model plus `GOOGLE_API_KEY` or `GEMINI_API_KEY`.
 - `JARVIS_PROVIDER=gemini_vertex`: requires an explicit model, project, location and ambient ADC.
 
-A configured provider remains `ACTIVE_PARTIAL`. A successful response creates only a session-scoped semantic proof; deployment and independent provider proof remain separate gates.
+A configured provider remains `ACTIVE_PARTIAL`. A contract-valid external response creates only a session-scoped advisory-contract receipt; it does not create semantic, provider, deployment or effect proof.
 
 ## Run locally
 
@@ -86,8 +86,8 @@ PYTHONPATH=. python -m unittest discover -s tests -p 'test_*.py' -v
 python -m compileall -q jarvis tests
 ```
 
-The 25 tests cover provider fail-closed behavior, false-live prevention, typed action/resource/argument bypass attempts, permit binding/expiry/replay/key strength, enforced quarantine, authenticated independent recovery receipts, four generic effect-claim variants, input-failure isolation, concurrent ledger writes, authenticated checkpoints, deletion/rollback and tamper write refusal, authority intersection, interactive safe mathematics, science doctrine invariants, protected browser bootstrap, and the ADK workflow entrypoint source contract.
+The 32 authored tests cover provider fail-closed behavior, executable Gemini SDK call-contract retention, typed response envelopes, contradictory external advisory qualification, two trusted-local provenance spoof attempts, twelve unsupported untyped effect-claim variants, false-live prevention, typed action/resource/argument bypass attempts, Ed25519 permit binding/expiry/replay, enforced quarantine, signed generation-bound recovery receipts, replay rejection and in-process atomic consumption, input-failure isolation, concurrent ledger writes, authenticated checkpoints, retained separate file anchoring, deletion/rollback/replay and tamper write refusal, authority intersection, interactive safe mathematics, science doctrine invariants, protected browser bootstrap, and the ADK workflow entrypoint source contract.
 
 ## Deployment gate
 
-The container is buildable, but live deployment is intentionally gated. Promotion requires: installed ADK/GenAI integration tests, exact dependency lock, an asymmetric or externally isolated production permit signer, globally transactional nonce/effect state, managed ledger/breaker state, dedicated least-privilege runtime identity, private unauthenticated-denial canary, zero-traffic candidate, two stable semantic readbacks, source→build→digest→revision lineage, exact traffic proof, rollback restoration, cost-cap proof, and a current Formation permit. Until those gates pass, `cloudDeployed=false` and `geminiLive=false` remain authoritative.
+The container is buildable, but live deployment is intentionally gated. Promotion requires: installed ADK/GenAI integration tests, exact dependency lock, an externally isolated Ed25519 signer, globally transactional nonce/effect and recovery-generation state, a provider-managed monotonic/immutable ledger high-water anchor that survives total local-state deletion or replay, dedicated least-privilege runtime identity, private unauthenticated-denial canary, zero-traffic candidate, two stable action-specific semantic readbacks, source→build→digest→revision lineage, exact traffic proof, rollback restoration, cost-cap proof, and a current Formation permit. Until those gates pass, `cloudDeployed=false` and `geminiLive=false` remain authoritative.

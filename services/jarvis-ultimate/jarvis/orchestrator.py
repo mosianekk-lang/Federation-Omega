@@ -12,7 +12,7 @@ from .core import ACTION_SPECS, CapabilityFabric, CircuitBreaker, FormationKerne
 from .graph import GovernedReasoningGraph, GraphInputError, SemanticVerificationError
 from .math_engine import MathExpressionError, calculate
 from .principles import catalogue, doctrine_summary
-from .providers import ProviderError, Reasoner, select_reasoner
+from .providers import OfflineReasoner, ProviderError, Reasoner, select_reasoner
 
 
 class Jarvis:
@@ -22,25 +22,32 @@ class Jarvis:
         self.reasoner = reasoner or select_reasoner()
         self.fabric = CapabilityFabric(self.reasoner.provider_mode)
         permit_verifier = PermitVerifier(
-            os.getenv("JARVIS_FORMATION_HMAC_KEY"),
+            os.getenv("JARVIS_FORMATION_ED25519_PUBLIC_KEY"),
             self.state_dir / "consumed_permits.txt",
         )
         self.formation = FormationKernel(permit_verifier)
-        self.ledger = LearningLedger(self.state_dir / "learning.jsonl", os.getenv("JARVIS_LEDGER_HMAC_KEY"))
+        self.ledger = LearningLedger(
+            self.state_dir / "learning.jsonl",
+            os.getenv("JARVIS_LEDGER_HMAC_KEY"),
+            os.getenv("JARVIS_LEDGER_ANCHOR_PATH"),
+        )
         self.breaker = CircuitBreaker()
         self.graph = GovernedReasoningGraph()
         self.session_provider_proof: str | None = None
+        self.session_provider_receipt: str | None = None
 
     def health(self) -> dict[str, Any]:
         return {
             "ok": self.ledger.verify(),
             "service": "jarvis-ultimate",
-            "version": "1.3.0",
+            "version": "1.4.0",
             "reasoner": self.reasoner.name,
             "providerMode": self.reasoner.provider_mode,
             "providerSessionProof": self.session_provider_proof,
+            "providerSessionReceipt": self.session_provider_receipt,
             "ledgerValid": self.ledger.verify(),
             "ledgerCheckpointAuthenticated": self.ledger.authenticated_checkpoint_enabled,
+            "ledgerExternalAnchorBound": self.ledger.external_anchor_enabled,
             "runtimeState": "ON_DEMAND_GOVERNED",
             "maturity": "IMPLEMENTED_TESTED_LOCAL",
         }
@@ -82,13 +89,16 @@ class Jarvis:
 
     def chat(self, message: str) -> dict[str, Any]:
         started = time.perf_counter()
-        route = "deterministic-math" if message.strip().lower().startswith("/math ") else self.reasoner.name
+        internal_math_request = message.strip().lower().startswith("/math ")
+        route = "deterministic-math" if internal_math_request else self.reasoner.name
         if not self.ledger.verify():
             return {
                 "answer": "State integrity failed; reasoning and learning writes are blocked.",
                 "route": route,
                 "elapsedMs": 0,
                 "semanticFruit": False,
+                "advisoryFruit": False,
+                "effectFruit": False,
                 "error": "LEDGER_INTEGRITY_FAILED",
                 "learningHash": None,
                 "learningPromotion": "NOT_PROMOTED",
@@ -106,6 +116,9 @@ class Jarvis:
                 "learningHash": event["hash"],
                 "learningPromotion": "NOT_PROMOTED",
                 "quarantined": True,
+                "semanticFruit": False,
+                "advisoryFruit": False,
+                "effectFruit": False,
                 "workflowEvents": [],
             }
 
@@ -116,11 +129,23 @@ class Jarvis:
         }
         try:
             graph_result = self.graph.run(message, context, self.reasoner)
-            route = graph_result.reasoning.provider
             answer = graph_result.reasoning.text
             evidence_hash = graph_result.evidence_hash
             workflow_events = [event.public() for event in graph_result.events]
             success = True
+            semantic_fruit = (
+                internal_math_request
+                and graph_result.reasoning.provider == "deterministic-math"
+            ) or (
+                type(self.reasoner) is OfflineReasoner
+                and graph_result.reasoning.provider == "offline-deterministic"
+            )
+            advisory_fruit = True
+            if not semantic_fruit:
+                answer = (
+                    "Untrusted external advisory; no effects were executed and no semantic or provider fruit is established. "
+                    f"Proposal: {answer}"
+                )
             error_code = None
             breaker_relevant = True
             outcome = "SUCCESS"
@@ -130,6 +155,8 @@ class Jarvis:
             evidence_hash = semantic_fingerprint({"route": route, "error": str(exc)})
             workflow_events = []
             success = False
+            semantic_fruit = False
+            advisory_fruit = False
             error_code = str(exc)
             breaker_relevant = False
             outcome = "INPUT_REJECTED"
@@ -138,6 +165,8 @@ class Jarvis:
             evidence_hash = semantic_fingerprint({"route": route, "error": str(exc)})
             workflow_events = []
             success = False
+            semantic_fruit = False
+            advisory_fruit = False
             error_code = str(exc)
             breaker_relevant = True
             outcome = "FAILURE"
@@ -150,17 +179,18 @@ class Jarvis:
             outcome,
             elapsed,
             evidence_hash,
-            semantic_fruit=success,
+            semantic_fruit=semantic_fruit,
         )
         if success and self.reasoner.provider_mode != "offline" and route != "deterministic-math":
-            self.session_provider_proof = f"session-semantic:{evidence_hash}"
-            self.fabric.record_session_semantic_proof("gemini", self.session_provider_proof)
+            self.session_provider_receipt = f"session-advisory-contract:{evidence_hash}"
         return {
             "answer": answer,
             "route": route,
             "providerMode": self.reasoner.provider_mode,
             "elapsedMs": elapsed,
-            "semanticFruit": success,
+            "semanticFruit": semantic_fruit,
+            "advisoryFruit": advisory_fruit,
+            "effectFruit": False,
             "error": error_code,
             "learningHash": event["hash"],
             "learningPromotion": "NOT_PROMOTED",

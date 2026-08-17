@@ -1,22 +1,22 @@
 {
   "contract_version": "3.3",
-  "release_version": "1.3.0",
+  "release_version": "1.4.0",
   "mission": {
     "id": "JARVIS-ULTIMATE-FEDERATION",
     "version": 22,
-    "goal": "Create a governed interactive JARVIS foundation that combines explicit Gemini routing, Federation capability truth, scientific doctrine, deterministic mathematics, exact authority gates, semantic verification and non-self-promoting learning.",
+    "goal": "Create a governed interactive JARVIS foundation that combines explicit Gemini routing, Federation capability truth, scientific doctrine, deterministic mathematics, exact authority gates, response-contract verification and non-self-promoting learning.",
     "user": "Kagiso Kim Mosiane as sovereign owner and operator",
-    "workflow": "intake -> evidence context -> advisory twin -> reason -> semantic verification -> learning capture -> stop; effectful tools require a separate exact action transaction",
+    "workflow": "intake -> evidence context -> advisory twin -> reason -> response-contract verification -> learning capture -> stop; effectful tools require a separate exact action transaction",
     "data": "Untrusted objectives and provider outputs are processed in memory; only secret-free hashes, route state, elapsed time and learning status are persisted in the local hash chain.",
     "interface": "Responsive browser UI, JSON HTTP API, CLI and Google ADK 2 Workflow entrypoint",
-    "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 2.6.0, stdlib HTTP and Docker",
+    "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 2.6.0, cryptography 46.0.0, stdlib HTTP and Docker",
     "environment": "Local/offline is verified; Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
     "maturity": "PROD_FOUNDATION",
-    "governance": "One sovereign executor, typed action/resource/argument schemas, full effective-authority intersection, subject/mission-version/resource/argument-bound single-use permits, untrusted external content, semantic readback and no runtime self-promotion.",
-    "failure": "Invalid input, authorization denial, missing provider configuration, dependency failure, timeout, partial writes, generic effect claims, unauthenticated recovery receipts, weak signing material, ledger deletion/rollback/tamper and route recurrence fail closed or quarantine only the affected route.",
-    "testing": "Twenty-five local unit/integration/failure-first tests plus compilation, CLI, deterministic math, denial, contract and doctrine smokes.",
+    "governance": "One sovereign executor, typed response/action/resource/argument schemas, full effective-authority intersection, public-key-verified subject/mission-version/resource/argument-bound single-use permits, untrusted external content, structured readback and no runtime self-promotion.",
+    "failure": "Invalid input, untyped provider output, authorization denial, missing provider configuration, dependency failure, timeout, partial writes, unauthenticated or replayed recovery receipts, ledger deletion/rollback/replay/tamper and route recurrence fail closed or quarantine only the affected route.",
+    "testing": "Thirty-two authored local unit/integration/failure-first tests plus compilation, CLI, deterministic math, denial, contract and doctrine smokes; the fixed 28-probe and 5-E2E matrices pass, while external deployment gates remain open.",
     "deployment": "Container source exists; promotion is blocked until installed SDK integration, dependency lock, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
-    "continuity": "Atomic hash-chain state, circuit quarantine, two-authenticated-receipt restoration, project memory, Formation specification and AI handoff preserve bounded continuity."
+    "continuity": "Atomic hash-chain state with a retained separate file anchor, circuit quarantine, in-process atomic generation-bound two-receipt restoration, project memory, Formation specification and AI handoff preserve bounded local continuity."
   },
   "classification": ["Fullstack App", "Backend API", "Frontend UI", "AI Agent", "DevOps/Infra", "Test Suite"],
   "assumptions": {
@@ -50,16 +50,16 @@
       "correlation_ids": "Mission IDs, route IDs, content hashes and learning hashes",
       "health_checks": "GET /health separates ledger integrity, provider mode, session proof and maturity",
       "structured_logs": "Secret-free JSON response and ledger schemas; raw prompts and provider payloads are not logged",
-      "audit_logs": "Fsync-backed hash-chain that blocks writes after corruption, deletion or rollback, with optional HMAC checkpoint against full-chain recomputation",
+      "audit_logs": "Fsync-backed hash-chain plus authenticated checkpoint and separately located high-water anchor; production managed immutability remains required",
       "metrics_alerts": "Local elapsed time, semantic fruit and quarantine state; provider alerting ADAPTER_REQUIRED before deployment"
     }
   },
   "testing": {
-    "unit": "Provider settings, typed action/resource/argument schemas, permit cryptography/bindings/entropy floor, signed recovery receipts, math AST, doctrine and authority intersection",
-    "integration": "Canonical graph to semantic verifier to atomic learning ledger",
+    "unit": "Provider settings, typed response/action/resource/argument schemas, Ed25519 permit cryptography/bindings, signed generation-bound recovery receipts, math AST, doctrine and authority intersection",
+    "integration": "Canonical graph to response-contract verifier to atomic learning ledger",
     "e2e_or_smoke": "CLI offline response, interactive math calculation, cloud-deploy denial, browser bootstrap ordering and packaged resource load",
     "fixtures_mocks": "Deterministic successful, failing and short-response provider doubles plus temporary state directories",
-    "failure_first": "False-live env, provider configuration denial, action/resource/argument bypass, weak/repeated permit key, permit mismatch/expiry/replay, four generic effect-claim variants, unexpected provider exception, input poisoning, fabricated breaker recovery, code injection, ledger deletion/rollback/tamper and write-after-corruption",
+    "failure_first": "False-live env, untyped provider output, twelve unsupported effect assertions, action/resource/argument bypass, malformed/periodic shared-key permit input, permit mismatch/expiry/replay, unexpected provider exception, input poisoning, fabricated/replayed breaker recovery, code injection, ledger pair deletion/older-pair replay/tamper and write-after-corruption",
     "commands": [
       "PYTHONPATH=. python3 -m unittest discover -s tests -p 'test_*.py' -v",
       "python3 -m compileall -q jarvis tests scripts"
@@ -123,7 +123,7 @@
   },
   "proof": {
     "test_results": {
-      "unittest": "25/25 PASS",
+      "unittest": "32/32 PASS",
       "compileall": "PASS",
       "offline_graph_smoke": "PASS",
       "math_smoke": "PASS value=10.0",
@@ -132,16 +132,18 @@
     },
     "semantic_verification": {
       "scope": "local deterministic route only",
-      "fruit": "five distinct node events, doctrine-aware non-generic response, multiple generic effect-completion claim forms rejected, response/evidence hashes, semanticFruit=true, learningPromotion=NOT_PROMOTED",
+      "fruit": "five distinct node events, doctrine-aware typed advisory/deterministic response, effectFruit=false always; semanticFruit=true only for trusted local offline/math routes; external model output is qualified as untrusted advisoryFruit and cannot mint semantic or effect proof; learningPromotion=NOT_PROMOTED",
       "external_provider_inheritance": false
     },
     "unresolved_defects": [],
     "external_proof_gaps": [
       "Effectful adapters remain disabled; action-specific provider readback is not yet bound to a production executor.",
-      "Recovery trust roots and permit signing keys are local configuration only; production external isolation and rotation remain unproven.",
+      "Permit and recovery private keys must remain in external isolated signers; production public-key rotation and transactional state remain unproven.",
+      "The retained local file anchor detects ledger/checkpoint deletion and older-pair replay only while that anchor remains current; total-bundle deletion/replay requires provider-managed immutable/monotonic anchoring.",
+      "Independent v1.4 fixed regression completed 28/28 plus 5/5 end-to-end; focused challenge repaired external-advisory proof and in-process recovery races, while the total-bundle anchor limitation remains an explicit deployment blocker.",
       "ADK and GenAI packages are not installed in this scratch runtime; official API structure is source-checked but installed-package integration remains a deployment gate",
       "transitive dependency hashes are not generated",
-      "production permit signing and nonce/effect state require an externally isolated globally transactional authority; local HMAC/file state is test-only",
+      "production Ed25519 permit signing and nonce/effect state require an externally isolated globally transactional authority; local file state is test-only",
       "ledger and breaker require managed durable state before multi-instance execution",
       "Gemini and Workspace have no live runtime identity/readback",
       "prior Google WIF returned invalid_target",

@@ -3,12 +3,18 @@ import hashlib
 import hmac
 import json
 import os
+import sys
 import tempfile
+import threading
 import time
+import types as pytypes
 import unittest
 from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 from unittest.mock import patch
+
+from cryptography.hazmat.primitives import serialization
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 
 from jarvis.authority import AuthorityEnvelope, WORKSPACE_MINIMUM_SCOPES
 from jarvis.core import (
@@ -27,12 +33,21 @@ from jarvis.core import (
 from jarvis.math_engine import MathExpressionError, calculate
 from jarvis.orchestrator import Jarvis
 from jarvis.principles import ALLOWED_EPISTEMIC_CLASSES, catalogue, doctrine_summary
-from jarvis.providers import ProviderConfigurationError, ProviderInvocationError, ProviderSettings, ReasoningResult
+from jarvis.providers import GeminiReasoner, ProviderConfigurationError, ProviderInvocationError, ProviderSettings, ReasoningResult
 
 
-def mint_permit(secret, mission_id, mission_version, action_id, capability, subject_id, resource, arguments, nonce, issued_at, expires_at):
+def b64(value):
+    return base64.urlsafe_b64encode(value).rstrip(b"=").decode()
+
+
+def public_key(private_key):
+    raw = private_key.public_key().public_bytes(serialization.Encoding.Raw, serialization.PublicFormat.Raw)
+    return b64(raw)
+
+
+def mint_permit(private_key, mission_id, mission_version, action_id, capability, subject_id, resource, arguments, nonce, issued_at, expires_at):
     payload = {
-        "version": 2,
+        "version": 3,
         "audience": "jarvis-ultimate",
         "missionId": mission_id,
         "missionVersion": mission_version,
@@ -47,15 +62,14 @@ def mint_permit(secret, mission_id, mission_version, action_id, capability, subj
         "expiresAt": expires_at,
     }
     body = stable_json(payload).encode()
-    signature = hmac.new(secret.encode(), body, hashlib.sha256).digest()
-    encode = lambda value: base64.urlsafe_b64encode(value).rstrip(b"=").decode()
-    return f"{encode(body)}.{encode(signature)}"
+    signature = private_key.sign(body)
+    return f"{b64(body)}.{b64(signature)}"
 
 
-def signed_recovery_proof(route, proof_id, verifier_id, evidence_hash, checked_at, secret):
-    unsigned = RecoveryProof(route, proof_id, verifier_id, evidence_hash, True, checked_at)
-    signature = hmac.new(secret.encode(), unsigned.signed_body(), hashlib.sha256).hexdigest()
-    return RecoveryProof(route, proof_id, verifier_id, evidence_hash, True, checked_at, signature)
+def signed_recovery_proof(route, proof_id, verifier_id, evidence_hash, checked_at, generation, private_key):
+    unsigned = RecoveryProof(route, proof_id, verifier_id, evidence_hash, True, checked_at, generation)
+    signature = b64(private_key.sign(unsigned.signed_body()))
+    return RecoveryProof(route, proof_id, verifier_id, evidence_hash, True, checked_at, generation, signature)
 
 
 def authority(action, resource, subject="owner"):
@@ -76,7 +90,16 @@ class SuccessfulReasoner:
     provider_mode = "gemini_developer"
 
     def respond(self, message, context):
-        return ReasoningResult("A semantically meaningful, evidence-bounded test response.", self.provider_mode, "test-model", "test-v1")
+        return ReasoningResult(
+            "A semantically meaningful, evidence-bounded test response.",
+            self.provider_mode,
+            "test-model",
+            "test-v1",
+            "ADVISORY",
+            "NO_EFFECTS_EXECUTED",
+            (),
+            True,
+        )
 
 
 class FailingReasoner:
@@ -133,6 +156,52 @@ class JarvisTests(unittest.TestCase):
         with self.assertRaisesRegex(ProviderConfigurationError, "VERTEX_PROJECT_AND_LOCATION_REQUIRED"):
             ProviderSettings.from_env({"JARVIS_PROVIDER": "gemini_vertex", "JARVIS_GEMINI_MODEL": "m", "GOOGLE_CLOUD_PROJECT": "p"})
 
+    def test_gemini_reasoner_retains_sdk_types_for_the_call_contract(self):
+        class FakeHttpOptions:
+            def __init__(self, **kwargs):
+                self.kwargs = kwargs
+
+        class FakeGenerateContentConfig:
+            def __init__(self, **kwargs):
+                self.kwargs = kwargs
+
+        class FakeModels:
+            def generate_content(self, **kwargs):
+                self.kwargs = kwargs
+                return pytypes.SimpleNamespace(
+                    text=json.dumps(
+                        {
+                            "responseClass": "ADVISORY",
+                            "effectState": "NO_EFFECTS_EXECUTED",
+                            "answer": "Evidence-bounded advisory response.",
+                            "claims": [],
+                        }
+                    )
+                )
+
+        class FakeClient:
+            def __init__(self, **kwargs):
+                self.kwargs = kwargs
+                self.models = FakeModels()
+
+        fake_genai = pytypes.ModuleType("google.genai")
+        fake_genai.Client = FakeClient
+        fake_genai.types = pytypes.SimpleNamespace(
+            HttpOptions=FakeHttpOptions,
+            GenerateContentConfig=FakeGenerateContentConfig,
+        )
+        fake_google = pytypes.ModuleType("google")
+        fake_google.genai = fake_genai
+        settings = ProviderSettings("gemini_developer", "model", "v1beta", api_key="test-only")
+        with patch.dict(sys.modules, {"google": fake_google, "google.genai": fake_genai}):
+            result = GeminiReasoner(settings).respond(
+                "objective",
+                {"capabilities": [], "principles": [], "doctrine": {}},
+            )
+        self.assertEqual(result.response_class, "ADVISORY")
+        self.assertEqual(result.effect_state, "NO_EFFECTS_EXECUTED")
+        self.assertTrue(result.structured)
+
     def test_unknown_action_and_natural_language_bypasses_fail_closed(self):
         fabric, kernel = CapabilityFabric(), FormationKernel()
         for action_id in ("create resource", "update", "share", "move", "forward", "archive", "deploy candidate"):
@@ -163,13 +232,13 @@ class JarvisTests(unittest.TestCase):
         self.assertEqual(missing, [])
 
     def test_bound_permit_is_single_use_and_binds_resource_arguments_subject_and_version(self):
-        secret = "0123456789abcdef0123456789abcdef"
+        private_key = Ed25519PrivateKey.generate()
         now = int(time.time())
         action_id, resource = "github.release", "repo:agent/v1"
         arguments = {"idempotency_key": "release-1", "branch": "agent/v1", "commit_sha": "a" * 40}
-        token = mint_permit(secret, "M1", 7, action_id, "github", "owner", resource, arguments, "nonce-1234567890abcdef", now, now + 120)
+        token = mint_permit(private_key, "M1", 7, action_id, "github", "owner", resource, arguments, "nonce-1234567890abcdef", now, now + 120)
         with tempfile.TemporaryDirectory() as directory:
-            kernel = FormationKernel(PermitVerifier(secret, Path(directory) / "nonces.txt"))
+            kernel = FormationKernel(PermitVerifier(public_key(private_key), Path(directory) / "nonces.txt"))
             capability = CapabilityFabric().get("github")
             envelope = authority(action_id, resource)
             preview = kernel.decide("M1", 7, action_id, capability, resource=resource, arguments=arguments, authority_envelope=envelope, permit=token)
@@ -182,24 +251,24 @@ class JarvisTests(unittest.TestCase):
             changed = kernel.decide("M1", 8, action_id, capability, resource=resource, arguments=arguments, authority_envelope=envelope, permit=token)
             self.assertIn("PERMIT_BINDING_MISMATCH", changed.reasons)
 
-    def test_short_formation_key_is_rejected(self):
+    def test_malformed_formation_public_key_is_rejected(self):
         verifier = PermitVerifier("x", "/tmp/unused-nonce-test")
         valid, reason, consumed = verifier.verify_and_optionally_consume(
             "x.y", mission_id="M", mission_version=1, action_id="a", capability="c", subject_id="s",
             resource="r", arguments_hash="h", idempotency_key="i", consume=False,
         )
         self.assertFalse(valid)
-        self.assertEqual(reason, "FORMATION_KEY_TOO_WEAK")
+        self.assertEqual(reason, "FORMATION_PUBLIC_KEY_INVALID")
         self.assertFalse(consumed)
 
-    def test_repeated_byte_formation_key_is_rejected(self):
-        verifier = PermitVerifier("a" * 32, "/tmp/unused-repeated-key-test")
+    def test_periodic_shared_secret_cannot_be_used_as_formation_authority(self):
+        verifier = PermitVerifier("01234567" * 4, "/tmp/unused-repeated-key-test")
         valid, reason, consumed = verifier.verify_and_optionally_consume(
             "x.y", mission_id="M", mission_version=1, action_id="a", capability="c", subject_id="s",
             resource="r", arguments_hash="h", idempotency_key="i", consume=False,
         )
         self.assertFalse(valid)
-        self.assertEqual(reason, "FORMATION_KEY_TOO_WEAK")
+        self.assertEqual(reason, "FORMATION_PUBLIC_KEY_INVALID")
         self.assertFalse(consumed)
 
     def test_input_validation_never_quarantines_healthy_provider(self):
@@ -225,6 +294,14 @@ class JarvisTests(unittest.TestCase):
             "All requested work is done.",
             "The production service is now live.",
             "Permissions have been granted.",
+            "The resource has been provisioned.",
+            "The email reached the recipient.",
+            "Access is enabled.",
+            "The operation succeeded.",
+            "The rollout achieved its objective.",
+            "The file now exists in Drive.",
+            "The release went through.",
+            "The account can now administer the project.",
         )
         for claim in claims:
             with self.subTest(claim=claim), tempfile.TemporaryDirectory() as directory:
@@ -234,33 +311,70 @@ class JarvisTests(unittest.TestCase):
 
     def test_breaker_recovery_requires_two_independent_fresh_proofs(self):
         now = int(time.time())
+        first_private, second_private = Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()
         keys = {
-            "verifier-one": "0123456789abcdef0123456789abcdef",
-            "verifier-two": "fedcba9876543210fedcba9876543210",
+            "verifier-one": public_key(first_private),
+            "verifier-two": public_key(second_private),
         }
         breaker = CircuitBreaker(1, clock=lambda: now, recovery_verifier_keys=keys)
         breaker.record("route", False)
-        same = signed_recovery_proof("route", "proof-one", "verifier-one", "a" * 64, now, keys["verifier-one"])
+        same = signed_recovery_proof("route", "proof-one", "verifier-one", "a" * 64, now, 1, first_private)
         self.assertFalse(breaker.restore_after_independent_proof("route", (same, same)))
-        other = signed_recovery_proof("route", "proof-two", "verifier-two", "b" * 64, now, keys["verifier-two"])
+        other = signed_recovery_proof("route", "proof-two", "verifier-two", "b" * 64, now, 1, second_private)
         self.assertTrue(breaker.restore_after_independent_proof("route", (same, other)))
 
     def test_breaker_recovery_rejects_fabricated_distinct_receipts(self):
         now = int(time.time())
+        first_private, second_private = Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()
         breaker = CircuitBreaker(
             1,
             clock=lambda: now,
             recovery_verifier_keys={
-                "verifier-one": "0123456789abcdef0123456789abcdef",
-                "verifier-two": "fedcba9876543210fedcba9876543210",
+                "verifier-one": public_key(first_private),
+                "verifier-two": public_key(second_private),
             },
         )
         breaker.record("route", False)
         fabricated = (
-            RecoveryProof("route", "proof-one", "verifier-one", "a" * 64, True, now, "0" * 64),
-            RecoveryProof("route", "proof-two", "verifier-two", "b" * 64, True, now, "1" * 64),
+            RecoveryProof("route", "proof-one", "verifier-one", "a" * 64, True, now, 1, "0" * 64),
+            RecoveryProof("route", "proof-two", "verifier-two", "b" * 64, True, now, 1, "1" * 64),
         )
         self.assertFalse(breaker.restore_after_independent_proof("route", fabricated))
+
+    def test_recovery_receipts_cannot_be_replayed_after_later_quarantine(self):
+        now = int(time.time())
+        first_private, second_private = Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()
+        breaker = CircuitBreaker(1, clock=lambda: now, recovery_verifier_keys={"verifier-one": public_key(first_private), "verifier-two": public_key(second_private)})
+        breaker.record("route", False)
+        proofs = (
+            signed_recovery_proof("route", "proof-one", "verifier-one", "a" * 64, now, 1, first_private),
+            signed_recovery_proof("route", "proof-two", "verifier-two", "b" * 64, now, 1, second_private),
+        )
+        self.assertTrue(breaker.restore_after_independent_proof("route", proofs))
+        breaker.record("route", False)
+        self.assertEqual(breaker.generations["route"], 2)
+        self.assertFalse(breaker.restore_after_independent_proof("route", proofs))
+
+    def test_recovery_receipt_consumption_is_atomic_within_one_runtime(self):
+        now = int(time.time())
+        first_private, second_private = Ed25519PrivateKey.generate(), Ed25519PrivateKey.generate()
+        breaker = CircuitBreaker(1, clock=lambda: now, recovery_verifier_keys={"verifier-one": public_key(first_private), "verifier-two": public_key(second_private)})
+        breaker.record("route", False)
+        proofs = (
+            signed_recovery_proof("route", "proof-one", "verifier-one", "a" * 64, now, 1, first_private),
+            signed_recovery_proof("route", "proof-two", "verifier-two", "b" * 64, now, 1, second_private),
+        )
+        barrier = threading.Barrier(3)
+
+        def restore():
+            barrier.wait()
+            return breaker.restore_after_independent_proof("route", proofs)
+
+        with ThreadPoolExecutor(max_workers=2) as pool:
+            futures = [pool.submit(restore) for _ in range(2)]
+            barrier.wait()
+            results = [future.result() for future in futures]
+        self.assertEqual(sorted(results), [False, True])
 
     def test_atomic_ledger_survives_concurrent_appends(self):
         with tempfile.TemporaryDirectory() as directory:
@@ -283,7 +397,7 @@ class JarvisTests(unittest.TestCase):
 
     def test_authenticated_ledger_checkpoint_detects_recomputation(self):
         with tempfile.TemporaryDirectory() as directory:
-            ledger = LearningLedger(Path(directory) / "events.jsonl", "0123456789abcdef0123456789abcdef")
+            ledger = LearningLedger(Path(directory) / "state" / "events.jsonl", "0123456789abcdef0123456789abcdef", Path(directory) / "anchor" / "highwater.json")
             ledger.append("route", "SUCCESS", 1, "proof", True)
             self.assertTrue(ledger.verify())
             checkpoint = json.loads(ledger.checkpoint_path.read_text(encoding="utf-8"))
@@ -293,12 +407,33 @@ class JarvisTests(unittest.TestCase):
 
     def test_authenticated_ledger_detects_deletion_and_blocks_recreation(self):
         with tempfile.TemporaryDirectory() as directory:
-            ledger = LearningLedger(Path(directory) / "events.jsonl", "0123456789abcdef0123456789abcdef")
+            ledger = LearningLedger(Path(directory) / "state" / "events.jsonl", "0123456789abcdef0123456789abcdef", Path(directory) / "anchor" / "highwater.json")
             ledger.append("route", "SUCCESS", 1, "proof", True)
             ledger.path.unlink()
+            ledger.checkpoint_path.unlink()
             self.assertFalse(ledger.verify())
             with self.assertRaisesRegex(LedgerIntegrityError, "LEDGER_ROLLBACK_OR_DELETION_DETECTED"):
                 ledger.append("route", "SUCCESS", 2, "proof-2", True)
+
+    def test_authenticated_ledger_rejects_older_valid_chain_and_checkpoint_pair(self):
+        with tempfile.TemporaryDirectory() as directory:
+            ledger = LearningLedger(Path(directory) / "state" / "events.jsonl", "0123456789abcdef0123456789abcdef", Path(directory) / "anchor" / "highwater.json")
+            ledger.append("route", "SUCCESS", 1, "proof-1", True)
+            old_ledger = ledger.path.read_text(encoding="utf-8")
+            old_checkpoint = ledger.checkpoint_path.read_text(encoding="utf-8")
+            ledger.append("route", "SUCCESS", 2, "proof-2", True)
+            ledger.path.write_text(old_ledger, encoding="utf-8")
+            ledger.checkpoint_path.write_text(old_checkpoint, encoding="utf-8")
+            self.assertFalse(ledger.verify())
+            with self.assertRaises(LedgerIntegrityError):
+                ledger.append("route", "SUCCESS", 3, "proof-3", True)
+
+    def test_authenticated_ledger_refuses_unanchored_initialization(self):
+        with tempfile.TemporaryDirectory() as directory:
+            ledger = LearningLedger(Path(directory) / "events.jsonl", "0123456789abcdef0123456789abcdef")
+            self.assertFalse(ledger.verify())
+            with self.assertRaisesRegex(LedgerIntegrityError, "LEDGER_EXTERNAL_ANCHOR_REQUIRED"):
+                ledger.append("route", "SUCCESS", 1, "proof", True)
 
     def test_math_engine_is_integrated_and_rejects_code_arity_and_exponents(self):
         self.assertAlmostEqual(calculate("sqrt(81) + sin(pi / 2)").value, 10.0)
@@ -336,12 +471,73 @@ class JarvisTests(unittest.TestCase):
         source = (Path(__file__).parents[1] / "jarvis" / "main.py").read_text(encoding="utf-8")
         self.assertLess(source.index('if self.path == "/":'), source.index("if not self._authorized()"))
 
-    def test_success_creates_only_session_partial_proof(self):
+    def test_external_advisory_never_mints_semantic_or_effect_proof(self):
         with tempfile.TemporaryDirectory() as directory:
             app = Jarvis(directory, reasoner=SuccessfulReasoner())
-            self.assertTrue(app.chat("objective")["semanticFruit"])
-            self.assertTrue(app.health()["providerSessionProof"].startswith("session-semantic:"))
+            result = app.chat("objective")
+            self.assertFalse(result["semanticFruit"])
+            self.assertTrue(result["advisoryFruit"])
+            self.assertFalse(result["effectFruit"])
+            self.assertIsNone(app.health()["providerSessionProof"])
+            self.assertTrue(app.health()["providerSessionReceipt"].startswith("session-advisory-contract:"))
             self.assertEqual(app.fabric.get("gemini").state, CapabilityState.ACTIVE_PARTIAL)
+
+    def test_contradictory_structured_advisory_is_qualified_and_not_semantic_proof(self):
+        class ContradictoryStructuredReasoner:
+            name = "contradictory-structured-route"
+            provider_mode = "gemini_developer"
+
+            def respond(self, message, context):
+                return ReasoningResult(
+                    "The production deployment completed successfully.",
+                    "gemini_developer",
+                    "model",
+                    "v1",
+                    "ADVISORY",
+                    "NO_EFFECTS_EXECUTED",
+                    (),
+                    True,
+                )
+
+        with tempfile.TemporaryDirectory() as directory:
+            app = Jarvis(directory, reasoner=ContradictoryStructuredReasoner())
+            result = app.chat("status")
+            self.assertFalse(result["semanticFruit"])
+            self.assertTrue(result["advisoryFruit"])
+            self.assertFalse(result["effectFruit"])
+            self.assertTrue(result["answer"].startswith("Untrusted external advisory;"))
+            self.assertIsNone(app.health()["providerSessionProof"])
+
+    def test_external_reasoner_cannot_spoof_trusted_local_provenance(self):
+        class SpoofingReasoner:
+            name = "external-spoof-route"
+            provider_mode = "gemini_developer"
+
+            def __init__(self, provider):
+                self.provider = provider
+
+            def respond(self, message, context):
+                return ReasoningResult(
+                    "Evidence-bounded external advisory response.",
+                    self.provider,
+                    "model",
+                    "v1",
+                    "ADVISORY",
+                    "NO_EFFECTS_EXECUTED",
+                    (),
+                    True,
+                )
+
+        for spoofed_provider in ("offline-deterministic", "deterministic-math"):
+            with self.subTest(provider=spoofed_provider), tempfile.TemporaryDirectory() as directory:
+                app = Jarvis(directory, reasoner=SpoofingReasoner(spoofed_provider))
+                result = app.chat("ordinary advisory objective")
+                self.assertEqual(result["route"], "external-spoof-route")
+                self.assertFalse(result["semanticFruit"])
+                self.assertTrue(result["advisoryFruit"])
+                self.assertFalse(result["effectFruit"])
+                self.assertTrue(result["answer"].startswith("Untrusted external advisory;"))
+                self.assertIsNone(app.health()["providerSessionProof"])
 
 
 if __name__ == "__main__":

@@ -2,10 +2,10 @@
 
 ## Current state
 
-- Release: 1.3.0 candidate.
+- Release: 1.4.0 candidate.
 - Maturity: `IMPLEMENTED_TESTED_LOCAL`.
 - Canonical runtime: deterministic JARVIS graph; ADK 2 Workflow calls the same graph.
-- Direct dependencies: `google-adk==2.1.0`, `google-genai==2.6.0`.
+- Direct dependencies: `google-adk==2.1.0`, `google-genai==2.6.0`, `cryptography==46.0.0`.
 - Scientific doctrine: 9 categories, 32 truth-typed principles, local validation complete.
 - Google/Gemini authority: not live-proven in this runtime.
 - Google Cloud deployment: blocked until identity, cost, private-access, lineage, canary and rollback gates pass.
@@ -42,11 +42,28 @@
 - Breaker restoration now requires two valid HMAC receipts from distinct registered verifier keys; invented identifiers cannot restore a route.
 - An authenticated ledger checkpoint now blocks append after chain recomputation and detects ledger deletion or rollback before recreation.
 
+## Defects repaired from the 1.3 independent challenge
+
+- Prose blacklists were removed from the proof gate. Chat now accepts only a typed advisory/deterministic response contract with `NO_EFFECTS_EXECUTED`, and the public result always carries `effectFruit=false`.
+- Symmetric Formation signing was removed. Permit v3 uses Ed25519; the runtime receives only a public verification key and cannot mint permits.
+- Recovery receipts are Ed25519-signed, breaker-generation and latest-failure bound, distinct-root checked and consumed once, so a valid old pair cannot clear a later quarantine.
+- Authenticated learning state now requires a separately located high-water anchor; deleting the ledger/checkpoint pair or replaying an older valid pair fails against the current anchor.
+- The v1.3 success record remains historical and is corrected append-only; it is not silently rewritten.
+
+## Defects repaired from the 1.4 focused challenge
+
+- External typed model responses are qualified as untrusted advisory output and return `semanticFruit=false`, `effectFruit=false`; only a non-proof advisory-contract receipt is retained.
+- Recovery generation, receipt replay checks and restoration are protected by one in-process lock, so concurrent callers cannot consume the same pair twice.
+- The Gemini SDK type handle is retained across construction and invocation; an executable fake-SDK regression proves the response call no longer fails with `NameError`.
+- Exact version labels are normalized to `1.4.0`.
+- The local file anchor is truthfully bounded: it protects only while retained and current. Total bundle deletion/replay remains blocked from deployment until a provider-managed monotonic root exists.
+- Trusted-local semantic proof is bound to the exact built-in offline adapter or the internal `/math` request path; model-returned provider labels cannot inherit local proof.
+
 ## Open proof gates
 
 1. Run installed-package ADK 2.1.0 and GenAI 2.6.0 integration tests and generate a reproducible transitive lock.
 2. Move permit signing and nonce/effect state to an externally isolated, globally transactional production authority.
-3. Move ledger and breaker state to managed durable storage for multi-instance execution.
+3. Move ledger and breaker state to managed durable storage with transactional recovery receipt consumption and a provider-managed monotonic anchor for multi-instance execution.
 4. Repair and live-read the Google machine identity; prior WIF returned `invalid_target`.
 5. Run one exact-model Gemini semantic canary with stable provider metadata.
 6. Bind least-scope Workspace OAuth per capability; IAM alone is insufficient.

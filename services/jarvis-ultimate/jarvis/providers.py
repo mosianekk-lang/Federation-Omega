@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import json
 import os
 from dataclasses import dataclass
 from typing import Any, Mapping, Protocol
@@ -77,6 +78,10 @@ class ReasoningResult:
     provider: str
     model: str
     api_version: str
+    response_class: str = "UNCLASSIFIED"
+    effect_state: str = "UNCLASSIFIED"
+    claims: tuple[dict[str, Any], ...] = ()
+    structured: bool = False
 
 
 class Reasoner(Protocol):
@@ -102,7 +107,16 @@ class OfflineReasoner:
             f"verified local capabilities={', '.join(local)}; truth-typed doctrine principles={doctrine_count}. "
             "A Gemini route is used only when JARVIS_PROVIDER is explicit and its semantic call succeeds."
         )
-        return ReasoningResult(text=text, provider=self.name, model="deterministic-v1", api_version="local-v1")
+        return ReasoningResult(
+            text=text,
+            provider=self.name,
+            model="deterministic-v1",
+            api_version="local-v1",
+            response_class="ADVISORY",
+            effect_state="NO_EFFECTS_EXECUTED",
+            claims=(),
+            structured=True,
+        )
 
 
 class GeminiReasoner:
@@ -115,6 +129,7 @@ class GeminiReasoner:
         from google.genai import types
 
         self.settings = settings
+        self._types = types
         self.provider_mode = settings.mode
         http_options = types.HttpOptions(api_version=settings.api_version)
         if settings.mode == "gemini_developer":
@@ -138,22 +153,56 @@ class GeminiReasoner:
             + str(context.get("doctrine", {}))
             + "\nUSER OBJECTIVE:\n"
             + message
+            + "\nRETURN CONTRACT: Return one JSON object with exactly responseClass='ADVISORY', "
+            "effectState='NO_EFFECTS_EXECUTED', answer as evidence-bounded advisory prose, and claims as an empty array. "
+            "This lane executes no action and may not report any action as completed."
         )
         try:
             result = self.client.models.generate_content(
                 model=self.settings.model,
                 contents=prompt,
+                config=self._types.GenerateContentConfig(
+                    response_mime_type="application/json",
+                    response_schema={
+                        "type": "object",
+                        "properties": {
+                            "responseClass": {"type": "string", "enum": ["ADVISORY"]},
+                            "effectState": {"type": "string", "enum": ["NO_EFFECTS_EXECUTED"]},
+                            "answer": {"type": "string"},
+                            "claims": {"type": "array", "maxItems": 0, "items": {"type": "object"}},
+                        },
+                        "required": ["responseClass", "effectState", "answer", "claims"],
+                        "additionalProperties": False,
+                    },
+                ),
             )
         except Exception as exc:
             raise ProviderInvocationError(f"GEMINI_CALL_FAILED:{type(exc).__name__}") from exc
-        text = (getattr(result, "text", None) or "").strip()
-        if not text:
-            raise ProviderInvocationError("GEMINI_EMPTY_SEMANTIC_FRUIT")
+        raw = (getattr(result, "text", None) or "").strip()
+        try:
+            envelope = json.loads(raw)
+        except json.JSONDecodeError as exc:
+            raise ProviderInvocationError("GEMINI_RESPONSE_CONTRACT_INVALID") from exc
+        if set(envelope) != {"responseClass", "effectState", "answer", "claims"}:
+            raise ProviderInvocationError("GEMINI_RESPONSE_CONTRACT_INVALID")
+        text = envelope.get("answer")
+        if (
+            envelope.get("responseClass") != "ADVISORY"
+            or envelope.get("effectState") != "NO_EFFECTS_EXECUTED"
+            or envelope.get("claims") != []
+            or not isinstance(text, str)
+            or len(text.strip()) < 12
+        ):
+            raise ProviderInvocationError("GEMINI_RESPONSE_CONTRACT_INVALID")
         return ReasoningResult(
-            text=text,
+            text=text.strip(),
             provider=self.settings.mode,
             model=self.settings.model or "unknown",
             api_version=self.settings.api_version or "unknown",
+            response_class="ADVISORY",
+            effect_state="NO_EFFECTS_EXECUTED",
+            claims=(),
+            structured=True,
         )
 
 
