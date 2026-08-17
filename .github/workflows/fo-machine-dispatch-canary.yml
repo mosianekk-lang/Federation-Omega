@@ -1,0 +1,122 @@
+name: Federation Omega Machine Dispatch Canary
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: write
+  issues: read
+
+concurrency:
+  group: federation-omega-machine-dispatch
+  cancel-in-progress: true
+
+env:
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+
+jobs:
+  read-only-canary:
+    if: github.event.issue.title == '[FO-DISPATCH] READ_ONLY_AUTH_CANARY'
+    runs-on: ubuntu-latest
+    timeout-minutes: 4
+    env:
+      FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Execute fail-closed semantic canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p deployments/federation-omega-control-plane /tmp/fo-canary
+          python - <<'PY'
+          import hashlib, json, os, urllib.error, urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          base = os.environ['OPERATOR_URL'].rstrip('/')
+          token = os.environ.get('FO_ADMIN_TOKEN', '')
+          def call(path, body=None, authenticated=False):
+              headers={'accept':'application/json'}
+              data=None
+              if body is not None:
+                  headers['content-type']='application/json'
+                  data=json.dumps(body,separators=(',',':')).encode()
+              if authenticated and token:
+                  headers['x-fo-admin-token']=token
+              req=urllib.request.Request(base+path,data=data,headers=headers,method='POST' if body is not None else 'GET')
+              try:
+                  with urllib.request.urlopen(req,timeout=20) as r:
+                      raw=r.read().decode('utf-8','replace')
+                      return {'httpStatus':r.status,'body':json.loads(raw)}
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={'errorType':'NON_JSON'}
+                  return {'httpStatus':e.code,'body':parsed}
+              except Exception as e:
+                  return {'transportError':type(e).__name__}
+
+          health=call('/health')
+          contract=call('/')
+          unauth=call('/execute',{'action':'STATUS','payload':{}},False)
+          allowed=set(contract.get('body',{}).get('allowedActions',[]))
+          receipt={
+            'receipt':'FEDERATION-OMEGA-MACHINE-DISPATCH-CANARY',
+            'recordedAt':datetime.now(timezone.utc).isoformat(),
+            'sourceIssue':os.environ.get('GITHUB_EVENT_PATH',''),
+            'operatorUrl':base,
+            'health':health,
+            'contract':contract,
+            'unauthenticatedStatusCode':unauth.get('httpStatus'),
+            'privateAccessDenied':unauth.get('httpStatus') in (401,403),
+            'tokenPresent':bool(token),
+            'tokenValueRecorded':False,
+            'mutationAttempted':False,
+            'reads':{},
+            'classification':'BLOCKED'
+          }
+          required={'STATUS','READ_CLOUD_RUN_SERVICE','READ_BUILD','VERIFY_ARCHITRON_HEALTH'}
+          if not token:
+              receipt['classification']='BLOCKED_MISSING_FO_ADMIN_TOKEN_REPOSITORY_SECRET'
+          elif not required.issubset(allowed):
+              receipt['classification']='BLOCKED_LIVE_ALLOWLIST_MISMATCH'
+          elif not receipt['privateAccessDenied']:
+              receipt['classification']='BLOCKED_PRIVATE_ACCESS_NOT_PROVEN'
+          else:
+              probes={
+                'status':('STATUS',{'purpose':'machine dispatch read-only canary'}),
+                'cloudRun':('READ_CLOUD_RUN_SERVICE',{'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9'}),
+                'build':('READ_BUILD',{'project':'sov-hybrid-suite','region':'global'}),
+                'architron':('VERIFY_ARCHITRON_HEALTH',{'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9'})
+              }
+              for key,(action,payload) in probes.items():
+                  receipt['reads'][key]=call('/execute',{'action':action,'payload':payload},True)
+              bodies=[v.get('body',{}) for v in receipt['reads'].values()]
+              ok=all(v.get('httpStatus')==200 and v.get('body',{}).get('ok') is True for v in receipt['reads'].values())
+              fingerprints={hashlib.sha256(json.dumps(b,sort_keys=True).encode()).hexdigest() for b in bodies}
+              generic_collision=len(fingerprints)==1
+              receipt['genericHandlerCollision']=generic_collision
+              receipt['classification']='AUTHENTICATED_PROVIDER_READS_PROVEN' if ok and not generic_collision else 'SEMANTIC_CANARY_FAILED'
+          out=Path('deployments/federation-omega-control-plane/READ_ONLY_AUTH_CANARY.json')
+          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          Path('/tmp/fo-canary/READ_ONLY_AUTH_CANARY.json').write_text(out.read_text())
+          print(json.dumps({'classification':receipt['classification'],'recordedAt':receipt['recordedAt']}))
+          PY
+
+      - name: Persist redacted receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "federation-omega-canary[bot]"
+          git config user.email "federation-omega-canary[bot]@users.noreply.github.com"
+          git add deployments/federation-omega-control-plane/READ_ONLY_AUTH_CANARY.json
+          git diff --cached --quiet || { git commit -m "Record Federation Omega machine canary"; git push origin HEAD:main; }
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: federation-omega-machine-dispatch-canary
+          if-no-files-found: error
+          retention-days: 30
+          path: /tmp/fo-canary/READ_ONLY_AUTH_CANARY.json
