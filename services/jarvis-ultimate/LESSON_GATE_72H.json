@@ -1,0 +1,225 @@
+{
+  "schema": "JARVIS_FEDERATION_72H_LESSON_GATE_V1",
+  "gateId": "FEDERATION-72H-LESSON-GATE-20260817",
+  "timeZone": "Africa/Johannesburg",
+  "window": {
+    "start": "2026-08-14T23:36:41+02:00",
+    "end": "2026-08-17T23:36:41+02:00",
+    "durationHours": 72
+  },
+  "scope": {
+    "system": "JARVIS Ultimate Federation",
+    "sourcePullRequest": 548,
+    "sourceHeadBeforeGate": "f66adef224ef82bdaeaf6a70b2354b00589864e1",
+    "preservedArchiveBranch": "archive/jarvis-t20-pre-72h-gate-20260817",
+    "higherFoundationPullRequest": 546,
+    "higherFoundationVersion": "1.4.0",
+    "higherFoundationHead": "9b075fc64393e3b780a863860d59a082fe41ceb0",
+    "candidateVersion": "1.4.0",
+    "overlayVersion": "T20-AO-OMEGA-SCIENTIST-1.1",
+    "candidateBranch": "jarvis/t20-alpha-omega-governor"
+  },
+  "sources": [
+    {
+      "id": "1iwx51yOPrrcSbsaIieZJBkfbzdrx6qGBzxCw4V_wuzQ",
+      "title": "Federation Omega — Continuous Learning & Algorithm Trigger Register v1.0.2",
+      "role": "canonical append-only Federation learning and algorithm-trigger register",
+      "timeZone": "Africa/Johannesburg"
+    },
+    {
+      "id": "1odYLLcKfNr3uTdU-HIFa8sru29qTEpwB7eF9d7pX8f4",
+      "title": "FOREST-FIRST JUSTICE OS — LIVE STATE & LEARNING LEDGER",
+      "role": "Forest-First, RVE-Ω, OMEGA-10, continuity and failure-genome learning",
+      "contentBoundary": "system-method learning only; no legal/case workstream restoration"
+    },
+    {
+      "repository": "mosianekk-lang/Federation-Omega",
+      "pullRequest": 546,
+      "head": "9b075fc64393e3b780a863860d59a082fe41ceb0",
+      "role": "higher JARVIS security, authority, semantic-proof and continuity foundation"
+    },
+    {
+      "repository": "mosianekk-lang/Federation-Omega",
+      "pullRequest": 548,
+      "headBeforeGate": "f66adef224ef82bdaeaf6a70b2354b00589864e1",
+      "role": "T20 candidate subjected to this lesson gate"
+    }
+  ],
+  "preGateFinding": {
+    "decision": "REPAIR_REQUIRED",
+    "reason": "The pre-gate T20 branch diverged from and was seven commits behind the higher v1.4.0 foundation. Merging it as-is would reintroduce caller-asserted quality gates, configuration-as-live capability claims, weak non-consuming permits and unanchored learning state already repaired by v1.4.0.",
+    "action": "Preserve the old head, rebuild T20 additively on v1.4.0, and stack PR 548 on PR 546 rather than weakening or duplicating existing controls."
+  },
+  "lessons": [
+    {
+      "id": "L72-001",
+      "lesson": "Lock the requested objective, deliverable form and expected state delta; deny weaker terminal substitutions.",
+      "control": "TwentyMinuteGovernor.build_plan.objectiveLock",
+      "test": "test_plan_locks_objective_form_and_expected_delta",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-002",
+      "lesson": "Keep designed, implemented, tested, published, connected, authorized, deployed, read-back and proven states separate.",
+      "control": "BUILD_CONTRACT states plus proof-bearing release decision",
+      "test": "test_lesson_gate_preserves_maturity_boundaries",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-003",
+      "lesson": "Record success, failure, blocked, no-op and unverified states per route; one failed lane must not erase successful routes.",
+      "control": "RouteResult and review_cycle route accounting",
+      "test": "test_route_level_failure_preserves_successful_lane",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-004",
+      "lesson": "The first zero-delta route opens a no-op circuit and prohibits unchanged retry.",
+      "control": "review_cycle.noOpCircuitOpened",
+      "test": "test_no_op_route_forces_materially_different_next_route",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-005",
+      "lesson": "Use action-specific semantic canaries and readback; generic transport success is non-promoting.",
+      "control": "typed QualityEvidence with semantic digest and source class",
+      "test": "test_bare_boolean_quality_claim_is_rejected",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-006",
+      "lesson": "Deployment source or workflow is not provider authority or deployment proof.",
+      "control": "v1.4 CapabilityFabric, external effect boundary and BUILD_CONTRACT",
+      "test": "test_lesson_gate_preserves_maturity_boundaries",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-007",
+      "lesson": "Refresh current identity, source, metadata and proof before consequential work; stale proof expires.",
+      "control": "QualityEvidence observedAt freshness validation",
+      "test": "test_stale_quality_evidence_is_rejected",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-008",
+      "lesson": "Corrections are append-only; historical failures remain visible and are superseded, not rewritten.",
+      "control": "v1.4 anchored LearningLedger plus supersession record in this gate",
+      "test": "inherited ledger rollback, replay and tamper tests",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-009",
+      "lesson": "Reuse an admitted route before building another workflow, scheduler or authority plane.",
+      "control": "No new workflow; T20 tests bind into the existing allowlisted Airlock",
+      "test": "test_no_new_workflow_is_introduced",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-010",
+      "lesson": "Keep public source and private execution authority separated.",
+      "control": "v1.4 executor-only effect transaction and repository Airlock",
+      "test": "inherited authority and Airlock regression suites",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-011",
+      "lesson": "Spreadsheet writes require native IDs, live headers, one value per field and exact semantic readback.",
+      "control": "KNOWN_FAILURE_REPLAY gate includes schema-addressing recurrence",
+      "test": "test_known_failure_replay_is_mandatory",
+      "state": "COVERED_AT_RELEASE_GATE",
+      "runtimeAdapterState": "ADAPTER_REQUIRED"
+    },
+    {
+      "id": "L72-012",
+      "lesson": "Time compliance is a separate proof gate; late success does not repair a missed deadline.",
+      "control": "deadlinePass and immutable elapsedSeconds assessment",
+      "test": "test_deadline_breach_cannot_be_promoted",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-013",
+      "lesson": "Independent challenge is required before consequential closure.",
+      "control": "ADVERSARIAL_CHECK requires independent evidence",
+      "test": "test_adversarial_gate_requires_independent_evidence",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-014",
+      "lesson": "Speed improvement may be shadow-proposed only after proof-bearing regression with no quality loss.",
+      "control": "omegaScientist promotionState",
+      "test": "test_speed_gain_is_shadow_only_after_complete_verified_cycle",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-015",
+      "lesson": "Unknown incremental cost and authority fail closed.",
+      "control": "v1.4 authority intersection and disabled external effect adapters",
+      "test": "inherited authority, provider and effect-denial tests",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-016",
+      "lesson": "Adaptive intelligence routing does not prove downstream quality or savings without measured outcomes.",
+      "control": "improvement remains SHADOW_CANDIDATE or HELD",
+      "test": "test_speed_gain_is_shadow_only_after_complete_verified_cycle",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-017",
+      "lesson": "Context continuity requires explicit capsules and current-state revalidation; persistence is not invisible cross-chat inheritance.",
+      "control": "v1.4 handoff files and gate truth boundary",
+      "test": "test_lesson_gate_contains_no_chat_restore_claim",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-018",
+      "lesson": "External communication language and action must match provider proof; sending requires current owner authority.",
+      "control": "emailSendRule plus v1.4 gmail.send effect schema, authority intersection and Ed25519 permit",
+      "test": "test_email_send_rule_requires_explicit_owner_authority",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-019",
+      "lesson": "Minimize owner burden; retrieve, repair and reroute before asking the owner to perform system work.",
+      "control": "NEXT_AUTOMATED_PATHWAY quality gate and mandatory next route",
+      "test": "test_next_automated_pathway_is_mandatory",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-020",
+      "lesson": "An incident does not end the mission; preserve evidence, repair, reroute, test, read back, learn and resume.",
+      "control": "failure-recovery path plus completion state BLOCKED_WITH_EXECUTABLE_NEXT_ROUTE",
+      "test": "test_route_level_failure_preserves_successful_lane",
+      "state": "COVERED"
+    },
+    {
+      "id": "L72-021",
+      "lesson": "Prompt-only self-audit is not enforcement; actor, verifier, authority and semantic readback must remain separable.",
+      "control": "v1.4 governed graph, external permit verifier, structured evidence and independent adversarial gate",
+      "test": "inherited v1.4 authority/provenance tests plus T20 evidence tests",
+      "state": "COVERED"
+    }
+  ],
+  "nonNegotiableBoundaries": {
+    "mainUnchanged": true,
+    "emailSend": "NO_SEND_OR_FORWARD_WITHOUT_EXPLICIT_CURRENT_OWNER_INSTRUCTION_AND_EXECUTOR_AUTHORITY",
+    "emailActionsPerformedByThisGate": 0,
+    "chatDataRestored": false,
+    "workstreamsRestored": false,
+    "caseDataImported": false,
+    "newPublicWorkflowAdded": false,
+    "liveDeploymentClaimed": false,
+    "providerAuthorityInherited": false,
+    "manualUserTasks": []
+  },
+  "postRepairDecision": {
+    "decision": "HOLD",
+    "reasons": [
+      "PR 548 must pass provider-triggered Airlock, Leak Guard and Bubbles checks on the repaired head.",
+      "PR 548 is intentionally stacked on the still-open v1.4.0 foundation PR 546.",
+      "No owner authorization to merge has been given.",
+      "Gemini live binding, Workspace binding, production persistence and Cloud deployment remain unproven."
+    ],
+    "nextBestAutomatedPathway": "Complete the stacked T20 overlay repair, keep PR 548 based on the v1.4.0 branch, run existing admission controls, and emit a provider-readback HOLD/MERGE/REPAIR receipt without changing main."
+  }
+}
