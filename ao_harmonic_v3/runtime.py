@@ -15,7 +15,7 @@ from .evolution import (
 from .forest_omega import ForestFirstOmega
 from .graphs import MissionGraph, ProofGraph, StateFabric
 from .horizon import HorizonOmega
-from .intelligence_router import AdaptiveIntelligenceRouter
+from .intelligence_router import AdaptiveIntelligenceRouter, IntelligenceRouteDecision
 from .models import FederationEvent, Maturity, RiskClass
 from .resource_market import ResourceMarket
 from .science_and_routes import FederationDigitalTwin, FormationEngine, OmegaScientia
@@ -113,6 +113,20 @@ class AOHarmonicV3:
         self.events.subscribe("OWNER_CORRECTION", self._owner_correction)
         self.events.subscribe("CAPABILITY_DISCOVERED", self._capability_discovered)
         self.events.subscribe("NEW_EVIDENCE", self._new_evidence)
+
+    def prepare_openai_responses_request(
+        self,
+        decision: IntelligenceRouteDecision,
+        input_data: object,
+        *,
+        previous_response_id: str | None = None,
+    ) -> dict[str, object]:
+        """Prepare a provider-safe request body without invoking OpenAI."""
+        return self.intelligence.to_openai_responses_payload(
+            decision,
+            input_data,
+            previous_response_id=previous_response_id,
+        )
 
     def _tool_failure(self, event: FederationEvent) -> dict[str, object]:
         failure_type = str(event.payload.get("failure_type", "UNKNOWN"))

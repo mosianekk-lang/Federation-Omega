@@ -1,9 +1,9 @@
 {
   "schema": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "policy_id": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
   "owner": "Kim Kagiso Mosiane",
-  "state": "SOURCE_IMPLEMENTED_PROVIDER_EXECUTION_SEPARATE",
+  "state": "SOURCE_DIRECT_PAYLOAD_ADAPTER_VERIFIED_PROVIDER_EXECUTION_SEPARATE",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "purpose": "Select the minimum sufficient intelligence tier for each task, escalate when the cost of error warrants stronger reasoning, de-escalate after stable proof, and interlock every paid provider route with the Pre-Revenue Cost Governor.",
@@ -16,6 +16,7 @@
       "MINIMUM_QUALITY_FLOOR",
       "COST_GOVERNOR",
       "PROVIDER_BINDING",
+      "DIRECT_RESPONSES_PAYLOAD_ADAPTER",
       "EXECUTION_IF_AUTHORISED",
       "QUALITY_READBACK",
       "ESCALATE_OR_DEESCALATE",
@@ -91,6 +92,16 @@
       "EXTRA_HIGH": {"reasoning_effort": "xhigh"},
       "PRO": {"reasoning_effort": "max", "reasoning_mode": "pro"},
       "provider_authority_and_current_model_availability_must_be_revalidated": true
+    },
+    "direct_payload_adapter": {
+      "source": "AdaptiveIntelligenceRouter.to_openai_responses_payload",
+      "runtime_binding": "AOHarmonicV3.prepare_openai_responses_request",
+      "requires_explicit_non_empty_input": true,
+      "supports_new_input_with_previous_response_id": true,
+      "forwards_only": ["model", "input", "reasoning", "previous_response_id"],
+      "strips_internal_routing_keys": ["provider", "surface"],
+      "rejects_unknown_envelope_or_reasoning_keys": true,
+      "invokes_provider": false
     }
   },
   "learning": {
@@ -106,6 +117,8 @@
     "recommended_pro_tier_proves_pro_was_executed": false,
     "chatgpt_recommendation_changes_visible_picker": false,
     "api_binding_proves_api_key_or_budget": false,
+    "payload_adapter_source_proves_provider_acceptance": false,
+    "payload_preparation_proves_provider_execution": false,
     "source_merge_proves_provider_runtime_binding": false,
     "measured_quality_improvement_required_for_improvement_claim": true,
     "measured_cost_delta_required_for_savings_claim": true
