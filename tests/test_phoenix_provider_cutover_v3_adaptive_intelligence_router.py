@@ -182,7 +182,15 @@ class AdaptiveIntelligenceRouterTests(unittest.TestCase):
         self.assertIsNone(xhigh.reasoning_mode)
         self.assertEqual("gpt-5.6", pro.model)
         self.assertEqual("pro", pro.reasoning_mode)
-        self.assertIsNone(pro.reasoning_effort)
+        self.assertEqual("max", pro.reasoning_effort)
+        self.assertEqual(
+            {"effort": "xhigh"},
+            self.router.provider_request(xhigh)["reasoning"],
+        )
+        self.assertEqual(
+            {"effort": "max", "mode": "pro"},
+            self.router.provider_request(pro)["reasoning"],
+        )
 
     def test_calibration_never_self_mutates_policy(self):
         outcomes = [

@@ -176,7 +176,7 @@ class OpenAI56BindingCatalog:
             IntelligenceTier.MEDIUM: "medium",
             IntelligenceTier.HIGH: "high",
             IntelligenceTier.EXTRA_HIGH: "xhigh",
-            IntelligenceTier.PRO: None,
+            IntelligenceTier.PRO: "max",
         }[tier]
         return ProviderIntelligenceBinding(
             binding_id=f"OPENAI_RESPONSES_{tier.value}",
@@ -344,10 +344,13 @@ class AdaptiveIntelligenceRouter:
         if binding is None:
             return {}
         request: dict[str, object] = {"provider": binding.provider, "surface": binding.surface, "model": binding.model}
+        reasoning: dict[str, str] = {}
         if binding.reasoning_effort:
-            request["reasoning"] = {"effort": binding.reasoning_effort}
+            reasoning["effort"] = binding.reasoning_effort
         if binding.reasoning_mode:
-            request["reasoning"] = {"mode": binding.reasoning_mode}
+            reasoning["mode"] = binding.reasoning_mode
+        if reasoning:
+            request["reasoning"] = reasoning
         return request
 
     def _cost_decision(self, binding: ProviderIntelligenceBinding, envelope: CostEnvelope | None) -> CostDecision:
