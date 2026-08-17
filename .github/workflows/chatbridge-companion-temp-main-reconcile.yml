@@ -35,6 +35,7 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from pathlib import Path
+          import re
 
           def replace_exact(path: str, old: str, new: str) -> None:
               target = Path(path)
@@ -103,19 +104,24 @@ jobs:
           ''',
           )
 
-          replace_exact(
-              "bubbles/chatbridge_omega4/browser_companion_adapter.py",
-              '''                        terminal_observed=parsed["terminal_observed"],
-                          allow_derived_ordering=True,
-                      )
-          ''',
-              '''                        terminal_observed=parsed["terminal_observed"],
-                          allow_derived_ordering=True,
-                          source_provider=parsed["source_provider"],
-                          title=parsed["title"],
-                      )
-          ''',
+          adapter_path = Path("bubbles/chatbridge_omega4/browser_companion_adapter.py")
+          adapter_text = adapter_path.read_text(encoding="utf-8")
+          adapter_pattern = re.compile(
+              r'(?P<indent>[ \t]+)terminal_observed=parsed\["terminal_observed"\],\n'
+              r'(?P=indent)allow_derived_ordering=True,\n'
+              r'(?P<close>[ \t]+)\)\n'
           )
+          adapter_replacement = (
+              r'\g<indent>terminal_observed=parsed["terminal_observed"],\n'
+              r'\g<indent>allow_derived_ordering=True,\n'
+              r'\g<indent>source_provider=parsed["source_provider"],\n'
+              r'\g<indent>title=parsed["title"],\n'
+              r'\g<close>)\n'
+          )
+          adapter_text, count = adapter_pattern.subn(adapter_replacement, adapter_text, count=1)
+          if count != 1:
+              raise SystemExit("expected browser finalization patch target not found or not unique")
+          adapter_path.write_text(adapter_text, encoding="utf-8")
           PY
 
       - name: Run Companion deterministic suite
