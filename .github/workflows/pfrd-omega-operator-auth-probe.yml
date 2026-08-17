@@ -117,4 +117,4 @@ jobs:
           retention-days: 30
           path: /tmp/pfrd-operator/OPERATOR_AUTH_PROBE_RECEIPT.json
 
-# Rerun marker: 2026-08-13T16:39:00Z
+# Rerun marker: 2026-08-17T02:58:45Z
