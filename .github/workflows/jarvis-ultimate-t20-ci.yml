@@ -1,0 +1,80 @@
+name: JARVIS Ultimate T20 CI
+
+on:
+  push:
+    paths:
+      - "services/jarvis-ultimate/**"
+      - ".github/workflows/jarvis-ultimate-t20-ci.yml"
+  pull_request:
+    paths:
+      - "services/jarvis-ultimate/**"
+      - ".github/workflows/jarvis-ultimate-t20-ci.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jarvis-ultimate-t20-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  core-regression:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: services/jarvis-ultimate
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.11"
+      - name: Compile source
+        run: python -m compileall -q jarvis tests
+      - name: Run deterministic regression suite
+        env:
+          PYTHONPATH: .
+        run: python -m unittest discover -s tests -p 'test_*.py' -v
+      - name: Verify build contract and T20 invariants
+        run: |
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          contract = json.loads(Path("BUILD_CONTRACT.json").read_text())
+          boundary = contract["executionBoundary"]
+          proof = contract["proofBoundary"]
+          assert boundary["maxDirectiveSeconds"] == 1200
+          assert boundary["splitTriggerSeconds"] < boundary["expansionCutoffSeconds"] < boundary["forceReleaseSeconds"] < 1200
+          assert proof["t20GovernorSourceBuilt"] is True
+          assert proof["t20CiVerified"] is False, "CI may not self-certify before provider readback"
+          PY
+
+  container-smoke:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build image
+        run: docker build -t jarvis-ultimate:t20-ci services/jarvis-ultimate
+      - name: Start governed runtime
+        run: docker run -d --rm --name jarvis-ultimate-t20 -e JARVIS_API_TOKEN=ci-only -p 18080:8080 jarvis-ultimate:t20-ci
+      - name: Verify health and execution policy readback
+        run: |
+          for attempt in $(seq 1 30); do
+            if curl --fail --silent http://127.0.0.1:18080/health > health.json; then break; fi
+            sleep 1
+          done
+          curl --fail --silent -H 'Authorization: Bearer ci-only' http://127.0.0.1:18080/v1/execution-policy > policy.json
+          python - <<'PY'
+          import json
+          health = json.load(open("health.json"))
+          policy = json.load(open("policy.json"))
+          assert health["ok"] is True
+          assert health["directiveEnvelopeSeconds"] == 1200
+          assert policy["id"] == "T20-AO-OMEGA-SCIENTIST-1.0"
+          assert policy["max_directive_seconds"] == 1200
+          PY
+      - name: Show logs on failure
+        if: failure()
+        run: docker logs jarvis-ultimate-t20 || true
