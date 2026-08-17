@@ -1,0 +1,42 @@
+{
+  "classification": "BLOCKED_MISSING_FO_ADMIN_TOKEN_REPOSITORY_SECRET",
+  "contract": {
+    "body": {
+      "allowedActions": [
+        "STATUS",
+        "READ_CLOUD_RUN_SERVICE",
+        "VERIFY_ARCHITRON_HEALTH",
+        "DEPLOY_SOLUTION5_LOCKED",
+        "READ_BUILD"
+      ],
+      "checkedAt": "2026-08-17T03:16:03.661Z",
+      "ok": true,
+      "service": "federation-omega-operator",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "httpStatus": 200
+  },
+  "health": {
+    "body": {
+      "checkedAt": "2026-08-17T03:16:03.074Z",
+      "noGmail": true,
+      "ok": true,
+      "service": "federation-omega-operator",
+      "status": "OPERATOR_READY",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "httpStatus": 200
+  },
+  "mutationAttempted": false,
+  "operatorUrl": "https://federation-omega-operator-257649435135.africa-south1.run.app",
+  "privateAccessDenied": true,
+  "reads": {},
+  "receipt": "FEDERATION-OMEGA-MACHINE-DISPATCH-CANARY",
+  "recordedAt": "2026-08-17T03:16:04.396444+00:00",
+  "sourceIssue": "/home/runner/work/_temp/_github_workflow/event.json",
+  "tokenPresent": false,
+  "tokenValueRecorded": false,
+  "unauthenticatedStatusCode": 403
+}
