@@ -7,12 +7,16 @@ on:
 permissions:
   contents: write
   issues: read
+  id-token: write
 
 concurrency:
   group: federation-omega-machine-dispatch
   cancel-in-progress: true
 
 env:
+  PROJECT_ID: sov-hybrid-suite
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
 
 jobs:
@@ -24,6 +28,52 @@ jobs:
       FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
     steps:
       - uses: actions/checkout@v4
+
+      - name: Attempt canonical keyless Google authentication
+        id: google-auth
+        if: ${{ env.FO_ADMIN_TOKEN == '' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install gcloud for the verified keyless route
+        if: ${{ steps.google-auth.outcome == 'success' }}
+        uses: google-github-actions/setup-gcloud@v2
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Resolve operator token without exposing it
+        shell: bash
+        env:
+          GOOGLE_AUTH_OUTCOME: ${{ steps.google-auth.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          TOKEN="${FO_ADMIN_TOKEN:-}"
+          ROUTE="github_actions_secret"
+          if [[ -z "$TOKEN" && "$GOOGLE_AUTH_OUTCOME" == "success" ]]; then
+            set +e
+            TOKEN="$(gcloud secrets versions access latest --secret=fo-operator-admin-token --project="$PROJECT_ID" 2>/tmp/fo-secret-error)"
+            RC=$?
+            set -e
+            if [[ $RC -eq 0 && -n "$TOKEN" ]]; then
+              ROUTE="wif_secret_manager"
+            else
+              TOKEN=""
+              ROUTE="wif_secret_manager_denied"
+            fi
+          elif [[ -z "$TOKEN" ]]; then
+            ROUTE="wif_auth_failed"
+          fi
+          if [[ -n "$TOKEN" ]]; then echo "::add-mask::$TOKEN"; fi
+          {
+            echo "FO_ADMIN_TOKEN=$TOKEN"
+            echo "FO_MACHINE_AUTH_ROUTE=$ROUTE"
+            echo "FO_GOOGLE_AUTH_OUTCOME=$GOOGLE_AUTH_OUTCOME"
+          } >> "$GITHUB_ENV"
 
       - name: Execute fail-closed semantic canary
         shell: bash
@@ -72,6 +122,8 @@ jobs:
             'unauthenticatedStatusCode':unauth.get('httpStatus'),
             'privateAccessDenied':unauth.get('httpStatus') in (401,403),
             'tokenPresent':bool(token),
+            'machineAuthRoute':os.environ.get('FO_MACHINE_AUTH_ROUTE','unknown'),
+            'googleAuthOutcome':os.environ.get('FO_GOOGLE_AUTH_OUTCOME','unknown'),
             'tokenValueRecorded':False,
             'mutationAttempted':False,
             'reads':{},
