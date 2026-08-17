@@ -353,6 +353,75 @@ class AdaptiveIntelligenceRouter:
             request["reasoning"] = reasoning
         return request
 
+    @staticmethod
+    def to_openai_responses_payload(
+        decision: IntelligenceRouteDecision,
+        input_data: object,
+        *,
+        previous_response_id: str | None = None,
+    ) -> dict[str, object]:
+        """Translate an admitted AIR envelope into a direct Responses payload.
+
+        This boundary is deterministic and does not invoke the provider.  It
+        requires explicit new input even for a chained request, and it strips
+        AIR-only routing metadata before a caller can pass the result to an
+        OpenAI client.
+        """
+        if not decision.execution_allowed:
+            raise ValueError("AIR decision is not authorised for programmatic execution")
+        binding = decision.selected_binding
+        if binding is None:
+            raise ValueError("AIR decision has no selected provider binding")
+        if (
+            binding.provider != "OPENAI"
+            or binding.surface != "RESPONSES_API"
+            or not binding.programmatic
+            or not binding.available
+            or not binding.authorised
+        ):
+            raise ValueError("AIR binding is not an authorised OpenAI Responses API binding")
+
+        if isinstance(input_data, str):
+            if not input_data.strip():
+                raise ValueError("direct Responses payload requires non-empty input")
+        elif isinstance(input_data, list):
+            if not input_data:
+                raise ValueError("direct Responses payload requires non-empty input")
+        else:
+            raise TypeError("direct Responses input must be a string or non-empty list of items")
+
+        envelope = decision.provider_request
+        allowed_envelope_keys = {"provider", "surface", "model", "reasoning"}
+        unknown_keys = set(envelope) - allowed_envelope_keys
+        if unknown_keys:
+            raise ValueError(f"AIR provider envelope contains unsupported keys: {sorted(unknown_keys)}")
+        expected_envelope = AdaptiveIntelligenceRouter.provider_request(binding)
+        if envelope != expected_envelope:
+            raise ValueError("AIR provider envelope does not exactly match the selected binding")
+        if envelope.get("provider") != binding.provider or envelope.get("surface") != binding.surface:
+            raise ValueError("AIR provider envelope does not match the selected binding")
+        model = envelope.get("model")
+        if not isinstance(model, str) or not model.strip() or model != binding.model:
+            raise ValueError("AIR provider envelope model does not match the selected binding")
+
+        payload: dict[str, object] = {"model": model, "input": input_data}
+        reasoning = envelope.get("reasoning")
+        if reasoning is not None:
+            if not isinstance(reasoning, Mapping):
+                raise TypeError("AIR reasoning controls must be a mapping")
+            unknown_reasoning_keys = set(reasoning) - {"effort", "mode"}
+            if unknown_reasoning_keys:
+                raise ValueError(f"AIR reasoning contains unsupported keys: {sorted(unknown_reasoning_keys)}")
+            if not reasoning or not all(isinstance(value, str) and value.strip() for value in reasoning.values()):
+                raise ValueError("AIR reasoning controls must contain non-empty string values")
+            payload["reasoning"] = dict(reasoning)
+
+        if previous_response_id is not None:
+            if not isinstance(previous_response_id, str) or not previous_response_id.strip():
+                raise ValueError("previous_response_id must be a non-empty string")
+            payload["previous_response_id"] = previous_response_id
+        return payload
+
     def _cost_decision(self, binding: ProviderIntelligenceBinding, envelope: CostEnvelope | None) -> CostDecision:
         return self.cost.evaluate(
             WorkloadCostProfile(
