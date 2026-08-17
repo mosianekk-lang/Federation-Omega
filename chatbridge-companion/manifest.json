@@ -1,13 +1,14 @@
 {
   "manifest_version": 3,
   "name": "ChatBridge Companion for ChatGPT",
-  "version": "0.2.0",
-  "description": "Prepares bounded continuity capsules and adds Start a new chat via ChatBridge at ChatGPT conversation limits.",
-  "permissions": ["storage"],
-  "host_permissions": ["https://chatgpt.com/*"],
+  "version": "0.3.0",
+  "description": "Captures bounded rendered ChatGPT events into the ChatBridge Ω4.9 Alpha-Omega multi-path/multi-stream contract and prepares verified successor handoffs.",
+  "permissions": ["storage", "tabs"],
+  "host_permissions": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
+  "optional_host_permissions": ["https://*/*", "http://localhost/*", "http://127.0.0.1/*"],
   "background": {"service_worker": "src/background.js"},
   "content_scripts": [{
-    "matches": ["https://chatgpt.com/*"],
+    "matches": ["https://chatgpt.com/*", "https://chat.openai.com/*"],
     "js": ["src/bridge-core.js", "src/content-script.js"],
     "css": ["src/styles.css"],
     "run_at": "document_idle"

@@ -1,48 +1,105 @@
-# ChatBridge Companion for ChatGPT
+# ChatBridge Companion 0.3.0 — Alpha→Omega Browser Capture Adapter
 
-Status: `IMPLEMENTED / DETERMINISTICALLY TESTED / NO-ADMIN READINESS PREPARED / READY FOR LIVE BROWSER CANARY / NOT DEPLOYED`.
+ChatBridge Companion is a Manifest V3 browser extension for ChatGPT pages. It provides a
+no-administrator, user-profile capture path into **ChatBridge Ω4.9** where browser policy
+permits unpacked or managed extension use.
 
-This Manifest V3 browser companion augments ChatGPT's maximum-conversation-length notice with **Start a new chat via ChatBridge**. It prepares bounded checkpoints before the warning appears, preserves the current GPT/project route, opens a successor chat, and injects a source-bound ChatBridge restore capsule.
+The companion is one bounded acquisition route, not a hidden native ChatGPT hook. It reads
+only the rendered conversation DOM visible to the signed-in browser session. ChatGPT may
+virtualize or omit older rendered turns, so the browser route is non-authoritative and
+bounded by default.
 
-## Truthful continuity boundary
+## What 0.3.0 adds
 
-The extension carries complete actionable state plus verified-source instructions and a bounded rendered transcript. It does not claim an unlimited verbatim transfer, invisible access to messages absent from the rendered DOM, modification of OpenAI's servers, or removal of ChatGPT limits.
+- exact conversation-ID parsing from the ChatGPT URL;
+- stable rendered-turn identity and preservation of repeated identical messages;
+- user, assistant, system, developer, tool, connector, correction and terminal streams;
+- SHA-256 observation and snapshot evidence;
+- append-only correction events when a previously stable rendered turn changes;
+- explicit reporting when prior rendered turns disappear from the DOM;
+- attachment pointers where the rendered page exposes stable links;
+- local IndexedDB write before any optional provider upload;
+- optional HTTPS connector delivery to the Ω4.9 browser ingress adapter;
+- terminal warnings recorded as `NOT_EXECUTED_TERMINAL`;
+- compact successor-chat handoff capsules that point to the full-fidelity capture receipt;
+- session- or enterprise-managed connector tokens, never local persistent token storage.
 
-## Architecture
+## Two complementary continuity layers
 
-- `src/bridge-core.js`: deterministic warning recognition, URL routing, transcript bounding, capsule and restore-prompt generation.
-- `src/content-script.js`: MutationObserver, pre-limit checkpoints, accessible ChatBridge action, successor-composer restoration.
-- `src/background.js`: session-scoped full capsule, transcript-free local summary, tab-bound one-time transfer.
-- `options/`: local controls for capsule size, thresholds, and auto-send.
-- `tests/`: dependency-free Node tests.
+1. **Compact operational checkpoint** — objective, next action, sources, boundaries and a
+   bounded message head/tail for rapid successor-chat resumption.
+2. **Alpha→Omega / FFCL event lineage** — every rendered event delivered to the connector,
+   with exact identity, streams, hashes, correction history and provider receipt.
 
-The full capsule is held in `chrome.storage.session` and is cleared when the browser restarts or the extension reloads. Only a transcript-free summary is retained in `chrome.storage.local`. No third-party endpoint or OpenAI API key is used.
+Neither substitutes for the other.
 
-## Validate
+## Local-only mode
 
-```sh
-npm run check
-python3 /root/.codex/skills/remote-skills/validate-modisa-build-contracts/scripts/validate_build_contract.py BUILD_CONTRACT.json
+`autoUpload` is off by default. Captures are written to extension-owned IndexedDB and the
+latest bounded summary is stored in extension local storage. This is durable within the
+browser profile but is not independently recoverable if the profile is deleted, reset or
+blocked by enterprise policy.
+
+## Connector mode
+
+When the user explicitly enables upload and grants the exact connector origin, the service
+worker sends a JSON envelope to:
+
+```text
+POST /v1/chatbridge/alpha-omega/capture
 ```
 
-## Browser canary
+The corresponding Python ingress is:
 
-Load the directory as an unpacked extension in Chrome/Edge, open a test ChatGPT conversation, and verify: warning detection, exact ChatBridge button label, source route preservation, one successor tab, capsule injection, one-time consumption, and the native fallback button. Installation is a browser trust-boundary action and is not represented as completed without browser-native readback.
+```python
+from bubbles.chatbridge_omega4.browser_companion_adapter import (
+    ingest_browser_companion_capture,
+)
 
-The supplied 14 August 2026 screenshot was inspected at original resolution. Its exact warning text and `/g/<surface>/c/<conversation>` route match the deterministic detector and route-preservation tests. This is source-fixture verification, not a live installed-extension canary.
+result = ingest_browser_companion_capture(runtime, request_json)
+```
 
-## Managed Windows and no-administrator route
+The adapter verifies the browser envelope, registers a `RENDERED_DOM` capture path, submits
+observations to ChatBridge Ω4.9 and returns a receipt without echoing raw transcript content.
 
-The extension itself requires no Windows service, driver, native-messaging host, API key or system-wide installation. `tools/ChatBridge-Readiness.ps1` performs a read-only inspection of the existing user/machine Edge and Chrome policy registry paths, the available browser executables and this manifest. It never requests elevation, changes registry policy, bypasses PowerShell execution policy, loads an extension by command line or claims installation.
+## Security and privacy
 
-The assessor emits one of three bounded routes:
+- Permissions are limited to `storage`, `tabs`, ChatGPT hosts and an explicitly requested
+  optional connector origin.
+- No `nativeMessaging`, `debugger`, `management` or blocking web-request permission.
+- Connector tokens live only in browser session storage or enterprise managed storage.
+- Provider upload uses HTTPS except for localhost development.
+- Full rendered transcript content remains governed local data and must not be copied into
+  global Federation learning tables.
+- A valid hash proves record integrity, not factual truth.
 
-- `USER_PROFILE_SIDELOAD_NOT_EXPLICITLY_BLOCKED`: no inspected policy explicitly blocks the candidate route; browser-native installation and canary proof are still required.
-- `IT_MANAGED_DEPLOYMENT_REQUIRED`: a managed policy signal requires an approved allowlist, store or enterprise deployment.
-- `NO_SUPPORTED_BROWSER_FOUND` or `UNSUPPORTED_OS`: the inspected environment cannot run this readiness path.
+## Installation truth boundary
 
-Registry inspection is not a substitute for `edge://policy` or live browser readback. The prepared administrator-facing security and deployment scope is in `enterprise/CHATBRIDGE_ENTERPRISE_HANDOFF.md`.
+Source and tests do not prove that the extension is installed, enabled, policy-allowed,
+bound to a signed-in ChatGPT session, intercepting a live terminal warning, or delivering
+provider receipts. Those states require separate browser/provider readback.
 
-## Rollback
+Current maturity labels must remain separate:
 
-Disable or remove the extension. It never edits ChatGPT account data, native chats, project instructions, or server configuration. Session transfer data disappears when the extension/browser session ends; local summary data disappears when the extension is removed.
+```text
+SOURCE_BUILT
+DETERMINISTIC_TESTED
+GOVERNED_MERGED
+BROWSER_INSTALLED
+SIGNED_IN_SESSION_BOUND
+LIVE_CAPTURE_OBSERVED
+PROVIDER_RECEIPT_READ_BACK
+SUCCESSOR_RESTORE_ACCEPTED
+```
+
+Do not skip states.
+
+## Tests
+
+```bash
+npm check
+```
+
+The suite checks rendered capture, exact identity, duplicate preservation, correction
+append semantics, terminal execution boundaries, local-before-provider durability,
+permission minimisation and read-only enterprise readiness assessment.

@@ -6,7 +6,19 @@
   globalThis.__chatBridgeCompanionLoaded = true;
 
   let checkpointTimer = null;
-  let settings = {autoSend: true, maxCapsuleChars: 60000, tokenThreshold: 65000, messageThreshold: 80};
+  let checkpointInFlight = null;
+  let installationId = "";
+  let settings = {
+    autoSend: true,
+    autoUpload: false,
+    connectorUrl: "",
+    namespaceKey: "",
+    sensitivity: "GOVERNED_LOCAL",
+    sourceCompleteClaim: false,
+    maxCapsuleChars: 60000,
+    tokenThreshold: 65000,
+    messageThreshold: 80
+  };
 
   function status(message, kind) {
     let chip = document.querySelector("[data-chatbridge-status]");
@@ -22,28 +34,6 @@
     chip.__hideTimer = setTimeout(() => { chip.hidden = true; }, 5000);
   }
 
-  function currentCapsule() {
-    return core.buildCapsule({
-      sourceUrl: location.href,
-      title: document.title,
-      capturedAt: new Date().toISOString(),
-      messages: core.collectMessages(document),
-      maxChars: settings.maxCapsuleChars
-    });
-  }
-
-  async function checkpoint(reason) {
-    const capsule = currentCapsule();
-    await chrome.runtime.sendMessage({type: "CHATBRIDGE_CHECKPOINT", capsule, reason});
-    if (core.shouldPreempt(capsule.metrics, settings)) status("ChatBridge pre-limit checkpoint ready", "ready");
-    return capsule;
-  }
-
-  function scheduleCheckpoint() {
-    clearTimeout(checkpointTimer);
-    checkpointTimer = setTimeout(() => checkpoint("DOM_CHANGE").catch(() => {}), 1600);
-  }
-
   function findLimitBanner() {
     const root = document.querySelector("main") || document.body;
     if (!root) return null;
@@ -51,6 +41,70 @@
       .filter((node) => node.textContent && node.textContent.length < 1200 && core.isLimitNotice(node.textContent));
     candidates.sort((a, b) => a.textContent.length - b.textContent.length);
     return candidates.find((node) => node.querySelector("button")) || candidates[0] || null;
+  }
+
+  async function capture(reason, options) {
+    const identity = core.parseConversationIdentity(location.href);
+    if (!identity.bound) return {capsule: null, receipt: null, skipped: "CONVERSATION_ID_UNAVAILABLE"};
+    if (checkpointInFlight) return checkpointInFlight;
+
+    checkpointInFlight = (async () => {
+      const capturedAt = new Date().toISOString();
+      const messages = core.collectMessages(document);
+      const terminalBanner = options && options.terminalBanner || findLimitBanner();
+      const terminalObserved = Boolean(options && options.terminalObserved || terminalBanner);
+      const terminalText = terminalBanner ? core.normalizeText(terminalBanner.textContent) : "";
+      const envelope = await core.buildCaptureEnvelope({
+        sourceUrl: location.href,
+        title: document.title,
+        capturedAt,
+        messages,
+        namespaceKey: settings.namespaceKey,
+        installationId,
+        sensitivity: settings.sensitivity,
+        sourceCompleteClaim: settings.sourceCompleteClaim,
+        terminalObserved,
+        terminalText
+      });
+      const captureResult = await chrome.runtime.sendMessage({
+        type: "CHATBRIDGE_CAPTURE_ENVELOPE",
+        envelope,
+        reason
+      });
+      if (!captureResult || !captureResult.ok) {
+        throw new Error(captureResult && captureResult.error || "CAPTURE_FAILED");
+      }
+      const capsule = core.buildCapsule({
+        sourceUrl: location.href,
+        title: document.title,
+        capturedAt,
+        messages,
+        maxChars: settings.maxCapsuleChars,
+        captureReceipt: captureResult.receipt,
+        snapshotSha256: envelope.snapshot.sha256
+      });
+      await chrome.runtime.sendMessage({type: "CHATBRIDGE_CHECKPOINT", capsule, reason});
+      if (captureResult.receipt.providerReadbackVerified) {
+        status("ChatBridge full-fidelity capture acknowledged", "ready");
+      } else if (captureResult.receipt.locallyDurable) {
+        status("ChatBridge capture stored locally; provider readback pending", "ready");
+      }
+      if (core.shouldPreempt(capsule.metrics, settings)) {
+        status("ChatBridge pre-limit checkpoint and capture are ready", "ready");
+      }
+      return {capsule, receipt: captureResult.receipt, envelope};
+    })();
+
+    try {
+      return await checkpointInFlight;
+    } finally {
+      checkpointInFlight = null;
+    }
+  }
+
+  function scheduleCheckpoint(reason) {
+    clearTimeout(checkpointTimer);
+    checkpointTimer = setTimeout(() => capture(reason || "DOM_STABLE_DELTA").catch(() => {}), 1600);
   }
 
   function decorateLimitBanner() {
@@ -61,20 +115,21 @@
     button.dataset.chatbridgeStart = "true";
     button.className = "chatbridge-start-button";
     button.textContent = "Start a new chat via ChatBridge";
-    button.setAttribute("aria-label", "Start a new chat via ChatBridge with the current actionable context");
+    button.setAttribute("aria-label", "Start a new chat via ChatBridge with the verified checkpoint and capture receipt");
     button.addEventListener("click", async () => {
       button.disabled = true;
-      button.textContent = "Preparing ChatBridge handoff…";
+      button.textContent = "Verifying ChatBridge capture…";
       try {
-        const capsule = await checkpoint("LIMIT_WARNING_CLICK");
-        const prompt = core.renderRestorePrompt(capsule);
-        const result = await chrome.runtime.sendMessage({
+        const result = await capture("LIMIT_WARNING_CLICK", {terminalObserved: true, terminalBanner: banner});
+        if (!result.capsule) throw new Error(result.skipped || "CAPSULE_UNAVAILABLE");
+        const prompt = core.renderRestorePrompt(result.capsule);
+        const opened = await chrome.runtime.sendMessage({
           type: "CHATBRIDGE_OPEN",
-          capsule,
+          capsule: result.capsule,
           prompt,
-          targetUrl: capsule.source.successorUrl
+          targetUrl: result.capsule.source.successorUrl
         });
-        if (!result || !result.ok) throw new Error(result && result.error || "OPEN_FAILED");
+        if (!opened || !opened.ok) throw new Error(opened && opened.error || "OPEN_FAILED");
         button.textContent = "ChatBridge successor opened";
       } catch (error) {
         button.disabled = false;
@@ -85,7 +140,7 @@
     const nativeButton = Array.from(banner.querySelectorAll("button")).find((node) => /start new chat/i.test(node.textContent || ""));
     if (nativeButton && nativeButton.parentElement) nativeButton.parentElement.insertBefore(button, nativeButton);
     else banner.appendChild(button);
-    checkpoint("LIMIT_WARNING_DETECTED").catch(() => {});
+    capture("LIMIT_WARNING_DETECTED", {terminalObserved: true, terminalBanner: banner}).catch(() => {});
   }
 
   function setComposerText(composer, text) {
@@ -136,14 +191,17 @@
   }
 
   chrome.runtime.sendMessage({type: "CHATBRIDGE_SETTINGS"}).then((result) => {
-    if (result && result.ok) settings = Object.assign(settings, result.settings);
+    if (result && result.ok) {
+      settings = Object.assign(settings, result.settings);
+      installationId = result.installationId || "";
+    }
     restorePendingTransfer().catch((error) => status(String(error.message || error), "error"));
-    scheduleCheckpoint();
+    scheduleCheckpoint("INITIAL_DOM_STABLE");
   });
 
   const observer = new MutationObserver(() => {
     decorateLimitBanner();
-    scheduleCheckpoint();
+    scheduleCheckpoint("DOM_STABLE_DELTA");
   });
   observer.observe(document.documentElement, {subtree: true, childList: true, characterData: true});
   decorateLimitBanner();
