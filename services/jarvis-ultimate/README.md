@@ -1,6 +1,8 @@
-# JARVIS Ultimate Federation v1.5.0
+# JARVIS Ultimate Federation v1.4.0 — T20 Overlay Candidate
 
-JARVIS v1.5.0 is a governed interactive intelligence foundation built additively on the v1.4.0 authority and assurance core. It combines an ADK 2 workflow entrypoint, explicit Google GenAI provider selection, typed Formation action/resource/argument schemas, Ed25519 single-use permits, deterministic mathematics, a 32-principle truth-typed doctrine, route quarantine, anchored learning telemetry, and the proof-bearing `T20-AO-OMEGA-SCIENTIST-1.1` execution governor.
+This candidate adds a governed T20 execution and learning overlay to the verified JARVIS v1.4.0 authority and assurance foundation. It combines an ADK 2 workflow entrypoint, explicit Google GenAI provider selection, typed Formation action/resource/argument schemas, Ed25519 single-use permits, deterministic mathematics, a 32-principle truth-typed doctrine, route quarantine, anchored learning telemetry, and the proof-bearing `T20-AO-OMEGA-SCIENTIST-1.1` governor.
+
+The package version remains `1.4.0` so the checked-in dependency lock and inherited exact-version proof remain valid. T20 is an overlay candidate, not a silently promoted release number.
 
 ## Verified maturity
 
@@ -150,7 +152,7 @@ PYTHONPATH=. uv run --frozen python -m unittest discover -s tests -p 'test_*.py'
 uv run --frozen python -m compileall -q jarvis tests scripts
 ```
 
-The checked-in universal `uv.lock` remains authoritative. Direct versions remain `google-adk==2.1.0`, `google-genai==1.75.0`, and `cryptography==46.0.0`. The inherited v1.4 assurance suite remains intact; v1.5 adds T20, structured-evidence, route-accounting, no-op, deadline, next-pathway, email-authority, HTTP and 72-hour lesson-gate regressions.
+The checked-in universal `uv.lock` remains authoritative. Direct versions remain `google-adk==2.1.0`, `google-genai==1.75.0`, and `cryptography==46.0.0`. The inherited v1.4 assurance suite remains intact; the T20 overlay adds structured-evidence, route-accounting, no-op, deadline, next-pathway, email-authority, HTTP and 72-hour lesson-gate regressions.
 
 ## Deployment gate
 
