@@ -73,7 +73,7 @@
       "tests/{test_system,test_installed_dependencies}.py",
       "README.md, FORMATION_SPEC.md, PROJECT_MEMORY.md, AI_HANDOFF.md, SECURITY.md",
       "Dockerfile, .dockerignore, .env.example, pyproject.toml, uv.lock, BUILD_CONTRACT.json",
-      ".github/workflows/jarvis-ultimate-dependency-proof.yml"
+      ".github/workflows/github-airlock.yml"
     ],
     "exact_code_files": [
       "jarvis/core.py",
@@ -144,7 +144,7 @@
       "Permit and recovery private keys must remain in external isolated signers; production public-key rotation and transactional state remain unproven.",
       "The retained local file anchor detects ledger/checkpoint deletion and older-pair replay only while that anchor remains current; total-bundle deletion/replay requires provider-managed immutable/monotonic anchoring.",
       "Independent v1.4 fixed regression completed 28/28 plus 5/5 end-to-end; focused challenge repaired external-advisory proof and in-process recovery races, while the total-bundle anchor limitation remains an explicit deployment blocker.",
-      "The path-scoped GitHub Actions dependency-proof workflow must pass at the exact published commit before installed-package proof is promoted beyond local.",
+      "The JARVIS locked-package step inside the allowlisted Federation Airlock must pass at the exact published commit before installed-package proof is promoted beyond local.",
       "production Ed25519 permit signing and nonce/effect state require an externally isolated globally transactional authority; local file state is test-only",
       "ledger and breaker require managed durable state before multi-instance execution",
       "Gemini and Workspace have no live runtime identity/readback",

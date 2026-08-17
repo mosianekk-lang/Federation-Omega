@@ -62,7 +62,7 @@
 
 ## Open proof gates
 
-1. Read back the path-scoped GitHub Actions dependency-proof workflow for the exact PR commit.
+1. Read back the JARVIS locked-package step inside the allowlisted Federation Airlock for the exact PR commit.
 2. Move permit signing and nonce/effect state to an externally isolated, globally transactional production authority.
 3. Move ledger and breaker state to managed durable storage with transactional recovery receipt consumption and a provider-managed monotonic anchor for multi-instance execution.
 4. Repair and live-read the Google machine identity; prior WIF returned `invalid_target`.
