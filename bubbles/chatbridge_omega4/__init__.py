@@ -1,3 +1,21 @@
+from .alpha_omega_capture import (
+    AlphaOmegaCaptureError,
+    AlphaOmegaConversationCapture,
+    AlphaOmegaRestoreMode,
+    CaptureObservation,
+    CapturePath,
+    CapturePathConflict,
+    CapturePathKind,
+    CapturePathNotRegistered,
+    CapturePathState,
+    ConversationStream,
+    ObservationConflict,
+    OrderingAuthority,
+    ReconciliationState,
+    ReplayChunk,
+    StreamExpectation,
+    StreamManifestError,
+)
 from .completion_witness import (
     CompletionDecision,
     CompletionObservation,
@@ -58,24 +76,34 @@ from .restore_assurance import (
 )
 from .runtime import ChatBridgeOmega4 as ChatBridgeOmega47
 from .runtime_omega48 import ChatBridgeOmega48
+from .runtime_omega49 import ChatBridgeOmega49
 from .store import (
     ChatBridgeStore,
     NamespaceCollision,
     NamespaceNotFound,
 )
 
-# Package-level compatibility alias: new consumers that import ChatBridgeOmega4 from the
-# package receive the current Ω4.8 runtime, while the prior Ω4.7 implementation remains
-# explicitly available as ChatBridgeOmega47 and through bubbles.chatbridge_omega4.runtime.
-ChatBridgeOmega4 = ChatBridgeOmega48
+# Package-level compatibility alias: new consumers receive the current Ω4.9 runtime.
+# Ω4.8 and Ω4.7 remain explicitly available for historical checkpoints and tests.
+ChatBridgeOmega4 = ChatBridgeOmega49
 
 __all__ = [
+    "AlphaOmegaCaptureError",
+    "AlphaOmegaConversationCapture",
+    "AlphaOmegaRestoreMode",
     "ApprovalState",
     "ArtifactAvailability",
     "ArtifactReference",
+    "CaptureObservation",
+    "CapturePath",
+    "CapturePathConflict",
+    "CapturePathKind",
+    "CapturePathNotRegistered",
+    "CapturePathState",
     "ChatBridgeOmega4",
     "ChatBridgeOmega47",
     "ChatBridgeOmega48",
+    "ChatBridgeOmega49",
     "ChatBridgeStore",
     "ChatLearningEvent",
     "CompletionDecision",
@@ -92,6 +120,7 @@ __all__ = [
     "ConversationRiskState",
     "ConversationRole",
     "ConversationSignals",
+    "ConversationStream",
     "EmpiricalPlaybookEngine",
     "EmpiricalPlaybookStore",
     "EventExecutionState",
@@ -105,15 +134,21 @@ __all__ = [
     "LearningState",
     "NamespaceCollision",
     "NamespaceNotFound",
+    "ObservationConflict",
     "OperatingProfile",
+    "OrderingAuthority",
     "PayloadAvailability",
     "PendingUserTask",
     "ProviderContinuationRef",
+    "ReconciliationState",
+    "ReplayChunk",
     "RestoreAssuranceEngine",
     "RestoreAttestation",
     "RestoreConformanceState",
     "RestoreFinding",
     "RestorePreviewReason",
+    "StreamExpectation",
+    "StreamManifestError",
     "TaskCompletionState",
     "TerminalExecutionClaimError",
     "TranscriptConflict",
