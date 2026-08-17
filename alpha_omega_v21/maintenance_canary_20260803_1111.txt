@@ -1,2 +1,0 @@
-Alpha Omega maintenance provider-proof canary.
-Expected outcome: maintenance workflow runs, tests pass, receipt and ledgers upload as artifact.

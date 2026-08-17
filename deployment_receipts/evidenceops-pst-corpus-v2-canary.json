@@ -1,8 +1,0 @@
-{
-  "job_status": "success",
-  "receipt": "EVIDENCEOPS-PST-CORPUS-V2-CANARY",
-  "recorded_at": "2026-08-04T00:19:13.630575+00:00",
-  "source_commit": "4b62d2424d223d57196e5b53a8ea87fdfab54bea",
-  "status": "PASS",
-  "workflow_run_id": 30865188198
-}

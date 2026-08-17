@@ -1,4 +1,0 @@
-triggered_at=2026-08-04T02:35:00+02:00
-purpose=final clean four-provider IPEP Audio Engine v2 test, package, receipt and observer cycle
-expected_providers=google_speech_v2,openai_audio_transcriptions,gemini_files_api,local_whisper_cpp
-truth_boundary=source and tests only; no provider deployment or transcript claim

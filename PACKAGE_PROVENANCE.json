@@ -1,0 +1,13 @@
+{
+  "schema": "CHATBRIDGE-COMPANION-PACKAGE-PROVENANCE-1",
+  "package": "ChatBridge Companion Ω4.9 v0.3.0",
+  "source_main": "67f13e24c5061f4858a9b69cb4f5f045d2238308",
+  "source_subtree_sha": "779e9fcf9f9ab689fb9fa93758e531b9dd82ce15",
+  "browser_source_merge": "8d233ccda99ab92e9028762839674010bc201cbc",
+  "validated_ingress_merge": "67f13e24c5061f4858a9b69cb4f5f045d2238308",
+  "source_prs": [537, 542],
+  "superseded_pr": 536,
+  "packaged_at_sast": "2026-08-17T05:40:22+02:00",
+  "integrity_contract": "The package directory is an unchanged Git tree reference to the admitted chatbridge-companion subtree. Git object identity is the package integrity witness.",
+  "truth_boundary": "Packaging does not prove browser installation, policy permission, signed-in session binding, continuous capture, provider delivery, legacy transcript recovery or successful successor replay."
+}

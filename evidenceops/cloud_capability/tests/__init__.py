@@ -1,1 +1,0 @@
-"""Permanent cloud-capability tests."""

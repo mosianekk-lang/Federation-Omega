@@ -1,5 +1,0 @@
-triggered_at=2026-08-04T14:08:00+02:00
-purpose=package official whisper.cpp Linux runtime and English quantized model for private local EvidenceOps transcription
-source_audio_included=false
-credentials_included=false
-truth_boundary=runtime package only; no transcript claim

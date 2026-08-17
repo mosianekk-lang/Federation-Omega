@@ -1,8 +1,0 @@
-{
-  "failure_code": "RG-026-EXECUTION-GATE-FALLTHROUGH",
-  "claim": "A local learning-ledger mutation executes only after a current single-use Formation permit is consumed.",
-  "observed_fruit": "The permit command failed because it used the wrong working directory, but the following ledger command still executed because the shell sequence was not fail-fast.",
-  "desired_outcome": "No downstream executor may run after a permit, validation or safety gate fails; escaped effects must be quarantined and semantically reconciled.",
-  "affected_capabilities": ["formation_permit_gate", "local_effect_executor", "adaptive_learning_ledger"],
-  "reuse_decision": "PATCH_EXISTING"
-}

@@ -1,7 +1,0 @@
-# Recovery and rollback
-
-The package has no required database or remote state. Remove it from the caller's pre-output, pre-build or material-cycle hook to roll back. Audit logs, when enabled, are append-only JSONL and can be preserved independently. The adaptive learning ledger is a local atomically replaced JSON file; preserve or move it aside to disable learned incident recurrence without changing the deterministic engine. A failed scan, resolve, prebuild or upgrade returns a non-zero exit code and does not mutate the input.
-
-Resume by rerunning the same canonical JSON input; it produces the same truth correlation ID, solution decision ID, pre-build decision ID or upgrade decision/learning fingerprint. If evidence freshness, environment, authority or the capability inventory changes, update those records and regenerate the inventory snapshot hash rather than reusing the old route. A stale capability is rejected even when it historically claimed `LIVE_BOUND`.
-
-If an upgrade is interrupted after a source change, invalidate every entry in `correction_debt_invalidated`, restore or complete the patch, and repair in `correction_repair_order`. Do not re-enable the route until the original-failure and healthy-case tests pass and semantic readback confirms the target environment. Federation adapter removal is a source-level rollback only; it does not alter a runtime that never consumed the adapter.

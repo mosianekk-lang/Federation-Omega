@@ -1,7 +1,0 @@
-{
-  "canonical_source_pr": 149,
-  "canonical_source_head": "ab228213163d4b2840a05116a272909b33dded28",
-  "current_main_rebuild_branch": "live-bible-v2-core-current-main-20260804",
-  "preserve_old_branch": true,
-  "destructive_cleanup": false
-}

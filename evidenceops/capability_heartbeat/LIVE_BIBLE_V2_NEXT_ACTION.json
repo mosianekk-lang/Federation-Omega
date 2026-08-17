@@ -1,5 +1,0 @@
-{
-  "next_gate": "GITHUB_AIRLOCK_AND_LEAK_GUARD",
-  "fallback": "REPAIR_SOURCE_ONLY_CURRENT_MAIN_BRANCH",
-  "owner_action_required": false
-}

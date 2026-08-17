@@ -1,3 +1,0 @@
-Alpha Omega Foundry v2.1 pull-request CI proof canary.
-Created: 2026-08-03T10:53:00+02:00
-Purpose: trigger provider-native PR workflow execution and release-artifact proof.

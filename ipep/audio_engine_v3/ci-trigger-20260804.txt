@@ -1,3 +1,0 @@
-triggered_at=2026-08-04T19:57:00+02:00
-purpose=run EvidenceOps Consensus Transcription Mode v3 regression, compile and immutable package cycle
-truth_boundary=source and tests only; no claim that large-v3, Parakeet, pyannote or OpenAI processed the hearing yet
