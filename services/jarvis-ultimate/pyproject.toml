@@ -1,6 +1,6 @@
 [project]
 name = "jarvis-ultimate-federation"
-version = "1.4.0"
+version = "1.5.0"
 description = "Governed interactive Gemini and Federation intelligence system"
 requires-python = ">=3.11,<3.15"
 dependencies = ["google-genai==1.75.0", "google-adk==2.1.0", "cryptography==46.0.0"]
