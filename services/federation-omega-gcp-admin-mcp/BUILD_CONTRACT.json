@@ -1,0 +1,102 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "MISSION-GCP-MCP-V022-ALPHA-OMEGA-HARDENING-20260817",
+    "version": 3,
+    "goal": "Preserve all 17 tools while adopting bounded Alpha-Omega multi-stream execution and adding numeric WIF proof, serialized release fencing, private-IAM proof, negative unauthenticated canaries and exact rollback or deletion readback.",
+    "user": "Kim Kagiso Mosiane and authorized Federation Omega operators",
+    "workflow": "Build and push an immutable image; capture exact prior serving revision percentages; deploy one deterministic tagged revision with zero traffic; use an audience-bound identity token for health and MCP lineage canaries; promote exactly that revision to 100 percent only after ATTESTED two-pass provider proof; repeat health, lineage and traffic readback on the serving URL; otherwise restore the captured traffic or remove a newly created service automatically.",
+    "data": "Typed identifiers and bounded provider responses; SHA-256 evidence hashes; no credential material; no provider writes in lineage tools.",
+    "interface": "Private Streamable HTTP MCP endpoint plus /healthz",
+    "stack": "Node.js 20+, TypeScript, Express, MCP TypeScript SDK v1, Zod, Google REST APIs",
+    "environment": "Private authenticated Cloud Run or local ADC runtime",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation-gated local build; project/region/service/repository allowlists; runtime and deployment identities separated; existing approval-token mutations preserved; no unauthenticated route; zero-dilution regression; no live provider mutation in this release cycle.",
+    "failure": "Fail closed on invalid identifiers, missing configuration, allowlist denial, provider authorization, timeouts, generic response collisions, partial lineage, cross-pass drift, stale traffic, canary failure, promotion mismatch, rollback failure, or external API failure.",
+    "testing": "Static typecheck, unit and mocked integration tests, failure-first semantic collision tests, 17-tool surface regression, deployment-control regression, shell syntax, YAML parse, build-contract proof validation and archive hash verification.",
+    "deployment": "cloudbuild.v022.yaml creates a digest-pinned, tagged zero-traffic revision and requires negative unauthenticated, private-IAM, authenticated health and lineage canaries before exact promotion. The trap proves restored traffic or failed first-service absence. The dispatch-only workflow was not executed.",
+    "continuity": "Original validated ZIP retained byte-for-byte; versioned Library replacement only after local proof; rollback through prior Library version or original archive hash."
+  },
+  "classification": ["Backend API", "Automation", "DevOps/Infra", "Test Suite"],
+  "assumptions": {
+    "stack": "Existing TypeScript stack and locked dependencies remain authoritative.",
+    "runtime": "Node.js 20+ with fetch and Google ADC or configured impersonation.",
+    "storage": "Cloud Storage audit is optional and unchanged; lineage reads are returned and audited without adding a database.",
+    "authentication": "Existing ADC and optional short-lived service-account impersonation remain the only Google credential routes.",
+    "deployment": "Private Cloud Run remains the target. An already-authorized machine identity submits bootstrap.sh; the pipeline owns deployment, canary, promotion, restoration and readback without assigning operational steps to the owner."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: tool-only MCP server has no browser UI.",
+      "backend": "Express Streamable HTTP MCP server with typed tool handlers.",
+      "database": "NOT_APPLICABLE: no mutable application state; provider APIs are authoritative.",
+      "queue": "NOT_APPLICABLE: bounded synchronous read transactions only.",
+      "worker": "NOT_APPLICABLE: request-scoped provider reads and comparison.",
+      "scheduler": "NOT_APPLICABLE: no autonomous schedule is introduced by this package.",
+      "cache": "NOT_APPLICABLE: two-pass verification deliberately avoids cache trust.",
+      "storage": "Optional existing GCS audit records; release artifacts and rollback archive.",
+      "authentication": "Google ADC with optional short-lived impersonation; existing mutation approval token."
+    },
+    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE", "STALE_STATE", "ROLLBACK_FAILURE"],
+    "observability": {
+      "correlation_ids": "auditId on every tool execution and attestationId inside lineage reports",
+      "health_checks": "/healthz returns service/version/time only; never capability success",
+      "structured_logs": "JSON server-start and audit events",
+      "audit_logs": "Input hash, action, DONE/FAILED status and result; optional GCS persistence",
+      "metrics_alerts": "Cloud Build emits restoration or promotion events; Cloud Run request/error metrics remain provider-level; attestation reports explicit gaps and drift"
+    }
+  },
+  "testing": {
+    "unit": "Identifier validation, allowlists, parsing, canonical hashing and stable field comparison.",
+    "integration": "Mocked Google REST transaction across all five provider surfaces and two passes.",
+    "e2e_or_smoke": "Built server /healthz smoke, tool registry regression and static transactional deployment-control verification.",
+    "fixtures_mocks": "Deterministic Cloud Run, Artifact Registry, Cloud Build, Logging and IAM JSON fixtures.",
+    "failure_first": "Generic health collision, missing digest/build/source/deployer, cross-pass drift, auth denial, allowlist denial, canary failure, traffic mismatch and restoration failure.",
+    "commands": ["npm run check", "npm test", "npm run test:deployment", "npm run build", "npm run test:smoke", "bash -n ops/verify_gcp_admin_mcp_wif.sh", "python3 -c 'import yaml; yaml.safe_load(open(\"cloudbuild.v022.yaml\"))'"]
+  },
+  "delivery": {
+    "file_tree": "README.md; BUILD_CONTRACT.json; ALPHA_OMEGA_EXECUTION_SPEC.json; src/*.ts; test/*.test.mjs; ops/verify_gcp_admin_mcp_wif.sh; cloudbuild.v022.yaml; package.json; Dockerfile.",
+    "exact_code_files": ["src/config.ts", "src/google.ts", "src/operations.ts", "src/lineage.ts", "src/server.ts", "test/lineage.test.mjs", "test/surface.test.mjs", "test/deployment.test.mjs", "test/deployment-v022.test.mjs", "test/alpha-omega.test.mjs", "test/wif-preflight.test.mjs", "ops/verify_gcp_admin_mcp_wif.sh"],
+    "setup_commands": ["npm ci"],
+    "run_commands": ["npm run dev", "npm start"],
+    "test_commands": ["npm run check", "npm test", "npm run test:deployment", "npm run build", "npm run test:smoke", "bash -n bootstrap.sh"],
+    "deploy_commands": ["Automated machine executor invokes ./bootstrap.sh with existing Google authority; Cloud Build performs the complete transactional rollout."],
+    "rollback_commands": ["Cloud Build ERR/INT/TERM trap restores captured revision percentages with gcloud run services update-traffic; a failed first deployment deletes only the newly created exact service; preserved v0.1.0 archive remains the source rollback baseline."],
+    "debugging": "Inspect the Cloud Build rollout event and exact failing sentinel, verify the machine identity and allowlists, confirm prior traffic restoration, then rerun the same idempotent automated build only after the defect is repaired."
+  },
+  "formation": {
+    "mission_id": "MISSION-GCP-MCP-V022-ALPHA-OMEGA-HARDENING-20260817",
+    "mission_version": 3,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1",
+    "effectful_permit": "CONSUMED_RUNTIME_ONLY_NOT_PERSISTED",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "unavailable_capability": "Live provider attestation cannot run without an already-authorized machine identity.",
+    "safe_substitute": "Keep the tested package local and run no provider mutation until an existing machine identity can submit the transactional Cloud Build; never invent credentials or assign setup to the owner."
+  },
+  "continuity": {
+    "idempotency": "Lineage tools are read-only. Bootstrap creates or reuses named resources and IAM bindings; each build uses a unique revision suffix and exact traffic checkpoint.",
+    "checkpoints": "Baseline archive hash, 17-tool manifest, immutable image digest, prior service JSON, exact prior traffic assignments, candidate revision, authenticated canary receipts and promoted traffic readback.",
+    "resume_conditions": "Resume provider deployment only when the transactional deployer identity, runtime identity, Cloud Run invoker permission, project aliases and lineage allowlists are current; otherwise retain TESTED_LOCAL state.",
+    "handoff_files": ["README.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md", "VALIDATION_REPORT.md"],
+    "stop_switch": "The rollout trap catches ERR, INT and TERM, prevents promotion without ATTESTED canaries, restores exact prior traffic on any later failure, and fails the build if proof is incomplete."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": "Integrated v0.2.2 PASS: strict TypeScript build; 46/46 Alpha-Omega, WIF, deployment, lineage, security, redaction and anti-dilution tests; health smoke; WIF shell syntax; Cloud Build and workflow YAML parse; normalized rollout shell syntax.",
+    "deployment_readback": "NOT_APPLICABLE: no deployment authorized in this cycle.",
+    "semantic_verification": "Local tests verify the pipeline text requires authenticated health and two-pass ATTESTED lineage before exact revision promotion and verifies post-promotion traffic and lineage. Live semantic fruit remains a separate provider-stage gate.",
+    "unresolved_defects": []
+  }
+}
