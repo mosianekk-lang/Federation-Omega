@@ -192,6 +192,67 @@ class AdaptiveIntelligenceRouterTests(unittest.TestCase):
             self.router.provider_request(pro)["reasoning"],
         )
 
+    def test_runtime_prepares_provider_safe_direct_pro_payload(self):
+        signals = IntelligenceSignals(
+            task_id="direct-pro",
+            repeated_failures=3,
+            unresolved_contradictions=3,
+        )
+        binding = OpenAI56BindingCatalog.responses_api(
+            IntelligenceTier.PRO,
+            estimated_monthly_cost=0.0,
+        )
+        decision = self.router.route(signals, [binding])
+        self.assertTrue(decision.execution_allowed)
+        input_items = [{"role": "user", "content": "Review the bounded migration plan."}]
+        payload = AOHarmonicV3().prepare_openai_responses_request(
+            decision,
+            input_items,
+            previous_response_id="resp_previous_001",
+        )
+        self.assertEqual(
+            {
+                "model": "gpt-5.6",
+                "input": input_items,
+                "reasoning": {"effort": "max", "mode": "pro"},
+                "previous_response_id": "resp_previous_001",
+            },
+            payload,
+        )
+        self.assertNotIn("provider", payload)
+        self.assertNotIn("surface", payload)
+
+    def test_direct_payload_adapter_fails_closed(self):
+        runtime = AOHarmonicV3()
+        held = self.router.route(
+            IntelligenceSignals(task_id="held"),
+            [OpenAI56BindingCatalog.responses_api(IntelligenceTier.MEDIUM)],
+        )
+        with self.assertRaisesRegex(ValueError, "not authorised"):
+            runtime.prepare_openai_responses_request(held, "new input")
+
+        allowed = self.router.route(
+            IntelligenceSignals(task_id="allowed", requested_tier=IntelligenceTier.MEDIUM),
+            [OpenAI56BindingCatalog.responses_api(IntelligenceTier.MEDIUM, estimated_monthly_cost=0.0)],
+        )
+        with self.assertRaisesRegex(ValueError, "non-empty input"):
+            runtime.prepare_openai_responses_request(allowed, "  ")
+        allowed.provider_request["metadata"] = {"internal": True}
+        with self.assertRaisesRegex(ValueError, "unsupported keys"):
+            runtime.prepare_openai_responses_request(allowed, "new input")
+
+        for tampered_reasoning in ({"effort": "low"}, None):
+            pro = self.router.route(
+                IntelligenceSignals(task_id="tampered-pro", repeated_failures=3, unresolved_contradictions=3),
+                [OpenAI56BindingCatalog.responses_api(IntelligenceTier.PRO, estimated_monthly_cost=0.0)],
+            )
+            if tampered_reasoning is None:
+                del pro.provider_request["reasoning"]
+            else:
+                pro.provider_request["reasoning"] = tampered_reasoning
+            with self.assertRaisesRegex(ValueError, "exactly match"):
+                runtime.prepare_openai_responses_request(pro, "new input")
+
     def test_calibration_never_self_mutates_policy(self):
         outcomes = [
             RouterOutcome(
@@ -269,6 +330,9 @@ class AdaptiveIntelligenceRouterTests(unittest.TestCase):
         policy = json.loads(Path("governance/adaptive_intelligence_router_v1.json").read_text(encoding="utf-8"))
         bootstrap = json.loads(Path("governance/federation_node_bootstrap_v2.json").read_text(encoding="utf-8"))
         self.assertEqual("FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1", policy["policy_id"])
+        self.assertEqual("1.0.2", policy["version"])
+        self.assertTrue(policy["openai_binding"]["direct_payload_adapter"]["requires_explicit_non_empty_input"])
+        self.assertFalse(policy["openai_binding"]["direct_payload_adapter"]["invokes_provider"])
         self.assertIn("FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1", bootstrap["inherited_policies"])
         self.assertFalse(policy["learning"]["automatic_policy_mutation"])
         self.assertTrue(bootstrap["cost_governor"]["cannot_silently_degrade_below_air_minimum_quality_floor"])
