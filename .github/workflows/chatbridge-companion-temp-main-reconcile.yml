@@ -168,11 +168,22 @@ jobs:
           }
           EOF
 
-      - name: Remove temporary workflow and commit the verified merge
+      - name: Remove temporary workflow, normalize EOF and commit the verified merge
         shell: bash
         run: |
           set -euo pipefail
           rm -f .github/workflows/chatbridge-companion-temp-main-reconcile.yml
+          python - <<'PY'
+          from pathlib import Path
+          for name in (
+              "bubbles/chatbridge_omega4/alpha_omega_assess.py",
+              "bubbles/chatbridge_omega4/alpha_omega_canonical.py",
+              "bubbles/chatbridge_omega4/alpha_omega_reconcile.py",
+              "bubbles/chatbridge_omega4/alpha_omega_stage.py",
+          ):
+              path = Path(name)
+              path.write_text(path.read_text(encoding="utf-8").rstrip() + "\n", encoding="utf-8")
+          PY
           git add -A
           git diff --cached --check
           git commit -m 'Merge governed main and validate ChatBridge Omega 4.9 Companion adapter'
