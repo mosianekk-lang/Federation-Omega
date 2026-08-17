@@ -20,10 +20,12 @@ jobs:
           ref: chatbridge-omega49-companion-ffcl-adapter-20260817
           fetch-depth: 0
 
-      - name: Merge current governed main without committing
+      - name: Configure merge identity and merge current governed main without committing
         shell: bash
         run: |
           set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git fetch origin main
           git merge --no-commit --no-ff origin/main
 
@@ -57,7 +59,7 @@ jobs:
             "state": "CURRENT_MAIN_RECONCILED_AND_DETERMINISTIC_TESTED_NOT_BROWSER_DEPLOYED",
             "branch": "chatbridge-omega49-companion-ffcl-adapter-20260817",
             "source_run_id": "${GITHUB_RUN_ID}",
-            "reconciled_main_sha": "${GITHUB_SHA}",
+            "reconciled_main_ref": "origin/main",
             "capture_path": "RENDERED_DOM",
             "truth_boundary": [
               "NO_BROWSER_INSTALLATION_CLAIM",
@@ -75,8 +77,6 @@ jobs:
         run: |
           set -euo pipefail
           rm -f .github/workflows/chatbridge-companion-temp-main-reconcile.yml
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
           git add -A
           git diff --cached --check
           git commit -m 'Merge governed main and validate ChatBridge Omega 4.9 Companion adapter'
