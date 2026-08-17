@@ -1,4 +1,15 @@
 CHATBRIDGE-OMEGA49-REMAINING-WORK-LOCK
 started_at_sast=2026-08-17T05:16:12+02:00
+closed_at_sast=2026-08-17T05:46:02+02:00
 owner=Kim Kagiso Mosiane
-state=ACTIVE
+state=CLOSED_INTERNAL_EXECUTION_COMPLETE_EXTERNAL_PROVIDER_GATES_OPEN
+functional_main=67f13e24c5061f4858a9b69cb4f5f045d2238308
+core_merge=e7a8cebce21ddc1042439f45466803b42858582a
+browser_merge=8d233ccda99ab92e9028762839674010bc201cbc
+ingress_merge=67f13e24c5061f4858a9b69cb4f5f045d2238308
+package_branch=chatbridge-companion-omega49-v0.3.0-package
+package_commit=04a24af5201e5f5b53863509e4a47f7ff0dd54ee
+package_subtree=779e9fcf9f9ab689fb9fa93758e531b9dd82ce15
+gmail_backup_message_id=1a00dd330a98241a
+kdv_receipt=CBR-20260817T033648Z-CHATBRIDGE-OMEGA49-INGRESS-001
+external_open_gates=browser_installation,enterprise_policy,signed_in_binding,continuous_capture,real_replay,legacy_native_export_ingestion
