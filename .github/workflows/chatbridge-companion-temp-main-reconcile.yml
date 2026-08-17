@@ -1,0 +1,83 @@
+name: Temporary ChatBridge Companion Main Reconciliation
+
+on:
+  push:
+    branches:
+      - chatbridge-omega49-companion-ffcl-adapter-20260817
+
+permissions:
+  contents: write
+
+jobs:
+  reconcile-test-and-push:
+    if: github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - name: Check out exact Companion branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: chatbridge-omega49-companion-ffcl-adapter-20260817
+          fetch-depth: 0
+
+      - name: Merge current governed main without committing
+        shell: bash
+        run: |
+          set -euo pipefail
+          git fetch origin main
+          git merge --no-commit --no-ff origin/main
+
+      - name: Run Companion deterministic suite
+        shell: bash
+        run: |
+          set -euo pipefail
+          cd chatbridge-companion
+          npm run check
+
+      - name: Run ChatBridge Omega 4.9 browser ingress and core suites
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest \
+            bubbles.chatbridge_omega4.test_browser_companion_adapter \
+            bubbles.chatbridge_omega4.test_browser_companion_source_contract \
+            bubbles.chatbridge_omega4.test_alpha_omega_capture \
+            bubbles.chatbridge_omega4.test_runtime_omega49 \
+            -v
+
+      - name: Create exact-main reconciliation receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p audit
+          cat > audit/chatbridge_omega49_companion_main_reconciliation_receipt.json <<EOF
+          {
+            "schema_version": "1.0",
+            "system": "CHATBRIDGE_OMEGA49_BROWSER_COMPANION",
+            "state": "CURRENT_MAIN_RECONCILED_AND_DETERMINISTIC_TESTED_NOT_BROWSER_DEPLOYED",
+            "branch": "chatbridge-omega49-companion-ffcl-adapter-20260817",
+            "source_run_id": "${GITHUB_RUN_ID}",
+            "reconciled_main_sha": "${GITHUB_SHA}",
+            "capture_path": "RENDERED_DOM",
+            "truth_boundary": [
+              "NO_BROWSER_INSTALLATION_CLAIM",
+              "NO_SIGNED_IN_SESSION_BINDING_CLAIM",
+              "NO_LIVE_TERMINAL_INTERCEPTION_CLAIM",
+              "NO_CONNECTOR_DELIVERY_OR_PROVIDER_RECEIPT_CLAIM",
+              "NO_NATIVE_HIDDEN_CHAT_ACCESS",
+              "RENDERED_DOM_MAY_BE_VIRTUALIZED_OR_INCOMPLETE"
+            ]
+          }
+          EOF
+
+      - name: Remove temporary workflow and commit the verified merge
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f .github/workflows/chatbridge-companion-temp-main-reconcile.yml
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add -A
+          git diff --cached --check
+          git commit -m 'Merge governed main and validate ChatBridge Omega 4.9 Companion adapter'
+          git push origin HEAD:chatbridge-omega49-companion-ffcl-adapter-20260817
