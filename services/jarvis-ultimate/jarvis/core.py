@@ -7,7 +7,7 @@ import time
 from dataclasses import asdict, dataclass, field
 from enum import Enum
 from pathlib import Path
-from typing import Any, Callable
+from typing import Any
 
 
 class CapabilityState(str, Enum):
@@ -43,6 +43,20 @@ class CapabilityFabric:
         self._items = {
             "formation": Capability("formation", ("gate", "learn", "audit"), CapabilityState.VERIFIED_LIVE, "local"),
             "science": Capability("science", ("calculate", "hypothesize", "falsify"), CapabilityState.VERIFIED_LIVE, "local"),
+            "alpha_omega": Capability(
+                "alpha_omega",
+                ("preflight", "multi_path", "multi_stream", "fan_in", "converge"),
+                CapabilityState.VERIFIED_LIVE,
+                "local",
+                "T20-AO-OMEGA-SCIENTIST-1.0",
+            ),
+            "omega_scientist": Capability(
+                "omega_scientist",
+                ("cycle_review", "shadow_experiment", "regression_gate", "method_repair"),
+                CapabilityState.VERIFIED_LIVE,
+                "local",
+                "T20-AO-OMEGA-SCIENTIST-1.0",
+            ),
             "gemini": Capability("gemini", ("reason", "multimodal", "function_call", "live"), CapabilityState.VERIFIED_LIVE if gemini_live else CapabilityState.ADAPTER_REQUIRED, "GOOGLE_API_KEY or ADC"),
             "drive": Capability("drive", ("search", "read", "write"), CapabilityState.ADAPTER_REQUIRED, "incremental OAuth or service account"),
             "gmail": Capability("gmail", ("search", "read", "draft", "send"), CapabilityState.ADAPTER_REQUIRED, "incremental OAuth"),
