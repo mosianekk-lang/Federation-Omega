@@ -29,6 +29,95 @@ jobs:
           git fetch origin main
           git merge --no-commit --no-ff origin/main
 
+      - name: Preserve exact FFCL provider identity through Omega 4.9 finalization
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+
+          def replace_exact(path: str, old: str, new: str) -> None:
+              target = Path(path)
+              text = target.read_text(encoding="utf-8")
+              if old not in text:
+                  raise SystemExit(f"expected patch target not found: {path}")
+              target.write_text(text.replace(old, new, 1), encoding="utf-8")
+
+          replace_exact(
+              "bubbles/chatbridge_omega4/runtime_omega49.py",
+              '''        terminal_observed: bool = False,
+                  allow_derived_ordering: bool = True,
+              ) -> Dict[str, Any]:
+                  return self.alpha_omega_capture.finalize(
+                      conversation_key,
+                      namespace_key,
+                      expected_last_sequence=expected_last_sequence,
+                      expected_first_sequence=expected_first_sequence,
+                      closure_reason=closure_reason,
+                      terminal_observed=terminal_observed,
+                      allow_derived_ordering=allow_derived_ordering,
+                  )
+          ''',
+              '''        terminal_observed: bool = False,
+                  allow_derived_ordering: bool = True,
+                  source_provider: str = "CHATGPT",
+                  title: str = "",
+              ) -> Dict[str, Any]:
+                  return self.alpha_omega_capture.finalize(
+                      conversation_key,
+                      namespace_key,
+                      expected_last_sequence=expected_last_sequence,
+                      expected_first_sequence=expected_first_sequence,
+                      closure_reason=closure_reason,
+                      terminal_observed=terminal_observed,
+                      allow_derived_ordering=allow_derived_ordering,
+                      source_provider=source_provider,
+                      title=title,
+                  )
+          ''',
+          )
+
+          replace_exact(
+              "bubbles/chatbridge_omega4/alpha_omega_assess.py",
+              '''        terminal_observed: bool = False,
+                  allow_derived_ordering: bool = True,
+              ) -> Dict[str, Any]:
+                  reconciliation = self.reconcile(
+                      conversation_key,
+                      namespace_key,
+                      allow_derived_ordering=allow_derived_ordering,
+                  )
+          ''',
+              '''        terminal_observed: bool = False,
+                  allow_derived_ordering: bool = True,
+                  source_provider: str = "CHATGPT",
+                  title: str = "",
+              ) -> Dict[str, Any]:
+                  reconciliation = self.reconcile(
+                      conversation_key,
+                      namespace_key,
+                      allow_derived_ordering=allow_derived_ordering,
+                      source_provider=source_provider,
+                      title=title,
+                  )
+          ''',
+          )
+
+          replace_exact(
+              "bubbles/chatbridge_omega4/browser_companion_adapter.py",
+              '''                        terminal_observed=parsed["terminal_observed"],
+                          allow_derived_ordering=True,
+                      )
+          ''',
+              '''                        terminal_observed=parsed["terminal_observed"],
+                          allow_derived_ordering=True,
+                          source_provider=parsed["source_provider"],
+                          title=parsed["title"],
+                      )
+          ''',
+          )
+          PY
+
       - name: Run Companion deterministic suite
         shell: bash
         run: |
@@ -61,6 +150,7 @@ jobs:
             "source_run_id": "${GITHUB_RUN_ID}",
             "reconciled_main_ref": "origin/main",
             "capture_path": "RENDERED_DOM",
+            "provider_identity_rule": "FINALIZATION_MUST_REUSE_THE_SOURCE_PROVIDER_BOUND_DURING_CAPTURE",
             "truth_boundary": [
               "NO_BROWSER_INSTALLATION_CLAIM",
               "NO_SIGNED_IN_SESSION_BINDING_CLAIM",
