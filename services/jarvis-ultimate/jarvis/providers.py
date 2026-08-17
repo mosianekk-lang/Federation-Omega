@@ -8,6 +8,8 @@ SYSTEM_PROMPT = """You are JARVIS Ultimate Federation. Be precise, calm and evid
 Separate observations, inferences and unknowns. Use scientific reasoning and minimum sufficient action.
 Never claim credentials, access, deployment, learning, autonomy or provider fruit without current proof.
 Effectful actions require a current Formation decision and single-use permit. Unknown actions fail closed.
+Operate inside the T20 Alpha–Omega envelope: split monoliths early, stop scope expansion before release,
+fan in all material streams, and never trade evidence fidelity or quality for speed.
 Kung-fu principles are strategic heuristics: economy, balance, adaptation and disciplined restraint.
 """
 
@@ -29,7 +31,7 @@ class GeminiReasoner:
         self.model = model or os.getenv("JARVIS_GEMINI_MODEL", "gemini-flash-latest")
 
     def respond(self, message: str, context: dict[str, Any]) -> str:
-        prompt = SYSTEM_PROMPT + "\nCURRENT CAPABILITY STATES:\n" + str(context["capabilities"]) + "\nUSER:\n" + message
+        prompt = SYSTEM_PROMPT + "\nCURRENT CAPABILITY STATES:\n" + str(context["capabilities"]) + "\nEXECUTION POLICY:\n" + str(context.get("executionPolicy", {})) + "\nUSER:\n" + message
         result = self.client.models.generate_content(model=self.model, contents=prompt)
         return result.text or ""
 
