@@ -48,7 +48,7 @@ class Handler(BaseHTTPRequestHandler):
         if self.path == "/v1/execution-policy":
             return self._json(200, APP.execution_policy())
         if self.path == "/":
-            page = Path(__file__).parent.parent / "web" / "index.html"
+            page = Path(__file__).parent / "static" / "index.html"
             data = page.read_bytes()
             self.send_response(200)
             self.send_header("content-type", "text/html; charset=utf-8")
