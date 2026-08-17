@@ -31,6 +31,13 @@ from .intelligence_router import (
     ProviderIntelligenceBinding,
     RouterOutcome,
 )
+from .jarvis_ao5 import (
+    CapabilityRealityState,
+    ExecutionState,
+    ForensicRunRequest,
+    ForensicRunResult,
+    JarvisAO5Engine,
+)
 from .runtime import AOHarmonicV3, bootstrap
 
 __all__ = [
@@ -59,5 +66,10 @@ __all__ = [
     "OpenAI56BindingCatalog",
     "ProviderIntelligenceBinding",
     "RouterOutcome",
+    "JarvisAO5Engine",
+    "ForensicRunRequest",
+    "ForensicRunResult",
+    "ExecutionState",
+    "CapabilityRealityState",
 ]
 __version__ = "3.2.0"
