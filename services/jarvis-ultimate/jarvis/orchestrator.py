@@ -5,10 +5,11 @@ import time
 import uuid
 from dataclasses import asdict
 from pathlib import Path
-from typing import Any
+from typing import Any, Mapping, Sequence
 
 from .authority import AuthorityEnvelope
-from .core import ACTION_SPECS, CapabilityFabric, CircuitBreaker, FormationKernel, LearningLedger, PermitVerifier, semantic_fingerprint
+from .core import ACTION_SPECS, CapabilityFabric, CircuitBreaker, FormationKernel, LearningLedger, LedgerIntegrityError, PermitVerifier, semantic_fingerprint
+from .execution import TwentyMinuteGovernor
 from .graph import GovernedReasoningGraph, GraphInputError, SemanticVerificationError
 from .math_engine import MathExpressionError, calculate
 from .principles import catalogue, doctrine_summary
@@ -33,23 +34,29 @@ class Jarvis:
         )
         self.breaker = CircuitBreaker()
         self.graph = GovernedReasoningGraph()
+        self.execution = TwentyMinuteGovernor()
         self.session_provider_proof: str | None = None
         self.session_provider_receipt: str | None = None
 
     def health(self) -> dict[str, Any]:
+        ledger_valid = self.ledger.verify()
         return {
-            "ok": self.ledger.verify(),
+            "ok": ledger_valid,
             "service": "jarvis-ultimate",
-            "version": "1.4.0",
+            "version": "1.5.0",
             "reasoner": self.reasoner.name,
             "providerMode": self.reasoner.provider_mode,
             "providerSessionProof": self.session_provider_proof,
             "providerSessionReceipt": self.session_provider_receipt,
-            "ledgerValid": self.ledger.verify(),
+            "ledgerValid": ledger_valid,
             "ledgerCheckpointAuthenticated": self.ledger.authenticated_checkpoint_enabled,
             "ledgerExternalAnchorBound": self.ledger.external_anchor_enabled,
             "runtimeState": "ON_DEMAND_GOVERNED",
             "maturity": "IMPLEMENTED_TESTED_LOCAL",
+            "executionPolicy": self.execution.policy.id,
+            "lessonGate": self.execution.policy.lesson_gate_id,
+            "directiveEnvelopeSeconds": self.execution.policy.max_directive_seconds,
+            "emailSendRule": self.execution.policy.email_send_rule,
         }
 
     def capabilities(self) -> dict[str, Any]:
@@ -57,35 +64,81 @@ class Jarvis:
             "capabilities": self.fabric.inventory(),
             "quarantined": sorted(self.breaker.quarantined),
             "actionSchemas": [ACTION_SPECS[key].public() for key in sorted(ACTION_SPECS)],
+            "executionPolicy": self.execution.describe(),
         }
+
+    def execution_policy(self) -> dict[str, Any]:
+        return self.execution.describe()
 
     @staticmethod
     def formation_action_ids() -> list[str]:
         return list(ACTION_SPECS)
 
-    def plan(self, objective: str) -> dict[str, Any]:
+    def plan(
+        self,
+        objective: str,
+        deliverable_form: str | None = None,
+        expected_state_delta: str | None = None,
+    ) -> dict[str, Any]:
         objective = objective.strip()
         if not objective:
             raise GraphInputError("OBJECTIVE_REQUIRED")
         mission = "JARVIS-" + uuid.uuid4().hex[:12]
-        return {
-            "missionId": mission,
-            "objective": objective,
-            "taskState": "CREATED",
-            "principles": [principle["id"] for principle in catalogue()],
-            "steps": [
-                "observe",
-                "define terminal fruit",
-                "select verified route",
-                "run advisory twin",
-                "gate exact action schema",
-                "execute one minimum effectful path",
-                "semantic readback",
-                "capture unpromoted learning candidate",
-                "stop",
-            ],
-            "effectfulPathsAllowed": 1,
-        }
+        plan = self.execution.build_plan(
+            mission,
+            objective,
+            deliverable_form=deliverable_form,
+            expected_state_delta=expected_state_delta,
+        )
+        plan.update(
+            {
+                "taskState": "CREATED",
+                "principles": [principle["id"] for principle in catalogue()],
+                "workflowSteps": [
+                    "observe current verified state",
+                    "lock objective form and expected state delta",
+                    "select verified routes and run advisory twin",
+                    "fan out only independent streams",
+                    "gate exact action schema and authority",
+                    "execute one minimum effectful path when separately authorized",
+                    "fan in tests adversarial review and semantic readback",
+                    "capture unpromoted learning candidate",
+                    "emit completion state and next best automated pathway",
+                    "stop",
+                ],
+                "effectfulPathsAllowed": 1,
+            }
+        )
+        return plan
+
+    def review_cycle(
+        self,
+        elapsed_seconds: int,
+        quality_evidence: Mapping[str, Mapping[str, Any] | bool],
+        route_results: Sequence[Mapping[str, Any]],
+        next_best_automated_pathway: str,
+        retries: int = 0,
+    ) -> dict[str, Any]:
+        if not self.ledger.verify():
+            raise LedgerIntegrityError("LEDGER_INTEGRITY_FAILED")
+        review = self.execution.review_cycle(
+            elapsed_seconds,
+            quality_evidence,
+            route_results,
+            next_best_automated_pathway,
+            retries,
+        )
+        outcome = "SUCCESS" if review["qualityPass"] and review["meaningfulStateDelta"] else "FAILURE"
+        event = self.ledger.append(
+            "omega-scientist-cycle-review",
+            outcome,
+            elapsed_seconds * 1000,
+            semantic_fingerprint(review),
+            semantic_fruit=review["completionState"] == "COMPLETE_VERIFIED",
+        )
+        review["learningHash"] = event["hash"]
+        review["learningPromotion"] = "NOT_PROMOTED"
+        return review
 
     def chat(self, message: str) -> dict[str, Any]:
         started = time.perf_counter()
@@ -126,6 +179,7 @@ class Jarvis:
             "capabilities": self.fabric.inventory(),
             "principles": catalogue(),
             "doctrine": doctrine_summary(),
+            "executionPolicy": self.execution.describe(),
         }
         try:
             graph_result = self.graph.run(message, context, self.reasoner)
