@@ -1,0 +1,1 @@
+ChatBridge remaining-work execution initiated from live main after user directive to close all executable lanes.
