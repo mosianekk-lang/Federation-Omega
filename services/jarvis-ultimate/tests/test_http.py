@@ -52,6 +52,12 @@ class HttpTests(unittest.TestCase):
         self.assertEqual(status, 200)
         self.assertEqual(policy["id"], "T20-AO-OMEGA-SCIENTIST-1.0")
 
+    def test_root_page_is_packaged(self):
+        request = Request(self.base + "/", headers={"authorization": "Bearer secret"}, method="GET")
+        with urlopen(request, timeout=2) as response:
+            body = response.read().decode()
+        self.assertIn("JARVIS Ultimate Federation", body)
+
     def test_plan_and_cycle_review(self):
         status, plan = self.request("/v1/plan", {"objective": "Finish safely"})
         self.assertEqual(status, 200)
