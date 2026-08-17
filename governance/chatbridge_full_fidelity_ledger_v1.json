@@ -1,0 +1,68 @@
+{
+  "schema_version": "1.0",
+  "system": "CHATBRIDGE_OMEGA",
+  "release": "CHATBRIDGE-OMEGA4.8-FULL-FIDELITY-CONVERSATION-LEDGER",
+  "full_fidelity_conversation_ledger": {
+    "version": "FFCL-1.0",
+    "coverage_scope": "ALL_CHATBRIDGE_OMEGA48_ACTIVE_CONVERSATIONS",
+    "capture": "EVERY_OBSERVED_TURN_AND_PROVIDER_EVENT_APPEND_ONLY",
+    "source_identity": "EXACT_CONVERSATION_KEY_BOUND_TO_EXACT_NAMESPACE",
+    "ordering": "MONOTONIC_SEQUENCE",
+    "integrity": [
+      "SHA256_CANONICAL_EVENT_CONTENT",
+      "PREVIOUS_EVENT_HASH_CHAIN",
+      "ORDERED_EVENT_MERKLE_ROOT",
+      "ATOMIC_WRITE_AND_READBACK"
+    ],
+    "watermarks": "EXPECTED_FIRST_AND_LAST_SEQUENCE",
+    "completion": "SEALED_RANGE_WITH_ZERO_GAPS_AND_RESOLVED_REQUIRED_DEPENDENCIES",
+    "restore_modes": [
+      "EXACT_TRANSCRIPT_RESTORE",
+      "BOUNDED_TRANSCRIPT_RESTORE",
+      "REJECT_TAMPERED",
+      "NO_TRANSCRIPT"
+    ],
+    "gap_rule": "EXPLICIT_MISSING_RANGES_NEVER_GUESS",
+    "correction_rule": "APPEND_CORRECTION_EVENT_NEVER_REWRITE_HISTORY",
+    "terminal_rule": "TERMINAL_INTENT_IS_NOT_EXECUTION",
+    "artifact_rule": "STABLE_REFERENCE_HASH_LOCATOR_AND_AVAILABILITY",
+    "legacy_import": "IMPORT_PRIMARY_TRANSCRIPT_IN_ORDER_MARK_GAPS_EXPLICITLY",
+    "idempotency": "SAME_SEQUENCE_OR_KEY_MUST_MATCH_EXACT_CONTENT",
+    "privacy": "GOVERNED_LOCAL_RAW_OR_EXPLICIT_AVAILABILITY_DOWNGRADE"
+  },
+  "provider_contract": {
+    "native_hidden_chat_access": false,
+    "adapter_required": true,
+    "capture_before_heavy_operation": true,
+    "capture_before_provider_mutation": true,
+    "exact_provider_quota_visibility": false,
+    "provider_deployment_claimed": false,
+    "provider_effects_require_readback": true
+  },
+  "exact_restore_acceptance": [
+    "CONVERSATION_SEALED",
+    "EXPECTED_FIRST_SEQUENCE_KNOWN",
+    "EXPECTED_LAST_SEQUENCE_KNOWN",
+    "NO_MISSING_SEQUENCE",
+    "HASH_CHAIN_VALID",
+    "MERKLE_ROOT_DERIVED",
+    "RAW_CONTEXT_PAYLOADS_AVAILABLE",
+    "REQUIRED_ARTIFACTS_VERIFIED_AVAILABLE"
+  ],
+  "bounded_restore_requirements": [
+    "MISSING_RANGES_EXPOSED",
+    "UNAVAILABLE_PAYLOADS_EXPOSED",
+    "UNRESOLVED_ARTIFACTS_EXPOSED",
+    "NO_SYNTHETIC_RECONSTRUCTION",
+    "NEXT_ACQUISITION_ROUTE_IDENTIFIED"
+  ],
+  "truth_boundaries": [
+    "RECORD_INTEGRITY_DOES_NOT_PROVE_SUBSTANTIVE_TRUTH",
+    "SOURCE_COMPLETE_DOES_NOT_PROVE_NATIVE_CHATGPT_HOOK",
+    "LEGACY_CONTENT_NEVER_CAPTURED_CANNOT_BE_RETROACTIVELY_CREATED",
+    "LOCAL_SQLITE_PROOF_DOES_NOT_PROVE_ENCRYPTED_PROVIDER_DEPLOYMENT",
+    "TERMINAL_VISIBLE_COMMAND_DOES_NOT_PROVE_COMMAND_EXECUTION",
+    "PROVIDER_EFFECTS_REQUIRE_SEPARATE_READBACK",
+    "MODEL_WEIGHT_LEARNING_NOT_CLAIMED"
+  ]
+}
