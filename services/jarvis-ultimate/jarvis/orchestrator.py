@@ -43,7 +43,7 @@ class Jarvis:
         return {
             "ok": ledger_valid,
             "service": "jarvis-ultimate",
-            "version": "1.5.0",
+            "version": "1.4.0",
             "reasoner": self.reasoner.name,
             "providerMode": self.reasoner.provider_mode,
             "providerSessionProof": self.session_provider_proof,
