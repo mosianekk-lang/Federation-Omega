@@ -2,8 +2,8 @@
 
 ## Current state
 
-- Release: 1.5.0 stacked candidate.
-- Maturity: `IMPLEMENTED_TESTED_LOCAL` only after exact-head provider CI; candidate proof is currently pending.
+- Release: 1.4.0 with stacked T20 overlay candidate.
+- Maturity: `IMPLEMENTED_TESTED_LOCAL` only after exact-head provider CI; current overlay proof is pending.
 - Foundation: JARVIS v1.4.0 at `9b075fc64393e3b780a863860d59a082fe41ceb0`.
 - Execution layer: `T20-AO-OMEGA-SCIENTIST-1.1`.
 - Lesson gate: `FEDERATION-72H-LESSON-GATE-20260817`.
@@ -95,7 +95,7 @@
 
 ## Open proof gates
 
-1. Run the locked installed-package and full JARVIS suite inside the allowlisted Federation Airlock for the exact v1.5 commit.
+1. Run the locked installed-package and full JARVIS suite inside the allowlisted Federation Airlock for the exact T20 overlay commit.
 2. Keep PR 548 stacked on the open v1.4 foundation PR 546; do not merge or retarget without current ancestry and owner approval.
 3. Move permit signing and nonce/effect state to an externally isolated, globally transactional production authority.
 4. Move ledger and breaker state to managed durable storage with transactional recovery receipt consumption and a provider-managed monotonic anchor for multi-instance execution.
