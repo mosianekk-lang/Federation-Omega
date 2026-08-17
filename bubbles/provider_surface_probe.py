@@ -18,6 +18,7 @@ AFEME_URL = "https://afeme-sovereign-control-plane-v4-257649435135.africa-south1
 ARCHON_SCRIPT_DEPLOYMENT_ID = "AKfycbyaxovYOyaoMWFdsAZnbl2AIFU0PFY3hcGF-QRM1dmDqdtEHRFI7Ud7L_p7YCCVMG3J"
 ARCHON_SCRIPT_URL = f"https://script.google.com/macros/s/{ARCHON_SCRIPT_DEPLOYMENT_ID}/exec"
 PROJECT_ID = "sov-hybrid-suite"
+RESOURCE_PROJECT_NUMBER = "257649435135"
 REGION = "africa-south1"
 TARGET_SERVICE = "architron9"
 
@@ -85,7 +86,7 @@ def _default_http(
 
 def _default_command(args: list[str]) -> CommandResult:
     try:
-        proc = subprocess.run(args, text=True, capture_output=True, check=False, timeout=25)
+        proc = subprocess.run(args, text=True, capture_output=True, check=False, timeout=40)
         return CommandResult(proc.returncode, proc.stdout, proc.stderr)
     except Exception as exc:  # pragma: no cover - runner dependent
         return CommandResult(127, "", f"{type(exc).__name__}: {exc}")
@@ -139,6 +140,199 @@ def _identity_token(hooks: ProbeHooks, audience: str) -> tuple[str, str]:
     return "", result.stderr[-1800:]
 
 
+def _command_json(hooks: ProbeHooks, args: list[str]) -> tuple[object | None, str]:
+    result = hooks.command(args)
+    if result.returncode != 0:
+        return None, result.stderr[-2400:]
+    try:
+        return json.loads(result.stdout or "null"), ""
+    except json.JSONDecodeError as exc:
+        return None, f"INVALID_JSON: {exc.msg}; output={result.stdout[-1200:]}"
+
+
+def _dig(value: object, *keys: str) -> object | None:
+    current = value
+    for key in keys:
+        if not isinstance(current, Mapping):
+            return None
+        current = current.get(key)
+    return current
+
+
+def _cloud_run_summary(raw: object) -> dict[str, object]:
+    if not isinstance(raw, Mapping):
+        return {}
+    containers = _dig(raw, "spec", "template", "spec", "containers")
+    first_container = containers[0] if isinstance(containers, list) and containers and isinstance(containers[0], Mapping) else {}
+    return {
+        "name": _dig(raw, "metadata", "name"),
+        "generation": _dig(raw, "metadata", "generation"),
+        "latestReadyRevision": _dig(raw, "status", "latestReadyRevisionName"),
+        "latestCreatedRevision": _dig(raw, "status", "latestCreatedRevisionName"),
+        "url": _dig(raw, "status", "url"),
+        "serviceAccount": _dig(raw, "spec", "template", "spec", "serviceAccountName"),
+        "image": first_container.get("image") if isinstance(first_container, Mapping) else None,
+        "traffic": _dig(raw, "status", "traffic"),
+    }
+
+
+def _revision_summary(raw: object) -> dict[str, object]:
+    if not isinstance(raw, Mapping):
+        return {}
+    containers = _dig(raw, "spec", "containers")
+    if not isinstance(containers, list):
+        containers = _dig(raw, "spec", "template", "spec", "containers")
+    first_container = containers[0] if isinstance(containers, list) and containers and isinstance(containers[0], Mapping) else {}
+    return {
+        "name": _dig(raw, "metadata", "name"),
+        "service": _dig(raw, "metadata", "labels", "serving.knative.dev/service"),
+        "image": first_container.get("image") if isinstance(first_container, Mapping) else None,
+        "imageDigest": _dig(raw, "status", "imageDigest"),
+        "serviceAccount": _dig(raw, "spec", "serviceAccountName"),
+        "conditions": _dig(raw, "status", "conditions"),
+    }
+
+
+def _build_summaries(raw: object) -> list[dict[str, object]]:
+    if not isinstance(raw, list):
+        return []
+    summaries: list[dict[str, object]] = []
+    for item in raw[:20]:
+        if not isinstance(item, Mapping):
+            continue
+        summaries.append(
+            {
+                "id": item.get("id"),
+                "status": item.get("status"),
+                "createTime": item.get("createTime"),
+                "finishTime": item.get("finishTime"),
+                "images": item.get("images"),
+                "source": item.get("source"),
+                "substitutions": item.get("substitutions"),
+                "tags": item.get("tags"),
+            }
+        )
+    return summaries
+
+
+def _gcloud_provider_readback(hooks: ProbeHooks, account: str) -> dict[str, object]:
+    if not account:
+        return {
+            "classification": "NO_GCLOUD_IDENTITY",
+            "expectedProjectId": PROJECT_ID,
+            "expectedProjectNumber": RESOURCE_PROJECT_NUMBER,
+            "mutationAttempted": False,
+        }
+
+    project_raw, project_error = _command_json(
+        hooks,
+        ["gcloud", "projects", "describe", PROJECT_ID, "--format=json"],
+    )
+    project: dict[str, object] = {}
+    if isinstance(project_raw, Mapping):
+        project = {
+            "projectId": project_raw.get("projectId"),
+            "projectNumber": str(project_raw.get("projectNumber") or ""),
+            "name": project_raw.get("name"),
+            "lifecycleState": project_raw.get("lifecycleState"),
+        }
+
+    if project.get("projectId") and project.get("projectId") != PROJECT_ID:
+        classification = "PROJECT_IDENTITY_MISMATCH"
+    elif project.get("projectNumber") and project.get("projectNumber") != RESOURCE_PROJECT_NUMBER:
+        classification = "PROJECT_IDENTITY_MISMATCH"
+    elif not project:
+        classification = "PROJECT_READBACK_FAILED"
+    else:
+        classification = "PROJECT_IDENTITY_VERIFIED"
+
+    service_raw: object | None = None
+    service_error = ""
+    revision_raw: object | None = None
+    revision_error = ""
+    builds_raw: object | None = None
+    builds_error = ""
+
+    if classification == "PROJECT_IDENTITY_VERIFIED":
+        service_raw, service_error = _command_json(
+            hooks,
+            [
+                "gcloud",
+                "run",
+                "services",
+                "describe",
+                TARGET_SERVICE,
+                f"--project={PROJECT_ID}",
+                f"--region={REGION}",
+                "--format=json",
+            ],
+        )
+        service_summary = _cloud_run_summary(service_raw)
+        ready_revision = str(service_summary.get("latestReadyRevision") or "")
+        if ready_revision:
+            revision_raw, revision_error = _command_json(
+                hooks,
+                [
+                    "gcloud",
+                    "run",
+                    "revisions",
+                    "describe",
+                    ready_revision,
+                    f"--project={PROJECT_ID}",
+                    f"--region={REGION}",
+                    "--format=json",
+                ],
+            )
+        builds_raw, builds_error = _command_json(
+            hooks,
+            [
+                "gcloud",
+                "builds",
+                "list",
+                f"--project={PROJECT_ID}",
+                "--limit=20",
+                "--sort-by=~createTime",
+                "--format=json",
+            ],
+        )
+    else:
+        service_summary = {}
+
+    revision_summary = _revision_summary(revision_raw)
+    builds = _build_summaries(builds_raw)
+
+    if classification == "PROJECT_IDENTITY_VERIFIED":
+        if service_summary.get("name") == TARGET_SERVICE and service_summary.get("latestReadyRevision"):
+            classification = "CLOUD_RUN_READBACK_VERIFIED"
+        elif service_error:
+            classification = "CLOUD_RUN_READBACK_FAILED"
+        else:
+            classification = "CLOUD_RUN_READBACK_INCOMPLETE"
+
+    if classification == "CLOUD_RUN_READBACK_VERIFIED" and revision_summary.get("name"):
+        classification = "PROVIDER_REVISION_READBACK_VERIFIED"
+
+    return {
+        "classification": classification,
+        "activeAccount": account,
+        "expectedProjectId": PROJECT_ID,
+        "expectedProjectNumber": RESOURCE_PROJECT_NUMBER,
+        "project": project,
+        "projectError": project_error,
+        "cloudRunService": service_summary,
+        "cloudRunServiceError": service_error,
+        "latestReadyRevision": revision_summary,
+        "latestReadyRevisionError": revision_error,
+        "recentBuilds": builds,
+        "recentBuildsError": builds_error,
+        "mutationAttempted": False,
+        "truthBoundary": (
+            "These are read-only gcloud provider responses. Project identity must match the expected resource project before "
+            "Cloud Run data is promoted. Build metadata may be incomplete and does not by itself prove source lineage."
+        ),
+    }
+
+
 def _response_ok(response: Mapping[str, Any]) -> bool:
     return response.get("http_status") == 200 and isinstance(response.get("body"), Mapping) and response["body"].get("ok") is True
 
@@ -179,6 +373,8 @@ def run_probe(
     }
 
     account, account_error = _active_account(hooks)
+    google_cloud_readback = _gcloud_provider_readback(hooks, account)
+
     fo_token = direct_fo_token.strip()
     fo_token_source = "github_actions_secret" if fo_token else ""
     fo_token_error = ""
@@ -275,12 +471,14 @@ def run_probe(
 
     secrets = tuple(secret for secret in (fo_token, archon_token, afeme_token) if secret)
     receipt: dict[str, Any] = {
-        "schema": "BUBBLES-PROVIDER-SURFACE-PROBE-V1",
+        "schema": "BUBBLES-PROVIDER-SURFACE-PROBE-V2",
         "recorded_at": datetime.now(timezone.utc).isoformat(),
         "project": PROJECT_ID,
+        "expected_resource_project_number": RESOURCE_PROJECT_NUMBER,
         "region": REGION,
         "active_gcloud_account": account,
         "active_account_probe_error": account_error,
+        "google_cloud_readback": google_cloud_readback,
         "mutation_attempted": False,
         "secret_values_recorded": False,
         "surfaces": {
