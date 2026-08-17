@@ -26,6 +26,14 @@ class ActionRisk(str, Enum):
     EFFECTFUL = "EFFECTFUL"
 
 
+class ArgumentKind(str, Enum):
+    STRING = "STRING"
+    BOOLEAN = "BOOLEAN"
+    INTEGER = "INTEGER"
+    OBJECT = "OBJECT"
+    ARRAY = "ARRAY"
+
+
 class TaskState(str, Enum):
     CREATED = "CREATED"
     QUEUED = "QUEUED"
@@ -51,54 +59,94 @@ class Capability:
 
 
 @dataclass(frozen=True)
+class ArgumentField:
+    name: str
+    kind: ArgumentKind
+    required: bool = False
+
+
+@dataclass(frozen=True)
 class ActionSpec:
     id: str
     capability: str
     risk: ActionRisk
+    resource_required: bool
+    arguments: tuple[ArgumentField, ...] = ()
+
+    def public(self) -> dict[str, Any]:
+        return {
+            "id": self.id,
+            "capability": self.capability,
+            "risk": self.risk.value,
+            "resourceRequired": self.resource_required,
+            "arguments": [
+                {"name": item.name, "kind": item.kind.value, "required": item.required}
+                for item in self.arguments
+            ],
+        }
 
 
 @dataclass
 class Decision:
     mission_id: str
+    mission_version: int
     action_id: str
     risk: str
     capability: str
+    subject_id: str | None
+    resource: str | None
+    arguments_hash: str
     status: str
     reasons: list[str] = field(default_factory=list)
     permit_required: bool = False
     permit_consumed: bool = False
 
 
+S = ArgumentKind.STRING
+B = ArgumentKind.BOOLEAN
+I = ArgumentKind.INTEGER
+O = ArgumentKind.OBJECT
+A = ArgumentKind.ARRAY
+
+
+def arg(name: str, kind: ArgumentKind = S, required: bool = False) -> ArgumentField:
+    return ArgumentField(name, kind, required)
+
+
+def effectful(*fields: ArgumentField) -> tuple[ArgumentField, ...]:
+    return (arg("idempotency_key", S, True), *fields)
+
+
 ACTION_SPECS = {
     row.id: row
     for row in (
-        ActionSpec("formation.audit", "formation", ActionRisk.READ_ONLY),
-        ActionSpec("science.calculate", "science", ActionRisk.READ_ONLY),
-        ActionSpec("science.explain", "science", ActionRisk.READ_ONLY),
-        ActionSpec("gemini.reason", "gemini", ActionRisk.READ_ONLY),
-        ActionSpec("drive.search", "drive", ActionRisk.READ_ONLY),
-        ActionSpec("drive.read", "drive", ActionRisk.READ_ONLY),
-        ActionSpec("drive.write", "drive", ActionRisk.EFFECTFUL),
-        ActionSpec("drive.share", "drive", ActionRisk.EFFECTFUL),
-        ActionSpec("drive.move", "drive", ActionRisk.EFFECTFUL),
-        ActionSpec("gmail.search", "gmail", ActionRisk.READ_ONLY),
-        ActionSpec("gmail.read", "gmail", ActionRisk.READ_ONLY),
-        ActionSpec("gmail.draft", "gmail", ActionRisk.EFFECTFUL),
-        ActionSpec("gmail.send", "gmail", ActionRisk.EFFECTFUL),
-        ActionSpec("gmail.forward", "gmail", ActionRisk.EFFECTFUL),
-        ActionSpec("gmail.archive", "gmail", ActionRisk.EFFECTFUL),
-        ActionSpec("sheets.read", "sheets", ActionRisk.READ_ONLY),
-        ActionSpec("sheets.write", "sheets", ActionRisk.EFFECTFUL),
-        ActionSpec("calendar.read", "calendar", ActionRisk.READ_ONLY),
-        ActionSpec("calendar.schedule", "calendar", ActionRisk.EFFECTFUL),
-        ActionSpec("calendar.update", "calendar", ActionRisk.EFFECTFUL),
-        ActionSpec("github.source", "github", ActionRisk.READ_ONLY),
-        ActionSpec("github.release", "github", ActionRisk.EFFECTFUL),
-        ActionSpec("cloud.describe", "google_cloud", ActionRisk.READ_ONLY),
-        ActionSpec("cloud.deploy_candidate", "google_cloud", ActionRisk.EFFECTFUL),
-        ActionSpec("cloud.promote_candidate", "google_cloud", ActionRisk.EFFECTFUL),
-        ActionSpec("federation.discover", "federation_mcp", ActionRisk.READ_ONLY),
-        ActionSpec("federation.invoke", "federation_mcp", ActionRisk.EFFECTFUL),
+        ActionSpec("formation.audit", "formation", ActionRisk.READ_ONLY, False, (arg("event_hash"),)),
+        ActionSpec("science.calculate", "science", ActionRisk.READ_ONLY, False, (arg("expression", S, True),)),
+        ActionSpec("science.explain", "science", ActionRisk.READ_ONLY, False, (arg("principle_id", S, True),)),
+        ActionSpec("gemini.reason", "gemini", ActionRisk.READ_ONLY, True, (arg("prompt_hash", S, True),)),
+        ActionSpec("drive.search", "drive", ActionRisk.READ_ONLY, True, (arg("query", S, True), arg("page_size", I))),
+        ActionSpec("drive.read", "drive", ActionRisk.READ_ONLY, True),
+        ActionSpec("drive.write", "drive", ActionRisk.EFFECTFUL, True, effectful(arg("name", S, True), arg("content_hash", S, True), arg("mime_type"))),
+        ActionSpec("drive.share", "drive", ActionRisk.EFFECTFUL, True, effectful(arg("recipient_hash", S, True), arg("role", S, True))),
+        ActionSpec("drive.move", "drive", ActionRisk.EFFECTFUL, True, effectful(arg("destination_id", S, True))),
+        ActionSpec("gmail.search", "gmail", ActionRisk.READ_ONLY, True, (arg("query", S, True), arg("page_size", I))),
+        ActionSpec("gmail.read", "gmail", ActionRisk.READ_ONLY, True),
+        ActionSpec("gmail.draft", "gmail", ActionRisk.EFFECTFUL, True, effectful(arg("to_hash", S, True), arg("body_hash", S, True))),
+        ActionSpec("gmail.send", "gmail", ActionRisk.EFFECTFUL, True, effectful(arg("to_hash", S, True), arg("body_hash", S, True))),
+        ActionSpec("gmail.forward", "gmail", ActionRisk.EFFECTFUL, True, effectful(arg("to_hash", S, True), arg("body_hash", S, True))),
+        ActionSpec("gmail.archive", "gmail", ActionRisk.EFFECTFUL, True, effectful()),
+        ActionSpec("sheets.read", "sheets", ActionRisk.READ_ONLY, True, (arg("range", S, True),)),
+        ActionSpec("sheets.write", "sheets", ActionRisk.EFFECTFUL, True, effectful(arg("range", S, True), arg("values_hash", S, True))),
+        ActionSpec("calendar.read", "calendar", ActionRisk.READ_ONLY, True, (arg("time_min"), arg("time_max"))),
+        ActionSpec("calendar.schedule", "calendar", ActionRisk.EFFECTFUL, True, effectful(arg("event_hash", S, True))),
+        ActionSpec("calendar.update", "calendar", ActionRisk.EFFECTFUL, True, effectful(arg("event_hash", S, True))),
+        ActionSpec("github.source", "github", ActionRisk.READ_ONLY, True, (arg("ref"),)),
+        ActionSpec("github.release", "github", ActionRisk.EFFECTFUL, True, effectful(arg("branch", S, True), arg("commit_sha", S, True))),
+        ActionSpec("cloud.describe", "google_cloud", ActionRisk.READ_ONLY, True, (arg("region", S, True),)),
+        ActionSpec("cloud.deploy_candidate", "google_cloud", ActionRisk.EFFECTFUL, True, effectful(arg("region", S, True), arg("service", S, True), arg("image_digest", S, True))),
+        ActionSpec("cloud.promote_candidate", "google_cloud", ActionRisk.EFFECTFUL, True, effectful(arg("region", S, True), arg("service", S, True), arg("revision", S, True))),
+        ActionSpec("federation.discover", "federation_mcp", ActionRisk.READ_ONLY, True, (arg("server", S, True),)),
+        ActionSpec("federation.invoke", "federation_mcp", ActionRisk.EFFECTFUL, True, effectful(arg("tool", S, True), arg("arguments_hash", S, True))),
     )
 }
 
@@ -123,7 +171,7 @@ class CapabilityFabric:
         }
 
     def inventory(self) -> list[dict[str, Any]]:
-        return [asdict(v) for v in self._items.values()]
+        return [asdict(value) for value in self._items.values()]
 
     def get(self, capability: str) -> Capability | None:
         return self._items.get(capability)
@@ -142,59 +190,69 @@ def semantic_fingerprint(value: Any) -> str:
     return hashlib.sha256(stable_json(value).encode()).hexdigest()
 
 
-def _b64encode(value: bytes) -> str:
-    return base64.urlsafe_b64encode(value).rstrip(b"=").decode()
-
-
 def _b64decode(value: str) -> bytes:
     return base64.urlsafe_b64decode(value + "=" * (-len(value) % 4))
 
 
+def validate_arguments(spec: ActionSpec, arguments: dict[str, Any] | None) -> list[str]:
+    values = arguments if isinstance(arguments, dict) else {}
+    reasons: list[str] = []
+    fields = {field.name: field for field in spec.arguments}
+    unknown = sorted(set(values) - set(fields))
+    if unknown:
+        reasons.append("ACTION_ARGUMENT_UNKNOWN:" + ",".join(unknown))
+    expected_types = {
+        ArgumentKind.STRING: str,
+        ArgumentKind.BOOLEAN: bool,
+        ArgumentKind.INTEGER: int,
+        ArgumentKind.OBJECT: dict,
+        ArgumentKind.ARRAY: list,
+    }
+    for field in spec.arguments:
+        if field.required and field.name not in values:
+            reasons.append("ACTION_ARGUMENT_REQUIRED:" + field.name)
+            continue
+        if field.name not in values:
+            continue
+        value = values[field.name]
+        expected = expected_types[field.kind]
+        if not isinstance(value, expected) or (field.kind is ArgumentKind.INTEGER and isinstance(value, bool)):
+            reasons.append("ACTION_ARGUMENT_TYPE_INVALID:" + field.name)
+        elif field.kind is ArgumentKind.STRING and (not value.strip() or len(value) > 4096):
+            reasons.append("ACTION_ARGUMENT_VALUE_INVALID:" + field.name)
+    return reasons
+
+
 class PermitVerifier:
-    """Validates mission/action/capability-bound HMAC permits and consumes nonce once."""
+    """Verifies externally minted v2 HMAC permits; no issuance method exists in this runtime."""
 
     AUDIENCE = "jarvis-ultimate"
+    MINIMUM_KEY_BYTES = 32
 
     def __init__(self, secret: str | bytes | None, nonce_path: str | Path, clock: Callable[[], float] = time.time) -> None:
-        self.secret = secret.encode() if isinstance(secret, str) else secret
+        key = secret.encode() if isinstance(secret, str) else secret
+        self.secret = key if key and len(key) >= self.MINIMUM_KEY_BYTES else None
+        self.key_too_weak = bool(key) and self.secret is None
         self.nonce_path = Path(nonce_path)
         self.nonce_path.parent.mkdir(parents=True, exist_ok=True)
         self.clock = clock
 
-    @classmethod
-    def issue(
-        cls,
-        secret: str | bytes,
-        mission_id: str,
-        action_id: str,
-        capability: str,
-        nonce: str,
-        issued_at: int,
-        expires_at: int,
-    ) -> str:
-        key = secret.encode() if isinstance(secret, str) else secret
-        payload = {
-            "version": 1,
-            "audience": cls.AUDIENCE,
-            "missionId": mission_id,
-            "actionId": action_id,
-            "capability": capability,
-            "nonce": nonce,
-            "issuedAt": issued_at,
-            "expiresAt": expires_at,
-        }
-        body = stable_json(payload).encode()
-        signature = hmac.new(key, body, hashlib.sha256).digest()
-        return f"{_b64encode(body)}.{_b64encode(signature)}"
-
     def verify_and_optionally_consume(
         self,
         token: str | None,
+        *,
         mission_id: str,
+        mission_version: int,
         action_id: str,
         capability: str,
+        subject_id: str,
+        resource: str,
+        arguments_hash: str,
+        idempotency_key: str,
         consume: bool,
     ) -> tuple[bool, str, bool]:
+        if self.key_too_weak:
+            return False, "FORMATION_KEY_TOO_WEAK", False
         if not self.secret:
             return False, "FORMATION_AUTHORITY_UNBOUND", False
         if not token:
@@ -210,12 +268,22 @@ class PermitVerifier:
         except (ValueError, TypeError, json.JSONDecodeError):
             return False, "PERMIT_MALFORMED", False
 
-        required = {"version", "audience", "missionId", "actionId", "capability", "nonce", "issuedAt", "expiresAt"}
+        required = {
+            "version", "audience", "missionId", "missionVersion", "actionId", "capability",
+            "subjectId", "resource", "argumentsHash", "idempotencyKey", "nonce", "issuedAt", "expiresAt",
+        }
         if set(payload) != required:
             return False, "PERMIT_SCHEMA_INVALID", False
-        if payload["version"] != 1 or payload["audience"] != self.AUDIENCE:
+        if payload["version"] != 2 or payload["audience"] != self.AUDIENCE:
             return False, "PERMIT_AUDIENCE_INVALID", False
-        if payload["missionId"] != mission_id or payload["actionId"] != action_id or payload["capability"] != capability:
+        expected_binding = (
+            mission_id, mission_version, action_id, capability, subject_id, resource, arguments_hash, idempotency_key
+        )
+        actual_binding = (
+            payload["missionId"], payload["missionVersion"], payload["actionId"], payload["capability"],
+            payload["subjectId"], payload["resource"], payload["argumentsHash"], payload["idempotencyKey"],
+        )
+        if actual_binding != expected_binding:
             return False, "PERMIT_BINDING_MISMATCH", False
         now = int(self.clock())
         if not isinstance(payload["issuedAt"], int) or not isinstance(payload["expiresAt"], int):
@@ -227,24 +295,26 @@ class PermitVerifier:
             return False, "PERMIT_NONCE_INVALID", False
         nonce_hash = semantic_fingerprint({"nonce": nonce})
         self.nonce_path.touch(exist_ok=True)
-        with self.nonce_path.open("a+", encoding="utf-8") as fh:
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-            fh.seek(0)
-            consumed = {line.strip() for line in fh if line.strip()}
+        with self.nonce_path.open("a+", encoding="utf-8") as handle:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            handle.seek(0)
+            consumed = {line.strip() for line in handle if line.strip()}
             if nonce_hash in consumed:
-                fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
                 return False, "PERMIT_REPLAYED", False
             if consume:
-                fh.seek(0, os.SEEK_END)
-                fh.write(nonce_hash + "\n")
-                fh.flush()
-                os.fsync(fh.fileno())
-            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+                handle.seek(0, os.SEEK_END)
+                handle.write(nonce_hash + "\n")
+                handle.flush()
+                os.fsync(handle.fileno())
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
         return True, "PERMIT_VALID", consume
 
 
 class FormationKernel:
-    """Exact action-schema gate. It validates but never creates external authority."""
+    """Exact typed request gate; capability is never treated as authority."""
+
+    LOCAL_CAPABILITIES = {"formation", "science"}
 
     def __init__(self, permit_verifier: PermitVerifier | None = None) -> None:
         self.permit_verifier = permit_verifier
@@ -252,15 +322,24 @@ class FormationKernel:
     def decide(
         self,
         mission_id: str,
+        mission_version: int,
         action_id: str,
         capability: Capability | None,
+        *,
+        resource: str | None = None,
+        arguments: dict[str, Any] | None = None,
+        authority_envelope: Any | None = None,
         permit: str | None = None,
         consume_permit: bool = False,
     ) -> Decision:
         spec = ACTION_SPECS.get(action_id)
+        values = arguments if isinstance(arguments, dict) else {}
+        arguments_hash = semantic_fingerprint(values)
         reasons: list[str] = []
         if not mission_id.strip():
             reasons.append("MISSION_REQUIRED")
+        if not isinstance(mission_version, int) or mission_version < 1:
+            reasons.append("MISSION_VERSION_INVALID")
         if spec is None:
             reasons.append("ACTION_SCHEMA_UNKNOWN")
         if capability is None:
@@ -269,56 +348,140 @@ class FormationKernel:
             reasons.append("ACTION_CAPABILITY_MISMATCH")
         elif capability.state in {CapabilityState.BLOCKED_OR_UNVERIFIED, CapabilityState.ADAPTER_REQUIRED}:
             reasons.append("CAPABILITY_NOT_LIVE")
+        if spec is not None:
+            if spec.resource_required and (not isinstance(resource, str) or not resource.strip() or resource == "*"):
+                reasons.append("ACTION_RESOURCE_EXACT_REQUIRED")
+            reasons.extend(validate_arguments(spec, arguments))
 
         risk = spec.risk if spec else ActionRisk.EFFECTFUL
+        subject_id = getattr(authority_envelope, "subject_id", None)
+        permit_valid = risk is ActionRisk.READ_ONLY
+        idempotency_key = str(values.get("idempotency_key", ""))
         permit_consumed = False
         if risk is ActionRisk.EFFECTFUL and not reasons:
             if self.permit_verifier is None:
                 reasons.append("FORMATION_AUTHORITY_UNBOUND")
+            elif not subject_id:
+                reasons.append("AUTHORITY_SUBJECT_REQUIRED")
             else:
-                valid, reason, permit_consumed = self.permit_verifier.verify_and_optionally_consume(
-                    permit, mission_id, action_id, capability.id if capability else "unknown", consume_permit
+                permit_valid, permit_reason, _ = self.permit_verifier.verify_and_optionally_consume(
+                    permit,
+                    mission_id=mission_id,
+                    mission_version=mission_version,
+                    action_id=action_id,
+                    capability=capability.id if capability else "unknown",
+                    subject_id=subject_id,
+                    resource=resource or "",
+                    arguments_hash=arguments_hash,
+                    idempotency_key=idempotency_key,
+                    consume=False,
                 )
-                if not valid:
-                    reasons.append(reason)
+                if not permit_valid:
+                    reasons.append(permit_reason)
+
+        if spec is not None and capability is not None and capability.id not in self.LOCAL_CAPABILITIES:
+            if authority_envelope is None:
+                reasons.append("EFFECTIVE_AUTHORITY_REQUIRED")
+            else:
+                allowed, authority_reasons = authority_envelope.evaluate(
+                    action_id=action_id,
+                    resource=resource or "",
+                    mission_permit=permit_valid,
+                )
+                if not allowed:
+                    reasons.extend(authority_reasons)
+
+        if risk is ActionRisk.EFFECTFUL and consume_permit and not reasons:
+            valid, permit_reason, permit_consumed = self.permit_verifier.verify_and_optionally_consume(
+                permit,
+                mission_id=mission_id,
+                mission_version=mission_version,
+                action_id=action_id,
+                capability=capability.id if capability else "unknown",
+                subject_id=subject_id or "",
+                resource=resource or "",
+                arguments_hash=arguments_hash,
+                idempotency_key=idempotency_key,
+                consume=True,
+            )
+            if not valid:
+                reasons.append(permit_reason)
 
         return Decision(
             mission_id=mission_id,
+            mission_version=mission_version,
             action_id=action_id,
             risk=risk.value,
             capability=capability.id if capability else "unknown",
+            subject_id=subject_id,
+            resource=resource,
+            arguments_hash=arguments_hash,
             status="DENY" if reasons else ("AUTHORIZED_FOR_EXECUTION" if consume_permit else "ALLOW_DRY_RUN"),
-            reasons=reasons,
+            reasons=sorted(set(reasons)),
             permit_required=risk is ActionRisk.EFFECTFUL,
             permit_consumed=permit_consumed,
         )
 
 
-class LearningLedger:
-    """Concurrency-safe hash-chain telemetry. Events cannot promote themselves."""
+class LedgerIntegrityError(RuntimeError):
+    pass
 
-    def __init__(self, path: str | Path) -> None:
+
+class LearningLedger:
+    """Locked hash chain with optional authenticated checkpoint; corrupt chains reject writes."""
+
+    def __init__(self, path: str | Path, checkpoint_secret: str | bytes | None = None) -> None:
         self.path = Path(path)
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        key = checkpoint_secret.encode() if isinstance(checkpoint_secret, str) else checkpoint_secret
+        self.checkpoint_secret = key if key and len(key) >= 32 else None
+        self.checkpoint_path = self.path.with_suffix(self.path.suffix + ".checkpoint")
 
-    def append(
-        self,
-        route: str,
-        outcome: str,
-        elapsed_ms: int,
-        evidence_hash: str,
-        semantic_fruit: bool = False,
-    ) -> dict[str, Any]:
-        if outcome not in {"SUCCESS", "FAILURE", "QUARANTINED"}:
+    @staticmethod
+    def _validate_lines(lines: list[str]) -> tuple[bool, str, int]:
+        previous = "GENESIS"
+        count = 0
+        for line in lines:
+            if not line.strip():
+                continue
+            try:
+                event = json.loads(line)
+                digest = event.get("hash")
+                unhashed = {key: value for key, value in event.items() if key != "hash"}
+                if unhashed.get("previous") != previous or hashlib.sha256(stable_json(unhashed).encode()).hexdigest() != digest:
+                    return False, previous, count
+                previous = digest
+                count += 1
+            except (json.JSONDecodeError, TypeError, KeyError):
+                return False, previous, count
+        return True, previous, count
+
+    def _write_checkpoint(self, head: str, count: int) -> None:
+        if not self.checkpoint_secret:
+            return
+        body = {"version": 1, "head": head, "count": count}
+        body["signature"] = hmac.new(self.checkpoint_secret, stable_json(body).encode(), hashlib.sha256).hexdigest()
+        temporary = self.checkpoint_path.with_name(f"{self.checkpoint_path.name}.tmp.{os.getpid()}")
+        with temporary.open("w", encoding="utf-8") as handle:
+            handle.write(stable_json(body))
+            handle.flush()
+            os.fsync(handle.fileno())
+        os.replace(temporary, self.checkpoint_path)
+
+    def append(self, route: str, outcome: str, elapsed_ms: int, evidence_hash: str, semantic_fruit: bool = False) -> dict[str, Any]:
+        if outcome not in {"SUCCESS", "FAILURE", "QUARANTINED", "INPUT_REJECTED"}:
             raise ValueError("OUTCOME_INVALID")
         self.path.touch(exist_ok=True)
-        with self.path.open("a+", encoding="utf-8") as fh:
-            fcntl.flock(fh.fileno(), fcntl.LOCK_EX)
-            fh.seek(0)
-            lines = [line for line in fh.read().splitlines() if line]
-            previous = json.loads(lines[-1])["hash"] if lines else "GENESIS"
+        with self.path.open("a+", encoding="utf-8") as handle:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+            handle.seek(0)
+            lines = handle.read().splitlines()
+            valid, previous, count = self._validate_lines(lines)
+            if not valid:
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+                raise LedgerIntegrityError("LEDGER_INTEGRITY_FAILED_WRITE_BLOCKED")
             event = {
-                "eventVersion": 2,
+                "eventVersion": 3,
                 "route": route,
                 "outcome": outcome,
                 "semanticFruit": bool(semantic_fruit),
@@ -329,39 +492,57 @@ class LearningLedger:
                 "recordedAt": int(time.time()),
             }
             event["hash"] = hashlib.sha256(stable_json(event).encode()).hexdigest()
-            fh.seek(0, os.SEEK_END)
-            fh.write(stable_json(event) + "\n")
-            fh.flush()
-            os.fsync(fh.fileno())
-            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
+            handle.seek(0, os.SEEK_END)
+            handle.write(stable_json(event) + "\n")
+            handle.flush()
+            os.fsync(handle.fileno())
+            self._write_checkpoint(event["hash"], count + 1)
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
         return event
 
     def verify(self) -> bool:
-        previous = "GENESIS"
         if not self.path.exists():
             return True
-        with self.path.open("r", encoding="utf-8") as fh:
-            fcntl.flock(fh.fileno(), fcntl.LOCK_SH)
-            lines = list(fh)
-            fcntl.flock(fh.fileno(), fcntl.LOCK_UN)
-        for line in lines:
-            try:
-                event = json.loads(line)
-                digest = event.get("hash")
-                unhashed = {key: value for key, value in event.items() if key != "hash"}
-                if unhashed.get("previous") != previous or hashlib.sha256(stable_json(unhashed).encode()).hexdigest() != digest:
-                    return False
-                previous = digest
-            except (json.JSONDecodeError, TypeError, KeyError):
-                return False
-        return True
+        with self.path.open("r", encoding="utf-8") as handle:
+            fcntl.flock(handle.fileno(), fcntl.LOCK_SH)
+            lines = handle.read().splitlines()
+            fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        valid, head, count = self._validate_lines(lines)
+        if not valid:
+            return False
+        if not self.checkpoint_secret:
+            return True
+        if count == 0:
+            return not self.checkpoint_path.exists()
+        try:
+            checkpoint = json.loads(self.checkpoint_path.read_text(encoding="utf-8"))
+            signature = checkpoint.pop("signature")
+            expected = hmac.new(self.checkpoint_secret, stable_json(checkpoint).encode(), hashlib.sha256).hexdigest()
+            return hmac.compare_digest(signature, expected) and checkpoint == {"version": 1, "head": head, "count": count}
+        except (OSError, json.JSONDecodeError, KeyError, TypeError):
+            return False
+
+    @property
+    def authenticated_checkpoint_enabled(self) -> bool:
+        return self.checkpoint_secret is not None
+
+
+@dataclass(frozen=True)
+class RecoveryProof:
+    route: str
+    proof_id: str
+    verifier_id: str
+    evidence_hash: str
+    passed: bool
+    checked_at: int
 
 
 class CircuitBreaker:
-    def __init__(self, threshold: int = 2) -> None:
+    def __init__(self, threshold: int = 2, clock: Callable[[], float] = time.time) -> None:
         if threshold < 1:
             raise ValueError("THRESHOLD_INVALID")
         self.threshold = threshold
+        self.clock = clock
         self.failures: dict[str, int] = {}
         self.quarantined: set[str] = set()
 
@@ -378,8 +559,16 @@ class CircuitBreaker:
         if self.failures[route] >= self.threshold:
             self.quarantined.add(route)
 
-    def restore_after_independent_proof(self, route: str, proof_count: int) -> bool:
-        if proof_count < 2:
+    def restore_after_independent_proof(self, route: str, proofs: tuple[RecoveryProof, ...]) -> bool:
+        now = int(self.clock())
+        valid = [
+            proof for proof in proofs
+            if proof.route == route and proof.passed and 0 <= now - proof.checked_at <= 900
+            and len(proof.proof_id) >= 8 and len(proof.verifier_id) >= 8 and len(proof.evidence_hash) == 64
+        ]
+        if len(valid) < 2:
+            return False
+        if len({proof.proof_id for proof in valid}) < 2 or len({proof.verifier_id for proof in valid}) < 2 or len({proof.evidence_hash for proof in valid}) < 2:
             return False
         self.failures[route] = 0
         self.quarantined.discard(route)

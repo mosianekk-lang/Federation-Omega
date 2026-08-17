@@ -2,7 +2,7 @@
 
 ## Current state
 
-- Release: 1.1.0 candidate.
+- Release: 1.2.0 candidate.
 - Maturity: `IMPLEMENTED_TESTED_LOCAL`.
 - Canonical runtime: deterministic JARVIS graph; ADK 2 Workflow calls the same graph.
 - Direct dependencies: `google-adk==2.1.0`, `google-genai==2.6.0`.
@@ -22,14 +22,27 @@
 - Broad dependency ranges were replaced by exact direct pins.
 - The complete validated doctrine and deterministic math engine were incorporated.
 
+## Defects repaired from the 1.1 independent challenge
+
+- Effectful authorization now requires the full authority intersection, not a permit alone.
+- Permits bind subject, mission version, exact resource, arguments hash and idempotency key.
+- Every action publishes typed resource and argument schemas; unknown fields fail closed.
+- Generic effect-completion language cannot become session semantic proof.
+- Unexpected reasoner exceptions are sanitized and counted by the breaker; invalid user input is isolated from provider health.
+- Breaker restoration needs two recent, distinct verifier/proof/evidence records.
+- A corrupted ledger refuses all new writes; an optional HMAC checkpoint detects full-chain recomputation.
+- Workspace scope coverage now includes share, move, forward and archive.
+- Mathematics runs inside the chat graph with `/math`; invalid function arity fails closed.
+- The browser shell is public so a protected API token can be entered after initial navigation.
+
 ## Open proof gates
 
-1. Generate a reproducible transitive dependency lock in an authorized build environment.
-2. Repair and live-read the Google machine identity; prior WIF returned `invalid_target`.
-3. Run one exact-model Gemini semantic canary with stable provider metadata.
-4. Bind least-scope Workspace OAuth per capability; IAM alone is insufficient.
-5. Prove private Cloud Run posture with an unauthenticated negative canary.
-6. Prove source, build, digest, revision, traffic and exact rollback lineage.
-7. Prove the recurring cost boundary before promotion.
+1. Run installed-package ADK 2.1.0 and GenAI 2.6.0 integration tests and generate a reproducible transitive lock.
+2. Move permit signing and nonce/effect state to an externally isolated, globally transactional production authority.
+3. Move ledger and breaker state to managed durable storage for multi-instance execution.
+4. Repair and live-read the Google machine identity; prior WIF returned `invalid_target`.
+5. Run one exact-model Gemini semantic canary with stable provider metadata.
+6. Bind least-scope Workspace OAuth per capability; IAM alone is insufficient.
+7. Prove private Cloud Run posture, exact lineage, rollback and recurring-cost boundaries.
 
 No unresolved gate may be collapsed into a generic “healthy” claim.

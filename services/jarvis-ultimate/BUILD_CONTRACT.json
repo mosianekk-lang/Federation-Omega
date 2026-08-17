@@ -1,5 +1,6 @@
 {
   "contract_version": "3.3",
+  "release_version": "1.2.0",
   "mission": {
     "id": "JARVIS-ULTIMATE-FEDERATION",
     "version": 22,
@@ -11,10 +12,10 @@
     "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 2.6.0, stdlib HTTP and Docker",
     "environment": "Local/offline is verified; Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
     "maturity": "PROD_FOUNDATION",
-    "governance": "One sovereign executor, exact action schemas, least authority, bound single-use permits, untrusted external content, semantic readback and no runtime self-promotion.",
+    "governance": "One sovereign executor, typed action/resource/argument schemas, full effective-authority intersection, subject/mission-version/resource/argument-bound single-use permits, untrusted external content, semantic readback and no runtime self-promotion.",
     "failure": "Invalid input, authorization denial, missing provider configuration, dependency failure, timeout, partial writes, generic responses, ledger tamper and route recurrence fail closed or quarantine only the affected route.",
-    "testing": "Sixteen local unit/integration/failure-first tests plus compilation, CLI, deterministic math, denial, contract and doctrine smokes.",
-    "deployment": "Container source exists; promotion is blocked until dependency lock, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
+    "testing": "Twenty-two local unit/integration/failure-first tests plus compilation, CLI, deterministic math, denial, contract and doctrine smokes.",
+    "deployment": "Container source exists; promotion is blocked until installed SDK integration, dependency lock, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
     "continuity": "Atomic hash-chain state, circuit quarantine, two-proof restoration, project memory, Formation specification and AI handoff preserve bounded continuity."
   },
   "classification": ["Fullstack App", "Backend API", "Frontend UI", "AI Agent", "DevOps/Infra", "Test Suite"],
@@ -35,7 +36,7 @@
       "scheduler": "NOT_APPLICABLE: on-demand release has no background autonomy",
       "cache": "NOT_APPLICABLE: semantic/model responses are not cached",
       "storage": "Local atomic state and packaged versioned doctrine resource",
-      "authentication": "Constant-time bearer comparison; exact OAuth/IAM/permit intersection for future provider adapters"
+      "authentication": "Constant-time bearer comparison; typed request schemas and exact user grant/OAuth/IAM/mission/tool/resource intersection for future provider adapters"
     },
     "failure_modes": [
       "INVALID_INPUT",
@@ -49,16 +50,16 @@
       "correlation_ids": "Mission IDs, route IDs, content hashes and learning hashes",
       "health_checks": "GET /health separates ledger integrity, provider mode, session proof and maturity",
       "structured_logs": "Secret-free JSON response and ledger schemas; raw prompts and provider payloads are not logged",
-      "audit_logs": "Fsync-backed hash-chain with previous-hash verification and tamper regression",
+      "audit_logs": "Fsync-backed hash-chain that blocks writes after corruption, with optional HMAC checkpoint against full-chain recomputation",
       "metrics_alerts": "Local elapsed time, semantic fruit and quarantine state; provider alerting ADAPTER_REQUIRED before deployment"
     }
   },
   "testing": {
-    "unit": "Provider settings, action schemas, permit cryptography, math AST, doctrine and authority intersection",
+    "unit": "Provider settings, typed action/resource/argument schemas, permit cryptography/bindings/key strength, math AST, doctrine and authority intersection",
     "integration": "Canonical graph to semantic verifier to atomic learning ledger",
-    "e2e_or_smoke": "CLI offline response, math calculation, cloud-deploy denial and packaged resource load",
+    "e2e_or_smoke": "CLI offline response, interactive math calculation, cloud-deploy denial, browser bootstrap ordering and packaged resource load",
     "fixtures_mocks": "Deterministic successful, failing and short-response provider doubles plus temporary state directories",
-    "failure_first": "False-live env, provider configuration denial, action bypass, permit mismatch/expiry/replay, generic fruit, quarantine, code injection and ledger tamper",
+    "failure_first": "False-live env, provider configuration denial, action/resource/argument bypass, weak permit key, permit mismatch/expiry/replay, generic effect claim, unexpected provider exception, input poisoning, proofless breaker recovery, code injection, ledger tamper and write-after-corruption",
     "commands": [
       "PYTHONPATH=. python3 -m unittest discover -s tests -p 'test_*.py' -v",
       "python3 -m compileall -q jarvis tests scripts"
@@ -122,7 +123,7 @@
   },
   "proof": {
     "test_results": {
-      "unittest": "16/16 PASS",
+      "unittest": "22/22 PASS",
       "compileall": "PASS",
       "offline_graph_smoke": "PASS",
       "math_smoke": "PASS value=10.0",
@@ -131,13 +132,15 @@
     },
     "semantic_verification": {
       "scope": "local deterministic route only",
-      "fruit": "five distinct node events, non-generic response, response/evidence hashes, semanticFruit=true, learningPromotion=NOT_PROMOTED",
+      "fruit": "five distinct node events, doctrine-aware non-generic response, generic effect-completion claims rejected, response/evidence hashes, semanticFruit=true, learningPromotion=NOT_PROMOTED",
       "external_provider_inheritance": false
     },
     "unresolved_defects": [],
     "external_proof_gaps": [
       "ADK and GenAI packages are not installed in this scratch runtime; official API structure is source-checked but installed-package integration remains a deployment gate",
       "transitive dependency hashes are not generated",
+      "production permit signing and nonce/effect state require an externally isolated globally transactional authority; local HMAC/file state is test-only",
+      "ledger and breaker require managed durable state before multi-instance execution",
       "Gemini and Workspace have no live runtime identity/readback",
       "prior Google WIF returned invalid_target",
       "private Cloud Run, lineage, rollback and cost proof have not run"

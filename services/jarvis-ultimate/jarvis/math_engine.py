@@ -37,6 +37,16 @@ _FUNCTIONS: dict[str, Callable[..., float]] = {
     "cos": math.cos,
     "tan": math.tan,
 }
+_ARITIES: dict[str, frozenset[int]] = {
+    "abs": frozenset({1}),
+    "sqrt": frozenset({1}),
+    "log": frozenset({1, 2}),
+    "log10": frozenset({1}),
+    "exp": frozenset({1}),
+    "sin": frozenset({1}),
+    "cos": frozenset({1}),
+    "tan": frozenset({1}),
+}
 _CONSTANTS = {"pi": math.pi, "e": math.e}
 
 
@@ -72,11 +82,11 @@ def calculate(expression: str) -> MathResult:
                 raise MathExpressionError("NONFINITE_RESULT")
             return float(value)
         if isinstance(node, ast.Call) and isinstance(node.func, ast.Name) and node.func.id in _FUNCTIONS:
-            if node.keywords or len(node.args) not in {1, 2}:
+            if node.keywords or len(node.args) not in _ARITIES[node.func.id]:
                 raise MathExpressionError("FUNCTION_ARGUMENTS_INVALID")
             try:
                 value = _FUNCTIONS[node.func.id](*(evaluate(argument) for argument in node.args))
-            except (ArithmeticError, ValueError, OverflowError) as exc:
+            except (ArithmeticError, ValueError, OverflowError, TypeError) as exc:
                 raise MathExpressionError("ARITHMETIC_DOMAIN_ERROR") from exc
             if not math.isfinite(float(value)):
                 raise MathExpressionError("NONFINITE_RESULT")

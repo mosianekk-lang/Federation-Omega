@@ -1,6 +1,6 @@
-# JARVIS Ultimate Federation v1.1
+# JARVIS Ultimate Federation v1.2
 
-JARVIS is a governed interactive intelligence foundation that combines an ADK 2 workflow entrypoint, an explicitly selected Google GenAI provider, exact Formation action schemas, a single-use permit verifier, a deterministic mathematics engine, a 32-principle scientific doctrine, route quarantine, and concurrency-safe learning telemetry.
+JARVIS is a governed interactive intelligence foundation that combines an ADK 2 workflow entrypoint, an explicitly selected Google GenAI provider, typed Formation action/resource/argument schemas, a resource-bound single-use permit verifier, a deterministic mathematics engine, a 32-principle scientific doctrine, route quarantine, and concurrency-safe learning telemetry.
 
 ## Verified maturity
 
@@ -12,7 +12,7 @@ This repository proves source structure and local behavior. It does **not** prov
 
 `intake → evidence context → credential-free advisory twin → reason → semantic verification → unpromoted learning event`
 
-The HTTP/CLI path and the ADK `Workflow` entrypoint both call the same governed JARVIS graph. No ADK node receives effectful tools. An effectful adapter may run only after the exact action schema and a mission/action/capability-bound HMAC permit are consumed in the executor transaction.
+The HTTP/CLI path and the ADK `Workflow` entrypoint both call the same governed JARVIS graph. No ADK node receives effectful tools. An effectful adapter may run only after typed resource/argument validation, the full effective-authority intersection, and a subject/mission-version/action/capability/resource/argument/idempotency-bound HMAC permit are satisfied in the executor transaction.
 
 Provider selection never falls back across providers:
 
@@ -59,10 +59,10 @@ Example math request:
 {"expression":"sqrt(81) + sin(pi / 2)"}
 ```
 
-Example authorization preview:
+Example authorization preview (external actions deliberately deny because the public route cannot provide a trusted authority envelope):
 
 ```json
-{"missionId":"M1","actionId":"gmail.send","capability":"gmail","permit":"..."}
+{"missionId":"M1","missionVersion":1,"actionId":"gmail.send","capability":"gmail","resource":"gmail:draft-1","arguments":{"idempotency_key":"job-1","to_hash":"…","body_hash":"…"},"permit":"..."}
 ```
 
 Unknown action strings fail closed. Exact effectful schemas include `drive.write`, `drive.share`, `gmail.send`, `calendar.schedule`, `github.release`, `cloud.deploy_candidate`, `cloud.promote_candidate`, and `federation.invoke`.
@@ -86,8 +86,8 @@ PYTHONPATH=. python -m unittest discover -s tests -p 'test_*.py' -v
 python -m compileall -q jarvis tests
 ```
 
-The tests cover provider fail-closed behavior, false-live prevention, action-schema bypass attempts, permit binding/expiry/replay, enforced quarantine, semantic fruit rejection, concurrent ledger writes, tamper detection, authority intersection, safe mathematics, science doctrine invariants, and the ADK workflow entrypoint.
+The 22 tests cover provider fail-closed behavior, false-live prevention, typed action/resource/argument bypass attempts, permit binding/expiry/replay/key strength, enforced quarantine and proof-based recovery, generic effect-claim rejection, input-failure isolation, concurrent ledger writes, authenticated checkpoints, tamper write refusal, authority intersection, interactive safe mathematics, science doctrine invariants, protected browser bootstrap, and the ADK workflow entrypoint source contract.
 
 ## Deployment gate
 
-The container is buildable, but live deployment is intentionally gated. Promotion requires: exact dependency lock, dedicated least-privilege runtime identity, private unauthenticated-denial canary, zero-traffic candidate, two stable semantic readbacks, source→build→digest→revision lineage, exact traffic proof, rollback restoration, cost-cap proof, and a current Formation permit. Until those gates pass, `cloudDeployed=false` and `geminiLive=false` remain authoritative.
+The container is buildable, but live deployment is intentionally gated. Promotion requires: installed ADK/GenAI integration tests, exact dependency lock, an asymmetric or externally isolated production permit signer, globally transactional nonce/effect state, managed ledger/breaker state, dedicated least-privilege runtime identity, private unauthenticated-denial canary, zero-traffic candidate, two stable semantic readbacks, source→build→digest→revision lineage, exact traffic proof, rollback restoration, cost-cap proof, and a current Formation permit. Until those gates pass, `cloudDeployed=false` and `geminiLive=false` remain authoritative.

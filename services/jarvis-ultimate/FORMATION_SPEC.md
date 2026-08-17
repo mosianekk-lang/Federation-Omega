@@ -12,7 +12,7 @@ The advisory twin, model, external documents, email, Drive content and MCP respo
 
 ## Permit contract
 
-Effectful permits are HMAC-SHA256 envelopes with an exact schema: version, audience, mission ID, action ID, capability, nonce, issued time and expiry. The maximum lifetime is 300 seconds. Signature, audience, mission, action, capability, time and nonce are checked. The nonce is hash-persisted and consumed once under an exclusive file lock in the executor transaction.
+Effectful permits are externally minted HMAC-SHA256 v2 envelopes with an exact schema: audience, subject, mission ID and version, action, capability, exact resource, arguments hash, idempotency key, nonce, issued time and expiry. The verifier accepts keys of at least 32 bytes and has no issuance method. The maximum lifetime is 300 seconds. Every binding is checked and the nonce is hash-persisted and consumed once under an exclusive local lock in the executor transaction. Production remains gated on an isolated signer and globally transactional nonce/effect state.
 
 The public `/v1/authorize` route is dry-run only. It does not consume a permit or execute an effect. `authorize_for_execution` is an internal boundary for future adapters.
 

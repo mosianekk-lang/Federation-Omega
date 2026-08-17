@@ -13,7 +13,7 @@ from .orchestrator import Jarvis
 _JARVIS = Jarvis(os.getenv("JARVIS_STATE_DIR", "state"))
 
 
-def governed_reasoning(node_input: Any):
+def governed_reasoning(node_input: str):
     """Run the canonical deterministic graph; no ADK tool receives effectful authority."""
     result = _JARVIS.chat(str(node_input))
     yield Event(output=result)

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
 from dataclasses import asdict, dataclass
+import re
 from typing import Any
 
 from .core import semantic_fingerprint
-from .providers import Reasoner, ReasoningResult
+from .math_engine import calculate
+from .providers import ProviderError, ProviderInvocationError, Reasoner, ReasoningResult
 
 
 class GraphInputError(ValueError):
@@ -43,7 +45,14 @@ def semantic_response_valid(result: ReasoningResult) -> bool:
         return False
     lowered = text.lower()
     rejected = ("provider route failed", "generic health", "undefined", "null")
-    return not any(marker in lowered for marker in rejected)
+    if any(marker in lowered for marker in rejected):
+        return False
+    effect_words = r"deploy(?:ed|ment)?|sent|send|delet(?:ed|ion)|grant(?:ed)?|promot(?:ed|ion)|creat(?:ed|ion)|updat(?:ed|e)|shar(?:ed|e)|archiv(?:ed|e)"
+    completion_words = r"success|successful|successfully|complete|completed|done"
+    unsupported_effect_claim = re.search(rf"\b(?:{effect_words})\b.{{0,36}}\b(?:{completion_words})\b", lowered)
+    unsupported_reverse_claim = re.search(rf"\b(?:{completion_words})\b.{{0,36}}\b(?:{effect_words})\b", lowered)
+    first_person_effect_claim = re.search(rf"\b(?:i|we)\s+(?:have\s+)?(?:{effect_words})\b", lowered)
+    return not bool(unsupported_effect_claim or unsupported_reverse_claim or first_person_effect_claim)
 
 
 class GovernedReasoningGraph:
@@ -86,7 +95,21 @@ class GovernedReasoningGraph:
                 },
             )
         )
-        result = reasoner.respond(objective, context)
+        if objective.lower().startswith("/math "):
+            calculation = calculate(objective[6:])
+            result = ReasoningResult(
+                text=f"Deterministic result: {calculation.expression} = {calculation.value}",
+                provider="deterministic-math",
+                model=calculation.engine,
+                api_version="local-v1",
+            )
+        else:
+            try:
+                result = reasoner.respond(objective, context)
+            except ProviderError:
+                raise
+            except Exception as exc:
+                raise ProviderInvocationError("REASONER_UNEXPECTED_EXCEPTION") from exc
         events.append(
             WorkflowEvent(
                 NodeInfo("reason", 4),

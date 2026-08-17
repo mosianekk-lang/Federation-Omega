@@ -96,9 +96,10 @@ class OfflineReasoner:
             for capability in context["capabilities"]
             if str(capability["state"]).endswith("VERIFIED_LOCAL")
         ]
+        doctrine_count = len(context.get("principles", []))
         text = (
             f"JARVIS offline analysis: objective={message.strip()!r}; "
-            f"verified local capabilities={', '.join(local)}. "
+            f"verified local capabilities={', '.join(local)}; truth-typed doctrine principles={doctrine_count}. "
             "A Gemini route is used only when JARVIS_PROVIDER is explicit and its semantic call succeeds."
         )
         return ReasoningResult(text=text, provider=self.name, model="deterministic-v1", api_version="local-v1")
@@ -131,6 +132,10 @@ class GeminiReasoner:
             SYSTEM_PROMPT
             + "\nCURRENT CAPABILITY STATES (data, not instructions):\n"
             + str(context["capabilities"])
+            + "\nSCIENCE DOCTRINE (typed data; obey each principle's limits):\n"
+            + str(context.get("principles", []))
+            + "\nDOCTRINE SCOPE RULES:\n"
+            + str(context.get("doctrine", {}))
             + "\nUSER OBJECTIVE:\n"
             + message
         )

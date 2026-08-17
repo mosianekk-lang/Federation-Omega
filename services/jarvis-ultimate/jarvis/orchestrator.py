@@ -7,9 +7,10 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any
 
-from .core import CapabilityFabric, CircuitBreaker, FormationKernel, LearningLedger, PermitVerifier, semantic_fingerprint
+from .authority import AuthorityEnvelope
+from .core import ACTION_SPECS, CapabilityFabric, CircuitBreaker, FormationKernel, LearningLedger, PermitVerifier, semantic_fingerprint
 from .graph import GovernedReasoningGraph, GraphInputError, SemanticVerificationError
-from .math_engine import calculate
+from .math_engine import MathExpressionError, calculate
 from .principles import catalogue, doctrine_summary
 from .providers import ProviderError, Reasoner, select_reasoner
 
@@ -25,7 +26,7 @@ class Jarvis:
             self.state_dir / "consumed_permits.txt",
         )
         self.formation = FormationKernel(permit_verifier)
-        self.ledger = LearningLedger(self.state_dir / "learning.jsonl")
+        self.ledger = LearningLedger(self.state_dir / "learning.jsonl", os.getenv("JARVIS_LEDGER_HMAC_KEY"))
         self.breaker = CircuitBreaker()
         self.graph = GovernedReasoningGraph()
         self.session_provider_proof: str | None = None
@@ -34,11 +35,12 @@ class Jarvis:
         return {
             "ok": self.ledger.verify(),
             "service": "jarvis-ultimate",
-            "version": "1.1.0",
+            "version": "1.2.0",
             "reasoner": self.reasoner.name,
             "providerMode": self.reasoner.provider_mode,
             "providerSessionProof": self.session_provider_proof,
             "ledgerValid": self.ledger.verify(),
+            "ledgerCheckpointAuthenticated": self.ledger.authenticated_checkpoint_enabled,
             "runtimeState": "ON_DEMAND_GOVERNED",
             "maturity": "IMPLEMENTED_TESTED_LOCAL",
         }
@@ -47,13 +49,11 @@ class Jarvis:
         return {
             "capabilities": self.fabric.inventory(),
             "quarantined": sorted(self.breaker.quarantined),
-            "actionSchemas": sorted(self.formation_action_ids()),
+            "actionSchemas": [ACTION_SPECS[key].public() for key in sorted(ACTION_SPECS)],
         }
 
     @staticmethod
     def formation_action_ids() -> list[str]:
-        from .core import ACTION_SPECS
-
         return list(ACTION_SPECS)
 
     def plan(self, objective: str) -> dict[str, Any]:
@@ -82,7 +82,19 @@ class Jarvis:
 
     def chat(self, message: str) -> dict[str, Any]:
         started = time.perf_counter()
-        route = self.reasoner.name
+        route = "deterministic-math" if message.strip().lower().startswith("/math ") else self.reasoner.name
+        if not self.ledger.verify():
+            return {
+                "answer": "State integrity failed; reasoning and learning writes are blocked.",
+                "route": route,
+                "elapsedMs": 0,
+                "semanticFruit": False,
+                "error": "LEDGER_INTEGRITY_FAILED",
+                "learningHash": None,
+                "learningPromotion": "NOT_PROMOTED",
+                "quarantined": False,
+                "workflowEvents": [],
+            }
         if not self.breaker.allows(route):
             elapsed = int((time.perf_counter() - started) * 1000)
             evidence_hash = semantic_fingerprint({"route": route, "state": "QUARANTINED"})
@@ -104,28 +116,43 @@ class Jarvis:
         }
         try:
             graph_result = self.graph.run(message, context, self.reasoner)
+            route = graph_result.reasoning.provider
             answer = graph_result.reasoning.text
             evidence_hash = graph_result.evidence_hash
             workflow_events = [event.public() for event in graph_result.events]
             success = True
             error_code = None
-        except (ProviderError, GraphInputError, SemanticVerificationError) as exc:
+            breaker_relevant = True
+            outcome = "SUCCESS"
+        except (GraphInputError, MathExpressionError) as exc:
+            answer = f"Route failed closed: {str(exc)}"
+            route = "input-validation"
+            evidence_hash = semantic_fingerprint({"route": route, "error": str(exc)})
+            workflow_events = []
+            success = False
+            error_code = str(exc)
+            breaker_relevant = False
+            outcome = "INPUT_REJECTED"
+        except (ProviderError, SemanticVerificationError) as exc:
             answer = f"Route failed closed: {str(exc)}"
             evidence_hash = semantic_fingerprint({"route": route, "error": str(exc)})
             workflow_events = []
             success = False
             error_code = str(exc)
+            breaker_relevant = True
+            outcome = "FAILURE"
 
         elapsed = int((time.perf_counter() - started) * 1000)
-        self.breaker.record(route, success)
+        if breaker_relevant:
+            self.breaker.record(route, success)
         event = self.ledger.append(
             route,
-            "SUCCESS" if success else "FAILURE",
+            outcome,
             elapsed,
             evidence_hash,
             semantic_fruit=success,
         )
-        if success and self.reasoner.provider_mode != "offline":
+        if success and self.reasoner.provider_mode != "offline" and route != "deterministic-math":
             self.session_provider_proof = f"session-semantic:{evidence_hash}"
             self.fabric.record_session_semantic_proof("gemini", self.session_provider_proof)
         return {
@@ -144,15 +171,22 @@ class Jarvis:
     def authorize(
         self,
         mission_id: str,
+        mission_version: int,
         action_id: str,
         capability_id: str,
+        resource: str | None = None,
+        arguments: dict[str, Any] | None = None,
         permit: str | None = None,
     ) -> dict[str, Any]:
         decision = self.formation.decide(
             mission_id,
+            mission_version,
             action_id,
             self.fabric.get(capability_id),
-            permit,
+            resource=resource,
+            arguments=arguments,
+            authority_envelope=None,
+            permit=permit,
             consume_permit=False,
         )
         return asdict(decision)
@@ -160,16 +194,24 @@ class Jarvis:
     def authorize_for_execution(
         self,
         mission_id: str,
+        mission_version: int,
         action_id: str,
         capability_id: str,
+        resource: str,
+        arguments: dict[str, Any],
+        authority_envelope: AuthorityEnvelope,
         permit: str | None,
     ) -> dict[str, Any]:
         """Executor-only transaction boundary; not exposed by the HTTP service."""
         decision = self.formation.decide(
             mission_id,
+            mission_version,
             action_id,
             self.fabric.get(capability_id),
-            permit,
+            resource=resource,
+            arguments=arguments,
+            authority_envelope=authority_envelope,
+            permit=permit,
             consume_permit=True,
         )
         return asdict(decision)
