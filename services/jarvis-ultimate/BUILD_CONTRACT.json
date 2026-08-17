@@ -1,7 +1,7 @@
 {
   "contractVersion":"3.3","project":"jarvis-ultimate-federation","version":"1.0.0","maturity":"PROD_FOUNDATION",
   "components":{"frontend":"browser chat","backend":"stdlib HTTP + orchestrator","database":"hash-chained JSONL state; production adapter pending","queue":"NOT_APPLICABLE: synchronous bounded MVP","worker":"orchestrator","scheduler":"ADAPTER_REQUIRED","cache":"NOT_APPLICABLE: no live caching","storage":"local state with pluggable provider","authentication":"bearer token + external OAuth/IAM","ai":"Google ADK/GenAI with deterministic offline fallback"},
-  "proofBoundary":{"sourceBuilt":true,"testedLocal":true,"githubPublished":false,"googleWorkspaceBound":false,"geminiLive":false,"cloudDeployed":false},
+  "proofBoundary":{"sourceBuilt":true,"testedLocal":true,"githubPublished":true,"googleWorkspaceBound":false,"geminiLive":false,"cloudDeployed":false},
   "security":{"incrementalOAuth":true,"secretManagerRequired":true,"effectfulPermitRequired":true,"unknownActionFailsClosed":true,"oneSovereignExecutor":true},
   "manualUserTasks":[]
 }
