@@ -9,7 +9,7 @@
         "DEPLOY_SOLUTION5_LOCKED",
         "READ_BUILD"
       ],
-      "checkedAt": "2026-08-17T03:16:03.661Z",
+      "checkedAt": "2026-08-17T03:27:47.623Z",
       "ok": true,
       "service": "federation-omega-operator",
       "targetService": "architron9",
@@ -17,9 +17,10 @@
     },
     "httpStatus": 200
   },
+  "googleAuthOutcome": "failure",
   "health": {
     "body": {
-      "checkedAt": "2026-08-17T03:16:03.074Z",
+      "checkedAt": "2026-08-17T03:27:47.041Z",
       "noGmail": true,
       "ok": true,
       "service": "federation-omega-operator",
@@ -29,12 +30,13 @@
     },
     "httpStatus": 200
   },
+  "machineAuthRoute": "wif_auth_failed",
   "mutationAttempted": false,
   "operatorUrl": "https://federation-omega-operator-257649435135.africa-south1.run.app",
   "privateAccessDenied": true,
   "reads": {},
   "receipt": "FEDERATION-OMEGA-MACHINE-DISPATCH-CANARY",
-  "recordedAt": "2026-08-17T03:16:04.396444+00:00",
+  "recordedAt": "2026-08-17T03:27:48.345305+00:00",
   "sourceIssue": "/home/runner/work/_temp/_github_workflow/event.json",
   "tokenPresent": false,
   "tokenValueRecorded": false,
