@@ -5,7 +5,8 @@
 - Release: 1.4.0 candidate.
 - Maturity: `IMPLEMENTED_TESTED_LOCAL`.
 - Canonical runtime: deterministic JARVIS graph; ADK 2 Workflow calls the same graph.
-- Direct dependencies: `google-adk==2.1.0`, `google-genai==2.6.0`, `cryptography==46.0.0`.
+- Direct dependencies: `google-adk==2.1.0`, `google-genai==1.75.0`, `cryptography==46.0.0`.
+- Dependency truth: ADK 2.1.0 requires GenAI `>=1.72,<2`; the prior GenAI 2.6.0 pin was unsatisfiable. A universal `uv.lock` and installed-package regression now bind the compatible set.
 - Scientific doctrine: 9 categories, 32 truth-typed principles, local validation complete.
 - Google/Gemini authority: not live-proven in this runtime.
 - Google Cloud deployment: blocked until identity, cost, private-access, lineage, canary and rollback gates pass.
@@ -61,7 +62,7 @@
 
 ## Open proof gates
 
-1. Run installed-package ADK 2.1.0 and GenAI 2.6.0 integration tests and generate a reproducible transitive lock.
+1. Read back the path-scoped GitHub Actions dependency-proof workflow for the exact PR commit.
 2. Move permit signing and nonce/effect state to an externally isolated, globally transactional production authority.
 3. Move ledger and breaker state to managed durable storage with transactional recovery receipt consumption and a provider-managed monotonic anchor for multi-instance execution.
 4. Repair and live-read the Google machine identity; prior WIF returned `invalid_target`.

@@ -82,9 +82,13 @@ A missing term means deny. The current capability registry explicitly marks Goog
 ## Test
 
 ```bash
-PYTHONPATH=. python -m unittest discover -s tests -p 'test_*.py' -v
-python -m compileall -q jarvis tests
+uv lock --check
+uv sync --frozen
+PYTHONPATH=. uv run --frozen python -m unittest discover -s tests -p 'test_*.py' -v
+uv run --frozen python -m compileall -q jarvis tests scripts
 ```
+
+The checked-in universal `uv.lock` is authoritative for reproducible installs. The direct versions are `google-adk==2.1.0`, `google-genai==1.75.0`, and `cryptography==46.0.0`. ADK 2.1.0 constrains GenAI to `>=1.72,<2`; the earlier GenAI 2.6.0 pin was unsatisfiable and is retained only as historical defect context.
 
 The 32 authored tests cover provider fail-closed behavior, executable Gemini SDK call-contract retention, typed response envelopes, contradictory external advisory qualification, two trusted-local provenance spoof attempts, twelve unsupported untyped effect-claim variants, false-live prevention, typed action/resource/argument bypass attempts, Ed25519 permit binding/expiry/replay, enforced quarantine, signed generation-bound recovery receipts, replay rejection and in-process atomic consumption, input-failure isolation, concurrent ledger writes, authenticated checkpoints, retained separate file anchoring, deletion/rollback/replay and tamper write refusal, authority intersection, interactive safe mathematics, science doctrine invariants, protected browser bootstrap, and the ADK workflow entrypoint source contract.
 

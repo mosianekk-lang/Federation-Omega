@@ -3,24 +3,24 @@
   "release_version": "1.4.0",
   "mission": {
     "id": "JARVIS-ULTIMATE-FEDERATION",
-    "version": 22,
+    "version": 23,
     "goal": "Create a governed interactive JARVIS foundation that combines explicit Gemini routing, Federation capability truth, scientific doctrine, deterministic mathematics, exact authority gates, response-contract verification and non-self-promoting learning.",
     "user": "Kagiso Kim Mosiane as sovereign owner and operator",
     "workflow": "intake -> evidence context -> advisory twin -> reason -> response-contract verification -> learning capture -> stop; effectful tools require a separate exact action transaction",
     "data": "Untrusted objectives and provider outputs are processed in memory; only secret-free hashes, route state, elapsed time and learning status are persisted in the local hash chain.",
     "interface": "Responsive browser UI, JSON HTTP API, CLI and Google ADK 2 Workflow entrypoint",
-    "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 2.6.0, cryptography 46.0.0, stdlib HTTP and Docker",
+    "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 1.75.0, cryptography 46.0.0, uv 0.11.33 universal lock, stdlib HTTP and Docker",
     "environment": "Local/offline is verified; Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
     "maturity": "PROD_FOUNDATION",
     "governance": "One sovereign executor, typed response/action/resource/argument schemas, full effective-authority intersection, public-key-verified subject/mission-version/resource/argument-bound single-use permits, untrusted external content, structured readback and no runtime self-promotion.",
     "failure": "Invalid input, untyped provider output, authorization denial, missing provider configuration, dependency failure, timeout, partial writes, unauthenticated or replayed recovery receipts, ledger deletion/rollback/replay/tamper and route recurrence fail closed or quarantine only the affected route.",
-    "testing": "Thirty-two authored local unit/integration/failure-first tests plus compilation, CLI, deterministic math, denial, contract and doctrine smokes; the fixed 28-probe and 5-E2E matrices pass, while external deployment gates remain open.",
-    "deployment": "Container source exists; promotion is blocked until installed SDK integration, dependency lock, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
+    "testing": "Thirty-five authored local unit/integration/failure-first tests, including installed ADK/GenAI workflow-node and call-contract execution, plus compilation, CLI, deterministic math, denial, contract and doctrine smokes; the fixed 28-probe and 5-E2E matrices remain historical passes, while external deployment gates remain open.",
+    "deployment": "Container source exists; dependency resolution and installed-package proof pass locally, while promotion remains blocked until same-commit GitHub Actions readback, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
     "continuity": "Atomic hash-chain state with a retained separate file anchor, circuit quarantine, in-process atomic generation-bound two-receipt restoration, project memory, Formation specification and AI handoff preserve bounded local continuity."
   },
   "classification": ["Fullstack App", "Backend API", "Frontend UI", "AI Agent", "DevOps/Infra", "Test Suite"],
   "assumptions": {
-    "stack": "Python is the primary runtime and Google ADK/GenAI are installed from exact direct pins.",
+    "stack": "Python is the primary runtime; exact direct pins and the checked-in universal uv.lock bind the Google ADK/GenAI dependency graph.",
     "runtime": "Linux/Cloud Run compatible runtime with a non-root identity and writable JARVIS_STATE_DIR.",
     "storage": "Local JSONL is sufficient for source verification; managed transactional state is required before horizontal production scaling.",
     "authentication": "Local HTTP uses a bearer secret; Google capabilities use separate least-scope OAuth or dedicated service identity.",
@@ -70,9 +70,10 @@
       "jarvis/{agent,authority,core,graph,main,math_engine,orchestrator,principles,providers}.py",
       "jarvis/resources/{index.html,science_doctrine_v1.json}",
       "scripts/provider_canary.py",
-      "tests/test_system.py",
+      "tests/{test_system,test_installed_dependencies}.py",
       "README.md, FORMATION_SPEC.md, PROJECT_MEMORY.md, AI_HANDOFF.md, SECURITY.md",
-      "Dockerfile, .dockerignore, .env.example, pyproject.toml, BUILD_CONTRACT.json"
+      "Dockerfile, .dockerignore, .env.example, pyproject.toml, uv.lock, BUILD_CONTRACT.json",
+      ".github/workflows/jarvis-ultimate-dependency-proof.yml"
     ],
     "exact_code_files": [
       "jarvis/core.py",
@@ -84,19 +85,19 @@
       "jarvis/main.py",
       "jarvis/agent.py"
     ],
-    "setup_commands": ["python3 -m venv .venv", ".venv/bin/pip install ."],
+    "setup_commands": ["uv lock --check", "uv sync --frozen"],
     "run_commands": ["PYTHONPATH=. python3 -m jarvis.main 'Map the objective'", "JARVIS_API_TOKEN=runtime-secret PYTHONPATH=. python3 -m jarvis.main --serve --port 8080"],
-    "test_commands": ["PYTHONPATH=. python3 -m unittest discover -s tests -p 'test_*.py' -v", "python3 -m compileall -q jarvis tests scripts"],
-    "deploy_commands": ["BLOCKED_WITH_ROUTE: repair Google machine authority, generate transitive lock, build zero-traffic private candidate, run two-pass semantic/lineage canary, then promote exact revision"],
+    "test_commands": ["PYTHONPATH=. uv run --frozen python -m unittest discover -s tests -p 'test_*.py' -v", "uv run --frozen python -m compileall -q jarvis tests scripts"],
+    "deploy_commands": ["BLOCKED_WITH_ROUTE: verify exact-commit dependency workflow, repair Google machine authority, build zero-traffic private candidate, run two-pass semantic/lineage canary, then promote exact revision"],
     "rollback_commands": ["BLOCKED_UNTIL_DEPLOYMENT: restore the captured prior Cloud Run traffic allocation and independently verify health plus semantics"],
     "debugging": "Read health.providerMode and maturity; inspect only secret-free error code; verify exact env configuration; check quarantine; validate ledger; run provider_canary; never infer provider fruit from HTTP 200."
   },
   "formation": {
     "mission_id": "JARVIS-ULTIMATE-FEDERATION",
-    "mission_version": 22,
+    "mission_version": 23,
     "gate_decision": "EXECUTE",
     "authority_class": "A1_LOCAL_BUILD_AND_GITHUB_APP_PUBLICATION_ONLY",
-    "effectful_permit": "formation:mission-v22:consumed-prior-publication; new provider mutation requires a fresh permit",
+    "effectful_permit": "formation:mission-v23:consumed-local-dependency-patch; GitHub publication and every provider mutation require separate fresh permits",
     "single_effectful_path": true
   },
   "watchman": {
@@ -123,7 +124,9 @@
   },
   "proof": {
     "test_results": {
-      "unittest": "32/32 PASS",
+      "unittest": "35/35 PASS in locked installed-package environment",
+      "dependency_lock": "PASS uv.lock sha256:e6bffe5de6984cda923e53d40a55955083274263efaac295de4d216a00cffae2; 54 resolved packages; google-adk 2.1.0, google-genai 1.75.0, cryptography 46.0.0",
+      "installed_sdk_contract": "PASS both ADK workflow nodes execute offline; GenAI Client and GenerateContentConfig surfaces are present; no credential or provider call",
       "compileall": "PASS",
       "offline_graph_smoke": "PASS",
       "math_smoke": "PASS value=10.0",
@@ -141,8 +144,7 @@
       "Permit and recovery private keys must remain in external isolated signers; production public-key rotation and transactional state remain unproven.",
       "The retained local file anchor detects ledger/checkpoint deletion and older-pair replay only while that anchor remains current; total-bundle deletion/replay requires provider-managed immutable/monotonic anchoring.",
       "Independent v1.4 fixed regression completed 28/28 plus 5/5 end-to-end; focused challenge repaired external-advisory proof and in-process recovery races, while the total-bundle anchor limitation remains an explicit deployment blocker.",
-      "ADK and GenAI packages are not installed in this scratch runtime; official API structure is source-checked but installed-package integration remains a deployment gate",
-      "transitive dependency hashes are not generated",
+      "The path-scoped GitHub Actions dependency-proof workflow must pass at the exact published commit before installed-package proof is promoted beyond local.",
       "production Ed25519 permit signing and nonce/effect state require an externally isolated globally transactional authority; local file state is test-only",
       "ledger and breaker require managed durable state before multi-instance execution",
       "Gemini and Workspace have no live runtime identity/readback",
