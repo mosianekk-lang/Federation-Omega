@@ -1,21 +1,22 @@
 {
   "contract_version": "3.4",
-  "release_version": "1.5.0",
+  "release_version": "1.4.0",
+  "overlay_version": "T20-AO-OMEGA-SCIENTIST-1.1",
   "mission": {
     "id": "JARVIS-ULTIMATE-FEDERATION",
     "version": 24,
-    "goal": "Create a governed interactive JARVIS foundation that preserves the v1.4 authority and assurance core while adding proof-bearing 20-minute Alpha-Omega execution, route-specific outcomes, failure-genome replay and quality-gated method improvement.",
+    "goal": "Preserve the JARVIS v1.4 authority and assurance foundation while adding proof-bearing 20-minute Alpha-Omega execution, route-specific outcomes, failure-genome replay and quality-gated method improvement.",
     "user": "Kagiso Kim Mosiane as sovereign owner and operator",
     "workflow": "intake -> current verified state -> objective/form/state-delta lock -> advisory twin -> bounded multi-path/multi-stream execution -> exact authority gate -> assurance fan-in -> semantic readback -> unpromoted learning capture -> terminal receipt plus next automated route",
     "data": "Untrusted objectives and provider outputs are processed in memory; only secret-free hashes, route state, elapsed time, evidence references, completion state and learning status are persisted in the local hash chain.",
     "interface": "Responsive browser UI, JSON HTTP API, CLI and Google ADK 2 Workflow entrypoint",
     "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 1.75.0, cryptography 46.0.0, uv 0.11.33 universal lock, stdlib HTTP and Docker",
-    "environment": "Local/offline v1.4 is verified; the v1.5 candidate requires same-commit Airlock readback. Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
+    "environment": "The v1.4 core is locally verified. The T20 overlay requires same-commit Airlock readback. Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
     "maturity": "PROD_FOUNDATION",
     "governance": "One sovereign executor, typed response/action/resource/argument schemas, full effective-authority intersection, public-key-verified subject/mission-version/resource/argument-bound single-use permits, untrusted external content, structured quality evidence, independent adversarial proof, route-specific readback and no runtime self-promotion.",
     "failure": "Invalid input, untyped or stale quality evidence, authorization denial, no-op recurrence, missing provider configuration, dependency failure, timeout, partial writes, unauthenticated or replayed recovery receipts, ledger deletion/rollback/replay/tamper and route recurrence fail closed or quarantine only the affected route.",
-    "testing": "The inherited v1.4 security and assurance suite remains intact. v1.5 adds T20 policy, evidence, route-accounting, no-op, deadline, next-pathway, email-authority, HTTP and 72-hour lesson-gate regressions. Same-commit provider CI is pending for this candidate.",
-    "deployment": "Container source exists; dependency resolution and installed-package proof passed for v1.4. Promotion remains blocked until v1.5 same-commit Airlock readback, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
+    "testing": "The inherited v1.4 security and assurance suite remains intact. The T20 overlay adds policy, evidence, route-accounting, no-op, deadline, next-pathway, email-authority, HTTP and 72-hour lesson-gate regressions. Same-commit provider CI is pending for the current source head.",
+    "deployment": "Container source exists; dependency resolution and installed-package proof passed for v1.4. Promotion remains blocked until same-commit T20 Airlock readback, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
     "continuity": "Atomic hash-chain state with a retained separate file anchor, circuit quarantine, in-process atomic generation-bound two-receipt restoration, project memory, Formation specification, AI handoff, the 72-hour lesson gate and an archived pre-gate T20 head preserve bounded continuity."
   },
   "classification": [
@@ -168,7 +169,7 @@
       "BUILD_CONTRACT.json",
       "LESSON_GATE_72H.json"
     ],
-    "supersession": "The pre-gate PR 548 head is preserved on archive/jarvis-t20-pre-72h-gate-20260817; v1.5 is stacked on the higher v1.4 foundation rather than replacing it with the simplified v1.0 branch.",
+    "supersession": "The pre-gate PR 548 head is preserved on archive/jarvis-t20-pre-72h-gate-20260817; the T20 overlay is stacked on the higher v1.4 foundation rather than replacing it with the simplified v1.0 branch.",
     "stop_switch": "Unset provider mode, revoke runtime secret/identity, quarantine the exact route, or enter T20 release-only/deadline state; no background executor exists."
   },
   "states": {
@@ -184,7 +185,7 @@
   "proof": {
     "test_results": {
       "inherited_v1_4": "35/35 PASS in locked installed-package environment at head 9b075fc64393e3b780a863860d59a082fe41ceb0",
-      "candidate_v1_5_same_commit": "PENDING_PROVIDER_AIRLOCK_READBACK",
+      "t20_overlay_same_commit": "PENDING_PROVIDER_AIRLOCK_READBACK",
       "dependency_lock": "Inherited uv.lock sha256:e6bffe5de6984cda923e53d40a55955083274263efaac295de4d216a00cffae2; google-adk 2.1.0, google-genai 1.75.0, cryptography 46.0.0",
       "compileall": "PENDING_PROVIDER_AIRLOCK_READBACK",
       "lesson_gate": "21 recent lessons mapped; pre-gate decision REPAIR_REQUIRED; post-repair decision HOLD"
@@ -195,13 +196,13 @@
       "external_provider_inheritance": false
     },
     "unresolved_defects": [
-      "The v1.5 candidate has not yet received same-commit provider Airlock readback."
+      "The current T20 overlay head has not yet received same-commit provider Airlock readback."
     ],
     "external_proof_gaps": [
       "Effectful adapters remain disabled; action-specific provider readback is not bound to a production executor.",
       "Permit and recovery private keys must remain in external isolated signers; production public-key rotation and transactional state remain unproven.",
       "The retained local file anchor detects ledger/checkpoint deletion and older-pair replay only while that anchor remains current; total-bundle deletion/replay requires provider-managed immutable/monotonic anchoring.",
-      "The v1.5 locked-package step inside the allowlisted Federation Airlock must pass at the exact candidate commit.",
+      "The T20 overlay locked-package step inside the allowlisted Federation Airlock must pass at the exact current commit.",
       "production Ed25519 permit signing and nonce/effect state require an externally isolated globally transactional authority; local file state is test-only",
       "ledger and breaker require managed durable state before multi-instance execution",
       "Gemini and Workspace have no live runtime identity/readback",
