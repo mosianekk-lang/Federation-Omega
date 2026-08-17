@@ -12,11 +12,15 @@ COMPANION = ROOT / "chatbridge-companion"
 
 
 class BrowserCompanionSourceContractTests(unittest.TestCase):
-    def test_manifest_is_narrow_and_ffcl_ordered(self) -> None:
+    def test_manifest_matches_admitted_v030_and_stays_browser_bounded(self) -> None:
         manifest = json.loads((COMPANION / "manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["manifest_version"], 3)
         self.assertEqual(manifest["version"], "0.3.0")
-        self.assertEqual(manifest["permissions"], ["storage", "tabs"])
+        self.assertEqual(
+            manifest["permissions"],
+            ["storage", "unlimitedStorage", "downloads"],
+        )
+        self.assertEqual(manifest["host_permissions"], ["https://chatgpt.com/*"])
         self.assertEqual(
             manifest["content_scripts"][0]["js"],
             ["src/bridge-core.js", "src/content-script.js"],
@@ -25,35 +29,45 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
             "nativeMessaging",
             "debugger",
             "management",
+            "webRequest",
             "webRequestBlocking",
+            "scripting",
         ):
             self.assertNotIn(forbidden, manifest["permissions"])
 
-    def test_local_write_precedes_optional_provider_upload(self) -> None:
+    def test_capture_is_written_locally_before_return_and_has_no_network_client(self) -> None:
         background = (COMPANION / "src" / "background.js").read_text(
             encoding="utf-8"
         )
+        capture_start = background.index("async function capturePacket")
+        capture_end = background.index("async function handleMessage")
+        capture_body = background[capture_start:capture_end]
         self.assertLess(
-            background.index("await putCapture(captureRecord)"),
-            background.index("await uploadCapture"),
+            capture_body.index("await saveLedger(ledger)"),
+            capture_body.index("return ledger"),
         )
-        self.assertIn("PROVIDER_UPLOAD_FAILED_LOCAL_DURABLE", background)
-        self.assertIn("chrome.storage.session.get(\"chatbridgeConnectorToken\")", background)
-        self.assertNotIn(
-            "chrome.storage.local.set({chatbridgeConnectorToken", background
-        )
+        self.assertIn("chrome.storage.local.set", background)
+        self.assertIn("chrome.downloads.download", background)
+        self.assertNotIn("fetch(", background)
+        self.assertNotIn("XMLHttpRequest", background)
+        self.assertNotIn("WebSocket", background)
 
-    def test_terminal_capture_precedes_successor_tab(self) -> None:
+    def test_terminal_capture_precedes_successor_open(self) -> None:
         content = (COMPANION / "src" / "content-script.js").read_text(
             encoding="utf-8"
         )
+        start = content.index("async function startSuccessor")
+        end = content.index("function decorateLimitBanner")
+        successor_body = content[start:end]
         self.assertLess(
-            content.index('capture("LIMIT_WARNING_CLICK"'),
-            content.index('type: "CHATBRIDGE_OPEN"'),
+            successor_body.index('await checkpoint("SUCCESSOR_REQUEST")'),
+            successor_body.index('type: "CHATBRIDGE_OPEN"'),
         )
-        self.assertIn("terminalObserved: true", content)
+        self.assertIn('checkpoint("TERMINAL_WARNING_DETECTED")', content)
+        self.assertIn('checkpoint("PERIODIC_WRITE_AHEAD")', content)
+        self.assertIn('checkpoint("VISIBILITY_HIDDEN")', content)
 
-    def test_node_contract_suite(self) -> None:
+    def test_node_contract_suite_for_current_companion(self) -> None:
         node = shutil.which("node")
         if not node:
             self.skipTest("Node.js is not installed in this runner")
@@ -62,7 +76,6 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
                 node,
                 "--test",
                 "tests/bridge-core.test.js",
-                "tests/ffcl-adapter-static.test.js",
                 "tests/readiness-contract.test.js",
             ],
             cwd=COMPANION,
