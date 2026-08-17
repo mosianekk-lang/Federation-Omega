@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "policy_id": "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
   "owner": "Kim Kagiso Mosiane",
   "state": "SOURCE_IMPLEMENTED_PROVIDER_EXECUTION_SEPARATE",
@@ -68,10 +68,11 @@
     "decision_rule": "USE_STRONGER_INTELLIGENCE_WHEN_EXPECTED_COST_OF_ERROR_EXCEEDS_INCREMENTAL_REASONING_COST"
   },
   "openai_binding": {
-    "source_checked": "2026-08-16",
+    "source_checked": "2026-08-17",
     "official_sources": [
       "https://help.openai.com/en/articles/20001354-gpt-56-in-chatgpt/",
       "https://developers.openai.com/api/docs/guides/latest-model",
+      "https://developers.openai.com/api/docs/guides/reasoning",
       "https://developers.openai.com/api/docs/models"
     ],
     "chatgpt": {
@@ -88,7 +89,7 @@
       "MEDIUM": {"reasoning_effort": "medium"},
       "HIGH": {"reasoning_effort": "high"},
       "EXTRA_HIGH": {"reasoning_effort": "xhigh"},
-      "PRO": {"reasoning_mode": "pro"},
+      "PRO": {"reasoning_effort": "max", "reasoning_mode": "pro"},
       "provider_authority_and_current_model_availability_must_be_revalidated": true
     }
   },
