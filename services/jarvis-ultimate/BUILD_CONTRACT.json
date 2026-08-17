@@ -1,7 +1,46 @@
 {
-  "contractVersion":"3.3","project":"jarvis-ultimate-federation","version":"1.0.0","maturity":"PROD_FOUNDATION",
-  "components":{"frontend":"browser chat","backend":"stdlib HTTP + orchestrator","database":"hash-chained JSONL state; production adapter pending","queue":"NOT_APPLICABLE: synchronous bounded MVP","worker":"orchestrator","scheduler":"ADAPTER_REQUIRED","cache":"NOT_APPLICABLE: no live caching","storage":"local state with pluggable provider","authentication":"bearer token + external OAuth/IAM","ai":"Google ADK/GenAI with deterministic offline fallback"},
-  "proofBoundary":{"sourceBuilt":true,"testedLocal":true,"githubPublished":true,"googleWorkspaceBound":false,"geminiLive":false,"cloudDeployed":false},
-  "security":{"incrementalOAuth":true,"secretManagerRequired":true,"effectfulPermitRequired":true,"unknownActionFailsClosed":true,"oneSovereignExecutor":true},
-  "manualUserTasks":[]
+  "contractVersion": "3.4",
+  "project": "jarvis-ultimate-federation",
+  "version": "1.0.0",
+  "maturity": "PROD_FOUNDATION",
+  "components": {
+    "frontend": "browser chat",
+    "backend": "stdlib HTTP + orchestrator",
+    "database": "hash-chained JSONL state; production adapter pending",
+    "queue": "NOT_APPLICABLE: synchronous bounded MVP",
+    "worker": "orchestrator",
+    "scheduler": "ADAPTER_REQUIRED",
+    "cache": "NOT_APPLICABLE: no live caching",
+    "storage": "local state with pluggable provider",
+    "authentication": "bearer token + external OAuth/IAM",
+    "ai": "Google ADK/GenAI with deterministic offline fallback",
+    "executionGovernor": "T20-AO-OMEGA-SCIENTIST-1.0; 1200-second bounded attempt; 3 paths; 6 streams; quality-gated learning"
+  },
+  "executionBoundary": {
+    "maxDirectiveSeconds": 1200,
+    "splitTriggerSeconds": 720,
+    "expansionCutoffSeconds": 900,
+    "forceReleaseSeconds": 1080,
+    "guaranteeScope": "one bounded JARVIS execution attempt",
+    "externalLimit": "external provider latency or approval cannot be forced; unresolved blockers must produce an honest bounded result and executable next route"
+  },
+  "proofBoundary": {
+    "sourceBuilt": true,
+    "testedLocal": true,
+    "githubPublished": true,
+    "t20GovernorSourceBuilt": true,
+    "t20GovernorTestedLocal": true,
+    "t20CiVerified": false,
+    "googleWorkspaceBound": false,
+    "geminiLive": false,
+    "cloudDeployed": false
+  },
+  "security": {
+    "incrementalOAuth": true,
+    "secretManagerRequired": true,
+    "effectfulPermitRequired": true,
+    "unknownActionFailsClosed": true,
+    "oneSovereignExecutor": true
+  },
+  "manualUserTasks": []
 }
