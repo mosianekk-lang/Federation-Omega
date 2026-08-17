@@ -1,0 +1,16 @@
+{
+  "manifest_version": 3,
+  "name": "ChatBridge Companion for ChatGPT",
+  "version": "0.3.0",
+  "description": "Captures governed start-to-finish ChatGPT events for ChatBridge Ω4.9 and prepares exact or bounded successor restores.",
+  "permissions": ["storage", "downloads"],
+  "host_permissions": ["https://chatgpt.com/*"],
+  "background": {"service_worker": "src/background.js"},
+  "content_scripts": [{
+    "matches": ["https://chatgpt.com/*"],
+    "js": ["src/bridge-core.js", "src/content-script.js"],
+    "css": ["src/styles.css"],
+    "run_at": "document_idle"
+  }],
+  "options_page": "options/options.html"
+}
