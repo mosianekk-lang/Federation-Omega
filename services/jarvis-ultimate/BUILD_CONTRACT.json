@@ -1,7 +1,148 @@
 {
-  "contractVersion":"3.3","project":"jarvis-ultimate-federation","version":"1.0.0","maturity":"PROD_FOUNDATION",
-  "components":{"frontend":"browser chat","backend":"stdlib HTTP + orchestrator","database":"hash-chained JSONL state; production adapter pending","queue":"NOT_APPLICABLE: synchronous bounded MVP","worker":"orchestrator","scheduler":"ADAPTER_REQUIRED","cache":"NOT_APPLICABLE: no live caching","storage":"local state with pluggable provider","authentication":"bearer token + external OAuth/IAM","ai":"Google ADK/GenAI with deterministic offline fallback"},
-  "proofBoundary":{"sourceBuilt":true,"testedLocal":true,"githubPublished":true,"googleWorkspaceBound":false,"geminiLive":false,"cloudDeployed":false},
-  "security":{"incrementalOAuth":true,"secretManagerRequired":true,"effectfulPermitRequired":true,"unknownActionFailsClosed":true,"oneSovereignExecutor":true},
-  "manualUserTasks":[]
+  "contract_version": "3.3",
+  "mission": {
+    "id": "JARVIS-ULTIMATE-FEDERATION",
+    "version": 22,
+    "goal": "Create a governed interactive JARVIS foundation that combines explicit Gemini routing, Federation capability truth, scientific doctrine, deterministic mathematics, exact authority gates, semantic verification and non-self-promoting learning.",
+    "user": "Kagiso Kim Mosiane as sovereign owner and operator",
+    "workflow": "intake -> evidence context -> advisory twin -> reason -> semantic verification -> learning capture -> stop; effectful tools require a separate exact action transaction",
+    "data": "Untrusted objectives and provider outputs are processed in memory; only secret-free hashes, route state, elapsed time and learning status are persisted in the local hash chain.",
+    "interface": "Responsive browser UI, JSON HTTP API, CLI and Google ADK 2 Workflow entrypoint",
+    "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 2.6.0, stdlib HTTP and Docker",
+    "environment": "Local/offline is verified; Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "One sovereign executor, exact action schemas, least authority, bound single-use permits, untrusted external content, semantic readback and no runtime self-promotion.",
+    "failure": "Invalid input, authorization denial, missing provider configuration, dependency failure, timeout, partial writes, generic responses, ledger tamper and route recurrence fail closed or quarantine only the affected route.",
+    "testing": "Sixteen local unit/integration/failure-first tests plus compilation, CLI, deterministic math, denial, contract and doctrine smokes.",
+    "deployment": "Container source exists; promotion is blocked until dependency lock, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
+    "continuity": "Atomic hash-chain state, circuit quarantine, two-proof restoration, project memory, Formation specification and AI handoff preserve bounded continuity."
+  },
+  "classification": ["Fullstack App", "Backend API", "Frontend UI", "AI Agent", "DevOps/Infra", "Test Suite"],
+  "assumptions": {
+    "stack": "Python is the primary runtime and Google ADK/GenAI are installed from exact direct pins.",
+    "runtime": "Linux/Cloud Run compatible runtime with a non-root identity and writable JARVIS_STATE_DIR.",
+    "storage": "Local JSONL is sufficient for source verification; managed transactional state is required before horizontal production scaling.",
+    "authentication": "Local HTTP uses a bearer secret; Google capabilities use separate least-scope OAuth or dedicated service identity.",
+    "deployment": "No live deployment claim is allowed until the provider-native zero-traffic gate succeeds."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "Packaged responsive HTML interface with loading, error, token and capability-truth controls",
+      "backend": "Typed Python domain objects, canonical five-node deterministic graph, HTTP/CLI and ADK Workflow entrypoints",
+      "database": "Concurrency-safe hash-chained JSONL; managed production database ADAPTER_REQUIRED before multi-instance writes",
+      "queue": "NOT_APPLICABLE: no asynchronous effectful jobs are enabled in this release",
+      "worker": "Single synchronous governed graph; provider tool worker is feature-disabled",
+      "scheduler": "NOT_APPLICABLE: on-demand release has no background autonomy",
+      "cache": "NOT_APPLICABLE: semantic/model responses are not cached",
+      "storage": "Local atomic state and packaged versioned doctrine resource",
+      "authentication": "Constant-time bearer comparison; exact OAuth/IAM/permit intersection for future provider adapters"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
+    "observability": {
+      "correlation_ids": "Mission IDs, route IDs, content hashes and learning hashes",
+      "health_checks": "GET /health separates ledger integrity, provider mode, session proof and maturity",
+      "structured_logs": "Secret-free JSON response and ledger schemas; raw prompts and provider payloads are not logged",
+      "audit_logs": "Fsync-backed hash-chain with previous-hash verification and tamper regression",
+      "metrics_alerts": "Local elapsed time, semantic fruit and quarantine state; provider alerting ADAPTER_REQUIRED before deployment"
+    }
+  },
+  "testing": {
+    "unit": "Provider settings, action schemas, permit cryptography, math AST, doctrine and authority intersection",
+    "integration": "Canonical graph to semantic verifier to atomic learning ledger",
+    "e2e_or_smoke": "CLI offline response, math calculation, cloud-deploy denial and packaged resource load",
+    "fixtures_mocks": "Deterministic successful, failing and short-response provider doubles plus temporary state directories",
+    "failure_first": "False-live env, provider configuration denial, action bypass, permit mismatch/expiry/replay, generic fruit, quarantine, code injection and ledger tamper",
+    "commands": [
+      "PYTHONPATH=. python3 -m unittest discover -s tests -p 'test_*.py' -v",
+      "python3 -m compileall -q jarvis tests scripts"
+    ]
+  },
+  "delivery": {
+    "file_tree": [
+      "jarvis/{agent,authority,core,graph,main,math_engine,orchestrator,principles,providers}.py",
+      "jarvis/resources/{index.html,science_doctrine_v1.json}",
+      "scripts/provider_canary.py",
+      "tests/test_system.py",
+      "README.md, FORMATION_SPEC.md, PROJECT_MEMORY.md, AI_HANDOFF.md, SECURITY.md",
+      "Dockerfile, .dockerignore, .env.example, pyproject.toml, BUILD_CONTRACT.json"
+    ],
+    "exact_code_files": [
+      "jarvis/core.py",
+      "jarvis/providers.py",
+      "jarvis/graph.py",
+      "jarvis/orchestrator.py",
+      "jarvis/authority.py",
+      "jarvis/math_engine.py",
+      "jarvis/main.py",
+      "jarvis/agent.py"
+    ],
+    "setup_commands": ["python3 -m venv .venv", ".venv/bin/pip install ."],
+    "run_commands": ["PYTHONPATH=. python3 -m jarvis.main 'Map the objective'", "JARVIS_API_TOKEN=runtime-secret PYTHONPATH=. python3 -m jarvis.main --serve --port 8080"],
+    "test_commands": ["PYTHONPATH=. python3 -m unittest discover -s tests -p 'test_*.py' -v", "python3 -m compileall -q jarvis tests scripts"],
+    "deploy_commands": ["BLOCKED_WITH_ROUTE: repair Google machine authority, generate transitive lock, build zero-traffic private candidate, run two-pass semantic/lineage canary, then promote exact revision"],
+    "rollback_commands": ["BLOCKED_UNTIL_DEPLOYMENT: restore the captured prior Cloud Run traffic allocation and independently verify health plus semantics"],
+    "debugging": "Read health.providerMode and maturity; inspect only secret-free error code; verify exact env configuration; check quarantine; validate ledger; run provider_canary; never infer provider fruit from HTTP 200."
+  },
+  "formation": {
+    "mission_id": "JARVIS-ULTIMATE-FEDERATION",
+    "mission_version": 22,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1_LOCAL_BUILD_AND_GITHUB_APP_PUBLICATION_ONLY",
+    "effectful_permit": "formation:mission-v22:consumed-prior-publication; new provider mutation requires a fresh permit",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "preserved_core": "Offline graph, math, doctrine, security gates and local interfaces remain functional when every external provider is absent.",
+    "blocked_capabilities": ["Google Workspace runtime binding", "Gemini live proof", "Google Cloud deployment", "all-Federation invocation"],
+    "closure_test": "Each adapter must independently prove current identity, exact scopes/allowlist, semantic fruit and rollback without weakening another route."
+  },
+  "continuity": {
+    "idempotency": "Read routes are deterministic where possible; no effectful adapter is enabled; future writes require idempotency keys and preimages.",
+    "checkpoints": "Graph node events, learning hashes, capability truth, contract proof and release commit/readback.",
+    "resume_conditions": "Resume an isolated provider lane only after current authority, two bounded recovery proofs, cost fit and unchanged protected controls.",
+    "handoff_files": ["PROJECT_MEMORY.md", "AI_HANDOFF.md", "FORMATION_SPEC.md", "BUILD_CONTRACT.json"],
+    "stop_switch": "Unset provider mode, revoke runtime secret/identity, or quarantine the exact route; no background executor exists."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": {
+      "unittest": "16/16 PASS",
+      "compileall": "PASS",
+      "offline_graph_smoke": "PASS",
+      "math_smoke": "PASS value=10.0",
+      "effectful_cloud_denial": "PASS",
+      "contract_and_doctrine_static": "PASS"
+    },
+    "semantic_verification": {
+      "scope": "local deterministic route only",
+      "fruit": "five distinct node events, non-generic response, response/evidence hashes, semanticFruit=true, learningPromotion=NOT_PROMOTED",
+      "external_provider_inheritance": false
+    },
+    "unresolved_defects": [],
+    "external_proof_gaps": [
+      "ADK and GenAI packages are not installed in this scratch runtime; official API structure is source-checked but installed-package integration remains a deployment gate",
+      "transitive dependency hashes are not generated",
+      "Gemini and Workspace have no live runtime identity/readback",
+      "prior Google WIF returned invalid_target",
+      "private Cloud Run, lineage, rollback and cost proof have not run"
+    ],
+    "deployment_readback": null
+  },
+  "manualUserTasks": []
 }

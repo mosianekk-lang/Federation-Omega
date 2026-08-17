@@ -1,0 +1,10 @@
+.git
+.env
+state
+__pycache__
+*.pyc
+*.pyo
+*.pem
+*.key
+*.token
+tests
