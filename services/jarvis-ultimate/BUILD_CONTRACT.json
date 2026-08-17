@@ -1,77 +1,110 @@
 {
-  "contract_version": "3.3",
-  "release_version": "1.4.0",
+  "contract_version": "3.4",
+  "release_version": "1.5.0",
   "mission": {
     "id": "JARVIS-ULTIMATE-FEDERATION",
-    "version": 23,
-    "goal": "Create a governed interactive JARVIS foundation that combines explicit Gemini routing, Federation capability truth, scientific doctrine, deterministic mathematics, exact authority gates, response-contract verification and non-self-promoting learning.",
+    "version": 24,
+    "goal": "Create a governed interactive JARVIS foundation that preserves the v1.4 authority and assurance core while adding proof-bearing 20-minute Alpha-Omega execution, route-specific outcomes, failure-genome replay and quality-gated method improvement.",
     "user": "Kagiso Kim Mosiane as sovereign owner and operator",
-    "workflow": "intake -> evidence context -> advisory twin -> reason -> response-contract verification -> learning capture -> stop; effectful tools require a separate exact action transaction",
-    "data": "Untrusted objectives and provider outputs are processed in memory; only secret-free hashes, route state, elapsed time and learning status are persisted in the local hash chain.",
+    "workflow": "intake -> current verified state -> objective/form/state-delta lock -> advisory twin -> bounded multi-path/multi-stream execution -> exact authority gate -> assurance fan-in -> semantic readback -> unpromoted learning capture -> terminal receipt plus next automated route",
+    "data": "Untrusted objectives and provider outputs are processed in memory; only secret-free hashes, route state, elapsed time, evidence references, completion state and learning status are persisted in the local hash chain.",
     "interface": "Responsive browser UI, JSON HTTP API, CLI and Google ADK 2 Workflow entrypoint",
     "stack": "Python 3.11-3.14, google-adk 2.1.0, google-genai 1.75.0, cryptography 46.0.0, uv 0.11.33 universal lock, stdlib HTTP and Docker",
-    "environment": "Local/offline is verified; Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
+    "environment": "Local/offline v1.4 is verified; the v1.5 candidate requires same-commit Airlock readback. Gemini, Workspace, Cloud Run and Federation adapters require environment-specific authority proof.",
     "maturity": "PROD_FOUNDATION",
-    "governance": "One sovereign executor, typed response/action/resource/argument schemas, full effective-authority intersection, public-key-verified subject/mission-version/resource/argument-bound single-use permits, untrusted external content, structured readback and no runtime self-promotion.",
-    "failure": "Invalid input, untyped provider output, authorization denial, missing provider configuration, dependency failure, timeout, partial writes, unauthenticated or replayed recovery receipts, ledger deletion/rollback/replay/tamper and route recurrence fail closed or quarantine only the affected route.",
-    "testing": "Thirty-five authored local unit/integration/failure-first tests, including installed ADK/GenAI workflow-node and call-contract execution, plus compilation, CLI, deterministic math, denial, contract and doctrine smokes; the fixed 28-probe and 5-E2E matrices remain historical passes, while external deployment gates remain open.",
-    "deployment": "Container source exists; dependency resolution and installed-package proof pass locally, while promotion remains blocked until same-commit GitHub Actions readback, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
-    "continuity": "Atomic hash-chain state with a retained separate file anchor, circuit quarantine, in-process atomic generation-bound two-receipt restoration, project memory, Formation specification and AI handoff preserve bounded local continuity."
+    "governance": "One sovereign executor, typed response/action/resource/argument schemas, full effective-authority intersection, public-key-verified subject/mission-version/resource/argument-bound single-use permits, untrusted external content, structured quality evidence, independent adversarial proof, route-specific readback and no runtime self-promotion.",
+    "failure": "Invalid input, untyped or stale quality evidence, authorization denial, no-op recurrence, missing provider configuration, dependency failure, timeout, partial writes, unauthenticated or replayed recovery receipts, ledger deletion/rollback/replay/tamper and route recurrence fail closed or quarantine only the affected route.",
+    "testing": "The inherited v1.4 security and assurance suite remains intact. v1.5 adds T20 policy, evidence, route-accounting, no-op, deadline, next-pathway, email-authority, HTTP and 72-hour lesson-gate regressions. Same-commit provider CI is pending for this candidate.",
+    "deployment": "Container source exists; dependency resolution and installed-package proof passed for v1.4. Promotion remains blocked until v1.5 same-commit Airlock readback, isolated production signer and global state, machine identity, private canary, exact lineage, semantic readback, rollback and cost gates pass.",
+    "continuity": "Atomic hash-chain state with a retained separate file anchor, circuit quarantine, in-process atomic generation-bound two-receipt restoration, project memory, Formation specification, AI handoff, the 72-hour lesson gate and an archived pre-gate T20 head preserve bounded continuity."
   },
-  "classification": ["Fullstack App", "Backend API", "Frontend UI", "AI Agent", "DevOps/Infra", "Test Suite"],
+  "classification": [
+    "Fullstack App",
+    "Backend API",
+    "Frontend UI",
+    "AI Agent",
+    "DevOps/Infra",
+    "Test Suite"
+  ],
   "assumptions": {
     "stack": "Python is the primary runtime; exact direct pins and the checked-in universal uv.lock bind the Google ADK/GenAI dependency graph.",
     "runtime": "Linux/Cloud Run compatible runtime with a non-root identity and writable JARVIS_STATE_DIR.",
     "storage": "Local JSONL is sufficient for source verification; managed transactional state is required before horizontal production scaling.",
     "authentication": "Local HTTP uses a bearer secret; Google capabilities use separate least-scope OAuth or dedicated service identity.",
+    "execution_time": "The 1,200-second envelope governs one JARVIS attempt and cannot force external-provider latency or human approval.",
     "deployment": "No live deployment claim is allowed until the provider-native zero-traffic gate succeeds."
   },
   "architecture": {
     "components": {
       "frontend": "Packaged responsive HTML interface with loading, error, token and capability-truth controls",
       "backend": "Typed Python domain objects, canonical five-node deterministic graph, HTTP/CLI and ADK Workflow entrypoints",
+      "execution_governor": "T20-AO-OMEGA-SCIENTIST-1.1 with three bounded paths, six streams, structured evidence, no-op circuit, convergence controls and next-pathway release",
       "database": "Concurrency-safe hash-chained JSONL; managed production database ADAPTER_REQUIRED before multi-instance writes",
       "queue": "NOT_APPLICABLE: no asynchronous effectful jobs are enabled in this release",
       "worker": "Single synchronous governed graph; provider tool worker is feature-disabled",
       "scheduler": "NOT_APPLICABLE: on-demand release has no background autonomy",
       "cache": "NOT_APPLICABLE: semantic/model responses are not cached",
-      "storage": "Local atomic state and packaged versioned doctrine resource",
+      "storage": "Local atomic state, packaged versioned doctrine resource and machine-readable 72-hour lesson gate",
       "authentication": "Constant-time bearer comparison; typed request schemas and exact user grant/OAuth/IAM/mission/tool/resource intersection for future provider adapters"
     },
     "failure_modes": [
       "INVALID_INPUT",
       "AUTHORIZATION_FAILURE",
+      "QUALITY_EVIDENCE_REJECTED",
+      "STALE_EVIDENCE",
+      "NO_OP_RECURRENCE",
+      "TIME_BUDGET_EXCEEDED",
       "TIMEOUT",
       "PARTIAL_WRITE",
       "MISSING_CONFIGURATION",
       "EXTERNAL_API_FAILURE"
     ],
     "observability": {
-      "correlation_ids": "Mission IDs, route IDs, content hashes and learning hashes",
-      "health_checks": "GET /health separates ledger integrity, provider mode, session proof and maturity",
+      "correlation_ids": "Mission IDs, route IDs, content hashes, T20 receipt digests and learning hashes",
+      "health_checks": "GET /health separates ledger integrity, provider mode, execution policy, lesson gate, session proof and maturity",
       "structured_logs": "Secret-free JSON response and ledger schemas; raw prompts and provider payloads are not logged",
       "audit_logs": "Fsync-backed hash-chain plus authenticated checkpoint and separately located high-water anchor; production managed immutability remains required",
-      "metrics_alerts": "Local elapsed time, semantic fruit and quarantine state; provider alerting ADAPTER_REQUIRED before deployment"
+      "metrics_alerts": "Local elapsed time, evidence status, route state, no-op circuit, completion state, semantic fruit and quarantine state; provider alerting ADAPTER_REQUIRED before deployment"
     }
   },
+  "execution": {
+    "policy_id": "T20-AO-OMEGA-SCIENTIST-1.1",
+    "lesson_gate_id": "FEDERATION-72H-LESSON-GATE-20260817",
+    "max_directive_seconds": 1200,
+    "split_trigger_seconds": 720,
+    "expansion_cutoff_seconds": 900,
+    "force_release_seconds": 1080,
+    "max_active_paths": 3,
+    "max_active_streams": 6,
+    "completion_states": [
+      "COMPLETE_VERIFIED",
+      "BOUNDED_COMPLETE",
+      "BLOCKED_WITH_EXECUTABLE_NEXT_ROUTE"
+    ],
+    "quality_evidence": "Structured fresh evidence objects only; caller booleans and generic transport success are rejected.",
+    "email_send_rule": "gmail.send and gmail.forward require explicit current owner grant plus exact executor authority and a single-use permit.",
+    "improvement_rule": "Speed gains remain shadow candidates until proof-bearing regression demonstrates no quality loss."
+  },
   "testing": {
-    "unit": "Provider settings, typed response/action/resource/argument schemas, Ed25519 permit cryptography/bindings, signed generation-bound recovery receipts, math AST, doctrine and authority intersection",
-    "integration": "Canonical graph to response-contract verifier to atomic learning ledger",
-    "e2e_or_smoke": "CLI offline response, interactive math calculation, cloud-deploy denial, browser bootstrap ordering and packaged resource load",
-    "fixtures_mocks": "Deterministic successful, failing and short-response provider doubles plus temporary state directories",
-    "failure_first": "False-live env, untyped provider output, twelve unsupported effect assertions, action/resource/argument bypass, malformed/periodic shared-key permit input, permit mismatch/expiry/replay, unexpected provider exception, input poisoning, fabricated/replayed breaker recovery, code injection, ledger pair deletion/older-pair replay/tamper and write-after-corruption",
+    "unit": "Provider settings, typed response/action/resource/argument schemas, Ed25519 permit cryptography/bindings, signed generation-bound recovery receipts, T20 timing and evidence contracts, route accounting, no-op circuit, math AST, doctrine and authority intersection",
+    "integration": "Canonical graph to response-contract verifier to anchored learning ledger plus proof-bearing T20 cycle review and protected HTTP routes",
+    "e2e_or_smoke": "CLI offline response, interactive math calculation, cloud-deploy denial, browser bootstrap ordering, packaged resource load and T20 policy/readback",
+    "fixtures_mocks": "Deterministic successful, failing and short-response provider doubles, typed quality evidence, route outcomes and temporary state directories",
+    "failure_first": "False-live env, untyped provider output, unsupported effect assertions, action/resource/argument bypass, malformed permit input, permit mismatch/expiry/replay, fabricated recovery receipts, code injection, ledger deletion/rollback/replay/tamper, caller boolean completion, stale evidence, dependent adversarial proof, no-op retry and deadline overclaim",
     "commands": [
-      "PYTHONPATH=. python3 -m unittest discover -s tests -p 'test_*.py' -v",
-      "python3 -m compileall -q jarvis tests scripts"
+      "uv lock --check",
+      "uv sync --frozen",
+      "PYTHONPATH=. uv run --frozen python -m unittest discover -s tests -p 'test_*.py' -v",
+      "uv run --frozen python -m compileall -q jarvis tests scripts"
     ]
   },
   "delivery": {
     "file_tree": [
-      "jarvis/{agent,authority,core,graph,main,math_engine,orchestrator,principles,providers}.py",
+      "jarvis/{agent,authority,core,execution,graph,main,math_engine,orchestrator,principles,providers}.py",
       "jarvis/resources/{index.html,science_doctrine_v1.json}",
       "scripts/provider_canary.py",
-      "tests/{test_system,test_installed_dependencies}.py",
-      "README.md, FORMATION_SPEC.md, PROJECT_MEMORY.md, AI_HANDOFF.md, SECURITY.md",
+      "tests/{test_execution,test_system,test_installed_dependencies}.py",
+      "README.md, FORMATION_SPEC.md, PROJECT_MEMORY.md, AI_HANDOFF.md, SECURITY.md, LESSON_GATE_72H.json",
       "Dockerfile, .dockerignore, .env.example, pyproject.toml, uv.lock, BUILD_CONTRACT.json",
       ".github/workflows/github-airlock.yml"
     ],
@@ -80,42 +113,68 @@
       "jarvis/providers.py",
       "jarvis/graph.py",
       "jarvis/orchestrator.py",
+      "jarvis/execution.py",
       "jarvis/authority.py",
       "jarvis/math_engine.py",
       "jarvis/main.py",
       "jarvis/agent.py"
     ],
-    "setup_commands": ["uv lock --check", "uv sync --frozen"],
-    "run_commands": ["PYTHONPATH=. python3 -m jarvis.main 'Map the objective'", "JARVIS_API_TOKEN=runtime-secret PYTHONPATH=. python3 -m jarvis.main --serve --port 8080"],
-    "test_commands": ["PYTHONPATH=. uv run --frozen python -m unittest discover -s tests -p 'test_*.py' -v", "uv run --frozen python -m compileall -q jarvis tests scripts"],
-    "deploy_commands": ["BLOCKED_WITH_ROUTE: verify exact-commit dependency workflow, repair Google machine authority, build zero-traffic private candidate, run two-pass semantic/lineage canary, then promote exact revision"],
-    "rollback_commands": ["BLOCKED_UNTIL_DEPLOYMENT: restore the captured prior Cloud Run traffic allocation and independently verify health plus semantics"],
-    "debugging": "Read health.providerMode and maturity; inspect only secret-free error code; verify exact env configuration; check quarantine; validate ledger; run provider_canary; never infer provider fruit from HTTP 200."
+    "setup_commands": [
+      "uv lock --check",
+      "uv sync --frozen"
+    ],
+    "run_commands": [
+      "PYTHONPATH=. python3 -m jarvis.main 'Map the objective'",
+      "JARVIS_API_TOKEN=runtime-secret PYTHONPATH=. python3 -m jarvis.main --serve --port 8080"
+    ],
+    "test_commands": [
+      "PYTHONPATH=. uv run --frozen python -m unittest discover -s tests -p 'test_*.py' -v",
+      "uv run --frozen python -m compileall -q jarvis tests scripts"
+    ],
+    "deploy_commands": [
+      "BLOCKED_WITH_ROUTE: verify exact-commit dependency and T20 tests in the allowlisted Airlock, repair Google machine authority, build zero-traffic private candidate, run two-pass semantic/lineage canary, then promote exact revision"
+    ],
+    "rollback_commands": [
+      "BLOCKED_UNTIL_DEPLOYMENT: restore the captured prior Cloud Run traffic allocation and independently verify health plus semantics"
+    ],
+    "debugging": "Read health.providerMode, executionPolicy and maturity; inspect only secret-free error codes; verify exact evidence age and source class; check route/no-op/quarantine state; validate ledger; run provider_canary; never infer provider fruit from HTTP 200."
   },
   "formation": {
     "mission_id": "JARVIS-ULTIMATE-FEDERATION",
-    "mission_version": 23,
-    "gate_decision": "EXECUTE",
+    "mission_version": 24,
+    "gate_decision": "EXECUTE_SOURCE_REPAIR_ONLY",
     "authority_class": "A1_LOCAL_BUILD_AND_GITHUB_APP_PUBLICATION_ONLY",
-    "effectful_permit": "formation:mission-v23:consumed-local-dependency-patch; GitHub publication and every provider mutation require separate fresh permits",
+    "effectful_permit": "The runtime holds only the Formation public verifier. GitHub publication and every provider mutation require separate current authority; external tool execution is not enabled by T20.",
     "single_effectful_path": true
   },
   "watchman": {
-    "preserved_core": "Offline graph, math, doctrine, security gates and local interfaces remain functional when every external provider is absent.",
-    "blocked_capabilities": ["Google Workspace runtime binding", "Gemini live proof", "Google Cloud deployment", "all-Federation invocation"],
-    "closure_test": "Each adapter must independently prove current identity, exact scopes/allowlist, semantic fruit and rollback without weakening another route."
+    "preserved_core": "The complete v1.4 offline graph, math, doctrine, signed permits, anchored state, security gates and local interfaces remain functional when every external provider is absent.",
+    "blocked_capabilities": [
+      "Google Workspace runtime binding",
+      "Gemini live proof",
+      "Google Cloud deployment",
+      "all-Federation invocation"
+    ],
+    "closure_test": "Each adapter must independently prove current identity, exact scopes/allowlist, semantic fruit, rollback and T20 evidence without weakening another route."
   },
   "continuity": {
     "idempotency": "Read routes are deterministic where possible; no effectful adapter is enabled; future writes require idempotency keys and preimages.",
-    "checkpoints": "Graph node events, learning hashes, capability truth, contract proof and release commit/readback.",
+    "checkpoints": "Graph node events, learning hashes, route states, T20 receipt digests, capability truth, lesson-gate mapping, contract proof and release commit/readback.",
     "resume_conditions": "Resume an isolated provider lane only after current authority, two bounded authenticated recovery receipts from distinct trust roots, cost fit and unchanged protected controls.",
-    "handoff_files": ["PROJECT_MEMORY.md", "AI_HANDOFF.md", "FORMATION_SPEC.md", "BUILD_CONTRACT.json"],
-    "stop_switch": "Unset provider mode, revoke runtime secret/identity, or quarantine the exact route; no background executor exists."
+    "handoff_files": [
+      "PROJECT_MEMORY.md",
+      "AI_HANDOFF.md",
+      "FORMATION_SPEC.md",
+      "BUILD_CONTRACT.json",
+      "LESSON_GATE_72H.json"
+    ],
+    "supersession": "The pre-gate PR 548 head is preserved on archive/jarvis-t20-pre-72h-gate-20260817; v1.5 is stacked on the higher v1.4 foundation rather than replacing it with the simplified v1.0 branch.",
+    "stop_switch": "Unset provider mode, revoke runtime secret/identity, quarantine the exact route, or enter T20 release-only/deadline state; no background executor exists."
   },
   "states": {
     "designed": true,
     "implemented": true,
-    "tested": true,
+    "tested": false,
     "registered": false,
     "authorized": true,
     "ready": false,
@@ -124,27 +183,25 @@
   },
   "proof": {
     "test_results": {
-      "unittest": "35/35 PASS in locked installed-package environment",
-      "dependency_lock": "PASS uv.lock sha256:e6bffe5de6984cda923e53d40a55955083274263efaac295de4d216a00cffae2; 54 resolved packages; google-adk 2.1.0, google-genai 1.75.0, cryptography 46.0.0",
-      "installed_sdk_contract": "PASS both ADK workflow nodes execute offline; GenAI Client and GenerateContentConfig surfaces are present; no credential or provider call",
-      "compileall": "PASS",
-      "offline_graph_smoke": "PASS",
-      "math_smoke": "PASS value=10.0",
-      "effectful_cloud_denial": "PASS",
-      "contract_and_doctrine_static": "PASS"
+      "inherited_v1_4": "35/35 PASS in locked installed-package environment at head 9b075fc64393e3b780a863860d59a082fe41ceb0",
+      "candidate_v1_5_same_commit": "PENDING_PROVIDER_AIRLOCK_READBACK",
+      "dependency_lock": "Inherited uv.lock sha256:e6bffe5de6984cda923e53d40a55955083274263efaac295de4d216a00cffae2; google-adk 2.1.0, google-genai 1.75.0, cryptography 46.0.0",
+      "compileall": "PENDING_PROVIDER_AIRLOCK_READBACK",
+      "lesson_gate": "21 recent lessons mapped; pre-gate decision REPAIR_REQUIRED; post-repair decision HOLD"
     },
     "semantic_verification": {
-      "scope": "local deterministic route only",
-      "fruit": "five distinct node events, doctrine-aware typed advisory/deterministic response, effectFruit=false always; semanticFruit=true only for trusted local offline/math routes; external model output is qualified as untrusted advisoryFruit and cannot mint semantic or effect proof; learningPromotion=NOT_PROMOTED",
+      "scope": "local deterministic route and structured T20 evidence only",
+      "fruit": "External model output remains untrusted advisory fruit. T20 completion requires fresh structured proof, independent challenge, semantic readback, route-level state delta and a next automated pathway. effectFruit remains false on the public graph.",
       "external_provider_inheritance": false
     },
-    "unresolved_defects": [],
+    "unresolved_defects": [
+      "The v1.5 candidate has not yet received same-commit provider Airlock readback."
+    ],
     "external_proof_gaps": [
-      "Effectful adapters remain disabled; action-specific provider readback is not yet bound to a production executor.",
+      "Effectful adapters remain disabled; action-specific provider readback is not bound to a production executor.",
       "Permit and recovery private keys must remain in external isolated signers; production public-key rotation and transactional state remain unproven.",
       "The retained local file anchor detects ledger/checkpoint deletion and older-pair replay only while that anchor remains current; total-bundle deletion/replay requires provider-managed immutable/monotonic anchoring.",
-      "Independent v1.4 fixed regression completed 28/28 plus 5/5 end-to-end; focused challenge repaired external-advisory proof and in-process recovery races, while the total-bundle anchor limitation remains an explicit deployment blocker.",
-      "The JARVIS locked-package step inside the allowlisted Federation Airlock must pass at the exact published commit before installed-package proof is promoted beyond local.",
+      "The v1.5 locked-package step inside the allowlisted Federation Airlock must pass at the exact candidate commit.",
       "production Ed25519 permit signing and nonce/effect state require an externally isolated globally transactional authority; local file state is test-only",
       "ledger and breaker require managed durable state before multi-instance execution",
       "Gemini and Workspace have no live runtime identity/readback",
