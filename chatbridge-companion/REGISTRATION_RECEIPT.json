@@ -1,0 +1,30 @@
+{
+  "artifact": "ChatBridge Companion for ChatGPT",
+  "version": "0.2.0",
+  "registered_at": "2026-08-15T03:20:00Z",
+  "github": {
+    "repository": "mosianekk-lang/Federation-Omega",
+    "branch": "chatbridge/no-admin-readiness-v0.2.0-20260815",
+    "commit": "d3eefb200074fac6b04b3678498fb066c1a6727b",
+    "tree": "b0b0c7e6dc2bf8c4d8c5d841d4fc9c5c987de106",
+    "manifest_version_readback": "0.2.0",
+    "readback": "VERIFIED",
+    "predecessor_commit": "4df2ea2394930e9abc53325dd3b8c84a5cc43fbb"
+  },
+  "drive": {
+    "adapter_document_id": "115cayfnwB3bWRDlZ9E_qqoatyZuuOYnBfI49aGYdOx8",
+    "adapter_revision": 5,
+    "registry_document_id": "1xFaDUbO9dfatDp293rrJ-wwmgq_iVztf93lyqC7t5QY",
+    "registry_revision": 2,
+    "readback": "VERIFIED_ACTIVE_LOCAL"
+  },
+  "gmail_backup": {
+    "scope": "OUT_OF_BAND_BACKUP_RECEIPT",
+    "included_in_source_registration": false,
+    "note": "Backup markers bind to archive hashes and are recorded in the continuity capsule, not recursively inside this source receipt."
+  },
+  "tests": "VERIFIED_9_OF_9",
+  "windows_readiness_runtime": "NOT_EXECUTED_ON_TARGET",
+  "deployment": "NOT_DEPLOYED",
+  "live_browser_canary": "UNVERIFIED"
+}
