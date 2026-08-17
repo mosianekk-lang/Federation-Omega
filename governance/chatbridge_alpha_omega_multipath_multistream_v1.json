@@ -1,0 +1,108 @@
+{
+  "schema_version": "1.0",
+  "system": "CHATBRIDGE_OMEGA",
+  "release": "CHATBRIDGE-OMEGA4.9-ALPHA-OMEGA-MULTIPATH-MULTISTREAM",
+  "inherits": [
+    "CHATBRIDGE-OMEGA4.8-FULL-FIDELITY-CONVERSATION-LEDGER",
+    "AO-HARMONIC-V3.2.5-BOUNDED-CORE-CANONICAL"
+  ],
+  "architecture_cycle": [
+    "ALPHA_BIND",
+    "PATH_DISCOVERY",
+    "STREAM_DISCOVERY",
+    "STAGE",
+    "RECONCILE",
+    "CONFLICT_AND_GAP_TEST",
+    "CANONICAL_APPEND",
+    "OMEGA_COMPLETION_WITNESS",
+    "REPLAY",
+    "READBACK"
+  ],
+  "path_register": {
+    "kinds": [
+      "PROVIDER_API",
+      "NATIVE_EXPORT",
+      "RENDERED_DOM",
+      "BROWSER_ARCHIVE",
+      "SHARED_TRANSCRIPT",
+      "CONNECTOR_READBACK",
+      "ATTACHMENT_STORE",
+      "CHECKPOINT_CAPSULE",
+      "MANUAL_PRIMARY_SOURCE",
+      "OTHER"
+    ],
+    "identity": "EXACT_CONVERSATION_KEY_PLUS_PATH_ID",
+    "ranking": "AO_HARMONIC_FORMATION_ENGINE",
+    "failure_rule": "ROUTE_FAILURE_IS_NOT_OBJECTIVE_FAILURE",
+    "failover": "NEXT_RANKED_ELIGIBLE_PATH",
+    "historical_evidence": "PATH_FAILURE_DOES_NOT_ERASE_ALREADY_CAPTURED_PAYLOAD"
+  },
+  "stream_register": {
+    "streams": [
+      "USER",
+      "ASSISTANT",
+      "SYSTEM",
+      "DEVELOPER",
+      "TOOL_CALL",
+      "TOOL_RESULT",
+      "CONNECTOR",
+      "ATTACHMENT",
+      "DECISION",
+      "CORRECTION",
+      "CHECKPOINT",
+      "TERMINAL",
+      "OTHER"
+    ],
+    "ordering": [
+      "GLOBAL_CANONICAL_SEQUENCE",
+      "PER_STREAM_SEQUENCE"
+    ],
+    "exact_gate": "REQUIRED_STREAM_WATERMARKS_COMPLETE"
+  },
+  "reconciliation": {
+    "duplicate": "IDEMPOTENT_OR_CORROBORATED",
+    "same_identity_different_payload": "CRITICAL_CONFLICT_QUARANTINE",
+    "same_identity_different_sequence": "CRITICAL_SEQUENCE_CONFLICT",
+    "out_of_order": "STAGE_UNTIL_PRIOR_SEQUENCE_ARRIVES",
+    "missing": "EXPOSE_GAP_NEVER_SYNTHESIZE",
+    "canonical_event_stability": "PATH_SPECIFIC_METADATA_STAYS_OUTSIDE_FFCL_HASH",
+    "correction": "APPEND_ONLY"
+  },
+  "omega_completion_witness": {
+    "exact_mode": "EXACT_MULTIPATH_MULTISTREAM_RESTORE",
+    "requirements": [
+      "FFCL_EXACT_AND_SEALED",
+      "CANONICAL_EVENT_COUNT_EQUALS_FFCL_EVENT_COUNT",
+      "EXPLICIT_GLOBAL_SEQUENCE_FOR_EVERY_EVENT",
+      "REQUIRED_STREAMS_COMPLETE",
+      "TWO_INDEPENDENT_PATH_GROUPS_PER_EVENT",
+      "NO_OPEN_CRITICAL_CONFLICT",
+      "REQUIRED_ARTIFACTS_AVAILABLE"
+    ],
+    "weaker_exact_mode": "EXACT_SINGLE_PATH_TRANSCRIPT_RESTORE",
+    "bounded_mode": "BOUNDED_MULTIPATH_MULTISTREAM_RESTORE",
+    "conflict_mode": "REJECT_CONFLICTED"
+  },
+  "replay": {
+    "default_token_limit": 3800,
+    "event_order": "CANONICAL_SEQUENCE_ASCENDING",
+    "chunk_integrity": "SHA256_CANONICAL_CHUNK",
+    "oversized_event": "FRAGMENT_WITH_ORIGINAL_CONTENT_HASH_AND_REASSEMBLY_MANIFEST"
+  },
+  "provider_contract": {
+    "native_hidden_chat_access": false,
+    "authorised_adapter_required": true,
+    "browser_installation_claimed": false,
+    "signed_in_session_binding_claimed": false,
+    "provider_live_universal_capture_claimed": false,
+    "provider_effects_require_readback": true
+  },
+  "truth_boundaries": [
+    "COMPLETE_RECORD_DOES_NOT_PROVE_SUBSTANTIVE_TRUTH",
+    "SOURCE_TESTS_DO_NOT_PROVE_PROVIDER_DEPLOYMENT",
+    "UNCAPTURED_LEGACY_CONTENT_CANNOT_BE_INVENTED",
+    "TERMINAL_INTENT_IS_NOT_EXECUTION",
+    "MULTIPATH_CORROBORATION_IS_RECORD_ASSURANCE_NOT_FACTUAL_CORROBORATION",
+    "MODEL_WEIGHT_LEARNING_NOT_CLAIMED"
+  ]
+}
