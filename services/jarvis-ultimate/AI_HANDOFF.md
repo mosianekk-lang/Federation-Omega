@@ -1,6 +1,6 @@
 # AI handoff
 
-Continue from the stacked JARVIS 1.5.0 candidate. The security, semantic-proof, signed-permit and anchored-state foundation is v1.4.0; T20 is an additive execution layer. Do not rebuild the core, replace it with the archived simplified v1.0 branch, weaken an action schema, accept caller booleans as completion proof, or add a new public workflow.
+Continue from the stacked T20 overlay candidate on JARVIS release 1.4.0. The security, semantic-proof, signed-permit and anchored-state foundation is the v1.4 branch; T20 is an additive execution layer. Do not rebuild the core, replace it with the archived simplified v1.0 branch, weaken an action schema, accept caller booleans as completion proof, or add a new public workflow.
 
 Before external work:
 
@@ -21,7 +21,7 @@ Do not turn deadline expiry into success. A completion or speed-improvement clai
 
 The dependency lane is source-complete only when `uv lock --check`, `uv sync --frozen`, the installed-package regression, the full local suite, and the JARVIS step in the allowlisted Federation Airlock all pass for the same commit. The compatible direct set remains `google-adk==2.1.0`, `google-genai==1.75.0`, and `cryptography==46.0.0`.
 
-The next authorized engineering lane after same-commit v1.5 proof is provider identity, not feature expansion: repair and read the machine identity, run a bounded Gemini read canary, then deploy a private zero-traffic Cloud Run candidate. Reject generic HTTP health. Require two stable action-specific semantic results plus exact source→build→digest→revision→traffic lineage. Capture the prior revision and test rollback before promotion.
+The next authorized engineering lane after same-commit T20 proof is provider identity, not feature expansion: repair and read the machine identity, run a bounded Gemini read canary, then deploy a private zero-traffic Cloud Run candidate. Reject generic HTTP health. Require two stable action-specific semantic results plus exact source→build→digest→revision→traffic lineage. Capture the prior revision and test rollback before promotion.
 
 Workspace is a separate authority lane. Use incremental OAuth, exact user identity and minimal scopes. Do not assume ChatGPT Drive/Gmail connectors, Google Cloud IAM, Apps Script sharing, API keys or service-account ownership provide Workspace user-data authority.
 
