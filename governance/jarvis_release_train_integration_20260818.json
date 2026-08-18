@@ -1,0 +1,79 @@
+{
+  "schema": "JARVIS_RELEASE_TRAIN_INTEGRATION_V1",
+  "recordedAt": "2026-08-18T16:06:38+02:00",
+  "timeZone": "Africa/Johannesburg",
+  "purpose": "Disposable non-main integration proof for the four-source JARVIS Ultimate release train; this carrier must never be merged.",
+  "main": {
+    "head": "a4e1651d5ee69050c1501de1d1d67c4e6d8a582b",
+    "changed": false,
+    "protected": false,
+    "providerEnforcedAdmission": false
+  },
+  "components": {
+    "gcpAdminMcp": {
+      "pullRequest": 534,
+      "head": "bec80d87c5bb05e8a6a1a4453c71aef3d1d02ad6",
+      "serviceTree": "c72557e541a1be9c1b5205c79f5a18b9f3caf473",
+      "version": "0.2.2",
+      "role": "INDEPENDENT_ROOT"
+    },
+    "jarvisFoundation": {
+      "pullRequest": 546,
+      "head": "9b075fc64393e3b780a863860d59a082fe41ceb0",
+      "version": "1.4.0",
+      "role": "INDEPENDENT_ROOT"
+    },
+    "t20Overlay": {
+      "pullRequest": 548,
+      "head": "b6d95e15fd1b63fecabb63d00fd3565989fcfaf0",
+      "policy": "T20-AO-OMEGA-SCIENTIST-1.1",
+      "role": "STACKED_ON_546"
+    },
+    "disabledAdapter": {
+      "pullRequest": 549,
+      "head": "72e6fa48bc9f4d33ecbfb3976bfce181c07f85c1",
+      "state": "SOURCE_READY_PROVIDER_DISABLED",
+      "role": "STACKED_ON_548_LOGICALLY_DEPENDS_ON_534"
+    }
+  },
+  "integration": {
+    "baseHead": "72e6fa48bc9f4d33ecbfb3976bfce181c07f85c1",
+    "baseTree": "85f00651da7b424370fe4a5ddd6676574ec102ea",
+    "addedExactMcpServiceTree": "c72557e541a1be9c1b5205c79f5a18b9f3caf473",
+    "expectedBranch": "integration/jarvis-ultimate-release-train-20260818",
+    "expectedPullRequestBase": "main"
+  },
+  "truthBoundary": {
+    "sourceIntegrationOnly": true,
+    "providerExecutionAllowed": false,
+    "credentialDiscoveryAllowed": false,
+    "iamMutationAllowed": false,
+    "cloudDeploymentAllowed": false,
+    "trafficMutationAllowed": false,
+    "promotionAllowed": false,
+    "emailActionsAllowed": false,
+    "chatOrWorkstreamRestoreAllowed": false
+  },
+  "releasePolicy": {
+    "integrationCarrierMergeAllowed": false,
+    "integrationCarrierAutoMergeAllowed": false,
+    "productionClaimAllowed": false,
+    "requiredRealReleaseOrder": [534, 546, 548, 549],
+    "postMergeAdapterRebindRequired": true,
+    "providerEnablePatchMustBeSeparate": true
+  },
+  "verificationPlan": {
+    "mcpReleaseManifestHashReadback": true,
+    "exactToolSurfaceMatch": true,
+    "jarvisAndMcpTruthStateCheck": true,
+    "adapterSourceBindingCheck": true,
+    "rootWorkflowExpansionProhibited": true,
+    "existingAirlockLeakGuardAndBubblesRequired": true
+  },
+  "t20": {
+    "laneStartAt": "2026-08-18T16:06:38+02:00",
+    "ceilingSeconds": 1200,
+    "speedPromotion": "PENDING_EXTERNAL_END_RECEIPT"
+  },
+  "nextBestAutomatedPathway": "Run exact-head integration tests and existing provider-triggered controls, then close the integration PR after preserving its receipt. Do not merge it. Resume the real release train only after GitHub provider-enforced admission and explicit named merge authorization."
+}

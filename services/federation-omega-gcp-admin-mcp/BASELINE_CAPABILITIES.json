@@ -1,0 +1,27 @@
+{
+  "baselineArchiveSha256": "f578516eccb44a21c70358e13d698b3f49e016ccd331cb548ffc308bfddc3fa7",
+  "requiredTools": [
+    "gcp_project_info",
+    "gcp_service_status",
+    "gcp_enable_service",
+    "apps_script_metadata",
+    "apps_script_get_content",
+    "apps_script_backup",
+    "apps_script_dry_run",
+    "apps_script_apply",
+    "apps_script_rollback"
+  ],
+  "requiredControls": [
+    "ALLOWED_PROJECTS",
+    "ALLOWED_SERVICES",
+    "ALLOWED_SCRIPT_IDS",
+    "FEDERATION_APPROVAL_TOKEN",
+    "GOOGLE_IMPERSONATE_SERVICE_ACCOUNT",
+    "AUDIT_GCS_BUCKET",
+    "OPTIMISTIC_LOCK_FAILED",
+    "APPROVAL_TOKEN_INVALID",
+    "apps_script_backup",
+    "apps_script_rollback"
+  ],
+  "policy": "All baseline tools and controls must remain present. New capability is additive only."
+}
