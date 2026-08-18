@@ -41,7 +41,23 @@
     "baseTree": "85f00651da7b424370fe4a5ddd6676574ec102ea",
     "addedExactMcpServiceTree": "c72557e541a1be9c1b5205c79f5a18b9f3caf473",
     "expectedBranch": "integration/jarvis-ultimate-release-train-20260818",
-    "expectedPullRequestBase": "main"
+    "expectedPullRequestBase": "jarvis/gcp-admin-mcp-v022-adapter-disabled"
+  },
+  "normalization": {
+    "normalizedAt": "2026-08-18T16:22:15+02:00",
+    "initialPullRequestBase": "main",
+    "normalizedPullRequestBase": "jarvis/gcp-admin-mcp-v022-adapter-disabled",
+    "initialAirlockRun": 32146734783,
+    "initialAirlockResult": "FAIL_FINAL_DEFAULT_DENY_ADMISSION_ONLY",
+    "passedBeforeFinalAdmission": [
+      "source_provenance",
+      "jarvis_tests",
+      "integration_tests",
+      "repository_regressions",
+      "leak_guard",
+      "bubbles_command_bus"
+    ],
+    "reason": "The initial main-based comparison inherited previously verified stacked JARVIS and Airlock changes. The normalized base reduces the carrier diff to the exact MCP service tree and integration-only proof files without weakening any policy."
   },
   "truthBoundary": {
     "sourceIntegrationOnly": true,
@@ -75,5 +91,5 @@
     "ceilingSeconds": 1200,
     "speedPromotion": "PENDING_EXTERNAL_END_RECEIPT"
   },
-  "nextBestAutomatedPathway": "Run exact-head integration tests and existing provider-triggered controls, then close the integration PR after preserving its receipt. Do not merge it. Resume the real release train only after GitHub provider-enforced admission and explicit named merge authorization."
+  "nextBestAutomatedPathway": "Run exact-head integration tests and existing provider-triggered controls on the normalized diff, then close the integration PR after preserving its receipt. Do not merge it. Resume the real release train only after GitHub provider-enforced admission and explicit named merge authorization."
 }
