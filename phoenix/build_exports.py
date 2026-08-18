@@ -9,6 +9,7 @@ import gzip
 import hashlib
 import json
 import os
+import re
 import shutil
 import subprocess
 import tarfile
@@ -36,13 +37,28 @@ def sha256_file(path: Path) -> str:
 
 
 def source_sha(root: Path) -> str:
-    value = os.getenv("GITHUB_SHA", "").strip()
-    if value:
-        return value
+    """Return the exact checked-out source SHA, with a validated CI fallback.
+
+    GitHub's event SHA can be a synthetic pull-request merge ref even when the
+    workflow deliberately checks out the admitted candidate head. The files
+    actually exported are therefore identified by ``git rev-parse HEAD`` first.
+    ``GITHUB_SHA`` is used only when no Git checkout is available.
+    """
+
     process = subprocess.run(
-        ["git", "rev-parse", "HEAD"], cwd=root, text=True, capture_output=True
+        ["git", "rev-parse", "--verify", "HEAD"],
+        cwd=root,
+        text=True,
+        capture_output=True,
     )
-    return process.stdout.strip() if process.returncode == 0 else "UNRESOLVED"
+    checkout = process.stdout.strip().lower()
+    if process.returncode == 0 and re.fullmatch(r"[0-9a-f]{40}", checkout):
+        return checkout
+
+    event_sha = os.getenv("GITHUB_SHA", "").strip().lower()
+    if re.fullmatch(r"[0-9a-f]{40}", event_sha):
+        return event_sha
+    return "UNRESOLVED"
 
 
 def matches_prefix(path: str, prefixes: list[str]) -> bool:
@@ -141,7 +157,9 @@ def deterministic_tar(source_dir: Path, output: Path) -> None:
 
 def write_json(path: Path, payload: dict) -> None:
     path.parent.mkdir(parents=True, exist_ok=True)
-    path.write_text(json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+    path.write_text(
+        json.dumps(payload, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
 
 
 def stage_core(
@@ -251,7 +269,8 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
         )
         if migration_control_test_count:
             raise RuntimeError(
-                f"Core export contains {migration_control_test_count} migration-control tests"
+                f"Core export contains {migration_control_test_count} "
+                "migration-control tests"
             )
 
         common = {
@@ -316,7 +335,9 @@ def build(root: Path, output: Path, policy_path: Path) -> dict:
             },
             "source_mutation_attempted": False,
         }
-        canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+        canonical = json.dumps(
+            receipt, sort_keys=True, separators=(",", ":")
+        ).encode()
         receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
         write_json(output / "phoenix-export-receipt.json", receipt)
         return receipt

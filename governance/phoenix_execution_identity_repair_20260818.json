@@ -1,0 +1,66 @@
+{
+  "createdAt": "2026-08-18T16:55:21+02:00",
+  "discrepancies": [
+    {
+      "id": "EXECUTION_IDENTITY_001",
+      "observed": "The pull-request workflow resolved provenance against the candidate head while actions/checkout used the GitHub-generated merge ref by default.",
+      "repair": "Check out the exact admitted head and fail closed unless git HEAD equals the resolved admission head.",
+      "risk": "Tests and receipts could describe different source identities."
+    },
+    {
+      "id": "PHOENIX_SOURCE_IDENTITY_002",
+      "observed": "Phoenix source_sha preferred GITHUB_SHA over the checked-out Git HEAD.",
+      "repair": "Use validated git HEAD first; accept validated GITHUB_SHA only when no Git checkout exists.",
+      "risk": "A head-built archive could be labelled with the synthetic pull-request merge-ref SHA."
+    },
+    {
+      "id": "CORE_PROJECTION_003",
+      "observed": "The integration suite expected service-local deployment workflows and RELEASE_MANIFEST.sha256 inside the standalone Phoenix Core export.",
+      "repair": "Keep full manifest verification in source mode and verify explicit exclusion reasons in Core-export mode.",
+      "risk": "A source-repository invariant contradicted the deliberate zero-workflow Core projection."
+    }
+  ],
+  "proofContract": {
+    "executionReceipt": "airlock-output/execution-identity-report.json",
+    "phoenixExecutionPromotion": "ONLY_AFTER_DEDICATED_TEST_SUITE_EXIT_0",
+    "receiptHash": "SHA256_CANONICAL_JSON",
+    "requiredBindings": [
+      "base_sha",
+      "admitted_head_sha",
+      "event_sha_and_role",
+      "checkout_sha",
+      "checkout_tree_sha",
+      "workflow_git_blob_and_sha256",
+      "phoenix_exporter_git_blob_and_sha256"
+    ]
+  },
+  "releasePolicy": {
+    "integrationCarrierMergeAllowed": false,
+    "providerActivationChanged": false,
+    "realReleasePullRequestsChanged": false
+  },
+  "schema": "PHOENIX_EXECUTION_IDENTITY_REPAIR_V1",
+  "scope": {
+    "disposableCarrierPr": 550,
+    "observedGeneratedMergeRef": "ffe980adc76083adc5e66ad656458e920557ff7a",
+    "predecessorHead": "1033eabba2c1de0b823d26dc6223a62ca214fe4e",
+    "realReleasePullRequests": [
+      534,
+      546,
+      548,
+      549
+    ],
+    "repository": "mosianekk-lang/Federation-Omega"
+  },
+  "truthBoundary": {
+    "chatOrWorkstreamRestore": false,
+    "cloudDeployment": false,
+    "credentialDiscovery": false,
+    "emailActions": false,
+    "iamMutation": false,
+    "mainMutation": false,
+    "mergeAuthorization": false,
+    "providerExecution": false,
+    "trafficMutation": false
+  }
+}

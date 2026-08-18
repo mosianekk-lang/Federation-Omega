@@ -10,6 +10,7 @@ MCP = ROOT / "services" / "federation-omega-gcp-admin-mcp"
 JARVIS = ROOT / "services" / "jarvis-ultimate"
 MANIFEST_PATH = ROOT / "governance" / "jarvis_release_train_integration_20260818.json"
 ADAPTER_PATH = JARVIS / "jarvis" / "resources" / "gcp_admin_mcp_adapter_v1.json"
+CORE_MANIFEST_PATH = ROOT / "PHOENIX_CORE_MANIFEST.json"
 
 
 def read_json(path: Path):
@@ -23,25 +24,77 @@ class JarvisReleaseTrainIntegrationTests(unittest.TestCase):
         cls.adapter = read_json(ADAPTER_PATH)
         cls.mcp_contract = read_json(MCP / "BUILD_CONTRACT.json")
         cls.jarvis_contract = read_json(JARVIS / "BUILD_CONTRACT.json")
+        cls.core_manifest = (
+            read_json(CORE_MANIFEST_PATH) if CORE_MANIFEST_PATH.is_file() else None
+        )
+        cls.core_exclusions = (
+            {
+                item["path"]: item["reason"]
+                for item in cls.core_manifest.get("excluded", [])
+            }
+            if cls.core_manifest
+            else {}
+        )
 
     def test_integration_manifest_is_non_mergeable_by_policy(self):
-        self.assertEqual(self.manifest["schema"], "JARVIS_RELEASE_TRAIN_INTEGRATION_V1")
-        self.assertFalse(self.manifest["releasePolicy"]["integrationCarrierMergeAllowed"])
-        self.assertFalse(self.manifest["releasePolicy"]["integrationCarrierAutoMergeAllowed"])
+        self.assertEqual(
+            self.manifest["schema"], "JARVIS_RELEASE_TRAIN_INTEGRATION_V1"
+        )
+        self.assertFalse(
+            self.manifest["releasePolicy"]["integrationCarrierMergeAllowed"]
+        )
+        self.assertFalse(
+            self.manifest["releasePolicy"]["integrationCarrierAutoMergeAllowed"]
+        )
         self.assertFalse(self.manifest["releasePolicy"]["productionClaimAllowed"])
-        self.assertEqual(self.manifest["releasePolicy"]["requiredRealReleaseOrder"], [534, 546, 548, 549])
-        self.assertTrue(self.manifest["releasePolicy"]["postMergeAdapterRebindRequired"])
+        self.assertEqual(
+            self.manifest["releasePolicy"]["requiredRealReleaseOrder"],
+            [534, 546, 548, 549],
+        )
+        self.assertTrue(
+            self.manifest["releasePolicy"]["postMergeAdapterRebindRequired"]
+        )
 
     def test_exact_component_identities_are_bound(self):
         components = self.manifest["components"]
-        self.assertEqual(components["gcpAdminMcp"]["head"], "bec80d87c5bb05e8a6a1a4453c71aef3d1d02ad6")
-        self.assertEqual(components["gcpAdminMcp"]["serviceTree"], "c72557e541a1be9c1b5205c79f5a18b9f3caf473")
-        self.assertEqual(components["jarvisFoundation"]["head"], "9b075fc64393e3b780a863860d59a082fe41ceb0")
-        self.assertEqual(components["t20Overlay"]["head"], "b6d95e15fd1b63fecabb63d00fd3565989fcfaf0")
-        self.assertEqual(components["disabledAdapter"]["head"], "72e6fa48bc9f4d33ecbfb3976bfce181c07f85c1")
+        self.assertEqual(
+            components["gcpAdminMcp"]["head"],
+            "bec80d87c5bb05e8a6a1a4453c71aef3d1d02ad6",
+        )
+        self.assertEqual(
+            components["gcpAdminMcp"]["serviceTree"],
+            "c72557e541a1be9c1b5205c79f5a18b9f3caf473",
+        )
+        self.assertEqual(
+            components["jarvisFoundation"]["head"],
+            "9b075fc64393e3b780a863860d59a082fe41ceb0",
+        )
+        self.assertEqual(
+            components["t20Overlay"]["head"],
+            "b6d95e15fd1b63fecabb63d00fd3565989fcfaf0",
+        )
+        self.assertEqual(
+            components["disabledAdapter"]["head"],
+            "72e6fa48bc9f4d33ecbfb3976bfce181c07f85c1",
+        )
 
     def test_mcp_release_manifest_matches_every_listed_file(self):
-        lines = (MCP / "RELEASE_MANIFEST.sha256").read_text(encoding="utf-8").splitlines()
+        release_manifest = MCP / "RELEASE_MANIFEST.sha256"
+        release_manifest_path = (
+            "services/federation-omega-gcp-admin-mcp/RELEASE_MANIFEST.sha256"
+        )
+        if self.core_manifest:
+            self.assertFalse(release_manifest.exists())
+            self.assertEqual(
+                "UNAPPROVED_EXTENSION",
+                self.core_exclusions.get(release_manifest_path),
+            )
+            self.assertEqual(
+                0, self.core_manifest["invariants"]["workflow_count"]
+            )
+            return
+
+        lines = release_manifest.read_text(encoding="utf-8").splitlines()
         checked = 0
         for line in lines:
             if not line.strip():
@@ -68,29 +121,89 @@ class JarvisReleaseTrainIntegrationTests(unittest.TestCase):
 
     def test_adapter_binds_exact_sources_and_remains_disabled(self):
         bindings = self.adapter["sourceBindings"]
-        self.assertEqual(bindings["mcpHead"], self.manifest["components"]["gcpAdminMcp"]["head"])
-        self.assertEqual(bindings["mcpServiceTree"], self.manifest["components"]["gcpAdminMcp"]["serviceTree"])
-        self.assertEqual(bindings["jarvisBaseHead"], self.manifest["components"]["t20Overlay"]["head"])
-        self.assertEqual(self.adapter["adapterState"], "SOURCE_READY_PROVIDER_DISABLED")
+        self.assertEqual(
+            bindings["mcpHead"],
+            self.manifest["components"]["gcpAdminMcp"]["head"],
+        )
+        self.assertEqual(
+            bindings["mcpServiceTree"],
+            self.manifest["components"]["gcpAdminMcp"]["serviceTree"],
+        )
+        self.assertEqual(
+            bindings["jarvisBaseHead"],
+            self.manifest["components"]["t20Overlay"]["head"],
+        )
+        self.assertEqual(
+            self.adapter["adapterState"], "SOURCE_READY_PROVIDER_DISABLED"
+        )
         for lane in self.adapter["authorityLanes"].values():
             self.assertFalse(lane["enabled"])
-        self.assertFalse(self.manifest["truthBoundary"]["providerExecutionAllowed"])
+        self.assertFalse(
+            self.manifest["truthBoundary"]["providerExecutionAllowed"]
+        )
 
     def test_source_contracts_do_not_claim_deployment_or_production_proof(self):
-        self.assertEqual(self.mcp_contract["mission"]["maturity"], "PROD_FOUNDATION")
+        self.assertEqual(
+            self.mcp_contract["mission"]["maturity"], "PROD_FOUNDATION"
+        )
         self.assertFalse(self.mcp_contract["states"]["deployed"])
         self.assertFalse(self.mcp_contract["states"]["proven"])
         self.assertEqual(self.jarvis_contract["release_version"], "1.4.0")
-        self.assertEqual(self.jarvis_contract["overlay_version"], "T20-AO-OMEGA-SCIENTIST-1.1")
+        self.assertEqual(
+            self.jarvis_contract["overlay_version"],
+            "T20-AO-OMEGA-SCIENTIST-1.1",
+        )
         self.assertFalse(self.jarvis_contract["states"]["ready"])
         self.assertFalse(self.jarvis_contract["states"]["deployed"])
         self.assertFalse(self.jarvis_contract["states"]["proven"])
 
     def test_nested_service_workflows_do_not_expand_root_actions_surface(self):
-        self.assertTrue((MCP / ".github" / "workflows" / "release-gcp-admin-mcp-v022.yml").is_file())
-        self.assertTrue((MCP / ".github" / "workflows" / "verify-gcp-admin-mcp-v022.yml").is_file())
-        self.assertFalse((ROOT / ".github" / "workflows" / "release-gcp-admin-mcp-v022.yml").exists())
-        self.assertFalse((ROOT / ".github" / "workflows" / "verify-gcp-admin-mcp-v022.yml").exists())
+        release = (
+            MCP / ".github" / "workflows" / "release-gcp-admin-mcp-v022.yml"
+        )
+        verify = (
+            MCP / ".github" / "workflows" / "verify-gcp-admin-mcp-v022.yml"
+        )
+        release_path = (
+            "services/federation-omega-gcp-admin-mcp/.github/workflows/"
+            "release-gcp-admin-mcp-v022.yml"
+        )
+        verify_path = (
+            "services/federation-omega-gcp-admin-mcp/.github/workflows/"
+            "verify-gcp-admin-mcp-v022.yml"
+        )
+
+        if self.core_manifest:
+            self.assertFalse(release.exists())
+            self.assertFalse(verify.exists())
+            self.assertEqual(
+                "GITHUB_WORKFLOW_NOT_CORE_SOURCE",
+                self.core_exclusions.get(release_path),
+            )
+            self.assertEqual(
+                "GITHUB_WORKFLOW_NOT_CORE_SOURCE",
+                self.core_exclusions.get(verify_path),
+            )
+        else:
+            self.assertTrue(release.is_file())
+            self.assertTrue(verify.is_file())
+
+        self.assertFalse(
+            (
+                ROOT
+                / ".github"
+                / "workflows"
+                / "release-gcp-admin-mcp-v022.yml"
+            ).exists()
+        )
+        self.assertFalse(
+            (
+                ROOT
+                / ".github"
+                / "workflows"
+                / "verify-gcp-admin-mcp-v022.yml"
+            ).exists()
+        )
 
     def test_no_external_effect_is_authorized_by_integration_carrier(self):
         boundary = self.manifest["truthBoundary"]

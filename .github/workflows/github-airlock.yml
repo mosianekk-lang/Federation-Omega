@@ -22,6 +22,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.event.merge_group.head_sha || github.sha }}
           fetch-depth: 0
           persist-credentials: false
 
@@ -30,6 +31,7 @@ jobs:
         env:
           GH_TOKEN: ${{ github.token }}
           EVENT_NAME: ${{ github.event_name }}
+          EVENT_SHA: ${{ github.sha }}
           PR_BASE: ${{ github.event.pull_request.base.sha }}
           PR_HEAD: ${{ github.event.pull_request.head.sha }}
           MERGE_BASE: ${{ github.event.merge_group.base_sha }}
@@ -58,6 +60,7 @@ jobs:
           esac
           echo "base=$base" >> "$GITHUB_OUTPUT"
           echo "head=$head" >> "$GITHUB_OUTPUT"
+          echo "event_sha=$EVENT_SHA" >> "$GITHUB_OUTPUT"
           echo "associated_pr_count=$pr_count" >> "$GITHUB_OUTPUT"
 
       - name: Enforce pull-request head ancestry
@@ -74,6 +77,29 @@ jobs:
             exit 1
           fi
           echo "HEAD_ANCESTRY_VERIFIED: $BASE_SHA is an ancestor of $HEAD_SHA"
+
+      - name: Bind execution identity to admitted head
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BASE_SHA: ${{ steps.refs.outputs.base }}
+          HEAD_SHA: ${{ steps.refs.outputs.head }}
+          EVENT_SHA: ${{ steps.refs.outputs.event_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p airlock-output
+          python3 tools/airlock_execution_identity.py bind \
+            --repo-root . \
+            --repository "$GITHUB_REPOSITORY" \
+            --event "$EVENT_NAME" \
+            --base "$BASE_SHA" \
+            --head "$HEAD_SHA" \
+            --event-sha "$EVENT_SHA" \
+            --workflow .github/workflows/github-airlock.yml \
+            --exporter phoenix/build_exports.py \
+            --run-id "$GITHUB_RUN_ID" \
+            --run-attempt "$GITHUB_RUN_ATTEMPT" \
+            --report airlock-output/execution-identity-report.json
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
@@ -95,7 +121,7 @@ jobs:
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
 
-      - name: Run stale-base ancestry regression tests
+      - name: Run stale-base ancestry and execution-identity regression tests
         run: python -m unittest discover -s tests -p 'test_airlock_stale_base_guard.py' -v
 
       - name: Run source provenance regression tests
@@ -110,8 +136,18 @@ jobs:
       - name: Run provider cutover v3 regression tests
         run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3*.py' -v
 
+      - name: Run Phoenix source identity regression tests
+        run: python -m unittest discover -s tests -p 'test_phoenix_source_identity.py' -v
+
       - name: Run Phoenix export purity regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
+          python tools/airlock_execution_identity.py mark-phoenix-verified \
+            --report airlock-output/execution-identity-report.json \
+            --test-suite tests/test_phoenix_exports.py \
+            --test-command "python -m unittest discover -s tests -p test_phoenix_exports.py -v"
 
       - name: Run OpenAI rotation semantic proof regression tests
         run: python -m unittest discover -s tests -p 'test_openai_rotation_contract.py' -v
@@ -139,6 +175,11 @@ jobs:
 
       - name: Run Federation evolution program regression tests
         run: python -m unittest discover -s tests -p 'test_federation_evolution_program.py' -v
+
+      - name: Verify final execution identity receipt
+        run: |
+          python tools/airlock_execution_identity.py verify \
+            --report airlock-output/execution-identity-report.json
 
       - name: Build source provenance receipt
         env:
@@ -210,8 +251,14 @@ jobs:
             cat airlock-output/source-provenance-report.json >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
+          if [[ -f airlock-output/execution-identity-report.json ]]; then
+            echo '## Airlock Execution Identity' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat airlock-output/execution-identity-report.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
 
-      - name: Upload immutable Airlock and provenance reports
+      - name: Upload immutable Airlock, provenance and execution-identity reports
         if: always() && hashFiles('airlock-output/*.json') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -219,5 +266,6 @@ jobs:
           path: |
             airlock-output/github-airlock-report.json
             airlock-output/source-provenance-report.json
+            airlock-output/execution-identity-report.json
           if-no-files-found: error
           retention-days: 90
