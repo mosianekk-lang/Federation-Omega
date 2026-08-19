@@ -1,0 +1,35 @@
+{
+  "schema": "SOVARA-RELEASE-IDENTITY-REGISTRY-2",
+  "version": "2.0.0",
+  "truth_boundary": "Public-safe release identity metadata only; no private provider pointers, credentials, secrets or evidence.",
+  "restore_rule": "Resolve by release_key + role + immutable_sha256 + lineage. Never resolve by semver alone.",
+  "releases": [
+    {
+      "release_key": "A5-RR",
+      "semver": "2.0.0-alpha.5",
+      "role": "ROLLBACK_PREDECESSOR",
+      "sha256": "964a05d89403fd617eef8a746e05e8b86252232b22363b4c486fad2f8c38b113",
+      "state": "PRESERVED",
+      "controlling": false
+    },
+    {
+      "release_key": "A6-ADR",
+      "semver": "2.0.0-alpha.6",
+      "role": "ADAPTIVE_DEPLOYMENT_REINFORCEMENT_PRE_CONSOLIDATION",
+      "sha256": "872227b06417d693b373870d2cac98021357b26b814fb3e581dd140884e1c59c",
+      "state": "PRESERVED_HISTORICAL",
+      "controlling": false,
+      "parent": "A5-RR"
+    },
+    {
+      "release_key": "A6-CFR",
+      "semver": "2.0.0-alpha.6",
+      "role": "CONSTITUTIONAL_FEDERATION_RUNTIME",
+      "sha256": "d8958b5f09a5cd4113274deb95d922da806c99fb2cbc5b23af81eb3439224ca4",
+      "slim_runtime_sha256": "3d806d023a0243d80bf9d2ff48d754d28613cc33eaac8c460d304fb351e5c27d",
+      "state": "CONTROLLING_RUNTIME_CANDIDATE",
+      "controlling": true,
+      "lineage_note": "Constitutional consolidation preserves prior capabilities while superseding A6-ADR as the controlling release identity."
+    }
+  ]
+}

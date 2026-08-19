@@ -1,0 +1,26 @@
+{
+  "schema": "SOVARA-SURFACE-AUTHORITY-MATRIX-2-PUBLIC",
+  "fields": [
+    "surface_id",
+    "provider_family",
+    "surface",
+    "exact_operations",
+    "privacy_ceiling",
+    "effect_class",
+    "current_state",
+    "authority_state",
+    "truth_role",
+    "last_proof",
+    "proof_ttl",
+    "fallback",
+    "primary_risk",
+    "next_canary"
+  ],
+  "rules": [
+    "Current provider readback outranks historical inventory labels.",
+    "Provider identity, authority, quota and credentials do not inherit across project/provider boundaries.",
+    "Consequential effects require action-specific authority and semantic readback.",
+    "Presentation, experiment and interface surfaces are non-canonical.",
+    "Public GitHub must never receive private evidence, secrets, credentials or owner-private recovery pointers."
+  ]
+}
