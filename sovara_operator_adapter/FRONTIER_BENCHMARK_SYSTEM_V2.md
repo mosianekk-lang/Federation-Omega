@@ -76,6 +76,16 @@ These are bounded architecture assessments from the recorded propositions. Vendo
 - A gap experiment must pass matched workload, failure-first, independent semantic proof, rollback/compensation, owner-authority and critical non-regression gates.
 - `AHEAD_PROVEN` is unavailable unless every current matched proof gate passes; absolute or perpetual superiority is prohibited.
 
+## Engineering Value Density
+
+Repository, test, artifact and control-plane growth are activity signals, not proof of engineering value. Material CFBE growth is therefore evaluated using the provider-neutral `engineering_value_density.py` guardrail and a multidimensional vector: source footprint, canonical unique behavior tests, control efficiency, independently proven execution-surface classes, proof freshness, regressions, material cost and verified compensating value.
+
+The literal CFBE code birth state is commit `1514218b826a06ba5a5d237100285e283a236a11` with one 157-line file. Density trend begins at first-runnable commit `2df7c479e50c7a86b76c6f316548f9eacbb6346a` with 257 additions and five canonical tests. Current head `9e5efc9a2875cd7fc8e390affc6bce599c4f921d` has 3,158 additions, 19 changed CFBE-related files and 62 canonical unique behavior tests: 19.6327 tests/KLOC, about 0.912% above the first-runnable density.
+
+The metric is deliberately non-gameable: it cannot authorize pruning, retirement, maturity inheritance or provider claims. Critical regression, stale proof and unknown material cost hold promotion. Architecture expansion is held only after two comparable uncompensated value-dilution checkpoints; verified runtime, quality, outcome, reliability, cost or owner-burden gains may legitimately compensate for lower raw source-test density.
+
+Current provider CI: Federation Omega Airlock run `32586412751`, job `97063346131`, completed the provider-cutover-v3 surface at 644/644 PASS and explicitly ran the EVD guardrails. Bubbles Command Bus run `32586412677` and Public Repository Leak Guard run `32586412709` also passed. Existing Google Sheets bounded failover remains the independently evidenced second execution-surface class. This does not remove the `BOUNDED_CANARY` qualifier from CFBE sovereignty maturity.
+
 ## Local commands
 
 ```bash
