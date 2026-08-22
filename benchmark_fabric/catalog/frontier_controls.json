@@ -1,0 +1,483 @@
+{
+  "schema": "FEDOMEGA-FRONTIER-CONTROLS-1",
+  "version": "1.0.0",
+  "frontierDefinition": "A control-by-control envelope formed from the strongest relevant public Microsoft, Alphabet/Google, SoftBank and standards-owner practices. It is not a vendor ranking and does not infer non-public internal capabilities.",
+  "maturityScale": {
+    "0": "ABSENT",
+    "1": "DESIGNED",
+    "2": "SOURCE_IMPLEMENTED",
+    "3": "TESTED",
+    "4": "PROVIDER_BOUND",
+    "5": "PRODUCTION_PROVEN"
+  },
+  "controls": [
+    {
+      "id": "AO-01",
+      "domain": "Agent orchestration",
+      "title": "Role-specialist multi-agent planning and handoffs",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-FOUNDRY", "GOOGLE-AGENT-PLATFORM", "SOFTBANK-MULTI-AGENT", "SOFTBANK-AITRAS"],
+      "rationale": "Frontier systems coordinate bounded specialists through explicit handoffs and terminal states."
+    },
+    {
+      "id": "AO-02",
+      "domain": "Agent orchestration",
+      "title": "Managed runtime, sessions and durable memory",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-AGENTS", "GOOGLE-AGENT-PLATFORM", "SOFTBANK-MULTI-AGENT"],
+      "rationale": "Long-running agent work needs managed execution, session identity and recoverable state."
+    },
+    {
+      "id": "AO-03",
+      "domain": "Agent orchestration",
+      "title": "Governed tool registry and effect boundaries",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-AGENTS", "GOOGLE-AGENT-PLATFORM", "GOOGLE-SAIF-AGENTS", "SOFTBANK-CRISTAL"],
+      "rationale": "Every agent tool needs explicit identity, permissions, schemas and effect classification."
+    },
+    {
+      "id": "AO-04",
+      "domain": "Agent orchestration",
+      "title": "Model and provider portability with controlled fallback",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-FOUNDRY", "MS-AGENTS"],
+      "rationale": "A frontier control plane can change models without weakening policy, evidence or safety gates."
+    },
+    {
+      "id": "KC-01",
+      "domain": "Knowledge and context",
+      "title": "Persistent memory with scoped retrieval",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-AGENT-PLATFORM", "MS-FOUNDRY", "SOFTBANK-MULTI-AGENT"],
+      "rationale": "Memory must persist, remain scoped to its subject and be independently recoverable."
+    },
+    {
+      "id": "KC-02",
+      "domain": "Knowledge and context",
+      "title": "Enterprise knowledge grounding and connector governance",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-FOUNDRY", "SOFTBANK-CRISTAL", "SOFTBANK-SARASHINA"],
+      "rationale": "Grounding needs source identity, access enforcement, traceability and freshness."
+    },
+    {
+      "id": "KC-03",
+      "domain": "Knowledge and context",
+      "title": "Versioned provenance and citation lineage",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["NIST-AI-RMF", "NIST-SSDF-AI", "SLSA-SOURCE"],
+      "rationale": "Outputs must resolve to exact source versions and preserve the path from evidence to claim."
+    },
+    {
+      "id": "KC-04",
+      "domain": "Knowledge and context",
+      "title": "Cross-session checkpoint, replay and restoration",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-AGENT-PLATFORM", "SOFTBANK-MULTI-AGENT", "GOOGLE-SRE-ERROR-BUDGET"],
+      "rationale": "Long workstreams need deterministic checkpoint restoration, not conversational memory claims."
+    },
+    {
+      "id": "SI-01",
+      "domain": "Security and identity",
+      "title": "Least privilege, workload identity and explicit authorization",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-AGENTS", "GOOGLE-AGENT-PLATFORM", "MS-SDL", "NIST-SSDF"],
+      "rationale": "Every runtime and effect route must have a bounded identity and deny by default."
+    },
+    {
+      "id": "SI-02",
+      "domain": "Security and identity",
+      "title": "Per-agent and per-tool identity with delegated scopes",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-AGENTS", "GOOGLE-AGENT-PLATFORM", "GOOGLE-SAIF-AGENTS", "GOOGLE-SAIF-CONTROLS"],
+      "rationale": "Shared ambient credentials prevent attribution and safe least-privilege delegation."
+    },
+    {
+      "id": "SI-03",
+      "domain": "Security and identity",
+      "title": "Private networking, isolation and data perimeter",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-AGENTS", "GOOGLE-AGENT-PLATFORM", "GOOGLE-SAIF-CONTROLS", "SOFTBANK-SARASHINA"],
+      "rationale": "Production agent systems require private connectivity and controlled data movement."
+    },
+    {
+      "id": "SI-04",
+      "domain": "Security and identity",
+      "title": "Prompt-injection, data-exfiltration and unsafe-tool defenses",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-SAIF-AGENTS", "GOOGLE-SAIF-CONTROLS", "MS-SDL", "NIST-SSDF"],
+      "rationale": "Agent-specific threats need layered input, tool, data and output controls plus adversarial proof."
+    },
+    {
+      "id": "AR-01",
+      "domain": "AI risk and safety",
+      "title": "Govern, map, measure and manage AI risk",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["NIST-AI-RMF", "GOOGLE-SAIF-CONTROLS", "GOOGLE-AI-ML", "SOFTBANK-SARASHINA"],
+      "rationale": "AI risk must be a continuous operating process rather than a one-time checklist."
+    },
+    {
+      "id": "AR-02",
+      "domain": "AI risk and safety",
+      "title": "Threat modeling and misuse-case analysis",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-SDL", "GOOGLE-SAIF-AGENTS", "NIST-AI-RMF", "NIST-SSDF-AI"],
+      "rationale": "Threats and misuse cases must be modeled before deployment and revisited after material change."
+    },
+    {
+      "id": "AR-03",
+      "domain": "AI risk and safety",
+      "title": "Evaluation, red-team and adversarial quality gates",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-OBSERVABILITY", "GOOGLE-AGENT-PLATFORM", "NIST-AI-RMF", "NIST-SSDF-AI"],
+      "rationale": "Functional tests alone cannot prove model quality, robustness or safe tool use."
+    },
+    {
+      "id": "AR-04",
+      "domain": "AI risk and safety",
+      "title": "Human oversight, override and escalation",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["NIST-AI-RMF", "GOOGLE-SAIF-AGENTS", "GOOGLE-SAIF-CONTROLS"],
+      "rationale": "High-impact actions need visible ownership, reversible control and fail-closed escalation."
+    },
+    {
+      "id": "OE-01",
+      "domain": "Observability and evaluation",
+      "title": "End-to-end distributed tracing and lineage",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-OBSERVABILITY", "GOOGLE-AGENT-PLATFORM", "MS-FOUNDRY"],
+      "rationale": "Agent, model, tool and connector spans must be correlated across a complete request."
+    },
+    {
+      "id": "OE-02",
+      "domain": "Observability and evaluation",
+      "title": "Continuous quality, safety and groundedness evaluation",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-OBSERVABILITY", "GOOGLE-AGENT-PLATFORM", "GOOGLE-AI-ML", "NIST-AI-RMF"],
+      "rationale": "Quality regressions need automated datasets, evaluators, thresholds and release gates."
+    },
+    {
+      "id": "OE-03",
+      "domain": "Observability and evaluation",
+      "title": "Runtime latency, error, saturation and availability metrics",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-OBSERVABILITY", "GOOGLE-AGENT-PLATFORM", "SOFTBANK-AITRAS"],
+      "rationale": "Operational health requires measurable service indicators, not test completion."
+    },
+    {
+      "id": "OE-04",
+      "domain": "Observability and evaluation",
+      "title": "Token, model, tool and unit-cost telemetry",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-OBSERVABILITY", "MS-WAF", "GOOGLE-WAF"],
+      "rationale": "Cost and capacity decisions require per-workflow resource attribution."
+    },
+    {
+      "id": "RS-01",
+      "domain": "Reliability and SRE",
+      "title": "Service-level objectives and error budgets",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-SRE-ERROR-BUDGET", "MS-WAF", "GOOGLE-WAF", "MS-OBSERVABILITY"],
+      "rationale": "Reliability targets must govern release velocity and recovery work."
+    },
+    {
+      "id": "RS-02",
+      "domain": "Reliability and SRE",
+      "title": "Fault isolation, backpressure and circuit breaking",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-WAF", "GOOGLE-WAF", "SOFTBANK-AITRAS"],
+      "rationale": "A failed model, connector or agent must not cascade across the system."
+    },
+    {
+      "id": "RS-03",
+      "domain": "Reliability and SRE",
+      "title": "Backup, disaster recovery and proven restoration",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-WAF", "GOOGLE-WAF", "GOOGLE-SRE-ERROR-BUDGET"],
+      "rationale": "Backups count only when exact state can be restored within declared objectives."
+    },
+    {
+      "id": "RS-04",
+      "domain": "Reliability and SRE",
+      "title": "Incident response, postmortems and release freeze policy",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-SRE-ERROR-BUDGET", "MS-WAF", "GOOGLE-WAF"],
+      "rationale": "Operational learning needs terminal incident records, owners and verified corrective action."
+    },
+    {
+      "id": "PE-01",
+      "domain": "Platform engineering",
+      "title": "Golden paths and repeatable environment templates",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-PLATFORM", "MS-LANDING-ZONE", "SOFTBANK-AITRAS"],
+      "rationale": "Standardized paved roads reduce drift while preserving explicit exceptions."
+    },
+    {
+      "id": "PE-02",
+      "domain": "Platform engineering",
+      "title": "Self-service provisioning with guardrails",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-PLATFORM", "MS-LANDING-ZONE", "SOFTBANK-CRISTAL"],
+      "rationale": "Teams should obtain compliant environments without bypassing central security."
+    },
+    {
+      "id": "PE-03",
+      "domain": "Platform engineering",
+      "title": "Platform policy, tenancy and lifecycle governance",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-PLATFORM", "MS-LANDING-ZONE", "GOOGLE-WAF"],
+      "rationale": "Platform ownership must cover tenancy, upgrades, deprecation and exception handling."
+    },
+    {
+      "id": "PE-04",
+      "domain": "Platform engineering",
+      "title": "Adoption, developer experience and feedback measurement",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-PLATFORM", "DORA", "SOFTBANK-SB-OAI-JAPAN"],
+      "rationale": "A platform succeeds only when internal users adopt it and feedback changes priorities."
+    },
+    {
+      "id": "SD-01",
+      "domain": "Software delivery",
+      "title": "Protected source changes and independent review",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GITHUB-ACTIONS-SECURITY", "NIST-SSDF", "SLSA-SOURCE"],
+      "rationale": "Every production source change needs traceable review and protected history."
+    },
+    {
+      "id": "SD-02",
+      "domain": "Software delivery",
+      "title": "Automated tests, evaluation gates and exact-head CI",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-OBSERVABILITY", "GITHUB-ACTIONS-SECURITY", "NIST-SSDF"],
+      "rationale": "Release evidence must bind to the exact candidate source identity."
+    },
+    {
+      "id": "SD-03",
+      "domain": "Software delivery",
+      "title": "DORA delivery and stability performance measurement",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["DORA", "MS-PLATFORM"],
+      "rationale": "Deployment frequency, lead time, failure rate and recovery need trendable measurement."
+    },
+    {
+      "id": "SD-04",
+      "domain": "Software delivery",
+      "title": "Environment promotion, canary and rollback policy",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-LANDING-ZONE", "GOOGLE-SUPPLY-CHAIN", "GOOGLE-SRE-ERROR-BUDGET", "SOFTBANK-AITRAS"],
+      "rationale": "Deployments need separated environments, bounded exposure, semantic proof and reversible promotion."
+    },
+    {
+      "id": "SC-01",
+      "domain": "Software supply chain",
+      "title": "Immutable dependencies, actions and build inputs",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GITHUB-ACTIONS-SECURITY", "NIST-SSDF", "SLSA-1.2", "SLSA-BUILD"],
+      "rationale": "Mutable dependencies prevent reproducibility and enable silent compromise."
+    },
+    {
+      "id": "SC-02",
+      "domain": "Software supply chain",
+      "title": "Signed provenance and artifact attestations",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GITHUB-ACTIONS-SECURITY", "GOOGLE-SUPPLY-CHAIN", "SLSA-1.2", "SLSA-BUILD"],
+      "rationale": "A deployable artifact must trace back to an approved source and trusted builder."
+    },
+    {
+      "id": "SC-03",
+      "domain": "Software supply chain",
+      "title": "SBOM, vulnerability and dependency-risk management",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-SDL", "GOOGLE-SUPPLY-CHAIN", "NIST-SSDF", "NIST-SSDF-AI", "SLSA-BUILD"],
+      "rationale": "Known components and vulnerabilities need continuous discovery, ownership and remediation."
+    },
+    {
+      "id": "SC-04",
+      "domain": "Software supply chain",
+      "title": "Policy admission before deployment",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-SUPPLY-CHAIN", "SLSA-1.2", "SLSA-SOURCE", "NIST-SSDF"],
+      "rationale": "Only artifacts satisfying identity, provenance, test and policy gates should execute."
+    },
+    {
+      "id": "DD-01",
+      "domain": "Data and durability",
+      "title": "Globally transactional effect and recovery state",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-AGENT-PLATFORM", "MS-WAF", "GOOGLE-AI-ML"],
+      "rationale": "Effects, nonces and recovery state must survive concurrency and regional failure."
+    },
+    {
+      "id": "DD-02",
+      "domain": "Data and durability",
+      "title": "Tamper-evident ledger and external immutable anchor",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-WAF", "GOOGLE-WAF", "SLSA-1.2"],
+      "rationale": "Local hash chains need a provider-managed high-water anchor to resist total local deletion or replay."
+    },
+    {
+      "id": "DD-03",
+      "domain": "Data and durability",
+      "title": "Versioned schemas, migrations and compatibility",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-AI-ML", "NIST-SSDF-AI", "MS-WAF"],
+      "rationale": "State evolution needs tested forward/backward compatibility and rollback."
+    },
+    {
+      "id": "DD-04",
+      "domain": "Data and durability",
+      "title": "Retention, privacy, residency and deletion controls",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-SAIF-CONTROLS", "NIST-SSDF-AI", "MS-WAF"],
+      "rationale": "Knowledge and telemetry must observe purpose, minimization, residency and lifecycle requirements."
+    },
+    {
+      "id": "PO-01",
+      "domain": "Production operations",
+      "title": "Exact provider and model binding with semantic readback",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-AGENTS", "GOOGLE-AGENT-PLATFORM", "MS-FOUNDRY"],
+      "rationale": "Configuration or payload construction is not provider proof; the exact runtime must answer bounded canaries."
+    },
+    {
+      "id": "PO-02",
+      "domain": "Production operations",
+      "title": "Managed deployment, private IAM and runtime lineage",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-LANDING-ZONE", "GOOGLE-AGENT-PLATFORM", "GOOGLE-SUPPLY-CHAIN", "SOFTBANK-SARASHINA"],
+      "rationale": "A production service needs immutable source-to-image-to-revision lineage and verified denial boundaries."
+    },
+    {
+      "id": "PO-03",
+      "domain": "Production operations",
+      "title": "External secret storage, signing and key rotation",
+      "weight": 1.5,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-AGENTS", "GITHUB-ACTIONS-SECURITY", "GOOGLE-SAIF-CONTROLS", "MS-SDL"],
+      "rationale": "Production credentials and permit signing cannot live in source or local process state."
+    },
+    {
+      "id": "PO-04",
+      "domain": "Production operations",
+      "title": "Traffic management, rollback and dynamic resource control",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-WAF", "GOOGLE-WAF", "SOFTBANK-AITRAS", "GOOGLE-SRE-ERROR-BUDGET"],
+      "rationale": "Traffic, capacity and rollback need continuously evaluated desired state and verified outcomes."
+    },
+    {
+      "id": "FC-01",
+      "domain": "FinOps and sustainability",
+      "title": "Budgets, quotas and hard cost caps",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-WAF", "GOOGLE-WAF"],
+      "rationale": "Autonomous systems need explicit spend ceilings and fail-closed overrun behavior."
+    },
+    {
+      "id": "FC-02",
+      "domain": "FinOps and sustainability",
+      "title": "Dynamic resource and workload optimization",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-WAF", "GOOGLE-WAF", "SOFTBANK-AITRAS"],
+      "rationale": "Capacity should follow measured demand, service objectives and marginal value."
+    },
+    {
+      "id": "FC-03",
+      "domain": "FinOps and sustainability",
+      "title": "Per-capability unit economics and value measurement",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-WAF", "GOOGLE-WAF", "DORA"],
+      "rationale": "Roadmap decisions need cost per useful outcome and measured value, not only total spend."
+    },
+    {
+      "id": "FC-04",
+      "domain": "FinOps and sustainability",
+      "title": "Energy and sustainability-aware architecture",
+      "weight": 0.75,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-WAF", "MS-WAF"],
+      "rationale": "Frontier architecture includes energy, carbon and resource-efficiency tradeoffs."
+    },
+    {
+      "id": "TC-01",
+      "domain": "Team capability and governance",
+      "title": "Cross-functional product, platform, security, SRE and AI ownership",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-PLATFORM", "GOOGLE-WAF", "NIST-AI-RMF", "SOFTBANK-CAREERS"],
+      "rationale": "Complex agent platforms require explicit ownership across technical and risk disciplines."
+    },
+    {
+      "id": "TC-02",
+      "domain": "Team capability and governance",
+      "title": "Documentation, training and reusable engineering competencies",
+      "weight": 1.0,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-SDL", "MS-PLATFORM", "DORA", "SOFTBANK-SB-OAI-JAPAN", "SOFTBANK-CAREERS"],
+      "rationale": "Practices become capabilities only when documented, taught, reused and behaviorally proven."
+    },
+    {
+      "id": "TC-03",
+      "domain": "Team capability and governance",
+      "title": "Failure learning, postmortems and verified corrective action",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["GOOGLE-SRE-ERROR-BUDGET", "MS-SDL", "NIST-SSDF"],
+      "rationale": "Failure records must produce owned, testable improvements and later canary evidence."
+    },
+    {
+      "id": "TC-04",
+      "domain": "Team capability and governance",
+      "title": "Continuous external benchmark and roadmap feedback loop",
+      "weight": 1.25,
+      "frontierTargetMaturity": 5,
+      "referenceSourceIds": ["MS-PLATFORM", "DORA", "SOFTBANK-MULTI-AGENT", "SOFTBANK-SB-OAI-JAPAN"],
+      "rationale": "The benchmark corpus must refresh, detect change, preserve provenance and produce review-gated roadmap deltas."
+    }
+  ]
+}
