@@ -34,6 +34,13 @@ POLICIES: tuple[AutoscalePolicy, ...] = (
     AutoscalePolicy("AS-019", "MESH_NODE_DEMOTION", "DOWN_LATERAL", "DEMOTE_NODE_AND_REROUTE"),
     AutoscalePolicy("AS-020", "MESH_FAILOVER", "LATERAL", "CONTINUE_LOCAL_AND_REROUTE"),
     AutoscalePolicy("AS-021", "MESH_NODE_CADENCE", "UP_DOWN", "RIGHTSIZE_LOCAL_NODE_CADENCE"),
+    AutoscalePolicy("AS-022", "INCUMBENT_PERIODIC_CHALLENGE", "LATERAL_REVIEW", "CHALLENGE_INCUMBENT"),
+    AutoscalePolicy("AS-023", "INCUMBENT_EVENT_CHALLENGE", "LATERAL_REVIEW", "TRIGGER_EVENT_CHALLENGE"),
+    AutoscalePolicy("AS-024", "CHALLENGER_ADMISSION", "UP_LATERAL", "ADMIT_CHALLENGER"),
+    AutoscalePolicy("AS-025", "SHADOW_COMPARISON", "LATERAL", "RUN_SHADOW_COMPARISON"),
+    AutoscalePolicy("AS-026", "INCUMBENT_MIGRATION", "UP_LATERAL", "PROMOTE_PROVEN_CHALLENGER"),
+    AutoscalePolicy("AS-027", "ANTI_CHURN_HYSTERESIS", "HOLD", "HOLD_ANTI_CHURN"),
+    AutoscalePolicy("AS-028", "REFLEXIVITY_SELF_CHALLENGE", "REVIEW_HOLD_UP", "SELF_CHALLENGE_GOVERNOR"),
 )
 
 _POLICY_INDEX = {policy.policy_id: policy for policy in POLICIES}
@@ -143,8 +150,14 @@ def decide_autoscale(signal: AutoscaleSignal) -> AutoscaleDecision:
             continue_unaffected_lanes=True,
         )
 
-    if policy.policy_id == "AS-010":
-        return _hold(signal, policy, "HOLD_ARCHITECTURE_EXPANSION", "explicit EVD autoscale policy requests an architecture hold")
+    if policy.policy_id in {"AS-010", "AS-027"}:
+        status = "HOLD_ARCHITECTURE_EXPANSION" if policy.policy_id == "AS-010" else "HOLD_ANTI_CHURN"
+        reason = (
+            "explicit EVD autoscale policy requests an architecture hold"
+            if policy.policy_id == "AS-010"
+            else "reflexivity hysteresis requires the incumbent to remain serving until durable superiority is proven"
+        )
+        return _hold(signal, policy, status, reason)
 
     return AutoscaleDecision(
         signal_id=signal.signal_id,
