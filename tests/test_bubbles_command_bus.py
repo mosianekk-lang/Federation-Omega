@@ -35,44 +35,11 @@ class BubblesCommandBusTests(unittest.TestCase):
             payload=payload,
         )
 
-    def benchmark_command(self, action="jarvis_benchmark_validate", payload=None):
-        return self.command(
-            action=action,
-            effect="READ",
-            target_alias="JARVIS_BENCHMARK_PUBLIC_FIXTURE_V1",
-            payload=payload or {},
-        )
-
     def test_internal_canary_succeeds_without_external_provider_effect(self):
         receipt = self.run_command(self.command())
         self.assertEqual(receipt["state"], "SUCCESS")
         self.assertEqual(receipt["execution"]["kind"], "LOCAL_COMMAND_BUS_CANARY")
         self.assertIn("does not prove Google Cloud", receipt["truth_boundary"])
-
-    def test_jarvis_benchmark_runs_as_read_only_central_task_module(self):
-        receipt = self.run_command(self.benchmark_command())
-        self.assertEqual("SUCCESS", receipt["state"])
-        execution = receipt["execution"]
-        self.assertEqual("LOCAL_JARVIS_BENCHMARK_CONTROL_PLANE", execution["kind"])
-        self.assertTrue(execution["result"]["valid"])
-        self.assertFalse(execution["providerEffects"])
-        self.assertFalse(execution["networkUsed"])
-        self.assertFalse(execution["runtimeLedgerPersisted"])
-        self.assertIn("public fixture", receipt["truth_boundary"])
-
-    def test_jarvis_benchmark_rejects_private_payload_and_write_route(self):
-        private = self.run_command(self.benchmark_command(
-            action="jarvis_benchmark_snapshot",
-            payload={"state": {"private": "must-not-enter-public-command-bus"}},
-        ))
-        self.assertEqual("FAILURE", private["state"])
-        self.assertIn("unknown fields", private["reason"])
-
-        write_route = self.run_command(self.benchmark_command(
-            action="jarvis_benchmark_cycle_commit",
-        ))
-        self.assertEqual("CONSTRAINT", write_route["state"])
-        self.assertIn("not bound", write_route["reason"])
 
     def test_chat_failure_recovery_invokes_cfre_for_connection_interruption(self):
         receipt = self.run_command(self.recovery_command({
@@ -174,6 +141,61 @@ class BubblesCommandBusTests(unittest.TestCase):
         )
         self.assertEqual(receipt["state"], "CONSTRAINT")
         self.assertIn("GITHUB_COMMAND_BUS", receipt["reason"])
+
+
+class JarvisBenchmarkCommandBusTests(unittest.TestCase):
+    def command(self, **overrides):
+        base = {
+            "schema": "BUBBLES-CONTROL-COMMAND-V1",
+            "adapter_id": "bubbles_command_bus",
+            "action": "canary",
+            "effect": "READ",
+            "target_alias": "GITHUB_ACTIONS_A0_A1",
+            "payload": {"message": "CHATGPT_TO_ACTIONS_CANARY"},
+        }
+        base.update(overrides)
+        return base
+
+    def run_command(self, command, actor="mosianekk-lang"):
+        return build_receipt(
+            json.dumps(command),
+            actor=actor,
+            event_name="pull_request",
+            source_ref="PR-CANARY",
+        )
+
+    def benchmark_command(self, action="jarvis_benchmark_validate", payload=None):
+        return self.command(
+            action=action,
+            effect="READ",
+            target_alias="JARVIS_BENCHMARK_PUBLIC_FIXTURE_V1",
+            payload=payload or {},
+        )
+
+    def test_jarvis_benchmark_runs_as_read_only_central_task_module(self):
+        receipt = self.run_command(self.benchmark_command())
+        self.assertEqual("SUCCESS", receipt["state"])
+        execution = receipt["execution"]
+        self.assertEqual("LOCAL_JARVIS_BENCHMARK_CONTROL_PLANE", execution["kind"])
+        self.assertTrue(execution["result"]["valid"])
+        self.assertFalse(execution["providerEffects"])
+        self.assertFalse(execution["networkUsed"])
+        self.assertFalse(execution["runtimeLedgerPersisted"])
+        self.assertIn("public fixture", receipt["truth_boundary"])
+
+    def test_jarvis_benchmark_rejects_private_payload_and_write_route(self):
+        private = self.run_command(self.benchmark_command(
+            action="jarvis_benchmark_snapshot",
+            payload={"state": {"private": "must-not-enter-public-command-bus"}},
+        ))
+        self.assertEqual("FAILURE", private["state"])
+        self.assertIn("unknown fields", private["reason"])
+
+        write_route = self.run_command(self.benchmark_command(
+            action="jarvis_benchmark_cycle_commit",
+        ))
+        self.assertEqual("CONSTRAINT", write_route["state"])
+        self.assertIn("not bound", write_route["reason"])
 
 
 if __name__ == "__main__":
