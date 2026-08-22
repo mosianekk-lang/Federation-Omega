@@ -28,7 +28,7 @@ These views have different units, scopes and evidence populations. Combining or 
 
 ## Current strict profile result (22 August 2026)
 
-- Benchmark operations: **R2**, bottlenecked by the not-yet-machine-enforced canonical score contract.
+- Benchmark operations: **R3**, bottlenecked by tested-but-not-provider-bound engineering, Airlock, scheduler and source-refresh components.
 - JARVIS provider runtime: **R0**, bottlenecked by unverified Secret Manager and cost/capacity controls.
 - Full Federation operating system: **R0**, with the same provider gaps plus an unbound optional OpenAI provider route.
 

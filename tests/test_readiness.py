@@ -16,7 +16,7 @@ class ReadinessTests(unittest.TestCase):
     def test_current_profiles_use_strict_minimum(self):
         report = evaluate(STANDARD, ASSESSMENT)
         states = {item["id"]: item["readiness"] for item in report["releaseProfiles"]}
-        self.assertEqual({"benchmark_operations": "R2", "jarvis_provider_runtime": "R0", "full_federation": "R0"}, states)
+        self.assertEqual({"benchmark_operations": "R3", "jarvis_provider_runtime": "R0", "full_federation": "R0"}, states)
 
     def test_score_views_cannot_be_combined(self):
         assessment = copy.deepcopy(ASSESSMENT)
@@ -59,7 +59,7 @@ class ReadinessTests(unittest.TestCase):
         second = evaluate(STANDARD, ASSESSMENT)
         self.assertEqual(first, second)
         markdown = render_markdown(first)
-        self.assertIn("Benchmark operations | R2 | R6", markdown)
+        self.assertIn("Benchmark operations | R3 | R6", markdown)
         self.assertIn("No combined or averaged score", markdown)
 
 

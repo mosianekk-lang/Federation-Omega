@@ -72,4 +72,4 @@ Runtime artifacts are deliberately excluded from the source repository. The sche
 
 The 22 August 2026 baseline includes verified main-branch work, connected records and explicitly labeled source/test-verified open pull requests. No current JARVIS control is scored as `PROVIDER_BOUND` or `PRODUCTION_PROVEN`: the latest Gemini canary failed because the provider credential binding was absent, and the stronger JARVIS/GCP stack remains open and disabled.
 
-Under the stricter release-profile rule, benchmark operations are currently R2 and the provider-runtime and full-Federation profiles are R0. Those states are the minimum across critical dependencies, not averages; they cannot be raised until every blocking proof gate is satisfied.
+Under the stricter release-profile rule, benchmark operations are currently R3 and the provider-runtime and full-Federation profiles are R0. Those states are the minimum across critical dependencies, not averages; they cannot be raised until every blocking proof gate is satisfied.
