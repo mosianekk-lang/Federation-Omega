@@ -1,0 +1,253 @@
+{
+  "contract": "SOVARA_FRONTIER_BENCHMARK_KNOWLEDGEBASE_V2",
+  "engineVersion": "2.0.0",
+  "asOf": "2026-08-22",
+  "ownerId": "KIM_KAGISO_MOSIANE",
+  "subjectSystemId": "sovara_v38_verified",
+  "purpose": "Continuously compare SOVARA with the strongest current documented capability across Microsoft, Alphabet, SoftBank Group and materially relevant frontier peers, while separating product potential from observed operational proof.",
+  "truthBoundary": "Scores are bounded architecture assessments derived from the propositions in the cited primary sources. Vendor product evidence is not proof of private internal execution quality. SOVARA maturity scores require local execution or provider readback. Zero means not established in the reviewed corpus, not proven absence.",
+  "scale": {
+    "minimum": 0,
+    "maximum": 5,
+    "labels": {
+      "0": "unknown or not established in reviewed evidence",
+      "1": "narrow or conceptual capability",
+      "2": "usable component",
+      "3": "integrated capability",
+      "4": "strong production-oriented capability",
+      "5": "frontier documented or independently proven capability"
+    }
+  },
+  "claimPolicy": {
+    "absoluteOrPerpetualSuperiorityAllowed": false,
+    "marketingClaimsCountAsOperationalProof": false,
+    "privateInternalPracticesMayBeInferred": false,
+    "equalMaturityComparisonRequired": true,
+    "currentEvidenceRequired": true
+  },
+  "dimensions": [
+    {"id":"owner_authority_fidelity","label":"Owner authority","weight":8,"critical":true,"definition":"Exact owner intent, scoped authority and non-substitutable mission control."},
+    {"id":"durable_execution_resume","label":"Durable execution","weight":8,"critical":true,"definition":"Long-running state, idempotency, cancellation, replay and crash-safe resume."},
+    {"id":"surface_tool_breadth","label":"Surface breadth","weight":5,"critical":false,"definition":"Applications, tools, data and action surfaces available through governed integration."},
+    {"id":"multi_agent_orchestration","label":"Multi-agent orchestration","weight":6,"critical":false,"definition":"Specialist composition, parallel routing, isolation, handoffs and work balancing."},
+    {"id":"provider_model_portability","label":"Provider portability","weight":5,"critical":true,"definition":"Replaceable models, frameworks, clouds, clients and adapters."},
+    {"id":"identity_least_authority","label":"Least authority","weight":6,"critical":true,"definition":"Exact identity, least-scope permission, temporary authority and revocation."},
+    {"id":"independent_semantic_proof","label":"Independent proof","weight":8,"critical":true,"definition":"Executor-independent provider, target, bytes, semantics and terminal-fruit verification."},
+    {"id":"provenance_contradiction","label":"Provenance","weight":6,"critical":true,"definition":"Source, hash, decision, artifact, adverse evidence and readback lineage."},
+    {"id":"observability_evaluation","label":"Observability and evals","weight":5,"critical":false,"definition":"Traces, metrics, logs, evaluation sets, graders and regression detection."},
+    {"id":"digital_twin_simulation","label":"Digital twin","weight":5,"critical":false,"definition":"Counterfactual simulation, blast-radius preview and rollback rehearsal."},
+    {"id":"continuous_improvement","label":"Continuous improvement","weight":5,"critical":true,"definition":"Measured feedback-to-evaluation-to-experiment-to-promotion flywheel."},
+    {"id":"self_healing_compensation","label":"Self-healing","weight":5,"critical":false,"definition":"Failure classification, alternate routing, retries, compensation and anti-stall."},
+    {"id":"multi_interface_continuity","label":"Interface continuity","weight":3,"critical":false,"definition":"Mission and state continuity across web, mobile, voice, CLI, API and collaboration clients."},
+    {"id":"offline_multicloud_recovery","label":"Recovery portability","weight":3,"critical":false,"definition":"Self-hosting, alternate cloud, warm standby and encrypted offline restoration."},
+    {"id":"deployment_flow","label":"Deployment flow","weight":4,"critical":true,"definition":"Small-batch build, review, release, canary, rollback and lead-time performance."},
+    {"id":"test_automation","label":"Test automation","weight":4,"critical":true,"definition":"Repeatable failure-first, integration, security and regression testing."},
+    {"id":"documentation_knowledge","label":"Knowledge quality","weight":4,"critical":false,"definition":"Accurate, versioned, discoverable and reusable internal documentation and memory."},
+    {"id":"change_stability_recovery","label":"Change stability","weight":4,"critical":true,"definition":"Failed-deployment rate, recovery time, SLOs, incident learning and reliability."},
+    {"id":"developer_autonomy_platform","label":"Developer platform","weight":3,"critical":false,"definition":"Automated environments, agentic development, paved roads and low-friction delivery."},
+    {"id":"cost_efficiency_finops","label":"Cost efficiency","weight":3,"critical":false,"definition":"Measured utilization, cost visibility, optimization and value delivery."}
+  ],
+  "sources": [
+    {
+      "id":"SOVARA_STATE_V26","publisher":"SOVARA","title":"Operational state receipt v26","url":"local://sovara_operator_adapter/OPERATIONAL_STATE_RECEIPT_V26.json","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"LOCAL_EXECUTED_EVIDENCE","freshnessHorizonDays":30,
+      "supportedDimensions":["owner_authority_fidelity","durable_execution_resume","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","identity_least_authority","independent_semantic_proof","provenance_contradiction","observability_evaluation","continuous_improvement","self_healing_compensation","multi_interface_continuity","offline_multicloud_recovery","deployment_flow","documentation_knowledge","change_stability_recovery","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"SOV-P001","text":"The current local estate exposes versioned control, replay, authority, proof, recovery and multi-system contracts; external provider state remains separately classified."}]
+    },
+    {
+      "id":"SOVARA_TESTS_263","publisher":"SOVARA","title":"Full Python regression suite baseline","url":"local://python-unittest-discover/263-tests","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"LOCAL_EXECUTED_EVIDENCE","freshnessHorizonDays":14,
+      "supportedDimensions":["durable_execution_resume","multi_agent_orchestration","provider_model_portability","identity_least_authority","independent_semantic_proof","provenance_contradiction","observability_evaluation","digital_twin_simulation","continuous_improvement","self_healing_compensation","offline_multicloud_recovery","deployment_flow","test_automation","change_stability_recovery","developer_autonomy_platform"],
+      "propositions":[{"id":"SOV-P002","text":"On 2026-08-22 the pre-v38 Python baseline executed 263 tests with zero failures."}]
+    },
+    {
+      "id":"SOVARA_SITE_V28","publisher":"SOVARA Sites","title":"Owner Cockpit v28 deployment receipt","url":"local://sovara_operator_adapter/SITE_DEPLOYMENT_RECEIPT_V28.json","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"LOCAL_PROVIDER_READBACK","freshnessHorizonDays":14,
+      "supportedDimensions":["surface_tool_breadth","independent_semantic_proof","observability_evaluation","multi_interface_continuity","deployment_flow","developer_autonomy_platform"],
+      "propositions":[{"id":"SOV-P003","text":"The owner cockpit is deployed, mobile-responsive and provider-readable; its previous benchmark panel is static and is the v38 replacement target."}]
+    },
+    {
+      "id":"SOVARA_BIBLE_SYNC_V37","publisher":"SOVARA Federation","title":"Bible continuous-sync reconciliation v37","url":"local://sovara-bible-drive-revision-27-and-federation-rows-398-400","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"LOCAL_PROVIDER_READBACK","freshnessHorizonDays":14,
+      "supportedDimensions":["owner_authority_fidelity","durable_execution_resume","independent_semantic_proof","provenance_contradiction","continuous_improvement","self_healing_compensation","documentation_knowledge","change_stability_recovery"],
+      "propositions":[{"id":"SOV-P004","text":"The SOVARA Bible semantic revision 23 and Drive revision 27 were reconciled with append-only adverse, superseding and terminal receipts."}]
+    },
+    {
+      "id":"SOVARA_GEMINI_TWIN_V2","publisher":"SOVARA","title":"Gemini digital twin v2 contract","url":"local://sovara_operator_adapter/gemini_digital_twin/GEMINI_TWIN_CONTRACT_V2.json","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"LOCAL_EXECUTED_EVIDENCE","freshnessHorizonDays":30,
+      "supportedDimensions":["provider_model_portability","identity_least_authority","digital_twin_simulation","continuous_improvement","self_healing_compensation","multi_interface_continuity","test_automation"],
+      "propositions":[{"id":"SOV-P005","text":"A tested Gemini twin contract exists locally, while provider installation and Gemini execution remain unproven."}]
+    },
+    {
+      "id":"SOVARA_FRONTIER_AUTOMATION_V11","publisher":"ChatGPT Automations","title":"SOVARA Frontier Review provider receipt","url":"local://sovara_operator_adapter/AUTOMATION_FRONTIER_REVIEW_RECEIPT_V11.json","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"LOCAL_PROVIDER_READBACK","freshnessHorizonDays":14,
+      "supportedDimensions":["durable_execution_resume","continuous_improvement","deployment_flow","documentation_knowledge","cost_efficiency_finops"],
+      "propositions":[{"id":"SOV-P006","text":"A zero-cost weekly frontier-review task is provider-read-back as enabled; its first future execution is not yet proof."}]
+    },
+    {
+      "id":"SOVARA_APPS_SCRIPT_TESTS","publisher":"SOVARA","title":"Apps Script control-plane local validation","url":"local://sovara_operator_adapter/apps_script_control_plane/LOCAL_VALIDATION_RECEIPT_V1.json","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"LOCAL_EXECUTED_EVIDENCE","freshnessHorizonDays":30,
+      "supportedDimensions":["durable_execution_resume","identity_least_authority","provenance_contradiction","observability_evaluation","self_healing_compensation","deployment_flow","test_automation","change_stability_recovery","cost_efficiency_finops"],
+      "propositions":[{"id":"SOV-P007","text":"The Apps Script scheduling/control-plane package passes local validation, while its native installable trigger remains unbound."}]
+    },
+    {
+      "id":"MS_FOUNDRY_AGENTS","publisher":"Microsoft","title":"Microsoft Foundry Agent Service overview","url":"https://learn.microsoft.com/en-us/azure/foundry/agents/overview","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["owner_authority_fidelity","durable_execution_resume","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","identity_least_authority","observability_evaluation","self_healing_compensation","multi_interface_continuity","deployment_flow","developer_autonomy_platform"],
+      "propositions":[{"id":"MS-P001","text":"Foundry Agent Service is a managed platform for building, deploying and scaling agents with supported models and tools."}]
+    },
+    {
+      "id":"MS_FOUNDRY_OBSERVABILITY","publisher":"Microsoft","title":"Observability in generative AI","url":"https://learn.microsoft.com/en-us/azure/foundry/concepts/observability","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-01","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["independent_semantic_proof","provenance_contradiction","observability_evaluation","continuous_improvement","self_healing_compensation","deployment_flow","test_automation","change_stability_recovery"],
+      "propositions":[{"id":"MS-P002","text":"Foundry combines evaluation, production monitoring, OpenTelemetry tracing and CI/CD quality gates."}]
+    },
+    {
+      "id":"MS_AGENT_EVALUATION","publisher":"Microsoft","title":"Evaluate Microsoft Foundry agents","url":"https://learn.microsoft.com/en-us/azure/foundry/observability/how-to/evaluate-agent","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-07-01","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["observability_evaluation","continuous_improvement","deployment_flow","test_automation"],
+      "propositions":[{"id":"MS-P003","text":"Agent-targeted evaluation supports generated rubrics, built-in risk evaluators, datasets and workflow integration."}]
+    },
+    {
+      "id":"MS_GITHUB_CLOUD_AGENT","publisher":"GitHub / Microsoft","title":"GitHub Copilot cloud agent","url":"https://docs.github.com/en/copilot/concepts/agents/cloud-agent/about-cloud-agent","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["durable_execution_resume","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","provenance_contradiction","continuous_improvement","self_healing_compensation","multi_interface_continuity","deployment_flow","test_automation","documentation_knowledge","change_stability_recovery","developer_autonomy_platform"],
+      "propositions":[{"id":"MS-P004","text":"Copilot cloud agent can work asynchronously in an isolated Actions environment, plan, edit, test, commit and support scheduled or event-driven automation."}]
+    },
+    {
+      "id":"MS_GITHUB_ATTESTATIONS","publisher":"GitHub / Microsoft","title":"GitHub artifact attestations","url":"https://docs.github.com/en/actions/concepts/security/artifact-attestations","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":60,
+      "supportedDimensions":["identity_least_authority","independent_semantic_proof","provenance_contradiction","deployment_flow","test_automation","change_stability_recovery"],
+      "propositions":[{"id":"MS-P005","text":"Artifact attestations create signed build-provenance claims and can support SLSA build levels when verified."}]
+    },
+    {
+      "id":"MS_ENGINEERING_PLAYBOOK","publisher":"Microsoft ISE","title":"Engineering Fundamentals Playbook","url":"https://microsoft.github.io/code-with-engineering-playbook/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2024-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":180,
+      "supportedDimensions":["continuous_improvement","deployment_flow","test_automation","documentation_knowledge","change_stability_recovery","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"MS-P006","text":"The playbook emphasizes a high quality bar, shared context, small scope, CI/CD and incremental customer value."}]
+    },
+    {
+      "id":"MS_AZURE_DIGITAL_TWINS","publisher":"Microsoft","title":"Azure Digital Twins overview","url":"https://learn.microsoft.com/en-us/azure/digital-twins/overview","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2025-01-01","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":90,
+      "supportedDimensions":["surface_tool_breadth","provider_model_portability","identity_least_authority","observability_evaluation","digital_twin_simulation","continuous_improvement","multi_interface_continuity","change_stability_recovery","cost_efficiency_finops"],
+      "propositions":[{"id":"MS-P007","text":"Azure Digital Twins models live environments, connects data and compute, queries state, visualizes in 3D and routes events to broader workflows."}]
+    },
+    {
+      "id":"GOOGLE_AGENT_PLATFORM","publisher":"Google Cloud","title":"Gemini Enterprise Agent Platform overview","url":"https://docs.cloud.google.com/gemini-enterprise-agent-platform/overview","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["owner_authority_fidelity","durable_execution_resume","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","identity_least_authority","provenance_contradiction","observability_evaluation","continuous_improvement","self_healing_compensation","multi_interface_continuity","deployment_flow","developer_autonomy_platform"],
+      "propositions":[{"id":"GOOG-P001","text":"Agent Platform unifies build, scale, govern and optimize functions with model choice, ADK, identity, gateway and Model Armor."}]
+    },
+    {
+      "id":"GOOGLE_AGENT_SCALE","publisher":"Google Cloud","title":"Scale agents in production","url":"https://docs.cloud.google.com/gemini-enterprise-agent-platform/scale","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["durable_execution_resume","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","identity_least_authority","observability_evaluation","continuous_improvement","self_healing_compensation","multi_interface_continuity","offline_multicloud_recovery","deployment_flow","test_automation","change_stability_recovery","developer_autonomy_platform"],
+      "propositions":[{"id":"GOOG-P002","text":"The platform provides managed runtime, sessions, memory, feedback, continuous evaluation, observability, secure code execution and computer use."}]
+    },
+    {
+      "id":"GOOGLE_AGENT_OBSERVABILITY","publisher":"Google Cloud","title":"Agent observability","url":"https://docs.cloud.google.com/stackdriver/docs/observability/agent-observability","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-18","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["independent_semantic_proof","provenance_contradiction","observability_evaluation","continuous_improvement","self_healing_compensation","test_automation","change_stability_recovery"],
+      "propositions":[{"id":"GOOG-P003","text":"Google documents agent drift, silent regressions and unexpected actions as distinct observability problems."}]
+    },
+    {
+      "id":"GOOGLE_DORA_METRICS","publisher":"Google Cloud DORA","title":"DORA software delivery performance metrics","url":"https://dora.dev/guides/dora-metrics/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-01-05","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":90,
+      "supportedDimensions":["continuous_improvement","deployment_flow","test_automation","documentation_knowledge","change_stability_recovery","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"GOOG-P004","text":"DORA measures change lead time, deployment frequency, failed-deployment recovery, change failure and reliability outcomes."}]
+    },
+    {
+      "id":"GOOGLE_DORA_CAPABILITIES","publisher":"Google Cloud DORA","title":"DORA capability catalog","url":"https://dora.dev/capabilities/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":90,
+      "supportedDimensions":["continuous_improvement","deployment_flow","test_automation","documentation_knowledge","change_stability_recovery","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"GOOG-P005","text":"DORA identifies documentation, test automation, version control, work visibility, small batches and experimentation as delivery capabilities."}]
+    },
+    {
+      "id":"GOOGLE_SRE","publisher":"Google","title":"Monitoring Distributed Systems","url":"https://sre.google/sre-book/monitoring-distributed-systems/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":180,
+      "supportedDimensions":["durable_execution_resume","observability_evaluation","continuous_improvement","self_healing_compensation","deployment_flow","test_automation","documentation_knowledge","change_stability_recovery"],
+      "propositions":[{"id":"GOOG-P006","text":"Google SRE monitoring centers dashboards and the four golden signals: latency, traffic, errors and saturation."}]
+    },
+    {
+      "id":"GOOGLE_DIGITAL_TWIN","publisher":"Google Cloud","title":"Digital twin resilience architecture","url":"https://cloud.google.com/blog/products/identity-security/how-to-build-a-digital-twin-to-boost-resilience","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2025-06-04","sourceTier":"PRIMARY_OFFICIAL_RELEASE","freshnessHorizonDays":180,
+      "supportedDimensions":["identity_least_authority","digital_twin_simulation","self_healing_compensation","offline_multicloud_recovery","test_automation","change_stability_recovery"],
+      "propositions":[{"id":"GOOG-P007","text":"Google describes digital twins as safe environments for failure, recovery and security testing, including air-gapped deployment patterns."}]
+    },
+    {
+      "id":"GOOGLE_FINOPS","publisher":"Google Cloud","title":"FinOps Hub","url":"https://docs.cloud.google.com/billing/docs/how-to/finops-hub","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":60,
+      "supportedDimensions":["observability_evaluation","continuous_improvement","cost_efficiency_finops"],
+      "propositions":[{"id":"GOOG-P008","text":"FinOps Hub uses historical usage, recommendations, optimization scores and peer benchmarks to surface cost opportunities."}]
+    },
+    {
+      "id":"SB_CRYSTAL","publisher":"SoftBank Group","title":"SB OAI Japan and Crystal intelligence","url":"https://group.softbank/en/news/press/20251105","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2025-11-05","sourceTier":"PRIMARY_OFFICIAL_RELEASE","freshnessHorizonDays":180,
+      "supportedDimensions":["owner_authority_fidelity","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","identity_least_authority","continuous_improvement","multi_interface_continuity","deployment_flow","documentation_knowledge","developer_autonomy_platform"],
+      "propositions":[{"id":"SB-P001","text":"Crystal intelligence combines OpenAI products with implementation services; SoftBank is the first user and reports approximately 2.5 million custom GPTs for internal use."}]
+    },
+    {
+      "id":"SB_AITRAS_EXTERNAL","publisher":"SoftBank Corp.","title":"AITRAS external AI workload orchestration","url":"https://www.softbank.jp/en/corp/news/press/sbkk/2026/20260225_01/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-02-25","sourceTier":"PRIMARY_OFFICIAL_RELEASE","freshnessHorizonDays":180,
+      "supportedDimensions":["durable_execution_resume","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","observability_evaluation","continuous_improvement","self_healing_compensation","deployment_flow","change_stability_recovery","cost_efficiency_finops"],
+      "propositions":[{"id":"SB-P002","text":"AITRAS observes demand and dynamically allocates shared compute across internal, external AI and RAN workloads."}]
+    },
+    {
+      "id":"SB_AITRAS_OPEN","publisher":"SoftBank Corp.","title":"AITRAS Dynamic Scoring Framework open source","url":"https://www.softbank.jp/en/corp/news/press/sbkk/2026/20260218_01/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-02-18","sourceTier":"OPEN_SOURCE_UPSTREAM","freshnessHorizonDays":180,
+      "supportedDimensions":["multi_agent_orchestration","provider_model_portability","provenance_contradiction","continuous_improvement","self_healing_compensation","offline_multicloud_recovery","deployment_flow","test_automation","documentation_knowledge","change_stability_recovery","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"SB-P003","text":"SoftBank contributed dynamic user-defined scoring for multi-cluster optimization upstream to Open Cluster Management."}]
+    },
+    {
+      "id":"SB_GPU_CLOUD","publisher":"SoftBank Corp.","title":"AI Data Center GPU Cloud and Infrinia","url":"https://www.softbank.jp/en/corp/news/press/sbkk/2026/20260525_01/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-05-25","sourceTier":"PRIMARY_OFFICIAL_RELEASE","freshnessHorizonDays":180,
+      "supportedDimensions":["durable_execution_resume","surface_tool_breadth","provider_model_portability","identity_least_authority","observability_evaluation","self_healing_compensation","offline_multicloud_recovery","deployment_flow","change_stability_recovery","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"SB-P004","text":"The announced service combines multi-tenant KaaS, inference APIs and automated GPU management, with internal beta use before launch."}]
+    },
+    {
+      "id":"SB_SARASHINA","publisher":"SB Intuitions","title":"Med-Sarashina validation","url":"https://www.sbintuitions.co.jp/en/news/press/20260810_01/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-10","sourceTier":"PRIMARY_OFFICIAL_RELEASE","freshnessHorizonDays":90,
+      "supportedDimensions":["provider_model_portability","identity_least_authority","observability_evaluation","continuous_improvement","deployment_flow","test_automation","change_stability_recovery","developer_autonomy_platform"],
+      "propositions":[{"id":"SB-P005","text":"SB Intuitions reports a homegrown specialized model and a regulated-data validation and evaluation program."}]
+    },
+    {
+      "id":"SB_ARM_KLEIDI","publisher":"Arm / SoftBank Group","title":"Arm Kleidi software-level AI acceleration","url":"https://www.arm.com/markets/artificial-intelligence/software/kleidi","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":90,
+      "supportedDimensions":["surface_tool_breadth","provider_model_portability","continuous_improvement","multi_interface_continuity","offline_multicloud_recovery","deployment_flow","test_automation","documentation_knowledge","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"SB-P006","text":"Kleidi provides lightweight AI and computer-vision kernels integrated with popular frameworks to reduce developer integration effort and improve CPU performance."}]
+    },
+    {
+      "id":"AWS_AGENTCORE","publisher":"Amazon Web Services","title":"Amazon Bedrock AgentCore overview","url":"https://docs.aws.amazon.com/bedrock-agentcore/latest/devguide/what-is-bedrock-agentcore.html","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":30,
+      "supportedDimensions":["owner_authority_fidelity","durable_execution_resume","surface_tool_breadth","multi_agent_orchestration","provider_model_portability","identity_least_authority","provenance_contradiction","observability_evaluation","continuous_improvement","self_healing_compensation","multi_interface_continuity","deployment_flow","test_automation","change_stability_recovery","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"AWS-P001","text":"AgentCore provides secure serverless runtime, session isolation, identity and multimodal, multi-agent and asynchronous execution support."}]
+    },
+    {
+      "id":"AWS_AGENTCORE_OBSERVABILITY","publisher":"Amazon Web Services","title":"AgentCore unified observability","url":"https://aws.amazon.com/about-aws/whats-new/2026/07/amazon-bedrock-agentcore-unified-observability-single-log-group/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-07-23","sourceTier":"PRIMARY_OFFICIAL_RELEASE","freshnessHorizonDays":60,
+      "supportedDimensions":["identity_least_authority","independent_semantic_proof","provenance_contradiction","observability_evaluation","continuous_improvement","self_healing_compensation","test_automation","change_stability_recovery"],
+      "propositions":[{"id":"AWS-P002","text":"AgentCore can route traces, prompts, structured logs and standard output to a per-agent log group with scoped IAM and encryption."}]
+    },
+    {
+      "id":"NVIDIA_OMNIVERSE","publisher":"NVIDIA","title":"NVIDIA Omniverse","url":"https://www.nvidia.com/en-us/omniverse/","retrievedAt":"2026-08-22","publishedOrUpdatedAt":"2026-08-22","sourceTier":"PRIMARY_OFFICIAL_DOCUMENTATION","freshnessHorizonDays":60,
+      "supportedDimensions":["surface_tool_breadth","provider_model_portability","independent_semantic_proof","provenance_contradiction","observability_evaluation","digital_twin_simulation","continuous_improvement","multi_interface_continuity","deployment_flow","test_automation","documentation_knowledge","developer_autonomy_platform","cost_efficiency_finops"],
+      "propositions":[{"id":"NV-P001","text":"Omniverse provides agent-ready libraries, simulation, physics, sensors, validation, blueprints and digital-twin workflows for testing before real-world deployment."}]
+    }
+  ],
+  "systems": [
+    {
+      "id":"sovara_v38_verified","name":"SOVARA / Kim DataVerse verified baseline","company":"SOVARA","kind":"OWNER_SYSTEM","publicVisibilityState":"OWNER_FULL_EVIDENCE","sourceIds":["SOVARA_STATE_V26","SOVARA_TESTS_263","SOVARA_SITE_V28","SOVARA_BIBLE_SYNC_V37","SOVARA_GEMINI_TWIN_V2","SOVARA_FRONTIER_AUTOMATION_V11","SOVARA_APPS_SCRIPT_TESTS"],
+      "capabilityScores":{"owner_authority_fidelity":5,"durable_execution_resume":4,"surface_tool_breadth":4,"multi_agent_orchestration":5,"provider_model_portability":5,"identity_least_authority":4,"independent_semantic_proof":5,"provenance_contradiction":5,"observability_evaluation":4,"digital_twin_simulation":5,"continuous_improvement":5,"self_healing_compensation":4,"multi_interface_continuity":4,"offline_multicloud_recovery":4,"deployment_flow":4,"test_automation":5,"documentation_knowledge":5,"change_stability_recovery":4,"developer_autonomy_platform":4,"cost_efficiency_finops":4},
+      "maturityScores":{"owner_authority_fidelity":5,"durable_execution_resume":4,"surface_tool_breadth":2,"multi_agent_orchestration":4,"provider_model_portability":3,"identity_least_authority":3,"independent_semantic_proof":4,"provenance_contradiction":5,"observability_evaluation":3,"digital_twin_simulation":2,"continuous_improvement":4,"self_healing_compensation":3,"multi_interface_continuity":3,"offline_multicloud_recovery":2,"deployment_flow":3,"test_automation":5,"documentation_knowledge":5,"change_stability_recovery":3,"developer_autonomy_platform":3,"cost_efficiency_finops":2}
+    },
+    {
+      "id":"microsoft_cloud_ai_dev_platform","name":"Microsoft cloud, agent and developer platform suite","company":"Microsoft","kind":"COMMERCIAL_PORTFOLIO","publicVisibilityState":"PUBLIC_VISIBILITY_LIMITED","sourceIds":["MS_FOUNDRY_AGENTS","MS_FOUNDRY_OBSERVABILITY","MS_AGENT_EVALUATION","MS_GITHUB_CLOUD_AGENT","MS_GITHUB_ATTESTATIONS","MS_ENGINEERING_PLAYBOOK","MS_AZURE_DIGITAL_TWINS"],
+      "capabilityScores":{"owner_authority_fidelity":3,"durable_execution_resume":4,"surface_tool_breadth":5,"multi_agent_orchestration":5,"provider_model_portability":4,"identity_least_authority":5,"independent_semantic_proof":3,"provenance_contradiction":5,"observability_evaluation":5,"digital_twin_simulation":5,"continuous_improvement":5,"self_healing_compensation":4,"multi_interface_continuity":5,"offline_multicloud_recovery":0,"deployment_flow":5,"test_automation":5,"documentation_knowledge":5,"change_stability_recovery":5,"developer_autonomy_platform":5,"cost_efficiency_finops":3},
+      "maturityScores":{"owner_authority_fidelity":2,"durable_execution_resume":2,"surface_tool_breadth":2,"multi_agent_orchestration":2,"provider_model_portability":2,"identity_least_authority":2,"independent_semantic_proof":2,"provenance_contradiction":3,"observability_evaluation":2,"digital_twin_simulation":2,"continuous_improvement":2,"self_healing_compensation":2,"multi_interface_continuity":2,"offline_multicloud_recovery":0,"deployment_flow":3,"test_automation":3,"documentation_knowledge":3,"change_stability_recovery":2,"developer_autonomy_platform":2,"cost_efficiency_finops":2}
+    },
+    {
+      "id":"alphabet_google_cloud_ai_dev_platform","name":"Alphabet / Google Cloud AI and engineering suite","company":"Alphabet","kind":"COMMERCIAL_PORTFOLIO","publicVisibilityState":"PUBLIC_VISIBILITY_LIMITED","sourceIds":["GOOGLE_AGENT_PLATFORM","GOOGLE_AGENT_SCALE","GOOGLE_AGENT_OBSERVABILITY","GOOGLE_DORA_METRICS","GOOGLE_DORA_CAPABILITIES","GOOGLE_SRE","GOOGLE_DIGITAL_TWIN","GOOGLE_FINOPS"],
+      "capabilityScores":{"owner_authority_fidelity":3,"durable_execution_resume":5,"surface_tool_breadth":5,"multi_agent_orchestration":5,"provider_model_portability":5,"identity_least_authority":5,"independent_semantic_proof":3,"provenance_contradiction":4,"observability_evaluation":5,"digital_twin_simulation":4,"continuous_improvement":5,"self_healing_compensation":4,"multi_interface_continuity":5,"offline_multicloud_recovery":4,"deployment_flow":5,"test_automation":5,"documentation_knowledge":5,"change_stability_recovery":5,"developer_autonomy_platform":5,"cost_efficiency_finops":5},
+      "maturityScores":{"owner_authority_fidelity":2,"durable_execution_resume":2,"surface_tool_breadth":2,"multi_agent_orchestration":2,"provider_model_portability":2,"identity_least_authority":2,"independent_semantic_proof":2,"provenance_contradiction":2,"observability_evaluation":2,"digital_twin_simulation":2,"continuous_improvement":2,"self_healing_compensation":2,"multi_interface_continuity":2,"offline_multicloud_recovery":2,"deployment_flow":3,"test_automation":3,"documentation_knowledge":3,"change_stability_recovery":3,"developer_autonomy_platform":2,"cost_efficiency_finops":2}
+    },
+    {
+      "id":"softbank_group_ai_portfolio","name":"SoftBank Group AI, orchestration, cloud and Arm portfolio","company":"SoftBank Group","kind":"COMMERCIAL_PORTFOLIO","publicVisibilityState":"PUBLIC_VISIBILITY_LIMITED","sourceIds":["SB_CRYSTAL","SB_AITRAS_EXTERNAL","SB_AITRAS_OPEN","SB_GPU_CLOUD","SB_SARASHINA","SB_ARM_KLEIDI"],
+      "capabilityScores":{"owner_authority_fidelity":2,"durable_execution_resume":3,"surface_tool_breadth":4,"multi_agent_orchestration":4,"provider_model_portability":4,"identity_least_authority":3,"independent_semantic_proof":0,"provenance_contradiction":3,"observability_evaluation":4,"digital_twin_simulation":0,"continuous_improvement":4,"self_healing_compensation":4,"multi_interface_continuity":3,"offline_multicloud_recovery":3,"deployment_flow":4,"test_automation":3,"documentation_knowledge":3,"change_stability_recovery":4,"developer_autonomy_platform":4,"cost_efficiency_finops":5},
+      "maturityScores":{"owner_authority_fidelity":1,"durable_execution_resume":2,"surface_tool_breadth":2,"multi_agent_orchestration":2,"provider_model_portability":2,"identity_least_authority":2,"independent_semantic_proof":0,"provenance_contradiction":2,"observability_evaluation":2,"digital_twin_simulation":0,"continuous_improvement":2,"self_healing_compensation":2,"multi_interface_continuity":2,"offline_multicloud_recovery":2,"deployment_flow":2,"test_automation":2,"documentation_knowledge":2,"change_stability_recovery":2,"developer_autonomy_platform":2,"cost_efficiency_finops":2}
+    },
+    {
+      "id":"aws_agentcore_peer","name":"Amazon Bedrock AgentCore","company":"Amazon Web Services","kind":"COMMERCIAL_REFERENCE","publicVisibilityState":"PUBLIC_PRODUCT_EVIDENCE","sourceIds":["AWS_AGENTCORE","AWS_AGENTCORE_OBSERVABILITY"],
+      "capabilityScores":{"owner_authority_fidelity":3,"durable_execution_resume":5,"surface_tool_breadth":4,"multi_agent_orchestration":5,"provider_model_portability":5,"identity_least_authority":5,"independent_semantic_proof":3,"provenance_contradiction":4,"observability_evaluation":5,"digital_twin_simulation":0,"continuous_improvement":4,"self_healing_compensation":4,"multi_interface_continuity":3,"offline_multicloud_recovery":0,"deployment_flow":4,"test_automation":4,"documentation_knowledge":0,"change_stability_recovery":4,"developer_autonomy_platform":4,"cost_efficiency_finops":3},
+      "maturityScores":{"owner_authority_fidelity":2,"durable_execution_resume":2,"surface_tool_breadth":2,"multi_agent_orchestration":2,"provider_model_portability":2,"identity_least_authority":2,"independent_semantic_proof":2,"provenance_contradiction":2,"observability_evaluation":2,"digital_twin_simulation":0,"continuous_improvement":2,"self_healing_compensation":2,"multi_interface_continuity":2,"offline_multicloud_recovery":0,"deployment_flow":2,"test_automation":2,"documentation_knowledge":0,"change_stability_recovery":2,"developer_autonomy_platform":2,"cost_efficiency_finops":2}
+    },
+    {
+      "id":"nvidia_omniverse_peer","name":"NVIDIA Omniverse","company":"NVIDIA","kind":"COMMERCIAL_REFERENCE","publicVisibilityState":"PUBLIC_PRODUCT_EVIDENCE","sourceIds":["NVIDIA_OMNIVERSE"],
+      "capabilityScores":{"owner_authority_fidelity":0,"durable_execution_resume":0,"surface_tool_breadth":3,"multi_agent_orchestration":0,"provider_model_portability":4,"identity_least_authority":0,"independent_semantic_proof":4,"provenance_contradiction":3,"observability_evaluation":4,"digital_twin_simulation":5,"continuous_improvement":3,"self_healing_compensation":0,"multi_interface_continuity":3,"offline_multicloud_recovery":0,"deployment_flow":4,"test_automation":4,"documentation_knowledge":4,"change_stability_recovery":0,"developer_autonomy_platform":4,"cost_efficiency_finops":3},
+      "maturityScores":{"owner_authority_fidelity":0,"durable_execution_resume":0,"surface_tool_breadth":2,"multi_agent_orchestration":0,"provider_model_portability":2,"identity_least_authority":0,"independent_semantic_proof":2,"provenance_contradiction":2,"observability_evaluation":2,"digital_twin_simulation":3,"continuous_improvement":2,"self_healing_compensation":0,"multi_interface_continuity":2,"offline_multicloud_recovery":0,"deployment_flow":2,"test_automation":2,"documentation_knowledge":2,"change_stability_recovery":0,"developer_autonomy_platform":2,"cost_efficiency_finops":2}
+    }
+  ],
+  "target": {
+    "id":"sovara_frontier_target",
+    "requiredCapabilityByDimension":{"owner_authority_fidelity":5,"durable_execution_resume":5,"surface_tool_breadth":5,"multi_agent_orchestration":5,"provider_model_portability":5,"identity_least_authority":5,"independent_semantic_proof":5,"provenance_contradiction":5,"observability_evaluation":5,"digital_twin_simulation":5,"continuous_improvement":5,"self_healing_compensation":5,"multi_interface_continuity":5,"offline_multicloud_recovery":5,"deployment_flow":5,"test_automation":5,"documentation_knowledge":5,"change_stability_recovery":5,"developer_autonomy_platform":5,"cost_efficiency_finops":5},
+    "promotionRule":"No AHEAD_PROVEN state unless evidence is current, matched workloads pass, every critical dimension meets or exceeds the frontier, operational maturity is equal or stronger, independent live proof passes, and no protected dimension regresses."
+  },
+  "refreshPolicy": {
+    "externalSourceCadence":"P1D",
+    "localRecalculation":"ON_MATERIAL_BUILD_OR_PROVIDER_READBACK",
+    "changedEvidenceOnly":true,
+    "appendOnlySnapshots":true,
+    "automaticScorePromotion":false,
+    "semanticReviewRequiredForScoreChange":true,
+    "materialChangeDeploymentOnly":true
+  }
+}
