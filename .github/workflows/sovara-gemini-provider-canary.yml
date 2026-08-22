@@ -1,0 +1,106 @@
+name: SOVARA WIF Identity Diagnostic
+
+on:
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/sovara-gemini-provider-canary.yml'
+      - 'scripts/wif_identity_diagnostic.py'
+      - 'tests/test_wif_identity_diagnostic.py'
+      - 'docs/SOVARA_WIF_R1_R4_PROMOTION_PLAN.md'
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sovara-wif-identity-diagnostic-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  WIF_SERVICE_ACCOUNT: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+
+jobs:
+  wif-identity-diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout exact head without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: ${{ env.SOURCE_HEAD_SHA }}
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run failure-first diagnostic tests
+        run: python -m unittest tests/test_wif_identity_diagnostic.py -v
+
+      - name: Run zero-effect GitHub OIDC to Google STS diagnostic
+        run: >-
+          python scripts/wif_identity_diagnostic.py
+          --output sovara_wif_identity_diagnostic_receipt.json
+
+      - name: Validate sanitized diagnostic receipt
+        shell: bash
+        run: |
+          python - <<'PY'
+          import json
+          import os
+          import pathlib
+
+          path = pathlib.Path('sovara_wif_identity_diagnostic_receipt.json')
+          receipt = json.loads(path.read_text(encoding='utf-8'))
+          allowed = {
+              'WIF_CONFIGURATION_INVALID',
+              'WIF_SERVICE_ACCOUNT_PROJECT_MISMATCH',
+              'GITHUB_OIDC_UNAVAILABLE',
+              'GITHUB_OIDC_REQUEST_FAILED',
+              'WIF_TARGET_UNAVAILABLE_OR_DISABLED',
+              'WIF_SUBJECT_OR_ATTRIBUTE_DENIED',
+              'WIF_SUBJECT_TOKEN_REJECTED',
+              'STS_EXCHANGE_FAILED_CLASSIFIED',
+              'STS_EXCHANGE_SUCCEEDED',
+          }
+          assert receipt['schema'] == 'SOVARA_WIF_IDENTITY_DIAGNOSTIC_V1'
+          assert receipt['operation'] == 'ZERO_EFFECT_STS_EXCHANGE'
+          assert receipt['classification'] in allowed
+          assert receipt['head_sha'] == os.environ['SOURCE_HEAD_SHA']
+          assert receipt['workflow_sha'] == os.environ['GITHUB_SHA']
+          assert receipt['credential_value_exposed'] is False
+          assert receipt['mutation_performed'] is False
+          assert receipt['model_provider_invoked'] is False
+          assert receipt['service_account_impersonated'] is False
+          forbidden = {'access_token', 'id_token', 'subject_token', 'credential'}
+          assert not (forbidden & set(receipt))
+
+          summary = {
+              key: receipt[key]
+              for key in (
+                  'schema', 'operation', 'head_sha', 'workflow_sha', 'classification',
+                  'current_level', 'next_gate', 'sts_http_status',
+                  'google_sts_invoked', 'model_provider_invoked',
+                  'mutation_performed', 'credential_value_exposed'
+              )
+          }
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as handle:
+              handle.write('## SOVARA WIF identity diagnostic\n\n```json\n')
+              handle.write(json.dumps(summary, indent=2, sort_keys=True))
+              handle.write('\n```\n')
+          PY
+
+      - name: Upload immutable sanitized diagnostic receipt
+        if: always() && hashFiles('sovara_wif_identity_diagnostic_receipt.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sovara-wif-identity-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sovara_wif_identity_diagnostic_receipt.json
+          if-no-files-found: error
+          retention-days: 30
