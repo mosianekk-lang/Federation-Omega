@@ -28,7 +28,8 @@ class LineageNode:
 class WorkflowCluster:
     cluster_key: str
     members: tuple[str, ...]
-    consolidation_candidate: bool
+    shared_primitive_candidate: bool
+    consolidation_candidate: bool = False
 
 
 def census_repository(root: str | Path) -> RepoCensus:
@@ -67,31 +68,34 @@ def census_repository(root: str | Path) -> RepoCensus:
 
 
 def alpha_omega_lineage() -> tuple[LineageNode, ...]:
-    """Non-destructive lineage derived from explicit repository contracts.
+    """Evidence-first, non-destructive Alpha→Omega lineage.
 
-    Older generations are retained as historical/proof-bearing foundations until
-    dependency analysis proves that retirement or consolidation is safe.
+    Directory names are not treated as semantic version authority. The current
+    maturity records show alpha_omega_v21 at 2.2.1 and alpha_omega_v2 at 2.4.0
+    with canonical_path=alpha_omega_v2. v3.0 is a separate institutional
+    evolution and must not silently inherit provider maturity from either v2
+    line.
     """
     return (
         LineageNode(
-            "alpha_omega_v2",
-            "2.x",
-            "Operational solution foundry; build/deploy/execute/readback/rollback and provider contracts",
-            "HISTORICAL_FOUNDATION_RETAIN",
             "alpha_omega_v21",
+            "2.2.1",
+            "Operational foundry plus maintenance, drift, repair, learning and Drive manifest controls",
+            "HISTORICAL_INTERMEDIATE_RETAIN",
+            "alpha_omega_v2",
         ),
         LineageNode(
-            "alpha_omega_v21",
-            "2.2.x",
-            "Operational foundry plus maintenance, drift, repair, learning and release controls",
-            "SUCCESSOR_FOUNDATION_RETAIN",
+            "alpha_omega_v2",
+            "2.4.0",
+            "Canonical v2 operational foundry with GitHub provider proof and outcome/cost governor",
+            "CURRENT_CANONICAL_V2_LINE_RETAIN",
             "alpha_omega_v30",
         ),
         LineageNode(
             "alpha_omega_v30",
             "3.0",
             "Self-verifying digital systems institution with proof-carrying actions, capability market and institutional controls",
-            "CURRENT_EVOLUTION_CANDIDATE",
+            "CURRENT_INSTITUTIONAL_EVOLUTION_CANDIDATE",
             None,
         ),
     )
@@ -105,6 +109,14 @@ def _workflow_key(filename: str) -> str:
 
 
 def cluster_workflows(filenames: Iterable[str]) -> tuple[WorkflowCluster, ...]:
+    """Group naming siblings for semantic review without auto-consolidating them.
+
+    Filename similarity alone is insufficient to declare duplicate workflows.
+    Release and implementation siblings may intentionally preserve different
+    proof stages. A cluster therefore becomes a shared-primitive candidate only;
+    consolidation remains false until step/input/output/proof semantics are
+    compared independently.
+    """
     groups: dict[str, list[str]] = defaultdict(list)
     for filename in sorted(set(filenames)):
         if filename.endswith((".yml", ".yaml")):
@@ -114,7 +126,8 @@ def cluster_workflows(filenames: Iterable[str]) -> tuple[WorkflowCluster, ...]:
         WorkflowCluster(
             cluster_key=key,
             members=tuple(members),
-            consolidation_candidate=len(members) > 1,
+            shared_primitive_candidate=len(members) > 1,
+            consolidation_candidate=False,
         )
         for key, members in sorted(groups.items())
     )
