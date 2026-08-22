@@ -1,0 +1,30 @@
+name: CFBE Omega Benchmark Regression
+
+on:
+  pull_request:
+    paths:
+      - 'benchmarking/cfbe_omega/**'
+      - 'tests/test_cfbe_omega.py'
+      - '.github/workflows/cfbe-omega.yml'
+  push:
+    branches:
+      - build/cfbe-omega-20260822
+    paths:
+      - 'benchmarking/cfbe_omega/**'
+      - 'tests/test_cfbe_omega.py'
+      - '.github/workflows/cfbe-omega.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-benchmark:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Run CFBE regression tests
+        run: python -m pytest -q tests/test_cfbe_omega.py
