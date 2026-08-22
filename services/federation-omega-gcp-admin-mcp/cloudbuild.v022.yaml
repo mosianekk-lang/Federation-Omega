@@ -1,0 +1,315 @@
+substitutions:
+  _REGION: africa-south1
+  _SERVICE: federation-omega-gcp-admin-mcp
+  _RUNTIME_SA: federation-omega-admin@${PROJECT_ID}.iam.gserviceaccount.com
+  _ATTEST_PROJECT: sov-hybrid-suite
+  _ATTEST_REGION: africa-south1
+  _ATTEST_SERVICE: federation-omega-gcp-admin-mcp
+  _SERVER_VERSION: 0.2.2
+  _RELEASE_FENCE: UNSET
+
+steps:
+  - id: build-image
+    name: gcr.io/cloud-builders/docker
+    args: ["build", "-t", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/federation-omega/${_SERVICE}:${BUILD_ID}", "."]
+
+  - id: push-image
+    name: gcr.io/cloud-builders/docker
+    args: ["push", "${_REGION}-docker.pkg.dev/${PROJECT_ID}/federation-omega/${_SERVICE}:${BUILD_ID}"]
+
+  - id: transactional-canary-rollout
+    name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    entrypoint: bash
+    args:
+      - -Eeuo
+      - pipefail
+      - -c
+      - |
+        project_id="${PROJECT_ID}"
+        build_id="${BUILD_ID}"
+        region="${_REGION}"
+        service="${_SERVICE}"
+        runtime_sa="${_RUNTIME_SA}"
+        attest_project="${_ATTEST_PROJECT}"
+        attest_region="${_ATTEST_REGION}"
+        attest_service="${_ATTEST_SERVICE}"
+        expected_server_version="${_SERVER_VERSION}"
+        release_fence="${_RELEASE_FENCE}"
+        case "$${release_fence}" in github-[0-9]*-[0-9]*-[0-9a-f]*) ;; *) echo "RELEASE_FENCE_INVALID" >&2; exit 1 ;; esac
+        suffix="b$${build_id%%-*}"
+        canary_tag="canary-$${suffix}"
+        candidate_revision="$${service}-$${suffix}"
+        state_dir="/workspace/federation-rollout-$${build_id}"
+        prior_json="$${state_dir}/prior-service.json"
+        mkdir -p "$${state_dir}"
+
+        image="$${region}-docker.pkg.dev/$${project_id}/federation-omega/$${service}:$${build_id}"
+        digest="$$(gcloud artifacts docker images describe "$${image}" --project="$${project_id}" --format='value(image_summary.digest)')"
+        [[ "$${digest}" =~ ^sha256:[0-9a-f]{64}$ ]] || { echo "ARTIFACT_DIGEST_INVALID" >&2; exit 1; }
+        immutable_image="$${image%:*}@$${digest}"
+
+        prior_exists=false
+        prior_traffic=""
+        prior_error="$${state_dir}/prior-service.err"
+        set +e
+        gcloud run services describe "$${service}" --project="$${project_id}" --region="$${region}" --format=json > "$${prior_json}" 2> "$${prior_error}"
+        prior_status="$$?"
+        set -e
+        if [ "$${prior_status}" -eq 0 ]; then
+          prior_exists=true
+          prior_traffic="$$(python3 - "$${prior_json}" <<'PY'
+        import json, sys
+        service = json.load(open(sys.argv[1], encoding="utf-8"))
+        status = service.get("status") or {}
+        rows = status.get("traffic") or status.get("trafficStatuses") or []
+        merged = {}
+        for row in rows:
+            revision = (row.get("revisionName") or row.get("revision") or "").rsplit("/", 1)[-1]
+            percent = int(row.get("percent") or 0)
+            if revision and percent > 0:
+                merged[revision] = max(percent, merged.get(revision, 0))
+        if not merged or sum(merged.values()) != 100:
+            raise SystemExit("PRIOR_TRAFFIC_NOT_EXACTLY_100")
+        print(",".join(f"{revision}={merged[revision]}" for revision in sorted(merged)))
+        PY
+          )"
+          test -n "$${prior_traffic}"
+        elif grep -Eqi '(^|[^A-Z_])(NOT_FOUND|not found|does not exist)([^A-Z_]|$$)' "$${prior_error}"; then
+          prior_exists=false
+        else
+          sed 's/[[:cntrl:]]//g' "$${prior_error}" >&2
+          echo "PRIOR_SERVICE_STATE_UNRESOLVED" >&2
+          exit "$${prior_status}"
+        fi
+
+        restore_prior_traffic() {
+          code="$$?"
+          trap - ERR INT TERM
+          set +e
+          if "$${prior_exists}"; then
+            gcloud run services update-traffic "$${service}" --project="$${project_id}" --region="$${region}" --to-revisions="$${prior_traffic}" --quiet
+            restore_status="$$?"
+            gcloud run services update-traffic "$${service}" --project="$${project_id}" --region="$${region}" --remove-tags="$${canary_tag}" --quiet >/dev/null 2>&1
+            if [ "$${restore_status}" -eq 0 ]; then
+              gcloud run services describe "$${service}" --project="$${project_id}" --region="$${region}" --format=json > "$${state_dir}/restored-service.json"
+              restored_traffic="$$(python3 - "$${state_dir}/restored-service.json" <<'PY'
+        import json, sys
+        service = json.load(open(sys.argv[1], encoding="utf-8"))
+        status = service.get("status") or {}
+        rows = status.get("traffic") or status.get("trafficStatuses") or []
+        merged = {}
+        for row in rows:
+            revision = (row.get("revisionName") or row.get("revision") or "").rsplit("/", 1)[-1]
+            percent = int(row.get("percent") or 0)
+            if revision and percent > 0: merged[revision] = max(percent, merged.get(revision, 0))
+        if not merged or sum(merged.values()) != 100: raise SystemExit("RESTORED_TRAFFIC_NOT_EXACTLY_100")
+        print(",".join(f"{revision}={merged[revision]}" for revision in sorted(merged)))
+        PY
+              )"
+              if [ "$${restored_traffic}" = "$${prior_traffic}" ]; then
+                echo "AUTOMATIC_TRAFFIC_RESTORATION_CONFIRMED"
+              else
+                echo "AUTOMATIC_TRAFFIC_RESTORATION_READBACK_MISMATCH" >&2
+                restore_status=1
+              fi
+            else
+              echo "AUTOMATIC_TRAFFIC_RESTORATION_FAILED" >&2
+            fi
+          else
+            gcloud run services delete "$${service}" --project="$${project_id}" --region="$${region}" --quiet
+            delete_status="$$?"
+            if [ "$${delete_status}" -ne 0 ]; then
+              echo "AUTOMATIC_NEW_SERVICE_REMOVAL_FAILED" >&2
+            elif gcloud run services describe "$${service}" --project="$${project_id}" --region="$${region}" --format=json > "$${state_dir}/deleted-service-unexpected.json" 2> "$${state_dir}/deleted-service.err"; then
+              echo "AUTOMATIC_NEW_SERVICE_REMOVAL_READBACK_FAILED" >&2
+              delete_status=1
+            elif grep -Eqi '(^|[^A-Z_])(NOT_FOUND|not found|does not exist)([^A-Z_]|$$)' "$${state_dir}/deleted-service.err"; then
+              echo "AUTOMATIC_NEW_SERVICE_REMOVAL_CONFIRMED"
+            else
+              echo "AUTOMATIC_NEW_SERVICE_REMOVAL_READBACK_UNRESOLVED" >&2
+              delete_status=1
+            fi
+          fi
+          if [ "$${restore_status:-0}" -ne 0 ] || [ "$${delete_status:-0}" -ne 0 ]; then code=1; fi
+          exit "$${code}"
+        }
+        trap restore_prior_traffic ERR INT TERM
+
+        gcloud run deploy "$${service}" \
+          --project="$${project_id}" \
+          --image="$${immutable_image}" \
+          --region="$${region}" \
+          --revision-suffix="$${suffix}" \
+          --tag="$${canary_tag}" \
+          --no-traffic \
+          --service-account="$${runtime_sa}" \
+          --no-allow-unauthenticated \
+          --labels="federation-build-id=$${build_id},federation-release=0-2-2" \
+          --set-secrets="FEDERATION_APPROVAL_TOKEN=federation-omega-approval-token:latest,ALLOWED_SCRIPT_IDS=federation-omega-allowed-script-ids:latest" \
+          --set-env-vars="^~^GOOGLE_CLOUD_PROJECT=$${project_id}~ALLOWED_PROJECTS=sov-hybrid-suite,979287460558,516690968552,257649435135~ALLOWED_SERVICES=serviceusage.googleapis.com,script.googleapis.com,run.googleapis.com,cloudbuild.googleapis.com,artifactregistry.googleapis.com,logging.googleapis.com,cloudscheduler.googleapis.com,pubsub.googleapis.com,secretmanager.googleapis.com,iam.googleapis.com,iamcredentials.googleapis.com~ALLOWED_REGIONS=africa-south1,global~ALLOWED_CLOUD_RUN_SERVICES=architron9,federation-omega-operator,federation-omega-gcp-admin-mcp~ALLOWED_ARTIFACT_REPOSITORIES=federation-omega~GOOGLE_REQUEST_TIMEOUT_MS=30000" \
+          --quiet
+
+        deployed_revision="$$(gcloud run services describe "$${service}" --project="$${project_id}" --region="$${region}" --format='value(status.latestCreatedRevisionName)')"
+        test "$${deployed_revision}" = "$${candidate_revision}"
+        serving_image="$$(gcloud run revisions describe "$${candidate_revision}" --project="$${project_id}" --region="$${region}" --format='value(spec.containers[0].image)')"
+        test "$${serving_image}" = "$${immutable_image}"
+
+        gcloud run services describe "$${service}" --project="$${project_id}" --region="$${region}" --format=json > "$${state_dir}/canary-service.json"
+        service_url="$$(python3 - "$${state_dir}/canary-service.json" <<'PY'
+        import json, sys
+        service = json.load(open(sys.argv[1], encoding="utf-8"))
+        url = (service.get("status") or {}).get("url") or service.get("uri") or ""
+        if not url:
+            raise SystemExit("SERVICE_URL_MISSING")
+        print(url)
+        PY
+        )"
+        canary_url="$$(python3 - "$${state_dir}/canary-service.json" "$${canary_tag}" <<'PY'
+        import json, sys
+        service = json.load(open(sys.argv[1], encoding="utf-8"))
+        tag = sys.argv[2]
+        status = service.get("status") or {}
+        rows = status.get("traffic") or status.get("trafficStatuses") or []
+        urls = [row.get("url") for row in rows if row.get("tag") == tag and row.get("url")]
+        if len(urls) != 1:
+            raise SystemExit("CANARY_TAG_URL_NOT_UNIQUE")
+        print(urls[0])
+        PY
+        )"
+
+        gcloud run services get-iam-policy "$${service}" --project="$${project_id}" --region="$${region}" --format=json > "$${state_dir}/service-iam.json"
+        python3 - "$${state_dir}/service-iam.json" <<'PY'
+        import json, sys
+        policy = json.load(open(sys.argv[1], encoding="utf-8"))
+        public = [f"{b.get('role','MISSING')}:{m}" for b in policy.get("bindings") or []
+                  for m in b.get("members") or [] if m in {"allUsers", "allAuthenticatedUsers"}]
+        if public: raise SystemExit("PUBLIC_CLOUD_RUN_IAM_BINDING:" + ",".join(sorted(public)))
+        PY
+        unauth_status="$$(curl --silent --show-error --output /dev/null --write-out '%{http_code}' "$${canary_url}/healthz" || true)"
+        case "$${unauth_status}" in 401|403) ;; *) echo "UNAUTHENTICATED_CANARY_NOT_REJECTED:$${unauth_status}" >&2; exit 1 ;; esac
+
+        identity_token="$$(gcloud auth print-identity-token --audiences="$${service_url}")"
+        test -n "$${identity_token}"
+
+        validate_health() {
+          endpoint="$$1"
+          output="$$2"
+          curl --silent --show-error --fail-with-body --retry 5 --retry-all-errors --retry-delay 2 \
+            --header "Authorization: Bearer $${identity_token}" "$${endpoint}/healthz" > "$${output}"
+          python3 - "$${output}" "$${expected_server_version}" <<'PY'
+        import json, sys
+        body = json.load(open(sys.argv[1], encoding="utf-8"))
+        assert body.get("ok") is True, "HEALTH_OK_MISSING"
+        assert body.get("version") == sys.argv[2], "HEALTH_VERSION_MISMATCH"
+        assert body.get("proofBoundary") == "transport_liveness_only", "HEALTH_PROOF_BOUNDARY_INVALID"
+        PY
+        }
+
+        call_lineage() {
+          endpoint="$$1"
+          output="$$2"
+          phase="$$3"
+          python3 - "$${state_dir}/lineage-request.json" "$${attest_project}" "$${attest_region}" "$${attest_service}" "$${candidate_revision}" "$${build_id}" <<'PY'
+        import json, sys
+        output, project, region, service, revision, build_id = sys.argv[1:]
+        arguments = {"project":project,"region":region,"service":service,"rollback":{"revision":revision,"buildId":build_id}}
+        request = {"jsonrpc":"2.0","id":f"lineage-{build_id}","method":"tools/call","params":{"name":"gcp_deployment_lineage_attest","arguments":arguments}}
+        with open(output, "w", encoding="utf-8") as handle:
+            json.dump(request, handle, separators=(",", ":"))
+        PY
+          for attempt in $$(seq 1 12); do
+            curl --silent --show-error --fail-with-body --retry 3 --retry-all-errors --retry-delay 2 \
+              --request POST \
+              --header "Authorization: Bearer $${identity_token}" \
+              --header "Content-Type: application/json" \
+              --header "Accept: application/json, text/event-stream" \
+              --data-binary "@$${state_dir}/lineage-request.json" \
+              "$${endpoint}/mcp" > "$${output}"
+            if python3 - "$${output}" "$${attest_project}" "$${attest_service}" "$${candidate_revision}" "$${digest}" "$${build_id}" "$${phase}" <<'PY'
+        import json, sys
+        raw = open(sys.argv[1], encoding="utf-8").read().strip()
+        candidates = [line[5:].strip() for line in raw.splitlines() if line.startswith("data:")]
+        payload = json.loads(candidates[-1] if candidates else raw)
+        if payload.get("error"):
+            raise SystemExit(f"MCP_LINEAGE_RPC_ERROR:{payload['error']}")
+        record = (payload.get("result") or {}).get("structuredContent") or {}
+        if record.get("status") != "DONE":
+            raise SystemExit("MCP_LINEAGE_AUDIT_NOT_DONE")
+        attestation = record.get("result") or {}
+        if attestation.get("state") != "ATTESTED":
+            raise SystemExit(f"MCP_LINEAGE_NOT_ATTESTED:{attestation.get('state')}")
+        if attestation.get("proofBoundary") != "provider_identifiers_matched_across_two_independent_reads":
+            raise SystemExit("MCP_LINEAGE_PROOF_BOUNDARY_INVALID")
+        current = attestation.get("current") or {}
+        if current.get("identifiersMatch") is not True:
+            raise SystemExit("MCP_LINEAGE_TWO_PASS_MISMATCH")
+        expected_revision, expected_digest, expected_build, phase = sys.argv[4:8]
+        if phase == "canary":
+            comparison = attestation.get("rollback") or {}
+        elif phase == "promoted":
+            comparison = current
+        else:
+            raise SystemExit("MCP_LINEAGE_PHASE_INVALID")
+        if comparison.get("identifiersMatch") is not True:
+            raise SystemExit("MCP_LINEAGE_CANDIDATE_TWO_PASS_MISMATCH")
+        joins = [(comparison.get("pass1") or {}).get("join") or {}, (comparison.get("pass2") or {}).get("join") or {}]
+        for join in joins:
+            if join.get("projectId") != sys.argv[2] or join.get("service") != sys.argv[3]:
+                raise SystemExit("MCP_LINEAGE_TARGET_MISMATCH")
+            if join.get("revision") != expected_revision:
+                raise SystemExit("MCP_LINEAGE_REVISION_MISMATCH")
+            if join.get("imageDigest") != expected_digest or join.get("buildId") != expected_build:
+                raise SystemExit("MCP_LINEAGE_BUILD_DIGEST_MISMATCH")
+            if not join.get("sourceVerificationHash") or not join.get("iamPolicyHash"):
+                raise SystemExit("MCP_LINEAGE_PROOF_COMPONENT_MISSING")
+            if join.get("iamPrivate") is not True or join.get("publicIamMembers"):
+                raise SystemExit("MCP_LINEAGE_PRIVATE_IAM_NOT_PROVEN")
+        PY
+            then
+              return 0
+            fi
+            test "$${attempt}" -lt 12
+            sleep 5
+          done
+          return 1
+        }
+
+        validate_health "$${canary_url}" "$${state_dir}/canary-health.json"
+        call_lineage "$${canary_url}" "$${state_dir}/canary-lineage.json" canary
+
+        gcloud run services update-traffic "$${service}" --project="$${project_id}" --region="$${region}" --to-revisions="$${candidate_revision}=100" --quiet
+        gcloud run services update-traffic "$${service}" --project="$${project_id}" --region="$${region}" --remove-tags="$${canary_tag}" --quiet
+
+        gcloud run services describe "$${service}" --project="$${project_id}" --region="$${region}" --format=json > "$${state_dir}/promoted-service.json"
+        python3 - "$${state_dir}/promoted-service.json" "$${candidate_revision}" <<'PY'
+        import json, sys
+        service = json.load(open(sys.argv[1], encoding="utf-8"))
+        expected = sys.argv[2]
+        status = service.get("status") or {}
+        ready = (status.get("latestReadyRevisionName") or "").rsplit("/", 1)[-1]
+        if ready != expected:
+            raise SystemExit("PROMOTED_READY_REVISION_MISMATCH")
+        rows = status.get("traffic") or status.get("trafficStatuses") or []
+        totals = {}
+        for row in rows:
+            revision = (row.get("revisionName") or row.get("revision") or "").rsplit("/", 1)[-1]
+            percent = int(row.get("percent") or 0)
+            if revision and percent > 0:
+                totals[revision] = max(percent, totals.get(revision, 0))
+        if totals != {expected: 100}:
+            raise SystemExit(f"PROMOTED_TRAFFIC_MISMATCH:{totals}")
+        PY
+
+        identity_token="$$(gcloud auth print-identity-token --audiences="$${service_url}")"
+        validate_health "$${service_url}" "$${state_dir}/promoted-health.json"
+        call_lineage "$${service_url}" "$${state_dir}/promoted-lineage.json" promoted
+
+        trap - ERR INT TERM
+        printf '{"event":"DEPLOYMENT_PROMOTED","service":"%s","revision":"%s","image":"%s","buildId":"%s","priorTraffic":"%s"}\n' \
+          "$${service}" "$${candidate_revision}" "$${immutable_image}" "$${build_id}" "$${prior_traffic}"
+
+images:
+  - ${_REGION}-docker.pkg.dev/${PROJECT_ID}/federation-omega/${_SERVICE}:${BUILD_ID}
+
+options:
+  logging: CLOUD_LOGGING_ONLY
