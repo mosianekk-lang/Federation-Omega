@@ -15,6 +15,7 @@ _ALLOWED_DISPOSITIONS = {
     "REJECTED_WITH_EVIDENCE",
 }
 _AUTONOMOUS_COSTS = {"ZERO", "INCLUDED"}
+_AUTONOMOUS_EFFECT_CLASSES = {"A0_INTERNAL", "A1_INTERNAL"}
 
 
 @dataclass(frozen=True)
@@ -40,6 +41,7 @@ class CapabilityGene:
             ("origin", self.origin),
             ("capability", self.capability),
             ("target_selector", self.target_selector),
+            ("effect_class", self.effect_class),
             ("proof_gate", self.proof_gate),
         ):
             if not value:
@@ -179,6 +181,8 @@ def compile_adoption_work_packet(gene: CapabilityGene, receiver: ReceiverState) 
     if required_tags and not required_tags.intersection(receiver_tags):
         return _packet(gene, receiver, mission_id, "NOT_APPLICABLE", "AAA_NOT_APPLICABLE", "K2_HYPOTHESIS", "NO_EXECUTION_REQUIRED", "receiver has no matching applicability tag", False, False)
 
+    if gene.effect_class not in _AUTONOMOUS_EFFECT_CLASSES:
+        return _owner_gate(gene, receiver, mission_id, "capability gene effect class exceeds autonomous A0/A1 internal authority")
     if gene.cost_class not in _AUTONOMOUS_COSTS or receiver.paid_or_unknown_incremental_cost:
         return _owner_gate(gene, receiver, mission_id, "incremental cost is paid or unknown")
     if not receiver.existing_authority:
@@ -283,5 +287,4 @@ def _hold(gene: CapabilityGene, receiver: ReceiverState, mission_id: str, reason
 
 
 def _owner_gate(gene: CapabilityGene, receiver: ReceiverState, mission_id: str, reason: str) -> AdoptionWorkPacket:
-    packet = _packet(gene, receiver, mission_id, "HELD_WITH_EXACT_GATE", "AAA_HELD", "K2_HYPOTHESIS", "OWNER_TRIGGER_REQUIRED", reason, False, True)
-    return packet
+    return _packet(gene, receiver, mission_id, "HELD_WITH_EXACT_GATE", "AAA_HELD", "K2_HYPOTHESIS", "OWNER_TRIGGER_REQUIRED", reason, False, True)
