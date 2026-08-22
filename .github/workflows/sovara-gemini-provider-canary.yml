@@ -1,0 +1,101 @@
+name: SOVARA Gemini Provider Canary
+
+on:
+  push:
+    branches:
+      - probe/sovara-gemini-route-20260822
+  pull_request:
+    branches:
+      - main
+    paths:
+      - '.github/workflows/sovara-gemini-provider-canary.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  gemini-provider-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install existing Gemini provider dependency
+        run: python -m pip install --disable-pip-version-check 'google-genai>=1.0.0'
+
+      - name: Run sanitized Gemini provider canary
+        id: canary
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          JARVIS_GEMINI_MODEL: gemini-flash-latest
+        run: |
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import sys
+
+          receipt_path = pathlib.Path('sovara_gemini_provider_canary_receipt.json')
+          nonce = 'SOVARA_GEMINI_ROUTE_CANARY_20260822_A'
+          binding = 'GEMINI_API_KEY' if os.getenv('GEMINI_API_KEY') else ('GOOGLE_API_KEY' if os.getenv('GOOGLE_API_KEY') else None)
+          receipt = {
+              'schema': 'SOVARA_GEMINI_PROVIDER_CANARY_V1',
+              'provider': 'google-gemini-developer-api',
+              'route': 'github-actions/existing-jarvis-provider',
+              'binding_present': bool(binding),
+              'binding_source': binding or 'NONE',
+              'credential_value_exposed': False,
+              'model_requested': os.getenv('JARVIS_GEMINI_MODEL', 'gemini-flash-latest'),
+              'provider_invoked': False,
+              'marker_match': False,
+              'response_sha256': None,
+              'response_length': 0,
+              'state': 'BINDING_MISSING' if not binding else 'PENDING',
+              'error_class': None,
+          }
+
+          if not binding:
+              receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+              print('SOVARA_GEMINI_CANARY_STATE=BINDING_MISSING')
+              sys.exit(2)
+
+          try:
+              sys.path.insert(0, str(pathlib.Path('services/jarvis-ultimate').resolve()))
+              from jarvis.providers import GeminiReasoner
+
+              reasoner = GeminiReasoner(model=receipt['model_requested'])
+              output = reasoner.respond(
+                  f'Return this marker in your answer: {nonce}. Do not include secrets or private data.',
+                  {'capabilities': []},
+              )
+              encoded = output.encode('utf-8')
+              receipt['provider_invoked'] = True
+              receipt['marker_match'] = nonce in output
+              receipt['response_sha256'] = hashlib.sha256(encoded).hexdigest()
+              receipt['response_length'] = len(encoded)
+              receipt['state'] = 'VERIFIED_LIVE' if receipt['marker_match'] else 'SEMANTIC_MISMATCH'
+          except Exception as exc:
+              receipt['state'] = 'PROVIDER_ERROR'
+              receipt['error_class'] = type(exc).__name__
+
+          receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print('SOVARA_GEMINI_CANARY_STATE=' + receipt['state'])
+          sys.exit(0 if receipt['state'] == 'VERIFIED_LIVE' else 3)
+          PY
+
+      - name: Upload sanitized canary receipt
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: sovara-gemini-provider-canary-receipt
+          path: sovara_gemini_provider_canary_receipt.json
+          if-no-files-found: error
+          retention-days: 7
