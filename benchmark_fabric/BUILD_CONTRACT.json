@@ -1,0 +1,43 @@
+{
+  "schema": "FEDOMEGA-BUILD-CONTRACT-1",
+  "systemId": "SYS-FEDOMEGA-FRONTIER-BENCHMARK",
+  "version": "1.1.0",
+  "owner": "Kim Kagiso Mosiane",
+  "authorityCeiling": "A1_INTERNAL",
+  "externalEffectAuthority": false,
+  "purpose": "Continuously compare verified JARVIS/Federation work with a current official-source frontier envelope and emit review-gated roadmap evidence.",
+  "entrypoint": "python -m benchmark_fabric.frontier_benchmark.cli",
+  "canonicalInputs": [
+    "benchmark_fabric/catalog/official_sources.json",
+    "benchmark_fabric/catalog/frontier_controls.json",
+    "benchmark_fabric/evidence/jarvis_baseline_2026-08-22.json",
+    "benchmark_fabric/catalog/readiness_standard.json",
+    "benchmark_fabric/evidence/readiness_assessment_2026-08-22.json"
+  ],
+  "generatedOutputs": [
+    "benchmark-report.json",
+    "benchmark-report.md",
+    "run-summary.json",
+    "knowledgebase/manifest.json",
+    "knowledgebase/review-proposals.json",
+    "knowledgebase/snapshots/*",
+    "readiness-report.json",
+    "readiness-report.md"
+  ],
+  "outputDisposition": "GITHUB_ACTIONS_ARTIFACT_OR_EXTERNAL_APPEND_ONLY_STORE",
+  "automaticSourceMutation": false,
+  "automaticBenchmarkPromotion": false,
+  "networkPolicy": {
+    "scheme": "HTTPS_ONLY",
+    "authentication": "NONE",
+    "redirectValidation": true,
+    "publicDnsOnly": true,
+    "hostAllowlistFile": "benchmark_fabric/catalog/official_sources.json",
+    "maximumResponseBytes": 2000000
+  },
+  "terminalStates": ["SUCCESS", "CONSTRAINT"],
+  "tests": ["tests/test_frontier_benchmark.py", "tests/test_readiness.py"],
+  "workflow": ".github/workflows/frontier-benchmark.yml",
+  "schedule": "daily 03:15 UTC / 05:15 Africa/Johannesburg",
+  "truthBoundary": "A public source defines comparator evidence only. JARVIS maturity changes require separately verified evidence and reviewed source control. Frontier alignment, architecture alignment and operational readiness are separate views and must never be averaged or substituted."
+}

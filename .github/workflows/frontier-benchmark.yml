@@ -1,0 +1,75 @@
+name: Federation Frontier Benchmark
+
+on:
+  pull_request:
+    paths:
+      - 'benchmark_fabric/**'
+      - 'tests/test_frontier_benchmark.py'
+      - '.github/workflows/frontier-benchmark.yml'
+      - 'governance/github_airlock_policy.json'
+  schedule:
+    - cron: '15 3 * * *'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: federation-frontier-benchmark-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  benchmark:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run frontier benchmark regression tests
+        run: python -m unittest discover -s tests -p 'test_frontier_benchmark.py' -v
+
+      - name: Build deterministic reviewed-corpus benchmark
+        run: python -m benchmark_fabric.frontier_benchmark.cli --output benchmark-output
+
+      - name: Refresh allowlisted official sources
+        id: refresh
+        if: github.event_name == 'schedule' || github.event_name == 'workflow_dispatch'
+        continue-on-error: true
+        run: >-
+          python -m benchmark_fabric.frontier_benchmark.cli
+          --output benchmark-output
+          --refresh-official-sources
+
+      - name: Publish benchmark summary
+        if: always() && hashFiles('benchmark-output/run-summary.json') != ''
+        shell: bash
+        run: |
+          echo '## Federation Frontier Benchmark' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat benchmark-output/run-summary.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable benchmark and knowledgebase artifact
+        if: always() && hashFiles('benchmark-output/**') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: federation-frontier-benchmark-${{ github.run_id }}-${{ github.run_attempt }}
+          path: benchmark-output/
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce scheduled refresh terminal state
+        if: >-
+          (github.event_name == 'schedule' || github.event_name == 'workflow_dispatch') &&
+          steps.refresh.outcome == 'failure'
+        shell: bash
+        run: |
+          echo 'Official-source refresh ended in CONSTRAINT; inspect the uploaded artifact.' >&2
+          exit 1
+
