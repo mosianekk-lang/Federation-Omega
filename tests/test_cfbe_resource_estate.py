@@ -2,6 +2,10 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from benchmarking.cfbe_omega.compatibility import (
+    assess_drive_receipt_contract,
+    normalize_drive_receipt_for_v3,
+)
 from benchmarking.cfbe_omega.estate_audit import (
     alpha_omega_lineage,
     census_repository,
@@ -73,6 +77,48 @@ class ResourceGateTests(unittest.TestCase):
             CapabilityCandidate("W", "write", 1.0, 1.0, independent_verifier_available=True),
         ]
         self.assertTrue(upgrade_ready(evaluate_upgrade(requirements, candidates)))
+
+
+class CompatibilityTests(unittest.TestCase):
+    def _receipt(self):
+        return {
+            "discover": {"available": True},
+            "authority": {"authorised": True},
+            "snapshot": {"state": "INVENTORY_CAPTURED"},
+            "deploy": {"state": "DOCUMENT_CREATED"},
+            "execute": {"state": "CONTENT_WRITTEN"},
+            "readback": {"pass": True},
+            "health": {"pass": True},
+            "persistence": {"pass": True},
+            "rollback": {"target_absent": True},
+            "proof": {"receipt_id": "SYNTHETIC-RECEIPT-001"},
+        }
+
+    def test_prior_receipt_is_reusable_for_evidence_not_write_authority(self):
+        result = assess_drive_receipt_contract(self._receipt())
+        self.assertTrue(result.compatible)
+        self.assertIn("readback_validation", result.reusable_for)
+        self.assertIn("provider_write", result.not_sufficient_for)
+        self.assertIn("authority_grant", result.not_sufficient_for)
+        self.assertIn("maturity_inheritance", result.not_sufficient_for)
+
+    def test_normalized_observation_keeps_non_inheritance_boundary(self):
+        observation = normalize_drive_receipt_for_v3(
+            self._receipt(),
+            entity_id="synthetic-drive-object",
+            observed_at="2026-08-22T14:00:00+00:00",
+        )
+        self.assertEqual(observation["evidence_ref"], "SYNTHETIC-RECEIPT-001")
+        self.assertFalse(observation["truth_boundary"]["provider_write_performed_here"])
+        self.assertFalse(observation["truth_boundary"]["authority_inherited"])
+        self.assertFalse(observation["truth_boundary"]["maturity_inherited"])
+
+    def test_missing_receipt_section_fails_closed(self):
+        receipt = self._receipt()
+        del receipt["rollback"]
+        result = assess_drive_receipt_contract(receipt)
+        self.assertFalse(result.compatible)
+        self.assertIn("missing:rollback", result.gaps)
 
 
 class EstateAuditTests(unittest.TestCase):
