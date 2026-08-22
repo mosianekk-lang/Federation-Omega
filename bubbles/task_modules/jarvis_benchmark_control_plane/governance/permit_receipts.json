@@ -1,0 +1,11 @@
+{
+  "missionId": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+  "missionVersion": 1,
+  "actionId": "ACTION-BUILD-JBCP-001",
+  "formationBinding": "ENFORCED",
+  "authorityClass": "A1_LOCAL_REVERSIBLE_WRITE",
+  "permitPolicy": "opaque, single-use, five-minute TTL, consumed immediately before each local write cycle",
+  "writeCyclesCompleted": 5,
+  "rawTokensPersistedInDeliverable": false,
+  "requirements": ["R1", "R2", "R3", "R4", "R5"]
+}

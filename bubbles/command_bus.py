@@ -13,6 +13,11 @@ from bubbles.control_plane import (
     RouteKind,
 )
 from bubbles.forest_background import run_background_event
+from bubbles.jarvis_benchmark_task import (
+    ALLOWED_ACTIONS as JARVIS_BENCHMARK_ACTIONS,
+    JarvisBenchmarkTaskError,
+    run_jarvis_benchmark_task,
+)
 from evidenceops.build_system.chat_failure_resilience import evaluate_failure
 
 
@@ -83,6 +88,13 @@ def _forest_background_event(request: ActionRequest) -> dict[str, object]:
     }
 
 
+def _jarvis_benchmark_event(request: ActionRequest) -> dict[str, object]:
+    try:
+        return run_jarvis_benchmark_task(request.action, request.payload)
+    except JarvisBenchmarkTaskError as exc:
+        raise CommandBusError(str(exc)) from exc
+
+
 def execute_command(command: Mapping[str, object], *, actor: str, event_name: str, source_ref: str) -> dict[str, object]:
     if actor not in ALLOWED_ACTORS:
         return {"schema": RECEIPT_SCHEMA, "state": "CONSTRAINT", "actor": actor, "event_name": event_name,
@@ -140,6 +152,15 @@ def execute_command(command: Mapping[str, object], *, actor: str, event_name: st
     if request.adapter_id == "bubbles_command_bus" and request.action == "forest_first_omega_event":
         return {**base_receipt, "state": "SUCCESS", "execution": _forest_background_event(request),
                 "truth_boundary": "SUCCESS proves the admitted Bubbles runner processed a sanitized Forest-First Omega event and emitted a cost-governed wake decision. It does not expose private provider content, establish legal facts, or perform any external provider mutation."}
+
+    if request.adapter_id == "bubbles_command_bus" and request.action in JARVIS_BENCHMARK_ACTIONS:
+        execution = _jarvis_benchmark_event(request)
+        return {
+            **base_receipt,
+            "state": "SUCCESS",
+            "execution": execution,
+            "truth_boundary": execution["truthBoundary"],
+        }
 
     return {**base_receipt, "state": "CONSTRAINT", "reason": "Provider executor is not bound in command-bus v1.",
             "truth_boundary": "Route readiness alone is not provider authority. External execution remains blocked until a provider-specific executor supplies fresh identity, target, scope, execution and readback proof."}

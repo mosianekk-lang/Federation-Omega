@@ -1,0 +1,550 @@
+{
+  "activationMode": "FULL",
+  "authorityExpansion": false,
+  "effectfulPathsAllowed": 1,
+  "fanInCount": 1,
+  "horizons": [
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce outcome deviation before the next authorized action",
+      "horizon": 1,
+      "lens": "outcome",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce dependency deviation before the next authorized action",
+      "horizon": 2,
+      "lens": "dependency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce proof deviation before the next authorized action",
+      "horizon": 3,
+      "lens": "proof",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce authority deviation before the next authorized action",
+      "horizon": 4,
+      "lens": "authority",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce privacy deviation before the next authorized action",
+      "horizon": 5,
+      "lens": "privacy",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce cost deviation before the next authorized action",
+      "horizon": 6,
+      "lens": "cost",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce latency deviation before the next authorized action",
+      "horizon": 7,
+      "lens": "latency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce rollback deviation before the next authorized action",
+      "horizon": 8,
+      "lens": "rollback",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce contradiction deviation before the next authorized action",
+      "horizon": 9,
+      "lens": "contradiction",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce user-burden deviation before the next authorized action",
+      "horizon": 10,
+      "lens": "user-burden",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce outcome deviation before the next authorized action",
+      "horizon": 11,
+      "lens": "outcome",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce dependency deviation before the next authorized action",
+      "horizon": 12,
+      "lens": "dependency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce proof deviation before the next authorized action",
+      "horizon": 13,
+      "lens": "proof",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce authority deviation before the next authorized action",
+      "horizon": 14,
+      "lens": "authority",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce privacy deviation before the next authorized action",
+      "horizon": 15,
+      "lens": "privacy",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce cost deviation before the next authorized action",
+      "horizon": 16,
+      "lens": "cost",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce latency deviation before the next authorized action",
+      "horizon": 17,
+      "lens": "latency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce rollback deviation before the next authorized action",
+      "horizon": 18,
+      "lens": "rollback",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce contradiction deviation before the next authorized action",
+      "horizon": 19,
+      "lens": "contradiction",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce user-burden deviation before the next authorized action",
+      "horizon": 20,
+      "lens": "user-burden",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce outcome deviation before the next authorized action",
+      "horizon": 21,
+      "lens": "outcome",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce dependency deviation before the next authorized action",
+      "horizon": 22,
+      "lens": "dependency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce proof deviation before the next authorized action",
+      "horizon": 23,
+      "lens": "proof",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce authority deviation before the next authorized action",
+      "horizon": 24,
+      "lens": "authority",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce privacy deviation before the next authorized action",
+      "horizon": 25,
+      "lens": "privacy",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce cost deviation before the next authorized action",
+      "horizon": 26,
+      "lens": "cost",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce latency deviation before the next authorized action",
+      "horizon": 27,
+      "lens": "latency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce rollback deviation before the next authorized action",
+      "horizon": 28,
+      "lens": "rollback",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce contradiction deviation before the next authorized action",
+      "horizon": 29,
+      "lens": "contradiction",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce user-burden deviation before the next authorized action",
+      "horizon": 30,
+      "lens": "user-burden",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce outcome deviation before the next authorized action",
+      "horizon": 31,
+      "lens": "outcome",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce dependency deviation before the next authorized action",
+      "horizon": 32,
+      "lens": "dependency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce proof deviation before the next authorized action",
+      "horizon": 33,
+      "lens": "proof",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce authority deviation before the next authorized action",
+      "horizon": 34,
+      "lens": "authority",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce privacy deviation before the next authorized action",
+      "horizon": 35,
+      "lens": "privacy",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce cost deviation before the next authorized action",
+      "horizon": 36,
+      "lens": "cost",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce latency deviation before the next authorized action",
+      "horizon": 37,
+      "lens": "latency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce rollback deviation before the next authorized action",
+      "horizon": 38,
+      "lens": "rollback",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce contradiction deviation before the next authorized action",
+      "horizon": 39,
+      "lens": "contradiction",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce user-burden deviation before the next authorized action",
+      "horizon": 40,
+      "lens": "user-burden",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce outcome deviation before the next authorized action",
+      "horizon": 41,
+      "lens": "outcome",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce dependency deviation before the next authorized action",
+      "horizon": 42,
+      "lens": "dependency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce proof deviation before the next authorized action",
+      "horizon": 43,
+      "lens": "proof",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce authority deviation before the next authorized action",
+      "horizon": 44,
+      "lens": "authority",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce privacy deviation before the next authorized action",
+      "horizon": 45,
+      "lens": "privacy",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    },
+    {
+      "cancelCondition": "user supersession",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce cost deviation before the next authorized action",
+      "horizon": 46,
+      "lens": "cost",
+      "proofNeed": "current-source metadata and retrieval timestamp",
+      "trigger": "authoritative source or version changes"
+    },
+    {
+      "cancelCondition": "mission completion",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce latency deviation before the next authorized action",
+      "horizon": 47,
+      "lens": "latency",
+      "proofNeed": "deterministic test and validation receipt",
+      "trigger": "JARVIS evidence state changes"
+    },
+    {
+      "cancelCondition": "authority boundary reached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce rollback deviation before the next authorized action",
+      "horizon": 48,
+      "lens": "rollback",
+      "proofNeed": "hash-chain verification",
+      "trigger": "critical benchmark source becomes stale"
+    },
+    {
+      "cancelCondition": "critical evidence missing",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce contradiction deviation before the next authorized action",
+      "horizon": 49,
+      "lens": "contradiction",
+      "proofNeed": "explicit authority and cost boundary",
+      "trigger": "ledger integrity or idempotency check fails"
+    },
+    {
+      "cancelCondition": "zero-recurring-cost constraint would be breached",
+      "confidence": "TO_VERIFY",
+      "disposition": "ADVISORY",
+      "expectedImpact": "Detect or reduce user-burden deviation before the next authorized action",
+      "horizon": 50,
+      "lens": "user-burden",
+      "proofNeed": "before-and-after benchmark delta",
+      "trigger": "mission is superseded or deployment is authorized"
+    }
+  ],
+  "immediateActions": [
+    {
+      "burden": 0,
+      "id": "BUILD_LOCAL_CONTROL_PLANE",
+      "reversible": true,
+      "risk": 2,
+      "utility": 9.0,
+      "value": 10
+    },
+    {
+      "burden": 0,
+      "id": "PROVE_FAIL_CLOSED_FRESHNESS_AND_LEDGER",
+      "reversible": true,
+      "risk": 1,
+      "utility": 9.0,
+      "value": 9
+    },
+    {
+      "burden": 0,
+      "id": "REFRESH_PRIMARY_STANDARDS_REGISTRY",
+      "reversible": true,
+      "risk": 1,
+      "utility": 9.0,
+      "value": 9
+    }
+  ],
+  "lanes": [
+    "PRIMARY_EXECUTOR",
+    "TWIN_FORESIGHT_VERIFIER"
+  ],
+  "mission": {
+    "id": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+    "version": 1
+  },
+  "runtimeState": "ON_DEMAND_GOVERNED",
+  "stopState": "ACTIVE",
+  "throughput": {
+    "factor": 1.0,
+    "qualityProtected": true,
+    "state": "MEASURED_BELOW_2X"
+  },
+  "visibleLedgerRequired": true
+}

@@ -1,0 +1,41 @@
+{
+  "mission": {
+    "id": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+    "version": 1,
+    "objective": "Produce a runnable, tested, secure and recoverable JARVIS benchmark knowledge-plane candidate with current-source freshness controls and proof artifacts.",
+    "source": "Latest user authorization: n; standing instruction: benchmark, improve, seek and exploit opportunities, proceed until a genuine authorization boundary; incorporate 50 moves ahead doctrine.",
+    "stopRequested": false,
+    "requirements": [
+      {"id": "R1", "state": "OPEN", "evidence": "Authoritative standards registry with source identity, currency, evidence grade and private-claim quarantine."},
+      {"id": "R2", "state": "OPEN", "evidence": "Deterministic benchmark, delta, opportunity and mission-utility scoring engine."},
+      {"id": "R3", "state": "OPEN", "evidence": "Tamper-evident append-only learning ledger with idempotency and verification."},
+      {"id": "R4", "state": "OPEN", "evidence": "Dependency-free CLI and HTTP API with bounded inputs, auth-gated writes and fail-closed controls."},
+      {"id": "R5", "state": "OPEN", "evidence": "Tests, MODISA Build Contract, operator documentation, proof receipts and durable package."}
+    ],
+    "constraints": {
+      "authorizedClasses": ["A0", "A1"],
+      "maximumCost": 0,
+      "zeroNewRecurringCost": true,
+      "maximumUserBurden": 0
+    }
+  },
+  "proposedAction": {
+    "id": "ACTION-BUILD-JBCP-001",
+    "missionId": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+    "missionVersion": 1,
+    "kind": "LOCAL_REVERSIBLE_WRITE",
+    "description": "Create the dependency-free Node.js control plane, fixtures, tests, Build Contract and documentation in the scratch workspace.",
+    "requirementIds": ["R1", "R2", "R3", "R4", "R5"],
+    "authorityClass": "A1",
+    "estimatedCost": 0,
+    "recurringCost": 0,
+    "expectedOutcomeDelta": 5,
+    "expectedInformationGain": 1,
+    "estimatedUserBurden": 0,
+    "avoidableUserOrchestration": false,
+    "necessarySafetyAction": false,
+    "reversible": true,
+    "createsObligations": []
+  },
+  "pendingActions": []
+}

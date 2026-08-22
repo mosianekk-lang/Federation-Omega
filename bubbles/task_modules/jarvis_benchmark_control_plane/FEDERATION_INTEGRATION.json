@@ -1,0 +1,86 @@
+{
+  "schema": "JARVIS-BENCHMARK-FEDERATION-INTEGRATION-1",
+  "moduleId": "jarvis_benchmark_control_plane",
+  "moduleVersion": "1.0.0",
+  "candidateBase": {
+    "pullRequest": 549,
+    "branch": "jarvis/gcp-admin-mcp-v022-adapter-disabled",
+    "head": "72e6fa48bc9f4d33ecbfb3976bfce181c07f85c1"
+  },
+  "dependencyLineage": [
+    {
+      "pullRequest": 534,
+      "head": "bec80d87c5bb05e8a6a1a4453c71aef3d1d02ad6",
+      "relationship": "SEMANTIC_SERVICE_DEPENDENCY",
+      "currentMainRelation": "DIVERGED_AHEAD_1_BEHIND_1"
+    },
+    {
+      "pullRequest": 546,
+      "head": "9b075fc64393e3b780a863860d59a082fe41ceb0",
+      "relationship": "STACK_BASE",
+      "currentMainRelation": "DIVERGED_AHEAD_7_BEHIND_1"
+    },
+    {
+      "pullRequest": 548,
+      "head": "b6d95e15fd1b63fecabb63d00fd3565989fcfaf0",
+      "relationship": "STACK_BASE",
+      "parentHead": "9b075fc64393e3b780a863860d59a082fe41ceb0",
+      "parentRelation": "AHEAD_19_BEHIND_0"
+    },
+    {
+      "pullRequest": 549,
+      "head": "72e6fa48bc9f4d33ecbfb3976bfce181c07f85c1",
+      "relationship": "DIRECT_CANDIDATE_BASE",
+      "parentHead": "b6d95e15fd1b63fecabb63d00fd3565989fcfaf0",
+      "parentRelation": "AHEAD_4_BEHIND_0"
+    }
+  ],
+  "currentMain": "0ebbb7d95614fc78698a0e85f68301c61dcb9f3a",
+  "centralExecutionHome": {
+    "workflow": ".github/workflows/bubbles-command-bus.yml",
+    "workflowBlob": "c7fce6bade42dfb9db8bd8c7994f8bf6ebf475a9",
+    "runner": "bubbles.command_bus",
+    "taskAdapter": "bubbles.jarvis_benchmark_task",
+    "workflowFileChanged": false,
+    "newWorkflowFile": false,
+    "airlockAllowlistChanged": false
+  },
+  "airlock": {
+    "policyId": "FEDOMEGA-GITHUB-AIRLOCK-V2",
+    "policyVersion": "2.3.2",
+    "policyBlob": "fd21e41c779d66e85eb3f0ea1def810fe5afcbc5",
+    "activeWorkflowCount": 5,
+    "admissionRequired": true
+  },
+  "allowedActions": [
+    "jarvis_benchmark_validate",
+    "jarvis_benchmark_snapshot",
+    "jarvis_benchmark_opportunities",
+    "jarvis_benchmark_refresh_plan"
+  ],
+  "prohibitedActions": [
+    "cycle_commit",
+    "network_refresh",
+    "daemon_start",
+    "server_start",
+    "private_evidence_ingress",
+    "provider_write",
+    "deployment",
+    "merge"
+  ],
+  "inputClass": "COMMITTED_PUBLIC_FIXTURE_ONLY",
+  "runtimeState": "EPHEMERAL_PER_INVOCATION",
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "testedLocal": true,
+    "registeredCandidate": true,
+    "registeredOnMain": false,
+    "authorizedForSourcePublication": true,
+    "readyForStackedReview": true,
+    "deployed": false,
+    "provenProduction": false
+  },
+  "truthBoundary": "The integration makes the benchmark available as a bounded read-only module behind the existing command bus. It does not publish private benchmark evidence, add or activate a workflow, change the Airlock allowlist, write a durable runtime ledger, deploy the service, merge any dependency, or make the stale #534/#546 heads current with main."
+}
+

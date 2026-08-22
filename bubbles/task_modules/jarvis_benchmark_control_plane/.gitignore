@@ -1,0 +1,9 @@
+# Runtime-only state must never become source history.
+data/learning-ledger.jsonl
+data/learning-ledger.jsonl.lock
+runtime/
+STOP
+
+# Formation permits are trusted runtime state, not deliverables.
+governance/formation_permits.*
+

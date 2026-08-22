@@ -1,6 +1,6 @@
 {
   "schema": "BUBBLES-CONTROL-PLANE-REGISTRY-V1",
-  "version": "1.3.0",
+  "version": "1.4.0",
   "authority_ceiling": "A1_INTERNAL",
   "chatgpt_ingress": {
     "preferred_write_bus": "GITHUB_NATIVE_APP",
@@ -114,7 +114,29 @@
     "provider_execution_v1": false,
     "immutable_receipt": true,
     "receipt_storage": "GITHUB_ACTIONS_ARTIFACT",
-    "internal_canary": "LIVE_VERIFIED"
+    "internal_canary": "LIVE_VERIFIED",
+    "central_task_modules": [
+      {
+        "id": "jarvis_benchmark_control_plane",
+        "version": "1.0.0",
+        "runner": "bubbles.jarvis_benchmark_task",
+        "source_root": "bubbles/task_modules/jarvis_benchmark_control_plane",
+        "actions": [
+          "jarvis_benchmark_validate",
+          "jarvis_benchmark_snapshot",
+          "jarvis_benchmark_opportunities",
+          "jarvis_benchmark_refresh_plan"
+        ],
+        "effect": "READ",
+        "input_class": "COMMITTED_PUBLIC_FIXTURE_ONLY",
+        "network_access": false,
+        "durable_writes": false,
+        "provider_effects": false,
+        "new_workflow_file": false,
+        "runtime_state_in_source": false,
+        "state": "SOURCE_READY_LOCAL_TESTED_PROVIDER_CHECK_PENDING"
+      }
+    ]
   },
   "private_queue": {
     "pointer_source": "KIM_DATAVERSE_PRIVATE_CANONICAL_BRIDGE_V2",
@@ -143,5 +165,5 @@
     "PROVIDER_READBACK",
     "TERMINAL_SUCCESS_FAILURE_OR_CONSTRAINT"
   ],
-  "truth_boundary": "The ChatGPT-to-Actions command bus is live-verified. The private Kim Dataverse queue and its v2.2 processor are live-reachable, but production reuse of the legacy approval secret is intentionally quarantined. The statically verified FO-GAS v2.3 successor removes plaintext approval requirements from owner-only dry-run execution, rotates ScriptProperties without returning the secret, scrubs approval columns and leaves live mutations disabled; it remains STAGED_NOT_DEPLOYED until a provider-capable Apps Script source update route is available. Google Cloud management and WIF mutation remain provider-gated. Canonical GitHub truth is controlled by the private last-admitted-commit pointer because provider-native branch protection is not exposed."
+  "truth_boundary": "The ChatGPT-to-Actions command bus is live-verified. The private Kim Dataverse queue and its v2.2 processor are live-reachable, but production reuse of the legacy approval secret is intentionally quarantined. The statically verified FO-GAS v2.3 successor removes plaintext approval requirements from owner-only dry-run execution, rotates ScriptProperties without returning the secret, scrubs approval columns and leaves live mutations disabled; it remains STAGED_NOT_DEPLOYED until a provider-capable Apps Script source update route is available. Google Cloud management and WIF mutation remain provider-gated. Canonical GitHub truth is controlled by the private last-admitted-commit pointer because provider-native branch protection is not exposed. The JARVIS benchmark central task module is a source candidate restricted to the committed public fixture, no network, no durable writes and no provider effects; registration on main, deployment and private evidence benchmarking remain unproven."
 }

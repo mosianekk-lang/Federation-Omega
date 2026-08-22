@@ -1,0 +1,81 @@
+{
+  "mission": {
+    "id": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+    "version": 1,
+    "task": "Build the JARVIS continuously updating benchmark and mission-control knowledge plane under the explicit 50 moves ahead doctrine",
+    "stale": false
+  },
+  "activation": {
+    "substantive": true,
+    "complexity": "high",
+    "risk": "medium",
+    "explicitForesight": true,
+    "consequential": true,
+    "externalEffect": false,
+    "securitySensitive": true,
+    "providerBacked": false,
+    "deployment": false
+  },
+  "authority": {
+    "authorized": true,
+    "expansionRequested": false
+  },
+  "forecast": {
+    "triggers": [
+      "authoritative source or version changes",
+      "JARVIS evidence state changes",
+      "critical benchmark source becomes stale",
+      "ledger integrity or idempotency check fails",
+      "mission is superseded or deployment is authorized"
+    ],
+    "proofNeeds": [
+      "current-source metadata and retrieval timestamp",
+      "deterministic test and validation receipt",
+      "hash-chain verification",
+      "explicit authority and cost boundary",
+      "before-and-after benchmark delta"
+    ],
+    "cancelConditions": [
+      "user supersession",
+      "mission completion",
+      "authority boundary reached",
+      "critical evidence missing",
+      "zero-recurring-cost constraint would be breached"
+    ]
+  },
+  "candidates": [
+    {
+      "id": "BUILD_LOCAL_CONTROL_PLANE",
+      "value": 10,
+      "risk": 2,
+      "burden": 0,
+      "reversible": true
+    },
+    {
+      "id": "REFRESH_PRIMARY_STANDARDS_REGISTRY",
+      "value": 9,
+      "risk": 1,
+      "burden": 0,
+      "reversible": true
+    },
+    {
+      "id": "PROVE_FAIL_CLOSED_FRESHNESS_AND_LEDGER",
+      "value": 9,
+      "risk": 1,
+      "burden": 0,
+      "reversible": true
+    }
+  ],
+  "metrics": {
+    "baseline": {
+      "verifiedWorkUnits": 1,
+      "elapsedSeconds": 300,
+      "verifiedOutputRatio": 1
+    },
+    "candidate": {
+      "verifiedWorkUnits": 1,
+      "elapsedSeconds": 300,
+      "verifiedOutputRatio": 1
+    }
+  }
+}

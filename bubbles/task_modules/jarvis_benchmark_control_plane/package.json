@@ -1,0 +1,22 @@
+{
+  "name": "jarvis-benchmark-control-plane",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Evidence-gated benchmark, opportunity and delta-learning control plane for JARVIS.",
+  "engines": {
+    "node": ">=24.0.0"
+  },
+  "bin": {
+    "jarvis-benchmark": "./src/cli.js"
+  },
+  "scripts": {
+    "start": "node src/server.js",
+    "daemon:once": "node src/daemon.js --once",
+    "validate": "node src/cli.js validate",
+    "demo": "node src/cli.js evaluate --input examples/jarvis-state.sample.json",
+    "test": "node --test --test-reporter=spec",
+    "test:coverage": "node --test --experimental-test-coverage"
+  },
+  "license": "UNLICENSED"
+}

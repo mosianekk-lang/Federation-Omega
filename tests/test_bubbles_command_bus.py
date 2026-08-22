@@ -35,11 +35,29 @@ class BubblesCommandBusTests(unittest.TestCase):
             payload=payload,
         )
 
+    def benchmark_command(self, action="jarvis_benchmark_validate", payload=None):
+        return self.command(
+            action=action,
+            effect="READ",
+            target_alias="JARVIS_BENCHMARK_PUBLIC_FIXTURE_V1",
+            payload=payload or {},
+        )
+
     def test_internal_canary_succeeds_without_external_provider_effect(self):
         receipt = self.run_command(self.command())
         self.assertEqual(receipt["state"], "SUCCESS")
         self.assertEqual(receipt["execution"]["kind"], "LOCAL_COMMAND_BUS_CANARY")
         self.assertIn("does not prove Google Cloud", receipt["truth_boundary"])
+
+        benchmark = self.run_command(self.benchmark_command())
+        self.assertEqual("SUCCESS", benchmark["state"])
+        execution = benchmark["execution"]
+        self.assertEqual("LOCAL_JARVIS_BENCHMARK_CONTROL_PLANE", execution["kind"])
+        self.assertTrue(execution["result"]["valid"])
+        self.assertFalse(execution["providerEffects"])
+        self.assertFalse(execution["networkUsed"])
+        self.assertFalse(execution["runtimeLedgerPersisted"])
+        self.assertIn("public fixture", benchmark["truth_boundary"])
 
     def test_chat_failure_recovery_invokes_cfre_for_connection_interruption(self):
         receipt = self.run_command(self.recovery_command({
@@ -141,6 +159,18 @@ class BubblesCommandBusTests(unittest.TestCase):
         )
         self.assertEqual(receipt["state"], "CONSTRAINT")
         self.assertIn("GITHUB_COMMAND_BUS", receipt["reason"])
+        private = self.run_command(self.benchmark_command(
+            action="jarvis_benchmark_snapshot",
+            payload={"state": {"private": "must-not-enter-public-command-bus"}},
+        ))
+        self.assertEqual("FAILURE", private["state"])
+        self.assertIn("unknown fields", private["reason"])
+
+        write_route = self.run_command(self.benchmark_command(
+            action="jarvis_benchmark_cycle_commit",
+        ))
+        self.assertEqual("CONSTRAINT", write_route["state"])
+        self.assertIn("not bound", write_route["reason"])
 
 
 if __name__ == "__main__":
