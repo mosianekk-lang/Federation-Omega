@@ -27,6 +27,13 @@ POLICIES: tuple[AutoscalePolicy, ...] = (
     AutoscalePolicy("AS-012", "HIGH_SCALE_OPPORTUNITY", "UP_LATERAL", "EXPERIMENT_THEN_FANOUT"),
     AutoscalePolicy("AS-013", "COST_PERFORMANCE", "DOWN_LATERAL", "SHIFT_TO_CHEAPER_EQUIVALENT"),
     AutoscalePolicy("AS-014", "SELF_IMPROVEMENT", "UP", "FORM_SMALLEST_MISSING_CAPABILITY"),
+    AutoscalePolicy("AS-015", "MESH_NODE_FORMATION", "UP", "FORM_LOGICAL_SPECIALIST_CELL"),
+    AutoscalePolicy("AS-016", "MESH_NODE_SPLIT", "UP_LATERAL", "SPLIT_SPECIALIST_CELL"),
+    AutoscalePolicy("AS-017", "MESH_NODE_MERGE", "DOWN", "MERGE_OR_DEMOTE_LOGICAL_CELL"),
+    AutoscalePolicy("AS-018", "MESH_NODE_PROMOTION", "UP", "PROMOTE_NODE_RING"),
+    AutoscalePolicy("AS-019", "MESH_NODE_DEMOTION", "DOWN_LATERAL", "DEMOTE_NODE_AND_REROUTE"),
+    AutoscalePolicy("AS-020", "MESH_FAILOVER", "LATERAL", "CONTINUE_LOCAL_AND_REROUTE"),
+    AutoscalePolicy("AS-021", "MESH_NODE_CADENCE", "UP_DOWN", "RIGHTSIZE_LOCAL_NODE_CADENCE"),
 )
 
 _POLICY_INDEX = {policy.policy_id: policy for policy in POLICIES}
@@ -91,9 +98,10 @@ class AutoscaleDecision:
 def decide_autoscale(signal: AutoscaleSignal) -> AutoscaleDecision:
     """Return a deterministic CFBE autoscale decision without inheriting authority.
 
-    This governor can right-size CFBE's internal benchmark capability within an
-    already-authorised, reversible, zero/included-cost A0/A1 envelope. It does
-    not execute provider mutations and cannot certify its own improvement.
+    This governor can right-size CFBE's benchmark and mesh-control capability
+    within an already-authorised, reversible, zero/included-cost A0/A1 envelope.
+    It does not create provider resources, mutate IAM, retire infrastructure, or
+    certify its own improvement.
     """
     signal.validate()
     policy = _POLICY_INDEX[signal.policy_id]
@@ -152,11 +160,7 @@ def decide_autoscale(signal: AutoscaleSignal) -> AutoscaleDecision:
 
 
 def rank_admissible_signals(signals: Iterable[AutoscaleSignal]) -> list[AutoscaleDecision]:
-    """Rank currently admissible autoscale actions by value and information gain.
-
-    Gated/held signals are omitted from execution ranking but remain available to
-    callers through direct `decide_autoscale` evaluation and durable ledgers.
-    """
+    """Rank currently admissible autoscale actions by value and information gain."""
     prepared: list[tuple[float, str, AutoscaleDecision]] = []
     for signal in signals:
         decision = decide_autoscale(signal)
