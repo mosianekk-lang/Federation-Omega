@@ -27,4 +27,4 @@ jobs:
         with:
           python-version: '3.12'
       - name: Run CFBE regression tests
-        run: python -m pytest -q tests/test_cfbe_omega.py
+        run: python -m unittest -q tests.test_cfbe_omega
