@@ -12,10 +12,15 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 env:
   PROJECT_ID: sov-hybrid-suite
   GOOGLE_CLOUD_LOCATION: global
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  WIF_SERVICE_ACCOUNT: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+  HAS_GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY != '' }}
   HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
   HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
   HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
@@ -27,7 +32,7 @@ env:
 jobs:
   gemini-provider-canary:
     runs-on: ubuntu-latest
-    timeout-minutes: 7
+    timeout-minutes: 8
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -93,6 +98,16 @@ jobs:
         with:
           credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
 
+      - name: Authenticate with canonical keyless WIF if no other Google binding exists
+        id: auth_wif
+        if: ${{ env.HAS_GEMINI_API_KEY != 'true' && env.HAS_GOOGLE_API_KEY != 'true' && steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && steps.auth_gcp_credentials.outcome != 'success' && steps.auth_google_gha.outcome != 'success' && steps.auth_google_cloud.outcome != 'success' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
+
       - name: Install existing Gemini provider dependency
         run: python -m pip install --disable-pip-version-check 'google-genai>=1.0.0'
 
@@ -110,6 +125,7 @@ jobs:
           AUTH_GCP_CREDENTIALS: ${{ steps.auth_gcp_credentials.outcome }}
           AUTH_GOOGLE_GHA: ${{ steps.auth_google_gha.outcome }}
           AUTH_GOOGLE_CLOUD: ${{ steps.auth_google_cloud.outcome }}
+          AUTH_WIF: ${{ steps.auth_wif.outcome }}
         run: |
           python - <<'PY'
           import hashlib
@@ -121,7 +137,7 @@ jobs:
           from google import genai
 
           receipt_path = pathlib.Path('sovara_gemini_provider_canary_receipt.json')
-          nonce = 'SOVARA_GEMINI_ROUTE_CANARY_20260822_B'
+          nonce = 'SOVARA_GEMINI_ROUTE_CANARY_20260822_C'
 
           direct_binding = 'GEMINI_API_KEY' if os.getenv('GEMINI_API_KEY') else ('GOOGLE_API_KEY' if os.getenv('GOOGLE_API_KEY') else None)
           auth_outcomes = {
@@ -132,6 +148,7 @@ jobs:
               'GCP_CREDENTIALS': os.getenv('AUTH_GCP_CREDENTIALS', 'skipped'),
               'GOOGLE_GHA_CREDS_JSON': os.getenv('AUTH_GOOGLE_GHA', 'skipped'),
               'GOOGLE_CLOUD_CREDENTIALS': os.getenv('AUTH_GOOGLE_CLOUD', 'skipped'),
+              'CANONICAL_WIF': os.getenv('AUTH_WIF', 'skipped'),
           }
           adc_binding = next((name for name, outcome in auth_outcomes.items() if outcome == 'success'), None)
           alias_presence_count = sum(1 for name in (
@@ -143,13 +160,14 @@ jobs:
           binding = direct_binding or adc_binding
           model = os.getenv('JARVIS_GEMINI_MODEL', 'gemini-flash-latest') if direct_binding else os.getenv('VERTEX_GEMINI_MODEL', 'gemini-2.5-flash')
           receipt = {
-              'schema': 'SOVARA_GEMINI_PROVIDER_CANARY_V2',
+              'schema': 'SOVARA_GEMINI_PROVIDER_CANARY_V3',
               'provider': 'google-gemini',
               'route': route,
               'binding_present': bool(binding),
               'binding_source': binding or 'NONE',
               'gcp_credential_alias_presence_count': alias_presence_count,
               'adc_auth_success': bool(adc_binding),
+              'canonical_wif_outcome': os.getenv('AUTH_WIF', 'skipped'),
               'credential_value_exposed': False,
               'model_requested': model,
               'provider_invoked': False,
