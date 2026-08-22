@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.3.2",
+  "version": "2.4.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -19,14 +19,16 @@
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
-    ".github/workflows/caseforge-provider-readback-canary.yml"
+    ".github/workflows/caseforge-provider-readback-canary.yml",
+    ".github/workflows/frontier-benchmark.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
     ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
     ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"]
+    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
+    ".github/workflows/frontier-benchmark.yml": ["pull_request", "schedule", "workflow_dispatch"]
   },
   "required_push_branches": {
     ".github/workflows/bubbles-command-bus.yml": ["main"],
@@ -38,6 +40,9 @@
   ],
   "statuses_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
+  ],
+  "read_only_public_research_workflow_allowlist": [
+    ".github/workflows/frontier-benchmark.yml"
   ],
   "forbidden_pattern_exceptions": {
     ".github/workflows/phoenix-emergency-freeze.yml": [
@@ -72,13 +77,15 @@
   "proof_destination": "GITHUB_ACTIONS_ARTIFACT_OR_EXTERNAL_APPEND_ONLY_STORE",
   "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
   "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+  "public_research_exception_boundary": "Allowlisted read-only HTTPS research may emit Actions artifacts but may not mutate source, provider state, benchmark maturity or canonical private state.",
   "execution_quarantine": {
     "keep_active": [
       ".github/workflows/github-airlock.yml",
       ".github/workflows/public-repository-leak-guard.yml",
       ".github/workflows/phoenix-emergency-freeze.yml",
       ".github/workflows/bubbles-command-bus.yml",
-      ".github/workflows/caseforge-provider-readback-canary.yml"
+      ".github/workflows/caseforge-provider-readback-canary.yml",
+      ".github/workflows/frontier-benchmark.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
@@ -89,3 +96,4 @@
     "verified_commit_status": "phoenix-freeze/verified"
   }
 }
+
