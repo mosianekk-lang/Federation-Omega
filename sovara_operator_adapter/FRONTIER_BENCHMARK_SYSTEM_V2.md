@@ -1,6 +1,6 @@
 # SOVARA Continuous Frontier Benchmark System v2
 
-State: `LOCAL_CANARY_PROVEN / EXTERNAL_REFRESH_SCHEDULE_PENDING / COCKPIT_DEPLOYMENT_PENDING`
+State: `PRODUCTION_FOUNDATION_PROVEN / OWNER_COCKPIT_V4_LIVE / DAILY_OWNER_CONTROL_ENABLED`
 
 ## What it measures
 
@@ -56,16 +56,15 @@ These are bounded architecture assessments from the recorded propositions. Vendo
 11. Append an immutable benchmark snapshot and delta.
 12. Update the cockpit and deployment only for a material, verified change.
 
-## Repository contract
+## Source and evidence-plane contract
 
 - `frontier_knowledgebase_v2.json` — curated evidence, propositions, dimensions, scores and policies.
 - `frontier_benchmark_engine.py` — validator, scorer, gap engine, delta compiler and append-only benchmark repository.
 - `frontier_source_refresh.py` — bounded source watcher and semantic-review queue.
-- `frontier_benchmark_report_v2.json` — current generated decision surface.
-- `frontier_knowledgebase/benchmark/snapshots/` — immutable reports.
-- `frontier_knowledgebase/benchmark/deltas/` — immutable material changes.
-- `frontier_knowledgebase/benchmark/refresh-journal.ndjson` — append-only material refresh events.
-- `.github/workflows/sovara-frontier-benchmark.yml` — daily source observation and draft-PR route. Install this file at repository root `.github/workflows/`.
+- `frontier_knowledgebase/README.md` — portable runtime repository layout.
+- `test_frontier_benchmark_engine.py` and `test_frontier_source_refresh.py` — deterministic, failure-first proof.
+
+`frontier_benchmark_report_v2.json`, source observations, immutable snapshots, deltas and the material-change journal are generated runtime evidence. The public Federation-Omega repository is a source plane, not a scheduler or receipt database, so those outputs are retained in the owner-controlled private evidence/recovery plane. The enabled CFBE Frontier Review automation performs the daily control cycle and may propose a source change through a reviewed feature branch; it never self-merges or auto-promotes scores.
 
 ## Promotion and failure rules
 
@@ -82,8 +81,8 @@ These are bounded architecture assessments from the recorded propositions. Vendo
 ```bash
 python -m unittest test_frontier_benchmark_engine.py test_frontier_source_refresh.py
 python frontier_benchmark_engine.py --dataset frontier_knowledgebase_v2.json --check
-python frontier_benchmark_engine.py --dataset frontier_knowledgebase_v2.json --repository frontier_knowledgebase/benchmark --report-out frontier_benchmark_report_v2.json --check
-python frontier_source_refresh.py --knowledgebase frontier_knowledgebase_v2.json --repository frontier_knowledgebase/source-observations --require-all
+python frontier_benchmark_engine.py --dataset frontier_knowledgebase_v2.json --repository /private/evidence/frontier/benchmark --report-out /private/evidence/frontier/frontier_benchmark_report_v2.json --check
+python frontier_source_refresh.py --knowledgebase frontier_knowledgebase_v2.json --repository /private/evidence/frontier/source-observations --require-all
 ```
 
-The source refresh command requires network access to the allowlisted official corpus. A fetch failure retains the last good evidence and opens recovery work; it does not silently downgrade or promote a score.
+Replace `/private/evidence/frontier` with an owner-controlled runtime location. The source refresh command requires network access to the allowlisted official corpus. A fetch failure retains the last good evidence and opens recovery work; it does not silently downgrade or promote a score.
