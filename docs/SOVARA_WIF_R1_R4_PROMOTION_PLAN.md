@@ -13,6 +13,16 @@ This plan is fail-closed. A workflow may pass because it produced a valid,
 sanitized diagnostic receipt, while the provider route remains at R1. A route
 can advance only when the receipt itself proves the next gate.
 
+## Airlock boundary
+
+The exact-head repository Airlock classifies this public workflow as
+`UNAUTHORISED_OIDC` and `WORKFLOW_NOT_ALLOWLISTED`. That is an intended policy
+control, not a reason to weaken the Airlock: the repository is an execution-
+quarantined public source plane and its OIDC allowlist is empty. This draft must
+remain unmerged. R2 and later live identity work must move to the separately
+authorized private execution plane; the public repository should retain only
+reviewable code, tests, documentation, and sanitized external receipts.
+
 ## Readiness algorithm
 
 | Level | Required proof | Automated exit test | Forbidden shortcut |
@@ -24,10 +34,10 @@ can advance only when the receipt itself proves the next gate.
 
 ## Exact R1 to R2 readback contract
 
-The next automation must perform read-only inventory against the configured
-Google Cloud project and emit a receipt containing only booleans, stable state
-labels, resource-version hashes, and the provider's enabled/disabled state. It
-must verify all of the following:
+The next automation must run in the authorized private execution plane, perform
+read-only inventory against the configured Google Cloud project, and emit a
+receipt containing only booleans, stable state labels, resource-version hashes,
+and the provider's enabled/disabled state. It must verify all of the following:
 
 1. The workload identity pool exists and is enabled.
 2. The named provider exists and is enabled inside that pool.

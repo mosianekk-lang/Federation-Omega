@@ -1,9 +1,6 @@
 name: SOVARA WIF Identity Diagnostic
 
 on:
-  push:
-    branches:
-      - probe/sovara-gemini-route-20260822
   pull_request:
     branches:
       - main
@@ -12,11 +9,14 @@ on:
       - 'scripts/wif_identity_diagnostic.py'
       - 'tests/test_wif_identity_diagnostic.py'
       - 'docs/SOVARA_WIF_R1_R4_PROMOTION_PLAN.md'
-  workflow_dispatch:
 
 permissions:
   contents: read
   id-token: write
+
+concurrency:
+  group: sovara-wif-identity-diagnostic-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
 
 env:
   PROJECT_ID: sov-hybrid-suite
