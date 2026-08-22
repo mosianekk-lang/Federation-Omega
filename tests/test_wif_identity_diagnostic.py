@@ -22,6 +22,7 @@ ENVIRONMENT = {
     "GITHUB_REPOSITORY": "owner/repository",
     "GITHUB_REF": "refs/heads/diagnostic",
     "GITHUB_SHA": "a" * 40,
+    "SOURCE_HEAD_SHA": "b" * 40,
 }
 
 
@@ -46,6 +47,13 @@ class WifIdentityDiagnosticTests(unittest.TestCase):
         )
         query = urllib.parse.parse_qs(urllib.parse.urlsplit(url).query)
         self.assertEqual(query["audience"], [VALID_PROVIDER])
+
+    def test_receipt_binds_source_head_separately_from_workflow_sha(self):
+        receipt = diagnostic.make_base_receipt(
+            VALID_PROVIDER, PROJECT_ID, SERVICE_ACCOUNT, ENVIRONMENT
+        )
+        self.assertEqual(receipt["head_sha"], "b" * 40)
+        self.assertEqual(receipt["workflow_sha"], "a" * 40)
 
     def test_invalid_target_stays_at_r1_and_routes_to_provider_readback(self):
         base = diagnostic.make_base_receipt(

@@ -22,6 +22,7 @@ env:
   PROJECT_ID: sov-hybrid-suite
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   WIF_SERVICE_ACCOUNT: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  SOURCE_HEAD_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
 
 jobs:
   wif-identity-diagnostic:
@@ -32,6 +33,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          ref: ${{ env.SOURCE_HEAD_SHA }}
 
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
@@ -70,7 +72,8 @@ jobs:
           assert receipt['schema'] == 'SOVARA_WIF_IDENTITY_DIAGNOSTIC_V1'
           assert receipt['operation'] == 'ZERO_EFFECT_STS_EXCHANGE'
           assert receipt['classification'] in allowed
-          assert receipt['head_sha'] == '${{ github.sha }}'
+          assert receipt['head_sha'] == os.environ['SOURCE_HEAD_SHA']
+          assert receipt['workflow_sha'] == os.environ['GITHUB_SHA']
           assert receipt['credential_value_exposed'] is False
           assert receipt['mutation_performed'] is False
           assert receipt['model_provider_invoked'] is False
@@ -81,7 +84,7 @@ jobs:
           summary = {
               key: receipt[key]
               for key in (
-                  'schema', 'operation', 'head_sha', 'classification',
+                  'schema', 'operation', 'head_sha', 'workflow_sha', 'classification',
                   'current_level', 'next_gate', 'sts_http_status',
                   'google_sts_invoked', 'model_provider_invoked',
                   'mutation_performed', 'credential_value_exposed'

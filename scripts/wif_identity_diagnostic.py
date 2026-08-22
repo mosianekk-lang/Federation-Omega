@@ -110,7 +110,10 @@ def make_base_receipt(
         "operation": OPERATION,
         "repository": environment.get("GITHUB_REPOSITORY", "unknown"),
         "ref": environment.get("GITHUB_REF", "unknown"),
-        "head_sha": environment.get("GITHUB_SHA", "unknown"),
+        "head_sha": environment.get(
+            "SOURCE_HEAD_SHA", environment.get("GITHUB_SHA", "unknown")
+        ),
+        "workflow_sha": environment.get("GITHUB_SHA", "unknown"),
         "provider_resource_syntax_valid": parsed is not None,
         "github_oidc_audience_sha256": _sha256(provider_resource) if parsed else None,
         "sts_audience_sha256": _sha256(sts_audience) if parsed else None,
