@@ -1,4 +1,4 @@
-name: SOVARA Gemini Provider Canary
+name: SOVARA WIF Identity Diagnostic
 
 on:
   push:
@@ -9,6 +9,10 @@ on:
       - main
     paths:
       - '.github/workflows/sovara-gemini-provider-canary.yml'
+      - 'scripts/wif_identity_diagnostic.py'
+      - 'tests/test_wif_identity_diagnostic.py'
+      - 'docs/SOVARA_WIF_R1_R4_PROMOTION_PLAN.md'
+  workflow_dispatch:
 
 permissions:
   contents: read
@@ -16,203 +20,84 @@ permissions:
 
 env:
   PROJECT_ID: sov-hybrid-suite
-  GOOGLE_CLOUD_LOCATION: global
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   WIF_SERVICE_ACCOUNT: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
-  HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
-  HAS_GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY != '' }}
-  HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
-  HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
-  HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
-  HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
-  HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
-  HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
-  HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
 
 jobs:
-  gemini-provider-canary:
-    runs-on: ubuntu-latest
-    timeout-minutes: 8
+  wif-identity-diagnostic:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout exact head without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
 
-      - name: Authenticate with existing GCP_SA_KEY if present
-        id: auth_gcp_sa
-        if: ${{ env.HAS_GCP_SA_KEY == 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GCP_SA_KEY }}
+      - name: Run failure-first diagnostic tests
+        run: python -m unittest tests/test_wif_identity_diagnostic.py -v
 
-      - name: Authenticate with existing GCP_SERVICE_ACCOUNT_KEY if needed
-        id: auth_gcp_service
-        if: ${{ steps.auth_gcp_sa.outcome != 'success' && env.HAS_GCP_SERVICE_ACCOUNT_KEY == 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+      - name: Run zero-effect GitHub OIDC to Google STS diagnostic
+        run: >-
+          python scripts/wif_identity_diagnostic.py
+          --output sovara_wif_identity_diagnostic_receipt.json
 
-      - name: Authenticate with existing GOOGLE_CREDENTIALS if needed
-        id: auth_google_credentials
-        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && env.HAS_GOOGLE_CREDENTIALS == 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
-
-      - name: Authenticate with existing GOOGLE_SERVICE_ACCOUNT_KEY if needed
-        id: auth_google_sa
-        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY == 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-
-      - name: Authenticate with existing GCP_CREDENTIALS if needed
-        id: auth_gcp_credentials
-        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && env.HAS_GCP_CREDENTIALS == 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
-
-      - name: Authenticate with existing GOOGLE_GHA_CREDS_JSON if needed
-        id: auth_google_gha
-        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && steps.auth_gcp_credentials.outcome != 'success' && env.HAS_GOOGLE_GHA_CREDS_JSON == 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
-
-      - name: Authenticate with existing GOOGLE_CLOUD_CREDENTIALS if needed
-        id: auth_google_cloud
-        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && steps.auth_gcp_credentials.outcome != 'success' && steps.auth_google_gha.outcome != 'success' && env.HAS_GOOGLE_CLOUD_CREDENTIALS == 'true' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
-
-      - name: Authenticate with canonical keyless WIF if no other Google binding exists
-        id: auth_wif
-        if: ${{ env.HAS_GEMINI_API_KEY != 'true' && env.HAS_GOOGLE_API_KEY != 'true' && steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && steps.auth_gcp_credentials.outcome != 'success' && steps.auth_google_gha.outcome != 'success' && steps.auth_google_cloud.outcome != 'success' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.WIF_SERVICE_ACCOUNT }}
-
-      - name: Install existing Gemini provider dependency
-        run: python -m pip install --disable-pip-version-check 'google-genai>=1.0.0'
-
-      - name: Run sanitized Gemini provider canary
-        id: canary
-        env:
-          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
-          JARVIS_GEMINI_MODEL: gemini-flash-latest
-          VERTEX_GEMINI_MODEL: gemini-2.5-flash
-          AUTH_GCP_SA: ${{ steps.auth_gcp_sa.outcome }}
-          AUTH_GCP_SERVICE: ${{ steps.auth_gcp_service.outcome }}
-          AUTH_GOOGLE_CREDENTIALS: ${{ steps.auth_google_credentials.outcome }}
-          AUTH_GOOGLE_SA: ${{ steps.auth_google_sa.outcome }}
-          AUTH_GCP_CREDENTIALS: ${{ steps.auth_gcp_credentials.outcome }}
-          AUTH_GOOGLE_GHA: ${{ steps.auth_google_gha.outcome }}
-          AUTH_GOOGLE_CLOUD: ${{ steps.auth_google_cloud.outcome }}
-          AUTH_WIF: ${{ steps.auth_wif.outcome }}
+      - name: Validate sanitized diagnostic receipt
+        shell: bash
         run: |
           python - <<'PY'
-          import hashlib
           import json
           import os
           import pathlib
-          import sys
 
-          from google import genai
-
-          receipt_path = pathlib.Path('sovara_gemini_provider_canary_receipt.json')
-          nonce = 'SOVARA_GEMINI_ROUTE_CANARY_20260822_C'
-
-          direct_binding = 'GEMINI_API_KEY' if os.getenv('GEMINI_API_KEY') else ('GOOGLE_API_KEY' if os.getenv('GOOGLE_API_KEY') else None)
-          auth_outcomes = {
-              'GCP_SA_KEY': os.getenv('AUTH_GCP_SA', 'skipped'),
-              'GCP_SERVICE_ACCOUNT_KEY': os.getenv('AUTH_GCP_SERVICE', 'skipped'),
-              'GOOGLE_CREDENTIALS': os.getenv('AUTH_GOOGLE_CREDENTIALS', 'skipped'),
-              'GOOGLE_SERVICE_ACCOUNT_KEY': os.getenv('AUTH_GOOGLE_SA', 'skipped'),
-              'GCP_CREDENTIALS': os.getenv('AUTH_GCP_CREDENTIALS', 'skipped'),
-              'GOOGLE_GHA_CREDS_JSON': os.getenv('AUTH_GOOGLE_GHA', 'skipped'),
-              'GOOGLE_CLOUD_CREDENTIALS': os.getenv('AUTH_GOOGLE_CLOUD', 'skipped'),
-              'CANONICAL_WIF': os.getenv('AUTH_WIF', 'skipped'),
+          path = pathlib.Path('sovara_wif_identity_diagnostic_receipt.json')
+          receipt = json.loads(path.read_text(encoding='utf-8'))
+          allowed = {
+              'WIF_CONFIGURATION_INVALID',
+              'WIF_SERVICE_ACCOUNT_PROJECT_MISMATCH',
+              'GITHUB_OIDC_UNAVAILABLE',
+              'GITHUB_OIDC_REQUEST_FAILED',
+              'WIF_TARGET_UNAVAILABLE_OR_DISABLED',
+              'WIF_SUBJECT_OR_ATTRIBUTE_DENIED',
+              'WIF_SUBJECT_TOKEN_REJECTED',
+              'STS_EXCHANGE_FAILED_CLASSIFIED',
+              'STS_EXCHANGE_SUCCEEDED',
           }
-          adc_binding = next((name for name, outcome in auth_outcomes.items() if outcome == 'success'), None)
-          alias_presence_count = sum(1 for name in (
-              'HAS_GCP_SA_KEY','HAS_GCP_SERVICE_ACCOUNT_KEY','HAS_GOOGLE_CREDENTIALS',
-              'HAS_GOOGLE_SERVICE_ACCOUNT_KEY','HAS_GCP_CREDENTIALS','HAS_GOOGLE_GHA_CREDS_JSON',
-              'HAS_GOOGLE_CLOUD_CREDENTIALS') if os.getenv(name, '').lower() == 'true')
+          assert receipt['schema'] == 'SOVARA_WIF_IDENTITY_DIAGNOSTIC_V1'
+          assert receipt['operation'] == 'ZERO_EFFECT_STS_EXCHANGE'
+          assert receipt['classification'] in allowed
+          assert receipt['head_sha'] == '${{ github.sha }}'
+          assert receipt['credential_value_exposed'] is False
+          assert receipt['mutation_performed'] is False
+          assert receipt['model_provider_invoked'] is False
+          assert receipt['service_account_impersonated'] is False
+          forbidden = {'access_token', 'id_token', 'subject_token', 'credential'}
+          assert not (forbidden & set(receipt))
 
-          route = 'gemini-developer-api' if direct_binding else ('vertex-ai-adc' if adc_binding else 'none')
-          binding = direct_binding or adc_binding
-          model = os.getenv('JARVIS_GEMINI_MODEL', 'gemini-flash-latest') if direct_binding else os.getenv('VERTEX_GEMINI_MODEL', 'gemini-2.5-flash')
-          receipt = {
-              'schema': 'SOVARA_GEMINI_PROVIDER_CANARY_V3',
-              'provider': 'google-gemini',
-              'route': route,
-              'binding_present': bool(binding),
-              'binding_source': binding or 'NONE',
-              'gcp_credential_alias_presence_count': alias_presence_count,
-              'adc_auth_success': bool(adc_binding),
-              'canonical_wif_outcome': os.getenv('AUTH_WIF', 'skipped'),
-              'credential_value_exposed': False,
-              'model_requested': model,
-              'provider_invoked': False,
-              'marker_match': False,
-              'response_sha256': None,
-              'response_length': 0,
-              'state': 'BINDING_MISSING' if not binding else 'PENDING',
-              'error_class': None,
-          }
-
-          if not binding:
-              receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-              print('SOVARA_GEMINI_CANARY_STATE=BINDING_MISSING')
-              sys.exit(2)
-
-          try:
-              if direct_binding:
-                  client = genai.Client()
-              else:
-                  client = genai.Client(vertexai=True, project=os.environ['PROJECT_ID'], location=os.environ['GOOGLE_CLOUD_LOCATION'])
-              result = client.models.generate_content(
-                  model=model,
-                  contents=f'Return this marker in your answer: {nonce}. Do not include secrets or private data.',
+          summary = {
+              key: receipt[key]
+              for key in (
+                  'schema', 'operation', 'head_sha', 'classification',
+                  'current_level', 'next_gate', 'sts_http_status',
+                  'google_sts_invoked', 'model_provider_invoked',
+                  'mutation_performed', 'credential_value_exposed'
               )
-              output = result.text or ''
-              encoded = output.encode('utf-8')
-              receipt['provider_invoked'] = True
-              receipt['marker_match'] = nonce in output
-              receipt['response_sha256'] = hashlib.sha256(encoded).hexdigest()
-              receipt['response_length'] = len(encoded)
-              receipt['state'] = 'VERIFIED_LIVE' if receipt['marker_match'] else 'SEMANTIC_MISMATCH'
-          except Exception as exc:
-              receipt['state'] = 'PROVIDER_ERROR'
-              receipt['error_class'] = type(exc).__name__
-
-          receipt_path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-          print('SOVARA_GEMINI_CANARY_STATE=' + receipt['state'])
-          sys.exit(0 if receipt['state'] == 'VERIFIED_LIVE' else 3)
+          }
+          with open(os.environ['GITHUB_STEP_SUMMARY'], 'a', encoding='utf-8') as handle:
+              handle.write('## SOVARA WIF identity diagnostic\n\n```json\n')
+              handle.write(json.dumps(summary, indent=2, sort_keys=True))
+              handle.write('\n```\n')
           PY
 
-      - name: Upload sanitized canary receipt
-        if: always()
-        uses: actions/upload-artifact@v4
+      - name: Upload immutable sanitized diagnostic receipt
+        if: always() && hashFiles('sovara_wif_identity_diagnostic_receipt.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: sovara-gemini-provider-canary-receipt
-          path: sovara_gemini_provider_canary_receipt.json
+          name: sovara-wif-identity-diagnostic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: sovara_wif_identity_diagnostic_receipt.json
           if-no-files-found: error
-          retention-days: 7
+          retention-days: 30
