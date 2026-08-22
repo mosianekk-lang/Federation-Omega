@@ -85,6 +85,13 @@ class CFBEBenchmarkExecutionDiffusionAirlockAdmission(unittest.TestCase):
             self.assertTrue(packet.owner_trigger_required)
             self.assertFalse(packet.autonomous_execution_admissible)
 
+    def test_non_internal_gene_effect_class_requires_owner_trigger(self) -> None:
+        packet = compile_adoption_work_packet(gene(effect_class="A2_EXTERNAL"), receiver())
+        self.assertEqual(packet.status, "OWNER_TRIGGER_REQUIRED")
+        self.assertTrue(packet.owner_trigger_required)
+        self.assertFalse(packet.autonomous_execution_admissible)
+        self.assertFalse(packet.authorizes_authority_inheritance)
+
     def test_iam_secret_or_external_effect_cannot_inherit_benchmark_authority(self) -> None:
         for field in ("iam_or_secret_change_required", "external_effect_required", "consequential_effect_required"):
             packet = compile_adoption_work_packet(gene(), receiver(**{field: True}))
