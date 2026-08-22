@@ -1,0 +1,77 @@
+name: SOVARA Frontier Benchmark
+
+on:
+  schedule:
+    - cron: "30 5 * * *"
+  workflow_dispatch:
+
+permissions:
+  contents: write
+  pull-requests: write
+
+concurrency:
+  group: sovara-frontier-benchmark
+  cancel-in-progress: false
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - name: Check out source
+        uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+
+      - name: Validate current contracts
+        working-directory: sovara_operator_adapter
+        run: |
+          python -m unittest test_commercial_benchmark_engine.py test_frontier_benchmark_engine.py test_frontier_source_refresh.py
+          python frontier_benchmark_engine.py --dataset frontier_knowledgebase_v2.json --check
+
+      - name: Observe official sources
+        working-directory: sovara_operator_adapter
+        run: |
+          python frontier_source_refresh.py \
+            --knowledgebase frontier_knowledgebase_v2.json \
+            --repository frontier_knowledgebase/source-observations \
+            --require-all
+
+      - name: Recalculate benchmark snapshot
+        working-directory: sovara_operator_adapter
+        run: |
+          python frontier_benchmark_engine.py \
+            --dataset frontier_knowledgebase_v2.json \
+            --repository frontier_knowledgebase/benchmark \
+            --report-out frontier_benchmark_report_v2.json \
+            --check
+
+      - name: Verify generated state
+        working-directory: sovara_operator_adapter
+        run: |
+          python -m unittest test_frontier_benchmark_engine.py test_frontier_source_refresh.py
+
+      - name: Open evidence-review pull request on material change
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          if git diff --quiet -- sovara_operator_adapter/frontier_knowledgebase sovara_operator_adapter/frontier_benchmark_report_v2.json; then
+            echo "No material evidence change; no repository write."
+            exit 0
+          fi
+          branch="automation/sovara-frontier-${GITHUB_RUN_ID}"
+          git config user.name "sovara-frontier-bot"
+          git config user.email "sovara-frontier-bot@users.noreply.github.com"
+          git switch -c "$branch"
+          git add \
+            sovara_operator_adapter/frontier_knowledgebase \
+            sovara_operator_adapter/frontier_benchmark_report_v2.json
+          git commit -m "chore: refresh SOVARA frontier evidence"
+          git push --set-upstream origin "$branch"
+          gh pr create \
+            --draft \
+            --title "chore: review SOVARA frontier evidence refresh" \
+            --body "Automated change-detection found new, changed, or failed primary-source evidence. Scores are not promoted automatically. Review the semantic queue, rerun matched evaluations, and pass Formation plus non-regression gates before merge."
