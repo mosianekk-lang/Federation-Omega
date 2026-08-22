@@ -76,12 +76,14 @@ class ResourceGateTests(unittest.TestCase):
 
 
 class EstateAuditTests(unittest.TestCase):
-    def test_lineage_is_explicit_and_non_destructive(self):
+    def test_lineage_uses_semantic_versions_not_directory_names(self):
         lineage = alpha_omega_lineage()
-        self.assertEqual([node.generation for node in lineage], ["2.x", "2.2.x", "3.0"])
+        self.assertEqual([node.generation for node in lineage], ["2.2.1", "2.4.0", "3.0"])
+        self.assertEqual(lineage[0].name, "alpha_omega_v21")
+        self.assertEqual(lineage[1].name, "alpha_omega_v2")
         self.assertTrue(all("RETAIN" in node.status for node in lineage[:2]))
 
-    def test_release_siblings_cluster(self):
+    def test_release_siblings_are_review_candidates_not_auto_duplicates(self):
         names = [
             "alpha-omega-commercial-authority-action-binding.yml",
             "alpha-omega-commercial-authority-action-binding-release.yml",
@@ -89,7 +91,8 @@ class EstateAuditTests(unittest.TestCase):
         ]
         clusters = cluster_workflows(names)
         binding = [cluster for cluster in clusters if "action-binding" in cluster.cluster_key][0]
-        self.assertTrue(binding.consolidation_candidate)
+        self.assertTrue(binding.shared_primitive_candidate)
+        self.assertFalse(binding.consolidation_candidate)
         self.assertEqual(len(binding.members), 2)
 
     def test_family_counts(self):
