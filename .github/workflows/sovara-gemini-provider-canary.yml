@@ -13,10 +13,21 @@ on:
 permissions:
   contents: read
 
+env:
+  PROJECT_ID: sov-hybrid-suite
+  GOOGLE_CLOUD_LOCATION: global
+  HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+  HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
+  HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
+  HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
+  HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
+
 jobs:
   gemini-provider-canary:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 7
     steps:
       - name: Checkout
         uses: actions/checkout@v4
@@ -25,6 +36,62 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.12'
+
+      - name: Authenticate with existing GCP_SA_KEY if present
+        id: auth_gcp_sa
+        if: ${{ env.HAS_GCP_SA_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+
+      - name: Authenticate with existing GCP_SERVICE_ACCOUNT_KEY if needed
+        id: auth_gcp_service
+        if: ${{ steps.auth_gcp_sa.outcome != 'success' && env.HAS_GCP_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+
+      - name: Authenticate with existing GOOGLE_CREDENTIALS if needed
+        id: auth_google_credentials
+        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && env.HAS_GOOGLE_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+
+      - name: Authenticate with existing GOOGLE_SERVICE_ACCOUNT_KEY if needed
+        id: auth_google_sa
+        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+
+      - name: Authenticate with existing GCP_CREDENTIALS if needed
+        id: auth_gcp_credentials
+        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && env.HAS_GCP_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+
+      - name: Authenticate with existing GOOGLE_GHA_CREDS_JSON if needed
+        id: auth_google_gha
+        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && steps.auth_gcp_credentials.outcome != 'success' && env.HAS_GOOGLE_GHA_CREDS_JSON == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
+
+      - name: Authenticate with existing GOOGLE_CLOUD_CREDENTIALS if needed
+        id: auth_google_cloud
+        if: ${{ steps.auth_gcp_sa.outcome != 'success' && steps.auth_gcp_service.outcome != 'success' && steps.auth_google_credentials.outcome != 'success' && steps.auth_google_sa.outcome != 'success' && steps.auth_gcp_credentials.outcome != 'success' && steps.auth_google_gha.outcome != 'success' && env.HAS_GOOGLE_CLOUD_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@v3
+        with:
+          credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
 
       - name: Install existing Gemini provider dependency
         run: python -m pip install --disable-pip-version-check 'google-genai>=1.0.0'
@@ -35,6 +102,14 @@ jobs:
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           JARVIS_GEMINI_MODEL: gemini-flash-latest
+          VERTEX_GEMINI_MODEL: gemini-2.5-flash
+          AUTH_GCP_SA: ${{ steps.auth_gcp_sa.outcome }}
+          AUTH_GCP_SERVICE: ${{ steps.auth_gcp_service.outcome }}
+          AUTH_GOOGLE_CREDENTIALS: ${{ steps.auth_google_credentials.outcome }}
+          AUTH_GOOGLE_SA: ${{ steps.auth_google_sa.outcome }}
+          AUTH_GCP_CREDENTIALS: ${{ steps.auth_gcp_credentials.outcome }}
+          AUTH_GOOGLE_GHA: ${{ steps.auth_google_gha.outcome }}
+          AUTH_GOOGLE_CLOUD: ${{ steps.auth_google_cloud.outcome }}
         run: |
           python - <<'PY'
           import hashlib
@@ -43,17 +118,40 @@ jobs:
           import pathlib
           import sys
 
+          from google import genai
+
           receipt_path = pathlib.Path('sovara_gemini_provider_canary_receipt.json')
-          nonce = 'SOVARA_GEMINI_ROUTE_CANARY_20260822_A'
-          binding = 'GEMINI_API_KEY' if os.getenv('GEMINI_API_KEY') else ('GOOGLE_API_KEY' if os.getenv('GOOGLE_API_KEY') else None)
+          nonce = 'SOVARA_GEMINI_ROUTE_CANARY_20260822_B'
+
+          direct_binding = 'GEMINI_API_KEY' if os.getenv('GEMINI_API_KEY') else ('GOOGLE_API_KEY' if os.getenv('GOOGLE_API_KEY') else None)
+          auth_outcomes = {
+              'GCP_SA_KEY': os.getenv('AUTH_GCP_SA', 'skipped'),
+              'GCP_SERVICE_ACCOUNT_KEY': os.getenv('AUTH_GCP_SERVICE', 'skipped'),
+              'GOOGLE_CREDENTIALS': os.getenv('AUTH_GOOGLE_CREDENTIALS', 'skipped'),
+              'GOOGLE_SERVICE_ACCOUNT_KEY': os.getenv('AUTH_GOOGLE_SA', 'skipped'),
+              'GCP_CREDENTIALS': os.getenv('AUTH_GCP_CREDENTIALS', 'skipped'),
+              'GOOGLE_GHA_CREDS_JSON': os.getenv('AUTH_GOOGLE_GHA', 'skipped'),
+              'GOOGLE_CLOUD_CREDENTIALS': os.getenv('AUTH_GOOGLE_CLOUD', 'skipped'),
+          }
+          adc_binding = next((name for name, outcome in auth_outcomes.items() if outcome == 'success'), None)
+          alias_presence_count = sum(1 for name in (
+              'HAS_GCP_SA_KEY','HAS_GCP_SERVICE_ACCOUNT_KEY','HAS_GOOGLE_CREDENTIALS',
+              'HAS_GOOGLE_SERVICE_ACCOUNT_KEY','HAS_GCP_CREDENTIALS','HAS_GOOGLE_GHA_CREDS_JSON',
+              'HAS_GOOGLE_CLOUD_CREDENTIALS') if os.getenv(name, '').lower() == 'true')
+
+          route = 'gemini-developer-api' if direct_binding else ('vertex-ai-adc' if adc_binding else 'none')
+          binding = direct_binding or adc_binding
+          model = os.getenv('JARVIS_GEMINI_MODEL', 'gemini-flash-latest') if direct_binding else os.getenv('VERTEX_GEMINI_MODEL', 'gemini-2.5-flash')
           receipt = {
-              'schema': 'SOVARA_GEMINI_PROVIDER_CANARY_V1',
-              'provider': 'google-gemini-developer-api',
-              'route': 'github-actions/existing-jarvis-provider',
+              'schema': 'SOVARA_GEMINI_PROVIDER_CANARY_V2',
+              'provider': 'google-gemini',
+              'route': route,
               'binding_present': bool(binding),
               'binding_source': binding or 'NONE',
+              'gcp_credential_alias_presence_count': alias_presence_count,
+              'adc_auth_success': bool(adc_binding),
               'credential_value_exposed': False,
-              'model_requested': os.getenv('JARVIS_GEMINI_MODEL', 'gemini-flash-latest'),
+              'model_requested': model,
               'provider_invoked': False,
               'marker_match': False,
               'response_sha256': None,
@@ -68,14 +166,15 @@ jobs:
               sys.exit(2)
 
           try:
-              sys.path.insert(0, str(pathlib.Path('services/jarvis-ultimate').resolve()))
-              from jarvis.providers import GeminiReasoner
-
-              reasoner = GeminiReasoner(model=receipt['model_requested'])
-              output = reasoner.respond(
-                  f'Return this marker in your answer: {nonce}. Do not include secrets or private data.',
-                  {'capabilities': []},
+              if direct_binding:
+                  client = genai.Client()
+              else:
+                  client = genai.Client(vertexai=True, project=os.environ['PROJECT_ID'], location=os.environ['GOOGLE_CLOUD_LOCATION'])
+              result = client.models.generate_content(
+                  model=model,
+                  contents=f'Return this marker in your answer: {nonce}. Do not include secrets or private data.',
               )
+              output = result.text or ''
               encoded = output.encode('utf-8')
               receipt['provider_invoked'] = True
               receipt['marker_match'] = nonce in output
