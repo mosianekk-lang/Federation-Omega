@@ -1,0 +1,7 @@
+node_modules
+npm-debug.log
+proofs
+governance/formation_permits.json
+data/*.lock
+STOP
+.git

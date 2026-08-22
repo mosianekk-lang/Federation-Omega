@@ -1,0 +1,18 @@
+{
+  "systemId": "JARVIS-ULTIMATE",
+  "asOf": "2026-08-22T00:00:00.000Z",
+  "dimensions": [
+    {"id":"mission_strategy","maturity":80,"truthState":"TESTED","evidenceRefs":["JARVIS_MISSION_REBASE_CONTROL_PLAN_v1.0"]},
+    {"id":"architecture_platform","maturity":70,"truthState":"IMPLEMENTED","evidenceRefs":["Federation-Omega canonical architecture"]},
+    {"id":"reliability_resilience","maturity":55,"truthState":"TESTED","evidenceRefs":["fresh proof cycle v18"]},
+    {"id":"security_privacy_ai_safety","maturity":70,"truthState":"TESTED","evidenceRefs":["FEDOMEGA-GITHUB-AIRLOCK-V2 policy readback"]},
+    {"id":"engineering_flow","maturity":50,"truthState":"TESTED","evidenceRefs":["PR lineage #534 #546 #548 #549"]},
+    {"id":"governance_auditability","maturity":75,"truthState":"TESTED","evidenceRefs":["Formation gate and Airlock evidence"]},
+    {"id":"observability_operations","maturity":40,"truthState":"IMPLEMENTED","evidenceRefs":["operator health and workflow run evidence"]},
+    {"id":"knowledge_learning","maturity":45,"truthState":"IMPLEMENTED","evidenceRefs":["skills and mission rebase knowledge artifacts"]},
+    {"id":"cross_surface_integration","maturity":35,"truthState":"IMPLEMENTED","evidenceRefs":["connector inventory; semantic proof pending"]},
+    {"id":"cost_sustainability","maturity":80,"truthState":"TESTED","evidenceRefs":["zero-new-recurring-cost mission constraint"]},
+    {"id":"recovery_continuity","maturity":55,"truthState":"TESTED","evidenceRefs":["continuity and backup controls"]},
+    {"id":"evidence_maturity","maturity":75,"truthState":"TESTED","evidenceRefs":["canonical GitHub readback and proof-cycle receipts"]}
+  ]
+}

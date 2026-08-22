@@ -1,0 +1,5 @@
+[
+  {"organization":"Microsoft","claimClass":"private internal development capability","evidenceGrade":"UNVERIFIED_PRIVATE","scoreEligible":false,"treatment":"Do not infer or score without auditable primary evidence."},
+  {"organization":"Alphabet/Google","claimClass":"private internal development capability","evidenceGrade":"UNVERIFIED_PRIVATE","scoreEligible":false,"treatment":"Do not infer or score without auditable primary evidence."},
+  {"organization":"SoftBank","claimClass":"private internal development capability","evidenceGrade":"UNVERIFIED_PRIVATE","scoreEligible":false,"treatment":"Do not infer or score without auditable primary evidence."}
+]

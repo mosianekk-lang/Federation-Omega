@@ -1,0 +1,90 @@
+{
+  "schema": "JARVIS-BENCHMARK-FEDERATION-INTEGRATION-RECEIPT-1",
+  "missionId": "JARVIS-BENCHMARK-LANE2-20260822",
+  "missionVersion": 1,
+  "verifiedAt": "2026-08-22T18:47:42Z",
+  "candidateBase": "72e6fa48bc9f4d33ecbfb3976bfce181c07f85c1",
+  "documentationGate": {
+    "decision": "ALLOW_CYCLE",
+    "documentCount": 16,
+    "routeCapabilitySnapshotHash": "sha256:7f087f71cfb4ffeda6b7fa6c719ed2a54ebcbf0e7d4e83488849ebf3759462f4",
+    "issues": []
+  },
+  "foresight": {
+    "activationMode": "FULL",
+    "horizonCount": 50,
+    "fanInCount": 1,
+    "effectfulPathsAllowed": 1,
+    "authorityExpansion": false,
+    "validation": "PASS"
+  },
+  "tests": {
+    "nodeControlPlane": {
+      "command": "node --test --test-reporter=spec",
+      "total": 24,
+      "passed": 24,
+      "failed": 0
+    },
+    "pythonTaskAdapter": {
+      "command": "python -m unittest tests.test_jarvis_benchmark_task -v",
+      "total": 6,
+      "passed": 6,
+      "failed": 0
+    },
+    "commandBusWiring": {
+      "validateState": "SUCCESS",
+      "cycleCommitState": "CONSTRAINT",
+      "providerEffects": false
+    },
+    "static": {
+      "pythonCompile": "PASS",
+      "jsonValidation": "PASS",
+      "workflowBlobIdentity": "PASS",
+      "runtimePermitDatabaseAbsent": true,
+      "committedRuntimeLedgerAbsent": true,
+      "nestedWorkflowDirectoryAbsent": true
+    }
+  },
+  "failureFirstRepairs": [
+    {
+      "detected": "The first adapter snapshot test expected score/maxScore while the canonical engine returns overallScore/targetScore.",
+      "repair": "Bound the test to the canonical keys and reran the entire Python and Node suites.",
+      "regression": "6/6 Python adapter tests and 24/24 Node tests passed."
+    },
+    {
+      "detected": "The first isolated command-bus wiring probe lacked an unchanged base dependency and the shell harness was not fail-fast.",
+      "repair": "Restored the exact current control_plane.py dependency in the staging harness and reran with set -euo pipefail.",
+      "regression": "Wired validate returned SUCCESS; the write route returned CONSTRAINT; static checks exited zero."
+    },
+    {
+      "detected": "The staging copy of the unchanged Bubbles workflow had a trailing-newline byte drift.",
+      "repair": "Rebuilt the staging copy from canonical GitHub content without changing its semantics or source candidate.",
+      "regression": "git hash-object equals canonical blob c7fce6bade42dfb9db8bd8c7994f8bf6ebf475a9."
+    }
+  ],
+  "airlockBoundary": {
+    "policyId": "FEDOMEGA-GITHUB-AIRLOCK-V2",
+    "policyVersion": "2.3.2",
+    "activeWorkflowCount": 5,
+    "workflowFileChanged": false,
+    "newWorkflowFile": false,
+    "allowlistChanged": false
+  },
+  "truthState": {
+    "designed": true,
+    "implemented": true,
+    "testedLocal": true,
+    "registeredCandidate": true,
+    "registeredOnMain": false,
+    "authorizedForSourcePublication": true,
+    "readyForStackedReview": true,
+    "deployed": false,
+    "provenProduction": false
+  },
+  "manualUserTasks": [],
+  "unresolved": [
+    "Exact-head GitHub Airlock, Public Repository Leak Guard and Bubbles Command Bus readback remain pending until the source candidate is published.",
+    "PR #534 and PR #546 each remain one commit behind current main and must be re-stacked before an ordered merge sequence can be admitted.",
+    "No merge or deployment is authorized by this receipt."
+  ]
+}

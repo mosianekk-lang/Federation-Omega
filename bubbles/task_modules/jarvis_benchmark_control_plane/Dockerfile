@@ -1,0 +1,13 @@
+FROM node:24.19.0-alpine
+
+WORKDIR /app
+COPY --chown=node:node package.json ./
+COPY --chown=node:node src ./src
+COPY --chown=node:node data ./data
+COPY --chown=node:node examples ./examples
+
+USER node
+ENV NODE_ENV=production HOST=0.0.0.0 PORT=8787 JARVIS_ALLOW_REMOTE_BIND=true
+EXPOSE 8787
+HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 CMD node -e "fetch('http://127.0.0.1:8787/health').then(r=>{if(!r.ok)process.exit(1)}).catch(()=>process.exit(1))"
+CMD ["node", "src/server.js"]

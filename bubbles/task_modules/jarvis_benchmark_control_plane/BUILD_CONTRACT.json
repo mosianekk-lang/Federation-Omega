@@ -1,0 +1,104 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+    "version": 1,
+    "goal": "Build an evidence-gated, continuously refreshable benchmark and mission-control knowledge plane for JARVIS.",
+    "user": "Kim Kagiso Mosiane",
+    "workflow": "source registry -> freshness gate -> proof-weighted benchmark -> opportunity fan-in -> authorized append-only learning transaction",
+    "data": "official source metadata, JARVIS truth-state evidence, benchmark dimensions, observations and hash-chained cycle commits",
+    "interface": "dependency-free CLI and JSON HTTP API",
+    "stack": "Node.js 24 standard library and JSON/JSONL storage",
+    "environment": "local candidate; container-ready; no production host authorized",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation single-use permits, documentation-first preflight, 50-horizon digital twin, zero authority expansion",
+    "failure": "fail closed on stale critical evidence, identity mismatch, invalid input, ledger corruption, idempotency conflict and missing write authorization",
+    "testing": "node:test unit, integration, HTTP, CLI, failure-first and tamper tests",
+    "deployment": "container candidate only; deployment not executed",
+    "continuity": "append-only ledger restore, idempotency, stop switch and handoff files"
+  },
+  "classification": "INTERNAL_OPERATIONAL_CONTROL_PLANE_NO_SECRETS",
+  "assumptions": {
+    "stack": "Node.js 24.19.0 or compatible 24.x LTS runtime",
+    "runtime": "single writer per ledger guarded by an exclusive lock; multiple read-only clients supported",
+    "storage": "bounded local JSONL ledger is the source of truth; durable production storage remains a deployment decision",
+    "authentication": "writes disabled by default; bearer token required for API commits",
+    "deployment": "private managed container runtime with TLS, secret manager, identity and scheduler after authorization"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "JSON CLI output and HTTP JSON responses; no browser UI in lane one",
+      "backend": "Node.js benchmark, freshness, opportunity, collection and commit engine",
+      "database": "append-only JSONL knowledge ledger with materialized registry restored on startup",
+      "queue": "bounded refresh plan ordered by staleness, criticality and next due date",
+      "worker": "HTTPS source collector with timeout, response-size and identity boundaries",
+      "scheduler": "optional daemon interval; implemented but not installed or deployed",
+      "cache": "in-memory current registry/evaluation snapshot; recoverable from ledger",
+      "storage": "base JSON registries plus hash-chained JSONL transactions",
+      "authentication": "loopback default plus constant-time bearer-token check for the sole write route"
+    },
+    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE"],
+    "observability": {
+      "correlation_ids": "Every HTTP response carries x-correlation-id; safe supplied IDs are preserved.",
+      "health_checks": "GET /health reports runtime, write state and ledger verification.",
+      "structured_logs": "Server and daemon emit bounded JSON events without request bodies or secrets.",
+      "audit_logs": "Every committed cycle is idempotent, hash-chained and fully verified before and after append.",
+      "metrics_alerts": "Freshness counts, critical source issues, score deltas and collection failures are machine-readable; external alert routing is pending deployment."
+    }
+  },
+  "testing": {
+    "unit": "freshness, scoring, truth-state weighting, observation validation and Mission Utility formula",
+    "integration": "cycle engine, collector contracts, ledger restore and authenticated commit path",
+    "e2e_or_smoke": "real local HTTP server plus CLI subprocess validation",
+    "fixtures_mocks": "fixed-date source registry, JARVIS state, mocked HTTPS responses and isolated temporary ledgers",
+    "failure_first": "stale evidence, URL substitution, duplicate observations, redirect, oversized source, bad token, idempotency conflict and tamper detection",
+    "commands": ["npm test", "npm run validate", "node src/cli.js ledger-verify"]
+  },
+  "delivery": {
+    "file_tree": "README, security/governance/continuity documents, src modules, data registries, examples, tests, Dockerfile, proofs and BUILD_CONTRACT.json",
+    "exact_code_files": ["src/canonical.js", "src/cli.js", "src/config.js", "src/daemon.js", "src/engine.js", "src/errors.js", "src/freshness.js", "src/http-app.js", "src/ledger.js", "src/refresh.js", "src/scoring.js", "src/server.js", "src/validation.js"],
+    "setup_commands": ["node --version", "npm --version"],
+    "run_commands": ["npm start", "node src/daemon.js --once", "npm run demo"],
+    "test_commands": ["npm test", "npm run validate", "python /root/.codex/skills/remote-skills/validate-modisa-build-contracts/scripts/validate_build_contract.py BUILD_CONTRACT.json --require-proof"],
+    "deploy_commands": ["docker build -t jarvis-benchmark-control-plane:1.0.0 .", "Deploy only after a fresh Formation A2 permit and managed-secret/runtime configuration."],
+    "rollback_commands": ["Stop the candidate, restore the prior verified image and ledger checkpoint, then run ledger-verify before resuming."],
+    "debugging": "Use correlation ID, structured log event, /health, /v1/ledger/verify, refresh-plan and the first failing deterministic test."
+  },
+  "formation": {
+    "mission_id": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1_LOCAL_REVERSIBLE_WRITE",
+    "effectful_permit": "Sanitized single-use local build receipts in governance/permit_receipts.json",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "runtime": "GET /health plus daemon structured events",
+    "freshness": "critical-source SLA gate and bounded due-source queue",
+    "security": "identity-pinned collection, disabled-by-default writes and full ledger verification",
+    "deployment": "pending managed monitoring and alert routing"
+  },
+  "continuity": {
+    "idempotency": "8-160 character idempotency key bound to an exact payload hash; conflicting reuse is rejected",
+    "checkpoints": "every valid ledger head is a checkpoint; the latest cycle carries the full registry snapshot",
+    "resume_conditions": "valid hash chain, inactive STOP switch, current mission and authorized runtime configuration",
+    "handoff_files": ["README.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md", "FORMATION_SPEC.md", "BUILD_CONTRACT.json"],
+    "stop_switch": "A STOP file prevents daemon refresh cycles; process signals stop the HTTP server gracefully."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": "24/24 tests passed; 87.50% line, 65.98% branch and 89.53% function coverage; proofs/VERIFICATION_RECEIPT.json",
+    "semantic_verification": "CLI validation, ledger verification, fail-closed stale evidence, source identity, authenticated idempotent commit, tamper detection and daemon no-op smoke checks passed.",
+    "deployment_readback": "NOT_DEPLOYED",
+    "unresolved_defects": []
+  }
+}

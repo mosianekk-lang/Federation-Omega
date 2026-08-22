@@ -1,0 +1,64 @@
+{
+  "missionId": "JARVIS-BENCHMARK-KNOWLEDGE-PLANE-20260822",
+  "missionVersion": 1,
+  "verifiedAt": "2026-08-22T18:05:12.624Z",
+  "runtime": {
+    "node": "v24.19.0",
+    "npm": "11.9.0"
+  },
+  "documentationGate": {
+    "decision": "ALLOW_CYCLE",
+    "documentCount": 13,
+    "applicableRequirementCount": 10,
+    "applicableRouteCapabilityCount": 6,
+    "issues": []
+  },
+  "foresight": {
+    "activationMode": "FULL",
+    "horizonCount": 50,
+    "fanInCount": 1,
+    "effectfulPathsAllowed": 1,
+    "authorityExpansion": false,
+    "validation": "PASS"
+  },
+  "tests": {
+    "command": "node --test --test-reporter=spec",
+    "total": 24,
+    "passed": 24,
+    "failed": 0,
+    "cancelled": 0,
+    "skipped": 0,
+    "durationMilliseconds": 1001.152517
+  },
+  "coverage": {
+    "command": "node --test --experimental-test-coverage",
+    "linePercent": 87.5,
+    "branchPercent": 65.98,
+    "functionPercent": 89.53
+  },
+  "semanticChecks": {
+    "cliValidate": "PASS",
+    "ledgerGenesis": "PASS",
+    "daemonOnceNoOpWhenCurrent": "PASS",
+    "nextRefreshAt": "2026-09-21T00:00:00.000Z",
+    "privateInternalParityClaimed": false,
+    "writeApiDefault": "DISABLED",
+    "continuousRuntime": "CANDIDATE_NOT_SCHEDULED"
+  },
+  "securityScan": {
+    "credentialPatternMatches": 0,
+    "dynamicCodeExecutionMatches": 0,
+    "activeWorkflowFilesAdded": 0
+  },
+  "truthState": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": false
+  },
+  "unresolvedDefects": []
+}

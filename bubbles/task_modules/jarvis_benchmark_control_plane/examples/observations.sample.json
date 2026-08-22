@@ -1,0 +1,13 @@
+[
+  {
+    "sourceId": "microsoft-azure-waf",
+    "status": "VERIFIED",
+    "canonicalUrl": "https://learn.microsoft.com/en-us/azure/well-architected/",
+    "canonicalUrlMatch": true,
+    "publisherMatch": true,
+    "observedAt": "2026-08-22T12:00:00.000Z",
+    "observedVersion": "example-etag-replace-with-collector-output",
+    "contentHash": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa",
+    "sourceUpdatedAt": "2026-06-30T00:00:00.000Z"
+  }
+]
