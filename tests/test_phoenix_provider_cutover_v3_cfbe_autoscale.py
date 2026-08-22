@@ -11,8 +11,8 @@ from sovara_operator_adapter.cfbe_autoscale_governor import (
 
 
 class CFBEAutoscaleGovernorAirlockAdmission(unittest.TestCase):
-    def test_all_twenty_one_canonical_policies_are_present(self) -> None:
-        self.assertEqual([p.policy_id for p in POLICIES], [f"AS-{i:03d}" for i in range(1, 22)])
+    def test_all_twenty_eight_canonical_policies_are_present(self) -> None:
+        self.assertEqual([p.policy_id for p in POLICIES], [f"AS-{i:03d}" for i in range(1, 29)])
 
     def test_mesh_policy_actions_are_registered(self) -> None:
         index = {p.policy_id: p.action for p in POLICIES}
@@ -23,6 +23,16 @@ class CFBEAutoscaleGovernorAirlockAdmission(unittest.TestCase):
         self.assertEqual(index["AS-019"], "DEMOTE_NODE_AND_REROUTE")
         self.assertEqual(index["AS-020"], "CONTINUE_LOCAL_AND_REROUTE")
         self.assertEqual(index["AS-021"], "RIGHTSIZE_LOCAL_NODE_CADENCE")
+
+    def test_reflexivity_policy_actions_are_registered(self) -> None:
+        index = {p.policy_id: p.action for p in POLICIES}
+        self.assertEqual(index["AS-022"], "CHALLENGE_INCUMBENT")
+        self.assertEqual(index["AS-023"], "TRIGGER_EVENT_CHALLENGE")
+        self.assertEqual(index["AS-024"], "ADMIT_CHALLENGER")
+        self.assertEqual(index["AS-025"], "RUN_SHADOW_COMPARISON")
+        self.assertEqual(index["AS-026"], "PROMOTE_PROVEN_CHALLENGER")
+        self.assertEqual(index["AS-027"], "HOLD_ANTI_CHURN")
+        self.assertEqual(index["AS-028"], "SELF_CHALLENGE_GOVERNOR")
 
     def test_safe_source_depth_scale_up_is_admissible(self) -> None:
         decision = decide_autoscale(AutoscaleSignal("SIG-SOURCE", "AS-004", 0.8, 0.9))
@@ -37,6 +47,24 @@ class CFBEAutoscaleGovernorAirlockAdmission(unittest.TestCase):
         self.assertFalse(decision.authorizes_authority_expansion)
         self.assertFalse(decision.authorizes_destructive_retirement)
 
+    def test_safe_incumbent_challenge_is_control_admissible(self) -> None:
+        decision = decide_autoscale(AutoscaleSignal("SIG-CHALLENGE", "AS-022", 0.95, 0.95))
+        self.assertEqual(decision.status, "AUTONOMOUS_ADMISSIBLE")
+        self.assertEqual(decision.action, "CHALLENGE_INCUMBENT")
+        self.assertFalse(decision.authorizes_authority_expansion)
+
+    def test_anti_churn_policy_holds_migration(self) -> None:
+        decision = decide_autoscale(AutoscaleSignal("SIG-HYSTERESIS", "AS-027", 0.9, 0.9))
+        self.assertEqual(decision.status, "HOLD_ANTI_CHURN")
+        self.assertEqual(decision.direction, "HOLD")
+        self.assertTrue(decision.continue_unaffected_lanes)
+
+    def test_self_challenge_is_safe_control_action_not_self_certification(self) -> None:
+        decision = decide_autoscale(AutoscaleSignal("SIG-SELF-CHALLENGE", "AS-028", 1.0, 1.0))
+        self.assertEqual(decision.status, "AUTONOMOUS_ADMISSIBLE")
+        self.assertEqual(decision.action, "SELF_CHALLENGE_GOVERNOR")
+        self.assertFalse(decision.self_certifies_improvement)
+
     def test_paid_or_unknown_cost_requires_owner_trigger(self) -> None:
         for cost_class in ("PAID", "UNKNOWN"):
             decision = decide_autoscale(
@@ -47,6 +75,10 @@ class CFBEAutoscaleGovernorAirlockAdmission(unittest.TestCase):
 
     def test_mesh_paid_runtime_still_requires_owner_trigger(self) -> None:
         decision = decide_autoscale(AutoscaleSignal("SIG-MESH-PAID", "AS-018", 1.0, 1.0, cost_class="PAID"))
+        self.assertEqual(decision.status, "OWNER_TRIGGER_REQUIRED")
+
+    def test_paid_reflexivity_migration_still_requires_owner_trigger(self) -> None:
+        decision = decide_autoscale(AutoscaleSignal("SIG-MIGRATE-PAID", "AS-026", 1.0, 1.0, cost_class="PAID"))
         self.assertEqual(decision.status, "OWNER_TRIGGER_REQUIRED")
 
     def test_iam_secret_or_external_effect_cannot_autoscale_authority(self) -> None:
