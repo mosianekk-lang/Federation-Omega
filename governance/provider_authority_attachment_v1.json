@@ -53,7 +53,39 @@
         "provider_authority": false,
         "role": "FOGAS_OAUTH_CONSUMER_BLOCKED"
       }
-    ]
+    ],
+    "route_specific_requirements": {
+      "APPS_SCRIPT_PROJECT_MANAGEMENT": {
+        "consumer_target_same_required": false,
+        "requirements": [
+          "apps_script_api_enabled_in_calling_application_consumer_project",
+          "apps_script_api_project_access_granted",
+          "authorized_user_or_application",
+          "deployment_or_content_readback"
+        ]
+      },
+      "APPS_SCRIPT_SCRIPTS_RUN": {
+        "consumer_target_same_required": true,
+        "requirements": [
+          "script_and_calling_oauth_client_share_common_standard_cloud_project",
+          "apps_script_api_enabled",
+          "apps_script_api_access_granted",
+          "properly_scoped_oauth_token",
+          "api_executable_deployment",
+          "semantic_execution_readback"
+        ]
+      },
+      "GOOGLE_CLOUD_RESOURCE_ADMIN": {
+        "consumer_target_same_required": false,
+        "requirements": [
+          "consumer_identity_verified",
+          "required_api_enabled_in_consumer",
+          "token_and_active_principal_readback",
+          "target_authority_verified",
+          "action_specific_semantic_readback"
+        ]
+      }
+    }
   },
   "implementation": "federation_consolidation/provider_authority_attachment.py",
   "owner": "Kim Kagiso Mosiane",
@@ -78,5 +110,5 @@
     "source_code_grants_google_authority": false,
     "target_project_configuration_repairs_oauth_consumer": false
   },
-  "version": "1.1.0"
+  "version": "1.2.0"
 }

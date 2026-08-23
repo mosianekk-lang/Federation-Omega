@@ -26,6 +26,15 @@ KNOWN_GOOGLE_PROJECT_ROLES = {
     "979287460558": "FOGAS_OAUTH_CONSUMER_BLOCKED",
 }
 
+ROUTE_GOOGLE_CLOUD_RESOURCE_ADMIN = "GOOGLE_CLOUD_RESOURCE_ADMIN"
+ROUTE_APPS_SCRIPT_PROJECT_MANAGEMENT = "APPS_SCRIPT_PROJECT_MANAGEMENT"
+ROUTE_APPS_SCRIPT_SCRIPTS_RUN = "APPS_SCRIPT_SCRIPTS_RUN"
+SUPPORTED_GOOGLE_ROUTE_CLASSES = {
+    ROUTE_GOOGLE_CLOUD_RESOURCE_ADMIN,
+    ROUTE_APPS_SCRIPT_PROJECT_MANAGEMENT,
+    ROUTE_APPS_SCRIPT_SCRIPTS_RUN,
+}
+
 
 class AttachmentError(RuntimeError):
     """Fail-closed provider authority attachment error."""
@@ -63,6 +72,9 @@ class GoogleIdentityLineageState:
     target_project_number: str
     oauth_consumer_project_number: str
     transport_project_number: str | None = None
+    route_class: str = ROUTE_GOOGLE_CLOUD_RESOURCE_ADMIN
+    apps_script_api_access_granted: bool = False
+    standard_cloud_project_shared: bool = False
     active_principal: str = ""
     consumer_identity_verified: bool = False
     consumer_api_enabled: bool = False
@@ -196,6 +208,8 @@ def validate_google_identity_lineage(state: GoogleIdentityLineageState) -> None:
         str(state.transport_project_number)
     ):
         raise AttachmentError("transport project number is invalid")
+    if state.route_class not in SUPPORTED_GOOGLE_ROUTE_CLASSES:
+        raise AttachmentError("unsupported Google route class")
     if state.provider_authenticated and not state.token_issued:
         raise AttachmentError("provider authentication requires token issuance proof")
     if state.target_authority_verified and not state.provider_authenticated:
@@ -226,8 +240,35 @@ def classify_google_identity_lineage(
         state.target_project_id == CANONICAL_PROJECT_ID
         and state.target_project_number == CANONICAL_PROJECT_NUMBER
     )
-    consumer_binding_ready = (
+    base_consumer_binding_ready = (
         state.consumer_identity_verified and state.consumer_api_enabled
+    )
+    consumer_target_same = (
+        state.oauth_consumer_project_number == state.target_project_number
+    )
+    if state.route_class == ROUTE_APPS_SCRIPT_SCRIPTS_RUN:
+        route_relationship_ready = all(
+            (
+                state.apps_script_api_access_granted,
+                state.standard_cloud_project_shared,
+                consumer_target_same,
+            )
+        )
+        route_relationship_rule = (
+            "CALLER_AND_SCRIPT_MUST_SHARE_COMMON_STANDARD_CLOUD_PROJECT"
+        )
+    elif state.route_class == ROUTE_APPS_SCRIPT_PROJECT_MANAGEMENT:
+        route_relationship_ready = state.apps_script_api_access_granted
+        route_relationship_rule = (
+            "APPS_SCRIPT_API_ACCESS_GRANT_AND_CONSUMER_API_ENABLEMENT_REQUIRED"
+        )
+    else:
+        route_relationship_ready = True
+        route_relationship_rule = (
+            "CONSUMER_MAY_DIFFER_BUT_TARGET_AUTHORITY_REQUIRES_SEPARATE_PROOF"
+        )
+    consumer_binding_ready = (
+        base_consumer_binding_ready and route_relationship_ready
     )
     public_approval_bypass = (
         state.public_web_app and state.approval_default_injected
@@ -260,9 +301,12 @@ def classify_google_identity_lineage(
     elif not canonical_target:
         status = "BLOCKED_CANONICAL_TARGET_MISMATCH"
         next_gate = "RESTORE_CANONICAL_TARGET_WITHOUT_REBINDING_ASSUMPTIONS"
-    elif not consumer_binding_ready:
+    elif not base_consumer_binding_ready:
         status = "BLOCKED_OAUTH_CONSUMER_BINDING"
         next_gate = "VERIFY_CONSUMER_IDENTITY_AND_ENABLE_REQUIRED_API_IN_CONSUMER"
+    elif not route_relationship_ready:
+        status = "BLOCKED_ROUTE_PROJECT_RELATIONSHIP"
+        next_gate = "REPAIR_ROUTE_SPECIFIC_PROJECT_AND_API_BINDING"
     elif not (
         state.token_issued
         and state.provider_authenticated
@@ -296,7 +340,20 @@ def classify_google_identity_lineage(
             "role": consumer_role,
             "identity_verified": state.consumer_identity_verified,
             "required_api_enabled": state.consumer_api_enabled,
+            "base_binding_ready": base_consumer_binding_ready,
             "binding_ready": consumer_binding_ready,
+        },
+        "route": {
+            "route_class": state.route_class,
+            "apps_script_api_access_granted": (
+                state.apps_script_api_access_granted
+            ),
+            "standard_cloud_project_shared": (
+                state.standard_cloud_project_shared
+            ),
+            "consumer_target_same": consumer_target_same,
+            "relationship_ready": route_relationship_ready,
+            "relationship_rule": route_relationship_rule,
         },
         "transport": {
             "project_number": state.transport_project_number,
@@ -324,8 +381,11 @@ def classify_google_identity_lineage(
         "invariants": {
             "target_change_repairs_oauth_consumer": False,
             "transport_success_grants_provider_authority": False,
-            "consumer_project_must_equal_target_project": False,
+            "consumer_project_must_equal_target_project": (
+                state.route_class == ROUTE_APPS_SCRIPT_SCRIPTS_RUN
+            ),
             "consumer_and_target_require_separate_verification": True,
+            "route_specific_project_relationships_are_enforced": True,
         },
         "provider_authority_ready": provider_authority_ready,
         "next_gate": next_gate,
