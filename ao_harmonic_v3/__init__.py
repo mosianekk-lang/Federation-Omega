@@ -4,6 +4,20 @@ Source implementation only. Importing this package does not establish provider
 runtime, deployment, authority expansion, or operational maturity.
 """
 
+from .adaptive_cycle import (
+    AdaptiveCycleEngine,
+    AdaptiveCycleRequest,
+    AdaptiveCycleResult,
+    BestEffortGovernor,
+    BoundedDeltaMemory,
+    CodeRestructuringPlanner,
+    CodeUnit,
+    CompactionPolicy,
+    ContextAtom,
+    ContextCompactor,
+    CycleOutcome,
+    EffortRecord,
+)
 from .cost_governor import (
     CostAction,
     CostClass,
@@ -43,6 +57,18 @@ from .runtime import AOHarmonicV3, bootstrap
 __all__ = [
     "AOHarmonicV3",
     "bootstrap",
+    "AdaptiveCycleEngine",
+    "AdaptiveCycleRequest",
+    "AdaptiveCycleResult",
+    "BestEffortGovernor",
+    "BoundedDeltaMemory",
+    "CodeRestructuringPlanner",
+    "CodeUnit",
+    "CompactionPolicy",
+    "ContextAtom",
+    "ContextCompactor",
+    "CycleOutcome",
+    "EffortRecord",
     "HorizonOmega",
     "HorizonNode",
     "HorizonRun",
@@ -72,4 +98,4 @@ __all__ = [
     "ExecutionState",
     "CapabilityRealityState",
 ]
-__version__ = "3.2.0"
+__version__ = "3.3.0"

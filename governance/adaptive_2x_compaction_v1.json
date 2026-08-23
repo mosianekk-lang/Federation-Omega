@@ -1,0 +1,49 @@
+{
+  "schema": "FEDOMEGA-ADAPTIVE-2X-COMPACTION-CONTRACT-1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "implementation": "ao_harmonic_v3/adaptive_cycle.py",
+  "purpose": "Require best-effort execution, seek measured 2x improvement, preserve truthful incremental gains, and prevent working-context growth through restructuring, deduplication, bounded deltas and cryptographic checkpoints.",
+  "best_effort": {
+    "objective_required": true,
+    "execution_route_attempt_required": true,
+    "self_test_required": true,
+    "premature_stop_prohibited": true,
+    "critical_blocker_requires_fallback_or_completed_owner_gate_prework": true
+  },
+  "improvement": {
+    "target_multiplier": 2.0,
+    "measured_target_required_for_2x_claim": true,
+    "incremental_promotion_allowed_when_fitter": true,
+    "regression_promotion_prohibited": true,
+    "invariant_failure_promotion_prohibited": true,
+    "no_gain_routes_to_restructure_and_rebuild": true
+  },
+  "context": {
+    "delta_only_cycle_memory": true,
+    "exact_and_near_duplicate_merge": true,
+    "pinned_objective_fact_decision_blocker_next_action_support": true,
+    "bounded_active_working_set": true,
+    "full_history_external_archive_required": true,
+    "archive_hash_and_provenance_preservation": true,
+    "deletion_by_compaction_prohibited": true
+  },
+  "code_restructuring": {
+    "prefer_merge_over_duplicate_layer": true,
+    "prefer_module_extraction_over_monolith_growth": true,
+    "split_high_complexity_by_responsibility": true,
+    "characterization_tests_before_hot_code_rebuild": true,
+    "behavior_preservation_required": true
+  },
+  "zero_dilution": {
+    "existing_capability_removal_not_required": true,
+    "manual_execution_switch_added": false,
+    "provider_route_reduction_added": false,
+    "chat_platform_constraints_not_encoded_as_sovara_requirements": true
+  },
+  "truth_boundary": {
+    "source_presence_is_not_operational_2x_proof": true,
+    "test_pass_is_not_provider_deployment_proof": true,
+    "measured_workflow_gain_and_readback_are_required_for_operational_promotion": true
+  }
+}

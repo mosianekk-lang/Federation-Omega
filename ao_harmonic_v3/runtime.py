@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from datetime import datetime, timezone
 
+from .adaptive_cycle import AdaptiveCycleEngine, AdaptiveCycleRequest
 from .cost_governor import PreRevenueCostGovernor
 from .event_bus import EventBus
 from .evolution import (
@@ -75,7 +76,7 @@ class JarvisAssuranceMesh:
 
 
 class AOHarmonicV3:
-    VERSION = "3.2.0"
+    VERSION = "3.3.0"
     AUTHORITY_CEILING = "A1_INTERNAL"
     EXTERNAL_EFFECT_DEFAULT = False
 
@@ -102,7 +103,8 @@ class AOHarmonicV3:
         self.attention = HumanAttentionGovernor()
         self.mig = MarginalInformationGainGate()
         self.entropy = EntropyController()
-        self.learning = LearningLedger()
+        self.learning = LearningLedger(max_records=64)
+        self.adaptive_cycle = AdaptiveCycleEngine()
         self.jarvis = JarvisAssuranceMesh()
         self.boundary_build = BoundaryBuildEngine()
         self.semantic_firewall = SemanticReadbackFirewall()
@@ -128,6 +130,24 @@ class AOHarmonicV3:
             previous_response_id=previous_response_id,
         )
 
+    def run_adaptive_cycle(self, request: AdaptiveCycleRequest) -> dict[str, object]:
+        """Run one measured improvement cycle and retain only bounded deltas."""
+        result = self.adaptive_cycle.run(request)
+        learning_record = self.record_terminal_learning(
+            cycle_id=request.cycle_id,
+            objective=request.objective,
+            terminal_state=result.outcome.value,
+            actual_result=result.claim_state,
+            proof_refs=request.proof_refs,
+            proposed_patch=result.next_action,
+            fitness_score=result.candidate_score,
+        )
+        payload = result.to_dict()
+        payload["learning_record"] = learning_record
+        payload["learning_snapshot"] = self.learning.snapshot()
+        payload["adaptive_memory_snapshot"] = self.adaptive_cycle.memory.snapshot()
+        return payload
+
     def _tool_failure(self, event: FederationEvent) -> dict[str, object]:
         failure_type = str(event.payload.get("failure_type", "UNKNOWN"))
         return {
@@ -135,6 +155,7 @@ class AOHarmonicV3:
             "formation": "ROUTE_SEARCH_REQUIRED",
             "forest_first_omega": "AUTO_REROUTE_REMODEL_THEN_BUILD",
             "adaptive_intelligence_router": "REASSESS_AFTER_FAILURE_BEFORE_UNCHANGED_RETRY",
+            "adaptive_2x_cycle": "RESTRUCTURE_COMPACT_REBUILD_AND_REMEASURE",
             "cost_governor": "CHEAPEST_EQUIVALENT_ROUTE_BEFORE_PAID_ESCALATION",
             "owner_surface": "OBJECTIVE_LEVEL_ONLY",
             "unchanged_retry": "PROHIBITED_AFTER_REPEAT_FINGERPRINT",
@@ -147,6 +168,7 @@ class AOHarmonicV3:
             "scientific_review": "REQUIRED",
             "forest_first_omega": "REMODEL_AND_CREATE_LEARNING_CANDIDATE",
             "adaptive_intelligence_router": "REASSESS_AND_RAISE_TIER_IF_CORRECTION_REVEALS_MATERIAL_UNCERTAINTY",
+            "adaptive_2x_cycle": "SET_CORRECTED_STATE_AS_NEW_BASELINE_AND_REBUILD",
             "policy_candidate": "ELIGIBLE",
             "event_id": event.event_id,
         }
@@ -158,6 +180,7 @@ class AOHarmonicV3:
             "open_builds": "RECHECK",
             "forest_first_omega": "RECOMPUTE_PATHS_AND_HORIZON",
             "adaptive_intelligence_router": "RECHECK_PROVIDER_MODEL_AND_REASONING_BINDINGS",
+            "adaptive_2x_cycle": "GENERATE_NEW_CANDIDATE_AND_COMPARE_AGAINST_CURRENT_BASELINE",
             "cost_governor": "RECHECK_CHEAPER_INCLUDED_OR_SCALE_TO_ZERO_ROUTE",
             "shortest_safe_canary": "REQUIRED_BEFORE_PROMOTION",
             "event_id": event.event_id,
@@ -172,6 +195,7 @@ class AOHarmonicV3:
             "mission_graph": "RECOMPUTE",
             "forest_first_omega": "REMODEL_ROOTS_FOREST_HORIZON_AND_PATHS",
             "adaptive_intelligence_router": "REASSESS_IF_EVIDENCE_CHANGES_UNCERTAINTY_CONTRADICTIONS_OR_CONSEQUENCE",
+            "adaptive_2x_cycle": "DELTA_ONLY_CONTEXT_REFRESH_AND_CANDIDATE_REMEASUREMENT",
             "event_id": event.event_id,
         }
 
@@ -206,6 +230,9 @@ class AOHarmonicV3:
             "FOREST_FIRST_CREATOR_MODE",
             "HORIZON_OMEGA",
             "ADAPTIVE_INTELLIGENCE_ROUTER",
+            "ADAPTIVE_2X_CYCLE_ENGINE",
+            "BOUNDED_CONTEXT_COMPACTION",
+            "BOUNDED_DELTA_MEMORY",
             "PRE_REVENUE_COST_GOVERNOR",
             "OMEGA_SCIENTIA",
             "LEX_DOMAIN_AUTHORITY",
@@ -233,7 +260,9 @@ class AOHarmonicV3:
             "external_effect_default": self.EXTERNAL_EFFECT_DEFAULT,
             "cost_posture": "PRE_REVENUE_ZERO_BASE",
             "intelligence_routing": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
-            "cognitive_cycle": "ROOTS->FOREST->HORIZON->TREES->PATHS->DECISION->OMEGA->READBACK->LEARNING",
+            "improvement_target": "MEASURED_2X_WHEN_ATTAINED_MONOTONIC_GAIN_OTHERWISE",
+            "working_memory": "BOUNDED_DEDUPLICATED_DELTA_CAPSULES_WITH_HASH_CHECKPOINTS",
+            "cognitive_cycle": "ROOTS->FOREST->HORIZON->TREES->PATHS->DECISION->COMPACT->BASELINE->CANDIDATE->SELF-TEST->2X-TARGET->PROMOTE_OR_REBUILD->READBACK->DELTA-LEARNING",
         }
 
 
@@ -246,6 +275,8 @@ def bootstrap() -> dict[str, object]:
         "strategic_perception": "FOREST-FIRST-OMEGA",
         "foresight": "HORIZON-OMEGA",
         "intelligence_routing": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
+        "adaptive_improvement": "ADAPTIVE-2X-CYCLE-ENGINE-V1",
+        "context_management": "BOUNDED-CONTEXT-COMPACTION-V1",
         "cost_governance": "PRE_REVENUE_ZERO_BASE",
         "timestamp": datetime.now(timezone.utc).isoformat(),
         "acceptance": runtime.restore_acceptance_test(),
@@ -256,5 +287,7 @@ def bootstrap() -> dict[str, object]:
             "operationally_verified": False,
             "provider_billing_caps_configured": False,
             "model_or_reasoning_selection_executed": False,
+            "measured_2x_operational_gain_verified": False,
+            "durable_external_context_archive_bound": False,
         },
     }

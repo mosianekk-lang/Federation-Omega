@@ -120,20 +120,36 @@ class LearningEvent:
 
 
 class LearningLedger:
-    """Append-only in-memory hash chain for deterministic learning tests.
+    """Bounded hash-linked learning working set with checkpoint continuity.
 
-    Durable learning belongs in the approved external evidence plane, not source.
+    The in-process window is intentionally capped so repeated cycles do not grow
+    the active context without limit. Records that leave the working set remain
+    committed by ``checkpoint_hash``; durable full history belongs in the
+    approved external evidence plane.
     """
 
-    def __init__(self) -> None:
+    def __init__(self, *, max_records: int = 256) -> None:
+        if max_records < 1:
+            raise ValueError("max_records must be at least 1")
+        self.max_records = max_records
+        self._checkpoint_hash = "GENESIS"
         self._records: list[dict[str, Any]] = []
+        self._total_appended = 0
 
     @property
     def records(self) -> tuple[dict[str, Any], ...]:
         return tuple(self._records)
 
+    @property
+    def checkpoint_hash(self) -> str:
+        return self._checkpoint_hash
+
+    @property
+    def total_appended(self) -> int:
+        return self._total_appended
+
     def append(self, event: LearningEvent) -> dict[str, Any]:
-        previous_hash = self._records[-1]["hash"] if self._records else "GENESIS"
+        previous_hash = self._records[-1]["hash"] if self._records else self._checkpoint_hash
         payload = asdict(event)
         canonical = json.dumps(
             {"previous_hash": previous_hash, "event": payload},
@@ -143,10 +159,26 @@ class LearningLedger:
         digest = hashlib.sha256(canonical.encode("utf-8")).hexdigest()
         record = {"previous_hash": previous_hash, "event": payload, "hash": digest}
         self._records.append(record)
+        self._total_appended += 1
+        self._compact()
         return record
 
+    def _compact(self) -> None:
+        while len(self._records) > self.max_records:
+            removed = self._records.pop(0)
+            self._checkpoint_hash = removed["hash"]
+
+    def snapshot(self) -> dict[str, Any]:
+        return {
+            "checkpoint_hash": self._checkpoint_hash,
+            "retained_records": len(self._records),
+            "total_appended": self._total_appended,
+            "latest_hash": self._records[-1]["hash"] if self._records else self._checkpoint_hash,
+            "verified": self.verify(),
+        }
+
     def verify(self) -> bool:
-        previous_hash = "GENESIS"
+        previous_hash = self._checkpoint_hash
         for record in self._records:
             canonical = json.dumps(
                 {"previous_hash": previous_hash, "event": record["event"]},
