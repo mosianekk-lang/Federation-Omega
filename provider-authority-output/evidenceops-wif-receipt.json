@@ -1,0 +1,55 @@
+{
+  "access_token_test": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.auth.print-access-token) ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')"
+  },
+  "active_account": {
+    "exit_code": 0,
+    "ok": true,
+    "stderr": "",
+    "stdout": "evidenceops-cloud-operator@sov-hybrid-suite.iam.gserviceaccount.com"
+  },
+  "auth_action_outcome": "failure",
+  "candidate_provider": "projects/257649435135/locations/global/workloadIdentityPools/evidenceops-github/providers/github",
+  "candidate_service_account": "evidenceops-cloud-operator@sov-hybrid-suite.iam.gserviceaccount.com",
+  "classification": "EVIDENCEOPS_WIF_NOT_AUTHENTICATED",
+  "mutation_attempted": false,
+  "operator_service_account": {
+    "ok": false,
+    "skipped": "NO_VALID_PROVIDER_AUTH"
+  },
+  "project": {
+    "ok": false,
+    "skipped": "NO_VALID_PROVIDER_AUTH"
+  },
+  "project_number_match": false,
+  "provider_authenticated": false,
+  "recorded_at": "2026-08-23T17:59:10.894020+00:00",
+  "schema": "SOVARA-EXISTING-EVIDENCEOPS-WIF-PROBE-V1",
+  "secret_metadata": {
+    "fo-operator-admin-token": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "gemini-api-key": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "sovara-gateway-master-key": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    }
+  },
+  "secret_values_recorded": false,
+  "setup_gcloud_outcome": "failure",
+  "truth_boundary": "Read-only probe of an already source-defined WIF lineage. No Google API/IAM/WIF/secret/deployment/traffic mutation is performed.",
+  "wif_pool": {
+    "ok": false,
+    "skipped": "NO_VALID_PROVIDER_AUTH"
+  },
+  "wif_provider": {
+    "ok": false,
+    "skipped": "NO_VALID_PROVIDER_AUTH"
+  }
+}
