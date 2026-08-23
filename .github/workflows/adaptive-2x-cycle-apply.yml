@@ -1,14 +1,15 @@
 name: Apply AO Adaptive 2X Cycle Kernel
 
-# transport integrity diagnostic and exact-part verification
 on:
   push:
     branches:
       - feat/adaptive-2x-cycle-v1
     paths:
       - .github/workflows/adaptive-2x-cycle-apply.yml
-      - .github/bootstrap/adaptive-2x-cycle.tgz.part1
-      - .github/bootstrap/adaptive-2x-cycle.tgz.part2
+      - .github/bootstrap/adaptive-2x-cycle.b64.part1
+      - .github/bootstrap/adaptive-2x-cycle.b64.part2
+      - .github/bootstrap/adaptive-2x-cycle.b64.part3
+      - .github/bootstrap/adaptive-2x-cycle.b64.part4
 
 permissions:
   contents: write
@@ -27,28 +28,38 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Verify transport and materialize reviewed source transaction
+      - name: Verify text transport and materialize reviewed source transaction
         shell: bash
         run: |
           set -euo pipefail
-          stat -c '%n %s bytes' \
-            .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
-            .github/bootstrap/adaptive-2x-cycle.tgz.part2
-          sha256sum \
-            .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
-            .github/bootstrap/adaptive-2x-cycle.tgz.part2
-          echo "dece5de3971cab6bcd0fd7c7faeb2f28f759e21d39afe1a839435f1a0d779511  .github/bootstrap/adaptive-2x-cycle.tgz.part1" | sha256sum -c -
-          echo "3c5382109aac31ae279917b4dc06548426af78fbd126b7767f7740c7d13af8b3  .github/bootstrap/adaptive-2x-cycle.tgz.part2" | sha256sum -c -
+          wc -c \
+            .github/bootstrap/adaptive-2x-cycle.b64.part1 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part2 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part3 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part4
+          echo "d08b6f5f5bf64a07214b0808d8101f8e76ee53699124d79b38e63e523a637c2d  .github/bootstrap/adaptive-2x-cycle.b64.part1" | sha256sum -c -
+          echo "a07271a664e62ea8e169757134218ba1fe76a53114f0d4b33812db2882d3dc29  .github/bootstrap/adaptive-2x-cycle.b64.part2" | sha256sum -c -
+          echo "2c90e9b05dc6037abfa20497be573e61c566b6170a86b7f47465ddfbb902d1d7  .github/bootstrap/adaptive-2x-cycle.b64.part3" | sha256sum -c -
+          echo "c8338878e67d2463e7b4b8ee2c0a890f9139450a42805260974ccc9173fe7781  .github/bootstrap/adaptive-2x-cycle.b64.part4" | sha256sum -c -
           cat \
-            .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
-            .github/bootstrap/adaptive-2x-cycle.tgz.part2 \
-            > /tmp/adaptive-2x-cycle.tgz
+            .github/bootstrap/adaptive-2x-cycle.b64.part1 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part2 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part3 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part4 \
+            > /tmp/adaptive-2x-cycle.b64
+          echo "f87410463306a485fcfc2599c481a142f4c9d94b74ee87b51030eb64b30bcb87  /tmp/adaptive-2x-cycle.b64" | sha256sum -c -
+          base64 --decode /tmp/adaptive-2x-cycle.b64 > /tmp/adaptive-2x-cycle.tgz
           echo "f81ca2ca4944f40ea48b2647fb3cb2491821a99a184ec01655ff31386a40a381  /tmp/adaptive-2x-cycle.tgz" | sha256sum -c -
           gzip -t /tmp/adaptive-2x-cycle.tgz
+          tar -tzf /tmp/adaptive-2x-cycle.tgz
           tar -xzf /tmp/adaptive-2x-cycle.tgz -C .
           rm -f \
             .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
             .github/bootstrap/adaptive-2x-cycle.tgz.part2 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part1 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part2 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part3 \
+            .github/bootstrap/adaptive-2x-cycle.b64.part4 \
             .github/workflows/adaptive-2x-cycle-apply.yml
 
       - name: Deterministic regression proof
