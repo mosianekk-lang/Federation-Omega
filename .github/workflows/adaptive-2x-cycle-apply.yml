@@ -1,6 +1,6 @@
 name: Apply AO Adaptive 2X Cycle Kernel
 
-# deterministic trigger refresh: 2026-08-23T18:46:00Z
+# transport integrity diagnostic and exact-part verification
 on:
   push:
     branches:
@@ -27,15 +27,24 @@ jobs:
           ref: ${{ github.ref_name }}
           fetch-depth: 0
 
-      - name: Materialize reviewed source transaction
+      - name: Verify transport and materialize reviewed source transaction
         shell: bash
         run: |
           set -euo pipefail
+          stat -c '%n %s bytes' \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part2
+          sha256sum \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part2
+          echo "dece5de3971cab6bcd0fd7c7faeb2f28f759e21d39afe1a839435f1a0d779511  .github/bootstrap/adaptive-2x-cycle.tgz.part1" | sha256sum -c -
+          echo "3c5382109aac31ae279917b4dc06548426af78fbd126b7767f7740c7d13af8b3  .github/bootstrap/adaptive-2x-cycle.tgz.part2" | sha256sum -c -
           cat \
             .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
             .github/bootstrap/adaptive-2x-cycle.tgz.part2 \
             > /tmp/adaptive-2x-cycle.tgz
           echo "f81ca2ca4944f40ea48b2647fb3cb2491821a99a184ec01655ff31386a40a381  /tmp/adaptive-2x-cycle.tgz" | sha256sum -c -
+          gzip -t /tmp/adaptive-2x-cycle.tgz
           tar -xzf /tmp/adaptive-2x-cycle.tgz -C .
           rm -f \
             .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
