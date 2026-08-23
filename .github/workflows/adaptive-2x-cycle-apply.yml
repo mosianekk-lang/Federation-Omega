@@ -1,5 +1,6 @@
 name: Apply AO Adaptive 2X Cycle Kernel
 
+# deterministic trigger refresh: 2026-08-23T18:46:00Z
 on:
   push:
     branches:
