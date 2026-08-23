@@ -1,0 +1,53 @@
+{
+  "acceptance": [
+    "no_contents_write",
+    "persist_credentials_false",
+    "no_git_commit_or_push",
+    "no_credentials_json_or_service_account_key_file_route",
+    "no_secret_version_access",
+    "access_token_stdout_discarded",
+    "read_only_gcloud_commands_only",
+    "canonical_project_number_semantic_readback",
+    "artifact_receipt_uploaded",
+    "blocked_auth_cannot_report_verified",
+    "airlock_leak_guard_and_bubbles_pass_exact_head"
+  ],
+  "canonical_target": {
+    "project_id": "sov-hybrid-suite",
+    "project_number": "257649435135",
+    "region": "africa-south1"
+  },
+  "containment_target": {
+    "authentication": "WIF_ONLY",
+    "blocked_provider_auth_result": "FAILED_PROBE_WITH_RECEIPT",
+    "permissions": [
+      "contents:read",
+      "id-token:write"
+    ],
+    "provider_actions": "READ_ONLY_METADATA",
+    "repository_write": false,
+    "runtime_receipt_destination": "IMMUTABLE_WORKFLOW_ARTIFACT_ONLY",
+    "secret_value_access": false
+  },
+  "incident_lineage": {
+    "new_findings": [
+      "workflow_had_contents_write",
+      "checkout_persisted_repository_credentials",
+      "workflow_tried_long_lived_service_account_key_file_aliases",
+      "workflow_could_access_secret_values",
+      "workflow_committed_generated_runtime_receipt_to_main"
+    ],
+    "prior_direct_main_incident_preserved": true,
+    "prior_record": "FED-PROVIDER-AUTHORITY-PROBE-PROVENANCE-READMISSION-20260813-001"
+  },
+  "owner": "Kim Kagiso Mosiane",
+  "schema": "FEDOMEGA-PROVIDER-AUTHORITY-PROBE-CONTAINMENT-2",
+  "source_baseline": "9ff1c7d9e70fe078a6317656c6ccf477d6b24d2a",
+  "truth_boundary": [
+    "This record authorizes source containment and a read-only probe design only.",
+    "It does not prove Google authentication, WIF repair, IAM authority, API enablement, Apps Script authority, Cloud Run deployment or Gemini operation.",
+    "The probe must fail closed until exact provider-native principal and canonical project readback pass."
+  ],
+  "version": "2.0.0",
+  "workflow": ".github/workflows/bubbles-provider-authority-recovery-probe.yml"
+}

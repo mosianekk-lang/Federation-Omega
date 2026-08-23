@@ -14,6 +14,7 @@ REQUIRED = [
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
+    ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
 ]
 
 
@@ -26,6 +27,14 @@ def required(state: str = "active", attempt: int = 1):
         {"id": index, "path": path, "state": state, "attempt": attempt}
         for index, path in enumerate(REQUIRED, start=1)
     ]
+
+
+def set_required_state(rows, path: str, state: str):
+    for item in rows:
+        if item["path"] == path:
+            item["state"] = state
+            return rows
+    raise AssertionError(f"required workflow not found in fixture: {path}")
 
 
 class FreezeConvergenceTests(unittest.TestCase):
@@ -57,17 +66,45 @@ class FreezeConvergenceTests(unittest.TestCase):
 
     def test_missing_individual_required_state_fails(self):
         values = required()
-        values[1]["state"] = "disabled_manually"
+        set_required_state(
+            values,
+            ".github/workflows/public-repository-leak-guard.yml",
+            "disabled_manually",
+        )
         result = self.receipt(required_readback=values)
         self.assertEqual("READBACK_FAILED", result["status"])
-        self.assertEqual([REQUIRED[1]], result["missing_required"])
+        self.assertEqual(
+            [".github/workflows/public-repository-leak-guard.yml"],
+            result["missing_required"],
+        )
 
     def test_bubbles_disabled_state_fails_convergence(self):
         values = required()
-        values[-1]["state"] = "disabled_manually"
+        set_required_state(
+            values,
+            ".github/workflows/bubbles-command-bus.yml",
+            "disabled_manually",
+        )
         result = self.receipt(required_readback=values)
         self.assertEqual("READBACK_FAILED", result["status"])
-        self.assertEqual([".github/workflows/bubbles-command-bus.yml"], result["missing_required"])
+        self.assertEqual(
+            [".github/workflows/bubbles-command-bus.yml"],
+            result["missing_required"],
+        )
+
+    def test_provider_authority_recovery_probe_disabled_state_fails_convergence(self):
+        values = required()
+        set_required_state(
+            values,
+            ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
+            "disabled_manually",
+        )
+        result = self.receipt(required_readback=values)
+        self.assertEqual("READBACK_FAILED", result["status"])
+        self.assertEqual(
+            [".github/workflows/bubbles-provider-authority-recovery-probe.yml"],
+            result["missing_required"],
+        )
 
     def test_unexpected_active_workflow_still_fails(self):
         result = self.receipt(
@@ -111,13 +148,25 @@ class FreezeConvergenceTests(unittest.TestCase):
         self.assertNotIn("${payload:-{}}", text)
         self.assertIn('if [[ -z "${payload}" ]]; then', text)
         self.assertIn("payload='{}'", text)
-        self.assertIn("<<< \"${payload}\"", text)
+        self.assertIn('<<< "${payload}"', text)
 
     def test_workflow_treats_bubbles_command_bus_as_required_active(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         self.assertGreaterEqual(text.count("bubbles-command-bus.yml"), 2)
         self.assertIn(
             '"bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"',
+            text,
+        )
+
+    def test_workflow_treats_provider_authority_recovery_probe_as_required_active(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertGreaterEqual(
+            text.count("bubbles-provider-authority-recovery-probe.yml"),
+            2,
+        )
+        self.assertIn(
+            '"bubbles-provider-authority-recovery-probe.yml|.github/workflows/'
+            'bubbles-provider-authority-recovery-probe.yml"',
             text,
         )
 
