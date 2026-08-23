@@ -5,6 +5,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/sovara-evidenceops-wif-probe.yml'
+  issues:
+    types: [opened]
   workflow_dispatch:
 
 permissions:
@@ -23,6 +25,7 @@ env:
 
 jobs:
   probe-existing-lineage:
+    if: github.event_name != 'issues' || github.event.issue.title == 'SOVARA_EVIDENCEOPS_WIF_PROBE'
     runs-on: ubuntu-24.04
     timeout-minutes: 8
     steps:
