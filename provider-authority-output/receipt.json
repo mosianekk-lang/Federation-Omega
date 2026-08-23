@@ -88,7 +88,7 @@
         "DEPLOY_SOLUTION5_LOCKED",
         "READ_BUILD"
       ],
-      "checkedAt": "2026-08-23T11:52:07.014Z",
+      "checkedAt": "2026-08-23T17:01:29.878Z",
       "ok": true,
       "service": "federation-omega-operator",
       "targetService": "architron9",
@@ -98,7 +98,7 @@
   },
   "operator_public_health": {
     "body": {
-      "checkedAt": "2026-08-23T11:52:06.470Z",
+      "checkedAt": "2026-08-23T17:01:29.248Z",
       "noGmail": true,
       "ok": true,
       "service": "federation-omega-operator",
@@ -113,7 +113,7 @@
     "skipped": "NO_VALID_PROVIDER_AUTH"
   },
   "provider_authenticated": false,
-  "recorded_at": "2026-08-23T11:52:07.722619+00:00",
+  "recorded_at": "2026-08-23T17:01:33.042853+00:00",
   "schema": "BUBBLES-PROVIDER-AUTHORITY-RECOVERY-PROBE-V1",
   "secret_alias_presence": {
     "ARCHON_ADMIN_TOKEN": false,
