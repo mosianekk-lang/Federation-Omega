@@ -15,6 +15,7 @@ const SOVARA_ADMIN_LINEAGE = Object.freeze({
   FOGAS_OAUTH_CONSUMER_PROJECT_NUMBER: '979287460558',
   VERIFIER_URL_PROPERTY: 'SOVARA_ADMISSION_VERIFIER_URL',
   VERIFIER_HOST_PROPERTY: 'SOVARA_ADMISSION_VERIFIER_HOST',
+  VERIFIER_IDENTITY_PROPERTY: 'SOVARA_ADMISSION_VERIFIER_IDENTITY',
   MAX_PROOF_AGE_MS: 10 * 60 * 1000,
   MAX_FUTURE_SKEW_MS: 30 * 1000
 });
@@ -179,7 +180,13 @@ function SOVARA_ADMIN_verifyExternalAdmission_(
   const expectedHost = String(
     properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_HOST_PROPERTY) || ''
   ).toLowerCase();
+  const expectedIdentity = String(
+    properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_IDENTITY_PROPERTY) || ''
+  );
   SOVARA_ADMIN_assertPinnedHttpsEndpoint_(url, expectedHost);
+  if (!expectedIdentity) {
+    throw new Error('EXTERNAL_VERIFIER_IDENTITY_NOT_CONFIGURED');
+  }
 
   const challenge = Utilities.getUuid() + '-' + Date.now();
   const body = {
@@ -223,8 +230,10 @@ function SOVARA_ADMIN_verifyExternalAdmission_(
     String(result.requestSha256 || '') === requestSha256,
     String(result.providerReceiptSha256 || '') === provider.receiptSha256,
     String(result.effectPermitSha256 || '') === permit.permitSha256,
+    String(result.expectedBeforeHash || '') === permit.expectedBeforeHash,
+    String(result.expectedAfterHash || '') === permit.expectedAfterHash,
     Boolean(result.verificationId),
-    Boolean(result.verifierIdentity)
+    String(result.verifierIdentity || '') === expectedIdentity
   ];
   if (!checks.every(function (value) { return value === true; })) {
     throw new Error('EXTERNAL_ADMISSION_VERIFICATION_FAILED');
@@ -251,15 +260,31 @@ function SOVARA_ADMIN_verifyExternalPostEffect_(request, result) {
   const expectedHost = String(
     properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_HOST_PROPERTY) || ''
   ).toLowerCase();
+  const expectedIdentity = String(
+    properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_IDENTITY_PROPERTY) || ''
+  );
   SOVARA_ADMIN_assertPinnedHttpsEndpoint_(url, expectedHost);
+  if (!expectedIdentity) {
+    throw new Error('EXTERNAL_VERIFIER_IDENTITY_NOT_CONFIGURED');
+  }
 
   const challenge = Utilities.getUuid() + '-' + Date.now();
+  const effectAction = String(
+    request.effectPermit && request.effectPermit.action || ''
+  );
   const payload = {
     schema: 'SOVARA_POST_EFFECT_CHALLENGE_V2',
     challenge: challenge,
     transactionId: String(request.transactionId || ''),
     targetProjectNumber: SOVARA_ADMIN_LINEAGE.CANONICAL_PROJECT_NUMBER,
-    action: 'CODE_APPLY',
+    action: effectAction,
+    requestSha256: SOVARA_ADMIN_mutationIntentSha256_(request),
+    providerReceiptSha256: String(
+      request.providerReceipt && request.providerReceipt.receiptSha256 || ''
+    ),
+    effectPermitSha256: String(
+      request.effectPermit && request.effectPermit.permitSha256 || ''
+    ),
     expectedSourceHash: String(result.afterHash || ''),
     versionNumber: result.version ? result.version.versionNumber : null,
     deploymentId: result.deployment ? result.deployment.deploymentId : null,
@@ -287,13 +312,25 @@ function SOVARA_ADMIN_verifyExternalPostEffect_(request, result) {
     verified.verified === true,
     String(verified.challenge || '') === challenge,
     String(verified.transactionId || '') === String(request.transactionId || ''),
+    String(verified.action || '') === effectAction,
+    String(verified.requestSha256 || '') === payload.requestSha256,
+    String(verified.providerReceiptSha256 || '') ===
+      payload.providerReceiptSha256,
+    String(verified.effectPermitSha256 || '') === payload.effectPermitSha256,
     String(verified.observedSourceHash || '') === String(result.afterHash || ''),
+    String(verified.verifierIdentity || '') === expectedIdentity,
+    Boolean(verified.verificationId),
     verified.providerSemanticReadbackVerified === true,
     verified.providerMutationPerformedByVerifier === false
   ];
   if (!checks.every(function (value) { return value === true; })) {
     throw new Error('POST_EFFECT_SEMANTIC_VERIFICATION_FAILED');
   }
+  SOVARA_ADMIN_assertFreshWindow_(
+    verified.verifiedAt,
+    verified.expiresAt,
+    'POST_EFFECT_VERIFIER_RESULT_STALE'
+  );
   return verified;
 }
 
@@ -349,7 +386,8 @@ function SOVARA_ADMIN_lineageStatus() {
     ],
     externalVerifierConfigured: Boolean(
       properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_URL_PROPERTY) &&
-      properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_HOST_PROPERTY)
+      properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_HOST_PROPERTY) &&
+      properties.getProperty(SOVARA_ADMIN_LINEAGE.VERIFIER_IDENTITY_PROPERTY)
     ),
     providerAuthorityProven: false,
     providerMutationAuthorizedByStatus: false,
