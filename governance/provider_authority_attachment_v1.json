@@ -1,4 +1,16 @@
 {
+  "apps_script_security_gate": {
+    "deployment_or_invocation_allowed_before_recovery": false,
+    "public_web_app_plus_default_approval_injection": "SECURITY_HOLD_PUBLIC_APPROVAL_BYPASS",
+    "required_recovery": [
+      "patch_authorization_without_default_approval_substitution",
+      "verify_deployment_inventory",
+      "create_immutable_version_and_bounded_deployment_receipt",
+      "run_negative_unauthorized_call_canary",
+      "run_authenticated_semantic_readback",
+      "prove_rollback"
+    ]
+  },
   "authority_ceiling": "A1_PROVIDER_READ_ONLY_AFTER_NATIVE_AUTH",
   "controls": {
     "default_mode": "PLAN_OR_VERIFY",
@@ -11,10 +23,41 @@
     "service_account_key_files_prohibited": true,
     "service_enablement_requires_exact_apply_marker": true
   },
-  "current_source_baseline": "5555f8384fb851466f907830089e1370d9883502",
+  "current_source_baseline": "9ff1c7d9e70fe078a6317656c6ccf477d6b24d2a",
+  "identity_lineage_model": {
+    "canonical_provider_authority_target": {
+      "project_id": "sov-hybrid-suite",
+      "project_number": "257649435135",
+      "role": "CANONICAL_PROVIDER_AUTHORITY_TARGET"
+    },
+    "invariants": [
+      "resource_target_oauth_consumer_and_transport_are_separate_identity_lineages",
+      "changing_target_project_number_does_not_rebind_or_repair_oauth_consumer",
+      "oauth_consumer_project_may_differ_from_resource_target_but_requires_independent_identity_api_and_authority_proof",
+      "transport_success_never_grants_provider_authority",
+      "token_principal_target_scope_semantic_readback_and_deployment_inventory_are_required_for_promotion"
+    ],
+    "known_non_authority_lineages": [
+      {
+        "project_number": "516699068552",
+        "provider_authority": false,
+        "role": "LEGACY_CLOUDOPS_TRANSPORT_ONLY"
+      },
+      {
+        "project_number": "516690968552",
+        "provider_authority": false,
+        "role": "CLOUDOPS_OAUTH_CONSUMER_BLOCKED"
+      },
+      {
+        "project_number": "979287460558",
+        "provider_authority": false,
+        "role": "FOGAS_OAUTH_CONSUMER_BLOCKED"
+      }
+    ]
+  },
   "implementation": "federation_consolidation/provider_authority_attachment.py",
   "owner": "Kim Kagiso Mosiane",
-  "purpose": "Consume provider-native Google Cloud identity and metadata receipts, verify the sealed packet, issue one opaque read-only capability handle for at most ten minutes, and revoke it without exposing credentials.",
+  "purpose": "Consume provider-native Google Cloud identity and metadata receipts, keep resource target, OAuth consumer and transport lineages separate, verify the sealed packet, issue one opaque read-only capability handle for at most ten minutes, and revoke it without exposing credentials.",
   "required_identity": {
     "account": "mosianekk@gmail.com",
     "project_id": "sov-hybrid-suite",
@@ -29,9 +72,11 @@
   "schema": "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-CONTRACT-1",
   "truth_boundary": {
     "cloud_shell_requires_provider_authenticated_user": true,
+    "oauth_consumer_api_enablement_is_not_target_authority": true,
     "openai_key_deletion_remains_official_provider_action": true,
     "owner_intent_grants_google_authority": false,
-    "source_code_grants_google_authority": false
+    "source_code_grants_google_authority": false,
+    "target_project_configuration_repairs_oauth_consumer": false
   },
-  "version": "1.0.0"
+  "version": "1.1.0"
 }
