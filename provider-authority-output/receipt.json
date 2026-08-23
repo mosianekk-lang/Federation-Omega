@@ -1,0 +1,161 @@
+{
+  "access_token_test": {
+    "exit_code": 1,
+    "ok": false,
+    "stderr": "ERROR: (gcloud.auth.print-access-token) ('Error code invalid_target: The target service indicated by the \"audience\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.', '{\"error\":\"invalid_target\",\"error_description\":\"The target service indicated by the \\\\\"audience\\\\\" parameters is invalid. This might either be because the pool or provider is disabled or deleted or because it doesn\\'t exist.\"}')"
+  },
+  "active_account": null,
+  "actual_project_number": null,
+  "api_states": {
+    "artifactregistry.googleapis.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "cloudbuild.googleapis.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "run.googleapis.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "script.googleapis.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "secretmanager.googleapis.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "serviceusage.googleapis.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    }
+  },
+  "archon_authenticated_reads": {},
+  "archon_openapi": {
+    "body": {
+      "text": "openapi: 3.1.0\ninfo:\n  title: Archon Admin Plane\n  version: \"5.0.0\"\nservers:\n  - url: http://archon-admin-plane-7ujkyfl36q-bq.a.run.app\npaths:\n  /api/admin/command:\n    post:\n      operationId: runArchonAdminCommand\n      summary: Run a controlled Google Cloud admin command\n      security:\n        - bearerAuth: []\n      requestBody:\n        required: true\n        content:\n          application/json:\n            schema:\n              type: object\n              required: [command]\n              properties:\n                command:\n                  type: string\n                  enum:\n                    - health_check\n                    - capability_audit\n                    - project_info\n                    - iam_policy_read\n                    - enabled_services_list\n                    - run_services_list\n                    - run_service_get\n                    - run_logs_tail\n                    - builds_list\n                    - scheduler_jobs_list\n                    - secrets_list\n                    - storage_buckets_list\n                    - artifact_repositories_list\n                    - runtime_promote\n                    - runtime_rollback\n                    - shell_gcloud_readonly\n                payload:\n                  type: object\n                  additionalProperties: true\n                source:\n                  type: string\n      responses:\n        \"200\":\n          description: Command result\n          content:\n            application/json:\n              schema:\n                type: object\n                additionalProperties: true\ncomponents:\n  securitySchemes:\n    bearerAuth:\n      type: http\n      scheme: bearer\n"
+    },
+    "http_status": 200
+  },
+  "archon_token_available": false,
+  "archon_token_source": null,
+  "auth_outcomes": {
+    "CANONICAL_WIF": "failure",
+    "GCP_CREDENTIALS": "skipped",
+    "GCP_SA_KEY": "skipped",
+    "GCP_SERVICE_ACCOUNT_KEY": "skipped",
+    "GENERIC_WIF": "skipped",
+    "GOOGLE_CLOUD_CREDENTIALS": "skipped",
+    "GOOGLE_CREDENTIALS": "skipped",
+    "GOOGLE_GHA_CREDS_JSON": "skipped",
+    "GOOGLE_SERVICE_ACCOUNT_KEY": "skipped",
+    "REPOSITORY_GCP_WIF": "skipped"
+  },
+  "canonical_wif_read": {
+    "ok": false,
+    "skipped": "NO_VALID_PROVIDER_AUTH"
+  },
+  "classification": "TRUSTED_PROVIDER_AUTHORITY_STILL_BLOCKED",
+  "cloud_run_services": {
+    "afeme-sovereign-control-plane-v4": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "architron9": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "federation-omega-operator": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    }
+  },
+  "expected_project_id": "sov-hybrid-suite",
+  "expected_project_number": "257649435135",
+  "fo_token_available": false,
+  "fo_token_source": null,
+  "mutation_attempted": false,
+  "operator_architron_read": null,
+  "operator_authenticated_status": null,
+  "operator_public_contract": {
+    "body": {
+      "allowedActions": [
+        "STATUS",
+        "READ_CLOUD_RUN_SERVICE",
+        "VERIFY_ARCHITRON_HEALTH",
+        "DEPLOY_SOLUTION5_LOCKED",
+        "READ_BUILD"
+      ],
+      "checkedAt": "2026-08-23T11:52:07.014Z",
+      "ok": true,
+      "service": "federation-omega-operator",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "operator_public_health": {
+    "body": {
+      "checkedAt": "2026-08-23T11:52:06.470Z",
+      "noGmail": true,
+      "ok": true,
+      "service": "federation-omega-operator",
+      "status": "OPERATOR_READY",
+      "targetService": "architron9",
+      "version": "fo-operator-v1-image-cloudbuild"
+    },
+    "http_status": 200
+  },
+  "project_read": {
+    "ok": false,
+    "skipped": "NO_VALID_PROVIDER_AUTH"
+  },
+  "provider_authenticated": false,
+  "recorded_at": "2026-08-23T11:52:07.722619+00:00",
+  "schema": "BUBBLES-PROVIDER-AUTHORITY-RECOVERY-PROBE-V1",
+  "secret_alias_presence": {
+    "ARCHON_ADMIN_TOKEN": false,
+    "FO_ADMIN_TOKEN": false,
+    "GCP_CREDENTIALS": false,
+    "GCP_SA_KEY": false,
+    "GCP_SERVICE_ACCOUNT_KEY": false,
+    "GCP_WIF_PAIR": false,
+    "GENERIC_WIF_PAIR": false,
+    "GOOGLE_CLOUD_CREDENTIALS": false,
+    "GOOGLE_CREDENTIALS": false,
+    "GOOGLE_GHA_CREDS_JSON": false,
+    "GOOGLE_SERVICE_ACCOUNT_KEY": false
+  },
+  "secret_metadata": {
+    "archon-admin-plane-token": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "fo-operator-admin-token": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    }
+  },
+  "secret_values_recorded": false,
+  "service_accounts": {
+    "afeme-sovereign-runtime-v4@sov-hybrid-suite.iam.gserviceaccount.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "fo-automation-agent@sov-hybrid-suite.iam.gserviceaccount.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    },
+    "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com": {
+      "ok": false,
+      "skipped": "NO_VALID_PROVIDER_AUTH"
+    }
+  },
+  "truth_boundary": "Read-only authority recovery. No IAM, API, deployment, traffic, secret-version, Apps Script, scheduler, or Cloud Run mutation is performed."
+}
