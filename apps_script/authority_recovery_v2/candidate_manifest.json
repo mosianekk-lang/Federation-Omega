@@ -1,0 +1,156 @@
+{
+  "branch": "feat/apps-script-authority-recovery-v2",
+  "file_count": 27,
+  "files": [
+    {
+      "bytes": 3581,
+      "path": "apps_script/authority_recovery_v2/MIGRATION_PLAN.md",
+      "sha256": "48e03aeaa4ee2f809fb14ab8648912c2798f18289919ccc999275e5039011293"
+    },
+    {
+      "bytes": 6257,
+      "path": "apps_script/authority_recovery_v2/README.md",
+      "sha256": "ce57f1f0844b3a6699d64ebd79788c58d3f2befb39316a736305947f073e9c40"
+    },
+    {
+      "bytes": 15510,
+      "path": "apps_script/authority_recovery_v2/private_admin/ARCHON_Core.gs",
+      "sha256": "1f2b6fb9c44e4c32da3cb88dc3af56a099f6f527b1181bd081d44c9c0cf28fa8"
+    },
+    {
+      "bytes": 1294,
+      "path": "apps_script/authority_recovery_v2/private_admin/ARCHON_Execution.gs",
+      "sha256": "68ff5417ef074cf082deaf02c8a076de81c013171a4a4fdbf12e3ef58118659a"
+    },
+    {
+      "bytes": 9110,
+      "path": "apps_script/authority_recovery_v2/private_admin/ARCHON_Integrity_Audit.gs",
+      "sha256": "63340f99042448688efe669ee9390821dcb4d5b892317e9dbda2dd06031a138b"
+    },
+    {
+      "bytes": 5212,
+      "path": "apps_script/authority_recovery_v2/private_admin/ARCHON_Project_Content.gs",
+      "sha256": "1332004ba4e16681a37b20d36aec803c0b8c5a7185d0bb04f83cff1a567b38cc"
+    },
+    {
+      "bytes": 7524,
+      "path": "apps_script/authority_recovery_v2/private_admin/ARCHON_Version_Backup_API.gs",
+      "sha256": "9d6bec4b89f31dd6badfa272399fa359c57af83ad908f66bb182fa52b627b988"
+    },
+    {
+      "bytes": 952,
+      "path": "apps_script/authority_recovery_v2/private_admin/Admin_Router.gs",
+      "sha256": "afab17abce4f89a3e83cc175b56fd63f7b7ed087fe231267cf9721f2919bd346"
+    },
+    {
+      "bytes": 7689,
+      "path": "apps_script/authority_recovery_v2/private_admin/Admin_Security.gs",
+      "sha256": "0127e25925f660b050a465c881aeb76711b8a6a3fcad9e4bc37b805c8b2e54bc"
+    },
+    {
+      "bytes": 15829,
+      "path": "apps_script/authority_recovery_v2/private_admin/Project_Lineage.gs",
+      "sha256": "bb7af08012e0d6b1b9cb5b35978640e0c725bc0a3ab26a0948b88ebc2b265a19"
+    },
+    {
+      "bytes": 538,
+      "path": "apps_script/authority_recovery_v2/private_admin/README.md",
+      "sha256": "f1828a2d7888e7d253d6b29ca396cd1d937f40ae717d7d2c7911cf1844889105"
+    },
+    {
+      "bytes": 543,
+      "path": "apps_script/authority_recovery_v2/private_admin/appsscript.json",
+      "sha256": "a593376f99580f9f3417589115779a40a1c32e8ad963165e3844600987d9ec07"
+    },
+    {
+      "bytes": 3379,
+      "path": "apps_script/authority_recovery_v2/public_gateway/Gateway_Router.gs",
+      "sha256": "5d2fc771164b47a627456c18ae2a7b4fc381567f130703ba5fa27c7cb37400ab"
+    },
+    {
+      "bytes": 7726,
+      "path": "apps_script/authority_recovery_v2/public_gateway/Gateway_Security.gs",
+      "sha256": "b05caa417b5423d2142aceb409c9b2073150b6422519c25ddf1c51bffbc61b8e"
+    },
+    {
+      "bytes": 318,
+      "path": "apps_script/authority_recovery_v2/public_gateway/README.md",
+      "sha256": "1c5f3b23f4bdc453d523df74749667833020c82b335fca6557c4fb589188c839"
+    },
+    {
+      "bytes": 212,
+      "path": "apps_script/authority_recovery_v2/public_gateway/appsscript.json",
+      "sha256": "52c2192f151c949c6dc7cda5aeed15a733b69560f7a75d3484bda83db63283b3"
+    },
+    {
+      "bytes": 9755,
+      "path": "apps_script/authority_recovery_v2/tests/security_contracts.mjs",
+      "sha256": "c895b3fc5643e1a0812419b66d881b12d351a7b26c8010aa4730f085d3f0fe2a"
+    },
+    {
+      "bytes": 3412,
+      "path": "apps_script/authority_recovery_v2/tools/sign_envelope.py",
+      "sha256": "b52459bbfcb769bcf42804e5fbf46ce73d2052a9b35cc3f9e52bb1c12a279de4"
+    },
+    {
+      "bytes": 5392,
+      "path": "federation_consolidation/google_identity_lineage.py",
+      "sha256": "5817af4659394cecfb94003a00667d2ad25e84a1263aa017de96d8ad7453c888"
+    },
+    {
+      "bytes": 7671,
+      "path": "federation_consolidation/provider_authority_attachment.py",
+      "sha256": "2126779a0dbdba7c759bb7b355afbc6d0a9aa33e4c5e83301d21ae719002a5ed"
+    },
+    {
+      "bytes": 5391,
+      "path": "governance/apps_script_authority_recovery_v2.json",
+      "sha256": "0089fd2215d4542789206dc226318c293f674b90be0dfd22749bb3caa5eb6de5"
+    },
+    {
+      "bytes": 5185,
+      "path": "governance/provider_authority_attachment_v1.json",
+      "sha256": "be87d73ede72cb833d961ebc64eaed7d4987b043a551093053b42b542740a472"
+    },
+    {
+      "bytes": 21079,
+      "path": "ops/apps_script_authorization_gate.py",
+      "sha256": "5a84933070f7637764e45588f77b97c3acee73880d6676c078a8e6eeac4f1b1d"
+    },
+    {
+      "bytes": 10960,
+      "path": "ops/apps_script_authorization_model.py",
+      "sha256": "90fac875f3b7cc052777c41d5596686f22c7758b33a5af76afcf194b2f348c19"
+    },
+    {
+      "bytes": 14493,
+      "path": "tests/test_apps_script_authorization_gate.py",
+      "sha256": "5ecee2a44267a6a8cfe5882a0b0d6bb42a1328cfab7f201c26e175370bc96028"
+    },
+    {
+      "bytes": 8901,
+      "path": "tests/test_phoenix_provider_cutover_v3_apps_script_authority_recovery_v2.py",
+      "sha256": "d311ab44a2d48a9c48d6cc2ea783a96e0dfa2d49892b39f6dc28afc7e12c04eb"
+    },
+    {
+      "bytes": 8773,
+      "path": "tests/test_phoenix_provider_cutover_v3_google_identity_lineage.py",
+      "sha256": "b040f227083c024a7d116746359c6fbac7a1e0da593f38528c84614c52ec0e9a"
+    }
+  ],
+  "live_apps_script_mutated": false,
+  "manifest_sha256": "fe8ac70ea7c87a8654900545c8e92a7c6be620b7610360bbab01659d1ac720a9",
+  "private_fleet_source_included": false,
+  "provider_deployment_performed": false,
+  "raw_secret_value_included": false,
+  "schema": "SOVARA_APPS_SCRIPT_AUTHORITY_RECOVERY_V2_MANIFEST",
+  "source": {
+    "contract": "FO_GAS_FLEET_RESTORABLE_BACKUP",
+    "declared_source_sha256": "2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248",
+    "original_mutated": false,
+    "raw_wrapper_sha256": "3af2057a8fd0ee98fca08493f4b0e2405e86484c0663c53740af63c9f076082f",
+    "run_id": "FLEETWEEKLY-20260718-181318-5BXX66"
+  },
+  "source_base_commit": "725f9fe85b4210e9f3b13bba6108f89c8d2b586d",
+  "version": "2.0.0"
+}
