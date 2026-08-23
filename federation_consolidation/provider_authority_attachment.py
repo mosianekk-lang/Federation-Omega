@@ -1,22 +1,33 @@
 from __future__ import annotations
 
-from dataclasses import asdict, dataclass
+from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
-import hashlib
-import json
 import re
 import uuid
 from typing import Any, Mapping
 
+from federation_consolidation.google_identity_lineage import (
+    AttachmentError,
+    CANONICAL_PROJECT_ID,
+    CANONICAL_PROJECT_NUMBER,
+    GoogleIdentityLineageState,
+    KNOWN_GOOGLE_PROJECT_ROLES,
+    LINEAGE_SCHEMA,
+    ROUTE_APPS_SCRIPT_ADMIN_COMPOSITE,
+    ROUTE_APPS_SCRIPT_PROJECT_MANAGEMENT,
+    ROUTE_APPS_SCRIPT_SCRIPTS_RUN,
+    ROUTE_GOOGLE_CLOUD_RESOURCE_ADMIN,
+    SUPPORTED_GOOGLE_ROUTE_CLASSES,
+    canonical_sha256,
+    classify_google_identity_lineage,
+    reject_secret_payload,
+    validate_google_identity_lineage,
+)
 
 SCHEMA = "FEDOMEGA-PROVIDER-AUTHORITY-ATTACHMENT-1"
 HANDLE_SCHEMA = "FEDOMEGA-OPAQUE-CAPABILITY-HANDLE-1"
 MAX_HANDLE_SECONDS = 600
 HEX64 = re.compile(r"^[0-9a-f]{64}$")
-
-
-class AttachmentError(RuntimeError):
-    """Fail-closed provider authority attachment error."""
 
 
 @dataclass(frozen=True)
@@ -36,12 +47,6 @@ class AttachmentState:
     sealed_packet_verified: bool
     openai_existing_key_management_available: bool
     credential_value_recorded: bool = False
-
-
-def canonical_sha256(payload: Any) -> str:
-    return hashlib.sha256(
-        json.dumps(payload, sort_keys=True, separators=(",", ":")).encode()
-    ).hexdigest()
 
 
 def validate_state(state: AttachmentState) -> None:
@@ -99,38 +104,6 @@ def build_plan(state: AttachmentState) -> dict[str, Any]:
     }
     payload["receipt_sha256"] = canonical_sha256(payload)
     return payload
-
-
-def reject_secret_payload(value: Any, path: str = "receipt") -> None:
-    forbidden_keys = {
-        "secretdata",
-        "payload",
-        "payloaddata",
-        "accesstoken",
-        "refreshtoken",
-        "idtoken",
-        "apikey",
-        "privatekey",
-        "authorization",
-        "credentialvalue",
-    }
-    if isinstance(value, Mapping):
-        for key, item in value.items():
-            lowered = str(key).replace("_", "").lower()
-            if lowered in forbidden_keys:
-                raise AttachmentError(f"secret-bearing field prohibited: {path}.{key}")
-            reject_secret_payload(item, f"{path}.{key}")
-    elif isinstance(value, list):
-        for index, item in enumerate(value):
-            reject_secret_payload(item, f"{path}[{index}]")
-    elif isinstance(value, str):
-        if re.search(r"sk-(?:proj-)?[A-Za-z0-9_-]{20,}", value):
-            raise AttachmentError(f"secret-shaped OpenAI key at {path}")
-        if re.search(r"gh[pousr]_[A-Za-z0-9_]{20,}", value):
-            raise AttachmentError(f"secret-shaped GitHub token at {path}")
-        private_key_marker = "-----BEGIN " + "PRIVATE KEY-----"
-        if private_key_marker in value:
-            raise AttachmentError(f"private key at {path}")
 
 
 def verify_metadata_receipt(receipt: Mapping[str, Any]) -> dict[str, Any]:
