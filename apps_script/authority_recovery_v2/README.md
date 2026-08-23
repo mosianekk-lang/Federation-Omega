@@ -1,55 +1,72 @@
-# Federation Omega — Apps Script Authority Recovery v2
+# SOVARA Apps Script Authority Recovery v2
 
-## Purpose
+## State
 
-This additive source candidate preserves the admitted v1 fleet guard and recovers the useful queue, readback, backup, source-management, versioning and rollback capability identified in the restorable Apps Script fleet while removing the public privileged monolith, default approval substitution, raw authentication persistence, duplicate global handlers and legacy-project authority ambiguity.
+`TWO_PLANE_SOURCE_CANDIDATE_VERIFIED / LIVE_FLEET_UNCHANGED / PROVIDER_DEPLOYMENT_UNEXECUTED`
 
-The source basis is the owner-supplied `FO_GAS_FLEET_RESTORABLE_BACKUP`, run `FLEETWEEKLY-20260718-181318-5BXX66`, script `1LqRdlFdDlSh79snZYidLk-rdxjR8zGtEnYfkJgB7iA2N98l_yi18Zfeu`. The wrapper bytes have SHA-256 `3af2057a8fd0ee98fca08493f4b0e2405e86484c0663c53740af63c9f076082f`; the backup declares project-source SHA-256 `2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248`. The producer's canonicalization algorithm is not present, so the declared hash is preserved as a source assertion rather than treated as independently reproduced.
+This source candidate recovers the useful queue, status, backup, project-source, immutable-version, deployment and rollback capabilities identified in the protected fleet backup without preserving its public privileged monolith, default approval bypasses, raw authentication persistence, global handler collisions or legacy-project authority ambiguity.
 
-## Architecture
+## Source anchor
 
-### Public signed gateway
+- backup contract: `FO_GAS_FLEET_RESTORABLE_BACKUP`
+- backup run: `FLEETWEEKLY-20260718-181318-5BXX66`
+- declared source SHA-256: `2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248`
+- raw wrapper SHA-256: `3af2057a8fd0ee98fca08493f4b0e2405e86484c0663c53740af63c9f076082f`
 
-- one `doGet` and one `doPost`;
-- `script.external_request` scope only;
-- public status exposes no project, runtime, spreadsheet or capability inventory;
-- read-only `STATUS` and `CHALLENGE` actions only;
-- HMAC-SHA256 over the full canonical envelope;
-- canonical target, request ID, timestamp, nonce, action and payload binding;
-- bounded durable replay ledger;
-- secret-bearing fields and credential-shaped values rejected;
-- no IAM, API enablement, source mutation, deployment promotion, Drive or Sheets capability;
-- offline Python signer that reads HMAC key material only from an injected value or environment variable and returns no secret.
+The producer's canonicalization algorithm for the declared source hash was not present. The mismatch between the declared hash and tested wrapper/project serializations remains `ALGORITHM_UNSPECIFIED_UNVERIFIED`; it is not represented as corruption evidence.
 
-### Private privileged admin plane
+## Two-plane architecture
 
-- no `doGet`, `doPost` or public web-app deployment;
-- invocation must use a separately authenticated Apps Script API execution route on the canonical standard Cloud project;
-- exact composite proof for both `scripts.run` invocation and Apps Script project-management access;
-- canonical target `sov-hybrid-suite / 257649435135`;
-- legacy `516699068552` retained as transport-only, with `516690968552` and `979287460558` retained as separate OAuth-consumer contexts;
-- externally verified provider receipt plus one-use effect permit;
-- transaction, canonical mutation-intent, expected-before hash and expected-after hash binding;
-- fixed HTTPS verifier host, redirect rejection and one-time challenge response;
-- backup before effect, exact source readback, immutable version, deployment configuration readback, external semantic readback when deploying, automatic source/deployment rollback on failure;
-- explicit audit spreadsheet and backup folder references; no dependency on an implicit active spreadsheet;
-- protected core files and namespace validation.
+### Public gateway
 
-## Source state
+The public project has exactly one `doGet` and one `doPost`, no explicit OAuth scopes, no Google Cloud or Apps Script project-management authority, and only two signed read-only actions: `STATUS` and `CHALLENGE`.
 
-`SOURCE_CANDIDATE_TESTED / PROVIDER_DEPLOYMENT_UNEXECUTED / SERVING_LEGACY_TRANSPORT_UNCHANGED`
+Every POST binds version, request ID, action, canonical target, timestamp, nonce and payload under HMAC-SHA256. A locked, bounded Script Properties ledger rejects replay. Secret-bearing keys, credential-shaped values, excessive depth and oversized bodies fail closed. Public responses expose no spreadsheet, runtime, deployment or provider identity inventory.
 
-The candidate does not create an Apps Script project, OAuth client, token, IAM grant, API enablement, deployment or secret. It does not mutate the serving fleet. Provider promotion requires current Google project, OAuth-consumer, principal, API, deployment and semantic readback proof.
+### Private admin plane
 
-## Local verification
+The private project has no web entry point. Invocation requires a separately authenticated Apps Script API execution route. It preserves a namespaced, backup-first ARCHON source manager and requires a complete `APPS_SCRIPT_ADMIN_COMPOSITE` provider receipt proving both:
 
-Run:
+1. scripts.run/common-standard-Cloud-project/API-executable relationship; and
+2. Apps Script project-management/content/deployment relationship.
 
-```bash
-python -m unittest -v tests/test_phoenix_provider_cutover_v3_apps_script_authority_gate_v2.py
-python -m unittest -v tests/test_phoenix_provider_cutover_v3_apps_script_authority_recovery_v2.py
-python -m unittest -v tests/test_phoenix_provider_cutover_v3_apps_script_gateway_signer_v2.py
-node apps_script/authority_recovery_v2/tests/security_contracts.mjs
-```
+Mutation also requires a fresh, one-use effect permit bound to the exact transaction, mutation-intent SHA-256, canonical target, expected before/after project hashes, provider receipt, rollback reference and semantic-readback plan.
 
-The tests verify bundle-aware defect detection, minimum-scope routing, namespace isolation, delegated HMAC verification, stale/tampered/replayed request rejection, exact lineage, external verifier challenge binding, one-use effect permits and source/deployment rollback contracts.
+Neither receipt is trusted merely because its hash is stored inside the same script. The admin plane sends only hashes and stable evidence references to a pinned HTTPS verifier and requires a challenge-bound response from the configured verifier identity. No raw source, token, secret or credential value is sent to that verifier.
+
+## Transaction sequence
+
+`SIGNED REQUEST → EXTERNAL ADMISSION → CURRENT HASH → PROPOSED HASH → ONE-USE PERMIT CONSUMPTION → EXACT-READBACK BACKUP → SOURCE UPDATE → SOURCE HASH READBACK → IMMUTABLE VERSION → DEPLOYMENT CONFIG READBACK → OPTIONAL EXTERNAL SEMANTIC READBACK → AUDIT`
+
+A no-change result returns before permit consumption or provider writes. A failed mutation restores the exact-readback backup; a failed rollback restores its safety backup. V2 backups are self-hash bound and downloaded/read back immediately after creation. Legacy V1 backups require an explicitly permit-bound `allowLegacyBackup=true` request.
+
+## Corrections beyond the first recovery draft
+
+- replaced same-project “external” hash anchors with a pinned independent verifier contract;
+- bound provider receipt and effect permit to transaction, request and source hashes;
+- added durable one-use permit replay rejection;
+- removed a non-reentrant nested-lock path during permit consumption;
+- made no-change requests provider-write free;
+- added exact backup-file readback and self-hash verification;
+- made post-effect verification action-aware for both apply and rollback;
+- pinned verifier identity as well as host;
+- rejected redirects on authenticated Apps Script API requests;
+- removed unnecessary `cloud-platform` authority from the private source manager and all explicit OAuth scopes from the public gateway;
+- replaced active-spreadsheet assumptions with an explicit audit-spreadsheet ID.
+
+## Local evidence
+
+- bundle-aware authorization gate: 18/18 tests passed;
+- public candidate source audit: `SOURCE_REVIEW_PASS`, zero findings;
+- private candidate source audit: `SOURCE_REVIEW_PASS`, zero findings;
+- Node HMAC/replay/tamper/permit security contract: passed;
+- concatenated JavaScript syntax checks: passed;
+- Python compilation: passed;
+- protected backup audit under gate v2.1: `SECURITY_HOLD`, 22 findings (15 critical, 5 high, 2 medium);
+- static defect-class coverage: 16 classes, 5.333333× the prior gate's best-case manual-concatenation class coverage.
+
+The 5.333333× result is limited to static defect-class coverage on this supplied backup. It is not evidence of live provider authority, deployment quality, operational speed, production reliability or future intelligence gain.
+
+## Truth boundary
+
+This directory is public-safe source, tests and governance only. It does not create an Apps Script project, bind a standard Cloud project, enable an API, issue a Google token, expose a secret, mutate the live fleet, deploy a web app, change traffic, grant IAM, or certify provider authority. The legacy read/status route remains unchanged until a separately authenticated provider canary proves the replacement and rollback.
