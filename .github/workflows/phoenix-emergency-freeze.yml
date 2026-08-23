@@ -83,7 +83,8 @@ jobs:
                 .github/workflows/github-airlock.yml|\
                 .github/workflows/public-repository-leak-guard.yml|\
                 .github/workflows/phoenix-emergency-freeze.yml|\
-                .github/workflows/bubbles-command-bus.yml)
+                .github/workflows/bubbles-command-bus.yml|\
+                .github/workflows/bubbles-provider-authority-recovery-probe.yml)
                   if [[ "${workflow_state}" != "active" ]]; then
                     if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
@@ -123,6 +124,7 @@ jobs:
             "public-repository-leak-guard.yml|.github/workflows/public-repository-leak-guard.yml"
             "phoenix-emergency-freeze.yml|.github/workflows/phoenix-emergency-freeze.yml"
             "bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"
+            "bubbles-provider-authority-recovery-probe.yml|.github/workflows/bubbles-provider-authority-recovery-probe.yml"
           )
 
           for attempt in 1 2 3 4 5 6; do
