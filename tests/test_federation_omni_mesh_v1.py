@@ -109,6 +109,25 @@ def test_dead_letter_after_bounded_retry_budget():
     assert ledger.record_attempt("EV-1", "NODE") == "DEAD_LETTER"
 
 
+def test_dead_letter_can_be_explicitly_rearmed_for_replay():
+    ledger = DeliveryLedger(max_attempts=2)
+    ledger.record_attempt("EV-1", "NODE")
+    assert ledger.record_attempt("EV-1", "NODE") == "DEAD_LETTER"
+    assert ledger.replay_dead_letter("EV-1", "NODE") == "REPLAY_READY"
+    assert ledger.record_attempt("EV-1", "NODE") == "RETRYABLE"
+
+
+def test_non_dead_letter_replay_fails_closed():
+    ledger = DeliveryLedger(max_attempts=3)
+    ledger.record_attempt("EV-1", "NODE")
+    try:
+        ledger.replay_dead_letter("EV-1", "NODE")
+    except ValueError as exc:
+        assert "dead-letter" in str(exc)
+    else:
+        raise AssertionError("expected non-DLQ replay to fail")
+
+
 def test_semantic_readback_is_required_for_promotion():
     receipt = DeliveryReceipt(
         event_id="EV-1",
@@ -162,3 +181,82 @@ def test_best_route_prefers_reliable_fresh_low_burden_node():
         node("B", reliability=.99, freshness=.99, proof_strength=.99, executability=.99, latency=.2, owner_burden=0),
     ])
     assert router.best_route(envelope()).node_id == "B"
+
+
+def test_cloudevents_aligned_serialization_has_required_context():
+    event = envelope().to_cloudevent()
+    assert event["specversion"] == "1.0"
+    assert event["id"] == "EV-001"
+    assert event["source"] == "urn:federation:sovara"
+    assert event["type"] == "STATE_DELTA"
+    assert event["subject"] == "state.delta.v1"
+    assert event["correlationid"] == "CORR-001"
+    assert event["payloadhash"] == envelope().payload_hash
+
+
+def test_w3c_trace_context_is_preserved_in_cloudevent():
+    traceparent = "00-4bf92f3577b34da6a3ce929d0e0e4736-00f067aa0ba902b7-01"
+    event = envelope(traceparent=traceparent, tracestate="vendor=value").to_cloudevent()
+    assert event["traceparent"] == traceparent
+    assert event["tracestate"] == "vendor=value"
+
+
+def test_invalid_traceparent_fails_closed():
+    try:
+        envelope(traceparent="not-a-trace").validate()
+    except ValueError as exc:
+        assert "traceparent" in str(exc)
+    else:
+        raise AssertionError("expected invalid trace context to fail")
+
+
+def test_diverse_routes_select_distinct_failure_domains():
+    router = MeshRouter([
+        node("A", failure_domain="cell-1", reliability=.99),
+        node("B", failure_domain="cell-1", reliability=.95),
+        node("C", failure_domain="cell-2", reliability=.90),
+    ])
+    routes = router.diverse_routes(envelope(), max_routes=2)
+    assert len(routes) == 2
+    assert {route.failure_domain for route in routes} == {"cell-1", "cell-2"}
+
+
+def test_failed_domain_can_be_excluded_without_freezing_other_routes():
+    router = MeshRouter([
+        node("A", failure_domain="cell-1"),
+        node("B", failure_domain="cell-2"),
+    ])
+    routes = router.route(envelope(), excluded_failure_domains=("cell-1",))
+    assert [route.node_id for route in routes] == ["B"]
+
+
+def test_observability_gate_requires_complete_telemetry():
+    receipt = DeliveryReceipt(
+        event_id="EV-1", target_node="NODE", status="ACKED",
+        transport_ok=True, semantic_match=True, readback_present=True, state_changed=True,
+    )
+    assert MeshControlPlane.observability_gate(receipt, max_latency_ms=1000, max_attempts=3) == "TELEMETRY_INCOMPLETE"
+
+
+def test_observability_gate_accepts_within_target_receipt():
+    receipt = DeliveryReceipt(
+        event_id="EV-1", target_node="NODE", status="ACKED",
+        transport_ok=True, semantic_match=True, readback_present=True, state_changed=True,
+        trace_id="4bf92f3577b34da6a3ce929d0e0e4736", latency_ms=120,
+        attempt_count=1, incremental_cost_units=0.0, owner_action_count=0,
+        failure_domain="cell-1",
+    )
+    assert MeshControlPlane.observability_gate(receipt, max_latency_ms=1000, max_attempts=3) == "OBSERVABLE_WITHIN_TARGET"
+
+
+def test_observability_gate_surfaces_latency_and_owner_burden():
+    common = dict(
+        event_id="EV-1", target_node="NODE", status="ACKED",
+        transport_ok=True, semantic_match=True, readback_present=True, state_changed=True,
+        trace_id="4bf92f3577b34da6a3ce929d0e0e4736", attempt_count=1,
+        incremental_cost_units=0.0, failure_domain="cell-1",
+    )
+    slow = DeliveryReceipt(latency_ms=2000, owner_action_count=0, **common)
+    assert MeshControlPlane.observability_gate(slow, max_latency_ms=1000, max_attempts=3) == "SLO_LATENCY_BREACH"
+    burden = DeliveryReceipt(latency_ms=100, owner_action_count=1, **common)
+    assert MeshControlPlane.observability_gate(burden, max_latency_ms=1000, max_attempts=3) == "OWNER_BURDEN_BREACH"
