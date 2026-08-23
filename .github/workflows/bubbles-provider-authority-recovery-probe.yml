@@ -8,7 +8,7 @@ on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 concurrency:
@@ -44,7 +44,7 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          persist-credentials: true
+          persist-credentials: false
 
       - name: Try GCP_SA_KEY
         id: auth_gcp_sa
@@ -381,19 +381,6 @@ jobs:
           print(f"- fo_token_available: `{d['fo_token_available']}` ({d.get('fo_token_source')})")
           print(f"- archon_token_available: `{d['archon_token_available']}` ({d.get('archon_token_source')})")
           PY
-
-      - name: Persist redacted authority receipt for source readback
-        if: always() && hashFiles('provider-authority-output/receipt.json') != ''
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "sovara-authority-probe[bot]"
-          git config user.email "sovara-authority-probe[bot]@users.noreply.github.com"
-          git add provider-authority-output/receipt.json
-          git diff --cached --quiet || {
-            git commit -m "Record redacted provider authority probe"
-            git push origin HEAD:main
-          }
 
       - name: Upload immutable redacted authority receipt
         if: always() && hashFiles('provider-authority-output/receipt.json') != ''
