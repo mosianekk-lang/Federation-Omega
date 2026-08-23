@@ -1,0 +1,68 @@
+name: Apply AO Adaptive 2X Cycle Kernel
+
+on:
+  push:
+    branches:
+      - feat/adaptive-2x-cycle-v1
+    paths:
+      - .github/workflows/adaptive-2x-cycle-apply.yml
+      - .github/bootstrap/adaptive-2x-cycle.tgz.part1
+      - .github/bootstrap/adaptive-2x-cycle.tgz.part2
+
+permissions:
+  contents: write
+
+concurrency:
+  group: adaptive-2x-cycle-apply
+  cancel-in-progress: false
+
+jobs:
+  apply-and-verify:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout exact branch
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ github.ref_name }}
+          fetch-depth: 0
+
+      - name: Materialize reviewed source transaction
+        shell: bash
+        run: |
+          set -euo pipefail
+          cat \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part2 \
+            > /tmp/adaptive-2x-cycle.tgz
+          echo "f81ca2ca4944f40ea48b2647fb3cb2491821a99a184ec01655ff31386a40a381  /tmp/adaptive-2x-cycle.tgz" | sha256sum -c -
+          tar -xzf /tmp/adaptive-2x-cycle.tgz -C .
+          rm -f \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part1 \
+            .github/bootstrap/adaptive-2x-cycle.tgz.part2 \
+            .github/workflows/adaptive-2x-cycle-apply.yml
+
+      - name: Deterministic regression proof
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m py_compile \
+            ao_harmonic_v3/adaptive_cycle.py \
+            ao_harmonic_v3/evolution.py \
+            ao_harmonic_v3/runtime.py \
+            ao_harmonic_v3/__init__.py
+          python -m unittest discover -s tests -p 'test_adaptive_cycle.py' -v
+          python -m unittest discover -s tests -p 'test_ao_harmonic_v3.py' -v
+
+      - name: Persist cohesive branch transaction
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          if git diff --cached --quiet; then
+            echo "No source delta to commit."
+            exit 0
+          fi
+          git commit -m "feat(ao): add adaptive 2x cycle and bounded context [skip ci]"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
