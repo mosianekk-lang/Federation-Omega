@@ -59,6 +59,20 @@ function SOVARA_ADMIN_claimNonce_(nonce, timestamp) {
 }
 
 function SOVARA_ADMIN_claimEffectPermit_(permit, transactionId) {
+  const lock = LockService.getScriptLock();
+  lock.waitLock(30000);
+  try {
+    return SOVARA_ADMIN_claimEffectPermitUnderLock_(permit, transactionId);
+  } finally {
+    lock.releaseLock();
+  }
+}
+
+/**
+ * Consume a permit while the caller already holds the script lock.
+ * This avoids non-reentrant lock acquisition inside the source transaction.
+ */
+function SOVARA_ADMIN_claimEffectPermitUnderLock_(permit, transactionId) {
   if (!permit || typeof permit !== 'object' || Array.isArray(permit)) {
     throw new Error('EFFECT_PERMIT_REQUIRED');
   }
@@ -71,36 +85,36 @@ function SOVARA_ADMIN_claimEffectPermit_(permit, transactionId) {
     throw new Error('EFFECT_PERMIT_HASH_INVALID');
   }
 
-  const lock = LockService.getScriptLock();
-  lock.waitLock(30000);
-  try {
-    const properties = PropertiesService.getScriptProperties();
-    const now = Date.now();
-    const key = SOVARA_ADMIN_sha256_(permitId);
-    const ledger = SOVARA_ADMIN_readLedger_(
-      properties,
-      SOVARA_ADMIN_SECURITY.PERMIT_LEDGER_PROPERTY
-    );
-    SOVARA_ADMIN_pruneLedger_(ledger, now);
-    if (Object.prototype.hasOwnProperty.call(ledger, key)) {
-      throw new Error('EFFECT_PERMIT_REPLAY_REJECTED');
-    }
-    const expiresAt = new Date(permit.expiresAt).getTime();
-    ledger[key] = {
-      expiresAt: isNaN(expiresAt) ?
-        now + SOVARA_ADMIN_SECURITY.MAX_AGE_MS : expiresAt,
-      state: 'CONSUMED',
-      transactionSha256: SOVARA_ADMIN_sha256_(String(transactionId || '')),
-      permitSha256: permitSha256
-    };
-    SOVARA_ADMIN_boundLedger_(ledger, SOVARA_ADMIN_SECURITY.MAX_PERMITS);
-    properties.setProperty(
-      SOVARA_ADMIN_SECURITY.PERMIT_LEDGER_PROPERTY,
-      JSON.stringify(ledger)
-    );
-  } finally {
-    lock.releaseLock();
+  const properties = PropertiesService.getScriptProperties();
+  const now = Date.now();
+  const key = SOVARA_ADMIN_sha256_(permitId);
+  const ledger = SOVARA_ADMIN_readLedger_(
+    properties,
+    SOVARA_ADMIN_SECURITY.PERMIT_LEDGER_PROPERTY
+  );
+  SOVARA_ADMIN_pruneLedger_(ledger, now);
+  if (Object.prototype.hasOwnProperty.call(ledger, key)) {
+    throw new Error('EFFECT_PERMIT_REPLAY_REJECTED');
   }
+  const expiresAt = new Date(permit.expiresAt).getTime();
+  ledger[key] = {
+    expiresAt: isNaN(expiresAt) ?
+      now + SOVARA_ADMIN_SECURITY.MAX_AGE_MS : expiresAt,
+    state: 'CONSUMED',
+    transactionSha256: SOVARA_ADMIN_sha256_(String(transactionId || '')),
+    permitSha256: permitSha256
+  };
+  SOVARA_ADMIN_boundLedger_(ledger, SOVARA_ADMIN_SECURITY.MAX_PERMITS);
+  properties.setProperty(
+    SOVARA_ADMIN_SECURITY.PERMIT_LEDGER_PROPERTY,
+    JSON.stringify(ledger)
+  );
+  return {
+    state: 'CONSUMED',
+    permitIdSha256: key,
+    transactionSha256: SOVARA_ADMIN_sha256_(String(transactionId || '')),
+    permitSha256: permitSha256
+  };
 }
 
 function SOVARA_ADMIN_readLedger_(properties, key) {
@@ -191,6 +205,7 @@ function SOVARA_ADMIN_mutationIntent_(request) {
     fileName: request.fileName || null,
     files: request.files || null,
     backupFileId: request.backupFileId || null,
+    allowLegacyBackup: request.allowLegacyBackup === true,
     allowProtectedMutation: request.allowProtectedMutation === true,
     promoteDeployment: request.promoteDeployment === true,
     deploymentId: String(request.deploymentId || ''),
