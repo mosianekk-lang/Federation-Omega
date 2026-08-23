@@ -1,3 +1,5 @@
+import unittest
+
 from security.apps_script_fleet_guard import Severity, analyze_backup
 
 
@@ -43,48 +45,66 @@ def codes():
     return {item.code for item in result().findings}
 
 
-def test_fails_closed_and_never_grants_provider_authority():
-    value = result()
-    assert value.status == "SECURITY_HOLD"
-    assert value.provider_authority_proven is False
-    assert value.provider_mutation_authorized is False
+class AppsScriptFleetGuardTests(unittest.TestCase):
+    def test_fails_closed_and_never_grants_provider_authority(self):
+        value = result()
+        self.assertEqual(value.status, "SECURITY_HOLD")
+        self.assertFalse(value.provider_authority_proven)
+        self.assertFalse(value.provider_mutation_authorized)
+
+    def test_detects_public_privileged_ingress_and_approval_bypass(self):
+        self.assertTrue(
+            {"PUBLIC_PRIVILEGED_WEBAPP", "STATIC_APPROVAL_SECRET", "DEFAULT_APPROVAL_BYPASS"}
+            <= codes()
+        )
+
+    def test_detects_secret_query_and_persistence(self):
+        self.assertTrue(
+            {"SECRET_IN_QUERY_PARAMETER", "APPROVAL_CREDENTIAL_PERSISTED"}
+            <= codes()
+        )
+
+    def test_detects_global_collisions_and_mixed_auth_mutators(self):
+        value = result()
+        self.assertGreaterEqual(
+            sum(item.code == "DUPLICATE_GLOBAL_HANDLER" for item in value.findings),
+            4,
+        )
+        self.assertIn("MIXED_AUTH_MUTATOR_SHADOWING", codes())
+
+    def test_detects_transport_self_certification(self):
+        self.assertTrue(
+            {"GENERIC_TRANSPORT_SUCCESS_PROMOTION", "SELF_READBACK_ONLY"}
+            <= codes()
+        )
+
+    def test_detects_legacy_mutation_default_and_bearer_destination(self):
+        self.assertTrue(
+            {"LEGACY_PROJECT_MUTATION_DEFAULT", "CONFIGURABLE_BEARER_DESTINATION"}
+            <= codes()
+        )
+
+    def test_detects_token_policy_not_enforced(self):
+        self.assertIn("TOKEN_STRENGTH_NOT_ENFORCED", codes())
+
+    def test_clean_minimal_private_router_passes(self):
+        clean = {"files": [
+            {"name": "appsscript", "source": '{"oauthScopes":["https://www.googleapis.com/auth/spreadsheets"],"webapp":{"executeAs":"USER_DEPLOYING","access":"MYSELF"}}'},
+            {"name": "SecureRouter", "source": "function doPost(e){verifySignedRequest(e);}"},
+        ]}
+        value = analyze_backup(
+            clean,
+            canonical_target_project="257649435135",
+            legacy_projects={"516699068552"},
+        )
+        self.assertEqual(value.status, "SOURCE_REVIEW_PASS")
+        self.assertEqual(value.findings, ())
+
+    def test_critical_findings_remain_critical(self):
+        self.assertTrue(
+            any(item.severity == Severity.CRITICAL for item in result().findings)
+        )
 
 
-def test_detects_public_privileged_ingress_and_approval_bypass():
-    assert {"PUBLIC_PRIVILEGED_WEBAPP", "STATIC_APPROVAL_SECRET", "DEFAULT_APPROVAL_BYPASS"} <= codes()
-
-
-def test_detects_secret_query_and_persistence():
-    assert {"SECRET_IN_QUERY_PARAMETER", "APPROVAL_CREDENTIAL_PERSISTED"} <= codes()
-
-
-def test_detects_global_collisions_and_mixed_auth_mutators():
-    value = result()
-    assert sum(item.code == "DUPLICATE_GLOBAL_HANDLER" for item in value.findings) >= 4
-    assert "MIXED_AUTH_MUTATOR_SHADOWING" in codes()
-
-
-def test_detects_transport_self_certification():
-    assert {"GENERIC_TRANSPORT_SUCCESS_PROMOTION", "SELF_READBACK_ONLY"} <= codes()
-
-
-def test_detects_legacy_mutation_default_and_bearer_destination():
-    assert {"LEGACY_PROJECT_MUTATION_DEFAULT", "CONFIGURABLE_BEARER_DESTINATION"} <= codes()
-
-
-def test_detects_token_policy_not_enforced():
-    assert "TOKEN_STRENGTH_NOT_ENFORCED" in codes()
-
-
-def test_clean_minimal_private_router_passes():
-    clean = {"files": [
-        {"name": "appsscript", "source": '{"oauthScopes":["https://www.googleapis.com/auth/spreadsheets"],"webapp":{"executeAs":"USER_DEPLOYING","access":"MYSELF"}}'},
-        {"name": "SecureRouter", "source": "function doPost(e){verifySignedRequest(e);}"},
-    ]}
-    value = analyze_backup(clean, canonical_target_project="257649435135", legacy_projects={"516699068552"})
-    assert value.status == "SOURCE_REVIEW_PASS"
-    assert value.findings == ()
-
-
-def test_critical_findings_remain_critical():
-    assert any(item.severity == Severity.CRITICAL for item in result().findings)
+if __name__ == "__main__":
+    unittest.main()
