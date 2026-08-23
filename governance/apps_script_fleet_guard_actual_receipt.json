@@ -1,0 +1,42 @@
+{
+  "analysis_status": "SECURITY_HOLD",
+  "canonical_target_project_number": "257649435135",
+  "finding_codes": [
+    "PUBLIC_PRIVILEGED_WEBAPP",
+    "STATIC_APPROVAL_SECRET",
+    "DEFAULT_APPROVAL_BYPASS",
+    "SECRET_IN_QUERY_PARAMETER",
+    "APPROVAL_CREDENTIAL_PERSISTED",
+    "DUPLICATE_GLOBAL_HANDLER",
+    "DUPLICATE_GLOBAL_HANDLER",
+    "DUPLICATE_GLOBAL_HANDLER",
+    "DUPLICATE_GLOBAL_HANDLER",
+    "DUPLICATE_GLOBAL_HANDLER",
+    "DUPLICATE_GLOBAL_HANDLER",
+    "MIXED_AUTH_MUTATOR_SHADOWING",
+    "MIXED_AUTH_MUTATOR_SHADOWING",
+    "TOKEN_STRENGTH_NOT_ENFORCED",
+    "LEGACY_PROJECT_MUTATION_DEFAULT",
+    "GENERIC_TRANSPORT_SUCCESS_PROMOTION",
+    "SELF_READBACK_ONLY"
+  ],
+  "finding_counts": {
+    "CRITICAL": 13,
+    "HIGH": 3,
+    "MEDIUM": 1
+  },
+  "next_gate": "Apply a separately reviewed two-project split: private privileged admin plane plus minimal authenticated public gateway; then run hostile ingress, identity-lineage, source-hash, rollback and action-semantic canaries.",
+  "observed_project_numbers": [
+    "257649435135",
+    "516699068552"
+  ],
+  "provider_authority_proven": false,
+  "provider_mutation_authorized": false,
+  "schema": "SOVARA-APPS-SCRIPT-FLEET-GUARD-RECEIPT-1",
+  "secret_values_persisted_in_receipt": false,
+  "source_contract": "FO_GAS_FLEET_RESTORABLE_BACKUP",
+  "source_run_id": "FLEETWEEKLY-20260718-181318-5BXX66",
+  "source_sha256": "2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248",
+  "source_version": "FO_APPS_SCRIPT_FLEET_ADMIN_V1",
+  "truth_boundary": "Static source analysis and deterministic tests only. No Apps Script source, deployment, OAuth consent, IAM, API, secret, Cloud Run traffic or provider state was mutated."
+}

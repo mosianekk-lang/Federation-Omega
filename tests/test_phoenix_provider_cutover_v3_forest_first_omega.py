@@ -40,7 +40,7 @@ class ForestFirstOmegaIntegrationTests(unittest.TestCase):
 
     def test_runtime_exposes_forest_first_omega(self):
         runtime = AOHarmonicV3()
-        self.assertEqual(runtime.VERSION, "3.2.0")
+        self.assertEqual(runtime.VERSION, "3.3.0")
         self.assertEqual(runtime.forest.ENGINE_ID, "FOREST-FIRST-OMEGA-V1")
         self.assertEqual(runtime.horizon.ENGINE_ID, "HORIZON-OMEGA-V1")
 

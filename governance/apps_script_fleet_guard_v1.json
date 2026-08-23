@@ -1,0 +1,33 @@
+{
+  "schema": "SOVARA-APPS-SCRIPT-FLEET-GUARD-1",
+  "version": "1.0.0",
+  "purpose": "Fail closed when a privileged Apps Script fleet conflates public ingress, approval, OAuth consumer lineage, legacy transport and canonical provider authority.",
+  "canonical_target_project_number": "257649435135",
+  "legacy_or_consumer_contexts": [
+    "516699068552",
+    "516690968552",
+    "979287460558"
+  ],
+  "invariants": {
+    "one_global_web_router": true,
+    "static_approval_secret_allowed": false,
+    "missing_auth_may_default_to_approval": false,
+    "raw_auth_material_may_be_persisted": false,
+    "legacy_transport_may_mutate_canonical_target": false,
+    "transport_receipt_equals_semantic_receipt": false,
+    "executor_may_self_certify_provider_effect": false,
+    "provider_authority_inherited_between_projects": false
+  },
+  "required_promotion_evidence": [
+    "single-entrypoint namespace audit",
+    "HMAC timestamp nonce and replay tests",
+    "identity-lineage binding for target consumer and active principal",
+    "backup-first mutation and exact source hash readback",
+    "action-specific downstream semantic verifier",
+    "rollback canary",
+    "independent readback"
+  ],
+  "default_state": "SECURITY_HOLD_UNTIL_SOURCE_AND_PROVIDER_GATES_PASS",
+  "provider_mutation_authorized": false,
+  "provider_authority_proven": false
+}
