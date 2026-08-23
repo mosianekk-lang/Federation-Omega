@@ -94,6 +94,14 @@ A production mesh is not `FULLY_OPERATIONAL` until all of the following pass:
 - rollback from the successor route to the incumbent is demonstrated;
 - sustained operation is observed across a defined soak period.
 
+## Validation and repository admission
+
+The deterministic source test is `python -m pytest -q tests/test_federation_omni_mesh_v1.py` in an environment where repository test dependencies are installed.
+
+Repository Airlock remains authoritative. Omni-Mesh does **not** add a new GitHub Actions workflow merely to run its tests: a first draft did so, the Airlock policy correctly rejected that workflow shape, and the workflow was removed before source promotion. Validation must run through an existing allowlisted repository control or an approved local/hosted runner, and merge remains blocked until those results are read back.
+
+The provider deployment scaffold also remains inert until an exact provider-native Google project/identity preflight passes. Legacy bridge transport success is not accepted as that identity proof.
+
 ## Guarantee boundary
 
 The design is intended to make access/automation failures diagnosable, recoverable and much less likely to stall the estate. No distributed system can truthfully guarantee that a third-party provider, credential, quota, network, policy or API will never fail. The mesh therefore treats failure as an expected state and is built to detect, isolate, reroute, recover and prove the result.
