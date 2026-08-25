@@ -54,9 +54,34 @@ def test_changed_preconditions_keep_bounded_retry_available():
     assert receipt["effective_recovery"]["next_automated_action"] == "RETRY_SAME_ATOMIC_ACTION"
 
 
+def test_checkpoint_memory_makes_second_unchanged_failure_self_suppressing():
+    event = {
+        "message": "Connection interrupted",
+        "objective": "read current source",
+        "route_id": "drive-export",
+        "route_fingerprint": "drive-raw-export",
+        "precondition_fingerprint": "connector-state-a",
+        "attempted_at": "2026-08-25T09:00:00+00:00",
+    }
+    first = evaluate_failure_with_aaa(event)
+    assert first["aaa_route_retry"]["retry_allowed"] is True
+    assert first["aaa_route_memory_count"] == 1
+    checkpoint = first["effective_recovery"]["checkpoint"]
+    assert checkpoint["aaa_route_history"][0]["route_fingerprint"] == "drive-raw-export"
+
+    second = evaluate_failure_with_aaa(
+        {**event, "route_id": "drive-export-retry", "attempted_at": "2026-08-25T09:05:00+00:00"},
+        previous_checkpoint=checkpoint,
+    )
+    assert second["aaa_route_retry"]["retry_allowed"] is False
+    assert second["effective_recovery"]["next_automated_action"] == "DISCOVER_MATERIALLY_DIFFERENT_ROUTE"
+    assert second["aaa_route_memory_count"] == 1
+
+
 def test_no_route_metadata_preserves_existing_cfre_behavior():
     receipt = evaluate_failure_with_aaa({"message": "Connection interrupted"})
     assert receipt["aaa_route_retry"] is None
+    assert receipt["aaa_route_memory_count"] == 0
     assert receipt["effective_recovery"]["next_automated_action"] == receipt["base_recovery"]["next_automated_action"]
     assert [step["action"] for step in receipt["effective_recovery"]["recovery_steps"]] == [
         step["action"] for step in receipt["base_recovery"]["recovery_steps"]
