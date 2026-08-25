@@ -16,127 +16,690 @@ concurrency:
   cancel-in-progress: false
 
 env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  SERVICE: federation-omega-operator
   OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  PROBE_SCHEMA: SOVARA-OPERATOR-AUTH-RECOVERY-V2
+  HAS_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN != '' }}
+  HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+  HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+  HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
+  HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
+  HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
+  HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
+  HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
+  HAS_GENERIC_WIF_PAIR: ${{ (secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '') && (secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '') }}
 
 jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
     steps:
-      - name: Probe public contract and authenticated read actions
+      - name: Checkout without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate existing GCP_SA_KEY route
+        id: auth_gcp_sa
+        if: ${{ env.HAS_GCP_SA_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GCP_SERVICE_ACCOUNT_KEY route
+        id: auth_gcp_service_account
+        if: ${{ env.HAS_GCP_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_CREDENTIALS route
+        id: auth_google_credentials
+        if: ${{ env.HAS_GOOGLE_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_SERVICE_ACCOUNT_KEY route
+        id: auth_google_service_account
+        if: ${{ env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GCP_CREDENTIALS route
+        id: auth_gcp_credentials
+        if: ${{ env.HAS_GCP_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_GHA_CREDS_JSON route
+        id: auth_google_gha
+        if: ${{ env.HAS_GOOGLE_GHA_CREDS_JSON == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_CLOUD_CREDENTIALS route
+        id: auth_google_cloud
+        if: ${{ env.HAS_GOOGLE_CLOUD_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Recover existing authority routes and run bounded semantic readback
         shell: bash
+        env:
+          FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth_gcp_sa.outputs.access_token || steps.auth_gcp_service_account.outputs.access_token || steps.auth_google_credentials.outputs.access_token || steps.auth_google_service_account.outputs.access_token || steps.auth_gcp_credentials.outputs.access_token || steps.auth_google_gha.outputs.access_token || steps.auth_google_cloud.outputs.access_token }}
+          OUTCOME_GCP_SA_KEY: ${{ steps.auth_gcp_sa.outcome }}
+          OUTCOME_GCP_SERVICE_ACCOUNT_KEY: ${{ steps.auth_gcp_service_account.outcome }}
+          OUTCOME_GOOGLE_CREDENTIALS: ${{ steps.auth_google_credentials.outcome }}
+          OUTCOME_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ steps.auth_google_service_account.outcome }}
+          OUTCOME_GCP_CREDENTIALS: ${{ steps.auth_gcp_credentials.outcome }}
+          OUTCOME_GOOGLE_GHA_CREDS_JSON: ${{ steps.auth_google_gha.outcome }}
+          OUTCOME_GOOGLE_CLOUD_CREDENTIALS: ${{ steps.auth_google_cloud.outcome }}
         run: |
           set -euo pipefail
+          set +x
           mkdir -p /tmp/pfrd-operator
           python - <<'PY'
-          import json, os, urllib.error, urllib.request
+          from __future__ import annotations
+
+          import base64
+          import hashlib
+          import json
+          import os
+          import pathlib
+          import urllib.error
+          import urllib.parse
+          import urllib.request
           from datetime import datetime, timezone
-          from pathlib import Path
+          from typing import Any
 
-          base = os.environ['OPERATOR_URL'].rstrip('/')
-          token = os.environ.get('FO_ADMIN_TOKEN', '')
+          PROJECT = os.environ["PROJECT_ID"]
+          PROJECT_NUMBER = os.environ["PROJECT_NUMBER"]
+          REGION = os.environ["REGION"]
+          SERVICE = os.environ["SERVICE"]
+          OPERATOR = os.environ["OPERATOR_URL"].rstrip("/")
+          SCHEMA = os.environ["PROBE_SCHEMA"]
+          DIRECT_OPERATOR_TOKEN = os.environ.get("FO_ADMIN_TOKEN", "")
+          DIRECT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+          GOOGLE_ACCESS_TOKEN = os.environ.get("GOOGLE_ACCESS_TOKEN", "")
+          SOURCE_SHA = os.environ.get("GITHUB_SHA", "")
+          SOURCE_REF = os.environ.get("GITHUB_REF", "")
 
-          def request(path, *, body=None, authenticated=False):
-              headers = {'accept': 'application/json'}
-              data = None
-              if body is not None:
-                  headers['content-type'] = 'application/json'
-                  data = json.dumps(body, separators=(',', ':')).encode()
-              if authenticated:
-                  headers['x-fo-admin-token'] = token
-              req = urllib.request.Request(
-                  base + path,
+          ROUTES = (
+              "GCP_SA_KEY",
+              "GCP_SERVICE_ACCOUNT_KEY",
+              "GOOGLE_CREDENTIALS",
+              "GOOGLE_SERVICE_ACCOUNT_KEY",
+              "GCP_CREDENTIALS",
+              "GOOGLE_GHA_CREDS_JSON",
+              "GOOGLE_CLOUD_CREDENTIALS",
+          )
+
+          def redact(value: Any, *, operator_token: str = "", gemini_key: str = "") -> Any:
+              sensitive_keys = {
+                  "access_token",
+                  "refresh_token",
+                  "id_token",
+                  "token",
+                  "authorization",
+                  "client_secret",
+                  "secret_value",
+                  "credentials_json",
+                  "api_key",
+                  "key",
+              }
+              if isinstance(value, dict):
+                  output = {}
+                  for key, item in value.items():
+                      if str(key).lower() in sensitive_keys:
+                          output[key] = "[REDACTED]"
+                      else:
+                          output[key] = redact(
+                              item,
+                              operator_token=operator_token,
+                              gemini_key=gemini_key,
+                          )
+                  return output
+              if isinstance(value, list):
+                  return [
+                      redact(item, operator_token=operator_token, gemini_key=gemini_key)
+                      for item in value
+                  ]
+              if isinstance(value, str):
+                  if operator_token:
+                      value = value.replace(operator_token, "[REDACTED]")
+                  if gemini_key:
+                      value = value.replace(gemini_key, "[REDACTED]")
+                  return value
+              return value
+
+          def safe_http_json(
+              url: str,
+              *,
+              method: str = "GET",
+              headers: dict[str, str] | None = None,
+              data: bytes | None = None,
+              timeout: int = 30,
+          ) -> dict[str, Any]:
+              request = urllib.request.Request(
+                  url,
                   data=data,
-                  headers=headers,
-                  method='POST' if body is not None else 'GET',
+                  headers=headers or {},
+                  method=method,
               )
               try:
-                  with urllib.request.urlopen(req, timeout=20) as response:
-                      raw = response.read().decode('utf-8', 'replace')
-                      return {'http_status': response.status, 'body': json.loads(raw)}
+                  with urllib.request.urlopen(request, timeout=timeout) as response:
+                      raw = response.read().decode("utf-8", "replace")
+                      try:
+                          body = json.loads(raw)
+                      except Exception:
+                          body = {"text_sha256": hashlib.sha256(raw.encode()).hexdigest()}
+                      return {"http_status": response.status, "body": body}
               except urllib.error.HTTPError as exc:
-                  raw = exc.read().decode('utf-8', 'replace')
+                  raw = exc.read().decode("utf-8", "replace")
                   try:
-                      body_out = json.loads(raw)
+                      body = json.loads(raw)
                   except Exception:
-                      body_out = {'text': raw[:1000]}
-                  return {'http_status': exc.code, 'body': body_out}
+                      body = {"text_sha256": hashlib.sha256(raw.encode()).hexdigest()}
+                  return {"http_status": exc.code, "body": body}
               except Exception as exc:
-                  return {'transport_error': type(exc).__name__, 'message': str(exc)[:300]}
+                  return {
+                      "transport_error": type(exc).__name__,
+                      "message_sha256": hashlib.sha256(str(exc).encode()).hexdigest(),
+                  }
 
-          health = request('/health')
-          contract = request('/')
-          allowed = set(contract.get('body', {}).get('allowedActions', []))
-          required_reads = {'STATUS', 'READ_CLOUD_RUN_SERVICE'}
-          bind_action = 'BIND_CFRE_PRIVATE_RUNTIME'
+          def operator_call(
+              path: str,
+              *,
+              body: dict[str, Any] | None = None,
+              token: str = "",
+              authenticated: bool = False,
+          ) -> dict[str, Any]:
+              headers = {"accept": "application/json"}
+              data = None
+              if body is not None:
+                  headers["content-type"] = "application/json"
+                  data = json.dumps(body, separators=(",", ":")).encode()
+              if authenticated and token:
+                  headers["x-fo-admin-token"] = token
+              result = safe_http_json(
+                  OPERATOR + path,
+                  method="POST" if body is not None else "GET",
+                  headers=headers,
+                  data=data,
+                  timeout=45,
+              )
+              return redact(result, operator_token=token)
 
-          receipt = {
-              'receipt': 'PFRD-OMEGA-OPERATOR-AUTH-PROBE',
-              'recorded_at': datetime.now(timezone.utc).isoformat(),
-              'operator_url': base,
-              'health': health,
-              'contract': contract,
-              'token_present': bool(token),
-              'token_value_recorded': False,
-              'mutation_attempted': False,
-              'authenticated_status': None,
-              'authenticated_cloud_read': None,
-              'bind_action_visible': bind_action in allowed,
-              'classification': 'PUBLIC_OPERATOR_ONLY',
+          def google_get_json(url: str) -> dict[str, Any]:
+              if not GOOGLE_ACCESS_TOKEN:
+                  return {"classification": "GOOGLE_ACCESS_TOKEN_UNAVAILABLE"}
+              return safe_http_json(
+                  url,
+                  headers={
+                      "authorization": f"Bearer {GOOGLE_ACCESS_TOKEN}",
+                      "accept": "application/json",
+                      "x-goog-user-project": PROJECT,
+                  },
+                  timeout=30,
+              )
+
+          def secret_access(secret_name: str) -> tuple[str, dict[str, Any]]:
+              if not GOOGLE_ACCESS_TOKEN:
+                  return "", {
+                      "secret": secret_name,
+                      "accessible": False,
+                      "classification": "GOOGLE_ACCESS_TOKEN_UNAVAILABLE",
+                  }
+              quoted = urllib.parse.quote(secret_name, safe="")
+              url = (
+                  f"https://secretmanager.googleapis.com/v1/projects/{PROJECT}/"
+                  f"secrets/{quoted}/versions/latest:access"
+              )
+              result = google_get_json(url)
+              payload = result.get("body", {}).get("payload", {}).get("data", "")
+              value = ""
+              if result.get("http_status") == 200 and payload:
+                  value = base64.b64decode(payload).decode("utf-8").strip()
+              return value, {
+                  "secret": secret_name,
+                  "http_status": result.get("http_status"),
+                  "accessible": bool(value),
+                  "transport_error": result.get("transport_error"),
+              }
+
+          def cloud_run_readback() -> dict[str, Any]:
+              if not GOOGLE_ACCESS_TOKEN:
+                  return {"classification": "GOOGLE_ACCESS_TOKEN_UNAVAILABLE"}
+              url = (
+                  f"https://run.googleapis.com/v2/projects/{PROJECT}/locations/"
+                  f"{REGION}/services/{SERVICE}"
+              )
+              result = google_get_json(url)
+              body = result.get("body", {})
+              if result.get("http_status") != 200:
+                  return {
+                      "http_status": result.get("http_status"),
+                      "transport_error": result.get("transport_error"),
+                      "error_status": body.get("error", {}).get("status"),
+                  }
+              template = body.get("template", {})
+              return {
+                  "http_status": 200,
+                  "name": body.get("name"),
+                  "uid": body.get("uid"),
+                  "generation": body.get("generation"),
+                  "uri": body.get("uri"),
+                  "latest_ready_revision": body.get("latestReadyRevision"),
+                  "latest_created_revision": body.get("latestCreatedRevision"),
+                  "service_account": template.get("serviceAccount"),
+                  "ingress": body.get("ingress"),
+                  "reconciling": body.get("reconciling"),
+              }
+
+          def extract_gemini_text(body: Any) -> str:
+              try:
+                  parts = body["candidates"][0]["content"]["parts"]
+                  return "".join(str(part.get("text", "")) for part in parts).strip()
+              except Exception:
+                  return ""
+
+          def gemini_semantic_canary(api_key: str, nonce: str) -> dict[str, Any]:
+              if not api_key:
+                  return {"classification": "GEMINI_KEY_UNAVAILABLE"}
+              query_key = urllib.parse.quote(api_key, safe="")
+              models_url = (
+                  "https://generativelanguage.googleapis.com/v1beta/models"
+                  f"?key={query_key}"
+              )
+              model_result = safe_http_json(models_url, timeout=30)
+              models = model_result.get("body", {}).get("models", [])
+              candidates: list[dict[str, Any]] = []
+              for model in models:
+                  methods = model.get("supportedGenerationMethods", [])
+                  name = str(model.get("name", ""))
+                  lowered = name.lower()
+                  if (
+                      "generateContent" in methods
+                      and "gemini" in lowered
+                      and all(
+                          blocked not in lowered
+                          for blocked in ("embedding", "image", "vision", "tts", "aqa")
+                      )
+                  ):
+                      candidates.append(model)
+
+              def rank(model: dict[str, Any]) -> tuple[int, int, str]:
+                  name = str(model.get("name", "")).lower()
+                  stable_penalty = int(
+                      any(
+                          marker in name
+                          for marker in ("preview", "experimental", "exp-", "latest")
+                      )
+                  )
+                  flash_penalty = 0 if "flash" in name else 1
+                  return (stable_penalty, flash_penalty, name)
+
+              candidates.sort(key=rank)
+              if model_result.get("http_status") != 200 or not candidates:
+                  return {
+                      "classification": "GEMINI_MODEL_DISCOVERY_FAILED",
+                      "models_http_status": model_result.get("http_status"),
+                      "candidate_count": len(candidates),
+                  }
+
+              selected = str(candidates[0].get("name", ""))
+              prompt = "Return exactly this token and nothing else: " + nonce
+              body = json.dumps(
+                  {
+                      "contents": [
+                          {
+                              "role": "user",
+                              "parts": [{"text": prompt}],
+                          }
+                      ],
+                      "generationConfig": {
+                          "temperature": 0,
+                          "maxOutputTokens": 32,
+                      },
+                  },
+                  separators=(",", ":"),
+              ).encode()
+              generate_url = (
+                  "https://generativelanguage.googleapis.com/v1beta/"
+                  f"{selected}:generateContent?key={query_key}"
+              )
+              generate = safe_http_json(
+                  generate_url,
+                  method="POST",
+                  headers={"content-type": "application/json"},
+                  data=body,
+                  timeout=45,
+              )
+              text = extract_gemini_text(generate.get("body", {}))
+              exact = generate.get("http_status") == 200 and text == nonce
+              return {
+                  "classification": (
+                      "GEMINI_SEMANTIC_READBACK_PROVEN"
+                      if exact
+                      else "GEMINI_SEMANTIC_READBACK_FAILED"
+                  ),
+                  "models_http_status": model_result.get("http_status"),
+                  "candidate_count": len(candidates),
+                  "selected_model": selected,
+                  "generate_http_status": generate.get("http_status"),
+                  "semantic_exact_match": exact,
+                  "response_sha256": (
+                      hashlib.sha256(text.encode()).hexdigest() if text else None
+                  ),
+              }
+
+          recorded_at = datetime.now(timezone.utc).isoformat()
+          nonce = "SOVARA_GEMINI_CANARY_" + hashlib.sha256(
+              f"{SOURCE_SHA}:{recorded_at}".encode()
+          ).hexdigest()[:16]
+
+          route_presence = {
+              "FO_ADMIN_TOKEN": os.environ.get("HAS_FO_ADMIN_TOKEN") == "true",
+              "GEMINI_API_KEY": os.environ.get("HAS_GEMINI_API_KEY") == "true",
+              **{
+                  route: os.environ.get(f"HAS_{route}") == "true"
+                  for route in ROUTES
+              },
+              "GCP_WIF_PAIR_CONFIGURED_NOT_USED": (
+                  os.environ.get("HAS_GCP_WIF_PAIR") == "true"
+              ),
+              "GENERIC_WIF_PAIR_CONFIGURED_NOT_USED": (
+                  os.environ.get("HAS_GENERIC_WIF_PAIR") == "true"
+              ),
+          }
+          auth_outcomes = {
+              route: os.environ.get(f"OUTCOME_{route}", "skipped")
+              for route in ROUTES
+          }
+          successful_static_route = next(
+              (
+                  route
+                  for route in ROUTES
+                  if auth_outcomes.get(route) == "success"
+              ),
+              None,
+          )
+
+          receipt: dict[str, Any] = {
+              "schema": SCHEMA,
+              "receipt": "PFRD-OMEGA-OPERATOR-AUTH-RECOVERY",
+              "recorded_at": recorded_at,
+              "source_sha": SOURCE_SHA,
+              "source_ref": SOURCE_REF,
+              "project_id": PROJECT,
+              "project_number": PROJECT_NUMBER,
+              "region": REGION,
+              "service": SERVICE,
+              "operator_url": OPERATOR,
+              "permissions": {
+                  "contents": "read",
+                  "id_token": "none",
+                  "provider_mutation": False,
+                  "repository_mutation": False,
+              },
+              "credential_alias_presence": route_presence,
+              "google_machine_auth": {
+                  "attempted": any(route_presence.get(route, False) for route in ROUTES),
+                  "source_alias": successful_static_route,
+                  "authenticated": bool(GOOGLE_ACCESS_TOKEN),
+                  "auth_outcomes": auth_outcomes,
+                  "public_oidc_used": False,
+              },
+              "secret_manager": {
+                  "operator_token": None,
+                  "gemini_key": None,
+              },
+              "provider_readback": {
+                  "cloud_run": None,
+              },
+              "operator": {
+                  "public_health": None,
+                  "public_contract": None,
+                  "unauthenticated_execute": None,
+                  "token_source": None,
+                  "token_present": False,
+                  "authenticated_status": None,
+                  "authenticated_cloud_read": None,
+                  "bind_action_visible": False,
+                  "classification": "NOT_EVALUATED",
+              },
+              "gemini": {
+                  "key_source": None,
+                  "semantic": None,
+              },
+              "overall_classification": "NOT_EVALUATED",
+              "secret_values_recorded": False,
+              "mutation_attempted": False,
           }
 
-          if not token:
-              receipt['classification'] = 'BLOCKED_MISSING_FO_ADMIN_TOKEN_REPOSITORY_SECRET'
-          elif not required_reads.issubset(allowed):
-              receipt['classification'] = 'BLOCKED_LIVE_ALLOWLIST_MISMATCH'
+          if GOOGLE_ACCESS_TOKEN:
+              receipt["provider_readback"]["cloud_run"] = cloud_run_readback()
+              operator_secret, operator_meta = secret_access("fo-operator-admin-token")
+              receipt["secret_manager"]["operator_token"] = operator_meta
+              gemini_secret, gemini_meta = secret_access("gemini-api-key")
+              receipt["secret_manager"]["gemini_key"] = gemini_meta
           else:
-              status = request(
-                  '/execute',
-                  body={
-                      'action': 'STATUS',
-                      'payload': {
-                          'purpose': 'CFRE private-runtime authority probe',
-                          'mutation': 'NONE',
-                      },
-                  },
-                  authenticated=True,
-              )
-              cloud_read = request(
-                  '/execute',
-                  body={
-                      'action': 'READ_CLOUD_RUN_SERVICE',
-                      'payload': {
-                          'project': 'sov-hybrid-suite',
-                          'region': 'africa-south1',
-                          'service': 'federation-omega-operator',
-                          'purpose': 'CFRE private-runtime read-only deployment preflight',
-                      },
-                  },
-                  authenticated=True,
-              )
-              receipt['authenticated_status'] = status
-              receipt['authenticated_cloud_read'] = cloud_read
-              status_ok = status.get('http_status') == 200 and status.get('body', {}).get('ok') is True
-              read_ok = cloud_read.get('http_status') == 200 and cloud_read.get('body', {}).get('ok') is True
-              if not (status_ok and read_ok):
-                  receipt['classification'] = 'AUTHENTICATED_OPERATOR_READS_FAILED'
-              elif bind_action not in allowed:
-                  receipt['classification'] = 'AUTHENTICATED_READS_PROVEN_BIND_ACTION_ABSENT'
-              else:
-                  receipt['classification'] = 'AUTHENTICATED_READS_PROVEN_BIND_ACTION_VISIBLE'
+              operator_secret = ""
+              gemini_secret = ""
 
-          path = Path('/tmp/pfrd-operator/OPERATOR_AUTH_PROBE_RECEIPT.json')
-          path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-          print(json.dumps(receipt, indent=2, sort_keys=True))
+          operator_token = DIRECT_OPERATOR_TOKEN or operator_secret
+          operator_token_source = (
+              "github_actions_secret"
+              if DIRECT_OPERATOR_TOKEN
+              else ("google_secret_manager" if operator_secret else "none")
+          )
+
+          public_health = operator_call("/health")
+          public_contract = operator_call("/")
+          unauth_execute = operator_call(
+              "/execute",
+              body={
+                  "action": "STATUS",
+                  "payload": {
+                      "purpose": "SOVARA unauthenticated boundary canary",
+                      "mutation": "NONE",
+                  },
+              },
+          )
+          receipt["operator"]["public_health"] = public_health
+          receipt["operator"]["public_contract"] = public_contract
+          receipt["operator"]["unauthenticated_execute"] = {
+              "http_status": unauth_execute.get("http_status"),
+              "private_access_denied": unauth_execute.get("http_status") in (401, 403),
+              "transport_error": unauth_execute.get("transport_error"),
+          }
+          allowed = set(public_contract.get("body", {}).get("allowedActions", []))
+          receipt["operator"]["bind_action_visible"] = (
+              "BIND_CFRE_PRIVATE_RUNTIME" in allowed
+          )
+          receipt["operator"]["token_present"] = bool(operator_token)
+          receipt["operator"]["token_source"] = operator_token_source
+
+          required_reads = {"STATUS", "READ_CLOUD_RUN_SERVICE"}
+          if not operator_token:
+              receipt["operator"]["classification"] = "OPERATOR_TOKEN_UNAVAILABLE"
+          elif not required_reads.issubset(allowed):
+              receipt["operator"]["classification"] = "OPERATOR_ALLOWLIST_MISMATCH"
+          elif unauth_execute.get("http_status") not in (401, 403):
+              receipt["operator"]["classification"] = "OPERATOR_PRIVATE_BOUNDARY_NOT_PROVEN"
+          else:
+              status = operator_call(
+                  "/execute",
+                  body={
+                      "action": "STATUS",
+                      "payload": {
+                          "purpose": "SOVARA authenticated authority canary",
+                          "mutation": "NONE",
+                      },
+                  },
+                  token=operator_token,
+                  authenticated=True,
+              )
+              cloud_read = operator_call(
+                  "/execute",
+                  body={
+                      "action": "READ_CLOUD_RUN_SERVICE",
+                      "payload": {
+                          "project": PROJECT,
+                          "region": REGION,
+                          "service": SERVICE,
+                          "purpose": "SOVARA provider-native operator readback",
+                      },
+                  },
+                  token=operator_token,
+                  authenticated=True,
+              )
+              receipt["operator"]["authenticated_status"] = status
+              receipt["operator"]["authenticated_cloud_read"] = cloud_read
+              reads_ok = all(
+                  result.get("http_status") == 200
+                  and result.get("body", {}).get("ok") is True
+                  for result in (status, cloud_read)
+              )
+              if not reads_ok:
+                  receipt["operator"]["classification"] = "AUTHENTICATED_OPERATOR_READS_FAILED"
+              elif receipt["operator"]["bind_action_visible"]:
+                  receipt["operator"]["classification"] = "AUTHENTICATED_OPERATOR_READS_PROVEN_BIND_VISIBLE"
+              else:
+                  receipt["operator"]["classification"] = "AUTHENTICATED_OPERATOR_READS_PROVEN_BIND_ABSENT"
+
+          gemini_key = DIRECT_GEMINI_KEY or gemini_secret
+          receipt["gemini"]["key_source"] = (
+              "github_actions_secret"
+              if DIRECT_GEMINI_KEY
+              else ("google_secret_manager" if gemini_secret else "none")
+          )
+          receipt["gemini"]["semantic"] = gemini_semantic_canary(gemini_key, nonce)
+
+          cloud_run = receipt["provider_readback"]["cloud_run"] or {}
+          google_read_ok = (
+              receipt["google_machine_auth"]["authenticated"]
+              and cloud_run.get("http_status") == 200
+              and cloud_run.get("name")
+              == f"projects/{PROJECT}/locations/{REGION}/services/{SERVICE}"
+          )
+          operator_ok = receipt["operator"]["classification"] in {
+              "AUTHENTICATED_OPERATOR_READS_PROVEN_BIND_VISIBLE",
+              "AUTHENTICATED_OPERATOR_READS_PROVEN_BIND_ABSENT",
+          }
+          gemini_ok = (
+              receipt["gemini"]["semantic"].get("classification")
+              == "GEMINI_SEMANTIC_READBACK_PROVEN"
+          )
+
+          if google_read_ok and operator_ok and gemini_ok:
+              receipt["overall_classification"] = "SOVARA_CLOUD_OPERATOR_GEMINI_READ_MESH_PROVEN"
+          elif operator_ok and gemini_ok:
+              receipt["overall_classification"] = "SOVARA_OPERATOR_GEMINI_READ_MESH_PROVEN_GOOGLE_ADMIN_UNPROVEN"
+          elif google_read_ok and operator_ok:
+              receipt["overall_classification"] = "SOVARA_CLOUD_OPERATOR_READ_MESH_PROVEN_GEMINI_UNPROVEN"
+          elif operator_ok:
+              receipt["overall_classification"] = "SOVARA_OPERATOR_READ_MESH_PROVEN"
+          elif google_read_ok:
+              receipt["overall_classification"] = "SOVARA_GOOGLE_PROVIDER_READ_PROVEN_OPERATOR_UNPROVEN"
+          else:
+              receipt["overall_classification"] = "SOVARA_PROVIDER_AUTHORITY_NOT_REESTABLISHED"
+
+          output = pathlib.Path("/tmp/pfrd-operator/OPERATOR_AUTH_RECOVERY_RECEIPT.json")
+          output.write_text(
+              json.dumps(
+                  redact(
+                      receipt,
+                      operator_token=operator_token,
+                      gemini_key=gemini_key,
+                  ),
+                  indent=2,
+                  sort_keys=True,
+              )
+              + "\n",
+              encoding="utf-8",
+          )
+          print(
+              json.dumps(
+                  {
+                      "overall_classification": receipt["overall_classification"],
+                      "operator_classification": receipt["operator"]["classification"],
+                      "google_machine_authenticated": receipt["google_machine_auth"]["authenticated"],
+                      "google_machine_route": receipt["google_machine_auth"]["source_alias"],
+                      "gemini_classification": receipt["gemini"]["semantic"].get("classification"),
+                      "bind_action_visible": receipt["operator"]["bind_action_visible"],
+                  },
+                  sort_keys=True,
+              )
+          )
           PY
 
-      - name: Upload immutable operator probe receipt
+      - name: Upload immutable redacted authority receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: pfrd-omega-operator-auth-probe
+          name: pfrd-omega-operator-auth-recovery
           if-no-files-found: error
           retention-days: 30
-          path: /tmp/pfrd-operator/OPERATOR_AUTH_PROBE_RECEIPT.json
+          path: /tmp/pfrd-operator/OPERATOR_AUTH_RECOVERY_RECEIPT.json
