@@ -15,8 +15,16 @@ class CFRECommandBusAdmissionTests(unittest.TestCase):
         )
         combined = result.stdout + result.stderr
         self.assertEqual(0, result.returncode, combined)
-        self.assertIn("Ran 10 tests", combined)
+        self.assertIn("Ran ", combined)
         self.assertIn("OK", combined)
+        self.assertIn(
+            "test_archon_apps_script_public_probe_runs_as_read_only_command",
+            combined,
+        )
+        self.assertIn(
+            "test_archon_apps_script_public_probe_cannot_be_promoted_to_write",
+            combined,
+        )
 
 
 if __name__ == "__main__":

@@ -1,5 +1,6 @@
 import json
 import unittest
+from unittest.mock import patch
 
 from bubbles.command_bus import build_receipt
 from bubbles.control_plane import ActionRequest, BubblesControlPlane, EffectClass
@@ -40,6 +41,43 @@ class BubblesCommandBusTests(unittest.TestCase):
         self.assertEqual(receipt["state"], "SUCCESS")
         self.assertEqual(receipt["execution"]["kind"], "LOCAL_COMMAND_BUS_CANARY")
         self.assertIn("does not prove Google Cloud", receipt["truth_boundary"])
+
+    def test_archon_apps_script_public_probe_runs_as_read_only_command(self):
+        probe = {
+            "schema": "BUBBLES-ARCHON-APPS-SCRIPT-DEPLOYMENT-PROBE-V1",
+            "overall_classification": "DEPLOYMENT_HEALTH_SEMANTICS_VERIFIED",
+            "mutation_attempted": False,
+            "credential_values_recorded": False,
+        }
+        with patch("bubbles.command_bus.run_apps_script_deployment_probe", return_value=probe):
+            receipt = self.run_command(
+                self.command(
+                    action="probe_archon_apps_script_deployment",
+                    effect="READ",
+                    target_alias="ARCHON_APPS_SCRIPT_PUBLIC_DEPLOYMENT",
+                    payload={},
+                )
+            )
+        self.assertEqual("SUCCESS", receipt["state"])
+        self.assertEqual(
+            "READ_ONLY_PUBLIC_APPS_SCRIPT_DEPLOYMENT_PROBE",
+            receipt["execution"]["kind"],
+        )
+        self.assertEqual(probe, receipt["execution"]["probe"])
+        self.assertFalse(receipt["execution"]["provider_effects"])
+        self.assertIn("nested provider classification", receipt["truth_boundary"])
+
+    def test_archon_apps_script_public_probe_cannot_be_promoted_to_write(self):
+        receipt = self.run_command(
+            self.command(
+                action="probe_archon_apps_script_deployment",
+                effect="LOW_RISK_WRITE",
+                target_alias="ARCHON_APPS_SCRIPT_PUBLIC_DEPLOYMENT",
+                payload={},
+            )
+        )
+        self.assertEqual("CONSTRAINT", receipt["state"])
+        self.assertIn("read-only", receipt["reason"])
 
     def test_chat_failure_recovery_invokes_cfre_for_connection_interruption(self):
         receipt = self.run_command(self.recovery_command({
