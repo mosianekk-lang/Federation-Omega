@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import hashlib
 import json
 import tempfile
 import unittest
@@ -8,6 +9,7 @@ from unittest.mock import patch
 
 from bubbles.apps_script_deployment_probe import (
     ARCHON_SCRIPT_DEPLOYMENT_ID,
+    ARCHON_SCRIPT_DEPLOYMENT_ID_SHA256,
     ARCHON_SCRIPT_URL,
     augment_receipt,
     run_probe,
@@ -17,8 +19,16 @@ from bubbles.apps_script_deployment_probe import (
 class AppsScriptDeploymentProbeTests(unittest.TestCase):
     def test_exact_deployment_id_and_exec_url_are_bound(self) -> None:
         self.assertEqual(
-            "AKfycbyaxovYOyaoMWFdsAZnbl2AIFU0PFY3hcGF-QRM1dmDqdtEHRFI7Ud7L_p7YCCVMG3J",
+            "AKfycbyaxovYOyaoMWFdSAZnbl2AIFU0PFY3hcGF-QRM1dmDqdtEHRFl7Ud7L_p7YCCVMG3J",
             ARCHON_SCRIPT_DEPLOYMENT_ID,
+        )
+        self.assertEqual(
+            "67b07a3a8ae7d6e8b00b64548649d82b8d53979aae26ff45fd838b4cf479d1e8",
+            ARCHON_SCRIPT_DEPLOYMENT_ID_SHA256,
+        )
+        self.assertEqual(
+            ARCHON_SCRIPT_DEPLOYMENT_ID_SHA256,
+            hashlib.sha256(ARCHON_SCRIPT_DEPLOYMENT_ID.encode("utf-8")).hexdigest(),
         )
         self.assertEqual(
             f"https://script.google.com/macros/s/{ARCHON_SCRIPT_DEPLOYMENT_ID}/exec",
@@ -36,6 +46,7 @@ class AppsScriptDeploymentProbeTests(unittest.TestCase):
         with patch("bubbles.apps_script_deployment_probe._http", side_effect=fake_http):
             receipt = run_probe()
         self.assertEqual("DEPLOYMENT_HEALTH_SEMANTICS_VERIFIED", receipt["overall_classification"])
+        self.assertEqual(ARCHON_SCRIPT_DEPLOYMENT_ID_SHA256, receipt["deployment_id_sha256"])
         self.assertFalse(receipt["mutation_attempted"])
         self.assertFalse(receipt["credential_values_recorded"])
 
