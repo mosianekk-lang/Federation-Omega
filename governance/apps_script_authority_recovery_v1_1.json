@@ -1,0 +1,96 @@
+{
+  "architecture": {
+    "private_admin": {
+      "audit_state": "SOURCE_REVIEW_PASS",
+      "backup": "HASH_BOUND_EXACT_READBACK_BEFORE_MUTATION",
+      "effect_permit": "ONE_USE_TRANSACTION_IDEMPOTENCY_MUTATION_BOUND",
+      "provider_disabled_source_candidate": true,
+      "public_web_handlers": 0,
+      "replay_state": "SHARDED_HASH_ONLY_FAIL_CLOSED",
+      "request_signature": "HMAC_SHA256_CANONICAL_JSON_LOWERCASE_HEX"
+    },
+    "public_gateway": {
+      "actions": [
+        "STATUS",
+        "CHALLENGE"
+      ],
+      "audit_state": "SOURCE_REVIEW_PASS",
+      "global_do_get": 1,
+      "global_do_post": 1,
+      "oauth_scope": [
+        "https://www.googleapis.com/auth/script.external_request"
+      ],
+      "privileged_provider_mutation": false,
+      "replay_state": "SHARDED_HASH_ONLY_FAIL_CLOSED",
+      "request_signature": "HMAC_SHA256_CANONICAL_JSON_LOWERCASE_HEX"
+    }
+  },
+  "lineage": {
+    "authority_inheritance": false,
+    "canonical_target_project_number": "257649435135",
+    "fogas_consumer_project_number": "979287460558",
+    "historical_cloudops_consumer_project_number": "516690968552",
+    "legacy_transport_project_number": "516699068552"
+  },
+  "owner": "Kim Kagiso Mosiane",
+  "promotion_gates": [
+    "authenticated provider inventory",
+    "exact target consumer and principal proof",
+    "candidate project creation without serving traffic",
+    "provider-native hostile ingress and replay tests",
+    "backup source-hash and rollback canary",
+    "action-specific semantic readback",
+    "reversible shadow cutover",
+    "positive value and no hard regression",
+    "sustained operation before legacy retirement eligibility"
+  ],
+  "repository": {
+    "admission_state": "LOCAL_PATCH_VERIFIED_GITHUB_WRITE_PENDING",
+    "base_main": "725f9fe85b4210e9f3b13bba6108f89c8d2b586d",
+    "existing_guard_merge_pr": 571,
+    "repository": "mosianekk-lang/Federation-Omega",
+    "workflow_change_required": false
+  },
+  "schema": "SOVARA_APPS_SCRIPT_AUTHORITY_RECOVERY_CONTRACT_V1_1",
+  "source": {
+    "audit_receipt_sha256": "dbd50091c877a4998cd1d7dfdc481b7a3ec8eb08b4801ff99ea71990a98200fe",
+    "audit_state": "SECURITY_HOLD",
+    "backup_run": "FLEETWEEKLY-20260718-181318-5BXX66",
+    "declared_sha256": "2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248",
+    "finding_counts": {
+      "CRITICAL": 15,
+      "HIGH": 5,
+      "INFO": 0,
+      "MEDIUM": 2
+    },
+    "finding_instances": 22,
+    "unique_finding_classes": 16
+  },
+  "state": "SOURCE_CANDIDATE_VERIFIED_LIVE_PRIVILEGED_MUTATION_SECURITY_HOLD",
+  "truth_boundary": [
+    "Source presence is not Google provider authority.",
+    "Local Node simulation is not Apps Script provider execution.",
+    "Script Property anchor fingerprints do not alone prove independent external custody.",
+    "No live source, deployment, OAuth, IAM, secret, traffic or billing state was changed.",
+    "Legacy read/status transport remains preserved while privileged mutation is held."
+  ],
+  "verification": {
+    "live_apps_script_changed": false,
+    "node_hostile_simulation": {
+      "candidate_source_sha256": "7e83d38f93475433cb7d4cfc8a9c7aec623fda98e376b8da42d05abe1ee8572e",
+      "failed": 0,
+      "passed": 30,
+      "receipt_sha256": "d21f970c6512dc92612136a67de44a772c59e0793f3df576caff49ce75caf8da"
+    },
+    "provider_runtime_executed": false,
+    "python_tests": {
+      "failed": 0,
+      "passed": 18
+    },
+    "signer_tests": {
+      "failed": 0,
+      "passed": 4
+    }
+  },
+  "version": "1.1.0"
+}
