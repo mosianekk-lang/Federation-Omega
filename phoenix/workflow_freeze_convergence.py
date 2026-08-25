@@ -14,7 +14,8 @@ REQUIRED = {
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
-    ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
+    ".github/workflows/caseforge-provider-readback-canary.yml",
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml",
 }
 PROVIDER_MANAGED = {"dynamic/dependabot/dependabot-updates"}
 
