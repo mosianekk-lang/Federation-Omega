@@ -1,0 +1,110 @@
+name: Formation Omega OpenRouter Metadata Probe
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/formation-omega-openrouter-metadata-probe.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      HAS_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY != '' }}
+    steps:
+      - name: Inspect OpenRouter binding and catalog without inference spend
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/formation-omega-openrouter
+          python - <<'PY'
+          from __future__ import annotations
+          import json, os, pathlib, urllib.error, urllib.request
+          from datetime import datetime, timezone
+
+          key=os.environ.get('OPENROUTER_API_KEY','')
+
+          def req(path, auth=True):
+              headers={'accept':'application/json'}
+              if auth and key:
+                  headers['authorization']='Bearer '+key
+              r=urllib.request.Request('https://openrouter.ai'+path,headers=headers,method='GET')
+              try:
+                  with urllib.request.urlopen(r,timeout=30) as resp:
+                      raw=resp.read().decode('utf-8','replace')
+                      try: body=json.loads(raw)
+                      except Exception: body={}
+                      return {'http_status':resp.status,'body':body}
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  try: body=json.loads(raw)
+                  except Exception: body={}
+                  return {'http_status':e.code,'body':body}
+              except Exception as e:
+                  return {'transport_error':type(e).__name__}
+
+          models=req('/api/v1/models',auth=False)
+          ids=[]
+          if models.get('http_status')==200:
+              ids=[str(x.get('id','')) for x in (models.get('body') or {}).get('data',[]) if isinstance(x,dict)]
+          gpt56_matches=[x for x in ids if 'gpt-5.6' in x.lower()]
+
+          current={'http_status':None}
+          credits={'http_status':None}
+          meta={}
+          if key:
+              current=req('/api/v1/key',auth=True)
+              credits=req('/api/v1/credits',auth=True)
+              data=(current.get('body') or {}).get('data',{}) if current.get('http_status')==200 else {}
+              rem=data.get('limit_remaining')
+              meta={
+                  'is_free_tier':data.get('is_free_tier'),
+                  'is_management_key':data.get('is_management_key'),
+                  'has_expiry':bool(data.get('expires_at')),
+                  'key_limit_remaining_positive':(rem is None or (isinstance(rem,(int,float)) and rem>0)),
+              }
+
+          credit_positive=None
+          if credits.get('http_status')==200:
+              d=(credits.get('body') or {}).get('data',{})
+              tc=d.get('total_credits'); tu=d.get('total_usage')
+              if isinstance(tc,(int,float)) and isinstance(tu,(int,float)):
+                  credit_positive=(tc-tu)>0
+
+          receipt={
+              'schema':'FORMATION-OMEGA-OPENROUTER-METADATA-PROBE-V1',
+              'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'source_ref':os.environ.get('GITHUB_REF'),
+              'api_key_bound':bool(key),
+              'current_key_http':current.get('http_status'),
+              'current_key_metadata':meta,
+              'credits_http':credits.get('http_status'),
+              'account_credit_positive':credit_positive,
+              'models_http':models.get('http_status'),
+              'catalog_model_count':len(ids),
+              'gpt56_catalog_matches':gpt56_matches[:20],
+              'gpt56_catalog_present':bool(gpt56_matches),
+              'inference_request_performed':False,
+              'provider_spend_requested':False,
+              'secret_values_recorded':False,
+          }
+          p=pathlib.Path('/tmp/formation-omega-openrouter/openrouter.json')
+          p.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({k:receipt[k] for k in ('api_key_bound','current_key_http','credits_http','account_credit_positive','models_http','gpt56_catalog_present')},sort_keys=True))
+          PY
+
+      - name: Upload no-spend OpenRouter receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: formation-omega-openrouter-metadata-probe
+          path: /tmp/formation-omega-openrouter/openrouter.json
+          if-no-files-found: error
+          retention-days: 7
