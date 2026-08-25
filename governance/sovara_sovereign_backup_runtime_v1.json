@@ -1,0 +1,119 @@
+{
+  "ao_cra_build": {
+    "build_id": "BUILD-SOVARA-BACKUP-002",
+    "classification": "UNRESOLVED_ENGINEERING_BUILD_UNTIL_PRIVATE_RUNTIME_AND_MISSED_RUN_CANARY",
+    "next_gate": "Admit this controller, bind a separately authorised private adapter, recover one deliberately overdue event, replay it exactly, and prove no duplicate provider effect.",
+    "workaround": "The admitted core plus manual full/delta provider procedure preserves verified continuity."
+  },
+  "authority_ceiling": "A1_INTERNAL",
+  "code_restructuring": {
+    "compatibility_import_surface_preserved": true,
+    "controller_module_max_lines": 650,
+    "monolith_detected": true,
+    "reason": "Keep event/state validation independently testable and prevent provider execution changes from overloading the durable-state component.",
+    "state_and_provider_effects_separated": true,
+    "state_module_max_lines": 600
+  },
+  "current_evidence": {
+    "deterministic_runtime_tests": "26_PASS_AFTER_STATE_CONTROLLER_SPLIT",
+    "full_to_delta_restore": "8_OF_8_VERIFIED",
+    "manual_delta_provider_canary": "VERIFIED",
+    "manual_full_provider_canary": "VERIFIED",
+    "missed_run_provider_recovery": "PENDING_RUNTIME_ADMISSION_AND_CANARY",
+    "private_alias": "REGISTERED_AND_READ_BACK",
+    "source_core_main_commit": "a7476faaf3e2aefe73309bf8ba6872b9ff179be7",
+    "unattended_scheduler": "UNVERIFIED"
+  },
+  "effect_idempotency": {
+    "adapter_container_creation_must_be_idempotent": true,
+    "adapter_file_upload_must_reject_changed_content": true,
+    "completed_receipt_readback_before_reexecution": true,
+    "final_state_cas_failure_classification": "PROVIDER_EFFECT_STATE_RECONCILIATION_REQUIRED",
+    "partial_provider_failure_may_not_be_reported_as_no_effect": true,
+    "payload_bound_idempotency_key": true,
+    "private_atomic_reservation_required": true
+  },
+  "external_effect_default": false,
+  "missed_run_recovery": {
+    "dead_letter_after_max_attempts": true,
+    "due_time_required": true,
+    "exact_provider_receipt_reconciles_lost_runtime_commit": true,
+    "grace_window_configurable": true,
+    "later_sequence_before_missing_sequence": "HELD_SEQUENCE_GAP",
+    "overdue_next_sequence_classification": "MISSED_RUN_RECOVERED",
+    "retry_backoff": "BOUNDED_EXPONENTIAL"
+  },
+  "owner": "Kim Kagiso Mosiane",
+  "privacy": {
+    "gmail_identity_in_public_source": false,
+    "opaque_secret_references_allowed": true,
+    "owner_only_permission_readback_required": true,
+    "private_drive_ids_in_public_source": false,
+    "raw_credentials_in_public_source": false,
+    "raw_credentials_in_runtime_state": false
+  },
+  "private_destination_alias": "SOVARA_PRIVATE_BACKUP_REPOSITORY_V1",
+  "private_exact_pointer_in_public_source": false,
+  "promotion_gates": [
+    "source compiles",
+    "deterministic and adversarial runtime tests pass",
+    "exact-head Airlock, Leak Guard and Bubbles pass",
+    "private alias resolves at runtime",
+    "provider full and delta receipts remain valid",
+    "missed event is recovered through the private runtime adapter",
+    "exact retry creates no duplicate container, file or Gmail effect",
+    "lost runtime commit is reconciled from the provider receipt",
+    "missed-run recovery is proven after an unattended trigger",
+    "restore chain remains exact after recovery"
+  ],
+  "public_implementation": [
+    "federation_consolidation/sovara_sovereign_backup_runtime_state.py",
+    "federation_consolidation/sovara_sovereign_backup_runtime.py"
+  ],
+  "purpose": "Bind the admitted sovereign backup core to a private, durable, at-least-once event runtime with exact retry suppression, missed-run recovery, provider-effect reservation and state reconciliation, without exposing private provider pointers or reusing the security-held monolithic Apps Script fleet.",
+  "reuse_decision": {
+    "does_not_rebuild": [
+      "SOVARA",
+      "Alpha-Omega",
+      "Federation Omni-Mesh",
+      "the admitted backup archive core"
+    ],
+    "new_github_workflow_added": false,
+    "reuses": [
+      "federation_consolidation.sovara_sovereign_backup",
+      "KDV private alias registry",
+      "existing Airlock, source provenance, Leak Guard and Bubbles admission",
+      "existing owner-private Drive and Gmail provider route"
+    ],
+    "security_held_apps_script_fleet_used": false
+  },
+  "runtime_contract": {
+    "changed_payload_collision_rejected": true,
+    "durable_state": "PRIVATE_ADAPTER_COMPARE_AND_SWAP",
+    "event_delivery": "AT_LEAST_ONCE",
+    "event_ordering": "STRICT_MONOTONIC_SEQUENCE",
+    "event_payload_binding": "SHA256_EVENT_AND_ARTIFACT_SET",
+    "expired_lease_recovery": true,
+    "provider_effect_reservation": true,
+    "provider_effects_serialized": true,
+    "provider_receipt_recovery": true,
+    "runtime_event_compaction_anchor": true,
+    "runtime_event_hash_chain": true,
+    "runtime_event_window": 128,
+    "sequence_gap_held": true,
+    "single_lineage_lease": true,
+    "state_versioning": true,
+    "unaffected_non_backup_work_may_continue": true
+  },
+  "schema": "SOVARA-SOVEREIGN-BACKUP-RUNTIME-CONTRACT-1",
+  "truth_boundary": {
+    "deterministic_test_proves_provider_recovery": false,
+    "manual_connector_execution_proves_background_runtime": false,
+    "provider_authority_inherited": false,
+    "provider_native_readback_required": true,
+    "source_proves_private_adapter_deployed": false,
+    "source_proves_unattended_scheduler_live": false,
+    "stored_alias_proves_provider_authority": false
+  },
+  "version": "1.0.0"
+}
