@@ -1,0 +1,298 @@
+name: Formation Omega Provider Closure Canary
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/formation-omega-provider-closure-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: formation-omega-provider-closure-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  SERVICE: federation-omega-operator
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  CANARY_SCHEMA: FORMATION-OMEGA-PROVIDER-CLOSURE-V1
+  HAS_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN != '' }}
+  HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+  HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+  HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
+  HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
+  HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
+  HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
+  HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
+  HAS_GENERIC_WIF_PAIR: ${{ (secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '') && (secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '') }}
+
+jobs:
+  provider-closure:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate GCP_SA_KEY
+        id: auth_gcp_sa
+        if: ${{ env.HAS_GCP_SA_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate GCP_SERVICE_ACCOUNT_KEY
+        id: auth_gcp_service_account
+        if: ${{ env.HAS_GCP_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate GOOGLE_CREDENTIALS
+        id: auth_google_credentials
+        if: ${{ env.HAS_GOOGLE_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate GOOGLE_SERVICE_ACCOUNT_KEY
+        id: auth_google_service_account
+        if: ${{ env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate GCP_CREDENTIALS
+        id: auth_gcp_credentials
+        if: ${{ env.HAS_GCP_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate GOOGLE_GHA_CREDS_JSON
+        id: auth_google_gha
+        if: ${{ env.HAS_GOOGLE_GHA_CREDS_JSON == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate GOOGLE_CLOUD_CREDENTIALS
+        id: auth_google_cloud
+        if: ${{ env.HAS_GOOGLE_CLOUD_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate GCP workload identity
+        id: auth_gcp_wif
+        if: ${{ env.HAS_GCP_WIF_PAIR == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER || vars.GCP_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ secrets.GCP_SERVICE_ACCOUNT || vars.GCP_SERVICE_ACCOUNT }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate generic workload identity
+        id: auth_generic_wif
+        if: ${{ env.HAS_GENERIC_WIF_PAIR == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ secrets.WIF_PROVIDER || vars.WIF_PROVIDER }}
+          service_account: ${{ secrets.DEPLOYER_SA || vars.DEPLOYER_SA }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Execute bounded Formation Omega provider readback
+        shell: bash
+        env:
+          FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth_gcp_sa.outputs.access_token || steps.auth_gcp_service_account.outputs.access_token || steps.auth_google_credentials.outputs.access_token || steps.auth_google_service_account.outputs.access_token || steps.auth_gcp_credentials.outputs.access_token || steps.auth_google_gha.outputs.access_token || steps.auth_google_cloud.outputs.access_token || steps.auth_gcp_wif.outputs.access_token || steps.auth_generic_wif.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/formation-omega
+          python - <<'PY'
+          from __future__ import annotations
+          import base64, hashlib, json, os, urllib.error, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+
+          project=os.environ['PROJECT_ID']; region=os.environ['REGION']; service=os.environ['SERVICE']
+          operator=os.environ['OPERATOR_URL'].rstrip('/'); gtoken=os.environ.get('GOOGLE_ACCESS_TOKEN','')
+          direct_fo=os.environ.get('FO_ADMIN_TOKEN',''); direct_gem=os.environ.get('GEMINI_API_KEY','')
+          recorded=datetime.now(timezone.utc).isoformat()
+          nonce='FORMATION_OMEGA_GEMINI_'+hashlib.sha256((os.environ.get('GITHUB_SHA','')+recorded).encode()).hexdigest()[:20]
+
+          def http_json(url, method='GET', headers=None, body=None, timeout=35):
+              data=None if body is None else json.dumps(body,separators=(',',':')).encode()
+              h={'accept':'application/json', **(headers or {})}
+              if body is not None: h['content-type']='application/json'
+              req=urllib.request.Request(url,data=data,headers=h,method=method)
+              try:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
+                      raw=r.read().decode('utf-8','replace')
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={'text_sha256':hashlib.sha256(raw.encode()).hexdigest()}
+                      return {'http_status':r.status,'body':parsed}
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={'text_sha256':hashlib.sha256(raw.encode()).hexdigest()}
+                  return {'http_status':e.code,'body':parsed}
+              except Exception as e:
+                  return {'transport_error':type(e).__name__,'message_sha256':hashlib.sha256(str(e).encode()).hexdigest()}
+
+          def google_get(url):
+              if not gtoken: return {'classification':'GOOGLE_ACCESS_TOKEN_UNAVAILABLE'}
+              return http_json(url,headers={'authorization':'Bearer '+gtoken,'x-goog-user-project':project})
+
+          def secret_value(names):
+              if not gtoken: return '', {'classification':'GOOGLE_ACCESS_TOKEN_UNAVAILABLE'}
+              attempts=[]
+              for name in names:
+                  u=f'https://secretmanager.googleapis.com/v1/projects/{project}/secrets/{urllib.parse.quote(name,safe="")}/versions/latest:access'
+                  r=google_get(u); attempts.append({'name':name,'http_status':r.get('http_status')})
+                  payload=r.get('body',{}).get('payload',{}).get('data','')
+                  if r.get('http_status')==200 and payload:
+                      return base64.b64decode(payload).decode().strip(), {'source':name,'attempts':attempts}
+              return '', {'attempts':attempts}
+
+          def operator_call(path, token='', body=None):
+              headers={}
+              if token: headers['x-fo-admin-token']=token
+              r=http_json(operator+path,method='POST' if body is not None else 'GET',headers=headers,body=body,timeout=45)
+              return r
+
+          cloud={'classification':'GOOGLE_ACCESS_TOKEN_UNAVAILABLE'}
+          if gtoken:
+              r=google_get(f'https://run.googleapis.com/v2/projects/{project}/locations/{region}/services/{service}')
+              b=r.get('body',{})
+              cloud={'http_status':r.get('http_status'),'name':b.get('name'),'uid':b.get('uid'),'generation':b.get('generation'),'uri':b.get('uri'),'latest_ready_revision':b.get('latestReadyRevision'),'service_account':b.get('template',{}).get('serviceAccount'),'reconciling':b.get('reconciling')}
+
+          fo_secret, fo_lookup=secret_value(['FO_ADMIN_TOKEN','fo-admin-token','federation-omega-admin-token'])
+          gem_secret, gem_lookup=secret_value(['GEMINI_API_KEY','gemini-api-key','gemini_api_key'])
+          fo=direct_fo or fo_secret; gem=direct_gem or gem_secret
+
+          public_health=operator_call('/health')
+          public_contract=operator_call('/')
+          unauth=operator_call('/execute',body={'action':'STATUS','payload':{'purpose':'Formation Omega unauthenticated boundary canary'}})
+          operator_result={'token_present':bool(fo),'token_source':'github_actions_secret' if direct_fo else ('google_secret_manager' if fo_secret else 'none'),'public_health_http':public_health.get('http_status'),'public_contract_http':public_contract.get('http_status'),'unauth_execute_http':unauth.get('http_status')}
+          if fo:
+              status=operator_call('/execute',token=fo,body={'action':'STATUS','payload':{'purpose':'Formation Omega authenticated canary'}})
+              cloudread=operator_call('/execute',token=fo,body={'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':service,'purpose':'Formation Omega provider readback'}})
+              operator_result.update({'authenticated_status_http':status.get('http_status'),'authenticated_cloud_read_http':cloudread.get('http_status'),'status_body':status.get('body'),'cloud_read_body':cloudread.get('body')})
+
+          gemini={'classification':'GEMINI_KEY_UNAVAILABLE','key_source':'none'}
+          if gem:
+              gemini={'key_source':'github_actions_secret' if direct_gem else 'google_secret_manager'}
+              models=http_json('https://generativelanguage.googleapis.com/v1beta/models?key='+urllib.parse.quote(gem,safe=''))
+              available=models.get('body',{}).get('models',[])
+              selected=None
+              for m in available:
+                  if 'generateContent' in (m.get('supportedGenerationMethods') or []):
+                      selected=m.get('name'); break
+              gemini.update({'models_http_status':models.get('http_status'),'model_count':len(available),'selected_model':selected})
+              if selected:
+                  prompt='Return exactly this token and nothing else: '+nonce
+                  gen=http_json('https://generativelanguage.googleapis.com/v1beta/'+selected+':generateContent?key='+urllib.parse.quote(gem,safe=''),method='POST',body={'contents':[{'parts':[{'text':prompt}]}],'generationConfig':{'temperature':0}})
+                  text=''
+                  try: text=''.join(p.get('text','') for p in gen['body']['candidates'][0]['content']['parts']).strip()
+                  except Exception: pass
+                  gemini.update({'generate_http_status':gen.get('http_status'),'semantic_exact_match':text==nonce,'response_sha256':hashlib.sha256(text.encode()).hexdigest() if text else None,'nonce_sha256':hashlib.sha256(nonce.encode()).hexdigest()})
+
+          receipt={
+              'schema':os.environ['CANARY_SCHEMA'],
+              'recorded_at':recorded,
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'source_ref':os.environ.get('GITHUB_REF'),
+              'project_id':project,'project_number':os.environ['PROJECT_NUMBER'],'region':region,'service':service,
+              'route_presence':{k:os.environ.get(k)=='true' for k in ['HAS_FO_ADMIN_TOKEN','HAS_GEMINI_API_KEY','HAS_GCP_SA_KEY','HAS_GCP_SERVICE_ACCOUNT_KEY','HAS_GOOGLE_CREDENTIALS','HAS_GOOGLE_SERVICE_ACCOUNT_KEY','HAS_GCP_CREDENTIALS','HAS_GOOGLE_GHA_CREDS_JSON','HAS_GOOGLE_CLOUD_CREDENTIALS','HAS_GCP_WIF_PAIR','HAS_GENERIC_WIF_PAIR']},
+              'google_access_token_present':bool(gtoken),
+              'cloud_run':cloud,
+              'fo_secret_lookup':fo_lookup,
+              'gemini_secret_lookup':gem_lookup,
+              'operator':operator_result,
+              'gemini':gemini,
+          }
+          receipt['closure']={
+              'google_cloud_readback_verified':cloud.get('http_status')==200 and bool(cloud.get('uid')),
+              'operator_authenticated_readback_verified':operator_result.get('authenticated_status_http')==200 and operator_result.get('authenticated_cloud_read_http')==200,
+              'gemini_semantic_readback_verified':gemini.get('generate_http_status')==200 and gemini.get('semantic_exact_match') is True,
+          }
+          with open('/tmp/formation-omega/FORMATION_OMEGA_PROVIDER_CLOSURE_RECEIPT.json','w') as f:
+              json.dump(receipt,f,indent=2,sort_keys=True)
+          print(json.dumps(receipt['closure'],sort_keys=True))
+          PY
+
+      - name: Upload redacted closure receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: formation-omega-provider-closure-receipt
+          if-no-files-found: error
+          retention-days: 7
+          path: /tmp/formation-omega/FORMATION_OMEGA_PROVIDER_CLOSURE_RECEIPT.json
