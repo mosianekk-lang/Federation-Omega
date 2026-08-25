@@ -4,7 +4,7 @@ Formation-Omega is the public-safe source contract for the Federation-wide conve
 
 ## Purpose
 
-Formation-Omega coordinates existing Federation systems without erasing or falsely promoting them. It standardises precedence, proof ceilings, formation workflow, legal/adversarial review, assurance, release controls, and cross-surface readback.
+Formation-Omega coordinates existing Federation systems without erasing or falsely promoting them. It standardises precedence, proof ceilings, formation workflow, legal/adversarial review, assurance, release controls, cross-surface readback, and Federation AAA (`ABSTRACT → ADAPT → ACTIVATE`) workflow learning.
 
 ## Public-safe precedence
 
@@ -18,6 +18,26 @@ Formation-Omega coordinates existing Federation systems without erasing or false
 8. JARVIS provides independent assurance.
 9. Sentinel observes freshness, health, and drift.
 10. Other registered systems inherit these semantics through the canonical policy-inheritance plane; inheritance does not itself prove runtime activation.
+
+## Federation AAA workflow learning
+
+`aaa_workflow.py` turns bounded operational evidence into reusable execution controls through three stages:
+
+1. **ABSTRACT** — convert recurring successes, failures, contradictions and owner-burden signals into provider-neutral learning genes.
+2. **ADAPT** — admit only genes the receiving system can actually enforce with its current capabilities.
+3. **ACTIVATE** — promote only tested, regression-free controls within the receiver's authority ceiling.
+
+Current executable controls include:
+
+- current/fresh evidence selection with explicit contradiction preservation;
+- suppression of unchanged failed route fingerprints;
+- bounded re-probe after a verified precondition change;
+- separate `PRESENT → CALLABLE → AUTHORITY_BOUND → SEMANTICALLY_VERIFIED` capability stages;
+- fresh-live capability-floor protection before source replacement;
+- duplicate global-function rejection; and
+- owner-burden-aware route selection through the existing smallest-sufficient-action rule.
+
+`evidenceops/build_system/aaa_chat_resilience.py` activates route-memory in the existing CFRE/Bubbles recovery path. It preserves the original Bubbles recovery response contract, writes bounded route memory into the CFRE checkpoint, suppresses the same failed route on a later unchanged cycle, and redirects the effective plan toward materially different route discovery. It performs no provider effect and grants no authority.
 
 ## Current-matter supersession rule
 
@@ -51,8 +71,11 @@ Repository-local Formation-Omega logic is `A1_INTERNAL` by default. External com
 ## Files
 
 - `upgrade_manifest.json` — public-safe 100-upgrade catalogue.
-- `powerhouse.py` — deterministic precedence, claim-ceiling, harmonisation, and release-gate primitives.
+- `powerhouse.py` — deterministic precedence, claim-ceiling, harmonisation, route-selection and release-gate primitives.
+- `aaa_workflow.py` — deterministic AAA evidence, route-memory, capability-stage, source-upgrade and learning primitives.
 - `tests/test_formation_omega_powerhouse.py` — regression tests for count, precedence, claim ceilings, readback, and release gating.
+- `tests/test_formation_omega_aaa_workflow.py` — chat-derived AAA regression suite.
+- `evidenceops/build_system/aaa_chat_resilience.py` — CFRE/Bubbles AAA route-memory adapter with checkpoint-carried learning.
 
 ## Proof semantics
 

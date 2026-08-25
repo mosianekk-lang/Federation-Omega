@@ -1,5 +1,28 @@
-"""Public-safe Formation-Omega convergence primitives."""
+"""Public-safe Formation-Omega convergence and AAA workflow primitives."""
 
+from .aaa_workflow import (
+    AAAError,
+    AAACycleReport,
+    AAALearningEvent,
+    AAALearningGene,
+    CapabilityStage,
+    CapabilityState,
+    Contradiction,
+    EvidenceObservation,
+    RouteAttempt,
+    RouteOutcome,
+    RouteRetryDecision,
+    SourceCapabilitySnapshot,
+    SourceUpgradeDecision,
+    TruthResolution,
+    abstract_learning,
+    activate_learning,
+    adapt_learning,
+    choose_operational_route,
+    resolve_current_truth,
+    route_retry_decision,
+    source_upgrade_decision,
+)
 from .powerhouse import (
     ClaimDecision,
     FormationOmega,
@@ -9,9 +32,30 @@ from .powerhouse import (
 )
 
 __all__ = [
+    "AAAError",
+    "AAACycleReport",
+    "AAALearningEvent",
+    "AAALearningGene",
+    "CapabilityStage",
+    "CapabilityState",
     "ClaimDecision",
+    "Contradiction",
+    "EvidenceObservation",
     "FormationOmega",
     "ProofState",
     "ReleaseGate",
+    "RouteAttempt",
+    "RouteOutcome",
+    "RouteRetryDecision",
+    "SourceCapabilitySnapshot",
+    "SourceUpgradeDecision",
     "SurfaceReadback",
+    "TruthResolution",
+    "abstract_learning",
+    "activate_learning",
+    "adapt_learning",
+    "choose_operational_route",
+    "resolve_current_truth",
+    "route_retry_decision",
+    "source_upgrade_decision",
 ]
