@@ -1,0 +1,92 @@
+name: SOVARA CLASP OAuth Presence Probe
+
+on:
+  push:
+    branches:
+      - probe/clasp-oauth-presence-20260825
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - name: Probe candidate OAuth secret bindings without disclosure
+        shell: bash
+        env:
+          CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+          CLASPRC: ${{ secrets.CLASPRC }}
+          CLASP_CREDENTIALS: ${{ secrets.CLASP_CREDENTIALS }}
+          CLASP_TOKEN: ${{ secrets.CLASP_TOKEN }}
+          GOOGLE_OAUTH_JSON: ${{ secrets.GOOGLE_OAUTH_JSON }}
+          GOOGLE_OAUTH_CLIENT_JSON: ${{ secrets.GOOGLE_OAUTH_CLIENT_JSON }}
+          GOOGLE_OAUTH_REFRESH_TOKEN: ${{ secrets.GOOGLE_OAUTH_REFRESH_TOKEN }}
+          GOOGLE_REFRESH_TOKEN: ${{ secrets.GOOGLE_REFRESH_TOKEN }}
+          GOOGLE_CLIENT_ID: ${{ secrets.GOOGLE_CLIENT_ID }}
+          GOOGLE_CLIENT_SECRET: ${{ secrets.GOOGLE_CLIENT_SECRET }}
+          APPS_SCRIPT_OAUTH_JSON: ${{ secrets.APPS_SCRIPT_OAUTH_JSON }}
+          APPS_SCRIPT_CREDENTIALS: ${{ secrets.APPS_SCRIPT_CREDENTIALS }}
+          APPS_SCRIPT_REFRESH_TOKEN: ${{ secrets.APPS_SCRIPT_REFRESH_TOKEN }}
+          GAS_OAUTH_JSON: ${{ secrets.GAS_OAUTH_JSON }}
+          GAS_REFRESH_TOKEN: ${{ secrets.GAS_REFRESH_TOKEN }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+
+          names = [
+              "CLASPRC_JSON",
+              "CLASPRC",
+              "CLASP_CREDENTIALS",
+              "CLASP_TOKEN",
+              "GOOGLE_OAUTH_JSON",
+              "GOOGLE_OAUTH_CLIENT_JSON",
+              "GOOGLE_OAUTH_REFRESH_TOKEN",
+              "GOOGLE_REFRESH_TOKEN",
+              "GOOGLE_CLIENT_ID",
+              "GOOGLE_CLIENT_SECRET",
+              "APPS_SCRIPT_OAUTH_JSON",
+              "APPS_SCRIPT_CREDENTIALS",
+              "APPS_SCRIPT_REFRESH_TOKEN",
+              "GAS_OAUTH_JSON",
+              "GAS_REFRESH_TOKEN",
+          ]
+          presence = {name: bool(os.environ.get(name, "")) for name in names}
+          complete_routes = {
+              "clasprc_json": presence["CLASPRC_JSON"] or presence["CLASPRC"],
+              "apps_script_oauth_json": presence["APPS_SCRIPT_OAUTH_JSON"] or presence["APPS_SCRIPT_CREDENTIALS"],
+              "google_client_refresh_tuple": (
+                  presence["GOOGLE_CLIENT_ID"]
+                  and presence["GOOGLE_CLIENT_SECRET"]
+                  and (presence["GOOGLE_OAUTH_REFRESH_TOKEN"] or presence["GOOGLE_REFRESH_TOKEN"])
+              ),
+              "gas_refresh_tuple": (
+                  presence["GOOGLE_CLIENT_ID"]
+                  and presence["GOOGLE_CLIENT_SECRET"]
+                  and presence["GAS_REFRESH_TOKEN"]
+              ),
+          }
+          receipt = {
+              "schema": "SOVARA-CLASP-OAUTH-PRESENCE-PROBE-1",
+              "secret_values_disclosed": False,
+              "presence": presence,
+              "complete_routes": complete_routes,
+              "any_complete_route": any(complete_routes.values()),
+          }
+          print(json.dumps(receipt, indent=2, sort_keys=True))
+          with open("clasp-oauth-presence-receipt.json", "w", encoding="utf-8") as handle:
+              json.dump(receipt, handle, indent=2, sort_keys=True)
+              handle.write("\n")
+          PY
+
+      - name: Upload presence-only receipt
+        uses: actions/upload-artifact@v4
+        with:
+          name: clasp-oauth-presence-receipt
+          path: clasp-oauth-presence-receipt.json
+          if-no-files-found: error
+          retention-days: 7
