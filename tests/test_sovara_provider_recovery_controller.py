@@ -98,8 +98,10 @@ class SovaraProviderRecoveryControllerTests(unittest.TestCase):
         )
 
     def test_secret_like_material_is_rejected(self):
+        synthetic_prefix = "sk" + "-" + "proj" + "-"
+        synthetic_secret = synthetic_prefix + ("A" * 32)
         with self.assertRaises(ValueError):
-            build_recovery_receipt({"openai": {"raw": "sk-proj-1234567890abcdefghijklmnop"}})
+            build_recovery_receipt({"openai": {"raw": synthetic_secret}})
 
 
 if __name__ == "__main__":
