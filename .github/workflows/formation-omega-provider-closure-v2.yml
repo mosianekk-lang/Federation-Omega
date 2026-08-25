@@ -1,0 +1,333 @@
+name: Formation Omega Provider Closure V2
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/formation-omega-provider-closure-v2.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: formation-omega-provider-closure-v2-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  SERVICE: federation-omega-operator
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  openai-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    env:
+      OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+    steps:
+      - name: Run bounded OpenAI GPT-5.6 semantic/readback canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/formation-omega-v2
+          python - <<'PY'
+          from __future__ import annotations
+          import hashlib, json, os, pathlib, time, urllib.error, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+
+          key=os.environ.get('OPENAI_API_KEY','')
+          recorded=datetime.now(timezone.utc).isoformat()
+          nonce='FORMATION_OMEGA_OPENAI_'+hashlib.sha256((os.environ.get('GITHUB_SHA','')+recorded).encode()).hexdigest()[:20]
+
+          def request_json(url, *, method='GET', body=None, timeout=90):
+              headers={'accept':'application/json'}
+              if key: headers['authorization']='Bearer '+key
+              data=None
+              if body is not None:
+                  headers['content-type']='application/json'
+                  data=json.dumps(body,separators=(',',':')).encode()
+              req=urllib.request.Request(url,data=data,headers=headers,method=method)
+              try:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
+                      raw=r.read().decode('utf-8','replace')
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={}
+                      return {'http_status':r.status,'body':parsed}
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={}
+                  err=parsed.get('error',{}) if isinstance(parsed,dict) else {}
+                  return {'http_status':e.code,'error_type':err.get('type'),'error_code':err.get('code')}
+              except Exception as e:
+                  return {'transport_error':type(e).__name__}
+
+          def output_text(body):
+              out=[]
+              for item in body.get('output',[]) if isinstance(body,dict) else []:
+                  if item.get('type')!='message': continue
+                  for c in item.get('content',[]) or []:
+                      if c.get('type') in ('output_text','text') and c.get('text'):
+                          out.append(str(c.get('text')))
+              return ''.join(out).strip()
+
+          def attempt(model, effort=None):
+              model_ref=request_json('https://api.openai.com/v1/models/'+urllib.parse.quote(model,safe=''))
+              result={
+                  'requested_model':model,
+                  'model_resource_http':model_ref.get('http_status'),
+                  'model_resource_id':(model_ref.get('body') or {}).get('id'),
+                  'model_resource_error_type':model_ref.get('error_type'),
+                  'model_resource_error_code':model_ref.get('error_code'),
+              }
+              payload={
+                  'model':model,
+                  'input':[{'role':'user','content':[{'type':'input_text','text':'Return exactly this token and nothing else: '+nonce}]}],
+                  'store':True,
+                  'max_output_tokens':256,
+              }
+              if effort:
+                  payload['reasoning']={'effort':effort}
+              started=time.monotonic()
+              created=request_json('https://api.openai.com/v1/responses',method='POST',body=payload)
+              result['create_http']=created.get('http_status')
+              result['create_error_type']=created.get('error_type')
+              result['create_error_code']=created.get('error_code')
+              result['latency_ms']=round((time.monotonic()-started)*1000,1)
+              body=created.get('body') or {}
+              rid=body.get('id')
+              text=output_text(body)
+              result['provider_response_id']=rid
+              result['provider_response_model']=body.get('model')
+              result['semantic_exact_match']=text==nonce
+              result['response_sha256']=hashlib.sha256(text.encode()).hexdigest() if text else None
+              usage=body.get('usage') or {}
+              result['usage']={k:usage.get(k) for k in ('input_tokens','output_tokens','total_tokens') if k in usage}
+              if rid:
+                  read=request_json('https://api.openai.com/v1/responses/'+urllib.parse.quote(rid,safe=''))
+                  rbody=read.get('body') or {}
+                  rtext=output_text(rbody)
+                  result['readback_http']=read.get('http_status')
+                  result['readback_id_match']=rbody.get('id')==rid
+                  result['readback_model']=rbody.get('model')
+                  result['readback_semantic_exact_match']=rtext==nonce
+                  result['readback_response_sha256']=hashlib.sha256(rtext.encode()).hexdigest() if rtext else None
+              return result
+
+          attempts=[]
+          if key:
+              for model,effort in [('gpt-5.6-sol','high'),('gpt-5.6','high')]:
+                  a=attempt(model,effort)
+                  attempts.append(a)
+                  if a.get('readback_semantic_exact_match'):
+                      break
+              if not any(a.get('readback_semantic_exact_match') for a in attempts):
+                  attempts.append(attempt('gpt-5.4-mini',None))
+
+          gpt56=[a for a in attempts if a.get('requested_model') in ('gpt-5.6-sol','gpt-5.6')]
+          selected=next((a for a in gpt56 if a.get('readback_semantic_exact_match')),None)
+          control=next((a for a in attempts if a.get('requested_model')=='gpt-5.4-mini'),None)
+          receipt={
+              'schema':'FORMATION-OMEGA-OPENAI-LIVE-CLOSURE-V2',
+              'recorded_at':recorded,
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'source_ref':os.environ.get('GITHUB_REF'),
+              'api_key_present':bool(key),
+              'attempts':attempts,
+              'closure':{
+                  'openai_api_authority_bound':bool(key),
+                  'gpt56_model_resource_verified':any(a.get('model_resource_http')==200 for a in gpt56),
+                  'gpt56_provider_response_created':any(a.get('create_http')==200 for a in gpt56),
+                  'gpt56_semantic_readback_verified':bool(selected),
+                  'gpt56_selected_model':selected.get('provider_response_model') if selected else None,
+                  'control_provider_live':bool(control and control.get('readback_semantic_exact_match')),
+              },
+              'external_effect':'STORED_BOUNDED_PROVIDER_RESPONSE_ONLY',
+              'secret_values_recorded':False,
+          }
+          p=pathlib.Path('/tmp/formation-omega-v2/openai.json')
+          p.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt['closure'],sort_keys=True))
+          PY
+
+      - name: Upload OpenAI closure receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: formation-omega-openai-live-v2
+          path: /tmp/formation-omega-v2/openai.json
+          if-no-files-found: error
+          retention-days: 7
+
+  google-live:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Authenticate canonical Federation WIF route
+        id: auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Run canonical WIF Cloud Run, Secret Manager, operator and Gemini readback
+        shell: bash
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+          AUTH_OUTCOME: ${{ steps.auth.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/formation-omega-v2
+          python - <<'PY'
+          from __future__ import annotations
+          import base64, hashlib, json, os, pathlib, urllib.error, urllib.parse, urllib.request
+          from datetime import datetime, timezone
+
+          project=os.environ['PROJECT_ID']; region=os.environ['REGION']; service=os.environ['SERVICE']
+          operator=os.environ['OPERATOR_URL'].rstrip('/'); token=os.environ.get('GOOGLE_ACCESS_TOKEN','')
+          recorded=datetime.now(timezone.utc).isoformat()
+          nonce='FORMATION_OMEGA_GEMINI_'+hashlib.sha256((os.environ.get('GITHUB_SHA','')+recorded).encode()).hexdigest()[:20]
+
+          def http_json(url, *, method='GET', headers=None, body=None, timeout=45):
+              h={'accept':'application/json',**(headers or {})}
+              data=None
+              if body is not None:
+                  h['content-type']='application/json'; data=json.dumps(body,separators=(',',':')).encode()
+              req=urllib.request.Request(url,data=data,headers=h,method=method)
+              try:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
+                      raw=r.read().decode('utf-8','replace')
+                      try: parsed=json.loads(raw)
+                      except Exception: parsed={}
+                      return {'http_status':r.status,'body':parsed}
+              except urllib.error.HTTPError as e:
+                  raw=e.read().decode('utf-8','replace')
+                  try: parsed=json.loads(raw)
+                  except Exception: parsed={}
+                  err=parsed.get('error',{}) if isinstance(parsed,dict) else {}
+                  return {'http_status':e.code,'error_status':err.get('status')}
+              except Exception as e:
+                  return {'transport_error':type(e).__name__}
+
+          def google_get(url):
+              if not token: return {'classification':'GOOGLE_ACCESS_TOKEN_UNAVAILABLE'}
+              return http_json(url,headers={'authorization':'Bearer '+token,'x-goog-user-project':project})
+
+          secret_list={'classification':'GOOGLE_ACCESS_TOKEN_UNAVAILABLE'}
+          secret_names=[]
+          if token:
+              secret_list=google_get(f'https://secretmanager.googleapis.com/v1/projects/{project}/secrets?pageSize=100')
+              if secret_list.get('http_status')==200:
+                  for item in (secret_list.get('body') or {}).get('secrets',[]) or []:
+                      full=item.get('name',''); name=full.rsplit('/',1)[-1] if full else ''
+                      if name: secret_names.append(name)
+
+          def candidates(kind):
+              if kind=='fo':
+                  base=['FO_ADMIN_TOKEN','fo-admin-token','federation-omega-admin-token']
+                  dyn=[n for n in secret_names if (('fo' in n.lower() or 'federation' in n.lower()) and 'admin' in n.lower() and 'token' in n.lower())]
+              else:
+                  base=['GEMINI_API_KEY','gemini-api-key','gemini_api_key']
+                  dyn=[n for n in secret_names if 'gemini' in n.lower() and ('key' in n.lower() or 'api' in n.lower())]
+              out=[]
+              for n in base+dyn:
+                  if n not in out: out.append(n)
+              return out
+
+          def secret_value(names):
+              attempts=[]
+              if not token: return '',attempts
+              for name in names:
+                  u=f'https://secretmanager.googleapis.com/v1/projects/{project}/secrets/{urllib.parse.quote(name,safe="")}/versions/latest:access'
+                  r=google_get(u); attempts.append({'name':name,'http_status':r.get('http_status'),'error_status':r.get('error_status')})
+                  payload=(r.get('body') or {}).get('payload',{}).get('data','') if r.get('http_status')==200 else ''
+                  if payload:
+                      try: return base64.b64decode(payload).decode('utf-8').strip(),attempts
+                      except Exception: return '',attempts
+              return '',attempts
+
+          cloud={'classification':'GOOGLE_ACCESS_TOKEN_UNAVAILABLE'}
+          if token:
+              r=google_get(f'https://run.googleapis.com/v2/projects/{project}/locations/{region}/services/{service}')
+              b=r.get('body') or {}
+              cloud={'http_status':r.get('http_status'),'error_status':r.get('error_status'),'name':b.get('name'),'uid':b.get('uid'),'generation':b.get('generation'),'uri':b.get('uri'),'latest_ready_revision':b.get('latestReadyRevision'),'service_account':(b.get('template') or {}).get('serviceAccount'),'reconciling':b.get('reconciling')}
+
+          fo,fo_attempts=secret_value(candidates('fo'))
+          gem,gem_attempts=secret_value(candidates('gem'))
+
+          def operator_call(path, *, admin='', body=None):
+              h={}
+              if admin: h['x-fo-admin-token']=admin
+              return http_json(operator+path,method='POST' if body is not None else 'GET',headers=h,body=body)
+
+          public_health=operator_call('/health'); public_contract=operator_call('/')
+          unauth=operator_call('/execute',body={'action':'STATUS','payload':{'purpose':'Formation Omega v2 unauth boundary'}})
+          op={'token_present':bool(fo),'public_health_http':public_health.get('http_status'),'public_contract_http':public_contract.get('http_status'),'unauth_execute_http':unauth.get('http_status')}
+          if fo:
+              s=operator_call('/execute',admin=fo,body={'action':'STATUS','payload':{'purpose':'Formation Omega v2 authenticated status'}})
+              c=operator_call('/execute',admin=fo,body={'action':'READ_CLOUD_RUN_SERVICE','payload':{'project':project,'region':region,'service':service,'purpose':'Formation Omega v2 canonical WIF readback'}})
+              op.update({'authenticated_status_http':s.get('http_status'),'authenticated_cloud_read_http':c.get('http_status')})
+
+          gemini={'key_present':bool(gem)}
+          if gem:
+              models=http_json('https://generativelanguage.googleapis.com/v1beta/models?key='+urllib.parse.quote(gem,safe=''))
+              available=(models.get('body') or {}).get('models',[]) if models.get('http_status')==200 else []
+              selected=None
+              for m in available:
+                  if 'generateContent' in (m.get('supportedGenerationMethods') or []):
+                      selected=m.get('name'); break
+              gemini.update({'models_http':models.get('http_status'),'model_count':len(available),'selected_model':selected})
+              if selected:
+                  gen=http_json('https://generativelanguage.googleapis.com/v1beta/'+selected+':generateContent?key='+urllib.parse.quote(gem,safe=''),method='POST',body={'contents':[{'parts':[{'text':'Return exactly this token and nothing else: '+nonce}]}],'generationConfig':{'temperature':0}})
+                  text=''
+                  try: text=''.join(str(p.get('text','')) for p in gen['body']['candidates'][0]['content']['parts']).strip()
+                  except Exception: pass
+                  gemini.update({'generate_http':gen.get('http_status'),'semantic_exact_match':text==nonce,'response_sha256':hashlib.sha256(text.encode()).hexdigest() if text else None})
+
+          receipt={
+              'schema':'FORMATION-OMEGA-GOOGLE-LIVE-CLOSURE-V2',
+              'recorded_at':recorded,
+              'source_sha':os.environ.get('GITHUB_SHA'),'source_ref':os.environ.get('GITHUB_REF'),
+              'project_id':project,'project_number':os.environ['PROJECT_NUMBER'],'region':region,'service':service,
+              'canonical_wif_provider':os.environ['WIF_PROVIDER'],'canonical_deployer_sa':os.environ['DEPLOYER_SA'],
+              'auth_action_outcome':os.environ.get('AUTH_OUTCOME'),'google_access_token_present':bool(token),
+              'secret_list_http':secret_list.get('http_status'),'secret_list_error_status':secret_list.get('error_status'),'secret_name_count':len(secret_names),
+              'fo_secret_attempts':fo_attempts,'gemini_secret_attempts':gem_attempts,
+              'cloud_run':cloud,'operator':op,'gemini':gemini,
+              'closure':{
+                  'canonical_wif_authenticated':bool(token),
+                  'google_cloud_readback_verified':cloud.get('http_status')==200 and bool(cloud.get('uid')),
+                  'fo_admin_token_recovered':bool(fo),
+                  'operator_authenticated_readback_verified':op.get('authenticated_status_http')==200 and op.get('authenticated_cloud_read_http')==200,
+                  'gemini_key_recovered':bool(gem),
+                  'gemini_semantic_readback_verified':gemini.get('semantic_exact_match') is True,
+              },
+              'provider_mutation_performed':False,'secret_values_recorded':False,
+          }
+          p=pathlib.Path('/tmp/formation-omega-v2/google.json')
+          p.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt['closure'],sort_keys=True))
+          PY
+
+      - name: Upload Google/Gemini closure receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: formation-omega-google-live-v2
+          path: /tmp/formation-omega-v2/google.json
+          if-no-files-found: error
+          retention-days: 7
