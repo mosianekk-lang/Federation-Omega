@@ -5,13 +5,14 @@ on:
     branches: ["main"]
     paths:
       - ".github/workflows/pfrd-omega-operator-auth-probe.yml"
+      - "governance/github_airlock_policy.json"
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: pfrd-omega-operator-auth-probe
+  group: pfrd-omega-operator-auth-probe-${{ github.ref }}
   cancel-in-progress: false
 
 env:
@@ -24,13 +25,11 @@ jobs:
     env:
       FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
     steps:
-      - uses: actions/checkout@v4
-
       - name: Probe public contract and authenticated read actions
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p /tmp/pfrd-operator deployments/pfrd-omega
+          mkdir -p /tmp/pfrd-operator
           python - <<'PY'
           import json, os, urllib.error, urllib.request
           from datetime import datetime, timezone
@@ -47,15 +46,22 @@ jobs:
                   data = json.dumps(body, separators=(',', ':')).encode()
               if authenticated:
                   headers['x-fo-admin-token'] = token
-              req = urllib.request.Request(base + path, data=data, headers=headers, method='POST' if body is not None else 'GET')
+              req = urllib.request.Request(
+                  base + path,
+                  data=data,
+                  headers=headers,
+                  method='POST' if body is not None else 'GET',
+              )
               try:
                   with urllib.request.urlopen(req, timeout=20) as response:
                       raw = response.read().decode('utf-8', 'replace')
                       return {'http_status': response.status, 'body': json.loads(raw)}
               except urllib.error.HTTPError as exc:
                   raw = exc.read().decode('utf-8', 'replace')
-                  try: body_out = json.loads(raw)
-                  except Exception: body_out = {'text': raw[:1000]}
+                  try:
+                      body_out = json.loads(raw)
+                  except Exception:
+                      body_out = {'text': raw[:1000]}
                   return {'http_status': exc.code, 'body': body_out}
               except Exception as exc:
                   return {'transport_error': type(exc).__name__, 'message': str(exc)[:300]}
@@ -63,6 +69,8 @@ jobs:
           health = request('/health')
           contract = request('/')
           allowed = set(contract.get('body', {}).get('allowedActions', []))
+          required_reads = {'STATUS', 'READ_CLOUD_RUN_SERVICE'}
+          bind_action = 'BIND_CFRE_PRIVATE_RUNTIME'
 
           receipt = {
               'receipt': 'PFRD-OMEGA-OPERATOR-AUTH-PROBE',
@@ -75,46 +83,60 @@ jobs:
               'mutation_attempted': False,
               'authenticated_status': None,
               'authenticated_cloud_read': None,
+              'bind_action_visible': bind_action in allowed,
               'classification': 'PUBLIC_OPERATOR_ONLY',
           }
 
           if not token:
               receipt['classification'] = 'BLOCKED_MISSING_FO_ADMIN_TOKEN_REPOSITORY_SECRET'
-          elif not {'STATUS', 'READ_CLOUD_RUN_SERVICE'}.issubset(allowed):
+          elif not required_reads.issubset(allowed):
               receipt['classification'] = 'BLOCKED_LIVE_ALLOWLIST_MISMATCH'
           else:
-              status = request('/execute', body={'action': 'STATUS', 'payload': {'purpose': 'PFRD Omega deployment authority probe', 'mutation': 'NONE'}}, authenticated=True)
-              cloud_read = request('/execute', body={'action': 'READ_CLOUD_RUN_SERVICE', 'payload': {'project': 'sov-hybrid-suite', 'region': 'africa-south1', 'service': 'architron9', 'purpose': 'PFRD Omega read-only deployment preflight'}}, authenticated=True)
+              status = request(
+                  '/execute',
+                  body={
+                      'action': 'STATUS',
+                      'payload': {
+                          'purpose': 'CFRE private-runtime authority probe',
+                          'mutation': 'NONE',
+                      },
+                  },
+                  authenticated=True,
+              )
+              cloud_read = request(
+                  '/execute',
+                  body={
+                      'action': 'READ_CLOUD_RUN_SERVICE',
+                      'payload': {
+                          'project': 'sov-hybrid-suite',
+                          'region': 'africa-south1',
+                          'service': 'federation-omega-operator',
+                          'purpose': 'CFRE private-runtime read-only deployment preflight',
+                      },
+                  },
+                  authenticated=True,
+              )
               receipt['authenticated_status'] = status
               receipt['authenticated_cloud_read'] = cloud_read
               status_ok = status.get('http_status') == 200 and status.get('body', {}).get('ok') is True
               read_ok = cloud_read.get('http_status') == 200 and cloud_read.get('body', {}).get('ok') is True
-              receipt['classification'] = 'AUTHENTICATED_OPERATOR_READS_PROVEN' if status_ok and read_ok else 'AUTHENTICATED_OPERATOR_READS_FAILED'
+              if not (status_ok and read_ok):
+                  receipt['classification'] = 'AUTHENTICATED_OPERATOR_READS_FAILED'
+              elif bind_action not in allowed:
+                  receipt['classification'] = 'AUTHENTICATED_READS_PROVEN_BIND_ACTION_ABSENT'
+              else:
+                  receipt['classification'] = 'AUTHENTICATED_READS_PROVEN_BIND_ACTION_VISIBLE'
 
-          path = Path('deployments/pfrd-omega/OPERATOR_AUTH_PROBE_RECEIPT.json')
+          path = Path('/tmp/pfrd-operator/OPERATOR_AUTH_PROBE_RECEIPT.json')
           path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-          Path('/tmp/pfrd-operator/OPERATOR_AUTH_PROBE_RECEIPT.json').write_text(path.read_text(), encoding='utf-8')
           print(json.dumps(receipt, indent=2, sort_keys=True))
           PY
 
-      - name: Persist operator probe receipt
-        run: |
-          set -euo pipefail
-          git config user.name "pfrd-omega-operator-probe[bot]"
-          git config user.email "pfrd-omega-operator-probe[bot]@users.noreply.github.com"
-          git add deployments/pfrd-omega/OPERATOR_AUTH_PROBE_RECEIPT.json
-          if git diff --cached --quiet; then
-            echo "Receipt unchanged"
-          else
-            git commit -m "Record PFRD Omega operator auth probe"
-            git push origin HEAD:main
-          fi
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload immutable operator probe receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: pfrd-omega-operator-auth-probe
           if-no-files-found: error
           retention-days: 30
           path: /tmp/pfrd-operator/OPERATOR_AUTH_PROBE_RECEIPT.json
-
-# Rerun marker: 2026-08-17T02:58:45Z
