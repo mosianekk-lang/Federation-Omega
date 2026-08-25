@@ -1,7 +1,20 @@
 {
   "schema": "EVIDENCEOPS-CHAT-FAILURE-RESILIENCE-CONTRACT-1",
   "name": "CFRE Omega - Chat Failure Resilience Engine",
-  "status": "IMPLEMENTATION_CANDIDATE",
+  "status": "LOCALLY_CANARY_VALIDATED",
+  "implementationBaseCommit": "d54e81a7044b964fcdadbe30bbbd4c26546257e2",
+  "localValidation": {
+    "date": "2026-08-25",
+    "focusedTests": "21/21",
+    "completionGuard": "7/7",
+    "airlockBinding": "2/2",
+    "leakGuardAssertions": "3/3",
+    "publicRepositoryLeakScan": "PASS",
+    "mandatoryCanaryControls": "5/5",
+    "negativeCanaryControls": "3/3",
+    "providerEffects": 0,
+    "canaryReceiptSha256": "cf901888050edc42924d3ce4510f1d4b539d57640c61c474ad2f4f588a24877d"
+  },
   "purpose": "Detect chat/runtime failure signatures, preserve active mission state, diagnose likely dependency classes, and select a bounded recovery route without treating a failed response as mission completion.",
   "extends": [
     "evidenceops/build_system/objective_completion_guard.py",
@@ -48,6 +61,19 @@
     "dedupeKey": "receipt_sha256",
     "latestCheckpoint": true
   },
+  "runtimeControlCandidate": {
+    "identity": "CFRE-OMEGA",
+    "module": "evidenceops/build_system/runtime_controls.py",
+    "providersEnabled": false,
+    "controls": [
+      "BACKGROUND_HEARTBEAT_SCHEDULER",
+      "SHARED_COOPERATIVE_CANCELLATION",
+      "DISTINCT_ROUTE_CIRCUIT_BREAKER",
+      "HASH_VERIFIED_HANDOFF_PERSISTENCE",
+      "JOURNALED_TERMINAL_DELIVERY"
+    ],
+    "terminalUnacknowledgedState": "ORPHANED_UNACKNOWLEDGED"
+  },
   "truthBoundary": {
     "canDo": [
       "classify observed failure signatures",
@@ -62,13 +88,14 @@
       "repair a user's physical network",
       "restart or reauthenticate a browser session without an authorized client executor",
       "guarantee a third-party provider is available",
-      "perform external effects merely because a recovery route is described"
+      "perform external effects merely because a recovery route is described",
+      "prove ChatGPT-native or private execution-plane binding from local tests"
     ]
   },
   "acceptance": {
     "focusedTest": "evidenceops/build_system/tests/test_chat_failure_resilience.py",
     "airlockBinding": "tests/test_phoenix_provider_cutover_v3_chat_failure_resilience.py",
-    "minimumFocusedTests": 13,
+    "minimumFocusedTests": 21,
     "requiredGates": [
       "Federation Omega Airlock",
       "Public Repository Leak Guard"

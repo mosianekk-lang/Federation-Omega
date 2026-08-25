@@ -1,0 +1,14 @@
+{
+  "name": "federation-omega-operator",
+  "version": "2.0.0-cfre1",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "start": "node server.mjs",
+    "test": "node --test tests/*.test.mjs",
+    "check": "node --check server.mjs && node --check lib/auth.mjs && node --check lib/contracts.mjs && node --check lib/google_cloud.mjs && node --check lib/operator.mjs"
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

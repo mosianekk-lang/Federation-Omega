@@ -27,7 +27,7 @@ class ChatFailureResilienceAirlockTests(unittest.TestCase):
         )
         combined = result.stdout + result.stderr
         self.assertEqual(result.returncode, 0, combined)
-        self.assertIn("Ran 13 tests", combined)
+        self.assertIn("Ran 21 tests", combined)
         self.assertIn("OK", combined)
 
     def test_specific_causal_surface_outranks_generic_stall_symptom(self):
