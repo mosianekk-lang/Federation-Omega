@@ -22,26 +22,139 @@ env:
   SERVICE: federation-omega-operator
   OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
   PROBE_SCHEMA: SOVARA-OPERATOR-AUTH-RECOVERY-V2
+  HAS_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN != '' }}
+  HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+  HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+  HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
+  HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
+  HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
+  HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
+  HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
+  HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
+  HAS_GENERIC_WIF_PAIR: ${{ (secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '') && (secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '') }}
 
 jobs:
   probe:
     runs-on: ubuntu-latest
     timeout-minutes: 10
-    env:
-      FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
-      GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
-      GCP_SA_KEY: ${{ secrets.GCP_SA_KEY }}
-      GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
-      GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS }}
-      GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
-      GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS }}
-      GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
-      GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
-      HAS_GCP_WIF_PAIR: ${{ (secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '') && (secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '') }}
-      HAS_GENERIC_WIF_PAIR: ${{ (secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '') && (secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '') }}
     steps:
+      - name: Checkout without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate existing GCP_SA_KEY route
+        id: auth_gcp_sa
+        if: ${{ env.HAS_GCP_SA_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SA_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GCP_SERVICE_ACCOUNT_KEY route
+        id: auth_gcp_service_account
+        if: ${{ env.HAS_GCP_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_CREDENTIALS route
+        id: auth_google_credentials
+        if: ${{ env.HAS_GOOGLE_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_SERVICE_ACCOUNT_KEY route
+        id: auth_google_service_account
+        if: ${{ env.HAS_GOOGLE_SERVICE_ACCOUNT_KEY == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GCP_CREDENTIALS route
+        id: auth_gcp_credentials
+        if: ${{ env.HAS_GCP_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_GHA_CREDS_JSON route
+        id: auth_google_gha
+        if: ${{ env.HAS_GOOGLE_GHA_CREDS_JSON == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Authenticate existing GOOGLE_CLOUD_CREDENTIALS route
+        id: auth_google_cloud
+        if: ${{ env.HAS_GOOGLE_CLOUD_CREDENTIALS == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
+          token_format: access_token
+          access_token_lifetime: 600s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
       - name: Recover existing authority routes and run bounded semantic readback
         shell: bash
+        env:
+          FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth_gcp_sa.outputs.access_token || steps.auth_gcp_service_account.outputs.access_token || steps.auth_google_credentials.outputs.access_token || steps.auth_google_service_account.outputs.access_token || steps.auth_gcp_credentials.outputs.access_token || steps.auth_google_gha.outputs.access_token || steps.auth_google_cloud.outputs.access_token }}
+          OUTCOME_GCP_SA_KEY: ${{ steps.auth_gcp_sa.outcome }}
+          OUTCOME_GCP_SERVICE_ACCOUNT_KEY: ${{ steps.auth_gcp_service_account.outcome }}
+          OUTCOME_GOOGLE_CREDENTIALS: ${{ steps.auth_google_credentials.outcome }}
+          OUTCOME_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ steps.auth_google_service_account.outcome }}
+          OUTCOME_GCP_CREDENTIALS: ${{ steps.auth_gcp_credentials.outcome }}
+          OUTCOME_GOOGLE_GHA_CREDS_JSON: ${{ steps.auth_google_gha.outcome }}
+          OUTCOME_GOOGLE_CLOUD_CREDENTIALS: ${{ steps.auth_google_cloud.outcome }}
         run: |
           set -euo pipefail
           set +x
@@ -54,9 +167,6 @@ jobs:
           import json
           import os
           import pathlib
-          import subprocess
-          import tempfile
-          import time
           import urllib.error
           import urllib.parse
           import urllib.request
@@ -71,10 +181,11 @@ jobs:
           SCHEMA = os.environ["PROBE_SCHEMA"]
           DIRECT_OPERATOR_TOKEN = os.environ.get("FO_ADMIN_TOKEN", "")
           DIRECT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
+          GOOGLE_ACCESS_TOKEN = os.environ.get("GOOGLE_ACCESS_TOKEN", "")
           SOURCE_SHA = os.environ.get("GITHUB_SHA", "")
           SOURCE_REF = os.environ.get("GITHUB_REF", "")
 
-          STATIC_CREDENTIAL_NAMES = (
+          ROUTES = (
               "GCP_SA_KEY",
               "GCP_SERVICE_ACCOUNT_KEY",
               "GOOGLE_CREDENTIALS",
@@ -84,8 +195,43 @@ jobs:
               "GOOGLE_CLOUD_CREDENTIALS",
           )
 
-          def b64url(data: bytes) -> str:
-              return base64.urlsafe_b64encode(data).rstrip(b"=").decode("ascii")
+          def redact(value: Any, *, operator_token: str = "", gemini_key: str = "") -> Any:
+              sensitive_keys = {
+                  "access_token",
+                  "refresh_token",
+                  "id_token",
+                  "token",
+                  "authorization",
+                  "client_secret",
+                  "secret_value",
+                  "credentials_json",
+                  "api_key",
+                  "key",
+              }
+              if isinstance(value, dict):
+                  output = {}
+                  for key, item in value.items():
+                      if str(key).lower() in sensitive_keys:
+                          output[key] = "[REDACTED]"
+                      else:
+                          output[key] = redact(
+                              item,
+                              operator_token=operator_token,
+                              gemini_key=gemini_key,
+                          )
+                  return output
+              if isinstance(value, list):
+                  return [
+                      redact(item, operator_token=operator_token, gemini_key=gemini_key)
+                      for item in value
+                  ]
+              if isinstance(value, str):
+                  if operator_token:
+                      value = value.replace(operator_token, "[REDACTED]")
+                  if gemini_key:
+                      value = value.replace(gemini_key, "[REDACTED]")
+                  return value
+              return value
 
           def safe_http_json(
               url: str,
@@ -122,46 +268,6 @@ jobs:
                       "message_sha256": hashlib.sha256(str(exc).encode()).hexdigest(),
                   }
 
-          def redact(value: Any, *, operator_token: str = "", gemini_key: str = "") -> Any:
-              sensitive_keys = {
-                  "access_token",
-                  "refresh_token",
-                  "id_token",
-                  "token",
-                  "authorization",
-                  "private_key",
-                  "private_key_data",
-                  "client_secret",
-                  "secret_value",
-                  "credentials_json",
-                  "api_key",
-                  "key",
-              }
-              if isinstance(value, dict):
-                  output = {}
-                  for key, item in value.items():
-                      if str(key).lower() in sensitive_keys:
-                          output[key] = "[REDACTED]"
-                      else:
-                          output[key] = redact(
-                              item,
-                              operator_token=operator_token,
-                              gemini_key=gemini_key,
-                          )
-                  return output
-              if isinstance(value, list):
-                  return [
-                      redact(item, operator_token=operator_token, gemini_key=gemini_key)
-                      for item in value
-                  ]
-              if isinstance(value, str):
-                  if operator_token:
-                      value = value.replace(operator_token, "[REDACTED]")
-                  if gemini_key:
-                      value = value.replace(gemini_key, "[REDACTED]")
-                  return value
-              return value
-
           def operator_call(
               path: str,
               *,
@@ -183,126 +289,34 @@ jobs:
                   data=data,
                   timeout=45,
               )
-              return redact(result, operator_token=token, gemini_key="")
+              return redact(result, operator_token=token)
 
-          def mint_service_account_access_token(
-              credential: dict[str, Any],
-          ) -> tuple[str, dict[str, Any]]:
-              client_email = str(credential.get("client_email", ""))
-              private_key = str(credential.get("private_key", ""))
-              token_uri = str(
-                  credential.get("token_uri", "https://oauth2.googleapis.com/token")
-              )
-              project_id = str(credential.get("project_id", ""))
-              if credential.get("type") != "service_account":
-                  raise ValueError("credential_type_not_service_account")
-              if project_id != PROJECT:
-                  raise ValueError("credential_project_mismatch")
-              if not client_email.endswith(f"@{PROJECT}.iam.gserviceaccount.com"):
-                  raise ValueError("credential_identity_outside_project")
-              parsed = urllib.parse.urlparse(token_uri)
-              if parsed.scheme != "https" or parsed.hostname != "oauth2.googleapis.com":
-                  raise ValueError("untrusted_token_uri")
-              if not private_key.startswith("-----BEGIN PRIVATE KEY-----"):
-                  raise ValueError("missing_private_key")
-
-              now = int(time.time())
-              header = b64url(
-                  json.dumps(
-                      {"alg": "RS256", "typ": "JWT"},
-                      separators=(",", ":"),
-                  ).encode()
-              )
-              claims = b64url(
-                  json.dumps(
-                      {
-                          "iss": client_email,
-                          "scope": "https://www.googleapis.com/auth/cloud-platform",
-                          "aud": token_uri,
-                          "iat": now,
-                          "exp": now + 600,
-                      },
-                      separators=(",", ":"),
-                  ).encode()
-              )
-              signing_input = f"{header}.{claims}".encode()
-              key_path = ""
-              try:
-                  with tempfile.NamedTemporaryFile(
-                      mode="w",
-                      encoding="utf-8",
-                      delete=False,
-                  ) as handle:
-                      handle.write(private_key)
-                      key_path = handle.name
-                  os.chmod(key_path, 0o600)
-                  signed = subprocess.run(
-                      [
-                          "openssl",
-                          "dgst",
-                          "-sha256",
-                          "-sign",
-                          key_path,
-                          "-binary",
-                      ],
-                      input=signing_input,
-                      stdout=subprocess.PIPE,
-                      stderr=subprocess.PIPE,
-                      check=True,
-                      timeout=10,
-                  ).stdout
-              finally:
-                  if key_path:
-                      pathlib.Path(key_path).unlink(missing_ok=True)
-              assertion = f"{header}.{claims}.{b64url(signed)}"
-              form = urllib.parse.urlencode(
-                  {
-                      "grant_type": "urn:ietf:params:oauth:grant-type:jwt-bearer",
-                      "assertion": assertion,
-                  }
-              ).encode()
-              response = safe_http_json(
-                  token_uri,
-                  method="POST",
-                  headers={"content-type": "application/x-www-form-urlencoded"},
-                  data=form,
-                  timeout=30,
-              )
-              token = str(response.get("body", {}).get("access_token", ""))
-              if response.get("http_status") != 200 or not token:
-                  raise RuntimeError(
-                      f"oauth_exchange_failed_{response.get('http_status', 'transport')}"
-                  )
-              return token, {
-                  "client_email": client_email,
-                  "project_id": project_id,
-                  "oauth_http_status": response.get("http_status"),
-              }
-
-          def google_get_json(
-              access_token: str,
-              url: str,
-          ) -> dict[str, Any]:
+          def google_get_json(url: str) -> dict[str, Any]:
+              if not GOOGLE_ACCESS_TOKEN:
+                  return {"classification": "GOOGLE_ACCESS_TOKEN_UNAVAILABLE"}
               return safe_http_json(
                   url,
                   headers={
-                      "authorization": f"Bearer {access_token}",
+                      "authorization": f"Bearer {GOOGLE_ACCESS_TOKEN}",
                       "accept": "application/json",
                       "x-goog-user-project": PROJECT,
                   },
                   timeout=30,
               )
 
-          def secret_access(
-              access_token: str,
-              secret_name: str,
-          ) -> tuple[str, dict[str, Any]]:
+          def secret_access(secret_name: str) -> tuple[str, dict[str, Any]]:
+              if not GOOGLE_ACCESS_TOKEN:
+                  return "", {
+                      "secret": secret_name,
+                      "accessible": False,
+                      "classification": "GOOGLE_ACCESS_TOKEN_UNAVAILABLE",
+                  }
               quoted = urllib.parse.quote(secret_name, safe="")
               url = (
                   f"https://secretmanager.googleapis.com/v1/projects/{PROJECT}/"
                   f"secrets/{quoted}/versions/latest:access"
               )
-              result = google_get_json(access_token, url)
+              result = google_get_json(url)
               payload = result.get("body", {}).get("payload", {}).get("data", "")
               value = ""
               if result.get("http_status") == 200 and payload:
@@ -314,12 +328,14 @@ jobs:
                   "transport_error": result.get("transport_error"),
               }
 
-          def cloud_run_readback(access_token: str) -> dict[str, Any]:
+          def cloud_run_readback() -> dict[str, Any]:
+              if not GOOGLE_ACCESS_TOKEN:
+                  return {"classification": "GOOGLE_ACCESS_TOKEN_UNAVAILABLE"}
               url = (
                   f"https://run.googleapis.com/v2/projects/{PROJECT}/locations/"
                   f"{REGION}/services/{SERVICE}"
               )
-              result = google_get_json(access_token, url)
+              result = google_get_json(url)
               body = result.get("body", {})
               if result.get("http_status") != 200:
                   return {
@@ -368,13 +384,7 @@ jobs:
                       and "gemini" in lowered
                       and all(
                           blocked not in lowered
-                          for blocked in (
-                              "embedding",
-                              "image",
-                              "vision",
-                              "tts",
-                              "aqa",
-                          )
+                          for blocked in ("embedding", "image", "vision", "tts", "aqa")
                       )
                   ):
                       candidates.append(model)
@@ -449,12 +459,12 @@ jobs:
               f"{SOURCE_SHA}:{recorded_at}".encode()
           ).hexdigest()[:16]
 
-          presence = {
-              "FO_ADMIN_TOKEN": bool(DIRECT_OPERATOR_TOKEN),
-              "GEMINI_API_KEY": bool(DIRECT_GEMINI_KEY),
+          route_presence = {
+              "FO_ADMIN_TOKEN": os.environ.get("HAS_FO_ADMIN_TOKEN") == "true",
+              "GEMINI_API_KEY": os.environ.get("HAS_GEMINI_API_KEY") == "true",
               **{
-                  name: bool(os.environ.get(name, ""))
-                  for name in STATIC_CREDENTIAL_NAMES
+                  route: os.environ.get(f"HAS_{route}") == "true"
+                  for route in ROUTES
               },
               "GCP_WIF_PAIR_CONFIGURED_NOT_USED": (
                   os.environ.get("HAS_GCP_WIF_PAIR") == "true"
@@ -463,6 +473,18 @@ jobs:
                   os.environ.get("HAS_GENERIC_WIF_PAIR") == "true"
               ),
           }
+          auth_outcomes = {
+              route: os.environ.get(f"OUTCOME_{route}", "skipped")
+              for route in ROUTES
+          }
+          successful_static_route = next(
+              (
+                  route
+                  for route in ROUTES
+                  if auth_outcomes.get(route) == "success"
+              ),
+              None,
+          )
 
           receipt: dict[str, Any] = {
               "schema": SCHEMA,
@@ -481,13 +503,13 @@ jobs:
                   "provider_mutation": False,
                   "repository_mutation": False,
               },
-              "credential_alias_presence": presence,
+              "credential_alias_presence": route_presence,
               "google_machine_auth": {
-                  "attempted": False,
-                  "source_alias": None,
-                  "authenticated": False,
-                  "identity": None,
-                  "attempts": [],
+                  "attempted": any(route_presence.get(route, False) for route in ROUTES),
+                  "source_alias": successful_static_route,
+                  "authenticated": bool(GOOGLE_ACCESS_TOKEN),
+                  "auth_outcomes": auth_outcomes,
+                  "public_oidc_used": False,
               },
               "secret_manager": {
                   "operator_token": None,
@@ -516,46 +538,11 @@ jobs:
               "mutation_attempted": False,
           }
 
-          google_access_token = ""
-          for alias in STATIC_CREDENTIAL_NAMES:
-              raw = os.environ.get(alias, "")
-              if not raw:
-                  continue
-              receipt["google_machine_auth"]["attempted"] = True
-              attempt: dict[str, Any] = {"alias": alias, "success": False}
-              try:
-                  credential = json.loads(raw)
-                  access_token, identity = mint_service_account_access_token(credential)
-                  google_access_token = access_token
-                  attempt["success"] = True
-                  attempt["identity"] = identity
-                  receipt["google_machine_auth"].update(
-                      {
-                          "source_alias": alias,
-                          "authenticated": True,
-                          "identity": identity,
-                      }
-                  )
-                  receipt["google_machine_auth"]["attempts"].append(attempt)
-                  break
-              except Exception as exc:
-                  attempt["error_type"] = type(exc).__name__
-                  attempt["error_code"] = str(exc)[:120]
-                  receipt["google_machine_auth"]["attempts"].append(attempt)
-
-          if google_access_token:
-              receipt["provider_readback"]["cloud_run"] = cloud_run_readback(
-                  google_access_token
-              )
-              operator_secret, operator_meta = secret_access(
-                  google_access_token,
-                  "fo-operator-admin-token",
-              )
+          if GOOGLE_ACCESS_TOKEN:
+              receipt["provider_readback"]["cloud_run"] = cloud_run_readback()
+              operator_secret, operator_meta = secret_access("fo-operator-admin-token")
               receipt["secret_manager"]["operator_token"] = operator_meta
-              gemini_secret, gemini_meta = secret_access(
-                  google_access_token,
-                  "gemini-api-key",
-              )
+              gemini_secret, gemini_meta = secret_access("gemini-api-key")
               receipt["secret_manager"]["gemini_key"] = gemini_meta
           else:
               operator_secret = ""
@@ -648,10 +635,7 @@ jobs:
               if DIRECT_GEMINI_KEY
               else ("google_secret_manager" if gemini_secret else "none")
           )
-          receipt["gemini"]["semantic"] = gemini_semantic_canary(
-              gemini_key,
-              nonce,
-          )
+          receipt["gemini"]["semantic"] = gemini_semantic_canary(gemini_key, nonce)
 
           cloud_run = receipt["provider_readback"]["cloud_run"] or {}
           google_read_ok = (
@@ -702,6 +686,7 @@ jobs:
                       "overall_classification": receipt["overall_classification"],
                       "operator_classification": receipt["operator"]["classification"],
                       "google_machine_authenticated": receipt["google_machine_auth"]["authenticated"],
+                      "google_machine_route": receipt["google_machine_auth"]["source_alias"],
                       "gemini_classification": receipt["gemini"]["semantic"].get("classification"),
                       "bind_action_visible": receipt["operator"]["bind_action_visible"],
                   },
