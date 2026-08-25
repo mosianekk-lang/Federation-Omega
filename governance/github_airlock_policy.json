@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -19,18 +19,21 @@
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
-    ".github/workflows/caseforge-provider-readback-canary.yml"
+    ".github/workflows/caseforge-provider-readback-canary.yml",
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
     ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
     ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"]
+    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"]
   },
   "required_push_branches": {
     ".github/workflows/bubbles-command-bus.yml": ["main"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"]
+    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["main"]
   },
   "oidc_workflow_allowlist": [],
   "actions_write_workflow_allowlist": [
@@ -78,7 +81,8 @@
       ".github/workflows/public-repository-leak-guard.yml",
       ".github/workflows/phoenix-emergency-freeze.yml",
       ".github/workflows/bubbles-command-bus.yml",
-      ".github/workflows/caseforge-provider-readback-canary.yml"
+      ".github/workflows/caseforge-provider-readback-canary.yml",
+      ".github/workflows/pfrd-omega-operator-auth-probe.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
