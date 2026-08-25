@@ -6,6 +6,7 @@ import json
 from pathlib import Path
 from typing import Mapping
 
+from bubbles.apps_script_deployment_probe import run_probe as run_apps_script_deployment_probe
 from bubbles.control_plane import (
     ActionRequest,
     BubblesControlPlane,
@@ -103,6 +104,22 @@ def _forest_background_event(request: ActionRequest) -> dict[str, object]:
     }
 
 
+def _archon_apps_script_public_probe() -> dict[str, object]:
+    """Run the admitted no-secret ARCHON web-app deployment probe.
+
+    The Bubbles command bus supplies only execution/receipt transport. The
+    provider response remains inside the nested probe receipt and must satisfy
+    its own semantic classification before any Apps Script capability is
+    promoted.
+    """
+
+    return {
+        "kind": "READ_ONLY_PUBLIC_APPS_SCRIPT_DEPLOYMENT_PROBE",
+        "probe": run_apps_script_deployment_probe(),
+        "provider_effects": False,
+    }
+
+
 def execute_command(command: Mapping[str, object], *, actor: str, event_name: str, source_ref: str) -> dict[str, object]:
     if actor not in ALLOWED_ACTORS:
         return {"schema": RECEIPT_SCHEMA, "state": "CONSTRAINT", "actor": actor, "event_name": event_name,
@@ -160,6 +177,18 @@ def execute_command(command: Mapping[str, object], *, actor: str, event_name: st
     if request.adapter_id == "bubbles_command_bus" and request.action == "forest_first_omega_event":
         return {**base_receipt, "state": "SUCCESS", "execution": _forest_background_event(request),
                 "truth_boundary": "SUCCESS proves the admitted Bubbles runner processed a sanitized Forest-First Omega event and emitted a cost-governed wake decision. It does not expose private provider content, establish legal facts, or perform any external provider mutation."}
+
+    if request.adapter_id == "bubbles_command_bus" and request.action == "probe_archon_apps_script_deployment":
+        return {
+            **base_receipt,
+            "state": "SUCCESS",
+            "execution": _archon_apps_script_public_probe(),
+            "truth_boundary": (
+                "SUCCESS proves the Bubbles runner executed the admitted public, read-only ARCHON Apps Script deployment probe. "
+                "The nested provider classification controls any reachability or semantic claim. No credential, Apps Script mutation, "
+                "Google Cloud mutation, trigger installation, or GAS-primary promotion is performed by this command."
+            ),
+        }
 
     return {**base_receipt, "state": "CONSTRAINT", "reason": "Provider executor is not bound in command-bus v1.",
             "truth_boundary": "Route readiness alone is not provider authority. External execution remains blocked until a provider-specific executor supplies fresh identity, target, scope, execution and readback proof."}
