@@ -66,7 +66,8 @@ class FreezeConvergenceTests(unittest.TestCase):
 
     def test_bubbles_disabled_state_fails_convergence(self):
         values = required()
-        values[-1]["state"] = "disabled_manually"
+        bubbles_index = REQUIRED.index(".github/workflows/bubbles-command-bus.yml")
+        values[bubbles_index]["state"] = "disabled_manually"
         result = self.receipt(required_readback=values)
         self.assertEqual("READBACK_FAILED", result["status"])
         self.assertEqual([".github/workflows/bubbles-command-bus.yml"], result["missing_required"])
