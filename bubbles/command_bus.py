@@ -13,7 +13,7 @@ from bubbles.control_plane import (
     RouteKind,
 )
 from bubbles.forest_background import run_background_event
-from evidenceops.build_system.chat_failure_resilience import evaluate_failure
+from evidenceops.build_system.aaa_chat_resilience import evaluate_failure_with_aaa
 
 
 COMMAND_SCHEMA = "BUBBLES-CONTROL-COMMAND-V1"
@@ -68,8 +68,16 @@ def _chat_failure_recovery(request: ActionRequest) -> dict[str, object]:
     previous = request.payload.get("previous_checkpoint")
     if previous is not None and not isinstance(previous, dict):
         raise CommandBusError("payload.previous_checkpoint must be a JSON object when supplied")
-    recovery = evaluate_failure(event, previous_checkpoint=previous, mission_packet=mission)
-    return {"kind": "LOCAL_CHAT_FAILURE_RECOVERY", "recovery": asdict(recovery), "provider_effects": False}
+    recovery = evaluate_failure_with_aaa(
+        event,
+        previous_checkpoint=previous,
+        mission_packet=mission,
+    )
+    return {
+        "kind": "LOCAL_CHAT_FAILURE_RECOVERY_AAA",
+        "recovery": recovery,
+        "provider_effects": False,
+    }
 
 
 def _forest_background_event(request: ActionRequest) -> dict[str, object]:
@@ -135,7 +143,7 @@ def execute_command(command: Mapping[str, object], *, actor: str, event_name: st
 
     if request.adapter_id == "bubbles_command_bus" and request.action == "recover_chat_failure":
         return {**base_receipt, "state": "SUCCESS", "execution": _chat_failure_recovery(request),
-                "truth_boundary": "SUCCESS proves that the Bubbles command bus invoked CFRE and generated a recovery receipt. It does not prove repair of the ChatGPT client, browser, network or OpenAI service, and it performs no external provider mutation."}
+                "truth_boundary": "SUCCESS proves that the Bubbles command bus invoked CFRE through Formation AAA and generated a local recovery receipt. It does not prove repair of the ChatGPT client, browser, network or OpenAI service, and it performs no external provider mutation."}
 
     if request.adapter_id == "bubbles_command_bus" and request.action == "forest_first_omega_event":
         return {**base_receipt, "state": "SUCCESS", "execution": _forest_background_event(request),
