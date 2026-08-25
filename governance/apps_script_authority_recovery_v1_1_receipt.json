@@ -1,0 +1,30 @@
+{
+  "actual_audit": {
+    "finding_counts": {
+      "CRITICAL": 15,
+      "HIGH": 5,
+      "INFO": 0,
+      "MEDIUM": 2
+    },
+    "receipt_sha256": "dbd50091c877a4998cd1d7dfdc481b7a3ec8eb08b4801ff99ea71990a98200fe",
+    "status": "SECURITY_HOLD"
+  },
+  "base_main_selected": "725f9fe85b4210e9f3b13bba6108f89c8d2b586d",
+  "candidate": {
+    "candidate_source_sha256": "7e83d38f93475433cb7d4cfc8a9c7aec623fda98e376b8da42d05abe1ee8572e",
+    "hostile_receipt_sha256": "d21f970c6512dc92612136a67de44a772c59e0793f3df576caff49ce75caf8da",
+    "hostile_tests_failed": 0,
+    "hostile_tests_passed": 30,
+    "private_admin_audit": "SOURCE_REVIEW_PASS",
+    "public_gateway_audit": "SOURCE_REVIEW_PASS"
+  },
+  "live_apps_script_changed": false,
+  "provider_authority_proven": false,
+  "provider_mutation_authorized": false,
+  "provider_runtime_executed": false,
+  "receipt_sha256": "096659920c25cb8082cff0b5dedc75a1cb36192f7525f9944d38f795d0d878e5",
+  "schema": "SOVARA_APPS_SCRIPT_AUTHORITY_RECOVERY_PUBLIC_RECEIPT_V1_1",
+  "source_declared_sha256": "2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248",
+  "truth_boundary": "Source and local deterministic tests only; provider-native inventory, deployment, semantic readback and rollback remain open.",
+  "version": "1.1.0"
+}
