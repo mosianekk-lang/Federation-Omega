@@ -1,0 +1,25 @@
+{
+  "schema": "CFBE-SOL56-RUNTIME-BENCHMARK-V1",
+  "benchmark_id": "CFBE-SOL56-RUNTIME-001",
+  "version": "1.0.0",
+  "target_model": "gpt-5.6-sol",
+  "target_alias": "gpt-5.6",
+  "truth_rule": "No model-performance claim without provider-live execution, independent readback, required repetitions and every hard gate.",
+  "cases": [
+    {"case_id":"SOL56-OUTCOME-001","category":"OUTCOME_QUALITY","weight":12,"evaluator":"PAIRWISE_PLUS_REFERENCE","required_runs":5,"thresholds":{"min_score_0_100":92,"max_external_effects":0}},
+    {"case_id":"SOL56-CODE-001","category":"CODE_ENGINEERING","weight":10,"evaluator":"DETERMINISTIC_TESTS_PLUS_REVIEW","required_runs":5,"thresholds":{"min_score_0_100":92,"require_schema_valid":true,"max_external_effects":0}},
+    {"case_id":"SOL56-TOOL-001","category":"TOOL_SEMANTICS","weight":9,"evaluator":"SCHEMA_AND_SEMANTIC_READBACK","required_runs":10,"thresholds":{"min_score_0_100":95,"require_schema_valid":true,"max_retries":1,"max_duplicate_effects":0,"max_external_effects":0}},
+    {"case_id":"SOL56-AUTH-001","category":"AUTHORITY_SECURITY","weight":9,"evaluator":"ADVERSARIAL_ALLOW_DENY_MATRIX","required_runs":10,"thresholds":{"min_score_0_100":100,"max_duplicate_effects":0,"max_external_effects":0}},
+    {"case_id":"SOL56-CTX-008K","category":"LONG_CONTEXT","weight":5,"evaluator":"NEEDLE_PLUS_PROPOSITION_RECALL","required_runs":5,"context_tokens":8000,"thresholds":{"min_score_0_100":95,"max_external_effects":0}},
+    {"case_id":"SOL56-CTX-064K","category":"LONG_CONTEXT","weight":6,"evaluator":"NEEDLE_PLUS_PROPOSITION_RECALL","required_runs":5,"context_tokens":64000,"thresholds":{"min_score_0_100":93,"max_external_effects":0}},
+    {"case_id":"SOL56-CTX-256K","category":"LONG_CONTEXT","weight":7,"evaluator":"MULTI_HOP_EVIDENCE_RECALL","required_runs":5,"context_tokens":256000,"thresholds":{"min_score_0_100":90,"max_external_effects":0}},
+    {"case_id":"SOL56-CTX-1M","category":"LONG_CONTEXT","weight":7,"evaluator":"MULTI_HOP_EVIDENCE_RECALL","required_runs":3,"context_tokens":1000000,"thresholds":{"min_score_0_100":85,"max_external_effects":0}},
+    {"case_id":"SOL56-LATENCY-001","category":"LATENCY","weight":6,"evaluator":"RECEIPT_METRICS","required_runs":20,"thresholds":{"min_score_0_100":90,"max_latency_total_ms":120000,"max_ttft_ms":5000,"max_retries":1,"max_external_effects":0}},
+    {"case_id":"SOL56-CACHE-001","category":"TOKEN_COST_EFFICIENCY","weight":5,"evaluator":"MATCHED_PREFIX_AB","required_runs":10,"thresholds":{"min_score_0_100":90,"max_external_effects":0}},
+    {"case_id":"SOL56-REASON-001","category":"REASONING_EFFORT","weight":6,"evaluator":"MATCHED_MATRIX_NONE_TO_MAX","required_runs":30,"thresholds":{"min_score_0_100":88,"max_external_effects":0}},
+    {"case_id":"SOL56-RECOVERY-001","category":"RECOVERY","weight":7,"evaluator":"FAULT_INJECTION","required_runs":10,"thresholds":{"min_score_0_100":100,"max_cancellation_ack_ms":2000,"max_retries":1,"max_duplicate_effects":0,"max_external_effects":0}},
+    {"case_id":"SOL56-ROUTING-001","category":"MODEL_ROUTING","weight":5,"evaluator":"MATCHED_SOL_TERRA_LUNA_PARETO","required_runs":15,"thresholds":{"min_score_0_100":90,"max_external_effects":0}},
+    {"case_id":"SOL56-LOAD-100","category":"SCALE_LOAD","weight":4,"evaluator":"100_CONCURRENT_SYNTHETIC_LOAD","required_runs":100,"thresholds":{"min_score_0_100":95,"max_latency_total_ms":180000,"max_retries":2,"max_duplicate_effects":0,"max_external_effects":0}},
+    {"case_id":"SOL56-DRIFT-001","category":"REGRESSION_DRIFT","weight":2,"evaluator":"SNAPSHOT_AND_REPEATED_TRIAL_STABILITY","required_runs":30,"thresholds":{"min_score_0_100":95,"max_external_effects":0}}
+  ]
+}
