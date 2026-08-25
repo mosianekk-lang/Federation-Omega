@@ -1,9 +1,10 @@
 import json,pathlib,sys,unittest
 ROOT=pathlib.Path(__file__).resolve().parent; sys.path.insert(0,str(ROOT)); import bootstrap_wif as b
 class BootstrapTests(unittest.TestCase):
-  def setUp(self): self.c=b.load_config(ROOT/"wif_config.json")
-  def test_repo_id(self): self.assertIn("repository_id=='1292795464'",b.condition(self.c))
-  def test_owner_id(self): self.assertIn("repository_owner_id=='261966700'",b.condition(self.c))
+  def setUp(self): self.c=b.load_config(ROOT/"wif_config.example.json")
+  def test_repo_id(self): self.assertIn("repository_id=='1000000000'",b.condition(self.c))
+  def test_owner_id(self): self.assertIn("repository_owner_id=='100000000'",b.condition(self.c))
+  def test_no_private_drive_pointer(self): self.assertNotIn("sourceDriveId",self.c)
   def test_main_only(self): self.assertIn("refs/heads/main",b.condition(self.c))
   def test_dispatch_only(self): self.assertIn("workflow_dispatch",b.condition(self.c))
   def test_default_audience(self): self.assertFalse(any("--allowed-audiences" in x for cmd in b.commands(self.c) for x in cmd))
@@ -18,6 +19,7 @@ class BootstrapTests(unittest.TestCase):
     with self.assertRaises(b.BootstrapError): b.verify_provider(self.c,{"oidc":{"issuerUri":"https://example.invalid"}})
   def test_operator_account(self): self.assertTrue(any(self.c["operatorServiceAccount"] in cmd for cmd in b.commands(self.c)))
   def test_apis(self): self.assertTrue(set(b.APIS).issubset(set(b.commands(self.c)[0])))
+  def test_public_source_repo_is_not_the_trust_target(self): self.assertNotEqual("mosianekk-lang/Federation-Omega",self.c["repository"])
   def test_bad_hash(self):
     v=dict(self.c); v["sourceSha256"]="bad"; p=ROOT/"_bad.json"; p.write_text(json.dumps(v))
     try:

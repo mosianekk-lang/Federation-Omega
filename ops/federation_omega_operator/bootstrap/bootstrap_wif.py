@@ -59,7 +59,7 @@ def run(c:dict,apply:bool)->dict:
     receipt["readback"]={"provider":"VERIFIED","attributeCondition":condition(c),"deployerServiceAccount":f"{c['deployerServiceAccountId']}@{c['projectId']}.iam.gserviceaccount.com"}
     receipt["status"]="BOOTSTRAP_APPLIED_AND_VERIFIED"; return receipt
 def main()->int:
-    parser=argparse.ArgumentParser(); parser.add_argument("--config",default=str(pathlib.Path(__file__).with_name("wif_config.json"))); parser.add_argument("--apply",action="store_true"); parser.add_argument("--out"); args=parser.parse_args()
+    parser=argparse.ArgumentParser(); parser.add_argument("--config",required=True); parser.add_argument("--apply",action="store_true"); parser.add_argument("--out"); args=parser.parse_args()
     try:
         result=run(load_config(pathlib.Path(args.config)),args.apply); encoded=json.dumps(result,indent=2,sort_keys=True)
         if args.out: pathlib.Path(args.out).write_text(encoded+"\n",encoding="utf-8")
