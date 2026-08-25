@@ -1,6 +1,8 @@
 import json
 from pathlib import Path
 import tempfile
+import threading
+import time
 import unittest
 
 from evidenceops.build_system.chat_failure_resilience import (
@@ -10,6 +12,21 @@ from evidenceops.build_system.chat_failure_resilience import (
     evaluate_failure,
 )
 from evidenceops.build_system.objective_completion_guard import REQUIRED_OPERATIONAL_LAYERS
+from evidenceops.build_system.runtime_controls import (
+    ACKNOWLEDGED,
+    ORPHANED_UNACKNOWLEDGED,
+    CancellationToken,
+    CooperativeCancellation,
+    DeliveryJournal,
+    DistinctRouteCircuit,
+    HeartbeatScheduler,
+    HandoffStore,
+    IntegrityError,
+    NoSafeRoute,
+    PolicyDenied,
+    Route,
+    RuntimePolicy,
+)
 
 
 def open_mission_packet():
@@ -183,6 +200,84 @@ class ChatFailureResilienceTests(unittest.TestCase):
             on_disk = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(receipt.receipt_sha256, on_disk["latest_receipt_sha256"])
             self.assertEqual(receipt.checkpoint["resume_token"], on_disk["latest_checkpoint"]["resume_token"])
+
+    def test_background_heartbeat_runs_without_caller_polling_and_stops(self):
+        heartbeats = []
+        observed = threading.Event()
+
+        def capture(heartbeat):
+            heartbeats.append(heartbeat)
+            if len(heartbeats) >= 2:
+                observed.set()
+
+        scheduler = HeartbeatScheduler(0.01, capture)
+        scheduler.start()
+        self.assertTrue(observed.wait(1.0), heartbeats)
+        self.assertTrue(scheduler.stop())
+        self.assertFalse(scheduler.is_running)
+        self.assertEqual([1, 2], [item.sequence for item in heartbeats[:2]])
+        self.assertIsNone(scheduler.callback_error)
+
+    def test_shared_cancellation_persists_and_preempts_at_checkpoint(self):
+        with tempfile.TemporaryDirectory() as temp:
+            database = Path(temp) / "control.sqlite3"
+            first = CancellationToken(database, "mission-1")
+            second = CancellationToken(database, "mission-1")
+            first.checkpoint()
+            first.cancel("owner stop")
+            with self.assertRaisesRegex(CooperativeCancellation, "owner stop"):
+                second.checkpoint()
+
+    def test_open_circuit_selects_a_deterministic_distinct_route(self):
+        with tempfile.TemporaryDirectory() as temp:
+            circuit = DistinctRouteCircuit(
+                Path(temp) / "routes.sqlite3",
+                [Route("primary", 100), Route("fallback-b", 50), Route("fallback-a", 50)],
+            )
+            circuit.open("primary", "sha256:failure")
+            self.assertEqual("fallback-a", circuit.select_distinct("primary").route_id)
+
+    def test_retry_fails_closed_when_no_distinct_authorized_route_exists(self):
+        with tempfile.TemporaryDirectory() as temp:
+            circuit = DistinctRouteCircuit(
+                Path(temp) / "routes.sqlite3",
+                [Route("primary", 100), Route("provider", 90, provider_effect=True)],
+            )
+            circuit.open("primary", "sha256:failure")
+            with self.assertRaises(NoSafeRoute):
+                circuit.select_distinct("primary", providers_enabled=False)
+
+    def test_handoff_is_hash_verified_and_tampering_is_rejected(self):
+        with tempfile.TemporaryDirectory() as temp:
+            path = Path(temp) / "handoff.json"
+            store = HandoffStore(path)
+            payload = {"directive": "continue", "next_action": "canary"}
+            store.write("tx-handoff", payload)
+            self.assertEqual(payload, store.read("tx-handoff"))
+            envelope = json.loads(path.read_text(encoding="utf-8"))
+            envelope["payload"]["next_action"] = "mutated"
+            path.write_text(json.dumps(envelope), encoding="utf-8")
+            with self.assertRaises(IntegrityError):
+                store.read("tx-handoff")
+
+    def test_terminal_delivery_marks_orphan_or_atomic_ack_and_chain_verifies(self):
+        with tempfile.TemporaryDirectory() as temp:
+            journal = DeliveryJournal(Path(temp) / "delivery.sqlite3")
+            orphan = journal.deliver("tx-orphan", "artifact-1", "sha256:a", acknowledgement=None)
+            acknowledged = journal.deliver(
+                "tx-ack", "artifact-2", "sha256:b", acknowledgement="owner-visible-response"
+            )
+            self.assertEqual(ORPHANED_UNACKNOWLEDGED, orphan["state"])
+            self.assertEqual(ACKNOWLEDGED, acknowledged["state"])
+            self.assertTrue(journal.verify_event_chain())
+
+    def test_provider_effect_is_blocked_by_default(self):
+        with self.assertRaisesRegex(PolicyDenied, "provider actions are disabled"):
+            RuntimePolicy().admit("PROVIDER_WRITE")
+
+    def test_new_system_identity_is_rejected(self):
+        with self.assertRaisesRegex(PolicyDenied, "new system identity"):
+            RuntimePolicy().admit("LOCAL_TEST", target_identity="CFRE-OMEGA-REPLACEMENT")
 
 
 if __name__ == "__main__":
