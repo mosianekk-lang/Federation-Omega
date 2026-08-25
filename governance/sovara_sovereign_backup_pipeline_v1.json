@@ -1,0 +1,98 @@
+{
+  "schema": "SOVARA-SOVEREIGN-BACKUP-PIPELINE-CONTRACT-1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Convert every admitted SOVARA or Federation state change into an idempotent, integrity-verified full or delta backup whose exact provider destination is resolved only through the private canonical registry.",
+  "canonical_destination_alias": "SOVARA_PRIVATE_BACKUP_REPOSITORY_V1",
+  "private_exact_pointer_in_public_source": false,
+  "event_types": [
+    "ADMITTED_SOURCE_RELEASE",
+    "LIVE_BIBLE_REVISION",
+    "PROVIDER_CANARY",
+    "DEPLOYMENT",
+    "ROLLBACK",
+    "MATERIAL_CONFIG_CHANGE",
+    "MANUAL_CHECKPOINT"
+  ],
+  "snapshot_policy": {
+    "initial_snapshot": "FULL",
+    "ordinary_changed_snapshot": "DELTA",
+    "unchanged_snapshot": "NO_CHANGE_RECEIPT",
+    "periodic_full_checkpoint_every": 7,
+    "deterministic_archive": true,
+    "stable_file_order": true,
+    "stable_zip_timestamps": true,
+    "deletion_tombstones": true,
+    "previous_manifest_binding": true,
+    "previous_receipt_binding": true
+  },
+  "integrity": {
+    "artifact_sha256": true,
+    "manifest_sha256": true,
+    "archive_sha256": true,
+    "provider_download_readback_required": true,
+    "zip_crc_verification_required": true,
+    "restore_chain_verification_required": true,
+    "idempotency_key_payload_bound": true,
+    "changed_payload_collision_rejected": true,
+    "append_only_receipt_hash_chain": true
+  },
+  "privacy": {
+    "owner_only_destination_required": true,
+    "shared_destination_rejected": true,
+    "non_owner_permission_rejected": true,
+    "raw_secret_metadata_rejected": true,
+    "opaque_secret_references_allowed": true,
+    "private_exact_pointer_publicly_stored": false,
+    "gmail_archive_attachment_requires_all_selected_artifacts_email_eligible": true,
+    "gmail_archive_attachment_size_limit_required": true,
+    "manifest_and_checksum_continuity_receipt_allowed": true
+  },
+  "execution": {
+    "provider_neutral_core": "federation_consolidation/sovara_sovereign_backup.py",
+    "private_adapter_required_for_provider_effect": true,
+    "destination_alias_must_resolve_privately": true,
+    "safe_source_and_manifest_build_automatic": true,
+    "drive_upload_requires_private_adapter": true,
+    "gmail_delivery_requires_private_adapter": true,
+    "provider_effects_serialized": true,
+    "failed_provider_readback_blocks_success": true,
+    "retry_exact_receipt_without_duplicate_effect": true
+  },
+  "source_admission": {
+    "existing_airlock_reused": true,
+    "new_workflow_required": false,
+    "test_pattern": "tests/test_phoenix_provider_cutover_v3_sovara_sovereign_backup.py",
+    "provider_runtime_receipts_committed_to_source": false
+  },
+  "promotion_gates": [
+    "source compiles",
+    "deterministic and adversarial tests pass",
+    "exact-head Airlock passes",
+    "Public Repository Leak Guard passes",
+    "Bubbles Command Bus passes",
+    "private alias exists and exact provider pointer remains private",
+    "owner-only permission readback passes",
+    "provider-download SHA-256 equals local archive SHA-256",
+    "Gmail message readback confirms continuity receipt when email is requested",
+    "restore drill reconstructs the expected current artifact set"
+  ],
+  "truth_boundary": {
+    "source_proves_provider_scheduler_live": false,
+    "source_proves_drive_upload": false,
+    "source_proves_gmail_delivery": false,
+    "stored_alias_proves_provider_authority": false,
+    "backup_receipt_transfers_provider_authority": false,
+    "backup_receipt_transfers_system_maturity": false,
+    "provider_native_readback_required": true,
+    "workaround_is_not_deployment": true
+  },
+  "ao_cra_build": {
+    "build_id": "BUILD-SOVARA-BACKUP-001",
+    "classification": "UNRESOLVED_ENGINEERING_BUILD_UNTIL_PROVIDER_ADAPTER_CANARY",
+    "workaround": "Current private Drive archive and Gmail continuity copy remain valid baseline snapshot evidence.",
+    "next_gate": "Bind the provider-neutral core to an authorised private Google adapter and execute one delta plus restore canary."
+  }
+}
