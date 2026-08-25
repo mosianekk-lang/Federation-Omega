@@ -10,7 +10,6 @@ from benchmarking.cfbe_omega.sol56_runtime import (
     RouteCandidate,
     RunObservation,
     evaluate_suite,
-    load_observations,
     load_spec,
     nearest_rank,
     select_route,
@@ -21,9 +20,6 @@ from benchmarking.cfbe_omega.sol56_runtime import (
 
 ROOT = Path(__file__).resolve().parents[1]
 SPEC_PATH = ROOT / "benchmarking" / "cfbe_omega" / "sol56_benchmark_spec.json"
-TEMPLATE_PATH = ROOT / "benchmarking" / "cfbe_omega" / "sol56_observations.template.jsonl"
-
-
 class Sol56ContractTests(unittest.TestCase):
     def test_spec_is_complete_and_weighted(self):
         spec = load_spec(SPEC_PATH)
@@ -54,7 +50,16 @@ class Sol56ContractTests(unittest.TestCase):
             observation.validate()
 
     def test_template_fails_closed_without_fabricating_scores(self):
-        report = evaluate_suite(load_spec(SPEC_PATH), load_observations(TEMPLATE_PATH))
+        spec = load_spec(SPEC_PATH)
+        observations = [
+            RunObservation(
+                run_id=f"TEMPLATE-{index:03d}",
+                case_id=case.case_id,
+                result_state="NOT_EXECUTED",
+            )
+            for index, case in enumerate(spec["cases"], 1)
+        ]
+        report = evaluate_suite(spec, observations)
         self.assertEqual(report["truth_state"], "PROVIDER_NOT_EXECUTED")
         self.assertIsNone(report["weighted_quality_0_100"])
         self.assertFalse(report["model_performance_claim_allowed"])
@@ -112,3 +117,4 @@ class Sol56RouteTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
