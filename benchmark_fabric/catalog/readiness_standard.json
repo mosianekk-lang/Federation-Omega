@@ -1,0 +1,59 @@
+{
+  "schema": "FEDOMEGA-JARVIS-READINESS-STANDARD-1",
+  "version": "1.0.0",
+  "title": "Canonical JARVIS Operational Readiness Standard",
+  "authorityCeiling": "A1_INTERNAL",
+  "levels": [
+    {"id":"R0","name":"UNVERIFIED","definition":"No acceptable evidence establishes the capability."},
+    {"id":"R1","name":"DEFINED","definition":"Scope, owner, architecture and acceptance conditions are explicit."},
+    {"id":"R2","name":"IMPLEMENTED","definition":"Source or configuration exists and has been reviewed."},
+    {"id":"R3","name":"TESTED","definition":"Automated success and failure tests pass at an exact source version."},
+    {"id":"R4","name":"PROVIDER_BOUND","definition":"The real provider identity and route pass a bounded semantic canary with readback."},
+    {"id":"R5","name":"PRODUCTION_PROVEN","definition":"A controlled production release meets live SLO and rollback or restore proof."},
+    {"id":"R6","name":"CONTINUOUSLY_ASSURED","definition":"Continuous monitoring, evaluation, benchmark refresh and incident learning repeatedly preserve the target state."}
+  ],
+  "categories": [
+    {"id":"architecture_products","name":"Product, service and system architecture"},
+    {"id":"agent_intelligence","name":"AI, agent and model intelligence"},
+    {"id":"knowledge_data","name":"Knowledge, data and memory"},
+    {"id":"engineering_quality","name":"Engineering quality and test discipline"},
+    {"id":"devsecops_delivery","name":"DevSecOps and software delivery"},
+    {"id":"security_identity","name":"Security, privacy, identity and secrets"},
+    {"id":"reliability_resilience","name":"Reliability, SRE, continuity and disaster recovery"},
+    {"id":"observability_evals","name":"Observability, evaluations and feedback"},
+    {"id":"governance_risk","name":"Governance, risk, compliance and owner control"},
+    {"id":"finops_capacity","name":"FinOps, capacity, quota and vendor controls"},
+    {"id":"experience_adoption","name":"User experience, accessibility and adoption"},
+    {"id":"team_capability","name":"Internal development team capability and operating model"},
+    {"id":"automation_continuity","name":"Automation, multi-surface continuity and knowledge refresh"}
+  ],
+  "promotionGates": [
+    {"level":"R1","requiredEvidenceKinds":["definition","owner"],"maximumAgeDays":365},
+    {"level":"R2","requiredEvidenceKinds":["implementation","source_review"],"maximumAgeDays":180},
+    {"level":"R3","requiredEvidenceKinds":["automated_tests","failure_tests","ci_receipt"],"maximumAgeDays":30},
+    {"level":"R4","requiredEvidenceKinds":["provider_binding","semantic_canary","provider_readback"],"maximumAgeDays":7},
+    {"level":"R5","requiredEvidenceKinds":["production_release","live_slo","rollback_restore"],"maximumAgeDays":30},
+    {"level":"R6","requiredEvidenceKinds":["continuous_monitoring","continuous_evaluation","incident_learning","fresh_benchmark"],"maximumAgeDays":30}
+  ],
+  "freshnessPolicy":{"appliesFromLevel":"R4","requiredEvidenceKinds":["provider_readback","live_slo","continuous_monitoring"],"maximumAgeDays":30,"demoteTo":"R3"},
+  "demotionRules": [
+    {"eventType":"provider_canary_failed","demoteTo":"R2"},
+    {"eventType":"identity_invalid","demoteTo":"R1"},
+    {"eventType":"release_test_failed","demoteTo":"R2"},
+    {"eventType":"evidence_stale","demoteTo":"R3"},
+    {"eventType":"rollback_unavailable","demoteTo":"R4"},
+    {"eventType":"slo_breach_unmanaged","demoteTo":"R4"},
+    {"eventType":"cost_guardrail_breach","demoteTo":"R3"}
+  ],
+  "scoreViewPolicy": {
+    "allowCombinedScore": false,
+    "requiredViews":["frontier_control_alignment","architecture_capability_alignment","operational_readiness"],
+    "rule":"Capability alignment, architecture alignment and operational readiness answer different questions and must never be averaged or substituted."
+  },
+  "releaseProfiles": [
+    {"id":"benchmark_operations","name":"Benchmark operations","targetLevel":"R6","criticalComponentIds":["engineering_codebase","ci_airlock","benchmark_scheduler","source_registry_refresh","knowledge_repository","canonical_score_contract","security_leak_guard","owner_governance","drive_canonical_storage"]},
+    {"id":"jarvis_provider_runtime","name":"JARVIS provider runtime","targetLevel":"R6","criticalComponentIds":["gemini_adapter","gemini_provider_canary","google_wif_identity","cloud_run_package","cloud_run_live_runtime","secret_manager_binding","observability_eval_fabric","sre_slo_incident_ops","cost_capacity_controls","backup_restore"]},
+    {"id":"full_federation","name":"Full Federation operating system","targetLevel":"R6","criticalComponentIds":["engineering_codebase","canonical_score_contract","knowledge_repository","gemini_provider_canary","google_wif_identity","cloud_run_live_runtime","secret_manager_binding","openai_provider_binding","multimodel_router","observability_eval_fabric","sre_slo_incident_ops","cost_capacity_controls","backup_restore","development_team_operating_model"]}
+  ],
+  "releaseRule":"A profile readiness state is the minimum effective level across every critical component. Promotion requires all next-level proof gates; any active demotion event takes precedence."
+}
