@@ -84,7 +84,8 @@ jobs:
                 .github/workflows/public-repository-leak-guard.yml|\
                 .github/workflows/phoenix-emergency-freeze.yml|\
                 .github/workflows/bubbles-command-bus.yml|\
-                .github/workflows/bubbles-provider-authority-recovery-probe.yml)
+                .github/workflows/caseforge-provider-readback-canary.yml|\
+                .github/workflows/pfrd-omega-operator-auth-probe.yml)
                   if [[ "${workflow_state}" != "active" ]]; then
                     if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
@@ -124,7 +125,8 @@ jobs:
             "public-repository-leak-guard.yml|.github/workflows/public-repository-leak-guard.yml"
             "phoenix-emergency-freeze.yml|.github/workflows/phoenix-emergency-freeze.yml"
             "bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"
-            "bubbles-provider-authority-recovery-probe.yml|.github/workflows/bubbles-provider-authority-recovery-probe.yml"
+            "caseforge-provider-readback-canary.yml|.github/workflows/caseforge-provider-readback-canary.yml"
+            "pfrd-omega-operator-auth-probe.yml|.github/workflows/pfrd-omega-operator-auth-probe.yml"
           )
 
           for attempt in 1 2 3 4 5 6; do
@@ -171,6 +173,24 @@ jobs:
             fi
             sleep $((attempt * 2))
           done
+
+          if awk -F '\t' '$2 == ".github/workflows/pfrd-omega-operator-auth-probe.yml" {found=1} END {exit !found}' \
+               /tmp/phoenix-freeze-enabled.txt; then
+            probe_dispatched=false
+            for attempt in 1 2 3 4 5 6; do
+              if gh api -X POST \
+                "/repos/${GITHUB_REPOSITORY}/actions/workflows/pfrd-omega-operator-auth-probe.yml/dispatches" \
+                -f ref=main >/dev/null 2>&1; then
+                probe_dispatched=true
+                break
+              fi
+              sleep $((attempt * 2))
+            done
+            if [[ "${probe_dispatched}" != "true" ]]; then
+              echo 'Failed to dispatch newly enabled operator auth probe' \
+                >> /tmp/phoenix-freeze-errors.txt
+            fi
+          fi
 
           if ! gh api --paginate \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \
