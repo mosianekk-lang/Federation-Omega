@@ -1,0 +1,66 @@
+{
+  "schema": "SOVARA-PROVIDER-RECOVERY-CONTROLLER-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "mission": "FORMATION_OMEGA_PROVIDER_CLOSURE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Convert provider failures into deterministic recovery routes, stop unchanged retries, preserve independent-lane progress and auto-continue when fresh proof crosses a provider gate.",
+  "formation_route_families": [
+    "REUSE_OPTIMISE",
+    "COMPOSE_EXTEND",
+    "MATERIAL_NEW",
+    "REVERSIBLE_EXPERIMENT"
+  ],
+  "durable_trackers": {
+    "google_wif_admin_recovery": 52,
+    "direct_openai_provider_proof": 179,
+    "openrouter_alternate_route_binding": 592
+  },
+  "current_failure_classes": {
+    "google": "STS_INVALID_TARGET",
+    "openai": "CREDIT_BALANCE_EXHAUSTED",
+    "openrouter": "RUNTIME_KEY_UNBOUND"
+  },
+  "circuit_breakers": {
+    "google": "Do not repeat the same invalid WIF token exchange until provider/admin state changes.",
+    "openai": "Do not repeat paid inference attempts while credit_balance_exhausted remains the latest provider result.",
+    "openrouter": "Do not attempt inference until a credential is bound through an approved secret-bearing execution surface."
+  },
+  "progressive_execution": {
+    "independent_lanes_continue": true,
+    "shared_or_consequential_effects_serialize": true,
+    "one_effectful_provider_lane_per_wave": true,
+    "fresh_proof_required_before_auto_continue": true,
+    "unchanged_retry_after_open_circuit": false
+  },
+  "selected_current_route": {
+    "family": "REUSE_OPTIMISE",
+    "route": "Repair the existing canonical Google WIF through an authenticated Google administration surface, then reuse Secret Manager, Federation operator and SOVARA gateway capability before creating any new control plane.",
+    "why": "This restores the greatest number of downstream capabilities while minimizing duplicated infrastructure."
+  },
+  "auto_continue_chain": [
+    "FRESH_WIF_TOKEN_ISSUED",
+    "PROJECT_257649435135_READBACK",
+    "CLOUD_RUN_UID_READBACK",
+    "OPERATOR_AUTHENTICATED_STATUS_200",
+    "GEMINI_EXACT_NONCE_MATCH",
+    "OPENROUTER_KEY_METADATA_200",
+    "OPENROUTER_EXACT_NONCE_READBACK",
+    "OPENAI_RESPONSES_CREATE_200",
+    "OPENAI_EXACT_NONCE_READBACK",
+    "CFBE_REQUIRED_REPETITIONS"
+  ],
+  "truth_boundary": {
+    "source_controller_proves_provider_repair": false,
+    "issue_state_proves_provider_repair": false,
+    "health_200_proves_authenticated_action": false,
+    "model_resource_200_proves_inference_credit": false,
+    "openrouter_catalog_proves_key_binding": false,
+    "secret_values_may_enter_source_or_receipts": false
+  },
+  "source": {
+    "controller": "ops/sovara_provider_recovery_controller.py",
+    "tests": "tests/test_sovara_provider_recovery_controller.py"
+  }
+}
