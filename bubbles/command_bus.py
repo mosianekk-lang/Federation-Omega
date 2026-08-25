@@ -68,14 +68,26 @@ def _chat_failure_recovery(request: ActionRequest) -> dict[str, object]:
     previous = request.payload.get("previous_checkpoint")
     if previous is not None and not isinstance(previous, dict):
         raise CommandBusError("payload.previous_checkpoint must be a JSON object when supplied")
-    recovery = evaluate_failure_with_aaa(
+
+    aaa = evaluate_failure_with_aaa(
         event,
         previous_checkpoint=previous,
         mission_packet=mission,
     )
+
+    # Preserve the already-proven Bubbles/CFRE response contract. AAA changes
+    # the effective recovery behavior additively and exposes its own sidecar
+    # proof, rather than forcing callers to understand a new nesting shape.
     return {
-        "kind": "LOCAL_CHAT_FAILURE_RECOVERY_AAA",
-        "recovery": recovery,
+        "kind": "LOCAL_CHAT_FAILURE_RECOVERY",
+        "recovery": aaa["effective_recovery"],
+        "aaa": {
+            "schema": aaa["schema"],
+            "route_retry": aaa["aaa_route_retry"],
+            "learning_genes": aaa["aaa_learning_genes"],
+            "receipt_sha256": aaa["aaa_receipt_sha256"],
+            "base_recovery_sha256": aaa["base_recovery"]["receipt_sha256"],
+        },
         "provider_effects": False,
     }
 
