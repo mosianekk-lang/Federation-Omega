@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.3.2",
+  "version": "2.3.3",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -15,24 +15,52 @@
     "block_deletions": true
   },
   "active_workflow_allowlist": [
-    ".github/workflows/github-airlock.yml",
-    ".github/workflows/public-repository-leak-guard.yml",
-    ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
-    ".github/workflows/caseforge-provider-readback-canary.yml"
+    ".github/workflows/caseforge-provider-readback-canary.yml",
+    ".github/workflows/cfre-operator-deploy.yml",
+    ".github/workflows/github-airlock.yml",
+    ".github/workflows/phoenix-emergency-freeze.yml",
+    ".github/workflows/public-repository-leak-guard.yml"
   ],
   "allowed_events": {
-    ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
-    ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"]
+    ".github/workflows/github-airlock.yml": [
+      "pull_request",
+      "merge_group",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/public-repository-leak-guard.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/phoenix-emergency-freeze.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/bubbles-command-bus.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "push"
+    ],
+    ".github/workflows/cfre-operator-deploy.yml": [
+      "workflow_dispatch"
+    ]
   },
   "required_push_branches": {
-    ".github/workflows/bubbles-command-bus.yml": ["main"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"]
+    ".github/workflows/bubbles-command-bus.yml": [
+      "main"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "main"
+    ]
   },
-  "oidc_workflow_allowlist": [],
+  "oidc_workflow_allowlist": [
+    ".github/workflows/cfre-operator-deploy.yml"
+  ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
   ],
@@ -74,11 +102,12 @@
   "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE",
   "execution_quarantine": {
     "keep_active": [
-      ".github/workflows/github-airlock.yml",
-      ".github/workflows/public-repository-leak-guard.yml",
-      ".github/workflows/phoenix-emergency-freeze.yml",
       ".github/workflows/bubbles-command-bus.yml",
-      ".github/workflows/caseforge-provider-readback-canary.yml"
+      ".github/workflows/caseforge-provider-readback-canary.yml",
+      ".github/workflows/cfre-operator-deploy.yml",
+      ".github/workflows/github-airlock.yml",
+      ".github/workflows/phoenix-emergency-freeze.yml",
+      ".github/workflows/public-repository-leak-guard.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
@@ -89,3 +118,4 @@
     "verified_commit_status": "phoenix-freeze/verified"
   }
 }
+
