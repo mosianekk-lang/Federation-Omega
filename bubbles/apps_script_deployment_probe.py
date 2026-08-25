@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import argparse
+import hashlib
 import json
 from pathlib import Path
 from typing import Any, Mapping
@@ -9,9 +10,23 @@ import urllib.parse
 import urllib.request
 
 
-ARCHON_SCRIPT_DEPLOYMENT_ID = "AKfycbyaxovYOyaoMWFdsAZnbl2AIFU0PFY3hcGF-QRM1dmDqdtEHRFI7Ud7L_p7YCCVMG3J"
+# Apps Script deployment IDs are case-sensitive. This value is transcribed from
+# the original provider deployment evidence for ARCHON Federation Surface
+# Translator; keep the independent digest bound so a single-character drift
+# fails before a provider probe can create a false reachability conclusion.
+ARCHON_SCRIPT_DEPLOYMENT_ID = "AKfycbyaxovYOyaoMWFdSAZnbl2AIFU0PFY3hcGF-QRM1dmDqdtEHRFl7Ud7L_p7YCCVMG3J"
+ARCHON_SCRIPT_DEPLOYMENT_ID_SHA256 = "67b07a3a8ae7d6e8b00b64548649d82b8d53979aae26ff45fd838b4cf479d1e8"
 ARCHON_SCRIPT_URL = f"https://script.google.com/macros/s/{ARCHON_SCRIPT_DEPLOYMENT_ID}/exec"
 EVIDENCE_BASIS = "USER_SUPPLIED_DEPLOYMENT_SCREENSHOT_PLUS_EXISTING_ARCHON_CONTROL_RECORDS"
+
+
+def _assert_deployment_binding() -> None:
+    actual = hashlib.sha256(ARCHON_SCRIPT_DEPLOYMENT_ID.encode("utf-8")).hexdigest()
+    if actual != ARCHON_SCRIPT_DEPLOYMENT_ID_SHA256:
+        raise RuntimeError("ARCHON_APPS_SCRIPT_DEPLOYMENT_ID_INTEGRITY_MISMATCH")
+
+
+_assert_deployment_binding()
 
 
 class _NoRedirect(urllib.request.HTTPRedirectHandler):
@@ -90,6 +105,7 @@ def _semantic_classification(probe: Mapping[str, Any], *, expected_action: str |
 
 
 def run_probe() -> dict[str, Any]:
+    _assert_deployment_binding()
     targets = {
         "root_no_redirect": (_url(), False, None),
         "health_no_redirect": (_url("health_check"), False, "health_check"),
@@ -123,6 +139,7 @@ def run_probe() -> dict[str, Any]:
         "evidence_basis": EVIDENCE_BASIS,
         "script_id": "12CrTP0YUQbUpBvLklf_tInjN_k3L5qt3Tkp-M9pIO_O4Cs8dsYRH7kPO",
         "deployment_id": ARCHON_SCRIPT_DEPLOYMENT_ID,
+        "deployment_id_sha256": ARCHON_SCRIPT_DEPLOYMENT_ID_SHA256,
         "web_app_url": ARCHON_SCRIPT_URL,
         "overall_classification": overall,
         "mutation_attempted": False,
