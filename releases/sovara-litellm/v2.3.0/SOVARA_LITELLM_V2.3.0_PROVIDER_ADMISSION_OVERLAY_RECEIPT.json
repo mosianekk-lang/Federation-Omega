@@ -1,0 +1,16 @@
+{
+  "base_bundle_sha256": "2dc95a249938604e3117d26e81da4afada96e3c836ab9dde3d80776187cf15bd",
+  "deterministic_double_build": "PASS",
+  "file": "SOVARA_LITELLM_V2.3.0_PROVIDER_ADMISSION_OVERLAY.zip",
+  "member_count": 7,
+  "receipt_sha256": "3ffc639487830031d66070595c3cd1e359102a14981b600dec4e74a11d70db5e",
+  "schema": "SOVARA-LITELLM-V2.3-PROVIDER-ADMISSION-OVERLAY-RECEIPT-1",
+  "sha256": "7d15c31e266a1424d982be82655b07c96afe29480ac2f921639215433204794f",
+  "size_bytes": 13420,
+  "truth_boundary": {
+    "credential_values_recorded": false,
+    "gateway_deployed": false,
+    "provider_calls_executed": false
+  },
+  "zip_crc": "PASS"
+}
