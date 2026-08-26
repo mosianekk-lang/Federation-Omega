@@ -1,6 +1,6 @@
 {
   "name": "federation-omega-operator",
-  "version": "2.0.0-cfre1",
+  "version": "3.0.0-gemini-vertex1",
   "private": true,
   "type": "module",
   "scripts": {

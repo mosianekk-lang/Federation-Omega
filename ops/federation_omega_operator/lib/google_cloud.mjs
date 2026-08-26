@@ -56,6 +56,99 @@ export class GoogleCloudAdapter {
     return (await this.api(`https://cloudbuild.googleapis.com/v1/projects/${encodeURIComponent(project)}/locations/${encodeURIComponent(region)}/builds/${encodeURIComponent(payload.buildId)}`)).body;
   }
 
+  vertexBase(location) {
+    return location === "global"
+      ? "https://aiplatform.googleapis.com"
+      : `https://${encodeURIComponent(location)}-aiplatform.googleapis.com`;
+  }
+
+  vertexModelUrl({ project, location, model }, suffix = "") {
+    return `${this.vertexBase(location)}/v1/projects/${encodeURIComponent(project)}/locations/${encodeURIComponent(location)}/publishers/google/models/${encodeURIComponent(model)}${suffix}`;
+  }
+
+  async readGeminiVertexCapability(target) {
+    const service = await this.api(
+      `https://serviceusage.googleapis.com/v1/projects/${encodeURIComponent(target.project)}/services/aiplatform.googleapis.com`,
+    );
+    if (service.body.state !== "ENABLED") {
+      return {
+        ok: false,
+        status: "VERTEX_AI_API_DISABLED",
+        provider: "vertex",
+        authMode: "CLOUD_RUN_SERVICE_IDENTITY",
+        target,
+        serviceState: service.body.state || "UNKNOWN",
+        semanticExecutionAttempted: false,
+        incrementalCost: 0,
+        silentFallback: false,
+      };
+    }
+    const publisherModel = await this.api(this.vertexModelUrl(target));
+    return {
+      ok: true,
+      status: "GEMINI_VERTEX_CAPABILITY_READ",
+      provider: "vertex",
+      authMode: "CLOUD_RUN_SERVICE_IDENTITY",
+      target,
+      serviceState: service.body.state,
+      modelReadback: {
+        name: publisherModel.body.name || null,
+        versionId: publisherModel.body.versionId || null,
+        displayName: publisherModel.body.displayName || null,
+        launchStage: publisherModel.body.launchStage || null,
+        supportedActions: publisherModel.body.supportedActions || null,
+      },
+      semanticExecutionAttempted: false,
+      incrementalCost: 0,
+      silentFallback: false,
+    };
+  }
+
+  async verifyGeminiVertexSemantic(canary) {
+    const capability = await this.readGeminiVertexCapability(canary);
+    if (!capability.ok) throw new Error(`Gemini Vertex capability unavailable: ${capability.status}`);
+    const request = {
+      contents: [{ role: "user", parts: [{ text: `Return exactly this nonce and nothing else: ${canary.nonce}` }] }],
+      generationConfig: {
+        candidateCount: 1,
+        temperature: 0,
+        maxOutputTokens: canary.maxOutputTokens,
+      },
+    };
+    const response = await this.api(
+      this.vertexModelUrl(canary, ":generateContent"),
+      { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(request) },
+    );
+    const observed = (response.body.candidates?.[0]?.content?.parts || [])
+      .map((part) => typeof part.text === "string" ? part.text : "")
+      .join("")
+      .trim();
+    if (observed !== canary.nonce) {
+      throw new Error("Gemini Vertex semantic nonce mismatch");
+    }
+    const usage = response.body.usageMetadata || {};
+    return {
+      ok: true,
+      status: "GEMINI_VERTEX_SEMANTIC_VERIFIED",
+      provider: "vertex",
+      authMode: "CLOUD_RUN_SERVICE_IDENTITY",
+      target: {
+        project: canary.project,
+        location: canary.location,
+        model: canary.model,
+        tenantId: canary.tenantId,
+      },
+      nonceVerified: true,
+      idempotencyKey: canary.idempotencyKey,
+      usage: {
+        promptTokenCount: Number(usage.promptTokenCount || 0),
+        candidatesTokenCount: Number(usage.candidatesTokenCount || 0),
+        totalTokenCount: Number(usage.totalTokenCount || 0),
+      },
+      silentFallback: false,
+    };
+  }
+
   async downloadDriveFile(fileId) {
     const token = await this.token();
     const response = await this.fetch(`https://www.googleapis.com/drive/v3/files/${encodeURIComponent(fileId)}?alt=media&supportsAllDrives=true`, { headers: { authorization: `Bearer ${token}` } });

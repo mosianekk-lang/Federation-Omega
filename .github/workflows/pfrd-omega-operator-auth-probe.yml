@@ -21,7 +21,8 @@ env:
   REGION: africa-south1
   SERVICE: federation-omega-operator
   OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
-  PROBE_SCHEMA: SOVARA-OPERATOR-AUTH-RECOVERY-V2
+  PROBE_SCHEMA: SOVARA-OPERATOR-AUTH-RECOVERY-V3
+  SEMANTIC_PROBE_MODE: AUTHORITY_ONLY
   HAS_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN != '' }}
   HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
   HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
@@ -179,6 +180,7 @@ jobs:
           SERVICE = os.environ["SERVICE"]
           OPERATOR = os.environ["OPERATOR_URL"].rstrip("/")
           SCHEMA = os.environ["PROBE_SCHEMA"]
+          SEMANTIC_PROBE_MODE = os.environ["SEMANTIC_PROBE_MODE"]
           DIRECT_OPERATOR_TOKEN = os.environ.get("FO_ADMIN_TOKEN", "")
           DIRECT_GEMINI_KEY = os.environ.get("GEMINI_API_KEY", "")
           GOOGLE_ACCESS_TOKEN = os.environ.get("GOOGLE_ACCESS_TOKEN", "")
@@ -501,6 +503,7 @@ jobs:
                   "contents": "read",
                   "id_token": "none",
                   "provider_mutation": False,
+                  "provider_semantic_call": False,
                   "repository_mutation": False,
               },
               "credential_alias_presence": route_presence,
@@ -531,6 +534,7 @@ jobs:
               },
               "gemini": {
                   "key_source": None,
+                  "semantic_probe_mode": SEMANTIC_PROBE_MODE,
                   "semantic": None,
               },
               "overall_classification": "NOT_EVALUATED",
@@ -635,7 +639,14 @@ jobs:
               if DIRECT_GEMINI_KEY
               else ("google_secret_manager" if gemini_secret else "none")
           )
-          receipt["gemini"]["semantic"] = gemini_semantic_canary(gemini_key, nonce)
+          receipt["gemini"]["semantic"] = (
+              gemini_semantic_canary(gemini_key, nonce)
+              if SEMANTIC_PROBE_MODE == "SEMANTIC_CANARY"
+              else {
+                  "classification": "GEMINI_SEMANTIC_PROBE_HELD_ZERO_COST",
+                  "key_present": bool(gemini_key),
+              }
+          )
 
           cloud_run = receipt["provider_readback"]["cloud_run"] or {}
           google_read_ok = (
