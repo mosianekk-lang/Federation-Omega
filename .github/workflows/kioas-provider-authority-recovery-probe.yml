@@ -1,6 +1,8 @@
 name: KIOAS Provider Authority Recovery Probe
 
 on:
+  schedule:
+    - cron: '15 17 26 8 *'
   push:
     branches: [main]
     paths:
@@ -406,3 +408,25 @@ jobs:
           path: provider-authority-output/receipt.json
           if-no-files-found: error
           retention-days: 90
+      - name: Retire one-shot schedule without removing the recovery route
+        if: always() && github.event_name == 'schedule'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from pathlib import Path
+          path = Path('.github/workflows/kioas-provider-authority-recovery-probe.yml')
+          source = path.read_text(encoding='utf-8')
+          block = "  schedule:\\n    - cron: '15 17 26 8 *'\\n"
+          if source.count(block) != 1:
+              raise SystemExit('ONE_SHOT_SCHEDULE_PRECONDITION_FAILED')
+          path.write_text(source.replace(block, '', 1), encoding='utf-8')
+          PY
+          git config user.name "kioas-authority-probe[bot]"
+          git config user.email "kioas-authority-probe[bot]@users.noreply.github.com"
+          git add .github/workflows/kioas-provider-authority-recovery-probe.yml
+          git diff --cached --quiet || {
+            git commit -m "Retire KIOAS one-shot authority-probe schedule"
+            git pull --rebase origin main
+            git push origin HEAD:main
+          }
