@@ -1,0 +1,29 @@
+{
+  "schema": "SOVARA-LITELLM-V2.3-PROVIDER-ADMISSION-TRIGGER-V1",
+  "version": "1.0.0",
+  "trigger_id": "SOV-LITELLM-V23-POST-REPAIR-20260826T2120SAST",
+  "recorded_at_sast": "2026-08-26T21:20:00+02:00",
+  "owner": "Kim Kagiso Mosiane",
+  "base_main_sha": "34e8c8650b0cdd251adc97a1ba8b438f9f2ba119",
+  "release_byte_repair_commit": "36b460bec5461aca99a368182d914e7b59af0f19",
+  "previous_provider_run_id": 32999261519,
+  "previous_stop_gate": "MATERIALIZE_AND_VERIFY_EXACT_RELEASE_BYTES",
+  "previous_google_wif_tested": false,
+  "workflow_path": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+  "expected_release_sha256": {
+    "base_bundle": "2dc95a249938604e3117d26e81da4afada96e3c836ab9dde3d80776187cf15bd",
+    "provider_overlay": "7d15c31e266a1424d982be82655b07c96afe29480ac2f921639215433204794f"
+  },
+  "purpose": "Start one fresh current-main provider-admission run after the canonical release bytes were repaired, so structural validation, exact Google WIF authentication, Secret Manager metadata gates, bounded provider canaries, digest-pinned deployment and automatic rollback can be evaluated in their defined order.",
+  "execution_controls": [
+    "push to main through an admitted pull request",
+    "repository contents read only in the provider workflow",
+    "short-lived repository-scoped Google WIF",
+    "no credential values in source or receipts",
+    "immutable artifact-only provider receipts",
+    "automatic rollback on failed serving validation",
+    "no terminal promotion below FULLY_ESTABLISHED"
+  ],
+  "provider_effect": "ONLY_IF_THE_EXISTING_WORKFLOW_PASSES_ITS_IDENTITY_AUTHORITY_AND_SEMANTIC_GATES",
+  "truth_boundary": "This trigger record performs no provider call itself and proves no Google, Gemini, OpenRouter, OpenAI, LiteLLM or Cloud Run capability. The resulting workflow run and its redacted artifacts are the only admissible evidence for any provider-stage change."
+}
