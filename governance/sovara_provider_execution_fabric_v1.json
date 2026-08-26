@@ -1,31 +1,52 @@
 {
   "schema": "SOVARA-PROVIDER-EXECUTION-FABRIC-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
+  "architecture": "ISOLATED_PROVIDER_CELLS_WITH_REPLACEABLE_SUBSTRATES_AND_PROGRESSIVE_AGGREGATOR_ADMISSION",
   "mission": "FORMATION_OMEGA_MULTI_PROVIDER_EXECUTION",
   "principles": [
-    "provider cells are independent failure domains",
-    "one provider failure never creates a global mission stall",
-    "credential values remain outside public source and orchestration receipts",
-    "provider semantic proof precedes LiteLLM admission",
-    "Apps Script, Cloud Run, private runtime and local runtime are replaceable substrates",
-    "stable failure fingerprints suppress unchanged retries until a material dependency changes"
+    "provider cells are failure-domain isolated",
+    "provider authority never inherits across cells",
+    "one held provider never stalls independent cells",
+    "provider metadata precedes paid semantic canary",
+    "exact semantic/model/usage/cost/generation readback precedes receipt-based LiteLLM admission",
+    "aggregator availability is progressive, not all-or-nothing",
+    "legacy CloudOps is not an OpenRouter critical-path dependency",
+    "Apps Script, Cloud Run, private runtime and local runtime are replaceable execution substrates",
+    "stable provider failure fingerprints suppress unchanged retries until a material dependency changes"
   ],
-  "provider_cells": [
-    {"provider": "openrouter", "initial_substrate": "apps_script", "state": "BOOTSTRAP_TARGET"},
-    {"provider": "gemini", "initial_substrate": "cloud_run", "state": "AUTHORITY_HELD"},
-    {"provider": "openai", "initial_substrate": "private_runtime", "state": "CREDIT_HELD"},
-    {"provider": "anthropic", "initial_substrate": "private_runtime", "state": "UNQUALIFIED"},
-    {"provider": "deepseek", "initial_substrate": "private_runtime", "state": "UNQUALIFIED"},
-    {"provider": "ollama", "initial_substrate": "local", "state": "LOCAL_FALLBACK"}
-  ],
-  "promotion_contract": [
+  "private_openrouter_cell": {
+    "runtime": "isolated_google_apps_script",
+    "deployment_posture": "OWNER_PRIVATE_NON_PUBLIC",
+    "source_state": "PRIVATE_SOURCE_VALIDATED_AND_EXACT_DRIVE_READBACK",
+    "target_state": "OWNER_PRIVATE_TARGET_CREATED",
+    "runtime_binding": "OPEN",
+    "semantic_readback": "OPEN",
+    "source_sha256": "bba4b152588f4a789338a35fc6e243a5d8de2524f09371fb25a816ef6e2a117b",
+    "private_package_sha256": "bc570828b145f742d4d80c7951078f773c5ba711f76042559564cd074093e0e7"
+  },
+  "execution_substrates": ["apps_script", "cloud_run", "private_runtime", "local"],
+  "cells": {
+    "openrouter": {"preferred_substrate": "apps_script", "state": "SOURCE_AND_TARGET_READY_RUNTIME_BINDING_OPEN"},
+    "gemini": {"preferred_substrate": "cloud_run", "state": "INDEPENDENT_AUTHORITY_RECOVERY"},
+    "openai": {"preferred_substrate": "private_runtime", "state": "INDEPENDENT_CREDIT_RECOVERY"},
+    "anthropic": {"preferred_substrate": "private_runtime", "state": "FUTURE_ISOLATED_CELL"},
+    "deepseek": {"preferred_substrate": "private_runtime", "state": "FUTURE_ISOLATED_CELL"},
+    "ollama": {"preferred_substrate": "local", "state": "SEPARATE_LOCAL_PROOF"}
+  },
+  "receipt_promotion_contract": [
     "IDENTITY_VERIFIED",
     "METADATA_VERIFIED",
     "EXACT_NONCE_SEMANTIC_READBACK",
     "RESOLVED_MODEL_READBACK",
     "USAGE_READBACK",
-    "COST_READBACK"
+    "COST_READBACK",
+    "GENERATION_READBACK"
   ],
-  "litellm_role": "aggregator_of_independently_proven_cells",
-  "truth_boundary": "This source defines orchestration and promotion semantics only. It does not create credentials, provider authority, funded quota, runtime deployment, or provider execution."
+  "aggregator": {
+    "name": "SOVARA LiteLLM v2.3",
+    "role": "DOWNSTREAM_AGGREGATOR_OF_INDEPENDENTLY_PROVEN_CELLS",
+    "admission": "PER_CELL_SEMANTIC_AND_RECEIPT_PROOF_REQUIRED",
+    "all_provider_dependency": false
+  },
+  "truth_boundary": "This manifest proves source/governance orchestration semantics and private-cell hash binding only. It does not prove Apps Script source installation, credential validity, provider balance, live OpenRouter/Gemini/OpenAI/Anthropic/DeepSeek/Ollama inference, LiteLLM provider deployment, or production readiness."
 }
