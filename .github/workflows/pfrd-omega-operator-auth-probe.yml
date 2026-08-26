@@ -5,8 +5,16 @@ on:
     branches: ["main"]
     paths:
       - ".github/workflows/pfrd-omega-operator-auth-probe.yml"
+      - "bubbles/apps_script_provider_inventory.py"
       - "governance/github_airlock_policy.json"
+      - "tests/test_bubbles_apps_script_provider_inventory.py"
   workflow_dispatch:
+    inputs:
+      apps_script_provider_proof:
+        description: Run the bounded Apps Script inventory and append-only proof canary
+        required: false
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -21,7 +29,8 @@ env:
   REGION: africa-south1
   SERVICE: federation-omega-operator
   OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
-  PROBE_SCHEMA: SOVARA-OPERATOR-AUTH-RECOVERY-V2
+  PROBE_SCHEMA: SOVARA-OPERATOR-AUTH-RECOVERY-V3
+  APPS_SCRIPT_PROVIDER_PROOF_REQUESTED: ${{ github.event_name == 'workflow_dispatch' && inputs.apps_script_provider_proof == true }}
   HAS_FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN != '' }}
   HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
   HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
@@ -54,7 +63,11 @@ jobs:
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           token_format: access_token
           access_token_lifetime: 600s
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          access_token_scopes: |-
+            https://www.googleapis.com/auth/cloud-platform
+            https://www.googleapis.com/auth/script.projects.readonly
+            https://www.googleapis.com/auth/script.deployments.readonly
+            https://www.googleapis.com/auth/spreadsheets
           create_credentials_file: false
           export_environment_variables: false
 
@@ -68,7 +81,11 @@ jobs:
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           token_format: access_token
           access_token_lifetime: 600s
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          access_token_scopes: |-
+            https://www.googleapis.com/auth/cloud-platform
+            https://www.googleapis.com/auth/script.projects.readonly
+            https://www.googleapis.com/auth/script.deployments.readonly
+            https://www.googleapis.com/auth/spreadsheets
           create_credentials_file: false
           export_environment_variables: false
 
@@ -82,7 +99,11 @@ jobs:
           credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
           token_format: access_token
           access_token_lifetime: 600s
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          access_token_scopes: |-
+            https://www.googleapis.com/auth/cloud-platform
+            https://www.googleapis.com/auth/script.projects.readonly
+            https://www.googleapis.com/auth/script.deployments.readonly
+            https://www.googleapis.com/auth/spreadsheets
           create_credentials_file: false
           export_environment_variables: false
 
@@ -96,7 +117,11 @@ jobs:
           credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           token_format: access_token
           access_token_lifetime: 600s
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          access_token_scopes: |-
+            https://www.googleapis.com/auth/cloud-platform
+            https://www.googleapis.com/auth/script.projects.readonly
+            https://www.googleapis.com/auth/script.deployments.readonly
+            https://www.googleapis.com/auth/spreadsheets
           create_credentials_file: false
           export_environment_variables: false
 
@@ -110,7 +135,11 @@ jobs:
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           token_format: access_token
           access_token_lifetime: 600s
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          access_token_scopes: |-
+            https://www.googleapis.com/auth/cloud-platform
+            https://www.googleapis.com/auth/script.projects.readonly
+            https://www.googleapis.com/auth/script.deployments.readonly
+            https://www.googleapis.com/auth/spreadsheets
           create_credentials_file: false
           export_environment_variables: false
 
@@ -124,7 +153,11 @@ jobs:
           credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
           token_format: access_token
           access_token_lifetime: 600s
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          access_token_scopes: |-
+            https://www.googleapis.com/auth/cloud-platform
+            https://www.googleapis.com/auth/script.projects.readonly
+            https://www.googleapis.com/auth/script.deployments.readonly
+            https://www.googleapis.com/auth/spreadsheets
           create_credentials_file: false
           export_environment_variables: false
 
@@ -138,7 +171,11 @@ jobs:
           credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
           token_format: access_token
           access_token_lifetime: 600s
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          access_token_scopes: |-
+            https://www.googleapis.com/auth/cloud-platform
+            https://www.googleapis.com/auth/script.projects.readonly
+            https://www.googleapis.com/auth/script.deployments.readonly
+            https://www.googleapis.com/auth/spreadsheets
           create_credentials_file: false
           export_environment_variables: false
 
@@ -695,6 +732,49 @@ jobs:
           )
           PY
 
+      - name: Run bounded Apps Script provider inventory and append-only proof
+        if: ${{ env.APPS_SCRIPT_PROVIDER_PROOF_REQUESTED == 'true' }}
+        shell: bash
+        env:
+          GOOGLE_ACCESS_TOKEN: ${{ steps.auth_gcp_sa.outputs.access_token || steps.auth_gcp_service_account.outputs.access_token || steps.auth_google_credentials.outputs.access_token || steps.auth_google_service_account.outputs.access_token || steps.auth_gcp_credentials.outputs.access_token || steps.auth_google_gha.outputs.access_token || steps.auth_google_cloud.outputs.access_token }}
+          OUTCOME_GCP_SA_KEY: ${{ steps.auth_gcp_sa.outcome }}
+          OUTCOME_GCP_SERVICE_ACCOUNT_KEY: ${{ steps.auth_gcp_service_account.outcome }}
+          OUTCOME_GOOGLE_CREDENTIALS: ${{ steps.auth_google_credentials.outcome }}
+          OUTCOME_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ steps.auth_google_service_account.outcome }}
+          OUTCOME_GCP_CREDENTIALS: ${{ steps.auth_gcp_credentials.outcome }}
+          OUTCOME_GOOGLE_GHA_CREDS_JSON: ${{ steps.auth_google_gha.outcome }}
+          OUTCOME_GOOGLE_CLOUD_CREDENTIALS: ${{ steps.auth_google_cloud.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          python -m bubbles.apps_script_provider_inventory \
+            --output /tmp/pfrd-operator/GAS_PRIMARY_PROVIDER_PROOF_RECEIPT.json
+
+      - name: Enforce Apps Script provider proof truth gate
+        if: ${{ always() && env.APPS_SCRIPT_PROVIDER_PROOF_REQUESTED == 'true' }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          path = Path('/tmp/pfrd-operator/GAS_PRIMARY_PROVIDER_PROOF_RECEIPT.json')
+          if not path.exists():
+              raise SystemExit('Apps Script provider proof receipt was not produced')
+          receipt = json.loads(path.read_text(encoding='utf-8'))
+          if receipt.get('classification') != 'GAS_PRIMARY_PROVIDER_PROOF_CONFIRMED':
+              raise SystemExit('Apps Script provider proof remains open: ' + str(receipt.get('classification')))
+          if receipt.get('provider_reads_proven') is not True:
+              raise SystemExit('Apps Script provider reads remain unproven')
+          if receipt.get('proof_sheet', {}).get('rows_confirmed') != 3:
+              raise SystemExit('GAS_PRIMARY_PROVIDER_PROOF readback is incomplete')
+          if receipt.get('credential_values_recorded') is not False:
+              raise SystemExit('Credential-value recording boundary was violated')
+          print('GAS_PRIMARY_PROVIDER_PROOF_CONFIRMED')
+          print('INSTALLABLE_TRIGGER_INVENTORY_REMAINS_SEPARATE')
+          PY
+
       - name: Upload immutable redacted authority receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
@@ -702,4 +782,6 @@ jobs:
           name: pfrd-omega-operator-auth-recovery
           if-no-files-found: error
           retention-days: 30
-          path: /tmp/pfrd-operator/OPERATOR_AUTH_RECOVERY_RECEIPT.json
+          path: |
+            /tmp/pfrd-operator/OPERATOR_AUTH_RECOVERY_RECEIPT.json
+            /tmp/pfrd-operator/GAS_PRIMARY_PROVIDER_PROOF_RECEIPT.json
