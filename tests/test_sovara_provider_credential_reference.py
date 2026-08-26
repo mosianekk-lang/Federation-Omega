@@ -28,6 +28,29 @@ class ProviderCredentialReferenceTests(unittest.TestCase):
         self.assertEqual("SOVARA_ROUTER_CREDENTIAL", plan.source_locator)
         self.assertEqual("apps_script", plan.resolution_surface)
 
+    def test_drive_document_title_reference_is_value_free(self):
+        plan = build_binding_plan(
+            CredentialReference("openrouter", "drive_document_title", "SOVARA OpenRouter Credential Reference"),
+            resolution_surface="apps_script",
+        )
+        self.assertEqual("drive_document_title", plan.source_kind)
+        self.assertFalse(plan.value_exposed)
+        self.assertFalse(plan.value_persisted)
+        self.assertFalse(plan.provider_call_performed)
+
+    def test_drive_document_title_rejects_url_or_secret_like_locator(self):
+        for locator in (
+            "https://drive.google.com/private-ref",
+            "sk-or-v1-not-a-real-secret-but-secret-like",
+            "Bearer not-a-real-token-value",
+        ):
+            with self.subTest(locator=locator):
+                with self.assertRaises(CredentialReferenceError):
+                    build_binding_plan(
+                        CredentialReference("openrouter", "drive_document_title", locator),
+                        resolution_surface="apps_script",
+                    )
+
     def test_environment_reference_rejects_literal_like_value(self):
         with self.assertRaises(CredentialReferenceError):
             build_binding_plan(
@@ -46,17 +69,29 @@ class ProviderCredentialReferenceTests(unittest.TestCase):
         decision = choose_openrouter_binding_route(
             google_admin_ready=True,
             apps_script_property_ready=True,
+            owner_drive_document_ready=True,
         )
         self.assertEqual("REUSE_OPTIMISE", decision["family"])
         self.assertEqual("google_cloud_secret_reference", decision["route"])
 
-    def test_apps_script_route_is_second_choice(self):
+    def test_apps_script_property_route_precedes_drive_document(self):
         decision = choose_openrouter_binding_route(
             google_admin_ready=False,
             apps_script_property_ready=True,
+            owner_drive_document_ready=True,
         )
         self.assertEqual("COMPOSE_EXTEND", decision["family"])
         self.assertEqual("apps_script_property_reference", decision["route"])
+
+    def test_owner_drive_document_route_is_available_without_value_transport(self):
+        decision = choose_openrouter_binding_route(
+            google_admin_ready=False,
+            apps_script_property_ready=False,
+            owner_drive_document_ready=True,
+        )
+        self.assertEqual("COMPOSE_EXTEND", decision["family"])
+        self.assertEqual("apps_script_owner_drive_document_reference", decision["route"])
+        self.assertFalse(decision["provider_call_performed"])
 
     def test_no_resolver_holds_without_provider_effect(self):
         decision = choose_openrouter_binding_route(
