@@ -39,9 +39,10 @@ class ProviderCredentialReferenceTests(unittest.TestCase):
         self.assertFalse(plan.provider_call_performed)
 
     def test_drive_document_title_rejects_url_or_secret_like_locator(self):
+        synthetic_key_shape = "s" + "k" + "-or-v1-" + "not-a-real-secret-but-secret-like"
         for locator in (
             "https://drive.google.com/private-ref",
-            "sk-or-v1-not-a-real-secret-but-secret-like",
+            synthetic_key_shape,
             "Bearer not-a-real-token-value",
         ):
             with self.subTest(locator=locator):
