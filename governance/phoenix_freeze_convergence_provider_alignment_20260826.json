@@ -1,0 +1,22 @@
+{
+  "schema": "PHOENIX-FREEZE-CONVERGENCE-PROVIDER-ALIGNMENT-V1",
+  "version": "1.0.0",
+  "recorded_at_sast": "2026-08-26T21:55:00+02:00",
+  "owner": "Kim Kagiso Mosiane",
+  "incident": "Phoenix run 33006908257 successfully re-enabled and dispatched the Airlock-admitted SOVARA LiteLLM v2.3 provider gateway, but the convergence evaluator still omitted that workflow from its REQUIRED set and therefore classified the now-correct active workflow as unexpected. The workflow receipt was READBACK_FAILED despite exact individual active-state readback.",
+  "root_cause": "Duplicated hard-coded workflow truth: Phoenix YAML had been repaired, while phoenix/workflow_freeze_convergence.py and its regression fixture retained the six-workflow predecessor set.",
+  "repair": [
+    "add the provider-admission workflow to the convergence REQUIRED set",
+    "make an active provider gateway explicitly non-unexpected",
+    "fail convergence when the provider gateway is disabled",
+    "bind the Phoenix YAML required-active contract to focused regression tests"
+  ],
+  "affected_run": 33006908257,
+  "affected_receipt_sha256": "743d9e1fffeee4fd8b36cd249df1120728e6f1c6adea0005c379edb1242799f7",
+  "provider_run_dispatched": 33006976929,
+  "provider_run_result": "STRUCTURAL_PASS / GOOGLE_WIF_INVALID_TARGET / NO_PROVIDER_EFFECT",
+  "provider_effect": false,
+  "secret_value_access": false,
+  "learning": "Whenever an execution allowlist changes, every YAML keep-active set, individual readback set, convergence evaluator, test fixture and owner-visible registry must be updated atomically and tested against both active and disabled states.",
+  "truth_boundary": "This repair corrects workflow-state convergence only. It does not repair Google WIF or establish any provider, model, deployment, serving or FULLY_ESTABLISHED claim."
+}

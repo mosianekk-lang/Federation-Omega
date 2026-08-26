@@ -16,6 +16,7 @@ REQUIRED = {
     ".github/workflows/bubbles-command-bus.yml",
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
 }
 PROVIDER_MANAGED = {"dynamic/dependabot/dependabot-updates"}
 
