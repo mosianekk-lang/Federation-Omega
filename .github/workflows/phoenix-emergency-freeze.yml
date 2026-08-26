@@ -48,6 +48,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
           python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3.py' -v
+          python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3_*.py' -v
           python -m unittest discover -s tests -p 'test_pst_composite_runtime_contract.py' -v
 
       - name: Build source-clean Core and private Ops exports
@@ -85,7 +86,8 @@ jobs:
                 .github/workflows/phoenix-emergency-freeze.yml|\
                 .github/workflows/bubbles-command-bus.yml|\
                 .github/workflows/caseforge-provider-readback-canary.yml|\
-                .github/workflows/pfrd-omega-operator-auth-probe.yml)
+                .github/workflows/pfrd-omega-operator-auth-probe.yml|\
+                .github/workflows/sovara-litellm-v2-3-provider-admission.yml)
                   if [[ "${workflow_state}" != "active" ]]; then
                     if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
@@ -127,6 +129,7 @@ jobs:
             "bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"
             "caseforge-provider-readback-canary.yml|.github/workflows/caseforge-provider-readback-canary.yml"
             "pfrd-omega-operator-auth-probe.yml|.github/workflows/pfrd-omega-operator-auth-probe.yml"
+            "sovara-litellm-v2-3-provider-admission.yml|.github/workflows/sovara-litellm-v2-3-provider-admission.yml"
           )
 
           for attempt in 1 2 3 4 5 6; do
@@ -174,23 +177,36 @@ jobs:
             sleep $((attempt * 2))
           done
 
-          if awk -F '\t' '$2 == ".github/workflows/pfrd-omega-operator-auth-probe.yml" {found=1} END {exit !found}' \
-               /tmp/phoenix-freeze-enabled.txt; then
-            probe_dispatched=false
-            for attempt in 1 2 3 4 5 6; do
-              if gh api -X POST \
-                "/repos/${GITHUB_REPOSITORY}/actions/workflows/pfrd-omega-operator-auth-probe.yml/dispatches" \
-                -f ref=main >/dev/null 2>&1; then
-                probe_dispatched=true
-                break
+          dispatch_after_enable=(
+            "pfrd-omega-operator-auth-probe.yml|.github/workflows/pfrd-omega-operator-auth-probe.yml|operator auth probe"
+            "sovara-litellm-v2-3-provider-admission.yml|.github/workflows/sovara-litellm-v2-3-provider-admission.yml|LiteLLM provider admission"
+          )
+
+          for dispatch_spec in "${dispatch_after_enable[@]}"; do
+            workflow_file="${dispatch_spec%%|*}"
+            dispatch_rest="${dispatch_spec#*|}"
+            workflow_path="${dispatch_rest%%|*}"
+            workflow_label="${dispatch_rest#*|}"
+
+            if awk -F '\t' -v expected="${workflow_path}" \
+                 '$2 == expected {found=1} END {exit !found}' \
+                 /tmp/phoenix-freeze-enabled.txt; then
+              workflow_dispatched=false
+              for attempt in 1 2 3 4 5 6; do
+                if gh api -X POST \
+                  "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}/dispatches" \
+                  -f ref=main >/dev/null 2>&1; then
+                  workflow_dispatched=true
+                  break
+                fi
+                sleep $((attempt * 2))
+              done
+              if [[ "${workflow_dispatched}" != "true" ]]; then
+                printf 'Failed to dispatch newly enabled %s\n' "${workflow_label}" \
+                  >> /tmp/phoenix-freeze-errors.txt
               fi
-              sleep $((attempt * 2))
-            done
-            if [[ "${probe_dispatched}" != "true" ]]; then
-              echo 'Failed to dispatch newly enabled operator auth probe' \
-                >> /tmp/phoenix-freeze-errors.txt
             fi
-          fi
+          done
 
           if ! gh api --paginate \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \

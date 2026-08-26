@@ -1,0 +1,19 @@
+{
+  "schema": "PHOENIX-PROVIDER-GATEWAY-ALIGNMENT-REPAIR-V1",
+  "version": "1.0.0",
+  "recorded_at_sast": "2026-08-26T21:42:00+02:00",
+  "owner": "Kim Kagiso Mosiane",
+  "incident": "Airlock v2.3.5 declared the SOVARA LiteLLM v2.3 provider-admission workflow active and OIDC-admitted, while Phoenix Emergency Execution Freeze still omitted it from the hard-coded keep-active and required-readback sets. Every main push therefore disabled the admitted provider gateway, and a post-repair provider trigger produced no provider workflow run.",
+  "repair": [
+    "add the provider gateway to Phoenix keep-active matching",
+    "add it to required workflow readback and re-enable convergence",
+    "dispatch it once when Phoenix has newly re-enabled it",
+    "retain repository-read-only provider workflow permissions and artifact-only evidence",
+    "add provider-cutover-v3 alignment regressions"
+  ],
+  "previous_trigger_merge": "4621483b6a3930a676e0f7beb0a153ce631d9a26",
+  "previous_trigger_outcome": "SOURCE_PUSH_CONTROLS_PASS / PROVIDER_WORKFLOW_ABSENT_BECAUSE_DISABLED",
+  "provider_effect": false,
+  "secret_value_access": false,
+  "truth_boundary": "The source repair restores execution-plane alignment. It does not prove Google WIF, provider credentials, semantic inference, LiteLLM deployment, rollback, soak, or FULLY_ESTABLISHED status. The newly dispatched provider run and immutable artifacts remain the only provider-stage evidence."
+}
