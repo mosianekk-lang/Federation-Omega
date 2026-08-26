@@ -1,13 +1,14 @@
 from __future__ import annotations
 
 import argparse
+import hmac
 import json
 import os
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
-from pathlib import Path
+from importlib.resources import files
 
 from .orchestrator import Jarvis
-from .principles import catalogue
+from .principles import catalogue, doctrine_summary
 
 APP = Jarvis(os.getenv("JARVIS_STATE_DIR", "state"))
 
@@ -19,16 +20,16 @@ class Handler(BaseHTTPRequestHandler):
 
     def _authorized(self) -> bool:
         expected = os.getenv("JARVIS_API_TOKEN", "")
-        return not expected or self.headers.get("authorization") == f"Bearer {expected}"
+        provided = self.headers.get("authorization", "")
+        return not expected or hmac.compare_digest(provided, f"Bearer {expected}")
 
     def do_GET(self):
         if self.path == "/health": return self._json(200, APP.health())
+        if self.path == "/":
+            data = files("jarvis.resources").joinpath("index.html").read_bytes(); self.send_response(200); self.send_header("content-type", "text/html; charset=utf-8"); self.send_header("content-length", str(len(data))); self.end_headers(); self.wfile.write(data); return
         if not self._authorized(): return self._json(403, {"ok": False, "error": "FORBIDDEN"})
         if self.path == "/v1/capabilities": return self._json(200, APP.capabilities())
-        if self.path == "/v1/principles": return self._json(200, {"principles": catalogue()})
-        if self.path == "/":
-            page = Path(__file__).parent.parent / "web" / "index.html"
-            data = page.read_bytes(); self.send_response(200); self.send_header("content-type", "text/html; charset=utf-8"); self.send_header("content-length", str(len(data))); self.end_headers(); self.wfile.write(data); return
+        if self.path == "/v1/principles": return self._json(200, {"summary": doctrine_summary(), "principles": catalogue()})
         self._json(404, {"ok": False, "error": "NOT_FOUND"})
 
     def do_POST(self):
@@ -38,7 +39,8 @@ class Handler(BaseHTTPRequestHandler):
             body = json.loads(self.rfile.read(length) or b"{}")
             if self.path == "/v1/chat": return self._json(200, APP.chat(str(body.get("message", ""))))
             if self.path == "/v1/plan": return self._json(200, APP.plan(str(body.get("objective", ""))))
-            if self.path == "/v1/authorize": return self._json(200, APP.authorize(str(body.get("missionId", "")), str(body.get("action", "")), str(body.get("capability", "")), body.get("permit")))
+            if self.path == "/v1/math": return self._json(200, APP.math(str(body.get("expression", ""))))
+            if self.path == "/v1/authorize": return self._json(200, APP.authorize(str(body.get("missionId", "")), int(body.get("missionVersion", 0)), str(body.get("actionId", "")), str(body.get("capability", "")), body.get("resource"), body.get("arguments"), body.get("permit")))
             return self._json(404, {"ok": False, "error": "NOT_FOUND"})
         except Exception as exc:
             return self._json(400, {"ok": False, "error": type(exc).__name__})

@@ -1,0 +1,45 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width,initial-scale=1">
+  <title>JARVIS Ultimate Federation</title>
+  <style>
+    :root{color-scheme:dark;--ink:#dffaff;--muted:#8fb9c4;--cyan:#59e3ff;--blue:#386fff;--panel:rgba(8,25,36,.86);--line:#245468}
+    *{box-sizing:border-box} body{margin:0;min-height:100vh;font:16px/1.5 Inter,ui-sans-serif,system-ui;background:radial-gradient(circle at 20% 0,#123c55 0,transparent 34%),radial-gradient(circle at 100% 20%,#1b2858 0,transparent 32%),#030b12;color:var(--ink)}
+    main{width:min(980px,calc(100% - 32px));margin:0 auto;padding:48px 0 80px}.eyebrow{color:var(--cyan);letter-spacing:.18em;text-transform:uppercase;font-size:.75rem}h1{font-size:clamp(2.2rem,6vw,5rem);line-height:.95;margin:.35rem 0 1rem;background:linear-gradient(90deg,#fff,var(--cyan));-webkit-background-clip:text;color:transparent}p{color:var(--muted);max-width:720px}.grid{display:grid;grid-template-columns:1fr 290px;gap:18px;margin-top:28px}.panel{background:var(--panel);border:1px solid var(--line);border-radius:20px;padding:20px;box-shadow:0 22px 80px rgba(0,0,0,.3);backdrop-filter:blur(12px)}label{display:block;color:var(--muted);font-size:.82rem;margin-bottom:7px}textarea,input,button{font:inherit;border-radius:12px;border:1px solid var(--line);background:#071722;color:#fff;padding:12px;width:100%}textarea{min-height:160px;resize:vertical}input{margin-bottom:14px}button{width:auto;margin-top:12px;padding:11px 18px;border-color:#49cce7;background:linear-gradient(135deg,#187da0,#3c5fe0);cursor:pointer;font-weight:700}button:disabled{opacity:.55;cursor:wait}.chips{display:flex;gap:8px;flex-wrap:wrap}.chip{border:1px solid var(--line);border-radius:999px;padding:5px 9px;font-size:.76rem;color:#bdeaf2}pre{white-space:pre-wrap;word-break:break-word;background:#030c12;padding:16px;border:1px solid #173847;border-radius:14px;min-height:150px;max-height:520px;overflow:auto}.status{display:flex;align-items:center;gap:8px}.dot{width:9px;height:9px;border-radius:50%;background:#54e59a;box-shadow:0 0 18px #54e59a}@media(max-width:760px){.grid{grid-template-columns:1fr}main{padding-top:28px}}
+  </style>
+</head>
+<body>
+<main>
+  <div class="eyebrow">Alpha–Omega governed intelligence</div>
+  <h1>JARVIS</h1>
+  <p>Evidence-led Gemini advisory reasoning, deterministic mathematics, truth-typed science, Federation routing, exact authority gates, response-contract verification, and learning candidates that cannot promote themselves.</p>
+  <div class="chips"><span class="chip">One executor</span><span class="chip">Fail closed</span><span class="chip">32 scientific principles</span><span class="chip">No silent provider fallback</span></div>
+  <section class="grid">
+    <div class="panel">
+      <label for="token">Runtime token (kept only in this browser tab)</label>
+      <input id="token" type="password" autocomplete="off" placeholder="Bearer token if configured">
+      <label for="question">Objective</label>
+      <textarea id="question" placeholder="State an objective, constraints, evidence and terminal fruit…"></textarea>
+      <button id="run" type="button">Run governed analysis</button>
+      <pre id="output" aria-live="polite">Ready.</pre>
+    </div>
+    <aside class="panel">
+      <div class="status"><span class="dot"></span><strong>On-demand governed</strong></div>
+      <p>Gemini and Google Workspace remain unproven until the runtime completes their own authenticated semantic canaries.</p>
+      <button id="health" type="button">Read health</button>
+      <button id="capabilities" type="button">Read capability truth</button>
+    </aside>
+  </section>
+</main>
+<script>
+const output=document.querySelector('#output'),run=document.querySelector('#run'),token=document.querySelector('#token'),question=document.querySelector('#question');
+const headers=()=>{const value=token.value.trim();return {'content-type':'application/json',...(value?{authorization:`Bearer ${value}`}:{})}};
+async function request(path,options={}){output.textContent='Working…';try{const response=await fetch(path,{...options,headers:{...headers(),...(options.headers||{})}});const body=await response.json();output.textContent=JSON.stringify(body,null,2)}catch(error){output.textContent=`Request failed: ${error.name}`}}
+run.addEventListener('click',async()=>{run.disabled=true;await request('/v1/chat',{method:'POST',body:JSON.stringify({message:question.value})});run.disabled=false});
+document.querySelector('#health').addEventListener('click',()=>request('/health'));
+document.querySelector('#capabilities').addEventListener('click',()=>request('/v1/capabilities'));
+</script>
+</body>
+</html>
