@@ -1,0 +1,162 @@
+name: SOVARA LiteLLM v2.3 Provider Admission
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+      - "governance/github_airlock_policy.json"
+      - "releases/sovara-litellm/v2.3.0/**"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
+concurrency:
+  group: sovara-litellm-v2-3-provider-admission-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  AR_REPOSITORY: federation-omega
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+
+jobs:
+  provider-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - name: Check out exact admitted main source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Materialize and verify exact release bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE_BUNDLE="releases/sovara-litellm/v2.3.0/SOVARA_LITELLM_GATEWAY_V2.3.0_CONVERGED_PROOF_READY.zip"
+          OVERLAY="releases/sovara-litellm/v2.3.0/SOVARA_LITELLM_V2.3.0_PROVIDER_ADMISSION_OVERLAY.zip"
+          BASE_EXPECTED="2dc95a249938604e3117d26e81da4afada96e3c836ab9dde3d80776187cf15bd"
+          OVERLAY_EXPECTED="7d15c31e266a1424d982be82655b07c96afe29480ac2f921639215433204794f"
+
+          test "$(sha256sum "$BASE_BUNDLE" | awk '{print $1}')" = "$BASE_EXPECTED"
+          test "$(sha256sum "$OVERLAY" | awk '{print $1}')" = "$OVERLAY_EXPECTED"
+
+          TARGET="$RUNNER_TEMP/sovara-litellm-v2.3.0"
+          rm -rf "$TARGET"
+          mkdir -p "$TARGET/receipts"
+          unzip -q "$BASE_BUNDLE" -d "$TARGET"
+          unzip -qo "$OVERLAY" -d "$TARGET"
+
+          python3 "$TARGET/sovara_gateway_control_v2_3.py" validate \
+            "$TARGET/litellm_config.v2.3.0-converged-proof-ready.yaml" \
+            --predecessor "$TARGET/litellm_config.v2.2.0-proof-ready.rollback.yaml" \
+            --expected-alias-count 33 \
+            > "$TARGET/receipts/STRUCTURAL_VALIDATION_PRE_AUTH.json"
+
+          python3 "$TARGET/SOVARA_PROVIDER_ADMISSION_PROBE_V2.3.0.py" \
+            --self-test \
+            > "$TARGET/receipts/PROVIDER_PROBE_SELF_TEST.json"
+
+          bash -n "$TARGET/run_provider_admission_v2_3.sh"
+
+          echo "SOVARA_RELEASE_DIR=$TARGET" >> "$GITHUB_ENV"
+          echo "SOVARA_RECEIPT_DIR=$TARGET/receipts" >> "$GITHUB_ENV"
+
+      - name: Authenticate through exact repository-scoped Google WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned Google Cloud CLI action
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute provider admission, canaries, deployment, and rollback gates
+        id: admission
+        continue-on-error: true
+        shell: bash
+        env:
+          RELEASE_DIR: ${{ env.SOVARA_RELEASE_DIR }}
+          RECEIPT_DIR: ${{ env.SOVARA_RECEIPT_DIR }}
+          GH_SOVARA_GATEWAY_MASTER_KEY: ${{ secrets.SOVARA_GATEWAY_MASTER_KEY }}
+          GH_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+          GH_OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
+          GH_ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+          GH_DEEPSEEK_API_KEY: ${{ secrets.DEEPSEEK_API_KEY }}
+          GH_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+          GH_OLLAMA_API_BASE: ${{ secrets.OLLAMA_API_BASE }}
+        run: |
+          set +e
+          chmod +x "$RELEASE_DIR/run_provider_admission_v2_3.sh"
+          "$RELEASE_DIR/run_provider_admission_v2_3.sh"
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+
+      - name: Record workflow-level truth boundary
+        if: always()
+        shell: bash
+        env:
+          ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          mkdir -p "${SOVARA_RECEIPT_DIR:-$RUNNER_TEMP/sovara-litellm-v2.3.0/receipts}"
+          python3 - "${SOVARA_RECEIPT_DIR:-$RUNNER_TEMP/sovara-litellm-v2.3.0/receipts}/WORKFLOW_RECEIPT.json" <<'PY'
+          import hashlib, json, os, sys
+          from datetime import datetime, timezone
+          from pathlib import Path
+          path = Path(sys.argv[1])
+          code = int(os.environ.get("ADMISSION_EXIT_CODE") or 99)
+          receipt = {
+              "schema": "SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-2",
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "workflow": os.environ["GITHUB_WORKFLOW"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
+              "source_sha": os.environ["GITHUB_SHA"],
+              "ref": os.environ["GITHUB_REF"],
+              "provider_admission_exit_code": code,
+              "provider_admission_completed": code == 0,
+              "repository_source_write_authority": False,
+              "credential_values_recorded": False,
+          }
+          receipt["receipt_sha256"] = hashlib.sha256(
+              json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          ).hexdigest()
+          path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          PY
+
+      - name: Upload immutable redacted provider receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sovara-litellm-v2-3-provider-admission-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: ${{ env.SOVARA_RECEIPT_DIR }}
+
+      - name: Enforce provider-admission result
+        if: always()
+        env:
+          ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
+        run: |
+          set -euo pipefail
+          code="${ADMISSION_EXIT_CODE:-99}"
+          if [ "$code" -ne 0 ]; then
+            echo "Provider admission stopped at a proof gate. Redacted receipts were retained as a workflow artifact." >&2
+            exit "$code"
+          fi

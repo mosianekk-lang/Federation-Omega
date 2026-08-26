@@ -39,12 +39,15 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertIn("PST not requested", self.workflow)
         self.assertIn("persist-credentials: false", self.workflow)
 
-    def test_airlock_oidc_allowlist_is_empty(self) -> None:
-        self.assertEqual([], self.policy["oidc_workflow_allowlist"])
+    def test_airlock_oidc_allowlist_is_exactly_scoped(self) -> None:
+        expected = [
+            ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+        ]
+        self.assertEqual(expected, self.policy["oidc_workflow_allowlist"])
         self.assertNotIn("oidc_boundary", self.policy)
         self.assertEqual(
-            "SEPARATE_PRIVATE_EXECUTION_PLANE",
-            self.policy["automation_repository_role"],
+            "QUARANTINED_SOURCE_WITH_ONE_EXACT_PROVIDER_DEPLOYMENT_GATEWAY",
+            self.policy["source_repository_role"],
         )
 
     def test_rebuild_is_packaged_capability_not_active_source_runtime(self) -> None:
@@ -52,7 +55,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertTrue(BOUNDARY.exists())
         self.assertIn("PRIVATE_OPS_PLANE_REQUIRED", self.boundary)
         self.assertIn("not executable from the legacy public source repository", self.boundary)
-        self.assertIn("oidc_workflow_allowlist` is empty", self.boundary)
+        self.assertIn("contains exactly one provider-deployment gateway", self.boundary)
         self.assertIn("no provider rebuild or Library writeback is claimed", self.boundary)
 
     def test_rebuild_anchors_to_exact_predecessor_and_original_writer(self) -> None:

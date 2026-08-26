@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.3.4",
+  "version": "2.3.5",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -20,22 +20,59 @@
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
     ".github/workflows/caseforge-provider-readback-canary.yml",
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml"
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
   ],
   "allowed_events": {
-    ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
-    ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"]
+    ".github/workflows/github-airlock.yml": [
+      "pull_request",
+      "merge_group",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/public-repository-leak-guard.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/phoenix-emergency-freeze.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/bubbles-command-bus.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "push"
+    ],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "push",
+      "workflow_dispatch"
+    ]
   },
   "required_push_branches": {
-    ".github/workflows/bubbles-command-bus.yml": ["main"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["main"]
+    ".github/workflows/bubbles-command-bus.yml": [
+      "main"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "main"
+    ],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
+      "main"
+    ],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "main"
+    ]
   },
-  "oidc_workflow_allowlist": [],
+  "oidc_workflow_allowlist": [
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+  ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
   ],
@@ -84,10 +121,13 @@
     "secret_values_in_receipts": false,
     "reference_presence_proves_provider_authority": false,
     "provider_promotion_requires_surface_specific_readback": true,
-    "provider_probe_workflow": ".github/workflows/pfrd-omega-operator-auth-probe.yml"
+    "provider_probe_workflow": ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+    "provider_deployment_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+    "provider_deployment_workflow_source_write": false,
+    "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT"
   },
-  "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
-  "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE",
+  "source_repository_role": "QUARANTINED_SOURCE_WITH_ONE_EXACT_PROVIDER_DEPLOYMENT_GATEWAY",
+  "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE_OR_EXACT_AIRLOCKED_GATEWAY",
   "execution_quarantine": {
     "keep_active": [
       ".github/workflows/github-airlock.yml",
@@ -95,7 +135,8 @@
       ".github/workflows/phoenix-emergency-freeze.yml",
       ".github/workflows/bubbles-command-bus.yml",
       ".github/workflows/caseforge-provider-readback-canary.yml",
-      ".github/workflows/pfrd-omega-operator-auth-probe.yml"
+      ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+      ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"

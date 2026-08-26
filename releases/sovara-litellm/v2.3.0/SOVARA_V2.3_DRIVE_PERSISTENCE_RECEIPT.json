@@ -1,0 +1,30 @@
+{
+  "base_bundle": {
+    "file_id": "1PDUZaxbnU4dsqd-VqCj24VkMff0EAPVa",
+    "provider_download_readback": true,
+    "sha256": "2dc95a249938604e3117d26e81da4afada96e3c836ab9dde3d80776187cf15bd",
+    "size_bytes": 29674,
+    "zip_crc": "PASS"
+  },
+  "checksum_file_id": "1OMC64bGNK7GJgMJMQ9vYWTKaNIgOJSc3",
+  "configuration": {
+    "file_id": "1Omb_7mrsh_9HU5M_Q7KTiXbzeT9oWJQZ",
+    "sha256": "8cad48d954cd960b37b8c94559a19de244ffbd6d0ca1f7450dcec7b054d7d554"
+  },
+  "final_receipt_file_id": "17HJ8b141KwZISstZFVo_AYMssxB7OwYP",
+  "folder": {
+    "id": "1tRPIHXL4PZUAs5M4MhQ3W9I8oHjPd6K7",
+    "name": "2026-08-26 — SOVARA Ω — LiteLLM v2.3 Converged Provider Admission",
+    "owner": "mosianekk@gmail.com",
+    "shared": false
+  },
+  "receipt_sha256": "6d33df55a5c87b8b53790724ea54408869a0f67cda545a6fbb2ae3bc0c9d0604",
+  "schema": "SOVARA-LITELLM-V2.3-DRIVE-PERSISTENCE-1",
+  "truth_boundary": {
+    "credential_values_recorded": false,
+    "drive_exact_bundle_readback_verified": true,
+    "drive_persisted": true,
+    "gateway_deployed": false,
+    "provider_semantic_canary_executed": false
+  }
+}
