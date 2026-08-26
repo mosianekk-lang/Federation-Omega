@@ -1,0 +1,139 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "MISSION-RESOLVE-FEDERATION-GEMINI-20260826",
+    "version": 1,
+    "goal": "Add a keyless, tenant-pinned Gemini Vertex route to the existing Federation Omega operator without weakening its current controls.",
+    "user": "Kim Kagiso Mosiane",
+    "workflow": "Canonical-source verification, documentation gate, isolated patch, failure-first tests, Airlock-governed promotion, provider-native readback.",
+    "data": "Public operator source and synthetic exact-nonce fixtures only; no client content or provider credentials.",
+    "interface": "Authenticated Federation Omega JSON actions over the existing Cloud Run HTTP service.",
+    "stack": "Node.js 20+ standard library and Google REST APIs.",
+    "environment": "Isolated local test workspace; provider calls disabled during build validation.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation-gated, keyless service identity, exact target and tenant allowlists, no silent fallback.",
+    "failure": "Fail closed on authentication absence, target drift, model drift, tenant drift, disabled semantic gate, provider error or nonce mismatch.",
+    "testing": "Twenty-one Node tests plus syntax checks, secret scan and restored-source baseline verification.",
+    "deployment": "Not yet deployed; promotion requires Airlock-admitted pull request and trusted Google deployment identity.",
+    "continuity": "Existing v2 image remains rollback baseline; new semantic execution is environment-disabled by default."
+  },
+  "classification": "EXISTING_SYSTEM_REPAIR",
+  "assumptions": {
+    "stack": "Node.js 20+ standard library",
+    "runtime": "Existing Federation Omega Cloud Run service",
+    "storage": "No new storage for capability or semantic canary actions",
+    "authentication": "Existing Secret Manager token or Google-signed OIDC for operator ingress; Cloud Run service identity for Vertex",
+    "deployment": "Existing private deployment plane or authenticated Google-native deployer"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "Not applicable",
+      "backend": "Federation Omega operator action router and GoogleCloudAdapter",
+      "database": "Not applicable for bounded canary actions",
+      "queue": "Not applicable",
+      "worker": "Single bounded action invocation",
+      "scheduler": "Not applicable",
+      "cache": "Short-lived metadata access-token cache only",
+      "storage": "No new persistent storage",
+      "authentication": "Keyless Cloud Run service identity to Vertex AI"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE",
+      "SEMANTIC_MISMATCH"
+    ],
+    "observability": {
+      "correlation_ids": "idempotencyKey on semantic canary",
+      "health_checks": "existing operator health and authenticated status actions",
+      "structured_logs": "operator action status plus provider-safe response metadata",
+      "audit_logs": "existing Cloud Run request logs and provider audit logs",
+      "metrics_alerts": "capability status, nonce verification and token usage readback"
+    }
+  },
+  "testing": {
+    "unit": "Contract and adapter tests for allowlists, disabled gates and response parsing",
+    "integration": "Action router to mocked provider adapter",
+    "e2e_or_smoke": "Exact-nonce semantic fixture with no live provider effect",
+    "fixtures_mocks": "Synthetic project, tenant, model and nonce only",
+    "failure_first": "Model drift, tenant drift, disabled API, closed semantic gate and nonce mismatch",
+    "commands": [
+      "node --test tests/operator.test.mjs",
+      "node --check server.mjs",
+      "node --check lib/contracts.mjs",
+      "node --check lib/google_cloud.mjs",
+      "node --check lib/operator.mjs"
+    ]
+  },
+  "delivery": {
+    "file_tree": "ops/federation_omega_operator with contracts, action router, Google adapter, tests and operator documentation",
+    "exact_code_files": [
+      "lib/contracts.mjs",
+      "lib/operator.mjs",
+      "lib/google_cloud.mjs",
+      "tests/operator.test.mjs"
+    ],
+    "setup_commands": ["No new dependencies"],
+    "run_commands": ["node server.mjs"],
+    "test_commands": ["node --test tests/operator.test.mjs"],
+    "deploy_commands": ["HELD until trusted Google deployment identity and Airlock admission are proven"],
+    "rollback_commands": ["Route traffic to the previously ready Cloud Run revision and leave GEMINI_SEMANTIC_CANARY_ENABLED unset"],
+    "debugging": "Inspect contract error code, provider-safe response, Cloud Run revision logs and exact-nonce readback"
+  },
+  "formation": {
+    "mission_id": "MISSION-RESOLVE-FEDERATION-GEMINI-20260826",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1_INTERNAL",
+    "effectful_permit": "CONSUMED_LOCAL_IMPLEMENTATION_ONLY",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "stop_conditions": [
+      "secret detected",
+      "unapproved provider cost",
+      "target or tenant drift",
+      "test failure",
+      "semantic nonce mismatch"
+    ],
+    "health": "All local gates green; provider route not yet deployed",
+    "rollback": "Use previous Cloud Run revision; semantic canary is disabled by default"
+  },
+  "continuity": {
+    "idempotency": "Exact semantic idempotencyKey required and provider retry/fallback omitted",
+    "checkpoints": "Git commit, pull request checks, deployment readback and provider-native canary receipt",
+    "resume_conditions": "Current main SHA, trusted deployment identity and zero-cost capability readback verified",
+    "handoff_files": ["BUILD_CONTRACT.json", "README.md", "tests/operator.test.mjs"],
+    "stop_switch": "Unset GEMINI_SEMANTIC_CANARY_ENABLED or roll back Cloud Run revision"
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": [
+      "21/21 operator tests passed",
+      "Node syntax checks passed"
+    ],
+    "semantic_verification": [
+      "local exact-nonce success and mismatch fixtures passed",
+      "semantic provider action remains environment-disabled by default"
+    ],
+    "deployment_readback": null,
+    "unresolved_defects": [],
+    "open_constraints": [
+      "Live operator remains fo-operator-v1-image-cloudbuild",
+      "Trusted Google deployment identity is not yet proven",
+      "Provider-native Vertex capability and semantic readbacks are pending"
+    ]
+  }
+}
