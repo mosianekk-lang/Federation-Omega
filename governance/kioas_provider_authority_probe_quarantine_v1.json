@@ -1,0 +1,51 @@
+{
+  "schema": "KIOAS-PROVIDER-AUTHORITY-PROBE-QUARANTINE-V1",
+  "version": "1.0.0",
+  "recorded_at_sast": "2026-08-26T19:09:00+02:00",
+  "owner": "Kim Kagiso Mosiane",
+  "mission": "FORMATION_OMEGA_PROVIDER_CLOSURE",
+  "source_commits_observed": [
+    "59ea723b96206a554bbdcacdd7bbc8bf52d05c52",
+    "ffb8ac3493c9f66f7a710876d85d139555363840"
+  ],
+  "emergency_containment_commit": "0c6b16822fc47e38c36af5f2c4cf81e4636a9667",
+  "source_change": ".github/workflows/kioas-provider-authority-recovery-probe.yml",
+  "classification": "CAPABILITY_PRESERVED_EXECUTION_WORKFLOW_QUARANTINED",
+  "reasons": [
+    "workflow was not present in the active Airlock workflow allowlist",
+    "workflow requested contents write while provider proof belongs in immutable artifacts or an external append-only store",
+    "workflow requested OIDC while the Airlock OIDC allowlist is empty",
+    "checkout persisted repository credentials",
+    "workflow committed and pushed runtime evidence into the source repository",
+    "workflow added issue and one-shot schedule trigger surfaces outside the approved probe path",
+    "scheduled self-modification of main created an immediate execution-containment requirement"
+  ],
+  "preserved_capability": {
+    "current_approved_probe": ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+    "provider_recovery_controller": "ops/sovara_provider_recovery_controller.py",
+    "credential_reference_contract": "ops/sovara_provider_credential_reference.py",
+    "evidence_destination": "GITHUB_ACTIONS_ARTIFACT_OR_EXTERNAL_APPEND_ONLY_STORE",
+    "independent_lanes_continue": true
+  },
+  "fresh_evidence": {
+    "pfrd_run_id": 32990944176,
+    "pfrd_artifact_id": 9614571493,
+    "pfrd_artifact_digest": "sha256:0055d2fa66eb4b898ae343686c9435343660d1214a17e66888826cb78b7034e9",
+    "google_machine_authenticated": false,
+    "operator_token_available": false,
+    "gemini_credential_available": false,
+    "provider_mutation_performed": false,
+    "secret_value_recorded": false
+  },
+  "readmission_requirements": [
+    "separate private execution plane or explicitly admitted minimal workflow",
+    "contents read only unless source mutation is the separately approved objective",
+    "no OIDC until the exact workflow and provider trust condition are independently admitted",
+    "checkout credentials disabled",
+    "no git commit or git push from provider probes",
+    "immutable redacted artifact receipt",
+    "surface-specific provider semantic readback",
+    "JARVIS assurance and CFBE value/regression evidence before promotion"
+  ],
+  "truth_boundary": "Emergency containment removed only the unallowlisted execution surface. KIOAS provider-recovery intelligence remains available through the approved PFRD and SOVARA source components. This record does not prove provider recovery, credential binding or model execution."
+}
