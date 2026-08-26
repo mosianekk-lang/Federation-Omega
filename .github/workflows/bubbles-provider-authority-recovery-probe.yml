@@ -406,3 +406,4 @@ jobs:
           path: provider-authority-output/receipt.json
           if-no-files-found: error
           retention-days: 90
+# KIOAS route probe trigger 2026-08-26: inert comment; executable workflow semantics unchanged.
