@@ -1,0 +1,38 @@
+{
+  "schema": "SOVARA-PROVIDER-EXECUTION-FABRIC-V1",
+  "version": "1.0.0",
+  "architecture": "ISOLATED_PROVIDER_CELLS_WITH_PROGRESSIVE_AGGREGATOR_ADMISSION",
+  "principles": [
+    "provider cells are failure-domain isolated",
+    "provider authority never inherits across cells",
+    "one held provider never stalls independent cells",
+    "provider metadata precedes paid semantic canary",
+    "semantic readback precedes LiteLLM admission",
+    "aggregator availability is progressive, not all-or-nothing",
+    "legacy CloudOps is not an OpenRouter critical-path dependency"
+  ],
+  "private_openrouter_cell": {
+    "runtime": "isolated_google_apps_script",
+    "deployment_posture": "OWNER_PRIVATE_NON_PUBLIC",
+    "source_state": "PRIVATE_SOURCE_VALIDATED_AND_EXACT_DRIVE_READBACK",
+    "target_state": "OWNER_PRIVATE_TARGET_CREATED",
+    "runtime_binding": "OPEN",
+    "semantic_readback": "OPEN",
+    "source_sha256": "bba4b152588f4a789338a35fc6e243a5d8de2524f09371fb25a816ef6e2a117b",
+    "private_package_sha256": "bc570828b145f742d4d80c7951078f773c5ba711f76042559564cd074093e0e7"
+  },
+  "cells": {
+    "openrouter": {"state": "SOURCE_AND_TARGET_READY_RUNTIME_BINDING_OPEN"},
+    "gemini": {"state": "INDEPENDENT_AUTHORITY_RECOVERY"},
+    "openai": {"state": "INDEPENDENT_CREDIT_RECOVERY"},
+    "anthropic": {"state": "FUTURE_ISOLATED_CELL"},
+    "deepseek": {"state": "FUTURE_ISOLATED_CELL"},
+    "ollama": {"state": "SEPARATE_LOCAL_PROOF"}
+  },
+  "aggregator": {
+    "name": "SOVARA LiteLLM v2.2",
+    "admission": "PER_CELL_SEMANTIC_PROOF_REQUIRED",
+    "all_provider_dependency": false
+  },
+  "truth_boundary": "This manifest proves source/governance architecture and hash binding only. It does not prove Apps Script source installation, credential validity, provider balance, OpenRouter inference, LiteLLM provider admission, or production readiness."
+}
