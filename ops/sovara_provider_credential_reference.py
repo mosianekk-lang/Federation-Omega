@@ -19,12 +19,15 @@ SUPPORTED_KINDS = {
     "gcp_secret_name",
     "script_property_name",
     "environment_alias",
+    "drive_document_title",
 }
 SUPPORTED_PROVIDERS = {"openrouter", "openai", "gemini", "anthropic", "deepseek"}
 
 _ENV_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,79}$")
 _GCP_RE = re.compile(r"^[a-z][a-z0-9-]{2,254}$")
 _SCRIPT_PROP_RE = re.compile(r"^[A-Z][A-Z0-9_]{2,99}$")
+_DRIVE_TITLE_RE = re.compile(r"^[A-Za-z0-9][A-Za-z0-9 ._()\-]{2,119}$")
+_SECRET_LIKE_RE = re.compile(r"(?i)(?:sk-[a-z0-9_-]{8,}|bearer\s+[a-z0-9._-]{8,}|https?://)")
 
 
 class CredentialReferenceError(ValueError):
@@ -70,6 +73,8 @@ def _validate(ref: CredentialReference) -> None:
         raise CredentialReferenceError("unsupported reference kind")
     if not ref.locator or len(ref.locator) > 255:
         raise CredentialReferenceError("invalid reference locator")
+    if _SECRET_LIKE_RE.search(ref.locator):
+        raise CredentialReferenceError("reference locator resembles a credential or URL")
 
     if ref.kind == "environment_alias" and not _ENV_RE.fullmatch(ref.locator):
         raise CredentialReferenceError("environment alias must be a symbolic name")
@@ -77,6 +82,8 @@ def _validate(ref: CredentialReference) -> None:
         raise CredentialReferenceError("GCP secret reference must be a secret name only")
     if ref.kind == "script_property_name" and not _SCRIPT_PROP_RE.fullmatch(ref.locator):
         raise CredentialReferenceError("script property reference must be a symbolic name")
+    if ref.kind == "drive_document_title" and not _DRIVE_TITLE_RE.fullmatch(ref.locator):
+        raise CredentialReferenceError("Drive document reference must be a bounded symbolic title")
 
 
 def build_binding_plan(ref: CredentialReference, *, resolution_surface: str) -> BindingPlan:
@@ -107,7 +114,12 @@ def build_binding_plan(ref: CredentialReference, *, resolution_surface: str) -> 
     return BindingPlan(**core, fingerprint=_fingerprint(core))
 
 
-def choose_openrouter_binding_route(*, google_admin_ready: bool, apps_script_property_ready: bool) -> dict[str, Any]:
+def choose_openrouter_binding_route(
+    *,
+    google_admin_ready: bool,
+    apps_script_property_ready: bool,
+    owner_drive_document_ready: bool = False,
+) -> dict[str, Any]:
     """Select the strongest current secret-reference route without reading a value."""
     if google_admin_ready:
         return {
@@ -121,6 +133,13 @@ def choose_openrouter_binding_route(*, google_admin_ready: bool, apps_script_pro
             "family": "COMPOSE_EXTEND",
             "route": "apps_script_property_reference",
             "next_gate": "SCRIPT_PROPERTY_REFERENCE_BINDING_READBACK",
+            "provider_call_performed": False,
+        }
+    if owner_drive_document_ready:
+        return {
+            "family": "COMPOSE_EXTEND",
+            "route": "apps_script_owner_drive_document_reference",
+            "next_gate": "APPS_SCRIPT_REFERENCE_RESOLVER_EXECUTION_PROOF",
             "provider_call_performed": False,
         }
     return {
