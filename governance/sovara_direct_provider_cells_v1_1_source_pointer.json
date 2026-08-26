@@ -1,0 +1,63 @@
+{
+  "admission_role": "SOURCE_CANDIDATE_POINTER_ONLY_NOT_PROVIDER_PROOF",
+  "cells": {
+    "ollama_local": {
+      "inventory_endpoint": "/api/tags",
+      "semantic_endpoint": "/api/chat",
+      "state": "SOURCE_READY_LOCAL_RUNTIME_READBACK_PENDING"
+    },
+    "openrouter_direct": {
+      "credit_endpoint": "/api/v1/credits",
+      "generation_endpoint": "/api/v1/generation",
+      "key_metadata_endpoint": "/api/v1/key",
+      "semantic_endpoint": "/api/v1/chat/completions",
+      "state": "SOURCE_READY_CREDENTIAL_REFERENCE_AND_LIVE_METADATA_PENDING"
+    }
+  },
+  "controls": {
+    "canonical_truth_promoted": false,
+    "changed_payload_collision_rejected": true,
+    "exact_replay_second_provider_effect": false,
+    "idempotency_reserved_before_effect": true,
+    "network_default": "DENY",
+    "openrouter_inference_requires_admit_spend": true,
+    "raw_credit_balances_persisted": false,
+    "raw_credentials_persisted": false,
+    "raw_prompts_or_responses_persisted": false,
+    "remote_insecure_http_rejected": true
+  },
+  "library": {
+    "bundle_id": "libfile_d5cb7933a94c8191af38324b4f8559e8",
+    "final_receipt_id": "libfile_f523e4d720bc8191835b8ec35b491106",
+    "module_id": "libfile_3ad667e16b248191be968b90ef2c19fa",
+    "path": "/SOVARA/Federation Capability Adoption v1.1",
+    "tests_id": "libfile_72048eaddd488191bf5cb5ae876192dd",
+    "validation_receipt_id": "libfile_6693967e71d88191ae02a94c23a7972d"
+  },
+  "owner": "Kim Kagiso Mosiane",
+  "release": {
+    "bundle_members": 6,
+    "bundle_sha256": "fb7033bd81892a186df60eeab2817a9beade44383cfb2fd811813754cc3119bf",
+    "bundle_size_bytes": 12847,
+    "deterministic_double_build": "PASS",
+    "final_receipt_sha256": "59963d59cd8849ee3ff45007b21f347e8aa559021e845ab2d03fa4932ceb0c01",
+    "module_sha256": "8ffae53e3caa37d7a2c32b169c1ef2e7db52e38d13ab0d4927a89edacdba60b2",
+    "state": "OPENROUTER_DIRECT_AND_OLLAMA_LOCAL_SOURCE_READY_PROVIDER_DISABLED",
+    "tests": "12 PASS",
+    "tests_sha256": "d66d0da5f2a8502ffc2587ac8d4ac44fdf32a36f219173c941d00866e9de0124",
+    "validation_receipt_sha256": "a384ccda23f111d37158165f65690f1838c94f44fdd30ab2e2cb5b5356195a4f",
+    "zip_crc": "PASS"
+  },
+  "schema": "SOVARA-DIRECT-PROVIDER-CELLS-SOURCE-POINTER-1.1",
+  "truth_boundary": {
+    "litellm_admission": false,
+    "live_ollama_runtime": false,
+    "live_openrouter_inference": false,
+    "live_openrouter_metadata": false,
+    "production_effect": false,
+    "provider_credentials_resolved": false,
+    "provider_spend": false,
+    "source_ready": true,
+    "zero_dilution": true
+  }
+}
