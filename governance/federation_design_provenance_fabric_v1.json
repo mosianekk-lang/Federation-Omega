@@ -1,0 +1,74 @@
+{
+  "schema": "FEDERATION-DESIGN-PROVENANCE-FABRIC-CONTRACT-1.0",
+  "state": "SOURCE_CANDIDATE_PROVIDER_NEUTRAL",
+  "purpose": "Bind ChatBridge full-fidelity conversation provenance to the Federation Design Provenance Fabric without duplicating transcript authority, exposing private registry identities, or promoting design state into runtime truth.",
+  "capture_law": "FULL_CAPTURE_FIRST_RECONCILE_THEN_COMPACT",
+  "raw_capture_authority": "CHATBRIDGE_FULL_FIDELITY_LEDGER",
+  "private_registry_aliases": {
+    "lab_registry": "DPF_PRIVATE_LAB_REGISTRY",
+    "raw_capture_manifest": "DPF_PRIVATE_RAW_CAPTURE_MANIFEST",
+    "reconciliation_receipts": "DPF_PRIVATE_RECONCILIATION_RECEIPTS",
+    "compaction_cleanup": "DPF_PRIVATE_COMPACTION_CLEANUP",
+    "design_genes": "DPF_PRIVATE_DESIGN_GENES",
+    "receiver_learning": "DPF_PRIVATE_RECEIVER_LEARNING"
+  },
+  "triggers": [
+    "END_OF_CHAT",
+    "END_OF_MATERIAL_SESSION",
+    "DAILY_RECONCILIATION",
+    "PRE_PROMOTION",
+    "PRE_MIGRATION",
+    "PRE_DEPLOYMENT"
+  ],
+  "pipeline": [
+    "CHATBRIDGE_APPEND_ONLY_CAPTURE",
+    "CHATBRIDGE_VERIFY",
+    "DPF_RAW_CAPTURE_MANIFEST",
+    "DPF_DETERMINISTIC_RECONCILIATION",
+    "DPF_COMPACTION_PLAN",
+    "DESIGN_GENE_CANDIDATE_EXTRACTION_OPTIONAL",
+    "CFBE_AND_JARVIS_PROMOTION_SEPARATE",
+    "RECEIVER_SPECIFIC_ADAPTATION_AND_PROOF"
+  ],
+  "cleanup_contract": {
+    "canonical_raw": "PRESERVE_IMMUTABLE_RECONSTRUCTABLE_ARCHIVE",
+    "active_or_derived_copies": "MAY_DEDUPE_ARCHIVE_OR_DELETE_ONLY_AFTER_FULL_CAPTURE_AND_ARCHIVE_POINTER_PROOF",
+    "tampered_capture": "FAIL_CLOSED_NO_RECONCILIATION_OR_CLEANUP",
+    "incomplete_capture": "NO_IRREVERSIBLE_CLEANUP",
+    "protected_semantics": [
+      "MESSAGE",
+      "DECISION",
+      "CORRECTION",
+      "ATTACHMENT",
+      "TERMINAL_WARNING",
+      "MIGRATION"
+    ]
+  },
+  "design_gene_contract": {
+    "initial_state": "CANDIDATE_ONLY",
+    "private_matter_content": "PROHIBITED_FROM_CROSS_SYSTEM_GENE",
+    "credentials_or_secret_values": "PROHIBITED",
+    "authority_inheritance": false,
+    "maturity_inheritance": false,
+    "promotion_requires": [
+      "CFBE_COMPATIBILITY_AND_VALUE_REVIEW",
+      "JARVIS_INDEPENDENT_CHALLENGE",
+      "RECEIVER_SPECIFIC_ADAPTATION",
+      "RECEIVER_SPECIFIC_PROOF_AND_REGRESSION"
+    ]
+  },
+  "scheduler_contract": {
+    "controller": "DPF_RECONCILIATION_CONTROLLER",
+    "daily_due_logic": "SOURCE_IMPLEMENTED_PROVIDER_NEUTRAL",
+    "provider_scheduler": "SEPARATELY_BOUND_AND_PROVEN",
+    "no_background_runtime_claim_from_source": true
+  },
+  "truth_boundary": {
+    "source_or_tests_are_not_runtime_deployment": true,
+    "design_provenance_is_not_provider_authority": true,
+    "manifest_write_is_not_full_capture_proof": true,
+    "reconciliation_is_not_design_gene_promotion": true,
+    "compaction_plan_is_not_deletion_authority": true,
+    "private_provider_ids_and_secrets_must_not_enter_public_source": true
+  }
+}
