@@ -1,0 +1,33 @@
+{
+  "assurance": {
+    "AEGIS": "PASS_LOCAL_RELEASE_ASSURANCE",
+    "CFBE": "PASS_ARCHITECTURAL_VALUE_LIVE_BENCHMARK_PENDING",
+    "JARVIS": "PASS_SOURCE_LAYER_HOLD_PROVIDER_PROMOTION",
+    "KDV_LIVE_BIBLE": "PASS_DURABLE_CONTROL_LIVE_BIBLE_APPEND_HELD",
+    "Sentinel": "PASS_SOURCE_FRESHNESS_GOOGLE_WIF_CIRCUIT_OPEN"
+  },
+  "external_independent_quorum_bound": false,
+  "library": {
+    "assurance_json": "libfile_6b3176a0a0f481918790495a560c05fb",
+    "assurance_markdown": "libfile_f771548124288191ad69d5147dac0538",
+    "checksums": "libfile_a41e0a41e8e08191bc9faf94b91a89a7"
+  },
+  "mission_id": "SOV-MSN-PROVIDER-FABRIC-ADOPTION-20260826-001",
+  "observed_at_sast": "2026-08-27T00:23:21+02:00",
+  "owner": "Kim Kagiso Mosiane",
+  "provider_promotion_allowed": false,
+  "receipt_sha256": "80caab47d0b4b5c1af7144a306c1abbe369b378eb4be2ceef2352aeee63978cb",
+  "schema": "SOVARA-FEDERATION-ADOPTION-PREADMISSION-ASSURANCE-POINTER-1",
+  "state": "SOURCE_ADOPTION_ASSURANCE_PASS_PROVIDER_PROMOTION_HOLD_EXTERNAL_QUORUM_UNBOUND",
+  "truth_boundary": {
+    "external_assurance_services_bound": false,
+    "litellm_deployed": false,
+    "live_bible_updated": false,
+    "production_traffic_changed": false,
+    "provider_calls_made": 0,
+    "provider_credentials_resolved": false,
+    "provider_inference_proven": false,
+    "source_release_assurance_proven": true,
+    "zero_dilution": true
+  }
+}
