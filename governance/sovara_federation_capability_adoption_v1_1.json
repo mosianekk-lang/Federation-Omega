@@ -1,0 +1,133 @@
+{
+  "adopted_systems": {
+    "ARCHON_Apps_Script_NEXUS_EvidenceOps_AEGIS": "reversible transport, source/rollback, inventory and authenticated local control within proven scopes",
+    "Alpha-Omega": "multi-path programme formation and bounded parallel waves",
+    "CFBE": "quality, reliability, latency, cost, value and owner-burden vote",
+    "Federation Orchestration Kernel": "SQLite/WAL mission ledger, idempotency, replay, lane isolation, checkpoints and fan-in",
+    "Federation_Omni_Mesh": "post-admission retry, DLQ, trace and replay transport after two cells are proven",
+    "Formation Innovation": "constraint science and materially different route generation",
+    "JARVIS": "independent contradiction and evidence-coherence vote",
+    "KDV_and_Live_Bible": "deterministic material-delta projections",
+    "Provider Execution Fabric": "isolated OpenRouter, Gemini, OpenAI, Anthropic, DeepSeek and Ollama cells",
+    "SOVARA": "mission, route, authority and effect admission",
+    "Secure Capability Box": "opaque one-use mission-scoped credential references; raw secrets excluded",
+    "Sentinel": "identity, revision, freshness, health and drift vote"
+  },
+  "controls": {
+    "blocked_lane": "hold only the affected lane; safe independent lanes continue",
+    "circuit": "repeated unchanged failure opens a circuit and requires a materially different route",
+    "credential": "short-lived exact-purpose references only; no raw secret in chat/source/ledger/receipt",
+    "effects": "one serialized provider effect lane per cell; exact target/readback/rollback required",
+    "idempotency": "same key with changed payload is rejected",
+    "learning": "promotion only after replay/regression; provider truth and authority cannot be learned into existence",
+    "omni_mesh": "deferred until at least two provider cells are proven",
+    "provider_promotion": "current semantic proof plus independent JARVIS, Sentinel and CFBE PASS"
+  },
+  "github_gateway": {
+    "decision": "compose existing workflow as canonical Google/WIF and LiteLLM admission lane; do not create a replacement gateway",
+    "latest_run": {
+      "alias_count": 33,
+      "artifact_id": 9620930148,
+      "artifact_sha256": "e2655541b923cc8547f2c2eebe5353dfeb93f95de1d497d1a4d9f1667ee562e3",
+      "conclusion": "failure",
+      "fallback_cycles": 0,
+      "id": 33006976929,
+      "job_id": 98303140062,
+      "provider_calls": 0,
+      "provider_execution_reached": false,
+      "provider_families": 6,
+      "structural_validation": "PASS",
+      "wif_audience": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+      "wif_result": "GOOGLE_WIF_INVALID_TARGET",
+      "workflow_receipt_sha256": "0d9d3f5488d7d50cee31935b4d0bfa37b21bb0977870d3213f295c874d56302d"
+    },
+    "main_sha": "d59be9603e6b43d35d8132ba82c5552888d133ef",
+    "repairs": [
+      {
+        "merge_sha": "b784dd6c43dd8ae345d8dcc5ab59479856d16a3c",
+        "pr": 620
+      },
+      {
+        "merge_sha": "d59be9603e6b43d35d8132ba82c5552888d133ef",
+        "pr": 621
+      }
+    ],
+    "repository": "mosianekk-lang/Federation-Omega",
+    "workflow_blob_sha": "8fa6c34c8468753c954f436210a9d3b44f5efb0e",
+    "workflow_path": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+    "workflow_state": "AIRLOCK_ADMITTED_AND_PHOENIX_REQUIRED_ACTIVE"
+  },
+  "mission_id": "SOV-MSN-PROVIDER-FABRIC-ADOPTION-20260826-001",
+  "next_transition": "repair exact WIF pool/provider existence, enabled state, repository/branch trust and service-account impersonation; rerun gateway while Ollama and credential-safe independent lanes continue",
+  "objective": "Compose the strongest existing Federation systems into a durable progressively provable provider-execution lifecycle without rebuilding or reducing the capability floor.",
+  "owner": "Kim Kagiso Mosiane",
+  "persistence": {
+    "drive_folder_id": "1YRE1_OOTfYkhzviKfH3i9rORCFCyi0vN",
+    "drive_readout_id": "1wfROBE_eMZ2lerLSwm9BBcZ1wMElzn-F8YE46H-0SCI",
+    "drive_registry_id": "1YxdS17TuYphW-qvbQqq0EipmUp7ABi3ylErbklfQ9Mw",
+    "library_bundle_id": "libfile_25b5154f31c08191be7387f0616c9b3d",
+    "library_folder": "/SOVARA/Federation Capability Adoption v1.1"
+  },
+  "protected_floor": {
+    "baseline_reduction": 0,
+    "config_sha256": "8cad48d954cd960b37b8c94559a19de244ffbd6d0ca1f7450dcec7b054d7d554",
+    "litellm_aliases": 33,
+    "predecessor_aliases": 31
+  },
+  "provider_cells": [
+    {
+      "id": "CELL-OPENROUTER-001",
+      "state": "GATEWAY_CONFIG_AND_WORKFLOW_ADMITTED_WIF_AUTHENTICATION_FAILED_DIRECT_CELL_UNBOUND"
+    },
+    {
+      "id": "CELL-GEMINI-001",
+      "state": "GITHUB_GATEWAY_STRUCTURAL_PASS_GOOGLE_WIF_INVALID_TARGET_IDENTITY_AND_SEMANTIC_PROOF_PENDING"
+    },
+    {
+      "id": "CELL-OPENAI-001",
+      "state": "CONFIG_READY_RUNTIME_BINDING_PENDING"
+    },
+    {
+      "id": "CELL-ANTHROPIC-001",
+      "state": "CONFIG_READY_RUNTIME_BINDING_PENDING"
+    },
+    {
+      "id": "CELL-DEEPSEEK-001",
+      "state": "CONFIG_READY_RUNTIME_BINDING_PENDING"
+    },
+    {
+      "id": "CELL-OLLAMA-001",
+      "state": "CONFIG_READY_LOCAL_RUNTIME_READBACK_PENDING"
+    }
+  ],
+  "receipt_sha256": "3c4ac667c8555f78ca646349710c98e489ca2204c9fbdc24625135577107ecc3",
+  "schema": "SOVARA-FEDERATION-CAPABILITY-ADOPTION-GOVERNANCE-1.1-COMPACT",
+  "state": "ADOPTION_PROTOCOL_ACTIVE_LOCAL_GITHUB_GATEWAY_RECONCILED_PROVIDER_DISABLED",
+  "truth_boundary": {
+    "external_assurance_services_bound": false,
+    "github_gateway_structural_validation_passed": true,
+    "github_gateway_workflow_admitted": true,
+    "google_wif_authenticated": false,
+    "litellm_deployed": false,
+    "local_adoption_wiring_executed": true,
+    "openrouter_live_binding_proven": false,
+    "production_traffic_changed": false,
+    "provider_calls_made": 0,
+    "provider_credentials_resolved": false,
+    "zero_dilution": true
+  },
+  "verification": {
+    "bundle_members": 23,
+    "bundle_sha256": "65d98e5c39c06611a64e4524580d0c8d133d85f4babb7b7cb21c1856051eaee7",
+    "bundle_size_bytes": 40018,
+    "deterministic_double_build": "PASS",
+    "event_chain": "PASS",
+    "final_receipt_sha256": "03efa3811d5a6729932f3f405625656c99c83850eacca4d7bfaaca6456042fa5",
+    "full_package_tests": "21 PASS",
+    "github_compact_tests": "22 PASS",
+    "raw_secret_scan": "PASS",
+    "replay": "PASS",
+    "sqlite_wal": true,
+    "zip_crc": "PASS"
+  }
+}

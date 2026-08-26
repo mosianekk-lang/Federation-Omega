@@ -1,0 +1,112 @@
+{
+  "connected_github_inventory": {
+    "interpretation": "The private-Ops execution substrate is not connected through the current GitHub installation. This is a repository/runtime binding gap, not a missing architecture or source gap.",
+    "repositories_visible_to_current_installation": [
+      {
+        "admin": true,
+        "repository": "mosianekk-lang/Federation-Omega",
+        "visibility": "public"
+      }
+    ],
+    "separately_governed_private_ops_repository_visible": false
+  },
+  "current_google_gateway": {
+    "authentication_result": "GOOGLE_STS_INVALID_TARGET_BEFORE_TOKEN_ISSUANCE",
+    "deployment_changed": false,
+    "main_sha": "d59be9603e6b43d35d8132ba82c5552888d133ef",
+    "production_traffic_changed": false,
+    "provider_calls": 0,
+    "provider_execution_reached": false,
+    "repository": "mosianekk-lang/Federation-Omega",
+    "run_id": 33006976929,
+    "secret_values_accessed": false,
+    "service_account_target": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "structural_validation": "PASS",
+    "wif_audience": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+    "workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+  },
+  "current_main_private_ops_bootstrap": {
+    "apply_requires_trusted_google_machine_identity": true,
+    "bootstrap_script": "bootstrap_wif.py",
+    "drift_rejection": true,
+    "dry_run_default": true,
+    "example_config": "wif_config.example.json",
+    "path": "ops/federation_omega_operator/bootstrap",
+    "policy": "Materialize exact trust configuration in a separately governed private Ops repository; keep private repository IDs and exact source pointers out of the public repository.",
+    "rollback": "Disable exact provider, prove token-exchange rejection, and remove only resources created by the recorded receipt.",
+    "source_state": "ADMITTED_TO_MAIN"
+  },
+  "independent_lanes_continue": {
+    "drive_library_github_persistence": "CONTINUE",
+    "google_gateway_provider_execution": "HELD_ON_WIF",
+    "internal_orchestration_and_assurance_preparation": "CONTINUE",
+    "ollama_local_cell": "CONTINUE",
+    "omni_mesh": "DEFER_UNTIL_TWO_PROVIDER_CELLS_PROVEN",
+    "openrouter_direct_cell_source_and_reference_preparation": "CONTINUE"
+  },
+  "mission_id": "SOV-MSN-PROVIDER-FABRIC-ADOPTION-20260826-001",
+  "next_transition": "Connect or create the separately governed private Ops repository; materialize its exact numeric identity configuration; execute the admitted bootstrap under a trusted Google administration identity; read back provider and IAM state; then rerun the canonical LiteLLM provider-admission workflow.",
+  "owner": "Kim Kagiso Mosiane",
+  "receipt_sha256": "e47d6ca79d195d00f801ca7f81a60684207013beaf9b9a01437019a7eb433a62",
+  "recorded_at_sast": "2026-08-26T23:55:00+02:00",
+  "required_private_ops_contract": {
+    "completion": [
+      "successful token exchange",
+      "project identity readback",
+      "runtime identity readback",
+      "redacted immutable receipt",
+      "rollback canary",
+      "rerun of LiteLLM provider admission"
+    ],
+    "google_identity": [
+      "project sov-hybrid-suite",
+      "project number 257649435135",
+      "active trusted Google principal",
+      "dedicated deployer service account"
+    ],
+    "repository_identity": [
+      "exact numeric repository ID",
+      "exact numeric owner ID",
+      "refs/heads/main",
+      "workflow_dispatch only"
+    ],
+    "wif_readback": [
+      "pool exists and ACTIVE",
+      "provider exists and ACTIVE",
+      "issuer URI exact",
+      "attribute mapping exact",
+      "attribute condition exact",
+      "workloadIdentityUser binding exact",
+      "service-account impersonation exact"
+    ]
+  },
+  "route_decision": {
+    "rejected": [
+      {
+        "reason": "The current audience failed invalid_target and current main explicitly moves exact trust configuration to a private Ops repository. Recreating public trust without provider-native inventory would risk identity drift.",
+        "route": "BLIND_RECREATE_PUBLIC_WIF_PROVIDER"
+      },
+      {
+        "reason": "No Google provider state changed; an unchanged retry would repeat the same authentication failure.",
+        "route": "UNCHANGED_GITHUB_RETRY"
+      },
+      {
+        "reason": "The repository-native provider-admission workflow is already Airlock-admitted and structurally verified.",
+        "route": "DUPLICATE_LITELLM_GATEWAY"
+      }
+    ],
+    "selected": "PRIVATE_OPS_WIF_MATERIALIZATION"
+  },
+  "schema": "SOVARA-WIF-PRIVATE-OPS-RECOVERY-ROUTE-1",
+  "truth_boundary": {
+    "private_ops_repository_connected": false,
+    "production_effect": false,
+    "provider_credentials_resolved": false,
+    "provider_inference_performed": false,
+    "route_selected": true,
+    "trusted_google_machine_identity_callable": false,
+    "wif_mutation_performed": false,
+    "wif_provider_inventory_read_back": false,
+    "zero_dilution": true
+  }
+}
