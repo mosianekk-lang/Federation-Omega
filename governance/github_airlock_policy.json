@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.3.3",
+  "version": "2.3.4",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -73,6 +73,19 @@
   "require_checkout_credentials_disabled": true,
   "require_concurrency": true,
   "proof_destination": "GITHUB_ACTIONS_ARTIFACT_OR_EXTERNAL_APPEND_ONLY_STORE",
+  "provider_credential_reference_policy": {
+    "admitted_source_contracts": [
+      "governance/sovara_provider_credential_reference_v1.json",
+      "ops/sovara_provider_credential_reference.py"
+    ],
+    "secret_values_in_source": false,
+    "secret_values_in_workflow_payloads": false,
+    "secret_values_in_logs": false,
+    "secret_values_in_receipts": false,
+    "reference_presence_proves_provider_authority": false,
+    "provider_promotion_requires_surface_specific_readback": true,
+    "provider_probe_workflow": ".github/workflows/pfrd-omega-operator-auth-probe.yml"
+  },
   "source_repository_role": "QUARANTINED_LEGACY_SOURCE_PENDING_PHOENIX_CUTOVER",
   "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE",
   "execution_quarantine": {
