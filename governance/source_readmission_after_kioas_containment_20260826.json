@@ -1,0 +1,24 @@
+{
+  "schema": "FEDERATION-SOURCE-READMISSION-RECEIPT-V1",
+  "recorded_at_sast": "2026-08-26T19:11:00+02:00",
+  "mission": "RESTORE_GOVERNED_SOURCE_PROVENANCE_AFTER_EMERGENCY_CONTAINMENT",
+  "base_main_sha": "718b9eb8b5fb4b7ef237368d5a64c9ffaa1ccc4f",
+  "base_tree_sha": "135a5180f05918e490b0a16b5c9d5d19e42f1b5e",
+  "contained_incident_commits": [
+    "59ea723b96206a554bbdcacdd7bbc8bf52d05c52",
+    "ffb8ac3493c9f66f7a710876d85d139555363840",
+    "0c6b16822fc47e38c36af5f2c4cf81e4636a9667",
+    "718b9eb8b5fb4b7ef237368d5a64c9ffaa1ccc4f"
+  ],
+  "current_containment": {
+    "unallowlisted_kioas_workflow_absent": true,
+    "quarantine_record_present": true,
+    "approved_pfrd_probe_preserved": true,
+    "sovara_provider_recovery_preserved": true,
+    "provider_credential_reference_preserved": true
+  },
+  "admission_requirement": "Exact PR head must pass Federation Omega Airlock, Bubbles Command Bus and Public Repository Leak Guard before merge; merged main must be read back before downstream provider-fabric admission.",
+  "provider_effect": false,
+  "secret_value_access": false,
+  "truth_boundary": "This receipt restores governed source provenance for the already-contained tree. It does not rehabilitate the quarantined workflow, prove Google/OpenRouter/OpenAI/Gemini authority, or perform any provider mutation."
+}
