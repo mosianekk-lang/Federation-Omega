@@ -1,0 +1,60 @@
+{
+  "schema_version": "superior-logic.failure-win.v1",
+  "id": "SL-MATURATION-SHADOW-FAILURE-WIN-001",
+  "failure_signature": "PYTHON_DIRECT_SCRIPT_TOP_LEVEL_IMPORT_PATH",
+  "system": "SUPERIOR_LOGIC_MATURATION_SHADOW_V1",
+  "provider": "GITHUB_ACTIONS",
+  "observed": {
+    "run_id": 33126859126,
+    "job_id": 98706962316,
+    "head_sha": "8563d8bc6d7df559cf65aaa5dd301e733c7ac011",
+    "event": "push",
+    "failed_step": "Execute chat-independent maturation shadow cycle",
+    "exception": "ModuleNotFoundError: No module named 'evidenceops'",
+    "failed_invocation": "python tools/superior_logic_maturation_shadow.py",
+    "artifact_id": 9668699460,
+    "artifact_zip_sha256": "658d16143367485f3d6b5eb19a697750573e91605db89556a9c0a40734d64c13"
+  },
+  "facts_preserved": {
+    "workflow_launched_on_provider": true,
+    "checkout_passed": true,
+    "python_setup_passed": true,
+    "prior_run_history_readback_passed": true,
+    "focused_unit_tests_passed": 8,
+    "runtime_cli_failed_before_receipt_creation": true,
+    "failure_evidence_artifact_uploaded": true,
+    "external_effect": false
+  },
+  "root_cause": {
+    "class": "ENTRYPOINT_IMPORT_CONTEXT",
+    "cause": "Executing a Python file by pathname places the script directory on the import path; the tools directory did not provide the repository root required for importing the top-level evidenceops package.",
+    "logic_failure": false,
+    "provider_authority_failure": false,
+    "test_logic_failure": false
+  },
+  "why_premerge_tests_missed_it": "The focused suite imported the runtime from the repository root under python -m unittest, while the provider used a direct-script entrypoint. The test did not execute the exact provider entrypoint.",
+  "containment": [
+    "PRESERVE_FAILED_RUN_AND_ARTIFACT",
+    "DO_NOT_COUNT_FAILED_RUN_AS_SUCCESSFUL_MATURATION_CYCLE",
+    "DO_NOT_CLAIM_PROVIDER_RUNTIME_SUCCESS",
+    "REPAIR_ON_SEPARATE_BRANCH",
+    "READBACK_AFTER_PROVIDER_RERUN"
+  ],
+  "permanent_repair": [
+    "MOVE_CANONICAL_CLI_INTO_EVIDENCEOPS_PACKAGE",
+    "INVOKE_PROVIDER_AS_PYTHON_MODULE",
+    "KEEP_DIRECT_SCRIPT_ONLY_AS_EXPLICIT_REPOSITORY_ROOT_COMPATIBILITY_WRAPPER",
+    "REGRESSION_TEST_CANONICAL_PROVIDER_ENTRYPOINT_WITH_SUBPROCESS",
+    "REGRESSION_TEST_COMPATIBILITY_ENTRYPOINT_WITH_SUBPROCESS"
+  ],
+  "prevention_rule": "A provider-executed CLI is not qualified until the exact provider entrypoint is exercised as a subprocess from the provider-equivalent working directory and produces its expected proof object.",
+  "promotion_boundary": {
+    "repair_source_proves_provider_recovery": false,
+    "passing_regression_proves_provider_recovery": false,
+    "successful_provider_rerun_and_receipt_readback_required": true,
+    "schedule_configuration_proves_schedule_event_execution": false
+  },
+  "owner_intervention_required": false,
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false
+}

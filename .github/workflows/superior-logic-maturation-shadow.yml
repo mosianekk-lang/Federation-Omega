@@ -6,6 +6,7 @@ on:
     paths:
       - "evidenceops/caseforge/autonomous_maturation.py"
       - "evidenceops/caseforge/maturation_shadow_runtime.py"
+      - "evidenceops/caseforge/maturation_shadow_cli.py"
       - "governance/superior_logic_autonomous_maturation_v1.json"
       - "governance/superior_logic_maturation_shadow_v1.json"
       - "tools/superior_logic_maturation_shadow.py"
@@ -80,7 +81,7 @@ jobs:
         run: |
           set -euo pipefail
           observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
-          python tools/superior_logic_maturation_shadow.py \
+          python -m evidenceops.caseforge.maturation_shadow_cli \
             --output-dir runtime-output/receipts \
             --run-id "$GITHUB_RUN_ID" \
             --head-sha "$GITHUB_SHA" \
@@ -110,7 +111,6 @@ jobs:
           assert work['external_effect'] is False, work
           assert heartbeat['external_effect'] is False, heartbeat
           assert heartbeat['status'] == 'SHADOW_MATURATION_CYCLE_VERIFIED', heartbeat
-          # The first shadow tier is deliberately incapable of self-certifying maturity.
           assert receipt['self_sustaining'] is False, receipt
           print(json.dumps({
               'status': receipt['status'],
