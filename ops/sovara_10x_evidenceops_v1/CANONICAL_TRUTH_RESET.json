@@ -1,0 +1,29 @@
+{
+  "effective_date_sast": "2026-08-27",
+  "owner": "Kim Kagiso Mosiane",
+  "precedence": [
+    "fresh provider-native readback",
+    "current owner-private canonical register",
+    "independently persisted signed receipt",
+    "verified local artifact and test output",
+    "conversation statement"
+  ],
+  "promotion_rule": "No state above SOURCE_READY may be inherited from chat memory or a self-authored receipt.",
+  "receipt_sha256": "78083bdfaae123f85ea5e3e6e8564fec41e4947fad6c5f4db74fbf758df41755",
+  "schema": "SOVARA-CANONICAL-TRUTH-RESET-10X-1",
+  "state": {
+    "external_jarvis_sentinel_cfbe": "UNBOUND_OR_UNVERIFIED",
+    "gateway_deployed": "UNVERIFIED_REQUIRES_FRESH_PROVIDER_READBACK",
+    "litellm_configuration": "SOURCE_PROOF_READY_BASELINE_PRESERVED",
+    "live_bible_current_revision": "UNVERIFIED_REQUIRES_FRESH_PROVIDER_READBACK",
+    "live_provider_semantic_canaries": "UNVERIFIED_REQUIRES_FRESH_PROVIDER_READBACK",
+    "ollama_runtime": "UNVERIFIED_REQUIRES_FRESH_ENDPOINT_INVENTORY",
+    "omni_mesh_provider_transport": "UNVERIFIED",
+    "openrouter_live_binding": "UNVERIFIED_REQUIRES_FRESH_PROVIDER_READBACK",
+    "production_traffic": "UNVERIFIED_REQUIRES_FRESH_SERVICE_REVISION_AND_TRAFFIC_READBACK",
+    "provider_cells_source": "SOURCE_READY",
+    "sovara_capability_source": "VERIFIED_LOCAL_OR_SOURCE_SUPPORTED",
+    "ten_x_performance": "NOT_CLAIMED_BASELINE_AND_MEASUREMENT_REQUIRED"
+  },
+  "zero_dilution": true
+}
