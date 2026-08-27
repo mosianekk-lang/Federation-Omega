@@ -2,8 +2,8 @@ import json
 import unittest
 from types import SimpleNamespace
 
-import select_route_v2
-from failure_win_execution_guard import (
+from failure_kernel import select_route_v2
+from failure_kernel.failure_win_execution_guard import (
     ExecutionBlocked,
     consume_then_execute,
     require_stage_budget,
