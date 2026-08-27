@@ -10,8 +10,6 @@ from google.auth.transport.requests import AuthorizedSession, Request
 from .contracts import Command
 
 CLOUD_PLATFORM = "https://www.googleapis.com/auth/cloud-platform"
-APPS_SCRIPT = "https://www.googleapis.com/auth/script.projects"
-DEPLOYMENTS = "https://www.googleapis.com/auth/script.deployments"
 
 
 @dataclass
@@ -23,14 +21,23 @@ class ExecutionResult:
 
 
 class GoogleExecutor:
-    """Bounded Google executor. No arbitrary URL passthrough is allowed."""
+    """Bounded Google Cloud executor. No arbitrary URL passthrough is allowed.
+
+    Apps Script management/runtime execution is intentionally NOT implemented
+    here. Google documents that Apps Script API execution does not work with
+    service accounts and scripts.run additionally requires the calling app and
+    script to share the same standard Cloud project. Apps Script commands are
+    routed to the separate owner-OAuth Apps Script broker instead.
+    """
+
+    SUPPORTED_ADAPTERS = frozenset({"google_cloud"})
 
     def __init__(self, *, project_id: str, elevated_sa: str = "") -> None:
         self.project_id = project_id
         self.elevated_sa = elevated_sa
 
     def _credentials(self, elevated: bool):
-        base, _ = google.auth.default(scopes=[CLOUD_PLATFORM, APPS_SCRIPT, DEPLOYMENTS])
+        base, _ = google.auth.default(scopes=[CLOUD_PLATFORM])
         if not elevated:
             return base
         if not self.elevated_sa:
@@ -38,7 +45,7 @@ class GoogleExecutor:
         return impersonated_credentials.Credentials(
             source_credentials=base,
             target_principal=self.elevated_sa,
-            target_scopes=[CLOUD_PLATFORM, APPS_SCRIPT, DEPLOYMENTS],
+            target_scopes=[CLOUD_PLATFORM],
             lifetime=900,
         )
 
@@ -56,19 +63,20 @@ class GoogleExecutor:
         return {"http_status": response.status_code, "body": body}
 
     def execute(self, command: Command, *, elevated: bool) -> ExecutionResult:
+        if command.adapter_id not in self.SUPPORTED_ADAPTERS:
+            raise ValueError(
+                f"Adapter {command.adapter_id!r} belongs to another Federation executor"
+            )
         handlers: dict[str, Callable[[Command, AuthorizedSession], ExecutionResult]] = {
             "GCP_GET_PROJECT": self._get_project,
             "GCP_LIST_ENABLED_SERVICES": self._list_enabled_services,
             "GCP_ENABLE_SERVICE": self._enable_service,
             "CLOUD_RUN_GET_SERVICE": self._get_cloud_run_service,
-            "APPS_SCRIPT_GET_CONTENT": self._apps_script_get_content,
-            "APPS_SCRIPT_GET_DEPLOYMENTS": self._apps_script_get_deployments,
-            "APPS_SCRIPT_RUN": self._apps_script_run,
         }
         try:
             handler = handlers[command.action]
         except KeyError as exc:
-            raise ValueError(f"Unsupported bounded Google action: {command.action}") from exc
+            raise ValueError(f"Unsupported bounded Google Cloud action: {command.action}") from exc
         return handler(command, self._session(elevated))
 
     def _get_project(self, command: Command, session: AuthorizedSession) -> ExecutionResult:
@@ -139,66 +147,4 @@ class GoogleExecutor:
             "DONE" if ok else "FAILED",
             "CLOUD_RUN_TARGET_EXACT" if ok else "CLOUD_RUN_READBACK_FAILED",
             proof,
-        )
-
-    def _apps_script_get_content(self, command: Command, session: AuthorizedSession) -> ExecutionResult:
-        script_id = str(command.payload.get("script_id", ""))
-        if not script_id:
-            raise ValueError("payload.script_id is required")
-        response = session.get(
-            f"https://script.googleapis.com/v1/projects/{script_id}/content",
-            timeout=30,
-        )
-        proof = self._json_response(response)
-        files = proof["body"].get("files", []) if response.status_code == 200 else []
-        ok = response.status_code == 200 and bool(files)
-        proof["file_count"] = len(files)
-        return ExecutionResult(
-            "DONE" if ok else "FAILED",
-            "APPS_SCRIPT_SOURCE_READBACK" if ok else "APPS_SCRIPT_CONTENT_FAILED",
-            proof,
-        )
-
-    def _apps_script_get_deployments(self, command: Command, session: AuthorizedSession) -> ExecutionResult:
-        script_id = str(command.payload.get("script_id", ""))
-        if not script_id:
-            raise ValueError("payload.script_id is required")
-        response = session.get(
-            f"https://script.googleapis.com/v1/projects/{script_id}/deployments",
-            timeout=30,
-        )
-        proof = self._json_response(response)
-        ok = response.status_code == 200
-        proof["deployment_count"] = len(proof["body"].get("deployments", [])) if ok else None
-        return ExecutionResult(
-            "DONE" if ok else "FAILED",
-            "APPS_SCRIPT_DEPLOYMENT_READBACK" if ok else "APPS_SCRIPT_DEPLOYMENTS_FAILED",
-            proof,
-        )
-
-    def _apps_script_run(self, command: Command, session: AuthorizedSession) -> ExecutionResult:
-        script_id = str(command.payload.get("script_id", ""))
-        function = str(command.payload.get("function", ""))
-        parameters = command.payload.get("parameters", [])
-        if not script_id or not function:
-            raise ValueError("payload.script_id and payload.function are required")
-        if not isinstance(parameters, list):
-            raise ValueError("payload.parameters must be a list")
-        response = session.post(
-            f"https://script.googleapis.com/v1/scripts/{script_id}:run",
-            json={
-                "function": function,
-                "parameters": parameters,
-                "devMode": bool(command.payload.get("dev_mode", False)),
-            },
-            timeout=90,
-        )
-        proof = self._json_response(response)
-        body = proof["body"]
-        ok = response.status_code == 200 and "error" not in body and "response" in body
-        return ExecutionResult(
-            "DONE" if ok else "FAILED",
-            "APPS_SCRIPT_FUNCTION_RETURNED" if ok else "APPS_SCRIPT_RUN_FAILED",
-            proof,
-            production_effect=True,
         )
