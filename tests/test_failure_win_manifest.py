@@ -16,13 +16,14 @@ def registry(*names):
 
 
 class FailureWinReceiverManifestTests(unittest.TestCase):
-    def compile(self, rows, events=(), complete=True):
+    def compile(self, rows, events=(), complete=True, aliases=()):
         return compile_receiver_manifest(
             rows,
             events,
             generated_from="fixture",
             generated_at="2026-08-27T04:00:00+02:00",
             source_complete=complete,
+            receiver_alias_rows=aliases,
         )
 
     def test_clean_registry_is_structurally_complete_but_behavior_pending(self):
@@ -52,6 +53,48 @@ class FailureWinReceiverManifestTests(unittest.TestCase):
         result = self.compile(registry("A"), events)
         self.assertFalse(result.complete)
         self.assertIn("UNKNOWN_EVENT_RECEIVER", {item.code for item in result.anomalies})
+
+    def test_explicit_alias_normalizes_event_without_rewriting_source_label(self):
+        events = [{
+            "event_id": "E-ALIAS",
+            "timestamp": "2026-08-27T00:00:00Z",
+            "receiver_id": "A work-unit label",
+            "kernel_version": "2.0.0",
+            "kernel_invoked": True,
+            "behavior_proven": False,
+            "independent_readback": True,
+            "current": True,
+            "evidence_refs": ["R-A"],
+        }]
+        aliases = [{
+            "alias": "A work-unit label",
+            "canonical_receiver": "A",
+            "current": True,
+        }]
+        result = self.compile(registry("A"), events, aliases=aliases)
+        self.assertTrue(result.complete)
+        self.assertEqual("V2_INVOKED_PROOF_OPEN", result.receivers[0].receiver_state)
+        self.assertIn("RECEIVER_ALIAS_APPLIED", {item.code for item in result.anomalies})
+
+    def test_alias_to_unknown_receiver_fails_closed(self):
+        aliases = [{
+            "alias": "legacy-a",
+            "canonical_receiver": "MISSING",
+            "current": True,
+        }]
+        result = self.compile(registry("A"), aliases=aliases)
+        self.assertFalse(result.complete)
+        self.assertIn("UNKNOWN_RECEIVER_ALIAS_TARGET", {item.code for item in result.anomalies})
+
+    def test_alias_cannot_shadow_different_canonical_receiver(self):
+        aliases = [{
+            "alias": "A",
+            "canonical_receiver": "B",
+            "current": True,
+        }]
+        result = self.compile(registry("A", "B"), aliases=aliases)
+        self.assertFalse(result.complete)
+        self.assertIn("ALIAS_SHADOWS_CANONICAL_RECEIVER", {item.code for item in result.anomalies})
 
     def test_v1_behavior_proof_does_not_promote_v2(self):
         events = [{
