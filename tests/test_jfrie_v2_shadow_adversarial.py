@@ -1,5 +1,11 @@
 from __future__ import annotations
 import unittest
+
+from ao_harmonic_v3.failure_win_v2 import (
+    FailureEventType, FailureObservation, FailureToOperationalWinKernelV2,
+    FailureWinRequest, FailureWinState, RecoveryRoute,
+)
+from ao_harmonic_v3.models import PerformanceVector
 from evidenceops.jurisdiction_first_referral_integrity.jfrie_v2_validation import (
     FULL_V2_PARITY, ValidationMode, run_adversarial_validation, run_shadow_validation,
 )
@@ -97,5 +103,46 @@ class JfrieV2ShadowAdversarialTests(unittest.TestCase):
         s1 = run_semantic_shadow(SOURCE_REF, OBSERVED_AT); s2 = run_semantic_shadow(SOURCE_REF, OBSERVED_AT); a = run_semantic_adversarial(SOURCE_REF, OBSERVED_AT)
         self.assertEqual((s1.result_sha256, s1.receipt_id), (s2.result_sha256, s2.receipt_id))
         self.assertNotEqual(s1.result_sha256, a.result_sha256)
+
+    def test_failure_win_v2_jfrie_receiver_canary_preserves_domain_boundary(self) -> None:
+        native = run_semantic_shadow(SOURCE_REF, OBSERVED_AT)
+        self.assertTrue(native.qualifies)
+        self.assertFalse(native.external_effect)
+
+        incumbent = PerformanceVector(quality=8, reliability=8, proof=9, speed=2, owner_burden=1)
+        candidate = PerformanceVector(
+            quality=8, reliability=8, proof=9, speed=5,
+            owner_time_recovered=2, recovery_gain=2, owner_burden=0,
+        )
+        result = FailureToOperationalWinKernelV2().evaluate(
+            FailureWinRequest(
+                observation=FailureObservation(
+                    event_id="FWV2-JFRIE-PRECURSOR-CANARY",
+                    event_type=FailureEventType.PRECURSOR_RISK,
+                    system_id="JFRIE",
+                    objective="preempt a synthetic jurisdiction-integrity drift risk",
+                    claim="a source-bound jurisdiction projection may become stale",
+                    observed_fruit="synthetic precursor only; no legal or provider effect",
+                    desired_outcome="prewarm a current reversible validation route",
+                    failure_code="SYNTHETIC_JFRIE_INTEGRITY_DRIFT",
+                    material=False,
+                    precursor_signals=("version-drift-fixture", "citation-cycle-fixture"),
+                ),
+                incumbent=incumbent,
+                routes=(RecoveryRoute(
+                    route_id="jfrie-current-validation-fixture",
+                    route_type="REROUTE",
+                    performance=candidate,
+                    proof_strength=1.0,
+                    reversibility=1.0,
+                    strategic_value=1.0,
+                    expected_value=2.0,
+                ),),
+            )
+        )
+        self.assertEqual(FailureWinState.PREEMPTION_READY, result.state)
+        self.assertTrue(result.vector_gate_passed)
+        self.assertFalse(result.proof_graph.complete)
+        self.assertNotEqual(FailureWinState.OPERATIONAL_WIN_VERIFIED, result.state)
 
 if __name__ == "__main__": unittest.main()
