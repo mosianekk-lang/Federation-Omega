@@ -2,6 +2,15 @@ from __future__ import annotations
 
 import unittest
 
+from ao_harmonic_v3.failure_win_v2 import (
+    FailureEventType,
+    FailureObservation,
+    FailureToOperationalWinKernelV2,
+    FailureWinRequest,
+    FailureWinState,
+    RecoveryRoute,
+)
+from ao_harmonic_v3.models import PerformanceVector
 from evidenceops.caseforge.federation_evolution_program import (
     ALL_STAGES,
     EvolutionMaturity,
@@ -186,6 +195,56 @@ class FederationEvolutionProgramTests(unittest.TestCase):
         self.assertFalse(rollup["external_effect"])
         actions = rollup["next_actions"]["MODISA"]
         self.assertIn("DISPOSITION_EXTERNAL:PROVIDER_SCHEDULER_PROOF", actions)
+
+    def test_failure_win_v2_source_bridge_opens_repair_without_self_promotion(self) -> None:
+        result = FailureToOperationalWinKernelV2().evaluate(
+            FailureWinRequest(
+                observation=FailureObservation(
+                    event_id="FW-AIRLOCK-1",
+                    event_type=FailureEventType.FAILURE,
+                    system_id="FEDERATION_OMEGA",
+                    objective="recover material failure",
+                    claim="route should produce semantic completion",
+                    observed_fruit="failure",
+                    desired_outcome="proved recovery",
+                    failure_code="FIXTURE_FAILURE",
+                )
+            )
+        )
+        self.assertEqual(FailureWinState.REPAIR_CYCLE_OPEN, result.state)
+        self.assertFalse(result.proof_graph.complete)
+        self.assertTrue(result.next_falsification_test)
+
+    def test_failure_win_v2_rejects_speed_gain_that_dilutes_quality(self) -> None:
+        incumbent = PerformanceVector(quality=5, reliability=5, proof=5, speed=1)
+        faster_but_worse = PerformanceVector(quality=4, reliability=5, proof=5, speed=20)
+        result = FailureToOperationalWinKernelV2().evaluate(
+            FailureWinRequest(
+                observation=FailureObservation(
+                    event_id="FW-AIRLOCK-2",
+                    event_type=FailureEventType.REGRESSION,
+                    system_id="FEDERATION_OMEGA",
+                    objective="preserve quality while improving recovery",
+                    claim="candidate is better",
+                    observed_fruit="quality regressed",
+                    desired_outcome="non-diluting improvement",
+                    failure_code="QUALITY_REGRESSION",
+                ),
+                incumbent=incumbent,
+                routes=(
+                    RecoveryRoute(
+                        route_id="fast-worse",
+                        route_type="REROUTE",
+                        performance=faster_but_worse,
+                        proof_strength=1.0,
+                        reversibility=1.0,
+                        strategic_value=1.0,
+                    ),
+                ),
+            )
+        )
+        self.assertFalse(result.vector_gate_passed)
+        self.assertIn("quality", result.protected_regressions)
 
 
 if __name__ == "__main__":
