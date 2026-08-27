@@ -26,6 +26,10 @@ class FailureWinProjectionContractTests(unittest.TestCase):
         self.assertIn("current_ok", formula)
         self.assertIn("evidence_ref_ok", formula)
 
+    def test_generated_provider_formulas_have_balanced_parentheses(self):
+        for formula in (behavior_projection_formula(), receiver_state_formula(), truth_boundary_formula()):
+            self.assertEqual(formula.count("("), formula.count(")"), formula)
+
     def test_live_formula_uses_non_cell_like_let_identifiers(self):
         formula = behavior_projection_formula()
         self.assertNotIn(",g1,", formula)
