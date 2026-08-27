@@ -1,0 +1,1 @@
+CFBE v2 canary branch reconciles current main 227abcde4afb69e3c30e7eff4a31632b8e180a63 after stale-base detection; the intervening change is RealityGuard fault-book management only and does not overlap the CFBE canary.
