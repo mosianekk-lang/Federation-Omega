@@ -170,7 +170,12 @@ def tick():
         claim_until = (datetime.now(LOGICAL_TZ) + timedelta(minutes=5)).isoformat(
             timespec="seconds"
         )
-        bus.claim(row_number, owner=EXECUTOR_ID, until_sast=claim_until)
+        bus.claim(
+            row_number,
+            owner=EXECUTOR_ID,
+            until_sast=claim_until,
+            started_at_sast=started,
+        )
 
         # Mission authority is consumed before the provider call. Failed/retried
         # provider work therefore cannot silently reuse the same command budget.
