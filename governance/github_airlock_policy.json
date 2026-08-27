@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.4.0",
+  "version": "2.5.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -22,7 +22,8 @@
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-    ".github/workflows/cios-production-lane.yml"
+    ".github/workflows/cios-production-lane.yml",
+    ".github/workflows/federation-automation-gateway-activate.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -60,6 +61,9 @@
       "pull_request",
       "push",
       "workflow_dispatch"
+    ],
+    ".github/workflows/federation-automation-gateway-activate.yml": [
+      "push"
     ]
   },
   "required_push_branches": {
@@ -77,11 +81,15 @@
     ],
     ".github/workflows/cios-production-lane.yml": [
       "main"
+    ],
+    ".github/workflows/federation-automation-gateway-activate.yml": [
+      "main"
     ]
   },
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-    ".github/workflows/cios-production-lane.yml"
+    ".github/workflows/cios-production-lane.yml",
+    ".github/workflows/federation-automation-gateway-activate.yml"
   ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
@@ -147,7 +155,8 @@
       ".github/workflows/caseforge-provider-readback-canary.yml",
       ".github/workflows/pfrd-omega-operator-auth-probe.yml",
       ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-      ".github/workflows/cios-production-lane.yml"
+      ".github/workflows/cios-production-lane.yml",
+      ".github/workflows/federation-automation-gateway-activate.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
