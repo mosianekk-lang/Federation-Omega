@@ -79,6 +79,10 @@ jobs:
         with:
           python-version: '3.12'
 
+      # Fail fast on Frontier source-byte drift before running the larger regression court.
+      - name: Run Frontier Convergence source-manifest integrity test
+        run: python -m unittest discover -s tests -p 'test_frontier_convergence_manifest.py' -v
+
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
 
@@ -126,6 +130,9 @@ jobs:
 
       - name: Run Federation evolution program regression tests
         run: python -m unittest discover -s tests -p 'test_federation_evolution_program.py' -v
+
+      - name: Run Frontier Convergence core regression tests
+        run: python -m unittest discover -s tests -p 'test_frontier_convergence.py' -v
 
       - name: Build source provenance receipt
         env:
