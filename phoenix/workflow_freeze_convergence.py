@@ -18,6 +18,7 @@ REQUIRED = {
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     ".github/workflows/cios-production-lane.yml",
+    ".github/workflows/frontier-runtime-qualification.yml",
 }
 PROVIDER_MANAGED = {"dynamic/dependabot/dependabot-updates"}
 
