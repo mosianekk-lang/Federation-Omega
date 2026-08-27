@@ -1,19 +1,9 @@
 {
   "node": "FEDERATION_QUANT_LAB_LONA_NODE",
   "version": "1.0.0-canary",
-  "status": "EXECUTING_CANARY",
+  "status": "CANARY_EXECUTION_VERIFIED_RESEARCH_ONLY",
   "research_only": true,
   "live_broker_execution": false,
-  "strategy": {
-    "name": "Federation LONA Canary SMA v1",
-    "lona_strategy_id": "c9dc8521-938e-45e0-8708-fda32c080231",
-    "code_sha256": "266505912eb3d1cf05230ad823177c8ff95639edd1a4c0b6ac1fa946bc7754bf",
-    "parameters": {
-      "fast_period": 20,
-      "slow_period": 50,
-      "position_fraction": 0.95
-    }
-  },
   "dataset": {
     "symbol": "SPY",
     "asset_class": "etf",
@@ -21,28 +11,79 @@
     "source": "TIINGO",
     "lona_symbol_id": "9e60d261-2ffe-4f9f-8412-35f59224b6cd"
   },
-  "backtest": {
-    "report_id": "bc6c79d0-3951-4b87-804a-c1fc3911e703",
+  "strategy_lineage": [
+    {
+      "version": "v1",
+      "name": "Federation LONA Canary SMA v1",
+      "lona_strategy_id": "c9dc8521-938e-45e0-8708-fda32c080231",
+      "code_sha256": "266505912eb3d1cf05230ad823177c8ff95639edd1a4c0b6ac1fa946bc7754bf",
+      "parameters": {"fast_period": 20, "slow_period": 50, "position_fraction": 0.95},
+      "report": {
+        "id": "bc6c79d0-3951-4b87-804a-c1fc3911e703",
+        "status": "COMPLETED",
+        "total_return_pct": 71.08,
+        "cagr_pct": 8.41,
+        "sharpe": 0.55,
+        "max_drawdown_pct": 28.3,
+        "win_rate_pct": 53.85,
+        "closed_trades": 13,
+        "open_trades": 1,
+        "profit_factor": 2.42
+      }
+    },
+    {
+      "version": "v2",
+      "name": "Federation LONA Canary SMA v2",
+      "lona_strategy_id": "9761cff0-0f2b-48e4-9c18-83c1476dbaf8",
+      "previous_lona_strategy_id": "c9dc8521-938e-45e0-8708-fda32c080231",
+      "code_sha256": "8817f9fdc36f4e2c37e52925c2f2726365995ca0794fbbb06113da40f1c47f9e",
+      "parameters": {"fast_period": 20, "slow_period": 50, "position_fraction": 0.95, "stop_loss_pct": 0.08},
+      "standard_report": {
+        "id": "de6d3b60-df68-44af-9ab0-93de50d48952",
+        "status": "COMPLETED",
+        "commission": 0.001,
+        "total_return_pct": 71.67,
+        "cagr_pct": 8.47,
+        "sharpe": 0.56,
+        "max_drawdown_pct": 28.04,
+        "win_rate_pct": 53.85,
+        "closed_trades": 13,
+        "open_trades": 1,
+        "profit_factor": 2.45
+      },
+      "commission_stress_report": {
+        "id": "9f774799-0f4e-44db-93cc-aff6e8e9a92f",
+        "status": "COMPLETED",
+        "commission": 0.003,
+        "total_return_pct": 63.17,
+        "cagr_pct": 7.64,
+        "sharpe": 0.5,
+        "max_drawdown_pct": 29.52,
+        "win_rate_pct": 53.85,
+        "closed_trades": 13,
+        "open_trades": 1,
+        "profit_factor": 2.2
+      }
+    }
+  ],
+  "execution_contract": {
     "start_date": "2020-01-01",
     "end_date": "2026-08-27",
     "initial_cash": 100000,
-    "commission": 0.001,
     "leverage": 1,
-    "buy_on_close": true,
-    "completion_state": "DISPATCHED_NOT_YET_VERIFIED"
+    "buy_on_close": true
   },
-  "promotion_policy": {
-    "admit_to_main_only_after": [
-      "LONA report status COMPLETED",
-      "full report readback",
-      "strategy source readback match",
-      "manifest reconciliation",
-      "GitHub PR reviewable"
-    ],
-    "prohibited": [
-      "claiming live trading capability",
-      "using backtest success as live-capital approval",
-      "equating dispatched work with completion"
+  "admission_decision": {
+    "node_capability": "ADMIT_CANARY_EXECUTION_PATH",
+    "strategy_for_live_capital": "REJECT_NOT_PROVEN",
+    "reason": "Connector execution, readback and versioning are proven, but strategy evidence is insufficient for live capital and risk-adjusted performance remains weak.",
+    "next_gates": [
+      "holdout testing",
+      "cross-asset testing",
+      "parameter perturbation",
+      "benchmark comparison",
+      "data provenance hashing for uploaded/custom datasets",
+      "paper-trading provider integration before any broker-capital lane"
     ]
   }
 }
