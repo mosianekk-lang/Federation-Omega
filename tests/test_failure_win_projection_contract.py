@@ -2,7 +2,6 @@ import unittest
 
 from ao_harmonic_v3.failure_win_manifest import compile_receiver_manifest
 from ao_harmonic_v3.failure_win_projection_contract import (
-    EVENT_COLUMNS,
     PROOF_BOOLEAN_COUNT,
     PROOF_BOOLEAN_FIRST_COLUMN,
     PROOF_BOOLEAN_LAST_COLUMN,
@@ -15,38 +14,29 @@ from ao_harmonic_v3.failure_win_projection_contract import (
 
 
 class FailureWinProjectionContractTests(unittest.TestCase):
-    def test_live_behavior_formula_references_complete_proof_block_and_outer_gates(self):
+    def test_live_behavior_formula_covers_proof_block_outer_gates_repeat_and_soak(self):
         formula = behavior_projection_formula()
-        self.assertIn("'Failure-Win Events v2'!H$2:H", formula)
+        self.assertIn("'Failure-Win Events v2'!G$2:Y", formula)
         self.assertIn(
             f"'Failure-Win Events v2'!{PROOF_BOOLEAN_FIRST_COLUMN}$2:{PROOF_BOOLEAN_LAST_COLUMN}",
             formula,
         )
         self.assertIn(f"TRUE)={PROOF_BOOLEAN_COUNT}", formula)
-        self.assertIn(f"repeat_count_ok>={REQUIRED_REPEATED_SUCCESSES}", formula)
-        self.assertIn(f"soak_seconds_ok>={REQUIRED_SOAK_SECONDS}", formula)
-        for key in ("kernel_invoked", "independent_readback", "current", "evidence_refs"):
-            column = EVENT_COLUMNS[key]
-            self.assertIn(f"'Failure-Win Events v2'!{column}$2:{column}", formula)
+        self.assertIn(f"INDEX(r,1,18)>={REQUIRED_REPEATED_SUCCESSES}", formula)
+        self.assertIn(f"INDEX(r,1,19)>={REQUIRED_SOAK_SECONDS}", formula)
+        self.assertIn('INDEX(r,1,5)<>""', formula)
 
     def test_generated_provider_formulas_have_balanced_parentheses(self):
         for formula in (behavior_projection_formula(), receiver_state_formula(), truth_boundary_formula()):
             self.assertEqual(formula.count("("), formula.count(")"), formula)
-
-    def test_live_formula_uses_non_cell_like_let_identifiers(self):
-        formula = behavior_projection_formula()
-        self.assertIn("proof_row_ok", formula)
-        self.assertIn("proof_graph_ok", formula)
-        self.assertIn("repeat_count_ok", formula)
-        self.assertIn("soak_seconds_ok", formula)
 
     def test_live_state_formula_exposes_incomplete_raw_claim(self):
         formula = receiver_state_formula()
         self.assertIn("V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE", formula)
         self.assertIn("V2_BEHAVIOR_PROVEN", formula)
         self.assertIn("V2_INVOKED_PROOF_OPEN", formula)
-        self.assertIn("proof_graph_ok", formula)
         self.assertIn("'Failure-Win Events v2'!H$2:H", formula)
+        self.assertIn("'Failure-Win Events v2'!L$2:W", formula)
 
     def test_truth_boundary_names_complete_graph_repeat_and_soak(self):
         formula = truth_boundary_formula()
@@ -82,22 +72,51 @@ class FailureWinProjectionContractTests(unittest.TestCase):
             "repeated_successes": 0,
             "soak_seconds": 0,
         }
-        result = compile_receiver_manifest(registry, [event], generated_from="parity-regression", generated_at="2026-08-27T20:00:00+02:00", source_complete=True, receiver_alias_rows=aliases)
+        result = compile_receiver_manifest(
+            registry,
+            [event],
+            generated_from="parity-regression",
+            generated_at="2026-08-27T20:00:00+02:00",
+            source_complete=True,
+            receiver_alias_rows=aliases,
+        )
         self.assertFalse(result.receivers[0].behavior_proven)
         self.assertEqual(result.receivers[0].receiver_state, "V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE")
 
     def test_complete_event_remains_promotable(self):
         registry = [{"receiver_id": "A", "canonical_control": "A control", "primary_id": "a-id", "active": True}]
         event = {
-            "event_id": "COMPLETE", "timestamp": "2026-08-27T20:00:00+02:00", "receiver_id": "A",
-            "kernel_version": "2.0.0", "kernel_invoked": True, "behavior_proven": True,
-            "independent_readback": True, "current": True, "evidence_refs": ["complete-proof"],
-            "failure_fact_preserved": True, "causal_falsification": True, "different_route": True,
-            "vector_gate": True, "failure_first": True, "healthy_path": True, "rollback": True,
-            "forward_canary": True, "semantic_readback": True, "positive_value": True,
-            "no_regression": True, "no_burden_increase": True, "repeated_successes": 3, "soak_seconds": 300,
+            "event_id": "COMPLETE",
+            "timestamp": "2026-08-27T20:00:00+02:00",
+            "receiver_id": "A",
+            "kernel_version": "2.0.0",
+            "kernel_invoked": True,
+            "behavior_proven": True,
+            "independent_readback": True,
+            "current": True,
+            "evidence_refs": ["complete-proof"],
+            "failure_fact_preserved": True,
+            "causal_falsification": True,
+            "different_route": True,
+            "vector_gate": True,
+            "failure_first": True,
+            "healthy_path": True,
+            "rollback": True,
+            "forward_canary": True,
+            "semantic_readback": True,
+            "positive_value": True,
+            "no_regression": True,
+            "no_burden_increase": True,
+            "repeated_successes": 3,
+            "soak_seconds": 300,
         }
-        result = compile_receiver_manifest(registry, [event], generated_from="parity-regression", generated_at="2026-08-27T20:00:00+02:00", source_complete=True)
+        result = compile_receiver_manifest(
+            registry,
+            [event],
+            generated_from="parity-regression",
+            generated_at="2026-08-27T20:00:00+02:00",
+            source_complete=True,
+        )
         self.assertTrue(result.receivers[0].behavior_proven)
         self.assertEqual(result.receivers[0].receiver_state, "V2_BEHAVIOR_PROVEN")
 
