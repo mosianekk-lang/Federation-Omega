@@ -1,6 +1,6 @@
-# EvidenceOps Capital Intelligence OS — v1.0.0-rc6
+# EvidenceOps Capital Intelligence OS — v1.0.0-rc7.1 secure-source candidate
 
-CIOS rc6 advances the internally executable maturity lanes while provider production remains separately blocked and proof-gated.
+CIOS rc7.1 hardens the exact-current source and production proof boundary while provider production remains separately blocked and proof-gated.
 
 ## Current states
 
@@ -9,6 +9,21 @@ CIOS rc6 advances the internally executable maturity lanes while provider produc
 - Portfolio state: **`PORTFOLIO_DEMONSTRABLE_CANDIDATE`**
 - Provider maturity: **`PROVIDER_BINDING_READY`**
 - Production claim: **false**
+
+## rc7.1 production-convergence controls
+
+- OOXML ZIP entries are streamed under declared and actual decompression budgets.
+- UTF-16/32, NUL-bearing XML, DTDs and entities fail closed across the full bounded payload.
+- XML elements, depth, attributes, text, paragraphs, worksheets, shared strings and cells are bounded.
+- The provider candidate now exposes exactly four routes with a 256,000-byte request ceiling; document/search/workspace routes are disabled.
+- Its bearer credential maps to one configured tenant and runtime principal; caller identity overrides are denied.
+- SQLite request handling is serialized as a containment control. This does not qualify SQLite for horizontal production.
+- Production evidence must bind the exact provider/project/region/environment/service/tenant/source/image target and pass an injected independent attestation verifier.
+- Future, naive, stale, conflicting, failed, forged, self-attested or unregistered evidence blocks promotion.
+- Duplicate document content cannot be used to downgrade classification or disclose restricted metadata.
+- The provider canary executes the current cumulative release verifier rather than the obsolete rc2 verifier.
+
+The rc7.1 source cut does **not** claim live production. Managed transactional persistence, immutable external audit, enterprise OIDC, malware/DLP, resource-isolated parsing, observability, supply-chain admission, backup/restore, rollback and provider-native receipts remain hard gates.
 
 The states are intentionally independent. A strong synthetic qualification or portfolio demonstration cannot be used as evidence of provider deployment or real-world investment performance.
 
@@ -59,7 +74,7 @@ The pack is explicitly labelled `PUBLIC_SAFE_SYNTHETIC_DEMONSTRATION`. It preser
 
 The case study may only describe implemented/proven software behavior. It explicitly disclaims real customer, company, transaction, investment-performance or production claims.
 
-## Runtime authority remains unchanged
+## Local runtime authority remains unchanged
 
 Authenticated/default-deny product routes remain:
 
@@ -74,6 +89,13 @@ Authenticated/default-deny product routes remain:
 
 Trade, orders, transfers, withdrawals, payments, signing and regulatory-filing route families remain unexposed.
 
+The provider candidate is intentionally narrower and exposes only:
+
+- `GET /health`
+- `GET /ready`
+- `GET /v1/verify`
+- `POST /v1/events`
+
 ## Next finish gates after rc6
 
 Without waiting for Google/provider authority, CIOS should next pursue:
@@ -84,6 +106,6 @@ Without waiting for Google/provider authority, CIOS should next pursue:
 4. add false-positive/false-negative and calibration-error reporting;
 5. conduct product pilot/value measurement with real consenting users when available.
 
-The separate Sparks lane remains:
+The separate provider lane remains:
 
 `authorised private provider → canary → provider readback → enterprise controls → ProductionQualificationGate → PRODUCTION_VERIFIED`

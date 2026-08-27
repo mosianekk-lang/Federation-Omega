@@ -1,7 +1,7 @@
 {
-  "schema": "CIOS-PROVIDER-RUNTIME-CONTRACT-V1",
-  "version": "1.0.0",
-  "purpose": "Provider-hostable authenticated CIOS candidate runtime without enabling consequential financial actions or self-certifying deployment.",
+  "schema": "CIOS-PROVIDER-RUNTIME-CONTRACT-V1.1",
+  "version": "1.0.0-rc7.1",
+  "purpose": "Fail-closed single-tenant provider candidate without document routes, consequential financial actions or self-certifying deployment.",
   "entrypoint": "python -m evidenceops.capital_intelligence_os.provider_runtime",
   "container": "evidenceops/capital_intelligence_os/Dockerfile.runtime",
   "required_environment": [
@@ -10,7 +10,9 @@
     "CIOS_AUDIT_PATH",
     "CIOS_EXPECTED_SOURCE_SHA",
     "CIOS_RUNTIME_SOURCE_SHA",
-    "CIOS_RUNTIME_IDENTITY"
+    "CIOS_RUNTIME_IDENTITY",
+    "CIOS_TENANT_ID",
+    "CIOS_RUNTIME_USER_ID"
   ],
   "safe_routes": [
     "GET /health",
@@ -30,14 +32,22 @@
   "persistence": {
     "database_required": true,
     "audit_path_required": true,
-    "in_memory_rejected": true
+    "in_memory_rejected": true,
+    "sqlite_reference_runtime_only": true,
+    "horizontal_provider_persistence_verified": false,
+    "production_managed_database_required": true,
+    "immutable_external_audit_required": true
   },
   "security": {
     "bearer_auth_required": true,
-    "tenant_and_user_headers_required": true,
+    "tenant_and_user_bound_by_configuration": true,
+    "caller_identity_override_denied": true,
     "default_deny_routes": true,
+    "document_routes_enabled": false,
     "non_root_container": true,
-    "request_size_limit_bytes": 256000
+    "request_size_limit_bytes": 256000,
+    "serialized_sqlite_request_handling": true,
+    "enterprise_oidc_required_for_production": true
   },
   "maturity_boundary": {
     "source_proves_provider_deployment": false,
@@ -45,6 +55,7 @@
     "declared_runtime_identity_is_provider_readback": false,
     "external_effects_enabled": false,
     "provider_execution_requires_separate_authority": true,
-    "provider_readback_required_for_verified_deployment": true
+    "provider_readback_required_for_verified_deployment": true,
+    "production_claim": false
   }
 }

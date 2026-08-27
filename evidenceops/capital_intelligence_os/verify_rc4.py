@@ -1,7 +1,13 @@
 from __future__ import annotations
 from datetime import datetime, timezone
-from .production_dataplane import AdapterProbe, IdentityClaims, ProductionBindingIntent, ProductionDataPlanePreflight
-from .production_gate import DeploymentIntent, ProductionQualificationGate
+from .production_dataplane import (
+    AdapterProbe,
+    IdentityClaims,
+    ProductionBindingIntent,
+    ProductionDataPlanePreflight,
+    ProviderAdapterRegistration,
+)
+from .production_gate import DeploymentIntent, EvidenceBinding, ProductionQualificationGate
 from .verify_rc3 import verify as verify_rc3
 
 
@@ -10,7 +16,31 @@ def verify() -> dict[str, object]:
     now = datetime(2026, 8, 11, 21, 0, tzinfo=timezone.utc)
     intent = ProductionBindingIntent("verification-tenant", private_mna_enabled=True, market_intelligence_enabled=True)
     claims = IdentityClaims("verification-user", "verification-tenant", ("admin",), "verification-idp", True, now.isoformat())
-    preflight = ProductionDataPlanePreflight()
+    target = EvidenceBinding(
+        "verification-provider",
+        "verification-project",
+        "africa-south1",
+        "STAGING",
+        "verification-service",
+        "verification-tenant",
+        "a" * 40,
+        "sha256:" + "b" * 64,
+    )
+    controls = ProductionDataPlanePreflight().required_controls(intent)
+    registrations = [
+        ProviderAdapterRegistration(
+            f"verify-{index}",
+            "verification-provider",
+            control,
+            target,
+            "verification-reader",
+        )
+        for index, control in enumerate(controls)
+    ]
+    preflight = ProductionDataPlanePreflight(
+        registrations,
+        attestation_verifier=lambda probe: probe.attestation == "verified-test-attestation",
+    )
     empty = preflight.evaluate(intent, claims, [], now=now)
     probes = [
         AdapterProbe(
@@ -20,6 +50,11 @@ def verify() -> dict[str, object]:
             (control,),
             f"provider-receipt:{control}",
             now.isoformat(),
+            {},
+            target,
+            "verified-test-attestation",
+            "verification-reader",
+            "verification-executor",
         )
         for index, control in enumerate(preflight.required_controls(intent))
     ]

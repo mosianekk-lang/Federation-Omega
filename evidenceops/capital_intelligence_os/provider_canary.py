@@ -58,7 +58,7 @@ class ProviderCanary:
     """Harmless A1 runtime canary; it never provisions or promotes a provider."""
     def __init__(self, *, store_factory=SqliteStateStore, release_verify:Callable[[],dict[str,object]]|None=None, authority_factory=AuthorityGuard) -> None:
         if release_verify is None:
-            from .verify_rc2 import verify as release_verify
+            from .verify_release import verify as release_verify
         self.store_factory=store_factory; self.release_verify=release_verify; self.authority_factory=authority_factory
     def run(self,spec:ProviderCanarySpec)->ProviderCanaryReceipt:
         spec.validate(); path=Path(spec.db_path)

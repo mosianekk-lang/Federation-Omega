@@ -3,13 +3,24 @@ from __future__ import annotations
 import json
 import os
 import re
+import threading
 from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import Any
 
-from .local_runtime import LocalRuntimeApplication, MAX_HTTP_BODY_BYTES
+from .local_runtime import LocalRuntimeApplication
+from .policy import RuntimePolicy
 
 _SHA_RE = re.compile(r"^[0-9a-f]{40}$")
+PROVIDER_MAX_HTTP_BODY_BYTES = 256_000
+PROVIDER_SAFE_ROUTES = frozenset(
+    {
+        ("GET", "/health"),
+        ("GET", "/ready"),
+        ("GET", "/v1/verify"),
+        ("POST", "/v1/events"),
+    }
+)
 
 
 class ProviderRuntimeConfig:
@@ -28,6 +39,8 @@ class ProviderRuntimeConfig:
         expected_source_sha: str,
         runtime_source_sha: str,
         runtime_identity: str,
+        tenant_id: str,
+        runtime_user_id: str,
         host: str = "0.0.0.0",
         port: int = 8080,
     ) -> None:
@@ -39,6 +52,8 @@ class ProviderRuntimeConfig:
             raise ValueError("runtime source SHA does not match expected source SHA")
         if not runtime_identity.strip():
             raise ValueError("CIOS_RUNTIME_IDENTITY is required")
+        if not tenant_id.strip() or not runtime_user_id.strip():
+            raise ValueError("provider runtime requires a fixed tenant and runtime user")
         if db_path.strip() in {"", ":memory:"} or audit_path.strip() in {"", ":memory:"}:
             raise ValueError("provider runtime requires persistent database and audit paths")
         if Path(db_path).resolve() == Path(audit_path).resolve():
@@ -51,6 +66,8 @@ class ProviderRuntimeConfig:
         self.expected_source_sha = expected_source_sha
         self.runtime_source_sha = runtime_source_sha
         self.runtime_identity = runtime_identity
+        self.tenant_id = tenant_id
+        self.runtime_user_id = runtime_user_id
         self.host = host
         self.port = int(port)
 
@@ -63,6 +80,8 @@ class ProviderRuntimeConfig:
             "CIOS_EXPECTED_SOURCE_SHA": os.environ.get("CIOS_EXPECTED_SOURCE_SHA", ""),
             "CIOS_RUNTIME_SOURCE_SHA": os.environ.get("CIOS_RUNTIME_SOURCE_SHA", ""),
             "CIOS_RUNTIME_IDENTITY": os.environ.get("CIOS_RUNTIME_IDENTITY", ""),
+            "CIOS_TENANT_ID": os.environ.get("CIOS_TENANT_ID", ""),
+            "CIOS_RUNTIME_USER_ID": os.environ.get("CIOS_RUNTIME_USER_ID", ""),
         }
         missing = sorted(name for name, value in required.items() if not value)
         if missing:
@@ -74,6 +93,8 @@ class ProviderRuntimeConfig:
             expected_source_sha=required["CIOS_EXPECTED_SOURCE_SHA"],
             runtime_source_sha=required["CIOS_RUNTIME_SOURCE_SHA"],
             runtime_identity=required["CIOS_RUNTIME_IDENTITY"],
+            tenant_id=required["CIOS_TENANT_ID"],
+            runtime_user_id=required["CIOS_RUNTIME_USER_ID"],
             host=os.environ.get("HOST", "0.0.0.0"),
             port=int(os.environ.get("PORT", "8080")),
         )
@@ -85,6 +106,16 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
     def __init__(self, config: ProviderRuntimeConfig) -> None:
         self.config = config
         super().__init__(config.db_path, config.audit_path, config.bearer_token)
+        self.policy = RuntimePolicy(
+            config.bearer_token,
+            runtime_roles=("operator",),
+            safe_routes=PROVIDER_SAFE_ROUTES,
+            fixed_tenant_id=config.tenant_id,
+            fixed_user_id=config.runtime_user_id,
+        )
+        # The reference provider candidate uses SQLite and must serialize requests.
+        # This is a containment control, not evidence of horizontally safe persistence.
+        self._provider_request_lock = threading.RLock()
 
     def handle(
         self,
@@ -93,7 +124,10 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
         headers: dict[str, str],
         body: bytes = b"",
     ) -> tuple[int, dict[str, Any]]:
-        status, payload = super().handle(method, path, headers, body)
+        if len(body) > PROVIDER_MAX_HTTP_BODY_BYTES:
+            return 413, {"error": "REQUEST_TOO_LARGE"}
+        with self._provider_request_lock:
+            status, payload = super().handle(method, path, headers, body)
         normalized = path.split("?", 1)[0]
         if status == 200 and normalized in {"/health", "/ready"}:
             payload = dict(payload)
@@ -105,6 +139,9 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
                     "provider_identity_readback_verified": False,
                     "provider_deployment_verified": False,
                     "external_effects_enabled": False,
+                    "fixed_tenant_binding": True,
+                    "document_routes_enabled": False,
+                    "horizontal_persistence_verified": False,
                     "truth_boundary": (
                         "This response proves bounded application runtime semantics only. "
                         "Provider identity, revision and deployment require independent provider-native readback."
@@ -115,7 +152,7 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
 
 
 class _ProviderHandler(BaseHTTPRequestHandler):
-    server_version = "CIOSProviderCandidate/1.0-rc5"
+    server_version = "CIOSProviderCandidate/1.0-rc7.1"
 
     def _dispatch(self) -> None:
         try:
@@ -123,7 +160,7 @@ class _ProviderHandler(BaseHTTPRequestHandler):
         except ValueError:
             self.send_error(400)
             return
-        if length < 0 or length > MAX_HTTP_BODY_BYTES:
+        if length < 0 or length > PROVIDER_MAX_HTTP_BODY_BYTES:
             payload = {"error": "REQUEST_TOO_LARGE"}
             data = json.dumps(payload).encode()
             self.send_response(413)
