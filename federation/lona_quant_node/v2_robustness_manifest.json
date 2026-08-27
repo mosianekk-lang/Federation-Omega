@@ -1,10 +1,20 @@
 {
   "node": "FEDERATION_QUANT_LAB_LONA_NODE",
   "version": "2.0.0-robustness-canary",
-  "status": "ROBUSTNESS_EXPERIMENTS_DISPATCHED",
+  "status": "ROBUSTNESS_EVIDENCE_RECONCILED_ADVERSE_COST_PENDING",
   "research_only": true,
   "live_broker_execution": false,
   "candidate_strategy_id": "9761cff0-0f2b-48e4-9c18-83c1476dbaf8",
+  "candidate_decision": "REVISE_AND_RETEST",
+  "decision_basis": {
+    "score_before_adverse_cost": 57.75,
+    "hard_failures": [
+      "HOLDOUT_SAMPLE_TOO_SMALL",
+      "MATERIAL_BENCHMARK_UNDERPERFORMANCE",
+      "ADVERSE_COST_EVIDENCE_MISSING"
+    ],
+    "notes": "Candidate remains useful as a Failure-Win parent but is not robustness-admitted. SPY holdout and QQQ are positive; IWM generalisation fails and passive benchmarks materially outperform the candidate."
+  },
   "benchmark_strategy": {
     "strategy_id": "83ef6616-f288-4e9f-8cdf-69f64a7e86e4",
     "code_sha256": "e16bdba897a7d3cc5486970cc29653b35f10be070a7b2db4b71605ce2f22adbf"
@@ -15,15 +25,16 @@
     "IWM": "2a153979-017d-4aec-bab4-222a7a4179e3"
   },
   "experiments": {
-    "in_sample_spy_2020_2023": "22f6c7ef-217e-4397-93ef-4c40e58fc84b",
-    "holdout_spy_2024_2026": "86584c26-fb18-4cfe-86c5-b0f89dc427df",
-    "perturb_fast15_slow45": "e6a85720-49c6-4d25-97c1-cdc7ed2bab2d",
-    "perturb_fast25_slow60": "4e60dab9-4e6d-40cb-8d6e-46e88bac8ac4",
-    "cross_asset_qqq": "f197d129-12a7-445b-8367-bf1e1ea0d5bf",
-    "cross_asset_iwm": "aa6adc15-6887-468b-901a-994c40e9faba",
-    "benchmark_spy": "a6830c18-f5ad-46bc-bb8a-9549ebfd0661",
-    "benchmark_qqq": "23e0c3bd-51dd-4096-a334-392956f9a69b",
-    "benchmark_iwm": "e5750e3d-8d94-4caf-a6c7-ace6c1df4929"
+    "in_sample_spy_2020_2023": {"report_id":"22f6c7ef-217e-4397-93ef-4c40e58fc84b","return":25.96,"sharpe":0.36,"max_drawdown":28.04,"trades":8},
+    "holdout_spy_2024_2026": {"report_id":"86584c26-fb18-4cfe-86c5-b0f89dc427df","return":27.67,"sharpe":6.42,"max_drawdown":9.58,"trades":4},
+    "perturb_fast15_slow45": {"report_id":"e6a85720-49c6-4d25-97c1-cdc7ed2bab2d","return":24.64,"sharpe":1.55,"max_drawdown":10.69,"trades":7},
+    "perturb_fast25_slow60": {"report_id":"4e60dab9-4e6d-40cb-8d6e-46e88bac8ac4","return":31.04,"sharpe":2.90,"max_drawdown":10.47,"trades":4},
+    "cross_asset_qqq": {"report_id":"f197d129-12a7-445b-8367-bf1e1ea0d5bf","return":30.66,"sharpe":1.47,"max_drawdown":12.79,"trades":5},
+    "cross_asset_iwm": {"report_id":"aa6adc15-6887-468b-901a-994c40e9faba","return":-0.01,"sharpe":-0.07,"max_drawdown":18.61,"trades":5},
+    "benchmark_spy": {"report_id":"a6830c18-f5ad-46bc-bb8a-9549ebfd0661","return":63.51,"sharpe":3.51,"max_drawdown":18.04},
+    "benchmark_qqq": {"report_id":"23e0c3bd-51dd-4096-a334-392956f9a69b","return":74.97,"sharpe":4.46,"max_drawdown":21.92},
+    "benchmark_iwm": {"report_id":"e5750e3d-8d94-4caf-a6c7-ace6c1df4929","return":51.12,"sharpe":3.13,"max_drawdown":26.38},
+    "adverse_cost_spy_holdout": {"report_id":"e5d15463-588e-44fd-9587-435606624b17","status":"PENDING","commission":0.003}
   },
   "execution_assumptions": {
     "frequency": "1d",
@@ -37,6 +48,8 @@
   "promotion_contract": {
     "positive_absolute_return_is_not_sufficient": true,
     "benchmark_relative_evidence_required": true,
+    "minimum_holdout_closed_trades": 8,
+    "material_benchmark_underperformance_threshold_pct_points": -10.0,
     "parameter_perturbation_required": true,
     "cross_asset_survival_required": true,
     "adverse_cost_evidence_required": true,
