@@ -41,7 +41,8 @@
     "no_external_effect_without_separate_authority",
     "no_silent_objective_rewrite",
     "no_history_deletion_on_merge_or_supersession",
-    "rollback_and_readback_remain_separate_proof_axes"
+    "rollback_and_readback_remain_separate_proof_axes",
+    "existing_public_api_non_dilution"
   ],
   "maturity_boundary": {
     "runtime_and_provider_receipts_required_for_promotion": true,
@@ -52,8 +53,10 @@
   "status": "SOURCE_CANDIDATE",
   "testing": {
     "external_effect": false,
-    "focused_test_count": 19,
-    "framework": "python_stdlib_unittest"
+    "focused_local_pass_count": 19,
+    "focused_test_count": 21,
+    "framework": "python_stdlib_unittest",
+    "public_api_hosted_tests_pending": 2
   },
-  "version": "1.0.0"
+  "version": "1.0.1"
 }
