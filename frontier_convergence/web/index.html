@@ -1,0 +1,47 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>Frontier Convergence Cockpit</title>
+<style>
+:root{font-family:Inter,system-ui,sans-serif;background:#0d1117;color:#e6edf3}
+body{margin:0} header{padding:28px 6vw;border-bottom:1px solid #30363d;background:#161b22}
+main{padding:28px 6vw;display:grid;gap:20px}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:16px}
+.card{background:#161b22;border:1px solid #30363d;border-radius:14px;padding:18px}
+h1,h2{margin-top:0}.muted{color:#8b949e}.ok{color:#3fb950}.hold{color:#d29922}
+input,textarea,button{width:100%;box-sizing:border-box;margin:6px 0;padding:10px;border-radius:8px;border:1px solid #30363d;background:#0d1117;color:#e6edf3}
+button{background:#238636;border:0;font-weight:700;cursor:pointer}.mono{font-family:ui-monospace,monospace;word-break:break-all}
+pre{white-space:pre-wrap;background:#0d1117;padding:12px;border-radius:8px;max-height:340px;overflow:auto}
+</style>
+</head>
+<body>
+<header><h1>Superior Logic × Gemini — Frontier Convergence</h1>
+<div class="muted">Provider-neutral control cockpit. This surface compiles and evaluates; provider effects remain SOVARA-gated.</div></header>
+<main>
+<div class="grid">
+<section class="card"><h2>Runtime</h2><div id="runtime">Loading…</div></section>
+<section class="card"><h2>Control invariants</h2><div>Proof before promotion</div><div>Receiver-local capability leases</div><div>Default-deny effects</div><div>No raw secrets</div><div>Rollback + readback for mutations</div></section>
+<section class="card"><h2>Convergence loop</h2><div>Observe → Decompose → Compare → Forge → Shadow → Robustness → Canary → Readback → Value → Promote/Reject</div></section>
+</div>
+<section class="card"><h2>Register a frontier signal</h2>
+<input id="org" placeholder="Source organization" value="Google">
+<input id="class" placeholder="Capability class" value="agent_identity">
+<textarea id="mechanism" placeholder="Mechanism">Short-lived workload identity with bounded tool/resource scope</textarea>
+<input id="evidence" placeholder="Evidence reference" value="official://source">
+<button onclick="signal()">Register signal</button><pre id="signalOut"></pre></section>
+<section class="card"><h2>Scenario branch</h2>
+<div class="muted">Runs an isolated state delta; it does not mutate canonical state.</div>
+<textarea id="base">{"route":"incumbent","cost":1,"state":"stable"}</textarea>
+<textarea id="delta">{"route":"gemini-challenger","cost":0.8}</textarea>
+<button onclick="scenario()">Materialize scenario</button><pre id="scenarioOut"></pre></section>
+</main>
+<script>
+async function refresh(){const r=await fetch('/v1/status');const j=await r.json();document.getElementById('runtime').innerHTML=
+`<div class="${j.event_chain_valid?'ok':'hold'}">${j.state}</div><div>v${j.version}</div><div>Event chain: ${j.event_chain_valid}</div><div>Provider effects: ${j.provider_effects}</div>`}
+async function signal(){const body={source_organization:org.value,capability_class:document.getElementById('class').value,mechanism:mechanism.value,evidence_refs:[evidence.value]};
+const r=await fetch('/v1/frontier/signals',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});signalOut.textContent=JSON.stringify(await r.json(),null,2);refresh()}
+async function scenario(){const body={mission_id:'COCKPIT-SCENARIO',base_state:JSON.parse(base.value),delta:JSON.parse(delta.value)};
+const r=await fetch('/v1/scenarios/materialize',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(body)});scenarioOut.textContent=JSON.stringify(await r.json(),null,2)}
+refresh()
+</script>
+</body></html>
