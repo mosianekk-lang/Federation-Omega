@@ -1,5 +1,14 @@
 import unittest
 
+from ao_harmonic_v3.failure_win_v2 import (
+    FailureEventType,
+    FailureObservation,
+    FailureToOperationalWinKernelV2,
+    FailureWinRequest,
+    FailureWinState,
+    RecoveryRoute,
+)
+from ao_harmonic_v3.models import PerformanceVector
 from bubbles.control_plane import (
     ActionRequest,
     BubblesControlPlane,
@@ -123,6 +132,47 @@ class BubblesControlPlaneTests(unittest.TestCase):
         second = self.control.command_envelope(request)
         self.assertEqual(first["command_sha256"], second["command_sha256"])
         self.assertIn("provider execution", first["truth_boundary"])
+
+    def test_failure_win_v2_bubbles_precursor_canary_invokes_prevention_path(self) -> None:
+        incumbent = PerformanceVector(quality=5, reliability=5, proof=5, speed=1)
+        candidate = PerformanceVector(
+            quality=5,
+            reliability=5,
+            proof=5,
+            speed=4,
+            owner_time_recovered=2,
+            recovery_gain=2,
+        )
+        result = FailureToOperationalWinKernelV2().evaluate(
+            FailureWinRequest(
+                observation=FailureObservation(
+                    event_id="FWV2-BUBBLES-PRECURSOR-CANARY",
+                    event_type=FailureEventType.PRECURSOR_RISK,
+                    system_id="Bubbles",
+                    objective="preempt a synthetic no-effect route risk",
+                    claim="current route may become slow",
+                    observed_fruit="precursor only; no provider effect",
+                    desired_outcome="prewarm a stronger reversible route",
+                    failure_code="SYNTHETIC_PRECURSOR_CANARY",
+                    material=False,
+                    precursor_signals=("latency-drift-fixture",),
+                ),
+                incumbent=incumbent,
+                routes=(
+                    RecoveryRoute(
+                        route_id="bubbles-prewarm-fixture",
+                        route_type="REROUTE",
+                        performance=candidate,
+                        proof_strength=1.0,
+                        reversibility=1.0,
+                        strategic_value=1.0,
+                    ),
+                ),
+            )
+        )
+        self.assertEqual(FailureWinState.PREEMPTION_READY, result.state)
+        self.assertEqual(("bubbles-prewarm-fixture",), result.prewarm_route_ids)
+        self.assertFalse(result.proof_graph.complete)
 
 
 if __name__ == "__main__":
