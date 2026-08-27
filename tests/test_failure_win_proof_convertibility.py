@@ -92,7 +92,7 @@ class ProofConvertibilityClassifierTests(unittest.TestCase):
         self.assertFalse(decision.convertible)
         self.assertEqual(decision.reason, ConvertibilityReason.RECEIVER_MISMATCH)
 
-    def test_jARVIS_harness_contamination_is_test_harness_noise(self):
+    def test_jarvis_harness_contamination_is_test_harness_noise(self):
         evidence = self.failure(
             evidence_id="jarvis-monkeypatch",
             phase=ExecutionPhase.TEST_HARNESS,
@@ -129,9 +129,19 @@ class ProofConvertibilityClassifierTests(unittest.TestCase):
     def test_success_without_antecedent_is_retained_but_not_promoted(self):
         evidence = self.recovery(evidence_id="bubbles-cloud-run-health")
         classified = ProofConvertibilityClassifier.classify(evidence)
-        self.assertEqual(classified.kind, EvidenceKind.RECOVERY_EVIDENCE)
+        self.assertEqual(classified.kind, EvidenceKind.SUCCESS_ONLY)
         self.assertEqual(classified.reason, ConvertibilityReason.SUCCESS_ONLY)
         self.assertFalse(classified.promotable)
+
+    def test_real_success_becomes_convertible_only_after_same_surface_pair(self):
+        recovery = self.recovery(evidence_id="paired-success")
+        self.assertEqual(
+            ProofConvertibilityClassifier.classify(recovery).kind,
+            EvidenceKind.SUCCESS_ONLY,
+        )
+        decision = ProofConvertibilityClassifier.pair(self.failure(), recovery)
+        self.assertTrue(decision.convertible)
+        self.assertEqual(decision.reason, ConvertibilityReason.CONVERTIBLE)
 
     def test_setup_failure_does_not_become_behavior_failure(self):
         evidence = self.failure(
