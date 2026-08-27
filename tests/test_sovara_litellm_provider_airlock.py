@@ -15,6 +15,8 @@ sys.modules[SPEC.name] = AIRLOCK
 SPEC.loader.exec_module(AIRLOCK)
 POLICY = AIRLOCK.load_policy(ROOT / "governance" / "github_airlock_policy.json")
 WORKFLOW_PATH = ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+AUTOMATION_GATEWAY = ".github/workflows/federation-automation-gateway-activate.yml"
+CIOS_GATEWAY = ".github/workflows/cios-production-lane.yml"
 
 
 class SovaraLiteLLMProviderAirlockTests(unittest.TestCase):
@@ -46,16 +48,18 @@ jobs:
         findings = AIRLOCK.analyse_workflow(WORKFLOW_PATH, self.contract(), POLICY)
         self.assertEqual([], findings)
 
-    def test_exact_gateway_is_the_only_oidc_source_workflow(self):
+    def test_exact_gateway_is_admitted_without_broadening_oidc(self):
         self.assertEqual(
             {
                 WORKFLOW_PATH,
-                ".github/workflows/cios-production-lane.yml",
+                CIOS_GATEWAY,
+                AUTOMATION_GATEWAY,
             },
             set(POLICY["oidc_workflow_allowlist"]),
         )
         self.assertIn(WORKFLOW_PATH, POLICY["active_workflow_allowlist"])
         self.assertIn(WORKFLOW_PATH, POLICY["execution_quarantine"]["keep_active"])
+        self.assertIn(AUTOMATION_GATEWAY, POLICY["execution_quarantine"]["keep_active"])
 
     def test_gateway_cannot_gain_source_write(self):
         findings = AIRLOCK.analyse_workflow(
