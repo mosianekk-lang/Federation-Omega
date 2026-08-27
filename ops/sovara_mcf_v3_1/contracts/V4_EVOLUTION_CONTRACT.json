@@ -1,0 +1,14 @@
+{
+  "implementation_rule": "NO_V4_MODULE_IMPLEMENTATION_WITHOUT_CFBE_POSITIVE_EXPECTED_VALUE",
+  "modules": [
+    {"default_cfbe_state":"HOLD_UNTIL_REAL_MISSION_DATA","module_id":"V4_OBJECTIVE_ECOLOGY","required_data_fields":["mission.accepted","mission.value","mission.cost","mission.risk"],"status":"INTERFACE_ONLY"},
+    {"default_cfbe_state":"HOLD_UNTIL_MULTI_MISSION_SAMPLE","module_id":"V4_PORTFOLIO_OPTIMIZER","required_data_fields":["mission.dependencies","mission.value","mission.resource_cost"],"status":"INTERFACE_ONLY"},
+    {"default_cfbe_state":"HOLD_UNTIL_COUNTERFACTUAL_DATA","module_id":"V4_CAUSAL_WORLD_MODEL","required_data_fields":["route.context","route.outcome","route.counterfactual"],"status":"INTERFACE_ONLY"},
+    {"default_cfbe_state":"HOLD_UNTIL_DURABLE_SNAPSHOTS","module_id":"V4_INSTITUTIONAL_DIGITAL_TWIN","required_data_fields":["mission.checkpoint","capability.state","resource.state"],"status":"INTERFACE_ONLY"},
+    {"default_cfbe_state":"HOLD_UNTIL_REPEATED_GAP_EVIDENCE","module_id":"V4_CAPABILITY_FOUNDRY","required_data_fields":["opportunity.gradient","capability.gap","regression.baseline"],"status":"INTERFACE_ONLY"},
+    {"default_cfbe_state":"HOLD_UNTIL_COST_AND_VALUE_DATA","module_id":"V4_INSTITUTIONAL_METABOLISM","required_data_fields":["mission.value","mission.cost","owner.intervention_seconds"],"status":"INTERFACE_ONLY"}
+  ],
+  "north_star": "SOVARA Mission Ecology v4.0 — Autonomous Institutional Intelligence & Evolution Fabric",
+  "promotion_path": ["INTERFACE_ONLY","DATA_READY","CFBE_POSITIVE_EXPECTED_VALUE","INCUBATING","OFFLINE_VALIDATED","SHADOW","ADMITTED"],
+  "schema": "SOVARA-V4-EVOLUTION-CONTRACT-1"
+}
