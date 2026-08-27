@@ -1,0 +1,47 @@
+{
+  "audit": {
+    "critical_findings": 2,
+    "high_findings": 6,
+    "medium_findings": 4,
+    "receipt_sha256": "bafba9127961acf9f804c860f850a99c0187a44a5926bcfb6e98cfdfd41634d4",
+    "verdict": "REPAIR_REQUIRED_AND_IMPLEMENTED_IN_LOCAL_10X_REFERENCE_RELEASE"
+  },
+  "flagship_mission": "EVIDENCEOPS_CASE_PACKET_ANALYSIS_V1",
+  "implementation": {
+    "corpus_cases": 24,
+    "critical_provider_cells": 3,
+    "json_schemas": 5,
+    "security_surfaces_audited": 8,
+    "security_surfaces_quarantined": 7,
+    "unit_tests": 46,
+    "yaml_configs": 8
+  },
+  "owner": "Kim Kagiso Mosiane",
+  "receipt_sha256": "0ab875d3bd80fbab5e6eceb21b2e49ac9b9e4dcc859127bd738d7bd0ce06ec36",
+  "release": "1.0.0",
+  "schema": "SOVARA-10X-EVIDENCEOPS-RELEASE-1",
+  "state": "LOCAL_10X_VERTICAL_SLICE_COMPLETE_LIVE_PROVIDER_AND_PERFORMANCE_CLAIMS_HELD",
+  "truth_boundary": {
+    "external_assurance_bound": false,
+    "gateway_deployed": false,
+    "production_traffic_changed": false,
+    "provider_calls_made_by_release_build": 0,
+    "provider_credentials_read": false,
+    "ten_x_ratio_claimed": false,
+    "zero_dilution": true
+  },
+  "verification": {
+    "fault_accepted_rate": 0.0,
+    "fault_hard_veto_count": 24,
+    "gold_accepted_rate": 1.0,
+    "gold_hard_veto_count": 0,
+    "gold_mean_score": 1.0,
+    "live_promotion_held": true,
+    "offline_demo_state": "ACCEPTED",
+    "offline_ledger_event_count": 2,
+    "offline_ledger_valid": true,
+    "offline_promotion_decision": true,
+    "release_validation": "PASS",
+    "secret_scan": "PASS"
+  }
+}
