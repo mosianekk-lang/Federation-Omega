@@ -110,12 +110,14 @@ def compile_receiver_manifest(
     generated_from: str,
     generated_at: str,
     source_complete: bool,
+    receiver_alias_rows: Iterable[Mapping[str, Any]] = (),
 ) -> ReceiverManifestSnapshot:
     """Compile a fail-closed receiver manifest from provider-neutral tabular rows.
 
     Registry completeness and behavioral completeness are deliberately separate.
-    A structurally complete 25-receiver universe may still have zero v2 behavior
-    proofs. Historical v1 events remain visible but cannot promote v2 state.
+    Explicit aliases may normalize a historical route/work-unit label to one
+    canonical registered receiver without rewriting the original event. Unknown
+    unaliased receiver identities remain fail-closed anomalies.
     """
 
     anomalies: list[ManifestAnomaly] = []
@@ -142,22 +144,65 @@ def compile_receiver_manifest(
             "primary_id": primary_id,
         }
 
+    aliases: dict[str, str] = {}
+    for index, raw in enumerate(receiver_alias_rows, start=1):
+        if not _truthy(raw.get("current", True)):
+            continue
+        alias = _text(raw.get("alias"))
+        target = _text(raw.get("canonical_receiver"))
+        if not alias:
+            anomalies.append(ManifestAnomaly("BLANK_RECEIVER_ALIAS", f"alias row {index}"))
+            continue
+        if not target:
+            anomalies.append(ManifestAnomaly("BLANK_RECEIVER_ALIAS_TARGET", f"alias row {index}", alias))
+            continue
+        if alias in aliases:
+            anomalies.append(ManifestAnomaly("DUPLICATE_RECEIVER_ALIAS", f"alias row {index}", alias))
+            continue
+        if target not in registry:
+            anomalies.append(ManifestAnomaly("UNKNOWN_RECEIVER_ALIAS_TARGET", f"alias row {index}", target))
+            continue
+        if alias in registry and alias != target:
+            anomalies.append(ManifestAnomaly("ALIAS_SHADOWS_CANONICAL_RECEIVER", f"alias row {index}", alias))
+            continue
+        aliases[alias] = target
+
     latest: dict[str, Mapping[str, Any]] = {}
     for index, raw in enumerate(event_rows, start=1):
         event_id = _text(raw.get("event_id"))
-        receiver_id = _text(raw.get("receiver_id"))
+        observed_receiver_id = _text(raw.get("receiver_id"))
         if not event_id:
-            anomalies.append(ManifestAnomaly("BLANK_EVENT_ID", f"event row {index}", receiver_id))
+            anomalies.append(ManifestAnomaly("BLANK_EVENT_ID", f"event row {index}", observed_receiver_id))
             continue
-        if not receiver_id:
+        if not observed_receiver_id:
             anomalies.append(ManifestAnomaly("EVENT_WITHOUT_RECEIVER", f"event {event_id}"))
             continue
+
+        receiver_id = observed_receiver_id
         if receiver_id not in registry:
-            anomalies.append(ManifestAnomaly("UNKNOWN_EVENT_RECEIVER", f"event {event_id}", receiver_id))
-            continue
+            receiver_id = aliases.get(observed_receiver_id, "")
+            if not receiver_id:
+                anomalies.append(
+                    ManifestAnomaly(
+                        "UNKNOWN_EVENT_RECEIVER",
+                        f"event {event_id}",
+                        observed_receiver_id,
+                    )
+                )
+                continue
+            anomalies.append(
+                ManifestAnomaly(
+                    "RECEIVER_ALIAS_APPLIED",
+                    f"event {event_id}: {observed_receiver_id} -> {receiver_id}",
+                    receiver_id,
+                )
+            )
+
+        normalized = dict(raw)
+        normalized["receiver_id"] = receiver_id
         prior = latest.get(receiver_id)
-        if prior is None or _event_sort_key(raw) >= _event_sort_key(prior):
-            latest[receiver_id] = raw
+        if prior is None or _event_sort_key(normalized) >= _event_sort_key(prior):
+            latest[receiver_id] = normalized
 
     entries: list[ReceiverManifestEntry] = []
     for receiver_id in sorted(registry):
@@ -218,6 +263,11 @@ def compile_receiver_manifest(
         "BLANK_EVENT_ID",
         "EVENT_WITHOUT_RECEIVER",
         "UNKNOWN_EVENT_RECEIVER",
+        "BLANK_RECEIVER_ALIAS",
+        "BLANK_RECEIVER_ALIAS_TARGET",
+        "DUPLICATE_RECEIVER_ALIAS",
+        "UNKNOWN_RECEIVER_ALIAS_TARGET",
+        "ALIAS_SHADOWS_CANONICAL_RECEIVER",
     }
     complete = bool(source_complete and entries) and not any(item.code in structural_codes for item in anomalies)
     behavior_complete = complete and all(item.receiver_state == "V2_BEHAVIOR_PROVEN" for item in entries)
