@@ -23,7 +23,8 @@
     "provider_semantic_readback_required_for_provider_promotion",
     "conversation_write_ahead_checkpoint_before_heavy_operations",
     "bounded_tool_payload_governor",
-    "cfre_readback_before_retry"
+    "cfre_readback_before_retry",
+    "ambiguous_inflight_tool_readback_before_retry"
   ],
   "external_effect_default": false,
   "frontier_tracks": {
@@ -92,14 +93,14 @@
     "frontier_convergence/__init__.py": "89e1aa424deba7a640dc6eb406060d9863f7ff7fa1672073da41b1ce3c843756",
     "frontier_convergence/__main__.py": "5ce0654fd6796586c2c620efc7d8587a195cb7e18ad4f88372251e7bde309a1e",
     "frontier_convergence/canary.py": "77955ddbc609570ad53ddee0dd58cbd32f27b2577264930c363b8eca05ed7bd3",
-    "frontier_convergence/continuity_adapter.py": "306344e52a6a8fb0708e4f4dc0b8b4b1e40828b266d9a28b3ebbd31e86dab216",
+    "frontier_convergence/continuity_adapter.py": "679cae9490745f9f356c798f17e4fffd7ed2bd1b6eda7e573e3a542c1c980f74",
     "frontier_convergence/core.py": "5dac5ebc80f6fae57d1a94542ed02cbeb8290beb997d294b03f93b98cd77e968",
     "frontier_convergence/federation_adapter.py": "cf68860544c6501a7ec1607d57ebdbadd085621eb1ae944bc9a01a38d6b3f9e3",
     "frontier_convergence/gemini_adapter.py": "a06e65cbac61094f495e826c7985593a675a2e09b67da28809057c04c59cc177",
     "frontier_convergence/service.py": "d13624ef6a52da158deb1e6253c8c652b0d26fcab23552c6a181a374e488f37d",
     "frontier_convergence/web/index.html": "0f818a90557bb90524e22722f5dbbf9007ac5cf73ce29a5b860a080fa6e71e4a",
     "tests/test_frontier_convergence.py": "4d903a8c35cdc5181818118a314df1cedd3e7dbcbebb28ce1753ffa8c9daabac",
-    "tests/test_frontier_convergence_continuity.py": "c69bdb520fcc4ff84a202809627eebec17f7d6ce200a33ab061db4a03dedd475"
+    "tests/test_frontier_convergence_continuity.py": "428e4599dd413bd480795ce6a0f34a1e06d98cf076793ca32236e0c333975bd9"
   },
   "state": "SOURCE_IMPLEMENTATION_PROVIDER_DISABLED_CANARY_READY",
   "sovereignty": {
@@ -120,5 +121,5 @@
     "source_proves_provider_deployment": false,
     "stored_credential_reference_proves_availability": false
   },
-  "version": "1.0.1"
+  "version": "1.0.2"
 }
