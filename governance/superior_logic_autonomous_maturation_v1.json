@@ -1,0 +1,174 @@
+{
+  "schema_version": "superior-logic.autonomous-maturation.v1",
+  "id": "SUPERIOR-LOGIC-AUTONOMOUS-MATURATION-V1",
+  "version": "1.0.0",
+  "kind": "IN_PLACE_FEDERATION_CONTROL_EXTENSION",
+  "objective": "Allow Federation systems to discover gaps, experiment, repair, benchmark, learn and mature without routine owner intervention while preserving proof-before-claim, rollback, authority boundaries and constitutional owner control.",
+  "reuse": {
+    "failure_learning": "FAILURE-TO-OPERATIONAL-WIN-V2",
+    "maturity_assessment": "kimmie_seed/maturity_assessor.py",
+    "federation_maturity_model": "federation_consolidation/data/maturity_model.json",
+    "capability_discovery": ["CFBE", "ResourceMarket", "Federation unified capability graph"],
+    "assurance": ["RealityGuard", "JARVIS", "CFBE", "ProofGraph", "SemanticReadbackFirewall"]
+  },
+  "constitutional_root": {
+    "owner_authority_preserved": true,
+    "proof_before_claim": true,
+    "no_silent_overwrite": true,
+    "experiment_is_not_production": true,
+    "lineage_and_rollback_required": true,
+    "lowest_independently_proven_state_controls": true,
+    "external_authority_never_inferred": true,
+    "proof_thresholds_may_not_self_relax": true
+  },
+  "default_authority": {
+    "ceiling": "A1_INTERNAL",
+    "external_effect_default": false,
+    "new_recurring_cost_default": false,
+    "credential_scope_expansion_default": false,
+    "destructive_mutation_default": false
+  },
+  "autonomous_cycle": [
+    "OBSERVE",
+    "ASSESS_MATURITY",
+    "IDENTIFY_HIGHEST_VALUE_GAP",
+    "RECALL_FAILURES_AND_PRIOR_EXPERIMENTS",
+    "FORM_COMPETING_HYPOTHESES",
+    "HARVEST_EXISTING_CAPABILITIES",
+    "GENERATE_CANDIDATES",
+    "SIMULATE",
+    "TEST",
+    "ADVERSARIAL_TEST",
+    "HISTORICAL_REPLAY",
+    "RANK_BY_MISSION_VALUE_AND_PROOF",
+    "SELECT_CHAMPION",
+    "RUN_REVERSIBLE_CANARY",
+    "READBACK",
+    "REGRESSION_TEST",
+    "SOAK",
+    "PROMOTE_WITHIN_AUTHORITY",
+    "DIFFUSE_LEARNING",
+    "VERIFY_RECEIVER_LOCAL_EFFECT",
+    "REASSESS"
+  ],
+  "maturity_states": [
+    "SEED",
+    "GERMINATED",
+    "ROOTED",
+    "SPROUT",
+    "SAPLING",
+    "MATURE",
+    "FEDERATED",
+    "SELF_SUSTAINING"
+  ],
+  "self_sustaining_gate": {
+    "required": [
+      "persistent_monitoring",
+      "repeated_successful_maturity_cycles",
+      "automatic_gap_detection",
+      "automatic_repair_or_candidate_generation",
+      "independent_proof",
+      "verified_rollback",
+      "measurable_operational_value",
+      "bounded_owner_intervention_rate",
+      "cross_receiver_learning_with_compatibility_proof",
+      "no_unresolved_constitutional_drift"
+    ],
+    "owner_intervention_target": "EXCEPTION_ONLY"
+  },
+  "autonomous_permissions": {
+    "always_allowed_when_reversible_and_within_current_authority": [
+      "inspect_state",
+      "read_evidence",
+      "assess_maturity",
+      "benchmark",
+      "simulate",
+      "run_tests",
+      "historical_replay",
+      "fault_injection_in_sandbox",
+      "generate_candidate_algorithms",
+      "generate_candidate_configuration",
+      "harvest_existing_capabilities",
+      "create_shadow_artifacts",
+      "quarantine_failed_candidate",
+      "update_internal_learning_ledger",
+      "propose_or_apply_reversible_internal_repairs",
+      "promote_shadow_champion",
+      "rollback_shadow_champion",
+      "diffuse proven learning to compatible receivers"
+    ],
+    "conditionally_allowed_without_owner_prompt": [
+      "reversible_internal_canonical_promotion_if_proof_graph_complete_and_no_new_authority_cost_or_external_effect",
+      "automatic_retry_only_when_route_or_state_materially_changes",
+      "automatic route race up to configured width",
+      "automatic predecessor preservation before mutation"
+    ]
+  },
+  "mandatory_owner_escalation": [
+    "constitutional_root_change",
+    "proof_threshold_reduction",
+    "owner_objective_or_value_tradeoff_change",
+    "irreversible_external_effect",
+    "destructive_data_mutation_without_verified_restore",
+    "new_or_expanded_provider_authority",
+    "credential_or_secret_scope_expansion",
+    "unapproved_recurring_cost",
+    "consequential_legal_hr_financial_or_personal_action",
+    "promotion_when_independent_proof_is_incomplete",
+    "unresolved conflict between two protected objectives"
+  ],
+  "anti_stall": {
+    "ordinary_blockers_must_not_be_returned_to_owner": true,
+    "maximum_parallel_recovery_routes": 3,
+    "unchanged_retry_after_same_failure_fingerprint": false,
+    "on_block": [
+      "diagnose",
+      "search_alternate_route",
+      "harvest_capability",
+      "generate_candidate",
+      "simulate",
+      "test",
+      "quarantine_failed_route",
+      "continue_unblocked_lanes"
+    ],
+    "owner_escalation_only_after": "ALL_SAFE_INTERNAL_RECOVERY_CLASSES_EXHAUSTED_OR_MANDATORY_OWNER_TRIGGER"
+  },
+  "promotion_rule": {
+    "champion_anchor_required": true,
+    "candidate_must_beat_or_pareto_improve_champion": true,
+    "protected_floors": ["quality", "reliability", "proof", "rollback", "owner_burden"],
+    "restore_test_required": true,
+    "independent_readback_required": true,
+    "lineage_required": true,
+    "external_effect_requires_surface_specific_authority": true
+  },
+  "maturation_priority_function": [
+    "mission_value_gain",
+    "failure_recurrence_reduction",
+    "owner_burden_reduction",
+    "proof_strength_gain",
+    "resilience_gain",
+    "capability_reuse_gain",
+    "reversibility",
+    "cost",
+    "risk"
+  ],
+  "system_obligations": {
+    "declare_current_verified_maturity": true,
+    "declare_next_gate": true,
+    "maintain_gap_backlog": true,
+    "maintain_champion_and_challengers": true,
+    "maintain_fault_and_experiment_lineage": true,
+    "emit_machine_readable_maturity_receipt": true,
+    "reassess_after_each_material_event": true,
+    "never_claim_self_sustaining_without_measured_owner_intervention_evidence": true
+  },
+  "truth_boundary": {
+    "source_presence_proves_live_autonomy": false,
+    "scheduled_workflow_proves_maturity": false,
+    "candidate_generation_proves_improvement": false,
+    "passing_local_tests_proves_provider_effect": false,
+    "internal_autonomy_grants_external_authority": false,
+    "maturity_is_never_inherited_across_receivers": true
+  }
+}
