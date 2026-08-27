@@ -1,0 +1,24 @@
+{
+  "control_id": "FWV2-EMPIRICAL-PROGRESS-20260827-002",
+  "current_main_before_admission": "0d9372af65a2f847ccd499ddc4003cd83b84b8f3",
+  "federation_omega": {
+    "real_recovery_1": "FWV2-FEDERATION-REAL-PROVENANCE-RECOVERY-20260827-001",
+    "rollback_receipt": "FWV2-FEDERATION-REAL-ROLLBACK-RESTORE-20260827-001",
+    "real_recovery_2": "FWV2-FEDERATION-SHEETS-PROJECTION-RECOVERY-20260827-001",
+    "vector_gate": "PASS_WITH_JUSTIFIED_LATENCY_TRADEOFF",
+    "rollback": true,
+    "distinct_real_successes": 2,
+    "required_real_successes": 3,
+    "soak_seconds": 17246,
+    "required_soak_seconds": 300,
+    "behavior_proven": false
+  },
+  "receiver_manifest": {
+    "receiver_count": 26,
+    "v2_invoked_open": 26,
+    "v2_behavior_proven": 0,
+    "sha256": "2ec66d8eb19add2e665f6d06642adfbd6c7d61375a0903f5ba07f944029a83b7"
+  },
+  "next_gate": "One additional genuinely distinct independently-read real provider/runtime success; CI, merge, currentness and rollback-only events do not count.",
+  "truth_boundary": "Soak and rollback gates are now satisfied for Federation Omega, but repeated-success threshold is still 2/3. No behavior or estate-wide operational promotion is claimed."
+}

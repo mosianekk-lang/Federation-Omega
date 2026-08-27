@@ -1,0 +1,10 @@
+{
+  "control_id": "FWV2-PROJECTION-WRITE-BOUNDARY-AIRLOCK-20260827-001",
+  "source": "ao_harmonic_v3/failure_win_sheet_boundary.py",
+  "focused_tests": [
+    "tests/test_failure_win_projection_write_boundary.py",
+    "tests/test_phoenix_provider_cutover_v3_failure_win_projection_boundary.py"
+  ],
+  "admission_intent": "Require the existing provider-cutover-v3 Airlock stage to execute the projection-write boundary regression without modifying workflow policy.",
+  "truth_boundary": "Admission proves source policy and regression execution only; external Sheets clients must still invoke the guard or remain governed by the canonical write-surface rule."
+}
