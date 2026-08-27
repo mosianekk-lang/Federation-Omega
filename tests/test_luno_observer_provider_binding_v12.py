@@ -112,20 +112,13 @@ class LunoObserverProviderBindingV12Tests(unittest.TestCase):
         self.assertNotIn("999.99", serialized)
         self.assertNotIn("private-order", serialized)
 
-    def test_binding_contract_ignores_legacy_trading_secret_names(self):
+    def test_binding_contract_rejects_legacy_credentials_and_requires_exact_read_set(self):
         contract = json.loads(Path("federation/capital_execution/venues/LUNO_OBSERVER_BINDING_CONTRACT.json").read_text(encoding="utf-8"))
         self.assertFalse(contract["credential_binding"]["legacy_secret_names_accepted"])
         self.assertEqual(set(contract["credential_binding"]["exact_permissions"]), set(REQUIRED_READ_PERMISSIONS))
-        workflow = Path(".github/workflows/luno-observer-provider-binding.yml").read_text(encoding="utf-8")
-        self.assertNotIn("luno-api-key", workflow)
-        self.assertNotIn("luno-api-secret", workflow)
-        self.assertIn("--no-traffic", workflow)
-        self.assertNotIn("scheduler jobs create", workflow.lower())
-
-    def test_container_is_non_root_and_public_only_by_default(self):
-        dockerfile = Path("federation/capital_execution/venues/Dockerfile.luno_observer").read_text(encoding="utf-8")
-        self.assertIn("USER observer", dockerfile)
-        self.assertIn("LUNO_BINDING_MODE=PUBLIC_ONLY", dockerfile)
+        self.assertFalse(contract["financial_effects"])
+        self.assertFalse(contract["provider_write_operations"])
+        self.assertIn("SHADOW_MODE_REMAINS_THE_CAPITAL_CEILING", contract["invariants"])
 
 
 if __name__ == "__main__":

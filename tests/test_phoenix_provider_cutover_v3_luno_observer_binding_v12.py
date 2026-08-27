@@ -35,12 +35,21 @@ class LunoObserverBindingAirlockBridgeTests(unittest.TestCase):
         self.assertFalse(contract["credential_binding"]["legacy_secret_names_accepted"])
         self.assertIn("SHADOW_MODE_REMAINS_THE_CAPITAL_CEILING", contract["invariants"])
 
-    def test_provider_job_is_not_executed_on_pull_request(self):
+    def test_provider_workflow_remains_read_only_zero_traffic_and_no_legacy_secret_import(self):
         workflow = Path(".github/workflows/luno-observer-provider-binding.yml").read_text(encoding="utf-8")
         self.assertIn("github.event_name == 'push' || github.event_name == 'workflow_dispatch'", workflow)
         self.assertIn("CREDENTIAL_PERMISSION_PROOF_REQUIRED", workflow)
         self.assertIn("PUBLIC_MARKET_PROVIDER_VERIFIED", workflow)
         self.assertIn("OBSERVER_BOUND", workflow)
+        self.assertIn("--no-traffic", workflow)
+        self.assertNotIn("luno-api-key", workflow)
+        self.assertNotIn("luno-api-secret", workflow)
+        self.assertNotIn("scheduler jobs create", workflow.lower())
+
+    def test_container_is_non_root_and_public_only_by_default(self):
+        dockerfile = Path("federation/capital_execution/venues/Dockerfile.luno_observer").read_text(encoding="utf-8")
+        self.assertIn("USER observer", dockerfile)
+        self.assertIn("LUNO_BINDING_MODE=PUBLIC_ONLY", dockerfile)
 
     def test_legacy_crosswalk_quarantines_execution_heartbeat_and_order_methods(self):
         text = Path("federation/capital_execution/venues/LEGACY_OMEGA_MAX_CROSSWALK.md").read_text(encoding="utf-8")
