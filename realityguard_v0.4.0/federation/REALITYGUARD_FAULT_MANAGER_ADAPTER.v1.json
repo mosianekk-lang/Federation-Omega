@@ -1,16 +1,22 @@
 {
   "schema_version": "realityguard.fault-manager-adapter.v1",
   "canonical_manager": "RealityGuard",
+  "manager_core": "realityguard.faultbooks.FaultbookManager",
+  "compatibility_api": "realityguard.faultbook.FaultBookManager",
   "manager_scope": ["federation", "chatgpt"],
-  "source_contract": "hash-chained JSONL fault ledgers plus versioned human fault books",
-  "identity_rule": "stable fault_id; duplicate content deduplicates; equal-length divergent heads require explicit merge",
-  "lifecycle_rule": "registration never proves installation, binding, provider interception, remediation or closure",
-  "closure_rule": "PROVEN_CLOSED is rejected while any open requirement remains",
-  "history_rule": "event history is append-only and may not regress",
+  "source_contract": "verified hash-chained JSONL fault ledgers plus versioned human fault books and private atomic central registry",
+  "identity_rule": "stable faultbook_id and deterministic import_id; exact source duplicates suppress content writes while independently verified binding metadata may advance",
+  "lifecycle_rule": "source registration and one successful invocation never prove host binding, provider interception, remediation or closure",
+  "closure_rule": "CLOSED is rejected while regression tests remain open; universal synchronization is prohibited unless every registered consumer is VERIFIED_HOST_BOUND",
+  "history_rule": "event history is append-only; changed sources preserve revision identity; equal-length divergent compatibility records require explicit merge",
+  "privacy_rule": "raw events, local paths, storage references and consumer proof references are excluded from the public manifest",
+  "public_registry": "federation/REALITYGUARD_FAULT_REGISTRY.v1.json",
   "integration_state": {
-    "federation_repository": "IMPLEMENTED_LOCAL_TEST_PENDING",
+    "federation_repository": "TESTED_SOURCE_CANDIDATE",
     "federation_runtime": "ADAPTER_REQUIRED",
-    "chatgpt_provider": "ADAPTER_REQUIRED",
+    "chatgpt_current_invocation": "VERIFIED_INVOCATION",
+    "chatgpt_future_participating_chats": "ADAPTER_REQUIRED",
+    "chatgpt_historical_inaccessible_chats": "ADAPTER_REQUIRED",
     "cross_chat_behavior": "UNVERIFIED"
   }
 }
