@@ -1,0 +1,59 @@
+{
+  "authority": {
+    "authority_inheritance_between_cells": false,
+    "consequential_owner_intent": "NON_DELEGABLE",
+    "default_ceiling": "A1_INTERNAL",
+    "external_effects_default": "HELD",
+    "self_certification": false
+  },
+  "components": {
+    "amcf": {
+      "capabilities": [
+        "proof_directed_scheduler",
+        "monotonic_closure_gate",
+        "counterfactual_planner",
+        "failure_horizon",
+        "mission_genome",
+        "mission_swarm",
+        "deterministic_autonomic_plan"
+      ],
+      "module": "formation_omega/autonomic_fabric.py"
+    },
+    "soe_omega": {
+      "capabilities": [
+        "mission_genesis",
+        "strategic_utility",
+        "resource_envelope",
+        "portfolio_allocator",
+        "capability_centrality",
+        "mission_deduplication",
+        "strategic_genome",
+        "ecology_plan"
+      ],
+      "module": "formation_omega/strategic_ecology.py"
+    }
+  },
+  "contract": "MCE_AUTONOMIC_SOE_OMEGA_V1",
+  "invariants": [
+    "proof_before_claim",
+    "surface_local_authority",
+    "no_provider_state_inheritance",
+    "no_external_effect_without_separate_authority",
+    "no_silent_objective_rewrite",
+    "no_history_deletion_on_merge_or_supersession",
+    "rollback_and_readback_remain_separate_proof_axes"
+  ],
+  "maturity_boundary": {
+    "runtime_and_provider_receipts_required_for_promotion": true,
+    "source_candidate_proves_provider": false,
+    "source_candidate_proves_runtime": false
+  },
+  "purpose": "Add proof-directed mission autonomy and estate-wide strategic objective ecology above MCE v1 without authority inheritance.",
+  "status": "SOURCE_CANDIDATE",
+  "testing": {
+    "external_effect": false,
+    "focused_test_count": 19,
+    "framework": "python_stdlib_unittest"
+  },
+  "version": "1.0.0"
+}
