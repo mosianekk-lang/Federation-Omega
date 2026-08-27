@@ -1,0 +1,298 @@
+name: Luno Observer Provider Binding
+
+on:
+  pull_request:
+    paths:
+      - "federation/capital_execution/venues/luno_*"
+      - "federation/capital_execution/venues/Dockerfile.luno_observer"
+      - "federation/capital_execution/venues/LUNO_OBSERVER_BINDING_CONTRACT.json"
+      - "federation/capital_execution/venues/LEGACY_OMEGA_MAX_CROSSWALK.md"
+      - "tests/test_luno_observer_provider_binding_v12.py"
+      - "tests/test_phoenix_provider_cutover_v3_luno_observer_binding_v12.py"
+      - ".github/workflows/luno-observer-provider-binding.yml"
+  push:
+    branches: [main]
+    paths:
+      - "federation/capital_execution/venues/luno_*"
+      - "federation/capital_execution/venues/Dockerfile.luno_observer"
+      - "federation/capital_execution/venues/LUNO_OBSERVER_BINDING_CONTRACT.json"
+      - "federation/capital_execution/venues/LEGACY_OMEGA_MAX_CROSSWALK.md"
+      - "tests/test_luno_observer_provider_binding_v12.py"
+      - "tests/test_phoenix_provider_cutover_v3_luno_observer_binding_v12.py"
+      - ".github/workflows/luno-observer-provider-binding.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: luno-observer-provider-binding
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  AR_REPOSITORY: federation-omega
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  OBSERVER_SA: luno-observer@sov-hybrid-suite.iam.gserviceaccount.com
+  PUBLIC_SERVICE: federation-luno-market-observer
+  ACCOUNT_SERVICE: federation-luno-account-observer
+  KEY_ID_RESOURCE: luno-observer-key-id
+  KEY_MATERIAL_RESOURCE: luno-observer-key-material
+  PERMISSION_PROOF_RESOURCE: luno-observer-permission-proof
+
+jobs:
+  source-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Run Luno observer v1.2 source court
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            tests.test_luno_observer_provider_binding_v12 \
+            tests.test_phoenix_provider_cutover_v3_luno_observer_binding_v12 \
+            tests.test_luno_cios_integration_v1 \
+            tests.test_capital_feedback_fabric_v11
+          python -m py_compile \
+            federation/capital_execution/venues/luno_permission_proof.py \
+            federation/capital_execution/venues/luno_account_observer.py \
+            federation/capital_execution/venues/luno_observer_runtime.py
+
+  provider:
+    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    needs: source-admission
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Authenticate through established keyless WIF
+        id: google-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+
+      - name: Verify WIF and exact provider project
+        run: |
+          set -euo pipefail
+          SERVICE=architron9 ./ops/bootstrap_github_wif.sh --verify > /tmp/luno-wif.json
+          python - <<'PY'
+          import json
+          value=json.load(open('/tmp/luno-wif.json',encoding='utf-8'))
+          assert value['receipt']=='FEDOMEGA-WIF-CLOUD-VERIFIED', value
+          assert value['state']=='VERIFIED', value
+          assert value['mutation_performed'] is False, value
+          PY
+          test "$(gcloud config get-value project)" = "$PROJECT_ID"
+
+      - name: Discover dedicated observer prerequisites without reading credential values
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/luno-observer
+          secret_ready() {
+            local name="$1"
+            gcloud secrets describe "$name" --project "$PROJECT_ID" >/dev/null 2>&1 || return 1
+            test -n "$(gcloud secrets versions list "$name" --project "$PROJECT_ID" --filter='state=ENABLED' --format='value(name)' --limit=1)"
+          }
+          MODE=PUBLIC_ONLY
+          ACCOUNT_STATE=CREDENTIAL_PERMISSION_PROOF_REQUIRED
+          if secret_ready "$KEY_ID_RESOURCE" && secret_ready "$KEY_MATERIAL_RESOURCE" && secret_ready "$PERMISSION_PROOF_RESOURCE"; then
+            MODE=ACCOUNT_READ_ONLY
+            ACCOUNT_STATE=ACCOUNT_CANARY_PENDING
+          fi
+          printf '%s\n' "$MODE" > /tmp/luno-observer/mode.txt
+          printf '%s\n' "$ACCOUNT_STATE" > /tmp/luno-observer/account-state.txt
+          printf 'LUNO_BINDING_MODE=%s\n' "$MODE" >> "$GITHUB_ENV"
+          printf 'LUNO_ACCOUNT_STATE=%s\n' "$ACCOUNT_STATE" >> "$GITHUB_ENV"
+
+      - name: Ensure dedicated least-privilege runtime identity
+        run: |
+          set -euo pipefail
+          gcloud iam service-accounts describe "$OBSERVER_SA" --project "$PROJECT_ID" >/dev/null 2>&1 || \
+            gcloud iam service-accounts create luno-observer --project "$PROJECT_ID" --display-name="Federation Luno read-only observer"
+          if [[ "$LUNO_BINDING_MODE" == "ACCOUNT_READ_ONLY" ]]; then
+            for resource in "$KEY_ID_RESOURCE" "$KEY_MATERIAL_RESOURCE" "$PERMISSION_PROOF_RESOURCE"; do
+              gcloud secrets add-iam-policy-binding "$resource" --project "$PROJECT_ID" \
+                --member="serviceAccount:${OBSERVER_SA}" --role=roles/secretmanager.secretAccessor --quiet >/dev/null
+            done
+          fi
+
+      - name: Build and push immutable observer image
+        run: |
+          set -euo pipefail
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/federation-luno-observer:${GITHUB_SHA}"
+          docker build --pull -f federation/capital_execution/venues/Dockerfile.luno_observer -t "$IMAGE_TAG" .
+          docker push "$IMAGE_TAG" >/dev/null
+          DIGEST="$(gcloud artifacts docker images describe "$IMAGE_TAG" --project "$PROJECT_ID" --format='value(image_summary.digest)')"
+          test -n "$DIGEST"
+          echo "LUNO_OBSERVER_IMAGE=${REGION}-docker.pkg.dev/${PROJECT_ID}/${AR_REPOSITORY}/federation-luno-observer@${DIGEST}" >> "$GITHUB_ENV"
+          printf '%s\n' "$DIGEST" > /tmp/luno-observer/image-digest.txt
+
+      - name: Deploy, canary and promote private public-market observer
+        run: |
+          set -euo pipefail
+          SERVICE="$PUBLIC_SERVICE"
+          PREVIOUS="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)' 2>/dev/null || true)"
+          TAG="public-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --image "$LUNO_OBSERVER_IMAGE" --service-account "$OBSERVER_SA" \
+            --no-allow-unauthenticated --no-traffic --tag "$TAG" \
+            --set-env-vars="LUNO_BINDING_MODE=PUBLIC_ONLY" \
+            --min-instances=0 --max-instances=1 --concurrency=1 --memory=256Mi --cpu=1 --timeout=30 --quiet
+          gcloud run services add-iam-policy-binding "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --member="serviceAccount:${DEPLOYER_SA}" --role=roles/run.invoker --quiet >/dev/null
+          SERVICE_JSON="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json)"
+          TAGGED_URL="$(python -c 'import json,sys; p=json.load(sys.stdin); tag=sys.argv[1]; print(next(x["url"] for x in p["status"]["traffic"] if x.get("tag")==tag))' "$TAG" <<< "$SERVICE_JSON")"
+          CANDIDATE="$(python -c 'import json,sys; p=json.load(sys.stdin); tag=sys.argv[1]; print(next(x["revisionName"] for x in p["status"]["traffic"] if x.get("tag")==tag))' "$TAG" <<< "$SERVICE_JSON")"
+          test -n "$TAGGED_URL"; test -n "$CANDIDATE"
+          rollback_public() {
+            if [[ -n "$PREVIOUS" ]]; then
+              gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions "${PREVIOUS}=100" --quiet || true
+            fi
+          }
+          trap rollback_public ERR
+          TOKEN="$(gcloud auth print-identity-token --audiences="$TAGGED_URL")"
+          curl --fail --silent --show-error "$TAGGED_URL/health" -H "Authorization: Bearer $TOKEN" > /tmp/luno-observer/public-health.json
+          curl --fail --silent --show-error "$TAGGED_URL/ready" -H "Authorization: Bearer $TOKEN" > /tmp/luno-observer/public-ready.json
+          curl --fail --silent --show-error "$TAGGED_URL/v1/public/ticker?pair=XBTZAR" -H "Authorization: Bearer $TOKEN" > /tmp/luno-observer/public-ticker.json
+          curl --fail --silent --show-error "$TAGGED_URL/v1/public/orderbook?pair=XBTZAR" -H "Authorization: Bearer $TOKEN" > /tmp/luno-observer/public-orderbook.json
+          unset TOKEN
+          python - <<'PY'
+          import json
+          for name in ('public-health','public-ready','public-ticker','public-orderbook'):
+              value=json.load(open(f'/tmp/luno-observer/{name}.json',encoding='utf-8'))
+              assert value.get('financial_effects') is not True, value
+          ready=json.load(open('/tmp/luno-observer/public-ready.json',encoding='utf-8'))
+          assert ready['state']=='PUBLIC_MARKET_READY' and ready['observer_bound'] is False, ready
+          ticker=json.load(open('/tmp/luno-observer/public-ticker.json',encoding='utf-8'))
+          assert ticker['state']=='PUBLIC_MARKET_READBACK_VERIFIED' and ticker['pair']=='XBTZAR', ticker
+          book=json.load(open('/tmp/luno-observer/public-orderbook.json',encoding='utf-8'))
+          assert book['state']=='PUBLIC_ORDERBOOK_READBACK_VERIFIED' and book['bid_levels']>0 and book['ask_levels']>0, book
+          PY
+          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions "${CANDIDATE}=100" --quiet
+          trap - ERR
+          printf '%s\n' "$CANDIDATE" > /tmp/luno-observer/public-revision.txt
+          printf 'PUBLIC_MARKET_PROVIDER_VERIFIED\n' > /tmp/luno-observer/public-state.txt
+
+      - name: Deploy authenticated account observer at zero traffic
+        if: ${{ env.LUNO_BINDING_MODE == 'ACCOUNT_READ_ONLY' }}
+        run: |
+          set -euo pipefail
+          SERVICE="$ACCOUNT_SERVICE"
+          PREVIOUS="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)' 2>/dev/null || true)"
+          printf '%s\n' "$PREVIOUS" > /tmp/luno-observer/account-previous.txt
+          TAG="account-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --image "$LUNO_OBSERVER_IMAGE" --service-account "$OBSERVER_SA" \
+            --no-allow-unauthenticated --no-traffic --tag "$TAG" \
+            --set-env-vars="LUNO_BINDING_MODE=ACCOUNT_READ_ONLY" \
+            --set-secrets="LUNO_OBSERVER_KEY_ID=${KEY_ID_RESOURCE}:latest,LUNO_OBSERVER_KEY_MATERIAL=${KEY_MATERIAL_RESOURCE}:latest,LUNO_OBSERVER_PERMISSION_PROOF=${PERMISSION_PROOF_RESOURCE}:latest" \
+            --min-instances=0 --max-instances=1 --concurrency=1 --memory=256Mi --cpu=1 --timeout=30 --quiet
+          gcloud run services add-iam-policy-binding "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --member="serviceAccount:${DEPLOYER_SA}" --role=roles/run.invoker --quiet >/dev/null
+          SERVICE_JSON="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json)"
+          TAGGED_URL="$(python -c 'import json,sys; p=json.load(sys.stdin); tag=sys.argv[1]; print(next(x["url"] for x in p["status"]["traffic"] if x.get("tag")==tag))' "$TAG" <<< "$SERVICE_JSON")"
+          CANDIDATE="$(python -c 'import json,sys; p=json.load(sys.stdin); tag=sys.argv[1]; print(next(x["revisionName"] for x in p["status"]["traffic"] if x.get("tag")==tag))' "$TAG" <<< "$SERVICE_JSON")"
+          test -n "$TAGGED_URL"; test -n "$CANDIDATE"
+          rollback_account() {
+            if [[ -n "$PREVIOUS" ]]; then
+              gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions "${PREVIOUS}=100" --quiet || true
+            fi
+          }
+          trap rollback_account ERR
+          TOKEN="$(gcloud auth print-identity-token --audiences="$TAGGED_URL")"
+          curl --fail --silent --show-error "$TAGGED_URL/ready" -H "Authorization: Bearer $TOKEN" > /tmp/luno-observer/account-ready.json
+          curl --fail --silent --show-error "$TAGGED_URL/v1/account/semantic-canary?pair=XBTZAR" -H "Authorization: Bearer $TOKEN" > /tmp/luno-observer/account-canary.json
+          unset TOKEN
+          python - <<'PY'
+          import json
+          ready=json.load(open('/tmp/luno-observer/account-ready.json',encoding='utf-8'))
+          assert ready['state']=='OBSERVER_BOUND' and ready['observer_bound'] is True, ready
+          assert ready['permission_proof_digest'], ready
+          canary=json.load(open('/tmp/luno-observer/account-canary.json',encoding='utf-8'))
+          assert canary['state']=='AUTHENTICATED_READ_ONLY_SEMANTIC_CANARY_VERIFIED', canary
+          assert canary['financial_effects'] is False and canary['write_operations'] is False, canary
+          assert canary['private_values_returned'] is False, canary
+          assert canary['balance_rows']>0 and canary['account_id_count']>0, canary
+          assert {'maker_fee','taker_fee'}.issubset(set(canary['fee_fields'])), canary
+          PY
+          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions "${CANDIDATE}=100" --quiet
+          trap - ERR
+          printf '%s\n' "$CANDIDATE" > /tmp/luno-observer/account-revision.txt
+          printf 'OBSERVER_BOUND\n' > /tmp/luno-observer/account-state.txt
+
+      - name: Build redacted immutable provider receipt
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, pathlib, os
+          root=pathlib.Path('/tmp/luno-observer')
+          def text(name, default=''):
+              p=root/name
+              return p.read_text(encoding='utf-8').strip() if p.exists() else default
+          def projected_hash(name):
+              p=root/name
+              if not p.exists(): return None
+              value=json.loads(p.read_text(encoding='utf-8'))
+              safe={k:value.get(k) for k in ('state','pair','timestamp_ms','bid_levels','ask_levels','structural_digest','permission_proof_digest','observer_bound','binding_mode') if k in value}
+              return hashlib.sha256(json.dumps(safe,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          receipt={
+              'schema':'FEDERATION-LUNO-OBSERVER-PROVIDER-RECEIPT-1',
+              'source_sha':os.environ.get('GITHUB_SHA',''),
+              'project':'sov-hybrid-suite','region':'africa-south1',
+              'public_state':text('public-state.txt','PUBLIC_PROVIDER_CANARY_NOT_COMPLETED'),
+              'public_revision':text('public-revision.txt'),
+              'account_state':text('account-state.txt','CREDENTIAL_PERMISSION_PROOF_REQUIRED'),
+              'account_revision':text('account-revision.txt'),
+              'image_digest':text('image-digest.txt'),
+              'public_evidence_hashes':{
+                  'ticker':projected_hash('public-ticker.json'),
+                  'orderbook':projected_hash('public-orderbook.json'),
+              },
+              'account_semantic_hash':projected_hash('account-canary.json'),
+              'raw_credential_values_persisted':False,
+              'raw_private_account_values_persisted':False,
+              'financial_effects':False,
+              'write_operations':False,
+              'legacy_credentials_imported':False,
+          }
+          pathlib.Path('luno-observer-provider-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+
+      - name: Publish redacted provider state
+        if: ${{ always() }}
+        run: |
+          set -euo pipefail
+          if [[ -f luno-observer-provider-receipt.json ]]; then
+            cat luno-observer-provider-receipt.json
+          else
+            echo '{"schema":"FEDERATION-LUNO-OBSERVER-PROVIDER-RECEIPT-1","public_state":"RECEIPT_BUILD_FAILED","account_state":"UNVERIFIED","financial_effects":false,"write_operations":false}'
+          fi
+
+      - uses: actions/upload-artifact@v4
+        if: ${{ always() }}
+        with:
+          name: luno-observer-provider-receipt-${{ github.run_id }}
+          path: luno-observer-provider-receipt.json
+          retention-days: 90

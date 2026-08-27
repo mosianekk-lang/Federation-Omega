@@ -1,0 +1,16 @@
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PORT=8080 \
+    LUNO_BINDING_MODE=PUBLIC_ONLY
+
+WORKDIR /app
+COPY federation /app/federation
+
+RUN useradd --create-home --uid 10001 observer \
+    && chown -R observer:observer /app
+USER observer
+
+EXPOSE 8080
+CMD ["python", "-m", "federation.capital_execution.venues.luno_observer_runtime"]
