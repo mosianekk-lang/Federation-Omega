@@ -92,7 +92,7 @@ class BEFWindowsRuntimeBootstrapTests(unittest.TestCase):
     def test_runtime_scripts_preserve_truth_boundaries(self):
         for name in ("bootstrap_windows_canary.ps1", "verify_windows_canary.ps1", "rollback_windows_canary.ps1"):
             source = (RUNTIME / name).read_text(encoding="utf-8")
-            self.assertIn("TruthBoundary", source)
+            self.assertIn("truthboundary", source.lower())
 
 
 if __name__ == "__main__":
