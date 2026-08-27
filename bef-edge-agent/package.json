@@ -1,0 +1,12 @@
+{
+  "name": "sovara-bef-edge-agent",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Bounded native-messaging provenance courier for SOVARA Browser Execution Fabric",
+  "scripts": {
+    "test": "node --test tests/*.test.js",
+    "check": "node --check src/protocol.js && node --check src/background.js && npm test"
+  },
+  "engines": {"node": ">=20"},
+  "license": "UNLICENSED"
+}
