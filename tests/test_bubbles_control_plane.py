@@ -1,5 +1,15 @@
 import unittest
 
+from ao_harmonic_v3.failure_win_manifest import compile_receiver_manifest
+from ao_harmonic_v3.failure_win_v2 import (
+    FailureEventType,
+    FailureObservation,
+    FailureToOperationalWinKernelV2,
+    FailureWinRequest,
+    FailureWinState,
+    RecoveryRoute,
+)
+from ao_harmonic_v3.models import PerformanceVector
 from bubbles.control_plane import (
     ActionRequest,
     BubblesControlPlane,
@@ -8,6 +18,7 @@ from bubbles.control_plane import (
 )
 from governance.external_action_firewall import LEASE_PROOF
 from tests.test_external_action_firewall import ExternalActionFirewallTests  # noqa: F401
+from tests.test_failure_win_manifest import FailureWinReceiverManifestTests  # noqa: F401
 
 
 class BubblesControlPlaneTests(unittest.TestCase):
@@ -123,6 +134,86 @@ class BubblesControlPlaneTests(unittest.TestCase):
         second = self.control.command_envelope(request)
         self.assertEqual(first["command_sha256"], second["command_sha256"])
         self.assertIn("provider execution", first["truth_boundary"])
+
+    def test_failure_win_v2_manifest_compiler_separates_structure_from_behavior(self) -> None:
+        result = compile_receiver_manifest(
+            [
+                {
+                    "receiver_id": "Bubbles",
+                    "canonical_control": "Bubbles control",
+                    "primary_id": "bubbles-id",
+                    "active": True,
+                },
+                {
+                    "receiver_id": "CFBE-Ω",
+                    "canonical_control": "CFBE control",
+                    "primary_id": "cfbe-id",
+                    "active": True,
+                },
+            ],
+            [
+                {
+                    "event_id": "V1-CFBE",
+                    "timestamp": "2026-08-23T00:00:00Z",
+                    "receiver_id": "CFBE-Ω",
+                    "kernel_version": "1.0.0",
+                    "kernel_invoked": True,
+                    "behavior_proven": True,
+                    "independent_readback": True,
+                    "current": True,
+                    "evidence_refs": ["R1"],
+                }
+            ],
+            generated_from="bubbles-host-fixture",
+            generated_at="2026-08-27T00:00:00Z",
+            source_complete=True,
+        )
+        self.assertTrue(result.complete)
+        self.assertFalse(result.behavior_complete)
+        by_id = {item.receiver_id: item for item in result.receivers}
+        self.assertEqual("REGISTERED_V2_BEHAVIOR_PENDING", by_id["Bubbles"].receiver_state)
+        self.assertEqual("V1_BEHAVIOR_PROVEN_V2_PENDING", by_id["CFBE-Ω"].receiver_state)
+
+    def test_failure_win_v2_bubbles_precursor_canary_invokes_prevention_path(self) -> None:
+        incumbent = PerformanceVector(quality=5, reliability=5, proof=5, speed=1)
+        candidate = PerformanceVector(
+            quality=5,
+            reliability=5,
+            proof=5,
+            speed=4,
+            owner_time_recovered=2,
+            recovery_gain=2,
+        )
+        result = FailureToOperationalWinKernelV2().evaluate(
+            FailureWinRequest(
+                observation=FailureObservation(
+                    event_id="FWV2-BUBBLES-PRECURSOR-CANARY",
+                    event_type=FailureEventType.PRECURSOR_RISK,
+                    system_id="Bubbles",
+                    objective="preempt a synthetic no-effect route risk",
+                    claim="current route may become slow",
+                    observed_fruit="precursor only; no provider effect",
+                    desired_outcome="prewarm a stronger reversible route",
+                    failure_code="SYNTHETIC_PRECURSOR_CANARY",
+                    material=False,
+                    precursor_signals=("latency-drift-fixture",),
+                ),
+                incumbent=incumbent,
+                routes=(
+                    RecoveryRoute(
+                        route_id="bubbles-prewarm-fixture",
+                        route_type="REROUTE",
+                        performance=candidate,
+                        proof_strength=1.0,
+                        reversibility=1.0,
+                        strategic_value=1.0,
+                    ),
+                ),
+            )
+        )
+        self.assertEqual(FailureWinState.PREEMPTION_READY, result.state)
+        self.assertEqual(("bubbles-prewarm-fixture",), result.prewarm_route_ids)
+        self.assertFalse(result.proof_graph.complete)
 
 
 if __name__ == "__main__":
