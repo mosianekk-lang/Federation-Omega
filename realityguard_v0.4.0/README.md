@@ -2,7 +2,7 @@
 
 RealityGuard is a runnable, offline, deterministic protection and solutions layer for AI-assisted work. It compares what a model claims against what the supplied evidence can actually prove, blocks unsafe completion language, independently preserves the valid owner objective through a reuse-first solution route, and gates new construction on a current environment inventory.
 
-Version 0.4 adds a governed automatic-upgrade decision at material lifecycle boundaries. Integrated hosts no longer wait for another owner prompt before classifying a material build, failure, recovery, deployment or canary result. The engine chooses `NO_UPGRADE_REQUIRED`, `OBSERVE`, `PATCH_EXISTING`, `CREATE_CANDIDATE`, `BLOCK_DUPLICATE_UPGRADE` or `BLOCK_UNSAFE_UPGRADE`; it never edits or promotes itself.
+Version 0.4.1 adds a central, private-data-safe fault-book manager alongside the governed automatic-upgrade decision. It verifies hash-chained fault ledgers, preserves revisions and forks, deduplicates exact re-imports, holds raw event content in the private registry, and emits a redacted Federation manifest. It never treats source presence as proof that every ChatGPT or Federation host is bound.
 
 It is **implemented and tested locally**. It is not installed in ChatGPT, not bound to a signed-in browser, and not deployed as a provider-side interceptor. Those states require separate authority and target-system readback.
 
@@ -22,9 +22,18 @@ PYTHONPATH=src python -m realityguard.cli resolve --input examples/chatbridge_so
 PYTHONPATH=src python -m realityguard.cli prebuild --input examples/chatbridge_prebuild_request.json --capabilities examples/federation_capabilities.json
 PYTHONPATH=src python -m realityguard.cli upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json
 PYTHONPATH=src python -m realityguard.cli federation-upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json --adapter-contract federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json
+PYTHONPATH=src python -m realityguard.cli faultbook-import --ledger FAULTS.jsonl --metadata IMPORT.json --registry PRIVATE_REGISTRY.json
+PYTHONPATH=src python -m realityguard.cli faultbook-verify --registry PRIVATE_REGISTRY.json
+PYTHONPATH=src python -m realityguard.cli faultbook-manifest --registry PRIVATE_REGISTRY.json
 ```
 
-Exit codes: `0` bounded claim/action or upgrade route emitted, `2` invalid input, `3` claim blocked or rewrite required, `4` proposed build blocked or redirected to reuse, `5` duplicate or unsafe upgrade blocked.
+Exit codes: `0` bounded claim/action or valid manager result emitted, `2` invalid input, `3` claim blocked or rewrite required, `4` proposed build blocked or redirected to reuse, `5` duplicate or unsafe upgrade blocked, `6` private registry verification failed.
+
+## Central fault-book manager
+
+`faultbook-import` verifies the complete parent-plus-payload hash chain before an atomic registry write. It records exact artifact digests, normalized fault fingerprints, open regression tests and per-surface consumer states. An identical source import is a no-write duplicate; a changed source is preserved as a revision.
+
+`faultbook-manifest` is safe for source review: it excludes raw events, local paths and private storage references. Historical or inaccessible chats remain `ADAPTER_REQUIRED`; the package does not claim they were rewritten or synchronized. See `docs/CENTRAL_FAULTBOOK_MANAGER.md`.
 
 ## Reuse-first solution contract
 
@@ -84,4 +93,4 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 
 Place RealityGuard immediately before user-visible completion/status output. The caller supplies a structured claim, evidence records and scope context. If the verdict is not `ALLOW_BOUNDED`, the caller must suppress the original status and use `safe_statement` plus the findings and missing proof gates.
 
-The default `scan`, `resolve`, `prebuild`, and `upgrade` paths perform no network access and no writes. A single CLI invocation may use one explicit local mutation path: `scan --audit-log` appends a secret-redacted JSONL decision, or `learn --ledger` atomically publishes a deduplicated learning record. The gate is mandatory for any pipeline that places it before construction or a material cycle boundary; this local package does not claim universal interception of systems that have not integrated it.
+The default `scan`, `resolve`, `prebuild`, `upgrade`, `faultbook-verify`, and `faultbook-manifest` paths perform no network access. Explicit local mutation paths are `scan --audit-log`, `learn --ledger`, and `faultbook-import --registry`; the latter atomically publishes a verified private registry. The gate is mandatory for any pipeline that places it before construction or a material cycle boundary; this local package does not claim universal interception of systems that have not integrated it.
