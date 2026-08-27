@@ -1,0 +1,37 @@
+"""Superior Logic × Gemini Frontier Convergence Suite v1."""
+from .core import (
+    ActionMode,
+    AgentIdentityContract,
+    AIAssetRecord,
+    AIControlTower,
+    AssetKind,
+    AuthorizationDecision,
+    AuthorizationRequest,
+    BudgetLease,
+    CapabilityLease,
+    CircuitState,
+    ConnectorIntentGuard,
+    ConvergenceCandidate,
+    ConvergenceStage,
+    EffectContract,
+    ExperimentIdentity,
+    ExperimentIdentityCompiler,
+    FinOpsParetoRouter,
+    FrontierConvergenceEngine,
+    FrontierSignal,
+    PolicyDecisionPoint,
+    PrivacyEnvelope,
+    ProofLevel,
+    ProvenanceAttestation,
+    RobustnessCourt,
+    RobustnessObservation,
+    RobustnessVerdict,
+    ScenarioBranch,
+    SchemaCompatibilityHandshake,
+    SQLiteConvergenceStore,
+    TraceEvent,
+    ValueReceipt,
+)
+from .gemini_adapter import GeminiAdapter, GeminiCallPlan
+
+__version__ = "1.0.0"
