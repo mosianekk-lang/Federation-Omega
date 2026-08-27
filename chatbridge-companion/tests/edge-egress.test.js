@@ -96,6 +96,6 @@ test("flush without browser runtime fails closed and keeps raw ledger untouched"
   const before = JSON.stringify(value);
   const result = await egress.flushLedger(value, {reason: "TEST"});
   assert.equal(result.ok, false);
-  assert.equal(result.state, "EDGE_AGENT_UNAVAILABLE");
+  assert.equal(result.state, "EDGE_AGENT_RUNTIME_UNAVAILABLE");
   assert.equal(JSON.stringify(value), before);
 });
