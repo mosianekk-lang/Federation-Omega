@@ -19,7 +19,7 @@ class FrontierConvergenceContinuityTests(unittest.TestCase):
         self.assertFalse(assessment["new_heavy_work_allowed"])
         self.assertEqual("CHECKPOINT_THEN_CONTINUE", assessment["action"])
 
-    def test_tool_timeout_prefers_readback_before_retry_and_preserves_checkpoint(self):
+    def test_tool_timeout_requires_readback_even_when_stall_is_primary(self):
         receipt = FederationExecutionContinuityAdapter.diagnose_failure(
             {
                 "message": "tool call timeout; no progress",
@@ -34,7 +34,10 @@ class FrontierConvergenceContinuityTests(unittest.TestCase):
                 "conversation_id": "conv-1",
             }
         )
-        self.assertEqual("TOOL_OR_CONNECTOR_FAILURE", receipt["failure_class"])
+        candidate_classes = {item["failure_class"] for item in receipt["candidates"]}
+        self.assertIn("STALL_TIMEOUT", candidate_classes)
+        self.assertIn("TOOL_OR_CONNECTOR_FAILURE", candidate_classes)
+        self.assertTrue(receipt["tool_outcome_readback_required"])
         self.assertEqual("READBACK_BEFORE_RETRY", receipt["retry_rule"])
         self.assertTrue(receipt["checkpoint"]["resume_token"])
         self.assertTrue(receipt["checkpoint"]["idempotency_key"])
