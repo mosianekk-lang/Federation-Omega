@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import io
 import subprocess
 import sys
 import unittest
@@ -25,6 +26,17 @@ class CFRECommandBusAdmissionTests(unittest.TestCase):
             "test_archon_apps_script_public_probe_cannot_be_promoted_to_write",
             combined,
         )
+
+    def test_omega_autofix_failure_win_v2_canary_executes(self) -> None:
+        suite = unittest.defaultTestLoader.loadTestsFromName(
+            "tests.test_autofix_failure_win_v2"
+        )
+        stream = io.StringIO()
+        result = unittest.TextTestRunner(stream=stream, verbosity=2).run(suite)
+        evidence = stream.getvalue()
+        self.assertTrue(result.wasSuccessful(), evidence)
+        self.assertEqual(1, result.testsRun, evidence)
+        self.assertIn("test_cfre_native_recovery_then_v2_canary", evidence)
 
 
 if __name__ == "__main__":
