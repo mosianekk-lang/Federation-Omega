@@ -1,0 +1,49 @@
+{
+  "schema_version": "federation.failure-win.v2",
+  "id": "PHOENIX-WORKFLOW-POLICY-DRIFT-FAILURE-WIN-001",
+  "failure_signature": "DUPLICATED_WORKFLOW_AUTHORITY_FALSE_GREEN",
+  "system": "PHOENIX_EXECUTION_QUARANTINE",
+  "observed": {
+    "source_sha": "b17169788ddb07f96a2701c0fffd28c231f3e371",
+    "phoenix_run_id": 33127556378,
+    "phoenix_job_id": 98709193404,
+    "phoenix_artifact_id": 9668979775,
+    "phoenix_artifact_digest": "sha256:528f9cd6460160c277314da9b2c197f3191bbe6d33f20db9e629c1c0dd71a501",
+    "phoenix_receipt_status": "VERIFIED",
+    "airlock_policy_required_maturation_workflow": ".github/workflows/superior-logic-maturation-shadow.yml",
+    "phoenix_receipt_required_workflow_omitted": ".github/workflows/superior-logic-maturation-shadow.yml",
+    "phoenix_active_after_omitted_maturation_workflow": true,
+    "post_repair_shadow_run_observed_before_fix": false
+  },
+  "root_cause": {
+    "class": "DUPLICATED_POLICY_AUTHORITY_DRIFT",
+    "description": "The Airlock policy and Phoenix quarantine independently encoded the required-active workflow set. The Airlock source admitted the maturation shadow, while Phoenix's hard-coded execution list and hard-coded verifier still reflected the older set. Execution and verification therefore agreed with each other while disagreeing with canonical policy.",
+    "why_false_green_was_possible": "Phoenix mutation logic and its convergence verifier shared the same stale duplicate list, allowing the receipt to report VERIFIED even though a canonically required workflow was not active."
+  },
+  "containment": [
+    "DO_NOT_CLAIM_POST_REPAIR_SHADOW_EXECUTION",
+    "PRESERVE_PROVIDER_RECEIPT",
+    "TREAT_AIRLOCK_POLICY_AS_CANONICAL_REQUIRED_WORKFLOW_AUTHORITY",
+    "REPAIR_PHOENIX_THROUGH_AIRLOCK",
+    "REQUIRE_PROVIDER_READBACK_AFTER_REENABLE"
+  ],
+  "permanent_repair": [
+    "REMOVE_HARDCODED_PHOENIX_REQUIRED_WORKFLOW_SET",
+    "DERIVE_QUARANTINE_KEEP_ACTIVE_SET_FROM_GITHUB_AIRLOCK_POLICY",
+    "DERIVE_CONVERGENCE_REQUIRED_SET_FROM_SAME_POLICY",
+    "FAIL_CLOSED_IF_ACTIVE_ALLOWLIST_AND_KEEP_ACTIVE_PROJECTION_DIVERGE",
+    "DISPATCH_BOUNDED_MATURATION_CANARY_IF_REENABLED",
+    "REGRESSION_TEST_CANONICAL_MATURATION_WORKFLOW_MEMBERSHIP"
+  ],
+  "prevention_rule": "A mutable operational policy may have one canonical authority. Execution logic and proof logic must consume that authority independently; they must not share an unverified duplicate constant that can drift into a self-consistent false green.",
+  "truth_boundary": {
+    "source_policy_membership_proves_provider_workflow_active": false,
+    "phoenix_verified_receipt_proves_canonical_policy_alignment_without_policy_binding": false,
+    "reenable_source_change_proves_provider_reenable": false,
+    "provider_workflow_state_and_successful_runtime_readback_required": true,
+    "schedule_configuration_proves_schedule_event_execution": false
+  },
+  "owner_intervention_required": false,
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false
+}
