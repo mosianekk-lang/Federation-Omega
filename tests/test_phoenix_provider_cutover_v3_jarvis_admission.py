@@ -1,7 +1,5 @@
 from __future__ import annotations
 
-import subprocess
-import sys
 import unittest
 from pathlib import Path
 
@@ -19,29 +17,18 @@ class JarvisAdmissionTests(unittest.TestCase):
     """
 
     def test_jarvis_failure_win_receiver_canary_executes(self) -> None:
-        proc = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "unittest",
-                "discover",
-                "-s",
-                "tests",
-                "-p",
-                "test_jarvis_failure_win_v2.py",
-                "-v",
-            ],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
+        suite = unittest.defaultTestLoader.loadTestsFromName(
+            "tests.test_jarvis_failure_win_v2"
         )
-        if proc.returncode != 0:
-            self.fail(
-                "JARVIS Failure-Win v2 receiver canary failed.\n"
-                f"stdout:\n{proc.stdout[-6000:]}\n"
-                f"stderr:\n{proc.stderr[-6000:]}"
-            )
+        result = unittest.TestResult()
+        suite.run(result)
+        if not result.wasSuccessful():
+            details = [
+                f"FAIL: {case}: {trace}" for case, trace in result.failures
+            ] + [
+                f"ERROR: {case}: {trace}" for case, trace in result.errors
+            ]
+            self.fail("JARVIS Failure-Win v2 receiver canary failed.\n" + "\n".join(details))
 
     def test_native_and_failure_win_canaries_are_present(self) -> None:
         required = (
