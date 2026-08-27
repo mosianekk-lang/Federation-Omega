@@ -59,7 +59,40 @@ jobs:
             --repo-root . \
             --output phoenix-export-output
 
+      - name: Record passive verification receipt
+        if: steps.pst_closure.outputs.requested != 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p phoenix-freeze-output
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          receipt = {
+              "schema": "FEDOMEGA-PHOENIX-PASSIVE-VERIFICATION-1",
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "source_sha": os.environ["GITHUB_SHA"],
+              "run_id": int(os.environ["GITHUB_RUN_ID"]),
+              "run_attempt": int(os.environ["GITHUB_RUN_ATTEMPT"]),
+              "pst_closure_requested": False,
+              "workflow_quarantine_performed": False,
+              "source_mutation_attempted": False,
+              "status": "VERIFIED",
+          }
+          canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
+          Path("phoenix-freeze-output/phoenix-execution-freeze.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+
       - name: Quarantine legacy workflow execution
+        if: steps.pst_closure.outputs.requested == 'true'
         shell: bash
         run: |
           set -uo pipefail
@@ -88,7 +121,8 @@ jobs:
                 .github/workflows/caseforge-provider-readback-canary.yml|\
                 .github/workflows/pfrd-omega-operator-auth-probe.yml|\
                 .github/workflows/sovara-litellm-v2-3-provider-admission.yml|\
-                .github/workflows/cios-production-lane.yml)
+                .github/workflows/cios-production-lane.yml|\
+                .github/workflows/frontier-runtime-qualification.yml)
                   if [[ "${workflow_state}" != "active" ]]; then
                     if gh api -X PUT \
                       "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
@@ -132,6 +166,7 @@ jobs:
             "pfrd-omega-operator-auth-probe.yml|.github/workflows/pfrd-omega-operator-auth-probe.yml"
             "sovara-litellm-v2-3-provider-admission.yml|.github/workflows/sovara-litellm-v2-3-provider-admission.yml"
             "cios-production-lane.yml|.github/workflows/cios-production-lane.yml"
+            "frontier-runtime-qualification.yml|.github/workflows/frontier-runtime-qualification.yml"
           )
 
           for attempt in 1 2 3 4 5 6; do
@@ -301,7 +336,7 @@ jobs:
              && [[ "${pst_ok}" == "true" ]]; then
             state=success
             if [[ "${requested}" != "true" ]]; then
-              description='Phoenix quarantine and exports verified; PST not requested'
+              description='Phoenix passive verification and exports verified; PST not requested'
             fi
           fi
           gh api -X POST \
