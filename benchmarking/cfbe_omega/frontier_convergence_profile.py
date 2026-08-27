@@ -6,7 +6,7 @@ from typing import Iterable, Mapping
 from .benchmark_engine import Dimension, EVIDENCE_FACTORS, weighted_score, leadership_state
 
 
-PROFILE_ID = "CFBE-FRONTIER-CONVERGENCE-001"
+PROFILE_KEY = "CFBE-FRONTIER-CONVERGENCE-001"
 SOURCE_PROOF_REF = "AOCRA-BUILD-FCG-001-SOURCE"
 RUNTIME_PROOF_REF = "AOCRA-BUILD-FCG-001-INTERNAL-RUNTIME"
 CURRENT_EVIDENCE_STATE = "DETERMINISTIC_CI_BOUNDED_RUNTIME"
@@ -24,7 +24,7 @@ class FrontierProof:
 
 @dataclass(frozen=True)
 class FrontierBindingReport:
-    profile_id: str
+    profile_key: str
     raw_architecture: float
     proof_adjusted: float
     leadership: str
@@ -119,7 +119,7 @@ def evaluate(proofs: Iterable[FrontierProof] = ()) -> FrontierBindingReport:
     )
 
     return FrontierBindingReport(
-        profile_id=PROFILE_ID,
+        profile_key=PROFILE_KEY,
         raw_architecture=score.raw_architecture,
         proof_adjusted=score.proof_adjusted,
         leadership=leadership,
