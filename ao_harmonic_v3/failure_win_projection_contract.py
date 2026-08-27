@@ -1,17 +1,36 @@
 from __future__ import annotations
 
-"""Canonical Google Sheets projection formulas for Failure-Win v2.
+"""Canonical behavior-proof contract for source and Google Sheets projection.
 
 The source compiler and the live provider projection must enforce the same
-behavioral proof boundary. These helpers generate formulas only; they do not
-mutate Google Sheets or grant receiver maturity.
+behavioral proof boundary. These helpers do not mutate Google Sheets or grant
+receiver maturity.
 """
+
+from typing import Any, Mapping
 
 EVENT_SHEET = "Failure-Win Events v2"
 REQUIRED_REPEATED_SUCCESSES = 3
 REQUIRED_SOAK_SECONDS = 300
 
-# Event-ledger columns. Column H is the raw behavior claim; L:Y are proof fruit.
+# Provider-neutral event field aliases used by the source compiler.
+PROOF_BOOLEAN_GATES = (
+    ("FAILURE_FACT_PRESERVED", ("failure_fact_preserved",)),
+    ("CAUSAL_FALSIFICATION", ("causal_falsification", "falsification_executed")),
+    ("MATERIALLY_DIFFERENT_ROUTE", ("different_route", "materially_different_route")),
+    ("VECTOR_GATE", ("vector_gate", "vector_gate_passed")),
+    ("FAILURE_FIRST", ("failure_first", "failure_first_test_passed")),
+    ("HEALTHY_PATH", ("healthy_path", "healthy_path_test_passed")),
+    ("ROLLBACK", ("rollback", "rollback_test_passed")),
+    ("FORWARD_CANARY", ("forward_canary", "forward_canary_passed")),
+    ("SEMANTIC_READBACK", ("semantic_readback", "independent_semantic_readback")),
+    ("POSITIVE_VALUE", ("positive_value",)),
+    ("NO_REGRESSION", ("no_regression",)),
+    ("NO_BURDEN_INCREASE", ("no_burden_increase", "owner_burden_not_increased")),
+)
+
+# Exact live event-ledger columns for the canonical fields above. Column H is
+# the raw behavior claim; L:Y are proof fruit.
 EVENT_COLUMNS = {
     "event_id": "A",
     "kernel_invoked": "G",
@@ -35,20 +54,52 @@ EVENT_COLUMNS = {
     "soak_seconds": "Y",
 }
 
-PROOF_BOOLEAN_COLUMNS = (
-    "failure_fact_preserved",
-    "causal_falsification",
-    "different_route",
-    "vector_gate",
-    "failure_first",
-    "healthy_path",
-    "rollback",
-    "forward_canary",
-    "semantic_readback",
-    "positive_value",
-    "no_regression",
-    "no_burden_increase",
-)
+PROOF_BOOLEAN_COLUMNS = tuple(aliases[0] for _, aliases in PROOF_BOOLEAN_GATES)
+
+
+def _text(value: Any) -> str:
+    return "" if value is None else str(value).strip()
+
+
+def _truthy(value: Any) -> bool:
+    if isinstance(value, bool):
+        return value
+    return _text(value).upper() in {"TRUE", "YES", "1", "VERIFIED"}
+
+
+def _number(value: Any, default: float = 0.0) -> float:
+    if value is None or _text(value) == "":
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _first(raw: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in raw:
+            return raw.get(key)
+    return None
+
+
+def behavior_proof_missing(event: Mapping[str, Any]) -> tuple[str, ...]:
+    """Return exact v2 behavior gates missing from one persisted event."""
+
+    missing: list[str] = []
+    for label, aliases in PROOF_BOOLEAN_GATES:
+        if not _truthy(_first(event, *aliases)):
+            missing.append(label)
+
+    repeated = int(_number(_first(event, "repeated_successes", "repeat_count"), 0.0))
+    if repeated < REQUIRED_REPEATED_SUCCESSES:
+        missing.append(f"REPEATED_SUCCESSES<{REQUIRED_REPEATED_SUCCESSES}")
+
+    soak = _number(_first(event, "soak_seconds", "soak"), 0.0)
+    if soak < REQUIRED_SOAK_SECONDS:
+        missing.append(f"SOAK_SECONDS<{REQUIRED_SOAK_SECONDS}")
+
+    return tuple(missing)
 
 
 def _sheet_ref(sheet_name: str) -> str:
