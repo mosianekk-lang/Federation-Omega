@@ -45,7 +45,7 @@
   },
   "luno": {
     "public_rest": "implemented source adapter for ticker, top order book, candles and markets",
-    "authenticated_read_only": "contract planned; provider binding unproven",
+    "authenticated_read_only": "implemented as GET-only symbolic-credential observer; provider credential binding and account readback remain unproven",
     "mcp": "control/observation option; write operations must remain disabled",
     "websocket": "future streaming data plane; not required for v1 source admission",
     "write_operations": false,
