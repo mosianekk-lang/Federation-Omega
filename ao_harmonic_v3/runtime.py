@@ -3,8 +3,6 @@ from __future__ import annotations
 from datetime import datetime, timezone
 
 from .adaptive_cycle import AdaptiveCycleEngine, AdaptiveCycleRequest
-from .behavioral_binding import BehavioralConvergenceBinding, BehavioralRecordStore
-from .behavioral_convergence import BehavioralConvergenceEngine, BehavioralProofReceipt
 from .cost_governor import PreRevenueCostGovernor
 from .event_bus import EventBus
 from .evolution import (
@@ -94,7 +92,7 @@ class AOHarmonicV3:
     AUTHORITY_CEILING = "A1_INTERNAL"
     EXTERNAL_EFFECT_DEFAULT = False
 
-    def __init__(self, *, behavioral_store: BehavioralRecordStore | None = None) -> None:
+    def __init__(self) -> None:
         self.events = EventBus()
         self.state = StateFabric()
         self.missions = MissionGraph()
@@ -116,15 +114,6 @@ class AOHarmonicV3:
         self.failure_win = FailureToOperationalWinKernelV2(
             horizon=self.horizon,
             formation=self.formation,
-        )
-        self.behavioral = BehavioralConvergenceEngine(
-            kernel=self.failure_win,
-            horizon=self.horizon,
-            formation=self.formation,
-        )
-        self.behavioral_binding = BehavioralConvergenceBinding(
-            self.behavioral,
-            store=behavioral_store,
         )
         self.policy = PolicyEvolution()
         self.attention = HumanAttentionGovernor()
@@ -179,39 +168,33 @@ class AOHarmonicV3:
 
     def _tool_failure(self, event: FederationEvent) -> dict[str, object]:
         failure_type = str(event.payload.get("failure_type", "UNKNOWN"))
-        behavioral = self.behavioral_binding.handle_event(event)
         return {
             "classification": self.boundary_build.classify(failure_type),
             "formation": "ROUTE_SEARCH_REQUIRED",
             "forest_first_omega": "AUTO_REROUTE_REMODEL_THEN_BUILD",
             "adaptive_intelligence_router": "REASSESS_AFTER_FAILURE_BEFORE_UNCHANGED_RETRY",
             "adaptive_2x_cycle": "RESTRUCTURE_COMPACT_REBUILD_AND_REMEASURE",
-            "failure_to_operational_win_v2": behavioral["kernel_result"],
-            "behavioral_convergence": behavioral,
+            "failure_to_operational_win_v2": self.failure_win.observe_federation_event(event),
             "cost_governor": "CHEAPEST_EQUIVALENT_ROUTE_BEFORE_PAID_ESCALATION",
             "owner_surface": "OBJECTIVE_LEVEL_ONLY",
             "unchanged_retry": "PROHIBITED_AFTER_REPEAT_FINGERPRINT",
         }
 
     def _failure_win_event(self, event: FederationEvent) -> dict[str, object]:
-        behavioral = self.behavioral_binding.handle_event(event)
         return {
-            "failure_to_operational_win_v2": behavioral["kernel_result"],
-            "behavioral_convergence": behavioral,
+            "failure_to_operational_win_v2": self.failure_win.observe_federation_event(event),
             "authority_ceiling": self.AUTHORITY_CEILING,
             "external_effect_default": self.EXTERNAL_EFFECT_DEFAULT,
         }
 
     def _owner_correction(self, event: FederationEvent) -> dict[str, object]:
-        behavioral = self.behavioral_binding.handle_event(event)
         return {
             "failure_genome": "CREATE_OR_UPDATE",
             "scientific_review": "REQUIRED",
             "forest_first_omega": "REMODEL_AND_CREATE_LEARNING_CANDIDATE",
             "adaptive_intelligence_router": "REASSESS_AND_RAISE_TIER_IF_CORRECTION_REVEALS_MATERIAL_UNCERTAINTY",
             "adaptive_2x_cycle": "SET_CORRECTED_STATE_AS_NEW_BASELINE_AND_REBUILD",
-            "failure_to_operational_win_v2": behavioral["kernel_result"],
-            "behavioral_convergence": behavioral,
+            "failure_to_operational_win_v2": self.failure_win.observe_federation_event(event),
             "policy_candidate": "ELIGIBLE",
             "event_id": event.event_id,
         }
@@ -243,10 +226,6 @@ class AOHarmonicV3:
             "adaptive_2x_cycle": "DELTA_ONLY_CONTEXT_REFRESH_AND_CANDIDATE_REMEASUREMENT",
             "event_id": event.event_id,
         }
-
-    def record_behavioral_proof(self, fingerprint: str, receipt: BehavioralProofReceipt) -> dict[str, object]:
-        """Persist one empirical proof receipt and re-assess its open incident."""
-        return self.behavioral_binding.record_proof(fingerprint, receipt)
 
     def record_terminal_learning(
         self,
@@ -281,7 +260,6 @@ class AOHarmonicV3:
             "ADAPTIVE_INTELLIGENCE_ROUTER",
             "ADAPTIVE_2X_CYCLE_ENGINE",
             "FAILURE_TO_OPERATIONAL_WIN_V2",
-            "BEHAVIORAL_CONVERGENCE_LIVE_BINDING",
             "DYNAMIC_RECEIVER_ATTESTATION",
             "FAILURE_GENOME_AND_PREEMPTION",
             "BOUNDED_CONTEXT_COMPACTION",
@@ -316,9 +294,6 @@ class AOHarmonicV3:
             "improvement_target": "MULTI_DIMENSIONAL_PARETO_OR_MISSION_VALUE_GAIN_WITH_PROTECTED_FLOORS",
             "failure_win_kernel": self.failure_win.KERNEL_ID,
             "failure_win_version": self.failure_win.VERSION,
-            "behavioral_convergence_version": self.behavioral.VERSION,
-            "behavioral_store_kind": self.behavioral_binding.store.kind,
-            "behavioral_replayed_records": self.behavioral_binding.replayed_records,
             "working_memory": "BOUNDED_DEDUPLICATED_DELTA_CAPSULES_WITH_HASH_CHECKPOINTS",
             "cognitive_cycle": "DETECT->PRESERVE->CLASSIFY->RECALL->MODEL_CAUSES->FALSIFY->SEARCH_CAPABILITIES->SIMULATE->RANK_ROUTES->AUTHORIZE->EXECUTE->READBACK->REGRESSION->SOAK->VALUE->LEARN->DIFFUSE->PREVENT",
         }
@@ -335,7 +310,6 @@ def bootstrap() -> dict[str, object]:
         "intelligence_routing": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
         "adaptive_improvement": "ADAPTIVE-2X-CYCLE-ENGINE-V1",
         "failure_to_operational_win": "FAILURE-TO-OPERATIONAL-WIN-V2",
-        "behavioral_convergence": "EVENT_BOUND_REPLAYABLE_SOURCE_IMPLEMENTATION",
         "prevention_path": "PREDICT->PREWARM->AVOID_FAILURE",
         "context_management": "BOUNDED-CONTEXT-COMPACTION-V1",
         "cost_governance": "PRE_REVENUE_ZERO_BASE",
@@ -350,7 +324,6 @@ def bootstrap() -> dict[str, object]:
             "model_or_reasoning_selection_executed": False,
             "measured_2x_operational_gain_verified": False,
             "failure_win_behavior_proven_across_receivers": False,
-            "behavioral_provider_store_bound": False,
             "durable_external_context_archive_bound": False,
         },
     }
