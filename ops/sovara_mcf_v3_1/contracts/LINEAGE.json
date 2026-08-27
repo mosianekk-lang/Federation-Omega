@@ -1,0 +1,27 @@
+{
+  "mode": "ADDITIVE_ZERO_DILUTION",
+  "predecessor_blob_sha": "12a5082f713a9dfe62bd689d85982dbe5af777c9",
+  "predecessor_path": "ops/sovara_10x_evidenceops_v1/10X_BUILD_CONTRACT.json",
+  "predecessor_pr": 647,
+  "preserved": [
+    "flagship mission objective",
+    "three-cell critical-path concept",
+    "hard non-regression",
+    "provider proof boundary",
+    "progressive promotion",
+    "material-delta continuity"
+  ],
+  "schema": "SOVARA-MCF-V3.1-LINEAGE-1",
+  "v31_additions": [
+    "Temporal-grade durable runtime contract",
+    "Causal Time Travel",
+    "OTel-compatible telemetry",
+    "non-bypass capability gateway",
+    "dynamic route selector",
+    "selective parallelism",
+    "epistemic reputation",
+    "Sequential Evidence Engine",
+    "Opportunity Gradient Engine",
+    "v4 Evolution Contract"
+  ]
+}

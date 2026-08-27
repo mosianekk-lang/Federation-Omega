@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import argparse
 import json
 from pathlib import Path
 from typing import Any, Dict, Iterable, Optional
@@ -72,6 +73,63 @@ class BefSpoolReader:
                 "PROVIDER_NATIVE_HIDDEN_EVENTS_NOT_INFERRED"
             ),
         }
+
+
+def _public_receipt_projection(row: Dict[str, Any]) -> Dict[str, Any]:
+    """Return only redacted receipt metadata; never decrypted event content."""
+    return {
+        "receiptId": str(row.get("receiptId", "")),
+        "conversationKey": str(row.get("conversationKey", "")),
+        "envelopeSha256": str(row.get("envelopeSha256", "")),
+        "fromAppendSequence": int(row.get("fromAppendSequence", 0) or 0),
+        "toAppendSequence": int(row.get("toAppendSequence", 0) or 0),
+        "storedEncrypted": bool(row.get("storedEncrypted", False)),
+        "observedAt": str(row.get("observedAt", "")),
+    }
+
+
+def _cli() -> int:
+    parser = argparse.ArgumentParser(
+        description="Read redacted BEF spool receipts or observable-scope DPF evidence."
+    )
+    parser.add_argument("--conversation-key", default="")
+    parser.add_argument("--root", default="")
+    mode = parser.add_mutually_exclusive_group(required=True)
+    mode.add_argument("--list-receipts", action="store_true")
+    mode.add_argument("--latest-receipt", action="store_true")
+    mode.add_argument("--observable-scope-evidence", action="store_true")
+    args = parser.parse_args()
+
+    root = Path(args.root) if args.root else None
+    reader = BefSpoolReader(root)
+    key = str(args.conversation_key or "")
+
+    if args.list_receipts:
+        rows = [_public_receipt_projection(row) for row in reader.receipts(key or None)]
+        print(json.dumps({"state": "BEF_SPOOL_RECEIPTS_READBACK", "receipts": rows}, sort_keys=True))
+        return 0
+
+    if not key:
+        parser.error("--conversation-key is required for latest/evidence modes")
+
+    if args.latest_receipt:
+        row = reader.latest_receipt(key)
+        if row is None:
+            print(json.dumps({"state": "BEF_SPOOL_RECEIPT_NOT_FOUND", "conversationKey": key}, sort_keys=True))
+            return 2
+        print(json.dumps({"state": "BEF_SPOOL_LATEST_RECEIPT", "receipt": _public_receipt_projection(row)}, sort_keys=True))
+        return 0
+
+    evidence = reader.observable_scope_evidence(key)
+    if evidence is None:
+        print(json.dumps({"state": "BEF_OBSERVABLE_SCOPE_EVIDENCE_NOT_FOUND", "conversationKey": key}, sort_keys=True))
+        return 2
+    print(json.dumps({"state": "BEF_OBSERVABLE_SCOPE_EVIDENCE", "conversationKey": key, "evidence": evidence}, sort_keys=True))
+    return 0
+
+
+if __name__ == "__main__":
+    raise SystemExit(_cli())
 
 
 __all__ = ["BefSpoolReader"]

@@ -1,0 +1,58 @@
+{
+  "contract": "BEF_CHATBRIDGE_WINDOWS_CANARY_V1",
+  "version": "1.0.1",
+  "status": "SOURCE_CANDIDATE",
+  "objective": "Provide a reversible one-command Windows runtime bootstrap, redacted spool/DPF evidence export, readback lane and rollback path for the admitted BEF/ChatBridge provenance courier.",
+  "source_bindings": {
+    "chatbridge_extension_id": "kacbginamagliaddmlkffhcadpamomjb",
+    "bef_edge_extension_id": "apokbhjjgiaceigelkedcelcecfmgnia",
+    "native_host_name": "com.sovara.bef_edge"
+  },
+  "runtime_states": [
+    "RUNTIME_NOT_BOUND",
+    "NATIVE_HOST_REGISTERED_VERIFIED",
+    "BROWSER_PROFILE_BINDING_VERIFIED",
+    "LIVE_ENCRYPTED_SPOOL_RECEIPT_OBSERVED"
+  ],
+  "invariants": [
+    "chatbridge_has_no_nativeMessaging_permission",
+    "bef_edge_has_no_host_permissions",
+    "exact_cross_extension_ids_are_manifest_key_derived",
+    "native_host_registration_is_HKCU_scoped",
+    "no_silent_dependency_download",
+    "dedicated_edge_canary_profile",
+    "rollback_is_profile_scoped",
+    "encrypted_spool_is_preserved_by_default",
+    "spool_cli_exports_redacted_metadata_or_bounded_scope_evidence_not_raw_event_content",
+    "rendered_dom_evidence_never_claims_provider_native_hidden_events",
+    "runtime_state_promotes_only_from_readback"
+  ],
+  "source_files": [
+    "bef-edge-agent/runtime/bootstrap_windows_canary.ps1",
+    "bef-edge-agent/runtime/verify_windows_canary.ps1",
+    "bef-edge-agent/runtime/rollback_windows_canary.ps1",
+    "bef-edge-agent/native-host/bef_spool.py",
+    "tests/test_bef_windows_runtime_bootstrap.py",
+    "docs/BEF_CHATBRIDGE_WINDOWS_CANARY_V1.md"
+  ],
+  "external_effect_boundary": {
+    "source_ci_external_effect": false,
+    "local_bootstrap_creates_current_user_registry_binding": true,
+    "local_bootstrap_may_launch_dedicated_edge_profile": true,
+    "local_bootstrap_sends_external_messages": false,
+    "local_bootstrap_creates_credentials": false,
+    "local_bootstrap_downloads_dependencies": false
+  },
+  "proof_boundary": {
+    "source_candidate_proves_local_installation": false,
+    "source_candidate_proves_live_delivery": false,
+    "source_candidate_proves_dpf_reconstruction": false,
+    "source_candidate_proves_provider_execution": false,
+    "chatgpt_authentication_is_separate_owner_provider_boundary": true
+  },
+  "testing": {
+    "framework": "python_stdlib_unittest",
+    "focused_test_count": 10,
+    "hosted_admission_pending": true
+  }
+}

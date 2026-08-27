@@ -1,0 +1,34 @@
+{
+  "schema": "FEDERATION-CAPITAL-FEEDBACK-FABRIC-V1.1",
+  "version": "1.1.0-canary",
+  "extends": "FEDERATION-CAPITAL-INTELLIGENCE-EXECUTION-SUITE-V1",
+  "mode": "SHADOW_ONLY",
+  "purpose": "Close the research-to-market learning loop without adding financial authority.",
+  "components": [
+    "venue-neutral market observation protocol",
+    "Luno-to-LONA OHLCV normalization and provenance",
+    "backtest-to-reality implementation-cost comparator",
+    "capital circuit breaker",
+    "SOVARA-compatible no-effect event envelopes",
+    "execution-failure to Failure-Win mutation bridge"
+  ],
+  "boundaries": {
+    "lona_upload_performed": false,
+    "sovara_publish_performed": false,
+    "luno_account_bound": false,
+    "luno_write_authority": false,
+    "paper_trading": false,
+    "live_capital": false,
+    "withdrawals_transfers_sends": false
+  },
+  "invariants": [
+    "OBSERVATION_PROTOCOL_HAS_NO_ORDER_METHOD",
+    "NORMALIZATION_IS_NOT_DATASET_UPLOAD",
+    "EVENT_ENVELOPE_IS_NOT_EVENT_PUBLICATION",
+    "CIRCUIT_CANNOT_SELF_GRANT_LIVE_AUTHORITY",
+    "FAILURE_MUTATION_IS_NON_AUTHORITATIVE",
+    "BACKTEST_REALITY_ERROR_CANNOT_PROMOTE_ALPHA",
+    "LONA_UPLOAD_ELIGIBILITY_REQUIRES_AT_LEAST_10_BARS",
+    "ALL_FEEDBACK_RECORDS_HAVE_ZERO_FINANCIAL_EFFECT"
+  ]
+}
