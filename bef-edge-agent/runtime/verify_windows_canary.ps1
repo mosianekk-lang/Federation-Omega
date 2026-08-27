@@ -100,7 +100,7 @@ $result = [ordered]@{
   latestToAppendSequence = if ($latest) { [int]$latest.toAppendSequence } else { $null }
   latestStoredEncrypted = if ($latest) { [bool]$latest.storedEncrypted } else { $false }
   conversationFilter = if ($ConversationKey) { $ConversationKey } else { $null }
-  truthBoundary = 'Spool receipt proves browser-to-native encrypted courier delivery only for the recorded rendered-DOM scope. It does not prove provider-native hidden events, complete DPF reconciliation, successor-chat restore, or external provider execution.'
+  TruthBoundary = 'Spool receipt proves browser-to-native encrypted courier delivery only for the recorded rendered-DOM scope. It does not prove provider-native hidden events, complete DPF reconciliation, successor-chat restore, or external provider execution.'
 }
 
 $result | ConvertTo-Json -Depth 8
