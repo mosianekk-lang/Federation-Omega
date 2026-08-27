@@ -3,6 +3,7 @@
   "name": "ChatBridge Companion for ChatGPT",
   "version": "0.3.0",
   "description": "Captures governed start-to-finish ChatGPT events for ChatBridge Ω4.9 and prepares exact or bounded successor restores.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAqrtMo7F8vfnMj2S4Hi4OZiuUgC6RRviKmc+7Fjso5Z/ALhoPmzwZ2M5WBD0xgx62Gv40DD7uG6dCcqiR/OoMmhqMA8DxRuyCluBSx+NyaisykeWapKf/BSl5NROSaD0QRDXB6KN4JLWr06m/mrkn3D8RdRcdNGpce6ZqU4gJry0bz0EUiCGntb6pssDchN66Yd9QhcyZT2kJKs7dht1jRxJJJpSUPsSxPx231xxdlBz3sB5KdgUty5JTLg/S1aClgeVMTE6AFFDXaG4g0TsbD53LGbSTH/eFFSwev8yd81Gm5PQ3FmOpiWE6u0W3L1BSN6o1sP6tfQ7uOh/p/C0lQQIDAQAB",
   "permissions": ["storage", "unlimitedStorage", "downloads"],
   "host_permissions": ["https://chatgpt.com/*"],
   "background": {"service_worker": "src/background.js"},

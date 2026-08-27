@@ -1,7 +1,8 @@
 "use strict";
 
-importScripts("bridge-core.js");
+importScripts("bridge-core.js", "edge-egress.js");
 const core = globalThis.ChatBridgeCore;
+const edgeEgress = globalThis.ChatBridgeEdgeEgress;
 
 const DEFAULTS = Object.freeze({
   autoSend: true,
@@ -222,7 +223,9 @@ async function capturePacket(packet) {
   ledger.source = packet.source;
   ledger.updatedAt = packet.capturedAt;
   ledger.manifest = await buildManifest(ledger);
+  // Full local capture is committed before any egress attempt. Courier failure is isolated.
   await saveLedger(ledger);
+  if (edgeEgress) await edgeEgress.flushLedger(ledger, {reason: "CAPTURE"});
   return ledger;
 }
 
@@ -242,6 +245,12 @@ async function handleMessage(request, sender) {
   if (request.type === "CHATBRIDGE_GET_LEDGER") {
     const ledger = await loadLedger(request.conversationKey);
     return {ok: true, ledger};
+  }
+
+  if (request.type === "CHATBRIDGE_EDGE_EGRESS_STATUS") {
+    const ledger = await loadLedger(request.conversationKey);
+    if (!ledger) throw new Error("LEDGER_NOT_FOUND");
+    return edgeEgress ? edgeEgress.flushLedger(ledger, {reason: "STATUS_OR_CATCHUP"}) : {ok: false, state: "EDGE_EGRESS_MODULE_MISSING"};
   }
 
   if (request.type === "CHATBRIDGE_EXPORT_LEDGER") {
