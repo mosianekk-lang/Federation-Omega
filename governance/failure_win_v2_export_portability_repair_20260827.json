@@ -1,0 +1,62 @@
+{
+  "schema": "FAILURE-WIN-V2-EXPORT-PORTABILITY-REPAIR-2",
+  "recorded_at": "2026-08-27T06:08:00+02:00",
+  "receiver": "Federation Omega",
+  "failure_event": {
+    "event_class": "REAL_CI_INDEPENDENT_EXPORT_FAILURE",
+    "failed_pr": 639,
+    "failed_head_sha": "60a03f8931569b8876e56a6baf820903c44ba97e",
+    "airlock_run": 33039017684,
+    "job": 98408150682,
+    "behavioral_convergence_provider_cutover_v3": "PASS",
+    "phoenix_independent_repository_core": "FAIL",
+    "error": "ModuleNotFoundError: No module named 'select_route_v2'",
+    "failure_fact_preserved": true
+  },
+  "causal_falsification": {
+    "supported_cause": "REGRESSION_USED_TOP_LEVEL_IMPORTS_THAT_DEPENDED_ON_NON_PORTABLE_FAILURE_KERNEL_PYTHONPATH",
+    "counter_hypothesis_rejected": "FAILURE_KERNEL_GUARD_SOURCE_WAS_ABSENT_FROM_CURRENT_MAIN",
+    "counter_hypothesis_rejected_2": "BEHAVIORAL_CONVERGENCE_ENGINE_FAILED_PROVIDER_CUTOVER_V3",
+    "current_main_guard_readback": {
+      "selector": "failure_kernel/select_route_v2.py",
+      "execution": "failure_kernel/failure_win_execution_guard.py"
+    },
+    "recovered_lineage": {
+      "selector_commit": "a2968bdbc888b818d80ac257b40c1555a0c4ba2b",
+      "execution_guard_commit": "4fbb6a285c18dd095f966cdb2e912fc48353b899",
+      "regression_commit": "d2460b73bacfaef52b5e37503cd7d4cbdb6ec1cc"
+    },
+    "library_receipt": "FAILURE_KERNEL_SOVARA_REPAIR_V9.md",
+    "evidence": "original guards are tracked and exact; clean Phoenix core export includes them but the regression imported unqualified top-level module names"
+  },
+  "repair": {
+    "strategy": "PACKAGE_QUALIFY_EXISTING_FAILURE_KERNEL_IMPORTS",
+    "selector_source_changed": false,
+    "execution_guard_source_changed": false,
+    "provisional_duplicate_modules_carried_forward": false,
+    "test_imports": [
+      "from failure_kernel import select_route_v2",
+      "from failure_kernel.failure_win_execution_guard import ..."
+    ],
+    "sovara_route_contract_test_sha256": "0e2dd54b45624989490be348858efc169f7ef4d198def2a79cb635b9504bd39a",
+    "phoenix_exclusion_added": false,
+    "purity_gate_weakened": false,
+    "workflow_changed": false,
+    "provider_authority_changed": false,
+    "expected_acceptance": "same Phoenix independent repository-core archive test passes unchanged"
+  },
+  "truth_boundary": {
+    "behavior_proven": false,
+    "source_or_ci_success_is_not_behavior_proof": true,
+    "real_behavioral_promotion_still_requires": [
+      "provider/runtime failure-derived proof",
+      "failure-first and healthy-path evidence",
+      "rollback and forward canary",
+      "independent semantic readback",
+      "positive value and no regression",
+      "no owner-burden increase",
+      "distinct real repeated successes",
+      "soak"
+    ]
+  }
+}

@@ -51,7 +51,7 @@
     },
     "tests": {
       "path": "tests/test_failure_kernel_repairs.py",
-      "sha256": "d33e2b5d9e788d83099c017e43106aa29f9b6f13c0b61946bf13d6ca1d55f7c1"
+      "sha256": "0e2dd54b45624989490be348858efc169f7ef4d198def2a79cb635b9504bd39a"
     }
   },
   "truthBoundary": {
