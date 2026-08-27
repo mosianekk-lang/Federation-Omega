@@ -1,0 +1,12 @@
+{
+  "manifest_version": 3,
+  "name": "SOVARA BEF Edge Agent",
+  "version": "0.1.0",
+  "description": "Private provenance courier between the bounded ChatBridge browser companion and the local SOVARA Browser Execution Fabric native host.",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAkI8HgNTvzEXApTRrpEK663tRki3spiYsF7a+HiSAv73xgN6ZQVvkTjk6tkN0Qmln2GyyxjqO9hMmCeXhOlD9zHSx5gBUFAFfYFlONPy+IvTLf6GCbDVl5hiUcbALoOUCF2IMgucu10RgU4VeSEcbCF1w9/fmOv2J0rggutwgBYi8nSm3+CEFyMLowv/kdEvlaWddak4NiXP2K8Z8f18580Tc7UiHv8YF3MITDu4mAS4jsgZ510cZdt6Jge3Ef91QchCGRUo9Met6j1s0CUxWZziYxOn2QHAjEaUMiKjsvcDoQ+nyRmZhHHRP1l10VGxz+56R9ea9L0FTb+lkm3aFnwIDAQAB",
+  "permissions": ["storage", "nativeMessaging"],
+  "background": {"service_worker": "src/background.js"},
+  "externally_connectable": {
+    "ids": ["kacbginamagliaddmlkffhcadpamomjb"]
+  }
+}
