@@ -1,0 +1,12 @@
+{
+  "schema": "failure-win.reconciliation-marker.v1",
+  "receiver": "CFBE-Ω",
+  "failed_head": "8d72407a6d480c8d11294241e51e503ff0fbbfcf",
+  "previous_base": "23d4df6db524926a15001e415c826544c99883e5",
+  "current_base": "227abcde4afb69e3c30e7eff4a31632b8e180a63",
+  "failure_class": "STALE_BASE_HEAD",
+  "intervening_change": "RealityGuard fault-book management only",
+  "overlap_with_cfbe_canary": false,
+  "recovery": "RECONCILE_CURRENT_BASE_THEN_RERUN_EXACT_HEAD_ADMISSION",
+  "truth_boundary": "This marker preserves the failed stale-base condition. It is not runtime or behavioral proof."
+}
