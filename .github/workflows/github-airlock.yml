@@ -134,6 +134,9 @@ jobs:
       - name: Run Frontier Convergence core regression tests
         run: python -m unittest discover -s tests -p 'test_frontier_convergence.py' -v
 
+      - name: Run Frontier Convergence execution-continuity regression tests
+        run: python -m unittest discover -s tests -p 'test_frontier_convergence_continuity.py' -v
+
       - name: Build source provenance receipt
         env:
           GH_TOKEN: ${{ github.token }}
