@@ -1,19 +1,18 @@
 {
   "node": "FEDERATION_QUANT_LAB_LONA_NODE",
   "version": "2.0.0-robustness-canary",
-  "status": "ROBUSTNESS_EVIDENCE_RECONCILED_ADVERSE_COST_PENDING",
+  "status": "ROBUSTNESS_EVIDENCE_COMPLETE",
   "research_only": true,
   "live_broker_execution": false,
   "candidate_strategy_id": "9761cff0-0f2b-48e4-9c18-83c1476dbaf8",
   "candidate_decision": "REVISE_AND_RETEST",
   "decision_basis": {
-    "score_before_adverse_cost": 57.75,
+    "score": 67.75,
     "hard_failures": [
       "HOLDOUT_SAMPLE_TOO_SMALL",
-      "MATERIAL_BENCHMARK_UNDERPERFORMANCE",
-      "ADVERSE_COST_EVIDENCE_MISSING"
+      "MATERIAL_BENCHMARK_UNDERPERFORMANCE"
     ],
-    "notes": "Candidate remains useful as a Failure-Win parent but is not robustness-admitted. SPY holdout and QQQ are positive; IWM generalisation fails and passive benchmarks materially outperform the candidate."
+    "notes": "Candidate survives adverse cost and both parameter perturbations, with lower SPY holdout drawdown than passive exposure. It remains not robustness-admitted because the holdout has only four closed trades, it underperforms passive SPY by 35.84 percentage points, and IWM generalisation is effectively flat/negative. Preserve as a Failure-Win mutation parent."
   },
   "benchmark_strategy": {
     "strategy_id": "83ef6616-f288-4e9f-8cdf-69f64a7e86e4",
@@ -34,7 +33,7 @@
     "benchmark_spy": {"report_id":"a6830c18-f5ad-46bc-bb8a-9549ebfd0661","return":63.51,"sharpe":3.51,"max_drawdown":18.04},
     "benchmark_qqq": {"report_id":"23e0c3bd-51dd-4096-a334-392956f9a69b","return":74.97,"sharpe":4.46,"max_drawdown":21.92},
     "benchmark_iwm": {"report_id":"e5750e3d-8d94-4caf-a6c7-ace6c1df4929","return":51.12,"sharpe":3.13,"max_drawdown":26.38},
-    "adverse_cost_spy_holdout": {"report_id":"e5d15463-588e-44fd-9587-435606624b17","status":"PENDING","commission":0.003}
+    "adverse_cost_spy_holdout": {"report_id":"e5d15463-588e-44fd-9587-435606624b17","status":"COMPLETED","commission":0.003,"return":25.49,"sharpe":6.35,"max_drawdown":10.29,"trades":4}
   },
   "execution_assumptions": {
     "frequency": "1d",
