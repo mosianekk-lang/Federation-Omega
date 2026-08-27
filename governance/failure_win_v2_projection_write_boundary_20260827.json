@@ -1,0 +1,40 @@
+{
+  "control_id": "FWV2-PROJECTION-WRITE-BOUNDARY-20260827-001",
+  "schema_version": "failure-win.projection-write-boundary.v1",
+  "kernel_version": "2.0.0",
+  "trigger_event": "FWV2-FEDERATION-SHEETS-PROJECTION-RECOVERY-20260827-001",
+  "failure": {
+    "provider": "Google Sheets",
+    "surface": "Failure-Win Receiver Manifest v2",
+    "symptom": "MAP spill returned #REF because a direct write occupied derived projection cells",
+    "exact_failed_range": "E6:L6",
+    "source_event_ledger_damaged": false
+  },
+  "causal_falsification": {
+    "hypothesis": "Direct values in formula-owned manifest projection cells block MAP/XLOOKUP expansion",
+    "test": "Clear only user-entered values from the blocking derived cells while preserving Failure-Win Events v2",
+    "result": "Projection expanded again and selected the latest Federation Omega event automatically"
+  },
+  "write_policy": {
+    "normal_behavior_and_currentness_writes": "Failure-Win Events v2",
+    "manifest_registry_A_D": "RECEIVER_REGISTRY_MANAGER_ONLY",
+    "manifest_projection_E_M": "NEVER_DIRECT_WRITE_FORMULA_OWNED",
+    "manifest_truth_boundary_N": "GOVERNANCE_OWNED",
+    "manifest_snapshot_O_P": "MANIFEST_COMPILER_ONLY",
+    "receiver_aliases": "RECEIVER_ALIAS_MANAGER_ONLY"
+  },
+  "source_enforcement": "ao_harmonic_v3/failure_win_sheet_boundary.py",
+  "regression_suite": "tests/test_failure_win_projection_write_boundary.py",
+  "behavioral_state_after_repair": {
+    "federation_omega_distinct_real_successes": 2,
+    "required_distinct_real_successes": 3,
+    "soak_seconds": 17246,
+    "soak_threshold_seconds": 300,
+    "rollback_proven": true,
+    "behavior_proven": false,
+    "manifest_receiver_count": 26,
+    "manifest_behavior_proven_count": 0,
+    "manifest_sha256": "2ec66d8eb19add2e665f6d06642adfbd6c7d61375a0903f5ba07f944029a83b7"
+  },
+  "truth_boundary": "This contract prevents recurrence of the observed projection-write failure at source policy level. It does not claim that every external Sheets client already invokes the guard, nor does it create provider authority or promote Federation Omega behavior before the third distinct real success."
+}
