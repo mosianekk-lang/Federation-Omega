@@ -5,6 +5,7 @@ from .authority import AuthorityGuard
 from .autopilot import Autopilot
 from .backup import BackupManager
 from .capital import *
+from .capital_intent import *
 from .deal_workspace import DealWorkspaceService
 from .decision_algorithms import *
 from .demo_pack import CIOSDemoPackBuilder
@@ -27,6 +28,7 @@ from .mvp_journey import *
 from .outcomenet import *
 from .passport import *
 from .policy import RuntimePolicy, RuntimePrincipal
+from .portfolio_intelligence import *
 from .production_dataplane import *
 from .production_gate import *
 from .provider_canary import *
@@ -34,6 +36,7 @@ from .product_ui import WorkspaceSnapshot, WorkspaceComposer, DashboardRenderer
 from .proofgraph import *
 from .qoe import *
 from .qualification import InternalQualificationCourt, QualificationCheck, QualificationReport
+from .quant_evidence_bridge import *
 from .restricted import *
 from .service import CapitalIntelligenceService
 from .store import SqliteStateStore
