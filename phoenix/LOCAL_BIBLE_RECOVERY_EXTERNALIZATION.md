@@ -8,13 +8,15 @@ It remains deliberately **not executable from the legacy public source repositor
 
 ## Reason
 
-General source-repository OIDC remains denied. The admitted exceptions are exactly two narrowly scoped provider-deployment gateways:
+General source-repository OIDC remains denied. The admitted exceptions are exactly three narrowly scoped provider-deployment gateways:
 
 `.github/workflows/sovara-litellm-v2-3-provider-admission.yml`
 
 `.github/workflows/cios-production-lane.yml`
 
-That gateway is main-only, repository-read-only, immutable-action-pinned, concurrency-bound, restricted to the exact WIF service account, and may persist proof only as a GitHub Actions artifact or external append-only record. It has no source-write, actions-write or statuses-write authority.
+`.github/workflows/luno-observer-provider-binding.yml`
+
+Each gateway is main-only for provider execution, repository-read-only, immutable-action-pinned, concurrency-bound, restricted to its exact admitted provider identity, and may persist proof only as a GitHub Actions artifact or external append-only record. None has source-write, actions-write or statuses-write authority. The Luno gateway is additionally bounded to the read-only observer contract and does not grant financial write authority.
 
 These exceptions do not authorize Phoenix Local Bible recovery, do not widen the Phoenix freeze controller beyond their exact paths, and do not transfer cloud authority to any other workflow. A commit-message marker remains an inadequate provider authorization boundary.
 
@@ -32,7 +34,7 @@ Local Bible recovery may resume only from the private Federation Omega Ops repos
 
 ## Current source-repository contract
 
-- `oidc_workflow_allowlist` contains exactly two provider-deployment gateways;
+- `oidc_workflow_allowlist` contains exactly three provider-deployment gateways;
 - Phoenix Local Bible recovery remains excluded from that allowlist;
 - the Phoenix freeze controller has no `id-token: write` permission;
 - `[BIBLE-REBUILD]` is not an active source-repository trigger;
