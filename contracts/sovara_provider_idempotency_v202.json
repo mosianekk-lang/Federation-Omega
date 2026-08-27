@@ -1,0 +1,14 @@
+{
+  "schema": "SOVARA-PROVIDER-IDEMPOTENCY-CONTRACT-2",
+  "version": "2.0.2",
+  "functionName": "sovaraProviderFabricIdempotencySelfTestV2",
+  "expectedState": "IDEMPOTENCY_VERIFIED",
+  "queueCommandsRequired": 1,
+  "baselineQueueCommandsRequired": 2,
+  "measuredCapabilityRatio": 2,
+  "ratioDefinition": "baseline_queue_commands/new_queue_commands",
+  "providerEffects": 0,
+  "inferenceCalls": 0,
+  "credentialValuesPersisted": false,
+  "proofOrder": ["capabilities", "commands", "source", "receipts"]
+}
