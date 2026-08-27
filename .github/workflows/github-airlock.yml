@@ -127,7 +127,13 @@ jobs:
       - name: Run Federation evolution program regression tests
         run: python -m unittest discover -s tests -p 'test_federation_evolution_program.py' -v
 
-      - name: Run Frontier Convergence regression tests
+      - name: Run Frontier Convergence core regression tests
+        run: python -m unittest discover -s tests -p 'test_frontier_convergence.py' -v
+
+      - name: Run Frontier Convergence source-manifest integrity test
+        run: python -m unittest discover -s tests -p 'test_frontier_convergence_manifest.py' -v
+
+      - name: Run Frontier Convergence combined regression tests
         run: python -m unittest discover -s tests -p 'test_frontier_convergence*.py' -v
 
       - name: Build source provenance receipt
