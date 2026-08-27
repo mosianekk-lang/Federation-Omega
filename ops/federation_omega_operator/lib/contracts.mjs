@@ -1,7 +1,7 @@
 import { createHash } from "node:crypto";
 
 export const OPERATOR_IDENTITY = "federation-omega-operator";
-export const OPERATOR_VERSION = "fo-operator-v3-gemini-vertex1";
+export const OPERATOR_VERSION = "fo-operator-v4-cios-production";
 export const DEFAULT_PROJECT = "sov-hybrid-suite";
 export const DEFAULT_REGION = "africa-south1";
 export const DEFAULT_TARGET_SERVICE = "architron9";
@@ -9,6 +9,7 @@ export const DEFAULT_VERTEX_LOCATION = "global";
 export const DEFAULT_GEMINI_MODEL = "gemini-2.5-flash";
 export const DEFAULT_TENANT = "federation-omega";
 export const CFRE_PRIVATE_SERVICE = "cfre-omega-private-runtime";
+export const DEFAULT_CIOS_SERVICE = "cios-capital-intelligence";
 export const CFRE_REPAIR_SHA256 = "58c1e456f02642bcccdf13c8029a07dc4f497f6418c274afc6d8185365f7407b";
 export const CFRE_MANIFEST_SHA256 = "c581e04c3a5f15e59451e1fc6201ad1b07032418f632994001bf2d449f6b93e7";
 
@@ -21,6 +22,12 @@ export const ALLOWED_ACTIONS = Object.freeze([
   "BIND_CFRE_PRIVATE_RUNTIME",
   "READ_GEMINI_VERTEX_CAPABILITY",
   "VERIFY_GEMINI_VERTEX_SEMANTIC",
+  "READ_CIOS_PRODUCTION",
+  "READ_CIOS_PERSISTENCE",
+  "DEPLOY_CIOS_ZERO_TRAFFIC",
+  "VERIFY_CIOS_CANARY",
+  "ROLLBACK_CIOS_TRAFFIC",
+  "PROMOTE_CIOS_TRAFFIC",
 ]);
 
 export class ContractError extends Error {
@@ -51,6 +58,101 @@ function requireExact(value, expected, field) {
     throw new ContractError(`${field} must equal ${expected}`, "TARGET_MISMATCH");
   }
   return value;
+}
+
+function expectedCios(env) {
+  const project = env.CIOS_PROJECT_ID || env.PROJECT_ID || DEFAULT_PROJECT;
+  const region = env.CIOS_REGION || env.REGION || DEFAULT_REGION;
+  const service = env.CIOS_SERVICE || DEFAULT_CIOS_SERVICE;
+  return {
+    project,
+    region,
+    service,
+    serviceAccount: env.CIOS_RUNTIME_SERVICE_ACCOUNT || `cios-runtime@${project}.iam.gserviceaccount.com`,
+    cloudSqlInstance: env.CIOS_CLOUD_SQL_INSTANCE || `${project}:${region}:cios-postgres`,
+    artifactRepository: env.CIOS_ARTIFACT_REPOSITORY || "federation-omega",
+    databaseSecret: env.CIOS_DATABASE_SECRET || "cios-database-url",
+    auditDatabaseSecret: env.CIOS_AUDIT_DATABASE_SECRET || "cios-audit-database-url",
+    bearerSecret: env.CIOS_BEARER_SECRET || "cios-bearer-token",
+    tenantId: env.CIOS_TENANT_ID || "evidenceops-capital-intelligence",
+    runtimeUserId: env.CIOS_RUNTIME_USER_ID || "cios-provider-operator",
+  };
+}
+
+function validateCiosTarget(payload, env) {
+  requireObject(payload);
+  const expected = expectedCios(env);
+  for (const field of ["project", "region", "service", "serviceAccount", "cloudSqlInstance", "databaseSecret", "auditDatabaseSecret", "bearerSecret", "tenantId", "runtimeUserId"]) {
+    requireExact(payload[field] || expected[field], expected[field], field);
+  }
+  return expected;
+}
+
+export function validateCiosReadPayload(payload = {}, env = process.env) {
+  const target = validateCiosTarget(payload, env);
+  return Object.freeze({ project: target.project, region: target.region, service: target.service });
+}
+
+export function validateCiosPersistencePayload(payload = {}, env = process.env) {
+  return Object.freeze(validateCiosTarget(payload, env));
+}
+
+export function validateCiosDeployPayload(payload = {}, env = process.env) {
+  const target = validateCiosTarget(payload, env);
+  requireExact(payload.approvalKey, "APPROVED_CIOS_ZERO_TRAFFIC", "approvalKey");
+  const sourceSha = requireString(payload.sourceSha, "sourceSha", /^[a-f0-9]{40}$/);
+  const image = requireString(payload.image, "image", /^[a-z0-9.-]+\/[a-z0-9._/-]+@sha256:[a-f0-9]{64}$/);
+  const expectedPrefix = `${target.region}-docker.pkg.dev/${target.project}/${target.artifactRepository}/`;
+  if (!image.startsWith(expectedPrefix)) {
+    throw new ContractError("image must use the allowlisted Artifact Registry repository", "IMAGE_TARGET_MISMATCH");
+  }
+  const tag = requireString(payload.tag, "tag", /^[a-z][a-z0-9-]{2,30}$/);
+  const idempotencyKey = requireString(payload.idempotencyKey, "idempotencyKey", /^[A-Za-z0-9._:-]{16,180}$/);
+  return Object.freeze({
+    ...target,
+    approvalKey: "APPROVED_CIOS_ZERO_TRAFFIC",
+    sourceSha,
+    image,
+    tag,
+    idempotencyKey,
+  });
+}
+
+function validateCiosReceiptPayload(payload, env, approvalKey) {
+  const target = validateCiosTarget(payload, env);
+  requireExact(payload.approvalKey, approvalKey, "approvalKey");
+  return Object.freeze({
+    ...target,
+    approvalKey,
+    sourceSha: requireString(payload.sourceSha, "sourceSha", /^[a-f0-9]{40}$/),
+    revision: requireString(payload.revision, "revision", /^[a-z][a-z0-9-]{2,62}$/),
+    deploymentKey: requireString(payload.deploymentKey, "deploymentKey", /^[A-Za-z0-9._:-]{16,180}$/),
+    canaryKey: payload.canaryKey
+      ? requireString(payload.canaryKey, "canaryKey", /^[A-Za-z0-9._:-]{16,180}$/)
+      : null,
+  });
+}
+
+export function validateCiosCanaryPayload(payload = {}, env = process.env) {
+  const binding = validateCiosReceiptPayload(payload, env, "APPROVED_CIOS_SEMANTIC_CANARY");
+  const occurredAt = requireString(payload.occurredAt, "occurredAt", /^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z$/);
+  const canaryKey = requireString(payload.canaryKey, "canaryKey", /^[A-Za-z0-9._:-]{16,180}$/);
+  return Object.freeze({ ...binding, canaryKey, occurredAt });
+}
+
+export function validateCiosRollbackPayload(payload = {}, env = process.env) {
+  return validateCiosReceiptPayload(payload, env, "APPROVED_CIOS_BASELINE_ROLLBACK");
+}
+
+export function validateCiosPromotePayload(payload = {}, env = process.env) {
+  if (env.CIOS_PROMOTION_ENABLED !== "true") {
+    throw new ContractError("CIOS promotion is disabled", "CIOS_PROMOTION_DISABLED");
+  }
+  const binding = validateCiosReceiptPayload(payload, env, "APPROVED_CIOS_PRODUCTION_PROMOTION");
+  if (!binding.canaryKey) {
+    throw new ContractError("canaryKey is required", "INVALID_FIELD");
+  }
+  return binding;
 }
 
 function requireObject(payload) {

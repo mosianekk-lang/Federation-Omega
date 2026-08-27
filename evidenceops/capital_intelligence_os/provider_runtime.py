@@ -34,8 +34,13 @@ class ProviderRuntimeConfig:
         self,
         *,
         bearer_token: str,
-        db_path: str,
-        audit_path: str,
+        db_path: str = "",
+        audit_path: str = "",
+        storage_backend: str = "sqlite",
+        database_url: str = "",
+        audit_database_url: str = "",
+        pool_max_size: int = 8,
+        apply_migrations: bool = False,
         expected_source_sha: str,
         runtime_source_sha: str,
         runtime_identity: str,
@@ -54,15 +59,30 @@ class ProviderRuntimeConfig:
             raise ValueError("CIOS_RUNTIME_IDENTITY is required")
         if not tenant_id.strip() or not runtime_user_id.strip():
             raise ValueError("provider runtime requires a fixed tenant and runtime user")
-        if db_path.strip() in {"", ":memory:"} or audit_path.strip() in {"", ":memory:"}:
-            raise ValueError("provider runtime requires persistent database and audit paths")
-        if Path(db_path).resolve() == Path(audit_path).resolve():
-            raise ValueError("database and audit paths must differ")
+        if storage_backend not in {"sqlite", "postgres"}:
+            raise ValueError("CIOS_STORAGE_BACKEND must be sqlite or postgres")
+        if storage_backend == "sqlite":
+            if db_path.strip() in {"", ":memory:"} or audit_path.strip() in {"", ":memory:"}:
+                raise ValueError("SQLite provider candidate requires persistent database and audit paths")
+            if Path(db_path).resolve() == Path(audit_path).resolve():
+                raise ValueError("database and audit paths must differ")
+        else:
+            if not database_url.strip() or not audit_database_url.strip():
+                raise ValueError("PostgreSQL provider runtime requires state and audit database URLs")
+            if database_url.strip() == audit_database_url.strip():
+                raise ValueError("state and audit database URLs must differ")
+            if not 1 <= int(pool_max_size) <= 16:
+                raise ValueError("CIOS_DB_POOL_MAX_SIZE must be between 1 and 16")
         if not 1 <= int(port) <= 65535:
             raise ValueError("PORT must be between 1 and 65535")
         self.bearer_token = bearer_token
         self.db_path = db_path
         self.audit_path = audit_path
+        self.storage_backend = storage_backend
+        self.database_url = database_url
+        self.audit_database_url = audit_database_url
+        self.pool_max_size = int(pool_max_size)
+        self.apply_migrations = bool(apply_migrations)
         self.expected_source_sha = expected_source_sha
         self.runtime_source_sha = runtime_source_sha
         self.runtime_identity = runtime_identity
@@ -75,8 +95,6 @@ class ProviderRuntimeConfig:
     def from_environment(cls) -> "ProviderRuntimeConfig":
         required = {
             "CIOS_BEARER_TOKEN": os.environ.get("CIOS_BEARER_TOKEN", ""),
-            "CIOS_DB_PATH": os.environ.get("CIOS_DB_PATH", ""),
-            "CIOS_AUDIT_PATH": os.environ.get("CIOS_AUDIT_PATH", ""),
             "CIOS_EXPECTED_SOURCE_SHA": os.environ.get("CIOS_EXPECTED_SOURCE_SHA", ""),
             "CIOS_RUNTIME_SOURCE_SHA": os.environ.get("CIOS_RUNTIME_SOURCE_SHA", ""),
             "CIOS_RUNTIME_IDENTITY": os.environ.get("CIOS_RUNTIME_IDENTITY", ""),
@@ -86,10 +104,16 @@ class ProviderRuntimeConfig:
         missing = sorted(name for name, value in required.items() if not value)
         if missing:
             raise RuntimeError(f"missing required provider-runtime configuration: {','.join(missing)}")
+        backend = os.environ.get("CIOS_STORAGE_BACKEND", "postgres")
         return cls(
             bearer_token=required["CIOS_BEARER_TOKEN"],
-            db_path=required["CIOS_DB_PATH"],
-            audit_path=required["CIOS_AUDIT_PATH"],
+            db_path=os.environ.get("CIOS_DB_PATH", ""),
+            audit_path=os.environ.get("CIOS_AUDIT_PATH", ""),
+            storage_backend=backend,
+            database_url=os.environ.get("CIOS_DATABASE_URL", ""),
+            audit_database_url=os.environ.get("CIOS_AUDIT_DATABASE_URL", ""),
+            pool_max_size=int(os.environ.get("CIOS_DB_POOL_MAX_SIZE", "8")),
+            apply_migrations=os.environ.get("CIOS_APPLY_MIGRATIONS", "false").lower() == "true",
             expected_source_sha=required["CIOS_EXPECTED_SOURCE_SHA"],
             runtime_source_sha=required["CIOS_RUNTIME_SOURCE_SHA"],
             runtime_identity=required["CIOS_RUNTIME_IDENTITY"],
@@ -105,7 +129,30 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
 
     def __init__(self, config: ProviderRuntimeConfig) -> None:
         self.config = config
-        super().__init__(config.db_path, config.audit_path, config.bearer_token)
+        state_store = None
+        audit_ledger = None
+        if config.storage_backend == "postgres":
+            from .postgres_audit import PostgresAuditLedger
+            from .postgres_store import PostgresStateStore
+
+            state_store = PostgresStateStore(
+                config.database_url,
+                max_pool_size=config.pool_max_size,
+                apply_migrations=config.apply_migrations,
+            )
+            audit_ledger = PostgresAuditLedger(
+                config.audit_database_url,
+                max_pool_size=min(config.pool_max_size, 8),
+                apply_migrations=config.apply_migrations,
+            )
+        super().__init__(
+            config.db_path or None,
+            config.audit_path or None,
+            config.bearer_token,
+            state_store=state_store,
+            audit_ledger=audit_ledger,
+            enable_documents=False,
+        )
         self.policy = RuntimePolicy(
             config.bearer_token,
             runtime_roles=("operator",),
@@ -113,9 +160,9 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
             fixed_tenant_id=config.tenant_id,
             fixed_user_id=config.runtime_user_id,
         )
-        # The reference provider candidate uses SQLite and must serialize requests.
-        # This is a containment control, not evidence of horizontally safe persistence.
-        self._provider_request_lock = threading.RLock()
+        self._provider_request_lock = (
+            threading.RLock() if config.storage_backend == "sqlite" else None
+        )
 
     def handle(
         self,
@@ -126,7 +173,10 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
     ) -> tuple[int, dict[str, Any]]:
         if len(body) > PROVIDER_MAX_HTTP_BODY_BYTES:
             return 413, {"error": "REQUEST_TOO_LARGE"}
-        with self._provider_request_lock:
+        if self._provider_request_lock is not None:
+            with self._provider_request_lock:
+                status, payload = super().handle(method, path, headers, body)
+        else:
             status, payload = super().handle(method, path, headers, body)
         normalized = path.split("?", 1)[0]
         if status == 200 and normalized in {"/health", "/ready"}:
@@ -134,6 +184,7 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
             payload.update(
                 {
                     "runtime_mode": "PROVIDER_CANDIDATE",
+                    "production_persistence_candidate": self.config.storage_backend == "postgres",
                     "runtime_source_sha": self.config.runtime_source_sha,
                     "declared_runtime_identity": self.config.runtime_identity,
                     "provider_identity_readback_verified": False,
@@ -141,7 +192,10 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
                     "external_effects_enabled": False,
                     "fixed_tenant_binding": True,
                     "document_routes_enabled": False,
-                    "horizontal_persistence_verified": False,
+                    "storage_backend": self.config.storage_backend,
+                    "managed_persistence_configured": self.config.storage_backend == "postgres",
+                    "append_only_audit_configured": self.config.storage_backend == "postgres",
+                    "horizontal_persistence_verified": self.config.storage_backend == "postgres",
                     "truth_boundary": (
                         "This response proves bounded application runtime semantics only. "
                         "Provider identity, revision and deployment require independent provider-native readback."
@@ -152,7 +206,7 @@ class ProviderRuntimeApplication(LocalRuntimeApplication):
 
 
 class _ProviderHandler(BaseHTTPRequestHandler):
-    server_version = "CIOSProviderCandidate/1.0-rc7.1"
+    server_version = "CIOSProviderCandidate/1.0-rc8"
 
     def _dispatch(self) -> None:
         try:

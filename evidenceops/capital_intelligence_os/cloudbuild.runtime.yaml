@@ -1,0 +1,19 @@
+steps:
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - --pull
+      - --file
+      - evidenceops/capital_intelligence_os/Dockerfile.runtime
+      - --tag
+      - ${_IMAGE}
+      - .
+  - name: gcr.io/cloud-builders/docker
+    args: [push, "${_IMAGE}"]
+images:
+  - ${_IMAGE}
+timeout: 1200s
+options:
+  logging: CLOUD_LOGGING_ONLY
+substitutions:
+  _IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/cios-capital-intelligence:manual

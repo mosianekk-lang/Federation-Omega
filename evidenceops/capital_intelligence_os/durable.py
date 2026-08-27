@@ -9,7 +9,6 @@ from .autopilot import Autopilot
 from .models import ActionRequest, Claim, Event, stable_sha256
 from .proofgraph import ProofGraph
 from .restricted import RestrictedListRegistry
-from .store import SqliteStateStore
 from .tenancy import TenantBoundaryGuard, TenantContext
 
 
@@ -28,7 +27,7 @@ def _plain(value: Any) -> Any:
 class DurableAutopilotRuntime:
     """Tenant-scoped, idempotent, replayable reference runtime."""
 
-    def __init__(self, store: SqliteStateStore) -> None:
+    def __init__(self, store: Any) -> None:
         self.store = store
         self.restrictions = RestrictedListRegistry(store)
         self._autopilots: dict[str, Autopilot] = {}

@@ -4,6 +4,12 @@ import {
   OPERATOR_VERSION,
   validateBindPayload,
   validateCloudReadPayload,
+  validateCiosCanaryPayload,
+  validateCiosDeployPayload,
+  validateCiosPromotePayload,
+  validateCiosPersistencePayload,
+  validateCiosReadPayload,
+  validateCiosRollbackPayload,
   validateGeminiCapabilityPayload,
   validateGeminiSemanticPayload,
 } from "./contracts.mjs";
@@ -25,6 +31,30 @@ export async function executeAction({ action, payload = {}, principal, adapter, 
   }
   if (action === "READ_BUILD") {
     return { httpStatus: 200, body: { ok: true, status: "BUILD_READ", build: await adapter.readBuild(payload) } };
+  }
+  if (action === "READ_CIOS_PRODUCTION") {
+    const target = validateCiosReadPayload(payload, env);
+    return { httpStatus: 200, body: await adapter.readCiosProduction(target) };
+  }
+  if (action === "READ_CIOS_PERSISTENCE") {
+    const target = validateCiosPersistencePayload(payload, env);
+    return { httpStatus: 200, body: await adapter.readCiosPersistence(target) };
+  }
+  if (action === "DEPLOY_CIOS_ZERO_TRAFFIC") {
+    const binding = validateCiosDeployPayload(payload, env);
+    return { httpStatus: 200, body: await adapter.deployCiosZeroTraffic(binding) };
+  }
+  if (action === "VERIFY_CIOS_CANARY") {
+    const binding = validateCiosCanaryPayload(payload, env);
+    return { httpStatus: 200, body: await adapter.verifyCiosCanary(binding) };
+  }
+  if (action === "ROLLBACK_CIOS_TRAFFIC") {
+    const binding = validateCiosRollbackPayload(payload, env);
+    return { httpStatus: 200, body: await adapter.rollbackCiosTraffic(binding) };
+  }
+  if (action === "PROMOTE_CIOS_TRAFFIC") {
+    const binding = validateCiosPromotePayload(payload, env);
+    return { httpStatus: 200, body: await adapter.promoteCiosTraffic(binding) };
   }
   if (action === "DEPLOY_SOLUTION5_LOCKED") {
     if (typeof adapter.deploySolution5Locked !== "function") {
