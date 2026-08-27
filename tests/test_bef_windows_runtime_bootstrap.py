@@ -73,6 +73,15 @@ class BEFWindowsRuntimeBootstrapTests(unittest.TestCase):
         self.assertEqual(positions, sorted(positions))
         self.assertIn("provider-native hidden events", source.lower())
 
+    def test_spool_cli_exposes_redacted_receipts_and_bounded_dpf_evidence(self):
+        source = (NATIVE / "bef_spool.py").read_text(encoding="utf-8")
+        self.assertIn("_public_receipt_projection", source)
+        self.assertIn("--observable-scope-evidence", source)
+        self.assertIn('"provider_native_complete": False', source)
+        self.assertIn("FULL_OBSERVABLE_RENDERED_CHAT_EVIDENCE_ONLY", source)
+        self.assertIn("BEF_SPOOL_RECEIPTS_READBACK", source)
+        self.assertIn("BEF_OBSERVABLE_SCOPE_EVIDENCE", source)
+
     def test_rollback_is_scoped_and_preserves_spool_by_default(self):
         source = (RUNTIME / "rollback_windows_canary.ps1").read_text(encoding="utf-8")
         self.assertIn("CommandLine -match", source)
