@@ -34,6 +34,13 @@ def _positive_fraction(runs: Iterable[RunMetrics]) -> float:
     return sum(r.total_return > 0 for r in values) / len(values)
 
 
+def _mean_sharpe(runs: Iterable[RunMetrics]) -> float:
+    values = tuple(runs)
+    if not values:
+        return 0.0
+    return mean(r.sharpe for r in values)
+
+
 def promotion_score(e: RobustnessEvidence) -> Mapping[str, float | str]:
     """Return a conservative evidence score and state.
 
@@ -45,8 +52,8 @@ def promotion_score(e: RobustnessEvidence) -> Mapping[str, float | str]:
     benchmark_delta = e.holdout.total_return - e.benchmark.total_return
     perturbation_survival = _positive_fraction(e.perturbations)
     cross_asset_survival = _positive_fraction(e.cross_assets)
-    perturbation_sharpe = mean((r.sharpe for r in e.perturbations), default=0.0)
-    cross_asset_sharpe = mean((r.sharpe for r in e.cross_assets), default=0.0)
+    perturbation_sharpe = _mean_sharpe(e.perturbations)
+    cross_asset_sharpe = _mean_sharpe(e.cross_assets)
 
     score = 0.0
     score += min(max(e.holdout.sharpe, -1.0), 2.0) * 20.0
