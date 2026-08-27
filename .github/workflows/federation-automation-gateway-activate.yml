@@ -1,0 +1,258 @@
+name: Federation Automation Gateway Activate
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - "federation_automation_gateway/**"
+      - "apps_script_owner_broker/**"
+      - "governance/federation_automation_authority_fabric_v1.json"
+      - "phoenix/export_policy.json"
+      - ".github/workflows/federation-automation-gateway-activate.yml"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: federation-automation-gateway-activate
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  FABRIC_SHEET_ID: 17WRSvjj98RbOKZrnTefcZkfK-z9gZYdZX_pACm8VuOQ
+  SERVICE: federation-automation-gateway
+  SCHEDULER: federation-automation-tick
+  BOOTSTRAP_SA: federation-bootstrap-admin@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: federation-automation-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/fed-bootstrap-pool/providers/github-fed-omega
+
+jobs:
+  activate:
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+
+      - name: Re-run focused authority-fabric tests
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            tests.test_federation_automation_policy \
+            tests.test_federation_automation_authority_fabric \
+            tests.test_federation_chat_inheritance
+
+      - name: Authenticate through the owner-created keyless WIF bootstrap
+        id: google-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.BOOTSTRAP_SA }}
+
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+
+      - name: Verify provider identity and recover bootstrap expiry
+        run: |
+          set -euo pipefail
+          ACTUAL_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          ACTUAL_ID="$(gcloud projects describe "$PROJECT_NUMBER" --format='value(projectId)')"
+          test "$ACTUAL_NUMBER" = "$PROJECT_NUMBER"
+          test "$ACTUAL_ID" = "$PROJECT_ID"
+          ACTIVE="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          test "$ACTIVE" = "$BOOTSTRAP_SA"
+
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > /tmp/fed-project-iam.json
+          EXPIRY_UTC="$(python - <<'PY'
+          import json, re
+          p=json.load(open('/tmp/fed-project-iam.json', encoding='utf-8'))
+          member='serviceAccount:federation-bootstrap-admin@sov-hybrid-suite.iam.gserviceaccount.com'
+          expiries=[]
+          for binding in p.get('bindings', []):
+              if member not in binding.get('members', []):
+                  continue
+              expression=(binding.get('condition') or {}).get('expression','')
+              match=re.search(r"timestamp\(['\"]([^'\"]+)['\"]\)", expression)
+              if match:
+                  expiries.append(match.group(1))
+          if not expiries:
+              raise SystemExit('BOOTSTRAP_EXPIRY_NOT_FOUND')
+          print(min(expiries))
+          PY
+          )"
+          test -n "$EXPIRY_UTC"
+          python - "$EXPIRY_UTC" <<'PY'
+          from datetime import datetime, timezone
+          import sys
+          expiry=datetime.fromisoformat(sys.argv[1].replace('Z','+00:00'))
+          if expiry <= datetime.now(timezone.utc):
+              raise SystemExit('BOOTSTRAP_AUTHORITY_EXPIRED')
+          PY
+          echo "EXPIRY_UTC=$EXPIRY_UTC" >> "$GITHUB_ENV"
+
+      - name: Reconcile narrow permanent runtime identity
+        run: |
+          set -euo pipefail
+          gcloud services enable \
+            serviceusage.googleapis.com \
+            iam.googleapis.com \
+            iamcredentials.googleapis.com \
+            run.googleapis.com \
+            cloudbuild.googleapis.com \
+            artifactregistry.googleapis.com \
+            cloudscheduler.googleapis.com \
+            logging.googleapis.com \
+            monitoring.googleapis.com \
+            sheets.googleapis.com \
+            --project "$PROJECT_ID"
+
+          if ! gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            gcloud iam service-accounts create federation-automation-runtime \
+              --project "$PROJECT_ID" \
+              --display-name='Federation Automation Runtime'
+          fi
+
+          for ROLE in \
+            roles/browser \
+            roles/serviceusage.serviceUsageViewer \
+            roles/serviceusage.serviceUsageConsumer \
+            roles/run.viewer \
+            roles/logging.logWriter \
+            roles/monitoring.metricWriter; do
+            gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+              --member="serviceAccount:${RUNTIME_SA}" \
+              --role="$ROLE" \
+              --quiet >/dev/null
+          done
+
+          CONDITION="expression=request.time < timestamp('${EXPIRY_UTC}'),title=fed_automation_runtime_elevation,description=Runtime_impersonation_cannot_outlive_owner_bootstrap"
+          gcloud iam service-accounts add-iam-policy-binding "$BOOTSTRAP_SA" \
+            --project "$PROJECT_ID" \
+            --member="serviceAccount:${RUNTIME_SA}" \
+            --role=roles/iam.serviceAccountTokenCreator \
+            --condition="$CONDITION" \
+            --quiet >/dev/null
+
+      - name: Deploy private shared automation executor
+        run: |
+          set -euo pipefail
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --source federation_automation_gateway \
+            --service-account "$RUNTIME_SA" \
+            --no-allow-unauthenticated \
+            --max-instances 1 \
+            --concurrency 1 \
+            --set-env-vars="FED_AUTOMATION_SHEET_ID=${FABRIC_SHEET_ID},FED_BOOTSTRAP_SA=${BOOTSTRAP_SA},PROJECT_ID=${PROJECT_ID},FED_SOURCE_HEAD=${GITHUB_SHA}" \
+            --quiet
+
+          SERVICE_URL="$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+          test -n "$SERVICE_URL"
+          echo "SERVICE_URL=$SERVICE_URL" >> "$GITHUB_ENV"
+
+          gcloud run services add-iam-policy-binding "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --member="serviceAccount:${RUNTIME_SA}" \
+            --role=roles/run.invoker \
+            --quiet >/dev/null
+
+      - name: Reconcile one-minute scheduler
+        run: |
+          set -euo pipefail
+          if gcloud scheduler jobs describe "$SCHEDULER" \
+              --location "$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            gcloud scheduler jobs update http "$SCHEDULER" \
+              --location "$REGION" \
+              --project "$PROJECT_ID" \
+              --schedule='* * * * *' \
+              --time-zone='Africa/Johannesburg' \
+              --uri="${SERVICE_URL}/tick" \
+              --http-method=POST \
+              --oidc-service-account-email="$RUNTIME_SA" \
+              --oidc-token-audience="$SERVICE_URL" \
+              --quiet
+          else
+            gcloud scheduler jobs create http "$SCHEDULER" \
+              --location "$REGION" \
+              --project "$PROJECT_ID" \
+              --schedule='* * * * *' \
+              --time-zone='Africa/Johannesburg' \
+              --uri="${SERVICE_URL}/tick" \
+              --http-method=POST \
+              --oidc-service-account-email="$RUNTIME_SA" \
+              --oidc-token-audience="$SERVICE_URL" \
+              --quiet
+          fi
+
+      - name: Provider-native readback and semantic health proof
+        run: |
+          set -euo pipefail
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service.json
+          gcloud scheduler jobs describe "$SCHEDULER" \
+            --project "$PROJECT_ID" --location "$REGION" --format=json > /tmp/scheduler.json
+
+          TOKEN="$(gcloud auth print-identity-token \
+            --impersonate-service-account="$RUNTIME_SA" \
+            --audiences="$SERVICE_URL" \
+            --include-email)"
+          test -n "$TOKEN"
+          HEALTH="$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer ${TOKEN}" \
+            "${SERVICE_URL}/health")"
+          printf '%s\n' "$HEALTH" > /tmp/health.json
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          service=json.load(open('/tmp/service.json', encoding='utf-8'))
+          scheduler=json.load(open('/tmp/scheduler.json', encoding='utf-8'))
+          health=json.load(open('/tmp/health.json', encoding='utf-8'))
+          template=service.get('spec',{}).get('template',{}).get('spec',{})
+          expected_sa=os.environ['RUNTIME_SA']
+          assert template.get('serviceAccountName') == expected_sa, service
+          assert health.get('ok') is True, health
+          assert health.get('service') == 'federation-automation-gateway', health
+          assert health.get('project') == os.environ['PROJECT_ID'], health
+          assert health.get('sheet_bound') is True, health
+          assert health.get('elevated_identity_bound') is True, health
+          assert health.get('production_effect') is False, health
+          receipt={
+              'schema':'FED-AUTOMATION-ACTIVATION-RECEIPT-V1',
+              'source_sha':os.environ['GITHUB_SHA'],
+              'project_id':os.environ['PROJECT_ID'],
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'service':os.environ['SERVICE'],
+              'service_url':os.environ['SERVICE_URL'],
+              'runtime_service_account':expected_sa,
+              'bootstrap_service_account':os.environ['BOOTSTRAP_SA'],
+              'bootstrap_expiry_utc':os.environ['EXPIRY_UTC'],
+              'wif_provider':os.environ['WIF_PROVIDER'],
+              'scheduler':os.environ['SCHEDULER'],
+              'scheduler_state':scheduler.get('state'),
+              'health':health,
+              'sheet_acl_canary_pending':True,
+              'command_receipt_canary_pending':True,
+              'production_effect':False,
+          }
+          Path('/tmp/federation-automation-activation.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True)+'\n', encoding='utf-8')
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: federation-automation-activation-${{ github.sha }}
+          path: /tmp/federation-automation-activation.json
+          if-no-files-found: error
+          retention-days: 14
