@@ -1,0 +1,21 @@
+{
+  "bundle": "SOVARA_MCF_V3_1_MARKET_FUSED.zip",
+  "bundle_sha256": "daa5243c070f748a254b400e06b97b8d0471716420ab23431a6600b72e4c4315",
+  "bundle_size_bytes": 16028,
+  "deterministic_double_build": "PASS",
+  "member_count": 17,
+  "predecessor_contract_blob_sha": "12a5082f713a9dfe62bd689d85982dbe5af777c9",
+  "receipt_sha256": "889848e2a3a9c2cd92923618ddfb0f6ee78c68b6f872dbf50fa8106348fed01d",
+  "schema": "SOVARA-MCF-V3.1-RELEASE-RECEIPT-1",
+  "state": "SOURCE_IMPLEMENTED_LOCAL_VALIDATED",
+  "truth_boundary": {
+    "gateway_deployed": false,
+    "literal_10x_claim": false,
+    "production_traffic_changed": false,
+    "provider_calls": false,
+    "v4_modules_live": false
+  },
+  "validation_state": "PASS",
+  "zero_dilution": true,
+  "zip_crc": "PASS"
+}
