@@ -1,0 +1,22 @@
+{
+  "schema": "AUTONOMOUS-MATURATION-TIMEOUT-REGRESSION-V1",
+  "failure_signature": "CHAT_MESSAGE_DELIVERY_TIMEOUT_AFTER_PARTIAL_PROVIDER_EFFECTS",
+  "observed_condition": "A conversational response timed out after a GitHub branch and governance commit had already been provider-verified.",
+  "containment": [
+    "DO_NOT_BLIND_RETRY",
+    "READ_PROVIDER_STATE",
+    "RESUME_FROM_LAST_VERIFIED_CHECKPOINT",
+    "PRESERVE_SUCCESSFUL_PRIOR_EFFECTS"
+  ],
+  "permanent_controls": [
+    "WRITE_AHEAD_CHECKPOINT",
+    "STABLE_IDEMPOTENCY_KEY",
+    "EXPECTED_STATE_EPOCH",
+    "AMBIGUOUS_EFFECT_HOLD",
+    "READBACK_BEFORE_RETRY",
+    "CHAT_TURN_NOT_EXECUTION_AUTHORITY"
+  ],
+  "bound_regression": "tests/test_autonomous_maturation.py::AutonomousMaturationTests.test_interrupted_tool_execution_requires_readback_before_retry",
+  "external_effect": false,
+  "truth_boundary": "This fixture preserves the observed failure class and required control behavior; it does not prove a background scheduler or live provider autonomy."
+}
