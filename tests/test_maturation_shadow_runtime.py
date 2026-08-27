@@ -3,6 +3,8 @@ from __future__ import annotations
 import hashlib
 import json
 from pathlib import Path
+import subprocess
+import sys
 import tempfile
 import unittest
 
@@ -10,6 +12,9 @@ from evidenceops.caseforge.maturation_shadow_runtime import (
     ShadowRuntimeInput,
     SuperiorLogicMaturationShadowRuntime,
 )
+
+
+ROOT = Path(__file__).resolve().parents[1]
 
 
 class MaturationShadowRuntimeTests(unittest.TestCase):
@@ -32,6 +37,43 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
             previous_successful_cycles=successes,
             previous_manual_cycles=manual,
         )
+
+    def _assert_entrypoint_executes(self, prefix: list[str]) -> None:
+        with tempfile.TemporaryDirectory() as temp_dir:
+            output_dir = Path(temp_dir) / "receipts"
+            command = prefix + [
+                "--output-dir",
+                str(output_dir),
+                "--run-id",
+                "provider-entrypoint-regression",
+                "--head-sha",
+                "8563d8bc6d7df559cf65aaa5dd301e733c7ac011",
+                "--event",
+                "push",
+                "--observed-at",
+                "2026-08-28T00:00:00Z",
+                "--previous-successful-cycles",
+                "0",
+                "--previous-manual-cycles",
+                "0",
+            ]
+            completed = subprocess.run(
+                command,
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(
+                0,
+                completed.returncode,
+                msg=f"stdout:\n{completed.stdout}\nstderr:\n{completed.stderr}",
+            )
+            receipt = json.loads((output_dir / "maturation_receipt.json").read_text(encoding="utf-8"))
+            self.assertEqual("SHADOW_MATURATION_CYCLE_VERIFIED", receipt["status"])
+            self.assertFalse(receipt["external_effect"])
+            self.assertTrue(receipt["transaction_id"].startswith("matx-"))
+            self.assertTrue(receipt["idempotency_key"].startswith("maturation:"))
 
     def test_first_cycle_is_chat_independent_shadow_only(self) -> None:
         receipt = self.runtime.run(self._input())
@@ -114,6 +156,16 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
         receipt = self.runtime.run(self._input(event="workflow_dispatch", successes=0, manual=0))
         self.assertEqual(1.0, receipt.owner_intervention_rate)
         self.assertFalse(receipt.self_sustaining)
+
+    def test_canonical_package_entrypoint_executes_from_repository_root(self) -> None:
+        self._assert_entrypoint_executes(
+            [sys.executable, "-m", "evidenceops.caseforge.maturation_shadow_cli"]
+        )
+
+    def test_compatibility_script_entrypoint_executes_from_repository_root(self) -> None:
+        self._assert_entrypoint_executes(
+            [sys.executable, str(ROOT / "tools" / "superior_logic_maturation_shadow.py")]
+        )
 
 
 if __name__ == "__main__":

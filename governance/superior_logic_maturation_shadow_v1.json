@@ -1,11 +1,13 @@
 {
   "schema_version": "superior-logic.maturation-shadow.v1",
   "id": "SUPERIOR-LOGIC-MATURATION-SHADOW-V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "kind": "CHAT_INDEPENDENT_READ_ONLY_MATURATION_RUNTIME",
   "objective": "Prove that Superior Logic can wake up without a live ChatGPT turn, assess its next maturity gap, compile a resumable transaction, emit a bounded candidate work package and preserve provider-native evidence without source mutation or external provider effects.",
   "source": "evidenceops/caseforge/maturation_shadow_runtime.py::SuperiorLogicMaturationShadowRuntime",
-  "cli": "tools/superior_logic_maturation_shadow.py",
+  "canonical_cli": "python -m evidenceops.caseforge.maturation_shadow_cli",
+  "compatibility_cli": "tools/superior_logic_maturation_shadow.py",
+  "entrypoint_rule": "Provider-executed Python CLIs must be tested through the same package/module entrypoint used by the provider. Direct script wrappers must explicitly establish repository import context and are secondary compatibility surfaces.",
   "controller": "evidenceops/caseforge/autonomous_maturation.py::AutonomousMaturationController",
   "evolution_stage": "20_AUTONOMOUS_MATURITY_DOMINANCE_CONTROLLER",
   "execution_provider": "GITHUB_ACTIONS",
@@ -52,6 +54,15 @@
     "transaction_id": true,
     "blind_retry_after_ambiguous_effect": false,
     "ambiguous_effect_rule": "READBACK_BEFORE_RETRY"
+  },
+  "failure_learning": {
+    "provider_run_33126859126": {
+      "state": "FAILED_PROVIDER_ENTRYPOINT",
+      "failure_signature": "PYTHON_DIRECT_SCRIPT_TOP_LEVEL_IMPORT_PATH",
+      "evidence_artifact_id": 9668699460,
+      "containment": "PRESERVE_FAILURE_THEN_REPAIR_THROUGH_AIRLOCK",
+      "permanent_regression": "tests/test_maturation_shadow_runtime.py provider-entrypoint subprocess tests"
+    }
   },
   "gap_progression": [
     {
