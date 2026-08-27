@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.3.5",
+  "version": "2.4.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -21,7 +21,8 @@
     ".github/workflows/bubbles-command-bus.yml",
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+    ".github/workflows/cios-production-lane.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -54,6 +55,11 @@
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
       "push",
       "workflow_dispatch"
+    ],
+    ".github/workflows/cios-production-lane.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
     ]
   },
   "required_push_branches": {
@@ -68,10 +74,14 @@
     ],
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
       "main"
+    ],
+    ".github/workflows/cios-production-lane.yml": [
+      "main"
     ]
   },
   "oidc_workflow_allowlist": [
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+    ".github/workflows/cios-production-lane.yml"
   ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
@@ -126,7 +136,7 @@
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT"
   },
-  "source_repository_role": "QUARANTINED_SOURCE_WITH_ONE_EXACT_PROVIDER_DEPLOYMENT_GATEWAY",
+  "source_repository_role": "QUARANTINED_SOURCE_WITH_EXACT_AIRLOCKED_PROVIDER_GATEWAYS",
   "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE_OR_EXACT_AIRLOCKED_GATEWAY",
   "execution_quarantine": {
     "keep_active": [
@@ -136,7 +146,8 @@
       ".github/workflows/bubbles-command-bus.yml",
       ".github/workflows/caseforge-provider-readback-canary.yml",
       ".github/workflows/pfrd-omega-operator-auth-probe.yml",
-      ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+      ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+      ".github/workflows/cios-production-lane.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"

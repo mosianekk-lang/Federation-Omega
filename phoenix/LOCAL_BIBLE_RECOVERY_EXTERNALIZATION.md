@@ -8,13 +8,15 @@ It remains deliberately **not executable from the legacy public source repositor
 
 ## Reason
 
-General source-repository OIDC remains denied. The only admitted exception is the exact SOVARA LiteLLM provider-deployment gateway:
+General source-repository OIDC remains denied. The admitted exceptions are exactly two narrowly scoped provider-deployment gateways:
 
 `.github/workflows/sovara-litellm-v2-3-provider-admission.yml`
 
+`.github/workflows/cios-production-lane.yml`
+
 That gateway is main-only, repository-read-only, immutable-action-pinned, concurrency-bound, restricted to the exact WIF service account, and may persist proof only as a GitHub Actions artifact or external append-only record. It has no source-write, actions-write or statuses-write authority.
 
-This exception does not authorize Phoenix Local Bible recovery, does not widen the Phoenix freeze controller, and does not transfer cloud authority to any other workflow. A commit-message marker remains an inadequate provider authorization boundary.
+These exceptions do not authorize Phoenix Local Bible recovery, do not widen the Phoenix freeze controller beyond their exact paths, and do not transfer cloud authority to any other workflow. A commit-message marker remains an inadequate provider authorization boundary.
 
 ## Required Local Bible execution plane
 
@@ -30,7 +32,7 @@ Local Bible recovery may resume only from the private Federation Omega Ops repos
 
 ## Current source-repository contract
 
-- `oidc_workflow_allowlist` contains exactly one provider-deployment gateway;
+- `oidc_workflow_allowlist` contains exactly two provider-deployment gateways;
 - Phoenix Local Bible recovery remains excluded from that allowlist;
 - the Phoenix freeze controller has no `id-token: write` permission;
 - `[BIBLE-REBUILD]` is not an active source-repository trigger;
