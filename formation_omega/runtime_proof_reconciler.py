@@ -4,7 +4,7 @@ import hashlib
 import json
 from dataclasses import dataclass
 from enum import IntEnum
-from typing import Any, Iterable, Mapping, Sequence
+from typing import Any, Iterable, Mapping
 
 
 class RuntimeProofStage(IntEnum):
@@ -42,7 +42,7 @@ class RuntimeProofReconciler:
 
     The reconciler never executes a workstation action. It consumes explicit
     receipts/readbacks, validates their semantics, and exposes only the highest
-    *contiguous* proof stage. Rendered-DOM evidence can never be promoted into
+    contiguous proof stage. Rendered-DOM evidence can never be promoted into
     provider-native hidden-event completeness.
     """
 
@@ -55,12 +55,10 @@ class RuntimeProofReconciler:
 
     CHATBRIDGE_EXTENSION_ID = "kacbginamagliaddmlkffhcadpamomjb"
     BEF_EXTENSION_ID = "apokbhjjgiaceigelkedcelcecfmgnia"
-
     TRUTH_BOUNDARY = (
         "FULL_OBSERVABLE_RENDERED_CHAT_EVIDENCE_ONLY / "
         "PROVIDER_NATIVE_HIDDEN_EVENTS_NOT_INFERRED"
     )
-
     SUPPORTED_SCHEMAS = frozenset(
         {
             SOURCE_SCHEMA,
@@ -99,7 +97,12 @@ class RuntimeProofReconciler:
 
     @classmethod
     def _schema(cls, receipt: Mapping[str, Any]) -> str:
-        return cls._text(receipt.get("schema") or receipt.get("state"))
+        return cls._text(
+            receipt.get("schema")
+            or receipt.get("Schema")
+            or receipt.get("state")
+            or receipt.get("State")
+        )
 
     @classmethod
     def _check_identity(cls, receipt: Mapping[str, Any], violations: list[str]) -> None:
@@ -132,7 +135,7 @@ class RuntimeProofReconciler:
     ) -> set[RuntimeProofStage]:
         cls._check_identity(receipt, violations)
         stages: set[RuntimeProofStage] = set()
-        state = cls._text(receipt.get("state")).upper()
+        state = cls._text(receipt.get("state") or receipt.get("State")).upper()
         host_sha = cls._text(receipt.get("nativeHostSha256"))
         if host_sha:
             stages.add(RuntimeProofStage.NATIVE_HOST_BUILT)
@@ -161,7 +164,7 @@ class RuntimeProofReconciler:
     ) -> set[RuntimeProofStage]:
         cls._check_identity(receipt, violations)
         stages: set[RuntimeProofStage] = set()
-        state = cls._text(receipt.get("state")).upper()
+        state = cls._text(receipt.get("state") or receipt.get("State")).upper()
         registered = (
             cls._as_bool(receipt.get("nativeHostRegistered"))
             and cls._as_bool(receipt.get("nativeHostManifestValid"))
@@ -195,9 +198,7 @@ class RuntimeProofReconciler:
 
     @classmethod
     def _dpf_ok(cls, receipt: Mapping[str, Any], violations: list[str]) -> bool:
-        evidence = cls._mapping(receipt.get("evidence"))
-        if not evidence:
-            evidence = receipt
+        evidence = cls._mapping(receipt.get("evidence")) or receipt
         if evidence.get("provider_native_complete") is True:
             violations.append("OBSERVABLE_SCOPE_ESCALATION_FORBIDDEN")
             return False
@@ -265,7 +266,6 @@ class RuntimeProofReconciler:
             if schema not in self.SUPPORTED_SCHEMAS:
                 unsupported.append(schema or "<missing>")
                 continue
-
             if schema == self.SOURCE_SCHEMA:
                 if self._source_ok(receipt, violations):
                     proven.add(RuntimeProofStage.SOURCE_ADMITTED)
@@ -283,14 +283,12 @@ class RuntimeProofReconciler:
                 if self._resilience_ok(receipt, violations):
                     proven.add(RuntimeProofStage.RESILIENCE_VERIFIED)
 
-        # A stage is exposable only when every lower stage has explicit proof.
         highest = RuntimeProofStage.NO_RUNTIME_PROOF
         satisfied: list[str] = []
         for stage in RuntimeProofStage:
             if stage == RuntimeProofStage.NO_RUNTIME_PROOF:
                 continue
             if stage in proven:
-                # NATIVE_HOST_BUILT is also established by a valid registered readback.
                 highest = stage
                 satisfied.append(stage.name)
                 continue
