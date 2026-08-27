@@ -2,6 +2,12 @@
   "tournament": "FQEF_G1_ADAPTIVE_TREND",
   "research_only": true,
   "provider_prompt_identity": "IDENTICAL_ACROSS_ALL_PROVIDERS",
+  "status": "G1_SMOKE_COMPLETED_NO_CAPITAL_CANDIDATE",
+  "benchmark": {
+    "asset": "SPY",
+    "holdout_return_pct": 63.51,
+    "report_id": "a6830c18-f5ad-46bc-bb8a-9549ebfd0661"
+  },
   "providers": {
     "openai": {
       "job_id": "ade255a9-6ce5-4d5a-8985-f41b62c99a07",
@@ -11,7 +17,13 @@
       "generation_review_score": 7,
       "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW",
       "spy_holdout_report_id": "3a9139f8-e302-4ec2-bd15-388130775ef9",
-      "spy_holdout_status": "PENDING"
+      "spy_holdout_status": "COMPLETED",
+      "spy_holdout_return_pct": 3.56,
+      "spy_holdout_sharpe": 0.11,
+      "spy_holdout_max_drawdown_pct": 3.81,
+      "spy_holdout_closed_trades": 9,
+      "benchmark_delta_pct_points": -59.95,
+      "capital_decision": "REJECT_CAPITAL_BENCHMARK_UNDERPERFORMANCE"
     },
     "google": {
       "job_id": "515a3220-f27e-41b0-af2b-93fcb283c038",
@@ -21,7 +33,13 @@
       "generation_review_score": 8,
       "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW;FRACTIONAL_POSITION_SIZE",
       "spy_holdout_report_id": "42008dab-37e3-4451-884f-ed989ae65249",
-      "spy_holdout_status": "PENDING"
+      "spy_holdout_status": "COMPLETED",
+      "spy_holdout_return_pct": 1.84,
+      "spy_holdout_sharpe": -0.70,
+      "spy_holdout_max_drawdown_pct": 1.12,
+      "spy_holdout_closed_trades": 4,
+      "benchmark_delta_pct_points": -61.67,
+      "capital_decision": "REJECT_CAPITAL_BENCHMARK_UNDERPERFORMANCE"
     },
     "anthropic": {
       "job_id": "de637faf-24a8-4c14-8524-4a25c1694797",
@@ -31,13 +49,17 @@
       "generation_review_score": 8,
       "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW",
       "spy_holdout_report_id": "495bb328-198d-4aee-90c0-94df99238e24",
-      "spy_holdout_status": "PENDING"
+      "spy_holdout_status": "COMPLETED",
+      "spy_holdout_return_pct": 0.43,
+      "benchmark_delta_pct_points": -63.08,
+      "capital_decision": "REJECT_CAPITAL_BENCHMARK_UNDERPERFORMANCE"
     },
     "xai": {
       "job_id": "bf09b115-e8f7-4d9b-8a68-c838d2706043",
       "status": "FAILED",
       "failure": "XAI_API_KEY is not configured",
-      "retryable": false
+      "retryable": false,
+      "capital_decision": "NOT_ELIGIBLE_PROVIDER_FAILURE"
     },
     "openrouter": {
       "job_id": "c7713b20-2ec9-4fc9-96fb-4fcadfe2293e",
@@ -47,7 +69,10 @@
       "generation_review_score": 7,
       "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW",
       "spy_holdout_report_id": "9f5e1053-2a29-427a-9632-2240eddb58d2",
-      "spy_holdout_status": "PENDING"
+      "spy_holdout_status": "COMPLETED",
+      "spy_holdout_return_pct": 7.35,
+      "benchmark_delta_pct_points": -56.16,
+      "capital_decision": "REJECT_CAPITAL_BENCHMARK_UNDERPERFORMANCE"
     }
   },
   "smoke_contract": {
@@ -60,6 +85,17 @@
     "commission": 0.001,
     "leverage": 1,
     "buy_on_close": true
+  },
+  "failure_win_direction": {
+    "preserve_original_provider_fruit": true,
+    "do_not_promote_any_g1_candidate": true,
+    "mutation_targets": [
+      "benchmark_participation",
+      "entry_exit_frequency",
+      "close_based_stop_semantics",
+      "cross_asset_generalisation"
+    ],
+    "next_generation_requires_material_change": true
   },
   "fairness_invariants": [
     "identical generation prompt",
