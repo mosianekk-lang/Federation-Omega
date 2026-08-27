@@ -104,32 +104,68 @@ def _lookup(event_expr: str, column: str, *, sheet_name: str, default: str) -> s
     return f"IFNA(XLOOKUP({event_expr},{sheet}!A$2:A,{sheet}!{column}$2:{column},{default}),{default})"
 
 
-def behavior_projection_formula(*, sheet_name: str = EVENT_SHEET) -> str:
-    """Project Behavior Proven only when raw claim + every hard gate is true."""
-    bindings = [("rawbp", _lookup("e", EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE"))]
+def _proof_complete_expression(event_expr: str, *, sheet_name: str) -> str:
+    bindings = [
+        ("raw_claim_ok", _lookup(event_expr, EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")),
+    ]
     for index, key in enumerate(PROOF_BOOLEAN_COLUMNS, start=1):
-        bindings.append((f"g{index}", _lookup("e", EVENT_COLUMNS[key], sheet_name=sheet_name, default="FALSE")))
-    bindings.extend([
-        ("repeats", _lookup("e", EVENT_COLUMNS["repeated_successes"], sheet_name=sheet_name, default="0")),
-        ("soak", _lookup("e", EVENT_COLUMNS["soak_seconds"], sheet_name=sheet_name, default="0")),
-    ])
+        bindings.append(
+            (
+                f"gate_{index}_ok",
+                _lookup(event_expr, EVENT_COLUMNS[key], sheet_name=sheet_name, default="FALSE"),
+            )
+        )
+    bindings.extend(
+        [
+            ("repeat_count_ok", _lookup(event_expr, EVENT_COLUMNS["repeated_successes"], sheet_name=sheet_name, default="0")),
+            ("soak_seconds_ok", _lookup(event_expr, EVENT_COLUMNS["soak_seconds"], sheet_name=sheet_name, default="0")),
+        ]
+    )
     let_bindings = ",".join(f"{name},{value}" for name, value in bindings)
-    boolean_names = ["rawbp", *[f"g{index}" for index in range(1, len(PROOF_BOOLEAN_COLUMNS) + 1)]]
-    all_terms = ",".join([*boolean_names, f"repeats>={REQUIRED_REPEATED_SUCCESSES}", f"soak>={REQUIRED_SOAK_SECONDS}"])
-    return "=MAP(E2:E,G2:G,LAMBDA(e,ver,IF(e=\"\",\"\",IF(ver=\"2.0.0\",LET(" + let_bindings + ",AND(" + all_terms + ")),FALSE))))"
+    boolean_names = [
+        "raw_claim_ok",
+        *[f"gate_{index}_ok" for index in range(1, len(PROOF_BOOLEAN_COLUMNS) + 1)],
+    ]
+    all_terms = ",".join(
+        [
+            *boolean_names,
+            f"repeat_count_ok>={REQUIRED_REPEATED_SUCCESSES}",
+            f"soak_seconds_ok>={REQUIRED_SOAK_SECONDS}",
+        ]
+    )
+    return f"LET({let_bindings},AND({all_terms}))"
+
+
+def behavior_projection_formula(*, sheet_name: str = EVENT_SHEET) -> str:
+    """Project Behavior Proven only when proof graph and outer gates all pass."""
+    proof_complete = _proof_complete_expression("e", sheet_name=sheet_name)
+    invoked = _lookup("e", EVENT_COLUMNS["kernel_invoked"], sheet_name=sheet_name, default="FALSE")
+    readback = _lookup("e", EVENT_COLUMNS["independent_readback"], sheet_name=sheet_name, default="FALSE")
+    current = _lookup("e", EVENT_COLUMNS["current"], sheet_name=sheet_name, default="FALSE")
+    refs = _lookup("e", EVENT_COLUMNS["evidence_refs"], sheet_name=sheet_name, default='""')
+    return (
+        '=MAP(E2:E,G2:G,LAMBDA(e,ver,IF(e="","",IF(ver="2.0.0",'
+        f'LET(proof_graph_ok,{proof_complete},invocation_ok,{invoked},readback_ok,{readback},'
+        f'current_ok,{current},evidence_ref_ok,{refs},'
+        'AND(proof_graph_ok,invocation_ok,readback_ok,current_ok,evidence_ref_ok<>"")),FALSE))))'
+    )
 
 
 def receiver_state_formula(*, sheet_name: str = EVENT_SHEET) -> str:
-    """Expose incomplete raw claims without promoting them."""
+    """Expose incomplete raw claims without misclassifying outer-gate holds."""
     raw_behavior = _lookup("e", EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")
+    proof_complete = _proof_complete_expression("e", sheet_name=sheet_name)
     v1_behavior = _lookup("e", EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")
     return (
-        "=MAP(A2:A,E2:E,G2:G,H2:H,I2:I,J2:J,K2:K,L2:L,LAMBDA(s,e,ver,ki,bp,ir,cur,refs,"
-        "IF(s=\"\",\"\",IF(e=\"\",\"REGISTERED_V2_BEHAVIOR_PENDING\",IF(ver=\"2.0.0\","
-        f"LET(rawbp,{raw_behavior},IF(AND(ki,bp,ir,cur,refs<>\"\"),\"V2_BEHAVIOR_PROVEN\","
-        "IF(AND(rawbp,bp=FALSE),\"V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE\",IF(ki,\"V2_INVOKED_PROOF_OPEN\",\"V2_EVENT_PRESENT_INVOCATION_OPEN\")))),"
-        f"IF(ver=\"1.0.0\",IF({v1_behavior},\"V1_BEHAVIOR_PROVEN_V2_PENDING\",\"HISTORICAL_EVENT_V2_PENDING\"),\"HISTORICAL_EVENT_V2_PENDING\")))))))"
-    )
+        '=MAP(A2:A,E2:E,G2:G,H2:H,I2:I,J2:J,K2:K,L2:L,LAMBDA(s,e,ver,ki,bp,ir,cur,refs,'
+        'IF(s="","",IF(e="","REGISTERED_V2_BEHAVIOR_PENDING",IF(ver="2.0.0",'
+        f'LET(raw_claim,{raw_behavior},proof_graph_ok,{proof_complete},'
+        'IF(AND(ki,bp,ir,cur,refs<>""),"V2_BEHAVIOR_PROVEN",'
+        'IF(AND(raw_claim,proof_graph_ok=FALSE),"V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE",'
+        'IF(ki,"V2_INVOKED_PROOF_OPEN","V2_EVENT_PRESENT_INVOCATION_OPEN")))), '
+        f'IF(ver="1.0.0",IF({v1_behavior},"V1_BEHAVIOR_PROVEN_V2_PENDING","HISTORICAL_EVENT_V2_PENDING"),'
+        '"HISTORICAL_EVENT_V2_PENDING")))))))'
+    ).replace(')))), IF', ')))),IF')
 
 
 def truth_boundary_formula() -> str:
