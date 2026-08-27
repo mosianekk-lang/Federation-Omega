@@ -3,8 +3,8 @@ from __future__ import annotations
 """Canonical behavior-proof contract for source and Google Sheets projection.
 
 The source compiler and the live provider projection must enforce the same
-behavioral proof boundary. These helpers do not mutate Google Sheets or grant
-receiver maturity.
+behavioral proof boundary. These helpers emit the exact formula shape exercised
+by the provider-native parity canary; they do not mutate Sheets or grant maturity.
 """
 
 from typing import Any, Mapping
@@ -102,57 +102,33 @@ def _sheet_ref(sheet_name: str) -> str:
     return "'" + sheet_name.replace("'", "''") + "'"
 
 
-def _lookup(event_expr: str, column: str, *, sheet_name: str, default: str) -> str:
-    sheet = _sheet_ref(sheet_name)
-    return f"IFNA(XLOOKUP({event_expr},{sheet}!A$2:A,{sheet}!{column}$2:{column},{default}),{default})"
-
-
-def _proof_complete_expression(event_expr: str, *, sheet_name: str) -> str:
-    """Compact provider expression for the same hard gates as the source compiler."""
-    sheet = _sheet_ref(sheet_name)
-    raw_claim = _lookup(event_expr, EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")
-    repeat_count = _lookup(event_expr, EVENT_COLUMNS["repeated_successes"], sheet_name=sheet_name, default="0")
-    soak_seconds = _lookup(event_expr, EVENT_COLUMNS["soak_seconds"], sheet_name=sheet_name, default="0")
-    proof_row = (
-        f"IFNA(COUNTIF(FILTER({sheet}!{PROOF_BOOLEAN_FIRST_COLUMN}$2:{PROOF_BOOLEAN_LAST_COLUMN},"
-        f"{sheet}!A$2:A={event_expr}),TRUE)={PROOF_BOOLEAN_COUNT},FALSE)"
-    )
-    return (
-        f"LET(raw_claim_ok,{raw_claim},proof_row_ok,{proof_row},"
-        f"repeat_count_ok,{repeat_count},soak_seconds_ok,{soak_seconds},"
-        f"AND(raw_claim_ok,proof_row_ok,repeat_count_ok>={REQUIRED_REPEATED_SUCCESSES},"
-        f"soak_seconds_ok>={REQUIRED_SOAK_SECONDS}))"
-    )
-
-
 def behavior_projection_formula(*, sheet_name: str = EVENT_SHEET) -> str:
-    """Project Behavior Proven only when proof graph and outer gates all pass."""
-    proof_complete = _proof_complete_expression("e", sheet_name=sheet_name)
-    invoked = _lookup("e", EVENT_COLUMNS["kernel_invoked"], sheet_name=sheet_name, default="FALSE")
-    readback = _lookup("e", EVENT_COLUMNS["independent_readback"], sheet_name=sheet_name, default="FALSE")
-    current = _lookup("e", EVENT_COLUMNS["current"], sheet_name=sheet_name, default="FALSE")
-    refs = _lookup("e", EVENT_COLUMNS["evidence_refs"], sheet_name=sheet_name, default='""')
+    """Provider-proven formula: full proof graph plus invocation/readback/current/refs."""
+    sheet = _sheet_ref(sheet_name)
     return (
-        '=MAP(E2:E,G2:G,LAMBDA(e,ver,IF(e="","",IF(ver="2.0.0",'
-        f'LET(proof_graph_ok,{proof_complete},invocation_ok,{invoked},readback_ok,{readback},'
-        f'current_ok,{current},evidence_ref_ok,{refs},'
-        'AND(proof_graph_ok,invocation_ok,readback_ok,current_ok,evidence_ref_ok<>"")),FALSE))))'
+        '=MAP(E2:E,G2:G,LAMBDA(e,ver,IF(e="","",IF(ver<>"2.0.0",FALSE,'
+        f'IFNA(LET(r,FILTER({sheet}!G$2:Y,{sheet}!A$2:A=e),'
+        'AND(INDEX(r,1,1),INDEX(r,1,2),INDEX(r,1,3),INDEX(r,1,4),INDEX(r,1,5)<>"",'
+        f'COUNTIF(FILTER({sheet}!L$2:W,{sheet}!A$2:A=e),TRUE)={PROOF_BOOLEAN_COUNT},'
+        f'INDEX(r,1,18)>={REQUIRED_REPEATED_SUCCESSES},INDEX(r,1,19)>={REQUIRED_SOAK_SECONDS})),FALSE)))))'
     )
 
 
 def receiver_state_formula(*, sheet_name: str = EVENT_SHEET) -> str:
-    """Expose incomplete raw claims without misclassifying outer-gate holds."""
-    raw_behavior = _lookup("e", EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")
-    proof_complete = _proof_complete_expression("e", sheet_name=sheet_name)
-    v1_behavior = _lookup("e", EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")
+    """Provider-proven state projection; incomplete raw claims cannot self-promote."""
+    sheet = _sheet_ref(sheet_name)
     return (
         '=MAP(A2:A,E2:E,G2:G,H2:H,I2:I,J2:J,K2:K,L2:L,LAMBDA(s,e,ver,ki,bp,ir,cur,refs,'
         'IF(s="","",IF(e="","REGISTERED_V2_BEHAVIOR_PENDING",IF(ver="2.0.0",'
-        f'LET(raw_claim,{raw_behavior},proof_graph_ok,{proof_complete},'
         'IF(AND(ki,bp,ir,cur,refs<>""),"V2_BEHAVIOR_PROVEN",'
-        'IF(AND(raw_claim,proof_graph_ok=FALSE),"V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE",'
-        'IF(ki,"V2_INVOKED_PROOF_OPEN","V2_EVENT_PRESENT_INVOCATION_OPEN")))),'
-        f'IF(ver="1.0.0",IF({v1_behavior},"V1_BEHAVIOR_PROVEN_V2_PENDING","HISTORICAL_EVENT_V2_PENDING"),'
+        f'IF(AND(IFNA(XLOOKUP(e,{sheet}!A$2:A,{sheet}!H$2:H,FALSE),FALSE),'
+        f'IFNA(AND(COUNTIF(FILTER({sheet}!L$2:W,{sheet}!A$2:A=e),TRUE)={PROOF_BOOLEAN_COUNT},'
+        f'XLOOKUP(e,{sheet}!A$2:A,{sheet}!X$2:X,0)>={REQUIRED_REPEATED_SUCCESSES},'
+        f'XLOOKUP(e,{sheet}!A$2:A,{sheet}!Y$2:Y,0)>={REQUIRED_SOAK_SECONDS}),FALSE)=FALSE),'
+        '"V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE",'
+        'IF(ki,"V2_INVOKED_PROOF_OPEN","V2_EVENT_PRESENT_INVOCATION_OPEN"))),'
+        f'IF(ver="1.0.0",IF(IFNA(XLOOKUP(e,{sheet}!A$2:A,{sheet}!H$2:H,FALSE),FALSE),'
+        '"V1_BEHAVIOR_PROVEN_V2_PENDING","HISTORICAL_EVENT_V2_PENDING"),'
         '"HISTORICAL_EVENT_V2_PENDING"))))))'
     )
 
