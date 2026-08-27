@@ -1,0 +1,30 @@
+{
+  "receipt": "FORMATION_OMEGA_MCE_REANCHOR_20260827",
+  "state": "REANCHORED_PENDING_FRESH_ADMISSION",
+  "classification": "DISJOINT_STALE_BY_ANCESTRY",
+  "original_pr": 648,
+  "active_pr": 651,
+  "original_candidate_head": "024f46fc1f2008f6ace9e5aef295f162fed137f8",
+  "first_reanchor_base": "41c98ed8813408d02d625ac87582ebbddaac4032",
+  "first_reanchor_commit": "44a331bdb74be7282f89e68e0472f414e35f07e0",
+  "stdlib_test_repair_head": "10b5c420be632ba1fa251e05bcf918eeb19cf78c",
+  "stdlib_test_repair_checks": {
+    "federation_omega_airlock": "PASS",
+    "bubbles_command_bus": "PASS",
+    "public_repository_leak_guard": "PASS"
+  },
+  "fresh_main_observed": "e5f96967cfe10fda0c8dfc4bf283e728337e84d0",
+  "second_reanchor_commit": "ad60d001dbbe5e973fc852f0f4be2765ab611caf",
+  "lineage_preservation": {
+    "primary_parent": "e5f96967cfe10fda0c8dfc4bf283e728337e84d0",
+    "prior_mce_parent": "10b5c420be632ba1fa251e05bcf918eeb19cf78c",
+    "semantic_source_change_during_second_reanchor": false
+  },
+  "proof_boundary": {
+    "source_admitted": false,
+    "runtime_bound": false,
+    "provider_verified": false,
+    "fresh_head_checks_required": true,
+    "signed_main_readback_required": true
+  }
+}
