@@ -71,6 +71,13 @@ jobs:
           }
           trap cleanup EXIT
 
+          # The production image stays non-root. This helper only shares the
+          # ephemeral synthetic test volume between container UID 65532 and the
+          # hosted runner during offline SQLite checkpoint/backup verification.
+          share_test_volume() {
+            sudo chmod -R a+rwX "$RUNTIME_DIR"
+          }
+
           start_runtime() {
             cleanup
             docker run -d --name frontier-runtime \
@@ -85,7 +92,7 @@ jobs:
               -v "$RUNTIME_DIR:/state" \
               "$IMAGE" >/dev/null
             for _ in $(seq 1 30); do
-              if curl --fail --silent --show-error "http://127.0.0.1:${PORT}/health" >/dev/null; then
+              if curl --fail --silent "http://127.0.0.1:${PORT}/health" >/dev/null 2>&1; then
                 return 0
               fi
               sleep 1
@@ -109,6 +116,7 @@ jobs:
             --data "$SIGNAL_ONE" \
             "http://127.0.0.1:${PORT}/v1/frontier/signals" > runtime-proof/signal-1.json
           stop_runtime
+          share_test_volume
 
           python - <<'PY'
           import json, os, sqlite3
@@ -125,6 +133,7 @@ jobs:
           con.close()
           json.dump({'baseline_event_count': baseline}, open('runtime-proof/baseline.json', 'w', encoding='utf-8'), sort_keys=True)
           PY
+          share_test_volume
 
           start_runtime
           curl --fail --silent --show-error "http://127.0.0.1:${PORT}/health" > runtime-proof/health-2.json
@@ -137,6 +146,7 @@ jobs:
             --data "$SIGNAL_TWO" \
             "http://127.0.0.1:${PORT}/v1/frontier/signals" > runtime-proof/signal-2.json
           stop_runtime
+          share_test_volume
 
           python - <<'PY'
           import json, os, sqlite3
@@ -169,10 +179,12 @@ jobs:
               'rollback_restored': True,
           }, open('runtime-proof/persistence-rollback.json', 'w', encoding='utf-8'), sort_keys=True)
           PY
+          share_test_volume
 
           start_runtime
           curl --fail --silent --show-error "http://127.0.0.1:${PORT}/health" > runtime-proof/health-3-after-restore.json
           stop_runtime
+          share_test_volume
 
           python - <<'PY'
           import json, os
