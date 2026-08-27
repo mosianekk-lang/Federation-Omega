@@ -1,0 +1,43 @@
+{
+  "schema": "FEDERATION-DPF-CAPTURE-SCOPE-CONTRACT-1.0",
+  "state": "SOURCE_CANDIDATE_PROVIDER_NEUTRAL",
+  "purpose": "Separate DPF completeness within the complete observable rendered-chat scope from provider-native exact-context completeness, without weakening ChatBridge truth boundaries or cleanup proof requirements.",
+  "completeness_dimensions": {
+    "full_observable_rendered_chat": {
+      "meaning": "All rendered user/assistant/system/tool-visible events in the declared browser scope are hash-valid, gap-free and reconstructable for the observed range.",
+      "may_satisfy_dpf_whole_chat_provenance": true,
+      "may_claim_hidden_provider_events": false,
+      "may_claim_provider_native_exact": false
+    },
+    "provider_native_exact": {
+      "meaning": "Provider-native source completeness under the strict ChatBridge full-fidelity ledger contract.",
+      "may_satisfy_dpf_whole_chat_provenance": true,
+      "requires_independent_provider_native_proof": true
+    }
+  },
+  "observable_promotion_gates": [
+    "CAPTURE_SCOPE_RENDERED_DOM",
+    "SOURCE_PROVIDER_ALLOWLIST_MATCH",
+    "EXACT_RENDERED_TRANSCRIPT_COMPLETE_TRUE",
+    "RENDERED_HASH_CHAIN_VERIFIED",
+    "FIRST_SOURCE_SEQUENCE_1",
+    "LAST_SOURCE_SEQUENCE_EQUALS_LATEST_RENDERED_MESSAGE_COUNT",
+    "NO_MISSING_RENDERED_RANGES",
+    "NO_UNRESOLVED_REQUIRED_ARTIFACTS",
+    "INGESTED_EVENT_COUNT_COVERS_RENDERED_MESSAGE_COUNT",
+    "UNDERLYING_CHATBRIDGE_LEDGER_NOT_TAMPERED"
+  ],
+  "hard_boundaries": {
+    "rendered_evidence_cannot_self_declare_provider_native_complete": true,
+    "raw_chatbridge_ledger_remains_authoritative": true,
+    "scoped_adapter_is_read_only_view": true,
+    "canonical_raw_archive_is_preserved": true,
+    "cleanup_still_requires_archive_pointer_and_reconstruction_proof": true,
+    "missing_or_invalid_scope_evidence_remains_bounded": true
+  },
+  "source_components": [
+    "bubbles/chatbridge_omega4/dpf_capture_scope_adapter.py",
+    "bubbles/chatbridge_omega4/test_dpf_capture_scope_adapter.py"
+  ],
+  "truth_boundary": "FULL_OBSERVABLE_RENDERED_CHAT may be verified for DPF provenance while PROVIDER_NATIVE_EXACT remains false. No hidden provider event, browser installation, live egress, current-chat capture, cleanup effect, Design Gene promotion, provider authority or runtime maturity is inferred from this source contract."
+}
