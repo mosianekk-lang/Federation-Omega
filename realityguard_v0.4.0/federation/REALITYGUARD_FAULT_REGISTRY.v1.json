@@ -55,7 +55,7 @@
       "artifact_digests": [
         "3b372cb696aae1d683dfd6b8ddc6e7f552cc14a945f8641f16555256164e7b27",
         "6faed72f81b460bc54ab0f0c872817c11bac3e7157a1838c8026a55067b21f56",
-        "b6e2fb944742ec0b4ac7b0dd8b97a6bf1e33981515ad476fc52ee2748f8d3099"
+        "8924bc925cba7060180f97143ec75fb8430729db7217641df5c053f1ae50921a"
       ],
       "faultbook_id": "FO-GEM-AUTH-CONT-20260826-001",
       "faults": [
@@ -237,9 +237,9 @@
       ],
       "import_id": "0fb6ca75c77a3a94579135d0886ba7b04f40c7e1f249a69027c529866695fcd2",
       "ledger": {
-        "event_count": 97,
-        "head_hash": "8895c51dcebc4fce4704399ffbc95752731a3d715c8db15b61cd5a42dbf603b2",
-        "sha256": "b6e2fb944742ec0b4ac7b0dd8b97a6bf1e33981515ad476fc52ee2748f8d3099"
+        "event_count": 98,
+        "head_hash": "5c3084376131745681487a27bc00b757f855060a4c1a3ef1ed6ad259aee1f704",
+        "sha256": "8924bc925cba7060180f97143ec75fb8430729db7217641df5c053f1ae50921a"
       },
       "open_regression_tests": [
         "FT-01",

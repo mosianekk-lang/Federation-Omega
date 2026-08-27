@@ -7,15 +7,15 @@
   "build_contract": {"valid": true, "proof_required": true},
   "private_import": {
     "faultbook_id": "FO-GEM-AUTH-CONT-20260826-001",
-    "ledger_events": 97,
-    "ledger_head": "8895c51dcebc4fce4704399ffbc95752731a3d715c8db15b61cd5a42dbf603b2",
-    "ledger_sha256": "b6e2fb944742ec0b4ac7b0dd8b97a6bf1e33981515ad476fc52ee2748f8d3099",
+    "ledger_events": 98,
+    "ledger_head": "5c3084376131745681487a27bc00b757f855060a4c1a3ef1ed6ad259aee1f704",
+    "ledger_sha256": "8924bc925cba7060180f97143ec75fb8430729db7217641df5c053f1ae50921a",
     "faults": 25,
     "registry_valid": true,
     "system_status": "SYSTEMIC_OPEN"
   },
   "privacy": {"raw_events_in_public_manifest": false, "artifact_paths_in_public_manifest": false, "storage_refs_in_public_manifest": false, "consumer_proof_refs_in_public_manifest": false, "semantic_scan": "PASS"},
-  "public_manifest_sha256": "c0573ef7023a477959de9035c35bdd6f18d29e390c759ba2050ef44ef1da5129",
+  "public_manifest_sha256": "2885c125ddbadf802db9ad70a487c75a65a538e8e1aa6ca8305eca64854654a4",
   "binding_truth": {"current_invocation": "VERIFIED_INVOCATION", "library_registry": "VERIFIED_SOURCE", "federation_live_operator": "ADAPTER_REQUIRED", "historical_chatgpt_chats": "ADAPTER_REQUIRED", "universal_sync_claim_allowed": false},
   "maturity": "TESTED_LOCAL_SOURCE_CANDIDATE",
   "external_deployment_claimed": false
