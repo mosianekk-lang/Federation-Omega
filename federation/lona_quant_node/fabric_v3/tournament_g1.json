@@ -1,0 +1,74 @@
+{
+  "tournament": "FQEF_G1_ADAPTIVE_TREND",
+  "research_only": true,
+  "provider_prompt_identity": "IDENTICAL_ACROSS_ALL_PROVIDERS",
+  "providers": {
+    "openai": {
+      "job_id": "ade255a9-6ce5-4d5a-8985-f41b62c99a07",
+      "status": "COMPLETED",
+      "strategy_id": "240bc470-7e54-4515-b470-c7c55834739d",
+      "source_sha256": "8b4e0054b5023766e2a42169dcf635d1af947deeeafb2ceba1e56e404dc56fd5",
+      "generation_review_score": 7,
+      "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW",
+      "spy_holdout_report_id": "3a9139f8-e302-4ec2-bd15-388130775ef9",
+      "spy_holdout_status": "PENDING"
+    },
+    "google": {
+      "job_id": "515a3220-f27e-41b0-af2b-93fcb283c038",
+      "status": "COMPLETED",
+      "strategy_id": "3131f706-877b-47c5-b598-8e21151209fe",
+      "source_sha256": "675aa673a736ec9dab1042e1e27de392b673f751bfa4450f802934a91f21b03e",
+      "generation_review_score": 8,
+      "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW;FRACTIONAL_POSITION_SIZE",
+      "spy_holdout_report_id": "42008dab-37e3-4451-884f-ed989ae65249",
+      "spy_holdout_status": "PENDING"
+    },
+    "anthropic": {
+      "job_id": "de637faf-24a8-4c14-8524-4a25c1694797",
+      "status": "COMPLETED",
+      "strategy_id": "b18b9bd1-7129-4387-97c4-fb35380f9412",
+      "source_sha256": "f57dd7753892094bb0a5e50e959f26175721ef11ec2f1991f1137b48a3806fd6",
+      "generation_review_score": 8,
+      "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW",
+      "spy_holdout_report_id": "495bb328-198d-4aee-90c0-94df99238e24",
+      "spy_holdout_status": "PENDING"
+    },
+    "xai": {
+      "job_id": "bf09b115-e8f7-4d9b-8a68-c838d2706043",
+      "status": "FAILED",
+      "failure": "XAI_API_KEY is not configured",
+      "retryable": false
+    },
+    "openrouter": {
+      "job_id": "c7713b20-2ec9-4fc9-96fb-4fcadfe2293e",
+      "status": "COMPLETED",
+      "strategy_id": "8a6b9ad1-759a-47b3-8a4e-855e36ec29e5",
+      "source_sha256": "4eac6f50e060a6e2e16e78e2c3fc2d134cee21bc3750e1ea261bffe7fe5f1294",
+      "generation_review_score": 7,
+      "static_warning": "STOP_EXIT_USES_CLOSE_NOT_LOW",
+      "spy_holdout_report_id": "9f5e1053-2a29-427a-9632-2240eddb58d2",
+      "spy_holdout_status": "PENDING"
+    }
+  },
+  "smoke_contract": {
+    "asset": "SPY",
+    "data_id": "9e60d261-2ffe-4f9f-8412-35f59224b6cd",
+    "frequency": "1d",
+    "start_date": "2024-01-01",
+    "end_date": "2026-08-27",
+    "initial_cash": 100000,
+    "commission": 0.001,
+    "leverage": 1,
+    "buy_on_close": true
+  },
+  "fairness_invariants": [
+    "identical generation prompt",
+    "original provider fruit preserved before repairs",
+    "source readback and SHA256 required before backtest",
+    "same smoke-test data and economic assumptions",
+    "generation review score is not trading-performance evidence",
+    "provider failure remains visible",
+    "no silent provider substitution"
+  ],
+  "live_capital_authorized": false
+}
