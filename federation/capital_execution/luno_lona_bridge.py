@@ -57,39 +57,29 @@ class NormalizedOHLCVDataset:
         if self.external_effect or self.financial_effect:
             raise PermissionError("DATASET_NORMALIZATION_CANNOT_HAVE_FINANCIAL_EFFECT")
 
+    @property
+    def lona_upload_eligible(self) -> bool:
+        self.validate()
+        return len(self.bars) >= 10
+
     def fingerprint(self) -> str:
         self.validate()
         return stable_sha256(asdict(self))
 
     def to_csv_text(self) -> str:
-        """Return deterministic OHLCV CSV suitable for later LONA upload after separate provider action."""
         self.validate()
         buffer = io.StringIO(newline="")
         writer = csv.writer(buffer, lineterminator="\n")
         writer.writerow(["timestamp", "open", "high", "low", "close", "volume"])
         for bar in self.bars:
-            writer.writerow([
-                bar.timestamp_ms,
-                str(bar.open),
-                str(bar.high),
-                str(bar.low),
-                str(bar.close),
-                str(bar.volume),
-            ])
+            writer.writerow([bar.timestamp_ms, str(bar.open), str(bar.high), str(bar.low), str(bar.close), str(bar.volume)])
         return buffer.getvalue()
 
 
 class LunoToLonaDataBridge:
     """Normalizes Luno candle payloads without uploading, trading or claiming LONA dataset creation."""
 
-    def normalize_candles(
-        self,
-        *,
-        pair: str,
-        duration_seconds: int,
-        payload: Mapping[str, Any],
-        source_ref: str,
-    ) -> NormalizedOHLCVDataset:
+    def normalize_candles(self, *, pair: str, duration_seconds: int, payload: Mapping[str, Any], source_ref: str) -> NormalizedOHLCVDataset:
         raw = payload.get("candles")
         if not isinstance(raw, Sequence) or isinstance(raw, (str, bytes)):
             raise ValueError("Luno candle payload requires a candles sequence")
@@ -107,12 +97,6 @@ class LunoToLonaDataBridge:
             )
             bar.validate()
             bars.append(bar)
-        dataset = NormalizedOHLCVDataset(
-            provider="LUNO",
-            pair=pair,
-            duration_seconds=int(duration_seconds),
-            bars=tuple(bars),
-            source_ref=source_ref,
-        )
+        dataset = NormalizedOHLCVDataset("LUNO", pair, int(duration_seconds), tuple(bars), source_ref)
         dataset.validate()
         return dataset
