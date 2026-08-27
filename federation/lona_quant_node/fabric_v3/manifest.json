@@ -1,0 +1,51 @@
+{
+  "fabric": "FEDERATION_QUANT_EVIDENCE_FABRIC",
+  "version": "3.0.0-canary",
+  "research_only": true,
+  "live_broker_execution": false,
+  "authorities": {
+    "canonical_source": "GitHub/Federation-Omega",
+    "native_quant_execution": "LONA",
+    "human_evidence_registry": {
+      "provider": "Google Sheets",
+      "spreadsheet_id": "1-lwI_pV2Uu8Ev1BcyYMt9CSalzK3VBzouBb6KpswyVM"
+    },
+    "event_transport": "SOVARA when runtime binding is separately proven"
+  },
+  "components": [
+    "deterministic experiment queue",
+    "append-only hash-chained evidence receipts",
+    "provider-neutral model tournament",
+    "expanding walk-forward battery",
+    "parameter-neighborhood survival matrix",
+    "cross-asset and adverse-cost batteries",
+    "Failure-Win mutation lineage"
+  ],
+  "g1_tournament": {
+    "spec": "identical adaptive-trend research prompt",
+    "providers": ["openai", "google", "anthropic", "xai", "openrouter"],
+    "known_provider_state": {
+      "google": "COMPLETED_STRATEGY_PENDING_STATIC_AND_EMPIRICAL_ADMISSION",
+      "xai": "FAILED_XAI_API_KEY_NOT_CONFIGURED",
+      "openai": "GENERATING",
+      "anthropic": "GENERATING",
+      "openrouter": "GENERATING"
+    }
+  },
+  "parent_failure": {
+    "strategy_id": "9761cff0-0f2b-48e4-9c18-83c1476dbaf8",
+    "decision": "REVISE_AND_RETEST",
+    "hard_failures": ["HOLDOUT_SAMPLE_TOO_SMALL", "MATERIAL_BENCHMARK_UNDERPERFORMANCE"],
+    "observed_generalisation_weakness": "IWM return -0.01% / Sharpe -0.07"
+  },
+  "invariants": [
+    "queued_is_not_done",
+    "completed_generation_is_not_backtest_evidence",
+    "generation_review_score_is_not_performance_evidence",
+    "provider_failure_is_preserved",
+    "no_silent_provider_substitution",
+    "no_strategy_promotion_without_source_identity",
+    "no_research_admission_without_evidence_readback",
+    "no_paper_or_live_capital_authorization_from_this_fabric"
+  ]
+}
