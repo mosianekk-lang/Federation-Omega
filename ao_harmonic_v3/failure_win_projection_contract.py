@@ -52,6 +52,9 @@ EVENT_COLUMNS = {
 }
 
 PROOF_BOOLEAN_COLUMNS = tuple(aliases[0] for _, aliases in PROOF_BOOLEAN_GATES)
+PROOF_BOOLEAN_FIRST_COLUMN = EVENT_COLUMNS[PROOF_BOOLEAN_COLUMNS[0]]
+PROOF_BOOLEAN_LAST_COLUMN = EVENT_COLUMNS[PROOF_BOOLEAN_COLUMNS[-1]]
+PROOF_BOOLEAN_COUNT = len(PROOF_BOOLEAN_COLUMNS)
 
 
 def _text(value: Any) -> str:
@@ -105,35 +108,21 @@ def _lookup(event_expr: str, column: str, *, sheet_name: str, default: str) -> s
 
 
 def _proof_complete_expression(event_expr: str, *, sheet_name: str) -> str:
-    bindings = [
-        ("raw_claim_ok", _lookup(event_expr, EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")),
-    ]
-    for index, key in enumerate(PROOF_BOOLEAN_COLUMNS, start=1):
-        bindings.append(
-            (
-                f"gate_{index}_ok",
-                _lookup(event_expr, EVENT_COLUMNS[key], sheet_name=sheet_name, default="FALSE"),
-            )
-        )
-    bindings.extend(
-        [
-            ("repeat_count_ok", _lookup(event_expr, EVENT_COLUMNS["repeated_successes"], sheet_name=sheet_name, default="0")),
-            ("soak_seconds_ok", _lookup(event_expr, EVENT_COLUMNS["soak_seconds"], sheet_name=sheet_name, default="0")),
-        ]
+    """Compact provider expression for the same hard gates as the source compiler."""
+    sheet = _sheet_ref(sheet_name)
+    raw_claim = _lookup(event_expr, EVENT_COLUMNS["behavior_claim"], sheet_name=sheet_name, default="FALSE")
+    repeat_count = _lookup(event_expr, EVENT_COLUMNS["repeated_successes"], sheet_name=sheet_name, default="0")
+    soak_seconds = _lookup(event_expr, EVENT_COLUMNS["soak_seconds"], sheet_name=sheet_name, default="0")
+    proof_row = (
+        f"IFNA(COUNTIF(FILTER({sheet}!{PROOF_BOOLEAN_FIRST_COLUMN}$2:{PROOF_BOOLEAN_LAST_COLUMN},"
+        f"{sheet}!A$2:A={event_expr}),TRUE)={PROOF_BOOLEAN_COUNT},FALSE)"
     )
-    let_bindings = ",".join(f"{name},{value}" for name, value in bindings)
-    boolean_names = [
-        "raw_claim_ok",
-        *[f"gate_{index}_ok" for index in range(1, len(PROOF_BOOLEAN_COLUMNS) + 1)],
-    ]
-    all_terms = ",".join(
-        [
-            *boolean_names,
-            f"repeat_count_ok>={REQUIRED_REPEATED_SUCCESSES}",
-            f"soak_seconds_ok>={REQUIRED_SOAK_SECONDS}",
-        ]
+    return (
+        f"LET(raw_claim_ok,{raw_claim},proof_row_ok,{proof_row},"
+        f"repeat_count_ok,{repeat_count},soak_seconds_ok,{soak_seconds},"
+        f"AND(raw_claim_ok,proof_row_ok,repeat_count_ok>={REQUIRED_REPEATED_SUCCESSES},"
+        f"soak_seconds_ok>={REQUIRED_SOAK_SECONDS}))"
     )
-    return f"LET({let_bindings},AND({all_terms}))"
 
 
 def behavior_projection_formula(*, sheet_name: str = EVENT_SHEET) -> str:
