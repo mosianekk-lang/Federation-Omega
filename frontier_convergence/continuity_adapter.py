@@ -184,6 +184,12 @@ class FederationExecutionContinuityAdapter:
         candidates = classify_failure(event_dict)
         checkpoint = build_checkpoint(event_dict, dict(previous_checkpoint or {}))
         primary = candidates[0]
+        tool_candidate_present = any(
+            item.failure_class == "TOOL_OR_CONNECTOR_FAILURE" for item in candidates
+        )
+        tool_outcome_readback_required = (
+            event_dict.get("tool_inflight") is True or tool_candidate_present
+        )
         return {
             "failure_class": primary.failure_class,
             "confidence": primary.score,
@@ -191,9 +197,10 @@ class FederationExecutionContinuityAdapter:
             "dependencies": primary.dependencies,
             "candidates": [asdict(item) for item in candidates],
             "checkpoint": checkpoint,
+            "tool_outcome_readback_required": tool_outcome_readback_required,
             "retry_rule": (
                 "READBACK_BEFORE_RETRY"
-                if primary.failure_class == "TOOL_OR_CONNECTOR_FAILURE"
+                if tool_outcome_readback_required
                 else "RESUME_FROM_LAST_PROVEN_CHECKPOINT"
             ),
         }
