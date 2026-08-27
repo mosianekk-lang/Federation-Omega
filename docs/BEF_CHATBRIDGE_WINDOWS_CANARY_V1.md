@@ -15,7 +15,7 @@ ChatGPT rendered DOM
   -> com.sovara.bef_edge Windows native host
   -> current-user DPAPI encryption
   -> content-addressed local spool
-  -> readback verifier / DPF observable-scope evidence
+  -> redacted spool readback / DPF observable-scope evidence
 ```
 
 ChatBridge remains browser bounded and does not receive nativeMessaging permission. The BEF Edge Agent is the only native-messaging browser component.
@@ -50,6 +50,20 @@ RUNTIME_NOT_BOUND
 ```
 
 A spool receipt proves a rendered-DOM browser-to-native encrypted courier event. It does not prove provider-native hidden events, DPF semantic reconstruction, successor-chat restore or provider execution.
+
+## Redacted spool / DPF evidence export
+
+`bef-edge-agent/native-host/bef_spool.py` now provides a local same-user CLI for post-canary readback without exposing decrypted message content in its normal outputs:
+
+```text
+--list-receipts
+--latest-receipt --conversation-key <key>
+--observable-scope-evidence --conversation-key <key>
+```
+
+Receipt output is restricted to receipt ID, conversation key, envelope hash, sequence bounds, encrypted-storage state and observation time. Observable-scope evidence preserves `provider_native_complete=false` and the boundary `FULL_OBSERVABLE_RENDERED_CHAT_EVIDENCE_ONLY / PROVIDER_NATIVE_HIDDEN_EVENTS_NOT_INFERRED`.
+
+This output is designed to feed the existing ChatBridge DPF observable-capture adapter, which independently verifies gap-free rendered scope before treating the DPF view as complete within that declared scope.
 
 ## Reversible rollback
 
