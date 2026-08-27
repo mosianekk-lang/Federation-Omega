@@ -13,6 +13,7 @@ from .evolution import (
     MarginalInformationGainGate,
     PolicyEvolution,
 )
+from .failure_win_v2 import FailureToOperationalWinKernelV2
 from .forest_omega import ForestFirstOmega
 from .graphs import MissionGraph, ProofGraph, StateFabric
 from .horizon import HorizonOmega
@@ -36,6 +37,17 @@ BOUNDARY_CLASSES = {
     "SEMANTIC_FAILURE",
     "CAPABILITY_LOST",
 }
+
+FAILURE_WIN_EVENT_TYPES = (
+    "FAILURE",
+    "TIMEOUT",
+    "REGRESSION",
+    "CLAIM_FRUIT_CONTRADICTION",
+    "PROVIDER_ERROR",
+    "SLO_BREACH",
+    "CANARY_FAILURE",
+    "PRECURSOR_RISK",
+)
 
 
 class AdaptiveScheduler:
@@ -99,6 +111,10 @@ class AOHarmonicV3:
             formation=self.formation,
             digital_twin=self.digital_twin,
         )
+        self.failure_win = FailureToOperationalWinKernelV2(
+            horizon=self.horizon,
+            formation=self.formation,
+        )
         self.policy = PolicyEvolution()
         self.attention = HumanAttentionGovernor()
         self.mig = MarginalInformationGainGate()
@@ -115,6 +131,8 @@ class AOHarmonicV3:
         self.events.subscribe("OWNER_CORRECTION", self._owner_correction)
         self.events.subscribe("CAPABILITY_DISCOVERED", self._capability_discovered)
         self.events.subscribe("NEW_EVIDENCE", self._new_evidence)
+        for event_type in FAILURE_WIN_EVENT_TYPES:
+            self.events.subscribe(event_type, self._failure_win_event)
 
     def prepare_openai_responses_request(
         self,
@@ -156,19 +174,27 @@ class AOHarmonicV3:
             "forest_first_omega": "AUTO_REROUTE_REMODEL_THEN_BUILD",
             "adaptive_intelligence_router": "REASSESS_AFTER_FAILURE_BEFORE_UNCHANGED_RETRY",
             "adaptive_2x_cycle": "RESTRUCTURE_COMPACT_REBUILD_AND_REMEASURE",
+            "failure_to_operational_win_v2": self.failure_win.observe_federation_event(event),
             "cost_governor": "CHEAPEST_EQUIVALENT_ROUTE_BEFORE_PAID_ESCALATION",
             "owner_surface": "OBJECTIVE_LEVEL_ONLY",
             "unchanged_retry": "PROHIBITED_AFTER_REPEAT_FINGERPRINT",
         }
 
-    @staticmethod
-    def _owner_correction(event: FederationEvent) -> dict[str, object]:
+    def _failure_win_event(self, event: FederationEvent) -> dict[str, object]:
+        return {
+            "failure_to_operational_win_v2": self.failure_win.observe_federation_event(event),
+            "authority_ceiling": self.AUTHORITY_CEILING,
+            "external_effect_default": self.EXTERNAL_EFFECT_DEFAULT,
+        }
+
+    def _owner_correction(self, event: FederationEvent) -> dict[str, object]:
         return {
             "failure_genome": "CREATE_OR_UPDATE",
             "scientific_review": "REQUIRED",
             "forest_first_omega": "REMODEL_AND_CREATE_LEARNING_CANDIDATE",
             "adaptive_intelligence_router": "REASSESS_AND_RAISE_TIER_IF_CORRECTION_REVEALS_MATERIAL_UNCERTAINTY",
             "adaptive_2x_cycle": "SET_CORRECTED_STATE_AS_NEW_BASELINE_AND_REBUILD",
+            "failure_to_operational_win_v2": self.failure_win.observe_federation_event(event),
             "policy_candidate": "ELIGIBLE",
             "event_id": event.event_id,
         }
@@ -179,6 +205,7 @@ class AOHarmonicV3:
             "resource_market": "REFRESH",
             "open_builds": "RECHECK",
             "forest_first_omega": "RECOMPUTE_PATHS_AND_HORIZON",
+            "failure_to_operational_win_v2": "RECHECK_OPEN_GENOMES_AND_PREWARM_ELIGIBLE_ROUTES",
             "adaptive_intelligence_router": "RECHECK_PROVIDER_MODEL_AND_REASONING_BINDINGS",
             "adaptive_2x_cycle": "GENERATE_NEW_CANDIDATE_AND_COMPARE_AGAINST_CURRENT_BASELINE",
             "cost_governor": "RECHECK_CHEAPER_INCLUDED_OR_SCALE_TO_ZERO_ROUTE",
@@ -194,6 +221,7 @@ class AOHarmonicV3:
             "proof_graph": "PROPAGATE",
             "mission_graph": "RECOMPUTE",
             "forest_first_omega": "REMODEL_ROOTS_FOREST_HORIZON_AND_PATHS",
+            "failure_to_operational_win_v2": "RECOMPUTE_CAUSAL_AND_PROOF_GRAPH",
             "adaptive_intelligence_router": "REASSESS_IF_EVIDENCE_CHANGES_UNCERTAINTY_CONTRADICTIONS_OR_CONSEQUENCE",
             "adaptive_2x_cycle": "DELTA_ONLY_CONTEXT_REFRESH_AND_CANDIDATE_REMEASUREMENT",
             "event_id": event.event_id,
@@ -231,6 +259,9 @@ class AOHarmonicV3:
             "HORIZON_OMEGA",
             "ADAPTIVE_INTELLIGENCE_ROUTER",
             "ADAPTIVE_2X_CYCLE_ENGINE",
+            "FAILURE_TO_OPERATIONAL_WIN_V2",
+            "DYNAMIC_RECEIVER_ATTESTATION",
+            "FAILURE_GENOME_AND_PREEMPTION",
             "BOUNDED_CONTEXT_COMPACTION",
             "BOUNDED_DELTA_MEMORY",
             "PRE_REVENUE_COST_GOVERNOR",
@@ -260,9 +291,11 @@ class AOHarmonicV3:
             "external_effect_default": self.EXTERNAL_EFFECT_DEFAULT,
             "cost_posture": "PRE_REVENUE_ZERO_BASE",
             "intelligence_routing": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
-            "improvement_target": "MEASURED_2X_WHEN_ATTAINED_MONOTONIC_GAIN_OTHERWISE",
+            "improvement_target": "MULTI_DIMENSIONAL_PARETO_OR_MISSION_VALUE_GAIN_WITH_PROTECTED_FLOORS",
+            "failure_win_kernel": self.failure_win.KERNEL_ID,
+            "failure_win_version": self.failure_win.VERSION,
             "working_memory": "BOUNDED_DEDUPLICATED_DELTA_CAPSULES_WITH_HASH_CHECKPOINTS",
-            "cognitive_cycle": "ROOTS->FOREST->HORIZON->TREES->PATHS->DECISION->COMPACT->BASELINE->CANDIDATE->SELF-TEST->2X-TARGET->PROMOTE_OR_REBUILD->READBACK->DELTA-LEARNING",
+            "cognitive_cycle": "DETECT->PRESERVE->CLASSIFY->RECALL->MODEL_CAUSES->FALSIFY->SEARCH_CAPABILITIES->SIMULATE->RANK_ROUTES->AUTHORIZE->EXECUTE->READBACK->REGRESSION->SOAK->VALUE->LEARN->DIFFUSE->PREVENT",
         }
 
 
@@ -276,6 +309,8 @@ def bootstrap() -> dict[str, object]:
         "foresight": "HORIZON-OMEGA",
         "intelligence_routing": "ADAPTIVE-INTELLIGENCE-ROUTER-V1",
         "adaptive_improvement": "ADAPTIVE-2X-CYCLE-ENGINE-V1",
+        "failure_to_operational_win": "FAILURE-TO-OPERATIONAL-WIN-V2",
+        "prevention_path": "PREDICT->PREWARM->AVOID_FAILURE",
         "context_management": "BOUNDED-CONTEXT-COMPACTION-V1",
         "cost_governance": "PRE_REVENUE_ZERO_BASE",
         "timestamp": datetime.now(timezone.utc).isoformat(),
@@ -288,6 +323,7 @@ def bootstrap() -> dict[str, object]:
             "provider_billing_caps_configured": False,
             "model_or_reasoning_selection_executed": False,
             "measured_2x_operational_gain_verified": False,
+            "failure_win_behavior_proven_across_receivers": False,
             "durable_external_context_archive_bound": False,
         },
     }

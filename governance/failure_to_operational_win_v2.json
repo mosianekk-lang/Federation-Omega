@@ -1,0 +1,184 @@
+{
+  "schema_version": "federation.failure-win.v2",
+  "id": "FAILURE-TO-OPERATIONAL-WIN-V2",
+  "version": "2.0.0",
+  "kind": "IN_PLACE_FEDERATION_KERNEL_EXTENSION",
+  "owner": "Kim Kagiso Mosiane",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "recurring_cost": 0,
+  "manual_user_tasks": [],
+  "source_component": "ao_harmonic_v3/failure_win_v2.py",
+  "runtime_binding": "ao_harmonic_v3.runtime.AOHarmonicV3.failure_win",
+  "objective": "Convert material failure into preserved evidence, causal learning, materially different recovery, independently proven operational improvement, receiver-local diffusion and eventual recurrence prevention without creating a parallel top-level system.",
+  "canonical_cycle": [
+    "DETECT",
+    "PRESERVE",
+    "CLASSIFY",
+    "RECALL",
+    "MODEL_CAUSES",
+    "FALSIFY",
+    "SEARCH_CAPABILITIES",
+    "SIMULATE",
+    "RANK_ROUTES",
+    "AUTHORIZE",
+    "EXECUTE",
+    "READBACK",
+    "REGRESSION_TEST",
+    "SOAK",
+    "SCORE_VALUE",
+    "LEARN",
+    "DIFFUSE",
+    "PREVENT_RECURRENCE"
+  ],
+  "prevention_cycle": [
+    "PREDICT_PRECURSOR",
+    "PREWARM_STRONGEST_REVERSIBLE_ROUTE",
+    "AVOID_FAILURE",
+    "VERIFY_PREVENTION_VALUE"
+  ],
+  "trigger_events": [
+    "FAILURE",
+    "TIMEOUT",
+    "REGRESSION",
+    "CLAIM_FRUIT_CONTRADICTION",
+    "PROVIDER_ERROR",
+    "OWNER_CORRECTION",
+    "SLO_BREACH",
+    "CANARY_FAILURE",
+    "PRECURSOR_RISK"
+  ],
+  "capability_bindings": {
+    "event_detection": ["AO-HARMONIC EventBus", "Sentinel Omega"],
+    "failure_memory": ["Failure Genome v2", "AO-HARMONIC LearningLedger", "BoundedDeltaMemory"],
+    "causal_science": ["Omega-Scientia", "competing hypotheses", "falsification tests", "information-gain ranking"],
+    "foresight": ["Horizon-Omega", "FederationDigitalTwin"],
+    "capability_discovery": ["ResourceMarket", "Federation unified capability graph", "CFBE resource/capability sufficiency"],
+    "route_formation": ["FormationEngine", "RealityGuard reuse/prebuild", "Omega-AUTOFIX/CFRE"],
+    "performance": ["PerformanceVector", "AdaptiveCycleEngine", "CFBE independent benchmark"],
+    "authority": ["Formation single-use permit", "Alpha-Omega execution boundary", "surface-specific provider authority"],
+    "proof": ["ProofGraph", "SemanticReadbackFirewall", "EvidenceOps", "TruthGrid"],
+    "assurance": ["JARVIS", "CFBE", "provider-native readback when provider-dependent"],
+    "continuity": ["ChatBridge", "StateFabric", "MissionGraph"],
+    "cost": ["PreRevenueCostGovernor"],
+    "receiver_diffusion": ["Federation Bible Fabric", "dynamic receiver-native attestation"]
+  },
+  "failure_genome": {
+    "system_fingerprint_fields": [
+      "system_id",
+      "provider",
+      "failure_code",
+      "claim",
+      "observed_fruit",
+      "desired_outcome",
+      "configuration_hash",
+      "dependency_refs"
+    ],
+    "portable_fingerprint_fields": ["failure_code", "claim", "observed_fruit", "desired_outcome"],
+    "preserve_original_failure": true,
+    "recurrence_counter": true,
+    "failed_route_quarantine": true,
+    "cross_receiver_learning_requires_compatibility_test": true
+  },
+  "causal_model": {
+    "competing_hypotheses_required": true,
+    "default_hypothesis_classes": ["ROUTE_OR_TRANSPORT", "DEPENDENCY_SCHEMA_OR_CONFIGURATION", "AUTHORITY_PROVIDER_OR_SEMANTIC"],
+    "falsification_required_before_win": true,
+    "rank_by": ["falsifiability", "confidence", "expected_information_gain", "test_cost"]
+  },
+  "route_race": {
+    "default_maximum_width": 3,
+    "eligibility": ["available", "authorised", "zero_or_included_cost", "rollback_available", "materially_different"],
+    "ranking": ["feasibility", "proof_strength", "reversibility", "speed", "strategic_value", "expected_value", "owner_burden", "privacy_cost", "maintenance_cost", "expected_risk"],
+    "unchanged_retry_after_repeated_fingerprint": false
+  },
+  "performance_gate": {
+    "fitness_improvement_required": true,
+    "protected_positive_floors": ["quality", "reliability", "proof"],
+    "protected_cost_floors": ["false_blocks", "error_cost", "owner_burden", "privacy_risk", "regression_risk"],
+    "speed_alone_can_promote": false,
+    "two_x_is_target_not_truth_override": true,
+    "mission_value_or_pareto_gain_required": true
+  },
+  "time_budgets": {
+    "stage_specific": true,
+    "hard_owner_commitments_may_be_silently_relaxed": false,
+    "non_hard_internal_stage_budgets_may_adapt_from_observed_data": true,
+    "breach_triggers": ["route_reassessment", "prewarm", "failure fingerprint", "learning"]
+  },
+  "stability": {
+    "detect_alternating_route_thrash": true,
+    "detect_same_route_repeat_thrash": true,
+    "on_oscillation": "QUARANTINE_THRASHING_ROUTES_AND_FORCE_NEW_RECOVERY_CLASS"
+  },
+  "proof_graph": {
+    "bounded_win_required_nodes": [
+      "FAILURE_FACT_PRESERVED",
+      "CAUSAL_MODEL_RECORDED",
+      "FALSIFICATION_EXECUTED",
+      "MATERIALLY_DIFFERENT_ROUTE",
+      "PERFORMANCE_VECTOR_GATE",
+      "AUTHORITY_CURRENT",
+      "COST_ALLOWED",
+      "FAILURE_FIRST_TEST",
+      "HEALTHY_PATH_TEST",
+      "ROLLBACK_TEST",
+      "FORWARD_CANARY",
+      "INDEPENDENT_SEMANTIC_READBACK",
+      "POSITIVE_VALUE",
+      "NO_REGRESSION",
+      "OWNER_BURDEN_NOT_INCREASED"
+    ],
+    "provider_dependent_addition": "PROVIDER_RECEIPT",
+    "estate_scope_additions": ["DYNAMIC_RECEIVER_MANIFEST_COMPLETE", "RECEIVER_NATIVE_BEHAVIOR_PROOF"],
+    "operational_win_additions": ["REPEATED_SUCCESS_THRESHOLD", "SOAK_THRESHOLD"]
+  },
+  "receiver_rule": {
+    "fixed_receiver_count": false,
+    "dynamic_manifest_hash_required_for_estate_claim": true,
+    "receiver_behavior_may_be_inherited_from_registry_only": false,
+    "receiver_native_requirements": ["kernel_invoked", "behavior_proven", "current", "independent_readback", "evidence_refs"],
+    "provider_authority_never_inherits": true,
+    "maturity_never_inherits": true
+  },
+  "promotion_states": [
+    "OBSERVE",
+    "PREEMPTION_READY",
+    "REPAIR_CYCLE_OPEN",
+    "ROUTE_SELECTED",
+    "QUARANTINED",
+    "BOUNDED_WIN",
+    "OPERATIONAL_WIN_VERIFIED"
+  ],
+  "default_operational_win_thresholds": {
+    "repeated_successes": 3,
+    "soak_seconds": 300
+  },
+  "kpis": [
+    "failure_recurrence_rate",
+    "failure_classes_prevented_from_recurring",
+    "mean_time_to_diagnosis",
+    "mean_time_to_recovery",
+    "first_pass_recovery_rate",
+    "route_race_width",
+    "proof_graph_completeness",
+    "rollback_success_rate",
+    "owner_interventions_required",
+    "owner_burden_delta",
+    "semantic_readback_success_rate",
+    "prevention_signals_converted_to_preemption",
+    "soak_success"
+  ],
+  "reuse_decision": "EXTEND_AND_COMPOSE_EXISTING_FEDERATION_PRIMITIVES",
+  "new_top_level_system_created": false,
+  "truth_boundary": {
+    "source_implementation_proves_provider_execution": false,
+    "registry_adoption_proves_receiver_behavior": false,
+    "decision_grants_execution_authority": false,
+    "simulation_is_fact": false,
+    "two_x_speed_proves_overall_improvement": false,
+    "provider_receipt_required_when_provider_dependent": true,
+    "estate_wide_operational_win_requires_dynamic_receiver_native_proof": true,
+    "external_effect_requires_fresh_surface_specific_authority_and_readback": true
+  }
+}

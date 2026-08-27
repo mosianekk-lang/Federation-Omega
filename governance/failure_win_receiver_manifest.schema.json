@@ -1,0 +1,35 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://federation.local/schemas/failure-win-receiver-manifest-v2.json",
+  "title": "Failure-to-Operational-Win v2 Receiver Manifest",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["schema_version", "generated_from", "generated_at", "complete", "receivers"],
+  "properties": {
+    "schema_version": {"const": "failure-win.receiver-manifest.v2"},
+    "generated_from": {"type": "string", "minLength": 1},
+    "generated_at": {"type": "string", "minLength": 1},
+    "complete": {"type": "boolean"},
+    "receivers": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["receiver_id", "kernel_invoked", "behavior_proven", "current", "independent_readback", "evidence_refs"],
+        "properties": {
+          "receiver_id": {"type": "string", "minLength": 1},
+          "kernel_invoked": {"type": "boolean"},
+          "behavior_proven": {"type": "boolean"},
+          "current": {"type": "boolean"},
+          "independent_readback": {"type": "boolean"},
+          "evidence_refs": {
+            "type": "array",
+            "items": {"type": "string", "minLength": 1},
+            "uniqueItems": true
+          }
+        }
+      }
+    }
+  }
+}
