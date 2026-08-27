@@ -4,22 +4,8 @@ from datetime import datetime
 import fnmatch
 from typing import Iterable
 
+from .chat_inheritance import ENGINE_ALLOWLIST, engine_allowed
 from .contracts import Command, Decision, EffectClass, MissionLease
-
-ENGINE_ALLOWLIST = frozenset(
-    {
-        "SUPERIOR_LOGIC",
-        "SOVARA",
-        "REALITYGUARD",
-        "FAILURE_WIN_AUTOFIX",
-        "SENTINEL",
-        "CFBE",
-        "FORMATION_ARCHON",
-        "KIOAS",
-        "EVIDENCEOPS_CIOS",
-        "AIU",
-    }
-)
 
 # Reusable mission leases intentionally never authorize outbound communication
 # or destructive action families. Those retain their separate exact-user gate.
@@ -45,7 +31,7 @@ def _matches_any(value: str, patterns: Iterable[str]) -> bool:
 
 
 def evaluate(command: Command, lease: MissionLease | None, *, now: datetime) -> Decision:
-    if command.engine not in ENGINE_ALLOWLIST:
+    if not engine_allowed(command.engine):
         return Decision("DENY", "Unknown engine profile.", "NONE", True, True)
 
     action = command.action.strip().upper()
