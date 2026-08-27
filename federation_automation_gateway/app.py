@@ -50,6 +50,8 @@ def health():
             "sheet_bound": bool(SHEET_ID),
             "elevated_identity_bound": bool(BOOTSTRAP_SA),
             "executor": EXECUTOR_ID,
+            "supported_adapters": sorted(GoogleExecutor.SUPPORTED_ADAPTERS),
+            "apps_script_route": "OWNER_OAUTH_BROKER",
             "production_effect": False,
             "checked_at_sast": now_sast(),
         }
@@ -98,12 +100,17 @@ def write_receipt(
 @app.post("/tick")
 def tick():
     # Cloud Run IAM + Scheduler OIDC is the transport authorization boundary.
+    # This worker intentionally leaves Apps Script rows QUEUED for the separate
+    # owner-OAuth broker; a service-account worker must never steal those rows.
     bus = get_bus()
     executor = GoogleExecutor(project_id=PROJECT_ID, elevated_sa=BOOTSTRAP_SA)
     processed: list[dict[str, str]] = []
     completed_keys = bus.completed_idempotency_keys()
 
-    for row_number, command in bus.queued(limit=20):
+    for row_number, command in bus.queued(limit=50):
+        if command.adapter_id not in executor.SUPPORTED_ADAPTERS:
+            continue
+
         receipt_id = "RCP-" + uuid.uuid4().hex[:20]
         started = now_sast()
 
