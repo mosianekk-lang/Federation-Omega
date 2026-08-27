@@ -19,14 +19,25 @@ class FailureWinProjectionContractTests(unittest.TestCase):
         for key in PROOF_BOOLEAN_COLUMNS:
             column = EVENT_COLUMNS[key]
             self.assertIn(f"'Failure-Win Events v2'!{column}$2:{column}", formula)
-        self.assertIn(f"repeats>={REQUIRED_REPEATED_SUCCESSES}", formula)
-        self.assertIn(f"soak>={REQUIRED_SOAK_SECONDS}", formula)
+        self.assertIn(f"repeat_count_ok>={REQUIRED_REPEATED_SUCCESSES}", formula)
+        self.assertIn(f"soak_seconds_ok>={REQUIRED_SOAK_SECONDS}", formula)
+        self.assertIn("invocation_ok", formula)
+        self.assertIn("readback_ok", formula)
+        self.assertIn("current_ok", formula)
+        self.assertIn("evidence_ref_ok", formula)
+
+    def test_live_formula_uses_non_cell_like_let_identifiers(self):
+        formula = behavior_projection_formula()
+        self.assertNotIn(",g1,", formula)
+        self.assertIn("gate_1_ok", formula)
+        self.assertIn("proof_graph_ok", formula)
 
     def test_live_state_formula_exposes_incomplete_raw_claim(self):
         formula = receiver_state_formula()
         self.assertIn("V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE", formula)
         self.assertIn("V2_BEHAVIOR_PROVEN", formula)
         self.assertIn("V2_INVOKED_PROOF_OPEN", formula)
+        self.assertIn("proof_graph_ok", formula)
         self.assertIn("'Failure-Win Events v2'!H$2:H", formula)
 
     def test_truth_boundary_names_complete_graph_repeat_and_soak(self):
