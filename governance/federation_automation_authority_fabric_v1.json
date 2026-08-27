@@ -1,0 +1,62 @@
+{
+  "schema": "FEDERATION-AUTOMATION-AUTHORITY-FABRIC-V1",
+  "version": "1.0.0",
+  "status": "SOURCE_CANDIDATE",
+  "owner": "Kagiso Kim Mosiane",
+  "control_plane": {
+    "provider": "Google Sheets",
+    "spreadsheet_id": "17WRSvjj98RbOKZrnTefcZkfK-z9gZYdZX_pACm8VuOQ",
+    "title": "Federation Ω — Shared Automation Authority Fabric",
+    "ingress": "owner-connected Google Drive/Sheets surface",
+    "executor": "private Cloud Run federation-automation-gateway",
+    "scheduler": "one-minute Africa/Johannesburg Cloud Scheduler"
+  },
+  "authority_model": {
+    "read": "AUTONOMOUS",
+    "lab_write": "AUTONOMOUS_WITH_ROLLBACK_AND_READBACK",
+    "control_plane_write": "EXPIRING_MISSION_LEASE",
+    "provider_admin_write": "EXPIRING_MISSION_LEASE_PLUS_SHORT_LIVED_BOOTSTRAP_SA_IMPERSONATION",
+    "destructive_write": "ONE_USE_EXACT_TARGET_ONLY",
+    "communication_write": "EXPLICIT_USER_DIRECTIVE_ONLY"
+  },
+  "shared_chat_model": {
+    "engines": [
+      "SUPERIOR_LOGIC",
+      "SOVARA",
+      "REALITYGUARD",
+      "FAILURE_WIN_AUTOFIX",
+      "SENTINEL",
+      "CFBE",
+      "FORMATION_ARCHON",
+      "KIOAS",
+      "EVIDENCEOPS_CIOS",
+      "AIU"
+    ],
+    "mechanism": "Each authorized chat reads the common control plane, appends canonical commands, and reads immutable semantic receipts.",
+    "truth_boundary": "This is shared provider state through Drive/KDV. It does not create hidden native chat-to-chat communication or independent credentials for each chat."
+  },
+  "security_invariants": [
+    "NO_SERVICE_ACCOUNT_PRIVATE_KEYS",
+    "NO_SECRETS_IN_COMMAND_PAYLOADS",
+    "PRIVATE_CLOUD_RUN_ONLY",
+    "OIDC_SCHEDULER_INVOCATION",
+    "SINGLE_INSTANCE_SINGLE_CONCURRENCY_SHEETS_QUEUE_GENESIS",
+    "IDEMPOTENCY_REPLAY_BLOCKING",
+    "MISSION_LEASE_EXPIRY_SCOPE_AND_BUDGET",
+    "SHORT_LIVED_ELEVATED_IMPERSONATION",
+    "PROVIDER_SEMANTIC_READBACK_BEFORE_SUCCESS",
+    "OUTBOUND_COMMUNICATION_EXCLUDED_FROM_REUSABLE_LEASES",
+    "DESTRUCTIVE_ACTIONS_EXCLUDED_FROM_REUSABLE_LEASES"
+  ],
+  "initial_actions": [
+    "GCP_GET_PROJECT",
+    "GCP_LIST_ENABLED_SERVICES",
+    "GCP_ENABLE_SERVICE",
+    "CLOUD_RUN_GET_SERVICE",
+    "APPS_SCRIPT_GET_CONTENT",
+    "APPS_SCRIPT_GET_DEPLOYMENTS",
+    "APPS_SCRIPT_RUN"
+  ],
+  "production_effect": false,
+  "admission_rule": "Source, CI, or Sheet creation alone does not prove deployed runtime execution. Production/runtime claims require private Cloud Run identity readback, queue canary, provider semantic receipt, rollback proof, and heartbeat."
+}
