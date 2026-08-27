@@ -7,6 +7,8 @@ from typing import Any, Iterable, Mapping
 
 
 KERNEL_V2 = "2.0.0"
+REQUIRED_REPEATED_SUCCESSES = 3
+REQUIRED_SOAK_SECONDS = 300.0
 
 
 @dataclass(frozen=True)
@@ -63,6 +65,22 @@ def _truthy(value: Any) -> bool:
     return _text(value).upper() in {"TRUE", "YES", "1", "VERIFIED"}
 
 
+def _number(value: Any, default: float = 0.0) -> float:
+    if value is None or _text(value) == "":
+        return default
+    try:
+        return float(value)
+    except (TypeError, ValueError):
+        return default
+
+
+def _first(raw: Mapping[str, Any], *keys: str) -> Any:
+    for key in keys:
+        if key in raw:
+            return raw.get(key)
+    return None
+
+
 def _evidence_refs(value: Any) -> tuple[str, ...]:
     if value is None:
         return ()
@@ -74,6 +92,45 @@ def _evidence_refs(value: Any) -> tuple[str, ...]:
     # Semicolon is the canonical multi-reference delimiter. A legacy single
     # free-text receipt remains one reference rather than being guessed apart.
     return tuple(sorted({item.strip() for item in text.split(";") if item.strip()}))
+
+
+def _behavior_proof_missing(event: Mapping[str, Any]) -> tuple[str, ...]:
+    """Return the exact v2 behavior gates still missing from an event.
+
+    A raw `behavior_proven=true` flag is a claim, never proof by itself. Promotion
+    requires the persisted proof graph to establish every hard gate plus distinct
+    repeated successes and minimum soak. Key aliases support provider-neutral
+    adapters without relaxing the underlying requirements.
+    """
+
+    required_boolean_gates = (
+        ("FAILURE_FACT_PRESERVED", ("failure_fact_preserved",)),
+        ("CAUSAL_FALSIFICATION", ("causal_falsification", "falsification_executed")),
+        ("MATERIALLY_DIFFERENT_ROUTE", ("different_route", "materially_different_route")),
+        ("VECTOR_GATE", ("vector_gate", "vector_gate_passed")),
+        ("FAILURE_FIRST", ("failure_first", "failure_first_test_passed")),
+        ("HEALTHY_PATH", ("healthy_path", "healthy_path_test_passed")),
+        ("ROLLBACK", ("rollback", "rollback_test_passed")),
+        ("FORWARD_CANARY", ("forward_canary", "forward_canary_passed")),
+        ("SEMANTIC_READBACK", ("semantic_readback", "independent_semantic_readback")),
+        ("POSITIVE_VALUE", ("positive_value",)),
+        ("NO_REGRESSION", ("no_regression",)),
+        ("NO_BURDEN_INCREASE", ("no_burden_increase", "owner_burden_not_increased")),
+    )
+    missing: list[str] = []
+    for label, keys in required_boolean_gates:
+        if not _truthy(_first(event, *keys)):
+            missing.append(label)
+
+    repeated = int(_number(_first(event, "repeated_successes", "repeat_count"), 0.0))
+    if repeated < REQUIRED_REPEATED_SUCCESSES:
+        missing.append(f"REPEATED_SUCCESSES<{REQUIRED_REPEATED_SUCCESSES}")
+
+    soak = _number(_first(event, "soak_seconds", "soak"), 0.0)
+    if soak < REQUIRED_SOAK_SECONDS:
+        missing.append(f"SOAK_SECONDS<{int(REQUIRED_SOAK_SECONDS)}")
+
+    return tuple(missing)
 
 
 def _canonical_hash(entries: Iterable[ReceiverManifestEntry]) -> str:
@@ -117,7 +174,9 @@ def compile_receiver_manifest(
     Registry completeness and behavioral completeness are deliberately separate.
     Explicit aliases may normalize a historical route/work-unit label to one
     canonical registered receiver without rewriting the original event. Unknown
-    unaliased receiver identities remain fail-closed anomalies.
+    unaliased receiver identities remain fail-closed anomalies. A behavior claim
+    cannot promote the receiver unless the full v2 proof graph, repeated-success
+    threshold and soak threshold are all present in the latest event.
     """
 
     anomalies: list[ManifestAnomaly] = []
@@ -221,19 +280,31 @@ def compile_receiver_manifest(
 
         version = _text(event.get("kernel_version"))
         invoked = _truthy(event.get("kernel_invoked"))
-        behavior = _truthy(event.get("behavior_proven"))
+        behavior_claim = _truthy(event.get("behavior_proven"))
         readback = _truthy(event.get("independent_readback"))
         current = _truthy(event.get("current"))
         refs = _evidence_refs(event.get("evidence_refs"))
+        projected_behavior = False
 
         if version == KERNEL_V2:
-            if invoked and behavior and readback and current and refs:
+            missing_behavior_gates = _behavior_proof_missing(event) if behavior_claim else ()
+            if behavior_claim and missing_behavior_gates:
+                anomalies.append(
+                    ManifestAnomaly(
+                        "BEHAVIOR_CLAIM_PROOF_INCOMPLETE",
+                        f"event {_text(event.get('event_id'))}: missing " + ",".join(missing_behavior_gates),
+                        receiver_id,
+                    )
+                )
+                state = "V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE"
+            elif invoked and behavior_claim and readback and current and refs:
+                projected_behavior = True
                 state = "V2_BEHAVIOR_PROVEN"
             elif invoked:
                 state = "V2_INVOKED_PROOF_OPEN"
             else:
                 state = "V2_EVENT_PRESENT_INVOCATION_OPEN"
-        elif version == "1.0.0" and behavior:
+        elif version == "1.0.0" and behavior_claim:
             state = "V1_BEHAVIOR_PROVEN_V2_PENDING"
         else:
             state = "HISTORICAL_EVENT_V2_PENDING"
@@ -248,7 +319,7 @@ def compile_receiver_manifest(
                 latest_event_timestamp=_text(event.get("timestamp")),
                 latest_event_kernel_version=version,
                 kernel_invoked=invoked if version == KERNEL_V2 else False,
-                behavior_proven=behavior if version == KERNEL_V2 else False,
+                behavior_proven=projected_behavior if version == KERNEL_V2 else False,
                 independent_readback=readback if version == KERNEL_V2 else False,
                 current=current if version == KERNEL_V2 else False,
                 evidence_refs=refs,
