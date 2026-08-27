@@ -1,8 +1,8 @@
 {
   "contract": "BEF_CHATBRIDGE_WINDOWS_CANARY_V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "status": "SOURCE_CANDIDATE",
-  "objective": "Provide a reversible one-command Windows runtime bootstrap and readback lane for the admitted BEF/ChatBridge provenance courier.",
+  "objective": "Provide a reversible one-command Windows runtime bootstrap, redacted spool/DPF evidence export, readback lane and rollback path for the admitted BEF/ChatBridge provenance courier.",
   "source_bindings": {
     "chatbridge_extension_id": "kacbginamagliaddmlkffhcadpamomjb",
     "bef_edge_extension_id": "apokbhjjgiaceigelkedcelcecfmgnia",
@@ -23,6 +23,7 @@
     "dedicated_edge_canary_profile",
     "rollback_is_profile_scoped",
     "encrypted_spool_is_preserved_by_default",
+    "spool_cli_exports_redacted_metadata_or_bounded_scope_evidence_not_raw_event_content",
     "rendered_dom_evidence_never_claims_provider_native_hidden_events",
     "runtime_state_promotes_only_from_readback"
   ],
@@ -30,6 +31,7 @@
     "bef-edge-agent/runtime/bootstrap_windows_canary.ps1",
     "bef-edge-agent/runtime/verify_windows_canary.ps1",
     "bef-edge-agent/runtime/rollback_windows_canary.ps1",
+    "bef-edge-agent/native-host/bef_spool.py",
     "tests/test_bef_windows_runtime_bootstrap.py",
     "docs/BEF_CHATBRIDGE_WINDOWS_CANARY_V1.md"
   ],
@@ -50,7 +52,7 @@
   },
   "testing": {
     "framework": "python_stdlib_unittest",
-    "focused_test_count": 9,
+    "focused_test_count": 10,
     "hosted_admission_pending": true
   }
 }
