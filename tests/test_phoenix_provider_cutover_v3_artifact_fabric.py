@@ -37,7 +37,8 @@ class SecurityTests(unittest.TestCase):
     def test_plain_text_passes(self):
         report = scan_artifact(request()); self.assertTrue(report.passed); self.assertEqual(report.sha256, sha256_bytes(b"# Verified artifact\n"))
     def test_secret_token_is_rejected(self):
-        with self.assertRaises(ScanViolation): scan_artifact(request(content=b"token = 'sk-proj-abcdefghijklmnopqrstuvwxyz123456'"))
+        synthetic = b"token = '" + b"sk-" + b"proj-" + (b"A" * 32) + b"'"
+        with self.assertRaises(ScanViolation): scan_artifact(request(content=synthetic))
     def test_secret_metadata_field_is_rejected(self):
         with self.assertRaises(ScanViolation): scan_artifact(request(metadata={"api_key": "not-even-needed"}))
     def test_secret_reference_metadata_is_allowed(self): self.assertTrue(scan_artifact(request(metadata={"api_key_ref": "OPENROUTER_KEY_ALIAS"})).passed)
