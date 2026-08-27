@@ -13,6 +13,7 @@ from .redaction import redact
 from .schema import InputError
 from .taxonomy import FAILURES, TAXONOMY_VERSION
 from .upgrade import UpgradeDecisionCode
+from .faultbooks import FaultbookManager
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -40,6 +41,15 @@ def _parser() -> argparse.ArgumentParser:
     learn.add_argument("--promotion-state", choices=[state.name for state in PromotionState], default="DETECTED")
     learn.add_argument("--regression-test", action="append", default=[])
     learn.add_argument("--dry-run", action="store_true")
+    faultbook_import = sub.add_parser("faultbook-import", help="verify and import one fault book into the central RealityGuard registry")
+    faultbook_import.add_argument("--ledger", required=True, type=Path)
+    faultbook_import.add_argument("--metadata", required=True, type=Path)
+    faultbook_import.add_argument("--registry", required=True, type=Path)
+    faultbook_import.add_argument("--dry-run", action="store_true")
+    faultbook_verify = sub.add_parser("faultbook-verify", help="verify the complete private central fault-book registry")
+    faultbook_verify.add_argument("--registry", required=True, type=Path)
+    faultbook_manifest = sub.add_parser("faultbook-manifest", help="emit a public redacted manifest without raw events or storage references")
+    faultbook_manifest.add_argument("--registry", required=True, type=Path)
     sub.add_parser("taxonomy", help="print the versioned failure taxonomy")
     sub.add_parser("health", help="run a dependency-free health check")
     return parser
@@ -48,10 +58,27 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "health":
-        print(json.dumps({"status": "ok", "engine": "RealityGuard", "version": "0.4.0", "mode": "offline-deterministic", "automatic_upgrade": "host-invoked-material-cycles", "external_bindings": False}, sort_keys=True))
+        print(json.dumps({"status": "ok", "engine": "RealityGuard", "version": "0.4.1", "mode": "offline-deterministic", "automatic_upgrade": "host-invoked-material-cycles", "faultbook_manager": "CENTRAL_FAULTBOOK_MANAGER", "external_bindings": False}, sort_keys=True))
         return 0
     if args.command == "taxonomy":
         print(json.dumps({"version": TAXONOMY_VERSION, "failures": {key: {"title": val[0], "definition": val[1]} for key, val in FAILURES.items()}}, indent=2, sort_keys=True))
+        return 0
+    if args.command in {"faultbook-import", "faultbook-verify", "faultbook-manifest"}:
+        try:
+            manager = FaultbookManager(args.registry)
+            if args.command == "faultbook-import":
+                metadata = json.loads(args.metadata.read_text(encoding="utf-8"))
+                result = manager.import_faultbook(args.ledger, metadata, dry_run=args.dry_run)
+            elif args.command == "faultbook-verify":
+                result = manager.verify()
+            else:
+                result = manager.public_manifest()
+        except (OSError, json.JSONDecodeError, InputError) as exc:
+            print(json.dumps({"error": "INVALID_INPUT", "message": str(exc)}), file=sys.stderr)
+            return 2
+        print(json.dumps(result, indent=2, sort_keys=True))
+        if args.command == "faultbook-verify" and not result["valid"]:
+            return 6
         return 0
     if args.command == "learn":
         try:

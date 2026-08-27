@@ -14,7 +14,7 @@ def event(event_id, previous, content):
     return {**payload, "prev_hash": previous, "event_hash": digest}
 
 
-class FaultBookManagerTests(unittest.TestCase):
+class FaultBookCompatibilityTests(unittest.TestCase):
     def setUp(self):
         self.tmp = tempfile.TemporaryDirectory()
         self.root = Path(self.tmp.name)
@@ -31,7 +31,7 @@ class FaultBookManagerTests(unittest.TestCase):
         return path, second["event_hash"]
 
     def metadata(self):
-        return dict(fault_id="FAULT-1", title="Authorization continuity", scope="chatgpt", status="SYSTEMIC_OPEN", source_kind="HASH_CHAINED_JSONL", owner_authority="Kim Kagiso Mosiane", truth_state="PARTIAL_CHECKPOINTED", lifecycle_state="REGISTERED", registered_at="2026-08-27T02:45:00+02:00", fault_classes=("AUTHORIZATION_CONSERVATION_FAILURE",), open_requirements=("NT-01",))
+        return dict(fault_id="FAULT-1", title="Authorization continuity", scope="chatgpt", status="SYSTEMIC_OPEN", source_kind="HASH_CHAINED_JSONL", owner_authority="owner", truth_state="PARTIAL_CHECKPOINTED", lifecycle_state="REGISTERED", registered_at="2026-08-27T02:45:00+02:00", fault_classes=("AUTHORIZATION_CONSERVATION_FAILURE",), open_requirements=("NT-01",))
 
     def test_registers_verified_chain_and_queries(self):
         path, head = self.ledger()
@@ -63,8 +63,8 @@ class FaultBookManagerTests(unittest.TestCase):
     def test_rejects_equal_length_fork(self):
         path, _ = self.ledger()
         self.manager.register_jsonl(path, **self.metadata())
-        data = self.manager.load()
-        prior = data["faults"][0]
+        data = self.manager._read()
+        prior = data["records"][0]
         fork = FaultRecord(**{**prior, "source_sha256": "c" * 64, "chain_head": "d" * 64, "fault_classes": tuple(prior["fault_classes"]), "open_requirements": tuple(prior["open_requirements"]), "supersedes": tuple(prior["supersedes"])})
         with self.assertRaisesRegex(ValueError, "FAULT_BRANCH_MERGE_REQUIRED"):
             self.manager.register(fork)

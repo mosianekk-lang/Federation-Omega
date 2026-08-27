@@ -1,59 +1,277 @@
 {
-  "faults": [
+  "consumers": [
     {
-      "chain_head": "d7eea8c23873bdbc81dc51d99fd0166d0ba7d00e3f315999ae0d2dc07001c826",
-      "event_count": 65,
-      "fault_classes": [
-        "AUTHORIZATION_CONSERVATION_FAILURE",
-        "PROXY_OPTIMIZATION_FAILURE",
-        "ASYMMETRIC_ERROR_COSTING",
-        "REPRESENTATION_BOUNDARY_STATE_LOSS",
-        "ACCOUNTABILITY_DIFFUSION",
-        "NON_MONOTONIC_COMPLETION_STATE",
-        "SPEECH_ACT_MISCLASSIFICATION",
-        "REPAIR_THEATRE_RISK"
-      ],
-      "fault_id": "FO-GEM-AUTH-CONT-20260826-001",
-      "lifecycle_state": "REGISTERED_LOCAL",
-      "open_requirements": [
-        "NT-01",
-        "NT-02",
-        "NT-03",
-        "NT-04",
-        "NT-05",
-        "NT-06",
-        "NT-07",
-        "NT-08",
-        "NT-09",
-        "NT-10",
-        "NT-11",
-        "NT-12",
-        "NT-13",
-        "NT-14",
-        "NT-15",
-        "NT-16",
-        "NT-17",
-        "NT-18",
-        "NT-19",
-        "NT-20",
-        "NT-21",
-        "NT-22",
-        "NT-23",
-        "NT-24"
-      ],
-      "owner_authority": "Kim Kagiso Mosiane",
-      "registered_at": "2026-08-27T02:50:00+02:00",
-      "scope": "chatgpt",
-      "source_kind": "HASH_CHAINED_JSONL",
-      "source_ref": "/workspace/scratch/137bfa825505/fault_book_current_reconcile_v4_v11/Federation_Omega_Fault_Book_Live_Capture_2026-08-26.jsonl",
-      "source_sha256": "0d482d8cad291bdcd18ff4fd94b25ae1fd9621998624cee40502c39a9b02276e",
-      "status": "SYSTEMIC_OPEN",
-      "supersedes": [],
-      "title": "Authorization Continuity and Safeguard Cascade Failure",
-      "truth_state": "PARTIAL_CHECKPOINTED"
+      "consumer_id": "chatgpt-future-participating-chats",
+      "proof_available": false,
+      "proof_count": 0,
+      "state": "ADAPTER_REQUIRED",
+      "surface": "ChatGPT"
+    },
+    {
+      "consumer_id": "chatgpt-historical-inaccessible-chats",
+      "proof_available": false,
+      "proof_count": 0,
+      "state": "ADAPTER_REQUIRED",
+      "surface": "ChatGPT"
+    },
+    {
+      "consumer_id": "chatgpt-library-registry",
+      "proof_available": true,
+      "proof_count": 1,
+      "state": "VERIFIED_SOURCE",
+      "surface": "ChatGPT Library"
+    },
+    {
+      "consumer_id": "codex-current-invocation",
+      "proof_available": true,
+      "proof_count": 1,
+      "state": "VERIFIED_INVOCATION",
+      "surface": "ChatGPT/Codex"
+    },
+    {
+      "consumer_id": "federation-omega-live-operator",
+      "proof_available": false,
+      "proof_count": 0,
+      "state": "ADAPTER_REQUIRED",
+      "surface": "Cloud Run"
+    },
+    {
+      "consumer_id": "federation-omega-source",
+      "proof_available": false,
+      "proof_count": 0,
+      "state": "UNKNOWN",
+      "surface": "GitHub"
+    },
+    {
+      "consumer_id": "realityguard-chatbridge",
+      "proof_available": false,
+      "proof_count": 0,
+      "state": "UNKNOWN",
+      "surface": "Google Drive"
     }
   ],
-  "manager": "RealityGuard",
-  "registry_sha256": "3d617335c26f8e74709a8d444ce788e78f1742e54873e4ee57470dcf7b3482c1",
-  "schema_version": "realityguard.fault-manager.v1"
+  "faultbooks": [
+    {
+      "artifact_digests": [
+        "3b372cb696aae1d683dfd6b8ddc6e7f552cc14a945f8641f16555256164e7b27",
+        "6faed72f81b460bc54ab0f0c872817c11bac3e7157a1838c8026a55067b21f56",
+        "8924bc925cba7060180f97143ec75fb8430729db7217641df5c053f1ae50921a"
+      ],
+      "faultbook_id": "FO-GEM-AUTH-CONT-20260826-001",
+      "faults": [
+        {
+          "classification": "AUTHORIZATION_CONTINUITY",
+          "fault_id": "F-01",
+          "fingerprint": "03ad857ffb66f71b71e91f67fa0a03968dadfeedc2e94797d42de347d27afdf4",
+          "status": "OPEN",
+          "title": "Authorized validation paused redundantly"
+        },
+        {
+          "classification": "SEMANTIC_DECISION_BYPASS",
+          "fault_id": "F-02",
+          "fingerprint": "07d9de3e1ad51adb79d90a38862b41503a71b2eacc400e3881e614d1dd7a5790",
+          "status": "OPEN",
+          "title": "Semantic DENY was bypassed by process success"
+        },
+        {
+          "classification": "PERMIT_OBJECT_TYPING",
+          "fault_id": "F-03",
+          "fingerprint": "423961118388df10677023d52ebca4495365a5c7cd789be03628149d847d111e",
+          "status": "OPEN",
+          "title": "Nested permit token was misapplied"
+        },
+        {
+          "classification": "SAFEGUARD_PAYLOAD_OVERFLOW",
+          "fault_id": "F-04",
+          "fingerprint": "b296d7a1f637042cfbd78544603a5e3eccb1622ab750c2418f131a0e7d27da11",
+          "status": "OPEN",
+          "title": "Safeguard payload exceeded bounded capacity"
+        },
+        {
+          "classification": "CONTROL_PLANE_FORK",
+          "fault_id": "F-05",
+          "fingerprint": "5c638c9ee0068ee65354290d063c594d95ac84caf89a16f10b0afcc47b6ed0fb",
+          "status": "OPEN",
+          "title": "Five concurrent live-capture forks formed"
+        },
+        {
+          "classification": "LEDGER_INTEGRITY",
+          "fault_id": "F-06",
+          "fingerprint": "5d1f838099a45bb48c694aa9f0c78a3daf857265bd52072aee9c6a716d511845",
+          "status": "OPEN",
+          "title": "Durable ledger terminal hash mismatch"
+        },
+        {
+          "classification": "COMMON_MODE_SUPERVISION",
+          "fault_id": "F-07",
+          "fingerprint": "9b3e168759b156c1324b5d221bb95585f8af515b275f3647923148d19a58b6a2",
+          "status": "OPEN",
+          "title": "Safeguards shared the primary failure assumptions"
+        },
+        {
+          "classification": "SELF_CERTIFYING_GOVERNANCE",
+          "fault_id": "F-08",
+          "fingerprint": "29d05c44ad6dfcf4ef3a3015a151e1520b7e5c5f105aee398bb86cfb177a5777",
+          "status": "OPEN",
+          "title": "Governance could self-certify"
+        },
+        {
+          "classification": "PROXY_OPTIMIZATION",
+          "fault_id": "F-09",
+          "fingerprint": "b1a8e23d9e97e263592df73777ffcfa1d2df14bdbe8db04a5d8460b115f2cd58",
+          "status": "OPEN",
+          "title": "Proxy completion displaced owner outcome"
+        },
+        {
+          "classification": "ASYMMETRIC_ERROR_COSTING",
+          "fault_id": "F-10",
+          "fingerprint": "fd1f12c78b2a991c88db7b73a584e990dccaab65907f80eab6a5e9772627a86b",
+          "status": "OPEN",
+          "title": "False-positive and false-negative costs were asymmetric"
+        },
+        {
+          "classification": "REPRESENTATION_BOUNDARY_LOSS",
+          "fault_id": "F-11",
+          "fingerprint": "48843143221b9767577eaa2a9d0f85e4862e54972769560dd94d04a4582ba813",
+          "status": "OPEN",
+          "title": "Authorization meaning was lost across representations"
+        },
+        {
+          "classification": "NON_MONOTONIC_COMPLETION",
+          "fault_id": "F-12",
+          "fingerprint": "433902873f9b85ea912d5fc38f19255f85b22dbc31b0015bdab52234455ba325",
+          "status": "OPEN",
+          "title": "Completion state regressed after authorization"
+        },
+        {
+          "classification": "SPEECH_ACT_MISCLASSIFICATION",
+          "fault_id": "F-13",
+          "fingerprint": "38f100266a04d5a5d38b853064fd8c08f899ab03341ada59644edfae4d71550b",
+          "status": "OPEN",
+          "title": "A continuation directive was treated as a new speech act"
+        },
+        {
+          "classification": "REPAIR_THEATRE",
+          "fault_id": "F-14",
+          "fingerprint": "460455a488223222af789b6b4c63a7bbbb3b7b24ac18ed5830ab1fc8f8470b58",
+          "status": "OPEN",
+          "title": "Repair artifacts could substitute for remediation"
+        },
+        {
+          "classification": "TIME_BUDGET_EXCEEDED",
+          "fault_id": "F-15",
+          "fingerprint": "d9e8614dfe5c69c51f69215e16e00e10ad8c358e5957fb326059e971f8dfa187",
+          "status": "OPEN",
+          "title": "Recovery exceeded the five-minute release budget"
+        },
+        {
+          "classification": "SAFEGUARD_CONTRACT_IMPLEMENTATION_MISMATCH",
+          "fault_id": "F-16",
+          "fingerprint": "c6e3699f8b5c6dec30b1c3a7afbaed4bec032011ae3c292be698586a96fa04e7",
+          "status": "OPEN",
+          "title": "Zero-harm contract and evaluator disagree"
+        },
+        {
+          "classification": "VALIDATOR_INTERFACE_ASSUMPTION",
+          "fault_id": "F-17",
+          "fingerprint": "ba7d54294b7e210a9c841c938415e2b1cd0281769f4d131607d1f38dd3c43dc0",
+          "status": "OPEN",
+          "title": "Validator interface was recalled incorrectly"
+        },
+        {
+          "classification": "NEGATIVE_ASSERTION_FALSE_POSITIVE",
+          "fault_id": "F-18",
+          "fingerprint": "b7951f7bf2a7c1a2861464e42f5c60053d6919a99d12d469daa6d9e8d6adfa69",
+          "status": "OPEN",
+          "title": "Negative privacy assertion was classified as a leak"
+        },
+        {
+          "classification": "DUPLICATE_SOURCE_SUPPRESSES_BINDING_UPDATE",
+          "fault_id": "F-19",
+          "fingerprint": "c13fc35fac34a96964cce7583d601c11a1627bbe80ee9b41ef5727e533995a54",
+          "status": "OPEN",
+          "title": "Duplicate source suppressed binding updates"
+        },
+        {
+          "classification": "SINGLE_USE_PERMIT_SCOPE_VIOLATION",
+          "fault_id": "F-20",
+          "fingerprint": "de866ac0acb24e48ca90dd68afd1c03e99b6efd233f559c0aa175bebec084899",
+          "status": "OPEN",
+          "title": "External persistence reused a consumed local permit"
+        },
+        {
+          "classification": "PUBLIC_MANIFEST_PRIVATE_PROOF_REFERENCE_LEAK",
+          "fault_id": "F-21",
+          "fingerprint": "25fe78bac56696189e3b3b2992f45ef2bd4f7cb336dd7b5169006f1ac9f363bd",
+          "status": "OPEN",
+          "title": "Redacted manifest exposed a private proof reference"
+        },
+        {
+          "classification": "FORMATION_INACTIVE_REQUIREMENT_BINDING",
+          "fault_id": "F-22",
+          "fingerprint": "74e8f795f5cd31c6d9aa501c3458dc8cf75ac3c369f046c1cc8790f2396d7803",
+          "status": "OPEN",
+          "title": "Source permit referenced inactive requirements"
+        },
+        {
+          "classification": "LOCAL_COMMAND_QUOTING_FAILURE",
+          "fault_id": "F-23",
+          "fingerprint": "c539ca7ec87bbbfe381f51cdba6c73777ce14cceba099297a3a417ea29f8aae3",
+          "status": "OPEN",
+          "title": "Branch content loader double-encoded newlines"
+        },
+        {
+          "classification": "STALE_BASE_DURING_PR_OPEN",
+          "fault_id": "F-24",
+          "fingerprint": "879c1750d6a96a600398068845f73354d78afb9a370310ed06c89b611d3ef39e",
+          "status": "OPEN",
+          "title": "Main advanced before PR ancestry admission"
+        },
+        {
+          "classification": "GITHUB_BRANCH_TOOL_CONTRACT_MISMATCH",
+          "fault_id": "F-25",
+          "fingerprint": "60532bcd3c946c795ac75da03e4bc1dd2cd1b2f49c2ac08068cc224b751fcb0d",
+          "status": "OPEN",
+          "title": "Branch tool claimed update but only created references"
+        }
+      ],
+      "import_id": "0fb6ca75c77a3a94579135d0886ba7b04f40c7e1f249a69027c529866695fcd2",
+      "ledger": {
+        "event_count": 98,
+        "head_hash": "5c3084376131745681487a27bc00b757f855060a4c1a3ef1ed6ad259aee1f704",
+        "sha256": "8924bc925cba7060180f97143ec75fb8430729db7217641df5c053f1ae50921a"
+      },
+      "open_regression_tests": [
+        "FT-01",
+        "FT-02",
+        "FT-03",
+        "FT-04",
+        "FT-05",
+        "FT-06",
+        "FT-07",
+        "FT-08",
+        "FT-09",
+        "FT-10",
+        "FT-11",
+        "FT-12",
+        "FT-13",
+        "FT-14",
+        "FT-15",
+        "FT-16"
+      ],
+      "status": "SYSTEMIC_OPEN",
+      "title": "Federation Omega authorization continuity and safeguard-stack failure"
+    }
+  ],
+  "manager_id": "RealityGuard",
+  "manager_role": "CENTRAL_FAULTBOOK_MANAGER",
+  "privacy": {
+    "artifact_paths_included": false,
+    "consumer_proof_refs_included": false,
+    "raw_events_included": false,
+    "storage_refs_included": false
+  },
+  "schema_version": "realityguard.faultbook-public-manifest.v1",
+  "system_status": "SYSTEMIC_OPEN",
+  "universal_sync_claim_allowed": false
 }

@@ -1,8 +1,9 @@
 # Project memory
 
-- System: RealityGuard 0.4.0
+- System: RealityGuard 0.4.1
 - Mission: protect Kim Mosiane from false-positive completion and false operational reality in AI workstreams.
-- Proven maturity: local deterministic truth gate, reuse-first solution broker, manifest-bound pre-build gate, host-invoked material-cycle upgrade decision and one executable adapter accepting all 20 canonical Federation system IDs, implemented and tested with 96 passing tests.
+- Proven maturity: local deterministic truth gate, reuse-first solution broker, manifest-bound pre-build gate, host-invoked material-cycle upgrade decision, harmonized central private-data-safe fault-book manager and one executable adapter accepting all 20 canonical Federation system IDs, implemented and tested with 115 passing tests.
+- Fault-book manager state: verifies parent-plus-payload JSONL chains, artifact digests, revisions, idempotent imports, strict closure, and per-consumer binding truth. Raw fault content stays private; only the redacted manifest is source-safe. Historical and inaccessible ChatGPT conversations remain `ADAPTER_REQUIRED` until a real adapter proves current invocation and semantic readback.
 - Not proven: installed browser extension, ChatGPT interception, provider binding, hosted service, account-wide coverage.
 - Taxonomy: 30 failure classes, version `2026.08.15-5`; RG-028 is reactive-only correction, RG-029 is correction-debt orphaning and RG-030 is ungoverned self-upgrade.
 - Invariant: no state promotion without evidence meeting the target state's proof grade and freshness requirements.
