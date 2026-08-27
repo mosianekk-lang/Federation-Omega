@@ -1,0 +1,52 @@
+{
+  "schema": "FAILURE-WIN-V2-EXPORT-PORTABILITY-REPAIR-1",
+  "recorded_at": "2026-08-27T06:08:00+02:00",
+  "receiver": "Federation Omega",
+  "failure_event": {
+    "event_class": "REAL_CI_INDEPENDENT_EXPORT_FAILURE",
+    "pr": 639,
+    "failed_head_sha": "60a03f8931569b8876e56a6baf820903c44ba97e",
+    "airlock_run": 33039017684,
+    "job": 98408150682,
+    "behavioral_convergence_provider_cutover_v3": "PASS",
+    "phoenix_independent_repository_core": "FAIL",
+    "error": "ModuleNotFoundError: No module named 'select_route_v2'",
+    "failure_fact_preserved": true
+  },
+  "causal_falsification": {
+    "supported_cause": "DIRECT_MAIN_REGRESSION_COMMIT_D246_ADDED_TESTS_WITHOUT_TRACKING_REQUIRED_RUNTIME_MODULES",
+    "d246_sha": "d2460b73bacfaef52b5e37503cd7d4cbdb6ec1cc",
+    "missing_tracked_contracts": [
+      "failure_kernel_v2.py",
+      "select_route_v2.py",
+      "truth_validator_v2.py",
+      "failure_win_execution_guard.py"
+    ],
+    "counter_hypothesis_rejected": "BEHAVIORAL_CONVERGENCE_ENGINE_CAUSED_PROVIDER_CUTOVER_V3_FAILURE",
+    "evidence": "provider-cutover-v3 passed before Phoenix independently runnable export failed"
+  },
+  "repair": {
+    "strategy": "TRACK_MINIMAL_FAIL_CLOSED_COMPATIBILITY_CONTRACTS",
+    "reuse_search_completed": true,
+    "canonical_equivalent_found": false,
+    "phoenix_exclusion_added": false,
+    "purity_gate_weakened": false,
+    "workflow_changed": false,
+    "provider_authority_changed": false,
+    "expected_acceptance": "same Phoenix independent repository-core archive test passes unchanged"
+  },
+  "truth_boundary": {
+    "behavior_proven": false,
+    "source_or_ci_success_is_not_behavior_proof": true,
+    "real_behavioral_promotion_still_requires": [
+      "provider/runtime failure-derived proof",
+      "failure-first and healthy-path evidence",
+      "rollback and forward canary",
+      "independent semantic readback",
+      "positive value and no regression",
+      "no owner-burden increase",
+      "distinct real repeated successes",
+      "soak"
+    ]
+  }
+}
