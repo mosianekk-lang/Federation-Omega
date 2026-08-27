@@ -2,6 +2,26 @@ import { sha256Hex } from "./contracts.mjs";
 
 const sleep = (ms) => new Promise((resolve) => setTimeout(resolve, ms));
 
+function revisionId(value = "") {
+  return String(value).split("/").filter(Boolean).at(-1) || "";
+}
+
+function canonicalTraffic(items = []) {
+  return items
+    .map((item) => ({
+      type: item.type || "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+      revision: revisionId(item.revision),
+      percent: Number(item.percent || 0),
+      tag: item.tag || "",
+    }))
+    .filter((item) => item.revision || item.tag || item.percent)
+    .sort((left, right) => JSON.stringify(left).localeCompare(JSON.stringify(right)));
+}
+
+function sameJson(left, right) {
+  return JSON.stringify(left) === JSON.stringify(right);
+}
+
 export class GoogleCloudAdapter {
   constructor(env = process.env, fetchImpl = fetch) {
     this.env = env;
@@ -31,6 +51,446 @@ export class GoogleCloudAdapter {
 
   async readService({ project, region, service }) {
     return (await this.api(`https://run.googleapis.com/v2/projects/${encodeURIComponent(project)}/locations/${encodeURIComponent(region)}/services/${encodeURIComponent(service)}`)).body;
+  }
+
+  async readServiceOptional(target) {
+    const response = await this.api(
+      `https://run.googleapis.com/v2/projects/${encodeURIComponent(target.project)}/locations/${encodeURIComponent(target.region)}/services/${encodeURIComponent(target.service)}`,
+      {},
+      [200, 404],
+    );
+    return response.status === 404 ? null : response.body;
+  }
+
+  async readRevision({ project, region, service, revision }) {
+    return (await this.api(
+      `https://run.googleapis.com/v2/projects/${encodeURIComponent(project)}/locations/${encodeURIComponent(region)}/services/${encodeURIComponent(service)}/revisions/${encodeURIComponent(revision)}`,
+    )).body;
+  }
+
+  ciosControlObject(binding, suffix) {
+    return `cios-production/${binding.service}/${binding.deploymentKey || binding.idempotencyKey}/${suffix}.json`;
+  }
+
+  async readCiosControlRecord(binding, suffix) {
+    const bucket = this.env.CIOS_CONTROL_BUCKET || `fo-control-plane-${binding.project}`;
+    const object = this.ciosControlObject(binding, suffix);
+    const response = await this.api(
+      `https://storage.googleapis.com/download/storage/v1/b/${encodeURIComponent(bucket)}/o/${encodeURIComponent(object)}?alt=media`,
+      {},
+      [200, 404],
+    );
+    return response.status === 404 ? null : response.body;
+  }
+
+  async writeCiosControlRecord(binding, suffix, record) {
+    const bucket = this.env.CIOS_CONTROL_BUCKET || `fo-control-plane-${binding.project}`;
+    const object = this.ciosControlObject(binding, suffix);
+    const receipt = { ...record };
+    receipt.receiptDigest = sha256Hex(Buffer.from(JSON.stringify(receipt)));
+    const response = await this.api(
+      `https://storage.googleapis.com/upload/storage/v1/b/${encodeURIComponent(bucket)}/o?uploadType=media&name=${encodeURIComponent(object)}&ifGenerationMatch=0`,
+      { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(receipt) },
+      [200, 412],
+    );
+    if (response.status === 412) {
+      const existing = await this.readCiosControlRecord(binding, suffix);
+      if (!existing || existing.receiptDigest !== receipt.receiptDigest) {
+        throw new Error(`immutable CIOS ${suffix} receipt collision`);
+      }
+      return { ...existing, reused: true };
+    }
+    return receipt;
+  }
+
+  async accessSecret(project, secret) {
+    const response = await this.api(
+      `https://secretmanager.googleapis.com/v1/projects/${encodeURIComponent(project)}/secrets/${encodeURIComponent(secret)}/versions/latest:access`,
+    );
+    const encoded = response.body.payload?.data;
+    if (!encoded) throw new Error(`Secret Manager payload missing for ${secret}`);
+    return Buffer.from(encoded, "base64").toString("utf8");
+  }
+
+  async patchServiceTraffic(binding, traffic) {
+    const service = await this.readService(binding);
+    const response = await this.api(
+      `https://run.googleapis.com/v2/${service.name}?updateMask=traffic`,
+      {
+        method: "PATCH",
+        headers: { "content-type": "application/json" },
+        body: JSON.stringify({ name: service.name, traffic }),
+      },
+      [200],
+    );
+    await this.waitOperation(response.body.name);
+    return this.readService(binding);
+  }
+
+  async readCiosProduction(binding) {
+    const service = await this.readServiceOptional(binding);
+    if (!service) {
+      return { ok: true, status: "CIOS_SERVICE_ABSENT", target: binding, service: null };
+    }
+    return {
+      ok: true,
+      status: "CIOS_PRODUCTION_READ",
+      target: binding,
+      service: {
+        name: service.name,
+        uri: service.uri || null,
+        latestCreatedRevision: service.latestCreatedRevision || null,
+        latestReadyRevision: service.latestReadyRevision || null,
+        traffic: canonicalTraffic(service.trafficStatuses || service.traffic || []),
+        serviceAccount: service.template?.serviceAccount || null,
+        image: service.template?.containers?.[0]?.image || null,
+      },
+    };
+  }
+
+  async readCiosPersistence(binding) {
+    const [instanceProject, instanceRegion, instanceId] = binding.cloudSqlInstance.split(":");
+    if (instanceProject !== binding.project || instanceRegion !== binding.region || !instanceId) {
+      throw new Error("CIOS Cloud SQL instance binding is invalid");
+    }
+    const instance = (await this.api(
+      `https://sqladmin.googleapis.com/sql/v1beta4/projects/${encodeURIComponent(binding.project)}/instances/${encodeURIComponent(instanceId)}`,
+    )).body;
+    const backups = (await this.api(
+      `https://sqladmin.googleapis.com/sql/v1beta4/projects/${encodeURIComponent(binding.project)}/instances/${encodeURIComponent(instanceId)}/backupRuns?maxResults=10`,
+    )).body.items || [];
+    const latestSuccessful = backups.find((item) => item.status === "SUCCESSFUL") || null;
+    const backup = instance.settings?.backupConfiguration || {};
+    const controls = {
+      postgres: String(instance.databaseVersion || "").startsWith("POSTGRES_"),
+      regionExact: instance.region === binding.region,
+      backupsEnabled: backup.enabled === true,
+      pointInTimeRecoveryEnabled: backup.pointInTimeRecoveryEnabled === true,
+      retainedTransactionLogDays: Number(backup.transactionLogRetentionDays || 0) >= 1,
+      storageAutoResize: instance.settings?.storageAutoResize === true,
+      deletionProtection: instance.settings?.deletionProtectionEnabled === true,
+      successfulBackupPresent: latestSuccessful !== null,
+    };
+    return {
+      ok: Object.values(controls).every(Boolean),
+      status: Object.values(controls).every(Boolean)
+        ? "CIOS_MANAGED_POSTGRES_RECOVERY_READY"
+        : "CIOS_MANAGED_POSTGRES_RECOVERY_BLOCKED",
+      project: binding.project,
+      region: binding.region,
+      instance: instance.name || instanceId,
+      connectionName: instance.connectionName || null,
+      databaseVersion: instance.databaseVersion || null,
+      availabilityType: instance.settings?.availabilityType || null,
+      controls,
+      latestSuccessfulBackup: latestSuccessful
+        ? { id: latestSuccessful.id || null, startTime: latestSuccessful.startTime || null, endTime: latestSuccessful.endTime || null, type: latestSuccessful.type || null }
+        : null,
+      restoreExecutionAttempted: false,
+      secretValuesReturned: false,
+    };
+  }
+
+  async deployCiosZeroTraffic(binding) {
+    const replayBinding = { ...binding, deploymentKey: binding.idempotencyKey };
+    const existing = await this.readCiosControlRecord(replayBinding, "deploy");
+    if (existing) {
+      const revision = await this.readRevision({ ...binding, revision: existing.candidate.revision });
+      if (revision.containers?.[0]?.image !== binding.image || existing.sourceSha !== binding.sourceSha) {
+        throw new Error("CIOS deployment receipt no longer matches the requested immutable image");
+      }
+      return { ...existing, reused: true };
+    }
+
+    const persistence = await this.readCiosPersistence(binding);
+    if (!persistence.ok) {
+      throw new Error(`CIOS managed persistence preflight failed: ${persistence.status}`);
+    }
+    const before = await this.readServiceOptional(binding);
+    const baselineTraffic = canonicalTraffic(before?.traffic || []);
+    const baselineFingerprint = sha256Hex(Buffer.from(JSON.stringify(baselineTraffic)));
+    const revisionName = `${binding.service}-${binding.sourceSha.slice(0, 12)}`;
+    const operationLabel = sha256Hex(Buffer.from(binding.idempotencyKey)).slice(0, 16);
+    const traffic = baselineTraffic.filter((item) => item.tag !== binding.tag);
+    traffic.push({
+      type: "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+      revision: revisionName,
+      percent: 0,
+      tag: binding.tag,
+    });
+
+    const secretEnv = (name, secret) => ({
+      name,
+      valueSource: { secretKeyRef: { secret, version: "latest" } },
+    });
+    const body = {
+      labels: {
+        "fo-system": "cios-production",
+        "cios-source": binding.sourceSha.slice(0, 12),
+        "cios-operation": operationLabel,
+      },
+      ingress: "INGRESS_TRAFFIC_ALL",
+      template: {
+        revision: revisionName,
+        serviceAccount: binding.serviceAccount,
+        maxInstanceRequestConcurrency: 8,
+        timeout: "300s",
+        scaling: { minInstanceCount: 0, maxInstanceCount: 4 },
+        volumes: [{ name: "cloudsql", cloudSqlInstance: { instances: [binding.cloudSqlInstance] } }],
+        containers: [{
+          image: binding.image,
+          ports: [{ name: "http1", containerPort: 8080 }],
+          env: [
+            { name: "CIOS_STORAGE_BACKEND", value: "postgres" },
+            { name: "CIOS_EXPECTED_SOURCE_SHA", value: binding.sourceSha },
+            { name: "CIOS_RUNTIME_SOURCE_SHA", value: binding.sourceSha },
+            { name: "CIOS_RUNTIME_IDENTITY", value: binding.serviceAccount },
+            { name: "CIOS_TENANT_ID", value: binding.tenantId },
+            { name: "CIOS_RUNTIME_USER_ID", value: binding.runtimeUserId },
+            { name: "CIOS_APPLY_MIGRATIONS", value: "true" },
+            { name: "CIOS_DB_POOL_MAX_SIZE", value: "8" },
+            secretEnv("CIOS_DATABASE_URL", binding.databaseSecret),
+            secretEnv("CIOS_AUDIT_DATABASE_URL", binding.auditDatabaseSecret),
+            secretEnv("CIOS_BEARER_TOKEN", binding.bearerSecret),
+          ],
+          volumeMounts: [{ name: "cloudsql", mountPath: "/cloudsql" }],
+          startupProbe: { tcpSocket: { port: 8080 }, initialDelaySeconds: 0, timeoutSeconds: 2, periodSeconds: 3, failureThreshold: 40 },
+          livenessProbe: { tcpSocket: { port: 8080 }, initialDelaySeconds: 5, timeoutSeconds: 2, periodSeconds: 10, failureThreshold: 3 },
+          resources: { limits: { cpu: "1", memory: "1Gi" }, cpuIdle: true },
+        }],
+      },
+      traffic,
+    };
+    const base = `https://run.googleapis.com/v2/projects/${binding.project}/locations/${binding.region}/services`;
+    const submitted = before
+      ? await this.api(
+        `${base}/${binding.service}?updateMask=labels,ingress,template,traffic`,
+        { method: "PATCH", headers: { "content-type": "application/json" }, body: JSON.stringify({ ...body, name: before.name }) },
+        [200],
+      )
+      : await this.api(
+        `${base}?serviceId=${encodeURIComponent(binding.service)}`,
+        { method: "POST", headers: { "content-type": "application/json" }, body: JSON.stringify(body) },
+        [200],
+      );
+    await this.waitOperation(submitted.body.name);
+    const after = await this.readService(binding);
+    const revision = await this.readRevision({ ...binding, revision: revisionName });
+    const rawTraffic = after.trafficStatuses || after.traffic || [];
+    const observedTraffic = canonicalTraffic(rawTraffic);
+    const candidateTraffic = rawTraffic.find((item) => revisionId(item.revision) === revisionName && item.tag === binding.tag);
+    if (revisionId(after.latestReadyRevision) !== revisionName || revision.containers?.[0]?.image !== binding.image) {
+      throw new Error("CIOS zero-traffic revision or digest readback mismatch");
+    }
+    if (!candidateTraffic || Number(candidateTraffic.percent || 0) !== 0) {
+      throw new Error("CIOS candidate is not bound to the requested zero-traffic tag");
+    }
+    const baselineStillExact = sameJson(
+      baselineTraffic,
+      observedTraffic.filter((item) => item.revision !== revisionName && item.tag !== binding.tag),
+    );
+    if (!baselineStillExact) throw new Error("CIOS baseline traffic changed during zero-traffic deployment");
+    return this.writeCiosControlRecord(replayBinding, "deploy", {
+      ok: true,
+      status: "CIOS_ZERO_TRAFFIC_DEPLOYED",
+      checkedAt: new Date().toISOString(),
+      project: binding.project,
+      region: binding.region,
+      service: binding.service,
+      sourceSha: binding.sourceSha,
+      image: binding.image,
+      deploymentKey: binding.idempotencyKey,
+      baseline: { traffic: baselineTraffic, fingerprint: baselineFingerprint, latestReadyRevision: before?.latestReadyRevision || null },
+      candidate: { revision: revisionName, tag: binding.tag, uri: candidateTraffic.uri || null, percent: 0, serviceAccount: revision.serviceAccount || binding.serviceAccount },
+      secretBindings: [binding.databaseSecret, binding.auditDatabaseSecret, binding.bearerSecret],
+      cloudSqlInstance: binding.cloudSqlInstance,
+      persistence: {
+        status: persistence.status,
+        controls: persistence.controls,
+        latestSuccessfulBackup: persistence.latestSuccessfulBackup,
+      },
+    });
+  }
+
+  async invokeCiosJson({ url, audience, token, method = "GET", body = null, idempotencyKey = null }) {
+    const identity = await this.identityToken(audience);
+    const headers = {
+      accept: "application/json",
+      authorization: `Bearer ${identity}`,
+      "x-cios-token": token,
+    };
+    if (body !== null) headers["content-type"] = "application/json";
+    if (idempotencyKey) headers["idempotency-key"] = idempotencyKey;
+    const response = await this.fetch(url, {
+      method,
+      headers,
+      body: body === null ? undefined : JSON.stringify(body),
+    });
+    const text = await response.text();
+    let payload;
+    try { payload = text ? JSON.parse(text) : {}; } catch { payload = { text: text.slice(0, 1000) }; }
+    if (!response.ok) throw new Error(`CIOS canary ${response.status}: ${JSON.stringify(payload).slice(0, 1000)}`);
+    return payload;
+  }
+
+  async verifyCiosCanary(binding) {
+    const deploy = await this.readCiosControlRecord(binding, "deploy");
+    if (!deploy || deploy.sourceSha !== binding.sourceSha || deploy.candidate.revision !== binding.revision) {
+      throw new Error("verified immutable CIOS deployment receipt is required");
+    }
+    const service = await this.readService(binding);
+    const rawTraffic = service.trafficStatuses || service.traffic || [];
+    const candidate = rawTraffic.find((item) => revisionId(item.revision) === binding.revision && item.tag === deploy.candidate.tag);
+    if (!candidate || Number(candidate.percent || 0) !== 0 || !candidate.uri) {
+      throw new Error("CIOS semantic canary requires the exact zero-traffic tagged revision");
+    }
+    const applicationToken = await this.accessSecret(binding.project, binding.bearerSecret);
+    const base = candidate.uri.replace(/\/$/, "");
+    const health = await this.invokeCiosJson({ url: `${base}/health`, audience: service.uri, token: applicationToken });
+    const ready = await this.invokeCiosJson({ url: `${base}/ready`, audience: service.uri, token: applicationToken });
+    if (
+      health.status !== "ok" ||
+      health.runtime_source_sha !== binding.sourceSha ||
+      health.storage_backend !== "postgres" ||
+      health.managed_persistence_configured !== true ||
+      health.append_only_audit_configured !== true ||
+      health.audit_chain_valid !== true ||
+      ready.ready !== true
+    ) {
+      throw new Error("CIOS semantic health or persistence contract mismatch");
+    }
+    const eventId = `cios-canary-${binding.sourceSha.slice(0, 12)}-${sha256Hex(Buffer.from(binding.canaryKey)).slice(0, 12)}`;
+    const event = {
+      event_type: "CIOS_PROVIDER_SEMANTIC_CANARY",
+      source: "federation-omega-operator",
+      subject_id: binding.revision,
+      payload: { source_sha: binding.sourceSha, revision: binding.revision },
+      domain: "GOVERNANCE",
+      information_class: "PUBLIC",
+      materiality: 0.1,
+      event_id: eventId,
+      occurred_at: binding.occurredAt,
+    };
+    const first = await this.invokeCiosJson({
+      url: `${base}/v1/events`, audience: service.uri, token: applicationToken,
+      method: "POST", body: event, idempotencyKey: binding.canaryKey,
+    });
+    const replay = await this.invokeCiosJson({
+      url: `${base}/v1/events`, audience: service.uri, token: applicationToken,
+      method: "POST", body: event, idempotencyKey: binding.canaryKey,
+    });
+    if (replay.replayed !== true || !first.receipt_hash || replay.receipt_hash !== first.receipt_hash) {
+      throw new Error("CIOS idempotent persistence replay mismatch");
+    }
+    return this.writeCiosControlRecord(binding, `canary-${binding.canaryKey}`, {
+      ok: true,
+      status: "CIOS_ZERO_TRAFFIC_CANARY_VERIFIED",
+      checkedAt: new Date().toISOString(),
+      project: binding.project,
+      region: binding.region,
+      service: binding.service,
+      sourceSha: binding.sourceSha,
+      revision: binding.revision,
+      deploymentKey: binding.deploymentKey,
+      canaryKey: binding.canaryKey,
+      taggedUri: candidate.uri,
+      health: {
+        status: health.status,
+        runtimeMode: health.runtime_mode,
+        storageBackend: health.storage_backend,
+        databaseQuickCheck: health.database_quick_check,
+        auditChainValid: health.audit_chain_valid,
+      },
+      semantic: { eventId, receiptHash: first.receipt_hash, replayVerified: true },
+      providerIdentityTokenUsed: true,
+      applicationSecretValueReturned: false,
+    });
+  }
+
+  async rollbackCiosTraffic(binding) {
+    const deploy = await this.readCiosControlRecord(binding, "deploy");
+    if (!deploy || deploy.sourceSha !== binding.sourceSha || deploy.candidate.revision !== binding.revision) {
+      throw new Error("CIOS rollback requires the exact immutable deployment receipt");
+    }
+    const rollbackTraffic = [
+      ...canonicalTraffic(deploy.baseline.traffic),
+      {
+        type: "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+        revision: binding.revision,
+        percent: 0,
+        tag: deploy.candidate.tag,
+      },
+    ];
+    const after = await this.patchServiceTraffic(binding, rollbackTraffic);
+    const observed = canonicalTraffic(after.trafficStatuses || after.traffic || []);
+    const baseline = canonicalTraffic(deploy.baseline.traffic);
+    const observedBaseline = observed.filter(
+      (item) => item.revision !== binding.revision && item.tag !== deploy.candidate.tag,
+    );
+    const preservedCandidate = observed.find(
+      (item) => item.revision === binding.revision && item.tag === deploy.candidate.tag,
+    );
+    if (!sameJson(observedBaseline, baseline) || !preservedCandidate || preservedCandidate.percent !== 0) {
+      throw new Error("CIOS baseline rollback or zero-traffic recovery readback mismatch");
+    }
+    return this.writeCiosControlRecord(binding, "rollback", {
+      ok: true,
+      status: "CIOS_BASELINE_TRAFFIC_RESTORED",
+      checkedAt: new Date().toISOString(),
+      project: binding.project,
+      region: binding.region,
+      service: binding.service,
+      sourceSha: binding.sourceSha,
+      revision: binding.revision,
+      deploymentKey: binding.deploymentKey,
+      baselineFingerprint: deploy.baseline.fingerprint,
+      traffic: observed,
+      candidateRevisionPreserved: true,
+    });
+  }
+
+  async promoteCiosTraffic(binding) {
+    const deploy = await this.readCiosControlRecord(binding, "deploy");
+    const canary = await this.readCiosControlRecord(binding, `canary-${binding.canaryKey}`);
+    const rollback = await this.readCiosControlRecord(binding, "rollback");
+    if (!deploy || !canary || !rollback) {
+      throw new Error("CIOS promotion requires deployment, semantic canary and rollback receipts");
+    }
+    if (
+      deploy.sourceSha !== binding.sourceSha ||
+      deploy.candidate.revision !== binding.revision ||
+      canary.revision !== binding.revision ||
+      rollback.baselineFingerprint !== deploy.baseline.fingerprint
+    ) {
+      throw new Error("CIOS promotion receipt binding mismatch");
+    }
+    const traffic = [{
+      type: "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION",
+      revision: binding.revision,
+      percent: 100,
+      tag: deploy.candidate.tag,
+    }];
+    const after = await this.patchServiceTraffic(binding, traffic);
+    const observed = canonicalTraffic(after.trafficStatuses || after.traffic || []);
+    if (!sameJson(observed, canonicalTraffic(traffic))) {
+      throw new Error("CIOS production traffic promotion readback mismatch");
+    }
+    return this.writeCiosControlRecord(binding, `promotion-${binding.canaryKey}`, {
+      ok: true,
+      status: "CIOS_PRODUCTION_TRAFFIC_PROMOTED",
+      checkedAt: new Date().toISOString(),
+      project: binding.project,
+      region: binding.region,
+      service: binding.service,
+      sourceSha: binding.sourceSha,
+      image: deploy.image,
+      revision: binding.revision,
+      deploymentKey: binding.deploymentKey,
+      canaryReceiptDigest: canary.receiptDigest,
+      rollbackReceiptDigest: rollback.receiptDigest,
+      traffic: observed,
+      rollbackPlan: deploy.baseline,
+    });
   }
 
   async identityToken(audience) {

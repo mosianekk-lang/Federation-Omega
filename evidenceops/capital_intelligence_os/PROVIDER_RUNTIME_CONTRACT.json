@@ -1,18 +1,23 @@
 {
-  "schema": "CIOS-PROVIDER-RUNTIME-CONTRACT-V1.1",
-  "version": "1.0.0-rc7.1",
-  "purpose": "Fail-closed single-tenant provider candidate without document routes, consequential financial actions or self-certifying deployment.",
+  "schema": "CIOS-PROVIDER-RUNTIME-CONTRACT-V2",
+  "version": "1.0.0-rc8",
+  "purpose": "Fail-closed single-tenant production candidate with managed PostgreSQL, a separately bound append-only audit chain, no document routes and no consequential financial effects.",
   "entrypoint": "python -m evidenceops.capital_intelligence_os.provider_runtime",
   "container": "evidenceops/capital_intelligence_os/Dockerfile.runtime",
   "required_environment": [
     "CIOS_BEARER_TOKEN",
-    "CIOS_DB_PATH",
-    "CIOS_AUDIT_PATH",
+    "CIOS_STORAGE_BACKEND=postgres",
+    "CIOS_DATABASE_URL",
+    "CIOS_AUDIT_DATABASE_URL",
     "CIOS_EXPECTED_SOURCE_SHA",
     "CIOS_RUNTIME_SOURCE_SHA",
     "CIOS_RUNTIME_IDENTITY",
     "CIOS_TENANT_ID",
     "CIOS_RUNTIME_USER_ID"
+  ],
+  "optional_environment": [
+    "CIOS_DB_POOL_MAX_SIZE (1..16, default 8)",
+    "CIOS_APPLY_MIGRATIONS=true only in the gated deployment revision"
   ],
   "safe_routes": [
     "GET /health",
@@ -27,19 +32,30 @@
     "withdrawals",
     "transfers",
     "regulatory filing",
-    "external signing"
+    "external signing",
+    "document ingestion"
   ],
   "persistence": {
-    "database_required": true,
-    "audit_path_required": true,
-    "in_memory_rejected": true,
+    "managed_postgresql_required": true,
+    "state_and_audit_urls_distinct": true,
+    "maximum_state_pool_size": 16,
+    "maximum_audit_pool_size": 8,
+    "atomic_event_idempotency_transaction": true,
+    "tenant_scoped_keys": true,
+    "advisory_locked_learning_chain": true,
+    "advisory_locked_migrations": true,
+    "audit_update_delete_trigger_denial": true,
+    "cloud_sql_backups_required": true,
+    "cloud_sql_pitr_required": true,
+    "successful_backup_readback_required": true,
     "sqlite_reference_runtime_only": true,
-    "horizontal_provider_persistence_verified": false,
-    "production_managed_database_required": true,
-    "immutable_external_audit_required": true
+    "in_memory_rejected": true
   },
   "security": {
-    "bearer_auth_required": true,
+    "cloud_run_iam_identity_token_required_by_provider": true,
+    "application_token_header": "X-CIOS-Token",
+    "application_token_from_secret_manager": true,
+    "secret_value_returned": false,
     "tenant_and_user_bound_by_configuration": true,
     "caller_identity_override_denied": true,
     "default_deny_routes": true,
@@ -47,7 +63,19 @@
     "non_root_container": true,
     "request_size_limit_bytes": 256000,
     "serialized_sqlite_request_handling": true,
-    "enterprise_oidc_required_for_production": true
+    "digest_pinned_image_required": true,
+    "tcp_startup_and_liveness_probes": true,
+    "google_application_credentials_env_forbidden": true
+  },
+  "rollout": {
+    "zero_traffic_first": true,
+    "tagged_semantic_canary": true,
+    "event_and_idempotent_replay_required": true,
+    "immutable_deployment_and_canary_receipts": true,
+    "baseline_traffic_fingerprint_required": true,
+    "rollback_preserves_candidate_at_zero_traffic": true,
+    "recovery_canary_required": true,
+    "promotion_requires_deploy_canary_and_rollback_receipts": true
   },
   "maturity_boundary": {
     "source_proves_provider_deployment": false,

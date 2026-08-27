@@ -8,6 +8,8 @@ POLICY_PATH = ROOT / "governance" / "github_airlock_policy.json"
 PHOENIX_PATH = ROOT / ".github" / "workflows" / "phoenix-emergency-freeze.yml"
 PROVIDER_PATH = ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
 PROVIDER_FILE = "sovara-litellm-v2-3-provider-admission.yml"
+CIOS_PATH = ".github/workflows/cios-production-lane.yml"
+CIOS_FILE = "cios-production-lane.yml"
 
 
 class PhoenixRequiredWorkflowAlignmentTests(unittest.TestCase):
@@ -21,13 +23,23 @@ class PhoenixRequiredWorkflowAlignmentTests(unittest.TestCase):
         self.assertIn(PROVIDER_PATH, self.policy["execution_quarantine"]["keep_active"])
         self.assertIn(PROVIDER_PATH, self.policy["oidc_workflow_allowlist"])
         self.assertEqual(["main"], self.policy["required_push_branches"][PROVIDER_PATH])
+        self.assertIn(CIOS_PATH, self.policy["active_workflow_allowlist"])
+        self.assertIn(CIOS_PATH, self.policy["execution_quarantine"]["keep_active"])
+        self.assertIn(CIOS_PATH, self.policy["oidc_workflow_allowlist"])
+        self.assertEqual(["main"], self.policy["required_push_branches"][CIOS_PATH])
+        self.assertEqual(
+            {"pull_request", "push", "workflow_dispatch"},
+            set(self.policy["allowed_events"][CIOS_PATH]),
+        )
 
     def test_phoenix_keeps_provider_gateway_active(self) -> None:
-        self.assertIn(f"{PROVIDER_PATH})", self.phoenix)
+        self.assertIn(f"{PROVIDER_PATH}|\\", self.phoenix)
         self.assertIn(
             f'"{PROVIDER_FILE}|{PROVIDER_PATH}"',
             self.phoenix,
         )
+        self.assertIn(f"{CIOS_PATH})", self.phoenix)
+        self.assertIn(f'"{CIOS_FILE}|{CIOS_PATH}"', self.phoenix)
 
     def test_phoenix_dispatches_provider_gateway_after_reenable(self) -> None:
         self.assertIn(

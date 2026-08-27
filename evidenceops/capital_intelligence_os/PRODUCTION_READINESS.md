@@ -1,10 +1,12 @@
-# Production Readiness Register — v1.0.0-rc5
+# Production Readiness Register — v1.0.0-rc8
 
 ## Current maturity
 
-Provider maturity remains **`PROVIDER_BINDING_READY`**.
+Provider maturity is **`PROVIDER_EXECUTION_READY`** in source and remains live-proof pending.
 
-Internal product state is **`INTERNAL_COMPLETION_CANDIDATE`** pending exact-head repository admission of rc5.
+Internal product state is **`SOURCE_PRODUCTION_LANE_CANDIDATE`** pending exact-head repository admission of rc8.
+
+Implemented in rc8: pooled managed PostgreSQL state, separate append-only PostgreSQL audit, advisory-locked migrations, Cloud SQL backup/PITR preflight, digest-pinned Cloud Run revisions, immutable operation receipts, zero-traffic semantic/idempotency canary, exact baseline rollback, recovery canary and receipt-gated promotion.
 
 These states are intentionally separate. More complete product behavior does not establish cloud deployment, enterprise identity, security-provider binding or production qualification.
 
@@ -40,14 +42,14 @@ The preflight compiles accepted probes into validated `ProviderEvidence` objects
 
 ## Exact remaining provider path
 
-1. bind an authorised private CIOS execution target;
-2. materialise/read back the exact admitted CIOS source/revision;
-3. execute the harmless provider canary using persistent storage;
-4. keep non-secret provider/runtime receipts outside the public source plane;
-5. run the production data-plane preflight over identity, storage, scanning, audit, observability and entitlement adapters;
-6. obtain independent health, persistence, rollback, backup/restore, vulnerability and incident/DR evidence;
-7. feed the complete fresh provider evidence set into `ProductionQualificationGate`;
-8. promote only if the gate returns `PRODUCTION_VERIFIED`.
+1. admit the exact rc8 head and its complete source court;
+2. upgrade and read back the v4 Federation operator at zero traffic;
+3. verify the exact existing Cloud SQL recovery controls and successful backup;
+4. build and read back the digest-pinned CIOS image;
+5. deploy the deterministic revision at zero traffic and run the semantic/idempotency canary;
+6. restore the exact baseline traffic map and run the recovery canary;
+7. bind independent identity, restore, vulnerability, observability and incident/DR evidence into `ProductionQualificationGate`;
+8. promote only the exact proven revision and issue one provider-native production receipt.
 
 ## Internal work that should continue while provider execution is blocked
 

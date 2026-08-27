@@ -1,6 +1,6 @@
 {
   "name": "federation-omega-operator",
-  "version": "3.0.0-gemini-vertex1",
+  "version": "4.0.0-cios-production",
   "private": true,
   "type": "module",
   "scripts": {

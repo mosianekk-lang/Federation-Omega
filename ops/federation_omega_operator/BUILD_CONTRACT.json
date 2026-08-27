@@ -1,113 +1,88 @@
 {
   "contract_version": "3.3",
   "mission": {
-    "id": "MISSION-RESOLVE-FEDERATION-GEMINI-20260826",
-    "version": 1,
-    "goal": "Add a keyless, tenant-pinned Gemini Vertex route to the existing Federation Omega operator without weakening its current controls.",
+    "id": "CIOS-PRODUCTION-CONVERGENCE-20260827",
+    "version": 7,
+    "goal": "Upgrade the existing Federation Omega operator with an exact, receipt-bound CIOS production control lane.",
     "user": "Kim Kagiso Mosiane",
-    "workflow": "Canonical-source verification, documentation gate, isolated patch, failure-first tests, Airlock-governed promotion, provider-native readback.",
-    "data": "Public operator source and synthetic exact-nonce fixtures only; no client content or provider credentials.",
-    "interface": "Authenticated Federation Omega JSON actions over the existing Cloud Run HTTP service.",
-    "stack": "Node.js 20+ standard library and Google REST APIs.",
-    "environment": "Isolated local test workspace; provider calls disabled during build validation.",
+    "workflow": "Validate exact targets; read Cloud SQL recovery state; deploy a digest-pinned revision at zero traffic; verify the tagged semantic and idempotency canary; restore the baseline traffic map; re-canary recovery; promote only with immutable deployment, canary and rollback receipts.",
+    "data": "Provider resource metadata, exact traffic maps, source/image/revision bindings and synthetic canary events; secret values are used in memory and never returned.",
+    "interface": "Authenticated Federation Omega JSON actions over the existing Cloud Run operator service.",
+    "stack": "Node.js 20 standard library and Google Cloud REST APIs.",
+    "environment": "Local provider fakes during source admission; existing Federation Omega Cloud Run service after exact-main admission.",
     "maturity": "PROD_FOUNDATION",
-    "governance": "Formation-gated, keyless service identity, exact target and tenant allowlists, no silent fallback.",
-    "failure": "Fail closed on authentication absence, target drift, model drift, tenant drift, disabled semantic gate, provider error or nonce mismatch.",
-    "testing": "Twenty-one Node tests plus syntax checks, secret scan and restored-source baseline verification.",
-    "deployment": "Not yet deployed; promotion requires Airlock-admitted pull request and trusted Google deployment identity.",
-    "continuity": "Existing v2 image remains rollback baseline; new semantic execution is environment-disabled by default."
+    "governance": "Formation-gated, exact-target, idempotent, zero-traffic-first and provider-readback-bound.",
+    "failure": "Fail closed on authentication, target, image digest, service identity, Cloud SQL, backup/PITR, traffic, receipt, semantic, replay or promotion-gate drift.",
+    "testing": "Twenty-eight Node contract/adapter/action tests plus syntax checks before full repository admission.",
+    "deployment": "Not self-certified live by source; the CIOS Production Lane workflow upgrades and verifies the operator at zero traffic before any CIOS mutation.",
+    "continuity": "GCS generation-match-zero receipts and deterministic Cloud Run revision names make deployment and recovery resumable without blind retries."
   },
   "classification": "EXISTING_SYSTEM_REPAIR",
   "assumptions": {
     "stack": "Node.js 20+ standard library",
-    "runtime": "Existing Federation Omega Cloud Run service",
-    "storage": "No new storage for capability or semantic canary actions",
-    "authentication": "Existing Secret Manager token or Google-signed OIDC for operator ingress; Cloud Run service identity for Vertex",
-    "deployment": "Existing private deployment plane or authenticated Google-native deployer"
+    "runtime": "Existing Federation Omega Cloud Run service identity",
+    "storage": "Existing private control bucket for immutable non-secret receipts",
+    "authentication": "Existing Secret Manager token or Google-signed OIDC for operator ingress; Cloud Run service identity for provider APIs",
+    "deployment": "Existing Cloud Build, Artifact Registry, Cloud Run, Cloud SQL and Secret Manager estate"
   },
   "architecture": {
     "components": {
       "frontend": "Not applicable",
-      "backend": "Federation Omega operator action router and GoogleCloudAdapter",
-      "database": "Not applicable for bounded canary actions",
+      "backend": "Federation Omega exact-action router and GoogleCloudAdapter",
+      "database": "Cloud SQL control readback only; CIOS owns pooled PostgreSQL connections",
       "queue": "Not applicable",
-      "worker": "Single bounded action invocation",
-      "scheduler": "Not applicable",
+      "worker": "One bounded provider action invocation",
+      "scheduler": "GitHub Actions dispatch",
       "cache": "Short-lived metadata access-token cache only",
-      "storage": "No new persistent storage",
-      "authentication": "Keyless Cloud Run service identity to Vertex AI"
+      "storage": "Immutable JSON control receipts with ifGenerationMatch=0",
+      "authentication": "Secret Manager admin token or allowlisted Google OIDC; service identity for Cloud APIs"
     },
-    "failure_modes": [
-      "INVALID_INPUT",
-      "AUTHORIZATION_FAILURE",
-      "TIMEOUT",
-      "PARTIAL_WRITE",
-      "MISSING_CONFIGURATION",
-      "EXTERNAL_API_FAILURE",
-      "SEMANTIC_MISMATCH"
-    ],
+    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE", "SEMANTIC_MISMATCH", "ROLLBACK_FAILURE"],
     "observability": {
-      "correlation_ids": "idempotencyKey on semantic canary",
-      "health_checks": "existing operator health and authenticated status actions",
-      "structured_logs": "operator action status plus provider-safe response metadata",
-      "audit_logs": "existing Cloud Run request logs and provider audit logs",
-      "metrics_alerts": "capability status, nonce verification and token usage readback"
+      "correlation_ids": "deploymentKey, canaryKey, source SHA, revision and receipt digest",
+      "health_checks": "operator /health, CIOS tagged /health and /ready, Cloud Run ready revision",
+      "structured_logs": "provider-safe action results with checkedAt timestamps",
+      "audit_logs": "Cloud Audit Logs plus immutable control receipts",
+      "metrics_alerts": "Cloud Run traffic and readiness, Cloud SQL recovery controls and canary outcomes"
     }
   },
   "testing": {
-    "unit": "Contract and adapter tests for allowlists, disabled gates and response parsing",
-    "integration": "Action router to mocked provider adapter",
-    "e2e_or_smoke": "Exact-nonce semantic fixture with no live provider effect",
-    "fixtures_mocks": "Synthetic project, tenant, model and nonce only",
-    "failure_first": "Model drift, tenant drift, disabled API, closed semantic gate and nonce mismatch",
-    "commands": [
-      "node --test tests/operator.test.mjs",
-      "node --check server.mjs",
-      "node --check lib/contracts.mjs",
-      "node --check lib/google_cloud.mjs",
-      "node --check lib/operator.mjs"
-    ]
+    "unit": "Exact payload, target, digest, promotion and allowlist validation",
+    "integration": "Action router to provider fakes and adapter request-body readback",
+    "e2e_or_smoke": "Mocked zero-traffic deployment and semantic/replay canary",
+    "fixtures_mocks": "Synthetic services, revisions, traffic maps, backups, secrets and receipts",
+    "failure_first": "Mutable images, target drift, closed promotion, secret disclosure, missing backup/PITR and receipt mismatch",
+    "commands": ["node --test tests/operator.test.mjs", "npm run check"]
   },
   "delivery": {
-    "file_tree": "ops/federation_omega_operator with contracts, action router, Google adapter, tests and operator documentation",
-    "exact_code_files": [
-      "lib/contracts.mjs",
-      "lib/operator.mjs",
-      "lib/google_cloud.mjs",
-      "tests/operator.test.mjs"
-    ],
-    "setup_commands": ["No new dependencies"],
+    "file_tree": "ops/federation_omega_operator with contracts, action router, Google adapter, client, tests and documentation",
+    "exact_code_files": ["lib/contracts.mjs", "lib/operator.mjs", "lib/google_cloud.mjs", "cios_client.py", "tests/operator.test.mjs"],
+    "setup_commands": ["No new Node dependencies"],
     "run_commands": ["node server.mjs"],
-    "test_commands": ["node --test tests/operator.test.mjs"],
-    "deploy_commands": ["HELD until trusted Google deployment identity and Airlock admission are proven"],
-    "rollback_commands": ["Route traffic to the previously ready Cloud Run revision and leave GEMINI_SEMANTIC_CANARY_ENABLED unset"],
-    "debugging": "Inspect contract error code, provider-safe response, Cloud Run revision logs and exact-nonce readback"
+    "test_commands": ["node --test tests/operator.test.mjs", "npm run check"],
+    "deploy_commands": ["Dispatch CIOS Production Lane from exact main with operator-upgrade or a full phase"],
+    "rollback_commands": ["Route operator traffic to the captured previous revision; invoke ROLLBACK_CIOS_TRAFFIC for the exact CIOS deployment receipt"],
+    "debugging": "Inspect the contract code, immutable receipt and provider readback; never expose tokens or retry an uncertain mutation under a new key"
   },
   "formation": {
-    "mission_id": "MISSION-RESOLVE-FEDERATION-GEMINI-20260826",
-    "mission_version": 1,
+    "mission_id": "CIOS-PRODUCTION-CONVERGENCE-20260827",
+    "mission_version": 7,
     "gate_decision": "EXECUTE",
     "authority_class": "A1_INTERNAL",
     "effectful_permit": "CONSUMED_LOCAL_IMPLEMENTATION_ONLY",
     "single_effectful_path": true
   },
   "watchman": {
-    "stop_conditions": [
-      "secret detected",
-      "unapproved provider cost",
-      "target or tenant drift",
-      "test failure",
-      "semantic nonce mismatch"
-    ],
-    "health": "All local gates green; provider route not yet deployed",
-    "rollback": "Use previous Cloud Run revision; semantic canary is disabled by default"
+    "stop_conditions": ["secret detected", "unapproved provider cost", "target drift", "backup/PITR failure", "test failure", "traffic mismatch", "semantic mismatch"],
+    "health": "All local operator gates green; live v4 deployment is separately evidence-bound",
+    "rollback": "Previous operator revision and exact CIOS baseline traffic receipt"
   },
   "continuity": {
-    "idempotency": "Exact semantic idempotencyKey required and provider retry/fallback omitted",
-    "checkpoints": "Git commit, pull request checks, deployment readback and provider-native canary receipt",
-    "resume_conditions": "Current main SHA, trusted deployment identity and zero-cost capability readback verified",
-    "handoff_files": ["BUILD_CONTRACT.json", "README.md", "tests/operator.test.mjs"],
-    "stop_switch": "Unset GEMINI_SEMANTIC_CANARY_ENABLED or roll back Cloud Run revision"
+    "idempotency": "Deterministic revision plus immutable deploymentKey/canaryKey receipt paths",
+    "checkpoints": "Git SHA, image digest, operator revision, persistence readback, traffic fingerprint and action receipts",
+    "resume_conditions": "Exact main SHA and trusted WIF/operator authentication are verified",
+    "handoff_files": ["BUILD_CONTRACT.json", "README.md", "tests/operator.test.mjs", ".github/workflows/cios-production-lane.yml"],
+    "stop_switch": "CIOS_PROMOTION_ENABLED=false or absence of any required immutable receipt"
   },
   "states": {
     "designed": true,
@@ -120,20 +95,10 @@
     "proven": false
   },
   "proof": {
-    "test_results": [
-      "21/21 operator tests passed",
-      "Node syntax checks passed"
-    ],
-    "semantic_verification": [
-      "local exact-nonce success and mismatch fixtures passed",
-      "semantic provider action remains environment-disabled by default"
-    ],
+    "test_results": ["28/28 operator tests passed", "Node syntax checks passed"],
+    "semantic_verification": ["local zero-traffic baseline preservation passed", "managed persistence and idempotent replay canary passed with provider fakes", "secret-value non-return passed"],
     "deployment_readback": null,
     "unresolved_defects": [],
-    "open_constraints": [
-      "Live operator remains fo-operator-v1-image-cloudbuild",
-      "Trusted Google deployment identity is not yet proven",
-      "Provider-native Vertex capability and semantic readbacks are pending"
-    ]
+    "open_constraints": ["Live operator remains provider-readback-bound until v4 is deployed", "Live Cloud SQL recovery controls and restore evidence remain pending", "Traffic promotion requires fresh exact receipts"]
   }
 }

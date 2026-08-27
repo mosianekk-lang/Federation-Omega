@@ -10,6 +10,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "phoenix-emergency-freeze.yml"
 NOW = datetime(2026, 8, 5, 3, 0, tzinfo=timezone.utc)
 PROVIDER_GATEWAY = ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+CIOS_GATEWAY = ".github/workflows/cios-production-lane.yml"
 REQUIRED = [
     ".github/workflows/github-airlock.yml",
     ".github/workflows/public-repository-leak-guard.yml",
@@ -18,6 +19,7 @@ REQUIRED = [
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     PROVIDER_GATEWAY,
+    CIOS_GATEWAY,
 ]
 
 
@@ -89,6 +91,12 @@ class FreezeConvergenceTests(unittest.TestCase):
         self.assertEqual("VERIFIED", result["status"])
         self.assertEqual([], result["unexpected_active"])
         self.assertIn(PROVIDER_GATEWAY, result["required_active_workflows"])
+
+    def test_cios_gateway_active_is_not_unexpected(self):
+        result = self.receipt(after=[row(1, REQUIRED[0]), row(100, CIOS_GATEWAY)])
+        self.assertEqual("VERIFIED", result["status"])
+        self.assertEqual([], result["unexpected_active"])
+        self.assertIn(CIOS_GATEWAY, result["required_active_workflows"])
 
     def test_unexpected_active_workflow_still_fails(self):
         result = self.receipt(
@@ -167,6 +175,14 @@ class FreezeConvergenceTests(unittest.TestCase):
         self.assertGreaterEqual(text.count("sovara-litellm-v2-3-provider-admission.yml"), 3)
         self.assertIn(
             '"sovara-litellm-v2-3-provider-admission.yml|.github/workflows/sovara-litellm-v2-3-provider-admission.yml"',
+            text,
+        )
+
+    def test_workflow_treats_cios_gateway_as_required_active(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        self.assertGreaterEqual(text.count("cios-production-lane.yml"), 2)
+        self.assertIn(
+            '"cios-production-lane.yml|.github/workflows/cios-production-lane.yml"',
             text,
         )
 

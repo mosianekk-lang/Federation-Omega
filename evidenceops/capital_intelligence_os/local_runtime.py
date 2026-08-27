@@ -22,21 +22,31 @@ MAX_HTTP_BODY_BYTES = 7_000_000
 class LocalRuntimeApplication:
     def __init__(
         self,
-        db_path: str | Path,
-        audit_path: str | Path,
+        db_path: str | Path | None,
+        audit_path: str | Path | None,
         bearer_token: str,
         *,
         runtime_roles: Iterable[str] = ("operator", "deal_member"),
+        state_store: Any | None = None,
+        audit_ledger: Any | None = None,
+        enable_documents: bool = True,
     ) -> None:
-        self.store = SqliteStateStore(db_path)
-        self.audit = AuditLedger(audit_path)
+        if state_store is None and db_path is None:
+            raise ValueError("db_path or state_store is required")
+        if audit_ledger is None and audit_path is None:
+            raise ValueError("audit_path or audit_ledger is required")
+        if enable_documents and db_path is None:
+            raise ValueError("document routes require a SQLite db_path")
+        self.store = state_store if state_store is not None else SqliteStateStore(db_path)
+        self.audit = audit_ledger if audit_ledger is not None else AuditLedger(audit_path)
         self.runtime = DurableAutopilotRuntime(self.store)
         self.policy = RuntimePolicy(bearer_token, runtime_roles=runtime_roles)
-        self.vault = DocumentVault(db_path)
-        self.workspace = DealWorkspaceService(self.vault)
+        self.vault = DocumentVault(db_path) if enable_documents else None
+        self.workspace = DealWorkspaceService(self.vault) if self.vault is not None else None
 
     def close(self) -> None:
-        self.vault.close()
+        if self.vault is not None:
+            self.vault.close()
         self.store.close()
         self.audit.close()
 
@@ -68,7 +78,11 @@ class LocalRuntimeApplication:
 
         try:
             principal = self.policy.authenticate(
-                header_value("Authorization"),
+                (
+                    f"Bearer {header_value('X-CIOS-Token')}"
+                    if header_value("X-CIOS-Token")
+                    else header_value("Authorization")
+                ),
                 header_value("X-Tenant-ID"),
                 header_value("X-User-ID"),
             )
@@ -90,13 +104,17 @@ class LocalRuntimeApplication:
                     "status": "ok",
                     "mode": "LOCAL_CANARY",
                     "database_quick_check": self.store.quick_check(),
-                    "vault_quick_check": self.vault.quick_check(),
+                    "vault_quick_check": self.vault.quick_check() if self.vault is not None else None,
                     "audit_chain_valid": self.audit.verify(),
                     "live_financial_effects": False,
                 }
             elif method == "GET" and normalized_path == "/ready":
                 payload = {
-                    "ready": self.store.quick_check() and self.vault.quick_check() and self.audit.verify(),
+                    "ready": (
+                        self.store.quick_check()
+                        and (self.vault is None or self.vault.quick_check())
+                        and self.audit.verify()
+                    ),
                     "authority_ceiling": "A1_INTERNAL",
                     "runtime_roles": list(principal.roles),
                 }
@@ -121,12 +139,20 @@ class LocalRuntimeApplication:
                 )
                 payload = self.runtime.process(ctx, event, idempotency_key=header_value("Idempotency-Key"))
             elif method == "POST" and normalized_path == "/v1/documents":
+                if self.workspace is None:
+                    raise PermissionError("DOCUMENT_ROUTES_DISABLED")
                 payload = self.workspace.ingest_payload(ctx, json.loads(body.decode() or "{}"))
             elif method == "POST" and normalized_path == "/v1/search":
+                if self.workspace is None:
+                    raise PermissionError("DOCUMENT_ROUTES_DISABLED")
                 payload = self.workspace.search_payload(ctx, json.loads(body.decode() or "{}"))
             elif method == "GET" and normalized_path == "/v1/diligence":
+                if self.workspace is None:
+                    raise PermissionError("DOCUMENT_ROUTES_DISABLED")
                 payload = self.workspace.ingestion.diligence_status(ctx)
             elif method == "GET" and normalized_path == "/v1/workspace":
+                if self.workspace is None:
+                    raise PermissionError("DOCUMENT_ROUTES_DISABLED")
                 payload = self.workspace.snapshot(ctx)
             else:
                 return 403, {"error": "ROUTE_DEFAULT_DENY"}

@@ -8,6 +8,9 @@ import {
   ContractError,
   sha256Hex,
   validateBindPayload,
+  validateCiosCanaryPayload,
+  validateCiosDeployPayload,
+  validateCiosPromotePayload,
   validateGeminiCapabilityPayload,
   validateGeminiSemanticPayload,
 } from "../lib/contracts.mjs";
@@ -23,6 +26,14 @@ const env = {
   GEMINI_MODEL: "gemini-2.5-flash",
   GEMINI_ALLOWED_MODELS: "gemini-2.5-flash",
   FEDERATION_TENANT_ID: "federation-omega",
+  CIOS_SERVICE: "cios-capital-intelligence",
+  CIOS_RUNTIME_SERVICE_ACCOUNT: "cios-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  CIOS_CLOUD_SQL_INSTANCE: "sov-hybrid-suite:africa-south1:cios-postgres",
+  CIOS_DATABASE_SECRET: "cios-database-url",
+  CIOS_AUDIT_DATABASE_SECRET: "cios-audit-database-url",
+  CIOS_BEARER_SECRET: "cios-bearer-token",
+  CIOS_TENANT_ID: "evidenceops-capital-intelligence",
+  CIOS_RUNTIME_USER_ID: "cios-provider-operator",
 };
 
 const valid = {
@@ -38,6 +49,33 @@ const valid = {
   idempotencyKey: "CFRE-BIND-aaaaaaaaaaaaaaaa",
 };
 
+const ciosDeploy = {
+  approvalKey: "APPROVED_CIOS_ZERO_TRAFFIC",
+  project: "sov-hybrid-suite",
+  region: "africa-south1",
+  service: "cios-capital-intelligence",
+  serviceAccount: "cios-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  cloudSqlInstance: "sov-hybrid-suite:africa-south1:cios-postgres",
+  databaseSecret: "cios-database-url",
+  auditDatabaseSecret: "cios-audit-database-url",
+  bearerSecret: "cios-bearer-token",
+  tenantId: "evidenceops-capital-intelligence",
+  runtimeUserId: "cios-provider-operator",
+  sourceSha: "c".repeat(40),
+  image: `africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/cios-capital-intelligence@sha256:${"d".repeat(64)}`,
+  tag: "cios-candidate-c0ffee",
+  idempotencyKey: "CIOS-DEPLOY-c0ffee0000000000",
+};
+
+const ciosCanary = {
+  ...ciosDeploy,
+  approvalKey: "APPROVED_CIOS_SEMANTIC_CANARY",
+  revision: "cios-capital-intelligence-cccccccccccc",
+  deploymentKey: ciosDeploy.idempotencyKey,
+  canaryKey: "CIOS-CANARY-c0ffee0000000000",
+  occurredAt: "2026-08-27T05:00:00Z",
+};
+
 test("allowlist restores the exact CFRE binding action", () => {
   assert.equal(ALLOWED_ACTIONS.includes("BIND_CFRE_PRIVATE_RUNTIME"), true);
 });
@@ -45,6 +83,50 @@ test("allowlist restores the exact CFRE binding action", () => {
 test("allowlist exposes capability read and separately gated semantic canary", () => {
   assert.equal(ALLOWED_ACTIONS.includes("READ_GEMINI_VERTEX_CAPABILITY"), true);
   assert.equal(ALLOWED_ACTIONS.includes("VERIFY_GEMINI_VERTEX_SEMANTIC"), true);
+});
+
+test("allowlist exposes the complete CIOS zero-traffic control lane", () => {
+  for (const action of [
+    "READ_CIOS_PRODUCTION",
+    "READ_CIOS_PERSISTENCE",
+    "DEPLOY_CIOS_ZERO_TRAFFIC",
+    "VERIFY_CIOS_CANARY",
+    "ROLLBACK_CIOS_TRAFFIC",
+    "PROMOTE_CIOS_TRAFFIC",
+  ]) assert.equal(ALLOWED_ACTIONS.includes(action), true, action);
+});
+
+test("CIOS deploy contract pins target, digest image, identities, secrets and idempotency", () => {
+  const binding = validateCiosDeployPayload(ciosDeploy, env);
+  assert.equal(binding.image, ciosDeploy.image);
+  assert.equal(binding.cloudSqlInstance, env.CIOS_CLOUD_SQL_INSTANCE);
+  assert.equal(binding.databaseSecret, env.CIOS_DATABASE_SECRET);
+  assert.throws(
+    () => validateCiosDeployPayload({ ...ciosDeploy, image: ciosDeploy.image.replace("@sha256:", ":mutable-") }, env),
+    ContractError,
+  );
+  assert.throws(
+    () => validateCiosDeployPayload({ ...ciosDeploy, service: "other-service" }, env),
+    (error) => error instanceof ContractError && error.code === "TARGET_MISMATCH",
+  );
+});
+
+test("CIOS semantic and promotion contracts are independently gated", () => {
+  assert.equal(validateCiosCanaryPayload(ciosCanary, env).occurredAt, ciosCanary.occurredAt);
+  assert.throws(
+    () => validateCiosPromotePayload({
+      ...ciosCanary,
+      approvalKey: "APPROVED_CIOS_PRODUCTION_PROMOTION",
+    }, env),
+    (error) => error instanceof ContractError && error.code === "CIOS_PROMOTION_DISABLED",
+  );
+  assert.equal(
+    validateCiosPromotePayload({
+      ...ciosCanary,
+      approvalKey: "APPROVED_CIOS_PRODUCTION_PROMOTION",
+    }, { ...env, CIOS_PROMOTION_ENABLED: "true" }).revision,
+    ciosCanary.revision,
+  );
 });
 
 test("Gemini capability contract is pinned to project, tenant, location and model", () => {
@@ -279,4 +361,115 @@ test("provider adapter completes the exact stage-build-deploy transaction", asyn
   assert.equal(result.status, "CFRE_PRIVATE_RUNTIME_BOUND");
   assert.equal(result.sourceSha256, binding.sourceSha256);
   assert.equal(result.build.status, "SUCCESS");
+});
+
+test("CIOS zero-traffic adapter preserves baseline and binds digest, probes, secrets and Cloud SQL", async () => {
+  const binding = validateCiosDeployPayload(ciosDeploy, env);
+  const revision = "cios-capital-intelligence-cccccccccccc";
+  const baseline = [{ type: "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION", revision: "cios-old", percent: 100, tag: "stable" }];
+  const adapter = new GoogleCloudAdapter({ CIOS_CONTROL_BUCKET: "control-bucket" });
+  adapter.readCiosControlRecord = async () => null;
+  adapter.readCiosPersistence = async () => ({
+    ok: true,
+    status: "CIOS_MANAGED_POSTGRES_RECOVERY_READY",
+    controls: { backupsEnabled: true, pointInTimeRecoveryEnabled: true },
+    latestSuccessfulBackup: { id: "backup-1" },
+  });
+  adapter.readServiceOptional = async () => ({ name: "projects/p/locations/r/services/s", latestReadyRevision: "cios-old", traffic: baseline });
+  let submittedBody;
+  adapter.api = async (_url, options) => {
+    submittedBody = JSON.parse(options.body);
+    return { status: 200, body: { name: "operations/deploy-1" } };
+  };
+  adapter.waitOperation = async () => ({});
+  adapter.readService = async () => ({
+    latestReadyRevision: revision,
+    trafficStatuses: [
+      ...baseline,
+      { type: "TRAFFIC_TARGET_ALLOCATION_TYPE_REVISION", revision, percent: 0, tag: ciosDeploy.tag, uri: "https://candidate.example" },
+    ],
+  });
+  adapter.readRevision = async () => ({ containers: [{ image: ciosDeploy.image }], serviceAccount: ciosDeploy.serviceAccount });
+  adapter.writeCiosControlRecord = async (_binding, _suffix, record) => ({ ...record, receiptDigest: "receipt" });
+  const result = await adapter.deployCiosZeroTraffic(binding);
+  assert.equal(result.status, "CIOS_ZERO_TRAFFIC_DEPLOYED");
+  assert.deepEqual(result.baseline.traffic, baseline);
+  assert.equal(result.candidate.percent, 0);
+  assert.equal(submittedBody.template.revision, revision);
+  assert.equal(submittedBody.template.volumes[0].cloudSqlInstance.instances[0], ciosDeploy.cloudSqlInstance);
+  assert.equal(submittedBody.template.containers[0].startupProbe.tcpSocket.port, 8080);
+  assert.equal(submittedBody.template.containers[0].env.some((item) => item.name === "CIOS_DATABASE_URL" && item.valueSource), true);
+  assert.equal(submittedBody.traffic.some((item) => item.revision === revision && item.percent === 0), true);
+});
+
+test("CIOS persistence readback requires PostgreSQL backup, PITR and a successful recovery point", async () => {
+  const binding = validateCiosDeployPayload(ciosDeploy, env);
+  const adapter = new GoogleCloudAdapter({});
+  const responses = [
+    {
+      name: "cios-postgres", connectionName: ciosDeploy.cloudSqlInstance,
+      databaseVersion: "POSTGRES_16", region: ciosDeploy.region,
+      settings: {
+        storageAutoResize: true, deletionProtectionEnabled: true, availabilityType: "REGIONAL",
+        backupConfiguration: { enabled: true, pointInTimeRecoveryEnabled: true, transactionLogRetentionDays: 7 },
+      },
+    },
+    { items: [{ id: "backup-1", status: "SUCCESSFUL", startTime: "2026-08-27T01:00:00Z", endTime: "2026-08-27T01:02:00Z", type: "AUTOMATED" }] },
+  ];
+  adapter.api = async () => ({ status: 200, body: responses.shift() });
+  const result = await adapter.readCiosPersistence(binding);
+  assert.equal(result.status, "CIOS_MANAGED_POSTGRES_RECOVERY_READY");
+  assert.equal(result.controls.pointInTimeRecoveryEnabled, true);
+  assert.equal(result.controls.successfulBackupPresent, true);
+  assert.equal(result.restoreExecutionAttempted, false);
+  assert.equal(result.secretValuesReturned, false);
+});
+
+test("CIOS semantic canary proves managed persistence and idempotent replay without returning its secret", async () => {
+  const binding = validateCiosCanaryPayload(ciosCanary, env);
+  const adapter = new GoogleCloudAdapter({});
+  adapter.readCiosControlRecord = async () => ({
+    sourceSha: binding.sourceSha,
+    candidate: { revision: binding.revision, tag: ciosDeploy.tag },
+  });
+  adapter.readService = async () => ({
+    uri: "https://service.example",
+    trafficStatuses: [{ revision: binding.revision, tag: ciosDeploy.tag, percent: 0, uri: "https://candidate.example" }],
+  });
+  adapter.accessSecret = async () => "super-secret-application-token";
+  const responses = [
+    {
+      status: "ok", runtime_source_sha: binding.sourceSha, storage_backend: "postgres",
+      managed_persistence_configured: true, append_only_audit_configured: true,
+      audit_chain_valid: true, database_quick_check: true, runtime_mode: "PROVIDER_CANDIDATE",
+    },
+    { ready: true },
+    { replayed: false, receipt_hash: "semantic-receipt" },
+    { replayed: true, receipt_hash: "semantic-receipt" },
+  ];
+  adapter.invokeCiosJson = async () => responses.shift();
+  adapter.writeCiosControlRecord = async (_binding, _suffix, record) => ({ ...record, receiptDigest: "canary-receipt" });
+  const result = await adapter.verifyCiosCanary(binding);
+  assert.equal(result.status, "CIOS_ZERO_TRAFFIC_CANARY_VERIFIED");
+  assert.equal(result.semantic.replayVerified, true);
+  assert.equal(result.applicationSecretValueReturned, false);
+  assert.equal(JSON.stringify(result).includes("super-secret-application-token"), false);
+});
+
+test("CIOS promotion delegates only after deployment, canary and rollback contract validation", async () => {
+  let observed;
+  const result = await executeAction({
+    action: "PROMOTE_CIOS_TRAFFIC",
+    payload: { ...ciosCanary, approvalKey: "APPROVED_CIOS_PRODUCTION_PROMOTION" },
+    principal: { mode: "TEST", principal: "test" },
+    env: { ...env, CIOS_PROMOTION_ENABLED: "true" },
+    adapter: {
+      async promoteCiosTraffic(binding) {
+        observed = binding;
+        return { ok: true, status: "CIOS_PRODUCTION_TRAFFIC_PROMOTED" };
+      },
+    },
+  });
+  assert.equal(result.body.status, "CIOS_PRODUCTION_TRAFFIC_PROMOTED");
+  assert.equal(observed.revision, ciosCanary.revision);
 });

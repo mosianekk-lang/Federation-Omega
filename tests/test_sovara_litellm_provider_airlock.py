@@ -47,7 +47,13 @@ jobs:
         self.assertEqual([], findings)
 
     def test_exact_gateway_is_the_only_oidc_source_workflow(self):
-        self.assertEqual([WORKFLOW_PATH], POLICY["oidc_workflow_allowlist"])
+        self.assertEqual(
+            {
+                WORKFLOW_PATH,
+                ".github/workflows/cios-production-lane.yml",
+            },
+            set(POLICY["oidc_workflow_allowlist"]),
+        )
         self.assertIn(WORKFLOW_PATH, POLICY["active_workflow_allowlist"])
         self.assertIn(WORKFLOW_PATH, POLICY["execution_quarantine"]["keep_active"])
 

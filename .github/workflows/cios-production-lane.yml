@@ -1,0 +1,314 @@
+name: CIOS Production Lane
+
+on:
+  pull_request:
+    paths:
+      - "evidenceops/capital_intelligence_os/**"
+      - "ops/federation_omega_operator/**"
+      - "tests/test_cios_*.py"
+      - ".github/workflows/cios-production-lane.yml"
+  push:
+    branches: [main]
+    paths:
+      - "evidenceops/capital_intelligence_os/**"
+      - "ops/federation_omega_operator/**"
+      - "tests/test_cios_*.py"
+      - ".github/workflows/cios-production-lane.yml"
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: Type EXECUTE_CIOS_PRODUCTION_LANE
+        required: true
+        type: string
+      phase:
+        description: Provider phase to execute
+        required: true
+        type: choice
+        default: full-prove-and-rollback
+        options:
+          - read-only
+          - operator-upgrade
+          - zero-traffic
+          - prove-and-rollback
+          - promote
+          - full-prove-and-rollback
+          - full-promote
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cios-production-lane
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  REPOSITORY: federation-omega
+  OPERATOR_SERVICE: federation-omega-operator
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  CIOS_SERVICE: cios-capital-intelligence
+  CIOS_RUNTIME_SERVICE_ACCOUNT: cios-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  CIOS_CLOUD_SQL_INSTANCE: sov-hybrid-suite:africa-south1:cios-postgres
+  CIOS_DATABASE_SECRET: cios-database-url
+  CIOS_AUDIT_DATABASE_SECRET: cios-audit-database-url
+  CIOS_BEARER_SECRET: cios-bearer-token
+  CIOS_TENANT_ID: evidenceops-capital-intelligence
+  CIOS_RUNTIME_USER_ID: cios-provider-operator
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  source-admission:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: "20"
+      - name: Run CIOS production-lane admission
+        run: |
+          set -euo pipefail
+          python -m unittest -v \
+            tests.test_cios_rc8_production_lane \
+            tests.test_cios_provider_runtime \
+            tests.test_cios_rc71_security_admission
+          python -m unittest discover -v evidenceops/capital_intelligence_os/tests
+          npm --prefix ops/federation_omega_operator test
+          npm --prefix ops/federation_omega_operator run check
+
+  provider:
+    if: ${{ github.event_name == 'workflow_dispatch' }}
+    needs: source-admission
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Validate provider execution gate
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRMATION" = "EXECUTE_CIOS_PRODUCTION_LANE"
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - name: Authenticate through keyless Workload Identity Federation
+        id: google-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+
+      - name: Recover operator authentication without disclosure
+        env:
+          DIRECT_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+        run: |
+          set -euo pipefail
+          set +x
+          TOKEN="$DIRECT_TOKEN"
+          if [[ -z "$TOKEN" ]]; then
+            TOKEN="$(gcloud secrets versions access latest --secret=fo-operator-admin-token --project="$PROJECT_ID")"
+          fi
+          test -n "$TOKEN"
+          echo "::add-mask::$TOKEN"
+          {
+            echo 'FO_ADMIN_TOKEN<<CIOS_TOKEN_EOF'
+            printf '%s\n' "$TOKEN"
+            echo 'CIOS_TOKEN_EOF'
+          } >> "$GITHUB_ENV"
+
+      - name: Read provider and persistence baseline
+        if: ${{ inputs.phase != 'operator-upgrade' && inputs.phase != 'full-prove-and-rollback' && inputs.phase != 'full-promote' }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cios-lane
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          common = {
+              "project": "sov-hybrid-suite",
+              "region": "africa-south1",
+              "service": "cios-capital-intelligence",
+              "serviceAccount": "cios-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+              "cloudSqlInstance": "sov-hybrid-suite:africa-south1:cios-postgres",
+              "databaseSecret": "cios-database-url",
+              "auditDatabaseSecret": "cios-audit-database-url",
+              "bearerSecret": "cios-bearer-token",
+              "tenantId": "evidenceops-capital-intelligence",
+              "runtimeUserId": "cios-provider-operator",
+          }
+          Path('/tmp/cios-lane/common.json').write_text(json.dumps(common), encoding='utf-8')
+          PY
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$OPERATOR_URL" --action READ_CIOS_PRODUCTION \
+            --payload /tmp/cios-lane/common.json --output /tmp/cios-lane/service-before.json
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$OPERATOR_URL" --action READ_CIOS_PERSISTENCE \
+            --payload /tmp/cios-lane/common.json --output /tmp/cios-lane/persistence.json
+
+      - name: Build and admit operator candidate
+        if: ${{ inputs.phase == 'operator-upgrade' || inputs.phase == 'full-prove-and-rollback' || inputs.phase == 'full-promote' }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cios-lane
+          OPERATOR_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${OPERATOR_SERVICE}:${GITHUB_SHA}"
+          gcloud builds submit ops/federation_omega_operator \
+            --project "$PROJECT_ID" --region "$REGION" --tag "$OPERATOR_TAG" --quiet
+          OPERATOR_DIGEST="$(gcloud artifacts docker images describe "$OPERATOR_TAG" --project "$PROJECT_ID" --format='value(image_summary.digest)')"
+          test -n "$OPERATOR_DIGEST"
+          OPERATOR_IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${OPERATOR_SERVICE}@${OPERATOR_DIGEST}"
+          PREVIOUS="$(gcloud run services describe "$OPERATOR_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')"
+          test -n "$PREVIOUS"
+          TAG="cios-operator-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$OPERATOR_SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --image "$OPERATOR_IMAGE" --no-traffic --tag "$TAG" \
+            --update-env-vars "CIOS_PROJECT_ID=${PROJECT_ID},CIOS_REGION=${REGION},CIOS_SERVICE=${CIOS_SERVICE},CIOS_RUNTIME_SERVICE_ACCOUNT=${CIOS_RUNTIME_SERVICE_ACCOUNT},CIOS_CLOUD_SQL_INSTANCE=${CIOS_CLOUD_SQL_INSTANCE},CIOS_ARTIFACT_REPOSITORY=${REPOSITORY},CIOS_DATABASE_SECRET=${CIOS_DATABASE_SECRET},CIOS_AUDIT_DATABASE_SECRET=${CIOS_AUDIT_DATABASE_SECRET},CIOS_BEARER_SECRET=${CIOS_BEARER_SECRET},CIOS_TENANT_ID=${CIOS_TENANT_ID},CIOS_RUNTIME_USER_ID=${CIOS_RUNTIME_USER_ID},CIOS_PROMOTION_ENABLED=true" \
+            --quiet
+          TAGGED_URL="$(gcloud run services describe "$OPERATOR_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json | \
+            python -c 'import json,sys; p=json.load(sys.stdin); tag=sys.argv[1]; print(next(x["url"] for x in p["status"]["traffic"] if x.get("tag")==tag))' "$TAG")"
+          CONTRACT="$(curl --fail --silent --show-error "$TAGGED_URL/")"
+          python - "$CONTRACT" <<'PY'
+          import json, sys
+          payload=json.loads(sys.argv[1])
+          required={"READ_CIOS_PRODUCTION","READ_CIOS_PERSISTENCE","DEPLOY_CIOS_ZERO_TRAFFIC","VERIFY_CIOS_CANARY","ROLLBACK_CIOS_TRAFFIC","PROMOTE_CIOS_TRAFFIC"}
+          assert required.issubset(set(payload.get("allowedActions", []))), payload
+          assert payload.get("version") == "fo-operator-v4-cios-production", payload
+          PY
+          printf '{}\n' > /tmp/cios-lane/status-request.json
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$TAGGED_URL" --action STATUS \
+            --payload /tmp/cios-lane/status-request.json --output /tmp/cios-lane/operator-status.json
+          CANDIDATE="$(gcloud run services describe "$OPERATOR_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')"
+          rollback_operator() {
+            gcloud run services update-traffic "$OPERATOR_SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+              --to-revisions "${PREVIOUS}=100" --quiet
+          }
+          trap rollback_operator ERR
+          gcloud run services update-traffic "$OPERATOR_SERVICE" --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${CANDIDATE}=100" --quiet
+          curl --fail --silent --show-error "$OPERATOR_URL/health" | \
+            python -c 'import json,sys; p=json.load(sys.stdin); assert p.get("version")=="fo-operator-v4-cios-production",p'
+          trap - ERR
+          printf '%s\n' "$PREVIOUS" > /tmp/cios-lane/operator-rollback-revision.txt
+
+      - name: Read upgraded provider and persistence baseline
+        if: ${{ inputs.phase == 'full-prove-and-rollback' || inputs.phase == 'full-promote' }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          common = {
+              "project": "sov-hybrid-suite", "region": "africa-south1",
+              "service": "cios-capital-intelligence",
+              "serviceAccount": "cios-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+              "cloudSqlInstance": "sov-hybrid-suite:africa-south1:cios-postgres",
+              "databaseSecret": "cios-database-url", "auditDatabaseSecret": "cios-audit-database-url",
+              "bearerSecret": "cios-bearer-token", "tenantId": "evidenceops-capital-intelligence",
+              "runtimeUserId": "cios-provider-operator",
+          }
+          Path('/tmp/cios-lane/common.json').write_text(json.dumps(common), encoding='utf-8')
+          PY
+          python ops/federation_omega_operator/cios_client.py --operator "$OPERATOR_URL" \
+            --action READ_CIOS_PRODUCTION --payload /tmp/cios-lane/common.json --output /tmp/cios-lane/service-before.json
+          python ops/federation_omega_operator/cios_client.py --operator "$OPERATOR_URL" \
+            --action READ_CIOS_PERSISTENCE --payload /tmp/cios-lane/common.json --output /tmp/cios-lane/persistence.json
+
+      - name: Build immutable CIOS runtime image
+        if: ${{ inputs.phase == 'zero-traffic' || inputs.phase == 'prove-and-rollback' || inputs.phase == 'full-prove-and-rollback' || inputs.phase == 'full-promote' }}
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${CIOS_SERVICE}:${GITHUB_SHA}"
+          gcloud builds submit . --project "$PROJECT_ID" --region "$REGION" \
+            --config evidenceops/capital_intelligence_os/cloudbuild.runtime.yaml \
+            --substitutions "_IMAGE=${IMAGE_TAG}" --quiet
+          DIGEST="$(gcloud artifacts docker images describe "$IMAGE_TAG" --project "$PROJECT_ID" --format='value(image_summary.digest)')"
+          test -n "$DIGEST"
+          echo "CIOS_IMAGE=${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${CIOS_SERVICE}@${DIGEST}" >> "$GITHUB_ENV"
+
+      - name: Deploy exact CIOS revision at zero traffic
+        if: ${{ inputs.phase == 'zero-traffic' || inputs.phase == 'prove-and-rollback' || inputs.phase == 'full-prove-and-rollback' || inputs.phase == 'full-promote' }}
+        run: |
+          set -euo pipefail
+          DEPLOYMENT_KEY="CIOS-DEPLOY-${GITHUB_SHA}"
+          TAG="cios-${GITHUB_SHA:0:8}"
+          jq --arg image "$CIOS_IMAGE" --arg sha "$GITHUB_SHA" --arg key "$DEPLOYMENT_KEY" --arg tag "$TAG" \
+            '. + {approvalKey:"APPROVED_CIOS_ZERO_TRAFFIC",image:$image,sourceSha:$sha,idempotencyKey:$key,tag:$tag}' \
+            /tmp/cios-lane/common.json > /tmp/cios-lane/deploy-request.json
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$OPERATOR_URL" --action DEPLOY_CIOS_ZERO_TRAFFIC \
+            --payload /tmp/cios-lane/deploy-request.json --output /tmp/cios-lane/deploy.json
+          echo "CIOS_DEPLOYMENT_KEY=$DEPLOYMENT_KEY" >> "$GITHUB_ENV"
+          echo "CIOS_REVISION=${CIOS_SERVICE}-${GITHUB_SHA:0:12}" >> "$GITHUB_ENV"
+
+      - name: Prove semantic canary, rollback and recovery canary
+        if: ${{ inputs.phase == 'prove-and-rollback' || inputs.phase == 'full-prove-and-rollback' || inputs.phase == 'full-promote' }}
+        run: |
+          set -euo pipefail
+          CANARY_KEY="CIOS-CANARY-${GITHUB_SHA}"
+          OCCURRED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          jq --arg sha "$GITHUB_SHA" --arg revision "$CIOS_REVISION" --arg deployment "$CIOS_DEPLOYMENT_KEY" \
+            --arg canary "$CANARY_KEY" --arg occurred "$OCCURRED_AT" \
+            '. + {approvalKey:"APPROVED_CIOS_SEMANTIC_CANARY",sourceSha:$sha,revision:$revision,deploymentKey:$deployment,canaryKey:$canary,occurredAt:$occurred}' \
+            /tmp/cios-lane/common.json > /tmp/cios-lane/canary-request.json
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$OPERATOR_URL" --action VERIFY_CIOS_CANARY \
+            --payload /tmp/cios-lane/canary-request.json --output /tmp/cios-lane/canary.json
+          jq '.approvalKey="APPROVED_CIOS_BASELINE_ROLLBACK" | del(.occurredAt)' \
+            /tmp/cios-lane/canary-request.json > /tmp/cios-lane/rollback-request.json
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$OPERATOR_URL" --action ROLLBACK_CIOS_TRAFFIC \
+            --payload /tmp/cios-lane/rollback-request.json --output /tmp/cios-lane/rollback.json
+          RECOVERY_KEY="CIOS-RECOVERY-${GITHUB_SHA}"
+          jq --arg key "$RECOVERY_KEY" '.canaryKey=$key' \
+            /tmp/cios-lane/canary-request.json > /tmp/cios-lane/recovery-canary-request.json
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$OPERATOR_URL" --action VERIFY_CIOS_CANARY \
+            --payload /tmp/cios-lane/recovery-canary-request.json --output /tmp/cios-lane/recovery-canary.json
+
+      - name: Promote only an already-proven exact revision
+        if: ${{ inputs.phase == 'promote' || inputs.phase == 'full-promote' }}
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          DEPLOYMENT_KEY="CIOS-DEPLOY-${SOURCE_SHA}"
+          CANARY_KEY="CIOS-RECOVERY-${SOURCE_SHA}"
+          REVISION="${CIOS_SERVICE}-${SOURCE_SHA:0:12}"
+          jq --arg sha "$SOURCE_SHA" --arg revision "$REVISION" --arg deployment "$DEPLOYMENT_KEY" --arg canary "$CANARY_KEY" \
+            '. + {approvalKey:"APPROVED_CIOS_PRODUCTION_PROMOTION",sourceSha:$sha,revision:$revision,deploymentKey:$deployment,canaryKey:$canary}' \
+            /tmp/cios-lane/common.json > /tmp/cios-lane/promote-request.json
+          python ops/federation_omega_operator/cios_client.py \
+            --operator "$OPERATOR_URL" --action PROMOTE_CIOS_TRAFFIC \
+            --payload /tmp/cios-lane/promote-request.json --output /tmp/cios-lane/promotion.json
+
+      - name: Emit proof summary without secret values
+        if: always()
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          root=Path('/tmp/cios-lane')
+          files={}
+          for path in sorted(root.glob('*.json')):
+              raw=path.read_bytes()
+              files[path.name]={"sha256":hashlib.sha256(raw).hexdigest(),"bytes":len(raw)}
+          print(json.dumps({"receipt":"CIOS-PRODUCTION-LANE-WORKFLOW","source_sha":"${{ github.sha }}","phase":"${{ inputs.phase }}","artifacts":files,"secret_values_recorded":False},sort_keys=True))
