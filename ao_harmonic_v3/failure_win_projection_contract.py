@@ -162,10 +162,10 @@ def receiver_state_formula(*, sheet_name: str = EVENT_SHEET) -> str:
         f'LET(raw_claim,{raw_behavior},proof_graph_ok,{proof_complete},'
         'IF(AND(ki,bp,ir,cur,refs<>""),"V2_BEHAVIOR_PROVEN",'
         'IF(AND(raw_claim,proof_graph_ok=FALSE),"V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE",'
-        'IF(ki,"V2_INVOKED_PROOF_OPEN","V2_EVENT_PRESENT_INVOCATION_OPEN")))), '
+        'IF(ki,"V2_INVOKED_PROOF_OPEN","V2_EVENT_PRESENT_INVOCATION_OPEN")))),'
         f'IF(ver="1.0.0",IF({v1_behavior},"V1_BEHAVIOR_PROVEN_V2_PENDING","HISTORICAL_EVENT_V2_PENDING"),'
-        '"HISTORICAL_EVENT_V2_PENDING")))))))'
-    ).replace(')))), IF', ')))),IF')
+        '"HISTORICAL_EVENT_V2_PENDING"))))))'
+    )
 
 
 def truth_boundary_formula() -> str:
