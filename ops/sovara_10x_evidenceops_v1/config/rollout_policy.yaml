@@ -1,0 +1,88 @@
+schema: SOVARA-10X-PROGRESSIVE-ROLLOUT-1
+stages:
+  SOURCE_READY:
+    minimum_samples: 0
+    minimum_accepted_rate: 0.0
+    minimum_mean_score: 0.0
+    maximum_p95_latency_ms: 999999
+    maximum_cost_per_accepted_mission_usd: 999999
+    requires_external_quorum: false
+  OFFLINE_VALIDATED:
+    minimum_samples: 24
+    minimum_accepted_rate: 1.0
+    minimum_mean_score: 0.95
+    maximum_p95_latency_ms: 5000
+    maximum_cost_per_accepted_mission_usd: 0.25
+    requires_external_quorum: false
+  METADATA_VERIFIED:
+    minimum_samples: 24
+    minimum_accepted_rate: 1.0
+    minimum_mean_score: 0.95
+    maximum_p95_latency_ms: 5000
+    maximum_cost_per_accepted_mission_usd: 0.25
+    requires_external_quorum: false
+  SEMANTIC_VERIFIED:
+    minimum_samples: 24
+    minimum_accepted_rate: 0.95
+    minimum_mean_score: 0.90
+    maximum_p95_latency_ms: 15000
+    maximum_cost_per_accepted_mission_usd: 0.25
+    requires_external_quorum: true
+  CORPUS_BENCHMARKED:
+    minimum_samples: 50
+    minimum_accepted_rate: 0.90
+    minimum_mean_score: 0.88
+    maximum_p95_latency_ms: 15000
+    maximum_cost_per_accepted_mission_usd: 0.20
+    requires_external_quorum: true
+  SHADOW:
+    minimum_samples: 100
+    minimum_accepted_rate: 0.92
+    minimum_mean_score: 0.90
+    maximum_p95_latency_ms: 12000
+    maximum_cost_per_accepted_mission_usd: 0.15
+    requires_external_quorum: true
+  CANARY_1:
+    minimum_samples: 100
+    minimum_accepted_rate: 0.95
+    minimum_mean_score: 0.92
+    maximum_p95_latency_ms: 10000
+    maximum_cost_per_accepted_mission_usd: 0.12
+    requires_external_quorum: true
+  CANARY_5:
+    minimum_samples: 250
+    minimum_accepted_rate: 0.96
+    minimum_mean_score: 0.93
+    maximum_p95_latency_ms: 9000
+    maximum_cost_per_accepted_mission_usd: 0.10
+    requires_external_quorum: true
+  LIMITED_25:
+    minimum_samples: 500
+    minimum_accepted_rate: 0.97
+    minimum_mean_score: 0.94
+    maximum_p95_latency_ms: 8000
+    maximum_cost_per_accepted_mission_usd: 0.09
+    requires_external_quorum: true
+  LIMITED_50:
+    minimum_samples: 750
+    minimum_accepted_rate: 0.98
+    minimum_mean_score: 0.95
+    maximum_p95_latency_ms: 7500
+    maximum_cost_per_accepted_mission_usd: 0.08
+    requires_external_quorum: true
+  FULL_100:
+    minimum_samples: 1000
+    minimum_accepted_rate: 0.985
+    minimum_mean_score: 0.95
+    maximum_p95_latency_ms: 7000
+    maximum_cost_per_accepted_mission_usd: 0.08
+    requires_external_quorum: true
+rollback_triggers:
+  - hard_veto_count_gt_zero
+  - secret_leak_count_gt_zero
+  - provider_or_model_identity_drift
+  - rollback_canary_failure
+  - accepted_rate_below_stage_floor
+  - p95_latency_above_stage_ceiling
+  - cost_per_accepted_mission_above_stage_ceiling
+  - evidence_receipt_completeness_below_100_percent

@@ -1,0 +1,45 @@
+{
+  "acceptance": {
+    "deterministic_zip": "PASS",
+    "fault_provider_must_fail": true,
+    "live_provider_claim": false,
+    "offline_corpus_cases": 24,
+    "offline_gold_acceptance_rate": 1.0,
+    "production_promotion": false,
+    "secret_scan": "PASS",
+    "unit_tests_minimum": 40
+  },
+  "deliverables": [
+    "chat audit and correction ledger",
+    "canonical truth reset",
+    "flagship mission contract",
+    "24-case immutable synthetic evaluation corpus",
+    "deterministic EvidenceOps scorer",
+    "three-cell policy router",
+    "provider-neutral adapter interface",
+    "hash-chain SQLite ledger",
+    "secret-safe lightweight receipts",
+    "JARVIS/Sentinel/CFBE assurance plane",
+    "progressive rollout and rollback controller",
+    "material-delta filter",
+    "300-second checkpointed execution plan",
+    "operator, provider admission, evaluation, and incident runbooks",
+    "tests, validation receipts, checksums, and deterministic bundle"
+  ],
+  "flagship_mission": "EVIDENCEOPS_CASE_PACKET_ANALYSIS_V1",
+  "objective": "Reduce time and owner intervention per accepted, evidence-grounded mission while preserving privacy, source fidelity, rollback and canonical-truth controls.",
+  "owner": "Kim Kagiso Mosiane",
+  "provider_fabric": {
+    "critical_cells": 3,
+    "other_provider_routes": "PRESERVED_ADDITIVELY_NOT_ON_FLAGSHIP_CRITICAL_PATH",
+    "roles": [
+      "CHAMPION_PRIMARY",
+      "OPENROUTER_CHALLENGER_SHADOW",
+      "OLLAMA_CONTINUITY"
+    ]
+  },
+  "receipt_sha256": "6b190f55c1c273da25deadfe6708f8a04268f7a54d9f825510dcfb5a818bd485",
+  "release": "SOVARA_10X_EVIDENCEOPS_VERTICAL_SLICE_V1.0.0",
+  "schema": "SOVARA-10X-BUILD-CONTRACT-1",
+  "truth_boundary": "This release creates and validates the 10x operating system locally. It does not manufacture provider credentials, deploy a gateway, change traffic, or prove a 10x performance ratio."
+}

@@ -1,0 +1,25 @@
+schema: SOVARA-10X-MEASUREMENT-CONTRACT-1
+primary_metric: TIME_TO_ACCEPTED_MISSION
+secondary_metrics:
+  - cost_per_accepted_mission
+  - accepted_missions_per_owner_intervention
+  - first_pass_acceptance_rate
+  - p50_latency
+  - p95_latency
+  - fallback_success_rate
+  - mean_time_to_recovery
+  - evidence_receipt_completeness
+  - unsupported_verified_claim_rate
+hard_non_regression_metrics:
+  secret_leak_count: 0
+  canonical_truth_promotion_attempts: 0
+  invalid_source_bindings: 0
+  privacy_policy_violations: 0
+  rollback_readback_failures: 0
+ten_x_claim_gate:
+  minimum_sample_count: 100
+  required_ratio_on_primary_metric: 10.0
+  hard_vetoes_allowed: 0
+  replicated_runs_required: 3
+  confidence_interval_required: true
+  provider_count_is_not_a_performance_metric: true

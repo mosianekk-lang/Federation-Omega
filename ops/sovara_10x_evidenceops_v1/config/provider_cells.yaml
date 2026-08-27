@@ -1,0 +1,43 @@
+schema: SOVARA-10X-THREE-CELL-FABRIC-1
+truth_boundary: SOURCE_CONTRACT_ONLY_LIVE_PROVIDER_STATE_REQUIRES_FRESH_READBACK
+cells:
+  primary:
+    role: CHAMPION
+    alias: sovara-primary
+    provider_family: direct
+    returned_to_user: true
+    admission_requires:
+      - provider_metadata
+      - exact_nonce_semantic_canary
+      - resolved_model
+      - usage
+      - latency
+      - benchmark_corpus
+      - rollback
+  openrouter:
+    role: CHALLENGER
+    alias: openrouter-auto
+    provider_family: openrouter
+    returned_to_user: false
+    mode: SHADOW_UNTIL_PROMOTED
+    admission_requires:
+      - key_metadata
+      - usable_credit_boolean_without_balance_persistence
+      - exact_nonce_semantic_canary
+      - resolved_model
+      - usage
+      - latency
+      - cost
+      - benchmark_corpus
+  ollama:
+    role: CONTINUITY
+    alias: local-llama3
+    provider_family: local
+    returned_to_user: only_on_primary_failure_or_privileged_policy
+    admission_requires:
+      - endpoint_inventory
+      - model_digest
+      - exact_nonce_semantic_canary
+      - runtime_metrics
+      - restart_recovery
+selection_rule: MISSION_SPECIFIC_CHAMPION_NOT_UNIVERSAL_BEST_MODEL
