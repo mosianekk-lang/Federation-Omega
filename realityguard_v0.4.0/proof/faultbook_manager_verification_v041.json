@@ -1,0 +1,22 @@
+{
+  "schema_version": "realityguard.faultbook-manager-proof.v1",
+  "version": "0.4.1",
+  "baseline_commit": "5e751038ff80bd02652e3ea22e027ea31d3b2dad",
+  "test_suite": {"passed": 115, "failed": 0, "command": "PYTHONPATH=src python -m unittest discover -s tests"},
+  "compilation": {"passed": true, "command": "PYTHONPATH=src python -m compileall -q src tests"},
+  "build_contract": {"valid": true, "proof_required": true},
+  "private_import": {
+    "faultbook_id": "FO-GEM-AUTH-CONT-20260826-001",
+    "ledger_events": 94,
+    "ledger_head": "5ea22b2b6f7e245b4764d387967ef0a527747055c5d4cff9b32227a47a6ba054",
+    "ledger_sha256": "bc62c937fb2b74ae141be616a6b849d6d586fa55fc1495ebcfa41812e86a2aaf",
+    "faults": 23,
+    "registry_valid": true,
+    "system_status": "SYSTEMIC_OPEN"
+  },
+  "privacy": {"raw_events_in_public_manifest": false, "artifact_paths_in_public_manifest": false, "storage_refs_in_public_manifest": false, "consumer_proof_refs_in_public_manifest": false, "semantic_scan": "PASS"},
+  "public_manifest_sha256": "abad8adb8026e957845d19bca722a056b56a9fc2024f6d224b4457080947a4e5",
+  "binding_truth": {"current_invocation": "VERIFIED_INVOCATION", "library_registry": "VERIFIED_SOURCE", "federation_live_operator": "ADAPTER_REQUIRED", "historical_chatgpt_chats": "ADAPTER_REQUIRED", "universal_sync_claim_allowed": false},
+  "maturity": "TESTED_LOCAL_SOURCE_CANDIDATE",
+  "external_deployment_claimed": false
+}
