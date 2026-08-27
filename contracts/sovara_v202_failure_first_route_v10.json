@@ -1,0 +1,65 @@
+{
+  "routeId": "SOVARA-V202-FAILURE-FIRST-V10",
+  "state": "COMPILED_NOT_EXECUTED",
+  "compiledAt": "2026-08-27T04:15:11Z",
+  "failureKernel": {
+    "ruleId": "PROP-FAILURE-WIN-20260822-002",
+    "version": "2.0",
+    "sourceFingerprint": "sha256:a8d45e485533b2f88d204a3475205542f147e07ac693fd12e960ba4895990a74"
+  },
+  "source": {
+    "driveFileId": "18sNico5_y0kkbnM7LoYyRywSiHy3wb55",
+    "sha256": "1176eaa93b1a889ba96f16e780c01012c413c360d8979246bca8cab41a446424",
+    "bytes": 28586
+  },
+  "jarvis": {
+    "deadlineSeconds": 300,
+    "proofReserveSeconds": 30,
+    "minimumRemainingBudgetAtExecutionSeconds": 80,
+    "previousPreflightSeconds": 245,
+    "warmedPreflightTargetSeconds": 20,
+    "measuredImprovementFactorForRetryAdmission": 12.25
+  },
+  "stages": [
+    {
+      "id": "install",
+      "estimatedSeconds": 20,
+      "kind": "provider_write",
+      "requires": ["fresh Formation permit", "source hash equality", "remaining-budget gate"]
+    },
+    {
+      "id": "zero_provider_self_test",
+      "estimatedSeconds": 20,
+      "kind": "provider_canary",
+      "requires": ["install readback", "provider effects remain zero"]
+    },
+    {
+      "id": "semantic_proof",
+      "estimatedSeconds": 10,
+      "kind": "provider_read",
+      "requires": ["receipt hash equality", "task-specific semantic fruit"]
+    }
+  ],
+  "guardFiles": {
+    "selector": {
+      "path": "failure_kernel/select_route_v2.py",
+      "sha256": "99ce8c4192d870551d42cb9c54fd03385ec3edaed3e99c70618f157f77b2cc36"
+    },
+    "execution": {
+      "path": "failure_kernel/failure_win_execution_guard.py",
+      "sha256": "f6d3ca43486d42bddfeeb68e3a8dcfd0554e48f2e6157a52c6d87000ad721559"
+    },
+    "tests": {
+      "path": "tests/test_failure_kernel_repairs.py",
+      "sha256": "d33e2b5d9e788d83099c017e43106aa29f9b6f13c0b61946bf13d6ca1d55f7c1"
+    }
+  },
+  "truthBoundary": {
+    "liveAppsScriptMutation": false,
+    "providerRouteAttempted": false,
+    "operationalWinVerified": false,
+    "repairCycleState": "REPAIR_CYCLE_OPEN"
+  },
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}
