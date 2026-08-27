@@ -1,0 +1,48 @@
+{
+  "node": "FEDERATION_QUANT_LAB_LONA_NODE",
+  "version": "1.0.0-canary",
+  "status": "EXECUTING_CANARY",
+  "research_only": true,
+  "live_broker_execution": false,
+  "strategy": {
+    "name": "Federation LONA Canary SMA v1",
+    "lona_strategy_id": "c9dc8521-938e-45e0-8708-fda32c080231",
+    "code_sha256": "266505912eb3d1cf05230ad823177c8ff95639edd1a4c0b6ac1fa946bc7754bf",
+    "parameters": {
+      "fast_period": 20,
+      "slow_period": 50,
+      "position_fraction": 0.95
+    }
+  },
+  "dataset": {
+    "symbol": "SPY",
+    "asset_class": "etf",
+    "frequency": "1d",
+    "source": "TIINGO",
+    "lona_symbol_id": "9e60d261-2ffe-4f9f-8412-35f59224b6cd"
+  },
+  "backtest": {
+    "report_id": "bc6c79d0-3951-4b87-804a-c1fc3911e703",
+    "start_date": "2020-01-01",
+    "end_date": "2026-08-27",
+    "initial_cash": 100000,
+    "commission": 0.001,
+    "leverage": 1,
+    "buy_on_close": true,
+    "completion_state": "DISPATCHED_NOT_YET_VERIFIED"
+  },
+  "promotion_policy": {
+    "admit_to_main_only_after": [
+      "LONA report status COMPLETED",
+      "full report readback",
+      "strategy source readback match",
+      "manifest reconciliation",
+      "GitHub PR reviewable"
+    ],
+    "prohibited": [
+      "claiming live trading capability",
+      "using backtest success as live-capital approval",
+      "equating dispatched work with completion"
+    ]
+  }
+}
