@@ -1,0 +1,11 @@
+{
+  "receipt_id": "FWV2-PROJECTION-BOUNDARY-LEARNING-20260827-001",
+  "failure_preserved": true,
+  "cause_isolated": true,
+  "materially_different_repair": true,
+  "provider_readback_after_repair": true,
+  "source_event_loss": false,
+  "recurrence_control_created": true,
+  "current_behavioral_state": "REPEAT_2_OF_3_SOAK_PASS_BEHAVIOR_OPEN",
+  "external_effect_default": false
+}
