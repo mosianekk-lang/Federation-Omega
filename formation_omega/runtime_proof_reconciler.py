@@ -36,6 +36,22 @@ class RuntimeProofSnapshot:
     def valid(self) -> bool:
         return not self.violations
 
+    @property
+    def proof_axes(self) -> Mapping[str, bool]:
+        axes = {
+            "source_admitted": RuntimeProofStage.SOURCE_ADMITTED,
+            "native_host_built": RuntimeProofStage.NATIVE_HOST_BUILT,
+            "native_host_registered": RuntimeProofStage.NATIVE_HOST_REGISTERED,
+            "browser_bound": RuntimeProofStage.BROWSER_BOUND,
+            "live_delivery": RuntimeProofStage.LIVE_DELIVERY,
+            "observable_dpf_verified": RuntimeProofStage.OBSERVABLE_DPF_VERIFIED,
+            "rollback_verified": RuntimeProofStage.ROLLBACK_VERIFIED,
+            "resilience_verified": RuntimeProofStage.RESILIENCE_VERIFIED,
+        }
+        return {name: self.stage >= required for name, required in axes.items()} | {
+            "provider_native_complete": False
+        }
+
 
 class RuntimeProofReconciler:
     """Fail-closed receipt reconciler for runtime proof maturation.
@@ -105,7 +121,7 @@ class RuntimeProofReconciler:
         )
 
     @classmethod
-    def _check_identity(cls, receipt: Mapping[str, Any], violations: list[str]) -> None:
+    def _check_identity(cls, receipt: Mapping[str, Any], violations: list[str]) -> bool:
         chat = cls._text(
             receipt.get("chatBridgeExtensionId")
             or receipt.get("chatbridge_extension_id")
@@ -114,18 +130,23 @@ class RuntimeProofReconciler:
             receipt.get("befEdgeExtensionId")
             or receipt.get("bef_edge_extension_id")
         )
+        valid = True
         if chat and chat != cls.CHATBRIDGE_EXTENSION_ID:
             violations.append("CHATBRIDGE_EXTENSION_IDENTITY_MISMATCH")
+            valid = False
         if bef and bef != cls.BEF_EXTENSION_ID:
             violations.append("BEF_EXTENSION_IDENTITY_MISMATCH")
+            valid = False
+        return valid
 
     @classmethod
     def _source_ok(cls, receipt: Mapping[str, Any], violations: list[str]) -> bool:
         if receipt.get("verified") is not True:
             violations.append("SOURCE_ADMISSION_NOT_VERIFIED")
             return False
-        if not cls._text(receipt.get("commit_sha")):
-            violations.append("SOURCE_ADMISSION_COMMIT_SHA_REQUIRED")
+        commit_sha = cls._text(receipt.get("commit_sha"))
+        if len(commit_sha) not in {40, 64} or any(ch not in "0123456789abcdefABCDEF" for ch in commit_sha):
+            violations.append("SOURCE_ADMISSION_COMMIT_SHA_INVALID")
             return False
         return True
 
@@ -133,7 +154,8 @@ class RuntimeProofReconciler:
     def _bootstrap_stages(
         cls, receipt: Mapping[str, Any], violations: list[str]
     ) -> set[RuntimeProofStage]:
-        cls._check_identity(receipt, violations)
+        if not cls._check_identity(receipt, violations):
+            return set()
         stages: set[RuntimeProofStage] = set()
         state = cls._text(receipt.get("state") or receipt.get("State")).upper()
         host_sha = cls._text(receipt.get("nativeHostSha256"))
@@ -162,7 +184,8 @@ class RuntimeProofReconciler:
     def _readback_stages(
         cls, receipt: Mapping[str, Any], violations: list[str]
     ) -> set[RuntimeProofStage]:
-        cls._check_identity(receipt, violations)
+        if not cls._check_identity(receipt, violations):
+            return set()
         stages: set[RuntimeProofStage] = set()
         state = cls._text(receipt.get("state") or receipt.get("State")).upper()
         registered = (
