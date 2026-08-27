@@ -43,6 +43,11 @@ function Get-ChromiumExtensionId([string]$ManifestPath) {
   return -join $chars
 }
 
+function Quote-ProcessArgument([string]$Value) {
+  if ($null -eq $Value) { return '""' }
+  return '"' + ($Value -replace '"', '\"') + '"'
+}
+
 $chatId = Get-ChromiumExtensionId $chatManifestPath
 $edgeId = Get-ChromiumExtensionId $edgeManifestPath
 if ($chatId -ne 'kacbginamagliaddmlkffhcadpamomjb') { throw "CHATBRIDGE_EXTENSION_ID_DRIFT: $chatId" }
@@ -70,12 +75,14 @@ if ($install.State -ne 'NATIVE_HOST_REGISTERED_VERIFIED') { throw 'NATIVE_HOST_R
 if ($install.EdgeAgentExtensionId -ne $edgeId) { throw 'NATIVE_HOST_ALLOWED_ORIGIN_ID_DRIFT' }
 
 if (-not $EdgeExecutable) {
-  $candidates = @(
-    (Join-Path ${env:ProgramFiles(x86)} 'Microsoft\Edge\Application\msedge.exe'),
-    (Join-Path $env:ProgramFiles 'Microsoft\Edge\Application\msedge.exe'),
-    (Join-Path $env:LOCALAPPDATA 'Microsoft\Edge\Application\msedge.exe')
-  ) | Where-Object { $_ -and (Test-Path -LiteralPath $_ -PathType Leaf) }
-  if (-not $candidates) { throw 'MICROSOFT_EDGE_EXECUTABLE_NOT_FOUND' }
+  $candidates = New-Object System.Collections.Generic.List[string]
+  $roots = @(${env:ProgramFiles(x86)}, $env:ProgramFiles, $env:LOCALAPPDATA)
+  foreach ($root in $roots) {
+    if (-not $root) { continue }
+    $candidate = Join-Path $root 'Microsoft\Edge\Application\msedge.exe'
+    if (Test-Path -LiteralPath $candidate -PathType Leaf) { $candidates.Add($candidate) }
+  }
+  if ($candidates.Count -eq 0) { throw 'MICROSOFT_EDGE_EXECUTABLE_NOT_FOUND' }
   $EdgeExecutable = $candidates[0]
 }
 $EdgeExecutable = (Resolve-Path -LiteralPath $EdgeExecutable).Path
@@ -109,12 +116,14 @@ $receipt = [ordered]@{
 }
 
 if (-not $NoLaunch) {
+  $userDataArg = '--user-data-dir=' + (Quote-ProcessArgument $CanaryProfileDir)
+  $extensionsArg = '--load-extension=' + (Quote-ProcessArgument ($chatBridge + ',' + $edgeAgent))
   $arguments = @(
-    "--user-data-dir=$CanaryProfileDir",
-    "--load-extension=$chatBridge,$edgeAgent",
+    $userDataArg,
+    $extensionsArg,
     '--no-first-run',
     '--no-default-browser-check',
-    $ConversationUrl
+    (Quote-ProcessArgument $ConversationUrl)
   )
   $process = Start-Process -FilePath $EdgeExecutable -ArgumentList $arguments -PassThru
   $receipt.edgeLaunched = $true
