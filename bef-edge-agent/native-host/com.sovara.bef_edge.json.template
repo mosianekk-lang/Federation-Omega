@@ -1,0 +1,9 @@
+{
+  "name": "com.sovara.bef_edge",
+  "description": "SOVARA BEF encrypted ChatBridge provenance courier",
+  "path": "__NATIVE_HOST_EXECUTABLE__",
+  "type": "stdio",
+  "allowed_origins": [
+    "chrome-extension://apokbhjjgiaceigelkedcelcecfmgnia/"
+  ]
+}
