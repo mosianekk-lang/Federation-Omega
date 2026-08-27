@@ -1,0 +1,46 @@
+{
+  "node": "FEDERATION_QUANT_LAB_LONA_NODE",
+  "version": "2.0.0-robustness-canary",
+  "status": "ROBUSTNESS_EXPERIMENTS_DISPATCHED",
+  "research_only": true,
+  "live_broker_execution": false,
+  "candidate_strategy_id": "9761cff0-0f2b-48e4-9c18-83c1476dbaf8",
+  "benchmark_strategy": {
+    "strategy_id": "83ef6616-f288-4e9f-8cdf-69f64a7e86e4",
+    "code_sha256": "e16bdba897a7d3cc5486970cc29653b35f10be070a7b2db4b71605ce2f22adbf"
+  },
+  "datasets": {
+    "SPY": "9e60d261-2ffe-4f9f-8412-35f59224b6cd",
+    "QQQ": "355c8f36-17ad-4f9a-aa4f-c51f2d2f3b61",
+    "IWM": "2a153979-017d-4aec-bab4-222a7a4179e3"
+  },
+  "experiments": {
+    "in_sample_spy_2020_2023": "22f6c7ef-217e-4397-93ef-4c40e58fc84b",
+    "holdout_spy_2024_2026": "86584c26-fb18-4cfe-86c5-b0f89dc427df",
+    "perturb_fast15_slow45": "e6a85720-49c6-4d25-97c1-cdc7ed2bab2d",
+    "perturb_fast25_slow60": "4e60dab9-4e6d-40cb-8d6e-46e88bac8ac4",
+    "cross_asset_qqq": "f197d129-12a7-445b-8367-bf1e1ea0d5bf",
+    "cross_asset_iwm": "aa6adc15-6887-468b-901a-994c40e9faba",
+    "benchmark_spy": "a6830c18-f5ad-46bc-bb8a-9549ebfd0661",
+    "benchmark_qqq": "23e0c3bd-51dd-4096-a334-392956f9a69b",
+    "benchmark_iwm": "e5750e3d-8d94-4caf-a6c7-ace6c1df4929"
+  },
+  "execution_assumptions": {
+    "frequency": "1d",
+    "initial_cash": 100000,
+    "commission": 0.001,
+    "leverage": 1,
+    "buy_on_close": true,
+    "holdout_start": "2024-01-01",
+    "holdout_end": "2026-08-27"
+  },
+  "promotion_contract": {
+    "positive_absolute_return_is_not_sufficient": true,
+    "benchmark_relative_evidence_required": true,
+    "parameter_perturbation_required": true,
+    "cross_asset_survival_required": true,
+    "adverse_cost_evidence_required": true,
+    "paper_trading_required_before_live_capital": true,
+    "owner_authorization_required_for_live_capital": true
+  }
+}
