@@ -1,0 +1,131 @@
+name: Apps Script source authority canary
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/apps-script-source-authority-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  reversible-source-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      TARGET_SCRIPT_ID: 1AATuqatUaWP2Gin1T9T7jk_qB1tOWIJ40jm2LiSEcwnsJkdzvt-_-u3I
+      CANARY_MARKER: FEDLAB-CLASP-SOURCE-WRITE-CANARY-20260827
+      CLASPRC_JSON: ${{ secrets.CLASPRC_JSON }}
+    steps:
+      - name: Checkout
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+
+      - name: Verify encrypted clasp credential exists
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [ -z "${CLASPRC_JSON:-}" ]; then
+            echo "::error::CLASPRC_JSON_MISSING"
+            exit 20
+          fi
+          umask 077
+          printf '%s' "$CLASPRC_JSON" > "$HOME/.clasprc.json"
+          python3 - <<'PY'
+          import json, os
+          p = os.path.expanduser('~/.clasprc.json')
+          data = json.load(open(p, encoding='utf-8'))
+          if not isinstance(data, dict) or not data:
+              raise SystemExit('CLASPRC_JSON_INVALID')
+          print('CLASPRC_JSON_PRESENT_AND_JSON_VALID')
+          PY
+
+      - name: Install pinned clasp
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --version
+          npm --version
+          npm install --no-save --no-audit --no-fund @google/clasp@3.3.0
+          npx clasp --version
+
+      - name: Pull, write canary, read back, and rollback
+        shell: bash
+        run: |
+          set -euo pipefail
+          BASE="$RUNNER_TEMP/fedlab-gas-canary"
+          ORIGINAL="$BASE/original"
+          MUTATED="$BASE/mutated"
+          READBACK="$BASE/readback"
+          FINAL="$BASE/final"
+          mkdir -p "$ORIGINAL" "$MUTATED" "$READBACK" "$FINAL"
+
+          make_clasp_config() {
+            local dir="$1"
+            printf '{"scriptId":"%s","rootDir":"."}\n' "$TARGET_SCRIPT_ID" > "$dir/.clasp.json"
+          }
+
+          tree_hash() {
+            local dir="$1"
+            python3 - "$dir" <<'PY'
+          import hashlib, pathlib, sys
+          root = pathlib.Path(sys.argv[1])
+          h = hashlib.sha256()
+          for p in sorted(x for x in root.rglob('*') if x.is_file() and x.name not in {'.clasp.json'}):
+              rel = p.relative_to(root).as_posix().encode()
+              h.update(len(rel).to_bytes(4,'big')); h.update(rel)
+              b = p.read_bytes(); h.update(len(b).to_bytes(8,'big')); h.update(b)
+          print(h.hexdigest())
+          PY
+          }
+
+          CANARY_PUSHED=0
+          ROLLBACK_DONE=0
+          rollback_on_exit() {
+            code=$?
+            if [ "$CANARY_PUSHED" -eq 1 ] && [ "$ROLLBACK_DONE" -eq 0 ] && [ -d "$ORIGINAL" ]; then
+              echo "Attempting fail-safe rollback"
+              (cd "$ORIGINAL" && "$GITHUB_WORKSPACE/node_modules/.bin/clasp" push --force) || true
+            fi
+            exit "$code"
+          }
+          trap rollback_on_exit EXIT
+
+          make_clasp_config "$ORIGINAL"
+          (cd "$ORIGINAL" && "$GITHUB_WORKSPACE/node_modules/.bin/clasp" pull)
+          ORIGINAL_HASH="$(tree_hash "$ORIGINAL")"
+          ORIGINAL_COUNT="$(find "$ORIGINAL" -type f ! -name '.clasp.json' | wc -l | tr -d ' ')"
+          echo "ORIGINAL_FILE_COUNT=$ORIGINAL_COUNT"
+          echo "ORIGINAL_TREE_SHA256=$ORIGINAL_HASH"
+
+          cp -a "$ORIGINAL/." "$MUTATED/"
+          cat > "$MUTATED/FEDLAB_Source_Write_Canary.js" <<'EOF'
+          function FEDLAB_sourceWriteCanary() {
+            return 'FEDLAB-CLASP-SOURCE-WRITE-CANARY-20260827';
+          }
+          EOF
+          (cd "$MUTATED" && "$GITHUB_WORKSPACE/node_modules/.bin/clasp" push --force)
+          CANARY_PUSHED=1
+
+          make_clasp_config "$READBACK"
+          (cd "$READBACK" && "$GITHUB_WORKSPACE/node_modules/.bin/clasp" pull)
+          grep -R --fixed-strings "$CANARY_MARKER" "$READBACK" >/dev/null
+          echo "FEDLAB_APPS_SCRIPT_SOURCE_WRITE_READBACK=PASS"
+
+          (cd "$ORIGINAL" && "$GITHUB_WORKSPACE/node_modules/.bin/clasp" push --force)
+          ROLLBACK_DONE=1
+
+          make_clasp_config "$FINAL"
+          (cd "$FINAL" && "$GITHUB_WORKSPACE/node_modules/.bin/clasp" pull)
+          if grep -R --fixed-strings "$CANARY_MARKER" "$FINAL" >/dev/null 2>&1; then
+            echo "::error::CANARY_REMAINS_AFTER_ROLLBACK"
+            exit 31
+          fi
+          FINAL_HASH="$(tree_hash "$FINAL")"
+          FINAL_COUNT="$(find "$FINAL" -type f ! -name '.clasp.json' | wc -l | tr -d ' ')"
+          echo "FINAL_FILE_COUNT=$FINAL_COUNT"
+          echo "FINAL_TREE_SHA256=$FINAL_HASH"
+          test "$ORIGINAL_HASH" = "$FINAL_HASH"
+          test "$ORIGINAL_COUNT" = "$FINAL_COUNT"
+          echo "FEDLAB_APPS_SCRIPT_SOURCE_ROLLBACK_READBACK=PASS"
+          echo "FEDLAB-APPS-SCRIPT-SOURCE-AUTHORITY-VERIFIED"
