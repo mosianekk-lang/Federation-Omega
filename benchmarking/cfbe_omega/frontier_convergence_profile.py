@@ -7,8 +7,8 @@ from .benchmark_engine import Dimension, EVIDENCE_FACTORS, weighted_score, leade
 
 
 PROFILE_ID = "CFBE-FRONTIER-CONVERGENCE-001"
-CURRENT_SOURCE_MERGE = "723fccc904f2160bf325a289beab5e8139862e15"
-CURRENT_RUNTIME_MERGE = "d889885071d2984816e67d9b553ecb4377fc3920"
+SOURCE_PROOF_REF = "AOCRA-BUILD-FCG-001-SOURCE"
+RUNTIME_PROOF_REF = "AOCRA-BUILD-FCG-001-INTERNAL-RUNTIME"
 CURRENT_EVIDENCE_STATE = "DETERMINISTIC_CI_BOUNDED_RUNTIME"
 CURRENT_EVIDENCE_FACTOR = EVIDENCE_FACTORS[CURRENT_EVIDENCE_STATE]
 
@@ -31,8 +31,8 @@ class FrontierBindingReport:
     gemini_canary_verified: bool
     workspace_bidirectional_verified: bool
     production_qualified: bool
-    source_merge: str
-    runtime_merge: str
+    source_proof_ref: str
+    runtime_proof_ref: str
 
 
 # The current raw architecture profile records implemented contracts only.
@@ -126,6 +126,6 @@ def evaluate(proofs: Iterable[FrontierProof] = ()) -> FrontierBindingReport:
         gemini_canary_verified=gemini_verified,
         workspace_bidirectional_verified=workspace_verified,
         production_qualified=production_qualified,
-        source_merge=CURRENT_SOURCE_MERGE,
-        runtime_merge=CURRENT_RUNTIME_MERGE,
+        source_proof_ref=SOURCE_PROOF_REF,
+        runtime_proof_ref=RUNTIME_PROOF_REF,
     )
