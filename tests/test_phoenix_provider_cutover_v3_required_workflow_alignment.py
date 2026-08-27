@@ -10,6 +10,8 @@ PROVIDER_PATH = ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
 PROVIDER_FILE = "sovara-litellm-v2-3-provider-admission.yml"
 CIOS_PATH = ".github/workflows/cios-production-lane.yml"
 CIOS_FILE = "cios-production-lane.yml"
+FRONTIER_PATH = ".github/workflows/frontier-runtime-qualification.yml"
+FRONTIER_FILE = "frontier-runtime-qualification.yml"
 
 
 class PhoenixRequiredWorkflowAlignmentTests(unittest.TestCase):
@@ -31,15 +33,19 @@ class PhoenixRequiredWorkflowAlignmentTests(unittest.TestCase):
             {"pull_request", "push", "workflow_dispatch"},
             set(self.policy["allowed_events"][CIOS_PATH]),
         )
+        self.assertIn(FRONTIER_PATH, self.policy["active_workflow_allowlist"])
+        self.assertIn(FRONTIER_PATH, self.policy["execution_quarantine"]["keep_active"])
 
     def test_phoenix_keeps_provider_gateway_active(self) -> None:
-        self.assertIn(f"{PROVIDER_PATH}|\\", self.phoenix)
+        self.assertIn(PROVIDER_PATH, self.phoenix)
         self.assertIn(
             f'"{PROVIDER_FILE}|{PROVIDER_PATH}"',
             self.phoenix,
         )
-        self.assertIn(f"{CIOS_PATH})", self.phoenix)
+        self.assertIn(CIOS_PATH, self.phoenix)
         self.assertIn(f'"{CIOS_FILE}|{CIOS_PATH}"', self.phoenix)
+        self.assertIn(FRONTIER_PATH, self.phoenix)
+        self.assertIn(f'"{FRONTIER_FILE}|{FRONTIER_PATH}"', self.phoenix)
 
     def test_phoenix_dispatches_provider_gateway_after_reenable(self) -> None:
         self.assertIn(
