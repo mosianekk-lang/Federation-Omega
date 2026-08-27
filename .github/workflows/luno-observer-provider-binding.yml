@@ -9,6 +9,8 @@ on:
       - "federation/capital_execution/venues/LEGACY_OMEGA_MAX_CROSSWALK.md"
       - "tests/test_luno_observer_provider_binding_v12.py"
       - "tests/test_phoenix_provider_cutover_v3_luno_observer_binding_v12.py"
+      - "tests/test_phoenix_provider_cutover_v3_luno_observer_gateway_policy_v12.py"
+      - "governance/github_airlock_policy.json"
       - ".github/workflows/luno-observer-provider-binding.yml"
   push:
     branches: [main]
@@ -19,6 +21,8 @@ on:
       - "federation/capital_execution/venues/LEGACY_OMEGA_MAX_CROSSWALK.md"
       - "tests/test_luno_observer_provider_binding_v12.py"
       - "tests/test_phoenix_provider_cutover_v3_luno_observer_binding_v12.py"
+      - "tests/test_phoenix_provider_cutover_v3_luno_observer_gateway_policy_v12.py"
+      - "governance/github_airlock_policy.json"
       - ".github/workflows/luno-observer-provider-binding.yml"
   workflow_dispatch:
 
@@ -60,6 +64,7 @@ jobs:
           python -m unittest -v \
             tests.test_luno_observer_provider_binding_v12 \
             tests.test_phoenix_provider_cutover_v3_luno_observer_binding_v12 \
+            tests.test_phoenix_provider_cutover_v3_luno_observer_gateway_policy_v12 \
             tests.test_luno_cios_integration_v1 \
             tests.test_capital_feedback_fabric_v11
           python -m py_compile \
@@ -290,7 +295,7 @@ jobs:
             echo '{"schema":"FEDERATION-LUNO-OBSERVER-PROVIDER-RECEIPT-1","public_state":"RECEIPT_BUILD_FAILED","account_state":"UNVERIFIED","financial_effects":false,"write_operations":false}'
           fi
 
-      - uses: actions/upload-artifact@v4
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: ${{ always() }}
         with:
           name: luno-observer-provider-receipt-${{ github.run_id }}
