@@ -1,6 +1,6 @@
 {
   "authority_ceiling": "A1_INTERNAL",
-  "branch": "feature/superior-gemini-frontier-convergence-v1",
+  "branch": "feature/superior-gemini-frontier-convergence-v1-r2",
   "canonical_issue": 663,
   "controls": [
     "experiment_identity_before_comparison",
@@ -79,18 +79,18 @@
   ],
   "schema": "SUPERIOR-LOGIC-GEMINI-FRONTIER-CONVERGENCE-V1",
   "source_files": {
-    "docs/SUPERIOR_LOGIC_GEMINI_FRONTIER_CONVERGENCE_V1.md": "62c9fe9d0159cffacb732086e489ba868626c7dc67242645cd6ccf58dda3f8f7",
+    "docs/SUPERIOR_LOGIC_GEMINI_FRONTIER_CONVERGENCE_V1.md": "683efc349deff27ee8bb33f7ed0607f648ca4506eaaa1af7c4b782fb8c7afeaf",
     "frontier_convergence/Dockerfile": "1e500c5f78e55f76bbfe45061f8fe1c75364bf2fec338b136dc7e39043db82f5",
     "frontier_convergence/README.md": "c697e8251eb6818903b6d0372c13878a46d7353ae804d7c9a3a2c3129e4f1bd0",
     "frontier_convergence/__init__.py": "89e1aa424deba7a640dc6eb406060d9863f7ff7fa1672073da41b1ce3c843756",
-    "frontier_convergence/__main__.py": "89e4dd53dfeec3a3e73062393ceb40cb0237b5b40072294c3a72c5b3f78b31e3",
-    "frontier_convergence/canary.py": "ae286c15390b9bd39cda57c35853bae63a27bbe9abeb1b948d000444f5f4af42",
-    "frontier_convergence/core.py": "23946019d2a902c7d6d1fc76536dcde63c2108138ec8ed6ec06563ac02268740",
-    "frontier_convergence/federation_adapter.py": "e3bb418d662dcc8cb72fe0444f8dc7fd4dc3729f8311451fd0e106f2579e1f65",
-    "frontier_convergence/gemini_adapter.py": "1569c345b1414b940f31d377ab3699ef0fb4bb2154fc9075c545a9a30e3f4b0c",
-    "frontier_convergence/service.py": "f12365cc1eafa2c84c84c51d0299e9ccf503f426a7f6af9e1e4b61f2cfbe81d2",
+    "frontier_convergence/__main__.py": "5ce0654fd6796586c2c620efc7d8587a195cb7e18ad4f88372251e7bde309a1e",
+    "frontier_convergence/canary.py": "77955ddbc609570ad53ddee0dd58cbd32f27b2577264930c363b8eca05ed7bd3",
+    "frontier_convergence/core.py": "5dac5ebc80f6fae57d1a94542ed02cbeb8290beb997d294b03f93b98cd77e968",
+    "frontier_convergence/federation_adapter.py": "cf68860544c6501a7ec1607d57ebdbadd085621eb1ae944bc9a01a38d6b3f9e3",
+    "frontier_convergence/gemini_adapter.py": "a06e65cbac61094f495e826c7985593a675a2e09b67da28809057c04c59cc177",
+    "frontier_convergence/service.py": "d13624ef6a52da158deb1e6253c8c652b0d26fcab23552c6a181a374e488f37d",
     "frontier_convergence/web/index.html": "0f818a90557bb90524e22722f5dbbf9007ac5cf73ce29a5b860a080fa6e71e4a",
-    "tests/test_frontier_convergence.py": "e4a9788c0326cb25dfbe296055a8a6992d3e67650d95d697d3e4ef00f978c280"
+    "tests/test_frontier_convergence.py": "4d903a8c35cdc5181818118a314df1cedd3e7dbcbebb28ce1753ffa8c9daabac"
   },
   "state": "SOURCE_IMPLEMENTATION_PROVIDER_DISABLED_CANARY_READY",
   "sovereignty": {
