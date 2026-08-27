@@ -1,0 +1,43 @@
+{
+  "control_id": "FWV2-LIVE-BEHAVIORAL-BINDING-20260827-001",
+  "schema_version": "failure-win.behavioral-binding.governance.v1",
+  "kernel_version": "2.0.0",
+  "ao_harmonic_version": "3.3.1",
+  "objective": "Bind real Federation failure and owner-correction events into BehavioralConvergenceEngine with replayable append-only state without creating a second recovery engine or inheriting provider authority.",
+  "reuse": [
+    "ao_harmonic_v3.event_bus.EventBus",
+    "ao_harmonic_v3.behavioral_convergence.BehavioralConvergenceEngine",
+    "ao_harmonic_v3.failure_win_v2.FailureToOperationalWinKernelV2",
+    "ao_harmonic_v3.runtime.AOHarmonicV3"
+  ],
+  "new_source": [
+    "ao_harmonic_v3/behavioral_binding.py",
+    "tests/test_failure_win_behavioral_runtime_binding.py"
+  ],
+  "invariants": {
+    "single_failure_evaluation_path": true,
+    "synthetic_behavior_promotion": false,
+    "append_only_records": true,
+    "record_payload_hash_validation": true,
+    "conflicting_record_id_fails_closed": true,
+    "restart_replay": true,
+    "provider_effects_created": false,
+    "provider_authority_inherited": false,
+    "remote_provider_store_claimed": false
+  },
+  "persistence": {
+    "in_memory_store": "NON_DURABLE_TEST_OR_EXPLICIT_RUNTIME_ONLY",
+    "jsonl_store": "LOCAL_DURABLE_FSYNC_PROVIDER_NEUTRAL",
+    "remote_store": "ADAPTER_AND_AUTHORITY_REQUIRED"
+  },
+  "behavioral_truth": {
+    "receiver_universe": 26,
+    "behavior_proven_count": 0,
+    "federation_omega_real_recovery_cycles": 1,
+    "federation_omega_vector_gate": "PASS_WITH_JUSTIFIED_LATENCY_TRADEOFF",
+    "federation_omega_rollback": "OPEN",
+    "federation_omega_repeated_successes": 1,
+    "federation_omega_soak_seconds": 0
+  },
+  "promotion_boundary": "Source admission proves event-binding and restart-replay mechanics only. V2_BEHAVIOR_PROVEN still requires receiver-local empirical failure, complete proof graph, actual rollback evidence, at least three distinct qualifying real success receipts and at least 300 seconds soak."
+}
