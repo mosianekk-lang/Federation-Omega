@@ -18,8 +18,14 @@ class LunoCredentialReference:
     expected_permissions: tuple[str, ...] = ("Perm_R_Balance", "Perm_R_Orders")
 
     def validate(self) -> None:
-        if not self.reference or any(token in self.reference.lower() for token in ("secret=", "api_secret", "password=")):
+        reference = self.reference.strip()
+        if not reference or reference != self.reference or "=" in reference or any(ch.isspace() for ch in reference):
             raise ValueError("credential reference must be symbolic and value-free")
+        scheme, separator, locator = reference.partition("://")
+        if not separator or not scheme or not locator:
+            raise ValueError("credential reference must use a symbolic URI scheme")
+        if scheme not in {"secret", "gcp-secret", "env", "runtime-ref"}:
+            raise ValueError("credential reference scheme is not allowlisted")
         allowed = {"Perm_R_Balance", "Perm_R_Transactions", "Perm_R_Orders"}
         if not set(self.expected_permissions).issubset(allowed):
             raise PermissionError("LUNO_OBSERVER_WRITE_PERMISSION_NOT_ALLOWED")
