@@ -1,0 +1,77 @@
+{
+  "schema": "FEDERATION-CAPITAL-INTELLIGENCE-EXECUTION-SUITE-V1",
+  "version": "1.0.0-canary",
+  "research_only": true,
+  "default_mode": "SHADOW",
+  "authority": {
+    "research": "LONA + Federation Quant Evidence Fabric",
+    "portfolio_and_capital_intent": "EvidenceOps Capital Intelligence OS",
+    "risk_veto": "Federation Capital Risk Governor",
+    "execution_simulation": "Federation Execution Digital Twin",
+    "venue_market_data": "venue adapter; Luno first",
+    "ground_truth_reconciliation": "Federation Reconciler",
+    "canonical_source": "GitHub/Federation-Omega"
+  },
+  "capital_intent_contract": {
+    "non_executable": true,
+    "allowed_fields": [
+      "intent_id",
+      "portfolio_id",
+      "strategy_id",
+      "instrument_id",
+      "target_weight",
+      "maximum_weight",
+      "evidence_ref",
+      "confidence",
+      "constraints",
+      "expires_at",
+      "status"
+    ],
+    "forbidden_fields": [
+      "order_id",
+      "order_type",
+      "limit_price",
+      "stop_price",
+      "api_key",
+      "api_secret",
+      "withdrawal_address"
+    ]
+  },
+  "modes": {
+    "SHADOW": "implemented; no provider financial effect",
+    "PAPER": "not admitted in v1",
+    "MICRO_CAPITAL": "hard disabled",
+    "LIVE": "hard disabled"
+  },
+  "luno": {
+    "public_rest": "implemented source adapter for ticker, top order book, candles and markets",
+    "authenticated_read_only": "contract planned; provider binding unproven",
+    "mcp": "control/observation option; write operations must remain disabled",
+    "websocket": "future streaming data plane; not required for v1 source admission",
+    "write_operations": false,
+    "withdrawal_capability": false,
+    "transfer_capability": false
+  },
+  "hard_gates": [
+    "research_admission",
+    "evidence_reference",
+    "positive_excess_return_for_capital_consideration",
+    "portfolio_constraints",
+    "market_freshness",
+    "venue_health",
+    "risk_governor",
+    "reconciliation_health",
+    "kill_switch_clear"
+  ],
+  "invariants": [
+    "CIOS_NEVER_EMITS_EXCHANGE_ORDER",
+    "STRATEGY_CANNOT_APPROVE_OWN_RISK",
+    "VENUE_ADAPTER_CANNOT_ALLOCATE_CAPITAL",
+    "SHADOW_SUCCESS_IS_NOT_ALPHA_PROOF",
+    "PROVIDER_ACCESS_IS_NOT_PROVIDER_AUTHORITY",
+    "NO_REAL_CAPITAL_FROM_N_DIRECTIVE",
+    "NO_WITHDRAWAL_OR_TRANSFER_AUTHORITY",
+    "FAILURE_HISTORY_IS_APPEND_ONLY",
+    "PARTIAL_PROOF_EQUALS_PARTIAL_STATUS"
+  ]
+}
