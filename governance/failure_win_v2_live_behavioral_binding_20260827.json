@@ -2,7 +2,7 @@
   "control_id": "FWV2-LIVE-BEHAVIORAL-BINDING-20260827-001",
   "schema_version": "failure-win.behavioral-binding.governance.v1",
   "kernel_version": "2.0.0",
-  "ao_harmonic_version": "3.3.1",
+  "ao_harmonic_version": "3.3.0",
   "objective": "Bind real Federation failure and owner-correction events into BehavioralConvergenceEngine with replayable append-only state without creating a second recovery engine or inheriting provider authority.",
   "reuse": [
     "ao_harmonic_v3.event_bus.EventBus",
@@ -23,7 +23,8 @@
     "restart_replay": true,
     "provider_effects_created": false,
     "provider_authority_inherited": false,
-    "remote_provider_store_claimed": false
+    "remote_provider_store_claimed": false,
+    "existing_ao_harmonic_version_contract_preserved": true
   },
   "persistence": {
     "in_memory_store": "NON_DURABLE_TEST_OR_EXPLICIT_RUNTIME_ONLY",
@@ -38,6 +39,12 @@
     "federation_omega_rollback": "OPEN",
     "federation_omega_repeated_successes": 1,
     "federation_omega_soak_seconds": 0
+  },
+  "failed_admission_learning": {
+    "failed_head": "67c62479577ac3c1c0b7231fe3a9a947126b6903",
+    "failed_airlock_run": 33043992782,
+    "cause": "UNNECESSARY_AO_HARMONIC_VERSION_BUMP_VIOLATED_EXISTING_EXACT_VERSION_REGRESSION",
+    "repair": "PRESERVE_3_3_0_VERSION_CONTRACT_WITH_BEHAVIORAL_BINDING_AS_IN_PLACE_EXTENSION"
   },
   "promotion_boundary": "Source admission proves event-binding and restart-replay mechanics only. V2_BEHAVIOR_PROVEN still requires receiver-local empirical failure, complete proof graph, actual rollback evidence, at least three distinct qualifying real success receipts and at least 300 seconds soak."
 }
