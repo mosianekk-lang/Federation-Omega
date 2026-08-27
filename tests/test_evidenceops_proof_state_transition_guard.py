@@ -2,6 +2,15 @@ from __future__ import annotations
 
 import unittest
 
+from ao_harmonic_v3.failure_win_v2 import (
+    FailureEventType,
+    FailureObservation,
+    FailureToOperationalWinKernelV2,
+    FailureWinRequest,
+    FailureWinState,
+    RecoveryRoute,
+)
+from ao_harmonic_v3.models import PerformanceVector
 from evidenceops.innovation_engine.algorithm_proof_state_transition_guard import (
     ProofStateTransitionGuard,
 )
@@ -131,6 +140,63 @@ class EvidenceOpsProofStateTransitionGuardTests(unittest.TestCase):
         )
         self.assertEqual("TRANSITION_PERMITTED", result.status)
         self.assertFalse(result.output["semantic_envelope_required"])
+
+    def test_failure_win_v2_evidenceops_receiver_canary_preserves_proof_gate(self) -> None:
+        native = self.guard.run(
+            current_state="NO_EVIDENCE",
+            target_state="LIVE_READBACK",
+            proof={
+                "execution_receipt": {
+                    "receipt_id": "FWV2-EOPS-NATIVE",
+                    "target_id": "SYNTHETIC-EOPS",
+                    "executed": True,
+                    "semantic_match": True,
+                    "verified": True,
+                },
+                "target_readback": {
+                    "target_id": "SYNTHETIC-EOPS",
+                    "state": "EXPECTED",
+                    "verified": True,
+                },
+            },
+        )
+        self.assertEqual("TRANSITION_PERMITTED", native.status)
+
+        incumbent = PerformanceVector(quality=9, reliability=8, proof=9, speed=2, owner_burden=1)
+        candidate = PerformanceVector(
+            quality=9, reliability=8, proof=9, speed=5,
+            owner_time_recovered=2, recovery_gain=2, owner_burden=0,
+        )
+        result = FailureToOperationalWinKernelV2().evaluate(
+            FailureWinRequest(
+                observation=FailureObservation(
+                    event_id="FWV2-EVIDENCEOPS-PRECURSOR-CANARY",
+                    event_type=FailureEventType.PRECURSOR_RISK,
+                    system_id="EvidenceOps",
+                    objective="preempt a synthetic proof-state drift risk",
+                    claim="a proof-state transition may outpace its evidence envelope",
+                    observed_fruit="synthetic structured proof only; no provider mutation",
+                    desired_outcome="prewarm a current proof-envelope/readback route",
+                    failure_code="SYNTHETIC_EVIDENCEOPS_PROOF_DRIFT",
+                    material=False,
+                    precursor_signals=("proof-envelope-fixture", "readback-fixture"),
+                ),
+                incumbent=incumbent,
+                routes=(RecoveryRoute(
+                    route_id="evidenceops-current-proof-readback-fixture",
+                    route_type="REROUTE",
+                    performance=candidate,
+                    proof_strength=1.0,
+                    reversibility=1.0,
+                    strategic_value=1.0,
+                    expected_value=2.0,
+                ),),
+            )
+        )
+        self.assertEqual(FailureWinState.PREEMPTION_READY, result.state)
+        self.assertTrue(result.vector_gate_passed)
+        self.assertFalse(result.proof_graph.complete)
+        self.assertNotEqual(FailureWinState.OPERATIONAL_WIN_VERIFIED, result.state)
 
 
 if __name__ == "__main__":
