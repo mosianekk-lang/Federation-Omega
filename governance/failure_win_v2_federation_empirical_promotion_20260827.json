@@ -1,0 +1,156 @@
+{
+  "control_id": "FWV2-FEDERATION-EMPIRICAL-PROMOTION-20260827-001",
+  "schema_version": "failure-win.federation-empirical-promotion.v1",
+  "kernel_version": "2.0.0",
+  "receiver_id": "Federation Omega",
+  "source_frontier": {
+    "signed_main_before_promotion": "f1961830c8f8f9e820687a0ed3d141f19f92e812",
+    "airlock": 33059388339,
+    "bubbles": 33059388340,
+    "leak_guard": 33059388346,
+    "phoenix": 33059388359
+  },
+  "root_failure": {
+    "event_id": "FWV2-FEDERATION-REAL-PROVENANCE-RECOVERY-20260827-001",
+    "failure_provider": "GitHub Actions",
+    "failure_code": "SOURCE_PROVENANCE_ADMISSION_FAILURE",
+    "failed_airlock_run": 33037638447,
+    "recovered_airlock_run": 33040068419,
+    "failure_fact_preserved": true,
+    "causal_falsification_preserved": true,
+    "materially_different_recovery_preserved": true
+  },
+  "performance_vector": {
+    "gate": "PASS_WITH_JUSTIFIED_LATENCY_TRADEOFF",
+    "failed_latency_seconds": 49.0,
+    "recovered_latency_seconds": 52.0,
+    "latency_delta_seconds": 3.0,
+    "latency_delta_percent": 6.1,
+    "latency_improvement_claimed": false,
+    "normalization": "speed=1/latency_seconds; latency_cost=latency_seconds/100; quality held at 1; reliability and proof move 0->1 after admitted recovery",
+    "incumbent": {
+      "quality": 1.0,
+      "reliability": 0.0,
+      "proof": 0.0,
+      "speed": 0.02040816326530612,
+      "latency_cost": 0.49
+    },
+    "candidate": {
+      "quality": 1.0,
+      "reliability": 1.0,
+      "proof": 1.0,
+      "speed": 0.019230769230769232,
+      "recovery_gain": 1.0,
+      "latency_cost": 0.52
+    }
+  },
+  "rollback": {
+    "proven": true,
+    "isolated_branch": "failure-win/v2-rollback-drill-20260827",
+    "rollback_commit": "b982f6c462015777c90e14e23a3022976106627d",
+    "rollback_tree": "3d1dfee25afe28e82641574dca286a6fe8a2df0f",
+    "rollback_compare_files": 0,
+    "restore_commit": "a3680bb8cd6fc38864f4ed65b6ab0f62a5783caf",
+    "restore_tree": "adf11e5c3bf582aef5eb5fec23f9edec7f1f786e",
+    "restore_compare_files": 0,
+    "main_mutated_by_drill": false
+  },
+  "success_receipts": [
+    {
+      "success_id": "FEDERATION_REAL_SUCCESS_1_GITHUB_PROVENANCE",
+      "observed_at": "2026-08-27T04:40:23+00:00",
+      "origin": "REAL_RUNTIME",
+      "provider": "GitHub Actions",
+      "proof_refs": [
+        "Airlock:33037638447:FAILURE",
+        "Airlock:33040068419:SUCCESS",
+        "FWV2-FEDERATION-REAL-PROVENANCE-VECTOR-20260827-001"
+      ]
+    },
+    {
+      "success_id": "FEDERATION_REAL_SUCCESS_2_GOOGLE_SHEETS_PROJECTION",
+      "observed_at": "2026-08-27T09:27:49+00:00",
+      "origin": "REAL_PROVIDER",
+      "provider": "Google Sheets",
+      "proof_refs": [
+        "FWV2-FEDERATION-SHEETS-PROJECTION-RECOVERY-20260827-001",
+        "Failure-Win Receiver Manifest v2:#REF->healthy projection",
+        "manifest:2ec66d8eb19add2e665f6d06642adfbd6c7d61375a0903f5ba07f944029a83b7"
+      ]
+    },
+    {
+      "success_id": "FEDERATION_REAL_SUCCESS_3_CLOUD_RUN_PUBLIC_OPERATOR",
+      "observed_at": "2026-08-27T10:01:10.046599+00:00",
+      "origin": "REAL_PROVIDER",
+      "provider": "Google Cloud Run",
+      "proof_refs": [
+        "PFRD-run:32997102848:attempt-2",
+        "PFRD-job:98480041350",
+        "PFRD-artifact:9641750816",
+        "PFRD-artifact-sha256:445c1ee9d758191d2c8d7b8124b634d04db3b9ee6b2f3ce9ef22fa9e42a69083",
+        "PFRD-workflow-blob:8b742f005de5acba0d97428b9a14b1394f56393e"
+      ],
+      "semantic_readback": {
+        "health_http_status": 200,
+        "health_ok": true,
+        "health_status": "OPERATOR_READY",
+        "health_service": "federation-omega-operator",
+        "health_target_service": "architron9",
+        "health_version": "fo-operator-v1-image-cloudbuild",
+        "contract_http_status": 200,
+        "contract_ok": true,
+        "contract_service": "federation-omega-operator",
+        "contract_target_service": "architron9",
+        "private_execute_http_status": 403,
+        "private_access_denied": true,
+        "provider_mutation": false,
+        "repository_mutation": false,
+        "paid_semantic_call": false,
+        "secret_values_recorded": false
+      },
+      "source_currentness": {
+        "rerun_head_sha": "870d7c89207d919134e8c653a95522ca1165a7d2",
+        "current_main": "f1961830c8f8f9e820687a0ed3d141f19f92e812",
+        "rerun_workflow_blob_sha": "8b742f005de5acba0d97428b9a14b1394f56393e",
+        "current_workflow_blob_sha": "8b742f005de5acba0d97428b9a14b1394f56393e",
+        "workflow_logic_exact_current_match": true
+      }
+    }
+  ],
+  "derived_thresholds": {
+    "distinct_real_successes": 3,
+    "required_distinct_real_successes": 3,
+    "soak_seconds": 19247.046599,
+    "required_soak_seconds": 300.0,
+    "rollback_proven": true,
+    "vector_gate_passed": true
+  },
+  "proof_mapping": {
+    "FAILURE_FACT_PRESERVED": ["Airlock:33037638447:FAILURE"],
+    "CAUSAL_MODEL_RECORDED": ["FWV2-FEDERATION-REAL-PROVENANCE-RECOVERY-20260827-001"],
+    "FALSIFICATION_EXECUTED": ["Airlock:33040068419:SUCCESS"],
+    "MATERIALLY_DIFFERENT_ROUTE": ["GitHub recovery", "Google Sheets event-ledger repair", "Google Cloud Run public operator readback"],
+    "PERFORMANCE_VECTOR_GATE": ["FWV2-FEDERATION-REAL-PROVENANCE-VECTOR-20260827-001"],
+    "AUTHORITY_CURRENT": ["public read-only Cloud Run health/contract requires no private mutation authority", "PFRD-workflow-blob exact-current match"],
+    "COST_ALLOWED": ["PFRD AUTHORITY_ONLY", "paid semantic call false", "provider mutation false"],
+    "FAILURE_FIRST_TEST": ["Airlock:33037638447:FAILURE"],
+    "HEALTHY_PATH_TEST": ["Airlock:33040068419:SUCCESS", "Sheets healthy projection"],
+    "ROLLBACK_TEST": ["b982f6c462015777c90e14e23a3022976106627d", "a3680bb8cd6fc38864f4ed65b6ab0f62a5783caf"],
+    "FORWARD_CANARY": ["PFRD-run:32997102848:attempt-2"],
+    "INDEPENDENT_SEMANTIC_READBACK": ["Cloud Run health 200/OPERATOR_READY", "contract 200/ok", "unauthenticated execute 403"],
+    "POSITIVE_VALUE": ["vector PASS_WITH_JUSTIFIED_LATENCY_TRADEOFF", "projection recurrence guard admitted"],
+    "NO_REGRESSION": ["exact-main f196 Airlock/Bubbles/Leak/Phoenix pass", "Cloud Run mutation false"],
+    "OWNER_BURDEN_NOT_INCREASED": ["rollback automated", "projection repair automated", "fresh provider readback automated"],
+    "PROVIDER_RECEIPT": ["PFRD-artifact:9641750816"]
+  },
+  "promotion_scope": {
+    "federation_omega_receiver_local_candidate": "OPERATIONAL_WIN_VERIFIED",
+    "estate_scope_claim": false,
+    "sovara_private_authority_reestablished": false,
+    "sovara_behavior_proven": false,
+    "estate_operational_win_verified": false,
+    "expected_estate_behavior_proven_after_local_promotion": 1,
+    "receiver_universe": 26
+  },
+  "truth_boundary": "The third success proves fresh public Google Cloud Run operator health, contract semantics and private-boundary denial using an exact-current workflow blob. It does not re-establish SOVARA private authority, Google admin authority, Gemini inference authority or any mutation authority. Promotion, if the admitted Failure-Win engine returns OPERATIONAL_WIN_VERIFIED, is Federation Omega receiver-local only; no estate-wide maturity is inherited."
+}
