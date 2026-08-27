@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.4.0",
+  "version": "2.4.1",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -22,7 +22,8 @@
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-    ".github/workflows/cios-production-lane.yml"
+    ".github/workflows/cios-production-lane.yml",
+    ".github/workflows/frontier-runtime-qualification.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -60,6 +61,11 @@
       "pull_request",
       "push",
       "workflow_dispatch"
+    ],
+    ".github/workflows/frontier-runtime-qualification.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
     ]
   },
   "required_push_branches": {
@@ -76,6 +82,9 @@
       "main"
     ],
     ".github/workflows/cios-production-lane.yml": [
+      "main"
+    ],
+    ".github/workflows/frontier-runtime-qualification.yml": [
       "main"
     ]
   },
@@ -147,7 +156,8 @@
       ".github/workflows/caseforge-provider-readback-canary.yml",
       ".github/workflows/pfrd-omega-operator-auth-probe.yml",
       ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-      ".github/workflows/cios-production-lane.yml"
+      ".github/workflows/cios-production-lane.yml",
+      ".github/workflows/frontier-runtime-qualification.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
