@@ -12,6 +12,9 @@ import uuid
 from .models import InformationClass, canonical_json, utc_now_iso
 from .tenancy import TenantContext
 
+MAX_SEARCH_QUERY_CHARS = 4_096
+MAX_SEARCH_TERMS = 32
+
 
 @dataclass(frozen=True)
 class DocumentRecord:
@@ -116,7 +119,14 @@ class DocumentVault:
             (ctx.tenant_id, digest),
         ).fetchone()
         if existing:
-            return self._row(existing), True
+            record = self._row(existing)
+            if (
+                record.information_class != information_class
+                or not self.access.allowed(ctx, record.information_class)
+            ):
+                # Do not return existing metadata or reveal its classification.
+                raise PermissionError("DOCUMENT_INGESTION_CONFLICT")
+            return record, True
 
         prior = self.conn.execute(
             """
@@ -210,7 +220,15 @@ class DocumentVault:
         ctx.validate()
         if not 1 <= int(limit) <= 100:
             raise ValueError("search limit must be between 1 and 100")
-        terms = [term for term in re.findall(r"[a-z0-9]+", query.lower()) if len(term) > 1]
+        if len(query) > MAX_SEARCH_QUERY_CHARS:
+            raise ValueError("search query is too large")
+        terms = list(
+            dict.fromkeys(
+                term for term in re.findall(r"[a-z0-9]+", query.lower()) if len(term) > 1
+            )
+        )
+        if len(terms) > MAX_SEARCH_TERMS:
+            raise ValueError("search query has too many terms")
         if not terms:
             return []
         results: list[dict[str, object]] = []

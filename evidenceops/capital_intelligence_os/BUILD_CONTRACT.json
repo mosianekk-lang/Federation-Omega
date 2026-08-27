@@ -1,55 +1,194 @@
 {
-  "schema": "EVIDENCEOPS-CIOS-BUILD-16-RC6",
-  "version": "1.0.0-rc6",
-  "authority_ceiling": "A1_INTERNAL",
-  "external_effect_default": false,
-  "internal_product_state": "SYNTHETIC_DETERMINISTIC_QUALIFICATION_CANDIDATE",
-  "portfolio_state": "PORTFOLIO_DEMONSTRABLE_CANDIDATE",
-  "provider_maturity": "PROVIDER_BINDING_READY",
+  "contract_version": "3.3",
+  "mission": {
+    "id": "CIOS-PRODUCTION-CONVERGENCE-20260827",
+    "version": 2,
+    "goal": "Converge CIOS onto an exact-head, failure-first, provider-attested production path while preserving the A1 capital-intelligence authority ceiling and preventing premature production promotion.",
+    "user": "Kim Kagiso Mosiane and authorised Federation Omega operators",
+    "workflow": "Admit exact source; run the complete CIOS and adversarial suites; build an immutable image; deploy zero traffic through an authorised private route; read back identity, digest, health, persistence, restore and rollback; promote only after independent target-bound evidence passes the production gate.",
+    "data": "Tenant-scoped capital-intelligence events and classified evidence metadata; provider receipts contain bounded identifiers and digests but no credentials.",
+    "interface": "Authenticated HTTP provider candidate exposing exactly health, readiness, release verification and bounded event ingestion; document routes remain disabled.",
+    "stack": "Python 3.12 standard library reference runtime; SQLite is containment-only; managed PostgreSQL and immutable external audit are required for production.",
+    "environment": "Local deterministic qualification now; private Cloud Run candidate after trusted OIDC and provider target binding are available.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation-gated A1 local build; no financial effects, external communication, deployment, merge or traffic promotion in this build action.",
+    "failure": "Fail closed on source drift, route drift, caller identity override, parser budgets, conflicting or future evidence, self-attestation, unknown adapters, persistence uncertainty, failed canaries, missing rollback or provider readback.",
+    "testing": "Complete CIOS unit suite, rc7.1 OOXML adversarial suite, provider concurrency and identity regressions, Phoenix bridge admission, release verification and MODISA v3.3 validation.",
+    "deployment": "Not executed: the live Federation operator has no CIOS deployment action, no bound admin token is available, and managed persistence plus provider identity remain unproven.",
+    "continuity": "Resume from the exact admitted pull-request head; preserve immutable test receipts and require the same image digest through zero-traffic canary, promotion and rollback readback."
+  },
+  "classification": [
+    "Backend API",
+    "Automation",
+    "DevOps/Infra",
+    "Security",
+    "Test Suite"
+  ],
+  "assumptions": {
+    "stack": "The deterministic CIOS domain engines remain reusable; only the provider shell and proof plane are hardened.",
+    "runtime": "Python 3.12 with no third-party parser dependency in the reference build.",
+    "storage": "SQLite proves local semantics only; production requires an existing authorised managed transactional database and immutable evidence store.",
+    "authentication": "The reference candidate binds one configured tenant and runtime principal; production requires independently verified enterprise OIDC/IAP/IAM claims.",
+    "deployment": "A private zero-traffic deployment may run only through a live-allowlisted CIOS action using short-lived provider identity and zero new recurring cost."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: CIOS production convergence is an API and proof-plane build.",
+      "backend": "Fail-closed Python HTTP provider candidate with an exact four-route profile and 256000-byte request ceiling.",
+      "database": "SQLite reference store serialized per process; managed PostgreSQL adapter remains required before production traffic.",
+      "queue": "NOT_APPLICABLE: no asynchronous provider queue is enabled in this source cut.",
+      "worker": "Bounded in-process OOXML parser; a resource-isolated parser worker is required before provider document routes can be enabled.",
+      "scheduler": "NOT_APPLICABLE: no autonomous scheduled effects are introduced.",
+      "cache": "NOT_APPLICABLE: provider proof is always read back and never promoted from cache.",
+      "storage": "Classified metadata vault and hash-chain audit are local references; immutable object evidence and retention-locked audit remain provider gates.",
+      "authentication": "Constant-time bearer check bound to a configured single tenant/principal; caller tenant/user overrides are denied."
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE",
+      "STALE_STATE",
+      "ROLLBACK_FAILURE"
+    ],
+    "observability": {
+      "correlation_ids": "Event IDs, idempotency keys, evidence control IDs and provider artifact references.",
+      "health_checks": "Authenticated /health and /ready expose local semantic health while explicitly denying provider-deployment proof.",
+      "structured_logs": "Provider structured logging and trace correlation remain a production qualification control.",
+      "audit_logs": "Local hash-chain audit is verified on health; immutable external audit remains required.",
+      "metrics_alerts": "Provider availability, latency, error, auth-denial, persistence, backup and audit alerts remain required before promotion."
+    }
+  },
+  "testing": {
+    "unit": "CIOS domain, tenancy, authority, ingestion, gate, data-plane and release suites.",
+    "integration": "Real local HTTP canary, 64-way serialized provider requests, reopen persistence and audit-chain validation.",
+    "e2e_or_smoke": "Release verifier and Phoenix Airlock bridge execute the complete internal CIOS test court.",
+    "fixtures_mocks": "Deterministic provider bindings, independent verifier callbacks, bounded OOXML archives and tenant fixtures.",
+    "failure_first": "Late/encoded DTDs, archive bombs, route drift, oversized requests, identity override, classification downgrade, future/conflicting/self-attested evidence, unregistered adapters and concurrent writes.",
+    "commands": [
+      "python -m unittest discover -s evidenceops/capital_intelligence_os/tests -p test_*.py -v",
+      "python -m unittest tests.test_cios_provider_runtime tests.test_cios_rc71_security_admission -v",
+      "python -m evidenceops.capital_intelligence_os.verify_release",
+      "python validate_build_contract.py evidenceops/capital_intelligence_os/BUILD_CONTRACT.json"
+    ]
+  },
+  "delivery": {
+    "file_tree": "evidenceops/capital_intelligence_os/{ingestion.py,policy.py,provider_runtime.py,production_gate.py,production_dataplane.py,vault.py,provider_canary.py,tests/*,PROVIDER_RUNTIME_CONTRACT.json,BUILD_CONTRACT.json,README.md}; tests/test_cios_*.py; tests/test_phoenix_provider_cutover_v3_cios_*.py",
+    "exact_code_files": [
+      "evidenceops/capital_intelligence_os/ingestion.py",
+      "evidenceops/capital_intelligence_os/policy.py",
+      "evidenceops/capital_intelligence_os/provider_runtime.py",
+      "evidenceops/capital_intelligence_os/production_gate.py",
+      "evidenceops/capital_intelligence_os/production_dataplane.py",
+      "evidenceops/capital_intelligence_os/provider_canary.py",
+      "evidenceops/capital_intelligence_os/vault.py",
+      "evidenceops/capital_intelligence_os/tests/test_ingestion_hardening_rc71.py",
+      "evidenceops/capital_intelligence_os/tests/test_production_gate_rc2.py",
+      "evidenceops/capital_intelligence_os/tests/test_production_dataplane_rc4.py",
+      "tests/test_cios_provider_runtime.py",
+      "tests/test_cios_rc71_security_admission.py"
+    ],
+    "setup_commands": [
+      "No additional dependency installation is required for the stdlib reference suite."
+    ],
+    "run_commands": [
+      "python -m evidenceops.capital_intelligence_os.provider_runtime"
+    ],
+    "test_commands": [
+      "python -m unittest discover -s evidenceops/capital_intelligence_os/tests -p test_*.py -v",
+      "python -m unittest tests.test_cios_provider_runtime tests.test_cios_rc71_security_admission -v",
+      "python -m evidenceops.capital_intelligence_os.verify_release"
+    ],
+    "deploy_commands": [
+      "NOT_AUTHORIZED_IN_THIS_BUILD: invoke only a future live-allowlisted CIOS zero-traffic operator action after managed persistence and trusted identity are bound."
+    ],
+    "rollback_commands": [
+      "Future provider pipeline must restore the exact prior Cloud Run revision traffic map and prove semantic health; failed first deployment must remove only the new exact service."
+    ],
+    "debugging": "Keep production_claim=false; inspect the failing unit, exact source SHA, provider binding, receipt verifier, target digest and rollback checkpoint; repair and rerun the full admission court."
+  },
+  "formation": {
+    "mission_id": "CIOS-PRODUCTION-CONVERGENCE-20260827",
+    "mission_version": 2,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1",
+    "effectful_permit": "CONSUMED_RUNTIME_ONLY_NOT_PERSISTED",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "unavailable_capability": "The healthy live Federation operator exposes no CIOS deployment action; trusted provider identity, production database, immutable audit and rollback receipts are not bound.",
+    "safe_substitute": "Produce and admit the exact secure source candidate, keep document and consequential routes closed, and stop before deployment or traffic promotion."
+  },
+  "continuity": {
+    "idempotency": "Event ingestion requires stable occurred_at and supports idempotency keys; future deployment uses unique revisions and exact digest binding.",
+    "checkpoints": "Exact Git SHA, test receipt, MODISA contract validation, image digest, prior traffic map, provider target binding, zero-traffic canary, persistence restart, restore and rollback receipts.",
+    "resume_conditions": "A CIOS action is live-allowlisted; a trusted short-lived identity can read and mutate the exact target; an existing managed database and immutable audit sink are bound; full CI is exact-head green.",
+    "handoff_files": [
+      "README.md",
+      "BUILD_CONTRACT.json",
+      "PROVIDER_RUNTIME_CONTRACT.json"
+    ],
+    "stop_switch": "No production qualification without an exact target and independent verifier; any failed, invalid, future, stale, self-attested or conflicting control blocks promotion."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": "Local rc7.1 court PASS: 233/233 complete internal CIOS tests; 20/20 provider, security and Phoenix admission tests; release verifier passed as 1.0.0-rc7.1 with production_claim=false; MODISA v3.3 validation passed. Exact-head GitHub CI remains pending.",
+    "deployment_readback": "NOT_APPLICABLE: no authorised CIOS provider mutation or deployment occurred.",
+    "semantic_verification": "Local tests prove bounded parsing, exact provider route/body parity, fixed-tenant bearer containment, conflict/future/self-attestation rejection and classification-downgrade denial. They do not prove provider identity, horizontal persistence or production recovery.",
+    "unresolved_defects": [
+      "Managed PostgreSQL or equivalent transactional production persistence adapter is not implemented or provider-proven.",
+      "Immutable external audit, malware/DLP, enterprise OIDC, observability, backup/restore and rollback are not provider-proven.",
+      "Container digest pinning, SBOM, signature, provenance and vulnerability admission are not yet enforced.",
+      "Resource-isolated parser worker is required before provider document routes may be enabled.",
+      "Live Federation operator has no CIOS deployment action and no bound admin token in this execution context."
+    ]
+  },
   "builds": [
     {
-      "build_id": "BUILD-CIOS-013",
-      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "closure_proof": "Provider canary source admitted under PR #346 with bounded authority checks."
+      "build_id": "BUILD-CIOS-017",
+      "state": "IMPLEMENTED_TESTED_LOCAL",
+      "scope": "rc7.1 bounded OOXML ingestion and archive defenses"
     },
     {
-      "build_id": "BUILD-CIOS-014",
-      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "closure_proof": "Production data-plane rc4 admitted with provider-evidence preflight and preserved production qualification boundary."
+      "build_id": "BUILD-CIOS-018",
+      "state": "IMPLEMENTED_TESTED_LOCAL",
+      "scope": "target-bound independently verified production qualification gate"
     },
     {
-      "build_id": "BUILD-CIOS-015",
-      "lifecycle_state": "CLOSED_VERIFIED_SOURCE",
-      "gap_statement": "No coherent authenticated document-to-search-to-diligence-to-workspace route.",
-      "closure_proof": "PR #414 passed exact-head Airlock and Public Repository Leak Guard and merged as ca1de34c13e94e1a2654e1c3a3d48f8d33ececb1. rc5 added bounded multi-format ingestion, tenant workspace export, role-smuggling rejection, vault integrity and cumulative rc4 regression."
+      "build_id": "BUILD-CIOS-019",
+      "state": "IMPLEMENTED_CONTAINMENT_ONLY",
+      "scope": "exact provider route/body profile, fixed-tenant identity and serialized SQLite candidate"
     },
     {
-      "build_id": "BUILD-CIOS-016",
-      "lifecycle_state": "IMPLEMENTED_AWAITING_EXACT_HEAD_ADMISSION",
-      "gap_statement": "CIOS had many passing component tests and one synthetic journey but lacked a single transparent qualification court with independent numeric oracles, counterfactual checks and a proof-safe portfolio demonstration pack gated by that qualification.",
-      "acceptance_criteria": [
-        "DCF and IRR pass independent analytic oracles",
-        "DCF WACC and terminal-growth monotonicity hold",
-        "QoE, working-capital and debt-like evidence thresholds behave as expected",
-        "diligence boundary states are 0/full=1 with partial between",
-        "off-thesis targets fail hard gates",
-        "final acquisition remains human-gated",
-        "live orders and private-to-market export remain denied",
-        "missing evidence reduces diligence and transaction readiness",
-        "deterministic economic/decision fields replay exactly",
-        "demo pack cannot build unless qualification and full synthetic journey pass",
-        "demo outputs are explicitly synthetic and digest-bound",
-        "case study language remains proof-safe"
-      ],
-      "proof_route": "Focused qualification/demo tests are bound into Federation Omega Airlock through test_phoenix_provider_cutover_v3_cios_qualification_demo.py.",
-      "next_executable_action": "Admit rc6, generate the exact-source demonstration pack as a user-visible artifact, then advance representative historical/public calibration and pilot-value lanes without waiting for provider deployment."
+      "build_id": "BUILD-CIOS-020",
+      "state": "BLOCKED_DEPENDENCY_ACTIVE",
+      "scope": "managed transactional persistence and recovery"
     },
     {
-      "build_id": "BUILD-CIOS-003",
-      "lifecycle_state": "BLOCKED_DEPENDENCY_ACTIVE",
-      "gap_statement": "No authorised private CIOS production runtime with independent provider readback is available to this chat session.",
-      "interim_workaround": "Provider execution remains isolated under Sparks. All internal product, scientific and demonstrability work continues independently."
+      "build_id": "BUILD-CIOS-021",
+      "state": "BLOCKED_DEPENDENCY_ACTIVE",
+      "scope": "immutable audit and provider observability"
+    },
+    {
+      "build_id": "BUILD-CIOS-022",
+      "state": "BLOCKED_DEPENDENCY_ACTIVE",
+      "scope": "provider IaC, zero-traffic release and rollback proof"
+    },
+    {
+      "build_id": "BUILD-CIOS-023",
+      "state": "BLOCKED_DEPENDENCY_ACTIVE",
+      "scope": "quarantine, malware/DLP and isolated document processing plane"
     }
-  ],
-  "truth_boundary": "Synthetic deterministic qualification is not historical-deal calibration, investment performance, accounting assurance or provider production. Portfolio demonstrability does not inherit provider deployment maturity."
+  ]
 }

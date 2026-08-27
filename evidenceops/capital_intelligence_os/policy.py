@@ -48,6 +48,10 @@ class RuntimePolicy:
         self,
         bearer_token: str,
         runtime_roles: Iterable[str] = ("operator", "deal_member"),
+        *,
+        safe_routes: Iterable[tuple[str, str]] | None = None,
+        fixed_tenant_id: str | None = None,
+        fixed_user_id: str | None = None,
     ) -> None:
         if len(bearer_token) < 24:
             raise ValueError("local canary bearer token must be at least 24 characters")
@@ -59,6 +63,18 @@ class RuntimePolicy:
             raise ValueError(f"unsupported runtime roles: {','.join(unknown)}")
         self._token_hash = hashlib.sha256(bearer_token.encode()).digest()
         self._runtime_roles = roles
+        self._safe_routes = frozenset(
+            (str(method).upper(), str(path))
+            for method, path in (safe_routes if safe_routes is not None else self.SAFE_ROUTES)
+        )
+        if (fixed_tenant_id is None) != (fixed_user_id is None):
+            raise ValueError("fixed tenant and user identity must be configured together")
+        if fixed_tenant_id is not None and (
+            not fixed_tenant_id.strip() or not fixed_user_id or not fixed_user_id.strip()
+        ):
+            raise ValueError("fixed tenant and user identity must be non-empty")
+        self._fixed_tenant_id = fixed_tenant_id
+        self._fixed_user_id = fixed_user_id
 
     def authenticate(
         self,
@@ -71,6 +87,16 @@ class RuntimePolicy:
         supplied = hashlib.sha256(authorization[7:].encode()).digest()
         if not hmac.compare_digest(supplied, self._token_hash):
             raise PermissionError("AUTH_INVALID")
+        if self._fixed_tenant_id is not None:
+            if tenant_id and tenant_id != self._fixed_tenant_id:
+                raise PermissionError("CALLER_TENANT_OVERRIDE_DENIED")
+            if user_id and user_id != self._fixed_user_id:
+                raise PermissionError("CALLER_USER_OVERRIDE_DENIED")
+            return RuntimePrincipal(
+                self._fixed_tenant_id,
+                self._fixed_user_id or "",
+                self._runtime_roles,
+            )
         if not tenant_id or not user_id:
             raise PermissionError("TENANT_AND_USER_REQUIRED")
         return RuntimePrincipal(tenant_id, user_id, self._runtime_roles)
@@ -79,5 +105,5 @@ class RuntimePolicy:
         normalized = path.split("?", 1)[0]
         if any(normalized.startswith(prefix) for prefix in self.FORBIDDEN_PREFIXES):
             raise PermissionError("CONSEQUENTIAL_ROUTE_NOT_EXPOSED")
-        if (method.upper(), normalized) not in self.SAFE_ROUTES:
+        if (method.upper(), normalized) not in self._safe_routes:
             raise PermissionError("ROUTE_DEFAULT_DENY")

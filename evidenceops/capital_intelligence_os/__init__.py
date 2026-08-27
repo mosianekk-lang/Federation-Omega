@@ -43,4 +43,4 @@ from .valuation import *
 from .vault import DocumentRecord, DocumentVault, InformationAccessPolicy
 from .workspace import *
 
-__version__ = "1.0.0-rc6"
+__version__ = "1.0.0-rc7.1"

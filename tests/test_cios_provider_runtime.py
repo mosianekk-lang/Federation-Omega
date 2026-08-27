@@ -6,12 +6,14 @@ import tempfile
 import threading
 import unittest
 import urllib.request
+from concurrent.futures import ThreadPoolExecutor
 from pathlib import Path
 
 from evidenceops.capital_intelligence_os.provider_runtime import (
     ProviderRuntimeApplication,
     ProviderRuntimeConfig,
     ProviderRuntimeServer,
+    PROVIDER_MAX_HTTP_BODY_BYTES,
 )
 
 
@@ -27,6 +29,8 @@ def _config(root: Path, *, port: int = 8080) -> ProviderRuntimeConfig:
         expected_source_sha=SHA,
         runtime_source_sha=SHA,
         runtime_identity="test-runtime@example.invalid",
+        tenant_id="TENANT-TEST",
+        runtime_user_id="USER-TEST",
         host="127.0.0.1",
         port=port,
     )
@@ -52,6 +56,8 @@ class CIOSProviderRuntimeTests(unittest.TestCase):
                     expected_source_sha=SHA,
                     runtime_source_sha="b" * 40,
                     runtime_identity="runtime",
+                    tenant_id="TENANT-TEST",
+                    runtime_user_id="USER-TEST",
                 )
 
     def test_health_is_authenticated_and_never_self_certifies_provider(self) -> None:
@@ -79,6 +85,39 @@ class CIOSProviderRuntimeTests(unittest.TestCase):
                 status, payload = app.handle("POST", "/trade", _headers(), b"{}")
                 self.assertEqual(403, status)
                 self.assertEqual("CONSEQUENTIAL_ROUTE_NOT_EXPOSED", payload["error"])
+            finally:
+                app.close()
+
+    def test_provider_contract_routes_and_body_limit_are_enforced(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            app = ProviderRuntimeApplication(_config(Path(tmp)))
+            try:
+                status, payload = app.handle("POST", "/v1/documents", _headers(), b"{}")
+                self.assertEqual(403, status)
+                self.assertEqual("ROUTE_DEFAULT_DENY", payload["error"])
+                status, payload = app.handle(
+                    "POST",
+                    "/v1/events",
+                    _headers(),
+                    b"x" * (PROVIDER_MAX_HTTP_BODY_BYTES + 1),
+                )
+                self.assertEqual(413, status)
+                self.assertEqual("REQUEST_TOO_LARGE", payload["error"])
+            finally:
+                app.close()
+
+    def test_bearer_holder_cannot_choose_another_tenant_or_user(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            app = ProviderRuntimeApplication(_config(Path(tmp)))
+            try:
+                wrong = {
+                    **_headers(),
+                    "X-Tenant-ID": "TENANT-OTHER",
+                    "X-User-ID": "USER-OTHER",
+                }
+                status, payload = app.handle("GET", "/health", wrong)
+                self.assertEqual(401, status)
+                self.assertEqual("CALLER_TENANT_OVERRIDE_DENIED", payload["error"])
             finally:
                 app.close()
 
@@ -114,6 +153,37 @@ class CIOSProviderRuntimeTests(unittest.TestCase):
                 self.assertTrue(any(event.event_id == "forge-provider-runtime-event-1" for event in events))
             finally:
                 reopened.close()
+
+    def test_parallel_provider_requests_are_serialized_without_loss(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            app = ProviderRuntimeApplication(_config(Path(tmp)))
+
+            def submit(index: int) -> int:
+                event_id = f"parallel-provider-event-{index}"
+                body = json.dumps(
+                    {
+                        "event_type": "PROVIDER_CONCURRENCY_TEST",
+                        "source": "forge-test",
+                        "subject_id": f"subject-{index}",
+                        "payload": {"safe": True},
+                        "domain": "GOVERNANCE",
+                        "information_class": "PUBLIC",
+                        "materiality": 0.1,
+                        "event_id": event_id,
+                        "occurred_at": "2026-08-12T10:00:00+00:00",
+                    }
+                ).encode()
+                headers = {**_headers(), "Idempotency-Key": event_id}
+                return app.handle("POST", "/v1/events", headers, body)[0]
+
+            try:
+                with ThreadPoolExecutor(max_workers=16) as pool:
+                    statuses = list(pool.map(submit, range(64)))
+                self.assertEqual([200] * 64, statuses)
+                self.assertEqual(64, len(app.store.load_events("TENANT-TEST")))
+                self.assertTrue(app.audit.verify())
+            finally:
+                app.close()
 
     def test_real_http_canary_serves_authenticated_semantic_health(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
