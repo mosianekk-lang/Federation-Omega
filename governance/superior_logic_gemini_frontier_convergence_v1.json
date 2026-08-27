@@ -90,7 +90,7 @@
     "frontier_convergence/gemini_adapter.py": "1569c345b1414b940f31d377ab3699ef0fb4bb2154fc9075c545a9a30e3f4b0c",
     "frontier_convergence/service.py": "f12365cc1eafa2c84c84c51d0299e9ccf503f426a7f6af9e1e4b61f2cfbe81d2",
     "frontier_convergence/web/index.html": "0f818a90557bb90524e22722f5dbbf9007ac5cf73ce29a5b860a080fa6e71e4a",
-    "tests/test_frontier_convergence.py": "510997135bece335337b7e1791c456b0b65e1e1c247d4abc10b88bbb990dd884"
+    "tests/test_frontier_convergence.py": "e4a9788c0326cb25dfbe296055a8a6992d3e67650d95d697d3e4ef00f978c280"
   },
   "state": "SOURCE_IMPLEMENTATION_PROVIDER_DISABLED_CANARY_READY",
   "sovereignty": {
