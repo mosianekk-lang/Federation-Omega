@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-AUTOMATION-AUTHORITY-FABRIC-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "status": "SOURCE_CANDIDATE",
   "owner": "Kagiso Kim Mosiane",
   "control_plane": {
@@ -37,8 +37,29 @@
       "EVIDENCEOPS_CIOS",
       "AIU"
     ],
-    "mechanism": "Each authorized chat reads the common control plane, appends canonical commands with the registered adapter, and reads immutable semantic receipts.",
-    "truth_boundary": "This is shared provider state through Drive/KDV. It does not create hidden native chat-to-chat communication or independent credentials for each chat."
+    "profile_module": "federation_automation_gateway.chat_inheritance",
+    "scoped_profile_labels": "CANONICAL_ENGINE followed by one of : / @ and a chat-local suffix",
+    "session_registration": "CHAT_SESSIONS",
+    "mechanism": "Every admitted engine invocation binds the same Fabric ID, registers a chat-local session identity, appends governed commands to COMMAND_QUEUE, and consumes semantic receipts from COMMAND_RECEIPTS.",
+    "continuation_rule": "CONTINUE_UNTIL_SEMANTIC_TERMINAL_RECEIPT_OR_EXACT_EXTERNAL_GATE",
+    "credential_inheritance": false,
+    "authority_inheritance": "SHARED_FABRIC_ONLY",
+    "truth_boundary": "Shared automation never copies provider credentials into chats and does not create hidden native chat-to-chat communication. Provider authority remains executor-local and proof-gated."
+  },
+  "activation_model": {
+    "github_to_google": "MAIN_ONLY_KEYLESS_OIDC",
+    "deployment_trigger": "ADMITTED_MAIN_PUSH",
+    "runtime_identity": "federation-automation-runtime service account",
+    "bootstrap_identity": "temporary federation-bootstrap-admin service account",
+    "bootstrap_identity_is_permanent": false,
+    "deployment_success_requires": [
+      "provider identity readback",
+      "private Cloud Run service readback",
+      "runtime service-account readback",
+      "scheduler readback",
+      "semantic health readback",
+      "Fabric Sheet ACL and command/receipt canary"
+    ]
   },
   "security_invariants": [
     "NO_SERVICE_ACCOUNT_PRIVATE_KEYS",
@@ -57,7 +78,8 @@
     "APPS_SCRIPT_POST_WRITE_HASH_EQUALITY",
     "PROVIDER_SEMANTIC_READBACK_BEFORE_SUCCESS",
     "OUTBOUND_COMMUNICATION_EXCLUDED_FROM_REUSABLE_LEASES",
-    "DESTRUCTIVE_ACTIONS_EXCLUDED_FROM_REUSABLE_LEASES"
+    "DESTRUCTIVE_ACTIONS_EXCLUDED_FROM_REUSABLE_LEASES",
+    "CROSS_CHAT_ACCESS_NEVER_EQUALS_CREDENTIAL_COPY"
   ],
   "google_cloud_actions": [
     "GCP_GET_PROJECT",
@@ -76,5 +98,5 @@
     "APPS_SCRIPT_UPDATE_DEPLOYMENT"
   ],
   "production_effect": false,
-  "admission_rule": "Source, CI, or Sheet creation alone does not prove deployed runtime execution. Cloud claims require private Cloud Run identity/readback receipts. Apps Script claims require owner-OAuth broker receipts. Direct target function execution remains unproven until Google API-executable and common-standard-project requirements are independently satisfied."
+  "admission_rule": "Source, CI, Sheet creation, identity bootstrap, or IAM binding alone does not prove deployed runtime execution. Cloud claims require private Cloud Run identity/readback receipts plus a real Fabric command/receipt canary. Apps Script claims require owner-OAuth broker receipts. Direct target function execution remains unproven until Google API-executable and common-standard-project requirements are independently satisfied."
 }
