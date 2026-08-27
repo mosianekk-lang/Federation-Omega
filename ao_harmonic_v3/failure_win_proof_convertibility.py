@@ -2,13 +2,13 @@ from __future__ import annotations
 
 """Deterministic proof-convertibility classification for Failure-Win v2.
 
-This module prevents receiver-name-only trust transfer.  A recovery candidate is
-convertible only when preserved failure evidence and recovery evidence resolve to
-the same receiver *and* the same semantic surface.  Workflow/admission noise,
-test-harness defects, authority holds and success-only evidence are retained but
+This module prevents receiver-name-only trust transfer. A recovery decision is
+convertible only when preserved failure evidence and successful readback resolve
+to the same receiver *and* the same semantic surface. Workflow/admission noise,
+test-harness defects, authority holds and unpaired successes are retained but
 cannot promote receiver behaviour.
 
-The classifier is deterministic decision support only.  It performs no provider
+The classifier is deterministic decision support only. It performs no provider
 mutation, grants no authority and does not self-promote receiver maturity.
 """
 
@@ -194,9 +194,12 @@ class ProofConvertibilityClassifier:
                     ConvertibilityReason.SYNTHETIC_ONLY,
                     False,
                 )
+            # A successful observation is intentionally SUCCESS_ONLY here.
+            # It becomes recovery evidence only after pair() proves a preserved,
+            # executed failure on the exact same receiver + semantic surface.
             return ClassifiedEvidence(
                 evidence,
-                EvidenceKind.RECOVERY_EVIDENCE,
+                EvidenceKind.SUCCESS_ONLY,
                 ConvertibilityReason.SUCCESS_ONLY,
                 False,
             )
@@ -228,7 +231,15 @@ class ProofConvertibilityClassifier:
                 surface_fingerprint,
                 0,
             )
-        if recovery_class.kind is not EvidenceKind.RECOVERY_EVIDENCE:
+
+        # Raw successes must remain SUCCESS_ONLY. Only the strongest success-only
+        # class (real execution + independent readback + non-synthetic) may be
+        # paired. Lower-quality success-only observations keep their specific
+        # disqualifying reason and cannot become recovery evidence.
+        if not (
+            recovery_class.kind is EvidenceKind.SUCCESS_ONLY
+            and recovery_class.reason is ConvertibilityReason.SUCCESS_ONLY
+        ):
             return ProofPairDecision(
                 failure.evidence_id,
                 recovery.evidence_id,
@@ -265,7 +276,7 @@ class ProofConvertibilityClassifier:
                 0,
             )
 
-        # Hard gates above dominate.  The score only ranks already-convertible
+        # Hard gates above dominate. The score only ranks already-convertible
         # evidence and cannot turn an ineligible pair into a promotable one.
         score = 0
         score += 3 if failure.material else 0
