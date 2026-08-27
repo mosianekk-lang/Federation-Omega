@@ -119,7 +119,14 @@ class SheetsBus:
             return
         raise RuntimeError(f"Lease disappeared before consumption: {lease_id}")
 
-    def claim(self, row_number: int, *, owner: str, until_sast: str) -> None:
+    def claim(
+        self,
+        row_number: int,
+        *,
+        owner: str,
+        until_sast: str,
+        started_at_sast: str,
+    ) -> None:
         (
             self.api.spreadsheets()
             .values()
@@ -129,8 +136,14 @@ class SheetsBus:
                     "valueInputOption": "RAW",
                     "data": [
                         {
-                            "range": f"COMMAND_QUEUE!O{row_number}:R{row_number}",
-                            "values": [["EXECUTING", 1, owner, until_sast]],
+                            "range": f"COMMAND_QUEUE!O{row_number}:S{row_number}",
+                            "values": [[
+                                "EXECUTING",
+                                1,
+                                owner,
+                                until_sast,
+                                started_at_sast,
+                            ]],
                         }
                     ],
                 },
@@ -147,6 +160,8 @@ class SheetsBus:
         receipt_id: str,
         error_code: str = "",
     ) -> None:
+        # Keep column S (started_at_sast) intact so the provider execution
+        # interval remains auditable after the queue row reaches terminal state.
         (
             self.api.spreadsheets()
             .values()
@@ -156,18 +171,13 @@ class SheetsBus:
                     "valueInputOption": "RAW",
                     "data": [
                         {
-                            "range": f"COMMAND_QUEUE!O{row_number}:V{row_number}",
-                            "values": [[
-                                state,
-                                1,
-                                "",
-                                "",
-                                "",
-                                completed_at_sast,
-                                receipt_id,
-                                error_code,
-                            ]],
-                        }
+                            "range": f"COMMAND_QUEUE!O{row_number}:R{row_number}",
+                            "values": [[state, 1, "", ""]],
+                        },
+                        {
+                            "range": f"COMMAND_QUEUE!T{row_number}:V{row_number}",
+                            "values": [[completed_at_sast, receipt_id, error_code]],
+                        },
                     ],
                 },
             )
