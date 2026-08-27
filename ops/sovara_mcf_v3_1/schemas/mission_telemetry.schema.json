@@ -1,0 +1,18 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "SOVARA Mission Telemetry Envelope",
+  "type": "object",
+  "required": [
+    "sovara.mission.id",
+    "sovara.mission.class",
+    "sovara.mission.stage",
+    "sovara.route.id",
+    "sovara.route.role",
+    "sovara.evidence.hard_veto_count",
+    "sovara.owner.interventions",
+    "sovara.owner.intervention_seconds",
+    "sovara.rollback.available",
+    "sovara.rollback.executed"
+  ],
+  "additionalProperties": true
+}

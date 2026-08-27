@@ -1,0 +1,16 @@
+{
+  "schema": "SOVARA-CFBE-V4-EVOLUTION-GATE-1",
+  "assessment": "PRE_REAL_MISSION",
+  "policy": "NO_V4_MODULE_ACTIVATION_WITHOUT_REQUIRED_REAL_MISSION_DATA_AND_POSITIVE_EXPECTED_VALUE",
+  "admitted_count": 0,
+  "held_count": 6,
+  "module_results": [
+    {"module_id":"V4_OBJECTIVE_ECOLOGY","decision":"HOLD","reason":"MISSING_DATA"},
+    {"module_id":"V4_PORTFOLIO_OPTIMIZER","decision":"HOLD","reason":"MISSING_DATA"},
+    {"module_id":"V4_CAUSAL_WORLD_MODEL","decision":"HOLD","reason":"MISSING_DATA"},
+    {"module_id":"V4_INSTITUTIONAL_DIGITAL_TWIN","decision":"HOLD","reason":"MISSING_DATA"},
+    {"module_id":"V4_CAPABILITY_FOUNDRY","decision":"HOLD","reason":"MISSING_DATA"},
+    {"module_id":"V4_INSTITUTIONAL_METABOLISM","decision":"HOLD","reason":"MISSING_DATA"}
+  ],
+  "truth_boundary": {"v4_modules_live":false,"real_mission_data_supplied":false,"provider_calls":false}
+}
