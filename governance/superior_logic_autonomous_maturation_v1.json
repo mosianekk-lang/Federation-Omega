@@ -1,0 +1,219 @@
+{
+  "schema_version": "superior-logic.autonomous-maturation.v1",
+  "id": "SUPERIOR-LOGIC-AUTONOMOUS-MATURATION-V1",
+  "version": "1.1.0",
+  "kind": "IN_PLACE_FEDERATION_EVOLUTION_STAGE_20_EXTENSION",
+  "objective": "Allow Federation systems to discover maturity gaps, experiment, repair, benchmark, learn, qualify challengers and advance safe internal maturity without routine owner intervention, while preserving constitutional owner control, proof-before-claim, rollback, exact authority and truthful state language.",
+  "lineage": {
+    "preserved_checkpoint_branch": "feature/superior-logic-autonomous-maturation-v1",
+    "preserved_checkpoint_commit": "bad93d80f84c0af708fff190a99fb86e0bf9ca11",
+    "converged_base_commit": "d889885071d2984816e67d9b553ecb4377fc3920",
+    "no_silent_overwrite": true
+  },
+  "reuse": {
+    "maturity_spine": "evidenceops/caseforge/federation_evolution_program.py::EvolutionStage.AUTONOMOUS_MATURITY_DOMINANCE_CONTROLLER",
+    "stage20_controller": "evidenceops/caseforge/autonomous_maturation.py::AutonomousMaturationController",
+    "failure_learning": "AO-HARMONIC / FAILURE-TO-OPERATIONAL-WIN-V2",
+    "execution_continuity": "frontier_convergence/continuity_adapter.py::FederationExecutionContinuityAdapter",
+    "runtime_replay_and_state": "Frontier Convergence durable state / replay fence / state epoch / ambiguous-effect hold",
+    "maturity_assessment": "kimmie_seed/maturity_assessor.py",
+    "federation_maturity_model": "federation_consolidation/data/maturity_model.json",
+    "capability_discovery": [
+      "CFBE",
+      "ResourceMarket",
+      "Federation unified capability graph"
+    ],
+    "assurance": [
+      "RealityGuard",
+      "JARVIS",
+      "CFBE",
+      "ProofGraph",
+      "SemanticReadbackFirewall"
+    ]
+  },
+  "non_duplication_rule": {
+    "new_top_level_evolution_system_created": false,
+    "new_parallel_persistence_system_created": false,
+    "new_parallel_failure_kernel_created": false,
+    "new_parallel_chat_recovery_system_created": false,
+    "policy": "EXTEND_AND_COMPOSE_EXISTING_FEDERATION_PRIMITIVES"
+  },
+  "constitutional_root": {
+    "owner_authority_preserved": true,
+    "proof_before_claim": true,
+    "no_silent_overwrite": true,
+    "experiment_is_not_production": true,
+    "lineage_and_rollback_required": true,
+    "lowest_independently_proven_state_controls": true,
+    "external_authority_never_inferred": true,
+    "proof_thresholds_may_not_self_relax": true,
+    "owner_objectives_may_not_self_rewrite": true
+  },
+  "default_authority": {
+    "ceiling": "A1_INTERNAL",
+    "external_effect_default": false,
+    "new_recurring_cost_default": false,
+    "credential_scope_expansion_default": false,
+    "destructive_mutation_default": false,
+    "provider_authority_inheritance": false
+  },
+  "autonomous_cycle": [
+    "OBSERVE",
+    "ASSESS_EXISTING_20_STAGE_MATURITY",
+    "IDENTIFY_HIGHEST_VALUE_GAP",
+    "RECALL_FAILURES_AND_PRIOR_EXPERIMENTS",
+    "FORM_COMPETING_HYPOTHESES",
+    "HARVEST_EXISTING_CAPABILITIES",
+    "GENERATE_CHALLENGERS",
+    "SIMULATE",
+    "TEST",
+    "ADVERSARIAL_TEST",
+    "HISTORICAL_REPLAY",
+    "RANK_BY_MISSION_VALUE_PROOF_AND_OWNER_BURDEN",
+    "SELECT_CHAMPION_OR_CONTINUE_QUALIFICATION",
+    "RUN_REVERSIBLE_CANARY_WITHIN_AUTHORITY",
+    "READBACK",
+    "REGRESSION_TEST",
+    "SOAK",
+    "PROMOTE_ONLY_WITHIN_EXISTING_AUTHORITY",
+    "DIFFUSE_PROVEN_LEARNING_TO_COMPATIBLE_RECEIVERS",
+    "VERIFY_RECEIVER_LOCAL_EFFECT",
+    "REASSESS"
+  ],
+  "self_sustaining_gate": {
+    "required": [
+      "persistent_monitoring",
+      "at_least_three_repeated_successful_maturity_cycles",
+      "automatic_gap_detection",
+      "automatic_repair_or_candidate_generation",
+      "independent_proof",
+      "verified_rollback",
+      "measurable_operational_value",
+      "measured_owner_intervention_rate_at_or_below_configured_ceiling",
+      "cross_receiver_learning_with_compatibility_proof",
+      "no_unresolved_constitutional_drift"
+    ],
+    "owner_intervention_target": "EXCEPTION_ONLY",
+    "source_or_schedule_alone_may_claim_self_sustaining": false
+  },
+  "autonomous_permissions": {
+    "always_allowed_when_reversible_and_within_current_authority": [
+      "inspect_state",
+      "read_evidence",
+      "assess_maturity",
+      "prioritize_gap_backlog",
+      "benchmark",
+      "simulate",
+      "run_tests",
+      "historical_replay",
+      "fault_injection_in_sandbox",
+      "generate_candidate_algorithms",
+      "generate_candidate_configuration",
+      "harvest_existing_capabilities",
+      "create_shadow_artifacts",
+      "quarantine_failed_candidate",
+      "update_internal_learning_ledger",
+      "propose_or_apply_reversible_internal_repairs",
+      "promote_proven_reversible_internal_champion",
+      "rollback_internal_champion",
+      "diffuse_proven_learning_to_compatible_receivers",
+      "continue_qualification_when_promotion_proof_is_incomplete"
+    ],
+    "conditionally_allowed_without_owner_prompt": [
+      "reversible_internal_canonical_promotion_if_proof_graph_complete_and_no_new_authority_cost_or_external_effect",
+      "automatic_retry_only_when_route_or_state_materially_changes",
+      "automatic_route_race_up_to_configured_width",
+      "automatic_predecessor_preservation_before_mutation"
+    ]
+  },
+  "mandatory_owner_escalation": [
+    "constitutional_root_change",
+    "proof_threshold_reduction",
+    "owner_objective_or_value_tradeoff_change",
+    "irreversible_external_effect",
+    "destructive_data_mutation_without_verified_restore",
+    "new_or_expanded_provider_authority",
+    "credential_or_secret_scope_expansion",
+    "unapproved_recurring_cost",
+    "consequential_legal_hr_financial_or_personal_action",
+    "explicit_request_to_override_incomplete_proof",
+    "unresolved_conflict_between_protected_objectives"
+  ],
+  "anti_stall": {
+    "ordinary_blockers_must_not_be_returned_to_owner": true,
+    "incomplete_promotion_proof_is_normally_an_autonomous_qualification_task": true,
+    "maximum_parallel_recovery_routes": 3,
+    "unchanged_retry_after_same_failure_fingerprint": false,
+    "on_block": [
+      "diagnose",
+      "readback_current_state",
+      "search_alternate_route",
+      "harvest_capability",
+      "generate_candidate",
+      "simulate",
+      "test",
+      "quarantine_failed_route",
+      "continue_unblocked_lanes"
+    ],
+    "owner_escalation_only_after": "ALL_SAFE_INTERNAL_RECOVERY_CLASSES_EXHAUSTED_OR_MANDATORY_OWNER_TRIGGER"
+  },
+  "execution_continuity": {
+    "chat_turn_is_not_execution_authority": true,
+    "message_delivery_timeout_is_transport_failure_not_automatic_mission_failure": true,
+    "write_ahead_checkpoint": true,
+    "stable_idempotency_key": true,
+    "expected_state_epoch": true,
+    "provider_receipt_refs": true,
+    "ambiguous_inflight_effect_rule": "READBACK_BEFORE_RETRY",
+    "resume_rule": "RESUME_FROM_LAST_PROVIDER_VERIFIED_OR_DURABLE_CHECKPOINT",
+    "blind_retry_after_timeout": false
+  },
+  "promotion_rule": {
+    "champion_anchor_required": true,
+    "candidate_must_materially_improve_champion": true,
+    "protected_floors": [
+      "quality",
+      "reliability",
+      "proof",
+      "rollback",
+      "owner_burden"
+    ],
+    "restore_test_required": true,
+    "independent_readback_required": true,
+    "lineage_required": true,
+    "no_regression_required": true,
+    "external_effect_requires_surface_specific_authority": true
+  },
+  "maturation_priority_function": [
+    "mission_value_gain",
+    "failure_recurrence_reduction",
+    "owner_burden_reduction",
+    "proof_strength_gain",
+    "resilience_gain",
+    "capability_reuse_gain",
+    "reversibility",
+    "cost",
+    "risk"
+  ],
+  "system_obligations": {
+    "declare_current_verified_maturity": true,
+    "declare_next_gate": true,
+    "maintain_gap_backlog": true,
+    "maintain_champion_and_challengers": true,
+    "maintain_fault_and_experiment_lineage": true,
+    "emit_machine_readable_maturity_receipt": true,
+    "reassess_after_each_material_event": true,
+    "measure_owner_intervention_rate": true,
+    "never_claim_self_sustaining_without_measured_owner_intervention_evidence": true
+  },
+  "truth_boundary": {
+    "source_presence_proves_live_autonomy": false,
+    "scheduled_workflow_proves_maturity": false,
+    "candidate_generation_proves_improvement": false,
+    "passing_local_tests_proves_provider_effect": false,
+    "internal_autonomy_grants_external_authority": false,
+    "runtime_qualification_proves_background_scheduler": false,
+    "maturity_is_never_inherited_across_receivers": true,
+    "provider_execution_requires_provider_native_readback": true
+  }
+}
