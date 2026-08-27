@@ -1,0 +1,54 @@
+{
+  "schema": "FAILURE-WIN-V2-BEHAVIORAL-CONVERGENCE-REENTRY-1",
+  "recorded_at": "2026-08-27T06:08:00+02:00",
+  "receiver": "Federation Omega",
+  "kernel": "FAILURE-TO-OPERATIONAL-WIN-V2",
+  "behavioral_layer": "BehavioralConvergenceEngine/1.0.0",
+  "failure_event": {
+    "event_id": "AIRLOCK-33037638447",
+    "event_class": "REAL_SOURCE_PROVENANCE_FAILURE_OBSERVED",
+    "failed_main_sha": "ec7cbc9f1a5c0ae9fd6355852c9c4e2918620d43",
+    "parent_sha": "7d9625f5188ac2e112561ffcea31c4880c5b098f",
+    "airlock_run": 33037638447,
+    "provider": "github",
+    "source_provenance_status": "UNADMITTED_HISTORY",
+    "source_provenance_receipt_sha256": "4bc4068a8dc94f7998e33b6a947e92957f2292d2af7f6cae7de876c3ee08d2c1",
+    "functional_regression_result": "671_PROVIDER_CUTOVER_V3_TESTS_PASSED_BEFORE_PROVENANCE_FAILURE",
+    "failure_fact_preserved": true
+  },
+  "causal_falsification": {
+    "supported_cause": "DIRECT_MAIN_COMMIT_WITH_ZERO_ASSOCIATED_PULL_REQUESTS",
+    "content_delta": "contracts/sovara_provider_idempotency_v202.json; 14 additive lines",
+    "content_regression_observed": false,
+    "route_provenance_defect_observed": true,
+    "counter_hypothesis_rejected": "SOVARA_CONTRACT_CONTENT_OR_FUNCTIONAL_REGRESSION_CAUSED_AIRLOCK_FAILURE"
+  },
+  "repair_route": {
+    "route_id": "GOVERNED_PR_REENTRY_FROM_EXACT_FAILED_MAIN",
+    "materially_different": true,
+    "preserve_direct_push_as_history": true,
+    "revert_valid_sovara_contract": false,
+    "weaken_airlock": false,
+    "force_push": false,
+    "merge_condition": "EXACT_HEAD_AIRLOCK_BUBBLES_LEAK_SUCCESS_AND_CURRENT_MAIN_ANCESTRY_RECHECK",
+    "post_merge_condition": "EXACT_SUCCESSOR_MAIN_AIRLOCK_BUBBLES_LEAK_PHOENIX_SUCCESS"
+  },
+  "behavioral_truth_boundary": {
+    "current_state": "BEHAVIOR_PROOF_OPEN",
+    "behavior_proven": false,
+    "synthetic_tests_count_as_behavior": false,
+    "source_admission_counts_as_behavior": false,
+    "required_after_reentry": [
+      "FAILURE_FIRST_PROVIDER_RECEIPT",
+      "HEALTHY_PATH_PROVIDER_RECEIPT",
+      "ROLLBACK_PROOF",
+      "FORWARD_CANARY",
+      "INDEPENDENT_SEMANTIC_READBACK",
+      "POSITIVE_VALUE",
+      "NO_REGRESSION",
+      "OWNER_BURDEN_NOT_INCREASED",
+      "DISTINCT_REAL_SUCCESS_RECEIPTS",
+      "SOAK"
+    ]
+  }
+}
