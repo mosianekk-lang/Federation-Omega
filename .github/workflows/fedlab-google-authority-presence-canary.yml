@@ -1,0 +1,36 @@
+name: Federation Lab Google Authority Presence Canary
+on:
+  pull_request:
+    paths:
+      - ".github/workflows/fedlab-google-authority-presence-canary.yml"
+permissions:
+  contents: read
+jobs:
+  presence:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Emit redacted credential presence receipt
+        env:
+          HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
+          HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
+          HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
+          HAS_GOOGLE_SERVICE_ACCOUNT_KEY: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' }}
+          HAS_GCP_CREDENTIALS: ${{ secrets.GCP_CREDENTIALS != '' }}
+          HAS_GOOGLE_GHA_CREDS_JSON: ${{ secrets.GOOGLE_GHA_CREDS_JSON != '' }}
+          HAS_GOOGLE_CLOUD_CREDENTIALS: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
+          HAS_GCP_WIF_PROVIDER: ${{ secrets.GCP_WORKLOAD_IDENTITY_PROVIDER != '' || vars.GCP_WORKLOAD_IDENTITY_PROVIDER != '' }}
+          HAS_GCP_WIF_SA: ${{ secrets.GCP_SERVICE_ACCOUNT != '' || vars.GCP_SERVICE_ACCOUNT != '' }}
+          HAS_GENERIC_WIF_PROVIDER: ${{ secrets.WIF_PROVIDER != '' || vars.WIF_PROVIDER != '' }}
+          HAS_GENERIC_WIF_SA: ${{ secrets.DEPLOYER_SA != '' || vars.DEPLOYER_SA != '' }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os
+          names=[
+            'HAS_GCP_SA_KEY','HAS_GCP_SERVICE_ACCOUNT_KEY','HAS_GOOGLE_CREDENTIALS',
+            'HAS_GOOGLE_SERVICE_ACCOUNT_KEY','HAS_GCP_CREDENTIALS','HAS_GOOGLE_GHA_CREDS_JSON',
+            'HAS_GOOGLE_CLOUD_CREDENTIALS','HAS_GCP_WIF_PROVIDER','HAS_GCP_WIF_SA',
+            'HAS_GENERIC_WIF_PROVIDER','HAS_GENERIC_WIF_SA']
+          presence={n: os.environ.get(n,'false')=='true' for n in names}
+          print(json.dumps({'schema':'FEDLAB-GOOGLE-AUTHORITY-PRESENCE-V1','presence':presence},sort_keys=True))
+          PY
