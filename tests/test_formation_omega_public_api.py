@@ -4,7 +4,7 @@ import formation_omega
 
 
 class FormationOmegaPublicAPITests(unittest.TestCase):
-    def test_mce_amcf_and_soe_exports_are_public(self):
+    def test_mce_amcf_soe_and_fci_exports_are_public(self):
         expected = {
             "MissionConvergenceEngine",
             "MissionSpec",
@@ -26,6 +26,16 @@ class FormationOmegaPublicAPITests(unittest.TestCase):
             "CapabilityCentrality",
             "MissionDeduplicator",
             "StrategicGenomeLibrary",
+            "FederatedCognitiveInstitution",
+            "ConstitutionKernel",
+            "EvidenceWeightedCouncil",
+            "MultiTimescalePlanner",
+            "RobustScenarioPlanner",
+            "PolicyEvolutionLab",
+            "RecursiveImprovementGate",
+            "FractalDelegationGuard",
+            "InstitutionalImmuneSystem",
+            "InstitutionalMemory",
         }
         self.assertTrue(expected.issubset(set(formation_omega.__all__)))
         for name in expected:
