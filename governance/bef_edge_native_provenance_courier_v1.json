@@ -1,0 +1,88 @@
+{
+  "schema": "SOVARA-BEF-EDGE-NATIVE-PROVENANCE-COURIER-CONTRACT-1.0",
+  "state": "SOURCE_CANDIDATE_PROVIDER_NEUTRAL",
+  "purpose": "Provide a private local provenance courier from the bounded ChatBridge rendered-DOM recorder to an encrypted same-user BEF spool without granting the recorder native-host, site-administration, network-client or provider authority.",
+  "identities": {
+    "chatbridge_extension_id": "kacbginamagliaddmlkffhcadpamomjb",
+    "edge_agent_extension_id": "apokbhjjgiaceigelkedcelcecfmgnia",
+    "native_host_name": "com.sovara.bef_edge"
+  },
+  "authority_split": {
+    "chatbridge_companion": {
+      "permissions": ["storage", "unlimitedStorage", "downloads"],
+      "host_permissions": ["https://chatgpt.com/*"],
+      "native_messaging": false,
+      "role": "LOCAL_RENDERED_DOM_RECORDER_AND_HASH_CHAIN"
+    },
+    "bef_edge_agent": {
+      "permissions": ["storage", "nativeMessaging"],
+      "host_permissions": [],
+      "externally_connectable_only_from_chatbridge": true,
+      "role": "CROSS_EXTENSION_TO_NATIVE_PROVENANCE_COURIER"
+    },
+    "native_host": {
+      "allowed_extension_origins": ["apokbhjjgiaceigelkedcelcecfmgnia"],
+      "network_listener": false,
+      "network_client": false,
+      "storage": "WINDOWS_DPAPI_CURRENT_USER_ENCRYPTED_CONTENT_ADDRESSED_SPOOL",
+      "role": "LOCAL_ENCRYPTED_PROVENANCE_SPOOL"
+    }
+  },
+  "data_flow": [
+    "CHATBRIDGE_LOCAL_SAVE_FIRST",
+    "ONLY_UNACKNOWLEDGED_APPEND_EVENTS",
+    "SIGNED_URL_QUERY_AND_FRAGMENT_STRIPPED",
+    "SOURCE_URL_HASH_ONLY",
+    "HASH_BOUND_DELTA_ENVELOPE",
+    "FIXED_CHATBRIDGE_TO_EDGE_EXTENSION_ID",
+    "EDGE_PROTOCOL_REVALIDATION",
+    "NATIVE_HOST_ALLOWED_ORIGIN",
+    "NATIVE_PROTOCOL_REVALIDATION",
+    "DPAPI_ENCRYPT_BEFORE_DISK",
+    "REDACTED_RECEIPT_ACK",
+    "APPEND_SEQUENCE_ACK_ADVANCES_EGRESS_CURSOR"
+  ],
+  "failure_isolation": {
+    "local_capture_precedes_egress": true,
+    "courier_failure_cannot_delete_or_rewrite_raw_chatbridge_ledger": true,
+    "missing_edge_agent_or_native_host_opens_bounded_egress_circuit": true,
+    "duplicate_envelope_hash_reuses_existing_encrypted_object": true,
+    "ack_requires_matching_envelope_hash_and_to_append_sequence": true
+  },
+  "truth_boundaries": {
+    "rendered_scope_may_not_claim_provider_native_exact": true,
+    "stable_manifest_public_keys_are_not_provider_credentials": true,
+    "no_extension_signing_private_key_is_committed": true,
+    "source_admission_is_not_browser_installation": true,
+    "native_host_build_is_not_native_host_registration": true,
+    "registration_is_not_live_message_delivery": true,
+    "encrypted_spool_receipt_is_not_chatbridge_runtime_ingress": true,
+    "current_chat_full_capture_requires_event_range_hash_readback": true,
+    "no_cleanup_or_design_gene_promotion_from_transport_source": true
+  },
+  "live_promotion_gates": [
+    "BUILD_NATIVE_HOST_EXE_AND_SELF_TEST",
+    "REGISTER_HKCU_EDGE_OR_CHROME_NATIVE_HOST_AND_READBACK",
+    "INSTALL_CHATBRIDGE_EXTENSION_WITH_EXPECTED_ID",
+    "INSTALL_BEF_EDGE_AGENT_WITH_EXPECTED_ID",
+    "PROVE_CHATBRIDGE_LOCAL_CAPTURE_BEFORE_EGRESS",
+    "DELIVER_EXACT_NONCE_DELTA_TO_NATIVE_HOST",
+    "VERIFY_DPAPI_ENCRYPTED_OBJECT_AND_HASH_BOUND_ACK",
+    "BIND_SPOOL_READER_TO_CHATBRIDGE_DPF_RUNTIME",
+    "INGEST_COMPLETE_RENDERED_EVENT_RANGE",
+    "VERIFY_FULL_OBSERVABLE_RENDERED_CHAT_SCOPE",
+    "DPF_END_OF_CHAT_RECONCILIATION_CANARY",
+    "ROLLBACK_OR_UNINSTALL_READBACK"
+  ],
+  "source_components": [
+    "chatbridge-companion/src/edge-egress.js",
+    "chatbridge-companion/src/background.js",
+    "bef-edge-agent/manifest.json",
+    "bef-edge-agent/src/protocol.js",
+    "bef-edge-agent/src/background.js",
+    "bef-edge-agent/native-host/bef_native_host.py",
+    "bef-edge-agent/native-host/bef_spool.py",
+    "bef-edge-agent/native-host/build_native_host.ps1",
+    "bef-edge-agent/native-host/install_native_host.ps1"
+  ]
+}
