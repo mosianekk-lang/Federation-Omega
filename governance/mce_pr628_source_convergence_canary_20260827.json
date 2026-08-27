@@ -1,0 +1,54 @@
+{
+  "receipt": "MCE_PR628_SOURCE_CONVERGENCE_CANARY_20260827",
+  "mission": "Converge PR #628 BEF native encrypted provenance courier onto fresh signed main without semantic dilution.",
+  "state": "SOURCE_CANDIDATE_REANCHORED_PENDING_ADMISSION",
+  "source_pr": 628,
+  "source_head": "8ebe5e60afe6ae1adff980f5dbbec53594a3b792",
+  "source_merge_base": "1d384455d1cc35c9f02116639292c00387ae5c4b",
+  "fresh_main": "cd998380a292535cc6eb93423c2be20a134ef97f",
+  "reanchor_commit": "7117de5cbb15ffd4ce203cb3d2e2569ef853f3fd",
+  "classification": "DISJOINT_STALE_BY_ANCESTRY",
+  "path_overlap_with_intervening_main_delta": [],
+  "candidate_blob_count": 18,
+  "candidate_blobs_preserved_exactly": true,
+  "candidate_blobs": {
+    "bef-edge-agent/manifest.json": "0605c4463a834e326fa27d33d31221f97db33830",
+    "bef-edge-agent/native-host/bef_native_host.py": "7ae31311331680b379ab1bea364aab746d96e078",
+    "bef-edge-agent/native-host/bef_spool.py": "61fd10981f26d3516c0a811f51dbb0d6df279dea",
+    "bef-edge-agent/native-host/build_native_host.ps1": "b7b54035f1f976baf66c0b3deb9d0ebfe77c2dae",
+    "bef-edge-agent/native-host/com.sovara.bef_edge.json.template": "ac4c0e0a3b21cdaa7ad311abb1d09d8b50fb383b",
+    "bef-edge-agent/native-host/install_native_host.ps1": "157c328d7ddc5caf0e3a834f0af2c59ab90c6ef0",
+    "bef-edge-agent/native-host/tests/test_native_spool.py": "97f7d15094c70d0a6d0cbeb042ea38abe9aca21a",
+    "bef-edge-agent/package.json": "98e96d4646e59e5ab5ea28622068b7f6a07a81cb",
+    "bef-edge-agent/src/background.js": "513a084ebb970ba1cee40a6656888209e0bfab95",
+    "bef-edge-agent/src/protocol.js": "0d7571dcdd6807a84f687d083456da469498f83b",
+    "bef-edge-agent/tests/protocol.test.js": "59118f347ae9a67c428cd3ef83c6209f1e896f90",
+    "bubbles/chatbridge_omega4/test_browser_companion_source_contract.py": "226b80b02ec52691191908eaaec530de9eed5768",
+    "chatbridge-companion/manifest.json": "be62882fa02f0f767520c668f82b0c348eefeb16",
+    "chatbridge-companion/package.json": "1b9ee275df88a4a183f3112064906ca04e31530b",
+    "chatbridge-companion/src/background.js": "1f404fe033826a53c4a4ae0f785f2e761f4f3e3f",
+    "chatbridge-companion/src/edge-egress.js": "dd716024cd8a5d8518b876a4cd4f621a05e5d310",
+    "chatbridge-companion/tests/edge-egress.test.js": "6a1aab15469c46b5cbe60f4ddbbd6a524f781311",
+    "governance/bef_edge_native_provenance_courier_v1.json": "d2d9425875c66d05c0876dbfb18d7e75fe399df6"
+  },
+  "closure_lock": {
+    "priority": "P0_SOURCE_CANARY",
+    "required_checks": [
+      "Federation Omega Airlock",
+      "Bubbles Command Bus",
+      "Public Repository Leak Guard"
+    ],
+    "expected_head_merge_required": true,
+    "signed_main_readback_required": true
+  },
+  "proof_boundary": {
+    "source_admission": "PENDING",
+    "extension_installation": "UNVERIFIED",
+    "native_host_build": "UNVERIFIED",
+    "native_host_registration": "UNVERIFIED",
+    "live_browser_delivery": "UNVERIFIED",
+    "current_chat_capture": "UNVERIFIED",
+    "dpf_reconciliation": "UNVERIFIED",
+    "runtime_resilience": "UNVERIFIED"
+  }
+}

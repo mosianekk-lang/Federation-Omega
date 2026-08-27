@@ -18,6 +18,21 @@ from .adaptive_cycle import (
     CycleOutcome,
     EffortRecord,
 )
+from .behavioral_convergence import (
+    BehavioralConvergenceEngine,
+    BehavioralConvergenceState,
+    BehavioralEvidenceKind,
+    BehavioralOrigin,
+    BehavioralProofReceipt,
+    BehavioralReceiptConflict,
+)
+from .behavioral_convergence_factory import (
+    BehavioralCandidate,
+    BehavioralConvergenceFactory,
+    BehavioralConvergencePlan,
+    CandidateAssessment,
+    CandidateDisposition,
+)
 from .cost_governor import (
     CostAction,
     CostClass,
@@ -83,6 +98,17 @@ __all__ = [
     "ContextCompactor",
     "CycleOutcome",
     "EffortRecord",
+    "BehavioralConvergenceEngine",
+    "BehavioralConvergenceState",
+    "BehavioralEvidenceKind",
+    "BehavioralOrigin",
+    "BehavioralProofReceipt",
+    "BehavioralReceiptConflict",
+    "BehavioralCandidate",
+    "BehavioralConvergenceFactory",
+    "BehavioralConvergencePlan",
+    "CandidateAssessment",
+    "CandidateDisposition",
     "FailureToOperationalWinKernelV2",
     "FailureEventType",
     "FailureObservation",

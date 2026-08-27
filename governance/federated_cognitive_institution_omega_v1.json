@@ -1,0 +1,72 @@
+{
+  "contract": "FEDERATED_COGNITIVE_INSTITUTION_OMEGA_V1",
+  "version": "1.0.0",
+  "status": "SOURCE_CANDIDATE",
+  "purpose": "Provide an owner-rooted, evidence-weighted, multi-timescale institutional cognition layer above MCE/AMCF/SOE without creating a second sovereign authority plane.",
+  "composition": {
+    "constitutional_authority_plane": "SOVARA",
+    "institutional_cognition": "FCI_OMEGA",
+    "strategic_objective_ecology": "SOE_OMEGA",
+    "mission_autonomy": "AMCF",
+    "deterministic_closure_kernel": "MCE_V1",
+    "independent_assurance": ["JARVIS", "TruthGrid", "Failure-Win", "specialist verifiers"]
+  },
+  "default_authority_ceiling": "A1_INTERNAL",
+  "institutional_roles": [
+    "PROPOSER",
+    "BUILDER",
+    "FALSIFIER",
+    "VERIFIER",
+    "AUDITOR",
+    "STEWARD"
+  ],
+  "invariants": [
+    "proof_surface_and_state_non_inflation",
+    "delegated_authority_can_only_narrow_or_remain_equal",
+    "consequential_owner_intent_is_non_delegable",
+    "no_consequential_self_certification",
+    "rollback_or_explicit_owner_irreversibility_decision",
+    "history_preservation_on_correction_supersession_and_merge",
+    "critical_falsifier_or_verifier_veto_is_preserved",
+    "independence_domain_diversity_required_for_council_quorum",
+    "policy_promotion_is_sequential",
+    "recursive_improvement_requires_measured_gain_independent_reproduction_and_rollback",
+    "local_failure_does_not_freeze_independent_safe_work"
+  ],
+  "algorithms": [
+    "constitution_kernel",
+    "evidence_weighted_council",
+    "multi_timescale_planner",
+    "minimax_regret_scenario_planner",
+    "policy_evolution_lab",
+    "recursive_improvement_gate",
+    "fractal_delegation_guard",
+    "institutional_immune_system",
+    "hash_chained_institutional_memory"
+  ],
+  "policy_evolution": {
+    "stages": ["CANDIDATE", "SHADOW", "CANARY", "ADOPTED"],
+    "stage_skip_allowed": false,
+    "adoption_independent_replications_required": 2,
+    "consequential_adoption_owner_gate": true
+  },
+  "external_effect_boundary": {
+    "credentials_created": false,
+    "provider_authority_created": false,
+    "provider_mutation_performed": false,
+    "financial_effect_performed": false,
+    "external_message_sent": false,
+    "owner_intent_mutated": false
+  },
+  "testing": {
+    "framework": "python_stdlib_unittest",
+    "focused_test_count": 17,
+    "hosted_admission_pending": true
+  },
+  "maturity_boundary": {
+    "source_candidate_proves_runtime": false,
+    "source_candidate_proves_provider": false,
+    "provider_native_24x7": "UNVERIFIED",
+    "fully_established": false
+  }
+}
