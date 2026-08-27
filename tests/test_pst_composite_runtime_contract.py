@@ -27,6 +27,17 @@ class PstCompositeRuntimeContractTests(unittest.TestCase):
         self.assertIn("id: pst_closure", text)
         self.assertIn("if: steps.pst_closure.outputs.requested == 'true'", text)
 
+    def test_passive_run_cannot_quarantine_workflows(self):
+        text = WORKFLOW.read_text(encoding="utf-8")
+        marker = "      - name: Quarantine legacy workflow execution\n"
+        start = text.index(marker)
+        quarantine = text[start : text.index("      - name: Run authorised PST composite verification", start)]
+        self.assertIn("if: steps.pst_closure.outputs.requested == 'true'", quarantine)
+        self.assertIn("      - name: Record passive verification receipt", text)
+        self.assertIn("if: steps.pst_closure.outputs.requested != 'true'", text)
+        self.assertIn('"workflow_quarantine_performed": False', text)
+        self.assertIn('"source_mutation_attempted": False', text)
+
     def test_local_bible_rebuild_is_externalized_from_source_workflow(self):
         text = WORKFLOW.read_text(encoding="utf-8")
         boundary = BIBLE_BOUNDARY.read_text(encoding="utf-8")
@@ -48,7 +59,7 @@ class PstCompositeRuntimeContractTests(unittest.TestCase):
         self.assertIn('requested="${{ steps.pst_closure.outputs.requested }}"', text)
         self.assertIn('if [[ "${requested}" != "true" ]]; then', text)
         self.assertIn(
-            "Phoenix quarantine and exports verified; PST not requested",
+            "Phoenix passive verification and exports verified; PST not requested",
             text,
         )
         self.assertNotIn("bible_ok", text)
