@@ -39,6 +39,18 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Resolve provider execution mode
+        id: provider_mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          requested=false
+          if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
+            requested=true
+          fi
+          echo "requested=${requested}" >> "$GITHUB_OUTPUT"
+          echo "Provider execution requested: ${requested}"
+
       - name: Materialize and verify exact release bytes
         shell: bash
         run: |
@@ -73,6 +85,7 @@ jobs:
           echo "SOVARA_RECEIPT_DIR=$TARGET/receipts" >> "$GITHUB_ENV"
 
       - name: Authenticate through exact repository-scoped Google WIF
+        if: steps.provider_mode.outputs.requested == 'true'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.PROJECT_ID }}
@@ -80,11 +93,13 @@ jobs:
           service_account: ${{ env.DEPLOYER_SA }}
 
       - name: Install pinned Google Cloud CLI action
+        if: steps.provider_mode.outputs.requested == 'true'
         uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
         with:
           project_id: ${{ env.PROJECT_ID }}
 
       - name: Execute provider admission, canaries, deployment, and rollback gates
+        if: steps.provider_mode.outputs.requested == 'true'
         id: admission
         continue-on-error: true
         shell: bash
@@ -110,6 +125,7 @@ jobs:
         if: always()
         shell: bash
         env:
+          PROVIDER_ADMISSION_REQUESTED: ${{ steps.provider_mode.outputs.requested }}
           ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
         run: |
           set -euo pipefail
@@ -118,10 +134,18 @@ jobs:
           import hashlib, json, os, sys
           from datetime import datetime, timezone
           from pathlib import Path
+
           path = Path(sys.argv[1])
-          code = int(os.environ.get("ADMISSION_EXIT_CODE") or 99)
+          requested = os.environ.get("PROVIDER_ADMISSION_REQUESTED", "false") == "true"
+          raw_code = os.environ.get("ADMISSION_EXIT_CODE", "").strip()
+          code = int(raw_code) if raw_code else None
+          receipt_dir = path.parent
+          structural_ok = (
+              (receipt_dir / "STRUCTURAL_VALIDATION_PRE_AUTH.json").is_file()
+              and (receipt_dir / "PROVIDER_PROBE_SELF_TEST.json").is_file()
+          )
           receipt = {
-              "schema": "SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-2",
+              "schema": "SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-3",
               "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
               "repository": os.environ["GITHUB_REPOSITORY"],
               "workflow": os.environ["GITHUB_WORKFLOW"],
@@ -129,8 +153,12 @@ jobs:
               "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
               "source_sha": os.environ["GITHUB_SHA"],
               "ref": os.environ["GITHUB_REF"],
+              "execution_mode": "PROVIDER_ADMISSION" if requested else "SOURCE_VALIDATION_ONLY",
+              "structural_validation_completed": structural_ok,
+              "provider_admission_attempted": requested,
               "provider_admission_exit_code": code,
-              "provider_admission_completed": code == 0,
+              "provider_admission_completed": requested and code == 0,
+              "provider_state_claimed": requested and code == 0,
               "repository_source_write_authority": False,
               "credential_values_recorded": False,
           }
@@ -149,14 +177,22 @@ jobs:
           retention-days: 90
           path: ${{ env.SOVARA_RECEIPT_DIR }}
 
-      - name: Enforce provider-admission result
+      - name: Enforce execution-mode result
         if: always()
         env:
+          PROVIDER_ADMISSION_REQUESTED: ${{ steps.provider_mode.outputs.requested }}
           ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
         run: |
           set -euo pipefail
-          code="${ADMISSION_EXIT_CODE:-99}"
-          if [ "$code" -ne 0 ]; then
-            echo "Provider admission stopped at a proof gate. Redacted receipts were retained as a workflow artifact." >&2
-            exit "$code"
+          receipt="${SOVARA_RECEIPT_DIR}/WORKFLOW_RECEIPT.json"
+          if [[ "${PROVIDER_ADMISSION_REQUESTED:-false}" == "true" ]]; then
+            code="${ADMISSION_EXIT_CODE:-99}"
+            if [ "$code" -ne 0 ]; then
+              echo "Provider admission stopped at a proof gate. Redacted receipts were retained as a workflow artifact." >&2
+              exit "$code"
+            fi
+            jq -e '.provider_admission_attempted == true and .provider_admission_completed == true and .provider_admission_exit_code == 0' "$receipt" >/dev/null
+          else
+            jq -e '.execution_mode == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_admission_exit_code == null and .provider_state_claimed == false' "$receipt" >/dev/null
+            echo "Source validation verified. Provider admission was not requested and no WIF exchange was attempted."
           fi
