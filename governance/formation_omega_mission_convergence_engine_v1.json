@@ -1,0 +1,47 @@
+{
+  "contract": "FORMATION_OMEGA_MISSION_CONVERGENCE_ENGINE_V1",
+  "version": "1.0.0",
+  "status": "PUBLIC_SAFE_SOURCE_CANDIDATE",
+  "authority_class": "A1_INTERNAL",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Keep material missions converging from directive through source/runtime/proof to independently verified closure.",
+  "not_authority": [
+    "provider credential authority",
+    "external effect permission",
+    "owner approval replacement",
+    "JARVIS self-certification replacement",
+    "EvidenceOps proof replacement",
+    "DPF raw provenance replacement"
+  ],
+  "reuse": {
+    "mission_contract": "Federation Omega v2 MissionContract/intent compiler semantics",
+    "projection": "Federation Omega event-sourced current-state semantics",
+    "formation": ["FUP-025", "FUP-026", "FUP-027", "FUP-028", "FUP-030", "FUP-057", "FUP-067", "FUP-068", "FUP-073", "FUP-074", "FUP-080"],
+    "superior_logic": ["SLD-001", "SLD-002", "SLD-003", "SLD-004", "SLD-005", "DIR-044", "DIR-046", "DIR-049", "DIR-051"],
+    "dpf": "FULL_CAPTURE_FIRST / RECONCILE / DERIVE / COMPACT_ARCHIVE / LEARN"
+  },
+  "proof_axes": ["design", "source", "installation", "identity", "authentication", "authorization", "execution", "semantic_proof", "independent_proof", "resilience", "rollback", "closure"],
+  "closure_lock": {"P0": "INTERRUPT_CLOSURE", "P1": "PARALLEL_CHALLENGER", "P2": "IMPROVEMENT_INBOX", "P3": "FUTURE_BACKLOG"},
+  "source_convergence_classes": ["CURRENT_BASE", "ALREADY_APPLIED", "DISJOINT_STALE_BY_ANCESTRY", "STRUCTURALLY_COMPATIBLE", "SEMANTIC_CONFLICT"],
+  "automatic_reanchor_allowed": ["CURRENT_BASE", "ALREADY_APPLIED", "DISJOINT_STALE_BY_ANCESTRY"],
+  "automatic_reanchor_prohibited": ["STRUCTURALLY_COMPATIBLE", "SEMANTIC_CONFLICT"],
+  "admission_train": ["fresh_signed_main", "path_blob_readback", "convergence_classification", "current_main_candidate", "focused_tests", "affected_regressions", "airlock", "bubbles_command_bus", "public_repository_leak_guard", "fresh_main_recheck", "expected_head_merge", "signed_main_readback"],
+  "hard_invariants": [
+    "no DONE without mission closure receipt",
+    "source proof does not imply runtime proof",
+    "no secret-bearing payload in public-safe MCE ledger",
+    "independent lanes may continue when another lane is held",
+    "shared mutation domains serialize only at the state-changing boundary",
+    "semantic conflict never auto-rebases",
+    "repeated failure fingerprint updates one durable resolver",
+    "DPF provenance remains reconstructable",
+    "provider authority remains surface-specific and effect-specific"
+  ],
+  "first_canary": {
+    "subject": "BEF provenance courier PR #628",
+    "objective": "Converge stale-by-ancestry source candidate to current main without semantic dilution.",
+    "runtime_effects": false,
+    "source_only_until": "signed main readback"
+  },
+  "truth_boundary": "Source contract and tests cannot prove private runtime binding, live chat capture, provider execution or Fully Established maturity."
+}
