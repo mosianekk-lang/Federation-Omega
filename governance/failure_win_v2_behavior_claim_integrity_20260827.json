@@ -1,0 +1,43 @@
+{
+  "schema": "FAILURE-WIN-V2-BEHAVIOR-CLAIM-INTEGRITY-1",
+  "recorded_at": "2026-08-27T06:41:00+02:00",
+  "receiver": "SOVARA Ω",
+  "source_event": {
+    "event_id": "FWV2-CURRENT-CHAT-SOVARA-REPAIR-20260827-001",
+    "observed_receiver_label": "Current Chat / SOVARA",
+    "provider_status": "GITHUB_EXACT_MAIN_VERIFIED_PROVIDER_NOT_ATTEMPTED",
+    "raw_behavior_proven": true,
+    "proof_graph_complete": false,
+    "provider_attempted": false
+  },
+  "live_correction": {
+    "alias": "Current Chat / SOVARA -> SOVARA Ω",
+    "correction_event": "FWV2-SOVARA-BEHAVIOR-CLAIM-CORRECTION-20260827-001",
+    "projected_behavior_proven": false,
+    "projected_state": "V2_INVOKED_PROOF_OPEN",
+    "original_event_rewritten": false
+  },
+  "compiler_rule": {
+    "behavior_flag_is_claim_only": true,
+    "required_boolean_gates": [
+      "FAILURE_FACT_PRESERVED",
+      "CAUSAL_FALSIFICATION",
+      "MATERIALLY_DIFFERENT_ROUTE",
+      "VECTOR_GATE",
+      "FAILURE_FIRST",
+      "HEALTHY_PATH",
+      "ROLLBACK",
+      "FORWARD_CANARY",
+      "SEMANTIC_READBACK",
+      "POSITIVE_VALUE",
+      "NO_REGRESSION",
+      "NO_BURDEN_INCREASE"
+    ],
+    "minimum_repeated_successes": 3,
+    "minimum_soak_seconds": 300,
+    "incomplete_claim_state": "V2_BEHAVIOR_CLAIM_PROOF_INCOMPLETE",
+    "incomplete_claim_anomaly": "BEHAVIOR_CLAIM_PROOF_INCOMPLETE",
+    "incomplete_claim_projects_behavior_false": true
+  },
+  "truth_boundary": "This repair prevents claim-field self-promotion. It does not itself prove SOVARA behavior, provider execution, operational win, authority, or estate-wide maturity."
+}
