@@ -1,0 +1,59 @@
+{
+  "faults": [
+    {
+      "chain_head": "d7eea8c23873bdbc81dc51d99fd0166d0ba7d00e3f315999ae0d2dc07001c826",
+      "event_count": 65,
+      "fault_classes": [
+        "AUTHORIZATION_CONSERVATION_FAILURE",
+        "PROXY_OPTIMIZATION_FAILURE",
+        "ASYMMETRIC_ERROR_COSTING",
+        "REPRESENTATION_BOUNDARY_STATE_LOSS",
+        "ACCOUNTABILITY_DIFFUSION",
+        "NON_MONOTONIC_COMPLETION_STATE",
+        "SPEECH_ACT_MISCLASSIFICATION",
+        "REPAIR_THEATRE_RISK"
+      ],
+      "fault_id": "FO-GEM-AUTH-CONT-20260826-001",
+      "lifecycle_state": "REGISTERED_LOCAL",
+      "open_requirements": [
+        "NT-01",
+        "NT-02",
+        "NT-03",
+        "NT-04",
+        "NT-05",
+        "NT-06",
+        "NT-07",
+        "NT-08",
+        "NT-09",
+        "NT-10",
+        "NT-11",
+        "NT-12",
+        "NT-13",
+        "NT-14",
+        "NT-15",
+        "NT-16",
+        "NT-17",
+        "NT-18",
+        "NT-19",
+        "NT-20",
+        "NT-21",
+        "NT-22",
+        "NT-23",
+        "NT-24"
+      ],
+      "owner_authority": "Kim Kagiso Mosiane",
+      "registered_at": "2026-08-27T02:50:00+02:00",
+      "scope": "chatgpt",
+      "source_kind": "HASH_CHAINED_JSONL",
+      "source_ref": "/workspace/scratch/137bfa825505/fault_book_current_reconcile_v4_v11/Federation_Omega_Fault_Book_Live_Capture_2026-08-26.jsonl",
+      "source_sha256": "0d482d8cad291bdcd18ff4fd94b25ae1fd9621998624cee40502c39a9b02276e",
+      "status": "SYSTEMIC_OPEN",
+      "supersedes": [],
+      "title": "Authorization Continuity and Safeguard Cascade Failure",
+      "truth_state": "PARTIAL_CHECKPOINTED"
+    }
+  ],
+  "manager": "RealityGuard",
+  "registry_sha256": "3d617335c26f8e74709a8d444ce788e78f1742e54873e4ee57470dcf7b3482c1",
+  "schema_version": "realityguard.fault-manager.v1"
+}

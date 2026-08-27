@@ -1,0 +1,16 @@
+{
+  "schema_version": "realityguard.fault-manager-adapter.v1",
+  "canonical_manager": "RealityGuard",
+  "manager_scope": ["federation", "chatgpt"],
+  "source_contract": "hash-chained JSONL fault ledgers plus versioned human fault books",
+  "identity_rule": "stable fault_id; duplicate content deduplicates; equal-length divergent heads require explicit merge",
+  "lifecycle_rule": "registration never proves installation, binding, provider interception, remediation or closure",
+  "closure_rule": "PROVEN_CLOSED is rejected while any open requirement remains",
+  "history_rule": "event history is append-only and may not regress",
+  "integration_state": {
+    "federation_repository": "IMPLEMENTED_LOCAL_TEST_PENDING",
+    "federation_runtime": "ADAPTER_REQUIRED",
+    "chatgpt_provider": "ADAPTER_REQUIRED",
+    "cross_chat_behavior": "UNVERIFIED"
+  }
+}
