@@ -3,7 +3,9 @@ import unittest
 from ao_harmonic_v3.failure_win_manifest import compile_receiver_manifest
 from ao_harmonic_v3.failure_win_projection_contract import (
     EVENT_COLUMNS,
-    PROOF_BOOLEAN_COLUMNS,
+    PROOF_BOOLEAN_COUNT,
+    PROOF_BOOLEAN_FIRST_COLUMN,
+    PROOF_BOOLEAN_LAST_COLUMN,
     REQUIRED_REPEATED_SUCCESSES,
     REQUIRED_SOAK_SECONDS,
     behavior_projection_formula,
@@ -13,18 +15,19 @@ from ao_harmonic_v3.failure_win_projection_contract import (
 
 
 class FailureWinProjectionContractTests(unittest.TestCase):
-    def test_live_behavior_formula_references_every_hard_gate(self):
+    def test_live_behavior_formula_references_complete_proof_block_and_outer_gates(self):
         formula = behavior_projection_formula()
         self.assertIn("'Failure-Win Events v2'!H$2:H", formula)
-        for key in PROOF_BOOLEAN_COLUMNS:
-            column = EVENT_COLUMNS[key]
-            self.assertIn(f"'Failure-Win Events v2'!{column}$2:{column}", formula)
+        self.assertIn(
+            f"'Failure-Win Events v2'!{PROOF_BOOLEAN_FIRST_COLUMN}$2:{PROOF_BOOLEAN_LAST_COLUMN}",
+            formula,
+        )
+        self.assertIn(f"TRUE)={PROOF_BOOLEAN_COUNT}", formula)
         self.assertIn(f"repeat_count_ok>={REQUIRED_REPEATED_SUCCESSES}", formula)
         self.assertIn(f"soak_seconds_ok>={REQUIRED_SOAK_SECONDS}", formula)
-        self.assertIn("invocation_ok", formula)
-        self.assertIn("readback_ok", formula)
-        self.assertIn("current_ok", formula)
-        self.assertIn("evidence_ref_ok", formula)
+        for key in ("kernel_invoked", "independent_readback", "current", "evidence_refs"):
+            column = EVENT_COLUMNS[key]
+            self.assertIn(f"'Failure-Win Events v2'!{column}$2:{column}", formula)
 
     def test_generated_provider_formulas_have_balanced_parentheses(self):
         for formula in (behavior_projection_formula(), receiver_state_formula(), truth_boundary_formula()):
@@ -32,9 +35,10 @@ class FailureWinProjectionContractTests(unittest.TestCase):
 
     def test_live_formula_uses_non_cell_like_let_identifiers(self):
         formula = behavior_projection_formula()
-        self.assertNotIn(",g1,", formula)
-        self.assertIn("gate_1_ok", formula)
+        self.assertIn("proof_row_ok", formula)
         self.assertIn("proof_graph_ok", formula)
+        self.assertIn("repeat_count_ok", formula)
+        self.assertIn("soak_seconds_ok", formula)
 
     def test_live_state_formula_exposes_incomplete_raw_claim(self):
         formula = receiver_state_formula()
