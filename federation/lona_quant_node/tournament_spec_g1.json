@@ -1,0 +1,23 @@
+{
+  "tournament": "FQEF_G1_ADAPTIVE_TREND",
+  "research_only": true,
+  "objective": "Generate deterministic long-only adaptive trend candidates for SPY, QQQ, and IWM under identical requirements, then compare provider fruit through the same evidence battery.",
+  "providers": {
+    "openai": {"job_id":"ade255a9-6ce5-4d5a-8985-f41b62c99a07","status":"GENERATING"},
+    "google": {"job_id":"515a3220-f27e-41b0-af2b-93fcb283c038","status":"GENERATING"},
+    "anthropic": {"job_id":"de637faf-24a8-4c14-8524-4a25c1694797","status":"GENERATING"},
+    "xai": {"job_id":"bf09b115-e8f7-4d9b-8a68-c838d2706043","status":"FAILED","failure":"XAI_API_KEY is not configured"},
+    "openrouter": {"job_id":"c7713b20-2ec9-4fc9-96fb-4fcadfe2293e","status":"GENERATING"}
+  },
+  "fairness_invariants": [
+    "identical natural-language strategy specification",
+    "no provider-specific strategy tuning",
+    "provider identity and failure state preserved",
+    "generated source must be read back and hashed before testing",
+    "identical datasets and economic assumptions for comparisons",
+    "no failed provider may be silently replaced under the same label",
+    "generation review score is not trading-performance evidence"
+  ],
+  "evidence_ledger_drive_id": "1-lwI_pV2Uu8Ev1BcyYMt9CSalzK3VBzouBb6KpswyVM",
+  "live_capital_authorized": false
+}
