@@ -1,0 +1,7 @@
+{
+  "schema": "SOVARA-SIC-V2-RUNTIME-INDEPENDENCE-V1",
+  "primary_runtime": "PERSISTENT_SOVARA_SERVICE",
+  "clients": ["CHATGPT_MCP", "CLI", "AUTOMATION"],
+  "non_primary_runtime": ["CHAT_TRANSCRIPT", "GITHUB_ACTIONS"],
+  "durability_requirements": ["PERSISTENT_MISSION_STORE", "ATOMIC_CHECKPOINTS", "IDEMPOTENT_MISSION_ID", "RESTART_RESUME"]
+}
