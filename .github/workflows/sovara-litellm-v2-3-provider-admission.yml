@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
       - "governance/github_airlock_policy.json"
+      - "governance/sovara_gemini_collaboration_request_v1.json"
       - "releases/sovara-litellm/v2.3.0/**"
   workflow_dispatch:
 
@@ -26,6 +27,7 @@ env:
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  GEMINI_REQUEST_FILE: governance/sovara_gemini_collaboration_request_v1.json
 
 jobs:
   provider-admission:
@@ -36,7 +38,7 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           ref: main
-          fetch-depth: 1
+          fetch-depth: 2
           persist-credentials: false
 
       - name: Resolve provider execution mode
@@ -45,11 +47,36 @@ jobs:
         run: |
           set -euo pipefail
           requested=false
+          scope=SOURCE_VALIDATION_ONLY
+
           if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then
             requested=true
+            scope=FULL_PROVIDER_ADMISSION
+          elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
+            changed="$(git diff-tree --no-commit-id --name-only -r "${GITHUB_SHA}" || true)"
+            if grep -Fxq "${GEMINI_REQUEST_FILE}" <<<"${changed}"; then
+              python3 - "${GEMINI_REQUEST_FILE}" <<'PY'
+          import json, sys
+          p=json.load(open(sys.argv[1], encoding='utf-8'))
+          assert p.get('schema') == 'SOVARA_GEMINI_COLLABORATION_REQUEST_V1', p
+          assert p.get('mode') == 'G0_READ_ONLY_VERIFY', p
+          assert p.get('execute') is True, p
+          assert p.get('promote') is False, p
+          assert p.get('case_data_allowed') is False, p
+          assert p.get('provider_mutation_allowed') is False, p
+          assert p.get('external_communication_allowed') is False, p
+          assert p.get('expected_project_id') == 'sov-hybrid-suite', p
+          assert p.get('expected_project_number') == '257649435135', p
+          assert p.get('expected_workflow') == '.github/workflows/sovara-litellm-v2-3-provider-admission.yml', p
+          PY
+              requested=true
+              scope=G0_READ_ONLY_VERIFY
+            fi
           fi
+
           echo "requested=${requested}" >> "$GITHUB_OUTPUT"
-          echo "Provider execution requested: ${requested}"
+          echo "scope=${scope}" >> "$GITHUB_OUTPUT"
+          echo "Provider execution requested: ${requested}; scope=${scope}"
 
       - name: Materialize and verify exact release bytes
         shell: bash
@@ -98,8 +125,84 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Execute provider admission, canaries, deployment, and rollback gates
+      - name: Verify exact canonical WIF provider contract
         if: steps.provider_mode.outputs.requested == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$SOVARA_RECEIPT_DIR"
+          gcloud iam workload-identity-pools providers describe github \
+            --project "$PROJECT_ID" \
+            --location global \
+            --workload-identity-pool github-federation-omega \
+            --format=json > "$SOVARA_RECEIPT_DIR/WIF_PROVIDER_READBACK.json"
+          gcloud projects describe "$PROJECT_ID" --format=json > "$SOVARA_RECEIPT_DIR/GCP_PROJECT_READBACK.json"
+          ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          python3 - "$SOVARA_RECEIPT_DIR/WIF_PROVIDER_READBACK.json" "$SOVARA_RECEIPT_DIR/GCP_PROJECT_READBACK.json" "$ACTIVE_ACCOUNT" <<'PY' > "$SOVARA_RECEIPT_DIR/WIF_G0_VERIFIED.json"
+          import hashlib, json, sys
+          provider=json.load(open(sys.argv[1], encoding='utf-8'))
+          project=json.load(open(sys.argv[2], encoding='utf-8'))
+          active=sys.argv[3]
+          expected_condition=(
+              "assertion.repository_id=='1292795464'"
+              " && assertion.repository_owner_id=='261966700'"
+              " && assertion.ref=='refs/heads/main'"
+              " && assertion.job_workflow_ref=='mosianekk-lang/Federation-Omega/.github/workflows/sovara-litellm-v2-3-provider-admission.yml@refs/heads/main'"
+              " && (assertion.event_name=='workflow_dispatch' || assertion.event_name=='push')"
+          )
+          expected_mapping={
+              'google.subject':'assertion.sub',
+              'attribute.repository_id':'assertion.repository_id',
+              'attribute.repository_owner_id':'assertion.repository_owner_id',
+              'attribute.ref':'assertion.ref',
+              'attribute.event_name':'assertion.event_name',
+              'attribute.workflow_ref':'assertion.job_workflow_ref',
+          }
+          observed_mapping=provider.get('attributeMapping') or {}
+          observed_condition=provider.get('attributeCondition') or ''
+          assert str(project.get('projectNumber','')) == '257649435135', project
+          assert project.get('projectId') == 'sov-hybrid-suite', project
+          assert provider.get('state','ACTIVE') == 'ACTIVE' and provider.get('disabled') is not True, provider
+          assert observed_condition == expected_condition, {'observed':observed_condition,'expected':expected_condition}
+          assert observed_mapping == expected_mapping, {'observed':observed_mapping,'expected':expected_mapping}
+          assert active == 'superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com', active
+          r={
+              'receipt':'FEDOMEGA-WIF-CLOUD-VERIFIED',
+              'state':'VERIFIED',
+              'project':'sov-hybrid-suite',
+              'project_number_observed':'257649435135',
+              'active_account':active,
+              'provider_name':provider.get('name',''),
+              'provider_state':provider.get('state','ACTIVE'),
+              'provider_condition_sha256':hashlib.sha256(observed_condition.encode()).hexdigest(),
+              'provider_mapping_sha256':hashlib.sha256(json.dumps(observed_mapping,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+              'mutation_performed':False,
+              'secret_payload_accessed':False,
+          }
+          r['receipt_sha256']=hashlib.sha256(json.dumps(r,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          print(json.dumps(r,sort_keys=True))
+          PY
+
+      - name: Verify Gemini ADC runtime identity contract
+        if: steps.provider_mode.outputs.requested == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          ./ops/bootstrap_gemini_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
+          python3 - "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json" <<'PY'
+          import json, sys
+          p=json.load(open(sys.argv[1], encoding='utf-8'))
+          assert p['receipt']=='FEDOMEGA-GEMINI-ADC-VERIFIED',p
+          assert p['state']=='VERIFIED',p
+          assert p['project_id']=='sov-hybrid-suite',p
+          assert p['project_number_observed']=='257649435135',p
+          assert p['mutation_performed'] is False,p
+          assert p['service_account_key_created'] is False,p
+          assert p['secret_payload_accessed'] is False,p
+          PY
+
+      - name: Execute provider admission, canaries, deployment, and rollback gates
+        if: steps.provider_mode.outputs.scope == 'FULL_PROVIDER_ADMISSION'
         id: admission
         continue-on-error: true
         shell: bash
@@ -126,6 +229,7 @@ jobs:
         shell: bash
         env:
           PROVIDER_ADMISSION_REQUESTED: ${{ steps.provider_mode.outputs.requested }}
+          EXECUTION_SCOPE: ${{ steps.provider_mode.outputs.scope }}
           ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
         run: |
           set -euo pipefail
@@ -137,6 +241,7 @@ jobs:
 
           path = Path(sys.argv[1])
           requested = os.environ.get("PROVIDER_ADMISSION_REQUESTED", "false") == "true"
+          scope = os.environ.get("EXECUTION_SCOPE", "SOURCE_VALIDATION_ONLY")
           raw_code = os.environ.get("ADMISSION_EXIT_CODE", "").strip()
           code = int(raw_code) if raw_code else None
           receipt_dir = path.parent
@@ -144,8 +249,12 @@ jobs:
               (receipt_dir / "STRUCTURAL_VALIDATION_PRE_AUTH.json").is_file()
               and (receipt_dir / "PROVIDER_PROBE_SELF_TEST.json").is_file()
           )
+          g0_ok = (
+              (receipt_dir / "WIF_G0_VERIFIED.json").is_file()
+              and (receipt_dir / "GEMINI_ADC_VERIFIED.json").is_file()
+          )
           receipt = {
-              "schema": "SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-3",
+              "schema": "SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-4",
               "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
               "repository": os.environ["GITHUB_REPOSITORY"],
               "workflow": os.environ["GITHUB_WORKFLOW"],
@@ -153,12 +262,14 @@ jobs:
               "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
               "source_sha": os.environ["GITHUB_SHA"],
               "ref": os.environ["GITHUB_REF"],
-              "execution_mode": "PROVIDER_ADMISSION" if requested else "SOURCE_VALIDATION_ONLY",
+              "execution_scope": scope,
               "structural_validation_completed": structural_ok,
-              "provider_admission_attempted": requested,
+              "g0_identity_adc_verified": g0_ok,
+              "provider_admission_attempted": scope == "FULL_PROVIDER_ADMISSION",
               "provider_admission_exit_code": code,
-              "provider_admission_completed": requested and code == 0,
-              "provider_state_claimed": requested and code == 0,
+              "provider_admission_completed": scope == "FULL_PROVIDER_ADMISSION" and code == 0,
+              "provider_state_claimed": scope == "FULL_PROVIDER_ADMISSION" and code == 0,
+              "case_data_processed": False,
               "repository_source_write_authority": False,
               "credential_values_recorded": False,
           }
@@ -180,19 +291,30 @@ jobs:
       - name: Enforce execution-mode result
         if: always()
         env:
-          PROVIDER_ADMISSION_REQUESTED: ${{ steps.provider_mode.outputs.requested }}
+          EXECUTION_SCOPE: ${{ steps.provider_mode.outputs.scope }}
           ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
         run: |
           set -euo pipefail
           receipt="${SOVARA_RECEIPT_DIR}/WORKFLOW_RECEIPT.json"
-          if [[ "${PROVIDER_ADMISSION_REQUESTED:-false}" == "true" ]]; then
-            code="${ADMISSION_EXIT_CODE:-99}"
-            if [ "$code" -ne 0 ]; then
-              echo "Provider admission stopped at a proof gate. Redacted receipts were retained as a workflow artifact." >&2
-              exit "$code"
-            fi
-            jq -e '.provider_admission_attempted == true and .provider_admission_completed == true and .provider_admission_exit_code == 0' "$receipt" >/dev/null
-          else
-            jq -e '.execution_mode == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_admission_exit_code == null and .provider_state_claimed == false' "$receipt" >/dev/null
-            echo "Source validation verified. Provider admission was not requested and no WIF exchange was attempted."
-          fi
+          case "${EXECUTION_SCOPE:-SOURCE_VALIDATION_ONLY}" in
+            FULL_PROVIDER_ADMISSION)
+              code="${ADMISSION_EXIT_CODE:-99}"
+              if [ "$code" -ne 0 ]; then
+                echo "Provider admission stopped at a proof gate. Redacted receipts were retained as a workflow artifact." >&2
+                exit "$code"
+              fi
+              jq -e '.provider_admission_attempted == true and .provider_admission_completed == true and .provider_admission_exit_code == 0' "$receipt" >/dev/null
+              ;;
+            G0_READ_ONLY_VERIFY)
+              jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .g0_identity_adc_verified == true and .provider_admission_attempted == false and .case_data_processed == false' "$receipt" >/dev/null
+              echo "G0 WIF and Gemini ADC verification passed. No model inference, provider mutation, traffic promotion or case-data processing was performed."
+              ;;
+            SOURCE_VALIDATION_ONLY)
+              jq -e '.execution_scope == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_state_claimed == false' "$receipt" >/dev/null
+              echo "Source validation verified. Provider admission was not requested and no WIF exchange was attempted."
+              ;;
+            *)
+              echo "Unknown execution scope: ${EXECUTION_SCOPE}" >&2
+              exit 2
+              ;;
+          esac
