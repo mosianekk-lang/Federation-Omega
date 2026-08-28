@@ -56,7 +56,11 @@ jobs:
             requested=true
             scope=FULL_PROVIDER_ADMISSION
           elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            changed="$(git diff-tree --no-commit-id --name-only -r "${GITHUB_SHA}" || true)"
+            if git rev-parse "${GITHUB_SHA}^1" >/dev/null 2>&1; then
+              changed="$(git diff --name-only "${GITHUB_SHA}^1" "${GITHUB_SHA}" || true)"
+            else
+              changed="$(git diff-tree --root --no-commit-id --name-only -r "${GITHUB_SHA}" || true)"
+            fi
             if grep -Fxq "${GEMINI_REQUEST_FILE}" <<<"${changed}"; then
               scope="$(python3 - "${GEMINI_REQUEST_FILE}" <<'PY'
           import json, sys
@@ -344,7 +348,7 @@ jobs:
               and challenge.get('case_data_processed') is False
               and challenge.get('external_effect_performed') is False
               and challenge.get('proposal_authority_only') is True
-              and challenge.get('proposal_count') == 18
+              and challenge.get('proposal_count') == 12
               and g2_code == 0
           )
 
@@ -426,7 +430,7 @@ jobs:
                 echo "G2 Gemini Creative Architecture Challenge stopped at a provider proof gate. Redacted receipts were retained when available." >&2
                 exit "$code"
               fi
-              jq -e '.execution_scope == "G2_CREATIVE_ARCHITECTURE_CHALLENGE" and .gemini_architecture_challenge_verified == true and .model_inference_performed == true and .case_data_processed == false and .gemini_proposal_count == 18 and (.gemini_provider_request_id | length > 0)' "$receipt" >/dev/null
+              jq -e '.execution_scope == "G2_CREATIVE_ARCHITECTURE_CHALLENGE" and .gemini_architecture_challenge_verified == true and .model_inference_performed == true and .case_data_processed == false and .gemini_proposal_count == 12 and (.gemini_provider_request_id | length > 0)' "$receipt" >/dev/null
               echo "G2 Gemini Creative Architecture Challenge verified. Output is proposal-only; no provider mutation, case-data processing, publishing or design auto-promotion occurred."
               ;;
             SOURCE_VALIDATION_ONLY)
