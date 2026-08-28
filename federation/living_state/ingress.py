@@ -160,7 +160,9 @@ def run_ingress_canary():
             try: ingress.ingest(IngressEnvelope(**{**e.__dict__,"state":"DOWN"}))
             except FabricError: conflict=True
             secret=False
-            try: ingress.ingest(IngressEnvelope("evt:secret","NODE_STATE","s",e.observed_at,"p",ProofMaturity.SOURCE_READBACK,"surface:X",NodeKind.SURFACE.value,"READY",{"api_key":"sk-example-12345678901234567890"}))
+            try:
+                fake_token="sk-"+("fixture"*4)
+                ingress.ingest(IngressEnvelope("evt:secret","NODE_STATE","s",e.observed_at,"p",ProofMaturity.SOURCE_READBACK,"surface:X",NodeKind.SURFACE.value,"READY",{"api_key":fake_token}))
             except FabricError: secret=True
             checks={"provider_event_applied":r1.disposition=="APPLIED" and estimate.state=="READY","duplicate_is_idempotent":r2.disposition=="DUPLICATE_IDEMPOTENT" and model.event_count==1,"conflicting_event_id_fails_closed":conflict,"public_secret_shape_rejected":secret,"receipt_has_no_private_payload":not r1.private_payload_returned,"journal_readback_verified":r1.readback_verified,"zero_external_effects":model.external_effects==0}
             return {"schema":"FEDERATION-LIVING-STATE-INGRESS-CANARY-V1","status":"PASS" if all(checks.values()) else "FAIL","count":len(checks),"checks":checks,"external_effects":model.external_effects,"receipt_sha256":digest({"checks":checks,"head":model.event_head_digest}),"truth_boundary":{"host_invoked_not_background_daemon":True,"exactly_once_is_store_scoped_transactional":True,"provider_liveness_not_inferred_from_ingress_code":True,"private_payload_not_returned_in_receipt":True,"external_effect_authority_created":False}}
