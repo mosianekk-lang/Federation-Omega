@@ -79,81 +79,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Fail fast on Frontier source-byte drift before running the larger regression court.
-      - name: Run Frontier Convergence source-manifest integrity test
-        run: python -m unittest discover -s tests -p 'test_frontier_convergence_manifest.py' -v
-
+      # Bootstrap the P0 admission kernel and selector before trusting dynamic selection.
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
 
-      - name: Run stale-base ancestry regression tests
-        run: python -m unittest discover -s tests -p 'test_airlock_stale_base_guard.py' -v
-
-      - name: Run source provenance regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_source_provenance.py' -v
-
-      - name: Run provider Airlock activator regression tests
-        run: python -m unittest discover -s tests -p 'test_provider_airlock_activate.py' -v
-
-      - name: Run provider cutover v2 regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v2.py' -v
-
-      - name: Run provider cutover v3 regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3*.py' -v
-
-      - name: Run Phoenix export purity regression tests
-        run: python -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
-
-      - name: Run OpenAI rotation semantic proof regression tests
-        run: python -m unittest discover -s tests -p 'test_openai_rotation_contract.py' -v
-
-      - name: Run Apps Script authorization regression tests
-        run: python -m unittest discover -s tests -p 'test_apps_script_authorization_gate.py' -v
-
-      - name: Run JFRIE v2 shadow and adversarial regression tests
-        run: python -m unittest discover -s tests -p 'test_jfrie_v2_shadow_adversarial.py' -v
-
-      - name: Run TruthGrid guard-bound writer regression tests
-        run: python -m unittest evidenceops.truthgrid.test_writer_adapter -v
-
-      - name: Run KAIO registered-source shadow boundary regression tests
-        run: python -m unittest discover -s tests -p 'test_kaio_fluid_shadow_unittest.py' -v
-
-      - name: Run EvidenceOps proof-state transition adversarial regression tests
-        run: python -m unittest discover -s tests -p 'test_evidenceops_proof_state_transition_guard.py' -v
-
-      - name: Run EvidenceOps Algorithm Foundry action-proof regressions
-        run: python -m unittest discover -s tests -p 'test_evidenceops_algorithm_foundry.py' -v
-
-      - name: Run Architron action-specific semantic contract regressions
-        run: python -m unittest discover -s tests -p 'test_architron_semantic_contract.py' -v
-
-      - name: Run SOVARA provider recovery circuit regressions
-        run: python -m unittest discover -s tests -p 'test_sovara_provider_recovery_controller.py' -v
-
-      - name: Run Federation autonomous controller regression tests
-        run: python -m unittest discover -s tests -p 'test_federation_autonomous_controller.py' -v
-
-      - name: Run Federation capability twin regression tests
-        run: python -m unittest discover -s tests -p 'test_federation_capability_twin.py' -v
-
-      - name: Run Federation evolution program regression tests
-        run: python -m unittest discover -s tests -p 'test_federation_evolution_program.py' -v
-
-      - name: Run Superior Logic autonomous maturation regression tests
-        run: python -m unittest discover -s tests -p 'test_autonomous_maturation.py' -v
-
-      - name: Run Superior Logic maturation shadow runtime regression tests
-        run: python -m unittest discover -s tests -p 'test_maturation_shadow_runtime.py' -v
-
-      - name: Run Frontier Convergence core regression tests
-        run: python -m unittest discover -s tests -p 'test_frontier_convergence.py' -v
-
-      - name: Run Frontier Convergence execution-continuity regression tests
-        run: python -m unittest discover -s tests -p 'test_frontier_convergence_continuity.py' -v
-
-      - name: Run CFBE Frontier Convergence receiver-local proof binding tests
-        run: python -m unittest discover -s tests -p 'test_cfbe_frontier_convergence_binding.py' -v
+      - name: Run ProofOS bootstrap regression tests
+        run: python -m unittest discover -s tests -p 'test_proofos_omega.py' -v
 
       - name: Build source provenance receipt
         env:
@@ -209,6 +140,33 @@ jobs:
             --associated-pr-count '${{ steps.refs.outputs.associated_pr_count }}' \
             --report airlock-output/github-airlock-report.json
 
+      - name: Compile Evidence-Directed ProofOS manifest
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m proofos_omega.cli compile \
+            --policy governance/proofos_omega_policy_v1.json \
+            --base '${{ steps.refs.outputs.base }}' \
+            --head '${{ steps.refs.outputs.head }}' \
+            --repo-root . \
+            --output airlock-output/proofos-manifest.json
+
+      - name: Verify ProofOS omission and integrity contract
+        run: >-
+          python -m proofos_omega.cli verify
+          --policy governance/proofos_omega_policy_v1.json
+          --manifest airlock-output/proofos-manifest.json
+
+      - name: Execute manifest-selected proof court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m proofos_omega.cli run \
+            --policy governance/proofos_omega_policy_v1.json \
+            --manifest airlock-output/proofos-manifest.json \
+            --repo-root . \
+            --output airlock-output/proofos-admission-report.json
+
       - name: Publish Airlock result
         if: always()
         shell: bash
@@ -225,8 +183,31 @@ jobs:
             cat airlock-output/source-provenance-report.json >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
+          if [[ -f airlock-output/proofos-manifest.json ]]; then
+            echo '## ProofOS change-impact manifest' >> "$GITHUB_STEP_SUMMARY"
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          p = json.load(open('airlock-output/proofos-manifest.json'))
+          print(f"- manifest: `{p['manifest_sha256']}`")
+          print(f"- risk: `{p['impact']['risk']}`")
+          print(f"- selected proofs: `{len(p['selected_tests'])}`")
+          print(f"- omitted proofs with reasons: `{len(p['omitted_tests'])}`")
+          print(f"- unmapped production paths: `{len(p['impact']['unmapped_production_paths'])}`")
+          PY
+          fi
+          if [[ -f airlock-output/proofos-admission-report.json ]]; then
+            echo '## ProofOS admission report' >> "$GITHUB_STEP_SUMMARY"
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          p = json.load(open('airlock-output/proofos-admission-report.json'))
+          print(f"- status: `{p['status']}`")
+          print(f"- report: `{p['report_sha256']}`")
+          print(f"- executed/reused proofs: `{len(p['results'])}`")
+          print(f"- blocking failures: `{len(p['blocking_failures'])}`")
+          PY
+          fi
 
-      - name: Upload immutable Airlock and provenance reports
+      - name: Upload immutable Airlock, provenance and ProofOS reports
         if: always() && hashFiles('airlock-output/*.json') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -234,5 +215,7 @@ jobs:
           path: |
             airlock-output/github-airlock-report.json
             airlock-output/source-provenance-report.json
+            airlock-output/proofos-manifest.json
+            airlock-output/proofos-admission-report.json
           if-no-files-found: error
           retention-days: 90
