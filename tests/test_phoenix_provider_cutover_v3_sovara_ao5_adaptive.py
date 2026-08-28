@@ -18,7 +18,10 @@ class SovaraAO5AdaptiveHostedBridgeTests(unittest.TestCase):
     The nested suite intentionally uses unittest's in-process loader rather than
     subprocess.run. Other provider-cutover regressions monkey-patch subprocess
     during the same discovery process, so subprocess would create a false
-    coupling between otherwise unrelated tests.
+    coupling between otherwise unrelated tests. The test directory is not a
+    Python package, so discovery must also preserve the same start-directory
+    semantics as the standalone validated command and must not force `.` as an
+    importable top-level directory.
     """
 
     def test_byte_exact_source_identity_is_unchanged(self):
@@ -50,10 +53,10 @@ class SovaraAO5AdaptiveHostedBridgeTests(unittest.TestCase):
         self.assertEqual(result["external_effects"], 0)
 
     def test_full_package_regression_surface_including_optimizer(self):
-        suite = unittest.defaultTestLoader.discover(
+        loader = unittest.TestLoader()
+        suite = loader.discover(
             "ops/sovara_ao5_full_v2/tests",
             pattern="test_*.py",
-            top_level_dir=".",
         )
         stream = io.StringIO()
         result = unittest.TextTestRunner(
