@@ -1,6 +1,5 @@
 import importlib.util
 import json
-import os
 from pathlib import Path
 import sys
 import tempfile
@@ -11,6 +10,10 @@ mod = importlib.util.module_from_spec(spec)
 sys.modules[spec.name] = mod
 assert spec.loader is not None
 spec.loader.exec_module(mod)
+
+
+def fake_openrouter_key():
+    return "sk-" + "or-v1-" + ("A" * 36)
 
 
 class FakeExternalRunner:
@@ -98,7 +101,7 @@ class FakeExternalRunner:
 
 
 def test_secret_preflight_blocks_external_transmission():
-    result = mod.privacy_preflight("OPENROUTER_API_KEY='sk-or-v1-ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789'")
+    result = mod.privacy_preflight("OPENROUTER_API_KEY='" + fake_openrouter_key() + "'")
     assert result["status"] == "BLOCK_EXTERNAL_TRANSMISSION"
     assert result["external_transmission_allowed"] is False
     assert "OPENROUTER_KEY" in result["secret_shape_findings"]
@@ -163,7 +166,7 @@ def test_exact_retry_returns_sealed_result_without_provider_reentry(monkeypatch)
 def test_secret_shaped_source_blocks_external_but_keeps_deterministic_lane(monkeypatch):
     monkeypatch.setenv("OPENROUTER_API_KEY", "runtime-reference-only")
     fake = FakeExternalRunner()
-    code = "TOKEN='sk-or-v1-ABCDEFGHIJKLMNOPQRSTUVWXYZ123456789'\nprint('x')\n"
+    code = "TOKEN='" + fake_openrouter_key() + "'\nprint('x')\n"
     with tempfile.TemporaryDirectory() as root:
         court = mod.SovereignIntelligenceCourt(store=mod.FileMissionStore(root), external_runner=fake)
         result = court.evaluate(code, language="python")
