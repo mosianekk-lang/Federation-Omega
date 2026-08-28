@@ -1,0 +1,23 @@
+{
+  "schema": "SOVARA_CREATIVE_IMAGE_CATALOG_READBACK_REQUEST_V1",
+  "request_id": "SOVARA-IMAGE-CATALOG-READBACK-20260828-001",
+  "execute": true,
+  "mode": "READ_ONLY_PUBLIC_CATALOG",
+  "provider": "OPENROUTER",
+  "catalog_url": "https://openrouter.ai/api/v1/images/models",
+  "selected_model": "recraft/recraft-v3",
+  "free_alias_to_check": "recraft/recraft-v3:free",
+  "credential_allowed": false,
+  "authorization_header_allowed": false,
+  "http_methods_allowed": ["GET"],
+  "provider_effect_allowed": false,
+  "image_generation_allowed": false,
+  "spend_allowed": false,
+  "case_data_allowed": false,
+  "real_person_data_allowed": false,
+  "publishing_allowed": false,
+  "external_communication_allowed": false,
+  "production_traffic_allowed": false,
+  "purpose": "Resolve the current OpenRouter image-model capability and price truth through the public API catalog before any provider effect. Determine whether recraft/recraft-v3:free is actually present in the executable image catalog and read endpoint-native pricing for recraft/recraft-v3 without using a credential or making a generation request.",
+  "truth_boundary": "This request authorizes read-only public catalog GETs only. It does not authorize credentials, image generation, spend, provider mutation, publication, external communication, case or real-person data, production traffic, or any claim of media-canary completion."
+}

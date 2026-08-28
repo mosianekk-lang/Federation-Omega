@@ -1,0 +1,131 @@
+name: SOVARA Creative Image Catalog Readback
+
+on:
+  pull_request:
+    paths:
+      - 'sovara/creative/openrouter_image_catalog_probe.py'
+      - 'tests/test_sovara_openrouter_image_catalog_probe.py'
+      - 'governance/sovara_creative_image_catalog_readback_request_v1.json'
+      - '.github/workflows/sovara-creative-image-catalog-readback.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'governance/sovara_creative_image_catalog_readback_request_v1.json'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sovara-creative-image-catalog-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  catalog-readback:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Validate source contract and regressions
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests -p 'test_sovara_openrouter_image_catalog_probe.py'
+          python3 - <<'PY'
+          import json
+          p=json.load(open('governance/sovara_creative_image_catalog_readback_request_v1.json', encoding='utf-8'))
+          assert p['schema'] == 'SOVARA_CREATIVE_IMAGE_CATALOG_READBACK_REQUEST_V1'
+          assert p['execute'] is True
+          assert p['mode'] == 'READ_ONLY_PUBLIC_CATALOG'
+          assert p['provider'] == 'OPENROUTER'
+          assert p['catalog_url'] == 'https://openrouter.ai/api/v1/images/models'
+          assert p['credential_allowed'] is False
+          assert p['authorization_header_allowed'] is False
+          assert p['http_methods_allowed'] == ['GET']
+          for key in (
+              'provider_effect_allowed','image_generation_allowed','spend_allowed','case_data_allowed',
+              'real_person_data_allowed','publishing_allowed','external_communication_allowed','production_traffic_allowed'
+          ):
+              assert p[key] is False, (key, p[key])
+          PY
+
+      - name: Diagnose blocking Phoenix compatibility proofs
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set +e
+          python3 -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3*.py' -v
+          v3=$?
+          python3 -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
+          exports=$?
+          echo "phoenix_cutover_v3_exit=${v3} phoenix_exports_exit=${exports}"
+          if [[ "$v3" -ne 0 || "$exports" -ne 0 ]]; then
+            exit 1
+          fi
+
+      - name: Resolve execution mode
+        id: mode
+        shell: bash
+        run: |
+          set -euo pipefail
+          execute=false
+          if [[ "${GITHUB_EVENT_NAME}" == "push" && "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            execute=true
+          elif [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" && "${GITHUB_REF}" == "refs/heads/main" ]]; then
+            execute=true
+          fi
+          echo "execute=${execute}" >> "$GITHUB_OUTPUT"
+          echo "Read-only catalog execution requested: ${execute}"
+
+      - name: Execute public GET-only catalog readback
+        id: probe
+        if: steps.mode.outputs.execute == 'true'
+        shell: bash
+        run: |
+          set +e
+          mkdir -p "$RUNNER_TEMP/sovara-image-catalog"
+          python3 sovara/creative/openrouter_image_catalog_probe.py \
+            --model 'recraft/recraft-v3' \
+            --free-alias 'recraft/recraft-v3:free' \
+            --output "$RUNNER_TEMP/sovara-image-catalog/OPENROUTER_IMAGE_CATALOG_READBACK.json"
+          code=$?
+          echo "exit_code=${code}" >> "$GITHUB_OUTPUT"
+          exit 0
+
+      - name: Enforce no-effect readback truth boundary
+        if: steps.mode.outputs.execute == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt="$RUNNER_TEMP/sovara-image-catalog/OPENROUTER_IMAGE_CATALOG_READBACK.json"
+          test -f "$receipt"
+          jq -e '
+            .schema == "SOVARA_OPENROUTER_IMAGE_CATALOG_READBACK_V1" and
+            .selected_model == "recraft/recraft-v3" and
+            .selected_model_present == true and
+            .image_output_verified == true and
+            (.state == "PAID_ROUTE_VERIFIED" or .state == "ZERO_COST_ROUTE_VERIFIED") and
+            .credential_used == false and
+            .authorization_header_sent == false and
+            .http_methods_used == ["GET"] and
+            .provider_effect_performed == false and
+            .image_generation_performed == false and
+            .spend_performed == false and
+            .case_data_processed == false and
+            .real_person_processed == false
+          ' "$receipt" >/dev/null
+          test "${{ steps.probe.outputs.exit_code }}" = "0"
+          jq '{state,selected_model,free_alias_present,unit_price_usd,zero_cost_verified,providers,receipt_sha256}' "$receipt"
+
+      - name: Upload immutable readback receipt
+        if: steps.mode.outputs.execute == 'true'
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sovara-openrouter-image-catalog-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/sovara-image-catalog/OPENROUTER_IMAGE_CATALOG_READBACK.json
+          if-no-files-found: error
+          retention-days: 90
