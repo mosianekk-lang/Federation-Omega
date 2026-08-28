@@ -11,7 +11,7 @@
     "frontier_convergence/os_canary.py": "e0548813b5d5dbae6aa4e8991a4fc57935169acdf5fbf1fd0d0d158470491986",
     "frontier_convergence/os_core.py": "1574761bc8f33775beb0684fda4f5d487db05023e52dcaf1ed2c93b688f245cf",
     "governance/frontier_convergence_os_v1.json": "23a95a4b7f63314bb96e67cd8e35cb6abcf2c862851ec2909472f58c30c164b4",
-    "tests/test_frontier_convergence_manifest.py": "cf69eab7febd72e9ccd863d12eb9be64caf015dfa5350958d6ef975bfc7830ba",
+    "tests/test_frontier_convergence_manifest.py": "55df6dac9d366b8bb240675fc5159f7274ccabae701a591f912927c324d3a274",
     "tests/test_frontier_convergence_os.py": "7018a690c33d7e43900d2735fed10c28a8141d1d17b8ce649f2bf4641ae7116c"
   },
   "truth_boundary": {
