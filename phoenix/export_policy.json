@@ -47,6 +47,8 @@
       "tests/test_wif_hardening.py",
       "tests/test_airlock_stale_base_guard.py",
       "tests/test_ao_cra_federation_inheritance.py",
+      "tests/test_frontier_convergence_manifest.py",
+      "tests/test_frontier_convergence_continuity.py",
       "tests/test_federation_automation_gateway_airlock.py"
     ],
     "excluded_segments": [
