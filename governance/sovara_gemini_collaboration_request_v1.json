@@ -1,15 +1,22 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-20260828-001",
-  "mode": "G0_READ_ONLY_VERIFY",
+  "request_id": "SOVARA-GEMINI-G1-20260828-002",
+  "mode": "G1_ADC_APPLY_VERIFY",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
-  "provider_mutation_allowed": false,
+  "provider_mutation_allowed": true,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "purpose": "Verify current canonical Google WIF and Gemini ADC authority before any SOVARA-Gemini legal collaboration provider call.",
-  "truth_boundary": "This request authorizes read-only identity and ADC verification only. It does not authorize model inference, legal filing, email, service, publication, traffic promotion, IAM/API mutation, secret payload access or case-data disclosure."
+  "mutation_scope": [
+    "CREATE_SV_GEMINI_RUNTIME_SERVICE_ACCOUNT_IF_ABSENT",
+    "BIND_RUNTIME_ROLES_AIPLATFORM_USER_AND_SERVICEUSAGE_CONSUMER",
+    "BIND_DEPLOYER_SERVICE_ACCOUNT_USER_ON_RUNTIME",
+    "BIND_DEPLOYER_RUN_DEVELOPER",
+    "ENSURE_EXISTING_REQUIRED_APIS_ENABLED"
+  ],
+  "purpose": "Attach only the exact missing Gemini ADC/runtime controls discovered by the fresh G0 canary, verify them by provider readback, and prepare a zero-traffic semantic gateway canary. No model inference or case-data processing is authorized by this stage.",
+  "truth_boundary": "This request authorizes only the minimum provider-side ADC/runtime identity controls enumerated in mutation_scope. It does not authorize model inference, legal filing, email, service, publication, production traffic promotion, secret payload access, unrelated IAM expansion, case-data disclosure or destructive provider actions."
 }
