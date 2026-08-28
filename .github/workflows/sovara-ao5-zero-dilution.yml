@@ -1,0 +1,74 @@
+name: SOVARA AO5 Zero Dilution
+
+on:
+  pull_request:
+    paths:
+      - 'ops/sovara_ao5_full_v2/**'
+      - '.github/workflows/sovara-ao5-zero-dilution.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  zero-dilution-source-gate:
+    runs-on: ubuntu-24.04
+    steps:
+      - name: Checkout exact candidate
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run complete AO5 regression surface
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s ops/sovara_ao5_full_v2/tests -p 'test_*.py' -v
+
+      - name: Verify coverage, canary and truth boundary
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          from ops.sovara_ao5_full_v2.ao5_full_engine import coverage_gate, canary, zero_dilution_verdict
+
+          coverage = coverage_gate()
+          assert coverage['complete'] is True, coverage
+          assert coverage['sections'] == 55, coverage
+          assert coverage['roman_parts'] == 54, coverage
+          assert coverage['part0'] is True, coverage
+
+          result = canary()
+          assert result['status'] == 'PASS', result
+          assert result['count'] == 56, result
+          assert all(result['checks'].values()), result
+          assert result['external_effects'] == 0, result
+
+          gate = zero_dilution_verdict(
+              regression_ok=True,
+              canonical_source_ok=True,
+              provider_ci_ok=False,
+              merged_readback_ok=False,
+          )
+          assert gate['local_eligible'] is True, gate
+          assert gate['verified'] is False, gate
+          assert gate['label'] == 'ZERO_DILUTION_LOCAL_ELIGIBLE_PROVIDER_GATES_OPEN', gate
+          print('AO5_SOURCE_CI_VERIFIED')
+          print(result['receipt_sha256'])
+          PY
+
+      - name: Enforce no premature zero-dilution provider claim
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('ops/sovara_ao5_full_v2/AO5_FULL_LOCAL_VERIFICATION.json').read_text(encoding='utf-8'))
+          gate = receipt['zero_dilution_gate']
+          assert gate['github_pr_admission_pass'] is False, gate
+          assert gate['merged_main_exact_readback_pass'] is False, gate
+          assert gate['state'] == 'ZERO_DILUTION_LOCAL_ELIGIBLE_PROVIDER_GATES_OPEN', gate
+          PY
