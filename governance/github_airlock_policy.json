@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.5.0",
+  "version": "2.6.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -25,7 +25,8 @@
     ".github/workflows/cios-production-lane.yml",
     ".github/workflows/frontier-runtime-qualification.yml",
     ".github/workflows/superior-logic-maturation-shadow.yml",
-    ".github/workflows/luno-observer-provider-binding.yml"
+    ".github/workflows/luno-observer-provider-binding.yml",
+    ".github/workflows/deploy-gemini-gateway.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -78,6 +79,9 @@
       "pull_request",
       "push",
       "workflow_dispatch"
+    ],
+    ".github/workflows/deploy-gemini-gateway.yml": [
+      "workflow_dispatch"
     ]
   },
   "required_push_branches": {
@@ -109,7 +113,8 @@
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     ".github/workflows/cios-production-lane.yml",
-    ".github/workflows/luno-observer-provider-binding.yml"
+    ".github/workflows/luno-observer-provider-binding.yml",
+    ".github/workflows/deploy-gemini-gateway.yml"
   ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
@@ -163,6 +168,7 @@
     "provider_probe_workflow": ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     "provider_deployment_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
+    "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT"
   },
@@ -180,7 +186,8 @@
       ".github/workflows/cios-production-lane.yml",
       ".github/workflows/frontier-runtime-qualification.yml",
       ".github/workflows/superior-logic-maturation-shadow.yml",
-      ".github/workflows/luno-observer-provider-binding.yml"
+      ".github/workflows/luno-observer-provider-binding.yml",
+      ".github/workflows/deploy-gemini-gateway.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"

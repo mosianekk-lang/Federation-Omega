@@ -33,7 +33,7 @@ class GeminiCallPlan:
 
 class GeminiAdapter:
     PROVIDER = "GOOGLE_GEMINI"
-    PROTOCOL = "GOOGLE_GENAI_SDK_OR_REST"
+    PROTOCOL = "VERTEX_AI_GENERATE_CONTENT_REST"
     REQUIRED_READBACK = (
         "provider_request_id",
         "model_identity",
@@ -51,7 +51,7 @@ class GeminiAdapter:
         mission_id: str,
         model_ref: str,
         contents: Any,
-        credential_reference: str = "GEMINI_API_KEY",
+        credential_reference: str = "CLOUD_RUN_ADC",
         system_instruction: str | None = None,
         tool_allowlist: Iterable[str] = (),
         generation_config: Mapping[str, Any] | None = None,

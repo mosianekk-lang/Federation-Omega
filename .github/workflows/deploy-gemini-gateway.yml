@@ -1,0 +1,308 @@
+name: Deploy SOVARA Gemini Gateway
+
+on:
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: "Type DEPLOY_SOVARA_GEMINI_GATEWAY"
+        required: true
+        type: string
+      wif_receipt:
+        description: "Type FEDOMEGA-WIF-CLOUD-VERIFIED after provider-native verification"
+        required: true
+        type: string
+      adc_receipt:
+        description: "Type FEDOMEGA-GEMINI-ADC-VERIFIED after provider-native verification"
+        required: true
+        type: string
+      promote:
+        description: "Promote verified Gemini gateway canary to 100% traffic"
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+  actions: read
+
+concurrency:
+  group: sovara-gemini-gateway-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  SERVICE: sovara-gemini-gateway
+  REPOSITORY: federation-omega
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  IMAGE: africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/sovara-gemini-gateway:${{ github.sha }}
+  MODEL: gemini-2.5-flash
+
+jobs:
+  validate-request:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Validate exact owner/provider gates
+        env:
+          CONFIRMATION: ${{ inputs.confirmation }}
+          WIF_RECEIPT: ${{ inputs.wif_receipt }}
+          ADC_RECEIPT: ${{ inputs.adc_receipt }}
+        run: |
+          set -euo pipefail
+          test "$CONFIRMATION" = "DEPLOY_SOVARA_GEMINI_GATEWAY"
+          test "$WIF_RECEIPT" = "FEDOMEGA-WIF-CLOUD-VERIFIED"
+          test "$ADC_RECEIPT" = "FEDOMEGA-GEMINI-ADC-VERIFIED"
+
+  deploy-canary:
+    needs: validate-request
+    runs-on: ubuntu-latest
+    outputs:
+      canary_revision: ${{ steps.canary.outputs.canary_revision }}
+      canary_url: ${{ steps.canary.outputs.canary_url }}
+      previous_ready_revision: ${{ steps.baseline.outputs.previous_ready_revision }}
+      service_preexisted: ${{ steps.baseline.outputs.service_preexisted }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Verify canonical WIF control
+        run: |
+          set -euo pipefail
+          ./ops/bootstrap_github_wif.sh --verify | tee /tmp/wif.json
+          python - <<'PY'
+          import json
+          wif = json.load(open('/tmp/wif.json', encoding='utf-8'))
+          assert wif['receipt'] == 'FEDOMEGA-WIF-CLOUD-VERIFIED', wif
+          assert wif['state'] == 'VERIFIED', wif
+          assert wif['project_number_observed'] == '257649435135', wif
+          assert wif['mutation_performed'] is False, wif
+          PY
+
+      - name: Capture prior service state
+        id: baseline
+        run: |
+          set -euo pipefail
+          if gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" >/tmp/baseline.json 2>/dev/null; then
+            PREVIOUS_READY=$(gcloud run services describe "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --format='value(status.latestReadyRevisionName)')
+            echo "service_preexisted=true" >> "$GITHUB_OUTPUT"
+            echo "previous_ready_revision=$PREVIOUS_READY" >> "$GITHUB_OUTPUT"
+          else
+            echo "service_preexisted=false" >> "$GITHUB_OUTPUT"
+            echo "previous_ready_revision=" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Require existing Artifact Registry
+        run: |
+          set -euo pipefail
+          gcloud artifacts repositories describe "$REPOSITORY" \
+            --project "$PROJECT_ID" --location "$REGION" >/dev/null
+
+      - name: Configure Docker
+        run: gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+
+      - name: Build and push immutable Gemini gateway image
+        run: |
+          set -euo pipefail
+          docker build --pull -f services/gemini_gateway/Dockerfile -t "$IMAGE" .
+          docker push "$IMAGE"
+          DIGEST=$(gcloud artifacts docker images describe "$IMAGE" \
+            --project "$PROJECT_ID" --format='value(image_summary.digest)')
+          test -n "$DIGEST"
+          echo "$DIGEST" | tee /tmp/gemini-image-digest.txt
+
+      - name: Deploy zero-traffic private canary
+        id: canary
+        run: |
+          set -euo pipefail
+          CANARY_TAG="gemini-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE" \
+            --service-account "$RUNTIME_SA" \
+            --platform managed \
+            --tag "$CANARY_TAG" \
+            --no-traffic \
+            --no-allow-unauthenticated \
+            --set-env-vars "GOOGLE_CLOUD_PROJECT=${PROJECT_ID},GOOGLE_CLOUD_LOCATION=global,GEMINI_MODEL=${MODEL},EXPECTED_RUNTIME_SERVICE_ACCOUNT=${RUNTIME_SA}" \
+            --quiet
+
+          gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/service.json
+          python - "$CANARY_TAG" <<'PY' > /tmp/canary.env
+          import json, sys
+          tag = sys.argv[1]
+          service = json.load(open('/tmp/service.json', encoding='utf-8'))
+          status = service.get('status', {})
+          created = status.get('latestCreatedRevisionName', '')
+          ready = status.get('latestReadyRevisionName', '')
+          tagged = next((x for x in status.get('traffic', []) if x.get('tag') == tag), {})
+          url = tagged.get('url', '')
+          if not created or created != ready or not url:
+              raise SystemExit(f'Canary not ready: created={created!r} ready={ready!r} url={url!r}')
+          print(f'CANARY_REVISION={created}')
+          print(f'CANARY_URL={url}')
+          PY
+          source /tmp/canary.env
+          echo "canary_revision=$CANARY_REVISION" >> "$GITHUB_OUTPUT"
+          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Verify service identity and live Gemini semantic handshake
+        env:
+          CANARY_URL: ${{ steps.canary.outputs.canary_url }}
+        run: |
+          set -euo pipefail
+          ID_TOKEN=$(gcloud auth print-identity-token --audiences="$CANARY_URL")
+          HEALTH=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" "$CANARY_URL/health")
+          READY=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" "$CANARY_URL/ready")
+          NONCE="CG-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:12}"
+          HANDSHAKE=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"semantic_nonce\":\"${NONCE}\"}" \
+            "$CANARY_URL/v1/handshake")
+
+          printf '%s\n' "$HEALTH" > /tmp/health.json
+          printf '%s\n' "$READY" > /tmp/ready.json
+          printf '%s\n' "$HANDSHAKE" > /tmp/handshake.json
+
+          python - "$NONCE" <<'PY'
+          import json, sys
+          nonce = sys.argv[1]
+          health = json.load(open('/tmp/health.json', encoding='utf-8'))
+          ready = json.load(open('/tmp/ready.json', encoding='utf-8'))
+          hs = json.load(open('/tmp/handshake.json', encoding='utf-8'))
+          assert health['status'] == 'HEALTHY', health
+          assert health['provider_execution_verified'] is False, health
+          assert ready['status'] == 'READY_IDENTITY_VERIFIED', ready
+          ident = ready['provider_identity']
+          assert ident['project_id'] == 'sov-hybrid-suite', ready
+          assert ident['project_number'] == '257649435135', ready
+          assert ident['service_account'] == 'sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com', ready
+          assert hs['schema'] == 'SOVARA_GEMINI_HANDSHAKE_RECEIPT_V1', hs
+          assert hs['status'] == 'VERIFIED', hs
+          assert hs['semantic_nonce'] == nonce, hs
+          assert hs['semantic_verified'] is True, hs
+          assert hs['provider_request_id'], hs
+          assert hs['model_identity'], hs
+          assert hs['finish_state'], hs
+          assert isinstance(hs['usage'], dict), hs
+          assert len(hs['receipt_sha256']) == 64, hs
+          print(json.dumps(hs, sort_keys=True))
+          PY
+
+      - name: Emit redacted canary receipt
+        env:
+          CANARY_REVISION: ${{ steps.canary.outputs.canary_revision }}
+          CANARY_URL: ${{ steps.canary.outputs.canary_url }}
+        run: |
+          set -euo pipefail
+          python - <<PY
+          import json
+          hs = json.load(open('/tmp/handshake.json', encoding='utf-8'))
+          print(json.dumps({
+            "receipt": "FEDOMEGA-GEMINI-GATEWAY-CANARY-VERIFIED",
+            "project": "${PROJECT_ID}",
+            "project_number": "${PROJECT_NUMBER}",
+            "region": "${REGION}",
+            "service": "${SERVICE}",
+            "revision": "${CANARY_REVISION}",
+            "url": "${CANARY_URL}",
+            "image": "${IMAGE}",
+            "runtime_service_account": "${RUNTIME_SA}",
+            "provider_request_id": hs["provider_request_id"],
+            "model_identity": hs["model_identity"],
+            "semantic_nonce_sha256": hs["semantic_nonce_sha256"],
+            "handshake_receipt_sha256": hs["receipt_sha256"],
+          }, sort_keys=True))
+          PY
+
+  promote:
+    if: ${{ inputs.promote }}
+    needs: deploy-canary
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Promote verified revision with rollback
+        env:
+          CANARY_REVISION: ${{ needs.deploy-canary.outputs.canary_revision }}
+          PREVIOUS_READY: ${{ needs.deploy-canary.outputs.previous_ready_revision }}
+          SERVICE_PREEXISTED: ${{ needs.deploy-canary.outputs.service_preexisted }}
+          CANARY_URL: ${{ needs.deploy-canary.outputs.canary_url }}
+        run: |
+          set -euo pipefail
+          rollback() {
+            if [[ "$SERVICE_PREEXISTED" == "true" && -n "$PREVIOUS_READY" ]]; then
+              gcloud run services update-traffic "$SERVICE" \
+                --project "$PROJECT_ID" --region "$REGION" \
+                --to-revisions "${PREVIOUS_READY}=100" --quiet || true
+            else
+              gcloud run services update-traffic "$SERVICE" \
+                --project "$PROJECT_ID" --region "$REGION" \
+                --to-revisions "${CANARY_REVISION}=0" --quiet || true
+            fi
+          }
+          trap rollback ERR
+
+          gcloud run services update-traffic "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --to-revisions "${CANARY_REVISION}=100" --quiet
+
+          SERVICE_URL=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')
+          READY_REVISION=$(gcloud run services describe "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')
+          test "$READY_REVISION" = "$CANARY_REVISION"
+
+          ID_TOKEN=$(gcloud auth print-identity-token --audiences="$SERVICE_URL")
+          NONCE="CG-PROMOTE-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          HANDSHAKE=$(curl --fail --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" \
+            -H "Content-Type: application/json" \
+            -d "{\"semantic_nonce\":\"${NONCE}\"}" \
+            "$SERVICE_URL/v1/handshake")
+          python - "$HANDSHAKE" "$NONCE" <<'PY'
+          import json, sys
+          hs = json.loads(sys.argv[1])
+          assert hs['status'] == 'VERIFIED', hs
+          assert hs['semantic_nonce'] == sys.argv[2], hs
+          assert hs['semantic_verified'] is True, hs
+          assert hs['provider_request_id'], hs
+          assert len(hs['receipt_sha256']) == 64, hs
+          PY
+          trap - ERR
+          echo "FEDOMEGA-GEMINI-GATEWAY-PRODUCTION-VERIFIED"

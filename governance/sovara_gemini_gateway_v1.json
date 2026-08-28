@@ -1,0 +1,31 @@
+{
+  "schema": "SOVARA_GEMINI_GATEWAY_GOVERNANCE_V1",
+  "version": "1.0.0",
+  "canonical_project": {
+    "id": "sov-hybrid-suite",
+    "number": "257649435135"
+  },
+  "region": "africa-south1",
+  "provider_location": "global",
+  "service": "sovara-gemini-gateway",
+  "runtime_service_account": "sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "deployer_service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+  "credential_mode": "CLOUD_RUN_SERVICE_ACCOUNT_ADC",
+  "service_account_keys_allowed": false,
+  "api_keys_allowed": false,
+  "legacy_project_516699068552": "TRANSPORT_FALLBACK_ONLY_NOT_AUTHORITY",
+  "provider_promotion_requires": [
+    "FEDOMEGA-WIF-CLOUD-VERIFIED",
+    "FEDOMEGA-GEMINI-ADC-VERIFIED",
+    "zero_traffic_ready_revision",
+    "canonical_project_readback",
+    "runtime_service_account_readback",
+    "vertex_response_id",
+    "vertex_model_version",
+    "exact_semantic_nonce",
+    "usage_metadata",
+    "receipt_sha256"
+  ],
+  "source_or_ci_substitutes_for_provider_proof": false,
+  "rollback_required": true
+}
