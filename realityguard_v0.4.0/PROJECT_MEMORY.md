@@ -1,8 +1,8 @@
 # Project memory
 
-- System: RealityGuard 0.4.1
+- System: RealityGuard 0.5.0
 - Mission: protect Kim Mosiane from false-positive completion and false operational reality in AI workstreams.
-- Proven maturity: local deterministic truth gate, reuse-first solution broker, manifest-bound pre-build gate, host-invoked material-cycle upgrade decision, harmonized central private-data-safe fault-book manager and one executable adapter accepting all 20 canonical Federation system IDs, implemented and tested with 115 passing tests.
+- Proven maturity: local deterministic truth gate, side-effect execution guard, reuse-first solution broker, manifest-bound pre-build gate, host-invoked material-cycle upgrade decision, harmonized central private-data-safe fault-book manager and one executable adapter accepting all 20 canonical Federation system IDs, implemented and tested with 130 passing tests.
 - Fault-book manager state: verifies parent-plus-payload JSONL chains, artifact digests, revisions, idempotent imports, strict closure, and per-consumer binding truth. Raw fault content stays private; only the redacted manifest is source-safe. Historical and inaccessible ChatGPT conversations remain `ADAPTER_REQUIRED` until a real adapter proves current invocation and semantic readback.
 - Not proven: installed browser extension, ChatGPT interception, provider binding, hosted service, account-wide coverage.
 - Taxonomy: 30 failure classes, version `2026.08.15-5`; RG-028 is reactive-only correction, RG-029 is correction-debt orphaning and RG-030 is ungoverned self-upgrade.
@@ -19,3 +19,7 @@
 - Learning state: ChatBridge capability-dilution fingerprint `40ab1fd03db3e0ca639ae60ef33a2ef121fd54bc8c444b30de0957247881a2de`, recurrence 1, promotion state TESTED, promotion not authorized.
 - Execution lesson: never combine permit consumption and a downstream mutation in a non-fail-fast shell sequence. A wrong working directory caused the permit step to fail while the ledger write continued; the effect was quarantined and semantically reconciled before further claims.
 - Owner boundary: only the owner can supply `OWNER_ACCEPTED` evidence.
+
+## 2026-08-28 — v0.5.0 side-effect execution guard
+
+The Rule 32 Gmail/PDF incident exposed a missing enforcement boundary: RealityGuard could diagnose false claims but did not sit beside side-effecting tool calls. Version 0.5.0 adds a host-neutral ExecutionGuard with pre-dispatch authority, recipient, binary-transport, idempotency, retry, route-canary, semantic-readback, and claim-release gates. The complete suite passes 130/130 tests; the original inline-binary route is quarantined and the repaired file-reference route is admitted. State remains TESTED_LOCAL / ADAPTER_REQUIRED until a Federation-controlled host proves live invocation and semantic readback. Native ChatGPT connectors are not claimed as intercepted.
