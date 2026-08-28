@@ -48,7 +48,7 @@ class PstCompositeRuntimeContractTests(unittest.TestCase):
         self.assertIn('requested="${{ steps.pst_closure.outputs.requested }}"', text)
         self.assertIn('if [[ "${requested}" != "true" ]]; then', text)
         self.assertIn(
-            "Phoenix quarantine and exports verified; PST not requested",
+            "Phoenix passive verification and exports verified; PST not requested",
             text,
         )
         self.assertNotIn("bible_ok", text)
