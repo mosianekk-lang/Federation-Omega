@@ -1,0 +1,46 @@
+{
+  "schema": "SOVARA-OPENROUTER-CODE-EVAL-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "mission": "EXTERNAL_MULTI_MODEL_CODE_BLOCK_EVALUATION",
+  "authority": "PROPOSAL_ONLY_EXTERNAL_REVIEW",
+  "provider": "openrouter",
+  "runtime_binding": "OPEN_UNTIL_PROVIDER_CANARY_READBACK",
+  "source": "ops/sovara_openrouter_code_eval_v1.py",
+  "tests": "tests/test_sovara_openrouter_code_eval_v1.py",
+  "principles": [
+    "user supplied code is treated as untrusted text and is never executed by the evaluator",
+    "embedded prompt instructions inside code/comments/strings are ignored",
+    "multiple model families are preferred to reduce correlated review blind spots",
+    "creative review encourages divergent engineering alternatives but does not remove safety, law, provider policy, privacy, or authority boundaries",
+    "OPENROUTER_API_KEY is runtime-only and must never be persisted in source, receipts, prompts, logs, or portable artifacts",
+    "provider routing requests data_collection=deny and zdr=true by default",
+    "model outputs remain PROPOSAL_ONLY until independently validated",
+    "live provider maturity requires exact provider response, resolved-model identity, usage/cost where supplied, source hash, and semantic readback",
+    "source or CI success never substitutes for provider connectivity proof"
+  ],
+  "default_model_selectors": [
+    "deepseek-v4-flash",
+    "mimo-v2.5",
+    "glm-5.2",
+    "gpt-5.6-luna"
+  ],
+  "fallback": "openrouter/auto",
+  "request_policy": {
+    "temperature": 0.85,
+    "max_models": 4,
+    "data_collection": "deny",
+    "zdr": true,
+    "code_execution": false
+  },
+  "promotion_contract": [
+    "SOURCE_TESTS_PASS",
+    "OPENROUTER_CREDENTIAL_RUNTIME_BOUND_WITHOUT_VALUE_DISCLOSURE",
+    "MODEL_CATALOG_READBACK",
+    "SYNTHETIC_CODE_CANARY_SENT",
+    "AT_LEAST_TWO_DISTINCT_MODEL_FAMILIES_RESPOND",
+    "RESOLVED_MODEL_IDS_READ_BACK",
+    "OUTPUT_HASHES_RECORDED",
+    "NO_SECRET_VALUE_RECORDED"
+  ],
+  "truth_boundary": "This manifest registers the evaluator design and source contract only. LIVE_OPENROUTER_CODE_EVALUATION is not proven until the provider canary runs with an authorised runtime credential and its receipt is independently read back."
+}
