@@ -1,0 +1,77 @@
+{
+  "schema": "FEDERATION-LIVING-STATE-EVOLUTION-FABRIC-V1",
+  "version": "1.0.0",
+  "role": "FEDERATION_WORLD_MODEL_RECONCILIATION_PREDICTION_AND_EVOLUTION_SUBSTRATE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "sovereignty": {
+    "sovara": "MISSION_ROUTING_AND_EFFECT_ADMISSION_AUTHORITY",
+    "jarvis_ao5": "FULL_FORENSIC_DECISION_INTELLIGENCE_ENGINE",
+    "adaptive_governor": "HOT_PATH_EXECUTION_CONTEXT_AND_ROUTE_OPTIMIZER",
+    "living_state_fabric": "WORLD_STATE_RECONCILIATION_PREDICTION_AND_EVOLUTION_SUBSTRATE",
+    "jarvis_assurance": "INDEPENDENT_CHALLENGE_AND_HOLD",
+    "realityguard": "TRUTH_AND_EXECUTION_RECEIPT_GUARD",
+    "cfbe": "BENCHMARK_VALUE_AND_COMPETITIVE_LEARNING",
+    "sentinel": "HEALTH_FRESHNESS_AND_DRIFT_OBSERVER"
+  },
+  "heritage_reused": [
+    "OMEGA_CYBERNETIC_LIVING_BIBLE_V11",
+    "FEDERATION_CAPABILITY_DIGITAL_TWINS",
+    "FEDERATION_SURFACE_AWARENESS_V1",
+    "AWARENESS_OPPORTUNITY_FOUNDRY",
+    "BUBBLES_FEDERATION_GOVERNOR_OMEGA4",
+    "JARVIS_AO5_FULL_ZERO_DILUTION",
+    "ADAPTIVE_COGNITIVE_EXECUTION_GOVERNOR_V1",
+    "CFBE_FRONTIER_CONVERGENCE",
+    "REALITYGUARD"
+  ],
+  "cybernetic_loop": ["SENSE", "ESTIMATE", "COMPARE", "DECIDE", "ACT", "READBACK", "LEARN", "RESEAL"],
+  "node_classes": [
+    "SYSTEM", "CAPABILITY", "PROVIDER", "SURFACE", "ROUTE", "PROOF", "FAILURE_DOMAIN",
+    "CONTEXT", "SESSION", "MISSION", "WORKSTREAM", "EVIDENCE", "CONTROL", "LEARNING",
+    "RULE", "OPPORTUNITY", "EXPERIMENT", "DEBT"
+  ],
+  "first_class_controls": {
+    "event_sourced_state": true,
+    "proof_and_freshness_precedence": true,
+    "split_brain_fencing": true,
+    "matter_wall_isolation": true,
+    "causal_promotion_requires_falsifiable_evidence": true,
+    "route_performance_with_thin_sample_shrinkage": true,
+    "failure_domain_diversity": true,
+    "context_pressure_and_protected_compaction": true,
+    "mission_lease_and_stale_main_fencing": true,
+    "owner_correction_and_near_miss_learning": true,
+    "recurrence_escalation": true,
+    "model_predictive_internal_planner": true,
+    "reflex_layer": true,
+    "champion_shadow_reserve_evolution": true,
+    "rollback_and_independent_readback_promotion_gate": true,
+    "proof_freshness_benchmark_context_resilience_owner_burden_causal_debt": true,
+    "deterministic_snapshot_and_replay_digest": true
+  },
+  "causal_truth_boundary": {
+    "correlation_is_not_causation": true,
+    "verified_causal_edge_requires_temporal_order": true,
+    "verified_causal_edge_requires_falsifier_test": true,
+    "verified_causal_edge_requires_intervention_or_supported_mechanism": true,
+    "evidence_reference_required": true
+  },
+  "promotion_contract": {
+    "regression_required": true,
+    "forward_canary_required": true,
+    "independent_readback_required": true,
+    "rollback_required": true,
+    "minimum_samples": 3,
+    "external_effect_authority_created": false
+  },
+  "truth_boundary": {
+    "continuous_unattended_runtime_claimed": false,
+    "hidden_cross_chat_access_claimed": false,
+    "provider_authority_inferred_from_graph": false,
+    "graph_state_proves_provider_liveness": false,
+    "synthetic_benchmark_proves_real_performance": false,
+    "living_fabric_executes_external_effects": false,
+    "provider_effects_require_separate_sovara_owner_and_native_readback": true
+  }
+}
