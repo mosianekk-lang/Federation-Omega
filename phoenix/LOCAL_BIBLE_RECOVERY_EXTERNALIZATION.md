@@ -8,7 +8,7 @@ It remains deliberately **not executable from the legacy public source repositor
 
 ## Reason
 
-General source-repository OIDC remains denied. The admitted exceptions are exactly four narrowly scoped provider-deployment gateways:
+General source-repository OIDC remains denied. The admitted exceptions contain exactly five narrowly scoped provider-deployment gateways:
 
 `.github/workflows/sovara-litellm-v2-3-provider-admission.yml`
 
@@ -18,7 +18,11 @@ General source-repository OIDC remains denied. The admitted exceptions are exact
 
 `.github/workflows/deploy-gemini-gateway.yml`
 
-Each gateway is repository-read-only, immutable-action-pinned, concurrency-bound, restricted to its exact admitted provider identity and trigger contract, and may persist proof only as a GitHub Actions artifact or external append-only record. None has source-write, actions-write or statuses-write authority. Provider execution remains separately proof-gated. The Luno gateway is additionally bounded to the read-only observer contract and does not grant financial write authority. The Gemini gateway is workflow-dispatch-only, obtains Google authority through the admitted keyless OIDC/WIF route, and must prove its Cloud Run service-account ADC identity plus a live Vertex AI semantic-nonce receipt before provider promotion.
+`.github/workflows/federation-automation-gateway-activate.yml`
+
+A sixth OIDC workflow, `.github/workflows/fo-wif-semantic-canary.yml`, remains a bounded owner-only read-only identity verifier and is **not** a provider-deployment gateway.
+
+Each deployment gateway is repository-read-only, immutable-action-pinned, concurrency-bound, restricted to its exact admitted provider identity and trigger contract, and may persist proof only as a GitHub Actions artifact or external append-only record. None has source-write, actions-write or statuses-write authority. Provider execution remains separately proof-gated. The Luno gateway is additionally bounded to the read-only observer contract and does not grant financial write authority. The Gemini gateway is workflow-dispatch-only, obtains Google authority through the admitted keyless OIDC/WIF route, and must prove its Cloud Run service-account ADC identity plus a live Vertex AI semantic-nonce receipt before provider promotion. The Federation Automation gateway is restricted to a dedicated workflow-scoped WIF provider, deploys the private shared automation executor with separate deployer/runtime identities, and leaves provider-admin runtime authority unbound and fail-closed until independently admitted.
 
 These exceptions do not authorize Phoenix Local Bible recovery, do not widen the Phoenix freeze controller beyond their exact paths, and do not transfer cloud authority to any other workflow. A commit-message marker remains an inadequate provider authorization boundary.
 
@@ -36,7 +40,7 @@ Local Bible recovery may resume only from the private Federation Omega Ops repos
 
 ## Current source-repository contract
 
-- `oidc_workflow_allowlist` contains exactly four provider-deployment gateways;
+- `oidc_workflow_allowlist` contains exactly five provider-deployment gateways plus one owner-only read-only identity verifier;
 - Phoenix Local Bible recovery remains excluded from that allowlist;
 - the Phoenix freeze controller has no `id-token: write` permission;
 - `[BIBLE-REBUILD]` is not an active source-repository trigger;
