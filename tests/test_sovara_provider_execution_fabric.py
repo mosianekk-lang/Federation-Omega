@@ -15,23 +15,35 @@ from ops.sovara_provider_execution_fabric import (
 )
 from sovara.creative import (
     AdmissionState,
+    AmbitionClass,
+    BenchmarkDimension,
     BuildStrategy,
     ContentClass,
     CreativeMissionGenome,
     Eligibility,
+    EvolutionEvidence,
     ExecutionPlane,
+    FrontierObservation,
     MatureContext,
+    MetaEvolutionState,
     PrivacyClass,
     RightsState,
     RoutePolicy,
     RouteType,
+    ScientistHypothesis,
     SkillDomain,
+    SovaraDimensionState,
     StudioMode,
     StudioRequest,
+    build_ten_x_target,
+    calculate_frontier_gaps,
     can_deploy,
+    compile_best_of_breed_frontier,
     compile_studio_plan,
+    evaluate_meta_evolution,
     evaluate_route,
     plan_capability,
+    preregister_omega_scientist_experiment,
     select_route,
 )
 
@@ -358,6 +370,125 @@ class SovaraCreativeSovereignStudioTests(unittest.TestCase):
         )
         self.assertEqual(candidate.strategy, BuildStrategy.INVENT)
         self.assertFalse(can_deploy(candidate))
+
+
+class SovaraCreativeCFBEMetaEvolutionTests(unittest.TestCase):
+    def test_composite_frontier_uses_best_fresh_suite_not_average(self):
+        frontier = compile_best_of_breed_frontier(
+            [
+                FrontierObservation(
+                    "F-1", "suite-a", BenchmarkDimension.DIRECTOR_EXPERIENCE,
+                    3.0, "https://example.invalid/a", "2026-08-28", True,
+                ),
+                FrontierObservation(
+                    "F-2", "suite-b", BenchmarkDimension.DIRECTOR_EXPERIENCE,
+                    5.0, "https://example.invalid/b", "2026-08-28", True,
+                ),
+                FrontierObservation(
+                    "F-3", "stale-suite", BenchmarkDimension.DIRECTOR_EXPERIENCE,
+                    5.0, "https://example.invalid/stale", "2025-01-01", False,
+                ),
+            ]
+        )
+        self.assertEqual(len(frontier), 1)
+        self.assertEqual(frontier[0].frontier_score, 5.0)
+        self.assertEqual(frontier[0].suite_ids, ("suite-b",))
+
+    def test_ratio_gap_selects_ten_x_but_quality_gap_selects_frontier_plus(self):
+        frontier = compile_best_of_breed_frontier(
+            [
+                FrontierObservation(
+                    "F-1", "suite-a", BenchmarkDimension.OWNER_BURDEN,
+                    5.0, "https://example.invalid/a", "2026-08-28",
+                ),
+                FrontierObservation(
+                    "F-2", "suite-b", BenchmarkDimension.PROFESSIONAL_FINISHING,
+                    5.0, "https://example.invalid/b", "2026-08-28",
+                ),
+            ]
+        )
+        gaps = calculate_frontier_gaps(
+            frontier=frontier,
+            sovara=(
+                SovaraDimensionState(BenchmarkDimension.OWNER_BURDEN, 4.0, 1.0, "CI_ADMITTED"),
+                SovaraDimensionState(BenchmarkDimension.PROFESSIONAL_FINISHING, 3.0, 1.0, "CI_ADMITTED"),
+            ),
+            ratio_dimensions=(BenchmarkDimension.OWNER_BURDEN,),
+        )
+        by_dimension = {gap.dimension: gap for gap in gaps}
+        self.assertEqual(by_dimension[BenchmarkDimension.OWNER_BURDEN].ambition, AmbitionClass.TEN_X)
+        self.assertEqual(by_dimension[BenchmarkDimension.PROFESSIONAL_FINISHING].ambition, AmbitionClass.FRONTIER_PLUS)
+
+    def test_ten_x_target_requires_measured_positive_baseline(self):
+        target = build_ten_x_target(
+            metric="owner_interventions_per_mission",
+            baseline=20.0,
+            higher_is_better=False,
+        )
+        self.assertEqual(target.target, 2.0)
+        self.assertTrue(target.met_by(1.5))
+        self.assertFalse(target.met_by(3.0))
+        with self.assertRaises(ValueError):
+            build_ten_x_target(metric="owner_interventions", baseline=0.0, higher_is_better=False)
+
+    def test_omega_scientist_requires_competing_falsifiable_hypotheses(self):
+        target = build_ten_x_target(
+            metric="recovery_seconds",
+            baseline=100.0,
+            higher_is_better=False,
+        )
+        experiment = preregister_omega_scientist_experiment(
+            experiment_id="SC-X-001",
+            dimension=BenchmarkDimension.AUTOMATED_RECOVERY,
+            primary_metric="recovery_seconds",
+            hypotheses=(
+                ScientistHypothesis(
+                    "H1", "Failure-Win composition reduces recovery time",
+                    ("median recovery <= 10 seconds",),
+                    ("median recovery > 10 seconds",),
+                ),
+                ScientistHypothesis(
+                    "H2", "Static fallback performs as well or better",
+                    ("static recovery <= adaptive recovery",),
+                    ("adaptive recovery is materially faster",),
+                ),
+            ),
+            benchmark_ids=("CFBE-CREATIVE-001",),
+            rollback_condition="Any reliability or proof regression",
+            ambition=AmbitionClass.TEN_X,
+            ten_x_target=target,
+        )
+        self.assertEqual(experiment.authority_ceiling, "A1_INTERNAL")
+        self.assertFalse(experiment.external_effect)
+        self.assertTrue(experiment.preregistration_sha256)
+
+    def test_meta_evolution_never_promotes_from_ci_without_runtime_and_value_proof(self):
+        held = evaluate_meta_evolution(
+            EvolutionEvidence(
+                benchmark_refs=("CFBE-CREATIVE-001",),
+                scientist_preregistered=True,
+                deterministic_tests_passed=True,
+                ci_admitted=True,
+                provider_effect_required=True,
+                provider_native_readback=False,
+                repeated_success=False,
+                value_gain_verified=False,
+            )
+        )
+        self.assertEqual(held, MetaEvolutionState.HOLD_PROVIDER_READBACK_UNPROVEN)
+        promoted = evaluate_meta_evolution(
+            EvolutionEvidence(
+                benchmark_refs=("CFBE-CREATIVE-001",),
+                scientist_preregistered=True,
+                deterministic_tests_passed=True,
+                ci_admitted=True,
+                provider_effect_required=True,
+                provider_native_readback=True,
+                repeated_success=True,
+                value_gain_verified=True,
+            )
+        )
+        self.assertEqual(promoted, MetaEvolutionState.PROMOTION_CANDIDATE)
 
 
 if __name__ == "__main__":

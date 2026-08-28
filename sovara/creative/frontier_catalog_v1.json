@@ -1,0 +1,47 @@
+{
+  "schema": "SOVARA-CREATIVE-CFBE-FRONTIER-CATALOG-V1",
+  "version": "1.0.0",
+  "truth_boundary": "Public comparator identifiers and evidence URLs only. Capability scores and freshness are produced by current benchmark observations, not asserted by this catalog.",
+  "suites": [
+    {
+      "suite_id": "ADOBE_CREATIVE_CLOUD_FIREFLY",
+      "display_name": "Adobe Creative Cloud / Firefly",
+      "official_evidence_urls": [
+        "https://www.adobe.com/products/firefly/features/ai-assistant.html",
+        "https://helpx.adobe.com/creative-cloud/apps/generative-ai/creative-cloud-generative-ai-features.html"
+      ]
+    },
+    {
+      "suite_id": "CANVA_MAGIC_STUDIO",
+      "display_name": "Canva Magic Studio / Canva Video",
+      "official_evidence_urls": [
+        "https://www.canva.com/newsroom/news/magic-studio/",
+        "https://www.canva.com/newsroom/news/canva-video/"
+      ]
+    },
+    {
+      "suite_id": "RUNWAY",
+      "display_name": "Runway",
+      "official_evidence_urls": [
+        "https://help.runwayml.com/hc/en-us/articles/51683104370451-Creating-with-Edit-Studio",
+        "https://help.runwayml.com/hc/en-us/articles/52685547867667-Trimming-and-Assembling-Clips-in-Studio"
+      ]
+    },
+    {
+      "suite_id": "DAVINCI_RESOLVE",
+      "display_name": "DaVinci Resolve",
+      "official_evidence_urls": [
+        "https://www.blackmagicdesign.com/products/davinciresolve/whatsnew",
+        "https://www.blackmagicdesign.com/products/davinciresolve"
+      ]
+    },
+    {
+      "suite_id": "DESCRIPT",
+      "display_name": "Descript",
+      "official_evidence_urls": [
+        "https://www.descript.com/",
+        "https://www.descript.com/tools/video-editor"
+      ]
+    }
+  ]
+}
