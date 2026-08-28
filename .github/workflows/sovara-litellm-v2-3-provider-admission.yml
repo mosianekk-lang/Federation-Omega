@@ -56,7 +56,11 @@ jobs:
             requested=true
             scope=FULL_PROVIDER_ADMISSION
           elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
-            changed="$(git diff-tree --no-commit-id --name-only -r "${GITHUB_SHA}" || true)"
+            if git rev-parse --verify "${GITHUB_SHA}^1" >/dev/null 2>&1; then
+              changed="$(git diff --name-only "${GITHUB_SHA}^1" "${GITHUB_SHA}" || true)"
+            else
+              changed="$(git diff-tree --no-commit-id --name-only -r "${GITHUB_SHA}" || true)"
+            fi
             if grep -Fxq "${GEMINI_REQUEST_FILE}" <<<"${changed}"; then
               scope="$(python3 - "${GEMINI_REQUEST_FILE}" <<'PY'
           import json, sys
@@ -141,6 +145,7 @@ jobs:
           assert request['provider']['data_collection'] == 'deny'
           assert request['provider']['zdr'] is True
           assert request['response_format']['type'] == 'json_schema'
+          assert int(spec['proposal_count']) == 12
           PY
           fi
 
@@ -329,6 +334,8 @@ jobs:
           adc=load('GEMINI_ADC_VERIFIED.json')
           adc_apply=load('GEMINI_ADC_APPLY.json')
           challenge=load('GEMINI_CREATIVE_ARCHITECTURE_CHALLENGE_RECEIPT.json')
+          challenge_spec=json.loads(Path('governance/sovara_creative_gemini_architecture_challenge_v1.json').read_text(encoding='utf-8'))
+          expected_proposal_count=int(challenge_spec.get('proposal_count',0))
           structural_ok=(d/'STRUCTURAL_VALIDATION_PRE_AUTH.json').is_file() and (d/'PROVIDER_PROBE_SELF_TEST.json').is_file()
           wif_ok=(wif.get('receipt')=='FEDOMEGA-WIF-CLOUD-VERIFIED' and wif.get('state')=='VERIFIED' and wif.get('project_number_observed')=='257649435135')
           adc_ok=(adc.get('receipt')=='FEDOMEGA-GEMINI-ADC-VERIFIED' and adc.get('state')=='VERIFIED' and adc.get('project_number_observed')=='257649435135' and adc.get('service_account_key_created') is False and adc.get('secret_payload_accessed') is False)
@@ -344,12 +351,12 @@ jobs:
               and challenge.get('case_data_processed') is False
               and challenge.get('external_effect_performed') is False
               and challenge.get('proposal_authority_only') is True
-              and challenge.get('proposal_count') == 18
+              and challenge.get('proposal_count') == expected_proposal_count
               and g2_code == 0
           )
 
           receipt={
-              'schema':'SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-6',
+              'schema':'SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-7',
               'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
               'repository':os.environ['GITHUB_REPOSITORY'],
               'workflow':os.environ['GITHUB_WORKFLOW'],
@@ -375,6 +382,7 @@ jobs:
               'gemini_upstream_provider':challenge.get('provider') if challenge else None,
               'gemini_provider_request_id':challenge.get('provider_request_id') if challenge else None,
               'gemini_proposal_count':challenge.get('proposal_count') if challenge else None,
+              'gemini_expected_proposal_count':expected_proposal_count,
               'gemini_challenge_receipt_sha256':challenge.get('receipt_sha256') if challenge else None,
               'case_data_processed':False,
               'model_inference_performed':challenge_ok if scope=='G2_CREATIVE_ARCHITECTURE_CHALLENGE' else (False if scope in {'G0_READ_ONLY_VERIFY','G1_ADC_APPLY_VERIFY'} else None),
@@ -426,12 +434,11 @@ jobs:
                 echo "G2 Gemini Creative Architecture Challenge stopped at a provider proof gate. Redacted receipts were retained when available." >&2
                 exit "$code"
               fi
-              jq -e '.execution_scope == "G2_CREATIVE_ARCHITECTURE_CHALLENGE" and .gemini_architecture_challenge_verified == true and .model_inference_performed == true and .case_data_processed == false and .gemini_proposal_count == 18 and (.gemini_provider_request_id | length > 0)' "$receipt" >/dev/null
+              jq -e '.execution_scope == "G2_CREATIVE_ARCHITECTURE_CHALLENGE" and .gemini_architecture_challenge_verified == true and .model_inference_performed == true and .case_data_processed == false and .gemini_proposal_count == .gemini_expected_proposal_count and (.gemini_provider_request_id | length > 0)' "$receipt" >/dev/null
               echo "G2 Gemini Creative Architecture Challenge verified. Output is proposal-only; no provider mutation, case-data processing, publishing or design auto-promotion occurred."
               ;;
             SOURCE_VALIDATION_ONLY)
               jq -e '.execution_scope == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_state_claimed == false' "$receipt" >/dev/null
-              echo "Source validation verified. Provider admission was not requested and no WIF exchange was attempted."
               ;;
             *)
               echo "Unknown execution scope: ${EXECUTION_SCOPE}" >&2
