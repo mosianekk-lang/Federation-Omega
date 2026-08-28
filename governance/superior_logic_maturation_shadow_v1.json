@@ -1,7 +1,7 @@
 {
   "schema_version": "superior-logic.maturation-shadow.v1",
   "id": "SUPERIOR-LOGIC-MATURATION-SHADOW-V1",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "kind": "CHAT_INDEPENDENT_READ_ONLY_MATURATION_RUNTIME",
   "objective": "Prove that Superior Logic can wake up without a live ChatGPT turn, assess its next maturity gap, compile a resumable transaction, emit a bounded candidate work package and preserve provider-native evidence without source mutation or external provider effects.",
   "source": "evidenceops/caseforge/maturation_shadow_runtime.py::SuperiorLogicMaturationShadowRuntime",
@@ -31,8 +31,8 @@
   "runtime_cycle": [
     "WAKE",
     "READ_CURRENT_HEAD",
-    "READ_PROVIDER_RUN_HISTORY",
-    "ASSESS_PREVIOUS_CYCLES_AND_OWNER_INTERVENTION",
+    "READ_PROVIDER_RUN_HISTORY_WITH_ACTOR_PROVENANCE",
+    "ASSESS_PREVIOUS_CYCLES_AND_PROVEN_OWNER_INTERVENTION",
     "SELECT_HIGHEST_VALUE_MATURATION_GAP",
     "COMPILE_IDEMPOTENT_MATURATION_TRANSACTION",
     "EMIT_BOUNDED_CANDIDATE_WORK_PACKAGE",
@@ -46,8 +46,19 @@
     "candidate_work_package.json",
     "heartbeat.json",
     "GitHub Actions run identity",
+    "GitHub Actions actor identity",
     "GitHub Actions artifact identity"
   ],
+  "trigger_provenance": {
+    "schedule": "SCHEDULED_AUTONOMY",
+    "push": "SOURCE_PUSH_AUTOMATION",
+    "workflow_dispatch_by_github_actions_bot": "SYSTEM_AUTOMATION_DISPATCH",
+    "workflow_dispatch_by_non_system_actor": "OWNER_OR_HUMAN_DISPATCH",
+    "owner_burden_rule": "Event type alone is not proof of owner intervention. Owner burden requires actor-bound provenance.",
+    "trusted_system_dispatch_actors": [
+      "github-actions[bot]"
+    ]
+  },
   "anti_replay": {
     "stable_idempotency_key": true,
     "expected_state_epoch": true,
@@ -62,6 +73,16 @@
       "evidence_artifact_id": 9668699460,
       "containment": "PRESERVE_FAILURE_THEN_REPAIR_THROUGH_AIRLOCK",
       "permanent_regression": "tests/test_maturation_shadow_runtime.py provider-entrypoint subprocess tests"
+    },
+    "provider_run_33128067115": {
+      "state": "PROVIDER_EXECUTED_VERIFIED_WITH_OWNER_BURDEN_SEMANTIC_DEFECT",
+      "failure_signature": "AUTOMATION_DISPATCH_FALSELY_COUNTED_AS_OWNER_INTERVENTION",
+      "actor": "github-actions[bot]",
+      "event": "workflow_dispatch",
+      "evidence_artifact_id": 9669154038,
+      "receipt_sha256": "bc5af07fa9e75ffc08b9e41b6f1392de1549306a28a36134df39aa6b78f75004",
+      "observed_bad_metric": "owner_intervention_rate=1.0",
+      "correct_semantics": "SYSTEM_AUTOMATION_DISPATCH / current_owner_intervention=false"
     }
   },
   "gap_progression": [
@@ -71,12 +92,12 @@
       "next_gate": "ACCUMULATE_THREE_REPEATED_PROVIDER_NATIVE_CYCLES"
     },
     {
-      "condition": "measured_owner_intervention_rate > 0.10",
+      "condition": "actor_bound_owner_intervention_rate > 0.10",
       "gap": "GAP-OWNER-INTERVENTION-RATE",
-      "next_gate": "REDUCE_MANUAL_INVOCATION_RATE"
+      "next_gate": "REDUCE_PROVEN_HUMAN_INVOCATION_RATE"
     },
     {
-      "condition": "successful_cycles >= 3 and owner_intervention_rate <= 0.10",
+      "condition": "successful_cycles >= 3 and actor_bound_owner_intervention_rate <= 0.10",
       "gap": "GAP-CLOSED-LOOP-CANDIDATE-QUALIFICATION",
       "next_gate": "ADMIT_PR_ONLY_CANDIDATE_BUILDER_AND_INDEPENDENT_ASSURANCE"
     }
@@ -102,12 +123,14 @@
     ],
     "minimum_repeated_successful_cycles": 3,
     "owner_intervention_rate_ceiling": 0.10,
+    "owner_intervention_measurement": "ACTOR_BOUND_PROVIDER_PROVENANCE",
     "required_next_evolution": "PR_ONLY_CANDIDATE_BUILDER_PLUS_INDEPENDENT_ASSURANCE"
   },
   "truth_boundary": {
     "source_presence_proves_provider_execution": false,
     "workflow_configuration_proves_schedule_execution": false,
     "push_triggered_success_proves_recurring_schedule": false,
+    "workflow_dispatch_event_proves_owner_intervention": false,
     "work_package_generation_proves_candidate_improvement": false,
     "three_shadow_cycles_prove_self_sustaining": false,
     "github_actions_execution_grants_external_provider_authority": false,

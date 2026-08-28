@@ -1,0 +1,51 @@
+{
+  "schema_version": "federation.failure-win.v2",
+  "id": "MATURATION-OWNER-BURDEN-PROVENANCE-FAILURE-WIN-001",
+  "failure_signature": "AUTOMATION_DISPATCH_FALSELY_COUNTED_AS_OWNER_INTERVENTION",
+  "system": "SUPERIOR_LOGIC_MATURATION_SHADOW_V1",
+  "observed": {
+    "run_id": 33128067115,
+    "workflow_id": 344197377,
+    "head_sha": "c4880004ba226c7d5c273f99e44f50f9342f3d88",
+    "event": "workflow_dispatch",
+    "actor": "github-actions[bot]",
+    "conclusion": "success",
+    "artifact_id": 9669154038,
+    "artifact_digest": "sha256:cda090983ce5eeb23e30dd6f081c88a1a9a5ff0bda0a1208227c0df64b77e992",
+    "receipt_sha256": "bc5af07fa9e75ffc08b9e41b6f1392de1549306a28a36134df39aa6b78f75004",
+    "observed_owner_intervention_rate": 1.0,
+    "owner_action_actually_observed": false
+  },
+  "root_cause": {
+    "class": "EVENT_TYPE_USED_AS_ACTOR_PROVENANCE",
+    "description": "The runtime treated every workflow_dispatch event as manual owner intervention. Phoenix had automatically dispatched the canary as github-actions[bot], so the transport event type was incorrectly used as proof of human burden.",
+    "runtime_execution_failure": false,
+    "proof_artifact_failure": false,
+    "semantic_metric_failure": true
+  },
+  "containment": [
+    "PRESERVE_SUCCESSFUL_PROVIDER_RUN",
+    "DO_NOT_USE_OLD_OWNER_INTERVENTION_RATE_AS_OWNER_BURDEN_EVIDENCE",
+    "BIND_TRIGGER_CLASSIFICATION_TO_EVENT_PLUS_ACTOR",
+    "COUNT_ONLY_NON_SYSTEM_WORKFLOW_DISPATCH_AS_OWNER_OR_HUMAN_INTERVENTION"
+  ],
+  "permanent_repair": [
+    "ADD_ACTOR_TO_RUNTIME_INPUT_AND_RECEIPT",
+    "CLASSIFY_SCHEDULE_AS_SCHEDULED_AUTONOMY",
+    "CLASSIFY_GITHUB_ACTIONS_BOT_WORKFLOW_DISPATCH_AS_SYSTEM_AUTOMATION_DISPATCH",
+    "CLASSIFY_NON_SYSTEM_WORKFLOW_DISPATCH_AS_OWNER_OR_HUMAN_DISPATCH",
+    "COUNT_PRIOR_MANUAL_CYCLES_FROM_PROVIDER_ACTOR_PROVENANCE",
+    "TRACK_PRIOR_SYSTEM_DISPATCH_CYCLES_SEPARATELY",
+    "REGRESSION_TEST_SYSTEM_CANARY_IS_NOT_OWNER_BURDEN"
+  ],
+  "prevention_rule": "A transport/event class is not actor provenance. Metrics for owner burden, authority, responsibility or human intervention must be bound to provider-observed actor identity and event context.",
+  "truth_boundary": {
+    "workflow_dispatch_proves_owner_intervention": false,
+    "github_actions_bot_dispatch_proves_human_intervention": false,
+    "actor_classification_proves_person_identity_beyond_provider_login": false,
+    "scheduled_event_execution_still_required_for_persistent_scheduled_autonomy_claim": true
+  },
+  "owner_intervention_required": false,
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false
+}

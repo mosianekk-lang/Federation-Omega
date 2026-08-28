@@ -11,6 +11,7 @@ import unittest
 from evidenceops.caseforge.maturation_shadow_runtime import (
     ShadowRuntimeInput,
     SuperiorLogicMaturationShadowRuntime,
+    classify_trigger,
 )
 
 
@@ -25,17 +26,21 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
         self,
         *,
         event: str = "schedule",
+        actor: str = "github-actions[bot]",
         successes: int = 0,
         manual: int = 0,
+        system_dispatch: int = 0,
         head: str = "4f3c6286ba33f6d178c4b849eb51c69a0aa2f12c",
     ) -> ShadowRuntimeInput:
         return ShadowRuntimeInput(
             run_id=f"run-{successes + 1}",
             head_sha=head,
             event=event,
+            actor=actor,
             observed_at="2026-08-28T00:00:00Z",
             previous_successful_cycles=successes,
             previous_manual_cycles=manual,
+            previous_system_dispatch_cycles=system_dispatch,
         )
 
     def _assert_entrypoint_executes(self, prefix: list[str]) -> None:
@@ -50,11 +55,15 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
                 "8563d8bc6d7df559cf65aaa5dd301e733c7ac011",
                 "--event",
                 "push",
+                "--actor",
+                "github-actions[bot]",
                 "--observed-at",
                 "2026-08-28T00:00:00Z",
                 "--previous-successful-cycles",
                 "0",
                 "--previous-manual-cycles",
+                "0",
+                "--previous-system-dispatch-cycles",
                 "0",
             ]
             completed = subprocess.run(
@@ -72,6 +81,9 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
             receipt = json.loads((output_dir / "maturation_receipt.json").read_text(encoding="utf-8"))
             self.assertEqual("SHADOW_MATURATION_CYCLE_VERIFIED", receipt["status"])
             self.assertFalse(receipt["external_effect"])
+            self.assertEqual("github-actions[bot]", receipt["actor"])
+            self.assertEqual("SOURCE_PUSH_AUTOMATION", receipt["trigger_class"])
+            self.assertFalse(receipt["current_owner_intervention"])
             self.assertTrue(receipt["transaction_id"].startswith("matx-"))
             self.assertTrue(receipt["idempotency_key"].startswith("maturation:"))
 
@@ -79,6 +91,9 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
         receipt = self.runtime.run(self._input())
         self.assertEqual("SHADOW_MATURATION_CYCLE_VERIFIED", receipt.status)
         self.assertEqual(1, receipt.cycle_number)
+        self.assertEqual("SCHEDULED_AUTONOMY", receipt.trigger_class)
+        self.assertFalse(receipt.current_owner_intervention)
+        self.assertEqual(0.0, receipt.owner_intervention_rate)
         self.assertEqual("GAP-REPEATED-SHADOW-CYCLES", receipt.selected_gap_id)
         self.assertFalse(receipt.external_effect)
         self.assertFalse(receipt.self_sustaining)
@@ -87,7 +102,7 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
         self.assertEqual("ACCUMULATE_THREE_REPEATED_PROVIDER_NATIVE_CYCLES", receipt.next_gate)
 
     def test_third_cycle_selects_closed_loop_candidate_qualification(self) -> None:
-        receipt = self.runtime.run(self._input(successes=2, manual=0))
+        receipt = self.runtime.run(self._input(successes=2, manual=0, system_dispatch=1))
         self.assertEqual(3, receipt.cycle_number)
         self.assertEqual("GAP-CLOSED-LOOP-CANDIDATE-QUALIFICATION", receipt.selected_gap_id)
         self.assertEqual("BRANCH_BOUND_CHALLENGER", receipt.candidate_work_package.experiment_class)
@@ -97,7 +112,7 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
         )
         self.assertFalse(receipt.self_sustaining)
 
-    def test_high_manual_rate_becomes_owner_burden_gap(self) -> None:
+    def test_high_proven_human_rate_becomes_owner_burden_gap(self) -> None:
         receipt = self.runtime.run(self._input(successes=9, manual=3))
         self.assertEqual("GAP-OWNER-INTERVENTION-RATE", receipt.selected_gap_id)
         self.assertGreater(receipt.owner_intervention_rate, 0.10)
@@ -140,6 +155,8 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
             heartbeat = json.loads(paths[2].read_text(encoding="utf-8"))
             self.assertEqual(receipt.candidate_work_package.work_package_id, work["work_package_id"])
             self.assertEqual("SHADOW_MATURATION_CYCLE_VERIFIED", heartbeat["status"])
+            self.assertEqual(receipt.actor, heartbeat["actor"])
+            self.assertEqual(receipt.trigger_class, heartbeat["trigger_class"])
             self.assertFalse(heartbeat["external_effect"])
 
     def test_many_shadow_cycles_still_do_not_false_claim_self_sustaining(self) -> None:
@@ -151,11 +168,47 @@ class MaturationShadowRuntimeTests(unittest.TestCase):
         self.assertIn("verified_rollback", missing)
         self.assertIn("measurable_operational_value", missing)
         self.assertIn("cross_receiver_learning_with_compatibility_proof", missing)
+        self.assertNotIn("owner_intervention_rate", missing)
 
-    def test_manual_dispatch_is_measured_not_hidden(self) -> None:
-        receipt = self.runtime.run(self._input(event="workflow_dispatch", successes=0, manual=0))
+    def test_human_dispatch_is_measured_not_hidden(self) -> None:
+        receipt = self.runtime.run(
+            self._input(
+                event="workflow_dispatch",
+                actor="mosianekk-lang",
+                successes=0,
+                manual=0,
+            )
+        )
+        self.assertEqual("OWNER_OR_HUMAN_DISPATCH", receipt.trigger_class)
+        self.assertTrue(receipt.current_owner_intervention)
         self.assertEqual(1.0, receipt.owner_intervention_rate)
         self.assertFalse(receipt.self_sustaining)
+
+    def test_system_dispatched_canary_is_not_false_owner_burden(self) -> None:
+        receipt = self.runtime.run(
+            self._input(
+                event="workflow_dispatch",
+                actor="github-actions[bot]",
+                successes=0,
+                manual=0,
+            )
+        )
+        self.assertEqual("SYSTEM_AUTOMATION_DISPATCH", receipt.trigger_class)
+        self.assertFalse(receipt.current_owner_intervention)
+        self.assertEqual(0.0, receipt.owner_intervention_rate)
+        self.assertNotIn("owner_intervention_rate", receipt.self_sustaining_missing)
+
+    def test_trigger_classification_is_actor_bound(self) -> None:
+        self.assertEqual(
+            "SYSTEM_AUTOMATION_DISPATCH",
+            classify_trigger("workflow_dispatch", "github-actions[bot]"),
+        )
+        self.assertEqual(
+            "OWNER_OR_HUMAN_DISPATCH",
+            classify_trigger("workflow_dispatch", "mosianekk-lang"),
+        )
+        self.assertEqual("SCHEDULED_AUTONOMY", classify_trigger("schedule", "github-actions[bot]"))
+        self.assertEqual("SOURCE_PUSH_AUTOMATION", classify_trigger("push", "mosianekk-lang"))
 
     def test_canonical_package_entrypoint_executes_from_repository_root(self) -> None:
         self._assert_entrypoint_executes(

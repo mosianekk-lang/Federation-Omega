@@ -28,9 +28,11 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--head-sha", required=True)
     parser.add_argument("--event", required=True, choices=("schedule", "push", "workflow_dispatch"))
+    parser.add_argument("--actor", required=True)
     parser.add_argument("--observed-at", required=True)
     parser.add_argument("--previous-successful-cycles", type=int, default=0)
     parser.add_argument("--previous-manual-cycles", type=int, default=0)
+    parser.add_argument("--previous-system-dispatch-cycles", type=int, default=0)
     return parser
 
 
@@ -42,9 +44,11 @@ def main(argv: list[str] | None = None) -> int:
             run_id=args.run_id,
             head_sha=args.head_sha,
             event=args.event,
+            actor=args.actor,
             observed_at=args.observed_at,
             previous_successful_cycles=args.previous_successful_cycles,
             previous_manual_cycles=args.previous_manual_cycles,
+            previous_system_dispatch_cycles=args.previous_system_dispatch_cycles,
         )
     )
     output_dir = Path(args.output_dir)
