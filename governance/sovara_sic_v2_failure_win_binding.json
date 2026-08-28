@@ -1,0 +1,25 @@
+{
+  "schema": "SOVARA-SIC-V2-FAILURE-WIN-BINDING-V1",
+  "material_events": [
+    "PROVIDER_BOUNDARY",
+    "TIMEOUT",
+    "OUTAGE",
+    "OWNER_CORRECTION",
+    "FALSE_COMPLETION_CLAIM",
+    "DILUTION_ATTEMPT",
+    "RESTORE_FAILURE",
+    "REPEATED_ROUTE_FAILURE"
+  ],
+  "pipeline": [
+    "DETECT",
+    "CAPTURE",
+    "CLASSIFY",
+    "ROOT_CAUSE",
+    "DESIGN_REPAIR",
+    "VERIFY",
+    "REGRESSION_TEST",
+    "LEARN",
+    "CONTINUE"
+  ],
+  "unchanged_failed_route_retry": false
+}
