@@ -1,11 +1,12 @@
 # SOVARA Ω × JARVIS ΑΩ5 — Full Zero-Dilution Integration v2
 
-This package corrects the earlier partial ΑΩ5 integration.
+This package corrects and supersedes the earlier partial ΑΩ5 executable integration.
 
 ## Canonical source
-- Exact user-supplied specification retained at `JARVIS_AO5_CANONICAL_SPEC.txt`.
-- Exact source SHA-256: `e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f`.
-- The source contains **54 Roman-numbered parts (I–LIV) plus Part 0**, for **55 covered sections**.
+- The exact user-supplied 2,561-line specification is retained deterministically at `JARVIS_AO5_CANONICAL_SPEC.txt.gz.b64` as `base64(gzip(mtime=0, level=9, raw_source_bytes))`.
+- Exact decompressed source SHA-256: `e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f`.
+- `tests/test_canonical_payload.py` decompresses the stored payload in CI, re-hashes the raw bytes, and verifies 2,561 source lines and all **54 Roman-numbered parts (I–LIV) plus Part 0**.
+- The earlier subset's recorded `773ee295...` source hash is superseded as incorrect and retained in the discrepancy ledger rather than silently erased.
 
 ## Executable projection
 `ao5_full_engine.py` implements or enforces every numbered section, including:
@@ -23,35 +24,33 @@ experiment/promotion/self-improvement controls; semantic firewall; behavioural
 safety; RealityGuard receipts; AutoFIX; output standard; owner-load contract;
 command layer; first-turn boot; master initialization; and performance success gate.
 
+`AO5_FULL_COMPATIBILITY_MATRIX.json` maps every source section to its executable method and direct regression test.
+
 ## Harmonized authority
 - **SOVARA** remains mission / route / effect-admission / orchestration authority.
-- **ΑΩ5** is the full forensic decision-intelligence engine within the SOVARA mission.
+- **ΑΩ5** is the full forensic decision-intelligence engine within the SOVARA mission envelope.
 - **JARVIS assurance** remains independent challenge / hold / assurance.
 - **RealityGuard** governs truth and execution receipts.
 - **CFBE** remains benchmark/value-learning.
 - **Sentinel** remains freshness/drift/health.
-- No provider-effect executor is included in this module.
+- No provider-effect executor, credential minting, IAM mutation or external-effect authority is included in this package.
 
-This role reconciliation changes only orchestration placement. The ΑΩ5 method surface
-itself is retained, and the canonical source is preserved byte-for-byte for future
-compatibility verification.
+The only deliberate architectural reconciliation is orchestration placement. The complete ΑΩ5 method contract remains represented, and the canonical source is independently hash-bound so later refactors cannot silently redefine it.
 
 ## Verification
-- Local regression: **60/60 PASS**.
-- End-to-end synthetic canary: **57/57 PASS**.
+- Provider-shaped local regression: **60/60 PASS** = 59 executable-engine tests + 1 exact-canonical-payload test.
+- End-to-end synthetic canary: **56/56 PASS**.
 - External effects during canary: **0**.
 - Compatibility matrix: **55/55 sections mapped; 54/54 Roman parts + Part 0**.
-- Initial regression near-miss: four test-surface export omissions were detected,
-  repaired, and the complete suite was rerun. The failure is preserved in
-  `AO5_FULL_LOCAL_VERIFICATION.json`.
+- Development near-misses and repairs are retained in `AO5_FULL_LOCAL_VERIFICATION.json`.
 
 ## Zero-dilution gate
-`ZERO_DILUTION_VERIFIED` may be asserted only after:
+`ZERO_DILUTION_VERIFIED` may be asserted only after all six gates pass:
 1. exact canonical-source hash matches;
 2. compatibility matrix is complete;
 3. all regression tests pass;
 4. synthetic canary passes;
-5. GitHub PR admission passes;
-6. merged-main readback preserves the exact package.
+5. GitHub pull-request source/admission checks pass;
+6. merged-`main` readback preserves the exact admitted package.
 
-Local items 1–4 pass. Items 5–6 are provider-governance gates and are not pre-claimed.
+Local/source gates 1–4 currently pass. Gates 5–6 remain provider-governance gates until fresh GitHub readback proves them.
