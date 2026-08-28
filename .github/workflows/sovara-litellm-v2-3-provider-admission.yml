@@ -55,22 +55,36 @@ jobs:
           elif [[ "${GITHUB_EVENT_NAME}" == "push" ]]; then
             changed="$(git diff-tree --no-commit-id --name-only -r "${GITHUB_SHA}" || true)"
             if grep -Fxq "${GEMINI_REQUEST_FILE}" <<<"${changed}"; then
-              python3 - "${GEMINI_REQUEST_FILE}" <<'PY'
+              scope="$(python3 - "${GEMINI_REQUEST_FILE}" <<'PY'
           import json, sys
           p=json.load(open(sys.argv[1], encoding='utf-8'))
           assert p.get('schema') == 'SOVARA_GEMINI_COLLABORATION_REQUEST_V1', p
-          assert p.get('mode') == 'G0_READ_ONLY_VERIFY', p
           assert p.get('execute') is True, p
           assert p.get('promote') is False, p
           assert p.get('case_data_allowed') is False, p
-          assert p.get('provider_mutation_allowed') is False, p
           assert p.get('external_communication_allowed') is False, p
           assert p.get('expected_project_id') == 'sov-hybrid-suite', p
           assert p.get('expected_project_number') == '257649435135', p
           assert p.get('expected_workflow') == '.github/workflows/sovara-litellm-v2-3-provider-admission.yml', p
+          mode=p.get('mode')
+          if mode == 'G0_READ_ONLY_VERIFY':
+              assert p.get('provider_mutation_allowed') is False, p
+          elif mode == 'G1_ADC_APPLY_VERIFY':
+              assert p.get('provider_mutation_allowed') is True, p
+              expected={
+                'CREATE_SV_GEMINI_RUNTIME_SERVICE_ACCOUNT_IF_ABSENT',
+                'BIND_RUNTIME_ROLES_AIPLATFORM_USER_AND_SERVICEUSAGE_CONSUMER',
+                'BIND_DEPLOYER_SERVICE_ACCOUNT_USER_ON_RUNTIME',
+                'BIND_DEPLOYER_RUN_DEVELOPER',
+                'ENSURE_EXISTING_REQUIRED_APIS_ENABLED',
+              }
+              assert set(p.get('mutation_scope') or []) == expected, p
+          else:
+              raise AssertionError(f'unsupported request mode: {mode!r}')
+          print(mode)
           PY
+              )"
               requested=true
-              scope=G0_READ_ONLY_VERIFY
             fi
           fi
 
@@ -183,23 +197,42 @@ jobs:
           print(json.dumps(r,sort_keys=True))
           PY
 
-      - name: Verify Gemini ADC runtime identity contract
+      - name: Reconcile Gemini ADC runtime identity contract
         if: steps.provider_mode.outputs.requested == 'true'
+        id: adc
+        continue-on-error: true
         shell: bash
+        env:
+          EXECUTION_SCOPE: ${{ steps.provider_mode.outputs.scope }}
         run: |
-          set -euo pipefail
-          ./ops/bootstrap_gemini_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
-          python3 - "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json" <<'PY'
-          import json, sys
-          p=json.load(open(sys.argv[1], encoding='utf-8'))
-          assert p['receipt']=='FEDOMEGA-GEMINI-ADC-VERIFIED',p
-          assert p['state']=='VERIFIED',p
-          assert p['project_id']=='sov-hybrid-suite',p
-          assert p['project_number_observed']=='257649435135',p
-          assert p['mutation_performed'] is False,p
-          assert p['service_account_key_created'] is False,p
-          assert p['secret_payload_accessed'] is False,p
-          PY
+          set -u
+          mkdir -p "$SOVARA_RECEIPT_DIR"
+          case "$EXECUTION_SCOPE" in
+            G0_READ_ONLY_VERIFY|FULL_PROVIDER_ADMISSION)
+              set +e
+              ./ops/bootstrap_gemini_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
+              code=${PIPESTATUS[0]}
+              set -e
+              exit "$code"
+              ;;
+            G1_ADC_APPLY_VERIFY)
+              set -euo pipefail
+              ./ops/bootstrap_gemini_gateway.sh --plan | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_PRE_APPLY.json"
+              set +e
+              FEDOMEGA_GEMINI_GATEWAY_APPLY=ATTACH_GEMINI_GATEWAY_ADC_V1 \
+                ./ops/bootstrap_gemini_gateway.sh --apply | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_APPLY.json"
+              apply_code=${PIPESTATUS[0]}
+              set -e
+              ./ops/bootstrap_gemini_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
+              verify_code=${PIPESTATUS[0]}
+              if [[ "$apply_code" -ne 0 || "$verify_code" -ne 0 ]]; then
+                exit 1
+              fi
+              ;;
+            *)
+              echo "ADC reconciliation not applicable for scope=$EXECUTION_SCOPE"
+              ;;
+          esac
 
       - name: Execute provider admission, canaries, deployment, and rollback gates
         if: steps.provider_mode.outputs.scope == 'FULL_PROVIDER_ADMISSION'
@@ -239,44 +272,52 @@ jobs:
           from datetime import datetime, timezone
           from pathlib import Path
 
-          path = Path(sys.argv[1])
-          requested = os.environ.get("PROVIDER_ADMISSION_REQUESTED", "false") == "true"
-          scope = os.environ.get("EXECUTION_SCOPE", "SOURCE_VALIDATION_ONLY")
-          raw_code = os.environ.get("ADMISSION_EXIT_CODE", "").strip()
-          code = int(raw_code) if raw_code else None
-          receipt_dir = path.parent
-          structural_ok = (
-              (receipt_dir / "STRUCTURAL_VALIDATION_PRE_AUTH.json").is_file()
-              and (receipt_dir / "PROVIDER_PROBE_SELF_TEST.json").is_file()
-          )
-          g0_ok = (
-              (receipt_dir / "WIF_G0_VERIFIED.json").is_file()
-              and (receipt_dir / "GEMINI_ADC_VERIFIED.json").is_file()
-          )
-          receipt = {
-              "schema": "SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-4",
-              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
-              "repository": os.environ["GITHUB_REPOSITORY"],
-              "workflow": os.environ["GITHUB_WORKFLOW"],
-              "run_id": os.environ["GITHUB_RUN_ID"],
-              "run_attempt": os.environ["GITHUB_RUN_ATTEMPT"],
-              "source_sha": os.environ["GITHUB_SHA"],
-              "ref": os.environ["GITHUB_REF"],
-              "execution_scope": scope,
-              "structural_validation_completed": structural_ok,
-              "g0_identity_adc_verified": g0_ok,
-              "provider_admission_attempted": scope == "FULL_PROVIDER_ADMISSION",
-              "provider_admission_exit_code": code,
-              "provider_admission_completed": scope == "FULL_PROVIDER_ADMISSION" and code == 0,
-              "provider_state_claimed": scope == "FULL_PROVIDER_ADMISSION" and code == 0,
-              "case_data_processed": False,
-              "repository_source_write_authority": False,
-              "credential_values_recorded": False,
+          path=Path(sys.argv[1])
+          scope=os.environ.get('EXECUTION_SCOPE','SOURCE_VALIDATION_ONLY')
+          raw_code=os.environ.get('ADMISSION_EXIT_CODE','').strip()
+          code=int(raw_code) if raw_code else None
+          d=path.parent
+
+          def load(name):
+              p=d/name
+              if not p.is_file(): return {}
+              try: return json.loads(p.read_text(encoding='utf-8'))
+              except Exception: return {}
+
+          wif=load('WIF_G0_VERIFIED.json')
+          adc=load('GEMINI_ADC_VERIFIED.json')
+          adc_apply=load('GEMINI_ADC_APPLY.json')
+          structural_ok=(d/'STRUCTURAL_VALIDATION_PRE_AUTH.json').is_file() and (d/'PROVIDER_PROBE_SELF_TEST.json').is_file()
+          wif_ok=(wif.get('receipt')=='FEDOMEGA-WIF-CLOUD-VERIFIED' and wif.get('state')=='VERIFIED' and wif.get('project_number_observed')=='257649435135')
+          adc_ok=(adc.get('receipt')=='FEDOMEGA-GEMINI-ADC-VERIFIED' and adc.get('state')=='VERIFIED' and adc.get('project_number_observed')=='257649435135' and adc.get('service_account_key_created') is False and adc.get('secret_payload_accessed') is False)
+          adc_mutation=bool(adc_apply.get('mutation_performed',False))
+
+          receipt={
+              'schema':'SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-5',
+              'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
+              'repository':os.environ['GITHUB_REPOSITORY'],
+              'workflow':os.environ['GITHUB_WORKFLOW'],
+              'run_id':os.environ['GITHUB_RUN_ID'],
+              'run_attempt':os.environ['GITHUB_RUN_ATTEMPT'],
+              'source_sha':os.environ['GITHUB_SHA'],
+              'ref':os.environ['GITHUB_REF'],
+              'execution_scope':scope,
+              'structural_validation_completed':structural_ok,
+              'wif_verified':wif_ok,
+              'adc_verified':adc_ok,
+              'g0_identity_adc_verified':wif_ok and adc_ok,
+              'adc_apply_mutation_performed':adc_mutation,
+              'provider_admission_attempted':scope=='FULL_PROVIDER_ADMISSION',
+              'provider_admission_exit_code':code,
+              'provider_admission_completed':scope=='FULL_PROVIDER_ADMISSION' and code==0,
+              'provider_state_claimed':scope=='FULL_PROVIDER_ADMISSION' and code==0,
+              'case_data_processed':False,
+              'model_inference_performed':False if scope in {'G0_READ_ONLY_VERIFY','G1_ADC_APPLY_VERIFY'} else None,
+              'repository_source_write_authority':False,
+              'credential_values_recorded':False,
           }
-          receipt["receipt_sha256"] = hashlib.sha256(
-              json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
-          ).hexdigest()
-          path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
       - name: Upload immutable redacted provider receipts
@@ -299,15 +340,19 @@ jobs:
           case "${EXECUTION_SCOPE:-SOURCE_VALIDATION_ONLY}" in
             FULL_PROVIDER_ADMISSION)
               code="${ADMISSION_EXIT_CODE:-99}"
-              if [ "$code" -ne 0 ]; then
+              if [[ "$code" -ne 0 ]]; then
                 echo "Provider admission stopped at a proof gate. Redacted receipts were retained as a workflow artifact." >&2
                 exit "$code"
               fi
               jq -e '.provider_admission_attempted == true and .provider_admission_completed == true and .provider_admission_exit_code == 0' "$receipt" >/dev/null
               ;;
             G0_READ_ONLY_VERIFY)
-              jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .g0_identity_adc_verified == true and .provider_admission_attempted == false and .case_data_processed == false' "$receipt" >/dev/null
+              jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .wif_verified == true and .adc_verified == true and .adc_apply_mutation_performed == false and .provider_admission_attempted == false and .case_data_processed == false' "$receipt" >/dev/null
               echo "G0 WIF and Gemini ADC verification passed. No model inference, provider mutation, traffic promotion or case-data processing was performed."
+              ;;
+            G1_ADC_APPLY_VERIFY)
+              jq -e '.execution_scope == "G1_ADC_APPLY_VERIFY" and .wif_verified == true and .adc_verified == true and .adc_apply_mutation_performed == true and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == false' "$receipt" >/dev/null
+              echo "G1 Gemini ADC attachment verified. Only the bounded runtime identity/IAM/API controls in the request were admitted; no model inference, traffic promotion or case-data processing was performed."
               ;;
             SOURCE_VALIDATION_ONLY)
               jq -e '.execution_scope == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_state_claimed == false' "$receipt" >/dev/null
