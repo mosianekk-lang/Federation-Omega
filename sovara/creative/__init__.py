@@ -1,10 +1,10 @@
 """SOVARA Creative sovereign multi-format production package.
 
-Genesis scope: mission genomes, content/privacy classification, policy-aware
-routing, digital continuity, a private-studio planning boundary, a reuse-first
-adaptive capability foundry, and a CFBE/Ω-Scientist meta-evolution layer. This
-package does not grant provider authority, perform publishing effects, deploy
-infrastructure, or claim runtime maturity.
+Scope: mission genomes, content/privacy classification, policy-aware routing,
+digital continuity, private-studio planning, reuse-first adaptive capability
+creation, CFBE/Ω-Scientist meta-evolution, and proof-gated commercial value.
+This package does not grant provider authority, authorize spend, perform
+publishing effects, deploy infrastructure, or claim runtime/value maturity.
 """
 
 from .capability_foundry import (
@@ -14,6 +14,21 @@ from .capability_foundry import (
     SkillDomain,
     can_deploy,
     plan_capability,
+)
+from .commercial_value import (
+    MetricComparison,
+    MetricDirection,
+    MetricObservation,
+    MissionEconomics,
+    ValueClass,
+    ValueEvidence,
+    ValueGateDecision,
+    ValueGateState,
+    ValueMetricSpec,
+    compare_value_metrics,
+    default_production_value_specs,
+    economics_snapshot,
+    evaluate_value_gate,
 )
 from .genome import CreativeMissionGenome, RightsState
 from .meta_benchmark import (
@@ -71,6 +86,10 @@ __all__ = [
     "FrontierObservation",
     "MatureContext",
     "MetaEvolutionState",
+    "MetricComparison",
+    "MetricDirection",
+    "MetricObservation",
+    "MissionEconomics",
     "OmegaScientistExperiment",
     "PrivacyClass",
     "RightsState",
@@ -84,14 +103,23 @@ __all__ = [
     "StudioPlan",
     "StudioRequest",
     "TenXTarget",
+    "ValueClass",
+    "ValueEvidence",
+    "ValueGateDecision",
+    "ValueGateState",
+    "ValueMetricSpec",
     "build_ten_x_target",
     "calculate_frontier_gaps",
     "can_deploy",
     "choose_ambition",
+    "compare_value_metrics",
     "compile_best_of_breed_frontier",
     "compile_studio_plan",
+    "default_production_value_specs",
+    "economics_snapshot",
     "evaluate_meta_evolution",
     "evaluate_route",
+    "evaluate_value_gate",
     "plan_capability",
     "preregister_omega_scientist_experiment",
     "select_route",
