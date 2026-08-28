@@ -1,10 +1,13 @@
 {
   "schema": "SOVARA-AO5-FULL-LOCAL-VERIFICATION-2",
   "canonical_source_sha256": "e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f",
+  "canonical_gzip_sha256": "e1b911b405c2e2cd26f78b72b31e2702bdc904269ff48155398c2e3299ad9c59",
+  "canonical_b64_length": 20196,
+  "canonical_chunk_count": 6,
   "source_lines": 2561,
   "sections": {"part0":1,"roman_parts":54,"total":55,"mapped":55,"unmapped":0},
-  "tests": {"engine_regressions":59,"canonical_payload_regressions":1,"total":60,"passed":60,"failed":0},
-  "canary": {"checks":56,"passed":56,"failed":0,"external_effects":0},
+  "tests": {"engine_regressions":59,"canonical_payload_regressions":1,"total":60,"local_passed":60,"local_failed":0},
+  "canary": {"checks":56,"local_passed":56,"local_failed":0,"external_effects":0},
   "harmonization": {
     "SOVARA":"MISSION_ROUTE_EFFECT_ADMISSION_AND_ORCHESTRATION",
     "AO5":"FULL_FORENSIC_DECISION_INTELLIGENCE_ENGINE",
@@ -31,6 +34,15 @@
       "repair":"Rehearsal harness import corrected to ops.sovara_ao5_full_v2.ao5_full_engine; exact provider-shaped 60-test suite rerun to PASS.",
       "provider_branch_affected":false,
       "promotion":"LEARNING"
+    },
+    {
+      "id":"AO5-FULL-NEARMISS-003",
+      "class":"CANONICAL_PAYLOAD_TRANSPORT_TRUNCATION",
+      "stage":"GitHub PR #699 source CI run 1",
+      "observed":"All 59 executable-engine regressions passed, but the single-file base64 canonical carrier failed strict reconstruction with binascii.Error: Incorrect padding.",
+      "repair":"Replaced the fragile carrier with six bounded deterministic chunks and strengthened CI to verify chunk count, exact base64 length, gzip SHA-256, raw source SHA-256, source line count and all section headings.",
+      "provider_branch_affected":true,
+      "promotion":"LEARNING_PENDING_PROVIDER_REGRESSION"
     }
   ],
   "discrepancies": [
@@ -52,7 +64,7 @@
     }
   ],
   "zero_dilution_gate": {
-    "canonical_source_exact":true,
+    "canonical_source_exact_local":true,
     "compatibility_matrix_complete":true,
     "local_regression_pass":true,
     "local_canary_pass":true,
@@ -60,5 +72,5 @@
     "merged_main_exact_readback_pass":false,
     "state":"ZERO_DILUTION_LOCAL_ELIGIBLE_PROVIDER_GATES_OPEN"
   },
-  "truth_boundary":"This receipt proves local/source behavior only. It does not claim provider runtime, consequential external effects, GitHub PR admission, or merged-main zero-dilution until those provider-native gates are read back."
+  "truth_boundary":"This receipt proves local/source behavior only. GitHub PR #699 run 1 failed the canonical transport test and is preserved as an adverse event. Zero dilution remains unverified until the repaired branch passes provider CI/admission and merged-main exact readback."
 }
