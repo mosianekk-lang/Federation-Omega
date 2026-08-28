@@ -41,23 +41,17 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
 
     def test_airlock_oidc_allowlist_is_exactly_scoped(self) -> None:
         deployment_gateways = {
-            ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-            ".github/workflows/cios-production-lane.yml",
-            ".github/workflows/luno-observer-provider-binding.yml",
-            ".github/workflows/deploy-gemini-gateway.yml",
-        }
-        g0_identity_probe = ".github/workflows/fo-wif-semantic-canary.yml"
-        expected = deployment_gateways | {g0_identity_probe}
-        self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
-        self.assertEqual(
-            g0_identity_probe,
-            self.policy["provider_credential_reference_policy"]["g0_identity_probe_workflow"],
-        )
-        self.assertNotIn(g0_identity_probe, {
             self.policy["provider_credential_reference_policy"]["provider_deployment_workflow"],
+            ".github/workflows/cios-production-lane.yml",
             self.policy["provider_credential_reference_policy"]["luno_observer_deployment_workflow"],
             self.policy["provider_credential_reference_policy"]["gemini_provider_deployment_workflow"],
-        })
+        }
+        g0_identity_probe = self.policy["provider_credential_reference_policy"]["g0_identity_probe_workflow"]
+        expected = deployment_gateways | {g0_identity_probe}
+        self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
+        self.assertIn(g0_identity_probe, self.policy["active_workflow_allowlist"])
+        self.assertIn(g0_identity_probe, self.policy["execution_quarantine"]["keep_active"])
+        self.assertNotIn(g0_identity_probe, deployment_gateways)
         self.assertNotIn("oidc_boundary", self.policy)
         self.assertEqual(
             "QUARANTINED_SOURCE_WITH_EXACT_AIRLOCKED_PROVIDER_GATEWAYS",
