@@ -7,10 +7,14 @@ on:
       - "ops/sovara_sovereign_intelligence_court_v2.py"
       - "ops/sovara_sovereign_mcp_v2.py"
       - "ops/sovara_gcs_mission_store_v1.py"
+      - "ops/sovara_local_model_lane_v1.py"
       - "tests/test_sovara_openrouter_code_eval_v1.py"
       - "tests/test_sovara_sovereign_intelligence_court_v2.py"
       - "tests/test_sovara_sovereign_mcp_v2.py"
       - "tests/test_sovara_gcs_mission_store_v1.py"
+      - "tests/test_sovara_local_model_lane_v1.py"
+      - "tests/test_sovara_sic_v2_provider_truth.py"
+      - "tests/test_sovara_sic_v2_public_safety.py"
       - "governance/sovara_*.json"
       - "governance/github_airlock_policy.json"
       - "requirements-sovara-mcp.txt"
@@ -23,10 +27,14 @@ on:
       - "ops/sovara_sovereign_intelligence_court_v2.py"
       - "ops/sovara_sovereign_mcp_v2.py"
       - "ops/sovara_gcs_mission_store_v1.py"
+      - "ops/sovara_local_model_lane_v1.py"
       - "tests/test_sovara_openrouter_code_eval_v1.py"
       - "tests/test_sovara_sovereign_intelligence_court_v2.py"
       - "tests/test_sovara_sovereign_mcp_v2.py"
       - "tests/test_sovara_gcs_mission_store_v1.py"
+      - "tests/test_sovara_local_model_lane_v1.py"
+      - "tests/test_sovara_sic_v2_provider_truth.py"
+      - "tests/test_sovara_sic_v2_public_safety.py"
       - "governance/sovara_*.json"
       - "requirements-sovara-mcp.txt"
       - "deployment/sovara-sovereign-intelligence-court/**"
@@ -68,12 +76,15 @@ jobs:
             tests/test_sovara_openrouter_code_eval_v1.py \
             tests/test_sovara_sovereign_intelligence_court_v2.py \
             tests/test_sovara_sovereign_mcp_v2.py \
-            tests/test_sovara_gcs_mission_store_v1.py
+            tests/test_sovara_gcs_mission_store_v1.py \
+            tests/test_sovara_local_model_lane_v1.py \
+            tests/test_sovara_sic_v2_provider_truth.py
           python -m py_compile \
             ops/sovara_openrouter_code_eval_v1.py \
             ops/sovara_sovereign_intelligence_court_v2.py \
             ops/sovara_sovereign_mcp_v2.py \
-            ops/sovara_gcs_mission_store_v1.py
+            ops/sovara_gcs_mission_store_v1.py \
+            ops/sovara_local_model_lane_v1.py
 
       - name: Run repository safety regression slice
         run: |
@@ -95,6 +106,7 @@ jobs:
               'ops/sovara_sovereign_intelligence_court_v2.py',
               'ops/sovara_sovereign_mcp_v2.py',
               'ops/sovara_gcs_mission_store_v1.py',
+              'ops/sovara_local_model_lane_v1.py',
           ]
           receipt = {
               'schema': 'SOVARA-SIC-V2-SOURCE-VALIDATION-RECEIPT-1',
