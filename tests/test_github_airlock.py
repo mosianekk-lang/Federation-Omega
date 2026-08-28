@@ -185,6 +185,23 @@ jobs:
         )
         self.assertEqual([], findings)
 
+    def test_airlock_installs_exact_api_test_dependencies_before_proofos(self):
+        workflow = (ROOT / ".github" / "workflows" / "github-airlock.yml").read_text(
+            encoding="utf-8"
+        )
+        install = "Install pinned Airlock API test dependencies"
+        proof = "Execute manifest-selected proof court"
+        self.assertEqual(1, workflow.count(install))
+        self.assertLess(workflow.index(install), workflow.index(proof))
+        self.assertIn("--disable-pip-version-check --no-input", workflow)
+        for requirement in (
+            "fastapi==0.115.6",
+            "httpx==0.28.1",
+            "pydantic==2.10.4",
+        ):
+            with self.subTest(requirement=requirement):
+                self.assertEqual(1, workflow.count(requirement))
+
     def test_unlisted_workflow_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/new-bot.yml",
