@@ -1,8 +1,10 @@
 """Formation Ω Convergence Supervisor v1.
 
-Thin orchestration layer over existing MCE/JARVIS/Autonomous Maturation primitives.
-It does not create provider authority or perform mutations. It compiles proof-bound
-execution permits that external adapters may honor only after fresh-state verification.
+Thin orchestration layer over existing MCE, Failure-Win and Autonomous Maturation
+primitives. It does not create provider authority or perform mutations. It compiles
+proof-bound execution permits that external adapters may honor only after fresh-state
+verification. JARVIS may consume the neutral failure envelope but is not a package
+dependency of this provider-neutral Formation Ω layer.
 """
 
 from __future__ import annotations
@@ -13,7 +15,6 @@ import hashlib
 import json
 from typing import Any, Iterable, Mapping
 
-from ao_harmonic_v3.jarvis_ao5 import FailureEvent
 from evidenceops.caseforge.autonomous_maturation import AutonomousMaturationController, MaturationGap
 from evidenceops.caseforge.federation_evolution_program import EvolutionStage
 from formation_omega.mission_convergence import FailureResolver
@@ -157,8 +158,32 @@ class ExecutionPermit:
 
 
 @dataclass(frozen=True)
+class SupervisorFailureEvent:
+    """Receiver-neutral Failure-Win envelope compatible with JARVIS escalation semantics."""
+
+    failure_id: str
+    failure_class: str
+    observed_state: str
+    expected_state: str
+    root_cause: str
+    available_signal: str
+    detector_that_should_have_fired: str
+    repair: str
+    regression_test: str
+    recurrence_count: int = 1
+
+    @property
+    def required_response(self) -> str:
+        if self.recurrence_count >= 3:
+            return "REDESIGN_OR_ROLLBACK"
+        if self.recurrence_count == 2:
+            return "MANDATORY_OMEGA_SCIENTIST_ARCHITECTURE_REVIEW"
+        return "STRENGTHEN_CONTROL"
+
+
+@dataclass(frozen=True)
 class FailureLearningBundle:
-    failure_event: FailureEvent
+    failure_event: SupervisorFailureEvent
     resolver: FailureResolver
     maturation_gap: MaturationGap
     maturation_transaction: Mapping[str, Any]
@@ -218,7 +243,7 @@ class ConvergenceSupervisor:
     ) -> FailureLearningBundle:
         recurrence_count = max(1, int(recurrence_count))
         fingerprint = f"{failure_class}|{capsule.change_id}|{expected_state}|{root_cause}"
-        failure = FailureEvent(
+        failure = SupervisorFailureEvent(
             failure_id="FAIL-" + _sha256(fingerprint)[:20].upper(),
             failure_class=failure_class,
             observed_state=observed_state,
@@ -508,4 +533,5 @@ __all__ = [
     "ProviderSnapshot",
     "SupervisorAction",
     "SupervisorDecision",
+    "SupervisorFailureEvent",
 ]

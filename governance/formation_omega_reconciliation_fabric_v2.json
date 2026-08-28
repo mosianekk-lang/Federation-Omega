@@ -1,0 +1,113 @@
+{
+  "contract_id": "FORMATION-OMEGA-RECONCILIATION-FABRIC-V2",
+  "version": "2.0.0",
+  "status_semantics": "SOURCE_CONTRACT_ONLY_UNTIL_EXACT_HEAD_ADMISSION_AND_SIGNED_MAIN_READBACK",
+  "role": "ADDITIVE_CLOSED_LOOP_MISSION_RECONCILIATION_LAYER",
+  "sovereign_authority_created": false,
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "extends": [
+    "formation_omega.mission_convergence.ConvergenceLedger",
+    "formation_omega.convergence_supervisor.ConvergenceSupervisor",
+    "formation_omega.autonomic_fabric.ProofDirectedScheduler",
+    "formation_omega.autonomic_fabric.FailureHorizon",
+    "formation_omega.autonomic_fabric.MissionSwarmPlanner",
+    "formation_omega.autonomic_fabric.MonotonicClosureGate"
+  ],
+  "harvested_frontier_patterns": {
+    "durable_execution": "Temporal/LangGraph-style replay and checkpoint semantics implemented over the existing MCE hash-chained ledger; no Temporal or LangGraph runtime dependency is required",
+    "continuous_reconciliation": "Kubernetes-controller-style desired-state versus observed-state loop",
+    "adaptive_agent_topology": "task-structure-based deterministic/single/parallel/hybrid/builder-falsifier-witness selection",
+    "evaluator_driven_evolution": "AlphaEvolve-style candidate/evaluator/tournament pattern with deterministic promotion gates",
+    "formal_safety": "TLA+-shaped constitutional transition model at formal/FormationOmegaReconciliationV2.tla",
+    "policy_as_code": "OPA/Rego-compatible deny policy at policy/formation_omega_reconciliation_v2.rego plus stdlib PolicyKernel mirror",
+    "causal_observability": "W3C traceparent-compatible TraceContext for mission correlation across adapters",
+    "attested_provenance": "in-toto Statement v1 / SLSA-shaped AttestationEnvelope; signing remains a separate provider proof gate"
+  },
+  "constitutional_invariants": [
+    "NO_PROVIDER_EFFECT_FROM_RECONCILIATION_CORE",
+    "NO_EXTERNAL_EFFECT_AT_A1_INTERNAL",
+    "NO_AUTOMATIC_MERGE_ON_SEMANTIC_CONFLICT",
+    "NO_STALE_PROVIDER_SNAPSHOT_AUTHORITY",
+    "NO_CI_PROOF_INHERITANCE_ACROSS_CANDIDATE_HEAD_DRIFT",
+    "NO_TERMINAL_PROMOTION_WITHOUT_REQUIRED_CHECKS",
+    "NO_TERMINAL_PROMOTION_WITHOUT_REQUIRED_ROLLBACK",
+    "NO_REPLAY_STEP_KEY_REUSE_WITH_DIFFERENT_INPUT",
+    "NO_REGRESSING_ACTION_THROUGH_MONOTONIC_CLOSURE_GATE",
+    "NO_CHALLENGER_PROMOTION_WITH_FATAL_EVALUATOR_REGRESSION",
+    "NO_SELF_SIGNED_PROVENANCE_CLAIM_WITHOUT_EXTERNAL_SIGNING_READBACK"
+  ],
+  "desired_state_loop": [
+    "COMPILE_OR_RESTORE_DESIRED_STATE",
+    "READ_FRESH_OBSERVED_STATE",
+    "COMPUTE_MINIMAL_STATE_DELTA",
+    "PREEMPT_HIGH_PRIORITY_FAILURE_PRECURSORS",
+    "SELECT_EXECUTION_TOPOLOGY_FROM_TASK_GRAPH",
+    "RANK_READY_INTERNAL_ACTIONS_BY_PROOF_DIRECTED_VALUE",
+    "APPLY_POLICY_AND_MONOTONIC_CLOSURE_GATES",
+    "COMMIT_INTERNAL_STEP_RECEIPTS_TO_DURABLE_LEDGER",
+    "PROPAGATE_CAUSAL_TRACE_CONTEXT",
+    "REOBSERVE_PROVIDER_STATE",
+    "REPEAT_UNTIL_PROOF_GATED_CONVERGENCE"
+  ],
+  "topology_modes": [
+    "DETERMINISTIC",
+    "SINGLE_CONTROLLER",
+    "PARALLEL_CELLS",
+    "HYBRID",
+    "BUILDER_FALSIFIER_WITNESS"
+  ],
+  "promotion_gates": {
+    "source": [
+      "focused_v2_tests",
+      "Federation Omega Airlock",
+      "Bubbles Command Bus",
+      "Public Repository Leak Guard",
+      "fresh_main_recheck",
+      "expected_head_merge",
+      "signed_main_readback"
+    ],
+    "formal_model": [
+      "TLC_OR_APALACHE_EXECUTION_RECEIPT",
+      "ALL_DECLARED_SAFETY_INVARIANTS_HOLD"
+    ],
+    "policy_runtime": [
+      "OPA_EVALUATION_RECEIPT_OR_EQUIVALENT_INDEPENDENT_POLICY_ENGINE_READBACK",
+      "PYTHON_POLICY_KERNEL_AND_REGO_DECISIONS_MATCH_ON_ADVERSARIAL_CORPUS"
+    ],
+    "observability": [
+      "TRACE_CONTEXT_PROPAGATES_ACROSS_AT_LEAST_TWO_REAL_RECEIVERS",
+      "TRACE_BACKEND_READBACK_CORRELATES_ONE_COMPLETE_MISSION"
+    ],
+    "attestation": [
+      "SIGNATURE_CREATED_OUTSIDE_SOURCE_CORE",
+      "SIGNATURE_IDENTITY_READBACK",
+      "TRANSPARENCY_OR_TRUSTED_ATTESTATION_STORE_RECEIPT"
+    ],
+    "evolution": [
+      "INCUMBENT_AND_CHALLENGERS_SHARE_EVALUATOR_PROFILE",
+      "NO_FATAL_REGRESSION",
+      "MINIMUM_IMPROVEMENT_MET",
+      "PARETO_FRONTIER_PRESERVED",
+      "ROLLBACK_TO_INCUMBENT_PROVEN"
+    ]
+  },
+  "forbidden_claims_without_proof": [
+    "TEMPORAL_DURABILITY_DEPLOYED",
+    "OPA_RUNTIME_BOUND",
+    "TLA_MODEL_CHECKED",
+    "OPENTELEMETRY_BACKEND_CONNECTED",
+    "SIGSTORE_SIGNED",
+    "SLSA_LEVEL_ACHIEVED",
+    "ALPHAEVOLVE_DEPLOYED",
+    "PROVIDER_LIVE",
+    "FRONTIER_LEADER"
+  ],
+  "proof_artifacts": {
+    "core": "formation_omega/reconciliation_fabric_v2.py",
+    "tests": "tests/test_formation_omega_reconciliation_fabric_v2.py",
+    "formal_model": "formal/FormationOmegaReconciliationV2.tla",
+    "policy": "policy/formation_omega_reconciliation_v2.rego",
+    "cfbe_profile": "benchmarking/cfbe_omega/reconciliation_fabric_v2_profile.py"
+  }
+}
