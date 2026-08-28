@@ -1,6 +1,6 @@
 import unittest
 
-from sovara_creative import (
+from sovara.creative import (
     ContentClass,
     CreativeMissionGenome,
     Eligibility,
