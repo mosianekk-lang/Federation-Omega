@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.6.0",
+  "version": "2.7.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -26,7 +26,8 @@
     ".github/workflows/frontier-runtime-qualification.yml",
     ".github/workflows/superior-logic-maturation-shadow.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
-    ".github/workflows/deploy-gemini-gateway.yml"
+    ".github/workflows/deploy-gemini-gateway.yml",
+    ".github/workflows/sovara-sovereign-intelligence-court-v2.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -82,6 +83,10 @@
     ],
     ".github/workflows/deploy-gemini-gateway.yml": [
       "workflow_dispatch"
+    ],
+    ".github/workflows/sovara-sovereign-intelligence-court-v2.yml": [
+      "pull_request",
+      "push"
     ]
   },
   "required_push_branches": {
@@ -107,6 +112,9 @@
       "main"
     ],
     ".github/workflows/luno-observer-provider-binding.yml": [
+      "main"
+    ],
+    ".github/workflows/sovara-sovereign-intelligence-court-v2.yml": [
       "main"
     ]
   },
@@ -187,7 +195,8 @@
       ".github/workflows/frontier-runtime-qualification.yml",
       ".github/workflows/superior-logic-maturation-shadow.yml",
       ".github/workflows/luno-observer-provider-binding.yml",
-      ".github/workflows/deploy-gemini-gateway.yml"
+      ".github/workflows/deploy-gemini-gateway.yml",
+      ".github/workflows/sovara-sovereign-intelligence-court-v2.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
