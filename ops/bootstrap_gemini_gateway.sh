@@ -174,11 +174,12 @@ fi
 
 MUTATION_PERFORMED=true
 gcloud config set project "$PROJECT_ID" >/dev/null
-gcloud services enable \
-  aiplatform.googleapis.com \
-  run.googleapis.com \
-  artifactregistry.googleapis.com \
-  --project "$PROJECT_ID"
+
+# Only request Service Usage mutation for APIs that fresh readback says are missing.
+# This prevents an already-healthy API state from becoming an unnecessary privilege gate.
+if ((${#MISSING_APIS[@]} > 0)); then
+  gcloud services enable "${MISSING_APIS[@]}" --project "$PROJECT_ID"
+fi
 
 if [[ "$RUNTIME_EXISTS" != true ]]; then
   gcloud iam service-accounts create "$RUNTIME_SA_NAME" \
