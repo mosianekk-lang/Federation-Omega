@@ -1,0 +1,55 @@
+{
+  "schema": "FEDERATION-LIVING-EVOLUTION-INTELLIGENCE-V1",
+  "version": "1.0.0",
+  "role": "FEDERATION_GRAPH_LEVEL_COUNTERFACTUAL_ATTENTION_IMMUNE_CALIBRATION_AND_EVOLUTION_INTELLIGENCE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "inherits": [
+    "FEDERATION-LIVING-STATE-EVOLUTION-FABRIC-V1",
+    "JARVIS-ALPHA-OMEGA-5-SOVEREIGN",
+    "SOVARA-AO5-ADAPTIVE-OPTIMIZATION-V1",
+    "REALITYGUARD",
+    "CFBE"
+  ],
+  "capabilities": {
+    "counterfactual_topology_blast_radius": true,
+    "fragility_ranking": true,
+    "pareto_route_frontier": true,
+    "route_calibration_against_observed_outcomes": true,
+    "mission_attention_market": true,
+    "federation_digital_immune_system": true,
+    "shadow_capability_genome_candidates": true,
+    "multidimensional_harmonic_fitness": true,
+    "anti_goodhart_promotion_gate": true
+  },
+  "truth_boundaries": {
+    "counterfactual_topology_is_not_causation": true,
+    "unverified_causal_edges_do_not_drive_causal_claims": true,
+    "attention_budget_is_not_compute_or_provider_execution": true,
+    "immune_signals_are_recommendations_not_provider_mutations": true,
+    "genome_candidates_are_shadow_experiments_only": true,
+    "genome_candidates_do_not_self_promote": true,
+    "synthetic_canary_is_not_provider_performance": true,
+    "living_evolution_intelligence_executes_external_effects": false,
+    "provider_effects_remain_sovara_owner_and_native_readback_bound": true
+  },
+  "anti_goodhart": {
+    "target_metric_must_actually_improve": true,
+    "harmonic_fitness_must_not_materially_regress": true,
+    "non_target_measured_dimensions_may_not_regress_beyond_tolerance": true,
+    "single_easy_metric_cannot_authorize_promotion": true
+  },
+  "promotion_contract": {
+    "source_regression_required": true,
+    "forward_canary_required": true,
+    "independent_readback_required": true,
+    "rollback_required": true,
+    "minimum_samples_required": true,
+    "external_effect_authority_created": false
+  },
+  "admission": {
+    "new_github_workflow_created": false,
+    "existing_federation_airlock_bridge": "tests/test_phoenix_provider_cutover_v3_federation_living_evolution.py",
+    "default_deny_must_pass": true
+  }
+}
