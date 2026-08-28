@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G1-20260828-002",
+  "request_id": "SOVARA-GEMINI-G1-20260828-003",
   "mode": "G1_ADC_APPLY_VERIFY",
   "execute": true,
   "promote": false,
@@ -17,6 +17,6 @@
     "BIND_DEPLOYER_RUN_DEVELOPER",
     "ENSURE_EXISTING_REQUIRED_APIS_ENABLED"
   ],
-  "purpose": "Attach only the exact missing Gemini ADC/runtime controls discovered by the fresh G0 canary, verify them by provider readback, and prepare a zero-traffic semantic gateway canary. No model inference or case-data processing is authorized by this stage.",
+  "purpose": "Re-run the exact bounded G1 ADC/runtime attach after repairing the unnecessary Service Usage mutation attempt when all required APIs are already enabled. Verify every resulting provider-side control before any semantic Gemini call.",
   "truth_boundary": "This request authorizes only the minimum provider-side ADC/runtime identity controls enumerated in mutation_scope. It does not authorize model inference, legal filing, email, service, publication, production traffic promotion, secret payload access, unrelated IAM expansion, case-data disclosure or destructive provider actions."
 }
