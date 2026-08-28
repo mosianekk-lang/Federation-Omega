@@ -68,6 +68,31 @@ class QuantEvidenceFabricV3Tests(unittest.TestCase):
         self.assertTrue(materially_changed({"a": 1}, {"a": 2}))
         self.assertFalse(materially_changed({"a": 1}, {"a": 1}))
 
+    def test_g1_diagnostics_are_not_dropped_from_next_child_mutation(self):
+        sig = FailureSignature(
+            parent_strategy_id="parent",
+            evidence_ref="g1-tournament",
+            failures=("HOLDOUT_SAMPLE_TOO_SMALL", "MATERIAL_BENCHMARK_UNDERPERFORMANCE"),
+            diagnostics=("CLOSE_BASED_STOP_EVALUATION", "CROSS_ASSET_GENERALISATION_WEAKNESS"),
+        )
+        proposal = propose_from_failure(sig)
+        self.assertEqual(
+            set(proposal.changed_dimensions),
+            {"entry_exit_frequency", "trend_participation", "close_based_stop_semantics", "regime_adaptation"},
+        )
+        self.assertIn("OHLC-aware", proposal.hypothesis)
+        self.assertTrue(proposal.forbidden_unchanged_retry)
+        self.assertTrue(proposal.material_change_required)
+        self.assertFalse(proposal.auto_promote)
+        self.assertFalse(proposal.external_effect)
+        self.assertFalse(proposal.financial_effect)
+
+    def test_failure_win_mutation_requires_bound_evidence_identity(self):
+        with self.assertRaises(ValueError):
+            propose_from_failure(FailureSignature(parent_strategy_id="", evidence_ref="receipt", failures=("HOLDOUT_SAMPLE_TOO_SMALL",)))
+        with self.assertRaises(ValueError):
+            propose_from_failure(FailureSignature(parent_strategy_id="parent", evidence_ref="", failures=("HOLDOUT_SAMPLE_TOO_SMALL",)))
+
 
 if __name__ == "__main__":
     unittest.main()
