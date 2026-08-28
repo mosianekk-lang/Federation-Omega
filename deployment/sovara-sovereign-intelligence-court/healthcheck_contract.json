@@ -1,0 +1,17 @@
+{
+  "schema": "SOVARA-SOVEREIGN-INTELLIGENCE-COURT-HEALTHCHECK-V1",
+  "required": {
+    "mcp_transport": "streamable-http",
+    "canonical_tool": "sovara_external_model_review",
+    "mission_state_persistent": true,
+    "external_provider_optional": true,
+    "provider_output_state": "PROPOSAL_ONLY",
+    "canonical_source_mutation": false
+  },
+  "readiness_must_not_claim": [
+    "OPENROUTER_CONNECTED_WITHOUT_PROVIDER_READBACK",
+    "CROSS_PROVIDER_REDUNDANCY_WITHOUT_INDEPENDENT_FAILURE_DOMAIN",
+    "ZERO_DILUTION_WITHOUT_REGRESSION_PROOF",
+    "CANONICAL_SOURCE_PROMOTED_FROM_MODEL_OUTPUT"
+  ]
+}
