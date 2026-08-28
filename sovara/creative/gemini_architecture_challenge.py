@@ -282,7 +282,10 @@ def execute_challenge(
 
 
 def _vertex_fallback(spec: ChallengeSpec) -> tuple[dict[str, Any], dict[str, Any]]:
-    from sovara.creative.gemini_vertex_architecture_challenge import execute_vertex_challenge
+    try:
+        from .gemini_vertex_architecture_challenge import execute_vertex_challenge
+    except ImportError:
+        from gemini_vertex_architecture_challenge import execute_vertex_challenge
 
     token = subprocess.check_output(
         ["gcloud", "auth", "print-access-token"],
