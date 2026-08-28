@@ -43,7 +43,8 @@
   "next_generation": {
     "state": "MUTATION_REQUIRED_BEFORE_RETEST",
     "material_change_required": true,
-    "targets": ["benchmark_participation", "entry_exit_frequency", "close_based_stop_semantics", "cross_asset_generalisation"]
+    "targets": ["benchmark_participation", "entry_exit_frequency", "close_based_stop_semantics", "cross_asset_generalisation"],
+    "diagnostic_codes": ["CLOSE_BASED_STOP_EVALUATION", "CROSS_ASSET_GENERALISATION_WEAKNESS"]
   },
   "invariants": [
     "queued_is_not_done",
