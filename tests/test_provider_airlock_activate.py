@@ -50,11 +50,11 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
         with self.assertRaises(MODULE.ActivationError):
             MODULE.validate_ruleset(payload)
 
-    def test_missing_or_non_strict_admission_is_rejected(self):
+    def test_missing_or_non_strict_release_court_is_rejected(self):
         payload = ruleset()
         for rule in payload["rules"]:
             if rule["type"] == "required_status_checks":
-                rule["parameters"]["required_status_checks"] = [{"context": "other"}]
+                rule["parameters"]["required_status_checks"] = [{"context": "admission"}]
         with self.assertRaises(MODULE.ActivationError):
             MODULE.validate_ruleset(payload)
         payload = ruleset()
@@ -63,6 +63,16 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
                 rule["parameters"]["strict_required_status_checks_policy"] = False
         with self.assertRaises(MODULE.ActivationError):
             MODULE.validate_ruleset(payload)
+
+    def test_required_status_court_matches_airlock_bubbles_and_leak_guard(self):
+        payload = ruleset()
+        status_rule = next(rule for rule in payload["rules"] if rule["type"] == "required_status_checks")
+        contexts = [
+            item["context"]
+            for item in status_rule["parameters"]["required_status_checks"]
+        ]
+        self.assertEqual(["admission", "contract", "scan"], contexts)
+        self.assertEqual(tuple(contexts), MODULE.REQUIRED_STATUS_CONTEXTS)
 
     def test_canary_targets_only_temporary_branch(self):
         desired = ruleset()
@@ -90,6 +100,7 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
             "credential_source_env": "GH_ADMIN_TOKEN",
             "credential_value_recorded": False,
             "main_mutation_attempted": False,
+            "required_status_contexts": list(MODULE.REQUIRED_STATUS_CONTEXTS),
         }
         with tempfile.TemporaryDirectory() as temporary:
             target = Path(temporary) / "receipt.json"
@@ -97,6 +108,7 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
             saved = json.loads(target.read_text(encoding="utf-8"))
         self.assertFalse(saved["credential_value_recorded"])
         self.assertNotIn("token", json.dumps(saved).lower().replace("gh_admin_token", ""))
+        self.assertEqual(["admission", "contract", "scan"], saved["required_status_contexts"])
         self.assertEqual(64, len(saved["receipt_sha256"]))
 
     def test_activation_state_is_truthful_and_fail_closed(self):
@@ -104,10 +116,10 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
         self.assertEqual(
             "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-STATE-1", state["schema"]
         )
-        self.assertEqual("READY_TOOL_SURFACE_BLOCKED", state["state"])
+        self.assertEqual("PROVIDER_PREVENTION_ABSENT_WRITE_BOUNDARY_HELD", state["state"])
         self.assertFalse(state["provider_state"]["provider_apply_performed"])
         self.assertEqual("ABSENT", state["provider_state"]["provider_receipt_status"])
-        self.assertEqual("UNVERIFIED", state["provider_state"]["main_ruleset_active"])
+        self.assertEqual("ABSENT_PROVIDER_READBACK", state["provider_state"]["main_ruleset_active"])
         self.assertEqual(
             "NOT_RUN", state["provider_state"]["direct_update_rejection_canary"]
         )
@@ -117,11 +129,20 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
         self.assertTrue(
             state["connected_authority"]["repository_admin_standing_reported"]
         )
+        observation = state["provider_observation"]
+        self.assertFalse(observation["main_protected"])
+        self.assertFalse(observation["branch_protection_enabled"])
+        self.assertEqual("off", observation["required_status_checks_enforcement_level"])
+        self.assertEqual([], observation["required_status_contexts"])
+        self.assertEqual(0, observation["ruleset_count"])
+        self.assertEqual([], observation["rulesets"])
+        self.assertEqual("READ_ONLY", observation["observation_mode"])
         self.assertEqual("VERIFIED", state["allowed_next_state"])
         gate = state["verification_gate"]
         self.assertEqual("FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-1", gate["required_receipt_schema"])
         self.assertEqual("VERIFIED", gate["required_receipt_status"])
         self.assertIn("provider_readback.ruleset_exact", gate["required_checks"])
+        self.assertIn("provider_readback.required_status_contexts_exact", gate["required_checks"])
         self.assertIn("provider_readback.main_sha_unchanged", gate["required_checks"])
         self.assertNotIn("provider prevention is active", state["truth_boundary"].lower())
 
