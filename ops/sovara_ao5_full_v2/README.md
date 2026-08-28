@@ -3,9 +3,12 @@
 This package corrects and supersedes the earlier partial ΑΩ5 executable integration.
 
 ## Canonical source
-- The exact user-supplied 2,561-line specification is retained deterministically at `JARVIS_AO5_CANONICAL_SPEC.txt.gz.b64` as `base64(gzip(mtime=0, level=9, raw_source_bytes))`.
+- The exact user-supplied 2,561-line specification is retained as six bounded deterministic payload chunks under `canonical/JARVIS_AO5_CANONICAL_SPEC.txt.gz.b64.part01` through `part06`.
+- Reconstruction is `gzip.decompress(base64.b64decode(concat(parts)))` where the gzip used `mtime=0` and compression level 9.
+- Exact reconstructed base64 length: `20196`.
+- Exact deterministic gzip SHA-256: `e1b911b405c2e2cd26f78b72b31e2702bdc904269ff48155398c2e3299ad9c59`.
 - Exact decompressed source SHA-256: `e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f`.
-- `tests/test_canonical_payload.py` decompresses the stored payload in CI, re-hashes the raw bytes, and verifies 2,561 source lines and all **54 Roman-numbered parts (I–LIV) plus Part 0**.
+- `tests/test_canonical_payload.py` joins exactly six chunks, validates base64 strictly, verifies the gzip hash, decompresses, verifies the raw source hash, then verifies 2,561 lines and all **54 Roman-numbered parts (I–LIV) plus Part 0**.
 - The earlier subset's recorded `773ee295...` source hash is superseded as incorrect and retained in the discrepancy ledger rather than silently erased.
 
 ## Executable projection
@@ -42,7 +45,7 @@ The only deliberate architectural reconciliation is orchestration placement. The
 - End-to-end synthetic canary: **56/56 PASS**.
 - External effects during canary: **0**.
 - Compatibility matrix: **55/55 sections mapped; 54/54 Roman parts + Part 0**.
-- Development near-misses and repairs are retained in `AO5_FULL_LOCAL_VERIFICATION.json`.
+- Development and provider-CI near-misses and repairs are retained in `AO5_FULL_LOCAL_VERIFICATION.json`.
 
 ## Zero-dilution gate
 `ZERO_DILUTION_VERIFIED` may be asserted only after all six gates pass:
@@ -53,4 +56,4 @@ The only deliberate architectural reconciliation is orchestration placement. The
 5. GitHub pull-request source/admission checks pass;
 6. merged-`main` readback preserves the exact admitted package.
 
-Local/source gates 1–4 currently pass. Gates 5–6 remain provider-governance gates until fresh GitHub readback proves them.
+Local/source gates 1–4 pass. Gates 5–6 remain provider-governance gates until fresh GitHub readback proves them.
