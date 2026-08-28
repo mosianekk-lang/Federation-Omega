@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.7.0",
+  "version": "2.7.1",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -27,106 +27,46 @@
     ".github/workflows/superior-logic-maturation-shadow.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
-    ".github/workflows/fo-wif-semantic-canary.yml"
+    ".github/workflows/fo-wif-semantic-canary.yml",
+    ".github/workflows/federation-automation-gateway-activate.yml"
   ],
   "allowed_events": {
-    ".github/workflows/github-airlock.yml": [
-      "pull_request",
-      "merge_group",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/public-repository-leak-guard.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/phoenix-emergency-freeze.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/bubbles-command-bus.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/caseforge-provider-readback-canary.yml": [
-      "push"
-    ],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/cios-production-lane.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/frontier-runtime-qualification.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/superior-logic-maturation-shadow.yml": [
-      "push",
-      "schedule",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/luno-observer-provider-binding.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/deploy-gemini-gateway.yml": [
-      "workflow_dispatch"
-    ],
-    ".github/workflows/fo-wif-semantic-canary.yml": [
-      "issues"
-    ]
+    ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
+    ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/cios-production-lane.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/frontier-runtime-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/superior-logic-maturation-shadow.yml": ["push", "schedule", "workflow_dispatch"],
+    ".github/workflows/luno-observer-provider-binding.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/deploy-gemini-gateway.yml": ["workflow_dispatch"],
+    ".github/workflows/fo-wif-semantic-canary.yml": ["issues"],
+    ".github/workflows/federation-automation-gateway-activate.yml": ["push", "workflow_dispatch"]
   },
   "required_push_branches": {
-    ".github/workflows/bubbles-command-bus.yml": [
-      "main"
-    ],
-    ".github/workflows/caseforge-provider-readback-canary.yml": [
-      "main"
-    ],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
-      "main"
-    ],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
-      "main"
-    ],
-    ".github/workflows/cios-production-lane.yml": [
-      "main"
-    ],
-    ".github/workflows/frontier-runtime-qualification.yml": [
-      "main"
-    ],
-    ".github/workflows/superior-logic-maturation-shadow.yml": [
-      "main"
-    ],
-    ".github/workflows/luno-observer-provider-binding.yml": [
-      "main"
-    ]
+    ".github/workflows/bubbles-command-bus.yml": ["main"],
+    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["main"],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["main"],
+    ".github/workflows/cios-production-lane.yml": ["main"],
+    ".github/workflows/frontier-runtime-qualification.yml": ["main"],
+    ".github/workflows/superior-logic-maturation-shadow.yml": ["main"],
+    ".github/workflows/luno-observer-provider-binding.yml": ["main"],
+    ".github/workflows/federation-automation-gateway-activate.yml": ["main"]
   },
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     ".github/workflows/cios-production-lane.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
-    ".github/workflows/fo-wif-semantic-canary.yml"
+    ".github/workflows/fo-wif-semantic-canary.yml",
+    ".github/workflows/federation-automation-gateway-activate.yml"
   ],
-  "actions_write_workflow_allowlist": [
-    ".github/workflows/phoenix-emergency-freeze.yml"
-  ],
-  "statuses_write_workflow_allowlist": [
-    ".github/workflows/phoenix-emergency-freeze.yml"
-  ],
+  "actions_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
+  "statuses_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
   "forbidden_pattern_exceptions": {
     ".github/workflows/phoenix-emergency-freeze.yml": [
       "gh api --method put",
@@ -136,23 +76,11 @@
     ]
   },
   "forbidden_repository_mutations": [
-    "git push",
-    "git commit",
-    "git tag",
-    "gh api --method post",
-    "gh api --method put",
-    "gh api --method patch",
-    "gh api --method delete",
-    "gh api -x post",
-    "gh api -x put",
-    "gh api -x patch",
-    "gh api -x delete"
+    "git push", "git commit", "git tag",
+    "gh api --method post", "gh api --method put", "gh api --method patch", "gh api --method delete",
+    "gh api -x post", "gh api -x put", "gh api -x patch", "gh api -x delete"
   ],
-  "forbidden_source_paths": [
-    "deployment_receipts/",
-    "runtime-receipts/",
-    "workflow-state/"
-  ],
+  "forbidden_source_paths": ["deployment_receipts/", "runtime-receipts/", "workflow-state/"],
   "maximum_workflow_files_changed_per_pull_request": 3,
   "require_immutable_action_shas": true,
   "require_checkout_credentials_disabled": true,
@@ -174,6 +102,7 @@
     "provider_deployment_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
     "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
+    "federation_automation_deployment_workflow": ".github/workflows/federation-automation-gateway-activate.yml",
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT",
     "g0_identity_probe_workflow": ".github/workflows/fo-wif-semantic-canary.yml"
@@ -194,11 +123,10 @@
       ".github/workflows/superior-logic-maturation-shadow.yml",
       ".github/workflows/luno-observer-provider-binding.yml",
       ".github/workflows/deploy-gemini-gateway.yml",
-      ".github/workflows/fo-wif-semantic-canary.yml"
+      ".github/workflows/fo-wif-semantic-canary.yml",
+      ".github/workflows/federation-automation-gateway-activate.yml"
     ],
-    "provider_managed_active": [
-      "dynamic/dependabot/dependabot-updates"
-    ],
+    "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",
     "all_other_workflows": "DISABLED_MANUALLY",
     "provider_readback_required": true,

@@ -45,6 +45,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             ".github/workflows/cios-production-lane.yml",
             ".github/workflows/luno-observer-provider-binding.yml",
             ".github/workflows/deploy-gemini-gateway.yml",
+            ".github/workflows/federation-automation-gateway-activate.yml",
         }
         g0_identity_probe = ".github/workflows/fo-wif-semantic-canary.yml"
         expected = deployment_gateways | {g0_identity_probe}
@@ -53,11 +54,14 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             g0_identity_probe,
             self.policy["provider_credential_reference_policy"]["g0_identity_probe_workflow"],
         )
-        self.assertNotIn(g0_identity_probe, {
+        provider_workflows = {
             self.policy["provider_credential_reference_policy"]["provider_deployment_workflow"],
             self.policy["provider_credential_reference_policy"]["luno_observer_deployment_workflow"],
             self.policy["provider_credential_reference_policy"]["gemini_provider_deployment_workflow"],
-        })
+            self.policy["provider_credential_reference_policy"]["federation_automation_deployment_workflow"],
+        }
+        self.assertNotIn(g0_identity_probe, provider_workflows)
+        self.assertTrue(provider_workflows.issubset(deployment_gateways))
         self.assertNotIn("oidc_boundary", self.policy)
         self.assertEqual(
             "QUARANTINED_SOURCE_WITH_EXACT_AIRLOCKED_PROVIDER_GATEWAYS",
@@ -69,8 +73,9 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertTrue(BOUNDARY.exists())
         self.assertIn("PRIVATE_OPS_PLANE_REQUIRED", self.boundary)
         self.assertIn("not executable from the legacy public source repository", self.boundary)
-        self.assertIn("contains exactly four provider-deployment gateways", self.boundary)
-        self.assertIn("deploy-gemini-gateway.yml", self.boundary)
+        self.assertIn("exactly five provider-deployment gateways", self.boundary)
+        self.assertIn("fo-wif-semantic-canary.yml", self.boundary)
+        self.assertIn("federation-automation-gateway-activate.yml", self.boundary)
         self.assertIn("no provider rebuild or Library writeback is claimed", self.boundary)
 
     def test_rebuild_anchors_to_exact_predecessor_and_original_writer(self) -> None:

@@ -1,0 +1,108 @@
+{
+  "schema": "FEDERATION-AUTOMATION-AUTHORITY-FABRIC-V1",
+  "version": "1.3.0",
+  "status": "SOURCE_CANDIDATE_REANCHORED",
+  "owner": "Kagiso Kim Mosiane",
+  "control_plane": {
+    "provider": "Google Sheets",
+    "spreadsheet_id": "17WRSvjj98RbOKZrnTefcZkfK-z9gZYdZX_pACm8VuOQ",
+    "title": "Federation Ω — Shared Automation Authority Fabric",
+    "ingress": "owner-connected Google Drive/Sheets surface",
+    "executors": {
+      "google_cloud": "private Cloud Run federation-automation-gateway",
+      "apps_script": "owner-OAuth federation Apps Script broker"
+    },
+    "scheduler": "one-minute Africa/Johannesburg execution loops"
+  },
+  "authority_model": {
+    "read": "AUTONOMOUS",
+    "lab_write": "AUTONOMOUS_WITH_ROLLBACK_AND_READBACK",
+    "control_plane_write": "EXPIRING_MISSION_LEASE",
+    "provider_admin_write": "EXPIRING_MISSION_LEASE_PLUS_SEPARATELY_ADMITTED_ELEVATED_IDENTITY",
+    "apps_script_management": "OWNER_OAUTH_BROKER_PLUS_MISSION_LEASE_FOR_WRITES",
+    "apps_script_function_execution": "SEPARATE_PROVIDER_GATE_API_EXECUTABLE_AND_COMMON_STANDARD_CLOUD_PROJECT_REQUIRED",
+    "destructive_write": "ONE_USE_EXACT_TARGET_ONLY",
+    "communication_write": "EXPLICIT_USER_DIRECTIVE_ONLY"
+  },
+  "shared_chat_model": {
+    "engines": [
+      "SUPERIOR_LOGIC",
+      "SOVARA",
+      "REALITYGUARD",
+      "FAILURE_WIN_AUTOFIX",
+      "SENTINEL",
+      "CFBE",
+      "FORMATION_ARCHON",
+      "KIOAS",
+      "EVIDENCEOPS_CIOS",
+      "AIU"
+    ],
+    "profile_module": "federation_automation_gateway.chat_inheritance",
+    "scoped_profile_labels": "CANONICAL_ENGINE followed by one of : / @ and a chat-local suffix",
+    "session_registration": "CHAT_SESSIONS",
+    "mechanism": "Every admitted engine invocation binds the same Fabric ID, registers a chat-local session identity, appends governed commands to COMMAND_QUEUE, and consumes semantic receipts from COMMAND_RECEIPTS.",
+    "continuation_rule": "CONTINUE_UNTIL_SEMANTIC_TERMINAL_RECEIPT_OR_EXACT_EXTERNAL_GATE",
+    "credential_inheritance": false,
+    "authority_inheritance": "SHARED_FABRIC_ONLY",
+    "truth_boundary": "Shared automation never copies provider credentials into chats and does not create hidden native chat-to-chat communication. Provider authority remains executor-local and proof-gated."
+  },
+  "activation_model": {
+    "github_to_google": "MAIN_ONLY_KEYLESS_OIDC_WITH_WORKFLOW_SCOPED_PROVIDER",
+    "deployment_trigger": "ADMITTED_MAIN_PUSH_OR_EXPLICIT_WORKFLOW_DISPATCH",
+    "deployment_identity": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "runtime_identity": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+    "wif_pool": "github-federation-omega",
+    "wif_provider": "luna-automation-gateway",
+    "wif_provider_scope": ".github/workflows/federation-automation-gateway-activate.yml@refs/heads/main",
+    "legacy_bootstrap_identity_required": false,
+    "provider_admin_runtime_lane": "UNBOUND_FAIL_CLOSED_UNTIL_SEPARATELY_ADMITTED",
+    "deployment_success_requires": [
+      "provider identity readback",
+      "private Cloud Run service readback",
+      "runtime service-account readback",
+      "scheduler readback",
+      "semantic health readback",
+      "Fabric Sheet ACL and command/receipt canary"
+    ]
+  },
+  "security_invariants": [
+    "NO_SERVICE_ACCOUNT_PRIVATE_KEYS",
+    "NO_SECRETS_IN_COMMAND_PAYLOADS",
+    "PRIVATE_CLOUD_RUN_ONLY",
+    "OWNER_OAUTH_NEVER_EXPORTED_TO_CHAT_OR_CLOUD_RUN",
+    "SERVICE_ACCOUNT_NEVER_USED_FOR_APPS_SCRIPT_API",
+    "EXECUTOR_ADAPTER_ISOLATION",
+    "WORKFLOW_SCOPED_WIF_PROVIDER",
+    "DEPLOYER_AND_RUNTIME_IDENTITIES_SEPARATE",
+    "PROVIDER_ADMIN_RUNTIME_LANE_FAILS_CLOSED_WHEN_UNBOUND",
+    "OIDC_SCHEDULER_INVOCATION",
+    "SINGLE_INSTANCE_SINGLE_CONCURRENCY_SHEETS_QUEUE_GENESIS",
+    "IDEMPOTENCY_REPLAY_BLOCKING",
+    "MISSION_LEASE_EXPIRY_SCOPE_AND_BUDGET",
+    "APPS_SCRIPT_TARGET_MUST_EXIST_IN_CANONICAL_LAB_REGISTRY",
+    "APPS_SCRIPT_SOURCE_BACKUP_BEFORE_WRITE",
+    "APPS_SCRIPT_POST_WRITE_HASH_EQUALITY",
+    "PROVIDER_SEMANTIC_READBACK_BEFORE_SUCCESS",
+    "OUTBOUND_COMMUNICATION_EXCLUDED_FROM_REUSABLE_LEASES",
+    "DESTRUCTIVE_ACTIONS_EXCLUDED_FROM_REUSABLE_LEASES",
+    "CROSS_CHAT_ACCESS_NEVER_EQUALS_CREDENTIAL_COPY"
+  ],
+  "google_cloud_actions": [
+    "GCP_GET_PROJECT",
+    "GCP_LIST_ENABLED_SERVICES",
+    "GCP_ENABLE_SERVICE",
+    "CLOUD_RUN_GET_SERVICE"
+  ],
+  "apps_script_broker_actions": [
+    "APPS_SCRIPT_GET_CONTENT",
+    "APPS_SCRIPT_GET_DEPLOYMENTS",
+    "APPS_SCRIPT_UPSERT_FILE",
+    "APPS_SCRIPT_REPLACE_CONTENT",
+    "APPS_SCRIPT_ROLLBACK_CONTENT",
+    "APPS_SCRIPT_CREATE_VERSION",
+    "APPS_SCRIPT_CREATE_DEPLOYMENT",
+    "APPS_SCRIPT_UPDATE_DEPLOYMENT"
+  ],
+  "production_effect": false,
+  "admission_rule": "Source, CI, Sheet creation, WIF configuration, IAM binding or deployment acceptance alone does not prove runtime behavior. Cloud claims require provider-native Cloud Run identity/readback receipts plus a real Fabric command/receipt canary. Apps Script claims require owner-OAuth broker receipts. Provider-admin runtime execution remains unavailable until a separately admitted elevated identity is bound and read back."
+}
