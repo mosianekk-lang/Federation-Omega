@@ -1,0 +1,27 @@
+{
+  "schema": "FEDERATION-PROOFOS-CFBE-V1",
+  "version": "1.0.0",
+  "benchmark_method": "BEST_OF_BREED_COMPOSITE_FRONTIER_NOT_VENDOR_AVERAGE",
+  "frontier_leader_requires_independent_readback": true,
+  "architecture_score_alone_cannot_promote": true,
+  "dimensions": [
+    {"metric":"p95_admission_latency_seconds","direction":"LOWER_IS_BETTER","weight":15,"target":{"kind":"RATIO_AT_MOST","value":0.20},"ten_x_target":true},
+    {"metric":"ci_compute_minutes_per_pr","direction":"LOWER_IS_BETTER","weight":12,"target":{"kind":"RATIO_AT_MOST","value":0.20},"ten_x_target":true},
+    {"metric":"unrelated_test_execution_ratio","direction":"LOWER_IS_BETTER","weight":10,"target":{"kind":"RATIO_AT_MOST","value":0.10},"ten_x_target":true},
+    {"metric":"false_block_rate","direction":"LOWER_IS_BETTER","weight":12,"target":{"kind":"RATIO_AT_MOST","value":0.10},"ten_x_target":true},
+    {"metric":"security_escape_rate","direction":"LOWER_IS_BETTER","weight":15,"target":{"kind":"AT_MOST","value":0.0},"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"},"hard_gate":true,"ten_x_target":true},
+    {"metric":"regression_escape_rate","direction":"LOWER_IS_BETTER","weight":12,"target":{"kind":"RATIO_AT_MOST","value":1.0},"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"},"hard_gate":true},
+    {"metric":"selector_false_negative_rate","direction":"LOWER_IS_BETTER","weight":8,"target":{"kind":"AT_MOST","value":0.001},"safety_gate":{"kind":"AT_MOST","value":0.001},"hard_gate":true},
+    {"metric":"critical_invariant_coverage","direction":"HIGHER_IS_BETTER","weight":8,"target":{"kind":"AT_LEAST","value":1.0},"safety_gate":{"kind":"AT_LEAST","value":1.0},"hard_gate":true,"ten_x_target":true},
+    {"metric":"omission_attribution_coverage","direction":"HIGHER_IS_BETTER","weight":8,"target":{"kind":"AT_LEAST","value":1.0},"safety_gate":{"kind":"AT_LEAST","value":1.0},"hard_gate":true,"ten_x_target":true},
+    {"metric":"proof_cache_hit_ratio","direction":"HIGHER_IS_BETTER","weight":5,"target":{"kind":"AT_LEAST","value":0.80},"ten_x_target":true},
+    {"metric":"owner_intervention_rate","direction":"LOWER_IS_BETTER","weight":5,"target":{"kind":"RATIO_AT_MOST","value":0.10},"ten_x_target":true},
+    {"metric":"mean_time_to_root_cause_seconds","direction":"LOWER_IS_BETTER","weight":5,"target":{"kind":"RATIO_AT_MOST","value":0.30},"ten_x_target":true}
+  ],
+  "promotion_truth": {
+    "planned_or_source_only_is_frontier_leader": false,
+    "provider_live_independent_readback_required_for_ten_x_frontier_candidate": true,
+    "safety_or_regression_gate_failure_rejects_candidate": true,
+    "all_ten_x_targets_required_for_ten_x_frontier_candidate": true
+  }
+}
