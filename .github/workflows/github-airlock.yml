@@ -122,6 +122,9 @@ jobs:
       - name: Run EvidenceOps proof-state transition adversarial regression tests
         run: python -m unittest discover -s tests -p 'test_evidenceops_proof_state_transition_guard.py' -v
 
+      - name: Run EvidenceOps Algorithm Foundry action-proof regressions
+        run: python -m unittest discover -s tests -p 'test_evidenceops_algorithm_foundry.py' -v
+
       - name: Run Federation autonomous controller regression tests
         run: python -m unittest discover -s tests -p 'test_federation_autonomous_controller.py' -v
 
