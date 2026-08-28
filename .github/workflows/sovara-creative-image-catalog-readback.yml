@@ -53,6 +53,20 @@ jobs:
               assert p[key] is False, (key, p[key])
           PY
 
+      - name: Diagnose blocking Phoenix compatibility proofs
+        if: github.event_name == 'pull_request'
+        shell: bash
+        run: |
+          set +e
+          python3 -m unittest discover -s tests -p 'test_phoenix_provider_cutover_v3*.py' -v
+          v3=$?
+          python3 -m unittest discover -s tests -p 'test_phoenix_exports.py' -v
+          exports=$?
+          echo "phoenix_cutover_v3_exit=${v3} phoenix_exports_exit=${exports}"
+          if [[ "$v3" -ne 0 || "$exports" -ne 0 ]]; then
+            exit 1
+          fi
+
       - name: Resolve execution mode
         id: mode
         shell: bash
