@@ -1,0 +1,15 @@
+{
+  "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
+  "request_id": "SOVARA-GEMINI-G0-20260828-001",
+  "mode": "G0_READ_ONLY_VERIFY",
+  "execute": true,
+  "promote": false,
+  "case_data_allowed": false,
+  "provider_mutation_allowed": false,
+  "external_communication_allowed": false,
+  "expected_project_id": "sov-hybrid-suite",
+  "expected_project_number": "257649435135",
+  "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+  "purpose": "Verify current canonical Google WIF and Gemini ADC authority before any SOVARA-Gemini legal collaboration provider call.",
+  "truth_boundary": "This request authorizes read-only identity and ADC verification only. It does not authorize model inference, legal filing, email, service, publication, traffic promotion, IAM/API mutation, secret payload access or case-data disclosure."
+}
