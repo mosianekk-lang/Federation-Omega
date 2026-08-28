@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "core": {
     "include_extensions": [
       ".css",
@@ -12,8 +12,10 @@
       ".proto",
       ".ps1",
       ".py",
+      ".rego",
       ".sh",
       ".sql",
+      ".tla",
       ".toml",
       ".ts",
       ".txt",
