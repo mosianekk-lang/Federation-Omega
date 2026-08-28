@@ -674,9 +674,12 @@ class SovereignIntelligenceCourt:
                 "isolated tests, empirical CFBE comparison and zero-dilution regression before any promotion."
             )
 
+        round1_external_success = sum(
+            r.status == LaneStatus.SUCCESS.value for r in external_round1
+        )
         panel_summary = {
             "round1_external_lanes": len(external_round1),
-            "round1_external_success": sum(r.status == LaneStatus.SUCCESS.value for r in external_round1),
+            "round1_external_success": round1_external_success,
             "round2_external_lanes": len(external_round2),
             "round2_external_success": sum(r.status == LaneStatus.SUCCESS.value for r in external_round2),
             "sovereign_lanes": len(sovereign),
@@ -684,7 +687,7 @@ class SovereignIntelligenceCourt:
             "privacy_preflight": preflight,
             "round1_envelope_sha256": _sha256_text(_canonical_json(round1_envelope)) if round1_envelope else None,
             "round2_envelope_sha256": _sha256_text(_canonical_json(round2_envelope)) if round2_envelope else None,
-            "provider_connectivity_claimed": bool(external_round1),
+            "provider_connectivity_claimed": round1_external_success > 0,
         }
 
         unresolved = []
@@ -692,7 +695,7 @@ class SovereignIntelligenceCourt:
             unresolved.append("ROUND2_SEMANTIC_CROSS_EXAM_NOT_PROVEN")
         if candidate_hashes:
             unresolved.extend(["EMPIRICAL_CHALLENGER_TESTS_NOT_RUN", "CANDIDATE_ZERO_DILUTION_NOT_PROVEN"])
-        if not external_round1:
+        if round1_external_success == 0:
             unresolved.append("EXTERNAL_PROVIDER_REVIEW_NOT_PROVEN_FOR_THIS_MISSION")
 
         result = CourtResult(
