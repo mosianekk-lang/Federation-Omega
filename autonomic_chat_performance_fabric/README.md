@@ -18,11 +18,16 @@ python -m unittest autonomic_chat_performance_fabric.test_fabric -v
 node autonomic_chat_performance_fabric/test_sentinel.js
 node autonomic_chat_performance_fabric/benchmark_gate.js
 node autonomic_chat_performance_fabric/benchmark.js
+node autonomic_chat_performance_fabric/test_benchmark_v2.js
+node autonomic_chat_performance_fabric/benchmark_v2.js
 ```
 
 The deterministic benchmark is the CI admission gate. Wall-clock timing is an
 informational synthetic receipt because shared runners are noisy and are not a
-substitute for same-workload browser evidence.
+substitute for same-workload browser evidence. The v2 receipt uses balanced
+matched samples and a paired-bootstrap 95% interval, binds the sentinel source
+hash, and emits aggregate timing only. Its timing result remains informational;
+only semantic, privacy, rollback, and receipt-contract assertions block CI.
 
 ## Browser canary
 
