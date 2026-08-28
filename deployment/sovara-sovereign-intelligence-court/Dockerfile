@@ -13,6 +13,7 @@ COPY ops/sovara_openrouter_code_eval_v1.py /app/ops/sovara_openrouter_code_eval_
 COPY ops/sovara_sovereign_intelligence_court_v2.py /app/ops/sovara_sovereign_intelligence_court_v2.py
 COPY ops/sovara_sovereign_mcp_v2.py /app/ops/sovara_sovereign_mcp_v2.py
 COPY ops/sovara_gcs_mission_store_v1.py /app/ops/sovara_gcs_mission_store_v1.py
+COPY ops/sovara_local_model_lane_v1.py /app/ops/sovara_local_model_lane_v1.py
 COPY ao_harmonic_v3 /app/ao_harmonic_v3
 
 RUN useradd --create-home --uid 10001 sovara && chown -R sovara:sovara /app
