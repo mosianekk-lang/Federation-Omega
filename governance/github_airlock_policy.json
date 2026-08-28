@@ -54,7 +54,8 @@
       "push"
     ],
     ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
-      "main"
+      "push",
+      "workflow_dispatch"
     ],
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
       "push",
