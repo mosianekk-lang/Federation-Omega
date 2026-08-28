@@ -186,9 +186,10 @@ jobs:
         self.assertEqual([], findings)
 
     def test_airlock_installs_exact_api_test_dependencies_before_proofos(self):
-        workflow = (ROOT / ".github" / "workflows" / "github-airlock.yml").read_text(
-            encoding="utf-8"
-        )
+        workflow_path = ROOT / ".github" / "workflows" / "github-airlock.yml"
+        if not workflow_path.is_file():
+            self.skipTest("workflow-free Phoenix Core export")
+        workflow = workflow_path.read_text(encoding="utf-8")
         install = "Install pinned Airlock API test dependencies"
         proof = "Execute manifest-selected proof court"
         self.assertEqual(1, workflow.count(install))
