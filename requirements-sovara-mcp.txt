@@ -1,0 +1,2 @@
+# SOVARA chat-native MCP runtime. Current MCP Python SDK v2 stable line.
+mcp>=2,<3
