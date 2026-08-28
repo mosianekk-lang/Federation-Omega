@@ -7,7 +7,7 @@ from dataclasses import asdict
 import os
 from pathlib import Path
 import sys
-from typing import Any, Literal
+from typing import Any, Callable, Literal
 
 OPS_DIR = Path(__file__).resolve().parent
 REPO_ROOT = OPS_DIR.parent
@@ -18,7 +18,10 @@ for _path in (OPS_DIR, REPO_ROOT):
 from sovara_sovereign_intelligence_court_v2 import (  # noqa: E402
     DEFAULT_OBJECTIVE,
     FileMissionStore,
+    LaneReceipt,
+    LaneStatus,
     SovereignIntelligenceCourt,
+    deterministic_source_reviewer,
 )
 
 TOOL_NAME = "sovara_external_model_review"
@@ -52,6 +55,42 @@ def build_store(*, state_dir: Path | None = None):
     raise RuntimeError(f"UNSUPPORTED_SOVARA_STATE_BACKEND:{backend}")
 
 
+def _failing_local_reviewer(error: Exception) -> Callable[[str, str, str], LaneReceipt]:
+    """Represent bad local-lane configuration as an isolated lane failure.
+
+    The deterministic lane still runs and the court records this reviewer failure;
+    a local configuration mistake must not terminate the whole mission.
+    """
+
+    def reviewer(code: str, language: str, objective: str) -> LaneReceipt:
+        del code, language, objective
+        return LaneReceipt(
+            lane_id="local-model-config",
+            lane_type="LOCAL_MODEL",
+            status=LaneStatus.FAILED.value,
+            provider="SOVARA_LOOPBACK",
+            error_class=type(error).__name__,
+            error_message=str(error)[:1000],
+            metadata={"credential_value_recorded": False, "code_executed": False},
+        )
+
+    return reviewer
+
+
+def build_reviewers() -> tuple[Callable[[str, str, str], LaneReceipt], ...]:
+    reviewers: list[Callable[[str, str, str], LaneReceipt]] = [deterministic_source_reviewer]
+    if os.environ.get("SOVARA_LOCAL_MODEL_URL", "").strip():
+        try:
+            from sovara_local_model_lane_v1 import reviewer_from_env
+
+            local = reviewer_from_env()
+            if local is not None:
+                reviewers.append(local)
+        except Exception as exc:
+            reviewers.append(_failing_local_reviewer(exc))
+    return tuple(reviewers)
+
+
 def run_review(
     code: str,
     *,
@@ -61,7 +100,10 @@ def run_review(
     max_models: int = 4,
     state_dir: Path | None = None,
 ) -> dict[str, Any]:
-    court = SovereignIntelligenceCourt(store=build_store(state_dir=state_dir))
+    court = SovereignIntelligenceCourt(
+        store=build_store(state_dir=state_dir),
+        sovereign_reviewers=build_reviewers(),
+    )
     return asdict(
         court.evaluate(
             code,
