@@ -1,0 +1,58 @@
+{
+  "control_id": "FORMATION-OMEGA-CONVERGENCE-SUPERVISOR-V1",
+  "version": "1.0.0",
+  "role": "THIN_COMPOSITION_LAYER",
+  "sovereign_authority": false,
+  "provider_authority_created": false,
+  "external_effect_default": false,
+  "objective": "Reduce stale-state rework, repeated rediscovery and manual admission choreography by composing existing Federation proof and convergence capabilities into one fresh-state execution loop.",
+  "capability_chain": [
+    "MCE_CHANGE_CAPSULE",
+    "MCE_SOURCE_CONVERGENCE",
+    "JARVIS_AO5_FAILURE_ESCALATION",
+    "FAILURE_WIN_RESOLVER_MEMORY",
+    "AUTONOMOUS_MATURATION_GAP_RANKING",
+    "FEDERATION_EXECUTION_CONTINUITY_CHECKPOINT",
+    "GITHUB_EXACT_HEAD_ADMISSION",
+    "INDEPENDENT_READBACK"
+  ],
+  "hard_invariants": [
+    "RECONCILE_BEFORE_REBUILD",
+    "FRESH_PROVIDER_READ_BEFORE_MUTATION",
+    "EXACT_MAIN_AND_CANDIDATE_HEAD_BINDING",
+    "CHECK_AUTHORITY_INVALIDATED_BY_HEAD_DRIFT",
+    "SEMANTIC_CONFLICT_FAILS_CLOSED",
+    "CHANGE_CAPSULE_SURVIVES_ANCESTRY_DRIFT",
+    "RECLASSIFY_ONLY_FRESH_DELTA_AFTER_MAIN_DRIFT",
+    "NO_SELF_CERTIFIED_CLOSURE",
+    "SIGNED_MAIN_READBACK_REQUIRED",
+    "FAILURE_MUST_CREATE_DURABLE_RESOLVER_AND_REGRESSION",
+    "NO_PROVIDER_AUTHORITY_INHERITANCE"
+  ],
+  "mutation_contract": {
+    "source_mutation_permit_is_no_effect_data": true,
+    "permit_requires_exact_snapshot_hash": true,
+    "permit_requires_expected_main_sha": true,
+    "permit_requires_expected_candidate_head_sha": true,
+    "permit_invalidated_by_snapshot_drift": true,
+    "provider_adapter_must_reverify_before_effect": true
+  },
+  "failure_learning": {
+    "jarvis_recurrence_escalation": true,
+    "mce_failure_resolver": true,
+    "autonomous_maturation_gap": true,
+    "continuity_checkpoint": true,
+    "same_fingerprint_restarts_from_zero": false
+  },
+  "success_metrics": [
+    "stale_base_manual_restart_count",
+    "repeated_discovery_count",
+    "owner_intervention_count",
+    "exact_head_check_reuse_error_count",
+    "semantic_dilution_count",
+    "false_completion_count",
+    "directive_to_verified_closure_time"
+  ],
+  "proof_boundary": "Source-level orchestration only until provider-specific adapters independently verify and execute an effect.",
+  "rollback": "Delete/revert supervisor source and governance registration; existing MCE/JARVIS/Autonomous Maturation primitives remain unchanged."
+}
