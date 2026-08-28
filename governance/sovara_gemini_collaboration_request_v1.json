@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G1-20260828-002",
+  "request_id": "SOVARA-GEMINI-G1-20260828-003",
   "mode": "G1_ADC_APPLY_VERIFY",
   "execute": true,
   "promote": false,
@@ -17,6 +17,6 @@
     "BIND_DEPLOYER_RUN_DEVELOPER",
     "ENSURE_EXISTING_REQUIRED_APIS_ENABLED"
   ],
-  "purpose": "Attach only the exact missing Gemini ADC/runtime controls discovered by the fresh G0 canary, verify them by provider readback, and prepare a zero-traffic semantic gateway canary. No model inference or case-data processing is authorized by this stage.",
-  "truth_boundary": "This request authorizes only the minimum provider-side ADC/runtime identity controls enumerated in mutation_scope. It does not authorize model inference, legal filing, email, service, publication, production traffic promotion, secret payload access, unrelated IAM expansion, case-data disclosure or destructive provider actions."
+  "purpose": "Retry the bounded G1 Gemini ADC/runtime attachment after repairing the redundant service-enable defect discovered in provider run 33163800017. Apply only the exact still-missing runtime service-account/IAM controls, skip service-enablement mutation when provider readback shows all required APIs already enabled, verify the resulting ADC state by provider readback, and prepare the next zero-traffic semantic gateway canary. No model inference or case-data processing is authorized by this stage.",
+  "truth_boundary": "This request authorizes only the minimum provider-side ADC/runtime identity controls enumerated in mutation_scope. It does not authorize model inference, legal filing, email, service, publication, advertising spend, production traffic promotion, secret payload access, unrelated IAM expansion, case-data disclosure or destructive provider actions. A successful source/CI merge is not ADC proof; the post-merge provider workflow must emit a verified same-surface receipt."
 }
