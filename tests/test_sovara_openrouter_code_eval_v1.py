@@ -53,6 +53,7 @@ def test_build_prompt_marks_code_untrusted():
 
 def test_evaluate_one_requests_zdr_and_returns_proposal_only_receipt():
     observed = {}
+    dummy_key = "DUMMY_PROVIDER_API_KEY"
 
     def opener(request, timeout):
         observed["timeout"] = timeout
@@ -70,7 +71,7 @@ def test_evaluate_one_requests_zdr_and_returns_proposal_only_receipt():
     receipt, output = mod.evaluate_one(
         "print('x')",
         model="deepseek/deepseek-v4-flash-0731",
-        api_key="test-secret-value",
+        api_key=dummy_key,
         language="python",
         objective="find alternatives",
         opener=opener,
@@ -82,7 +83,7 @@ def test_evaluate_one_requests_zdr_and_returns_proposal_only_receipt():
     assert receipt.provider_data_collection == "deny"
     assert observed["payload"]["provider"] == {"data_collection": "deny", "zdr": True}
     assert observed["payload"]["temperature"] == 0.85
-    assert "test-secret-value" not in json.dumps(receipt.to_dict())
+    assert dummy_key not in json.dumps(receipt.to_dict())
 
 
 def test_evaluate_panel_preserves_independent_outputs_and_hashes_source():
@@ -102,7 +103,7 @@ def test_evaluate_panel_preserves_independent_outputs_and_hashes_source():
 
     result = mod.evaluate_panel(
         "x = 1",
-        api_key="secret",
+        api_key="DUMMY_KEY",
         models=["deepseek/a", "z-ai/b", "deepseek/a"],
         language="python",
         objective=None,
