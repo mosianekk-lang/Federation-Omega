@@ -7,6 +7,7 @@ on:
       - ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
       - "governance/github_airlock_policy.json"
       - "governance/sovara_gemini_collaboration_request_v1.json"
+      - "sovara/gemini/bootstrap_gateway.sh"
       - "releases/sovara-litellm/v2.3.0/**"
   workflow_dispatch:
 
@@ -210,20 +211,20 @@ jobs:
           case "$EXECUTION_SCOPE" in
             G0_READ_ONLY_VERIFY|FULL_PROVIDER_ADMISSION)
               set +e
-              ./ops/bootstrap_gemini_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
+              ./sovara/gemini/bootstrap_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
               code=${PIPESTATUS[0]}
               set -e
               exit "$code"
               ;;
             G1_ADC_APPLY_VERIFY)
               set -euo pipefail
-              ./ops/bootstrap_gemini_gateway.sh --plan | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_PRE_APPLY.json"
+              ./sovara/gemini/bootstrap_gateway.sh --plan | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_PRE_APPLY.json"
               set +e
               FEDOMEGA_GEMINI_GATEWAY_APPLY=ATTACH_GEMINI_GATEWAY_ADC_V1 \
-                ./ops/bootstrap_gemini_gateway.sh --apply | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_APPLY.json"
+                ./sovara/gemini/bootstrap_gateway.sh --apply | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_APPLY.json"
               apply_code=${PIPESTATUS[0]}
               set -e
-              ./ops/bootstrap_gemini_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
+              ./sovara/gemini/bootstrap_gateway.sh --verify | tee "$SOVARA_RECEIPT_DIR/GEMINI_ADC_VERIFIED.json"
               verify_code=${PIPESTATUS[0]}
               if [[ "$apply_code" -ne 0 || "$verify_code" -ne 0 ]]; then
                 exit 1
