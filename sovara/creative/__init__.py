@@ -3,11 +3,22 @@
 Scope: mission genomes, content/privacy classification, policy-aware routing,
 digital continuity, private-studio planning, reuse-first adaptive capability
 creation, CFBE/Ω-Scientist meta-evolution, proof-gated commercial value,
-progressive production convergence, and bounded Gemini creative challenges.
-This package does not grant provider authority, authorize spend, perform
-publishing effects, deploy infrastructure, or claim runtime/value maturity.
+progressive production convergence, bounded creative canaries, and bounded
+Gemini creative challenges. This package does not grant provider authority,
+authorize spend, perform publishing effects, deploy infrastructure, or claim
+runtime/value maturity.
 """
 
+from .canary import (
+    CreativeCanaryDecision,
+    CreativeCanaryObservation,
+    CreativeCanarySpec,
+    CreativeCanaryState,
+    evaluate_creative_canary,
+    load_creative_canary_spec,
+    missing_semantic_assertions,
+    source_only_canary_decision,
+)
 from .capability_foundry import (
     AdmissionState,
     BuildStrategy,
@@ -108,6 +119,10 @@ __all__ = [
     "ChallengeSpec",
     "CompositeFrontierPoint",
     "ContentClass",
+    "CreativeCanaryDecision",
+    "CreativeCanaryObservation",
+    "CreativeCanarySpec",
+    "CreativeCanaryState",
     "CreativeMissionGenome",
     "DEFAULT_FRONTIER_SUITES",
     "Eligibility",
@@ -116,12 +131,12 @@ __all__ = [
     "FrontierGap",
     "FrontierObservation",
     "MatureContext",
+    "MaturePolicyState",
     "MetaEvolutionState",
     "MetricComparison",
     "MetricDirection",
     "MetricObservation",
     "MissionEconomics",
-    "MaturePolicyState",
     "OmegaScientistExperiment",
     "OpenRouterPlanState",
     "OpenRouterPolicySnapshot",
@@ -163,15 +178,19 @@ __all__ = [
     "compile_studio_plan",
     "default_production_value_specs",
     "economics_snapshot",
+    "evaluate_creative_canary",
     "evaluate_meta_evolution",
     "evaluate_openrouter_response",
     "evaluate_production_convergence",
     "evaluate_route",
     "evaluate_value_gate",
+    "load_creative_canary_spec",
     "load_gemini_challenge_spec",
+    "missing_semantic_assertions",
     "next_surface_to_admit",
     "plan_capability",
     "preregister_omega_scientist_experiment",
     "select_route",
+    "source_only_canary_decision",
     "vertex_endpoint",
 ]
