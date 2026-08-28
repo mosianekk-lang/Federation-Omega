@@ -1,0 +1,26 @@
+{
+  "schema": "FEDERATION-PROOFOS-SHADOW-CALIBRATION-V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "omitted_proof_sample_percent": 5,
+  "max_sentinels": 2,
+  "exclude_test_ids": [
+    "full_federation_fallback",
+    "phoenix_cutover_v3",
+    "phoenix_exports",
+    "compileall_shared"
+  ],
+  "failure_semantics": {
+    "sentinel_failure": "SELECTOR_ESCAPE_CANDIDATE",
+    "sentinel_failure_blocks_current_admission": false,
+    "confirmation_required_before_graph_promotion": true,
+    "security_or_provenance_invariant_may_be_demoted_to_shadow": false
+  },
+  "truth_boundary": {
+    "shadow_success_proves_selector_complete": false,
+    "shadow_failure_proves_causal_dependency": false,
+    "shadow_failure_is_learning_evidence": true,
+    "provider_live_claim": false
+  }
+}
