@@ -1,0 +1,8 @@
+{
+  "schema": "SOVARA-SIC-V2-PR-BINDING-V1",
+  "pr": 711,
+  "issue": 710,
+  "head_at_binding": "26838b9620b28062ae1f1e30a3ddaddcf5d870e2",
+  "state": "SOURCE_CANDIDATE_PENDING_CI_ADMISSION",
+  "production_claim": false
+}
