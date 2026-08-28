@@ -33,18 +33,21 @@ Init ==
     /\ closed = FALSE
 
 RefreshMain ==
+    /\ ~merged
     /\ main' = Main1
     /\ UNCHANGED <<head, checkedHead, permitMain, permitHead,
                    semanticConflict, rollbackAvailable, externalEffect,
                    authority, merged, closed>>
 
 MoveHead ==
+    /\ ~merged
     /\ head' = Head1
     /\ UNCHANGED <<main, checkedHead, permitMain, permitHead,
                    semanticConflict, rollbackAvailable, externalEffect,
                    authority, merged, closed>>
 
 Recheck ==
+    /\ ~merged
     /\ checkedHead' = head
     /\ permitMain' = main
     /\ permitHead' = head
@@ -52,21 +55,25 @@ Recheck ==
                    externalEffect, authority, merged, closed>>
 
 SetConflict ==
+    /\ ~merged
     /\ semanticConflict' = TRUE
     /\ UNCHANGED <<main, head, checkedHead, permitMain, permitHead,
                    rollbackAvailable, externalEffect, authority, merged, closed>>
 
 LoseRollback ==
+    /\ ~merged
     /\ rollbackAvailable' = FALSE
     /\ UNCHANGED <<main, head, checkedHead, permitMain, permitHead,
                    semanticConflict, externalEffect, authority, merged, closed>>
 
 AttemptExternalEffect ==
+    /\ ~merged
     /\ externalEffect' = TRUE
     /\ UNCHANGED <<main, head, checkedHead, permitMain, permitHead,
                    semanticConflict, rollbackAvailable, authority, merged, closed>>
 
 Merge ==
+    /\ ~merged
     /\ ~semanticConflict
     /\ rollbackAvailable
     /\ main = permitMain
@@ -80,6 +87,7 @@ Merge ==
 
 Close ==
     /\ merged
+    /\ ~closed
     /\ rollbackAvailable
     /\ ~semanticConflict
     /\ closed' = TRUE
