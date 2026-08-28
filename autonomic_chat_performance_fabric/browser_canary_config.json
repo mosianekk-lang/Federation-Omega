@@ -1,0 +1,38 @@
+{
+  "schema": "FACPF-BROWSER-CANARY-1",
+  "enabled": false,
+  "mode": "SHADOW_OBSERVE_ONLY",
+  "scope": {
+    "maximumChats": 1,
+    "maximumDurationMinutes": 15,
+    "maximumMessagesObserved": 250,
+    "maximumPayloadCharsPerCapture": 32000,
+    "maximumQueueItems": 64
+  },
+  "privacy": {
+    "captureMessageText": false,
+    "persistRawDom": false,
+    "emitOnlyAggregateMetrics": true
+  },
+  "promotionGates": {
+    "formationPermitRequired": true,
+    "explicitOperatorActivationRequired": true,
+    "sameWorkloadChampionChallengerRequired": true,
+    "minimumSuccessfulRuns": 5,
+    "maximumReloadRegression": 0,
+    "maximumErrorRegression": 0
+  },
+  "stopConditions": [
+    "page reload or reconnect increase",
+    "capture budget exceeded",
+    "queue saturation",
+    "message-stream interference",
+    "privacy invariant violation"
+  ],
+  "rollback": {
+    "action": "disable sentinel and clear its in-memory queue",
+    "automaticOnStopCondition": true,
+    "requiresMainMutation": false
+  }
+}
+
