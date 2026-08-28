@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-LUNO-OBSERVER-BINDING-CONTRACT-1",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "project": "sov-hybrid-suite",
   "region": "africa-south1",
   "service": "federation-luno-observer",
@@ -10,6 +10,23 @@
   "research_only": true,
   "financial_effects": false,
   "provider_write_operations": false,
+  "control_authority": {
+    "engine_id": "JARVIS-ALPHA-OMEGA-5-SOVEREIGN",
+    "engine_version": "ΑΩ5.0",
+    "canonical_governance_contract": "governance/jarvis_ao5_forensic_decision_intelligence_v1.json",
+    "canonical_spec_sha256": "773ee29579605aa3f3b956a27af3e5ac5dd7c3a28e524f61cd8c392451366443",
+    "realityguard_execution_receipt_required": true,
+    "completion_standard": [
+      "AUTHORISATION",
+      "EXECUTION",
+      "TARGET_READBACK",
+      "RECEIPT"
+    ],
+    "failure_learning": "Ω-FLM",
+    "method_science": "Ω-SCIENTIST",
+    "consequential_external_action_requires_owner_approval": true,
+    "provider_state_must_match_readback": true
+  },
   "credential_binding": {
     "legacy_secret_names_accepted": false,
     "dedicated_secret_names": [
@@ -66,6 +83,7 @@
     "NO_PRIVATE_ACCOUNT_VALUES_IN_PROVIDER_RECEIPT",
     "NO_SCHEDULER_OR_AUTONOMOUS_EXECUTION_LOOP",
     "SHADOW_MODE_REMAINS_THE_CAPITAL_CEILING",
-    "PUBLIC_PROVIDER_SUCCESS_DOES_NOT_IMPLY_ACCOUNT_BINDING"
+    "PUBLIC_PROVIDER_SUCCESS_DOES_NOT_IMPLY_ACCOUNT_BINDING",
+    "JARVIS_AO5_REALITYGUARD_CONTROLS_PROVIDER_STATE_CLAIMS"
   ]
 }

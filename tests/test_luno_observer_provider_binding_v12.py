@@ -120,6 +120,28 @@ class LunoObserverProviderBindingV12Tests(unittest.TestCase):
         self.assertFalse(contract["provider_write_operations"])
         self.assertIn("SHADOW_MODE_REMAINS_THE_CAPITAL_CEILING", contract["invariants"])
 
+    def test_binding_contract_is_governed_by_exact_jarvis_ao5_realityguard_contract(self):
+        contract = json.loads(Path("federation/capital_execution/venues/LUNO_OBSERVER_BINDING_CONTRACT.json").read_text(encoding="utf-8"))
+        authority = contract["control_authority"]
+        self.assertEqual(authority["engine_id"], "JARVIS-ALPHA-OMEGA-5-SOVEREIGN")
+        self.assertEqual(authority["engine_version"], "ΑΩ5.0")
+        self.assertEqual(
+            authority["canonical_governance_contract"],
+            "governance/jarvis_ao5_forensic_decision_intelligence_v1.json",
+        )
+        self.assertEqual(
+            authority["canonical_spec_sha256"],
+            "773ee29579605aa3f3b956a27af3e5ac5dd7c3a28e524f61cd8c392451366443",
+        )
+        self.assertTrue(authority["realityguard_execution_receipt_required"])
+        self.assertEqual(
+            authority["completion_standard"],
+            ["AUTHORISATION", "EXECUTION", "TARGET_READBACK", "RECEIPT"],
+        )
+        self.assertTrue(authority["consequential_external_action_requires_owner_approval"])
+        self.assertTrue(authority["provider_state_must_match_readback"])
+        self.assertIn("JARVIS_AO5_REALITYGUARD_CONTROLS_PROVIDER_STATE_CLAIMS", contract["invariants"])
+
 
 if __name__ == "__main__":
     unittest.main()
