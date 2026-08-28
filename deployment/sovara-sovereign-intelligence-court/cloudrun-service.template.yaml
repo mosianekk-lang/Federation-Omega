@@ -1,0 +1,26 @@
+apiVersion: serving.knative.dev/v1
+kind: Service
+metadata:
+  name: sovara-sovereign-intelligence-court
+spec:
+  template:
+    metadata:
+      annotations:
+        autoscaling.knative.dev/minScale: "1"
+        autoscaling.knative.dev/maxScale: "4"
+    spec:
+      containerConcurrency: 16
+      timeoutSeconds: 900
+      containers:
+        - image: REPLACE_WITH_IMMUTABLE_IMAGE_DIGEST
+          ports:
+            - containerPort: 8000
+          env:
+            - name: SOVARA_STATE_DIR
+              value: /var/lib/sovara/sovereign-intelligence-court
+            # OPENROUTER_API_KEY must be bound at the provider secret boundary;
+            # never place the credential value in this template.
+          resources:
+            limits:
+              cpu: "2"
+              memory: 2Gi
