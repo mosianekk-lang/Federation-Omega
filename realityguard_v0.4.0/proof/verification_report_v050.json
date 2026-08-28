@@ -1,0 +1,35 @@
+{
+  "schema_version": "realityguard.verification.v0.5.0",
+  "verified_at": "2026-08-28T22:26:56.926Z",
+  "base_commit": "88a81f431ce2a9021a4af2bdd2f340aec836e2ae",
+  "scope": "local deterministic execution guard; no native ChatGPT/provider host binding",
+  "states": {
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "deployed": false,
+    "proven_in_host": false
+  },
+  "commands": [
+    "PYTHONPATH=src python -m compileall -q src tests",
+    "PYTHONPATH=src python -m unittest discover -s tests -v",
+    "python validate_build_contract.py BUILD_CONTRACT.json --require-proof"
+  ],
+  "results": {
+    "tests_total": 130,
+    "tests_passed": 130,
+    "original_gmail_binary_route": "BLOCK_UNSAFE_BINARY_TRANSPORT",
+    "original_route_exit": 7,
+    "repaired_file_reference_route": "ALLOW_DISPATCH",
+    "repaired_route_exit": 0,
+    "build_contract_valid": true,
+    "anti_dilution": "ACCEPT_ZERO_DILUTION",
+    "anti_dilution_tests": "12/12"
+  },
+  "boundaries": {
+    "provider_binding": "ADAPTER_REQUIRED",
+    "target_runtime_binding_proven": false,
+    "manual_user_tasks": [],
+    "owner_action_required": false
+  }
+}
