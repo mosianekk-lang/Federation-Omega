@@ -86,6 +86,88 @@ class EvidenceOpsAlgorithmFoundryReleaseTests(unittest.TestCase):
         self.assertEqual("BLOCKED_FAIL_CLOSED", control.status)
         self.assertEqual("ACTION_PROOF_REJECTED", proof.status)
 
+    def test_action_proof_rejects_structured_generic_health_from_semantic_wrapper(self) -> None:
+        result = ActionSpecificProofValidator().run(
+            {
+                "action_id": "A2",
+                "action": "RUNTIME_EXECUTE",
+                "target_id": "sov-hybrid-suite",
+                "requested_capability": "LIST_SERVICE_ACCOUNTS",
+                "required_readback_fields": ["service_accounts"],
+            },
+            {
+                "action": "RUNTIME_EXECUTE",
+                "target_id": "sov-hybrid-suite",
+                "returned_capability": "LIST_SERVICE_ACCOUNTS",
+                "provider_response": {
+                    "ok": True,
+                    "service": "architron9",
+                    "status": "healthy",
+                    "version": "3.0.0",
+                },
+                "target_readback": {
+                    "ok": True,
+                    "service": "architron9",
+                    "status": "healthy",
+                },
+                "checked_at": "now",
+                "executed": True,
+                "semantic_match": True,
+            },
+        )
+        self.assertEqual("ACTION_PROOF_REJECTED", result.status)
+        self.assertIn("GENERIC_HEALTH_OBJECT_NOT_ACTION_PROOF", result.violations)
+        self.assertIn("MISSING_REQUIRED_READBACK_FIELDS", result.violations)
+        self.assertFalse(result.output["promotion_permitted"])
+
+    def test_action_proof_rejects_wrapper_without_inner_semantic_intent(self) -> None:
+        result = ActionSpecificProofValidator().run(
+            {
+                "action_id": "A3",
+                "action": "RUNTIME_EXECUTE",
+                "target_id": "project-1",
+            },
+            {
+                "action": "RUNTIME_EXECUTE",
+                "target_id": "project-1",
+                "provider_response": {"operation": "opaque", "count": 1},
+                "target_readback": {"items": ["x"]},
+                "checked_at": "now",
+                "executed": True,
+                "semantic_match": True,
+            },
+        )
+        self.assertEqual("ACTION_PROOF_REJECTED", result.status)
+        self.assertIn("WRAPPER_ACTION_MISSING_SEMANTIC_INTENT", result.violations)
+
+    def test_action_proof_accepts_bound_inner_capability_with_specific_readback(self) -> None:
+        result = ActionSpecificProofValidator().run(
+            {
+                "action_id": "A4",
+                "action": "RUNTIME_EXECUTE",
+                "target_id": "sov-hybrid-suite",
+                "requested_capability": "LIST_SERVICE_ACCOUNTS",
+                "required_readback_fields": ["service_accounts"],
+            },
+            {
+                "action": "RUNTIME_EXECUTE",
+                "target_id": "sov-hybrid-suite",
+                "returned_capability": "LIST_SERVICE_ACCOUNTS",
+                "provider_response": {"operation": "LIST_SERVICE_ACCOUNTS", "count": 1},
+                "target_readback": {
+                    "service_accounts": [
+                        {"email": "reader@sov-hybrid-suite.iam.gserviceaccount.com"}
+                    ]
+                },
+                "checked_at": "now",
+                "executed": True,
+                "semantic_match": True,
+            },
+        )
+        self.assertEqual("ACTION_SPECIFIC_PROOF_PASSED", result.status)
+        self.assertTrue(result.output["promotion_permitted"])
+        self.assertEqual((), result.output["missing_readback_fields"])
+
     def test_failure_compiles_to_gene_only_after_verified_recovery(self) -> None:
         result = FailureToEngineeringGeneCompiler().run(
             failure={"fingerprint": "fp", "category": "CONTRACT", "summary": "failure"},
