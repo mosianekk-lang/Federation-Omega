@@ -1,0 +1,140 @@
+name: SOVARA OpenRouter Code Eval Canary
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - "ops/sovara_openrouter_code_eval_v1.py"
+      - "tests/test_sovara_openrouter_code_eval_v1.py"
+      - "governance/sovara_openrouter_code_eval_v1.json"
+      - ".github/workflows/sovara-openrouter-code-eval-canary.yml"
+  pull_request:
+    paths:
+      - "ops/sovara_openrouter_code_eval_v1.py"
+      - "tests/test_sovara_openrouter_code_eval_v1.py"
+      - "governance/sovara_openrouter_code_eval_v1.json"
+      - ".github/workflows/sovara-openrouter-code-eval-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: sovara-openrouter-code-eval-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  source-and-provider-canary:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Check out exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Prove source-level evaluator boundaries
+        run: |
+          set -euo pipefail
+          python -m pytest -q tests/test_sovara_openrouter_code_eval_v1.py
+          python -m py_compile ops/sovara_openrouter_code_eval_v1.py
+
+      - name: Resolve live-canary eligibility
+        id: eligibility
+        shell: bash
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          set -euo pipefail
+          mkdir -p receipts
+          if [[ "${GITHUB_EVENT_NAME}" == "pull_request" ]]; then
+            echo "live=false" >> "$GITHUB_OUTPUT"
+            echo "reason=PULL_REQUEST_SOURCE_VALIDATION_ONLY" >> "$GITHUB_OUTPUT"
+          elif [[ -z "${OPENROUTER_API_KEY:-}" ]]; then
+            echo "live=false" >> "$GITHUB_OUTPUT"
+            echo "reason=OPENROUTER_SECRET_NOT_BOUND" >> "$GITHUB_OUTPUT"
+          else
+            echo "live=true" >> "$GITHUB_OUTPUT"
+            echo "reason=AUTHORISED_REPOSITORY_SECRET_BOUND" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Run live synthetic multi-model code-review canary
+        if: steps.eligibility.outputs.live == 'true'
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          set -euo pipefail
+          python ops/sovara_openrouter_code_eval_v1.py \
+            --synthetic-canary \
+            --language python \
+            --objective "Find correctness defects and propose at least two materially different redesigns." \
+            --max-models 4 \
+            --temperature 0.85 \
+            --max-tokens 1400 \
+            --output receipts/SOVARA_OPENROUTER_CODE_EVAL_CANARY.json \
+            > receipts/SOVARA_OPENROUTER_CODE_EVAL_CANARY.stdout.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          p = Path('receipts/SOVARA_OPENROUTER_CODE_EVAL_CANARY.json')
+          data = json.loads(p.read_text())
+          assert data['successful_reviews'] >= 2, data
+          providers = {
+              item['receipt']['resolved_model'].split('/', 1)[0]
+              for item in data['reviews']
+              if item['receipt']['status'] != 'FAILED' and item['receipt'].get('resolved_model')
+          }
+          assert len(providers) >= 2, {"providers": sorted(providers), "data": data}
+          assert data['terminal_state'] == 'PROPOSALS_RECEIVED_REQUIRES_INDEPENDENT_VALIDATION'
+          summary = {
+              'schema': 'SOVARA-OPENROUTER-CODE-EVAL-LIVE-CANARY-RECEIPT-V1',
+              'source_sha256': data['source_sha256'],
+              'panel': data['panel'],
+              'successful_reviews': data['successful_reviews'],
+              'failed_reviews': data['failed_reviews'],
+              'resolved_providers': sorted(providers),
+              'envelope_sha256': data['envelope_sha256'],
+              'credential_value_recorded': False,
+              'code_executed': False,
+              'provider_connectivity_proven_for_this_canary': True,
+              'production_readiness_claimed': False,
+          }
+          Path('receipts/SOVARA_OPENROUTER_CODE_EVAL_LIVE_RECEIPT.json').write_text(
+              json.dumps(summary, indent=2, sort_keys=True) + '\n'
+          )
+          PY
+
+      - name: Record held/source-only truth boundary
+        if: steps.eligibility.outputs.live != 'true'
+        env:
+          HOLD_REASON: ${{ steps.eligibility.outputs.reason }}
+        run: |
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('receipts').mkdir(exist_ok=True)
+          receipt = {
+              'schema': 'SOVARA-OPENROUTER-CODE-EVAL-LIVE-CANARY-RECEIPT-V1',
+              'provider_connectivity_proven_for_this_canary': False,
+              'source_validation_only': True,
+              'hold_reason': os.environ.get('HOLD_REASON'),
+              'credential_value_recorded': False,
+              'code_executed': False,
+              'production_readiness_claimed': False,
+          }
+          Path('receipts/SOVARA_OPENROUTER_CODE_EVAL_LIVE_RECEIPT.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n'
+          )
+          PY
+
+      - name: Upload redacted proof receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sovara-openrouter-code-eval-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: receipts/
