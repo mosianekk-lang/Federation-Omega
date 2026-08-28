@@ -2,7 +2,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from enum import Enum
-from typing import Iterable, Mapping, Sequence
+from math import isfinite
+from typing import Iterable, Sequence
 
 
 class ValueClass(str, Enum):
@@ -30,11 +31,7 @@ class ValueGateState(str, Enum):
 
 @dataclass(frozen=True, slots=True)
 class MissionEconomics:
-    """Direct mission economics only; attribution is supplied by trusted measurement.
-
-    The creative model cannot manufacture revenue or cost truth. Values are observations
-    supplied by the surrounding SOVARA/Kim DataVerse measurement plane.
-    """
+    """Direct mission economics supplied by trusted measurement, not by a model."""
 
     currency: str
     attributed_revenue: float = 0.0
@@ -55,8 +52,9 @@ class MissionEconomics:
             "owner_labor_cost",
             "other_direct_cost",
         ):
-            if float(getattr(self, name)) < 0:
-                raise ValueError(f"{name} cannot be negative")
+            value = float(getattr(self, name))
+            if not isfinite(value) or value < 0:
+                raise ValueError(f"{name} must be finite and non-negative")
         if self.approved_assets < 0 or self.published_assets < 0:
             raise ValueError("asset counts cannot be negative")
         if self.published_assets > self.approved_assets and self.approved_assets > 0:
@@ -101,16 +99,19 @@ class ValueMetricSpec:
     direction: MetricDirection
     weight: float = 1.0
     minimum_gain: float = 1.0
+    minimum_candidate: float | None = None
     required: bool = True
     hard_gate: bool = False
 
     def __post_init__(self) -> None:
         if not self.metric.strip():
             raise ValueError("metric is required")
-        if float(self.weight) <= 0:
-            raise ValueError("weight must be positive")
-        if float(self.minimum_gain) < 1.0:
-            raise ValueError("minimum_gain cannot be below 1.0")
+        if not isfinite(float(self.weight)) or float(self.weight) <= 0:
+            raise ValueError("weight must be finite and positive")
+        if not isfinite(float(self.minimum_gain)) or float(self.minimum_gain) < 1.0:
+            raise ValueError("minimum_gain must be finite and cannot be below 1.0")
+        if self.minimum_candidate is not None and not isfinite(float(self.minimum_candidate)):
+            raise ValueError("minimum_candidate must be finite")
 
 
 @dataclass(frozen=True, slots=True)
@@ -124,8 +125,8 @@ class MetricObservation:
     def __post_init__(self) -> None:
         if not self.metric.strip():
             raise ValueError("metric is required")
-        if float(self.baseline) < 0 or float(self.candidate) < 0:
-            raise ValueError("metric observations cannot be negative")
+        if not isfinite(float(self.baseline)) or not isfinite(float(self.candidate)):
+            raise ValueError("metric observations must be finite")
         if not self.evidence_ref.strip():
             raise ValueError("evidence_ref is required")
 
@@ -138,6 +139,7 @@ class MetricComparison:
     candidate: float
     target_value: float
     minimum_gain: float
+    minimum_candidate: float | None
     target_met: bool
     hard_gate_pass: bool
     relative_gain: float | None
@@ -163,7 +165,7 @@ class ValueGateDecision:
 
 
 def economics_snapshot(economics: MissionEconomics) -> dict[str, float]:
-    """Return only metrics that have a meaningful denominator."""
+    """Return only economics metrics that have a meaningful denominator."""
 
     out: dict[str, float] = {
         "attributed_revenue": float(economics.attributed_revenue),
@@ -183,16 +185,18 @@ def economics_snapshot(economics: MissionEconomics) -> dict[str, float]:
 
 def _target_value(spec: ValueMetricSpec, baseline: float) -> float:
     if spec.direction is MetricDirection.HIGHER_IS_BETTER:
-        return baseline * float(spec.minimum_gain)
-    return baseline / float(spec.minimum_gain)
+        if baseline > 0:
+            return baseline * float(spec.minimum_gain)
+        # A zero/negative baseline does not define multiplicative commercial growth.
+        # The optional minimum_candidate provides the absolute crossing threshold.
+        return baseline
+    if baseline > 0:
+        return baseline / float(spec.minimum_gain)
+    return baseline
 
 
 def _relative_gain(spec: ValueMetricSpec, baseline: float, candidate: float) -> float | None:
-    """Return a ratio only when mathematically defined.
-
-    A zero baseline never becomes a fabricated 10x claim. Directional target checks
-    still work, but the ratio remains None until a positive baseline exists.
-    """
+    """Return a ratio only when mathematically meaningful; never fabricate 10x."""
 
     if baseline <= 0:
         return None
@@ -201,6 +205,18 @@ def _relative_gain(spec: ValueMetricSpec, baseline: float, candidate: float) -> 
     if candidate <= 0:
         return None
     return baseline / candidate
+
+
+def _target_met(spec: ValueMetricSpec, baseline: float, candidate: float, target: float) -> bool:
+    if spec.direction is MetricDirection.HIGHER_IS_BETTER:
+        directional = candidate >= target
+    else:
+        directional = candidate <= target
+    if spec.minimum_candidate is None:
+        return directional
+    if spec.direction is MetricDirection.HIGHER_IS_BETTER:
+        return directional and candidate >= float(spec.minimum_candidate)
+    return directional and candidate <= float(spec.minimum_candidate)
 
 
 def compare_value_metrics(
@@ -225,10 +241,7 @@ def compare_value_metrics(
         baseline = float(observation.baseline)
         candidate = float(observation.candidate)
         target = _target_value(spec, baseline)
-        if spec.direction is MetricDirection.HIGHER_IS_BETTER:
-            target_met = candidate >= target
-        else:
-            target_met = candidate <= target
+        target_met = _target_met(spec, baseline, candidate, target)
         hard_gate_pass = target_met if spec.hard_gate else True
         comparisons.append(
             MetricComparison(
@@ -238,6 +251,7 @@ def compare_value_metrics(
                 candidate=candidate,
                 target_value=target,
                 minimum_gain=float(spec.minimum_gain),
+                minimum_candidate=spec.minimum_candidate,
                 target_met=target_met,
                 hard_gate_pass=hard_gate_pass,
                 relative_gain=_relative_gain(spec, baseline, candidate),
@@ -275,24 +289,13 @@ def evaluate_value_gate(
     observations: Iterable[MetricObservation],
     evidence: ValueEvidence,
 ) -> ValueGateDecision:
-    """Require commercial, operational and usability value before production promotion.
-
-    Source/CI proof is intentionally insufficient here. A production-value candidate
-    also needs provider-native readback, repeated success, and measured value across
-    all three classes. This function does not deploy or mutate provider state.
-    """
+    """Require commercial, operational and usability value before production promotion."""
 
     rows = tuple(observations)
     reasons: list[str] = []
     if not specs or not rows:
         return ValueGateDecision(
-            ValueGateState.HOLD_NO_METRICS,
-            False,
-            0.0,
-            0.0,
-            0.0,
-            (),
-            ("NO_VALUE_METRICS",),
+            ValueGateState.HOLD_NO_METRICS, False, 0.0, 0.0, 0.0, (), ("NO_VALUE_METRICS",)
         )
 
     required = {spec.metric for spec in specs if spec.required}
@@ -410,11 +413,11 @@ def evaluate_value_gate(
 
 
 def default_production_value_specs() -> tuple[ValueMetricSpec, ...]:
-    """Conservative default scorecard for a repeated production mission cohort.
+    """Conservative repeated-mission scorecard.
 
-    Revenue and margin may be replaced by a channel-specific commercial metric such
-    as ROAS/CPA/conversion in a mission-specific scorecard, but commercial value may
-    not be silently omitted from a production promotion decision.
+    Revenue/margin can be replaced by verified channel-specific commercial metrics
+    (for example ROAS, CPA or conversion) in a mission-specific scorecard, but the
+    COMMERCIAL class may not be silently omitted from production promotion.
     """
 
     return (
@@ -424,6 +427,7 @@ def default_production_value_specs() -> tuple[ValueMetricSpec, ...]:
             MetricDirection.HIGHER_IS_BETTER,
             weight=2.0,
             minimum_gain=1.0,
+            minimum_candidate=0.01,
             required=True,
             hard_gate=True,
         ),
@@ -433,6 +437,7 @@ def default_production_value_specs() -> tuple[ValueMetricSpec, ...]:
             MetricDirection.HIGHER_IS_BETTER,
             weight=1.5,
             minimum_gain=1.0,
+            minimum_candidate=0.01,
             required=True,
         ),
         ValueMetricSpec(
