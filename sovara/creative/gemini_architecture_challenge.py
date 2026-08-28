@@ -6,6 +6,7 @@ from hashlib import sha256
 import json
 import os
 from pathlib import Path
+import subprocess
 import sys
 from typing import Any
 from urllib.error import HTTPError, URLError
@@ -274,6 +275,57 @@ def execute_challenge(
         "external_effect_performed": False,
         "credential_value_recorded": False,
         "proposal_authority_only": True,
+        "provider_native_readback": True,
+    }
+    receipt["receipt_sha256"] = _sha(_stable_json(receipt))
+    return output, receipt
+
+
+def _vertex_fallback(spec: ChallengeSpec) -> tuple[dict[str, Any], dict[str, Any]]:
+    from sovara.creative.gemini_vertex_architecture_challenge import execute_vertex_challenge
+
+    token = subprocess.check_output(
+        ["gcloud", "auth", "print-access-token"],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    ).strip()
+    active_account = subprocess.check_output(
+        ["gcloud", "auth", "list", "--filter=status:ACTIVE", "--format=value(account)"],
+        text=True,
+        stderr=subprocess.DEVNULL,
+    ).strip().splitlines()[0]
+    output, vertex = execute_vertex_challenge(
+        spec=spec,
+        access_token=token,
+        active_account=active_account,
+    )
+    receipt: dict[str, Any] = {
+        "schema": "SOVARA_CREATIVE_GEMINI_ARCHITECTURE_CHALLENGE_RECEIPT_V1",
+        "status": vertex.get("status"),
+        "challenge_id": vertex.get("challenge_id"),
+        "transport": vertex.get("transport"),
+        "project": vertex.get("project"),
+        "location": vertex.get("location"),
+        "active_account": vertex.get("active_account"),
+        "model_requested": spec.model,
+        "model_returned": vertex.get("model_returned"),
+        "provider": "GOOGLE_VERTEX_AI",
+        "provider_request_id": vertex.get("provider_request_id"),
+        "semantic_verified": vertex.get("semantic_verified") is True,
+        "prompt_sha256": vertex.get("prompt_sha256"),
+        "request_sha256": vertex.get("request_sha256"),
+        "response_sha256": vertex.get("response_sha256"),
+        "output_sha256": vertex.get("output_sha256"),
+        "proposal_count": vertex.get("proposal_count"),
+        "usage": vertex.get("usage") if isinstance(vertex.get("usage"), dict) else {},
+        "sanitized": spec.sanitized,
+        "case_data_processed": False,
+        "provider_mutation_performed": False,
+        "external_effect_performed": False,
+        "credential_value_recorded": False,
+        "proposal_authority_only": True,
+        "provider_native_readback": vertex.get("provider_native_readback") is True,
+        "fallback_reason": "OPENROUTER_CREDENTIAL_UNBOUND",
     }
     receipt["receipt_sha256"] = _sha(_stable_json(receipt))
     return output, receipt
@@ -282,19 +334,45 @@ def execute_challenge(
 def write_outputs(
     *,
     output_dir: str | Path,
-    output: dict[str, Any],
+    output: dict[str, Any] | None,
     receipt: dict[str, Any],
 ) -> None:
     directory = Path(output_dir)
     directory.mkdir(parents=True, exist_ok=True)
-    (directory / "GEMINI_CREATIVE_ARCHITECTURE_CHALLENGE_OUTPUT.json").write_text(
-        json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
-        encoding="utf-8",
-    )
+    if output is not None:
+        (directory / "GEMINI_CREATIVE_ARCHITECTURE_CHALLENGE_OUTPUT.json").write_text(
+            json.dumps(output, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
+            encoding="utf-8",
+        )
     (directory / "GEMINI_CREATIVE_ARCHITECTURE_CHALLENGE_RECEIPT.json").write_text(
         json.dumps(receipt, indent=2, sort_keys=True, ensure_ascii=False) + "\n",
         encoding="utf-8",
     )
+
+
+def _write_failure(output_dir: str | Path, spec: ChallengeSpec, exc: Exception) -> None:
+    receipt: dict[str, Any] = {
+        "schema": "SOVARA_CREATIVE_GEMINI_ARCHITECTURE_CHALLENGE_RECEIPT_V1",
+        "status": "FAILED",
+        "challenge_id": spec.challenge_id,
+        "transport": "OPENROUTER_THEN_VERTEX_WIF",
+        "model_requested": spec.model,
+        "model_returned": None,
+        "provider": None,
+        "provider_request_id": None,
+        "semantic_verified": False,
+        "proposal_count": 0,
+        "sanitized": spec.sanitized,
+        "case_data_processed": False,
+        "provider_mutation_performed": False,
+        "external_effect_performed": False,
+        "credential_value_recorded": False,
+        "proposal_authority_only": True,
+        "error_class": type(exc).__name__,
+        "error_detail": str(exc)[:500],
+    }
+    receipt["receipt_sha256"] = _sha(_stable_json(receipt))
+    write_outputs(output_dir=output_dir, output=None, receipt=receipt)
 
 
 def main(argv: list[str] | None = None) -> int:
@@ -304,17 +382,22 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--endpoint", default=DEFAULT_ENDPOINT)
     args = parser.parse_args(argv)
 
+    spec = load_spec(args.spec)
     try:
-        spec = load_spec(args.spec)
-        output, receipt = execute_challenge(
-            spec=spec,
-            api_key=os.environ.get("OPENROUTER_API_KEY", ""),
-            endpoint=args.endpoint,
-        )
+        api_key = os.environ.get("OPENROUTER_API_KEY", "")
+        if api_key.strip():
+            output, receipt = execute_challenge(
+                spec=spec,
+                api_key=api_key,
+                endpoint=args.endpoint,
+            )
+        else:
+            output, receipt = _vertex_fallback(spec)
         write_outputs(output_dir=args.output_dir, output=output, receipt=receipt)
         print(json.dumps(receipt, sort_keys=True))
         return 0
     except Exception as exc:
+        _write_failure(args.output_dir, spec, exc)
         print(f"SOVARA_GEMINI_G2_FAILED: {exc}", file=sys.stderr)
         return 1
 

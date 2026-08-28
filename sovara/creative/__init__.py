@@ -2,10 +2,10 @@
 
 Scope: mission genomes, content/privacy classification, policy-aware routing,
 digital continuity, private-studio planning, reuse-first adaptive capability
-creation, CFBE/Ω-Scientist meta-evolution, proof-gated commercial value, and
-progressive production convergence. This package does not grant provider
-authority, authorize spend, perform publishing effects, deploy infrastructure,
-or claim runtime/value maturity.
+creation, CFBE/Ω-Scientist meta-evolution, proof-gated commercial value,
+progressive production convergence, and bounded Gemini creative challenges.
+This package does not grant provider authority, authorize spend, perform
+publishing effects, deploy infrastructure, or claim runtime/value maturity.
 """
 
 from .capability_foundry import (
@@ -30,6 +30,15 @@ from .commercial_value import (
     default_production_value_specs,
     economics_snapshot,
     evaluate_value_gate,
+)
+from .gemini_architecture_challenge import (
+    ChallengeSpec,
+    build_request as build_gemini_challenge_request,
+    load_spec as load_gemini_challenge_spec,
+)
+from .gemini_vertex_architecture_challenge import (
+    build_vertex_request,
+    vertex_endpoint,
 )
 from .genome import CreativeMissionGenome, RightsState
 from .meta_benchmark import (
@@ -85,6 +94,7 @@ __all__ = [
     "BenchmarkDimension",
     "BuildStrategy",
     "CapabilityCandidate",
+    "ChallengeSpec",
     "CompositeFrontierPoint",
     "ContentClass",
     "CreativeMissionGenome",
@@ -123,7 +133,9 @@ __all__ = [
     "ValueGateDecision",
     "ValueGateState",
     "ValueMetricSpec",
+    "build_gemini_challenge_request",
     "build_ten_x_target",
+    "build_vertex_request",
     "calculate_frontier_gaps",
     "can_deploy",
     "choose_ambition",
@@ -136,8 +148,10 @@ __all__ = [
     "evaluate_production_convergence",
     "evaluate_route",
     "evaluate_value_gate",
+    "load_gemini_challenge_spec",
     "next_surface_to_admit",
     "plan_capability",
     "preregister_omega_scientist_experiment",
     "select_route",
+    "vertex_endpoint",
 ]
