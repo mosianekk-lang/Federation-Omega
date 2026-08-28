@@ -163,6 +163,28 @@ jobs:
         self.assertIn("REPOSITORY_WRITE_AUTHORITY", rules)
         self.assertIn("UNAUTHORISED_OIDC", rules)
 
+    def test_facpf_shadow_ci_exact_read_only_contract_passes(self):
+        text = """name: FACPF Shadow CI
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: facpf-shadow-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  champion-challenger:
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/facpf-shadow-ci.yml", text, POLICY
+        )
+        self.assertEqual([], findings)
+
     def test_unlisted_workflow_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/new-bot.yml",
