@@ -1,0 +1,71 @@
+{
+  "schema": "FEDERATION-LUNO-OBSERVER-BINDING-CONTRACT-1",
+  "version": "1.2.0",
+  "project": "sov-hybrid-suite",
+  "region": "africa-south1",
+  "service": "federation-luno-observer",
+  "service_account": "luno-observer@sov-hybrid-suite.iam.gserviceaccount.com",
+  "default_mode": "PUBLIC_ONLY",
+  "account_mode": "ACCOUNT_READ_ONLY",
+  "research_only": true,
+  "financial_effects": false,
+  "provider_write_operations": false,
+  "credential_binding": {
+    "legacy_secret_names_accepted": false,
+    "dedicated_secret_names": [
+      "luno-observer-key-id",
+      "luno-observer-key-material",
+      "luno-observer-permission-proof"
+    ],
+    "permission_proof_schema": "LUNO-OBSERVER-PERMISSION-PROOF-1",
+    "exact_permissions": [
+      "Perm_R_Balance",
+      "Perm_R_Transactions",
+      "Perm_R_Orders"
+    ],
+    "write_permissions_forbidden": true,
+    "key_id_fingerprint_binding_required": true,
+    "raw_values_in_source_logs_receipts": false
+  },
+  "provider_canaries": {
+    "public": [
+      "GET /health",
+      "GET /ready",
+      "GET /v1/public/ticker?pair=XBTZAR",
+      "GET /v1/public/orderbook?pair=XBTZAR"
+    ],
+    "authenticated": [
+      "GET /v1/account/semantic-canary?pair=XBTZAR"
+    ],
+    "authenticated_response_policy": "structural counts and hashes only; no balance, order, transaction or fee values persist to receipts"
+  },
+  "deployment": {
+    "container": "federation/capital_execution/venues/Dockerfile.luno_observer",
+    "private_cloud_run": true,
+    "min_instances": 0,
+    "max_instances": 1,
+    "concurrency": 1,
+    "zero_traffic_canary_first": true,
+    "promotion_requires_canary": true,
+    "rollback_required": true,
+    "scheduler": false
+  },
+  "states": [
+    "SOURCE_IMPLEMENTED_PROVIDER_UNBOUND",
+    "PUBLIC_MARKET_PROVIDER_VERIFIED",
+    "CREDENTIAL_PERMISSION_PROOF_REQUIRED",
+    "OBSERVER_BOUND",
+    "PROVIDER_CANARY_FAILED"
+  ],
+  "invariants": [
+    "LEGACY_TRADING_CREDENTIALS_ARE_NEVER_AUTO_IMPORTED",
+    "READ_ONLY_PRESET_NAME_IS_NOT_PERMISSION_PROOF",
+    "EXACT_PERMISSION_NAMES_PLUS_KEY_FINGERPRINT_ARE_REQUIRED",
+    "NO_POST_PUT_PATCH_DELETE_PROVIDER_ROUTE",
+    "NO_ORDER_CONVERSION_SEND_WITHDRAWAL_TRANSFER_METHOD",
+    "NO_PRIVATE_ACCOUNT_VALUES_IN_PROVIDER_RECEIPT",
+    "NO_SCHEDULER_OR_AUTONOMOUS_EXECUTION_LOOP",
+    "SHADOW_MODE_REMAINS_THE_CAPITAL_CEILING",
+    "PUBLIC_PROVIDER_SUCCESS_DOES_NOT_IMPLY_ACCOUNT_BINDING"
+  ]
+}

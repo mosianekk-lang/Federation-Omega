@@ -43,6 +43,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         expected = {
             ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
             ".github/workflows/cios-production-lane.yml",
+            ".github/workflows/luno-observer-provider-binding.yml",
         }
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
         self.assertNotIn("oidc_boundary", self.policy)
@@ -56,7 +57,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertTrue(BOUNDARY.exists())
         self.assertIn("PRIVATE_OPS_PLANE_REQUIRED", self.boundary)
         self.assertIn("not executable from the legacy public source repository", self.boundary)
-        self.assertIn("contains exactly two provider-deployment gateways", self.boundary)
+        self.assertIn("contains exactly three provider-deployment gateways", self.boundary)
         self.assertIn("no provider rebuild or Library writeback is claimed", self.boundary)
 
     def test_rebuild_anchors_to_exact_predecessor_and_original_writer(self) -> None:
