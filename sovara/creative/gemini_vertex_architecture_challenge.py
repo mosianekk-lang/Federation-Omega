@@ -10,7 +10,10 @@ from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
-from .gemini_architecture_challenge import ChallengeSpec, load_spec
+try:
+    from .gemini_architecture_challenge import ChallengeSpec, load_spec
+except ImportError:  # direct file-path execution inside the trusted workflow
+    from gemini_architecture_challenge import ChallengeSpec, load_spec
 
 
 DEFAULT_PROJECT = "sov-hybrid-suite"
