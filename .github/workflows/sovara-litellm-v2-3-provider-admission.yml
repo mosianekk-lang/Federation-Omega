@@ -7,7 +7,9 @@ on:
       - ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
       - "governance/github_airlock_policy.json"
       - "governance/sovara_gemini_collaboration_request_v1.json"
+      - "governance/sovara_creative_gemini_architecture_challenge_v1.json"
       - "sovara/gemini/bootstrap_gateway.sh"
+      - "sovara/creative/gemini_architecture_challenge.py"
       - "releases/sovara-litellm/v2.3.0/**"
   workflow_dispatch:
 
@@ -80,6 +82,13 @@ jobs:
                 'ENSURE_EXISTING_REQUIRED_APIS_ENABLED',
               }
               assert set(p.get('mutation_scope') or []) == expected, p
+          elif mode == 'G2_CREATIVE_ARCHITECTURE_CHALLENGE':
+              assert p.get('provider_mutation_allowed') is False, p
+              assert p.get('model_inference_allowed') is True, p
+              assert p.get('transport') == 'OPENROUTER', p
+              assert p.get('model') == 'google/gemini-3.1-pro-preview', p
+              assert p.get('challenge_spec') == 'governance/sovara_creative_gemini_architecture_challenge_v1.json', p
+              assert 1 <= int(p.get('max_output_tokens', 0)) <= 6000, p
           else:
               raise AssertionError(f'unsupported request mode: {mode!r}')
           print(mode)
@@ -122,6 +131,18 @@ jobs:
             > "$TARGET/receipts/PROVIDER_PROBE_SELF_TEST.json"
 
           bash -n "$TARGET/run_provider_admission_v2_3.sh"
+
+          if [[ -f governance/sovara_creative_gemini_architecture_challenge_v1.json ]]; then
+            python3 - <<'PY'
+          from sovara.creative.gemini_architecture_challenge import build_request, load_spec
+          spec=load_spec('governance/sovara_creative_gemini_architecture_challenge_v1.json')
+          request=build_request(spec)
+          assert request['model'] == 'google/gemini-3.1-pro-preview'
+          assert request['provider']['data_collection'] == 'deny'
+          assert request['provider']['zdr'] is True
+          assert request['response_format']['type'] == 'json_schema'
+          PY
+          fi
 
           echo "SOVARA_RELEASE_DIR=$TARGET" >> "$GITHUB_ENV"
           echo "SOVARA_RECEIPT_DIR=$TARGET/receipts" >> "$GITHUB_ENV"
@@ -235,6 +256,22 @@ jobs:
               ;;
           esac
 
+      - name: Execute bounded Gemini Creative Architecture Challenge
+        if: steps.provider_mode.outputs.scope == 'G2_CREATIVE_ARCHITECTURE_CHALLENGE'
+        id: g2_challenge
+        continue-on-error: true
+        shell: bash
+        env:
+          OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+        run: |
+          set +e
+          python3 sovara/creative/gemini_architecture_challenge.py \
+            --spec governance/sovara_creative_gemini_architecture_challenge_v1.json \
+            --output-dir "$SOVARA_RECEIPT_DIR"
+          code=$?
+          echo "exit_code=$code" >> "$GITHUB_OUTPUT"
+          exit "$code"
+
       - name: Execute provider admission, canaries, deployment, and rollback gates
         if: steps.provider_mode.outputs.scope == 'FULL_PROVIDER_ADMISSION'
         id: admission
@@ -265,6 +302,7 @@ jobs:
           PROVIDER_ADMISSION_REQUESTED: ${{ steps.provider_mode.outputs.requested }}
           EXECUTION_SCOPE: ${{ steps.provider_mode.outputs.scope }}
           ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
+          G2_EXIT_CODE: ${{ steps.g2_challenge.outputs.exit_code }}
         run: |
           set -euo pipefail
           mkdir -p "${SOVARA_RECEIPT_DIR:-$RUNNER_TEMP/sovara-litellm-v2.3.0/receipts}"
@@ -277,6 +315,8 @@ jobs:
           scope=os.environ.get('EXECUTION_SCOPE','SOURCE_VALIDATION_ONLY')
           raw_code=os.environ.get('ADMISSION_EXIT_CODE','').strip()
           code=int(raw_code) if raw_code else None
+          raw_g2=os.environ.get('G2_EXIT_CODE','').strip()
+          g2_code=int(raw_g2) if raw_g2 else None
           d=path.parent
 
           def load(name):
@@ -288,13 +328,28 @@ jobs:
           wif=load('WIF_G0_VERIFIED.json')
           adc=load('GEMINI_ADC_VERIFIED.json')
           adc_apply=load('GEMINI_ADC_APPLY.json')
+          challenge=load('GEMINI_CREATIVE_ARCHITECTURE_CHALLENGE_RECEIPT.json')
           structural_ok=(d/'STRUCTURAL_VALIDATION_PRE_AUTH.json').is_file() and (d/'PROVIDER_PROBE_SELF_TEST.json').is_file()
           wif_ok=(wif.get('receipt')=='FEDOMEGA-WIF-CLOUD-VERIFIED' and wif.get('state')=='VERIFIED' and wif.get('project_number_observed')=='257649435135')
           adc_ok=(adc.get('receipt')=='FEDOMEGA-GEMINI-ADC-VERIFIED' and adc.get('state')=='VERIFIED' and adc.get('project_number_observed')=='257649435135' and adc.get('service_account_key_created') is False and adc.get('secret_payload_accessed') is False)
           adc_mutation=bool(adc_apply.get('mutation_performed',False))
+          challenge_ok=(
+              challenge.get('schema')=='SOVARA_CREATIVE_GEMINI_ARCHITECTURE_CHALLENGE_RECEIPT_V1'
+              and challenge.get('status')=='VERIFIED'
+              and challenge.get('challenge_id')=='SC-GEMINI-ARCH-20260828-001'
+              and challenge.get('semantic_verified') is True
+              and challenge.get('model_returned')
+              and 'gemini' in str(challenge.get('model_returned','')).lower()
+              and challenge.get('provider_request_id')
+              and challenge.get('case_data_processed') is False
+              and challenge.get('external_effect_performed') is False
+              and challenge.get('proposal_authority_only') is True
+              and challenge.get('proposal_count') == 18
+              and g2_code == 0
+          )
 
           receipt={
-              'schema':'SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-5',
+              'schema':'SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-6',
               'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
               'repository':os.environ['GITHUB_REPOSITORY'],
               'workflow':os.environ['GITHUB_WORKFLOW'],
@@ -312,8 +367,17 @@ jobs:
               'provider_admission_exit_code':code,
               'provider_admission_completed':scope=='FULL_PROVIDER_ADMISSION' and code==0,
               'provider_state_claimed':scope=='FULL_PROVIDER_ADMISSION' and code==0,
+              'gemini_architecture_challenge_verified':challenge_ok,
+              'gemini_challenge_id':challenge.get('challenge_id') if challenge else None,
+              'gemini_transport':challenge.get('transport') if challenge else None,
+              'gemini_model_requested':challenge.get('model_requested') if challenge else None,
+              'gemini_model_returned':challenge.get('model_returned') if challenge else None,
+              'gemini_upstream_provider':challenge.get('provider') if challenge else None,
+              'gemini_provider_request_id':challenge.get('provider_request_id') if challenge else None,
+              'gemini_proposal_count':challenge.get('proposal_count') if challenge else None,
+              'gemini_challenge_receipt_sha256':challenge.get('receipt_sha256') if challenge else None,
               'case_data_processed':False,
-              'model_inference_performed':False if scope in {'G0_READ_ONLY_VERIFY','G1_ADC_APPLY_VERIFY'} else None,
+              'model_inference_performed':challenge_ok if scope=='G2_CREATIVE_ARCHITECTURE_CHALLENGE' else (False if scope in {'G0_READ_ONLY_VERIFY','G1_ADC_APPLY_VERIFY'} else None),
               'repository_source_write_authority':False,
               'credential_values_recorded':False,
           }
@@ -335,6 +399,7 @@ jobs:
         env:
           EXECUTION_SCOPE: ${{ steps.provider_mode.outputs.scope }}
           ADMISSION_EXIT_CODE: ${{ steps.admission.outputs.exit_code }}
+          G2_EXIT_CODE: ${{ steps.g2_challenge.outputs.exit_code }}
         run: |
           set -euo pipefail
           receipt="${SOVARA_RECEIPT_DIR}/WORKFLOW_RECEIPT.json"
@@ -354,6 +419,15 @@ jobs:
             G1_ADC_APPLY_VERIFY)
               jq -e '.execution_scope == "G1_ADC_APPLY_VERIFY" and .wif_verified == true and .adc_verified == true and .adc_apply_mutation_performed == true and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == false' "$receipt" >/dev/null
               echo "G1 Gemini ADC attachment verified. Only the bounded runtime identity/IAM/API controls in the request were admitted; no model inference, traffic promotion or case-data processing was performed."
+              ;;
+            G2_CREATIVE_ARCHITECTURE_CHALLENGE)
+              code="${G2_EXIT_CODE:-99}"
+              if [[ "$code" -ne 0 ]]; then
+                echo "G2 Gemini Creative Architecture Challenge stopped at a provider proof gate. Redacted receipts were retained when available." >&2
+                exit "$code"
+              fi
+              jq -e '.execution_scope == "G2_CREATIVE_ARCHITECTURE_CHALLENGE" and .gemini_architecture_challenge_verified == true and .model_inference_performed == true and .case_data_processed == false and .gemini_proposal_count == 18 and (.gemini_provider_request_id | length > 0)' "$receipt" >/dev/null
+              echo "G2 Gemini Creative Architecture Challenge verified. Output is proposal-only; no provider mutation, case-data processing, publishing or design auto-promotion occurred."
               ;;
             SOURCE_VALIDATION_ONLY)
               jq -e '.execution_scope == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_state_claimed == false' "$receipt" >/dev/null
