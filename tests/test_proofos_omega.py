@@ -2,6 +2,7 @@ from __future__ import annotations
 import json, tempfile, unittest
 from pathlib import Path
 from proofos_omega import *
+from proofos_omega.core import bounded_failure_diagnostic
 
 ROOT=Path(__file__).resolve().parents[1]; POLICY_PATH=ROOT/'governance/proofos_omega_policy_v1.json'; BASE='1'*40; HEAD='2'*40
 
@@ -66,6 +67,12 @@ class CacheRunnerTests(unittest.TestCase):
     def test_runner_only_selected(self):
         with tempfile.TemporaryDirectory() as td:
             r=Path(td); self.setup(r); (r/'tests/test_unrelated.py').write_text('import unittest\nclass T(unittest.TestCase):\n def test_bad(self): self.fail()\n'); p=self.small(); m=ProofSelector(p).compile_manifest(base_sha=BASE,head_sha=HEAD,impact=ImpactCompiler(p).assess(['app/x.py'])); self.assertEqual({'focused'},selected(m)); rep=ProofRunner(policy=p,repo_root=r).run(m); self.assertEqual('PASS',rep.status)
+    def test_failure_diagnostic_is_bounded_and_redacted(self):
+        with tempfile.TemporaryDirectory() as td:
+            r=Path(td); self.setup(r); secret='github'+'_pat_'+'SECRET1234567890'; (r/'tests/test_focus.py').write_text(f'import sys,unittest\nclass T(unittest.TestCase):\n def test_bad(self):\n  print("token={secret}",file=sys.stderr)\n  self.fail("X"*6000)\n'); p=self.small(); m=ProofSelector(p).compile_manifest(base_sha=BASE,head_sha=HEAD,impact=ImpactCompiler(p).assess(['app/x.py'])); result=ProofRunner(policy=p,repo_root=r).run(m).results[0]; self.assertEqual('FAIL',result.status); self.assertLessEqual(len(result.failure_diagnostic),4096); self.assertNotIn(secret,result.failure_diagnostic); self.assertEqual('token=[REDACTED]',bounded_failure_diagnostic(f'token={secret}'))
+    def test_pass_result_remains_hash_only(self):
+        with tempfile.TemporaryDirectory() as td:
+            r=Path(td); self.setup(r); p=self.small(); m=ProofSelector(p).compile_manifest(base_sha=BASE,head_sha=HEAD,impact=ImpactCompiler(p).assess(['app/x.py'])); result=ProofRunner(policy=p,repo_root=r).run(m).results[0]; self.assertEqual('PASS',result.status); self.assertNotIn('failure_diagnostic',result.to_dict())
     def test_missing_required_fails_optional_skips(self):
         for optional,status in [(False,'FAIL'),(True,'PASS')]:
             with tempfile.TemporaryDirectory() as td:
