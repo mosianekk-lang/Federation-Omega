@@ -79,12 +79,12 @@ jobs:
         with:
           python-version: '3.12'
 
-      # Bootstrap the P0 admission kernel and selector before trusting dynamic selection.
+      # P0 bootstrap: validate the admission kernel and selector before trusting dynamic selection.
       - name: Run Airlock regression tests
         run: python -m unittest discover -s tests -p 'test_github_airlock.py' -v
 
       - name: Run ProofOS bootstrap regression tests
-        run: python -m unittest discover -s tests -p 'test_proofos_omega.py' -v
+        run: python -m unittest discover -s tests -p 'test_proofos*.py' -v
 
       - name: Build source provenance receipt
         env:
@@ -167,6 +167,17 @@ jobs:
             --repo-root . \
             --output airlock-output/proofos-admission-report.json
 
+      - name: Run non-blocking ProofOS shadow selector calibration
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m proofos_omega.calibration \
+            --policy governance/proofos_omega_policy_v1.json \
+            --config proofos_omega/shadow_calibration_v1.json \
+            --manifest airlock-output/proofos-manifest.json \
+            --repo-root . \
+            --output airlock-output/proofos-shadow-calibration.json
+
       - name: Publish Airlock result
         if: always()
         shell: bash
@@ -206,6 +217,17 @@ jobs:
           print(f"- blocking failures: `{len(p['blocking_failures'])}`")
           PY
           fi
+          if [[ -f airlock-output/proofos-shadow-calibration.json ]]; then
+            echo '## ProofOS shadow selector calibration' >> "$GITHUB_STEP_SUMMARY"
+            python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          p = json.load(open('airlock-output/proofos-shadow-calibration.json'))
+          print(f"- status: `{p['status']}`")
+          print(f"- receipt: `{p['receipt_sha256']}`")
+          print(f"- sentinels: `{len(p['selected_sentinels'])}`")
+          print(f"- selector escape candidates: `{len(p['escape_candidates'])}`")
+          PY
+          fi
 
       - name: Upload immutable Airlock, provenance and ProofOS reports
         if: always() && hashFiles('airlock-output/*.json') != ''
@@ -217,5 +239,6 @@ jobs:
             airlock-output/source-provenance-report.json
             airlock-output/proofos-manifest.json
             airlock-output/proofos-admission-report.json
+            airlock-output/proofos-shadow-calibration.json
           if-no-files-found: error
           retention-days: 90
