@@ -1,22 +1,20 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G1-20260828-004",
-  "mode": "G1_ADC_APPLY_VERIFY",
+  "request_id": "SOVARA-GEMINI-G2-20260828-001",
+  "mode": "G2_CREATIVE_ARCHITECTURE_CHALLENGE",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
-  "provider_mutation_allowed": true,
+  "provider_mutation_allowed": false,
+  "model_inference_allowed": true,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "mutation_scope": [
-    "CREATE_SV_GEMINI_RUNTIME_SERVICE_ACCOUNT_IF_ABSENT",
-    "BIND_RUNTIME_ROLES_AIPLATFORM_USER_AND_SERVICEUSAGE_CONSUMER",
-    "BIND_DEPLOYER_SERVICE_ACCOUNT_USER_ON_RUNTIME",
-    "BIND_DEPLOYER_RUN_DEVELOPER",
-    "ENSURE_EXISTING_REQUIRED_APIS_ENABLED"
-  ],
-  "purpose": "Retry the bounded G1 Gemini ADC/runtime attachment after the canonical bootstrap executable-mode repair admitted in PR #743. Reuse the already-proven repository-scoped WIF/project/provider identity, apply only the exact still-missing runtime service-account/IAM controls, skip service-enablement mutation when fresh provider readback shows all required APIs already enabled, verify the resulting ADC state by same-surface provider readback, and prepare the separate zero-traffic Gemini semantic gateway canary. No model inference or case-data processing is authorized by this stage.",
-  "truth_boundary": "This request authorizes only the minimum provider-side ADC/runtime identity controls enumerated in mutation_scope. It does not authorize model inference, legal filing, email, service, publication, advertising spend, production traffic promotion, secret payload access, unrelated IAM expansion, case-data disclosure or destructive provider actions. A successful source/CI merge is not ADC proof; the post-merge provider workflow must emit a verified same-surface receipt."
+  "transport": "OPENROUTER",
+  "model": "google/gemini-3.1-pro-preview",
+  "challenge_spec": "governance/sovara_creative_gemini_architecture_challenge_v1.json",
+  "max_output_tokens": 5500,
+  "purpose": "Execute one sanitized, bounded Gemini 3.1 Pro architecture challenge for SOVARA Creative through the already-governed OpenRouter transport while the Google-native G1 runtime-identity lane is independently held at iam.serviceAccounts.create. The output is proposal-only and will be challenged by Formation, CFBE and Omega-Scientist before any design adoption.",
+  "truth_boundary": "This request authorizes one bounded model-inference call using the exact sanitized challenge spec and declared Gemini model. It does not authorize case-data processing, provider/IAM mutation, legal filing, email, service, publication, advertising spend, production traffic promotion, secret disclosure, unrelated external effects or design auto-promotion. A provider response must carry the exact challenge_id and be recorded with provider/model/request/usage hashes before any claim that Gemini participated."
 }
