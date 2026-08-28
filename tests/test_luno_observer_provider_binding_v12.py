@@ -142,6 +142,21 @@ class LunoObserverProviderBindingV12Tests(unittest.TestCase):
         self.assertTrue(authority["provider_state_must_match_readback"])
         self.assertIn("JARVIS_AO5_REALITYGUARD_CONTROLS_PROVIDER_STATE_CLAIMS", contract["invariants"])
 
+    def test_provider_workflow_externalizes_wif_authority_and_fails_closed_when_unbound(self):
+        workflow = Path(".github/workflows/luno-observer-provider-binding.yml").read_text(encoding="utf-8")
+        self.assertNotIn(
+            "WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+            workflow,
+        )
+        self.assertIn("vars.FEDOMEGA_GCP_WIF_PROVIDER", workflow)
+        self.assertIn("vars.FEDOMEGA_GCP_DEPLOYER_SA", workflow)
+        self.assertIn("PROVIDER_AUTHORITY_NOT_ESTABLISHED", workflow)
+        self.assertIn("provider-authority-state.txt", workflow)
+        self.assertIn("provider_authority_state", workflow)
+        self.assertIn("provider_authority_source", workflow)
+        self.assertNotIn("secrets.FEDOMEGA_GCP_WIF_PROVIDER", workflow)
+        self.assertNotIn("secrets.FEDOMEGA_GCP_DEPLOYER_SA", workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
