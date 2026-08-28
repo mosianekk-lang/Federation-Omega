@@ -1,0 +1,100 @@
+{
+  "authority_ceiling": "A1_INTERNAL",
+  "constitutional_rules": [
+    "owner objectives may not self-rewrite",
+    "proof thresholds may not self-relax",
+    "authority may not self-expand",
+    "provider output is never canonical truth by itself",
+    "architectural evolution cannot self-promote",
+    "cross-receiver maturity inheritance is prohibited",
+    "provider and external effects remain in SOVARA",
+    "every consequential mutation requires exact readback and rollback",
+    "large evidence remains external with compact hash-bound pointers"
+  ],
+  "discovery_payload_contract": {
+    "default_result_target_chars": 12000,
+    "genesis_failure": "FCG-GEMINI-DISCOVER-20260828-001",
+    "google_sheets_hard_cell_limit_chars": 50000,
+    "large_result_route": "CHUNK_OR_EXTERNALIZE_AND_RETURN_POINTER",
+    "single_cell_payload_above_limit": "PROHIBITED"
+  },
+  "evolution_modes": {
+    "ARCHITECTURAL": "Propose a system-boundary change; simulation, rollback, independent readback and explicit owner approval are mandatory.",
+    "HORIZONTAL": "Transfer a proven mechanism to another receiver without transferring proof; the target requires its own live lease.",
+    "VERTICAL": "Improve a capability within its current constitutional boundary."
+  },
+  "experiment_rules": [
+    "comparison context must be stable before causal attribution",
+    "single-mechanism deltas are required for direct causal attribution",
+    "champion protected floors cover quality reliability proof rollback and owner burden",
+    "high-information reversible experiments outrank repetitive low-information retries",
+    "negative results remain evidence",
+    "unknown cost or risk fails closed"
+  ],
+  "external_effect_default": false,
+  "issue": 714,
+  "kind": "ADDITIVE_SOVEREIGN_EVOLUTION_LAYER",
+  "new_capabilities": [
+    "capability_genome",
+    "causal_attribution",
+    "evidence_economics",
+    "shadow_tournament",
+    "vertical_horizontal_architectural_evolution_modes",
+    "constitutional_architectural_owner_gate",
+    "receiver_local_horizontal_transfer_gate",
+    "chaos_recovery_court",
+    "value_realization_receipt",
+    "evidence_virtualization",
+    "bounded_discovery_planner",
+    "stage20_bridge"
+  ],
+  "non_duplication": {
+    "new_chat_recovery_system": false,
+    "new_failure_kernel": false,
+    "new_parallel_persistence_system": false,
+    "new_provider_execution_plane": false,
+    "new_top_level_mission_engine": false,
+    "policy": "EXTEND_AND_COMPOSE_EXISTING_PROVEN_PRIMITIVES"
+  },
+  "objective": "Continuously harvest frontier mechanisms, compile provider-neutral capability genomes, run comparable causal experiments, select high-information reversible work, challenge incumbents in shadow tournaments, qualify recovery and value, and promote only receiver-local proof-backed gains without surrendering Superior Logic mission sovereignty or SOVARA effect authority.",
+  "promotion_ladder": [
+    "SOURCE_IMPLEMENTED",
+    "AIRLOCK_ADMITTED",
+    "INTERNAL_OS_CANARY_VERIFIED",
+    "CFBE_AND_AOCRA_REGISTERED",
+    "GEMINI_RECEIVER_CANARY_VERIFIED",
+    "WORKSPACE_BIDIRECTIONAL_VERIFIED",
+    "ROBUSTNESS_CHAOS_VALUE_SOAK_VERIFIED",
+    "PRODUCTION_QUALIFIED"
+  ],
+  "provider_boundary": {
+    "aggregate_sovara_status_proves_receiver": false,
+    "gemini_first_domain": true,
+    "provider_maturity_receiver_local": true,
+    "provider_native_readback_required": true,
+    "stored_credential_reference_proves_authority": false,
+    "workspace_effect_proof_separate": true
+  },
+  "reuse": {
+    "benchmarking": "benchmarking.cfbe_omega",
+    "execution_continuity": "frontier_convergence.continuity_adapter",
+    "failure_recovery": "Failure-Win / CFRE / RealityGuard",
+    "federation_evolution": "evidenceops.caseforge.federation_evolution_program",
+    "frontier_primitives": "frontier_convergence.core",
+    "gemini_domain_adapter": "frontier_convergence.gemini_adapter",
+    "institutional_cognition": "formation_omega.institutional_cognition",
+    "mission_closure": "formation_omega.mission_convergence",
+    "provider_effects": "SOVARA",
+    "stage20_maturation": "evidenceops.caseforge.autonomous_maturation"
+  },
+  "schema": "FRONTIER-CONVERGENCE-OS-V1",
+  "truth_boundary": {
+    "architectural_proposal_proves_improvement": false,
+    "benchmark_score_grants_authority": false,
+    "ci_proves_provider_effect": false,
+    "conversation_continuity_required_for_mission_continuity": false,
+    "internal_canary_proves_production": false,
+    "source_proves_live_provider": false
+  },
+  "version": "1.0.0"
+}
