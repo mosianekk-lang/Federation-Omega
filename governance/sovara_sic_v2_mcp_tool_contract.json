@@ -1,0 +1,9 @@
+{
+  "schema": "SOVARA-SIC-V2-MCP-TOOL-CONTRACT-V1",
+  "canonical_user_tool": "sovara_external_model_review",
+  "single_transaction": true,
+  "input": ["code", "language", "objective", "mode", "max_models"],
+  "output": "FULL_ADJUDICATED_RECEIPT",
+  "canonical_source_mutation": false,
+  "internal_sequence_must_not_depend_on_chat_client": true
+}
