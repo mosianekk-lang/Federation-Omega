@@ -1,0 +1,4 @@
+# Runtime mission state is durable runtime data, never source control.
+.sovara/
+receipts/
+mission-state/
