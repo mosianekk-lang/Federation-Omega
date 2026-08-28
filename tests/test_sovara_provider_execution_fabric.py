@@ -1,3 +1,4 @@
+import io
 import unittest
 
 from ops.sovara_provider_execution_fabric import (
@@ -312,6 +313,18 @@ class SovaraCreativeGenesisTests(unittest.TestCase):
             route=route,
         )
         self.assertEqual(result, Eligibility.NON_GENERATIVE_ONLY)
+
+
+class SovaraCreativeOpenRouterAdmissionTests(unittest.TestCase):
+    def test_openrouter_policy_adapter_regressions_are_admission_bound(self):
+        suite = unittest.defaultTestLoader.loadTestsFromName(
+            "tests.test_sovara_creative_openrouter_adapter"
+        )
+        stream = io.StringIO()
+        result = unittest.TextTestRunner(stream=stream, verbosity=2).run(suite)
+
+        self.assertGreaterEqual(result.testsRun, 26)
+        self.assertTrue(result.wasSuccessful(), stream.getvalue())
 
 
 class SovaraCreativeSovereignStudioTests(unittest.TestCase):
