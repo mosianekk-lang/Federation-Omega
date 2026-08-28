@@ -1,0 +1,16 @@
+{
+  "schema": "SOVARA-SIC-V2-END-TO-END-CANARY-CONTRACT-V1",
+  "required_sequence": [
+    "CHAT_OR_TEST_CLIENT_SUBMITS_SYNTHETIC_CODE",
+    "MCP_TOOL_ACCEPTS",
+    "MISSION_ID_CREATED",
+    "SOURCE_HASHED",
+    "AT_LEAST_ONE_REVIEW_LANE_EXECUTES",
+    "BOUNDARY_EVENTS_RECORDED_IF_ANY",
+    "RESULT_SEALED",
+    "SAME_MISSION_RESUMABLE",
+    "NO_CANONICAL_SOURCE_MUTATION"
+  ],
+  "live_external_provider_optional_for_source_canary": true,
+  "provider_live_claim_requires_provider_readback": true
+}
