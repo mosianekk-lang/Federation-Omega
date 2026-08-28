@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.8.0",
+  "version": "2.8.1",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -22,6 +22,7 @@
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+    ".github/workflows/sovara-creative-image-catalog-readback.yml",
     ".github/workflows/cios-production-lane.yml",
     ".github/workflows/frontier-runtime-qualification.yml",
     ".github/workflows/superior-logic-maturation-shadow.yml",
@@ -58,6 +59,11 @@
       "workflow_dispatch"
     ],
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/sovara-creative-image-catalog-readback.yml": [
+      "pull_request",
       "push",
       "workflow_dispatch"
     ],
@@ -99,6 +105,9 @@
       "main"
     ],
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "main"
+    ],
+    ".github/workflows/sovara-creative-image-catalog-readback.yml": [
       "main"
     ],
     ".github/workflows/cios-production-lane.yml": [
@@ -189,6 +198,7 @@
       ".github/workflows/caseforge-provider-readback-canary.yml",
       ".github/workflows/pfrd-omega-operator-auth-probe.yml",
       ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+      ".github/workflows/sovara-creative-image-catalog-readback.yml",
       ".github/workflows/cios-production-lane.yml",
       ".github/workflows/frontier-runtime-qualification.yml",
       ".github/workflows/superior-logic-maturation-shadow.yml",
