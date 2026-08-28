@@ -34,6 +34,24 @@ ReviewMode = Literal[
 ]
 
 
+def build_store(*, state_dir: Path | None = None):
+    backend = os.environ.get("SOVARA_STATE_BACKEND", "file").strip().lower()
+    if backend == "file":
+        root = state_dir or Path(os.environ.get("SOVARA_STATE_DIR", ".sovara/sovereign-intelligence-court"))
+        return FileMissionStore(root)
+    if backend == "gcs":
+        bucket = os.environ.get("SOVARA_STATE_BUCKET", "").strip()
+        if not bucket:
+            raise RuntimeError("SOVARA_STATE_BUCKET_REQUIRED_FOR_GCS_BACKEND")
+        from sovara_gcs_mission_store_v1 import GCSMissionStore
+
+        return GCSMissionStore(
+            bucket_name=bucket,
+            prefix=os.environ.get("SOVARA_STATE_PREFIX", "sovara/sic-v2"),
+        )
+    raise RuntimeError(f"UNSUPPORTED_SOVARA_STATE_BACKEND:{backend}")
+
+
 def run_review(
     code: str,
     *,
@@ -43,8 +61,7 @@ def run_review(
     max_models: int = 4,
     state_dir: Path | None = None,
 ) -> dict[str, Any]:
-    root = state_dir or Path(os.environ.get("SOVARA_STATE_DIR", ".sovara/sovereign-intelligence-court"))
-    court = SovereignIntelligenceCourt(store=FileMissionStore(root))
+    court = SovereignIntelligenceCourt(store=build_store(state_dir=state_dir))
     return asdict(
         court.evaluate(
             code,
@@ -57,7 +74,7 @@ def run_review(
 
 
 def build_server():
-    """Build the MCP server lazily so lean source-test jobs need no MCP package."""
+    """Build the MCP server lazily so source-only modules remain independently testable."""
     try:
         from mcp.server.mcpserver import MCPServer
         from mcp.types import ToolAnnotations
