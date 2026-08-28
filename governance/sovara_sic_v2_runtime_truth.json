@@ -1,0 +1,9 @@
+{
+  "schema": "SOVARA-SIC-V2-RUNTIME-TRUTH-V1",
+  "source_branch": "sovara-sovereign-intelligence-court-v2",
+  "source_state": "IMPLEMENTATION_IN_PROGRESS",
+  "provider_live": false,
+  "mcp_deployed": false,
+  "chat_connected": false,
+  "note": "These booleans must be advanced only by provider/runtime readback, not by source creation."
+}
