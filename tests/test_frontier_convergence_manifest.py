@@ -46,6 +46,24 @@ class FrontierConvergenceManifestTests(unittest.TestCase):
             + json.dumps(mismatches, sort_keys=True, separators=(",", ":")),
         )
 
+    def test_frontier_convergence_os_regression_court(self):
+        repo = Path(__file__).resolve().parents[1]
+        suite = unittest.defaultTestLoader.discover(
+            str(repo / "tests"),
+            pattern="test_frontier_convergence_os.py",
+        )
+        result = unittest.TestResult()
+        suite.run(result)
+        failures = [
+            {"test": str(test), "message": message[-2000:]}
+            for test, message in (*result.failures, *result.errors)
+        ]
+        self.assertTrue(
+            result.wasSuccessful(),
+            "FRONTIER_CONVERGENCE_OS_REGRESSION_FAILURE="
+            + json.dumps(failures, sort_keys=True, separators=(",", ":")),
+        )
+
 
 if __name__ == "__main__":
     unittest.main()
