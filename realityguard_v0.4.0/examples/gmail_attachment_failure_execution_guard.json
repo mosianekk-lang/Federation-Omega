@@ -1,0 +1,47 @@
+{
+  "schema_version": "realityguard.execution-guard.v1",
+  "request": {
+    "request_id": "MPMB298-26-EMAIL-FAILED-1",
+    "tool_name": "gmail.send_email",
+    "operation": "send",
+    "effect_class": "EXTERNAL_MESSAGE",
+    "target": {
+      "recipients": [
+        "faith@example.org",
+        "employer@example.org"
+      ],
+      "recipients_verified": true
+    },
+    "payload": {
+      "subject": "MPMB298-26 Rule 32 application",
+      "attachments": [
+        {
+          "name": "MPMB298-26.pdf",
+          "content_base64": "JVBERi0xLjQKQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB"
+        }
+      ]
+    },
+    "expected_fruit": {
+      "provider_state": "SENT"
+    },
+    "idempotency_key": "mpmb298-26-email-v1"
+  },
+  "authority": {
+    "formation_permit_consumed": true,
+    "permit_single_use": true,
+    "action_binding_matches": true,
+    "proof_ref": "formation:example"
+  },
+  "route": {
+    "readback_supported": true,
+    "semantic_canary_verified": true,
+    "canary_proof_ref": "canary:gmail",
+    "inline_binary_supported": false,
+    "inline_binary_canary_verified": false
+  },
+  "retry": {
+    "attempt": 1,
+    "previous_attempts": [],
+    "exact_repair": ""
+  }
+}
