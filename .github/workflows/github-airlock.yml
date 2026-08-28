@@ -128,6 +128,9 @@ jobs:
       - name: Run Architron action-specific semantic contract regressions
         run: python -m unittest discover -s tests -p 'test_architron_semantic_contract.py' -v
 
+      - name: Run SOVARA provider recovery circuit regressions
+        run: python -m unittest discover -s tests -p 'test_sovara_provider_recovery_controller.py' -v
+
       - name: Run Federation autonomous controller regression tests
         run: python -m unittest discover -s tests -p 'test_federation_autonomous_controller.py' -v
 
