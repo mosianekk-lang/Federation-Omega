@@ -1,0 +1,17 @@
+{
+  "schema": "SOVARA-SIC-V2-ZERO-DILUTION-CONTRACT-V1",
+  "incumbent_preserved": true,
+  "prohibited_successor_changes_without_equivalence_proof": [
+    "REMOVE_EXISTING_MODULE",
+    "WEAKEN_GATE",
+    "COLLAPSE_PROOF_STATE",
+    "SILENT_ABI_CHANGE",
+    "REMOVE_RECOVERY_ROUTE",
+    "LOWER_TEST_THRESHOLD",
+    "REDUCE_TRACEABILITY",
+    "WEAKEN_PROJECT_ISOLATION",
+    "WEAKEN_SOVARA_SLOS_SEPARATION",
+    "REMOVE_FAILURE_WIN_CONTROL"
+  ],
+  "violation_action": "HOLD_PROMOTION_AND_PRESERVE_INCUMBENT"
+}
