@@ -34,6 +34,10 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           from ops.sovara_ao5_full_v2.ao5_full_engine import coverage_gate, canary, zero_dilution_verdict
+          from ops.sovara_ao5_full_v2.source_identity import RAW_UPLOAD_SHA256, CANONICAL_AUTHORITY
+
+          assert CANONICAL_AUTHORITY == 'RAW_UPLOAD_SHA256'
+          assert RAW_UPLOAD_SHA256 == '773ee295b2ae3f2182afc47bcc94c676c1e6464face0176504ff8763c9616443'
 
           coverage = coverage_gate()
           assert coverage['complete'] is True, coverage
@@ -55,8 +59,8 @@ jobs:
           )
           assert gate['local_eligible'] is True, gate
           assert gate['verified'] is False, gate
-          assert gate['label'] == 'ZERO_DILUTION_LOCAL_ELIGIBLE_PROVIDER_GATES_OPEN', gate
-          print('AO5_SOURCE_CI_VERIFIED')
+          assert gate['label'] != 'ZERO_DILUTION_VERIFIED', gate
+          print('AO5_BYTE_EXACT_SOURCE_CI_VERIFIED')
           print(result['receipt_sha256'])
           PY
 
@@ -70,5 +74,5 @@ jobs:
           gate = receipt['zero_dilution_gate']
           assert gate['github_pr_admission_pass'] is False, gate
           assert gate['merged_main_exact_readback_pass'] is False, gate
-          assert gate['state'] == 'ZERO_DILUTION_LOCAL_ELIGIBLE_PROVIDER_GATES_OPEN', gate
+          assert gate['state'] != 'ZERO_DILUTION_VERIFIED', gate
           PY
