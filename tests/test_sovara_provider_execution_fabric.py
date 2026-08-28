@@ -26,6 +26,9 @@ from sovara.creative import (
     FrontierObservation,
     MatureContext,
     MetaEvolutionState,
+    MetricDirection,
+    MetricObservation,
+    MissionEconomics,
     PrivacyClass,
     RightsState,
     RoutePolicy,
@@ -35,13 +38,21 @@ from sovara.creative import (
     SovaraDimensionState,
     StudioMode,
     StudioRequest,
+    ValueClass,
+    ValueEvidence,
+    ValueGateState,
+    ValueMetricSpec,
     build_ten_x_target,
     calculate_frontier_gaps,
     can_deploy,
+    compare_value_metrics,
     compile_best_of_breed_frontier,
     compile_studio_plan,
+    default_production_value_specs,
+    economics_snapshot,
     evaluate_meta_evolution,
     evaluate_route,
+    evaluate_value_gate,
     plan_capability,
     preregister_omega_scientist_experiment,
     select_route,
@@ -489,6 +500,121 @@ class SovaraCreativeCFBEMetaEvolutionTests(unittest.TestCase):
             )
         )
         self.assertEqual(promoted, MetaEvolutionState.PROMOTION_CANDIDATE)
+
+
+class SovaraCreativeCommercialValueEngineTests(unittest.TestCase):
+    def test_mission_economics_exposes_contribution_margin_and_unit_economics(self):
+        economics = MissionEconomics(
+            currency="ZAR",
+            attributed_revenue=10000.0,
+            direct_provider_cost=500.0,
+            external_tool_cost=300.0,
+            owner_labor_cost=700.0,
+            other_direct_cost=500.0,
+            approved_assets=10,
+            published_assets=5,
+        )
+        snapshot = economics_snapshot(economics)
+        self.assertEqual(snapshot["total_cost"], 2000.0)
+        self.assertEqual(snapshot["contribution_margin"], 8000.0)
+        self.assertAlmostEqual(snapshot["margin_rate"], 0.8)
+        self.assertEqual(snapshot["cost_per_approved_asset"], 200.0)
+        self.assertEqual(snapshot["revenue_per_published_asset"], 2000.0)
+
+    def test_zero_baseline_never_fabricates_relative_gain(self):
+        comparisons = compare_value_metrics(
+            specs=(
+                ValueMetricSpec(
+                    "attributed_revenue",
+                    ValueClass.COMMERCIAL,
+                    MetricDirection.HIGHER_IS_BETTER,
+                ),
+            ),
+            observations=(
+                MetricObservation("attributed_revenue", 0.0, 100.0, "KDV:VALUE-001"),
+            ),
+        )
+        self.assertIsNone(comparisons[0].relative_gain)
+        self.assertTrue(comparisons[0].target_met)
+
+    def test_value_gate_never_promotes_from_metrics_without_provider_readback(self):
+        observations = (
+            MetricObservation("contribution_margin", 100.0, 120.0, "KDV:MARGIN"),
+            MetricObservation("attributed_revenue", 200.0, 250.0, "KDV:REVENUE"),
+            MetricObservation("time_to_deliverable_seconds", 100.0, 80.0, "KDV:TIME"),
+            MetricObservation("publication_success_rate", 0.9, 0.95, "KDV:PUBLISH"),
+            MetricObservation("owner_interventions", 10.0, 5.0, "KDV:INTERVENTIONS"),
+            MetricObservation("owner_minutes", 100.0, 60.0, "KDV:OWNER_MINUTES"),
+        )
+        decision = evaluate_value_gate(
+            specs=default_production_value_specs(),
+            observations=observations,
+            evidence=ValueEvidence(provider_native_readback=False, repeated_success=True),
+        )
+        self.assertEqual(decision.state, ValueGateState.HOLD_RUNTIME_PROOF)
+        self.assertFalse(decision.promotion_ready)
+
+    def test_commercial_value_is_coequal_with_operational_and_usability_value(self):
+        specs = (
+            ValueMetricSpec("revenue", ValueClass.COMMERCIAL, MetricDirection.HIGHER_IS_BETTER),
+            ValueMetricSpec("time", ValueClass.OPERATIONAL, MetricDirection.LOWER_IS_BETTER),
+            ValueMetricSpec("owner", ValueClass.USABILITY, MetricDirection.LOWER_IS_BETTER),
+        )
+        decision = evaluate_value_gate(
+            specs=specs,
+            observations=(
+                MetricObservation("revenue", 100.0, 90.0, "KDV:REV"),
+                MetricObservation("time", 100.0, 50.0, "KDV:TIME"),
+                MetricObservation("owner", 10.0, 2.0, "KDV:OWNER"),
+            ),
+            evidence=ValueEvidence(provider_native_readback=True, repeated_success=True),
+        )
+        self.assertEqual(decision.state, ValueGateState.HOLD_COMMERCIAL_VALUE)
+        self.assertFalse(decision.promotion_ready)
+
+    def test_full_value_evidence_can_reach_production_value_candidate(self):
+        specs = (
+            ValueMetricSpec("margin", ValueClass.COMMERCIAL, MetricDirection.HIGHER_IS_BETTER),
+            ValueMetricSpec("time", ValueClass.OPERATIONAL, MetricDirection.LOWER_IS_BETTER),
+            ValueMetricSpec("owner", ValueClass.USABILITY, MetricDirection.LOWER_IS_BETTER),
+        )
+        decision = evaluate_value_gate(
+            specs=specs,
+            observations=(
+                MetricObservation("margin", 100.0, 140.0, "KDV:MARGIN"),
+                MetricObservation("time", 100.0, 70.0, "KDV:TIME"),
+                MetricObservation("owner", 10.0, 3.0, "KDV:OWNER"),
+            ),
+            evidence=ValueEvidence(provider_native_readback=True, repeated_success=True),
+        )
+        self.assertEqual(decision.state, ValueGateState.PRODUCTION_VALUE_CANDIDATE)
+        self.assertTrue(decision.promotion_ready)
+        self.assertEqual(decision.commercial_target_rate, 1.0)
+        self.assertEqual(decision.operational_target_rate, 1.0)
+        self.assertEqual(decision.usability_target_rate, 1.0)
+
+    def test_foundry_reuses_k10_finops_and_evolution_governor_for_commercial_builds(self):
+        candidate = plan_capability(
+            capability_id="SC-COMMERCIAL-001",
+            outcome="Build an adaptive campaign performance and creative value skill",
+            skill_domains=(SkillDomain.COMMERCIAL_GROWTH, SkillDomain.PERFORMANCE_MARKETING),
+            available_capabilities=(
+                "K10_CANVA_CINEMA_OS",
+                "FINOPS_ROUTE_OPTIMIZER",
+                "FEDERATION_EVOLUTION_GOVERNOR",
+                "CFBE_OMEGA",
+                "FORMATION_OMEGA",
+            ),
+        )
+        self.assertEqual(candidate.strategy, BuildStrategy.COMPOSE)
+        self.assertIn("K10_CANVA_CINEMA_OS", candidate.reused_capabilities)
+        self.assertIn("FINOPS_ROUTE_OPTIMIZER", candidate.reused_capabilities)
+        self.assertIn("FEDERATION_EVOLUTION_GOVERNOR", candidate.reused_capabilities)
+
+    def test_commercial_frontier_dimensions_are_first_class(self):
+        self.assertEqual(BenchmarkDimension.COMMERCIAL_VALUE.value, "COMMERCIAL_VALUE")
+        self.assertEqual(BenchmarkDimension.REVENUE_ATTRIBUTION.value, "REVENUE_ATTRIBUTION")
+        self.assertEqual(BenchmarkDimension.PERFORMANCE_INTELLIGENCE.value, "PERFORMANCE_INTELLIGENCE")
 
 
 if __name__ == "__main__":

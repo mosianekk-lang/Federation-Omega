@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from enum import Enum
 from hashlib import sha256
 import json
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Sequence
 
 
 class BenchmarkDimension(str, Enum):
@@ -23,6 +23,15 @@ class BenchmarkDimension(str, Enum):
     OWNER_BURDEN = "OWNER_BURDEN"
     TIME_TO_DELIVERABLE = "TIME_TO_DELIVERABLE"
     VALUE_LEARNING = "VALUE_LEARNING"
+    BRAND_GOVERNANCE = "BRAND_GOVERNANCE"
+    CONTENT_SUPPLY_CHAIN = "CONTENT_SUPPLY_CHAIN"
+    PERSONALIZATION_AT_SCALE = "PERSONALIZATION_AT_SCALE"
+    MULTI_CHANNEL_ACTIVATION = "MULTI_CHANNEL_ACTIVATION"
+    PERFORMANCE_INTELLIGENCE = "PERFORMANCE_INTELLIGENCE"
+    PREDICTIVE_PRELAUNCH = "PREDICTIVE_PRELAUNCH"
+    UNIT_ECONOMICS = "UNIT_ECONOMICS"
+    REVENUE_ATTRIBUTION = "REVENUE_ATTRIBUTION"
+    COMMERCIAL_VALUE = "COMMERCIAL_VALUE"
 
 
 class AmbitionClass(str, Enum):
@@ -45,10 +54,14 @@ class MetaEvolutionState(str, Enum):
 
 DEFAULT_FRONTIER_SUITES = (
     "ADOBE_CREATIVE_CLOUD_FIREFLY",
+    "ADOBE_GENSTUDIO",
     "CANVA_MAGIC_STUDIO",
+    "CANVA_AI_2",
     "RUNWAY",
     "DAVINCI_RESOLVE",
     "DESCRIPT",
+    "CELTRA_CREATIVE_AUTOMATION",
+    "SMARTLY_INTELLIGENCE",
 )
 
 

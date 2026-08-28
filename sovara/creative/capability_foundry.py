@@ -16,6 +16,9 @@ class SkillDomain(str, Enum):
     OBSERVABILITY = "OBSERVABILITY"
     SECURITY_PRIVACY = "SECURITY_PRIVACY"
     QA_TESTING = "QA_TESTING"
+    COMMERCIAL_GROWTH = "COMMERCIAL_GROWTH"
+    PERFORMANCE_MARKETING = "PERFORMANCE_MARKETING"
+    CHANNEL_DISTRIBUTION = "CHANNEL_DISTRIBUTION"
 
 
 class BuildStrategy(str, Enum):
@@ -52,6 +55,14 @@ _FEDERATION_REUSE_ORDER = (
     "SOVARA_PROVIDER_RECOVERY",
     "FORMATION_OMEGA",
     "CFBE_OMEGA",
+    "FEDERATION_EVOLUTION_GOVERNOR",
+    "BENCHMARK_TO_BUILD",
+    "ENGINEERING_VALUE_DENSITY",
+    "FINOPS_ROUTE_OPTIMIZER",
+    "K10_CANVA_CINEMA_OS",
+    "FEDERATION_UNIFIED_CAPABILITY_GRAPH",
+    "HIGH_SCALE_OPPORTUNITY_RADAR",
+    "OMNI_MESH",
     "FAILURE_WIN_V2",
     "OMEGA_AUTOFIX",
     "EVIDENCEOPS_ALGORITHM_FOUNDRY",
@@ -71,11 +82,11 @@ def plan_capability(
     available_capabilities: Iterable[str],
     provider_effect_required: bool = False,
 ) -> CapabilityCandidate:
-    """Compile a missing technical skill into a proof-gated build candidate.
+    """Compile a missing technical or commercial skill into a proof-gated candidate.
 
     This function does not write source, deploy infrastructure, expand authority,
-    or perform provider effects. It chooses a reuse-first engineering strategy
-    and makes the remaining build requirement explicit.
+    authorize spend, or perform provider effects. It chooses a reuse-first engineering
+    strategy and makes the remaining build requirement explicit.
     """
 
     cid = capability_id.strip()
