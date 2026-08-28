@@ -64,11 +64,28 @@ jobs:
           from pathlib import Path
           payload = json.loads(Path('runtime-output/prior-runs.json').read_text())
           runs = payload.get('workflow_runs', [])
-          print(sum(1 for run in runs if run.get('event') == 'workflow_dispatch'))
+          print(sum(
+              1 for run in runs
+              if run.get('event') == 'workflow_dispatch'
+              and (run.get('actor') or {}).get('login', '').lower() != 'github-actions[bot]'
+          ))
+          PY
+          )"
+          previous_system_dispatch="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('runtime-output/prior-runs.json').read_text())
+          runs = payload.get('workflow_runs', [])
+          print(sum(
+              1 for run in runs
+              if run.get('event') == 'workflow_dispatch'
+              and (run.get('actor') or {}).get('login', '').lower() == 'github-actions[bot]'
+          ))
           PY
           )"
           echo "previous_successful=${previous_successful}" >> "$GITHUB_OUTPUT"
           echo "previous_manual=${previous_manual}" >> "$GITHUB_OUTPUT"
+          echo "previous_system_dispatch=${previous_system_dispatch}" >> "$GITHUB_OUTPUT"
 
       - name: Run maturation shadow regression tests
         run: python -m unittest discover -s tests -p 'test_maturation_shadow_runtime.py' -v
@@ -77,6 +94,7 @@ jobs:
         env:
           PREVIOUS_SUCCESSFUL: ${{ steps.history.outputs.previous_successful }}
           PREVIOUS_MANUAL: ${{ steps.history.outputs.previous_manual }}
+          PREVIOUS_SYSTEM_DISPATCH: ${{ steps.history.outputs.previous_system_dispatch }}
         shell: bash
         run: |
           set -euo pipefail
@@ -86,9 +104,11 @@ jobs:
             --run-id "$GITHUB_RUN_ID" \
             --head-sha "$GITHUB_SHA" \
             --event "$GITHUB_EVENT_NAME" \
+            --actor "$GITHUB_ACTOR" \
             --observed-at "$observed_at" \
             --previous-successful-cycles "$PREVIOUS_SUCCESSFUL" \
             --previous-manual-cycles "$PREVIOUS_MANUAL" \
+            --previous-system-dispatch-cycles "$PREVIOUS_SYSTEM_DISPATCH" \
             | tee runtime-output/runtime-stdout.json
 
       - name: Verify no-effect runtime receipt
@@ -108,13 +128,28 @@ jobs:
           assert receipt['authority_ceiling'] == 'A1_INTERNAL', receipt
           assert receipt['transaction_id'].startswith('matx-'), receipt
           assert receipt['idempotency_key'].startswith('maturation:'), receipt
+          assert receipt['actor'], receipt
+          assert receipt['trigger_class'] in {
+              'SCHEDULED_AUTONOMY',
+              'SOURCE_PUSH_AUTOMATION',
+              'SYSTEM_AUTOMATION_DISPATCH',
+              'OWNER_OR_HUMAN_DISPATCH',
+          }, receipt
+          if receipt['event'] == 'workflow_dispatch' and receipt['actor'].lower() == 'github-actions[bot]':
+              assert receipt['current_owner_intervention'] is False, receipt
           assert work['external_effect'] is False, work
           assert heartbeat['external_effect'] is False, heartbeat
           assert heartbeat['status'] == 'SHADOW_MATURATION_CYCLE_VERIFIED', heartbeat
+          assert heartbeat['actor'] == receipt['actor'], (heartbeat, receipt)
+          assert heartbeat['trigger_class'] == receipt['trigger_class'], (heartbeat, receipt)
           assert receipt['self_sustaining'] is False, receipt
           print(json.dumps({
               'status': receipt['status'],
               'cycle_number': receipt['cycle_number'],
+              'actor': receipt['actor'],
+              'trigger_class': receipt['trigger_class'],
+              'current_owner_intervention': receipt['current_owner_intervention'],
+              'owner_intervention_rate': receipt['owner_intervention_rate'],
               'selected_gap_id': receipt['selected_gap_id'],
               'transaction_id': receipt['transaction_id'],
               'self_sustaining': receipt['self_sustaining'],
