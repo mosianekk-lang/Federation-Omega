@@ -1,0 +1,31 @@
+{
+  "schema": "SOVARA_CREATIVE_IMAGE_CANARY_ROUTE_CANDIDATE_V1",
+  "recorded_date": "2026-08-28",
+  "canary_id": "SC-CANARY-PUBLIC-SYNTHETIC-ASSET-001",
+  "candidate_transport": "OPENROUTER_IMAGES",
+  "candidate_endpoint": "https://openrouter.ai/api/v1/images",
+  "candidate_model": "recraft/recraft-v3:free",
+  "candidate_output_modality": "image",
+  "catalog_api_required_before_execution": true,
+  "public_web_price_claim_verified_for_execution": false,
+  "unit_price_usd": null,
+  "zero_cost_verified": false,
+  "credential_reference": "env:OPENROUTER_API_KEY",
+  "credential_bound": false,
+  "provider_effect_authority_bound": false,
+  "finite_spend_authorized": false,
+  "state": "HOLD_ROUTE_CATALOG",
+  "evidence_conflict": [
+    "The current model-specific :free page labels recraft/recraft-v3:free as an image-output model with zero listed price.",
+    "Recent OpenRouter image-generation guidance states that no image-generation model currently carries the :free suffix.",
+    "Current Recraft provider/model pages list Recraft V3 at approximately USD 0.04 per image."
+  ],
+  "required_resolution": "Before any provider effect, read the current OpenRouter image-model API catalog in the same execution context and bind the exact model, image-output capability, endpoint, provider readback support and unit price. Only an exact zero price may bypass finite-spend authority.",
+  "source_urls": [
+    "https://openrouter.ai/recraft/recraft-v3%3Afree",
+    "https://openrouter.ai/blog/tutorials/image-generation-models/",
+    "https://openrouter.ai/provider/recraft",
+    "https://openrouter.ai/api/v1/images/models"
+  ],
+  "truth_boundary": "This record is a route candidate and contradiction log only. It does not prove current API catalog availability, zero-cost execution, credential binding, provider-effect authority, media generation, asset quality, rollback, spend, publishing or production readiness."
+}
