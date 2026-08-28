@@ -1,0 +1,234 @@
+name: Gemini Handshake Canary
+
+on:
+  pull_request:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/gemini-handshake-canary.yml"
+
+permissions:
+  contents: read
+
+jobs:
+  handshake:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    env:
+      BRIDGE_ID: CG-BRIDGE-20260828-023812-SAST
+      BRIDGE_DOC_ID: 1nEtTJVutY1lUch8krbUthJEPEg7ebVk5GtXFVoG3TkM
+      SOURCE_PROMPT_ID: 1Kpn5SQ05bgmPTorb6-wmBhTuu8mwvPen
+      GH_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+      GH_OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+    steps:
+      - name: Execute bounded Gemini handshake
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+
+          bridge_id = os.environ["BRIDGE_ID"]
+          bridge_doc_id = os.environ["BRIDGE_DOC_ID"]
+          source_prompt_id = os.environ["SOURCE_PROMPT_ID"]
+          gemini_key = os.environ.get("GH_GEMINI_API_KEY", "").strip()
+          openrouter_key = os.environ.get("GH_OPENROUTER_API_KEY", "").strip()
+
+          prompt = (
+              "Return JSON only, with no markdown. This is a bounded interoperability handshake. "
+              f"bridge_id={bridge_id}; bridge_doc_id={bridge_doc_id}; source_prompt_id={source_prompt_id}. "
+              "Return keys: cockpit (must be GEMINI), model_actually_used, bridge_id, bridge_doc_id, "
+              "source_prompt_id, read_state (HANDSHAKE_RECEIVED), gaps (array), provider_timestamp_utc. "
+              "Do not claim access to any external system that this inference call did not actually read."
+          )
+
+          receipt = {
+              "schema": "CHATGPT-GEMINI-HANDSHAKE-CANARY-1",
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+              "bridge_id": bridge_id,
+              "bridge_doc_id": bridge_doc_id,
+              "source_prompt_id": source_prompt_id,
+              "direct_google_secret_present": bool(gemini_key),
+              "openrouter_secret_present": bool(openrouter_key),
+              "inference_verified": False,
+              "native_google_provider_verified": False,
+              "route": None,
+              "model": None,
+              "provider": None,
+              "handshake_text": None,
+              "handshake_sha256": None,
+              "attempts": [],
+          }
+
+          def http_json(url, *, method="GET", headers=None, payload=None, timeout=45):
+              data = None if payload is None else json.dumps(payload).encode("utf-8")
+              req = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
+              try:
+                  with urllib.request.urlopen(req, timeout=timeout) as resp:
+                      body = resp.read().decode("utf-8", "replace")
+                      return resp.status, json.loads(body)
+              except urllib.error.HTTPError as exc:
+                  body = exc.read().decode("utf-8", "replace")
+                  try:
+                      parsed = json.loads(body)
+                  except Exception:
+                      parsed = {"error_text": body[:1200]}
+                  return exc.code, parsed
+
+          def err_summary(obj):
+              if isinstance(obj, dict):
+                  err = obj.get("error")
+                  if isinstance(err, dict):
+                      return {
+                          "code": err.get("code"),
+                          "status": err.get("status"),
+                          "message": str(err.get("message", ""))[:500],
+                      }
+                  return {"message": str(obj)[:500]}
+              return {"message": str(obj)[:500]}
+
+          # Route 1: native Google Gemini API, using repository secret only inside Actions.
+          if gemini_key:
+              headers = {"x-goog-api-key": gemini_key, "Content-Type": "application/json"}
+              status, models_obj = http_json(
+                  "https://generativelanguage.googleapis.com/v1beta/models",
+                  headers={"x-goog-api-key": gemini_key},
+              )
+              if status == 200:
+                  models = models_obj.get("models", []) if isinstance(models_obj, dict) else []
+                  usable = [
+                      m for m in models
+                      if "generateContent" in (m.get("supportedGenerationMethods") or [])
+                      and "gemini" in (m.get("name") or "").lower()
+                  ]
+                  names = [m.get("name") for m in usable if m.get("name")]
+                  preferred = [
+                      "models/gemini-3.1-pro-preview",
+                      "models/gemini-3.1-pro",
+                      "models/gemini-3-pro-preview",
+                      "models/gemini-2.5-pro",
+                      "models/gemini-2.5-flash",
+                  ]
+                  selected = next((m for m in preferred if m in names), names[0] if names else None)
+                  if selected:
+                      endpoint = f"https://generativelanguage.googleapis.com/v1beta/{selected}:generateContent"
+                      payload = {
+                          "contents": [{"role": "user", "parts": [{"text": prompt}]}],
+                          "generationConfig": {"temperature": 0.0},
+                      }
+                      call_status, obj = http_json(endpoint, method="POST", headers=headers, payload=payload)
+                      if call_status == 200:
+                          parts = (((obj.get("candidates") or [{}])[0].get("content") or {}).get("parts") or [])
+                          text = "".join(p.get("text", "") for p in parts if isinstance(p, dict)).strip()
+                          if text:
+                              receipt.update({
+                                  "inference_verified": True,
+                                  "native_google_provider_verified": True,
+                                  "route": "GOOGLE_GEMINI_API",
+                                  "model": selected,
+                                  "provider": "Google Gemini API",
+                                  "handshake_text": text[:6000],
+                                  "handshake_sha256": hashlib.sha256(text.encode()).hexdigest(),
+                              })
+                              receipt["attempts"].append({"route": "GOOGLE_GEMINI_API", "status": call_status, "result": "PASS"})
+                          else:
+                              receipt["attempts"].append({"route": "GOOGLE_GEMINI_API", "status": call_status, "result": "EMPTY_RESPONSE"})
+                      else:
+                          receipt["attempts"].append({"route": "GOOGLE_GEMINI_API", "status": call_status, "result": "HTTP_ERROR", "error": err_summary(obj)})
+                  else:
+                      receipt["attempts"].append({"route": "GOOGLE_GEMINI_API", "status": 200, "result": "NO_GENERATECONTENT_MODEL"})
+              else:
+                  receipt["attempts"].append({"route": "GOOGLE_GEMINI_API", "status": status, "result": "MODEL_LIST_ERROR", "error": err_summary(models_obj)})
+          else:
+              receipt["attempts"].append({"route": "GOOGLE_GEMINI_API", "result": "SECRET_ABSENT"})
+
+          # Route 2: OpenRouter Gemini fallback. This proves Gemini-model inference, not native Google provider identity.
+          if not receipt["inference_verified"] and openrouter_key:
+              or_headers = {
+                  "Authorization": f"Bearer {openrouter_key}",
+                  "Content-Type": "application/json",
+                  "HTTP-Referer": "https://github.com/mosianekk-lang/Federation-Omega",
+                  "X-Title": "Federation Omega Gemini Handshake Canary",
+              }
+              ms, mobj = http_json("https://openrouter.ai/api/v1/models", headers=or_headers)
+              if ms == 200:
+                  ids = [m.get("id") for m in (mobj.get("data") or []) if isinstance(m, dict) and m.get("id")]
+                  gemini_ids = [i for i in ids if i.startswith("google/gemini")]
+                  preferred_or = [
+                      "google/gemini-3.1-pro-preview",
+                      "google/gemini-3-pro-preview",
+                      "google/gemini-2.5-pro",
+                      "google/gemini-2.5-flash",
+                  ]
+                  selected_or = next((m for m in preferred_or if m in gemini_ids), gemini_ids[0] if gemini_ids else None)
+                  if selected_or:
+                      payload = {
+                          "model": selected_or,
+                          "messages": [{"role": "user", "content": prompt}],
+                          "temperature": 0,
+                      }
+                      cs, cobj = http_json("https://openrouter.ai/api/v1/chat/completions", method="POST", headers=or_headers, payload=payload)
+                      if cs == 200:
+                          text = (((cobj.get("choices") or [{}])[0].get("message") or {}).get("content") or "").strip()
+                          if text:
+                              receipt.update({
+                                  "inference_verified": True,
+                                  "native_google_provider_verified": False,
+                                  "route": "OPENROUTER_GEMINI",
+                                  "model": cobj.get("model") or selected_or,
+                                  "provider": cobj.get("provider") or "OpenRouter (Gemini model)",
+                                  "handshake_text": text[:6000],
+                                  "handshake_sha256": hashlib.sha256(text.encode()).hexdigest(),
+                              })
+                              receipt["attempts"].append({"route": "OPENROUTER_GEMINI", "status": cs, "result": "PASS"})
+                          else:
+                              receipt["attempts"].append({"route": "OPENROUTER_GEMINI", "status": cs, "result": "EMPTY_RESPONSE"})
+                      else:
+                          receipt["attempts"].append({"route": "OPENROUTER_GEMINI", "status": cs, "result": "HTTP_ERROR", "error": err_summary(cobj)})
+                  else:
+                      receipt["attempts"].append({"route": "OPENROUTER_GEMINI", "status": 200, "result": "NO_GEMINI_MODEL"})
+              else:
+                  receipt["attempts"].append({"route": "OPENROUTER_GEMINI", "status": ms, "result": "MODEL_LIST_ERROR", "error": err_summary(mobj)})
+          elif not receipt["inference_verified"]:
+              receipt["attempts"].append({"route": "OPENROUTER_GEMINI", "result": "SECRET_ABSENT"})
+
+          canonical = json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          receipt["receipt_sha256"] = hashlib.sha256(canonical).hexdigest()
+          with open("HANDSHAKE_RECEIPT.json", "w", encoding="utf-8") as fh:
+              json.dump(receipt, fh, indent=2, sort_keys=True)
+              fh.write("\n")
+          print(json.dumps({
+              "inference_verified": receipt["inference_verified"],
+              "native_google_provider_verified": receipt["native_google_provider_verified"],
+              "route": receipt["route"],
+              "model": receipt["model"],
+              "attempts": receipt["attempts"],
+              "receipt_sha256": receipt["receipt_sha256"],
+          }, sort_keys=True))
+          PY
+
+      - name: Upload redacted handshake receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: gemini-handshake-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: HANDSHAKE_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce inference proof
+        if: always()
+        shell: bash
+        run: |
+          test -f HANDSHAKE_RECEIPT.json
+          python3 - <<'PY'
+          import json
+          with open("HANDSHAKE_RECEIPT.json", encoding="utf-8") as fh:
+              r = json.load(fh)
+          if not r.get("inference_verified"):
+              raise SystemExit("No live Gemini inference was verified; inspect the redacted receipt.")
+          PY
