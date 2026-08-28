@@ -1,0 +1,5 @@
+{
+  "schema": "SOVARA-SIC-V2-CI-INTENT-V1",
+  "required_readback_after_pr": ["AIRLOCK", "LEAK_GUARD", "V1_EVALUATOR_TESTS", "V2_COURT_TESTS", "MCP_SOURCE_TESTS"],
+  "state": "AWAITING_EXECUTED_CI_READBACK"
+}
