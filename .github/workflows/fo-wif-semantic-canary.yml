@@ -1,174 +1,126 @@
-name: Federation Omega WIF Semantic Canary
+name: SLOS G0 Read-Only WIF and ADC Canary
 
 on:
   issues:
     types: [opened]
 
 permissions:
-  contents: write
+  contents: read
   issues: read
   id-token: write
 
 concurrency:
-  group: federation-omega-wif-semantic-canary
-  cancel-in-progress: true
+  group: slos-g0-read-only-auth-canary
+  cancel-in-progress: false
 
 env:
   PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
-  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  SLOS_RELEASE_SHA256: 979f4f6423920ed32d0a46f9eac069d92f045e350210f6ad3932ed8c90e7dd84
 
 jobs:
-  read-only-canary:
-    if: github.event.issue.title == '[FO-DISPATCH] READ_ONLY_AUTH_CANARY'
-    runs-on: ubuntu-latest
-    timeout-minutes: 4
-    env:
-      FO_ADMIN_TOKEN: ${{ secrets.FO_ADMIN_TOKEN }}
+  g0-read-only:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] SLOS_G0_READ_ONLY_AUTH_CANARY' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
 
-      - name: Attempt canonical keyless Google authentication
-        id: google-auth
-        if: ${{ env.FO_ADMIN_TOKEN == '' }}
-        continue-on-error: true
-        uses: google-github-actions/auth@v3
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOYER_SA }}
 
-      - name: Install gcloud for the verified keyless route
-        if: ${{ steps.google-auth.outcome == 'success' }}
-        uses: google-github-actions/setup-gcloud@v2
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Resolve operator token without exposing it
-        shell: bash
-        env:
-          GOOGLE_AUTH_OUTCOME: ${{ steps.google-auth.outcome }}
-        run: |
-          set -euo pipefail
-          set +x
-          TOKEN="${FO_ADMIN_TOKEN:-}"
-          ROUTE="github_actions_secret"
-          if [[ -z "$TOKEN" && "$GOOGLE_AUTH_OUTCOME" == "success" ]]; then
-            set +e
-            TOKEN="$(gcloud secrets versions access latest --secret=fo-operator-admin-token --project="$PROJECT_ID" 2>/tmp/fo-secret-error)"
-            RC=$?
-            set -e
-            if [[ $RC -eq 0 && -n "$TOKEN" ]]; then
-              ROUTE="wif_secret_manager"
-            else
-              TOKEN=""
-              ROUTE="wif_secret_manager_denied"
-            fi
-          elif [[ -z "$TOKEN" ]]; then
-            ROUTE="wif_auth_failed"
-          fi
-          if [[ -n "$TOKEN" ]]; then echo "::add-mask::$TOKEN"; fi
-          {
-            echo "FO_ADMIN_TOKEN=$TOKEN"
-            echo "FO_MACHINE_AUTH_ROUTE=$ROUTE"
-            echo "FO_GOOGLE_AUTH_OUTCOME=$GOOGLE_AUTH_OUTCOME"
-          } >> "$GITHUB_ENV"
-
-      - name: Execute fail-closed semantic canary
+      - name: Verify current WIF identity contract
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p deployments/federation-omega-control-plane /tmp/fo-canary
+          mkdir -p g0-output
+          ./ops/bootstrap_github_wif.sh --verify | tee g0-output/wif.json
           python - <<'PY'
-          import hashlib, json, os, urllib.error, urllib.request
-          from datetime import datetime, timezone
-          from pathlib import Path
-
-          base = os.environ['OPERATOR_URL'].rstrip('/')
-          token = os.environ.get('FO_ADMIN_TOKEN', '')
-          def call(path, body=None, authenticated=False):
-              headers={'accept':'application/json'}
-              data=None
-              if body is not None:
-                  headers['content-type']='application/json'
-                  data=json.dumps(body,separators=(',',':')).encode()
-              if authenticated and token:
-                  headers['x-fo-admin-token']=token
-              req=urllib.request.Request(base+path,data=data,headers=headers,method='POST' if body is not None else 'GET')
-              try:
-                  with urllib.request.urlopen(req,timeout=20) as r:
-                      raw=r.read().decode('utf-8','replace')
-                      return {'httpStatus':r.status,'body':json.loads(raw)}
-              except urllib.error.HTTPError as e:
-                  raw=e.read().decode('utf-8','replace')
-                  try: parsed=json.loads(raw)
-                  except Exception: parsed={'errorType':'NON_JSON'}
-                  return {'httpStatus':e.code,'body':parsed}
-              except Exception as e:
-                  return {'transportError':type(e).__name__}
-
-          health=call('/health')
-          contract=call('/')
-          unauth=call('/execute',{'action':'STATUS','payload':{}},False)
-          allowed=set(contract.get('body',{}).get('allowedActions',[]))
-          receipt={
-            'receipt':'FEDERATION-OMEGA-MACHINE-DISPATCH-CANARY',
-            'recordedAt':datetime.now(timezone.utc).isoformat(),
-            'sourceIssue':os.environ.get('GITHUB_EVENT_PATH',''),
-            'operatorUrl':base,
-            'health':health,
-            'contract':contract,
-            'unauthenticatedStatusCode':unauth.get('httpStatus'),
-            'privateAccessDenied':unauth.get('httpStatus') in (401,403),
-            'tokenPresent':bool(token),
-            'machineAuthRoute':os.environ.get('FO_MACHINE_AUTH_ROUTE','unknown'),
-            'googleAuthOutcome':os.environ.get('FO_GOOGLE_AUTH_OUTCOME','unknown'),
-            'tokenValueRecorded':False,
-            'mutationAttempted':False,
-            'reads':{},
-            'classification':'BLOCKED'
-          }
-          required={'STATUS','READ_CLOUD_RUN_SERVICE','READ_BUILD','VERIFY_ARCHITRON_HEALTH'}
-          if not token:
-              receipt['classification']='BLOCKED_MISSING_FO_ADMIN_TOKEN_REPOSITORY_SECRET'
-          elif not required.issubset(allowed):
-              receipt['classification']='BLOCKED_LIVE_ALLOWLIST_MISMATCH'
-          elif not receipt['privateAccessDenied']:
-              receipt['classification']='BLOCKED_PRIVATE_ACCESS_NOT_PROVEN'
-          else:
-              probes={
-                'status':('STATUS',{'purpose':'machine dispatch read-only canary'}),
-                'cloudRun':('READ_CLOUD_RUN_SERVICE',{'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9'}),
-                'build':('READ_BUILD',{'project':'sov-hybrid-suite','region':'global'}),
-                'architron':('VERIFY_ARCHITRON_HEALTH',{'project':'sov-hybrid-suite','region':'africa-south1','service':'architron9'})
-              }
-              for key,(action,payload) in probes.items():
-                  receipt['reads'][key]=call('/execute',{'action':action,'payload':payload},True)
-              bodies=[v.get('body',{}) for v in receipt['reads'].values()]
-              ok=all(v.get('httpStatus')==200 and v.get('body',{}).get('ok') is True for v in receipt['reads'].values())
-              fingerprints={hashlib.sha256(json.dumps(b,sort_keys=True).encode()).hexdigest() for b in bodies}
-              generic_collision=len(fingerprints)==1
-              receipt['genericHandlerCollision']=generic_collision
-              receipt['classification']='AUTHENTICATED_PROVIDER_READS_PROVEN' if ok and not generic_collision else 'SEMANTIC_CANARY_FAILED'
-          out=Path('deployments/federation-omega-control-plane/READ_ONLY_AUTH_CANARY.json')
-          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-          Path('/tmp/fo-canary/READ_ONLY_AUTH_CANARY.json').write_text(out.read_text())
-          print(json.dumps({'classification':receipt['classification'],'recordedAt':receipt['recordedAt']}))
+          import json
+          p=json.load(open('g0-output/wif.json',encoding='utf-8'))
+          assert p['receipt']=='FEDOMEGA-WIF-CLOUD-VERIFIED',p
+          assert p['state']=='VERIFIED',p
+          assert p['project']=='sov-hybrid-suite',p
+          assert p['project_number_observed']=='257649435135',p
+          assert p['mutation_performed'] is False,p
           PY
 
-      - name: Persist redacted receipt
+      - name: Verify Gemini ADC runtime identity contract
         shell: bash
         run: |
           set -euo pipefail
-          git config user.name "federation-omega-canary[bot]"
-          git config user.email "federation-omega-canary[bot]@users.noreply.github.com"
-          git add deployments/federation-omega-control-plane/READ_ONLY_AUTH_CANARY.json
-          git diff --cached --quiet || { git commit -m "Record Federation Omega machine canary"; git push origin HEAD:main; }
+          ./ops/bootstrap_gemini_gateway.sh --verify | tee g0-output/adc.json
+          python - <<'PY'
+          import json
+          p=json.load(open('g0-output/adc.json',encoding='utf-8'))
+          assert p['receipt']=='FEDOMEGA-GEMINI-ADC-VERIFIED',p
+          assert p['state']=='VERIFIED',p
+          assert p['project_id']=='sov-hybrid-suite',p
+          assert p['project_number_observed']=='257649435135',p
+          assert p['mutation_performed'] is False,p
+          assert p['service_account_key_created'] is False,p
+          assert p['secret_payload_accessed'] is False,p
+          PY
 
-      - uses: actions/upload-artifact@v4
+      - name: Compile receiver-local G0 receipt
+        shell: bash
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+          ISSUE_ACTOR: ${{ github.event.issue.user.login }}
+          ISSUE_ASSOCIATION: ${{ github.event.issue.author_association }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os
+          wif=json.load(open('g0-output/wif.json',encoding='utf-8'))
+          adc=json.load(open('g0-output/adc.json',encoding='utf-8'))
+          r={
+            'schema':'SLOS_G0_RECEIVER_LOCAL_IDENTITY_RECEIPT_V1',
+            'state':'VERIFIED',
+            'release_sha256':os.environ['SLOS_RELEASE_SHA256'],
+            'source_sha':os.environ['SOURCE_SHA'],
+            'issue_number':int(os.environ['ISSUE_NUMBER']),
+            'issue_actor':os.environ['ISSUE_ACTOR'],
+            'issue_author_association':os.environ['ISSUE_ASSOCIATION'],
+            'project_id':os.environ['PROJECT_ID'],
+            'project_number':os.environ['PROJECT_NUMBER'],
+            'region':os.environ['REGION'],
+            'wif_receipt':wif,
+            'adc_receipt':adc,
+            'mutation_performed':False,
+            'provider_effect_executed':False,
+            'secret_payload_accessed':False,
+          }
+          raw=json.dumps(r,sort_keys=True,separators=(',',':')).encode()
+          r['receipt_sha256']=hashlib.sha256(raw).hexdigest()
+          open('g0-output/slos-g0-receiver-local-receipt.json','w',encoding='utf-8').write(json.dumps(r,indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Upload immutable G0 proof artifact
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: federation-omega-machine-dispatch-canary
+          name: slos-g0-receiver-local-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            g0-output/wif.json
+            g0-output/adc.json
+            g0-output/slos-g0-receiver-local-receipt.json
           if-no-files-found: error
-          retention-days: 30
-          path: /tmp/fo-canary/READ_ONLY_AUTH_CANARY.json
+          retention-days: 90
