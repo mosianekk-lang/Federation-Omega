@@ -1,0 +1,7 @@
+{
+  "schema": "SOVARA-SIC-V2-CHECKPOINT-RECEIPT-CONTRACT-V1",
+  "minimum_fields": ["MISSION_ID", "SOURCE_SHA256", "STATE", "CHECKPOINT_SEQ", "BOUNDARY_EVENTS", "LANE_RECEIPTS", "UPDATED_AT_UTC"],
+  "persistence": "ATOMIC_WRITE",
+  "append_only_fields": ["BOUNDARY_EVENTS", "COMPLETED_STATES"],
+  "secret_values_allowed": false
+}
