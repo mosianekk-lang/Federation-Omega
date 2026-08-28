@@ -15,6 +15,11 @@ sys.modules[SPEC.name] = AIRLOCK
 SPEC.loader.exec_module(AIRLOCK)
 POLICY = AIRLOCK.load_policy(ROOT / "governance" / "github_airlock_policy.json")
 WORKFLOW_PATH = ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
+EXPECTED_OIDC_WORKFLOWS = {
+    WORKFLOW_PATH,
+    ".github/workflows/cios-production-lane.yml",
+    ".github/workflows/luno-observer-provider-binding.yml",
+}
 
 
 class SovaraLiteLLMProviderAirlockTests(unittest.TestCase):
@@ -46,12 +51,9 @@ jobs:
         findings = AIRLOCK.analyse_workflow(WORKFLOW_PATH, self.contract(), POLICY)
         self.assertEqual([], findings)
 
-    def test_exact_gateway_is_the_only_oidc_source_workflow(self):
+    def test_exact_provider_gateways_are_the_only_oidc_source_workflows(self):
         self.assertEqual(
-            {
-                WORKFLOW_PATH,
-                ".github/workflows/cios-production-lane.yml",
-            },
+            EXPECTED_OIDC_WORKFLOWS,
             set(POLICY["oidc_workflow_allowlist"]),
         )
         self.assertIn(WORKFLOW_PATH, POLICY["active_workflow_allowlist"])
