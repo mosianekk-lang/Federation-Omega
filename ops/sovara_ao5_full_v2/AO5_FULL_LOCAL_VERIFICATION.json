@@ -1,0 +1,64 @@
+{
+  "schema": "SOVARA-AO5-FULL-LOCAL-VERIFICATION-2",
+  "canonical_source_sha256": "e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f",
+  "source_lines": 2561,
+  "sections": {"part0":1,"roman_parts":54,"total":55,"mapped":55,"unmapped":0},
+  "tests": {"engine_regressions":59,"canonical_payload_regressions":1,"total":60,"passed":60,"failed":0},
+  "canary": {"checks":56,"passed":56,"failed":0,"external_effects":0},
+  "harmonization": {
+    "SOVARA":"MISSION_ROUTE_EFFECT_ADMISSION_AND_ORCHESTRATION",
+    "AO5":"FULL_FORENSIC_DECISION_INTELLIGENCE_ENGINE",
+    "JARVIS":"INDEPENDENT_ASSURANCE_HOLD_CHALLENGE",
+    "REALITYGUARD":"TRUTH_EXECUTION_RECEIPT_GUARD",
+    "CFBE":"BENCHMARK_VALUE_LEARNING",
+    "SENTINEL":"HEALTH_FRESHNESS_DRIFT",
+    "provider_effect_authority":"SOVARA_PROOF_BOUND_EFFECT_LANE_ONLY"
+  },
+  "near_misses": [
+    {
+      "id":"AO5-FULL-NEARMISS-001",
+      "class":"REGRESSION_TEST_SURFACE_EXPORT",
+      "stage":"first full monolithic regression development pass",
+      "observed":"Four internally implemented symbols were omitted from the test export surface: ProofState, COUNCIL_ANGLES, OUTPUT_FIELDS, PERFORMANCE_SUCCESS_TESTS.",
+      "repair":"Export surface corrected and full 60-test monolithic suite rerun to PASS.",
+      "promotion":"LEARNING"
+    },
+    {
+      "id":"AO5-FULL-NEARMISS-002",
+      "class":"LOCAL_TEST_HARNESS_IMPORT",
+      "stage":"provider-shaped local readback rehearsal",
+      "observed":"Temporary local copied test file still imported compact_engine by its development name.",
+      "repair":"Rehearsal harness import corrected to ops.sovara_ao5_full_v2.ao5_full_engine; exact provider-shaped 60-test suite rerun to PASS.",
+      "provider_branch_affected":false,
+      "promotion":"LEARNING"
+    }
+  ],
+  "discrepancies": [
+    {
+      "id":"AO5-DISC-001",
+      "prior_state":"Earlier partial integration claimed zero dilution.",
+      "corrected_state":"Claim withdrawn; prior integration classified PARTIAL_ADAPTED."
+    },
+    {
+      "id":"AO5-DISC-002",
+      "prior_source_sha256":"773ee295b2ae3f2182afc47bcc94c676c1e6464face0176504ff8763c9616443",
+      "correct_source_sha256":"e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f",
+      "correction":"Exact raw uploaded UTF-8 bytes were rehashed and bound into canonical payload regression."
+    },
+    {
+      "id":"AO5-DISC-003",
+      "prior_source_admission":"Earlier subset was written directly to main and Airlock classified the resulting history UNADMITTED_HISTORY.",
+      "corrective_route":"This full v2 package is isolated on a feature branch and must pass PR admission before merge."
+    }
+  ],
+  "zero_dilution_gate": {
+    "canonical_source_exact":true,
+    "compatibility_matrix_complete":true,
+    "local_regression_pass":true,
+    "local_canary_pass":true,
+    "github_pr_admission_pass":false,
+    "merged_main_exact_readback_pass":false,
+    "state":"ZERO_DILUTION_LOCAL_ELIGIBLE_PROVIDER_GATES_OPEN"
+  },
+  "truth_boundary":"This receipt proves local/source behavior only. It does not claim provider runtime, consequential external effects, GitHub PR admission, or merged-main zero-dilution until those provider-native gates are read back."
+}
