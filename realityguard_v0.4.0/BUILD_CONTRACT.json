@@ -3,7 +3,7 @@
   "mission": {
     "id": "MISSION-REALITYGUARD-041-CENTRAL-FAULTBOOK-MANAGER",
     "version": 2,
-    "goal": "Detect and block false-reality claims, preserve valid owner capability, prevent duplicate construction, select the smallest governed improvement, and centrally verify and manage Federation and ChatGPT fault books without false host-binding claims.",
+    "goal": "Detect and block false-reality claims, guard Federation-controlled side effects before dispatch and claim release, preserve valid owner capability, prevent duplicate construction, select the smallest governed improvement, and centrally verify and manage Federation and ChatGPT fault books without false host-binding claims.",
     "user": "Kim Mosiane",
     "workflow": "Structured claim and evidence enter a deterministic truth gate; a separate capability broker filters and deduplicates a provenance manifest; the pre-build gate blocks duplicate construction; and a host-invoked material-cycle upgrade gate checks environment identity, capability preservation and correction debt before routing to observe, patch, candidate or block.",
     "data": "Caller-supplied JSON claims, evidence metadata, scope, objective and capability manifests; optional redacted audit log, atomic learning ledger, or verified private hash-chained fault-book registry.",
@@ -13,7 +13,7 @@
     "maturity": "PROD_FOUNDATION",
     "governance": "Formation mission MISSION-REALITYGUARD-040-GOVERNED-AUTO-UPGRADE; A0-A2; zero cost; host-invoked material cycles; one explicitly selected effectful path only after a separate single-use permit; no self-promotion.",
     "failure": "Fail closed on invalid input, insufficient proof, partial scope, stale evidence, false ownership, unauthorized effects, duplicate capability, capability dilution, unverified inventory, environment inheritance, correction-debt cycles, protected-capability loss, ungoverned self-upgrade and unproven or over-broad gaps.",
-    "testing": "115 passing unit, integration, CLI, failure-first, healthy-path, redaction, reuse-ranking, pre-build, automatic-upgrade, correction-debt, universal Federation-adapter, learning-ledger, fault-book integrity, compatibility, privacy, idempotency and semantic regression tests; the adaptive competency separately passes 10/10 tests and validation.",
+    "testing": "130 passing unit, integration, CLI, failure-first, healthy-path, redaction, reuse-ranking, pre-build, side-effect execution-guard, automatic-upgrade, correction-debt, universal Federation-adapter, learning-ledger, fault-book integrity, compatibility, privacy, idempotency and semantic regression tests; the adaptive competency separately passes 10/10 tests and validation.",
     "deployment": "Not externally deployed or browser-installed. ChatBridge 0.2.0 includes a read-only Windows policy-readiness assessor and enterprise handoff, but the assessor has not run on the target work laptop and external deployment was not authorized.",
     "continuity": "Canonical truth, solution, pre-build, upgrade and fault import IDs; idempotent learning and fault fingerprints; deterministic reruns; collision-safe fault-book revisions; dependency-ordered correction debt; project memory, handoff, documentation gate and recovery files."
   },
@@ -82,7 +82,8 @@
       ,"src/realityguard/upgrade.py",
       "src/realityguard/federation_adapter.py",
       "src/realityguard/faultbook.py",
-      "src/realityguard/faultbooks.py"
+      "src/realityguard/faultbooks.py",
+      "src/realityguard/execution_guard.py"
     ],
     "setup_commands": ["cd realityguard", "python -m pip install -e ."],
     "run_commands": ["PYTHONPATH=src python -m realityguard.cli health", "PYTHONPATH=src python -m realityguard.cli scan --input examples/false_ownership.json", "PYTHONPATH=src python -m realityguard.cli resolve --input examples/chatbridge_solution_request.json --capabilities examples/federation_capabilities.json", "PYTHONPATH=src python -m realityguard.cli prebuild --input examples/chatbridge_prebuild_request.json --capabilities examples/federation_capabilities.json", "PYTHONPATH=src python -m realityguard.cli upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json", "PYTHONPATH=src python -m realityguard.cli federation-upgrade --input examples/material_cycle_upgrade.json --capabilities examples/federation_capabilities.json --adapter-contract federation/REALITYGUARD_AUTO_UPGRADE_ADAPTER.v1.json", "PYTHONPATH=src python -m realityguard.cli faultbook-import --ledger FAULTS.jsonl --metadata IMPORT.json --registry PRIVATE_REGISTRY.json", "PYTHONPATH=src python -m realityguard.cli faultbook-verify --registry PRIVATE_REGISTRY.json", "PYTHONPATH=src python -m realityguard.cli faultbook-manifest --registry PRIVATE_REGISTRY.json"],
@@ -122,7 +123,7 @@
     "proven": false
   },
   "proof": {
-    "test_results": "115/115 RealityGuard tests passing plus 10/10 adaptive competency tests; current run receipt must accompany source promotion.",
+    "test_results": "130/130 RealityGuard tests passing, including 15 execution-guard regressions, plus 10/10 adaptive competency tests; current run receipt must accompany source promotion.",
     "semantic_verification": "False-ownership and interface-semantic-gap fixtures block false reality. ChatBridge remains protected from duplicate replacement. Material-cycle fixtures preserve capabilities and require a separate Formation permit. Fault-book fixtures reject tampering, parent mismatch, duplicate IDs, false host binding, private-manifest leakage and premature closure. The Federation source adapter and central fault-book manifest record unbound systems as ADAPTER_REQUIRED rather than claiming live binding.",
     "deployment_readback": "NOT_APPLICABLE: external deployment not authorized or claimed.",
     "unresolved_defects": [],
