@@ -11,9 +11,9 @@ from urllib.error import HTTPError, URLError
 from urllib.request import Request, urlopen
 
 try:
-    from .gemini_architecture_challenge import ChallengeSpec, load_spec
+    from .gemini_architecture_challenge import ChallengeSpec, load_spec, response_schema
 except ImportError:  # direct file-path execution inside the trusted workflow
-    from gemini_architecture_challenge import ChallengeSpec, load_spec
+    from gemini_architecture_challenge import ChallengeSpec, load_spec, response_schema
 
 
 DEFAULT_PROJECT = "sov-hybrid-suite"
@@ -37,6 +37,20 @@ def vertex_endpoint(*, project: str, location: str, model: str) -> str:
     )
 
 
+def _vertex_response_json_schema(spec: ChallengeSpec) -> dict[str, Any]:
+    """Convert the shared strict schema to Vertex-supported JSON Schema.
+
+    Vertex responseJsonSchema supports standard JSON Schema fields but not `const`.
+    Bind the exact challenge ID through a single-value enum instead.
+    """
+
+    schema = json.loads(json.dumps(response_schema(spec)))
+    challenge = schema["properties"]["challenge_id"]
+    constant = challenge.pop("const", spec.challenge_id)
+    challenge["enum"] = [constant]
+    return schema
+
+
 def build_vertex_request(spec: ChallengeSpec) -> dict[str, Any]:
     return {
         "systemInstruction": {
@@ -52,6 +66,11 @@ def build_vertex_request(spec: ChallengeSpec) -> dict[str, Any]:
             "temperature": spec.temperature,
             "maxOutputTokens": spec.max_output_tokens,
             "responseMimeType": "application/json",
+            "responseJsonSchema": _vertex_response_json_schema(spec),
+            "thinkingConfig": {
+                "thinkingLevel": "LOW",
+                "includeThoughts": False,
+            },
         },
     }
 
@@ -65,7 +84,7 @@ def _candidate_text(response: dict[str, Any]) -> str:
     text = "".join(
         str(part.get("text", ""))
         for part in parts
-        if isinstance(part, dict)
+        if isinstance(part, dict) and not part.get("thought")
     )
     if not text.strip():
         raise RuntimeError("Vertex response has no candidate text")
@@ -194,16 +213,27 @@ def execute_vertex_challenge(
         raise RuntimeError(f"Vertex transport failure: {exc.reason}") from exc
 
     response = json.loads(response_bytes.decode("utf-8"))
-    text = _candidate_text(response)
-    output = json.loads(text)
-    _validate_output(spec, output)
-
     response_id = str(response.get("responseId", "")).strip()
     model_version = str(response.get("modelVersion", "")).strip()
+    usage = response.get("usageMetadata") if isinstance(response.get("usageMetadata"), dict) else {}
     if not response_id:
         raise RuntimeError("Vertex responseId is missing")
     if "gemini" not in model_version.lower():
         raise RuntimeError(f"unexpected Vertex modelVersion: {model_version!r}")
+
+    text = _candidate_text(response)
+    try:
+        output = json.loads(text)
+    except json.JSONDecodeError as exc:
+        raise VertexChallengeParseError(
+            response_id=response_id,
+            model_version=model_version,
+            usage=usage,
+            response_sha256=_sha(response_bytes),
+            candidate_sha256=_sha(text),
+            detail=str(exc),
+        ) from exc
+    _validate_output(spec, output)
 
     receipt: dict[str, Any] = {
         "schema": "SOVARA_CREATIVE_GEMINI_VERTEX_CHALLENGE_RECEIPT_V1",
@@ -223,7 +253,9 @@ def execute_vertex_challenge(
         "response_sha256": _sha(response_bytes),
         "output_sha256": _sha(_stable_json(output)),
         "proposal_count": len(output.get("proposals") or []),
-        "usage": response.get("usageMetadata") if isinstance(response.get("usageMetadata"), dict) else {},
+        "usage": usage,
+        "thinking_level": "LOW",
+        "response_json_schema_enforced": True,
         "case_data_processed": False,
         "provider_mutation_performed": False,
         "external_effect_performed": False,
@@ -240,6 +272,28 @@ class VertexChallengeHTTPError(RuntimeError):
         super().__init__(f"Vertex HTTP {status}: {detail[:500]}")
         self.status = int(status)
         self.body = body
+        self.detail = detail
+
+
+class VertexChallengeParseError(RuntimeError):
+    def __init__(
+        self,
+        *,
+        response_id: str,
+        model_version: str,
+        usage: dict[str, Any],
+        response_sha256: str,
+        candidate_sha256: str,
+        detail: str,
+    ) -> None:
+        super().__init__(f"Vertex Gemini returned non-parseable JSON: {detail}")
+        self.provider_request_id = response_id
+        self.model_returned = model_version
+        self.provider = "GOOGLE_VERTEX_AI"
+        self.transport = "VERTEX_AI_WIF_DIRECT"
+        self.usage = usage
+        self.response_sha256 = response_sha256
+        self.candidate_sha256 = candidate_sha256
         self.detail = detail
 
 
@@ -304,6 +358,20 @@ def main(argv: list[str] | None = None) -> int:
             error_body=None,
             detail=str(exc),
         )
+        if isinstance(exc, VertexChallengeParseError):
+            receipt.update(
+                {
+                    "provider_request_id": exc.provider_request_id,
+                    "model_returned": exc.model_returned,
+                    "provider": exc.provider,
+                    "usage": exc.usage,
+                    "response_sha256": exc.response_sha256,
+                    "candidate_sha256": exc.candidate_sha256,
+                    "provider_native_response_observed": True,
+                    "semantic_verified": False,
+                }
+            )
+            receipt["receipt_sha256"] = _sha(_stable_json(receipt))
         write_outputs(output_dir=args.output_dir, output=None, receipt=receipt)
         print(json.dumps(receipt, sort_keys=True), file=sys.stderr)
         return 1
