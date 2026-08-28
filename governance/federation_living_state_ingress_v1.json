@@ -1,0 +1,51 @@
+{
+  "schema": "FEDERATION-LIVING-STATE-INGRESS-V1",
+  "version": "1.0.0",
+  "role": "NORMALIZED_TRANSACTIONAL_EVENT_INGRESS_FOR_FEDERATION_LIVING_STATE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "continuous_model": "HOST_OR_EVENT_INVOKED_WITH_DURABLE_PERSISTENCE",
+  "capabilities": {
+    "normalized_event_envelopes": true,
+    "proof_maturity_and_freshness_metadata": true,
+    "matter_scope_isolation": true,
+    "public_safe_secret_shape_rejection": true,
+    "private_local_explicit_admission": true,
+    "durable_idempotency_receipts": true,
+    "store_scoped_exactly_once_transaction": true,
+    "journal_head_compare_and_swap": true,
+    "atomic_event_snapshot_receipt_commit": true,
+    "semantic_store_readback": true
+  },
+  "supported_event_classes": [
+    "NODE_STATE",
+    "ROUTE_TELEMETRY",
+    "CONTEXT_STATE",
+    "LEARNING",
+    "BENCHMARK"
+  ],
+  "truth_boundaries": {
+    "background_daemon_deployed": false,
+    "scheduler_deployed": false,
+    "provider_liveness_inferred_from_ingress_code": false,
+    "ingress_event_proves_provider_state_beyond_supplied_proof": false,
+    "duplicate_delivery_creates_duplicate_state": false,
+    "conflicting_event_id_reuse_allowed": false,
+    "public_safe_secret_material_allowed": false,
+    "private_payload_returned_in_receipt": false,
+    "external_effect_authority_created": false,
+    "provider_effects_remain_sovara_owner_and_native_readback_bound": true
+  },
+  "durability_contract": {
+    "sqlite_wal_compatible": true,
+    "shares_existing_living_state_store": true,
+    "ingress_receipt_table": "living_state_ingress_receipts",
+    "journal_delta_snapshot_receipt_atomic": true,
+    "cas_head_drift_fails_closed": true
+  },
+  "admission": {
+    "new_github_workflow_created": false,
+    "existing_federation_airlock_bridge": "tests/test_phoenix_provider_cutover_v3_federation_living_ingress.py",
+    "default_deny_must_pass": true
+  }
+}
