@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.7.0",
+  "version": "2.8.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -27,7 +27,7 @@
     ".github/workflows/superior-logic-maturation-shadow.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
-    ".github/workflows/fo-wif-semantic-canary.yml"
+    ".github/workflows/fo-wif-semantic-canary-v2.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -54,8 +54,7 @@
       "push"
     ],
     ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
-      "push",
-      "workflow_dispatch"
+      "main"
     ],
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
       "push",
@@ -84,7 +83,7 @@
     ".github/workflows/deploy-gemini-gateway.yml": [
       "workflow_dispatch"
     ],
-    ".github/workflows/fo-wif-semantic-canary.yml": [
+    ".github/workflows/fo-wif-semantic-canary-v2.yml": [
       "issues"
     ]
   },
@@ -119,7 +118,7 @@
     ".github/workflows/cios-production-lane.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
-    ".github/workflows/fo-wif-semantic-canary.yml"
+    ".github/workflows/fo-wif-semantic-canary-v2.yml"
   ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
@@ -176,7 +175,7 @@
     "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT",
-    "g0_identity_probe_workflow": ".github/workflows/fo-wif-semantic-canary.yml"
+    "g0_identity_probe_workflow": ".github/workflows/fo-wif-semantic-canary-v2.yml"
   },
   "source_repository_role": "QUARANTINED_SOURCE_WITH_EXACT_AIRLOCKED_PROVIDER_GATEWAYS",
   "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE_OR_EXACT_AIRLOCKED_GATEWAY",
@@ -194,7 +193,7 @@
       ".github/workflows/superior-logic-maturation-shadow.yml",
       ".github/workflows/luno-observer-provider-binding.yml",
       ".github/workflows/deploy-gemini-gateway.yml",
-      ".github/workflows/fo-wif-semantic-canary.yml"
+      ".github/workflows/fo-wif-semantic-canary-v2.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
