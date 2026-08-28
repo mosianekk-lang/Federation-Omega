@@ -1,0 +1,11 @@
+{
+  "schema": "SOVARA-SIC-V2-DEGRADATION-CONTRACT-V1",
+  "modes": {
+    "FULL": "external plus sovereign/local lanes and all decision courts available",
+    "DEGRADED_EXTERNAL_PARTIAL": "one or more external lanes succeed but full diversity not met",
+    "DEGRADED_LOCAL_ONLY": "external unavailable; authorized sovereign/local lanes continue",
+    "DEGRADED_DETERMINISTIC_ONLY": "model lanes unavailable; deterministic analysis continues",
+    "CHECKPOINT_ONLY": "no safe executable review lane remains; durable state preserved"
+  },
+  "rule": "DEGRADE_VISIBLY_NEVER_CORRUPT_MISSION_INVISIBLY"
+}
