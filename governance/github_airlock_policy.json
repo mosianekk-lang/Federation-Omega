@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.5.0",
+  "version": "2.4.2",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -23,31 +23,83 @@
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     ".github/workflows/cios-production-lane.yml",
-    ".github/workflows/luno-observer-provider-binding.yml"
+    ".github/workflows/frontier-runtime-qualification.yml",
+    ".github/workflows/superior-logic-maturation-shadow.yml"
   ],
   "allowed_events": {
-    ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
-    ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/cios-production-lane.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/luno-observer-provider-binding.yml": ["pull_request", "push", "workflow_dispatch"]
+    ".github/workflows/github-airlock.yml": [
+      "pull_request",
+      "merge_group",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/public-repository-leak-guard.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/phoenix-emergency-freeze.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/bubbles-command-bus.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "push"
+    ],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/cios-production-lane.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/frontier-runtime-qualification.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/superior-logic-maturation-shadow.yml": [
+      "push",
+      "schedule",
+      "workflow_dispatch"
+    ]
   },
   "required_push_branches": {
-    ".github/workflows/bubbles-command-bus.yml": ["main"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["main"],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["main"],
-    ".github/workflows/cios-production-lane.yml": ["main"],
-    ".github/workflows/luno-observer-provider-binding.yml": ["main"]
+    ".github/workflows/bubbles-command-bus.yml": [
+      "main"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "main"
+    ],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
+      "main"
+    ],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "main"
+    ],
+    ".github/workflows/cios-production-lane.yml": [
+      "main"
+    ],
+    ".github/workflows/frontier-runtime-qualification.yml": [
+      "main"
+    ],
+    ".github/workflows/superior-logic-maturation-shadow.yml": [
+      "main"
+    ]
   },
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-    ".github/workflows/cios-production-lane.yml",
-    ".github/workflows/luno-observer-provider-binding.yml"
+    ".github/workflows/cios-production-lane.yml"
   ],
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
@@ -89,8 +141,7 @@
   "provider_credential_reference_policy": {
     "admitted_source_contracts": [
       "governance/sovara_provider_credential_reference_v1.json",
-      "ops/sovara_provider_credential_reference.py",
-      "federation/capital_execution/venues/LUNO_OBSERVER_BINDING_CONTRACT.json"
+      "ops/sovara_provider_credential_reference.py"
     ],
     "secret_values_in_source": false,
     "secret_values_in_workflow_payloads": false,
@@ -100,7 +151,6 @@
     "provider_promotion_requires_surface_specific_readback": true,
     "provider_probe_workflow": ".github/workflows/pfrd-omega-operator-auth-probe.yml",
     "provider_deployment_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-    "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT"
   },
@@ -116,9 +166,12 @@
       ".github/workflows/pfrd-omega-operator-auth-probe.yml",
       ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
       ".github/workflows/cios-production-lane.yml",
-      ".github/workflows/luno-observer-provider-binding.yml"
+      ".github/workflows/frontier-runtime-qualification.yml",
+      ".github/workflows/superior-logic-maturation-shadow.yml"
     ],
-    "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
+    "provider_managed_active": [
+      "dynamic/dependabot/dependabot-updates"
+    ],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",
     "all_other_workflows": "DISABLED_MANUALLY",
     "provider_readback_required": true,

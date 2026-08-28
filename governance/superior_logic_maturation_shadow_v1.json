@@ -1,0 +1,117 @@
+{
+  "schema_version": "superior-logic.maturation-shadow.v1",
+  "id": "SUPERIOR-LOGIC-MATURATION-SHADOW-V1",
+  "version": "1.0.1",
+  "kind": "CHAT_INDEPENDENT_READ_ONLY_MATURATION_RUNTIME",
+  "objective": "Prove that Superior Logic can wake up without a live ChatGPT turn, assess its next maturity gap, compile a resumable transaction, emit a bounded candidate work package and preserve provider-native evidence without source mutation or external provider effects.",
+  "source": "evidenceops/caseforge/maturation_shadow_runtime.py::SuperiorLogicMaturationShadowRuntime",
+  "canonical_cli": "python -m evidenceops.caseforge.maturation_shadow_cli",
+  "compatibility_cli": "tools/superior_logic_maturation_shadow.py",
+  "entrypoint_rule": "Provider-executed Python CLIs must be tested through the same package/module entrypoint used by the provider. Direct script wrappers must explicitly establish repository import context and are secondary compatibility surfaces.",
+  "controller": "evidenceops/caseforge/autonomous_maturation.py::AutonomousMaturationController",
+  "evolution_stage": "20_AUTONOMOUS_MATURITY_DOMINANCE_CONTROLLER",
+  "execution_provider": "GITHUB_ACTIONS",
+  "workflow": ".github/workflows/superior-logic-maturation-shadow.yml",
+  "cadence": {
+    "scheduled_cron": "37 */6 * * *",
+    "push_trigger": "main scoped paths only",
+    "manual_trigger": "workflow_dispatch for bounded verification only",
+    "persistent_schedule_truth": "A configured schedule is not proof of recurring execution until at least one schedule-event run is provider-readback verified."
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "contents": "read",
+    "actions": "read",
+    "id_token": "none",
+    "source_write": false,
+    "provider_external_effect": false,
+    "credential_scope_expansion": false,
+    "recurring_cost_expansion": false
+  },
+  "runtime_cycle": [
+    "WAKE",
+    "READ_CURRENT_HEAD",
+    "READ_PROVIDER_RUN_HISTORY",
+    "ASSESS_PREVIOUS_CYCLES_AND_OWNER_INTERVENTION",
+    "SELECT_HIGHEST_VALUE_MATURATION_GAP",
+    "COMPILE_IDEMPOTENT_MATURATION_TRANSACTION",
+    "EMIT_BOUNDED_CANDIDATE_WORK_PACKAGE",
+    "WRITE_LOCAL_RECEIPTS",
+    "VERIFY_NO_EXTERNAL_EFFECT",
+    "UPLOAD_PROVIDER_ARTIFACT",
+    "END_WITH_NEXT_GATE"
+  ],
+  "proof_objects": [
+    "maturation_receipt.json",
+    "candidate_work_package.json",
+    "heartbeat.json",
+    "GitHub Actions run identity",
+    "GitHub Actions artifact identity"
+  ],
+  "anti_replay": {
+    "stable_idempotency_key": true,
+    "expected_state_epoch": true,
+    "transaction_id": true,
+    "blind_retry_after_ambiguous_effect": false,
+    "ambiguous_effect_rule": "READBACK_BEFORE_RETRY"
+  },
+  "failure_learning": {
+    "provider_run_33126859126": {
+      "state": "FAILED_PROVIDER_ENTRYPOINT",
+      "failure_signature": "PYTHON_DIRECT_SCRIPT_TOP_LEVEL_IMPORT_PATH",
+      "evidence_artifact_id": 9668699460,
+      "containment": "PRESERVE_FAILURE_THEN_REPAIR_THROUGH_AIRLOCK",
+      "permanent_regression": "tests/test_maturation_shadow_runtime.py provider-entrypoint subprocess tests"
+    }
+  },
+  "gap_progression": [
+    {
+      "condition": "successful_cycles < 3",
+      "gap": "GAP-REPEATED-SHADOW-CYCLES",
+      "next_gate": "ACCUMULATE_THREE_REPEATED_PROVIDER_NATIVE_CYCLES"
+    },
+    {
+      "condition": "measured_owner_intervention_rate > 0.10",
+      "gap": "GAP-OWNER-INTERVENTION-RATE",
+      "next_gate": "REDUCE_MANUAL_INVOCATION_RATE"
+    },
+    {
+      "condition": "successful_cycles >= 3 and owner_intervention_rate <= 0.10",
+      "gap": "GAP-CLOSED-LOOP-CANDIDATE-QUALIFICATION",
+      "next_gate": "ADMIT_PR_ONLY_CANDIDATE_BUILDER_AND_INDEPENDENT_ASSURANCE"
+    }
+  ],
+  "prohibited_effects": [
+    "direct_main_mutation",
+    "source_repository_write",
+    "provider_mutation",
+    "provider_authority_expansion",
+    "credential_scope_expansion",
+    "unapproved_recurring_cost",
+    "external_consequential_effect",
+    "self_certified_self_sustaining_claim"
+  ],
+  "self_sustaining_gate": {
+    "this_runtime_alone_can_satisfy": false,
+    "deliberately_unproven_in_shadow": [
+      "automatic_repair_or_candidate_generation",
+      "independent_proof",
+      "verified_rollback_of_candidate_promotion",
+      "measurable_operational_value",
+      "cross_receiver_learning_with_compatibility_proof"
+    ],
+    "minimum_repeated_successful_cycles": 3,
+    "owner_intervention_rate_ceiling": 0.10,
+    "required_next_evolution": "PR_ONLY_CANDIDATE_BUILDER_PLUS_INDEPENDENT_ASSURANCE"
+  },
+  "truth_boundary": {
+    "source_presence_proves_provider_execution": false,
+    "workflow_configuration_proves_schedule_execution": false,
+    "push_triggered_success_proves_recurring_schedule": false,
+    "work_package_generation_proves_candidate_improvement": false,
+    "three_shadow_cycles_prove_self_sustaining": false,
+    "github_actions_execution_grants_external_provider_authority": false,
+    "provider_run_plus_artifact_readback_required_for_runtime_execution_claim": true,
+    "schedule_event_run_readback_required_for_persistent_scheduled_autonomy_claim": true
+  }
+}

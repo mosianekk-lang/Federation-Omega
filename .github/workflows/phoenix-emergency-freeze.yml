@@ -69,6 +69,20 @@ jobs:
           : > /tmp/phoenix-freeze-enabled.txt
           : > /tmp/phoenix-freeze-provider-managed.txt
           : > /tmp/phoenix-required-readback.tsv
+          : > /tmp/phoenix-required-workflows.txt
+
+          policy_path='governance/github_airlock_policy.json'
+          if ! jq -e '
+              (.active_workflow_allowlist | type == "array" and length > 0)
+              and (.execution_quarantine.keep_active | type == "array")
+              and ((.active_workflow_allowlist | sort) == (.execution_quarantine.keep_active | sort))
+            ' "${policy_path}" >/dev/null; then
+            echo 'Airlock active-workflow policy and execution-quarantine keep-active set are missing or divergent' \
+              >> /tmp/phoenix-freeze-errors.txt
+          else
+            jq -r '.active_workflow_allowlist[]' "${policy_path}" \
+              | sort -u > /tmp/phoenix-required-workflows.txt
+          fi
 
           if ! gh api --paginate \
             "/repos/${GITHUB_REPOSITORY}/actions/workflows?per_page=100" \
@@ -80,66 +94,49 @@ jobs:
 
           if [[ -s /tmp/phoenix-workflows-before.tsv ]]; then
             while IFS=$'\t' read -r workflow_id workflow_path workflow_state workflow_name; do
-              case "${workflow_path}" in
-                .github/workflows/github-airlock.yml|\
-                .github/workflows/public-repository-leak-guard.yml|\
-                .github/workflows/phoenix-emergency-freeze.yml|\
-                .github/workflows/bubbles-command-bus.yml|\
-                .github/workflows/caseforge-provider-readback-canary.yml|\
-                .github/workflows/pfrd-omega-operator-auth-probe.yml|\
-                .github/workflows/sovara-litellm-v2-3-provider-admission.yml|\
-                .github/workflows/cios-production-lane.yml)
-                  if [[ "${workflow_state}" != "active" ]]; then
-                    if gh api -X PUT \
-                      "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
-                      >/dev/null; then
-                      printf '%s\t%s\n' "${workflow_id}" "${workflow_path}" \
-                        >> /tmp/phoenix-freeze-enabled.txt
-                    else
-                      printf 'Failed to enable required workflow: %s\n' "${workflow_path}" \
-                        >> /tmp/phoenix-freeze-errors.txt
-                    fi
+              if grep -Fxq "${workflow_path}" /tmp/phoenix-required-workflows.txt; then
+                if [[ "${workflow_state}" != "active" ]]; then
+                  if gh api -X PUT \
+                    "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/enable" \
+                    >/dev/null; then
+                    printf '%s\t%s\n' "${workflow_id}" "${workflow_path}" \
+                      >> /tmp/phoenix-freeze-enabled.txt
+                  else
+                    printf 'Failed to enable required workflow: %s\n' "${workflow_path}" \
+                      >> /tmp/phoenix-freeze-errors.txt
                   fi
-                  ;;
-                dynamic/dependabot/dependabot-updates)
-                  printf '%s\t%s\t%s\n' \
-                    "${workflow_id}" "${workflow_path}" "${workflow_state}" \
-                    >> /tmp/phoenix-freeze-provider-managed.txt
-                  ;;
-                *)
-                  if [[ "${workflow_state}" != "disabled_manually" ]]; then
-                    if gh api -X PUT \
-                      "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/disable" \
-                      >/dev/null; then
-                      printf '%s\t%s\n' "${workflow_id}" "${workflow_path}" \
-                        >> /tmp/phoenix-freeze-disabled.txt
-                    else
-                      printf 'Failed to disable legacy workflow: %s\n' "${workflow_path}" \
-                        >> /tmp/phoenix-freeze-errors.txt
-                    fi
+                fi
+              elif [[ "${workflow_path}" == "dynamic/dependabot/dependabot-updates" ]]; then
+                printf '%s\t%s\t%s\n' \
+                  "${workflow_id}" "${workflow_path}" "${workflow_state}" \
+                  >> /tmp/phoenix-freeze-provider-managed.txt
+              else
+                if [[ "${workflow_state}" != "disabled_manually" ]]; then
+                  if gh api -X PUT \
+                    "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_id}/disable" \
+                    >/dev/null; then
+                    printf '%s\t%s\n' "${workflow_id}" "${workflow_path}" \
+                      >> /tmp/phoenix-freeze-disabled.txt
+                  else
+                    printf 'Failed to disable legacy workflow: %s\n' "${workflow_path}" \
+                      >> /tmp/phoenix-freeze-errors.txt
                   fi
-                  ;;
-              esac
+                fi
+              fi
             done < /tmp/phoenix-workflows-before.tsv
           fi
 
-          required_specs=(
-            "github-airlock.yml|.github/workflows/github-airlock.yml"
-            "public-repository-leak-guard.yml|.github/workflows/public-repository-leak-guard.yml"
-            "phoenix-emergency-freeze.yml|.github/workflows/phoenix-emergency-freeze.yml"
-            "bubbles-command-bus.yml|.github/workflows/bubbles-command-bus.yml"
-            "caseforge-provider-readback-canary.yml|.github/workflows/caseforge-provider-readback-canary.yml"
-            "pfrd-omega-operator-auth-probe.yml|.github/workflows/pfrd-omega-operator-auth-probe.yml"
-            "sovara-litellm-v2-3-provider-admission.yml|.github/workflows/sovara-litellm-v2-3-provider-admission.yml"
-            "cios-production-lane.yml|.github/workflows/cios-production-lane.yml"
-          )
+          mapfile -t required_paths < /tmp/phoenix-required-workflows.txt
+          if [[ "${#required_paths[@]}" -eq 0 ]]; then
+            echo 'No required workflows resolved from canonical Airlock policy' \
+              >> /tmp/phoenix-freeze-errors.txt
+          fi
 
           for attempt in 1 2 3 4 5 6; do
             : > /tmp/phoenix-required-readback.tsv
             all_required_active=true
-            for spec in "${required_specs[@]}"; do
-              workflow_file="${spec%%|*}"
-              expected_path="${spec#*|}"
+            for expected_path in "${required_paths[@]}"; do
+              workflow_file="${expected_path##*/}"
               payload="$(
                 gh api \
                   "/repos/${GITHUB_REPOSITORY}/actions/workflows/${workflow_file}" \
@@ -182,6 +179,7 @@ jobs:
           dispatch_after_enable=(
             "pfrd-omega-operator-auth-probe.yml|.github/workflows/pfrd-omega-operator-auth-probe.yml|operator auth probe"
             "sovara-litellm-v2-3-provider-admission.yml|.github/workflows/sovara-litellm-v2-3-provider-admission.yml|LiteLLM provider admission"
+            "superior-logic-maturation-shadow.yml|.github/workflows/superior-logic-maturation-shadow.yml|Superior Logic maturation shadow"
           )
 
           for dispatch_spec in "${dispatch_after_enable[@]}"; do
@@ -219,6 +217,7 @@ jobs:
           fi
 
           python phoenix/workflow_freeze_convergence.py \
+            --policy "${policy_path}" \
             --before /tmp/phoenix-workflows-before.tsv \
             --after /tmp/phoenix-workflows-after.tsv \
             --required-readback /tmp/phoenix-required-readback.tsv \

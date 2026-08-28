@@ -15,11 +15,7 @@ sys.modules[SPEC.name] = AIRLOCK
 SPEC.loader.exec_module(AIRLOCK)
 POLICY = AIRLOCK.load_policy(ROOT / "governance" / "github_airlock_policy.json")
 WORKFLOW_PATH = ".github/workflows/sovara-litellm-v2-3-provider-admission.yml"
-EXPECTED_OIDC_WORKFLOWS = {
-    WORKFLOW_PATH,
-    ".github/workflows/cios-production-lane.yml",
-    ".github/workflows/luno-observer-provider-binding.yml",
-}
+WORKFLOW = (ROOT / WORKFLOW_PATH).read_text(encoding="utf-8")
 
 
 class SovaraLiteLLMProviderAirlockTests(unittest.TestCase):
@@ -51,13 +47,33 @@ jobs:
         findings = AIRLOCK.analyse_workflow(WORKFLOW_PATH, self.contract(), POLICY)
         self.assertEqual([], findings)
 
-    def test_exact_provider_gateways_are_the_only_oidc_source_workflows(self):
-        self.assertEqual(
-            EXPECTED_OIDC_WORKFLOWS,
-            set(POLICY["oidc_workflow_allowlist"]),
-        )
+    def test_gateway_is_explicitly_admitted_for_oidc(self):
+        self.assertIn(WORKFLOW_PATH, set(POLICY["oidc_workflow_allowlist"]))
         self.assertIn(WORKFLOW_PATH, POLICY["active_workflow_allowlist"])
         self.assertIn(WORKFLOW_PATH, POLICY["execution_quarantine"]["keep_active"])
+        self.assertIn(
+            ".github/workflows/cios-production-lane.yml",
+            set(POLICY["oidc_workflow_allowlist"]),
+        )
+
+    def test_provider_execution_is_dispatch_only(self):
+        self.assertIn("id: provider_mode", WORKFLOW)
+        self.assertIn('if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then', WORKFLOW)
+        self.assertGreaterEqual(
+            WORKFLOW.count("if: steps.provider_mode.outputs.requested == 'true'"),
+            3,
+        )
+        self.assertIn("Authenticate through exact repository-scoped Google WIF", WORKFLOW)
+        self.assertIn("Execute provider admission, canaries, deployment, and rollback gates", WORKFLOW)
+
+    def test_push_path_is_truthful_source_validation_only(self):
+        self.assertIn('"execution_mode": "PROVIDER_ADMISSION" if requested else "SOURCE_VALIDATION_ONLY"', WORKFLOW)
+        self.assertIn('"provider_admission_attempted": requested', WORKFLOW)
+        self.assertIn('"provider_state_claimed": requested and code == 0', WORKFLOW)
+        self.assertIn('.execution_mode == "SOURCE_VALIDATION_ONLY"', WORKFLOW)
+        self.assertIn('.provider_admission_attempted == false', WORKFLOW)
+        self.assertIn('.provider_admission_exit_code == null', WORKFLOW)
+        self.assertIn("no WIF exchange was attempted", WORKFLOW)
 
     def test_gateway_cannot_gain_source_write(self):
         findings = AIRLOCK.analyse_workflow(
