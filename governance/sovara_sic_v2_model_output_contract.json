@@ -1,0 +1,16 @@
+{
+  "schema": "SOVARA-SIC-V2-MODEL-OUTPUT-CONTRACT-V1",
+  "state": "PROPOSAL_ONLY",
+  "must_include_or_derive": [
+    "SOURCE_SHA256",
+    "MODEL_OR_LANE_IDENTITY",
+    "OUTPUT_SHA256",
+    "BOUNDARY_STATUS"
+  ],
+  "must_not_grant": [
+    "SOURCE_MUTATION_AUTHORITY",
+    "RELEASE_PROMOTION_AUTHORITY",
+    "PROVIDER_AUTHORITY",
+    "CANONICAL_TRUTH"
+  ]
+}
