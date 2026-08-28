@@ -1,0 +1,19 @@
+{
+  "schema": "SOVARA-OPENROUTER-CODE-EVAL-GOVERNANCE-V1",
+  "provider": "OpenRouter",
+  "role": "EXTERNAL_INTELLIGENCE_SUPPLIER",
+  "source_execution": false,
+  "output_state": "PROPOSAL_ONLY",
+  "credential_source": "RUNTIME_ENVIRONMENT_REFERENCE_ONLY",
+  "credential_value_persisted": false,
+  "request_privacy_defaults": {
+    "data_collection": "deny",
+    "zdr": true
+  },
+  "live_claim_requires": [
+    "PROVIDER_RESPONSE_READBACK",
+    "RESOLVED_MODEL_IDENTITY",
+    "OUTPUT_HASH"
+  ],
+  "canonical_source_mutation_authority": false
+}
