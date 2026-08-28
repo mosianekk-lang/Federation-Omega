@@ -1,0 +1,49 @@
+{
+  "schema": "FEDERATION-LIVING-FUTURE-INTELLIGENCE-V1",
+  "version": "1.0.0",
+  "role": "FEDERATION_SCENARIO_EXPERIMENT_EXPLANATION_AND_RETIREMENT_INTELLIGENCE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "inherits": [
+    "FEDERATION-LIVING-STATE-EVOLUTION-FABRIC-V1",
+    "FEDERATION-LIVING-EVOLUTION-INTELLIGENCE-V1"
+  ],
+  "capabilities": {
+    "scenario_ensemble_topology_stress": true,
+    "shared_dependency_stress_ranking": true,
+    "reversible_internal_experiment_selection": true,
+    "state_choice_explanation_trace": true,
+    "route_choice_explanation_trace": true,
+    "archive_before_retirement_planning": true
+  },
+  "truth_boundaries": {
+    "scenario_is_simulation_not_prediction_fact": true,
+    "scenario_topology_is_not_causation": true,
+    "experiment_selection_does_not_execute_provider_actions": true,
+    "experiment_selection_does_not_promote_causation": true,
+    "explanation_trace_is_not_new_evidence_or_proof": true,
+    "retirement_planner_never_deletes": true,
+    "archive_required_before_retirement_review": true,
+    "active_mission_dependency_holds_retirement": true,
+    "external_effect_authority_created": false,
+    "provider_effects_remain_sovara_owner_and_native_readback_bound": true
+  },
+  "retirement_contract": {
+    "archive_first": true,
+    "dependency_blast_radius_required": true,
+    "active_mission_exposure_blocks_retirement": true,
+    "direct_delete_permitted": false
+  },
+  "experiment_contract": {
+    "prefer_information_gain": true,
+    "prefer_falsifiability": true,
+    "prefer_reversibility": true,
+    "effectful_experiment_requires_separate_admission": true,
+    "causal_promotion_by_experiment_selector": false
+  },
+  "admission": {
+    "new_github_workflow_created": false,
+    "existing_federation_airlock_bridge": "tests/test_phoenix_provider_cutover_v3_federation_living_future.py",
+    "default_deny_must_pass": true
+  }
+}
