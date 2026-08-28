@@ -1,0 +1,16 @@
+{
+  "schema": "SOVARA-SIC-V2-RELEASE-POLICY-V1",
+  "incumbent_preservation": true,
+  "external_model_direct_promotion": false,
+  "required_challenger_gates": [
+    "SOURCE_IDENTITY",
+    "SEMANTIC_ADJUDICATION",
+    "FALSIFICATION",
+    "EMPIRICAL_TESTS",
+    "ZERO_DILUTION",
+    "ROLLBACK",
+    "RECOVERY_FLOOR",
+    "ATOMIC_PROMOTION"
+  ],
+  "failure_behavior": "HOLD_CHALLENGER_AND_PRESERVE_INCUMBENT"
+}
