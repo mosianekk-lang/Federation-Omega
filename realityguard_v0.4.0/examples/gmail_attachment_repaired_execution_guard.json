@@ -1,0 +1,60 @@
+{
+  "schema_version": "realityguard.execution-guard.v1",
+  "request": {
+    "request_id": "MPMB298-26-EMAIL-REPAIRED-1",
+    "tool_name": "gmail.send_email",
+    "operation": "send",
+    "effect_class": "EXTERNAL_MESSAGE",
+    "target": {
+      "recipients": [
+        "faith@example.org",
+        "employer@example.org"
+      ],
+      "recipients_verified": true
+    },
+    "payload": {
+      "subject": "MPMB298-26 Rule 32 application",
+      "attachments": [
+        {
+          "name": "MPMB298-26.pdf",
+          "transport": {
+            "mode": "FILE_REFERENCE",
+            "reference": "file_000000007e2081f4bc40759fa4027778",
+            "sha256": "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+          }
+        }
+      ]
+    },
+    "expected_fruit": {
+      "provider_state": "SENT",
+      "attachment_sha256": [
+        "sha256:aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+      ]
+    },
+    "idempotency_key": "mpmb298-26-email-repaired-v1"
+  },
+  "authority": {
+    "formation_permit_consumed": true,
+    "permit_single_use": true,
+    "action_binding_matches": true,
+    "proof_ref": "formation:example"
+  },
+  "route": {
+    "readback_supported": true,
+    "semantic_canary_verified": true,
+    "canary_proof_ref": "canary:gmail-file-reference",
+    "inline_binary_supported": false,
+    "inline_binary_canary_verified": false
+  },
+  "retry": {
+    "attempt": 2,
+    "previous_attempts": [
+      {
+        "request_fingerprint": "sha256:failed-inline-binary-route",
+        "idempotency_key": "mpmb298-26-email-v1",
+        "status": "FAILED_PRE_DISPATCH"
+      }
+    ],
+    "exact_repair": "Replace unsupported inline base64 with a verified provider file reference."
+  }
+}
