@@ -6,10 +6,13 @@ from pathlib import Path
 import re
 import unittest
 
-EXPECTED_RAW_SHA256 = "e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f"
-EXPECTED_GZIP_SHA256 = "e1b911b405c2e2cd26f78b72b31e2702bdc904269ff48155398c2e3299ad9c59"
-EXPECTED_CHUNK_LENGTHS = [4000, 4000, 4000, 4000, 4000, 196]
-EXPECTED_B64_LENGTH = 20196
+EXPECTED_RAW_SHA256 = "773ee295b2ae3f2182afc47bcc94c676c1e6464face0176504ff8763c9616443"
+EXPECTED_LF_NORMALIZED_SHA256 = "e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f"
+EXPECTED_GZIP_SHA256 = "a3b130bb71d08fb5a3a2c63615920ade240e2937a875f984e8d1982cf262f920"
+EXPECTED_RAW_BYTES = 52480
+EXPECTED_CRLF_COUNT = 2560
+EXPECTED_CHUNK_LENGTHS = [4000, 4000, 4000, 4000, 4000, 460]
+EXPECTED_B64_LENGTH = 20460
 
 class CanonicalAO5PayloadTests(unittest.TestCase):
     def test_exact_canonical_payload(self):
@@ -23,7 +26,11 @@ class CanonicalAO5PayloadTests(unittest.TestCase):
         compressed = base64.b64decode(encoded, validate=True)
         self.assertEqual(hashlib.sha256(compressed).hexdigest(), EXPECTED_GZIP_SHA256)
         raw = gzip.decompress(compressed)
+        self.assertEqual(len(raw), EXPECTED_RAW_BYTES)
+        self.assertEqual(raw.count(b"\r\n"), EXPECTED_CRLF_COUNT)
         self.assertEqual(hashlib.sha256(raw).hexdigest(), EXPECTED_RAW_SHA256)
+        normalized = raw.decode("utf-8").replace("\r\n", "\n").encode("utf-8")
+        self.assertEqual(hashlib.sha256(normalized).hexdigest(), EXPECTED_LF_NORMALIZED_SHA256)
         text = raw.decode("utf-8")
         self.assertEqual(len(text.splitlines()), 2561)
         parts = re.findall(r"# PART ([IVXLCDM0-9]+) — ", text)
