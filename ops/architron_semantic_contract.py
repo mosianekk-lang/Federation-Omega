@@ -22,6 +22,7 @@ ACTION_REQUIRED_KEYS = {
     "GET_RUNTIME_IDENTITY": {"runtimeIdentity"},
     "GET_PROJECT_INFO": {"projectInfo"},
     "GET_CLOUD_RUN_SERVICE": {"service"},
+    "LIST_SERVICE_ACCOUNTS": {"serviceAccounts"},
 }
 
 
@@ -39,8 +40,8 @@ def _payload_body(response: Mapping[str, Any]) -> Mapping[str, Any]:
 def validate_action_response(action: str, response: Mapping[str, Any]) -> Mapping[str, Any]:
     """Return the action body only when its semantic contract is satisfied.
 
-    HTTP 2xx, DONE, or generic health is insufficient for the three provider
-    proof actions used by the KAIO canary.
+    HTTP 2xx, DONE, or generic health is insufficient for provider proof
+    actions admitted by this contract.
     """
 
     normalized = str(action or "").strip().upper()
@@ -51,7 +52,7 @@ def validate_action_response(action: str, response: Mapping[str, Any]) -> Mappin
     body = _payload_body(response)
     observed = set(body)
 
-    # Explicitly reject the exact failure mode observed on 9 August 2026.
+    # Explicitly reject the generic-health collision observed on the provider route.
     if GENERIC_HEALTH_KEYS.issubset(observed) and not (required & observed):
         raise SemanticContractError(
             f"{normalized} collapsed to generic runtime health; action-specific proof absent"
