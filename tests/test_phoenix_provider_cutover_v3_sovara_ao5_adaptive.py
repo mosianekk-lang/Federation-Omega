@@ -1,7 +1,6 @@
 from __future__ import annotations
 
-import subprocess
-import sys
+import io
 import unittest
 
 from ops.sovara_ao5_full_v2.ao5_full_engine import canary, coverage_gate
@@ -15,6 +14,11 @@ class SovaraAO5AdaptiveHostedBridgeTests(unittest.TestCase):
     Federation Omega Airlock runs `test_phoenix_provider_cutover_v3*.py` on every
     pull request. This bridge makes that existing hosted court execute the full
     zero-dilution AO5 regression directory plus the adaptive challenger tests.
+
+    The nested suite intentionally uses unittest's in-process loader rather than
+    subprocess.run. Other provider-cutover regressions monkey-patch subprocess
+    during the same discovery process, so subprocess would create a false
+    coupling between otherwise unrelated tests.
     """
 
     def test_byte_exact_source_identity_is_unchanged(self):
@@ -46,30 +50,20 @@ class SovaraAO5AdaptiveHostedBridgeTests(unittest.TestCase):
         self.assertEqual(result["external_effects"], 0)
 
     def test_full_package_regression_surface_including_optimizer(self):
-        proc = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "unittest",
-                "discover",
-                "-s",
-                "ops/sovara_ao5_full_v2/tests",
-                "-p",
-                "test_*.py",
-                "-v",
-            ],
-            cwd=".",
-            text=True,
-            capture_output=True,
-            check=False,
+        suite = unittest.defaultTestLoader.discover(
+            "ops/sovara_ao5_full_v2/tests",
+            pattern="test_*.py",
+            top_level_dir=".",
         )
-        self.assertEqual(
-            proc.returncode,
-            0,
-            "FULL_AO5_STACKED_REGRESSION_FAILED\nSTDOUT:\n"
-            + proc.stdout
-            + "\nSTDERR:\n"
-            + proc.stderr,
+        stream = io.StringIO()
+        result = unittest.TextTestRunner(
+            stream=stream,
+            verbosity=2,
+            failfast=False,
+        ).run(suite)
+        self.assertTrue(
+            result.wasSuccessful(),
+            "FULL_AO5_STACKED_REGRESSION_FAILED\n" + stream.getvalue(),
         )
 
     def test_synthetic_benchmark_is_not_promoted_as_real_performance(self):
