@@ -3,8 +3,9 @@ import json,re
 
 ROOT=Path(__file__).resolve().parents[1]
 W=ROOT/'.github/workflows/fo-wif-semantic-canary-v2.yml'
+PW=ROOT/'.github/workflows/sovara-litellm-v2-3-provider-admission.yml'
 P=ROOT/'governance/github_airlock_policy.json'
-G=ROOT/'ops/bootstrap_gemini_gateway.sh'
+G=ROOT/'sovara/gemini/bootstrap_gateway.sh'
 
 def test_slos_g0_issue_canary_is_owner_only_read_only_and_pinned():
     w=W.read_text(encoding='utf-8')
@@ -32,11 +33,16 @@ def test_slos_g0_issue_canary_is_owner_only_read_only_and_pinned():
 
 def test_gemini_g1_only_enables_services_when_readback_reports_missing_apis():
     g=G.read_text(encoding='utf-8')
+    provider_workflow=PW.read_text(encoding='utf-8')
     guard='if ((${#MISSING_APIS[@]} > 0)); then'
     enable='gcloud services enable "${MISSING_APIS[@]}" --project "$PROJECT_ID"'
     assert guard in g
     assert enable in g
     assert g.index(guard) < g.index(enable)
+    assert './sovara/gemini/bootstrap_gateway.sh --plan' in provider_workflow
+    assert './sovara/gemini/bootstrap_gateway.sh --apply' in provider_workflow
+    assert './sovara/gemini/bootstrap_gateway.sh --verify' in provider_workflow
+    assert './ops/bootstrap_gemini_gateway.sh --apply' not in provider_workflow
     # Never regress to the old unconditional fixed-list enable call that required
     # Service Usage Admin even when the plan had already proven all APIs active.
     assert 'gcloud services enable \\\n  aiplatform.googleapis.com' not in g
