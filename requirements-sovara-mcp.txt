@@ -1,0 +1,4 @@
+# SOVARA chat-native MCP runtime dependencies.
+# Keep provider/model SDK dependencies out of the court core; OpenRouter access
+# currently uses Python stdlib HTTP in ops/sovara_openrouter_code_eval_v1.py.
+mcp>=1.15,<2
