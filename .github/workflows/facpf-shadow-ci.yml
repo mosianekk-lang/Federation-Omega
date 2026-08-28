@@ -1,0 +1,53 @@
+name: FACPF Shadow CI
+
+on:
+  pull_request:
+    paths:
+      - 'autonomic_chat_performance_fabric/**'
+      - '.github/workflows/facpf-shadow-ci.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: facpf-shadow-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  champion-challenger:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+      - name: Run Python fabric tests
+        run: python -m unittest autonomic_chat_performance_fabric.test_fabric -v
+      - name: Compile Python package
+        run: python -m compileall -q autonomic_chat_performance_fabric
+      - name: Run sentinel and inactive-canary tests
+        run: node autonomic_chat_performance_fabric/test_sentinel.js
+      - name: Run deterministic champion-challenger gate
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p facpf-output
+          node autonomic_chat_performance_fabric/benchmark_gate.js \
+            | tee facpf-output/deterministic-benchmark.json
+      - name: Record informational local timing
+        run: >-
+          node autonomic_chat_performance_fabric/benchmark.js
+          > facpf-output/synthetic-timing.json
+      - name: Upload benchmark receipts
+        if: always() && hashFiles('facpf-output/*.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: facpf-shadow-${{ github.run_id }}-${{ github.run_attempt }}
+          path: facpf-output/*.json
+          if-no-files-found: error
+          retention-days: 30
+
