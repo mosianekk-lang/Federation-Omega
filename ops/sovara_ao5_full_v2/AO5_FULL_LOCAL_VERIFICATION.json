@@ -1,12 +1,19 @@
 {
-  "schema": "SOVARA-AO5-FULL-LOCAL-VERIFICATION-2",
-  "canonical_source_sha256": "e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f",
-  "canonical_gzip_sha256": "e1b911b405c2e2cd26f78b72b31e2702bdc904269ff48155398c2e3299ad9c59",
-  "canonical_b64_length": 20196,
-  "canonical_chunk_count": 6,
-  "source_lines": 2561,
+  "schema": "SOVARA-AO5-FULL-LOCAL-VERIFICATION-2.2",
+  "canonical_source": {
+    "authority": "BYTE_EXACT_USER_UPLOAD",
+    "raw_sha256": "773ee295b2ae3f2182afc47bcc94c676c1e6464face0176504ff8763c9616443",
+    "lf_normalized_sha256": "e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f",
+    "deterministic_gzip_sha256": "a3b130bb71d08fb5a3a2c63615920ade240e2937a875f984e8d1982cf262f920",
+    "raw_bytes": 52480,
+    "crlf_count": 2560,
+    "b64_length": 20460,
+    "chunk_count": 6,
+    "chunk_lengths": [4000,4000,4000,4000,4000,460],
+    "source_lines": 2561
+  },
   "sections": {"part0":1,"roman_parts":54,"total":55,"mapped":55,"unmapped":0},
-  "tests": {"engine_regressions":59,"canonical_payload_regressions":1,"total":60,"local_passed":60,"local_failed":0},
+  "tests": {"engine_regressions":59,"canonical_payload_regressions":1,"total":60,"local_engine_passed":59,"local_canonical_pre_correction_result":"SUPERSEDED_BY_BYTE_EXACT_RERUN_REQUIRED"},
   "canary": {"checks":56,"local_passed":56,"local_failed":0,"external_effects":0},
   "harmonization": {
     "SOVARA":"MISSION_ROUTE_EFFECT_ADMISSION_AND_ORCHESTRATION",
@@ -21,27 +28,39 @@
     {
       "id":"AO5-FULL-NEARMISS-001",
       "class":"REGRESSION_TEST_SURFACE_EXPORT",
-      "stage":"first full monolithic regression development pass",
-      "observed":"Four internally implemented symbols were omitted from the test export surface: ProofState, COUNCIL_ANGLES, OUTPUT_FIELDS, PERFORMANCE_SUCCESS_TESTS.",
-      "repair":"Export surface corrected and full 60-test monolithic suite rerun to PASS.",
+      "observed":"Four internally implemented symbols were omitted from the first development test export surface.",
+      "repair":"Export surface corrected and full development suite rerun.",
       "promotion":"LEARNING"
     },
     {
       "id":"AO5-FULL-NEARMISS-002",
       "class":"LOCAL_TEST_HARNESS_IMPORT",
-      "stage":"provider-shaped local readback rehearsal",
-      "observed":"Temporary local copied test file still imported compact_engine by its development name.",
-      "repair":"Rehearsal harness import corrected to ops.sovara_ao5_full_v2.ao5_full_engine; exact provider-shaped 60-test suite rerun to PASS.",
+      "observed":"Temporary local provider-shaped rehearsal used the development import name.",
+      "repair":"Harness import corrected before branch mutation and suite rerun.",
       "provider_branch_affected":false,
       "promotion":"LEARNING"
     },
     {
       "id":"AO5-FULL-NEARMISS-003",
       "class":"CANONICAL_PAYLOAD_TRANSPORT_TRUNCATION",
-      "stage":"GitHub PR #699 source CI run 1",
-      "observed":"All 59 executable-engine regressions passed, but the single-file base64 canonical carrier failed strict reconstruction with binascii.Error: Incorrect padding.",
-      "repair":"Replaced the fragile carrier with six bounded deterministic chunks and strengthened CI to verify chunk count, exact base64 length, gzip SHA-256, raw source SHA-256, source line count and all section headings.",
-      "provider_branch_affected":true,
+      "provider_run":"PR #699 source CI run 1",
+      "observed":"All 59 engine regressions passed; the obsolete single-file canonical carrier failed strict base64 reconstruction with Incorrect padding.",
+      "repair":"Single-file carrier was superseded by six bounded chunks and later deleted.",
+      "promotion":"LEARNING"
+    },
+    {
+      "id":"AO5-FULL-NEARMISS-004",
+      "class":"CANONICAL_CHUNK_TRANSPORT_LENGTH",
+      "provider_run":"PR #699 source CI diagnostic run",
+      "observed":"Part01 measured 3903 characters instead of 4000 while parts02-05 were 4000 and part06 was 196 for the then LF-normalized carrier.",
+      "repair":"Chunk-level length diagnostics isolated the carrier defect before promotion.",
+      "promotion":"LEARNING"
+    },
+    {
+      "id":"AO5-FULL-NEARMISS-005",
+      "class":"LINE_ENDING_CANONICAL_IDENTITY_MISCLASSIFICATION",
+      "observed":"During repair, `e777a19e...` was discovered to be the SHA-256 of LF-normalized text, not the byte-exact uploaded file. The uploaded file is CRLF-terminated and hashes to `773ee295...`.",
+      "repair":"Canonical authority reverted to the byte-exact upload; all six chunks were regenerated from original CRLF bytes; a separate source_identity.py records raw and normalized identities; manifests and strict regression were rebound to raw bytes.",
       "promotion":"LEARNING_PENDING_PROVIDER_REGRESSION"
     }
   ],
@@ -53,24 +72,25 @@
     },
     {
       "id":"AO5-DISC-002",
-      "prior_source_sha256":"773ee295b2ae3f2182afc47bcc94c676c1e6464face0176504ff8763c9616443",
-      "correct_source_sha256":"e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f",
-      "correction":"Exact raw uploaded UTF-8 bytes were rehashed and bound into canonical payload regression."
+      "incorrect_intermediate_claim":"e777a19ed3750c989fdb82033fba1247e1b8fedb5be8721783697c83b4a4bb7f was described as the exact raw upload hash.",
+      "verified_identity":"773ee295b2ae3f2182afc47bcc94c676c1e6464face0176504ff8763c9616443 is the byte-exact upload hash; e777a19e... is the LF-normalized textual-equivalence hash.",
+      "correction":"Raw upload outranks normalized text for zero-dilution source identity."
     },
     {
       "id":"AO5-DISC-003",
       "prior_source_admission":"Earlier subset was written directly to main and Airlock classified the resulting history UNADMITTED_HISTORY.",
-      "corrective_route":"This full v2 package is isolated on a feature branch and must pass PR admission before merge."
+      "corrective_route":"Full v2 remains feature-branch + PR gated; no direct-main bypass is accepted."
     }
   ],
   "zero_dilution_gate": {
-    "canonical_source_exact_local":true,
-    "compatibility_matrix_complete":true,
-    "local_regression_pass":true,
-    "local_canary_pass":true,
-    "github_pr_admission_pass":false,
-    "merged_main_exact_readback_pass":false,
-    "state":"ZERO_DILUTION_LOCAL_ELIGIBLE_PROVIDER_GATES_OPEN"
+    "byte_exact_canonical_source_bound": true,
+    "compatibility_matrix_complete": true,
+    "local_engine_regression_pass": true,
+    "local_canary_pass": true,
+    "fresh_byte_exact_provider_ci_pass": false,
+    "github_pr_admission_pass": false,
+    "merged_main_exact_readback_pass": false,
+    "state":"ZERO_DILUTION_NOT_YET_VERIFIED"
   },
-  "truth_boundary":"This receipt proves local/source behavior only. GitHub PR #699 run 1 failed the canonical transport test and is preserved as an adverse event. Zero dilution remains unverified until the repaired branch passes provider CI/admission and merged-main exact readback."
+  "truth_boundary":"The executable coverage and local engine/canary gates are green, but the canonical identity correction materially supersedes earlier normalized-source verification. Zero dilution remains unverified until fresh provider CI proves the byte-exact CRLF carrier, PR admission passes, and merged-main exact readback passes."
 }
