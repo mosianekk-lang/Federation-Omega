@@ -1,5 +1,4 @@
-import importlib.util
-import json
+from dataclasses import asdict
 from pathlib import Path
 import sys
 
@@ -93,7 +92,7 @@ def sealed_result():
         unresolved_unknowns=[],
         receipts=[],
     )
-    material = result.__dict__.copy()
+    material = asdict(result)
     material["result_sha256"] = None
     result.result_sha256 = _sha256_text(_canonical_json(material))
     return result
