@@ -14,20 +14,31 @@
     "persistRawDom": false,
     "emitOnlyAggregateMetrics": true
   },
+  "implementationContracts": {
+    "messageTextReturned": false,
+    "perMessageIdentifiersReturned": false,
+    "rawPerformanceEntryNamesReturned": false,
+    "attributionReturned": false,
+    "rollbackClearsMemory": true,
+    "maximumAggregateSamples": 256
+  },
   "promotionGates": {
     "formationPermitRequired": true,
     "explicitOperatorActivationRequired": true,
     "sameWorkloadChampionChallengerRequired": true,
     "minimumSuccessfulRuns": 5,
+    "minimumP95ImprovementPercent": 5,
     "maximumReloadRegression": 0,
-    "maximumErrorRegression": 0
+    "maximumErrorRegression": 0,
+    "maximumLongTaskRegression": 0
   },
   "stopConditions": [
     "page reload or reconnect increase",
     "capture budget exceeded",
     "queue saturation",
     "message-stream interference",
-    "privacy invariant violation"
+    "privacy invariant violation",
+    "aggregate-only implementation contract violation"
   ],
   "rollback": {
     "action": "disable sentinel and clear its in-memory queue",
@@ -35,4 +46,3 @@
     "requiresMainMutation": false
   }
 }
-

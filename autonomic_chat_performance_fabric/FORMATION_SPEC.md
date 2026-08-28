@@ -11,3 +11,6 @@
 - CI admission: deterministic work-unit superiority is blocking; wall-clock timing is informational
 - Browser canary: configuration present but `enabled: false`; one chat, 15 minutes,
   aggregate-only telemetry, automatic rollback on any stop condition
+- Privacy implementation: emitted sentinel and browser-probe telemetry contains no
+  message text, per-message identifier/hash, raw DOM, URL, entry name or attribution;
+  rollback clears the bounded in-memory state

@@ -17,6 +17,7 @@
       this.lastCaptureAt = 0;
       this.streaming = false;
       this.circuitOpen = false;
+      this.disabled = false;
     }
 
     static hashText(text) {
@@ -33,34 +34,44 @@
     }
 
     admit(messages, now = Date.now()) {
+      if (this.disabled) return {state: "DISABLED", deltas: [], changeCount: 0};
       if (this.circuitOpen || this.streaming) return {state: "DEFERRED", deltas: []};
       if (now - this.lastCaptureAt < this.options.minimumIntervalMs) {
         return {state: "THROTTLED", deltas: []};
       }
       const started = typeof performance !== "undefined" ? performance.now() : now;
-      const deltas = [];
+      const pendingHashes = [];
+      let changeCount = 0;
+      let payloadChars = 0;
       for (const message of messages) {
         const id = String(message.id || "");
         const text = String(message.text || "");
         if (!id || !text) continue;
         const hash = PerformanceSentinel.hashText(text);
         if (this.lastHashes.get(id) === hash) continue;
-        this.lastHashes.set(id, hash);
-        deltas.push({id, role: String(message.role || "unknown"), text, hash});
+        pendingHashes.push([id, hash]);
+        changeCount += 1;
+        payloadChars += text.length;
       }
-      const payloadChars = deltas.reduce((sum, item) => sum + item.text.length, 0);
       const ended = typeof performance !== "undefined" ? performance.now() : now;
       const elapsedMs = Math.max(0, ended - started);
       if (payloadChars > this.options.maximumPayloadChars || elapsedMs > this.options.maximumCaptureMs) {
         this.circuitOpen = true;
-        return {state: "CIRCUIT_OPEN", deltas: [], payloadChars, elapsedMs};
+        return {state: "CIRCUIT_OPEN", deltas: [], changeCount: 0, payloadChars, elapsedMs};
       }
+      for (const [id, hash] of pendingHashes) this.lastHashes.set(id, hash);
       this.lastCaptureAt = now;
-      this.queue.push(...deltas);
+      if (changeCount) this.queue.push({observedAt: Number(now), changeCount, payloadChars, elapsedMs});
       if (this.queue.length > this.options.maximumQueueItems) {
         this.queue.splice(0, this.queue.length - this.options.maximumQueueItems);
       }
-      return {state: deltas.length ? "DELTA_READY" : "NO_CHANGE", deltas, payloadChars, elapsedMs};
+      return {
+        state: changeCount ? "DELTA_READY" : "NO_CHANGE",
+        deltas: [],
+        changeCount,
+        payloadChars,
+        elapsedMs
+      };
     }
 
     drain(limit = 16) {
@@ -69,6 +80,14 @@
 
     resetCircuit() {
       this.circuitOpen = false;
+    }
+
+    rollback() {
+      this.disabled = true;
+      this.streaming = false;
+      this.circuitOpen = false;
+      this.lastHashes.clear();
+      this.queue.length = 0;
     }
   }
 

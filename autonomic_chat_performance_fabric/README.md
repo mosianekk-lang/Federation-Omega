@@ -29,7 +29,10 @@ substitute for same-workload browser evidence.
 `browser_canary_config.json` is deliberately disabled. It limits observation to
 one chat and 15 minutes, captures aggregate metrics without message text or raw
 DOM persistence, and requires a separate Formation permit plus explicit operator
-activation. This branch does not activate it.
+activation. `performance_sentinel.js` emits no message text, per-message IDs or
+hashes; `aggregate_browser_probe.js` omits URLs, entry names and attribution and
+caps long-task samples at 256. Rollback disconnects observation and clears all
+in-memory state. This branch does not activate the canary.
 
 ## Deployment gate
 
