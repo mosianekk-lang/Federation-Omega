@@ -1,0 +1,23 @@
+{
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "issue": 714,
+  "schema": "FRONTIER-CONVERGENCE-OS-SOURCE-MANIFEST-V1",
+  "shared_admission_files": [
+    ".github/workflows/github-airlock.yml"
+  ],
+  "source_files": {
+    "docs/FRONTIER_CONVERGENCE_OS_V1.md": "afe9c7016171a795323c649f56edb11c7f91fbca8251f1a2592a9d065ead3d44",
+    "frontier_convergence/os_canary.py": "e0548813b5d5dbae6aa4e8991a4fc57935169acdf5fbf1fd0d0d158470491986",
+    "frontier_convergence/os_core.py": "1574761bc8f33775beb0684fda4f5d487db05023e52dcaf1ed2c93b688f245cf",
+    "governance/frontier_convergence_os_v1.json": "23a95a4b7f63314bb96e67cd8e35cb6abcf2c862851ec2909472f58c30c164b4",
+    "tests/test_frontier_convergence_manifest.py": "cf69eab7febd72e9ccd863d12eb9be64caf015dfa5350958d6ef975bfc7830ba",
+    "tests/test_frontier_convergence_os.py": "7018a690c33d7e43900d2735fed10c28a8141d1d17b8ce649f2bf4641ae7116c"
+  },
+  "truth_boundary": {
+    "manifest_proves_production_qualification": false,
+    "manifest_proves_provider_execution": false,
+    "manifest_proves_workspace_effects": false
+  },
+  "version": "1.0.0"
+}
