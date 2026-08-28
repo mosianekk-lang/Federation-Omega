@@ -1,0 +1,25 @@
+{
+  "schema": "SOVARA_CREATIVE_CANARY_CONTRACT_V1",
+  "canary_id": "SC-CANARY-PUBLIC-SYNTHETIC-ASSET-001",
+  "objective": "Prove one bounded end-to-end creative media asset path using a fictional public-synthetic subject, with provider-native execution evidence, exact asset hash readback, semantic verification and rollback/disable proof before any repeated cohort or value claim.",
+  "synthetic_only": true,
+  "case_data_allowed": false,
+  "real_person_allowed": false,
+  "provider_mutation_allowed": false,
+  "publishing_allowed": false,
+  "external_communication_allowed": false,
+  "production_traffic_allowed": false,
+  "provider_effect_authorized": false,
+  "max_provider_calls": 1,
+  "max_assets": 1,
+  "max_source_spend": 0,
+  "required_semantic_assertions": [
+    "FICTIONAL_SUBJECT_CONFIRMED",
+    "REQUESTED_CREATIVE_INTENT_PRESENT",
+    "ASSET_PAYLOAD_NONEMPTY",
+    "ASSET_HASH_READBACK_MATCH"
+  ],
+  "rollback_requirement": "The canary route must prove a provider/tool-specific disable, delete, invalidate or equivalent bounded rollback for the generated canary asset without modifying production traffic.",
+  "execution_gate": "A separate execution-time authority record must bind provider/tool, runtime identity, exact request, privacy eligibility and either explicit finite spend authority or verified zero-cost/quota execution. This source contract cannot grant that authority.",
+  "truth_boundary": "Source/test/CI admission of this contract proves only canary design and deterministic evaluator behavior. It does not prove provider execution, media generation, semantic asset quality, rollback, spend, repeated success, commercial value, publishing or production readiness."
+}
