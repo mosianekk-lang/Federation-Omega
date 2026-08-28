@@ -1,0 +1,17 @@
+{
+  "schema": "SOVARA-SIC-V2-TRUTH-BOUNDARY-V1",
+  "claims": {
+    "SOURCE_IMPLEMENTED": "requires source readback at exact branch/head",
+    "CI_VERIFIED": "requires executed CI result readback",
+    "MCP_DEPLOYED": "requires deployed HTTPS MCP endpoint readback",
+    "CHAT_CONNECTED": "requires ChatGPT/plugin connection plus tool canary",
+    "OPENROUTER_CONNECTED": "requires provider response/readback for the exact runtime",
+    "ZERO_DILUTION": "requires incumbent/challenger comparison plus regression proof"
+  },
+  "forbidden_inference": [
+    "SOURCE_IMPLIES_DEPLOYMENT",
+    "CI_IMPLIES_PROVIDER_CONNECTIVITY",
+    "PROVIDER_A_IMPLIES_PROVIDER_B",
+    "CHAT_PROMPT_IMPLIES_DURABLE_RUNTIME"
+  ]
+}
