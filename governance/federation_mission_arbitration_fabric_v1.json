@@ -1,0 +1,110 @@
+{
+  "schema": "FEDERATION-MISSION-ARBITRATION-FABRIC-1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Compose canonical Federation capability discovery, concurrency control, route failure memory, evidence proof and mission-scoped authorization into one pre-execution arbitration layer.",
+  "composition": {
+    "JARVIS_AO5": [
+      "capability reality state",
+      "decision DAG and contradiction discipline",
+      "reconcile-before-rebuild"
+    ],
+    "FORMATION_OMEGA_MCE": [
+      "mission/work-item closure contracts",
+      "proof axes",
+      "hash-chained mission convergence ledger"
+    ],
+    "SECURE_CAPABILITY_BOX": [
+      "mission-scoped short-lived capability handles",
+      "execution receipts",
+      "secret-reference separation"
+    ],
+    "FAILURE_WIN_AND_AUTONOMOUS_REGRESSION": [
+      "route and failure memory",
+      "materially different retry",
+      "known-failure replay"
+    ],
+    "CFBE": [
+      "quality",
+      "reliability",
+      "freshness",
+      "proof strength",
+      "latency",
+      "cost",
+      "owner burden",
+      "risk"
+    ],
+    "REALITYGUARD": [
+      "authorization -> execution -> target readback -> receipt",
+      "claim ceiling bound to proof"
+    ],
+    "SOVARA": [
+      "mission",
+      "route",
+      "authority",
+      "effect admission"
+    ],
+    "SENTINEL": [
+      "identity",
+      "revision",
+      "freshness",
+      "health and drift vote"
+    ],
+    "CAPABILITY_RESOLUTION_GATE_AND_DIGITAL_TWIN": [
+      "reality-state eligibility",
+      "provider/runtime readiness before route selection"
+    ],
+    "ALPHA_OMEGA_AND_AUTOMATION_AUTHORITY_FABRIC": [
+      "bounded parallel lanes",
+      "mission lease/fencing semantics",
+      "blocked-lane isolation"
+    ]
+  },
+  "new_controls": {
+    "mission_lease": "Repository-scoped mission lease bound to current main SHA, lease epoch and exact path scope.",
+    "prewrite_fence": "Every source write must re-read current main and pass a CAS-style fence; moving main cannot be ignored.",
+    "workstream_overlap_guard": "Overlapping open lanes are serialized; non-overlapping drift is fast-reconverged rather than blindly written.",
+    "route_memory_gate": "Known failed routes are ineligible until their explicit retry condition and recovery proof are satisfied.",
+    "capability_tournament": "CFBE-inspired ranking happens only after reality, readiness, authority and failure-memory hard gates.",
+    "execution_envelope": "Completion claims require authorization, execution, target readback, matching target digest and final receipt.",
+    "near_miss_learning": "Prevented stale writes, overlap collisions and known-dead route retries become reusable learning events.",
+    "mission_snapshot": "Every arbitration cycle can emit a deterministic digest of current main, fence, blocked routes, active failures and next action."
+  },
+  "known_failure_floor": {
+    "GOOGLE_WIF_INVALID_TARGET": {
+      "route_id": "GITHUB_TO_GOOGLE_WIF",
+      "state": "OPEN",
+      "source": "governance/sovara_federation_capability_adoption_v1_1.json",
+      "retry_condition": "A newer provider-native FEDOMEGA-WIF-CLOUD-VERIFIED receipt must prove provider existence/enabled state, repository/branch trust and service-account impersonation before this route is eligible again."
+    }
+  },
+  "luno_binding": {
+    "mode": "SOURCE_GOVERNANCE_ONLY",
+    "provider_route_state": "KNOWN_WIF_FAILURE_HELD",
+    "financial_effects": false,
+    "provider_write_operations": false,
+    "capital_authority_created": false
+  },
+  "invariants": [
+    "CAPABILITY_DISCOVERY_PRECEDES_BUILD_OR_ROUTE_CREATION",
+    "FAILURE_MEMORY_PRECEDES_PROVIDER_RETRY",
+    "CURRENT_MAIN_READBACK_PRECEDES_EVERY_SOURCE_WRITE",
+    "OPEN_OVERLAPPING_WORKSTREAMS_ARE_SERIALIZED",
+    "NON_OVERLAPPING_MAIN_DRIFT_REQUIRES_FAST_RECONVERGENCE",
+    "KNOWN_DEAD_ROUTE_CANNOT_WIN_ON_SCORE",
+    "PROOF_STATE_IS_A_HARD_GATE_NOT_A_SOFT_SCORE",
+    "AUTHORITY_CANNOT_BE_INFERRED_FROM_CAPABILITY_EXISTENCE",
+    "PROVIDER_CLAIM_CANNOT_EXCEED_TARGET_READBACK_AND_RECEIPT",
+    "BLOCKED_PROVIDER_LANE_DOES_NOT_FREEZE_SAFE_INDEPENDENT_LANES",
+    "NO_FINANCIAL_OR_EXTERNAL_EFFECT_AUTHORITY_IS_CREATED"
+  ],
+  "truth_boundary": {
+    "source_module_is_provider_neutral": true,
+    "source_module_performs_provider_mutation": false,
+    "source_module_creates_google_wif": false,
+    "source_module_repairs_iam": false,
+    "source_module_creates_financial_authority": false,
+    "provider_recovery_requires_separate_provider_native_authorization_and_readback": true
+  }
+}

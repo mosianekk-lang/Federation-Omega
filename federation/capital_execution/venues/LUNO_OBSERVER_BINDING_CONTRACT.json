@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-LUNO-OBSERVER-BINDING-CONTRACT-1",
-  "version": "1.2.1",
+  "version": "1.3.0",
   "project": "sov-hybrid-suite",
   "region": "africa-south1",
   "service": "federation-luno-observer",
@@ -26,6 +26,19 @@
     "method_science": "Ω-SCIENTIST",
     "consequential_external_action_requires_owner_approval": true,
     "provider_state_must_match_readback": true
+  },
+  "mission_arbitration": {
+    "contract": "governance/federation_mission_arbitration_fabric_v1.json",
+    "implementation": "federation.orchestration.mission_arbitration",
+    "capability_discovery_before_route_selection": true,
+    "failure_memory_before_retry": true,
+    "current_main_prewrite_fence_required": true,
+    "cross_workstream_overlap_detection_required": true,
+    "known_failure_fingerprint": "GOOGLE_WIF_INVALID_TARGET",
+    "known_failed_route": "GITHUB_TO_GOOGLE_WIF",
+    "provider_retry_requires_newer_wif_recovery_proof": true,
+    "source_and_provider_readiness_are_separate": true,
+    "blocked_provider_lane_does_not_freeze_safe_research_lanes": true
   },
   "credential_binding": {
     "legacy_secret_names_accepted": false,
@@ -84,6 +97,8 @@
     "NO_SCHEDULER_OR_AUTONOMOUS_EXECUTION_LOOP",
     "SHADOW_MODE_REMAINS_THE_CAPITAL_CEILING",
     "PUBLIC_PROVIDER_SUCCESS_DOES_NOT_IMPLY_ACCOUNT_BINDING",
-    "JARVIS_AO5_REALITYGUARD_CONTROLS_PROVIDER_STATE_CLAIMS"
+    "JARVIS_AO5_REALITYGUARD_CONTROLS_PROVIDER_STATE_CLAIMS",
+    "MISSION_ARBITRATION_PRECEDES_PROVIDER_ROUTE_RETRY",
+    "KNOWN_WIF_INVALID_TARGET_ROUTE_REQUIRES_RECOVERY_PROOF_BEFORE_REUSE"
   ]
 }
