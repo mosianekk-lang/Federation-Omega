@@ -1,0 +1,59 @@
+{
+  "schema": "SOVARA-SOVEREIGN-INTELLIGENCE-COURT-V2",
+  "version": "2.0.0",
+  "status": "IMPLEMENTATION_IN_PROGRESS",
+  "owner": "Kim Kagiso Mosiane",
+  "objective": "Provide a chat-native, durable, provider-independent code evaluation court that preserves mission state across platform interruptions and keeps all external model outputs proposal-only until SLOS adjudication.",
+  "invariants": [
+    "NO_SINGLE_CHAT_MAY_TERMINATE_OR_REDEFINE_THE_MISSION",
+    "NO_SINGLE_MODEL_MAY_PROMOTE_CODE",
+    "NO_SINGLE_PROVIDER_MAY_BE_A_REQUIRED_DEPENDENCY",
+    "NO_PLATFORM_BOUNDARY_MAY_SILENTLY_DILUTE_ACCEPTANCE_CRITERIA",
+    "INCUMBENT_SOURCE_REMAINS_CANONICAL_UNTIL_CHALLENGER_PASSES_ZERO_DILUTION_AND_REGRESSION",
+    "PROVIDER_BOUNDARY_EVENTS_ARE_CLASSIFIED_AND_REROUTED_NOT_HIDDEN",
+    "RAW_SECRETS_NEVER_ENTER_MISSION_STATE_OR_RECEIPTS"
+  ],
+  "planes": [
+    "CHAT_NATIVE_MCP_INGRESS",
+    "DURABLE_MISSION_CONTROL",
+    "PROVIDER_INDEPENDENT_INTELLIGENCE_MESH",
+    "SOVEREIGN_LOCAL_INTELLIGENCE_MESH",
+    "ADVERSARIAL_INTELLIGENCE_COURT",
+    "SLOS_DECISION_COURT",
+    "PROVENANCE_AND_RECOVERY_PLANE"
+  ],
+  "mission_states": [
+    "RECEIVED",
+    "HASHED",
+    "PRIVACY_PREFLIGHT",
+    "PANEL_SELECTED",
+    "ROUND_1",
+    "ROUND_1_CHECKPOINTED",
+    "DISAGREEMENTS_COMPILED",
+    "ROUND_2",
+    "ROUND_2_CHECKPOINTED",
+    "AO5_COURT",
+    "OMEGA_SCIENTIST",
+    "CFBE",
+    "ZERO_DILUTION",
+    "RESULT_SEALED",
+    "RETURNED_TO_USER"
+  ],
+  "degradation_modes": [
+    "FULL",
+    "DEGRADED_EXTERNAL_PARTIAL",
+    "DEGRADED_LOCAL_ONLY",
+    "DEGRADED_DETERMINISTIC_ONLY",
+    "CHECKPOINT_ONLY"
+  ],
+  "provider_role": "INTELLIGENCE_SUPPLIER_ONLY",
+  "sovara_role": "ORCHESTRATION_AUTHORITY",
+  "slos_role": "DECISION_AUTHORITY",
+  "owner_role": "FINAL_APPROVER",
+  "external_output_state": "PROPOSAL_ONLY",
+  "github_role": ["SOURCE_CONTROL", "CI", "ADMISSION", "REGRESSION_COURT"],
+  "github_not_primary_runtime": true,
+  "chat_role": "CLIENT_TERMINAL_NOT_SYSTEM_OF_RECORD",
+  "zero_dilution_required": true,
+  "issue": 710
+}
