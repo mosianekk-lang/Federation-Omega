@@ -19,6 +19,13 @@ from .canary import (
     missing_semantic_assertions,
     source_only_canary_decision,
 )
+from .canary_authority import (
+    CanaryAuthorityDecision,
+    CanaryAuthorityState,
+    CanaryExecutionBinding,
+    ImageRouteCatalogEvidence,
+    evaluate_image_canary_authority,
+)
 from .capability_foundry import (
     AdmissionState,
     BuildStrategy,
@@ -115,6 +122,9 @@ __all__ = [
     "AmbitionClass",
     "BenchmarkDimension",
     "BuildStrategy",
+    "CanaryAuthorityDecision",
+    "CanaryAuthorityState",
+    "CanaryExecutionBinding",
     "CapabilityCandidate",
     "ChallengeSpec",
     "CompositeFrontierPoint",
@@ -130,6 +140,7 @@ __all__ = [
     "ExecutionPlane",
     "FrontierGap",
     "FrontierObservation",
+    "ImageRouteCatalogEvidence",
     "MatureContext",
     "MaturePolicyState",
     "MetaEvolutionState",
@@ -179,6 +190,7 @@ __all__ = [
     "default_production_value_specs",
     "economics_snapshot",
     "evaluate_creative_canary",
+    "evaluate_image_canary_authority",
     "evaluate_meta_evolution",
     "evaluate_openrouter_response",
     "evaluate_production_convergence",
