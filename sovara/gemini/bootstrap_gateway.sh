@@ -142,6 +142,13 @@ PY
 collect_state
 MUTATION_PERFORMED=false
 
+# Read-only authority census: it is deliberately diagnostic-only and must never
+# convert an ADC verification failure into success. The receipt is retained by
+# the trusted workflow artifact when SOVARA_RECEIPT_DIR is available.
+if [[ "$MODE" == "verify" && -f sovara/gemini/admin_authority_census.py ]]; then
+  python3 sovara/gemini/admin_authority_census.py || true
+fi
+
 if [[ "$MODE" == "plan" ]]; then
   if ((${#MISSING[@]} == 0)); then
     emit "FEDOMEGA-GEMINI-ADC-PLAN" "READY_FOR_VERIFICATION"
@@ -179,7 +186,6 @@ fi
 MUTATION_PERFORMED=true
 gcloud config set project "$PROJECT_ID" >/dev/null
 
-# Service Usage mutation is requested only if provider readback found a missing API.
 if ((${#MISSING_APIS[@]} > 0)); then
   gcloud services enable "${MISSING_APIS[@]}" --project "$PROJECT_ID"
 fi
