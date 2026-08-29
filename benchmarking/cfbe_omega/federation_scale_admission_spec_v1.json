@@ -1,0 +1,28 @@
+{
+  "schema": "FEDERATION-PROOFOS-CFBE-V1",
+  "version": "1.0.0",
+  "benchmark_method": "FEDERATION_SCALE_CHAMPION_VS_CHALLENGER_WITH_PROOF_AND_VALUE_GATES",
+  "frontier_leader_requires_independent_readback": true,
+  "architecture_score_alone_cannot_promote": true,
+  "dimensions": [
+    {"metric":"duplicate_capability_ratio","direction":"LOWER_IS_BETTER","weight":9,"target":{"kind":"RATIO_AT_MOST","value":0.50},"ten_x_target":false},
+    {"metric":"stale_capability_state_ratio","direction":"LOWER_IS_BETTER","weight":9,"target":{"kind":"RATIO_AT_MOST","value":0.25},"ten_x_target":true},
+    {"metric":"owner_intervention_rate","direction":"LOWER_IS_BETTER","weight":8,"target":{"kind":"RATIO_AT_MOST","value":0.50},"ten_x_target":false},
+    {"metric":"mean_time_to_root_cause_seconds","direction":"LOWER_IS_BETTER","weight":8,"target":{"kind":"RATIO_AT_MOST","value":0.30},"ten_x_target":true},
+    {"metric":"p95_route_selection_latency_seconds","direction":"LOWER_IS_BETTER","weight":6,"target":{"kind":"RATIO_AT_MOST","value":0.50},"ten_x_target":false},
+    {"metric":"cost_per_verified_decision","direction":"LOWER_IS_BETTER","weight":8,"target":{"kind":"RATIO_AT_MOST","value":0.70},"ten_x_target":false},
+    {"metric":"security_escape_rate","direction":"LOWER_IS_BETTER","weight":12,"target":{"kind":"AT_MOST","value":0.0},"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"},"hard_gate":true,"ten_x_target":true},
+    {"metric":"regression_escape_rate","direction":"LOWER_IS_BETTER","weight":10,"target":{"kind":"RATIO_AT_MOST","value":1.0},"safety_gate":{"kind":"NO_WORSE_THAN_INCUMBENT"},"hard_gate":true},
+    {"metric":"provider_readback_coverage","direction":"HIGHER_IS_BETTER","weight":8,"target":{"kind":"AT_LEAST","value":0.95},"safety_gate":{"kind":"AT_LEAST","value":0.80},"hard_gate":true,"ten_x_target":false},
+    {"metric":"critical_proof_chain_coverage","direction":"HIGHER_IS_BETTER","weight":9,"target":{"kind":"AT_LEAST","value":1.0},"safety_gate":{"kind":"AT_LEAST","value":1.0},"hard_gate":true,"ten_x_target":true},
+    {"metric":"value_telemetry_coverage","direction":"HIGHER_IS_BETTER","weight":7,"target":{"kind":"AT_LEAST","value":0.90},"ten_x_target":false},
+    {"metric":"retirement_or_reuse_decision_coverage","direction":"HIGHER_IS_BETTER","weight":6,"target":{"kind":"AT_LEAST","value":1.0},"ten_x_target":true}
+  ],
+  "promotion_truth": {
+    "source_or_design_only_cannot_promote_to_frontier": true,
+    "safety_regression_is_veto": true,
+    "provider_live_independent_readback_required_for_frontier_claim": true,
+    "losing_or_duplicate_capabilities_require_retire_reuse_or_hold_decision": true,
+    "live_financial_effects_are_outside_this_admission_court": true
+  }
+}
