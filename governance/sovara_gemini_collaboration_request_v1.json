@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-DIRECT-WIF-ADMIN-CENSUS-20260829-001",
+  "request_id": "SOVARA-GEMINI-G0-ADMIN-AUTHORITY-GRAPH-20260829-001",
   "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
@@ -22,12 +22,12 @@
       "roles/serviceusage.serviceUsageConsumer on superior-logic-runtime",
       "roles/run.developer on superior-logic-deployer"
     ],
-    "prior_admin_census_run_id": "33270067682",
-    "prior_admin_census_artifact_id": "9719834914",
-    "prior_admin_census_artifact_sha256": "98fad5182b59f2e01de1ee6b19c67c2905760b4eb4ae6f5297775989ea8678c3",
-    "prior_admin_candidate_count": 11,
-    "prior_verified_impersonable_admin_count": 0
+    "direct_wif_census_run_id": "33270202979",
+    "direct_wif_census_artifact_id": "9719877365",
+    "direct_wif_census_artifact_sha256": "da98f7c09eaa3719895003084837930ad1e1dc14f1bba4d69a2e31dc15b876e5",
+    "direct_current_wif_admin_candidate_count": 0,
+    "verified_impersonable_admin_count": 0
   },
-  "purpose": "Read the service-account IAM policies of existing project Owner/Project-IAM-Admin candidates and compare their roles/iam.workloadIdentityUser members with the exact members already authorizing the canonical superior-logic-deployer. Identify whether any existing admin service account directly trusts the same GitHub WIF principal, so a keyless direct-auth route can be tested without granting the deployer broader authority.",
-  "truth_boundary": "Read-only direct-WIF trust census only. Do not alter IAM, service accounts, WIF configuration or keys; do not access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. A policy-member match only qualifies a direct-auth candidate; it does not by itself prove successful authentication or authorize mutation."
+  "purpose": "Map bounded roles/iam.serviceAccountTokenCreator delegation edges and alternate workload-identity bindings across the existing high-authority service-account estate. Starting from the currently authenticated superior-logic-deployer, test only bounded service-account delegation chains and projects.testIamPermissions to determine whether an already-existing keyless route reaches a project Owner/IAM-admin principal with resourcemanager.projects.setIamPolicy.",
+  "truth_boundary": "Read-only authority-graph census only. Do not change IAM, service accounts, Workload Identity configuration or keys; do not access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. Delegation or policy edges are candidates until provider-native access-token issuance plus testIamPermissions verifies setIamPolicy."
 }
