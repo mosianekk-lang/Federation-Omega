@@ -1,0 +1,49 @@
+{
+  "schema": "SOVARA_SC_VERSION_TREE_PROCESS_CRASH_DRILL_V1",
+  "capability_id": "SC-VERSION-TREE",
+  "layer": "LOCAL_ABRUPT_PROCESS_CRASH_RECOVERY",
+  "predecessor_admission": "governance/sovara_sc_version_tree_durable_store_v1_admission.json",
+  "worker": "sovara/creative/version_tree_crash_drill.py",
+  "regression_court": "tests/test_sovara_creative_version_tree_crash_drill.py",
+  "objective": "Prove that an abruptly terminated local process cannot promote uncommitted immutable objects and that a process terminated after authoritative refs replacement reconstructs the new committed tree from a fresh interpreter.",
+  "checkpoints": [
+    "IMMUTABLE_OBJECTS_WRITTEN_BEFORE_REFS",
+    "REFS_REPLACED_BEFORE_POST_WRITE_READBACK"
+  ],
+  "required_proofs": [
+    "PARENT_PROCESS_ABRUPTLY_KILLS_WORKER",
+    "PRE_REFS_CRASH_PRESERVES_PRIOR_AUTHORITATIVE_HEAD",
+    "PRE_REFS_ORPHAN_OBJECTS_REMAIN_NON_AUTHORITATIVE",
+    "POST_REFS_CRASH_RECOVERS_NEW_AUTHORITATIVE_HEAD",
+    "POST_REFS_GENERATION_CHAIN_PRESERVED",
+    "FRESH_INTERPRETER_RESTART_READBACK",
+    "EXACT_LOCAL_ONLY_CONFIRMATION_REQUIRED",
+    "NO_PROVIDER_EFFECT",
+    "NO_EXTERNAL_EFFECT"
+  ],
+  "authority": {
+    "ceiling": "A1_INTERNAL_LOCAL_PROCESS_TEST",
+    "local_subprocess_execution_authorized_for_test": true,
+    "local_filesystem_write_authorized_for_test": true,
+    "cloud_storage_write_authorized": false,
+    "provider_effect_authorized": false,
+    "production_deployment_authorized": false,
+    "publishing_authorized": false,
+    "production_traffic_authorized": false,
+    "spend_authorized": false
+  },
+  "promotion_if_green": {
+    "state": "LOCAL_PROCESS_CRASH_RECOVERY_PROVEN",
+    "does_not_inherit": [
+      "POWER_LOSS_DURABILITY",
+      "FILESYSTEM_OR_DISK_FAILURE_DURABILITY",
+      "MULTI_HOST_CONSISTENCY",
+      "CLOUD_STORAGE_DURABILITY",
+      "PRODUCTION_RUNTIME_BINDING",
+      "AUTONOMOUS_PRODUCTION_ROLLBACK",
+      "PROVIDER_EXECUTION",
+      "REALISED_VALUE"
+    ]
+  },
+  "truth_boundary": "A green drill proves bounded abrupt-process recovery on the tested local runtime only. It does not prove power-loss durability, disk/filesystem failure recovery, distributed consistency, cloud durability, production deployment, provider effects, autonomous production rollback, publishing, spend or realised value."
+}
