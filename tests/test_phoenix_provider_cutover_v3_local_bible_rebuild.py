@@ -46,7 +46,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             ".github/workflows/luno-observer-provider-binding.yml",
             ".github/workflows/deploy-gemini-gateway.yml",
         }
-        g0_identity_probe = ".github/workflows/fo-wif-semantic-canary.yml"
+        g0_identity_probe = ".github/workflows/fo-wif-semantic-canary-v2.yml"
         expected = deployment_gateways | {g0_identity_probe}
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
         self.assertEqual(

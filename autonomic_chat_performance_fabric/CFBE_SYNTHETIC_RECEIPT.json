@@ -1,0 +1,13 @@
+{
+  "schema": "FACPF-CFBE-SYNTHETIC-1",
+  "evidenceClass": "SYNTHETIC_LOCAL_NOT_REAL_BROWSER",
+  "cases": [
+    {"messages": 100, "rounds": 20, "baselineMs": 15.072, "candidateMs": 6.274, "factor": 2.4},
+    {"messages": 250, "rounds": 20, "baselineMs": 100.477, "candidateMs": 3.726, "factor": 26.97},
+    {"messages": 500, "rounds": 20, "baselineMs": 82.816, "candidateMs": 6.109, "factor": 13.56},
+    {"messages": 750, "rounds": 20, "baselineMs": 91.251, "candidateMs": 8.786, "factor": 10.39},
+    {"messages": 1000, "rounds": 20, "baselineMs": 121.951, "candidateMs": 12.946, "factor": 9.42}
+  ],
+  "allCandidateFaster": true,
+  "truthBoundary": "Synthetic local benchmark only. It does not prove Edge, ChatGPT, provider, network, extension, or production performance."
+}

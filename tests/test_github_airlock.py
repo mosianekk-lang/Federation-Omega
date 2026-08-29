@@ -163,6 +163,46 @@ jobs:
         self.assertIn("REPOSITORY_WRITE_AUTHORITY", rules)
         self.assertIn("UNAUTHORISED_OIDC", rules)
 
+    def test_facpf_shadow_ci_exact_read_only_contract_passes(self):
+        text = """name: FACPF Shadow CI
+on:
+  pull_request:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: facpf-shadow-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  champion-challenger:
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/facpf-shadow-ci.yml", text, POLICY
+        )
+        self.assertEqual([], findings)
+
+    def test_airlock_installs_exact_api_test_dependencies_before_proofos(self):
+        workflow_path = ROOT / ".github" / "workflows" / "github-airlock.yml"
+        if not workflow_path.is_file():
+            self.skipTest("workflow-free Phoenix Core export")
+        workflow = workflow_path.read_text(encoding="utf-8")
+        install = "Install pinned Airlock API test dependencies"
+        proof = "Execute manifest-selected proof court"
+        self.assertEqual(1, workflow.count(install))
+        self.assertLess(workflow.index(install), workflow.index(proof))
+        self.assertIn("--disable-pip-version-check --no-input", workflow)
+        for requirement in (
+            "fastapi==0.115.6",
+            "httpx==0.28.1",
+            "pydantic==2.10.4",
+        ):
+            with self.subTest(requirement=requirement):
+                self.assertEqual(1, workflow.count(requirement))
+
     def test_unlisted_workflow_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/new-bot.yml",

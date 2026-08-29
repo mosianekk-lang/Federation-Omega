@@ -109,7 +109,8 @@ class CreativeCanaryDecision:
 _TRUTH_BOUNDARY = (
     "A SOVARA Creative canary is proven only by same-run provider-native execution, exact asset readback, "
     "required semantic assertions, and rollback/disable evidence. Source tests or simulated observations do not "
-    "prove provider execution, media generation, publishing, production traffic, value, repeated success, or spend authority."
+    "prove provider execution. Any source-only or simulated result does not prove provider execution, media generation, "
+    "publishing, production traffic, value, repeated success, or spend authority."
 )
 
 

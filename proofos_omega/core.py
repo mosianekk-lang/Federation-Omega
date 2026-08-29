@@ -28,6 +28,14 @@ VALID_SCOPES={"GLOBAL","SUBSYSTEM","SHADOW"}
 VALID_FAILURES={"SECURITY_VIOLATION","AUTHORITY_EXPANSION","PROVENANCE_FAILURE","SOURCE_INTEGRITY_FAILURE","ABI_REGRESSION","SUBSYSTEM_REGRESSION","EXPORT_COMPATIBILITY","SELECTOR_ESCAPE","GENERAL_REGRESSION"}
 SAFE_TARGET=re.compile(r"^[A-Za-z0-9_.*:/-]+(?:\.py)?$")
 SAFE_MODULE=re.compile(r"^[A-Za-z0-9_.]+$")
+FAILURE_DIAGNOSTIC_LIMIT=4096
+ANSI_ESCAPE=re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+FAILURE_SECRET_PATTERNS=(
+    (re.compile(r"\b(?:gh[pousr]_[A-Za-z0-9_]{8,}|"+"github"+r"_pat_[A-Za-z0-9_]{8,})\b"), "[REDACTED]"),
+    (re.compile(r"(?i)\b(bearer)\s+[A-Za-z0-9._~+/=-]{8,}"), r"\1 [REDACTED]"),
+    (re.compile(r"(?i)\b(token|password|secret|api[_-]?key)\b(\s*[:=]\s*)([^\s,;]+)"), r"\1\2[REDACTED]"),
+    (re.compile(r"(?i)([?&](?:sig|token|key|secret)=)[^&\s]+"), r"\1[REDACTED]"),
+)
 
 def canonical_json(v): return json.dumps(v,sort_keys=True,separators=(",",":"),ensure_ascii=False)
 def sha256_bytes(b:bytes): return hashlib.sha256(b).hexdigest()
@@ -40,6 +48,13 @@ def normalize_path(path:str):
     out=str(PurePosixPath(raw))
     if out in {"","."} or out==".." or out.startswith("../") or "/../" in out: raise ImpactError(f"unsafe path: {path!r}")
     return out
+
+def bounded_failure_diagnostic(payload:bytes|str|None):
+    if not payload: return ""
+    text=payload.decode("utf-8",errors="replace") if isinstance(payload,bytes) else str(payload)
+    text=ANSI_ESCAPE.sub("",text)
+    for pattern,replacement in FAILURE_SECRET_PATTERNS: text=pattern.sub(replacement,text)
+    return text[-FAILURE_DIAGNOSTIC_LIMIT:]
 
 @dataclass(frozen=True)
 class SubsystemRule: subsystem:str; patterns:tuple[str,...]; depends_on:tuple[str,...]=()
@@ -78,8 +93,11 @@ class ProofManifest:
     def verify(self): return sha256_json(self.deterministic_payload())==self.manifest_sha256
 @dataclass(frozen=True)
 class TestExecutionResult:
-    test_id:str; status:str; returncode:int; elapsed_seconds:float; proof_key:str; stdout_sha256:str; stderr_sha256:str; failure_class:str; block_scope:str; reused_from_cache:bool=False
-    def to_dict(self): return {"test_id":self.test_id,"status":self.status,"returncode":self.returncode,"elapsed_seconds":round(self.elapsed_seconds,6),"proof_key":self.proof_key,"stdout_sha256":self.stdout_sha256,"stderr_sha256":self.stderr_sha256,"failure_class":self.failure_class,"block_scope":self.block_scope,"reused_from_cache":self.reused_from_cache}
+    test_id:str; status:str; returncode:int; elapsed_seconds:float; proof_key:str; stdout_sha256:str; stderr_sha256:str; failure_class:str; block_scope:str; reused_from_cache:bool=False; failure_diagnostic:str=""
+    def to_dict(self):
+        result={"test_id":self.test_id,"status":self.status,"returncode":self.returncode,"elapsed_seconds":round(self.elapsed_seconds,6),"proof_key":self.proof_key,"stdout_sha256":self.stdout_sha256,"stderr_sha256":self.stderr_sha256,"failure_class":self.failure_class,"block_scope":self.block_scope,"reused_from_cache":self.reused_from_cache}
+        if self.failure_diagnostic: result["failure_diagnostic"]=self.failure_diagnostic
+        return result
 @dataclass(frozen=True)
 class AdmissionReport:
     manifest_sha256:str; results:tuple[TestExecutionResult,...]; blocking_failures:tuple[str,...]; scoped_failures:tuple[str,...]; status:str; report_sha256:str
@@ -215,14 +233,15 @@ class ProofRunner:
                 r=TestExecutionResult(t.test_id,"PASS",0,0.0,key,cached["stdout_sha256"],cached["stderr_sha256"],t.failure_class,t.block_scope,True); results.append(r); continue
             if not self._present(t):
                 status="SKIPPED_NOT_PRESENT" if t.optional_if_missing else "FAIL_NOT_PRESENT"; rc=0 if t.optional_if_missing else 2
-                r=TestExecutionResult(t.test_id,status,rc,0.0,key,sha256_bytes(b""),sha256_bytes(b"required proof target not present" if rc else b""),t.failure_class,t.block_scope)
+                stderr=b"required proof target not present" if rc else b""
+                r=TestExecutionResult(t.test_id,status,rc,0.0,key,sha256_bytes(b""),sha256_bytes(stderr),t.failure_class,t.block_scope,failure_diagnostic=bounded_failure_diagnostic(stderr))
             else:
                 start=time.monotonic()
                 try:
                     p=subprocess.run(self._argv(t),cwd=self.repo_root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=t.timeout_seconds,check=False,env={**os.environ,"PYTHONDONTWRITEBYTECODE":"1"})
-                    r=TestExecutionResult(t.test_id,"PASS" if p.returncode==0 else "FAIL",p.returncode,time.monotonic()-start,key,sha256_bytes(p.stdout),sha256_bytes(p.stderr),t.failure_class,t.block_scope)
+                    r=TestExecutionResult(t.test_id,"PASS" if p.returncode==0 else "FAIL",p.returncode,time.monotonic()-start,key,sha256_bytes(p.stdout),sha256_bytes(p.stderr),t.failure_class,t.block_scope,failure_diagnostic=bounded_failure_diagnostic(p.stderr) if p.returncode else "")
                 except subprocess.TimeoutExpired as e:
-                    r=TestExecutionResult(t.test_id,"FAIL_TIMEOUT",124,time.monotonic()-start,key,sha256_bytes(e.stdout or b""),sha256_bytes(e.stderr or b""),t.failure_class,t.block_scope)
+                    r=TestExecutionResult(t.test_id,"FAIL_TIMEOUT",124,time.monotonic()-start,key,sha256_bytes(e.stdout or b""),sha256_bytes(e.stderr or b""),t.failure_class,t.block_scope,failure_diagnostic=bounded_failure_diagnostic(e.stderr))
             results.append(r)
             if r.status=="PASS" and self.cache: self.cache.store(r)
             elif not (r.status.startswith("PASS") or r.status.startswith("SKIPPED")):

@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.8.0",
+  "version": "2.9.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -17,6 +17,7 @@
   "active_workflow_allowlist": [
     ".github/workflows/github-airlock.yml",
     ".github/workflows/public-repository-leak-guard.yml",
+    ".github/workflows/facpf-shadow-ci.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
     ".github/workflows/caseforge-provider-readback-canary.yml",
@@ -86,6 +87,10 @@
     ],
     ".github/workflows/fo-wif-semantic-canary-v2.yml": [
       "issues"
+    ],
+    ".github/workflows/facpf-shadow-ci.yml": [
+      "pull_request",
+      "workflow_dispatch"
     ]
   },
   "required_push_branches": {
@@ -184,6 +189,7 @@
     "keep_active": [
       ".github/workflows/github-airlock.yml",
       ".github/workflows/public-repository-leak-guard.yml",
+      ".github/workflows/facpf-shadow-ci.yml",
       ".github/workflows/phoenix-emergency-freeze.yml",
       ".github/workflows/bubbles-command-bus.yml",
       ".github/workflows/caseforge-provider-readback-canary.yml",

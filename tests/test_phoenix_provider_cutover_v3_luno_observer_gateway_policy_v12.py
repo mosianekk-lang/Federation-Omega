@@ -13,7 +13,9 @@ class LunoObserverGatewayPolicyV12Tests(unittest.TestCase):
         self.workflow = Path(WORKFLOW).read_text(encoding="utf-8")
 
     def test_gateway_is_exactly_registered_in_airlock_policy(self):
-        self.assertEqual(self.policy["version"], "2.7.0")
+        self.assertGreaterEqual(
+            tuple(map(int, self.policy["version"].split("."))), (2, 7, 0)
+        )
         self.assertIn(WORKFLOW, self.policy["active_workflow_allowlist"])
         self.assertIn(WORKFLOW, self.policy["oidc_workflow_allowlist"])
         self.assertIn(WORKFLOW, self.policy["execution_quarantine"]["keep_active"])

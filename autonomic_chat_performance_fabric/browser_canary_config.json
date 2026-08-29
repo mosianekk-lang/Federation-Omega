@@ -1,0 +1,48 @@
+{
+  "schema": "FACPF-BROWSER-CANARY-1",
+  "enabled": false,
+  "mode": "SHADOW_OBSERVE_ONLY",
+  "scope": {
+    "maximumChats": 1,
+    "maximumDurationMinutes": 15,
+    "maximumMessagesObserved": 250,
+    "maximumPayloadCharsPerCapture": 32000,
+    "maximumQueueItems": 64
+  },
+  "privacy": {
+    "captureMessageText": false,
+    "persistRawDom": false,
+    "emitOnlyAggregateMetrics": true
+  },
+  "implementationContracts": {
+    "messageTextReturned": false,
+    "perMessageIdentifiersReturned": false,
+    "rawPerformanceEntryNamesReturned": false,
+    "attributionReturned": false,
+    "rollbackClearsMemory": true,
+    "maximumAggregateSamples": 256
+  },
+  "promotionGates": {
+    "formationPermitRequired": true,
+    "explicitOperatorActivationRequired": true,
+    "sameWorkloadChampionChallengerRequired": true,
+    "minimumSuccessfulRuns": 5,
+    "minimumP95ImprovementPercent": 5,
+    "maximumReloadRegression": 0,
+    "maximumErrorRegression": 0,
+    "maximumLongTaskRegression": 0
+  },
+  "stopConditions": [
+    "page reload or reconnect increase",
+    "capture budget exceeded",
+    "queue saturation",
+    "message-stream interference",
+    "privacy invariant violation",
+    "aggregate-only implementation contract violation"
+  ],
+  "rollback": {
+    "action": "disable sentinel and clear its in-memory queue",
+    "automaticOnStopCondition": true,
+    "requiresMainMutation": false
+  }
+}
