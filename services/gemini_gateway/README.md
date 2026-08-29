@@ -1,44 +1,33 @@
-# SOVARA Gemini Gateway v1
+# SOVARA Gemini Gateway
 
-Private Cloud Run execution cell for Gemini through Vertex AI.
+Private Cloud Run gateway for provider-native Gemini execution through Google Vertex AI using the Cloud Run runtime service account via Application Default Credentials (ADC).
 
-## Security model
+## Canonical identity
 
-- Canonical Google Cloud project is hard-bound to `sov-hybrid-suite` / `257649435135`.
-- The workload uses the Cloud Run service account through Application Default Credentials.
-- No Gemini API key, service-account key, refresh token, or OAuth token is stored in source.
-- OAuth access tokens are fetched only from the Google metadata server and are never returned.
-- Cloud Run remains private; callers must pass Cloud Run IAM authentication.
-- `/health` proves only process/configuration health.
-- `/ready` proves runtime metadata identity, not Gemini inference.
-- `/v1/handshake` is the provider promotion gate and requires exact semantic-nonce return plus Vertex `responseId`, `modelVersion`, finish state, usage metadata and runtime identity.
-- Every provider result is SHA-256 bound. CI/source success never substitutes for provider execution proof.
+The canonical project is `sov-hybrid-suite` (`257649435135`). The canonical runtime identity for this deployment line is:
 
-## Endpoints
+`superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com`
 
-- `GET /health`
-- `GET /ready`
-- `POST /v1/handshake` with `{"semantic_nonce":"..."}`.
-- `POST /v1/generate` with `{"prompt":"...", "temperature":0, "max_output_tokens":512}`.
+The gateway does not accept API keys or service-account keys. Runtime OAuth credentials are obtained only from the Cloud Run metadata server and the service fails closed if `EXPECTED_RUNTIME_SERVICE_ACCOUNT` does not match the metadata identity.
 
-## Runtime identity
+## Private canary contract
 
-Recommended dedicated service account:
+The bounded private canary path is:
 
-`sv-gemini-runtime@sov-hybrid-suite.iam.gserviceaccount.com`
+1. authenticate the already-trusted GitHub workflow through repository-scoped WIF;
+2. independently verify `FEDOMEGA-GEMINI-ADC-VERIFIED`;
+3. build the gateway container from the exact admitted source SHA;
+4. push it to the existing `federation-omega` Artifact Registry repository;
+5. resolve and preserve the immutable image digest;
+6. deploy a private Cloud Run revision as `superior-logic-runtime` with `--no-traffic` and a revision tag;
+7. read back the exact revision, runtime identity, image digest and traffic allocation;
+8. invoke the tagged revision with an authenticated identity token;
+9. require `/health`, `/ready`, and a nonce-bound `/v1/handshake` that returns a genuine Vertex `responseId`, model identity, usage metadata and exact semantic nonce;
+10. emit a redacted provider receipt;
+11. leave production traffic at 0% unless a separate promotion action is explicitly admitted.
 
-Minimum project role for model invocation: `roles/aiplatform.user`.
+Cloud Run revision tags allow direct testing of a revision that has no production traffic allocation. The deployment executor must still verify the provider's actual traffic state after deployment; command flags alone are not treated as proof.
 
-Use `ops/bootstrap_gemini_gateway.sh --plan` first. Applying identity/API bindings is gated and produces an explicit verification receipt.
+## Truth boundary
 
-## Promotion rule
-
-Do not call the lane live until the zero-traffic canary returns:
-
-- `status = VERIFIED`
-- exact semantic nonce
-- non-empty Vertex `provider_request_id`
-- non-empty `model_identity`
-- canonical project
-- exact expected runtime service account
-- receipt hash
+Source/CI success is not provider proof. A successful `gcloud run deploy` command is not completion. `FEDOMEGA-GEMINI-GATEWAY-CANARY-VERIFIED` requires provider-native deployment readback plus a live semantic Gemini handshake from the deployed private revision. Production serving is a separate state and is never inherited from canary success.
