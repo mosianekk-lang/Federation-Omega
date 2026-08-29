@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-RUNTIME-REUSE-20260829-001",
+  "request_id": "SOVARA-GEMINI-G0-ADMIN-CENSUS-20260829-001",
   "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
@@ -11,14 +11,24 @@
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "g1_failure_evidence": {
-    "run_id": "33267495987",
-    "source_sha": "9a759d35c69f7e8f56dab70e1bea0da13d667386",
-    "failure": "iam.serviceAccounts.create denied for superior-logic-deployer",
-    "mutation_performed": false,
-    "artifact_id": "9719096753",
-    "artifact_sha256": "e18417b4a1229a92914c32b6a0065849fa4985c856081d72fd4a453e438325f8"
+  "current_provider_evidence": {
+    "wif_verified": true,
+    "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+    "runtime_exists": true,
+    "deployer_service_account_user": true,
+    "required_apis_enabled": true,
+    "remaining_controls": [
+      "roles/aiplatform.user on superior-logic-runtime",
+      "roles/serviceusage.serviceUsageConsumer on superior-logic-runtime",
+      "roles/run.developer on superior-logic-deployer"
+    ],
+    "runtime_reuse_run_id": "33267811046",
+    "runtime_reuse_artifact_id": "9719180571",
+    "runtime_reuse_artifact_sha256": "9e5613577adfdf640e3971ace305eebdc96f83879b738244b5d31141f691b9e0",
+    "failed_g1_run_id": "33267495987",
+    "failed_g1_artifact_id": "9719096753",
+    "failed_g1_artifact_sha256": "e18417b4a1229a92914c32b6a0065849fa4985c856081d72fd4a453e438325f8"
   },
-  "purpose": "Re-run read-only WIF and Gemini ADC verification after repairing bootstrap identity drift so the verifier honors the workflow's existing canonical runtime service account superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com instead of inventing sv-gemini-runtime. Determine whether the existing runtime removes the service-account-creation dependency before any further IAM or deployment action.",
-  "truth_boundary": "This request is read-only. It authorizes no IAM/API mutation, service-account creation, WIF expansion, key creation, secret access, model inference, case-data processing, image build, Cloud Run deployment or traffic, email, publication, spend or destructive effect. The failed G1 route is quarantined and may not be retried unchanged."
+  "purpose": "Use the already-trusted WIF deployer in read-only mode to census project IAM bindings for existing owner/project-IAM/security-admin service accounts and test whether the deployer can impersonate any such service account to obtain resourcemanager.projects.setIamPolicy. Preserve human principals only as hashes. This is the final credential-free reuse search before treating the three remaining bindings as a genuine owner/admin authority gate.",
+  "truth_boundary": "Read-only authority census only. Do not change IAM, create identities or keys, widen WIF trust, access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. Any discovered admin service account is only a candidate until impersonation plus testIamPermissions returns provider-native setIamPolicy proof."
 }
