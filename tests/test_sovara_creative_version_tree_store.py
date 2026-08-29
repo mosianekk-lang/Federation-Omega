@@ -223,7 +223,15 @@ class SovaraCreativeVersionTreeStoreTests(unittest.TestCase):
             self.store.load()
 
     def test_unsafe_asset_ids_are_rejected_before_filesystem_access(self) -> None:
-        bad = ("../escape", "a/b", "a\\b", "..", "safe..unsafe", " has-space")
+        bad = (
+            "../escape",
+            "a/b",
+            "a\\b",
+            "..",
+            "safe..unsafe",
+            " has-space",
+            "trailing-space ",
+        )
         for asset_id in bad:
             with self.subTest(asset_id=asset_id):
                 with self.assertRaises(VersionTreeStoreError):
