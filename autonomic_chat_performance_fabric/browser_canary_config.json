@@ -1,5 +1,5 @@
 {
-  "schema": "FACPF-BROWSER-CANARY-1",
+  "schema": "FACPF-BROWSER-CANARY-2",
   "enabled": false,
   "mode": "SHADOW_OBSERVE_ONLY",
   "scope": {
@@ -13,6 +13,26 @@
     "captureMessageText": false,
     "persistRawDom": false,
     "emitOnlyAggregateMetrics": true
+  },
+  "activation": {
+    "authorizedEdgeHookPresent": false,
+    "formationPermitValidated": false,
+    "operatorActivationValidated": false,
+    "defaultState": "ADAPTER_REQUIRED"
+  },
+  "routeContract": {
+    "acceptedInputModes": ["ACTIVE", "PASSIVE"],
+    "derivedHealthStates": ["HEALTHY", "DEGRADED", "OPEN"],
+    "rejectDerivedHealthAsInputMode": true
+  },
+  "aggregateMetrics": {
+    "navigationReloads": true,
+    "hydrationDuration": true,
+    "lifecycleEvents": true,
+    "transportReconnectsAndErrors": true,
+    "memoryPressureRatios": true,
+    "longTasks": true,
+    "maximumSamplesPerMetric": 256
   },
   "implementationContracts": {
     "messageTextReturned": false,
