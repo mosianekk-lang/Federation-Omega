@@ -4,9 +4,10 @@ Scope: mission genomes, content/privacy classification, policy-aware routing,
 digital continuity, private-studio planning, reuse-first adaptive capability
 creation, CFBE/Ω-Scientist meta-evolution, proof-gated commercial value,
 progressive production convergence, bounded creative canaries, bounded Gemini
-creative challenges, and deterministic non-destructive creative version lineage.
+creative challenges, deterministic non-destructive creative version lineage,
+and bounded local restart-safe lineage persistence.
 This package does not grant provider authority, authorize spend, perform
-publishing effects, deploy infrastructure, or claim runtime/value maturity.
+publishing effects, deploy infrastructure, or claim production/value maturity.
 """
 
 from .canary import (
@@ -123,6 +124,15 @@ from .version_tree import (
     VersionTreeError,
     VersionTreeReceipt,
 )
+from .version_tree_store import (
+    FileVersionTreeStore,
+    LocalStoreReceipt,
+    StoreAlreadyInitializedError,
+    StoreConcurrentMutationError,
+    StoreCorruptionError,
+    StoreNotInitializedError,
+    VersionTreeStoreError,
+)
 
 __all__ = [
     "AdmissionState",
@@ -146,9 +156,11 @@ __all__ = [
     "Eligibility",
     "EvolutionEvidence",
     "ExecutionPlane",
+    "FileVersionTreeStore",
     "FrontierGap",
     "FrontierObservation",
     "ImageRouteCatalogEvidence",
+    "LocalStoreReceipt",
     "MatureContext",
     "MaturePolicyState",
     "MetaEvolutionState",
@@ -174,6 +186,10 @@ __all__ = [
     "ScientistHypothesis",
     "SkillDomain",
     "SovaraDimensionState",
+    "StoreAlreadyInitializedError",
+    "StoreConcurrentMutationError",
+    "StoreCorruptionError",
+    "StoreNotInitializedError",
     "StudioMode",
     "StudioPlan",
     "StudioRequest",
@@ -189,6 +205,7 @@ __all__ = [
     "VersionTree",
     "VersionTreeError",
     "VersionTreeReceipt",
+    "VersionTreeStoreError",
     "build_gemini_challenge_request",
     "build_openrouter_request_plan",
     "build_ten_x_target",
