@@ -1,11 +1,11 @@
 {
   "schema": "SOVARA_GEMINI_FEEDBACK_CONSUMPTION_CANARY_V1",
   "canary_id": "SC-GEMINI-COLLAB-FEEDBACK-CANARY-20260830-001",
-  "cycle_id": "SC-GEMINI-COLLAB-B79F56BB1FF618FA",
-  "challenge_id": "SC-GEMINI-COLLAB-B79F56BB1FF618FA-G2",
+  "cycle_id": "SC-GEMINI-COLLAB-6DC1DCE7B3B23E65",
+  "challenge_id": "SC-GEMINI-COLLAB-6DC1DCE7B3B23E65-G2",
   "parent_cycle_id": "SC-GEMINI-ARCH-20260828-001",
   "source_head": "7cbc5d791c01321d42b012767301fec6ba4080a9",
-  "delta_sha256": "53215b0a6bda0f0c9c8f2b5019d127d7ba46a6a9de09a05dae3080c819ec73aa",
+  "delta_sha256": "933f28ed35256fa418f8311bb04217522f2a3a138d0839d9b2e20e9716368ccd",
   "feedback_sha256": "c36356c6a75d6ed76e1a7e09308f95a03209ec658c149a7a12f8dad551a0c85a",
   "prior_provider_proof": {
     "challenge_id": "SC-GEMINI-ARCH-20260828-001",
