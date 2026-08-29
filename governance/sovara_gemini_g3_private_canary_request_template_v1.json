@@ -1,0 +1,44 @@
+{
+  "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
+  "request_id": "SOVARA-GEMINI-G3-PRIVATE-CANARY-TEMPLATE-V1",
+  "mode": "G3_PRIVATE_GATEWAY_CANARY",
+  "execute": true,
+  "promote": false,
+  "case_data_allowed": false,
+  "provider_mutation_allowed": true,
+  "model_inference_allowed": true,
+  "external_communication_allowed": false,
+  "expected_project_id": "sov-hybrid-suite",
+  "expected_project_number": "257649435135",
+  "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+  "deployment_scope": "PRIVATE_ZERO_TRAFFIC_CANARY",
+  "production_traffic_allowed": false,
+  "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+  "service": "sovara-gemini-gateway",
+  "activation_preconditions": [
+    "FEDOMEGA-WIF-CLOUD-VERIFIED",
+    "FEDOMEGA-GEMINI-ADC-VERIFIED",
+    "artifact_registry_upload_and_download_permissions_verified",
+    "cloud_run_create_get_update_operation_and_invoke_permissions_verified",
+    "exact_current_main_head_admitted"
+  ],
+  "expected_effects": [
+    "build_exact_source_container",
+    "push_container_to_existing_artifact_registry",
+    "deploy_private_tagged_cloud_run_revision",
+    "normal_service_traffic_remains_zero_percent",
+    "execute_synthetic_nonce_bound_gemini_semantic_handshake",
+    "emit_provider_native_canary_receipt"
+  ],
+  "forbidden_effects": [
+    "production_traffic_promotion",
+    "public_unauthenticated_access",
+    "service_account_key_creation",
+    "wif_expansion",
+    "project_iam_expansion",
+    "case_data_processing",
+    "external_communication"
+  ],
+  "promotion_receipt_required": "FEDOMEGA-GEMINI-GATEWAY-CANARY-VERIFIED",
+  "truth_boundary": "Template only; this file is not the active provider request and cannot trigger G3. Activation requires copying these bounded semantics into governance/sovara_gemini_collaboration_request_v1.json on an exact-current admitted branch after provider-native ADC verification. G3 success proves only a private zero-normal-traffic canary; it does not authorize or prove production serving."
+}
