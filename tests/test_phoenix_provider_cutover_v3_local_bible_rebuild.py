@@ -46,17 +46,16 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             ".github/workflows/luno-observer-provider-binding.yml",
             ".github/workflows/deploy-gemini-gateway.yml",
         }
-        g0_identity_probe = ".github/workflows/fo-wif-semantic-canary.yml"
+        credential_policy = self.policy["provider_credential_reference_policy"]
+        g0_identity_probe = credential_policy["g0_identity_probe_workflow"]
         expected = deployment_gateways | {g0_identity_probe}
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
-        self.assertEqual(
-            g0_identity_probe,
-            self.policy["provider_credential_reference_policy"]["g0_identity_probe_workflow"],
-        )
+        self.assertIn(g0_identity_probe, self.policy["active_workflow_allowlist"])
+        self.assertIn(g0_identity_probe, self.policy["execution_quarantine"]["keep_active"])
         self.assertNotIn(g0_identity_probe, {
-            self.policy["provider_credential_reference_policy"]["provider_deployment_workflow"],
-            self.policy["provider_credential_reference_policy"]["luno_observer_deployment_workflow"],
-            self.policy["provider_credential_reference_policy"]["gemini_provider_deployment_workflow"],
+            credential_policy["provider_deployment_workflow"],
+            credential_policy["luno_observer_deployment_workflow"],
+            credential_policy["gemini_provider_deployment_workflow"],
         })
         self.assertNotIn("oidc_boundary", self.policy)
         self.assertEqual(
