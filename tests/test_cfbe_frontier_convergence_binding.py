@@ -1,10 +1,18 @@
 import unittest
 
+from frontier_convergence.os_core import ExperimentOption
 from benchmarking.cfbe_omega.frontier_convergence_profile import (
     CURRENT_EVIDENCE_FACTOR,
     FrontierProof,
     compile_dimensions,
     evaluate,
+)
+from benchmarking.cfbe_omega.v4_capability_foundry import (
+    CapabilityFoundryInput,
+    GapObservation,
+    RegressionBaselineEvidence,
+    compile_opportunity_gradient,
+    evaluate_capability_foundry_readiness,
 )
 from benchmarking.cfbe_omega.v4_data_readiness import (
     MissionTelemetryEvidence,
@@ -155,6 +163,116 @@ class V4ObjectiveEcologyReadinessTests(unittest.TestCase):
             (self._record(telemetry=telemetry),)
         )
         self.assertEqual(report.state, "HELD_INVALID_VALUE_TELEMETRY")
+
+
+class V4CapabilityFoundryReadinessTests(unittest.TestCase):
+    def _experiment(self, **overrides):
+        values = {
+            "label": "bounded observed foundry experiment",
+            "expected_information_gain": 0.8,
+            "mission_value": 0.9,
+            "proof_strength_gain": 0.7,
+            "reversibility": 0.9,
+            "estimated_cost": 0.2,
+            "latency_burden": 0.1,
+            "owner_burden": 0.1,
+            "risk": 0.2,
+            "evidence_refs": ("fcos:option:001",),
+        }
+        values.update(overrides)
+        return ExperimentOption.create(**values)
+
+    def _packet(self, **overrides):
+        values = {
+            "experiment": self._experiment(),
+            "confidence": 0.9,
+            "gap_observations": (
+                GapObservation(
+                    observation_id="gap:backlog:001",
+                    capability_gap="unified observability spine",
+                    evidence_refs=("cfbe:gap:GAP-004",),
+                ),
+                GapObservation(
+                    observation_id="gap:radar:001",
+                    capability_gap="unified observability spine",
+                    evidence_refs=("kdv:opportunity:OPP-005",),
+                ),
+            ),
+            "regression_baseline": RegressionBaselineEvidence(
+                baseline_id="cfbe-regression-baseline-001",
+                evidence_refs=("cfbe:baseline:56.0/40.4", "proofos:current-court"),
+            ),
+        }
+        values.update(overrides)
+        return CapabilityFoundryInput(**values)
+
+    def test_gradient_is_compiled_from_existing_fcos_and_sovara_contracts(self):
+        gradient = compile_opportunity_gradient(self._experiment(), 0.9)
+        self.assertGreater(gradient, 0.0)
+
+    def test_complete_repeated_gap_packet_reaches_data_ready_only(self):
+        report = evaluate_capability_foundry_readiness(self._packet())
+        self.assertEqual(report.state, "DATA_READY")
+        self.assertEqual(report.capability_gap, "unified observability spine")
+        self.assertEqual(len(report.qualifying_gap_observation_ids), 2)
+        self.assertGreater(report.opportunity_gradient, 0.0)
+        self.assertIn("cfbe:gap:GAP-004", report.evidence_refs)
+
+    def test_one_gap_observation_does_not_satisfy_repeated_evidence(self):
+        packet = self._packet(
+            gap_observations=(
+                GapObservation(
+                    observation_id="gap:backlog:001",
+                    capability_gap="unified observability spine",
+                    evidence_refs=("cfbe:gap:GAP-004",),
+                ),
+            )
+        )
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "INSTRUMENTED_REPEATED_GAP_EVIDENCE_REQUIRED")
+        self.assertIn("REPEATED_GAP_EVIDENCE_REQUIRED", report.blockers)
+
+    def test_mismatched_gap_semantics_fail_closed(self):
+        packet = self._packet(
+            gap_observations=(
+                GapObservation("gap:1", "observability", ("ref:1",)),
+                GapObservation("gap:2", "identity", ("ref:2",)),
+            )
+        )
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "HELD_GAP_EVIDENCE_CONFLICT")
+        self.assertIn("CAPABILITY_GAP_MISMATCH", report.blockers)
+
+    def test_missing_regression_baseline_provenance_holds(self):
+        packet = self._packet(
+            regression_baseline=RegressionBaselineEvidence("baseline", ())
+        )
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "HELD_REGRESSION_BASELINE_REQUIRED")
+
+    def test_synthetic_gap_does_not_count_as_repeated_observation(self):
+        packet = self._packet(
+            gap_observations=(
+                GapObservation(
+                    "gap:1",
+                    "unified observability spine",
+                    ("ref:1",),
+                ),
+                GapObservation(
+                    "gap:synthetic",
+                    "unified observability spine",
+                    ("ref:synthetic",),
+                    evidence_class="PUBLIC_SYNTHETIC",
+                ),
+            )
+        )
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "INSTRUMENTED_REPEATED_GAP_EVIDENCE_REQUIRED")
+
+    def test_missing_experiment_provenance_holds(self):
+        packet = self._packet(experiment=self._experiment(evidence_refs=()))
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "HELD_EXPERIMENT_PROVENANCE_REQUIRED")
 
 
 if __name__ == "__main__":
