@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-ADMIN-CENSUS-20260829-001",
+  "request_id": "SOVARA-GEMINI-G0-DIRECT-WIF-ADMIN-CENSUS-20260829-001",
   "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
@@ -22,13 +22,12 @@
       "roles/serviceusage.serviceUsageConsumer on superior-logic-runtime",
       "roles/run.developer on superior-logic-deployer"
     ],
-    "runtime_reuse_run_id": "33267811046",
-    "runtime_reuse_artifact_id": "9719180571",
-    "runtime_reuse_artifact_sha256": "9e5613577adfdf640e3971ace305eebdc96f83879b738244b5d31141f691b9e0",
-    "failed_g1_run_id": "33267495987",
-    "failed_g1_artifact_id": "9719096753",
-    "failed_g1_artifact_sha256": "e18417b4a1229a92914c32b6a0065849fa4985c856081d72fd4a453e438325f8"
+    "prior_admin_census_run_id": "33270067682",
+    "prior_admin_census_artifact_id": "9719834914",
+    "prior_admin_census_artifact_sha256": "98fad5182b59f2e01de1ee6b19c67c2905760b4eb4ae6f5297775989ea8678c3",
+    "prior_admin_candidate_count": 11,
+    "prior_verified_impersonable_admin_count": 0
   },
-  "purpose": "Use the already-trusted WIF deployer in read-only mode to census project IAM bindings for existing owner/project-IAM/security-admin service accounts and test whether the deployer can impersonate any such service account to obtain resourcemanager.projects.setIamPolicy. Preserve human principals only as hashes. This is the final credential-free reuse search before treating the three remaining bindings as a genuine owner/admin authority gate.",
-  "truth_boundary": "Read-only authority census only. Do not change IAM, create identities or keys, widen WIF trust, access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. Any discovered admin service account is only a candidate until impersonation plus testIamPermissions returns provider-native setIamPolicy proof."
+  "purpose": "Read the service-account IAM policies of existing project Owner/Project-IAM-Admin candidates and compare their roles/iam.workloadIdentityUser members with the exact members already authorizing the canonical superior-logic-deployer. Identify whether any existing admin service account directly trusts the same GitHub WIF principal, so a keyless direct-auth route can be tested without granting the deployer broader authority.",
+  "truth_boundary": "Read-only direct-WIF trust census only. Do not alter IAM, service accounts, WIF configuration or keys; do not access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. A policy-member match only qualifies a direct-auth candidate; it does not by itself prove successful authentication or authorize mutation."
 }
