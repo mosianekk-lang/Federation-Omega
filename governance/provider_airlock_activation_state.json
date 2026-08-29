@@ -1,15 +1,23 @@
 {
   "schema": "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-STATE-1",
   "repository": "mosianekk-lang/Federation-Omega",
-  "assessed_at": "2026-08-29T21:40:00Z",
+  "assessed_at": "2026-08-29T22:29:00Z",
   "implementation": {
     "activator_path": "phoenix/provider_airlock_activate.py",
     "runbook_path": "phoenix/PROVIDER_AIRLOCK_ACTIVATION.md",
     "ruleset_payload_path": "governance/federation_omega_main_airlock.ruleset.json",
-    "provider_native_regression_tests_passed": false,
-    "public_leak_guard_passed": false,
-    "phoenix_freeze_status": "PENDING_CURRENT_HEAD_CI",
-    "required_status_contexts": ["admission", "contract", "scan"]
+    "release_court_reanchor_source": "PR_723_RECONCILED_WITH_CURRENT_MAIN_SOURCE",
+    "canonical_ruleset_already_present_on_current_main": true,
+    "required_status_contexts": ["admission", "contract", "scan"],
+    "pre_restack_exact_head": "77a79b58b1b96c8c2fce0d0a901e3b9cc9cb0169",
+    "pre_restack_airlock_run": 33278566413,
+    "pre_restack_bubbles_run": 33278566412,
+    "pre_restack_leak_guard_run": 33278566394,
+    "pre_restack_release_court": "ALL_THREE_SUCCESS",
+    "current_main_at_restack": "7cbc5d791c01321d42b012767301fec6ba4080a9",
+    "restack_merge_commit": "e7b9febc5dd1e082e223ac35541df9018b2f60e3",
+    "fresh_current_main_restack_required": false,
+    "restack_state": "RECONCILED_PENDING_EXACT_HEAD_RELEASE_COURT"
   },
   "connected_authority": {
     "repository_admin_standing_reported": true,
@@ -21,8 +29,8 @@
   },
   "provider_observation": {
     "observation_mode": "READ_ONLY",
-    "observed_at": "2026-08-29T21:40:00Z",
-    "main_sha": "76bb7ca5c31e048d147feb23bfee5fd6b23d82ea",
+    "observed_at": "2026-08-29T22:27:00Z",
+    "main_sha": "7cbc5d791c01321d42b012767301fec6ba4080a9",
     "main_commit_signature_verified": true,
     "main_protected": false,
     "branch_protection_enabled": false,
@@ -34,6 +42,26 @@
       "GET /repos/mosianekk-lang/Federation-Omega/branches/main",
       "GET /repos/mosianekk-lang/Federation-Omega/rulesets"
     ]
+  },
+  "source_incident": {
+    "incident_id": "INC-FEDOMEGA-DIRECT-MAIN-20260830-001",
+    "state": "PRESERVED_ADVERSE_EVIDENCE_REPAIR_PR_REQUIRED",
+    "direct_main_commit": "064a9382041f6e252cfb4c4b220c6767228c6029",
+    "direct_main_parent": "82198e426aa9dab1181c9fea0e4ea8895169d008",
+    "direct_main_commit_signature_verified": false,
+    "current_main_descends_from_incident": true,
+    "current_main": "7cbc5d791c01321d42b012767301fec6ba4080a9",
+    "intervening_main_delta_overlap_with_repair": false,
+    "unintended_path": "tmp",
+    "unintended_path_content_bytes": 0,
+    "history_rewritten": false,
+    "force_main_ref_update_performed": false,
+    "repair_branch": "fix/provider-airlock-current-main-and-direct-write-recovery-20260830",
+    "pre_restack_repair_head": "77a79b58b1b96c8c2fce0d0a901e3b9cc9cb0169",
+    "restack_commit": "e7b9febc5dd1e082e223ac35541df9018b2f60e3",
+    "prospective_repair_tree_tmp_absent": true,
+    "repair_effect_on_main": false,
+    "failure_win_rule": "Preserve the adverse direct-main event, reconcile every moving-main delta, remove the stray serving-tree artifact only through an admitted PR, and activate provider prevention only after exact provider-native readback."
   },
   "provider_state": {
     "provider_apply_performed": false,
@@ -48,20 +76,22 @@
     "main_sha_preserved_during_activation": "NOT_APPLICABLE_NO_APPLY"
   },
   "local_defence_in_depth": {
-    "source_provenance_sentinel": "ACTIVE",
+    "source_provenance_sentinel": "ACTIVE_BUT_PROVIDER_BYPASS_OBSERVED",
     "workflow_execution_quarantine": "ACTIVE",
     "public_leak_guard": "ACTIVE",
-    "agent_governance_contract": "ACTIVE",
-    "sole_owner_safe_ruleset_payload": "SOURCE_CANDIDATE_THREE_CHECK",
-    "ruleset_only_activator": "SOURCE_CANDIDATE_THREE_CHECK",
+    "agent_governance_contract": "ACTIVE_BUT_NOT_PROVIDER_ENFORCED",
+    "sole_owner_safe_ruleset_payload": "SOURCE_PRESENT_THREE_CHECK",
+    "ruleset_only_activator": "SOURCE_REANCHOR_RESTACKED_PENDING_EXACT_HEAD_CI",
     "provider_prevention": "ABSENT"
   },
-  "state": "PROVIDER_PREVENTION_ABSENT_WRITE_BOUNDARY_HELD",
+  "state": "PROVIDER_PREVENTION_ABSENT_DIRECT_WRITE_INCIDENT_REPAIR_IN_PROGRESS",
   "allowed_next_state": "VERIFIED",
   "verification_gate": {
     "required_receipt_schema": "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-1",
     "required_receipt_status": "VERIFIED",
     "required_checks": [
+      "source_repair.tmp_absent_on_admitted_main",
+      "source_repair.current_main_airlock_bubbles_leakguard_green",
       "authority.repository_admin",
       "negative_canary.direct_update_rejected",
       "provider_readback.ruleset_exact",
@@ -72,5 +102,5 @@
       "provider_readback.main_sha_unchanged"
     ]
   },
-  "truth_boundary": "Fresh provider readback on 29 August 2026 shows main unprotected, required status enforcement off and zero repository rulesets. This source tranche prepares an exact three-context release court but does not activate provider prevention. Do not claim provider enforcement until a separately authorized ruleset write plus negative direct-update canary and exact provider readback returns VERIFIED."
+  "truth_boundary": "Current main still descends from the preserved direct-main incident and remains unprotected with zero provider rulesets. The source three-check ruleset exists and the recovery lane is now reconciled onto current main 7cbc5d79, with tmp absent only in the prospective repair tree. Exact-head CI must pass again before source repair can be promoted. Provider prevention is absent and remains absent until an independently read-back GitHub ruleset returns VERIFIED."
 }
