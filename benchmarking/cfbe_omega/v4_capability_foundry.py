@@ -4,19 +4,19 @@ This module composes existing Federation contracts instead of creating a second
 foundry or a second opportunity-scoring system:
 
 * Frontier Convergence OS supplies normalized experiment economics.
-* CFBE supplies explicit confidence and repeated capability-gap observations.
+* CFBE supplies explicit, provenance-bound confidence and repeated gap evidence.
 * ProofOS/CFBE supplies a named regression baseline with provenance.
 * SOVARA MCF v3.1 supplies the canonical OpportunityGradientEngine formula.
 
-The bridge is provider-neutral and effect-free.  It cannot manufacture gap
+The bridge is provider-neutral and effect-free. It cannot manufacture gap
 observations, confidence, regression baselines, provider authority, or maturity.
-Synthetic fixtures may test the algorithm but may not produce DATA_READY.
+Synthetic fixtures may test the algorithm but cannot produce DATA_READY.
 """
 
 from __future__ import annotations
 
 from dataclasses import dataclass
-from typing import Iterable, Sequence
+from typing import Iterable
 
 from frontier_convergence.os_core import ExperimentOption
 from ops.sovara_mcf_v3_1.sovara_mcf_v3_1 import (
@@ -26,8 +26,28 @@ from ops.sovara_mcf_v3_1.sovara_mcf_v3_1 import (
 
 
 CAPABILITY_FOUNDRY_MODULE_ID = "V4_CAPABILITY_FOUNDRY"
+OBSERVED_EXPERIMENT_EVIDENCE = "OBSERVED_FEDERATION_EXPERIMENT"
+OBSERVED_CONFIDENCE_EVIDENCE = "OBSERVED_CFBE_CONFIDENCE"
 OBSERVED_GAP_EVIDENCE = "OBSERVED_FEDERATION_GAP"
+OBSERVED_REGRESSION_BASELINE = "OBSERVED_REGRESSION_BASELINE"
 MIN_REPEATED_GAP_OBSERVATIONS = 2
+
+
+@dataclass(frozen=True)
+class ExperimentEvidence:
+    """FC-OS option plus an explicit evidence class."""
+
+    option: ExperimentOption
+    evidence_class: str = OBSERVED_EXPERIMENT_EVIDENCE
+
+
+@dataclass(frozen=True)
+class ConfidenceEvidence:
+    """Explicit CFBE confidence observation with provenance."""
+
+    value: float
+    evidence_refs: tuple[str, ...]
+    evidence_class: str = OBSERVED_CONFIDENCE_EVIDENCE
 
 
 @dataclass(frozen=True)
@@ -46,14 +66,15 @@ class RegressionBaselineEvidence:
 
     baseline_id: str
     evidence_refs: tuple[str, ...]
+    evidence_class: str = OBSERVED_REGRESSION_BASELINE
 
 
 @dataclass(frozen=True)
 class CapabilityFoundryInput:
     """Complete evidence packet required to form canonical v4 Foundry data."""
 
-    experiment: ExperimentOption
-    confidence: float
+    experiment: ExperimentEvidence
+    confidence: ConfidenceEvidence
     gap_observations: tuple[GapObservation, ...]
     regression_baseline: RegressionBaselineEvidence
 
@@ -74,7 +95,7 @@ class CapabilityFoundryReadinessReport:
 def _expected_gain(option: ExperimentOption) -> float:
     """Compile a positive expected-gain term without double-counting penalties.
 
-    FC-OS already normalizes these three positive dimensions to [0,1].  Cost,
+    FC-OS already normalizes these three positive dimensions to [0,1]. Cost,
     risk and owner burden are deliberately excluded here because the canonical
     SOVARA OpportunityGradientEngine applies those as denominator penalties.
     """
@@ -118,29 +139,46 @@ def evaluate_capability_foundry_readiness(
     """Evaluate whether v4 Capability Foundry has a complete data packet.
 
     DATA_READY requires:
-    - a real FC-OS experiment option with provenance;
-    - explicit CFBE confidence in [0,1];
+    - an observed FC-OS experiment option with provenance;
+    - an observed CFBE confidence value in [0,1] with provenance;
     - at least two distinct observed Federation gap records describing the same
       non-empty capability gap, each with provenance;
-    - a named regression baseline with provenance; and
+    - an observed named regression baseline with provenance; and
     - a successfully computed canonical SOVARA opportunity gradient.
 
-    The bridge stops at DATA_READY.  Incubation still requires the separate
+    The bridge stops at DATA_READY. Incubation still requires the separate
     CFBE positive-expected-value gate and all downstream proof/authority gates.
     """
 
     blockers: set[str] = set()
-    refs: set[str] = set(_clean_refs(packet.experiment.evidence_refs))
+    refs: set[str] = set()
 
-    if not packet.experiment.evidence_refs:
+    option = packet.experiment.option
+    experiment_refs = _clean_refs(option.evidence_refs)
+    if packet.experiment.evidence_class != OBSERVED_EXPERIMENT_EVIDENCE:
+        blockers.add("EXPERIMENT_EVIDENCE_NOT_OBSERVED")
+    if not experiment_refs:
         blockers.add("EXPERIMENT_PROVENANCE_REQUIRED")
+    refs.update(experiment_refs)
 
-    confidence = float(packet.confidence)
+    confidence_refs = _clean_refs(packet.confidence.evidence_refs)
+    if packet.confidence.evidence_class != OBSERVED_CONFIDENCE_EVIDENCE:
+        blockers.add("CONFIDENCE_EVIDENCE_NOT_OBSERVED")
+    if not confidence_refs:
+        blockers.add("CONFIDENCE_PROVENANCE_REQUIRED")
+    refs.update(confidence_refs)
+    try:
+        confidence = float(packet.confidence.value)
+    except (TypeError, ValueError):
+        confidence = -1.0
+        blockers.add("CONFIDENCE_OUT_OF_RANGE")
     if not 0.0 <= confidence <= 1.0:
         blockers.add("CONFIDENCE_OUT_OF_RANGE")
 
     baseline_id = str(packet.regression_baseline.baseline_id).strip()
     baseline_refs = _clean_refs(packet.regression_baseline.evidence_refs)
+    if packet.regression_baseline.evidence_class != OBSERVED_REGRESSION_BASELINE:
+        blockers.add("REGRESSION_BASELINE_NOT_OBSERVED")
     if not baseline_id:
         blockers.add("REGRESSION_BASELINE_ID_REQUIRED")
     if not baseline_refs:
@@ -175,21 +213,30 @@ def evaluate_capability_foundry_readiness(
     capability_gap = next(iter(capability_gaps), "") if len(capability_gaps) == 1 else ""
 
     gradient: float | None = None
-    if "CONFIDENCE_OUT_OF_RANGE" not in blockers:
+    gradient_preconditions = {
+        "EXPERIMENT_EVIDENCE_NOT_OBSERVED",
+        "EXPERIMENT_PROVENANCE_REQUIRED",
+        "CONFIDENCE_EVIDENCE_NOT_OBSERVED",
+        "CONFIDENCE_PROVENANCE_REQUIRED",
+        "CONFIDENCE_OUT_OF_RANGE",
+    }
+    if not blockers.intersection(gradient_preconditions):
         try:
-            gradient = compile_opportunity_gradient(packet.experiment, confidence)
+            gradient = compile_opportunity_gradient(option, confidence)
         except (TypeError, ValueError, ZeroDivisionError):
             blockers.add("OPPORTUNITY_GRADIENT_UNRESOLVED")
 
     if blockers:
         if "CAPABILITY_GAP_MISMATCH" in blockers or "DUPLICATE_GAP_OBSERVATION_ID" in blockers:
             state = "HELD_GAP_EVIDENCE_CONFLICT"
-        elif "REPEATED_GAP_EVIDENCE_REQUIRED" in blockers:
-            state = "INSTRUMENTED_REPEATED_GAP_EVIDENCE_REQUIRED"
+        elif "EXPERIMENT_EVIDENCE_NOT_OBSERVED" in blockers or "EXPERIMENT_PROVENANCE_REQUIRED" in blockers:
+            state = "HELD_EXPERIMENT_EVIDENCE_REQUIRED"
+        elif "CONFIDENCE_EVIDENCE_NOT_OBSERVED" in blockers or "CONFIDENCE_PROVENANCE_REQUIRED" in blockers or "CONFIDENCE_OUT_OF_RANGE" in blockers:
+            state = "HELD_CONFIDENCE_EVIDENCE_REQUIRED"
         elif any(blocker.startswith("REGRESSION_BASELINE") for blocker in blockers):
             state = "HELD_REGRESSION_BASELINE_REQUIRED"
-        elif "EXPERIMENT_PROVENANCE_REQUIRED" in blockers:
-            state = "HELD_EXPERIMENT_PROVENANCE_REQUIRED"
+        elif "REPEATED_GAP_EVIDENCE_REQUIRED" in blockers:
+            state = "INSTRUMENTED_REPEATED_GAP_EVIDENCE_REQUIRED"
         else:
             state = "HELD_INCOMPLETE_FOUNDRY_DATA"
     else:
@@ -207,7 +254,7 @@ def evaluate_capability_foundry_readiness(
         evidence_refs=tuple(sorted(refs)),
         blockers=tuple(sorted(blockers)),
         truth_boundary=(
-            "DATA_READY proves only a complete provenance-bound Foundry evidence packet. "
+            "DATA_READY proves only a complete observed provenance-bound Foundry evidence packet. "
             "It does not prove positive expected value, candidate construction, incubation, "
             "provider execution, regression safety, operational maturity, or promotion."
         ),
