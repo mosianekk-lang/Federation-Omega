@@ -1,0 +1,33 @@
+{
+  "schema": "SOVARA_SC_VERSION_TREE_ADMISSION_V1",
+  "capability_id": "SC-VERSION-TREE",
+  "source_design_decision": "SOVARA-GEMINI-G2-DESIGN-PROMOTION-20260829-001",
+  "source_proposal_id": "PROP-08",
+  "promotion_ceiling": "SOURCE_CANDIDATE",
+  "implementation": "sovara/creative/version_tree.py",
+  "regression_court": "tests/test_sovara_creative_version_tree.py",
+  "objective": "Extend SC-ASSET with content-addressed non-destructive creative version lineage and deterministic rollback.",
+  "build_strategy": "NEW_LAST_AFTER_REUSE_SCAN",
+  "reuse_scan_result": "NO_EXISTING_SOVARA_VERSION_LINEAGE_IMPLEMENTATION_FOUND",
+  "proof_gate": {
+    "required": [
+      "CONTENT_HASH_STABILITY",
+      "COMPARE_AND_SWAP_BRANCH_HEADS",
+      "APPEND_ONLY_ROLLBACK",
+      "TWO_PARENT_MERGE_LINEAGE",
+      "TAMPER_DETECTION",
+      "DETERMINISTIC_RECEIPT",
+      "NO_EXTERNAL_EFFECT"
+    ]
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "deployment_authorized": false,
+    "provider_effect_authorized": false,
+    "storage_provider_write_authorized": false,
+    "publishing_authorized": false,
+    "production_traffic_authorized": false,
+    "spend_authorized": false
+  },
+  "truth_boundary": "Source and CI admission prove the deterministic local version-tree contract only. They do not prove persistent storage durability, provider deployment, production runtime integration, media quality improvement, realised value, or autonomous rollback."
+}
