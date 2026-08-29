@@ -73,7 +73,7 @@ jobs:
             federation/capital_execution/venues/luno_observer_runtime.py
 
   provider:
-    if: ${{ github.event_name == 'push' || github.event_name == 'workflow_dispatch' }}
+    if: ${{ github.event_name == 'workflow_dispatch' && vars.LUNO_PROVIDER_WIF_BOUND == 'true' }}
     needs: source-admission
     runs-on: ubuntu-latest
     timeout-minutes: 45
