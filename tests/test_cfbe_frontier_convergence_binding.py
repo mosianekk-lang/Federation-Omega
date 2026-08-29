@@ -9,6 +9,8 @@ from benchmarking.cfbe_omega.frontier_convergence_profile import (
 )
 from benchmarking.cfbe_omega.v4_capability_foundry import (
     CapabilityFoundryInput,
+    ConfidenceEvidence,
+    ExperimentEvidence,
     GapObservation,
     RegressionBaselineEvidence,
     compile_opportunity_gradient,
@@ -166,7 +168,7 @@ class V4ObjectiveEcologyReadinessTests(unittest.TestCase):
 
 
 class V4CapabilityFoundryReadinessTests(unittest.TestCase):
-    def _experiment(self, **overrides):
+    def _option(self, **overrides):
         values = {
             "label": "bounded observed foundry experiment",
             "expected_information_gain": 0.8,
@@ -184,8 +186,11 @@ class V4CapabilityFoundryReadinessTests(unittest.TestCase):
 
     def _packet(self, **overrides):
         values = {
-            "experiment": self._experiment(),
-            "confidence": 0.9,
+            "experiment": ExperimentEvidence(self._option()),
+            "confidence": ConfidenceEvidence(
+                0.9,
+                ("cfbe:confidence:OPP-005",),
+            ),
             "gap_observations": (
                 GapObservation(
                     observation_id="gap:backlog:001",
@@ -207,16 +212,17 @@ class V4CapabilityFoundryReadinessTests(unittest.TestCase):
         return CapabilityFoundryInput(**values)
 
     def test_gradient_is_compiled_from_existing_fcos_and_sovara_contracts(self):
-        gradient = compile_opportunity_gradient(self._experiment(), 0.9)
+        gradient = compile_opportunity_gradient(self._option(), 0.9)
         self.assertGreater(gradient, 0.0)
 
-    def test_complete_repeated_gap_packet_reaches_data_ready_only(self):
+    def test_complete_observed_repeated_gap_packet_reaches_data_ready_only(self):
         report = evaluate_capability_foundry_readiness(self._packet())
         self.assertEqual(report.state, "DATA_READY")
         self.assertEqual(report.capability_gap, "unified observability spine")
         self.assertEqual(len(report.qualifying_gap_observation_ids), 2)
         self.assertGreater(report.opportunity_gradient, 0.0)
         self.assertIn("cfbe:gap:GAP-004", report.evidence_refs)
+        self.assertIn("cfbe:confidence:OPP-005", report.evidence_refs)
 
     def test_one_gap_observation_does_not_satisfy_repeated_evidence(self):
         packet = self._packet(
@@ -270,9 +276,43 @@ class V4CapabilityFoundryReadinessTests(unittest.TestCase):
         self.assertEqual(report.state, "INSTRUMENTED_REPEATED_GAP_EVIDENCE_REQUIRED")
 
     def test_missing_experiment_provenance_holds(self):
-        packet = self._packet(experiment=self._experiment(evidence_refs=()))
+        packet = self._packet(experiment=ExperimentEvidence(self._option(evidence_refs=())))
         report = evaluate_capability_foundry_readiness(packet)
-        self.assertEqual(report.state, "HELD_EXPERIMENT_PROVENANCE_REQUIRED")
+        self.assertEqual(report.state, "HELD_EXPERIMENT_EVIDENCE_REQUIRED")
+
+    def test_synthetic_experiment_evidence_cannot_reach_data_ready(self):
+        packet = self._packet(
+            experiment=ExperimentEvidence(
+                self._option(),
+                evidence_class="PUBLIC_SYNTHETIC",
+            )
+        )
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "HELD_EXPERIMENT_EVIDENCE_REQUIRED")
+        self.assertIsNone(report.opportunity_gradient)
+
+    def test_unproven_confidence_cannot_reach_data_ready(self):
+        packet = self._packet(
+            confidence=ConfidenceEvidence(
+                0.9,
+                ("fixture:confidence",),
+                evidence_class="PUBLIC_SYNTHETIC",
+            )
+        )
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "HELD_CONFIDENCE_EVIDENCE_REQUIRED")
+        self.assertIsNone(report.opportunity_gradient)
+
+    def test_synthetic_regression_baseline_cannot_reach_data_ready(self):
+        packet = self._packet(
+            regression_baseline=RegressionBaselineEvidence(
+                "baseline",
+                ("fixture:baseline",),
+                evidence_class="PUBLIC_SYNTHETIC",
+            )
+        )
+        report = evaluate_capability_foundry_readiness(packet)
+        self.assertEqual(report.state, "HELD_REGRESSION_BASELINE_REQUIRED")
 
 
 if __name__ == "__main__":
