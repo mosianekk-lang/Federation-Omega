@@ -27,6 +27,12 @@ class SovaraCreativeVersionTreeTests(unittest.TestCase):
         self.assertFalse(receipt.destructive_mutation_performed)
         self.assertEqual(self.root.version_id, receipt.branch_heads["main"])
 
+    def test_metadata_is_read_only(self) -> None:
+        with self.assertRaises(TypeError):
+            self.root.metadata["source"] = "mutated"  # type: ignore[index]
+        self.assertEqual("synthetic", self.root.metadata["source"])
+        self.assertTrue(self.tree.verify_integrity())
+
     def test_commit_requires_compare_and_swap_head(self) -> None:
         v2 = self.tree.commit(
             branch="main",
@@ -101,15 +107,14 @@ class SovaraCreativeVersionTreeTests(unittest.TestCase):
             content=b"frame-v2",
             metadata={"edit": "grade"},
         )
-        # Replaying the exact node through the internal content-addressing primitive
-        # is stable; branch CAS prevents pretending it is a new branch mutation.
         node2 = self.tree._make_node(
             content=b"frame-v2",
             parents=(self.root.version_id,),
             operation="COMMIT",
             metadata={"edit": "grade"},
         )
-        self.assertEqual(node1, node2)
+        self.assertEqual(node1.canonical_record(), node2.canonical_record())
+        self.assertEqual(node1.version_id, node2.version_id)
         self.assertEqual(2, self.tree.node_count)
 
     def test_branch_recreation_conflict_fails_closed(self) -> None:
