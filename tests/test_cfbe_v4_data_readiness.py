@@ -10,13 +10,15 @@ from benchmarking.cfbe_omega.v4_data_readiness import (
 
 class CFBEV4DataReadinessTests(unittest.TestCase):
     def _record(self, **overrides):
-        telemetry = {
-            "sovara.outcome.accepted": True,
-            "sovara.mission.value": 0.9,
-            "sovara.mission.cost": 0.1,
-            "sovara.mission.risk": 0.2,
-        }
-        telemetry.update(overrides.pop("telemetry", {}))
+        telemetry = overrides.pop(
+            "telemetry",
+            {
+                "sovara.outcome.accepted": True,
+                "sovara.mission.value": 0.9,
+                "sovara.mission.cost": 0.1,
+                "sovara.mission.risk": 0.2,
+            },
+        )
         return MissionTelemetryEvidence(
             mission_id=overrides.pop("mission_id", "MSN-REAL-001"),
             telemetry=telemetry,
