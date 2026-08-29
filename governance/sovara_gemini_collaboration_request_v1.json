@@ -1,23 +1,16 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G2-20260828-006",
-  "mode": "G2_CREATIVE_ARCHITECTURE_CHALLENGE",
+  "request_id": "SOVARA-GEMINI-G0-20260829-001",
+  "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
   "provider_mutation_allowed": false,
-  "model_inference_allowed": true,
+  "model_inference_allowed": false,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "transport": "OPENROUTER",
-  "fallback_transport": "VERTEX_AI_WIF_DIRECT",
-  "fallback_project": "sov-hybrid-suite",
-  "fallback_location": "global",
-  "model": "google/gemini-3.1-pro-preview",
-  "challenge_spec": "governance/sovara_creative_gemini_architecture_challenge_v1.json",
-  "max_output_tokens": 6000,
-  "purpose": "Reissue the same bounded Gemini 3.1 Pro architecture challenge after provider run 33206634239 returned a provider-native VERIFIED 12-proposal semantic receipt but the workflow-level verifier still enforced the obsolete 18-proposal contract. This request accompanies the repair that aligns the workflow verifier to 12 proposals and makes main-push change detection compare the commit against its first parent so merge commits no longer silently degrade to SOURCE_VALIDATION_ONLY. Prefer OpenRouter only when its credential is bound; otherwise use direct Vertex AI through the proven repository-scoped Google WIF deployer identity. No IAM/provider mutation or dedicated runtime service-account creation is part of this challenge. Output remains proposal-only pending Formation, CFBE and Omega-Scientist challenge.",
-  "truth_boundary": "This request authorizes one bounded model-inference call using the exact sanitized challenge spec and declared Gemini model. It does not authorize case-data processing, provider/IAM mutation, legal filing, email, service, publication, advertising spend, production traffic promotion, secret disclosure, unrelated external effects or design auto-promotion. OpenRouter credential absence is a route-selection condition, not objective failure. If direct Vertex is used, provider-native responseId/modelVersion and exact challenge_id must be read back. A malformed or truncated response must retain provider metadata but cannot become semantic proof. Any permission denial must be preserved as the exact provider boundary rather than generalized into a Gemini-unavailable claim."
+  "purpose": "Refresh the canonical repository-scoped Google WIF identity and Gemini ADC/runtime control state from the only workflow currently trusted by the provider condition, before any further provider mutation or deployment. Preserve the prior Gemini G2 semantic proof in history; this request changes only the active bounded provider-verification objective.",
+  "truth_boundary": "This request authorizes read-only provider identity/control verification through the existing trusted SOVARA LiteLLM workflow. It does not authorize IAM or API mutation, service-account creation, model inference, case-data processing, deployment, traffic change, publishing, email, financial commitment, secret disclosure or any unrelated external effect. If ADC controls are incomplete, preserve the exact missing controls and advance only through a separately admitted G1 request."
 }
