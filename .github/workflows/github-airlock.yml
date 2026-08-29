@@ -86,6 +86,21 @@ jobs:
       - name: Run ProofOS bootstrap regression tests
         run: python -m unittest discover -s tests -p 'test_proofos*.py' -v
 
+      - name: Run changed SOVARA creative capability courts
+        env:
+          BASE_SHA: ${{ steps.refs.outputs.base }}
+          HEAD_SHA: ${{ steps.refs.outputs.head }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          changed="$(git diff --name-only "$BASE_SHA" "$HEAD_SHA")"
+          if grep -Eq '^(sovara/creative/|governance/sovara_.*|tests/test_sovara_creative_.*\.py$)' <<<"$changed"; then
+            echo "SOVARA_CREATIVE_CAPABILITY_COURT_REQUIRED"
+            python -m unittest discover -s tests -p 'test_sovara_creative_*.py' -v
+          else
+            echo "SOVARA_CREATIVE_CAPABILITY_COURT_NOT_APPLICABLE"
+          fi
+
       - name: Build source provenance receipt
         env:
           GH_TOKEN: ${{ github.token }}
