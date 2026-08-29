@@ -37,7 +37,8 @@ class LunoObserverBindingAirlockBridgeTests(unittest.TestCase):
 
     def test_provider_workflow_remains_read_only_zero_traffic_and_no_legacy_secret_import(self):
         workflow = Path(".github/workflows/luno-observer-provider-binding.yml").read_text(encoding="utf-8")
-        self.assertIn("github.event_name == 'push' || github.event_name == 'workflow_dispatch'", workflow)
+        self.assertIn("github.event_name == 'workflow_dispatch' && vars.LUNO_PROVIDER_WIF_BOUND == 'true'", workflow)
+        self.assertNotIn("github.event_name == 'push' || github.event_name == 'workflow_dispatch'", workflow)
         self.assertIn("CREDENTIAL_PERMISSION_PROOF_REQUIRED", workflow)
         self.assertIn("PUBLIC_MARKET_PROVIDER_VERIFIED", workflow)
         self.assertIn("OBSERVER_BOUND", workflow)
@@ -45,6 +46,14 @@ class LunoObserverBindingAirlockBridgeTests(unittest.TestCase):
         self.assertNotIn("luno-api-key", workflow)
         self.assertNotIn("luno-api-secret", workflow)
         self.assertNotIn("scheduler jobs create", workflow.lower())
+
+    def test_provider_execution_fails_closed_until_workflow_scoped_wif_is_bound(self):
+        workflow = Path(".github/workflows/luno-observer-provider-binding.yml").read_text(encoding="utf-8")
+        self.assertIn("vars.LUNO_PROVIDER_WIF_BOUND == 'true'", workflow)
+        self.assertIn("workflow_dispatch", workflow)
+        self.assertIn("id-token: write", workflow)
+        self.assertIn("workload_identity_provider: ${{ env.WIF_PROVIDER }}", workflow)
+        self.assertIn("service_account: ${{ env.DEPLOYER_SA }}", workflow)
 
     def test_container_is_non_root_and_public_only_by_default(self):
         dockerfile = Path("federation/capital_execution/venues/Dockerfile.luno_observer").read_text(encoding="utf-8")
