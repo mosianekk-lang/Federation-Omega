@@ -1,0 +1,147 @@
+{
+  "schema": "SOVARA_GEMINI_G2_DESIGN_PROMOTION_V1",
+  "decision_id": "SOVARA-GEMINI-G2-DESIGN-PROMOTION-20260829-001",
+  "source_proof": {
+    "workflow_run_id": 33206987595,
+    "workflow_source_sha": "fe8c4bf15a47e0f7a7873c195a320aeb192f1b62",
+    "artifact_id": 9700068344,
+    "artifact_digest_sha256": "7c9f77d4ec6ca32f692bcc7d87ad955f04b6595ed04dbde45a8f40b68429a5cf",
+    "challenge_id": "SC-GEMINI-ARCH-20260828-001",
+    "transport": "VERTEX_AI_WIF_DIRECT",
+    "provider": "GOOGLE_VERTEX_AI",
+    "response_id": "BuuRaovIGfL1tALF9JSYBQ",
+    "model_version": "gemini-3.1-pro-preview",
+    "proposal_count": 12,
+    "semantic_verified": true,
+    "provider_native_readback": true,
+    "output_sha256": "2130be2e7ac9ea4a82386fd441a2df5bc7fa4b3fb40257166314f74246dd4000",
+    "provider_receipt_sha256": "4b0d9eb55339c209f2426d454c3aa2a92f64ad7925d7a47c8e944ce3f71e04fa",
+    "workflow_receipt_sha256": "31c660a75a5590a2fd0e8a7a25eef97447369525beaeb355d9e9e92dad2bede4"
+  },
+  "promotion": {
+    "status": "PERMITTED_WITH_GATES",
+    "promotion_ceiling": "SOURCE_CANDIDATE",
+    "model_ranking_authority": false,
+    "model_output_is_design_authority": false,
+    "automatic_production_promotion": false,
+    "deployment_authorized": false,
+    "provider_effect_authorized": false,
+    "spend_authorized": false,
+    "publishing_authorized": false,
+    "external_communication_authorized": false,
+    "case_data_authorized": false,
+    "real_person_data_authorized": false,
+    "truth_boundary": "The verified Gemini output may inform SOVARA source-level design candidates only. It does not authorize deployment, provider effects, production traffic, spend, publishing, external communication, legal/rights clearance, realised ROI claims, or autonomous optimization."
+  },
+  "normalization_rules": {
+    "absolute_claims_promoted": false,
+    "guarantee_language_becomes_testable_hypothesis": true,
+    "predicted_roi_is_not_realised_roi": true,
+    "provider_cost_savings_require_same-run_observation": true,
+    "rights_clearance_requires explicit_human_or_policy_authority": true,
+    "live_performance_tuning_starts_shadow_only": true,
+    "new_last_requires_reuse_scan": true
+  },
+  "decisions": [
+    {
+      "proposal_id": "PROP-01",
+      "capability_id": "SC-CONTINUITY-LENS",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Measure and improve cross-shot character/environment continuity using reference and asset evidence without claiming guaranteed identity preservation.",
+      "proof_gate": "Bounded synthetic continuity court with declared similarity metric, threshold, false-match controls and human visual review.",
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-02",
+      "capability_id": "SC-BRAND-GUARD",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Compose deterministic brand-policy checks with rights metadata and QA without claiming comprehensive IP-law adjudication.",
+      "proof_gate": "Injected-policy regression suite with false-positive and false-negative reporting; legal clearance remains outside automated authority.",
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-03",
+      "capability_id": "SC-AUDIO-SYNC",
+      "disposition": "EVIDENCE_HOLD",
+      "normalized_objective": "Evaluate reuse-first audio synchronization before any NEW_LAST build or provider effect.",
+      "proof_gate": "Federation reuse scan plus synthetic timing/alignment prototype; no external audio generation authority inherited.",
+      "hold_gates": ["REUSE_SCAN", "MEDIA_PROVIDER_CAPABILITY", "RIGHTS_POLICY"],
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-04",
+      "capability_id": "SC-FORMAT-ADAPT",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Extend packaging with subject-aware multi-format adaptation and measurable safe-zone retention.",
+      "proof_gate": "Synthetic 16:9, 9:16 and 1:1 regression corpus with subject-retention and resolution checks.",
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-05",
+      "capability_id": "SC-STORYBOARD-AI",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Compose brief and meta-studio outputs into a reversible storyboard/animatic planning artifact.",
+      "proof_gate": "Five-shot synthetic brief court with timing, editability and no-provider-effect local fallback.",
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-06",
+      "capability_id": "SC-ASSET-PREDICT",
+      "disposition": "EVIDENCE_HOLD",
+      "normalized_objective": "Build an offline commercial-performance research model only after provenance-bound historical SC-PULSE data exists; never treat predicted ROAS as realised ROI.",
+      "proof_gate": "Time-split validation on sufficient real historical observations with calibration/error reporting and holdout performance; no deterministic ROI claim.",
+      "hold_gates": ["REAL_HISTORICAL_DATA", "PROVENANCE", "SAMPLE_ADEQUACY", "OUT_OF_SAMPLE_VALIDATION"],
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-07",
+      "capability_id": "SC-AUTO-COLOR",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Reuse reference/studio color controls to improve measurable grade consistency while protecting skin-tone and clipping constraints.",
+      "proof_gate": "Synthetic/reference color-difference court with skin-tone and banding regressions.",
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-08",
+      "capability_id": "SC-VERSION-TREE",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Extend SC-ASSET with content-addressed non-destructive creative version lineage and deterministic rollback.",
+      "proof_gate": "Branch/edit/rollback/merge simulation with exact hash lineage and no silent overwrite.",
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-09",
+      "capability_id": "SC-RENDER-FINOPS",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Compose SC-ROUTER and existing FinOps capability into a cost-quality route planner; savings remain unproven until observed on equivalent workloads.",
+      "proof_gate": "Deterministic route simulation first, then separately authorized same-workload provider cohort with cost/quality/readback evidence.",
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-10",
+      "capability_id": "SC-TALENT-VAULT",
+      "disposition": "EVIDENCE_HOLD",
+      "normalized_objective": "Design a consent/rights/provenance registry and approval ledger; never auto-declare legal clearance or compensation authority.",
+      "proof_gate": "Synthetic rights-lifecycle court plus privacy/security review and explicit human/policy authority for any real-person or contractual effect.",
+      "hold_gates": ["PRIVACY_SECURITY_REVIEW", "RIGHTS_AUTHORITY", "REAL_PERSON_DATA_AUTHORITY"],
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-11",
+      "capability_id": "SC-FEEDBACK-LOOP",
+      "disposition": "EVIDENCE_HOLD",
+      "normalized_objective": "Start with an offline/shadow performance-to-brief learning loop; no live platform writeback or autonomous campaign tuning is inherited.",
+      "proof_gate": "Replay historical/synthetic performance events through a shadow learner, compare proposed brief changes, then require separate connector/readback and production authority.",
+      "hold_gates": ["PERFORMANCE_DATA_PROVENANCE", "CONNECTOR_READBACK", "PRODUCTION_CHANGE_AUTHORITY"],
+      "authority_ceiling": "A1_INTERNAL"
+    },
+    {
+      "proposal_id": "PROP-12",
+      "capability_id": "SC-DYNAMIC-TYPOGRAPHY",
+      "disposition": "SOURCE_CANDIDATE",
+      "normalized_objective": "Separate editable typography from generated pixels and preserve licensing/layout metadata across formats and translations.",
+      "proof_gate": "Synthetic multilingual layout court with clipping, font-license metadata and editability checks.",
+      "authority_ceiling": "A1_INTERNAL"
+    }
+  ]
+}
