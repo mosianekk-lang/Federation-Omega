@@ -1,0 +1,49 @@
+{
+  "schema": "SOVARA_GEMINI_COLLABORATION_BUS_ADMISSION_V1",
+  "capability_id": "SC-GEMINI-COLLABORATION-BUS",
+  "source_decision": "SOVARA-GEMINI-BIDIRECTIONAL-BUS-20260830-001",
+  "implementation": "sovara/creative/gemini_collaboration_bus.py",
+  "regression_court": "tests/test_sovara_creative_gemini_collaboration_bus.py",
+  "build_strategy": "EXTEND_AND_COMPOSE",
+  "reuse": [
+    "verified Gemini G2 Vertex/WIF semantic route",
+    "SOVARA Creative Gemini architecture challenge contract",
+    "KDV Omni-Mesh topics/routes/receipts",
+    "Platform AI Liaison and Handoff Bus",
+    "CFBE/Formation proposal evaluation",
+    "ProofOS source/test/runtime proof separation"
+  ],
+  "protocol": [
+    "FEDERATION_DELTA",
+    "SANITIZED_CHALLENGE_PACKET",
+    "BUDGET_AND_AUTHORITY_GATE",
+    "GEMINI_PROVIDER_READBACK",
+    "PROPOSAL_ENVELOPE",
+    "CFBE_FORMATION_DECISION",
+    "FEEDBACK_ENVELOPE",
+    "NEXT_CYCLE_CONTEXT"
+  ],
+  "provider_policy": {
+    "proposal_authority_only": true,
+    "case_data_allowed": false,
+    "external_effect_allowed": false,
+    "canonical_mutation_allowed": false,
+    "provider_dispatch_requires_explicit_finite_spend_authority": true,
+    "default_dispatch_state": "HOLD_SPEND_AUTHORITY"
+  },
+  "proof_gate": {
+    "required": [
+      "DETERMINISTIC_CYCLE_ID",
+      "SANITIZED_CONTEXT",
+      "CREDENTIAL_KEY_REJECTION",
+      "G2_SCHEMA_COMPATIBILITY",
+      "PROPOSAL_ONLY_INGESTION",
+      "FEDERATION_DECISION_FEEDBACK_ROUNDTRIP",
+      "FINITE_SPEND_AUTHORITY_GATE",
+      "NO_CANONICAL_AUTO_PROMOTION",
+      "NO_EXTERNAL_EFFECT"
+    ]
+  },
+  "deployment_boundary": "Source/CI admission creates the collaboration protocol and deterministic round-trip envelopes only. Persistent provider scheduling, a second-leg Gemini receipt showing Federation feedback was consumed, automated KDV ingestion, recurring spend, production media effects, publishing and whole-estate maturity remain separate proof gates.",
+  "target_runtime": "Existing trusted SOVARA LiteLLM/Vertex workflow or future sovereign runtime; do not widen WIF merely for scheduling convenience."
+}
