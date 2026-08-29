@@ -294,7 +294,8 @@ def main() -> int:
     adc_role_state["all_three_project_bindings_present"] = all(adc_role_state.values())
 
     receipt = {
-        "schema": "SOVARA_PROJECT_IAM_AUTHORITY_GRAPH_V2",
+        "schema": "SOVARA_PROJECT_IAM_AUTHORITY_GRAPH_V1",
+        "schema_revision": 2,
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         "project_id": PROJECT,
         "project_number": PROJECT_NUMBER,
