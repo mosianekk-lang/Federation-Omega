@@ -67,7 +67,7 @@ class SourceProvenanceTests(unittest.TestCase):
         self.assertIn("provider protection is not yet active", copilot_contract)
         self.assertNotIn("branch protection is active", agent_contract.lower())
 
-    def test_main_airlock_ruleset_is_sole_owner_safe_and_requires_full_release_court(self):
+    def test_main_airlock_ruleset_is_sole_owner_safe_and_requires_release_court(self):
         ruleset = json.loads(
             (
                 ROOT
@@ -86,7 +86,11 @@ class SourceProvenanceTests(unittest.TestCase):
         checks = by_type["required_status_checks"]["parameters"]
         self.assertTrue(checks["strict_required_status_checks_policy"])
         self.assertEqual(
-            [{"context": "admission"}, {"context": "contract"}, {"context": "scan"}],
+            [
+                {"context": "admission"},
+                {"context": "contract"},
+                {"context": "scan"},
+            ],
             checks["required_status_checks"],
         )
 

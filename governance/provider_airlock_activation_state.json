@@ -1,29 +1,35 @@
 {
   "schema": "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-STATE-1",
   "repository": "mosianekk-lang/Federation-Omega",
-  "assessed_at": "2026-08-29T21:40:00Z",
+  "assessed_at": "2026-08-29T22:21:03Z",
   "implementation": {
     "activator_path": "phoenix/provider_airlock_activate.py",
     "runbook_path": "phoenix/PROVIDER_AIRLOCK_ACTIVATION.md",
     "ruleset_payload_path": "governance/federation_omega_main_airlock.ruleset.json",
-    "provider_native_regression_tests_passed": false,
-    "public_leak_guard_passed": false,
-    "phoenix_freeze_status": "PENDING_CURRENT_HEAD_CI",
+    "activator_merge_commit": "34e1205e6d2f2195f7a2766cc471b8b52c8661dc",
+    "activator_pull_request": 209,
+    "release_court_reanchor_source": "PR_723_RECONCILED_ON_CURRENT_MAIN",
+    "provider_native_regression_tests_passed": true,
+    "public_leak_guard_passed": true,
+    "phoenix_freeze_status_before_direct_write_incident": "SUCCESS",
     "required_status_contexts": ["admission", "contract", "scan"]
   },
   "connected_authority": {
+    "github_app_installation_id": 149462480,
+    "installed_account": "mosianekk-lang",
     "repository_admin_standing_reported": true,
     "repository_push_standing_reported": true,
     "connector_ruleset_mutation_exposed": false,
     "connector_branch_protection_mutation_exposed": false,
     "connector_actions_defaults_mutation_exposed": false,
-    "classification": "ADMIN_STANDING_PRESENT_PROVIDER_RULESET_MUTATION_ROUTE_NOT_BOUND_IN_CHAT"
+    "connector_repository_creation_exposed": false,
+    "classification": "ADMIN_STANDING_PRESENT_CONNECTOR_MUTATION_SURFACE_UNEXPOSED"
   },
   "provider_observation": {
     "observation_mode": "READ_ONLY",
-    "observed_at": "2026-08-29T21:40:00Z",
-    "main_sha": "76bb7ca5c31e048d147feb23bfee5fd6b23d82ea",
-    "main_commit_signature_verified": true,
+    "observed_at": "2026-08-29T22:20:30Z",
+    "main_sha": "064a9382041f6e252cfb4c4b220c6767228c6029",
+    "main_commit_signature_verified": false,
     "main_protected": false,
     "branch_protection_enabled": false,
     "required_status_checks_enforcement_level": "off",
@@ -34,6 +40,21 @@
       "GET /repos/mosianekk-lang/Federation-Omega/branches/main",
       "GET /repos/mosianekk-lang/Federation-Omega/rulesets"
     ]
+  },
+  "source_incident": {
+    "incident_id": "INC-FEDOMEGA-DIRECT-MAIN-20260830-001",
+    "state": "PRESERVED_ADVERSE_EVIDENCE_REPAIR_PR_REQUIRED",
+    "direct_main_commit": "064a9382041f6e252cfb4c4b220c6767228c6029",
+    "direct_main_parent": "82198e426aa9dab1181c9fea0e4ea8895169d008",
+    "commit_signature_verified": false,
+    "unintended_path": "tmp",
+    "unintended_path_content_bytes": 0,
+    "history_rewritten": false,
+    "force_ref_update_performed": false,
+    "repair_branch": "fix/provider-airlock-current-main-and-direct-write-recovery-20260830",
+    "repair_commit": "f77a2599f9008ea86d3012fd713d9aaed59953b7",
+    "repair_effect_on_main": false,
+    "failure_win_rule": "Do not hide or rewrite an unadmitted direct-main incident; preserve it, remove the serving-tree artifact through a governed PR, activate provider prevention only after exact provider readback."
   },
   "provider_state": {
     "provider_apply_performed": false,
@@ -48,20 +69,22 @@
     "main_sha_preserved_during_activation": "NOT_APPLICABLE_NO_APPLY"
   },
   "local_defence_in_depth": {
-    "source_provenance_sentinel": "ACTIVE",
+    "source_provenance_sentinel": "ACTIVE_BUT_PROVIDER_BYPASS_OBSERVED",
     "workflow_execution_quarantine": "ACTIVE",
     "public_leak_guard": "ACTIVE",
-    "agent_governance_contract": "ACTIVE",
-    "sole_owner_safe_ruleset_payload": "SOURCE_CANDIDATE_THREE_CHECK",
-    "ruleset_only_activator": "SOURCE_CANDIDATE_THREE_CHECK",
+    "agent_governance_contract": "ACTIVE_BUT_NOT_PROVIDER_ENFORCED",
+    "sole_owner_safe_ruleset_payload": "VERIFIED_SOURCE_PENDING_FRESH_REANCHOR_CI",
+    "ruleset_only_activator": "VERIFIED_IMPLEMENTATION_PENDING_FRESH_REANCHOR_CI",
     "provider_prevention": "ABSENT"
   },
-  "state": "PROVIDER_PREVENTION_ABSENT_WRITE_BOUNDARY_HELD",
+  "state": "PROVIDER_PREVENTION_ABSENT_DIRECT_WRITE_INCIDENT_REPAIR_IN_PROGRESS",
   "allowed_next_state": "VERIFIED",
   "verification_gate": {
     "required_receipt_schema": "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-1",
     "required_receipt_status": "VERIFIED",
     "required_checks": [
+      "source_repair.tmp_absent_on_admitted_main",
+      "source_repair.current_main_airlock_bubbles_leakguard_green",
       "authority.repository_admin",
       "negative_canary.direct_update_rejected",
       "provider_readback.ruleset_exact",
@@ -72,5 +95,5 @@
       "provider_readback.main_sha_unchanged"
     ]
   },
-  "truth_boundary": "Fresh provider readback on 29 August 2026 shows main unprotected, required status enforcement off and zero repository rulesets. This source tranche prepares an exact three-context release court but does not activate provider prevention. Do not claim provider enforcement until a separately authorized ruleset write plus negative direct-update canary and exact provider readback returns VERIFIED."
+  "truth_boundary": "Repository-local Airlock, Bubbles, Leak Guard and governance controls exist, but GitHub provider prevention is absent. A real unadmitted direct-main write occurred while provider prevention was absent and is preserved as adverse evidence. The unintended empty tmp artifact is removed only on the repair branch until a governed PR is admitted. Do not claim provider prevention or source-incident closure until provider-native ruleset readback and admitted-main repair are both verified."
 }
