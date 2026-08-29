@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-ADMIN-AUTHORITY-GRAPH-20260829-001",
+  "request_id": "SOVARA-GEMINI-G0-DEPLOYMENT-READINESS-20260829-001",
   "mode": "G0_READ_ONLY_VERIFY",
   "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
   "execute": true,
@@ -17,23 +17,38 @@
     "deployer_cloud_run_developer_binding",
     "service_usage_consumer_binding"
   ],
+  "deployment_readiness_probe": true,
+  "deployment_readiness_scope": {
+    "cloud_run_project_permissions": [
+      "run.services.create",
+      "run.services.get",
+      "run.services.update",
+      "run.operations.get",
+      "run.routes.invoke"
+    ],
+    "artifact_registry_repository": "projects/sov-hybrid-suite/locations/africa-south1/repositories/federation-omega",
+    "artifact_registry_permissions": [
+      "artifactregistry.repositories.downloadArtifacts",
+      "artifactregistry.repositories.uploadArtifacts"
+    ],
+    "read_only": true
+  },
   "current_provider_evidence": {
     "wif_verified": true,
     "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
     "runtime_exists": true,
     "deployer_service_account_user": true,
     "required_apis_enabled": true,
+    "safety_spine_source_ci_admitted": true,
+    "safety_spine_merge_sha": "82198e426aa9dab1181c9fea0e4ea8895169d008",
     "remaining_controls": [
       "roles/aiplatform.user on superior-logic-runtime",
       "roles/serviceusage.serviceUsageConsumer on superior-logic-runtime",
       "roles/run.developer on superior-logic-deployer"
     ],
-    "direct_wif_census_run_id": "33270202979",
-    "direct_wif_census_artifact_id": "9719877365",
-    "direct_wif_census_artifact_sha256": "da98f7c09eaa3719895003084837930ad1e1dc14f1bba4d69a2e31dc15b876e5",
-    "direct_current_wif_admin_candidate_count": 0,
-    "verified_impersonable_admin_count": 0
+    "verified_automated_project_iam_admin_route": false,
+    "authority_boundary": "HUMAN_OWNER_OR_PROJECT_IAM_ADMIN_REQUIRED_FOR_THREE_BINDINGS"
   },
-  "purpose": "Map bounded roles/iam.serviceAccountTokenCreator delegation edges and alternate workload-identity bindings across the existing high-authority service-account estate. Starting from the currently authenticated superior-logic-deployer, test only bounded service-account delegation chains and projects.testIamPermissions to determine whether an already-existing keyless route reaches a project Owner/IAM-admin principal with resourcemanager.projects.setIamPolicy.",
-  "truth_boundary": "Read-only authority-graph census only. Do not change IAM, service accounts, Workload Identity configuration or keys; do not access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. Census success does not imply Gemini ADC readiness: the expected missing ADC controls remain explicit and must stay unverified until provider-native readback proves them present. Delegation or policy edges are candidates until provider-native access-token issuance plus testIamPermissions verifies setIamPolicy."
+  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to refresh the existing project-IAM authority graph and add provider-native deployment-readiness proof for Cloud Run and Artifact Registry. Preserve the three expected Gemini ADC bindings as unverified until provider readback proves them present. Determine whether any additional deployment permission is missing beyond those three bindings before forming the private zero-traffic G3 gateway canary request.",
+  "truth_boundary": "Read-only provider census only. Do not change IAM, WIF, service accounts, API enablement, Artifact Registry contents, Cloud Run services or traffic; do not build or push an image, run Gemini inference, access secret payloads, send communications, publish, spend, or perform destructive actions. Deployment-readiness observations are evidence only and cannot promote Gemini ADC or runtime deployment state."
 }
