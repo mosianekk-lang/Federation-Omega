@@ -1,0 +1,50 @@
+{
+  "authority_ceiling": "A1_INTERNAL",
+  "cfbe_score_weights": {
+    "cost": 0.05,
+    "freshness": 0.15,
+    "latency": 0.06,
+    "owner_burden": 0.06,
+    "proof_strength": 0.2,
+    "quality": 0.16,
+    "reliability": 0.22,
+    "risk": 0.1
+  },
+  "dynamic_failure_memory": {
+    "mitigated_or_closed_failure_requires_recovery_proof": true,
+    "open_failure_requires_current_failure_proof": true,
+    "recovered_route_requires_recovery_proof_bound_in_retry_evidence": true,
+    "static_provider_failure_constants_allowed": false
+  },
+  "external_effect_default": false,
+  "invariants": [
+    "FRESH_CURRENT_MAIN_BEFORE_WRITE",
+    "STALE_MAIN_NEVER_INHERITS_WRITE_AUTHORITY",
+    "OVERLAPPING_ACTIVE_WORKSTREAMS_SERIALIZE_OR_RECONCILE",
+    "KNOWN_OPEN_FAILURE_BLOCKS_UNCHANGED_ROUTE",
+    "CLOSED_FAILURE_REQUIRES_BOUND_RECOVERY_PROOF",
+    "HISTORICAL_PROVIDER_FAILURES_ARE_NOT_STATIC_GLOBAL_TRUTH",
+    "REALITY_READINESS_AUTHORITY_AND_PROOF_GATES_PRECEDE_CFBE_SCORING",
+    "CFBE_ROUTE_SCORE_USES_QUALITY_RELIABILITY_FRESHNESS_PROOF_LATENCY_COST_OWNER_BURDEN_RISK",
+    "NEAR_MISSES_ARE_PRESERVED_AS_LEARNING_EVIDENCE",
+    "COMPLETION_REQUIRES_AUTHORIZATION_EXECUTION_TARGET_READBACK_AND_RECEIPT",
+    "PROVIDER_AIRLOCK_SOURCE_DOES_NOT_PROVE_PROVIDER_RULESET_ACTIVE",
+    "REALITYGUARD_TRANSPORT_OR_PROVIDER_RECEIPT_ALONE_CANNOT_RELEASE_EFFECT_CLAIM",
+    "NO_PROVIDER_IAM_WIF_CREDENTIAL_TRAFFIC_SPEND_OR_COMMUNICATION_AUTHORITY_CREATED"
+  ],
+  "provider_airlock": {
+    "activation_requires_separate_provider_write_authority": true,
+    "provider_apply_performed": false,
+    "required_status_contexts": ["admission", "contract", "scan"]
+  },
+  "purpose": "Fresh-main mission arbitration and deployment-safety composition using dynamic failure memory, CFBE multidimensional route fitness, moving-main fencing, near-miss learning, provider-enforced release preparation and RealityGuard effect-claim control.",
+  "schema": "FEDERATION_MISSION_ARBITRATION_FABRIC_V2",
+  "source_lineage": {
+    "convergence_predecessor": "PR-783",
+    "mission_arbitration_gene": "PR-697",
+    "provider_airlock_gene": "PR-723/PR-783",
+    "realityguard_effect_gene": "PR-760/PR-783"
+  },
+  "truth_boundary": "Source/CI admission proves only deterministic safety-spine composition. It does not activate a GitHub ruleset, grant provider authority, mutate IAM/WIF, deploy a runtime, process case data, send communications, create financial effects, or prove production value.",
+  "version": "2.0.0"
+}
