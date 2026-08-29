@@ -36,7 +36,11 @@ class SovaraVersionTreeProcessCrashDrillTests(unittest.TestCase):
         for process in self.processes:
             if process.poll() is None:
                 process.kill()
-                process.wait(timeout=5)
+            try:
+                process.communicate(timeout=5)
+            except subprocess.TimeoutExpired:
+                process.kill()
+                process.communicate(timeout=5)
         self.temp.cleanup()
 
     def _spawn_until_checkpoint(self, checkpoint: str) -> tuple[subprocess.Popen[str], dict]:
@@ -83,7 +87,9 @@ class SovaraVersionTreeProcessCrashDrillTests(unittest.TestCase):
 
     def _kill_abruptly(self, process: subprocess.Popen[str]) -> int:
         process.kill()
-        return process.wait(timeout=5)
+        process.communicate(timeout=5)
+        assert process.returncode is not None
+        return process.returncode
 
     def test_crash_after_immutable_objects_before_refs_preserves_old_authority(self) -> None:
         process, marker = self._spawn_until_checkpoint(CHECKPOINT_BEFORE_REFS)
