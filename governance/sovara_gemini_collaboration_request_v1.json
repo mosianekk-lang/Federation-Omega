@@ -1,37 +1,24 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G1-20260829-001",
-  "mode": "G1_ADC_APPLY_VERIFY",
+  "request_id": "SOVARA-GEMINI-G0-RUNTIME-REUSE-20260829-001",
+  "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
-  "provider_mutation_allowed": true,
+  "provider_mutation_allowed": false,
   "model_inference_allowed": false,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "mutation_scope": [
-    "CREATE_SV_GEMINI_RUNTIME_SERVICE_ACCOUNT_IF_ABSENT",
-    "BIND_RUNTIME_ROLES_AIPLATFORM_USER_AND_SERVICEUSAGE_CONSUMER",
-    "BIND_DEPLOYER_SERVICE_ACCOUNT_USER_ON_RUNTIME",
-    "BIND_DEPLOYER_RUN_DEVELOPER",
-    "ENSURE_EXISTING_REQUIRED_APIS_ENABLED"
-  ],
-  "g0_evidence": {
-    "run_id": "33267237183",
-    "source_sha": "27a4ba9ace2afec1b85c903c98f0bd9f67e5155c",
-    "wif_receipt": "FEDOMEGA-WIF-CLOUD-VERIFIED",
-    "adc_state": "NOT_VERIFIED",
-    "missing_apis": [],
-    "missing_controls": [
-      "gemini_runtime_service_account",
-      "aiplatform_user_binding",
-      "service_usage_consumer_binding",
-      "deployer_service_account_user_binding",
-      "deployer_cloud_run_developer_binding"
-    ]
+  "g1_failure_evidence": {
+    "run_id": "33267495987",
+    "source_sha": "9a759d35c69f7e8f56dab70e1bea0da13d667386",
+    "failure": "iam.serviceAccounts.create denied for superior-logic-deployer",
+    "mutation_performed": false,
+    "artifact_id": "9719096753",
+    "artifact_sha256": "e18417b4a1229a92914c32b6a0065849fa4985c856081d72fd4a453e438325f8"
   },
-  "purpose": "Apply only the five exact Gemini ADC/runtime identity controls proven missing by fresh G0 run 33267237183 through the existing repository-scoped WIF deployer identity, then verify provider-native state. Required APIs were already enabled at G0, so the apply script must not enable additional services unless same-run readback unexpectedly proves one of the three declared required APIs missing.",
-  "truth_boundary": "This request authorizes only the declared bounded Gemini ADC/IAM attachment required for deployment convergence. It does not authorize service-account keys, raw secret access, model inference, case-data processing, artifact/image deployment, Cloud Run traffic, email, publication, financial commitment, destructive mutation, WIF trust expansion or unrelated IAM roles. Provider-native post-apply verification is mandatory before any deployment step."
+  "purpose": "Re-run read-only WIF and Gemini ADC verification after repairing bootstrap identity drift so the verifier honors the workflow's existing canonical runtime service account superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com instead of inventing sv-gemini-runtime. Determine whether the existing runtime removes the service-account-creation dependency before any further IAM or deployment action.",
+  "truth_boundary": "This request is read-only. It authorizes no IAM/API mutation, service-account creation, WIF expansion, key creation, secret access, model inference, case-data processing, image build, Cloud Run deployment or traffic, email, publication, spend or destructive effect. The failed G1 route is quarantined and may not be retried unchanged."
 }
