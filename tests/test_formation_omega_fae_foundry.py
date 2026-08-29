@@ -1,6 +1,6 @@
 import json
 import unittest
-from fully_automated_elevation import AuthorityEnvelope, BuildStage, CandidateRoute, IdeaCandidate, SovereignFoundryCompiler, ValidationError
+from formation_omega.fully_automated_elevation_foundry import AuthorityEnvelope, BuildStage, CandidateRoute, IdeaCandidate, SovereignFoundryCompiler, ValidationError
 
 
 def candidate(**changes):
