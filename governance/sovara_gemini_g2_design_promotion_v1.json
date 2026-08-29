@@ -38,7 +38,7 @@
     "guarantee_language_becomes_testable_hypothesis": true,
     "predicted_roi_is_not_realised_roi": true,
     "provider_cost_savings_require_same-run_observation": true,
-    "rights_clearance_requires explicit_human_or_policy_authority": true,
+    "rights_clearance_requires_explicit_human_or_policy_authority": true,
     "live_performance_tuning_starts_shadow_only": true,
     "new_last_requires_reuse_scan": true
   },
