@@ -33,6 +33,7 @@ EXPECTED_RULE_TYPES = {
     "pull_request",
     "required_status_checks",
 }
+REQUIRED_STATUS_CONTEXTS = ("admission", "contract", "scan")
 HEX40 = re.compile(r"^[0-9a-f]{40}$")
 
 
@@ -82,8 +83,11 @@ def validate_ruleset(payload: dict[str, Any]) -> dict[str, Any]:
     checks = by_type["required_status_checks"].get("parameters", {})
     if checks.get("strict_required_status_checks_policy") is not True:
         raise ActivationError("required status checks must be strict")
-    if checks.get("required_status_checks") != [{"context": "admission"}]:
-        raise ActivationError("admission must be the sole required status context")
+    expected_checks = [{"context": context} for context in REQUIRED_STATUS_CONTEXTS]
+    if checks.get("required_status_checks") != expected_checks:
+        raise ActivationError(
+            "required status court must be exactly admission, contract and scan"
+        )
     return payload
 
 
@@ -274,8 +278,24 @@ def verify_provider_state(
     workflow = api.request("GET", f"/repos/{owner}/{repo}/actions/permissions/workflow")
     rules = active_rule_types(api, owner, repo, "main")
     current_main_sha = ref_sha(api, owner, repo, "main")
+    actual_by_type = {
+        item.get("type"): item
+        for item in actual.get("rules", [])
+        if isinstance(item, dict)
+    }
+    actual_required_checks = (
+        actual_by_type.get("required_status_checks", {})
+        .get("parameters", {})
+        .get("required_status_checks", [])
+    )
+    actual_contexts = [
+        item.get("context")
+        for item in actual_required_checks
+        if isinstance(item, dict)
+    ]
     checks = {
         "ruleset_exact": canonical_ruleset_view(actual) == canonical_ruleset_view(desired),
+        "required_status_contexts_exact": actual_contexts == list(REQUIRED_STATUS_CONTEXTS),
         "workflow_permissions_read": workflow.get("default_workflow_permissions") == "read",
         "actions_cannot_approve_reviews": workflow.get("can_approve_pull_request_reviews") is False,
         "main_rules_complete": EXPECTED_RULE_TYPES.issubset(rules),
@@ -283,6 +303,7 @@ def verify_provider_state(
     }
     return {
         "checks": checks,
+        "required_status_contexts": actual_contexts,
         "active_rule_types": sorted(rules),
         "main_sha": current_main_sha,
         "verified": all(checks.values()),
@@ -313,6 +334,7 @@ def main() -> int:
         "mode": "APPLY" if args.apply else "DRY_RUN",
         "repository": f"{args.owner}/{args.repo}",
         "ruleset_sha256": canonical_sha256(canonical_ruleset_view(desired)),
+        "required_status_contexts": list(REQUIRED_STATUS_CONTEXTS),
         "recorded_at": datetime.now(timezone.utc).isoformat(),
         "credential_source_env": "GH_ADMIN_TOKEN",
         "credential_value_recorded": False,
