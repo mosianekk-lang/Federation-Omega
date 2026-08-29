@@ -1,0 +1,49 @@
+{
+  "schema": "SOVARA_SC_VERSION_TREE_DURABLE_STORE_ADMISSION_V1",
+  "capability_id": "SC-VERSION-TREE",
+  "layer": "LOCAL_DURABILITY_AND_RESTART_RECOVERY",
+  "predecessor_admission": "governance/sovara_sc_version_tree_v1_admission.json",
+  "implementation": "sovara/creative/version_tree_store.py",
+  "regression_court": "tests/test_sovara_creative_version_tree_store.py",
+  "objective": "Prove deterministic local filesystem persistence, restart reconstruction and fail-closed recovery without introducing a cloud storage or production effect.",
+  "required_proofs": [
+    "ATOMIC_SAME_DIRECTORY_REPLACE",
+    "FILE_AND_DIRECTORY_FSYNC_WHERE_SUPPORTED",
+    "IMMUTABLE_BLOB_AND_NODE_WRITE_ONCE",
+    "AUTHORITATIVE_REFS_COMPARE_AND_SWAP",
+    "RESTART_EXACT_TREE_READBACK",
+    "INTERRUPTED_TEMP_FILE_IGNORED",
+    "UNREACHABLE_ORPHAN_OBJECT_IGNORED",
+    "REFS_TAMPER_DETECTION",
+    "NODE_TAMPER_DETECTION",
+    "BLOB_TAMPER_DETECTION",
+    "MISSING_OBJECT_FAIL_CLOSED",
+    "STALE_WRITER_REJECTION",
+    "GENERATION_HASH_CHAIN",
+    "PATH_TRAVERSAL_REJECTION",
+    "SYMLINKED_STORAGE_PATH_REJECTION",
+    "NO_EXTERNAL_EFFECT"
+  ],
+  "authority": {
+    "ceiling": "A1_INTERNAL_LOCAL_FILESYSTEM",
+    "local_filesystem_write_authorized_for_test_and_internal_runtime": true,
+    "cloud_storage_write_authorized": false,
+    "provider_effect_authorized": false,
+    "production_deployment_authorized": false,
+    "publishing_authorized": false,
+    "production_traffic_authorized": false,
+    "spend_authorized": false
+  },
+  "promotion_if_green": {
+    "state": "LOCAL_DURABILITY_PROVEN",
+    "does_not_inherit": [
+      "CLOUD_STORAGE_DURABILITY",
+      "MULTI_HOST_CONSISTENCY",
+      "PRODUCTION_RUNTIME_BINDING",
+      "PROVIDER_EXECUTION",
+      "AUTONOMOUS_ROLLBACK",
+      "VALUE_OR_MEDIA_QUALITY_IMPROVEMENT"
+    ]
+  },
+  "truth_boundary": "A green court proves bounded local-filesystem durability and restart/recovery semantics on the tested runtime only. It does not prove cloud durability, distributed locking, production deployment, provider effects, publishing, realised value or autonomous recovery in production."
+}
