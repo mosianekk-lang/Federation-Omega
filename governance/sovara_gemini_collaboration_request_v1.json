@@ -2,6 +2,7 @@
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
   "request_id": "SOVARA-GEMINI-G0-ADMIN-AUTHORITY-GRAPH-20260829-001",
   "mode": "G0_READ_ONLY_VERIFY",
+  "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
@@ -11,6 +12,11 @@
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+  "expected_missing_adc_controls": [
+    "aiplatform_user_binding",
+    "deployer_cloud_run_developer_binding",
+    "service_usage_consumer_binding"
+  ],
   "current_provider_evidence": {
     "wif_verified": true,
     "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
@@ -29,5 +35,5 @@
     "verified_impersonable_admin_count": 0
   },
   "purpose": "Map bounded roles/iam.serviceAccountTokenCreator delegation edges and alternate workload-identity bindings across the existing high-authority service-account estate. Starting from the currently authenticated superior-logic-deployer, test only bounded service-account delegation chains and projects.testIamPermissions to determine whether an already-existing keyless route reaches a project Owner/IAM-admin principal with resourcemanager.projects.setIamPolicy.",
-  "truth_boundary": "Read-only authority-graph census only. Do not change IAM, service accounts, Workload Identity configuration or keys; do not access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. Delegation or policy edges are candidates until provider-native access-token issuance plus testIamPermissions verifies setIamPolicy."
+  "truth_boundary": "Read-only authority-graph census only. Do not change IAM, service accounts, Workload Identity configuration or keys; do not access secret payloads, run Gemini inference, build or deploy images, change Cloud Run traffic, send communications, publish, spend, or perform destructive actions. Census success does not imply Gemini ADC readiness: the expected missing ADC controls remain explicit and must stay unverified until provider-native readback proves them present. Delegation or policy edges are candidates until provider-native access-token issuance plus testIamPermissions verifies setIamPolicy."
 }

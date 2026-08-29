@@ -76,6 +76,11 @@ jobs:
           mode=p.get('mode')
           if mode == 'G0_READ_ONLY_VERIFY':
               assert p.get('provider_mutation_allowed') is False, p
+              objective=p.get('g0_objective', 'ADC_IDENTITY_VERIFY')
+              assert objective in {'ADC_IDENTITY_VERIFY','ADMIN_AUTHORITY_GRAPH_CENSUS'}, p
+              if objective == 'ADMIN_AUTHORITY_GRAPH_CENSUS':
+                  expected=set(p.get('expected_missing_adc_controls') or [])
+                  assert expected, p
           elif mode == 'G1_ADC_APPLY_VERIFY':
               assert p.get('provider_mutation_allowed') is True, p
               expected={
@@ -329,14 +334,40 @@ jobs:
               try: return json.loads(p.read_text(encoding='utf-8'))
               except Exception: return {}
 
+          request={}
+          request_path=Path(os.environ.get('GEMINI_REQUEST_FILE',''))
+          if request_path.is_file():
+              try: request=json.loads(request_path.read_text(encoding='utf-8'))
+              except Exception: request={}
+          g0_objective=request.get('g0_objective','ADC_IDENTITY_VERIFY') if scope=='G0_READ_ONLY_VERIFY' else None
+          expected_missing=set(request.get('expected_missing_adc_controls') or [])
+
           wif=load('WIF_G0_VERIFIED.json')
           adc=load('GEMINI_ADC_VERIFIED.json')
           adc_apply=load('GEMINI_ADC_APPLY.json')
+          census=load('PROJECT_IAM_AUTHORITY_CENSUS.json')
           challenge=load('GEMINI_CREATIVE_ARCHITECTURE_CHALLENGE_RECEIPT.json')
           structural_ok=(d/'STRUCTURAL_VALIDATION_PRE_AUTH.json').is_file() and (d/'PROVIDER_PROBE_SELF_TEST.json').is_file()
           wif_ok=(wif.get('receipt')=='FEDOMEGA-WIF-CLOUD-VERIFIED' and wif.get('state')=='VERIFIED' and wif.get('project_number_observed')=='257649435135')
           adc_ok=(adc.get('receipt')=='FEDOMEGA-GEMINI-ADC-VERIFIED' and adc.get('state')=='VERIFIED' and adc.get('project_number_observed')=='257649435135' and adc.get('service_account_key_created') is False and adc.get('secret_payload_accessed') is False)
           adc_mutation=bool(adc_apply.get('mutation_performed',False))
+          census_ok=(
+              census.get('schema')=='SOVARA_PROJECT_IAM_AUTHORITY_GRAPH_V1'
+              and census.get('project_id')=='sov-hybrid-suite'
+              and str(census.get('project_number'))=='257649435135'
+              and census.get('provider_mutation_performed') is False
+              and census.get('credential_values_recorded') is False
+              and census.get('secret_payload_accessed') is False
+              and bool(census.get('receipt_sha256'))
+          )
+          adc_gap_preserved=(
+              g0_objective=='ADMIN_AUTHORITY_GRAPH_CENSUS'
+              and bool(expected_missing)
+              and adc.get('receipt')=='FEDOMEGA-GEMINI-ADC-VERIFICATION-FAILED'
+              and adc.get('state')=='NOT_VERIFIED'
+              and adc.get('mutation_performed') is False
+              and set(adc.get('missing_controls') or [])==expected_missing
+          )
           challenge_ok=(
               challenge.get('schema')=='SOVARA_CREATIVE_GEMINI_ARCHITECTURE_CHALLENGE_RECEIPT_V1'
               and challenge.get('status')=='VERIFIED'
@@ -353,7 +384,7 @@ jobs:
           )
 
           receipt={
-              'schema':'SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-6',
+              'schema':'SOVARA-LITELLM-V2.3-GITHUB-WORKFLOW-RECEIPT-7',
               'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
               'repository':os.environ['GITHUB_REPOSITORY'],
               'workflow':os.environ['GITHUB_WORKFLOW'],
@@ -362,10 +393,16 @@ jobs:
               'source_sha':os.environ['GITHUB_SHA'],
               'ref':os.environ['GITHUB_REF'],
               'execution_scope':scope,
+              'g0_objective':g0_objective,
               'structural_validation_completed':structural_ok,
               'wif_verified':wif_ok,
               'adc_verified':adc_ok,
               'g0_identity_adc_verified':wif_ok and adc_ok,
+              'admin_authority_census_verified':census_ok,
+              'admin_authority_verified_path_count':len(census.get('verified_admin_delegation_paths') or []) if census else None,
+              'admin_authority_reusable_service_account_count':len(census.get('verified_reusable_admin_service_accounts') or []) if census else None,
+              'adc_gap_preserved':adc_gap_preserved,
+              'adc_missing_controls':adc.get('missing_controls') if adc else None,
               'adc_apply_mutation_performed':adc_mutation,
               'provider_admission_attempted':scope=='FULL_PROVIDER_ADMISSION',
               'provider_admission_exit_code':code,
@@ -417,8 +454,13 @@ jobs:
               jq -e '.provider_admission_attempted == true and .provider_admission_completed == true and .provider_admission_exit_code == 0' "$receipt" >/dev/null
               ;;
             G0_READ_ONLY_VERIFY)
-              jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .wif_verified == true and .adc_verified == true and .adc_apply_mutation_performed == false and .provider_admission_attempted == false and .case_data_processed == false' "$receipt" >/dev/null
-              echo "G0 WIF and Gemini ADC verification passed. No model inference, provider mutation, traffic promotion or case-data processing was performed."
+              if jq -e '.g0_objective == "ADMIN_AUTHORITY_GRAPH_CENSUS"' "$receipt" >/dev/null; then
+                jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .wif_verified == true and .admin_authority_census_verified == true and .adc_verified == false and .adc_gap_preserved == true and .adc_apply_mutation_performed == false and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == false' "$receipt" >/dev/null
+                echo "G0 admin authority graph census verified. WIF is verified; the expected Gemini ADC gaps remain explicitly unverified and no provider mutation or model inference occurred."
+              else
+                jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .wif_verified == true and .adc_verified == true and .adc_apply_mutation_performed == false and .provider_admission_attempted == false and .case_data_processed == false' "$receipt" >/dev/null
+                echo "G0 WIF and Gemini ADC verification passed. No model inference, provider mutation, traffic promotion or case-data processing was performed."
+              fi
               ;;
             G1_ADC_APPLY_VERIFY)
               jq -e '.execution_scope == "G1_ADC_APPLY_VERIFY" and .wif_verified == true and .adc_verified == true and .adc_apply_mutation_performed == true and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == false' "$receipt" >/dev/null
