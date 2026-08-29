@@ -116,7 +116,10 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
         self.assertEqual(
             "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-STATE-1", state["schema"]
         )
-        self.assertEqual("PROVIDER_PREVENTION_ABSENT_WRITE_BOUNDARY_HELD", state["state"])
+        self.assertEqual(
+            "PROVIDER_PREVENTION_ABSENT_DIRECT_WRITE_INCIDENT_REPAIR_IN_PROGRESS",
+            state["state"],
+        )
         self.assertFalse(state["provider_state"]["provider_apply_performed"])
         self.assertEqual("ABSENT", state["provider_state"]["provider_receipt_status"])
         self.assertEqual("ABSENT_PROVIDER_READBACK", state["provider_state"]["main_ruleset_active"])
@@ -137,13 +140,25 @@ class ProviderAirlockActivatorTests(unittest.TestCase):
         self.assertEqual(0, observation["ruleset_count"])
         self.assertEqual([], observation["rulesets"])
         self.assertEqual("READ_ONLY", observation["observation_mode"])
+        incident = state["source_incident"]
+        self.assertEqual("INC-FEDOMEGA-DIRECT-MAIN-20260830-001", incident["incident_id"])
+        self.assertEqual(
+            "PRESERVED_ADVERSE_EVIDENCE_REPAIR_PR_REQUIRED", incident["state"]
+        )
+        self.assertEqual("tmp", incident["unintended_path"])
+        self.assertEqual(0, incident["unintended_path_content_bytes"])
+        self.assertFalse(incident["history_rewritten"])
+        self.assertFalse(incident["force_ref_update_performed"])
+        self.assertFalse(incident["repair_effect_on_main"])
         self.assertEqual("VERIFIED", state["allowed_next_state"])
         gate = state["verification_gate"]
         self.assertEqual("FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-1", gate["required_receipt_schema"])
         self.assertEqual("VERIFIED", gate["required_receipt_status"])
+        self.assertIn("source_repair.tmp_absent_on_admitted_main", gate["required_checks"])
         self.assertIn("provider_readback.ruleset_exact", gate["required_checks"])
         self.assertIn("provider_readback.required_status_contexts_exact", gate["required_checks"])
         self.assertIn("provider_readback.main_sha_unchanged", gate["required_checks"])
+        self.assertIn("provider prevention is absent", state["truth_boundary"].lower())
         self.assertNotIn("provider prevention is active", state["truth_boundary"].lower())
 
     def test_verified_state_requires_provider_receipt_evidence(self):
