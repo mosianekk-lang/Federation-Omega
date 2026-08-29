@@ -1,0 +1,43 @@
+{
+  "schema": "FEDERATION-MISSION-ARBITRATION-CONTRACT-2",
+  "version": "2.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Bind current-main fencing, dynamic failure-memory, CFBE multidimensional route selection, near-miss learning and proof-state snapshots without encoding stale provider truth.",
+  "required_order": [
+    "FRESH_MAIN_READBACK",
+    "CAPABILITY_DISCOVERY",
+    "CURRENT_FAILURE_MEMORY",
+    "REALITY_READINESS_AUTHORITY_GATES",
+    "CFBE_ROUTE_TOURNAMENT",
+    "PREWRITE_FENCE",
+    "AUTHORISED_EXECUTION",
+    "INDEPENDENT_READBACK",
+    "RECEIPT",
+    "NEAR_MISS_AND_FAILURE_LEARNING"
+  ],
+  "route_score_dimensions": {
+    "positive": ["quality", "reliability", "freshness", "proof_strength"],
+    "penalty": ["latency", "cost", "owner_burden", "risk"]
+  },
+  "invariants": [
+    "CURRENT_MAIN_SHA_IS_A_WRITE_FENCE",
+    "OPEN_WORKSTREAM_PATH_OVERLAP_SERIALIZES_WRITES",
+    "REALITY_READINESS_AND_AUTHORITY_ARE_HARD_GATES_NOT_SCORE_OFFSETS",
+    "UNCHANGED_OPEN_FAILURE_ROUTE_CANNOT_RETRY",
+    "CLOSED_OR_MITIGATED_FAILURE_REQUIRES_BOUND_RECOVERY_PROOF",
+    "FAILURE_MEMORY_MUST_BE_CURRENT_AND_PROOF_FED",
+    "STATIC_PROVIDER_FAILURE_ASSUMPTIONS_ARE_FORBIDDEN",
+    "PROVIDER_SUCCESS_IS_NOT_INFERRED_FROM_SOURCE_OR_TRANSPORT",
+    "COMPLETION_REQUIRES_AUTHORISATION_EXECUTION_READBACK_AND_RECEIPT",
+    "NEAR_MISS_EVENTS_ARE_DETERMINISTIC_AND_PROOF_REFERENCED",
+    "BLOCKED_PROVIDER_LANE_DOES_NOT_FREEZE_UNRELATED_SAFE_LANES"
+  ],
+  "truth_boundary": {
+    "source_contract_proves_provider_state": false,
+    "mission_lease_grants_provider_authority": false,
+    "route_score_overrides_hard_gate": false,
+    "historical_failure_is_current_without_fresh_proof": false,
+    "external_effect_performed": false
+  }
+}
