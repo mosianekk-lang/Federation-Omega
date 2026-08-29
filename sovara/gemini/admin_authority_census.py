@@ -6,6 +6,7 @@ import json
 import subprocess
 import urllib.error
 import urllib.request
+from collections import deque
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -23,6 +24,7 @@ TEST_PERMISSIONS = [
 ]
 WIF_ROLE = "roles/iam.workloadIdentityUser"
 TOKEN_CREATOR_ROLE = "roles/iam.serviceAccountTokenCreator"
+MAX_GRAPH_DEPTH = 3
 
 
 def run(*args: str) -> subprocess.CompletedProcess[str]:
@@ -37,6 +39,8 @@ def safe_member(member: str) -> dict[str, object]:
     kind, _, value = member.partition(":")
     if kind == "serviceAccount":
         return {"type": kind, "principal": value}
+    if kind in {"principal", "principalSet"}:
+        return {"type": kind, "principal_path": value}
     return {"type": kind or "unknown", "principal_sha256": digest(value or member)}
 
 
@@ -62,6 +66,10 @@ def role_members(policy: dict[str, object], role: str) -> tuple[str, ...]:
     return tuple(sorted(members))
 
 
+def service_account_members(members: tuple[str, ...]) -> tuple[str, ...]:
+    return tuple(sorted({m.split(":", 1)[1] for m in members if m.startswith("serviceAccount:")}))
+
+
 def test_permissions(token: str) -> tuple[int, list[str]]:
     body = json.dumps({"permissions": TEST_PERMISSIONS}, separators=(",", ":")).encode()
     req = urllib.request.Request(
@@ -81,6 +89,22 @@ def test_permissions(token: str) -> tuple[int, list[str]]:
             return response.status, sorted(payload.get("permissions") or [])
     except urllib.error.HTTPError as exc:
         return exc.code, []
+
+
+def impersonate(target: str, delegates: tuple[str, ...] = ()) -> tuple[bool, int | None, list[str]]:
+    args = [
+        "gcloud", "auth", "print-access-token",
+        f"--impersonate-service-account={target}",
+        "--lifetime=600",
+    ]
+    for delegate in delegates:
+        args.append(f"--delegates={delegate}")
+    proc = run(*args)
+    token = proc.stdout.strip()
+    if proc.returncode != 0 or not token:
+        return False, None, []
+    status, granted = test_permissions(token)
+    return True, status, granted
 
 
 def main() -> int:
@@ -104,70 +128,113 @@ def main() -> int:
 
     deployer_policy = load_sa_policy(DEPLOYER_SA)
     canonical_wif_members = role_members(deployer_policy, WIF_ROLE)
-    canonical_wif_hashes = [digest(x) for x in canonical_wif_members]
 
-    qualified: list[dict[str, object]] = []
-    direct_wif_candidates: list[str] = []
+    policies: dict[str, dict[str, object]] = {}
+    graph: dict[str, set[str]] = {}
+    q: deque[tuple[str, int]] = deque((principal, 0) for principal in service_roles)
+    seen: set[str] = set()
+    while q:
+        principal, depth = q.popleft()
+        if principal in seen or depth > MAX_GRAPH_DEPTH:
+            continue
+        seen.add(principal)
+        p = load_sa_policy(principal)
+        policies[principal] = p
+        for delegator in service_account_members(role_members(p, TOKEN_CREATOR_ROLE)):
+            graph.setdefault(delegator, set()).add(principal)
+            if delegator not in seen:
+                q.append((delegator, depth + 1))
+
+    policies.setdefault(DEPLOYER_SA, deployer_policy)
+
+    nodes: list[dict[str, object]] = []
+    direct_wif_nodes: set[str] = set()
+    for principal in sorted(policies):
+        p = policies[principal]
+        wif_members = role_members(p, WIF_ROLE)
+        token_members = role_members(p, TOKEN_CREATOR_ROLE)
+        exact_wif = sorted(set(canonical_wif_members) & set(wif_members))
+        github_pool = [m for m in wif_members if "workloadIdentityPools/github-federation-omega" in m]
+        if exact_wif:
+            direct_wif_nodes.add(principal)
+        nodes.append({
+            "principal": principal,
+            "project_roles": sorted(service_roles.get(principal, set())),
+            "policy_readable": bool(p.get("readable")),
+            "direct_current_wif_trust": bool(exact_wif),
+            "exact_current_wif_member_match_count": len(exact_wif),
+            "github_pool_wif_members": [safe_member(m) for m in github_pool],
+            "token_creator_members": [safe_member(m) for m in token_members],
+        })
+
+    direct_tests: dict[str, dict[str, object]] = {}
     for principal in sorted(service_roles):
-        candidate_policy = load_sa_policy(principal)
-        candidate_wif_members = role_members(candidate_policy, WIF_ROLE)
-        candidate_token_creator_members = role_members(candidate_policy, TOKEN_CREATOR_ROLE)
-        exact_wif_intersection = sorted(set(canonical_wif_members) & set(candidate_wif_members))
-        github_pool_wif_members = [
-            member for member in candidate_wif_members
-            if "workloadIdentityPools/github-federation-omega" in member
-        ]
-        direct_wif_trust = bool(exact_wif_intersection)
-        if direct_wif_trust:
-            direct_wif_candidates.append(principal)
+        ok, status, granted = impersonate(principal)
+        direct_tests[principal] = {
+            "impersonation_verified": ok,
+            "test_iam_http_status": status,
+            "granted_permissions": granted,
+            "project_set_iam_policy": "resourcemanager.projects.setIamPolicy" in granted,
+        }
 
-        token_proc = run(
-            "gcloud",
-            "auth",
-            "print-access-token",
-            f"--impersonate-service-account={principal}",
-            "--lifetime=600",
-        )
-        impersonation_ok = token_proc.returncode == 0 and bool(token_proc.stdout.strip())
-        granted: list[str] = []
-        status = None
-        if impersonation_ok:
-            status, granted = test_permissions(token_proc.stdout.strip())
-        qualified.append(
-            {
-                "principal": principal,
-                "project_roles": sorted(service_roles[principal]),
-                "service_account_policy_readable": bool(candidate_policy.get("readable")),
-                "direct_current_wif_trust": direct_wif_trust,
-                "exact_current_wif_member_match_count": len(exact_wif_intersection),
-                "github_pool_wif_binding_count": len(github_pool_wif_members),
-                "candidate_wif_member_sha256": [digest(x) for x in candidate_wif_members],
-                "token_creator_binding_count": len(candidate_token_creator_members),
-                "impersonation_from_deployer_verified": impersonation_ok,
-                "test_iam_http_status": status,
-                "granted_permissions": granted,
-                "project_set_iam_policy": "resourcemanager.projects.setIamPolicy" in granted,
-            }
-        )
+    starts = {DEPLOYER_SA} | direct_wif_nodes
+    delegation_tests: list[dict[str, object]] = []
+    verified_paths: list[dict[str, object]] = []
+    for start in sorted(starts):
+        queue: deque[tuple[str, tuple[str, ...]]] = deque([(start, (start,))])
+        visited_paths: set[tuple[str, ...]] = set()
+        while queue:
+            current, path = queue.popleft()
+            if path in visited_paths or len(path) > MAX_GRAPH_DEPTH + 2:
+                continue
+            visited_paths.add(path)
+            for target in sorted(graph.get(current, set())):
+                new_path = path + (target,)
+                if start == DEPLOYER_SA:
+                    delegates = new_path[1:-1]
+                    ok, status, granted = impersonate(target, delegates)
+                    result = {
+                        "start": start,
+                        "target": target,
+                        "delegates": list(delegates),
+                        "path": list(new_path),
+                        "impersonation_verified": ok,
+                        "test_iam_http_status": status,
+                        "granted_permissions": granted,
+                        "project_set_iam_policy": "resourcemanager.projects.setIamPolicy" in granted,
+                    }
+                    delegation_tests.append(result)
+                    if result["project_set_iam_policy"] and target in service_roles:
+                        verified_paths.append(result)
+                if target not in path:
+                    queue.append((target, new_path))
 
     receipt = {
-        "schema": "SOVARA_PROJECT_IAM_AUTHORITY_CENSUS_V2",
+        "schema": "SOVARA_PROJECT_IAM_AUTHORITY_GRAPH_V1",
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         "project_id": PROJECT,
         "project_number": PROJECT_NUMBER,
         "deployer_service_account": DEPLOYER_SA,
         "candidate_roles": sorted(CANDIDATE_ROLES),
-        "candidate_count": len(candidates),
-        "unique_service_account_candidate_count": len(service_roles),
+        "candidate_binding_count": len(candidates),
+        "admin_service_account_count": len(service_roles),
         "candidates": candidates,
         "canonical_deployer_wif_policy_readable": bool(deployer_policy.get("readable")),
-        "canonical_deployer_wif_member_count": len(canonical_wif_members),
-        "canonical_deployer_wif_member_sha256": canonical_wif_hashes,
-        "service_account_qualification": qualified,
-        "verified_reusable_admin_service_accounts": [
-            x["principal"] for x in qualified if x["project_set_iam_policy"]
+        "canonical_deployer_wif_members": [safe_member(m) for m in canonical_wif_members],
+        "authority_nodes": nodes,
+        "token_creator_edges": [
+            {"from": source, "to": target}
+            for source in sorted(graph)
+            for target in sorted(graph[source])
         ],
-        "direct_current_wif_admin_candidates": sorted(direct_wif_candidates),
+        "direct_impersonation_tests": direct_tests,
+        "direct_current_wif_admin_candidates": sorted(direct_wif_nodes & set(service_roles)),
+        "delegation_tests": delegation_tests,
+        "verified_admin_delegation_paths": verified_paths,
+        "verified_reusable_admin_service_accounts": sorted({
+            principal for principal, result in direct_tests.items()
+            if result["project_set_iam_policy"]
+        } | {str(x["target"]) for x in verified_paths}),
         "provider_mutation_performed": False,
         "credential_values_recorded": False,
         "secret_payload_accessed": False,
@@ -178,10 +245,11 @@ def main() -> int:
     out.parent.mkdir(parents=True, exist_ok=True)
     out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps({
-        "candidate_count": receipt["candidate_count"],
-        "unique_service_account_candidate_count": receipt["unique_service_account_candidate_count"],
-        "verified_reusable_admin_service_accounts": receipt["verified_reusable_admin_service_accounts"],
+        "candidate_binding_count": receipt["candidate_binding_count"],
+        "admin_service_account_count": receipt["admin_service_account_count"],
         "direct_current_wif_admin_candidates": receipt["direct_current_wif_admin_candidates"],
+        "verified_admin_delegation_paths": receipt["verified_admin_delegation_paths"],
+        "verified_reusable_admin_service_accounts": receipt["verified_reusable_admin_service_accounts"],
         "receipt_sha256": receipt["receipt_sha256"],
     }, sort_keys=True))
     return 0
