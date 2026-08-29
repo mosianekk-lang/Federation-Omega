@@ -6,8 +6,12 @@ PROJECT_NUMBER="${PROJECT_NUMBER:-257649435135}"
 REGION="${REGION:-africa-south1}"
 AR_REPO="${AR_REPO:-federation-omega}"
 DEPLOYER_SA="${DEPLOYER_SA:-superior-logic-deployer@${PROJECT_ID}.iam.gserviceaccount.com}"
-RUNTIME_SA_NAME="${RUNTIME_SA_NAME:-sv-gemini-runtime}"
-RUNTIME_SA="${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com"
+RUNTIME_SA="${RUNTIME_SA:-superior-logic-runtime@${PROJECT_ID}.iam.gserviceaccount.com}"
+RUNTIME_SA_NAME="${RUNTIME_SA_NAME:-${RUNTIME_SA%@*}}"
+if [[ "$RUNTIME_SA" != "${RUNTIME_SA_NAME}@${PROJECT_ID}.iam.gserviceaccount.com" ]]; then
+  echo "Refusing runtime identity drift: RUNTIME_SA and RUNTIME_SA_NAME/project disagree." >&2
+  exit 2
+fi
 APPLY_CONFIRMATION="ATTACH_GEMINI_GATEWAY_ADC_V1"
 
 MODE="plan"
