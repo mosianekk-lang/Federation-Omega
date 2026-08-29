@@ -12,15 +12,29 @@ from pathlib import Path
 
 PROJECT = "sov-hybrid-suite"
 PROJECT_NUMBER = "257649435135"
+REGION = "africa-south1"
+AR_REPOSITORY = "federation-omega"
 DEPLOYER_SA = f"superior-logic-deployer@{PROJECT}.iam.gserviceaccount.com"
+RUNTIME_SA = f"superior-logic-runtime@{PROJECT}.iam.gserviceaccount.com"
 CANDIDATE_ROLES = {
     "roles/owner",
     "roles/resourcemanager.projectIamAdmin",
     "roles/iam.securityAdmin",
 }
-TEST_PERMISSIONS = [
+ADMIN_TEST_PERMISSIONS = [
     "resourcemanager.projects.getIamPolicy",
     "resourcemanager.projects.setIamPolicy",
+]
+DEPLOYMENT_PROJECT_PERMISSIONS = [
+    "run.services.create",
+    "run.services.get",
+    "run.services.update",
+    "run.operations.get",
+    "run.routes.invoke",
+]
+AR_TEST_PERMISSIONS = [
+    "artifactregistry.repositories.downloadArtifacts",
+    "artifactregistry.repositories.uploadArtifacts",
 ]
 WIF_ROLE = "roles/iam.workloadIdentityUser"
 TOKEN_CREATOR_ROLE = "roles/iam.serviceAccountTokenCreator"
@@ -66,14 +80,23 @@ def role_members(policy: dict[str, object], role: str) -> tuple[str, ...]:
     return tuple(sorted(members))
 
 
+def project_has_role(policy: dict[str, object], member: str, role: str) -> bool:
+    for binding in policy.get("bindings") or []:
+        if not isinstance(binding, dict) or binding.get("role") != role:
+            continue
+        if member in {str(x) for x in (binding.get("members") or [])}:
+            return True
+    return False
+
+
 def service_account_members(members: tuple[str, ...]) -> tuple[str, ...]:
     return tuple(sorted({m.split(":", 1)[1] for m in members if m.startswith("serviceAccount:")}))
 
 
-def test_permissions(token: str) -> tuple[int, list[str]]:
-    body = json.dumps({"permissions": TEST_PERMISSIONS}, separators=(",", ":")).encode()
+def test_permissions_url(token: str, url: str, permissions: list[str]) -> tuple[int, list[str]]:
+    body = json.dumps({"permissions": permissions}, separators=(",", ":")).encode()
     req = urllib.request.Request(
-        f"https://cloudresourcemanager.googleapis.com/v1/projects/{PROJECT}:testIamPermissions",
+        url,
         data=body,
         method="POST",
         headers={
@@ -91,6 +114,38 @@ def test_permissions(token: str) -> tuple[int, list[str]]:
         return exc.code, []
 
 
+def test_admin_permissions(token: str) -> tuple[int, list[str]]:
+    return test_permissions_url(
+        token,
+        f"https://cloudresourcemanager.googleapis.com/v1/projects/{PROJECT}:testIamPermissions",
+        ADMIN_TEST_PERMISSIONS,
+    )
+
+
+def current_deployer_deployment_permissions(token: str) -> dict[str, object]:
+    project_url = f"https://cloudresourcemanager.googleapis.com/v1/projects/{PROJECT}:testIamPermissions"
+    ar_url = (
+        "https://artifactregistry.googleapis.com/v1/"
+        f"projects/{PROJECT}/locations/{REGION}/repositories/{AR_REPOSITORY}:testIamPermissions"
+    )
+    project_status, project_granted = test_permissions_url(token, project_url, DEPLOYMENT_PROJECT_PERMISSIONS)
+    ar_status, ar_granted = test_permissions_url(token, ar_url, AR_TEST_PERMISSIONS)
+    return {
+        "project_test_http_status": project_status,
+        "artifact_registry_test_http_status": ar_status,
+        "required_project_permissions": DEPLOYMENT_PROJECT_PERMISSIONS,
+        "granted_project_permissions": project_granted,
+        "missing_project_permissions": sorted(set(DEPLOYMENT_PROJECT_PERMISSIONS) - set(project_granted)),
+        "required_artifact_registry_permissions": AR_TEST_PERMISSIONS,
+        "granted_artifact_registry_permissions": ar_granted,
+        "missing_artifact_registry_permissions": sorted(set(AR_TEST_PERMISSIONS) - set(ar_granted)),
+        "deployment_permissions_verified": (
+            set(DEPLOYMENT_PROJECT_PERMISSIONS).issubset(project_granted)
+            and set(AR_TEST_PERMISSIONS).issubset(ar_granted)
+        ),
+    }
+
+
 def impersonate(target: str, delegates: tuple[str, ...] = ()) -> tuple[bool, int | None, list[str]]:
     args = [
         "gcloud", "auth", "print-access-token",
@@ -103,7 +158,7 @@ def impersonate(target: str, delegates: tuple[str, ...] = ()) -> tuple[bool, int
     token = proc.stdout.strip()
     if proc.returncode != 0 or not token:
         return False, None, []
-    status, granted = test_permissions(token)
+    status, granted = test_admin_permissions(token)
     return True, status, granted
 
 
@@ -112,6 +167,26 @@ def main() -> int:
     if policy_proc.returncode != 0:
         raise SystemExit("project IAM policy read failed")
     policy = json.loads(policy_proc.stdout)
+
+    active_proc = run("gcloud", "auth", "list", "--filter=status:ACTIVE", "--format=value(account)")
+    active_account = active_proc.stdout.strip().splitlines()[0] if active_proc.returncode == 0 and active_proc.stdout.strip() else ""
+    token_proc = run("gcloud", "auth", "print-access-token")
+    active_token = token_proc.stdout.strip() if token_proc.returncode == 0 else ""
+    deployment_permissions = (
+        current_deployer_deployment_permissions(active_token)
+        if active_account == DEPLOYER_SA and active_token
+        else {
+            "project_test_http_status": None,
+            "artifact_registry_test_http_status": None,
+            "required_project_permissions": DEPLOYMENT_PROJECT_PERMISSIONS,
+            "granted_project_permissions": [],
+            "missing_project_permissions": DEPLOYMENT_PROJECT_PERMISSIONS,
+            "required_artifact_registry_permissions": AR_TEST_PERMISSIONS,
+            "granted_artifact_registry_permissions": [],
+            "missing_artifact_registry_permissions": AR_TEST_PERMISSIONS,
+            "deployment_permissions_verified": False,
+        }
+    )
 
     candidates: list[dict[str, object]] = []
     service_roles: dict[str, set[str]] = {}
@@ -209,12 +284,26 @@ def main() -> int:
                 if target not in path:
                     queue.append((target, new_path))
 
+    runtime_member = f"serviceAccount:{RUNTIME_SA}"
+    deployer_member = f"serviceAccount:{DEPLOYER_SA}"
+    adc_role_state = {
+        "runtime_aiplatform_user": project_has_role(policy, runtime_member, "roles/aiplatform.user"),
+        "runtime_service_usage_consumer": project_has_role(policy, runtime_member, "roles/serviceusage.serviceUsageConsumer"),
+        "deployer_run_developer": project_has_role(policy, deployer_member, "roles/run.developer"),
+    }
+    adc_role_state["all_three_project_bindings_present"] = all(adc_role_state.values())
+
     receipt = {
         "schema": "SOVARA_PROJECT_IAM_AUTHORITY_GRAPH_V1",
+        "schema_revision": 2,
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         "project_id": PROJECT,
         "project_number": PROJECT_NUMBER,
+        "region": REGION,
+        "artifact_registry_repository": AR_REPOSITORY,
         "deployer_service_account": DEPLOYER_SA,
+        "runtime_service_account": RUNTIME_SA,
+        "active_account": active_account,
         "candidate_roles": sorted(CANDIDATE_ROLES),
         "candidate_binding_count": len(candidates),
         "admin_service_account_count": len(service_roles),
@@ -235,6 +324,12 @@ def main() -> int:
             principal for principal, result in direct_tests.items()
             if result["project_set_iam_policy"]
         } | {str(x["target"]) for x in verified_paths}),
+        "adc_project_role_state": adc_role_state,
+        "deployer_deployment_permissions": deployment_permissions,
+        "private_gateway_canary_preflight_ready": (
+            adc_role_state["all_three_project_bindings_present"]
+            and deployment_permissions["deployment_permissions_verified"]
+        ),
         "provider_mutation_performed": False,
         "credential_values_recorded": False,
         "secret_payload_accessed": False,
@@ -247,9 +342,10 @@ def main() -> int:
     print(json.dumps({
         "candidate_binding_count": receipt["candidate_binding_count"],
         "admin_service_account_count": receipt["admin_service_account_count"],
-        "direct_current_wif_admin_candidates": receipt["direct_current_wif_admin_candidates"],
-        "verified_admin_delegation_paths": receipt["verified_admin_delegation_paths"],
         "verified_reusable_admin_service_accounts": receipt["verified_reusable_admin_service_accounts"],
+        "adc_project_role_state": receipt["adc_project_role_state"],
+        "deployer_deployment_permissions": receipt["deployer_deployment_permissions"],
+        "private_gateway_canary_preflight_ready": receipt["private_gateway_canary_preflight_ready"],
         "receipt_sha256": receipt["receipt_sha256"],
     }, sort_keys=True))
     return 0
