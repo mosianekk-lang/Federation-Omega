@@ -1,16 +1,37 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-20260829-001",
-  "mode": "G0_READ_ONLY_VERIFY",
+  "request_id": "SOVARA-GEMINI-G1-20260829-001",
+  "mode": "G1_ADC_APPLY_VERIFY",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
-  "provider_mutation_allowed": false,
+  "provider_mutation_allowed": true,
   "model_inference_allowed": false,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "purpose": "Refresh the canonical repository-scoped Google WIF identity and Gemini ADC/runtime control state from the only workflow currently trusted by the provider condition, before any further provider mutation or deployment. Preserve the prior Gemini G2 semantic proof in history; this request changes only the active bounded provider-verification objective.",
-  "truth_boundary": "This request authorizes read-only provider identity/control verification through the existing trusted SOVARA LiteLLM workflow. It does not authorize IAM or API mutation, service-account creation, model inference, case-data processing, deployment, traffic change, publishing, email, financial commitment, secret disclosure or any unrelated external effect. If ADC controls are incomplete, preserve the exact missing controls and advance only through a separately admitted G1 request."
+  "mutation_scope": [
+    "CREATE_SV_GEMINI_RUNTIME_SERVICE_ACCOUNT_IF_ABSENT",
+    "BIND_RUNTIME_ROLES_AIPLATFORM_USER_AND_SERVICEUSAGE_CONSUMER",
+    "BIND_DEPLOYER_SERVICE_ACCOUNT_USER_ON_RUNTIME",
+    "BIND_DEPLOYER_RUN_DEVELOPER",
+    "ENSURE_EXISTING_REQUIRED_APIS_ENABLED"
+  ],
+  "g0_evidence": {
+    "run_id": "33267237183",
+    "source_sha": "27a4ba9ace2afec1b85c903c98f0bd9f67e5155c",
+    "wif_receipt": "FEDOMEGA-WIF-CLOUD-VERIFIED",
+    "adc_state": "NOT_VERIFIED",
+    "missing_apis": [],
+    "missing_controls": [
+      "gemini_runtime_service_account",
+      "aiplatform_user_binding",
+      "service_usage_consumer_binding",
+      "deployer_service_account_user_binding",
+      "deployer_cloud_run_developer_binding"
+    ]
+  },
+  "purpose": "Apply only the five exact Gemini ADC/runtime identity controls proven missing by fresh G0 run 33267237183 through the existing repository-scoped WIF deployer identity, then verify provider-native state. Required APIs were already enabled at G0, so the apply script must not enable additional services unless same-run readback unexpectedly proves one of the three declared required APIs missing.",
+  "truth_boundary": "This request authorizes only the declared bounded Gemini ADC/IAM attachment required for deployment convergence. It does not authorize service-account keys, raw secret access, model inference, case-data processing, artifact/image deployment, Cloud Run traffic, email, publication, financial commitment, destructive mutation, WIF trust expansion or unrelated IAM roles. Provider-native post-apply verification is mandatory before any deployment step."
 }
