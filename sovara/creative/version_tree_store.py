@@ -94,7 +94,13 @@ def _write_once_verified(path: Path, data: bytes) -> None:
 
 
 def _validated_asset_id(asset_id: str) -> str:
-    asset_id = asset_id.strip()
+    if not isinstance(asset_id, str):
+        raise VersionTreeStoreError("asset_id must be a string")
+    canonical = asset_id.strip()
+    if canonical != asset_id:
+        raise VersionTreeStoreError(
+            "asset_id leading or trailing whitespace is forbidden"
+        )
     if not _ASSET_ID.fullmatch(asset_id):
         raise VersionTreeStoreError("asset_id contains unsafe path characters")
     if asset_id in {".", ".."} or ".." in asset_id:
