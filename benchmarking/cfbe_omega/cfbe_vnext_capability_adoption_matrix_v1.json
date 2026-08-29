@@ -1,0 +1,189 @@
+{
+  "schema": "CFBE-VNEXT-CAPABILITY-ADOPTION-MATRIX-1",
+  "baseline_main_sha": "88a81f431ce2a9021a4af2bdd2f340aec836e2ae",
+  "objective": "Advance CFBE-Ω by composing existing Federation capability rather than duplicating benchmark, execution, assurance or recovery systems.",
+  "truth_boundary": {
+    "matrix_is_execution_authority": false,
+    "matrix_is_provider_proof": false,
+    "source_presence_is_operational_maturity": false,
+    "v4_data_ready_requires_real_mission_evidence": true,
+    "proof_and_authority_inheritance": false
+  },
+  "adoption_order": [
+    "REUSE",
+    "EXTEND",
+    "REPURPOSE_OR_SPECIALISE",
+    "COMPOSE_OR_MERGE",
+    "NEW_LAST"
+  ],
+  "capabilities": [
+    {
+      "system": "Frontier Convergence OS",
+      "priority": "P0",
+      "cfbe_role": "capability genomes, causal attribution, evidence economics, shadow tournaments, recovery/value qualification",
+      "decision": "COMPOSE",
+      "boundary": "CFBE remains benchmark/value governor; FC-OS does not inherit execution authority"
+    },
+    {
+      "system": "Superior Logic + Omega-Scientist",
+      "priority": "P0",
+      "cfbe_role": "competing hypotheses, falsification, causal reasoning, frontier mechanism decomposition",
+      "decision": "COMPOSE",
+      "boundary": "scientific proposal and reasoning do not self-certify benchmark promotion"
+    },
+    {
+      "system": "Federation ProofOS Omega",
+      "priority": "P0",
+      "cfbe_role": "risk-adaptive proof selection, omission proof, content-addressed proof, selector falsification",
+      "decision": "COMPOSE",
+      "boundary": "proof selection never grants provider authority or external effects"
+    },
+    {
+      "system": "Formation Omega Mission Convergence Engine",
+      "priority": "P0",
+      "cfbe_role": "mission closure contract, dependency DAG, proof vector, source convergence, durable failure resolver",
+      "decision": "COMPOSE",
+      "boundary": "MCE coordinates closure; CFBE independently evaluates proof-adjusted maturity and value"
+    },
+    {
+      "system": "Federation Orchestration Kernel",
+      "priority": "P0",
+      "cfbe_role": "durable mission ledger, idempotency, replay, checkpoints, lane isolation, fan-in telemetry",
+      "decision": "REUSE_AS_DATA_SUBSTRATE",
+      "boundary": "execution state is evidence input, not benchmark authority"
+    },
+    {
+      "system": "Sentinel Omega",
+      "priority": "P0",
+      "cfbe_role": "freshness, revision, health, drift, regression and stall signals",
+      "decision": "KEEP_INDEPENDENT_LIVE_INPUT",
+      "boundary": "Sentinel remains an independent observer rather than a CFBE submodule"
+    },
+    {
+      "system": "Failure-Win v2 + Omega-AutoFIX",
+      "priority": "P0",
+      "cfbe_role": "real failure, recovery, recurrence and owner-correction evidence",
+      "decision": "COMPOSE_AS_EMPIRICAL_LEARNING",
+      "boundary": "synthetic behavior cannot promote empirical failure intelligence"
+    },
+    {
+      "system": "RealityGuard",
+      "priority": "P0",
+      "cfbe_role": "truth/solution separation, lifecycle claims, fault-book, reuse-before-build, false-completion prevention",
+      "decision": "COMPOSE_AS_TRUTH_GOVERNOR",
+      "boundary": "source or invocation proof cannot become host-bound or operational proof"
+    },
+    {
+      "system": "JARVIS",
+      "priority": "P0",
+      "cfbe_role": "independent contradiction and evidence-coherence vote",
+      "decision": "KEEP_INDEPENDENT_ASSURANCE",
+      "boundary": "CFBE may consume JARVIS verdicts but must not subsume its independence"
+    },
+    {
+      "system": "SOVARA Omega",
+      "priority": "P0",
+      "cfbe_role": "provider identity, route, exact-effect authority, execution, readback and rollback",
+      "decision": "KEEP_SEPARATE_EXECUTOR",
+      "boundary": "CFBE evaluates; SOVARA executes within current authority"
+    },
+    {
+      "system": "KDV + Federation Bible Fabric",
+      "priority": "P0",
+      "cfbe_role": "durable canonical capability, mission, benchmark, learning and provenance projections",
+      "decision": "REUSE_CANONICAL_DATA_PLANE",
+      "boundary": "derived projections do not outrank provider/source evidence"
+    },
+    {
+      "system": "Alpha-Omega + Formation Innovation",
+      "priority": "P1",
+      "cfbe_role": "materially different routes, bounded parallel waves and challenger formation",
+      "decision": "COMPOSE_FOR_EXPERIMENT_FORMATION",
+      "boundary": "route formation is not effect authorization"
+    },
+    {
+      "system": "Secure Capability Box",
+      "priority": "P1",
+      "cfbe_role": "opaque mission-scoped capability references for bounded experiments",
+      "decision": "REUSE_AT_EXECUTION_BOUNDARY",
+      "boundary": "raw secrets remain excluded from CFBE state and public source"
+    },
+    {
+      "system": "Federation Omni-Mesh",
+      "priority": "P1",
+      "cfbe_role": "retry, DLQ, trace, replay and distributed route transport",
+      "decision": "COMPOSE_AFTER_RECEIVER_PROOF",
+      "boundary": "mesh controls do not imply provider-live runtime maturity"
+    },
+    {
+      "system": "Design Provenance Fabric",
+      "priority": "P1",
+      "cfbe_role": "design lineage, decision provenance and receiver-local Design Gene learning",
+      "decision": "REUSE_AS_PROVENANCE_INPUT",
+      "boundary": "design lineage is evidence context, not live capability proof"
+    },
+    {
+      "system": "Airlock + Bubbles + Leak Guard",
+      "priority": "P1",
+      "cfbe_role": "source admission, command integrity, provenance and leakage protection",
+      "decision": "REUSE_AS_CANDIDATE_ADMISSION_FABRIC",
+      "boundary": "green source admission cannot promote provider or value state"
+    }
+  ],
+  "v4_modules": [
+    {
+      "module_id": "V4_OBJECTIVE_ECOLOGY",
+      "current_code_state": "INTERFACE_AND_SCORING_LOGIC_PRESENT",
+      "required_fields": ["mission.accepted", "mission.value", "mission.cost", "mission.risk"],
+      "existing_equivalent_telemetry": ["sovara.outcome.accepted", "sovara.mission.value", "sovara.mission.cost", "sovara.mission.risk"],
+      "identified_gap": "SEMANTIC_FIELD_VOCABULARY_MISMATCH_PLUS_REAL_MISSION_SAMPLE_REQUIRED",
+      "vnext_change": "CFBE semantic alias/readiness adapter with conflict, provenance and real-mission gates",
+      "post_change_state": "INSTRUMENTED_DATA_READY_WHEN_ONE_COMPLETE_REAL_MISSION_RECORD_EXISTS"
+    },
+    {
+      "module_id": "V4_PORTFOLIO_OPTIMIZER",
+      "current_code_state": "INTERFACE_AND_RANKING_LOGIC_PRESENT",
+      "required_fields": ["mission.dependencies", "mission.value", "mission.resource_cost"],
+      "identified_gap": "RESOURCE_COST_SEMANTICS_AND_MULTI_MISSION_SAMPLE_UNRESOLVED",
+      "post_change_state": "HELD"
+    },
+    {
+      "module_id": "V4_CAUSAL_WORLD_MODEL",
+      "current_code_state": "PROTOCOL_PRESENT_WITH_COUNTERFACTUAL_RUNTIME_PRIMITIVES",
+      "required_fields": ["route.context", "route.outcome", "route.counterfactual"],
+      "identified_gap": "REAL_COMPARABLE_ROUTE_OUTCOME_AND_COUNTERFACTUAL_DATA_REQUIRED",
+      "post_change_state": "HELD"
+    },
+    {
+      "module_id": "V4_INSTITUTIONAL_DIGITAL_TWIN",
+      "current_code_state": "PROTOCOL_PRESENT_WITH_CHECKPOINT_AND_STATE_PRIMITIVES",
+      "required_fields": ["mission.checkpoint", "capability.state", "resource.state"],
+      "identified_gap": "DURABLE_MULTI_SNAPSHOT_RECEIVER_EVIDENCE_REQUIRED",
+      "post_change_state": "HELD"
+    },
+    {
+      "module_id": "V4_CAPABILITY_FOUNDRY",
+      "current_code_state": "PROTOCOL_PRESENT_AND_EXISTING_FEDERATION_FOUNDRIES_AVAILABLE",
+      "required_fields": ["opportunity.gradient", "capability.gap", "regression.baseline"],
+      "identified_gap": "REPEATED_REAL_GAP_AND_REGRESSION_BASELINE_REQUIRED",
+      "post_change_state": "HELD"
+    },
+    {
+      "module_id": "V4_INSTITUTIONAL_METABOLISM",
+      "current_code_state": "ROI_LOGIC_PRESENT_AND_TELEMETRY_KEYS_EXIST",
+      "required_fields": ["mission.value", "mission.cost", "owner.intervention_seconds"],
+      "existing_equivalent_telemetry": ["sovara.mission.value", "sovara.mission.cost", "sovara.owner.intervention_seconds"],
+      "identified_gap": "REAL_COST_VALUE_OWNER_BURDEN_OBSERVATION_WINDOW_REQUIRED",
+      "post_change_state": "HELD"
+    }
+  ],
+  "first_transition": {
+    "module_id": "V4_OBJECTIVE_ECOLOGY",
+    "source_change_scope": [
+      "benchmarking/cfbe_omega/v4_data_readiness.py",
+      "tests/test_cfbe_frontier_convergence_binding.py"
+    ],
+    "target": "INTERFACE_ONLY_TO_DATA_READY_ON_REAL_EVIDENCE",
+    "automatic_promotion_from_source_only": false
+  }
+}
