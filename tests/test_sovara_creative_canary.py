@@ -65,7 +65,8 @@ class SovaraCreativeCanaryTests(unittest.TestCase):
         decision = source_only_canary_decision(spec())
         self.assertEqual(CreativeCanaryState.HOLD_EFFECT_AUTHORITY, decision.state)
         self.assertFalse(decision.verified)
-        self.assertIn("does not prove provider execution", decision.truth_boundary)
+        self.assertIn("Source tests or simulated observations", decision.truth_boundary)
+        self.assertIn("do not prove provider execution", decision.truth_boundary)
 
     def test_no_runtime_authority_means_no_provider_canary(self) -> None:
         decision = evaluate_creative_canary(spec(), observation(), provider_effect_authority_bound=False, finite_spend_authorized=False)
