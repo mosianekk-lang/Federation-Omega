@@ -1,12 +1,13 @@
 {
   "schema": "CFBE-VNEXT-CAPABILITY-ADOPTION-MATRIX-1",
   "baseline_main_sha": "88a81f431ce2a9021a4af2bdd2f340aec836e2ae",
+  "current_source_main_before_foundry_bridge": "1e94bfa9130c75213bb1326db7ecbe179510eeb1",
   "objective": "Advance CFBE-Ω by composing existing Federation capability rather than duplicating benchmark, execution, assurance or recovery systems.",
   "truth_boundary": {
     "matrix_is_execution_authority": false,
     "matrix_is_provider_proof": false,
     "source_presence_is_operational_maturity": false,
-    "v4_data_ready_requires_real_mission_evidence": true,
+    "v4_data_ready_requires_receiver_specific_evidence": true,
     "proof_and_authority_inheritance": false
   },
   "adoption_order": [
@@ -133,11 +134,10 @@
   "v4_modules": [
     {
       "module_id": "V4_OBJECTIVE_ECOLOGY",
-      "current_code_state": "INTERFACE_AND_SCORING_LOGIC_PRESENT",
+      "current_code_state": "INTERFACE_SCORING_AND_READINESS_BRIDGE_PRESENT",
       "required_fields": ["mission.accepted", "mission.value", "mission.cost", "mission.risk"],
       "existing_equivalent_telemetry": ["sovara.outcome.accepted", "sovara.mission.value", "sovara.mission.cost", "sovara.mission.risk"],
-      "identified_gap": "SEMANTIC_FIELD_VOCABULARY_MISMATCH_PLUS_REAL_MISSION_SAMPLE_REQUIRED",
-      "vnext_change": "CFBE semantic alias/readiness adapter with conflict, provenance and real-mission gates",
+      "identified_gap": "ONE_COMPLETE_PROVENANCE_BOUND_ACCEPTED_REAL_MISSION_REQUIRED",
       "post_change_state": "INSTRUMENTED_DATA_READY_WHEN_ONE_COMPLETE_REAL_MISSION_RECORD_EXISTS"
     },
     {
@@ -163,10 +163,12 @@
     },
     {
       "module_id": "V4_CAPABILITY_FOUNDRY",
-      "current_code_state": "PROTOCOL_PRESENT_AND_EXISTING_FEDERATION_FOUNDRIES_AVAILABLE",
+      "current_code_state": "PROTOCOL_PRESENT_PLUS_FCOS_CFBE_SOVARA_READINESS_COMPOSITION_SOURCE",
       "required_fields": ["opportunity.gradient", "capability.gap", "regression.baseline"],
-      "identified_gap": "REPEATED_REAL_GAP_AND_REGRESSION_BASELINE_REQUIRED",
-      "post_change_state": "HELD"
+      "existing_composed_sources": ["Frontier Convergence OS ExperimentOption", "CFBE confidence and repeated gap observations", "ProofOS/CFBE regression baseline", "SOVARA MCF OpportunityGradientEngine"],
+      "identified_gap": "COMPLETE_PROVENANCE_BOUND_FCOS_EXPERIMENT_PLUS_EXPLICIT_CONFIDENCE_PLUS_TWO_MATCHING_OBSERVED_GAP_RECORDS_PLUS_REGRESSION_BASELINE_REQUIRED",
+      "vnext_change": "Compute the canonical SOVARA opportunity gradient from FC-OS positive experiment economics plus explicit CFBE confidence; require repeated matching observed gap evidence and regression-baseline provenance; synthetic gap evidence cannot satisfy readiness",
+      "post_change_state": "INSTRUMENTED_DATA_READY_WHEN_COMPLETE_FOUNDRY_EVIDENCE_PACKET_EXISTS"
     },
     {
       "module_id": "V4_INSTITUTIONAL_METABOLISM",
@@ -177,13 +179,24 @@
       "post_change_state": "HELD"
     }
   ],
-  "first_transition": {
-    "module_id": "V4_OBJECTIVE_ECOLOGY",
-    "source_change_scope": [
-      "benchmarking/cfbe_omega/v4_data_readiness.py",
-      "tests/test_cfbe_frontier_convergence_binding.py"
-    ],
-    "target": "INTERFACE_ONLY_TO_DATA_READY_ON_REAL_EVIDENCE",
-    "automatic_promotion_from_source_only": false
-  }
+  "transitions": [
+    {
+      "module_id": "V4_OBJECTIVE_ECOLOGY",
+      "source_change_scope": [
+        "benchmarking/cfbe_omega/v4_data_readiness.py",
+        "tests/test_cfbe_frontier_convergence_binding.py"
+      ],
+      "target": "INTERFACE_ONLY_TO_DATA_READY_ON_REAL_EVIDENCE",
+      "automatic_promotion_from_source_only": false
+    },
+    {
+      "module_id": "V4_CAPABILITY_FOUNDRY",
+      "source_change_scope": [
+        "benchmarking/cfbe_omega/v4_capability_foundry.py",
+        "tests/test_cfbe_frontier_convergence_binding.py"
+      ],
+      "target": "INTERFACE_ONLY_TO_DATA_READY_ON_COMPLETE_PROVENANCE_BOUND_FOUNDRY_PACKET",
+      "automatic_promotion_from_source_only": false
+    }
+  ]
 }
