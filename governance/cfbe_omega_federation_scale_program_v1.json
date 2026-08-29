@@ -1,0 +1,111 @@
+{
+  "schema": "CFBE-OMEGA-FEDERATION-SCALE-PROGRAM-V1",
+  "program_id": "CFBE-OMEGA-SCALE-20260829-001",
+  "objective": "Advance twelve high-scale Federation opportunities in phases until each reaches its highest supportable production, provider, value, or explicitly-held state without allowing one blocked lane to freeze unrelated work.",
+  "truth_boundary": {
+    "source_is_not_runtime": true,
+    "runtime_is_not_provider_proof": true,
+    "provider_proof_is_not_value_proof": true,
+    "live_financial_execution_requires_separate_explicit_authority": true,
+    "no_cross_domain_maturity_inheritance": true
+  },
+  "completion_states": [
+    "DESIGN_ONLY",
+    "SOURCE_VERIFIED",
+    "DETERMINISTIC_TEST_VERIFIED",
+    "SHADOW_OR_PAPER_VERIFIED",
+    "PROVIDER_RUNTIME_VERIFIED",
+    "PRODUCTION_VERIFIED",
+    "VALUE_VERIFIED",
+    "LIVE_EFFECT_VERIFIED_WHERE_SEPARATELY_AUTHORIZED"
+  ],
+  "phases": [
+    {
+      "phase": 0,
+      "name": "Independent challenge and programme admission",
+      "exit_gates": [
+        "fresh Gemini sanitized scale audit with provider-native receipt",
+        "CFBE-Omega challenge court defined",
+        "all twelve initiatives registered with dependencies and authority ceilings",
+        "no unsupported production or live-effect claims"
+      ]
+    },
+    {
+      "phase": 1,
+      "name": "Federation evaluation and proof substrate",
+      "initiatives": ["I01", "I03", "I05"],
+      "exit_gates": [
+        "universal CFBE evaluation contract",
+        "ProofOS evidence/maturity binding",
+        "live capability graph with source/runtime/provider/value states",
+        "deterministic benchmark receipts"
+      ]
+    },
+    {
+      "phase": 2,
+      "name": "Evolution, routing and failure intelligence",
+      "initiatives": ["I02", "I04", "I07"],
+      "exit_gates": [
+        "challenger generation under bounded experiment court",
+        "multi-model selection by evidence/cost/latency/risk",
+        "failure genome feeds regression and recovery",
+        "no unbounded self-modification"
+      ]
+    },
+    {
+      "phase": 3,
+      "name": "Flagship domain foundries",
+      "initiatives": ["I08", "I09", "I10"],
+      "exit_gates": [
+        "Omega-Max capital research foundry reaches paper/shadow qualification before any live-capital gate",
+        "CIOS reaches provider/runtime qualification and demonstrable value proof",
+        "SOVARA Creative reaches provider/runtime qualification and commercial value proof"
+      ]
+    },
+    {
+      "phase": 4,
+      "name": "Enterprise control, opportunity and product factory",
+      "initiatives": ["I06", "I11", "I12"],
+      "exit_gates": [
+        "Opportunity Radar produces proof-scored build candidates",
+        "enterprise AI control plane is provider-verified on admitted surfaces",
+        "vertical product factory produces at least one end-to-end acceptance-to-renewal system with measured value"
+      ]
+    },
+    {
+      "phase": 5,
+      "name": "Production convergence and externalization",
+      "exit_gates": [
+        "security/privacy/observability/rollback/readback complete per deployed service",
+        "provider-native deployment proof complete for each released surface",
+        "value telemetry distinguishes modeled, synthetic, pilot and real outcomes",
+        "Federation-as-a-Service APIs expose only Ledger-approved capabilities",
+        "financial live effects remain held unless separately explicitly authorized"
+      ]
+    }
+  ],
+  "initiatives": [
+    {"id":"I01","name":"CFBE-Omega Universal Evaluation Exchange","phase":1,"authority_ceiling":"A1_INTERNAL_EVALUATION","target":"PRODUCTION_VERIFIED"},
+    {"id":"I02","name":"Autonomous Capability Foundry","phase":2,"authority_ceiling":"A1_INTERNAL_BUILD_AND_TEST","target":"PRODUCTION_VERIFIED"},
+    {"id":"I03","name":"ProofOS Trust Infrastructure","phase":1,"authority_ceiling":"A1_INTERNAL_PROOF","target":"PRODUCTION_VERIFIED"},
+    {"id":"I04","name":"Federation Multi-Model Exchange","phase":2,"authority_ceiling":"A1_MODEL_INFERENCE_ONLY","target":"VALUE_VERIFIED"},
+    {"id":"I05","name":"Universal Capability Graph","phase":1,"authority_ceiling":"A1_READ_AND_INTERNAL_STATE","target":"PRODUCTION_VERIFIED"},
+    {"id":"I06","name":"Opportunity Radar","phase":4,"authority_ceiling":"A1_RESEARCH_AND_PROPOSAL_ONLY","target":"VALUE_VERIFIED"},
+    {"id":"I07","name":"Failure-Win Reliability and Failure Genome","phase":2,"authority_ceiling":"A1_INTERNAL_RECOVERY","target":"PRODUCTION_VERIFIED"},
+    {"id":"I08","name":"Omega-Max Quant Research Foundry","phase":3,"authority_ceiling":"PAPER_AND_SHADOW_ONLY_UNTIL_SEPARATE_LIVE_AUTHORITY","target":"SHADOW_OR_PAPER_VERIFIED"},
+    {"id":"I09","name":"Capital Intelligence OS","phase":3,"authority_ceiling":"HUMAN_DECISION_GATE_FOR_CONSEQUENTIAL_ACTIONS","target":"VALUE_VERIFIED"},
+    {"id":"I10","name":"SOVARA Creative Production OS","phase":3,"authority_ceiling":"PROPOSAL_AND_BOUNDED_PROVIDER_EFFECTS_PER_ROUTE","target":"VALUE_VERIFIED"},
+    {"id":"I11","name":"Enterprise AI Control Plane","phase":4,"authority_ceiling":"ROUTE_SPECIFIC_PROVIDER_AUTHORITY","target":"PRODUCTION_VERIFIED"},
+    {"id":"I12","name":"Vertical Product Factory and Federation-as-a-Service","phase":4,"authority_ceiling":"INTERNAL_BUILD_PLUS_EXPLICIT_EXTERNAL_RELEASE","target":"VALUE_VERIFIED"}
+  ],
+  "global_promotion_rules": [
+    "REUSE_EXTEND_COMPOSE_BEFORE_NEW",
+    "CHAMPION_VS_CHALLENGER_REQUIRED",
+    "HARD_SAFETY_REGRESSION_VETO",
+    "INDEPENDENT_READBACK_FOR_FRONTIER_CLAIMS",
+    "BLOCKED_LANE_ISOLATION",
+    "NO_STATUS_ONLY_PAUSE_WHILE_INTERNAL_WORK_REMAINS",
+    "NO_LIVE_FINANCIAL_EFFECT_FROM_RESEARCH_PROMOTION",
+    "OWNER_RELEASE_GATE_FOR_PRODUCTION_EXTERNALIZATION_WHERE_REQUIRED"
+  ]
+}
