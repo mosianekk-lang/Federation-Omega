@@ -3,6 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 import json
+from types import MappingProxyType
 from typing import Any, Iterable, Mapping
 
 
@@ -38,7 +39,7 @@ class VersionNode:
     content_sha256: str
     parent_ids: tuple[str, ...]
     operation: str
-    metadata: dict[str, Any]
+    metadata: Mapping[str, Any]
     rollback_of: str | None = None
 
     def canonical_record(self) -> dict[str, Any]:
@@ -47,7 +48,7 @@ class VersionNode:
             "content_sha256": self.content_sha256,
             "parent_ids": list(self.parent_ids),
             "operation": self.operation,
-            "metadata": self.metadata,
+            "metadata": dict(self.metadata),
             "rollback_of": self.rollback_of,
         }
 
@@ -71,8 +72,9 @@ class VersionTree:
 
     The tree is append-only: historical nodes cannot be replaced or deleted. Branch
     heads move only through compare-and-swap operations. Rollback creates a new node
-    carrying old content; it never rewrites history. This object performs no provider,
-    storage, publishing, financial, or production effect.
+    carrying old content; it never rewrites history. Node metadata is exposed through
+    a read-only mapping. This object performs no provider, storage, publishing,
+    financial, or production effect.
     """
 
     def __init__(self, asset_id: str) -> None:
@@ -132,12 +134,13 @@ class VersionTree:
             raise VersionTreeError("rollback target is unknown")
 
         content_sha256 = sha256(content).hexdigest()
+        normalized_metadata = _normalize_metadata(metadata)
         record = {
             "asset_id": self.asset_id,
             "content_sha256": content_sha256,
             "parent_ids": list(parent_ids),
             "operation": operation,
-            "metadata": _normalize_metadata(metadata),
+            "metadata": normalized_metadata,
             "rollback_of": rollback_of,
         }
         version_id = _sha(record)
@@ -147,12 +150,12 @@ class VersionTree:
             content_sha256=content_sha256,
             parent_ids=parent_ids,
             operation=operation,
-            metadata=record["metadata"],
+            metadata=MappingProxyType(normalized_metadata),
             rollback_of=rollback_of,
         )
         existing = self._nodes.get(version_id)
         if existing is not None:
-            if existing != node or self._content.get(content_sha256) != content:
+            if existing.canonical_record() != node.canonical_record() or self._content.get(content_sha256) != content:
                 raise VersionTreeError("content-address collision or conflicting replay")
             return existing
         self._nodes[version_id] = node
