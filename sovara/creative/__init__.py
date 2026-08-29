@@ -3,10 +3,10 @@
 Scope: mission genomes, content/privacy classification, policy-aware routing,
 digital continuity, private-studio planning, reuse-first adaptive capability
 creation, CFBE/Ω-Scientist meta-evolution, proof-gated commercial value,
-progressive production convergence, bounded creative canaries, and bounded
-Gemini creative challenges. This package does not grant provider authority,
-authorize spend, perform publishing effects, deploy infrastructure, or claim
-runtime/value maturity.
+progressive production convergence, bounded creative canaries, bounded Gemini
+creative challenges, and deterministic non-destructive creative version lineage.
+This package does not grant provider authority, authorize spend, perform
+publishing effects, deploy infrastructure, or claim runtime/value maturity.
 """
 
 from .canary import (
@@ -116,11 +116,19 @@ from .sovereign_studio import (
     StudioRequest,
     compile_studio_plan,
 )
+from .version_tree import (
+    BranchConflictError,
+    VersionNode,
+    VersionTree,
+    VersionTreeError,
+    VersionTreeReceipt,
+)
 
 __all__ = [
     "AdmissionState",
     "AmbitionClass",
     "BenchmarkDimension",
+    "BranchConflictError",
     "BuildStrategy",
     "CanaryAuthorityDecision",
     "CanaryAuthorityState",
@@ -177,6 +185,10 @@ __all__ = [
     "ValueGateDecision",
     "ValueGateState",
     "ValueMetricSpec",
+    "VersionNode",
+    "VersionTree",
+    "VersionTreeError",
+    "VersionTreeReceipt",
     "build_gemini_challenge_request",
     "build_openrouter_request_plan",
     "build_ten_x_target",
