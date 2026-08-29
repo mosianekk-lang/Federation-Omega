@@ -1,0 +1,37 @@
+{
+  "schema": "CFBE-CYCLE-PREFLIGHT-1",
+  "purpose": "Bind every substantive CFBE/Federation improvement cycle to fresh terminal-state evidence before new architecture work begins.",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "preflight_order": [
+    "FRESH_READ_CURRENT_MAIN",
+    "READ_CURRENT_TERMINAL_STATUS",
+    "READ_ACTIVE_CRITICAL_REGRESSIONS",
+    "RECONCILE_STALE_CONTROL_STATE",
+    "REPAIR_CURRENT_RED_TERMINAL_STATE_IF_SAFE",
+    "SELECT_EVIDENCE_PRODUCING_MISSION",
+    "PRE_REGISTER_METRICS_AND_TRUTH_BOUNDARY",
+    "EXECUTE_SMALLEST_SAFE_ROUTE",
+    "INDEPENDENT_READBACK",
+    "MEASURE_VALUE_OWNER_BURDEN_AND_REGRESSION",
+    "CFBE_RESCORE",
+    "ONLY_THEN_CONSIDER_NEW_ARCHITECTURE"
+  ],
+  "gates": {
+    "critical_current_regression_blocks_new_architecture": true,
+    "historical_green_tranche_is_not_current_terminal_truth": true,
+    "stale_state_fencing_required": true,
+    "source_readiness_without_real_evidence_is_non_promoting": true,
+    "new_v4_bridge_requires_receiver_evidence_that_existing_bridge_cannot_ingest": true,
+    "pr_open_requires_stable_self_reviewed_branch": true,
+    "unknown_incremental_cost_fails_closed": true,
+    "owner_reserved_effects_remain_owner_reserved": true
+  },
+  "anti_noise": {
+    "open_pr_only_after_branch_self_review": true,
+    "avoid_ci_on_known_incomplete_construction_states": true,
+    "group_related_semantic_repairs_before_admission": true,
+    "email_failure_noise_is_a_workflow_efficiency_signal": true
+  },
+  "truth_boundary": "This contract changes CFBE operating discipline only. It does not prove the current repository is green, create provider authority, promote any v4 module, or replace ProofOS/Airlock/Sentinel/Formation/SOVARA."
+}
