@@ -1,7 +1,7 @@
 {
   "schema": "FEDOMEGA-PROVIDER-AIRLOCK-ACTIVATION-STATE-1",
   "repository": "mosianekk-lang/Federation-Omega",
-  "assessed_at": "2026-08-29T22:27:00Z",
+  "assessed_at": "2026-08-29T22:29:00Z",
   "implementation": {
     "activator_path": "phoenix/provider_airlock_activate.py",
     "runbook_path": "phoenix/PROVIDER_AIRLOCK_ACTIVATION.md",
@@ -14,7 +14,10 @@
     "pre_restack_bubbles_run": 33278566412,
     "pre_restack_leak_guard_run": 33278566394,
     "pre_restack_release_court": "ALL_THREE_SUCCESS",
-    "fresh_current_main_restack_required": true
+    "current_main_at_restack": "7cbc5d791c01321d42b012767301fec6ba4080a9",
+    "restack_merge_commit": "e7b9febc5dd1e082e223ac35541df9018b2f60e3",
+    "fresh_current_main_restack_required": false,
+    "restack_state": "RECONCILED_PENDING_EXACT_HEAD_RELEASE_COURT"
   },
   "connected_authority": {
     "repository_admin_standing_reported": true,
@@ -55,6 +58,8 @@
     "force_main_ref_update_performed": false,
     "repair_branch": "fix/provider-airlock-current-main-and-direct-write-recovery-20260830",
     "pre_restack_repair_head": "77a79b58b1b96c8c2fce0d0a901e3b9cc9cb0169",
+    "restack_commit": "e7b9febc5dd1e082e223ac35541df9018b2f60e3",
+    "prospective_repair_tree_tmp_absent": true,
     "repair_effect_on_main": false,
     "failure_win_rule": "Preserve the adverse direct-main event, reconcile every moving-main delta, remove the stray serving-tree artifact only through an admitted PR, and activate provider prevention only after exact provider-native readback."
   },
@@ -76,7 +81,7 @@
     "public_leak_guard": "ACTIVE",
     "agent_governance_contract": "ACTIVE_BUT_NOT_PROVIDER_ENFORCED",
     "sole_owner_safe_ruleset_payload": "SOURCE_PRESENT_THREE_CHECK",
-    "ruleset_only_activator": "SOURCE_REANCHOR_EXACT_HEAD_GREEN_PRE_RESTACK",
+    "ruleset_only_activator": "SOURCE_REANCHOR_RESTACKED_PENDING_EXACT_HEAD_CI",
     "provider_prevention": "ABSENT"
   },
   "state": "PROVIDER_PREVENTION_ABSENT_DIRECT_WRITE_INCIDENT_REPAIR_IN_PROGRESS",
@@ -97,5 +102,5 @@
       "provider_readback.main_sha_unchanged"
     ]
   },
-  "truth_boundary": "Current main still descends from the preserved direct-main incident and remains unprotected with zero provider rulesets. The source three-check ruleset exists, and the recovery lane passed Airlock+Bubbles+Leak Guard before a disjoint main advance, but the repair must be restacked and re-admitted on the fresh main before tmp removal can be claimed. Provider prevention remains absent until an independently read-back GitHub ruleset returns VERIFIED."
+  "truth_boundary": "Current main still descends from the preserved direct-main incident and remains unprotected with zero provider rulesets. The source three-check ruleset exists and the recovery lane is now reconciled onto current main 7cbc5d79, with tmp absent only in the prospective repair tree. Exact-head CI must pass again before source repair can be promoted, and provider prevention remains absent until an independently read-back GitHub ruleset returns VERIFIED."
 }
