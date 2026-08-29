@@ -102,5 +102,5 @@
       "provider_readback.main_sha_unchanged"
     ]
   },
-  "truth_boundary": "Current main still descends from the preserved direct-main incident and remains unprotected with zero provider rulesets. The source three-check ruleset exists and the recovery lane is now reconciled onto current main 7cbc5d79, with tmp absent only in the prospective repair tree. Exact-head CI must pass again before source repair can be promoted, and provider prevention remains absent until an independently read-back GitHub ruleset returns VERIFIED."
+  "truth_boundary": "Current main still descends from the preserved direct-main incident and remains unprotected with zero provider rulesets. The source three-check ruleset exists and the recovery lane is now reconciled onto current main 7cbc5d79, with tmp absent only in the prospective repair tree. Exact-head CI must pass again before source repair can be promoted. Provider prevention is absent and remains absent until an independently read-back GitHub ruleset returns VERIFIED."
 }
