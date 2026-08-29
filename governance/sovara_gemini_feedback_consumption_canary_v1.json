@@ -1,0 +1,50 @@
+{
+  "schema": "SOVARA_GEMINI_FEEDBACK_CONSUMPTION_CANARY_V1",
+  "canary_id": "SC-GEMINI-COLLAB-FEEDBACK-CANARY-20260830-001",
+  "cycle_id": "SC-GEMINI-COLLAB-6DC1DCE7B3B23E65",
+  "challenge_id": "SC-GEMINI-COLLAB-6DC1DCE7B3B23E65-G2",
+  "parent_cycle_id": "SC-GEMINI-ARCH-20260828-001",
+  "source_head": "7cbc5d791c01321d42b012767301fec6ba4080a9",
+  "delta_sha256": "933f28ed35256fa418f8311bb04217522f2a3a138d0839d9b2e20e9716368ccd",
+  "feedback_sha256": "c36356c6a75d6ed76e1a7e09308f95a03209ec658c149a7a12f8dad551a0c85a",
+  "prior_provider_proof": {
+    "challenge_id": "SC-GEMINI-ARCH-20260828-001",
+    "provider": "GOOGLE_VERTEX_AI",
+    "transport": "VERTEX_AI_WIF_DIRECT",
+    "model": "gemini-3.1-pro-preview",
+    "provider_request_id": "BuuRaovIGfL1tALF9JSYBQ",
+    "semantic_verified": true,
+    "provider_native_readback": true,
+    "proposal_authority_only": true
+  },
+  "delta": {
+    "summary": "SOVARA Creative now has an admitted durable Gemini collaboration bus. Federation feedback from the first verified Gemini G2 design cycle has been classified and must be consumed by Gemini in a second provider-native cycle. Promptless kernel consolidation and one Golden Creative Path remain the highest-value product direction.",
+    "changed_capabilities": ["PROMPTLESS-KERNEL", "SC-GEMINI-COLLAB", "SC-GRAPH", "SC-VERSION-TREE"],
+    "evidence_pointers": ["KDV OMR-SOVARA-GEMINI-COLLAB-001", "PR #789 / main 7cbc5d791c01321d42b012767301fec6ba4080a9", "SC-PROOF-GEMINI-G2-001 / provider request BuuRaovIGfL1tALF9JSYBQ", "SOVARA Creative Bible section 28", "governance/sovara_gemini_g2_design_promotion_v1.json"],
+    "context": {
+      "active_mission": "SOVARA Creative",
+      "architecture_bias": "KERNEL_CONSOLIDATION_PLUS_VERTICAL_PROOF",
+      "next_kernel_order": ["SC-GRAPH", "SC-VERSION-TREE", "SC-TASTE", "SC-PRODUCER", "SC-RIPPLE"],
+      "next_production_milestone": "Golden Creative Path with one real asset and one owner-correction loop",
+      "feedback_policy": "Gemini proposals are proposal-only and must respond explicitly to Federation accept/experiment/hold decisions",
+      "commercial_rule": "Commercial, operational and usability value are co-equal; no unmeasured 10x or ROI claims"
+    }
+  },
+  "federation_feedback": [
+    {"proposal_id":"PROP-01","decision":"ACCEPT","target_capability":"SC-GRAPH/SC-WORLD/SC-RIPPLE","reason":"Continuity is high-value but must be composed into SC-GRAPH/SC-WORLD/SC-RIPPLE rather than a new root.","proof_gate":"Bounded continuity court with identity/environment similarity metrics, false-match controls and human visual review."},
+    {"proposal_id":"PROP-02","decision":"ACCEPT","target_capability":"SC-BRAND/SC-RIGHTS/SC-QA","reason":"Brand guard fits the existing SC-BRAND/SC-RIGHTS/SC-QA domains and strengthens commercial reliability.","proof_gate":"Injected brand-policy regression suite with false-positive/false-negative reporting; legal clearance remains outside automated authority."},
+    {"proposal_id":"PROP-03","decision":"HOLD","target_capability":"SC-SOUND/SC-EDIT","reason":"Audio sync is useful but should not create a new root before reuse of SC-SOUND/SC-EDIT and media-route capability is proven.","proof_gate":"Federation reuse scan plus synthetic timing/alignment prototype and rights/policy verification."},
+    {"proposal_id":"PROP-04","decision":"ACCEPT","target_capability":"SC-PACK/SC-CAMPAIGN","reason":"Format adaptation belongs inside SC-PACK/SC-CAMPAIGN and directly reduces owner rework across channels.","proof_gate":"Synthetic 16:9, 9:16 and 1:1 adaptation corpus with safe-zone, subject-retention and resolution checks."},
+    {"proposal_id":"PROP-05","decision":"ACCEPT","target_capability":"SC-PREVIZ","reason":"Storyboard intelligence is a natural SC-PREVIZ extension and reduces expensive generation before creative intent is settled.","proof_gate":"Five-shot synthetic brief court with timing, editability, reversibility and no-provider-effect fallback."},
+    {"proposal_id":"PROP-06","decision":"EXPERIMENT","target_capability":"SC-PULSE/SC-ECONOMICS","reason":"Predictive commercial scoring is valuable only after provenance-bound performance baselines exist; predicted ROI must stay separate from realised ROI.","proof_gate":"Time-split calibrated validation on sufficient provenance-bound historical observations with out-of-sample error reporting."},
+    {"proposal_id":"PROP-07","decision":"EXPERIMENT","target_capability":"SC-FINISH","reason":"Auto-colour can improve consistency, but should be tested as an SC-FINISH capability before broader adoption.","proof_gate":"Reference/synthetic colour-difference court with skin-tone, clipping, banding and human-review regressions."},
+    {"proposal_id":"PROP-08","decision":"ACCEPT","target_capability":"SC-VERSION-TREE/SC-GRAPH","reason":"SC-VERSION-TREE has already been implemented and proven for bounded local durability/crash recovery; use it as the persistence substrate beneath SC-GRAPH.","proof_gate":"Preserve current version-tree regression/crash court and add graph-state persistence/readback proof separately."},
+    {"proposal_id":"PROP-09","decision":"EXPERIMENT","target_capability":"SC-ROUTER/SC-ECONOMICS","reason":"Render FinOps should compose into SC-ROUTER/SC-ECONOMICS and prove same-workload cost/quality trade-offs before any savings claim.","proof_gate":"Deterministic route simulation followed by separately authorized same-workload provider cohort with cost/quality/readback evidence."},
+    {"proposal_id":"PROP-10","decision":"HOLD","target_capability":"SC-RIGHTS/SC-WORLD","reason":"Talent vault introduces real-person privacy/rights complexity and should wait for a concrete use case and explicit data/rights authority.","proof_gate":"Synthetic rights-lifecycle court, privacy/security review and explicit real-person/contractual authority before any live data."},
+    {"proposal_id":"PROP-11","decision":"EXPERIMENT","target_capability":"SC-PULSE/SC-LEARN/SC-TASTE/SC-BRIEF","reason":"The feedback loop is strategically important but must start as shadow learning to prevent performance overfit and unauthorized live platform tuning.","proof_gate":"Replay historical/synthetic performance events through a shadow learner with anti-overfit controls, then require separate connector/readback authority."},
+    {"proposal_id":"PROP-12","decision":"ACCEPT","target_capability":"SC-BRAND/SC-PACK/SC-FINISH","reason":"Editable typography belongs in SC-BRAND/SC-PACK/SC-FINISH and preserves post-generation control across formats and languages.","proof_gate":"Synthetic multilingual layout court with clipping, font-license metadata, editability and translation checks."}
+  ],
+  "dispatch": {"state":"HOLD_SPEND_AUTHORITY","provider_call_authorized":false,"max_usd":null,"authority_id":null,"automatic_recurring_inference_authorized":false},
+  "success_contract": {"must_return_exact_challenge_id":true,"must_include_prior_feedback_response":true,"provider_native_response_id_required":true,"provider_model_version_required":true,"semantic_verified_required":true,"proposal_authority_only_required":true,"case_data_processed":false,"provider_mutation_allowed":false,"external_effect_allowed":false,"canonical_auto_promotion_allowed":false},
+  "truth_boundary": "This packet is a source/control artifact only. It deliberately cannot dispatch Gemini while provider spend authority is absent. A second Gemini response must produce provider-native response/model readback and demonstrate consumption of the Federation feedback before FULL_SEMANTIC_BIDIRECTIONALITY may be claimed."
+}
