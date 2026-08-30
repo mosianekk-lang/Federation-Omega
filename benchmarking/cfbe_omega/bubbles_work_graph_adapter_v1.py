@@ -28,12 +28,16 @@ class BubblesWorkNode:
 
 @dataclass(frozen=True, slots=True)
 class BubblesCellShadowReceipt:
-    """Shadow-only failure-domain placements for a CFBE-selected work wave."""
+    """Shadow-only capacity/failure-domain placements for a CFBE-selected work wave."""
 
     state: str
     selected_work_ids: tuple[str, ...]
     placements: tuple[CellAllocationDecision, ...]
     placement_digest: str
+    cell_occupancy: tuple[tuple[str, int], ...] = ()
+    remaining_capacity: tuple[tuple[str, int], ...] = ()
+    saturated_cell_ids: tuple[str, ...] = ()
+    backpressure_work_ids: tuple[str, ...] = ()
     serving_route_changed: bool = False
     provider_effect_authorized: bool = False
     financial_effect_authorized: bool = False
@@ -139,16 +143,18 @@ def shadow_place_bubbles_work(
     *,
     shard_width: int = 1,
     excluded_failure_domains: Iterable[str] = (),
+    initial_occupancy: Mapping[str, int] | None = None,
     active_ids: Iterable[str] = (),
     completed_ids: Iterable[str] = (),
     critical_regression_ids: Iterable[str] = (),
     live_ready_ids: Iterable[str] = (),
     readiness_blockers: Mapping[str, Iterable[str]] | None = None,
 ) -> BubblesCellShadowReceipt:
-    """Place only the already-selected CFBE work wave into failure-domain cells.
+    """Place only the already-selected CFBE work wave into bounded work cells.
 
-    This is deliberately a shadow projection. A held cell allocation never
-    rewrites the serving CFBE selection, changes a route or grants an effect.
+    CFBE still owns work selection. Bubbles consumes that immutable selection and
+    computes capacity/failure-domain placement in shadow mode. Backpressure never
+    rewrites the serving CFBE wave, changes a route or grants an external effect.
     """
 
     wave = plan_bubbles_work_graph(
@@ -160,21 +166,23 @@ def shadow_place_bubbles_work(
         readiness_blockers=readiness_blockers,
     )
     selected_ids = tuple(item.capability_id for item in wave.selected)
-    allocator = WorkCellAllocator()
-    placements = tuple(
-        allocator.allocate(
-            work_id,
-            cells,
-            shard_width=shard_width,
-            excluded_failure_domains=excluded_failure_domains,
-            require_distinct_failure_domains=True,
-        )
-        for work_id in selected_ids
+    allocation = WorkCellAllocator().allocate_wave(
+        selected_ids,
+        cells,
+        shard_width=shard_width,
+        excluded_failure_domains=excluded_failure_domains,
+        require_distinct_failure_domains=True,
+        initial_occupancy=initial_occupancy,
     )
-    state = "SHADOW_READY" if all(item.state == "ALLOCATED" for item in placements) else "SHADOW_HELD"
+    if allocation.state == "WAVE_ALLOCATED":
+        state = "SHADOW_READY"
+    elif allocation.state == "WAVE_BACKPRESSURE":
+        state = "SHADOW_BACKPRESSURE"
+    else:
+        state = "SHADOW_HELD"
     digest_payload = {
         "selected_work_ids": selected_ids,
-        "placement_digests": [item.allocation_digest for item in placements],
+        "wave_allocation_digest": allocation.allocation_digest,
         "state": state,
         "serving_route_changed": False,
     }
@@ -184,6 +192,10 @@ def shadow_place_bubbles_work(
     return BubblesCellShadowReceipt(
         state=state,
         selected_work_ids=selected_ids,
-        placements=placements,
+        placements=allocation.placements,
         placement_digest=placement_digest,
+        cell_occupancy=allocation.occupancy,
+        remaining_capacity=allocation.remaining_capacity,
+        saturated_cell_ids=allocation.saturated_cell_ids,
+        backpressure_work_ids=allocation.backpressure_work_ids,
     )
