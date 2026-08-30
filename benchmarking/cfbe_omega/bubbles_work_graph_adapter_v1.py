@@ -1,7 +1,15 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from hashlib import sha256
+import json
 from typing import Iterable, Mapping, Sequence
+
+from federation.bubbles_frontier_hyperperformance import (
+    CellAllocationDecision,
+    WorkCell,
+    WorkCellAllocator,
+)
 
 from .closure_matrix_v1 import ClosureWaveReceipt, plan_wave
 
@@ -16,6 +24,19 @@ class BubblesWorkNode:
     closure_state: str = "INTEGRATE"
     priority: int = 100
     role: str = "PRIMARY"
+
+
+@dataclass(frozen=True, slots=True)
+class BubblesCellShadowReceipt:
+    """Shadow-only failure-domain placements for a CFBE-selected work wave."""
+
+    state: str
+    selected_work_ids: tuple[str, ...]
+    placements: tuple[CellAllocationDecision, ...]
+    placement_digest: str
+    serving_route_changed: bool = False
+    provider_effect_authorized: bool = False
+    financial_effect_authorized: bool = False
 
 
 _CLOSURE_STATES = (
@@ -109,4 +130,60 @@ def plan_bubbles_work_graph(
         live_ready_ids=live_ready_ids,
         critical_regression_ids=critical_regression_ids,
         readiness_blockers=readiness_blockers,
+    )
+
+
+def shadow_place_bubbles_work(
+    nodes: Sequence[BubblesWorkNode],
+    cells: Sequence[WorkCell],
+    *,
+    shard_width: int = 1,
+    excluded_failure_domains: Iterable[str] = (),
+    active_ids: Iterable[str] = (),
+    completed_ids: Iterable[str] = (),
+    critical_regression_ids: Iterable[str] = (),
+    live_ready_ids: Iterable[str] = (),
+    readiness_blockers: Mapping[str, Iterable[str]] | None = None,
+) -> BubblesCellShadowReceipt:
+    """Place only the already-selected CFBE work wave into failure-domain cells.
+
+    This is deliberately a shadow projection. A held cell allocation never
+    rewrites the serving CFBE selection, changes a route or grants an effect.
+    """
+
+    wave = plan_bubbles_work_graph(
+        nodes,
+        active_ids=active_ids,
+        completed_ids=completed_ids,
+        critical_regression_ids=critical_regression_ids,
+        live_ready_ids=live_ready_ids,
+        readiness_blockers=readiness_blockers,
+    )
+    selected_ids = tuple(item.capability_id for item in wave.selected)
+    allocator = WorkCellAllocator()
+    placements = tuple(
+        allocator.allocate(
+            work_id,
+            cells,
+            shard_width=shard_width,
+            excluded_failure_domains=excluded_failure_domains,
+            require_distinct_failure_domains=True,
+        )
+        for work_id in selected_ids
+    )
+    state = "SHADOW_READY" if all(item.state == "ALLOCATED" for item in placements) else "SHADOW_HELD"
+    digest_payload = {
+        "selected_work_ids": selected_ids,
+        "placement_digests": [item.allocation_digest for item in placements],
+        "state": state,
+        "serving_route_changed": False,
+    }
+    placement_digest = sha256(
+        json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    return BubblesCellShadowReceipt(
+        state=state,
+        selected_work_ids=selected_ids,
+        placements=placements,
+        placement_digest=placement_digest,
     )
