@@ -26,6 +26,8 @@ class SovaraGeminiDeploymentReadinessTests(unittest.TestCase):
         self.assertEqual(self.request["mode"], "G0_READ_ONLY_VERIFY")
         self.assertEqual(self.request["g0_objective"], "ADMIN_AUTHORITY_GRAPH_CENSUS")
         self.assertTrue(self.request["deployment_readiness_probe"])
+        self.assertTrue(self.request["admin_actas_census_probe"])
+        self.assertTrue(self.request["admin_actas_census_scope"]["read_only"])
         self.assertTrue(self.request["privileged_control_runtime_census"])
         self.assertTrue(self.request["privileged_control_runtime_scope"]["read_only"])
         self.assertFalse(self.request["provider_mutation_allowed"])
