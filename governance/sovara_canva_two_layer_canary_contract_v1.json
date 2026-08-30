@@ -1,0 +1,84 @@
+{
+  "schema": "SOVARA_CANVA_TWO_LAYER_CANARY_CONTRACT_V1",
+  "invariant_id": "SC-CANVA-TWO-LAYER-001",
+  "candidate_set_id": "SOVARA-CANVA-CANARY-FOUR-CANDIDATES-001",
+  "expected_candidate_count": 4,
+  "owner_selection_required": true,
+  "age_state_required": "VERIFIED_ADULT_OR_SYNTHETIC",
+  "consent_state_required": "AFFIRMATIVE_OR_NOT_APPLICABLE",
+  "rights_state_required": "VERIFIED",
+  "asset_origin_state_required": "VERIFIED",
+  "raw_sensitive_payload_allowed": false,
+  "connector_schema_snapshot_id": "CANVA-CODEX-APPS-20260830-001",
+  "connector_schema_sha256": "38024fbcf9ae71cb9161a4de4df5a97547ab5a3087eb894fcdbac2c82b57967e",
+  "connector_schema_snapshot": {
+    "provider": "Canva",
+    "retrieved_at": "2026-08-30T00:00:00Z",
+    "tools": {
+      "cancel_editing_transaction": {
+        "effect": "DRAFT_WRITE_CANCEL",
+        "required_bindings": ["transaction_id"]
+      },
+      "commit_editing_transaction": {
+        "effect": "PROVIDER_WRITE_COMMIT",
+        "required_bindings": ["transaction_id", "explicit_user_approval_after_preview"]
+      },
+      "create_design_from_candidate": {
+        "effect": "PROVIDER_WRITE_CREATE",
+        "required_bindings": ["job_id", "candidate_id"]
+      },
+      "get_design": {
+        "effect": "READ_ONLY",
+        "required_bindings": ["design_id"]
+      },
+      "get_design_pages": {
+        "effect": "READ_ONLY",
+        "required_bindings": ["design_id"]
+      },
+      "get_design_thumbnail": {
+        "effect": "READ_ONLY",
+        "required_bindings": ["design_id"]
+      },
+      "perform_editing_operations": {
+        "effect": "DRAFT_WRITE",
+        "required_bindings": ["transaction_id", "operations"]
+      },
+      "start_editing_transaction": {
+        "effect": "DRAFT_WRITE_START",
+        "required_bindings": ["design_id"]
+      }
+    },
+    "semantic_invariants": [
+      "candidate conversion creates one new editable design",
+      "editing operations remain draft-only until commit",
+      "commit requires explicit user approval immediately after preview disclosure",
+      "cancel discards the editing transaction draft",
+      "no callable export download share publish or created-design delete capability is assumed"
+    ]
+  },
+  "schema_checked_at": "2026-08-30T00:00:00Z",
+  "schema_expires_at": "2026-09-30T00:00:00Z",
+  "max_designs": 1,
+  "max_draft_operations": 20,
+  "create_effect_authorized": false,
+  "draft_effect_authorized": false,
+  "commit_effect_authorized": false,
+  "export_allowed": false,
+  "download_allowed": false,
+  "share_allowed": false,
+  "publish_allowed": false,
+  "required_readbacks": [
+    "CREATE_REQUEST_BINDING",
+    "DESIGN_METADATA",
+    "DRAFT_TRANSACTION",
+    "OWNER_PREVIEW",
+    "COMMIT_RESULT",
+    "POST_COMMIT_DESIGN_METADATA"
+  ],
+  "rollback_requirements": [
+    "CREATE_ROLLBACK",
+    "DRAFT_CANCEL"
+  ],
+  "execution_gate": "Layer 1 contains no candidate ID and grants no provider effect. Layer 2 requires an explicit owner-authored selection receipt, a separate exact one-create authority with proven create rollback, provider-native create readback, a separate cancelable draft authority, owner-visible preview, and a new exact single-use owner commit approval issued after that preview.",
+  "truth_boundary": "Source/test/CI admission proves only deterministic contract behavior. The contract makes no Canva call and grants no provider authority. Supplied receipt validation does not authenticate provider provenance and does not prove export, download, share, publish, repeated success, commercial value, deployment, production traffic or production maturity."
+}
