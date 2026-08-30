@@ -10,6 +10,7 @@ import types
 import unittest
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+from unittest.mock import patch
 
 ROOT = Path(__file__).resolve().parents[1]
 TEMPLATE = ROOT / "phoenix" / "ops-template"
@@ -100,18 +101,18 @@ class GuardedLauncherTests(unittest.TestCase):
                 calls.append((list(command), dict(env)))
                 return types.SimpleNamespace(returncode=0)
 
-            launcher.subprocess.run = fake_run
             command = [
                 sys.executable,
                 str(stage / "provider_cutover_v3_1.py"),
                 "--apply",
             ]
-            result = launcher.guarded_runner(
-                SOURCE_SHA,
-                "mosianekk-lang",
-                "Federation-Omega",
-                lambda _owner, _legacy: SOURCE_SHA,
-            )(command)
+            with patch.object(launcher.subprocess, "run", side_effect=fake_run):
+                result = launcher.guarded_runner(
+                    SOURCE_SHA,
+                    "mosianekk-lang",
+                    "Federation-Omega",
+                    lambda _owner, _legacy: SOURCE_SHA,
+                )(command)
             self.assertEqual(0, result)
             self.assertEqual(1, len(calls))
             guarded, environment = calls[0]
