@@ -7,7 +7,7 @@ import sys
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUEST = ROOT / "governance" / "sovara_gemini_collaboration_request_v1.json"
+G0_TEMPLATE = ROOT / "governance" / "sovara_gemini_g0_authority_census_request_template_v1.json"
 CENSUS = ROOT / "sovara" / "gemini" / "admin_authority_census.py"
 
 SPEC = importlib.util.spec_from_file_location("sovara_admin_authority_census", CENSUS)
@@ -19,10 +19,10 @@ SPEC.loader.exec_module(MODULE)
 
 class SovaraGeminiDeploymentReadinessTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.request = json.loads(REQUEST.read_text(encoding="utf-8"))
+        self.request = json.loads(G0_TEMPLATE.read_text(encoding="utf-8"))
         self.source = CENSUS.read_text(encoding="utf-8")
 
-    def test_request_remains_strictly_read_only(self) -> None:
+    def test_g0_readiness_template_remains_strictly_read_only(self) -> None:
         self.assertEqual(self.request["mode"], "G0_READ_ONLY_VERIFY")
         self.assertEqual(self.request["g0_objective"], "ADMIN_AUTHORITY_GRAPH_CENSUS")
         self.assertTrue(self.request["deployment_readiness_probe"])
