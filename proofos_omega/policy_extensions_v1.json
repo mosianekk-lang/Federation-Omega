@@ -4,7 +4,7 @@
   "base_policy_version": "1.0.1",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
-  "purpose": "Add Omega-One v0.8.5 maturity and interoperability paths to ProofOS without replacing or weakening the canonical base policy.",
+  "purpose": "Add Omega-One v0.8.5 maturity, portfolio and interoperability paths to ProofOS without replacing or weakening the canonical base policy.",
   "risk_rules": [
     {
       "risk": "R2_SHARED",
@@ -23,17 +23,17 @@
     {
       "patterns": ["omega_one/**"],
       "tests": ["omega_one_v085_maturity_interop"],
-      "evidence": "OMEGA_ONE_V085_ZERO_DILUTION_MATURITY_INTEROP_ADMISSION"
+      "evidence": "OMEGA_ONE_V085_ZERO_DILUTION_MATURITY_PORTFOLIO_INTEROP_ADMISSION"
     }
   ],
   "tests": [
     {
       "id": "omega_one_v085_maturity_interop",
       "kind": "unittest_glob",
-      "target": "test_omega_one_v085_maturity_interop.py",
+      "target": "test_omega_one_v085_*.py",
       "patterns": [
         "omega_one/**",
-        "tests/test_omega_one_v085_maturity_interop.py",
+        "tests/test_omega_one_v085_*.py",
         "proofos_omega/policy_extensions_v1.json"
       ],
       "subsystems": ["OMEGA_ONE"],
