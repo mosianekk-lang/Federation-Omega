@@ -8,7 +8,10 @@ import re
 from typing import Any, Mapping
 
 _GITHUB_USER_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$")
-_REFERENCE_RE = re.compile(r"^[A-Z0-9][A-Z0-9._:-]{2,127}$")
+_REFERENCE_RE = re.compile(r"^CR-[0-9]{3,6}$")
+_RAW_SECRET_RE = re.compile(
+    r"(?i)^(?:ghp_|github_pat_|gho_|ghu_|ghs_|ghr_|bearer\s+|token\s+)"
+)
 API_VERSION = "2026-03-10"
 REQUIRED_PERMISSION = "Plan:read"
 
@@ -92,9 +95,16 @@ def build_ai_credit_usage_request(
         raise ValueError("year is out of supported range")
     if not 1 <= int(month) <= 12:
         raise ValueError("month must be in 1..12")
-    reference = str(credential_reference_id).strip().upper()
+
+    # Inspect the caller-supplied bytes before any normalization. A raw token
+    # must never be transformed into something that happens to look like a
+    # symbolic reference. v1 accepts only Secure Capability Box CR-* handles.
+    raw_reference = str(credential_reference_id).strip()
+    if _RAW_SECRET_RE.search(raw_reference):
+        raise ValueError("credential values are forbidden; use an opaque CR-* reference")
+    reference = raw_reference.upper()
     if not _REFERENCE_RE.fullmatch(reference):
-        raise ValueError("credential_reference_id must be an opaque reference")
+        raise ValueError("credential_reference_id must be an opaque Secure Capability Box CR-* reference")
 
     body = {
         "schema": "FCX_COPILOT_BILLING_USAGE_REQUEST_V1",
@@ -156,7 +166,6 @@ def parse_ai_credit_usage_response(
     gross_credits = discount_credits = net_credits = 0.0
     gross_amount = discount_amount = net_amount = 0.0
     models: set[str] = set()
-    matched_items = 0
 
     for item in items:
         if not isinstance(item, Mapping):
@@ -165,7 +174,6 @@ def parse_ai_credit_usage_response(
         unit_type = str(item.get("unitType", "")).strip().lower()
         if product.lower() != "copilot ai credits" or unit_type != "ai-credits":
             continue
-        matched_items += 1
         gross_credits += _finite_nonnegative(item.get("grossQuantity", 0), "grossQuantity")
         discount_credits += _finite_nonnegative(item.get("discountQuantity", 0), "discountQuantity")
         net_credits += _finite_nonnegative(item.get("netQuantity", 0), "netQuantity")
