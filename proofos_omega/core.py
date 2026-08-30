@@ -56,7 +56,7 @@ class TestSpec:
         if self.block_scope not in VALID_SCOPES or self.failure_class not in VALID_FAILURES: raise PolicyError(f"unsafe test contract: {self.test_id}")
         if not 1<=self.timeout_seconds<=3600: raise PolicyError(f"invalid timeout: {self.test_id}")
         safe=SAFE_MODULE if self.kind=="unittest_module" else SAFE_TARGET
-        if not safe.fullmatch(self.target): raise PolicyError(f"unsafe test target: {self.target}")
+        if not safe.fullmatch(self.target): raise PolicyError(f"unsafe test target: {self.test_id}")
 
 @dataclass(frozen=True)
 class ImpactAssessment:
@@ -133,6 +133,13 @@ class ProofPolicy:
 
 class ImpactCompiler:
     def __init__(self,policy): self.policy=policy
+    def _explicit_owners(self,path:str):
+        return {r.subsystem for r in self.policy.subsystem_rules if any_glob(path,r.patterns)}
+    def _unique_package_root_owner(self,path:str):
+        if "/" not in path: return ""
+        root=path.split("/",1)[0]+"/"
+        owners={r.subsystem for r in self.policy.subsystem_rules if any(str(pattern).startswith(root) for pattern in r.patterns)}
+        return next(iter(owners)) if len(owners)==1 else ""
     def assess(self,changed_paths:Sequence[str]):
         paths=tuple(stable_unique(normalize_path(x) for x in changed_paths)); reasons=[]; risk=RiskTier.R0_DOCS
         for p in paths:
@@ -140,10 +147,16 @@ class ImpactCompiler:
             for r in self.policy.risk_rules:
                 if any_glob(p,r.patterns): matched=True; risk=max(risk,r.risk); reasons.append(f"{p}:{r.reason}:{r.risk.name}")
             if not matched and self.policy.is_production_path(p): risk=max(risk,RiskTier.R1_ISOLATED); reasons.append(f"{p}:DEFAULT_PRODUCTION:R1_ISOLATED")
-        direct=stable_unique(r.subsystem for r in self.policy.subsystem_rules if any(any_glob(p,r.patterns) for p in paths))
+        explicit={p:self._explicit_owners(p) for p in paths}
+        inferred={}
+        for p in paths:
+            if explicit[p] or not self.policy.is_production_path(p): continue
+            owner=self._unique_package_root_owner(p)
+            if owner: inferred[p]=owner
+        direct=stable_unique([owner for owners in explicit.values() for owner in owners]+list(inferred.values()))
         impacted=self.policy.dependency_closure(direct)
-        unmapped=stable_unique(p for p in paths if self.policy.is_production_path(p) and not any(any_glob(p,r.patterns) for r in self.policy.subsystem_rules))
-        graph=sha256_json({"rules":[{"subsystem":r.subsystem,"patterns":r.patterns,"depends_on":r.depends_on} for r in self.policy.subsystem_rules],"direct":direct,"impacted":impacted})
+        unmapped=stable_unique(p for p in paths if self.policy.is_production_path(p) and not explicit[p] and p not in inferred)
+        graph=sha256_json({"rules":[{"subsystem":r.subsystem,"patterns":r.patterns,"depends_on":r.depends_on} for r in self.policy.subsystem_rules],"direct":direct,"impacted":impacted,"package_root_inference":inferred})
         return ImpactAssessment(paths,risk,tuple(stable_unique(reasons)),tuple(direct),tuple(impacted),tuple(unmapped),graph)
 
 class ProofSelector:
