@@ -304,6 +304,10 @@ jobs:
             "fcx-gemini-challenger.agent.md": ("proposal-only", "Never infer that you are Gemini"),
         }
         agent_dir = ROOT / ".github" / "agents"
+        if not agent_dir.is_dir():
+            self.skipTest(
+                "repository-only FCX agent profiles are intentionally excluded from workflow-free Core"
+            )
         for name, phrases in profiles.items():
             path = agent_dir / name
             self.assertTrue(path.is_file(), name)
