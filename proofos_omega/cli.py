@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -16,10 +19,75 @@ from .core import (
 )
 
 
+_DIAGNOSTIC_MAX_CHARS = 12000
+_SECRET_PATTERNS = (
+    re.compile(r"(?i)(authorization:\s*(?:bearer|token)\s+)[^\s]+"),
+    re.compile(r"(?i)\b(?:github_pat_|gh[pousr]_|sk-proj-|sk-or-v1-|sk-ant-)[A-Za-z0-9_.-]+"),
+    re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
+)
+
+
 def _write_json(path: str | Path, payload: dict) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+def _redact_diagnostic(text: str) -> str:
+    value = text
+    value = _SECRET_PATTERNS[0].sub(r"\1[REDACTED]", value)
+    for pattern in _SECRET_PATTERNS[1:]:
+        value = pattern.sub("[REDACTED_SECRET]", value)
+    if len(value) > _DIAGNOSTIC_MAX_CHARS:
+        value = "[...diagnostic truncated...]\n" + value[-_DIAGNOSTIC_MAX_CHARS:]
+    return value
+
+
+def _diagnostic_argv(spec) -> list[str] | None:
+    if spec.kind == "unittest_glob":
+        return [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", spec.target, "-v"]
+    if spec.kind == "unittest_module":
+        return [sys.executable, "-m", "unittest", spec.target, "-v"]
+    return None
+
+
+def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | Path) -> None:
+    """Rerun only failed unittest courts for bounded, redacted CI diagnostics.
+
+    This does not alter the hash-bound admission report, selection, cache semantics,
+    authority ceiling, or external-effect policy. It is a failure-only observability
+    pass after the authoritative court has already returned non-zero.
+    """
+    root = Path(repo_root)
+    for result in report.results:
+        if result.status.startswith("PASS") or result.status.startswith("SKIPPED"):
+            continue
+        spec = policy.tests[result.test_id]
+        argv = _diagnostic_argv(spec)
+        if argv is None:
+            continue
+        try:
+            proc = subprocess.run(
+                argv,
+                cwd=root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=spec.timeout_seconds,
+                check=False,
+                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            )
+            diagnostic = _redact_diagnostic((proc.stdout or "") + (proc.stderr or ""))
+        except subprocess.TimeoutExpired as exc:
+            raw_stdout = exc.stdout.decode(errors="replace") if isinstance(exc.stdout, bytes) else (exc.stdout or "")
+            raw_stderr = exc.stderr.decode(errors="replace") if isinstance(exc.stderr, bytes) else (exc.stderr or "")
+            diagnostic = _redact_diagnostic(raw_stdout + raw_stderr + "\n[diagnostic rerun timed out]")
+        print(
+            f"PROOFOS_DIAGNOSTIC_BEGIN test_id={result.test_id} authoritative_returncode={result.returncode}",
+            file=sys.stderr,
+        )
+        print(diagnostic, file=sys.stderr)
+        print(f"PROOFOS_DIAGNOSTIC_END test_id={result.test_id}", file=sys.stderr)
 
 
 def compile_command(args: argparse.Namespace) -> int:
@@ -60,7 +128,10 @@ def run_command(args: argparse.Namespace) -> int:
         f" tests={len(report.results)}"
         f" failures={len(report.blocking_failures)}"
     )
-    return 0 if report.status == "PASS" else 1
+    if report.status != "PASS":
+        _emit_failure_diagnostics(policy=policy, report=report, repo_root=args.repo_root)
+        return 1
+    return 0
 
 
 def verify_command(args: argparse.Namespace) -> int:
