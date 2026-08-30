@@ -1,0 +1,128 @@
+name: FCX Copilot Falsifier Canary
+
+on:
+  workflow_dispatch:
+    inputs:
+      execute:
+        description: 'Explicitly execute the bounded Copilot provider canary'
+        required: true
+        type: boolean
+        default: false
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+concurrency:
+  group: fcx-copilot-falsifier-canary
+  cancel-in-progress: false
+
+env:
+  TARGET_PR: '810'
+  TARGET_BASE_SHA: 'a202c105217ad774083b0234ec7561299900bbc3'
+  TARGET_HEAD_SHA: '57717da12451ae0b58b3ce92cfad77782844376b'
+  COPILOT_MODEL: 'gpt-5.6-luna'
+  MAX_AI_CREDITS: '30'
+  PROMPT_SHA256: 'b768c73bc97fe4c553cac76b91449bc636180eddab3171e450cd7818a315cc7f'
+
+jobs:
+  falsifier:
+    if: ${{ inputs.execute == true }}
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.TARGET_HEAD_SHA }}
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify exact immutable target and prepare public diff
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$TARGET_HEAD_SHA"
+          git merge-base --is-ancestor "$TARGET_BASE_SHA" "$TARGET_HEAD_SHA"
+          mkdir -p "$RUNNER_TEMP/fcx-copilot-canary" copilot-proof
+          git diff --no-ext-diff --unified=80 "$TARGET_BASE_SHA" "$TARGET_HEAD_SHA" \
+            > "$RUNNER_TEMP/fcx-copilot-canary/pr810.diff"
+          test -s "$RUNNER_TEMP/fcx-copilot-canary/pr810.diff"
+          test -z "$(git status --porcelain)"
+
+      - name: Install current GitHub Copilot CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g @github/copilot
+          copilot --version | tee copilot-proof/cli-version.txt
+
+      - name: Run bounded read-only Falsifier
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PROMPT='You are the FCX Copilot Falsifier. Perform a strict read-only engineering review of the supplied pull-request diff and checked-out repository at the exact target commit. Do not modify files, create commits, call GitHub APIs, use MCP, browse the web, or infer facts you cannot support from repository evidence. Focus on material defects that could make the proposed repair incorrect, noisy, brittle, over-broad, or misleading. Distinguish genuine defects from diagnostic artifacts or environment-induced false positives. For each finding return: severity, file/line or diff hunk, claim, evidence, likely impact, and minimal repair. Also identify any apparently alarming failures that are actually false positives and explain why. End with a concise verdict: PASS, PASS_WITH_FINDINGS, or FAIL. Do not mention any hidden benchmark or expected answer.'
+          observed_hash="$(printf '%s' "$PROMPT" | sha256sum | awk '{print $1}')"
+          test "$observed_hash" = "$PROMPT_SHA256"
+          printf '%s\n' "$observed_hash" > copilot-proof/prompt-sha256.txt
+
+          copilot \
+            -p "$PROMPT" \
+            --model="$COPILOT_MODEL" \
+            --max-ai-credits="$MAX_AI_CREDITS" \
+            --no-ask-user \
+            --add-dir="$RUNNER_TEMP/fcx-copilot-canary" \
+            --available-tools='view,grep,glob' \
+            --allow-tool='read' \
+            --deny-tool='write' \
+            --disable-builtin-mcps \
+            2>&1 | tee copilot-proof/falsifier-output.txt
+
+      - name: Enforce no repository mutation and build provider receipt shell
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          root = Path('copilot-proof')
+          output = (root / 'falsifier-output.txt').read_text(encoding='utf-8', errors='replace') if (root / 'falsifier-output.txt').exists() else ''
+          body = {
+              'schema': 'FCX_COPILOT_FALSIFIER_PROVIDER_RECEIPT_SHELL_V1',
+              'repository': os.environ['GITHUB_REPOSITORY'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'target_pr': os.environ['TARGET_PR'],
+              'target_base_sha': os.environ['TARGET_BASE_SHA'],
+              'target_head_sha': os.environ['TARGET_HEAD_SHA'],
+              'requested_model': os.environ['COPILOT_MODEL'],
+              'max_ai_credits_soft_limit': float(os.environ['MAX_AI_CREDITS']),
+              'prompt_sha256': os.environ['PROMPT_SHA256'],
+              'output_sha256': hashlib.sha256(output.encode()).hexdigest(),
+              'repository_mutation_detected': False,
+              'mcp_enabled': False,
+              'web_tool_enabled': False,
+              'write_tool_enabled': False,
+              'provider_usage_readback_required': True,
+              'observed_model_identity_required': True,
+              'blind_cfbe_scoring_required': True,
+              'promotion_claimed': False,
+          }
+          canonical = json.dumps(body, sort_keys=True, separators=(',', ':')).encode()
+          body['receipt_sha256'] = hashlib.sha256(canonical).hexdigest()
+          (root / 'receipt-shell.json').write_text(json.dumps(body, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps(body, sort_keys=True))
+          PY
+
+      - name: Upload immutable canary evidence
+        if: always() && hashFiles('copilot-proof/*') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fcx-copilot-falsifier-${{ github.run_id }}-${{ github.run_attempt }}
+          path: copilot-proof/
+          if-no-files-found: error
+          retention-days: 30
