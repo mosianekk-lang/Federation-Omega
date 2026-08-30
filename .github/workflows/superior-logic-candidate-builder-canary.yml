@@ -14,8 +14,6 @@ on:
       - "tests/test_maturation_candidate_builder.py"
       - "governance/SUPERIOR_LOGIC_CANDIDATE_BUILDER_V1.md"
       - ".github/workflows/superior-logic-candidate-builder-canary.yml"
-  workflow_dispatch:
-
 permissions:
   contents: read
   actions: read
