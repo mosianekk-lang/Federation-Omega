@@ -166,6 +166,26 @@ def shadow_place_bubbles_work(
         readiness_blockers=readiness_blockers,
     )
     selected_ids = tuple(item.capability_id for item in wave.selected)
+    if not selected_ids:
+        # Preserve the pre-capacity adapter's neutral no-op behavior. An empty
+        # CFBE wave has nothing for Bubbles to place, so cell/capacity validation
+        # must not manufacture a failure or alter the serving scheduler result.
+        digest_payload = {
+            "selected_work_ids": selected_ids,
+            "placement_digests": [],
+            "state": "SHADOW_READY",
+            "serving_route_changed": False,
+        }
+        placement_digest = sha256(
+            json.dumps(digest_payload, sort_keys=True, separators=(",", ":")).encode("utf-8")
+        ).hexdigest()
+        return BubblesCellShadowReceipt(
+            state="SHADOW_READY",
+            selected_work_ids=selected_ids,
+            placements=(),
+            placement_digest=placement_digest,
+        )
+
     allocation = WorkCellAllocator().allocate_wave(
         selected_ids,
         cells,
