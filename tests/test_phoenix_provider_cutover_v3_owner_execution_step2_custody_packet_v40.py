@@ -188,7 +188,7 @@ class OwnerExecutionStep2CustodyPacketV40Tests(unittest.TestCase):
         self.assertFalse(release["attestation_truth"]["owner_execution_present"])
         self.assertFalse(release["provider_proof"]["provider_apply_performed"])
         required = set(policy["ops"]["required_files"])
-        self.assertEqual("1.0.20", policy["version"])
+        self.assertEqual("1.0.21", policy["version"])
         self.assertIn("owner_execution_step2_custody_packet.py", required)
         self.assertIn("governance/OWNER_EXECUTION_STEP2_CUSTODY_PACKET_CONTRACT.json", required)
 
