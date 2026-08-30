@@ -1,0 +1,36 @@
+{
+  "schema": "SOVARA_SC_RIPPLE_ADMISSION_V1",
+  "capability_id": "SC-RIPPLE",
+  "predecessors": [
+    "governance/sovara_sc_graph_v1_admission.json",
+    "governance/sovara_sc_taste_v1_admission.json",
+    "governance/sovara_sc_producer_v1_admission.json"
+  ],
+  "promotion_ceiling": "SOURCE_CANDIDATE",
+  "implementation": "sovara/creative/ripple.py",
+  "regression_court": "tests/test_sovara_creative_ripple.py",
+  "objective": "Compile one owner correction into the minimum graph invalidation and production regeneration set while preserving locked work and authority boundaries.",
+  "build_strategy": "EXTEND_AND_COMPOSE",
+  "proof_gate": {
+    "required": [
+      "DETERMINISTIC_REPLAY",
+      "STALE_WRITER_REJECTION",
+      "LOCKED_TARGET_PROTECTION",
+      "LOCKED_PROPAGATION_STOP",
+      "MINIMUM_GRAPH_INVALIDATION",
+      "MINIMUM_MODALITY_REGENERATION",
+      "TASTE_CONFLICT_PRESERVATION",
+      "OWNER_REVIEW_ESCALATION",
+      "NO_AUTHORITY_INHERITANCE",
+      "NO_PROVIDER_OR_EXTERNAL_EFFECT"
+    ]
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "provider_effect_authorized": false,
+    "media_generation_authorized": false,
+    "publishing_authorized": false,
+    "spend_authorized": false
+  },
+  "truth_boundary": "Source and deterministic tests prove only in-process correction, invalidation and regeneration planning. They do not prove provider execution, media regeneration, production deployment, publication, owner-burden reduction, commercial value, repeated success or soak."
+}
