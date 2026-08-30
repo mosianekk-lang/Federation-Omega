@@ -1,0 +1,280 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "MISSION-ULTIMATE-MULTISTREAM-ENGINE-20260830",
+    "version": 5,
+    "goal": "Deliver a provider-neutral production foundation that deterministically decomposes, allocates, load-balances, joins, verifies, cancels and recovers bounded multi-stream work while preserving authority, privacy, cost and proof boundaries.",
+    "user": "Kim Kagiso Mosiane",
+    "workflow": "RECONCILE_NOT_REBUILD: Formation Reconciliation Fabric v2 plus SOL 6.1 plus isolated Omega-One PR 843 candidate semantics.",
+    "data": "Typed mission, task, capability, result, receipt, checkpoint, telemetry and proof records; secret values and private provider locators are prohibited.",
+    "interface": "Implemented local omega-completion CLI demo plus Python work-engine API, including topology-aware concurrency planning, bounded scheduling waves, persistence status and online-backup operations; additional operational commands remain future scope.",
+    "stack": "Python 3.11+ standard-library-first package; SQLite WAL transactional state store; Omega-One contracts and telemetry; SOL 6.1 runtime primitives.",
+    "environment": "Local deterministic no-effect development and CI foundation; provider adapters disabled by default.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation-gated A0-A3 separation, zero-new-recurring-cost default, zero-dilution proof maturity, single effect gateway and independent readback.",
+    "failure": "Fail closed on stale mission state, authority/privacy/cost uncertainty, provider drift, shared-write conflicts, missing proof, uncertain external outcome or cancellation.",
+    "testing": "Seventy-two local unit/integration tests and sixteen adversarial invariants passed. The H2-P paired five-boundary process-kill canary recovered every mission and cleared speed, projection, recovery, integrity and fairness gates, but failed proof-receipt exactly-once quality; multi-host, live-provider, hidden-suite, soak and real-media courts remain required before readiness.",
+    "deployment": "No deployment is authorized or claimed by this contract. A future target requires a separate permit, canary, health, persistence, rollback and semantic readback.",
+    "continuity": "SQLite transactional revisions, append-only control events, idempotency reservations, durable admission and dispatch-transition outbox recovery, online backup, leases, fencing, dead-letter state, explicit resume conditions and AI handoff files."
+  },
+  "classification": {
+    "system": "PROD_FOUNDATION_TESTED_LOCAL",
+    "effect": "A1_INTERNAL_ONLY",
+    "privacy": "P1_INTERNAL_DEFAULT",
+    "proof_ceiling": "TESTED_LOCAL",
+    "cfbe": "SHADOW_ONLY_ACTUAL_LOCAL_ENGINE",
+    "deployment": "NOT_DEPLOYED"
+  },
+  "assumptions": {
+    "stack": "Python 3.11+ and setuptools; no mandatory runtime dependency beyond the standard library at foundation stage.",
+    "runtime": "One root orchestrator owns bounded fan-out/fan-in; child concurrency cannot exceed the root budget.",
+    "storage": "Local SQLite WAL schema v2 with FULL synchronous commits, revision fencing, append-only control events and durable admission/dispatch-transition outboxes for deterministic same-host operation; a multi-host datastore and leader-election path remain unresolved.",
+    "authentication": "Provider credentials are never read by the core. Future adapters consume opaque authorized references and must prove current identity and scope.",
+    "deployment": "No target runtime, provider deployment or recurring infrastructure spend is assumed."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: CLI-first foundation; no graphical frontend is required for the current mission.",
+      "backend": "Implemented omega_one.work_engine mission governor and deterministic fan-out/fan-in coordinator composed over inherited Omega-One and SOL modules.",
+      "database": "Implemented normalized SQLite WAL transactional store with schema versioning, optimistic revision fencing, integrity checks, source-preserving legacy JSON migration and online backup; this is same-host proof only.",
+      "queue": "SOL DurableWorkerPlane-compatible durable queue with transactionally unique idempotency reservations, durable admission and dispatch-transition outboxes, idempotent partial sidecar materialization, leases, retries, dead-letter routing and checkpoint references.",
+      "worker": "SOL worker/coordinator primitives wrapped by typed Omega-One task/result contracts and mission-version fencing.",
+      "scheduler": "Root-owned DAG scheduler with hard vetoes, topology/critical-depth awareness, adaptive READY-frontier and worker-capacity width, weighted fairness, one-revision multi-lease waves, affinity and provider capacity scoring.",
+      "cache": "NOT_APPLICABLE: correctness cannot depend on a cache; any future cache is an optimization with independent invalidation tests.",
+      "storage": "Incrementally committed top-level records and hash-validated append-only control events stored in SQLite; inherited SOL worker/audit sidecars remain byte-preserved and are recovered idempotently from admission or dispatch-transition intent after interruption.",
+      "authentication": "Default-deny provider adapter admission; opaque secret references only; maker-credential Copilot autonomous triggers prohibited."
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE",
+      "CANCELLATION",
+      "STALE_MISSION_VERSION",
+      "LEASE_EXPIRY",
+      "OUTCOME_UNKNOWN",
+      "PROOF_GAP"
+    ],
+    "observability": {
+      "correlation_ids": "Mission, task, attempt, provider request and parent/child trace identities on every material event.",
+      "health_checks": "Required local status checks for event-chain integrity, queue state, lease age, provider flags and proof freshness.",
+      "structured_logs": "Secret-safe CloudEvent-shaped records with bounded recursively redacted data.",
+      "audit_logs": "Append-only hash-chained audit journal with tamper verification and cancellation/recovery events.",
+      "metrics_alerts": "Queue depth/age, active leases, latency, retries, cancellations, breaker state, cost, proof age and false-completion signals."
+    },
+    "invariants": [
+      "One current mission version.",
+      "One root-owned fan-out/fan-in boundary.",
+      "No overlapping parallel writer.",
+      "One serialized effect gateway.",
+      "Policy vetoes precede utility scoring.",
+      "No authority, privacy, cost or proof inheritance across providers.",
+      "Remote delivery is at-least-once plus idempotency and reconciliation.",
+      "Duplicate or conflicting idempotency keys are rejected before any state-plane mutation.",
+      "Integrity verification reconciles every control task with its exact worker job and idempotency index entry.",
+      "Detached later-stage evidence cannot promote over a missing predecessor.",
+      "A failed or fenced state commit publishes no partial control-state revision.",
+      "Exactly one same-host contender may reserve an idempotency key; losing contenders cannot mutate mission, task, job, index or outbox state.",
+      "Committed admissions survive interruption between the control transaction and inherited-sidecar materialization and are replayed idempotently on restart.",
+      "A multi-lease dispatch wave advances one control revision and records one durable transition intent before inherited worker-sidecar publication.",
+      "Partial dispatch-wave materialization is replayed idempotently; a matching existing lease is accepted and missing leases are completed.",
+      "Effectful tasks and proof completion remain on single-item paths and are excluded from multi-item transaction coalescing.",
+      "Full H2 is not admitted while process-kill recovery can replay RESULT or INDEPENDENT_PROOF receipts."
+    ]
+  },
+  "testing": {
+    "unit": [
+      "PASS: integrated local discovery executed 72 tests covering telemetry, schema-v2 transactional store, topology-aware adaptive waves, atomic idempotency admission, dispatch-transition recovery, cross-plane integrity, migration, crash recovery, same-host contention, online backup, CLI, provider adapters, source proof, deterministic CFBE and the H2-P harness contract.",
+      "REQUIRED FOR NEXT MATURITY: live-provider, multi-host persistence/leader election and long-duration courts."
+    ],
+    "integration": [
+      "PASS LOCAL: mission intake through DAG, bounded fan-out, join, proof closure and checkpoint.",
+      "PASS LOCAL: SOL-derived work-engine coordination without provider calls.",
+      "PASS LOCAL: duplicate and existing idempotency-key conflicts are rejected before mission or queue mutation; cross-plane integrity mismatch is detected.",
+      "PASS LOCAL: committed admission and dispatch waves interrupted before sidecar publication recover from durable outboxes; partial wave materialization replays idempotently; cross-instance same-host contention admits one shared key and one dispatch committer; a semantic online backup restores correctly.",
+      "REQUIRED: multi-host effect gateway outbox, shared-store idempotency, leader election, fencing and outcome-unknown reconciliation."
+    ],
+    "e2e_or_smoke": [
+      "PASS LOCAL: omega-completion demo --state-dir .omega-demo completed a no-effect three-task two-read-plus-join mission with integrity and source verification true.",
+      "REQUIRED: cancel and resume smoke cases fence late results."
+    ],
+    "fixtures_mocks": [
+      "Deterministic provider adapters for OpenAI, Gemini and Copilot envelopes.",
+      "Controlled quota, saturation, timeout, partial-output, stale-version and uncertain-outcome fixtures."
+    ],
+    "failure_first": [
+      "Unknown cost is held.",
+      "Unauthorized or privacy-incompatible route never reaches an adapter.",
+      "Gemini managed-agent/A2A preview routes are disabled by default.",
+      "Copilot maker-credential autonomous trigger is rejected.",
+      "Missing proof predecessor denies completion.",
+      "Expired leases recover or dead-letter without double credit.",
+      "Repeated unchanged failure opens its circuit.",
+      "Duplicate or conflicting idempotency admission produces zero mission, task, worker-job, index or outbox mutation.",
+      "Injected failure before commit rolls back the complete state revision.",
+      "Malformed or already-imported legacy state fails closed or remains idempotent without destroying the source."
+      ,"A schema-v2 dispatch wave survives post-commit interruption and partial inherited-sidecar materialization without duplicate leases or pending intent after restart."
+    ],
+    "commands": [
+      "python3 -m unittest discover -s tests -v",
+      "python3 /root/.codex/skills/remote-skills/validate-modisa-build-contracts/scripts/validate_build_contract.py BUILD_CONTRACT.json"
+    ]
+  },
+  "delivery": {
+    "file_tree": [
+      "README_ENGINE.md",
+      "ARCHITECTURE.md",
+      "AI_HANDOFF.md",
+      "PROJECT_MEMORY.md",
+      "FORMATION_SPEC.md",
+      "BUILD_CONTRACT.json",
+      "INTEGRATION_RECEIPT.json",
+      "pyproject.toml",
+      "SOURCE_BASE.json",
+      "governance/",
+      "benchmarks/",
+      "omega_one/",
+      "sol_61_runtime/",
+      "tests/"
+    ],
+    "exact_code_files": {
+      "present_implemented_and_reconciled": [
+        "omega_one/maturity.py",
+        "omega_one/interop.py",
+        "omega_one/portfolio.py",
+        "omega_one/promotion.py",
+        "omega_one/proof_harvest.py",
+        "omega_one/schema_adapter.py",
+        "omega_one/telemetry.py",
+        "omega_one/transaction_store.py",
+        "omega_one/work_engine.py",
+        "omega_one/provider_adapters.py",
+        "omega_one/source_proof.py",
+        "omega_one/cfbe.py",
+        "omega_one/cli.py",
+        "omega_one/__main__.py",
+        "benchmarks/run_engine_cfbe.py",
+        "tests/test_transaction_store.py",
+        "tests/test_work_engine.py",
+        "sol_61_runtime/runtime.py",
+        "sol_61_runtime/worker.py",
+        "sol_61_runtime/coordinator.py",
+        "sol_61_runtime/adaptive.py",
+        "sol_61_runtime/provider_bridge.py"
+      ],
+      "required_for_next_maturity": [
+        "live provider clients behind current identity, privacy, cost, authority and maturity admission",
+        "multi-host transactional persistence, leader election and distributed lease/fencing implementation",
+        "transactional idempotent proof finalization followed by a passing H2-P rerun and long-duration soak, hidden-suite and real-media completion courts",
+        "enforced repository required-check ruleset"
+      ]
+    },
+    "setup_commands": [
+      "python3 -m venv .venv",
+      ".venv/bin/python -m pip install -e ."
+    ],
+    "run_commands": [
+      ".venv/bin/omega-completion --help",
+      ".venv/bin/omega-completion demo --state-dir .omega-demo"
+    ],
+    "test_commands": [
+      ".venv/bin/python -m unittest discover -s tests -v",
+      ".venv/bin/python /root/.codex/skills/remote-skills/validate-modisa-build-contracts/scripts/validate_build_contract.py BUILD_CONTRACT.json"
+    ],
+    "deploy_commands": [
+      "NOT_APPLICABLE: deployed=false; deployment requires a separate current Formation mission, target contract, permit, canary, rollback and provider readback."
+    ],
+    "rollback_commands": [
+      "NOT_APPLICABLE: no deployment occurred; preserve the SQLite database or online backup, retain any legacy JSON source, and revert source changes only through the governed version-control review route."
+    ],
+    "debugging": [
+      "Run the smallest failing unittest module with verbose output.",
+      "Inspect redacted audit events and verify their hash chain.",
+      "Inspect mission version, dependency frontier, leases, provider flags and proof gaps before retry.",
+      "Do not repeat an unchanged failed provider route."
+    ]
+  },
+  "formation": {
+    "mission_id": "MISSION-ULTIMATE-MULTISTREAM-ENGINE-20260830",
+    "mission_version": 4,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1_INTERNAL",
+    "effectful_permit": "NOT_APPLICABLE: this contract covers documentation/configuration and local no-effect foundation work only.",
+    "single_effectful_path": true,
+    "effect_gateway_state": "DESIGNED_NOT_AUTHORIZED",
+    "maximum_cost": 0,
+    "zero_new_recurring_cost": true,
+    "manual_user_tasks": []
+  },
+  "watchman": {
+    "checks": [
+      "mission_version_fresh",
+      "queue_and_lease_health",
+      "provider_capability_fresh",
+      "cost_known_and_within_budget",
+      "privacy_and_authority_compatible",
+      "proof_predecessors_complete",
+      "audit_chain_valid",
+      "cancel_and_stop_state_enforced"
+    ],
+    "on_drift": "Hold affected route, preserve evidence, invalidate stale permits/leases, recompile the smallest safe frontier and require new readback.",
+    "completion_guard": "Reject completion when any required task, proof predecessor, semantic readback, rollback requirement or unresolved defect remains open."
+  },
+  "continuity": {
+    "idempotency": "Stable mission/task/provider keys; exact retries return committed records while conflicting reuse fails closed.",
+    "checkpoints": "Mission-versioned transactional revisions, event and task checkpoints with content hashes and completed-proof references.",
+    "resume_conditions": [
+      "Current mission version matches.",
+      "Audit/event chains verify.",
+      "Cancellation is not active.",
+      "Expired leases are recovered.",
+      "Outcome-unknown provider work is reconciled.",
+      "Provider capability, authority, privacy and cost state is refreshed."
+    ],
+    "handoff_files": [
+      "AI_HANDOFF.md",
+      "PROJECT_MEMORY.md",
+      "BUILD_CONTRACT.json",
+      "ARCHITECTURE.md",
+      "README_ENGINE.md"
+    ],
+    "stop_switch": "Persist mission/task cancellation, stop new leases, fence stale completions, reconcile in-flight effects and checkpoint terminal state."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": false,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "source_provenance": {
+      "federation_main": "73963da2b1e23b87c0bb440c044a32fbc08d3ce8",
+      "federation_tree": "3137_ENTRIES_NON_TRUNCATED",
+      "main_required_check_enforcement": "OBSERVED_DISABLED",
+      "omega_one_pr": 843,
+      "omega_one_pr_state": "OPEN_DRAFT_UNMERGED_28_AHEAD_0_BEHIND_RECORDED_BASE_THREE_EXACT_HEAD_CHECKS_PASS",
+      "omega_one_pr_head": "b1ccae6833410899ca07aada218a6b585d3c9f5e",
+      "omega_one_pr_base": "main"
+    },
+    "test_results": "PASS LOCAL: unittest discovery 77/77; compileall PASS; atomic control-state plus transition finalization, wrong-claim rollback, parameter-bound replay rejection, schema-v2 migration, one-revision multi-lease coalescing, transaction rollback, admission and dispatch post-commit crash recovery, partial sidecar replay, same-host cross-instance contention, online-backup restore and the exact H2-P process-kill court passed.",
+    "semantic_verification": "PASS LOCAL: CLI demo completed a three-task two-read-plus-join mission with all tasks PROVEN, integrity=true, source_verified=true, provider_execution=false and deployed=false.",
+    "deployment_readback": "NOT_APPLICABLE: deployed=false.",
+    "provider_readback": "NOT_APPLICABLE: all live provider adapters are disabled and provider execution is not claimed.",
+    "cfbe_state": "SHADOW_ONLY ACTUAL LOCAL ENGINE: H1 passed 16/16 invariants across eight paired workloads through 240 tasks. The repaired H2-P court paired identical 100-mission candidate and baseline routes across all five verified process-kill boundaries; candidate recovered every mission, emitted zero duplicate RESULT, INDEPENDENT_PROOF, completion-evaluation or reliability events, measured 2.9985594776855318x, and passed every integrity, fairness, recovery and quality gate. Full H2 retry is admitted but not yet executed. Exact report sha256 59ebdd2c4136d76826e68e7ea18eeb63920ae6d98f91da5686d8d179fb92266e. Live automation remains NO_GO and CFBE-GOLD is not claimed.",
+    "known_limitations_outside_tested_local_boundary": [
+      "Live OpenAI, Gemini and Copilot clients are not implemented, authorized or provider-read back.",
+      "Multi-host transactional persistence, distributed leader election and distributed fencing are not proven; SQLite WAL proof is same-host only.",
+      "Actual local paired benchmarks are not live-provider or distributed throughput proof; H1 measurements require counterbalanced repeated statistical courts before any production performance claim.",
+      "Seven-day/10,000-mission soak, hidden-suite and real image/video completion evidence are absent.",
+      "No deployment, repeated-success or owner-value proof.",
+      "Current main required-check enforcement was observed disabled and an enforced ruleset is absent."
+    ],
+    "unresolved_defects": []
+  }
+}

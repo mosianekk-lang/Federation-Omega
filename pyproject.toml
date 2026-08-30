@@ -3,14 +3,37 @@ requires = ["setuptools>=68"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "federation-omega-consolidation"
-version = "1.0.1"
-description = "Alpha→Omega proof-carrying 24-hour Federation Omega consolidation kernel"
+name = "omega-completion-engine"
+version = "0.1.0.dev0"
+description = "Governed provider-neutral multi-stream work allocation and proof-closure engine"
+readme = "README_ENGINE.md"
 requires-python = ">=3.11"
+license = { text = "Proprietary" }
+authors = [
+  { name = "Kim Kagiso Mosiane" }
+]
 dependencies = []
+classifiers = [
+  "Development Status :: 2 - Pre-Alpha",
+  "Programming Language :: Python :: 3",
+  "Programming Language :: Python :: 3.11",
+  "Programming Language :: Python :: 3.12",
+  "Operating System :: OS Independent",
+  "Topic :: Software Development :: Libraries :: Application Frameworks"
+]
 
-[tool.setuptools]
-packages = ["federation_consolidation", "alpha_omega_v30", "ao_harmonic_v3"]
+[project.scripts]
+omega-completion = "omega_one.cli:main"
 
-[tool.pytest.ini_options]
-testpaths = ["tests"]
+[tool.setuptools.packages.find]
+where = ["."]
+include = ["omega_one*", "sol_61_runtime*"]
+namespaces = true
+
+[tool.setuptools.package-data]
+omega_one = ["*.json"]
+
+[tool.unittest]
+start-directory = "tests"
+pattern = "test_*.py"
+
