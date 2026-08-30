@@ -12,6 +12,7 @@ from dataclasses import dataclass
 from pathlib import Path
 from typing import Any, Mapping
 
+from .policy_loader import _load_policy
 from .core import (
     ProofPolicy,
     ProofRunner,
@@ -255,7 +256,7 @@ def main(argv: list[str] | None = None) -> int:
     parser.add_argument("--output", required=True)
     args = parser.parse_args(argv)
     try:
-        policy = ProofPolicy.from_path(args.policy)
+        policy = _load_policy(args.policy, args.repo_root)
         config = CalibrationConfig.from_path(args.config)
         manifest = load_manifest(args.manifest)
         receipt = ShadowCalibrator(policy=policy, config=config, repo_root=args.repo_root).run(manifest)

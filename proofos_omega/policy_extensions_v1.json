@@ -1,0 +1,67 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-EXTENSION-V1",
+  "version": "1.1.0",
+  "base_policy_version": "1.0.2",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Add Omega-One v0.8.5 maturity/interoperability and v0.8.6 bounded hyperperformance paths to ProofOS without replacing or weakening the canonical base policy.",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": ["omega_one/**"],
+      "reason": "OMEGA_ONE_SHARED_GOVERNANCE_AND_INTEROP_LIBRARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "OMEGA_ONE",
+      "patterns": ["omega_one/**"],
+      "depends_on": ["FEDERATION_CORE"]
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": ["omega_one/**"],
+      "tests": ["omega_one_v085_maturity_interop", "omega_one_v086_hyperperformance"],
+      "evidence": "OMEGA_ONE_V085_ZERO_DILUTION_AND_V086_BOUNDED_HYPERPERFORMANCE_ADMISSION"
+    }
+  ],
+  "tests": [
+    {
+      "id": "omega_one_v085_maturity_interop",
+      "kind": "unittest_glob",
+      "target": "test_omega_one_v085_*.py",
+      "patterns": [
+        "omega_one/**",
+        "tests/test_omega_one_v085_*.py",
+        "proofos_omega/policy_extensions_v1.json"
+      ],
+      "subsystems": ["OMEGA_ONE"],
+      "always": false,
+      "hard_always_run": false,
+      "sentinel_eligible": false,
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "omega_one_v086_hyperperformance",
+      "kind": "unittest_glob",
+      "target": "test_omega_one_v086_hyperperformance.py",
+      "patterns": [
+        "omega_one/hyperperformance.py",
+        "benchmarking/omega_one_cfbe_local.py",
+        "omega_one/__init__.py",
+        "tests/test_omega_one_v086_hyperperformance.py",
+        "proofos_omega/policy_extensions_v1.json"
+      ],
+      "subsystems": ["OMEGA_ONE"],
+      "always": false,
+      "hard_always_run": false,
+      "sentinel_eligible": false,
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
