@@ -8,14 +8,44 @@
     "max_tool_payload_chars": 120000,
     "max_capsule_chars": 24000
   },
+  "tool_payload_firewall": {
+    "state": "SOURCE_CANDIDATE",
+    "per_result_max_raw_chars": 24000,
+    "per_result_max_raw_lines": 300,
+    "max_diagnostic_chars": 12000,
+    "max_diagnostic_lines": 120,
+    "tail_lines": 20,
+    "heavy_content_kinds": [
+      "workflow_log",
+      "provider_log",
+      "repository_listing",
+      "connector_schema"
+    ],
+    "oversize_action": "EXTRACT_BOUNDED_DIAGNOSTIC",
+    "sensitive_hint_action": "REDACT_AND_EXTRACT_DIAGNOSTIC",
+    "raw_output_default": "ADMIT_ONLY_WITHIN_PER_RESULT_BUDGET"
+  },
+  "diagnostic_extractor": {
+    "selection": "FAILURE_LINES_PLUS_CONTEXT_PLUS_BOUNDED_TAIL",
+    "raw_payload_hash_required": true,
+    "common_secret_shape_redaction_required": true,
+    "full_log_is_last_resort": true
+  },
   "breach_action": "CHECKPOINT_COMPACT_REROUTE",
-  "mandatory_retrieval_order": ["CANONICAL_SOURCE", "SEARCH", "TARGETED_SLICE", "COMPACT_CAPSULE", "WORK"],
+  "mandatory_retrieval_order": [
+    "CANONICAL_SOURCE",
+    "SEARCH",
+    "TARGETED_SLICE",
+    "COMPACT_CAPSULE",
+    "WORK"
+  ],
   "prohibited_default_behaviors": [
     "FULL_BIBLE_HYDRATION",
     "FULL_KDV_SCAN",
     "UNBOUNDED_PROVIDER_LOG_HYDRATION",
     "REPEATED_CONNECTOR_SCHEMA_RELOAD",
-    "UNBOUNDED_TOOL_FANOUT"
+    "UNBOUNDED_TOOL_FANOUT",
+    "FULL_WORKFLOW_LOG_BEFORE_BOUNDED_DIAGNOSTIC"
   ],
-  "truth_boundary": "Budget enforcement controls active working context only; canonical history remains external and must not be deleted to satisfy a budget."
+  "truth_boundary": "Budget enforcement controls active working context only; canonical history remains external and must not be deleted to satisfy a budget. Source code defines a host/runtime contract and does not by itself intercept ChatGPT connector output or prove browser-crash prevention."
 }
