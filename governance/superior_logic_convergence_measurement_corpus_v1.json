@@ -1,0 +1,16 @@
+{
+  "schema": "SLOS-CONVERGENCE-SYNTHETIC-CORPUS-V1",
+  "status": "SOURCE_CANDIDATE",
+  "privacy": "PUBLIC_SAFE_SYNTHETIC_ONLY",
+  "mission_classes": [
+    "CURRENT_STATE_READ",
+    "PROVIDER_EFFECT",
+    "LEGAL_FORENSIC",
+    "FAILURE_RECOVERY",
+    "EVOLUTION_BENCHMARK",
+    "CROSS_CHAT_HEARTBEAT",
+    "LARGE_TOOL_OUTPUT",
+    "VISUAL_ARTIFACT_ASSURANCE"
+  ],
+  "truth_boundary": "This corpus tests deterministic control retention and modeled structural efficiency only. It contains no private case facts, provider receipts, model outputs, runtime measurements or owner-behavior observations."
+}
