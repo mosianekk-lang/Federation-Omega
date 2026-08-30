@@ -6,18 +6,18 @@ from pathlib import Path
 
 
 ROOT = Path(__file__).resolve().parents[1]
-REQUEST = ROOT / "governance" / "sovara_gemini_collaboration_request_v1.json"
+G0_TEMPLATE = ROOT / "governance" / "sovara_gemini_g0_authority_census_request_template_v1.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "sovara-litellm-v2-3-provider-admission.yml"
 BOOTSTRAP = ROOT / "sovara" / "gemini" / "bootstrap_gateway.sh"
 
 
 class SovaraGeminiG0AuthorityCensusTests(unittest.TestCase):
     def setUp(self) -> None:
-        self.request = json.loads(REQUEST.read_text(encoding="utf-8"))
+        self.request = json.loads(G0_TEMPLATE.read_text(encoding="utf-8"))
         self.workflow = WORKFLOW.read_text(encoding="utf-8")
         self.bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
 
-    def test_current_g0_request_is_read_only_authority_census(self) -> None:
+    def test_dormant_g0_template_is_read_only_authority_census(self) -> None:
         self.assertEqual(self.request["mode"], "G0_READ_ONLY_VERIFY")
         self.assertEqual(self.request["g0_objective"], "ADMIN_AUTHORITY_GRAPH_CENSUS")
         self.assertFalse(self.request["provider_mutation_allowed"])

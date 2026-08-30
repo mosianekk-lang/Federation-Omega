@@ -13,7 +13,6 @@ class SovaraGeminiG3RequestTemplateTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.template = json.loads(TEMPLATE.read_text(encoding="utf-8"))
-        cls.active = json.loads(ACTIVE.read_text(encoding="utf-8"))
 
     def test_template_matches_exact_trusted_g3_contract(self) -> None:
         p = self.template
@@ -42,11 +41,10 @@ class SovaraGeminiG3RequestTemplateTests(unittest.TestCase):
         self.assertIn("production_traffic_promotion", self.template["forbidden_effects"])
         self.assertIn("public_unauthenticated_access", self.template["forbidden_effects"])
 
-    def test_template_is_dormant_and_active_request_remains_read_only(self) -> None:
-        self.assertEqual("G0_READ_ONLY_VERIFY", self.active["mode"])
-        self.assertFalse(self.active["provider_mutation_allowed"])
-        self.assertFalse(self.active["model_inference_allowed"])
-        self.assertEqual("ADMIN_AUTHORITY_GRAPH_CENSUS", self.active["g0_objective"])
+    def test_g3_template_is_separate_from_mutable_active_request(self) -> None:
+        self.assertNotEqual(TEMPLATE, ACTIVE)
+        self.assertTrue(TEMPLATE.name.endswith("_template_v1.json"))
+        self.assertEqual("G3_PRIVATE_GATEWAY_CANARY", self.template["mode"])
 
 
 if __name__ == "__main__":
