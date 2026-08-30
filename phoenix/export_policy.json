@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "core": {
     "include_extensions": [
       ".css",
@@ -50,7 +50,9 @@
       "tests/test_ao_cra_federation_inheritance.py",
       "tests/test_frontier_convergence_manifest.py",
       "tests/test_frontier_convergence_continuity.py",
-      "tests/test_sovara_litellm_provider_airlock.py"
+      "tests/test_sovara_litellm_provider_airlock.py",
+      "tests/test_sovara_admin_actas_census.py",
+      "tests/test_sovara_privileged_control_runtime_census.py"
     ],
     "excluded_segments": [
       "__pycache__",
