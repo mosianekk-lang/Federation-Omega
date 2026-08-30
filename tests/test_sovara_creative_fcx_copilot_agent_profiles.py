@@ -5,11 +5,23 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 AGENTS_DIR = ROOT / ".github" / "agents"
+CORE_MANIFEST = ROOT / "PHOENIX_CORE_MANIFEST.json"
 GOVERNANCE = ROOT / "governance" / "sovara_fcx_copilot_pro_adapter_v1.json"
+
+
+def require_repository_agent_surface(testcase: unittest.TestCase) -> None:
+    if AGENTS_DIR.is_dir():
+        return
+    if CORE_MANIFEST.is_file():
+        testcase.skipTest(
+            "GitHub Copilot agent profiles are source-repository controls intentionally excluded from Phoenix Core export"
+        )
+    testcase.fail(".github/agents is missing outside a Phoenix Core export")
 
 
 class FCXCopilotAgentProfileTests(unittest.TestCase):
     def test_all_four_native_custom_agent_profiles_exist(self):
+        require_repository_agent_surface(self)
         expected = {
             "fcx-builder.agent.md",
             "fcx-reviewer.agent.md",
@@ -20,6 +32,7 @@ class FCXCopilotAgentProfileTests(unittest.TestCase):
         self.assertEqual(observed, expected)
 
     def test_profiles_use_required_github_frontmatter(self):
+        require_repository_agent_surface(self)
         for path in AGENTS_DIR.glob("fcx-*.agent.md"):
             text = path.read_text(encoding="utf-8")
             self.assertTrue(text.startswith("---\n"), path.name)
@@ -29,12 +42,14 @@ class FCXCopilotAgentProfileTests(unittest.TestCase):
             self.assertIn(".github/copilot-instructions.md", text, path.name)
 
     def test_builder_is_branch_pr_only(self):
+        require_repository_agent_surface(self)
         text = (AGENTS_DIR / "fcx-builder.agent.md").read_text(encoding="utf-8")
         self.assertIn("purpose-specific branch", text)
         self.assertIn("pull request", text)
         self.assertIn("Never push or commit directly to `main`", text)
 
     def test_review_falsifier_and_gemini_profiles_are_read_only(self):
+        require_repository_agent_surface(self)
         for name in (
             "fcx-reviewer.agent.md",
             "fcx-falsifier.agent.md",
@@ -44,6 +59,7 @@ class FCXCopilotAgentProfileTests(unittest.TestCase):
             self.assertIn("read-only", text, name)
 
     def test_gemini_profile_does_not_self_assert_model_identity(self):
+        require_repository_agent_surface(self)
         text = (AGENTS_DIR / "fcx-gemini-challenger.agent.md").read_text(encoding="utf-8")
         self.assertIn("Never infer that you are Gemini", text)
         self.assertIn("UNVERIFIED", text)
