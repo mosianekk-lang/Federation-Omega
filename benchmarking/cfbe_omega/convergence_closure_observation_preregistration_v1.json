@@ -1,0 +1,92 @@
+{
+  "schema": "CFBE-OMEGA-CONVERGENCE-CLOSURE-OBSERVATION-PREREGISTRATION-V1",
+  "window_id": "CFBE-CLOSURE-WINDOW-20260830-001",
+  "mission_id": "MISSION-CFBE-OMEGA-CONVERGENCE-COMPLETE",
+  "source_main_sha": "642958d6a60e1f2509f802e668a39d09c69684aa",
+  "pre_registered_at_sast": "2026-08-30T19:24:06+02:00",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effects_authorized": false,
+  "financial_effects_authorized": false,
+  "maximum_incremental_cost_usd": 0.01,
+  "manual_owner_actions_allowed": 0,
+  "observation_command": "python -m unittest tests.test_cfbe_convergence_closure_runtime_v1 tests.test_cfbe_convergence_closure_matrix_v1 -v",
+  "dimensions": [
+    {
+      "dimension": "expected_information_gain",
+      "source_key": "canary.failure_modes_falsified",
+      "semantic_kind": "BENEFIT_TARGET",
+      "bound": 12.0,
+      "evidence_ref": "preregistration:failure-mode-catalog-v1"
+    },
+    {
+      "dimension": "mission_value",
+      "source_key": "canary.closure_cells_advanced",
+      "semantic_kind": "BENEFIT_TARGET",
+      "bound": 4.0,
+      "evidence_ref": "closure-matrix:C03+C05+C07+C12"
+    },
+    {
+      "dimension": "proof_strength_gain",
+      "source_key": "canary.proof_layers_verified",
+      "semantic_kind": "BENEFIT_TARGET",
+      "bound": 3.0,
+      "evidence_ref": "preregistration:projection+durable-readback+regression"
+    },
+    {
+      "dimension": "reversibility",
+      "source_key": "canary.rollback_routes_verified",
+      "semantic_kind": "BENEFIT_TARGET",
+      "bound": 1.0,
+      "evidence_ref": "git:single-branch-revert-route"
+    },
+    {
+      "dimension": "estimated_cost",
+      "source_key": "canary.incremental_cost_usd",
+      "semantic_kind": "BURDEN_CEILING",
+      "bound": 0.01,
+      "evidence_ref": "mission:maximum-cost-zero-existing-runtime"
+    },
+    {
+      "dimension": "latency_burden",
+      "source_key": "canary.elapsed_seconds",
+      "semantic_kind": "BURDEN_CEILING",
+      "bound": 120.0,
+      "evidence_ref": "preregistration:bounded-local-canary-120s"
+    },
+    {
+      "dimension": "owner_burden",
+      "source_key": "canary.manual_owner_actions",
+      "semantic_kind": "BURDEN_CEILING",
+      "bound": 1.0,
+      "evidence_ref": "mission:manual-user-tasks-forbidden"
+    },
+    {
+      "dimension": "risk",
+      "source_key": "canary.external_effects_or_harm_signals",
+      "semantic_kind": "BURDEN_CEILING",
+      "bound": 1.0,
+      "evidence_ref": "mission:zero-avoidable-harm"
+    }
+  ],
+  "required_failure_modes": [
+    "stale-main projection",
+    "stale Living State evidence",
+    "split-brain Living State evidence",
+    "dependency not terminal",
+    "C03 and C05 same-wave scheduling",
+    "more than one primary per rail",
+    "more than one challenger per rail",
+    "blocked-lane cross-rail contamination",
+    "critical regression non-preemption",
+    "static DATA_NEEDED without observed override",
+    "cross-mission Foundry evidence stitching",
+    "synthetic or baseline-free Foundry admission"
+  ],
+  "truth_boundary": {
+    "preregistration_is_not_observation": true,
+    "source_implementation_is_not_operational_maturity": true,
+    "local_zero_effect_window_is_not_provider_or_production_proof": true,
+    "data_ready_is_not_promotion": true,
+    "ten_x_claimed": false
+  }
+}
