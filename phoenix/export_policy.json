@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-PHOENIX-EXPORT-POLICY-1",
-  "version": "1.0.20",
+  "version": "1.0.21",
   "core": {
     "include_extensions": [
       ".css",
@@ -42,6 +42,7 @@
     ],
     "excluded_test_globs": [
       "tests/test_phoenix_*",
+      "tests/test_github_airlock.py",
       "tests/test_provider_airlock_activate.py",
       "tests/test_agent_governance_contract.py",
       "tests/test_pst_composite_runtime_contract.py",
