@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .core import (
     ImpactCompiler,
+    PolicyError,
     ProofCache,
     ProofPolicy,
     ProofRunner,
@@ -31,12 +32,93 @@ _SECRET_VALUE_RES = (
 _SECRET_ASSIGNMENT_RE = re.compile(
     r"(?i)\b(token|secret|password|api[_-]?key|authorization|cookie)\b(\s*[:=]\s*)([^\r\n]+)"
 )
+_EXTENSION_SCHEMA = "FEDERATION-PROOFOS-OMEGA-EXTENSION-V1"
+_EXTENSION_FILENAME = "policy_extensions_v1.json"
+_EXTENSION_ALLOWED_KEYS = {
+    "schema",
+    "version",
+    "base_policy_version",
+    "authority_ceiling",
+    "external_effect_default",
+    "purpose",
+    "risk_rules",
+    "subsystem_rules",
+    "historical_associations",
+    "tests",
+}
+_EXTENSION_APPEND_KEYS = (
+    "risk_rules",
+    "subsystem_rules",
+    "historical_associations",
+    "tests",
+)
 
 
 def _write_json(path: str | Path, payload: dict) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+def _merge_policy_extension(base: dict, extension: dict) -> dict:
+    """Merge one ProofOS extension additively and fail closed on any override attempt.
+
+    The extension may add risk rules, subsystem mappings, historical associations and
+    tests. It may not replace selector behavior, truth boundaries, authority, existing
+    subsystem identities or existing test identities. This preserves the canonical base
+    policy while allowing newly admitted systems to become first-class proof surfaces.
+    """
+    unexpected = set(extension) - _EXTENSION_ALLOWED_KEYS
+    if unexpected:
+        raise PolicyError(f"ProofOS extension contains forbidden keys: {sorted(unexpected)}")
+    if extension.get("schema") != _EXTENSION_SCHEMA:
+        raise PolicyError("unsupported ProofOS extension schema")
+    if not re.fullmatch(r"\d+\.\d+\.\d+", str(extension.get("version", ""))):
+        raise PolicyError("invalid ProofOS extension version")
+    if str(extension.get("base_policy_version", "")) != str(base.get("version", "")):
+        raise PolicyError("ProofOS extension base policy version mismatch")
+    if extension.get("authority_ceiling") != "A1_INTERNAL":
+        raise PolicyError("ProofOS extension may not expand authority")
+    if extension.get("external_effect_default") is not False:
+        raise PolicyError("ProofOS extension may not enable external effects")
+
+    existing_subsystems = {str(item.get("subsystem", "")) for item in base.get("subsystem_rules", [])}
+    extension_subsystems = [str(item.get("subsystem", "")) for item in extension.get("subsystem_rules", [])]
+    if not all(extension_subsystems) or len(extension_subsystems) != len(set(extension_subsystems)):
+        raise PolicyError("ProofOS extension subsystem identities must be non-empty and unique")
+    overlap_subsystems = existing_subsystems & set(extension_subsystems)
+    if overlap_subsystems:
+        raise PolicyError(f"ProofOS extension may not replace subsystem identities: {sorted(overlap_subsystems)}")
+
+    existing_tests = {str(item.get("id", "")) for item in base.get("tests", [])}
+    extension_tests = [str(item.get("id", "")) for item in extension.get("tests", [])]
+    if not all(extension_tests) or len(extension_tests) != len(set(extension_tests)):
+        raise PolicyError("ProofOS extension test identities must be non-empty and unique")
+    overlap_tests = existing_tests & set(extension_tests)
+    if overlap_tests:
+        raise PolicyError(f"ProofOS extension may not replace test identities: {sorted(overlap_tests)}")
+
+    merged = json.loads(json.dumps(base))
+    for key in _EXTENSION_APPEND_KEYS:
+        merged.setdefault(key, [])
+        merged[key].extend(json.loads(json.dumps(extension.get(key, []))))
+    return merged
+
+
+def _load_policy(policy_path: str | Path, repo_root: str | Path = ".") -> ProofPolicy:
+    """Load the canonical policy plus an optional additive extension registry.
+
+    The base policy remains unchanged on disk. Extension absence simply preserves the
+    historical behavior. Extension presence is validated before any merged ProofPolicy is
+    constructed, so unknown or authority-expanding extensions fail closed.
+    """
+    path = Path(policy_path)
+    base = json.loads(path.read_text(encoding="utf-8"))
+    extension_path = Path(repo_root) / "proofos_omega" / _EXTENSION_FILENAME
+    if extension_path.is_file():
+        extension = json.loads(extension_path.read_text(encoding="utf-8"))
+        base = _merge_policy_extension(base, extension)
+    return ProofPolicy(base)
 
 
 def _redact_diagnostic(text: str) -> str:
@@ -140,7 +222,7 @@ def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | P
 
 
 def compile_command(args: argparse.Namespace) -> int:
-    policy = ProofPolicy.from_path(args.policy)
+    policy = _load_policy(args.policy, args.repo_root)
     if args.changed_file:
         changed_paths = [line.strip() for line in Path(args.changed_file).read_text(encoding="utf-8").splitlines() if line.strip()]
     else:
@@ -164,7 +246,7 @@ def compile_command(args: argparse.Namespace) -> int:
 
 
 def run_command(args: argparse.Namespace) -> int:
-    policy = ProofPolicy.from_path(args.policy)
+    policy = _load_policy(args.policy, args.repo_root)
     manifest = load_manifest(args.manifest)
     cache = ProofCache(args.cache_dir) if args.cache_dir else None
     report = ProofRunner(policy=policy, repo_root=args.repo_root, cache=cache).run(manifest)
@@ -185,7 +267,7 @@ def run_command(args: argparse.Namespace) -> int:
 
 def verify_command(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.manifest)
-    policy = ProofPolicy.from_path(args.policy)
+    policy = _load_policy(args.policy, args.repo_root)
     if manifest.policy_sha256 != policy.sha256:
         print("PROOFOS_VERIFY policy_hash_mismatch", file=sys.stderr)
         return 1
@@ -224,6 +306,7 @@ def build_parser() -> argparse.ArgumentParser:
     verify_parser = sub.add_parser("verify", help="verify manifest integrity and proof completeness")
     verify_parser.add_argument("--policy", required=True)
     verify_parser.add_argument("--manifest", required=True)
+    verify_parser.add_argument("--repo-root", default=".")
     verify_parser.set_defaults(func=verify_command)
     return parser
 
