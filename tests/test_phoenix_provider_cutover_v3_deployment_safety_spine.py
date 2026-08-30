@@ -269,26 +269,6 @@ class DeploymentSafetySpineTests(unittest.TestCase):
         self.assertEqual("TESTED_LOCAL_ADAPTER_REQUIRED", health["execution_guard"])
         self.assertFalse(health["external_bindings"])
 
-    def test_fcx_copilot_adapter_court_stays_green(self):
-        proc = subprocess.run(
-            [
-                sys.executable,
-                "-m",
-                "unittest",
-                "discover",
-                "-s",
-                "tests",
-                "-p",
-                "test_fcx_copilot_*.py",
-                "-v",
-            ],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            timeout=60,
-        )
-        self.assertEqual(0, proc.returncode, proc.stdout + "\n" + proc.stderr)
-
 
 if __name__ == "__main__":
     unittest.main()

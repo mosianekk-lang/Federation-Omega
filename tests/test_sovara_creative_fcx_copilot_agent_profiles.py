@@ -5,7 +5,7 @@ import unittest
 
 ROOT = pathlib.Path(__file__).resolve().parents[1]
 AGENTS_DIR = ROOT / ".github" / "agents"
-GOVERNANCE = ROOT / "governance" / "federation_fcx_copilot_pro_adapter_v1.json"
+GOVERNANCE = ROOT / "governance" / "sovara_fcx_copilot_pro_adapter_v1.json"
 
 
 class FCXCopilotAgentProfileTests(unittest.TestCase):

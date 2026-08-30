@@ -67,28 +67,6 @@ class SourceProvenanceTests(unittest.TestCase):
         self.assertIn("provider protection is not yet active", copilot_contract)
         self.assertNotIn("branch protection is active", agent_contract.lower())
 
-    def test_fcx_copilot_agent_profiles_inherit_fail_closed_governance(self):
-        profiles = {
-            "fcx-builder.agent.md": ("purpose-specific branch", "Never push or commit directly to `main`"),
-            "fcx-reviewer.agent.md": ("read-only", "AGENTS.md"),
-            "fcx-falsifier.agent.md": ("read-only", "AGENTS.md"),
-            "fcx-gemini-challenger.agent.md": ("proposal-only", "Never infer that you are Gemini"),
-        }
-        agent_dir = ROOT / ".github" / "agents"
-        for name, phrases in profiles.items():
-            path = agent_dir / name
-            self.assertTrue(path.is_file(), name)
-            text = path.read_text(encoding="utf-8")
-            self.assertIn("target: github-copilot", text, name)
-            self.assertIn(".github/copilot-instructions.md", text, name)
-            for phrase in phrases:
-                self.assertIn(phrase, text, name)
-        governance = json.loads(
-            (ROOT / "governance" / "federation_fcx_copilot_pro_adapter_v1.json").read_text(encoding="utf-8")
-        )
-        self.assertEqual("DENY", governance["credit_policy"]["paid_overage_default"])
-        self.assertEqual("PRIVATE_ACCOUNT_EVIDENCE_REQUIRED", governance["account_entitlement"])
-
     def test_main_airlock_ruleset_is_sole_owner_safe_and_requires_release_court(self):
         ruleset = json.loads(
             (
