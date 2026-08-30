@@ -1,0 +1,30 @@
+{
+  "schema": "SOVARA_SC_TASTE_ADMISSION_V1",
+  "capability_id": "SC-TASTE",
+  "predecessor": "governance/sovara_sc_graph_v1_admission.json",
+  "promotion_ceiling": "SOURCE_CANDIDATE",
+  "implementation": "sovara/creative/taste.py",
+  "regression_court": "tests/test_sovara_creative_taste.py",
+  "objective": "Convert owner corrections into deterministic evidence-weighted taste preferences while preserving conflict, decay, provenance and authority boundaries.",
+  "build_strategy": "EXTEND_AND_COMPOSE",
+  "proof_gate": {
+    "required": [
+      "DETERMINISTIC_REPLAY",
+      "EVIDENCE_WEIGHTING",
+      "RECENCY_DECAY",
+      "CONFLICT_PRESERVATION",
+      "SYNTHETIC_NON_PROMOTION",
+      "DUPLICATE_REJECTION",
+      "NO_AUTHORITY_INHERITANCE",
+      "NO_EXTERNAL_EFFECT"
+    ]
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "provider_effect_authorized": false,
+    "media_generation_authorized": false,
+    "publishing_authorized": false,
+    "spend_authorized": false
+  },
+  "truth_boundary": "Source and deterministic tests prove only an in-process taste-memory contract. They do not prove durable storage, correct inference from real owner behavior, provider execution, media quality, production deployment, commercial value, repeated success or soak."
+}
