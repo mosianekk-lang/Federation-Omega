@@ -1,0 +1,56 @@
+{
+  "schema": "CFBE_VNEXT_CAPABILITY_ADOPTION_PROFILE_V1",
+  "profile_id": "CFBE-EVIDENCE-AUTOPILOT-20260830",
+  "baseline_main_sha": "9307cb7a1445122c1e4432db9afabda8fbb01fbd",
+  "capability": "Federation Evidence Autopilot Compiler",
+  "problem": "The Federation emits rich mission, proof, failure, rollback and value receipts, but no deterministic bridge compiles them into complete CFBE V4 experiment measurements without manual score entry.",
+  "reuse": [
+    "ops/sovara_mcf_v3_1/sovara_mcf_v3_1.py::otel_mission_attributes",
+    "frontier_convergence/os_core.py::ExperimentOption",
+    "benchmarking/cfbe_omega/observed_experiment_normalization.py",
+    "benchmarking/cfbe_omega/measurement_sheet_ingestion.py",
+    "governance/failure_win_v2_live_behavioral_binding_20260827.json",
+    "ProofOS receipts",
+    "Formation Omega checkpoints",
+    "CFBE-Ω scorecard::V4_EXPERIMENT_MEASUREMENTS"
+  ],
+  "new_source": [
+    "benchmarking/cfbe_omega/evidence_autopilot.py",
+    "governance/cfbe_evidence_autopilot_contract_v1.json",
+    "tests/test_cfbe_evidence_autopilot.py"
+  ],
+  "current_binding": "SOURCE_CANDIDATE_PENDING_ADMISSION",
+  "data_available": [
+    "mission value/cost/risk telemetry fields",
+    "owner intervention seconds",
+    "rollback availability/execution",
+    "evidence coverage",
+    "mission checkpoints",
+    "provider/proof/failure receipts"
+  ],
+  "missing_real_data": [
+    "one pre-registered real experiment contract containing all eight dimension bounds",
+    "observed information-resolution metric",
+    "observed proof-axis-gain metric",
+    "complete same-experiment provenance-bound observation set"
+  ],
+  "duplication_risk": "LOW: compiler composes existing telemetry and normalization contracts; it creates no alternate benchmark engine, proof engine, runtime or database.",
+  "action": "COMPOSE_AND_EXTEND",
+  "expected_value": "HIGH_BUT_UNVERIFIED: removes manual score translation, makes evidence reproducible, and can unblock C07/C12 only after real observations exist.",
+  "proof_gate": [
+    "exact-head Airlock/ProofOS",
+    "Bubbles",
+    "Public Repository Leak Guard",
+    "serving-main Phoenix",
+    "real observed packet",
+    "independent measurement verification"
+  ],
+  "authority_boundary": "A1_INTERNAL; no provider effect, Sheets mutation, external communication, financial effect, promotion or authority expansion.",
+  "v4_effect": {
+    "V4_OBJECTIVE_ECOLOGY": "instrumentation support only",
+    "V4_CAPABILITY_FOUNDRY": "can supply normalized ExperimentOption once a complete real packet exists",
+    "V4_INSTITUTIONAL_METABOLISM": "owner intervention/cost fields reusable once measured",
+    "all_other_modules": "unchanged"
+  },
+  "truth_boundary": "Source/admission profile only. The capability cannot create missing empirical observations and therefore does not itself move any V4 module to DATA_READY."
+}
