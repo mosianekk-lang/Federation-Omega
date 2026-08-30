@@ -16,6 +16,14 @@ from bubbles.control_plane import (
     EffectClass,
     RouteKind,
 )
+from federation.bubbles_hyperperformance import (
+    CurrentStateLease,
+    CurrentStateLeaseError,
+    IdempotencyEnvelope,
+    IdempotencyLedger,
+    TraceEvent,
+    TraceSpine,
+)
 from governance.external_action_firewall import LEASE_PROOF
 from tests.test_external_action_firewall import ExternalActionFirewallTests  # noqa: F401
 from tests.test_failure_win_manifest import FailureWinReceiverManifestTests  # noqa: F401
@@ -134,6 +142,117 @@ class BubblesControlPlaneTests(unittest.TestCase):
         second = self.control.command_envelope(request)
         self.assertEqual(first["command_sha256"], second["command_sha256"])
         self.assertIn("provider execution", first["truth_boundary"])
+
+    def test_current_state_lease_expires_and_preserves_authority_boundary(self) -> None:
+        lease = CurrentStateLease(
+            entity_id="SURFACE-GITHUB",
+            field_id="current_sha",
+            value="9a7e83c",
+            authority_source="GITHUB_MAIN",
+            observed_at="2026-08-30T20:00:00+02:00",
+            fresh_until="2026-08-30T20:10:00+02:00",
+            proof_refs=("github:main:9a7e83c",),
+            source_event_id="GEN2-EVT-LEASE-001",
+        )
+        lease.require_fresh(
+            now="2026-08-30T20:05:00+02:00",
+            expected_authority="GITHUB_MAIN",
+        )
+        with self.assertRaisesRegex(CurrentStateLeaseError, "AUTHORITY_MISMATCH"):
+            lease.require_fresh(
+                now="2026-08-30T20:05:00+02:00",
+                expected_authority="PROJECT_HEARTBEAT",
+            )
+        with self.assertRaisesRegex(CurrentStateLeaseError, "EXPIRED"):
+            lease.require_fresh(now="2026-08-30T20:10:00+02:00")
+
+    def test_trace_spine_is_append_only_idempotent_and_payload_safe(self) -> None:
+        trace = TraceSpine()
+        root = TraceEvent(
+            trace_id="trace-1",
+            span_id="span-root",
+            mission_id="mission-1",
+            stage="MISSION",
+            state="STARTED",
+            occurred_at="2026-08-30T20:00:00+02:00",
+            proof_refs=("mission:capsule",),
+        )
+        child = TraceEvent(
+            trace_id="trace-1",
+            span_id="span-provider",
+            parent_span_id="span-root",
+            mission_id="mission-1",
+            stage="PROVIDER_READ",
+            state="PASS",
+            occurred_at="2026-08-30T20:01:00+02:00",
+            provider="GITHUB",
+            proof_refs=("github:readback",),
+        )
+        self.assertEqual("APPENDED", trace.append(root).state)
+        appended = trace.append(child)
+        self.assertEqual(2, appended.event_count)
+        self.assertEqual("IDEMPOTENT_REPLAY", trace.append(child).state)
+        with self.assertRaisesRegex(ValueError, "TRACE_SPAN_CONFLICT"):
+            trace.append(
+                TraceEvent(
+                    **{**child.__dict__, "state": "FAIL"}
+                )
+            )
+        with self.assertRaisesRegex(ValueError, "SENSITIVE_PAYLOAD"):
+            trace.append(
+                TraceEvent(
+                    trace_id="trace-1",
+                    span_id="span-secret",
+                    parent_span_id="span-root",
+                    mission_id="mission-1",
+                    stage="PROVIDER_READ",
+                    state="HELD",
+                    occurred_at="2026-08-30T20:02:00+02:00",
+                    sensitive_payload_present=True,
+                )
+            )
+
+    def test_universal_idempotency_reuses_existing_command_hash_without_granting_authority(self) -> None:
+        request = ActionRequest(
+            adapter_id="google_drive",
+            action="update_document",
+            effect=EffectClass.LOW_RISK_WRITE,
+            target_alias="DOC-EXACT-1",
+            payload={"document_alias": "TEST_ONLY"},
+        )
+        command = self.control.command_envelope(request)
+        envelope = IdempotencyEnvelope(
+            operation_id="op-1",
+            command_sha256=str(command["command_sha256"]),
+            target_alias=request.target_alias,
+            action_scope=request.action,
+            effect_class=request.effect.value,
+            expires_at="2026-08-30T20:10:00+02:00",
+        )
+        ledger = IdempotencyLedger()
+        first = ledger.admit(envelope, now="2026-08-30T20:00:00+02:00")
+        self.assertTrue(first.execute)
+        self.assertEqual("ACCEPT_FIRST", first.state)
+        duplicate = ledger.admit(envelope, now="2026-08-30T20:01:00+02:00")
+        self.assertFalse(duplicate.execute)
+        self.assertEqual("HOLD_DUPLICATE_IN_FLIGHT", duplicate.state)
+        ledger.record_result("op-1", "provider-readback:receipt-1")
+        replay = ledger.admit(envelope, now="2026-08-30T20:02:00+02:00")
+        self.assertEqual("REPLAY_SAME_RESULT", replay.state)
+        self.assertEqual("provider-readback:receipt-1", replay.result_ref)
+        conflict = ledger.admit(
+            IdempotencyEnvelope(
+                operation_id="op-1",
+                command_sha256=str(command["command_sha256"]),
+                target_alias="DOC-DIFFERENT",
+                action_scope=request.action,
+                effect_class=request.effect.value,
+                expires_at="2026-08-30T20:10:00+02:00",
+            ),
+            now="2026-08-30T20:03:00+02:00",
+        )
+        self.assertEqual("REJECT_CONFLICT", conflict.state)
+        self.assertFalse(conflict.execute)
 
     def test_failure_win_v2_manifest_compiler_separates_structure_from_behavior(self) -> None:
         result = compile_receiver_manifest(
