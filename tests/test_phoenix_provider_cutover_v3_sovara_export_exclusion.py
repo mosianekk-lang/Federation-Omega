@@ -49,13 +49,18 @@ class SovaraRepositoryControlExportExclusionTests(unittest.TestCase):
                 )
         out = ROOT / "airlock-output"
         out.mkdir(exist_ok=True)
+        diagnostic = {
+            "temporary_isolated_v3_diagnostic": True,
+            "failures": failures,
+        }
         (out / "proofos-shadow-calibration.json").write_text(
-            json.dumps(
-                {"temporary_isolated_v3_diagnostic": True, "failures": failures},
-                indent=2,
-            ),
-            encoding="utf-8",
+            json.dumps(diagnostic, indent=2), encoding="utf-8"
         )
+        airlock_report = out / "github-airlock-report.json"
+        if airlock_report.exists():
+            payload = json.loads(airlock_report.read_text(encoding="utf-8"))
+            payload["temporary_v3_diagnostic"] = diagnostic
+            airlock_report.write_text(json.dumps(payload, indent=2), encoding="utf-8")
 
     def test_sovara_repository_control_test_is_excluded_from_core(self):
         policy = json.loads(POLICY_PATH.read_text(encoding="utf-8"))
