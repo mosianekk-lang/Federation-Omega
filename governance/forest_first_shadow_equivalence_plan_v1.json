@@ -1,27 +1,13 @@
 {
   "schema": "FOREST-FIRST-SHADOW-EQUIVALENCE-PLAN-V1",
   "version": "1.0.0",
-  "status": "PLAN_ONLY_NO_SHADOW_RUN_YET",
+  "status": "C1_DETERMINISTIC_LOCAL_SHADOW_PASS_PENDING_INDEPENDENT_ASSURANCE",
   "base_main_sha": "413862511ae9c8be5d14b42be553967767bec6dc",
   "objective": "Demonstrate that target architecture preserves or improves bounded capability while preserving authority/proof boundaries and reducing conceptual/owner burden.",
   "global_acceptance": {
     "all_required": true,
-    "criteria": [
-      "functional_result_equivalent_or_better",
-      "truth_and_domain_authority_unchanged",
-      "proof_scope_not_inflated",
-      "independent_assurance_preserved",
-      "owner_burden_not_increased",
-      "rollback_path_present",
-      "legacy_identity_still_resolves"
-    ],
-    "prohibited_claims": [
-      "provider_effect_from_shadow",
-      "maturity_inheritance",
-      "global_superiority",
-      "system_retirement_before_dual_run",
-      "model_weight_learning"
-    ]
+    "criteria": ["functional_result_equivalent_or_better","truth_and_domain_authority_unchanged","proof_scope_not_inflated","independent_assurance_preserved","owner_burden_not_increased","rollback_path_present","legacy_identity_still_resolves"],
+    "prohibited_claims": ["provider_effect_from_shadow","maturity_inheritance","global_superiority","system_retirement_before_dual_run","model_weight_learning"]
   },
   "cohorts": [
     {"id":"C1_AUTHORITY_ONLY","systems":["AEON-Ω","IPEP","SIF AI","Next Frontier AI Bible / Ω-SCIENTIA"],"shadow_type":"CONTROL_AND_RESTORE_SHADOW","inputs":"sanitized governance/restore scenarios","target":"new layer classification and compatibility resolver","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":3,"special_checks":["historical_identity_preserved","canonical_knowledge_authority_preserved","scientia_runtime_separate_from_bible","no_registry_loss"]},
@@ -30,30 +16,23 @@
     {"id":"C4_HIGH_COUPLING_POLICY_VALIDATION","systems":["Superior Logic Doctrine","CASEFORGE-Ω"],"shadow_type":"FULL_CONSUMER_AWARE_SHADOW","inputs":"existing regression fixtures plus sanitized real-mission-derived controls","target":"Forest policy library and EvidenceOps validation lab","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":10,"special_checks":["workflow_compatibility","cross_coupling_preserved","scientific_falsification_preserved","no_new_single_point_of_failure","rollback"]},
     {"id":"C5_FORMATION_LAST","systems":["FORMATION-OMEGA Unified Powerhouse"],"shadow_type":"PUBLIC_API_AND_PROOF_GRAPH_SHADOW","inputs":"full Formation public API/regression suite and bounded real mission scenarios","target":"Formation engine canonical identity","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":10,"special_checks":["public_api_freeze","proof_graph_equivalence","reconciliation_behavior_preserved","strategic_ecology_preserved","autonomic_behavior_preserved","rollback","exact_head_admission_before_any_supersession"]}
   ],
-  "measurement_fields": [
-    "functional_pass",
-    "decision_delta",
-    "proof_boundary_delta",
-    "authority_boundary_delta",
-    "owner_interruption_count",
-    "manual_debug_steps",
-    "latency_ms_if_measured",
-    "complexity_units_removed",
-    "rollback_pass",
-    "unexpected_behavior"
-  ],
+  "cohort_status": {
+    "C1_AUTHORITY_ONLY": "DETERMINISTIC_LOCAL_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C2_DOMAIN_COMPATIBILITY": "NOT_RUN",
+    "C3_RECOVERY_FORMATION": "NOT_RUN",
+    "C4_HIGH_COUPLING_POLICY_VALIDATION": "NOT_RUN",
+    "C5_FORMATION_LAST": "NOT_RUN"
+  },
+  "measurement_fields": ["functional_pass","decision_delta","proof_boundary_delta","authority_boundary_delta","owner_interruption_count","manual_debug_steps","latency_ms_if_measured","complexity_units_removed","rollback_pass","unexpected_behavior"],
   "promotion_gate": {
-    "to_dual_run_requires": [
-      "required_runs_met",
-      "all_acceptance_criteria_pass",
-      "no_unresolved_high_severity_delta",
-      "independent_assurance_review"
-    ],
+    "to_dual_run_requires": ["required_runs_met","all_acceptance_criteria_pass","no_unresolved_high_severity_delta","independent_assurance_review"],
     "automatic_source_move": false,
     "automatic_retirement": false
   },
   "truth_boundary": {
-    "shadow_run_executed": false,
+    "shadow_run_executed": true,
+    "shadow_scope": "C1_DETERMINISTIC_LOCAL_A1_INTERNAL_ONLY",
+    "provider_hosted_shadow_proved": false,
     "physical_migration_executed": false,
     "runtime_changed": false,
     "provider_effect": false
