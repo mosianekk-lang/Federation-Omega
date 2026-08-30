@@ -1,0 +1,44 @@
+{
+  "schema": "CFBE-BUBBLES-CHATBRIDGE-PAYLOAD-INGRESS-OBSERVATION-V1",
+  "observed_at": "2026-08-30T19:35:05Z",
+  "state": "OBSERVED_SHADOW_RUNTIME_VALUE_PASS_SOURCE_ADMISSION_PENDING",
+  "system": "BUBBLES_CHATBRIDGE_TOOL_PAYLOAD_INGRESS",
+  "runtime": "GITHUB_ACTIONS_PR_SHADOW",
+  "canary": {
+    "run_id": 33331267599,
+    "run_number": 2,
+    "head_sha": "9350d5e8d06907dbee2344c8d9145a90868a34a3",
+    "artifact_id": 9737704522,
+    "artifact_digest": "sha256:8db78778d7690fc633bd9f121e4c30a897483828da5854a2c409f999a53cb99c",
+    "receipt_sha256": "5d552fe7144f3cc42f90bed71b8bcc4bc5886bc8a95401eaffc28bbd613315e7",
+    "external_effects": 0,
+    "manual_interventions": 0
+  },
+  "measurements": {
+    "raw_chars": 190624,
+    "bounded_chars": 1278,
+    "raw_lines": 1800,
+    "bounded_lines": 13,
+    "reduction_percent": 99.32957,
+    "processing_ms": 5.151568,
+    "failure_signal_preserved": true,
+    "secret_absent": true,
+    "redaction_applied": true
+  },
+  "value_gate": {
+    "minimum_reduction_percent": 90.0,
+    "maximum_processing_ms": 500.0,
+    "failure_signal_required": true,
+    "secret_absence_required": true,
+    "passed": true
+  },
+  "failure_win": {
+    "initial_runtime_run_id": 33331223001,
+    "initial_runtime_state": "FAIL_RUNNER_IMPORT_BOUNDARY_AFTER_FOCUSED_TESTS_PASS",
+    "repair": "BOOTSTRAP_REPOSITORY_ROOT_IN_STANDALONE_CANARY_RUNNER",
+    "airlock_run_id": 33331267523,
+    "airlock_state": "FAIL_WORKFLOW_NOT_ALLOWLISTED_AND_UNAUTHORISED_TRIGGER",
+    "airlock_repair": "REMOVE_TEMPORARY_WORKFLOW_AFTER_OBSERVATION_AND_PRESERVE_RECEIPT_AS_EVIDENCE"
+  },
+  "truth_boundary": "This observation proves the payload ingress adapter executed in a hosted GitHub Actions shadow runtime and materially reduced a synthetic heavy workflow-log payload while preserving the failure signal and removing the canary secret. It does not prove native ChatGPT pre-tool interception, browser-crash elimination, default ChatBridge serving-path binding, or provider-effect authority. The temporary canary workflow is intentionally removed before source admission rather than added to the permanent workflow estate."
+}
