@@ -1,0 +1,87 @@
+{
+  "schema": "SOVARA_CANVA_TWO_LAYER_CANARY_CONTRACT_V1",
+  "invariant_id": "SC-CANVA-TWO-LAYER-001",
+  "candidate_set_id": "SOVARA-CANVA-CANARY-FOUR-CANDIDATES-001",
+  "candidate_roster_sha256": "2a37b93af625deab1d6ea204b9ac0242a4638d55b2ca2eea32d1d7bc254b4e8d",
+  "expected_candidate_count": 4,
+  "owner_selection_required": true,
+  "age_state_required": "VERIFIED_ADULT_OR_SYNTHETIC",
+  "consent_state_required": "AFFIRMATIVE_OR_NOT_APPLICABLE",
+  "rights_state_required": "VERIFIED",
+  "asset_origin_state_required": "VERIFIED",
+  "raw_sensitive_payload_allowed": false,
+  "connector_schema_snapshot_id": "CANVA-CODEX-APPS-20260830-001",
+  "connector_schema_sha256": "38024fbcf9ae71cb9161a4de4df5a97547ab5a3087eb894fcdbac2c82b57967e",
+  "connector_schema_provenance_sha256": "0e4281029dc343c7f540dcfc9362265e7a3631bc7c205c62b12b660d27f2076e",
+  "connector_schema_authenticated": true,
+  "connector_schema_snapshot": {
+    "provider": "Canva",
+    "retrieved_at": "2026-08-30T00:00:00Z",
+    "tools": {
+      "cancel_editing_transaction": {
+        "effect": "DRAFT_WRITE_CANCEL",
+        "required_bindings": ["transaction_id"]
+      },
+      "commit_editing_transaction": {
+        "effect": "PROVIDER_WRITE_COMMIT",
+        "required_bindings": ["transaction_id", "explicit_user_approval_after_preview"]
+      },
+      "create_design_from_candidate": {
+        "effect": "PROVIDER_WRITE_CREATE",
+        "required_bindings": ["job_id", "candidate_id"]
+      },
+      "get_design": {
+        "effect": "READ_ONLY",
+        "required_bindings": ["design_id"]
+      },
+      "get_design_pages": {
+        "effect": "READ_ONLY",
+        "required_bindings": ["design_id"]
+      },
+      "get_design_thumbnail": {
+        "effect": "READ_ONLY",
+        "required_bindings": ["design_id"]
+      },
+      "perform_editing_operations": {
+        "effect": "DRAFT_WRITE",
+        "required_bindings": ["transaction_id", "operations"]
+      },
+      "start_editing_transaction": {
+        "effect": "DRAFT_WRITE_START",
+        "required_bindings": ["design_id"]
+      }
+    },
+    "semantic_invariants": [
+      "candidate conversion creates one new editable design",
+      "editing operations remain draft-only until commit",
+      "commit requires explicit user approval immediately after preview disclosure",
+      "cancel discards the editing transaction draft",
+      "no callable export download share publish or created-design delete capability is assumed"
+    ]
+  },
+  "schema_checked_at": "2026-08-30T00:00:00Z",
+  "schema_expires_at": "2026-09-30T00:00:00Z",
+  "max_designs": 1,
+  "max_draft_operations": 20,
+  "create_effect_authorized": false,
+  "draft_effect_authorized": false,
+  "commit_effect_authorized": false,
+  "export_allowed": false,
+  "download_allowed": false,
+  "share_allowed": false,
+  "publish_allowed": false,
+  "required_readbacks": [
+    "CREATE_REQUEST_BINDING",
+    "DESIGN_METADATA",
+    "DRAFT_TRANSACTION",
+    "OWNER_PREVIEW",
+    "COMMIT_RESULT",
+    "POST_COMMIT_DESIGN_METADATA"
+  ],
+  "rollback_requirements": [
+    "CREATE_ROLLBACK",
+    "DRAFT_CANCEL"
+  ],
+  "execution_gate": "Layer 1 contains no candidate ID and grants no provider effect. Layer 2 structurally binds an explicit owner-selection claim, typed adult/consent/rights/origin/privacy and candidate-membership claims, exact zero-cost ceilings across create/draft/approval/commit, an exact create-rollback tool present in the schema envelope, provider-native readback claims, a propagated consumption ledger, owner-visible preview, and a single-use owner commit-approval claim issued strictly after that preview.",
+  "truth_boundary": "Source/test/CI admission proves only deterministic envelope behavior. The contract makes no Canva call and grants no provider authority; ready_for_effect and contract_preconditions_met remain false in every decision. Supplied fields and digests do not authenticate candidate membership, issuer, connector, receipt, rollback, or provider provenance and do not prove export, download, share, publish, repeated success, commercial value, deployment, production traffic or production maturity."
+}

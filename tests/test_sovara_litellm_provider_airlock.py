@@ -67,11 +67,14 @@ jobs:
         self.assertIn("Execute provider admission, canaries, deployment, and rollback gates", WORKFLOW)
 
     def test_push_path_is_truthful_source_validation_only(self):
-        self.assertIn('"execution_mode": "PROVIDER_ADMISSION" if requested else "SOURCE_VALIDATION_ONLY"', WORKFLOW)
-        self.assertIn('"provider_admission_attempted": requested', WORKFLOW)
-        self.assertIn('"provider_state_claimed": requested and code == 0', WORKFLOW)
-        self.assertIn('.execution_mode == "SOURCE_VALIDATION_ONLY"', WORKFLOW)
+        self.assertIn("scope=SOURCE_VALIDATION_ONLY", WORKFLOW)
+        self.assertIn("'execution_scope':scope", WORKFLOW)
+        self.assertIn("'provider_admission_attempted':scope=='FULL_PROVIDER_ADMISSION'", WORKFLOW)
+        self.assertIn("'provider_state_claimed':scope=='FULL_PROVIDER_ADMISSION' and code==0", WORKFLOW)
+        self.assertIn("code=int(raw_code) if raw_code else None", WORKFLOW)
+        self.assertIn('.execution_scope == "SOURCE_VALIDATION_ONLY"', WORKFLOW)
         self.assertIn('.provider_admission_attempted == false', WORKFLOW)
+        self.assertIn('.provider_state_claimed == false', WORKFLOW)
         self.assertIn('.provider_admission_exit_code == null', WORKFLOW)
         self.assertIn("no WIF exchange was attempted", WORKFLOW)
 
