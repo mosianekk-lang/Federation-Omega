@@ -13,7 +13,7 @@
     },
     {
       "system": "SOVARA 10X EvidenceOps v1",
-      "role": "measurement constitution, primary/secondary KPI definitions and hard non-regression vetoes"
+      "role": "measurement constitution, progressive rollout cost/p95-latency ceilings, primary/secondary KPI definitions and hard non-regression vetoes"
     },
     {
       "system": "Frontier Convergence OS",
@@ -44,6 +44,10 @@
     {
       "name": "EMPIRICAL_EVIDENCE_GRADIENT_PLANNER",
       "rule": "Use greedy missing-dimension set cover; where routes cover equal new dimensions, reuse FC-OS EvidenceEconomicsSelector as the tie-break court. Never convert expected route economics into observed measurements."
+    },
+    {
+      "name": "TEN_X_ROLLOUT_BOUND_ADAPTER",
+      "rule": "Reuse only semantically exact stage ceilings from SOVARA 10X rollout policy: maximum_cost_per_accepted_mission_usd -> estimated_cost and maximum_p95_latency_ms -> latency_burden. The policy evidence reference is mandatory and mission-level cost/elapsed-time fields are not treated as aliases."
     }
   ],
   "required_dimensions": [
@@ -60,6 +64,7 @@
     "NO_QUALITATIVE_TO_NUMERIC_INFERENCE",
     "NO_CROSS_EXPERIMENT_STITCHING",
     "NO_DENOMINATOR_WITHOUT_PROVENANCE",
+    "NO_SEMANTIC_UNIT_ALIASING",
     "NO_SYNTHETIC_TO_OBSERVED_PROMOTION",
     "NO_STORED_NORMALIZED_VALUE_AS_SOURCE_OF_TRUTH",
     "NO_PROVIDER_OR_EXTERNAL_EFFECT",
@@ -70,7 +75,8 @@
     "benchmarking/cfbe_omega/empirical_measurement_fabric.py",
     "benchmarking/cfbe_omega/measurement_sheet_ingestion.py",
     "benchmarking/cfbe_omega/observed_experiment_normalization.py",
-    "ops/sovara_10x_evidenceops_v1/config/measurement_contract.yaml"
+    "ops/sovara_10x_evidenceops_v1/config/measurement_contract.yaml",
+    "ops/sovara_10x_evidenceops_v1/config/rollout_policy.yaml"
   ],
   "promotion_path": [
     "SOURCE_IMPLEMENTED",
@@ -79,7 +85,7 @@
     "SERVING_MAIN_VERIFIED",
     "REAL_OBSERVATION_CAPTURED",
     "COMPLETE_EIGHT_DIMENSION_PACKET",
-    "FOUNDARY_DATA_READY_IF_RECEIVER_GATES_PASS",
+    "FOUNDRY_DATA_READY_IF_RECEIVER_GATES_PASS",
     "CFBE_POSITIVE_EXPECTED_VALUE_IF_MEASURED",
     "SHADOW",
     "ADMITTED"
