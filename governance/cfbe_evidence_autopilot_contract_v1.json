@@ -1,0 +1,70 @@
+{
+  "schema": "CFBE_EVIDENCE_AUTOPILOT_CONTRACT_V1",
+  "capability_id": "CFBE-EVIDENCE-AUTOPILOT-V1",
+  "authority": "A1_INTERNAL",
+  "objective": "Compile exact provenance-bound Federation telemetry into the canonical V4 experiment measurement row contract without inventing scores or creating provider authority.",
+  "source_systems_reused": [
+    "SOVARA MCF mission telemetry",
+    "Frontier Convergence OS experiment economics",
+    "ProofOS proof receipts",
+    "Failure-Win recovery evidence",
+    "Formation Omega mission/checkpoint state",
+    "CFBE V4_EXPERIMENT_MEASUREMENTS"
+  ],
+  "canonical_dimensions": {
+    "expected_information_gain": {
+      "preferred_metric": "cfbe.information.questions_resolved",
+      "denominator_semantics": "explicit targeted questions or uncertainty units registered before measurement"
+    },
+    "mission_value": {
+      "preferred_metric": "sovara.mission.value",
+      "denominator_semantics": "explicit mission value target or approved value bound"
+    },
+    "proof_strength_gain": {
+      "preferred_metric": "cfbe.proof.axes_gained",
+      "denominator_semantics": "explicit targeted proof axes registered before measurement"
+    },
+    "reversibility": {
+      "preferred_metric": "sovara.rollback.available",
+      "denominator_semantics": "boolean observation normalized against 1.0; executed rollback evidence remains separate"
+    },
+    "estimated_cost": {
+      "preferred_metric": "sovara.mission.cost",
+      "denominator_semantics": "mission max_cost or separately approved finite cost ceiling"
+    },
+    "latency_burden": {
+      "preferred_metric": "sovara.mission.elapsed_seconds",
+      "denominator_semantics": "explicit mission latency ceiling"
+    },
+    "owner_burden": {
+      "preferred_metric": "sovara.owner.intervention_seconds",
+      "denominator_semantics": "explicit owner-intervention ceiling"
+    },
+    "risk": {
+      "preferred_metric": "sovara.mission.risk",
+      "denominator_semantics": "explicit bounded mission risk ceiling"
+    }
+  },
+  "hard_invariants": [
+    "all eight dimensions must be present exactly once",
+    "each dimension names one exact observation and metric key",
+    "every numerator is observed, finite and provenance-bound",
+    "every denominator is explicit, positive and provenance-bound",
+    "qualitative labels are never converted to numbers",
+    "synthetic observations cannot enter observed experiment evidence",
+    "cross-experiment stitching is prohibited",
+    "stored normalized values remain assertions and are recomputed from raw inputs",
+    "OBSERVED_RAW is not independent verification or value proof",
+    "no provider call, Sheets write, IAM/WIF mutation, external effect or promotion is created by the compiler"
+  ],
+  "promotion_path": [
+    "SOURCE_IMPLEMENTED",
+    "DETERMINISTIC_TESTED",
+    "CANONICAL_MEASUREMENT_PLANE_BOUND",
+    "REAL_OBSERVED_PACKET_COMPILED",
+    "INDEPENDENT_MEASUREMENT_VERIFIED",
+    "V4_DATA_READY",
+    "CFBE_POSITIVE_EXPECTED_VALUE"
+  ],
+  "truth_boundary": "This contract defines a deterministic internal evidence compiler. It does not create real measurements, independent verification, provider proof, DATA_READY, positive expected value, incubation, production maturity or authority."
+}
