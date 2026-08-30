@@ -56,9 +56,12 @@ jobs:
             set(POLICY["oidc_workflow_allowlist"]),
         )
 
-    def test_provider_execution_is_dispatch_only(self):
+    def test_provider_execution_is_dispatch_or_explicit_request_only(self):
         self.assertIn("id: provider_mode", WORKFLOW)
         self.assertIn('if [[ "${GITHUB_EVENT_NAME}" == "workflow_dispatch" ]]; then', WORKFLOW)
+        self.assertIn('scope=SOURCE_VALIDATION_ONLY', WORKFLOW)
+        self.assertIn('scope=FULL_PROVIDER_ADMISSION', WORKFLOW)
+        self.assertIn('if grep -Fxq "${GEMINI_REQUEST_FILE}" <<<"${changed}"; then', WORKFLOW)
         self.assertGreaterEqual(
             WORKFLOW.count("if: steps.provider_mode.outputs.requested == 'true'"),
             3,
@@ -67,13 +70,26 @@ jobs:
         self.assertIn("Execute provider admission, canaries, deployment, and rollback gates", WORKFLOW)
 
     def test_push_path_is_truthful_source_validation_only(self):
-        self.assertIn('"execution_mode": "PROVIDER_ADMISSION" if requested else "SOURCE_VALIDATION_ONLY"', WORKFLOW)
-        self.assertIn('"provider_admission_attempted": requested', WORKFLOW)
-        self.assertIn('"provider_state_claimed": requested and code == 0', WORKFLOW)
-        self.assertIn('.execution_mode == "SOURCE_VALIDATION_ONLY"', WORKFLOW)
+        self.assertIn("'execution_scope':scope", WORKFLOW)
+        self.assertIn("'provider_admission_attempted':scope=='FULL_PROVIDER_ADMISSION'", WORKFLOW)
+        self.assertIn("'provider_admission_completed':scope=='FULL_PROVIDER_ADMISSION' and code==0", WORKFLOW)
+        self.assertIn("'provider_state_claimed':scope=='FULL_PROVIDER_ADMISSION' and code==0", WORKFLOW)
+        self.assertIn('.execution_scope == "SOURCE_VALIDATION_ONLY"', WORKFLOW)
         self.assertIn('.provider_admission_attempted == false', WORKFLOW)
-        self.assertIn('.provider_admission_exit_code == null', WORKFLOW)
+        self.assertIn('.provider_state_claimed == false', WORKFLOW)
         self.assertIn("no WIF exchange was attempted", WORKFLOW)
+
+    def test_mode_specific_requests_do_not_become_full_provider_admission(self):
+        for scope in (
+            "G0_READ_ONLY_VERIFY",
+            "G1_ADC_APPLY_VERIFY",
+            "G2_CREATIVE_ARCHITECTURE_CHALLENGE",
+            "G3_PRIVATE_GATEWAY_CANARY",
+        ):
+            with self.subTest(scope=scope):
+                self.assertIn(scope, WORKFLOW)
+        self.assertIn("scope=='FULL_PROVIDER_ADMISSION'", WORKFLOW)
+        self.assertIn(".provider_admission_attempted == false", WORKFLOW)
 
     def test_gateway_cannot_gain_source_write(self):
         findings = AIRLOCK.analyse_workflow(
