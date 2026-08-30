@@ -16,6 +16,7 @@ class ResolvedIdentity:
     disposition: str
     legacy_calls_allowed: bool
     translate_to_target: bool
+    target_components: tuple[dict[str, str], ...] = ()
     proof_inherited: bool = False
     authority_inherited: bool = False
     maturity_inherited: bool = False
@@ -54,14 +55,8 @@ class ArchitectureConsolidationRegistry:
         self.compatibility = self._load("compatibility")
         self.dependencies = self._load("dependencies")
         self.migration = self._load("migration")
-        self._entries = {
-            row["legacy_identity"]: row
-            for row in self.compatibility["entries"]
-        }
-        self._forbidden = {
-            (row["from"], row["to"], row["transition"])
-            for row in self.dependencies["forbidden_edges"]
-        }
+        self._entries = {row["legacy_identity"]: row for row in self.compatibility["entries"]}
+        self._forbidden = {(row["from"], row["to"], row["transition"]) for row in self.dependencies["forbidden_edges"]}
 
     def _load(self, key: str) -> dict[str, Any]:
         path = self.governance_dir / self.REQUIRED_FILES[key]
@@ -76,6 +71,7 @@ class ArchitectureConsolidationRegistry:
             disposition=row["current_disposition"],
             legacy_calls_allowed=bool(row["legacy_calls_allowed"]),
             translate_to_target=bool(row["translate_to_target"]),
+            target_components=tuple(dict(item) for item in row.get("target_components", ())),
         )
 
     def admit_top_level_system(
@@ -92,17 +88,12 @@ class ArchitectureConsolidationRegistry:
             "UNIQUE_RUNTIME": unique_runtime,
             "UNIQUE_FAILURE_DOMAIN": unique_failure_domain,
         }
-        required = tuple(
-            row["id"]
-            for row in self.architecture["top_level_system_admission_rule"]["criteria"]
-        )
+        required = tuple(row["id"] for row in self.architecture["top_level_system_admission_rule"]["criteria"])
         missing = tuple(item for item in required if not supplied[item])
         return AdmissionDecision(
             admitted_as_top_level_system=not missing,
             missing_criteria=missing,
-            fallback_classification=tuple(
-                self.architecture["top_level_system_admission_rule"]["fallback_classification"]
-            ),
+            fallback_classification=tuple(self.architecture["top_level_system_admission_rule"]["fallback_classification"]),
         )
 
     def transition_forbidden(self, from_layer: str, to_layer: str, transition: str) -> bool:
@@ -113,11 +104,7 @@ class ArchitectureConsolidationRegistry:
         return any(key in self._forbidden for key in (exact, wildcard_from, wildcard_to, wildcard_both))
 
     def independent_systems(self) -> tuple[str, ...]:
-        return tuple(
-            row["system"]
-            for row in self.architecture["system_dispositions"]
-            if row["disposition"] == "KEEP_INDEPENDENT"
-        )
+        return tuple(row["system"] for row in self.architecture["system_dispositions"] if row["disposition"] == "KEEP_INDEPENDENT")
 
     def migration_phase(self, phase_id: str) -> dict[str, Any]:
         return next(row for row in self.migration["phases"] if row["id"] == phase_id)
