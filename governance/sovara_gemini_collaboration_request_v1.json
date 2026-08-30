@@ -27,6 +27,7 @@
     "wif_authenticated_read_probe": true,
     "read_only": true
   },
+  "deployment_readiness_probe": true,
   "current_provider_evidence": {
     "wif_verified": true,
     "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
