@@ -5,7 +5,7 @@ from hashlib import sha256
 import json
 from typing import Iterable, Mapping, Sequence
 
-from federation.bubbles_frontier_hyperperformance import WorkCell
+from federation.bubbles_frontier_hyperperformance import CellAllocationDecision, WorkCell
 from federation.bubbles_hyperperformance import ContextPressureBudget
 from federation.mission_ir import MissionIR
 
@@ -23,6 +23,7 @@ class MissionExecutionShadowReceipt:
     mission_ir_sha256: str
     selected_work_ids: tuple[str, ...]
     cell_shadow_state: str
+    cell_placements: tuple[CellAllocationDecision, ...]
     cell_placement_digest: str
     context_budget: ContextPressureBudget
     proof_requirements: tuple[str, ...]
@@ -94,6 +95,7 @@ def shadow_compile_mission_execution(
         "mission_ir_sha256": mission_sha,
         "selected_work_ids": list(shadow.selected_work_ids),
         "cell_shadow_state": shadow.state,
+        "cell_placement_digests": [item.allocation_digest for item in shadow.placements],
         "cell_placement_digest": shadow.placement_digest,
         "context_budget": normalized.canonical_mapping()["context_budget"],
         "proof_requirements": list(normalized.proof_requirements),
@@ -110,6 +112,7 @@ def shadow_compile_mission_execution(
         mission_ir_sha256=mission_sha,
         selected_work_ids=shadow.selected_work_ids,
         cell_shadow_state=shadow.state,
+        cell_placements=shadow.placements,
         cell_placement_digest=shadow.placement_digest,
         context_budget=_context_budget(normalized),
         proof_requirements=normalized.proof_requirements,
