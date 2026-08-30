@@ -1,0 +1,34 @@
+{
+  "schema": "SOVARA_SC_PRODUCER_ADMISSION_V1",
+  "capability_id": "SC-PRODUCER",
+  "predecessors": [
+    "governance/sovara_sc_graph_v1_admission.json",
+    "governance/sovara_sc_taste_v1_admission.json"
+  ],
+  "promotion_ceiling": "SOURCE_CANDIDATE",
+  "implementation": "sovara/creative/producer.py",
+  "regression_court": "tests/test_sovara_creative_producer.py",
+  "objective": "Compile owner intent, immutable creative graph state and evidence-weighted taste into a deterministic provider-disabled production DAG.",
+  "build_strategy": "EXTEND_AND_COMPOSE",
+  "proof_gate": {
+    "required": [
+      "DETERMINISTIC_REPLAY",
+      "GRAPH_VERSION_BINDING",
+      "TASTE_STATE_BINDING",
+      "ACYCLIC_DEPENDENCIES",
+      "PARALLEL_MODALITY_WORK_PACKETS",
+      "OWNER_RELEASE_GATE",
+      "EXACT_POLICY_STATE_BINDING",
+      "NO_AUTHORITY_INHERITANCE",
+      "NO_PROVIDER_OR_EXTERNAL_EFFECT"
+    ]
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "provider_effect_authorized": false,
+    "media_generation_authorized": false,
+    "publishing_authorized": false,
+    "spend_authorized": false
+  },
+  "truth_boundary": "Source and deterministic tests prove that content class, privacy class, rights state and owner-approval requirement are bound into an in-process provider-disabled production plan and its canonical hash. They do not prove execution, media generation, provider routing, production deployment, publication, commercial value, repeated success or soak."
+}

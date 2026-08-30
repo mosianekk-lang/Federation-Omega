@@ -1,0 +1,43 @@
+{
+  "schema": "SOVARA_SC_PRODUCER_RIPPLE_HANDOFF_ADMISSION_V1",
+  "capability_id": "SC-PRODUCER-RIPPLE-HANDOFF",
+  "predecessors": [
+    "governance/sovara_sc_producer_v1_admission.json",
+    "governance/sovara_sc_ripple_v1_admission.json"
+  ],
+  "promotion_ceiling": "SOURCE_CANDIDATE",
+  "implementation": "sovara/creative/ripple.py#RippleCompiler._verify_handoff",
+  "regression_court": "tests/test_sovara_creative_producer_ripple_handoff.py",
+  "objective": "Admit only an exact deterministic SC-PRODUCER plan replay into SC-RIPPLE and reject schema, identity, graph, taste, policy, owner-gate, authority or effect drift before graph mutation.",
+  "build_strategy": "RECONCILE_AND_EXTEND",
+  "reuse": [
+    "SC-PRODUCER deterministic compiler and canonical plan hash",
+    "SC-RIPPLE stale-writer and minimum-regeneration controls",
+    "SC-GRAPH content-addressed state and version binding",
+    "SC-TASTE evidence-weighted state hash",
+    "Creative Mission Genome policy and owner-approval fields"
+  ],
+  "proof_gate": {
+    "required": [
+      "EXACT_PRODUCER_REPLAY",
+      "SUPPORTED_SCHEMA",
+      "GRAPH_VERSION_AND_STATE_BINDING",
+      "TASTE_STATE_BINDING",
+      "EXACT_POLICY_STATE_BINDING",
+      "OWNER_RELEASE_GATE_PRESERVATION",
+      "TAMPER_REJECTION_BEFORE_MUTATION",
+      "NO_AUTHORITY_INHERITANCE",
+      "NO_PROVIDER_OR_EXTERNAL_EFFECT",
+      "DETERMINISTIC_V2_RECEIPT"
+    ]
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "provider_effect_authorized": false,
+    "media_generation_authorized": false,
+    "publishing_authorized": false,
+    "spend_authorized": false,
+    "owner_release_authorized": false
+  },
+  "truth_boundary": "Source and deterministic tests prove only that one in-process ProductionPlan must exactly replay from the supplied mission, graph and taste state before SC-RIPPLE mutates the graph, and that owner, privacy, rights, authority and effect boundaries are preserved in that handoff. They do not prove provider execution, media generation, deployment, publication, owner release, commercial value, repeated success or soak."
+}

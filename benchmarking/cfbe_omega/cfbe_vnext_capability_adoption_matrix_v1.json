@@ -2,13 +2,15 @@
   "schema": "CFBE-VNEXT-CAPABILITY-ADOPTION-MATRIX-1",
   "baseline_main_sha": "88a81f431ce2a9021a4af2bdd2f340aec836e2ae",
   "current_source_main_before_foundry_bridge": "1e94bfa9130c75213bb1326db7ecbe179510eeb1",
-  "objective": "Advance CFBE-Ω by composing existing Federation capability rather than duplicating benchmark, execution, assurance or recovery systems.",
+  "current_source_main_before_empirical_measurement_fabric": "9307cb7a1445122c1e4432db9afabda8fbb01fbd",
+  "objective": "Advance CFBE-Ω by composing existing Federation capability rather than duplicating benchmark, execution, assurance, recovery or measurement systems.",
   "truth_boundary": {
     "matrix_is_execution_authority": false,
     "matrix_is_provider_proof": false,
     "source_presence_is_operational_maturity": false,
     "v4_data_ready_requires_receiver_specific_evidence": true,
-    "proof_and_authority_inheritance": false
+    "proof_and_authority_inheritance": false,
+    "measurement_compilation_is_not_measurement_observation": true
   },
   "adoption_order": [
     "REUSE",
@@ -96,6 +98,20 @@
       "boundary": "derived projections do not outrank provider/source evidence"
     },
     {
+      "system": "CFBE Empirical Measurement Fabric v1",
+      "priority": "P0",
+      "cfbe_role": "provenance-bound observation-to-measurement compilation plus minimum-route empirical evidence acquisition planning",
+      "decision": "COMPOSE_AS_EMPIRICAL_MEASUREMENT_MEMBRANE",
+      "reuses": [
+        "SOVARA MCF mission telemetry and MissionEfficiencyIndex",
+        "SOVARA 10X measurement contract",
+        "FC-OS ExperimentOption and EvidenceEconomicsSelector",
+        "CFBE V4_EXPERIMENT_MEASUREMENTS",
+        "CFBE observed experiment normalizer"
+      ],
+      "boundary": "compiler output is not an observation; numerator and target/ceiling require independent provenance; source/tests cannot create DATA_READY or a 10x claim"
+    },
+    {
       "system": "Alpha-Omega + Formation Innovation",
       "priority": "P1",
       "cfbe_role": "materially different routes, bounded parallel waves and challenger formation",
@@ -163,12 +179,19 @@
     },
     {
       "module_id": "V4_CAPABILITY_FOUNDRY",
-      "current_code_state": "PROTOCOL_PRESENT_PLUS_FCOS_CFBE_SOVARA_READINESS_COMPOSITION_SOURCE",
+      "current_code_state": "PROTOCOL_PRESENT_PLUS_FCOS_CFBE_SOVARA_READINESS_COMPOSITION_PLUS_RAW_MEASUREMENT_INGESTION_PLUS_EMPIRICAL_MEASUREMENT_COMPILER",
       "required_fields": ["opportunity.gradient", "capability.gap", "regression.baseline"],
-      "existing_composed_sources": ["Frontier Convergence OS ExperimentOption", "CFBE confidence and repeated gap observations", "ProofOS/CFBE regression baseline", "SOVARA MCF OpportunityGradientEngine"],
-      "identified_gap": "COMPLETE_PROVENANCE_BOUND_FCOS_EXPERIMENT_PLUS_EXPLICIT_CONFIDENCE_PLUS_TWO_MATCHING_OBSERVED_GAP_RECORDS_PLUS_REGRESSION_BASELINE_REQUIRED",
-      "vnext_change": "Compute the canonical SOVARA opportunity gradient from FC-OS positive experiment economics plus explicit CFBE confidence; require repeated matching observed gap evidence and regression-baseline provenance; synthetic gap evidence cannot satisfy readiness",
-      "post_change_state": "INSTRUMENTED_DATA_READY_WHEN_COMPLETE_FOUNDRY_EVIDENCE_PACKET_EXISTS"
+      "existing_composed_sources": [
+        "Frontier Convergence OS ExperimentOption",
+        "CFBE confidence and repeated gap observations",
+        "ProofOS/CFBE regression baseline",
+        "SOVARA MCF OpportunityGradientEngine",
+        "CFBE V4_EXPERIMENT_MEASUREMENTS",
+        "CFBE Empirical Measurement Fabric v1"
+      ],
+      "identified_gap": "ONE_COMPLETE_PROVENANCE_BOUND_REAL_EIGHT_DIMENSION_EXPERIMENT_PACKET_PLUS_EXPLICIT_CONFIDENCE_PLUS_TWO_MATCHING_OBSERVED_GAP_RECORDS_PLUS_REGRESSION_BASELINE_REQUIRED",
+      "vnext_change": "Compile eight FC-OS economics only from one provenance-bound Federation observation plus explicit provenance-bound targets/ceilings; plan missing evidence with maximum-new-coverage set cover and FC-OS economics tie-break; then reuse the existing Foundry gate without automatic promotion",
+      "post_change_state": "EMPIRICAL_MEASUREMENT_PATH_INSTRUMENTED_DATA_READY_ONLY_WHEN_COMPLETE_REAL_FOUNDRY_EVIDENCE_PACKET_EXISTS"
     },
     {
       "module_id": "V4_INSTITUTIONAL_METABOLISM",
@@ -193,7 +216,13 @@
       "module_id": "V4_CAPABILITY_FOUNDRY",
       "source_change_scope": [
         "benchmarking/cfbe_omega/v4_capability_foundry.py",
-        "tests/test_cfbe_frontier_convergence_binding.py"
+        "benchmarking/cfbe_omega/observed_experiment_normalization.py",
+        "benchmarking/cfbe_omega/measurement_sheet_ingestion.py",
+        "benchmarking/cfbe_omega/empirical_measurement_fabric.py",
+        "tests/test_cfbe_frontier_convergence_binding.py",
+        "tests/test_cfbe_observed_experiment_normalization.py",
+        "tests/test_cfbe_measurement_sheet_ingestion.py",
+        "tests/test_cfbe_empirical_measurement_fabric.py"
       ],
       "target": "INTERFACE_ONLY_TO_DATA_READY_ON_COMPLETE_PROVENANCE_BOUND_FOUNDRY_PACKET",
       "automatic_promotion_from_source_only": false
