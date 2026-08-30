@@ -1,0 +1,48 @@
+{
+  "schema": "SOVARA_SC_GRAPH_ADMISSION_V1",
+  "capability_id": "SC-GRAPH",
+  "source_decision": "SOVARA-CFBE-AUDIT-20260829-001",
+  "source_audit_drive_id": "1KMHXcH_8klGgVpws8w77JcJXHZoIsVjuXPyMhQkFhuc",
+  "promotion_ceiling": "SOURCE_CANDIDATE",
+  "implementation": "sovara/creative/creative_graph.py",
+  "regression_court": "tests/test_sovara_creative_graph.py",
+  "objective": "Make the creative graph, rather than the prompt, the canonical unit of work for promptless SOVARA Creative workflows.",
+  "build_strategy": "EXTEND_AND_COMPOSE",
+  "reuse": [
+    "SC-VERSION-TREE immutable version lineage",
+    "SOVARA asset identity and provenance",
+    "Living State graph/state patterns",
+    "Creative Mission Genome",
+    "Failure-Win and proof-before-claim controls"
+  ],
+  "kernel_order": [
+    "SC-GRAPH",
+    "SC-VERSION-TREE",
+    "SC-TASTE",
+    "SC-PRODUCER",
+    "SC-RIPPLE"
+  ],
+  "proof_gate": {
+    "required": [
+      "STABLE_GRAPH_IDS",
+      "ACYCLIC_DEPENDENCIES",
+      "VERSION_TREE_BINDING",
+      "COMPARE_AND_SWAP_STALE_WRITER_REJECTION",
+      "LOCKED_ACCEPTED_NODE_PROTECTION",
+      "MINIMUM_DOWNSTREAM_INVALIDATION",
+      "DETERMINISTIC_REPLAY",
+      "NO_EXTERNAL_EFFECT"
+    ]
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "deployment_authorized": false,
+    "provider_effect_authorized": false,
+    "media_generation_authorized": false,
+    "publishing_authorized": false,
+    "production_traffic_authorized": false,
+    "spend_authorized": false
+  },
+  "anti_sprawl": "Do not create a new top-level creative subsystem where SC-GRAPH or an existing specialist domain can absorb the capability cleanly.",
+  "truth_boundary": "Source and CI admission prove only the deterministic in-process graph contract and its binding to SC-VERSION-TREE. They do not prove durable graph storage, provider execution, media generation, saved Canva design, production deployment, commercial value, repeated success, soak, or estate-wide maturity."
+}
