@@ -42,10 +42,10 @@ class ArchitectureConsolidationRegistry:
     """
 
     REQUIRED_FILES = {
-        "architecture": "forest_first_architecture_consolidation_v1.json",
-        "compatibility": "forest_first_compatibility_manifest_v1.json",
-        "dependencies": "forest_first_dependency_contract_v1.json",
-        "migration": "forest_first_migration_contracts_v1.json",
+        "architecture": "ao_harmonic_forest_first_architecture_consolidation_v1.json",
+        "compatibility": "ao_harmonic_forest_first_compatibility_manifest_v1.json",
+        "dependencies": "ao_harmonic_forest_first_dependency_contract_v1.json",
+        "migration": "ao_harmonic_forest_first_migration_contracts_v1.json",
     }
 
     def __init__(self, *, governance_dir: Path | None = None) -> None:

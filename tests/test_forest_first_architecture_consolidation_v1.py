@@ -12,10 +12,10 @@ def load(name: str):
 
 class ForestFirstArchitectureConsolidationV1Tests(unittest.TestCase):
     def setUp(self):
-        self.arch = load("forest_first_architecture_consolidation_v1.json")
-        self.compat = load("forest_first_compatibility_manifest_v1.json")
-        self.deps = load("forest_first_dependency_contract_v1.json")
-        self.migration = load("forest_first_migration_contracts_v1.json")
+        self.arch = load("ao_harmonic_forest_first_architecture_consolidation_v1.json")
+        self.compat = load("ao_harmonic_forest_first_compatibility_manifest_v1.json")
+        self.deps = load("ao_harmonic_forest_first_dependency_contract_v1.json")
+        self.migration = load("ao_harmonic_forest_first_migration_contracts_v1.json")
 
     def test_exact_eight_layers_and_human_root(self):
         layers = self.arch["layers"]

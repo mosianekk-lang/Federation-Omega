@@ -3,7 +3,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-CENSUS = ROOT / "governance" / "forest_first_consumer_census_v1.json"
+CENSUS = ROOT / "governance" / "ao_harmonic_forest_first_consumer_census_v1.json"
 
 
 class ForestFirstConsumerCensusV1Tests(unittest.TestCase):

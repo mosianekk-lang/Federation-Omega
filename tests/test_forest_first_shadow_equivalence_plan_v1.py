@@ -3,7 +3,7 @@ from pathlib import Path
 import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
-PLAN = ROOT / "governance" / "forest_first_shadow_equivalence_plan_v1.json"
+PLAN = ROOT / "governance" / "ao_harmonic_forest_first_shadow_equivalence_plan_v1.json"
 
 
 class ForestFirstShadowEquivalencePlanV1Tests(unittest.TestCase):

@@ -49,7 +49,7 @@ class C2CompatibilityContract:
     transfer EvidenceOps/TruthGrid/JFRIE authority into LEX.
     """
 
-    CONTRACT_FILE = "forest_first_c2_domain_compatibility_contract_v1.json"
+    CONTRACT_FILE = "ao_harmonic_forest_first_c2_domain_compatibility_contract_v1.json"
 
     def __init__(self, *, governance_dir: Path | None = None) -> None:
         root = Path(__file__).resolve().parents[1]
