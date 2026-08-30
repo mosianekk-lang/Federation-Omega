@@ -6,6 +6,7 @@ from benchmarking.cfbe_omega.empirical_measurement_fabric import (
     AcquisitionRoute,
     DimensionBound,
     FederationObservationPacket,
+    bounds_from_10x_rollout_stage,
     compile_measurement_rows,
     plan_measurement_acquisition,
 )
@@ -245,6 +246,74 @@ class EmpiricalMeasurementFabricTests(unittest.TestCase):
                     ),
                 ),
             )
+
+    def test_10x_rollout_stage_creates_exact_cost_and_p95_burden_bounds(self):
+        bounds = bounds_from_10x_rollout_stage(
+            {
+                "maximum_p95_latency_ms": 12000,
+                "maximum_cost_per_accepted_mission_usd": 0.15,
+            },
+            evidence_refs=("policy:sovara-10x:SHADOW",),
+        )
+        by_dimension = {bound.dimension: bound for bound in bounds}
+        self.assertEqual({"estimated_cost", "latency_burden"}, set(by_dimension))
+        self.assertEqual(0.15, by_dimension["estimated_cost"].bound)
+        self.assertEqual(12000.0, by_dimension["latency_burden"].bound)
+        self.assertEqual(
+            ("cost_per_accepted_mission_usd", "sovara.10x.cost_per_accepted_mission_usd"),
+            by_dimension["estimated_cost"].source_keys,
+        )
+        self.assertNotIn("sovara.mission.cost", by_dimension["estimated_cost"].source_keys)
+        self.assertNotIn("sovara.mission.elapsed_seconds", by_dimension["latency_burden"].source_keys)
+
+    def test_10x_rollout_stage_requires_denominator_provenance(self):
+        with self.assertRaisesRegex(ValueError, "ROLLOUT_STAGE_PROVENANCE_REQUIRED"):
+            bounds_from_10x_rollout_stage(
+                {
+                    "maximum_p95_latency_ms": 12000,
+                    "maximum_cost_per_accepted_mission_usd": 0.15,
+                },
+                evidence_refs=(),
+            )
+
+    def test_10x_rollout_stage_invalid_ceiling_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "ROLLOUT_STAGE_P95_LATENCY_CEILING_MUST_BE_POSITIVE"):
+            bounds_from_10x_rollout_stage(
+                {
+                    "maximum_p95_latency_ms": 0,
+                    "maximum_cost_per_accepted_mission_usd": 0.15,
+                },
+                evidence_refs=("policy:sovara-10x:SHADOW",),
+            )
+        with self.assertRaisesRegex(ValueError, "ROLLOUT_STAGE_COST_CEILING_REQUIRED"):
+            bounds_from_10x_rollout_stage(
+                {
+                    "maximum_p95_latency_ms": 12000,
+                    "maximum_cost_per_accepted_mission_usd": "unknown",
+                },
+                evidence_refs=("policy:sovara-10x:SHADOW",),
+            )
+
+    def test_10x_rollout_bounds_compile_matching_observations_without_other_dimension_inference(self):
+        telemetry = {
+            "p95_latency_ms": 9000.0,
+            "cost_per_accepted_mission_usd": 0.10,
+        }
+        bounds = bounds_from_10x_rollout_stage(
+            {
+                "maximum_p95_latency_ms": 12000,
+                "maximum_cost_per_accepted_mission_usd": 0.15,
+            },
+            evidence_refs=("policy:sovara-10x:SHADOW",),
+        )
+        report = compile_measurement_rows(self._packet(telemetry=telemetry), bounds)
+        self.assertEqual("PARTIAL_MEASUREMENT_PACKET", report.state)
+        self.assertEqual(2, len(report.rows))
+        by_dimension = {row["Dimension"]: row for row in report.rows}
+        self.assertAlmostEqual(0.75, by_dimension["latency_burden"]["Normalized_Value"])
+        self.assertAlmostEqual(2.0 / 3.0, by_dimension["estimated_cost"]["Normalized_Value"])
+        self.assertIn("policy:sovara-10x:SHADOW", by_dimension["estimated_cost"]["Verification_Refs"])
+        self.assertNotIn("mission_value", by_dimension)
 
 
 if __name__ == "__main__":
