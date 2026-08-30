@@ -1,0 +1,135 @@
+name: Superior Logic Candidate Builder Canary
+
+on:
+  pull_request:
+    branches: [main]
+    types: [opened, synchronize, reopened]
+    paths:
+      - "evidenceops/caseforge/maturation_shadow_runtime.py"
+      - "evidenceops/caseforge/maturation_candidate_builder.py"
+      - "evidenceops/caseforge/maturation_candidate_builder_cli.py"
+      - "federation/bubbles_cognitive_court.py"
+      - "federation/bubbles_hyperperformance.py"
+      - "tests/test_bubbles_cognitive_court.py"
+      - "tests/test_maturation_candidate_builder.py"
+      - "governance/SUPERIOR_LOGIC_CANDIDATE_BUILDER_V1.md"
+      - ".github/workflows/superior-logic-candidate-builder-canary.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  actions: read
+
+concurrency:
+  group: superior-logic-candidate-builder-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  provider-disabled-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 1
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run cognitive court and candidate-builder regressions
+        run: |
+          python -m unittest discover -s tests -p 'test_bubbles_cognitive_court.py' -v
+          python -m unittest discover -s tests -p 'test_maturation_candidate_builder.py' -v
+
+      - name: Generate the Stage-20 branch-bound work package
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-output
+          python - <<'PY'
+          from dataclasses import asdict
+          import json
+          from pathlib import Path
+          from evidenceops.caseforge.maturation_shadow_runtime import (
+              ShadowRuntimeInput,
+              SuperiorLogicMaturationShadowRuntime,
+          )
+
+          receipt = SuperiorLogicMaturationShadowRuntime().run(ShadowRuntimeInput(
+              run_id="candidate-builder-${{ github.run_id }}",
+              head_sha="${{ github.event.pull_request.head.sha || github.sha }}",
+              event="push",
+              observed_at="2026-08-30T23:00:00+00:00",
+              previous_successful_cycles=3,
+              previous_manual_cycles=0,
+          ))
+          assert receipt.selected_gap_id == "GAP-CLOSED-LOOP-CANDIDATE-QUALIFICATION", receipt
+          Path("runtime-output/stage20-candidate-work-package.json").write_text(
+              json.dumps(asdict(receipt.candidate_work_package), indent=2, sort_keys=True) + "\n",
+              encoding="utf-8",
+          )
+          PY
+
+      - name: Execute five observed provider-disabled challenger missions
+        shell: bash
+        env:
+          TARGET_BRANCH: ${{ github.head_ref || github.ref_name }}
+        run: |
+          set -euo pipefail
+          observed_at="$(date -u +'%Y-%m-%dT%H:%M:%SZ')"
+          python -m evidenceops.caseforge.maturation_candidate_builder_cli \
+            --input-work-package runtime-output/stage20-candidate-work-package.json \
+            --output-dir runtime-output/receipts \
+            --mission-id "MISSION-SLOS-CANDIDATE-BUILDER-${GITHUB_RUN_ID}" \
+            --run-id "$GITHUB_RUN_ID" \
+            --head-sha "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --base-ref main \
+            --target-branch "$TARGET_BRANCH" \
+            --observed-at "$observed_at" \
+            | tee runtime-output/candidate-builder-stdout.json
+
+      - name: Independently verify no-effect canary fruit
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          root = Path("runtime-output/receipts")
+          receipt = json.loads((root / "candidate_builder_receipt.json").read_text())
+          manifest = json.loads((root / "candidate_manifest.json").read_text())
+          observations = json.loads((root / "observed_challenger_receipts.json").read_text())
+          assurance = json.loads((root / "independent_assurance.json").read_text())
+          assert receipt["status"] == "CANDIDATE_CANARY_ASSURED", receipt
+          assert receipt["provider_disabled"] is True, receipt
+          assert receipt["external_effect"] is False, receipt
+          assert len(observations) == 5, observations
+          assert all(item["execution_observed"] for item in observations), observations
+          assert all(item["provider_execution"] is False for item in observations), observations
+          assert all(item["effect_authorized"] is False for item in observations), observations
+          assert manifest["direct_main_mutation"] is False, manifest
+          assert manifest["provider_authority_expansion"] is False, manifest
+          assert assurance["assurance_passed"] is True, assurance
+          assert assurance["decision"] == "HOLD_FOR_30_PAIR_GATE", assurance
+          assert assurance["stable_promotion_authorized"] is False, assurance
+          print(json.dumps({
+              "status": receipt["status"],
+              "candidate_id": manifest["candidate_id"],
+              "observed_pair_count": len(observations),
+              "assurance_decision": assurance["decision"],
+              "stable_promotion_authorized": assurance["stable_promotion_authorized"],
+              "external_effect": receipt["external_effect"],
+          }, indent=2, sort_keys=True))
+          PY
+
+      - name: Upload candidate-builder evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: superior-logic-candidate-builder-${{ github.run_id }}-${{ github.run_attempt }}
+          path: runtime-output/
+          if-no-files-found: error
+          retention-days: 90
