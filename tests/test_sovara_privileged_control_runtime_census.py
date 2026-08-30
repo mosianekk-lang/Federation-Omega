@@ -42,7 +42,7 @@ class SovaraPrivilegedControlRuntimeCensusTests(unittest.TestCase):
         self.assertIn('"gcloud", "auth", "print-identity-token"', self.script)
         self.assertIn('"Authorization"] = f"Bearer {token}"', self.script)
         self.assertNotIn('"identity_token": token', self.script)
-        self.assertIn('"identity_token_minted": bool(token)', self.script)
+        self.assertIn('info["identity_token_minted"] = bool(token)', self.script)
 
     def test_receipt_requires_service_specific_identity_and_no_mutation(self) -> None:
         self.assertIn('"runtime_identity_matches_expected"', self.script)
