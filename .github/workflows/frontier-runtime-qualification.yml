@@ -4,12 +4,20 @@ on:
   pull_request:
     paths:
       - 'frontier_convergence/**'
+      - 'federation/superior_logic_convergence_measurement.py'
+      - 'tests/test_superior_logic_convergence_measurement.py'
+      - 'tests/test_frontier_slos_convergence_runner.py'
+      - 'benchmarking/cfbe_omega/bubbles_chatbridge_payload_ingress_observation_20260830_v1.json'
       - 'governance/superior_logic_gemini_frontier_convergence_v1.json'
       - '.github/workflows/frontier-runtime-qualification.yml'
   push:
     branches: [main]
     paths:
       - 'frontier_convergence/**'
+      - 'federation/superior_logic_convergence_measurement.py'
+      - 'tests/test_superior_logic_convergence_measurement.py'
+      - 'tests/test_frontier_slos_convergence_runner.py'
+      - 'benchmarking/cfbe_omega/bubbles_chatbridge_payload_ingress_observation_20260830_v1.json'
       - 'governance/superior_logic_gemini_frontier_convergence_v1.json'
       - '.github/workflows/frontier-runtime-qualification.yml'
   workflow_dispatch:
@@ -47,6 +55,27 @@ jobs:
           assert receipt['provider_effects'] is False, receipt
           assert receipt['event_chain_valid'] is True, receipt
           print('PROVIDER_DISABLED_CANARY_VERIFIED')
+          PY
+
+      - name: Run 30-pair CFBE hosted shadow court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_superior_logic_convergence_measurement.py' -v
+          python -m unittest discover -s tests -p 'test_frontier_slos_convergence_runner.py' -v
+          python -m frontier_convergence.slos_convergence_runner > runtime-proof/slos-convergence-campaign.json
+          python - <<'PY'
+          import json
+          receipt = json.load(open('runtime-proof/slos-convergence-campaign.json', encoding='utf-8'))
+          assert receipt['state'] == 'HOSTED_SHADOW_30_OF_30_PASS', receipt
+          assert receipt['pair_count'] == 30, receipt
+          assert receipt['hosted_shadow_pair_count'] == 30, receipt
+          assert receipt['observed_pair_count'] == 0, receipt
+          assert receipt['zero_critical_omissions'] is True, receipt
+          assert receipt['external_effect'] is False, receipt
+          assert receipt['provider_effects'] is False, receipt
+          assert receipt['stable_promotion_allowed'] is False, receipt
+          print('CFBE_HOSTED_SHADOW_30_OF_30_VERIFIED')
           PY
 
       - name: Build non-root control-runtime container

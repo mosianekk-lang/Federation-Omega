@@ -23,6 +23,7 @@ CONSTITUTIONAL_CORE = frozenset(
 
 class ObservationMode(str, Enum):
     SYNTHETIC = "SYNTHETIC"
+    HOSTED_SHADOW = "HOSTED_SHADOW"
     OBSERVED = "OBSERVED"
 
 
@@ -65,8 +66,8 @@ class ProfileObservation:
             raise ValueError("PROFILE_CONTEXT_CHARS_POSITIVE_REQUIRED")
         if self.tool_round_trips < 0 or self.owner_interventions < 0:
             raise ValueError("PROFILE_COUNTS_NONNEGATIVE_REQUIRED")
-        if self.mode == ObservationMode.OBSERVED and not self.proof_refs:
-            raise ValueError("OBSERVED_PROFILE_PROOF_REQUIRED")
+        if self.mode in {ObservationMode.HOSTED_SHADOW, ObservationMode.OBSERVED} and not self.proof_refs:
+            raise ValueError("PROOF_REFERENCED_PROFILE_REQUIRED")
 
 
 @dataclass(frozen=True, slots=True)
@@ -100,6 +101,7 @@ class PairMeasurement:
 class CampaignMeasurement:
     pair_count: int
     observed_pair_count: int
+    hosted_shadow_pair_count: int
     structural_pass_count: int
     zero_critical_omissions: bool
     median_context_reduction: float
@@ -163,6 +165,8 @@ def compare_pair(
     truth_state = (
         "OBSERVED_PAIR_PASS"
         if structural_pass and candidate.mode == ObservationMode.OBSERVED
+        else "HOSTED_SHADOW_PAIR_PASS"
+        if structural_pass and candidate.mode == ObservationMode.HOSTED_SHADOW
         else "SYNTHETIC_PAIR_PASS"
         if structural_pass
         else "PAIR_HOLD"
@@ -197,6 +201,7 @@ def aggregate_campaign(
     tool_deltas = [pair.tool_round_trip_delta for pair in pairs]
     owner_deltas = [pair.owner_intervention_delta for pair in pairs]
     observed_count = sum(pair.mode == ObservationMode.OBSERVED for pair in pairs)
+    hosted_shadow_count = sum(pair.mode == ObservationMode.HOSTED_SHADOW for pair in pairs)
     pass_count = sum(pair.structural_pass for pair in pairs)
     zero_critical_omissions = all(
         not pair.candidate_missing_controls and not pair.candidate_behavior_failures
@@ -224,6 +229,7 @@ def aggregate_campaign(
     return CampaignMeasurement(
         pair_count=len(pairs),
         observed_pair_count=observed_count,
+        hosted_shadow_pair_count=hosted_shadow_count,
         structural_pass_count=pass_count,
         zero_critical_omissions=zero_critical_omissions,
         median_context_reduction=median_reduction,
