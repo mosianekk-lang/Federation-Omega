@@ -1,0 +1,67 @@
+{
+  "schema": "FOREST-FIRST-100X-TRANCHE1-RESULT-V1",
+  "version": "1.0.0",
+  "tranche": "FOREST_INTEGRITY_FOUNDATION",
+  "base_main_sha": "fe9ac2a419fa23650379d8877c71baed246e0f92",
+  "source_head_under_test": "6a13bc74b871fcd359094c43bedf82d1ef18ce8b",
+  "functional_result": "PASS",
+  "capabilities": [
+    "Universal Evidence Atom",
+    "Objective Genome",
+    "Decision Contract",
+    "Path Admissibility Gate",
+    "Effect Contract + Readback Receipt",
+    "Capability Truth Resolver",
+    "Complexity Tax / Architecture Budget",
+    "Forest-First Empirical Fitness Observation Contract"
+  ],
+  "source_surface": {
+    "shared_module": "ao_harmonic_v3/forest_integrity.py",
+    "dedicated_regression": "tests/test_forest_first_integrity_v1.py",
+    "canonical_phoenix_binding": "tests/test_phoenix_provider_cutover_v3_forest_integrity.py",
+    "gap_matrix": "governance/ao_harmonic_forest_first_100x_capability_gap_matrix_v1.json"
+  },
+  "admission": {
+    "github_airlock_run_id": 33308845935,
+    "bubbles_run_id": 33308845940,
+    "leak_guard_run_id": 33308845945,
+    "artifact_id": 9731347872,
+    "artifact_sha256": "c8d244032bbe1f7cba05124721da903581db94a9a7b20773dae91a210182bb34",
+    "proofos_manifest_sha256": "73cee5b4e1a63e08e827a9f2c093fe13ff232c59517cbc5314cc6145cebeaf04",
+    "proofos_report_sha256": "cfa8068f2f10fd499770841ce8895bde3d17b0d05968cb355209dc4d9e8e1c32",
+    "shadow_calibration_receipt_sha256": "dfbb75fb02469475f26f6434754660aacbdbc03504f10ccd8e2a176d93a6d1bf",
+    "source_provenance_receipt_sha256": "8f95c1186755b17ff7b1a1737d8f0d99eeb9669a7258da2d1fdcd2a6403c0758",
+    "blocking_proofs_passed": 16,
+    "blocking_failures": 0,
+    "unmapped_production_paths": 0,
+    "shadow_escape_candidates": 0,
+    "bubbles": "PASS",
+    "public_repository_leak_guard": "PASS"
+  },
+  "proved_invariants": {
+    "verified_evidence_requires_provider_or_source_reference_and_timestamp": true,
+    "freshness_can_expire_without_rewriting_historical_truth_state": true,
+    "synthetic_or_disputed_evidence_is_not_consequentially_usable": true,
+    "objective_requires_explicit_success_condition": true,
+    "inadmissible_path_cannot_win_by_score": true,
+    "high_irreversibility_requires_owner_authority_and_rollback": true,
+    "owner_required_decision_holds_without_approval": true,
+    "effect_claim_requires_matching_semantic_readback": true,
+    "source_presence_does_not_imply_executability": true,
+    "net_new_complexity_requires_measurable_gain_and_strict_budget": true,
+    "synthetic_or_unproven_outcome_is_not_empirical_learning": true
+  },
+  "truth_boundary": {
+    "authority_ceiling": "A1_INTERNAL",
+    "external_effect": false,
+    "runtime_binding_changed": false,
+    "forest_omega_runtime_rewired": false,
+    "provider_runtime_proved": false,
+    "empirical_outcome_improvement_proved": false,
+    "global_superiority_proved": false,
+    "physical_migration_executed": false,
+    "maturity_inherited": false
+  },
+  "promotion_state": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_RUNTIME_BINDING_AND_EMPIRICAL_VALIDATION",
+  "next_gate": "Bind selected integrity contracts into ForestOmegaContext through a backwards-compatible shadow adapter, then measure real mission outcomes before any operational promotion."
+}
