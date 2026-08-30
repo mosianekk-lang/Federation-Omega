@@ -1,0 +1,34 @@
+{
+  "schema": "BUBBLES-OMEGA-AGENT-FABRIC-V1",
+  "status": "SOURCE_CANDIDATE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "mission_controller": "BUBBLES-OMEGA-CONTROLLER",
+  "architecture": {
+    "agents": "bounded specialist reasoning/execution roles",
+    "bots": "deterministic queue, dedup, checkpoint, proof, retry, handoff and completion controls",
+    "scheduler": "dependency-aware DAG waves with bounded parallelism",
+    "effect_lanes": "maximum one effectful lane unless a stronger mission contract explicitly lowers risk and proves authority",
+    "completion": "every required task must have terminal SUCCESS; FAILURE/CONSTRAINT cannot be relabeled complete"
+  },
+  "integrations": {
+    "omega_one": "load balancing, DAG allocation, failure isolation and champion/challenger telemetry",
+    "cfbe": "benchmark snapshots and value/reliability comparison",
+    "realityguard": "preflight guard callback before dispatch",
+    "jarvis": "independent semantic verification callback after result",
+    "bubbles_omega2": "existing capability discovery, squad formation, proof graph and anti-proliferation controls"
+  },
+  "non_negotiable_controls": [
+    "NO_HIDDEN_BACKGROUND_AGENT_CLAIM",
+    "NO_PROVIDER_AUTHORITY_INHERITANCE",
+    "NO_DIRECT_MAIN_WRITE",
+    "NO_EFFECT_WITHOUT_EXACT_PERMIT",
+    "NO_UNCHANGED_FAILED_ROUTE_RETRY",
+    "NO_DUPLICATE_EFFECT_FROM_REPLAY",
+    "NO_EXECUTOR_SELF_CERTIFICATION_FOR_CONSEQUENTIAL_EFFECT",
+    "NO_COMPLETION_WITHOUT_REQUIRED_TASK_SUCCESS",
+    "UNRELATED_SAFE_LANES_CONTINUE_AFTER_FAILURE",
+    "SOURCE_TEST_RUNTIME_PROVIDER_AND_VALUE_STATES_REMAIN_SEPARATE"
+  ],
+  "truth_boundary": "This contract governs provider-neutral source/runtime orchestration. It does not prove native ChatGPT background workers, provider deployment, provider credentials, external authority or completed external effects."
+}
