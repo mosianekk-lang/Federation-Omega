@@ -1,0 +1,83 @@
+{
+  "contractId": "CFBE-OMEGA-FIDELITY-CONSTRAINT-ISOLATION-V1",
+  "schema": "CFBE-OMEGA-FIDELITY-CONSTRAINT-ISOLATION-RESULT-V1",
+  "status": "SOURCE_IMPLEMENTED",
+  "purpose": "Prove canonical-source fidelity independently from platform capability and preserve unresolved requirements as explicit build triggers.",
+  "inputs": {
+    "canonicalSource": {
+      "required": [
+        "sourceId",
+        "version",
+        "mediaType",
+        "content",
+        "fidelityMode"
+      ],
+      "contentHandling": "Input-only; raw canonical content is excluded from reports.",
+      "fidelityModes": [
+        "EXACT",
+        "EXACT_OR_ADDITIVE",
+        "PROTECTED_INVARIANTS"
+      ]
+    },
+    "candidateContent": {
+      "type": "string",
+      "contentHandling": "Input-only; raw candidate content is excluded from reports."
+    },
+    "platformProfile": {
+      "required": [
+        "platformId",
+        "exactScope",
+        "discoveryRef",
+        "capabilities"
+      ]
+    },
+    "requirements": {
+      "minimumItems": 1,
+      "platformHardLimit": "Optional boolean; true requires boundaryEvidenceRef and enables exact-scope hard-limit language. Absence of a proven route otherwise remains UNRESOLVED_CAPABILITY."
+    },
+    "adapterRoutes": {
+      "default": []
+    },
+    "policy": {
+      "defaults": {
+        "availableAuthority": "A1",
+        "maxRecurringCost": 0,
+        "maxUserBurden": 0,
+        "allowExternalEffects": false
+      }
+    }
+  },
+  "maturityLadder": [
+    "DESIGNED",
+    "SOURCE_IMPLEMENTED",
+    "DETERMINISTIC_TESTED",
+    "REGISTERED",
+    "AUTHORIZED",
+    "PROVIDER_READY",
+    "PROVIDER_DEPLOYED",
+    "READBACK_PROVEN"
+  ],
+  "resultStates": {
+    "REJECT_DILUTION": "Candidate failed the selected fidelity contract; route selection is not performed.",
+    "PLATFORM_BOUNDARY": "Canonical source passed, but one or more exact platform requirements remain unresolved and are emitted as stable AO-CRA build triggers.",
+    "ROUTE_READY_LOCAL": "Every requirement has a native or adapter route with at least deterministic test evidence; no execution is claimed.",
+    "ROUTE_READY_PROVEN": "Every selected route carries provider readback proof; no new execution is performed by this evaluator.",
+    "INVALID_INPUT": "The request failed schema or evidence validation and no result was admitted."
+  },
+  "invariants": [
+    "Fidelity is evaluated before capability negotiation.",
+    "A fidelity failure cannot be repaired by an adapter route.",
+    "Platform limitations never authorize deletion or weakening of canonical source.",
+    "Absence of capability evidence is never promoted to a proven platform hard limit.",
+    "Adapters require deterministic test evidence, rollback evidence, and a fidelity evidence reference.",
+    "Authority, recurring cost, user burden, and external effects are bounded by policy.",
+    "Provider execution state is always NOT_EXECUTED for this evaluator.",
+    "Runtime, deployment, and completion claims require their own provider receipts."
+  ],
+  "composition": {
+    "capabilityResolutionGate": "evidenceops.caseforge.capability_decision.CapabilityResolutionGate",
+    "providerConstraintResolver": "federation_consolidation.provider_constraint_resolver",
+    "boundary": "The generic kernel classifies platform gaps; provider-specific mutation remains outside this package."
+  },
+  "rollback": "Discard the candidate or generated report; the canonical source is immutable and this evaluator performs no provider mutation."
+}

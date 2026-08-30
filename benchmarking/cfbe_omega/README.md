@@ -55,3 +55,13 @@ python -m benchmarking.cfbe_omega.sol56_runtime \
   --observations benchmarking/cfbe_omega/sol56_observations.template.jsonl \
   --output /tmp/cfbe-sol56-report.json
 ```
+
+## Fidelity and constraint isolation
+
+`fidelity_constraint_isolation/` separates canonical-source fidelity from platform capability. It rejects deletion or weakening before route negotiation, selects only evidence-backed routes within explicit authority/cost/effect limits, and converts unresolved requirements into stable AO-CRA build triggers. The evaluator is deterministic and provider-disabled: every report declares `NOT_EXECUTED`.
+
+```bash
+python -m benchmarking.cfbe_omega.fidelity_constraint_isolation \
+  --input request.json \
+  --output /tmp/cfbe-fidelity-result.json
+```
