@@ -1,0 +1,28 @@
+{
+  "schema": "AO-CRA-SLOS-CONVERGENCE-MEASUREMENT-V1",
+  "status": "ACTIVE_BUILD_RECORD",
+  "classification": "UNRESOLVED_ENGINEERING_BUILD",
+  "build_identity": "AO-CRA-SLOS-CONVERGENCE-OBSERVED-PAIRS-001",
+  "gap": "Deterministic structural tests cannot prove runtime latency, model-answer quality, browser responsiveness or owner-time value.",
+  "workaround": "Use source-level structural court now; keep all operational-value and stable-promotion claims held.",
+  "owning_engine": "BUBBLES_CFBE_SLOS_CONVERGENCE",
+  "dependencies": [
+    "source admission of measurement court",
+    "proof-referenced observed paired mission runner",
+    "at least 30 paired observed runs",
+    "semantic fruit oracle",
+    "owner-intervention and tool-round-trip telemetry"
+  ],
+  "test_harness": "tests/test_superior_logic_convergence_measurement.py",
+  "acceptance_criteria": [
+    "zero required-control omissions",
+    "zero protected-behavior regressions",
+    "at least 30 proof-referenced observed pairs",
+    "median tool round trips not worse",
+    "median owner interventions not worse",
+    "stable promotion remains separately gated"
+  ],
+  "next_executable_action": "Admit deterministic source candidate, then implement/run no-effect paired observed shadow campaign through existing runtime surfaces.",
+  "capability_recheck_trigger": "measurement source admitted or a callable observed mission runner becomes available",
+  "proof_and_closure_state": "WORKAROUND_ACTIVE_BUILD_OPEN"
+}
