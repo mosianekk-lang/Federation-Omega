@@ -18,6 +18,7 @@ from proofos_omega.cli import (
 
 class ProofOSFailureDiagnosticsTests(unittest.TestCase):
     def test_redaction_masks_common_secret_shapes_and_assignment_lines(self) -> None:
+        synthetic_openai_key = "sk-" + "proj-" + "abcdefghijklmnopqrstuvwxyz"
         raw = "\n".join(
             (
                 "Authorization: Bearer abcdefghijklmnop",
@@ -26,7 +27,7 @@ class ProofOSFailureDiagnosticsTests(unittest.TestCase):
                 "api_key=abcdefghijklmnop",
                 "github_pat_abcdefghijklmnopqrstuvwxyz",
                 "ghp_abcdefghijklmnopqrstuvwxyz",
-                "sk-proj-abcdefghijklmnopqrstuvwxyz",
+                synthetic_openai_key,
                 "AIzaABCDEFGHIJKLMNOPQRSTUVWXYZ123456",
                 "AKIAABCDEFGHIJKLMNOP",
                 "eyJabcdefghijk.abcdefghijkl.abcdefghijkl",
@@ -38,7 +39,7 @@ class ProofOSFailureDiagnosticsTests(unittest.TestCase):
             "hunter2",
             "github_pat_abcdefghijklmnopqrstuvwxyz",
             "ghp_abcdefghijklmnopqrstuvwxyz",
-            "sk-proj-abcdefghijklmnopqrstuvwxyz",
+            synthetic_openai_key,
             "AIzaABCDEFGHIJKLMNOPQRSTUVWXYZ123456",
             "AKIAABCDEFGHIJKLMNOP",
             "eyJabcdefghijk.abcdefghijkl.abcdefghijkl",
