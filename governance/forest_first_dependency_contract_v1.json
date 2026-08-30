@@ -18,6 +18,8 @@
   "component_boundaries": {
     "AO-HARMONIC": {"classification":"RUNTIME_HOST","may_own_domain_truth":false,"may_execute_external_effects_by_itself":false},
     "Forest-First Ω": {"classification":"COGNITIVE_KERNEL","may_mint_provider_authority":false,"may_self_certify":false},
+    "Ω-SCIENTIA": {"classification":"SCIENTIFIC_FALSIFICATION_ORGAN","runtime_host":"AO-HARMONIC","target_layer":"COGNITIVE_KERNEL","may_own_canonical_bible_knowledge":false,"may_mint_domain_or_provider_authority":false},
+    "Next Frontier AI Bible": {"classification":"CANONICAL_KNOWLEDGE_SOURCE","target_layer":"LEARNING_EVOLUTION","may_execute":false,"may_transfer_knowledge_source_status_into_runtime_maturity":false},
     "LEX": {"classification":"DOMAIN_INTELLIGENCE","owns":"LEGAL_INTERPRETATION","does_not_own":["EVIDENCE_PROVENANCE","PROVIDER_EFFECT"]},
     "EvidenceOps": {"classification":"EVIDENCE_ENGINEERING","owns":"EVIDENCE_PROCESSING_AND_PROVENANCE"},
     "TruthGrid": {"classification":"TRUTH_ASSURANCE","owns":"CONTRADICTION_AND_TRUTH_CLASS_ASSURANCE"},
@@ -41,8 +43,5 @@
     {"from":"ANY","to":"HUMAN_SOVEREIGNTY","transition":"SILENTLY_OVERRIDE_RESERVED_CONSEQUENTIAL_DECISION"}
   ],
   "freshness_rule": "CURRENT_PROVIDER_OR_DOMAIN_NATIVE_READBACK_OUTRANKS_REGISTRY_PROJECTION_AND_PRIOR_SUMMARY",
-  "truth_boundary": {
-    "runtime_binding_changed": false,
-    "external_effect": false
-  }
+  "truth_boundary": {"runtime_binding_changed":false,"external_effect":false}
 }
