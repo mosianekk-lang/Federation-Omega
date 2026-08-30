@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-PRIVILEGED-RUNTIME-CENSUS-20260830-001",
+  "request_id": "SOVARA-GEMINI-G0-PRIVILEGED-RUNTIME-CENSUS-20260830-002",
   "mode": "G0_READ_ONLY_VERIFY",
   "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
   "execute": true,
@@ -42,18 +42,37 @@
       "roles/iam.securityAdmin"
     ],
     "known_control_services": [
-      {"service":"architron9","region":"africa-south1"},
-      {"service":"federation-omega-operator","region":"us-central1"}
+      {
+        "service": "architron9",
+        "region": "africa-south1"
+      },
+      {
+        "service": "federation-omega-operator",
+        "region": "us-central1"
+      }
     ],
     "read_only": true
   },
   "privileged_control_runtime_census": true,
   "privileged_control_runtime_scope": {
     "services": [
-      {"service":"federation-omega-operator","region":"africa-south1","expected_service_account":"fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com"},
-      {"service":"afeme-sovereign-control-plane-v4","region":"africa-south1","expected_service_account":"afeme-sovereign-runtime-v4@sov-hybrid-suite.iam.gserviceaccount.com"}
+      {
+        "service": "federation-omega-operator",
+        "region": "africa-south1",
+        "expected_service_account": "fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com"
+      },
+      {
+        "service": "afeme-sovereign-control-plane-v4",
+        "region": "africa-south1",
+        "expected_service_account": "afeme-sovereign-runtime-v4@sov-hybrid-suite.iam.gserviceaccount.com"
+      }
     ],
-    "read_paths": ["/", "/health", "/openapi.json", "/openapi.yaml"],
+    "read_paths": [
+      "/",
+      "/health",
+      "/openapi.json",
+      "/openapi.yaml"
+    ],
     "wif_authenticated_read_probe": true,
     "read_only": true
   },
