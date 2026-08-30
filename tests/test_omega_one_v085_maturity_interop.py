@@ -1,7 +1,11 @@
+import copy
 import unittest
+from pathlib import Path
 
 from omega_one.interop import EffectClass, OmegaInteropSpine, OmegaTaskState, UniversalCapabilityContract
 from omega_one.maturity import CapabilityMaturityCompiler, CapabilityRecord, MaturityStage, ProofClaim
+from proofos_omega.cli import _load_policy, _merge_policy_extension
+from proofos_omega.core import ImpactCompiler, PolicyError, ProofSelector
 
 
 def claims_through(stage: MaturityStage):
@@ -188,6 +192,74 @@ class InteropSpineTests(unittest.TestCase):
         self.assertEqual(bundle.otel.attributes["omega.trace.id"], "trace-7")
         self.assertEqual(bundle.otel.attributes["gen_ai.operation.name"], "execute_tool")
         self.assertTrue(bundle.otel.attributes["omega.zero_dilution"])
+
+
+class ProofOSExtensionTests(unittest.TestCase):
+    def test_omega_one_paths_are_mapped_without_full_fallback(self):
+        root = Path(__file__).resolve().parents[1]
+        policy = _load_policy(root / "governance" / "proofos_omega_policy_v1.json", root)
+        self.assertIn("OMEGA_ONE", policy.subsystems)
+        impact = ImpactCompiler(policy).assess(
+            [
+                "omega_one/maturity.py",
+                "omega_one/interop.py",
+                "omega_one/__init__.py",
+                "proofos_omega/policy_extensions_v1.json",
+                "proofos_omega/cli.py",
+                "tests/test_omega_one_v085_maturity_interop.py",
+            ]
+        )
+        self.assertEqual(impact.unmapped_production_paths, ())
+        self.assertIn("OMEGA_ONE", impact.impacted_subsystems)
+        manifest = ProofSelector(policy).compile_manifest(
+            base_sha="a" * 40,
+            head_sha="b" * 40,
+            impact=impact,
+        )
+        selected = {item.test_id for item in manifest.selected_tests}
+        self.assertIn("omega_one_v085_maturity_interop", selected)
+        self.assertFalse(manifest.selector_state["fallback_full_suite_activated"])
+        self.assertNotIn("full_federation_fallback", selected)
+
+    def test_extension_rejects_selector_override(self):
+        base = {
+            "schema": "FEDERATION-PROOFOS-OMEGA-V1",
+            "version": "1.0.1",
+            "authority_ceiling": "A1_INTERNAL",
+            "external_effect_default": False,
+            "subsystem_rules": [],
+            "tests": [],
+        }
+        extension = {
+            "schema": "FEDERATION-PROOFOS-OMEGA-EXTENSION-V1",
+            "version": "1.0.0",
+            "base_policy_version": "1.0.1",
+            "authority_ceiling": "A1_INTERNAL",
+            "external_effect_default": False,
+            "selector": {"sentinel_percent": 0},
+        }
+        with self.assertRaises(PolicyError):
+            _merge_policy_extension(base, extension)
+
+    def test_extension_rejects_existing_subsystem_override(self):
+        base = {
+            "schema": "FEDERATION-PROOFOS-OMEGA-V1",
+            "version": "1.0.1",
+            "authority_ceiling": "A1_INTERNAL",
+            "external_effect_default": False,
+            "subsystem_rules": [{"subsystem": "FEDERATION_CORE", "patterns": ["x/**"]}],
+            "tests": [],
+        }
+        extension = {
+            "schema": "FEDERATION-PROOFOS-OMEGA-EXTENSION-V1",
+            "version": "1.0.0",
+            "base_policy_version": "1.0.1",
+            "authority_ceiling": "A1_INTERNAL",
+            "external_effect_default": False,
+            "subsystem_rules": [{"subsystem": "FEDERATION_CORE", "patterns": ["omega/**"]}],
+        }
+        with self.assertRaises(PolicyError):
+            _merge_policy_extension(copy.deepcopy(base), extension)
 
 
 if __name__ == "__main__":
