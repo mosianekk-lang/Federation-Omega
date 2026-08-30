@@ -1,0 +1,10 @@
+{
+  "schema": "FEDERATION-PRE-REVENUE-COST-DECISION-V1",
+  "mission": "SLOS_CONVERGENCE_MEASUREMENT_SOURCE_CANDIDATE",
+  "incremental_paid_budget": 0,
+  "selected_route": "EXISTING_GITHUB_SOURCE_AND_CI",
+  "paid_provider_required": false,
+  "unknown_recurring_cost": false,
+  "external_effect": false,
+  "truth_boundary": "This source-route decision does not measure future provider/runtime campaign cost and does not authorize paid execution."
+}
