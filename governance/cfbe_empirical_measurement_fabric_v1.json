@@ -1,0 +1,88 @@
+{
+  "schema": "CFBE_EMPIRICAL_MEASUREMENT_FABRIC_V1",
+  "capability_id": "CFBE-EMF-001",
+  "objective": "Convert heterogeneous Federation observations into provenance-bound canonical CFBE V4 experiment measurements without inventing scores, weakening proof gates or creating a second truth store.",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_allowed": false,
+  "provider_authority_created": false,
+  "automatic_v4_promotion": false,
+  "composition": [
+    {
+      "system": "SOVARA MCF v3.1",
+      "role": "mission telemetry, mission value/cost/risk, owner intervention, mission efficiency and sequential evidence primitives"
+    },
+    {
+      "system": "SOVARA 10X EvidenceOps v1",
+      "role": "measurement constitution, primary/secondary KPI definitions and hard non-regression vetoes"
+    },
+    {
+      "system": "Frontier Convergence OS",
+      "role": "ExperimentOption economics and EvidenceEconomicsSelector for evidence-acquisition route ranking"
+    },
+    {
+      "system": "CFBE observed experiment normalization",
+      "role": "eight-dimension observed numerator/denominator normalization and fail-closed promotion boundary"
+    },
+    {
+      "system": "CFBE V4_EXPERIMENT_MEASUREMENTS",
+      "role": "canonical raw measurement evidence plane; no parallel database"
+    },
+    {
+      "system": "ProofOS + Airlock + Bubbles + Leak Guard",
+      "role": "source admission and proof integrity"
+    },
+    {
+      "system": "Failure-Win v2 + RealityGuard + Sentinel + JARVIS",
+      "role": "failure/recovery, truth-boundary, freshness/drift and independent assurance evidence inputs"
+    }
+  ],
+  "algorithms": [
+    {
+      "name": "PROVENANCE_BOUND_OBSERVATION_COMPILER",
+      "rule": "Every normalized dimension requires one observed numerator plus one explicit target/ceiling denominator, each with evidence references. Benefit=observed/target; burden=observed/ceiling."
+    },
+    {
+      "name": "EMPIRICAL_EVIDENCE_GRADIENT_PLANNER",
+      "rule": "Use greedy missing-dimension set cover; where routes cover equal new dimensions, reuse FC-OS EvidenceEconomicsSelector as the tie-break court. Never convert expected route economics into observed measurements."
+    }
+  ],
+  "required_dimensions": [
+    "expected_information_gain",
+    "mission_value",
+    "proof_strength_gain",
+    "reversibility",
+    "estimated_cost",
+    "latency_burden",
+    "owner_burden",
+    "risk"
+  ],
+  "hard_boundaries": [
+    "NO_QUALITATIVE_TO_NUMERIC_INFERENCE",
+    "NO_CROSS_EXPERIMENT_STITCHING",
+    "NO_DENOMINATOR_WITHOUT_PROVENANCE",
+    "NO_SYNTHETIC_TO_OBSERVED_PROMOTION",
+    "NO_STORED_NORMALIZED_VALUE_AS_SOURCE_OF_TRUTH",
+    "NO_PROVIDER_OR_EXTERNAL_EFFECT",
+    "NO_V4_DATA_READY_FROM_SOURCE_ONLY",
+    "NO_TEN_X_CLAIM_WITHOUT_10X_MEASUREMENT_CONTRACT_GATES"
+  ],
+  "canonical_source": [
+    "benchmarking/cfbe_omega/empirical_measurement_fabric.py",
+    "benchmarking/cfbe_omega/measurement_sheet_ingestion.py",
+    "benchmarking/cfbe_omega/observed_experiment_normalization.py",
+    "ops/sovara_10x_evidenceops_v1/config/measurement_contract.yaml"
+  ],
+  "promotion_path": [
+    "SOURCE_IMPLEMENTED",
+    "DETERMINISTIC_TESTED",
+    "AIRLOCK_ADMITTED",
+    "SERVING_MAIN_VERIFIED",
+    "REAL_OBSERVATION_CAPTURED",
+    "COMPLETE_EIGHT_DIMENSION_PACKET",
+    "FOUNDARY_DATA_READY_IF_RECEIVER_GATES_PASS",
+    "CFBE_POSITIVE_EXPECTED_VALUE_IF_MEASURED",
+    "SHADOW",
+    "ADMITTED"
+  ],
+  "truth_boundary": "This capability creates a measurement compiler and evidence-acquisition plan, not measurements themselves. Real V4 readiness still requires receiver-specific empirical evidence, provenance, regression baselines and any independent/provider proof required by the existing gate."
+}
