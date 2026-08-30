@@ -1,0 +1,13 @@
+{
+  "mission_id": "MISSION-BUBBLES-HYPERPERFORMANCE-CANARY",
+  "objective": "Prove compact mission-state restoration without hydrating the full estate.",
+  "verified_state": "SHADOW_CANDIDATE",
+  "source_frontier": "PR856",
+  "authorities": ["SLOS", "Forest-First", "CFBE", "SOVARA", "Bubbles"],
+  "active_capabilities": ["Context Pressure Governor", "Mission Capsule Compiler"],
+  "artifacts": ["governance/bubbles_hyperperformance_wave1_v1.json", "federation/bubbles_hyperperformance.py"],
+  "blockers": ["Provider runtime unproven"],
+  "next_action": "Run exact-head regression and measure payload reduction.",
+  "proof_refs": ["PR856"],
+  "freshness": "LEASE_REQUIRED"
+}
