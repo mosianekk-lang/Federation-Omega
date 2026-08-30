@@ -27,12 +27,19 @@ class ForestFirstShadowEquivalencePlanV1Tests(unittest.TestCase):
         self.assertFalse(self.plan["promotion_gate"]["automatic_source_move"])
         self.assertFalse(self.plan["promotion_gate"]["automatic_retirement"])
 
-    def test_no_shadow_has_run_yet(self):
+    def test_only_c1_shadow_has_run_and_remains_bounded(self):
         boundary = self.plan["truth_boundary"]
-        self.assertFalse(boundary["shadow_run_executed"])
+        self.assertTrue(boundary["shadow_run_executed"])
+        self.assertEqual(boundary["shadow_scope"], "C1_DETERMINISTIC_LOCAL_A1_INTERNAL_ONLY")
+        self.assertFalse(boundary["provider_hosted_shadow_proved"])
         self.assertFalse(boundary["physical_migration_executed"])
         self.assertFalse(boundary["runtime_changed"])
         self.assertFalse(boundary["provider_effect"])
+        self.assertEqual(self.plan["cohort_status"]["C1_AUTHORITY_ONLY"], "DETERMINISTIC_LOCAL_PASS_PENDING_INDEPENDENT_ASSURANCE")
+        self.assertTrue(all(
+            self.plan["cohort_status"][cohort] == "NOT_RUN"
+            for cohort in ("C2_DOMAIN_COMPATIBILITY","C3_RECOVERY_FORMATION","C4_HIGH_COUPLING_POLICY_VALIDATION","C5_FORMATION_LAST")
+        ))
 
 
 if __name__ == "__main__":
