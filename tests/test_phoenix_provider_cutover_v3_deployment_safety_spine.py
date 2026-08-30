@@ -2,7 +2,9 @@ from __future__ import annotations
 
 import importlib.util
 import json
+import os
 from pathlib import Path
+import subprocess
 import sys
 import unittest
 
@@ -234,6 +236,38 @@ class DeploymentSafetySpineTests(unittest.TestCase):
         })
         self.assertTrue(guard.guard_claim_release(record, "CANARY_READY")["claim_authorized"])
         self.assertFalse(guard.guard_claim_release(record, "PRODUCTION")["claim_authorized"])
+
+    def test_realityguard_nested_package_suite_stays_green(self):
+        rg_root = ROOT / "realityguard_v0.4.0"
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(rg_root / "src")
+        proc = subprocess.run(
+            [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-v"],
+            cwd=rg_root,
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=180,
+        )
+        self.assertEqual(0, proc.returncode, proc.stdout + "\n" + proc.stderr)
+
+    def test_realityguard_cli_version_and_effect_surface_are_coherent(self):
+        rg_root = ROOT / "realityguard_v0.4.0"
+        env = dict(os.environ)
+        env["PYTHONPATH"] = str(rg_root / "src")
+        proc = subprocess.run(
+            [sys.executable, "-m", "realityguard.cli", "health"],
+            cwd=rg_root,
+            env=env,
+            text=True,
+            capture_output=True,
+            timeout=30,
+        )
+        self.assertEqual(0, proc.returncode, proc.stdout + proc.stderr)
+        health = json.loads(proc.stdout)
+        self.assertEqual("0.5.0", health["version"])
+        self.assertEqual("TESTED_LOCAL_ADAPTER_REQUIRED", health["execution_guard"])
+        self.assertFalse(health["external_bindings"])
 
 
 if __name__ == "__main__":
