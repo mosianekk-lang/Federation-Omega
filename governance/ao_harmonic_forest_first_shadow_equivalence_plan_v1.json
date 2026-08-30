@@ -1,8 +1,9 @@
 {
   "schema": "FOREST-FIRST-SHADOW-EQUIVALENCE-PLAN-V1",
-  "version": "1.0.0",
-  "status": "C1_DETERMINISTIC_LOCAL_SHADOW_PASS_PENDING_INDEPENDENT_ASSURANCE",
-  "base_main_sha": "413862511ae9c8be5d14b42be553967767bec6dc",
+  "version": "1.1.0",
+  "status": "C1_C2_PROVIDER_HOSTED_SOURCE_SHADOW_PASS_PENDING_INDEPENDENT_ASSURANCE",
+  "base_main_sha": "d6603e980ed5ad9c7c111a1561cf745de7c7b4c9",
+  "exact_head_sha": "c9503ca565cfd171495e2cb54bd2245bce28cfd0",
   "objective": "Demonstrate that target architecture preserves or improves bounded capability while preserving authority/proof boundaries and reducing conceptual/owner burden.",
   "global_acceptance": {
     "all_required": true,
@@ -17,11 +18,24 @@
     {"id":"C5_FORMATION_LAST","systems":["FORMATION-OMEGA Unified Powerhouse"],"shadow_type":"PUBLIC_API_AND_PROOF_GRAPH_SHADOW","inputs":"full Formation public API/regression suite and bounded real mission scenarios","target":"Formation engine canonical identity","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":10,"special_checks":["public_api_freeze","proof_graph_equivalence","reconciliation_behavior_preserved","strategic_ecology_preserved","autonomic_behavior_preserved","rollback","exact_head_admission_before_any_supersession"]}
   ],
   "cohort_status": {
-    "C1_AUTHORITY_ONLY": "DETERMINISTIC_LOCAL_PASS_PENDING_INDEPENDENT_ASSURANCE",
-    "C2_DOMAIN_COMPATIBILITY": "NOT_RUN",
+    "C1_AUTHORITY_ONLY": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C2_DOMAIN_COMPATIBILITY": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
     "C3_RECOVERY_FORMATION": "NOT_RUN",
     "C4_HIGH_COUPLING_POLICY_VALIDATION": "NOT_RUN",
     "C5_FORMATION_LAST": "NOT_RUN"
+  },
+  "proof_receipts": {
+    "github_airlock_run_id": 33287881028,
+    "artifact_id": 9725010593,
+    "artifact_sha256": "54d16bd48d7b0e07a5a7ac7d442cf8f2e8ba4a21fbdfb2c7c58affd501b3eba5",
+    "proofos_manifest_sha256": "7ef8291f619fdef9edf9937b4603b89de033d8782079e6b32aa664bc5fb3907a",
+    "proofos_report_sha256": "f2afe4eee194d49d6cadec52322f8b647f527f35e576bf0248ff36010019596c",
+    "shadow_calibration_receipt_sha256": "4d09b38fa591f63b1c42c20211185ada66a5209c937f1866c13a1e9cddaa77db",
+    "blocking_proofs_passed": 14,
+    "blocking_failures": 0,
+    "unmapped_production_paths": 0,
+    "fallback_full_suite_activated": false,
+    "shadow_escape_candidates": 0
   },
   "measurement_fields": ["functional_pass","decision_delta","proof_boundary_delta","authority_boundary_delta","owner_interruption_count","manual_debug_steps","latency_ms_if_measured","complexity_units_removed","rollback_pass","unexpected_behavior"],
   "promotion_gate": {
@@ -31,8 +45,10 @@
   },
   "truth_boundary": {
     "shadow_run_executed": true,
-    "shadow_scope": "C1_DETERMINISTIC_LOCAL_A1_INTERNAL_ONLY",
-    "provider_hosted_shadow_proved": false,
+    "shadow_scope": ["C1_AUTHORITY_ONLY","C2_DOMAIN_COMPATIBILITY"],
+    "provider_hosted_source_shadow_proved": true,
+    "provider_runtime_shadow_proved": false,
+    "independent_assurance_review": "PENDING",
     "physical_migration_executed": false,
     "runtime_changed": false,
     "provider_effect": false
