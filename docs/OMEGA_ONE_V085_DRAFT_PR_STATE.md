@@ -1,0 +1,1 @@
+Draft PR #843 is intentionally non-promotable until branch source is reconciled to the corrected local candidate and hosted checks pass. This marker prevents the existence of the PR from being interpreted as an admitted release.
