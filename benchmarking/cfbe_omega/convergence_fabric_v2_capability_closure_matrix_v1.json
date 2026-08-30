@@ -187,7 +187,8 @@
       "provider_gate": "provider failures require provider-native readback",
       "economic_gate": "failure cost and owner intervention feed C07",
       "specialists": ["Patch", "Pulse", "Ledger"],
-      "dependencies": ["C03", "C12"],
+      "dependencies": ["C03"],
+      "feedback_targets": ["C12"],
       "next_action": "Normalize existing failure receipts into one genome record and feed only proven repair outcomes to the Foundry."
     },
     {
