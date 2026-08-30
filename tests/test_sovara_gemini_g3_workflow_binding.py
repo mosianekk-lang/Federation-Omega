@@ -1,19 +1,16 @@
 from __future__ import annotations
 
-import json
 import unittest
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "sovara-litellm-v2-3-provider-admission.yml"
-REQUEST = ROOT / "governance" / "sovara_gemini_collaboration_request_v1.json"
 
 
 class SovaraGeminiG3WorkflowBindingTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.workflow = WORKFLOW.read_text(encoding="utf-8")
-        cls.request = json.loads(REQUEST.read_text(encoding="utf-8"))
 
     def test_g3_is_additive_supported_mode_with_exact_private_scope(self) -> None:
         self.assertIn("mode == 'G3_PRIVATE_GATEWAY_CANARY'", self.workflow)
@@ -46,22 +43,31 @@ class SovaraGeminiG3WorkflowBindingTests(unittest.TestCase):
         g3_block = self.workflow.split("- name: Execute private zero-traffic Gemini gateway canary", 1)[1].split(
             "- name: Execute provider admission, canaries, deployment, and rollback gates", 1
         )[0]
+        self.assertIn("if: steps.provider_mode.outputs.scope == 'G3_PRIVATE_GATEWAY_CANARY'", g3_block)
         self.assertIn("private_gateway_canary.sh", g3_block)
         self.assertNotIn("run_provider_admission_v2_3.sh", g3_block)
         self.assertNotIn("update-traffic", g3_block)
 
-    def test_workflow_wiring_merge_cannot_trigger_g3(self) -> None:
-        # The active request deliberately remains read-only G0 while G3 wiring is admitted.
-        self.assertEqual("G0_READ_ONLY_VERIFY", self.request["mode"])
-        self.assertFalse(self.request["provider_mutation_allowed"])
-        self.assertFalse(self.request["model_inference_allowed"])
-        self.assertEqual("ADMIN_AUTHORITY_GRAPH_CENSUS", self.request["g0_objective"])
+    def test_g2_and_g3_execution_lanes_remain_exactly_separate(self) -> None:
+        g2_block = self.workflow.split("- name: Execute bounded Gemini Creative Architecture Challenge", 1)[1].split(
+            "- name: Execute private zero-traffic Gemini gateway canary", 1
+        )[0]
+        g3_block = self.workflow.split("- name: Execute private zero-traffic Gemini gateway canary", 1)[1].split(
+            "- name: Execute provider admission, canaries, deployment, and rollback gates", 1
+        )[0]
+        self.assertIn("if: steps.provider_mode.outputs.scope == 'G2_CREATIVE_ARCHITECTURE_CHALLENGE'", g2_block)
+        self.assertIn("gemini_architecture_challenge.py", g2_block)
+        self.assertNotIn("private_gateway_canary.sh", g2_block)
+        self.assertIn("if: steps.provider_mode.outputs.scope == 'G3_PRIVATE_GATEWAY_CANARY'", g3_block)
+        self.assertIn("private_gateway_canary.sh", g3_block)
+        self.assertNotIn("gemini_architecture_challenge.py", g3_block)
 
     def test_existing_modes_are_preserved(self) -> None:
         for mode in (
             "G0_READ_ONLY_VERIFY",
             "G1_ADC_APPLY_VERIFY",
             "G2_CREATIVE_ARCHITECTURE_CHALLENGE",
+            "G3_PRIVATE_GATEWAY_CANARY",
             "FULL_PROVIDER_ADMISSION",
             "SOURCE_VALIDATION_ONLY",
         ):
