@@ -2,6 +2,7 @@
   "schema": "SOVARA_CANVA_TWO_LAYER_CANARY_CONTRACT_V1",
   "invariant_id": "SC-CANVA-TWO-LAYER-001",
   "candidate_set_id": "SOVARA-CANVA-CANARY-FOUR-CANDIDATES-001",
+  "candidate_roster_sha256": "2a37b93af625deab1d6ea204b9ac0242a4638d55b2ca2eea32d1d7bc254b4e8d",
   "expected_candidate_count": 4,
   "owner_selection_required": true,
   "age_state_required": "VERIFIED_ADULT_OR_SYNTHETIC",
@@ -11,6 +12,8 @@
   "raw_sensitive_payload_allowed": false,
   "connector_schema_snapshot_id": "CANVA-CODEX-APPS-20260830-001",
   "connector_schema_sha256": "38024fbcf9ae71cb9161a4de4df5a97547ab5a3087eb894fcdbac2c82b57967e",
+  "connector_schema_provenance_sha256": "0e4281029dc343c7f540dcfc9362265e7a3631bc7c205c62b12b660d27f2076e",
+  "connector_schema_authenticated": true,
   "connector_schema_snapshot": {
     "provider": "Canva",
     "retrieved_at": "2026-08-30T00:00:00Z",
@@ -79,6 +82,6 @@
     "CREATE_ROLLBACK",
     "DRAFT_CANCEL"
   ],
-  "execution_gate": "Layer 1 contains no candidate ID and grants no provider effect. Layer 2 requires an explicit owner-authored selection receipt, a separate exact one-create authority with proven create rollback, provider-native create readback, a separate cancelable draft authority, owner-visible preview, and a new exact single-use owner commit approval issued after that preview.",
-  "truth_boundary": "Source/test/CI admission proves only deterministic contract behavior. The contract makes no Canva call and grants no provider authority. Supplied receipt validation does not authenticate provider provenance and does not prove export, download, share, publish, repeated success, commercial value, deployment, production traffic or production maturity."
+  "execution_gate": "Layer 1 contains no candidate ID and grants no provider effect. Layer 2 structurally binds an explicit owner-selection claim, typed adult/consent/rights/origin/privacy and candidate-membership claims, exact zero-cost ceilings across create/draft/approval/commit, an exact create-rollback tool present in the schema envelope, provider-native readback claims, a propagated consumption ledger, owner-visible preview, and a single-use owner commit-approval claim issued strictly after that preview.",
+  "truth_boundary": "Source/test/CI admission proves only deterministic envelope behavior. The contract makes no Canva call and grants no provider authority; ready_for_effect and contract_preconditions_met remain false in every decision. Supplied fields and digests do not authenticate candidate membership, issuer, connector, receipt, rollback, or provider provenance and do not prove export, download, share, publish, repeated success, commercial value, deployment, production traffic or production maturity."
 }

@@ -75,6 +75,7 @@ jobs:
         self.assertIn('.execution_scope == "SOURCE_VALIDATION_ONLY"', WORKFLOW)
         self.assertIn('.provider_admission_attempted == false', WORKFLOW)
         self.assertIn('.provider_state_claimed == false', WORKFLOW)
+        self.assertIn('.provider_admission_exit_code == null', WORKFLOW)
         self.assertIn("no WIF exchange was attempted", WORKFLOW)
 
     def test_gateway_cannot_gain_source_write(self):

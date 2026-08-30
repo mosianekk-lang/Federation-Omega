@@ -21,8 +21,10 @@ from `sovara.creative`; the governance JSON is the candidate-neutral input.
   A future adapter may translate a ready decision into a connector invocation,
   but it must remain outside this authority-free evaluator.
 - Observability is deterministic: every decision carries a state, reason set,
-  next gate, receipt-validation flag, effect-readiness flag, and fixed truth
-  boundary.
+  next gate, receipt-validation flag, structural-precondition flag, an
+  envelope-consistency flag, an always-false provider-effect flag, and a fixed
+  truth boundary. `contract_preconditions_met` remains false until an external
+  trust service authenticates provenance.
 
 The bounded lifecycle is:
 
@@ -34,8 +36,9 @@ authority.
 
 ## Layer 1 — candidate-neutral invariants
 
-The governance contract binds the current connector-schema snapshot, one-design
-blast radius, verified eligibility states, zero raw-sensitive-payload handling,
+The governance contract binds a candidate-roster commitment, a strict current
+Canva connector-schema shape and provenance commitment, one-design blast
+radius, verified eligibility states, zero raw-sensitive-payload handling,
 required readbacks, and create/draft rollback requirements. It deliberately
 contains no `candidate_id`, `job_id`, or selected-candidate value and grants no
 create, draft, commit, export, download, share, or publish effect.
@@ -49,13 +52,17 @@ Layer 2 accepts externally issued evidence but never issues authority itself.
 The gates are sequential and non-transitive:
 
 1. An explicit, owner-authored, trusted-surface, non-inferred, single-use
-   selection receipt binds the invariant, candidate set, exact `job_id`, exact
-   `candidate_id`, brand-control hash, eligibility-evidence hash, and current
-   connector-schema hash.
+   selection receipt binds the invariant, candidate set and roster commitment,
+   exact `job_id`, exact `candidate_id`, brand-control hash,
+   eligibility-evidence hash, and current connector-schema hash. A separate
+   typed eligibility envelope must bind claimed membership plus exact adult,
+   consent, rights, origin, and privacy states. These fields are not a signature
+   verifier; their provenance remains external and untrusted here.
 2. A separate current one-create authority binds the exact selection, request
-   hash, runtime, non-secret credential reference, privacy eligibility, and a
-   proven provider-native create rollback. Only then can the evaluator return
-   `READY_FOR_CANDIDATE_CONVERSION`.
+   hash, expected owner/title hashes, runtime, opaque non-secret credential
+   handle, zero-cost ceiling, privacy eligibility, and a provider-native create
+   rollback tool present in the strict schema. Only then can the evaluator
+   return the envelope-only state `READY_FOR_CANDIDATE_CONVERSION`.
 3. Provider-native `get_design` metadata must match the selected job/candidate
    and show the create authority was consumed. This does not authorize editing.
 4. A separate single-use draft authority binds the created design and exact
@@ -66,13 +73,29 @@ The gates are sequential and non-transitive:
 6. A new explicit owner approval must be issued after that preview and bind its
    exact design, transaction, operations, and preview hashes. Only then can the
    evaluator return `READY_FOR_COMMIT`.
-7. Commit and post-commit design readbacks must match every prior binding and
-   show approval consumption. The terminal source decision is
+7. Commit and post-commit design readbacks must match every prior binding,
+   expected post-commit design hash, and show approval consumption through the
+   propagated transition ledger. The terminal source decision is
    `SAVED_DESIGN_RECEIPT_VALIDATED`, not a provider-runtime or production claim.
 
+The enforced chronology is strict:
+
+`ELIGIBILITY ≤ SELECTION < CREATE_AUTHORITY < CREATE_READBACK < DRAFT_AUTHORITY < PREVIEW < OWNER_APPROVAL < COMMIT_READBACK`
+
 Every receipt class rejects blank identifiers, naive timestamps, malformed
-SHA-256 bindings, unsafe multiplicity, stale windows, mismatches, and replay.
+SHA-256 bindings, raw-secret-shaped credential values, nonzero/unknown cost at
+create, draft, approval, or commit,
+unsafe multiplicity, stale windows, mismatches, duplicate consumption events,
+and replay. Issuance objects remain immutable `consumed=false` snapshots;
+consumption is represented by the propagated ID ledger plus the matching
+provider readback transition.
 Any export, download, share, or publish observation quarantines the receipt.
+
+Because this module cannot authenticate a connector invocation, every
+`CanvaCanaryDecision.ready_for_effect` and `contract_preconditions_met` values
+are false. A `READY_*` state with `envelope_consistent=true` means only that a
+caller-supplied envelope is structurally self-consistent; no executor may treat
+that as membership, provenance, rollback, cost, or provider authority proof.
 
 ## Provider capability gap retained
 
@@ -80,9 +103,13 @@ The current connector exposes candidate conversion, transactional drafting,
 cancel, commit, preview/read, and design readback. It does not expose a callable
 export/download/publish path, and this schema snapshot does not assume a
 provider-native delete/archive operation for a newly created design. Therefore
-live candidate conversion remains held unless an execution-time create-rollback
-proof is independently supplied. This source contract does not invent that
-capability.
+the checked-in governance loader admits exactly the eight captured tools and
+five exact semantic invariants; editing in a delete/archive tool, candidate
+choice, or recomputed schema hash is rejected. The current contract therefore
+deterministically remains at
+`HOLD_CREATE_ROLLBACK`; an arbitrary proof string cannot bypass the gate. A
+future fresh schema may add an exact `delete_design` or `archive_design` tool,
+but provider authority and authenticated provenance would still remain external.
 
 ## Proof and maturity boundary
 
@@ -103,15 +130,18 @@ reused.
 - `sovara/creative/canva_two_layer_canary.py` — typed pure evaluator
 - `governance/sovara_canva_two_layer_canary_contract_v1.json` — neutral
   invariant and canonical connector-schema snapshot
-- `tests/test_sovara_canva_two_layer_canary.py` — happy path, invalid input,
+- `tests/test_sovara_creative_canva_two_layer_canary.py` — happy path, invalid input,
   permission denial, staleness, replay, rollback, forbidden-effect, readback,
-  and truth-boundary tests
+  chronology, schema-forgery, strict-loader, cost/secret, and truth-boundary tests
 - `sovara/creative/__init__.py` — package exports
+- `.github/workflows/sovara-litellm-v2-3-provider-admission.yml` — preserves the
+  source-only null provider-exit-code invariant without changing triggers or
+  permissions
 
 Run the focused suite:
 
 ```bash
-python -m unittest -v tests.test_sovara_canva_two_layer_canary
+python -m unittest -v tests.test_sovara_creative_canva_two_layer_canary
 ```
 
 Run the bounded SOVARA regression set:
@@ -121,13 +151,13 @@ python -m unittest -v \
   tests.test_sovara_creative_canary \
   tests.test_sovara_creative_canary_authority \
   tests.test_sovara_provider_execution_fabric \
-  tests.test_sovara_canva_two_layer_canary
+  tests.test_sovara_creative_canva_two_layer_canary
 ```
 
 Compile and verify whitespace/integrity before a PR:
 
 ```bash
-python -m compileall -q sovara/creative tests/test_sovara_canva_two_layer_canary.py
+python -m compileall -q sovara/creative tests/test_sovara_creative_canva_two_layer_canary.py
 git diff --check
 ```
 

@@ -537,7 +537,7 @@ jobs:
               echo "G3 private Gemini gateway canary verified. The tagged revision has zero normal traffic; no production promotion or case-data processing occurred."
               ;;
             SOURCE_VALIDATION_ONLY)
-              jq -e '.execution_scope == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_state_claimed == false' "$receipt" >/dev/null
+              jq -e '.execution_scope == "SOURCE_VALIDATION_ONLY" and .structural_validation_completed == true and .provider_admission_attempted == false and .provider_admission_exit_code == null and .provider_state_claimed == false' "$receipt" >/dev/null
               echo "Source validation verified. Provider admission was not requested and no WIF exchange was attempted."
               ;;
             *)
