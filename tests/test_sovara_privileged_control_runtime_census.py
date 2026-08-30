@@ -7,16 +7,16 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "sovara" / "gemini" / "privileged_control_runtime_census.py"
 ACTAS = ROOT / "sovara" / "gemini" / "admin_actas_census.py"
-REQUEST = ROOT / "governance" / "sovara_gemini_collaboration_request_v1.json"
+G0_TEMPLATE = ROOT / "governance" / "sovara_gemini_g0_authority_census_request_template_v1.json"
 
 
 class SovaraPrivilegedControlRuntimeCensusTests(unittest.TestCase):
     def setUp(self) -> None:
         self.script = SCRIPT.read_text(encoding="utf-8")
         self.actas = ACTAS.read_text(encoding="utf-8")
-        self.request = json.loads(REQUEST.read_text(encoding="utf-8"))
+        self.request = json.loads(G0_TEMPLATE.read_text(encoding="utf-8"))
 
-    def test_active_request_is_read_only_g0(self) -> None:
+    def test_g0_template_preserves_read_only_privileged_runtime_contract(self) -> None:
         self.assertEqual("G0_READ_ONLY_VERIFY", self.request["mode"])
         self.assertEqual("ADMIN_AUTHORITY_GRAPH_CENSUS", self.request["g0_objective"])
         self.assertTrue(self.request["privileged_control_runtime_census"])
