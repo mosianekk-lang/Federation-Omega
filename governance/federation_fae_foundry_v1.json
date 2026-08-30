@@ -1,0 +1,11 @@
+{
+  "schema": "FAE-SOVEREIGN-FOUNDRY-COMPILER-1",
+  "version": "1.0.0",
+  "objective": "Compile source-backed AI Bible ideas into deterministic Project Genomes and proof-bound production plans without creating execution authority.",
+  "authority": {"source_compiler_may_execute_provider_effects": false, "source_compiler_may_grant_itself_authority": false, "owner_release_required_for_consequential_release": true, "proof_and_maturity_inheritance": false},
+  "reuse_order": ["REUSE","EXTEND","SPECIALISE","COMPOSE","ADAPT","REROUTE","ENGINEER","NEW_BUILD"],
+  "maturity_ladder": ["IDEA_CAPTURED","SOURCE_VERIFIED","GAP_DEFINED","PROJECT_GENOME_COMPILED","FORMATION_SELECTED","PREBUILD_ASSURANCE_PASSED","DESIGN_PROVENANCE_CAPTURED","SOURCE_IMPLEMENTED","DETERMINISTIC_TESTED","CI_ADMITTED","DEPLOYED","PROVIDER_EXECUTED","SEMANTIC_READBACK_VERIFIED","REPEATED_SUCCESS","SOAKED","VALUE_VERIFIED","FULLY_ESTABLISHED_SYSTEM_OR_SERVICE"],
+  "operational_promotion": {"minimum_distinct_successes": 3, "minimum_soak_seconds": 300, "provider_native_semantic_readback_required": true, "measured_value_required": true},
+  "bound_roles": {"science":"Next Frontier AI Bible / Ω-SCIENTIA","formation":"Formation-Ω + Superior Logic","prebuild":"RealityGuard/RCSG","design_provenance":"DPF","engineering":"Bubbles/Federation/Alpha-Omega","orchestration":"SOVARA","evidence":"EvidenceOps","assurance":"JARVIS","freshness":"Sentinel","recovery":"Failure-Win v2 / Ω-AutoFIX","state_transport":"Kim DataVerse / Federation Fabric / Omni-Mesh","benchmark_value":"CFBE-Ω / EVD / FinOps"},
+  "truth_boundary": "Source implementation and deterministic tests do not prove CI admission, deployment, provider execution, semantic outcome, repeated success, soak, value, customer operation or production readiness."
+}
