@@ -1,0 +1,47 @@
+{
+  "schema_version": "realityguard.execution-guard.v1",
+  "request": {
+    "request_id": "SYNTHETIC-EMAIL-FAILED-1",
+    "tool_name": "gmail.send_email",
+    "operation": "send",
+    "effect_class": "EXTERNAL_MESSAGE",
+    "target": {
+      "recipients": [
+        "recipient-a@example.invalid",
+        "recipient-b@example.invalid"
+      ],
+      "recipients_verified": true
+    },
+    "payload": {
+      "subject": "Synthetic execution-guard transport canary",
+      "attachments": [
+        {
+          "name": "synthetic.pdf",
+          "content_base64": "JVBERi0xLjQKQUFBQUFBQUFBQUFBQUFBQUFBQUFBQUFB"
+        }
+      ]
+    },
+    "expected_fruit": {
+      "provider_state": "SENT"
+    },
+    "idempotency_key": "synthetic-email-failed-v1"
+  },
+  "authority": {
+    "formation_permit_consumed": true,
+    "permit_single_use": true,
+    "action_binding_matches": true,
+    "proof_ref": "formation:synthetic-example"
+  },
+  "route": {
+    "readback_supported": true,
+    "semantic_canary_verified": true,
+    "canary_proof_ref": "canary:synthetic-gmail",
+    "inline_binary_supported": false,
+    "inline_binary_canary_verified": false
+  },
+  "retry": {
+    "attempt": 1,
+    "previous_attempts": [],
+    "exact_repair": ""
+  }
+}
