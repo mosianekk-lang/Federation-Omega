@@ -14,6 +14,7 @@ from .schema import InputError
 from .taxonomy import FAILURES, TAXONOMY_VERSION
 from .upgrade import UpgradeDecisionCode
 from .faultbooks import FaultbookManager
+from .execution_guard import ExecutionGuard
 
 
 def _parser() -> argparse.ArgumentParser:
@@ -50,6 +51,12 @@ def _parser() -> argparse.ArgumentParser:
     faultbook_verify.add_argument("--registry", required=True, type=Path)
     faultbook_manifest = sub.add_parser("faultbook-manifest", help="emit a public redacted manifest without raw events or storage references")
     faultbook_manifest.add_argument("--registry", required=True, type=Path)
+    execution_preflight = sub.add_parser("execution-preflight", help="fail closed before a Federation-controlled side effect")
+    execution_preflight.add_argument("--input", required=True, type=Path)
+    execution_observe = sub.add_parser("execution-observe", help="derive effect state from provider receipt and semantic readback")
+    execution_observe.add_argument("--input", required=True, type=Path)
+    execution_release = sub.add_parser("execution-release", help="veto an effect-state claim without exact semantic readback")
+    execution_release.add_argument("--input", required=True, type=Path)
     sub.add_parser("taxonomy", help="print the versioned failure taxonomy")
     sub.add_parser("health", help="run a dependency-free health check")
     return parser
@@ -58,7 +65,7 @@ def _parser() -> argparse.ArgumentParser:
 def main(argv: list[str] | None = None) -> int:
     args = _parser().parse_args(argv)
     if args.command == "health":
-        print(json.dumps({"status": "ok", "engine": "RealityGuard", "version": "0.4.1", "mode": "offline-deterministic", "automatic_upgrade": "host-invoked-material-cycles", "faultbook_manager": "CENTRAL_FAULTBOOK_MANAGER", "external_bindings": False}, sort_keys=True))
+        print(json.dumps({"status": "ok", "engine": "RealityGuard", "version": "0.5.0", "mode": "offline-deterministic", "automatic_upgrade": "host-invoked-material-cycles", "faultbook_manager": "CENTRAL_FAULTBOOK_MANAGER", "execution_guard": "TESTED_LOCAL_ADAPTER_REQUIRED", "external_bindings": False}, sort_keys=True))
         return 0
     if args.command == "taxonomy":
         print(json.dumps({"version": TAXONOMY_VERSION, "failures": {key: {"title": val[0], "definition": val[1]} for key, val in FAILURES.items()}}, indent=2, sort_keys=True))
@@ -96,7 +103,13 @@ def main(argv: list[str] | None = None) -> int:
         return 0
     try:
         payload = json.loads(args.input.read_text(encoding="utf-8"))
-        if args.command == "resolve":
+        if args.command == "execution-preflight":
+            result = ExecutionGuard().preflight_tool_call(payload).to_dict()
+        elif args.command == "execution-observe":
+            result = ExecutionGuard().observe_dispatch(payload.get("preflight"), payload.get("observation"))
+        elif args.command == "execution-release":
+            result = ExecutionGuard().guard_claim_release(payload.get("record"), payload.get("claimed_state"))
+        elif args.command == "resolve":
             manifest = json.loads(args.capabilities.read_text(encoding="utf-8"))
             result = RealityGuard().resolve(payload, manifest)
         elif args.command == "prebuild":
@@ -116,6 +129,12 @@ def main(argv: list[str] | None = None) -> int:
         print(json.dumps({"error": "INVALID_INPUT", "message": str(exc)}), file=sys.stderr)
         return 2
     print(json.dumps(result, indent=2, sort_keys=True))
+    if args.command == "execution-preflight":
+        return 0 if result["dispatch_authorized"] else 7
+    if args.command == "execution-observe":
+        return 0 if result["completion_proven"] else 7
+    if args.command == "execution-release":
+        return 0 if result["claim_authorized"] else 7
     if args.command == "scan" and args.audit_log:
         args.audit_log.parent.mkdir(parents=True, exist_ok=True)
         record = {"input": redact(payload), "result": result}

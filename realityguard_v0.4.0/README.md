@@ -2,7 +2,7 @@
 
 RealityGuard is a runnable, offline, deterministic protection and solutions layer for AI-assisted work. It compares what a model claims against what the supplied evidence can actually prove, blocks unsafe completion language, independently preserves the valid owner objective through a reuse-first solution route, and gates new construction on a current environment inventory.
 
-Version 0.4.1 adds a central, private-data-safe fault-book manager alongside the governed automatic-upgrade decision. It verifies hash-chained fault ledgers, preserves revisions and forks, deduplicates exact re-imports, holds raw event content in the private registry, and emits a redacted Federation manifest. It never treats source presence as proof that every ChatGPT or Federation host is bound.
+Version 0.5.0 adds a fail-closed side-effect execution guard alongside the central, private-data-safe fault-book manager and governed automatic-upgrade decision. The guard blocks unsupported binary transport, unchanged failed retries, ambiguous recipients, missing consumed authority, unverified routes, and effect claims that outrun semantic readback. It never treats source presence as proof that every ChatGPT or Federation host is bound.
 
 It is **implemented and tested locally**. It is not installed in ChatGPT, not bound to a signed-in browser, and not deployed as a provider-side interceptor. Those states require separate authority and target-system readback.
 
@@ -25,9 +25,15 @@ PYTHONPATH=src python -m realityguard.cli federation-upgrade --input examples/ma
 PYTHONPATH=src python -m realityguard.cli faultbook-import --ledger FAULTS.jsonl --metadata IMPORT.json --registry PRIVATE_REGISTRY.json
 PYTHONPATH=src python -m realityguard.cli faultbook-verify --registry PRIVATE_REGISTRY.json
 PYTHONPATH=src python -m realityguard.cli faultbook-manifest --registry PRIVATE_REGISTRY.json
+PYTHONPATH=src python -m realityguard.cli execution-preflight --input examples/gmail_attachment_failure_execution_guard.json
+PYTHONPATH=src python -m realityguard.cli execution-preflight --input examples/gmail_attachment_repaired_execution_guard.json
 ```
 
-Exit codes: `0` bounded claim/action or valid manager result emitted, `2` invalid input, `3` claim blocked or rewrite required, `4` proposed build blocked or redirected to reuse, `5` duplicate or unsafe upgrade blocked, `6` private registry verification failed.
+Exit codes: `0` bounded claim/action or valid manager result emitted, `2` invalid input, `3` claim blocked or rewrite required, `4` proposed build blocked or redirected to reuse, `5` duplicate or unsafe upgrade blocked, `6` private registry verification failed, `7` execution dispatch, observation, or claim release blocked.
+
+## Side-effect execution guard
+
+`ExecutionGuard` is placed beside Federation-controlled provider calls. Its preflight requires exact expected fruit, idempotency, consumed single-use Formation authority, recipient verification where applicable, and a current semantic-canary/readback route. It quarantines unsupported inline binary payloads and unchanged failed retries. After dispatch it separates transport, receipt, and semantic success; before status output it releases only an exact independently verified state such as `DRAFT`, `SENT`, `FILED`, or `SERVED`. See `docs/EXECUTION_GUARD.md`.
 
 ## Central fault-book manager
 
@@ -93,4 +99,4 @@ PYTHONPATH=src python -m unittest discover -s tests -v
 
 Place RealityGuard immediately before user-visible completion/status output. The caller supplies a structured claim, evidence records and scope context. If the verdict is not `ALLOW_BOUNDED`, the caller must suppress the original status and use `safe_statement` plus the findings and missing proof gates.
 
-The default `scan`, `resolve`, `prebuild`, `upgrade`, `faultbook-verify`, and `faultbook-manifest` paths perform no network access. Explicit local mutation paths are `scan --audit-log`, `learn --ledger`, and `faultbook-import --registry`; the latter atomically publishes a verified private registry. The gate is mandatory for any pipeline that places it before construction or a material cycle boundary; this local package does not claim universal interception of systems that have not integrated it.
+The default `scan`, `resolve`, `prebuild`, `upgrade`, `faultbook-verify`, and `faultbook-manifest` paths perform no network access. Explicit local mutation paths are `scan --audit-log`, `learn --ledger`, and `faultbook-import --registry`; the latter atomically publishes a verified private registry. The execution-guard CLI commands are local decision/readback evaluators only; they do not dispatch provider actions themselves. The gate is mandatory for any pipeline that places it before construction or a material cycle boundary; this local package does not claim universal interception of systems that have not integrated it.
