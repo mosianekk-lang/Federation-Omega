@@ -1,0 +1,72 @@
+{
+  "schema": "FOREST-FIRST-SHADOW-EQUIVALENCE-PLAN-V1",
+  "version": "1.2.0",
+  "status": "C1_C2_C3_PROVIDER_HOSTED_SOURCE_SHADOW_PASS_PENDING_INDEPENDENT_ASSURANCE",
+  "base_main_sha": "d6603e980ed5ad9c7c111a1561cf745de7c7b4c9",
+  "exact_head_sha": "e36994cb2da6fa2158615b6943b4a90e600efb87",
+  "objective": "Demonstrate that target architecture preserves or improves bounded capability while preserving authority/proof boundaries and reducing conceptual/owner burden.",
+  "global_acceptance": {
+    "all_required": true,
+    "criteria": ["functional_result_equivalent_or_better","truth_and_domain_authority_unchanged","proof_scope_not_inflated","independent_assurance_preserved","owner_burden_not_increased","rollback_path_present","legacy_identity_still_resolves"],
+    "prohibited_claims": ["provider_effect_from_shadow","maturity_inheritance","global_superiority","system_retirement_before_dual_run","model_weight_learning"]
+  },
+  "cohorts": [
+    {"id":"C1_AUTHORITY_ONLY","systems":["AEON-Ω","IPEP","SIF AI","Next Frontier AI Bible / Ω-SCIENTIA"],"shadow_type":"CONTROL_AND_RESTORE_SHADOW","inputs":"sanitized governance/restore scenarios","target":"new layer classification and compatibility resolver","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":3,"special_checks":["historical_identity_preserved","canonical_knowledge_authority_preserved","scientia_runtime_separate_from_bible","no_registry_loss"]},
+    {"id":"C2_DOMAIN_COMPATIBILITY","systems":["KIOAS","KAIO Ω"],"shadow_type":"INTERFACE_AND_DOMAIN_SHADOW","inputs":"sanitized directive compilation and legal-advocacy routing scenarios","target":"KIOAS compiler role and KAIO→LEX advocacy profile","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":5,"special_checks":["directive_semantics_preserved","legal_domain_authority_remains_LEX","no_evidence_truth_override","legacy_calls_resolve"]},
+    {"id":"C3_RECOVERY_FORMATION","systems":["Ω-AUTOFIX","Modisa Continuum"],"shadow_type":"DUAL_RECOVERY_ROUTE_SHADOW","inputs":"historical/synthetic failure and self-correction fixtures","target":"Failure-Win recovery and Formation self-correction modules","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":5,"special_checks":["same_failure_fingerprint","recovery_receipt_equivalence","unchanged_retry_still_prohibited","route_failure_not_objective_failure","rollback"]},
+    {"id":"C4_HIGH_COUPLING_POLICY_VALIDATION","systems":["Superior Logic Doctrine","CASEFORGE-Ω"],"shadow_type":"FULL_CONSUMER_AWARE_SHADOW","inputs":"existing regression fixtures plus sanitized real-mission-derived controls","target":"Forest policy library and EvidenceOps validation lab","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":10,"special_checks":["workflow_compatibility","cross_coupling_preserved","scientific_falsification_preserved","no_new_single_point_of_failure","rollback"]},
+    {"id":"C5_FORMATION_LAST","systems":["FORMATION-OMEGA Unified Powerhouse"],"shadow_type":"PUBLIC_API_AND_PROOF_GRAPH_SHADOW","inputs":"full Formation public API/regression suite and bounded real mission scenarios","target":"Formation engine canonical identity","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","required_runs":10,"special_checks":["public_api_freeze","proof_graph_equivalence","reconciliation_behavior_preserved","strategic_ecology_preserved","autonomic_behavior_preserved","rollback","exact_head_admission_before_any_supersession"]}
+  ],
+  "cohort_status": {
+    "C1_AUTHORITY_ONLY": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C2_DOMAIN_COMPATIBILITY": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C3_RECOVERY_FORMATION": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C4_HIGH_COUPLING_POLICY_VALIDATION": "NOT_RUN",
+    "C5_FORMATION_LAST": "NOT_RUN"
+  },
+  "proof_receipts": {
+    "C1_C2": {
+      "github_airlock_run_id": 33287881028,
+      "artifact_id": 9725010593,
+      "artifact_sha256": "54d16bd48d7b0e07a5a7ac7d442cf8f2e8ba4a21fbdfb2c7c58affd501b3eba5",
+      "proofos_manifest_sha256": "7ef8291f619fdef9edf9937b4603b89de033d8782079e6b32aa664bc5fb3907a",
+      "proofos_report_sha256": "f2afe4eee194d49d6cadec52322f8b647f527f35e576bf0248ff36010019596c",
+      "shadow_calibration_receipt_sha256": "4d09b38fa591f63b1c42c20211185ada66a5209c937f1866c13a1e9cddaa77db",
+      "blocking_proofs_passed": 14,
+      "blocking_failures": 0,
+      "unmapped_production_paths": 0,
+      "fallback_full_suite_activated": false,
+      "shadow_escape_candidates": 0
+    },
+    "C3": {
+      "github_airlock_run_id": 33288108031,
+      "artifact_id": 9725082124,
+      "artifact_sha256": "df487d5ca98b3d9e263bd57fe36127859deab19efd333125ff03ed29f0f4e57a",
+      "proofos_manifest_sha256": "fce69b29db68420e651b0a1efc2e3f8ebc9bf79a2b3bae499e0a1100b9636833",
+      "proofos_report_sha256": "b227de9ecd8142f9f25a174a6ce849bb3bcdd0c943867f92d88cc997f799df1a",
+      "shadow_calibration_receipt_sha256": "d48c7bc02dc62aef3713ca7748ca34a04ec661667493a7a30401bd3d25ac6ccc",
+      "source_provenance_receipt_sha256": "51a39bb07475104a029cbd80c90a4981479acfb4ca6d4ea63428c080af970313",
+      "blocking_proofs_passed": 14,
+      "blocking_failures": 0,
+      "unmapped_production_paths": 0,
+      "fallback_full_suite_activated": false,
+      "shadow_escape_candidates": 0
+    }
+  },
+  "measurement_fields": ["functional_pass","decision_delta","proof_boundary_delta","authority_boundary_delta","owner_interruption_count","manual_debug_steps","latency_ms_if_measured","complexity_units_removed","rollback_pass","unexpected_behavior"],
+  "promotion_gate": {
+    "to_dual_run_requires": ["required_runs_met","all_acceptance_criteria_pass","no_unresolved_high_severity_delta","independent_assurance_review"],
+    "automatic_source_move": false,
+    "automatic_retirement": false
+  },
+  "truth_boundary": {
+    "shadow_run_executed": true,
+    "shadow_scope": ["C1_AUTHORITY_ONLY","C2_DOMAIN_COMPATIBILITY","C3_RECOVERY_FORMATION"],
+    "provider_hosted_source_shadow_proved": true,
+    "provider_runtime_shadow_proved": false,
+    "independent_assurance_review": "PENDING",
+    "physical_migration_executed": false,
+    "runtime_changed": false,
+    "provider_effect": false
+  }
+}
