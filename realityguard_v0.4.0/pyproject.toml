@@ -4,8 +4,8 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "realityguard"
-version = "0.4.1"
-description = "Deterministic truth protection, reuse-first routing and governed material-cycle upgrades"
+version = "0.5.0"
+description = "Deterministic truth protection, side-effect execution guards, reuse-first routing and governed material-cycle upgrades"
 requires-python = ">=3.11"
 dependencies = []
 
