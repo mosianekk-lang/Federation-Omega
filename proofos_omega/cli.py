@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
+import re
+import subprocess
 import sys
 from pathlib import Path
 
@@ -16,10 +19,124 @@ from .core import (
 )
 
 
+_DIAGNOSTIC_MAX_CHARS = 12000
+_ANSI_ESCAPE_RE = re.compile(r"\x1b\[[0-?]*[ -/]*[@-~]")
+_AUTH_VALUE_RE = re.compile(r"(?i)\b(?:bearer|token)\s+[A-Za-z0-9._~+/=-]{6,}")
+_SECRET_VALUE_RES = (
+    re.compile(r"\b(?:sk-(?:proj-|or-v1-|ant-)?|github_pat_|gh[pousr]_)[A-Za-z0-9_.-]{6,}\b"),
+    re.compile(r"\bAIza[0-9A-Za-z_-]{20,}\b"),
+    re.compile(r"\bAKIA[0-9A-Z]{16}\b"),
+    re.compile(r"\beyJ[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\.[A-Za-z0-9_-]{10,}\b"),
+)
+_SECRET_ASSIGNMENT_RE = re.compile(
+    r"(?i)\b(token|secret|password|api[_-]?key|authorization|cookie)\b(\s*[:=]\s*)([^\r\n]+)"
+)
+
+
 def _write_json(path: str | Path, payload: dict) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(payload, sort_keys=True, indent=2) + "\n", encoding="utf-8")
+
+
+def _redact_diagnostic(text: str) -> str:
+    """Return a bounded, secret-scrubbed diagnostic while preserving the traceback tail."""
+    value = _ANSI_ESCAPE_RE.sub("", text)
+    value = _AUTH_VALUE_RE.sub("[REDACTED_AUTH]", value)
+    for pattern in _SECRET_VALUE_RES:
+        value = pattern.sub("[REDACTED_SECRET]", value)
+    value = _SECRET_ASSIGNMENT_RE.sub(r"\1\2[REDACTED]", value)
+    if len(value) > _DIAGNOSTIC_MAX_CHARS:
+        value = (
+            f"[...diagnostic truncated to last {_DIAGNOSTIC_MAX_CHARS} characters...]\n"
+            + value[-_DIAGNOSTIC_MAX_CHARS:]
+        )
+    return value
+
+
+def _diagnostic_argv(spec) -> list[str] | None:
+    """Reconstruct only already-admitted deterministic ProofOS court kinds."""
+    if spec.kind == "unittest_glob":
+        return [
+            sys.executable,
+            "-m",
+            "unittest",
+            "discover",
+            "-s",
+            "tests",
+            "-p",
+            spec.target,
+            "-v",
+        ]
+    if spec.kind == "unittest_module":
+        return [sys.executable, "-m", "unittest", spec.target, "-v"]
+    if spec.kind == "compileall":
+        return [sys.executable, "-m", "compileall", "-q", spec.target]
+    return None
+
+
+def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | Path) -> None:
+    """Emit failure-only diagnostics without changing authoritative ProofOS evidence.
+
+    The authoritative court has already executed and its hashes remain unchanged in
+    the immutable admission report. This observability pass reruns only failed,
+    policy-registered deterministic courts and writes a bounded/redacted excerpt to
+    stderr. Diagnostic failure can never turn an admission failure into success or
+    change its failure class.
+    """
+    root = Path(repo_root)
+    for result in report.results:
+        if result.status.startswith("PASS") or result.status.startswith("SKIPPED"):
+            continue
+        spec = policy.tests.get(result.test_id)
+        argv = _diagnostic_argv(spec) if spec is not None else None
+        if argv is None:
+            continue
+        diagnostic = ""
+        diagnostic_status = "RERUN_COMPLETED"
+        try:
+            process = subprocess.run(
+                argv,
+                cwd=root,
+                stdout=subprocess.PIPE,
+                stderr=subprocess.PIPE,
+                text=True,
+                timeout=spec.timeout_seconds,
+                check=False,
+                env={**os.environ, "PYTHONDONTWRITEBYTECODE": "1"},
+            )
+            diagnostic = _redact_diagnostic(
+                (process.stdout or "") + (process.stderr or "")
+            )
+        except subprocess.TimeoutExpired as exc:
+            stdout = (
+                exc.stdout.decode(errors="replace")
+                if isinstance(exc.stdout, bytes)
+                else (exc.stdout or "")
+            )
+            stderr = (
+                exc.stderr.decode(errors="replace")
+                if isinstance(exc.stderr, bytes)
+                else (exc.stderr or "")
+            )
+            diagnostic_status = "RERUN_TIMEOUT"
+            diagnostic = _redact_diagnostic(
+                stdout + stderr + "\n[diagnostic rerun timed out]"
+            )
+        except Exception as exc:  # diagnostic observability must never mask admission truth
+            diagnostic_status = "RERUN_UNAVAILABLE"
+            diagnostic = f"[diagnostic rerun unavailable: {type(exc).__name__}]"
+        print(
+            "PROOFOS_DIAGNOSTIC_BEGIN"
+            f" test_id={result.test_id}"
+            f" authoritative_status={result.status}"
+            f" authoritative_returncode={result.returncode}"
+            f" diagnostic_status={diagnostic_status}",
+            file=sys.stderr,
+        )
+        if diagnostic:
+            print(diagnostic, file=sys.stderr)
+        print(f"PROOFOS_DIAGNOSTIC_END test_id={result.test_id}", file=sys.stderr)
 
 
 def compile_command(args: argparse.Namespace) -> int:
@@ -60,7 +177,10 @@ def run_command(args: argparse.Namespace) -> int:
         f" tests={len(report.results)}"
         f" failures={len(report.blocking_failures)}"
     )
-    return 0 if report.status == "PASS" else 1
+    if report.status != "PASS":
+        _emit_failure_diagnostics(policy=policy, report=report, repo_root=args.repo_root)
+        return 1
+    return 0
 
 
 def verify_command(args: argparse.Namespace) -> int:
