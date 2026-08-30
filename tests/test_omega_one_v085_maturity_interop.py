@@ -24,6 +24,7 @@ class MaturityCompilerTests(unittest.TestCase):
         self.assertEqual(verdict.lowest_proven_stage, MaturityStage.DETERMINISTIC_TESTED)
         self.assertEqual(verdict.next_required_stage, MaturityStage.CI_ADMITTED)
         self.assertFalse(verdict.overclaim)
+        self.assertEqual(verdict.detached_proven_stages, ())
 
     def test_detached_ci_cannot_skip_design_source_test(self):
         record = CapabilityRecord(
@@ -44,6 +45,32 @@ class MaturityCompilerTests(unittest.TestCase):
                 MaturityStage.DETERMINISTIC_TESTED,
             ),
         )
+        self.assertEqual(verdict.detached_proven_stages, (MaturityStage.CI_ADMITTED,))
+
+    def test_detached_provider_receipt_is_preserved_without_maturity_inheritance(self):
+        record = CapabilityRecord(
+            "CAP-Z",
+            "Detached provider receipt",
+            "provider",
+            (
+                ProofClaim(MaturityStage.DESIGNED, True, ("design:1",)),
+                ProofClaim(MaturityStage.SOURCE_IMPLEMENTED, True, ("source:1",)),
+                ProofClaim(MaturityStage.PROVIDER_EXECUTED, True, ("provider:1",)),
+            ),
+        )
+        verdict = CapabilityMaturityCompiler.compile(record)
+        self.assertEqual(verdict.lowest_proven_stage, MaturityStage.SOURCE_IMPLEMENTED)
+        self.assertEqual(verdict.next_required_stage, MaturityStage.DETERMINISTIC_TESTED)
+        self.assertEqual(
+            verdict.missing_predecessors,
+            (
+                MaturityStage.DETERMINISTIC_TESTED,
+                MaturityStage.CI_ADMITTED,
+                MaturityStage.DEPLOYED,
+            ),
+        )
+        self.assertEqual(verdict.detached_proven_stages, (MaturityStage.PROVIDER_EXECUTED,))
+        self.assertIn("provider:1", verdict.evidence_refs)
 
     def test_full_value_chain(self):
         record = CapabilityRecord(
@@ -70,8 +97,9 @@ class InteropSpineTests(unittest.TestCase):
             capability_id="CAP-READ",
             name="Read Document",
             description="Read a document",
-            input_schema={"type": "object"},
-            output_schema={"type": "object"},
+            input_schema={"type": "object", "properties": {"document_id": {"type": "string"}}},
+            output_schema={"type": "object", "properties": {"content": {"type": "string"}}},
+            metadata={"omega-only-rich-semantic": {"preserve": True}},
         )
         values.update(overrides)
         return UniversalCapabilityContract(**values)
@@ -81,9 +109,13 @@ class InteropSpineTests(unittest.TestCase):
         self.assertEqual(bundle.mcp.headers["MCP-Protocol-Version"], "2026-07-28")
         self.assertEqual(bundle.mcp.headers["Mcp-Method"], "tools/call")
         self.assertEqual(bundle.mcp.headers["Mcp-Name"], "Read-Document")
+        self.assertEqual(
+            bundle.mcp.request_meta["io.modelcontextprotocol/clientInfo"]["name"],
+            "omega-one",
+        )
         self.assertTrue(bundle.mcp.execution_ready)
 
-    def test_a2a_governance_is_card_extension_not_skill_custom_field(self):
+    def test_a2a_governance_is_agent_capability_extension_not_skill_custom_field(self):
         bundle = OmegaInteropSpine.compile(self.base(), mission_id="M1")
         card = bundle.a2a.agent_card
         self.assertEqual(card["skills"][0]["id"], "CAP-READ")
@@ -91,6 +123,10 @@ class InteropSpineTests(unittest.TestCase):
         ext = card["capabilities"]["extensions"][0]
         self.assertEqual(ext["uri"], "urn:omega-one:governance:v1")
         self.assertTrue(ext["required"])
+        self.assertTrue(ext["params"]["zeroDilution"])
+        self.assertEqual(card["supportedInterfaces"], [])
+        self.assertFalse(bundle.a2a.execution_ready)
+        self.assertEqual(bundle.a2a.hold_reason, "A2A_RUNTIME_INTERFACE_REQUIRED")
 
     def test_external_effect_is_projected_but_held_for_sovara(self):
         ucc = self.base(
@@ -103,6 +139,7 @@ class InteropSpineTests(unittest.TestCase):
         self.assertFalse(bundle.mcp.execution_ready)
         self.assertEqual(bundle.mcp.hold_reason, "SOVARA_EFFECT_AUTHORITY_REQUIRED")
         self.assertFalse(bundle.a2a.execution_ready)
+        self.assertEqual(bundle.a2a.hold_reason, "SOVARA_EFFECT_AUTHORITY_REQUIRED")
         self.assertFalse(bundle.otel.attributes["omega.execution.ready"])
 
     def test_write_requires_rollback(self):
@@ -115,6 +152,22 @@ class InteropSpineTests(unittest.TestCase):
         first = OmegaInteropSpine.compile(ucc, mission_id="M4", trace_id="T")
         second = OmegaInteropSpine.compile(ucc, mission_id="M4", trace_id="T")
         self.assertEqual(first.bundle_sha256, second.bundle_sha256)
+        self.assertEqual(first.source_ucc_sha256, second.source_ucc_sha256)
+
+    def test_zero_dilution_preserves_exact_internal_contract(self):
+        ucc = self.base(
+            proof_required=("semantic_readback", "rollback"),
+            metadata={
+                "omega-only-rich-semantic": {"preserve": True, "creative_freedom": "FULL"},
+                "future_standard_field": ["A", "B", "C"],
+            },
+        )
+        bundle = OmegaInteropSpine.compile(ucc, mission_id="M-ZD")
+        self.assertEqual(bundle.source_contract, ucc)
+        self.assertTrue(bundle.zero_dilution_verified)
+        self.assertTrue(OmegaInteropSpine.verify_zero_dilution(bundle))
+        self.assertEqual(bundle.source_contract.metadata["future_standard_field"], ["A", "B", "C"])
+        self.assertTrue(bundle.mcp.tool["_meta"]["omega.zero_dilution"])
 
     def test_a2a_task_state_mapping(self):
         self.assertEqual(
@@ -126,16 +179,15 @@ class InteropSpineTests(unittest.TestCase):
             "canceled",
         )
 
-    def test_otel_has_causal_fields(self):
+    def test_otel_uses_standard_execute_tool_operation_and_preserves_causal_fields(self):
         bundle = OmegaInteropSpine.compile(
             self.base(), mission_id="mission-7", trace_id="trace-7"
         )
         self.assertEqual(bundle.otel.attributes["service.name"], "omega-one")
         self.assertEqual(bundle.otel.attributes["omega.mission.id"], "mission-7")
         self.assertEqual(bundle.otel.attributes["omega.trace.id"], "trace-7")
-        self.assertEqual(
-            bundle.otel.attributes["gen_ai.operation.name"], "execute_capability"
-        )
+        self.assertEqual(bundle.otel.attributes["gen_ai.operation.name"], "execute_tool")
+        self.assertTrue(bundle.otel.attributes["omega.zero_dilution"])
 
 
 if __name__ == "__main__":
