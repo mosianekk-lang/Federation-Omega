@@ -345,6 +345,7 @@ jobs:
           import hashlib, json, os, sys
           from datetime import datetime, timezone
           from pathlib import Path
+          from sovara.creative.gemini_workflow_receipt_verifier import verify_challenge_identity
 
           path=Path(sys.argv[1])
           scope=os.environ.get('EXECUTION_SCOPE','SOURCE_VALIDATION_ONLY')
@@ -397,10 +398,20 @@ jobs:
               and adc.get('mutation_performed') is False
               and set(adc.get('missing_controls') or [])==expected_missing
           )
+          challenge_spec={}
+          challenge_spec_path=Path(str(request.get('challenge_spec','')))
+          if challenge_spec_path.is_file():
+              try: challenge_spec=json.loads(challenge_spec_path.read_text(encoding='utf-8'))
+              except Exception: challenge_spec={}
+          challenge_identity_ok=verify_challenge_identity(
+              challenge,
+              challenge_spec,
+              request,
+          )
           challenge_ok=(
               challenge.get('schema')=='SOVARA_CREATIVE_GEMINI_ARCHITECTURE_CHALLENGE_RECEIPT_V1'
               and challenge.get('status')=='VERIFIED'
-              and challenge.get('challenge_id')=='SC-GEMINI-ARCH-20260828-001'
+              and challenge_identity_ok
               and challenge.get('semantic_verified') is True
               and challenge.get('model_returned')
               and 'gemini' in str(challenge.get('model_returned','')).lower()
