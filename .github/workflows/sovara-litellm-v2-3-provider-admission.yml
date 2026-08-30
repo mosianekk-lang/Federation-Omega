@@ -398,10 +398,15 @@ jobs:
               and adc.get('mutation_performed') is False
               and set(adc.get('missing_controls') or [])==expected_missing
           )
+          challenge_spec={}
+          challenge_spec_path=Path(str(request.get('challenge_spec','')))
+          if challenge_spec_path.is_file():
+              try: challenge_spec=json.loads(challenge_spec_path.read_text(encoding='utf-8'))
+              except Exception: challenge_spec={}
           challenge_identity_ok=verify_challenge_identity(
               challenge,
-              load('governance/sovara_creative_gemini_architecture_challenge_v1.json'),
-              load('governance/sovara_gemini_collaboration_request_v1.json'),
+              challenge_spec,
+              request,
           )
           challenge_ok=(
               challenge.get('schema')=='SOVARA_CREATIVE_GEMINI_ARCHITECTURE_CHALLENGE_RECEIPT_V1'
