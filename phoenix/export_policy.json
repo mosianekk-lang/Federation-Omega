@@ -52,7 +52,8 @@
       "tests/test_frontier_convergence_manifest.py",
       "tests/test_frontier_convergence_continuity.py",
       "tests/test_sovara_litellm_provider_airlock.py",
-      "tests/test_sovara_gemini_g3_workflow_binding.py"
+      "tests/test_sovara_gemini_g3_workflow_binding.py",
+      "tests/test_sovara_creative_cfbe_differential_diag.py"
     ],
     "excluded_segments": [
       "__pycache__",
