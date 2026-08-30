@@ -193,4 +193,8 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    raise SystemExit(main())
+    code = main()
+    if code == 0:
+        from privileged_control_runtime_census import main as privileged_runtime_main
+        privileged_runtime_main()
+    raise SystemExit(code)
