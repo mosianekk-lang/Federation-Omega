@@ -103,6 +103,22 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertFalse(first.financial_effect_authorized)
         self.assertTrue(all(item.state == "ALLOCATED" for item in first.placements))
 
+    def test_shadow_empty_cfbe_wave_remains_neutral_noop(self):
+        receipt = shadow_place_bubbles_work(
+            self._nodes(),
+            (),
+            active_ids=("BHP-LEASE", "BHP-IDEM"),
+        )
+        self.assertEqual(receipt.state, "SHADOW_READY")
+        self.assertEqual(receipt.selected_work_ids, ())
+        self.assertEqual(receipt.placements, ())
+        self.assertEqual(receipt.cell_occupancy, ())
+        self.assertEqual(receipt.remaining_capacity, ())
+        self.assertEqual(receipt.backpressure_work_ids, ())
+        self.assertFalse(receipt.serving_route_changed)
+        self.assertFalse(receipt.provider_effect_authorized)
+        self.assertFalse(receipt.financial_effect_authorized)
+
     def test_shadow_exclusion_preserves_cfbe_selection_but_changes_candidate_cells(self):
         receipt = shadow_place_bubbles_work(
             self._nodes(),
