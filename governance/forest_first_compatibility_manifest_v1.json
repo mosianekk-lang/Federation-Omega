@@ -26,7 +26,7 @@
     {"legacy_identity":"JFRIE","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"KEEP_SUBORDINATE","target_authority_layer":"EVIDENCE_TRUTH","target_role":"Integrity/release assurance organ","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
     {"legacy_identity":"Modisa Continuum","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"MERGE","target_authority_layer":"MISSION_EXECUTION","target_role":"Formation self-correction module","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
     {"legacy_identity":"AEON-Ω","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"RETIRE_SOVEREIGN_KEEP_LINEAGE","target_authority_layer":"COGNITIVE_KERNEL","target_role":"Historical architecture/compatibility profile","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
-    {"legacy_identity":"Next Frontier AI Bible / Ω-SCIENTIA","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"SPLIT","target_authority_layer":"LEARNING_EVOLUTION","target_role":"Bible remains knowledge authority; Ω-SCIENTIA becomes scientific falsification organ","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
+    {"legacy_identity":"Next Frontier AI Bible / Ω-SCIENTIA","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"SPLIT","target_authority_layer":"SPLIT","target_role":"Bible remains knowledge authority; Ω-SCIENTIA becomes scientific falsification organ","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false,"target_components":[{"identity":"Next Frontier AI Bible","target_authority_layer":"LEARNING_EVOLUTION","target_role":"Canonical knowledge/control source"},{"identity":"Ω-SCIENTIA","target_authority_layer":"COGNITIVE_KERNEL","target_role":"Scientific falsification and competing-hypothesis organ"}]},
     {"legacy_identity":"IPEP","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"ABSORB","target_authority_layer":"LEARNING_EVOLUTION","target_role":"Prospective experiment/validation laboratory","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
     {"legacy_identity":"SIF AI","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"ABSORB","target_authority_layer":"STATE_CONTINUITY","target_role":"Registry/install/control-plane administration","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
     {"legacy_identity":"CASEFORGE-Ω","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"MERGE","target_authority_layer":"EVIDENCE_TRUTH","target_role":"EvidenceOps scientific validation laboratory","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
@@ -40,15 +40,5 @@
     {"legacy_identity":"Reality Guard","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"KEEP_INDEPENDENT","target_authority_layer":"ASSURANCE_REALITY","target_role":"Fault/reality manager","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false},
     {"legacy_identity":"SOVARA Creative","lineage_policy":"PRESERVE_IMMUTABLE","current_disposition":"KEEP_DOMAIN_PACK","target_authority_layer":"DOMAIN_INTELLIGENCE","target_role":"Creative-production domain pack","legacy_calls_allowed":true,"translate_to_target":true,"silent_authority_transfer":false,"maturity_inheritance":false,"deletion_allowed":false}
   ],
-  "completion_gate": {
-    "required": [
-      "consumer_inventory_complete",
-      "dependency_edges_bound",
-      "shadow_equivalence_pass",
-      "rollback_proved",
-      "no_proof_boundary_regression",
-      "owner_burden_not_increased"
-    ],
-    "provider_effect_required": false
-  }
+  "completion_gate": {"required":["consumer_inventory_complete","dependency_edges_bound","shadow_equivalence_pass","rollback_proved","no_proof_boundary_regression","owner_burden_not_increased"],"provider_effect_required":false}
 }
