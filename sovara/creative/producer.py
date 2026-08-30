@@ -28,6 +28,10 @@ class ProductionPlan:
     schema: str
     mission_id: str
     objective: str
+    content_class: str
+    privacy_class: str
+    rights_state: str
+    owner_approval_required: bool
     graph_version: str
     graph_sha256: str
     taste_state_sha256: str
@@ -83,8 +87,19 @@ class ProducerCompiler:
             ),
             ProductionStep(
                 step_id="02-bind-creative-state",
-                action="BIND_GRAPH_AND_TASTE_STATE",
-                inputs=(graph.head_version, taste_receipt.state_sha256),
+                action="BIND_GRAPH_TASTE_AND_POLICY_STATE",
+                inputs=(
+                    graph.head_version,
+                    taste_receipt.state_sha256,
+                    mission.content_class.value,
+                    mission.privacy_class.value,
+                    mission.rights_state.value,
+                    (
+                        "OWNER_APPROVAL_REQUIRED"
+                        if mission.owner_approval_required
+                        else "OWNER_APPROVAL_NOT_REQUIRED"
+                    ),
+                ),
                 depends_on=("01-interpret-intent",),
                 approval_required=False,
             ),
@@ -129,6 +144,10 @@ class ProducerCompiler:
             "schema": "SOVARA_SC_PRODUCER_PLAN_V1",
             "mission_id": mission.mission_id,
             "objective": mission.objective,
+            "content_class": mission.content_class.value,
+            "privacy_class": mission.privacy_class.value,
+            "rights_state": mission.rights_state.value,
+            "owner_approval_required": mission.owner_approval_required,
             "graph_version": graph.head_version,
             "graph_sha256": graph.state_sha256(),
             "taste_state_sha256": taste_receipt.state_sha256,
@@ -143,6 +162,10 @@ class ProducerCompiler:
             schema=base["schema"],
             mission_id=mission.mission_id,
             objective=mission.objective,
+            content_class=mission.content_class.value,
+            privacy_class=mission.privacy_class.value,
+            rights_state=mission.rights_state.value,
+            owner_approval_required=mission.owner_approval_required,
             graph_version=graph.head_version,
             graph_sha256=graph.state_sha256(),
             taste_state_sha256=taste_receipt.state_sha256,

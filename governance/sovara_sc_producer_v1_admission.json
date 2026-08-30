@@ -18,7 +18,7 @@
       "ACYCLIC_DEPENDENCIES",
       "PARALLEL_MODALITY_WORK_PACKETS",
       "OWNER_RELEASE_GATE",
-      "RIGHTS_AND_PRIVACY_GATE_INHERITANCE",
+      "EXACT_POLICY_STATE_BINDING",
       "NO_AUTHORITY_INHERITANCE",
       "NO_PROVIDER_OR_EXTERNAL_EFFECT"
     ]
@@ -30,5 +30,5 @@
     "publishing_authorized": false,
     "spend_authorized": false
   },
-  "truth_boundary": "Source and deterministic tests prove only compilation into an in-process provider-disabled production plan. They do not prove execution, media generation, provider routing, production deployment, publication, commercial value, repeated success or soak."
+  "truth_boundary": "Source and deterministic tests prove that content class, privacy class, rights state and owner-approval requirement are bound into an in-process provider-disabled production plan and its canonical hash. They do not prove execution, media generation, provider routing, production deployment, publication, commercial value, repeated success or soak."
 }
