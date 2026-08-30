@@ -387,3 +387,55 @@ def plan_from_report(
     routes: Sequence[AcquisitionRoute],
 ) -> AcquisitionPlan:
     return plan_measurement_acquisition(report.missing_dimensions, routes)
+
+
+def bounds_from_10x_rollout_stage(
+    stage_policy: Mapping[str, Any],
+    *,
+    evidence_refs: Iterable[str],
+) -> tuple[DimensionBound, DimensionBound]:
+    """Compile existing SOVARA 10X rollout ceilings into CFBE burden bounds.
+
+    This adapter intentionally maps only semantically exact, unit-stable metrics:
+    `maximum_cost_per_accepted_mission_usd` -> `estimated_cost`, and
+    `maximum_p95_latency_ms` -> `latency_burden`.
+
+    Mission-level aggregate cost or elapsed time are not aliases for these metrics.
+    The source rollout-policy evidence reference is mandatory so denominator values
+    remain auditable instead of becoming magic constants.
+    """
+
+    refs = _clean_refs(evidence_refs)
+    if not refs:
+        raise ValueError("ROLLOUT_STAGE_PROVENANCE_REQUIRED")
+
+    latency = _numeric(
+        stage_policy.get("maximum_p95_latency_ms"),
+        "ROLLOUT_STAGE_P95_LATENCY_CEILING_REQUIRED",
+    )
+    cost = _numeric(
+        stage_policy.get("maximum_cost_per_accepted_mission_usd"),
+        "ROLLOUT_STAGE_COST_CEILING_REQUIRED",
+    )
+    if latency <= 0.0:
+        raise ValueError("ROLLOUT_STAGE_P95_LATENCY_CEILING_MUST_BE_POSITIVE")
+    if cost <= 0.0:
+        raise ValueError("ROLLOUT_STAGE_COST_CEILING_MUST_BE_POSITIVE")
+
+    return (
+        DimensionBound(
+            dimension="estimated_cost",
+            source_keys=(
+                "cost_per_accepted_mission_usd",
+                "sovara.10x.cost_per_accepted_mission_usd",
+            ),
+            bound=cost,
+            evidence_refs=refs,
+        ),
+        DimensionBound(
+            dimension="latency_burden",
+            source_keys=("p95_latency_ms", "sovara.10x.p95_latency_ms"),
+            bound=latency,
+            evidence_refs=refs,
+        ),
+    )
