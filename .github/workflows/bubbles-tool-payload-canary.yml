@@ -1,0 +1,70 @@
+name: Bubbles Tool Payload Runtime Canary
+
+on:
+  pull_request:
+    paths:
+      - 'federation/chatbridge_tool_payload_ingress.py'
+      - 'federation/bubbles_tool_payload_firewall.py'
+      - 'tests/test_chatbridge_tool_payload_ingress.py'
+      - 'tools/run_chatbridge_tool_payload_canary.py'
+      - '.github/workflows/bubbles-tool-payload-canary.yml'
+  push:
+    branches: [main]
+    paths:
+      - 'federation/chatbridge_tool_payload_ingress.py'
+      - 'federation/bubbles_tool_payload_firewall.py'
+      - 'tests/test_chatbridge_tool_payload_ingress.py'
+      - 'tools/run_chatbridge_tool_payload_canary.py'
+      - '.github/workflows/bubbles-tool-payload-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: bubbles-tool-payload-canary-${{ github.event_name }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Run focused ingress contracts
+        run: python -m unittest tests.test_chatbridge_tool_payload_ingress -v
+
+      - name: Run hosted before-after payload canary
+        run: python tools/run_chatbridge_tool_payload_canary.py --output bubbles-tool-payload-canary/receipt.json
+
+      - name: Publish compact measurement summary
+        shell: bash
+        run: |
+          python - <<'PY' >> "$GITHUB_STEP_SUMMARY"
+          import json
+          r=json.load(open('bubbles-tool-payload-canary/receipt.json', encoding='utf-8'))
+          print('## Bubbles Tool Payload Runtime Canary')
+          print(f"- raw chars: `{r['raw_chars']}`")
+          print(f"- bounded chars: `{r['bounded_chars']}`")
+          print(f"- reduction: `{r['reduction_percent']}%`")
+          print(f"- processing: `{r['processing_ms']} ms`")
+          print(f"- failure signal preserved: `{r['failure_signal_preserved']}`")
+          print(f"- secret absent: `{r['secret_absent']}`")
+          print(f"- value gate: `{r['value_gate_pass']}`")
+          print(f"- external effects: `{r['external_effects']}`")
+          PY
+
+      - name: Upload immutable measurement receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bubbles-tool-payload-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: bubbles-tool-payload-canary/receipt.json
+          if-no-files-found: error
+          retention-days: 90
