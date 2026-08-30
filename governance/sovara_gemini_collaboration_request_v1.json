@@ -17,6 +17,20 @@
     "deployer_cloud_run_developer_binding",
     "service_usage_consumer_binding"
   ],
+  "admin_actas_census_probe": true,
+  "admin_actas_census_scope": {
+    "permission": "iam.serviceAccounts.actAs",
+    "candidate_roles": [
+      "roles/owner",
+      "roles/resourcemanager.projectIamAdmin",
+      "roles/iam.securityAdmin"
+    ],
+    "known_control_services": [
+      {"service":"architron9","region":"africa-south1"},
+      {"service":"federation-omega-operator","region":"us-central1"}
+    ],
+    "read_only": true
+  },
   "privileged_control_runtime_census": true,
   "privileged_control_runtime_scope": {
     "services": [
@@ -45,6 +59,6 @@
     "fo_operator_secret_reference": "fo-operator-admin-token",
     "fo_operator_secret_payload_may_be_resolved_only_inside_trusted_runtime": true
   },
-  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to fresh-read the exact Cloud Run runtime identities and callable read contracts of Federation Omega Operator and AFEME v4. Determine whether either existing provider-verified Owner/IAM-admin runtime is already callable from the Federation without new credentials or WIF expansion and can serve as the bounded execution bridge for the exact three Gemini ADC bindings.",
-  "truth_boundary": "Read-only provider census only. Do not change IAM, WIF, service accounts, APIs, images, Cloud Run revisions or traffic; do not run Gemini inference, resolve Secret Manager payloads, send communications, publish, spend, or perform destructive actions. A privileged runtime is only considered reusable when Google provider readback proves the expected runtime service-account identity and an authenticated semantic read route returns current service-specific content rather than generic health substitution."
+  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to fresh-read the exact Cloud Run runtime identities and callable read contracts of Federation Omega Operator and AFEME v4 while preserving the bounded ActAs authority census metadata used by the existing G0 verifier. Determine whether either existing provider-verified Owner/IAM-admin runtime is already callable from the Federation without new credentials or WIF expansion and can serve as the bounded execution bridge for the exact three Gemini ADC bindings.",
+  "truth_boundary": "Read-only provider census only. Do not change IAM, WIF, service accounts, APIs, images, Cloud Run revisions or traffic; do not run Gemini inference, resolve Secret Manager payloads, send communications, publish, spend, or perform destructive actions. ActAs and privileged-runtime census results remain separate read-only evidence. A privileged runtime is only considered reusable when Google provider readback proves the expected runtime service-account identity and an authenticated semantic read route returns current service-specific content rather than generic health substitution."
 }
