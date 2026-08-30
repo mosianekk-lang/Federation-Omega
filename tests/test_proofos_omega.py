@@ -19,6 +19,12 @@ class PolicyTests(unittest.TestCase):
         _,i,m=compile_for(['runtime_bootstrap/sitecustomize.py']); self.assertIn('RELEASE_EXPORT',i.direct_subsystems); self.assertIn('phoenix_exports',selected(m))
     def test_unknown_prod_falls_back_full(self):
         _,i,m=compile_for(['future_plane/new_runtime.py']); self.assertTrue(i.unmapped_production_paths); self.assertIn('full_federation_fallback',selected(m)); self.assertTrue(m.selector_state['fallback_full_suite_activated'])
+    def test_unique_package_root_infers_realityguard_without_fallback(self):
+        paths=['realityguard_v0.4.0/BUILD_CONTRACT.json','realityguard_v0.4.0/examples/gmail_attachment_failure_execution_guard.json','realityguard_v0.4.0/examples/gmail_attachment_repaired_execution_guard.json','realityguard_v0.4.0/pyproject.toml']; _,i,m=compile_for(paths); self.assertIn('REALITYGUARD',i.direct_subsystems); self.assertFalse(i.unmapped_production_paths); self.assertIn('deployment_safety_spine',selected(m)); self.assertNotIn('full_federation_fallback',selected(m)); self.assertFalse(m.selector_state['fallback_full_suite_activated'])
+    def test_ambiguous_package_root_still_falls_back(self):
+        _,i,m=compile_for(['governance/unmapped_policy.json']); self.assertEqual(('governance/unmapped_policy.json',),i.unmapped_production_paths); self.assertIn('full_federation_fallback',selected(m)); self.assertTrue(m.selector_state['fallback_full_suite_activated'])
+    def test_package_root_inference_is_deterministic(self):
+        paths=['realityguard_v0.4.0/pyproject.toml','realityguard_v0.4.0/BUILD_CONTRACT.json']; a=compile_for(paths)[1]; b=compile_for(list(reversed(paths)))[1]; self.assertEqual(a.to_dict(),b.to_dict())
     def test_docs_no_full(self):
         _,i,m=compile_for(['docs/x.md']); self.assertEqual(RiskTier.R0_DOCS,i.risk); self.assertNotIn('full_federation_fallback',selected(m))
     def test_airlock_r3_scoped(self):
