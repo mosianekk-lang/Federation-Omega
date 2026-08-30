@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import importlib.util
+import json
 import sys
 import unittest
 from pathlib import Path
@@ -294,6 +295,28 @@ jobs:
             ".github/workflows/phoenix-emergency-freeze.yml", text, POLICY
         )
         self.assertIn("PROOF_STATUS_ENDPOINT_DRIFT", self.rules(findings))
+
+    def test_fcx_copilot_agent_profiles_preserve_repository_safety_contract(self):
+        profiles = {
+            "fcx-builder.agent.md": ("purpose-specific branch", "Never push or commit directly to `main`"),
+            "fcx-reviewer.agent.md": ("read-only", "AGENTS.md"),
+            "fcx-falsifier.agent.md": ("read-only", "AGENTS.md"),
+            "fcx-gemini-challenger.agent.md": ("proposal-only", "Never infer that you are Gemini"),
+        }
+        agent_dir = ROOT / ".github" / "agents"
+        for name, phrases in profiles.items():
+            path = agent_dir / name
+            self.assertTrue(path.is_file(), name)
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("target: github-copilot", text, name)
+            self.assertIn(".github/copilot-instructions.md", text, name)
+            for phrase in phrases:
+                self.assertIn(phrase, text, name)
+        governance = json.loads(
+            (ROOT / "governance" / "sovara_fcx_copilot_pro_adapter_v1.json").read_text(encoding="utf-8")
+        )
+        self.assertEqual("DENY", governance["credit_policy"]["paid_overage_default"])
+        self.assertEqual("PRIVATE_ACCOUNT_EVIDENCE_REQUIRED", governance["account_entitlement"])
 
 
 if __name__ == "__main__":

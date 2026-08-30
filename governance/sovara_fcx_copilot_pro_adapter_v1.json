@@ -1,0 +1,84 @@
+{
+  "schema": "FCX_COPILOT_PRO_ADAPTER_V1",
+  "capability_id": "FCX-COPILOT-PRO",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Use an existing individual GitHub Copilot subscription as a governed multi-model Federation coding/challenge surface before purchasing redundant external inference.",
+  "promotion_ceiling": "SOURCE_CANDIDATE",
+  "account_entitlement": "PRIVATE_ACCOUNT_EVIDENCE_REQUIRED",
+  "public_plan_reference": {
+    "plan": "Copilot Pro",
+    "monthly_price_usd": 10,
+    "included_ai_credits": 1500,
+    "credit_value_usd": 0.01,
+    "source_urls": [
+      "https://docs.github.com/en/copilot/get-started/plans",
+      "https://docs.github.com/en/billing/concepts/product-billing/github-copilot-billing",
+      "https://docs.github.com/en/copilot/how-tos/manage-and-track-spending/monitor-ai-usage"
+    ],
+    "freshness_checked": "2026-08-30"
+  },
+  "roles": {
+    "BUILDER": {
+      "agent_profile": ".github/agents/fcx-builder.agent.md",
+      "write_mode": "BRANCH_PR",
+      "authority": "EXPLICIT_TASK_SOURCE_PR_AUTHORITY_REQUIRED",
+      "purpose": "Implement bounded code changes through branch, tests, PR and proof."
+    },
+    "REVIEWER": {
+      "agent_profile": ".github/agents/fcx-reviewer.agent.md",
+      "write_mode": "READ_ONLY",
+      "authority": "A1_INTERNAL",
+      "purpose": "Independent code/proof review without modifying source."
+    },
+    "FALSIFIER": {
+      "agent_profile": ".github/agents/fcx-falsifier.agent.md",
+      "write_mode": "READ_ONLY",
+      "authority": "A1_INTERNAL",
+      "purpose": "Adversarially search for defects, unsupported claims and failure cases."
+    },
+    "GEMINI_CHALLENGER": {
+      "agent_profile": ".github/agents/fcx-gemini-challenger.agent.md",
+      "write_mode": "READ_ONLY",
+      "authority": "A1_PROPOSAL_ONLY",
+      "purpose": "Use a Gemini model selected in Copilot when available to challenge Federation architecture/code; observed model identity must be read back before scoring."
+    }
+  },
+  "credit_policy": {
+    "included_credits_first": true,
+    "paid_overage_default": "DENY",
+    "task_credit_cap_required": true,
+    "budget_snapshot_required": true,
+    "provider_budget_enforcement_required_for_paid_overage": true,
+    "truth_boundary": "A repository task cap is a planning control, not proof that GitHub will terminate a running agent at that amount. Paid-overage claims require provider-side budget and usage readback."
+  },
+  "privacy_policy": {
+    "eligible": ["PUBLIC_SAFE", "INTERNAL_SAFE"],
+    "blocked": ["PRIVATE_CASE", "SENSITIVE_IDENTITY", "SECRET"],
+    "no_raw_credentials": true,
+    "no_private_case_data": true,
+    "no_identity_documents": true
+  },
+  "cfbe_binding": {
+    "reuse": "federation.orchestration.mission_arbitration.CapabilityRoute/CapabilitySelector",
+    "adapter": "federation/copilot_pro/adapter.py",
+    "rule": "Do not invent quality/value from token counts. Only independently observed normalized metrics may enter CFBE route scoring."
+  },
+  "custom_agent_contract": {
+    "format": ".github/agents/*.agent.md",
+    "github_docs": "https://docs.github.com/en/copilot/how-tos/copilot-on-github/customize-copilot/customize-cloud-agent/create-custom-agents",
+    "model_selection": "RUNTIME_SELECTION_AND_READBACK_REQUIRED",
+    "mcp": "HELD_FOR_SEPARATE_DATA_MINIMIZATION_AND_TRUST_CANARY"
+  },
+  "proof_gates": [
+    "AGENT_PROFILE_PARSE_AND_POLICY_TEST",
+    "CREDIT_GATE_TESTS",
+    "PRIVACY_FAIL_CLOSED_TESTS",
+    "BRANCH_PR_AUTHORITY_TESTS",
+    "OBSERVED_MODEL_IDENTITY_TEST",
+    "CFBE_ROUTE_MAPPING_TEST",
+    "EXACT_HEAD_AIRLOCK",
+    "PUBLIC_LEAK_GUARD",
+    "MERGE_READBACK"
+  ],
+  "truth_boundary": "This source admission does not prove Copilot cloud-agent execution, a particular model invocation, AI-credit consumption, code-review behavior, MCP connectivity, provider budget enforcement, or value improvement. Those require separate runtime and billing/usage readback."
+}
