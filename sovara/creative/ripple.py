@@ -6,7 +6,8 @@ import json
 from typing import Any, Mapping
 
 from .creative_graph import CreativeGraph, CreativeNodeKind, GraphConflictError
-from .producer import ProductionPlan
+from .genome import CreativeMissionGenome
+from .producer import ProducerCompiler, ProductionPlan
 from .taste import TasteMemory
 
 
@@ -27,6 +28,12 @@ class RippleReceipt:
     preserved_step_ids: tuple[str, ...]
     taste_conflict_dimensions: tuple[str, ...]
     owner_review_required: bool
+    production_plan_sha256: str
+    producer_replay_verified: bool
+    graph_state_binding_verified: bool
+    taste_state_binding_verified: bool
+    policy_state_binding_verified: bool
+    owner_release_gate_preserved: bool
     authority_inherited: bool
     provider_execution_performed: bool
     external_effect_performed: bool
@@ -43,6 +50,7 @@ class RippleCompiler:
     def apply(
         self,
         *,
+        mission: CreativeMissionGenome,
         graph: CreativeGraph,
         plan: ProductionPlan,
         taste: TasteMemory,
@@ -50,12 +58,13 @@ class RippleCompiler:
         node_id: str,
         patch: Mapping[str, Any],
     ) -> RippleReceipt:
-        if plan.mission_id != graph.graph_id:
-            raise RippleError("production plan mission does not match graph")
-        if plan.graph_version != expected_graph_version:
-            raise GraphConflictError("production plan is stale for the requested correction")
-        if graph.head_version != expected_graph_version:
-            raise GraphConflictError("graph head changed before correction")
+        self._verify_handoff(
+            mission=mission,
+            graph=graph,
+            plan=plan,
+            taste=taste,
+            expected_graph_version=expected_graph_version,
+        )
         if not patch:
             raise RippleError("correction patch is required")
 
@@ -74,7 +83,7 @@ class RippleCompiler:
         )
         owner_review = bool(mutation.blocked_locked_node_ids or conflicts)
         base = {
-            "schema": "SOVARA_SC_RIPPLE_RECEIPT_V1",
+            "schema": "SOVARA_SC_RIPPLE_RECEIPT_V2",
             "graph_id": graph.graph_id,
             "previous_graph_version": expected_graph_version,
             "new_graph_version": mutation.version_id,
@@ -85,6 +94,12 @@ class RippleCompiler:
             "preserved_step_ids": list(preserved),
             "taste_conflict_dimensions": list(conflicts),
             "owner_review_required": owner_review,
+            "production_plan_sha256": plan.plan_sha256,
+            "producer_replay_verified": True,
+            "graph_state_binding_verified": True,
+            "taste_state_binding_verified": True,
+            "policy_state_binding_verified": True,
+            "owner_release_gate_preserved": True,
             "authority_inherited": False,
             "provider_execution_performed": False,
             "external_effect_performed": False,
@@ -101,11 +116,96 @@ class RippleCompiler:
             preserved_step_ids=preserved,
             taste_conflict_dimensions=conflicts,
             owner_review_required=owner_review,
+            production_plan_sha256=plan.plan_sha256,
+            producer_replay_verified=True,
+            graph_state_binding_verified=True,
+            taste_state_binding_verified=True,
+            policy_state_binding_verified=True,
+            owner_release_gate_preserved=True,
             authority_inherited=False,
             provider_execution_performed=False,
             external_effect_performed=False,
             receipt_sha256=sha256(_stable_json(base).encode("utf-8")).hexdigest(),
         )
+
+    @staticmethod
+    def _verify_handoff(
+        *,
+        mission: CreativeMissionGenome,
+        graph: CreativeGraph,
+        plan: ProductionPlan,
+        taste: TasteMemory,
+        expected_graph_version: str,
+    ) -> None:
+        if plan.schema != "SOVARA_SC_PRODUCER_PLAN_V1":
+            raise RippleError("unsupported production plan schema")
+        if mission.mission_id != graph.graph_id:
+            raise RippleError("creative mission does not match graph")
+        if plan.mission_id != mission.mission_id:
+            raise RippleError("production plan mission does not match creative mission")
+        if plan.graph_version != expected_graph_version:
+            raise GraphConflictError("production plan is stale for the requested correction")
+        if graph.head_version != expected_graph_version:
+            raise GraphConflictError("graph head changed before correction")
+        if plan.graph_sha256 != graph.state_sha256():
+            raise GraphConflictError("production plan graph state hash does not match graph")
+
+        taste_state_sha256 = taste.receipt().state_sha256
+        if plan.taste_state_sha256 != taste_state_sha256:
+            raise RippleError("production plan taste state is stale")
+        if any(
+            (
+                plan.authority_inherited,
+                plan.provider_execution_performed,
+                plan.external_effect_performed,
+            )
+        ):
+            raise RippleError("effectful or authority-inherited production plan is not admissible")
+        if any(step.provider_execution_allowed for step in plan.steps):
+            raise RippleError("provider-enabled production step is not admissible")
+
+        policy_bindings = tuple(
+            step for step in plan.steps if step.step_id == "02-bind-creative-state"
+        )
+        expected_policy_inputs = (
+            plan.graph_version,
+            plan.taste_state_sha256,
+            plan.content_class,
+            plan.privacy_class,
+            plan.rights_state,
+            (
+                "OWNER_APPROVAL_REQUIRED"
+                if plan.owner_approval_required
+                else "OWNER_APPROVAL_NOT_REQUIRED"
+            ),
+        )
+        if (
+            len(policy_bindings) != 1
+            or policy_bindings[0].action != "BIND_GRAPH_TASTE_AND_POLICY_STATE"
+            or policy_bindings[0].inputs != expected_policy_inputs
+        ):
+            raise RippleError("production plan policy-state binding is invalid")
+
+        if not plan.steps:
+            raise RippleError("production plan has no owner release gate")
+        release_gate = plan.steps[-1]
+        if (
+            release_gate.step_id != "90-owner-release-gate"
+            or release_gate.action != "REQUEST_OWNER_RELEASE_DECISION"
+            or release_gate.inputs != plan.target_channels
+            or release_gate.depends_on != ("80-package-preview",)
+            or release_gate.approval_required is not True
+            or release_gate.provider_execution_allowed
+        ):
+            raise RippleError("production plan owner release gate is invalid")
+
+        expected_plan = ProducerCompiler().compile(
+            mission=mission,
+            graph=graph,
+            taste=taste,
+        )
+        if plan != expected_plan:
+            raise RippleError("production plan differs from deterministic producer replay")
 
     @staticmethod
     def _affected_modalities(graph: CreativeGraph, node_ids: tuple[str, ...]) -> tuple[str, ...]:
