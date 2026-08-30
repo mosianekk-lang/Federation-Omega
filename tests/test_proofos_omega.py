@@ -19,6 +19,8 @@ class PolicyTests(unittest.TestCase):
         _,i,m=compile_for(['runtime_bootstrap/sitecustomize.py']); self.assertIn('RELEASE_EXPORT',i.direct_subsystems); self.assertIn('phoenix_exports',selected(m))
     def test_unknown_prod_falls_back_full(self):
         _,i,m=compile_for(['future_plane/new_runtime.py']); self.assertTrue(i.unmapped_production_paths); self.assertIn('full_federation_fallback',selected(m)); self.assertTrue(m.selector_state['fallback_full_suite_activated'])
+    def test_cfbe_governance_contract_selects_cfbe_court_without_fallback(self):
+        p,i,m=compile_for(['governance/cfbe_evidence_autopilot_contract_v1.json']); s=selected(m); court=p.tests['cfbe_frontier_binding']; self.assertIn('CFBE',i.direct_subsystems); self.assertFalse(i.unmapped_production_paths); self.assertEqual('test_cfbe_*.py',court.target); self.assertIn('governance/cfbe_*.json',court.patterns); self.assertIn('cfbe_frontier_binding',s); self.assertNotIn('full_federation_fallback',s); self.assertFalse(m.selector_state['fallback_full_suite_activated'])
     def test_unique_package_root_infers_realityguard_without_fallback(self):
         paths=['realityguard_v0.4.0/BUILD_CONTRACT.json','realityguard_v0.4.0/examples/gmail_attachment_failure_execution_guard.json','realityguard_v0.4.0/examples/gmail_attachment_repaired_execution_guard.json','realityguard_v0.4.0/pyproject.toml']; _,i,m=compile_for(paths); self.assertIn('REALITYGUARD',i.direct_subsystems); self.assertFalse(i.unmapped_production_paths); self.assertIn('deployment_safety_spine',selected(m)); self.assertNotIn('full_federation_fallback',selected(m)); self.assertFalse(m.selector_state['fallback_full_suite_activated'])
     def test_ambiguous_package_root_still_falls_back(self):
