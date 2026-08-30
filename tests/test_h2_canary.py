@@ -17,9 +17,16 @@ from run_h2_preflight_canary import (  # noqa: E402
     scenario_task_count,
     tenant_for,
 )
+from run_h2_full_soak import percentile  # noqa: E402
 
 
 class H2CanaryContractTests(unittest.TestCase):
+    def test_full_soak_percentile_is_interpolated_and_fail_closed(self):
+        self.assertEqual(percentile([1.0, 2.0, 3.0, 4.0], 0.50), 2.5)
+        self.assertEqual(percentile([1.0, 2.0, 3.0, 4.0], 1.0), 4.0)
+        with self.assertRaisesRegex(ValueError, "PERCENTILE_INPUT_INVALID"):
+            percentile([], 0.95)
+
     def test_exact_five_fault_boundaries_and_task_widths(self):
         self.assertEqual(len(SCENARIOS), 5)
         self.assertEqual(scenario_task_count("admission_commit"), 1)

@@ -18,6 +18,7 @@ import json
 import math
 import os
 from pathlib import Path
+import resource
 import signal
 import sqlite3
 import subprocess
@@ -253,6 +254,12 @@ def _rss_kib(pid: int) -> int:
     return 0
 
 
+def _completed_child_peak_rss_kib() -> int:
+    """Return a valid peak for completed children when /proc is unavailable."""
+    peak = int(resource.getrusage(resource.RUSAGE_CHILDREN).ru_maxrss)
+    return peak // 1024 if sys.platform == "darwin" else peak
+
+
 def _wal_bytes(root: Path) -> int:
     return max((path.stat().st_size for path in root.rglob("*-wal")), default=0)
 
@@ -299,6 +306,51 @@ def _recover_last_mission(
         engine.mission_status(mission_id(run_id, scenario, item))["state"]
         for item in range(missions)
     ]
+    task_keys = {
+        key
+        for key, row in engine.state["tasks"].items()
+        if str(row["spec"]["mission_id"]).startswith(f"h2p-{run_id}-{scenario}-")
+    }
+    task_count = len(task_keys)
+    publication_ids = {f"proof-finalize:{key}" for key in task_keys}
+    sol_events = engine.sol._events()
+    worker_events = engine.worker_plane._events()
+    raw_event_counts = {
+        "result_receipts": sum(
+            1 for event in sol_events
+            if event.get("event_type") == "RECEIPT_RECORDED"
+            and event.get("payload", {}).get("workstream_id") in task_keys
+            and event.get("payload", {}).get("receipt_type") == "RESULT"
+        ),
+        "independent_proof_receipts": sum(
+            1 for event in sol_events
+            if event.get("event_type") == "RECEIPT_RECORDED"
+            and event.get("payload", {}).get("workstream_id") in task_keys
+            and event.get("payload", {}).get("receipt_type") == "INDEPENDENT_PROOF"
+        ),
+        "completion_evaluations": sum(
+            1 for event in sol_events
+            if event.get("event_type") == "COMPLETION_EVALUATED"
+            and event.get("payload", {}).get("workstream_id") in task_keys
+        ),
+        "reliability_updates": sum(
+            1 for event in sol_events
+            if event.get("event_type") == "RELIABILITY_UPDATED"
+            and event.get("payload", {}).get("omega_publication_id") in publication_ids
+        ),
+        "worker_completions": sum(
+            1 for event in worker_events
+            if event.get("event_type") == "JOB_COMPLETED"
+            and event.get("payload", {}).get("job_id") in task_keys
+        ),
+        "task_proven_events": sum(
+            1 for event in engine.state["events"]
+            if event.get("type") == "TASK_PROVEN"
+            and event.get("body", {}).get("task_key") in task_keys
+        ),
+        "certificates": sum(1 for key in task_keys if key in engine.state["certificates"]),
+    }
+    exact_event_cardinality = all(value == task_count for value in raw_event_counts.values())
     receipt_counts = Counter(
         (str(row["workstream_id"]), str(row["receipt_type"]))
         for row in engine.sol.state.receipts.values()
@@ -311,23 +363,31 @@ def _recover_last_mission(
     try:
         sqlite_integrity = str(connection.execute("PRAGMA integrity_check").fetchone()[0])
         checkpoint = tuple(int(value) for value in connection.execute("PRAGMA wal_checkpoint(TRUNCATE)").fetchone())
+        transition_status_counts = {
+            str(state): int(count)
+            for state, count in connection.execute(
+                "SELECT status, COUNT(*) FROM transition_outbox GROUP BY status"
+            ).fetchall()
+        }
     finally:
         connection.close()
 
     return {
         "mission_count": len(mission_states),
         "all_missions_proven": all(state == "PROVEN" for state in mission_states),
-        "task_count": sum(
-            1
-            for row in engine.state["tasks"].values()
-            if str(row["spec"]["mission_id"]).startswith(f"h2p-{run_id}-{scenario}-")
-        ),
+        "task_count": task_count,
         "engine_integrity": engine_integrity,
         "sqlite_integrity": sqlite_integrity,
         "pending_admission_outbox": int(persistence["pending_admission_outbox"]),
         "pending_transition_outbox": int(persistence["pending_transition_outbox"]),
         "reclaimed_transition_ids": list(reclaimed),
         "duplicate_proof_receipts": duplicate_receipts,
+        "raw_event_counts": raw_event_counts,
+        "exact_event_cardinality": exact_event_cardinality,
+        "active_leases": sum(1 for row in engine.state["leases"].values() if row.get("active") is True),
+        "worker_running": sum(int(row.get("running", 0)) for row in engine.state["workers"].values()),
+        "dead_letters": sum(1 for row in engine.worker_plane.state.jobs.values() if row.get("status") == "DEAD_LETTER"),
+        "transition_status_counts": transition_status_counts,
         "dispatch_counts": {
             key: int(value)
             for key, value in engine.state["dispatch_counts"].items()
@@ -366,6 +426,7 @@ def run_shard(root: Path, scenario: str, run_id: str, missions: int) -> dict[str
     while process.poll() is None:
         peak_rss_kib = max(peak_rss_kib, _rss_kib(process.pid))
         time.sleep(0.002)
+    peak_rss_kib = max(peak_rss_kib, _completed_child_peak_rss_kib())
     stderr = (process.stderr.read() if process.stderr else b"").decode("utf-8", errors="replace")
     elapsed_to_kill = time.perf_counter() - started
     wal_at_crash = _wal_bytes(state_dir)
@@ -384,6 +445,7 @@ def run_shard(root: Path, scenario: str, run_id: str, missions: int) -> dict[str
             "elapsed_to_kill_seconds": elapsed_to_kill,
             "elapsed_total_seconds": elapsed_total,
             "peak_rss_kib": peak_rss_kib,
+            "rss_measurement_valid": peak_rss_kib > 0,
             "wal_bytes_at_crash": wal_at_crash,
             "wal_bound_pass": wal_at_crash <= WAL_BOUND_BYTES,
             "rss_bound_pass": peak_rss_kib <= RSS_BOUND_KIB,
@@ -398,7 +460,13 @@ def run_shard(root: Path, scenario: str, run_id: str, missions: int) -> dict[str
         and recovered["sqlite_integrity"] == "ok"
         and recovered["pending_admission_outbox"] == 0
         and recovered["pending_transition_outbox"] == 0
+        and recovered["exact_event_cardinality"]
+        and recovered["active_leases"] == 0
+        and recovered["worker_running"] == 0
+        and recovered["dead_letters"] == 0
+        and set(recovered["transition_status_counts"]) <= {"APPLIED"}
         and recovered["wal_bound_pass"]
+        and recovered["rss_measurement_valid"]
         and recovered["rss_bound_pass"]
     )
     return recovered
@@ -456,11 +524,16 @@ def run_suite(root: Path, run_id: str, missions_per_scenario: int, *, parallel: 
             for row in results
         ),
         "duplicate_proof_receipts": sum(int(row["duplicate_proof_receipts"]) for row in results),
+        "exact_event_cardinality": all(bool(row["exact_event_cardinality"]) for row in results),
+        "active_leases": sum(int(row["active_leases"]) for row in results),
+        "worker_running": sum(int(row["worker_running"]) for row in results),
+        "dead_letters": sum(int(row["dead_letters"]) for row in results),
         "dispatch_counts": dict(sorted(dispatch.items())),
         "normalized_service": normalized,
         "jain_fairness": jain_index(normalized),
         "max_wal_bytes_at_crash": max(int(row["wal_bytes_at_crash"]) for row in results),
         "max_peak_rss_kib": max(int(row["peak_rss_kib"]) for row in results),
+        "rss_measurement_valid": all(bool(row["rss_measurement_valid"]) for row in results),
         "wal_bound_pass": all(bool(row["wal_bound_pass"]) for row in results),
         "rss_bound_pass": all(bool(row["rss_bound_pass"]) for row in results),
         "provider_calls": 0,
@@ -510,6 +583,11 @@ def build_report(missions_per_scenario: int) -> dict[str, Any]:
         and candidate["wal_bound_pass"]
         and candidate["rss_bound_pass"]
         and candidate["duplicate_proof_receipts"] == 0
+        and candidate["exact_event_cardinality"]
+        and candidate["active_leases"] == 0
+        and candidate["worker_running"] == 0
+        and candidate["dead_letters"] == 0
+        and candidate["rss_measurement_valid"]
     )
     speed_gate = bool(
         speedup >= 2.0
@@ -548,6 +626,11 @@ def build_report(missions_per_scenario: int) -> dict[str, Any]:
             "rss_bounded": candidate["rss_bound_pass"],
             "fairness": candidate["jain_fairness"] >= 0.995,
             "proof_receipts_exactly_once": candidate["duplicate_proof_receipts"] == 0,
+            "all_raw_task_events_exactly_once": candidate["exact_event_cardinality"],
+            "no_active_leases": candidate["active_leases"] == 0,
+            "workers_drained": candidate["worker_running"] == 0,
+            "no_dead_letters": candidate["dead_letters"] == 0,
+            "rss_measurement_valid": candidate["rss_measurement_valid"],
             "quality_gate": quality_gate,
             "speed_gate": speed_gate,
             "projection_gate": projection_gate,
