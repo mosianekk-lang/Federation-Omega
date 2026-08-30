@@ -5,6 +5,9 @@ on:
     paths:
       - 'frontier_convergence/**'
       - 'federation/superior_logic_convergence_measurement.py'
+      - 'federation/cfbe_observed_campaign_admission.py'
+      - 'tests/test_cfbe_observed_campaign_admission.py'
+      - 'benchmarking/cfbe_omega/bubbles_30_pair_observed_certification_20260830.json'
       - 'tests/test_superior_logic_convergence_measurement.py'
       - 'tests/test_frontier_slos_convergence_runner.py'
       - 'benchmarking/cfbe_omega/bubbles_chatbridge_payload_ingress_observation_20260830_v1.json'
@@ -15,6 +18,9 @@ on:
     paths:
       - 'frontier_convergence/**'
       - 'federation/superior_logic_convergence_measurement.py'
+      - 'federation/cfbe_observed_campaign_admission.py'
+      - 'tests/test_cfbe_observed_campaign_admission.py'
+      - 'benchmarking/cfbe_omega/bubbles_30_pair_observed_certification_20260830.json'
       - 'tests/test_superior_logic_convergence_measurement.py'
       - 'tests/test_frontier_slos_convergence_runner.py'
       - 'benchmarking/cfbe_omega/bubbles_chatbridge_payload_ingress_observation_20260830_v1.json'
@@ -63,6 +69,7 @@ jobs:
           set -euo pipefail
           python -m unittest discover -s tests -p 'test_superior_logic_convergence_measurement.py' -v
           python -m unittest discover -s tests -p 'test_frontier_slos_convergence_runner.py' -v
+          python -m unittest discover -s tests -p 'test_cfbe_observed_campaign_admission.py' -v
           python -m frontier_convergence.slos_convergence_runner > runtime-proof/slos-convergence-campaign.json
           python - <<'PY'
           import json
