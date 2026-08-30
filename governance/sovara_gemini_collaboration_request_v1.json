@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-ADMIN-ACTAS-CENSUS-20260830-001",
+  "request_id": "SOVARA-GEMINI-G0-PRIVILEGED-RUNTIME-CENSUS-20260830-001",
   "mode": "G0_READ_ONLY_VERIFY",
   "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
   "execute": true,
@@ -17,21 +17,16 @@
     "deployer_cloud_run_developer_binding",
     "service_usage_consumer_binding"
   ],
-  "admin_actas_census_probe": true,
-  "admin_actas_census_scope": {
-    "permission": "iam.serviceAccounts.actAs",
-    "candidate_roles": [
-      "roles/owner",
-      "roles/resourcemanager.projectIamAdmin",
-      "roles/iam.securityAdmin"
+  "privileged_control_runtime_census": true,
+  "privileged_control_runtime_scope": {
+    "services": [
+      {"service":"federation-omega-operator","region":"africa-south1","expected_service_account":"fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com"},
+      {"service":"afeme-sovereign-control-plane-v4","region":"africa-south1","expected_service_account":"afeme-sovereign-runtime-v4@sov-hybrid-suite.iam.gserviceaccount.com"}
     ],
-    "known_control_services": [
-      {"service":"architron9","region":"africa-south1"},
-      {"service":"federation-omega-operator","region":"us-central1"}
-    ],
+    "read_paths": ["/", "/health", "/openapi.json", "/openapi.yaml"],
+    "wif_authenticated_read_probe": true,
     "read_only": true
   },
-  "deployment_readiness_probe": true,
   "current_provider_evidence": {
     "wif_verified": true,
     "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
@@ -45,8 +40,10 @@
       "roles/run.developer on superior-logic-deployer"
     ],
     "direct_impersonation_or_wif_admin_route": false,
-    "admin_actas_route": "UNVERIFIED"
+    "admin_actas_route": false,
+    "fo_operator_secret_reference": "fo-operator-admin-token",
+    "fo_operator_secret_payload_may_be_resolved_only_inside_trusted_runtime": true
   },
-  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to test iam.serviceAccounts.actAs against every provider-verified Owner/Project-IAM-Admin service account and read the runtime identities of known Federation Cloud Run control services. Determine whether an existing least-privilege Cloud Run actAs bridge can execute the exact three Gemini ADC bindings automatically without granting the deployer IAM-admin authority, creating credentials, or widening WIF.",
-  "truth_boundary": "Read-only provider census only. Do not change IAM, WIF, service accounts, API enablement, Artifact Registry contents, Cloud Run services or traffic; do not build or push an image, run Gemini inference, access secret payloads, send communications, publish, spend, or perform destructive actions. An actAs grant is only a route candidate until provider-native testIamPermissions proves it for a verified high-authority service account."
+  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to fresh-read the exact Cloud Run runtime identities and callable read contracts of Federation Omega Operator and AFEME v4. Determine whether either existing provider-verified Owner/IAM-admin runtime is already callable from the Federation without new credentials or WIF expansion and can serve as the bounded execution bridge for the exact three Gemini ADC bindings.",
+  "truth_boundary": "Read-only provider census only. Do not change IAM, WIF, service accounts, APIs, images, Cloud Run revisions or traffic; do not run Gemini inference, resolve Secret Manager payloads, send communications, publish, spend, or perform destructive actions. A privileged runtime is only considered reusable when Google provider readback proves the expected runtime service-account identity and an authenticated semantic read route returns current service-specific content rather than generic health substitution."
 }
