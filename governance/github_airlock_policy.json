@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.0",
+  "version": "2.10.0",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -28,6 +28,7 @@
     ".github/workflows/cios-production-lane.yml",
     ".github/workflows/frontier-runtime-qualification.yml",
     ".github/workflows/superior-logic-maturation-shadow.yml",
+    ".github/workflows/superior-logic-candidate-builder-canary.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
     ".github/workflows/fo-wif-semantic-canary-v2.yml"
@@ -44,6 +45,7 @@
     ".github/workflows/cios-production-lane.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/frontier-runtime-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/superior-logic-maturation-shadow.yml": ["push", "schedule", "workflow_dispatch"],
+    ".github/workflows/superior-logic-candidate-builder-canary.yml": ["pull_request"],
     ".github/workflows/luno-observer-provider-binding.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/deploy-gemini-gateway.yml": ["workflow_dispatch"],
     ".github/workflows/fo-wif-semantic-canary-v2.yml": ["issues"]
@@ -131,6 +133,7 @@
       ".github/workflows/cios-production-lane.yml",
       ".github/workflows/frontier-runtime-qualification.yml",
       ".github/workflows/superior-logic-maturation-shadow.yml",
+      ".github/workflows/superior-logic-candidate-builder-canary.yml",
       ".github/workflows/luno-observer-provider-binding.yml",
       ".github/workflows/deploy-gemini-gateway.yml",
       ".github/workflows/fo-wif-semantic-canary-v2.yml"
@@ -142,3 +145,4 @@
     "verified_commit_status": "phoenix-freeze/verified"
   }
 }
+
