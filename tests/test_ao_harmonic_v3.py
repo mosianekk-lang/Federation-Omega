@@ -16,6 +16,7 @@ from ao_harmonic_v3.evolution import (
     PolicyEvolution,
 )
 from ao_harmonic_v3.graphs import MissionGraph, ProofGraph, StateFabric
+from ao_harmonic_v3.high_coupling_policy_shadow import run_c4_high_coupling_policy_shadow
 from ao_harmonic_v3.models import (
     FederationEvent,
     Maturity,
@@ -324,6 +325,24 @@ class AOHarmonicV3Tests(unittest.TestCase):
         self.assertTrue(rows["C3-UNCHANGED-RETRY-PROHIBITED"]["checks"]["unchanged_route_not_selected"])
         self.assertTrue(rows["C3-ROUTE-FAILURE-NOT-OBJECTIVE-FAILURE"]["checks"]["failed_incumbent_route_does_not_end_objective"])
         self.assertTrue(rows["C3-ROLLBACK-AND-FORMATION-RELEASE"]["checks"]["formation_release_denied_without_rollback"])
+
+    def test_forest_first_c4_shadow_preserves_policy_validation_boundaries(self):
+        report = run_c4_high_coupling_policy_shadow()
+        self.assertTrue(report["pass"])
+        self.assertEqual(report["scenario_count"], 10)
+        self.assertEqual(report["authority_ceiling"], "A1_INTERNAL")
+        self.assertFalse(report["external_effect"])
+        self.assertFalse(report["provider_runtime_proved"])
+        self.assertFalse(report["physical_migration_executed"])
+        self.assertFalse(report["system_retirement_allowed"])
+        self.assertFalse(report["superior_logic_runtime_rewired"])
+        self.assertFalse(report["caseforge_authority_expanded"])
+        self.assertFalse(report["maturity_inheritance"])
+        rows = {row["scenario_id"]: row for row in report["scenarios"]}
+        self.assertTrue(rows["C4-SCIENTIFIC-FALSIFICATION"]["checks"]["missing_falsifier_fails_closed"])
+        self.assertTrue(rows["C4-BLIND-EVALUATION-SEPARATION"]["checks"]["answer_key_leak_is_rejected"])
+        self.assertTrue(rows["C4-PROVIDER-READBACK-SEPARATION"]["checks"]["provider_verified_without_readback_fails"])
+        self.assertTrue(rows["C4-INDEPENDENT-ASSURANCE-NO-SPOF"]["checks"]["independent_assurance_preserved"])
 
     def test_v3_synthetic_reference_benchmark_beats_v2_reference(self):
         result = run_benchmark()
