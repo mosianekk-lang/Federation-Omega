@@ -26,6 +26,7 @@ from ao_harmonic_v3.models import (
     RiskClass,
     TruthState,
 )
+from ao_harmonic_v3.recovery_formation_shadow import run_c3_recovery_formation_shadow
 from ao_harmonic_v3.resource_market import ResourceMarket, ResourceRequest
 from ao_harmonic_v3.runtime import (
     AOHarmonicV3,
@@ -307,6 +308,22 @@ class AOHarmonicV3Tests(unittest.TestCase):
         self.assertTrue(authority["checks"]["truthgrid_evidenceops_remain_fact_owner"])
         self.assertTrue(authority["checks"]["lex_remains_legal_owner"])
         self.assertTrue(authority["checks"]["no_route_transfers_authority"])
+
+    def test_forest_first_c3_shadow_preserves_recovery_and_formation_boundaries(self):
+        report = run_c3_recovery_formation_shadow()
+        self.assertTrue(report["pass"])
+        self.assertEqual(report["scenario_count"], 5)
+        self.assertEqual(report["authority_ceiling"], "A1_INTERNAL")
+        self.assertFalse(report["external_effect"])
+        self.assertFalse(report["provider_runtime_proved"])
+        self.assertFalse(report["physical_migration_executed"])
+        self.assertFalse(report["system_retirement_allowed"])
+        self.assertFalse(report["failure_win_operational_maturity_inherited"])
+        rows = {row["scenario_id"]: row for row in report["scenarios"]}
+        self.assertTrue(rows["C3-SHARED-PORTABLE-FINGERPRINT"]["checks"]["portable_fingerprint_shared"])
+        self.assertTrue(rows["C3-UNCHANGED-RETRY-PROHIBITED"]["checks"]["unchanged_route_not_selected"])
+        self.assertTrue(rows["C3-ROUTE-FAILURE-NOT-OBJECTIVE-FAILURE"]["checks"]["failed_incumbent_route_does_not_end_objective"])
+        self.assertTrue(rows["C3-ROLLBACK-AND-FORMATION-RELEASE"]["checks"]["formation_release_denied_without_rollback"])
 
     def test_v3_synthetic_reference_benchmark_beats_v2_reference(self):
         result = run_benchmark()
