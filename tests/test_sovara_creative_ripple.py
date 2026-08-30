@@ -58,11 +58,12 @@ class SovaraCreativeRippleTests(unittest.TestCase):
         taste = TasteMemory("owner")
         taste.observe(TasteObservation("taste-1", "lighting", "low-key", 1.0, 1))
         plan = ProducerCompiler().compile(mission=mission, graph=graph, taste=taste)
-        return graph, taste, plan, head
+        return mission, graph, taste, plan, head
 
     def test_concept_correction_regenerates_modalities_but_preserves_intent_steps(self):
-        graph, taste, plan, head = self.fixtures()
+        mission, graph, taste, plan, head = self.fixtures()
         receipt = RippleCompiler().apply(
+            mission=mission,
             graph=graph,
             plan=plan,
             taste=taste,
@@ -78,8 +79,9 @@ class SovaraCreativeRippleTests(unittest.TestCase):
         self.assertTrue(receipt.owner_review_required)
 
     def test_image_only_correction_preserves_video_work_packet(self):
-        graph, taste, plan, head = self.fixtures()
+        mission, graph, taste, plan, head = self.fixtures()
         receipt = RippleCompiler().apply(
+            mission=mission,
             graph=graph,
             plan=plan,
             taste=taste,
@@ -92,8 +94,9 @@ class SovaraCreativeRippleTests(unittest.TestCase):
         self.assertIn("10-02-prepare-video", receipt.preserved_step_ids)
 
     def test_taste_conflict_requires_owner_review(self):
-        graph, taste, plan, head = self.fixtures()
+        mission, graph, taste, plan, head = self.fixtures()
         receipt = RippleCompiler().apply(
+            mission=mission,
             graph=graph,
             plan=plan,
             taste=taste,
@@ -105,7 +108,7 @@ class SovaraCreativeRippleTests(unittest.TestCase):
         self.assertTrue(receipt.owner_review_required)
 
     def test_stale_plan_or_graph_is_rejected_before_mutation(self):
-        graph, taste, plan, head = self.fixtures()
+        mission, graph, taste, plan, head = self.fixtures()
         graph.update_node(
             expected_version=head,
             node_id="image-asset",
@@ -113,6 +116,7 @@ class SovaraCreativeRippleTests(unittest.TestCase):
         )
         with self.assertRaises(GraphConflictError):
             RippleCompiler().apply(
+                mission=mission,
                 graph=graph,
                 plan=plan,
                 taste=taste,
@@ -122,9 +126,10 @@ class SovaraCreativeRippleTests(unittest.TestCase):
             )
 
     def test_locked_target_cannot_be_corrected(self):
-        graph, taste, plan, head = self.fixtures()
+        mission, graph, taste, plan, head = self.fixtures()
         with self.assertRaises(LockedNodeError):
             RippleCompiler().apply(
+                mission=mission,
                 graph=graph,
                 plan=plan,
                 taste=taste,
@@ -135,8 +140,9 @@ class SovaraCreativeRippleTests(unittest.TestCase):
 
     def test_replay_is_deterministic_and_effect_free(self):
         def execute():
-            graph, taste, plan, head = self.fixtures()
+            mission, graph, taste, plan, head = self.fixtures()
             return RippleCompiler().apply(
+                mission=mission,
                 graph=graph,
                 plan=plan,
                 taste=taste,
