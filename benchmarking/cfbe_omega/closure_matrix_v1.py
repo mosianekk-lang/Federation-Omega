@@ -31,6 +31,9 @@ class ClosureDecision:
     next_action: str
     dependencies: tuple[str, ...]
     blockers: tuple[str, ...]
+    role: str = "PRIMARY"
+    effective_state: str = ""
+    rank_score: float = 0.0
 
     def to_dict(self) -> dict[str, object]:
         return {
@@ -41,6 +44,9 @@ class ClosureDecision:
             "next_action": self.next_action,
             "dependencies": list(self.dependencies),
             "blockers": list(self.blockers),
+            "role": self.role,
+            "effective_state": self.effective_state or self.closure_state,
+            "rank_score": self.rank_score,
         }
 
 
@@ -51,6 +57,10 @@ class ClosureWaveReceipt:
     selected: tuple[ClosureDecision, ...]
     held: tuple[ClosureDecision, ...]
     selected_per_rail: Mapping[str, int]
+    selected_roles_per_rail: Mapping[str, Mapping[str, int]]
+    active_per_rail: Mapping[str, int]
+    completed_ids: tuple[str, ...]
+    critical_regression_ids: tuple[str, ...]
     wip_limit_per_rail: int
     provider_effect_authorized: bool
     financial_effect_authorized: bool
@@ -63,6 +73,12 @@ class ClosureWaveReceipt:
             "selected": [x.to_dict() for x in self.selected],
             "held": [x.to_dict() for x in self.held],
             "selected_per_rail": dict(self.selected_per_rail),
+            "selected_roles_per_rail": {
+                rail: dict(counts) for rail, counts in self.selected_roles_per_rail.items()
+            },
+            "active_per_rail": dict(self.active_per_rail),
+            "completed_ids": list(self.completed_ids),
+            "critical_regression_ids": list(self.critical_regression_ids),
             "wip_limit_per_rail": self.wip_limit_per_rail,
             "provider_effect_authorized": self.provider_effect_authorized,
             "financial_effect_authorized": self.financial_effect_authorized,
@@ -138,7 +154,14 @@ def _assert_acyclic(rows: Iterable[Mapping[str, Any]]) -> None:
         visit(node)
 
 
-def _decision(row: Mapping[str, Any], blockers: Iterable[str] = ()) -> ClosureDecision:
+def _decision(
+    row: Mapping[str, Any],
+    blockers: Iterable[str] = (),
+    *,
+    role: str = "PRIMARY",
+    effective_state: str | None = None,
+    rank_score: float = 0.0,
+) -> ClosureDecision:
     return ClosureDecision(
         capability_id=str(row["id"]),
         capability=str(row["capability"]),
@@ -147,6 +170,9 @@ def _decision(row: Mapping[str, Any], blockers: Iterable[str] = ()) -> ClosureDe
         next_action=str(row["next_action"]),
         dependencies=tuple(str(x) for x in row.get("dependencies") or ()),
         blockers=tuple(sorted(set(str(x) for x in blockers))),
+        role=role,
+        effective_state=effective_state or str(row["closure_state"]),
+        rank_score=round(float(rank_score), 9),
     )
 
 
@@ -162,44 +188,161 @@ def first_closure(matrix: Mapping[str, Any]) -> ClosureDecision:
     return _decision(row)
 
 
-def plan_wave(matrix: Mapping[str, Any], *, active_ids: Iterable[str] = ()) -> ClosureWaveReceipt:
+def _rank_scores(matrix: Mapping[str, Any]) -> dict[str, float]:
+    rows = {str(row["id"]): row for row in matrix["rows"]}
+    downstream = {
+        cid: {other for other, row in rows.items() if cid in (row.get("dependencies") or ())}
+        for cid in rows
+    }
+
+    def descendants(cid: str) -> set[str]:
+        found: set[str] = set()
+        pending = list(downstream[cid])
+        while pending:
+            item = pending.pop()
+            if item in found:
+                continue
+            found.add(item)
+            pending.extend(downstream[item])
+        return found
+
+    priority = tuple(str(x) for x in matrix.get("highest_leverage_red_cells") or ())
+    priority_rank = {item: index for index, item in enumerate(priority)}
+    effort_by_state = {"REUSE_NOW": 1.0, "INTEGRATE": 2.0, "EXTEND": 3.0, "BUILD": 4.0}
+    scores: dict[str, float] = {}
+    for cid, row in rows.items():
+        unlocked = len(descendants(cid))
+        mission_impact = 1.0 if cid in priority_rank else 0.5
+        dependency_leverage = 1.0 + unlocked
+        expected_value = 1.0 / (1.0 + priority_rank[cid]) if cid in priority_rank else 0.25
+        unblock_value = 1.0 + unlocked
+        expected_effort = effort_by_state.get(str(row["closure_state"]), 5.0)
+        scores[cid] = round(
+            mission_impact * dependency_leverage * expected_value * unblock_value / expected_effort,
+            9,
+        )
+    return scores
+
+
+def plan_wave(
+    matrix: Mapping[str, Any],
+    *,
+    active_ids: Iterable[str] = (),
+    completed_ids: Iterable[str] = (),
+    roles: Mapping[str, str] | None = None,
+    live_ready_ids: Iterable[str] = (),
+    critical_regression_ids: Iterable[str] = (),
+    readiness_blockers: Mapping[str, Iterable[str]] | None = None,
+) -> ClosureWaveReceipt:
     validate_matrix(matrix)
     active = set(str(x) for x in active_ids)
+    completed = set(str(x) for x in completed_ids)
+    live_ready = set(str(x) for x in live_ready_ids)
+    critical = set(str(x) for x in critical_regression_ids)
+    role_by_id = {str(key): str(value).upper() for key, value in (roles or {}).items()}
+    readiness_by_id = {
+        str(key): tuple(str(item) for item in values)
+        for key, values in (readiness_blockers or {}).items()
+    }
     rows = list(matrix["rows"])
-    priority = list(matrix.get("highest_leverage_red_cells") or [])
-    priority_rank = {item: index for index, item in enumerate(priority)}
-    rows.sort(key=lambda row: (priority_rank.get(str(row["id"]), 10_000), str(row["rail"]), str(row["id"])))
+    row_by_id = {str(row["id"]): row for row in rows}
+    known = set(row_by_id)
+    for label, values in (
+        ("ACTIVE", active),
+        ("COMPLETED", completed),
+        ("LIVE_READY", live_ready),
+        ("CRITICAL", critical),
+        ("ROLE", set(role_by_id)),
+        ("READINESS", set(readiness_by_id)),
+    ):
+        unknown = values - known
+        if unknown:
+            raise ValueError(f"CFBE_CLOSURE_MATRIX_UNKNOWN_{label}_ID:{','.join(sorted(unknown))}")
+    if any(role not in {"PRIMARY", "CHALLENGER"} for role in role_by_id.values()):
+        raise ValueError("CFBE_CLOSURE_MATRIX_ROLE_INVALID")
+
+    rank_scores = _rank_scores(matrix)
+    rows.sort(
+        key=lambda row: (
+            0 if str(row["id"]) in critical else 1,
+            -rank_scores[str(row["id"])],
+            str(row["rail"]),
+            str(row["id"]),
+        )
+    )
     wip_limit = int(matrix["scheduler_policy"]["wip_limit_per_rail"])
+    primary_limit = int(matrix["scheduler_policy"]["primary_build_limit_per_rail"])
+    challenger_limit = int(matrix["scheduler_policy"]["challenger_limit_per_rail"])
     selected: list[ClosureDecision] = []
     held: list[ClosureDecision] = []
-    counts = {rail: 0 for rail in matrix["rails"]}
+    occupancy = {rail: 0 for rail in matrix["rails"]}
+    selected_counts = {rail: 0 for rail in matrix["rails"]}
+    active_counts = {rail: 0 for rail in matrix["rails"]}
+    role_occupancy = {rail: {"PRIMARY": 0, "CHALLENGER": 0} for rail in matrix["rails"]}
+    selected_role_counts = {rail: {"PRIMARY": 0, "CHALLENGER": 0} for rail in matrix["rails"]}
+    for cid in sorted(active):
+        rail = str(row_by_id[cid]["rail"])
+        role = role_by_id.get(cid, "PRIMARY")
+        occupancy[rail] += 1
+        active_counts[rail] += 1
+        role_occupancy[rail][role] += 1
+
+    terminal = set(completed)
+    terminal.update(str(row["id"]) for row in rows if row["closure_state"] == "REUSE_NOW")
+    critical_rails = {str(row_by_id[cid]["rail"]) for cid in critical}
 
     for row in rows:
         cid = str(row["id"])
         rail = str(row["rail"])
         state = str(row["closure_state"])
+        role = role_by_id.get(cid, "PRIMARY")
+        effective_state = "INTEGRATE" if state in HELD_STATES and cid in live_ready else state
         blockers: list[str] = []
+        blockers.extend(readiness_by_id.get(cid, ()))
         if cid in active:
             blockers.append("ALREADY_ACTIVE")
-        if state in HELD_STATES:
+        if cid in completed:
+            blockers.append("ALREADY_TERMINAL")
+        if state in HELD_STATES and cid not in live_ready:
             blockers.append(state)
         if state == "RETIRE_DUPLICATE":
             blockers.append("MORTALITY_DECISION_ONLY")
-        if counts[rail] >= wip_limit:
+        for dependency in row.get("dependencies") or ():
+            if dependency not in terminal:
+                blockers.append(f"DEPENDENCY_NOT_TERMINAL:{dependency}")
+        if rail in critical_rails and cid not in critical:
+            blockers.append("CRITICAL_REGRESSION_PREEMPTION")
+        if occupancy[rail] >= wip_limit:
             blockers.append("RAIL_WIP_LIMIT")
-        decision = _decision(row, blockers)
-        if blockers or state not in ACTIONABLE_STATES:
+        role_limit = primary_limit if role == "PRIMARY" else challenger_limit
+        if role_occupancy[rail][role] >= role_limit:
+            blockers.append(f"RAIL_{role}_LIMIT")
+        decision = _decision(
+            row,
+            blockers,
+            role=role,
+            effective_state=effective_state,
+            rank_score=rank_scores[cid],
+        )
+        if blockers or effective_state not in ACTIONABLE_STATES:
             held.append(decision)
             continue
         selected.append(decision)
-        counts[rail] += 1
+        occupancy[rail] += 1
+        selected_counts[rail] += 1
+        role_occupancy[rail][role] += 1
+        selected_role_counts[rail][role] += 1
 
     body = {
         "schema": "CFBE-OMEGA-CLOSURE-WAVE-RECEIPT-V1",
         "matrix_sha256": _sha(matrix),
         "selected": [x.to_dict() for x in selected],
         "held": [x.to_dict() for x in held],
-        "selected_per_rail": counts,
+        "selected_per_rail": selected_counts,
+        "selected_roles_per_rail": selected_role_counts,
+        "active_per_rail": active_counts,
+        "completed_ids": sorted(completed),
+        "critical_regression_ids": sorted(critical),
         "wip_limit_per_rail": wip_limit,
         "provider_effect_authorized": False,
         "financial_effect_authorized": False,
@@ -209,7 +352,11 @@ def plan_wave(matrix: Mapping[str, Any], *, active_ids: Iterable[str] = ()) -> C
         matrix_sha256=body["matrix_sha256"],
         selected=tuple(selected),
         held=tuple(held),
-        selected_per_rail=dict(counts),
+        selected_per_rail=dict(selected_counts),
+        selected_roles_per_rail={rail: dict(values) for rail, values in selected_role_counts.items()},
+        active_per_rail=dict(active_counts),
+        completed_ids=tuple(sorted(completed)),
+        critical_regression_ids=tuple(sorted(critical)),
         wip_limit_per_rail=wip_limit,
         provider_effect_authorized=False,
         financial_effect_authorized=False,

@@ -1,0 +1,40 @@
+{
+  "schema": "CFBE-OMEGA-CONVERGENCE-CLOSURE-OBSERVATION-V1",
+  "window_id": "CFBE-CLOSURE-WINDOW-20260830-001",
+  "mission_id": "MISSION-CFBE-OMEGA-CONVERGENCE-COMPLETE",
+  "source_main_sha": "642958d6a60e1f2509f802e668a39d09c69684aa",
+  "branch_head_sha": "0fa9a9b99aa5c2c01528b87145ff50bb4b630b68",
+  "observed_at_sast": "2026-08-30T19:36:28+02:00",
+  "observation_command": "python -m unittest tests.test_cfbe_convergence_closure_runtime_v1 tests.test_cfbe_convergence_closure_matrix_v1 -v",
+  "exit_code": 0,
+  "command_output_sha256": "b9dc5ba6448f6e36a11f993b673d6f7d831ad296c10f011ee4efe097164c822e",
+  "command_output_lines": 24,
+  "evidence_class": "OBSERVED_FEDERATION_EXPERIMENT",
+  "synthetic": false,
+  "evidence_refs": [
+    "git:branch-head:0fa9a9b99aa5c2c01528b87145ff50bb4b630b68",
+    "git:preregistration-parent:efcd6db35b3c2b3aabf93684070e09c6e6d92c1b",
+    "local:focused-suite:19/19",
+    "local:full-suite:2628/2628",
+    "github:baseline-airlock:33324629811"
+  ],
+  "telemetry": {
+    "canary.failure_modes_falsified": 12.0,
+    "canary.closure_cells_advanced": 4.0,
+    "canary.proof_layers_verified": 3.0,
+    "canary.rollback_routes_verified": 1.0,
+    "canary.incremental_cost_usd": 0.0,
+    "canary.elapsed_seconds": 0.425698601,
+    "canary.manual_owner_actions": 0.0,
+    "canary.external_effects_or_harm_signals": 0.0
+  },
+  "truth_boundary": {
+    "window_is_local_internal_runtime_only": true,
+    "provider_execution_observed": false,
+    "production_operation_observed": false,
+    "financial_effect_observed": false,
+    "owner_intervention_observed": false,
+    "data_ready_is_not_promotion": true,
+    "ten_x_claimed": false
+  }
+}

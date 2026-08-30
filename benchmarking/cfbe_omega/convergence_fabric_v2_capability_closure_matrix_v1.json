@@ -1,6 +1,6 @@
 {
   "schema": "CFBE-OMEGA-CONVERGENCE-CAPABILITY-CLOSURE-MATRIX-V1",
-  "baseline_main_sha": "82198e426aa9dab1181c9fea0e4ea8895169d008",
+  "baseline_main_sha": "642958d6a60e1f2509f802e668a39d09c69684aa",
   "objective": "Convert the Convergence Fabric v2 target architecture into a dependency-aware implementation backlog that reuses existing Federation and Kim DataVerse capability before any new build.",
   "truth_boundary": {
     "matrix_is_not_runtime_proof": true,
