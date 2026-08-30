@@ -1,9 +1,9 @@
 {
   "schema": "FOREST-FIRST-SHADOW-EQUIVALENCE-PLAN-V1",
-  "version": "1.3.0",
-  "status": "C1_C2_C3_C4_PROVIDER_HOSTED_SOURCE_SHADOW_PASS_C5_IN_PROGRESS_PENDING_INDEPENDENT_ASSURANCE",
-  "base_main_sha": "b5e3e247e76144ab27b373b747e091e5dca825f8",
-  "exact_head_sha": "56d0ac555027ef9fc535a005776bd416b6a7e870",
+  "version": "1.4.0",
+  "status": "C1_C2_C3_C4_C5_PROVIDER_HOSTED_SOURCE_SHADOW_PASS_PENDING_INDEPENDENT_ASSURANCE",
+  "base_main_sha": "9307cb7a1445122c1e4432db9afabda8fbb01fbd",
+  "exact_head_sha": "6f5e5438c5a5fdce0e1fef426a174c9d746c7823",
   "objective": "Demonstrate that target architecture preserves or improves bounded capability while preserving authority/proof boundaries and reducing conceptual/owner burden.",
   "global_acceptance": {
     "all_required": true,
@@ -81,7 +81,7 @@
     "C2_DOMAIN_COMPATIBILITY": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
     "C3_RECOVERY_FORMATION": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
     "C4_HIGH_COUPLING_POLICY_VALIDATION": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
-    "C5_FORMATION_LAST": "IN_PROGRESS_NOT_YET_PROVEN"
+    "C5_FORMATION_LAST": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE"
   },
   "proof_receipts": {
     "C1_C2": {
@@ -124,6 +124,20 @@
       "unmapped_production_paths": 0,
       "fallback_full_suite_activated": false,
       "shadow_escape_candidates": 0
+    },
+    "C5": {
+      "github_airlock_run_id": 33303243470,
+      "artifact_id": 9729627032,
+      "artifact_sha256": "8612ecf56fbc5401148732a54693e32bdb35e00758652541980413649304e9ef",
+      "proofos_manifest_sha256": "59b8688812a72b49b487c00a1430dc711663896f039cce7ce7d78822438cdfad",
+      "proofos_report_sha256": "112a1c097c83296fdbb55df996579b626543a4455e9a154d7741fcd3c3600226",
+      "shadow_calibration_receipt_sha256": "392eace5d275193f5b26e1917a758e3d9902d52b260738f37a0a6baff3de83fb",
+      "source_provenance_receipt_sha256": "c5f71cf67283ee7f478690c1d8b0493b46f86017c3b955d31c096c520a0b945c",
+      "blocking_proofs_passed": 16,
+      "blocking_failures": 0,
+      "unmapped_production_paths": 0,
+      "fallback_full_suite_activated": false,
+      "shadow_escape_candidates": 0
     }
   },
   "measurement_fields": ["functional_pass", "decision_delta", "proof_boundary_delta", "authority_boundary_delta", "owner_interruption_count", "manual_debug_steps", "latency_ms_if_measured", "complexity_units_removed", "rollback_pass", "unexpected_behavior"],
@@ -134,7 +148,7 @@
   },
   "truth_boundary": {
     "shadow_run_executed": true,
-    "shadow_scope": ["C1_AUTHORITY_ONLY", "C2_DOMAIN_COMPATIBILITY", "C3_RECOVERY_FORMATION", "C4_HIGH_COUPLING_POLICY_VALIDATION"],
+    "shadow_scope": ["C1_AUTHORITY_ONLY", "C2_DOMAIN_COMPATIBILITY", "C3_RECOVERY_FORMATION", "C4_HIGH_COUPLING_POLICY_VALIDATION", "C5_FORMATION_LAST"],
     "provider_hosted_source_shadow_proved": true,
     "provider_runtime_shadow_proved": false,
     "independent_assurance_review": "PENDING",
