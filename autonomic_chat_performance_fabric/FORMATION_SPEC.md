@@ -13,6 +13,10 @@
   aggregate-only telemetry, automatic rollback on any stop condition
 - Native Edge adapter: implemented and deterministic-testable, but disabled with
   `authorizedEdgeHookPresent: false`; activation remains a separately permitted act
+- Edge MV3 wrapper: unsigned source package only; no automatic injection, mandatory
+  host permission, extension identity, policy assignment, installation or activation
+- Enterprise policy: contract only with `enabled: false`, `applyAllowed: false`
+  and `installationMode: NOT_CONFIGURED`
 - Route regulator: accepts only `ACTIVE`/`PASSIVE` as input modes and derives
   `HEALTHY`/`DEGRADED`/`OPEN` from aggregate metrics
 - Privacy implementation: emitted sentinel and browser-probe telemetry contains no

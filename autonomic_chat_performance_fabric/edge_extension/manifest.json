@@ -1,0 +1,18 @@
+{
+  "manifest_version": 3,
+  "name": "FACPF Aggregate Diagnostic (Inactive)",
+  "version": "0.2.0",
+  "description": "Managed, aggregate-only ChatGPT performance diagnostics. Inactive unless every authorization gate passes.",
+  "permissions": ["storage"],
+  "optional_permissions": ["scripting"],
+  "optional_host_permissions": ["https://chatgpt.com/*"],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "storage": {
+    "managed_schema": "managed_schema.json"
+  },
+  "content_security_policy": {
+    "extension_pages": "script-src 'self'; object-src 'self'"
+  }
+}

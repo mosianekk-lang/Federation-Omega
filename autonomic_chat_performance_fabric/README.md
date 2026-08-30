@@ -17,6 +17,8 @@ Shadow-mode performance foundation for ChatGPT and future conversational surface
 python -m unittest autonomic_chat_performance_fabric.test_fabric -v
 node autonomic_chat_performance_fabric/test_sentinel.js
 node autonomic_chat_performance_fabric/test_native_edge_chatgpt_diagnostic.js
+node autonomic_chat_performance_fabric/edge_extension/test_edge_extension.js
+node autonomic_chat_performance_fabric/edge_extension/permission_audit.js
 node autonomic_chat_performance_fabric/benchmark_gate.js
 node autonomic_chat_performance_fabric/benchmark.js
 node autonomic_chat_performance_fabric/test_benchmark_v2.js
@@ -48,6 +50,13 @@ It fails closed unless the disabled configuration is explicitly enabled and
 both Formation-permit and operator-activation evidence are supplied. No Edge
 extension, host permission or native-messaging deployment is included here;
 runtime state therefore remains `ADAPTER_REQUIRED`.
+
+The `edge_extension` source builds an unsigned, unpacked Manifest V3 package
+around the adapter. It has no automatic content script or mandatory host
+access; managed storage is its only mandatory permission, while scripting and
+the exact ChatGPT origin remain optional. Its enterprise deployment contract is
+inactive and contains no identity, update URL, registry, MDM or force-install
+mutation. CI audits these invariants and builds a hash-bound source receipt.
 
 `route_mode_contract.js` keeps configured route mode (`ACTIVE` or `PASSIVE`)
 separate from derived health (`HEALTHY`, `DEGRADED` or `OPEN`) and rejects enum

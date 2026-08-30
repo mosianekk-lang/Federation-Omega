@@ -33,6 +33,11 @@ jobs:
         run: node autonomic_chat_performance_fabric/test_sentinel.js
       - name: Run native Edge adapter failure-first tests
         run: node autonomic_chat_performance_fabric/test_native_edge_chatgpt_diagnostic.js
+      - name: Audit and build inactive Edge extension package
+        run: |
+          node autonomic_chat_performance_fabric/edge_extension/test_edge_extension.js
+          node autonomic_chat_performance_fabric/edge_extension/permission_audit.js
+          node autonomic_chat_performance_fabric/edge_extension/build_edge_extension.js facpf-output/edge-extension
       - name: Run statistical benchmark contract tests
         run: node autonomic_chat_performance_fabric/test_benchmark_v2.js
       - name: Run deterministic champion-challenger gate
@@ -51,10 +56,10 @@ jobs:
           node autonomic_chat_performance_fabric/benchmark_v2.js
           > facpf-output/matched-synthetic-timing-v2.json
       - name: Upload benchmark receipts
-        if: always() && hashFiles('facpf-output/*.json') != ''
+        if: always() && hashFiles('facpf-output/**/*.json') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: facpf-shadow-${{ github.run_id }}-${{ github.run_attempt }}
-          path: facpf-output/*.json
+          path: facpf-output/**/*.json
           if-no-files-found: error
           retention-days: 30

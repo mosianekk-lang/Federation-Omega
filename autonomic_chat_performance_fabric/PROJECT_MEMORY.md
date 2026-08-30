@@ -10,3 +10,8 @@ It covers aggregate reload, hydration, lifecycle, reconnect, memory-pressure and
 long-task signals while remaining disabled until an authorized execution hook
 exists. Route configuration and derived health use disjoint enums to prevent the
 earlier regulator ambiguity from entering provider selection.
+
+The next layer is an inert Manifest V3 wrapper whose least-privilege contract is
+machine-audited. A build receipt is not browser deployment proof. Enterprise
+force-install remains prohibited until a signed identity, independent review,
+bounded canary and separate execution permit exist.

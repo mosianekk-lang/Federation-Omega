@@ -1,0 +1,36 @@
+{
+  "schema": "FACPF-EDGE-ENTERPRISE-DEPLOYMENT-1",
+  "enabled": false,
+  "applyAllowed": false,
+  "deploymentState": "UNSIGNED_UNPACKED_SOURCE_ONLY",
+  "extensionId": null,
+  "updateUrl": null,
+  "installationMode": "NOT_CONFIGURED",
+  "policyMutationIncluded": false,
+  "requiredBeforePolicyGeneration": [
+    "signed extension identity and immutable package hash",
+    "independent permission and privacy review",
+    "authorized managed-policy owner",
+    "exact canary device ring",
+    "rollback and uninstall proof",
+    "five same-workload successes with zero reload, reconnect, error, long-task or privacy regression",
+    "separate current Formation execution permit"
+  ],
+  "managedConfigurationDefaults": {
+    "enabled": false,
+    "authorizedEdgeHookPresent": false,
+    "formationPermitValidated": false,
+    "operatorActivationValidated": false,
+    "allowedOrigin": "https://chatgpt.com/*"
+  },
+  "forbiddenUntilPromoted": [
+    "ExtensionInstallForcelist",
+    "ExtensionSettings force_installed",
+    "registry mutation",
+    "MDM assignment",
+    "silent installation",
+    "production activation"
+  ],
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}
