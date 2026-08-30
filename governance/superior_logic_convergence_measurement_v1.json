@@ -1,0 +1,78 @@
+{
+  "schema": "SLOS-CONVERGENCE-MEASUREMENT-V1",
+  "version": "1.0.0",
+  "status": "SOURCE_CANDIDATE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "objective": "Measure whether a typed constitutional core plus mission-specific control slice can preserve mission/proof semantics while materially reducing active context, tool churn and owner burden relative to full-doctrine hydration.",
+  "reuse": {
+    "context_pressure": "federation.bubbles_hyperperformance.ContextPressureGovernor",
+    "mission_capsule": "federation.bubbles_hyperperformance.MissionCapsuleCompiler",
+    "current_state_lease": "federation.bubbles_hyperperformance.CurrentStateLease",
+    "trace_spine": "federation.bubbles_hyperperformance.TraceSpine",
+    "idempotency": "federation.bubbles_hyperperformance.IdempotencyLedger",
+    "work_graph": "federation.bubbles_work_graph_adapter.plan_bubbles_work_graph",
+    "tool_payload_firewall": "federation.bubbles_tool_payload_firewall.ToolPayloadFirewall",
+    "cfbe_fidelity": "benchmarking.cfbe_omega.fidelity_constraint_isolation"
+  },
+  "comparison_profiles": {
+    "baseline": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+    "candidate": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE"
+  },
+  "first_corpus": {
+    "kind": "PRIVACY_SAFE_SYNTHETIC_MISSION_CLASSES",
+    "classes": [
+      "CURRENT_STATE_READ",
+      "PROVIDER_EFFECT",
+      "LEGAL_FORENSIC",
+      "FAILURE_RECOVERY",
+      "EVOLUTION_BENCHMARK",
+      "CROSS_CHAT_HEARTBEAT",
+      "LARGE_TOOL_OUTPUT",
+      "VISUAL_ARTIFACT_ASSURANCE"
+    ]
+  },
+  "paired_metrics": [
+    "required_control_coverage",
+    "critical_control_omissions",
+    "behavioral_guard_failures",
+    "active_context_chars",
+    "tool_round_trips",
+    "owner_interventions",
+    "stale_state_rejection",
+    "duplicate_suppression",
+    "trace_completeness"
+  ],
+  "hard_vetoes": [
+    "MISSING_CRITICAL_CONTROL",
+    "MISSING_REQUIRED_CONTROL",
+    "STALE_STATE_ACCEPTED_WHERE_REJECTION_REQUIRED",
+    "DUPLICATE_EFFECT_NOT_SUPPRESSED_WHERE_REQUIRED",
+    "TRACE_INCOMPLETE_WHERE_REQUIRED"
+  ],
+  "structural_candidate_gate": {
+    "minimum_context_reduction": 0.8,
+    "all_pairs_pass": true,
+    "zero_required_control_omissions": true,
+    "zero_behavioral_guard_failures": true,
+    "tool_round_trips_not_worse": true,
+    "owner_interventions_not_worse": true
+  },
+  "empirical_value_candidate_gate": {
+    "minimum_observed_paired_runs": 30,
+    "structural_candidate_required": true,
+    "provider_or_runtime_proof_refs_required_for_observed_rows": true,
+    "median_tool_round_trip_delta_max": 0,
+    "median_owner_intervention_delta_max": 0
+  },
+  "promotion_boundary": {
+    "stable_slos_promotion_allowed_by_this_contract": false,
+    "stable_slos_v070_mutation_allowed": false,
+    "provider_authority_granted": false,
+    "runtime_latency_claim_from_synthetic_data": false,
+    "owner_value_claim_from_synthetic_data": false,
+    "source_admission_is_behavioral_maturity": false
+  },
+  "cold_history_rule": "Context reduction may select and reference canonical history, but may not delete or replace replayable source, event, proof, failure or lineage records.",
+  "next_gate": "Run deterministic source tests and exact-head repository admission. If admitted, execute at least 30 paired observed shadow missions before any operational-value or stable-successor claim."
+}
