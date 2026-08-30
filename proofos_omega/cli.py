@@ -10,6 +10,7 @@ from pathlib import Path
 
 from .core import (
     ImpactCompiler,
+    PolicyError,
     ProofCache,
     ProofPolicy,
     ProofRunner,
@@ -17,6 +18,7 @@ from .core import (
     changed_paths_from_git,
     load_manifest,
 )
+from .policy_loader import _load_policy, _merge_policy_extension
 
 
 _DIAGNOSTIC_MAX_CHARS = 12000
@@ -31,8 +33,6 @@ _SECRET_VALUE_RES = (
 _SECRET_ASSIGNMENT_RE = re.compile(
     r"(?i)\b(token|secret|password|api[_-]?key|authorization|cookie)\b(\s*[:=]\s*)([^\r\n]+)"
 )
-
-
 def _write_json(path: str | Path, payload: dict) -> None:
     target = Path(path)
     target.parent.mkdir(parents=True, exist_ok=True)
@@ -140,7 +140,7 @@ def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | P
 
 
 def compile_command(args: argparse.Namespace) -> int:
-    policy = ProofPolicy.from_path(args.policy)
+    policy = _load_policy(args.policy, args.repo_root)
     if args.changed_file:
         changed_paths = [line.strip() for line in Path(args.changed_file).read_text(encoding="utf-8").splitlines() if line.strip()]
     else:
@@ -164,7 +164,7 @@ def compile_command(args: argparse.Namespace) -> int:
 
 
 def run_command(args: argparse.Namespace) -> int:
-    policy = ProofPolicy.from_path(args.policy)
+    policy = _load_policy(args.policy, args.repo_root)
     manifest = load_manifest(args.manifest)
     cache = ProofCache(args.cache_dir) if args.cache_dir else None
     report = ProofRunner(policy=policy, repo_root=args.repo_root, cache=cache).run(manifest)
@@ -185,7 +185,7 @@ def run_command(args: argparse.Namespace) -> int:
 
 def verify_command(args: argparse.Namespace) -> int:
     manifest = load_manifest(args.manifest)
-    policy = ProofPolicy.from_path(args.policy)
+    policy = _load_policy(args.policy, args.repo_root)
     if manifest.policy_sha256 != policy.sha256:
         print("PROOFOS_VERIFY policy_hash_mismatch", file=sys.stderr)
         return 1
@@ -224,6 +224,7 @@ def build_parser() -> argparse.ArgumentParser:
     verify_parser = sub.add_parser("verify", help="verify manifest integrity and proof completeness")
     verify_parser.add_argument("--policy", required=True)
     verify_parser.add_argument("--manifest", required=True)
+    verify_parser.add_argument("--repo-root", default=".")
     verify_parser.set_defaults(func=verify_command)
     return parser
 
