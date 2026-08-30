@@ -5,7 +5,8 @@ digital continuity, private-studio planning, reuse-first adaptive capability
 creation, CFBE/Ω-Scientist meta-evolution, proof-gated commercial value,
 progressive production convergence, bounded creative canaries, bounded Gemini
 creative challenges, deterministic non-destructive creative version lineage,
-and bounded local restart-safe lineage persistence.
+bounded local restart-safe lineage persistence, and a version-bound promptless
+creative state graph.
 This package does not grant provider authority, authorize spend, perform
 publishing effects, deploy infrastructure, or claim production/value maturity.
 """
@@ -49,6 +50,17 @@ from .commercial_value import (
     default_production_value_specs,
     economics_snapshot,
     evaluate_value_gate,
+)
+from .creative_graph import (
+    CreativeGraph,
+    CreativeGraphEdge,
+    CreativeGraphError,
+    CreativeGraphNode,
+    CreativeNodeKind,
+    GraphConflictError,
+    GraphImpact,
+    GraphMutationReceipt,
+    LockedNodeError,
 )
 from .gemini_architecture_challenge import (
     ChallengeSpec,
@@ -151,7 +163,12 @@ __all__ = [
     "CreativeCanaryObservation",
     "CreativeCanarySpec",
     "CreativeCanaryState",
+    "CreativeGraph",
+    "CreativeGraphEdge",
+    "CreativeGraphError",
+    "CreativeGraphNode",
     "CreativeMissionGenome",
+    "CreativeNodeKind",
     "DEFAULT_FRONTIER_SUITES",
     "Eligibility",
     "EvolutionEvidence",
@@ -159,8 +176,12 @@ __all__ = [
     "FileVersionTreeStore",
     "FrontierGap",
     "FrontierObservation",
+    "GraphConflictError",
+    "GraphImpact",
+    "GraphMutationReceipt",
     "ImageRouteCatalogEvidence",
     "LocalStoreReceipt",
+    "LockedNodeError",
     "MatureContext",
     "MaturePolicyState",
     "MetaEvolutionState",
