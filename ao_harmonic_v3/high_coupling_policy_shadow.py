@@ -1,12 +1,8 @@
 from __future__ import annotations
 
+import ast
 from dataclasses import asdict, dataclass
 from pathlib import Path
-
-from evidenceops.caseforge.blind_runner import BlindIsolationError, ModelBinding, assert_blind_payload
-from evidenceops.caseforge.replication import IndependentReplicationGate, ReplicationRun
-from evidenceops.caseforge.scientia import EpistemicState, Hypothesis, ScientificObservation, ScientiaKernel
-from superior_logic.runtime import DONE_PREDICATES, SuperiorLogicRuntime
 
 from .architecture_consolidation import ArchitectureConsolidationRegistry
 from .high_coupling_policy_compatibility import C4HighCouplingPolicyContract
@@ -19,34 +15,42 @@ class C4Scenario:
     checks: dict[str, bool]
 
 
-def _raised(fn, expected: type[BaseException]) -> bool:
-    try:
-        fn()
-    except expected:
-        return True
-    return False
-
-
 def _source(root: Path, relative: str) -> str:
     return (root / relative).read_text(encoding="utf-8")
 
 
-def run_c4_high_coupling_policy_shadow() -> dict[str, object]:
-    """Run the ten required C4 Superior Logic × CASEFORGE compatibility scenarios.
+def _assigned_tuple(source: str, name: str) -> tuple[str, ...]:
+    tree = ast.parse(source)
+    for node in tree.body:
+        if not isinstance(node, ast.Assign):
+            continue
+        if any(isinstance(target, ast.Name) and target.id == name for target in node.targets):
+            value = ast.literal_eval(node.value)
+            return tuple(str(item) for item in value)
+    raise ValueError(f"assignment not found: {name}")
 
-    The shadow is portable and A1-internal. It exercises deterministic source/runtime
-    contracts only and deliberately avoids repository workflow reads, provider calls,
-    source moves, authority transfer and maturity inheritance.
+
+def run_c4_high_coupling_policy_shadow() -> dict[str, object]:
+    """Run ten portable C4 source/interface compatibility scenarios.
+
+    This portable AO-HARMONIC shadow deliberately does not import the broad
+    CASEFORGE package or Superior Logic runtime. Those real behavioral contracts
+    are executed by the repository-shell Phoenix court. Keeping the portable
+    layer source/interface-only prevents repository/provider-control coupling
+    from leaking into the independently runnable Phoenix Core projection.
     """
 
     root = Path(__file__).resolve().parents[1]
     contract = C4HighCouplingPolicyContract()
     registry = ArchitectureConsolidationRegistry()
 
+    superior_runtime = _source(root, "superior_logic/runtime.py")
     wrapper = _source(root, "tools/superior_logic_maturation_shadow.py")
     cli = _source(root, "evidenceops/caseforge/maturation_shadow_cli.py")
     maturation = _source(root, "evidenceops/caseforge/maturation_shadow_runtime.py")
     scientia_source = _source(root, "evidenceops/caseforge/scientia.py")
+    blind_source = _source(root, "evidenceops/caseforge/blind_runner.py")
+    replication_source = _source(root, "evidenceops/caseforge/replication.py")
 
     s1_checks = {
         "superior_wrapper_is_compatibility_entrypoint": "Compatibility entrypoint" in wrapper,
@@ -57,102 +61,58 @@ def run_c4_high_coupling_policy_shadow() -> dict[str, object]:
     }
     s1 = C4Scenario("C4-WRAPPER-HOST-COMPATIBILITY", all(s1_checks.values()), s1_checks)
 
-    runtime = SuperiorLogicRuntime(":memory:")
-    try:
-        complete = {name: True for name in DONE_PREDICATES}
-        incomplete = dict(complete)
-        incomplete["independent_observation_verified"] = False
-        complete_done, complete_missing = runtime.derive_done(complete)
-        incomplete_done, incomplete_missing = runtime.derive_done(incomplete)
-    finally:
-        runtime.close()
+    done_predicates = _assigned_tuple(superior_runtime, "DONE_PREDICATES")
+    expected_done = {
+        "operation_occurred",
+        "target_resolved",
+        "semantic_success",
+        "payload_present",
+        "result_stored",
+        "source_readback_verified",
+        "integrity_verified",
+        "independent_observation_verified",
+        "delivery_confirmed",
+        "audit_complete",
+        "no_invalidating_contradiction",
+    }
     s2_checks = {
-        "complete_predicates_can_reach_done": complete_done and not complete_missing,
-        "missing_independent_observation_blocks_done": not incomplete_done,
-        "missing_predicate_is_reported": "independent_observation_verified" in incomplete_missing,
+        "done_predicates_exactly_preserved": set(done_predicates) == expected_done and len(done_predicates) == 11,
+        "derive_done_fails_closed_on_missing_predicate": "predicates.get(name, False)" in superior_runtime,
+        "derive_done_returns_missing_contract": "return (not missing, missing)" in superior_runtime,
+        "independent_observation_is_mandatory": "independent_observation_verified" in done_predicates,
     }
     s2 = C4Scenario("C4-POLICY-COMPLETION-BOUNDARY", all(s2_checks.values()), s2_checks)
 
-    scientia = ScientiaKernel()
-    observations = (
-        ScientificObservation("O1", "Observed source behavior", EpistemicState.VERIFIED_FACT, ("SRC-1",)),
-    )
-    hypotheses = (
-        Hypothesis("H1", "Policy split preserves behavior", ("C4 remains green",), ("canonical regression fails",)),
-        Hypothesis("H2", "Policy split introduces drift", ("a regression should fail",), ("all independent checks remain green",)),
-    )
-    design = scientia.validate_case_design(observations=observations, hypotheses=hypotheses)
-    invalid_hypotheses = (
-        hypotheses[0],
-        Hypothesis("H3", "Unfalsifiable candidate", ("something happens",), ()),
-    )
     s3_checks = {
-        "competing_hypotheses_required_and_pass": design["status"] == "SCIENTIFIC_DESIGN_VALID" and design["hypotheses"] == 2,
-        "design_remains_a1": design["authority_ceiling"] == "A1_INTERNAL" and design["external_effect"] is False,
-        "missing_falsifier_fails_closed": _raised(
-            lambda: scientia.validate_case_design(observations=observations, hypotheses=invalid_hypotheses),
-            ValueError,
-        ),
+        "competing_hypotheses_required": "len(hypotheses) < 2" in scientia_source,
+        "testable_prediction_required": "has no testable prediction" in scientia_source,
+        "falsifier_required": "has no falsifier" in scientia_source,
+        "scientia_remains_a1": '"authority_ceiling": "A1_INTERNAL"' in scientia_source,
+        "scientia_remains_no_effect": '"external_effect": False' in scientia_source,
     }
     s3 = C4Scenario("C4-SCIENTIFIC-FALSIFICATION", all(s3_checks.values()), s3_checks)
 
-    safe_blind_hash = assert_blind_payload({"case_id": "C4-BLIND", "facts": ["public synthetic fact"]})
     s4_checks = {
-        "safe_blind_pack_hashes": len(safe_blind_hash) == 64,
-        "answer_key_leak_is_rejected": _raised(
-            lambda: assert_blind_payload({"case_id": "C4-BLIND", "answer_key": "hidden"}),
-            BlindIsolationError,
-        ),
+        "answer_key_is_reserved_control": '"answer_key"' in blind_source,
+        "hidden_control_leak_fails_closed": "hidden control leakage detected at:" in blind_source,
+        "blind_payload_has_explicit_guard": "def assert_blind_payload" in blind_source,
+        "tested_agent_receives_control_free_context": "tested agent receives no scorer object" in blind_source,
     }
     s4 = C4Scenario("C4-BLIND-EVALUATION-SEPARATION", all(s4_checks.values()), s4_checks)
 
-    unreadback = ModelBinding(
-        provider="fixture-provider",
-        model="fixture-model",
-        version="fixture-v1",
-        configuration={"temperature": 0},
-        execution_state="PROVIDER_VERIFIED",
-        provider_readback_ref="",
-    )
-    readback = ModelBinding(
-        provider="fixture-provider",
-        model="fixture-model",
-        version="fixture-v1",
-        configuration={"temperature": 0},
-        execution_state="PROVIDER_VERIFIED",
-        provider_readback_ref="provider:readback:C4",
-    )
-    readback_ok = True
-    try:
-        readback.validate()
-    except BlindIsolationError:
-        readback_ok = False
     s5_checks = {
-        "provider_verified_without_readback_fails": _raised(unreadback.validate, BlindIsolationError),
-        "provider_verified_with_readback_passes": readback_ok,
+        "provider_verified_state_is_explicit": '"PROVIDER_VERIFIED"' in blind_source,
+        "provider_verified_requires_readback": "provider-verified execution requires provider readback" in blind_source,
+        "readback_reference_is_model_binding_state": "provider_readback_ref" in blind_source,
     }
     s5 = C4Scenario("C4-PROVIDER-READBACK-SEPARATION", all(s5_checks.values()), s5_checks)
 
-    common = {
-        "case_id": "C4-REP",
-        "blind_input_sha256": "a" * 64,
-        "tested_output_sha256": "b" * 64,
-        "model": "fixture-model",
-        "model_version_ref": "fixture-v1",
-        "configuration_sha256": "c" * 64,
-        "provider_readback_ref": "provider:verified",
-        "provider_verified": True,
-    }
-    primary = ReplicationRun(run_id="R1", provider="provider-A", execution_route_id="route-A", **common)
-    independent = ReplicationRun(run_id="R2", provider="provider-B", execution_route_id="route-A", **common)
-    non_independent = ReplicationRun(run_id="R3", provider="provider-A", execution_route_id="route-A", **common)
-    gate = IndependentReplicationGate()
-    positive = gate.evaluate(primary, independent)
-    negative = gate.evaluate(primary, non_independent)
     s6_checks = {
-        "cross_provider_replication_is_independent": positive.independent and "PROVIDER" in positive.independence_dimensions,
-        "same_provider_same_model_same_route_is_not_independent": not negative.independent,
-        "replication_does_not_infer_truth_from_output_agreement": "MATERIAL_INDEPENDENCE_NOT_PROVEN" in negative.reason_codes,
+        "cross_provider_is_independence_dimension": 'dimensions.append("PROVIDER")' in replication_source,
+        "same_provider_requires_model_and_route": '{"MODEL_VERSION", "EXECUTION_ROUTE"}.issubset(dimensions)' in replication_source,
+        "non_independence_fails_closed": 'reasons.append("MATERIAL_INDEPENDENCE_NOT_PROVEN")' in replication_source,
+        "agreement_not_treated_as_truth": "agreement/correctness remains the" in replication_source,
+        "replication_remains_no_effect": "replication run must remain A1_INTERNAL/no-external-effect" in replication_source,
     }
     s6 = C4Scenario("C4-INDEPENDENT-REPLICATION", all(s6_checks.values()), s6_checks)
 
@@ -220,9 +180,10 @@ def run_c4_high_coupling_policy_shadow() -> dict[str, object]:
         "superior_logic_runtime_rewired": False,
         "caseforge_authority_expanded": False,
         "maturity_inheritance": False,
+        "behavioral_execution_surface": "REPOSITORY_SHELL_PHOENIX_COURT",
         "independent_assurance_review": "PENDING",
         "promotion_state": "SHADOW_PASS_PENDING_PROVIDER_HOSTED_ADMISSION_AND_INDEPENDENT_ASSURANCE",
-        "truth_boundary": "DETERMINISTIC_CONSUMER_AWARE_SOURCE_COMPATIBILITY_NOT_RUNTIME_MIGRATION_OR_PROVIDER_EFFECT",
+        "truth_boundary": "PORTABLE_SOURCE_INTERFACE_COMPATIBILITY_PLUS_SEPARATE_REPOSITORY_BEHAVIORAL_COURT_NOT_RUNTIME_MIGRATION_OR_PROVIDER_EFFECT",
     }
 
 
