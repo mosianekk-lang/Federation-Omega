@@ -1,0 +1,874 @@
+{
+  "campaign": {
+    "empirical_value_candidate": true,
+    "median_context_reduction": 0.984840081345905,
+    "median_owner_intervention_delta": 0.0,
+    "median_tool_round_trip_delta": 0.0,
+    "observed_pair_count": 30,
+    "pair_count": 30,
+    "stable_promotion_allowed": false,
+    "structural_candidate": true,
+    "structural_pass_count": 30,
+    "truth_state": "EMPIRICAL_VALUE_CANDIDATE",
+    "zero_critical_omissions": true
+  },
+  "communications": 0,
+  "external_effects": 0,
+  "host": "CODEX_LOCAL_ZERO_EFFECT_SHADOW",
+  "observed_at": "2026-08-30T21:51:03.821Z",
+  "pairs": [
+    {
+      "baseline_context_chars": 43273,
+      "candidate_context_chars": 586,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9864580685415848,
+        "mission_id": "CURRENT_STATE_READ",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CURRENT_STATE_READ",
+      "pair": 1,
+      "proof_refs": [
+        "provider:sha256:78b31171be7bf8e2e4d0fd9cf8bb24f3560b3dcd3482d403271d653d289e9597",
+        "baseline:sha256:3b88ec5b09c9b5ffe2b3ead6d2fc1509b11d4fe693f2639318752e38b302e581",
+        "candidate:sha256:e9ed3c56ebc7653a5dd2f2bebadeaabf47ec8b9c5a40801fca838590cb6d1164",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 1532
+    },
+    {
+      "baseline_context_chars": 43273,
+      "candidate_context_chars": 665,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9846324497954845,
+        "mission_id": "PROVIDER_EFFECT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "PROVIDER_EFFECT",
+      "pair": 2,
+      "proof_refs": [
+        "provider:sha256:1b4b07f80eabae4748ad171746d30ccee87dd732a7a743073b90e46a81b5ddc3",
+        "baseline:sha256:740cd21c70a3c5cdafdc93514d46190bea38546d9fe726348e38fac585f09f5d",
+        "candidate:sha256:bdecb42bba6fd995ce5b42d36e8a82cc4c6186d93efaf58ed545b694add37449",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 2600
+    },
+    {
+      "baseline_context_chars": 43273,
+      "candidate_context_chars": 663,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9846786679915883,
+        "mission_id": "LEGAL_FORENSIC",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "LEGAL_FORENSIC",
+      "pair": 3,
+      "proof_refs": [
+        "provider:sha256:a07923716dea075fbe31c4cb5a55692dec4161e488e6b29fab29feeaf7b9e432",
+        "baseline:sha256:6fd92d903127db39ae63478d5e63d435202998d99a01d3fd191b7b1b21a72497",
+        "candidate:sha256:903c4094691ef781f5b511bdcdf03c8ffd49dd791217da55603c501e8daae400",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 565
+    },
+    {
+      "baseline_context_chars": 43274,
+      "candidate_context_chars": 683,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9842168507648935,
+        "mission_id": "FAILURE_RECOVERY",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "FAILURE_RECOVERY",
+      "pair": 4,
+      "proof_refs": [
+        "provider:sha256:12ab8414eee2e6dd24d821d1b69bf2f20b0953df7844e7eea58d366cea1cbb2f",
+        "baseline:sha256:dacf10d2bd934544c364d91bb9c3178c6c4c19bb86b165dce704f8b1cd7b3394",
+        "candidate:sha256:bc1c7529717cb545b9d889f2fc8ab07fef5077fdc6938b4f15dc785834f5b0dd",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 1170
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 703,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9837539286374561,
+        "mission_id": "EVOLUTION_BENCHMARK",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "EVOLUTION_BENCHMARK",
+      "pair": 5,
+      "proof_refs": [
+        "provider:sha256:2e53a8f02dd4e1bf03d46c1dde8d2220bda589057b348eacc1fc873a912a3efd",
+        "baseline:sha256:1e707925db0f2fd23b38cf6bd006303389d2f542186e612d44d4e1d4a684f29b",
+        "candidate:sha256:3a6312815c8d91e41e8875c1b179a7dadc3450ea97b1490c2ab00346e2228fa6",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 4657
+    },
+    {
+      "baseline_context_chars": 43273,
+      "candidate_context_chars": 691,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.984031613246135,
+        "mission_id": "CROSS_CHAT_HEARTBEAT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CROSS_CHAT_HEARTBEAT",
+      "pair": 6,
+      "proof_refs": [
+        "provider:sha256:2efb01a5c8cbcf0cc8390b5fea06a4963e16c8ec71feecfc43b18ce3354eb081",
+        "baseline:sha256:5ff3c6f7e544560c4d2f28ad7f6ea8a3037e3eca09216839cccc8b6f6288562a",
+        "candidate:sha256:2db47d040034e7c8e663aeec303fd1ddaffcf98dfebfacfe5117a027a53f5d4e",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 3857
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 697,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9838925864300241,
+        "mission_id": "LARGE_TOOL_OUTPUT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "LARGE_TOOL_OUTPUT",
+      "pair": 7,
+      "proof_refs": [
+        "provider:sha256:4b5002881de8c66c911a4803d6da7f0b330f93c521e53ae1c5da39eefb3d57eb",
+        "baseline:sha256:4ab50afc8bca5e3fff5cb02ed131b522232fd349bb674a572de6e76ef191610d",
+        "candidate:sha256:c6c615c3cdba85cb60a6d444f62be8e20339c7b4db5a74076d91eb013ebb291d",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 3188
+    },
+    {
+      "baseline_context_chars": 43273,
+      "candidate_context_chars": 675,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9844013588149655,
+        "mission_id": "VISUAL_ARTIFACT_ASSURANCE",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "VISUAL_ARTIFACT_ASSURANCE",
+      "pair": 8,
+      "proof_refs": [
+        "provider:sha256:f1dbc5221ab1ddfbdf7f0a7d410088f1b3a1b669bcb8265c6490534f94e01f27",
+        "baseline:sha256:37001f2430a87124e36c1073f3ec5637fce5744e1531802322d75e7e41c593e0",
+        "candidate:sha256:71553e6f85df796cf12f620aa43e503cff4d9bd5932fb7974c8293ab4f598a53",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "github",
+      "provider_elapsed_ms": 5568
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 580,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.986596413385099,
+        "mission_id": "CURRENT_STATE_READ",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CURRENT_STATE_READ",
+      "pair": 9,
+      "proof_refs": [
+        "provider:sha256:a33c421b7d6a67859fd7470d321f7551a87f546929e05e54884cd11573eb98ca",
+        "baseline:sha256:0fae9bc45116389dfa12f0b7915af8751ae698833b8af9ceb0a419cd97c04246",
+        "candidate:sha256:1ad0fbe80e2783f7c2f05c3a5e8026da2a622fab122825919f7e2fbc53d53edf",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 5209
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 656,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.984840081345905,
+        "mission_id": "PROVIDER_EFFECT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "PROVIDER_EFFECT",
+      "pair": 10,
+      "proof_refs": [
+        "provider:sha256:e3a190eb8c8c1fed7734c4f089f73c97bc6f96cbf84d28bc5145485d15c1f601",
+        "baseline:sha256:bbdd3b98cabc4c987e9f8241f82b070a220a14fdff953e89b3eba59f29f35d6e",
+        "candidate:sha256:25e0e202712b8d77609df2ee4baa3ec74cc2688350f1ac3d9ae32e906915c2f6",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 2167
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 665,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.984632094657053,
+        "mission_id": "LEGAL_FORENSIC",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "LEGAL_FORENSIC",
+      "pair": 11,
+      "proof_refs": [
+        "provider:sha256:eff7583920db83b2cc80c972ec0f775aefdd35c936eb778440018a8f4608973f",
+        "baseline:sha256:2a7720d7f7d401a57ff49a827362cdf552b8f89afa89b200857fb9ff116b13f1",
+        "candidate:sha256:69569d8023fc4f15d660cf8737e328a28f3dd5d8c5c98d0df72e26a1b7f5d865",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 1402
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 643,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9851405065631356,
+        "mission_id": "FAILURE_RECOVERY",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "FAILURE_RECOVERY",
+      "pair": 12,
+      "proof_refs": [
+        "provider:sha256:b2d29ff9e5ac89a9eb8bc6983b00d1372922371d04ed833c218888bc49c48862",
+        "baseline:sha256:a5cbb07c13be90c83447095f460c8f56e00f4393be60737a4ae0317d35425809",
+        "candidate:sha256:39ff105332009a62c754c1acbca2b3bf2332b0230a2e56efb42624da292c4493",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 703
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 656,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.984840081345905,
+        "mission_id": "EVOLUTION_BENCHMARK",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "EVOLUTION_BENCHMARK",
+      "pair": 13,
+      "proof_refs": [
+        "provider:sha256:4bf949ce8e42cef8bce45793669e44662970b7392fa2cb9550ca279e1e3acb38",
+        "baseline:sha256:b4676f035406372ab8e21f85ad2c758c26724e4f049c85a09ca7ae6d55057eb9",
+        "candidate:sha256:fed6b5c425a6d4f86e49df3a774bfcaca55d3944e468349a81dea11b99fa26d7",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 2125
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 643,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9851405065631356,
+        "mission_id": "CROSS_CHAT_HEARTBEAT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CROSS_CHAT_HEARTBEAT",
+      "pair": 14,
+      "proof_refs": [
+        "provider:sha256:6a5ab40fcb07bbb4701c119fe8df5742af99c646db8adee364bf095845c84402",
+        "baseline:sha256:f0bb2e93e072c4171e135f423cc50df751ae8e1de4ffef665b140625a828d3a3",
+        "candidate:sha256:8e08ceca3fe0e77837efba6923e5546ad9c97b010acdbce0e4d235db6b21faa5",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 2859
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 635,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9853253836198927,
+        "mission_id": "LARGE_TOOL_OUTPUT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "LARGE_TOOL_OUTPUT",
+      "pair": 15,
+      "proof_refs": [
+        "provider:sha256:d6a03dff7396bd21bfdfcf3bf16a6ab50ed1e42081e68568729bc97fe5a43607",
+        "baseline:sha256:18266783954f18d118604539d31c5f5efdf15a92e3b8578c932072f6b94f4d19",
+        "candidate:sha256:ca97955810bfb3774683ed1f3c6a8df5e20dab14ecd58a8b226e2af1b26106c9",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 3542
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 671,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9844934368644851,
+        "mission_id": "VISUAL_ARTIFACT_ASSURANCE",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "VISUAL_ARTIFACT_ASSURANCE",
+      "pair": 16,
+      "proof_refs": [
+        "provider:sha256:3d6c5fc2b21a5414b4eb4690075a6b171c30cf88c18c827722f75fd0782fb861",
+        "baseline:sha256:d34725dbacf1424871c85eb08cb9e9029fb2a760b57edcb5d30a05a24a96c218",
+        "candidate:sha256:6d3223f8dd59078e857e6a110c53ceb343dea29211d8505aa20429b48d48dbda",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "drive",
+      "provider_elapsed_ms": 4169
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 581,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9865733037530042,
+        "mission_id": "CURRENT_STATE_READ",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CURRENT_STATE_READ",
+      "pair": 17,
+      "proof_refs": [
+        "provider:sha256:95b4991dfa9b794615cb1adec06308415772a3617782a83b0c9cf740ce51791b",
+        "baseline:sha256:5ccd009ac378ce7174c1ec682dd6947437da86f0c1aabf245916d703f36eca69",
+        "candidate:sha256:7023a7757f9aa0003fe209b28468fbe416f2ac2a7df753dca34248caa3571240",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "gmail",
+      "provider_elapsed_ms": 5523
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 656,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.984840081345905,
+        "mission_id": "PROVIDER_EFFECT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "PROVIDER_EFFECT",
+      "pair": 18,
+      "proof_refs": [
+        "provider:sha256:9a265ae2598c078e2a2936a1d66092eab2de21535e8f9d07eb9442326bfeceda",
+        "baseline:sha256:5182dd86f1f4a6f93b713be9eb15a2dadeb54deca9573d291ba580f67891bf0c",
+        "candidate:sha256:ab045234d85d58c98b68727c0602230c868d47c47915441ae008d07092e33276",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "gmail",
+      "provider_elapsed_ms": 5920
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 665,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.984632094657053,
+        "mission_id": "LEGAL_FORENSIC",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "LEGAL_FORENSIC",
+      "pair": 19,
+      "proof_refs": [
+        "provider:sha256:5f5afb3701f7518c61c478bc4f785bc0663bacb15bd494bd3a89706b6c478a86",
+        "baseline:sha256:47f54bfc024a1041738bfec9594303eb80506b4d0f526179e8705ec1da4284ec",
+        "candidate:sha256:134d55061c11461cd5b9bdfd772556de87893144d3fe997544387d1037d105c8",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "gmail",
+      "provider_elapsed_ms": 4657
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 644,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9851173969310408,
+        "mission_id": "FAILURE_RECOVERY",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "FAILURE_RECOVERY",
+      "pair": 20,
+      "proof_refs": [
+        "provider:sha256:95b4991dfa9b794615cb1adec06308415772a3617782a83b0c9cf740ce51791b",
+        "baseline:sha256:5ccd009ac378ce7174c1ec682dd6947437da86f0c1aabf245916d703f36eca69",
+        "candidate:sha256:48529cf23c08505044f71dae08d242c8629b232a2beaf18d183f172f9b3db2b2",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "gmail",
+      "provider_elapsed_ms": 5115
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 655,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9848631909779997,
+        "mission_id": "EVOLUTION_BENCHMARK",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "EVOLUTION_BENCHMARK",
+      "pair": 21,
+      "proof_refs": [
+        "provider:sha256:461c09a3f3e46d44d395e1d9308112784503acd978d1023b045bd93ad3a6e7fa",
+        "baseline:sha256:49c1919407acb05d4bcbbc614f7f92925eead6f8efb1ba5839a8b8be079e6363",
+        "candidate:sha256:f0ec169931510a0ad5e1f7444226ac90c32072b380427622891a01beaa5eec17",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "gmail",
+      "provider_elapsed_ms": 574
+    },
+    {
+      "baseline_context_chars": 43271,
+      "candidate_context_chars": 642,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9851632733239352,
+        "mission_id": "CROSS_CHAT_HEARTBEAT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CROSS_CHAT_HEARTBEAT",
+      "pair": 22,
+      "proof_refs": [
+        "provider:sha256:eac6cbc285eb5148dda4dbcb8477470032a5c94f4ed8d875251ed2523bf83013",
+        "baseline:sha256:d2934c1aeba15293f98332b1981c642477869fb84ea8ba2c8d7176acae5dac52",
+        "candidate:sha256:b5ce45959b8b2179a836b1c4dfb3bc6c3c3a13065b18b8d9405d95fb284ed0d2",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "gmail",
+      "provider_elapsed_ms": 854
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 635,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9853253836198927,
+        "mission_id": "LARGE_TOOL_OUTPUT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "LARGE_TOOL_OUTPUT",
+      "pair": 23,
+      "proof_refs": [
+        "provider:sha256:831a85a2ff826f963c818ba8bddfd0b800e7b9cc05ebfcb63bb20fce8a87e2c0",
+        "baseline:sha256:6511c5824e729e9c8769a2e74615cbd22bf925f7a4460b99fa4c312f28a189fe",
+        "candidate:sha256:fdafcbd943b5c82e362a6dda8d3fc929e699674f8c408c752c5f513d44bd6167",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "gmail",
+      "provider_elapsed_ms": 9040
+    },
+    {
+      "baseline_context_chars": 43270,
+      "candidate_context_chars": 666,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.984608273630691,
+        "mission_id": "VISUAL_ARTIFACT_ASSURANCE",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "VISUAL_ARTIFACT_ASSURANCE",
+      "pair": 24,
+      "proof_refs": [
+        "provider:sha256:4d890b61d5a3b4d60cbb10ee5ad5a0b7c5fe23484dfb479271371681ed2c0298",
+        "baseline:sha256:6feaa52ee276bb0d6432f191cc75960233a3e2e4bb121446c8a9de5d07f2f27e",
+        "candidate:sha256:651c71447e2dd49876b171b781e0db834371b3e48877c7f75f24350004681488",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "canva",
+      "provider_elapsed_ms": 4588
+    },
+    {
+      "baseline_context_chars": 43270,
+      "candidate_context_chars": 578,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9866420152530622,
+        "mission_id": "CURRENT_STATE_READ",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CURRENT_STATE_READ",
+      "pair": 25,
+      "proof_refs": [
+        "provider:sha256:4d890b61d5a3b4d60cbb10ee5ad5a0b7c5fe23484dfb479271371681ed2c0298",
+        "baseline:sha256:6feaa52ee276bb0d6432f191cc75960233a3e2e4bb121446c8a9de5d07f2f27e",
+        "candidate:sha256:9a45f04075c3f2014fa6b1f10859ad35a6c5e34dc9dad7f5de4ec943c2fd9ce4",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "canva",
+      "provider_elapsed_ms": 6474
+    },
+    {
+      "baseline_context_chars": 43271,
+      "candidate_context_chars": 662,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9847010700006933,
+        "mission_id": "PROVIDER_EFFECT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "PROVIDER_EFFECT",
+      "pair": 26,
+      "proof_refs": [
+        "provider:sha256:040bcb415832208f6d42abba6c08f3692a6d76280e76a72d0ade02265dce6bd7",
+        "baseline:sha256:493772a52d0e2adc3d1db4a1e9eb355b2939dc0a4f9655c032bd98b2d689750c",
+        "candidate:sha256:7ba8aadd6de0ef587569724ee3633532593c44c9344f651e7e203f55dd49714e",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "canva",
+      "provider_elapsed_ms": 5607
+    },
+    {
+      "baseline_context_chars": 43271,
+      "candidate_context_chars": 660,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9847472903330174,
+        "mission_id": "LEGAL_FORENSIC",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "LEGAL_FORENSIC",
+      "pair": 27,
+      "proof_refs": [
+        "provider:sha256:fc0085ab24f25b9977effac273c9e414ee30b6c7427474be631e5695c2fb85ed",
+        "baseline:sha256:240acf6a7ab4083af0c7f4146e8a8d5ad4c7ec2c2cc4e65cc12e1cc0c4df6f3f",
+        "candidate:sha256:8c93ca7ef3fd79591723fe6a5ff8c1f32e6f2ae466121342d73d55fe0a48e21f",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "canva",
+      "provider_elapsed_ms": 8549
+    },
+    {
+      "baseline_context_chars": 43271,
+      "candidate_context_chars": 642,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9851632733239352,
+        "mission_id": "FAILURE_RECOVERY",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "FAILURE_RECOVERY",
+      "pair": 28,
+      "proof_refs": [
+        "provider:sha256:4f4cd22a09531880ee5a832f431241a217f769e7f6994f2b87f5ac104a0e3fe4",
+        "baseline:sha256:9b82b88330df54aa921db4e47965995a546353665fcc7288fd62618a32bc4692",
+        "candidate:sha256:133fe2d196ac5f7e576029cb5674a8184b846c2cf74eb66bd34879dfab41d6b0",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "canva",
+      "provider_elapsed_ms": 9989
+    },
+    {
+      "baseline_context_chars": 43271,
+      "candidate_context_chars": 652,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9849321716623143,
+        "mission_id": "EVOLUTION_BENCHMARK",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "EVOLUTION_BENCHMARK",
+      "pair": 29,
+      "proof_refs": [
+        "provider:sha256:d7e75094d8f269b6225efc9a6670828b0ef922af17b164acdd31d2f9db291b0b",
+        "baseline:sha256:5363fb48b4c055262a48f7156837062d027ff209c06bc2d7a76efa83feafe802",
+        "candidate:sha256:5eb1c7e85c7e0ecc1f13a4762d557c2610a27607de9a3ac5d38f8ee4e8afb3ce",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "canva",
+      "provider_elapsed_ms": 7556
+    },
+    {
+      "baseline_context_chars": 43272,
+      "candidate_context_chars": 651,
+      "measurement": {
+        "baseline_profile": "FULL_DOCTRINE_ACTIVE_CONTEXT",
+        "candidate_behavior_failures": [],
+        "candidate_control_coverage": 1.0,
+        "candidate_missing_controls": [],
+        "candidate_profile": "CONSTITUTIONAL_CORE_PLUS_MISSION_SLICE_PLUS_CAPSULE",
+        "context_reduction": 0.9849556295063783,
+        "mission_id": "CROSS_CHAT_HEARTBEAT",
+        "mode": "OBSERVED",
+        "owner_intervention_delta": 0,
+        "structural_pass": true,
+        "tool_round_trip_delta": 0,
+        "truth_state": "OBSERVED_PAIR_PASS"
+      },
+      "mission_class": "CROSS_CHAT_HEARTBEAT",
+      "pair": 30,
+      "proof_refs": [
+        "provider:sha256:c500ec0dd4b35bcfa37e99f11821d9a9e85cbc13c0d87eea85ec7aa5f1e258d1",
+        "baseline:sha256:0200c4ec691db80ce1f777fea281725df9a9643b8d9071b7e2f893881b98a709",
+        "candidate:sha256:f0b8430f319530062fa9ab547f2ba7a7e31d32bbae4fe507331d550f9dff8323",
+        "source:73963da2b1e23b87c0bb440c044a32fbc08d3ce8"
+      ],
+      "provider": "canva",
+      "provider_elapsed_ms": 11435
+    }
+  ],
+  "provider_reads": 30,
+  "provider_successes": 30,
+  "schema": "BUBBLES-30-PAIR-SHADOW-CERTIFICATION-1",
+  "source_commit": "73963da2b1e23b87c0bb440c044a32fbc08d3ce8",
+  "truth_boundary": {
+    "cold_history_may_be_deleted_for_context_reduction": false,
+    "measurement_court_grants_provider_authority": false,
+    "observed_pair_is_stable_release_promotion": false,
+    "source_measurement_is_runtime_latency_proof": false,
+    "stable_slos_v070_is_mutated_by_this_module": false,
+    "synthetic_pair_is_owner_value_proof": false
+  },
+  "writes": 0
+}
