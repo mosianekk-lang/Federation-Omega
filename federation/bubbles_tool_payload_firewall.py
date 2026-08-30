@@ -13,7 +13,10 @@ _FAILURE_LINE = re.compile(
     r"invalid|blocked|rejected|conclusion|returncode|exit code)\b"
 )
 _SECRET_ASSIGNMENT = re.compile(
-    r"(?i)\b(api[_-]?key|token|secret|password|authorization)\b\s*[:=]\s*([^\s,;]+)"
+    r"(?i)\b(api[_-]?key|token|secret|password)\b\s*[:=]\s*([^\s,;]+)"
+)
+_AUTHORIZATION_VALUE = re.compile(
+    r"(?i)\bauthorization\b\s*[:=]\s*(?!bearer\b)([^\s,;]+)"
 )
 _BEARER = re.compile(r"(?i)\bbearer\s+[A-Za-z0-9._~+/=-]+")
 
@@ -138,16 +141,26 @@ class DiagnosticExtractor:
     def _redact(line: str) -> tuple[str, bool]:
         redacted = False
 
+        # Bearer must be redacted before generic key/value patterns so the token
+        # tail cannot survive after the word "Bearer" is consumed.
+        line, bearer_count = _BEARER.subn("Bearer [REDACTED]", line)
+        if bearer_count:
+            redacted = True
+
+        def replace_authorization(match: re.Match[str]) -> str:
+            nonlocal redacted
+            redacted = True
+            return "Authorization=[REDACTED]"
+
+        line = _AUTHORIZATION_VALUE.sub(replace_authorization, line)
+
         def replace_assignment(match: re.Match[str]) -> str:
             nonlocal redacted
             redacted = True
             return f"{match.group(1)}=[REDACTED]"
 
         line = _SECRET_ASSIGNMENT.sub(replace_assignment, line)
-        replaced, count = _BEARER.subn("Bearer [REDACTED]", line)
-        if count:
-            redacted = True
-        return replaced, redacted
+        return line, redacted
 
     def extract(self, payload: str) -> DiagnosticCapsule:
         text = str(payload)
