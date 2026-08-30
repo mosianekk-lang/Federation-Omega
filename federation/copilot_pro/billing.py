@@ -9,9 +9,8 @@ from typing import Any, Mapping
 
 _GITHUB_USER_RE = re.compile(r"^[A-Za-z0-9](?:[A-Za-z0-9-]{0,37}[A-Za-z0-9])?$")
 _REFERENCE_RE = re.compile(r"^CR-[0-9]{3,6}$")
-_RAW_SECRET_RE = re.compile(
-    r"(?i)^(?:ghp_|github_pat_|gho_|ghu_|ghs_|ghr_|bearer\s+|token\s+)"
-)
+_RAW_SECRET_PREFIXES = ("ghp_", "github_pat_", "gho_", "ghu_", "ghs_", "ghr_")
+_RAW_AUTH_RE = re.compile(r"(?i)^(?:bearer\s+|token\s+)")
 API_VERSION = "2026-03-10"
 REQUIRED_PERMISSION = "Plan:read"
 
@@ -32,6 +31,11 @@ def _finite_nonnegative(value: object, field: str) -> float:
     if not math.isfinite(number) or number < 0:
         raise ValueError(f"{field} must be finite and non-negative")
     return number
+
+
+def _looks_like_raw_credential(value: str) -> bool:
+    lowered = value.lower()
+    return lowered.startswith(_RAW_SECRET_PREFIXES) or bool(_RAW_AUTH_RE.search(value))
 
 
 @dataclass(frozen=True)
@@ -100,7 +104,7 @@ def build_ai_credit_usage_request(
     # must never be transformed into something that happens to look like a
     # symbolic reference. v1 accepts only Secure Capability Box CR-* handles.
     raw_reference = str(credential_reference_id).strip()
-    if _RAW_SECRET_RE.search(raw_reference):
+    if _looks_like_raw_credential(raw_reference):
         raise ValueError("credential values are forbidden; use an opaque CR-* reference")
     reference = raw_reference.upper()
     if not _REFERENCE_RE.fullmatch(reference):
