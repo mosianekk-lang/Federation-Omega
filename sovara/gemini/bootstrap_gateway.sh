@@ -142,12 +142,14 @@ PY
 collect_state
 MUTATION_PERFORMED=false
 
-# Read-only authority census is a separate evidence product. Its diagnostic
-# summary goes to stderr so stdout remains one machine-parseable ADC receipt.
-# The complete census receipt is written under SOVARA_RECEIPT_DIR by the Python
-# probe and never converts an ADC verification failure into success.
+# Read-only authority censuses are separate evidence products. Their diagnostic
+# summaries go to stderr so stdout remains one machine-parseable ADC receipt.
+# These probes never convert an ADC verification failure into success.
 if [[ "$MODE" == "verify" && -f sovara/gemini/admin_authority_census.py ]]; then
   python3 sovara/gemini/admin_authority_census.py >&2 || true
+fi
+if [[ "$MODE" == "verify" && -f sovara/gemini/admin_actas_census.py ]]; then
+  python3 sovara/gemini/admin_actas_census.py >&2 || true
 fi
 
 if [[ "$MODE" == "plan" ]]; then

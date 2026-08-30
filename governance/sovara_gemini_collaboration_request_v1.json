@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-DEPLOYMENT-READINESS-20260829-001",
+  "request_id": "SOVARA-GEMINI-G0-PRIVILEGED-RUNTIME-CENSUS-20260830-001",
   "mode": "G0_READ_ONLY_VERIFY",
   "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
   "execute": true,
@@ -17,20 +17,14 @@
     "deployer_cloud_run_developer_binding",
     "service_usage_consumer_binding"
   ],
-  "deployment_readiness_probe": true,
-  "deployment_readiness_scope": {
-    "cloud_run_project_permissions": [
-      "run.services.create",
-      "run.services.get",
-      "run.services.update",
-      "run.operations.get",
-      "run.routes.invoke"
+  "privileged_control_runtime_census": true,
+  "privileged_control_runtime_scope": {
+    "services": [
+      {"service":"federation-omega-operator","region":"africa-south1","expected_service_account":"fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com"},
+      {"service":"afeme-sovereign-control-plane-v4","region":"africa-south1","expected_service_account":"afeme-sovereign-runtime-v4@sov-hybrid-suite.iam.gserviceaccount.com"}
     ],
-    "artifact_registry_repository": "projects/sov-hybrid-suite/locations/africa-south1/repositories/federation-omega",
-    "artifact_registry_permissions": [
-      "artifactregistry.repositories.downloadArtifacts",
-      "artifactregistry.repositories.uploadArtifacts"
-    ],
+    "read_paths": ["/", "/health", "/openapi.json", "/openapi.yaml"],
+    "wif_authenticated_read_probe": true,
     "read_only": true
   },
   "current_provider_evidence": {
@@ -39,16 +33,17 @@
     "runtime_exists": true,
     "deployer_service_account_user": true,
     "required_apis_enabled": true,
-    "safety_spine_source_ci_admitted": true,
-    "safety_spine_merge_sha": "82198e426aa9dab1181c9fea0e4ea8895169d008",
+    "deployer_cloud_run_and_artifact_registry_permissions_verified": true,
     "remaining_controls": [
       "roles/aiplatform.user on superior-logic-runtime",
       "roles/serviceusage.serviceUsageConsumer on superior-logic-runtime",
       "roles/run.developer on superior-logic-deployer"
     ],
-    "verified_automated_project_iam_admin_route": false,
-    "authority_boundary": "HUMAN_OWNER_OR_PROJECT_IAM_ADMIN_REQUIRED_FOR_THREE_BINDINGS"
+    "direct_impersonation_or_wif_admin_route": false,
+    "admin_actas_route": false,
+    "fo_operator_secret_reference": "fo-operator-admin-token",
+    "fo_operator_secret_payload_may_be_resolved_only_inside_trusted_runtime": true
   },
-  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to refresh the existing project-IAM authority graph and add provider-native deployment-readiness proof for Cloud Run and Artifact Registry. Preserve the three expected Gemini ADC bindings as unverified until provider readback proves them present. Determine whether any additional deployment permission is missing beyond those three bindings before forming the private zero-traffic G3 gateway canary request.",
-  "truth_boundary": "Read-only provider census only. Do not change IAM, WIF, service accounts, API enablement, Artifact Registry contents, Cloud Run services or traffic; do not build or push an image, run Gemini inference, access secret payloads, send communications, publish, spend, or perform destructive actions. Deployment-readiness observations are evidence only and cannot promote Gemini ADC or runtime deployment state."
+  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to fresh-read the exact Cloud Run runtime identities and callable read contracts of Federation Omega Operator and AFEME v4. Determine whether either existing provider-verified Owner/IAM-admin runtime is already callable from the Federation without new credentials or WIF expansion and can serve as the bounded execution bridge for the exact three Gemini ADC bindings.",
+  "truth_boundary": "Read-only provider census only. Do not change IAM, WIF, service accounts, APIs, images, Cloud Run revisions or traffic; do not run Gemini inference, resolve Secret Manager payloads, send communications, publish, spend, or perform destructive actions. A privileged runtime is only considered reusable when Google provider readback proves the expected runtime service-account identity and an authenticated semantic read route returns current service-specific content rather than generic health substitution."
 }
