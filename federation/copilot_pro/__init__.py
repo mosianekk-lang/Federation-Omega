@@ -14,6 +14,14 @@ from .adapter import (
     to_cfbe_route,
     usage_receipt,
 )
+from .billing import (
+    API_VERSION,
+    REQUIRED_PERMISSION,
+    CopilotBillingUsageRequest,
+    CopilotBillingUsageSnapshot,
+    build_ai_credit_usage_request,
+    parse_ai_credit_usage_response,
+)
 from .canary import (
     BlindCanaryObservation,
     BlindCanaryScore,
@@ -23,10 +31,14 @@ from .canary import (
 )
 
 __all__ = [
+    "API_VERSION",
+    "REQUIRED_PERMISSION",
     "BlindCanaryObservation",
     "BlindCanaryScore",
     "BlindCanaryState",
     "BlindCanaryThresholds",
+    "CopilotBillingUsageRequest",
+    "CopilotBillingUsageSnapshot",
     "CopilotCreditBudget",
     "CopilotDispatchDecision",
     "CopilotDispatchState",
@@ -35,9 +47,11 @@ __all__ = [
     "CopilotTaskEnvelope",
     "CopilotTaskSpec",
     "WriteMode",
+    "build_ai_credit_usage_request",
     "compile_task_envelope",
     "evaluate_blind_canary",
     "evaluate_dispatch",
+    "parse_ai_credit_usage_response",
     "to_cfbe_route",
     "usage_receipt",
 ]
