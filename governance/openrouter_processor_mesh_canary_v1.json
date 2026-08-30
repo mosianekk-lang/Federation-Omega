@@ -1,0 +1,26 @@
+{
+  "schema": "OPENROUTER_PROCESSOR_MESH_CANARY_REQUEST_V1",
+  "request_id": "OPENROUTER-PROCESSOR-MESH-CANARY-20260830-001",
+  "execute": true,
+  "scope": "ZERO_COST_SYNTHETIC_PROVIDER_PROOF",
+  "secret_reference": "github:OPENROUTER_API_KEY",
+  "secret_value_may_be_exposed": false,
+  "synthetic_public_data_only": true,
+  "provider_mutation_allowed": false,
+  "paid_generation_allowed": false,
+  "external_communication_allowed": false,
+  "required_proofs": [
+    "credential_readback",
+    "authenticated_text_inference",
+    "image_input",
+    "audio_input",
+    "video_input",
+    "pdf_input",
+    "tool_calling",
+    "structured_output",
+    "embeddings",
+    "text_to_speech",
+    "capability_discovery"
+  ],
+  "truth_boundary": "This request authorizes only zero-cost OpenRouter calls using fixed synthetic/public canary data through the repository secret boundary. It does not authorize paid image generation, paid video generation, dedicated paid transcription, production traffic, private case data, credential disclosure, provider mutation, or stable SLOS release promotion."
+}
