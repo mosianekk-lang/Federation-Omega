@@ -14,8 +14,19 @@ from .adapter import (
     to_cfbe_route,
     usage_receipt,
 )
+from .canary import (
+    BlindCanaryObservation,
+    BlindCanaryScore,
+    BlindCanaryState,
+    BlindCanaryThresholds,
+    evaluate_blind_canary,
+)
 
 __all__ = [
+    "BlindCanaryObservation",
+    "BlindCanaryScore",
+    "BlindCanaryState",
+    "BlindCanaryThresholds",
     "CopilotCreditBudget",
     "CopilotDispatchDecision",
     "CopilotDispatchState",
@@ -25,6 +36,7 @@ __all__ = [
     "CopilotTaskSpec",
     "WriteMode",
     "compile_task_envelope",
+    "evaluate_blind_canary",
     "evaluate_dispatch",
     "to_cfbe_route",
     "usage_receipt",
