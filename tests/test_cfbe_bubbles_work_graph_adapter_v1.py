@@ -43,9 +43,9 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
 
     def _cells(self):
         return (
-            WorkCell("cell-a", ("provider-a", "zone-1")),
-            WorkCell("cell-b", ("provider-b", "zone-2")),
-            WorkCell("cell-c", ("provider-c", "zone-3")),
+            WorkCell("cell-a", ("provider-a", "zone-1"), capacity=2),
+            WorkCell("cell-b", ("provider-b", "zone-2"), capacity=2),
+            WorkCell("cell-c", ("provider-c", "zone-3"), capacity=2),
         )
 
     def test_adapter_reuses_cfbe_dependency_and_blocked_lane_isolation(self):
@@ -97,6 +97,7 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertEqual(first.state, "SHADOW_READY")
         self.assertEqual(first.selected_work_ids, second.selected_work_ids)
         self.assertEqual(first.placement_digest, second.placement_digest)
+        self.assertEqual(first.cell_occupancy, second.cell_occupancy)
         self.assertFalse(first.serving_route_changed)
         self.assertFalse(first.provider_effect_authorized)
         self.assertFalse(first.financial_effect_authorized)
@@ -126,10 +127,37 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertFalse(receipt.serving_route_changed)
         self.assertTrue(
             all(
-                item.state == "HOLD_INSUFFICIENT_FAILURE_DOMAIN_DIVERSITY"
+                item.state == "HOLD_INSUFFICIENT_CAPACITY_OR_FAILURE_DOMAIN_DIVERSITY"
                 for item in receipt.placements
             )
         )
+
+    def test_shadow_capacity_backpressure_preserves_serving_selection(self):
+        cells = (WorkCell("cell-a", ("provider-a", "zone-1"), capacity=1),)
+        receipt = shadow_place_bubbles_work(self._nodes(), cells, shard_width=1)
+        self.assertEqual(receipt.state, "SHADOW_BACKPRESSURE")
+        self.assertEqual(set(receipt.selected_work_ids), {"BHP-LEASE", "BHP-IDEM"})
+        self.assertEqual(len(receipt.backpressure_work_ids), 1)
+        self.assertEqual(receipt.cell_occupancy, (("cell-a", 1),))
+        self.assertEqual(receipt.remaining_capacity, (("cell-a", 0),))
+        self.assertEqual(receipt.saturated_cell_ids, ("cell-a",))
+        self.assertFalse(receipt.serving_route_changed)
+        self.assertFalse(receipt.provider_effect_authorized)
+
+    def test_shadow_initial_occupancy_spills_work_without_route_change(self):
+        cells = (
+            WorkCell("cell-a", ("provider-a", "zone-1"), capacity=1),
+            WorkCell("cell-b", ("provider-b", "zone-2"), capacity=2),
+        )
+        receipt = shadow_place_bubbles_work(
+            self._nodes(),
+            cells,
+            shard_width=1,
+            initial_occupancy={"cell-a": 1},
+        )
+        self.assertEqual(receipt.state, "SHADOW_READY")
+        self.assertTrue(all(item.selected_cell_ids == ("cell-b",) for item in receipt.placements))
+        self.assertFalse(receipt.serving_route_changed)
 
 
 if __name__ == "__main__":
