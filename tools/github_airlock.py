@@ -115,6 +115,10 @@ def has_statuses_write(text: str) -> bool:
     return has_permission(text, "statuses", "write")
 
 
+def has_copilot_requests_write(text: str) -> bool:
+    return has_permission(text, "copilot-requests", "write")
+
+
 def has_concurrency(text: str) -> bool:
     return bool(re.search(r"(?m)^concurrency\s*:", text))
 
@@ -145,6 +149,9 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     oidc_allowed = set(policy.get("oidc_workflow_allowlist", []))
     actions_write_allowed = set(policy.get("actions_write_workflow_allowlist", []))
     statuses_write_allowed = set(policy.get("statuses_write_workflow_allowlist", []))
+    copilot_requests_write_allowed = set(
+        policy.get("copilot_requests_write_workflow_allowlist", [])
+    )
 
     if path not in active:
         findings.append(Finding(
@@ -185,6 +192,14 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
             "UNAUTHORISED_STATUSES_WRITE",
             "CRITICAL",
             "workflow can publish commit status but is not an approved proof publisher",
+        ))
+
+    if has_copilot_requests_write(text) and path not in copilot_requests_write_allowed:
+        findings.append(Finding(
+            path,
+            "UNAUTHORISED_COPILOT_REQUESTS_WRITE",
+            "CRITICAL",
+            "workflow can invoke GitHub Copilot but is not the exact approved Copilot gateway",
         ))
 
     exceptions = set(policy.get("forbidden_pattern_exceptions", {}).get(path, []))
@@ -283,6 +298,29 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
                 "PROOF_STATUS_ENDPOINT_DRIFT",
                 "CRITICAL",
                 "proof publisher does not target the approved Phoenix status context",
+            ))
+
+    if path in copilot_requests_write_allowed:
+        if not has_copilot_requests_write(text):
+            findings.append(Finding(
+                path,
+                "COPILOT_GATEWAY_MISSING_REQUEST_AUTHORITY",
+                "CRITICAL",
+                "approved Copilot gateway lacks copilot-requests: write",
+            ))
+        if not has_permission(text, "contents", "read") or has_contents_write(text):
+            findings.append(Finding(
+                path,
+                "COPILOT_GATEWAY_SOURCE_AUTHORITY",
+                "CRITICAL",
+                "Copilot gateway must have contents: read and no source-write authority",
+            ))
+        if workflow_events(text) != {"workflow_dispatch"}:
+            findings.append(Finding(
+                path,
+                "COPILOT_GATEWAY_TRIGGER_DRIFT",
+                "CRITICAL",
+                "Copilot provider gateway must remain manual workflow_dispatch only",
             ))
 
     return findings
