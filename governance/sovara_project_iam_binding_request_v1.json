@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_PROJECT_IAM_BINDING_REQUEST_V1",
-  "request_id": "SOVARA-IAM-AUTHORITY-PROBE-20260829-001",
+  "request_id": "SOVARA-IAM-AUTHORITY-PROBE-20260830-002",
   "mode": "AUTHORITY_PROBE",
   "execute": true,
   "provider_mutation_allowed": false,
@@ -23,8 +23,8 @@
     }
   ],
   "g0_runtime_reuse_evidence": {
-    "run_id": "33267811046",
-    "source_sha": "efd8e2df237f0f14d2c66224a1c815095032dd2f",
+    "run_id": "33299678858",
+    "source_sha": "3fd9c56504b95b90610956aec38ed84fc239eef8",
     "runtime_exists": true,
     "deployer_service_account_user": true,
     "missing_apis": [],
@@ -33,10 +33,10 @@
       "service_usage_consumer_binding",
       "deployer_cloud_run_developer_binding"
     ],
-    "artifact_id": "9719180571",
-    "artifact_sha256": "9e5613577adfdf640e3971ace305eebdc96f83879b738244b5d31141f691b9e0"
+    "artifact_id": "9728520111",
+    "artifact_sha256": "bdb4d103e0957a616676b870adf8a833217a77737ee336b324c39acd717848bf"
   },
-  "owner_authority": "EXPLICIT_CURRENT_CHAT_2026-08-29",
+  "owner_authority": "EXPLICIT_CURRENT_CHAT_2026-08-30",
   "purpose": "Discover whether any already-configured Federation Google credential route can change project IAM for exactly the three bindings still required by the existing SOVARA Gemini runtime/deployer identities. Probe only; do not mutate provider state.",
   "truth_boundary": "This request authorizes authentication attempts against already-configured credential aliases and a read-only projects.testIamPermissions call. It does not authorize IAM mutation, secret-value logging, key creation, service-account creation, WIF expansion, model inference, Cloud Run deployment or traffic, email, publication, financial commitment or unrelated provider actions."
 }

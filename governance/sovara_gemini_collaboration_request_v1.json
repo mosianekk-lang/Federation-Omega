@@ -1,79 +1,20 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SOVARA-GEMINI-G0-PRIVILEGED-RUNTIME-CENSUS-20260830-001",
-  "mode": "G0_READ_ONLY_VERIFY",
-  "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
+  "request_id": "CFBE-GEMINI-REPAIR-20260830-001",
+  "mode": "G2_CREATIVE_ARCHITECTURE_CHALLENGE",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
   "provider_mutation_allowed": false,
-  "model_inference_allowed": false,
+  "model_inference_allowed": true,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "expected_missing_adc_controls": [
-    "aiplatform_user_binding",
-    "deployer_cloud_run_developer_binding",
-    "service_usage_consumer_binding"
-  ],
-  "deployment_readiness_probe": true,
-  "deployment_readiness_scope": {
-    "cloud_run_project_permissions": [
-      "run.services.create",
-      "run.services.get",
-      "run.services.update",
-      "run.operations.get",
-      "run.routes.invoke"
-    ],
-    "artifact_registry_repository": "projects/sov-hybrid-suite/locations/africa-south1/repositories/federation-omega",
-    "artifact_registry_permissions": [
-      "artifactregistry.repositories.downloadArtifacts",
-      "artifactregistry.repositories.uploadArtifacts"
-    ],
-    "read_only": true
-  },
-  "admin_actas_census_probe": true,
-  "admin_actas_census_scope": {
-    "permission": "iam.serviceAccounts.actAs",
-    "candidate_roles": [
-      "roles/owner",
-      "roles/resourcemanager.projectIamAdmin",
-      "roles/iam.securityAdmin"
-    ],
-    "known_control_services": [
-      {"service":"architron9","region":"africa-south1"},
-      {"service":"federation-omega-operator","region":"us-central1"}
-    ],
-    "read_only": true
-  },
-  "privileged_control_runtime_census": true,
-  "privileged_control_runtime_scope": {
-    "services": [
-      {"service":"federation-omega-operator","region":"africa-south1","expected_service_account":"fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com"},
-      {"service":"afeme-sovereign-control-plane-v4","region":"africa-south1","expected_service_account":"afeme-sovereign-runtime-v4@sov-hybrid-suite.iam.gserviceaccount.com"}
-    ],
-    "read_paths": ["/", "/health", "/openapi.json", "/openapi.yaml"],
-    "wif_authenticated_read_probe": true,
-    "read_only": true
-  },
-  "current_provider_evidence": {
-    "wif_verified": true,
-    "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
-    "runtime_exists": true,
-    "deployer_service_account_user": true,
-    "required_apis_enabled": true,
-    "deployer_cloud_run_and_artifact_registry_permissions_verified": true,
-    "remaining_controls": [
-      "roles/aiplatform.user on superior-logic-runtime",
-      "roles/serviceusage.serviceUsageConsumer on superior-logic-runtime",
-      "roles/run.developer on superior-logic-deployer"
-    ],
-    "direct_impersonation_or_wif_admin_route": false,
-    "admin_actas_route": false,
-    "fo_operator_secret_reference": "fo-operator-admin-token",
-    "fo_operator_secret_payload_may_be_resolved_only_inside_trusted_runtime": true
-  },
-  "purpose": "Use the already-trusted repository-scoped WIF deployer in read-only mode to fresh-read the exact Cloud Run runtime identities and callable read contracts of Federation Omega Operator and AFEME v4. Preserve the previously proven deployment-readiness and admin-actAs G0 census contracts as cumulative read-only evidence. Determine whether either existing provider-verified Owner/IAM-admin runtime is already callable from the Federation without new credentials or WIF expansion and can serve as the bounded execution bridge for the exact three Gemini ADC bindings.",
-  "truth_boundary": "Read-only provider census only. The active privileged-runtime census extends rather than erases earlier deployment-readiness and admin-actAs G0 observation contracts. Do not change IAM, WIF, service accounts, APIs, images, Cloud Run revisions or traffic; do not run Gemini inference, resolve Secret Manager payloads, send communications, publish, spend, or perform destructive actions. A privileged runtime is only considered reusable when Google provider readback proves the expected runtime service-account identity and an authenticated semantic read route returns current service-specific content rather than generic health substitution."
+  "transport": "OPENROUTER",
+  "model": "google/gemini-3.1-pro-preview",
+  "challenge_spec": "governance/sovara_creative_gemini_architecture_challenge_v1.json",
+  "max_output_tokens": 4200,
+  "purpose": "Run one bounded sanitized Gemini inference as an independent debugging challenger for CFBE-Omega Convergence Fabric PR #814 and current-main Phoenix admission debt. The output is proposal-only and must be reconciled against deterministic tests, current-main baselines, CFBE and ProofOS before any source repair is promoted.",
+  "truth_boundary": "One proposal-only Gemini inference. No IAM/WIF/API mutation, secret access, deployment, production traffic, external communication, publication, live financial effect, automatic source mutation, or automatic promotion. Gemini advice is evidence input only; exact-head tests and provider/source readback remain authoritative."
 }
