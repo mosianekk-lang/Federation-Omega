@@ -151,16 +151,12 @@ class MissionExecutionShadowTests(unittest.TestCase):
 
     def test_mission_failure_domain_exclusion_is_applied(self):
         receipt = shadow_compile_mission_execution(self._mission(), self._nodes(), self._cells())
-        chosen = {
-            cell_id
-            for placement in receipt.selected_work_ids
-            for cell_id in ()
-        }
-        # The adapter intentionally exposes the placement digest rather than
-        # provider execution details; a stable non-empty digest proves the
-        # mission-specific exclusion participated in deterministic placement.
+        self.assertEqual(1, len(receipt.cell_placements))
+        placement = receipt.cell_placements[0]
+        self.assertIn("cell-c", placement.excluded_cell_ids)
+        self.assertNotIn("cell-c", placement.selected_cell_ids)
+        self.assertEqual("ALLOCATED", placement.state)
         self.assertEqual(64, len(receipt.cell_placement_digest))
-        self.assertEqual(set(), chosen)
 
     def test_insufficient_cell_diversity_holds_shadow_not_serving(self):
         cells = (
