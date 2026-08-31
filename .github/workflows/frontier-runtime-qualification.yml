@@ -6,6 +6,8 @@ on:
       - 'frontier_convergence/**'
       - 'federation/superior_logic_convergence_measurement.py'
       - 'federation/cfbe_observed_campaign_admission.py'
+      - 'benchmarking/cfbe_omega/mission_execution_adapter_v1.py'
+      - 'tests/test_mission_ir_golden_path_shadow.py'
       - 'tests/test_cfbe_observed_campaign_admission.py'
       - 'benchmarking/cfbe_omega/bubbles_30_pair_observed_certification_20260830.json'
       - 'tests/test_superior_logic_convergence_measurement.py'
@@ -19,6 +21,8 @@ on:
       - 'frontier_convergence/**'
       - 'federation/superior_logic_convergence_measurement.py'
       - 'federation/cfbe_observed_campaign_admission.py'
+      - 'benchmarking/cfbe_omega/mission_execution_adapter_v1.py'
+      - 'tests/test_mission_ir_golden_path_shadow.py'
       - 'tests/test_cfbe_observed_campaign_admission.py'
       - 'benchmarking/cfbe_omega/bubbles_30_pair_observed_certification_20260830.json'
       - 'tests/test_superior_logic_convergence_measurement.py'
@@ -85,6 +89,36 @@ jobs:
           print('CFBE_HOSTED_SHADOW_30_OF_30_VERIFIED')
           PY
 
+      - name: Run MissionIR SOVARA Golden Path shadow court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_mission_ir_golden_path_shadow.py' -v
+          python -m frontier_convergence.mission_ir_golden_path_shadow > runtime-proof/mission-ir-golden-path-shadow.json
+          python - <<'PY'
+          import json, os
+          receipt = json.load(open('runtime-proof/mission-ir-golden-path-shadow.json', encoding='utf-8'))
+          assert receipt['certification_source_sha'] == os.environ['GITHUB_SHA'], receipt
+          assert receipt['state'] == 'HOSTED_SHADOW_REFERENCE_PASS', receipt
+          assert receipt['binding_hash_matches'] is True, receipt
+          assert receipt['semantic_pass'] is True, receipt
+          assert receipt['selected_work_ids'] == ['SC-PLAN'], receipt
+          assert receipt['provider_policy_excluded_cell_ids'] == ['cell-adobe', 'cell-gemini'], receipt
+          selected = {
+              cell_id
+              for placement in receipt['cell_placements']
+              for cell_id in placement['selected_cell_ids']
+          }
+          assert selected == {'cell-canva'}, receipt
+          assert receipt['provider_effect_authorized'] is False, receipt
+          assert receipt['financial_effect_authorized'] is False, receipt
+          assert receipt['publication_authorized'] is False, receipt
+          assert receipt['external_effects'] == 0, receipt
+          assert receipt['runtime_metrics']['observed_runtime_comparison_proven'] is False, receipt
+          assert receipt['stable_promotion_allowed'] is False, receipt
+          print('MISSION_IR_GOLDEN_PATH_HOSTED_SHADOW_VERIFIED')
+          PY
+
       - name: Build non-root control-runtime container
         shell: bash
         run: |
@@ -107,9 +141,6 @@ jobs:
           }
           trap cleanup EXIT
 
-          # The production image stays non-root. This helper only shares the
-          # ephemeral synthetic test volume between container UID 65532 and the
-          # hosted runner during offline SQLite checkpoint/backup verification.
           share_test_volume() {
             sudo chmod -R a+rwX "$RUNTIME_DIR"
           }
@@ -261,6 +292,12 @@ jobs:
             echo '## Frontier Runtime Qualification' >> "$GITHUB_STEP_SUMMARY"
             echo '```json' >> "$GITHUB_STEP_SUMMARY"
             cat runtime-proof/runtime-qualification.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [[ -f runtime-proof/mission-ir-golden-path-shadow.json ]]; then
+            echo '## MissionIR Golden Path Shadow Certification' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat runtime-proof/mission-ir-golden-path-shadow.json >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 

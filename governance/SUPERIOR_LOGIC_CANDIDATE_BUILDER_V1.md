@@ -37,6 +37,25 @@ Failure states are `REJECTED_INPUT`, `COURT_HOLD`, `ASSURANCE_FAILED` and `QUARA
 | Recovery | Exact branch-head rollback anchor plus deterministic replay |
 | Observability | Five canary receipts, 30-pair immutable receipt hash, bridge hash, trace digests, manifest hash, assurance hash and heartbeat |
 
+## Owner-value and deployment-proof court
+
+The follow-on court requires at least five separately typed
+`OBSERVED_OWNER_VALUE` comparisons with independent readback, positive
+owner-minute improvement, and no quality, intervention, or latency regression.
+Existing CFBE `OBSERVED` pairs remain empirical-value evidence and cannot be
+relabelled as measured owner value.
+
+Deployment proof is split. `INTERNAL_RUNTIME_QUALIFICATION` may prove image,
+health and rollback inside bounded CI; it never counts as
+`LIVE_PROVIDER_DEPLOYMENT`. Live proof additionally requires exact-head
+provider registration, workload identity, immutable image and revision
+identity, observed health, rollback, independent readback and an authority
+receipt. Missing evidence returns `HOLD_NO_PROMOTION`.
+
+Even complete evidence reaches only a separate promotion-review gate. The
+court always emits `stable_promotion_authorized=false`,
+`effect_authorized=false`, and `external_effect=false`.
+
 ## Truth boundary
 
 This closes the code, canary, and 30-pair empirical-evidence binding portion of the Stage-20 `ADMIT_PR_ONLY_CANDIDATE_BUILDER_AND_INDEPENDENT_ASSURANCE` gate on the draft branch. It does not prove provider registration, production deployment, owner-value improvement, stable superiority, self-sustaining operation or cross-receiver learning.

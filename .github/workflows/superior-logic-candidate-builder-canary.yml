@@ -15,6 +15,8 @@ on:
       - "tests/test_bubbles_cognitive_court.py"
       - "tests/test_cfbe_observed_campaign_admission.py"
       - "tests/test_maturation_candidate_builder.py"
+      - "evidenceops/caseforge/owner_value_deployment_court.py"
+      - "tests/test_owner_value_deployment_court.py"
       - "governance/SUPERIOR_LOGIC_CANDIDATE_BUILDER_V1.md"
       - ".github/workflows/superior-logic-candidate-builder-canary.yml"
 permissions:
@@ -44,6 +46,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_bubbles_cognitive_court.py' -v
           python -m unittest discover -s tests -p 'test_cfbe_observed_campaign_admission.py' -v
           python -m unittest discover -s tests -p 'test_maturation_candidate_builder.py' -v
+          python -m unittest discover -s tests -p 'test_owner_value_deployment_court.py' -v
 
       - name: Generate the Stage-20 branch-bound work package
         shell: bash
@@ -130,6 +133,29 @@ jobs:
               "stable_promotion_authorized": assurance["stable_promotion_authorized"],
               "external_effect": receipt["external_effect"],
           }, indent=2, sort_keys=True))
+          PY
+
+      - name: Run owner-value and deployment-proof court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m evidenceops.caseforge.owner_value_deployment_court \
+            --candidate-receipt runtime-output/receipts/candidate_builder_receipt.json \
+            --source-head-sha "${{ github.event.pull_request.head.sha || github.sha }}" \
+            --output runtime-output/receipts/owner_value_deployment_court.json \
+            | tee runtime-output/owner-value-deployment-court-stdout.json
+          python - <<'PY'
+          import json
+          receipt = json.load(open('runtime-output/receipts/owner_value_deployment_court.json', encoding='utf-8'))
+          assert receipt['decision'] == 'HOLD_NO_PROMOTION', receipt
+          assert receipt['owner_value_proven'] is False, receipt
+          assert receipt['provider_deployment_proven'] is False, receipt
+          assert receipt['stable_promotion_authorized'] is False, receipt
+          assert receipt['effect_authorized'] is False, receipt
+          assert receipt['external_effect'] is False, receipt
+          assert 'OWNER_VALUE_MINIMUM_FIVE_OBSERVED_PAIRS_REQUIRED' in receipt['blockers'], receipt
+          assert 'LIVE_PROVIDER_DEPLOYMENT_EVIDENCE_REQUIRED' in receipt['blockers'], receipt
+          print('OWNER_VALUE_AND_DEPLOYMENT_GATES_HELD_WITH_TYPED_PROOF_GAPS')
           PY
 
       - name: Upload candidate-builder evidence
