@@ -15,11 +15,12 @@ class ImpactCompiler(_CoreImpactCompiler):
     unmapped-production fallback for newly introduced modules.
 
     A package-root owner is now inferred only when exactly one subsystem has
-    concrete ownership evidence spanning at least two distinct first-level
-    children beneath that root. Broad wildcard ownership does not need
-    inference because it already matches explicitly. Ambiguous or weak
-    evidence returns no inferred owner, causing the existing full-suite
-    fallback to engage for production paths.
+    concrete ownership evidence spanning at least two distinct nested
+    first-level directories beneath that root. Root-level files never establish
+    package-wide ownership. Broad wildcard ownership does not need inference
+    because it already matches explicitly. Ambiguous or weak evidence returns
+    no inferred owner, causing the existing full-suite fallback to engage for
+    production paths.
     """
 
     @staticmethod
@@ -31,7 +32,7 @@ class ImpactCompiler(_CoreImpactCompiler):
             if not pattern.startswith(prefix):
                 continue
             remainder = pattern[len(prefix):]
-            if not remainder:
+            if "/" not in remainder:
                 continue
             child = remainder.split("/", 1)[0]
             if not child or any(meta in child for meta in _GLOB_META):
