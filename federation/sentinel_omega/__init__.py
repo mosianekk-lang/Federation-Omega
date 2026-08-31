@@ -6,10 +6,10 @@ from .observability_causal_fabric import (
     MultiWindowSLOGuard,
     NormalizedObservation,
     SemanticObservationNormalizer,
-    SentinelObservabilityCausalFabric,
     SignalKind,
     SLOWindowSample,
 )
+from .topology_correlation import SentinelObservabilityCausalFabric
 
 __all__ = [
     "AdaptiveBaselineDetector",
