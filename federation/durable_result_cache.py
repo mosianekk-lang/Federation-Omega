@@ -10,6 +10,7 @@ authority.
 """
 
 from dataclasses import asdict
+from datetime import datetime
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -45,6 +46,19 @@ def _require_sha256(value: str, label: str) -> str:
     if len(normalized) != 64 or any(ch not in _HEX for ch in normalized):
         raise ValueError(f"{label}_SHA256_REQUIRED")
     return normalized
+
+
+def _aware_datetime(value: str, label: str) -> datetime:
+    normalized = str(value).strip()
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise ValueError(f"{label}_ISO8601_REQUIRED") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{label}_TIMEZONE_REQUIRED")
+    return parsed
 
 
 def _identity_payload(action: DeterministicAction) -> dict[str, str]:
@@ -134,19 +148,24 @@ class SQLiteDeterministicResultCache:
     def _decode_row(cls, row: sqlite3.Row) -> CachedResult:
         try:
             raw_refs = json.loads(str(row["proof_refs_json"]))
-        except (TypeError, ValueError, json.JSONDecodeError) as exc:
+        except (TypeError, ValueError) as exc:
             raise ValueError("CACHE_DURABLE_RECORD_CORRUPT") from exc
         if not isinstance(raw_refs, list) or any(not isinstance(item, str) for item in raw_refs):
             raise ValueError("CACHE_DURABLE_RECORD_CORRUPT")
         refs = tuple(raw_refs)
         if not refs or tuple(sorted(set(refs))) != refs:
             raise ValueError("CACHE_DURABLE_RECORD_CORRUPT")
+        recorded_at = str(row["recorded_at"])
+        try:
+            _aware_datetime(recorded_at, "CACHE_RECORDED_AT")
+        except ValueError as exc:
+            raise ValueError("CACHE_DURABLE_RECORD_CORRUPT") from exc
         result = CachedResult(
             cache_key=str(row["cache_key"]),
             result_ref=str(row["result_ref"]),
             result_sha256=_require_sha256(str(row["result_sha256"]), "CACHE_RESULT"),
             proof_refs=refs,
-            recorded_at=str(row["recorded_at"]),
+            recorded_at=recorded_at,
         )
         payload = {
             "schema": _SCHEMA,
@@ -227,6 +246,7 @@ class SQLiteDeterministicResultCache:
         refs = tuple(sorted({item.strip() for item in proof_refs if item.strip()}))
         if not refs:
             raise ValueError("CACHE_PROOF_REFS_REQUIRED")
+        _aware_datetime(recorded_at, "CACHE_RECORDED_AT")
         key = action.cache_key()
         candidate = CachedResult(key, result_ref, digest, refs, recorded_at)
         identity = _identity_payload(action)
