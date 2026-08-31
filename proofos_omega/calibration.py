@@ -13,7 +13,6 @@ from pathlib import Path
 from typing import Any, Mapping
 
 from .core import (
-    ProofPolicy,
     ProofRunner,
     RunnerError,
     load_manifest,
@@ -21,6 +20,7 @@ from .core import (
     sha256_bytes,
     sha256_json,
 )
+from .policy import ProofPolicy
 
 
 class CalibrationError(RuntimeError):
