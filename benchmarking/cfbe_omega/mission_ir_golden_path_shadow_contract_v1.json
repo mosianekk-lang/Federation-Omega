@@ -1,0 +1,18 @@
+{
+  "schema": "FEDERATION-MISSION-IR-GOLDEN-PATH-SHADOW-CONTRACT-1",
+  "binding_id": "SC-MIR-20260831-001",
+  "mission_id": "SC-MSN-CANARY-001",
+  "reference_source_main": "dd7ff7b86c3aa4ed9cd49e0323d621384b28dc9f",
+  "required_state": "HOSTED_SHADOW_REFERENCE_PASS",
+  "required_selected_work_ids": ["SC-PLAN"],
+  "required_selected_cell_ids": ["cell-canva"],
+  "required_provider_policy_excluded_cell_ids": ["cell-adobe", "cell-gemini"],
+  "required_authority_requirements": ["CANVA_BOUNDED_CREATE", "OWNER_RELEASE"],
+  "required_proof_requirements": ["ASSET_ID", "OWNER_DECISION", "PROVIDER_READBACK", "QA_RECEIPT", "SAVED_DESIGN_ID"],
+  "provider_effect_authorized": false,
+  "financial_effect_authorized": false,
+  "publication_authorized": false,
+  "external_effects": 0,
+  "observed_runtime_comparison_required_for_performance_claim": true,
+  "stable_promotion_allowed": false
+}
