@@ -91,10 +91,21 @@ class DurableMissionResultIndexTests(unittest.TestCase):
             )
             drift = self._identity(source="main@changed")
             self.assertEqual("MISS", index.lookup(drift, now="2026-08-31T20:46:00+02:00").state)
+
+            expired_path = Path(tmp) / "expired-result-index.jsonl"
             expired = self._identity(fresh_until="2026-08-31T20:45:30+02:00")
+            expired_index = DurableMissionResultIndex(expired_path)
+            expired_index.record(
+                expired,
+                result_ref="runtime-proof/expiring-result.json",
+                result_sha256="f" * 64,
+                proof_refs=("proof:shadow",),
+                recorded_at="2026-08-31T20:45:00+02:00",
+                now="2026-08-31T20:45:00+02:00",
+            )
             self.assertEqual(
                 "HOLD_FRESHNESS_EXPIRED",
-                index.lookup(expired, now="2026-08-31T20:46:00+02:00").state,
+                expired_index.lookup(expired, now="2026-08-31T20:46:00+02:00").state,
             )
 
     def test_tamper_is_detected_on_restart(self):
