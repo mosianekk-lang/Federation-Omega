@@ -137,10 +137,10 @@ class ProjectionCompiler:
             "as_of_recorded_at": as_of_recorded_at,
             "event_count": len(ordered),
             "current": current,
-            "directive_ids": sorted(directives),
-            "mission_ids": sorted(missions),
-            "contradictions": sorted(contradictions),
-            "superseded_event_ids": sorted(superseded),
+            "directive_ids": tuple(sorted(directives)),
+            "mission_ids": tuple(sorted(missions)),
+            "contradictions": tuple(sorted(contradictions)),
+            "superseded_event_ids": tuple(sorted(superseded)),
         }
         return ProjectionState(**payload, projection_hash=_digest(payload))
 
