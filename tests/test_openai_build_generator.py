@@ -71,8 +71,18 @@ def candidate_json() -> str:
     )
 
 
+def authorized_generator(client, **kwargs):
+    return OpenAIResponsesBuildGenerator(
+        client=client,
+        model="gpt-build",
+        provider_execution_authorized=True,
+        provider_payload_authorized=True,
+        **kwargs,
+    )
+
+
 class OpenAIResponsesBuildGeneratorTests(unittest.TestCase):
-    def test_provider_call_is_blocked_without_explicit_authorization(self) -> None:
+    def test_provider_call_is_blocked_without_explicit_execution_authorization(self) -> None:
         client = FakeClient(candidate_json())
         generator = OpenAIResponsesBuildGenerator(client=client, model="gpt-build")
         with self.assertRaisesRegex(PermissionError, "explicit provider execution authorization"):
@@ -80,14 +90,22 @@ class OpenAIResponsesBuildGeneratorTests(unittest.TestCase):
         self.assertEqual([], client.responses.calls)
         self.assertIsNone(generator.provider_receipt())
 
-    def test_authorized_provider_execution_returns_bounded_candidate_without_self_readback(self) -> None:
+    def test_provider_call_is_blocked_without_separate_payload_authorization(self) -> None:
         client = FakeClient(candidate_json())
         generator = OpenAIResponsesBuildGenerator(
             client=client,
             model="gpt-build",
             provider_execution_authorized=True,
-            request_options={"max_output_tokens": 500},
+            provider_payload_authorized=False,
         )
+        with self.assertRaisesRegex(PermissionError, "explicit provider payload authorization"):
+            generator.propose(plan(), {"private.py": "PRIVATE-WORKSPACE"}, None)
+        self.assertEqual([], client.responses.calls)
+        self.assertIsNone(generator.provider_receipt())
+
+    def test_authorized_provider_execution_returns_bounded_candidate_without_self_readback(self) -> None:
+        client = FakeClient(candidate_json())
+        generator = authorized_generator(client, request_options={"max_output_tokens": 500})
         candidate = generator.propose(plan(), {}, None)
         self.assertEqual("candidate-1", candidate.candidate_id)
         self.assertEqual(("python", "app.py"), candidate.validation_command)
@@ -98,16 +116,16 @@ class OpenAIResponsesBuildGeneratorTests(unittest.TestCase):
         self.assertFalse(receipt["external_mutation"])
         self.assertEqual("", receipt["provider_readback_ref"])
         self.assertTrue(receipt["provider_execution_authorized"])
+        self.assertTrue(receipt["provider_payload_authorized"])
+        self.assertFalse(receipt["truth_boundary"]["provider_call_authority_is_payload_share_authority"])
         call = client.responses.calls[0]
         self.assertFalse(call["store"])
         self.assertNotIn("tools", call)
 
     def test_independent_readback_promotes_only_provider_generation_proof(self) -> None:
         client = FakeClient(candidate_json())
-        generator = OpenAIResponsesBuildGenerator(
-            client=client,
-            model="gpt-build",
-            provider_execution_authorized=True,
+        generator = authorized_generator(
+            client,
             readback_verifier=MatchingReadback(),
             require_provider_readback=True,
         )
@@ -126,17 +144,14 @@ class OpenAIResponsesBuildGeneratorTests(unittest.TestCase):
                 client=client,
                 model="gpt-build",
                 provider_execution_authorized=True,
+                provider_payload_authorized=True,
                 require_provider_readback=True,
             )
         self.assertEqual([], client.responses.calls)
 
     def test_failure_feedback_is_minimized_before_provider_prompt(self) -> None:
         client = FakeClient(candidate_json())
-        generator = OpenAIResponsesBuildGenerator(
-            client=client,
-            model="gpt-build",
-            provider_execution_authorized=True,
-        )
+        generator = authorized_generator(client)
         generator.propose(
             plan(),
             {},
@@ -155,11 +170,7 @@ class OpenAIResponsesBuildGeneratorTests(unittest.TestCase):
 
     def test_model_output_must_be_strict_candidate_json(self) -> None:
         client = FakeClient("not json")
-        generator = OpenAIResponsesBuildGenerator(
-            client=client,
-            model="gpt-build",
-            provider_execution_authorized=True,
-        )
+        generator = authorized_generator(client)
         with self.assertRaisesRegex(ValueError, "non-JSON"):
             generator.propose(plan(), {}, None)
         self.assertIsNone(generator.provider_receipt())
@@ -167,10 +178,8 @@ class OpenAIResponsesBuildGeneratorTests(unittest.TestCase):
     def test_tools_and_hidden_context_options_remain_forbidden(self) -> None:
         client = FakeClient(candidate_json())
         with self.assertRaises(OpenAIProviderAdapterError):
-            OpenAIResponsesBuildGenerator(
-                client=client,
-                model="gpt-build",
-                provider_execution_authorized=True,
+            authorized_generator(
+                client,
                 request_options={"tools": [{"type": "web_search"}]},
             )
 
