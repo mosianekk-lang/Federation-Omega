@@ -80,7 +80,7 @@ class SovaraMissionIRAdapterTests(unittest.TestCase):
         )
         self.assertEqual("SOVARA_CREATIVE", ir.domain)
         self.assertEqual("BRAND_COMMERCIAL", ir.metadata["content_class"])
-        self.assertEqual("image,copy", ir.metadata["required_modalities"])
+        self.assertEqual("copy,image", ir.metadata["required_modalities"])
         self.assertEqual("instagram", ir.metadata["target_channels"])
         self.assertIn("OWNER_RELEASE", ir.authority_requirements)
         self.assertEqual("NO_EFFECT", ir.effect_class)
