@@ -1,0 +1,101 @@
+id,domain,capability,frontier_inspiration,cfbe_state,wave,priority
+SENT-FH-001,Telemetry & Estate Perception,Cross-signal telemetry fusion,OpenTelemetry / Splunk / Coralogix,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-002,Telemetry & Estate Perception,OpenTelemetry semantic normalization,OpenTelemetry,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-003,Telemetry & Estate Perception,Adaptive behavioral baselines,Datadog Watchdog / Dynatrace,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-004,Telemetry & Estate Perception,Dynamic anomaly detection,Datadog / Coralogix,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-005,Telemetry & Estate Perception,Outlier peer-group detection,Datadog,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-006,Telemetry & Estate Perception,Continuous service/dependency topology,Dynatrace Smartscape / Elastic / Splunk,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-007,Telemetry & Estate Perception,Blast-radius propagation map,Datadog Watchdog RCA / Splunk,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-008,Telemetry & Estate Perception,User/owner impact inference,Datadog Impact Analysis,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-009,Telemetry & Estate Perception,Continuous profiling signal,OpenTelemetry Profiles / Coralogix,PROVIDER_GATED,W3_PROVIDER_GATE,76
+SENT-FH-010,Telemetry & Estate Perception,Synthetic/RUM/probe fusion,Splunk / Coralogix,PROVIDER_GATED,W3_PROVIDER_GATE,76
+SENT-FH-011,Noise Reduction & Incident Intelligence,Alert/event deduplication,PagerDuty / Grafana IRM,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-012,Noise Reduction & Incident Intelligence,Context-aware alert grouping,Grafana IRM / PagerDuty,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-013,Noise Reduction & Incident Intelligence,Alert suppression with expiry,Google SRE / PagerDuty,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-014,Noise Reduction & Incident Intelligence,Event normalization and enrichment,PagerDuty Event Orchestration,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-015,Noise Reduction & Incident Intelligence,Dynamic routing by labels/context,PagerDuty / Grafana IRM,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-016,Noise Reduction & Incident Intelligence,Probable origin ranking,PagerDuty AIOps,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-017,Noise Reduction & Incident Intelligence,Related-incident retrieval,PagerDuty AIOps / Rootly,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-018,Noise Reduction & Incident Intelligence,Incident novelty/outlier scoring,PagerDuty AIOps,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-019,Noise Reduction & Incident Intelligence,Severity inference from impact,PagerDuty / Rootly,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-020,Noise Reduction & Incident Intelligence,Structured incident lifecycle state machine,Rootly / Grafana IRM,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-021,Causal Diagnosis & Investigation,Causal dependency reasoning,Dynatrace / Datadog,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-022,Causal Diagnosis & Investigation,Competing causal hypothesis generation,Failure-Win / scientific method,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-023,Causal Diagnosis & Investigation,Automated falsification plans,CFBE / Omega-Scientia,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-024,Causal Diagnosis & Investigation,Evidence-strength weighting,TruthGrid / ProofOS,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-025,Causal Diagnosis & Investigation,Temporal causality ordering,Datadog / Dynatrace,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-026,Causal Diagnosis & Investigation,Differential diagnosis across signals,Splunk AI Assistant / Coralogix Olly,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-027,Causal Diagnosis & Investigation,Counterfactual repair simulation,CFBE / Digital Twin,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-028,Causal Diagnosis & Investigation,Failure-propagation reasoning,Dynatrace topology / Splunk map,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-029,Causal Diagnosis & Investigation,Change-to-regression attribution,New Relic change tracking / Dynatrace,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-030,Causal Diagnosis & Investigation,Calibrated uncertainty/confidence,ProofOS / AI observability,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-031,Prediction & Precursor Prevention,Metric/time-series forecasting,Datadog Forecast / Coralogix,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-032,Prediction & Precursor Prevention,Learned precursor signature library,Failure-Win v2,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-033,Prediction & Precursor Prevention,Queue/latency saturation prediction,AIOps/SRE practice,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-034,Prediction & Precursor Prevention,Multi-window SLO burn prediction,Google SRE,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-035,Prediction & Precursor Prevention,Capacity exhaustion forecasting,Datadog / SRE practice,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-036,Prediction & Precursor Prevention,Proof freshness/TTL decay prediction,ProofOS,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-037,Prediction & Precursor Prevention,Flaky CI recurrence prediction,GitHub / reliability analytics,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-038,Prediction & Precursor Prevention,Configuration drift trajectory,New Relic change tracking / governance,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-039,Prediction & Precursor Prevention,Provider/dependency degradation watch,Splunk / Dynatrace,PROVIDER_GATED,W3_PROVIDER_GATE,76
+SENT-FH-040,Prediction & Precursor Prevention,Risk horizon / failure likelihood ranking,CFBE / Horizon-Omega,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-041,Autofix & Remediation Engineering,Runbook-as-code execution,PagerDuty / Dynatrace / Rootly,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-042,Autofix & Remediation Engineering,AI root-cause-to-fix generation,Sentry Seer,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-043,Autofix & Remediation Engineering,Automatic code patch generation,Sentry Seer,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-044,Autofix & Remediation Engineering,Automatic PR creation/iteration,Sentry Seer / GitHub Copilot,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-045,Autofix & Remediation Engineering,Configuration patch generation,Dynatrace / GitOps patterns,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-046,Autofix & Remediation Engineering,Canary-first repair execution,GitHub environments / SRE,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-047,Autofix & Remediation Engineering,Automatic rollback on regression,Failure-Win / GitHub deploy patterns,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-048,Autofix & Remediation Engineering,Idempotent retry and alternate-route recovery,Failure-Win / Temporal-style patterns,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-049,Autofix & Remediation Engineering,Safe stale-lock/cache/state repair,SRE operations,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-050,Autofix & Remediation Engineering,Automatic failover/path switching,CFBE route market,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-051,"Workflow, Runtime & Agent Orchestration",Event-driven automation triggers,Dynatrace / Rootly / PagerDuty,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-052,"Workflow, Runtime & Agent Orchestration",Scheduled preventive workflows,Dynatrace / Rootly,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-053,"Workflow, Runtime & Agent Orchestration",Policy conditions before actions,Rootly / PagerDuty,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-054,"Workflow, Runtime & Agent Orchestration","Retries, loops and parallel branches",Dynatrace Workflows,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-055,"Workflow, Runtime & Agent Orchestration",Finite WIP and concurrency governance,GitHub Actions / CFBE,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-056,"Workflow, Runtime & Agent Orchestration",Backpressure and saturation handling,Bubbles capacity-aware fleet,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-057,"Workflow, Runtime & Agent Orchestration",Rate-limit and resource-budget governor,AWS AgentCore / FinOps,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-058,"Workflow, Runtime & Agent Orchestration",Dependency-aware task graph,Microsoft Agent Framework / CFBE,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-059,"Workflow, Runtime & Agent Orchestration",Dynamic specialist-agent delegation,Microsoft Agent Framework / Bubbles,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-060,"Workflow, Runtime & Agent Orchestration",MCP/A2A capability discovery and remote-agent routing,MCP / Microsoft A2A,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-061,"Governance, Security & Supply-Chain Integrity",Policy-as-code repair authorization,OPA-style / AWS AgentCore policy,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-062,"Governance, Security & Supply-Chain Integrity",Least-privilege capability scopes,AWS AgentCore / GitHub environments,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-063,"Governance, Security & Supply-Chain Integrity",Workload identity over static credentials,AWS / cloud-native,PROVIDER_GATED,W3_PROVIDER_GATE,76
+SENT-FH-064,"Governance, Security & Supply-Chain Integrity",Action-specific authorization verification,Dynatrace permissions / Federation doctrine,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-065,"Governance, Security & Supply-Chain Integrity",Secretless execution boundary,AWS / GitHub,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-066,"Governance, Security & Supply-Chain Integrity",Artifact provenance attestations,GitHub artifact attestations,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-067,"Governance, Security & Supply-Chain Integrity",Dependency security review,GitHub dependency review,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-068,"Governance, Security & Supply-Chain Integrity",Graduated autonomous authority tiers,Sentinel Omega,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-069,"Governance, Security & Supply-Chain Integrity",Immutable incident/repair audit chain,Failure-Win / Living State,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-070,"Governance, Security & Supply-Chain Integrity",Independent verifier / executor separation,Jarvis / ProofOS,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-071,SRE Reliability Economics & Service Control,Explicit SLI/SLO definitions,Google SRE,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-072,SRE Reliability Economics & Service Control,Multiwindow multi-burn-rate alerts,Google SRE,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-073,SRE Reliability Economics & Service Control,Error-budget release governor,Google SRE,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-074,SRE Reliability Economics & Service Control,Paging/attention budget,Google SRE,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-075,SRE Reliability Economics & Service Control,Toil measurement and elimination ledger,Google SRE / Bubbles owner burden,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-076,SRE Reliability Economics & Service Control,MTTA/MTTR/MTTD/MTTP metrics,Grafana IRM / PagerDuty,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-077,SRE Reliability Economics & Service Control,Incident recurrence rate,Rootly / SRE,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-078,SRE Reliability Economics & Service Control,Soak/repeated-success qualification,Failure-Win,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-079,SRE Reliability Economics & Service Control,Resilience/chaos experiment harness,SRE practice,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-080,SRE Reliability Economics & Service Control,Low-traffic reliability adaptation,Google SRE,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-081,"AI-Agent Observability, Evaluation & Runtime Safety",Agent workflow distributed tracing,Microsoft Agent Framework / OTel,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-082,"AI-Agent Observability, Evaluation & Runtime Safety",Tool-invocation spans and outcomes,AWS AgentCore / Microsoft,BUILD_NEXT,W1_COMPETITIVE_CORE,95
+SENT-FH-083,"AI-Agent Observability, Evaluation & Runtime Safety",Memory read/write observability,AWS AgentCore,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-084,"AI-Agent Observability, Evaluation & Runtime Safety",Agent cost/token/resource telemetry,AWS AgentCore / Coralogix,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-085,"AI-Agent Observability, Evaluation & Runtime Safety",Continuous quality evaluations,Coralogix AI Center / agent eval practice,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-086,"AI-Agent Observability, Evaluation & Runtime Safety",Guardrail/policy violation telemetry,Coralogix / AWS policy,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-087,"AI-Agent Observability, Evaluation & Runtime Safety",Prompt/response issue trend detection,Coralogix AI Center,PROVIDER_GATED,W3_PROVIDER_GATE,76
+SENT-FH-088,"AI-Agent Observability, Evaluation & Runtime Safety",Model/provider comparative performance,Agent observability,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-089,"AI-Agent Observability, Evaluation & Runtime Safety",Trace-to-code/change mapping,Sentry / New Relic,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-090,"AI-Agent Observability, Evaluation & Runtime Safety","Session isolation, resumability and durable checkpoints",AWS AgentCore / Microsoft Durable,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-091,"Learning, Knowledge & Owner-Value Optimization",Automatic postmortem synthesis,Rootly / Grafana IRM,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-092,"Learning, Knowledge & Owner-Value Optimization",Automatic corrective-action creation,Rootly,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-093,"Learning, Knowledge & Owner-Value Optimization",Runbook synthesis from successful repairs,Rootly playbooks / Failure-Win,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-094,"Learning, Knowledge & Owner-Value Optimization",Cross-system lesson diffusion with adoption proof,Federation KUAG,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-095,"Learning, Knowledge & Owner-Value Optimization",Owner-time-protected metric,Bubbles digital twin,COMPOSE_NOW,W1_COMPETITIVE_CORE,95
+SENT-FH-096,"Learning, Knowledge & Owner-Value Optimization",Repair value / change-impact attribution,New Relic / CFBE value,BUILD_NEXT,W2_EXPANSION,82
+SENT-FH-097,"Learning, Knowledge & Owner-Value Optimization",Capability effectiveness map,CFBE,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-098,"Learning, Knowledge & Owner-Value Optimization",Anti-churn/hysteresis for route and architecture changes,CFBE reflexivity,ALREADY_PRESENT_SOURCE,W0_REUSE_VERIFY,88
+SENT-FH-099,"Learning, Knowledge & Owner-Value Optimization",Digital-twin drift detection and simulation,Federation Digital Twin,COMPOSE_NOW,W2_EXPANSION,82
+SENT-FH-100,"Learning, Knowledge & Owner-Value Optimization",Prevention-dividend executive dashboard,Grafana/Rootly/PagerDuty analytics,BUILD_NEXT,W1_COMPETITIVE_CORE,95
