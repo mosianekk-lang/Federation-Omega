@@ -161,7 +161,7 @@ class MissionIRResultFabricShadowTests(unittest.TestCase):
         output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         self.assertTrue(output.exists())
         self.assertEqual(
-            [f"source:8da9ddc38b46ffef535064a5d13f65ba130a1b1c", "proof:mission-execution-shadow"],
+            ["proof:mission-execution-shadow", "source:8da9ddc38b46ffef535064a5d13f65ba130a1b1c"],
             receipt["proof_refs_preserved"],
         )
 
