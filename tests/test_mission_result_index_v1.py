@@ -97,6 +97,24 @@ class DurableMissionResultIndexTests(unittest.TestCase):
                 index.lookup(expired, now="2026-08-31T20:46:00+02:00").state,
             )
 
+    def test_lookup_cannot_extend_stored_freshness_lease(self):
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "result-index.jsonl"
+            stored = self._identity(fresh_until="2026-08-31T20:45:30+02:00")
+            index = DurableMissionResultIndex(path)
+            index.record(
+                stored,
+                result_ref="runtime-proof/result.json",
+                result_sha256="f" * 64,
+                proof_refs=("proof:shadow",),
+                recorded_at="2026-08-31T20:45:00+02:00",
+                now="2026-08-31T20:45:00+02:00",
+            )
+            attempted_extension = self._identity(fresh_until="2026-09-01T00:00:00+02:00")
+            held = index.lookup(attempted_extension, now="2026-08-31T20:46:00+02:00")
+            self.assertEqual("HOLD_FRESHNESS_EXPIRED", held.state)
+            self.assertFalse(held.reuse)
+
     def test_tamper_is_detected_on_restart(self):
         with tempfile.TemporaryDirectory() as tmp:
             path = Path(tmp) / "result-index.jsonl"
