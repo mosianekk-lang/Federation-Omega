@@ -19,7 +19,7 @@ SCHEMA = "FEDERATION-MISSION-IR-GOLDEN-PATH-SHADOW-CERTIFICATION-1"
 MISSION_ID = "SC-MSN-CANARY-001"
 BINDING_ID = "SC-MIR-20260831-001"
 REFERENCE_SOURCE_MAIN = "dd7ff7b86c3aa4ed9cd49e0323d621384b28dc9f"
-CONTROL_BINDING_EXPECTED_SHA256 = "f1980b968442991a33d2ad8e36a30dac2a2c33502bb8636c9fe6821f8616a331"
+CONTROL_BINDING_EXPECTED_SHA256 = "6883224d414f462ed258141ef9248b712ce4f884328ed48a56d99661812d106c"
 
 
 def _canonical_json(value: Any) -> str:
@@ -106,10 +106,6 @@ def _cells() -> tuple[WorkCell, ...]:
 
 
 def _legacy_structural_profile() -> dict[str, Any]:
-    # This is a control-structure baseline, not observed runtime telemetry. It is
-    # derived from the canonical SOVARA preparation surfaces used before MissionIR:
-    # CREATIVE_MISSIONS, FIRST_COHORT_PLAN, QA_RELEASE_GATES, PROVIDER_POLICY,
-    # MODEL_ROUTE_MATRIX and ASSET_REGISTRY.
     return {
         "evidence_mode": "CONTROL_STRUCTURE_NOT_RUNTIME_TELEMETRY",
         "control_surfaces_required": 6,
