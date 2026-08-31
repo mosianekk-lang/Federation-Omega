@@ -9,6 +9,9 @@ from benchmarking.cfbe_omega.mission_execution_adapter_v1 import shadow_compile_
 from federation.bubbles_frontier_hyperperformance import WorkCell
 from federation.mission_ir import MissionIR
 from frontier_convergence.mission_ir_golden_path_shadow import build_receipt
+from frontier_convergence.mission_ir_result_fabric_durable_shadow import (
+    build_receipt as build_durable_result_fabric_receipt,
+)
 from frontier_convergence.mission_ir_result_fabric_shadow import build_receipt as build_result_fabric_receipt
 from frontier_convergence.mission_ir_second_domain_shadow import build_receipt as build_second_domain_receipt
 
@@ -164,6 +167,56 @@ class MissionIRResultFabricShadowTests(unittest.TestCase):
             ["proof:mission-execution-shadow", "source:8da9ddc38b46ffef535064a5d13f65ba130a1b1c"],
             receipt["proof_refs_preserved"],
         )
+
+
+class MissionIRResultFabricDurabilityTests(unittest.TestCase):
+    def test_local_sqlite_close_reopen_preserves_exact_reuse_and_invalidations(self):
+        receipt = build_durable_result_fabric_receipt(certification_source_sha="test-sha")
+        self.assertEqual(
+            "HOSTED_SHADOW_RESULT_FABRIC_LOCAL_DURABILITY_PASS",
+            receipt["state"],
+        )
+        self.assertTrue(receipt["semantic_pass"])
+        self.assertTrue(receipt["local_sqlite_close_reopen_proven"])
+        self.assertTrue(receipt["persistent_cache_proven"])
+        self.assertEqual(
+            "LOCAL_SQLITE_CLOSE_REOPEN_HOSTED_SHADOW",
+            receipt["persistent_cache_scope"],
+        )
+        self.assertEqual("MISS", receipt["initial_durable_lookup_state"])
+        self.assertEqual("RECORDED", receipt["durable_record_state"])
+        self.assertEqual("HIT", receipt["restart_lookup_state"])
+        self.assertTrue(receipt["restart_reuse"])
+        self.assertEqual("IDEMPOTENT_RECORD", receipt["idempotent_record_state"])
+        self.assertEqual(1, receipt["record_count_after_restart"])
+        self.assertEqual("MISS", receipt["invalidation_after_restart"]["input_change"])
+        self.assertEqual("MISS", receipt["invalidation_after_restart"]["policy_change"])
+        self.assertEqual("MISS", receipt["invalidation_after_restart"]["environment_change"])
+        self.assertEqual("MISS", receipt["invalidation_after_restart"]["source_change"])
+        self.assertEqual(
+            "HOLD_FRESHNESS_EXPIRED",
+            receipt["invalidation_after_restart"]["freshness_expiry"],
+        )
+        self.assertTrue(receipt["conflicting_same_key_result_blocked"])
+        self.assertEqual("HOLD_CORRUPT_RECORD", receipt["tamper_lookup_state"])
+        self.assertFalse(receipt["tamper_verify_valid"])
+        self.assertFalse(receipt["distributed_cache_proven"])
+        self.assertFalse(receipt["cross_machine_cache_proven"])
+        self.assertFalse(receipt["provider_cache_proven"])
+        self.assertFalse(receipt["serving_route_changed"])
+        self.assertTrue(receipt["local_persistence_write_performed"])
+        self.assertEqual(0, receipt["external_effects"])
+        self.assertFalse(receipt["stable_promotion_allowed"])
+
+    def test_hosted_court_emits_durable_result_fabric_receipt(self):
+        receipt = build_durable_result_fabric_receipt(certification_source_sha="test-sha")
+        runtime_dir = Path("runtime-proof")
+        runtime_dir.mkdir(exist_ok=True)
+        output = runtime_dir / "mission-ir-result-fabric-durable-shadow.json"
+        output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        self.assertTrue(output.exists())
+        self.assertTrue(receipt["persistent_cache_proven"])
+        self.assertEqual(0, receipt["external_effects"])
 
 
 class FourSurfaceCompositeRouterQualificationTests(unittest.TestCase):
