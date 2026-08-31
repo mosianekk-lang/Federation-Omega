@@ -30,6 +30,9 @@ class CfbeHyperleverageAttestationWorkflowTests(unittest.TestCase):
         self.assertIn('actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6', self.workflow)
         self.assertIn('push-to-registry: false', self.workflow)
         self.assertIn('gh attestation verify', self.workflow)
+        self.assertIn('--format json', self.workflow)
+        self.assertIn('--signer-workflow', self.workflow)
+        self.assertIn("subject.get('digest', {}).get('sha256') == expected_digest", self.workflow)
 
     def test_artifact_is_deterministic_and_bounded_to_cfbe_evidence(self) -> None:
         self.assertIn("date_time=(1980, 1, 1, 0, 0, 0)", self.workflow)
