@@ -101,7 +101,7 @@ jobs:
           python - <<'PY'
           import json, os
           receipt = json.load(open('runtime-proof/mission-ir-golden-path-shadow.json', encoding='utf-8'))
-          assert receipt['certification_source_sha'] == os.environ['SOURCE_SHA'], receipt
+          assert receipt['certification_source_sha'] == os.environ['GITHUB_SHA'], receipt
           assert receipt['state'] == 'HOSTED_SHADOW_REFERENCE_PASS', receipt
           assert receipt['binding_hash_matches'] is True, receipt
           assert receipt['semantic_pass'] is True, receipt
