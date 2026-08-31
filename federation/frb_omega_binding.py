@@ -204,6 +204,7 @@ class FRBSelectionReceipt:
                 "discovery_is_provider_execution": False,
                 "unknown_value_metrics_are_inferred": False,
                 "unregistered_resource_is_reused": False,
+                "unregistered_capability_is_inherited": False,
                 "pareto_dominance_overrides_capability_coverage": False,
             },
         }
@@ -222,11 +223,19 @@ class FRBSelectionReceipt:
             source = by_id.get(resource_id)
             if source is None:
                 continue
+            registered_tags = source.normalized_tags()
+            requested_tags = frozenset(_tag(item) for item in capabilities if _tag(item))
+            unregistered = tuple(sorted(requested_tags - registered_tags))
+            if unregistered:
+                raise ValueError(
+                    "FRB observation cannot extend registered capability surface for "
+                    f"{resource_id}: " + ",".join(unregistered)
+                )
             result.append(
                 CapabilityRecord(
                     capability_id=source.capability_id,
-                    name=source.capability_id,
-                    tags=tuple(sorted(capabilities)),
+                    name=source.name,
+                    tags=tuple(sorted(requested_tags)),
                     evidence_state=source.evidence_state,
                     reusable=source.reusable,
                     provider_live=source.provider_live,
@@ -318,10 +327,8 @@ class FRBOmegaBinding:
             )
 
             admissible: list[FRBResourceObservation] = []
-            individual_gates = []
             for item in eligible_matching:
                 decision = evaluate_requirement(requirement_contract, (item.as_candidate(requirement),))
-                individual_gates.append(decision)
                 if decision.state in _READY_STATES:
                     admissible.append(item)
 
@@ -434,7 +441,6 @@ class FRBOmegaBinding:
                 if not any(requirement in roles.get(resource_id, set()) for resource_id in selected)
             )
         )
-        # Cross-check the existing forge result rather than trusting a local projection.
         if tuple(sorted(uncovered)) != unresolved:
             raise RuntimeError("FRB minimum-sufficient selection readback mismatch")
 
