@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
 import json
-from typing import Any, Mapping, Sequence
+from typing import Any, Mapping
 
 from evidenceops.caseforge.openai_provider_adapter import (
     ALLOWED_PROVIDER_OPTIONS,
@@ -62,6 +62,7 @@ class BuildGeneratorProviderReceipt:
     provider_readback_ref: str = ""
     verified_model_version: str = ""
     provider_execution_authorized: bool = True
+    provider_payload_authorized: bool = True
     provider_storage: bool = False
     external_mutation: bool = False
 
@@ -79,10 +80,12 @@ class BuildGeneratorProviderReceipt:
             "provider_readback_ref": self.provider_readback_ref,
             "verified_model_version": self.verified_model_version,
             "provider_execution_authorized": self.provider_execution_authorized,
+            "provider_payload_authorized": self.provider_payload_authorized,
             "provider_storage": self.provider_storage,
             "external_mutation": self.external_mutation,
             "truth_boundary": {
                 "provider_execution_is_provider_readback": self.provider_state == "PROVIDER_VERIFIED",
+                "provider_call_authority_is_payload_share_authority": False,
                 "generated_candidate_is_deployed": False,
                 "provider_execution_grants_mutation_authority": False,
                 "provider_execution_proves_user_value": False,
@@ -95,8 +98,8 @@ class OpenAIResponsesBuildGenerator:
 
     This adapter deliberately does not reuse CaseForge's legal benchmark prompt.
     It does reuse CaseForge's provider execution/readback evidence contracts.
-    Provider calls are blocked unless the caller supplies an explicit execution
-    authorization for this adapter instance. Responses are never provider-stored.
+    A provider call and transfer of the Idea/System workspace payload are separate
+    gates. Responses are never provider-stored by this adapter.
     """
 
     def __init__(
@@ -105,6 +108,7 @@ class OpenAIResponsesBuildGenerator:
         client: Any,
         model: str,
         provider_execution_authorized: bool = False,
+        provider_payload_authorized: bool = False,
         request_options: Mapping[str, Any] | None = None,
         readback_verifier: ProviderReadbackVerifier | None = None,
         require_provider_readback: bool = False,
@@ -114,6 +118,7 @@ class OpenAIResponsesBuildGenerator:
         self.client = client
         self.model = str(model).strip()
         self.provider_execution_authorized = bool(provider_execution_authorized)
+        self.provider_payload_authorized = bool(provider_payload_authorized)
         self.request_options = dict(request_options or {})
         forbidden = sorted(FORBIDDEN_PROVIDER_OPTIONS & set(self.request_options))
         if forbidden:
@@ -194,6 +199,8 @@ class OpenAIResponsesBuildGenerator:
         self._last_receipt = None
         if not self.provider_execution_authorized:
             raise PermissionError("OpenAI build generation requires explicit provider execution authorization")
+        if not self.provider_payload_authorized:
+            raise PermissionError("OpenAI build generation requires explicit provider payload authorization")
 
         payload = {
             "plan": plan.canonical_mapping(),
@@ -244,6 +251,7 @@ class OpenAIResponsesBuildGenerator:
             provider_readback_ref=("" if readback is None else readback.provider_readback_ref),
             verified_model_version=("" if readback is None else readback.model_version),
             provider_execution_authorized=True,
+            provider_payload_authorized=True,
             provider_storage=False,
             external_mutation=False,
         )
