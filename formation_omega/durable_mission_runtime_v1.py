@@ -376,11 +376,18 @@ class DurableMissionRuntimeV1:
     ) -> MissionProjection:
         return self.engine.verify_success(mission_id, criterion, evidence_refs=evidence_refs)
 
+    @staticmethod
+    def _request_from_payload(payload: Mapping[str, Any]) -> PendingRequest:
+        raw = dict(payload)
+        raw["required_authority"] = tuple(raw.get("required_authority", ()))
+        raw["proof_refs"] = tuple(raw.get("proof_refs", ()))
+        return PendingRequest(**raw).validate()
+
     def _request_projection(self, mission_id: str) -> dict[str, PendingRequest]:
         requests: dict[str, PendingRequest] = {}
         for event in self.ledger.events(mission_id):
             if event.event_type == self.EVENT_REQUEST_PENDING:
-                request = PendingRequest(**event.payload["request"]).validate()
+                request = self._request_from_payload(event.payload["request"])
                 prior = requests.get(request.request_id)
                 if prior is not None and prior.identity_mapping() != request.identity_mapping():
                     raise ValueError("BCO_PENDING_REQUEST_IDENTITY_CONFLICT")
@@ -390,7 +397,7 @@ class DurableMissionRuntimeV1:
                 self.EVENT_REQUEST_EXPIRED,
                 self.EVENT_REQUEST_CANCELLED,
             }:
-                request = PendingRequest(**event.payload["request"]).validate()
+                request = self._request_from_payload(event.payload["request"])
                 prior = requests.get(request.request_id)
                 if prior is None:
                     raise ValueError("BCO_PENDING_REQUEST_TRANSITION_WITHOUT_ORIGIN")
