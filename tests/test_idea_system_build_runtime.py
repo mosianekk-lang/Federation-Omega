@@ -1,9 +1,9 @@
 from __future__ import annotations
 
 import sys
+import tempfile
+import unittest
 from pathlib import Path
-
-import pytest
 
 from alpha_omega_v30.capability_market import CapabilityRegistry, CapabilitySpec
 from alpha_omega_v30.sandbox_fleet import OperationalSandbox, ReceiptLedger, SandboxPolicy
@@ -90,100 +90,119 @@ def make_runtime(tmp_path: Path, *, qualified: bool = True) -> IdeaSystemBuildRu
     )
 
 
-def test_unqualified_registry_presence_never_becomes_reusable(tmp_path: Path) -> None:
-    runtime = make_runtime(tmp_path, qualified=False)
-    records = runtime.discovery.records()
-    assert len(records) == 1
-    assert records[0].evidence_state == "CANDIDATE"
-    assert not records[0].reusable
-    assert runtime.discovery.snapshot()["qualified_reusable_count"] == 0
+class IdeaSystemBuildRuntimeTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self._temp = tempfile.TemporaryDirectory(prefix="idea-system-build-")
+        self.tmp_path = Path(self._temp.name)
 
+    def tearDown(self) -> None:
+        self._temp.cleanup()
 
-def test_qualified_registry_capability_is_reused_by_idea_compiler(tmp_path: Path) -> None:
-    runtime = make_runtime(tmp_path)
-    plan = runtime.plan(
-        "Build a small API and test it.",
-        source_frontier="main@test",
-    )
-    decisions = {item.requirement: item for item in plan.capability_decisions}
-    assert decisions["CODE_SANDBOX"].strategy == "REUSE"
-    assert "operational-sandbox-fleet" in decisions["CODE_SANDBOX"].candidate_ids
+    def test_unqualified_registry_presence_never_becomes_reusable(self) -> None:
+        runtime = make_runtime(self.tmp_path, qualified=False)
+        records = runtime.discovery.records()
+        self.assertEqual(1, len(records))
+        self.assertEqual("CANDIDATE", records[0].evidence_state)
+        self.assertFalse(records[0].reusable)
+        self.assertEqual(0, runtime.discovery.snapshot()["qualified_reusable_count"])
 
-
-def test_successful_repair_promotes_persistent_workspace(tmp_path: Path) -> None:
-    runtime = make_runtime(tmp_path)
-    plan = runtime.plan("Build a small API.", source_frontier="main@test")
-    receipt = runtime.build(plan, RepairingGenerator(), max_attempts=2)
-    assert receipt.final_status == "VERIFIED_BUILD_CANDIDATE"
-    assert receipt.promoted_revision is not None
-    assert receipt.attempts == 2
-    assert receipt.external_effects == 0
-    assert not receipt.provider_effect_authorized
-    assert runtime.workspace.verify()["valid"]
-    assert runtime.workspace.current_files()["result.txt"] == "verified"
-
-    restored = PersistentWorkspace(tmp_path / "workspace.jsonl")
-    assert restored.verify()["current_revision"] == receipt.promoted_revision
-    assert restored.current_files()["result.txt"] == "verified"
-    assert "app.py" in restored.current_files()
-
-
-def test_failed_candidate_is_not_promoted(tmp_path: Path) -> None:
-    runtime = make_runtime(tmp_path)
-    plan = runtime.plan("Build a small API.", source_frontier="main@test")
-    receipt = runtime.build(plan, RepairingGenerator(repeat_failure=True), max_attempts=1)
-    assert receipt.final_status == "FAILED"
-    assert receipt.promoted_revision is None
-    assert runtime.workspace.current_revision() is None
-
-
-def test_unchanged_retry_is_blocked(tmp_path: Path) -> None:
-    runtime = make_runtime(tmp_path)
-    plan = runtime.plan("Build a small API.", source_frontier="main@test")
-    receipt = runtime.build(plan, RepairingGenerator(repeat_failure=True), max_attempts=2)
-    assert receipt.final_status == "UNCHANGED_RETRY_BLOCKED"
-    assert receipt.attempts == 1
-    assert runtime.workspace.current_revision() is None
-
-
-def test_unsafe_workspace_path_fails_closed() -> None:
-    candidate = BuildCandidate(
-        candidate_id="bad",
-        files={"../escape.py": "print('no')"},
-        validation_command=(sys.executable, "escape.py"),
-    )
-    with pytest.raises(ValueError, match="unsafe workspace path"):
-        candidate.normalized_files()
-
-
-def test_workspace_rejects_nonpassing_promotion(tmp_path: Path) -> None:
-    workspace = PersistentWorkspace(tmp_path / "workspace.jsonl")
-    candidate = BuildCandidate(
-        candidate_id="x",
-        files={"a.py": "print('x')"},
-        validation_command=(sys.executable, "a.py"),
-    )
-    revision = workspace.stage(
-        plan_digest="PLAN",
-        candidate=candidate,
-        parent_revision=None,
-    )
-    with pytest.raises(ValueError, match="only a passing"):
-        workspace.promote(
-            revision_id=revision,
-            sandbox_receipt={"status": "NONZERO_EXIT"},
+    def test_qualified_registry_capability_is_reused_by_idea_compiler(self) -> None:
+        runtime = make_runtime(self.tmp_path)
+        plan = runtime.plan(
+            "Build a small API and test it.",
+            source_frontier="main@test",
+        )
+        decisions = {item.requirement: item for item in plan.capability_decisions}
+        self.assertEqual("REUSE", decisions["CODE_SANDBOX"].strategy)
+        self.assertIn(
+            "operational-sandbox-fleet",
+            decisions["CODE_SANDBOX"].candidate_ids,
         )
 
+    def test_successful_repair_promotes_persistent_workspace(self) -> None:
+        runtime = make_runtime(self.tmp_path)
+        plan = runtime.plan("Build a small API.", source_frontier="main@test")
+        receipt = runtime.build(plan, RepairingGenerator(), max_attempts=2)
+        self.assertEqual("VERIFIED_BUILD_CANDIDATE", receipt.final_status)
+        self.assertIsNotNone(receipt.promoted_revision)
+        self.assertEqual(2, receipt.attempts)
+        self.assertEqual(0, receipt.external_effects)
+        self.assertFalse(receipt.provider_effect_authorized)
+        self.assertTrue(runtime.workspace.verify()["valid"])
+        self.assertEqual("verified", runtime.workspace.current_files()["result.txt"])
 
-def test_consequential_idea_still_does_not_grant_provider_effect_authority(tmp_path: Path) -> None:
-    runtime = make_runtime(tmp_path)
-    plan = runtime.plan(
-        "Build the release, deploy to production and publish it.",
-        source_frontier="main@test",
-    )
-    assert plan.mission_ir.effect_class == "CONSEQUENTIAL_EFFECT"
-    assert plan.mission_ir.owner_approval_required
-    receipt = runtime.build(plan, RepairingGenerator(), max_attempts=2)
-    assert receipt.final_status == "VERIFIED_BUILD_CANDIDATE"
-    assert receipt.external_effects == 0
-    assert not receipt.provider_effect_authorized
+        restored = PersistentWorkspace(self.tmp_path / "workspace.jsonl")
+        self.assertEqual(
+            receipt.promoted_revision,
+            restored.verify()["current_revision"],
+        )
+        self.assertEqual("verified", restored.current_files()["result.txt"])
+        self.assertIn("app.py", restored.current_files())
+
+    def test_failed_candidate_is_not_promoted(self) -> None:
+        runtime = make_runtime(self.tmp_path)
+        plan = runtime.plan("Build a small API.", source_frontier="main@test")
+        receipt = runtime.build(
+            plan,
+            RepairingGenerator(repeat_failure=True),
+            max_attempts=1,
+        )
+        self.assertEqual("FAILED", receipt.final_status)
+        self.assertIsNone(receipt.promoted_revision)
+        self.assertIsNone(runtime.workspace.current_revision())
+
+    def test_unchanged_retry_is_blocked(self) -> None:
+        runtime = make_runtime(self.tmp_path)
+        plan = runtime.plan("Build a small API.", source_frontier="main@test")
+        receipt = runtime.build(
+            plan,
+            RepairingGenerator(repeat_failure=True),
+            max_attempts=2,
+        )
+        self.assertEqual("UNCHANGED_RETRY_BLOCKED", receipt.final_status)
+        self.assertEqual(1, receipt.attempts)
+        self.assertIsNone(runtime.workspace.current_revision())
+
+    def test_unsafe_workspace_path_fails_closed(self) -> None:
+        candidate = BuildCandidate(
+            candidate_id="bad",
+            files={"../escape.py": "print('no')"},
+            validation_command=(sys.executable, "escape.py"),
+        )
+        with self.assertRaisesRegex(ValueError, "unsafe workspace path"):
+            candidate.normalized_files()
+
+    def test_workspace_rejects_nonpassing_promotion(self) -> None:
+        workspace = PersistentWorkspace(self.tmp_path / "workspace.jsonl")
+        candidate = BuildCandidate(
+            candidate_id="x",
+            files={"a.py": "print('x')"},
+            validation_command=(sys.executable, "a.py"),
+        )
+        revision = workspace.stage(
+            plan_digest="PLAN",
+            candidate=candidate,
+            parent_revision=None,
+        )
+        with self.assertRaisesRegex(ValueError, "only a passing"):
+            workspace.promote(
+                revision_id=revision,
+                sandbox_receipt={"status": "NONZERO_EXIT"},
+            )
+
+    def test_consequential_idea_still_does_not_grant_provider_effect_authority(self) -> None:
+        runtime = make_runtime(self.tmp_path)
+        plan = runtime.plan(
+            "Build the release, deploy to production and publish it.",
+            source_frontier="main@test",
+        )
+        self.assertEqual("CONSEQUENTIAL_EFFECT", plan.mission_ir.effect_class)
+        self.assertTrue(plan.mission_ir.owner_approval_required)
+        receipt = runtime.build(plan, RepairingGenerator(), max_attempts=2)
+        self.assertEqual("VERIFIED_BUILD_CANDIDATE", receipt.final_status)
+        self.assertEqual(0, receipt.external_effects)
+        self.assertFalse(receipt.provider_effect_authorized)
+
+
+if __name__ == "__main__":
+    unittest.main()
