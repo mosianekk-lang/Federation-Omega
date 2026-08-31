@@ -1,0 +1,148 @@
+name: CFBE Hyperleverage 100 Artifact Attestation v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+  attestations: write
+
+concurrency:
+  group: cfbe-hyperleverage-artifact-attestation-v1
+  cancel-in-progress: false
+
+jobs:
+  attest:
+    if: >-
+      github.event.issue.title == '[CFBE-DISPATCH] HYPERLEVERAGE_100_ATTEST_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 6
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Build deterministic Hyperleverage 100 evidence artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p cfbe-attestation
+          python - <<'PY'
+          from pathlib import Path
+          from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
+          import hashlib, json
+
+          inputs = [
+              Path('benchmarking/cfbe_omega/FEDERATION_COMPETITIVE_UPGRADES_100_20260901.csv'),
+              Path('benchmarking/cfbe_omega/FEDERATION_COMPETITIVE_BENCHMARK_V2_20260901.md'),
+              Path('benchmarking/cfbe_omega/federation_competitive_upgrade_fabric_v1.py'),
+              Path('benchmarking/cfbe_omega/federation_competitive_upgrade_receipts_v1.py'),
+              Path('tests/test_federation_frontier_refresh_v2.py'),
+              Path('tests/test_federation_competitive_upgrade_receipts_v1.py'),
+          ]
+          for path in inputs:
+              if not path.is_file():
+                  raise SystemExit(f'missing required input: {path}')
+
+          out = Path('cfbe-attestation/cfbe-hyperleverage-100.zip')
+          with ZipFile(out, 'w', compression=ZIP_DEFLATED, compresslevel=9) as zf:
+              for path in sorted(inputs, key=lambda p: p.as_posix()):
+                  info = ZipInfo(path.as_posix(), date_time=(1980, 1, 1, 0, 0, 0))
+                  info.compress_type = ZIP_DEFLATED
+                  info.external_attr = 0o100644 << 16
+                  zf.writestr(info, path.read_bytes())
+
+          digest = hashlib.sha256(out.read_bytes()).hexdigest()
+          manifest = {
+              'schema': 'CFBE_HYPERLEVERAGE_100_ATTESTATION_SUBJECT_V1',
+              'artifact': out.name,
+              'sha256': digest,
+              'source_sha': '${{ github.sha }}',
+              'issue_number': '${{ github.event.issue.number }}',
+              'external_effect': False,
+              'deployment_effect': False,
+              'registry_push': False,
+              'inputs': [p.as_posix() for p in sorted(inputs, key=lambda p: p.as_posix())],
+          }
+          Path('cfbe-attestation/subject-manifest.json').write_text(
+              json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          Path('cfbe-attestation/sha256.txt').write_text(
+              f'{digest}  {out.name}\n', encoding='utf-8'
+          )
+          PY
+
+      - name: Generate GitHub build provenance attestation
+        id: attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: cfbe-attestation/cfbe-hyperleverage-100.zip
+          push-to-registry: false
+          show-summary: true
+
+      - name: Verify attestation through GitHub CLI
+        shell: bash
+        env:
+          GH_TOKEN: ${{ github.token }}
+          ATTESTATION_ID: ${{ steps.attest.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
+        run: |
+          set -euo pipefail
+          gh attestation verify cfbe-attestation/cfbe-hyperleverage-100.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/cfbe-hyperleverage-attestation-v1.yml" \
+            --format json > cfbe-attestation/verify.json
+          python - <<'PY'
+          from pathlib import Path
+          import json, os
+
+          verified = json.loads(Path('cfbe-attestation/verify.json').read_text(encoding='utf-8'))
+          if not isinstance(verified, list) or not verified:
+              raise SystemExit('GitHub CLI returned no verified attestations')
+
+          expected_digest = Path('cfbe-attestation/sha256.txt').read_text(encoding='utf-8').split()[0]
+          matched = False
+          for entry in verified:
+              result = entry.get('verificationResult', {})
+              statement = result.get('statement', {})
+              for subject in statement.get('subject', []):
+                  if subject.get('digest', {}).get('sha256') == expected_digest:
+                      matched = True
+                      break
+              if matched:
+                  break
+          if not matched:
+              raise SystemExit('verified attestation did not bind the expected artifact digest')
+
+          p = {
+              'schema': 'CFBE_HYPERLEVERAGE_100_ATTESTATION_RECEIPT_V1',
+              'state': 'VERIFIED',
+              'source_sha': os.environ['GITHUB_SHA'],
+              'artifact_sha256': expected_digest,
+              'attestation_id': os.environ['ATTESTATION_ID'],
+              'attestation_url': os.environ['ATTESTATION_URL'],
+              'verified_attestation_count': len(verified),
+              'digest_match': matched,
+              'provider_effect_executed': False,
+              'deployment_effect_executed': False,
+              'registry_push': False,
+          }
+          if not p['attestation_id'] or not p['attestation_url']:
+              raise SystemExit(f'incomplete attestation receipt: {p}')
+          Path('cfbe-attestation/attestation-receipt.json').write_text(
+              json.dumps(p, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          PY
+
+      - name: Upload immutable evidence bundle
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cfbe-hyperleverage-100-attestation-${{ github.run_id }}-${{ github.run_attempt }}
+          path: cfbe-attestation/
+          if-no-files-found: error
+          retention-days: 90

@@ -1,0 +1,54 @@
+{
+  "schema": "CFBE_HYPERLEVERAGE_100_CLOSURE_V1",
+  "programme": "CFBE Hyperleverage 100",
+  "date_sast": "2026-09-01",
+  "benchmark": {
+    "architecture_score": 85.9,
+    "proof_adjusted_score": 67.45,
+    "dimensions": 20,
+    "canonical_benchmark": "benchmarking/cfbe_omega/FEDERATION_COMPETITIVE_BENCHMARK_V2_20260901.md"
+  },
+  "capability_programme": {
+    "canonical_gene_ledger": "benchmarking/cfbe_omega/FEDERATION_COMPETITIVE_UPGRADES_100_20260901.csv",
+    "gene_count": 100,
+    "source_or_control_routed": 100,
+    "source_or_control_unrouted": 0,
+    "explicit_provider_gates": 2,
+    "provider_verified_closed": 1,
+    "provider_gate_open": 1,
+    "source_control_state": "COMPLETE",
+    "provider_completion_state": "ONE_CONSEQUENTIAL_PROVIDER_GATE_OPEN"
+  },
+  "FHU-042": {
+    "state": "PROVIDER_VERIFIED_CLOSED",
+    "source_main": "628bf90baa3d4f20d7dcb4b27279cd2fdd7f7364",
+    "workflow_run": 33450394976,
+    "artifact_subject_sha256": "2f0d622c0b274a79867a59613734dc3b944aa5ba426eb6d75d258623270fb38b",
+    "github_attestation_id": 44277491,
+    "rekor_log_index": 2669237108,
+    "evidence_artifact_id": 9779538934,
+    "evidence_artifact_sha256": "0ed007b2881d50707cae34c646653fb6079d3b4b6358b3df02720d87239aed02",
+    "same_run_machine_verification": true,
+    "signer_workflow_bound": true,
+    "subject_digest_bound": true,
+    "external_deployment_effect": false
+  },
+  "FHU-047": {
+    "state": "PROVIDER_CONFIGURATION_GATE_OPEN",
+    "read_only_identity_path_verified": true,
+    "provider_configuration_changes_required": true,
+    "provider_mutation_performed_in_this_programme": false,
+    "consequential_execution_authority_required_before_closure": true
+  },
+  "failure_to_win_repairs": [
+    "PR 934: shell-portable provider verification",
+    "PR 936: narrowly admitted attestation-only gateway",
+    "PR 940: digest-bound machine-readable attestation verification"
+  ],
+  "truth_boundary": {
+    "source_control_complete_is_not_equivalent_to_all_live_production_deployments": true,
+    "architecture_score_is_not_external_market_certification": true,
+    "provider_effects_require_provider_native_readback": true,
+    "FHU_047_remains_unpromoted_until_its_provider_gate_passes": true
+  }
+}
