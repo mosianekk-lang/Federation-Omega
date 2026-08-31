@@ -71,11 +71,6 @@ class InMemoryEventStore:
 
     def append(self, event: MemoryEvent, *, expected_version: int) -> AppendReceipt:
         event.validate()
-        current = self.version(event.stream_id)
-        if current != expected_version:
-            raise ValueError("MEMORY_STREAM_VERSION_CONFLICT")
-        if event.stream_version != current + 1:
-            raise ValueError("MEMORY_STREAM_EVENT_VERSION_MISMATCH")
         fingerprint = event.digest()
         prior = self._idempotency.get(event.idempotency_key)
         if prior:
@@ -83,6 +78,11 @@ class InMemoryEventStore:
             if prior_digest != fingerprint:
                 raise ValueError("MEMORY_IDEMPOTENCY_PARAMETER_MISMATCH")
             return AppendReceipt(prior_event_id, event.stream_id, event.stream_version, prior_digest, "IDEMPOTENT_REPLAY")
+        current = self.version(event.stream_id)
+        if current != expected_version:
+            raise ValueError("MEMORY_STREAM_VERSION_CONFLICT")
+        if event.stream_version != current + 1:
+            raise ValueError("MEMORY_STREAM_EVENT_VERSION_MISMATCH")
         self._streams.setdefault(event.stream_id, []).append(event)
         self._idempotency[event.idempotency_key] = (event.event_id, fingerprint)
         return AppendReceipt(event.event_id, event.stream_id, event.stream_version, fingerprint, "APPENDED")
