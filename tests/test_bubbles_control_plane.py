@@ -25,6 +25,14 @@ from federation.bubbles_hyperperformance import (
     TraceSpine,
 )
 from governance.external_action_firewall import LEASE_PROOF
+from tests.test_bubbles_frontier_hyperperformance import (  # noqa: F401
+    DeterministicResultCacheTests,
+    ReliabilityBudgetGovernorTests,
+    WorkCellAllocatorTests,
+)
+from tests.test_cfbe_bubbles_work_graph_adapter_v1 import (  # noqa: F401
+    BubblesWorkGraphAdapterTests,
+)
 from tests.test_external_action_firewall import ExternalActionFirewallTests  # noqa: F401
 from tests.test_failure_win_manifest import FailureWinReceiverManifestTests  # noqa: F401
 
