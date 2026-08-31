@@ -37,7 +37,6 @@ jobs:
           from zipfile import ZIP_DEFLATED, ZipFile, ZipInfo
           import hashlib, json
 
-          root = Path('.')
           inputs = [
               Path('benchmarking/cfbe_omega/FEDERATION_COMPETITIVE_UPGRADES_100_20260901.csv'),
               Path('benchmarking/cfbe_omega/FEDERATION_COMPETITIVE_BENCHMARK_V2_20260901.md'),
@@ -94,22 +93,46 @@ jobs:
           ATTESTATION_URL: ${{ steps.attest.outputs.attestation-url }}
         run: |
           set -euo pipefail
-          gh attestation verify cfbe-attestation/cfbe-hyperleverage-100.zip --repo "$GITHUB_REPOSITORY" | tee cfbe-attestation/verify.txt
+          gh attestation verify cfbe-attestation/cfbe-hyperleverage-100.zip \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/cfbe-hyperleverage-attestation-v1.yml" \
+            --format json > cfbe-attestation/verify.json
           python - <<'PY'
           from pathlib import Path
           import json, os
+
+          verified = json.loads(Path('cfbe-attestation/verify.json').read_text(encoding='utf-8'))
+          if not isinstance(verified, list) or not verified:
+              raise SystemExit('GitHub CLI returned no verified attestations')
+
+          expected_digest = Path('cfbe-attestation/sha256.txt').read_text(encoding='utf-8').split()[0]
+          matched = False
+          for entry in verified:
+              result = entry.get('verificationResult', {})
+              statement = result.get('statement', {})
+              for subject in statement.get('subject', []):
+                  if subject.get('digest', {}).get('sha256') == expected_digest:
+                      matched = True
+                      break
+              if matched:
+                  break
+          if not matched:
+              raise SystemExit('verified attestation did not bind the expected artifact digest')
+
           p = {
               'schema': 'CFBE_HYPERLEVERAGE_100_ATTESTATION_RECEIPT_V1',
               'state': 'VERIFIED',
               'source_sha': os.environ['GITHUB_SHA'],
+              'artifact_sha256': expected_digest,
               'attestation_id': os.environ['ATTESTATION_ID'],
               'attestation_url': os.environ['ATTESTATION_URL'],
-              'verification_nonempty': bool(Path('cfbe-attestation/verify.txt').read_text(encoding='utf-8').strip()),
+              'verified_attestation_count': len(verified),
+              'digest_match': matched,
               'provider_effect_executed': False,
               'deployment_effect_executed': False,
               'registry_push': False,
           }
-          if not p['attestation_id'] or not p['attestation_url'] or not p['verification_nonempty']:
+          if not p['attestation_id'] or not p['attestation_url']:
               raise SystemExit(f'incomplete attestation receipt: {p}')
           Path('cfbe-attestation/attestation-receipt.json').write_text(
               json.dumps(p, indent=2, sort_keys=True) + '\n', encoding='utf-8'
