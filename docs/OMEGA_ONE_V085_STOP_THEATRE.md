@@ -1,0 +1,1 @@
+Anti-theatre marker: no additional documentation-only expansion should occur until the actual branch source has been reconciled to the corrected candidate and its tests are runnable. Future edits in this cycle must change executable code, test coverage, or proof state.

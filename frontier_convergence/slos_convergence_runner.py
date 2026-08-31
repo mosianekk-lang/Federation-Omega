@@ -5,7 +5,12 @@ import hashlib
 import json
 import os
 from pathlib import Path
-from typing import Any
+from typing import Any, Callable, Mapping
+
+from benchmarking.omega_one_cfbe_local import (
+    GITHUB_HOST_OBSERVATION_SOURCE,
+    run_campaign as run_omega_one_campaign,
+)
 
 from federation.superior_logic_convergence_measurement import (
     ObservationMode,
@@ -25,6 +30,7 @@ BASELINE_OBSERVATION_PATH = (
     / "cfbe_omega"
     / "bubbles_chatbridge_payload_ingress_observation_20260830_v1.json"
 )
+OMEGA_ONE_HOST_PAIR_COUNT = 30
 
 
 def _canonical_json(value: Any) -> str:
@@ -167,9 +173,65 @@ def run_hosted_shadow_campaign(
     return receipt
 
 
+def run_omega_one_host_campaign(
+    *,
+    pair_count: int = OMEGA_ONE_HOST_PAIR_COUNT,
+    operations: int = 200,
+    attempts: int = 4,
+    environment: Mapping[str, str] | None = None,
+    campaign_runner: Callable[..., dict[str, object]] = run_omega_one_campaign,
+) -> dict[str, object]:
+    runtime = os.environ if environment is None else environment
+    if runtime.get("GITHUB_ACTIONS") != "true":
+        raise ValueError("GITHUB_ACTIONS_HOST_IDENTITY_REQUIRED")
+    if runtime.get("RUNNER_ENVIRONMENT") != "github-hosted":
+        raise ValueError("GITHUB_HOSTED_RUNNER_REQUIRED")
+    return campaign_runner(
+        pair_count=pair_count,
+        operations=operations,
+        attempts=attempts,
+        observation_source=GITHUB_HOST_OBSERVATION_SOURCE,
+        runtime_run_id=runtime.get("GITHUB_RUN_ID"),
+        source_sha=runtime.get("GITHUB_SHA"),
+        runtime_environment=runtime.get("RUNNER_ENVIRONMENT"),
+    )
+
+
 def main() -> int:
-    print(json.dumps(run_hosted_shadow_campaign(), indent=2, sort_keys=True))
-    return 0
+    receipt = run_hosted_shadow_campaign()
+    exit_code = 0
+    if os.environ.get("GITHUB_ACTIONS") == "true":
+        try:
+            omega_receipt = run_omega_one_host_campaign()
+        except (RuntimeError, ValueError) as exc:
+            omega_receipt = {
+                "schema": "OMEGA_ONE_CFBE_HOST_OBSERVED_BENCHMARK_V1",
+                "campaign_state": "HOST_OBSERVED_HOLD",
+                "campaign_reasons": [str(exc)],
+                "provider_effects": False,
+                "external_effect": False,
+                "stable_promotion_allowed": False,
+            }
+        qualified = (
+            omega_receipt.get("campaign_state")
+            == "QUALIFIED_HOST_OBSERVED_NO_EFFECT"
+            and omega_receipt.get("observed_pair_count") == OMEGA_ONE_HOST_PAIR_COUNT
+            and omega_receipt.get("cold_replayable_pair_count")
+            == OMEGA_ONE_HOST_PAIR_COUNT
+            and omega_receipt.get("semantic_parity") is True
+            and omega_receipt.get("one_canonical_receipt_per_mission") is True
+            and omega_receipt.get("provider_effects") is False
+            and omega_receipt.get("external_effect") is False
+        )
+        receipt["omega_one_host_observed_campaign"] = omega_receipt
+        receipt["omega_one_host_gate"] = "PASS" if qualified else "HOLD"
+        receipt.pop("receipt_sha256", None)
+        receipt["receipt_sha256"] = _sha256_bytes(
+            _canonical_json(receipt).encode("utf-8")
+        )
+        exit_code = 0 if qualified else 2
+    print(json.dumps(receipt, indent=2, sort_keys=True))
+    return exit_code
 
 
 if __name__ == "__main__":

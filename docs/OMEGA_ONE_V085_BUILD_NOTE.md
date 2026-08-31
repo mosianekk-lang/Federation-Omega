@@ -1,0 +1,1 @@
+Implementation note: source changes are isolated to the feature branch. The branch is a reversible working surface and not a production or main-branch promotion.
