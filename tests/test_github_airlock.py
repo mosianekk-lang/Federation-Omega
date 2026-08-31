@@ -228,6 +228,39 @@ jobs:
         )
         self.assertIn("UNAUTHORISED_TRIGGER", self.rules(findings))
 
+    def test_provider_mutation_is_rejected_outside_exact_lease(self):
+        text = """name: Guard
+on:
+  pull_request:
+permissions:
+  contents: read
+concurrency:
+  group: x
+jobs:
+  x:
+    steps:
+      - run: gcloud iam workload-identity-pools providers update-oidc github --project p
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/public-repository-leak-guard.yml", text, POLICY
+        )
+        self.assertIn("UNAUTHORISED_PROVIDER_MUTATION", self.rules(findings))
+
+    def test_fhu047_exact_one_use_provider_mutation_contract_passes(self):
+        path = ".github/workflows/fhu047-wif-least-privilege-apply-v1.yml"
+        text = (ROOT / path).read_text(encoding="utf-8")
+        findings = AIRLOCK.analyse_workflow(path, text, POLICY)
+        self.assertEqual([], findings)
+
+    def test_fhu047_provider_mutation_trigger_drift_is_rejected(self):
+        path = ".github/workflows/fhu047-wif-least-privilege-apply-v1.yml"
+        text = (ROOT / path).read_text(encoding="utf-8").replace(
+            "FHU047_WIF_LEAST_PRIVILEGE_ONCE_20260901_0142_SAST",
+            "FHU047_WIF_LEAST_PRIVILEGE_ONCE_WRONG",
+        )
+        findings = AIRLOCK.analyse_workflow(path, text, POLICY)
+        self.assertIn("PROVIDER_MUTATION_TRIGGER_DRIFT", self.rules(findings))
+
     def test_quarantine_controller_contract_passes(self):
         text = """name: Phoenix Emergency Execution Freeze
 on:
