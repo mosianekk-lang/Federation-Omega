@@ -42,11 +42,14 @@ concurrency:
 jobs:
   qualify:
     runs-on: ubuntu-24.04
+    env:
+      SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
 
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
@@ -98,7 +101,7 @@ jobs:
           python - <<'PY'
           import json, os
           receipt = json.load(open('runtime-proof/mission-ir-golden-path-shadow.json', encoding='utf-8'))
-          assert receipt['certification_source_sha'] == os.environ['GITHUB_SHA'], receipt
+          assert receipt['certification_source_sha'] == os.environ['SOURCE_SHA'], receipt
           assert receipt['state'] == 'HOSTED_SHADOW_REFERENCE_PASS', receipt
           assert receipt['binding_hash_matches'] is True, receipt
           assert receipt['semantic_pass'] is True, receipt
@@ -123,15 +126,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          docker build --pull -f frontier_convergence/Dockerfile -t "frontier-convergence:${GITHUB_SHA}" .
-          docker image inspect "frontier-convergence:${GITHUB_SHA}" --format '{{.Id}}' > runtime-proof/image-id.txt
+          docker build --pull -f frontier_convergence/Dockerfile -t "frontier-convergence:${SOURCE_SHA}" .
+          docker image inspect "frontier-convergence:${SOURCE_SHA}" --format '{{.Id}}' > runtime-proof/image-id.txt
 
       - name: Prove health restart idempotency persistence and rollback
         shell: bash
         run: |
           set -euo pipefail
           export RUNTIME_DIR="${RUNNER_TEMP}/frontier-runtime-${GITHUB_RUN_ID}"
-          export IMAGE="frontier-convergence:${GITHUB_SHA}"
+          export IMAGE="frontier-convergence:${SOURCE_SHA}"
           export PORT=18080
           mkdir -p "$RUNTIME_DIR"
           chmod 0777 "$RUNTIME_DIR"
@@ -272,7 +275,7 @@ jobs:
           canary = json.load(open('runtime-proof/canary.json', encoding='utf-8'))
           receipt = {
               'schema': 'FRONTIER-RUNTIME-QUALIFICATION-1',
-              'source_sha': os.environ['GITHUB_SHA'],
+              'source_sha': os.environ['SOURCE_SHA'],
               'provider_effects': False,
               'canary_state': canary['state'],
               'container_health_states': [item['state'] for item in healths],
@@ -298,7 +301,7 @@ jobs:
           runtime_raw = runtime_path.read_bytes()
           runtime = json.loads(runtime_raw)
           image_digest = Path('runtime-proof/image-id.txt').read_text(encoding='utf-8').strip()
-          assert runtime['source_sha'] == os.environ['GITHUB_SHA'], runtime
+          assert runtime['source_sha'] == os.environ['SOURCE_SHA'], runtime
           assert runtime['status'] == 'INTERNAL_RUNTIME_VERIFIED', runtime
           assert runtime['provider_effects'] is False, runtime
           assert runtime['container_health_states'] == ['READY_INTERNAL_CONTROL_RUNTIME'] * 3, runtime
@@ -311,7 +314,7 @@ jobs:
 
           evidence = [{
               'evidence_id': f"github-actions-frontier-runtime-{os.environ["GITHUB_RUN_ID"]}",
-              'source_head_sha': os.environ['GITHUB_SHA'],
+              'source_head_sha': os.environ['SOURCE_SHA'],
               'evidence_mode': 'INTERNAL_RUNTIME_QUALIFICATION',
               'environment': 'github-actions-ubuntu-24.04-docker',
               'image_digest': image_digest,
@@ -334,13 +337,13 @@ jobs:
           PY
           python -m evidenceops.caseforge.owner_value_deployment_court_v2 \
             --candidate-id bubbles-pr876-exact-head-runtime \
-            --source-head-sha "$GITHUB_SHA" \
+            --source-head-sha "$SOURCE_SHA" \
             --deployment-receipt runtime-proof/internal-runtime-court-evidence.json \
             --output runtime-proof/owner-value-deployment-court-v2.json
           python - <<'PY'
           import json
           receipt = json.load(open('runtime-proof/owner-value-deployment-court-v2.json', encoding='utf-8'))
-          assert receipt['source_head_sha'] == __import__('os').environ['GITHUB_SHA'], receipt
+          assert receipt['source_head_sha'] == __import__('os').environ['SOURCE_SHA'], receipt
           assert receipt['decision'] == 'HOLD_NO_PROMOTION', receipt
           assert receipt['internal_runtime_qualified'] is True, receipt
           assert receipt['provider_deployment_proven'] is False, receipt
