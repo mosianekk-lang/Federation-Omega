@@ -9,7 +9,7 @@ from federation.living_state.types import (
     WorldEdge,
     WorldNode,
 )
-from federation.sentinel_omega.observability_causal_fabric import (
+from federation.sentinel_omega import (
     AdaptiveBaselineDetector,
     IncidentCorrelator,
     MultiWindowSLOGuard,
@@ -201,6 +201,29 @@ class SentinelObservabilityCausalFabricTests(unittest.TestCase):
         self.assertEqual(ranking[0].target_id, "service:db")
         self.assertFalse(ranking[0].causal_claim)
         self.assertGreater(ranking[0].topology_coverage, 0.5)
+
+    def test_topology_without_change_or_trace_anchor_does_not_overgroup(self):
+        assessment = SentinelObservabilityCausalFabric(world()).assess(
+            (
+                {
+                    "kind": "event",
+                    "target_id": "service:db",
+                    "timestamp": "2026-08-31T20:20:00+00:00",
+                    "fingerprint": "db-noise",
+                    "severity": 0.3,
+                    "proof_ref": "db:noise",
+                },
+                {
+                    "kind": "event",
+                    "target_id": "service:api",
+                    "timestamp": "2026-08-31T20:20:05+00:00",
+                    "fingerprint": "api-noise",
+                    "severity": 0.3,
+                    "proof_ref": "api:noise",
+                },
+            )
+        )
+        self.assertEqual(len(assessment.clusters), 2)
 
     def test_remediation_bridge_emits_a1_internal_effect_free_actions(self):
         model = world()
