@@ -123,6 +123,9 @@ class DurableMissionResultIndex:
         if record.identity != identity.canonical_mapping():
             raise ValueError("RESULT_INDEX_IDENTITY_MISMATCH")
         cache = DeterministicResultCache()
+        preflight = lookup_mission_result(cache, identity, now=now)
+        if preflight.state == "HOLD_FRESHNESS_EXPIRED":
+            return preflight
         record_mission_result(
             cache,
             identity,
