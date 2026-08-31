@@ -13,7 +13,7 @@ from enum import Enum
 from hashlib import sha256
 import csv
 from pathlib import Path
-from typing import Iterable, Mapping, Sequence
+from typing import Callable, Iterable, Mapping, Sequence
 
 from federation.mission_ir import MissionIR
 
@@ -25,6 +25,19 @@ class ImplementationMode(str, Enum):
     REUSE_VERIFIED = "REUSE_VERIFIED"
     COMPOSED_BY_FABRIC = "COMPOSED_BY_FABRIC"
     PROVIDER_GATED_CONTRACT = "PROVIDER_GATED_CONTRACT"
+
+
+class ControlBindingKind(str, Enum):
+    REUSED_CONTROL_GATE = "REUSED_CONTROL_GATE"
+    FABRIC_POLICY_GATE = "FABRIC_POLICY_GATE"
+    PROVIDER_AUTHORITY_GATE = "PROVIDER_AUTHORITY_GATE"
+
+
+class GeneControlState(str, Enum):
+    HOLD_MISSING_PROOF = "HOLD_MISSING_PROOF"
+    HOLD_PROVIDER_RUNTIME = "HOLD_PROVIDER_RUNTIME"
+    READY_FOR_INDEPENDENT_READBACK = "READY_FOR_INDEPENDENT_READBACK"
+    READY_FOR_PROVIDER_REVIEW = "READY_FOR_PROVIDER_REVIEW"
 
 
 class RouteClass(str, Enum):
@@ -54,6 +67,28 @@ class CapabilityGene:
     priority: int
     wave: str
     control_family: str
+
+
+@dataclass(frozen=True, slots=True)
+class ControlBinding:
+    gene_id: str
+    kind: ControlBindingKind
+    handler_name: str
+    required_evidence: tuple[str, ...]
+    source_control_implemented: bool
+
+
+@dataclass(frozen=True, slots=True)
+class GeneControlDecision:
+    gene_id: str
+    state: GeneControlState
+    binding_kind: ControlBindingKind
+    handler_name: str
+    missing_evidence: tuple[str, ...]
+    source_control_implemented: bool
+    runtime_proven: bool
+    stable_promotion_allowed: bool
+    provider_effect_authorized: bool
 
 
 @dataclass(frozen=True, slots=True)
@@ -167,6 +202,117 @@ def validate_genome(genes: Sequence[CapabilityGene]) -> None:
             raise ValueError(f"COMPETITIVE_GENOME_INCOMPLETE:{gene.gene_id}")
         if not 1 <= gene.priority <= 100:
             raise ValueError(f"COMPETITIVE_GENOME_PRIORITY_INVALID:{gene.gene_id}")
+
+
+_BINDING_CONTRACTS: Mapping[ImplementationMode, tuple[ControlBindingKind, str, tuple[str, ...]]] = {
+    ImplementationMode.REUSE_VERIFIED: (
+        ControlBindingKind.REUSED_CONTROL_GATE,
+        "require_reuse_proof",
+        ("source_proof", "test_proof", "registration_proof"),
+    ),
+    ImplementationMode.COMPOSED_BY_FABRIC: (
+        ControlBindingKind.FABRIC_POLICY_GATE,
+        "require_composition_proof",
+        ("source_binding", "test_proof", "owner_binding"),
+    ),
+    ImplementationMode.PROVIDER_GATED_CONTRACT: (
+        ControlBindingKind.PROVIDER_AUTHORITY_GATE,
+        "require_provider_native_proof",
+        ("provider_authority", "provider_readback", "test_proof"),
+    ),
+}
+
+
+def _require_reuse_proof(missing: tuple[str, ...]) -> GeneControlState:
+    return GeneControlState.HOLD_MISSING_PROOF if missing else GeneControlState.READY_FOR_INDEPENDENT_READBACK
+
+
+def _require_composition_proof(missing: tuple[str, ...]) -> GeneControlState:
+    return GeneControlState.HOLD_MISSING_PROOF if missing else GeneControlState.READY_FOR_INDEPENDENT_READBACK
+
+
+def _require_provider_native_proof(missing: tuple[str, ...]) -> GeneControlState:
+    return GeneControlState.HOLD_PROVIDER_RUNTIME if missing else GeneControlState.READY_FOR_PROVIDER_REVIEW
+
+
+_EXECUTABLE_HANDLERS: Mapping[str, Callable[[tuple[str, ...]], GeneControlState]] = {
+    "require_reuse_proof": _require_reuse_proof,
+    "require_composition_proof": _require_composition_proof,
+    "require_provider_native_proof": _require_provider_native_proof,
+}
+
+
+def compile_control_bindings(genes: Sequence[CapabilityGene] | None = None) -> tuple[ControlBinding, ...]:
+    """Compile one executable, fail-closed control binding per catalog gene.
+
+    A binding implements the source-level admission policy. It does not prove the
+    target capability is deployed, provider-backed, valuable, or promotion-ready.
+    """
+
+    items = tuple(genes) if genes is not None else load_genome()
+    validate_genome(items)
+    bindings = tuple(
+        ControlBinding(
+            gene_id=gene.gene_id,
+            kind=_BINDING_CONTRACTS[gene.implementation_mode][0],
+            handler_name=_BINDING_CONTRACTS[gene.implementation_mode][1],
+            required_evidence=_BINDING_CONTRACTS[gene.implementation_mode][2],
+            source_control_implemented=True,
+        )
+        for gene in items
+    )
+    if len(bindings) != 100 or len({item.gene_id for item in bindings}) != 100:
+        raise ValueError("COMPETITIVE_BINDING_COVERAGE_INVALID")
+    if any(item.handler_name not in _EXECUTABLE_HANDLERS for item in bindings):
+        raise ValueError("COMPETITIVE_BINDING_HANDLER_MISSING")
+    return bindings
+
+
+def _is_proof_ref(value: object) -> bool:
+    text = str(value or "").strip()
+    return bool(text and ":" in text and text.casefold() not in {"pending", "unknown", "unverified"})
+
+
+def evaluate_gene_control(gene_id: str, evidence: Mapping[str, str] | None = None) -> GeneControlDecision:
+    """Evaluate a gene's exact proof contract without granting runtime authority."""
+
+    genes = {gene.gene_id: gene for gene in load_genome()}
+    bindings = {binding.gene_id: binding for binding in compile_control_bindings(tuple(genes.values()))}
+    if gene_id not in genes:
+        raise ValueError(f"COMPETITIVE_GENE_UNKNOWN:{gene_id}")
+    gene = genes[gene_id]
+    binding = bindings[gene_id]
+    supplied = evidence or {}
+    missing = tuple(key for key in binding.required_evidence if not _is_proof_ref(supplied.get(key)))
+    handler = _EXECUTABLE_HANDLERS[binding.handler_name]
+    state = handler(missing)
+    return GeneControlDecision(
+        gene_id=gene_id,
+        state=state,
+        binding_kind=binding.kind,
+        handler_name=binding.handler_name,
+        missing_evidence=missing,
+        source_control_implemented=True,
+        runtime_proven=False,
+        stable_promotion_allowed=False,
+        provider_effect_authorized=False,
+    )
+
+
+def executable_binding_summary() -> dict[str, object]:
+    bindings = compile_control_bindings()
+    return {
+        "gene_count": 100,
+        "executable_binding_count": len(bindings),
+        "unique_handler_count": len({item.handler_name for item in bindings}),
+        "all_fail_closed_without_proof": all(
+            evaluate_gene_control(item.gene_id).state
+            in {GeneControlState.HOLD_MISSING_PROOF, GeneControlState.HOLD_PROVIDER_RUNTIME}
+            for item in bindings
+        ),
+        "stable_promotion_allowed": False,
+        "provider_effect_authorized": False,
+    }
 
 
 def error_budget_assessment(*, total: int, successful: int, slo_target: float = 0.999) -> ErrorBudgetAssessment:
