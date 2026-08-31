@@ -1,0 +1,122 @@
+name: BCO Provider Readback Continuity
+
+on:
+  workflow_run:
+    workflows:
+      - 'Bubbles Command Bus'
+    types:
+      - completed
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: bco-provider-readback-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  continuity:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.workflow_run.head_sha }}
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Prepare restart-safe BC-Omega provider-read mission
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p bco-provider-readback-output .bco-provider-readback-runtime
+          python -m benchmarking.cfbe_omega.bco_provider_readback_continuity_v1 prepare \
+            --root .bco-provider-readback-runtime \
+            --head-sha "$HEAD_SHA" \
+            --output bco-provider-readback-output/prepare.json
+
+      - name: Download immutable Bubbles provider receipt from triggering run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: bubbles-provider-surface-readback-*
+          merge-multiple: true
+          path: /tmp/bubbles-provider-readback
+
+      - name: Resume BC-Omega mission and grade exact provider receipt
+        env:
+          HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+          SOURCE_RUN_ID: ${{ github.event.workflow_run.id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          receipt=$(find /tmp/bubbles-provider-readback -name receipt.json -print -quit)
+          test -n "$receipt"
+          python -m benchmarking.cfbe_omega.bco_provider_readback_continuity_v1 resume \
+            --root .bco-provider-readback-runtime \
+            --head-sha "$HEAD_SHA" \
+            --receipt "$receipt" \
+            --receipt-ref "github-actions:bubbles-provider-surface-readback:${SOURCE_RUN_ID}" \
+            --output bco-provider-readback-output/continuity.json
+
+      - name: Enforce proof-floor truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('bco-provider-readback-output/continuity.json').read_text(encoding='utf-8'))
+          if payload.get('mutation_attempted') is not False:
+              raise SystemExit('BCO_PROVIDER_READBACK_MUTATION_BOUNDARY_VIOLATED')
+          for key in ('provider_effect_authorized', 'financial_effect_authorized', 'publication_authorized'):
+              if payload.get(key) is not False:
+                  raise SystemExit(f'BCO_PROVIDER_READBACK_UNEXPECTED_AUTHORITY:{key}')
+          if payload.get('resume_state') != 'RESUMED_EVENT_REPLAY_CHECKPOINT_VALIDATED':
+              raise SystemExit('BCO_PROVIDER_READBACK_RESTART_NOT_PROVEN')
+
+          observed = payload.get('observed_level')
+          state = payload.get('state')
+          request_state = payload.get('request_state')
+          pending = payload.get('pending_request_count')
+          if observed == 'ACTION_SPECIFIC_AUTHENTICATED_READ':
+              if state != 'PROVIDER_READBACK_BOUND' or request_state != 'RESOLVED' or pending != 0:
+                  raise SystemExit('BCO_PROVIDER_READBACK_FALSE_PASS_STATE')
+              print('BCO_PROVIDER_READBACK_ACTION_SPECIFIC_AUTHENTICATED_READ_BOUND')
+          else:
+              if state != 'HOLD_PROVIDER_READBACK_FLOOR_UNMET' or request_state != 'PENDING' or pending != 1:
+                  raise SystemExit('BCO_PROVIDER_READBACK_FALSE_PROMOTION')
+              print(f'BCO_PROVIDER_READBACK_HELD_AT_OBSERVED_LEVEL={observed}')
+          PY
+
+      - name: Publish BC-Omega provider proof-floor summary
+        if: always() && hashFiles('bco-provider-readback-output/continuity.json') != ''
+        shell: bash
+        run: |
+          echo '## BC-Omega Provider Readback Continuity' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat bco-provider-readback-output/continuity.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable BC-Omega provider proof-floor receipt
+        if: always() && hashFiles('bco-provider-readback-output/continuity.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: bco-provider-readback-continuity-${{ github.event.workflow_run.id }}-${{ github.run_attempt }}
+          path: |
+            bco-provider-readback-output/prepare.json
+            bco-provider-readback-output/continuity.json
+          if-no-files-found: error
+          retention-days: 90
