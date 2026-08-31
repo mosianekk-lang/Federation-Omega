@@ -1,14 +1,12 @@
 from .core import (
     AdmissionReport,
     ImpactAssessment,
-    ImpactCompiler,
     ImpactError,
     OmittedTest,
     PolicyError,
     ProofCache,
     ProofManifest,
     ProofOSError,
-    ProofPolicy,
     ProofRunner,
     ProofSelector,
     RiskTier,
@@ -22,6 +20,8 @@ from .core import (
     proof_key_for_test,
     sha256_json,
 )
+from .policy import ProofPolicy
+from .impact import ImpactCompiler
 from .cfbe import (
     BenchmarkObservation,
     CFBEAdmissionComparator,
