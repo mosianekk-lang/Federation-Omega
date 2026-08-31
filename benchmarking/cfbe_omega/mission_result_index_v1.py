@@ -1,6 +1,7 @@
 from __future__ import annotations
 
-from dataclasses import dataclass
+from dataclasses import dataclass, replace
+from datetime import datetime
 from hashlib import sha256
 import json
 from pathlib import Path
@@ -23,6 +24,25 @@ def _canonical(value: Any) -> str:
 
 def _digest(value: Any) -> str:
     return sha256(_canonical(value).encode("utf-8")).hexdigest()
+
+
+def _aware_datetime(value: str, label: str) -> datetime:
+    normalized = str(value).strip()
+    if normalized.endswith("Z"):
+        normalized = normalized[:-1] + "+00:00"
+    try:
+        parsed = datetime.fromisoformat(normalized)
+    except ValueError as exc:
+        raise ValueError(f"{label}_ISO8601_REQUIRED") from exc
+    if parsed.tzinfo is None or parsed.utcoffset() is None:
+        raise ValueError(f"{label}_TIMEZONE_REQUIRED")
+    return parsed
+
+
+def _identity_without_freshness(mapping: dict[str, object]) -> dict[str, object]:
+    body = dict(mapping)
+    body.pop("fresh_until", None)
+    return body
 
 
 @dataclass(frozen=True, slots=True)
@@ -120,19 +140,34 @@ class DurableMissionResultIndex:
         record = self._records.get(identity.cache_key)
         if record is None:
             return lookup_mission_result(DeterministicResultCache(), identity, now=now)
-        if record.identity != identity.canonical_mapping():
+
+        requested_mapping = identity.canonical_mapping()
+        if _identity_without_freshness(record.identity) != _identity_without_freshness(requested_mapping):
             raise ValueError("RESULT_INDEX_IDENTITY_MISMATCH")
+
+        stored_fresh_until = str(record.identity.get("fresh_until", ""))
+        stored_freshness = _aware_datetime(stored_fresh_until, "RESULT_INDEX_STORED_FRESH_UNTIL")
+        requested_freshness = _aware_datetime(identity.fresh_until, "RESULT_INDEX_REQUESTED_FRESH_UNTIL")
+        effective_fresh_until = (
+            stored_fresh_until if stored_freshness <= requested_freshness else identity.fresh_until
+        )
+        effective_identity = replace(identity, fresh_until=effective_fresh_until)
+
+        freshness_probe = lookup_mission_result(DeterministicResultCache(), effective_identity, now=now)
+        if freshness_probe.state == "HOLD_FRESHNESS_EXPIRED":
+            return freshness_probe
+
         cache = DeterministicResultCache()
         record_mission_result(
             cache,
-            identity,
+            effective_identity,
             result_ref=record.result_ref,
             result_sha256=record.result_sha256,
             proof_refs=record.proof_refs,
             recorded_at=record.recorded_at,
             now=now,
         )
-        return lookup_mission_result(cache, identity, now=now)
+        return lookup_mission_result(cache, effective_identity, now=now)
 
     def record(
         self,
