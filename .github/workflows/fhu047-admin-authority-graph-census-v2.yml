@@ -1,0 +1,134 @@
+name: FHU-047 Admin Authority Graph Census v2
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: fhu047-admin-authority-graph-census-v2
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  authority-graph-census:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FHU047_ADMIN_AUTHORITY_GRAPH_CENSUS_V2_20260901_0155_SAST' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud action
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Walk existing Token Creator delegation graph without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fhu047-authority-graph
+          SOVARA_RECEIPT_DIR=fhu047-authority-graph \
+            python3 sovara/gemini/admin_authority_census.py \
+            | tee fhu047-authority-graph/census-summary.json
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+
+          source=Path('fhu047-authority-graph/PROJECT_IAM_AUTHORITY_CENSUS.json')
+          p=json.loads(source.read_text(encoding='utf-8'))
+          assert p.get('project_id') == 'sov-hybrid-suite', p
+          assert str(p.get('project_number')) == '257649435135', p
+          assert p.get('provider_mutation_performed') is False, p
+          assert p.get('credential_values_recorded') is False, p
+          assert p.get('secret_payload_accessed') is False, p
+
+          owner_nodes={
+              n.get('principal')
+              for n in p.get('authority_nodes') or []
+              if 'roles/owner' in set(n.get('project_roles') or [])
+          }
+          usable=[]
+          for row in p.get('verified_admin_delegation_paths') or []:
+              target=row.get('target')
+              if target in owner_nodes and row.get('impersonation_verified') is True and row.get('project_set_iam_policy') is True:
+                  usable.append({
+                      'target':target,
+                      'delegates':row.get('delegates') or [],
+                      'path':row.get('path') or [],
+                      'project_set_iam_policy':True,
+                      'owner_role_verified':True,
+                  })
+
+          direct=p.get('direct_impersonation_tests') or {}
+          for target, row in direct.items():
+              if target in owner_nodes and row.get('impersonation_verified') is True and row.get('project_set_iam_policy') is True:
+                  candidate={
+                      'target':target,
+                      'delegates':[],
+                      'path':['superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com',target],
+                      'project_set_iam_policy':True,
+                      'owner_role_verified':True,
+                  }
+                  if candidate not in usable:
+                      usable.append(candidate)
+
+          decision={
+              'schema':'CFBE_FHU047_ADMIN_AUTHORITY_GRAPH_DECISION_V2',
+              'state':'REUSABLE_OWNER_ROUTE_VERIFIED' if usable else 'NO_REUSABLE_OWNER_ROUTE_VERIFIED',
+              'project_id':'sov-hybrid-suite',
+              'project_number':'257649435135',
+              'source_receipt_sha256':p.get('receipt_sha256'),
+              'owner_candidate_count':len(owner_nodes),
+              'usable_route_count':len(usable),
+              'usable_routes':usable,
+              'provider_mutation_performed':False,
+              'iam_mutation_performed':False,
+              'service_account_key_used':False,
+              'secret_payload_accessed':False,
+          }
+          raw=json.dumps(decision,sort_keys=True,separators=(',',':')).encode()
+          decision['receipt_sha256']=hashlib.sha256(raw).hexdigest()
+          Path('fhu047-authority-graph/decision.json').write_text(
+              json.dumps(decision,indent=2,sort_keys=True)+'\n',encoding='utf-8'
+          )
+          print(json.dumps({
+              'state':decision['state'],
+              'owner_candidate_count':decision['owner_candidate_count'],
+              'usable_route_count':decision['usable_route_count'],
+              'usable_targets':[x['target'] for x in usable],
+              'receipt_sha256':decision['receipt_sha256'],
+          },sort_keys=True))
+          PY
+
+      - name: Upload immutable delegated-authority evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fhu047-admin-authority-graph-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: fhu047-authority-graph/
+          if-no-files-found: error
+          retention-days: 90
