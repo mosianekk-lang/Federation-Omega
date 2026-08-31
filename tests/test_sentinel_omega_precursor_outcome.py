@@ -74,8 +74,9 @@ class PrecursorOutcomeResolverTests(unittest.TestCase):
         self.resolver = PrecursorOutcomeResolver()
 
     def test_watch_then_heartbeat_before_precursor_is_on_time_after_warning(self):
-        p = prediction_at(70)
-        heartbeat = datetime.fromisoformat(p.precursor_at) - timedelta(seconds=1)
+        p = prediction_at(61.5)
+        heartbeat = datetime.fromisoformat(p.precursor_at) - timedelta(seconds=10)
+        self.assertGreater(heartbeat, datetime.fromisoformat(p.assessed_at))
         result = self.resolver.resolve(
             p,
             PrecursorOutcomeEvidence(
