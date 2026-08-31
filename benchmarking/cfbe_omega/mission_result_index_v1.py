@@ -122,6 +122,15 @@ class DurableMissionResultIndex:
             return lookup_mission_result(DeterministicResultCache(), identity, now=now)
         if record.identity != identity.canonical_mapping():
             raise ValueError("RESULT_INDEX_IDENTITY_MISMATCH")
+
+        # Freshness is a reuse-time lease, not a reason to reject an already
+        # admitted historical record while reconstructing the in-process cache.
+        # Check the lease first so expired durable entries fail closed as a HOLD
+        # without weakening DeterministicAction.validate() or replaying effects.
+        lease = lookup_mission_result(DeterministicResultCache(), identity, now=now)
+        if lease.state == "HOLD_FRESHNESS_EXPIRED":
+            return lease
+
         cache = DeterministicResultCache()
         record_mission_result(
             cache,
