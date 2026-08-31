@@ -10,12 +10,12 @@ from pathlib import Path
 
 from .core import (
     ProofCache,
-    ProofPolicy,
     ProofRunner,
     ProofSelector,
     changed_paths_from_git,
     load_manifest,
 )
+from .policy import ProofPolicy
 from .impact import ImpactCompiler
 
 
