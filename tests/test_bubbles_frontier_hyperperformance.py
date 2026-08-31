@@ -64,6 +64,60 @@ class WorkCellAllocatorTests(unittest.TestCase):
         self.assertEqual(decision.state, "HOLD_INSUFFICIENT_FAILURE_DOMAIN_DIVERSITY")
         self.assertLess(len(decision.selected_cell_ids), 2)
 
+    def test_wave_allocation_is_deterministic_and_capacity_aware(self):
+        allocator = WorkCellAllocator()
+        cells = (
+            WorkCell("cell-a", ("provider-a", "zone-1"), capacity=2),
+            WorkCell("cell-b", ("provider-b", "zone-2"), capacity=2),
+        )
+        first = allocator.allocate_wave(("w1", "w2", "w3", "w4"), cells)
+        second = allocator.allocate_wave(("w1", "w2", "w3", "w4"), cells)
+        self.assertEqual(first.state, "WAVE_ALLOCATED")
+        self.assertEqual(first.allocation_digest, second.allocation_digest)
+        self.assertEqual(first.occupancy, (("cell-a", 2), ("cell-b", 2)))
+        self.assertEqual(set(first.saturated_cell_ids), {"cell-a", "cell-b"})
+        self.assertFalse(first.backpressure_work_ids)
+
+    def test_wave_capacity_exhaustion_backpressures_without_partial_occupancy(self):
+        cells = (
+            WorkCell("cell-a", ("provider-a", "zone-1"), capacity=1),
+            WorkCell("cell-b", ("provider-b", "zone-2"), capacity=1),
+        )
+        decision = WorkCellAllocator().allocate_wave(("w1", "w2", "w3"), cells)
+        self.assertEqual(decision.state, "WAVE_BACKPRESSURE")
+        self.assertEqual(sum(value for _, value in decision.occupancy), 2)
+        self.assertEqual(len(decision.backpressure_work_ids), 1)
+        held = next(item for item in decision.placements if item.work_id in decision.backpressure_work_ids)
+        self.assertEqual(held.state, "HOLD_INSUFFICIENT_CAPACITY_OR_FAILURE_DOMAIN_DIVERSITY")
+
+    def test_wave_spills_away_from_pre_saturated_cell(self):
+        cells = (
+            WorkCell("cell-a", ("provider-a", "zone-1"), capacity=1),
+            WorkCell("cell-b", ("provider-b", "zone-2"), capacity=2),
+        )
+        decision = WorkCellAllocator().allocate_wave(
+            ("w1",),
+            cells,
+            initial_occupancy={"cell-a": 1},
+        )
+        self.assertEqual(decision.state, "WAVE_ALLOCATED")
+        self.assertEqual(decision.placements[0].selected_cell_ids, ("cell-b",))
+        self.assertIn("cell-a", decision.placements[0].excluded_cell_ids)
+
+    def test_wave_invalid_initial_occupancy_fails_closed(self):
+        with self.assertRaisesRegex(ValueError, "INITIAL_OCCUPANCY_UNKNOWN_CELL"):
+            WorkCellAllocator().allocate_wave(
+                ("w1",),
+                self._cells(),
+                initial_occupancy={"missing": 1},
+            )
+        with self.assertRaisesRegex(ValueError, "INITIAL_OCCUPANCY_INVALID"):
+            WorkCellAllocator().allocate_wave(
+                ("w1",),
+                self._cells(),
+                initial_occupancy={"cell-a": 99},
+            )
+
 
 class DeterministicResultCacheTests(unittest.TestCase):
     def _action(self, *, source=SHA_A, input_digest=SHA_B, environment=SHA_C, effect="NO_EFFECT"):
