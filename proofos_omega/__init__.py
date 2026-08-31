@@ -1,7 +1,6 @@
 from .core import (
     AdmissionReport,
     ImpactAssessment,
-    ImpactCompiler,
     ImpactError,
     OmittedTest,
     PolicyError,
@@ -22,6 +21,7 @@ from .core import (
     proof_key_for_test,
     sha256_json,
 )
+from .impact import ImpactCompiler
 from .cfbe import (
     BenchmarkObservation,
     CFBEAdmissionComparator,
