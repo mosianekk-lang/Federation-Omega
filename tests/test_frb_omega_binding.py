@@ -64,6 +64,45 @@ def observation(
     )
 
 
+def make_runtime(root: Path, interfaces: tuple[str, ...]):
+    registry = CapabilityRegistry(root / "capability_registry.jsonl")
+    registered = registry.register(
+        CapabilitySpec(
+            capability_id="operational-sandbox-fleet",
+            version="1.1.0",
+            purpose="Disposable operational sandbox",
+            interfaces=interfaces,
+            providers=("github-actions",),
+            fitness={"correctness": 1.0},
+            proof_refs=("PROOF-P06",),
+        )
+    )
+    discovery = CapabilityRegistryDiscovery(
+        registry,
+        qualifications=(
+            CapabilityQualification(
+                registered["fingerprint"],
+                "OPERATIONAL_VERIFIED",
+                ("PROOF-P06",),
+            ),
+        ),
+    )
+    sandbox = OperationalSandbox(
+        SandboxPolicy(
+            timeout_seconds=1.0,
+            max_output_bytes=2048,
+            max_artifact_bytes=100_000,
+            allowed_executables=(sys.executable,),
+        ),
+        ReceiptLedger(root / "sandbox_ledger.jsonl"),
+    )
+    return IdeaSystemBuildRuntime(
+        discovery,
+        PersistentWorkspace(root / "workspace.jsonl"),
+        sandbox,
+    )
+
+
 class FRBOmegaBindingTests(unittest.TestCase):
     def test_stale_high_fit_resource_never_becomes_reusable(self) -> None:
         broker = FRBOmegaBinding(
@@ -170,42 +209,7 @@ class FRBBoundIdeaSystemRuntimeTests(unittest.TestCase):
     def test_broker_selected_registry_slice_drives_compiler_reuse(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             root = Path(tmp)
-            registry = CapabilityRegistry(root / "capability_registry.jsonl")
-            registered = registry.register(
-                CapabilitySpec(
-                    capability_id="operational-sandbox-fleet",
-                    version="1.1.0",
-                    purpose="Disposable operational sandbox",
-                    interfaces=("CODE_SANDBOX", "TEST_EVALUATION"),
-                    providers=("github-actions",),
-                    fitness={"correctness": 1.0},
-                    proof_refs=("PROOF-P06",),
-                )
-            )
-            discovery = CapabilityRegistryDiscovery(
-                registry,
-                qualifications=(
-                    CapabilityQualification(
-                        registered["fingerprint"],
-                        "OPERATIONAL_VERIFIED",
-                        ("PROOF-P06",),
-                    ),
-                ),
-            )
-            sandbox = OperationalSandbox(
-                SandboxPolicy(
-                    timeout_seconds=1.0,
-                    max_output_bytes=2048,
-                    max_artifact_bytes=100_000,
-                    allowed_executables=(sys.executable,),
-                ),
-                ReceiptLedger(root / "sandbox_ledger.jsonl"),
-            )
-            runtime = IdeaSystemBuildRuntime(
-                discovery,
-                PersistentWorkspace(root / "workspace.jsonl"),
-                sandbox,
-            )
+            runtime = make_runtime(root, ("CODE_SANDBOX", "TEST_EVALUATION"))
             broker = FRBOmegaBinding(
                 (
                     observation(
@@ -222,6 +226,22 @@ class FRBBoundIdeaSystemRuntimeTests(unittest.TestCase):
             selection = bound.selection_for(plan)
             self.assertEqual(("operational-sandbox-fleet",), selection.selected_resource_ids)
             self.assertIn("SCAFFOLD_BUILD", selection.unresolved_capabilities)
+
+    def test_broker_observation_cannot_invent_unregistered_capability(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            root = Path(tmp)
+            runtime = make_runtime(root, ("CODE_SANDBOX",))
+            broker = FRBOmegaBinding(
+                (
+                    observation(
+                        "operational-sandbox-fleet",
+                        ("CODE_SANDBOX", "TEST_EVALUATION"),
+                    ),
+                )
+            )
+            bound = FRBBoundIdeaSystemRuntime(runtime, broker)
+            with self.assertRaisesRegex(ValueError, "cannot extend registered capability surface"):
+                bound.plan("Build a small API and test it.", source_frontier="main@test")
 
 
 if __name__ == "__main__":
