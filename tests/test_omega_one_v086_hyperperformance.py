@@ -322,6 +322,37 @@ class DeliveryAndProofOSBindingTests(unittest.TestCase):
         self.assertAlmostEqual(result["canonical_receipt_reduction_ratio"], 2 / 3)
         self.assertIn("NO_PROVIDER", result["truth_boundary"])
 
+    def test_host_observation_requires_thirty_pairs_and_exact_runtime_identity(self):
+        with self.assertRaisesRegex(ValueError, "HOST_OBSERVED_MINIMUM_30_PAIRS_REQUIRED"):
+            run_campaign(
+                pair_count=29,
+                operations=1,
+                attempts=1,
+                observation_source="GITHUB_ACTIONS_HOST_OBSERVED_NO_EFFECT",
+                runtime_run_id="123",
+                source_sha="a" * 40,
+                runtime_environment="github-hosted",
+            )
+        with self.assertRaisesRegex(ValueError, "HOST_OBSERVED_RUNTIME_RUN_ID_REQUIRED"):
+            run_campaign(
+                pair_count=30,
+                operations=1,
+                attempts=1,
+                observation_source="GITHUB_ACTIONS_HOST_OBSERVED_NO_EFFECT",
+                source_sha="a" * 40,
+                runtime_environment="github-hosted",
+            )
+        with self.assertRaisesRegex(ValueError, "HOST_OBSERVED_40_HEX_SOURCE_SHA_REQUIRED"):
+            run_campaign(
+                pair_count=30,
+                operations=1,
+                attempts=1,
+                observation_source="GITHUB_ACTIONS_HOST_OBSERVED_NO_EFFECT",
+                runtime_run_id="123",
+                source_sha="not-a-sha",
+                runtime_environment="github-hosted",
+            )
+
     def test_only_exact_full_capability_mappings_gain_local_maturity(self):
         verdicts = {
             verdict.capability_id: verdict

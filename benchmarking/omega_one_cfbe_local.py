@@ -13,6 +13,7 @@ import argparse
 import gc
 import hashlib
 import json
+import re
 import statistics
 import time
 import tracemalloc
@@ -27,6 +28,9 @@ from omega_one.hyperperformance import (
     canonical_sha256,
     evaluate_paired_campaign,
 )
+
+LOCAL_OBSERVATION_SOURCE = "LOCAL_OBSERVED_NON_PROVIDER"
+GITHUB_HOST_OBSERVATION_SOURCE = "GITHUB_ACTIONS_HOST_OBSERVED_NO_EFFECT"
 
 
 def _digest(value: object) -> str:
@@ -89,9 +93,28 @@ def run_campaign(
     pair_count: int = 30,
     operations: int = 200,
     attempts: int = 4,
+    observation_source: str = LOCAL_OBSERVATION_SOURCE,
+    runtime_run_id: str | None = None,
+    source_sha: str | None = None,
+    runtime_environment: str | None = None,
 ) -> dict[str, object]:
     if pair_count < 1 or operations < 1 or attempts < 1:
         raise ValueError("pair_count, operations and attempts must be positive")
+    if observation_source not in {
+        LOCAL_OBSERVATION_SOURCE,
+        GITHUB_HOST_OBSERVATION_SOURCE,
+    }:
+        raise ValueError("UNSUPPORTED_OBSERVATION_SOURCE")
+    host_observed = observation_source == GITHUB_HOST_OBSERVATION_SOURCE
+    if host_observed:
+        if pair_count < 30:
+            raise ValueError("HOST_OBSERVED_MINIMUM_30_PAIRS_REQUIRED")
+        if not runtime_run_id or not runtime_run_id.strip():
+            raise ValueError("HOST_OBSERVED_RUNTIME_RUN_ID_REQUIRED")
+        if not source_sha or not re.fullmatch(r"[0-9a-f]{40}", source_sha):
+            raise ValueError("HOST_OBSERVED_40_HEX_SOURCE_SHA_REQUIRED")
+        if runtime_environment != "github-hosted":
+            raise ValueError("GITHUB_HOSTED_RUNTIME_ENVIRONMENT_REQUIRED")
 
     baseline_function = lambda: _baseline(
         operations=operations, attempts=attempts
@@ -114,17 +137,22 @@ def run_campaign(
         baseline_ms.append(baseline_latency)
         candidate_ms.append(candidate_latency)
         oracle = _digest({"operations": operations, "successful": operations})
+        mission_id = (
+            f"github-actions://{runtime_run_id}/{source_sha}/omega-one-pair-{index + 1}"
+            if host_observed
+            else f"local-pair-{index}"
+        )
         observations.append(
             PairedMissionObservation(
                 MissionMeasurement(
-                    f"local-pair-{index}",
+                    mission_id,
                     oracle,
                     baseline_latency,
                     0.5,
                     canonical_receipt_count=attempts,
                 ),
                 MissionMeasurement(
-                    f"local-pair-{index}",
+                    mission_id,
                     oracle,
                     candidate_latency,
                     1.0,
@@ -146,9 +174,9 @@ def run_campaign(
     )
     baseline_peak = _peak_bytes(baseline_function)
     candidate_peak = _peak_bytes(candidate_function)
-    return {
+    receipt: dict[str, object] = {
         "schema": "OMEGA_ONE_CFBE_LOCAL_BENCHMARK_V3",
-        "source": "LOCAL_OBSERVED_NON_PROVIDER",
+        "source": LOCAL_OBSERVATION_SOURCE,
         "candidate_route": "PREHASHED_RECOVERED_REPLAY_BATCH",
         "pair_count": pair_count,
         "operations_per_pair": operations,
@@ -168,6 +196,41 @@ def run_campaign(
         "peak_memory_reduction_ratio": 1 - (candidate_peak / baseline_peak),
         "truth_boundary": verdict.truth_boundary,
     }
+    if host_observed:
+        qualified = verdict.state == "QUALIFIED_LOCAL"
+        receipt.update(
+            {
+                "schema": "OMEGA_ONE_CFBE_HOST_OBSERVED_BENCHMARK_V1",
+                "source": GITHUB_HOST_OBSERVATION_SOURCE,
+                "provider_host": "GITHUB_ACTIONS",
+                "runtime_environment": runtime_environment,
+                "runtime_run_id": runtime_run_id,
+                "source_sha": source_sha,
+                "observed_pair_count": pair_count,
+                "cold_replayable_pair_count": pair_count,
+                "cold_state_reset_per_candidate_invocation": True,
+                "baseline_recreated_per_invocation": True,
+                "semantic_parity": qualified,
+                "one_canonical_receipt_per_mission": candidate_count == operations,
+                "provider_effects": False,
+                "external_effect": False,
+                "manual_interventions": 0,
+                "stable_promotion_allowed": False,
+                "campaign_state": (
+                    "QUALIFIED_HOST_OBSERVED_NO_EFFECT"
+                    if qualified
+                    else "HOST_OBSERVED_HOLD"
+                ),
+                "truth_boundary": (
+                    "This receipt proves paired Omega-One replay-finalization code execution "
+                    "inside one source-bound GitHub-hosted Actions job with fresh candidate "
+                    "state and recreated baseline state for every invocation. It does not "
+                    "prove live provider behavior, production deployment, owner-value "
+                    "improvement, H2 segmentation, soak completion, or stable promotion."
+                ),
+            }
+        )
+    return receipt
 
 
 def main() -> int:
