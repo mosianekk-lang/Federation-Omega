@@ -27,6 +27,178 @@ env:
   EXPECTED_MAPPING: "google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref"
 
 jobs:
+  authority-census:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FHU047_ADMIN_AUTHORITY_CENSUS_V1_20260901_0150_SAST' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate through existing canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud action
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Discover reusable higher-authority route without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fhu047-authority
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > /tmp/project-policy.json
+          python - <<'PY'
+          from __future__ import annotations
+          import hashlib, json, os, subprocess, urllib.error, urllib.request
+          from pathlib import Path
+
+          project=os.environ['PROJECT_ID']
+          region=os.environ['REGION']
+          service=os.environ['SERVICE']
+          repo=os.environ['AR_REPO']
+          deployer=os.environ['DEPLOYER_SA']
+          policy=json.load(open('/tmp/project-policy.json',encoding='utf-8'))
+
+          wif_admin_roles={
+              'roles/owner',
+              'roles/iam.admin',
+              'roles/iam.workloadIdentityPoolAdmin',
+          }
+          service_iam_roles={
+              'roles/owner',
+              'roles/iam.securityAdmin',
+              'roles/run.admin',
+              'roles/cloudfunctions.admin',
+              'roles/firebase.admin',
+          }
+          artifact_iam_roles={
+              'roles/owner',
+              'roles/iam.securityAdmin',
+              'roles/artifactregistry.admin',
+              'roles/artifactregistry.containerRegistryMigrationAdmin',
+          }
+
+          roles_by_sa={}
+          for binding in policy.get('bindings') or []:
+              if binding.get('condition'):
+                  continue
+              role=str(binding.get('role') or '')
+              for member in binding.get('members') or []:
+                  if isinstance(member,str) and member.startswith('serviceAccount:'):
+                      sa=member.split(':',1)[1]
+                      roles_by_sa.setdefault(sa,set()).add(role)
+
+          candidates=[]
+          for sa,roles in sorted(roles_by_sa.items()):
+              if not (roles & wif_admin_roles):
+                  continue
+              candidates.append({'service_account':sa,'roles':sorted(roles)})
+
+          def run(*args):
+              return subprocess.run(args,text=True,capture_output=True,check=False)
+
+          def impersonation_args(sa):
+              return [f'--impersonate-service-account={sa}','--lifetime=600']
+
+          def token_for(sa):
+              p=run('gcloud','auth','print-access-token',*impersonation_args(sa))
+              return p.stdout.strip() if p.returncode==0 else ''
+
+          def test_permissions(token,url,permissions):
+              body=json.dumps({'permissions':permissions},separators=(',',':')).encode()
+              req=urllib.request.Request(url,data=body,method='POST',headers={
+                  'Authorization':f'Bearer {token}',
+                  'Content-Type':'application/json',
+                  'X-Goog-User-Project':project,
+              })
+              try:
+                  with urllib.request.urlopen(req,timeout=30) as r:
+                      payload=json.loads(r.read().decode() or '{}')
+                      return r.status,sorted(payload.get('permissions') or [])
+              except urllib.error.HTTPError as e:
+                  return e.code,[]
+
+          results=[]
+          for item in candidates:
+              sa=item['service_account']
+              roles=set(item['roles'])
+              token=token_for(sa)
+              direct=bool(token)
+              run_status=ar_status=None
+              run_granted=[]; ar_granted=[]
+              if token:
+                  run_status,run_granted=test_permissions(
+                      token,
+                      f'https://run.googleapis.com/v1/projects/{project}/locations/{region}/services/{service}:testIamPermissions',
+                      ['run.services.setIamPolicy'],
+                  )
+                  ar_status,ar_granted=test_permissions(
+                      token,
+                      f'https://artifactregistry.googleapis.com/v1/projects/{project}/locations/{region}/repositories/{repo}:testIamPermissions',
+                      ['artifactregistry.repositories.setIamPolicy'],
+                  )
+              wif_role_ok=bool(roles & wif_admin_roles)
+              run_ok='run.services.setIamPolicy' in run_granted or bool(roles & service_iam_roles)
+              ar_ok='artifactregistry.repositories.setIamPolicy' in ar_granted or bool(roles & artifact_iam_roles)
+              results.append({
+                  'service_account':sa,
+                  'project_roles':sorted(roles),
+                  'direct_impersonation_verified':direct,
+                  'wif_provider_update_role_verified':wif_role_ok,
+                  'run_set_iam_verified':run_ok,
+                  'artifact_set_iam_verified':ar_ok,
+                  'run_test_http_status':run_status,
+                  'artifact_test_http_status':ar_status,
+                  'usable_for_exact_fhu047':direct and wif_role_ok and run_ok and ar_ok,
+              })
+
+          usable=[x for x in results if x['usable_for_exact_fhu047']]
+          receipt={
+              'schema':'CFBE_FHU047_ADMIN_AUTHORITY_CENSUS_V1',
+              'state':'REUSABLE_ADMIN_ROUTE_VERIFIED' if usable else 'NO_DIRECT_REUSABLE_ADMIN_ROUTE',
+              'project_id':project,
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'active_identity':deployer,
+              'candidate_service_account_count':len(candidates),
+              'usable_route_count':len(usable),
+              'candidates':results,
+              'provider_mutation_performed':False,
+              'iam_mutation_performed':False,
+              'secret_payload_accessed':False,
+              'service_account_key_used':False,
+          }
+          raw=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
+          receipt['receipt_sha256']=hashlib.sha256(raw).hexdigest()
+          Path('fhu047-authority/census.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({
+              'state':receipt['state'],
+              'candidate_service_account_count':receipt['candidate_service_account_count'],
+              'usable_route_count':receipt['usable_route_count'],
+              'usable_service_accounts':[x['service_account'] for x in usable],
+              'receipt_sha256':receipt['receipt_sha256'],
+          },sort_keys=True))
+          PY
+
+      - name: Upload bounded authority census
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fhu047-admin-authority-census-${{ github.run_id }}-${{ github.run_attempt }}
+          path: fhu047-authority/census.json
+          if-no-files-found: error
+          retention-days: 90
+
   apply-once:
     if: >-
       github.event.issue.title == '[FO-DISPATCH] FHU047_WIF_LEAST_PRIVILEGE_ONCE_20260901_0142_SAST' &&
