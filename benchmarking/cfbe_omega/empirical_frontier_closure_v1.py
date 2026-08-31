@@ -116,7 +116,7 @@ class EmpiricalFrontierClosure:
                 "hosted_is_not_serving_provider_deployment": True,
                 "source_is_not_provider_proof": True,
                 "credential_hold_is_not_capability_failure": True,
-                "owner_value_requires_measured_matched_pairs": True,
+                "owner_value_requires_measured_matched_pairs_and_court_verification": True,
                 "provider_effect_authority_not_granted": True,
                 "stable_promotion_not_granted": True,
             },
@@ -159,22 +159,27 @@ def _lane(
     ).validate()
 
 
-def current_snapshot(*, owner_value_pairs: int = 0) -> EmpiricalFrontierClosure:
+def current_snapshot(
+    *,
+    owner_value_pairs: int = 0,
+    owner_value_court_verified: bool = False,
+) -> EmpiricalFrontierClosure:
     """Return the verified Bubbles–CFBE Ω empirical state at this snapshot.
 
-    ``owner_value_pairs`` may only be supplied from the existing proof-bound
-    owner-value ingress/court. This function deliberately cannot synthesize
-    owner minutes, interventions, corrections, acceptance, or readback.
+    Owner-value promotion is fail-closed: a raw pair count can never promote the
+    lane. The caller must supply both the measured-pair count and an affirmative
+    result from the existing owner-value court. The closure compiler itself
+    cannot synthesize owner minutes, interventions, corrections, acceptance, or
+    independent readback.
     """
     if owner_value_pairs < 0:
         raise ValueError("OWNER_VALUE_PAIR_COUNT_NONNEGATIVE_REQUIRED")
+    if owner_value_court_verified and owner_value_pairs < MINIMUM_OWNER_VALUE_PAIRS:
+        raise ValueError("OWNER_VALUE_COURT_CANNOT_VERIFY_SUBMINIMUM_COHORT")
 
-    owner_state = (
-        ProofState.HOSTED_VERIFIED
-        if owner_value_pairs >= MINIMUM_OWNER_VALUE_PAIRS
-        else ProofState.HOLD_REAL_OBSERVATIONS
-    )
-    owner_gate = None if owner_state is ProofState.HOSTED_VERIFIED else "MINIMUM_10_OBSERVED_OWNER_VALUE_PAIRS_REQUIRED"
+    owner_proven = owner_value_court_verified and owner_value_pairs >= MINIMUM_OWNER_VALUE_PAIRS
+    owner_state = ProofState.HOSTED_VERIFIED if owner_proven else ProofState.HOLD_REAL_OBSERVATIONS
+    owner_gate = None if owner_proven else "MINIMUM_10_COURT_VERIFIED_OWNER_VALUE_PAIRS_REQUIRED"
 
     lanes = (
         _lane(
@@ -337,11 +342,13 @@ def current_snapshot(*, owner_value_pairs: int = 0) -> EmpiricalFrontierClosure:
                 "evidenceops/caseforge/owner_value_deployment_court_v2.py",
                 "federation/sentinel_omega/owner_value_ingress.py",
                 f"observed-owner-value-pairs:{owner_value_pairs}",
+                f"owner-value-court-verified:{str(owner_value_court_verified).lower()}",
             ),
             (
                 "proof-bound pair compiler exists",
                 "minimum cohort is 10 measured pairs",
                 "independent readback required",
+                "court verification required in addition to pair count",
                 "owner minutes/interventions/clarifications/corrections cannot be inferred",
             ),
             owner_gate,
@@ -394,9 +401,16 @@ def held_external_lanes(closure: EmpiricalFrontierClosure) -> tuple[str, ...]:
     return tuple(sorted(set(held)))
 
 
-def render_json(*, owner_value_pairs: int = 0) -> str:
+def render_json(
+    *,
+    owner_value_pairs: int = 0,
+    owner_value_court_verified: bool = False,
+) -> str:
     return json.dumps(
-        current_snapshot(owner_value_pairs=owner_value_pairs).to_dict(),
+        current_snapshot(
+            owner_value_pairs=owner_value_pairs,
+            owner_value_court_verified=owner_value_court_verified,
+        ).to_dict(),
         indent=2,
         sort_keys=True,
     ) + "\n"
