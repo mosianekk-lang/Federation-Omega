@@ -34,7 +34,7 @@ class BubblesAutonomyValueCourtTests(unittest.TestCase):
             clarification_count=clarifications,
             correction_count=corrections,
             observed_at="2026-08-31T20:00:00+02:00",
-            proof_refs=proof_refs or (f"proof:{pair_id}:{variant}",),
+            proof_refs=(f"proof:{pair_id}:{variant}",) if proof_refs is None else proof_refs,
             evidence_class=evidence_class,
         )
 
