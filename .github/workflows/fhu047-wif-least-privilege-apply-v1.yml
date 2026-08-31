@@ -1,0 +1,244 @@
+name: FHU-047 WIF Least-Privilege Apply v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: fhu047-wif-least-privilege-apply-v1
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  SERVICE: architron9
+  AR_REPO: federation-omega
+  POOL_ID: github-federation-omega
+  PROVIDER_ID: github
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  EXPECTED_CONDITION: "assertion.repository=='mosianekk-lang/Federation-Omega' && assertion.ref=='refs/heads/main'"
+  EXPECTED_MAPPING: "google.subject=assertion.sub,attribute.repository=assertion.repository,attribute.repository_owner=assertion.repository_owner,attribute.ref=assertion.ref"
+
+jobs:
+  apply-once:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FHU047_WIF_LEAST_PRIVILEGE_ONCE_20260901_0142_SAST' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate through existing canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud action
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Preflight exact authorized delta and capture rollback state
+        id: preflight
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fhu047-output
+          bash ./ops/bootstrap_github_wif.sh --plan | tee fhu047-output/pre-plan.json
+          gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
+            --project "$PROJECT_ID" --location global \
+            --workload-identity-pool "$POOL_ID" --format=json \
+            > fhu047-output/pre-provider.json
+          gcloud run services get-iam-policy "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > fhu047-output/pre-service-iam.json
+          gcloud artifacts repositories get-iam-policy "$AR_REPO" \
+            --project "$PROJECT_ID" --location "$REGION" --format=json \
+            > fhu047-output/pre-artifact-iam.json
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          plan=json.load(open('fhu047-output/pre-plan.json',encoding='utf-8'))
+          expected={
+            'provider_attribute_condition',
+            'provider_attribute_mapping',
+            'cloud_run_developer_role',
+            'cloud_run_invoker_role',
+            'artifact_registry_writer_role',
+          }
+          observed=set(plan.get('missing_controls') or [])
+          assert plan['project']=='sov-hybrid-suite', plan
+          assert plan['project_number_observed']=='257649435135', plan
+          assert plan['active_account']=='superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com', plan
+          assert plan['pool_state']=='ACTIVE' and plan['provider_state']=='ACTIVE', plan
+          assert plan['wif_binding'] is True, plan
+          assert plan['service_usage_consumer'] is True, plan
+          assert plan['runtime_service_account_user'] is True, plan
+          assert plan['service_exists'] is True and plan['artifact_repository_exists'] is True, plan
+          assert not plan.get('missing_apis'), plan
+          assert observed == expected, {'observed':sorted(observed),'expected':sorted(expected)}
+          provider=json.load(open('fhu047-output/pre-provider.json',encoding='utf-8'))
+          mapping=provider.get('attributeMapping') or {}
+          Path('fhu047-output/pre-condition.txt').write_text(str(provider.get('attributeCondition') or '')+'\n',encoding='utf-8')
+          Path('fhu047-output/pre-mapping.txt').write_text(','.join(f'{k}={mapping[k]}' for k in sorted(mapping))+'\n',encoding='utf-8')
+          PY
+
+      - name: Apply only the five authorized missing controls
+        id: apply
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud iam workload-identity-pools providers update-oidc "$PROVIDER_ID" \
+            --project "$PROJECT_ID" --location global \
+            --workload-identity-pool "$POOL_ID" \
+            --issuer-uri="https://token.actions.githubusercontent.com" \
+            --attribute-mapping="$EXPECTED_MAPPING" \
+            --attribute-condition="$EXPECTED_CONDITION"
+          touch fhu047-output/provider-updated.marker
+
+          gcloud run services add-iam-policy-binding "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --role="roles/run.developer" \
+            --member="serviceAccount:${DEPLOYER_SA}" --quiet
+          touch fhu047-output/run-developer-added.marker
+
+          gcloud run services add-iam-policy-binding "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --role="roles/run.invoker" \
+            --member="serviceAccount:${DEPLOYER_SA}" --quiet
+          touch fhu047-output/run-invoker-added.marker
+
+          gcloud artifacts repositories add-iam-policy-binding "$AR_REPO" \
+            --project "$PROJECT_ID" --location "$REGION" \
+            --role="roles/artifactregistry.writer" \
+            --member="serviceAccount:${DEPLOYER_SA}" --quiet
+          touch fhu047-output/artifact-writer-added.marker
+
+      - name: Provider-native post-change verification
+        id: verify
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash ./ops/bootstrap_github_wif.sh --verify | tee fhu047-output/bootstrap-verify.json
+          gcloud iam workload-identity-pools providers describe "$PROVIDER_ID" \
+            --project "$PROJECT_ID" --location global \
+            --workload-identity-pool "$POOL_ID" --format=json \
+            > fhu047-output/post-provider.json
+          gcloud run services get-iam-policy "$SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > fhu047-output/post-service-iam.json
+          gcloud artifacts repositories get-iam-policy "$AR_REPO" \
+            --project "$PROJECT_ID" --location "$REGION" --format=json \
+            > fhu047-output/post-artifact-iam.json
+          python - <<'PY'
+          import hashlib,json,os
+          from pathlib import Path
+          verify=json.load(open('fhu047-output/bootstrap-verify.json',encoding='utf-8'))
+          assert verify['receipt']=='FEDOMEGA-WIF-CLOUD-VERIFIED', verify
+          assert verify['state']=='VERIFIED', verify
+          assert not verify.get('missing_controls'), verify
+          assert not verify.get('missing_apis'), verify
+          provider=json.load(open('fhu047-output/post-provider.json',encoding='utf-8'))
+          expected_condition=os.environ['EXPECTED_CONDITION']
+          expected_mapping={
+            'google.subject':'assertion.sub',
+            'attribute.repository':'assertion.repository',
+            'attribute.repository_owner':'assertion.repository_owner',
+            'attribute.ref':'assertion.ref',
+          }
+          assert provider.get('attributeCondition') == expected_condition, provider.get('attributeCondition')
+          assert provider.get('attributeMapping') == expected_mapping, provider.get('attributeMapping')
+          member='serviceAccount:'+os.environ['DEPLOYER_SA']
+          service=json.load(open('fhu047-output/post-service-iam.json',encoding='utf-8'))
+          artifact=json.load(open('fhu047-output/post-artifact-iam.json',encoding='utf-8'))
+          def has(bindings, role, member):
+              return any(b.get('role')==role and member in (b.get('members') or []) for b in bindings)
+          assert has(service.get('bindings') or [],'roles/run.developer',member), service
+          assert has(service.get('bindings') or [],'roles/run.invoker',member), service
+          assert has(artifact.get('bindings') or [],'roles/artifactregistry.writer',member), artifact
+          receipt={
+            'schema':'CFBE_FHU047_WIF_PROVIDER_CLOSURE_V1',
+            'state':'PROVIDER_VERIFIED_CLOSED',
+            'source_sha':os.environ['GITHUB_SHA'],
+            'issue_number':int(os.environ['ISSUE_NUMBER']),
+            'project_id':os.environ['PROJECT_ID'],
+            'project_number':os.environ['PROJECT_NUMBER'],
+            'provider_condition_exact':True,
+            'provider_mapping_exact':True,
+            'cloud_run_developer':True,
+            'cloud_run_invoker':True,
+            'artifact_registry_writer':True,
+            'runtime_service_account_user_preserved':verify['runtime_service_account_user'],
+            'service_usage_consumer_preserved':verify['service_usage_consumer'],
+            'wif_binding_preserved':verify['wif_binding'],
+            'missing_controls':verify.get('missing_controls') or [],
+            'missing_apis':verify.get('missing_apis') or [],
+            'long_lived_service_account_key_used':False,
+            'repository_source_write_authority':False,
+          }
+          raw=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
+          receipt['receipt_sha256']=hashlib.sha256(raw).hexdigest()
+          Path('fhu047-output/closure-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+        env:
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+
+      - name: Roll back authorized delta if apply or verification fails
+        if: ${{ failure() && steps.preflight.outcome == 'success' }}
+        shell: bash
+        run: |
+          set +e
+          PRE_CONDITION="$(cat fhu047-output/pre-condition.txt 2>/dev/null)"
+          PRE_MAPPING="$(cat fhu047-output/pre-mapping.txt 2>/dev/null)"
+          if [[ -f fhu047-output/provider-updated.marker && -n "$PRE_MAPPING" ]]; then
+            gcloud iam workload-identity-pools providers update-oidc "$PROVIDER_ID" \
+              --project "$PROJECT_ID" --location global \
+              --workload-identity-pool "$POOL_ID" \
+              --issuer-uri="https://token.actions.githubusercontent.com" \
+              --attribute-mapping="$PRE_MAPPING" \
+              --attribute-condition="$PRE_CONDITION"
+          fi
+          if [[ -f fhu047-output/run-developer-added.marker ]]; then
+            gcloud run services remove-iam-policy-binding "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --role="roles/run.developer" \
+              --member="serviceAccount:${DEPLOYER_SA}" --quiet
+          fi
+          if [[ -f fhu047-output/run-invoker-added.marker ]]; then
+            gcloud run services remove-iam-policy-binding "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" \
+              --role="roles/run.invoker" \
+              --member="serviceAccount:${DEPLOYER_SA}" --quiet
+          fi
+          if [[ -f fhu047-output/artifact-writer-added.marker ]]; then
+            gcloud artifacts repositories remove-iam-policy-binding "$AR_REPO" \
+              --project "$PROJECT_ID" --location "$REGION" \
+              --role="roles/artifactregistry.writer" \
+              --member="serviceAccount:${DEPLOYER_SA}" --quiet
+          fi
+          bash ./ops/bootstrap_github_wif.sh --plan > fhu047-output/rollback-readback.json 2>&1 || true
+          touch fhu047-output/rollback-attempted.marker
+
+      - name: Upload immutable FHU-047 evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fhu047-wif-least-privilege-${{ github.run_id }}-${{ github.run_attempt }}
+          path: fhu047-output/
+          if-no-files-found: error
+          retention-days: 90
