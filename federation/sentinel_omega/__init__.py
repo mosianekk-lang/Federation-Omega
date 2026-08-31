@@ -37,10 +37,19 @@ from .precursor_outcome import (
     PrecursorPrediction,
     ResolvedPrecursorOutcome,
 )
+from .repair_binding import (
+    BoundRepairPlan,
+    ProviderAuthorityEvidence,
+    RepairBindingState,
+    RepairRunbook,
+    RepairRunbookRegistry,
+    SentinelRepairBinder,
+)
 from .topology_correlation import SentinelObservabilityCausalFabric
 
 __all__ = [
     "AdaptiveBaselineDetector",
+    "BoundRepairPlan",
     "CadenceState",
     "CompiledOwnerValuePair",
     "GitHubWorkflowRunAdapter",
@@ -62,10 +71,15 @@ __all__ = [
     "PrecursorOutcomeResolver",
     "PrecursorPrediction",
     "ProjectionDriftObservationAdapter",
+    "ProviderAuthorityEvidence",
     "QueueObservationAdapter",
+    "RepairBindingState",
+    "RepairRunbook",
+    "RepairRunbookRegistry",
     "ResolvedPrecursorOutcome",
     "SemanticObservationNormalizer",
     "SentinelObservabilityCausalFabric",
+    "SentinelRepairBinder",
     "SignalKind",
     "SLOWindowSample",
 ]
