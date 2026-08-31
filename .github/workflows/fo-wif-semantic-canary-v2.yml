@@ -46,40 +46,118 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Verify current WIF identity contract
+      - name: Verify current WIF identity and isolate deploy-readiness gaps
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p g0-output
-          bash ./ops/bootstrap_github_wif.sh --verify | tee g0-output/wif.json
+          bash ./ops/bootstrap_github_wif.sh --plan | tee g0-output/wif-plan.json
           python - <<'PY'
-          import json
-          p=json.load(open('g0-output/wif.json',encoding='utf-8'))
-          assert p['receipt']=='FEDOMEGA-WIF-CLOUD-VERIFIED',p
-          assert p['state']=='VERIFIED',p
+          import json, os
+          from pathlib import Path
+
+          p=json.load(open('g0-output/wif-plan.json',encoding='utf-8'))
           assert p['project']=='sov-hybrid-suite',p
           assert p['project_number_observed']=='257649435135',p
+          assert p['active_account']==os.environ['DEPLOYER_SA'],p
+          assert p['deployer_exists'] is True,p
+          assert p['pool_state']=='ACTIVE',p
+          assert p['provider_state']=='ACTIVE',p
+          assert p['wif_binding'] is True,p
+          assert p['service_usage_consumer'] is True,p
           assert p['mutation_performed'] is False,p
+          condition=str(p.get('provider_condition') or '')
+          assert 'assertion.repository' in condition and 'mosianekk-lang/Federation-Omega' in condition,p
+
+          hardening=[]
+          if condition != str(p.get('provider_condition_expected') or ''):
+              hardening.append('provider_attribute_condition_ref_scope')
+          for item in p.get('missing_controls') or []:
+              if item == 'provider_attribute_mapping':
+                  hardening.append(item)
+          deploy_controls={
+              'cloud_run_developer_role',
+              'cloud_run_invoker_role',
+              'artifact_registry_writer_role',
+              'runtime_service_account_user_role',
+              'existing_cloud_run_service',
+              'existing_artifact_registry_repository',
+              'required_apis',
+          }
+          deployment=sorted(set(p.get('missing_controls') or []) & deploy_controls)
+          receipt={
+              'schema':'FEDOMEGA_WIF_IDENTITY_PROOF_V1',
+              'state':'WIF_IDENTITY_VERIFIED',
+              'project_id':p['project'],
+              'project_number':p['project_number_observed'],
+              'active_account':p['active_account'],
+              'workload_identity_provider':p['workload_identity_provider'],
+              'pool_state':p['pool_state'],
+              'provider_state':p['provider_state'],
+              'wif_binding':p['wif_binding'],
+              'service_usage_consumer':p['service_usage_consumer'],
+              'security_hardening_gaps':sorted(set(hardening)),
+              'deployment_readiness_gaps':deployment,
+              'identity_verified_independent_of_deploy_roles':True,
+              'mutation_performed':False,
+              'provider_effect_executed':False,
+          }
+          Path('g0-output/wif-identity.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
-      - name: Verify Gemini ADC runtime identity contract
+      - name: Verify ADC credential transport and isolate Gemini deployment readiness
         shell: bash
         run: |
           set -euo pipefail
-          bash ./ops/bootstrap_gemini_gateway.sh --verify | tee g0-output/adc.json
+          gcloud projects describe "$PROJECT_ID" --format=json > g0-output/project-readback.json
+          bash ./ops/bootstrap_gemini_gateway.sh --plan | tee g0-output/gemini-plan.json
           python - <<'PY'
-          import json
-          p=json.load(open('g0-output/adc.json',encoding='utf-8'))
-          assert p['receipt']=='FEDOMEGA-GEMINI-ADC-VERIFIED',p
-          assert p['state']=='VERIFIED',p
-          assert p['project_id']=='sov-hybrid-suite',p
-          assert p['project_number_observed']=='257649435135',p
-          assert p['mutation_performed'] is False,p
-          assert p['service_account_key_created'] is False,p
-          assert p['secret_payload_accessed'] is False,p
+          import json, os
+          from pathlib import Path
+          from urllib.parse import unquote
+
+          cred_path=Path(os.environ['GOOGLE_APPLICATION_CREDENTIALS'])
+          assert cred_path.is_file(),cred_path
+          cred=json.loads(cred_path.read_text(encoding='utf-8'))
+          assert cred.get('type')=='external_account',cred.get('type')
+          audience=str(cred.get('audience') or '')
+          assert os.environ['WIF_PROVIDER'] in audience,audience
+          impersonation=unquote(str(cred.get('service_account_impersonation_url') or ''))
+          assert os.environ['DEPLOYER_SA'] in impersonation,impersonation
+
+          project=json.load(open('g0-output/project-readback.json',encoding='utf-8'))
+          observed=str(project.get('projectNumber') or '')
+          assert observed==os.environ['PROJECT_NUMBER'],observed
+
+          plan=json.load(open('g0-output/gemini-plan.json',encoding='utf-8'))
+          assert plan['project_id']==os.environ['PROJECT_ID'],plan
+          assert plan['project_number_observed']==os.environ['PROJECT_NUMBER'],plan
+          assert plan['active_account']==os.environ['DEPLOYER_SA'],plan
+          assert plan['mutation_performed'] is False,plan
+          assert plan['service_account_key_created'] is False,plan
+          assert plan['secret_payload_accessed'] is False,plan
+
+          receipt={
+              'schema':'FEDOMEGA_GITHUB_WIF_ADC_TRANSPORT_PROOF_V1',
+              'state':'GITHUB_WIF_ADC_TRANSPORT_VERIFIED',
+              'credential_type':'external_account',
+              'project_id':plan['project_id'],
+              'project_number':plan['project_number_observed'],
+              'active_account':plan['active_account'],
+              'wif_provider_bound':True,
+              'service_account_impersonation_bound':True,
+              'gemini_deployment_ready':not bool(plan.get('missing_controls')),
+              'gemini_deployment_readiness_gaps':sorted(plan.get('missing_controls') or []),
+              'gemini_missing_apis':sorted(plan.get('missing_apis') or []),
+              'service_account_key_created':False,
+              'secret_payload_accessed':False,
+              'mutation_performed':False,
+              'provider_effect_executed':False,
+          }
+          Path('g0-output/adc-identity.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
-      - name: Compile receiver-local G0 receipt
+      - name: Compile receiver-local workload identity receipt
         shell: bash
         env:
           ISSUE_NUMBER: ${{ github.event.issue.number }}
@@ -90,11 +168,15 @@ jobs:
           set -euo pipefail
           python - <<'PY'
           import hashlib,json,os
-          wif=json.load(open('g0-output/wif.json',encoding='utf-8'))
-          adc=json.load(open('g0-output/adc.json',encoding='utf-8'))
+          from pathlib import Path
+          wif=json.load(open('g0-output/wif-identity.json',encoding='utf-8'))
+          adc=json.load(open('g0-output/adc-identity.json',encoding='utf-8'))
+          assert wif['state']=='WIF_IDENTITY_VERIFIED',wif
+          assert adc['state']=='GITHUB_WIF_ADC_TRANSPORT_VERIFIED',adc
           r={
-            'schema':'SLOS_G0_RECEIVER_LOCAL_IDENTITY_RECEIPT_V2',
-            'state':'VERIFIED',
+            'schema':'BUBBLES_CFBE_OMEGA_WORKLOAD_IDENTITY_RECEIPT_V1',
+            'state':'WORKLOAD_IDENTITY_VERIFIED',
+            'fhu_047_workload_identity_proven':True,
             'release_sha256':os.environ['SLOS_RELEASE_SHA256'],
             'source_sha':os.environ['SOURCE_SHA'],
             'issue_number':int(os.environ['ISSUE_NUMBER']),
@@ -103,24 +185,30 @@ jobs:
             'project_id':os.environ['PROJECT_ID'],
             'project_number':os.environ['PROJECT_NUMBER'],
             'region':os.environ['REGION'],
-            'wif_receipt':wif,
-            'adc_receipt':adc,
+            'wif_identity':wif,
+            'adc_transport':adc,
+            'deployment_readiness_proven':adc['gemini_deployment_ready'] and not bool(wif['deployment_readiness_gaps']),
+            'security_hardening_complete':not bool(wif['security_hardening_gaps']),
+            'long_lived_service_account_key_used':False,
             'mutation_performed':False,
             'provider_effect_executed':False,
             'secret_payload_accessed':False,
           }
           raw=json.dumps(r,sort_keys=True,separators=(',',':')).encode()
           r['receipt_sha256']=hashlib.sha256(raw).hexdigest()
-          open('g0-output/slos-g0-receiver-local-receipt-v2.json','w',encoding='utf-8').write(json.dumps(r,indent=2,sort_keys=True)+'\n')
+          Path('g0-output/bubbles-cfbe-workload-identity-receipt-v1.json').write_text(json.dumps(r,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
       - name: Upload immutable G0 proof artifact
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: slos-g0-receiver-local-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          name: bubbles-cfbe-workload-identity-v1-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
-            g0-output/wif.json
-            g0-output/adc.json
-            g0-output/slos-g0-receiver-local-receipt-v2.json
+            g0-output/wif-plan.json
+            g0-output/wif-identity.json
+            g0-output/project-readback.json
+            g0-output/gemini-plan.json
+            g0-output/adc-identity.json
+            g0-output/bubbles-cfbe-workload-identity-receipt-v1.json
           if-no-files-found: error
           retention-days: 90
