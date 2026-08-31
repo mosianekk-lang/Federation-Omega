@@ -31,6 +31,51 @@ def event(kind: str, previous: str = "GENESIS"):
 
 
 class TransactionStoreTests(unittest.TestCase):
+    def test_every_connection_enforces_full_wal_durability_policy(self):
+        with tempfile.TemporaryDirectory() as directory:
+            store = SQLiteStateStore(Path(directory) / "control-state.sqlite3")
+            connection = store._connect()
+            try:
+                self.assertEqual(int(connection.execute("PRAGMA synchronous").fetchone()[0]), 2)
+                self.assertEqual(int(connection.execute("PRAGMA wal_autocheckpoint").fetchone()[0]), 256)
+                self.assertEqual(int(connection.execute("PRAGMA journal_size_limit").fetchone()[0]), 16 * 1024 * 1024)
+            finally:
+                connection.close()
+
+    def test_delta_commit_matches_full_commit_and_is_atomic(self):
+        with tempfile.TemporaryDirectory() as directory:
+            root = Path(directory)
+            full = SQLiteStateStore(root / "full.sqlite3")
+            delta = SQLiteStateStore(root / "delta.sqlite3")
+            state = blank()
+            state["missions"]["M1"] = {"version": 1, "state": "ACTIVE"}
+            state["tasks"]["M1:v1:T1"] = {"state": "READY"}
+            first_event = event("MISSION_SUBMITTED")
+            state["events"].append(first_event)
+            full.commit(state, expected_revision=0)
+            receipt = delta.commit_delta(
+                expected_revision=0,
+                upserts={
+                    ("missions", "M1"): state["missions"]["M1"],
+                    ("tasks", "M1:v1:T1"): state["tasks"]["M1:v1:T1"],
+                },
+                new_events=(first_event,),
+            )
+            self.assertEqual((receipt.rows_upserted, receipt.events_appended), (2, 1))
+            self.assertEqual(full.load(blank()), delta.load(blank()))
+
+            invalid = event("BROKEN", previous="WRONG")
+            with self.assertRaisesRegex(Exception, "EVENT_PREVIOUS_HASH_INVALID"):
+                delta.commit_delta(
+                    expected_revision=1,
+                    upserts={("missions", "M2"): {"version": 1}},
+                    new_events=(invalid,),
+                )
+            loaded, revision = delta.load(blank())
+            self.assertEqual(revision, 1)
+            self.assertNotIn("M2", loaded["missions"])
+            self.assertTrue(delta.verify_integrity())
+
     def test_schema_one_database_migrates_to_schema_two_without_state_loss(self):
         with tempfile.TemporaryDirectory() as directory:
             path = Path(directory) / "control-state.sqlite3"

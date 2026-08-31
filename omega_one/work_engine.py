@@ -227,6 +227,7 @@ class OmegaCompletionEngine:
         self._outbox_claim_token = f"omega-engine:{uuid4()}"
         self._transition_claim_token = f"omega-transition:{uuid4()}"
         self.state = self._load()
+        self._rebuild_indexes()
         self._drain_admission_outbox()
         self._drain_transition_outbox()
 
@@ -246,13 +247,71 @@ class OmegaCompletionEngine:
         receipt = self.store.commit(self.state, expected_revision=self._revision)
         self._revision = receipt.revision_after
 
+    def _persist_delta(
+        self,
+        *,
+        event_start: int,
+        identities: tuple[tuple[str, str], ...],
+        reservations: tuple[Mapping[str, Any], ...] = (),
+        outbox: Mapping[str, Any] | None = None,
+        transition_outbox: Mapping[str, Any] | None = None,
+        applied_transition: Mapping[str, Any] | None = None,
+    ) -> None:
+        upserts = {
+            (collection, row_key): self.state[collection][row_key]
+            for collection, row_key in identities
+        }
+        receipt = self.store.commit_delta(
+            expected_revision=self._revision,
+            upserts=upserts,
+            new_events=tuple(self.state["events"][event_start:]),
+            reservations=reservations,
+            outbox=outbox,
+            transition_outbox=transition_outbox,
+            applied_transition=applied_transition,
+        )
+        self._revision = receipt.revision_after
+
     def _refresh_from_store(self, *, force: bool = False) -> None:
         current = self.store.current_revision()
         if not force and current == self._revision:
             return
         self.state, self._revision = self.store.load(self._blank())
-        self.sol._replay()
-        self.worker_plane._replay()
+        self.sol.sync_tail()
+        self.worker_plane.sync_tail()
+        self._rebuild_indexes()
+
+    def _rebuild_indexes(self) -> None:
+        self._tasks_by_mission_version: dict[tuple[str, int], set[str]] = {}
+        self._ready_task_keys: set[str] = set()
+        self._waiting_task_keys: set[str] = set()
+        self._running_effect_task_keys: set[str] = set()
+        for key, row in self.state["tasks"].items():
+            spec = row["spec"]
+            version = int(key.split(":v", 1)[1].split(":", 1)[0])
+            self._tasks_by_mission_version.setdefault((str(spec["mission_id"]), version), set()).add(key)
+            state = row["state"]
+            if state == TaskState.READY.value:
+                self._ready_task_keys.add(key)
+            elif state in {TaskState.BLOCKED.value, TaskState.RETRY_WAIT.value}:
+                self._waiting_task_keys.add(key)
+            elif state == TaskState.RUNNING.value and spec["effect_class"] != EffectClass.READ.value:
+                self._running_effect_task_keys.add(key)
+
+    def _index_task(self, key: str) -> None:
+        row = self.state["tasks"][key]
+        spec = row["spec"]
+        version = int(key.split(":v", 1)[1].split(":", 1)[0])
+        self._tasks_by_mission_version.setdefault((str(spec["mission_id"]), version), set()).add(key)
+        self._ready_task_keys.discard(key)
+        self._waiting_task_keys.discard(key)
+        self._running_effect_task_keys.discard(key)
+        if row["state"] == TaskState.READY.value:
+            self._ready_task_keys.add(key)
+        elif row["state"] in {TaskState.BLOCKED.value, TaskState.RETRY_WAIT.value}:
+            self._waiting_task_keys.add(key)
+        elif row["state"] == TaskState.RUNNING.value and spec["effect_class"] != EffectClass.READ.value:
+            self._running_effect_task_keys.add(key)
 
     def _inject_fault(self, point: str) -> None:
         if self._fault_injector:
@@ -294,11 +353,12 @@ class OmegaCompletionEngine:
     def register_worker(self, worker: WorkerDescriptor) -> dict[str, Any]:
         worker.validate()
         with self._lock:
+            event_start = len(self.state["events"])
             row = asdict(worker) | {"running": 0, "registered_at": utc_now()}
             self.state["workers"][worker.worker_id] = row
             self.worker_plane.heartbeat(worker.worker_id, worker.capabilities)
             self._event("WORKER_REGISTERED", {"worker_id": worker.worker_id, "generation": worker.generation})
-            self._persist()
+            self._persist_delta(event_start=event_start, identities=(("workers", worker.worker_id),))
             return row
 
     def register_provider_route(self, route: ProviderRoute) -> None:
@@ -353,8 +413,19 @@ class OmegaCompletionEngine:
                 if current and mission.version <= current["version"]:
                     raise ValueError("STALE_MISSION_VERSION")
                 admission_plan = self._admission_plan(mission, tasks)
-                previous_state = self.state
-                self.state = deepcopy(previous_state)
+                previous_state = deepcopy(self.state) if current else None
+                event_start = len(self.state["events"])
+
+                def rollback_admission() -> None:
+                    if previous_state is not None:
+                        self.state = previous_state
+                    else:
+                        self.state["missions"].pop(mission.mission_id, None)
+                        for _, task_key, _ in admission_plan:
+                            self.state["tasks"].pop(task_key, None)
+                        del self.state["events"][event_start:]
+                    self._rebuild_indexes()
+
                 if current:
                     self._supersede(mission.mission_id, int(current["version"]))
                 self.state["missions"][mission.mission_id] = asdict(mission) | {"state": "ACTIVE"}
@@ -366,6 +437,7 @@ class OmegaCompletionEngine:
                         "state": TaskState.READY.value if not task.dependencies else TaskState.BLOCKED.value,
                         "created_seq": len(self.state["events"]), "lease_id": None, "last_error": None,
                     }
+                    self._index_task(key)
                 self._event("MISSION_SUBMITTED", {"mission_id": mission.mission_id, "version": mission.version, "tasks": len(tasks)})
                 reservations = [
                     {
@@ -383,25 +455,36 @@ class OmegaCompletionEngine:
                     "payload": {"mission": asdict(mission), "tasks": [asdict(task) for task in tasks]},
                 }
                 try:
-                    receipt = self.store.commit(
-                        self.state,
-                        expected_revision=self._revision,
-                        reservations=reservations,
-                        outbox=outbox,
-                    )
+                    if current:
+                        receipt = self.store.commit(
+                            self.state,
+                            expected_revision=self._revision,
+                            reservations=reservations,
+                            outbox=outbox,
+                        )
+                        self._revision = receipt.revision_after
+                    else:
+                        identities = (("missions", mission.mission_id),) + tuple(
+                            ("tasks", key) for _, key, _ in admission_plan
+                        )
+                        self._persist_delta(
+                            event_start=event_start,
+                            identities=identities,
+                            reservations=tuple(reservations),
+                            outbox=outbox,
+                        )
                 except StateRevisionConflict:
-                    self.state = previous_state
+                    rollback_admission()
                     self._refresh_from_store(force=True)
                     if attempt == 0:
                         continue
                     raise
                 except IdempotencyReservationConflict as exc:
-                    self.state = previous_state
+                    rollback_admission()
                     raise ValueError(str(exc)) from exc
                 except Exception:
-                    self.state = previous_state
+                    rollback_admission()
                     raise
-                self._revision = receipt.revision_after
                 self._inject_fault("after_admission_commit")
                 self._drain_admission_outbox()
                 return self.mission_status(mission.mission_id)
@@ -462,8 +545,8 @@ class OmegaCompletionEngine:
 
     def _drain_admission_outbox(self) -> None:
         self.store.recover_stale_outbox()
-        self.sol._replay()
-        self.worker_plane._replay()
+        self.sol.sync_tail()
+        self.worker_plane.sync_tail()
         while True:
             item = self.store.claim_outbox(self._outbox_claim_token)
             if item is None:
@@ -485,10 +568,12 @@ class OmegaCompletionEngine:
         return self.store.backup_to(destination)
 
     def _supersede(self, mission_id: str, version: int) -> None:
-        for key, row in self.state["tasks"].items():
+        for key in tuple(self._tasks_by_mission_version.get((mission_id, version), ())):
+            row = self.state["tasks"][key]
             spec = row["spec"]
             if spec["mission_id"] == mission_id and f":v{version}:" in key and row["state"] not in {TaskState.PROVEN.value, TaskState.CANCELLED.value}:
                 row["state"] = TaskState.SUPERSEDED.value
+                self._index_task(key)
         for permit in self.state["permits"].values():
             if permit["mission_id"] == mission_id and permit["state"] == "ISSUED":
                 permit["state"] = "REVOKED"
@@ -496,13 +581,15 @@ class OmegaCompletionEngine:
 
     def _refresh_ready(self) -> int:
         changed = 0
-        for key, row in self.state["tasks"].items():
+        for key in tuple(self._waiting_task_keys):
+            row = self.state["tasks"][key]
             if row["state"] not in {TaskState.BLOCKED.value, TaskState.RETRY_WAIT.value}:
                 continue
             spec = row["spec"]
             current = self.state["missions"].get(spec["mission_id"])
             if not current or int(current["version"]) != int(key.split(":v", 1)[1].split(":", 1)[0]):
                 row["state"] = TaskState.SUPERSEDED.value
+                self._index_task(key)
                 changed += 1
                 continue
             dependency_keys = [self._task_key(spec["mission_id"], current["version"], item) for item in spec["dependencies"]]
@@ -510,6 +597,7 @@ class OmegaCompletionEngine:
                 worker_job = self.worker_plane.state.jobs.get(key)
                 if worker_job and worker_job["status"] in {"QUEUED", "RETRY_READY"}:
                     row["state"] = TaskState.READY.value
+                    self._index_task(key)
                     changed += 1
         return changed
 
@@ -542,7 +630,8 @@ class OmegaCompletionEngine:
         task_id = str(row["spec"]["task_id"])
         children = [
             key
-            for key, candidate in self.state["tasks"].items()
+            for key in self._tasks_by_mission_version.get((mission_id, version), ())
+            if (candidate := self.state["tasks"][key])
             if candidate["spec"]["mission_id"] == mission_id
             and f":v{version}:" in key
             and task_id in candidate["spec"]["dependencies"]
@@ -551,14 +640,10 @@ class OmegaCompletionEngine:
         return memo[task_key]
 
     def _plan_wave(self, max_concurrency: int) -> tuple[ConcurrencyPlan, list[tuple[str, dict[str, Any], dict[str, Any]]]]:
-        ready = [(key, row) for key, row in self.state["tasks"].items() if row["state"] == TaskState.READY.value]
+        ready = [(key, self.state["tasks"][key]) for key in self._ready_task_keys]
         simulated_workers = deepcopy(self.state["workers"])
         simulated_dispatch = dict(self.state["dispatch_counts"])
-        effect_running = any(
-            row["state"] == TaskState.RUNNING.value
-            and row["spec"]["effect_class"] != EffectClass.READ.value
-            for row in self.state["tasks"].values()
-        )
+        effect_running = bool(self._running_effect_task_keys)
         effect_slots = 0 if effect_running else 1
         selected: list[tuple[str, dict[str, Any], dict[str, Any]]] = []
         remaining = list(ready)
@@ -641,7 +726,7 @@ class OmegaCompletionEngine:
         with self._lock:
             self._drain_transition_outbox()
             ready_changed = self._refresh_ready()
-            ready = [(key, row) for key, row in self.state["tasks"].items() if row["state"] == TaskState.READY.value]
+            ready = [(key, self.state["tasks"][key]) for key in self._ready_task_keys]
             routable = []
             for key, row in ready:
                 workers = [worker for worker in self.state["workers"].values() if self._eligible(worker, row["spec"])]
@@ -667,12 +752,23 @@ class OmegaCompletionEngine:
             receipt = LeaseReceipt(lease_id, key, worker["worker_id"], int(key.split(":v", 1)[1].split(":", 1)[0]), fence, int(leased["attempts"]), row["spec"]["input_digest"])
             self.state["leases"][lease_id] = asdict(receipt) | {"active": True}
             row["state"] = TaskState.RUNNING.value
+            self._index_task(key)
             row["lease_id"] = lease_id
             worker["running"] += 1
             tenant = row["spec"]["tenant_id"]
             self.state["dispatch_counts"][tenant] = int(self.state["dispatch_counts"].get(tenant, 0)) + int(row["spec"]["service_units"])
+            event_start = len(self.state["events"])
             self._event("TASK_LEASED", {"task_key": key, "worker_id": worker["worker_id"], "fence": fence})
-            self._persist()
+            self._persist_delta(
+                event_start=event_start,
+                identities=(
+                    ("fences", key),
+                    ("leases", lease_id),
+                    ("tasks", key),
+                    ("workers", worker["worker_id"]),
+                    ("dispatch_counts", tenant),
+                ),
+            )
             return receipt
 
     def _materialize_dispatch_wave(self, payload: Mapping[str, Any]) -> None:
@@ -711,8 +807,8 @@ class OmegaCompletionEngine:
 
     def _drain_transition_outbox(self) -> None:
         self.store.recover_stale_transitions()
-        self.sol._replay()
-        self.worker_plane._replay()
+        self.sol.sync_tail()
+        self.worker_plane.sync_tail()
         while True:
             item = self.store.claim_transition(self._transition_claim_token)
             if item is None:
@@ -750,14 +846,7 @@ class OmegaCompletionEngine:
                 "body": base_body,
             }
         )
-        matches = [
-            event["payload"]
-            for event in self.sol._events()
-            if event.get("event_type") == "RECEIPT_RECORDED"
-            and event.get("payload", {}).get("workstream_id") == workstream_id
-            and event.get("payload", {}).get("receipt_type") == receipt_type
-            and event.get("payload", {}).get("body", {}).get("omega_publication_id") == publication_id
-        ]
+        matches = self.sol.publication_receipts(workstream_id, receipt_type, publication_id)
         if len(matches) > 1:
             raise RuntimeError("SOL_RECEIPT_RAW_DUPLICATE")
         if matches:
@@ -777,13 +866,7 @@ class OmegaCompletionEngine:
         )
 
     def _evaluate_sol_completion_once(self, workstream_id: str, publication_id: str) -> dict[str, Any]:
-        matches = [
-            event["payload"]
-            for event in self.sol._events()
-            if event.get("event_type") == "COMPLETION_EVALUATED"
-            and event.get("payload", {}).get("workstream_id") == workstream_id
-            and event.get("payload", {}).get("omega_publication_id") == publication_id
-        ]
+        matches = self.sol.publication_completions(workstream_id, publication_id)
         if len(matches) > 1:
             raise RuntimeError("SOL_COMPLETION_RAW_DUPLICATE")
         if matches:
@@ -804,12 +887,7 @@ class OmegaCompletionEngine:
         return payload
 
     def _update_sol_reliability_once(self, action_class: str, publication_id: str) -> dict[str, Any]:
-        matches = [
-            event["payload"]
-            for event in self.sol._events()
-            if event.get("event_type") == "RELIABILITY_UPDATED"
-            and event.get("payload", {}).get("omega_publication_id") == publication_id
-        ]
+        matches = self.sol.publication_reliability(publication_id)
         if len(matches) > 1:
             raise RuntimeError("SOL_RELIABILITY_RAW_DUPLICATE")
         if matches:
@@ -896,23 +974,55 @@ class OmegaCompletionEngine:
             str(payload["proof_digest"]),
             str(payload["verifier_id"]),
         )
-        previous_state = deepcopy(self.state)
+        missing_certificate = object()
+        previous_certificate = self.state["certificates"].get(task_key, missing_certificate)
+        previous_task_state = row["state"]
+        previous_lease_active = self.state["leases"][lease_id]["active"]
+        worker_id = str(payload["worker_id"])
+        previous_worker_running = self.state["workers"][worker_id]["running"]
+        previous_waiting_states = {
+            key: self.state["tasks"][key]["state"] for key in self._waiting_task_keys
+        }
+        event_start = len(self.state["events"])
         self.state["certificates"][task_key] = asdict(certificate)
         row["state"] = TaskState.PROVEN.value
+        self._index_task(task_key)
         self.state["leases"][lease_id]["active"] = False
-        self.state["workers"][str(payload["worker_id"])]["running"] -= 1
+        self.state["workers"][worker_id]["running"] -= 1
         self._event("TASK_PROVEN", {"task_key": task_key, "certificate_id": certificate.certificate_id})
-        self._refresh_ready()
+        ready_changed = self._refresh_ready()
         try:
-            commit = self.store.commit(
-                self.state,
-                expected_revision=self._revision,
-                applied_transition={"transition_id": transition_id, "claim_token": claim_token},
-            )
+            if ready_changed:
+                commit = self.store.commit(
+                    self.state,
+                    expected_revision=self._revision,
+                    applied_transition={"transition_id": transition_id, "claim_token": claim_token},
+                )
+                self._revision = commit.revision_after
+            else:
+                self._persist_delta(
+                    event_start=event_start,
+                    identities=(
+                        ("certificates", task_key),
+                        ("tasks", task_key),
+                        ("leases", lease_id),
+                        ("workers", worker_id),
+                    ),
+                    applied_transition={"transition_id": transition_id, "claim_token": claim_token},
+                )
         except Exception:
-            self.state = previous_state
+            if previous_certificate is missing_certificate:
+                self.state["certificates"].pop(task_key, None)
+            else:
+                self.state["certificates"][task_key] = previous_certificate
+            row["state"] = previous_task_state
+            self.state["leases"][lease_id]["active"] = previous_lease_active
+            self.state["workers"][worker_id]["running"] = previous_worker_running
+            for key, state in previous_waiting_states.items():
+                self.state["tasks"][key]["state"] = state
+            del self.state["events"][event_start:]
+            self._rebuild_indexes()
             raise
-        self._revision = commit.revision_after
         return certificate
 
     def schedule_wave(self, *, max_concurrency: int = 3, lease_seconds: int = 60) -> tuple[LeaseReceipt, ...]:
@@ -949,6 +1059,7 @@ class OmegaCompletionEngine:
                 receipts.append(receipt)
                 self.state["leases"][lease_id] = asdict(receipt) | {"active": True}
                 row["state"] = TaskState.RUNNING.value
+                self._index_task(key)
                 row["lease_id"] = lease_id
                 self.state["workers"][worker["worker_id"]]["running"] += 1
                 spec = row["spec"]
@@ -983,6 +1094,7 @@ class OmegaCompletionEngine:
                 )
             except Exception:
                 self.state = previous_state
+                self._rebuild_indexes()
                 raise
             self._revision = commit.revision_after
             self._inject_fault("after_dispatch_wave_commit")
@@ -1107,19 +1219,23 @@ class OmegaCompletionEngine:
                     "certificate_id": certificate_id,
                 },
             }
-            previous_state = deepcopy(self.state)
+            previous_task_state = row["state"]
+            previous_event_count = len(self.state["events"])
             row["state"] = TaskState.VERIFYING.value
+            self._index_task(lease.task_key)
+            event_start = len(self.state["events"])
             self._event("PROOF_FINALIZATION_INTENT", {"task_key": lease.task_key, "publication_id": publication_id, "binding_sha256": binding})
             try:
-                commit = self.store.commit(
-                    self.state,
-                    expected_revision=self._revision,
+                self._persist_delta(
+                    event_start=event_start,
+                    identities=(("tasks", lease.task_key),),
                     transition_outbox=transition,
                 )
             except Exception:
-                self.state = previous_state
+                row["state"] = previous_task_state
+                del self.state["events"][previous_event_count:]
+                self._rebuild_indexes()
                 raise
-            self._revision = commit.revision_after
             self._inject_fault("after_proof_intent_commit")
             self._drain_transition_outbox()
             return CompletionCertificate(**self.state["certificates"][lease.task_key])
@@ -1130,6 +1246,7 @@ class OmegaCompletionEngine:
             job = self.worker_plane.fail(lease.task_key, lease.worker_id, failure_class, message, backoff_seconds)
             state = TaskState.DEAD_LETTER if job["status"] == "DEAD_LETTER" else TaskState.RETRY_WAIT
             row["state"] = state.value
+            self._index_task(lease.task_key)
             row["last_error"] = {"class": failure_class, "message": message}
             self.state["leases"][lease.lease_id]["active"] = False
             self.state["workers"][lease.worker_id]["running"] -= 1
@@ -1160,6 +1277,7 @@ class OmegaCompletionEngine:
                 if permit["mission_id"] == mission_id and permit["state"] == "ISSUED":
                     permit["state"] = "REVOKED"
             self._event("MISSION_CANCELLED", {"mission_id": mission_id, "version": mission["version"]})
+            self._rebuild_indexes()
             self._persist()
             return self.mission_status(mission_id)
 
@@ -1175,6 +1293,7 @@ class OmegaCompletionEngine:
                     self.state["leases"][lease_id]["active"] = False
                     self.state["workers"][worker_id]["running"] = max(0, self.state["workers"][worker_id]["running"] - 1)
                 row["state"] = TaskState.DEAD_LETTER.value if job["status"] == "DEAD_LETTER" else TaskState.RETRY_WAIT.value
+                self._index_task(key)
             if recovered:
                 self._event("LEASES_RECOVERED", {"task_keys": recovered})
                 self._persist()
@@ -1185,7 +1304,10 @@ class OmegaCompletionEngine:
         if not mission:
             raise KeyError("MISSION_NOT_FOUND")
         version = int(mission["version"])
-        tasks = {key: row["state"] for key, row in self.state["tasks"].items() if row["spec"]["mission_id"] == mission_id and f":v{version}:" in key}
+        tasks = {
+            key: self.state["tasks"][key]["state"]
+            for key in self._tasks_by_mission_version.get((mission_id, version), ())
+        }
         terminal = bool(tasks) and all(state in {TaskState.PROVEN.value, TaskState.CANCELLED.value, TaskState.DEAD_LETTER.value} for state in tasks.values())
         proven = bool(tasks) and all(state == TaskState.PROVEN.value for state in tasks.values())
         return {"mission_id": mission_id, "version": version, "state": "PROVEN" if proven else mission["state"], "terminal": terminal, "tasks": dict(sorted(tasks.items()))}

@@ -46,6 +46,10 @@ class DurableWorkerPlane:
         self.events_file = self.root / "worker-events.jsonl"
         self.state_file = self.root / "worker-state.json"
         self.state = WorkerState()
+        self._event_count = 0
+        self._tail_hash = "GENESIS"
+        self._journal_offset = 0
+        self._jobs_by_action_class: dict[str, set[str]] = {}
         self._replay()
 
     @staticmethod
@@ -55,25 +59,85 @@ class DurableWorkerPlane:
     def _events(self) -> list[dict[str, Any]]:
         if not self.events_file.exists():
             return []
-        return [json.loads(line) for line in self.events_file.read_text(encoding="utf-8").splitlines() if line.strip()]
+        with self.events_file.open("rb") as handle:
+            return [json.loads(line) for line in handle if line.strip()]
 
     def _append(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
-        rows = self._events()
         event = {
-            "event_id": f"wevt-{len(rows)+1:08d}",
+            "event_id": f"wevt-{self._event_count+1:08d}",
             "event_type": event_type,
             "payload": payload,
             "recorded_at": utc_now(),
-            "previous_hash": rows[-1]["event_hash"] if rows else "GENESIS",
+            "previous_hash": self._tail_hash,
         }
         event["event_hash"] = digest(event)
-        with self.events_file.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+        encoded = (json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+        with self.events_file.open("ab") as handle:
+            handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
         self._apply(event)
-        atomic_json(self.state_file, asdict(self.state))
+        self._event_count += 1
+        self._tail_hash = event["event_hash"]
+        self._journal_offset += len(encoded)
+        if self._event_count & (self._event_count - 1) == 0:
+            atomic_json(self.state_file, asdict(self.state))
         return event
+
+    def sync_tail(self) -> int:
+        """Apply only journal records appended by another worker-plane instance."""
+        if not self.events_file.exists():
+            return 0
+        applied = 0
+        with self.events_file.open("rb") as handle:
+            handle.seek(self._journal_offset)
+            while line := handle.readline():
+                if not line.strip():
+                    continue
+                event = json.loads(line)
+                if event.get("previous_hash") != self._tail_hash:
+                    raise RuntimeError("WORKER_EVENT_TAIL_DIVERGENCE")
+                body = {key: value for key, value in event.items() if key != "event_hash"}
+                if digest(body) != event.get("event_hash"):
+                    raise RuntimeError("WORKER_EVENT_HASH_INVALID")
+                self._apply(event)
+                self._event_count += 1
+                self._tail_hash = event["event_hash"]
+                applied += 1
+            self._journal_offset = handle.tell()
+        return applied
+
+    def lease_job(self, job_id: str, worker_id: str, lease_seconds: int = 60, expected_attempt: int | None = None) -> dict[str, Any] | None:
+        """Lease the exact engine-selected job without rescanning the full queue."""
+        self.recover_expired_lease(job_id)
+        job = self.state.jobs.get(job_id)
+        if not job or job["status"] not in {"QUEUED", "RETRY_READY"}:
+            return None
+        now = datetime.now(timezone.utc)
+        if self._parse(job["next_eligible_at"]) > now:
+            return None
+        attempt = int(job["attempts"]) + 1
+        if expected_attempt is not None and attempt != expected_attempt:
+            return None
+        lease = {
+            "job_id": job_id,
+            "worker_id": worker_id,
+            "lease_expires_at": (now + timedelta(seconds=lease_seconds)).isoformat(timespec="seconds").replace("+00:00", "Z"),
+            "attempt": attempt,
+        }
+        self._append("JOB_LEASED", lease)
+        return dict(self.state.jobs[job_id])
+
+    def recover_expired_lease(self, job_id: str, as_of: str | None = None) -> bool:
+        point = self._parse(as_of) if as_of else datetime.now(timezone.utc)
+        row = self.state.jobs.get(job_id)
+        if not row:
+            return False
+        expiry = row.get("lease_expires_at")
+        if row["status"] == "LEASED" and expiry and self._parse(expiry) <= point:
+            self._append("LEASE_EXPIRED", {"job_id": row["job_id"], "expired_at": expiry, "recovered_at": utc_now()})
+            return True
+        return False
 
     def enqueue(self, job: Job) -> dict[str, Any]:
         if job.job_id in self.state.jobs:
@@ -104,12 +168,13 @@ class DurableWorkerPlane:
         return body
 
     def lease(self, worker_id: str, capability: str, lease_seconds: int = 60) -> dict[str, Any] | None:
-        self.recover_expired_leases()
+        for job_id in tuple(self._jobs_by_action_class.get(capability, ())):
+            self.recover_expired_lease(job_id)
         now = datetime.now(timezone.utc)
         eligible = [
-            row for row in self.state.jobs.values()
-            if row["status"] in {"QUEUED", "RETRY_READY"}
-            and row["action_class"] == capability
+            row
+            for job_id in self._jobs_by_action_class.get(capability, ())
+            if (row := self.state.jobs[job_id])["status"] in {"QUEUED", "RETRY_READY"}
             and self._parse(row["next_eligible_at"]) <= now
         ]
         eligible.sort(key=lambda row: (-int(row["priority"]), row["created_at"], row["job_id"]))
@@ -190,8 +255,20 @@ class DurableWorkerPlane:
 
     def _replay(self) -> None:
         self.state = WorkerState()
-        for event in self._events():
-            self._apply(event)
+        self._event_count = 0
+        self._tail_hash = "GENESIS"
+        self._journal_offset = 0
+        self._jobs_by_action_class = {}
+        if self.events_file.exists():
+            with self.events_file.open("rb") as handle:
+                for line in handle:
+                    if not line.strip():
+                        continue
+                    event = json.loads(line)
+                    self._apply(event)
+                    self._event_count += 1
+                    self._tail_hash = event["event_hash"]
+                self._journal_offset = handle.tell()
         atomic_json(self.state_file, asdict(self.state))
 
     def _apply(self, event: dict[str, Any]) -> None:
@@ -199,6 +276,7 @@ class DurableWorkerPlane:
         if kind == "JOB_ENQUEUED":
             self.state.jobs[p["job_id"]] = p
             self.state.idempotency[p["idempotency_key"]] = p["job_id"]
+            self._jobs_by_action_class.setdefault(p["action_class"], set()).add(p["job_id"])
         elif kind == "WORKER_HEARTBEAT":
             self.state.workers[p["worker_id"]] = p
         elif kind == "JOB_LEASED":

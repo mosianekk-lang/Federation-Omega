@@ -85,7 +85,25 @@ class SQLiteStateStore:
         self.path.parent.mkdir(parents=True, exist_ok=True)
         self.timeout_seconds = timeout_seconds
         self.last_commit: CommitReceipt | None = None
+        self._anchor: sqlite3.Connection | None = None
         self._initialize()
+        # Keep one connection open for the store lifetime.  In WAL mode this
+        # prevents every short hot-path transaction from becoming the last
+        # connection and forcing a close-time checkpoint immediately before a
+        # process interruption.  The WAL remains authoritative and recoverable
+        # across SIGKILL; ordinary transactions still use isolated connections.
+        self._anchor = self._connect()
+
+    def close(self) -> None:
+        anchor, self._anchor = self._anchor, None
+        if anchor is not None:
+            anchor.close()
+
+    def __del__(self) -> None:
+        try:
+            self.close()
+        except Exception:
+            pass
 
     def _connect(self) -> sqlite3.Connection:
         connection = sqlite3.connect(
@@ -97,6 +115,12 @@ class SQLiteStateStore:
         connection.row_factory = sqlite3.Row
         connection.execute("PRAGMA foreign_keys=ON")
         connection.execute("PRAGMA trusted_schema=OFF")
+        # Durability and checkpoint policy are connection-scoped.  Applying
+        # them only during schema initialization leaves later hot-path
+        # connections dependent on ambient SQLite defaults.
+        connection.execute("PRAGMA synchronous=FULL")
+        connection.execute("PRAGMA wal_autocheckpoint=256")
+        connection.execute(f"PRAGMA journal_size_limit={16 * 1024 * 1024}")
         connection.execute(f"PRAGMA busy_timeout={max(1, int(self.timeout_seconds * 1000))}")
         return connection
 
@@ -458,6 +482,118 @@ class SQLiteStateStore:
             upserts,
             deletes,
             appended,
+            changed_bytes,
+            reservations_added,
+            outbox_added,
+            transition_outbox_added,
+        )
+        self.last_commit = receipt
+        return receipt
+
+    def commit_delta(
+        self,
+        *,
+        expected_revision: int,
+        upserts: Mapping[tuple[str, str], Any],
+        deletes: Sequence[tuple[str, str]] = (),
+        new_events: Sequence[Mapping[str, Any]] = (),
+        reservations: Sequence[Mapping[str, Any]] = (),
+        outbox: Mapping[str, Any] | None = None,
+        transition_outbox: Mapping[str, Any] | None = None,
+        applied_transition: Mapping[str, Any] | None = None,
+        fault_at: str | None = None,
+    ) -> CommitReceipt:
+        """Atomically persist an explicit changed-row/event set.
+
+        The legacy full-state commit remains the reconciliation fallback.  This
+        hot path never infers dirtiness and therefore cannot silently omit a
+        mutation: callers must name every changed row and appended event.
+        """
+        for collection, row_key in upserts:
+            if collection not in STATE_COLLECTIONS or not row_key:
+                raise TransactionStoreError(f"DELTA_UPSERT_IDENTITY_INVALID:{collection}:{row_key}")
+        for collection, row_key in deletes:
+            if collection not in STATE_COLLECTIONS or not row_key:
+                raise TransactionStoreError(f"DELTA_DELETE_IDENTITY_INVALID:{collection}:{row_key}")
+
+        with self._write_transaction() as connection:
+            current = self._revision(connection)
+            if current != expected_revision:
+                raise StateRevisionConflict(f"STATE_REVISION_CONFLICT:{expected_revision}:{current}")
+            reservations_added = self._reserve(connection, reservations)
+            outbox_added = self._enqueue_outbox(connection, outbox)
+            transition_outbox_added = self._enqueue_transition_outbox(connection, transition_outbox)
+            now = utc_now()
+            changed_bytes = 0
+            rows_upserted = 0
+            for (collection, row_key), payload in upserts.items():
+                encoded = canonical_json(payload)
+                row_hash = hashlib.sha256(encoded.encode("utf-8")).hexdigest()
+                existing = connection.execute(
+                    "SELECT payload_sha256 FROM state_rows WHERE collection=? AND row_key=?",
+                    (collection, row_key),
+                ).fetchone()
+                if existing and str(existing["payload_sha256"]) == row_hash:
+                    continue
+                connection.execute(
+                    """INSERT INTO state_rows(collection,row_key,payload_json,payload_sha256,updated_at)
+                       VALUES(?,?,?,?,?)
+                       ON CONFLICT(collection,row_key) DO UPDATE SET
+                         payload_json=excluded.payload_json,
+                         payload_sha256=excluded.payload_sha256,
+                         updated_at=excluded.updated_at""",
+                    (collection, row_key, encoded, row_hash, now),
+                )
+                rows_upserted += 1
+                changed_bytes += len(encoded.encode("utf-8"))
+
+            rows_deleted = 0
+            for collection, row_key in deletes:
+                cursor = connection.execute(
+                    "DELETE FROM state_rows WHERE collection=? AND row_key=?",
+                    (collection, row_key),
+                )
+                rows_deleted += max(0, int(cursor.rowcount))
+
+            tail = connection.execute(
+                "SELECT seq,event_hash FROM control_events ORDER BY seq DESC LIMIT 1"
+            ).fetchone()
+            next_seq = int(tail["seq"]) + 1 if tail else 1
+            previous_hash = str(tail["event_hash"]) if tail else "GENESIS"
+            events_appended = 0
+            for event in new_events:
+                event_hash = str(event.get("hash") or "")
+                if not event_hash or canonical_digest({key: value for key, value in event.items() if key != "hash"}) != event_hash:
+                    raise TransactionStoreError(f"EVENT_HASH_INVALID:{next_seq}")
+                if str(event.get("previous") or "") != previous_hash:
+                    raise TransactionStoreError(f"EVENT_PREVIOUS_HASH_INVALID:{next_seq}")
+                encoded = canonical_json(event)
+                connection.execute(
+                    "INSERT INTO control_events(seq,event_hash,previous_hash,payload_json,recorded_at) VALUES(?,?,?,?,?)",
+                    (next_seq, event_hash, previous_hash, encoded, str(event.get("at") or now)),
+                )
+                next_seq += 1
+                previous_hash = event_hash
+                events_appended += 1
+                changed_bytes += len(encoded.encode("utf-8"))
+
+            if applied_transition is not None:
+                self._mark_transition_applied_in_transaction(
+                    connection,
+                    str(applied_transition["transition_id"]),
+                    str(applied_transition["claim_token"]),
+                )
+            next_revision = current + 1
+            connection.execute("UPDATE metadata SET value=? WHERE key='revision'", (str(next_revision),))
+            if fault_at == "before_commit":
+                raise InjectedStorageFault("INJECTED_BEFORE_COMMIT")
+
+        receipt = CommitReceipt(
+            current,
+            next_revision,
+            rows_upserted,
+            rows_deleted,
+            events_appended,
             changed_bytes,
             reservations_added,
             outbox_added,

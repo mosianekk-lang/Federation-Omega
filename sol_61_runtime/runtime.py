@@ -99,24 +99,34 @@ class SolRuntime:
         self.events = self.root / "events.jsonl"
         self.snapshot = self.root / "state.json"
         self.state = RuntimeState()
+        self._event_count = 0
+        self._tail_hash = "GENESIS"
+        self._journal_offset = 0
+        self._publication_receipts: dict[tuple[str, str, str], list[dict[str, Any]]] = {}
+        self._publication_completions: dict[tuple[str, str], list[dict[str, Any]]] = {}
+        self._publication_reliability: dict[str, list[dict[str, Any]]] = {}
         self._replay()
 
     def append_event(self, event_type: str, payload: dict[str, Any]) -> dict[str, Any]:
-        rows = self._events()
         event = {
-            "event_id": f"evt-{len(rows)+1:08d}",
+            "event_id": f"evt-{self._event_count+1:08d}",
             "event_type": event_type,
             "payload": payload,
             "recorded_at": utc_now(),
-            "previous_hash": rows[-1]["event_hash"] if rows else "GENESIS",
+            "previous_hash": self._tail_hash,
         }
         event["event_hash"] = digest(event)
-        with self.events.open("a", encoding="utf-8") as handle:
-            handle.write(json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n")
+        encoded = (json.dumps(event, sort_keys=True, separators=(",", ":")) + "\n").encode("utf-8")
+        with self.events.open("ab") as handle:
+            handle.write(encoded)
             handle.flush()
             os.fsync(handle.fileno())
         self._apply(event)
-        self._persist()
+        self._event_count += 1
+        self._tail_hash = event["event_hash"]
+        self._journal_offset += len(encoded)
+        if self._event_count & (self._event_count - 1) == 0:
+            self._persist()
         return event
 
     def register_mission(self, mission: Mission) -> dict[str, Any]:
@@ -211,6 +221,7 @@ class SolRuntime:
         }
         payload["checkpoint_id"] = f"cp-{len(self.state.checkpoints)+1:08d}"
         self.append_event("CHECKPOINT_CREATED", payload)
+        self._persist()
         return payload
 
     def classify_failure(self, failure: dict[str, Any]) -> dict[str, str]:
@@ -272,12 +283,59 @@ class SolRuntime:
     def _events(self) -> list[dict[str, Any]]:
         if not self.events.exists():
             return []
-        return [json.loads(line) for line in self.events.read_text(encoding="utf-8").splitlines() if line.strip()]
+        with self.events.open("rb") as handle:
+            return [json.loads(line) for line in handle if line.strip()]
+
+    def sync_tail(self) -> int:
+        """Apply only journal records appended by another runtime instance."""
+        if not self.events.exists():
+            return 0
+        applied = 0
+        with self.events.open("rb") as handle:
+            handle.seek(self._journal_offset)
+            while line := handle.readline():
+                if not line.strip():
+                    continue
+                event = json.loads(line)
+                if event.get("previous_hash") != self._tail_hash:
+                    raise RuntimeError("SOL_EVENT_TAIL_DIVERGENCE")
+                body = {key: value for key, value in event.items() if key != "event_hash"}
+                if digest(body) != event.get("event_hash"):
+                    raise RuntimeError("SOL_EVENT_HASH_INVALID")
+                self._apply(event)
+                self._event_count += 1
+                self._tail_hash = event["event_hash"]
+                applied += 1
+            self._journal_offset = handle.tell()
+        return applied
+
+    def publication_receipts(self, workstream_id: str, receipt_type: str, publication_id: str) -> tuple[dict[str, Any], ...]:
+        return tuple(self._publication_receipts.get((workstream_id, receipt_type, publication_id), ()))
+
+    def publication_completions(self, workstream_id: str, publication_id: str) -> tuple[dict[str, Any], ...]:
+        return tuple(self._publication_completions.get((workstream_id, publication_id), ()))
+
+    def publication_reliability(self, publication_id: str) -> tuple[dict[str, Any], ...]:
+        return tuple(self._publication_reliability.get(publication_id, ()))
 
     def _replay(self) -> None:
         self.state = RuntimeState()
-        for event in self._events():
-            self._apply(event)
+        self._event_count = 0
+        self._tail_hash = "GENESIS"
+        self._journal_offset = 0
+        self._publication_receipts = {}
+        self._publication_completions = {}
+        self._publication_reliability = {}
+        if self.events.exists():
+            with self.events.open("rb") as handle:
+                for line in handle:
+                    if not line.strip():
+                        continue
+                    event = json.loads(line)
+                    self._apply(event)
+                    self._event_count += 1
+                    self._tail_hash = event["event_hash"]
+                self._journal_offset = handle.tell()
         self._persist()
 
     def _apply(self, event: dict[str, Any]) -> None:
@@ -290,8 +348,16 @@ class SolRuntime:
             self.state.providers[f"{payload['provider']}:{payload['operation']}"] = payload
         elif kind == "RECEIPT_RECORDED":
             self.state.receipts[payload["receipt_id"]] = payload
+            publication_id = payload.get("body", {}).get("omega_publication_id")
+            if publication_id:
+                key = (payload["workstream_id"], payload["receipt_type"], publication_id)
+                self._publication_receipts.setdefault(key, []).append(payload)
         elif kind == "COMPLETION_EVALUATED":
             self.state.workstreams[payload["workstream_id"]]["status"] = payload["state"]
+            publication_id = payload.get("omega_publication_id")
+            if publication_id:
+                key = (payload["workstream_id"], publication_id)
+                self._publication_completions.setdefault(key, []).append(payload)
         elif kind == "CHECKPOINT_CREATED":
             self.state.checkpoints[payload["checkpoint_id"]] = payload
         elif kind == "LESSON_RECORDED":
@@ -299,8 +365,11 @@ class SolRuntime:
         elif kind == "POLICY_COMPILED":
             self.state.policies.append(payload)
         elif kind == "RELIABILITY_UPDATED":
-            action_class = payload.pop("action_class")
-            self.state.reliability[action_class] = payload
+            action_class = payload["action_class"]
+            self.state.reliability[action_class] = {key: value for key, value in payload.items() if key != "action_class"}
+            publication_id = payload.get("omega_publication_id")
+            if publication_id:
+                self._publication_reliability.setdefault(publication_id, []).append(payload)
 
     def _persist(self) -> None:
         atomic_json(self.snapshot, asdict(self.state))

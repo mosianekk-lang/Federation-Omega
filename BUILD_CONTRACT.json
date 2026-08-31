@@ -1,8 +1,8 @@
 {
   "contract_version": "3.3",
   "mission": {
-    "id": "MISSION-ULTIMATE-MULTISTREAM-ENGINE-20260830",
-    "version": 5,
+    "id": "MISSION-CFBE-OMEGA-ONE-WAVE2-20260830",
+    "version": 1,
     "goal": "Deliver a provider-neutral production foundation that deterministically decomposes, allocates, load-balances, joins, verifies, cancels and recovers bounded multi-stream work while preserving authority, privacy, cost and proof boundaries.",
     "user": "Kim Kagiso Mosiane",
     "workflow": "RECONCILE_NOT_REBUILD: Formation Reconciliation Fabric v2 plus SOL 6.1 plus isolated Omega-One PR 843 candidate semantics.",
@@ -13,7 +13,7 @@
     "maturity": "PROD_FOUNDATION",
     "governance": "Formation-gated A0-A3 separation, zero-new-recurring-cost default, zero-dilution proof maturity, single effect gateway and independent readback.",
     "failure": "Fail closed on stale mission state, authority/privacy/cost uncertainty, provider drift, shared-write conflicts, missing proof, uncertain external outcome or cancellation.",
-    "testing": "Seventy-two local unit/integration tests and sixteen adversarial invariants passed. The H2-P paired five-boundary process-kill canary recovered every mission and cleared speed, projection, recovery, integrity and fairness gates, but failed proof-receipt exactly-once quality; multi-host, live-provider, hidden-suite, soak and real-media courts remain required before readiness.",
+    "testing": "Eighty-three local unit/integration tests and sixteen adversarial invariants passed. The final H2-F court proved one continuously growing state with 10,000 globally unique missions, 24 real SIGKILLs, exact proof cardinality, saturated weighted fairness, bounded WAL/RSS amplification and zero residual work. Multi-host, live-provider, hidden-suite, seven-day endurance and real-media courts remain required before production readiness.",
     "deployment": "No deployment is authorized or claimed by this contract. A future target requires a separate permit, canary, health, persistence, rollback and semantic readback.",
     "continuity": "SQLite transactional revisions, append-only control events, idempotency reservations, durable admission and dispatch-transition outbox recovery, online backup, leases, fencing, dead-letter state, explicit resume conditions and AI handoff files."
   },
@@ -28,7 +28,7 @@
   "assumptions": {
     "stack": "Python 3.11+ and setuptools; no mandatory runtime dependency beyond the standard library at foundation stage.",
     "runtime": "One root orchestrator owns bounded fan-out/fan-in; child concurrency cannot exceed the root budget.",
-    "storage": "Local SQLite WAL schema v2 with FULL synchronous commits, revision fencing, append-only control events and durable admission/dispatch-transition outboxes for deterministic same-host operation; a multi-host datastore and leader-election path remain unresolved.",
+    "storage": "Local SQLite WAL schema v2 with FULL synchronous policy on every connection, a lifetime WAL anchor, revision fencing, explicit delta commits, append-only control events and durable admission/dispatch-transition outboxes for deterministic same-host operation; a multi-host datastore and leader-election path remain unresolved.",
     "authentication": "Provider credentials are never read by the core. Future adapters consume opaque authorized references and must prove current identity and scope.",
     "deployment": "No target runtime, provider deployment or recurring infrastructure spend is assumed."
   },
@@ -41,7 +41,7 @@
       "worker": "SOL worker/coordinator primitives wrapped by typed Omega-One task/result contracts and mission-version fencing.",
       "scheduler": "Root-owned DAG scheduler with hard vetoes, topology/critical-depth awareness, adaptive READY-frontier and worker-capacity width, weighted fairness, one-revision multi-lease waves, affinity and provider capacity scoring.",
       "cache": "NOT_APPLICABLE: correctness cannot depend on a cache; any future cache is an optimization with independent invalidation tests.",
-      "storage": "Incrementally committed top-level records and hash-validated append-only control events stored in SQLite; inherited SOL worker/audit sidecars remain byte-preserved and are recovered idempotently from admission or dispatch-transition intent after interruption.",
+      "storage": "Explicit changed-row/event deltas are committed atomically in SQLite; SOL and worker journals use fsynced append cursors, replay-derived publication/action indexes and bounded geometric snapshots. Raw journals remain authoritative and sidecars recover idempotently from durable intent after interruption.",
       "authentication": "Default-deny provider adapter admission; opaque secret references only; maker-credential Copilot autonomous triggers prohibited."
     },
     "failure_modes": [
@@ -81,12 +81,12 @@
       "A multi-lease dispatch wave advances one control revision and records one durable transition intent before inherited worker-sidecar publication.",
       "Partial dispatch-wave materialization is replayed idempotently; a matching existing lease is accepted and missing leases are completed.",
       "Effectful tasks and proof completion remain on single-item paths and are excluded from multi-item transaction coalescing.",
-      "Full H2 is not admitted while process-kill recovery can replay RESULT or INDEPENDENT_PROOF receipts."
+      "The final H2-F local-shadow claim is admitted only for one same-host continuously growing state; provider, multi-host, deployment and CFBE-GOLD promotion remain prohibited."
     ]
   },
   "testing": {
     "unit": [
-      "PASS: integrated local discovery executed 72 tests covering telemetry, schema-v2 transactional store, topology-aware adaptive waves, atomic idempotency admission, dispatch-transition recovery, cross-plane integrity, migration, crash recovery, same-host contention, online backup, CLI, provider adapters, source proof, deterministic CFBE and the H2-P harness contract.",
+      "PASS: integrated local discovery executed 83 tests covering telemetry, schema-v2 full and delta transactions, journal cursors/indexes, snapshot-independent replay, topology-aware adaptive waves, atomic idempotency admission, dispatch-transition recovery, cross-plane integrity, migration, crash recovery, same-host contention, online backup, CLI, provider adapters, source proof, deterministic CFBE and the H2-P/H2-F harness contracts.",
       "REQUIRED FOR NEXT MATURITY: live-provider, multi-host persistence/leader election and long-duration courts."
     ],
     "integration": [
@@ -197,8 +197,8 @@
     ]
   },
   "formation": {
-    "mission_id": "MISSION-ULTIMATE-MULTISTREAM-ENGINE-20260830",
-    "mission_version": 4,
+    "mission_id": "MISSION-CFBE-OMEGA-ONE-WAVE2-20260830",
+    "mission_version": 1,
     "gate_decision": "EXECUTE",
     "authority_class": "A1_INTERNAL",
     "effectful_permit": "NOT_APPLICABLE: this contract covers documentation/configuration and local no-effect foundation work only.",
@@ -262,16 +262,16 @@
       "omega_one_pr_head": "b1ccae6833410899ca07aada218a6b585d3c9f5e",
       "omega_one_pr_base": "main"
     },
-    "test_results": "PASS LOCAL: unittest discovery 78/78; compileall PASS; atomic control-state plus transition finalization, wrong-claim rollback, parameter-bound replay rejection, valid nonzero child RSS measurement, raw exact-event cardinality, schema-v2 migration, one-revision multi-lease coalescing, transaction rollback, admission and dispatch post-commit crash recovery, partial sidecar replay, same-host cross-instance contention, online-backup restore, exact H2-P and 10,000-mission segmented H2 courts passed.",
-    "semantic_verification": "PASS LOCAL: CLI demo completed a three-task two-read-plus-join mission with all tasks PROVEN, integrity=true, source_verified=true, provider_execution=false and deployed=false.",
+    "test_results": "PASS LOCAL: unittest discovery 83/83; compileall PASS; atomic full and explicit-delta control transactions, wrong-claim rollback, parameter-bound replay rejection, journal cursor/index recovery, stale-snapshot independence, per-connection FULL durability, lifetime WAL anchoring, valid nonzero RSS/WAL measurement, raw exact-event cardinality, schema-v2 migration, same-host contention, online-backup restore, exact H2-P, segmented H2 and final single-state H2-F courts passed.",
+    "semantic_verification": "PASS LOCAL: final H2-F court completed one continuously growing state with exactly 10,000 globally unique missions/tasks/certificates and exactly 10,000 RESULT, INDEPENDENT_PROOF, COMPLETION_EVALUATED, RELIABILITY_UPDATED, JOB_COMPLETED and TASK_PROVEN records; 24/24 SIGKILLs recovered; integrity=true; zero residual work; provider_execution=false; deployed=false.",
     "deployment_readback": "NOT_APPLICABLE: deployed=false.",
     "provider_readback": "NOT_APPLICABLE: all live provider adapters are disabled and provider execution is not claimed.",
-    "cfbe_state": "SHADOW_ONLY ACTUAL LOCAL ENGINE: H1 passed 16/16 invariants across eight paired workloads through 240 tasks. The repaired H2-P court passed every gate. The checkpointed H2 segmented resilience court then completed exactly 10,000 candidate and 10,000 paired baseline mission executions through 100 independent segments, with 500 verified process kills per route, zero failed segment or aggregate gates, valid nonzero peak RSS 52,392 KiB, Jain fairness 0.9983700081499592, 100% exact raw task-event cardinality, candidate elapsed 178.9526087200029 seconds and paired speedup 3.0624118816645196x. The same deterministic 100 mission identities were replayed per isolated segment, so 10,000 globally unique mission IDs and continuous single-state growth are not claimed. Aggregate report canonical sha256 28cf5ebf368fed226bc868a6ff08a85044c89d6e83c5e3d6b2cda45e9a8ee458. Live automation and CFBE-GOLD remain unproven.",
+    "cfbe_state": "SHADOW_ONLY ACTUAL LOCAL ENGINE: H1 passed 16/16 invariants; H2-P and the 100-segment 10,000-execution court passed their bounded contracts. Wave 2 then reduced the true one-state 800-mission time from 100.90343571099947 seconds to 5.481420353999056 seconds (18.41x) before the final court. The source-identical final H2-F court completed exactly 10,000 globally unique missions in one continuously growing state through 24 verified SIGKILLs and 25 processes in 133.00056921900068 seconds. Every one of seven required proof/event categories counted exactly 10,000; 9,649 dispatches occurred under saturation; minimum rolling weighted Jain fairness was 1.0; peak WAL was 1,161,872 bytes; peak RSS was 309,696 KiB and 1.8028496772645417x persisted state; all gates passed. Canonical report sha256 c6397fe9100fa0a328474817ad383c17e3aabc3283bd220928b2057660cf1ac4. Live providers, multi-host execution, deployment and CFBE-GOLD remain unproven.",
     "known_limitations_outside_tested_local_boundary": [
       "Live OpenAI, Gemini and Copilot clients are not implemented, authorized or provider-read back.",
       "Multi-host transactional persistence, distributed leader election and distributed fencing are not proven; SQLite WAL proof is same-host only.",
       "Actual local paired benchmarks are not live-provider or distributed throughput proof; H1 measurements require counterbalanced repeated statistical courts before any production performance claim.",
-      "A 10,000-mission checkpointed segmented resilience court passed, but a seven-day continuous single-state endurance soak, hidden suite and real image/video completion evidence remain absent.",
+      "The 10,000-mission single-state H2-F resilience court passed, but a seven-day endurance soak, hidden suite and real image/video completion evidence remain absent.",
       "No deployment, repeated-success or owner-value proof.",
       "Current main required-check enforcement was observed disabled and an enforced ruleset is absent."
     ],
