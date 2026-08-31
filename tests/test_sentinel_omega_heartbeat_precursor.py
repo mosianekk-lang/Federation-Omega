@@ -92,9 +92,14 @@ class HeartbeatCadenceForecasterTests(unittest.TestCase):
         self.assertGreater(high.precursor_after_seconds, low.precursor_after_seconds)
 
     def test_non_monotonic_history_fails_closed(self):
-        points = [BASE, BASE + timedelta(hours=1), BASE + timedelta(minutes=30)]
+        points = [
+            BASE,
+            BASE + timedelta(hours=1),
+            BASE + timedelta(hours=2),
+            BASE + timedelta(minutes=90),
+        ]
         with self.assertRaisesRegex(ValueError, "strictly increasing"):
-            HeartbeatCadenceForecaster(minimum_intervals=2).fit(points)
+            HeartbeatCadenceForecaster(minimum_intervals=3).fit(points)
 
     def test_insufficient_history_fails_closed(self):
         with self.assertRaisesRegex(ValueError, "insufficient heartbeat history"):
