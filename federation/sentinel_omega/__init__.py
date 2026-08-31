@@ -28,6 +28,15 @@ from .owner_value_ingress import (
     OwnerValueMissionRecord,
     OwnerValuePairCompiler,
 )
+from .precursor_outcome import (
+    PredictionOutcome,
+    PrecursorCohortEvaluator,
+    PrecursorCohortMetrics,
+    PrecursorOutcomeEvidence,
+    PrecursorOutcomeResolver,
+    PrecursorPrediction,
+    ResolvedPrecursorOutcome,
+)
 from .topology_correlation import SentinelObservabilityCausalFabric
 
 __all__ = [
@@ -46,8 +55,15 @@ __all__ = [
     "OwnerValueMissionObservationAdapter",
     "OwnerValueMissionRecord",
     "OwnerValuePairCompiler",
+    "PredictionOutcome",
+    "PrecursorCohortEvaluator",
+    "PrecursorCohortMetrics",
+    "PrecursorOutcomeEvidence",
+    "PrecursorOutcomeResolver",
+    "PrecursorPrediction",
     "ProjectionDriftObservationAdapter",
     "QueueObservationAdapter",
+    "ResolvedPrecursorOutcome",
     "SemanticObservationNormalizer",
     "SentinelObservabilityCausalFabric",
     "SignalKind",
