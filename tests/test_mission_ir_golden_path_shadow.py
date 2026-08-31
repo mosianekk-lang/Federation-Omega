@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import unittest
 
 from benchmarking.cfbe_omega.bubbles_work_graph_adapter_v1 import BubblesWorkNode
@@ -7,6 +9,7 @@ from benchmarking.cfbe_omega.mission_execution_adapter_v1 import shadow_compile_
 from federation.bubbles_frontier_hyperperformance import WorkCell
 from federation.mission_ir import MissionIR
 from frontier_convergence.mission_ir_golden_path_shadow import build_receipt
+from frontier_convergence.mission_ir_second_domain_shadow import build_receipt as build_second_domain_receipt
 
 
 class MissionIRProviderPolicyBindingTests(unittest.TestCase):
@@ -98,6 +101,36 @@ class GoldenPathShadowCertificationTests(unittest.TestCase):
         )
 
 
+class MissionIRSecondDomainUniversalityTests(unittest.TestCase):
+    def test_generic_idea_compiler_enters_same_shadow_fabric_without_effect_authority(self):
+        receipt = build_second_domain_receipt(certification_source_sha="test-sha")
+        self.assertEqual("HOSTED_SHADOW_SECOND_DOMAIN_PASS", receipt["state"])
+        self.assertTrue(receipt["binding_hash_matches"])
+        self.assertTrue(receipt["semantic_pass"])
+        self.assertEqual(["RESEARCH"], receipt["intent_classes"])
+        self.assertEqual("READ_ONLY", receipt["effect_class"])
+        self.assertEqual([], receipt["authority_requirements"])
+        self.assertEqual(["FED-AUDIT-SOURCE"], receipt["selected_work_ids"])
+        self.assertEqual(1, len(receipt["selected_cell_ids"]))
+        self.assertFalse(receipt["provider_effect_authorized"])
+        self.assertFalse(receipt["financial_effect_authorized"])
+        self.assertFalse(receipt["publication_authorized"])
+        self.assertEqual(0, receipt["external_effects"])
+        self.assertFalse(receipt["stable_promotion_allowed"])
+
+    def test_hosted_court_emits_second_domain_receipt_into_existing_runtime_artifact(self):
+        receipt = build_second_domain_receipt(certification_source_sha="test-sha")
+        runtime_dir = Path("runtime-proof")
+        runtime_dir.mkdir(exist_ok=True)
+        output = runtime_dir / "mission-ir-second-domain-shadow.json"
+        output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+        self.assertTrue(output.exists())
+        self.assertEqual(
+            "9e0c8c476d00da7c06d273c9aa147ba29a4eed865000c77871dc69ab0ad67a16",
+            receipt["calculated_mission_ir_sha256"],
+        )
+
+
 class FourSurfaceCompositeRouterQualificationTests(unittest.TestCase):
     def test_composite_bundle_keeps_four_surface_authority_and_proof_gates(self):
         from frontier_convergence.cfbe_fidelity_composite_router_v1 import (
@@ -133,4 +166,3 @@ class FourSurfaceCompositeRouterQualificationTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
