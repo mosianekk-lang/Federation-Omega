@@ -98,5 +98,39 @@ class GoldenPathShadowCertificationTests(unittest.TestCase):
         )
 
 
+class FourSurfaceCompositeRouterQualificationTests(unittest.TestCase):
+    def test_composite_bundle_keeps_four_surface_authority_and_proof_gates(self):
+        from frontier_convergence.cfbe_fidelity_composite_router_v1 import (
+            GoalEnvelope,
+            SURFACE_ORDER,
+            resolve_unified,
+        )
+
+        receipt = resolve_unified(GoalEnvelope("HOSTED-COMPOSITE-1"))
+        self.assertEqual("ELIGIBLE_COMPOSITE_BUNDLE", receipt.state)
+        self.assertEqual(SURFACE_ORDER, tuple(lane.surface for lane in receipt.lanes))
+        self.assertEqual(4, len({lane.authority_requirement for lane in receipt.lanes}))
+        self.assertTrue(all(lane.proof_requirements for lane in receipt.lanes))
+        self.assertTrue(all(lane.effect_class == "READ_ONLY" for lane in receipt.lanes))
+        self.assertFalse(receipt.serving_route_changed)
+        self.assertFalse(receipt.external_effects_authorized)
+        self.assertFalse(receipt.stable_promotion_allowed)
+
+    def test_composite_and_decomposed_receipts_are_semantically_identical(self):
+        from frontier_convergence.cfbe_fidelity_composite_router_v1 import (
+            qualification_suite,
+            resolve_decomposed,
+            resolve_unified,
+        )
+
+        for goal in qualification_suite():
+            unified = resolve_unified(goal)
+            decomposed = resolve_decomposed(goal)
+            self.assertEqual(decomposed.state, unified.state)
+            self.assertEqual(decomposed.semantic_digest, unified.semantic_digest)
+            self.assertEqual(decomposed.rejection_reasons, unified.rejection_reasons)
+
+
 if __name__ == "__main__":
     unittest.main()
+
