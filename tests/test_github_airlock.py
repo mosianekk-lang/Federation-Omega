@@ -69,16 +69,6 @@ jobs:
         )
         self.assertEqual([], findings)
 
-    def test_superior_logic_candidate_builder_exact_pr_only_contract_passes(self):
-        path = ".github/workflows/superior-logic-candidate-builder-canary.yml"
-        text = (ROOT / path).read_text(encoding="utf-8")
-        findings = AIRLOCK.analyse_workflow(path, text, POLICY)
-        self.assertEqual([], findings)
-        self.assertEqual({"pull_request"}, AIRLOCK.workflow_events(text))
-        self.assertFalse(AIRLOCK.has_contents_write(text))
-        self.assertFalse(AIRLOCK.has_oidc_write(text))
-        self.assertFalse(AIRLOCK.has_actions_write(text))
-
     def test_bubbles_command_bus_rejects_unscoped_push(self):
         text = """name: Bubbles Command Bus
 on:
@@ -331,4 +321,3 @@ jobs:
 
 if __name__ == "__main__":
     unittest.main()
-

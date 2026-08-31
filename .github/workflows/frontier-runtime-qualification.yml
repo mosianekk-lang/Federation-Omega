@@ -284,6 +284,74 @@ jobs:
           print(json.dumps(receipt, sort_keys=True))
           PY
 
+      - name: Bind exact-head internal runtime proof to v2 court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          from pathlib import Path
+
+          runtime_path = Path('runtime-proof/runtime-qualification.json')
+          runtime_raw = runtime_path.read_bytes()
+          runtime = json.loads(runtime_raw)
+          image_digest = Path('runtime-proof/image-id.txt').read_text(encoding='utf-8').strip()
+          assert runtime['source_sha'] == os.environ['GITHUB_SHA'], runtime
+          assert runtime['status'] == 'INTERNAL_RUNTIME_VERIFIED', runtime
+          assert runtime['provider_effects'] is False, runtime
+          assert runtime['container_health_states'] == ['READY_INTERNAL_CONTROL_RUNTIME'] * 3, runtime
+          assert runtime['event_chain_valid_after_restore'] is True, runtime
+          assert runtime['replay_event_id_equal'] is True, runtime
+          assert runtime['rollback_restored'] is True, runtime
+          assert runtime['mutated_event_count'] == runtime['baseline_event_count'] + 1, runtime
+          assert runtime['restored_event_count'] == runtime['baseline_event_count'], runtime
+          assert image_digest.startswith('sha256:') and len(image_digest) == 71, image_digest
+
+          evidence = [{
+              'evidence_id': f"github-actions-frontier-runtime-{os.environ["GITHUB_RUN_ID"]}",
+              'source_head_sha': os.environ['GITHUB_SHA'],
+              'evidence_mode': 'INTERNAL_RUNTIME_QUALIFICATION',
+              'environment': 'github-actions-ubuntu-24.04-docker',
+              'image_digest': image_digest,
+              'revision_id': '',
+              'provider_registration_verified': False,
+              'workload_identity_verified': False,
+              'health_readback_verified': True,
+              'rollback_verified': True,
+              'deployment_observed': False,
+              'independent_readback': True,
+              'provider_effect_authorized': False,
+              'proof_refs': [
+                  'runtime-qualification:sha256:' + hashlib.sha256(runtime_raw).hexdigest(),
+                  'image:' + image_digest,
+              ],
+          }]
+          Path('runtime-proof/internal-runtime-court-evidence.json').write_text(
+              json.dumps(evidence, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          PY
+          python -m evidenceops.caseforge.owner_value_deployment_court_v2 \
+            --candidate-id bubbles-pr876-exact-head-runtime \
+            --source-head-sha "$GITHUB_SHA" \
+            --deployment-receipt runtime-proof/internal-runtime-court-evidence.json \
+            --output runtime-proof/owner-value-deployment-court-v2.json
+          python - <<'PY'
+          import json
+          receipt = json.load(open('runtime-proof/owner-value-deployment-court-v2.json', encoding='utf-8'))
+          assert receipt['source_head_sha'] == __import__('os').environ['GITHUB_SHA'], receipt
+          assert receipt['decision'] == 'HOLD_NO_PROMOTION', receipt
+          assert receipt['internal_runtime_qualified'] is True, receipt
+          assert receipt['provider_deployment_proven'] is False, receipt
+          assert 'EXACT_HEAD_INTERNAL_RUNTIME_QUALIFICATION_REQUIRED' not in receipt['blockers'], receipt
+          assert 'OWNER_VALUE_MINIMUM_OBSERVED_PAIRS_REQUIRED' in receipt['blockers'], receipt
+          assert 'LIVE_PROVIDER_DEPLOYMENT_EVIDENCE_REQUIRED' in receipt['blockers'], receipt
+          assert receipt['stable_promotion_authorized'] is False, receipt
+          assert receipt['effect_authorized'] is False, receipt
+          assert receipt['external_effect'] is False, receipt
+          print('EXACT_HEAD_INTERNAL_RUNTIME_BOUND_TO_V2_COURT_NO_PROMOTION')
+          PY
       - name: Publish qualification summary
         if: always()
         shell: bash
@@ -301,6 +369,12 @@ jobs:
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
 
+          if [[ -f runtime-proof/owner-value-deployment-court-v2.json ]]; then
+            echo '## Owner-Value and Deployment Court v2' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat runtime-proof/owner-value-deployment-court-v2.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
       - name: Upload immutable runtime proof
         if: always() && hashFiles('runtime-proof/*') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02

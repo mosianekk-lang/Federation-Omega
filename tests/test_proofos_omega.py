@@ -23,6 +23,10 @@ class PolicyTests(unittest.TestCase):
         p,i,m=compile_for(['governance/cfbe_evidence_autopilot_contract_v1.json']); s=selected(m); court=p.tests['cfbe_frontier_binding']; self.assertIn('CFBE',i.direct_subsystems); self.assertFalse(i.unmapped_production_paths); self.assertEqual('test_cfbe_*.py',court.target); self.assertIn('governance/cfbe_*.json',court.patterns); self.assertIn('cfbe_frontier_binding',s); self.assertNotIn('full_federation_fallback',s); self.assertFalse(m.selector_state['fallback_full_suite_activated'])
     def test_unique_package_root_infers_realityguard_without_fallback(self):
         paths=['realityguard_v0.4.0/BUILD_CONTRACT.json','realityguard_v0.4.0/examples/gmail_attachment_failure_execution_guard.json','realityguard_v0.4.0/examples/gmail_attachment_repaired_execution_guard.json','realityguard_v0.4.0/pyproject.toml']; _,i,m=compile_for(paths); self.assertIn('REALITYGUARD',i.direct_subsystems); self.assertFalse(i.unmapped_production_paths); self.assertIn('deployment_safety_spine',selected(m)); self.assertNotIn('full_federation_fallback',selected(m)); self.assertFalse(m.selector_state['fallback_full_suite_activated'])
+    def test_narrow_package_subtree_cannot_claim_new_federation_siblings(self):
+        paths=['federation/unregistered_future_runtime.py']; p,i,m=compile_for(paths); self.assertEqual(tuple(paths),i.unmapped_production_paths); self.assertNotIn('MISSION_ARBITRATION',i.direct_subsystems); self.assertNotIn('FEDERATION_BUILD',i.direct_subsystems); self.assertIn('full_federation_fallback',selected(m)); self.assertEqual('test_*.py',p.tests['full_federation_fallback'].target); self.assertTrue(m.selector_state['fallback_full_suite_activated'])
+    def test_federation_build_paths_have_exact_blocking_courts(self):
+        paths=['federation/frb_omega_binding.py','federation/openai_build_generator.py']; _,i,m=compile_for(paths); s=selected(m); self.assertIn('FEDERATION_BUILD',i.direct_subsystems); self.assertFalse(i.unmapped_production_paths); self.assertEqual(RiskTier.R4_CORE,i.risk); self.assertTrue({'federation_frb_binding','federation_openai_build_generator'}<=s); self.assertNotIn('full_federation_fallback',s); self.assertFalse(m.selector_state['fallback_full_suite_activated'])
     def test_ambiguous_package_root_still_falls_back(self):
         _,i,m=compile_for(['governance/unmapped_policy.json']); self.assertEqual(('governance/unmapped_policy.json',),i.unmapped_production_paths); self.assertIn('full_federation_fallback',selected(m)); self.assertTrue(m.selector_state['fallback_full_suite_activated'])
     def test_package_root_inference_is_deterministic(self):
@@ -49,7 +53,10 @@ class PolicyTests(unittest.TestCase):
     def test_prediction_is_add_only(self):
         m=compile_for(['docs/x.md'])[2]; self.assertTrue(m.selector_state['predictive_selector_may_only_add_tests']); self.assertTrue(m.selector_state['deterministic_selector_floor_may_not_be_removed_by_prediction'])
     def test_latest_guard_ids_registered(self):
-        p=ProofPolicy.from_path(POLICY_PATH); self.assertTrue({'evidenceops_algorithm_foundry','architron_semantic_contract','sovara_provider_recovery','frontier_os'}<=set(p.tests))
+        p=ProofPolicy.from_path(POLICY_PATH); self.assertTrue({'evidenceops_algorithm_foundry','architron_semantic_contract','sovara_provider_recovery','frontier_os','federation_frb_binding','federation_openai_build_generator'}<=set(p.tests))
+    def test_additive_extension_cannot_override_selector_or_authority(self):
+        with tempfile.TemporaryDirectory() as td:
+            root=Path(td); primary=root/POLICY_PATH.name; primary.write_text(POLICY_PATH.read_text(encoding='utf-8'),encoding='utf-8'); extension=root/'proofos_omega_policy_extension_bad_v1.json'; extension.write_text(json.dumps({'schema':'FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1','version':'1.0.0','selector':{'sentinel_percent':100},'risk_rules':[],'subsystem_rules':[],'historical_associations':[],'tests':[]}),encoding='utf-8'); self.assertRaises(PolicyError,ProofPolicy.from_path,primary)
     def test_malicious_target_rejected(self):
         r=json.loads(POLICY_PATH.read_text()); r['tests'][0]['target']='x.py; rm -rf /'; self.assertRaises(PolicyError,ProofPolicy,r)
     def test_shell_kind_rejected(self):
@@ -87,7 +94,7 @@ class CFBETests(unittest.TestCase):
     def test_source_only_held(self):
         c=CFBEAdmissionComparator.from_path(self.SPEC); r=c.compare(incumbent=BenchmarkObservation('REPEATED_OPERATIONAL_SCOPED',self.metrics(),('i',)),challenger=BenchmarkObservation('SOURCE_DESIGN_ONLY',self.challenger())); self.assertEqual('HELD_NO_OPERATIONAL_EVIDENCE',r.status); self.assertTrue(r.hard_gates_pass)
     def test_provider_live_can_be_ten_x_candidate(self):
-        c=CFBEAdmissionComparator.from_path(self.SPEC); r=c.compare(incumbent=BenchmarkObservation('REPEATED_OPERATIONAL_SCOPED',self.metrics(),('i',)),challenger=BenchmarkObservation('PROVIDER_LIVE_INDEPENDENT_READBACK',self.challenger(),('provider','independent'))); self.assertEqual('TEN_X_FRONTIER_CANDIDATE',r.status)
+        c=CFBEAdmissionComparator.from_path(self.SPEC); r=c.compare(incumbent=BenchmarkObservation('REPEATED_OPERATIONAL_SCOPED',self.metrics()),challenger=BenchmarkObservation('PROVIDER_LIVE_INDEPENDENT_READBACK',self.challenger(),('provider','independent'))); self.assertEqual('TEN_X_FRONTIER_CANDIDATE',r.status)
     def test_safety_regression_rejects_speed(self):
         c=CFBEAdmissionComparator.from_path(self.SPEC); x=self.challenger(); x['security_escape_rate']=.01; r=c.compare(incumbent=BenchmarkObservation('REPEATED_OPERATIONAL_SCOPED',self.metrics()),challenger=BenchmarkObservation('PROVIDER_LIVE_INDEPENDENT_READBACK',x,('p',))); self.assertEqual('REJECTED_SAFETY_OR_REGRESSION_GATE',r.status)
 

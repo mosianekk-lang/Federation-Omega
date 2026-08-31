@@ -4,7 +4,7 @@ from dataclasses import dataclass
 from datetime import datetime
 from hashlib import sha256
 import json
-from typing import Iterable, Sequence
+from typing import Iterable, Mapping, Sequence
 
 
 _HEX = frozenset("0123456789abcdef")
@@ -68,17 +68,44 @@ class CellAllocationDecision:
     reason: str = ""
 
 
+@dataclass(frozen=True, slots=True)
+class WaveAllocationDecision:
+    """Capacity-aware shadow placement for a bounded wave of already-selected work."""
+
+    state: str
+    work_ids: tuple[str, ...]
+    placements: tuple[CellAllocationDecision, ...]
+    occupancy: tuple[tuple[str, int], ...]
+    remaining_capacity: tuple[tuple[str, int], ...]
+    saturated_cell_ids: tuple[str, ...]
+    backpressure_work_ids: tuple[str, ...]
+    allocation_digest: str
+    reason: str = ""
+
+
 class WorkCellAllocator:
     """Deterministic cell/shuffle-shard allocation without execution authority.
 
-    The allocator uses rendezvous-style hashing to choose a bounded set of cells.
-    It can exclude unhealthy/correlated failure domains and, by default, refuses
-    to place one work item into cells sharing any failure domain.
+    Single-work allocation preserves the original rendezvous-style behavior.
+    Wave allocation adds bounded capacity accounting, least-loaded spillover and
+    backpressure while keeping provider/effect authority external.
     """
 
     @staticmethod
     def _score(work_id: str, cell_id: str) -> str:
         return sha256(f"{work_id}\x1f{cell_id}".encode("utf-8")).hexdigest()
+
+    @staticmethod
+    def _validated_cells(cells: Sequence[WorkCell]) -> tuple[WorkCell, ...]:
+        if not cells:
+            raise ValueError("WORK_CELLS_REQUIRED")
+        seen: set[str] = set()
+        for cell in cells:
+            cell.validate()
+            if cell.cell_id in seen:
+                raise ValueError("WORK_CELL_IDS_MUST_BE_UNIQUE")
+            seen.add(cell.cell_id)
+        return tuple(cells)
 
     def allocate(
         self,
@@ -93,20 +120,12 @@ class WorkCellAllocator:
             raise ValueError("WORK_ID_REQUIRED")
         if shard_width <= 0:
             raise ValueError("SHARD_WIDTH_INVALID")
-        if not cells:
-            raise ValueError("WORK_CELLS_REQUIRED")
-
-        seen: set[str] = set()
-        for cell in cells:
-            cell.validate()
-            if cell.cell_id in seen:
-                raise ValueError("WORK_CELL_IDS_MUST_BE_UNIQUE")
-            seen.add(cell.cell_id)
+        validated_cells = self._validated_cells(cells)
 
         excluded_domains = {item.strip() for item in excluded_failure_domains if item.strip()}
         eligible: list[WorkCell] = []
         excluded_ids: list[str] = []
-        for cell in cells:
+        for cell in validated_cells:
             domains = set(cell.failure_domains)
             if not cell.active or domains & excluded_domains:
                 excluded_ids.append(cell.cell_id)
@@ -156,6 +175,160 @@ class WorkCellAllocator:
             excluded_cell_ids=tuple(sorted(excluded_ids)),
             allocation_digest=_digest(body),
             reason="Deterministic bounded allocation only; provider/effect authority remains external.",
+        )
+
+    def allocate_wave(
+        self,
+        work_ids: Sequence[str],
+        cells: Sequence[WorkCell],
+        *,
+        shard_width: int = 1,
+        excluded_failure_domains: Iterable[str] = (),
+        require_distinct_failure_domains: bool = True,
+        initial_occupancy: Mapping[str, int] | None = None,
+    ) -> WaveAllocationDecision:
+        """Place a bounded wave with capacity, anti-hotspot spillover and backpressure.
+
+        Capacity is consumed only when one work item receives its complete shard.
+        A held work item therefore cannot partially occupy cells. The algorithm
+        is deterministic for identical work/cell/occupancy inputs and remains a
+        shadow planning primitive: it neither executes work nor changes routes.
+        """
+
+        ids = tuple(str(item).strip() for item in work_ids)
+        if not ids or any(not item for item in ids):
+            raise ValueError("WORK_WAVE_IDS_REQUIRED")
+        if len(set(ids)) != len(ids):
+            raise ValueError("WORK_WAVE_IDS_MUST_BE_UNIQUE")
+        if shard_width <= 0:
+            raise ValueError("SHARD_WIDTH_INVALID")
+        validated_cells = self._validated_cells(cells)
+        by_id = {cell.cell_id: cell for cell in validated_cells}
+
+        occupancy = {cell.cell_id: 0 for cell in validated_cells}
+        for cell_id, value in dict(initial_occupancy or {}).items():
+            if cell_id not in by_id:
+                raise ValueError("WORK_CELL_INITIAL_OCCUPANCY_UNKNOWN_CELL")
+            if not isinstance(value, int) or value < 0 or value > by_id[cell_id].capacity:
+                raise ValueError("WORK_CELL_INITIAL_OCCUPANCY_INVALID")
+            occupancy[cell_id] = value
+
+        excluded_domains = {item.strip() for item in excluded_failure_domains if item.strip()}
+        base_eligible: list[WorkCell] = []
+        permanently_excluded: set[str] = set()
+        for cell in validated_cells:
+            if not cell.active or set(cell.failure_domains) & excluded_domains:
+                permanently_excluded.add(cell.cell_id)
+                continue
+            base_eligible.append(cell)
+
+        placements: list[CellAllocationDecision] = []
+        backpressure: list[str] = []
+        for work_id in ids:
+            ranked = sorted(
+                (cell for cell in base_eligible if occupancy[cell.cell_id] < cell.capacity),
+                key=lambda cell: (
+                    (cell.capacity - occupancy[cell.cell_id]) / cell.capacity,
+                    cell.capacity - occupancy[cell.cell_id],
+                    self._score(work_id, cell.cell_id),
+                    cell.cell_id,
+                ),
+                reverse=True,
+            )
+            selected: list[WorkCell] = []
+            occupied_domains: set[str] = set()
+            for cell in ranked:
+                if require_distinct_failure_domains and occupied_domains & set(cell.failure_domains):
+                    continue
+                selected.append(cell)
+                occupied_domains.update(cell.failure_domains)
+                if len(selected) == shard_width:
+                    break
+
+            candidate_ids = tuple(cell.cell_id for cell in ranked)
+            selected_ids = tuple(cell.cell_id for cell in selected)
+            saturated_before = {
+                cell.cell_id for cell in base_eligible if occupancy[cell.cell_id] >= cell.capacity
+            }
+            excluded_ids = tuple(sorted(permanently_excluded | saturated_before))
+            body = {
+                "work_id": work_id,
+                "shard_width": shard_width,
+                "require_distinct_failure_domains": require_distinct_failure_domains,
+                "excluded_failure_domains": sorted(excluded_domains),
+                "occupancy_before": sorted(occupancy.items()),
+                "candidate_cell_ids": candidate_ids,
+                "selected_cell_ids": selected_ids,
+            }
+            if len(selected) < shard_width:
+                backpressure.append(work_id)
+                placements.append(
+                    CellAllocationDecision(
+                        state="HOLD_INSUFFICIENT_CAPACITY_OR_FAILURE_DOMAIN_DIVERSITY",
+                        work_id=work_id,
+                        selected_cell_ids=selected_ids,
+                        candidate_cell_ids=candidate_ids,
+                        excluded_cell_ids=excluded_ids,
+                        allocation_digest=_digest(body),
+                        reason="Wave placement held: remaining cell capacity/failure-domain diversity cannot satisfy the complete shard.",
+                    )
+                )
+                continue
+
+            for cell in selected:
+                occupancy[cell.cell_id] += 1
+            placements.append(
+                CellAllocationDecision(
+                    state="ALLOCATED",
+                    work_id=work_id,
+                    selected_cell_ids=selected_ids,
+                    candidate_cell_ids=candidate_ids,
+                    excluded_cell_ids=excluded_ids,
+                    allocation_digest=_digest(body),
+                    reason="Capacity-aware deterministic shadow placement only; provider/effect authority remains external.",
+                )
+            )
+
+        occupancy_tuple = tuple(sorted(occupancy.items()))
+        remaining_tuple = tuple(
+            sorted((cell.cell_id, cell.capacity - occupancy[cell.cell_id]) for cell in validated_cells)
+        )
+        saturated = tuple(
+            sorted(cell.cell_id for cell in validated_cells if occupancy[cell.cell_id] >= cell.capacity)
+        )
+        allocated_count = sum(item.state == "ALLOCATED" for item in placements)
+        if not backpressure:
+            state = "WAVE_ALLOCATED"
+            reason = "All selected work received complete capacity-aware shadow placement."
+        elif allocated_count:
+            state = "WAVE_BACKPRESSURE"
+            reason = "Some selected work was placed and the remainder was held without partial occupancy."
+        else:
+            state = "WAVE_HELD"
+            reason = "No selected work could be placed within current capacity/failure-domain constraints."
+
+        wave_body = {
+            "work_ids": ids,
+            "shard_width": shard_width,
+            "excluded_failure_domains": sorted(excluded_domains),
+            "require_distinct_failure_domains": require_distinct_failure_domains,
+            "placements": [item.allocation_digest for item in placements],
+            "occupancy": occupancy_tuple,
+            "remaining_capacity": remaining_tuple,
+            "saturated_cell_ids": saturated,
+            "backpressure_work_ids": backpressure,
+            "state": state,
+        }
+        return WaveAllocationDecision(
+            state=state,
+            work_ids=ids,
+            placements=tuple(placements),
+            occupancy=occupancy_tuple,
+            remaining_capacity=remaining_tuple,
+            saturated_cell_ids=saturated,
+            backpressure_work_ids=tuple(backpressure),
+            allocation_digest=_digest(wave_body),
+            reason=reason,
         )
 
 

@@ -9,14 +9,14 @@ import sys
 from pathlib import Path
 
 from .core import (
-    ImpactCompiler,
     ProofCache,
-    ProofPolicy,
     ProofRunner,
     ProofSelector,
     changed_paths_from_git,
     load_manifest,
 )
+from .policy import ProofPolicy
+from .impact import ImpactCompiler
 
 
 _DIAGNOSTIC_MAX_CHARS = 12000
@@ -123,7 +123,7 @@ def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | P
             diagnostic = _redact_diagnostic(
                 stdout + stderr + "\n[diagnostic rerun timed out]"
             )
-        except Exception as exc:  # diagnostic observability must never mask admission truth
+        except Exception as exc:
             diagnostic_status = "RERUN_UNAVAILABLE"
             diagnostic = f"[diagnostic rerun unavailable: {type(exc).__name__}]"
         print(
