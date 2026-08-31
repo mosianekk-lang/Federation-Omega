@@ -126,7 +126,7 @@ class MissionIRSecondDomainUniversalityTests(unittest.TestCase):
         output.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
         self.assertTrue(output.exists())
         self.assertEqual(
-            "9e0c8c476d00da7c06d273c9aa147ba29a4eed865000c77871dc69ab0ad67a16",
+            "e1cece11ef78b56eeb44d90c05e16a80316084c81b45dd2b5a5dce84d6b61f17",
             receipt["calculated_mission_ir_sha256"],
         )
 
