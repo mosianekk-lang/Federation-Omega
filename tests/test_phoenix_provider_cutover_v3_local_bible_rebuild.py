@@ -48,10 +48,19 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         }
         credential_policy = self.policy["provider_credential_reference_policy"]
         g0_identity_probe = credential_policy["g0_identity_probe_workflow"]
-        expected = deployment_gateways | {g0_identity_probe}
+        artifact_attestation = credential_policy["artifact_attestation_workflow"]
+        fhu047_one_use_repair = credential_policy["fhu047_one_use_repair_workflow"]
+        bounded_oidc_workflows = {
+            g0_identity_probe,
+            artifact_attestation,
+            fhu047_one_use_repair,
+        }
+        expected = deployment_gateways | bounded_oidc_workflows
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
-        self.assertIn(g0_identity_probe, self.policy["active_workflow_allowlist"])
-        self.assertIn(g0_identity_probe, self.policy["execution_quarantine"]["keep_active"])
+        for workflow in bounded_oidc_workflows:
+            with self.subTest(workflow=workflow):
+                self.assertIn(workflow, self.policy["active_workflow_allowlist"])
+                self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
         self.assertNotIn(g0_identity_probe, {
             credential_policy["provider_deployment_workflow"],
             credential_policy["luno_observer_deployment_workflow"],
