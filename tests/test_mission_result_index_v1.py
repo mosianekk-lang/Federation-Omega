@@ -103,9 +103,10 @@ class DurableMissionResultIndexTests(unittest.TestCase):
                 recorded_at="2026-08-31T20:45:00+02:00",
                 now="2026-08-31T20:45:00+02:00",
             )
+            restored_expired = DurableMissionResultIndex(expired_path)
             self.assertEqual(
                 "HOLD_FRESHNESS_EXPIRED",
-                expired_index.lookup(expired, now="2026-08-31T20:46:00+02:00").state,
+                restored_expired.lookup(expired, now="2026-08-31T20:46:00+02:00").state,
             )
 
     def test_tamper_is_detected_on_restart(self):
