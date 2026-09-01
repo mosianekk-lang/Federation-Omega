@@ -7,8 +7,12 @@ on:
       - 'federation/superior_logic_convergence_measurement.py'
       - 'federation/cfbe_observed_campaign_admission.py'
       - 'benchmarking/cfbe_omega/mission_execution_adapter_v1.py'
+      - 'benchmarking/cfbe_omega/autopilot_metacognition_empirical_court_v1.py'
+      - 'benchmarking/cfbe_omega/autopilot_metacognition_shadow_campaign_v1.py'
       - 'tests/test_mission_ir_golden_path_shadow.py'
       - 'tests/test_cfbe_observed_campaign_admission.py'
+      - 'tests/test_cfbe_autopilot_metacognition_empirical_v1.py'
+      - 'tests/test_cfbe_autopilot_metacognition_shadow_campaign_v1.py'
       - 'benchmarking/cfbe_omega/bubbles_30_pair_observed_certification_20260830.json'
       - 'tests/test_superior_logic_convergence_measurement.py'
       - 'tests/test_frontier_slos_convergence_runner.py'
@@ -22,8 +26,12 @@ on:
       - 'federation/superior_logic_convergence_measurement.py'
       - 'federation/cfbe_observed_campaign_admission.py'
       - 'benchmarking/cfbe_omega/mission_execution_adapter_v1.py'
+      - 'benchmarking/cfbe_omega/autopilot_metacognition_empirical_court_v1.py'
+      - 'benchmarking/cfbe_omega/autopilot_metacognition_shadow_campaign_v1.py'
       - 'tests/test_mission_ir_golden_path_shadow.py'
       - 'tests/test_cfbe_observed_campaign_admission.py'
+      - 'tests/test_cfbe_autopilot_metacognition_empirical_v1.py'
+      - 'tests/test_cfbe_autopilot_metacognition_shadow_campaign_v1.py'
       - 'benchmarking/cfbe_omega/bubbles_30_pair_observed_certification_20260830.json'
       - 'tests/test_superior_logic_convergence_measurement.py'
       - 'tests/test_frontier_slos_convergence_runner.py'
@@ -87,6 +95,50 @@ jobs:
           assert receipt['provider_effects'] is False, receipt
           assert receipt['stable_promotion_allowed'] is False, receipt
           print('CFBE_HOSTED_SHADOW_30_OF_30_VERIFIED')
+          PY
+
+      - name: Run AutoPilot Meta-Cognition hosted shadow empirical court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest discover -s tests -p 'test_cfbe_autopilot_metacognition_empirical_v1.py' -v
+          python -m unittest discover -s tests -p 'test_cfbe_autopilot_metacognition_shadow_campaign_v1.py' -v
+          python -m benchmarking.cfbe_omega.autopilot_metacognition_shadow_campaign_v1 \
+            --source-sha "$GITHUB_SHA" \
+            --require-github-actions \
+            > runtime-proof/autopilot-metacognition-hosted-shadow.json
+          python - <<'PY'
+          import json
+          receipt = json.load(open('runtime-proof/autopilot-metacognition-hosted-shadow.json', encoding='utf-8'))
+          empirical = receipt['empirical_receipt']
+          assert receipt['github_actions_runtime'] is True, receipt
+          assert receipt['evidence_mode'] == 'HOSTED_SHADOW', receipt
+          assert receipt['pair_count'] == 30, receipt
+          assert receipt['resume_count'] == 10, receipt
+          assert receipt['cross_process_replacement_count'] == 10, receipt
+          assert set(receipt['oracle_action_coverage']) == {
+              'CONTINUE', 'REFLECT', 'SEEK_EVIDENCE', 'REPLAN', 'CHALLENGE', 'ROLLBACK'
+          }, receipt
+          assert receipt['external_effect'] is False, receipt
+          assert receipt['provider_effect_authorized'] is False, receipt
+          assert receipt['stable_promotion_authorized'] is False, receipt
+          assert receipt['full_autopilot_runtime_proven'] is False, receipt
+          assert empirical['decision'] == 'HOSTED_SHADOW_METACOG_QUALIFIED', empirical
+          assert empirical['paired_case_count'] == 30, empirical
+          assert empirical['resume_case_count'] == 10, empirical
+          assert empirical['reflection_coverage'] == 1.0, empirical
+          assert empirical['owner_intervention_delta_total'] > 0, empirical
+          assert empirical['cross_process_resume_ratio'] == 1.0, empirical
+          assert empirical['duplicate_effect_count'] == 0, empirical
+          assert empirical['state_drift_count'] == 0, empirical
+          assert empirical['independent_readback_coverage'] == 1.0, empirical
+          assert empirical['hosted_shadow_qualified'] is True, empirical
+          assert empirical['observed_empirical_candidate'] is False, empirical
+          assert empirical['provider_runtime_candidate'] is False, empirical
+          assert empirical['full_autopilot_runtime_proven'] is False, empirical
+          assert empirical['provider_effect_authorized'] is False, empirical
+          assert empirical['stable_promotion_authorized'] is False, empirical
+          print('AUTOPILOT_METACOG_HOSTED_SHADOW_VERIFIED')
           PY
 
       - name: Run MissionIR SOVARA Golden Path shadow court
@@ -292,6 +344,12 @@ jobs:
             echo '## Frontier Runtime Qualification' >> "$GITHUB_STEP_SUMMARY"
             echo '```json' >> "$GITHUB_STEP_SUMMARY"
             cat runtime-proof/runtime-qualification.json >> "$GITHUB_STEP_SUMMARY"
+            echo '```' >> "$GITHUB_STEP_SUMMARY"
+          fi
+          if [[ -f runtime-proof/autopilot-metacognition-hosted-shadow.json ]]; then
+            echo '## AutoPilot Meta-Cognition Hosted Shadow' >> "$GITHUB_STEP_SUMMARY"
+            echo '```json' >> "$GITHUB_STEP_SUMMARY"
+            cat runtime-proof/autopilot-metacognition-hosted-shadow.json >> "$GITHUB_STEP_SUMMARY"
             echo '```' >> "$GITHUB_STEP_SUMMARY"
           fi
           if [[ -f runtime-proof/mission-ir-golden-path-shadow.json ]]; then
