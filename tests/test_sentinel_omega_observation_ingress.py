@@ -103,6 +103,16 @@ class QueueObservationAdapterTests(unittest.TestCase):
         )
         self.assertLess(item.severity, 0.1)
 
+    def test_executed_queue_item_is_low_severity(self):
+        item = QueueObservationAdapter().adapt(
+            {"command_id": "cmd-3", "status": "EXECUTED", "updated_at": "2026-09-01T04:29:45Z"},
+            queue_id="architron-command",
+            proof_ref="sheet:Command_Queue:2",
+            now="2026-09-01T16:49:44Z",
+        )
+        self.assertEqual(item.attributes["status"], "EXECUTED")
+        self.assertLess(item.severity, 0.1)
+
 
 class ProjectionDriftObservationAdapterTests(unittest.TestCase):
     def test_drift_is_high_severity_event(self):
@@ -158,3 +168,4 @@ class ObservationIngressBatchTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+

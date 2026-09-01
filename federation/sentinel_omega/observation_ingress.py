@@ -158,7 +158,7 @@ class QueueObservationAdapter:
         elif status in {"QUEUED", "READY", "PENDING", "RETRY_READY"}:
             severity = min(0.90, 0.15 + age_seconds / 1800.0 + 0.10 * retries)
             kind = SignalKind.QUEUE
-        elif any(token in status for token in ("CLOSED", "COMPLETE", "DONE", "SUCCESS")):
+        elif any(token in status for token in ("CLOSED", "COMPLETE", "DONE", "SUCCESS", "EXECUTED")):
             severity = 0.05
             kind = SignalKind.QUEUE
         else:
@@ -230,3 +230,4 @@ class ObservationIngressBatch:
                 raise ValueError(f"conflicting ingress observation: {item.observation_id}")
             by_id[item.observation_id] = item
         return tuple(sorted(by_id.values(), key=lambda item: (item.observed_at, item.observation_id)))
+
