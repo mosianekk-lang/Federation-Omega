@@ -7,6 +7,7 @@ import json
 import math
 from typing import Iterable, Mapping, Sequence
 
+from .openrouter_adapter import OpenRouterReceiptState, OpenRouterSemanticReceipt
 from .policy import PrivacyClass
 
 
@@ -29,6 +30,7 @@ class MeshPlanState(str, Enum):
     HOLD_NO_CANDIDATE = "HOLD_NO_CANDIDATE"
     HOLD_PRIVACY = "HOLD_PRIVACY"
     HOLD_SPEND = "HOLD_SPEND"
+    HOLD_COST_UNRESOLVED = "HOLD_COST_UNRESOLVED"
     HOLD_CAPABILITY = "HOLD_CAPABILITY"
 
 
@@ -95,8 +97,6 @@ def _price_from_record(record: Mapping[str, object], key: str) -> float | None:
     value = _finite_nonnegative(pricing.get(key))
     if value is None:
         return None
-    # OpenRouter model catalog token prices are commonly represented per token.
-    # Preserve the raw numeric value; callers may impose a ceiling in the same unit.
     return value
 
 
@@ -350,8 +350,6 @@ def _router_model(contract: CognitiveCapabilityContract, ranked: Sequence[Candid
         return "openrouter/auto"
     if contract.strategy is ProcessorStrategy.PINNED:
         return contract.exact_model_id or (ranked[0].model.model_id if ranked else None)
-    # Pareto/Fusion/Nitro/Floor/Fallback model or preset identity must be supplied
-    # by current capability discovery/configuration rather than frozen here.
     return ranked[0].model.model_id if ranked else None
 
 
@@ -415,8 +413,7 @@ def compile_mesh_plan(
 
     selected = ranked[0].model if ranked else None
     paid = selected is not None and not selected.free_variant
-    if paid and not finite_spend_authorized:
-        return held(MeshPlanState.HOLD_SPEND, ("FINITE_SPEND_AUTHORITY_REQUIRED",))
+    live_requested = bool(credential_bound and runtime_identity and provider_effect_authorized)
 
     envelope = provider_envelope or ProviderEnvelope(
         sort="price" if contract.strategy is ProcessorStrategy.FLOOR else (
@@ -429,9 +426,31 @@ def compile_mesh_plan(
         max_price_prompt=contract.max_prompt_price,
         max_price_completion=contract.max_completion_price,
     )
+    explicit_price_ceiling = (
+        envelope.max_price_prompt is not None and envelope.max_price_completion is not None
+    )
+
+    if paid and not finite_spend_authorized:
+        return held(MeshPlanState.HOLD_SPEND, ("FINITE_SPEND_AUTHORITY_REQUIRED",))
+    if selected is None and live_requested:
+        if not finite_spend_authorized:
+            return held(
+                MeshPlanState.HOLD_COST_UNRESOLVED,
+                ("ROUTER_PRICING_UNRESOLVED_FINITE_SPEND_AUTHORITY_REQUIRED",),
+            )
+        if not explicit_price_ceiling:
+            return held(
+                MeshPlanState.HOLD_COST_UNRESOLVED,
+                ("ROUTER_PRICING_UNRESOLVED_PRICE_CEILING_REQUIRED",),
+            )
+
     provider = envelope.as_request()
     plugins = _plugins(contract)
-    live = bool(credential_bound and runtime_identity and provider_effect_authorized and (not paid or finite_spend_authorized))
+    live = bool(
+        live_requested
+        and (not paid or finite_spend_authorized)
+        and (selected is not None or explicit_price_ceiling)
+    )
     payload = {
         "state": MeshPlanState.READY_SOURCE_ONLY.value,
         "contract_id": contract.contract_id,
@@ -444,6 +463,8 @@ def compile_mesh_plan(
         "runtime_identity_bound": bool(runtime_identity),
         "provider_effect_authorized": provider_effect_authorized,
         "finite_spend_authorized": finite_spend_authorized,
+        "router_pricing_resolved": selected is not None,
+        "explicit_price_ceiling": explicit_price_ceiling,
     }
     return OpenRouterMeshPlan(
         state=MeshPlanState.READY_SOURCE_ONLY,
@@ -461,6 +482,31 @@ def compile_mesh_plan(
     )
 
 
+def _validated_semantic_receipt(
+    *,
+    request_sha256: str,
+    resolved_model: str | None,
+    provider: str | None,
+    cost: float | None,
+    semantic_receipt: OpenRouterSemanticReceipt | None,
+) -> bool:
+    if semantic_receipt is None:
+        return False
+    if semantic_receipt.state is not OpenRouterReceiptState.SEMANTIC_VERIFIED:
+        return False
+    if semantic_receipt.request_fingerprint != request_sha256:
+        raise ValueError("semantic receipt request fingerprint mismatch")
+    if not resolved_model or semantic_receipt.resolved_model != resolved_model:
+        raise ValueError("semantic receipt resolved model mismatch")
+    if not provider or semantic_receipt.provider != provider:
+        raise ValueError("semantic receipt provider mismatch")
+    if cost is None or semantic_receipt.cost_usd is None:
+        raise ValueError("semantic receipt cost readback required")
+    if not math.isclose(float(cost), float(semantic_receipt.cost_usd), rel_tol=0.0, abs_tol=1e-12):
+        raise ValueError("semantic receipt cost mismatch")
+    return True
+
+
 def evaluate_mesh_receipt(
     *,
     contract: CognitiveCapabilityContract,
@@ -468,20 +514,35 @@ def evaluate_mesh_receipt(
     modality: str,
     response: Mapping[str, object],
     evidence_refs: Sequence[str] = (),
+    semantic_receipt: OpenRouterSemanticReceipt | None = None,
     semantic_verified: bool = False,
 ) -> OpenRouterMeshReceipt:
+    if len(request_sha256.strip()) != 64 or any(ch not in "0123456789abcdef" for ch in request_sha256.strip().lower()):
+        raise ValueError("request_sha256 must be a lowercase-compatible SHA-256 value")
+    if semantic_verified and semantic_receipt is None:
+        raise ValueError("semantic_verified cannot be self-asserted; semantic_receipt is required")
+
     usage = response.get("usage")
     usage = usage if isinstance(usage, Mapping) else {}
     raw_cost = usage.get("cost") if isinstance(usage, Mapping) else None
     cost = _finite_nonnegative(raw_cost)
     resolved_model = str(response.get("model") or "").strip() or None
     provider = str(response.get("provider") or "").strip() or None
-    if semantic_verified:
+
+    semantic_proven = _validated_semantic_receipt(
+        request_sha256=request_sha256,
+        resolved_model=resolved_model,
+        provider=provider,
+        cost=cost,
+        semantic_receipt=semantic_receipt,
+    )
+    if semantic_proven:
         state = MeshProofState.SEMANTIC_VERIFIED
     elif resolved_model or provider:
         state = MeshProofState.PROVIDER_EXECUTED
     else:
         state = MeshProofState.SOURCE_ONLY
+
     return OpenRouterMeshReceipt(
         proof_state=state,
         contract_id=contract.contract_id,
@@ -490,7 +551,7 @@ def evaluate_mesh_receipt(
         provider=provider,
         usage=dict(usage),
         cost_usd=cost,
-        semantic_verified=bool(semantic_verified),
+        semantic_verified=semantic_proven,
         modality=str(modality).strip().lower(),
         evidence_refs=tuple(str(item).strip() for item in evidence_refs if str(item).strip()),
     )
