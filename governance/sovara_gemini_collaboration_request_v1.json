@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SSX-G0-PROVIDER-CENSUS-20260901-001",
+  "request_id": "SSX-G0-PROVIDER-CENSUS-20260901-002",
   "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
@@ -18,8 +18,14 @@
     "deployer_cloud_run_developer_binding"
   ],
   "prior_provider_evidence": {
-    "run_id": "33267811046",
-    "source_sha": "efd8e2df237f0f14d2c66224a1c815095032dd2f",
+    "latest_wif_run_id": "33465241806",
+    "latest_wif_source_sha": "820333924dd94b18abace5c8ba0c3a1f9d267ef6",
+    "oidc_exchange_succeeded": true,
+    "hardened_wif_contract_verified": false,
+    "observed_wif_condition_class": "REPOSITORY_NAME_ONLY_TRUST",
+    "expected_wif_condition_class": "REPOSITORY_ID_OWNER_ID_MAIN_REF_EXACT_WORKFLOW_EVENT_BOUND",
+    "adc_reference_run_id": "33267811046",
+    "adc_reference_source_sha": "efd8e2df237f0f14d2c66224a1c815095032dd2f",
     "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
     "runtime_service_account_exists": true,
     "deployer_service_account_user": true,
@@ -29,6 +35,6 @@
       "deployer_cloud_run_developer_binding"
     ]
   },
-  "purpose": "Refresh the exact repository-scoped Google WIF identity and run a read-only Google/Gemini project IAM authority census against current SOVARA x SOL 6.2 serving main. Preserve the exact ADC gap set as evidence and determine whether provider state changed before any provider mutation is considered.",
-  "truth_boundary": "Read-only verification only. No IAM or API mutation, service-account creation, WIF trust expansion, key creation, secret access, model inference, case-data processing, image build, deployment, traffic change, external communication, publication, spend, destructive effect, stable promotion or full-autopilot claim is authorized. If the observed provider state differs from the expected gap set, fail closed and preserve the new readback as the next truth input."
+  "purpose": "Run the repaired drift-aware read-only Google/Gemini authority census on current SOVARA x SOL 6.2 serving main. Preserve the live broader WIF trust policy as adverse evidence rather than promoting it, continue only read-only IAM/ADC inspection, and verify whether the prior exact three ADC gaps still remain.",
+  "truth_boundary": "Read-only verification only. A successful OIDC exchange under a broader-than-approved WIF policy is not hardened WIF verification. No IAM or API mutation, WIF policy change, service-account role binding, service-account creation, key creation, secret access, model inference, case-data processing, image build, deployment, traffic change, external communication, publication, spend, destructive effect, stable promotion or full-autopilot claim is authorized. If the ADC gap set differs from the expected three controls, fail closed and preserve the new provider readback as the next truth input."
 }
