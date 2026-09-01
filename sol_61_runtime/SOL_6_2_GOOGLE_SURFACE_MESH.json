@@ -1,0 +1,119 @@
+{
+  "schema": "SOL_6_2_GOOGLE_SURFACE_MESH_V1",
+  "version": "1.0.0",
+  "mesh_id": "SOL62-GOOGLE-SURFACE-MESH-20260901",
+  "objective": "Route SOL 6.2 across Google Cloud, Gemini/Vertex, Google AI Studio and Google Apps Script using the strongest independently verified surface for each operation without cross-surface maturity inheritance.",
+  "surfaces": {
+    "GOOGLE_APPS_SCRIPT_QUEUE_RUNTIME": {
+      "state": "OPERATIONAL_VERIFIED_SCOPED",
+      "automation_level": "SAFE_AUTO_HIGH",
+      "primary": true,
+      "script_id": "1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R",
+      "ledger_id": "1deZvtRorGrPwvp7CnUQMakeJaGz2hp5zaIHFBYYxzQg",
+      "worker_id": "ARCHITRON_AUTONOMOUS_DAEMON_WORKER",
+      "worker_version": "v4_autonomous_daemon_bot_control",
+      "cadence_minutes": 5,
+      "provider_canary": {
+        "command_id": "SOL62-GAS-VERIFY-20260901T042649Z",
+        "command": "verify_state",
+        "status": "EXECUTED",
+        "executed_at_utc": "2026-09-01T04:29:45.366Z",
+        "provider_state": "verified_live",
+        "verification_queue_state": "verified_live"
+      },
+      "allowed_commands": [
+        "heartbeat",
+        "reconcile",
+        "verify_state",
+        "gate_report",
+        "safe_append",
+        "bootstrap_state",
+        "register_bot",
+        "register_capability",
+        "create_agent_task",
+        "process_agent_tasks",
+        "runtime_confidence",
+        "self_heal",
+        "cleanup_stale",
+        "cloud_run_handoff",
+        "ai_task_stub"
+      ],
+      "effect_policy": "Only SAFE_AUTO queue work is autonomously admitted. External or consequential effects remain separately gated by their provider-specific authority contract."
+    },
+    "GOOGLE_APPS_SCRIPT_WEB_APP": {
+      "state": "PROVIDER_REACHABLE_ACTION_SEMANTICS_UNVERIFIED",
+      "automation_level": "DO_NOT_ROUTE",
+      "deployment_id": "AKfycbyaxovYOyaoMWFdSAZnbl2AIFU0PFY3hcGF-QRM1dmDqdtEHRFl7Ud7L_p7YCCVMG3J",
+      "last_probe_http_status": 404,
+      "truth_boundary": "The deployment identifier resolves to Google-hosted infrastructure but root, health and openapi actions returned 404. Reachability is not action proof."
+    },
+    "GOOGLE_APPS_SCRIPT_SOURCE_CONTROL": {
+      "state": "OWNER_OAUTH_REQUIRED",
+      "automation_level": "HELD",
+      "required_identity": "human_google_oauth_subject",
+      "required_scopes": [
+        "https://www.googleapis.com/auth/script.projects",
+        "https://www.googleapis.com/auth/script.deployments"
+      ],
+      "service_accounts_sufficient": false,
+      "truth_boundary": "Current live daemon execution does not transfer source/deployment mutation authority."
+    },
+    "GOOGLE_CLOUD_WIF_CONTROL_PLANE": {
+      "state": "AUTHENTICATED_PERMISSION_LIMITED",
+      "automation_level": "READ_AND_RUNTIME_IDENTITY_VERIFY",
+      "project_id": "sov-hybrid-suite",
+      "project_number": "257649435135",
+      "region": "africa-south1",
+      "deployer_service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+      "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+      "oidc_exchange_verified": true,
+      "adc_runtime_identity_verified": true,
+      "missing_adc_controls": [],
+      "wif_hardened_contract_verified": false,
+      "blocking_provider_permission": "iam.workloadIdentityPoolProviders.update",
+      "alternate_github_admin_credential_aliases_verified": 0,
+      "provider_mutation_policy": "FAIL_CLOSED_UNTIL_EXACT_WIF_HARDENING_IS_PROVIDER_READBACK_VERIFIED"
+    },
+    "GEMINI_VERTEX": {
+      "state": "IDENTITY_VERIFIED_INFERENCE_HELD",
+      "automation_level": "CONTROL_PLANE_ONLY",
+      "project_id": "sov-hybrid-suite",
+      "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+      "private_gateway_preflight_ready": true,
+      "provider_native_inference_verified": false,
+      "promotion_requirements": [
+        "HARDENED_WIF_CONTRACT_VERIFIED",
+        "PROVIDER_NATIVE_GEMINI_INFERENCE_RECEIPT",
+        "SEMANTIC_READBACK_VERIFIED",
+        "NO_CASE_DATA_PROCESSED"
+      ]
+    },
+    "GEMINI_AI_STUDIO_DEVELOPER_API": {
+      "state": "CREDENTIAL_MISSING_ON_SOL_EXECUTION_PLANE",
+      "automation_level": "AUTO_PROBE_WHEN_CREDENTIAL_PRESENT",
+      "credential_reference": "GEMINI_API_KEY",
+      "credential_value_recorded": false,
+      "semantic_canary_workflow": ".github/workflows/sol62-google-surface-probe.yml",
+      "model_probe": "gemini-2.5-flash",
+      "last_semantic_verified": false,
+      "truth_boundary": "A paid AI Studio profile does not itself supply API authority to SOL. The live probe automatically performs a bounded nonce canary if a legitimate GitHub GEMINI_API_KEY secret becomes available."
+    }
+  },
+  "routing_order": [
+    "GOOGLE_APPS_SCRIPT_QUEUE_RUNTIME",
+    "GOOGLE_CLOUD_WIF_CONTROL_PLANE",
+    "GEMINI_VERTEX",
+    "GEMINI_AI_STUDIO_DEVELOPER_API",
+    "GOOGLE_APPS_SCRIPT_SOURCE_CONTROL",
+    "GOOGLE_APPS_SCRIPT_WEB_APP"
+  ],
+  "global_rules": [
+    "NO_CROSS_SURFACE_MATURITY_INHERITANCE",
+    "PROVIDER_READBACK_BEFORE_PROMOTION",
+    "NO_SECRET_VALUES_IN_SOURCE_LOGS_OR_RECEIPTS",
+    "NO_SERVICE_ACCOUNT_KEY_CREATION",
+    "SAFE_AUTO_BY_DEFAULT_ONLY_ON_VERIFIED_REVERSIBLE_SURFACES",
+    "CONSEQUENTIAL_EXTERNAL_EFFECTS_REQUIRE_SURFACE_SPECIFIC_AUTHORITY",
+    "STALE_WEB_APP_NEVER_OUTRANKS_LIVE_QUEUE_RUNTIME"
+  ]
+}
