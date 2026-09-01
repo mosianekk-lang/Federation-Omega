@@ -337,6 +337,7 @@ class MultistreamContinuityFabric:
         self._set_command_state(command_id, CommandState.ACTIVE, now=now)
 
     def cancel_command(self, command_id: str, *, explicit: bool = False, now: float | None = None) -> None:
+        """Cancel future work without erasing uncertain in-flight effects."""
         self._require_explicit(explicit)
         when = time.time() if now is None else float(now)
         conn = self._connect()
@@ -351,18 +352,33 @@ class MultistreamContinuityFabric:
                 "UPDATE continuity_commands SET state=?,updated_at=? WHERE command_id=?",
                 (CommandState.CANCELLED.value, when, command_id),
             )
-            conn.execute(
-                """UPDATE continuity_lanes
-                   SET state=?, lease_owner=NULL, lease_expires_at=NULL, updated_at=?
+            lanes = conn.execute(
+                """SELECT lane_id,state,effect_class FROM continuity_lanes
                    WHERE command_id=? AND state NOT IN (?,?)""",
                 (
-                    ContinuityLaneState.CANCELLED.value,
-                    when,
                     command_id,
                     ContinuityLaneState.COMPLETE.value,
                     ContinuityLaneState.CANCELLED.value,
                 ),
-            )
+            ).fetchall()
+            for lane in lanes:
+                effect = EffectClass(lane["effect_class"])
+                uncertain_effect = lane["state"] == ContinuityLaneState.RUNNING.value and effect in {
+                    EffectClass.REVERSIBLE_EXTERNAL,
+                    EffectClass.HIGH_CONSEQUENCE,
+                }
+                preserve_readback = lane["state"] == ContinuityLaneState.HOLD_READBACK.value
+                next_state = (
+                    ContinuityLaneState.HOLD_READBACK.value
+                    if uncertain_effect or preserve_readback
+                    else ContinuityLaneState.CANCELLED.value
+                )
+                conn.execute(
+                    """UPDATE continuity_lanes
+                       SET state=?,lease_owner=NULL,lease_expires_at=NULL,updated_at=?
+                       WHERE lane_id=?""",
+                    (next_state, when, lane["lane_id"]),
+                )
             conn.execute("COMMIT")
         except Exception:
             try:
@@ -717,12 +733,16 @@ class MultistreamContinuityFabric:
         result_ref: str = "",
         now: float | None = None,
     ) -> None:
-        """Resolve a stale effect lane after independent semantic readback."""
+        """Resolve an uncertain effect lane after independent semantic readback."""
         when = time.time() if now is None else float(now)
         conn = self._connect()
         try:
             row = conn.execute(
-                "SELECT state FROM continuity_lanes WHERE lane_id=?", (lane_id,)
+                """SELECT l.state,l.command_id,c.state AS command_state
+                   FROM continuity_lanes l
+                   JOIN continuity_commands c ON c.command_id=l.command_id
+                   WHERE l.lane_id=?""",
+                (lane_id,),
             ).fetchone()
             if row is None:
                 raise KeyError(lane_id)
@@ -733,6 +753,9 @@ class MultistreamContinuityFabric:
                     raise ValueError("OBSERVED_EFFECT_RESULT_REF_REQUIRED")
                 new_state = ContinuityLaneState.COMPLETE.value
                 new_result = result_ref
+            elif row["command_state"] == CommandState.CANCELLED.value:
+                new_state = ContinuityLaneState.CANCELLED.value
+                new_result = ""
             else:
                 new_state = ContinuityLaneState.READY.value
                 new_result = ""
