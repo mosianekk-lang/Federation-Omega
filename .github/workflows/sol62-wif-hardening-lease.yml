@@ -1,4 +1,5 @@
 name: SOL 6.2 One-Use WIF Hardening Lease
+run-name: SOL62-WIF-HARDENING-LEASE-${{ github.event.issue.number }}
 
 on:
   issues:
@@ -6,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
   id-token: write
 
 concurrency:
@@ -32,7 +34,45 @@ jobs:
           fetch-depth: 1
           persist-credentials: false
 
+      - name: Consume lease only after first successful transaction
+        id: lease
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json, os, urllib.request
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          run_id = int(os.environ['GITHUB_RUN_ID'])
+          token = os.environ['GITHUB_TOKEN']
+          workflow = 'sol62-wif-hardening-lease.yml'
+          url = f'https://api.github.com/repos/{repo}/actions/workflows/{workflow}/runs?status=success&per_page=100'
+          request = urllib.request.Request(
+              url,
+              headers={
+                  'Authorization': f'Bearer {token}',
+                  'Accept': 'application/vnd.github+json',
+                  'X-GitHub-Api-Version': '2022-11-28',
+              },
+          )
+          with urllib.request.urlopen(request, timeout=30) as response:
+              runs = json.load(response).get('workflow_runs', [])
+          prior_success = [item for item in runs if int(item.get('id', 0)) != run_id]
+          consumed = bool(prior_success)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f'consumed={str(consumed).lower()}\n')
+              handle.write(f'prior_success_count={len(prior_success)}\n')
+          print(json.dumps({
+              'lease_state': 'ALREADY_CONSUMED' if consumed else 'AVAILABLE',
+              'prior_success_count': len(prior_success),
+              'current_run_id': run_id,
+          }, sort_keys=True))
+          PY
+
       - name: Authenticate through current provider WIF before tightening it
+        if: steps.lease.outputs.consumed != 'true'
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.PROJECT_ID }}
@@ -40,11 +80,13 @@ jobs:
           service_account: ${{ env.DEPLOYER_SA }}
 
       - name: Install pinned Google Cloud CLI action
+        if: steps.lease.outputs.consumed != 'true'
         uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
         with:
           project_id: ${{ env.PROJECT_ID }}
 
       - name: Apply least-change canonical WIF hardening and verify provider readback
+        if: steps.lease.outputs.consumed != 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -53,9 +95,9 @@ jobs:
           test "${{ github.event.issue.title }}" = "$EXACT_TRIGGER_TITLE"
           test "${{ github.event.issue.author_association }}" = "OWNER"
           SOVARA_WIF_HARDENING_APPROVAL=HARDEN_SOVARA_CANONICAL_WIF_V1 \
-            ./ops/harden_sovara_provider_wif_v1.sh --apply \
+            bash ./ops/harden_sovara_provider_wif_v1.sh --apply \
             | tee /tmp/sol62-wif/WIF_HARDEN_APPLY.json
-          ./ops/harden_sovara_provider_wif_v1.sh --verify \
+          bash ./ops/harden_sovara_provider_wif_v1.sh --verify \
             | tee /tmp/sol62-wif/WIF_HARDEN_VERIFY.json
           python3 - <<'PY'
           import hashlib, json
@@ -93,11 +135,34 @@ jobs:
             'service_account_created':False,
             'model_inference_performed':False,
             'traffic_change_performed':False,
+            'lease_consumed_on_success':True,
           }
           final['receipt_sha256']=hashlib.sha256(json.dumps(final,sort_keys=True,separators=(',',':')).encode()).hexdigest()
           open('/tmp/sol62-wif/SOL62_WIF_HARDENING_RECEIPT.json','w',encoding='utf-8').write(json.dumps(final,indent=2,sort_keys=True)+'\n')
           print(json.dumps(final, sort_keys=True))
           PY
+
+      - name: Emit already-consumed no-effect receipt
+        if: steps.lease.outputs.consumed == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sol62-wif
+          python3 - <<'PY'
+          import hashlib, json, os
+          receipt={
+            'receipt':'SOL62-WIF-HARDENING-LEASE',
+            'state':'ALREADY_CONSUMED',
+            'provider_mutation_performed':False,
+            'provider_authentication_performed':False,
+            'prior_success_count':int(os.environ.get('PRIOR_SUCCESS_COUNT','0')),
+          }
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          open('/tmp/sol62-wif/SOL62_WIF_HARDENING_RECEIPT.json','w',encoding='utf-8').write(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+        env:
+          PRIOR_SUCCESS_COUNT: ${{ steps.lease.outputs.prior_success_count }}
 
       - name: Upload immutable redacted WIF receipts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
