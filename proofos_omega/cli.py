@@ -6,6 +6,7 @@ import os
 import re
 import subprocess
 import sys
+import tempfile
 from pathlib import Path
 
 from .core import (
@@ -15,6 +16,7 @@ from .core import (
     changed_paths_from_git,
     load_manifest,
 )
+from .hermetic import enforce_hermetic_fallback, run_hermetic_r5_fallback
 from .policy import ProofPolicy
 from .impact import ImpactCompiler
 
@@ -139,6 +141,29 @@ def _emit_failure_diagnostics(*, policy: ProofPolicy, report, repo_root: str | P
         print(f"PROOFOS_DIAGNOSTIC_END test_id={result.test_id}", file=sys.stderr)
 
 
+def _emit_hermetic_failure(execution) -> None:
+    if execution is None or execution.result.status.startswith("PASS"):
+        return
+    diagnostic = _redact_diagnostic(
+        (execution.stdout or b"").decode(errors="replace")
+        + (execution.stderr or b"").decode(errors="replace")
+    )
+    print(
+        "PROOFOS_HERMETIC_R5_DIAGNOSTIC_BEGIN"
+        f" test_id={execution.result.test_id}"
+        f" status={execution.result.status}"
+        f" returncode={execution.result.returncode}"
+        f" head={execution.head_sha}",
+        file=sys.stderr,
+    )
+    if diagnostic:
+        print(diagnostic, file=sys.stderr)
+    print(
+        f"PROOFOS_HERMETIC_R5_DIAGNOSTIC_END test_id={execution.result.test_id}",
+        file=sys.stderr,
+    )
+
+
 def compile_command(args: argparse.Namespace) -> int:
     policy = ProofPolicy.from_path(args.policy)
     if args.changed_file:
@@ -166,9 +191,53 @@ def compile_command(args: argparse.Namespace) -> int:
 def run_command(args: argparse.Namespace) -> int:
     policy = ProofPolicy.from_path(args.policy)
     manifest = load_manifest(args.manifest)
-    cache = ProofCache(args.cache_dir) if args.cache_dir else None
-    report = ProofRunner(policy=policy, repo_root=args.repo_root, cache=cache).run(manifest)
+
+    # R5's full-federation proof is made hermetic before any selected court can
+    # mutate the working checkout. An exact-head clean worktree result is then
+    # made authoritative in the final admission report. This strengthens the
+    # release floor: dirty state can neither create a false pass nor a false block.
+    hermetic = run_hermetic_r5_fallback(
+        policy=policy,
+        manifest=manifest,
+        repo_root=args.repo_root,
+    )
+
+    temporary_cache = None
+    if args.cache_dir:
+        cache = ProofCache(args.cache_dir)
+    elif hermetic is not None and hermetic.result.status == "PASS":
+        temporary_cache = tempfile.TemporaryDirectory(prefix="proofos-hermetic-cache-")
+        cache = ProofCache(Path(temporary_cache.name) / "cache")
+    else:
+        cache = None
+
+    try:
+        if hermetic is not None and hermetic.result.status == "PASS" and cache is not None:
+            cache.store(hermetic.result)
+
+        report = ProofRunner(
+            policy=policy,
+            repo_root=args.repo_root,
+            cache=cache,
+        ).run(manifest)
+        report = enforce_hermetic_fallback(
+            report,
+            hermetic,
+            fallback_test_id=policy.fallback_test_id,
+        )
+    finally:
+        if temporary_cache is not None:
+            temporary_cache.cleanup()
+
     _write_json(args.output, report.to_dict())
+    if hermetic is not None:
+        print(
+            "PROOFOS_HERMETIC_R5"
+            f" status={hermetic.result.status}"
+            f" head={hermetic.head_sha}"
+            f" proof={hermetic.result.proof_key}"
+            f" clean_checkout={str(hermetic.clean_checkout_verified).lower()}"
+        )
     print(
         "PROOFOS_ADMISSION"
         f" status={report.status}"
@@ -178,6 +247,7 @@ def run_command(args: argparse.Namespace) -> int:
         f" failures={len(report.blocking_failures)}"
     )
     if report.status != "PASS":
+        _emit_hermetic_failure(hermetic)
         _emit_failure_diagnostics(policy=policy, report=report, repo_root=args.repo_root)
         return 1
     return 0
