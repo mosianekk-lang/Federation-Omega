@@ -25,6 +25,7 @@ from .federation_evolution_program import EvolutionStage, SystemEvolutionState
 
 RUNTIME_ID = "SUPERIOR-LOGIC-MATURATION-SHADOW-V1"
 RUNTIME_AUTHORITY = "A1_INTERNAL"
+SYSTEM_AUTOMATION_ACTORS = frozenset({"github-actions[bot]"})
 
 
 @dataclass(frozen=True)
@@ -33,15 +34,21 @@ class ShadowRuntimeInput:
     head_sha: str
     event: str
     observed_at: str
+    actor: str = "UNKNOWN"
     previous_successful_cycles: int = 0
     previous_manual_cycles: int = 0
+    previous_system_dispatch_cycles: int = 0
 
     def validate(self) -> "ShadowRuntimeInput":
         if not self.run_id.strip() or not self.head_sha.strip() or not self.event.strip():
             raise ValueError("run_id, head_sha and event are required")
-        if not self.observed_at.strip():
-            raise ValueError("observed_at is required")
-        if self.previous_successful_cycles < 0 or self.previous_manual_cycles < 0:
+        if not self.observed_at.strip() or not self.actor.strip():
+            raise ValueError("observed_at and actor are required")
+        if (
+            self.previous_successful_cycles < 0
+            or self.previous_manual_cycles < 0
+            or self.previous_system_dispatch_cycles < 0
+        ):
             raise ValueError("cycle counters cannot be negative")
         return self
 
@@ -66,10 +73,14 @@ class ShadowRuntimeReceipt:
     run_id: str
     head_sha: str
     event: str
+    actor: str
+    trigger_class: str
     observed_at: str
     cycle_number: int
     previous_successful_cycles: int
     previous_manual_cycles: int
+    previous_system_dispatch_cycles: int
+    current_owner_intervention: bool
     owner_intervention_rate: float
     selected_gap_id: str
     selected_gap_score: float
@@ -97,15 +108,38 @@ def canonical_hash(value: Any) -> str:
     ).hexdigest()
 
 
+def classify_trigger(event: str, actor: str) -> str:
+    """Classify execution provenance before converting it into owner burden.
+
+    `workflow_dispatch` is a transport/event type, not proof that the owner acted.
+    GitHub Actions can dispatch another workflow automatically, so owner burden must
+    be bound to actor provenance rather than inferred from event name alone.
+    """
+    normalized = actor.strip().lower()
+    if event == "schedule":
+        return "SCHEDULED_AUTONOMY"
+    if event == "push":
+        return "SOURCE_PUSH_AUTOMATION"
+    if event == "workflow_dispatch" and normalized in SYSTEM_AUTOMATION_ACTORS:
+        return "SYSTEM_AUTOMATION_DISPATCH"
+    if event == "workflow_dispatch":
+        return "OWNER_OR_HUMAN_DISPATCH"
+    return "OTHER_PROVIDER_EVENT"
+
+
 def _owner_rate(cycles: int, manual_cycles: int) -> float:
     if cycles <= 0:
         return 0.0
     return round(max(0, manual_cycles) / cycles, 8)
 
 
+def _current_owner_intervention(input_state: ShadowRuntimeInput) -> bool:
+    return classify_trigger(input_state.event, input_state.actor) == "OWNER_OR_HUMAN_DISPATCH"
+
+
 def _gap_for(input_state: ShadowRuntimeInput) -> MaturationGap:
     cycle = input_state.previous_successful_cycles + 1
-    current_manual = 1 if input_state.event == "workflow_dispatch" else 0
+    current_manual = 1 if _current_owner_intervention(input_state) else 0
     manual_cycles = input_state.previous_manual_cycles + current_manual
     owner_rate = _owner_rate(cycle, manual_cycles)
 
@@ -132,7 +166,7 @@ def _gap_for(input_state: ShadowRuntimeInput) -> MaturationGap:
             gap_id="GAP-OWNER-INTERVENTION-RATE",
             system_id="SUPERIOR_LOGIC",
             stage=EvolutionStage.AUTONOMOUS_MATURITY_DOMINANCE_CONTROLLER,
-            description="Reduce manual maturation invocations below the self-sustaining ceiling.",
+            description="Reduce proven human/owner maturation interventions below the self-sustaining ceiling.",
             mission_value_gain=0.84,
             failure_recurrence_reduction=0.58,
             owner_burden_reduction=1.0,
@@ -142,7 +176,7 @@ def _gap_for(input_state: ShadowRuntimeInput) -> MaturationGap:
             reversibility=1.0,
             cost=0.0,
             risk=0.04,
-            evidence_refs=("github-actions:run-history",),
+            evidence_refs=("github-actions:actor-bound-run-history",),
         )
 
     return MaturationGap(
@@ -202,6 +236,7 @@ def _work_package(gap: MaturationGap, cycle: int) -> ShadowCandidateWorkPackage:
             "gap_selection_receipt",
             "transaction_identity",
             "artifact_readback",
+            "actor_provenance",
         ),
         prohibited_effects=("source_mutation", "provider_mutation", "authority_expansion"),
     )
@@ -230,8 +265,10 @@ class SuperiorLogicMaturationShadowRuntime:
     def run(self, input_state: ShadowRuntimeInput) -> ShadowRuntimeReceipt:
         input_state.validate()
         cycle = input_state.previous_successful_cycles + 1
-        current_manual = 1 if input_state.event == "workflow_dispatch" else 0
+        owner_intervention = _current_owner_intervention(input_state)
+        current_manual = 1 if owner_intervention else 0
         manual_cycles = input_state.previous_manual_cycles + current_manual
+        trigger_class = classify_trigger(input_state.event, input_state.actor)
         gap = _gap_for(input_state)
         state_epoch = f"{input_state.head_sha[:16]}:{cycle}"
         decision = self.controller.plan(
@@ -269,10 +306,14 @@ class SuperiorLogicMaturationShadowRuntime:
             run_id=input_state.run_id,
             head_sha=input_state.head_sha,
             event=input_state.event,
+            actor=input_state.actor,
+            trigger_class=trigger_class,
             observed_at=input_state.observed_at,
             cycle_number=cycle,
             previous_successful_cycles=input_state.previous_successful_cycles,
             previous_manual_cycles=input_state.previous_manual_cycles,
+            previous_system_dispatch_cycles=input_state.previous_system_dispatch_cycles,
+            current_owner_intervention=owner_intervention,
             owner_intervention_rate=_owner_rate(cycle, manual_cycles),
             selected_gap_id=gap.gap_id,
             selected_gap_score=gap.priority_score,
@@ -286,6 +327,8 @@ class SuperiorLogicMaturationShadowRuntime:
             next_gate=next_gate,
             truth_boundary=(
                 "scheduled_shadow_execution_does_not_prove_self_sustaining_maturity",
+                "workflow_dispatch_event_alone_does_not_prove_owner_intervention",
+                "owner_burden_requires_actor_bound_provenance",
                 "work_package_generation_does_not_prove_candidate_improvement",
                 "github_actions_execution_does_not_grant_external_provider_authority",
                 "no_source_or_provider_mutation_occurs_in_this_runtime",
@@ -310,6 +353,9 @@ class SuperiorLogicMaturationShadowRuntime:
             "head_sha": receipt.head_sha,
             "cycle_number": receipt.cycle_number,
             "status": receipt.status,
+            "actor": receipt.actor,
+            "trigger_class": receipt.trigger_class,
+            "owner_intervention_rate": receipt.owner_intervention_rate,
             "selected_gap_id": receipt.selected_gap_id,
             "self_sustaining": receipt.self_sustaining,
             "next_gate": receipt.next_gate,
@@ -323,9 +369,11 @@ class SuperiorLogicMaturationShadowRuntime:
 __all__ = [
     "RUNTIME_AUTHORITY",
     "RUNTIME_ID",
+    "SYSTEM_AUTOMATION_ACTORS",
     "ShadowCandidateWorkPackage",
     "ShadowRuntimeInput",
     "ShadowRuntimeReceipt",
     "SuperiorLogicMaturationShadowRuntime",
     "canonical_hash",
+    "classify_trigger",
 ]
