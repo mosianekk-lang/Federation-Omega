@@ -66,3 +66,36 @@ The canonical registry is
 zero and all value, deployment, effect and promotion flags false. Later records
 must still pass Sentinel ingress, trusted-evidence resolution and the separate
 owner-value deployment court.
+
+## Passive observation collector
+
+`passive_observation_collector_v1.py` provides the source-level connection from
+eligible real directives to the next compatible empty Cohort 001 slot. It is a
+callable in-process adapter, not a background watcher or deployed provider
+runtime.
+
+The collector:
+
+1. requires an explicitly real, non-synthetic, non-shadow and non-replayed
+   directive event;
+2. resolves every directive proof through the existing trusted-evidence
+   registry before binding the first compatible empty slot;
+3. admits only explicitly real, measured `BASELINE/BUBBLES` observations whose
+   directive, task class, oracle, pair, observation ID and source head match the
+   binding and whose evidence receipts resolve;
+4. deduplicates exact replays, rejects conflicting replays and preserves an
+   immutable receipt-hashed overlay state; and
+5. stops at `PAIR_READY_FOR_SEPARATE_FOUNDRY_EVALUATION` after a valid pair.
+
+The registered empty overlay is
+`cohorts/CFBE_VALUE_FOUNDRY_COLLECTOR_001.json`. It has zero bindings, zero
+observations and zero ready pairs. Collection does not run automatically merely
+because the source exists, and neither pair readiness nor source qualification
+proves owner value, deployment, stable promotion or external effect.
+
+```bash
+python -m benchmarking.cfbe_omega.passive_observation_collector_v1 \
+  --input collector_action.json \
+  --output collector_state.json
+python -m unittest -v tests.test_cfbe_passive_observation_collector_v1
+```

@@ -12,6 +12,10 @@ POLICY = ROOT / "governance" / "github_airlock_policy.json"
 class Sol62GoogleSurfaceLiveProbeTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not WORKFLOW.exists():
+            raise unittest.SkipTest(
+                "workflow-free export excludes repository workflow controls"
+            )
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
 
