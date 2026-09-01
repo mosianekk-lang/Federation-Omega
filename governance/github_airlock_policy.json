@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.8",
+  "version": "2.9.9",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -29,6 +29,7 @@
     ".github/workflows/sovara-project-iam-bridge.yml",
     ".github/workflows/cios-production-lane.yml",
     ".github/workflows/frontier-runtime-qualification.yml",
+    ".github/workflows/bco-prime-shadow-qualification.yml",
     ".github/workflows/cfbe-observed-current-qualification.yml",
     ".github/workflows/superior-logic-maturation-shadow.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
@@ -50,6 +51,7 @@
     ".github/workflows/sovara-project-iam-bridge.yml": ["push", "workflow_dispatch"],
     ".github/workflows/cios-production-lane.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/frontier-runtime-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/bco-prime-shadow-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/cfbe-observed-current-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/superior-logic-maturation-shadow.yml": ["push", "schedule", "workflow_dispatch"],
     ".github/workflows/luno-observer-provider-binding.yml": ["pull_request", "push", "workflow_dispatch"],
@@ -66,6 +68,7 @@
     ".github/workflows/sovara-project-iam-bridge.yml": ["main"],
     ".github/workflows/cios-production-lane.yml": ["main"],
     ".github/workflows/frontier-runtime-qualification.yml": ["main"],
+    ".github/workflows/bco-prime-shadow-qualification.yml": ["main"],
     ".github/workflows/cfbe-observed-current-qualification.yml": ["main"],
     ".github/workflows/superior-logic-maturation-shadow.yml": ["main"],
     ".github/workflows/luno-observer-provider-binding.yml": ["main"]
@@ -156,6 +159,7 @@
       ".github/workflows/sovara-project-iam-bridge.yml",
       ".github/workflows/cios-production-lane.yml",
       ".github/workflows/frontier-runtime-qualification.yml",
+      ".github/workflows/bco-prime-shadow-qualification.yml",
       ".github/workflows/cfbe-observed-current-qualification.yml",
       ".github/workflows/superior-logic-maturation-shadow.yml",
       ".github/workflows/luno-observer-provider-binding.yml",
