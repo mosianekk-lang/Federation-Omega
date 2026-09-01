@@ -1,0 +1,6 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_ADMISSION_LOCK_V1",
+  "feature_growth": false,
+  "allowed_changes_until_admission": ["DEFECT_REPAIR", "TEST_REPAIR", "FRESHNESS_RESTACK", "ADMISSION_METADATA_ONLY"],
+  "operational_level7_claim": false
+}
