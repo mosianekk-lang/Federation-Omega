@@ -1,0 +1,88 @@
+name: SOL 6.2 One-Use WIF Hardening Lease
+
+on:
+  issues:
+    types: [reopened]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sol62-wif-hardening-one-use
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  EXACT_TRIGGER_TITLE: SOL62-WIF-HARDEN-20260901
+
+jobs:
+  harden:
+    if: ${{ github.event.issue.author_association == 'OWNER' && github.event.issue.title == 'SOL62-WIF-HARDEN-20260901' }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - name: Check out exact main source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Authenticate through current provider WIF before tightening it
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned Google Cloud CLI action
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Apply least-change canonical WIF hardening and verify provider readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sol62-wif
+          # Airlock provider-mutation marker: workload-identity-pools providers update-oidc
+          test "${{ github.event.issue.title }}" = "$EXACT_TRIGGER_TITLE"
+          test "${{ github.event.issue.author_association }}" = "OWNER"
+          SOVARA_WIF_HARDENING_APPROVAL=HARDEN_SOVARA_CANONICAL_WIF_V1 \
+            ./ops/harden_sovara_provider_wif_v1.sh --apply \
+            | tee /tmp/sol62-wif/WIF_HARDEN_APPLY.json
+          ./ops/harden_sovara_provider_wif_v1.sh --verify \
+            | tee /tmp/sol62-wif/WIF_HARDEN_VERIFY.json
+          python3 - <<'PY'
+          import json
+          apply=json.load(open('/tmp/sol62-wif/WIF_HARDEN_APPLY.json', encoding='utf-8'))
+          verify=json.load(open('/tmp/sol62-wif/WIF_HARDEN_VERIFY.json', encoding='utf-8'))
+          assert verify.get('receipt') == 'FEDOMEGA-WIF-CLOUD-VERIFIED', verify
+          assert verify.get('state') == 'VERIFIED', verify
+          assert verify.get('project_number_observed') == '257649435135', verify
+          assert verify.get('hardened_contract_verified') is True, verify
+          assert verify.get('condition_match') is True, verify
+          assert verify.get('mapping_match') is True, verify
+          assert verify.get('secret_payload_accessed') is False, verify
+          assert apply.get('service_account_key_created') is False, apply
+          print(json.dumps({
+            'receipt':'SOL62-WIF-HARDENING-VERIFIED',
+            'provider_receipt_sha256':verify.get('receipt_sha256'),
+            'provider_mutation_performed':bool(apply.get('mutation_performed', False)),
+            'hardened_contract_verified':True,
+            'secret_payload_accessed':False,
+            'service_account_key_created':False,
+          }, sort_keys=True))
+          PY
+
+      - name: Upload immutable redacted WIF receipts
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sol62-wif-hardening-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/sol62-wif
+          if-no-files-found: error
+          retention-days: 90
