@@ -246,20 +246,11 @@ jobs:
         )
         self.assertIn("UNAUTHORISED_PROVIDER_MUTATION", self.rules(findings))
 
-    def test_fhu047_exact_one_use_provider_mutation_contract_passes(self):
-        path = ".github/workflows/fhu047-wif-least-privilege-apply-v1.yml"
-        text = (ROOT / path).read_text(encoding="utf-8")
-        findings = AIRLOCK.analyse_workflow(path, text, POLICY)
-        self.assertEqual([], findings)
-
-    def test_fhu047_provider_mutation_trigger_drift_is_rejected(self):
-        path = ".github/workflows/fhu047-wif-least-privilege-apply-v1.yml"
-        text = (ROOT / path).read_text(encoding="utf-8").replace(
-            "FHU047_WIF_LEAST_PRIVILEGE_ONCE_20260901_0142_SAST",
-            "FHU047_WIF_LEAST_PRIVILEGE_ONCE_WRONG",
-        )
-        findings = AIRLOCK.analyse_workflow(path, text, POLICY)
-        self.assertIn("PROVIDER_MUTATION_TRIGGER_DRIFT", self.rules(findings))
+    def test_no_provider_mutation_lease_is_active_after_fhu047_attempt(self):
+        self.assertEqual([], POLICY.get("provider_mutation_workflow_allowlist"))
+        self.assertEqual({}, POLICY.get("provider_mutation_exact_issue_titles"))
+        self.assertFalse((ROOT / ".github/workflows/fhu047-wif-least-privilege-apply-v1.yml").exists())
+        self.assertFalse((ROOT / ".github/workflows/fhu047-admin-authority-graph-census-v2.yml").exists())
 
     def test_quarantine_controller_contract_passes(self):
         text = """name: Phoenix Emergency Execution Freeze
