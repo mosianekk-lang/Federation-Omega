@@ -1,0 +1,105 @@
+{
+  "schema": "CFBE_ESTATE_COHERENCE_VALUE_POLICY_V1",
+  "objective": "Keep Federation current-state projections coherent with fresh provider/source truth while making measured owner value a promotion gate and reducing stale PR/system entropy.",
+  "operating_order": [
+    "VERIFY_CURRENT_SOURCE",
+    "RECONCILE_CANONICAL_PROJECTIONS",
+    "CLASSIFY_LIFECYCLE_AND_SUPERSESSION",
+    "DISPOSE_OR_RESTACK_STALE_CHANGESETS",
+    "MEASURE_OWNER_BURDEN_AND_VALUE",
+    "ADMIT_NEW_CAPABILITY_ONLY_FOR_MEASURED_GAP"
+  ],
+  "authority_precedence": [
+    "FRESH_PROVIDER_NATIVE_READBACK",
+    "CURRENT_SIGNED_SOURCE_OR_RELEASE_IDENTITY",
+    "KDV_CANONICAL_CURRENT_STATE_PROJECTION",
+    "FEDERATION_OR_PROJECT_HEARTBEAT",
+    "DERIVED_REGISTRY_OR_DASHBOARD",
+    "HISTORICAL_SNAPSHOT"
+  ],
+  "reconciliation": {
+    "mode": "LEVEL_BASED_DESIRED_OBSERVED_STATE",
+    "generation_fencing_required": true,
+    "idempotent_exact_replay_required": true,
+    "default_projection_ttl_seconds": 900,
+    "historical_records_append_only": true,
+    "present_tense_claim_requires_fresh_source_read": true,
+    "partial_failure_isolated": true,
+    "bounded_retry_required": true,
+    "retry_route_must_materially_change_after_failure": true
+  },
+  "surface_lifecycle": [
+    "CURRENT",
+    "DRIFTED",
+    "STALE",
+    "HISTORICAL",
+    "SUPERSEDED",
+    "UNKNOWN"
+  ],
+  "pull_request_entropy": {
+    "restack_threshold_commits": 12,
+    "close_threshold_commits": 40,
+    "semantic_duplicate_default": "CLOSE",
+    "explicit_supersession_default": "CLOSE",
+    "provider_or_effect_gate_open_default": "HOLD",
+    "unique_stale_capability_default": "RESTACK_AND_RETEST_CURRENT_MAIN",
+    "green_stale_head_does_not_inherit_current_main_admission": true
+  },
+  "capability_admission": {
+    "order": ["REUSE", "EXTEND", "SPECIALISE", "MERGE", "NEW_LAST"],
+    "minimum_gap_severity": 1,
+    "measurable_owner_value_hypothesis_required": true,
+    "new_top_level_system_requires_zero_existing_coverage": true,
+    "new_top_level_system_requires_architectural_need": true,
+    "new_top_level_system_requires_strict_owner_value_proof": true,
+    "source_novelty_is_not_value": true
+  },
+  "owner_value": {
+    "minimum_matched_pairs": 10,
+    "strict_existing_court": "evidenceops/caseforge/owner_value_deployment_court_v2.py",
+    "machine_observable_burden_court": "evidenceops/caseforge/observable_burden_court_v1.py",
+    "feature_count_is_not_value": true,
+    "wall_clock_gap_is_not_owner_time": true,
+    "independent_readback_required": true,
+    "cognitive_load_is_a_first_class_cost": true,
+    "promotion_requires_no_quality_regression": true
+  },
+  "metrics": [
+    "CURRENT_SOURCE_CONVERGENCE_RATIO",
+    "PROJECTION_LAG_COUNT",
+    "STALE_SURFACE_COUNT",
+    "STALE_PRS_TO_RESTACK",
+    "PRS_TO_CLOSE",
+    "PRS_ON_HOLD",
+    "OWNER_VALUE_PAIR_DEFICIT",
+    "OWNER_INTERVENTION_DELTA",
+    "CLARIFICATION_DELTA",
+    "CORRECTION_DELTA",
+    "VERIFIED_OUTPUT_RATIO",
+    "TIME_TO_CANONICAL_CURRENT"
+  ],
+  "provenance": {
+    "source_head_bound": true,
+    "input_identity_bound": true,
+    "deterministic_receipt_hash": true,
+    "provider_effect_not_inferred": true,
+    "stable_promotion_not_inferred": true
+  },
+  "market_pattern_harvest": [
+    "KUBERNETES_RECONCILIATION",
+    "ARGO_SELF_HEAL_AND_BOUNDED_RETRY",
+    "BACKSTAGE_OWNERSHIP_AND_LIFECYCLE",
+    "TEMPORAL_DURABLE_CHECKPOINT_REPLAY",
+    "GITHUB_LATEST_BASE_VALIDATION",
+    "DORA_SPEED_PLUS_STABILITY",
+    "SLSA_PROVENANCE",
+    "OPENFEATURE_LIFECYCLE_HOOKS"
+  ],
+  "truth_boundary": {
+    "this_policy_grants_provider_authority": false,
+    "this_policy_authorizes_external_effects": false,
+    "this_policy_authorizes_source_merge": false,
+    "this_policy_proves_owner_value": false,
+    "this_policy_creates_a_new_top_level_system": false
+  }
+}
