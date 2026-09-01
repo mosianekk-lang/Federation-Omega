@@ -23,9 +23,11 @@ class Sol62ProofOSBindingTests(unittest.TestCase):
             "sol_61_runtime/prove_sol_62_runtime.py",
             "sol_61_runtime/prove_runtime.py",
             "sol_61_runtime/SOL_6_2_PROGRAMME.json",
+            "sol_61_runtime/SOL_6_2_ARCHITECTURE.md",
             "governance/proofos_omega_policy_extension_sol62_v1.json",
             "tests/test_sol_62_transactional_runtime.py",
             "tests/test_sol_62_proofos_binding.py",
+            "tests/test_sol_62_reference_proof.py",
         ]
         impact = ImpactCompiler(policy).assess(changed)
         manifest = ProofSelector(policy).compile_manifest(
