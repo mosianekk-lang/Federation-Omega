@@ -1,0 +1,48 @@
+{
+  "schema": "SLOS_HYPERPERFORMANCE_PROGRAMME_V1",
+  "version": "1.0.1",
+  "runtime_version": "3.3.0",
+  "status": "DETERMINISTIC_TESTED",
+  "parallel_lanes": [
+    "MISSION_IR_COMPILER",
+    "FEDERATION_DIGITAL_TWIN",
+    "SHADOW_CHAMPION_CHALLENGER",
+    "EVIDENCE_DISTILLATION",
+    "COUNTERFACTUAL_FAN_IN",
+    "OPPORTUNITY_DISCOVERY",
+    "ADMISSION_AND_PROOF"
+  ],
+  "hyperperformance_algorithms": [
+    "DEPENDENCY_AWARE_WAVE_SCHEDULING",
+    "LANE_PRIORITY_PLUS_UTILITY_RANKING",
+    "CRITICAL_PATH_EXTRACTION",
+    "RISK_PROOF_AUTHORITY_ROUTE_FILTERING",
+    "COMMON_MISSION_EMPIRICAL_SELECTION",
+    "CRYPTODIGEST_EVIDENCE_COMPRESSION",
+    "COUNTERFACTUAL_NO_ACTION_BASELINE",
+    "CAPABILITY_GAP_DISCOVERY",
+    "LATENCY_BOTTLENECK_DISCOVERY",
+    "REVERSIBILITY_RISK_GAP_DISCOVERY"
+  ],
+  "deterministic_admission": {
+    "airlock_run_id": "33500273513",
+    "source_head_sha": "f07a9bc2b50c3c5f1b42449731a40a07f553e2b9",
+    "risk": "R2_SHARED",
+    "proofos_manifest_sha256": "30b3f0461b2070299cece1c1cba5138bb627545341e77256d43115e7e6216c68",
+    "proofos_admission_report_sha256": "a9513a08ee8a0677d6df873e4fdb307f02fa11dabec3f6ab1fe5cdb5a71e0580",
+    "selected_proofs": 11,
+    "blocking_failures": 0,
+    "unmapped_production_paths": 0,
+    "shadow_selector_status": "PASS_NO_ESCAPE"
+  },
+  "authority_ceiling": "NO_PROVIDER_AUTHORITY_EXPANSION",
+  "provider_effects_enabled": false,
+  "automatic_stable_promotion": false,
+  "promotion_sequence": [
+    "SOURCE_IMPLEMENTED_PENDING_ADMISSION",
+    "DETERMINISTIC_TESTED",
+    "SHADOW_OPERATIONAL",
+    "EMPIRICAL_VALUE_VERIFIED_SCOPED"
+  ],
+  "truth_boundary": "The hyperperformance control layer is deterministically tested by exact-head Airlock/ProofOS, Bubbles Command Bus and Public Repository Leak Guard. It improves mission compilation, dependency-safe parallel scheduling, route synthesis, counterfactual choice, shadow evaluation, evidence compression and opportunity discovery. It does not grant provider authority, execute external effects or claim empirical superiority before real common-mission evidence exists."
+}
