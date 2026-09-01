@@ -7,6 +7,7 @@ import tempfile
 from pathlib import Path
 
 from runtime import CompletionContract, Mission, ProviderCapability, SolRuntime, Workstream, digest, utc_now
+from prove_sol_62_runtime import run as run_sol62
 
 
 def run(output: Path) -> dict:
@@ -34,7 +35,7 @@ def run(output: Path) -> dict:
             {"id": "claim-1", "missions": ["omega-evidenceops"], "verified": False, "priority": 90, "observed_at": utc_now()},
         ])
         reasoning = rt.reasoning_budget(complexity=3, consequence=3, uncertainty=2, dependency_depth=2, contradiction_risk=2)
-        lesson = rt.record_lesson("provider-registry-without-readback", "Require fresh provider-native readback", "receipt://reference")
+        rt.record_lesson("provider-registry-without-readback", "Require fresh provider-native readback", "receipt://reference")
         policy = rt.compile_lesson_to_policy(0, "PREFLIGHT_CHECK")
         reliability = rt.update_reliability("reference-transaction", True)
         control = rt.cybernetic_decision(error_rate=0.0, queue_age_seconds=0, proof_age_seconds=0, retries=0)
@@ -49,6 +50,8 @@ def run(output: Path) -> dict:
             "state_hash": digest(json.loads((root / "state.json").read_text())),
         }
         assert all(value for key, value in recovery.items() if key != "state_hash")
+
+        sol62 = run_sol62(output / "sol-62")
 
         receipt = {
             "programme": "SOL-6.1-OMEGA-EVIDENCEOPS-MODERNISATION",
@@ -67,6 +70,7 @@ def run(output: Path) -> dict:
                 "confidence_calibration": reliability["attempts"] == 1,
                 "cybernetic_control": control["action"] == "CONTINUE",
                 "recovery": recovery["event_chain_valid"],
+                "sol_62_transactional_runtime": sol62["status"] == "SOL_6_2_REFERENCE_RUNTIME_VERIFIED",
             },
             "truth_boundary": {
                 "provider_neutral_kernel": True,
@@ -74,6 +78,8 @@ def run(output: Path) -> dict:
                 "cloud_run_live": False,
                 "apps_script_live": False,
                 "continuous_background_execution": False,
+                "sol_62_reference_runtime": sol62["status"] == "SOL_6_2_REFERENCE_RUNTIME_VERIFIED",
+                "sol_62_provider_live_production": False,
                 "reason": "External providers require separate fresh authority and provider-native receipts."
             },
         }

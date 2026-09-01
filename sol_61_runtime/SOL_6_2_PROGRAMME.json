@@ -1,0 +1,41 @@
+{
+  "programme_id": "SOL-6.2-TRANSACTIONAL-SELF-VERIFYING-RUNTIME",
+  "version": "6.2",
+  "date": "2026-09-01",
+  "predecessor": "SOL-6.1-OMEGA-EVIDENCEOPS-MODERNISATION",
+  "status": "DETERMINISTIC_TESTED",
+  "objective": "Evolve SOL from durable orchestration to transactional, self-verifying state-transition execution while preserving SOL 6.1 compatibility.",
+  "primary_invariants": [
+    "TARGET_STATE_PLUS_PROOF_COMPLETION",
+    "ATOMIC_EFFECT_STATE_AUDIT_COMMIT",
+    "ATOMIC_EFFECT_PREPARATION",
+    "ATOMIC_AUTHORITY_AND_DISPATCH",
+    "REQUEST_HASH_IDEMPOTENCY",
+    "MONOTONIC_SCHEMA_VERSIONING",
+    "FENCED_EXECUTION",
+    "ACTION_BOUND_ONE_USE_AUTHORITY",
+    "SEMANTIC_AND_ATTESTATION_PROOF",
+    "GATEWAY_AND_WORKLOAD_IDENTITY",
+    "RISK_PROPORTIONAL_SIMULATION",
+    "FAIL_CLOSED_RECOVERY"
+  ],
+  "proof_entrypoint": "sol_61_runtime/prove_sol_62_runtime.py",
+  "compatibility_entrypoint": "sol_61_runtime/prove_runtime.py",
+  "promotion_ladder": [
+    "SOURCE_IMPLEMENTED",
+    "DETERMINISTIC_TESTED",
+    "HOSTED_SHADOW",
+    "PROVIDER_VERIFIED_SCOPED",
+    "OPERATIONAL_VERIFIED_SCOPED",
+    "SUSTAINED_VALUE_VERIFIED_SCOPED"
+  ],
+  "truth_boundary": {
+    "source_runtime_implemented": true,
+    "deterministic_ci_verified": true,
+    "provider_live_verified": false,
+    "multi_region_consensus": false,
+    "production_cutover": false,
+    "continuous_background_execution": false,
+    "market_superiority_claim": false
+  }
+}
