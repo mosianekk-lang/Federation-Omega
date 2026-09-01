@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.9",
+  "version": "2.9.10",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -36,7 +36,8 @@
     ".github/workflows/deploy-gemini-gateway.yml",
     ".github/workflows/fo-wif-semantic-canary-v2.yml",
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
-    ".github/workflows/sol62-wif-hardening-lease.yml"
+    ".github/workflows/sol62-wif-hardening-lease.yml",
+    ".github/workflows/sol62-google-surface-probe.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
@@ -58,7 +59,8 @@
     ".github/workflows/deploy-gemini-gateway.yml": ["workflow_dispatch"],
     ".github/workflows/fo-wif-semantic-canary-v2.yml": ["issues"],
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": ["issues"],
-    ".github/workflows/sol62-wif-hardening-lease.yml": ["issues"]
+    ".github/workflows/sol62-wif-hardening-lease.yml": ["issues"],
+    ".github/workflows/sol62-google-surface-probe.yml": ["push", "workflow_dispatch"]
   },
   "required_push_branches": {
     ".github/workflows/bubbles-command-bus.yml": ["main"],
@@ -71,7 +73,8 @@
     ".github/workflows/bco-prime-shadow-qualification.yml": ["main"],
     ".github/workflows/cfbe-observed-current-qualification.yml": ["main"],
     ".github/workflows/superior-logic-maturation-shadow.yml": ["main"],
-    ".github/workflows/luno-observer-provider-binding.yml": ["main"]
+    ".github/workflows/luno-observer-provider-binding.yml": ["main"],
+    ".github/workflows/sol62-google-surface-probe.yml": ["main"]
   },
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
@@ -138,6 +141,7 @@
     "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
     "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
     "sol62_wif_hardening_workflow": ".github/workflows/sol62-wif-hardening-lease.yml",
+    "sol62_google_surface_probe_workflow": ".github/workflows/sol62-google-surface-probe.yml",
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT",
     "g0_identity_probe_workflow": ".github/workflows/fo-wif-semantic-canary-v2.yml",
@@ -166,7 +170,8 @@
       ".github/workflows/deploy-gemini-gateway.yml",
       ".github/workflows/fo-wif-semantic-canary-v2.yml",
       ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
-      ".github/workflows/sol62-wif-hardening-lease.yml"
+      ".github/workflows/sol62-wif-hardening-lease.yml",
+      ".github/workflows/sol62-google-surface-probe.yml"
     ],
     "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",

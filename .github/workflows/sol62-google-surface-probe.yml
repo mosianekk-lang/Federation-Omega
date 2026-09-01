@@ -1,0 +1,145 @@
+name: SOL 6.2 Google Surface Live Probe
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/sol62-google-surface-probe.yml"
+      - "bubbles/apps_script_deployment_probe.py"
+      - "sol_61_runtime/SOL_6_2_GEMINI_BINDING.json"
+      - "governance/github_airlock_policy.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sol62-google-surface-live-probe-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
+  AI_STUDIO_MODEL: gemini-2.5-flash
+
+jobs:
+  probe:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - name: Checkout without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Probe exact Apps Script deployment semantics
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sol62-google
+          printf '{"schema":"SOL_6_2_GOOGLE_SURFACE_LIVE_RECEIPT_V1","source_sha":"%s","provider_mutation_performed":false,"credential_values_recorded":false}\n' "$GITHUB_SHA" > /tmp/sol62-google/SURFACE_RECEIPT.json
+          python3 bubbles/apps_script_deployment_probe.py --receipt /tmp/sol62-google/SURFACE_RECEIPT.json
+
+      - name: Probe AI Studio Gemini Developer API with bounded semantic nonce
+        shell: bash
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib, secrets, urllib.error, urllib.request
+          from datetime import datetime, timezone
+
+          receipt_path=pathlib.Path('/tmp/sol62-google/SURFACE_RECEIPT.json')
+          receipt=json.loads(receipt_path.read_text(encoding='utf-8'))
+          key=os.environ.get('GEMINI_API_KEY','')
+          model=os.environ.get('AI_STUDIO_MODEL','gemini-2.5-flash')
+          state={
+              'transport':'GEMINI_DEVELOPER_API',
+              'model_requested':model,
+              'api_key_present':bool(key),
+              'provider_mutation_performed':False,
+              'credential_value_recorded':False,
+              'case_data_processed':False,
+          }
+          if not key:
+              state['state']='CREDENTIAL_MISSING'
+              state['semantic_verified']=False
+          else:
+              nonce='SOL62-AISTUDIO-'+secrets.token_hex(12)
+              expected='SOL62-AISTUDIO-VERIFIED:'+nonce
+              payload={
+                  'contents':[{'parts':[{'text':f'Return exactly this text and nothing else: {expected}'}]}],
+                  'generationConfig':{'temperature':0,'maxOutputTokens':64},
+              }
+              url=f'https://generativelanguage.googleapis.com/v1beta/models/{model}:generateContent'
+              request=urllib.request.Request(
+                  url,
+                  data=json.dumps(payload,separators=(',',':')).encode(),
+                  headers={'Content-Type':'application/json','x-goog-api-key':key},
+                  method='POST',
+              )
+              try:
+                  with urllib.request.urlopen(request,timeout=60) as response:
+                      raw=response.read().decode('utf-8','replace')
+                      body=json.loads(raw) if raw else {}
+                      parts=((((body.get('candidates') or [{}])[0].get('content') or {}).get('parts')) or [])
+                      text=''.join(str(part.get('text','')) for part in parts).strip()
+                      state.update({
+                          'state':'VERIFIED_SCOPED' if text==expected else 'SEMANTIC_MISMATCH',
+                          'http_status':int(response.status),
+                          'semantic_verified':text==expected,
+                          'response_text_sha256':hashlib.sha256(text.encode()).hexdigest(),
+                          'provider_model_version':body.get('modelVersion'),
+                          'provider_response_id':body.get('responseId'),
+                          'usage_metadata_present':bool(body.get('usageMetadata')),
+                      })
+              except urllib.error.HTTPError as exc:
+                  raw=exc.read().decode('utf-8','replace')
+                  state.update({
+                      'state':'PROVIDER_REJECTED',
+                      'http_status':int(exc.code),
+                      'semantic_verified':False,
+                      'error_body_sha256':hashlib.sha256(raw.encode()).hexdigest(),
+                  })
+              except Exception as exc:
+                  state.update({
+                      'state':'TRANSPORT_FAILED',
+                      'semantic_verified':False,
+                      'error_class':type(exc).__name__,
+                  })
+          state['recorded_at_utc']=datetime.now(timezone.utc).isoformat()
+          receipt.setdefault('surface_corrections',{})['gemini_ai_studio_developer_api']=state
+          receipt_path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({
+              'apps_script':(receipt.get('surface_corrections',{}).get('archon_apps_script_exact_deployment') or {}).get('overall_classification'),
+              'ai_studio_state':state['state'],
+              'ai_studio_semantic_verified':state['semantic_verified'],
+              'credential_values_recorded':False,
+              'provider_mutation_performed':False,
+          },sort_keys=True))
+          PY
+
+      - name: Seal surface receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, pathlib
+          p=pathlib.Path('/tmp/sol62-google/SURFACE_RECEIPT.json')
+          r=json.loads(p.read_text(encoding='utf-8'))
+          body=dict(r)
+          body.pop('receipt_sha256',None)
+          r['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          assert r.get('provider_mutation_performed') is False
+          assert r.get('credential_values_recorded') is False
+          p.write_text(json.dumps(r,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+
+      - name: Upload immutable redacted surface receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sol62-google-surface-live-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/sol62-google/SURFACE_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
