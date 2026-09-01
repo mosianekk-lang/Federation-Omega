@@ -1,0 +1,147 @@
+name: AutoPilot Operational Witness Fabric
+
+on:
+  workflow_run:
+    workflows: ["Bubbles Command Bus"]
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: autopilot-operational-witness-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}
+  cancel-in-progress: false
+
+jobs:
+  witness:
+    if: >-
+      github.event.workflow_run.conclusion == 'success' &&
+      github.event.workflow_run.event == 'push' &&
+      github.event.workflow_run.head_branch == 'main'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    env:
+      GH_TOKEN: ${{ github.token }}
+      TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+      TRIGGER_RUN_ATTEMPT: ${{ github.event.workflow_run.run_attempt }}
+      TRIGGER_SHA: ${{ github.event.workflow_run.head_sha }}
+      TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
+      TRIGGER_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      TRIGGER_OBSERVED_AT: ${{ github.event.workflow_run.updated_at }}
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Verify Operational Witness Fabric contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_cfbe_autopilot_operational_witness_fabric_v1 -v
+
+      - name: Read exact Bubbles provider-readback artifact
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p operational-witness-input operational-witness-output
+          expected_name="bubbles-provider-surface-readback-${TRIGGER_RUN_ID}-${TRIGGER_RUN_ATTEMPT}"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/runs/${TRIGGER_RUN_ID}/artifacts" > operational-witness-input/artifacts.json
+          export EXPECTED_ARTIFACT_NAME="$expected_name"
+          artifact_id="$(python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          payload = json.loads(Path('operational-witness-input/artifacts.json').read_text(encoding='utf-8'))
+          expected = os.environ['EXPECTED_ARTIFACT_NAME']
+          matches = [
+              row for row in payload.get('artifacts', [])
+              if row.get('name') == expected and row.get('expired') is False
+          ]
+          if len(matches) != 1:
+              raise SystemExit(f'exact live Bubbles provider-readback artifact required: {expected}; matches={len(matches)}')
+          print(matches[0]['id'])
+          PY
+          )"
+          test -n "$artifact_id"
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" > operational-witness-input/provider-readback.zip
+          unzip -q operational-witness-input/provider-readback.zip -d operational-witness-input/provider-readback
+          mapfile -t receipts < <(find operational-witness-input/provider-readback -type f -name 'receipt.json' -print)
+          test "${#receipts[@]}" -eq 1
+          cp "${receipts[0]}" operational-witness-input/provider-readback-receipt.json
+
+      - name: Compile privacy-minimal operational witness bundle
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m benchmarking.cfbe_omega.autopilot_operational_witness_fabric_v1 \
+            --source-sha "$TRIGGER_SHA" \
+            --run-id "$TRIGGER_RUN_ID" \
+            --run-attempt "$TRIGGER_RUN_ATTEMPT" \
+            --event-name "$TRIGGER_EVENT" \
+            --head-branch "$TRIGGER_BRANCH" \
+            --workflow 'Bubbles Command Bus' \
+            --job 'provider-surface-readback' \
+            --observed-at-utc "$TRIGGER_OBSERVED_AT" \
+            --provider-readback-receipt operational-witness-input/provider-readback-receipt.json \
+            --output operational-witness-output/witness-bundle.json
+
+      - name: Enforce witness truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          receipt = json.loads(Path('operational-witness-output/witness-bundle.json').read_text(encoding='utf-8'))
+          assert receipt['source_head_sha'] == os.environ['TRIGGER_SHA'], receipt
+          assert receipt['triggering_run_id'] == os.environ['TRIGGER_RUN_ID'], receipt
+          assert receipt['event_name'] == 'push', receipt
+          assert receipt['head_branch'] == 'main', receipt
+          assert receipt['execution_witness']['kind'] == 'EXECUTION', receipt
+          assert receipt['execution_witness']['verified'] is True, receipt
+          assert receipt['provider_effect_authorized'] is False, receipt
+          assert receipt['stable_promotion_authorized'] is False, receipt
+          assert receipt['full_autopilot_runtime_proven'] is False, receipt
+          assert receipt['observed_pair_emitted'] is False, receipt
+          assert receipt['observed_resume_emitted'] is False, receipt
+
+          if receipt['status'] == 'WITNESS_EXECUTION_AND_READBACK_VERIFIED':
+              assert receipt['verified_surface_count'] > 0, receipt
+              assert receipt['readback_witness']['kind'] == 'READBACK', receipt
+              assert receipt['readback_witness']['independent'] is True, receipt
+              assert not receipt['blockers'], receipt
+          elif receipt['status'] == 'HOLD_EXECUTION_VERIFIED_READBACK_UNPROVEN':
+              assert receipt['verified_surface_count'] == 0, receipt
+              assert receipt['readback_witness'] is None, receipt
+              assert receipt['blockers'] == ['INDEPENDENT_PROVIDER_READBACK_NOT_VERIFIED'], receipt
+          else:
+              raise AssertionError(receipt)
+          print('AUTOPILOT_OPERATIONAL_WITNESS_FABRIC_VERIFIED')
+          PY
+
+      - name: Publish witness summary
+        if: always() && hashFiles('operational-witness-output/witness-bundle.json') != ''
+        shell: bash
+        run: |
+          echo '## AutoPilot Operational Witness Fabric' >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat operational-witness-output/witness-bundle.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable operational witness bundle
+        if: always() && hashFiles('operational-witness-output/witness-bundle.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: autopilot-operational-witness-${{ github.event.workflow_run.id }}-${{ github.event.workflow_run.run_attempt }}
+          path: operational-witness-output/witness-bundle.json
+          if-no-files-found: error
+          retention-days: 90
