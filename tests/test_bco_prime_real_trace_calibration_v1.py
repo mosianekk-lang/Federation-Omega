@@ -93,6 +93,16 @@ class CalibrationGateTests(unittest.TestCase):
         self.assertAlmostEqual(1.0, sum(dict(first.benefit_weights).values()))
         self.assertAlmostEqual(1.0, sum(dict(first.penalty_weights).values()))
 
+    def test_coordinate_transfer_clamps_epsilon_shortfall_without_negative_weight(self) -> None:
+        step = 0.02
+        weights = {"a": 0.98, "b": step - 5e-16}
+        shifted = court._coordinate_transfer(weights, "a", "b", step)
+        self.assertIsNotNone(shifted)
+        assert shifted is not None
+        self.assertEqual(0.0, shifted["b"])
+        self.assertGreaterEqual(shifted["a"], 0.0)
+        self.assertAlmostEqual(sum(weights.values()), sum(shifted.values()), places=12)
+
     def test_insufficient_real_cohort_is_held(self) -> None:
         receipt = court.evaluate_calibration(tuple(trace(index) for index in range(30)), holdout_size=10)
         self.assertEqual("HOLD_BASELINE_NEGATIVE_RESULT", receipt.decision)
@@ -185,6 +195,7 @@ class RealRepositoryIntegrationTests(unittest.TestCase):
         self.assertEqual(court.SCHEMA, manifest["schema"])
         self.assertTrue(manifest["temporal_leakage_rejected"])
         self.assertTrue(manifest["production_profile_immutable"])
+        self.assertTrue(manifest["coordinate_transfer_numeric_floor"])
         self.assertFalse(manifest["external_effect_authority"])
         self.assertFalse(manifest["stable_self_promotion"])
 
