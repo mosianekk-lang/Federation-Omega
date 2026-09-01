@@ -21,6 +21,10 @@ class PolicyKernelTests(unittest.TestCase):
         ]
         self.kernel = PolicyKernel(constitution, rules)
 
+    @staticmethod
+    def proof(seed: str):
+        return {"verified": True, "semantic_state": "VERIFIED", "sha256": (seed * 64)[:64]}
+
     def mandate(self, **changes):
         base = dict(
             action_id="a1", action_type="deploy_candidate", risk="MEDIUM",
@@ -34,8 +38,17 @@ class PolicyKernelTests(unittest.TestCase):
     def test_eligible_and_proof_carrying(self):
         decision = self.kernel.evaluate(self.mandate(), {"snapshot"})
         self.assertEqual(decision.status, "ELIGIBLE")
-        self.assertFalse(self.kernel.verify_proof_bundle(decision, {"execution": {}})["execution_authorised"])
-        self.assertTrue(self.kernel.verify_proof_bundle(decision, {"execution": {}, "readback": {}})["execution_authorised"])
+        self.assertFalse(self.kernel.verify_proof_bundle(decision, {"execution": self.proof("a")})["execution_authorised"])
+        self.assertTrue(self.kernel.verify_proof_bundle(decision, {"execution": self.proof("a"), "readback": self.proof("b")})["execution_authorised"])
+
+    def test_empty_or_unverified_proof_is_rejected(self):
+        decision = self.kernel.evaluate(self.mandate(), {"snapshot"})
+        empty = self.kernel.verify_proof_bundle(decision, {"execution": {}, "readback": {}})
+        self.assertFalse(empty["execution_authorised"])
+        self.assertEqual(empty["invalid"], ["execution", "readback"])
+        bad = self.kernel.verify_proof_bundle(decision, {"execution": {"verified": True, "sha256": "bad"}, "readback": self.proof("b")})
+        self.assertFalse(bad["execution_authorised"])
+        self.assertIn("execution", bad["invalid"])
 
     def test_role_separation_and_preconditions(self):
         same_role = self.mandate(executor_role="planner")
