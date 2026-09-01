@@ -17,8 +17,7 @@ from typing import Any
 
 ROOT = Path(__file__).resolve().parent
 MANIFEST_PATH = ROOT / "bot_manifest_199.json"
-DEPLOYMENT_DIR = ROOT / "deployment"
-RECEIPT_DIR = ROOT / "receipts"
+SOURCE_ROOT = ROOT.parents[1].resolve()
 
 MISSION_BY_LANE = {
     "KIMMIE-IPEP-001": {
@@ -116,13 +115,13 @@ def build_packet(bot: dict[str, Any], cycle_id: str, ordinal: int) -> dict[str, 
     }
 
 
-def deploy() -> tuple[dict[str, Any], dict[str, Any]]:
+def deploy(*, observed_at: str | None = None) -> tuple[dict[str, Any], dict[str, Any]]:
     manifest = load_manifest()
     errors = validate_manifest(manifest)
     if errors:
         raise RuntimeError("manifest_validation_failed:" + ",".join(errors))
 
-    observed_at = datetime.now(timezone.utc).isoformat()
+    observed_at = observed_at or datetime.now(timezone.utc).isoformat()
     cycle_id = observed_at.replace("-", "").replace(":", "").replace("+", "_").replace(".", "")
     assignments = [build_packet(bot, cycle_id, idx) for idx, bot in enumerate(manifest["bots"], 1)]
 
@@ -174,6 +173,8 @@ def deploy() -> tuple[dict[str, Any], dict[str, Any]]:
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--validate-only", action="store_true")
+    parser.add_argument("--output-dir", type=Path)
+    parser.add_argument("--observed-at")
     args = parser.parse_args()
 
     manifest = load_manifest()
@@ -185,15 +186,32 @@ def main() -> int:
         print(json.dumps({"status": "PASS", "bot_count": 199}))
         return 0
 
-    deployment, receipt = deploy()
-    DEPLOYMENT_DIR.mkdir(parents=True, exist_ok=True)
-    RECEIPT_DIR.mkdir(parents=True, exist_ok=True)
-    (DEPLOYMENT_DIR / "current_assignments.json").write_text(
+    if args.output_dir is None:
+        parser.error("--output-dir is required unless --validate-only is used")
+    output_dir = args.output_dir.expanduser().resolve()
+    if output_dir == SOURCE_ROOT or SOURCE_ROOT in output_dir.parents:
+        parser.error("--output-dir must be outside the repository")
+
+    deployment, receipt = deploy(observed_at=args.observed_at)
+    output_dir.mkdir(parents=True, exist_ok=True)
+    (output_dir / "assignments.json").write_text(
         json.dumps(deployment, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    (RECEIPT_DIR / "latest_workforce_receipt.json").write_text(
+    (output_dir / "receipt.json").write_text(
         json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
+    heartbeat = {
+        "schema": "KIMMIE-WORKFORCE-ARTIFACT-HEARTBEAT-V1",
+        "observed_at": receipt["observed_at"],
+        "status": "SOURCE_PACKET_BINDING_VERIFIED",
+        "provider_model_execution_proven": False,
+        "deployment_sha256": receipt["deployment_sha256"],
+        "receipt_sha256": receipt["receipt_sha256"],
+    }
+    (output_dir / "heartbeat.json").write_text(
+        json.dumps(heartbeat, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+    )
+    (output_dir / "dead_letter.json").write_text("[]\n", encoding="utf-8")
     print(json.dumps({
         "status": receipt["status"],
         "bot_count": receipt["bot_count"],
