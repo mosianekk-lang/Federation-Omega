@@ -73,6 +73,12 @@ class CapabilityRoute:
     mutating: bool
     reversible: bool
     authority_level: str
+    proof_quality: float
+    success_rate: float
+    latency_ms: float
+    cost: float
+    owner_interventions: float
+    risk: float
     concurrency_limit: int
     conflict_domains: tuple[str, ...]
     attestation_id: str | None
@@ -154,6 +160,12 @@ class CapabilityGraph:
                     mutating=node.mutating,
                     reversible=node.reversible,
                     authority_level=node.authority_level,
+                    proof_quality=node.proof_quality,
+                    success_rate=node.success_rate,
+                    latency_ms=node.latency_ms,
+                    cost=node.cost,
+                    owner_interventions=node.owner_interventions,
+                    risk=node.risk,
                     concurrency_limit=node.concurrency_limit,
                     conflict_domains=tuple(sorted(set(node.conflict_domains))),
                     attestation_id=attestation_id,
@@ -161,7 +173,15 @@ class CapabilityGraph:
                     metadata=dict(node.metadata),
                 )
             )
-        routes.sort(key=lambda item: (-item.score, item.cost if hasattr(item, "cost") else 0, item.capability_id))
+        routes.sort(
+            key=lambda item: (
+                -item.score,
+                item.cost,
+                item.latency_ms,
+                item.risk,
+                item.capability_id,
+            )
+        )
         return tuple(routes)
 
     def best_route(self, capability: str, **kwargs: Any) -> CapabilityRoute:
