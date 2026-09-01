@@ -1,0 +1,36 @@
+{
+  "schema": "BCO_PRIME_REAL_TRACE_CALIBRATION_V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "purpose": "Chronologically benchmark BCO-Prime opportunity scoring against later outcomes from real completed Federation first-parent missions.",
+  "feature_boundary": "Final mission scope, title and diff statistics are observed before the outcome window begins.",
+  "outcome_boundary": "Only later first-parent missions contribute reuse, survival and regression labels.",
+  "cohort": {
+    "default_real_traces": 75,
+    "minimum_real_traces": 60,
+    "chronological_holdout": 25,
+    "minimum_holdout": 20,
+    "future_missions_per_outcome": 20
+  },
+  "metrics": [
+    "pairwise ranking concordance",
+    "held-out pairwise regression count",
+    "top-decile hard-regression rate",
+    "mean realized opportunity yield"
+  ],
+  "promotion_gate": {
+    "minimum_training_concordance_gain": 0.03,
+    "minimum_holdout_concordance_gain": 0.03,
+    "held_out_pairwise_regressions": 0,
+    "top_decile_hard_regression_rate_may_increase": false,
+    "result_scope": "SHADOW_PROFILE_CANDIDATE_ONLY"
+  },
+  "truth_boundary": {
+    "production_weights_changed": false,
+    "live_weight_change_authority": false,
+    "external_effect_authority": false,
+    "stable_self_promotion": false,
+    "market_leadership_claim": false,
+    "manual_user_tasks": []
+  }
+}
