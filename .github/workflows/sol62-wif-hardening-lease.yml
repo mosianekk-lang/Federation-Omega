@@ -58,25 +58,45 @@ jobs:
           ./ops/harden_sovara_provider_wif_v1.sh --verify \
             | tee /tmp/sol62-wif/WIF_HARDEN_VERIFY.json
           python3 - <<'PY'
-          import json
+          import hashlib, json
           apply=json.load(open('/tmp/sol62-wif/WIF_HARDEN_APPLY.json', encoding='utf-8'))
           verify=json.load(open('/tmp/sol62-wif/WIF_HARDEN_VERIFY.json', encoding='utf-8'))
-          assert verify.get('receipt') == 'FEDOMEGA-WIF-CLOUD-VERIFIED', verify
+          assert apply.get('schema') == 'SOVARA_WIF_HARDENING_V1', apply
+          assert apply.get('state') in {'APPLIED_AND_VERIFIED','ALREADY_HARDENED'}, apply
+          assert verify.get('schema') == 'SOVARA_WIF_HARDENING_V1', verify
+          assert verify.get('mode') == 'verify', verify
           assert verify.get('state') == 'VERIFIED', verify
           assert verify.get('project_number_observed') == '257649435135', verify
-          assert verify.get('hardened_contract_verified') is True, verify
+          assert verify.get('provider_state') == 'ACTIVE', verify
           assert verify.get('condition_match') is True, verify
           assert verify.get('mapping_match') is True, verify
-          assert verify.get('secret_payload_accessed') is False, verify
-          assert apply.get('service_account_key_created') is False, apply
-          print(json.dumps({
+          assert verify.get('exact_repository_id_binding_present') is True, verify
+          assert verify.get('broad_repository_name_binding_present') is False, verify
+          assert verify.get('required_mutations') == [], verify
+          for receipt in (apply, verify):
+              assert receipt.get('service_account_created') is False, receipt
+              assert receipt.get('secret_payload_accessed') is False, receipt
+              assert receipt.get('model_inference_performed') is False, receipt
+              assert receipt.get('traffic_change_performed') is False, receipt
+              assert len(str(receipt.get('receipt_sha256') or '')) == 64, receipt
+          final={
             'receipt':'SOL62-WIF-HARDENING-VERIFIED',
-            'provider_receipt_sha256':verify.get('receipt_sha256'),
+            'state':'VERIFIED',
+            'provider_verify_receipt_sha256':verify['receipt_sha256'],
+            'provider_apply_receipt_sha256':apply['receipt_sha256'],
             'provider_mutation_performed':bool(apply.get('mutation_performed', False)),
-            'hardened_contract_verified':True,
+            'condition_match':True,
+            'mapping_match':True,
+            'exact_repository_id_binding_present':True,
+            'broad_repository_name_binding_present':False,
             'secret_payload_accessed':False,
-            'service_account_key_created':False,
-          }, sort_keys=True))
+            'service_account_created':False,
+            'model_inference_performed':False,
+            'traffic_change_performed':False,
+          }
+          final['receipt_sha256']=hashlib.sha256(json.dumps(final,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          open('/tmp/sol62-wif/SOL62_WIF_HARDENING_RECEIPT.json','w',encoding='utf-8').write(json.dumps(final,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(final, sort_keys=True))
           PY
 
       - name: Upload immutable redacted WIF receipts
