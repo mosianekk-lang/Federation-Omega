@@ -1,0 +1,19 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_GATE_REGISTER_V1",
+  "gates": [
+    {"gate_id": "L5-SOURCE-CONTROLS", "class": "SOURCE", "blocking_level": 5, "status": "CANDIDATE_IMPLEMENTED", "owner_authority_required": false},
+    {"gate_id": "L5-INTEGRATED-OBSERVED-EPISODES", "class": "OBSERVED", "blocking_level": 5, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L6-CONSTITUTIONAL-EVOLUTION-COURT", "class": "SOURCE", "blocking_level": 6, "status": "CANDIDATE_IMPLEMENTED", "owner_authority_required": false},
+    {"gate_id": "L6-CAUSAL-LEARNING-OBSERVATION", "class": "OBSERVED", "blocking_level": 6, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L7-PERSISTENT-NO-CHAT-RESUME", "class": "OBSERVED", "blocking_level": 7, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L7-MAINTENANCE-SELF-RESOLUTION", "class": "OBSERVED", "blocking_level": 7, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L7-RECOVERY-SELF-RESOLUTION", "class": "OBSERVED", "blocking_level": 7, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L7-OWNER-INTERRUPTION-REDUCTION", "class": "VALUE", "blocking_level": 7, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L7-PROSPECTIVE-OWNER-VALUE", "class": "VALUE", "blocking_level": 7, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L7-PROVIDER-WAIT-WAKE-HANDOFF", "class": "PROVIDER", "blocking_level": 7, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "GOOGLE-WIF-HARDENING-AUTHORITY", "class": "OWNER", "blocking_level": 7, "status": "HELD", "owner_authority_required": true},
+    {"gate_id": "L8-CROSS-PROVIDER-COUNTERFACTUAL-OBSERVATION", "class": "PROVIDER", "blocking_level": 8, "status": "OPEN", "owner_authority_required": false},
+    {"gate_id": "L8-SUSTAINED-VALUE", "class": "VALUE", "blocking_level": 8, "status": "OPEN", "owner_authority_required": false}
+  ],
+  "truth_boundary": "CANDIDATE_IMPLEMENTED is source/control-plane evidence only; OPEN gates require their native evidence class. HELD owner gate remains lane-local."
+}
