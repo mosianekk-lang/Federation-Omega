@@ -65,18 +65,29 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             self.assertIn(workflow, self.policy["active_workflow_allowlist"])
             self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
 
-        fhu047_repair = credential_policy["fhu047_one_use_repair_workflow"]
-        fhu047_census = credential_policy["fhu047_authority_graph_census_workflow"]
         self.assertEqual(
             [artifact_attestation],
             self.policy["attestations_write_workflow_allowlist"],
         )
-        self.assertEqual(
-            [fhu047_repair],
-            self.policy["provider_mutation_workflow_allowlist"],
-        )
-        self.assertNotIn(fhu047_census, self.policy["provider_mutation_workflow_allowlist"])
-        self.assertNotIn(fhu047_census, self.policy["attestations_write_workflow_allowlist"])
+
+        fhu047_repair = credential_policy.get("fhu047_one_use_repair_workflow")
+        provider_mutators = self.policy["provider_mutation_workflow_allowlist"]
+        if fhu047_repair is None:
+            self.assertEqual([], provider_mutators)
+        else:
+            self.assertIn(fhu047_repair, fhu047_workflows)
+            self.assertEqual([fhu047_repair], provider_mutators)
+
+        fhu047_census = credential_policy.get("fhu047_authority_graph_census_workflow")
+        if fhu047_census is not None:
+            self.assertIn(fhu047_census, fhu047_workflows)
+            self.assertNotIn(fhu047_census, provider_mutators)
+            self.assertNotIn(fhu047_census, self.policy["attestations_write_workflow_allowlist"])
+
+        if not fhu047_workflows:
+            self.assertFalse(any("fhu-047" in workflow.lower() for workflow in self.policy["oidc_workflow_allowlist"]))
+            self.assertFalse(any("fhu-047" in workflow.lower() for workflow in provider_mutators))
+
         self.assertNotIn(g0_identity_probe, deployment_gateways | {artifact_attestation} | fhu047_workflows)
         self.assertNotIn("oidc_boundary", self.policy)
         self.assertEqual(
