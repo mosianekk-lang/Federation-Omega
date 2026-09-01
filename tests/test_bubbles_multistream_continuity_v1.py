@@ -179,6 +179,45 @@ class MultistreamContinuityFabricTests(unittest.TestCase):
             tuple(item.lane_id for item in self.fabric.lease_wave(worker_id="w", now=4)),
         )
 
+    def test_cancel_running_external_preserves_readback_hold(self) -> None:
+        self.fabric.add_command(
+            self.command("a"),
+            [
+                self.lane("a", "external", effect=EffectClass.REVERSIBLE_EXTERNAL, permit="permit://1"),
+                self.lane("a", "future-safe"),
+            ],
+            now=0,
+        )
+        leases = self.fabric.lease_wave(worker_id="w", max_lanes=1, now=1)
+        self.assertEqual(("external",), tuple(item.lane_id for item in leases))
+        self.fabric.cancel_command("a", explicit=True, now=2)
+        snapshot = self.fabric.snapshot()
+        command = snapshot["commands"][0]
+        states = {item["lane_id"]: item["state"] for item in snapshot["lanes"]}
+        self.assertEqual(CommandState.CANCELLED.value, command["state"])
+        self.assertEqual(ContinuityLaneState.HOLD_READBACK.value, states["external"])
+        self.assertEqual(ContinuityLaneState.CANCELLED.value, states["future-safe"])
+        self.assertEqual((), self.fabric.lease_wave(worker_id="w2", now=3))
+        self.fabric.record_effect_readback("external", effect_observed=False, now=4)
+        states = {item["lane_id"]: item["state"] for item in self.fabric.snapshot()["lanes"]}
+        self.assertEqual(ContinuityLaneState.CANCELLED.value, states["external"])
+        self.assertEqual((), self.fabric.lease_wave(worker_id="w3", now=5))
+
+    def test_cancelled_external_observed_effect_is_recorded_complete(self) -> None:
+        self.fabric.add_command(
+            self.command("a"),
+            [self.lane("a", "external", effect=EffectClass.REVERSIBLE_EXTERNAL, permit="permit://1")],
+            now=0,
+        )
+        self.fabric.lease_wave(worker_id="w", max_lanes=1, now=1)
+        self.fabric.cancel_command("a", explicit=True, now=2)
+        self.fabric.record_effect_readback(
+            "external", effect_observed=True, result_ref="proof://provider", now=3
+        )
+        lane = self.fabric.snapshot()["lanes"][0]
+        self.assertEqual(ContinuityLaneState.COMPLETE.value, lane["state"])
+        self.assertEqual("proof://provider", lane["result_ref"])
+
     def test_dependency_failure_blocks_only_descendant_not_independent_stream(self) -> None:
         self.fabric.add_command(
             self.command("a"),
