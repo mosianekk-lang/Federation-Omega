@@ -135,6 +135,19 @@ class PassiveObservationCollectorV1Tests(unittest.TestCase):
                 evidence_registry={}, trusted_verifiers=(VERIFIER,),
             )
 
+    def test_directive_must_match_registered_source_epoch(self) -> None:
+        state = initialize_collector(cohort_manifest(), source_base_sha=HEAD)
+        item = directive()
+        item["source_head_sha"] = "a" * 40
+        registry = {"directive-proof-001": evidence_receipt(
+            "directive-proof-001", "directive:directive-real-001", item
+        )}
+        with self.assertRaisesRegex(ValueError, "SOURCE_EPOCH_MISMATCH"):
+            bind_eligible_directive(
+                state, cohort_manifest(), item,
+                evidence_registry=registry, trusted_verifiers=(VERIFIER,),
+            )
+
     def test_synthetic_shadow_and_replayed_directives_are_rejected(self) -> None:
         for field in ("synthetic", "shadow", "replayed"):
             item = directive()
