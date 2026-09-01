@@ -144,7 +144,7 @@ The cycle also repairs critical defects in the pre-existing SOL path rather than
 
 ## Source proof
 
-`frontier_hardening_v2.py` maps exactly 100 unique upgrade genes to executable controls. `test_frontier_hardening_v2.py` is the focused regression/adversarial court. `prove_frontier_hardening_v2.py` produces a bounded machine-readable source-proof receipt. The existing `SOL 6.1 Runtime Proof` workflow now runs that court and proof in addition to the legacy SOL proofs, and GitHub Actions are SHA-pinned in that workflow.
+`frontier_hardening_v2.py` maps exactly 100 unique upgrade genes to executable controls. `test_frontier_hardening_v2.py` is the focused regression/adversarial court. `prove_frontier_hardening_v2.py` produces a bounded machine-readable source-proof receipt. The 100-gene court is executed from `prove_runtime.py`, which is already invoked by the admitted `SOL 6.1 Runtime Proof` workflow whenever `sol_61_runtime/**` changes. A direct workflow-hardening attempt was deliberately withdrawn after the Federation Airlock rejected workflow mutation outside its approved mutation scope; no Airlock rule was weakened. Workflow-level action pin migration therefore remains a separately governed supply-chain opportunity, while the source-level toolbox/provenance controls are implemented here.
 
 ## Truth boundary
 
