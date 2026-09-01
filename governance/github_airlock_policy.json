@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.7",
+  "version": "2.9.8",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -34,7 +34,8 @@
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
     ".github/workflows/fo-wif-semantic-canary-v2.yml",
-    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
+    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
+    ".github/workflows/sol62-wif-hardening-lease.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
@@ -54,7 +55,8 @@
     ".github/workflows/luno-observer-provider-binding.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/deploy-gemini-gateway.yml": ["workflow_dispatch"],
     ".github/workflows/fo-wif-semantic-canary-v2.yml": ["issues"],
-    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": ["issues"]
+    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": ["issues"],
+    ".github/workflows/sol62-wif-hardening-lease.yml": ["issues"]
   },
   "required_push_branches": {
     ".github/workflows/bubbles-command-bus.yml": ["main"],
@@ -74,13 +76,18 @@
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
     ".github/workflows/fo-wif-semantic-canary-v2.yml",
-    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
+    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
+    ".github/workflows/sol62-wif-hardening-lease.yml"
   ],
   "attestations_write_workflow_allowlist": [
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
   ],
-  "provider_mutation_workflow_allowlist": [],
-  "provider_mutation_exact_issue_titles": {},
+  "provider_mutation_workflow_allowlist": [
+    ".github/workflows/sol62-wif-hardening-lease.yml"
+  ],
+  "provider_mutation_exact_issue_titles": {
+    ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901"
+  },
   "actions_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
   "statuses_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
   "forbidden_pattern_exceptions": {
@@ -127,6 +134,7 @@
     "project_iam_bridge_workflow": ".github/workflows/sovara-project-iam-bridge.yml",
     "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
     "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
+    "sol62_wif_hardening_workflow": ".github/workflows/sol62-wif-hardening-lease.yml",
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT",
     "g0_identity_probe_workflow": ".github/workflows/fo-wif-semantic-canary-v2.yml",
@@ -153,7 +161,8 @@
       ".github/workflows/luno-observer-provider-binding.yml",
       ".github/workflows/deploy-gemini-gateway.yml",
       ".github/workflows/fo-wif-semantic-canary-v2.yml",
-      ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
+      ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
+      ".github/workflows/sol62-wif-hardening-lease.yml"
     ],
     "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",
