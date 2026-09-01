@@ -1,5 +1,6 @@
 import unittest
 
+from sovara.creative.openrouter_adapter import OpenRouterReceiptState, OpenRouterSemanticReceipt
 from sovara.creative.openrouter_processor_mesh import (
     CognitiveCapabilityContract,
     EndpointFamily,
@@ -160,7 +161,7 @@ class OpenRouterProcessorMeshTests(unittest.TestCase):
         self.assertEqual(plan.provider["data_collection"], "deny")
         self.assertFalse(plan.provider["allow_fallbacks"])
 
-    def test_auto_router_compiles_without_freezing_vendor_model(self):
+    def test_auto_router_source_plan_can_compile_without_freezing_vendor_model(self):
         contract = CognitiveCapabilityContract(
             contract_id="CCC-AUTO",
             strategy=ProcessorStrategy.AUTO,
@@ -175,6 +176,55 @@ class OpenRouterProcessorMeshTests(unittest.TestCase):
         self.assertEqual(plan.state, MeshPlanState.READY_SOURCE_ONLY)
         self.assertEqual(plan.model_id, "openrouter/auto")
         self.assertFalse(plan.live_execution_authorized)
+
+    def test_auto_router_live_request_holds_when_pricing_is_unresolved(self):
+        contract = CognitiveCapabilityContract(
+            contract_id="CCC-AUTO-LIVE",
+            strategy=ProcessorStrategy.AUTO,
+        )
+        plan = compile_mesh_plan(
+            contract=contract,
+            models=[],
+            privacy_class=PrivacyClass.PUBLIC,
+            credential_bound=True,
+            runtime_identity="runner",
+            provider_effect_authorized=True,
+            finite_spend_authorized=True,
+        )
+        self.assertEqual(MeshPlanState.HOLD_COST_UNRESOLVED, plan.state)
+        self.assertIn("ROUTER_PRICING_UNRESOLVED_PRICE_CEILING_REQUIRED", plan.reason_codes)
+        self.assertFalse(plan.live_execution_authorized)
+
+    def test_auto_router_live_request_requires_finite_spend_before_unknown_pricing(self):
+        contract = CognitiveCapabilityContract(contract_id="CCC-AUTO-NO-SPEND", strategy=ProcessorStrategy.AUTO)
+        plan = compile_mesh_plan(
+            contract=contract,
+            models=[],
+            privacy_class=PrivacyClass.PUBLIC,
+            credential_bound=True,
+            runtime_identity="runner",
+            provider_effect_authorized=True,
+            finite_spend_authorized=False,
+        )
+        self.assertEqual(MeshPlanState.HOLD_COST_UNRESOLVED, plan.state)
+        self.assertIn("ROUTER_PRICING_UNRESOLVED_FINITE_SPEND_AUTHORITY_REQUIRED", plan.reason_codes)
+
+    def test_auto_router_live_request_can_be_bounded_by_explicit_price_ceiling(self):
+        contract = CognitiveCapabilityContract(contract_id="CCC-AUTO-BOUNDED", strategy=ProcessorStrategy.AUTO)
+        envelope = ProviderEnvelope(max_price_prompt=0.000001, max_price_completion=0.000005)
+        plan = compile_mesh_plan(
+            contract=contract,
+            models=[],
+            privacy_class=PrivacyClass.PUBLIC,
+            provider_envelope=envelope,
+            credential_bound=True,
+            runtime_identity="runner",
+            provider_effect_authorized=True,
+            finite_spend_authorized=True,
+        )
+        self.assertEqual(MeshPlanState.READY_SOURCE_ONLY, plan.state)
+        self.assertTrue(plan.live_execution_authorized)
+        self.assertEqual(plan.provider["max_price"], {"prompt": 0.000001, "completion": 0.000005})
 
     def test_fusion_is_plugin_not_new_sovereign_model(self):
         contract = CognitiveCapabilityContract(
@@ -247,14 +297,28 @@ class OpenRouterProcessorMeshTests(unittest.TestCase):
         self.assertEqual(plan.endpoint, EndpointFamily.EMBEDDINGS)
         self.assertEqual(plan.model_id, FREE_EMBED.model_id)
 
-    def test_receipt_uses_actual_model_provider_and_never_inherits_behavior(self):
-        contract = CognitiveCapabilityContract(
-            contract_id="CCC-RECEIPT",
-            strategy=ProcessorStrategy.AUTO,
+    def _semantic_receipt(self, request_sha256: str) -> OpenRouterSemanticReceipt:
+        return OpenRouterSemanticReceipt(
+            state=OpenRouterReceiptState.SEMANTIC_VERIFIED,
+            request_fingerprint=request_sha256,
+            transport_status=200,
+            generation_id="gen-1",
+            provider="ResolvedProvider",
+            resolved_model="resolved/model",
+            prompt_tokens=2,
+            completion_tokens=1,
+            cost_usd=0.0,
+            semantic_verified=True,
+            output_sha256="b" * 64,
+            failure_code=None,
         )
+
+    def test_receipt_uses_stronger_semantic_receipt_and_never_inherits_behavior(self):
+        contract = CognitiveCapabilityContract(contract_id="CCC-RECEIPT", strategy=ProcessorStrategy.AUTO)
+        request_sha = "a" * 64
         receipt = evaluate_mesh_receipt(
             contract=contract,
-            request_sha256="a" * 64,
+            request_sha256=request_sha,
             modality="text",
             response={
                 "model": "resolved/model",
@@ -262,12 +326,35 @@ class OpenRouterProcessorMeshTests(unittest.TestCase):
                 "usage": {"prompt_tokens": 2, "completion_tokens": 1, "cost": 0.0},
             },
             evidence_refs=("provider-run-1",),
-            semantic_verified=True,
+            semantic_receipt=self._semantic_receipt(request_sha),
         )
         self.assertEqual(receipt.proof_state, MeshProofState.SEMANTIC_VERIFIED)
         self.assertEqual(receipt.resolved_model, "resolved/model")
         self.assertEqual(receipt.provider, "ResolvedProvider")
+        self.assertTrue(receipt.semantic_verified)
         self.assertFalse(receipt.behavioral_proof_inherited)
+
+    def test_semantic_success_cannot_be_self_asserted(self):
+        contract = CognitiveCapabilityContract(contract_id="CCC-SELF-ASSERT", strategy=ProcessorStrategy.AUTO)
+        with self.assertRaisesRegex(ValueError, "cannot be self-asserted"):
+            evaluate_mesh_receipt(
+                contract=contract,
+                request_sha256="a" * 64,
+                modality="text",
+                response={"model": "resolved/model", "provider": "ResolvedProvider", "usage": {"cost": 0.0}},
+                semantic_verified=True,
+            )
+
+    def test_semantic_receipt_identity_mismatch_is_rejected(self):
+        contract = CognitiveCapabilityContract(contract_id="CCC-MISMATCH", strategy=ProcessorStrategy.AUTO)
+        with self.assertRaisesRegex(ValueError, "request fingerprint mismatch"):
+            evaluate_mesh_receipt(
+                contract=contract,
+                request_sha256="a" * 64,
+                modality="text",
+                response={"model": "resolved/model", "provider": "ResolvedProvider", "usage": {"cost": 0.0}},
+                semantic_receipt=self._semantic_receipt("c" * 64),
+            )
 
 
 if __name__ == "__main__":
