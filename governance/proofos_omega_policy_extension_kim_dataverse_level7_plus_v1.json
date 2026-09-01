@@ -1,0 +1,50 @@
+{
+  "schema": "PROOFOS_OMEGA_POLICY_EXTENSION_V1",
+  "extension_id": "kim-dataverse-level7-plus-v1",
+  "scope": [
+    "benchmarking/cfbe_omega/kim_dataverse_level7_plus_v1.py",
+    "benchmarking/cfbe_omega/KIM_DATAVERSE_LEVEL7_PLUS_ROADMAP_V1_20260901.md",
+    "tests/test_kim_dataverse_level7_plus_v1.py"
+  ],
+  "authority": {
+    "max_authority": "A1_INTERNAL_REVERSIBLE",
+    "external_effect_authorized": false,
+    "provider_effect_authorized": false,
+    "iam_mutation_authorized": false,
+    "financial_authority": false,
+    "publication_authority": false,
+    "destructive_authority": false,
+    "owner_intent_mutation_authorized": false
+  },
+  "required_courts": [
+    {
+      "court_id": "kim-dataverse-level7-plus-v1",
+      "command": "python -m unittest tests.test_kim_dataverse_level7_plus_v1 -v",
+      "blocking": true
+    }
+  ],
+  "invariants": [
+    "owner interruption is prohibited for reversible self-resolvable internal maintenance",
+    "irreducible owner boundaries remain owner-gated",
+    "blocked lanes do not freeze independent lanes",
+    "provider verified and owner-value proven remain distinct proof states",
+    "Level 7 is empirical and cannot be self-declared by source completion",
+    "no duplicate scheduler memory provider executor or authority plane is introduced"
+  ],
+  "promotion": {
+    "source_merge_may_prove": [
+      "design",
+      "implementation",
+      "deterministic_tests",
+      "adversarial_contract"
+    ],
+    "source_merge_may_not_prove": [
+      "persistent_no_chat_continuity",
+      "provider_runtime",
+      "provider_native_readback",
+      "observed_owner_value",
+      "sustained_autonomy",
+      "level7_operational_maturity"
+    ]
+  }
+}
