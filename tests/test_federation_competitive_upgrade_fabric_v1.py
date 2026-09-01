@@ -7,8 +7,11 @@ from benchmarking.cfbe_omega.federation_competitive_upgrade_fabric_v1 import (
     ReleaseStage,
     RetryPolicy,
     benchmark_summary,
+    compile_control_bindings,
     compile_competitive_profile,
     error_budget_assessment,
+    evaluate_gene_control,
+    executable_binding_summary,
     flake_classification,
     load_genome,
     operational_readiness_gate,
@@ -52,6 +55,43 @@ class CompetitiveUpgradeFabricTests(unittest.TestCase):
         gated = [g for g in genes if g.implementation_mode == ImplementationMode.PROVIDER_GATED_CONTRACT]
         self.assertGreaterEqual(len(gated), 1)
         self.assertTrue(all(g.wave == "W3" for g in gated))
+
+    def test_all_100_genes_have_executable_fail_closed_bindings(self) -> None:
+        bindings = compile_control_bindings()
+        self.assertEqual(len(bindings), 100)
+        self.assertEqual(len({item.gene_id for item in bindings}), 100)
+        self.assertTrue(all(item.handler_name for item in bindings))
+        self.assertEqual({item.handler_name for item in bindings}, {"require_reuse_proof", "require_composition_proof", "require_provider_native_proof"})
+        summary = executable_binding_summary()
+        self.assertEqual(summary["executable_binding_count"], 100)
+        self.assertTrue(summary["all_fail_closed_without_proof"])
+        self.assertFalse(summary["stable_promotion_allowed"])
+        self.assertFalse(summary["provider_effect_authorized"])
+
+    def test_catalog_mode_cannot_self_certify_implementation(self) -> None:
+        decision = evaluate_gene_control("FHU-001")
+        self.assertEqual(decision.state.value, "HOLD_MISSING_PROOF")
+        self.assertEqual(set(decision.missing_evidence), {"source_binding", "test_proof", "owner_binding"})
+        self.assertFalse(decision.runtime_proven)
+
+    def test_composed_control_requires_proof_references_not_booleans(self) -> None:
+        booleans = evaluate_gene_control("FHU-001", {"source_binding": True, "test_proof": True, "owner_binding": True})
+        self.assertEqual(booleans.state.value, "HOLD_MISSING_PROOF")
+        ready = evaluate_gene_control("FHU-001", {"source_binding": "source:module", "test_proof": "test:case", "owner_binding": "owner:MissionIR"})
+        self.assertEqual(ready.state.value, "READY_FOR_INDEPENDENT_READBACK")
+        self.assertFalse(ready.runtime_proven)
+        self.assertFalse(ready.stable_promotion_allowed)
+
+    def test_provider_gate_never_authorizes_effect_or_runtime(self) -> None:
+        decision = evaluate_gene_control("FHU-042", {"provider_authority": "github:authority", "provider_readback": "github:attestation", "test_proof": "test:provider-gate"})
+        self.assertEqual(decision.state.value, "READY_FOR_PROVIDER_REVIEW")
+        self.assertFalse(decision.runtime_proven)
+        self.assertFalse(decision.provider_effect_authorized)
+        self.assertFalse(decision.stable_promotion_allowed)
+
+    def test_unknown_gene_is_rejected(self) -> None:
+        with self.assertRaisesRegex(ValueError, "COMPETITIVE_GENE_UNKNOWN"):
+            evaluate_gene_control("FHU-999")
 
     def test_benchmark_summary_never_self_promotes(self) -> None:
         summary = benchmark_summary()

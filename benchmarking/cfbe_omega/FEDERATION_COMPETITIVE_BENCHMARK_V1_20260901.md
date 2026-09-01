@@ -71,3 +71,16 @@ Source admission of this package proves only that:
 - benchmark scores are heuristic metadata, not superiority claims.
 
 It does not prove top-market parity, provider deployment, always-on runtime, owner-value improvement, or stable promotion.
+
+## Executable-binding audit repair
+The post-merge audit found that v1 implementation receipts repeated each catalog row's
+declared implementation mode without requiring an executable binding. V2 closes that
+claim-to-fruit gap: every one of the 100 genes now compiles to a named fail-closed
+control handler with gene-specific proof requirements. Empty, boolean-only, pending,
+unknown, or unverified evidence cannot satisfy a binding. Provider-gated genes remain
+held even when proof references are supplied; they can advance only to independent
+provider review, never directly to runtime, effect, value, or stable promotion.
+
+Accordingly, `source_control_count=100` means 100 executable admission controls exist.
+It does not mean 100 target capabilities are deployed or runtime-proven. Runtime,
+provider, owner-value and promotion states remain separately measured and default false.
