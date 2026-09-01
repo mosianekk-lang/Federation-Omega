@@ -10,13 +10,28 @@ EXTENSION = ROOT / "governance/proofos_omega_policy_extension_kim_dataverse_leve
 
 
 class KimDataverseFullProofOSExtensionTests(unittest.TestCase):
-    def test_extension_is_internal_only_and_caps_source_at_level6_candidate(self) -> None:
-        data = json.loads(EXTENSION.read_text(encoding="utf-8"))
-        self.assertEqual("A1_INTERNAL_REVERSIBLE", data["authority"]["max_authority"])
-        self.assertTrue(all(value is False for key, value in data["authority"].items() if key != "max_authority"))
-        self.assertEqual("LEVEL6_SOURCE_CANDIDATE", data["source_promotion_ceiling"])
-        self.assertIn("PERSISTENT_NO_CHAT_CONTINUITY", data["explicit_empirical_holds"])
-        self.assertIn("PROSPECTIVE_OWNER_VALUE", data["explicit_empirical_holds"])
+    @classmethod
+    def setUpClass(cls) -> None:
+        cls.data = json.loads(EXTENSION.read_text(encoding="utf-8"))
+
+    def test_extension_uses_canonical_additive_schema(self) -> None:
+        self.assertEqual("FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1", self.data["schema"])
+        self.assertEqual("1.0.0", self.data["version"])
+        self.assertNotIn("authority", self.data)
+        self.assertNotIn("selector", self.data)
+
+    def test_level7_programme_is_one_scoped_subsystem_and_one_blocking_court(self) -> None:
+        self.assertEqual(1, len(self.data["subsystem_rules"]))
+        self.assertEqual("KIM_DATAVERSE_LEVEL7_PLUS", self.data["subsystem_rules"][0]["subsystem"])
+        self.assertEqual(1, len(self.data["tests"]))
+        court = self.data["tests"][0]
+        self.assertEqual("kim_dataverse_level7_plus_full_v1", court["id"])
+        self.assertEqual("test_kim_dataverse_*.py", court["target"])
+        self.assertEqual("SUBSYSTEM", court["block_scope"])
+
+    def test_level7_programme_is_core_risk_without_authority_override(self) -> None:
+        self.assertEqual("R4_CORE", self.data["risk_rules"][0]["risk"])
+        self.assertIn("KIM_DATAVERSE_LEVEL7_PLUS_INSTITUTIONAL_AUTONOMY_CONSTITUTIONAL_CONTROL", self.data["risk_rules"][0]["reason"])
 
 
 if __name__ == "__main__":
