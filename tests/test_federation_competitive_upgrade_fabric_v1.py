@@ -5,6 +5,7 @@ import unittest
 from benchmarking.cfbe_omega.federation_competitive_upgrade_fabric_v1 import (
     ImplementationMode,
     ReleaseStage,
+    ResolvedEvidenceRef,
     RetryPolicy,
     benchmark_summary,
     compile_control_bindings,
@@ -42,6 +43,12 @@ def mission(**overrides) -> MissionIR:
 
 
 class CompetitiveUpgradeFabricTests(unittest.TestCase):
+    @staticmethod
+    def resolved(name: str) -> ResolvedEvidenceRef:
+        digest = "sha256:" + ("a" if name != "test" else "b") * 64
+        receipt = "sha256:" + ("c" if name != "owner" else "d") * 64
+        return ResolvedEvidenceRef(name, f"subject:{name}", "verifier:test", digest, receipt, True)
+
     def test_genome_has_exactly_100_unique_complete_genes(self) -> None:
         genes = load_genome()
         self.assertEqual(len(genes), 100)
@@ -74,16 +81,18 @@ class CompetitiveUpgradeFabricTests(unittest.TestCase):
         self.assertEqual(set(decision.missing_evidence), {"source_binding", "test_proof", "owner_binding"})
         self.assertFalse(decision.runtime_proven)
 
-    def test_composed_control_requires_proof_references_not_booleans(self) -> None:
+    def test_composed_control_requires_resolved_evidence_not_strings_or_booleans(self) -> None:
         booleans = evaluate_gene_control("FHU-001", {"source_binding": True, "test_proof": True, "owner_binding": True})
         self.assertEqual(booleans.state.value, "HOLD_MISSING_PROOF")
-        ready = evaluate_gene_control("FHU-001", {"source_binding": "source:module", "test_proof": "test:case", "owner_binding": "owner:MissionIR"})
+        strings = evaluate_gene_control("FHU-001", {"source_binding": "source:module", "test_proof": "test:case", "owner_binding": "owner:MissionIR"})
+        self.assertEqual(strings.state.value, "HOLD_MISSING_PROOF")
+        ready = evaluate_gene_control("FHU-001", {"source_binding": self.resolved("source"), "test_proof": self.resolved("test"), "owner_binding": self.resolved("owner")})
         self.assertEqual(ready.state.value, "READY_FOR_INDEPENDENT_READBACK")
         self.assertFalse(ready.runtime_proven)
         self.assertFalse(ready.stable_promotion_allowed)
 
     def test_provider_gate_never_authorizes_effect_or_runtime(self) -> None:
-        decision = evaluate_gene_control("FHU-042", {"provider_authority": "github:authority", "provider_readback": "github:attestation", "test_proof": "test:provider-gate"})
+        decision = evaluate_gene_control("FHU-042", {"provider_authority": self.resolved("authority"), "provider_readback": self.resolved("readback"), "test_proof": self.resolved("test")})
         self.assertEqual(decision.state.value, "READY_FOR_PROVIDER_REVIEW")
         self.assertFalse(decision.runtime_proven)
         self.assertFalse(decision.provider_effect_authorized)
