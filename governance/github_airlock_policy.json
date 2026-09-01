@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.3",
+  "version": "2.9.6",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -77,6 +77,8 @@
   "attestations_write_workflow_allowlist": [
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
   ],
+  "provider_mutation_workflow_allowlist": [],
+  "provider_mutation_exact_issue_titles": {},
   "actions_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
   "statuses_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
   "forbidden_pattern_exceptions": {

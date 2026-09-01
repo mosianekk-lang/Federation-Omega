@@ -119,6 +119,20 @@ def has_concurrency(text: str) -> bool:
     return bool(re.search(r"(?m)^concurrency\s*:", text))
 
 
+def has_provider_mutation(text: str) -> bool:
+    """Detect explicit cloud-control-plane mutation capability in a workflow."""
+    normalized = re.sub(r"\s+", " ", text.lower())
+    markers = (
+        "workload-identity-pools providers update-oidc",
+        "run services add-iam-policy-binding",
+        "run services remove-iam-policy-binding",
+        "artifacts repositories add-iam-policy-binding",
+        "artifacts repositories remove-iam-policy-binding",
+        "bootstrap_github_wif.sh --apply",
+    )
+    return any(marker in normalized for marker in markers)
+
+
 def action_reference_findings(path: str, text: str) -> list[Finding]:
     findings: list[Finding] = []
     for line in text.splitlines():
@@ -143,6 +157,7 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     findings: list[Finding] = []
     active = set(policy["active_workflow_allowlist"])
     oidc_allowed = set(policy.get("oidc_workflow_allowlist", []))
+    provider_mutation_allowed = set(policy.get("provider_mutation_workflow_allowlist", []))
     actions_write_allowed = set(policy.get("actions_write_workflow_allowlist", []))
     statuses_write_allowed = set(policy.get("statuses_write_workflow_allowlist", []))
 
@@ -170,6 +185,39 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
             "CRITICAL",
             "workflow can mint OIDC tokens but is not an approved deployment gateway",
         ))
+
+    provider_mutation = has_provider_mutation(text)
+    if provider_mutation and path not in provider_mutation_allowed:
+        findings.append(Finding(
+            path,
+            "UNAUTHORISED_PROVIDER_MUTATION",
+            "CRITICAL",
+            "workflow contains cloud control-plane mutation but is not an explicitly leased provider-mutation gateway",
+        ))
+    if path in provider_mutation_allowed:
+        if not provider_mutation:
+            findings.append(Finding(
+                path,
+                "PROVIDER_MUTATION_GATEWAY_MISSING_EFFECT",
+                "HIGH",
+                "leased provider-mutation gateway contains no recognized provider mutation",
+            ))
+        expected_title = policy.get("provider_mutation_exact_issue_titles", {}).get(path)
+        owner_guard = "github.event.issue.author_association == 'OWNER'"
+        if not expected_title or expected_title not in text or owner_guard not in text:
+            findings.append(Finding(
+                path,
+                "PROVIDER_MUTATION_TRIGGER_DRIFT",
+                "CRITICAL",
+                "provider mutation must be bound to the exact leased issue title and OWNER association",
+            ))
+        if not has_oidc_write(text):
+            findings.append(Finding(
+                path,
+                "PROVIDER_MUTATION_MISSING_OIDC",
+                "CRITICAL",
+                "provider mutation gateway must use short-lived OIDC identity",
+            ))
 
     if has_actions_write(text) and path not in actions_write_allowed:
         findings.append(Finding(
