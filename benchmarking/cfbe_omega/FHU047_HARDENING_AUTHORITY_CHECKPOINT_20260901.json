@@ -1,0 +1,75 @@
+{
+  "schema": "CFBE_FHU047_HARDENING_AUTHORITY_CHECKPOINT_V1",
+  "date_sast": "2026-09-01",
+  "state": "HARDENING_AUTHORITY_BLOCKED_NO_CHANGE",
+  "authorized_scope": {
+    "project_id": "sov-hybrid-suite",
+    "project_number": "257649435135",
+    "repository": "mosianekk-lang/Federation-Omega",
+    "ref": "refs/heads/main",
+    "requested_controls": [
+      "provider_attribute_condition_ref_scope",
+      "provider_attribute_mapping",
+      "cloud_run_developer_role",
+      "cloud_run_invoker_role",
+      "artifact_registry_writer_role"
+    ]
+  },
+  "pre_change_readback": {
+    "run_id": 33451300917,
+    "artifact_id": 9779870719,
+    "keyless_wif_path_verified": true,
+    "missing_controls_exactly_matched_authorized_scope": true
+  },
+  "apply_attempt": {
+    "run_id": 33451897437,
+    "artifact_id": 9780079740,
+    "authentication": "CANONICAL_KEYLESS_WIF_SUCCEEDED",
+    "preflight": "PASSED_EXACT_FIVE_CONTROL_DELTA",
+    "first_blocker": "iam.workloadIdentityPoolProviders.update",
+    "provider_mutation_performed": false,
+    "iam_mutation_performed": false,
+    "rollback_readback": "UNCHANGED_PRE_CHANGE_STATE"
+  },
+  "authority_discovery": {
+    "direct_admin_census": {
+      "run_id": 33452491213,
+      "artifact_id": 9780261529,
+      "owner_candidate_count": 7,
+      "usable_direct_route_count": 0
+    },
+    "delegated_token_creator_census": {
+      "run_id": 33452823228,
+      "artifact_id": 9780376924,
+      "owner_candidate_count": 7,
+      "usable_delegated_route_count": 0
+    },
+    "existing_google_credential_alias_probe": {
+      "run_id": 33453036841,
+      "artifact_id": 9780434060,
+      "configured_alias_count": 0,
+      "selected_credential_alias": null,
+      "state": "NO_EXISTING_GOOGLE_AUTH_ROUTE"
+    }
+  },
+  "remaining_hardening_gaps": [
+    "provider_attribute_condition_ref_scope",
+    "provider_attribute_mapping",
+    "cloud_run_developer_role",
+    "cloud_run_invoker_role",
+    "artifact_registry_writer_role"
+  ],
+  "retirement": {
+    "one_use_provider_mutation_lease_retired": true,
+    "diagnostic_authority_graph_workflow_retired": true,
+    "generic_airlock_provider_mutation_default_deny_preserved": true
+  },
+  "truth_boundary": {
+    "fhu047_workload_identity_provider_gate_remains_provider_verified_closed": true,
+    "this_checkpoint_does_not_claim_cloud_run_or_gemini_deployment_readiness": true,
+    "this_checkpoint_does_not_claim_the_requested_hardening_controls_were_applied": true,
+    "no_new_admin_authority_was_granted": true,
+    "no_long_lived_google_credential_was_available_or_used": true,
+    "next_provider_mutation_requires_a_separate_existing_or_explicitly_granted_higher_authority_route": true
+  }
+}
