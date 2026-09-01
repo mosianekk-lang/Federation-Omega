@@ -516,6 +516,12 @@ class PerformanceObservation:
     sequence: int
     source: str = "OBSERVED_PERFORMANCE"
     synthetic: bool = False
+    mission_id: str = ""
+    cohort_id: str = ""
+    channel: str = ""
+    attribution_ref: str = ""
+    observed_at: str = ""
+    fresh: bool = False
 
 
 @dataclass(frozen=True, slots=True)
@@ -523,32 +529,57 @@ class DiscoveryRecommendation:
     tag: str
     score: float
     observation_count: int
+    distinct_asset_count: int = 0
+    mission_id: str = ""
+    cohort_id: str = ""
+    channel: str = ""
 
 
 @dataclass(frozen=True, slots=True)
 class DiscoveryReceipt:
     schema: str
     eligible_observation_count: int
+    qualified_observation_count: int
     recommendation_count: int
     recommendations: tuple[DiscoveryRecommendation, ...]
     learning_ready: bool
+    context_bound: bool
+    descriptive_only: bool
     state_sha256: str
     authority_inherited: bool = False
     external_effect_performed: bool = False
 
 
 class CreativeDiscoveryGraph:
-    """Bounded performance-learning graph for content tags.
+    """Bounded, cohort-aware performance-learning graph for content tags.
 
-    Synthetic observations are retained for tests but excluded from promoted
-    recommendations. The graph never publishes, routes spend, or mutates creative
-    state by itself; it emits evidence that SC-PRODUCER/CFBE may challenge later.
+    Unbound or incompletely attributed observations are retained for descriptive
+    analysis but cannot set ``learning_ready``. Production-influencing learning
+    requires an exact mission/cohort/channel context, fresh provider attribution,
+    repeated signal and distinct assets. The graph itself never publishes, routes
+    spend or mutates production policy.
     """
 
-    def __init__(self, *, min_observations: int = 2) -> None:
+    def __init__(
+        self,
+        *,
+        min_observations: int = 3,
+        min_distinct_assets: int = 2,
+        mission_id: str = "",
+        cohort_id: str = "",
+        channel: str = "",
+    ) -> None:
         if min_observations < 1:
             raise ValueError("min_observations must be positive")
+        if min_distinct_assets < 1:
+            raise ValueError("min_distinct_assets must be positive")
+        context = tuple(str(item).strip() for item in (mission_id, cohort_id, channel))
+        if any(context) and not all(context):
+            raise ValueError("mission_id, cohort_id and channel must be bound together")
         self.min_observations = int(min_observations)
+        self.min_distinct_assets = int(min_distinct_assets)
+        self.mission_id, self.cohort_id, self.channel = context
+        self.context_bound = bool(all(context))
         self._observations: dict[str, PerformanceObservation] = {}
 
     def observe(self, observation: PerformanceObservation) -> None:
@@ -562,6 +593,18 @@ class CreativeDiscoveryGraph:
         tags = _clean_tuple(item.lower() for item in observation.tags)
         if not tags:
             raise ValueError("at least one tag is required")
+
+        mission = str(observation.mission_id).strip()
+        cohort = str(observation.cohort_id).strip()
+        channel = str(observation.channel).strip().lower()
+        if self.context_bound:
+            if mission != self.mission_id:
+                raise ValueError("observation mission context mismatch")
+            if cohort != self.cohort_id:
+                raise ValueError("observation cohort context mismatch")
+            if channel != self.channel.lower():
+                raise ValueError("observation channel context mismatch")
+
         self._observations[oid] = PerformanceObservation(
             observation_id=oid,
             asset_id=_clean(observation.asset_id, field="asset_id"),
@@ -570,52 +613,91 @@ class CreativeDiscoveryGraph:
             sequence=int(observation.sequence),
             source=_clean(observation.source, field="source"),
             synthetic=bool(observation.synthetic),
+            mission_id=mission,
+            cohort_id=cohort,
+            channel=channel,
+            attribution_ref=str(observation.attribution_ref).strip(),
+            observed_at=str(observation.observed_at).strip(),
+            fresh=bool(observation.fresh),
         )
 
     def observations(self) -> tuple[PerformanceObservation, ...]:
         return tuple(sorted(self._observations.values(), key=lambda item: (item.sequence, item.observation_id)))
 
+    def _qualifies_for_learning(self, item: PerformanceObservation) -> bool:
+        return bool(
+            self.context_bound
+            and not item.synthetic
+            and item.mission_id == self.mission_id
+            and item.cohort_id == self.cohort_id
+            and item.channel == self.channel.lower()
+            and item.attribution_ref
+            and item.observed_at
+            and item.fresh
+        )
+
     def receipt(self, *, limit: int = 10) -> DiscoveryReceipt:
         if limit < 1:
             raise ValueError("limit must be positive")
         eligible = tuple(item for item in self.observations() if not item.synthetic)
-        scores: dict[str, list[float]] = {}
-        for item in eligible:
+        qualified = tuple(item for item in eligible if self._qualifies_for_learning(item))
+
+        scores: dict[str, list[PerformanceObservation]] = {}
+        for item in qualified:
             for tag in item.tags:
-                scores.setdefault(tag, []).append(item.reward)
+                scores.setdefault(tag, []).append(item)
+
+        rows: list[DiscoveryRecommendation] = []
+        for tag, observations in scores.items():
+            assets = {item.asset_id for item in observations}
+            if len(observations) < self.min_observations or len(assets) < self.min_distinct_assets:
+                continue
+            rows.append(
+                DiscoveryRecommendation(
+                    tag=tag,
+                    score=round(sum(item.reward for item in observations) / len(observations), 12),
+                    observation_count=len(observations),
+                    distinct_asset_count=len(assets),
+                    mission_id=self.mission_id,
+                    cohort_id=self.cohort_id,
+                    channel=self.channel.lower(),
+                )
+            )
         recommendations = tuple(
-            DiscoveryRecommendation(
-                tag=tag,
-                score=round(sum(values) / len(values), 12),
-                observation_count=len(values),
-            )
-            for tag, values in sorted(
-                scores.items(),
-                key=lambda item: (-sum(item[1]) / len(item[1]), item[0]),
-            )
-            if len(values) >= self.min_observations
-        )[:limit]
+            sorted(rows, key=lambda item: (-item.score, item.tag))[:limit]
+        )
+        learning_ready = bool(recommendations)
         state = {
-            "schema": "SOVARA_SC_DISCOVERY_GRAPH_RECEIPT_V1",
+            "schema": "SOVARA_SC_DISCOVERY_GRAPH_RECEIPT_V2",
             "eligible_observation_count": len(eligible),
+            "qualified_observation_count": len(qualified),
             "recommendations": [
                 {
                     "tag": item.tag,
                     "score": item.score,
                     "observation_count": item.observation_count,
+                    "distinct_asset_count": item.distinct_asset_count,
+                    "mission_id": item.mission_id,
+                    "cohort_id": item.cohort_id,
+                    "channel": item.channel,
                 }
                 for item in recommendations
             ],
-            "learning_ready": bool(recommendations),
+            "learning_ready": learning_ready,
+            "context_bound": self.context_bound,
+            "descriptive_only": not self.context_bound,
             "authority_inherited": False,
             "external_effect_performed": False,
         }
         return DiscoveryReceipt(
             schema=state["schema"],
             eligible_observation_count=len(eligible),
+            qualified_observation_count=len(qualified),
             recommendation_count=len(recommendations),
             recommendations=recommendations,
-            learning_ready=bool(recommendations),
+            learning_ready=learning_ready,
+            context_bound=self.context_bound,
+            descriptive_only=not self.context_bound,
             state_sha256=_digest(state),
             authority_inherited=False,
             external_effect_performed=False,

@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from contextlib import contextmanager
 from dataclasses import dataclass
 from hashlib import sha256
 import json
@@ -51,6 +52,47 @@ def _sha_json(value: object) -> str:
 
 def _canonical_json_bytes(value: object) -> bytes:
     return (_stable_json(value) + "\n").encode("utf-8")
+
+
+@contextmanager
+def _exclusive_process_lock(path: Path):
+    """Serialize refs mutations across processes without creating a new store.
+
+    The lock file contains no authority or state; refs.json remains the only mutable
+    authoritative pointer. POSIX uses flock and Windows uses the stdlib msvcrt byte
+    lock. The file may persist between runs; the OS lock itself is released on close.
+    """
+
+    path.parent.mkdir(parents=True, exist_ok=True)
+    handle = open(path, "a+b")
+    try:
+        if os.name == "nt":
+            import msvcrt
+
+            handle.seek(0, os.SEEK_END)
+            if handle.tell() == 0:
+                handle.write(b"\0")
+                handle.flush()
+            handle.seek(0)
+            msvcrt.locking(handle.fileno(), msvcrt.LK_LOCK, 1)
+        else:
+            import fcntl
+
+            fcntl.flock(handle.fileno(), fcntl.LOCK_EX)
+        yield
+    finally:
+        try:
+            if os.name == "nt":
+                import msvcrt
+
+                handle.seek(0)
+                msvcrt.locking(handle.fileno(), msvcrt.LK_UNLCK, 1)
+            else:
+                import fcntl
+
+                fcntl.flock(handle.fileno(), fcntl.LOCK_UN)
+        finally:
+            handle.close()
 
 
 def _fsync_dir(path: Path) -> None:
@@ -147,6 +189,7 @@ class FileVersionTreeStore:
         self.blob_dir = self.asset_dir / "blobs"
         self.node_dir = self.asset_dir / "nodes"
         self.refs_path = self.asset_dir / "refs.json"
+        self.lock_path = self.asset_dir / "refs.lock"
 
     def _guard_layout(self) -> None:
         for path in (
@@ -164,6 +207,10 @@ class FileVersionTreeStore:
             self.refs_path.is_symlink() or not self.refs_path.is_file()
         ):
             raise StoreCorruptionError("refs.json must be a regular file")
+        if self.lock_path.exists() and (
+            self.lock_path.is_symlink() or not self.lock_path.is_file()
+        ):
+            raise StoreCorruptionError("refs.lock must be a regular file")
 
     def _ensure_layout(self) -> None:
         self._guard_layout()
@@ -288,25 +335,27 @@ class FileVersionTreeStore:
         metadata: Mapping[str, Any] | None = None,
     ) -> tuple[VersionTree, LocalStoreReceipt]:
         self._ensure_layout()
-        if self.refs_path.exists():
-            raise StoreAlreadyInitializedError(
-                "version tree store already initialized"
+        with _exclusive_process_lock(self.lock_path):
+            self._guard_layout()
+            if self.refs_path.exists():
+                raise StoreAlreadyInitializedError(
+                    "version tree store already initialized"
+                )
+            tree = VersionTree(self.asset_id)
+            tree.create_root(content=content, branch=branch, metadata=metadata)
+            self._persist_immutable_objects(tree)
+            refs = self._refs_document(
+                tree=tree, generation=1, previous_refs_sha256=None
             )
-        tree = VersionTree(self.asset_id)
-        tree.create_root(content=content, branch=branch, metadata=metadata)
-        self._persist_immutable_objects(tree)
-        refs = self._refs_document(
-            tree=tree, generation=1, previous_refs_sha256=None
-        )
-        self._replace_refs_guarded(
-            refs, expected_current_refs_sha256=None
-        )
-        loaded, receipt = self.load()
-        if loaded.receipt().receipt_sha256 != tree.receipt().receipt_sha256:
-            raise StoreCorruptionError(
-                "restart readback does not match initialized tree"
+            self._replace_refs_guarded(
+                refs, expected_current_refs_sha256=None
             )
-        return loaded, receipt
+            loaded, receipt = self.load()
+            if loaded.receipt().receipt_sha256 != tree.receipt().receipt_sha256:
+                raise StoreCorruptionError(
+                    "restart readback does not match initialized tree"
+                )
+            return loaded, receipt
 
     def _node_payload(self, version_id: str) -> dict[str, Any]:
         if not re.fullmatch(r"[0-9a-f]{64}", version_id):
@@ -445,41 +494,43 @@ class FileVersionTreeStore:
     def _mutate(
         self, operation: str, **kwargs: Any
     ) -> tuple[VersionTree, LocalStoreReceipt]:
-        tree, prior_receipt = self.load()
-        _, _, expected_refs_sha = self._read_refs()
-        if expected_refs_sha != prior_receipt.refs_sha256:
-            raise StoreConcurrentMutationError(
-                "refs changed between readback steps"
-            )
+        self._ensure_layout()
+        with _exclusive_process_lock(self.lock_path):
+            tree, prior_receipt = self.load()
+            _, _, expected_refs_sha = self._read_refs()
+            if expected_refs_sha != prior_receipt.refs_sha256:
+                raise StoreConcurrentMutationError(
+                    "refs changed between readback steps"
+                )
 
-        if operation == "commit":
-            tree.commit(**kwargs)
-        elif operation == "create_branch":
-            tree.create_branch(**kwargs)
-        elif operation == "merge":
-            tree.merge(**kwargs)
-        elif operation == "rollback":
-            tree.rollback(**kwargs)
-        else:
-            raise VersionTreeStoreError(
-                f"unsupported mutation: {operation}"
-            )
+            if operation == "commit":
+                tree.commit(**kwargs)
+            elif operation == "create_branch":
+                tree.create_branch(**kwargs)
+            elif operation == "merge":
+                tree.merge(**kwargs)
+            elif operation == "rollback":
+                tree.rollback(**kwargs)
+            else:
+                raise VersionTreeStoreError(
+                    f"unsupported mutation: {operation}"
+                )
 
-        self._persist_immutable_objects(tree)
-        refs = self._refs_document(
-            tree=tree,
-            generation=prior_receipt.generation + 1,
-            previous_refs_sha256=expected_refs_sha,
-        )
-        self._replace_refs_guarded(
-            refs, expected_current_refs_sha256=expected_refs_sha
-        )
-        loaded, receipt = self.load()
-        if loaded.receipt().receipt_sha256 != tree.receipt().receipt_sha256:
-            raise StoreCorruptionError(
-                "post-mutation restart readback mismatch"
+            self._persist_immutable_objects(tree)
+            refs = self._refs_document(
+                tree=tree,
+                generation=prior_receipt.generation + 1,
+                previous_refs_sha256=expected_refs_sha,
             )
-        return loaded, receipt
+            self._replace_refs_guarded(
+                refs, expected_current_refs_sha256=expected_refs_sha
+            )
+            loaded, receipt = self.load()
+            if loaded.receipt().receipt_sha256 != tree.receipt().receipt_sha256:
+                raise StoreCorruptionError(
+                    "post-mutation restart readback mismatch"
+                )
+            return loaded, receipt
 
     def commit(
         self,

@@ -225,28 +225,64 @@ class SovaraCreativeSupplyChainTests(unittest.TestCase):
             compile_async_media_work_packet(plan)
 
     def test_discovery_graph_excludes_synthetic_and_requires_repeated_signal(self):
-        graph = CreativeDiscoveryGraph(min_observations=2)
-        graph.observe(
-            PerformanceObservation("perf-1", "asset-1", ("luxury", "silk"), 0.8, 1)
+        graph = CreativeDiscoveryGraph(
+            min_observations=2,
+            min_distinct_assets=2,
+            mission_id="mission-supply",
+            cohort_id="cohort-1",
+            channel="instagram",
+        )
+        common = dict(
+            mission_id="mission-supply",
+            cohort_id="cohort-1",
+            channel="instagram",
+            attribution_ref="provider:analytics",
+            observed_at="2026-09-01T10:00:00+02:00",
+            fresh=True,
         )
         graph.observe(
-            PerformanceObservation("perf-2", "asset-2", ("luxury",), 0.6, 2)
+            PerformanceObservation("perf-1", "asset-1", ("luxury", "silk"), 0.8, 1, **common)
+        )
+        graph.observe(
+            PerformanceObservation("perf-2", "asset-2", ("luxury",), 0.6, 2, **common)
         )
         graph.observe(
             PerformanceObservation(
-                "synthetic-1", "asset-x", ("neon",), 1.0, 3, synthetic=True
+                "synthetic-1", "asset-x", ("neon",), 1.0, 3, synthetic=True, **common
             )
         )
         receipt = graph.receipt()
         self.assertTrue(receipt.learning_ready)
+        self.assertTrue(receipt.context_bound)
         self.assertEqual(receipt.eligible_observation_count, 2)
+        self.assertEqual(receipt.qualified_observation_count, 2)
         self.assertEqual(tuple(item.tag for item in receipt.recommendations), ("luxury",))
         self.assertEqual(receipt.recommendations[0].score, 0.7)
+        self.assertEqual(receipt.recommendations[0].distinct_asset_count, 2)
         self.assertFalse(receipt.external_effect_performed)
 
     def test_discovery_graph_does_not_promote_one_off_signal(self):
-        graph = CreativeDiscoveryGraph(min_observations=2)
-        graph.observe(PerformanceObservation("perf-1", "asset-1", ("luxury",), 1.0, 1))
+        graph = CreativeDiscoveryGraph(
+            min_observations=2,
+            mission_id="mission-supply",
+            cohort_id="cohort-1",
+            channel="instagram",
+        )
+        graph.observe(
+            PerformanceObservation(
+                "perf-1",
+                "asset-1",
+                ("luxury",),
+                1.0,
+                1,
+                mission_id="mission-supply",
+                cohort_id="cohort-1",
+                channel="instagram",
+                attribution_ref="provider:analytics",
+                observed_at="2026-09-01T10:00:00+02:00",
+                fresh=True,
+            )
+        )
         receipt = graph.receipt()
         self.assertFalse(receipt.learning_ready)
         self.assertEqual(receipt.recommendations, ())
