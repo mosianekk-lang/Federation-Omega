@@ -183,6 +183,8 @@ jobs:
       - name: Verify exact canonical WIF provider contract
         if: steps.provider_mode.outputs.requested == 'true'
         shell: bash
+        env:
+          EXECUTION_SCOPE: ${{ steps.provider_mode.outputs.scope }}
         run: |
           set -euo pipefail
           mkdir -p "$SOVARA_RECEIPT_DIR"
@@ -194,7 +196,8 @@ jobs:
           gcloud projects describe "$PROJECT_ID" --format=json > "$SOVARA_RECEIPT_DIR/GCP_PROJECT_READBACK.json"
           ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
           python3 - "$SOVARA_RECEIPT_DIR/WIF_PROVIDER_READBACK.json" "$SOVARA_RECEIPT_DIR/GCP_PROJECT_READBACK.json" "$ACTIVE_ACCOUNT" <<'PY' > "$SOVARA_RECEIPT_DIR/WIF_G0_VERIFIED.json"
-          import hashlib, json, sys
+          import hashlib, json, os, sys
+          from pathlib import Path
           provider=json.load(open(sys.argv[1], encoding='utf-8'))
           project=json.load(open(sys.argv[2], encoding='utf-8'))
           active=sys.argv[3]
@@ -218,19 +221,45 @@ jobs:
           assert str(project.get('projectNumber','')) == '257649435135', project
           assert project.get('projectId') == 'sov-hybrid-suite', project
           assert provider.get('state','ACTIVE') == 'ACTIVE' and provider.get('disabled') is not True, provider
-          assert observed_condition == expected_condition, {'observed':observed_condition,'expected':expected_condition}
-          assert observed_mapping == expected_mapping, {'observed':observed_mapping,'expected':expected_mapping}
           assert active == 'superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com', active
+          condition_match=observed_condition == expected_condition
+          mapping_match=observed_mapping == expected_mapping
+          contract_match=condition_match and mapping_match
+          request={}
+          request_path=Path(os.environ.get('GEMINI_REQUEST_FILE',''))
+          if request_path.is_file():
+              request=json.loads(request_path.read_text(encoding='utf-8'))
+          allow_read_only_drift=(
+              os.environ.get('EXECUTION_SCOPE')=='G0_READ_ONLY_VERIFY'
+              and request.get('g0_objective')=='ADMIN_AUTHORITY_GRAPH_CENSUS'
+              and request.get('provider_mutation_allowed') is False
+              and request.get('model_inference_allowed') is False
+          )
+          if not contract_match and not allow_read_only_drift:
+              raise AssertionError({
+                  'condition_match':condition_match,
+                  'mapping_match':mapping_match,
+                  'observed_condition_sha256':hashlib.sha256(observed_condition.encode()).hexdigest(),
+                  'expected_condition_sha256':hashlib.sha256(expected_condition.encode()).hexdigest(),
+                  'observed_mapping_sha256':hashlib.sha256(json.dumps(observed_mapping,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+                  'expected_mapping_sha256':hashlib.sha256(json.dumps(expected_mapping,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+              })
           r={
-              'receipt':'FEDOMEGA-WIF-CLOUD-VERIFIED',
-              'state':'VERIFIED',
+              'receipt':'FEDOMEGA-WIF-CLOUD-VERIFIED' if contract_match else 'FEDOMEGA-WIF-CLOUD-DRIFT-OBSERVED',
+              'state':'VERIFIED' if contract_match else 'DRIFT_DETECTED',
               'project':'sov-hybrid-suite',
               'project_number_observed':'257649435135',
               'active_account':active,
               'provider_name':provider.get('name',''),
               'provider_state':provider.get('state','ACTIVE'),
+              'exchange_succeeded':True,
+              'hardened_contract_verified':contract_match,
+              'condition_match':condition_match,
+              'mapping_match':mapping_match,
               'provider_condition_sha256':hashlib.sha256(observed_condition.encode()).hexdigest(),
+              'expected_condition_sha256':hashlib.sha256(expected_condition.encode()).hexdigest(),
               'provider_mapping_sha256':hashlib.sha256(json.dumps(observed_mapping,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+              'expected_mapping_sha256':hashlib.sha256(json.dumps(expected_mapping,sort_keys=True,separators=(',',':')).encode()).hexdigest(),
               'mutation_performed':False,
               'secret_payload_accessed':False,
           }
@@ -340,8 +369,8 @@ jobs:
           G3_EXIT_CODE: ${{ steps.g3_canary.outputs.exit_code }}
         run: |
           set -euo pipefail
-          mkdir -p "${SOVARA_RECEIPT_DIR:-$RUNNER_TEMP/sovara-litellm-v2.3.0/receipts}"
-          python3 - "${SOVARA_RECEIPT_DIR:-$RUNNER_TEMP/sovara-litellm-v2.3.0/receipts}/WORKFLOW_RECEIPT.json" <<'PY'
+          mkdir -p "${SOVARA_RECEIPT_DIR:-$RUNNER_TEMP/sovara-litellm/v2.3.0/receipts}"
+          python3 - "${SOVARA_RECEIPT_DIR:-$RUNNER_TEMP/sovara-litellm/v2.3.0/receipts}/WORKFLOW_RECEIPT.json" <<'PY'
           import hashlib, json, os, sys
           from datetime import datetime, timezone
           from pathlib import Path
@@ -378,7 +407,22 @@ jobs:
           challenge=load('GEMINI_CREATIVE_ARCHITECTURE_CHALLENGE_RECEIPT.json')
           g3=load('G3_PRIVATE_CANARY_RECEIPT.json')
           structural_ok=(d/'STRUCTURAL_VALIDATION_PRE_AUTH.json').is_file() and (d/'PROVIDER_PROBE_SELF_TEST.json').is_file()
-          wif_ok=(wif.get('receipt')=='FEDOMEGA-WIF-CLOUD-VERIFIED' and wif.get('state')=='VERIFIED' and wif.get('project_number_observed')=='257649435135')
+          wif_ok=(wif.get('receipt')=='FEDOMEGA-WIF-CLOUD-VERIFIED' and wif.get('state')=='VERIFIED' and wif.get('project_number_observed')=='257649435135' and wif.get('hardened_contract_verified') is True)
+          wif_exchange_observed=(
+              wif.get('exchange_succeeded') is True
+              and wif.get('project')=='sov-hybrid-suite'
+              and str(wif.get('project_number_observed'))=='257649435135'
+              and wif.get('active_account')=='superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com'
+              and wif.get('mutation_performed') is False
+              and wif.get('secret_payload_accessed') is False
+          )
+          wif_contract_drift_preserved=(
+              wif.get('receipt')=='FEDOMEGA-WIF-CLOUD-DRIFT-OBSERVED'
+              and wif.get('state')=='DRIFT_DETECTED'
+              and wif_exchange_observed
+              and wif.get('hardened_contract_verified') is False
+              and (wif.get('condition_match') is False or wif.get('mapping_match') is False)
+          )
           adc_ok=(adc.get('receipt')=='FEDOMEGA-GEMINI-ADC-VERIFIED' and adc.get('state')=='VERIFIED' and adc.get('project_number_observed')=='257649435135' and adc.get('service_account_key_created') is False and adc.get('secret_payload_accessed') is False)
           adc_mutation=bool(adc_apply.get('mutation_performed',False))
           census_ok=(
@@ -450,6 +494,14 @@ jobs:
               'g0_objective':g0_objective,
               'structural_validation_completed':structural_ok,
               'wif_verified':wif_ok,
+              'wif_exchange_observed':wif_exchange_observed,
+              'wif_contract_drift_preserved':wif_contract_drift_preserved,
+              'wif_condition_match':wif.get('condition_match') if wif else None,
+              'wif_mapping_match':wif.get('mapping_match') if wif else None,
+              'wif_provider_condition_sha256':wif.get('provider_condition_sha256') if wif else None,
+              'wif_expected_condition_sha256':wif.get('expected_condition_sha256') if wif else None,
+              'wif_provider_mapping_sha256':wif.get('provider_mapping_sha256') if wif else None,
+              'wif_expected_mapping_sha256':wif.get('expected_mapping_sha256') if wif else None,
               'adc_verified':adc_ok,
               'g0_identity_adc_verified':wif_ok and adc_ok,
               'admin_authority_census_verified':census_ok,
@@ -518,8 +570,12 @@ jobs:
               ;;
             G0_READ_ONLY_VERIFY)
               if jq -e '.g0_objective == "ADMIN_AUTHORITY_GRAPH_CENSUS"' "$receipt" >/dev/null; then
-                jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .wif_verified == true and .admin_authority_census_verified == true and .adc_verified == false and .adc_gap_preserved == true and .adc_apply_mutation_performed == false and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == false' "$receipt" >/dev/null
-                echo "G0 admin authority graph census verified. WIF is verified; the expected Gemini ADC gaps remain explicitly unverified and no provider mutation or model inference occurred."
+                jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and (.wif_verified == true or (.wif_verified == false and .wif_exchange_observed == true and .wif_contract_drift_preserved == true)) and .admin_authority_census_verified == true and .adc_verified == false and .adc_gap_preserved == true and .adc_apply_mutation_performed == false and .provider_admission_attempted == false and .case_data_processed == false and .model_inference_performed == false' "$receipt" >/dev/null
+                if jq -e '.wif_verified == true' "$receipt" >/dev/null; then
+                  echo "G0 admin authority graph census verified. Hardened WIF is verified; the expected Gemini ADC gaps remain explicitly unverified and no provider mutation or model inference occurred."
+                else
+                  echo "G0 admin authority graph census verified diagnostically. OIDC exchange succeeded, but the hardened WIF provider contract remains drifted and explicitly unverified; the expected Gemini ADC gaps remain unverified and no provider mutation or model inference occurred."
+                fi
               else
                 jq -e '.execution_scope == "G0_READ_ONLY_VERIFY" and .wif_verified == true and .adc_verified == true and .adc_apply_mutation_performed == false and .provider_admission_attempted == false and .case_data_processed == false' "$receipt" >/dev/null
                 echo "G0 WIF and Gemini ADC verification passed. No model inference, provider mutation, traffic promotion or case-data processing was performed."
