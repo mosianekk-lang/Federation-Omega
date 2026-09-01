@@ -98,23 +98,39 @@ def run(repo_root: str | Path = ".") -> dict:
     )
     gates["trace_spine"] = trace.receipt()["span_count"] == 2
 
-    docker = (root / "Dockerfile").read_text(encoding="utf-8")
-    gates["secure_deployment_entrypoint"] = (
-        "APP_MODULE=superior_logic.secure_service:app" in docker
-        and "COPY sol_61_runtime ./sol_61_runtime" in docker
-        and "APP_MODULE=superior_logic.service:app" not in docker
-    )
-
-    workflow = (root / ".github/workflows/sol62-wif-hardening-lease.yml").read_text(encoding="utf-8")
-    gates["one_success_wif_lease"] = all(
-        needle in workflow
-        for needle in (
-            "actions: read",
-            "Consume lease only after first successful transaction",
-            "ALREADY_CONSUMED",
-            "bash ./ops/harden_sovara_provider_wif_v1.sh --apply",
+    # ProofOS's full-federation fallback deliberately executes from an extracted
+    # Python core that does not contain repository packaging surfaces such as
+    # Dockerfile or .github/workflows. Those surfaces remain independently
+    # enforced by the repository Airlock and by SourceShapeTests when the full
+    # checkout is present. A *partial* repository surface is never accepted.
+    docker_path = root / "Dockerfile"
+    workflow_path = root / ".github/workflows/sol62-wif-hardening-lease.yml"
+    docker_exists = docker_path.is_file()
+    workflow_exists = workflow_path.is_file()
+    if docker_exists and workflow_exists:
+        docker = docker_path.read_text(encoding="utf-8")
+        gates["secure_deployment_entrypoint"] = (
+            "APP_MODULE=superior_logic.secure_service:app" in docker
+            and "COPY sol_61_runtime ./sol_61_runtime" in docker
+            and "APP_MODULE=superior_logic.service:app" not in docker
         )
-    )
+
+        workflow = workflow_path.read_text(encoding="utf-8")
+        gates["one_success_wif_lease"] = all(
+            needle in workflow
+            for needle in (
+                "actions: read",
+                "Consume lease only after first successful transaction",
+                "ALREADY_CONSUMED",
+                "bash ./ops/harden_sovara_provider_wif_v1.sh --apply",
+            )
+        )
+        repository_surface_state = "VERIFIED_IN_FULL_CHECKOUT"
+    elif not docker_exists and not workflow_exists:
+        repository_surface_state = "ABSENT_FROM_EXTRACTED_CORE_AIRLOCK_OWNED"
+    else:
+        gates["repository_packaging_surface_complete"] = False
+        repository_surface_state = "PARTIAL_SURFACE_REJECTED"
 
     passed = all(gates.values())
     receipt = {
@@ -123,6 +139,8 @@ def run(repo_root: str | Path = ".") -> dict:
         "gates": gates,
         "gate_count": len(gates),
         "passed_count": sum(1 for value in gates.values() if value),
+        "repository_packaging_surface_state": repository_surface_state,
+        "repository_packaging_surface_authority": "FEDERATION_OMEGA_AIRLOCK",
         "provider_effect_performed": False,
         "provider_authority_inherited": False,
         "stable_release_promoted": False,
