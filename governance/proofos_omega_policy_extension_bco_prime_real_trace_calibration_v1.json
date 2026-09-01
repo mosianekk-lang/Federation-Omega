@@ -1,0 +1,55 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "benchmarking/cfbe_omega/BCO_PRIME_REAL_TRACE_CALIBRATION_V1.json",
+        "benchmarking/cfbe_omega/bco_prime_real_trace_calibration_v1.py",
+        "benchmarking/cfbe_omega/bco_prime_opportunity_exploitation_fabric_v1.py",
+        "tests/test_bco_prime_real_trace_calibration_v1.py",
+        "tests/test_bco_prime_opportunity_exploitation_fabric_v1.py",
+        "docs/architecture/BCO_PRIME_REAL_TRACE_CALIBRATION_V1.md",
+        "governance/proofos_omega_policy_extension_bco_prime_real_trace_calibration_v1.json"
+      ],
+      "reason": "BCO_PRIME_REAL_TRACE_TEMPORAL_HOLDOUT_AND_LIVE_WEIGHT_NONPROMOTION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "BCO_PRIME_REAL_TRACE_CALIBRATION_V1",
+      "patterns": [
+        "benchmarking/cfbe_omega/BCO_PRIME_REAL_TRACE_CALIBRATION_V1.json",
+        "benchmarking/cfbe_omega/bco_prime_real_trace_calibration_v1.py",
+        "benchmarking/cfbe_omega/bco_prime_opportunity_exploitation_fabric_v1.py",
+        "tests/test_bco_prime_real_trace_calibration_v1.py",
+        "tests/test_bco_prime_opportunity_exploitation_fabric_v1.py",
+        "docs/architecture/BCO_PRIME_REAL_TRACE_CALIBRATION_V1.md",
+        "governance/proofos_omega_policy_extension_bco_prime_real_trace_calibration_v1.json"
+      ],
+      "depends_on": ["BCO_PRIME_OPPORTUNITY_EXPLOITATION_FABRIC_V1", "CFBE"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "bco_prime_real_trace_calibration_v1",
+      "kind": "unittest_glob",
+      "target": "test_bco_prime_real_trace_calibration_v1.py",
+      "patterns": [
+        "benchmarking/cfbe_omega/BCO_PRIME_REAL_TRACE_CALIBRATION_V1.json",
+        "benchmarking/cfbe_omega/bco_prime_real_trace_calibration_v1.py",
+        "benchmarking/cfbe_omega/bco_prime_opportunity_exploitation_fabric_v1.py",
+        "tests/test_bco_prime_real_trace_calibration_v1.py",
+        "tests/test_bco_prime_opportunity_exploitation_fabric_v1.py",
+        "docs/architecture/BCO_PRIME_REAL_TRACE_CALIBRATION_V1.md",
+        "governance/proofos_omega_policy_extension_bco_prime_real_trace_calibration_v1.json"
+      ],
+      "subsystems": ["BCO_PRIME_REAL_TRACE_CALIBRATION_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
