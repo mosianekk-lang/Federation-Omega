@@ -1,14 +1,116 @@
 from __future__ import annotations
 
+import asyncio
 import json
 
 from .capability_graph import CapabilityGraph, CapabilityNode
 from .convergence import ConstitutionalConvergence
 from .digital_twin import CounterfactualController, FederationDigitalTwin, Intervention
 from .execution_fabric import HyperperformanceExecutionFabric
-from .hyperperformance import ParallelLaneScheduler
+from .hyperperformance import LanePlan, ParallelLaneExecutor, ParallelPlan, ParallelLaneScheduler
 from .mission_ir import MissionIRCompiler
 from .shadow_evolution import OpportunityScanner, OutcomeSample, ShadowEvolutionLab
+
+
+async def _prove_actual_parallelism() -> dict[str, bool]:
+    lane_a = LanePlan(
+        lane_id="lane:a",
+        transition_id="a",
+        route_ids=("route:a",),
+        priority=1.0,
+        critical_path_ms=100.0,
+        value_of_information=1.0,
+        estimated_latency_ms=100.0,
+        estimated_cost=0.0,
+        risk=0.0,
+        mutating=False,
+        reversible=True,
+        conflict_domains=("domain:a",),
+        execution_mode="NORMAL",
+    )
+    lane_b = LanePlan(
+        lane_id="lane:b",
+        transition_id="b",
+        route_ids=("route:b",),
+        priority=1.0,
+        critical_path_ms=100.0,
+        value_of_information=1.0,
+        estimated_latency_ms=100.0,
+        estimated_cost=0.0,
+        risk=0.0,
+        mutating=False,
+        reversible=True,
+        conflict_domains=("domain:b",),
+        execution_mode="NORMAL",
+    )
+    plan = ParallelPlan(
+        mission_id="parallel-proof",
+        lanes=(lane_a, lane_b),
+        deferred_transition_ids=(),
+        estimated_parallel_latency_ms=100.0,
+        estimated_serial_latency_ms=200.0,
+        theoretical_speedup=2.0,
+        algorithm="CP_VOI_BOUNDED_BEAM_V1",
+    )
+    active = 0
+    peak = 0
+    both_started = asyncio.Event()
+    lock = asyncio.Lock()
+
+    async def lane_runner(lane: LanePlan):
+        nonlocal active, peak
+        async with lock:
+            active += 1
+            peak = max(peak, active)
+            if active == 2:
+                both_started.set()
+        await asyncio.wait_for(both_started.wait(), timeout=0.5)
+        await asyncio.sleep(0)
+        async with lock:
+            active -= 1
+        return {
+            "route_id": lane.route_ids[0],
+            "semantic_verified": True,
+            "proof_valid": True,
+            "provider_effect_performed": False,
+        }
+
+    results = await asyncio.wait_for(
+        ParallelLaneExecutor.execute_plan(plan, lane_runner), timeout=1.0
+    )
+
+    race_lane = LanePlan(
+        lane_id="lane:race",
+        transition_id="race",
+        route_ids=("slow", "fast"),
+        priority=1.0,
+        critical_path_ms=100.0,
+        value_of_information=1.0,
+        estimated_latency_ms=100.0,
+        estimated_cost=0.0,
+        risk=0.0,
+        mutating=False,
+        reversible=True,
+        conflict_domains=(),
+        execution_mode="SPECULATIVE_READ_RACE",
+    )
+
+    async def route_runner(route_id: str):
+        await asyncio.sleep(0.005 if route_id == "fast" else 0.05)
+        return {
+            "route_id": route_id,
+            "semantic_verified": True,
+            "proof_valid": True,
+            "provider_effect_performed": False,
+        }
+
+    winner = await ParallelLaneExecutor.race_read_routes(
+        race_lane, ("slow", "fast"), route_runner
+    )
+    return {
+        "actual_parallel_fanout": peak == 2 and len(results) == 2,
+        "semantic_race_fanin": winner.get("route_id") == "fast",
+    }
 
 
 def run() -> dict:
@@ -96,6 +198,8 @@ def run() -> dict:
     )
     research = next(item for item in plan.lanes if item.transition_id == "research")
     gates["speculation_read_only"] = research.execution_mode == "SPECULATIVE_READ_RACE" and not research.mutating
+
+    gates.update(asyncio.run(_prove_actual_parallelism()))
 
     twin = FederationDigitalTwin()
     twin.project_mission(mission)
