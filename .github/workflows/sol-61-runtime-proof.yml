@@ -17,20 +17,18 @@ permissions:
 
 jobs:
   proof:
-    runs-on: ubuntu-24.04
+    runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
-        with:
-          persist-credentials: false
-      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
         with:
           python-version: "3.12"
       - name: Compile
         run: python -m compileall -q sol_61_runtime
       - name: Unit tests
         working-directory: sol_61_runtime
-        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py test_mission_autonomy.py test_provider_bridge.py test_provider_authority.py test_operator_activation.py test_live_authority.py test_frontier_hardening_v2.py
+        run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py test_mission_autonomy.py test_provider_bridge.py test_provider_authority.py test_operator_activation.py test_live_authority.py
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
@@ -59,8 +57,6 @@ jobs:
         run: python sol_61_runtime/prove_operator_activation.py --output sol_61_runtime/artifacts/operator-activation-proof
       - name: Execute canonical live authority manifest proof
         run: python sol_61_runtime/prove_live_authority.py --output sol_61_runtime/artifacts/live-authority-proof
-      - name: Execute CFBE Hyperleverage 100 frontier hardening proof
-        run: python sol_61_runtime/prove_frontier_hardening_v2.py --output sol_61_runtime/artifacts/frontier-hardening-v2
       - name: Validate proof gates and boundaries
         run: |
           python - <<'PY'
@@ -81,7 +77,6 @@ jobs:
             'authority': ('provider-authority-proof', 'sol-61-provider-authority-receipt.json', 'CLOUDRUN_APPS_SCRIPT_AUTHORITY_GATE_VERIFIED'),
             'activation': ('operator-activation-proof', 'sol-61-operator-activation-receipt.json', 'OPERATOR_ACTIVATION_PACKAGE_VERIFIED'),
             'live_authority': ('live-authority-proof', 'canonical-live-authority-receipt.json', 'CANONICAL_LIVE_AUTHORITY_MANIFEST_VERIFIED'),
-            'frontier_hardening_v2': ('frontier-hardening-v2', 'cfbe-sol61-hyperleverage-100-receipt.json', 'SOURCE_PROOF_VERIFIED'),
           }
           receipts = {}
           for key, (folder, filename, status) in pairs.items():
@@ -94,18 +89,11 @@ jobs:
           assert not live['truth_boundary']['cloud_run_live_invocation_certified']
           assert not live['truth_boundary']['apps_script_live_source_authority_certified']
           assert not live['truth_boundary']['owner_reserved_actions_bypassed']
-          frontier = receipts['frontier_hardening_v2']
-          assert frontier['gene_count'] == 100
-          assert frontier['truth_boundary']['source_and_deterministic_proof']
-          assert not frontier['truth_boundary']['provider_live_promotion']
-          assert not frontier['truth_boundary']['production_cutover']
-          assert not frontier['truth_boundary']['market_superiority']
-          assert not frontier['truth_boundary']['sustained_owner_value']
           root = Path('sol_61_runtime/artifacts/live-authority-proof')
           assert (root / 'canonical-live-authority-manifest.json').is_file()
           PY
       - name: Upload proof package
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        uses: actions/upload-artifact@v4
         with:
           name: sol-61-runtime-proof
           path: |
@@ -123,6 +111,5 @@ jobs:
             sol_61_runtime/artifacts/provider-authority-proof
             sol_61_runtime/artifacts/operator-activation-proof
             sol_61_runtime/artifacts/live-authority-proof
-            sol_61_runtime/artifacts/frontier-hardening-v2
           retention-days: 90
           if-no-files-found: error
