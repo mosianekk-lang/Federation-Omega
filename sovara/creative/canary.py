@@ -84,6 +84,7 @@ class CreativeCanaryObservation:
     rollback_or_disable_ref: str
     proof_ref: str
     provider_cost: float | None = None
+    provider_call_count: int | None = None
     case_data_processed: bool = False
     real_person_processed: bool = False
     provider_mutation_performed: bool = False
@@ -95,6 +96,11 @@ class CreativeCanaryObservation:
         if self.provider_cost is not None:
             if not isfinite(float(self.provider_cost)) or float(self.provider_cost) < 0:
                 raise ValueError("provider_cost must be finite and non-negative")
+        if self.provider_call_count is not None:
+            if isinstance(self.provider_call_count, bool) or not isinstance(self.provider_call_count, int):
+                raise ValueError("provider_call_count must be an integer when supplied")
+            if self.provider_call_count < 0:
+                raise ValueError("provider_call_count must be non-negative")
 
 
 @dataclass(frozen=True, slots=True)
@@ -107,9 +113,10 @@ class CreativeCanaryDecision:
 
 
 _TRUTH_BOUNDARY = (
-    "A SOVARA Creative canary is proven only by same-run provider-native execution, exact asset readback, "
-    "required semantic assertions, and rollback/disable evidence. Source tests or simulated observations do not "
-    "prove provider execution, media generation, publishing, production traffic, value, repeated success, or spend authority."
+    "A SOVARA Creative canary is proven only by same-run provider-native execution, bounded provider-call readback, "
+    "exact asset readback, required semantic assertions, and rollback/disable evidence. Source tests or simulated "
+    "observations do not prove provider execution, media generation, publishing, production traffic, value, repeated "
+    "success, or spend authority."
 )
 
 
@@ -216,6 +223,25 @@ def evaluate_creative_canary(
             _TRUTH_BOUNDARY,
         )
 
+    if observation.provider_call_count is None or observation.provider_call_count < 1:
+        return CreativeCanaryDecision(
+            CreativeCanaryState.HOLD_PROVIDER_RECEIPT,
+            False,
+            "CAPTURE_PROVIDER_CALL_COUNT_READBACK",
+            ("PROVIDER_CALL_COUNT_READBACK_REQUIRED",),
+            _TRUTH_BOUNDARY,
+        )
+    if observation.provider_call_count > spec.max_provider_calls:
+        return CreativeCanaryDecision(
+            CreativeCanaryState.HOLD_EFFECT_AUTHORITY,
+            False,
+            "QUARANTINE_CANARY_AND_RESTORE_PROVIDER_CALL_BOUND",
+            (
+                f"PROVIDER_CALL_LIMIT_EXCEEDED:{observation.provider_call_count}>{spec.max_provider_calls}",
+            ),
+            _TRUTH_BOUNDARY,
+        )
+
     asset_ids = tuple(item.strip() for item in observation.asset_ids if item.strip())
     hashes = tuple(item.strip().lower() for item in observation.asset_sha256 if item.strip())
     if (
@@ -259,6 +285,7 @@ def evaluate_creative_canary(
         "FORCED_FAILURE_AND_RECOVERY_CANARY",
         (
             "PROVIDER_NATIVE_EXECUTION_VERIFIED",
+            "PROVIDER_CALL_BOUND_VERIFIED",
             "ASSET_READBACK_VERIFIED",
             "SEMANTIC_ASSERTIONS_VERIFIED",
             "ROLLBACK_OR_DISABLE_VERIFIED",
