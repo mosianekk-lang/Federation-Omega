@@ -4,19 +4,23 @@ __version__ = "3.3.0"
 
 from .digital_twin import CapabilityEdge, FederationDigitalTwin, RouteCandidate
 from .evidence_distillation import EvidenceDistiller, EvidenceReceipt
+from .hyperperformance import CounterfactualRoute, HyperperformanceController, MissionPlan
 from .mission_ir import HyperSchedule, LaneClass, MissionCompiler, MissionIR, MissionNode, ParallelWave
 from .shadow_evolution import PromotionDecision, ShadowEvolutionEngine, TrialScore
 
 __all__ = [
     "CapabilityEdge",
+    "CounterfactualRoute",
     "EvidenceDistiller",
     "EvidenceReceipt",
     "FederationDigitalTwin",
     "HyperSchedule",
+    "HyperperformanceController",
     "LaneClass",
     "MissionCompiler",
     "MissionIR",
     "MissionNode",
+    "MissionPlan",
     "ParallelWave",
     "PromotionDecision",
     "RouteCandidate",
