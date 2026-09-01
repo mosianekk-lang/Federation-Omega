@@ -4,6 +4,7 @@ import unittest
 
 from superior_logic.digital_twin import CapabilityEdge, FederationDigitalTwin
 from superior_logic.evidence_distillation import EvidenceDistiller
+from superior_logic.hyperperformance import HyperperformanceController
 from superior_logic.mission_ir import LaneClass, MissionCompiler, MissionIRError, MissionNode
 from superior_logic.shadow_evolution import ShadowEvolutionEngine, TrialScore
 
@@ -17,13 +18,7 @@ class MissionIRTests(unittest.TestCase):
             MissionNode("effect", "dispatch effect", "provider", LaneClass.CRITICAL, depends_on=("compile",), reversible=False, authority="PROVIDER_MUTATION", estimated_latency_ms=100),
             MissionNode("readback", "verify provider", "evidence", LaneClass.EVIDENCE, depends_on=("effect",), estimated_latency_ms=25),
         )
-        ir = MissionCompiler().compile(
-            mission_id="M1",
-            objective="change reality safely",
-            success_condition="provider readback verified",
-            nodes=nodes,
-            terminal_proofs=("provider_native_readback",),
-        )
+        ir = MissionCompiler().compile(mission_id="M1", objective="change reality safely", success_condition="provider readback verified", nodes=nodes, terminal_proofs=("provider_native_readback",))
         schedule = MissionCompiler().schedule(ir, max_parallelism=4)
         self.assertEqual(set(schedule.waves[0].node_ids), {"identity", "evidence"})
         self.assertEqual(schedule.waves[1].node_ids, ("compile",))
@@ -34,15 +29,7 @@ class MissionIRTests(unittest.TestCase):
 
     def test_dependency_cycle_rejected(self) -> None:
         with self.assertRaises(MissionIRError):
-            MissionCompiler().compile(
-                mission_id="bad",
-                objective="bad",
-                success_condition="never",
-                nodes=(
-                    MissionNode("a", "a", "x", LaneClass.COMPUTE, depends_on=("b",)),
-                    MissionNode("b", "b", "x", LaneClass.COMPUTE, depends_on=("a",)),
-                ),
-            )
+            MissionCompiler().compile(mission_id="bad", objective="bad", success_condition="never", nodes=(MissionNode("a", "a", "x", LaneClass.COMPUTE, depends_on=("b",)), MissionNode("b", "b", "x", LaneClass.COMPUTE, depends_on=("a",))))
 
 
 class DigitalTwinTests(unittest.TestCase):
@@ -80,17 +67,48 @@ class EvidenceDistillationTests(unittest.TestCase):
     def test_receipt_is_bounded_and_raw_bound(self) -> None:
         raw = "provider log " * 5000
         distiller = EvidenceDistiller()
-        receipt = distiller.distill(
-            source_ref="provider://run/1",
-            raw=raw,
-            evidence_class="PROVIDER_NATIVE",
-            verified_claims=("AUTH_OK",),
-            excerpt_limit=200,
-        )
+        receipt = distiller.distill(source_ref="provider://run/1", raw=raw, evidence_class="PROVIDER_NATIVE", verified_claims=("AUTH_OK",), excerpt_limit=200)
         self.assertLessEqual(len(receipt.excerpt), 200)
         self.assertTrue(distiller.verify(receipt, raw=raw))
         self.assertFalse(distiller.verify(receipt, raw=raw + "tamper"))
         self.assertEqual(len(receipt.receipt_digest), 64)
+
+
+class HyperperformanceControllerTests(unittest.TestCase):
+    def test_fan_in_chooses_route_above_no_action_value(self) -> None:
+        twin = FederationDigitalTwin()
+        twin.upsert(CapabilityEdge("safe", "GOOGLE", "VERIFY", "STATE", "READ_ONLY", 1.0, 10, 0.0, 0.0, True))
+        controller = HyperperformanceController(twin=twin)
+        plan = controller.plan(
+            mission_id="M2",
+            objective="verify state",
+            success_condition="state verified",
+            nodes=(MissionNode("probe", "probe", "provider", LaneClass.PROVIDER),),
+            operation="VERIFY",
+            target_class="STATE",
+            max_risk=0.1,
+            min_proof_strength=0.9,
+            no_action_value=0.2,
+        )
+        chosen = controller.choose(plan)
+        self.assertIsNotNone(chosen)
+        self.assertEqual(chosen.capability_id, "safe")
+        self.assertEqual(plan.schedule.waves[0].node_ids, ("probe",))
+
+    def test_fan_in_can_choose_no_action(self) -> None:
+        twin = FederationDigitalTwin()
+        twin.upsert(CapabilityEdge("weak", "X", "VERIFY", "STATE", "READ_ONLY", 0.2, 90000, 0.8, 0.8, True))
+        controller = HyperperformanceController(twin=twin)
+        plan = controller.plan(
+            mission_id="M3",
+            objective="avoid negative intervention",
+            success_condition="no harmful action",
+            nodes=(MissionNode("assess", "assess", "compute", LaneClass.COMPUTE),),
+            operation="VERIFY",
+            target_class="STATE",
+            no_action_value=0.0,
+        )
+        self.assertIsNone(controller.choose(plan))
 
 
 if __name__ == "__main__":
