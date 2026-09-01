@@ -3,7 +3,7 @@
   "version": "6.2",
   "date": "2026-09-01",
   "predecessor": "SOL-6.1-OMEGA-EVIDENCEOPS-MODERNISATION",
-  "status": "SOURCE_IMPLEMENTED_CI_ADMISSION_PENDING",
+  "status": "DETERMINISTIC_TESTED",
   "objective": "Evolve SOL from durable orchestration to transactional, self-verifying state-transition execution while preserving SOL 6.1 compatibility.",
   "primary_invariants": [
     "TARGET_STATE_PLUS_PROOF_COMPLETION",
@@ -31,7 +31,7 @@
   ],
   "truth_boundary": {
     "source_runtime_implemented": true,
-    "deterministic_ci_verified": false,
+    "deterministic_ci_verified": true,
     "provider_live_verified": false,
     "multi_region_consensus": false,
     "production_cutover": false,
