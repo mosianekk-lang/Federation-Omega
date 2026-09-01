@@ -187,8 +187,6 @@ def _target_value(spec: ValueMetricSpec, baseline: float) -> float:
     if spec.direction is MetricDirection.HIGHER_IS_BETTER:
         if baseline > 0:
             return baseline * float(spec.minimum_gain)
-        # A zero/negative baseline does not define multiplicative commercial growth.
-        # The optional minimum_candidate provides the absolute crossing threshold.
         return baseline
     if baseline > 0:
         return baseline / float(spec.minimum_gain)
@@ -219,6 +217,16 @@ def _target_met(spec: ValueMetricSpec, baseline: float, candidate: float, target
     return directional and candidate <= float(spec.minimum_candidate)
 
 
+def _index_observations(observations: Iterable[MetricObservation]) -> dict[str, MetricObservation]:
+    indexed: dict[str, MetricObservation] = {}
+    for item in observations:
+        key = item.metric
+        if key in indexed:
+            raise ValueError(f"duplicate metric observation: {key}")
+        indexed[key] = item
+    return indexed
+
+
 def compare_value_metrics(
     *,
     specs: Sequence[ValueMetricSpec],
@@ -227,7 +235,7 @@ def compare_value_metrics(
     if not specs:
         raise ValueError("at least one value metric specification is required")
 
-    observed = {item.metric: item for item in observations}
+    observed = _index_observations(observations)
     comparisons: list[MetricComparison] = []
     for spec in specs:
         observation = observed.get(spec.metric)
@@ -267,15 +275,21 @@ def _class_target_rate(
     specs: Sequence[ValueMetricSpec],
     comparisons: Sequence[MetricComparison],
 ) -> float:
-    spec_map = {spec.metric: spec for spec in specs if spec.value_class is value_class}
-    rows = [row for row in comparisons if row.value_class is value_class]
+    by_metric = {row.metric: row for row in comparisons}
+    # Required metrics are always denominator-bearing. Optional metrics become
+    # denominator-bearing only when an observation exists, preventing an absent
+    # optional metric from silently depressing the class target rate.
+    spec_map = {
+        spec.metric: spec
+        for spec in specs
+        if spec.value_class is value_class and (spec.required or spec.metric in by_metric)
+    }
     if not spec_map:
         return 0.0
     weighted_total = sum(float(spec.weight) for spec in spec_map.values())
     if weighted_total <= 0:
         return 0.0
     weighted_met = 0.0
-    by_metric = {row.metric: row for row in rows}
     for metric, spec in spec_map.items():
         row = by_metric.get(metric)
         if row is not None and row.target_met:
@@ -298,8 +312,8 @@ def evaluate_value_gate(
             ValueGateState.HOLD_NO_METRICS, False, 0.0, 0.0, 0.0, (), ("NO_VALUE_METRICS",)
         )
 
+    by_metric = _index_observations(rows)
     required = {spec.metric for spec in specs if spec.required}
-    by_metric = {row.metric: row for row in rows}
     missing = tuple(sorted(required - set(by_metric)))
     if missing:
         return ValueGateDecision(
