@@ -1,6 +1,6 @@
 # SOL 6.2 — Transactional Self-Verifying Runtime
 
-Status: SOURCE_IMPLEMENTED / CI_ADMISSION_PENDING  
+Status: DETERMINISTIC_TESTED  
 Predecessor: SOL 6.1 durable reference runtime  
 Date: 2026-09-01
 
@@ -54,9 +54,17 @@ No SOL 6.1 public module is replaced in this upgrade.
 
 - `sol_62_frontier_primitives.py` — CFBE-harvested transactional/proof/identity/observability primitives.
 - `sol_62_runtime.py` — SOL 6.2 state-transition runtime.
-- `test_sol_62_runtime.py` — adversarial and transactional regression court.
+- `sol_62_strict_runtime.py` — strict effect/proof/closure binding facade.
+- `sol_62.py` — canonical SOL 6.2 runtime facade.
+- `test_sol_62_runtime.py` and `test_sol_62_strict_runtime.py` — adversarial and transactional regression courts.
 - `prove_sol_62_runtime.py` — machine-readable reference-runtime proof.
 - `SOL_6_2_PROGRAMME.json` — promotion state and truth boundary.
+
+## Current verified maturity
+
+The repository's exact-head Airlock/ProofOS court has admitted the SOL 6.2 source/reference runtime at **DETERMINISTIC_TESTED**. The SOL62 mapping has zero unmapped production paths and uses a scoped blocking court while retaining global Airlock, provenance, default-deny, Bubbles Command Bus and public leak-guard controls.
+
+This maturity is intentionally bounded to source/reference-runtime proof. It does not inherit into provider-live or production status.
 
 ## Promotion ladder
 
