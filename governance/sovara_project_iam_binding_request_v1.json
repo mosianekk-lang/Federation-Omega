@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_PROJECT_IAM_BINDING_REQUEST_V1",
-  "request_id": "FHU047-EXISTING-GOOGLE-AUTHORITY-PROBE-20260901-001",
+  "request_id": "SOL62-EXISTING-GOOGLE-ADMIN-AUTHORITY-PROBE-20260901-003",
   "mode": "AUTHORITY_PROBE",
   "execute": true,
   "provider_mutation_allowed": false,
@@ -22,29 +22,15 @@
       "member": "serviceAccount:superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com"
     }
   ],
-  "g0_runtime_reuse_evidence": {
-    "run_id": "33299678858",
-    "source_sha": "3fd9c56504b95b90610956aec38ed84fc239eef8",
-    "runtime_exists": true,
-    "deployer_service_account_user": true,
-    "missing_apis": [],
-    "remaining_controls": [
-      "aiplatform_user_binding",
-      "service_usage_consumer_binding",
-      "deployer_cloud_run_developer_binding"
-    ],
-    "artifact_id": "9728520111",
-    "artifact_sha256": "bdb4d103e0957a616676b870adf8a833217a77737ee336b324c39acd717848bf"
+  "current_provider_evidence": {
+    "sol62_wif_hardening_run_id": "33468764570",
+    "wif_oidc_authentication_succeeded": true,
+    "deployer_identity": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "missing_permission": "iam.workloadIdentityPoolProviders.update",
+    "provider_condition_update_performed": false,
+    "broad_binding_removal_performed": false
   },
-  "fhu047_context": {
-    "canonical_wif_apply_run": "33451897437",
-    "canonical_wif_apply_result": "BLOCKED_NO_PROVIDER_UPDATE_PERMISSION_NO_CHANGE",
-    "direct_admin_census_run": "33452491213",
-    "direct_admin_census_result": "SEVEN_OWNER_CANDIDATES_ZERO_DIRECT_ROUTES",
-    "delegated_admin_graph_run": "33452823228",
-    "delegated_admin_graph_result": "ZERO_REUSABLE_OWNER_ROUTES"
-  },
-  "owner_authority": "EXPLICIT_CURRENT_CHAT_2026-09-01_FHU047",
-  "purpose": "FHU-047 non-mutating fallback discovery: test whether any already-configured Federation Google credential alias authenticates successfully and already has project IAM change authority. Do not mutate IAM or provider state and do not expose credential values.",
-  "truth_boundary": "This request authorizes authentication attempts against already-configured credential aliases and a read-only projects.testIamPermissions call. It does not authorize IAM mutation, provider mutation, secret-value logging, key creation, service-account creation, WIF expansion, model inference, Cloud Run deployment or traffic, email, publication, financial commitment or unrelated provider actions."
+  "owner_authority": "EXPLICIT_CURRENT_CHAT_2026-09-01_SOL62_GOOGLE_MAX_AUTOMATION",
+  "purpose": "Read-only fallback discovery for SOL 6.2 Google maximum-automation integration: test whether any already-configured Federation Google credential alias authenticates successfully and already has project IAM change authority. No credential values may be emitted. This probe exists to reuse an existing owner/admin identity rather than create or grant a new broad administrator credential after the canonical deployer was provider-readback denied iam.workloadIdentityPoolProviders.update.",
+  "truth_boundary": "Authentication attempts and projects.testIamPermissions only. No IAM mutation, WIF mutation, secret-value logging, key creation, service-account creation, model inference, deployment, traffic change, case-data processing, email, publication, financial commitment or unrelated provider action is authorized by this request."
 }
