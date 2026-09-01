@@ -20,7 +20,7 @@ class KimDataverseProgrammeGuardTests(unittest.TestCase):
     def test_current_manifest_has_no_authority_expansion(self) -> None:
         paths = (
             ROOT / "benchmarking/cfbe_omega/KIM_DATAVERSE_LEVEL7_PLUS_IMPLEMENTATION_MANIFEST_V1_20260901.json",
-            ROOT / "governance/proofos_omega_policy_extension_kim_dataverse_level7_plus_v1.json",
+            ROOT / "governance/proofos_omega_policy_extension_kim_dataverse_level7_plus_full_v1.json",
         )
         self.assertEqual((), scan_files(paths))
 
