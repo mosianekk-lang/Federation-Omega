@@ -1,0 +1,27 @@
+{
+  "schema": "PROOFOS_OMEGA_POLICY_EXTENSION_V1",
+  "policy_id": "bco-prime-chat-forensics-v1",
+  "capability_schema": "BCO_PRIME_CHAT_FORENSICS_V1",
+  "authority_ceiling": "A1_INTERNAL",
+  "effect_policy": "NO_EXTERNAL_EFFECT",
+  "canonical_core_count_must_remain": 100,
+  "required_controls": [
+    "exact_conversation_id_binding",
+    "source_hashing",
+    "scope_collision_rejection",
+    "native_export_preferred",
+    "fallback_provenance_labeling",
+    "exact_backend_cause_unverified_without_native_telemetry",
+    "provider_durability_requires_pinned_artifact_match",
+    "deterministic_receipts",
+    "no_raw_secret_echo",
+    "zero_manual_user_tasks"
+  ],
+  "promotion_gates": {
+    "tested": true,
+    "independent_readback": true,
+    "rollback": true,
+    "hard_regressions": 0,
+    "self_promotion_authorized": false
+  }
+}
