@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.6",
+  "version": "2.9.7",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -21,6 +21,7 @@
     ".github/workflows/public-repository-leak-guard.yml",
     ".github/workflows/phoenix-emergency-freeze.yml",
     ".github/workflows/bubbles-command-bus.yml",
+    ".github/workflows/autopilot-operational-witness.yml",
     ".github/workflows/bco-provider-readback-continuity.yml",
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
@@ -40,6 +41,7 @@
     ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
     ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
     ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/autopilot-operational-witness.yml": ["workflow_run"],
     ".github/workflows/bco-provider-readback-continuity.yml": ["workflow_run"],
     ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
     ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"],
@@ -138,6 +140,7 @@
       ".github/workflows/public-repository-leak-guard.yml",
       ".github/workflows/phoenix-emergency-freeze.yml",
       ".github/workflows/bubbles-command-bus.yml",
+      ".github/workflows/autopilot-operational-witness.yml",
       ".github/workflows/bco-provider-readback-continuity.yml",
       ".github/workflows/caseforge-provider-readback-canary.yml",
       ".github/workflows/pfrd-omega-operator-auth-probe.yml",
