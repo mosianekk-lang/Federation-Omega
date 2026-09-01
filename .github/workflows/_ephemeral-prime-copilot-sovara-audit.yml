@@ -1,0 +1,121 @@
+name: Ephemeral PRIME Copilot SOVARA Source Audit
+
+on:
+  push:
+    branches:
+      - bco/prime-copilot-sovara-audit-20260901-exec
+
+permissions:
+  contents: read
+  copilot-requests: write
+
+concurrency:
+  group: ephemeral-prime-copilot-sovara-audit-20260901
+  cancel-in-progress: false
+
+env:
+  SOURCE_MAIN_SHA: '842a5e8089fca0e7a7686f42bdb5baef4335fe19'
+  COPILOT_MODEL: 'gpt-5.6-luna'
+  MAX_AI_CREDITS: '1'
+
+jobs:
+  audit:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout ephemeral audit branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+          persist-credentials: false
+
+      - name: Verify public-source audit boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p copilot-proof
+          git cat-file -e "$SOURCE_MAIN_SHA^{commit}"
+          git merge-base --is-ancestor "$SOURCE_MAIN_SHA" HEAD
+          test -d sovara/creative
+          test -z "$(git status --porcelain)"
+          printf '%s\n' "$SOURCE_MAIN_SHA" > copilot-proof/source-main-sha.txt
+          printf '%s\n' "PUBLIC_REPOSITORY_SOURCE_ONLY" > copilot-proof/data-boundary.txt
+
+      - name: Install current GitHub Copilot CLI
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install -g @github/copilot
+          copilot --version | tee copilot-proof/cli-version.txt
+
+      - name: Run bounded independent SOVARA Creative source audit
+        shell: bash
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          PROMPT=$(cat <<'EOF'
+          You are an independent GitHub Copilot engineering challenger for BCΩ-PRIME. Audit only the checked-out PUBLIC Federation-Omega repository, with primary scope sovara/creative plus directly related public tests/governance/source references needed to verify a claim. Do not access or request Google Drive, Gmail, KDV/private spreadsheets, secrets, environment credentials, web pages, MCP servers, GitHub APIs, or any private/user data. Do not modify files or repository state.
+
+          Objective: identify the highest-leverage hidden opportunities, defects, duplicated architecture, stale assumptions, missing runtime/value closures, or underused existing capabilities in SOVARA Creative. Prefer reuse/extension/composition over new systems. Distinguish source/test capability from provider execution, saved asset, publication, commercial value, and stable promotion. Do not infer provider maturity from source.
+
+          Return 5-10 ranked findings. For each provide: rank; concise finding; exact file path and source evidence; classification (REUSE / EXTEND / REPAIR / HOLD / RETIRE-CANDIDATE / EMPIRICAL-GATE); expected leverage; smallest safe next action; falsifier or proof gate. Explicitly call out any apparent opportunity that is already solved or would merely duplicate an existing owner. End with: (1) top 3 immediate A0/A1 actions, (2) true external/owner/provider gates, and (3) a verdict on whether SOVARA Creative needs more architecture or mainly vertical operational/value closure.
+          EOF
+          )
+          printf '%s' "$PROMPT" | sha256sum | awk '{print $1}' | tee copilot-proof/prompt-sha256.txt
+          copilot \
+            -p "$PROMPT" \
+            --model="$COPILOT_MODEL" \
+            --max-ai-credits="$MAX_AI_CREDITS" \
+            --no-ask-user \
+            --available-tools='view,grep,glob' \
+            --allow-tool='read' \
+            --deny-tool='write' \
+            --disable-builtin-mcps \
+            2>&1 | tee copilot-proof/copilot-audit.txt
+
+      - name: Prove no repository mutation and seal receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -z "$(git status --porcelain)"
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          root = Path('copilot-proof')
+          output = (root / 'copilot-audit.txt').read_text(encoding='utf-8', errors='replace') if (root / 'copilot-audit.txt').exists() else ''
+          prompt_hash = (root / 'prompt-sha256.txt').read_text().strip() if (root / 'prompt-sha256.txt').exists() else ''
+          body = {
+              'schema': 'BCO_PRIME_COPILOT_SOVARA_PUBLIC_SOURCE_AUDIT_V1',
+              'source_main_sha': os.environ['SOURCE_MAIN_SHA'],
+              'workflow_head_sha': os.environ['GITHUB_SHA'],
+              'run_id': os.environ['GITHUB_RUN_ID'],
+              'run_attempt': os.environ['GITHUB_RUN_ATTEMPT'],
+              'requested_model': os.environ['COPILOT_MODEL'],
+              'max_ai_credits_soft_limit': float(os.environ['MAX_AI_CREDITS']),
+              'prompt_sha256': prompt_hash,
+              'output_sha256': hashlib.sha256(output.encode()).hexdigest(),
+              'private_data_supplied': False,
+              'web_enabled': False,
+              'mcp_enabled': False,
+              'write_tool_enabled': False,
+              'repository_mutation_detected': False,
+              'provider_usage_readback_still_required': True,
+              'owner_value_claimed': False,
+              'provider_effect_authority_expanded': False,
+          }
+          canonical = json.dumps(body, sort_keys=True, separators=(',', ':')).encode()
+          body['receipt_sha256'] = hashlib.sha256(canonical).hexdigest()
+          (root / 'receipt.json').write_text(json.dumps(body, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps(body, sort_keys=True))
+          PY
+
+      - name: Upload immutable audit evidence
+        if: always() && hashFiles('copilot-proof/*') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: prime-copilot-sovara-audit-${{ github.run_id }}-${{ github.run_attempt }}
+          path: copilot-proof/
+          if-no-files-found: error
+          retention-days: 30
