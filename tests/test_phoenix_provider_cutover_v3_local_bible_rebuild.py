@@ -54,13 +54,14 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             for key, value in credential_policy.items()
             if key.startswith("fhu047_") and key.endswith("_workflow")
         }
+        provider_mutators = set(self.policy["provider_mutation_workflow_allowlist"])
         expected = deployment_gateways | {
             g0_identity_probe,
             artifact_attestation,
-        } | fhu047_workflows
+        } | fhu047_workflows | provider_mutators
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
 
-        scoped_non_deployment = {g0_identity_probe, artifact_attestation} | fhu047_workflows
+        scoped_non_deployment = {g0_identity_probe, artifact_attestation} | fhu047_workflows | provider_mutators
         for workflow in scoped_non_deployment:
             self.assertIn(workflow, self.policy["active_workflow_allowlist"])
             self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
@@ -70,13 +71,16 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             self.policy["attestations_write_workflow_allowlist"],
         )
 
+        sol62_wif = credential_policy.get("sol62_wif_hardening_workflow")
+        self.assertEqual({sol62_wif}, provider_mutators)
+        self.assertEqual(
+            {sol62_wif: "SOL62-WIF-HARDEN-20260901"},
+            self.policy["provider_mutation_exact_issue_titles"],
+        )
+
         fhu047_repair = credential_policy.get("fhu047_one_use_repair_workflow")
-        provider_mutators = self.policy["provider_mutation_workflow_allowlist"]
-        if fhu047_repair is None:
-            self.assertEqual([], provider_mutators)
-        else:
+        if fhu047_repair is not None:
             self.assertIn(fhu047_repair, fhu047_workflows)
-            self.assertEqual([fhu047_repair], provider_mutators)
 
         fhu047_census = credential_policy.get("fhu047_authority_graph_census_workflow")
         if fhu047_census is not None:
@@ -88,7 +92,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             self.assertFalse(any("fhu-047" in workflow.lower() for workflow in self.policy["oidc_workflow_allowlist"]))
             self.assertFalse(any("fhu-047" in workflow.lower() for workflow in provider_mutators))
 
-        self.assertNotIn(g0_identity_probe, deployment_gateways | {artifact_attestation} | fhu047_workflows)
+        self.assertNotIn(g0_identity_probe, deployment_gateways | {artifact_attestation} | fhu047_workflows | provider_mutators)
         self.assertNotIn("oidc_boundary", self.policy)
         self.assertEqual(
             "QUARANTINED_SOURCE_WITH_EXACT_AIRLOCKED_PROVIDER_GATEWAYS",
