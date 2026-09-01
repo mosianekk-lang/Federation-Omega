@@ -1,80 +1,61 @@
-name: Kimmie Seed 199-Bot Workforce
+name: Kimmie Seed 199-Role Source Canary
 
 on:
   workflow_dispatch:
-  push:
-    branches: [main]
-    paths:
-      - 'kimmie_seed/workforce/bot_manifest_199.json'
-      - 'kimmie_seed/workforce/coordinator.py'
-      - 'kimmie_seed/workforce/test_coordinator.py'
-      - 'kimmie_seed/workforce/README.md'
-      - '.github/workflows/kimmie-seed-199-bot-workforce.yml'
-  schedule:
-    - cron: '11 3 * * *'
 
 permissions:
-  contents: write
+  contents: read
 
 concurrency:
-  group: kimmie-seed-199-bot-workforce
+  group: kimmie-seed-199-role-source-canary
   cancel-in-progress: false
 
 jobs:
-  deploy-workforce:
-    if: ${{ !contains(github.event.head_commit.message || '', '[skip workforce]') }}
+  verify-source-packets:
+    if: ${{ vars.KIMMIE_WORKFORCE_ENABLED == 'true' }}
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - name: Checkout
-        uses: actions/checkout@v4
+      - name: Checkout without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          fetch-depth: 0
+          fetch-depth: 1
+          persist-credentials: false
 
       - name: Set up Python
-        uses: actions/setup-python@v5
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
 
-      - name: Validate 199-role manifest
-        run: python kimmie_seed/workforce/coordinator.py --validate-only
-
-      - name: Run workforce regression tests
-        run: python -m unittest kimmie_seed/workforce/test_coordinator.py -v
-
-      - name: Deploy packet-bound workforce
-        run: python kimmie_seed/workforce/coordinator.py
-
-      - name: Verify deployment receipt
+      - name: Validate source and runtime controls
         run: |
+          python kimmie_seed/workforce/coordinator.py --validate-only
+          python -m unittest kimmie_seed.workforce.test_coordinator -v
+          python -m unittest tests.test_kimmie_workforce_runtime_v1 -v
+
+      - name: Emit artifact-only packet proof
+        env:
+          KIMMIE_ARTIFACT_DIR: ${{ runner.temp }}/kimmie-workforce-${{ github.run_id }}-${{ github.run_attempt }}
+        run: |
+          python kimmie_seed/workforce/coordinator.py --output-dir "$KIMMIE_ARTIFACT_DIR"
           python - <<'PY'
           import json
+          import os
           from pathlib import Path
-          receipt = json.loads(Path('kimmie_seed/workforce/receipts/latest_workforce_receipt.json').read_text())
-          deployment = json.loads(Path('kimmie_seed/workforce/deployment/current_assignments.json').read_text())
+          root = Path(os.environ['KIMMIE_ARTIFACT_DIR'])
+          receipt = json.loads((root / 'receipt.json').read_text())
+          heartbeat = json.loads((root / 'heartbeat.json').read_text())
           assert receipt['status'] == 'PASS'
           assert receipt['bot_count'] == 199
           assert receipt['assignment_count'] == 199
-          assert receipt['unique_bot_ids'] == 199
-          assert receipt['unique_collision_keys'] == 199
-          assert deployment['assignment_count'] == 199
-          assert deployment['independent_verifier_count'] >= 40
-          print(json.dumps({
-              'deployment_sha256': receipt['deployment_sha256'],
-              'receipt_sha256': receipt['receipt_sha256'],
-              'independent_verifier_count': receipt['independent_verifier_count'],
-          }))
+          assert heartbeat['provider_model_execution_proven'] is False
+          assert json.loads((root / 'dead_letter.json').read_text()) == []
           PY
 
-      - name: Persist deployment proof
-        run: |
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add kimmie_seed/workforce/deployment/current_assignments.json
-          git add kimmie_seed/workforce/receipts/latest_workforce_receipt.json
-          if git diff --cached --quiet; then
-            echo 'No workforce proof-state change.'
-          else
-            git commit -m 'Record Kimmie Seed 199-bot workforce deployment [skip workforce]'
-            git push
-          fi
+      - name: Upload immutable source-canary proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: kimmie-source-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}/kimmie-workforce-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14

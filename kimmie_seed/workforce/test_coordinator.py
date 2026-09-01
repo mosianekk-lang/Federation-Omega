@@ -1,6 +1,10 @@
 from __future__ import annotations
 
 import importlib.util
+import json
+import subprocess
+import sys
+import tempfile
 import unittest
 from pathlib import Path
 
@@ -43,6 +47,30 @@ class KimmieWorkforceTests(unittest.TestCase):
         boundary = manifest["operating_boundary"]
         self.assertEqual(boundary["independent_model_processes"], "NOT_CLAIMED_WITHOUT_PROVIDER_RUNTIME_PROOF")
         self.assertEqual(boundary["financial_or_live_release"], "OWNER_GATE_REQUIRED")
+
+    def test_cli_emits_artifacts_only_outside_repository(self) -> None:
+        with tempfile.TemporaryDirectory() as directory:
+            observed = "2026-09-01T12:00:00+00:00"
+            result = subprocess.run(
+                [sys.executable, str(MODULE_PATH), "--output-dir", directory, "--observed-at", observed],
+                check=True,
+                capture_output=True,
+                text=True,
+            )
+            self.assertEqual(json.loads(result.stdout)["status"], "PASS")
+            names = {path.name for path in Path(directory).iterdir()}
+            self.assertEqual(names, {"assignments.json", "receipt.json", "heartbeat.json", "dead_letter.json"})
+            heartbeat = json.loads((Path(directory) / "heartbeat.json").read_text())
+            self.assertFalse(heartbeat["provider_model_execution_proven"])
+
+    def test_cli_rejects_repository_output(self) -> None:
+        result = subprocess.run(
+            [sys.executable, str(MODULE_PATH), "--output-dir", str(MODULE_PATH.parent / "deployment")],
+            capture_output=True,
+            text=True,
+        )
+        self.assertNotEqual(result.returncode, 0)
+        self.assertIn("outside the repository", result.stderr)
 
 
 if __name__ == "__main__":
