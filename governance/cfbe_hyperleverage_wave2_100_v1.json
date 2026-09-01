@@ -1,0 +1,35 @@
+{
+  "schema": "CFBE_HYPERLEVERAGE_WAVE2_100_V1",
+  "wave": 2,
+  "canonical_gene_source": "benchmarking/cfbe_omega/scientific_capability_compiler_v2.py::GENE_NAMES",
+  "objective": "Evolve CFBE from frontier benchmark/harvest into a scientific capability compiler that isolates causal primitives, rejects duplicate capability bloat, supports clean-room reimplementation, and promotes only evidence-bound owner value.",
+  "gene_count": 100,
+  "source_contract_count": 100,
+  "deep_control_count": 22,
+  "deep_tranche_gene_ids": [
+    "CF2-001", "CF2-002", "CF2-003", "CF2-008", "CF2-013", "CF2-016",
+    "CF2-020", "CF2-021", "CF2-023", "CF2-031", "CF2-032", "CF2-041",
+    "CF2-047", "CF2-050", "CF2-061", "CF2-064", "CF2-072", "CF2-076",
+    "CF2-080", "CF2-091", "CF2-095", "CF2-100"
+  ],
+  "provider_gated_gene_ids": ["CF2-067", "CF2-075", "CF2-093", "CF2-094", "CF2-098", "CF2-099"],
+  "anti_bloat_order": ["REUSE", "EXTEND", "SPECIALISE", "COMPOSE", "NEW_LAST"],
+  "admission_requirements": [
+    "MEASURED_GAP",
+    "PUBLIC_PROVENANCE",
+    "LICENSE_OR_STANDARD_ADMISSIBILITY",
+    "MEASURABLE_OWNER_VALUE_HYPOTHESIS",
+    "REUSE_EXTENSION_COMPOSITION_CHECK",
+    "EXACT_AUTHORITY_IF_EFFECTFUL",
+    "INDEPENDENT_PROOF",
+    "NO_REGRESSION_AND_OWNER_VALUE_GATE"
+  ],
+  "truth_boundary": {
+    "routed_is_not_provider_runtime": true,
+    "source_contract_is_not_owner_value": true,
+    "deep_control_is_not_market_superiority": true,
+    "provider_effect_authorized": false,
+    "stable_promotion_authorized": false,
+    "physical_hardware_execution_authorized": false
+  }
+}
