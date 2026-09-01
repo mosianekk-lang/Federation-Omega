@@ -18,6 +18,7 @@ env:
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   EXACT_TRIGGER_TITLE: SOL62-WIF-HARDEN-20260901
+  TEMP_WIF_ROLE: roles/iam.workloadIdentityPoolAdmin
 
 jobs:
   harden:
@@ -44,23 +45,131 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Apply least-change canonical WIF hardening and verify provider readback
+      - name: Preflight reversible project-IAM authority
         shell: bash
         run: |
           set -euo pipefail
+          set +x
           mkdir -p /tmp/sol62-wif
-          # Airlock provider-mutation marker: workload-identity-pools providers update-oidc
           test "${{ github.event.issue.title }}" = "$EXACT_TRIGGER_TITLE"
           test "${{ github.event.issue.author_association }}" = "OWNER"
+
+          TOKEN="$(gcloud auth print-access-token)"
+          curl --fail --silent --show-error \
+            -X POST \
+            -H "Authorization: Bearer ${TOKEN}" \
+            -H "Content-Type: application/json" \
+            "https://cloudresourcemanager.googleapis.com/v1/projects/${PROJECT_ID}:testIamPermissions" \
+            --data '{"permissions":["resourcemanager.projects.setIamPolicy"]}' \
+            > /tmp/sol62-wif/PROJECT_IAM_PERMISSION_PREFLIGHT_RAW.json
+          unset TOKEN
+
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json \
+            > /tmp/sol62-wif/PROJECT_IAM_POLICY_BEFORE.json
+
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          d=pathlib.Path('/tmp/sol62-wif')
+          perms=json.loads((d/'PROJECT_IAM_PERMISSION_PREFLIGHT_RAW.json').read_text(encoding='utf-8'))
+          policy=json.loads((d/'PROJECT_IAM_POLICY_BEFORE.json').read_text(encoding='utf-8'))
+          member='serviceAccount:'+os.environ['DEPLOYER_SA']
+          role=os.environ['TEMP_WIF_ROLE']
+          granted='resourcemanager.projects.setIamPolicy' in set(perms.get('permissions') or [])
+          preexisting=any(
+              b.get('role')==role and member in (b.get('members') or [])
+              for b in policy.get('bindings') or []
+          )
+          receipt={
+              'schema':'SOL62_WIF_PRIVILEGE_PREFLIGHT_V1',
+              'project_id':os.environ['PROJECT_ID'],
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'deployer_service_account':os.environ['DEPLOYER_SA'],
+              'set_iam_policy_granted':granted,
+              'temporary_wif_admin_binding_preexisting':preexisting,
+              'provider_mutation_performed':False,
+              'credential_values_recorded':False,
+              'service_account_key_created':False,
+          }
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          (d/'SOL62_WIF_PRIVILEGE_PREFLIGHT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          with open(os.environ['GITHUB_ENV'],'a',encoding='utf-8') as out:
+              out.write('SOL62_CAN_TEMP_ELEVATE='+('true' if granted and not preexisting else 'false')+'\n')
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+
+      - name: Apply transactional least-privilege self-heal and WIF hardening
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/sol62-wif
+          MEMBER="serviceAccount:${DEPLOYER_SA}"
+          TEMP_ROLE_ADDED=false
+
+          cleanup_temp_role() {
+            if [[ "$TEMP_ROLE_ADDED" == "true" ]]; then
+              gcloud projects remove-iam-policy-binding "$PROJECT_ID" \
+                --member="$MEMBER" \
+                --role="$TEMP_WIF_ROLE" \
+                --quiet \
+                > /tmp/sol62-wif/TEMP_ROLE_REMOVE.txt 2>&1 || true
+            fi
+          }
+          trap cleanup_temp_role EXIT
+
+          if [[ "${SOL62_CAN_TEMP_ELEVATE:-false}" != "true" ]]; then
+            python3 - <<'PY'
+          import hashlib, json, pathlib
+          p=pathlib.Path('/tmp/sol62-wif/SOL62_WIF_AUTHORITY_BLOCKED.json')
+          r={
+              'schema':'SOL62_WIF_AUTHORITY_BLOCKED_V1',
+              'state':'AUTHORITY_BLOCKED_PRE_EFFECT',
+              'required_permission':'resourcemanager.projects.setIamPolicy',
+              'provider_mutation_performed':False,
+              'temporary_role_added':False,
+              'credential_values_recorded':False,
+              'service_account_key_created':False,
+          }
+          r['receipt_sha256']=hashlib.sha256(json.dumps(r,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          p.write_text(json.dumps(r,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(r,sort_keys=True))
+          PY
+            exit 3
+          fi
+
+          # Airlock provider-mutation markers: projects add-iam-policy-binding;
+          # workload-identity-pools providers update-oidc; projects remove-iam-policy-binding.
+          gcloud projects add-iam-policy-binding "$PROJECT_ID" \
+            --member="$MEMBER" \
+            --role="$TEMP_WIF_ROLE" \
+            --quiet \
+            > /tmp/sol62-wif/TEMP_ROLE_ADD.txt
+          TEMP_ROLE_ADDED=true
+
           SOVARA_WIF_HARDENING_APPROVAL=HARDEN_SOVARA_CANONICAL_WIF_V1 \
             ./ops/harden_sovara_provider_wif_v1.sh --apply \
             | tee /tmp/sol62-wif/WIF_HARDEN_APPLY.json
           ./ops/harden_sovara_provider_wif_v1.sh --verify \
             | tee /tmp/sol62-wif/WIF_HARDEN_VERIFY.json
+
+          cleanup_temp_role
+          TEMP_ROLE_ADDED=false
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json \
+            > /tmp/sol62-wif/PROJECT_IAM_POLICY_AFTER.json
+
           python3 - <<'PY'
-          import hashlib, json
-          apply=json.load(open('/tmp/sol62-wif/WIF_HARDEN_APPLY.json', encoding='utf-8'))
-          verify=json.load(open('/tmp/sol62-wif/WIF_HARDEN_VERIFY.json', encoding='utf-8'))
+          import hashlib, json, os
+          from pathlib import Path
+          d=Path('/tmp/sol62-wif')
+          apply=json.load(open(d/'WIF_HARDEN_APPLY.json', encoding='utf-8'))
+          verify=json.load(open(d/'WIF_HARDEN_VERIFY.json', encoding='utf-8'))
+          after=json.load(open(d/'PROJECT_IAM_POLICY_AFTER.json', encoding='utf-8'))
+          member='serviceAccount:'+os.environ['DEPLOYER_SA']
+          role=os.environ['TEMP_WIF_ROLE']
+          temp_role_remaining=any(
+              b.get('role')==role and member in (b.get('members') or [])
+              for b in after.get('bindings') or []
+          )
           assert apply.get('schema') == 'SOVARA_WIF_HARDENING_V1', apply
           assert apply.get('state') in {'APPLIED_AND_VERIFIED','ALREADY_HARDENED'}, apply
           assert verify.get('schema') == 'SOVARA_WIF_HARDENING_V1', verify
@@ -73,6 +182,7 @@ jobs:
           assert verify.get('exact_repository_id_binding_present') is True, verify
           assert verify.get('broad_repository_name_binding_present') is False, verify
           assert verify.get('required_mutations') == [], verify
+          assert temp_role_remaining is False, after
           for receipt in (apply, verify):
               assert receipt.get('service_account_created') is False, receipt
               assert receipt.get('secret_payload_accessed') is False, receipt
@@ -85,21 +195,25 @@ jobs:
             'provider_verify_receipt_sha256':verify['receipt_sha256'],
             'provider_apply_receipt_sha256':apply['receipt_sha256'],
             'provider_mutation_performed':bool(apply.get('mutation_performed', False)),
+            'temporary_wif_admin_role_added':True,
+            'temporary_wif_admin_role_revoked':True,
             'condition_match':True,
             'mapping_match':True,
             'exact_repository_id_binding_present':True,
             'broad_repository_name_binding_present':False,
             'secret_payload_accessed':False,
             'service_account_created':False,
+            'service_account_key_created':False,
             'model_inference_performed':False,
             'traffic_change_performed':False,
           }
           final['receipt_sha256']=hashlib.sha256(json.dumps(final,sort_keys=True,separators=(',',':')).encode()).hexdigest()
-          open('/tmp/sol62-wif/SOL62_WIF_HARDENING_RECEIPT.json','w',encoding='utf-8').write(json.dumps(final,indent=2,sort_keys=True)+'\n')
+          (d/'SOL62_WIF_HARDENING_RECEIPT.json').write_text(json.dumps(final,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           print(json.dumps(final, sort_keys=True))
           PY
 
       - name: Upload immutable redacted WIF receipts
+        if: ${{ always() }}
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sol62-wif-hardening-${{ github.run_id }}-${{ github.run_attempt }}
