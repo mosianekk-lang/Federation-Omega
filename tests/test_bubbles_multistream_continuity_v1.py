@@ -20,7 +20,14 @@ class MultistreamContinuityFabricTests(unittest.TestCase):
     def setUp(self) -> None:
         self.tmp = tempfile.TemporaryDirectory()
         self.db = Path(self.tmp.name) / "continuity.sqlite3"
-        self.fabric = MultistreamContinuityFabric(self.db)
+        self.fabric = MultistreamContinuityFabric(
+            self.db,
+            effect_permit_verifier=lambda ref, mission_id, lane_id: (
+                ref.startswith("permit://")
+                and bool(mission_id)
+                and bool(lane_id)
+            ),
+        )
 
     def tearDown(self) -> None:
         self.tmp.cleanup()
@@ -115,6 +122,9 @@ class MultistreamContinuityFabricTests(unittest.TestCase):
         self.fabric.lease_wave(worker_id="w", lease_seconds=5, now=1)
         self.fabric.reconcile_after_host_interrupt(now=7)
         self.fabric.record_effect_readback("e", effect_observed=False, now=8)
+        self.fabric.bind_effect_permit(
+            "e", "permit://retry-two", explicit=True, now=8.5
+        )
         leases = self.fabric.lease_wave(worker_id="w2", now=9)
         self.assertEqual(("e",), tuple(item.lane_id for item in leases))
         self.assertEqual(2, leases[0].attempt)
@@ -227,8 +237,21 @@ class MultistreamContinuityFabricTests(unittest.TestCase):
         self.fabric.add_command(self.command("b"), [self.lane("b", "independent")], now=0)
         leases = self.fabric.lease_wave(worker_id="w", max_lanes=2, now=1)
         self.assertEqual({"root", "independent"}, {item.lane_id for item in leases})
-        self.fabric.fail_lane("root", error="synthetic", worker_id="w", now=2)
-        self.fabric.complete_lane("independent", result_ref="proof://b", worker_id="w", now=2)
+        by_lane = {item.lane_id: item for item in leases}
+        self.fabric.fail_lane(
+            "root",
+            error="synthetic",
+            worker_id="w",
+            lease_token=by_lane["root"].lease_token,
+            now=2,
+        )
+        self.fabric.complete_lane(
+            "independent",
+            result_ref="proof://b",
+            worker_id="w",
+            lease_token=by_lane["independent"].lease_token,
+            now=2,
+        )
         self.fabric.reconcile_after_host_interrupt(now=3)
         states = {item["lane_id"]: item["state"] for item in self.fabric.snapshot()["lanes"]}
         self.assertEqual(ContinuityLaneState.BLOCKED.value, states["child"])
@@ -236,8 +259,14 @@ class MultistreamContinuityFabricTests(unittest.TestCase):
 
     def test_cross_process_reopen_preserves_streams_and_checkpoint(self) -> None:
         self.fabric.add_command(self.command("a"), [self.lane("a", "a1")], now=0)
-        self.fabric.lease_wave(worker_id="w", lease_seconds=5, now=1)
-        self.fabric.checkpoint_lane("a1", "checkpoint://1", worker_id="w", now=2)
+        lease = self.fabric.lease_wave(worker_id="w", lease_seconds=5, now=1)[0]
+        self.fabric.checkpoint_lane(
+            "a1",
+            "checkpoint://1",
+            worker_id="w",
+            lease_token=lease.lease_token,
+            now=2,
+        )
         reopened = MultistreamContinuityFabric(self.db)
         recovered = reopened.reconcile_after_host_interrupt(now=7)
         self.assertEqual(("a1",), recovered["recovered_ready"])
@@ -253,6 +282,73 @@ class MultistreamContinuityFabricTests(unittest.TestCase):
         bad = CommandEnvelope("a", "mission-a", intent_sha256("different"))
         with self.assertRaises(ValueError):
             self.fabric.add_command(bad, [], now=2)
+
+    def test_stale_lease_token_cannot_complete_recovered_lane(self) -> None:
+        self.fabric.add_command(self.command("a"), [self.lane("a", "a1")], now=0)
+        stale = self.fabric.lease_wave(
+            worker_id="w1", max_lanes=1, lease_seconds=5, now=1
+        )[0]
+        self.fabric.reconcile_after_host_interrupt(now=7)
+        current = self.fabric.lease_wave(
+            worker_id="w2", max_lanes=1, lease_seconds=20, now=8
+        )[0]
+        with self.assertRaises(PermissionError):
+            self.fabric.complete_lane(
+                "a1",
+                result_ref="proof://stale",
+                worker_id="w1",
+                lease_token=stale.lease_token,
+                now=9,
+            )
+        lane = self.fabric.snapshot()["lanes"][0]
+        self.assertEqual(ContinuityLaneState.RUNNING.value, lane["state"])
+        self.assertEqual("w2", lane["lease_owner"])
+        self.assertEqual(current.lease_generation, lane["lease_generation"])
+
+    def test_cancelled_lane_rejects_former_worker_completion(self) -> None:
+        self.fabric.add_command(self.command("a"), [self.lane("a", "a1")], now=0)
+        lease = self.fabric.lease_wave(worker_id="w", max_lanes=1, now=1)[0]
+        self.fabric.cancel_command("a", explicit=True, now=2)
+        with self.assertRaises(ValueError):
+            self.fabric.complete_lane(
+                "a1",
+                result_ref="proof://late",
+                worker_id="w",
+                lease_token=lease.lease_token,
+                now=3,
+            )
+        self.assertEqual(
+            ContinuityLaneState.CANCELLED.value,
+            self.fabric.snapshot()["lanes"][0]["state"],
+        )
+
+    def test_opaque_external_permit_is_not_authority_without_verifier(self) -> None:
+        isolated = MultistreamContinuityFabric(Path(self.tmp.name) / "opaque.sqlite3")
+        isolated.add_command(
+            self.command("opaque"),
+            [
+                self.lane(
+                    "opaque",
+                    "external",
+                    effect=EffectClass.REVERSIBLE_EXTERNAL,
+                    permit="anything-nonempty",
+                )
+            ],
+            now=0,
+        )
+        self.assertEqual((), isolated.lease_wave(worker_id="w", now=1))
+
+    def test_dependency_cycle_is_rejected_atomically(self) -> None:
+        with self.assertRaisesRegex(ValueError, "DEPENDENCY_CYCLE"):
+            self.fabric.add_command(
+                self.command("cycle"),
+                [
+                    self.lane("cycle", "a", deps=("b",)),
+                    self.lane("cycle", "b", deps=("a",)),
+                ],
+                now=0,
+            )
+        self.assertEqual([], self.fabric.snapshot()["commands"])
 
     def test_truth_boundary_never_claims_hidden_background_execution(self) -> None:
         receipt = self.fabric.receipt()
