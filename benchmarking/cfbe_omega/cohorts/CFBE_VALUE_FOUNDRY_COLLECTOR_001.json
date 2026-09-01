@@ -1,0 +1,25 @@
+{
+  "bindings": [],
+  "bound_directive_count": 0,
+  "cohort_id": "CFBE-VF-COHORT-001",
+  "cohort_receipt_sha256": "sha256:9982fc80d4f5413ea444554fbc8c8fad6f6696206bc2a81f5bcb095939bb4100",
+  "collected_observation_count": 0,
+  "collector_id": "CFBE-VALUE-FOUNDRY-PASSIVE-COLLECTOR-001",
+  "external_effect": false,
+  "observations": [],
+  "owner_value_proven": false,
+  "pair_ready_count": 0,
+  "provider_effect_authorized": false,
+  "provider_runtime_deployed": false,
+  "receipt_sha256": "sha256:d1dff8806efcac96f98a9de97dbab18030d209e4ac57e6161d1068d20b0a18f9",
+  "runtime_state": "SOURCE_ADAPTER_READY_NOT_DEPLOYED",
+  "schema": "CFBE-PASSIVE-OBSERVATION-COLLECTOR-V1",
+  "source_base_sha": "7cb7c960ef0ef220d12f858b7a1d7960cb9f9525",
+  "stable_promotion_allowed": false,
+  "truth_boundary": [
+    "This is a passive in-process adapter, not a watcher, scheduler, hook or deployed runtime.",
+    "Only real caller-supplied directives and measured observations with trusted receipts can enter state.",
+    "Binding and collection do not prove owner value; pair-ready records require separate Value Foundry evaluation.",
+    "No state transition can self-promote, deploy, authorize provider effects or claim external effect."
+  ]
+}
