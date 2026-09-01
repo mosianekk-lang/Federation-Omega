@@ -1,0 +1,31 @@
+{
+  "schema": "SLOS_HYPERPERFORMANCE_PROGRAMME_V1",
+  "version": "1.0.0",
+  "runtime_version": "3.3.0",
+  "status": "SOURCE_IMPLEMENTED_PENDING_ADMISSION",
+  "parallel_lanes": [
+    "MISSION_IR_COMPILER",
+    "FEDERATION_DIGITAL_TWIN",
+    "SHADOW_CHAMPION_CHALLENGER",
+    "EVIDENCE_DISTILLATION",
+    "ADMISSION_AND_PROOF"
+  ],
+  "hyperperformance_algorithms": [
+    "DEPENDENCY_AWARE_WAVE_SCHEDULING",
+    "LANE_PRIORITY_PLUS_UTILITY_RANKING",
+    "CRITICAL_PATH_EXTRACTION",
+    "RISK_PROOF_AUTHORITY_ROUTE_FILTERING",
+    "COMMON_MISSION_EMPIRICAL_SELECTION",
+    "CRYPTODIGEST_EVIDENCE_COMPRESSION"
+  ],
+  "authority_ceiling": "NO_PROVIDER_AUTHORITY_EXPANSION",
+  "provider_effects_enabled": false,
+  "automatic_stable_promotion": false,
+  "promotion_sequence": [
+    "SOURCE_IMPLEMENTED_PENDING_ADMISSION",
+    "DETERMINISTIC_TESTED",
+    "SHADOW_OPERATIONAL",
+    "EMPIRICAL_VALUE_VERIFIED_SCOPED"
+  ],
+  "truth_boundary": "This programme improves mission compilation, route synthesis, parallel scheduling, shadow evaluation and context efficiency. It does not grant provider authority, execute external effects or claim empirical superiority before real common-mission evidence exists."
+}
