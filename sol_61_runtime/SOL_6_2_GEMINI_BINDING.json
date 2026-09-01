@@ -1,0 +1,53 @@
+{
+  "schema": "SOL_6_2_GEMINI_BINDING_V1",
+  "version": "1.0.0",
+  "route_id": "SOL62-GEMINI-CONTROL-PLANE-001",
+  "provider_family": "GOOGLE_GEMINI_VERTEX",
+  "connection_mode": "READ_ONLY_CONTROL_PLANE",
+  "project_id": "sov-hybrid-suite",
+  "project_number": "257649435135",
+  "region": "africa-south1",
+  "workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+  "provider_request": "governance/sovara_gemini_collaboration_request_v1.json",
+  "live_provider_proof": {
+    "workflow_run_id": "33465835354",
+    "source_sha": "4381762481262321f712d71c1c09d9f530e04a7d",
+    "oidc_exchange_succeeded": true,
+    "active_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "adc_verified": true,
+    "missing_controls": [],
+    "private_gateway_canary_preflight_ready": true,
+    "hardened_wif_contract_verified": false,
+    "wif_contract_state": "DRIFT_DETECTED",
+    "provider_mutation_performed": false,
+    "model_inference_performed": false,
+    "secret_payload_accessed": false
+  },
+  "connection_state": "CONTROL_PLANE_AUTHENTICATED_INFERENCE_HELD",
+  "allowed_capabilities": [
+    "READ_PROJECT_METADATA",
+    "READ_WIF_PROVIDER_METADATA",
+    "VERIFY_ADC_RUNTIME_IDENTITY",
+    "READ_GEMINI_AUTHORITY_STATE"
+  ],
+  "blocked_capabilities": [
+    "MODEL_INFERENCE",
+    "PROVIDER_MUTATION",
+    "IAM_MUTATION",
+    "WIF_POLICY_MUTATION",
+    "DEPLOYMENT",
+    "TRAFFIC_PROMOTION",
+    "SECRET_VALUE_ACCESS"
+  ],
+  "promotion_gate": {
+    "required_connection_state": "INFERENCE_VERIFIED_SCOPED",
+    "requirements": [
+      "HARDENED_WIF_CONTRACT_VERIFIED",
+      "ADC_RUNTIME_IDENTITY_VERIFIED",
+      "PROVIDER_NATIVE_GEMINI_INFERENCE_RECEIPT",
+      "SEMANTIC_READBACK_VERIFIED",
+      "NO_CASE_DATA_PROCESSED"
+    ]
+  },
+  "truth_boundary": "SOL 6.2 is authenticated to the existing Google/Gemini control plane through short-lived WIF and the Gemini ADC runtime identity is provider-readback verified. The WIF provider trust condition remains broader than the hardened SOL execution contract, so model inference, provider mutation, deployment and traffic are fail-closed. This binding does not claim direct ChatGPT-to-Gemini UI access, provider-live Gemini inference, production deployment, continuous background execution or spend authority."
+}
