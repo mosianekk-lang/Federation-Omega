@@ -40,25 +40,33 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", self.workflow)
 
     def test_airlock_oidc_allowlist_is_exactly_scoped(self) -> None:
-        deployment_gateways = {
-            ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-            ".github/workflows/cios-production-lane.yml",
-            ".github/workflows/luno-observer-provider-binding.yml",
-            ".github/workflows/deploy-gemini-gateway.yml",
-        }
         credential_policy = self.policy["provider_credential_reference_policy"]
+        deployment_gateways = {
+            credential_policy["provider_deployment_workflow"],
+            credential_policy["luno_observer_deployment_workflow"],
+            credential_policy["gemini_provider_deployment_workflow"],
+            ".github/workflows/cios-production-lane.yml",
+        }
         g0_identity_probe = credential_policy["g0_identity_probe_workflow"]
         artifact_attestation = credential_policy["artifact_attestation_workflow"]
-        fhu047_repair = credential_policy["fhu047_one_use_repair_workflow"]
+        fhu047_workflows = {
+            value
+            for key, value in credential_policy.items()
+            if key.startswith("fhu047_") and key.endswith("_workflow")
+        }
         expected = deployment_gateways | {
             g0_identity_probe,
             artifact_attestation,
-            fhu047_repair,
-        }
+        } | fhu047_workflows
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
-        for workflow in (g0_identity_probe, artifact_attestation, fhu047_repair):
+
+        scoped_non_deployment = {g0_identity_probe, artifact_attestation} | fhu047_workflows
+        for workflow in scoped_non_deployment:
             self.assertIn(workflow, self.policy["active_workflow_allowlist"])
             self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
+
+        fhu047_repair = credential_policy["fhu047_one_use_repair_workflow"]
+        fhu047_census = credential_policy["fhu047_authority_graph_census_workflow"]
         self.assertEqual(
             [artifact_attestation],
             self.policy["attestations_write_workflow_allowlist"],
@@ -67,13 +75,9 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             [fhu047_repair],
             self.policy["provider_mutation_workflow_allowlist"],
         )
-        self.assertNotIn(g0_identity_probe, {
-            credential_policy["provider_deployment_workflow"],
-            credential_policy["luno_observer_deployment_workflow"],
-            credential_policy["gemini_provider_deployment_workflow"],
-            artifact_attestation,
-            fhu047_repair,
-        })
+        self.assertNotIn(fhu047_census, self.policy["provider_mutation_workflow_allowlist"])
+        self.assertNotIn(fhu047_census, self.policy["attestations_write_workflow_allowlist"])
+        self.assertNotIn(g0_identity_probe, deployment_gateways | {artifact_attestation} | fhu047_workflows)
         self.assertNotIn("oidc_boundary", self.policy)
         self.assertEqual(
             "QUARANTINED_SOURCE_WITH_EXACT_AIRLOCKED_PROVIDER_GATEWAYS",
