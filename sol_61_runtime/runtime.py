@@ -122,9 +122,8 @@ class SolRuntime:
     def register_mission(self, mission: Mission) -> dict[str, Any]:
         existing = self.state.missions.get(mission.mission_id)
         body = asdict(mission)
-        if existing and existing != body:
-            if mission.version <= int(existing["version"]):
-                raise ValueError("mission replacement requires a higher version")
+        if existing and existing != body and mission.version <= int(existing["version"]):
+            raise ValueError("mission replacement requires a higher version")
         self.append_event("MISSION_REGISTERED", body)
         return body
 
@@ -191,16 +190,42 @@ class SolRuntime:
         self.append_event("RECEIPT_RECORDED", receipt)
         return receipt
 
-    def evaluate_completion(self, workstream_id: str, contract: CompletionContract) -> dict[str, Any]:
-        present = {
-            row["receipt_type"]
-            for row in self.state.receipts.values()
-            if row["workstream_id"] == workstream_id
-        }
-        missing = sorted(set(contract.required_receipts) - present)
+    @staticmethod
+    def _receipt_validity(row: dict[str, Any], *, now_epoch: int, max_age_seconds: int) -> tuple[bool, str | None]:
+        observed = row.get("observed_at")
+        try:
+            observed_epoch = int(datetime.fromisoformat(str(observed).replace("Z", "+00:00")).timestamp())
+        except (TypeError, ValueError):
+            return False, "INVALID_TIMESTAMP"
+        age = now_epoch - observed_epoch
+        if age < -300:
+            return False, "FUTURE_RECEIPT"
+        if age > max_age_seconds:
+            return False, "STALE_RECEIPT"
+        expected_hash = digest({k: v for k, v in row.items() if k != "sha256"})
+        if row.get("sha256") != expected_hash:
+            return False, "RECEIPT_HASH_MISMATCH"
+        body = row.get("body")
+        if isinstance(body, dict) and body.get("pass") is False:
+            return False, "NEGATIVE_RECEIPT"
+        return True, None
+
+    def evaluate_completion(self, workstream_id: str, contract: CompletionContract, *, now_epoch: int | None = None) -> dict[str, Any]:
+        now_epoch = int(datetime.now(timezone.utc).timestamp()) if now_epoch is None else int(now_epoch)
+        valid_types: set[str] = set()
+        invalid: dict[str, list[str]] = {}
+        for row in self.state.receipts.values():
+            if row["workstream_id"] != workstream_id:
+                continue
+            valid, reason = self._receipt_validity(row, now_epoch=now_epoch, max_age_seconds=contract.max_receipt_age_seconds)
+            if valid:
+                valid_types.add(row["receipt_type"])
+            else:
+                invalid.setdefault(row["receipt_type"], []).append(str(reason))
+        missing = sorted(set(contract.required_receipts) - valid_types)
         state = "VERIFIED" if not missing else "PARTIALLY_VERIFIED"
-        self.append_event("COMPLETION_EVALUATED", {"workstream_id": workstream_id, "state": state, "missing": missing})
-        return {"workstream_id": workstream_id, "state": state, "missing": missing}
+        self.append_event("COMPLETION_EVALUATED", {"workstream_id": workstream_id, "state": state, "missing": missing, "invalid": invalid})
+        return {"workstream_id": workstream_id, "state": state, "missing": missing, "invalid": invalid}
 
     def checkpoint(self, mission_id: str) -> dict[str, Any]:
         payload = {
@@ -275,6 +300,8 @@ class SolRuntime:
         return [json.loads(line) for line in self.events.read_text(encoding="utf-8").splitlines() if line.strip()]
 
     def _replay(self) -> None:
+        if self.events.exists() and not self.verify_event_chain():
+            raise ValueError("EVENT_CHAIN_INVALID")
         self.state = RuntimeState()
         for event in self._events():
             self._apply(event)
@@ -299,8 +326,8 @@ class SolRuntime:
         elif kind == "POLICY_COMPILED":
             self.state.policies.append(payload)
         elif kind == "RELIABILITY_UPDATED":
-            action_class = payload.pop("action_class")
-            self.state.reliability[action_class] = payload
+            action_class = payload["action_class"]
+            self.state.reliability[action_class] = {k: v for k, v in payload.items() if k != "action_class"}
 
     def _persist(self) -> None:
         atomic_json(self.snapshot, asdict(self.state))
