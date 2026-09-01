@@ -790,6 +790,9 @@ def v4_capability_manifest() -> dict[str, object]:
         "v4_provider_effect_authority": False,
         "v4_stable_self_promotion": False,
         "forecast_truth_class": "HYPOTHESIS_ONLY",
+        "opportunity_exploitation_fabric": "BCO_PRIME_OPPORTUNITY_EXPLOITATION_FABRIC_V1",
+        "opportunity_upgrade_functions": 150,
+        "total_bound_zero_manual_functions": 250,
     }
 
 

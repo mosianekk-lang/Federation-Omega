@@ -609,4 +609,8 @@ def prime_capability_manifest() -> Mapping[str, object]:
         "capability_fabric": "BCO_PRIME_CAPABILITY_FABRIC_V1",
         "zero_manual_capability_functions": 100,
         "capability_fabric_external_effect_authority": False,
+        "opportunity_exploitation_fabric": "BCO_PRIME_OPPORTUNITY_EXPLOITATION_FABRIC_V1",
+        "opportunity_upgrade_functions": 150,
+        "total_zero_manual_functions": 250,
+        "opportunity_fabric_external_effect_authority": False,
     }
