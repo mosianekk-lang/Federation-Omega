@@ -40,7 +40,32 @@ class SovaraGeminiG0AuthorityCensusTests(unittest.TestCase):
         self.assertIn("'admin_authority_census_verified':census_ok", self.workflow)
         self.assertIn("'adc_gap_preserved':adc_gap_preserved", self.workflow)
         self.assertIn('.adc_verified == false and .adc_gap_preserved == true', self.workflow)
-        self.assertIn("expected Gemini ADC gaps remain explicitly unverified", self.workflow)
+        self.assertIn("expected Gemini ADC gaps remain", self.workflow)
+
+    def test_wif_contract_drift_is_diagnostic_not_verified(self) -> None:
+        self.assertIn("FEDOMEGA-WIF-CLOUD-DRIFT-OBSERVED", self.workflow)
+        self.assertIn("'hardened_contract_verified':contract_match", self.workflow)
+        self.assertIn("'wif_exchange_observed':wif_exchange_observed", self.workflow)
+        self.assertIn("'wif_contract_drift_preserved':wif_contract_drift_preserved", self.workflow)
+        self.assertIn(".wif_verified == false and .wif_exchange_observed == true and .wif_contract_drift_preserved == true", self.workflow)
+        self.assertIn("hardened WIF provider contract remains drifted and explicitly unverified", self.workflow)
+        self.assertIn("'g0_identity_adc_verified':wif_ok and adc_ok", self.workflow)
+
+    def test_wif_drift_escape_hatch_is_read_only_admin_census_only(self) -> None:
+        self.assertIn("os.environ.get('EXECUTION_SCOPE')=='G0_READ_ONLY_VERIFY'", self.workflow)
+        self.assertIn("request.get('g0_objective')=='ADMIN_AUTHORITY_GRAPH_CENSUS'", self.workflow)
+        self.assertIn("request.get('provider_mutation_allowed') is False", self.workflow)
+        self.assertIn("request.get('model_inference_allowed') is False", self.workflow)
+        self.assertIn("if not contract_match and not allow_read_only_drift:", self.workflow)
+
+    def test_hardened_expected_wif_contract_is_not_weakened(self) -> None:
+        self.assertIn("assertion.repository_id=='1292795464'", self.workflow)
+        self.assertIn("assertion.repository_owner_id=='261966700'", self.workflow)
+        self.assertIn("assertion.ref=='refs/heads/main'", self.workflow)
+        self.assertIn("assertion.job_workflow_ref=='mosianekk-lang/Federation-Omega/.github/workflows/sovara-litellm-v2-3-provider-admission.yml@refs/heads/main'", self.workflow)
+        self.assertIn("(assertion.event_name=='workflow_dispatch' || assertion.event_name=='push')", self.workflow)
+        self.assertIn("'attribute.repository_id':'assertion.repository_id'", self.workflow)
+        self.assertIn("'attribute.workflow_ref':'assertion.job_workflow_ref'", self.workflow)
 
     def test_legacy_g0_adc_verification_gate_is_preserved(self) -> None:
         self.assertIn('.adc_verified == true and .adc_apply_mutation_performed == false', self.workflow)
