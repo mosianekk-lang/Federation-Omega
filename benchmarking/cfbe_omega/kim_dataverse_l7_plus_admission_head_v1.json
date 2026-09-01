@@ -1,0 +1,6 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_ADMISSION_HEAD_V1",
+  "head": "6ae86d81572d2343e532ab38eb56d8df63f16ac6",
+  "pr": 1022,
+  "state": "FEATURE_FROZEN_AWAITING_CI"
+}
