@@ -9,13 +9,15 @@ import unittest
 from pathlib import Path
 
 try:
-    from .sol_62_frontier_primitives import GatewayPolicy, ProofEnvelope, WorkloadIdentityPolicy, digest, utc_now
-    from .sol_62_runtime import ExecutionIntent, MissionSpec, Sol62Runtime, TransitionSpec
-    from . import test_sol_62_runtime as test_module
+    from .sol_62 import GatewayPolicy, ProofEnvelope, WorkloadIdentityPolicy, digest, utc_now
+    from .sol_62 import ExecutionIntent, MissionSpec, Sol62Runtime, TransitionSpec
+    from . import test_sol_62_runtime as base_test_module
+    from . import test_sol_62_strict_runtime as strict_test_module
 except ImportError:
-    from sol_62_frontier_primitives import GatewayPolicy, ProofEnvelope, WorkloadIdentityPolicy, digest, utc_now
-    from sol_62_runtime import ExecutionIntent, MissionSpec, Sol62Runtime, TransitionSpec
-    import test_sol_62_runtime as test_module
+    from sol_62 import GatewayPolicy, ProofEnvelope, WorkloadIdentityPolicy, digest, utc_now
+    from sol_62 import ExecutionIntent, MissionSpec, Sol62Runtime, TransitionSpec
+    import test_sol_62_runtime as base_test_module
+    import test_sol_62_strict_runtime as strict_test_module
 
 
 def _runtime(root: Path) -> Sol62Runtime:
@@ -45,7 +47,9 @@ def _claims(now: int) -> dict:
 def run(output: Path) -> dict:
     output.mkdir(parents=True, exist_ok=True)
     stream = io.StringIO()
-    suite = unittest.defaultTestLoader.loadTestsFromModule(test_module)
+    suite = unittest.TestSuite()
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(base_test_module))
+    suite.addTests(unittest.defaultTestLoader.loadTestsFromModule(strict_test_module))
     tests = unittest.TextTestRunner(stream=stream, verbosity=1).run(suite)
     if not tests.wasSuccessful():
         raise AssertionError(stream.getvalue())
@@ -60,6 +64,7 @@ def run(output: Path) -> dict:
             "target": "repo/main",
             "operation": "publish",
             "source_version": "abc",
+            "accepted_evidence_classes": ["DETERMINISTIC"],
         }
         rt.register_mission(
             MissionSpec(
@@ -124,10 +129,11 @@ def run(output: Path) -> dict:
             subject="transition:publish",
             target="repo/main",
             operation="publish",
-            issuer="reference-provider",
+            issuer="reference-court",
             source_version="abc",
             evidence=evidence,
             max_age_seconds=600,
+            evidence_class="DETERMINISTIC",
         )
         rt.register_verified_proof(
             proof,
@@ -141,12 +147,7 @@ def run(output: Path) -> dict:
             now_epoch=now,
             satisfied_constraints=set(),
         )
-        closure = rt.evaluate_mission(
-            "smoke",
-            proof_ids=["smoke-proof"],
-            now_epoch=now,
-            satisfied_constraints=set(),
-        )
+        closure = committed["mission_closure"]
         integrity = rt.verify_integrity()
         rt.close()
 
@@ -158,16 +159,18 @@ def run(output: Path) -> dict:
             satisfied_constraints=set(),
         )
         resumed_integrity = resumed.verify_integrity()
+        frozen_ready = resumed.ready_transitions("smoke", satisfied_constraints=set())
         resumed.close()
 
     gates = {
-        "adversarial_unit_court": tests.testsRun >= 10 and tests.wasSuccessful(),
+        "adversarial_unit_court": tests.testsRun >= 15 and tests.wasSuccessful(),
         "state_transition_planning": ready == ["publish"],
         "transactional_effect_preparation": prepared["state"] == "PREPARED",
         "fenced_dispatch": fence["fencing_token"] >= 1,
         "provider_readback": readback["match"],
         "proof_gated_commit": committed["state"] == "VERIFIED",
         "observed_reality_closure": closure["state"] == "VERIFIED_REALITY",
+        "verified_reality_execution_freeze": frozen_ready == [],
         "event_chain_integrity": integrity["event_chain_valid"],
         "restart_integrity": resumed_integrity["event_chain_valid"],
         "restart_reality_closure": resumed_closure["state"] == "VERIFIED_REALITY",
@@ -183,6 +186,7 @@ def run(output: Path) -> dict:
             "source_runtime_implemented": True,
             "deterministic_reference_proof": True,
             "transactional_single_shared_filesystem": True,
+            "provider_effect_proof_binding_enforced_in_reference_runtime": True,
             "multi_region_consensus": False,
             "provider_live_production_cutover": False,
             "provider_identity_inherited": False,
