@@ -1,0 +1,42 @@
+{
+  "schema": "CFBE_FEDERATION_SCIENTIFIC_FITNESS_SNAPSHOT_V1",
+  "source_main_sha": "0b359d501450c9875c336862249a87531c84d67d",
+  "observed_at_sast": "2026-09-01T05:54:15+02:00",
+  "owner_value_pair_count_observed": 0,
+  "owner_value_pair_minimum": 10,
+  "evidence_refs": [
+    "KDV:OWNER_VALUE_MISSION_OBSERVATIONS:EMPTY",
+    "KDV:OWNER_VALUE_PAIR_RECEIPTS:EMPTY",
+    "SYNCBUS:Systems:CURRENT",
+    "SYNCBUS:Estate Truth Map:CURRENT",
+    "PR#994:MERGED",
+    "MAIN:0b359d501450c9875c336862249a87531c84d67d"
+  ],
+  "system_observations": [
+    {"system_id":"BUBBLES","role":"orchestration","semantic_cluster":"ORCHESTRATION","current_projection_verified":true,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":1.0,"dependency_ids":["KDV","CFBE"],"proof_refs":["SYNCBUS:Systems:Bubbles"]},
+    {"system_id":"FORMATION_OMEGA","role":"formation","semantic_cluster":"ORCHESTRATION","current_projection_verified":false,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":0,"complexity_cost":1.2,"dependency_ids":["KDV"],"proof_refs":["SYNCBUS:Systems:Formation-Omega"]},
+    {"system_id":"OMEGA_ONE","role":"scheduler","semantic_cluster":"ORCHESTRATION","current_projection_verified":false,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":0,"complexity_cost":1.2,"dependency_ids":["CFBE"],"proof_refs":["SYNCBUS:Systems:Omega-One"]},
+    {"system_id":"JARVIS","role":"independent assurance","semantic_cluster":"ASSURANCE","current_projection_verified":false,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":0,"complexity_cost":0.9,"dependency_ids":["KDV"],"independent_assurance_role":true,"proof_refs":["SYNCBUS:Systems:JARVIS"]},
+    {"system_id":"REALITY_GUARD","role":"truth/failure guard","semantic_cluster":"ASSURANCE","current_projection_verified":true,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":0.8,"dependency_ids":["KDV"],"independent_assurance_role":true,"proof_refs":["SYNCBUS:Systems:RealityGuard"]},
+    {"system_id":"PROOFOS","role":"proof selection","semantic_cluster":"ASSURANCE","current_projection_verified":true,"proof_state":"SOURCE_PROVEN","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":0.8,"dependency_ids":["KDV"],"proof_refs":["MAIN:ProofOS"]},
+    {"system_id":"KDV","role":"canonical state","semantic_cluster":"STATE_MEMORY","current_projection_verified":true,"proof_state":"PROVEN_BOUNDED","provider_runtime_proven":true,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":1.0,"dependency_ids":[],"proof_refs":["KDV:BRIDGE_BOUND_WRITE_READBACK_VERIFIED"]},
+    {"system_id":"CFBE","role":"benchmark governor","semantic_cluster":"EVALUATION","current_projection_verified":true,"proof_state":"SOURCE_PROVEN","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":1.0,"dependency_ids":["KDV"],"proof_refs":["PR#994","MAIN:Wave2"]},
+    {"system_id":"SENTINEL","role":"freshness observer","semantic_cluster":"OBSERVABILITY","current_projection_verified":true,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":0.8,"dependency_ids":["KDV"],"independent_assurance_role":true,"proof_refs":["SYNCBUS:Systems:Sentinel"]},
+    {"system_id":"FAILURE_WIN_AUTOFIX","role":"recovery","semantic_cluster":"RECOVERY","current_projection_verified":true,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":0.9,"dependency_ids":["KDV"],"proof_refs":["SYNCBUS:Systems:Omega-AutoFIX"]},
+    {"system_id":"SOVARA","role":"effect authority","semantic_cluster":"EXECUTION_AUTHORITY","current_projection_verified":true,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":1,"complexity_cost":1.0,"dependency_ids":["KDV","CFBE"],"proof_refs":["SYNCBUS:Systems:SOVARA"]},
+    {"system_id":"CHATBRIDGE","role":"continuity","semantic_cluster":"CONTINUITY","current_projection_verified":false,"proof_state":"PARTIAL","provider_runtime_proven":false,"owner_value_pairs":0,"invocation_evidence_count":0,"complexity_cost":1.1,"dependency_ids":["KDV"],"proof_refs":["SYNCBUS:Systems:ChatBridge"]}
+  ],
+  "preregistered_experiment_ids": [
+    "EXP-CFBE-FIT-001","EXP-CFBE-FIT-002","EXP-CFBE-FIT-003","EXP-CFBE-FIT-004",
+    "EXP-CFBE-FIT-005","EXP-CFBE-FIT-006","EXP-CFBE-FIT-007","EXP-CFBE-FIT-008",
+    "EXP-CFBE-FIT-009","EXP-CFBE-FIT-010","EXP-CFBE-FIT-011","EXP-CFBE-FIT-012"
+  ],
+  "truth_boundary": {
+    "zero_owner_value_pairs_means_zero_value": false,
+    "structural_overlap_authorizes_merge": false,
+    "provider_expansion_authorized": false,
+    "new_top_level_system_required": false,
+    "stable_promotion_authorized": false,
+    "all_experiments_initially_no_effect": true
+  }
+}
