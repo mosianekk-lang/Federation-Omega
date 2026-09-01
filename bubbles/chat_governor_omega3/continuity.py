@@ -22,7 +22,7 @@ import time
 from dataclasses import asdict, dataclass
 from enum import Enum
 from pathlib import Path
-from typing import Iterable, Sequence
+from typing import Callable, Iterable, Sequence
 
 
 SCHEMA = "BUBBLES_CFBE_NONINTERRUPTING_MULTISTREAM_V1"
@@ -117,6 +117,8 @@ class LaneLease:
     lease_expires_at: float
     checkpoint_ref: str
     attempt: int
+    lease_generation: int
+    lease_token: str
 
 
 @dataclass(frozen=True, slots=True)
@@ -151,8 +153,14 @@ class MultistreamContinuityFabric:
       possible prior effect is never repeated without semantic readback.
     """
 
-    def __init__(self, db_path: str | Path) -> None:
+    def __init__(
+        self,
+        db_path: str | Path,
+        *,
+        effect_permit_verifier: Callable[[str, str, str], bool] | None = None,
+    ) -> None:
         self.db_path = str(db_path)
+        self.effect_permit_verifier = effect_permit_verifier
         self._bootstrap()
 
     def _connect(self) -> sqlite3.Connection:
@@ -194,6 +202,9 @@ class MultistreamContinuityFabric:
                 error TEXT NOT NULL,
                 priority_delta REAL NOT NULL,
                 attempt INTEGER NOT NULL,
+                lease_generation INTEGER NOT NULL DEFAULT 0,
+                lease_token TEXT NOT NULL DEFAULT '',
+                effect_permit_consumed INTEGER NOT NULL DEFAULT 0,
                 lease_owner TEXT,
                 lease_expires_at REAL,
                 created_at REAL NOT NULL,
@@ -208,7 +219,41 @@ class MultistreamContinuityFabric:
                 ON continuity_lanes(state, lease_expires_at);
             """
         )
+        existing = {
+            row["name"]
+            for row in conn.execute("PRAGMA table_info(continuity_lanes)").fetchall()
+        }
+        migrations = {
+            "lease_generation": "INTEGER NOT NULL DEFAULT 0",
+            "lease_token": "TEXT NOT NULL DEFAULT ''",
+            "effect_permit_consumed": "INTEGER NOT NULL DEFAULT 0",
+        }
+        for column, declaration in migrations.items():
+            if column not in existing:
+                conn.execute(
+                    f"ALTER TABLE continuity_lanes ADD COLUMN {column} {declaration}"
+                )
         conn.close()
+
+    @staticmethod
+    def _assert_acyclic(graph: dict[str, tuple[str, ...]]) -> None:
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(node: str) -> None:
+            if node in visiting:
+                raise ValueError(f"DEPENDENCY_CYCLE:{node}")
+            if node in visited:
+                return
+            visiting.add(node)
+            for dependency in graph.get(node, ()):
+                if dependency in graph:
+                    visit(dependency)
+            visiting.remove(node)
+            visited.add(node)
+
+        for lane_id in graph:
+            visit(lane_id)
 
     def add_command(
         self,
@@ -264,27 +309,33 @@ class MultistreamContinuityFabric:
                     when,
                 ),
             )
+            existing_lanes = conn.execute(
+                "SELECT lane_id,dependencies_json FROM continuity_lanes"
+            ).fetchall()
+            known_ids = {row["lane_id"] for row in existing_lanes} | set(lane_ids)
             for lane in lanes:
                 missing = [
-                    dep
-                    for dep in lane.dependencies
-                    if dep not in lane_ids
-                    and conn.execute(
-                        "SELECT 1 FROM continuity_lanes WHERE lane_id=?", (dep,)
-                    ).fetchone()
-                    is None
+                    dep for dep in lane.dependencies if dep not in known_ids
                 ]
                 if missing:
                     raise ValueError(
                         f"UNKNOWN_LANE_DEPENDENCIES:{lane.lane_id}:{','.join(missing)}"
                     )
+            graph = {
+                row["lane_id"]: tuple(json.loads(row["dependencies_json"]))
+                for row in existing_lanes
+            }
+            graph.update({lane.lane_id: tuple(lane.dependencies) for lane in lanes})
+            self._assert_acyclic(graph)
+
+            for lane in lanes:
                 conn.execute(
                     """INSERT INTO continuity_lanes
                        (lane_id,command_id,mission_id,path_id,path_role,dependencies_json,
                         concurrency_group,effect_class,effect_permit_ref,state,checkpoint_ref,
-                        result_ref,error,priority_delta,attempt,lease_owner,lease_expires_at,
-                        created_at,updated_at)
-                       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
+                        result_ref,error,priority_delta,attempt,lease_generation,lease_token,
+                        effect_permit_consumed,lease_owner,lease_expires_at,created_at,updated_at)
+                       VALUES(?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?,?)""",
                     (
                         lane.lane_id,
                         lane.command_id,
@@ -300,6 +351,9 @@ class MultistreamContinuityFabric:
                         "",
                         "",
                         float(lane.priority_delta),
+                        0,
+                        0,
+                        "",
                         0,
                         None,
                         None,
@@ -375,7 +429,7 @@ class MultistreamContinuityFabric:
                 )
                 conn.execute(
                     """UPDATE continuity_lanes
-                       SET state=?,lease_owner=NULL,lease_expires_at=NULL,updated_at=?
+                       SET state=?,lease_owner=NULL,lease_expires_at=NULL,lease_token='',updated_at=?
                        WHERE lane_id=?""",
                     (next_state, when, lane["lane_id"]),
                 )
@@ -445,7 +499,7 @@ class MultistreamContinuityFabric:
                     readback_hold.append(row["lane_id"])
                 conn.execute(
                     """UPDATE continuity_lanes SET state=?,lease_owner=NULL,
-                       lease_expires_at=NULL,updated_at=? WHERE lane_id=?""",
+                       lease_expires_at=NULL,lease_token='',updated_at=? WHERE lane_id=?""",
                     (state, when, row["lane_id"]),
                 )
             self._reconcile_dependency_blocks(conn, when)
@@ -546,7 +600,11 @@ class MultistreamContinuityFabric:
                 effect = EffectClass(row["effect_class"])
                 if effect == EffectClass.HIGH_CONSEQUENCE:
                     continue
-                if effect == EffectClass.REVERSIBLE_EXTERNAL and not row["effect_permit_ref"]:
+                if effect == EffectClass.REVERSIBLE_EXTERNAL and (
+                    not row["effect_permit_ref"]
+                    or int(row["effect_permit_consumed"])
+                    or self.effect_permit_verifier is None
+                ):
                     continue
                 age_minutes = max(0.0, (when - float(row["created_at"])) / 60.0)
                 score = (
@@ -572,6 +630,10 @@ class MultistreamContinuityFabric:
                     effect = EffectClass(row["effect_class"])
                     if effect == EffectClass.REVERSIBLE_EXTERNAL and external_effect_selected:
                         continue
+                    if effect == EffectClass.REVERSIBLE_EXTERNAL and not self.effect_permit_verifier(
+                        row["effect_permit_ref"], row["mission_id"], row["lane_id"]
+                    ):
+                        continue
                     selected.append(row)
                     per_command[command_id] = per_command.get(command_id, 0) + 1
                     if group:
@@ -587,20 +649,35 @@ class MultistreamContinuityFabric:
             leases: list[LaneLease] = []
             for row in selected:
                 attempt = int(row["attempt"]) + 1
+                generation = int(row["lease_generation"]) + 1
                 expires = when + lease_seconds
-                conn.execute(
-                    """UPDATE continuity_lanes SET state=?,attempt=?,lease_owner=?,
-                       lease_expires_at=?,updated_at=? WHERE lane_id=? AND state=?""",
+                lease_token = hashlib.sha256(
+                    (
+                        f"{row['lane_id']}|{row['mission_id']}|{worker_id}|"
+                        f"{attempt}|{generation}|{when}|{expires}"
+                    ).encode("utf-8")
+                ).hexdigest()
+                cursor = conn.execute(
+                    """UPDATE continuity_lanes SET state=?,attempt=?,lease_generation=?,
+                       lease_token=?,lease_owner=?,lease_expires_at=?,
+                       effect_permit_consumed=CASE
+                           WHEN effect_class=? THEN 1 ELSE effect_permit_consumed END,
+                       updated_at=? WHERE lane_id=? AND state=?""",
                     (
                         ContinuityLaneState.RUNNING.value,
                         attempt,
+                        generation,
+                        lease_token,
                         worker_id,
                         expires,
+                        EffectClass.REVERSIBLE_EXTERNAL.value,
                         when,
                         row["lane_id"],
                         ContinuityLaneState.READY.value,
                     ),
                 )
+                if cursor.rowcount != 1:
+                    raise RuntimeError("LANE_LEASE_COMPARE_AND_SET_FAILED")
                 leases.append(
                     LaneLease(
                         lane_id=row["lane_id"],
@@ -613,6 +690,8 @@ class MultistreamContinuityFabric:
                         lease_expires_at=expires,
                         checkpoint_ref=row["checkpoint_ref"],
                         attempt=attempt,
+                        lease_generation=generation,
+                        lease_token=lease_token,
                     )
                 )
             conn.execute("COMMIT")
@@ -631,7 +710,8 @@ class MultistreamContinuityFabric:
         lane_id: str,
         checkpoint_ref: str,
         *,
-        worker_id: str | None = None,
+        worker_id: str,
+        lease_token: str,
         extend_lease_seconds: float | None = None,
         now: float | None = None,
     ) -> None:
@@ -641,22 +721,26 @@ class MultistreamContinuityFabric:
         conn = self._connect()
         try:
             row = conn.execute(
-                "SELECT lease_owner,lease_expires_at FROM continuity_lanes WHERE lane_id=?",
+                """SELECT state,lease_owner,lease_expires_at,lease_token
+                   FROM continuity_lanes WHERE lane_id=?""",
                 (lane_id,),
             ).fetchone()
-            if row is None:
-                raise KeyError(lane_id)
-            if worker_id is not None and row["lease_owner"] not in {None, worker_id}:
-                raise PermissionError("LANE_LEASE_OWNER_MISMATCH")
+            self._require_current_lease(row, lane_id, worker_id, lease_token, when)
             expires = row["lease_expires_at"]
             if extend_lease_seconds is not None:
                 if extend_lease_seconds <= 0:
                     raise ValueError("LEASE_EXTENSION_MUST_BE_POSITIVE")
                 expires = when + extend_lease_seconds
-            conn.execute(
-                "UPDATE continuity_lanes SET checkpoint_ref=?,lease_expires_at=?,updated_at=? WHERE lane_id=?",
-                (checkpoint_ref, expires, when, lane_id),
+            cursor = conn.execute(
+                """UPDATE continuity_lanes SET checkpoint_ref=?,lease_expires_at=?,updated_at=?
+                   WHERE lane_id=? AND state=? AND lease_owner=? AND lease_token=?""",
+                (
+                    checkpoint_ref, expires, when, lane_id,
+                    ContinuityLaneState.RUNNING.value, worker_id, lease_token,
+                ),
             )
+            if cursor.rowcount != 1:
+                raise RuntimeError("LANE_CHECKPOINT_COMPARE_AND_SET_FAILED")
         finally:
             conn.close()
 
@@ -665,7 +749,8 @@ class MultistreamContinuityFabric:
         lane_id: str,
         *,
         result_ref: str,
-        worker_id: str | None = None,
+        worker_id: str,
+        lease_token: str,
         now: float | None = None,
     ) -> None:
         if not result_ref.strip():
@@ -676,6 +761,7 @@ class MultistreamContinuityFabric:
             result_ref=result_ref,
             error="",
             worker_id=worker_id,
+            lease_token=lease_token,
             now=now,
         )
         self._complete_empty_commands(now=now)
@@ -685,7 +771,8 @@ class MultistreamContinuityFabric:
         lane_id: str,
         *,
         error: str,
-        worker_id: str | None = None,
+        worker_id: str,
+        lease_token: str,
         now: float | None = None,
     ) -> None:
         self._finish_lane(
@@ -694,6 +781,7 @@ class MultistreamContinuityFabric:
             result_ref="",
             error=error or "LANE_FAILED",
             worker_id=worker_id,
+            lease_token=lease_token,
             now=now,
         )
 
@@ -704,23 +792,82 @@ class MultistreamContinuityFabric:
         *,
         result_ref: str,
         error: str,
-        worker_id: str | None,
+        worker_id: str,
+        lease_token: str,
         now: float | None,
     ) -> None:
         when = time.time() if now is None else float(now)
         conn = self._connect()
         try:
             row = conn.execute(
-                "SELECT lease_owner FROM continuity_lanes WHERE lane_id=?", (lane_id,)
+                """SELECT state,lease_owner,lease_expires_at,lease_token
+                   FROM continuity_lanes WHERE lane_id=?""", (lane_id,)
+            ).fetchone()
+            self._require_current_lease(row, lane_id, worker_id, lease_token, when)
+            cursor = conn.execute(
+                """UPDATE continuity_lanes SET state=?,result_ref=?,error=?,
+                   lease_owner=NULL,lease_expires_at=NULL,lease_token='',updated_at=?
+                   WHERE lane_id=? AND state=? AND lease_owner=? AND lease_token=?""",
+                (
+                    state.value, result_ref, error[:2000], when, lane_id,
+                    ContinuityLaneState.RUNNING.value, worker_id, lease_token,
+                ),
+            )
+            if cursor.rowcount != 1:
+                raise RuntimeError("LANE_FINISH_COMPARE_AND_SET_FAILED")
+        finally:
+            conn.close()
+
+    @staticmethod
+    def _require_current_lease(
+        row: sqlite3.Row | None,
+        lane_id: str,
+        worker_id: str,
+        lease_token: str,
+        when: float,
+    ) -> None:
+        if row is None:
+            raise KeyError(lane_id)
+        if row["state"] != ContinuityLaneState.RUNNING.value:
+            raise ValueError("LANE_NOT_RUNNING")
+        if not worker_id or row["lease_owner"] != worker_id:
+            raise PermissionError("LANE_LEASE_OWNER_MISMATCH")
+        if not lease_token or row["lease_token"] != lease_token:
+            raise PermissionError("LANE_LEASE_TOKEN_MISMATCH")
+        if row["lease_expires_at"] is None or float(row["lease_expires_at"]) <= when:
+            raise PermissionError("LANE_LEASE_EXPIRED")
+
+    def bind_effect_permit(
+        self,
+        lane_id: str,
+        permit_ref: str,
+        *,
+        explicit: bool = False,
+        now: float | None = None,
+    ) -> None:
+        self._require_explicit(explicit)
+        if not permit_ref.strip():
+            raise ValueError("EFFECT_PERMIT_REF_REQUIRED")
+        when = time.time() if now is None else float(now)
+        conn = self._connect()
+        try:
+            row = conn.execute(
+                "SELECT state,effect_class FROM continuity_lanes WHERE lane_id=?",
+                (lane_id,),
             ).fetchone()
             if row is None:
                 raise KeyError(lane_id)
-            if worker_id is not None and row["lease_owner"] not in {None, worker_id}:
-                raise PermissionError("LANE_LEASE_OWNER_MISMATCH")
+            if EffectClass(row["effect_class"]) != EffectClass.REVERSIBLE_EXTERNAL:
+                raise ValueError("LANE_NOT_REVERSIBLE_EXTERNAL")
+            if row["state"] not in {
+                ContinuityLaneState.READY.value,
+                ContinuityLaneState.HOLD_READBACK.value,
+            }:
+                raise ValueError("LANE_NOT_ELIGIBLE_FOR_EFFECT_PERMIT")
             conn.execute(
-                """UPDATE continuity_lanes SET state=?,result_ref=?,error=?,
-                   lease_owner=NULL,lease_expires_at=NULL,updated_at=? WHERE lane_id=?""",
-                (state.value, result_ref, error[:2000], when, lane_id),
+                """UPDATE continuity_lanes SET effect_permit_ref=?,
+                   effect_permit_consumed=0,updated_at=? WHERE lane_id=?""",
+                (permit_ref, when, lane_id),
             )
         finally:
             conn.close()
@@ -761,7 +908,8 @@ class MultistreamContinuityFabric:
                 new_result = ""
             conn.execute(
                 """UPDATE continuity_lanes SET state=?,result_ref=?,error='',
-                   lease_owner=NULL,lease_expires_at=NULL,updated_at=? WHERE lane_id=?""",
+                   lease_owner=NULL,lease_expires_at=NULL,lease_token='',updated_at=?
+                   WHERE lane_id=?""",
                 (new_state, new_result, when, lane_id),
             )
         finally:
@@ -795,7 +943,7 @@ class MultistreamContinuityFabric:
                     holds.append(row["lane_id"])
                 conn.execute(
                     """UPDATE continuity_lanes SET state=?,lease_owner=NULL,
-                       lease_expires_at=NULL,updated_at=? WHERE lane_id=?""",
+                       lease_expires_at=NULL,lease_token='',updated_at=? WHERE lane_id=?""",
                     (state, when, row["lane_id"]),
                 )
             conn.execute("COMMIT")
@@ -853,7 +1001,8 @@ class MultistreamContinuityFabric:
             for row in conn.execute(
                 """SELECT lane_id,command_id,mission_id,path_id,path_role,dependencies_json,
                           concurrency_group,effect_class,state,checkpoint_ref,result_ref,error,
-                          priority_delta,attempt,lease_owner,lease_expires_at,created_at,updated_at
+                          priority_delta,attempt,lease_generation,effect_permit_consumed,
+                          lease_owner,lease_expires_at,created_at,updated_at
                    FROM continuity_lanes ORDER BY created_at,lane_id"""
             ).fetchall():
                 item = dict(row)
