@@ -50,13 +50,22 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         g0_identity_probe = credential_policy["g0_identity_probe_workflow"]
         artifact_attestation = credential_policy["artifact_attestation_workflow"]
         fhu047_repair = credential_policy["fhu047_one_use_repair_workflow"]
+        fhu047_authority_census = credential_policy[
+            "fhu047_authority_graph_census_workflow"
+        ]
         expected = deployment_gateways | {
             g0_identity_probe,
             artifact_attestation,
             fhu047_repair,
+            fhu047_authority_census,
         }
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
-        for workflow in (g0_identity_probe, artifact_attestation, fhu047_repair):
+        for workflow in (
+            g0_identity_probe,
+            artifact_attestation,
+            fhu047_repair,
+            fhu047_authority_census,
+        ):
             self.assertIn(workflow, self.policy["active_workflow_allowlist"])
             self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
         self.assertEqual(
