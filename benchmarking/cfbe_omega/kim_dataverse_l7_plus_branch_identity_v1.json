@@ -1,7 +1,0 @@
-{
-  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_BRANCH_IDENTITY_V1",
-  "branch": "cfbe/l7-institutional-intelligence-v1-20260901",
-  "pr": 1022,
-  "programme_issue": 1019,
-  "truth_boundary": "branch source is candidate only until exact-head blocking courts and fresh-main readback pass"
-}
