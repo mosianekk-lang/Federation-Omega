@@ -1,23 +1,34 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "CFBE-GEMINI-REPAIR-20260830-001",
-  "mode": "G2_CREATIVE_ARCHITECTURE_CHALLENGE",
+  "request_id": "SSX-G0-PROVIDER-CENSUS-20260901-001",
+  "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
   "case_data_allowed": false,
   "provider_mutation_allowed": false,
-  "model_inference_allowed": true,
+  "model_inference_allowed": false,
   "external_communication_allowed": false,
   "expected_project_id": "sov-hybrid-suite",
   "expected_project_number": "257649435135",
   "expected_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
-  "transport": "OPENROUTER",
-  "model": "google/gemini-3.1-pro-preview",
-  "challenge_spec": "governance/sovara_creative_gemini_architecture_challenge_v1.json",
-  "max_output_tokens": 4200,
-  "purpose": "Run one bounded sanitized Gemini inference as an independent debugging challenger for CFBE-Omega Convergence Fabric PR #814 and current-main Phoenix admission debt. The output is proposal-only and must be reconciled against deterministic tests, current-main baselines, CFBE and ProofOS before any source repair is promoted.",
-  "truth_boundary": "One proposal-only Gemini inference. No IAM/WIF/API mutation, secret access, deployment, production traffic, external communication, publication, live financial effect, automatic source mutation, or automatic promotion. Gemini advice is evidence input only; exact-head tests and provider/source readback remain authoritative.",
-  "verification_epoch": "POST_DYNAMIC_VERIFIER_REPAIR_20260830T121300Z",
-  "verification_source_main": "ebe90ec7dd2da5f37c698c22b6ebbadd1d85bfc5",
-  "verification_objective": "Prove end-to-end G2 workflow verification after the dynamic challenge-identity verifier repair; proposal-only and no provider mutation."
+  "g0_objective": "ADMIN_AUTHORITY_GRAPH_CENSUS",
+  "expected_missing_adc_controls": [
+    "aiplatform_user_binding",
+    "service_usage_consumer_binding",
+    "deployer_cloud_run_developer_binding"
+  ],
+  "prior_provider_evidence": {
+    "run_id": "33267811046",
+    "source_sha": "efd8e2df237f0f14d2c66224a1c815095032dd2f",
+    "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
+    "runtime_service_account_exists": true,
+    "deployer_service_account_user": true,
+    "missing_controls": [
+      "aiplatform_user_binding",
+      "service_usage_consumer_binding",
+      "deployer_cloud_run_developer_binding"
+    ]
+  },
+  "purpose": "Refresh the exact repository-scoped Google WIF identity and run a read-only Google/Gemini project IAM authority census against current SOVARA x SOL 6.2 serving main. Preserve the exact ADC gap set as evidence and determine whether provider state changed before any provider mutation is considered.",
+  "truth_boundary": "Read-only verification only. No IAM or API mutation, service-account creation, WIF trust expansion, key creation, secret access, model inference, case-data processing, image build, deployment, traffic change, external communication, publication, spend, destructive effect, stable promotion or full-autopilot claim is authorized. If the observed provider state differs from the expected gap set, fail closed and preserve the new readback as the next truth input."
 }
