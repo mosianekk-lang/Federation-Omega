@@ -143,6 +143,9 @@ class AutoPilotOperationalWitnessFabricTests(unittest.TestCase):
         self.assertFalse(first.full_autopilot_runtime_proven)
 
     def test_workflow_is_read_only_and_policy_scoped(self) -> None:
+        if not WORKFLOW.exists():
+            self.skipTest("repository-only workflow control surface is intentionally absent from the standalone Core export")
+
         workflow = WORKFLOW.read_text(encoding="utf-8")
         policy = json.loads(POLICY.read_text(encoding="utf-8"))
         workflow_path = ".github/workflows/autopilot-operational-witness.yml"
