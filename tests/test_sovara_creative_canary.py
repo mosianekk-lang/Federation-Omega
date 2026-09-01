@@ -55,6 +55,7 @@ def observation(**overrides) -> CreativeCanaryObservation:
         rollback_or_disable_ref="rollback:asset-001",
         proof_ref="provider-receipt:001",
         provider_cost=0.0,
+        provider_call_count=1,
     )
     base.update(overrides)
     return CreativeCanaryObservation(**base)
@@ -65,7 +66,7 @@ class SovaraCreativeCanaryTests(unittest.TestCase):
         decision = source_only_canary_decision(spec())
         self.assertEqual(CreativeCanaryState.HOLD_EFFECT_AUTHORITY, decision.state)
         self.assertFalse(decision.verified)
-        self.assertIn("Source tests or simulated observations", decision.truth_boundary)
+        self.assertIn("Source tests or simulated", decision.truth_boundary)
         self.assertIn("do not prove provider execution", decision.truth_boundary)
 
     def test_no_runtime_authority_means_no_provider_canary(self) -> None:
@@ -93,6 +94,32 @@ class SovaraCreativeCanaryTests(unittest.TestCase):
         self.assertEqual(CreativeCanaryState.HOLD_EFFECT_AUTHORITY, decision.state)
         self.assertIn("PUBLISHING_PERFORMED", decision.reasons)
 
+    def test_missing_provider_call_count_never_self_certifies(self) -> None:
+        decision = evaluate_creative_canary(
+            spec(),
+            observation(provider_call_count=None),
+            provider_effect_authority_bound=True,
+            finite_spend_authorized=False,
+        )
+        self.assertEqual(CreativeCanaryState.HOLD_PROVIDER_RECEIPT, decision.state)
+        self.assertIn("PROVIDER_CALL_COUNT_READBACK_REQUIRED", decision.reasons)
+
+    def test_provider_call_count_above_contract_is_quarantined(self) -> None:
+        decision = evaluate_creative_canary(
+            spec(),
+            observation(provider_call_count=2),
+            provider_effect_authority_bound=True,
+            finite_spend_authorized=False,
+        )
+        self.assertEqual(CreativeCanaryState.HOLD_EFFECT_AUTHORITY, decision.state)
+        self.assertIn("PROVIDER_CALL_LIMIT_EXCEEDED:2>1", decision.reasons)
+
+    def test_provider_call_count_rejects_non_integer_or_negative_values(self) -> None:
+        with self.assertRaisesRegex(ValueError, "provider_call_count"):
+            observation(provider_call_count=True)
+        with self.assertRaisesRegex(ValueError, "non-negative"):
+            observation(provider_call_count=-1)
+
     def test_rollback_is_required_even_after_provider_and_semantic_readback(self) -> None:
         decision = evaluate_creative_canary(spec(), observation(rollback_or_disable_proven=False, rollback_or_disable_ref=""), provider_effect_authority_bound=True, finite_spend_authorized=False)
         self.assertEqual(CreativeCanaryState.HOLD_ROLLBACK_PROOF, decision.state)
@@ -103,6 +130,7 @@ class SovaraCreativeCanaryTests(unittest.TestCase):
         self.assertEqual(CreativeCanaryState.VERIFIED, decision.state)
         self.assertTrue(decision.verified)
         self.assertEqual("FORCED_FAILURE_AND_RECOVERY_CANARY", decision.next_gate)
+        self.assertIn("PROVIDER_CALL_BOUND_VERIFIED", decision.reasons)
         self.assertIn("do not prove provider execution", decision.truth_boundary)
         self.assertIn("repeated success", decision.truth_boundary)
 
