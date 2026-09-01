@@ -52,6 +52,7 @@ def identity(**overrides: object) -> RuntimeIdentity:
         "run_attempt": 1,
         "event_name": "push",
         "head_branch": "main",
+        "conclusion": "success",
         "workflow": WORKFLOW_NAME,
         "job": JOB_NAME,
         "observed_at_utc": "2026-09-01T01:33:06Z",
@@ -61,13 +62,13 @@ def identity(**overrides: object) -> RuntimeIdentity:
 
 
 class AutoPilotOperationalWitnessFabricTests(unittest.TestCase):
-    def test_real_main_push_compiles_minimal_execution_and_readback_witnesses(self) -> None:
+    def test_real_main_push_compiles_execution_host_and_external_readback_witnesses(self) -> None:
         raw = probe()
         bundle = compile_bubbles_provider_readback_witnesses(identity=identity(), provider_probe_raw=raw)
         payload = bundle.to_dict()
 
         self.assertEqual(SCHEMA, bundle.schema)
-        self.assertEqual("WITNESS_EXECUTION_AND_READBACK_VERIFIED", bundle.status)
+        self.assertEqual("WITNESS_EXECUTION_HOST_AND_EXTERNAL_READBACK_VERIFIED", bundle.status)
         self.assertEqual(HEAD, bundle.source_head_sha)
         self.assertEqual("OBSERVED_OPERATIONAL_WITNESS_INPUT", bundle.evidence_mode)
         self.assertEqual(ENVIRONMENT, bundle.environment)
@@ -81,13 +82,17 @@ class AutoPilotOperationalWitnessFabricTests(unittest.TestCase):
         self.assertFalse(bundle.full_autopilot_runtime_proven)
 
         execution = EvidenceWitness.from_mapping(payload["execution_witness"]).validate(expected_source_head_sha=HEAD)
-        readback = EvidenceWitness.from_mapping(payload["readback_witness"]).validate(expected_source_head_sha=HEAD)
+        host_readback = EvidenceWitness.from_mapping(payload["host_readback_witness"]).validate(expected_source_head_sha=HEAD)
+        external_readback = EvidenceWitness.from_mapping(payload["readback_witness"]).validate(expected_source_head_sha=HEAD)
         self.assertEqual("EXECUTION", execution.kind)
         self.assertEqual("IMMUTABLE_EXECUTION_RECEIPT", execution.evidence_class)
         self.assertFalse(execution.independent)
-        self.assertEqual("READBACK", readback.kind)
-        self.assertEqual("PROVIDER_LIVE_INDEPENDENT_READBACK", readback.evidence_class)
-        self.assertTrue(readback.independent)
+        self.assertEqual("github", host_readback.provider)
+        self.assertEqual("READBACK", host_readback.kind)
+        self.assertEqual("PROVIDER_LIVE_INDEPENDENT_READBACK", host_readback.evidence_class)
+        self.assertTrue(host_readback.independent)
+        self.assertEqual("federation-provider-surfaces", external_readback.provider)
+        self.assertTrue(external_readback.independent)
 
         serialized = json.dumps(payload, sort_keys=True).lower()
         for forbidden in (
@@ -98,20 +103,28 @@ class AutoPilotOperationalWitnessFabricTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, serialized)
 
-    def test_auth_pending_real_cycle_emits_execution_witness_and_hold_not_false_readback(self) -> None:
+    def test_auth_pending_real_cycle_keeps_host_readback_and_holds_external_semantics(self) -> None:
         raw = probe(verified=False)
         bundle = compile_bubbles_provider_readback_witnesses(identity=identity(), provider_probe_raw=raw)
         payload = bundle.to_dict()
 
-        self.assertEqual("HOLD_EXECUTION_VERIFIED_READBACK_UNPROVEN", bundle.status)
-        self.assertEqual("OBSERVED_OPERATIONAL_EXECUTION_WITNESS_ONLY", bundle.evidence_mode)
-        self.assertEqual(("INDEPENDENT_PROVIDER_READBACK_NOT_VERIFIED",), bundle.blockers)
+        self.assertEqual("WITNESS_EXECUTION_AND_HOST_READBACK_VERIFIED_EXTERNAL_READBACK_HELD", bundle.status)
+        self.assertEqual("OBSERVED_OPERATIONAL_HOST_WITNESS_INPUT", bundle.evidence_mode)
+        self.assertEqual(("EXTERNAL_PROVIDER_READBACK_NOT_VERIFIED",), bundle.blockers)
         self.assertEqual(0, bundle.verified_surface_count)
         self.assertIsNone(bundle.readback_witness)
         execution = EvidenceWitness.from_mapping(payload["execution_witness"]).validate(expected_source_head_sha=HEAD)
+        host_readback = EvidenceWitness.from_mapping(payload["host_readback_witness"]).validate(expected_source_head_sha=HEAD)
         self.assertEqual("EXECUTION", execution.kind)
+        self.assertEqual("READBACK", host_readback.kind)
+        self.assertEqual("github", host_readback.provider)
+        self.assertTrue(host_readback.independent)
         self.assertFalse(bundle.observed_pair_emitted)
         self.assertFalse(bundle.provider_effect_authorized)
+
+    def test_non_success_upstream_cannot_become_host_completion_readback(self) -> None:
+        with self.assertRaisesRegex(ValueError, "WITNESS_FABRIC_SUCCESSFUL_UPSTREAM_COMPLETION_REQUIRED"):
+            compile_bubbles_provider_readback_witnesses(identity=identity(conclusion="failure"), provider_probe_raw=probe())
 
     def test_provider_probe_mutation_is_rejected(self) -> None:
         with self.assertRaisesRegex(ValueError, "WITNESS_FABRIC_PROVIDER_MUTATION_REJECTED"):
@@ -155,6 +168,8 @@ class AutoPilotOperationalWitnessFabricTests(unittest.TestCase):
         self.assertIn("conclusion == 'success'", workflow)
         self.assertIn("event == 'push'", workflow)
         self.assertIn("head_branch == 'main'", workflow)
+        self.assertIn("TRIGGER_CONCLUSION", workflow)
+        self.assertIn("--conclusion", workflow)
         self.assertIn("actions: read", workflow)
         self.assertIn("contents: read", workflow)
         self.assertNotIn("id-token: write", workflow)

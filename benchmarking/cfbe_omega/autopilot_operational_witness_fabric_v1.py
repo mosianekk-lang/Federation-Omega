@@ -7,16 +7,19 @@ already completed operational runtime cycle. It does not call providers,
 authorize effects, score metacognition, or claim that a witness bundle is an
 observed metacognitive cohort.
 
-The first admitted adapter targets the existing Bubbles Command Bus
-provider-surface-readback job on main. That job already performs bounded
-read-only provider observation. This module hashes its receipt and emits only
-minimal execution/readback witness metadata compatible with the separate
-AutoPilot observed-operational intake bridge.
+The admitted adapter targets the existing Bubbles Command Bus
+provider-surface-readback job on main. The separate workflow_run observer is
+launched by GitHub only after that upstream workflow reaches a terminal state.
+This gives the fabric two distinct proof axes:
 
-A real execution remains evidence even when provider authentication is not
-available. In that case the fabric emits the execution witness and a bounded
-HOLD state; it does not fail unrelated work and does not invent an independent
-readback witness.
+1. an immutable execution witness for the Bubbles job; and
+2. an independent GitHub-host completion readback witness for that execution.
+
+External provider-surface readback remains a third, separately gated axis. A
+real execution therefore remains independently host-verifiable even when FO,
+Google, Archon or AFEME authentication is unavailable. In that case the fabric
+emits execution + host readback and a bounded external-readback HOLD rather
+than failing unrelated work or inventing external-provider proof.
 """
 
 from argparse import ArgumentParser
@@ -33,7 +36,7 @@ from benchmarking.cfbe_omega.autopilot_metacognition_observed_intake_v1 import (
 )
 
 
-SCHEMA = "CFBE-AUTOPILOT-OPERATIONAL-WITNESS-FABRIC-V1"
+SCHEMA = "CFBE-AUTOPILOT-OPERATIONAL-WITNESS-FABRIC-V1.1"
 BUBBLES_PROBE_SCHEMA = "BUBBLES-PROVIDER-SURFACE-PROBE-V1"
 ENVIRONMENT = "GITHUB_ACTIONS_MAIN_OPERATIONAL"
 WORKFLOW_NAME = "Bubbles Command Bus"
@@ -136,6 +139,7 @@ class RuntimeIdentity:
     run_attempt: int
     event_name: str
     head_branch: str
+    conclusion: str
     workflow: str
     job: str
     observed_at_utc: str
@@ -146,6 +150,7 @@ class RuntimeIdentity:
         _require(self.run_attempt > 0, "WITNESS_FABRIC_RUN_ATTEMPT_INVALID")
         _require(self.event_name == "push", "WITNESS_FABRIC_REAL_MAIN_PUSH_REQUIRED")
         _require(self.head_branch == "main", "WITNESS_FABRIC_MAIN_BRANCH_REQUIRED")
+        _require(self.conclusion == "success", "WITNESS_FABRIC_SUCCESSFUL_UPSTREAM_COMPLETION_REQUIRED")
         _require(self.workflow == WORKFLOW_NAME, "WITNESS_FABRIC_WORKFLOW_MISMATCH")
         _require(self.job == JOB_NAME, "WITNESS_FABRIC_JOB_MISMATCH")
         _utc(self.observed_at_utc)
@@ -167,11 +172,13 @@ class OperationalWitnessBundle:
     job: str
     event_name: str
     head_branch: str
+    conclusion: str
     provider_probe_schema: str
     provider_probe_digest: str
     verified_surface_count: int
     verified_surface_fingerprints: tuple[str, ...]
     execution_witness: dict[str, Any]
+    host_readback_witness: dict[str, Any]
     readback_witness: dict[str, Any] | None
     observed_pair_emitted: bool
     observed_resume_emitted: bool
@@ -245,28 +252,59 @@ def compile_bubbles_provider_readback_witnesses(
         observed_at_utc=observed_at,
     ).validate(expected_source_head_sha=identity.source_head_sha)
 
-    readback: EvidenceWitness | None = None
+    host_readback_payload = {
+        "run_id": identity.run_id,
+        "run_attempt": identity.run_attempt,
+        "workflow": identity.workflow,
+        "event_name": identity.event_name,
+        "head_branch": identity.head_branch,
+        "source_head_sha": identity.source_head_sha,
+        "conclusion": identity.conclusion,
+        "completed_at_utc": observed_at,
+    }
+    host_readback_ref = f"witness:github-actions:completion-readback:{identity.run_id}:{identity.run_attempt}"
+    host_readback = EvidenceWitness(
+        schema=WITNESS_SCHEMA,
+        ref=host_readback_ref,
+        kind="READBACK",
+        evidence_class="PROVIDER_LIVE_INDEPENDENT_READBACK",
+        provider="github",
+        environment=ENVIRONMENT,
+        source_head_sha=identity.source_head_sha,
+        provider_object_id=f"github-actions-workflow-run:{identity.run_id}:{identity.run_attempt}",
+        digest=canonical_hash(host_readback_payload),
+        verified=True,
+        independent=True,
+        observed_at_utc=observed_at,
+    ).validate(expected_source_head_sha=identity.source_head_sha)
+
+    external_readback: EvidenceWitness | None = None
     if verified_surfaces:
-        readback_object = f"bubbles-provider-readback:{identity.run_id}:{identity.run_attempt}"
-        readback_ref = f"witness:provider-readback:{identity.run_id}:{identity.run_attempt}"
-        readback = EvidenceWitness(
+        external_readback_object = f"bubbles-provider-readback:{identity.run_id}:{identity.run_attempt}"
+        external_readback_ref = f"witness:external-provider-readback:{identity.run_id}:{identity.run_attempt}"
+        external_readback = EvidenceWitness(
             schema=WITNESS_SCHEMA,
-            ref=readback_ref,
+            ref=external_readback_ref,
             kind="READBACK",
             evidence_class="PROVIDER_LIVE_INDEPENDENT_READBACK",
             provider="federation-provider-surfaces",
             environment=ENVIRONMENT,
             source_head_sha=identity.source_head_sha,
-            provider_object_id=readback_object,
+            provider_object_id=external_readback_object,
             digest=probe_digest,
             verified=True,
             independent=True,
             observed_at_utc=observed_at,
         ).validate(expected_source_head_sha=identity.source_head_sha)
 
-    status = "WITNESS_EXECUTION_AND_READBACK_VERIFIED" if readback else "HOLD_EXECUTION_VERIFIED_READBACK_UNPROVEN"
-    blockers = () if readback else ("INDEPENDENT_PROVIDER_READBACK_NOT_VERIFIED",)
-    evidence_mode = "OBSERVED_OPERATIONAL_WITNESS_INPUT" if readback else "OBSERVED_OPERATIONAL_EXECUTION_WITNESS_ONLY"
+    if external_readback:
+        status = "WITNESS_EXECUTION_HOST_AND_EXTERNAL_READBACK_VERIFIED"
+        blockers: tuple[str, ...] = ()
+        evidence_mode = "OBSERVED_OPERATIONAL_WITNESS_INPUT"
+    else:
+        status = "WITNESS_EXECUTION_AND_HOST_READBACK_VERIFIED_EXTERNAL_READBACK_HELD"
+        blockers = ("EXTERNAL_PROVIDER_READBACK_NOT_VERIFIED",)
+        evidence_mode = "OBSERVED_OPERATIONAL_HOST_WITNESS_INPUT"
 
     base = OperationalWitnessBundle(
         schema=SCHEMA,
@@ -282,21 +320,24 @@ def compile_bubbles_provider_readback_witnesses(
         job=identity.job,
         event_name=identity.event_name,
         head_branch=identity.head_branch,
+        conclusion=identity.conclusion,
         provider_probe_schema=BUBBLES_PROBE_SCHEMA,
         provider_probe_digest=probe_digest,
         verified_surface_count=len(verified_surfaces),
         verified_surface_fingerprints=surface_fingerprints,
         execution_witness=asdict(execution),
-        readback_witness=asdict(readback) if readback else None,
+        host_readback_witness=asdict(host_readback),
+        readback_witness=asdict(external_readback) if external_readback else None,
         observed_pair_emitted=False,
         observed_resume_emitted=False,
         provider_effect_authorized=False,
         stable_promotion_authorized=False,
         full_autopilot_runtime_proven=False,
         truth_boundary=(
-            "This bundle records a real GitHub-hosted Bubbles main-push execution; an independent readback witness is included only when an authenticated provider classification is actually present.",
+            "The GitHub workflow_run completion event is an independent provider-native readback of the Bubbles workflow execution, not proof of external FO/Google/Archon/AFEME semantics.",
+            "An external provider-surface readback witness is included only when authenticated provider classifications are actually present.",
             "Provider response bodies, prompts, transcripts, credentials, stdout and stderr are intentionally excluded; only hashes, classifications and runtime identity are retained.",
-            "An execution-only HOLD is a valid operational observation and must not stall unrelated work or be promoted into provider readback proof.",
+            "A host-verified external-readback HOLD remains valid observed operational witness material and must not stall unrelated work or be promoted into external-provider proof.",
             "The bundle is witness material for later observed-operational pairing, but it is not itself a matched metacognition pair or cross-process resume observation.",
             "A successful witness bundle does not grant provider-effect authority, stable policy promotion, provider-native durable runtime status or full-autopilot maturity.",
         ),
@@ -314,6 +355,7 @@ def main() -> int:
     parser.add_argument("--run-attempt", required=True, type=int)
     parser.add_argument("--event-name", required=True)
     parser.add_argument("--head-branch", required=True)
+    parser.add_argument("--conclusion", required=True)
     parser.add_argument("--workflow", default=WORKFLOW_NAME)
     parser.add_argument("--job", default=JOB_NAME)
     parser.add_argument("--observed-at-utc", required=True)
@@ -327,6 +369,7 @@ def main() -> int:
         run_attempt=args.run_attempt,
         event_name=args.event_name,
         head_branch=args.head_branch,
+        conclusion=args.conclusion,
         workflow=args.workflow,
         job=args.job,
         observed_at_utc=args.observed_at_utc,
@@ -343,7 +386,8 @@ def main() -> int:
         "status": result.status,
         "source_head_sha": result.source_head_sha,
         "verified_surface_count": result.verified_surface_count,
-        "readback_witness_emitted": result.readback_witness is not None,
+        "host_readback_witness_emitted": True,
+        "external_readback_witness_emitted": result.readback_witness is not None,
         "observed_pair_emitted": result.observed_pair_emitted,
         "provider_effect_authorized": result.provider_effect_authorized,
         "receipt_sha256": result.receipt_sha256,

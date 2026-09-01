@@ -28,6 +28,7 @@ jobs:
       TRIGGER_SHA: ${{ github.event.workflow_run.head_sha }}
       TRIGGER_EVENT: ${{ github.event.workflow_run.event }}
       TRIGGER_BRANCH: ${{ github.event.workflow_run.head_branch }}
+      TRIGGER_CONCLUSION: ${{ github.event.workflow_run.conclusion }}
       TRIGGER_OBSERVED_AT: ${{ github.event.workflow_run.updated_at }}
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -86,6 +87,7 @@ jobs:
             --run-attempt "$TRIGGER_RUN_ATTEMPT" \
             --event-name "$TRIGGER_EVENT" \
             --head-branch "$TRIGGER_BRANCH" \
+            --conclusion "$TRIGGER_CONCLUSION" \
             --workflow 'Bubbles Command Bus' \
             --job 'provider-surface-readback' \
             --observed-at-utc "$TRIGGER_OBSERVED_AT" \
@@ -106,23 +108,29 @@ jobs:
           assert receipt['triggering_run_id'] == os.environ['TRIGGER_RUN_ID'], receipt
           assert receipt['event_name'] == 'push', receipt
           assert receipt['head_branch'] == 'main', receipt
+          assert receipt['conclusion'] == 'success', receipt
           assert receipt['execution_witness']['kind'] == 'EXECUTION', receipt
           assert receipt['execution_witness']['verified'] is True, receipt
+          assert receipt['host_readback_witness']['kind'] == 'READBACK', receipt
+          assert receipt['host_readback_witness']['provider'] == 'github', receipt
+          assert receipt['host_readback_witness']['verified'] is True, receipt
+          assert receipt['host_readback_witness']['independent'] is True, receipt
           assert receipt['provider_effect_authorized'] is False, receipt
           assert receipt['stable_promotion_authorized'] is False, receipt
           assert receipt['full_autopilot_runtime_proven'] is False, receipt
           assert receipt['observed_pair_emitted'] is False, receipt
           assert receipt['observed_resume_emitted'] is False, receipt
 
-          if receipt['status'] == 'WITNESS_EXECUTION_AND_READBACK_VERIFIED':
+          if receipt['status'] == 'WITNESS_EXECUTION_HOST_AND_EXTERNAL_READBACK_VERIFIED':
               assert receipt['verified_surface_count'] > 0, receipt
               assert receipt['readback_witness']['kind'] == 'READBACK', receipt
+              assert receipt['readback_witness']['provider'] == 'federation-provider-surfaces', receipt
               assert receipt['readback_witness']['independent'] is True, receipt
               assert not receipt['blockers'], receipt
-          elif receipt['status'] == 'HOLD_EXECUTION_VERIFIED_READBACK_UNPROVEN':
+          elif receipt['status'] == 'WITNESS_EXECUTION_AND_HOST_READBACK_VERIFIED_EXTERNAL_READBACK_HELD':
               assert receipt['verified_surface_count'] == 0, receipt
               assert receipt['readback_witness'] is None, receipt
-              assert receipt['blockers'] == ['INDEPENDENT_PROVIDER_READBACK_NOT_VERIFIED'], receipt
+              assert receipt['blockers'] == ['EXTERNAL_PROVIDER_READBACK_NOT_VERIFIED'], receipt
           else:
               raise AssertionError(receipt)
           print('AUTOPILOT_OPERATIONAL_WITNESS_FABRIC_VERIFIED')
