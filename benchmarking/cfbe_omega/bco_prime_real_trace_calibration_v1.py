@@ -3,7 +3,7 @@ from __future__ import annotations
 """Leakage-safe real-mission calibration court for the BCΩ-PRIME radar.
 
 The court compiles candidate features from the final scope of completed
-first-parent missions and resolves value only from later missions.  It may
+first-parent missions and resolves value only from later missions. It may
 propose a shadow scoring profile, but cannot change the live radar, dispatch
 work, create provider effects, or promote itself.
 """
@@ -19,9 +19,7 @@ import re
 import subprocess
 from typing import Any, Sequence
 
-from benchmarking.cfbe_omega.bco_prime_opportunity_exploitation_fabric_v1 import (
-    OpportunityCandidate,
-)
+from benchmarking.cfbe_omega.bco_prime_opportunity_exploitation_fabric_v1 import OpportunityCandidate
 
 
 SCHEMA = "BCO_PRIME_REAL_TRACE_CALIBRATION_V1"
@@ -32,6 +30,7 @@ DEFAULT_HOLDOUT_SIZE = 25
 DEFAULT_FUTURE_WINDOW = 20
 TRAIN_GAIN_FLOOR = 0.03
 HOLDOUT_GAIN_FLOOR = 0.03
+NUMERIC_EPSILON = 1e-12
 
 
 @dataclass(frozen=True, slots=True)
@@ -221,6 +220,29 @@ def _top_decile_regression_rate(traces: Sequence[RealMissionTrace], profile: Sco
     return round(sum(item.hard_regression for item in ranked) / count, 9)
 
 
+def _coordinate_transfer(current: dict[str, float], increase: str, decrease: str, step: float) -> dict[str, float] | None:
+    """Return one numerically safe, mass-preserving coordinate transfer.
+
+    A coordinate exactly on the step boundary can be represented a few ulps below
+    ``step``. The previous implementation admitted that value using an epsilon guard
+    and then subtracted the full nominal step, creating a tiny negative weight. We
+    transfer the actually available mass when it is within the accepted epsilon and
+    otherwise hold the candidate. Production weights are never mutated here.
+    """
+
+    available = float(current[decrease])
+    if increase == decrease or available + NUMERIC_EPSILON < step:
+        return None
+    transfer = min(float(step), max(0.0, available))
+    if transfer <= 0.0:
+        return None
+    candidate_weights = dict(current)
+    candidate_weights[increase] = float(candidate_weights[increase]) + transfer
+    residual = available - transfer
+    candidate_weights[decrease] = 0.0 if abs(residual) <= NUMERIC_EPSILON else residual
+    return candidate_weights
+
+
 def optimize_shadow_profile(
     training: Sequence[RealMissionTrace],
     *,
@@ -241,11 +263,9 @@ def optimize_shadow_profile(
             current = benefits if group_name == "benefit" else penalties
             for increase in sorted(current):
                 for decrease in sorted(current):
-                    if increase == decrease or current[decrease] + 1e-12 < step:
+                    candidate_weights = _coordinate_transfer(current, increase, decrease, step)
+                    if candidate_weights is None:
                         continue
-                    candidate_weights = dict(current)
-                    candidate_weights[increase] += step
-                    candidate_weights[decrease] -= step
                     candidate = ScoreProfile(
                         profile_name="BCO_PRIME_RADAR_COORDINATE_CHALLENGER_V1",
                         benefit_weights=tuple(sorted((candidate_weights if group_name == "benefit" else benefits).items())),
@@ -340,9 +360,7 @@ def evaluate_calibration(
 
 
 def _git(repo: Path, *args: str, check: bool = True) -> str:
-    result = subprocess.run(
-        ["git", *args], cwd=repo, check=check, capture_output=True, text=True,
-    )
+    result = subprocess.run(["git", *args], cwd=repo, check=check, capture_output=True, text=True)
     return result.stdout.strip()
 
 
@@ -423,10 +441,7 @@ def _candidate_from_snapshot(item: _MissionSnapshot) -> OpportunityCandidate:
 
 
 def _path_survives(repo: Path, source_head_sha: str, path: str) -> bool:
-    result = subprocess.run(
-        ["git", "cat-file", "-e", f"{source_head_sha}:{path}"],
-        cwd=repo, capture_output=True, text=True,
-    )
+    result = subprocess.run(["git", "cat-file", "-e", f"{source_head_sha}:{path}"], cwd=repo, capture_output=True, text=True)
     return result.returncode == 0
 
 
@@ -492,6 +507,7 @@ def real_trace_calibration_manifest() -> dict[str, object]:
         "external_effect_authority": False,
         "stable_self_promotion": False,
         "manual_user_tasks": [],
+        "coordinate_transfer_numeric_floor": True,
     }
 
 
@@ -515,11 +531,7 @@ def main() -> int:
         future_window=args.future_window,
         history_limit=args.history_limit,
     )
-    receipt = evaluate_calibration(
-        traces,
-        holdout_size=args.holdout_size,
-        future_window=args.future_window,
-    )
+    receipt = evaluate_calibration(traces, holdout_size=args.holdout_size, future_window=args.future_window)
     print(json.dumps(receipt.to_dict(), sort_keys=True))
     return 0
 
@@ -528,9 +540,8 @@ __all__ = [
     "BASELINE_PROFILE", "CalibrationReceipt", "DEFAULT_COHORT_SIZE",
     "DEFAULT_FUTURE_WINDOW", "DEFAULT_HOLDOUT_SIZE", "MIN_HOLDOUT_TRACES",
     "MIN_REAL_TRACES", "RealMissionTrace", "SCHEMA", "ScoreProfile",
-    "collect_real_mission_traces", "evaluate_calibration",
-    "optimize_shadow_profile", "real_trace_calibration_manifest",
-    "score_candidate",
+    "collect_real_mission_traces", "evaluate_calibration", "optimize_shadow_profile",
+    "real_trace_calibration_manifest", "score_candidate",
 ]
 
 
