@@ -43,9 +43,9 @@ class MissionPlan:
 class MissionAutonomyEngine:
     """Provider-neutral mission planner with proof-based closure.
 
-    The engine decomposes goals, orders independent workstreams, substitutes
-    blocked paths, inherits completion contracts, replans deterministically,
-    and refuses mission closure until every required receipt is present.
+    Failed work may be superseded by a repair node, but the original dependency
+    is considered satisfied only after its bound successor is VERIFIED. Cycles
+    and missing dependencies fail closed before execution.
     """
 
     def __init__(self, goal: MissionGoal) -> None:
@@ -66,11 +66,47 @@ class MissionAutonomyEngine:
         unknown = sorted({dep for unit in units for dep in unit.dependencies if dep not in seen})
         if unknown:
             raise ValueError(f"unknown dependencies:{','.join(unknown)}")
+        self._validate_dag()
         self._record("PLAN_DECOMPOSED", {"work_units": sorted(seen)})
         return self.plan
 
+    def _validate_dag(self) -> None:
+        visiting: set[str] = set()
+        visited: set[str] = set()
+
+        def visit(work_id: str) -> None:
+            if work_id in visiting:
+                raise ValueError("dependency cycle detected")
+            if work_id in visited:
+                return
+            visiting.add(work_id)
+            for dep in self.plan.units[work_id].get("dependencies", ()):
+                if dep not in self.plan.units:
+                    raise ValueError(f"unknown dependency:{dep}")
+                visit(dep)
+            visiting.remove(work_id)
+            visited.add(work_id)
+
+        for work_id in self.plan.units:
+            visit(work_id)
+
+    def _satisfied_ids(self) -> set[str]:
+        satisfied = {wid for wid, row in self.plan.units.items() if row["status"] == "VERIFIED"}
+        changed = True
+        while changed:
+            changed = False
+            for wid, row in self.plan.units.items():
+                if wid in satisfied:
+                    continue
+                if row["status"] in {"SUBSTITUTED", "SUPERSEDED"}:
+                    successor = row.get("superseded_by") or row.get("substituted_by")
+                    if successor and successor in satisfied:
+                        satisfied.add(wid)
+                        changed = True
+        return satisfied
+
     def ready(self) -> list[dict[str, Any]]:
-        completed = {wid for wid, row in self.plan.units.items() if row["status"] == "VERIFIED"}
+        completed = self._satisfied_ids()
         rows = [
             row for row in self.plan.units.values()
             if row["status"] == "QUEUED" and set(row["dependencies"]) <= completed
@@ -99,11 +135,16 @@ class MissionAutonomyEngine:
             raise ValueError("target path is not blocked")
         if substitute.substitute_for != blocked_work_id:
             raise ValueError("substitution linkage required")
+        if substitute.work_id in self.plan.units:
+            raise ValueError("substitute work id already exists")
         inherited = tuple(sorted(set(substitute.required_receipts) | set(blocked["required_receipts"])))
+        dependencies = tuple(sorted(set(substitute.dependencies) | set(blocked.get("dependencies", ()))))
         row = asdict(substitute)
-        row.update({"required_receipts": inherited, "status": "QUEUED"})
+        row.update({"required_receipts": inherited, "dependencies": dependencies, "status": "QUEUED"})
         self.plan.units[substitute.work_id] = row
         blocked["status"] = "SUBSTITUTED"
+        blocked["substituted_by"] = substitute.work_id
+        self._validate_dag()
         self._replan("BLOCKED_PATH_SUBSTITUTED", {"blocked": blocked_work_id, "substitute": substitute.work_id})
         return row
 
@@ -124,26 +165,34 @@ class MissionAutonomyEngine:
 
     def replan_failed(self, work_id: str, repair_work: WorkUnit) -> dict[str, Any]:
         failed = self.plan.units[work_id]
-        failed["status"] = "FAILED"
-        inherited = tuple(sorted(set(repair_work.required_receipts) | set(failed["required_receipts"])))
+        if repair_work.work_id in self.plan.units:
+            raise ValueError("repair work id already exists")
+        inherited_receipts = tuple(sorted(set(repair_work.required_receipts) | set(failed["required_receipts"])))
+        inherited_dependencies = tuple(sorted(set(repair_work.dependencies) | set(failed.get("dependencies", ()))))
         row = asdict(repair_work)
-        row.update({"required_receipts": inherited, "status": "QUEUED"})
+        row.update({"required_receipts": inherited_receipts, "dependencies": inherited_dependencies, "status": "QUEUED"})
         self.plan.units[repair_work.work_id] = row
+        failed["status"] = "SUPERSEDED"
+        failed["superseded_by"] = repair_work.work_id
+        self._validate_dag()
         self._replan("FAILED_PATH_REPLANNED", {"failed": work_id, "repair": repair_work.work_id})
         return row
 
-    def evaluate_closure(self) -> dict[str, Any]:
-        active = [row for row in self.plan.units.values() if row["status"] not in {"SUBSTITUTED"}]
+    def evaluate_closure(self, satisfied_constraints: set[str] | None = None) -> dict[str, Any]:
+        satisfied_constraints = set(satisfied_constraints or ())
+        active = [row for row in self.plan.units.values() if row["status"] not in {"SUBSTITUTED", "SUPERSEDED"}]
         incomplete = sorted(row["work_id"] for row in active if row["status"] != "VERIFIED")
         present_types = {receipt["type"] for receipt in self.plan.receipts.values()}
         missing_mission_receipts = sorted(set(self.goal.success_receipts) - present_types)
-        closed = not incomplete and not missing_mission_receipts
+        missing_constraints = sorted(set(self.goal.constraints) - satisfied_constraints)
+        closed = not incomplete and not missing_mission_receipts and not missing_constraints
         self.plan.closure_state = "PROOF_CLOSED" if closed else "OPEN"
         result = {
             "mission_id": self.goal.mission_id,
             "state": self.plan.closure_state,
             "incomplete_work": incomplete,
             "missing_receipts": missing_mission_receipts,
+            "missing_constraints": missing_constraints,
             "plan_revision": self.plan.revision,
         }
         result["closure_hash"] = digest(result)

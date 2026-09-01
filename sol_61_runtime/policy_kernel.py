@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import re
 from dataclasses import dataclass, field
 from typing import Any
 
@@ -106,11 +107,26 @@ class PolicyKernel:
         return Decision("ELIGIBLE", ["POLICY_AND_CONSTITUTION_SATISFIED"], matched, required_proofs)
 
     @staticmethod
+    def _proof_is_verified(value: Any) -> bool:
+        if not isinstance(value, dict):
+            return False
+        if value.get("verified") is not True:
+            return False
+        if value.get("semantic_state", "VERIFIED") != "VERIFIED":
+            return False
+        sha256 = str(value.get("sha256", ""))
+        return bool(re.fullmatch(r"[0-9a-f]{64}", sha256))
+
+    @staticmethod
     def verify_proof_bundle(decision: Decision, proofs: dict[str, Any]) -> dict[str, Any]:
-        missing = sorted(set(decision.required_proofs) - set(proofs))
+        required = set(decision.required_proofs)
+        missing = sorted(required - set(proofs))
+        invalid = sorted(name for name in required & set(proofs) if not PolicyKernel._proof_is_verified(proofs[name]))
+        complete = not missing and not invalid
         return {
             "eligible_decision": decision.status == "ELIGIBLE",
-            "proof_complete": not missing,
+            "proof_complete": complete,
             "missing": missing,
-            "execution_authorised": decision.status == "ELIGIBLE" and not missing,
+            "invalid": invalid,
+            "execution_authorised": decision.status == "ELIGIBLE" and complete,
         }

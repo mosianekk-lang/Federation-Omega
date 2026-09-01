@@ -1,16 +1,10 @@
 import json
 import tempfile
 import unittest
+from datetime import datetime, timezone
 from pathlib import Path
 
-from runtime import (
-    CompletionContract,
-    Mission,
-    ProviderCapability,
-    SolRuntime,
-    Workstream,
-    utc_now,
-)
+from runtime import CompletionContract, Mission, ProviderCapability, SolRuntime, Workstream, utc_now
 
 
 class SolRuntimeTests(unittest.TestCase):
@@ -32,6 +26,15 @@ class SolRuntimeTests(unittest.TestCase):
         self.assertIn(before["checkpoint_id"], resumed.state.checkpoints)
         self.assertIn("m1", resumed.state.missions)
 
+    def test_tampered_event_chain_fails_before_replay(self):
+        lines = self.runtime.events.read_text(encoding="utf-8").splitlines()
+        first = json.loads(lines[0])
+        first["payload"]["objective"] = "tampered"
+        lines[0] = json.dumps(first, sort_keys=True, separators=(",", ":"))
+        self.runtime.events.write_text("\n".join(lines) + "\n", encoding="utf-8")
+        with self.assertRaisesRegex(ValueError, "EVENT_CHAIN_INVALID"):
+            SolRuntime(self.root)
+
     def test_completion_requires_all_receipts(self):
         contract = CompletionContract(("build", "test", "readback", "rollback"))
         self.runtime.record_receipt("w1", "build", "github", {"pass": True})
@@ -41,6 +44,14 @@ class SolRuntimeTests(unittest.TestCase):
             self.runtime.record_receipt("w1", kind, "github", {"pass": True})
         complete = self.runtime.evaluate_completion("w1", contract)
         self.assertEqual(complete["state"], "VERIFIED")
+
+    def test_completion_enforces_receipt_ttl(self):
+        self.runtime.record_receipt("w1", "build", "github", {"pass": True})
+        future = int(datetime.now(timezone.utc).timestamp()) + 2
+        result = self.runtime.evaluate_completion("w1", CompletionContract(("build",), max_receipt_age_seconds=1), now_epoch=future)
+        self.assertEqual(result["state"], "PARTIALLY_VERIFIED")
+        self.assertIn("build", result["missing"])
+        self.assertIn("STALE_RECEIPT", result["invalid"]["build"])
 
     def test_provider_admission_and_owner_boundary(self):
         cap = ProviderCapability("github", "merge", True, True, True, True, False, "VERIFIED", utc_now())
