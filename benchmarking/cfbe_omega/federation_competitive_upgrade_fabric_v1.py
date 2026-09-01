@@ -92,6 +92,37 @@ class GeneControlDecision:
 
 
 @dataclass(frozen=True, slots=True)
+class ResolvedEvidenceRef:
+    """Integrity-bound evidence state produced by a trusted resolver.
+
+    A URI-shaped string is not evidence.  This type records the resolver result;
+    it still does not grant runtime, provider-effect, or promotion authority.
+    """
+
+    evidence_id: str
+    subject: str
+    verifier_id: str
+    payload_sha256: str
+    receipt_sha256: str
+    independently_read_back: bool
+
+    def valid(self) -> bool:
+        digests = (self.payload_sha256, self.receipt_sha256)
+        return bool(
+            self.evidence_id.strip()
+            and self.subject.strip()
+            and self.verifier_id.strip()
+            and self.independently_read_back
+            and all(
+                value.startswith("sha256:")
+                and len(value) == 71
+                and all(character in "0123456789abcdef" for character in value[7:].lower())
+                for value in digests
+            )
+        )
+
+
+@dataclass(frozen=True, slots=True)
 class BenchmarkDimension:
     name: str
     current_design_score: float
@@ -269,11 +300,10 @@ def compile_control_bindings(genes: Sequence[CapabilityGene] | None = None) -> t
 
 
 def _is_proof_ref(value: object) -> bool:
-    text = str(value or "").strip()
-    return bool(text and ":" in text and text.casefold() not in {"pending", "unknown", "unverified"})
+    return isinstance(value, ResolvedEvidenceRef) and value.valid()
 
 
-def evaluate_gene_control(gene_id: str, evidence: Mapping[str, str] | None = None) -> GeneControlDecision:
+def evaluate_gene_control(gene_id: str, evidence: Mapping[str, object] | None = None) -> GeneControlDecision:
     """Evaluate a gene's exact proof contract without granting runtime authority."""
 
     genes = {gene.gene_id: gene for gene in load_genome()}
