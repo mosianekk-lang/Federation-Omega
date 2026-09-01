@@ -9,6 +9,10 @@ from policy_kernel import ActionMandate, Constitution, PolicyKernel, PolicyRule
 from runtime import digest, utc_now
 
 
+def verified_proof(seed: str) -> dict:
+    return {"verified": True, "semantic_state": "VERIFIED", "sha256": digest({"proof": seed})}
+
+
 def main() -> None:
     parser = argparse.ArgumentParser()
     parser.add_argument("--output", required=True)
@@ -40,8 +44,13 @@ def main() -> None:
         rollback_available=True, review_roles=(), proof_requirements=("execution", "readback", "rollback"),
     )
     allowed = kernel.evaluate(ActionMandate(**base), {"snapshot"})
-    complete = kernel.verify_proof_bundle(allowed, {"execution": {}, "readback": {}, "rollback": {}})
-    incomplete = kernel.verify_proof_bundle(allowed, {"execution": {}})
+    complete = kernel.verify_proof_bundle(allowed, {
+        "execution": verified_proof("execution"),
+        "readback": verified_proof("readback"),
+        "rollback": verified_proof("rollback"),
+    })
+    incomplete = kernel.verify_proof_bundle(allowed, {"execution": verified_proof("execution")})
+    forged = kernel.verify_proof_bundle(allowed, {"execution": {}, "readback": {}, "rollback": {}})
     owner = kernel.evaluate(ActionMandate(**{**base, "action_type": "live_release"}), {"snapshot"})
     forbidden = kernel.evaluate(ActionMandate(**{**base, "intended_effects": ("expose_secret",)}), {"snapshot"})
     separated = kernel.evaluate(ActionMandate(**{**base, "executor_role": "planner"}), {"snapshot"})
@@ -56,6 +65,7 @@ def main() -> None:
         "risk_tier_and_review": high.status == "ELIGIBLE",
         "fail_closed": PolicyKernel(kernel.constitution, []).evaluate(ActionMandate(**base), {"snapshot"}).status == "DENIED",
         "proof_carrying_mandate": complete["execution_authorised"] and not incomplete["execution_authorised"],
+        "empty_proof_rejected": not forged["execution_authorised"] and len(forged["invalid"]) == 3,
         "policy_conflict_precedence": PolicyKernel(kernel.constitution, [PolicyRule("A", "ALLOW", 1), PolicyRule("D", "DENY", 2)]).evaluate(ActionMandate(**{**base, "preconditions": ()}), set()).status == "DENIED",
     }
     receipt = {
