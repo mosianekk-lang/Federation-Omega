@@ -364,6 +364,11 @@ def bind_eligible_directive(
     source_head_sha = _git_sha(
         directive_event.get("source_head_sha"), "COLLECTOR_DIRECTIVE_SOURCE_SHA_INVALID"
     )
+    collector_source_epoch = _git_sha(
+        state.source_base_sha, "COLLECTOR_SOURCE_EPOCH_INVALID"
+    )
+    if source_head_sha != collector_source_epoch:
+        raise ValueError("COLLECTOR_DIRECTIVE_SOURCE_EPOCH_MISMATCH")
     observed_at = _iso(directive_event.get("observed_at"), "COLLECTOR_DIRECTIVE_TIMESTAMP_INVALID")
     if directive_event.get("real_directive") is not True:
         raise ValueError("COLLECTOR_REAL_DIRECTIVE_REQUIRED")
