@@ -1,8 +1,9 @@
-"""Bubbles Adaptive Chat Governor Ω3.2.
+"""Bubbles Adaptive Chat Governor Ω3.3.
 
 Truth boundary: this package governs Bubbles workflows routed through it. It does
 not modify hidden ChatGPT context management, provider serving infrastructure,
-or connector calls that bypass this middleware.
+or connector calls that bypass this middleware. The continuity fabric preserves
+and resumes work across host turns; it does not claim hidden/background execution.
 """
 
 from .routing import MissionCompiler, MissionPlan, MemoryGovernor
@@ -12,6 +13,18 @@ from .dag import DAGExecutor, Lane, LaneState
 from .completion import ChatGovCompletionInterlock, CompletionReconcileResult
 from .provider_trust import ChatGovProviderTrustInterlock, ProviderDependencyReconcileResult
 from .cognitive_precision import CognitivePrecisionKernel, RouteAssessment
+from .continuity import (
+    CommandEnvelope,
+    CommandState,
+    ContinuityLaneSpec,
+    ContinuityLaneState,
+    ContinuityReceipt,
+    EffectClass,
+    LaneLease,
+    MultistreamContinuityFabric,
+    PathRole,
+    intent_sha256,
+)
 
 __all__ = [
     "MissionCompiler", "MissionPlan", "MemoryGovernor", "ConnectorGateway",
@@ -19,6 +32,9 @@ __all__ = [
     "ChatGovCompletionInterlock", "CompletionReconcileResult",
     "ChatGovProviderTrustInterlock", "ProviderDependencyReconcileResult",
     "CognitivePrecisionKernel", "RouteAssessment",
+    "CommandEnvelope", "CommandState", "ContinuityLaneSpec", "ContinuityLaneState",
+    "ContinuityReceipt", "EffectClass", "LaneLease", "MultistreamContinuityFabric",
+    "PathRole", "intent_sha256",
 ]
 
-__version__ = "3.2.0"
+__version__ = "3.3.0"
