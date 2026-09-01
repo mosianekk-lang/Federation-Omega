@@ -1,0 +1,63 @@
+{
+  "authority": {
+    "bco_prime_authority_ceiling": "A1_INTERNAL",
+    "binding_effect_class": "NO_EFFECT",
+    "dispatch_authorized": false,
+    "external_effect_authorized": false,
+    "provider_effects_require_separate_sol61_admission": true,
+    "provider_native_readback_required_for_external_effects": true,
+    "stable_self_promotion_allowed": false
+  },
+  "date": "2026-09-01",
+  "dependency_direction": [
+    "BCO_PRIME -> TRIAD_BINDING",
+    "MODISA_KERNEL -> TRIAD_BINDING",
+    "TRIAD_BINDING -> SOL_6_1",
+    "SOL_6_1 does not import TRIAD_BINDING"
+  ],
+  "modisa": {
+    "kernel_id": "MODISA-COMPACT-KERNEL-v1",
+    "kernel_path": "federation_consolidation/data/modisa_compact_kernel.json",
+    "required_stages": [
+      "MISSION_CLASSIFY",
+      "SOURCE_GATE",
+      "AUTHORITY_GATE",
+      "DEPENDENCY_GRAPH",
+      "PROOF_CONTRACT",
+      "PREVENTION_GATES",
+      "EXECUTE_OR_HOLD",
+      "READBACK",
+      "LESSON",
+      "ROLLBACK_CHECKPOINT"
+    ]
+  },
+  "promotion_gate": {
+    "future_promotion_requires": "independent tests, execution receipt, state readback, provider-native proof where applicable, rollback/recovery proof",
+    "provider_effect_control": "OUT_OF_SCOPE",
+    "stable_policy_promotion": "OUT_OF_SCOPE"
+  },
+  "purpose": "Bind BCO-Prime proposal/challenge intelligence through the Modisa mission-authority-proof-continuity gate into SOL 6.1 durable commit/completion state without merging authority planes.",
+  "roles": {
+    "BCO_PRIME": "PROPOSE_CHALLENGE_RANK_AND_PLAN",
+    "MODISA": "MISSION_AUTHORITY_PROOF_CONTINUITY_GATE",
+    "SOL_6_1": "DURABLE_COMMIT_COMPLETION_AND_PROVIDER_ADMISSION"
+  },
+  "schema": "BCO_MODISA_SOL61_COGNITIVE_BINDING_V1",
+  "sol61": {
+    "completion_state_on_full_internal_binding": "VERIFIED",
+    "hold_state_when_commit_missing": "PARTIALLY_VERIFIED",
+    "required_receipts": [
+      "BCO_PRIME_DECISION",
+      "MODISA_GATE",
+      "SOL61_INTERNAL_COMMIT"
+    ],
+    "runtime": "sol_61_runtime.runtime.SolRuntime"
+  },
+  "truth_boundary": [
+    "BCO-Prime intelligence does not equal provider authority",
+    "Modisa gate admission does not equal external execution authority",
+    "SOL 6.1 internal commit proves only the no-effect triad binding",
+    "Any external effect remains action-specific and provider-proof-gated"
+  ],
+  "version": "1.0.0"
+}
