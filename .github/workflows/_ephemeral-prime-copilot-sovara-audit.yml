@@ -16,7 +16,7 @@ concurrency:
 env:
   SOURCE_MAIN_SHA: '842a5e8089fca0e7a7686f42bdb5baef4335fe19'
   COPILOT_MODEL: 'gpt-5.6-luna'
-  MAX_AI_CREDITS: '1'
+  MAX_AI_CREDITS: '30'
 
 jobs:
   audit:
@@ -33,20 +33,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p copilot-proof
+          export PROOF_DIR="$RUNNER_TEMP/prime-copilot-proof"
+          mkdir -p "$PROOF_DIR"
           git cat-file -e "$SOURCE_MAIN_SHA^{commit}"
           git merge-base --is-ancestor "$SOURCE_MAIN_SHA" HEAD
           test -d sovara/creative
           test -z "$(git status --porcelain)"
-          printf '%s\n' "$SOURCE_MAIN_SHA" > copilot-proof/source-main-sha.txt
-          printf '%s\n' "PUBLIC_REPOSITORY_SOURCE_ONLY" > copilot-proof/data-boundary.txt
+          printf '%s\n' "$SOURCE_MAIN_SHA" > "$PROOF_DIR/source-main-sha.txt"
+          printf '%s\n' "PUBLIC_REPOSITORY_SOURCE_ONLY" > "$PROOF_DIR/data-boundary.txt"
 
       - name: Install current GitHub Copilot CLI
         shell: bash
         run: |
           set -euo pipefail
+          export PROOF_DIR="$RUNNER_TEMP/prime-copilot-proof"
           npm install -g @github/copilot
-          copilot --version | tee copilot-proof/cli-version.txt
+          copilot --version | tee "$PROOF_DIR/cli-version.txt"
 
       - name: Run bounded independent SOVARA Creative source audit
         shell: bash
@@ -54,6 +56,7 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
+          export PROOF_DIR="$RUNNER_TEMP/prime-copilot-proof"
           PROMPT=$(cat <<'EOF'
           You are an independent GitHub Copilot engineering challenger for BCΩ-PRIME. Audit only the checked-out PUBLIC Federation-Omega repository, with primary scope sovara/creative plus directly related public tests/governance/source references needed to verify a claim. Do not access or request Google Drive, Gmail, KDV/private spreadsheets, secrets, environment credentials, web pages, MCP servers, GitHub APIs, or any private/user data. Do not modify files or repository state.
 
@@ -62,7 +65,7 @@ jobs:
           Return 5-10 ranked findings. For each provide: rank; concise finding; exact file path and source evidence; classification (REUSE / EXTEND / REPAIR / HOLD / RETIRE-CANDIDATE / EMPIRICAL-GATE); expected leverage; smallest safe next action; falsifier or proof gate. Explicitly call out any apparent opportunity that is already solved or would merely duplicate an existing owner. End with: (1) top 3 immediate A0/A1 actions, (2) true external/owner/provider gates, and (3) a verdict on whether SOVARA Creative needs more architecture or mainly vertical operational/value closure.
           EOF
           )
-          printf '%s' "$PROMPT" | sha256sum | awk '{print $1}' | tee copilot-proof/prompt-sha256.txt
+          printf '%s' "$PROMPT" | sha256sum | awk '{print $1}' | tee "$PROOF_DIR/prompt-sha256.txt"
           copilot \
             -p "$PROMPT" \
             --model="$COPILOT_MODEL" \
@@ -72,18 +75,20 @@ jobs:
             --allow-tool='read' \
             --deny-tool='write' \
             --disable-builtin-mcps \
-            2>&1 | tee copilot-proof/copilot-audit.txt
+            2>&1 | tee "$PROOF_DIR/copilot-audit.txt"
 
       - name: Prove no repository mutation and seal receipt
         if: always()
         shell: bash
         run: |
           set -euo pipefail
+          export PROOF_DIR="$RUNNER_TEMP/prime-copilot-proof"
           test -z "$(git status --porcelain)"
           python - <<'PY'
           import hashlib, json, os
           from pathlib import Path
-          root = Path('copilot-proof')
+          root = Path(os.environ['RUNNER_TEMP']) / 'prime-copilot-proof'
+          root.mkdir(parents=True, exist_ok=True)
           output = (root / 'copilot-audit.txt').read_text(encoding='utf-8', errors='replace') if (root / 'copilot-audit.txt').exists() else ''
           prompt_hash = (root / 'prompt-sha256.txt').read_text().strip() if (root / 'prompt-sha256.txt').exists() else ''
           body = {
@@ -111,11 +116,20 @@ jobs:
           print(json.dumps(body, sort_keys=True))
           PY
 
+      - name: Stage proof for artifact upload
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf copilot-proof-upload
+          mkdir -p copilot-proof-upload
+          cp -a "$RUNNER_TEMP/prime-copilot-proof/." copilot-proof-upload/
+
       - name: Upload immutable audit evidence
-        if: always() && hashFiles('copilot-proof/*') != ''
+        if: always() && hashFiles('copilot-proof-upload/*') != ''
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: prime-copilot-sovara-audit-${{ github.run_id }}-${{ github.run_attempt }}
-          path: copilot-proof/
+          path: copilot-proof-upload/
           if-no-files-found: error
           retention-days: 30
