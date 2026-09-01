@@ -606,4 +606,7 @@ def prime_capability_manifest() -> Mapping[str, object]:
         "new_provider_executors": 0,
         "v1_live_effect_authority": False,
         "v1_mode": PrimeMode.SHADOW_ONLY.value,
+        "capability_fabric": "BCO_PRIME_CAPABILITY_FABRIC_V1",
+        "zero_manual_capability_functions": 100,
+        "capability_fabric_external_effect_authority": False,
     }

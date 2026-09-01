@@ -1,0 +1,29 @@
+{
+  "schema": "BCO_PRIME_CAPABILITY_FABRIC_V1",
+  "version": "1.0.0",
+  "mode": "A1_INTERNAL_ZERO_MANUAL_NO_EFFECT",
+  "capability_count": 100,
+  "manual_user_tasks": [],
+  "owner_action_required": false,
+  "external_effect": false,
+  "provider_effect_authorized": false,
+  "stable_self_promotion_authorized": false,
+  "domains": [
+    {"name":"intent","operations":["objective_normalize","requirement_trace","scope_closure","terminal_fruit","constraint_lock","assumption_extract","ambiguity_flag","priority_score","cancellation_check","mission_fingerprint"]},
+    {"name":"evidence","operations":["reference_canonicalize","reference_deduplicate","coverage_measure","contradiction_scan","freshness_gate","trust_gate","source_binding","receipt_digest","missing_proof","proof_ceiling"]},
+    {"name":"planning","operations":["dependency_order","critical_path","parallel_waves","retry_budget","route_utility","route_diversity","rollback_plan","stop_conditions","budget_allocation","plan_fingerprint"]},
+    {"name":"execution","operations":["authority_gate","cost_gate","burden_gate","idempotency_key","cancellation_gate","timeout_policy","retry_decision","circuit_state","dead_letter_decision","execution_envelope"]},
+    {"name":"quality","operations":["schema_score","completeness_score","invariant_violations","verified_output_ratio","trace_score","regression_delta","consistency_check","deterministic_checksum","boundary_defects","quality_gate"]},
+    {"name":"safety","operations":["effect_classify","privilege_expansion","secret_indicators","privacy_minimize","unsafe_route","reversibility_check","blast_radius","approval_need","policy_violations","safe_disposition"]},
+    {"name":"continuity","operations":["checkpoint_digest","resume_cursor","replay_guard","stale_state","lineage_chain","merge_delta","restore_plan","capsule_summary","successor_binding","continuity_state"]},
+    {"name":"learning","operations":["failure_fingerprint","failure_classify","smallest_repair","lesson_candidate","route_confidence","quarantine_decision","promotion_eligibility","novelty_score","value_delta","learning_receipt"]},
+    {"name":"orchestration","operations":["lane_independence","fanout_bound","fanin_contract","stream_load","contention_risk","scheduler_mode","next_best_action","owner_interrupt","provider_readiness","orchestration_receipt"]},
+    {"name":"value","operations":["owner_burden_delta","time_delta","verified_output_delta","intervention_ratio","cost_delta","risk_adjusted_value","pair_completeness","minimum_cases","promotion_hold","value_receipt"]}
+  ],
+  "truth_boundary": [
+    "source_and_tests_prove deterministic local capability behavior only",
+    "the fabric never dispatches provider or external effects",
+    "the fabric cannot create authority or self-promote stable policy",
+    "measured operational and owner value remain separate promotion gates"
+  ]
+}
