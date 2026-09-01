@@ -1,6 +1,8 @@
 from __future__ import annotations
 
+import asyncio
 import math
+from collections.abc import Awaitable, Callable
 from dataclasses import dataclass
 from typing import Any, Mapping, Sequence
 
@@ -41,6 +43,13 @@ class ParallelPlan:
     estimated_serial_latency_ms: float
     theoretical_speedup: float
     algorithm: str
+
+
+@dataclass(frozen=True)
+class LaneExecutionResult:
+    lane_id: str
+    transition_id: str
+    result: Mapping[str, Any]
 
 
 class ParallelLaneScheduler:
@@ -94,7 +103,6 @@ class ParallelLaneScheduler:
 
     @staticmethod
     def _voi(item: TransitionSpec) -> float:
-        # Information gained per second of latency, weighted toward early uncertainty reduction.
         return item.uncertainty_reduction / max(item.estimated_latency_ms / 1000.0, 0.001)
 
     @staticmethod
@@ -180,11 +188,11 @@ class ParallelLaneScheduler:
         )
 
     def _beam_select(self, candidates: Sequence[LanePlan]) -> tuple[LanePlan, ...]:
-        # State: score, lanes, occupied conflict domains, total cost.
         states: list[tuple[float, tuple[LanePlan, ...], frozenset[str], float]] = [
             (0.0, (), frozenset(), 0.0)
         ]
-        for candidate in sorted(candidates, key=lambda item: (-item.priority, item.transition_id)):
+        ordered = sorted(candidates, key=lambda item: (-item.priority, item.transition_id))
+        for candidate in ordered:
             next_states = list(states)
             candidate_domains = frozenset(candidate.conflict_domains)
             for score, lanes, domains, cost in states:
@@ -209,6 +217,8 @@ class ParallelLaneScheduler:
             )
             states = next_states[: self.beam_width]
         best = states[0][1] if states else ()
+        if ordered and not best:
+            best = (ordered[0],)
         return tuple(sorted(best, key=lambda item: (-item.priority, item.transition_id)))
 
     def plan(
@@ -292,14 +302,16 @@ class ParallelLaneScheduler:
     ) -> dict[str, LanePlan]:
         ordered = sorted(queued, key=lambda item: (-item.priority, item.transition_id))
         assignments: dict[str, LanePlan] = {}
+        assigned_transition_ids: set[str] = set()
         occupied: set[str] = set()
         for worker_id in sorted(set(idle_worker_ids)):
             for lane in ordered:
-                if lane.transition_id in {item.transition_id for item in assignments.values()}:
+                if lane.transition_id in assigned_transition_ids:
                     continue
                 if occupied.intersection(lane.conflict_domains):
                     continue
                 assignments[worker_id] = lane
+                assigned_transition_ids.add(lane.transition_id)
                 occupied.update(lane.conflict_domains)
                 break
         return assignments
@@ -342,9 +354,132 @@ class ParallelLaneScheduler:
         )
 
 
+class ParallelLaneExecutor:
+    """Runtime fan-out/fan-in for an admitted ParallelPlan.
+
+    The executor is provider-agnostic. A mutating lane is accepted only when the
+    supplied lane runner returns a SOL transaction commit receipt. Read-route
+    races reject any result that reports a provider mutation, so speculative
+    speed never becomes speculative external effect authority.
+    """
+
+    @staticmethod
+    def _validate_plan_conflicts(plan: ParallelPlan) -> None:
+        occupied: set[str] = set()
+        for lane in plan.lanes:
+            overlap = occupied.intersection(lane.conflict_domains)
+            if overlap:
+                raise HyperperformanceError(
+                    "PARALLEL_PLAN_CONFLICT_DOMAIN_COLLISION:" + ",".join(sorted(overlap))
+                )
+            occupied.update(lane.conflict_domains)
+
+    @classmethod
+    async def execute_plan(
+        cls,
+        plan: ParallelPlan,
+        lane_runner: Callable[[LanePlan], Awaitable[Mapping[str, Any]]],
+    ) -> tuple[LaneExecutionResult, ...]:
+        cls._validate_plan_conflicts(plan)
+        tasks: dict[str, asyncio.Task[Mapping[str, Any]]] = {}
+        async with asyncio.TaskGroup() as group:
+            for lane in plan.lanes:
+                tasks[lane.lane_id] = group.create_task(lane_runner(lane))
+
+        results: list[LaneExecutionResult] = []
+        lane_by_id = {lane.lane_id: lane for lane in plan.lanes}
+        for lane_id in sorted(tasks):
+            lane = lane_by_id[lane_id]
+            result = tasks[lane_id].result()
+            if lane.mutating and result.get("sol_transaction_committed") is not True:
+                raise HyperperformanceError(
+                    f"MUTATING_LANE_WITHOUT_SOL_TRANSACTION_COMMIT:{lane.transition_id}"
+                )
+            if not lane.mutating and result.get("provider_effect_performed") is True:
+                raise HyperperformanceError(
+                    f"READ_ONLY_LANE_REPORTED_PROVIDER_MUTATION:{lane.transition_id}"
+                )
+            results.append(
+                LaneExecutionResult(
+                    lane_id=lane.lane_id,
+                    transition_id=lane.transition_id,
+                    result=dict(result),
+                )
+            )
+        return tuple(results)
+
+    @staticmethod
+    async def race_read_routes(
+        lane: LanePlan,
+        route_ids: Sequence[str],
+        route_runner: Callable[[str], Awaitable[Mapping[str, Any]]],
+    ) -> Mapping[str, Any]:
+        if lane.mutating:
+            raise HyperperformanceError("SPECULATIVE_MUTATION_RACE_FORBIDDEN")
+        unique_routes = tuple(dict.fromkeys(route_id for route_id in route_ids if route_id))
+        if len(unique_routes) < 2:
+            raise HyperperformanceError("READ_RACE_REQUIRES_AT_LEAST_TWO_ROUTES")
+
+        tasks = {
+            asyncio.create_task(route_runner(route_id)): route_id
+            for route_id in unique_routes
+        }
+        observations: list[Mapping[str, Any]] = []
+        try:
+            for completed in asyncio.as_completed(tasks):
+                result = dict(await completed)
+                if result.get("provider_effect_performed") is True:
+                    raise HyperperformanceError("READ_RACE_REPORTED_PROVIDER_MUTATION")
+                observations.append(result)
+                if result.get("semantic_verified") is True and result.get("proof_valid") is True:
+                    for task in tasks:
+                        if not task.done():
+                            task.cancel()
+                    await asyncio.gather(*tasks, return_exceptions=True)
+                    return result
+        finally:
+            for task in tasks:
+                if not task.done():
+                    task.cancel()
+            await asyncio.gather(*tasks, return_exceptions=True)
+        raise HyperperformanceError(
+            f"NO_SEMANTICALLY_VERIFIED_RACE_WINNER:{len(observations)}"
+        )
+
+    @classmethod
+    async def hedge_read_route(
+        cls,
+        lane: LanePlan,
+        *,
+        primary_route_id: str,
+        alternate_route_ids: Sequence[str],
+        hedge_after_seconds: float,
+        route_runner: Callable[[str], Awaitable[Mapping[str, Any]]],
+    ) -> Mapping[str, Any]:
+        if lane.mutating:
+            raise HyperperformanceError("MUTATING_LANE_HEDGE_FORBIDDEN")
+        if hedge_after_seconds <= 0:
+            raise ValueError("hedge_after_seconds must be positive")
+        primary = asyncio.create_task(route_runner(primary_route_id))
+        done, _ = await asyncio.wait({primary}, timeout=hedge_after_seconds)
+        if done:
+            result = dict(primary.result())
+            if result.get("provider_effect_performed") is True:
+                raise HyperperformanceError("READ_HEDGE_REPORTED_PROVIDER_MUTATION")
+            if result.get("semantic_verified") is True and result.get("proof_valid") is True:
+                return result
+        routes = [primary_route_id, *alternate_route_ids]
+        if not primary.done():
+            primary.cancel()
+            await asyncio.gather(primary, return_exceptions=True)
+        return await cls.race_read_routes(lane, routes, route_runner)
+
+
 __all__ = [
     "HyperperformanceError",
+    "LaneExecutionResult",
     "LanePlan",
+    "ParallelLaneExecutor",
     "ParallelLaneScheduler",
     "ParallelPlan",
 ]
