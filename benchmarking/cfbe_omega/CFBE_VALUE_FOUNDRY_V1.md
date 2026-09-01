@@ -51,3 +51,18 @@ The input contains `champion_id`, `candidate_id`, `source_head_sha`, measured
 observation records, optional runtime/deployment evidence, `evidence_registry`,
 and `trusted_verifiers`. The output is an immutable deterministic decision
 receipt with the promotion and effect boundaries explicit.
+
+## Prospective Cohort 001
+
+`prospective_observation_cohort_v1.py` registers the first ten-slot observation
+cohort. Registration is deliberately empty: every slot requires a later real,
+matched `BASELINE/BUBBLES` observation pair from its bound task oracle. Synthetic,
+shadow, replayed or invented observations are prohibited and cannot count toward
+owner value.
+
+The canonical registry is
+`cohorts/CFBE_VALUE_FOUNDRY_COHORT_001.json`. Its initial state is
+`REGISTERED_AWAITING_PROSPECTIVE_OBSERVATIONS`, with all measurement counters at
+zero and all value, deployment, effect and promotion flags false. Later records
+must still pass Sentinel ingress, trusted-evidence resolution and the separate
+owner-value deployment court.
