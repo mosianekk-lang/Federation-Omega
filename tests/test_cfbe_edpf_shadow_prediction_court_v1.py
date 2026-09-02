@@ -14,6 +14,7 @@ from benchmarking.cfbe_omega.epistemic_decision_prediction_fabric_v1 import (
 )
 
 SHA = "a" * 40
+DOMAINS = ("architecture", "source_defect", "provider_state")
 
 
 def make_pair(index: int, *, mode: EvidenceMode = EvidenceMode.REAL_MISSION, source: str | None = None) -> ShadowPredictionPair:
@@ -26,7 +27,7 @@ def make_pair(index: int, *, mode: EvidenceMode = EvidenceMode.REAL_MISSION, sou
     prediction = Prediction(
         prediction_id=prediction_id,
         predictor_id=predictor,
-        domain="architecture" if index % 2 == 0 else "source_defect",
+        domain=DOMAINS[index % len(DOMAINS)],
         event=f"event-{index}",
         probability=probability,
         expected_value=0.8 if occurred else 0.2,
