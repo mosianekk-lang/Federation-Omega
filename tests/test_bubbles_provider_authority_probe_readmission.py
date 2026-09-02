@@ -40,6 +40,11 @@ class ProviderAuthorityProbeReadmissionTests(unittest.TestCase):
         self.assertIn("No IAM, API, deployment, traffic", self.workflow)
         self.assertNotIn(PATH, self.policy.get("provider_mutation_workflow_allowlist", []))
 
+    def test_enabled_service_diagnostic_uses_supported_read_only_cli(self):
+        self.assertIn("'services','list','--enabled'", self.workflow)
+        self.assertIn("--filter=config.name=", self.workflow)
+        self.assertNotIn("'services','describe'", self.workflow)
+
 
 if __name__ == "__main__":
     unittest.main()
