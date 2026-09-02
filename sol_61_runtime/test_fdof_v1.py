@@ -111,6 +111,32 @@ class FdofV1Tests(unittest.TestCase):
         with self.assertRaises(ConstraintError):
             self.fdof.route(self.route_request(), now_epoch=self.now)
 
+    def test_not_applicable_required_dimension_never_qualifies_healthy(self):
+        self.fdof.register_executor(self.executor("exec-na"))
+        observation = self.healthy("exec-na")
+        observation = HealthObservation(
+            **{**observation.__dict__, "semantic_capability": "NOT_APPLICABLE"}
+        )
+        self.fdof.record_health(observation)
+        state = self.fdof.health_state("exec-na", now_epoch=self.now)
+        self.assertEqual(state["state"], "DEGRADED")
+        self.assertIn("REQUIRED_DIMENSION_NOT_HEALTHY", state["reasons"])
+        with self.assertRaises(ConstraintError):
+            self.fdof.route(self.route_request(), now_epoch=self.now)
+
+    def test_unknown_provider_state_never_qualifies_healthy(self):
+        self.fdof.register_executor(self.executor("exec-provider-unknown"))
+        observation = self.healthy("exec-provider-unknown")
+        observation = HealthObservation(
+            **{**observation.__dict__, "provider_state": "UNKNOWN"}
+        )
+        self.fdof.record_health(observation)
+        state = self.fdof.health_state("exec-provider-unknown", now_epoch=self.now)
+        self.assertEqual(state["state"], "DEGRADED")
+        self.assertIn("PROVIDER_NOT_AVAILABLE", state["reasons"])
+        with self.assertRaises(ConstraintError):
+            self.fdof.route(self.route_request(), now_epoch=self.now)
+
     def test_cheapest_fresh_eligible_executor_wins_deterministically(self):
         self.fdof.register_executor(self.executor("exec-free", cost_class="C0_INCLUDED_FREE"))
         self.fdof.register_executor(self.executor("exec-micro", cost_class="C1_MICRO_SERVERLESS"))
@@ -229,7 +255,7 @@ class FdofV1Tests(unittest.TestCase):
         self.fdof.register_executor(self.executor("exec-a"))
         self.fdof.record_health(self.healthy("exec-a"))
         status = self.fdof.status(now_epoch=self.now)
-        self.assertEqual(status["fdof_version"], "1.0.0")
+        self.assertEqual(status["fdof_version"], "1.0.1")
         self.assertTrue(status["sol62_integrity"]["event_chain_valid"])
         self.assertEqual(status["healthy_executors"], 1)
 
