@@ -1,0 +1,226 @@
+name: Google AI Studio Semantic Canary v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: google-ai-studio-semantic-canary-v1
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  canary:
+    if: >-
+      github.event.issue.title == '[BUBBLES-PROBE] GOOGLE_AI_STUDIO_SEMANTIC_CANARY_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Run one redacted Gemini semantic canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p ai-studio-output
+          python - <<'PY'
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          import os
+          import subprocess
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+          from typing import Any
+
+          project = os.environ['PROJECT_ID']
+          source_sha = os.environ.get('GITHUB_SHA', '')
+          run_id = os.environ.get('GITHUB_RUN_ID', '')
+          recorded_at = datetime.now(timezone.utc).isoformat()
+          challenge = 'FEDOMEGA_AI_STUDIO_' + hashlib.sha256(
+              f'{source_sha}:{run_id}:{recorded_at}'.encode('utf-8')
+          ).hexdigest()[:18]
+
+          def http_json(url: str, *, method: str = 'GET', headers: dict[str, str] | None = None, body: dict[str, Any] | None = None, timeout: int = 30) -> dict[str, Any]:
+              data = None if body is None else json.dumps(body, separators=(',', ':')).encode('utf-8')
+              request = urllib.request.Request(url, data=data, headers=headers or {}, method=method)
+              try:
+                  with urllib.request.urlopen(request, timeout=timeout) as response:
+                      raw = response.read().decode('utf-8', 'replace')
+                      try:
+                          parsed = json.loads(raw)
+                      except Exception:
+                          parsed = {}
+                      return {'http_status': response.status, 'body': parsed}
+              except urllib.error.HTTPError as exc:
+                  raw = exc.read().decode('utf-8', 'replace')
+                  try:
+                      parsed = json.loads(raw)
+                  except Exception:
+                      parsed = {}
+                  return {
+                      'http_status': exc.code,
+                      'error_status': parsed.get('error', {}).get('status') if isinstance(parsed, dict) else None,
+                  }
+              except Exception as exc:
+                  return {'transport_error': type(exc).__name__}
+
+          secret = subprocess.run(
+              ['gcloud', 'secrets', 'versions', 'access', 'latest', '--secret=gemini-api-key', '--project', project],
+              text=True,
+              capture_output=True,
+              timeout=30,
+              check=False,
+          )
+          api_key = secret.stdout.strip() if secret.returncode == 0 else ''
+
+          receipt: dict[str, Any] = {
+              'schema': 'GOOGLE-AI-STUDIO-SEMANTIC-CANARY-V1',
+              'recorded_at': recorded_at,
+              'source_sha': source_sha,
+              'run_id': run_id,
+              'project_id': project,
+              'classification': 'GEMINI_SECRET_ACCESS_FAILED' if not api_key else 'GEMINI_SEMANTIC_CANARY_NOT_RUN',
+              'secret_name': 'gemini-api-key',
+              'secret_value_accessed_transiently': bool(api_key),
+              'secret_value_recorded': False,
+              'provider_semantic_call_attempted': False,
+              'provider_semantic_call_verified': False,
+              'provider_mutation_attempted': False,
+              'model_discovery_http_status': None,
+              'generate_http_status': None,
+              'selected_model': None,
+              'candidate_count': 0,
+              'semantic_exact_match': False,
+              'challenge_sha256': hashlib.sha256(challenge.encode('utf-8')).hexdigest(),
+              'response_sha256': None,
+              'truth_boundary': 'One bounded Gemini Developer API semantic canary only. The existing API key is accessed transiently in runner memory and never written to source, logs, artifacts, summaries, or receipts. No IAM, API enablement, deployment, traffic, secret mutation, repository mutation, or external human communication is performed.'
+          }
+
+          if api_key:
+              headers = {'accept': 'application/json', 'x-goog-api-key': api_key}
+              models_result = http_json(
+                  'https://generativelanguage.googleapis.com/v1beta/models',
+                  headers=headers,
+                  timeout=30,
+              )
+              receipt['model_discovery_http_status'] = models_result.get('http_status')
+              models = models_result.get('body', {}).get('models', []) if isinstance(models_result.get('body'), dict) else []
+              candidates: list[dict[str, Any]] = []
+              for model in models if isinstance(models, list) else []:
+                  methods = model.get('supportedGenerationMethods', []) if isinstance(model, dict) else []
+                  name = str(model.get('name', '')) if isinstance(model, dict) else ''
+                  lowered = name.lower()
+                  if (
+                      'generateContent' in methods
+                      and 'gemini' in lowered
+                      and all(blocked not in lowered for blocked in ('embedding', 'image', 'vision', 'tts', 'aqa'))
+                  ):
+                      candidates.append(model)
+
+              def rank(model: dict[str, Any]) -> tuple[int, int, str]:
+                  name = str(model.get('name', '')).lower()
+                  unstable = int(any(marker in name for marker in ('preview', 'experimental', 'exp-', 'latest')))
+                  flash = 0 if 'flash' in name else 1
+                  return unstable, flash, name
+
+              candidates.sort(key=rank)
+              receipt['candidate_count'] = len(candidates)
+              if models_result.get('http_status') == 200 and candidates:
+                  selected = str(candidates[0].get('name', ''))
+                  receipt['selected_model'] = selected
+                  receipt['provider_semantic_call_attempted'] = True
+                  generate = http_json(
+                      f'https://generativelanguage.googleapis.com/v1beta/{selected}:generateContent',
+                      method='POST',
+                      headers={'content-type': 'application/json', 'x-goog-api-key': api_key},
+                      body={
+                          'contents': [{'role': 'user', 'parts': [{'text': 'Return exactly this token and nothing else: ' + challenge}]}],
+                          'generationConfig': {'temperature': 0, 'maxOutputTokens': 32},
+                      },
+                      timeout=45,
+                  )
+                  receipt['generate_http_status'] = generate.get('http_status')
+                  text = ''
+                  try:
+                      text = ''.join(
+                          str(part.get('text', ''))
+                          for part in generate.get('body', {})['candidates'][0]['content']['parts']
+                      ).strip()
+                  except Exception:
+                      text = ''
+                  exact = generate.get('http_status') == 200 and text == challenge
+                  receipt['semantic_exact_match'] = exact
+                  receipt['provider_semantic_call_verified'] = exact
+                  receipt['response_sha256'] = hashlib.sha256(text.encode('utf-8')).hexdigest() if text else None
+                  receipt['classification'] = 'GEMINI_SEMANTIC_READBACK_PROVEN' if exact else 'GEMINI_SEMANTIC_READBACK_FAILED'
+              else:
+                  receipt['classification'] = 'GEMINI_MODEL_DISCOVERY_FAILED'
+
+          Path('ai-studio-output/receipt.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n',
+              encoding='utf-8',
+          )
+          print(json.dumps({
+              'classification': receipt['classification'],
+              'provider_semantic_call_attempted': receipt['provider_semantic_call_attempted'],
+              'provider_semantic_call_verified': receipt['provider_semantic_call_verified'],
+              'secret_value_recorded': receipt['secret_value_recorded'],
+              'provider_mutation_attempted': receipt['provider_mutation_attempted'],
+              'model_discovery_http_status': receipt['model_discovery_http_status'],
+              'generate_http_status': receipt['generate_http_status'],
+              'selected_model': receipt['selected_model'],
+              'semantic_exact_match': receipt['semantic_exact_match'],
+              'response_sha256': receipt['response_sha256'],
+          }, sort_keys=True))
+          PY
+
+      - name: Verify semantic readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path('ai-studio-output/receipt.json').read_text(encoding='utf-8'))
+          assert receipt['schema'] == 'GOOGLE-AI-STUDIO-SEMANTIC-CANARY-V1', receipt
+          assert receipt['classification'] == 'GEMINI_SEMANTIC_READBACK_PROVEN', receipt
+          assert receipt['provider_semantic_call_attempted'] is True, receipt
+          assert receipt['provider_semantic_call_verified'] is True, receipt
+          assert receipt['semantic_exact_match'] is True, receipt
+          assert receipt['secret_value_accessed_transiently'] is True, receipt
+          assert receipt['secret_value_recorded'] is False, receipt
+          assert receipt['provider_mutation_attempted'] is False, receipt
+          PY
+
+      - name: Upload immutable redacted canary receipt
+        if: always() && hashFiles('ai-studio-output/receipt.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: google-ai-studio-semantic-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ai-studio-output/receipt.json
+          if-no-files-found: error
+          retention-days: 90
