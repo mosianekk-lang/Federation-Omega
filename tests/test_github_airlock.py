@@ -172,6 +172,37 @@ jobs:
         )
         self.assertIn("WORKFLOW_NOT_ALLOWLISTED", self.rules(findings))
 
+    def test_expression_bearing_flow_mapping_is_rejected(self):
+        text = """name: Guard
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: x
+jobs:
+  test:
+    steps:
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: proof-${{ github.run_id }}, path: output}
+"""
+        findings = AIRLOCK.analyse_workflow(
+            ".github/workflows/public-repository-leak-guard.yml", text, POLICY
+        )
+        self.assertIn(
+            "AMBIGUOUS_WORKFLOW_FLOW_EXPRESSION",
+            self.rules(findings),
+        )
+
+    def test_current_workflows_have_no_expression_bearing_flow_mappings(self):
+        workflow_dir = ROOT / ".github" / "workflows"
+        for path in sorted(workflow_dir.glob("*.yml")):
+            findings = AIRLOCK.workflow_syntax_findings(
+                path.relative_to(ROOT).as_posix(),
+                path.read_text(encoding="utf-8"),
+            )
+            self.assertEqual([], findings, path.name)
+
     def test_contents_write_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/public-repository-leak-guard.yml",
