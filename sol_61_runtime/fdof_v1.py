@@ -13,7 +13,7 @@ except ImportError:
     from sol_62_runtime import Sol62Runtime
 
 
-FDOF_VERSION = "1.0.0"
+FDOF_VERSION = "1.0.1"
 AUTHORITY_ORDER = {
     "A0_READ_ONLY": 0,
     "A1_INTERNAL": 1,
@@ -299,10 +299,10 @@ class FederationDistributedOperatingFabric:
         ]
         if value["capacity_available"] <= 0:
             reasons.append("NO_CAPACITY")
-        if any(item in {"FAILED", "UNKNOWN"} for item in required):
+        if any(item != "HEALTHY" for item in required):
             reasons.append("REQUIRED_DIMENSION_NOT_HEALTHY")
-        if any(item == "DEGRADED" for item in required) or value["provider_state"] == "DEGRADED":
-            reasons.append("DEGRADED_DIMENSION")
+        if value["provider_state"] != "AVAILABLE":
+            reasons.append("PROVIDER_NOT_AVAILABLE")
         if reasons:
             return {"executor_id": executor_id, "state": "DEGRADED", "age_seconds": age, "reasons": reasons}
         return {"executor_id": executor_id, "state": "HEALTHY", "age_seconds": age, "reasons": []}
