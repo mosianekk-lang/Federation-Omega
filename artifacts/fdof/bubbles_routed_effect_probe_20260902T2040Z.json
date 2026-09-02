@@ -1,0 +1,13 @@
+{
+  "schema": "FDOF-ROUTED-HOSTED-EFFECT-PROBE-V1",
+  "mission_id": "MISSION-FDOF-GEN16-20260902-001",
+  "transition_id": "TRANS-FDOF-BUBBLES-LIVE-20260902-001",
+  "route_id": "ROUTE-FDOF-BUBBLES-LIVE-001",
+  "lease_id": "LEASE-FDOF-BUBBLES-LIVE-001",
+  "effect_id": "EFFECT-FDOF-BUBBLES-LIVE-001",
+  "idempotency_key": "FDOF:BUBBLES:HOSTED_CANARY:20260902T2240",
+  "executor_id": "EXEC-GITHUB-BUBBLES-READ-001",
+  "effect": "READ_ONLY_CANARY",
+  "external_effect": false,
+  "generation_anchor": "GEN16/6fa54e31"
+}
