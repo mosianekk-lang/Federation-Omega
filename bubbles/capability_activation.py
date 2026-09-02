@@ -67,6 +67,19 @@ def _surface(receipt: Mapping[str, Any], name: str) -> Mapping[str, Any]:
     return {}
 
 
+def _http_200(value: Any) -> bool:
+    return isinstance(value, Mapping) and value.get("http_status") == 200
+
+
+def _http_semantic_ok(value: Any) -> bool:
+    if not _http_200(value):
+        return False
+    if value.get("body_ok") is True:
+        return True
+    body = value.get("body")
+    return isinstance(body, Mapping) and body.get("ok") is True
+
+
 def _sha(payload: Mapping[str, Any]) -> str:
     return sha256(
         json.dumps(payload, sort_keys=True, separators=(",", ":"), ensure_ascii=True).encode("utf-8")
@@ -93,16 +106,14 @@ def build_activation_snapshot(
         surface, "archon_apps_script_translator"
     )
 
-    operator_public_ok = (
-        isinstance(operator.get("public_health"), Mapping)
-        and operator["public_health"].get("http_status") == 200
-        and isinstance(operator.get("public_contract"), Mapping)
-        and operator["public_contract"].get("http_status") == 200
+    surface_operator_public_ok = (
+        _http_200(operator.get("public_health"))
+        and _http_200(operator.get("public_contract"))
     )
-    operator_authenticated = operator.get("classification") == "AUTHENTICATED_READBACK_VERIFIED"
-    operator_token = operator.get("trusted_token_available") is True
-    archon_authenticated = archon.get("classification") == "AUTHENTICATED_READBACK_VERIFIED"
-    archon_token = archon.get("trusted_token_available") is True
+    surface_operator_authenticated = operator.get("classification") == "AUTHENTICATED_READBACK_VERIFIED"
+    surface_operator_token = operator.get("trusted_token_available") is True
+    surface_archon_authenticated = archon.get("classification") == "AUTHENTICATED_READBACK_VERIFIED"
+    surface_archon_token = archon.get("trusted_token_available") is True
 
     authority_authenticated = authority.get("provider_authenticated") is True
     authority_classification = str(authority.get("classification") or "")
@@ -113,6 +124,32 @@ def build_activation_snapshot(
         isinstance(authority.get("access_token_test"), Mapping)
         and authority["access_token_test"].get("ok") is False
     )
+
+    authority_operator_public_ok = (
+        _http_200(authority.get("operator_public_health"))
+        and _http_200(authority.get("operator_public_contract"))
+    )
+    authority_operator_authenticated = (
+        authority.get("fo_token_available") is True
+        and _http_semantic_ok(authority.get("operator_authenticated_status"))
+        and _http_semantic_ok(authority.get("operator_architron_read"))
+    )
+    authority_archon_authenticated = (
+        authority.get("archon_token_available") is True
+        and authority.get("archon_authenticated_readback") is True
+    )
+    authority_cloud_read_ok = (
+        authority_authenticated
+        and _http_semantic_ok(authority.get("operator_architron_read"))
+        and not current_authority_failed
+    )
+
+    operator_public_ok = surface_operator_public_ok or authority_operator_public_ok
+    operator_authenticated = surface_operator_authenticated or authority_operator_authenticated
+    operator_token = surface_operator_token or authority.get("fo_token_available") is True
+    archon_authenticated = surface_archon_authenticated or authority_archon_authenticated
+    archon_token = surface_archon_token or authority.get("archon_token_available") is True
+    cloud_read_ok = operator_public_ok or authority_cloud_read_ok
 
     if event_name == "schedule":
         scheduled_state = ActivationState.OPERATIONAL
@@ -140,7 +177,7 @@ def build_activation_snapshot(
 
     if operator_authenticated and operator_token and authority_authenticated and not current_authority_failed:
         cloud_write_state = ActivationState.HOSTED_VERIFIED
-        cloud_write_reason = "Fresh authenticated operator/provider authority is present."
+        cloud_write_reason = "Fresh authenticated operator/provider authority is present; mutation remains action-specific and unproven."
         cloud_write_gate = "ACTION_SPECIFIC_MUTATION_PLUS_TARGET_READBACK"
     else:
         cloud_write_state = ActivationState.AUTHORITY_GATED
@@ -206,12 +243,12 @@ def build_activation_snapshot(
         ),
         ActivationLane(
             "GOOGLE_CLOUD_READ",
-            ActivationState.HOSTED_VERIFIED if operator_public_ok else ActivationState.PROVIDER_GATED,
-            ("bubbles-provider-surface-readback",),
-            "Public semantic operator health/contract readback is fresh."
-            if operator_public_ok
+            ActivationState.HOSTED_VERIFIED if cloud_read_ok else ActivationState.PROVIDER_GATED,
+            ("bubbles-provider-surface-readback", "provider-authority-recovery"),
+            "Fresh semantic Cloud operator/provider readback is verified."
+            if cloud_read_ok
             else "Fresh Cloud operator readback is absent.",
-            None if operator_public_ok else "FRESH_OPERATOR_HEALTH_AND_CONTRACT_READBACK",
+            None if cloud_read_ok else "FRESH_OPERATOR_HEALTH_AND_CONTRACT_READBACK",
         ),
         ActivationLane(
             "GOOGLE_CLOUD_EFFECTS",
@@ -239,7 +276,7 @@ def build_activation_snapshot(
         ActivationLane(
             "ARCHON_ADMIN",
             ActivationState.HOSTED_VERIFIED if archon_authenticated and archon_token else ActivationState.CREDENTIAL_GATED,
-            ("archon-admin-plane-v5",),
+            ("archon-admin-plane-v5", "provider-authority-recovery"),
             "Fresh authenticated ARCHON admin readback is available."
             if archon_authenticated and archon_token
             else "ARCHON public OpenAPI is reachable but trusted admin-token binding is absent.",
