@@ -69,8 +69,17 @@ jobs:
           print(sum(1 for run in runs if run.get('event') == 'workflow_dispatch'))
           PY
           )"
+          previous_scheduled="$(python - <<'PY'
+          import json
+          from pathlib import Path
+          payload = json.loads(Path('runtime-output/prior-runs.json').read_text())
+          runs = payload.get('workflow_runs', [])
+          print(sum(1 for run in runs if run.get('event') == 'schedule' and run.get('conclusion') == 'success'))
+          PY
+          )"
           echo "previous_successful=${previous_successful}" >> "$GITHUB_OUTPUT"
           echo "previous_manual=${previous_manual}" >> "$GITHUB_OUTPUT"
+          echo "previous_scheduled=${previous_scheduled}" >> "$GITHUB_OUTPUT"
 
       - name: Run maturation shadow regression tests
         run: |
@@ -103,14 +112,21 @@ jobs:
             --output runtime-output/bubbles-provider-surface-receipt.json
 
       - name: Compile fresh Bubbles capability activation projection
+        env:
+          PREVIOUS_SCHEDULED: ${{ steps.history.outputs.previous_scheduled }}
         shell: bash
         run: |
           set -euo pipefail
+          schedule_args=()
+          if [[ "${PREVIOUS_SCHEDULED:-0}" =~ ^[0-9]+$ ]] && (( PREVIOUS_SCHEDULED > 0 )); then
+            schedule_args+=(--schedule-provider-verified)
+          fi
           python -m bubbles.capability_activation \
             --source-sha "$GITHUB_SHA" \
             --event-name "$GITHUB_EVENT_NAME" \
             --provider-surface-receipt runtime-output/bubbles-provider-surface-receipt.json \
             --schedule-configured \
+            "${schedule_args[@]}" \
             --output runtime-output/bubbles-capability-activation.json \
             | tee runtime-output/bubbles-capability-activation-summary.json
 
@@ -127,6 +143,7 @@ jobs:
           heartbeat = json.loads(Path('runtime-output/receipts/heartbeat.json').read_text())
           activation = json.loads(Path('runtime-output/bubbles-capability-activation.json').read_text())
           provider = json.loads(Path('runtime-output/bubbles-provider-surface-receipt.json').read_text())
+          history = json.loads(Path('runtime-output/prior-runs.json').read_text())
 
           assert receipt['status'] == 'SHADOW_MATURATION_CYCLE_VERIFIED', receipt
           assert receipt['external_effect'] is False, receipt
@@ -142,8 +159,12 @@ jobs:
           assert activation['green_count'] > 0, activation
           assert provider['mutation_attempted'] is False, provider
           assert provider['secret_values_recorded'] is False, provider
-          if '${{ github.event_name }}' == 'schedule':
-              scheduled = next(lane for lane in activation['lanes'] if lane['lane_id'] == 'SCHEDULED_MISSIONS')
+          successful_schedule = any(
+              run.get('event') == 'schedule' and run.get('conclusion') == 'success'
+              for run in history.get('workflow_runs', [])
+          )
+          scheduled = next(lane for lane in activation['lanes'] if lane['lane_id'] == 'SCHEDULED_MISSIONS')
+          if '${{ github.event_name }}' == 'schedule' or successful_schedule:
               assert scheduled['state'] == 'OPERATIONAL', scheduled
           print(json.dumps({
               'status': receipt['status'],
@@ -153,6 +174,7 @@ jobs:
               'self_sustaining': receipt['self_sustaining'],
               'next_gate': receipt['next_gate'],
               'external_effect': receipt['external_effect'],
+              'provider_verified_schedule': successful_schedule,
               'bubbles_green_count': activation['green_count'],
               'bubbles_lane_count': activation['lane_count'],
               'bubbles_all_green': activation['all_green'],
