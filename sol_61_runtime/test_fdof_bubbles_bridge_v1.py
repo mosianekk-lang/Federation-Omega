@@ -11,6 +11,7 @@ try:
         HOST_CAPABILITY,
         HOST_EXECUTOR_ID,
         HOST_TARGET,
+        HostedReceiptEvidence,
         QUALIFICATION_MESSAGE,
         deterministic_local_qualification_receipt,
     )
@@ -23,6 +24,7 @@ except ImportError:
         HOST_CAPABILITY,
         HOST_EXECUTOR_ID,
         HOST_TARGET,
+        HostedReceiptEvidence,
         QUALIFICATION_MESSAGE,
         deterministic_local_qualification_receipt,
     )
@@ -43,6 +45,22 @@ class FDOFBubblesBridgeV1Tests(unittest.TestCase):
         self.runtime.close()
         self.tmp.cleanup()
 
+    def local_receipt(self):
+        qualification = self.bridge.qualification_command()
+        return deterministic_local_qualification_receipt(qualification.command)
+
+    def hosted_evidence(self, receipt=None, **overrides):
+        base = {
+            "provider_run_id": "33670000000",
+            "artifact_id": "9862000000",
+            "artifact_digest": "sha256:" + "a" * 64,
+            "head_sha": "b" * 40,
+            "conclusion": "success",
+            "receipt": receipt or self.local_receipt(),
+        }
+        base.update(overrides)
+        return HostedReceiptEvidence(**base)
+
     def test_executor_registration_does_not_auto_promote_health(self):
         self.bridge.register_hosted_executor()
         state = self.fdof.health_state(HOST_EXECUTOR_ID, now_epoch=self.now)
@@ -59,22 +77,36 @@ class FDOFBubblesBridgeV1Tests(unittest.TestCase):
         self.assertEqual(QUALIFICATION_MESSAGE, qualification.command["payload"]["message"])
         self.assertFalse(qualification.command["payload"]["external_effect"])
 
-    def test_local_semantic_receipt_can_validate_but_is_not_hosted_proof(self):
+    def test_local_receipt_proves_semantics_only(self):
         self.bridge.register_hosted_executor()
-        qualification = self.bridge.qualification_command()
-        receipt = deterministic_local_qualification_receipt(qualification.command)
-        observation = self.bridge.health_from_receipt(
-            receipt, observed_at_epoch=self.now, ttl_seconds=60
-        )
-        self.assertEqual("HOSTED_RUNTIME_IMMUTABLE_READBACK", observation.evidence_class)
-        self.assertFalse(observation.metadata["provider_effect_proven"])
-        self.assertFalse(observation.metadata["repository_write_authority_proven"])
+        semantic = self.bridge.validate_receipt_semantics(self.local_receipt())
+        self.assertTrue(semantic["semantic_match"])
+        self.assertFalse(semantic["provider_effect_proven"])
+        self.assertFalse(semantic["repository_write_authority_proven"])
+        self.assertEqual("UNKNOWN", self.fdof.health_state(HOST_EXECUTOR_ID, now_epoch=self.now)["state"])
 
-    def test_valid_receipt_admission_makes_only_registered_read_capability_routable(self):
+    def test_raw_local_receipt_cannot_be_submitted_as_hosted_health(self):
         self.bridge.register_hosted_executor()
-        qualification = self.bridge.qualification_command()
-        receipt = deterministic_local_qualification_receipt(qualification.command)
-        self.bridge.admit_hosted_receipt(receipt, observed_at_epoch=self.now, ttl_seconds=60)
+        with self.assertRaises(TypeError):
+            self.bridge.admit_hosted_evidence(self.local_receipt(), observed_at_epoch=self.now)
+
+    def test_hosted_evidence_requires_immutable_provider_identifiers(self):
+        self.bridge.register_hosted_executor()
+        for bad in (
+            self.hosted_evidence(provider_run_id=""),
+            self.hosted_evidence(artifact_id=""),
+            self.hosted_evidence(head_sha=""),
+            self.hosted_evidence(artifact_digest="missing-prefix"),
+            self.hosted_evidence(conclusion="failure"),
+        ):
+            with self.assertRaises(ConstraintError):
+                self.bridge.admit_hosted_evidence(bad, observed_at_epoch=self.now)
+
+    def test_valid_hosted_evidence_makes_only_read_capability_routable(self):
+        self.bridge.register_hosted_executor()
+        self.bridge.admit_hosted_evidence(
+            self.hosted_evidence(), observed_at_epoch=self.now, ttl_seconds=60
+        )
         route = self.fdof.route(
             RouteRequest(
                 route_id="route-host-read-1",
@@ -112,17 +144,18 @@ class FDOFBubblesBridgeV1Tests(unittest.TestCase):
 
     def test_tampered_receipt_fails_closed(self):
         self.bridge.register_hosted_executor()
-        qualification = self.bridge.qualification_command()
-        receipt = deterministic_local_qualification_receipt(qualification.command)
-        receipt = {**receipt, "execution": {**receipt["execution"], "kind": "OTHER"}}
+        receipt = self.local_receipt()
+        tampered = {**receipt, "execution": {**receipt["execution"], "kind": "OTHER"}}
         with self.assertRaises(ConstraintError):
-            self.bridge.admit_hosted_receipt(receipt, observed_at_epoch=self.now)
+            self.bridge.admit_hosted_evidence(
+                self.hosted_evidence(receipt=tampered), observed_at_epoch=self.now
+            )
 
     def test_stale_hosted_health_stops_routing(self):
         self.bridge.register_hosted_executor()
-        qualification = self.bridge.qualification_command()
-        receipt = deterministic_local_qualification_receipt(qualification.command)
-        self.bridge.admit_hosted_receipt(receipt, observed_at_epoch=self.now, ttl_seconds=5)
+        self.bridge.admit_hosted_evidence(
+            self.hosted_evidence(), observed_at_epoch=self.now, ttl_seconds=5
+        )
         self.assertEqual("STALE", self.fdof.health_state(HOST_EXECUTOR_ID, now_epoch=self.now + 6)["state"])
         with self.assertRaises(ConstraintError):
             self.fdof.route(
