@@ -11,6 +11,8 @@ on:
       - "governance/superior_logic_maturation_shadow_v1.json"
       - "tools/superior_logic_maturation_shadow.py"
       - "tests/test_maturation_shadow_runtime.py"
+      - "bubbles/capability_activation.py"
+      - "tests/test_bubbles_capability_activation.py"
       - ".github/workflows/superior-logic-maturation-shadow.yml"
   schedule:
     - cron: "37 */6 * * *"
@@ -71,7 +73,9 @@ jobs:
           echo "previous_manual=${previous_manual}" >> "$GITHUB_OUTPUT"
 
       - name: Run maturation shadow regression tests
-        run: python -m unittest discover -s tests -p 'test_maturation_shadow_runtime.py' -v
+        run: |
+          python -m unittest discover -s tests -p 'test_maturation_shadow_runtime.py' -v
+          python -m unittest tests.test_bubbles_capability_activation -v
 
       - name: Execute chat-independent maturation shadow cycle
         env:
@@ -91,7 +95,26 @@ jobs:
             --previous-manual-cycles "$PREVIOUS_MANUAL" \
             | tee runtime-output/runtime-stdout.json
 
-      - name: Verify no-effect runtime receipt
+      - name: Run fresh Bubbles provider-surface readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m bubbles.provider_surface_probe \
+            --output runtime-output/bubbles-provider-surface-receipt.json
+
+      - name: Compile fresh Bubbles capability activation projection
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m bubbles.capability_activation \
+            --source-sha "$GITHUB_SHA" \
+            --event-name "$GITHUB_EVENT_NAME" \
+            --provider-surface-receipt runtime-output/bubbles-provider-surface-receipt.json \
+            --schedule-configured \
+            --output runtime-output/bubbles-capability-activation.json \
+            | tee runtime-output/bubbles-capability-activation-summary.json
+
+      - name: Verify no-effect runtime and activation receipts
         shell: bash
         run: |
           set -euo pipefail
@@ -102,6 +125,8 @@ jobs:
           receipt = json.loads(Path('runtime-output/receipts/maturation_receipt.json').read_text())
           work = json.loads(Path('runtime-output/receipts/candidate_work_package.json').read_text())
           heartbeat = json.loads(Path('runtime-output/receipts/heartbeat.json').read_text())
+          activation = json.loads(Path('runtime-output/bubbles-capability-activation.json').read_text())
+          provider = json.loads(Path('runtime-output/bubbles-provider-surface-receipt.json').read_text())
 
           assert receipt['status'] == 'SHADOW_MATURATION_CYCLE_VERIFIED', receipt
           assert receipt['external_effect'] is False, receipt
@@ -112,6 +137,14 @@ jobs:
           assert heartbeat['external_effect'] is False, heartbeat
           assert heartbeat['status'] == 'SHADOW_MATURATION_CYCLE_VERIFIED', heartbeat
           assert receipt['self_sustaining'] is False, receipt
+          assert activation['schema'] == 'BUBBLES-CAPABILITY-ACTIVATION-V1', activation
+          assert activation['lane_count'] >= 20, activation
+          assert activation['green_count'] > 0, activation
+          assert provider['mutation_attempted'] is False, provider
+          assert provider['secret_values_recorded'] is False, provider
+          if '${{ github.event_name }}' == 'schedule':
+              scheduled = next(lane for lane in activation['lanes'] if lane['lane_id'] == 'SCHEDULED_MISSIONS')
+              assert scheduled['state'] == 'OPERATIONAL', scheduled
           print(json.dumps({
               'status': receipt['status'],
               'cycle_number': receipt['cycle_number'],
@@ -120,10 +153,15 @@ jobs:
               'self_sustaining': receipt['self_sustaining'],
               'next_gate': receipt['next_gate'],
               'external_effect': receipt['external_effect'],
+              'bubbles_green_count': activation['green_count'],
+              'bubbles_lane_count': activation['lane_count'],
+              'bubbles_all_green': activation['all_green'],
+              'bubbles_residual_gates': activation['residual_gates'],
+              'bubbles_activation_sha256': activation['activation_sha256'],
           }, indent=2, sort_keys=True))
           PY
 
-      - name: Upload maturation shadow evidence
+      - name: Upload maturation and Bubbles activation evidence
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
