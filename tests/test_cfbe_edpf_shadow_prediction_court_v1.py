@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import replace
 import unittest
 
 from benchmarking.cfbe_omega.edpf_shadow_prediction_court_v1 import (
@@ -80,26 +81,15 @@ class ShadowPredictionCourtTests(unittest.TestCase):
 
     def test_temporal_leakage_fails_closed(self) -> None:
         pair = make_pair(0)
-        leaked = ShadowPredictionPair(
-            **{**pair.__dict__, "outcome_observed_epoch": pair.prediction_cutoff_epoch}
-        )
+        leaked = replace(pair, outcome_observed_epoch=pair.prediction_cutoff_epoch)
         with self.assertRaisesRegex(ValueError, "TEMPORAL_LEAKAGE"):
             leaked.validate()
 
     def test_outcome_proof_cannot_be_prediction_evidence(self) -> None:
         pair = make_pair(1)
-        leaked = ShadowPredictionPair(
-            pair_id=pair.pair_id,
-            mission_id=pair.mission_id,
-            source_head_sha=pair.source_head_sha,
-            predictor_source_fingerprint=pair.predictor_source_fingerprint,
-            prediction_cutoff_epoch=pair.prediction_cutoff_epoch,
-            outcome_observed_epoch=pair.outcome_observed_epoch,
-            prediction=pair.prediction,
-            outcome=pair.outcome,
+        leaked = replace(
+            pair,
             pre_outcome_evidence_refs=pair.pre_outcome_evidence_refs + pair.outcome_proof_refs,
-            outcome_proof_refs=pair.outcome_proof_refs,
-            evidence_mode=pair.evidence_mode,
         )
         with self.assertRaisesRegex(ValueError, "OUTCOME_PROOF_LEAKED"):
             leaked.validate()
@@ -108,32 +98,8 @@ class ShadowPredictionCourtTests(unittest.TestCase):
         pairs = []
         for i in range(30):
             pair = make_pair(i, source="single-source")
-            prediction = Prediction(
-                prediction_id=pair.prediction.prediction_id,
-                predictor_id="ONLY_ONE",
-                domain=pair.prediction.domain,
-                event=pair.prediction.event,
-                probability=pair.prediction.probability,
-                expected_value=pair.prediction.expected_value,
-                expected_latency=pair.prediction.expected_latency,
-                expected_owner_burden=pair.prediction.expected_owner_burden,
-                evidence_refs=pair.prediction.evidence_refs,
-            )
-            pairs.append(
-                ShadowPredictionPair(
-                    pair_id=pair.pair_id,
-                    mission_id=pair.mission_id,
-                    source_head_sha=pair.source_head_sha,
-                    predictor_source_fingerprint="single-source",
-                    prediction_cutoff_epoch=pair.prediction_cutoff_epoch,
-                    outcome_observed_epoch=pair.outcome_observed_epoch,
-                    prediction=prediction,
-                    outcome=pair.outcome,
-                    pre_outcome_evidence_refs=pair.pre_outcome_evidence_refs,
-                    outcome_proof_refs=pair.outcome_proof_refs,
-                    evidence_mode=pair.evidence_mode,
-                )
-            )
+            prediction = replace(pair.prediction, predictor_id="ONLY_ONE")
+            pairs.append(replace(pair, predictor_source_fingerprint="single-source", prediction=prediction))
         receipt = evaluate_shadow_prediction_court(tuple(pairs), holdout_size=10)
         self.assertEqual(receipt.decision, "REAL_SHADOW_CALIBRATION_NEGATIVE_OR_INSUFFICIENT")
         self.assertIn("MINIMUM_PREDICTOR_DIVERSITY_REQUIRED", receipt.blockers)
