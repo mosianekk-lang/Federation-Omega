@@ -126,7 +126,7 @@ def _resolved_metadata(events: Sequence[Mapping[str, Any]]) -> dict[str, dict[st
     open_meta: dict[str, dict[str, str]] = {}
     resolved: dict[str, dict[str, str]] = {}
     for raw_event in events:
-        if str(raw_event.get("event_type")) != "NODE_OBSERVED":
+        if str(raw_event.get("event_type")) not in {"NODE_OBSERVED", "NODE_TRANSITIONED"}:
             continue
         node = dict(dict(raw_event.get("payload", {})).get("node", {}))
         if _kind(node.get("kind")) not in (NodeKind.EXPERIMENT.value, str(NodeKind.EXPERIMENT)):
