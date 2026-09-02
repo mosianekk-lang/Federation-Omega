@@ -17,6 +17,7 @@ env:
   SOURCE_FILE_ID: 1wRZyIhlFy5bECTccmfXHzWH5b4hTN7xN
   SOURCE_EXPECTED_SIZE: '3501253632'
   SOURCE_EXPECTED_SHA256: 14d280e593795253f81c375df671782d62d15349dfc241a791d6f974485b338b
+  PST_PARSER_JOBS: '0'
   SOURCE_NAME: MosianeKK@tut.ac.za.pst
   CORPUS_NAME: MosianeKK_PST_Evidence_Case
   SOURCE_PATH: /mnt/pst/MosianeKK@tut.ac.za.pst
@@ -52,6 +53,7 @@ jobs:
           set -euo pipefail
           sudo apt-get update -qq
           sudo apt-get install -y -qq --no-install-recommends ca-certificates pst-utils sqlite3 zip unzip
+          readpst -V
           python -m pip install --upgrade pip
           python -m pip install 'gdown==5.2.0' 'pypdf==6.1.1'
 
@@ -107,7 +109,7 @@ jobs:
             --source-type pst \
             --shard-size-mib 512 \
             --search-pack-size-mib 25 \
-            --jobs 8
+            --jobs "$PST_PARSER_JOBS"
           python - <<'PY'
           import json, os
           from pathlib import Path
@@ -181,7 +183,7 @@ jobs:
               },
               'extraction_contract': {
                   'parser': 'readpst',
-                  'jobs': 8,
+                  'jobs': int(os.environ['PST_PARSER_JOBS']),
                   'source_type': 'pst',
               },
               'reported_status': report.get('status'),
