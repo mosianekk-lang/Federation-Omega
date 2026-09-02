@@ -1,0 +1,32 @@
+{
+  "schema": "GOOGLE-AI-STUDIO-SEMANTIC-CANARY-CONTRACT-V1",
+  "workflow": ".github/workflows/google-ai-studio-semantic-canary-v1.yml",
+  "trigger": {
+    "event": "issues.opened",
+    "exact_title": "[BUBBLES-PROBE] GOOGLE_AI_STUDIO_SEMANTIC_CANARY_V1",
+    "owner_only": true
+  },
+  "authority": {
+    "project_id": "sov-hybrid-suite",
+    "wif_provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+    "service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "provider_mutation": false,
+    "repository_mutation": false
+  },
+  "credential_handling": {
+    "secret_name": "gemini-api-key",
+    "access": "TRANSIENT_RUNNER_MEMORY_ONLY",
+    "source_recording": false,
+    "log_recording": false,
+    "artifact_recording": false,
+    "receipt_recording": false
+  },
+  "proof_requirement": {
+    "model_discovery_http_status": 200,
+    "generate_http_status": 200,
+    "semantic_exact_match": true,
+    "classification": "GEMINI_SEMANTIC_READBACK_PROVEN",
+    "provider_mutation_attempted": false
+  },
+  "truth_boundary": "This contract can prove a bounded live Gemini Developer API semantic readback using the existing credential. It does not prove general Google Cloud mutation authority, unlimited inference capacity, cost guarantees, owner value, or any unrelated provider lane."
+}
