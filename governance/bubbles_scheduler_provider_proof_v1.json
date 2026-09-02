@@ -1,0 +1,17 @@
+{
+  "schema": "BUBBLES-SCHEDULER-PROVIDER-PROOF-V1",
+  "workflow": ".github/workflows/superior-logic-maturation-shadow.yml",
+  "workflow_id": 344197377,
+  "provider": "github_actions",
+  "proof_rule": "A successful natural schedule event for the same workflow identity proves the provider-hosted scheduler mechanism, but does not prove future payload semantics or external provider effects.",
+  "observed_schedule_run": {
+    "run_id": 33625877086,
+    "event": "schedule",
+    "conclusion": "success",
+    "observed_on": "2026-09-02"
+  },
+  "authority_effect": "UNCHANGED",
+  "provider_effect_authority_created": false,
+  "future_payload_self_certified": false,
+  "owner_value_inferred": false
+}
