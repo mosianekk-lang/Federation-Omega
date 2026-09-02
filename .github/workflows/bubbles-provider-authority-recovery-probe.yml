@@ -94,6 +94,17 @@ jobs:
           for api in ['serviceusage.googleapis.com','script.googleapis.com','secretmanager.googleapis.com','run.googleapis.com','cloudbuild.googleapis.com','artifactregistry.googleapis.com']:
               api_states[api]=gcloud('services','list','--enabled',f'--filter=config.name={api}','--format=json(config.name,state)') if provider_authenticated else {'ok':False,'skipped':'NO_VALID_PROVIDER_AUTH'}
 
+          gemini_secret_metadata=gcloud('secrets','describe','gemini-api-key','--format=json(name,createTime,replication)') if provider_authenticated else {'ok':False,'skipped':'NO_VALID_PROVIDER_AUTH'}
+          gemini_secret_enabled_versions=gcloud('secrets','versions','list','gemini-api-key','--filter=state=ENABLED','--limit=1','--format=json(name,state,createTime)') if provider_authenticated else {'ok':False,'skipped':'NO_VALID_PROVIDER_AUTH'}
+          gemini_versions=parse_json(gemini_secret_enabled_versions) if gemini_secret_enabled_versions.get('ok') else []
+          gemini_ai_studio_credential={
+              'secret_name':'gemini-api-key',
+              'metadata_readable':bool(gemini_secret_metadata.get('ok')),
+              'enabled_version_visible':bool(gemini_secret_enabled_versions.get('ok') and isinstance(gemini_versions,list) and len(gemini_versions)>0),
+              'secret_value_accessed':False,
+              'provider_call_performed':False,
+          }
+
           cloud_run={}
           for service in ['architron9','federation-omega-operator','afeme-sovereign-control-plane-v4']:
               cloud_run[service]=gcloud('run','services','describe',service,'--region',region,'--format=json(metadata.name,status.url,status.latestReadyRevisionName,status.traffic,spec.template.spec.serviceAccountName)') if provider_authenticated else {'ok':False,'skipped':'NO_VALID_PROVIDER_AUTH'}
@@ -201,6 +212,7 @@ jobs:
               'canonical_wif_read':canonical_wif,
               'api_states':api_states,
               'cloud_run_services':cloud_run,
+              'gemini_ai_studio_credential':gemini_ai_studio_credential,
               'fo_token_available':bool(fo_token),'fo_token_source':fo_source or None,
               'archon_token_available':bool(archon_token),'archon_token_source':archon_source or None,
               'operator_public_health':proof_only_http(operator_public_health),
@@ -212,7 +224,7 @@ jobs:
               'archon_authenticated_readback':archon_ok,
               'secret_values_recorded':False,
               'raw_authenticated_response_bodies_recorded':False,
-              'truth_boundary':'Read-only authority recovery. Raw HTTP response bodies are not persisted. No IAM, API, deployment, traffic, secret-version mutation, Apps Script mutation, scheduler mutation, Cloud Run mutation, or repository mutation is performed.'
+              'truth_boundary':'Read-only authority recovery. Raw HTTP response bodies are not persisted. No Gemini Developer API call and no gemini-api-key secret value access. No IAM, API, deployment, traffic, secret-version mutation, Apps Script mutation, scheduler mutation, Cloud Run mutation, or repository mutation is performed.'
           }
           Path('provider-authority-output/receipt.json').write_text(json.dumps(redact(receipt),indent=2,sort_keys=True)+'\n',encoding='utf-8')
           print(json.dumps(redact(receipt),indent=2,sort_keys=True))
@@ -232,6 +244,10 @@ jobs:
           print(f"- fo_token_available: `{d['fo_token_available']}` ({d.get('fo_token_source')})")
           print(f"- archon_token_available: `{d['archon_token_available']}` ({d.get('archon_token_source')})")
           print(f"- archon_authenticated_readback: `{d['archon_authenticated_readback']}`")
+          print(f"- gemini_secret_metadata_readable: `{d['gemini_ai_studio_credential']['metadata_readable']}`")
+          print(f"- gemini_enabled_version_visible: `{d['gemini_ai_studio_credential']['enabled_version_visible']}`")
+          print('- gemini_secret_value_accessed: `False`')
+          print('- gemini_provider_call_performed: `False`')
           PY
 
       - name: Upload immutable redacted authority receipt
