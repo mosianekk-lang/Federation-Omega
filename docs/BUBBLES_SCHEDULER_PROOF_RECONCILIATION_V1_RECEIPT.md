@@ -1,1 +1,0 @@
-Scheduler proof closure candidate: same GitHub Actions workflow identity has provider-observed natural schedule success today. Activation logic reuses that mechanism proof while preserving separate current-payload, external-effect, credential, owner-value and promotion gates.
