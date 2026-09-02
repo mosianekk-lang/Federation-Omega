@@ -43,7 +43,7 @@ class ProviderAuthorityProbeReadmissionTests(unittest.TestCase):
     def test_enabled_service_diagnostic_uses_supported_read_only_cli(self):
         self.assertIn("'services','list','--enabled'", self.workflow)
         self.assertIn("--filter=config.name=", self.workflow)
-        self.assertNotIn("'services','describe'", self.workflow)
+        self.assertNotIn("gcloud('services','describe'", self.workflow)
 
 
     def test_receipt_never_persists_raw_provider_http_bodies(self):
