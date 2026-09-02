@@ -1,0 +1,176 @@
+name: FDOF Hosted State Restore v1
+
+on:
+  workflow_run:
+    workflows: ['FDOF Hosted State Export v1']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: fdof-hosted-state-restore-v1-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  restore:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout triggering source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Download triggering capsule artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: fdof-hosted-state-export-*
+          path: runtime-input
+          merge-multiple: true
+
+      - name: Restore capsule in a fresh runner and prove continuity
+        env:
+          TRIGGER_RUN_ID: ${{ github.event.workflow_run.id }}
+          TRIGGER_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-output
+          python - <<'PY'
+          import json
+          import os
+          import tempfile
+          from pathlib import Path
+
+          from sol_61_runtime.fdof_hosted_state_v1 import read_capsule, restore_capsule
+          from sol_61_runtime.sol_62_frontier_primitives import FenceError, IdempotencyCollision
+          from sol_61_runtime.sol_62_runtime import Sol62Runtime
+
+          trigger_run_id = os.environ['TRIGGER_RUN_ID']
+          trigger_head_sha = os.environ['TRIGGER_HEAD_SHA']
+          capsule = read_capsule('runtime-input/capsule.json')
+          export_receipt = json.loads(
+              Path('runtime-input/export-receipt.json').read_text(encoding='utf-8')
+          )
+          if capsule['source_version'] != trigger_head_sha:
+              raise RuntimeError('HOSTED_STATE_TRIGGER_SOURCE_MISMATCH')
+          if export_receipt['source_sha'] != trigger_head_sha:
+              raise RuntimeError('HOSTED_STATE_EXPORT_RECEIPT_SOURCE_MISMATCH')
+          if export_receipt['capsule_sha256'] != capsule['capsule_sha256']:
+              raise RuntimeError('HOSTED_STATE_EXPORT_RECEIPT_DIGEST_MISMATCH')
+
+          request = {
+              'operation': 'READ',
+              'target': 'fdof-hosted-state-cross-run-canary',
+              'nonce': 'cross-run-v1',
+          }
+          same_request_replayed = False
+          changed_request_blocked = False
+          active_lease_blocked = False
+          authority_absent = False
+
+          with tempfile.TemporaryDirectory() as tmp:
+              runtime = Sol62Runtime(Path(tmp) / 'restore-runtime')
+              try:
+                  status = restore_capsule(runtime, capsule)
+                  if not runtime.control.verify_event_chain():
+                      raise RuntimeError('HOSTED_STATE_EVENT_CHAIN_INVALID_AFTER_RESTORE')
+
+                  authority_count = int(
+                      runtime.control.db.execute(
+                          'SELECT COUNT(*) AS n FROM authority_leases'
+                      ).fetchone()['n']
+                  )
+                  authority_absent = authority_count == 0
+                  if not authority_absent:
+                      raise RuntimeError('HOSTED_STATE_AUTHORITY_LEASE_TRANSFERRED')
+
+                  try:
+                      runtime.acquire_execution_fence(
+                          'fdof-hosted-cross-run-v1',
+                          'hosted-restore-worker',
+                          ttl_seconds=3600,
+                          now_epoch=1001,
+                      )
+                  except FenceError:
+                      active_lease_blocked = True
+                  if not active_lease_blocked:
+                      raise RuntimeError('HOSTED_STATE_ACTIVE_LEASE_NOT_ENFORCED')
+
+                  replacement = runtime.acquire_execution_fence(
+                      'fdof-hosted-cross-run-v1',
+                      'hosted-restore-worker',
+                      ttl_seconds=3600,
+                      now_epoch=4601,
+                  )
+                  if int(replacement['fencing_token']) <= int(export_receipt['fencing_token']):
+                      raise RuntimeError('HOSTED_STATE_FENCING_TOKEN_NOT_MONOTONIC')
+
+                  replay = runtime.control.reserve_idempotency(
+                      'idem-fdof-hosted-cross-run-v1', request, 'AT_MOST_ONCE'
+                  )
+                  same_request_replayed = (
+                      replay['request_sha256'] == export_receipt['idempotency_request_sha256']
+                  )
+                  if not same_request_replayed:
+                      raise RuntimeError('HOSTED_STATE_IDEMPOTENCY_REPLAY_MISMATCH')
+
+                  try:
+                      runtime.control.reserve_idempotency(
+                          'idem-fdof-hosted-cross-run-v1',
+                          {
+                              'operation': 'WRITE',
+                              'target': 'fdof-hosted-state-cross-run-canary',
+                              'nonce': 'collision-must-fail',
+                          },
+                          'AT_MOST_ONCE',
+                      )
+                  except IdempotencyCollision:
+                      changed_request_blocked = True
+                  if not changed_request_blocked:
+                      raise RuntimeError('HOSTED_STATE_IDEMPOTENCY_COLLISION_NOT_BLOCKED')
+
+                  receipt = {
+                      'schema': 'FDOF-HOSTED-STATE-CROSS-RUN-RECEIPT-V1',
+                      'state': 'HOSTED_SEPARATE_RUN_STATE_CONTINUITY_VERIFIED',
+                      'trigger_run_id': trigger_run_id,
+                      'trigger_head_sha': trigger_head_sha,
+                      'capsule_sha256': capsule['capsule_sha256'],
+                      'generation_anchor': status.generation_anchor,
+                      'event_chain_valid': True,
+                      'authority_leases_absent': authority_absent,
+                      'active_prior_lease_blocked': active_lease_blocked,
+                      'fencing_token_monotonic': True,
+                      'restored_fencing_token': int(replacement['fencing_token']),
+                      'idempotency_same_request_replayed': same_request_replayed,
+                      'idempotency_changed_request_blocked': changed_request_blocked,
+                      'provider_effect': False,
+                      'provider_authority': False,
+                      'persistent_24x7_host': False,
+                  }
+                  Path('runtime-output/restore-receipt.json').write_text(
+                      json.dumps(receipt, indent=2, sort_keys=True) + '\n',
+                      encoding='utf-8',
+                  )
+              finally:
+                  runtime.close()
+          PY
+
+      - name: Upload immutable cross-run continuity receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fdof-hosted-state-restore-${{ github.run_id }}
+          path: runtime-output/restore-receipt.json
+          if-no-files-found: error
+          retention-days: 14

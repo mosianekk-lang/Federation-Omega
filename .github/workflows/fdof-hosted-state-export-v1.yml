@@ -1,0 +1,110 @@
+name: FDOF Hosted State Export v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: fdof-hosted-state-export-v1
+  cancel-in-progress: false
+
+jobs:
+  export:
+    if: >-
+      github.event.issue.title == '[FDOF-HOSTED-STATE] EXPORT-V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout admitted source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Export authority-safe FDOF state capsule
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-output
+          python - <<'PY'
+          import json
+          import subprocess
+          import tempfile
+          from pathlib import Path
+
+          from sol_61_runtime.fdof_hosted_state_v1 import export_capsule, write_capsule
+          from sol_61_runtime.sol_62_runtime import Sol62Runtime
+
+          source_sha = subprocess.check_output(
+              ['git', 'rev-parse', 'HEAD'], text=True
+          ).strip()
+          request = {
+              'operation': 'READ',
+              'target': 'fdof-hosted-state-cross-run-canary',
+              'nonce': 'cross-run-v1',
+          }
+
+          with tempfile.TemporaryDirectory() as tmp:
+              runtime = Sol62Runtime(Path(tmp) / 'export-runtime')
+              try:
+                  runtime.control.cas_put(
+                      'fdof.hosted.cross_run',
+                      'seed',
+                      {'phase': 'EXPORT', 'cross_run_canary': True},
+                      expected_version=0,
+                  )
+                  event = runtime.control.append_event(
+                      'mission-fdof-hosted-cross-run-v1',
+                      'FDOF_HOSTED_STATE_EXPORT_SEEDED',
+                      {'cross_run_canary': True},
+                  )
+                  idem = runtime.control.reserve_idempotency(
+                      'idem-fdof-hosted-cross-run-v1', request, 'AT_MOST_ONCE'
+                  )
+                  lease = runtime.acquire_execution_fence(
+                      'fdof-hosted-cross-run-v1',
+                      'hosted-export-worker',
+                      ttl_seconds=3600,
+                      now_epoch=1000,
+                  )
+                  capsule = export_capsule(runtime, source_version=source_sha)
+                  write_capsule('runtime-output/capsule.json', capsule)
+                  receipt = {
+                      'schema': 'FDOF-HOSTED-STATE-EXPORT-RECEIPT-V1',
+                      'state': 'CAPSULE_EXPORTED',
+                      'source_sha': source_sha,
+                      'capsule_sha256': capsule['capsule_sha256'],
+                      'generation_anchor': capsule['generation_anchor'],
+                      'event_hash': event['event_hash'],
+                      'fencing_token': int(lease['fencing_token']),
+                      'lease_expires_at_epoch': int(lease['expires_at_epoch']),
+                      'idempotency_request_sha256': idem['request_sha256'],
+                      'authority_leases_persisted': False,
+                      'provider_effect': False,
+                      'provider_authority': False,
+                  }
+                  Path('runtime-output/export-receipt.json').write_text(
+                      json.dumps(receipt, indent=2, sort_keys=True) + '\n',
+                      encoding='utf-8',
+                  )
+              finally:
+                  runtime.close()
+          PY
+
+      - name: Upload immutable state capsule proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fdof-hosted-state-export-${{ github.run_id }}
+          path: runtime-output/
+          if-no-files-found: error
+          retention-days: 14
