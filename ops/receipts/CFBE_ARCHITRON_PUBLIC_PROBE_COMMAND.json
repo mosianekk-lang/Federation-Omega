@@ -1,0 +1,8 @@
+{
+  "schema": "BUBBLES-CONTROL-COMMAND-V1",
+  "adapter_id": "bubbles_command_bus",
+  "action": "probe_archon_apps_script_deployment",
+  "effect": "READ",
+  "target_alias": "ARCHON_APPS_SCRIPT_PUBLIC_DEPLOYMENT",
+  "payload": {}
+}
