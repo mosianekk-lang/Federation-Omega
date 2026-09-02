@@ -68,18 +68,34 @@ class BubblesCapabilityActivationTests(unittest.TestCase):
         monitor = self.lane(snapshot, "CONDITION_MONITORING")
         self.assertEqual(ActivationState.OPERATIONAL.value, scheduled["state"])
         self.assertEqual(ActivationState.HOSTED_VERIFIED.value, monitor["state"])
+        self.assertTrue(snapshot["schedule_proof"]["current_event_is_schedule"])
 
-    def test_push_with_configured_schedule_does_not_fake_schedule_execution(self) -> None:
+    def test_prior_provider_verified_schedule_promotes_same_bound_workflow(self) -> None:
         snapshot = build_activation_snapshot(
             source_sha=SOURCE,
             event_name="push",
             provider_surface_receipt=provider_surface(),
             provider_authority_receipt=current_blocked_authority(),
             schedule_configured=True,
+            schedule_provider_verified=True,
+        )
+        scheduled = self.lane(snapshot, "SCHEDULED_MISSIONS")
+        self.assertEqual(ActivationState.OPERATIONAL.value, scheduled["state"])
+        self.assertIsNone(scheduled["next_gate"])
+        self.assertTrue(snapshot["schedule_proof"]["provider_verified_prior_schedule"])
+
+    def test_push_with_configured_schedule_without_provider_proof_does_not_fake_execution(self) -> None:
+        snapshot = build_activation_snapshot(
+            source_sha=SOURCE,
+            event_name="push",
+            provider_surface_receipt=provider_surface(),
+            provider_authority_receipt=current_blocked_authority(),
+            schedule_configured=True,
+            schedule_provider_verified=False,
         )
         scheduled = self.lane(snapshot, "SCHEDULED_MISSIONS")
         self.assertEqual(ActivationState.SOURCE_READY.value, scheduled["state"])
-        self.assertEqual("FIRST_NATURAL_SCHEDULE_EVENT_READBACK", scheduled["next_gate"])
+        self.assertEqual("NATURAL_SCHEDULE_EVENT_READBACK", scheduled["next_gate"])
 
     def test_authenticated_provider_does_not_self_certify_mutation(self) -> None:
         snapshot = build_activation_snapshot(
