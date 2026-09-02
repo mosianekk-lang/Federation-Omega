@@ -80,6 +80,7 @@ def build_activation_snapshot(
     provider_surface_receipt: Mapping[str, Any] | None = None,
     provider_authority_receipt: Mapping[str, Any] | None = None,
     schedule_configured: bool = True,
+    schedule_provider_verified: bool = False,
 ) -> dict[str, Any]:
     if len(source_sha) != 40 or any(ch not in "0123456789abcdef" for ch in source_sha.lower()):
         raise ValueError("SOURCE_SHA_REQUIRED")
@@ -115,16 +116,27 @@ def build_activation_snapshot(
 
     if event_name == "schedule":
         scheduled_state = ActivationState.OPERATIONAL
-        scheduled_reason = "Bubbles/Federation closure executed from a provider-hosted schedule event."
+        scheduled_reason = "This Bubbles/Federation closure executed from a provider-hosted schedule event."
         scheduled_gate = None
+        scheduled_evidence = ("workflow:superior-logic-maturation-shadow", "current-event:schedule")
+    elif schedule_provider_verified:
+        scheduled_state = ActivationState.OPERATIONAL
+        scheduled_reason = "The bound provider-hosted scheduler has independent successful natural schedule-event readback."
+        scheduled_gate = None
+        scheduled_evidence = (
+            "workflow:superior-logic-maturation-shadow",
+            "github-actions:schedule:provider-verified",
+        )
     elif schedule_configured:
         scheduled_state = ActivationState.SOURCE_READY
-        scheduled_reason = "Provider-hosted schedule is configured; first natural schedule event remains separate proof."
-        scheduled_gate = "FIRST_NATURAL_SCHEDULE_EVENT_READBACK"
+        scheduled_reason = "Provider-hosted schedule is configured; natural schedule-event readback is not supplied to this projection."
+        scheduled_gate = "NATURAL_SCHEDULE_EVENT_READBACK"
+        scheduled_evidence = ("workflow:superior-logic-maturation-shadow",)
     else:
         scheduled_state = ActivationState.PROVIDER_GATED
         scheduled_reason = "No admitted provider-hosted schedule is bound."
         scheduled_gate = "BIND_EXISTING_ADMITTED_SCHEDULER"
+        scheduled_evidence = ("workflow:superior-logic-maturation-shadow",)
 
     if operator_authenticated and operator_token and authority_authenticated and not current_authority_failed:
         cloud_write_state = ActivationState.HOSTED_VERIFIED
@@ -172,7 +184,7 @@ def build_activation_snapshot(
         ActivationLane(
             "SCHEDULED_MISSIONS",
             scheduled_state,
-            ("workflow:superior-logic-maturation-shadow",),
+            scheduled_evidence,
             scheduled_reason,
             scheduled_gate,
         ),
@@ -310,10 +322,16 @@ def build_activation_snapshot(
         "lanes": [lane.to_dict() for lane in lanes],
         "freshness_rules": {
             "current_provider_readback_overrides_historical_provider_success": True,
+            "provider_hosted_scheduler_proof_can_be_reused_when_same_workflow_identity_is_preserved": True,
             "source_presence_does_not_prove_provider_effect": True,
             "credential_absence_does_not_cancel_unaffected_work": True,
             "shadow_prediction_does_not_prove_superiority": True,
             "owner_value_is_never_inferred": True,
+        },
+        "schedule_proof": {
+            "configured": schedule_configured,
+            "current_event_is_schedule": event_name == "schedule",
+            "provider_verified_prior_schedule": schedule_provider_verified,
         },
         "provider_authority_conflict": {
             "historical_provider_success_may_exist": True,
@@ -333,6 +351,7 @@ def main() -> int:
     parser.add_argument("--provider-surface-receipt")
     parser.add_argument("--provider-authority-receipt")
     parser.add_argument("--schedule-configured", action="store_true")
+    parser.add_argument("--schedule-provider-verified", action="store_true")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
@@ -342,6 +361,7 @@ def main() -> int:
         provider_surface_receipt=_load(args.provider_surface_receipt),
         provider_authority_receipt=_load(args.provider_authority_receipt),
         schedule_configured=args.schedule_configured,
+        schedule_provider_verified=args.schedule_provider_verified,
     )
     target = Path(args.output)
     target.parent.mkdir(parents=True, exist_ok=True)
