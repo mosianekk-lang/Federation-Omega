@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.11",
+  "version": "2.9.12",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -25,6 +25,7 @@
     ".github/workflows/bco-provider-readback-continuity.yml",
     ".github/workflows/caseforge-provider-readback-canary.yml",
     ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+    ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     ".github/workflows/sovara-project-iam-bridge.yml",
     ".github/workflows/cios-production-lane.yml",
@@ -49,6 +50,7 @@
     ".github/workflows/bco-provider-readback-continuity.yml": ["workflow_run"],
     ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
     ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/bubbles-provider-authority-recovery-probe.yml": ["issues", "workflow_dispatch"],
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["push", "workflow_dispatch"],
     ".github/workflows/sovara-project-iam-bridge.yml": ["push", "workflow_dispatch"],
     ".github/workflows/cios-production-lane.yml": ["pull_request", "push", "workflow_dispatch"],
@@ -84,6 +86,7 @@
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
     ".github/workflows/fo-wif-semantic-canary-v2.yml",
+    ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
     ".github/workflows/sol62-wif-hardening-lease.yml"
   ],
@@ -138,6 +141,7 @@
     "reference_presence_proves_provider_authority": false,
     "provider_promotion_requires_surface_specific_readback": true,
     "provider_probe_workflow": ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+    "provider_authority_recovery_probe_workflow": ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
     "provider_deployment_workflow": ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
     "project_iam_bridge_workflow": ".github/workflows/sovara-project-iam-bridge.yml",
     "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
@@ -161,6 +165,7 @@
       ".github/workflows/bco-provider-readback-continuity.yml",
       ".github/workflows/caseforge-provider-readback-canary.yml",
       ".github/workflows/pfrd-omega-operator-auth-probe.yml",
+      ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
       ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
       ".github/workflows/sovara-project-iam-bridge.yml",
       ".github/workflows/cios-production-lane.yml",
