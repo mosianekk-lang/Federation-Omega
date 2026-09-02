@@ -1,0 +1,113 @@
+name: FDOF Bubbles Host Bridge v1
+
+on:
+  workflow_run:
+    workflows: ['FDOF Hosted State Restore v1']
+    types: [completed]
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: fdof-bubbles-host-bridge-v1-${{ github.event.workflow_run.id }}
+  cancel-in-progress: false
+
+jobs:
+  bridge:
+    if: github.event.workflow_run.conclusion == 'success'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout triggering source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.workflow_run.head_sha }}
+          persist-credentials: false
+
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Download verified restore receipt
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ github.event.workflow_run.id }}
+          pattern: fdof-hosted-state-restore-*
+          path: runtime-input/restore
+          merge-multiple: true
+
+      - name: Resolve originating export run
+        id: origin
+        env:
+          TRIGGER_HEAD_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          receipt = json.loads(Path('runtime-input/restore/restore-receipt.json').read_text(encoding='utf-8'))
+          if receipt.get('state') != 'HOSTED_SEPARATE_RUN_STATE_CONTINUITY_VERIFIED':
+              raise SystemExit('RESTORE_RECEIPT_NOT_VERIFIED')
+          if receipt.get('trigger_head_sha') != os.environ['TRIGGER_HEAD_SHA']:
+              raise SystemExit('RESTORE_RECEIPT_HEAD_MISMATCH')
+          run_id = str(receipt.get('trigger_run_id', '')).strip()
+          if not run_id.isdigit():
+              raise SystemExit('RESTORE_RECEIPT_EXPORT_RUN_ID_INVALID')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f'export_run_id={run_id}\n')
+          PY
+
+      - name: Download originating authority-safe capsule
+        env:
+          GH_TOKEN: ${{ github.token }}
+          EXPORT_RUN_ID: ${{ steps.origin.outputs.export_run_id }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-input/export
+          gh run download "${EXPORT_RUN_ID}" \
+            --repo "${GITHUB_REPOSITORY}" \
+            --name "fdof-hosted-state-export-${EXPORT_RUN_ID}" \
+            --dir runtime-input/export
+
+      - name: Execute fenced host-side FDOF Bubbles canary
+        env:
+          SOURCE_SHA: ${{ github.event.workflow_run.head_sha }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -rf runtime-local runtime-output
+          mkdir -p runtime-output
+          python - <<'PY'
+          import json, os
+          from sol_61_runtime.fdof_bubbles_host_bridge_v1 import run_hosted_bridge
+
+          receipt = run_hosted_bridge(
+              capsule_path='runtime-input/export/capsule.json',
+              restore_receipt_path='runtime-input/restore/restore-receipt.json',
+              runtime_root='runtime-local',
+              output_dir='runtime-output',
+              source_sha=os.environ['SOURCE_SHA'],
+          )
+          print(json.dumps(receipt, sort_keys=True))
+          if receipt.get('state') != 'HOSTED_FDOF_BUBBLES_BRIDGE_VERIFIED':
+              raise SystemExit('HOSTED_FDOF_BUBBLES_BRIDGE_NOT_VERIFIED')
+          if receipt.get('provider_execution_state') != 'VERIFIED':
+              raise SystemExit('HOSTED_FDOF_PROVIDER_EXECUTION_NOT_VERIFIED')
+          if not receipt.get('authority_leases_absent'):
+              raise SystemExit('HOSTED_FDOF_AUTHORITY_TRANSFER_DETECTED')
+          if receipt.get('provider_effect') or receipt.get('external_effect') or receipt.get('provider_authority'):
+              raise SystemExit('HOSTED_FDOF_TRUTH_BOUNDARY_VIOLATED')
+          PY
+
+      - name: Upload immutable FDOF Bubbles bridge receipt and next capsule
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fdof-bubbles-host-bridge-${{ github.run_id }}
+          path: runtime-output/
+          if-no-files-found: error
+          retention-days: 14
