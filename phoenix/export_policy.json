@@ -53,7 +53,8 @@
       "tests/test_frontier_convergence_continuity.py",
       "tests/test_sovara_litellm_provider_airlock.py",
       "tests/test_sovara_gemini_g3_workflow_binding.py",
-      "tests/test_bubbles_provider_authority_probe_readmission.py"
+      "tests/test_bubbles_provider_authority_probe_readmission.py",
+      "tests/test_pst_recovery_failure_diagnostic.py"
     ],
     "excluded_segments": [
       "__pycache__",
