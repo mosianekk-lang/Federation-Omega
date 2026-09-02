@@ -11,6 +11,10 @@ WORKFLOW = ROOT / ".github" / "workflows" / "evidenceops-pst-corpus-v2-extract.y
 class PSTRecoveryFailureDiagnosticTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not WORKFLOW.exists():
+            raise unittest.SkipTest(
+                "workflow-free Phoenix Core export intentionally excludes repository workflow controls"
+            )
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.workflow = yaml.safe_load(cls.text)
 
