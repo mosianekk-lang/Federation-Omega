@@ -39,6 +39,44 @@ def current_blocked_authority() -> dict:
     }
 
 
+def current_verified_authority() -> dict:
+    return {
+        "classification": "GOOGLE_AUTH_AND_OPERATOR_READBACK_VERIFIED",
+        "provider_authenticated": True,
+        "access_token_test": {"ok": True},
+        "fo_token_available": True,
+        "operator_public_health": {
+            "http_status": 200,
+            "body_present": True,
+            "body_ok": True,
+            "raw_body_recorded": False,
+        },
+        "operator_public_contract": {
+            "http_status": 200,
+            "body_present": True,
+            "body_ok": False,
+            "raw_body_recorded": False,
+        },
+        "operator_authenticated_status": {
+            "http_status": 200,
+            "body_present": True,
+            "body_ok": True,
+            "raw_body_recorded": False,
+        },
+        "operator_architron_read": {
+            "http_status": 200,
+            "body_present": True,
+            "body_ok": True,
+            "raw_body_recorded": False,
+        },
+        "archon_token_available": True,
+        "archon_authenticated_readback": True,
+        "raw_authenticated_response_bodies_recorded": False,
+        "secret_values_recorded": False,
+        "mutation_attempted": False,
+    }
+
+
 class BubblesCapabilityActivationTests(unittest.TestCase):
     def lane(self, snapshot: dict, lane_id: str) -> dict:
         return next(lane for lane in snapshot["lanes"] if lane["lane_id"] == lane_id)
@@ -112,6 +150,25 @@ class BubblesCapabilityActivationTests(unittest.TestCase):
         cloud = self.lane(snapshot, "GOOGLE_CLOUD_EFFECTS")
         self.assertEqual(ActivationState.HOSTED_VERIFIED.value, cloud["state"])
         self.assertEqual("ACTION_SPECIFIC_MUTATION_PLUS_TARGET_READBACK", cloud["next_gate"])
+
+    def test_summary_only_authority_receipt_promotes_readiness_not_mutation(self) -> None:
+        snapshot = build_activation_snapshot(
+            source_sha=SOURCE,
+            event_name="push",
+            provider_surface_receipt={},
+            provider_authority_receipt=current_verified_authority(),
+            schedule_configured=True,
+            schedule_provider_verified=True,
+        )
+        cloud_read = self.lane(snapshot, "GOOGLE_CLOUD_READ")
+        cloud_effects = self.lane(snapshot, "GOOGLE_CLOUD_EFFECTS")
+        archon = self.lane(snapshot, "ARCHON_ADMIN")
+        self.assertEqual(ActivationState.HOSTED_VERIFIED.value, cloud_read["state"])
+        self.assertEqual(ActivationState.HOSTED_VERIFIED.value, cloud_effects["state"])
+        self.assertEqual("ACTION_SPECIFIC_MUTATION_PLUS_TARGET_READBACK", cloud_effects["next_gate"])
+        self.assertEqual(ActivationState.HOSTED_VERIFIED.value, archon["state"])
+        self.assertFalse(snapshot["provider_authority_conflict"]["current_authority_failed"])
+        self.assertTrue(snapshot["provider_authority_conflict"]["current_provider_authenticated"])
 
     def test_owner_value_and_full_twin_remain_data_gated(self) -> None:
         snapshot = build_activation_snapshot(
