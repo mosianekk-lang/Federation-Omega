@@ -92,7 +92,7 @@ jobs:
 
           api_states={}
           for api in ['serviceusage.googleapis.com','script.googleapis.com','secretmanager.googleapis.com','run.googleapis.com','cloudbuild.googleapis.com','artifactregistry.googleapis.com']:
-              api_states[api]=gcloud('services','describe',api,'--format=json(config.name,state)') if provider_authenticated else {'ok':False,'skipped':'NO_VALID_PROVIDER_AUTH'}
+              api_states[api]=gcloud('services','list','--enabled',f'--filter=config.name={api}','--format=json(config.name,state)') if provider_authenticated else {'ok':False,'skipped':'NO_VALID_PROVIDER_AUTH'}
 
           cloud_run={}
           for service in ['architron9','federation-omega-operator','afeme-sovereign-control-plane-v4']:
