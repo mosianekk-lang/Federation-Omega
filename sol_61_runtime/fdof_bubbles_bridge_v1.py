@@ -31,6 +31,16 @@ class HostedQualification:
     proof_scope: str
 
 
+@dataclass(frozen=True)
+class HostedReceiptEvidence:
+    provider_run_id: str
+    artifact_id: str
+    artifact_digest: str
+    head_sha: str
+    conclusion: str
+    receipt: Mapping[str, Any]
+
+
 class FDOFBubblesBridge:
     """Bind FDOF to the existing Bubbles control/command plane without duplicating it.
 
@@ -105,13 +115,7 @@ class FDOFBubblesBridge:
         )
 
     @staticmethod
-    def health_from_receipt(
-        receipt: Mapping[str, Any],
-        *,
-        executor_id: str = HOST_EXECUTOR_ID,
-        observed_at_epoch: int,
-        ttl_seconds: int = 900,
-    ) -> HealthObservation:
+    def validate_receipt_semantics(receipt: Mapping[str, Any]) -> dict[str, Any]:
         request = receipt.get("request")
         execution = receipt.get("execution")
         if not isinstance(request, Mapping) or not isinstance(execution, Mapping):
@@ -129,13 +133,37 @@ class FDOFBubblesBridge:
         failed = tuple(name for name, passed in expected.items() if not passed)
         if failed:
             raise ConstraintError("BUBBLES_HOST_RECEIPT_SEMANTIC_MISMATCH:" + ",".join(failed))
+        receipt_sha = str(receipt.get("receipt_sha256") or "") or digest(receipt)
+        return {
+            "semantic_match": True,
+            "receipt_sha256": receipt_sha,
+            "provider_effect_proven": False,
+            "repository_write_authority_proven": False,
+            "cloud_authority_proven": False,
+            "apps_script_authority_proven": False,
+        }
 
-        proof_id = str(receipt.get("receipt_sha256") or "")
-        if not proof_id:
-            proof_id = "sha256:" + digest(receipt)
-        elif not proof_id.startswith("sha256:"):
-            proof_id = "sha256:" + proof_id
+    @classmethod
+    def health_from_hosted_evidence(
+        cls,
+        evidence: HostedReceiptEvidence,
+        *,
+        executor_id: str = HOST_EXECUTOR_ID,
+        observed_at_epoch: int,
+        ttl_seconds: int = 900,
+    ) -> HealthObservation:
+        if not evidence.provider_run_id or not evidence.artifact_id or not evidence.head_sha:
+            raise ConstraintError("HOSTED_PROVIDER_IDENTIFIERS_REQUIRED")
+        if evidence.conclusion.lower() != "success":
+            raise ConstraintError("HOSTED_PROVIDER_RUN_NOT_SUCCESSFUL")
+        if not evidence.artifact_digest.startswith("sha256:") or len(evidence.artifact_digest) != 71:
+            raise ConstraintError("IMMUTABLE_ARTIFACT_DIGEST_REQUIRED")
 
+        semantic = cls.validate_receipt_semantics(evidence.receipt)
+        proof_id = (
+            f"github-actions:{evidence.provider_run_id}:artifact:{evidence.artifact_id}:"
+            f"{evidence.artifact_digest}"
+        )
         return HealthObservation(
             observation_id=f"health:{executor_id}:{observed_at_epoch}",
             executor_id=executor_id,
@@ -154,23 +182,24 @@ class FDOFBubblesBridge:
                 "bridge_version": BRIDGE_VERSION,
                 "qualified_capability": HOST_CAPABILITY,
                 "qualified_target": HOST_TARGET,
-                "provider_effect_proven": False,
-                "repository_write_authority_proven": False,
-                "cloud_authority_proven": False,
-                "apps_script_authority_proven": False,
+                "provider_run_id": evidence.provider_run_id,
+                "artifact_id": evidence.artifact_id,
+                "artifact_digest": evidence.artifact_digest,
+                "head_sha": evidence.head_sha,
+                **semantic,
             },
         )
 
-    def admit_hosted_receipt(
+    def admit_hosted_evidence(
         self,
-        receipt: Mapping[str, Any],
+        evidence: HostedReceiptEvidence,
         *,
         executor_id: str = HOST_EXECUTOR_ID,
         observed_at_epoch: int,
         ttl_seconds: int = 900,
     ) -> dict[str, Any]:
-        observation = self.health_from_receipt(
-            receipt,
+        observation = self.health_from_hosted_evidence(
+            evidence,
             executor_id=executor_id,
             observed_at_epoch=observed_at_epoch,
             ttl_seconds=ttl_seconds,
