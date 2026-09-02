@@ -230,9 +230,9 @@ class BubblesCommandBusTests(unittest.TestCase):
         self.assertEqual(0, execution["external_effects"])
 
     def test_edpf_shadow_command_cannot_be_promoted_to_write(self):
-        receipt = self.run_command(
-            self.edpf_predict_command(effect="LOW_RISK_WRITE")
-        )
+        command = self.edpf_predict_command()
+        command["effect"] = "LOW_RISK_WRITE"
+        receipt = self.run_command(command)
         self.assertEqual("CONSTRAINT", receipt["state"])
         self.assertIn("read-only", receipt["reason"])
 
