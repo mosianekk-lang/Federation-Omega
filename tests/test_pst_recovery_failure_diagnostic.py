@@ -28,6 +28,13 @@ class PSTRecoveryFailureDiagnosticTests(unittest.TestCase):
         self.assertNotIn("path: /mnt/corpus", self.text)
         self.assertNotIn("path: /mnt/pst", self.text)
 
+    def test_count_bound_recovery_uses_serial_readpst(self):
+        self.assertIn("PST_PARSER_JOBS: '0'", self.text)
+        self.assertIn("readpst -V", self.text)
+        self.assertIn('--jobs "$PST_PARSER_JOBS"', self.text)
+        self.assertNotIn("--jobs 8", self.text)
+        self.assertIn("'jobs': int(os.environ['PST_PARSER_JOBS'])", self.text)
+
     def test_failed_path_removes_downloaded_source(self):
         diagnostic = self.text.index("Build privacy-safe failed-closed extraction diagnostic")
         upload = self.text.index("Upload privacy-safe failed-closed extraction diagnostic")
