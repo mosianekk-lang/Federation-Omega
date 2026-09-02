@@ -181,55 +181,120 @@ jobs:
       - name: Upload shard 0001
         id: s01
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0001-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0001.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0001-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0001.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0002
         id: s02
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0002-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0002.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0002-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0002.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0003
         id: s03
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0003-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0003.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0003-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0003.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0004
         id: s04
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0004-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0004.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0004-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0004.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0005
         id: s05
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0005-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0005.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0005-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0005.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0006
         id: s06
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0006-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0006.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0006-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0006.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0007
         id: s07
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0007-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0007.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0007-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0007.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0008
         id: s08
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0008-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0008.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0008-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0008.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0009
         id: s09
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0009-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0009.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0009-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0009.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0010
         id: s10
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0010-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0010.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0010-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0010.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0011
         id: s11
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0011-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0011.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0011-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0011.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0012
         id: s12
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0012-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0012.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0012-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0012.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
       - name: Upload shard 0013
         id: s13
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
-        with: {name: evidenceops-pst-v2-shard-0013-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0013.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+        with:
+          name: evidenceops-pst-v2-shard-0013-recovery-${{ github.run_id }}
+          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0013.zip
+          compression-level: 0
+          retention-days: 90
+          if-no-files-found: error
 
       - name: Build provider-bound recovery receipt
         env:
