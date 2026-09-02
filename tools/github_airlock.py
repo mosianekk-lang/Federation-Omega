@@ -153,8 +153,26 @@ def action_reference_findings(path: str, text: str) -> list[Finding]:
     return findings
 
 
+def workflow_syntax_findings(path: str, text: str) -> list[Finding]:
+    """Reject expression-bearing flow mappings that GitHub cannot parse safely."""
+    findings: list[Finding] = []
+    for number, line in enumerate(text.splitlines(), start=1):
+        if re.search(r"\bwith\s*:\s*\{", line) and "${{" in line:
+            findings.append(Finding(
+                path,
+                "AMBIGUOUS_WORKFLOW_FLOW_EXPRESSION",
+                "HIGH",
+                (
+                    "GitHub expressions must use block-style workflow mappings; "
+                    f"flow mapping found at line {number}"
+                ),
+            ))
+    return findings
+
+
 def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     findings: list[Finding] = []
+    findings.extend(workflow_syntax_findings(path, text))
     active = set(policy["active_workflow_allowlist"])
     oidc_allowed = set(policy.get("oidc_workflow_allowlist", []))
     provider_mutation_allowed = set(policy.get("provider_mutation_workflow_allowlist", []))
