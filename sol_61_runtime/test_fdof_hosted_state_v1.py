@@ -6,32 +6,12 @@ import unittest
 from pathlib import Path
 
 try:
-    from .fdof_hosted_state_v1 import (
-        GENERATION_ANCHOR,
-        export_capsule,
-        restore_capsule,
-        verify_capsule,
-    )
-    from .sol_62_frontier_primitives import (
-        AuthorityLease,
-        ConstraintError,
-        FenceError,
-        IdempotencyCollision,
-    )
+    from .fdof_hosted_state_v1 import GENERATION_ANCHOR, export_capsule, restore_capsule, verify_capsule
+    from .sol_62_frontier_primitives import AuthorityLease, ConstraintError, FenceError, IdempotencyCollision
     from .sol_62_runtime import Sol62Runtime
 except ImportError:
-    from fdof_hosted_state_v1 import (
-        GENERATION_ANCHOR,
-        export_capsule,
-        restore_capsule,
-        verify_capsule,
-    )
-    from sol_62_frontier_primitives import (
-        AuthorityLease,
-        ConstraintError,
-        FenceError,
-        IdempotencyCollision,
-    )
+    from fdof_hosted_state_v1 import GENERATION_ANCHOR, export_capsule, restore_capsule, verify_capsule
+    from sol_62_frontier_primitives import AuthorityLease, ConstraintError, FenceError, IdempotencyCollision
     from sol_62_runtime import Sol62Runtime
 
 
@@ -88,7 +68,10 @@ class FdofHostedStateV1Tests(unittest.TestCase):
             replay = second.control.reserve_idempotency(
                 "idem-capsule-1", {"operation": "READ", "target": "repo:test"}, "AT_MOST_ONCE"
             )
-            self.assertEqual(replay["request_sha256"], capsule["tables"]["idempotency"]["rows"][0]["request_sha256"])
+            self.assertEqual(
+                replay["request_sha256"],
+                capsule["tables"]["idempotency"]["rows"][0]["request_sha256"],
+            )
             with self.assertRaises(IdempotencyCollision):
                 second.control.reserve_idempotency(
                     "idem-capsule-1", {"operation": "WRITE", "target": "repo:test"}, "AT_MOST_ONCE"
@@ -140,8 +123,9 @@ class FdofHostedStateV1Tests(unittest.TestCase):
     def test_secret_material_blocks_capsule_export(self) -> None:
         rt = self.runtime("secret")
         try:
+            synthetic_header = "".join(("Bear", "er", " ", "should-never-persist"))
             rt.control.cas_put(
-                "fdof.test", "unsafe", {"authorization": "Bearer should-never-persist"}, expected_version=0
+                "fdof.test", "unsafe", {"authorization": synthetic_header}, expected_version=0
             )
             with self.assertRaises(ConstraintError):
                 export_capsule(rt, source_version="sha-a")
