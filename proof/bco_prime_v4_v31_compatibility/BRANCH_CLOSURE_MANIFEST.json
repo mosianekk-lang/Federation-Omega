@@ -35,6 +35,24 @@
       "preserved": true
     }
   },
+  "excludedLegacyArtifacts": [
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_chat_forensics_v1.json",
+      "reason": "Preserved inside the sealed v3.1 version-accounting archive; not materialized because current ProofOS accepts extension records only in the additive admission schema."
+    },
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_chat_forensics_v2.json",
+      "reason": "Preserved inside the sealed v3.1 version-accounting archive; not materialized because current ProofOS accepts extension records only in the additive admission schema."
+    },
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_successor_v3.json",
+      "reason": "Preserved inside the sealed v3.1 version-accounting archive; not materialized because current ProofOS accepts extension records only in the additive admission schema."
+    },
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_successor_v3_1.json",
+      "reason": "Preserved inside the sealed v3.1 version-accounting archive; not materialized because current ProofOS accepts extension records only in the additive admission schema."
+    }
+  ],
   "addedEntries": [
     {
       "path": "benchmarking/cfbe_omega/bco_prime_v4_v31_compatibility_adapter.py",
@@ -150,26 +168,6 @@
       "path": "governance/BCO_PRIME_BASELINE_REGISTRY_V3_1.json",
       "sha256": "f06036e70f6dc368e160d075e9b7aa11a7eb39b2c28c072277ea58f1254a6c7b",
       "sourceClass": "v31_trust_root"
-    },
-    {
-      "path": "governance/proofos_omega_policy_extension_bco_prime_chat_forensics_v1.json",
-      "sha256": "fc29bc65182c87ddfe7b060bb8e44bab5a11151ae50566a9c844e40cc0f9b002",
-      "sourceClass": "v31_policy"
-    },
-    {
-      "path": "governance/proofos_omega_policy_extension_bco_prime_chat_forensics_v2.json",
-      "sha256": "651fe713bd9008903b18740685d27972027b5272b2272c9407927b8ded943634",
-      "sourceClass": "v31_policy"
-    },
-    {
-      "path": "governance/proofos_omega_policy_extension_bco_prime_successor_v3.json",
-      "sha256": "aee1b209f84e91aec445524de8bde3ea3c30a61768863f2d48363bb6e9a84209",
-      "sourceClass": "v31_policy"
-    },
-    {
-      "path": "governance/proofos_omega_policy_extension_bco_prime_successor_v3_1.json",
-      "sha256": "da4aac763fca069afc0712ba5a38fb00d98d6562439a4da0b39ab9b84c96f1db",
-      "sourceClass": "v31_policy"
     },
     {
       "path": "docs/architecture/BCO_PRIME_CHAT_FORENSICS_V1.md",
