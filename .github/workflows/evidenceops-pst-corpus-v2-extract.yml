@@ -129,6 +129,95 @@ jobs:
           rm -f "$SOURCE_PATH"
           df -h
 
+      - name: Build privacy-safe failed-closed extraction diagnostic
+        if: ${{ always() && steps.extraction.outcome == 'failure' }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, re
+          from pathlib import Path
+
+          corpus = Path(os.environ['CORPUS_PATH'])
+          report_path = corpus / '00_CONTROL' / 'LOCAL_VERIFICATION.json'
+          stdout_path = corpus / '07_LOGS' / 'parser.stdout.log'
+          stderr_path = corpus / '07_LOGS' / 'parser.stderr.log'
+
+          report = {}
+          if report_path.is_file():
+              report = json.loads(report_path.read_text(encoding='utf-8'))
+
+          def sha256_or_none(path: Path):
+              if not path.is_file():
+                  return None
+              digest = hashlib.sha256()
+              with path.open('rb') as handle:
+                  for block in iter(lambda: handle.read(1024 * 1024), b''):
+                      digest.update(block)
+              return digest.hexdigest()
+
+          parser_done = 0
+          parser_skipped = 0
+          parser_summary_rows = 0
+          if stdout_path.is_file():
+              summary = re.compile(r'(?P<done>\d+) items done, (?P<skipped>\d+) items skipped')
+              for match in summary.finditer(stdout_path.read_text(encoding='utf-8', errors='replace')):
+                  parser_done += int(match.group('done'))
+                  parser_skipped += int(match.group('skipped'))
+                  parser_summary_rows += 1
+
+          allowed_counts = (
+              'message_occurrences', 'attachment_occurrences', 'attachment_text_occurrences',
+              'parse_failure_count', 'search_pack_count', 'shard_count',
+          )
+          diagnostic = {
+              'schema': 'EVIDENCEOPS-PST-V2-EXTRACTION-FAILURE-DIAGNOSTIC-1',
+              'status': 'FAILED_CLOSED_DIAGNOSTIC',
+              'workflow_run_id': int(os.environ['GITHUB_RUN_ID']),
+              'source_commit': os.environ['GITHUB_SHA'],
+              'source': {
+                  'drive_file_id': os.environ['SOURCE_FILE_ID'],
+                  'size_bytes': int(os.environ['SOURCE_EXPECTED_SIZE']),
+                  'sha256': os.environ['SOURCE_EXPECTED_SHA256'],
+              },
+              'extraction_contract': {
+                  'parser': 'readpst',
+                  'jobs': 8,
+                  'source_type': 'pst',
+              },
+              'reported_status': report.get('status'),
+              'reported_counts': {key: report.get(key) for key in allowed_counts},
+              'reported_problem_count': len(report.get('problems') or []),
+              'parser_summary': {
+                  'summary_rows': parser_summary_rows,
+                  'items_done': parser_done,
+                  'items_skipped': parser_skipped,
+                  'stdout_sha256': sha256_or_none(stdout_path),
+                  'stderr_sha256': sha256_or_none(stderr_path),
+              },
+              'privacy_boundary': {
+                  'corpus_content_included': False,
+                  'message_headers_included': False,
+                  'folder_names_included': False,
+                  'raw_parser_logs_included': False,
+              },
+          }
+          target = Path('/mnt/receipts/evidenceops-pst-v2-extraction-failure-diagnostic.json')
+          target.parent.mkdir(parents=True, exist_ok=True)
+          target.write_text(json.dumps(diagnostic, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps(diagnostic, indent=2, sort_keys=True))
+          PY
+          rm -f "$SOURCE_PATH"
+
+      - name: Upload privacy-safe failed-closed extraction diagnostic
+        if: ${{ always() && steps.extraction.outcome == 'failure' }}
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: evidenceops-pst-v2-extraction-failure-diagnostic-${{ github.run_id }}
+          path: /mnt/receipts/evidenceops-pst-v2-extraction-failure-diagnostic.json
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 90
+
       - name: Build searchable publication manifest
         run: |
           set -euo pipefail
