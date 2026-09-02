@@ -1,0 +1,51 @@
+{
+  "schema": "SOVARA-EDPF-PREDICTION-REQUEST-CONTRACT-V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Provider-neutral prospective forecast request/response contract feeding the admitted EDPF transactional ingress.",
+  "request_contract": {
+    "fixed_system_source_head_required": true,
+    "mission_snapshot_digest_required": true,
+    "explicit_outcome_criterion_required": true,
+    "prediction_deadline_precedes_outcome_window": true,
+    "credential_like_context_rejected": true,
+    "predictor_allocation_reuses_edpf_empirical_trust": true,
+    "minimum_independent_source_families_default": 2,
+    "maximum_predictors": 5,
+    "policy_market_scores_may_be_converted_to_probability": false,
+    "explicit_probability_required": true,
+    "probability_basis_attestation": "EXPLICIT_FORECAST_NOT_POLICY_SCORE_TRANSFORM"
+  },
+  "response_contract": {
+    "exact_request_receipt_binding_required": true,
+    "predictor_identity_and_version_binding_required": true,
+    "response_must_arrive_before_prediction_deadline": true,
+    "source_readback_or_stronger_required": true,
+    "provider_backed_response_requires_provider_native_readback": true,
+    "evidence_refs_required": true,
+    "response_conversion_only": true,
+    "automatic_ingress_write": false
+  },
+  "truth_boundaries": {
+    "provider_call_authorized": false,
+    "dispatch_authorized": false,
+    "external_effect_authorized": false,
+    "stable_self_promotion_allowed": false,
+    "request_contract_proves_predictor_superiority": false,
+    "request_contract_proves_provider_liveness": false,
+    "request_packet_inherits_spend_authority": false,
+    "response_validation_inherits_effect_authority": false,
+    "model_consensus_counts_as_independent_evidence": false
+  },
+  "reuse": {
+    "predictor_scoring": "benchmarking.cfbe_omega.epistemic_decision_prediction_fabric_v1.predictor_allocation_weight",
+    "transactional_ingress": "federation.living_state.ingress.LivingStateIngress",
+    "prospective_capture": "federation.living_state.edpf_prediction_adapter",
+    "new_scheduler": false,
+    "new_provider_executor": false,
+    "new_prediction_store": false,
+    "new_authority_plane": false
+  },
+  "promotion_boundary": "Source/CI admission proves deterministic request compilation, response binding and ingress conversion only. Actual provider dispatch, prospective prediction capture, later outcomes, calibration quality and owner value remain separate proof gates."
+}
