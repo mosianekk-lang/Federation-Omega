@@ -1,0 +1,30 @@
+{
+  "schema": "N-OMEGA-CFBE-AGENTIC-FRONTIER-V1",
+  "version": "1.1.0",
+  "status": "SOURCE_CANDIDATE",
+  "objective": "Integrate the independent CFBE-Omega benchmark/evolution governor into the N-OMEGA mission lifecycle while harvesting 40 proof-bound agentic capability genes from a 17-surface frontier reference set without creating another authority plane.",
+  "lifecycle": ["CFBE_PREPASS", "N_COMPILE", "EXECUTE", "PROVIDER_OR_NATIVE_READBACK", "INDEPENDENT_ASSURANCE", "OWNER_VALUE_SCORE", "CFBE_POSTPASS", "PERSIST_TERMINAL_RECEIPT"],
+  "roles": {
+    "n_omega": "MISSION_COMPILER_EXECUTION_MANAGER",
+    "cfbe_omega": "INDEPENDENT_BENCHMARK_CHALLENGE_EVOLUTION_GOVERNOR"
+  },
+  "capability_summary": {
+    "reference_surfaces": 17,
+    "capability_genes": 40,
+    "domains": 18,
+    "reuse_verified": 15,
+    "composed_by_fabric": 20,
+    "provider_gated": 5,
+    "unrouted": 0
+  },
+  "invariants": {
+    "max_mutating_lanes": 1,
+    "external_model_authority": "PROPOSAL_ONLY",
+    "self_certification_allowed": false,
+    "stable_self_promotion_authorized": false,
+    "provider_effect_authorized_by_source": false,
+    "stable_promotion_requires_owner_value": true,
+    "provider_gated_requires_native_identity_and_semantic_readback": true
+  },
+  "truth_boundary": "Source/CI admission proves the integrated compiler and deterministic routing contract only. It does not prove provider execution, provider-hosted durability, browser/computer/RPA effects, live voice/channel effects, sustained owner value or market superiority."
+}
