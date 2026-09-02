@@ -1,0 +1,213 @@
+{
+  "schema": "FEDERATION-DISTRIBUTED-OPERATING-FABRIC-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "generation_anchor": "GEN16/6fa54e31",
+  "source_pointer_semantics": "CURRENT_SIGNED_GITHUB_MAIN_IS_TRACKED_SEPARATELY_FROM_GENERATION_ANCHOR",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "cost_posture": "C0_INCLUDED_FREE_FIRST_PRE_REVENUE_ZERO_BASE",
+  "purpose": "Convert Federation coordination state into a deterministic distributed mission, lease, executor, health, conflict, proof, recovery and learning fabric without inventing provider authority or flattening proof classes.",
+  "reuse": {
+    "transactional_runtime": "sol_61_runtime.sol_62_runtime.Sol62Runtime",
+    "event_chain": "sol_61_runtime.sol_62_frontier_primitives.SQLiteControlPlane.events",
+    "state_cas": "sol_61_runtime.sol_62_frontier_primitives.SQLiteControlPlane.state",
+    "leases_and_fencing": "sol_61_runtime.sol_62_frontier_primitives.SQLiteControlPlane.leases",
+    "idempotency": "sol_61_runtime.sol_62_frontier_primitives.SQLiteControlPlane.idempotency",
+    "effect_state_machine": "sol_61_runtime.sol_62_frontier_primitives.SQLiteControlPlane.effects",
+    "proof_envelopes": "sol_61_runtime.sol_62_frontier_primitives.ProofEnvelope",
+    "authority_leases": "sol_61_runtime.sol_62_frontier_primitives.AuthorityLease",
+    "budgets": "sol_61_runtime.sol_62_frontier_primitives.SQLiteControlPlane.budgets",
+    "value_ledger": "sol_61_runtime.sol_62_frontier_primitives.SQLiteControlPlane.values_ledger"
+  },
+  "implementation": {
+    "module": "sol_61_runtime.fdof_v1",
+    "class": "FederationDistributedOperatingFabric",
+    "test": "sol_61_runtime/test_fdof_v1.py",
+    "new_runtime_or_workflow_created": false,
+    "provider_mutation_performed": false,
+    "credentials_created_or_modified": false
+  },
+  "canonical_entities": [
+    "Mission",
+    "Transition",
+    "Event",
+    "Lease",
+    "Executor",
+    "HealthObservation",
+    "AuthorityLease",
+    "Effect",
+    "ProofEnvelope",
+    "FactClaim",
+    "RouteDecision",
+    "ValueObservation",
+    "Turn_Capture"
+  ],
+  "executor_contract": {
+    "required": [
+      "executor_id",
+      "provider",
+      "capabilities",
+      "target_prefixes",
+      "authority_ceiling",
+      "cost_class",
+      "readback_modes",
+      "rollback_modes",
+      "max_parallel",
+      "version"
+    ],
+    "source_registration_proves_runtime_health": false,
+    "source_registration_proves_provider_authority": false,
+    "fresh_health_required_before_routing": true,
+    "fresh_health_required_before_lease": true
+  },
+  "health_contract": {
+    "dimensions": [
+      "process",
+      "authentication",
+      "target_access",
+      "semantic_capability",
+      "readback",
+      "capacity_available",
+      "provider_state"
+    ],
+    "states": [
+      "HEALTHY",
+      "DEGRADED",
+      "DOWN",
+      "AUTHORITY_LOST",
+      "STALE",
+      "QUARANTINED",
+      "UNKNOWN"
+    ],
+    "ttl_required": true,
+    "stale_health_is_routable": false
+  },
+  "routing_contract": {
+    "hard_gates": [
+      "required capability match",
+      "target scope match",
+      "executor authority ceiling sufficient",
+      "allowed cost class",
+      "fresh HEALTHY observation",
+      "readback capability when required",
+      "rollback capability for consequential effects"
+    ],
+    "ranking": [
+      "health",
+      "C0 included/free before paid",
+      "provider readback availability",
+      "rollback availability",
+      "target specificity",
+      "capability completeness"
+    ],
+    "no_verified_route": "NO_VERIFIED_EXECUTOR_ROUTE",
+    "route_decision_is_immutable_per_route_id": true
+  },
+  "concurrency_contract": {
+    "exclusive_transition_execution": true,
+    "mechanism": "SOL62_LEASE_PLUS_MONOTONIC_FENCING_TOKEN",
+    "expired_worker_may_resume_without_new_fence": false,
+    "idempotency_required_for_effects": true,
+    "uncertain_at_most_once_effect": "PROBE_PROVIDER_BEFORE_RETRY"
+  },
+  "conflict_contract": {
+    "last_write_wins": false,
+    "preserve_all_claims": true,
+    "resolution_scope": "SUBJECT_PLUS_DIMENSION",
+    "runtime_dimensions_prefer": [
+      "PROVIDER_NATIVE",
+      "INDEPENDENT_READBACK",
+      "HOSTED_RUNTIME",
+      "DETERMINISTIC_TEST",
+      "SOURCE",
+      "POLICY",
+      "OWNER_DIRECTIVE",
+      "HISTORICAL"
+    ],
+    "governance_dimensions_prefer": [
+      "OWNER_DIRECTIVE",
+      "POLICY",
+      "INDEPENDENT_READBACK",
+      "PROVIDER_NATIVE",
+      "SOURCE",
+      "HOSTED_RUNTIME",
+      "DETERMINISTIC_TEST",
+      "HISTORICAL"
+    ],
+    "source_dimensions_prefer": [
+      "SIGNED_SOURCE",
+      "SOURCE",
+      "INDEPENDENT_READBACK",
+      "PROVIDER_NATIVE",
+      "HOSTED_RUNTIME",
+      "POLICY",
+      "OWNER_DIRECTIVE",
+      "HISTORICAL"
+    ],
+    "generation_anchor_rule": "owner-declared controlling generation anchor is not silently replaced by newer repository source"
+  },
+  "proof_classes": [
+    "DESIGN",
+    "SOURCE",
+    "TEST",
+    "CI",
+    "REGISTRATION",
+    "BINDING",
+    "DEPLOYMENT",
+    "RUNTIME",
+    "PROVIDER_NATIVE_READBACK",
+    "BEHAVIOR",
+    "VALUE"
+  ],
+  "proof_rules": {
+    "proof_maturity_inheritance": false,
+    "source_is_not_runtime": true,
+    "runtime_is_not_provider_effect": true,
+    "provider_effect_is_not_owner_value": true,
+    "provider_native_readback_required_for_provider_effect_claim": true,
+    "independent_semantic_verification_required_for_verified_transition": true
+  },
+  "failure_and_recovery": {
+    "kernel": "DETECT>PRESERVE>CLASSIFY>RECALL>MODEL_CAUSES>FALSIFY>SEARCH_CAPABILITIES>SIMULATE>RANK_ROUTES>AUTHORIZE>LEASE>EXECUTE>READ_BACK>REGRESSION_TEST>SOAK>SCORE_VALUE>LEARN>DIFFUSE>PREVENT_RECURRENCE",
+    "uncertain_effects_are_not_blindly_retried": true,
+    "repeated_failure_requires_materially_different_route": true,
+    "rollback_proof_required_before consequential promotion": true
+  },
+  "security": {
+    "raw_secrets_in_canonical_state": false,
+    "raw_secrets_in_source": false,
+    "short_lived_identity_preferred": true,
+    "provider_authority_revalidated_immediately_before_use": true,
+    "authority_expansion_from_mission_need": false,
+    "trust_transfer": false,
+    "new_paid_resources_without_finite_owner_approved_envelope": false
+  },
+  "sync": {
+    "canonical_bus": "1N9plg1P3lY0_0w2kWc4WHIH-rqK62Xq1tU5WRYtCWfo",
+    "turn_capture_columns": [
+      "Capture_ID",
+      "Event_Time",
+      "Material_Delta",
+      "Source_Ref",
+      "Proof_State",
+      "Next_Action"
+    ],
+    "sync_bus_is_execution_authority": false,
+    "sync_bus_role": "DURABLE_COORDINATION_AND_PROJECTION_SPINE"
+  },
+  "maturity": {
+    "source_and_deterministic_test_completion_may_be_claimed_after_exact_head_ci": true,
+    "provider_runtime_operational_may_be_claimed_from_source_only": false,
+    "distributed_multi_provider_operational_requires": [
+      "provider-specific executor bindings",
+      "fresh health",
+      "real provider execution",
+      "provider-native semantic readback",
+      "rollback or compensation proof",
+      "regression proof",
+      "persistent hosted runtime proof"
+    ],
+    "owner_value_requires_empirical_observation": true
+  }
+}
