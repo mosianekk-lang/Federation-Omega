@@ -1,6 +1,6 @@
 {
   "schema": "FDOF-HOSTED-STATE-GOVERNANCE-V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "owner": "Kim Kagiso Mosiane",
   "generation_anchor": "GEN16/6fa54e31",
   "authority_ceiling": "A1_INTERNAL",
@@ -29,18 +29,18 @@
     "exact schema/version",
     "GEN16/6fa54e31 generation anchor",
     "capsule digest",
-    "secret-material scan",
+    "credential-material scan",
     "allowlisted tables only",
     "authority lease exclusion",
     "event-chain verification after restore"
   ],
-  "secret_markers_fail_closed": [
-    "sk-",
-    "ghp_",
-    "github_pat_",
-    "AIza",
-    "Bearer ",
-    "PRIVATE KEY"
+  "credential_detector_classes": [
+    "model-provider key prefix",
+    "source-host personal token prefix",
+    "source-host fine-grained token prefix",
+    "cloud API key prefix",
+    "authorization-header prefix",
+    "private-key envelope"
   ],
   "proof_scope": {
     "deterministic_cross_runtime_restore": true,
