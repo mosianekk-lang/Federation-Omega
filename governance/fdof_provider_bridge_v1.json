@@ -1,0 +1,46 @@
+{
+  "schema": "FDOF-PROVIDER-BRIDGE-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "generation_anchor": "GEN16/6fa54e31",
+  "purpose": "Bind FDOF routed transitions to provider adapters through fresh-health gating, transition leases, fencing, idempotent execution identity, explicit uncertain-effect handling, independent semantic readback and rollback hooks.",
+  "source": "sol_61_runtime.fdof_provider_bridge_v1",
+  "authority": {
+    "creates_provider_authority": false,
+    "creates_credentials": false,
+    "expands_iam": false,
+    "creates_paid_resources": false,
+    "external_effect_default": false
+  },
+  "execution_contract": {
+    "route_binding_required": true,
+    "fresh_healthy_executor_required_at_dispatch": true,
+    "valid_transition_fence_required": true,
+    "execution_id_collision_fails_closed": true,
+    "same_execution_not_blindly_redispatched": true,
+    "dispatch_is_verification": false,
+    "dispatch_exception_state": "EFFECT_UNKNOWN",
+    "uncertain_effect_state": "EFFECT_UNKNOWN",
+    "provider_native_semantic_readback_required_for_verified": true,
+    "rollback_explicit_for_consequential_operations": true
+  },
+  "provider_binding_model": {
+    "bridge_is_provider_neutral": true,
+    "provider_specific_adapters_required": true,
+    "provider_adapter_registration_proves_provider_runtime": false,
+    "provider_adapter_registration_proves_authority": false,
+    "provider_specific_health_and_readback_proofs_required": true
+  },
+  "initial_provider_targets": [
+    "github",
+    "google_drive_workspace",
+    "google_cloud",
+    "google_apps_script"
+  ],
+  "proof_boundary": {
+    "source_and_tests_may_be_promoted_after_exact_head_ci": true,
+    "provider_runtime_may_be_promoted_from_source_or_mock_tests": false,
+    "provider_effect_requires_provider_native_readback": true,
+    "owner_value_requires_empirical_observation": true
+  }
+}
