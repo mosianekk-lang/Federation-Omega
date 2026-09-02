@@ -1,23 +1,22 @@
-name: EvidenceOps PST Corpus v2 Extraction
+name: EvidenceOps PST Corpus v2 Artifact Recovery
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - 'evidenceops/pst_corpus_v2/**'
-      - '.github/workflows/evidenceops-pst-corpus-v2-extract.yml'
+  issues:
+    types: [opened]
   workflow_dispatch:
 
 permissions:
-  contents: write
+  actions: read
+  contents: read
 
 concurrency:
-  group: evidenceops-pst-corpus-v2-production
+  group: evidenceops-pst-corpus-v2-artifact-recovery
   cancel-in-progress: false
 
 env:
   SOURCE_FILE_ID: 1wRZyIhlFy5bECTccmfXHzWH5b4hTN7xN
   SOURCE_EXPECTED_SIZE: '3501253632'
+  SOURCE_EXPECTED_SHA256: 14d280e593795253f81c375df671782d62d15349dfc241a791d6f974485b338b
   SOURCE_NAME: MosianeKK@tut.ac.za.pst
   CORPUS_NAME: MosianeKK_PST_Evidence_Case
   SOURCE_PATH: /mnt/pst/MosianeKK@tut.ac.za.pst
@@ -25,15 +24,20 @@ env:
   CORPUS_PATH: /mnt/corpus/MosianeKK_PST_Evidence_Case
 
 jobs:
-  extract-verify-package:
+  recover:
+    if: >-
+      github.event_name == 'workflow_dispatch' ||
+      (github.event.issue.title == 'EVIDENCEOPS_PST_V2_ARTIFACT_RECOVERY' &&
+       github.actor == github.repository_owner)
     runs-on: ubuntu-24.04
     timeout-minutes: 355
 
     steps:
-      - name: Check out Federation Omega
-        uses: actions/checkout@v4
+      - name: Check out admitted source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           fetch-depth: 1
+          persist-credentials: false
 
       - name: Recover runner disk capacity
         run: |
@@ -43,7 +47,7 @@ jobs:
           sudo apt-get clean
           df -h
 
-      - name: Install PST and Python dependencies
+      - name: Install pinned extraction dependencies
         run: |
           set -euo pipefail
           sudo apt-get update -qq
@@ -51,7 +55,7 @@ jobs:
           python -m pip install --upgrade pip
           python -m pip install 'gdown==5.2.0' 'pypdf==6.1.1'
 
-      - name: Materialize reviewed source
+      - name: Materialize and test reviewed extractor
         working-directory: evidenceops/pst_corpus_v2
         run: |
           set -euo pipefail
@@ -65,8 +69,7 @@ jobs:
           python -m py_compile extractor.py test_controls.py
           python -m unittest -v test_controls.py
 
-      - name: Download immutable PST source
-        id: source
+      - name: Download and hash-bind immutable PST source
         run: |
           set -euo pipefail
           sudo mkdir -p /mnt/pst /mnt/corpus /mnt/receipts
@@ -77,7 +80,6 @@ jobs:
             if python -m gdown --id "$SOURCE_FILE_ID" --output "$SOURCE_PATH"; then
               actual="$(stat -c%s "$SOURCE_PATH")"
               if [[ "$actual" == "$SOURCE_EXPECTED_SIZE" ]]; then success=1; break; fi
-              echo "gdown size mismatch on attempt $attempt: $actual" >&2
             fi
             sleep $((attempt * 10))
           done
@@ -87,10 +89,10 @@ jobs:
               "https://drive.usercontent.google.com/download?id=${SOURCE_FILE_ID}&export=download&confirm=t" \
               --output "$SOURCE_PATH"
           fi
-          actual="$(stat -c%s "$SOURCE_PATH")"
-          test "$actual" = "$SOURCE_EXPECTED_SIZE"
-          echo "size=$actual" >> "$GITHUB_OUTPUT"
-          df -h
+          test "$(stat -c%s "$SOURCE_PATH")" = "$SOURCE_EXPECTED_SIZE"
+          actual_sha="$(sha256sum "$SOURCE_PATH" | awk '{print $1}')"
+          test "$actual_sha" = "$SOURCE_EXPECTED_SHA256"
+          echo "Immutable PST source size and SHA-256 verified."
 
       - name: Extract, index, shard and locally verify
         id: extraction
@@ -107,37 +109,35 @@ jobs:
             --search-pack-size-mib 25 \
             --jobs 8
           python - <<'PY'
-          import json
-          import os
+          import json, os
           from pathlib import Path
           report_path = Path(os.environ['CORPUS_PATH']) / '00_CONTROL' / 'LOCAL_VERIFICATION.json'
           report = json.loads(report_path.read_text(encoding='utf-8'))
-          if report.get('status') != 'LOCAL_COMPLETE_VERIFIED':
-              raise SystemExit(json.dumps(report, sort_keys=True))
-          output = Path(os.environ['GITHUB_OUTPUT'])
-          with output.open('a', encoding='utf-8') as handle:
-              handle.write(f"source_sha256={report['source_sha256']}\n")
-              handle.write(f"messages={report['message_occurrences']}\n")
-              handle.write(f"attachments={report['attachment_occurrences']}\n")
-              handle.write(f"shards={report['shard_count']}\n")
-              handle.write(f"search_packs={report['search_pack_count']}\n")
-          print(json.dumps(report, indent=2, sort_keys=True))
+          required = {
+              'status': 'LOCAL_COMPLETE_VERIFIED',
+              'source_sha256': os.environ['SOURCE_EXPECTED_SHA256'],
+              'message_occurrences': 2885,
+              'attachment_occurrences': 5203,
+              'shard_count': 13,
+              'search_pack_count': 3,
+          }
+          for key, expected in required.items():
+              if report.get(key) != expected:
+                  raise SystemExit(f'LOCAL_VERIFICATION_MISMATCH:{key}:{report.get(key)}:{expected}')
+          print(json.dumps({k: report[k] for k in required}, indent=2, sort_keys=True))
           PY
           rm -f "$SOURCE_PATH"
           df -h
 
-      - name: Build publication manifest
-        id: manifest
+      - name: Build searchable publication manifest
         run: |
           set -euo pipefail
           python - <<'PY'
           import hashlib, json, os
-          from datetime import datetime, timezone
           from pathlib import Path
           corpus = Path(os.environ['CORPUS_PATH'])
-          publish_roots = ['00_CONTROL', '04_INDEX', '05_SEARCH_PACKS', '06_RETRIEVAL_SHARDS', '07_LOGS']
           rows = []
-          for root in publish_roots:
+          for root in ['00_CONTROL', '04_INDEX', '05_SEARCH_PACKS', '07_LOGS']:
               for path in sorted((corpus / root).rglob('*')):
                   if not path.is_file():
                       continue
@@ -151,37 +151,24 @@ jobs:
                       'sha256': digest.hexdigest(),
                   })
           manifest = {
-              'schema': 'EVIDENCEOPS-PST-GITHUB-PUBLICATION-1',
-              'status': 'ARTIFACTS_READY_PENDING_DRIVE_TRANSFER',
-              'generated_at': datetime.now(timezone.utc).isoformat(),
+              'schema': 'EVIDENCEOPS-PST-ARTIFACT-RECOVERY-PUBLICATION-1',
+              'status': 'LOCAL_COMPLETE_VERIFIED',
               'source_file_id': os.environ['SOURCE_FILE_ID'],
               'source_size_bytes': int(os.environ['SOURCE_EXPECTED_SIZE']),
-              'source_sha256': os.environ.get('SOURCE_SHA256', ''),
-              'message_occurrences': int(os.environ.get('MESSAGES', '0')),
-              'attachment_occurrences': int(os.environ.get('ATTACHMENTS', '0')),
-              'shard_count': int(os.environ.get('SHARDS', '0')),
-              'search_pack_count': int(os.environ.get('SEARCH_PACKS', '0')),
+              'source_sha256': os.environ['SOURCE_EXPECTED_SHA256'],
               'objects': rows,
               'object_count': len(rows),
               'total_bytes': sum(row['size_bytes'] for row in rows),
           }
           target = corpus / '00_CONTROL' / 'GITHUB_PUBLICATION_MANIFEST.json'
           target.write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-          Path('/mnt/receipts/extraction.json').write_text(json.dumps(manifest, indent=2, sort_keys=True) + '\n', encoding='utf-8')
-          print(json.dumps(manifest, indent=2, sort_keys=True))
           PY
-        env:
-          SOURCE_SHA256: ${{ steps.extraction.outputs.source_sha256 }}
-          MESSAGES: ${{ steps.extraction.outputs.messages }}
-          ATTACHMENTS: ${{ steps.extraction.outputs.attachments }}
-          SHARDS: ${{ steps.extraction.outputs.shards }}
-          SEARCH_PACKS: ${{ steps.extraction.outputs.search_packs }}
 
-      - name: Upload searchable corpus artifact
-        id: searchable_artifact
-        uses: actions/upload-artifact@v4
+      - name: Upload searchable recovery artifact
+        id: searchable
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: evidenceops-pst-v2-searchable-${{ github.run_id }}
+          name: evidenceops-pst-v2-searchable-recovery-${{ github.run_id }}
           path: |
             ${{ env.CORPUS_PATH }}/00_CONTROL
             ${{ env.CORPUS_PATH }}/04_INDEX
@@ -189,75 +176,192 @@ jobs:
             ${{ env.CORPUS_PATH }}/07_LOGS
           if-no-files-found: error
           compression-level: 0
-          retention-days: 7
+          retention-days: 90
 
-      - name: Upload raw retrieval shards artifact
-        id: shards_artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: evidenceops-pst-v2-raw-shards-${{ github.run_id }}
-          path: ${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS
-          if-no-files-found: error
-          compression-level: 0
-          retention-days: 7
+      - name: Upload shard 0001
+        id: s01
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0001-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0001.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0002
+        id: s02
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0002-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0002.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0003
+        id: s03
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0003-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0003.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0004
+        id: s04
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0004-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0004.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0005
+        id: s05
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0005-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0005.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0006
+        id: s06
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0006-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0006.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0007
+        id: s07
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0007-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0007.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0008
+        id: s08
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0008-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0008.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0009
+        id: s09
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0009-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0009.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0010
+        id: s10
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0010-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0010.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0011
+        id: s11
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0011-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0011.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0012
+        id: s12
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0012-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0012.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
+      - name: Upload shard 0013
+        id: s13
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with: {name: evidenceops-pst-v2-shard-0013-recovery-${{ github.run_id }}, path: '${{ env.CORPUS_PATH }}/06_RETRIEVAL_SHARDS/Corpus_Shard_0013.zip', compression-level: 0, retention-days: 90, if-no-files-found: error}
 
-      - name: Commit provider receipt
-        if: always()
+      - name: Build provider-bound recovery receipt
         env:
-          JOB_STATUS: ${{ job.status }}
-          SEARCHABLE_ARTIFACT_ID: ${{ steps.searchable_artifact.outputs.artifact-id }}
-          SEARCHABLE_ARTIFACT_URL: ${{ steps.searchable_artifact.outputs.artifact-url }}
-          SHARDS_ARTIFACT_ID: ${{ steps.shards_artifact.outputs.artifact-id }}
-          SHARDS_ARTIFACT_URL: ${{ steps.shards_artifact.outputs.artifact-url }}
-          SOURCE_SHA256: ${{ steps.extraction.outputs.source_sha256 }}
-          MESSAGES: ${{ steps.extraction.outputs.messages }}
-          ATTACHMENTS: ${{ steps.extraction.outputs.attachments }}
-          SHARDS: ${{ steps.extraction.outputs.shards }}
-          SEARCH_PACKS: ${{ steps.extraction.outputs.search_packs }}
+          GH_TOKEN: ${{ github.token }}
+          SEARCH_ID: ${{ steps.searchable.outputs.artifact-id }}
+          SEARCH_DIGEST: ${{ steps.searchable.outputs.artifact-digest }}
+          S01_ID: ${{ steps.s01.outputs.artifact-id }}
+          S01_DIGEST: ${{ steps.s01.outputs.artifact-digest }}
+          S02_ID: ${{ steps.s02.outputs.artifact-id }}
+          S02_DIGEST: ${{ steps.s02.outputs.artifact-digest }}
+          S03_ID: ${{ steps.s03.outputs.artifact-id }}
+          S03_DIGEST: ${{ steps.s03.outputs.artifact-digest }}
+          S04_ID: ${{ steps.s04.outputs.artifact-id }}
+          S04_DIGEST: ${{ steps.s04.outputs.artifact-digest }}
+          S05_ID: ${{ steps.s05.outputs.artifact-id }}
+          S05_DIGEST: ${{ steps.s05.outputs.artifact-digest }}
+          S06_ID: ${{ steps.s06.outputs.artifact-id }}
+          S06_DIGEST: ${{ steps.s06.outputs.artifact-digest }}
+          S07_ID: ${{ steps.s07.outputs.artifact-id }}
+          S07_DIGEST: ${{ steps.s07.outputs.artifact-digest }}
+          S08_ID: ${{ steps.s08.outputs.artifact-id }}
+          S08_DIGEST: ${{ steps.s08.outputs.artifact-digest }}
+          S09_ID: ${{ steps.s09.outputs.artifact-id }}
+          S09_DIGEST: ${{ steps.s09.outputs.artifact-digest }}
+          S10_ID: ${{ steps.s10.outputs.artifact-id }}
+          S10_DIGEST: ${{ steps.s10.outputs.artifact-digest }}
+          S11_ID: ${{ steps.s11.outputs.artifact-id }}
+          S11_DIGEST: ${{ steps.s11.outputs.artifact-digest }}
+          S12_ID: ${{ steps.s12.outputs.artifact-id }}
+          S12_DIGEST: ${{ steps.s12.outputs.artifact-digest }}
+          S13_ID: ${{ steps.s13.outputs.artifact-id }}
+          S13_DIGEST: ${{ steps.s13.outputs.artifact-digest }}
         run: |
           set -euo pipefail
-          mkdir -p deployment_receipts
           python - <<'PY'
-          import json, os
+          import json, os, urllib.request
           from datetime import datetime, timezone
           from pathlib import Path
+
+          repo = os.environ['GITHUB_REPOSITORY']
+          token = os.environ['GH_TOKEN']
+          corpus = Path(os.environ['CORPUS_PATH'])
+          shard_manifest = json.loads((corpus / '04_INDEX' / 'shards.json').read_text(encoding='utf-8'))
+          by_number = {int(row['name'].split('_')[-1].split('.')[0]): row for row in shard_manifest}
+
+          def artifact_meta(artifact_id: int):
+              req = urllib.request.Request(
+                  f'https://api.github.com/repos/{repo}/actions/artifacts/{artifact_id}',
+                  headers={
+                      'Authorization': f'Bearer {token}',
+                      'Accept': 'application/vnd.github+json',
+                      'X-GitHub-Api-Version': '2022-11-28',
+                      'User-Agent': 'EvidenceOps-PST-Recovery/1.0',
+                  },
+              )
+              with urllib.request.urlopen(req, timeout=60) as response:
+                  return json.load(response)
+
+          def clean_digest(value: str) -> str:
+              return value.split(':', 1)[-1]
+
+          searchable_id = int(os.environ['SEARCH_ID'])
+          searchable_meta = artifact_meta(searchable_id)
+          shards = []
+          for number in range(1, 14):
+              key = f'S{number:02d}'
+              artifact_id = int(os.environ[f'{key}_ID'])
+              meta = artifact_meta(artifact_id)
+              logical = by_number[number]
+              shards.append({
+                  'number': number,
+                  'artifact_id': artifact_id,
+                  'name': meta['name'],
+                  'archive_size_bytes': int(meta['size_in_bytes']),
+                  'archive_sha256': clean_digest(os.environ[f'{key}_DIGEST']),
+                  'logical_size_bytes': int(logical['size_bytes']),
+                  'logical_sha256': logical['sha256'],
+              })
+
           receipt = {
-              'schema': 'EVIDENCEOPS-PST-CORPUS-V2-GITHUB-RECEIPT-1',
-              'receipt': 'EVIDENCEOPS-PST-CORPUS-V2-GITHUB-EXTRACTION',
-              'status': 'ARTIFACTS_READY_PENDING_DRIVE_TRANSFER' if os.environ['JOB_STATUS'] == 'success' else 'FAILED',
-              'job_status': os.environ['JOB_STATUS'],
+              'schema': 'EVIDENCEOPS-PST-V2-ARTIFACT-RECOVERY-1',
+              'status': 'RECOVERY_ARTIFACTS_READY_LOCAL_AND_PROVIDER_BOUND',
               'recorded_at': datetime.now(timezone.utc).isoformat(),
-              'repository': os.environ['GITHUB_REPOSITORY'],
+              'repository': repo,
               'workflow_run_id': int(os.environ['GITHUB_RUN_ID']),
-              'workflow_run_attempt': int(os.environ['GITHUB_RUN_ATTEMPT']),
               'source_commit': os.environ['GITHUB_SHA'],
-              'source_file_id': os.environ['SOURCE_FILE_ID'],
-              'source_size_bytes': int(os.environ['SOURCE_EXPECTED_SIZE']),
-              'source_sha256': os.environ.get('SOURCE_SHA256') or None,
-              'message_occurrences': int(os.environ.get('MESSAGES') or 0),
-              'attachment_occurrences': int(os.environ.get('ATTACHMENTS') or 0),
-              'shard_count': int(os.environ.get('SHARDS') or 0),
-              'search_pack_count': int(os.environ.get('SEARCH_PACKS') or 0),
-              'artifacts': {
-                  'searchable': {'id': os.environ.get('SEARCHABLE_ARTIFACT_ID') or None, 'url': os.environ.get('SEARCHABLE_ARTIFACT_URL') or None},
-                  'raw_shards': {'id': os.environ.get('SHARDS_ARTIFACT_ID') or None, 'url': os.environ.get('SHARDS_ARTIFACT_URL') or None},
+              'source': {
+                  'drive_file_id': os.environ['SOURCE_FILE_ID'],
+                  'size_bytes': int(os.environ['SOURCE_EXPECTED_SIZE']),
+                  'sha256': os.environ['SOURCE_EXPECTED_SHA256'],
               },
-              'drive_completion_required': True,
-              'completion_gate': 'Drive 00_CONTROL/COMPLETION.json status COMPLETE_VERIFIED',
+              'searchable_artifact': {
+                  'workflow_run_id': int(os.environ['GITHUB_RUN_ID']),
+                  'artifact_id': searchable_id,
+                  'name': searchable_meta['name'],
+                  'archive_size_bytes': int(searchable_meta['size_in_bytes']),
+                  'archive_sha256': clean_digest(os.environ['SEARCH_DIGEST']),
+                  'source_commit': os.environ['GITHUB_SHA'],
+              },
+              'final_shard_artifacts': shards,
+              'counts': {
+                  'messages_meta': 2885,
+                  'attachments_meta': 5203,
+                  'search_packs': 3,
+                  'shards': 13,
+              },
+              'external_effect': 'GITHUB_ACTIONS_ARTIFACT_WRITE_ONLY',
+              'repository_source_mutation': False,
+              'provider_authority_expansion': False,
+              'communication_state': 'NO_SEND',
+              'truth_boundary': [
+                  'This receipt proves regeneration from the exact source size and SHA plus local corpus verification and GitHub artifact binding.',
+                  'It does not by itself prove composite remote verification; Phoenix must independently re-download and verify these artifacts.',
+                  'No repository source, Google IAM, APIs, Drive content, deployment, traffic, secrets, Apps Script, Cloud Run or scheduler state is mutated by this workflow.',
+              ],
           }
-          Path('deployment_receipts/evidenceops-pst-corpus-v2-latest.json').write_text(
-              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
-          )
-          print(json.dumps(receipt, indent=2, sort_keys=True))
+          target = Path('/mnt/receipts/evidenceops-pst-v2-artifact-recovery.json')
+          target.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps({
+              'status': receipt['status'],
+              'workflow_run_id': receipt['workflow_run_id'],
+              'searchable_artifact_id': searchable_id,
+              'shard_artifact_count': len(shards),
+              'source_sha256': receipt['source']['sha256'],
+          }, indent=2, sort_keys=True))
           PY
-          git config user.name 'evidenceops-pst-bot'
-          git config user.email 'evidenceops-pst-bot@users.noreply.github.com'
-          git add deployment_receipts/evidenceops-pst-corpus-v2-latest.json
-          if git diff --cached --quiet; then exit 0; fi
-          git commit -m "Record EvidenceOps PST v2 extraction receipt [skip ci]"
-          for attempt in 1 2 3; do
-            if git push origin HEAD:main; then exit 0; fi
-            git pull --rebase origin main
-            sleep $((attempt * 5))
-          done
-          exit 1
+
+      - name: Upload immutable recovery receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: evidenceops-pst-v2-artifact-recovery-receipt-${{ github.run_id }}
+          path: /mnt/receipts/evidenceops-pst-v2-artifact-recovery.json
+          if-no-files-found: error
+          compression-level: 6
+          retention-days: 90
