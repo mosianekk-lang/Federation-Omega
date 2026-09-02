@@ -20,7 +20,12 @@ class FederationGlobalArtifactCustodyPolicyTests(unittest.TestCase):
         cls.policy_text = POLICY_PATH.read_text(encoding="utf-8")
         cls.policy = json.loads(cls.policy_text)
         cls.bootstrap = json.loads(BOOTSTRAP_PATH.read_text(encoding="utf-8"))
-        cls.instructions = AGENT_INSTRUCTIONS_PATH.read_text(encoding="utf-8")
+        cls.instructions_present = AGENT_INSTRUCTIONS_PATH.exists()
+        cls.instructions = (
+            AGENT_INSTRUCTIONS_PATH.read_text(encoding="utf-8")
+            if cls.instructions_present
+            else ""
+        )
         cls.agents = AGENTS_PATH.read_text(encoding="utf-8")
 
     def test_policy_identity_scope_and_authority_are_fail_closed(self) -> None:
@@ -124,6 +129,14 @@ class FederationGlobalArtifactCustodyPolicyTests(unittest.TestCase):
         self.assertIn("Exact private Drive pointers", self.agents)
 
     def test_repository_wide_instruction_binds_policy_and_truth_boundary(self) -> None:
+        if not self.instructions_present:
+            self.assertFalse(
+                (ROOT / ".git").exists(),
+                "FACP-001 repository-wide instruction is missing from a full repository checkout",
+            )
+            self.skipTest(
+                "workflow-free Phoenix Core export intentionally excludes repository instruction controls"
+            )
         self.assertIn('applyTo: "**"', self.instructions)
         self.assertIn("FACP-001", self.instructions)
         self.assertIn(
