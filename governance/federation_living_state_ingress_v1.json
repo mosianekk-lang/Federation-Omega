@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-LIVING-STATE-INGRESS-V1",
-  "version": "1.0.0",
+  "version": "1.1.1",
   "role": "NORMALIZED_TRANSACTIONAL_EVENT_INGRESS_FOR_FEDERATION_LIVING_STATE",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
@@ -15,20 +15,41 @@
     "store_scoped_exactly_once_transaction": true,
     "journal_head_compare_and_swap": true,
     "atomic_event_snapshot_receipt_commit": true,
-    "semantic_store_readback": true
+    "semantic_store_readback": true,
+    "explicit_probabilistic_prediction_ingress": true,
+    "later_observed_outcome_resolution": true,
+    "edpf_prospective_capture_binding": true,
+    "prediction_probability_separate_from_ingress_provenance_confidence": true
   },
   "supported_event_classes": [
     "NODE_STATE",
     "ROUTE_TELEMETRY",
     "CONTEXT_STATE",
     "LEARNING",
-    "BENCHMARK"
+    "BENCHMARK",
+    "EDPF_PREDICTION",
+    "EDPF_OUTCOME"
   ],
+  "edpf_binding_contract": {
+    "prediction_object_kind": "EXPERIMENT",
+    "prediction_state": "PREDICTION_OPEN",
+    "explicit_probability_required": true,
+    "prediction_requires_source_readback_or_stronger": true,
+    "policy_market_score_may_be_converted_to_probability": false,
+    "outcome_requires_later_timestamp": true,
+    "outcome_requires_separate_proof": true,
+    "matter_scope_must_match": true,
+    "prediction_and_outcome_use_existing_living_state_journal": true
+  },
   "truth_boundaries": {
     "background_daemon_deployed": false,
     "scheduler_deployed": false,
     "provider_liveness_inferred_from_ingress_code": false,
     "ingress_event_proves_provider_state_beyond_supplied_proof": false,
+    "edpf_ingress_calls_model_or_provider": false,
+    "edpf_ingress_manufactures_forecast_probability": false,
+    "edpf_ingress_proves_predictor_superiority": false,
+    "prediction_declared_proof_may_be_uplifted": false,
     "duplicate_delivery_creates_duplicate_state": false,
     "conflicting_event_id_reuse_allowed": false,
     "public_safe_secret_material_allowed": false,
@@ -46,6 +67,7 @@
   "admission": {
     "new_github_workflow_created": false,
     "existing_federation_airlock_bridge": "tests/test_phoenix_provider_cutover_v3_federation_living_ingress.py",
+    "focused_edpf_ingress_court": "tests/test_edpf_living_state_ingress_binding.py",
     "default_deny_must_pass": true
   }
 }
