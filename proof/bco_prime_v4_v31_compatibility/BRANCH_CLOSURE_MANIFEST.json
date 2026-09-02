@@ -1,0 +1,338 @@
+{
+  "schema": "CFBE_BCO_PRIME_V4_V31_BRANCH_CLOSURE_MANIFEST_V1",
+  "version": "1.0.0",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "branch": "codex/cfbe-bco-v4-v31-compatibility-20260902",
+  "sourceMainSha": "ceb5cf36d1e608d0520a23114fe4bfc08eab644a",
+  "sourceMainTreeSha": "f973a2923453bfdd89dce8dd412d1c43100030ae",
+  "adapterVersion": "4.0.1",
+  "v31RegistrySha256": "111e37d3f6d990819f5d7ce6463cf62babb13aa3cdbb20db1490ec9366211a26",
+  "v4InstitutionSha256": "3cada8deb311b9fcefe04990c0063086b0e623884591d23fe3359d258c04d0c8",
+  "v4GenomeBridgeSha256": "937024053bf593a03ffa59b21dea301f9ab2ce8c7fd86e684ba4669aa3e3f33c",
+  "existingMainClosurePaths": {
+    "benchmarking/cfbe_omega/BCO_PRIME_CAPABILITY_FABRIC_V1.json": {
+      "gitBlobSha": "cda851c11059152a2a4852be861e11d9f51d48d0",
+      "preserved": true
+    },
+    "benchmarking/cfbe_omega/bco_prime_capability_fabric_v1.py": {
+      "gitBlobSha": "b2f0bf9d5a52e6b3c99ca1b907d6e18e1dba6c01",
+      "preserved": true
+    },
+    "benchmarking/cfbe_omega/bco_prime_meta_executive_v1.py": {
+      "gitBlobSha": "b5544c500a0d48e0eec35d9e064de0b51c1c73b5",
+      "preserved": true
+    },
+    "docs/architecture/BCO_PRIME_CAPABILITY_FABRIC_V1.md": {
+      "gitBlobSha": "7d302eee7eb83affb620037626da6bf8445afd0d",
+      "preserved": true
+    },
+    "governance/proofos_omega_policy_extension_bco_prime_capability_fabric_v1.json": {
+      "gitBlobSha": "c98915d0f666ed52025957c74d6ac56600a1ef9b",
+      "preserved": true
+    },
+    "tests/test_bco_prime_capability_fabric_v1.py": {
+      "gitBlobSha": "62d96302ea78d0d1d11aac5a1cd0389911f11df2",
+      "preserved": true
+    }
+  },
+  "addedEntries": [
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_v4_v31_compatibility_adapter.py",
+      "sha256": "65b81e0cab5d71711accd093aa42925a61736c4ce6538ee5883d991f061ae4b8",
+      "sourceClass": "adapter"
+    },
+    {
+      "path": "tests/test_bco_prime_v4_v31_compatibility_adapter.py",
+      "sha256": "b673d62c9286a8192f43a187cdf07ebda2cd7b047cedcdbc31fb30f4b0554fec",
+      "sourceClass": "adapter_test"
+    },
+    {
+      "path": "BUILD_CONTRACT.json",
+      "sha256": "34416cbbef3f19082075be74ce9b7def340cdf13b59fc9dd546310ad3f52e3f8",
+      "sourceClass": "build_contract"
+    },
+    {
+      "path": "docs/architecture/BCO_PRIME_V4_V31_COMPATIBILITY_ADAPTER.md",
+      "sha256": "43bcf8fba93b5d65cb37d9ddc45ea9e35c5fa3a2cf1f560990efde6ea02aa579",
+      "sourceClass": "adapter_documentation"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_v4_v31_compatibility/FORMATION_SPEC.md",
+      "sha256": "3fda2b3ba863482cc7ecdfa3a4c64e6c2c4a12de4d3a5631dd1eb81b392bed6b",
+      "sourceClass": "adapter_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_v4_v31_compatibility/PROJECT_MEMORY.md",
+      "sha256": "c01833a1b31f75f77cff8e4665ca6059bb772cba80f6a2dbeb74dff80b5fa288",
+      "sourceClass": "adapter_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_v4_v31_compatibility/AI_HANDOFF.md",
+      "sha256": "4202e65f2242386a8d3c77deec46512deb3901f49384255d82a5c6336d531a3a",
+      "sourceClass": "adapter_handoff"
+    },
+    {
+      "path": "proof/bco_prime_v4_v31_compatibility/DOCUMENTATION_GATE_PACKET.json",
+      "sha256": "fafc70a9d3e3be71839d16988a66d234e7569ae493883622137a385dc10ef595",
+      "sourceClass": "documentation_gate"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/BCO_PRIME_CHAT_FORENSICS_V1.json",
+      "sha256": "ef367f15fccd8eb16bbe217546f4636cc662fcf1082b00ef5f358cd1b6923a54",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/BCO_PRIME_CHAT_FORENSICS_V2.json",
+      "sha256": "f517ff53a19e0f1653581d26ab4c5fbc364725cf9bec826a9b4a37b69147aa77",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/BCO_PRIME_SUCCESSOR_V3.json",
+      "sha256": "302815dff12ab772a0af43d370299761a02441cfdfca22db12b8b324e02c31c6",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/BCO_PRIME_SUCCESSOR_V3_1.json",
+      "sha256": "35bb02a10ec990d8200925d6641727a99eba7ea496576a9b7e6743901e15d522",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_adaptive_intelligence_v1.py",
+      "sha256": "5bd51c60ee9929e76dd3303454c5c4a3e15ef7aa73894b2861527467416d22bb",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_baseline_registry_v3_1.py",
+      "sha256": "605e012922b20d6f7d0609dd378e8480699b0716e776787efed08a31829250bb",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_chat_forensics_v1.py",
+      "sha256": "067950e2fc4436992875e3514404b680bc68636e1342bb51b0832e0d1575fad9",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_chat_forensics_v2.py",
+      "sha256": "6865ab5906181cd0e5d2443398b3f3f6a696fab7e35ab0bd939bed927d2c136e",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_cycle_v3_1.py",
+      "sha256": "56719a076303ce51902582b4a464950c2ff96a84a6a16dacf412678b960c4346",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_drift_harvest_v3_1.py",
+      "sha256": "06e16eecaf473fde21216cbe57bce2dd6ca57f9aa4cf4da59feb37d9b48f281d",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_flight_recorder_v3.py",
+      "sha256": "6dc9ae3a0cdc4a547f36c850ebd800217dbf6204ae708ae023a07dd85d36846a",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_harvesting_fabric_v1.py",
+      "sha256": "2b38da88b6e8c3ec56dea1623f02630effbf99e2501be5ec7b86573bf352a561",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_successor_v3.py",
+      "sha256": "3d6ef7f283f5f6ac02fa77befc20784079b6d0e64e842f5631442954f73cea0a",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "benchmarking/cfbe_omega/bco_prime_successor_v3_1.py",
+      "sha256": "111e37d3f6d990819f5d7ce6463cf62babb13aa3cdbb20db1490ec9366211a26",
+      "sourceClass": "v31_runtime_closure"
+    },
+    {
+      "path": "governance/BCO_PRIME_BASELINE_REGISTRY_V3_1.json",
+      "sha256": "f06036e70f6dc368e160d075e9b7aa11a7eb39b2c28c072277ea58f1254a6c7b",
+      "sourceClass": "v31_trust_root"
+    },
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_chat_forensics_v1.json",
+      "sha256": "fc29bc65182c87ddfe7b060bb8e44bab5a11151ae50566a9c844e40cc0f9b002",
+      "sourceClass": "v31_policy"
+    },
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_chat_forensics_v2.json",
+      "sha256": "651fe713bd9008903b18740685d27972027b5272b2272c9407927b8ded943634",
+      "sourceClass": "v31_policy"
+    },
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_successor_v3.json",
+      "sha256": "aee1b209f84e91aec445524de8bde3ea3c30a61768863f2d48363bb6e9a84209",
+      "sourceClass": "v31_policy"
+    },
+    {
+      "path": "governance/proofos_omega_policy_extension_bco_prime_successor_v3_1.json",
+      "sha256": "da4aac763fca069afc0712ba5a38fb00d98d6562439a4da0b39ab9b84c96f1db",
+      "sourceClass": "v31_policy"
+    },
+    {
+      "path": "docs/architecture/BCO_PRIME_CHAT_FORENSICS_V1.md",
+      "sha256": "e916e9ae46500c3c21914f0487c53dce7df693f5ba3230a3430dc6e9e16d0797",
+      "sourceClass": "version_documentation"
+    },
+    {
+      "path": "docs/architecture/BCO_PRIME_CHAT_FORENSICS_V2.md",
+      "sha256": "6e55dc4cd7111f3e0e06e4b517b0d0dbd4110552ed61e92b1a78cb9dca999d63",
+      "sourceClass": "version_documentation"
+    },
+    {
+      "path": "docs/architecture/BCO_PRIME_SUCCESSOR_V3.md",
+      "sha256": "5cc1485154e24e818744c68b981f59f9b8cf217f2d2e219acc75a312b7274a90",
+      "sourceClass": "version_documentation"
+    },
+    {
+      "path": "docs/architecture/BCO_PRIME_SUCCESSOR_V3_1.md",
+      "sha256": "290ea42ac4127acd161bda1fe8a3de96e63b9ad3ffeca45db9ed747d915bb978",
+      "sourceClass": "version_documentation"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_chat_forensics/AI_HANDOFF.md",
+      "sha256": "d7a597ba5f24597b5bb507792b61f9655e8986d90cd62d02364b2b8c062d8583",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_chat_forensics/FORMATION_SPEC.md",
+      "sha256": "995c10db94227706a47302707bfda42b03c9a17b0a5c72a4af5ca80fda75f630",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_chat_forensics/PROJECT_MEMORY.md",
+      "sha256": "ac51badf2a5f283ea1264923bb27481800ddb3b708678e897bf1b00ed4fdff27",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_chat_forensics_v2/AI_HANDOFF.md",
+      "sha256": "335119d714cc0cfd36a905c3b636c88a54d8eec2465d189f22b4ba985b7dc42a",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_chat_forensics_v2/FORMATION_SPEC.md",
+      "sha256": "c93079be02bdd0c3d46fe315bc09e446c67474723332fbc0bff55da20b67549d",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_chat_forensics_v2/PROJECT_MEMORY.md",
+      "sha256": "f1088db89ffb5042bc98bfea6e0dba9d056a619e2c122ec1a7758935320e2e0a",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3/AI_HANDOFF.md",
+      "sha256": "a630cf53a197d3b2bae306b74840d891e5947f451318be05c36e720d9f95c1ab",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3/FORMATION_SPEC.md",
+      "sha256": "267ce568f0df961f498a4504042f805ad9ba00ddf29533be4f1d04d1f2645be3",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3/PROJECT_MEMORY.md",
+      "sha256": "125ca659c2cfe21a4da75229213f51c439230766b5c074f9b0907ae865b31e79",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3_1/AI_HANDOFF.md",
+      "sha256": "ed57c2754ce59a9fc4e9c63f05fb4dbac2caa9e6a92e4c151d166a94d2d376d8",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3_1/FORMATION_SPEC.md",
+      "sha256": "8f69ba7da1c0efab2791881f5e0e26a20f197b7d0567dfb565a6df9971a16987",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3_1/PROJECT_MEMORY.md",
+      "sha256": "35fd43f76d817652d93900fa90785d886d440587355352600f6cb2b1c1ea48b6",
+      "sourceClass": "version_handoff"
+    },
+    {
+      "path": "scripts/verify_bco_prime_successor_v3.py",
+      "sha256": "5055840dd4d1c8e112f436dbf3bb88696afccbf55014606562e258b73efbe986",
+      "sourceClass": "version_verifier"
+    },
+    {
+      "path": "scripts/verify_bco_prime_successor_v3_1.py",
+      "sha256": "9040c1dba57c38c73893f4a5f4d0bf1421870664a77703e9fef28bcd79b35bfe",
+      "sourceClass": "version_verifier"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3/RELEASE_PROOF.json",
+      "sha256": "689484020af8d1d2cb747210769b5f3980415a13d1f5cd9c91ee02974dc5dbfc",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3/REALITYGUARD_PACKET.json",
+      "sha256": "ac054182b98f0fcc714e001ee8a7d05be362e8f9633db6eeaea3359b6f6a1703",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3/SOURCE_MANIFEST.json",
+      "sha256": "86addcd76f9b786df1df1845669d4829db3cec1488872f7bf0f2120569ffb7fb",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3/REALITYGUARD_RESULT.json",
+      "sha256": "55c0394c94b7fae5204e31e459e40486b016329fb39218b81fb177a1c7ffe151",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3_1/RELEASE_PROOF.json",
+      "sha256": "e1afd61f8941c4a2512368796637f4f6adb643eb7f74ab4f05a1a0a8e37c9082",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3_1/REALITYGUARD_PACKET.json",
+      "sha256": "51433b45224530c3827df590de50c5d9e8f257afa979ecd72084cfb2aee6d37e",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3_1/SOURCE_MANIFEST.json",
+      "sha256": "765e58a29957722cddacecec776a0f2e95cf3088fa3c3fc5fe23d6dba3bf5669",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "proof/bco_prime_successor_v3_1/REALITYGUARD_RESULT.json",
+      "sha256": "4b30952cb542278efec7ba3c1ab4acc5ae8d63649bfe91e7e803d021bf517e07",
+      "sourceClass": "version_proof"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3_1/BUILD_CONTRACT.json",
+      "sha256": "57dfd0add7c8424d61714bb778c081d8bc5e684ef90a043c44abe12e7cf68101",
+      "sourceClass": "sealed_v31_package_artifact"
+    },
+    {
+      "path": "docs/handoffs/bco_prime_successor_v3_1/PACKAGE_README.md",
+      "sha256": "0d14c333977b337b48b2be56ac2e3a5a8e111090d14d50b29c265b43d74ac11c",
+      "sourceClass": "sealed_v31_package_artifact"
+    }
+  ],
+  "verification": {
+    "adapterFocused": "23/23 PASS",
+    "v4Focused": "20/20 PASS",
+    "sealedV31": "67/67 PASS in sealed fixture-complete layout",
+    "currentMainOverlay": "107/110; only three inherited external CFF-fixture checks unavailable",
+    "modisa": "VALID --require-proof",
+    "semanticManifestSha256": "ddde977054477971c1a38d906d554e75bdc17f494a08f522f5997dd1e8c836e2",
+    "highConfidenceSecretScan": "PASS"
+  },
+  "authority": {
+    "runtime": "A1_LOCAL_INTERNAL",
+    "providerEffectAuthorized": false,
+    "dispatchAuthorized": false,
+    "sourceMutationAuthorizedAtRuntime": false,
+    "stablePromotionAuthorized": false,
+    "mergeAuthorized": false,
+    "deploymentAuthorized": false
+  },
+  "limitations": [
+    "The three inherited CFF engine tests require an adjacent external fixture outside repository root; no private or unreviewed fixture is published.",
+    "The sealed 67-test v3.1 package remains preserved separately; this branch materializes the runtime/proof closure without overwriting evolved current-main capability-fabric files.",
+    "Branch and draft PR admission do not prove deployment, provider effect, production superiority or owner value."
+  ]
+}

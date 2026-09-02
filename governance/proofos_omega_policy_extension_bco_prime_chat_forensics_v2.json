@@ -1,0 +1,36 @@
+{
+  "schema": "PROOFOS_OMEGA_POLICY_EXTENSION_BCO_PRIME_CHAT_FORENSICS_V2",
+  "version": "2.0.0",
+  "authorityCeiling": "A1_LOCAL_INTERNAL",
+  "allowed": [
+    "validate bounded incident metadata",
+    "execute deterministic core and legacy capabilities",
+    "rank shadow-only strategies",
+    "probe and hash-verify local CFF engine files",
+    "read a caller-supplied local native source",
+    "write and validate seven local audit artifacts"
+  ],
+  "denied": [
+    "network access",
+    "credential discovery or extraction",
+    "provider mutation",
+    "publish",
+    "merge",
+    "deploy",
+    "register",
+    "external communication",
+    "financial effect",
+    "approval substitution",
+    "stable self-promotion"
+  ],
+  "proofGates": {
+    "incidentIdentity": "expected and observed IDs must be equal",
+    "capturedSource": "accessible=true plus lowercase SHA-256",
+    "providerDurability": "pinned ref plus equal expected/observed hashes plus readback",
+    "nativeAuditCompletion": "all seven files plus ledger and ChatBridge validation",
+    "backendCause": "native backend evidence required",
+    "fullMetaRuntime": "all three imported runtime dependencies required"
+  },
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}

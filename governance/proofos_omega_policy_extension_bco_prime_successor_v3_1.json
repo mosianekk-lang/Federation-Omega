@@ -1,0 +1,47 @@
+{
+  "schema": "PROOFOS_OMEGA_POLICY_EXTENSION_BCO_PRIME_SUCCESSOR_V3_1",
+  "version": "3.1.0",
+  "authorityCeiling": "A1_LOCAL_INTERNAL",
+  "runtimeState": "ON_DEMAND_GOVERNED",
+  "allowed": [
+    "verify an externally trust-pinned one-time-signed local baseline",
+    "compare complete contained local source, policy, capability, test and result state",
+    "scan an explicitly authorized bounded local source root",
+    "hold secret-bearing, unstable, unknown or incompatible licensed inputs before DNA extraction",
+    "derive semantic Capability DNA and separate occurrence identities",
+    "append a hash-chained local regression scoreboard",
+    "produce declarative non-executable shadow repair proposals",
+    "cancel before commit and select a prior verified local control pointer"
+  ],
+  "denied": [
+    "trusting a registry-contained public key without an external fingerprint",
+    "baseline auto-advance",
+    "partial-scan no-drift or deletion claims",
+    "quarantine auto-clear",
+    "raw source, secret, path, heading, key or symbol emission from held files",
+    "network crawling or provider mutation",
+    "generated repair execution or monitored-source rewriting",
+    "credential discovery, extraction or reuse",
+    "publish, merge, deploy, register or stable promotion",
+    "authority expansion, external communication or financial effect"
+  ],
+  "hardVetoStates": [
+    "SIGNATURE_OR_BASELINE_HOLD",
+    "PARTIAL",
+    "BLOCKED_WITH_ROUTE",
+    "UNSTABLE_SOURCE_HOLD",
+    "SECRET_HOLD",
+    "LICENSE_HOLD",
+    "TEST_REGRESSION",
+    "RESULT_DRIFT",
+    "CANCELLED",
+    "QUARANTINED"
+  ],
+  "baselineAdvanceAuthorized": false,
+  "quarantineAutoClearAuthorized": false,
+  "sourceMutationAuthorized": false,
+  "providerEffectAuthorized": false,
+  "stablePromotionAuthorized": false,
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}
