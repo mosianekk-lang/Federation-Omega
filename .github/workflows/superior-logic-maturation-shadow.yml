@@ -15,6 +15,7 @@ on:
       - "bubbles/capability_activation.py"
       - "tests/test_bubbles_capability_activation.py"
       - "tests/test_bubbles_scheduler_provider_proof.py"
+      - "tests/test_bubbles_authority_artifact_ingestion.py"
       - ".github/workflows/superior-logic-maturation-shadow.yml"
   schedule:
     - cron: "37 */6 * * *"
@@ -88,6 +89,7 @@ jobs:
           python -m unittest discover -s tests -p 'test_maturation_shadow_runtime.py' -v
           python -m unittest tests.test_bubbles_capability_activation -v
           python -m unittest tests.test_bubbles_scheduler_provider_proof -v
+          python -m unittest tests.test_bubbles_authority_artifact_ingestion -v
 
       - name: Execute chat-independent maturation shadow cycle
         env:
@@ -114,6 +116,91 @@ jobs:
           python -m bubbles.provider_surface_probe \
             --output runtime-output/bubbles-provider-surface-receipt.json
 
+      - name: Resolve latest successful Bubbles provider-authority proof
+        id: authority_run
+        env:
+          GH_TOKEN: ${{ github.token }}
+          AUTHORITY_WORKFLOW: bubbles-provider-authority-recovery-probe.yml
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p runtime-output/provider-authority
+          gh api \
+            -H 'Accept: application/vnd.github+json' \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/${AUTHORITY_WORKFLOW}/runs?branch=main&status=success&per_page=20" \
+            > runtime-output/provider-authority/runs.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          runs = json.loads(Path('runtime-output/provider-authority/runs.json').read_text()).get('workflow_runs', [])
+          run_id = next((str(run['id']) for run in runs if run.get('conclusion') == 'success'), '')
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f"run_id={run_id}\n")
+          print(json.dumps({'authority_run_id': run_id or None, 'found': bool(run_id)}, sort_keys=True))
+          PY
+
+      - name: Download latest Bubbles provider-authority artifact
+        if: steps.authority_run.outputs.run_id != ''
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ steps.authority_run.outputs.run_id }}
+          pattern: bubbles-provider-authority-recovery-*
+          path: runtime-output/provider-authority/download
+          merge-multiple: true
+
+      - name: Validate hardened provider-authority receipt
+        id: authority_receipt
+        if: steps.authority_run.outputs.run_id != ''
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os, shutil
+          from datetime import datetime, timezone
+          from pathlib import Path
+          candidates = list(Path('runtime-output/provider-authority/download').rglob('receipt.json'))
+          usable = False
+          reason = 'RECEIPT_NOT_FOUND'
+          if len(candidates) == 1:
+              payload = json.loads(candidates[0].read_text(encoding='utf-8'))
+              raw = payload.get('recorded_at')
+              try:
+                  observed = datetime.fromisoformat(str(raw).replace('Z', '+00:00'))
+                  age_seconds = (datetime.now(timezone.utc) - observed.astimezone(timezone.utc)).total_seconds()
+              except Exception:
+                  age_seconds = None
+              safe = (
+                  payload.get('schema') == 'BUBBLES-PROVIDER-AUTHORITY-RECOVERY-PROBE-V2'
+                  and payload.get('mutation_attempted') is False
+                  and payload.get('secret_values_recorded') is False
+                  and payload.get('raw_authenticated_response_bodies_recorded') is False
+              )
+              fresh = age_seconds is not None and -300 <= age_seconds <= 86400
+              usable = safe and fresh
+              reason = 'SAFE_FRESH_AUTHORITY_RECEIPT' if usable else ('UNSAFE_AUTHORITY_RECEIPT_OMITTED' if not safe else 'STALE_AUTHORITY_RECEIPT_OMITTED')
+              if usable:
+                  Path('runtime-output/bubbles-provider-authority-receipt.json').write_text(
+                      json.dumps(payload, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+                  )
+              print(json.dumps({
+                  'usable': usable,
+                  'reason': reason,
+                  'classification': payload.get('classification'),
+                  'provider_authenticated': payload.get('provider_authenticated'),
+                  'age_seconds': age_seconds,
+                  'mutation_attempted': payload.get('mutation_attempted'),
+                  'secret_values_recorded': payload.get('secret_values_recorded'),
+                  'raw_authenticated_response_bodies_recorded': payload.get('raw_authenticated_response_bodies_recorded'),
+              }, sort_keys=True))
+          else:
+              print(json.dumps({'usable': False, 'reason': reason, 'candidate_count': len(candidates)}, sort_keys=True))
+          shutil.rmtree('runtime-output/provider-authority/download', ignore_errors=True)
+          with open(os.environ['GITHUB_OUTPUT'], 'a', encoding='utf-8') as handle:
+              handle.write(f"usable={'true' if usable else 'false'}\n")
+              handle.write(f"reason={reason}\n")
+          PY
+
       - name: Compile fresh Bubbles capability activation projection
         env:
           PREVIOUS_SCHEDULED: ${{ steps.history.outputs.previous_scheduled }}
@@ -121,13 +208,18 @@ jobs:
         run: |
           set -euo pipefail
           schedule_args=()
+          authority_args=()
           if [[ "${PREVIOUS_SCHEDULED:-0}" =~ ^[0-9]+$ ]] && (( PREVIOUS_SCHEDULED > 0 )); then
             schedule_args+=(--schedule-provider-verified)
+          fi
+          if [[ -f runtime-output/bubbles-provider-authority-receipt.json ]]; then
+            authority_args+=(--provider-authority-receipt runtime-output/bubbles-provider-authority-receipt.json)
           fi
           python -m bubbles.capability_activation \
             --source-sha "$GITHUB_SHA" \
             --event-name "$GITHUB_EVENT_NAME" \
             --provider-surface-receipt runtime-output/bubbles-provider-surface-receipt.json \
+            "${authority_args[@]}" \
             --schedule-configured \
             "${schedule_args[@]}" \
             --output runtime-output/bubbles-capability-activation.json \
@@ -140,14 +232,13 @@ jobs:
           python - <<'PY'
           import json
           from pathlib import Path
-
           receipt = json.loads(Path('runtime-output/receipts/maturation_receipt.json').read_text())
           work = json.loads(Path('runtime-output/receipts/candidate_work_package.json').read_text())
           heartbeat = json.loads(Path('runtime-output/receipts/heartbeat.json').read_text())
           activation = json.loads(Path('runtime-output/bubbles-capability-activation.json').read_text())
           provider = json.loads(Path('runtime-output/bubbles-provider-surface-receipt.json').read_text())
           history = json.loads(Path('runtime-output/prior-runs.json').read_text())
-
+          authority_path = Path('runtime-output/bubbles-provider-authority-receipt.json')
           assert receipt['status'] == 'SHADOW_MATURATION_CYCLE_VERIFIED', receipt
           assert receipt['external_effect'] is False, receipt
           assert receipt['authority_ceiling'] == 'A1_INTERNAL', receipt
@@ -162,6 +253,11 @@ jobs:
           assert activation['green_count'] > 0, activation
           assert provider['mutation_attempted'] is False, provider
           assert provider['secret_values_recorded'] is False, provider
+          if authority_path.exists():
+              authority = json.loads(authority_path.read_text())
+              assert authority['mutation_attempted'] is False, authority
+              assert authority['secret_values_recorded'] is False, authority
+              assert authority['raw_authenticated_response_bodies_recorded'] is False, authority
           successful_schedule = any(
               run.get('event') == 'schedule' and run.get('conclusion') == 'success'
               for run in history.get('workflow_runs', [])
@@ -178,6 +274,7 @@ jobs:
               'next_gate': receipt['next_gate'],
               'external_effect': receipt['external_effect'],
               'provider_verified_schedule': successful_schedule,
+              'authority_receipt_ingested': authority_path.exists(),
               'bubbles_green_count': activation['green_count'],
               'bubbles_lane_count': activation['lane_count'],
               'bubbles_all_green': activation['all_green'],
