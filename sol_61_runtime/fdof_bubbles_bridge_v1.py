@@ -152,6 +152,8 @@ class FDOFBubblesBridge:
         observed_at_epoch: int,
         ttl_seconds: int = 900,
     ) -> HealthObservation:
+        if not isinstance(evidence, HostedReceiptEvidence):
+            raise ConstraintError("HOSTED_EVIDENCE_ENVELOPE_REQUIRED")
         if not evidence.provider_run_id or not evidence.artifact_id or not evidence.head_sha:
             raise ConstraintError("HOSTED_PROVIDER_IDENTIFIERS_REQUIRED")
         if evidence.conclusion.lower() != "success":
