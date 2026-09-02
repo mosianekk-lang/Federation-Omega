@@ -90,7 +90,7 @@ def _kind_value(value: object) -> str:
 def _prediction_nodes(events: Sequence[Mapping[str, Any]]) -> dict[str, list[tuple[int, Mapping[str, Any]]]]:
     nodes: dict[str, list[tuple[int, Mapping[str, Any]]]] = {}
     for raw_event in events:
-        if str(raw_event.get("event_type")) != "NODE_OBSERVED":
+        if str(raw_event.get("event_type")) not in {"NODE_OBSERVED", "NODE_TRANSITIONED"}:
             continue
         sequence = int(raw_event.get("sequence", 0))
         node = dict(dict(raw_event.get("payload", {})).get("node", {}))
