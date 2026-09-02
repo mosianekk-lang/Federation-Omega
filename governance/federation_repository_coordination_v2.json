@@ -1,0 +1,72 @@
+{
+  "schema": "FEDERATION-REPOSITORY-COORDINATION-V2",
+  "version": "2.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Make the existing cooperative repository critical section machine-verifiable inside the already-admitted Federation Omega Airlock without creating another scheduler, store, authority plane or private credential dependency.",
+  "lease_ref": "refs/heads/locks/fdof-repository-critical-section",
+  "lease_schema": "FEDERATION_REPOSITORY_LEASE_V2",
+  "claim_schema": "FEDERATION_COORDINATION_V1",
+  "initial_scope": "repository:*",
+  "lease_descriptor_location": "HEAD_COMMIT_MESSAGE_ON_EXISTING_LOCK_REF",
+  "write_ahead_capture_required": true,
+  "turn_capture_provider": "FEDERATION_SYNC_BUS_TURN_CAPTURE",
+  "github_court_can_validate_private_turn_capture_contents": false,
+  "github_court_requirement": "PR claim must bind the exact turn_capture_id already carried by the active lease descriptor",
+  "required_lease_fields": [
+    "state",
+    "fencing_token",
+    "writer_node",
+    "system",
+    "workstream",
+    "transaction_id",
+    "idempotency_key",
+    "source_head",
+    "scope",
+    "acquired_at",
+    "expires_at",
+    "turn_capture_id",
+    "effect",
+    "authority"
+  ],
+  "required_pr_claim_fields": [
+    "writer_node",
+    "system",
+    "workstream",
+    "transaction_id",
+    "idempotency_key",
+    "source_head",
+    "turn_capture_id",
+    "lock_ref",
+    "lease_commit_sha",
+    "fencing_token"
+  ],
+  "admission_rules": {
+    "no_active_v2_lease": "PASS_WITHOUT_COORDINATION_PROMOTION",
+    "released_or_expired_lease": "PASS_WITHOUT_COORDINATION_PROMOTION",
+    "active_unexpired_lease": "PR_MUST_CLAIM_EXACT_LEASE",
+    "active_lease_source_head_mismatch": "FAIL",
+    "active_lease_tree_mismatch": "FAIL",
+    "missing_or_malformed_pr_claim": "FAIL",
+    "writer_or_transaction_mismatch": "FAIL",
+    "fencing_token_or_lease_commit_mismatch": "FAIL"
+  },
+  "claim_surfaces": [
+    "whole PR body JSON with schema FEDERATION_COORDINATION_V1",
+    "top-level coordination object",
+    "payload.coordination object for Bubbles command PRs",
+    "HTML comment block beginning FEDERATION_COORDINATION_V1"
+  ],
+  "enforcement_host": "EXISTING_PROOFOS_BOOTSTRAP_INSIDE_FEDERATION_OMEGA_AIRLOCK",
+  "provider_branch_protection_equivalent": false,
+  "provider_ruleset_equivalent": false,
+  "provider_authority_created": false,
+  "external_effect_authorized": false,
+  "security": {
+    "public_safe_metadata_only": true,
+    "raw_secrets_allowed": false,
+    "credential_material_allowed": false,
+    "lock_ref_is_not_source_authority": true,
+    "lock_ref_is_not_provider_effect_authority": true
+  },
+  "truth_boundary": "This court can fail hosted Airlock proof when an active cooperative lease is bypassed. Because GitHub main is not yet provider-enforced by a ruleset/branch protection, this does not make bypass technically impossible at the provider layer. Provider-enforced Main Airlock remains a separate owner-authorized gate."
+}
