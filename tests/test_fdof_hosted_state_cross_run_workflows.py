@@ -18,6 +18,8 @@ DOWNLOAD_SHA = 'd3f86a106a0bac45b974a628896c90dbdf5c8093'
 
 class FdofHostedStateCrossRunWorkflowTests(unittest.TestCase):
     def setUp(self) -> None:
+        if not EXPORT_PATH.exists() or not RESTORE_PATH.exists():
+            self.skipTest('workflow-free export excludes repository workflow controls')
         self.export = EXPORT_PATH.read_text(encoding='utf-8')
         self.restore = RESTORE_PATH.read_text(encoding='utf-8')
         self.policy = json.loads(POLICY_PATH.read_text(encoding='utf-8'))
