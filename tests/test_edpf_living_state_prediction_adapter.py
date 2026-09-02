@@ -75,6 +75,8 @@ class EdpfLivingStatePredictionAdapterTests(unittest.TestCase):
         self.assertEqual(node.state, OPEN_STATE)
         self.assertTrue(node.payload["prospective_capture"])
         self.assertEqual(node.payload["mission_snapshot_digest"], "snapshot:mission-1:v1")
+        self.assertEqual(node.provenance.confidence, 1.0)
+        self.assertEqual(node.payload["prediction"]["probability"], 0.80)
         self.assertFalse(node.external_effect)
 
     def test_duplicate_prediction_cutoff_fails_closed(self) -> None:
@@ -91,12 +93,15 @@ class EdpfLivingStatePredictionAdapterTests(unittest.TestCase):
             resolve_prospective_prediction(model, outcome_record(observed_at="2026-09-02T09:59:00+00:00"))
 
         leaked = outcome_record()
-        leaked = replace(
-            leaked,
-            outcome=replace(leaked.outcome, proof_refs=("evidence:pre:1",)),
-        )
+        leaked = replace(leaked, outcome=replace(leaked.outcome, proof_refs=("evidence:pre:1",)))
         with self.assertRaisesRegex(ValueError, "OUTCOME_PROOF_LEAKED"):
             resolve_prospective_prediction(model, leaked)
+
+    def test_resolution_cannot_cross_matter_wall(self) -> None:
+        model = LivingWorldModel()
+        record_prospective_prediction(model, replace(prediction_record(), matter_scope="MATTER-A"))
+        with self.assertRaisesRegex(ValueError, "MATTER_SCOPE_MISMATCH"):
+            resolve_prospective_prediction(model, replace(outcome_record(), matter_scope="MATTER-B"))
 
     def test_declared_outcome_proof_is_too_weak(self) -> None:
         weak = replace(outcome_record(), proof_maturity=ProofMaturity.DECLARED)
@@ -152,10 +157,11 @@ class EdpfLivingStatePredictionAdapterTests(unittest.TestCase):
         record_prospective_prediction(model, first)
         record_prospective_prediction(model, second)
         resolve_prospective_prediction(model, outcome_record(prediction_id="pred-1", observed_at="2026-09-02T11:00:00+00:00"))
+        base_second_outcome = outcome_record(prediction_id="pred-2", observed_at="2026-09-02T11:05:00+00:00")
         second_outcome = replace(
-            outcome_record(prediction_id="pred-2", observed_at="2026-09-02T11:05:00+00:00"),
+            base_second_outcome,
             outcome_source_ref="runtime:mission-2",
-            outcome=replace(outcome_record(prediction_id="pred-2").outcome, prediction_id="pred-2", proof_refs=("proof:outcome:3",)),
+            outcome=replace(base_second_outcome.outcome, proof_refs=("proof:outcome:3",)),
         )
         resolve_prospective_prediction(model, second_outcome)
         pairs = compile_real_shadow_pairs(model.export_event_log())
