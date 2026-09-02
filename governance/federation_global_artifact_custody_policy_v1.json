@@ -1,0 +1,191 @@
+{
+  "schema": "FEDERATION_GLOBAL_ARTIFACT_CUSTODY_POLICY_V1",
+  "policy_id": "FACP-001",
+  "version": "1.0.0",
+  "state": "ACTIVE_AFTER_PRIVATE_CONTROL_PLANE_AND_SOURCE_READBACK",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Require durable, non-duplicative placement, indexing, lifecycle control and readback for every material artifact produced by current and future registered Federation chats, nodes, systems and workstreams.",
+  "scope": {
+    "current_registered_chats_and_nodes": true,
+    "future_registered_chats_and_nodes": true,
+    "repository_integrated_agents": true,
+    "provider_runtime_artifacts": true,
+    "unbootstrapped_native_chats": "UNBOUND_UNTIL_AUTHORISED_BOOTSTRAP_OR_FIRST_REGISTERED_MATERIAL_DELTA",
+    "invisible_closed_chat_control_claimed": false
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "external_effect_default": false,
+    "trust_inheritance": false,
+    "public_sharing_owner_reserved": true,
+    "legal_filing_owner_reserved": true,
+    "destructive_deletion_owner_reserved": true,
+    "permission_or_provider_authority_expansion_owner_reserved": true,
+    "paid_deployment_owner_reserved": true
+  },
+  "private_resolution": {
+    "canonical_vault_alias": "FEDERATION_CONTROLLED_ARTIFACT_VAULT_CANONICAL",
+    "artifact_registry_alias": "FEDERATION_ARTIFACT_REGISTRY_LIVE",
+    "policy_document_alias": "FACP_001_CANONICAL_DRIVE_POLICY",
+    "global_capture_node_alias": "NODE_GLOBAL_ARTIFACT_CUSTODY",
+    "exact_private_pointer_in_public_source": false,
+    "resolve_through_authorised_private_control_plane": true
+  },
+  "canonical_store_roles": {
+    "software_source": {
+      "store": "GITHUB",
+      "scope": [
+        "source_code",
+        "tests",
+        "governance_contracts",
+        "architecture_files"
+      ],
+      "route": "FRESH_PURPOSE_SPECIFIC_BRANCH_AND_PULL_REQUEST",
+      "direct_main_mutation": false
+    },
+    "artifact_custody": {
+      "store": "OWNER_CONTROLLED_GOOGLE_DRIVE_VAULT",
+      "resolved_by_alias": "FEDERATION_CONTROLLED_ARTIFACT_VAULT_CANONICAL",
+      "scope": [
+        "qualification_packets",
+        "evidence_bundles",
+        "patches",
+        "manifests",
+        "test_logs",
+        "assurance_records",
+        "provider_receipts",
+        "rollback_and_restore_evidence",
+        "exported_documents",
+        "images",
+        "presentations",
+        "spreadsheets",
+        "other_material_artifacts"
+      ]
+    },
+    "state_and_pointers": {
+      "store": "FEDERATION_SYNC_BUS_AND_KIM_DATAVERSE",
+      "registry_alias": "FEDERATION_ARTIFACT_REGISTRY_LIVE",
+      "artifact_bytes_stored_here": false
+    },
+    "detailed_history": {
+      "store": "OWNING_LOCAL_BIBLE",
+      "scope": "FULL_CHRONOLOGY_DECISIONS_FAILURES_CORRECTIONS_TESTS_AND_LINEAGE"
+    },
+    "master_summary": {
+      "store": "MASTER_BIBLE",
+      "scope": "MINIMUM_NECESSARY_MATERIAL_DELTA_AND_DURABLE_POINTERS"
+    },
+    "provider_native_artifacts": {
+      "store": "PROVIDER_NATIVE_IMMUTABLE_ARTIFACT_SYSTEM",
+      "drive_copy_when_required": [
+        "retention",
+        "cross_provider_continuity",
+        "case_preservation"
+      ],
+      "provider_object_and_drive_copy_are_distinct": true
+    },
+    "session_sandbox": {
+      "store": "CHAT_OR_LOCAL_RUNTIME_SANDBOX",
+      "state": "TEMPORARY_CONSTRUCTION_ONLY",
+      "canonical": false,
+      "completion_proof": false
+    }
+  },
+  "lifecycle_states": [
+    "WORKING",
+    "CURRENT",
+    "SUPERSEDED",
+    "HISTORICAL",
+    "QUARANTINED"
+  ],
+  "lifecycle_rules": {
+    "one_current_object_per_artifact_identity": true,
+    "material_history_preserved": true,
+    "zero_byte_or_incomplete_artifact": "QUARANTINED",
+    "stale_source_bound_plan": "SUPERSEDED_OR_WORKING_NOT_CURRENT_FOR_PROVIDER_WRITE",
+    "exact_duplicates_suppressed": true,
+    "divergent_objects_preserved_for_discrepancy_review": true
+  },
+  "standard_work_package_folders": [
+    "00_INDEX_AND_CURRENT",
+    "01_QUALIFICATION_PACKETS",
+    "02_CANDIDATE_SOURCE_AND_PATCH",
+    "03_TESTS_AND_ASSURANCE",
+    "04_RECEIPTS_AND_HASHES",
+    "05_PROVIDER_PROOF",
+    "06_ROLLBACK_AND_RESTORE",
+    "99_SUPERSEDED"
+  ],
+  "required_registry_fields": [
+    "Artifact_ID",
+    "Workstream_ID",
+    "Chat_or_Node_ID",
+    "Artifact_Name",
+    "Artifact_Class",
+    "Lifecycle_State",
+    "Canonical_Store",
+    "Drive_File_ID_or_GitHub_Path",
+    "Version",
+    "SHA256_or_Provider_Digest",
+    "Source_Epoch",
+    "Generation_Anchor",
+    "Proof_State",
+    "Supersedes_or_Predecessor",
+    "Privacy_Class",
+    "Created_SAST",
+    "Last_Verified_SAST",
+    "Owner",
+    "Next_Action"
+  ],
+  "routing_rules": [
+    "ROUTE_SOURCE_TESTS_GOVERNANCE_AND_ARCHITECTURE_TO_GITHUB_BRANCH_PR",
+    "ROUTE_MATERIAL_PACKETS_BUNDLES_RECEIPTS_EXPORTS_AND_MANIFESTS_TO_OWNING_DRIVE_WORK_PACKAGE",
+    "ROUTE_PROVIDER_RUNTIME_OUTPUTS_TO_PROVIDER_NATIVE_ARTIFACTS_FIRST",
+    "COPY_PROVIDER_OUTPUT_TO_DRIVE_WHEN_RETENTION_CONTINUITY_OR_CASE_PRESERVATION_REQUIRES",
+    "ROUTE_CURRENT_INDEX_AND_STATUS_TO_00_INDEX_AND_CURRENT",
+    "ROUTE_SUPERSEDED_DUPLICATE_AND_STALE_PLANS_TO_99_SUPERSEDED",
+    "ROUTE_ROLLBACK_RESTORE_AND_CLEAN_REBUILD_PROOF_TO_06_ROLLBACK_AND_RESTORE",
+    "KEEP_PRIVATE_LEGAL_EMPLOYMENT_MEDICAL_FAMILY_AND_SENSITIVE_EVIDENCE_INSIDE_OWNING_DOMAIN_PRIVACY_WALL"
+  ],
+  "completion_gate": {
+    "material_artifact_task_complete_only_when": [
+      "ARTIFACT_BYTES_CREATED_OR_CONFIRMED",
+      "CORRECT_CANONICAL_DESTINATION_RESOLVED",
+      "UPLOAD_OR_PROVIDER_STORAGE_COMPLETED",
+      "EXACT_FILE_OR_PROVIDER_ID_READ_BACK",
+      "DIGEST_RECORDED_WHERE_AVAILABLE",
+      "LIFECYCLE_STATE_ASSIGNED",
+      "ARTIFACT_REGISTRY_ROW_WRITTEN",
+      "LOCAL_BIBLE_DELTA_RECORDED",
+      "MASTER_BIBLE_OR_SHARED_SYNC_SUMMARY_RECORDED_WHEN_MATERIAL",
+      "CURRENT_AND_SUPERSEDED_RELATIONSHIP_RECONCILED",
+      "DURABLE_REFERENCE_RETURNED_TO_OWNER_WHERE_APPROPRIATE"
+    ],
+    "sandbox_only_output_is_complete": false,
+    "failed_placement_state": "ARTIFACT_CUSTODY_INCOMPLETE",
+    "failed_placement_requires_blocker_and_next_route": true
+  },
+  "inheritance": {
+    "current_registered_nodes": "PRIVATE_SYNC_BUS_GLOBAL_CAPTURE_NODE_AND_P0_DEPENDENCY_RULE",
+    "future_registered_nodes": "AUTO_REGISTER_ON_BOOTSTRAP_OR_FIRST_MATERIAL_DELTA",
+    "repository_agents": "ROOT_AGENT_GOVERNANCE_LOADS_CURRENT_CANONICAL_STATE_AND_ROUTE_AUTHORITY",
+    "node_bootstrap_contract": "governance/federation_node_bootstrap_v2.json",
+    "agent_governance_contract": "AGENTS.md",
+    "private_policy_and_vault_readback_required": true,
+    "per_node_or_per_artifact_execution_proof_required": true
+  },
+  "privacy": {
+    "shared_registry_default": "P1_MINIMUM_NECESSARY_OPERATIONAL_METADATA",
+    "raw_private_evidence_shared_globally": false,
+    "domain_privacy_walls_preserved": true,
+    "private_drive_ids_or_provider_object_ids_in_public_source": false
+  },
+  "truth_boundary": [
+    "This public contract contains aliases and rules, not private Drive or provider object identifiers.",
+    "The private Sync Bus and owner-controlled Drive policy remain the source of current vault and registry pointers.",
+    "Source presence does not prove that every chat loaded or executed the policy.",
+    "Current registered nodes inherit through the connected control plane; an unbootstrapped native chat remains unbound until first authorised registration or synchronization.",
+    "No hidden access to closed chats, universal memory, background execution, provider authority or trust transfer is created.",
+    "Enforcement is proven by bootstrap, artifact placement, registry write and provider or file readback."
+  ]
+}
