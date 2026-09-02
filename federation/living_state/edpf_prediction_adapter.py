@@ -254,7 +254,7 @@ def compile_real_shadow_pairs(
     open_nodes: dict[str, tuple[int, Mapping[str, Any]]] = {}
     pairs: list[ShadowPredictionPair] = []
     for raw_event in events:
-        if str(raw_event.get("event_type")) != "NODE_OBSERVED":
+        if str(raw_event.get("event_type")) not in {"NODE_OBSERVED", "NODE_TRANSITIONED"}:
             continue
         sequence = int(raw_event.get("sequence", 0))
         node = dict(dict(raw_event.get("payload", {})).get("node", {}))
