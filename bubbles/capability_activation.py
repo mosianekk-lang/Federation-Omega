@@ -9,6 +9,7 @@ cannot silently override fresher provider readback.
 """
 
 from dataclasses import asdict, dataclass
+from datetime import datetime, timezone
 from enum import Enum
 from hashlib import sha256
 import argparse
@@ -18,6 +19,9 @@ from typing import Any, Mapping
 
 
 SCHEMA = "BUBBLES-CAPABILITY-ACTIVATION-V1"
+OPENAI_OBSERVATION_SCHEMA = "BUBBLES-OPENAI-PROVIDER-TRUST-OBSERVATION-1"
+DEFAULT_OPENAI_OBSERVATION = Path("governance/bubbles_openai_provider_trust_observation_v1.json")
+OPENAI_OBSERVATION_MAX_AGE_SECONDS = 604800
 
 
 class ActivationState(str, Enum):
@@ -58,6 +62,36 @@ def _load(path: str | Path | None) -> dict[str, Any]:
     return raw
 
 
+def _load_fresh_openai_trust(path: str | Path | None) -> dict[str, Any]:
+    observation = _load(path)
+    if not observation:
+        return {}
+    if observation.get("schema") != OPENAI_OBSERVATION_SCHEMA:
+        return {}
+    if observation.get("secret_value_recorded") is not False:
+        return {}
+    if observation.get("provider_mutation_attempted") is not False:
+        return {}
+    raw_observed = observation.get("observed_at")
+    try:
+        observed = datetime.fromisoformat(str(raw_observed).replace("Z", "+00:00"))
+        age_seconds = (datetime.now(timezone.utc) - observed.astimezone(timezone.utc)).total_seconds()
+    except Exception:
+        return {}
+    max_age = int(observation.get("max_age_seconds") or OPENAI_OBSERVATION_MAX_AGE_SECONDS)
+    if not (-300 <= age_seconds <= max_age):
+        return {}
+    trust = observation.get("provider_trust")
+    if not isinstance(trust, Mapping):
+        return {}
+    if trust.get("provider") != "openai" or trust.get("secret_value_recorded") is not False:
+        return {}
+    payload = dict(trust)
+    payload["observation_source_ref"] = observation.get("source_ref")
+    payload["observation_age_seconds"] = age_seconds
+    return payload
+
+
 def _surface(receipt: Mapping[str, Any], name: str) -> Mapping[str, Any]:
     surfaces = receipt.get("surfaces", {})
     if isinstance(surfaces, Mapping):
@@ -86,12 +120,72 @@ def _sha(payload: Mapping[str, Any]) -> str:
     ).hexdigest()
 
 
+def _resolve_openai_lane(trust: Mapping[str, Any]) -> tuple[ActivationState, tuple[str, ...], str, str | None]:
+    base_refs = ["chatbridge-omega4:openai-provider", "caseforge:openai-provider-adapter"]
+    receipt_sha = trust.get("receipt_sha256")
+    if isinstance(receipt_sha, str) and receipt_sha:
+        base_refs.append(f"provider-trust-receipt:{receipt_sha}")
+    source_ref = trust.get("observation_source_ref")
+    if isinstance(source_ref, str) and source_ref:
+        base_refs.append(source_ref)
+
+    reference_found = trust.get("credential_reference_found") is True
+    runtime_bound = trust.get("runtime_bound") is True
+    authenticated = trust.get("provider_authenticated") is True
+    live = trust.get("provider_live_verified") is True
+    state = str(trust.get("state") or "")
+    error_code = str(trust.get("provider_error_code") or "")
+
+    if live and authenticated and runtime_bound:
+        return (
+            ActivationState.HOSTED_VERIFIED,
+            tuple(base_refs),
+            "Fresh provider trust proves the existing OpenAI credential is runtime-bound, authenticated and provider-live.",
+            None,
+        )
+    if authenticated and runtime_bound:
+        if state == "BLOCKED_PROVIDER_BILLING" or error_code == "credit_balance_exhausted":
+            return (
+                ActivationState.PROVIDER_GATED,
+                tuple(base_refs),
+                "OpenAI credential reference, runtime binding and provider authentication are proven; live execution is blocked by provider billing/credit.",
+                "RESTORE_PROVIDER_BILLING",
+            )
+        return (
+            ActivationState.PROVIDER_GATED,
+            tuple(base_refs),
+            "OpenAI credential is runtime-bound and authenticated, but provider-live execution remains blocked by a provider-side condition.",
+            str(trust.get("next_action") or "RESOLVE_PROVIDER_BLOCK_AND_RERUN_PROVIDER_LIVE_CANARY"),
+        )
+    if reference_found and runtime_bound:
+        return (
+            ActivationState.PROVIDER_GATED,
+            tuple(base_refs),
+            "OpenAI credential reference and runtime binding are proven, but provider authentication/live proof is absent.",
+            "RESTORE_PROVIDER_AUTHENTICATION_AND_RERUN_PROVIDER_LIVE_CANARY",
+        )
+    if reference_found:
+        return (
+            ActivationState.CREDENTIAL_GATED,
+            tuple(base_refs),
+            "An OpenAI credential reference is known, but fresh runtime binding is not proven.",
+            "BIND_EXISTING_CREDENTIAL_REFERENCE_AND_RUN_PROVIDER_LIVE_CANARY",
+        )
+    return (
+        ActivationState.CREDENTIAL_GATED,
+        tuple(base_refs),
+        "OpenAI provider adapters exist; no fresh safe provider-trust receipt proves a credential reference or provider-live execution.",
+        "FRESH_SAFE_PROVIDER_TRUST_RECEIPT_OR_SECURE_CREDENTIAL_BINDING",
+    )
+
+
 def build_activation_snapshot(
     *,
     source_sha: str,
     event_name: str,
     provider_surface_receipt: Mapping[str, Any] | None = None,
     provider_authority_receipt: Mapping[str, Any] | None = None,
+    openai_provider_trust_receipt: Mapping[str, Any] | None = None,
     schedule_configured: bool = True,
     schedule_provider_verified: bool = False,
 ) -> dict[str, Any]:
@@ -100,6 +194,7 @@ def build_activation_snapshot(
 
     surface = dict(provider_surface_receipt or {})
     authority = dict(provider_authority_receipt or {})
+    openai_trust = dict(openai_provider_trust_receipt or {})
     operator = _surface(surface, "federation_omega_operator")
     archon = _surface(surface, "archon_admin_plane_v5")
     apps = _surface(surface, "archon_apps_script_exact_deployment") or _surface(
@@ -150,6 +245,7 @@ def build_activation_snapshot(
     archon_authenticated = surface_archon_authenticated or authority_archon_authenticated
     archon_token = surface_archon_token or authority.get("archon_token_available") is True
     cloud_read_ok = operator_public_ok or authority_cloud_read_ok
+    openai_state, openai_evidence, openai_reason, openai_gate = _resolve_openai_lane(openai_trust)
 
     if event_name == "schedule":
         scheduled_state = ActivationState.OPERATIONAL
@@ -291,10 +387,10 @@ def build_activation_snapshot(
         ),
         ActivationLane(
             "OPENAI_PROVIDER_LIVE",
-            ActivationState.CREDENTIAL_GATED,
-            ("chatbridge-omega4:openai-provider", "caseforge:openai-provider-adapter"),
-            "OpenAI provider adapters exist; this snapshot does not infer an API credential or paid provider call.",
-            "EXPLICIT_SECURE_CREDENTIAL_DECISION_PLUS_PROVIDER_LIVE_CANARY",
+            openai_state,
+            openai_evidence,
+            openai_reason,
+            openai_gate,
         ),
         ActivationLane(
             "BROWSER_COMPUTER_AUTOMATION",
@@ -362,6 +458,8 @@ def build_activation_snapshot(
             "provider_hosted_scheduler_proof_can_be_reused_when_same_workflow_identity_is_preserved": True,
             "source_presence_does_not_prove_provider_effect": True,
             "credential_absence_does_not_cancel_unaffected_work": True,
+            "fresh_safe_openai_provider_trust_overrides_credential_guess": True,
+            "stale_openai_provider_trust_does_not_promote": True,
             "shadow_prediction_does_not_prove_superiority": True,
             "owner_value_is_never_inferred": True,
         },
@@ -376,6 +474,16 @@ def build_activation_snapshot(
             "current_provider_authenticated": authority_authenticated,
             "current_classification": authority_classification or None,
         },
+        "openai_provider_trust": {
+            "receipt_supplied": bool(openai_trust),
+            "credential_reference_found": openai_trust.get("credential_reference_found") is True,
+            "runtime_bound": openai_trust.get("runtime_bound") is True,
+            "provider_authenticated": openai_trust.get("provider_authenticated") is True,
+            "provider_live_verified": openai_trust.get("provider_live_verified") is True,
+            "provider_error_code": openai_trust.get("provider_error_code"),
+            "state": openai_trust.get("state"),
+            "secret_value_recorded": openai_trust.get("secret_value_recorded") if openai_trust else None,
+        },
     }
     payload["activation_sha256"] = _sha(payload)
     return payload
@@ -387,16 +495,23 @@ def main() -> int:
     parser.add_argument("--event-name", required=True)
     parser.add_argument("--provider-surface-receipt")
     parser.add_argument("--provider-authority-receipt")
+    parser.add_argument("--openai-provider-trust-receipt")
     parser.add_argument("--schedule-configured", action="store_true")
     parser.add_argument("--schedule-provider-verified", action="store_true")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
 
+    openai_trust = (
+        _load(args.openai_provider_trust_receipt)
+        if args.openai_provider_trust_receipt
+        else _load_fresh_openai_trust(DEFAULT_OPENAI_OBSERVATION)
+    )
     snapshot = build_activation_snapshot(
         source_sha=args.source_sha.lower(),
         event_name=args.event_name,
         provider_surface_receipt=_load(args.provider_surface_receipt),
         provider_authority_receipt=_load(args.provider_authority_receipt),
+        openai_provider_trust_receipt=openai_trust,
         schedule_configured=args.schedule_configured,
         schedule_provider_verified=args.schedule_provider_verified,
     )

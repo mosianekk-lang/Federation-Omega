@@ -1,0 +1,23 @@
+{
+  "artifact_digest": "sha256:3c50c96a163ea23cbe4482cbc28d6559203c1f4752f9532a2351486cb0fefb3e",
+  "max_age_seconds": 604800,
+  "observed_at": "2026-09-02T19:51:43Z",
+  "provider_mutation_attempted": false,
+  "provider_trust": {
+    "credential_reference_found": true,
+    "next_action": "RESTORE_PROVIDER_BILLING",
+    "provider": "openai",
+    "provider_authenticated": true,
+    "provider_error_code": "credit_balance_exhausted",
+    "provider_live_verified": false,
+    "receipt_sha256": "4382348b4d0719520f4d9a4b3f9760b60abf2c2d535a6eba089a478cdf144748",
+    "runtime_bound": true,
+    "secret_value_recorded": false,
+    "semantic_receipt_sha256": "55bfec0e7fd4f5b1c1293d09feb896383caf74e0fa27635abbd7660c1dff0745",
+    "state": "BLOCKED_PROVIDER_BILLING"
+  },
+  "schema": "BUBBLES-OPENAI-PROVIDER-TRUST-OBSERVATION-1",
+  "secret_value_recorded": false,
+  "source_artifact_id": 9864289632,
+  "source_ref": "github-actions:run:33675757882:artifact:9864289632"
+}
