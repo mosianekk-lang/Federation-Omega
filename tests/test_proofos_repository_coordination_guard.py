@@ -18,6 +18,7 @@ from proofos_omega.repository_coordination import (
 )
 
 ROOT = Path(__file__).resolve().parents[1]
+AIRLOCK_WORKFLOW = ROOT / ".github" / "workflows" / "github-airlock.yml"
 BASE = "1" * 40
 LEASE_SHA = "2" * 40
 NOW = datetime(2026, 9, 2, 20, 50, tzinfo=timezone.utc)
@@ -163,6 +164,8 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
         "hosted repository coordination court runs only on GitHub pull_request",
     )
     def test_hosted_pull_request_honours_active_repository_lease(self):
+        if not AIRLOCK_WORKFLOW.exists():
+            self.skipTest("workflow-free export excludes repository coordination enforcement surface")
         assessment = evaluate_hosted_pull_request(ROOT)
         self.assertEqual(
             "PASS",
