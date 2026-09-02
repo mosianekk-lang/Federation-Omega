@@ -1,0 +1,10 @@
+{
+  "schema": "FDOF-HOST-HEALTH-PROBE-V1",
+  "executor_id": "EXEC-GITHUB-BUBBLES-READ-001",
+  "purpose": "Fresh hosted read-only command-ingress health qualification for FDOF persistent-host admission.",
+  "effect": "READ_ONLY_CANARY",
+  "external_effect": false,
+  "provider_mutation": false,
+  "generation_anchor": "GEN16/6fa54e31",
+  "source_base": "91629ffd32bbd30773de7c8b7baa1354823ca143"
+}
