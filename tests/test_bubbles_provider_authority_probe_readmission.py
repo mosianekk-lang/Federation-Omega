@@ -46,5 +46,25 @@ class ProviderAuthorityProbeReadmissionTests(unittest.TestCase):
         self.assertNotIn("'services','describe'", self.workflow)
 
 
+    def test_receipt_never_persists_raw_provider_http_bodies(self):
+        self.assertIn("def proof_only_http", self.workflow)
+        self.assertIn("'raw_body_recorded':False", self.workflow)
+        self.assertIn("'raw_authenticated_response_bodies_recorded':False", self.workflow)
+        for unsafe_assignment in (
+            "'operator_authenticated_status':operator_status",
+            "'operator_architron_read':operator_architron",
+            "'archon_authenticated_reads':archon_reads",
+        ):
+            with self.subTest(unsafe_assignment=unsafe_assignment):
+                self.assertNotIn(unsafe_assignment, self.workflow)
+        for proof_only_assignment in (
+            "'operator_authenticated_status':proof_only_http(operator_status)",
+            "'operator_architron_read':proof_only_http(operator_architron)",
+            "'archon_authenticated_reads':{command:proof_only_http(result)",
+        ):
+            with self.subTest(proof_only_assignment=proof_only_assignment):
+                self.assertIn(proof_only_assignment, self.workflow)
+
+
 if __name__ == "__main__":
     unittest.main()

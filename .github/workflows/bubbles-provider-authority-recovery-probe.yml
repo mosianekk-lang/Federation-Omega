@@ -140,6 +140,18 @@ jobs:
               except Exception as exc:
                   return {'transport_error':type(exc).__name__,'message':str(exc)[:800]}
 
+          def proof_only_http(result:dict[str,Any]|None)->dict[str,Any]|None:
+              if result is None:
+                  return None
+              body=result.get('body')
+              return {
+                  'http_status':result.get('http_status'),
+                  'transport_error':result.get('transport_error'),
+                  'body_present':body is not None,
+                  'body_ok':bool(isinstance(body,dict) and body.get('ok') is True),
+                  'raw_body_recorded':False,
+              }
+
           operator_public_health=http(operator+'/health')
           operator_public_contract=http(operator+'/')
           operator_status=None; operator_architron=None
@@ -191,15 +203,16 @@ jobs:
               'cloud_run_services':cloud_run,
               'fo_token_available':bool(fo_token),'fo_token_source':fo_source or None,
               'archon_token_available':bool(archon_token),'archon_token_source':archon_source or None,
-              'operator_public_health':operator_public_health,
-              'operator_public_contract':operator_public_contract,
-              'operator_authenticated_status':operator_status,
-              'operator_architron_read':operator_architron,
-              'archon_openapi':archon_openapi,
-              'archon_authenticated_reads':archon_reads,
+              'operator_public_health':proof_only_http(operator_public_health),
+              'operator_public_contract':proof_only_http(operator_public_contract),
+              'operator_authenticated_status':proof_only_http(operator_status),
+              'operator_architron_read':proof_only_http(operator_architron),
+              'archon_openapi':proof_only_http(archon_openapi),
+              'archon_authenticated_reads':{command:proof_only_http(result) for command,result in archon_reads.items()},
               'archon_authenticated_readback':archon_ok,
               'secret_values_recorded':False,
-              'truth_boundary':'Read-only authority recovery. No IAM, API, deployment, traffic, secret-version mutation, Apps Script mutation, scheduler mutation, Cloud Run mutation, or repository mutation is performed.'
+              'raw_authenticated_response_bodies_recorded':False,
+              'truth_boundary':'Read-only authority recovery. Raw HTTP response bodies are not persisted. No IAM, API, deployment, traffic, secret-version mutation, Apps Script mutation, scheduler mutation, Cloud Run mutation, or repository mutation is performed.'
           }
           Path('provider-authority-output/receipt.json').write_text(json.dumps(redact(receipt),indent=2,sort_keys=True)+'\n',encoding='utf-8')
           print(json.dumps(redact(receipt),indent=2,sort_keys=True))
