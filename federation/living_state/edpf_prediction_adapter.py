@@ -85,6 +85,8 @@ class ProspectivePredictionRecord:
         _time(self.observed_at)
         if not self.prediction_proof_ref.strip():
             raise ValueError("EDPF_LIVING_STATE_PREDICTION_PROOF_REQUIRED")
+        if not self.matter_scope.strip():
+            raise ValueError("EDPF_LIVING_STATE_MATTER_SCOPE_REQUIRED")
         if self.ttl_seconds <= 0:
             raise ValueError("EDPF_LIVING_STATE_TTL_INVALID")
         self.prediction.validate()
@@ -106,6 +108,8 @@ class ProspectiveOutcomeRecord:
         if not self.prediction_id.strip() or not self.outcome_source_ref.strip():
             raise ValueError("EDPF_LIVING_STATE_OUTCOME_IDENTITY_REQUIRED")
         _time(self.observed_at)
+        if not self.matter_scope.strip():
+            raise ValueError("EDPF_LIVING_STATE_MATTER_SCOPE_REQUIRED")
         if self.ttl_seconds <= 0:
             raise ValueError("EDPF_LIVING_STATE_TTL_INVALID")
         if self.proof_maturity in (ProofMaturity.UNKNOWN, ProofMaturity.DECLARED):
@@ -150,7 +154,7 @@ def record_prospective_prediction(
         observed_at=record.observed_at,
         proof_maturity=ProofMaturity.SOURCE_READBACK,
         ttl_seconds=record.ttl_seconds,
-        confidence=float(record.prediction.probability),
+        confidence=1.0,
         authority_ceiling="A1_INTERNAL",
         matter_scope=record.matter_scope,
         sensitivity=record.sensitivity,
@@ -181,6 +185,8 @@ def resolve_prospective_prediction(
         raise ValueError("EDPF_LIVING_STATE_OPEN_PREDICTION_REQUIRED")
     if current.kind != NodeKind.EXPERIMENT or current.state != OPEN_STATE:
         raise ValueError("EDPF_LIVING_STATE_PREDICTION_NOT_OPEN")
+    if current.provenance.matter_scope != resolution.matter_scope:
+        raise ValueError("EDPF_LIVING_STATE_MATTER_SCOPE_MISMATCH")
     payload = dict(current.payload)
     if payload.get("schema") != SCHEMA or not payload.get("prospective_capture"):
         raise ValueError("EDPF_LIVING_STATE_FOREIGN_EXPERIMENT_NODE")
