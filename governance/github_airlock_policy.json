@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.13",
+  "version": "2.9.14",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -40,7 +40,9 @@
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
     ".github/workflows/sol62-wif-hardening-lease.yml",
     ".github/workflows/sol62-google-surface-probe.yml",
-    ".github/workflows/kimmie-seed-199-bot-workforce.yml"
+    ".github/workflows/kimmie-seed-199-bot-workforce.yml",
+    ".github/workflows/nexus-direct-preflight.yml",
+    ".github/workflows/nexus-direct-runtime-target.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
@@ -66,7 +68,9 @@
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": ["issues"],
     ".github/workflows/sol62-wif-hardening-lease.yml": ["issues"],
     ".github/workflows/sol62-google-surface-probe.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/kimmie-seed-199-bot-workforce.yml": ["workflow_dispatch"]
+    ".github/workflows/kimmie-seed-199-bot-workforce.yml": ["workflow_dispatch"],
+    ".github/workflows/nexus-direct-preflight.yml": ["workflow_dispatch"],
+    ".github/workflows/nexus-direct-runtime-target.yml": ["workflow_dispatch"]
   },
   "required_push_branches": {
     ".github/workflows/bubbles-command-bus.yml": ["main"],
@@ -90,14 +94,12 @@
     ".github/workflows/fo-wif-semantic-canary-v2.yml",
     ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
-    ".github/workflows/sol62-wif-hardening-lease.yml"
+    ".github/workflows/sol62-wif-hardening-lease.yml",
+    ".github/workflows/nexus-direct-preflight.yml",
+    ".github/workflows/nexus-direct-runtime-target.yml"
   ],
-  "attestations_write_workflow_allowlist": [
-    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
-  ],
-  "provider_mutation_workflow_allowlist": [
-    ".github/workflows/sol62-wif-hardening-lease.yml"
-  ],
+  "attestations_write_workflow_allowlist": [".github/workflows/cfbe-hyperleverage-attestation-v1.yml"],
+  "provider_mutation_workflow_allowlist": [".github/workflows/sol62-wif-hardening-lease.yml"],
   "provider_mutation_exact_issue_titles": {
     ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901"
   },
@@ -182,7 +184,9 @@
       ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
       ".github/workflows/sol62-wif-hardening-lease.yml",
       ".github/workflows/sol62-google-surface-probe.yml",
-      ".github/workflows/kimmie-seed-199-bot-workforce.yml"
+      ".github/workflows/kimmie-seed-199-bot-workforce.yml",
+      ".github/workflows/nexus-direct-preflight.yml",
+      ".github/workflows/nexus-direct-runtime-target.yml"
     ],
     "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",

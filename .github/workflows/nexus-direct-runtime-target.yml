@@ -1,14 +1,14 @@
-name: NEXUS Direct Runtime Target Executor
+name: NEXUS Direct Runtime Target Preflight
 
 on:
   workflow_dispatch:
 
 permissions:
-  contents: write
+  contents: read
   id-token: write
 
 concurrency:
-  group: nexus-direct-runtime-target
+  group: nexus-direct-runtime-target-preflight
   cancel-in-progress: false
 
 env:
@@ -25,29 +25,31 @@ env:
 
 jobs:
   preflight:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          ref: main
+          persist-credentials: false
 
-      - name: Authenticate through existing WIF
-        uses: google-github-actions/auth@v3
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOYER_SA }}
 
-      - uses: google-github-actions/setup-gcloud@v2
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Run fixed proof-only deployment preflight
+      - name: Run proof-only target preflight
         shell: bash
         run: |
           set -euo pipefail
-          mkdir -p deployments/nexus /tmp/nexus-preflight
+          mkdir -p nexus-target-output
           python - <<'PY'
           import json, os, subprocess
           from datetime import datetime, timezone
@@ -65,7 +67,7 @@ jobs:
           repository=gcloud('artifacts','repositories','describe',os.environ['REPOSITORY'],'--location',region,'--format=json(name,format,mode,createTime)')
           api_states={}
           for api in ['run.googleapis.com','cloudbuild.googleapis.com','artifactregistry.googleapis.com','secretmanager.googleapis.com','sqladmin.googleapis.com','drive.googleapis.com','docs.googleapis.com','sheets.googleapis.com']:
-              api_states[api]=gcloud('services','describe',api,'--format=value(state)')
+              api_states[api]=gcloud('services','list','--enabled',f'--filter=config.name={api}','--format=json(config.name,state)')
           secrets={}
           for secret in ['OPENAI_API_KEY','NEXUS_DATABASE_URL','fo-operator-admin-token','archon-admin-plane-token']:
               desc=gcloud('secrets','describe',secret,'--format=json(name,createTime,replication)')
@@ -84,8 +86,8 @@ jobs:
           receipt={
               'receipt':'NEXUS-DIRECT-TARGET-PREFLIGHT',
               'recorded_at':datetime.now(timezone.utc).isoformat(),
+              'source_sha':os.environ.get('GITHUB_SHA'),
               'event_name':os.environ.get('GITHUB_EVENT_NAME'),
-              'ref':os.environ.get('GITHUB_REF'),
               'mutation_attempted':False,
               'secret_values_recorded':False,
               'active_account':account,
@@ -104,36 +106,22 @@ jobs:
               'project_match':project_info['ok'] and os.environ['PROJECT_NUMBER'] in project_info['stdout'],
               'runtime_sa_exists':runtime_sa['ok'],
               'artifact_repo_exists':repository['ok'],
-              'openai_secret_ready':secrets['OPENAI_API_KEY']['metadata']['ok'] and secrets['OPENAI_API_KEY']['enabled_version_present'],
-              'database_secret_ready':secrets['NEXUS_DATABASE_URL']['metadata']['ok'] and secrets['NEXUS_DATABASE_URL']['enabled_version_present'],
+              'openai_secret_ready':secrets['OPENAI_API_KEY']['metadata']['ok'] and secrets['OPENAI_API_KEY']['enabled_version_present'] and secrets['OPENAI_API_KEY']['access_probe']['ok'],
+              'database_secret_ready':secrets['NEXUS_DATABASE_URL']['metadata']['ok'] and secrets['NEXUS_DATABASE_URL']['enabled_version_present'] and secrets['NEXUS_DATABASE_URL']['access_probe']['ok'],
               'sql_instance_exists':sql['ok'],
               'source_service_readable':source['ok'],
               'cloud_build_readable':builds['ok'],
           }
           receipt['prerequisites']=prerequisites
           receipt['classification']='DIRECT_DEPLOYMENT_PREFLIGHT_READY' if all(prerequisites.values()) else 'DIRECT_DEPLOYMENT_PREFLIGHT_PARTIAL'
-          path=Path('deployments/nexus/NEXUS_DIRECT_TARGET_PREFLIGHT_RECEIPT.json')
-          path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          print(json.dumps(receipt,indent=2,sort_keys=True))
+          Path('nexus-target-output/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({'classification':receipt['classification'],'prerequisites':prerequisites,'mutation_attempted':False,'secret_values_recorded':False},sort_keys=True))
           PY
 
-      - name: Persist redacted preflight receipt
-        shell: bash
-        run: |
-          set -euo pipefail
-          git config user.name "nexus-direct-target[bot]"
-          git config user.email "nexus-direct-target[bot]@users.noreply.github.com"
-          git add deployments/nexus/NEXUS_DIRECT_TARGET_PREFLIGHT_RECEIPT.json
-          if git diff --cached --quiet; then
-            echo "Receipt unchanged"
-          else
-            git commit -m "Record NEXUS direct target preflight"
-            git push origin HEAD:main
-          fi
-
-      - uses: actions/upload-artifact@v4
+      - name: Upload immutable redacted target preflight receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: nexus-direct-target-preflight
-          path: deployments/nexus/NEXUS_DIRECT_TARGET_PREFLIGHT_RECEIPT.json
+          name: nexus-direct-target-preflight-${{ github.run_id }}-${{ github.run_attempt }}
+          path: nexus-target-output/receipt.json
           if-no-files-found: error
           retention-days: 30

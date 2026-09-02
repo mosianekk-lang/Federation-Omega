@@ -56,18 +56,22 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             if key.startswith("fhu047_") and key.endswith("_workflow")
         }
         provider_mutators = set(self.policy["provider_mutation_workflow_allowlist"])
+        nexus_read_only_preflights = {
+            ".github/workflows/nexus-direct-preflight.yml",
+            ".github/workflows/nexus-direct-runtime-target.yml",
+        }
         expected = deployment_gateways | {
             g0_identity_probe,
             provider_authority_recovery_probe,
             artifact_attestation,
-        } | fhu047_workflows | provider_mutators
+        } | fhu047_workflows | provider_mutators | nexus_read_only_preflights
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
 
         scoped_non_deployment = {
             g0_identity_probe,
             provider_authority_recovery_probe,
             artifact_attestation,
-        } | fhu047_workflows | provider_mutators
+        } | fhu047_workflows | provider_mutators | nexus_read_only_preflights
         for workflow in scoped_non_deployment:
             self.assertIn(workflow, self.policy["active_workflow_allowlist"])
             self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
