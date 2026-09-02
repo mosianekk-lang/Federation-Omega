@@ -1,0 +1,68 @@
+{
+  "schema": "FDOF-HOSTED-STATE-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "generation_anchor": "GEN16/6fa54e31",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Carry only authority-safe SOL 6.2/FDOF coordination state across ephemeral hosted runners so fencing, idempotency, event continuity and verified effect state can survive runner replacement without treating artifacts as provider authority.",
+  "implementation": {
+    "module": "sol_61_runtime.fdof_hosted_state_v1",
+    "test": "sol_61_runtime.test_fdof_hosted_state_v1",
+    "proof_runner": "sol_61_runtime.prove_fdof_hosted_state_v1"
+  },
+  "persisted_tables": [
+    "events",
+    "state",
+    "idempotency",
+    "leases",
+    "effects",
+    "proofs",
+    "budgets",
+    "schemas",
+    "values_ledger"
+  ],
+  "excluded_tables": {
+    "authority_leases": "NEVER_TRANSFER_ACROSS_RUNS"
+  },
+  "hard_gates": [
+    "exact schema/version",
+    "GEN16/6fa54e31 generation anchor",
+    "capsule digest",
+    "secret-material scan",
+    "allowlisted tables only",
+    "authority lease exclusion",
+    "event-chain verification after restore"
+  ],
+  "secret_markers_fail_closed": [
+    "sk-",
+    "ghp_",
+    "github_pat_",
+    "AIza",
+    "Bearer ",
+    "PRIVATE KEY"
+  ],
+  "proof_scope": {
+    "deterministic_cross_runtime_restore": true,
+    "separate_provider_runner_instances": false,
+    "provider_effect": false,
+    "provider_authority": false,
+    "persistent_24x7_host": false
+  },
+  "promotion_sequence": [
+    "SOURCE_TEST_CI",
+    "HOSTED_SAME_RUN_FRESH_ROOT_RESTORE",
+    "SEPARATE_RUN_ARTIFACT_RESTORE",
+    "BUBBLES_HOST_BINDING",
+    "REAL_FDOF_EFFECT_WITH_HOST_SIDE_FENCE_IDEMPOTENCY",
+    "RECOVERY_FAILOVER_SOAK"
+  ],
+  "constraints": [
+    "no second scheduler",
+    "no repository mutation from hosted runtime",
+    "artifact or external append-only persistence only",
+    "no credentials or raw secrets",
+    "no authority transfer through state capsule",
+    "no maturity inheritance from deterministic tests"
+  ]
+}
