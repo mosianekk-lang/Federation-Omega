@@ -87,7 +87,7 @@ class FDOFBubblesBridgeV1Tests(unittest.TestCase):
 
     def test_raw_local_receipt_cannot_be_submitted_as_hosted_health(self):
         self.bridge.register_hosted_executor()
-        with self.assertRaises(TypeError):
+        with self.assertRaises(ConstraintError):
             self.bridge.admit_hosted_evidence(self.local_receipt(), observed_at_epoch=self.now)
 
     def test_hosted_evidence_requires_immutable_provider_identifiers(self):
