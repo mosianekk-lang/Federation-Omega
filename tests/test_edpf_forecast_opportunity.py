@@ -49,7 +49,9 @@ class ForecastOpportunityCompilerTests(unittest.TestCase):
     def test_ranks_high_information_signal_first(self) -> None:
         high = signal("high")
         low = signal("low", uncertainty=0.3, flip=0.2, impact=0.2, observability=0.5, cost=0.4, burden=0.4)
-        result = compile_forecast_opportunities((low, high), max_questions=1, min_score=0.1)
+        # This test isolates ranking and question-budget semantics; the score-floor
+        # behavior is covered separately by test_below_floor_is_held.
+        result = compile_forecast_opportunities((low, high), max_questions=1, min_score=0.0)
         self.assertEqual(result.selected_count, 1)
         self.assertEqual(result.opportunities[0].signal_id, "high")
         self.assertIn("QUESTION_BUDGET_EXHAUSTED", result.held[0].reason_codes)
