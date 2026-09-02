@@ -1,0 +1,63 @@
+{
+  "schema": "SOVARA-EDPF-PREDICTOR-EVIDENCE-PROJECTION-V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Read-only reconstruction of EDPF PredictorProfile trust from genuinely prospective, later-resolved Living State evidence.",
+  "identity_boundaries": {
+    "system_source_head_sha": "EXACT",
+    "matter_scope": "EXACT",
+    "predictor_id": "EXACT",
+    "domain": "EXACT",
+    "source_fingerprint": "EXACT",
+    "predictor_version": "EXACT",
+    "cross_epoch_trust_inheritance": false,
+    "cross_matter_trust_inheritance": false,
+    "cross_version_trust_inheritance": false,
+    "cross_source_family_trust_inheritance": false
+  },
+  "evidence_states": {
+    "NEUTRAL_UNSEEN": "0 resolved exact-identity prospective samples; uses PredictorProfile neutral prior.",
+    "THIN_PROSPECTIVE": "1-9 resolved exact-identity prospective samples.",
+    "OBSERVED_PROSPECTIVE": "10-29 resolved exact-identity prospective samples.",
+    "SHADOW_COUNT_ELIGIBLE": "30+ resolved exact-identity prospective samples; count eligibility only, not positive calibration."
+  },
+  "profile_math": {
+    "implementation": "benchmarking.cfbe_omega.epistemic_decision_prediction_fabric_v1.update_predictor",
+    "neutral_prior_trust_weight": 0.5,
+    "thin_sample_shrinkage_reused": true,
+    "historical_synthetic_evidence_admitted": false,
+    "prospective_real_pairs_compiler": "federation.living_state.edpf_prediction_adapter.compile_real_shadow_pairs"
+  },
+  "candidate_projection": {
+    "mission_fit_inputs_remain_explicit": [
+      "relevance",
+      "independence",
+      "expected_information_gain",
+      "cost",
+      "latency"
+    ],
+    "mission_fit_may_be_fabricated_from_history": false,
+    "missing_mission_fit_omits_candidate": true,
+    "unseen_predictor_uses_neutral_profile": true,
+    "request_candidate_type": "federation.living_state.edpf_prediction_request.PredictorCandidate"
+  },
+  "truth_boundaries": {
+    "calibration_positive_proven": false,
+    "owner_value_proven": false,
+    "live_weight_change_authorized": false,
+    "dispatch_authorized": false,
+    "external_effect_authorized": false,
+    "stable_self_promotion_allowed": false,
+    "provider_liveness_proven": false,
+    "predictor_superiority_proven_by_projection": false
+  },
+  "anti_sprawl": {
+    "new_database": false,
+    "new_registry_store": false,
+    "new_scheduler": false,
+    "new_provider_executor": false,
+    "new_world_model": false,
+    "new_authority_plane": false
+  }
+}
