@@ -4,12 +4,15 @@ from __future__ import annotations
 
 This layer removes a manual question-authoring bottleneck without creating a
 scheduler, predictor, provider client, probability model, database, authority
-plane, or execution route. It ranks measurable mission uncertainties by their
-expected decision value and compiles only the strongest opportunities into the
-already-admitted :class:`PredictionQuestion` contract.
+plane, execution route, or second epistemic scoring model.
 
-Important epistemic boundary: an opportunity score is NOT a forecast
-probability and must never be transformed into one.
+Canonical decision-sensitive information value belongs to EDPF
+``EvidenceCandidate.information_value()``. This module only adds forecast-
+specific admissibility: measurable outcome observability, prospective temporal
+separation, semantic de-duplication, and a bounded question budget.
+
+Important epistemic boundary: canonical evidence information value is NOT an
+event forecast probability and must never be transformed into one.
 """
 
 from dataclasses import asdict, dataclass
@@ -17,11 +20,17 @@ from hashlib import sha256
 import json
 from typing import Any, Mapping, Sequence
 
+from benchmarking.cfbe_omega.epistemic_decision_prediction_fabric_v1 import (
+    EvidenceCandidate,
+    MIN_DECISION_SENSITIVITY,
+)
 from .edpf_prediction_request import PredictionQuestion
 
-SCHEMA = "SOVARA_EDPF_FORECAST_OPPORTUNITY_COMPILER_V1"
+SCHEMA = "SOVARA_EDPF_FORECAST_OPPORTUNITY_COMPILER_V1_1"
+SCORE_BASIS = "EDPF_EVIDENCE_CANDIDATE_INFORMATION_VALUE"
 MAX_QUESTIONS = 5
-DEFAULT_MIN_SCORE = 0.20
+DEFAULT_MIN_INFORMATION_VALUE = MIN_DECISION_SENSITIVITY
+DEFAULT_MIN_OUTCOME_OBSERVABILITY = 0.50
 
 
 def _stable_json(value: object) -> str:
@@ -52,12 +61,8 @@ class ForecastSignal:
     prediction_deadline_at: str
     outcome_not_before_at: str
     outcome_deadline_at: str
-    uncertainty: float
-    decision_flip_probability: float
-    decision_impact: float
-    observability: float
-    acquisition_cost: float
-    owner_burden: float
+    evidence_candidate: EvidenceCandidate
+    outcome_observability: float
     evidence_refs: tuple[str, ...] = ()
     context: Mapping[str, Any] | None = None
     matter_scope: str = "GLOBAL"
@@ -66,31 +71,22 @@ class ForecastSignal:
     def validate(self) -> "ForecastSignal":
         if not self.signal_id.strip():
             raise ValueError("EDPF_FORECAST_SIGNAL_ID_REQUIRED")
-        for name in (
-            "uncertainty",
-            "decision_flip_probability",
-            "decision_impact",
-            "observability",
-            "acquisition_cost",
-            "owner_burden",
-        ):
-            _unit(name, getattr(self, name))
+        self.evidence_candidate.validate()
+        _unit("outcome_observability", self.outcome_observability)
+        # Forecast questions must be tied to at least one decision-sensitive
+        # claim already represented by the canonical EDPF evidence candidate.
+        if not self.evidence_candidate.resolves_claim_ids:
+            raise ValueError("EDPF_FORECAST_RESOLVED_CLAIM_REQUIRED")
         # Reuse the admitted request contract for source, chronology, context,
         # matter-scope and sensitivity validation. A temporary deterministic ID
         # is sufficient because the final request ID is compiled later.
         self.to_question(request_id="EDPF-VALIDATE-" + _digest(self.signal_id).split(":", 1)[1][:16].upper()).validate()
         return self
 
-    def opportunity_score(self) -> float:
-        """Rank decision-relevant uncertainty, not event probability."""
+    def canonical_information_value(self) -> float:
+        """Return EDPF's canonical evidence information value unchanged."""
         self.validate()
-        information_value = self.uncertainty * (
-            0.40 * self.decision_flip_probability
-            + 0.35 * self.decision_impact
-            + 0.25 * self.observability
-        )
-        burden = 0.12 * self.acquisition_cost + 0.08 * self.owner_burden
-        return round(max(0.0, min(1.0, information_value - burden)), 9)
+        return self.evidence_candidate.information_value()
 
     def semantic_key(self) -> tuple[str, str, str, str, str, str]:
         return (
@@ -103,14 +99,22 @@ class ForecastSignal:
         )
 
     def to_question(self, *, request_id: str) -> PredictionQuestion:
+        candidate = self.evidence_candidate
         context = dict(self.context or {})
         context.update(
             {
                 "edpf_forecast_signal_id": self.signal_id,
-                "decision_sensitive_uncertainty": float(self.uncertainty),
-                "decision_flip_probability": float(self.decision_flip_probability),
-                "decision_impact": float(self.decision_impact),
-                "outcome_observability": float(self.observability),
+                "edpf_evidence_candidate_id": candidate.candidate_id,
+                "edpf_resolves_claim_ids": tuple(candidate.resolves_claim_ids),
+                "edpf_decision_flip_probability": float(candidate.decision_flip_probability),
+                "edpf_uncertainty_reduction": float(candidate.uncertainty_reduction),
+                "edpf_acquisition_cost": float(candidate.acquisition_cost),
+                "edpf_acquisition_risk": float(candidate.acquisition_risk),
+                "edpf_freshness_gain": float(candidate.freshness_gain),
+                "edpf_canonical_information_value": float(candidate.information_value()),
+                "edpf_information_value_basis": SCORE_BASIS,
+                "outcome_observability": float(self.outcome_observability),
+                "information_value_is_event_probability": False,
             }
         )
         return PredictionQuestion(
@@ -136,6 +140,8 @@ class ForecastSignal:
 class ForecastOpportunity:
     signal_id: str
     score: float
+    score_basis: str
+    outcome_observability: float
     request_id: str
     question: PredictionQuestion
     reason_codes: tuple[str, ...]
@@ -145,6 +151,7 @@ class ForecastOpportunity:
 class HeldForecastSignal:
     signal_id: str
     score: float
+    score_basis: str
     reason_codes: tuple[str, ...]
 
 
@@ -156,6 +163,8 @@ class ForecastOpportunitySet:
     selected_count: int
     opportunities: tuple[ForecastOpportunity, ...]
     held: tuple[HeldForecastSignal, ...]
+    score_basis: str
+    local_information_value_model_present: bool
     opportunity_scores_are_forecast_probabilities: bool
     provider_call_authorized: bool
     dispatch_authorized: bool
@@ -168,6 +177,7 @@ class ForecastOpportunitySet:
 def _request_id(signal: ForecastSignal) -> str:
     seed = {
         "signal_id": signal.signal_id,
+        "evidence_candidate_id": signal.evidence_candidate.candidate_id,
         "mission_id": signal.mission_id,
         "source_head": signal.system_source_head_sha,
         "snapshot": signal.mission_snapshot_digest,
@@ -176,26 +186,38 @@ def _request_id(signal: ForecastSignal) -> str:
     return "EDPF-OPP-" + _digest(seed).split(":", 1)[1][:20].upper()
 
 
+def _strength(signal: ForecastSignal) -> tuple[float, float, str]:
+    return (signal.canonical_information_value(), float(signal.outcome_observability), signal.signal_id)
+
+
 def compile_forecast_opportunities(
     signals: Sequence[ForecastSignal],
     *,
     max_questions: int = 3,
-    min_score: float = DEFAULT_MIN_SCORE,
+    min_information_value: float = DEFAULT_MIN_INFORMATION_VALUE,
+    min_outcome_observability: float = DEFAULT_MIN_OUTCOME_OBSERVABILITY,
 ) -> ForecastOpportunitySet:
-    """Compile the smallest high-value set of measurable forecast questions.
+    """Compile a bounded set of measurable prospective forecast questions.
 
-    Duplicate semantic questions are collapsed to their highest-scoring signal.
-    The compiler never generates a probability and never dispatches a request.
+    Information-value ranking is delegated entirely to the canonical EDPF
+    ``EvidenceCandidate``. Duplicate semantic questions collapse to the strongest
+    canonical evidence candidate. This compiler never generates a probability
+    and never dispatches a request.
     """
     if not signals:
         raise ValueError("EDPF_FORECAST_SIGNAL_REQUIRED")
     if not 1 <= int(max_questions) <= MAX_QUESTIONS:
         raise ValueError("EDPF_FORECAST_MAX_QUESTIONS_INVALID")
-    threshold = _unit("min_score", min_score)
+    information_floor = float(min_information_value)
+    if not -1.0 <= information_floor <= 1.0:
+        raise ValueError("EDPF_FORECAST_MIN_INFORMATION_VALUE_OUT_OF_RANGE")
+    observability_floor = _unit("min_outcome_observability", min_outcome_observability)
 
     validated = tuple(signal.validate() for signal in signals)
     if len({signal.signal_id for signal in validated}) != len(validated):
         raise ValueError("EDPF_FORECAST_DUPLICATE_SIGNAL_ID")
+    if len({signal.evidence_candidate.candidate_id for signal in validated}) != len(validated):
+        raise ValueError("EDPF_FORECAST_DUPLICATE_EVIDENCE_CANDIDATE_ID")
 
     best_by_key: dict[tuple[str, str, str, str, str, str], ForecastSignal] = {}
     duplicates: list[ForecastSignal] = []
@@ -205,15 +227,21 @@ def compile_forecast_opportunities(
         if current is None:
             best_by_key[key] = signal
             continue
-        if (signal.opportunity_score(), signal.signal_id) > (current.opportunity_score(), current.signal_id):
+        if _strength(signal) > _strength(current):
             duplicates.append(current)
             best_by_key[key] = signal
         else:
             duplicates.append(signal)
 
     unique = tuple(best_by_key.values())
-    ranked = tuple(sorted(unique, key=lambda item: (-item.opportunity_score(), item.signal_id)))
-    selected_signals = tuple(item for item in ranked if item.opportunity_score() >= threshold)[:max_questions]
+    ranked = tuple(sorted(unique, key=lambda item: (-item.canonical_information_value(), -item.outcome_observability, item.signal_id)))
+    eligible = tuple(
+        item
+        for item in ranked
+        if item.canonical_information_value() >= information_floor
+        and item.outcome_observability >= observability_floor
+    )
+    selected_signals = eligible[:max_questions]
     selected_ids = {item.signal_id for item in selected_signals}
 
     opportunities: list[ForecastOpportunity] = []
@@ -224,11 +252,13 @@ def compile_forecast_opportunities(
         opportunities.append(
             ForecastOpportunity(
                 signal_id=signal.signal_id,
-                score=signal.opportunity_score(),
+                score=signal.canonical_information_value(),
+                score_basis=SCORE_BASIS,
+                outcome_observability=float(signal.outcome_observability),
                 request_id=request_id,
                 question=question,
                 reason_codes=(
-                    "DECISION_SENSITIVE_UNCERTAINTY",
+                    "CANONICAL_EDPF_INFORMATION_VALUE_ADMITTED",
                     "MEASURABLE_OUTCOME_CONTRACT",
                     "PROSPECTIVE_WINDOW_SEPARATED",
                 ),
@@ -237,13 +267,25 @@ def compile_forecast_opportunities(
 
     held: list[HeldForecastSignal] = []
     for signal in duplicates:
-        held.append(HeldForecastSignal(signal.signal_id, signal.opportunity_score(), ("SEMANTIC_DUPLICATE",)))
+        held.append(
+            HeldForecastSignal(
+                signal.signal_id,
+                signal.canonical_information_value(),
+                SCORE_BASIS,
+                ("SEMANTIC_DUPLICATE",),
+            )
+        )
     for signal in ranked:
         if signal.signal_id in selected_ids:
             continue
-        score = signal.opportunity_score()
-        reason = "BELOW_INFORMATION_VALUE_FLOOR" if score < threshold else "QUESTION_BUDGET_EXHAUSTED"
-        held.append(HeldForecastSignal(signal.signal_id, score, (reason,)))
+        score = signal.canonical_information_value()
+        if signal.outcome_observability < observability_floor:
+            reason = "OUTCOME_OBSERVABILITY_BELOW_FLOOR"
+        elif score < information_floor:
+            reason = "BELOW_CANONICAL_INFORMATION_VALUE_FLOOR"
+        else:
+            reason = "QUESTION_BUDGET_EXHAUSTED"
+        held.append(HeldForecastSignal(signal.signal_id, score, SCORE_BASIS, (reason,)))
 
     body: dict[str, Any] = {
         "schema": SCHEMA,
@@ -252,6 +294,8 @@ def compile_forecast_opportunities(
         "selected_count": len(opportunities),
         "opportunities": tuple(opportunities),
         "held": tuple(sorted(held, key=lambda item: item.signal_id)),
+        "score_basis": SCORE_BASIS,
+        "local_information_value_model_present": False,
         "opportunity_scores_are_forecast_probabilities": False,
         "provider_call_authorized": False,
         "dispatch_authorized": False,

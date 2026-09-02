@@ -1,43 +1,59 @@
 import unittest
+from dataclasses import replace
 
+from benchmarking.cfbe_omega.epistemic_decision_prediction_fabric_v1 import EvidenceCandidate
 from federation.living_state.edpf_forecast_opportunity import (
+    SCORE_BASIS,
     ForecastSignal,
     compile_forecast_opportunities,
 )
 
-HEAD = "01b987a642ab3b87b2bd515429857b4dd74958f2"
+HEAD = "55166f0a05befa1d0947cdf12662fd741b251a0f"
 SNAP = "sha256:mission-snapshot-001"
+
+
+def candidate(
+    candidate_id: str,
+    *,
+    flip: float = 0.8,
+    uncertainty_reduction: float = 0.8,
+    cost: float = 0.1,
+    risk: float = 0.1,
+    freshness: float = 0.8,
+) -> EvidenceCandidate:
+    return EvidenceCandidate(
+        candidate_id=candidate_id,
+        resolves_claim_ids=("claim-runtime",),
+        decision_flip_probability=flip,
+        uncertainty_reduction=uncertainty_reduction,
+        acquisition_cost=cost,
+        acquisition_risk=risk,
+        freshness_gain=freshness,
+    )
 
 
 def signal(
     signal_id: str,
     *,
     event: str | None = None,
-    uncertainty: float = 0.8,
-    flip: float = 0.8,
-    impact: float = 0.8,
+    evidence_candidate: EvidenceCandidate | None = None,
     observability: float = 0.9,
-    cost: float = 0.1,
-    burden: float = 0.1,
 ) -> ForecastSignal:
+    event_text = event or f"event-{signal_id} occurs"
     return ForecastSignal(
         signal_id=signal_id,
         mission_id="mission-edpf-forecast",
         system_source_head_sha=HEAD,
         mission_snapshot_digest=SNAP,
         domain="runtime",
-        event=event or f"event-{signal_id} occurs",
-        outcome_criterion=f"provider receipt for {event or signal_id} exists",
+        event=event_text,
+        outcome_criterion=f"provider receipt for {event_text} exists",
         created_at="2026-09-02T12:00:00+00:00",
         prediction_deadline_at="2026-09-02T12:10:00+00:00",
         outcome_not_before_at="2026-09-02T12:11:00+00:00",
         outcome_deadline_at="2026-09-02T13:00:00+00:00",
-        uncertainty=uncertainty,
-        decision_flip_probability=flip,
-        decision_impact=impact,
-        observability=observability,
-        acquisition_cost=cost,
-        owner_burden=burden,
+        evidence_candidate=evidence_candidate or candidate(f"candidate-{signal_id}"),
+        outcome_observability=observability,
         evidence_refs=("evidence:pre-outcome",),
         context={"route": "read-only"},
         matter_scope="GLOBAL",
@@ -46,68 +62,96 @@ def signal(
 
 
 class ForecastOpportunityCompilerTests(unittest.TestCase):
-    def test_ranks_high_information_signal_first(self) -> None:
-        high = signal("high")
-        low = signal("low", uncertainty=0.3, flip=0.2, impact=0.2, observability=0.5, cost=0.4, burden=0.4)
-        # This test isolates ranking and question-budget semantics; the score-floor
-        # behavior is covered separately by test_below_floor_is_held.
-        result = compile_forecast_opportunities((low, high), max_questions=1, min_score=0.0)
+    def test_ranks_by_canonical_edpf_information_value(self) -> None:
+        high = signal("high", evidence_candidate=candidate("candidate-high"))
+        low = signal(
+            "low",
+            evidence_candidate=candidate(
+                "candidate-low",
+                flip=0.5,
+                uncertainty_reduction=0.5,
+                cost=0.1,
+                risk=0.1,
+                freshness=0.5,
+            ),
+        )
+        result = compile_forecast_opportunities(
+            (low, high),
+            max_questions=1,
+            min_information_value=0.0,
+        )
         self.assertEqual(result.selected_count, 1)
         self.assertEqual(result.opportunities[0].signal_id, "high")
+        self.assertEqual(result.opportunities[0].score, high.evidence_candidate.information_value())
+        self.assertEqual(result.opportunities[0].score_basis, SCORE_BASIS)
         self.assertIn("QUESTION_BUDGET_EXHAUSTED", result.held[0].reason_codes)
 
-    def test_collapses_semantic_duplicates(self) -> None:
-        weak = signal("weak", event="same-event", uncertainty=0.4, flip=0.4, impact=0.4)
-        strong = signal("strong", event="same-event", uncertainty=0.9, flip=0.9, impact=0.9)
-        # Match the outcome criterion as well so the semantic keys are identical.
-        weak = ForecastSignal(**{**weak.__dict__, "outcome_criterion": "same criterion"}) if hasattr(weak, "__dict__") else ForecastSignal(
-            signal_id=weak.signal_id, mission_id=weak.mission_id, system_source_head_sha=weak.system_source_head_sha,
-            mission_snapshot_digest=weak.mission_snapshot_digest, domain=weak.domain, event=weak.event,
-            outcome_criterion="same criterion", created_at=weak.created_at, prediction_deadline_at=weak.prediction_deadline_at,
-            outcome_not_before_at=weak.outcome_not_before_at, outcome_deadline_at=weak.outcome_deadline_at,
-            uncertainty=weak.uncertainty, decision_flip_probability=weak.decision_flip_probability,
-            decision_impact=weak.decision_impact, observability=weak.observability, acquisition_cost=weak.acquisition_cost,
-            owner_burden=weak.owner_burden, evidence_refs=weak.evidence_refs, context=weak.context,
-            matter_scope=weak.matter_scope, sensitivity=weak.sensitivity)
-        strong = ForecastSignal(
-            signal_id=strong.signal_id, mission_id=strong.mission_id, system_source_head_sha=strong.system_source_head_sha,
-            mission_snapshot_digest=strong.mission_snapshot_digest, domain=strong.domain, event=strong.event,
-            outcome_criterion="same criterion", created_at=strong.created_at, prediction_deadline_at=strong.prediction_deadline_at,
-            outcome_not_before_at=strong.outcome_not_before_at, outcome_deadline_at=strong.outcome_deadline_at,
-            uncertainty=strong.uncertainty, decision_flip_probability=strong.decision_flip_probability,
-            decision_impact=strong.decision_impact, observability=strong.observability, acquisition_cost=strong.acquisition_cost,
-            owner_burden=strong.owner_burden, evidence_refs=strong.evidence_refs, context=strong.context,
-            matter_scope=strong.matter_scope, sensitivity=strong.sensitivity)
-        result = compile_forecast_opportunities((weak, strong), max_questions=2, min_score=0.0)
+    def test_collapses_semantic_duplicates_using_canonical_strength(self) -> None:
+        weak = signal(
+            "weak",
+            event="same-event",
+            evidence_candidate=candidate(
+                "candidate-weak",
+                flip=0.4,
+                uncertainty_reduction=0.4,
+                cost=0.2,
+                risk=0.2,
+                freshness=0.4,
+            ),
+        )
+        strong = signal("strong", event="same-event", evidence_candidate=candidate("candidate-strong"))
+        weak = replace(weak, outcome_criterion="same criterion")
+        strong = replace(strong, outcome_criterion="same criterion")
+        result = compile_forecast_opportunities(
+            (weak, strong),
+            max_questions=2,
+            min_information_value=-1.0,
+        )
         self.assertEqual(result.unique_candidate_count, 1)
         self.assertEqual(result.opportunities[0].signal_id, "strong")
-        self.assertTrue(any(item.signal_id == "weak" and "SEMANTIC_DUPLICATE" in item.reason_codes for item in result.held))
+        self.assertTrue(
+            any(item.signal_id == "weak" and "SEMANTIC_DUPLICATE" in item.reason_codes for item in result.held)
+        )
 
-    def test_below_floor_is_held(self) -> None:
+    def test_below_canonical_information_floor_is_held(self) -> None:
+        low = signal(
+            "low",
+            evidence_candidate=candidate(
+                "candidate-low",
+                flip=0.1,
+                uncertainty_reduction=0.1,
+                cost=0.9,
+                risk=0.9,
+                freshness=0.1,
+            ),
+        )
+        result = compile_forecast_opportunities((low,), min_information_value=0.05)
+        self.assertEqual(result.selected_count, 0)
+        self.assertEqual(result.held[0].reason_codes, ("BELOW_CANONICAL_INFORMATION_VALUE_FLOOR",))
+
+    def test_low_outcome_observability_is_held_even_when_information_value_is_high(self) -> None:
         result = compile_forecast_opportunities(
-            (signal("low", uncertainty=0.1, flip=0.1, impact=0.1, observability=0.1, cost=0.5, burden=0.5),),
-            min_score=0.2,
+            (signal("opaque", observability=0.2),),
+            min_information_value=0.0,
+            min_outcome_observability=0.5,
         )
         self.assertEqual(result.selected_count, 0)
-        self.assertEqual(result.held[0].reason_codes, ("BELOW_INFORMATION_VALUE_FLOOR",))
+        self.assertEqual(result.held[0].reason_codes, ("OUTCOME_OBSERVABILITY_BELOW_FLOOR",))
 
     def test_reuses_prediction_question_temporal_validation(self) -> None:
-        bad = signal("bad")
-        bad = ForecastSignal(
-            signal_id=bad.signal_id, mission_id=bad.mission_id, system_source_head_sha=bad.system_source_head_sha,
-            mission_snapshot_digest=bad.mission_snapshot_digest, domain=bad.domain, event=bad.event,
-            outcome_criterion=bad.outcome_criterion, created_at=bad.created_at,
+        bad = replace(
+            signal("bad"),
             prediction_deadline_at="2026-09-02T12:20:00+00:00",
-            outcome_not_before_at="2026-09-02T12:10:00+00:00", outcome_deadline_at=bad.outcome_deadline_at,
-            uncertainty=bad.uncertainty, decision_flip_probability=bad.decision_flip_probability,
-            decision_impact=bad.decision_impact, observability=bad.observability, acquisition_cost=bad.acquisition_cost,
-            owner_burden=bad.owner_burden, evidence_refs=bad.evidence_refs, context=bad.context,
-            matter_scope=bad.matter_scope, sensitivity=bad.sensitivity)
+            outcome_not_before_at="2026-09-02T12:10:00+00:00",
+        )
         with self.assertRaisesRegex(ValueError, "TEMPORAL_CONTRACT_INVALID"):
             compile_forecast_opportunities((bad,))
 
-    def test_compiler_never_authorizes_or_invents_probability(self) -> None:
-        result = compile_forecast_opportunities((signal("safe"),))
+    def test_compiler_has_no_local_information_value_model_or_event_probability(self) -> None:
+        source = signal("safe")
+        result = compile_forecast_opportunities((source,))
+        self.assertEqual(result.score_basis, SCORE_BASIS)
+        self.assertFalse(result.local_information_value_model_present)
         self.assertFalse(result.opportunity_scores_are_forecast_probabilities)
         self.assertFalse(result.provider_call_authorized)
         self.assertFalse(result.dispatch_authorized)
@@ -116,10 +160,17 @@ class ForecastOpportunityCompilerTests(unittest.TestCase):
         self.assertFalse(result.stable_self_promotion_allowed)
         question = result.opportunities[0].question
         self.assertFalse(hasattr(question, "probability"))
+        self.assertFalse(question.context["information_value_is_event_probability"])
+        self.assertEqual(question.context["edpf_canonical_information_value"], source.evidence_candidate.information_value())
 
     def test_duplicate_signal_ids_fail_closed(self) -> None:
         with self.assertRaisesRegex(ValueError, "DUPLICATE_SIGNAL_ID"):
-            compile_forecast_opportunities((signal("dup"), signal("dup")))
+            compile_forecast_opportunities((signal("dup"), signal("dup", evidence_candidate=candidate("candidate-dup-2"))))
+
+    def test_duplicate_evidence_candidate_ids_fail_closed(self) -> None:
+        shared = candidate("shared-candidate")
+        with self.assertRaisesRegex(ValueError, "DUPLICATE_EVIDENCE_CANDIDATE_ID"):
+            compile_forecast_opportunities((signal("one", evidence_candidate=shared), signal("two", evidence_candidate=shared)))
 
 
 if __name__ == "__main__":
