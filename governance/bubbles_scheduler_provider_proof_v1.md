@@ -1,0 +1,1 @@
+Provider-hosted scheduler proof is bound to GitHub Actions workflow id 344197377 and successful natural schedule run 33625877086. This proves the scheduler mechanism only; future payload semantics, external provider effects, credentials, owner value and stable promotion remain independently gated.
