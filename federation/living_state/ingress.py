@@ -5,6 +5,11 @@ from __future__ import annotations
 The ingress is event-driven, not a scheduler. A host/sensor supplies an envelope;
 this module validates, normalizes, applies and atomically commits the journal
 Delta + snapshot + idempotency receipt with a compare-and-swap head check.
+
+EDPF prediction/outcome support is deliberately an ingress binding only. A host
+must supply an explicit forecast probability or later observed outcome. This
+module never derives forecast probabilities from policy-market scores and never
+calls a model/provider itself.
 """
 
 from dataclasses import asdict, dataclass
@@ -12,7 +17,20 @@ from datetime import datetime, timezone
 import json, re
 from typing import Any, Mapping
 
+from benchmarking.cfbe_omega.epistemic_decision_prediction_fabric_v1 import (
+    Prediction,
+    PredictionOutcome,
+)
 from .canary import learning_event
+from .edpf_prediction_adapter import (
+    OPEN_STATE as EDPF_OPEN_STATE,
+    RESOLVED_FALSE_STATE as EDPF_RESOLVED_FALSE_STATE,
+    RESOLVED_TRUE_STATE as EDPF_RESOLVED_TRUE_STATE,
+    ProspectiveOutcomeRecord,
+    ProspectivePredictionRecord,
+    record_prospective_prediction,
+    resolve_prospective_prediction,
+)
 from .store import LivingStateStore
 from .types import (
     AUTHORITY_CEILING, ContextState, FabricError, LearningClass, NodeKind,
@@ -21,6 +39,9 @@ from .types import (
 )
 
 INGRESS_SCHEMA="FEDERATION-LIVING-STATE-INGRESS-V1"
+EDPF_PREDICTION_EVENT="EDPF_PREDICTION"
+EDPF_OUTCOME_EVENT="EDPF_OUTCOME"
+_EVENT_CLASSES={"NODE_STATE","ROUTE_TELEMETRY","CONTEXT_STATE","LEARNING","BENCHMARK",EDPF_PREDICTION_EVENT,EDPF_OUTCOME_EVENT}
 _SECRET_KEYS={"password","passwd","secret","token","api_key","apikey","private_key","authorization","cookie","access_key","client_secret"}
 _SECRET_VALUE_PATTERNS=(re.compile(r"\bsk-[A-Za-z0-9_-]{16,}"),re.compile(r"\bAIza[0-9A-Za-z_-]{20,}"),re.compile(r"\bgh[pousr]_[A-Za-z0-9]{20,}"),re.compile(r"\bBearer\s+[A-Za-z0-9._~-]{16,}",re.I))
 
@@ -37,6 +58,11 @@ def _contains_secret(value:Any)->bool:
     if isinstance(value,(list,tuple,set)): return any(_contains_secret(x) for x in value)
     text=str(value)
     return any(p.search(text) for p in _SECRET_VALUE_PATTERNS)
+
+
+def _require_payload(payload:Mapping[str,Any], keys:tuple[str,...], code:str)->None:
+    missing=[key for key in keys if key not in payload]
+    if missing: raise ValueError(code+":"+",".join(sorted(missing)))
 
 
 @dataclass(frozen=True)
@@ -59,13 +85,26 @@ class IngressEnvelope:
 
     def validate(self, *, allow_private_local:bool=False):
         _id(self.event_id,"event_id"); _id(self.object_id,"object_id"); _parse_time(self.observed_at)
-        if self.event_class not in {"NODE_STATE","ROUTE_TELEMETRY","CONTEXT_STATE","LEARNING","BENCHMARK"}: raise ValueError("unsupported event_class")
+        if self.event_class not in _EVENT_CLASSES: raise ValueError("unsupported event_class")
         if not self.source_ref or not self.proof_ref or not self.state: raise ValueError("source/proof/state required")
         if self.ttl_seconds<=0 or not 0<=self.confidence<=1: raise ValueError("invalid ttl/confidence")
         if not _authority_ok(self.authority_ceiling): raise ValueError("ingress authority exceeds A1")
         if self.sensitivity not in {"PUBLIC_SAFE","PRIVATE_LOCAL"}: raise ValueError("invalid sensitivity")
         if self.sensitivity=="PRIVATE_LOCAL" and not allow_private_local: raise FabricError("private local ingress requires explicit private-store admission")
         if self.sensitivity=="PUBLIC_SAFE" and _contains_secret(self.payload): raise FabricError("secret-shaped material rejected from public-safe ingress")
+        if self.event_class in {EDPF_PREDICTION_EVENT,EDPF_OUTCOME_EVENT}:
+            if self.object_kind!=NodeKind.EXPERIMENT.value: raise ValueError("EDPF ingress requires EXPERIMENT object_kind")
+            p=dict(self.payload)
+            if self.event_class==EDPF_PREDICTION_EVENT:
+                if self.proof_maturity in {ProofMaturity.UNKNOWN,ProofMaturity.DECLARED}: raise ValueError("EDPF prediction ingress proof maturity too weak")
+                if self.state!=EDPF_OPEN_STATE: raise ValueError("EDPF prediction ingress state mismatch")
+                _require_payload(p,("mission_id","system_source_head_sha","mission_snapshot_digest","predictor_source_fingerprint","predictor_version","predictor_id","domain","event","probability","expected_value","expected_latency","expected_owner_burden"),"EDPF_PREDICTION_PAYLOAD_REQUIRED")
+            else:
+                if self.proof_maturity in {ProofMaturity.UNKNOWN,ProofMaturity.DECLARED}: raise ValueError("EDPF outcome ingress proof maturity too weak")
+                _require_payload(p,("occurred","realised_value","realised_latency","realised_owner_burden","proof_refs"),"EDPF_OUTCOME_PAYLOAD_REQUIRED")
+                if not isinstance(p["occurred"],bool): raise ValueError("EDPF outcome occurred must be boolean")
+                expected=EDPF_RESOLVED_TRUE_STATE if p["occurred"] else EDPF_RESOLVED_FALSE_STATE
+                if self.state!=expected: raise ValueError("EDPF outcome ingress state mismatch")
         return self
 
     @property
@@ -113,6 +152,12 @@ class LivingStateIngress:
             model.observe_context(ContextState(envelope.object_id,int(p["used_units"]),int(p["capacity_units"]),float(p.get("duplicate_ratio",0)),int(p.get("stale_items",0)),tuple(p.get("verified_facts",())),tuple(p.get("adverse_evidence",())),tuple(p.get("contradictions",())),tuple(p.get("gaps",())),tuple(p.get("blockers",())),tuple(p.get("decisions",())),tuple(p.get("source_refs",()))))
         elif envelope.event_class=="LEARNING":
             model.observe_learning(learning_event(learning_class=LearningClass(str(p["learning_class"])),fingerprint=str(p["fingerprint"]),observed_at=envelope.observed_at,matter_scope=envelope.matter_scope,route_id=str(p.get("route_id","NONE")),signal=str(p["signal"]),diagnosis=str(p["diagnosis"]),hypothesis=str(p.get("hypothesis","UNKNOWN")),test_ref=str(p.get("test_ref",envelope.proof_ref)),result_ref=str(p.get("result_ref",envelope.proof_ref)),proof_refs=tuple(p.get("proof_refs",(envelope.proof_ref,))),recurrence=int(p.get("recurrence",1)),independent_evidence=bool(p.get("independent_evidence",False)),privacy_sensitive=envelope.sensitivity=="PRIVATE_LOCAL"))
+        elif envelope.event_class==EDPF_PREDICTION_EVENT:
+            prediction=Prediction(prediction_id=envelope.object_id,predictor_id=str(p["predictor_id"]),domain=str(p["domain"]),event=str(p["event"]),probability=float(p["probability"]),expected_value=float(p["expected_value"]),expected_latency=float(p["expected_latency"]),expected_owner_burden=float(p["expected_owner_burden"]),evidence_refs=tuple(p.get("evidence_refs",())))
+            record_prospective_prediction(model,ProspectivePredictionRecord(mission_id=str(p["mission_id"]),system_source_head_sha=str(p["system_source_head_sha"]),mission_snapshot_digest=str(p["mission_snapshot_digest"]),predictor_source_fingerprint=str(p["predictor_source_fingerprint"]),predictor_version=str(p["predictor_version"]),observed_at=envelope.observed_at,prediction_proof_ref=envelope.proof_ref,prediction=prediction,matter_scope=envelope.matter_scope,sensitivity=envelope.sensitivity,ttl_seconds=envelope.ttl_seconds))
+        elif envelope.event_class==EDPF_OUTCOME_EVENT:
+            outcome=PredictionOutcome(prediction_id=envelope.object_id,occurred=bool(p["occurred"]),realised_value=float(p["realised_value"]),realised_latency=float(p["realised_latency"]),realised_owner_burden=float(p["realised_owner_burden"]),proof_refs=tuple(p["proof_refs"]))
+            resolve_prospective_prediction(model,ProspectiveOutcomeRecord(prediction_id=envelope.object_id,observed_at=envelope.observed_at,outcome_source_ref=envelope.source_ref,proof_maturity=envelope.proof_maturity,outcome=outcome,matter_scope=envelope.matter_scope,sensitivity=envelope.sensitivity,ttl_seconds=envelope.ttl_seconds))
         else:
             model.observe_benchmark(envelope.object_id,envelope.observed_at,envelope.proof_ref)
 
@@ -167,4 +212,4 @@ def run_ingress_canary():
             checks={"provider_event_applied":r1.disposition=="APPLIED" and estimate.state=="READY","duplicate_is_idempotent":r2.disposition=="DUPLICATE_IDEMPOTENT" and model.event_count==1,"conflicting_event_id_fails_closed":conflict,"public_secret_shape_rejected":secret,"receipt_has_no_private_payload":not r1.private_payload_returned,"journal_readback_verified":r1.readback_verified,"zero_external_effects":model.external_effects==0}
             return {"schema":"FEDERATION-LIVING-STATE-INGRESS-CANARY-V1","status":"PASS" if all(checks.values()) else "FAIL","count":len(checks),"checks":checks,"external_effects":model.external_effects,"receipt_sha256":digest({"checks":checks,"head":model.event_head_digest}),"truth_boundary":{"host_invoked_not_background_daemon":True,"exactly_once_is_store_scoped_transactional":True,"provider_liveness_not_inferred_from_ingress_code":True,"private_payload_not_returned_in_receipt":True,"external_effect_authority_created":False}}
 
-__all__=["INGRESS_SCHEMA","IngressEnvelope","IngressReceipt","LivingStateIngress","run_ingress_canary"]
+__all__=["INGRESS_SCHEMA","EDPF_PREDICTION_EVENT","EDPF_OUTCOME_EVENT","IngressEnvelope","IngressReceipt","LivingStateIngress","run_ingress_canary"]
