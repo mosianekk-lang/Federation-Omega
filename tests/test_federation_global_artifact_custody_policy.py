@@ -17,6 +17,10 @@ AGENTS_PATH = ROOT / "AGENTS.md"
 class FederationGlobalArtifactCustodyPolicyTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not AGENT_INSTRUCTIONS_PATH.exists():
+            raise unittest.SkipTest(
+                "workflow-free Phoenix Core export intentionally excludes repository instruction controls"
+            )
         cls.policy_text = POLICY_PATH.read_text(encoding="utf-8")
         cls.policy = json.loads(cls.policy_text)
         cls.bootstrap = json.loads(BOOTSTRAP_PATH.read_text(encoding="utf-8"))
