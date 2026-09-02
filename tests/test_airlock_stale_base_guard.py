@@ -42,6 +42,18 @@ class AirlockStaleBaseGuardTests(unittest.TestCase):
         self.assertLess(ancestry, setup_python)
         self.assertLess(ancestry, first_tests)
 
+    def test_declared_dependencies_are_installed_before_regression_suites(self) -> None:
+        setup_python = self.text.index("actions/setup-python@")
+        install = self.text.index("name: Install declared test dependencies")
+        first_tests = self.text.index("name: Run Airlock regression tests")
+        self.assertIn(
+            "python -m pip install --disable-pip-version-check --no-input "
+            "-r requirements.txt",
+            self.text,
+        )
+        self.assertLess(setup_python, install)
+        self.assertLess(install, first_tests)
+
     def test_checkout_has_full_history_without_credentials(self) -> None:
         self.assertIn("fetch-depth: 0", self.text)
         self.assertIn("persist-credentials: false", self.text)
