@@ -77,6 +77,21 @@ def current_verified_authority() -> dict:
     }
 
 
+def valid_browser_receipt() -> dict:
+    return {
+        "schema": "BUBBLES-BROWSER-RUNTIME-CANARY-1",
+        "state": "HOSTED_BROWSER_RUNTIME_VERIFIED",
+        "browser_runtime_verified": True,
+        "javascript_execution_verified": True,
+        "dom_readback_verified": True,
+        "loopback_only": True,
+        "external_network_target_requested": False,
+        "provider_mutation_attempted": False,
+        "secret_values_recorded": False,
+        "receipt_sha256": "b" * 64,
+    }
+
+
 class BubblesCapabilityActivationTests(unittest.TestCase):
     def lane(self, snapshot: dict, lane_id: str) -> dict:
         return next(lane for lane in snapshot["lanes"] if lane["lane_id"] == lane_id)
@@ -180,6 +195,48 @@ class BubblesCapabilityActivationTests(unittest.TestCase):
         )
         self.assertEqual(ActivationState.DATA_GATED.value, self.lane(snapshot, "EMPIRICAL_OWNER_VALUE")["state"])
         self.assertEqual(ActivationState.DATA_GATED.value, self.lane(snapshot, "FULL_GOVERNED_DIGITAL_TWIN")["state"])
+
+    def test_browser_without_exact_receipt_remains_provider_gated(self) -> None:
+        snapshot = build_activation_snapshot(
+            source_sha=SOURCE,
+            event_name="push",
+            schedule_configured=True,
+        )
+        browser = self.lane(snapshot, "BROWSER_RUNTIME")
+        computer = self.lane(snapshot, "COMPUTER_USE_AUTOMATION")
+        self.assertEqual(ActivationState.PROVIDER_GATED.value, browser["state"])
+        self.assertEqual(ActivationState.PROVIDER_GATED.value, computer["state"])
+        self.assertGreaterEqual(snapshot["lane_count"], 21)
+        self.assertFalse(snapshot["browser_runtime_proof"]["hosted_browser_runtime_verified"])
+
+    def test_exact_source_browser_receipt_promotes_browser_only(self) -> None:
+        snapshot = build_activation_snapshot(
+            source_sha=SOURCE,
+            event_name="push",
+            browser_runtime_receipt=valid_browser_receipt(),
+            browser_runtime_source_sha=SOURCE,
+            schedule_configured=True,
+        )
+        browser = self.lane(snapshot, "BROWSER_RUNTIME")
+        computer = self.lane(snapshot, "COMPUTER_USE_AUTOMATION")
+        self.assertEqual(ActivationState.HOSTED_VERIFIED.value, browser["state"])
+        self.assertEqual(ActivationState.PROVIDER_GATED.value, computer["state"])
+        self.assertTrue(snapshot["browser_runtime_proof"]["source_bound"])
+        self.assertTrue(snapshot["browser_runtime_proof"]["hosted_browser_runtime_verified"])
+        self.assertFalse(snapshot["browser_runtime_proof"]["arbitrary_computer_use_verified"])
+
+    def test_stale_source_browser_receipt_does_not_promote(self) -> None:
+        snapshot = build_activation_snapshot(
+            source_sha=SOURCE,
+            event_name="push",
+            browser_runtime_receipt=valid_browser_receipt(),
+            browser_runtime_source_sha="a" * 40,
+            schedule_configured=True,
+        )
+        browser = self.lane(snapshot, "BROWSER_RUNTIME")
+        self.assertEqual(ActivationState.PROVIDER_GATED.value, browser["state"])
+        self.assertFalse(snapshot["browser_runtime_proof"]["source_bound"])
+        self.assertFalse(snapshot["browser_runtime_proof"]["hosted_browser_runtime_verified"])
 
 
 if __name__ == "__main__":
