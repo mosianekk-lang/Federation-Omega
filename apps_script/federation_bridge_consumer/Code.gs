@@ -2,16 +2,16 @@ const FED_BRIDGE = Object.freeze({
   controlSpreadsheetId: '1OsMaGUmAfv3iszkd6hbY6H1oNznYJ84uqtAga17xpj0',
   bridgeSheet: 'DB_ScriptRunBridge',
   proofSheet: 'DB_ScriptRunProof',
-  version: 'FEDOMEGA-BRIDGE-CONSUMER-1.0.0',
+  version: 'FEDOMEGA-BRIDGE-CONSUMER-1.1.0-KIOAS-HARDENED',
   lockTimeoutMs: 25000,
   maxRowsPerRun: 10,
-  allowedFunctions: Object.freeze([
-    'INSTALL_SOURCE_PACKAGE',
-    'gasSchedulerInstall',
-    'processMetaExecutorQueueV2',
-    'processSentinelQueue',
-    'genesisCompleteSetup'
-  ])
+  functionContracts: Object.freeze({
+    INSTALL_SOURCE_PACKAGE: Object.freeze({risk:'HIGH', route:'EXACT_SOURCE_AUTHORITY_CELL'}),
+    gasSchedulerInstall: Object.freeze({risk:'HIGH', route:'EXACT_GNS3_RECOVERY_CELL'}),
+    processMetaExecutorQueueV2: Object.freeze({risk:'HIGH', route:'METAEXECUTOR_ACTION_SPECIFIC_GATE'}),
+    processSentinelQueue: Object.freeze({risk:'HIGH', route:'SENTINEL_ACTION_SPECIFIC_GATE'}),
+    genesisCompleteSetup: Object.freeze({risk:'HIGH', route:'GENESIS_ACTION_SPECIFIC_GATE'})
+  })
 });
 
 function installFederationBridgeConsumer() {
@@ -23,9 +23,7 @@ function installFederationBridgeConsumer() {
       .forEach(t => ScriptApp.deleteTrigger(t));
     const trigger = ScriptApp.newTrigger('processFederationScriptRunBridge').timeBased().everyMinutes(5).create();
     return {status:'INSTALLED',version:FED_BRIDGE.version,triggerId:trigger.getUniqueId(),checkedAt:new Date().toISOString()};
-  } finally {
-    lock.releaseLock();
-  }
+  } finally { lock.releaseLock(); }
 }
 
 function processFederationScriptRunBridge() {
@@ -45,63 +43,36 @@ function processFederationScriptRunBridge() {
       const runId = String(row[idx.runId] || '').trim();
       const status = String(row[idx.status] || '').trim();
       if (!runId || status !== 'READY') continue;
-      const payload = parseJson_(String(row[idx.payload] || ''));
-      if (!dependenciesSatisfied_(values, idx, payload.dependsOn)) continue;
-      claim_(bridge, r + 1, idx, runId);
-      try {
-        const fn = String(row[idx.fn] || '').trim();
-        if (FED_BRIDGE.allowedFunctions.indexOf(fn) < 0) throw new Error('FUNCTION_NOT_ALLOWED:' + fn);
-        const result = dispatch_(fn, payload);
-        complete_(bridge, r + 1, idx, result);
-        appendProof_(proof, runId, 'ACTION_SPECIFIC_RESULT', result, 'PROVEN');
-      } catch (err) {
-        fail_(bridge, r + 1, idx, err);
-        appendProof_(proof, runId, 'EXECUTION_FAILURE', {error:safeError_(err)}, 'FAILED_EXACT');
+      const fn = String(row[idx.fn] || '').trim();
+      const contract = FED_BRIDGE.functionContracts[fn];
+      if (!contract) {
+        hold_(bridge, r + 1, idx, runId, 'FUNCTION_NOT_CONTRACTED:' + fn);
+        appendProof_(proof, runId, 'AUTHORITY_PREFLIGHT', {functionName:fn,state:'HELD',reason:'FUNCTION_NOT_CONTRACTED'}, 'HELD_EXACT');
+        processed++;
+        continue;
       }
+      if (contract.risk === 'HIGH' || contract.risk === 'CRITICAL') {
+        const held = {functionName:fn,state:'HELD_AUTHORITY',risk:contract.risk,route:contract.route,providerEffect:false,checkedAt:new Date().toISOString()};
+        hold_(bridge, r + 1, idx, runId, 'HELD_AUTHORITY_ACTION_SPECIFIC_CELL_REQUIRED:' + contract.route);
+        appendProof_(proof, runId, 'AUTHORITY_PREFLIGHT', held, 'HELD_EXACT');
+        processed++;
+        continue;
+      }
+      hold_(bridge, r + 1, idx, runId, 'NO_LOW_RISK_GENERIC_FUNCTIONS_ADMITTED');
+      appendProof_(proof, runId, 'AUTHORITY_PREFLIGHT', {functionName:fn,state:'HELD',reason:'NO_LOW_RISK_GENERIC_FUNCTIONS_ADMITTED'}, 'HELD_EXACT');
       processed++;
     }
-    return {status:'RUN_COMPLETE',processed:processed,version:FED_BRIDGE.version,checkedAt:new Date().toISOString()};
-  } finally {
-    lock.releaseLock();
-  }
+    return {status:'RUN_COMPLETE',processed:processed,version:FED_BRIDGE.version,providerEffect:false,checkedAt:new Date().toISOString()};
+  } finally { lock.releaseLock(); }
 }
 
-function dispatch_(fn, payload) {
-  if (fn === 'INSTALL_SOURCE_PACKAGE') throw new Error('INSTALL_SOURCE_PACKAGE_REQUIRES_BOUND_INSTALLER');
-  const target = this[fn];
-  if (typeof target !== 'function') throw new Error('FUNCTION_NOT_PRESENT:' + fn);
-  const result = target(payload || {});
-  return {functionName:fn,result:result,checkedAt:new Date().toISOString()};
-}
-
-function dependenciesSatisfied_(values, idx, dependsOn) {
-  if (!dependsOn) return true;
-  for (let i = 1; i < values.length; i++) {
-    if (String(values[i][idx.runId] || '') === String(dependsOn)) {
-      return ['DONE','CLOSED_VERIFIED','PROVEN'].indexOf(String(values[i][idx.status] || '')) >= 0;
-    }
-  }
-  return false;
-}
+function dispatch_() { throw new Error('GENERIC_DISPATCH_DISABLED_USE_ACTION_SPECIFIC_CELL'); }
 
 function index_(h) {
   const find = (names, fallback) => { for (let i=0;i<names.length;i++){ const p=h.indexOf(names[i]); if(p>=0)return p; } return fallback; };
-  return {
-    runId: find(['Run_ID','ID'],0),
-    status: find(['Status'],2),
-    fn: find(['Function','Action'],4),
-    payload: find(['Payload','Payload_JSON'],5),
-    result: find(['Result'],9),
-    processedAt: find(['ProcessedAt'],10),
-    notes: find(['Notes'],11)
-  };
+  return {runId:find(['Run_ID','ID'],0),status:find(['Status'],2),fn:find(['Function','Action'],4),payload:find(['Payload','Payload_JSON'],5),result:find(['Result'],9),processedAt:find(['ProcessedAt'],10),notes:find(['Notes'],11)};
 }
-
-function claim_(sheet,row,idx,runId){ set_(sheet,row,[[idx.status,'RUNNING'],[idx.processedAt,new Date().toISOString()],[idx.notes,'CLAIMED:'+runId]]); }
-function complete_(sheet,row,idx,result){ set_(sheet,row,[[idx.status,'DONE'],[idx.result,JSON.stringify(result)],[idx.processedAt,new Date().toISOString()]]); }
-function fail_(sheet,row,idx,err){ set_(sheet,row,[[idx.status,'FAILED_EXACT'],[idx.result,JSON.stringify({error:safeError_(err)})],[idx.processedAt,new Date().toISOString()]]); }
+function hold_(sheet,row,idx,runId,reason){ set_(sheet,row,[[idx.status,'HELD_AUTHORITY'],[idx.processedAt,new Date().toISOString()],[idx.result,JSON.stringify({runId:runId,state:'HELD_AUTHORITY',reason:reason,providerEffect:false})],[idx.notes,reason]]); }
 function set_(sheet,row,entries){ entries.forEach(e=>{ if(e[0]>=0) sheet.getRange(row,e[0]+1).setValue(e[1]); }); SpreadsheetApp.flush(); }
 function appendProof_(sheet,runId,expected,actual,status){ sheet.appendRow(['SRP-'+Utilities.getUuid(),new Date().toISOString(),runId,expected,JSON.stringify(actual),status,'Bridge consumer '+FED_BRIDGE.version]); }
 function requireSheet_(ss,name){ const sh=ss.getSheetByName(name); if(!sh) throw new Error('MISSING_SHEET:'+name); return sh; }
-function parseJson_(text){ if(!text) return {}; try{return JSON.parse(text);}catch(e){throw new Error('INVALID_JSON:'+e.message);} }
-function safeError_(err){ return String(err && err.stack ? err.stack : err).slice(0,5000); }
