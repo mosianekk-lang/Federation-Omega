@@ -26,7 +26,7 @@ class PhoenixAppsScriptExportAdmissionTests(unittest.TestCase):
         )
 
     def test_policy_admits_apps_script_source_extension(self) -> None:
-        self.assertEqual("1.0.22", self.policy["version"])
+        self.assertEqual("1.0.21", self.policy["version"])
         self.assertIn(".gs", self.policy["core"]["include_extensions"])
         self.assertEqual(
             1,
