@@ -1,0 +1,56 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/sentinel_omega/autonomic_immune_system.py",
+        "bubbles/provider_cell_registry.py",
+        "bubbles/autonomic_recovery_bridge.py",
+        "bubbles/mission_telemetry.py",
+        "governance/proofos_omega_policy_extension_bubbles_tranche2_v1.json"
+      ],
+      "reason": "BUBBLES_OMEGA_SENTINEL_PROVIDER_CELL_TELEMETRY_RECOVERY_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "BUBBLES_OMEGA_TRANCHE2_V1",
+      "patterns": [
+        "federation/sentinel_omega/autonomic_immune_system.py",
+        "bubbles/provider_cell_registry.py",
+        "bubbles/autonomic_recovery_bridge.py",
+        "bubbles/mission_telemetry.py",
+        "tests/test_bubbles_omega_tranche2.py",
+        "governance/proofos_omega_policy_extension_bubbles_tranche2_v1.json",
+        "docs/architecture/BUBBLES_OMEGA_TRANCHE2_SENTINEL_PROVIDER_TELEMETRY_V1.md"
+      ],
+      "depends_on": [
+        "BUBBLES_OMEGA_AUTONOMIC_RUNTIME_V1",
+        "FEDERATION_CORE",
+        "CFBE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "bubbles_omega_tranche2_v1",
+      "kind": "unittest_glob",
+      "target": "test_bubbles_omega_tranche2.py",
+      "patterns": [
+        "federation/sentinel_omega/autonomic_immune_system.py",
+        "bubbles/provider_cell_registry.py",
+        "bubbles/autonomic_recovery_bridge.py",
+        "bubbles/mission_telemetry.py",
+        "tests/test_bubbles_omega_tranche2.py",
+        "governance/proofos_omega_policy_extension_bubbles_tranche2_v1.json"
+      ],
+      "subsystems": ["BUBBLES_OMEGA_TRANCHE2_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}
