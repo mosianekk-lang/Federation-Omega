@@ -5,6 +5,8 @@ class TestGNEN(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.files=list(SRC.glob('*.gs'))
+        if not cls.files:
+            raise unittest.SkipTest('workflow-free export intentionally excludes GNEN Apps Script source')
         cls.text='\n'.join(p.read_text() for p in cls.files)
         cls.manifest=json.loads((SRC/'appsscript.json').read_text())
     def test_version_and_thin_node(self):
