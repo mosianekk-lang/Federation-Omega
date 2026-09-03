@@ -1,3 +1,4 @@
+# Owner-originated admission event after exact source repair; no semantic test change.
 from pathlib import Path
 import hashlib,json,re,unittest
 ROOT=Path(__file__).resolve().parents[1]
