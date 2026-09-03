@@ -1,0 +1,35 @@
+name: Sentinel Autonomic Immune System V2
+
+on:
+  pull_request:
+    paths:
+      - 'federation/sentinel_omega/**'
+      - 'tests/test_sentinel_omega_*.py'
+      - 'governance/sentinel_omega_autonomic_runbooks_v2.json'
+      - 'docs/architecture/SENTINEL_OMEGA_AUTONOMIC_IMMUNE_SYSTEM_V2.md'
+      - '.github/workflows/sentinel-autonomic-immune-system-v2.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  deterministic-control-proof:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Install test dependency
+        run: python -m pip install --disable-pip-version-check pytest
+      - name: Run Sentinel autonomic controls
+        run: |
+          python -m pytest -q \
+            tests/test_sentinel_omega_autonomic_immune_system.py \
+            tests/test_sentinel_omega_heartbeat_precursor.py \
+            tests/test_sentinel_omega_precursor_outcome.py \
+            tests/test_sentinel_omega_observation_ingress.py \
+            tests/test_sentinel_omega_observability_causal_fabric.py \
+            tests/test_sentinel_omega_owner_value_ingress.py
