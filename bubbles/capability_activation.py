@@ -22,6 +22,7 @@ SCHEMA = "BUBBLES-CAPABILITY-ACTIVATION-V1"
 OPENAI_OBSERVATION_SCHEMA = "BUBBLES-OPENAI-PROVIDER-TRUST-OBSERVATION-1"
 DEFAULT_OPENAI_OBSERVATION = Path("governance/bubbles_openai_provider_trust_observation_v1.json")
 OPENAI_OBSERVATION_MAX_AGE_SECONDS = 604800
+BROWSER_RUNTIME_SCHEMA = "BUBBLES-BROWSER-RUNTIME-CANARY-1"
 
 
 class ActivationState(str, Enum):
@@ -179,6 +180,66 @@ def _resolve_openai_lane(trust: Mapping[str, Any]) -> tuple[ActivationState, tup
     )
 
 
+def _resolve_browser_lane(
+    receipt: Mapping[str, Any],
+    *,
+    source_sha: str,
+    receipt_source_sha: str | None,
+) -> tuple[ActivationState, tuple[str, ...], str, str | None, dict[str, Any]]:
+    supplied = bool(receipt)
+    bound_sha = str(receipt_source_sha or receipt.get("source_sha") or "").strip().lower()
+    source_bound = bool(bound_sha) and bound_sha == source_sha.lower()
+    receipt_sha = str(receipt.get("receipt_sha256") or "").strip()
+    semantic_verified = (
+        receipt.get("schema") == BROWSER_RUNTIME_SCHEMA
+        and receipt.get("state") == "HOSTED_BROWSER_RUNTIME_VERIFIED"
+        and receipt.get("browser_runtime_verified") is True
+        and receipt.get("javascript_execution_verified") is True
+        and receipt.get("dom_readback_verified") is True
+        and receipt.get("loopback_only") is True
+        and receipt.get("external_network_target_requested") is False
+        and receipt.get("provider_mutation_attempted") is False
+        and receipt.get("secret_values_recorded") is False
+        and bool(receipt_sha)
+    )
+    verified = supplied and source_bound and semantic_verified
+    refs = ["workflow:bubbles-browser-runtime-canary"]
+    if receipt_sha:
+        refs.append(f"browser-runtime-receipt:{receipt_sha}")
+    if bound_sha:
+        refs.append(f"source:{bound_sha}")
+    proof = {
+        "receipt_supplied": supplied,
+        "receipt_source_sha": bound_sha or None,
+        "source_bound": source_bound,
+        "semantic_verified": semantic_verified,
+        "hosted_browser_runtime_verified": verified,
+        "arbitrary_computer_use_verified": False,
+        "external_site_authority_verified": False,
+        "provider_mutation_verified": False,
+    }
+    if verified:
+        return (
+            ActivationState.HOSTED_VERIFIED,
+            tuple(refs),
+            "Fresh exact-source no-effect browser canary proves bounded hosted browser launch, JavaScript execution and DOM readback.",
+            "EXTERNAL_SITE_AND_COMPUTER_USE_REMAIN_SEPARATE_GATES",
+            proof,
+        )
+    reason = (
+        "A browser runtime receipt was supplied but is not exact-source bound to the current activation source."
+        if supplied and not source_bound
+        else "No fresh exact-source bounded browser runtime receipt is supplied to this activation projection."
+    )
+    return (
+        ActivationState.PROVIDER_GATED,
+        tuple(refs),
+        reason,
+        "FRESH_EXACT_SOURCE_BROWSER_RUNTIME_CANARY_AND_READBACK",
+        proof,
+    )
+
+
 def build_activation_snapshot(
     *,
     source_sha: str,
@@ -186,6 +247,8 @@ def build_activation_snapshot(
     provider_surface_receipt: Mapping[str, Any] | None = None,
     provider_authority_receipt: Mapping[str, Any] | None = None,
     openai_provider_trust_receipt: Mapping[str, Any] | None = None,
+    browser_runtime_receipt: Mapping[str, Any] | None = None,
+    browser_runtime_source_sha: str | None = None,
     schedule_configured: bool = True,
     schedule_provider_verified: bool = False,
 ) -> dict[str, Any]:
@@ -195,6 +258,7 @@ def build_activation_snapshot(
     surface = dict(provider_surface_receipt or {})
     authority = dict(provider_authority_receipt or {})
     openai_trust = dict(openai_provider_trust_receipt or {})
+    browser_receipt = dict(browser_runtime_receipt or {})
     operator = _surface(surface, "federation_omega_operator")
     archon = _surface(surface, "archon_admin_plane_v5")
     apps = _surface(surface, "archon_apps_script_exact_deployment") or _surface(
@@ -246,6 +310,11 @@ def build_activation_snapshot(
     archon_token = surface_archon_token or authority.get("archon_token_available") is True
     cloud_read_ok = operator_public_ok or authority_cloud_read_ok
     openai_state, openai_evidence, openai_reason, openai_gate = _resolve_openai_lane(openai_trust)
+    browser_state, browser_evidence, browser_reason, browser_gate, browser_proof = _resolve_browser_lane(
+        browser_receipt,
+        source_sha=source_sha,
+        receipt_source_sha=browser_runtime_source_sha,
+    )
 
     if event_name == "schedule":
         scheduled_state = ActivationState.OPERATIONAL
@@ -393,11 +462,18 @@ def build_activation_snapshot(
             openai_gate,
         ),
         ActivationLane(
-            "BROWSER_COMPUTER_AUTOMATION",
+            "BROWSER_RUNTIME",
+            browser_state,
+            browser_evidence,
+            browser_reason,
+            browser_gate,
+        ),
+        ActivationLane(
+            "COMPUTER_USE_AUTOMATION",
             ActivationState.PROVIDER_GATED,
-            ("bubbles-digital-twin:AP24-AP25",),
-            "No current Bubbles-owned browser/computer provider executor is proven in this runtime.",
-            "BIND_PROVIDER_BROWSER_OR_COMPUTER_RUNTIME_WITH_IDENTITY_POLICY_AND_READBACK",
+            ("bubbles-digital-twin:AP25", "browser-proof-noninheriting"),
+            "Bounded browser runtime proof does not establish arbitrary OS/UI computer-use, external-site authority, login, or effect authority.",
+            "BIND_PROVIDER_COMPUTER_USE_RUNTIME_WITH_IDENTITY_POLICY_AND_READBACK",
         ),
         ActivationLane(
             "AUTOSCALING_WARM_POOLS",
@@ -460,6 +536,8 @@ def build_activation_snapshot(
             "credential_absence_does_not_cancel_unaffected_work": True,
             "fresh_safe_openai_provider_trust_overrides_credential_guess": True,
             "stale_openai_provider_trust_does_not_promote": True,
+            "browser_runtime_receipt_requires_exact_source_binding": True,
+            "browser_runtime_proof_does_not_promote_computer_use": True,
             "shadow_prediction_does_not_prove_superiority": True,
             "owner_value_is_never_inferred": True,
         },
@@ -484,6 +562,7 @@ def build_activation_snapshot(
             "state": openai_trust.get("state"),
             "secret_value_recorded": openai_trust.get("secret_value_recorded") if openai_trust else None,
         },
+        "browser_runtime_proof": browser_proof,
     }
     payload["activation_sha256"] = _sha(payload)
     return payload
@@ -496,6 +575,8 @@ def main() -> int:
     parser.add_argument("--provider-surface-receipt")
     parser.add_argument("--provider-authority-receipt")
     parser.add_argument("--openai-provider-trust-receipt")
+    parser.add_argument("--browser-runtime-receipt")
+    parser.add_argument("--browser-runtime-source-sha")
     parser.add_argument("--schedule-configured", action="store_true")
     parser.add_argument("--schedule-provider-verified", action="store_true")
     parser.add_argument("--output", required=True)
@@ -512,6 +593,8 @@ def main() -> int:
         provider_surface_receipt=_load(args.provider_surface_receipt),
         provider_authority_receipt=_load(args.provider_authority_receipt),
         openai_provider_trust_receipt=openai_trust,
+        browser_runtime_receipt=_load(args.browser_runtime_receipt),
+        browser_runtime_source_sha=args.browser_runtime_source_sha,
         schedule_configured=args.schedule_configured,
         schedule_provider_verified=args.schedule_provider_verified,
     )
