@@ -1,9 +1,13 @@
 from pathlib import Path
-import json,re,unittest
+import hashlib,json,re,unittest
 ROOT=Path(__file__).resolve().parents[1]
-S=(ROOT/'apps_script/architron_hardening/MetaExecutor_v2_1.gs').read_text()
-G=json.loads((ROOT/'governance/metaexecutor_v2_1_hardening.json').read_text())
+P=ROOT/'apps_script/architron_hardening/MetaExecutor_v2_1.gs'
+RAW=P.read_bytes()
+S=RAW.decode('utf-8')
+G=json.loads((ROOT/'governance/metaexecutor_v2_1_hardening.json').read_text(encoding='utf-8'))
 class TestHardenedMetaExecutor(unittest.TestCase):
+    def test_source_utf8_and_integrity(self):
+        self.assertEqual(hashlib.sha256(RAW).hexdigest(),G['source_sha256'])
     def test_a0_a1_mode(self): self.assertIn("authorityMode: 'A0_A1_ONLY'",S)
     def test_no_recurring_trigger_install(self): self.assertNotIn("ScriptApp.newTrigger(META_V2.triggerHandler)",S)
     def test_no_automatic_email(self): self.assertNotIn("GmailApp.sendEmail",S); self.assertNotIn("MailApp.sendEmail",S)
