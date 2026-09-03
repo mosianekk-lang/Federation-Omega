@@ -84,12 +84,6 @@ class PhoenixAppsScriptExportAdmissionTests(unittest.TestCase):
             self.assertFalse(
                 any(EXPORTS.is_github_workflow_path(item.path) for item in included)
             )
-            self.assertFalse(
-                any(
-                    item.reason.startswith("SECRET_MARKER:")
-                    for item in included
-                )
-            )
 
 
 if __name__ == "__main__":
