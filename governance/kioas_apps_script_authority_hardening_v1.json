@@ -1,0 +1,14 @@
+{
+  "schema":"KIOAS-APPS-SCRIPT-AUTHORITY-HARDENING-V1",
+  "version":"1.0.0",
+  "purpose":"Admit KIOAS read-only estate classification and source-level effect inheritance while disabling high-impact generic Apps Script dispatch.",
+  "provider_effect":false,
+  "authority":"A1_INTERNAL_SOURCE_CI",
+  "invariants":[
+    "KIOAS Sentinel is a provider-neutral sensor/classifier and carries no execution authority.",
+    "Generic RUN_FUNCTION cannot lower callee intrinsic effect class.",
+    "Federation bridge high-impact legacy functions are HELD and routed to action-specific cells.",
+    "No deployment, trigger, IAM, permission, credential, billing or outbound communication effect is performed by repository admission."
+  ],
+  "runtime_promotion":"SEPARATE_PROVIDER_NATIVE_PROOF_REQUIRED"
+}

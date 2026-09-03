@@ -1,0 +1,12 @@
+{
+  "schema": "KIOAS-METAEXECUTOR-HARDENING-V1",
+  "version": "2.1.0-kioas-hardening",
+  "source_base_sha256": "77feff8d37c97ab049ff46a93739221c8eda9240189ed0ad740e67885832dbcd",
+  "source_sha256": "035984c7d41b92a1b86056c1a3d4e8c6394011be3462501d2407ce0dd6fa824a",
+  "authority_mode": "A0_A1_ONLY",
+  "recurrence_owner": "GNS3_ONLY",
+  "reusable_approval_marker_authoritative": false,
+  "outbound_email": false,
+  "high_risk_generic_invocation": "HELD_AUTHORITY",
+  "controls": ["NO_RECURRING_METAEXECUTOR_TRIGGER","NO_AUTOMATIC_EMAIL","NO_REUSABLE_APPROVAL_AUTHORITY","GENERIC_FUNCTION_EFFECT_INHERITANCE","HIGH_CRITICAL_HELD_AUTHORITY","SOURCE_INSTALL_ROLLBACK_EMAIL_DISABLED_IN_LEGACY_QUEUE","NESTED_CONNECTOR_GENERIC_INVOCATION_HELD"]
+}
