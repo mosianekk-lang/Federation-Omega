@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-REPOSITORY-COORDINATION-V2",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "owner": "Kim Kagiso Mosiane",
   "purpose": "Make the existing cooperative repository critical section machine-verifiable inside the already-admitted Federation Omega Airlock without creating another scheduler, store, authority plane or private credential dependency.",
   "lease_ref": "refs/heads/locks/fdof-repository-critical-section",
@@ -12,6 +12,15 @@
   "turn_capture_provider": "FEDERATION_SYNC_BUS_TURN_CAPTURE",
   "github_court_can_validate_private_turn_capture_contents": false,
   "github_court_requirement": "PR claim must bind the exact turn_capture_id already carried by the active lease descriptor",
+  "lease_issuer_contract": {
+    "canonical_issuer": "proofos_omega.repository_lease_issuer.build_lease_commit_spec",
+    "commit_tree_source": "EXACT_DECLARED_SOURCE_HEAD_TREE",
+    "commit_parent_source": "CURRENT_LOCK_REF_COMMIT",
+    "turn_capture_precondition": "PROVIDER_READBACK_VERIFIED_EXACT_ID",
+    "fail_closed_on_source_tree_resolution_error": true,
+    "fail_closed_on_capture_witness_mismatch": true,
+    "provider_effect_authorized": false
+  },
   "required_lease_fields": [
     "state",
     "fencing_token",
@@ -68,5 +77,5 @@
     "lock_ref_is_not_source_authority": true,
     "lock_ref_is_not_provider_effect_authority": true
   },
-  "truth_boundary": "This court can fail hosted Airlock proof when an active cooperative lease is bypassed. Because GitHub main is not yet provider-enforced by a ruleset/branch protection, this does not make bypass technically impossible at the provider layer. Provider-enforced Main Airlock remains a separate owner-authorized gate."
+  "truth_boundary": "This court can fail hosted Airlock proof when an active cooperative lease is bypassed. The canonical issuer additionally makes the lease commit tree derive from the declared source_head and requires a provider-readback Turn_Capture witness before producing a commit spec. Because GitHub main is not yet provider-enforced by a ruleset/branch protection, this still does not make bypass technically impossible at the provider layer. Provider-enforced Main Airlock remains a separate owner-authorized gate."
 }
