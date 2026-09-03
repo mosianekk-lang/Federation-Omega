@@ -1,0 +1,103 @@
+name: KIOAS MetaExecutor Exact Source Repair Once
+
+on:
+  push:
+    branches:
+      - kioas/apps-script-authority-hardening-v1-20260903
+
+permissions:
+  contents: write
+  id-token: write
+
+concurrency:
+  group: kioas-metaexecutor-exact-source-repair-once
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  SOURCE_DRIVE_FILE_ID: 1cQtHCB70vMDqlrCqKbqws_vU46jmSPSP
+  EXPECTED_SOURCE_SHA256: 035984c7d41b92a1b86056c1a3d4e8c6394011be3462501d2407ce0dd6fa824a
+  TARGET_PATH: apps_script/architron_hardening/MetaExecutor_v2_1.gs
+
+jobs:
+  repair:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact repair branch
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          fetch-depth: 0
+
+      - name: Authenticate with canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Retrieve exact private source bridge and verify cryptographic identity
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          token="$(gcloud auth print-access-token)"
+          url="https://www.googleapis.com/drive/v3/files/${SOURCE_DRIVE_FILE_ID}?alt=media"
+          if ! curl --fail --silent --show-error --location -H "Authorization: Bearer ${token}" "${url}" -o /tmp/kioas-source.zip; then
+            gcloud services enable drive.googleapis.com --project "${PROJECT_ID}" --quiet
+            sleep 10
+            token="$(gcloud auth print-access-token)"
+            curl --fail --silent --show-error --location -H "Authorization: Bearer ${token}" "${url}" -o /tmp/kioas-source.zip
+          fi
+          python - <<'PY'
+          import hashlib, os, pathlib, zipfile
+          zpath=pathlib.Path('/tmp/kioas-source.zip')
+          target=pathlib.Path(os.environ['TARGET_PATH'])
+          expected=os.environ['EXPECTED_SOURCE_SHA256']
+          with zipfile.ZipFile(zpath) as z:
+              candidates=[n for n in z.namelist() if n.endswith('MetaExecutor.gs') or n.endswith('MetaExecutor_v2_1.gs')]
+              if len(candidates) != 1:
+                  raise SystemExit(f'expected exactly one MetaExecutor source, got {candidates!r}')
+              raw=z.read(candidates[0])
+          raw.decode('utf-8')
+          actual=hashlib.sha256(raw).hexdigest()
+          if actual != expected:
+              raise SystemExit(f'source sha mismatch: {actual} != {expected}')
+          target.write_bytes(raw)
+          print(f'EXACT_SOURCE_VERIFIED {actual} bytes={len(raw)} member={candidates[0]}')
+          PY
+
+      - name: Run failure-first KIOAS repair court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python tests/test_metaexecutor_authority_hardening.py
+          python - <<'PY'
+          import hashlib, pathlib
+          p=pathlib.Path('apps_script/architron_hardening/MetaExecutor_v2_1.gs')
+          raw=p.read_bytes(); raw.decode('utf-8')
+          print('SOURCE_SHA256', hashlib.sha256(raw).hexdigest())
+          PY
+          git diff --check
+
+      - name: Commit exact repair and self-delete one-use workflow
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name "Federation Omega Repair Bot"
+          git config user.email "mosianekk@gmail.com"
+          git rm .github/workflows/kioas-metaexecutor-exact-source-repair-once.yml
+          git add "${TARGET_PATH}" tests/test_metaexecutor_authority_hardening.py
+          if git diff --cached --quiet; then
+            echo "No repair delta remains."
+            exit 0
+          fi
+          git commit -m "KIOAS: restore exact UTF-8 MetaExecutor source for PR #1128"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
