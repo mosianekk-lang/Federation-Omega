@@ -92,6 +92,7 @@ def build_activation_snapshot(
     event_name: str,
     provider_surface_receipt: Mapping[str, Any] | None = None,
     provider_authority_receipt: Mapping[str, Any] | None = None,
+    openai_provider_trust_receipt: Mapping[str, Any] | None = None,
     schedule_configured: bool = True,
     schedule_provider_verified: bool = False,
 ) -> dict[str, Any]:
@@ -100,6 +101,7 @@ def build_activation_snapshot(
 
     surface = dict(provider_surface_receipt or {})
     authority = dict(provider_authority_receipt or {})
+    openai_trust = dict(openai_provider_trust_receipt or {})
     operator = _surface(surface, "federation_omega_operator")
     archon = _surface(surface, "archon_admin_plane_v5")
     apps = _surface(surface, "archon_apps_script_exact_deployment") or _surface(
@@ -192,6 +194,36 @@ def build_activation_snapshot(
     apps_reachable = bool(apps) and "UNVERIFIED" not in apps_classification
     apps_state = ActivationState.HOSTED_VERIFIED if apps_reachable else ActivationState.PROVIDER_GATED
     apps_gate = "ACTION_SEMANTIC_AUTHORITY_AND_MUTATION_READBACK" if apps_reachable else "FRESH_DEPLOYMENT_SEMANTIC_READBACK"
+
+    openai_reference_found = openai_trust.get("credential_reference_found") is True
+    openai_runtime_bound = openai_trust.get("runtime_bound") is True
+    openai_authenticated = openai_trust.get("provider_authenticated") is True
+    openai_live_verified = openai_trust.get("provider_live_verified") is True
+    openai_state_name = str(openai_trust.get("state") or "")
+    openai_error_code = str(openai_trust.get("provider_error_code") or "")
+
+    if openai_live_verified:
+        openai_state = ActivationState.HOSTED_VERIFIED
+        openai_reason = "Provider-native OpenAI semantic execution and readback are verified."
+        openai_gate = None
+    elif openai_authenticated and openai_runtime_bound and openai_reference_found:
+        openai_state = ActivationState.PROVIDER_GATED
+        if openai_state_name == "BLOCKED_PROVIDER_BILLING" or openai_error_code == "credit_balance_exhausted":
+            openai_reason = (
+                "OpenAI credential reference, runtime binding and provider authentication are proven; "
+                "provider-live execution is blocked by billing/credit state."
+            )
+            openai_gate = "RESTORE_PROVIDER_BILLING_THEN_REUSE_BOUNDED_PROVIDER_LIVE_CANARY"
+        else:
+            openai_reason = (
+                "OpenAI credential reference, runtime binding and provider authentication are proven; "
+                "provider-live semantic execution remains unverified."
+            )
+            openai_gate = "REUSE_BOUNDED_PROVIDER_LIVE_CANARY_AFTER_PROVIDER_BLOCK_IS_RESOLVED"
+    else:
+        openai_state = ActivationState.CREDENTIAL_GATED
+        openai_reason = "OpenAI provider adapters exist; current trusted runtime credential binding is not proven by the supplied receipt."
+        openai_gate = "EXPLICIT_SECURE_CREDENTIAL_DECISION_PLUS_PROVIDER_LIVE_CANARY"
 
     lanes = (
         ActivationLane(
@@ -291,10 +323,14 @@ def build_activation_snapshot(
         ),
         ActivationLane(
             "OPENAI_PROVIDER_LIVE",
-            ActivationState.CREDENTIAL_GATED,
-            ("chatbridge-omega4:openai-provider", "caseforge:openai-provider-adapter"),
-            "OpenAI provider adapters exist; this snapshot does not infer an API credential or paid provider call.",
-            "EXPLICIT_SECURE_CREDENTIAL_DECISION_PLUS_PROVIDER_LIVE_CANARY",
+            openai_state,
+            (
+                "chatbridge-omega4:openai-provider",
+                "caseforge:openai-provider-adapter",
+                "provider-trust-resolution:openai",
+            ),
+            openai_reason,
+            openai_gate,
         ),
         ActivationLane(
             "BROWSER_COMPUTER_AUTOMATION",
@@ -362,6 +398,7 @@ def build_activation_snapshot(
             "provider_hosted_scheduler_proof_can_be_reused_when_same_workflow_identity_is_preserved": True,
             "source_presence_does_not_prove_provider_effect": True,
             "credential_absence_does_not_cancel_unaffected_work": True,
+            "authenticated_provider_billing_failure_is_not_a_credential_failure": True,
             "shadow_prediction_does_not_prove_superiority": True,
             "owner_value_is_never_inferred": True,
         },
@@ -376,6 +413,14 @@ def build_activation_snapshot(
             "current_provider_authenticated": authority_authenticated,
             "current_classification": authority_classification or None,
         },
+        "openai_provider_trust": {
+            "credential_reference_found": openai_reference_found,
+            "runtime_bound": openai_runtime_bound,
+            "provider_authenticated": openai_authenticated,
+            "provider_live_verified": openai_live_verified,
+            "state": openai_state_name or None,
+            "provider_error_code": openai_error_code or None,
+        },
     }
     payload["activation_sha256"] = _sha(payload)
     return payload
@@ -387,6 +432,7 @@ def main() -> int:
     parser.add_argument("--event-name", required=True)
     parser.add_argument("--provider-surface-receipt")
     parser.add_argument("--provider-authority-receipt")
+    parser.add_argument("--openai-provider-trust-receipt")
     parser.add_argument("--schedule-configured", action="store_true")
     parser.add_argument("--schedule-provider-verified", action="store_true")
     parser.add_argument("--output", required=True)
@@ -397,6 +443,7 @@ def main() -> int:
         event_name=args.event_name,
         provider_surface_receipt=_load(args.provider_surface_receipt),
         provider_authority_receipt=_load(args.provider_authority_receipt),
+        openai_provider_trust_receipt=_load(args.openai_provider_trust_receipt),
         schedule_configured=args.schedule_configured,
         schedule_provider_verified=args.schedule_provider_verified,
     )
