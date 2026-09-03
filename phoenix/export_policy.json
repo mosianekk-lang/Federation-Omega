@@ -5,6 +5,7 @@
     "include_extensions": [
       ".css",
       ".csv",
+      ".gs",
       ".html",
       ".js",
       ".json",
