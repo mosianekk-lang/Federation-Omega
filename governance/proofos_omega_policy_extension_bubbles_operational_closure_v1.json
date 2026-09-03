@@ -1,0 +1,48 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "bubbles/operational_closure_spine_v1.py",
+        "governance/proofos_omega_policy_extension_bubbles_operational_closure_v1.json"
+      ],
+      "reason": "BUBBLES_CFBE_OPERATIONAL_PROOF_NONINHERITANCE_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "BUBBLES_CFBE_OPERATIONAL_CLOSURE_V1",
+      "patterns": [
+        "bubbles/operational_closure_spine_v1.py",
+        "tests/test_bubbles_operational_closure_spine_v1.py",
+        "governance/proofos_omega_policy_extension_bubbles_operational_closure_v1.json",
+        "docs/architecture/BUBBLES_CFBE_OPERATIONAL_CLOSURE_V1.md"
+      ],
+      "depends_on": [
+        "CFBE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "bubbles_cfbe_operational_closure_v1",
+      "kind": "unittest_glob",
+      "target": "test_bubbles_operational_closure_spine_v1.py",
+      "patterns": [
+        "bubbles/operational_closure_spine_v1.py",
+        "tests/test_bubbles_operational_closure_spine_v1.py",
+        "governance/proofos_omega_policy_extension_bubbles_operational_closure_v1.json",
+        "docs/architecture/BUBBLES_CFBE_OPERATIONAL_CLOSURE_V1.md"
+      ],
+      "subsystems": [
+        "BUBBLES_CFBE_OPERATIONAL_CLOSURE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
