@@ -1,0 +1,93 @@
+{
+  "schema": "SENTINEL_OMEGA_AUTONOMIC_RUNBOOK_REGISTRY_V2",
+  "version": "2.0.0",
+  "purpose": "Protect owner creative time by automatically selecting the smallest safe proof-bound repair for routine Federation reliability defects.",
+  "default_rules": {
+    "proof_before_close": true,
+    "semantic_readback_required": true,
+    "rollback_required_for_mutation": true,
+    "unchanged_failed_route_retry": false,
+    "continue_unaffected_lanes": true,
+    "owner_attention_is_premium_compute": true,
+    "provider_specific_execution_must_be_separately_authorized": true
+  },
+  "creative_time_slo_targets": {
+    "routine_owner_interruptions": 0,
+    "routine_incident_protection_rate": 0.99,
+    "fast_native_detection_seconds_target": 60,
+    "routine_repair_mttr_seconds_target": 300,
+    "self_test_required": true
+  },
+  "runbooks": [
+    {
+      "runbook_id": "SENT-RB-HEARTBEAT-STALE-A1",
+      "failure_classes": ["stale_heartbeat", "missed_heartbeat"],
+      "max_authority": "A1_INTERNAL",
+      "reversible": true,
+      "route_family": "heartbeat-reconcile",
+      "requires_canary": true,
+      "requires_semantic_readback": true,
+      "rollback_ref": "pre-repair-heartbeat-snapshot"
+    },
+    {
+      "runbook_id": "SENT-RB-QUEUE-STUCK-A1",
+      "failure_classes": ["queue_stuck", "queue_backlog", "stale_running_state"],
+      "max_authority": "A1_INTERNAL",
+      "reversible": true,
+      "route_family": "queue-reconcile",
+      "requires_canary": true,
+      "requires_semantic_readback": true,
+      "rollback_ref": "pre-repair-queue-state"
+    },
+    {
+      "runbook_id": "SENT-RB-CI-TRANSIENT-A1",
+      "failure_classes": ["ci_transient", "workflow_stall", "admission_check_stale"],
+      "max_authority": "A1_INTERNAL",
+      "reversible": true,
+      "route_family": "ci-recovery",
+      "requires_canary": false,
+      "requires_semantic_readback": true,
+      "rollback_ref": ""
+    },
+    {
+      "runbook_id": "SENT-RB-SOURCE-DRIFT-A1",
+      "failure_classes": ["source_drift", "stale_base", "projection_drift"],
+      "max_authority": "A1_INTERNAL",
+      "reversible": true,
+      "route_family": "source-reconciliation",
+      "requires_canary": true,
+      "requires_semantic_readback": true,
+      "rollback_ref": "pre-repair-source-head"
+    },
+    {
+      "runbook_id": "SENT-RB-NATIVE-TRIGGER-A2",
+      "failure_classes": ["trigger_missing", "trigger_duplicate", "native_scheduler_degraded"],
+      "max_authority": "A2_REVERSIBLE_PROVIDER",
+      "reversible": true,
+      "route_family": "native-trigger-repair",
+      "requires_canary": true,
+      "requires_semantic_readback": true,
+      "rollback_ref": "provider-trigger-inventory-before-change"
+    },
+    {
+      "runbook_id": "SENT-RB-PROVIDER-AUTH-A3",
+      "failure_classes": ["credential_missing", "credential_invalid", "iam_required", "consent_required"],
+      "max_authority": "A3_OWNER_RESERVED",
+      "reversible": false,
+      "route_family": "provider-authority",
+      "requires_canary": true,
+      "requires_semantic_readback": true,
+      "rollback_ref": ""
+    },
+    {
+      "runbook_id": "SENT-RB-BILLING-A3",
+      "failure_classes": ["billing_required", "credit_exhausted", "paid_resource_required"],
+      "max_authority": "A3_OWNER_RESERVED",
+      "reversible": false,
+      "route_family": "financial-authority",
+      "requires_canary": false,
+      "requires_semantic_readback": true,
+      "rollback_ref": ""
+    }
+  ]
+}
