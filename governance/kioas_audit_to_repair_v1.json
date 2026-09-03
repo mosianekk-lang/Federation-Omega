@@ -1,0 +1,102 @@
+{
+  "artifact_concurrency": {
+    "candidate_identity": "logical_name + version + sha256",
+    "candidate_write_mode": "CREATE_IMMUTABLE_CONTENT_ADDRESSED_CANDIDATE",
+    "canonical_pointer_mutation": "COMPARE_AND_SET_ONLY",
+    "concurrent_pointer_drift": "HOLD_CONCURRENT_DRIFT",
+    "fresh_readback_required": true,
+    "parallel_candidate_generation_allowed": true,
+    "same_artifact_in_place_overwrite_allowed": false,
+    "source_failure_learning": "FLT-ARC-CONCURRENCY-001/LRN-ARC-CONCURRENCY-001",
+    "superseded_candidate_deletion_allowed": false
+  },
+  "authority_ceiling": "A1_INTERNAL",
+  "cfbe_benchmark_binding": {
+    "practice_refs": [
+      "P-012",
+      "P-017",
+      "P-022",
+      "P-023",
+      "P-024",
+      "P-025",
+      "P-033",
+      "P-011"
+    ],
+    "relevance_bounded": true,
+    "required_prepass": true,
+    "standing_patterns": [
+      "PAT-HSO-OMEGA-001",
+      "PAT-CFBE-VIRT100-001"
+    ],
+    "truth_boundary": "Benchmark references shape repair selection and proof floors; they do not grant provider authority or runtime maturity."
+  },
+  "external_effect_default": false,
+  "invariants": [
+    "audit cannot close while executable material repairs remain",
+    "repeated unchanged failure fingerprints circuit-break",
+    "reuse before build",
+    "source/configuration/queueing is not runtime proof",
+    "executor cannot self-certify",
+    "provider or owner gate blocks only the exact dependent effect",
+    "unrelated safe lanes continue",
+    "no new scheduler, memory root, proof plane, provider executor or authority plane",
+    "parallel candidate bytes use unique content-addressed identities; shared mutable candidate overwrite is prohibited",
+    "canonical candidate pointer promotion is compare-and-set with exact post-write readback"
+  ],
+  "repair_classes": [
+    "AUTO_REPAIR_NOW",
+    "AUTO_REPAIR_FENCED",
+    "AUTO_REPAIR_CANARY",
+    "WAITING_EXACT_CAPABILITY",
+    "OWNER_OR_PROVIDER_TRIGGER_REQUIRED",
+    "QUARANTINE_AND_REROUTE",
+    "NOT_APPLICABLE",
+    "REJECTED_WITH_EVIDENCE"
+  ],
+  "reuse": {
+    "cfbe": [
+      "AUTO_IMPROVEMENT_QUEUE",
+      "RESOURCE_CAPABILITY_GATE",
+      "VALUE_REALIZATION_LEDGER",
+      "ENGINEERING_VALUE_DENSITY"
+    ],
+    "federation": [
+      "FDOF_REPOSITORY_FENCING",
+      "PROOFOS",
+      "FACP_001",
+      "TURN_CAPTURE"
+    ],
+    "kioas": [
+      "FAILURE_BOOK",
+      "LEARNING_LEDGER",
+      "ROUTE_MEMORY",
+      "EXPERIMENT_QUEUE",
+      "PROOF_LEDGER",
+      "ROLLBACK_REGISTER"
+    ],
+    "scheduler": "GOOGLE_APPS_SCRIPT_GNS3_ONLY"
+  },
+  "role": "thin deterministic reconciliation compiler",
+  "schema": "KIOAS-AUDIT-TO-REPAIR-COMPILER-CONTRACT-V1",
+  "terminality": {
+    "held_terminal": "exact non-bypassable capability/owner/provider gate with resumable trigger",
+    "not_terminal": [
+      "READY",
+      "QUARANTINED",
+      "APPLIED_UNVERIFIED"
+    ],
+    "verified": [
+      "REPAIRED_VERIFIED",
+      "NOT_APPLICABLE",
+      "REJECTED_WITH_EVIDENCE"
+    ]
+  },
+  "truth_boundary": {
+    "compiler_executes_provider_effects": false,
+    "compiler_self_certifies": false,
+    "design_or_source_is_runtime": false,
+    "provider_authority_inherited": false,
+    "scheduler_authority": "GOOGLE_APPS_SCRIPT_GNS3_ONLY"
+  },
+  "version": "1.0.0"
+}
