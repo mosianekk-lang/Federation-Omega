@@ -1,0 +1,34 @@
+{
+  "schema": "KIOAS-GNEN-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "purpose": "Permanent thin Google-native execution node for KIOAS without making KIOAS dependent on Apps Script.",
+  "node_class": "THIN_GOOGLE_NATIVE_EXECUTION_NODE",
+  "production_effect_default": false,
+  "source_of_truth": "GitHub",
+  "state_projection": "KIOAS Scientist + Genome Lab control plane",
+  "target_runtime": "existing owner-private KIOAS Apps Script project",
+  "invariants": [
+    "KIOAS core intelligence remains provider-neutral and outside GNEN",
+    "no secret persistence in Sheets, logs, receipts, GitHub or handoff envelopes",
+    "A2/A3 actions are held rather than executed by the command queue",
+    "writes require action-specific readback",
+    "exactly one command processor trigger and one heartbeat trigger",
+    "unchanged failed routes circuit-break into failure-to-win learning",
+    "source rollback is external and version-bound",
+    "provider/model authority never transfers from source presence"
+  ],
+  "promotion_gates": [
+    "CURRENT_APPS_SCRIPT_IDENTITY_VERIFIED",
+    "SOURCE_PACKAGE_TESTS_PASS",
+    "PREINSTALL_CHECKPOINT_VERIFIED",
+    "EXACT_INSTALLED_SOURCE_READBACK",
+    "OAUTH_SCOPE_REVIEWED",
+    "TRIGGER_SINGLETON_READBACK",
+    "BOOTSTRAP_CANARY_PASS",
+    "STATUS_COMMAND_SEMANTIC_READBACK",
+    "HEARTBEAT_FRESHNESS_PROVEN",
+    "FAILURE_PATH_CANARY_PASS",
+    "ROLLBACK_READBACK_PROVEN"
+  ],
+  "maturity_law": "SOURCE_READY is not DEPLOYED and DEPLOYED is not PROVEN."
+}
