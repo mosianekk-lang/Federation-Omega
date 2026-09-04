@@ -115,7 +115,7 @@ jobs:
           fi
           export DEPLOY_MODE
           echo "DEPLOY_MODE=$DEPLOY_MODE" >> "$GITHUB_ENV"
-          gcloud run deploy seb-omega --project sov-hybrid-suite --region us-central1 --image "${IMAGE_URI}@${IMAGE_DIGEST}" "${TRAFFIC_FLAGS[@]}" --tag "$TAG" --no-allow-unauthenticated --quiet
+          gcloud run deploy seb-omega --project sov-hybrid-suite --region us-central1 --image "${IMAGE_URI}@${IMAGE_DIGEST}" "${TRAFFIC_FLAGS[@]}" --tag "$TAG" --service-account superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com --no-allow-unauthenticated --quiet
           gcloud run services describe seb-omega --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/post.json
           export TAG
           python - <<'PY' >> "$GITHUB_ENV"
