@@ -143,7 +143,14 @@ class ModisaFederationCompiler:
         source_root = root / self.manifest["source"]["root"]
         if not source_root.is_dir():
             raise ManifestError("MODISA source root is missing")
-        paths = sorted(path for path in source_root.rglob("*") if path.is_file())
+        generated_directories = {"__pycache__", ".mypy_cache", ".pytest_cache", ".ruff_cache"}
+        paths = sorted(
+            path
+            for path in source_root.rglob("*")
+            if path.is_file()
+            and path.suffix != ".pyc"
+            and generated_directories.isdisjoint(path.relative_to(source_root).parts)
+        )
         if any(path.is_symlink() for path in paths):
             raise ManifestError("source tree may not contain symlinks")
         material = b"".join(

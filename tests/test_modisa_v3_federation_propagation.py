@@ -37,6 +37,22 @@ class ModisaV3FederationPropagationTests(unittest.TestCase):
         self.assertEqual(receipt["file_count"], 66)
         self.assertIs(receipt["provider_effect"], False)
 
+    def test_source_tree_ignores_generated_python_cache(self) -> None:
+        cache = ROOT / self.compiler.manifest["source"]["root"] / "modisa_v2" / "__pycache__"
+        marker = cache / "airlock_probe.pyc"
+        cache.mkdir(exist_ok=True)
+        marker.write_bytes(b"generated-not-source")
+        try:
+            receipt = self.compiler.verify_source_tree(ROOT)
+            self.assertEqual(receipt["tree_sha256"], self.compiler.manifest["source"]["tree_sha256"])
+            self.assertEqual(receipt["file_count"], 66)
+        finally:
+            marker.unlink(missing_ok=True)
+            try:
+                cache.rmdir()
+            except OSError:
+                pass
+
     def test_every_source_module_exists(self) -> None:
         if PHOENIX_CORE_MANIFEST.is_file():
             self.skipTest("Phoenix Core export intentionally excludes secret-detector and snapshot source segments")
