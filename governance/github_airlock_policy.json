@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.18",
+  "version": "2.9.19",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -170,6 +170,7 @@
     ],
     ".github/workflows/seb-omega.yml": [
       "pull_request",
+      "push",
       "workflow_dispatch"
     ]
   },
@@ -211,6 +212,9 @@
       "main"
     ],
     ".github/workflows/sol62-google-surface-probe.yml": [
+      "main"
+    ],
+    ".github/workflows/seb-omega.yml": [
       "main"
     ]
   },
