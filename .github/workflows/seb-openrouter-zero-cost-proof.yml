@@ -1,0 +1,54 @@
+name: SEB OpenRouter Authenticated Zero-Cost Proof
+
+on:
+  workflow_dispatch:
+    inputs:
+      model:
+        description: Explicit OpenRouter free route or :free model
+        required: true
+        default: openrouter/free
+        type: string
+
+permissions:
+  contents: read
+
+jobs:
+  proof:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    env:
+      OPENROUTER_API_KEY: ${{ secrets.OPENROUTER_API_KEY }}
+      SEB_OPENROUTER_MODEL: ${{ inputs.model }}
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Validate free model selector
+        shell: bash
+        run: |
+          case "$SEB_OPENROUTER_MODEL" in
+            openrouter/free|*:free) ;;
+            *) echo "model must be openrouter/free or end in :free" >&2; exit 2 ;;
+          esac
+      - name: Run authenticated pre/key, inference, generation, post/key proof
+        run: python sovereign_execution_boundary/prove_openrouter_zero_cost.py > seb-openrouter-proof.json
+      - name: Assert sanitized proof contract
+        run: |
+          python - <<'PY'
+          import json
+          p=json.load(open('seb-openrouter-proof.json', encoding='utf-8'))
+          assert p['state'] == 'AUTHENTICATED_ZERO_COST_SEMANTIC_VERIFIED'
+          assert p['generation_cost_usd'] == '0'
+          assert p['key_usage_delta_usd'] == '0'
+          assert p['secret_exposed'] is False
+          assert p['external_mutation'] is False
+          assert p['requested_model']
+          assert p['resolved_model']
+          assert p['downstream_provider']
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: seb-openrouter-zero-cost-proof
+          path: seb-openrouter-proof.json
+          retention-days: 7
+          if-no-files-found: error
