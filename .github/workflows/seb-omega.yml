@@ -137,7 +137,8 @@ jobs:
           import json,os
           p=json.load(open('/tmp/seb-proof/revision.json'))
           observed=p.get('status',{}).get('imageDigest','')
-          assert observed==os.environ['IMAGE_DIGEST'], (observed,os.environ['IMAGE_DIGEST'])
+          expected=f"{os.environ['IMAGE_URI']}@{os.environ['IMAGE_DIGEST']}"
+          assert observed==expected, (observed,expected)
           PY
           SERVICE_URL=$(python -c "import json; print(json.load(open('/tmp/seb-proof/post.json'))['status']['url'])")
           TOKEN=$(gcloud auth print-identity-token --audiences="$SERVICE_URL")
