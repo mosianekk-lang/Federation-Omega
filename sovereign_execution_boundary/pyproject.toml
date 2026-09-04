@@ -9,6 +9,10 @@ description = "Provider-neutral, policy-governed AI workflow control plane"
 requires-python = ">=3.11"
 dependencies = []
 
+[project.optional-dependencies]
+temporal = ["temporalio>=1.16,<2"]
+test = ["temporalio>=1.16,<2"]
+
 [project.scripts]
 seb = "seb.api:main"
 
