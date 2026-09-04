@@ -82,10 +82,22 @@ from .jarvis_ao5 import (
     JarvisAO5Engine,
 )
 from .runtime import AOHarmonicV3, bootstrap
+from .human_first_runtime import (
+    HUMAN_FIRST_OMEGA_ID,
+    HumanFirstAOHarmonicV3,
+    HumanFirstForestBinding,
+    HumanFirstForestResult,
+    bootstrap_human_first,
+)
 
 __all__ = [
     "AOHarmonicV3",
     "bootstrap",
+    "HUMAN_FIRST_OMEGA_ID",
+    "HumanFirstAOHarmonicV3",
+    "HumanFirstForestBinding",
+    "HumanFirstForestResult",
+    "bootstrap_human_first",
     "AdaptiveCycleEngine",
     "AdaptiveCycleRequest",
     "AdaptiveCycleResult",
