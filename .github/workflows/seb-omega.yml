@@ -134,7 +134,9 @@ jobs:
           print(f'CANARY_REVISION={revision}'); print(f'CANARY_URL={url}'); print(f'CANARY_TAG={os.environ["TAG"]}')
           PY
           cat /tmp/seb-proof/runtime.env >> "$GITHUB_ENV"
+          set -a
           source /tmp/seb-proof/runtime.env
+          set +a
           gcloud run revisions describe "$CANARY_REVISION" --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/revision.json
           python - <<'PY'
           import json,os
