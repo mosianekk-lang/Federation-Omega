@@ -1,0 +1,48 @@
+{
+  "schema": "FKPF_OMEGA_V3_BUILD_CONTRACT_V1",
+  "name": "FKPF-OMEGA-INFINITY",
+  "version": "3.0.0",
+  "architecture": "FEDERATION_SOVEREIGN_COGNITIVE_EXECUTION_FABRIC",
+  "constitutional_planes": ["MISSION", "KNOWLEDGE", "EXECUTION", "PROOF", "AUTHORITY", "EVOLUTION"],
+  "extends_existing": ["FKPF_V1_HEAD_2", "CFBE", "FEDERATION_BIBLE_FABRIC", "FDOF", "ProofOS", "SOVARA", "Sentinel", "ChatBridge"],
+  "no_new_sovereign_plane": true,
+  "must_preserve": [
+    "provider-native proof before operational claim",
+    "matter and privacy walls",
+    "receiver-local domain authority",
+    "no authority/maturity/value inheritance",
+    "explicit owner authority for consequential effects",
+    "idempotency before mutation",
+    "provider probing before retry after effect-unknown",
+    "inactive chats are not invisibly mutated",
+    "source/test/provider/value states remain distinct"
+  ],
+  "target_integrations": {
+    "A2A": "1.0",
+    "MCP": "2026-07-28+",
+    "Temporal": "DURABLE_WORKFLOW_TARGET_SHADOW_FIRST",
+    "NATS_JetStream": "REPLAYABLE_EVENT_TARGET_SHADOW_FIRST",
+    "OPA_Rego": "DEFAULT_DENY_POLICY_TARGET",
+    "SPIFFE_SPIRE": "SHORT_LIVED_WORKLOAD_IDENTITY_TARGET",
+    "Sigstore_Cosign_GitHub_Attestations": "ARTIFACT_PROVENANCE_TARGET",
+    "OpenTelemetry": "TRACE_METRIC_LOG_TARGET"
+  },
+  "promotion_ladder": ["BUILT", "TESTED_LOCAL", "SOURCE_ADMITTED", "CI_ADMITTED", "SHADOW_BOUND", "PROVIDER_READBACK", "BEHAVIOUR_VERIFIED", "VALUE_OBSERVED"],
+  "required_tests": [
+    "monotonic delta sequence",
+    "idempotency",
+    "watermark currentness",
+    "privacy and matter firewall",
+    "proof authority and effect ceilings",
+    "supersession invalidation",
+    "event replay and ACK",
+    "workflow restore",
+    "A2A 1.0 contract",
+    "MCP no-secret/readback boundary",
+    "stale-provider semantic reroute",
+    "effect-unknown provider probe",
+    "consequential release court"
+  ],
+  "provider_runtime_effect": false,
+  "truth_boundary": "SOURCE_AND_TEST_PRESENCE_DO_NOT_PROVE_TEMPORAL_NATS_OPA_SPIRE_SIGSTORE_OTEL_OR_OTHER_PROVIDER_DEPLOYMENT"
+}
