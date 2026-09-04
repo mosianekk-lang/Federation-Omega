@@ -1,0 +1,42 @@
+{
+  "schema": "CFBE-ULTIMATE-EXECUTION-SPINE-V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL_BY_DEFAULT",
+  "source_anchor_at_design": "3b47e77062242f224ab1d3eab993d53fd3f95147",
+  "composition": [
+    "bubbles.control_plane.BubblesControlPlane",
+    "governance.external_action_firewall.ExternalActionFirewall",
+    "evidenceops.build_system.aaa_chat_resilience.evaluate_failure_with_aaa",
+    "federation.living_state.ingress.LivingStateIngress"
+  ],
+  "laws": {
+    "no_new_provider_authority": true,
+    "automatic_workarounds_read_or_internal_only": true,
+    "effectful_tasks_require_existing_bubbles_route_proofs_and_execution_lease": true,
+    "successful_pending_work_must_survive_sibling_failure": true,
+    "unchanged_failed_route_retry_must_obey_aaa_route_memory": true,
+    "stale_source_before_effect_fails_closed": true,
+    "low_information_optional_work_may_be_skipped": true,
+    "failure_learning_persists_to_living_state_when_bound": true,
+    "learning_persistence_failure_must_not_hide_primary_failure": true,
+    "source_test_runtime_provider_value_states_remain_distinct": true
+  },
+  "safe_workarounds": [
+    "REANCHOR_AND_REPLAN",
+    "BOUNDED_RETRY_WHEN_AAA_ALLOWS",
+    "ALTERNATE_READ_ROUTE",
+    "SERIALIZE_AND_REFRESH",
+    "QUARANTINE_AND_VERIFY",
+    "HOLD_EFFECT_CONTINUE_SAFE_LANES",
+    "DIAGNOSTIC_FALLBACK"
+  ],
+  "forbidden_workarounds": [
+    "AUTHORITY_BYPASS",
+    "CREDENTIAL_GUESSING",
+    "SAFEGUARD_EVASION",
+    "UNVERIFIED_PROVIDER_WRITE_REPLAY",
+    "SILENT_EFFECT_ESCALATION",
+    "SYNTHETIC_VALUE_PROMOTION"
+  ],
+  "truth_boundary": "Source and CI can prove deterministic orchestration behavior only. Provider execution, production durability, owner-value improvement and stable promotion require separate provider-native and prospective evidence."
+}

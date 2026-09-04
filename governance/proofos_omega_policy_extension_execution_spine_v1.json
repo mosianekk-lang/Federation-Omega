@@ -1,0 +1,69 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/execution_spine.py",
+        "proofos_omega/repository_coordination.py",
+        "governance/cfbe_ultimate_execution_spine_v1.json",
+        "governance/proofos_omega_policy_extension_execution_spine_v1.json"
+      ],
+      "reason": "CFBE_ULTIMATE_EXECUTION_CONCURRENCY_AUTHORITY_FAILURE_LEARNING_AND_COORDINATION_CORE"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "CFBE_ULTIMATE_EXECUTION_SPINE_V1",
+      "patterns": [
+        "federation/execution_spine.py",
+        "proofos_omega/repository_coordination.py",
+        "tests/test_execution_spine.py",
+        "tests/test_execution_spine_coordination_recovery.py",
+        "governance/cfbe_ultimate_execution_spine_v1.json",
+        "governance/proofos_omega_policy_extension_execution_spine_v1.json",
+        "docs/CFBE_ULTIMATE_EXECUTION_SPINE_V1.md"
+      ],
+      "depends_on": [
+        "CFBE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "cfbe_ultimate_execution_spine_v1",
+      "kind": "unittest_glob",
+      "target": "test_execution_spine.py",
+      "patterns": [
+        "federation/execution_spine.py",
+        "tests/test_execution_spine.py",
+        "governance/cfbe_ultimate_execution_spine_v1.json",
+        "governance/proofos_omega_policy_extension_execution_spine_v1.json"
+      ],
+      "subsystems": [
+        "CFBE_ULTIMATE_EXECUTION_SPINE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "cfbe_execution_spine_coordination_recovery_v1",
+      "kind": "unittest_glob",
+      "target": "test_execution_spine_coordination_recovery.py",
+      "patterns": [
+        "proofos_omega/repository_coordination.py",
+        "tests/test_execution_spine_coordination_recovery.py",
+        "governance/proofos_omega_policy_extension_execution_spine_v1.json"
+      ],
+      "subsystems": [
+        "CFBE_ULTIMATE_EXECUTION_SPINE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    }
+  ]
+}

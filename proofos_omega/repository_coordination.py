@@ -124,6 +124,33 @@ def _lease_validation_findings(lease: Mapping[str, Any], policy: Mapping[str, An
     return findings
 
 
+def _inactive_lease_state(
+    lease: Mapping[str, Any],
+    *,
+    now_utc: datetime,
+    lease_commit_sha: str,
+) -> dict[str, Any] | None:
+    """Return a terminal PASS for a parseable released/expired lease.
+
+    Lifecycle is evaluated before full active-lease field validation because an
+    expired or released descriptor no longer carries repository write authority.
+    The schema, lifecycle state and expiration timestamp must still be parseable.
+    Active leases continue through the complete fail-closed descriptor court.
+    """
+    state = lease.get("state")
+    if state not in {"ACTIVE", "RELEASED"}:
+        return None
+    try:
+        expires_at = _parse_time(str(lease.get("expires_at", "")))
+    except (TypeError, ValueError):
+        return None
+    if state == "RELEASED":
+        return _assessment("PASS", "LEASE_RELEASED", lease_commit_sha, lease, [])
+    if expires_at <= now_utc:
+        return _assessment("PASS", "LEASE_EXPIRED", lease_commit_sha, lease, [])
+    return None
+
+
 def evaluate_coordination(
     *,
     base_sha: str,
@@ -148,15 +175,13 @@ def evaluate_coordination(
     if lease is None:
         return _assessment("PASS", "NO_ACTIVE_V2_LEASE", lease_commit_sha, None, findings)
 
+    inactive = _inactive_lease_state(lease, now_utc=now_utc, lease_commit_sha=lease_commit_sha)
+    if inactive is not None:
+        return inactive
+
     findings.extend(_lease_validation_findings(lease, policy))
     if findings:
         return _assessment("FAIL", "INVALID_LEASE", lease_commit_sha, lease, findings)
-
-    expires_at = _parse_time(str(lease["expires_at"]))
-    if lease["state"] == "RELEASED":
-        return _assessment("PASS", "LEASE_RELEASED", lease_commit_sha, lease, findings)
-    if expires_at <= now_utc:
-        return _assessment("PASS", "LEASE_EXPIRED", lease_commit_sha, lease, findings)
 
     if str(lease["source_head"]) != str(base_sha):
         findings.append(CoordinationFinding(
