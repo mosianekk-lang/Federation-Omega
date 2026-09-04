@@ -1,17 +1,18 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "risk_rules": [],
   "subsystem_rules": [
     {
       "subsystem": "CHATGOV_PREFINAL",
       "patterns": [
-        "bubbles/chat_governor_omega3/**",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/regression.py",
+        "bubbles/chat_governor_omega3/__init__.py",
         "governance/human_first_omega_v1.json",
-        "doctrine/ACME-001-v3.0.md",
         "governance/proofos_omega_policy_extension_chatgov_prefinal_v1.json"
       ],
-      "depends_on": ["FEDERATION_CORE"]
+      "depends_on": []
     }
   ],
   "historical_associations": [
