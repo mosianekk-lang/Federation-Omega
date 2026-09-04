@@ -6,9 +6,9 @@
   "role": "FEDERATION_WIDE_CONSTITUTIONAL_HUMAN_CONTROL_PLANE",
   "position": "ABOVE_FOREST_FIRST_OMEGA_AND_CROSS_CUTTING_ALL_FEDERATION_ORGANS",
   "mission": "Maximise human agency, comprehension, protected attention, creator focus, option value and verified mission success while keeping avoidable system work inside the system and preserving human authority over consequential decisions.",
-  "authority_ceiling": "A1_INTERNAL_BY_DEFAULT",
+  "authority_ceiling": "A1_INTERNAL_BY_DEFAULT_WITH_EXPLICIT_SCOPED_OWNER_PREAUTHORIZATION_FOR_REVERSIBLE_EFFECTS",
   "external_effect_default": false,
-  "maturity": "SOURCE_AND_POLICY_CONTRACT_IMPLEMENTED_PROVIDER_RUNTIME_UNPROVEN",
+  "maturity": "SOURCE_POLICY_AND_FOREST_BINDING_IMPLEMENTED_PROVIDER_RUNTIME_UNPROVEN",
   "human_mission_contract": {
     "required_fields": [
       "mission_id",
@@ -22,14 +22,18 @@
       "cognitive_budget_minutes",
       "reversibility_requirement",
       "proof_requirement",
-      "stop_conditions"
+      "stop_conditions",
+      "authorized_external_effect_classes",
+      "authorization_refs"
     ],
     "intent_may_be_refined_not_silently_replaced": true,
-    "original_human_language_preserved": true
+    "original_human_language_preserved": true,
+    "preauthorization_rule": "A reversible external effect may avoid a repeated owner interruption only when its exact effect class and authorization reference were already written into the Human Mission Contract by owner authority, the HMC authority ceiling covers the action, and an exact readback plan exists. The action cannot self-mint authority.",
+    "consequential_irreversible_privacy_or_objective_change_remain_human_gated": true
   },
   "governors": {
     "intent_fidelity": "Prevent proxy-objective substitution and silent mission drift.",
-    "authority_and_consent": "Keep owner-reserved consequential effects distinct from safe internal autonomy.",
+    "authority_and_consent": "Keep owner-reserved consequential effects distinct from safe internal autonomy. Reuse explicit mission-scoped owner authorization for reversible effect classes instead of repeatedly re-prompting, but never infer or self-create authorization.",
     "interruption_broker": "Suppress avoidable owner interruptions and batch material decisions.",
     "creator_time": "Route debugging, retries, retrieval, QA, continuity and routine orchestration to the system where feasible.",
     "cognitive_load": "Progressive disclosure and decision-sized human surfaces.",
@@ -64,8 +68,8 @@
     "CFBE_OMEGA": "Capability improvement must include owner-burden and human-value benchmarks.",
     "OMEGA_SCIENTIST": "Experiments test hypotheses without redefining owner objectives.",
     "BUBBLES_MODISA": "Recovery and orchestration absorb avoidable system work before owner escalation.",
-    "SOVARA": "External-effect authority remains separately governed and read back.",
-    "KDV_BIBLE_CHATBRIDGE": "Durable mission state preserves intent, decisions, proof and restore inheritance."
+    "SOVARA": "External-effect authority remains separately governed and read back. Human-First may carry a prior owner authorization reference but may not create provider authority.",
+    "KDV_BIBLE_CHATBRIDGE": "Durable mission state preserves intent, decisions, authorization references, proof and restore inheritance."
   },
   "automatic_internal_scope": [
     "READ_ONLY_RETRIEVAL",
@@ -85,6 +89,7 @@
     "IRREVERSIBLE_ACTION",
     "AUTHORITY_EXPANSION",
     "PRIVACY_ENVELOPE_EXPANSION",
+    "UNAUTHORIZED_EXTERNAL_EFFECT",
     "CONSEQUENTIAL_EXTERNAL_EFFECT",
     "MATERIAL_RESIDUAL_RISK",
     "TEACH_BACK_REQUIRED",
@@ -113,6 +118,7 @@
     "AUTOMATION_MUST_REDUCE_HUMAN_BURDEN",
     "IMPORTANT_ACTIONS_MUST_REMAIN_CONTROLLABLE",
     "EXTERNAL_EFFECT_MUST_MATCH_ACTUAL_AUTHORITY",
+    "PREAUTHORIZATION_MUST_BE_SCOPED_REFERENCEABLE_AND_READBACK_BOUND",
     "SUCCESS_REQUIRES_READBACK",
     "LEARNING_REQUIRES_MEASURED_HUMAN_VALUE",
     "HUMAN_ATTENTION_DIGNITY_AND_FINITE_TIME_ARE_FIRST_CLASS_SYSTEM_RESOURCES"
@@ -122,10 +128,13 @@
     "deterministic_gate_source_present": true,
     "policy_as_code_present": true,
     "regression_tests_present": true,
+    "scoped_preauthorization_contract_present": true,
+    "forest_first_source_binding_present": true,
+    "human_first_ao_wrapper_present": true,
     "provider_runtime_bound": false,
     "cross_surface_enforcement_proved": false,
     "human_value_improvement_measured": false,
     "external_authority_expanded": false
   },
-  "next_maturity_gate": "EXACT_HEAD_CI_PASS_THEN_BOUNDED_A1_SHADOW_THEN_MEASURED_OWNER_BURDEN_AND_INTENT_FIDELITY_CANARY_BEFORE_RUNTIME_PROMOTION"
+  "next_maturity_gate": "EXACT_HEAD_BINDING_CI_PASS_THEN_BOUNDED_A1_A2_PREAUTHORIZED_SHADOW_THEN_MEASURED_OWNER_BURDEN_AND_INTENT_FIDELITY_CANARY_BEFORE_RUNTIME_PROMOTION"
 }

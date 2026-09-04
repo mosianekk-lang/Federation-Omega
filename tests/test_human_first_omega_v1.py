@@ -34,30 +34,111 @@ def test_safe_internal_action_continues_without_human_interrupt():
     assert decision.mode == "AUTO_CONTINUE_SILENT"
 
 
-def test_external_effect_is_held_for_human_even_with_readback_plan():
+def test_unapproved_external_effect_is_held_for_human_even_with_readback_plan():
     action = ActionProposal(
         action_id="A2",
         description="Send an external message",
         authority_required="A2_EXTERNAL_REVERSIBLE",
         external_effect=True,
+        effect_class="EXTERNAL_MESSAGE_SEND",
+        authorization_ref="OWNER:NOT-IN-CONTRACT",
         readback_plan_present=True,
     )
     decision = evaluate(contract(), action)
     assert decision.allow is False
     assert decision.human_required is True
-    assert "EXTERNAL_EFFECT" in decision.reasons
+    assert "EXTERNAL_EFFECT_REQUIRES_OWNER_AUTHORIZATION" in decision.reasons
     assert "AUTHORITY_CEILING_EXCEEDED" in decision.reasons
 
 
-def test_external_effect_without_readback_plan_fails_closed():
+def test_scoped_preauthorized_reversible_external_effect_can_continue():
+    approved = contract(
+        authority_ceiling="A2_EXTERNAL_REVERSIBLE",
+        authorized_external_effect_classes=("SOURCE_GOVERNANCE_WRITE",),
+        authorization_refs=("OWNER:PROCEED:20260904",),
+    )
     action = ActionProposal(
-        action_id="A3",
-        description="External effect without verification",
+        action_id="A2-PREAUTH",
+        description="Apply the already-authorized reversible source governance write",
         authority_required="A2_EXTERNAL_REVERSIBLE",
         external_effect=True,
+        effect_class="SOURCE_GOVERNANCE_WRITE",
+        authorization_ref="OWNER:PROCEED:20260904",
+        readback_plan_present=True,
     )
-    decision = evaluate(contract(), action)
+    decision = evaluate(approved, action)
+    assert decision.allow is True
+    assert decision.human_required is False
+    assert decision.mode == "AUTO_CONTINUE"
+
+
+def test_mismatched_effect_class_or_authorization_ref_fails_closed():
+    approved = contract(
+        authority_ceiling="A2_EXTERNAL_REVERSIBLE",
+        authorized_external_effect_classes=("SOURCE_GOVERNANCE_WRITE",),
+        authorization_refs=("OWNER:PROCEED:20260904",),
+    )
+    wrong_class = ActionProposal(
+        action_id="WRONG-CLASS",
+        description="Different effect class",
+        authority_required="A2_EXTERNAL_REVERSIBLE",
+        external_effect=True,
+        effect_class="EXTERNAL_MESSAGE_SEND",
+        authorization_ref="OWNER:PROCEED:20260904",
+        readback_plan_present=True,
+    )
+    wrong_ref = ActionProposal(
+        action_id="WRONG-REF",
+        description="Different authorization reference",
+        authority_required="A2_EXTERNAL_REVERSIBLE",
+        external_effect=True,
+        effect_class="SOURCE_GOVERNANCE_WRITE",
+        authorization_ref="OWNER:DIFFERENT",
+        readback_plan_present=True,
+    )
+    assert "EXTERNAL_EFFECT_REQUIRES_OWNER_AUTHORIZATION" in evaluate(approved, wrong_class).reasons
+    assert "EXTERNAL_EFFECT_REQUIRES_OWNER_AUTHORIZATION" in evaluate(approved, wrong_ref).reasons
+
+
+def test_external_effect_without_readback_plan_fails_closed_even_if_preauthorized():
+    approved = contract(
+        authority_ceiling="A2_EXTERNAL_REVERSIBLE",
+        authorized_external_effect_classes=("SOURCE_GOVERNANCE_WRITE",),
+        authorization_refs=("OWNER:PROCEED:20260904",),
+    )
+    action = ActionProposal(
+        action_id="A3",
+        description="Preauthorized external effect without verification plan",
+        authority_required="A2_EXTERNAL_REVERSIBLE",
+        external_effect=True,
+        effect_class="SOURCE_GOVERNANCE_WRITE",
+        authorization_ref="OWNER:PROCEED:20260904",
+        readback_plan_present=False,
+    )
+    decision = evaluate(approved, action)
+    assert decision.human_required is True
     assert "READBACK_PLAN_REQUIRED" in decision.reasons
+
+
+def test_consequential_action_remains_human_gated_despite_other_preauthorization():
+    approved = contract(
+        authority_ceiling="A3_CONSEQUENTIAL",
+        authorized_external_effect_classes=("SOURCE_GOVERNANCE_WRITE",),
+        authorization_refs=("OWNER:PROCEED:20260904",),
+    )
+    action = ActionProposal(
+        action_id="A3-CONSEQUENTIAL",
+        description="Consequential action",
+        authority_required="A3_CONSEQUENTIAL",
+        external_effect=True,
+        effect_class="SOURCE_GOVERNANCE_WRITE",
+        authorization_ref="OWNER:PROCEED:20260904",
+        consequential=True,
+        readback_plan_present=True,
+    )
+    decision = evaluate(approved, action)
+    assert decision.human_required is True
+    assert "CONSEQUENTIAL_ACTION" in decision.reasons
 
 
 def test_objective_change_never_happens_silently():
