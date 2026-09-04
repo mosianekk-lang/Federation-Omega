@@ -1,0 +1,61 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [],
+  "subsystem_rules": [
+    {
+      "subsystem": "CHATGOV_PREFINAL",
+      "patterns": [
+        "bubbles/chat_governor_omega3/**",
+        "governance/human_first_omega_v1.json",
+        "doctrine/ACME-001-v3.0.md",
+        "governance/proofos_omega_policy_extension_chatgov_prefinal_v1.json"
+      ],
+      "depends_on": ["FEDERATION_CORE"]
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/regression.py",
+        "governance/human_first_omega_v1.json",
+        "doctrine/ACME-001-v3.0.md"
+      ],
+      "tests": ["chatgov_prefinal_integrity", "chatgov_integrity_regression"],
+      "evidence": "20260905_CURRENT_CHAT_PREMATURE_TERMINATION_AND_MATURITY_OVERCLAIM_REMEDIATION"
+    }
+  ],
+  "tests": [
+    {
+      "id": "chatgov_prefinal_integrity",
+      "kind": "unittest_module",
+      "target": "bubbles.chat_governor_omega3.test_pre_final",
+      "patterns": [
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "governance/human_first_omega_v1.json",
+        "doctrine/ACME-001-v3.0.md",
+        "governance/proofos_omega_policy_extension_chatgov_prefinal_v1.json"
+      ],
+      "subsystems": ["CHATGOV_PREFINAL"],
+      "failure_class": "MISSION_COMPLETION_OR_CLAIM_INTEGRITY_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "chatgov_integrity_regression",
+      "kind": "unittest_module",
+      "target": "bubbles.chat_governor_omega3.test_regression",
+      "patterns": [
+        "bubbles/chat_governor_omega3/regression.py",
+        "bubbles/chat_governor_omega3/test_regression.py",
+        "governance/proofos_omega_policy_extension_chatgov_prefinal_v1.json"
+      ],
+      "subsystems": ["CHATGOV_PREFINAL"],
+      "failure_class": "LEARNING_OR_REPLAY_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
