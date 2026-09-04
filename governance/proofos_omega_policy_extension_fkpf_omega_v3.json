@@ -1,0 +1,73 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/fkpf_omega_v3/ARCHITECTURE.md",
+        "federation/fkpf_omega_v3/BUILD_CONTRACT.json",
+        "federation/fkpf_omega_v3/README.md",
+        "federation/fkpf_omega_v3/deployment/docker-compose.shadow.yml",
+        "federation/fkpf_omega_v3/deployment/otel-collector.yaml",
+        "federation/fkpf_omega_v3/interop/agent_cards.json",
+        "federation/fkpf_omega_v3/interop/mcp_boundaries.json",
+        "federation/fkpf_omega_v3/kernel.py",
+        "federation/fkpf_omega_v3/policy/federation.rego",
+        "governance/fkpf_omega_v3_admission.json",
+        "governance/proofos_omega_policy_extension_fkpf_omega_v3.json"
+      ],
+      "reason": "FKPF_OMEGA_V3_SOVEREIGN_COGNITIVE_EXECUTION_FABRIC_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FKPF_OMEGA_V3",
+      "patterns": [
+        "federation/fkpf_omega_v3/ARCHITECTURE.md",
+        "federation/fkpf_omega_v3/BUILD_CONTRACT.json",
+        "federation/fkpf_omega_v3/README.md",
+        "federation/fkpf_omega_v3/deployment/docker-compose.shadow.yml",
+        "federation/fkpf_omega_v3/deployment/otel-collector.yaml",
+        "federation/fkpf_omega_v3/interop/agent_cards.json",
+        "federation/fkpf_omega_v3/interop/mcp_boundaries.json",
+        "federation/fkpf_omega_v3/kernel.py",
+        "federation/fkpf_omega_v3/policy/federation.rego",
+        "federation/fkpf_omega_v3/tests/test_kernel.py",
+        "governance/fkpf_omega_v3_admission.json",
+        "governance/proofos_omega_policy_extension_fkpf_omega_v3.json"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "CFBE",
+        "FEDERATION_BIBLE_FABRIC"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fkpf_omega_v3",
+      "kind": "unittest_glob",
+      "target": "test_kernel.py",
+      "patterns": [
+        "federation/fkpf_omega_v3/ARCHITECTURE.md",
+        "federation/fkpf_omega_v3/BUILD_CONTRACT.json",
+        "federation/fkpf_omega_v3/README.md",
+        "federation/fkpf_omega_v3/deployment/docker-compose.shadow.yml",
+        "federation/fkpf_omega_v3/deployment/otel-collector.yaml",
+        "federation/fkpf_omega_v3/interop/agent_cards.json",
+        "federation/fkpf_omega_v3/interop/mcp_boundaries.json",
+        "federation/fkpf_omega_v3/kernel.py",
+        "federation/fkpf_omega_v3/policy/federation.rego",
+        "federation/fkpf_omega_v3/tests/test_kernel.py",
+        "governance/fkpf_omega_v3_admission.json",
+        "governance/proofos_omega_policy_extension_fkpf_omega_v3.json"
+      ],
+      "subsystems": ["FKPF_OMEGA_V3"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}
