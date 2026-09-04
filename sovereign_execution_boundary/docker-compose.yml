@@ -4,8 +4,17 @@ services:
     ports: ["127.0.0.1:8080:8080"]
     environment:
       SEB_ENABLE_OPENROUTER: "0"
+      SEB_POLICY_BACKEND: "opa"
+      SEB_OPA_URL: "http://opa:8181/v1/data/seb/decision"
+    depends_on: ["opa"]
     read_only: true
     tmpfs: ["/app/data:size=64m,mode=0700"]
     security_opt: ["no-new-privileges:true"]
     cap_drop: ["ALL"]
-
+  opa:
+    image: ${OPA_IMAGE:?pin OPA_IMAGE to an immutable tested digest}
+    command: ["run", "--server", "--addr=0.0.0.0:8181", "/policies/seb.rego"]
+    volumes: ["./policy:/policies:ro"]
+    read_only: true
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
