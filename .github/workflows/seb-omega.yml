@@ -5,6 +5,7 @@ on:
     paths:
       - 'sovereign_execution_boundary/**'
       - '.github/workflows/seb-omega.yml'
+      - 'governance/github_airlock_policy.json'
   workflow_dispatch:
     inputs:
       confirmation:
