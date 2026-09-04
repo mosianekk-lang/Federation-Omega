@@ -85,8 +85,11 @@ jobs:
       - name: Build immutable image
         run: |
           set -euo pipefail
-          gcloud builds submit sovereign_execution_boundary --project sov-hybrid-suite --tag us-central1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega:${GITHUB_SHA}
-          IMAGE=$(gcloud artifacts docker images describe us-central1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega:${GITHUB_SHA} --format='value(image_summary.digest)')
+          gcloud auth configure-docker us-central1-docker.pkg.dev --quiet
+          IMAGE_TAG=us-central1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega:${GITHUB_SHA}
+          docker build --pull -t "$IMAGE_TAG" sovereign_execution_boundary
+          docker push "$IMAGE_TAG" >/dev/null
+          IMAGE=$(gcloud artifacts docker images describe "$IMAGE_TAG" --project sov-hybrid-suite --format='value(image_summary.digest)')
           [[ "$IMAGE" =~ ^sha256:[0-9a-f]{64}$ ]]
           echo "IMAGE_DIGEST=$IMAGE" >> "$GITHUB_ENV"
           echo "IMAGE_URI=us-central1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega" >> "$GITHUB_ENV"
