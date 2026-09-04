@@ -1,0 +1,79 @@
+name: SEB Omega Qualification and Zero-Traffic Canary
+
+on:
+  pull_request:
+    paths:
+      - 'sovereign_execution_boundary/**'
+      - '.github/workflows/seb-omega.yml'
+  workflow_dispatch:
+    inputs:
+      confirmation:
+        description: 'Type DEPLOY_SEB_OMEGA_ZERO_TRAFFIC'
+        required: true
+      promote:
+        description: 'Promote traffic only after tagged canary readback'
+        required: true
+        default: false
+        type: boolean
+
+permissions:
+  contents: read
+  id-token: write
+  packages: write
+  attestations: write
+
+jobs:
+  qualify:
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: sovereign_execution_boundary
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with: {python-version: '3.12'}
+      - run: python -m compileall -q seb tests
+      - run: python -m unittest discover -s tests -v
+      - run: docker build --pull -t seb-omega:${{ github.sha }} .
+      - run: docker run --rm --read-only --tmpfs /tmp seb-omega:${{ github.sha }} python -m unittest discover -s tests -v
+      - uses: anchore/sbom-action@v0
+        with:
+          image: seb-omega:${{ github.sha }}
+          format: spdx-json
+          output-file: seb-omega.spdx.json
+      - uses: aquasecurity/trivy-action@0.28.0
+        with:
+          image-ref: seb-omega:${{ github.sha }}
+          severity: CRITICAL,HIGH
+          exit-code: '1'
+
+  zero-traffic-canary:
+    if: github.event_name == 'workflow_dispatch'
+    needs: qualify
+    runs-on: ubuntu-latest
+    environment: seb-omega-canary
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify explicit canary authority
+        run: test '${{ inputs.confirmation }}' = 'DEPLOY_SEB_OMEGA_ZERO_TRAFFIC'
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ vars.FEDOMEGA_WORKLOAD_IDENTITY_PROVIDER }}
+          service_account: ${{ vars.FEDOMEGA_DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Build immutable image
+        run: |
+          gcloud builds submit sovereign_execution_boundary --project sov-hybrid-suite --tag us-central1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega:${GITHUB_SHA}
+          IMAGE=$(gcloud artifacts docker images describe us-central1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega:${GITHUB_SHA} --format='value(image_summary.digest)')
+          test -n "$IMAGE"
+          echo "IMAGE_DIGEST=$IMAGE" >> "$GITHUB_ENV"
+      - name: Deploy immutable zero-traffic revision
+        run: |
+          gcloud run deploy seb-omega --project sov-hybrid-suite --region us-central1 --image us-central1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega@${IMAGE_DIGEST} --no-traffic --tag canary-${GITHUB_RUN_ID} --no-allow-unauthenticated
+          URL=$(gcloud run services describe seb-omega --project sov-hybrid-suite --region us-central1 --format='value(status.url)')
+          TOKEN=$(gcloud auth print-identity-token)
+          curl --fail --silent --show-error -H "Authorization: Bearer $TOKEN" "$URL/health" | tee /tmp/health.json
+          python -c "import json; p=json.load(open('/tmp/health.json')); assert p.get('status') == 'ok', p"
+      - name: Promote only after explicit request
+        if: inputs.promote
+        run: gcloud run services update-traffic seb-omega --project sov-hybrid-suite --region us-central1 --to-tags canary-${GITHUB_RUN_ID}=100
