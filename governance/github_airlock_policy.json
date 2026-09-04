@@ -1,11 +1,15 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.16",
+  "version": "2.9.17",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
     "require_pull_request": true,
-    "required_status_checks": ["admission", "contract", "scan"],
+    "required_status_checks": [
+      "admission",
+      "contract",
+      "scan"
+    ],
     "require_code_owner_review": false,
     "required_approving_review_count": 0,
     "dismiss_stale_reviews": true,
@@ -45,53 +49,170 @@
     ".github/workflows/sol62-google-surface-probe.yml",
     ".github/workflows/kimmie-seed-199-bot-workforce.yml",
     ".github/workflows/nexus-direct-preflight.yml",
-    ".github/workflows/nexus-direct-runtime-target.yml"
+    ".github/workflows/nexus-direct-runtime-target.yml",
+    ".github/workflows/seb-omega.yml"
   ],
   "allowed_events": {
-    ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
-    ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/bubbles-browser-runtime-canary.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/autopilot-operational-witness.yml": ["workflow_run"],
-    ".github/workflows/fdof-hosted-state-export-v1.yml": ["issues"],
-    ".github/workflows/fdof-hosted-state-restore-v1.yml": ["workflow_run"],
-    ".github/workflows/bco-provider-readback-continuity.yml": ["workflow_run"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/bubbles-provider-authority-recovery-probe.yml": ["issues", "workflow_dispatch"],
-    ".github/workflows/evidenceops-pst-corpus-v2-extract.yml": ["issues", "workflow_dispatch"],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/sovara-project-iam-bridge.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/cios-production-lane.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/frontier-runtime-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/bco-prime-shadow-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/cfbe-observed-current-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/superior-logic-maturation-shadow.yml": ["push", "schedule", "workflow_dispatch"],
-    ".github/workflows/luno-observer-provider-binding.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/deploy-gemini-gateway.yml": ["workflow_dispatch"],
-    ".github/workflows/fo-wif-semantic-canary-v2.yml": ["issues"],
-    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": ["issues"],
-    ".github/workflows/sol62-wif-hardening-lease.yml": ["issues"],
-    ".github/workflows/sol62-google-surface-probe.yml": ["push", "workflow_dispatch"],
-    ".github/workflows/kimmie-seed-199-bot-workforce.yml": ["workflow_dispatch"],
-    ".github/workflows/nexus-direct-preflight.yml": ["workflow_dispatch"],
-    ".github/workflows/nexus-direct-runtime-target.yml": ["workflow_dispatch"]
+    ".github/workflows/github-airlock.yml": [
+      "pull_request",
+      "merge_group",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/public-repository-leak-guard.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/phoenix-emergency-freeze.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/bubbles-command-bus.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/bubbles-browser-runtime-canary.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/autopilot-operational-witness.yml": [
+      "workflow_run"
+    ],
+    ".github/workflows/fdof-hosted-state-export-v1.yml": [
+      "issues"
+    ],
+    ".github/workflows/fdof-hosted-state-restore-v1.yml": [
+      "workflow_run"
+    ],
+    ".github/workflows/bco-provider-readback-continuity.yml": [
+      "workflow_run"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "push"
+    ],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/bubbles-provider-authority-recovery-probe.yml": [
+      "issues",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/evidenceops-pst-corpus-v2-extract.yml": [
+      "issues",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/sovara-project-iam-bridge.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/cios-production-lane.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/frontier-runtime-qualification.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/bco-prime-shadow-qualification.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/cfbe-observed-current-qualification.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/superior-logic-maturation-shadow.yml": [
+      "push",
+      "schedule",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/luno-observer-provider-binding.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/deploy-gemini-gateway.yml": [
+      "workflow_dispatch"
+    ],
+    ".github/workflows/fo-wif-semantic-canary-v2.yml": [
+      "issues"
+    ],
+    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": [
+      "issues"
+    ],
+    ".github/workflows/sol62-wif-hardening-lease.yml": [
+      "issues"
+    ],
+    ".github/workflows/sol62-google-surface-probe.yml": [
+      "push",
+      "workflow_dispatch"
+    ],
+    ".github/workflows/kimmie-seed-199-bot-workforce.yml": [
+      "workflow_dispatch"
+    ],
+    ".github/workflows/nexus-direct-preflight.yml": [
+      "workflow_dispatch"
+    ],
+    ".github/workflows/nexus-direct-runtime-target.yml": [
+      "workflow_dispatch"
+    ],
+    ".github/workflows/seb-omega.yml": [
+      "pull_request",
+      "workflow_dispatch"
+    ]
   },
   "required_push_branches": {
-    ".github/workflows/bubbles-command-bus.yml": ["main"],
-    ".github/workflows/bubbles-browser-runtime-canary.yml": ["main"],
-    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["main"],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["main"],
-    ".github/workflows/sovara-project-iam-bridge.yml": ["main"],
-    ".github/workflows/cios-production-lane.yml": ["main"],
-    ".github/workflows/frontier-runtime-qualification.yml": ["main"],
-    ".github/workflows/bco-prime-shadow-qualification.yml": ["main"],
-    ".github/workflows/cfbe-observed-current-qualification.yml": ["main"],
-    ".github/workflows/superior-logic-maturation-shadow.yml": ["main"],
-    ".github/workflows/luno-observer-provider-binding.yml": ["main"],
-    ".github/workflows/sol62-google-surface-probe.yml": ["main"]
+    ".github/workflows/bubbles-command-bus.yml": [
+      "main"
+    ],
+    ".github/workflows/bubbles-browser-runtime-canary.yml": [
+      "main"
+    ],
+    ".github/workflows/caseforge-provider-readback-canary.yml": [
+      "main"
+    ],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
+      "main"
+    ],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
+      "main"
+    ],
+    ".github/workflows/sovara-project-iam-bridge.yml": [
+      "main"
+    ],
+    ".github/workflows/cios-production-lane.yml": [
+      "main"
+    ],
+    ".github/workflows/frontier-runtime-qualification.yml": [
+      "main"
+    ],
+    ".github/workflows/bco-prime-shadow-qualification.yml": [
+      "main"
+    ],
+    ".github/workflows/cfbe-observed-current-qualification.yml": [
+      "main"
+    ],
+    ".github/workflows/superior-logic-maturation-shadow.yml": [
+      "main"
+    ],
+    ".github/workflows/luno-observer-provider-binding.yml": [
+      "main"
+    ],
+    ".github/workflows/sol62-google-surface-probe.yml": [
+      "main"
+    ]
   },
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
@@ -103,15 +224,24 @@
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
     ".github/workflows/sol62-wif-hardening-lease.yml",
     ".github/workflows/nexus-direct-preflight.yml",
-    ".github/workflows/nexus-direct-runtime-target.yml"
+    ".github/workflows/nexus-direct-runtime-target.yml",
+    ".github/workflows/seb-omega.yml"
   ],
-  "attestations_write_workflow_allowlist": [".github/workflows/cfbe-hyperleverage-attestation-v1.yml"],
-  "provider_mutation_workflow_allowlist": [".github/workflows/sol62-wif-hardening-lease.yml"],
+  "attestations_write_workflow_allowlist": [
+    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
+  ],
+  "provider_mutation_workflow_allowlist": [
+    ".github/workflows/sol62-wif-hardening-lease.yml"
+  ],
   "provider_mutation_exact_issue_titles": {
     ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901"
   },
-  "actions_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
-  "statuses_write_workflow_allowlist": [".github/workflows/phoenix-emergency-freeze.yml"],
+  "actions_write_workflow_allowlist": [
+    ".github/workflows/phoenix-emergency-freeze.yml"
+  ],
+  "statuses_write_workflow_allowlist": [
+    ".github/workflows/phoenix-emergency-freeze.yml"
+  ],
   "forbidden_pattern_exceptions": {
     ".github/workflows/phoenix-emergency-freeze.yml": [
       "gh api --method put",
@@ -133,7 +263,11 @@
     "gh api -x patch",
     "gh api -x delete"
   ],
-  "forbidden_source_paths": ["deployment_receipts/", "runtime-receipts/", "workflow-state/"],
+  "forbidden_source_paths": [
+    "deployment_receipts/",
+    "runtime-receipts/",
+    "workflow-state/"
+  ],
   "maximum_workflow_files_changed_per_pull_request": 3,
   "require_immutable_action_shas": true,
   "require_checkout_credentials_disabled": true,
@@ -196,9 +330,12 @@
       ".github/workflows/sol62-google-surface-probe.yml",
       ".github/workflows/kimmie-seed-199-bot-workforce.yml",
       ".github/workflows/nexus-direct-preflight.yml",
-      ".github/workflows/nexus-direct-runtime-target.yml"
+      ".github/workflows/nexus-direct-runtime-target.yml",
+      ".github/workflows/seb-omega.yml"
     ],
-    "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
+    "provider_managed_active": [
+      "dynamic/dependabot/dependabot-updates"
+    ],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",
     "all_other_workflows": "DISABLED_MANUALLY",
     "provider_readback_required": true,
