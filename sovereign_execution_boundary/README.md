@@ -21,14 +21,32 @@ routes, and completion evidence are separate state domains.
 - Anti-dilution comparison for requirements, tests, invariants and prohibited substitutes.
 - A completion theorem that returns `BLOCKED_INCOMPLETE` until all proofs hold.
 - OPA, durable-workflow, SPIFFE identity and Kubernetes production contracts.
+- Fail-closed mTLS with CA validation and exact URI-SAN SPIFFE authorization.
 
 OpenRouter is disabled by default. No production credential, provider call or external effect is part of this qualification. Kubernetes, OPA, Temporal, SPIFFE/SPIRE and production rollback still require live infrastructure; their absence is an open operational requirement, not a completed substitute.
+
+### SPIFFE mTLS host proof
+
+Set `SEB_MTLS_REQUIRED=1` and the SVID, key, bundle, and exact allowed identity
+variables in `.env.example`. A SPIRE Agent and `spiffe-helper` can materialize
+and rotate those files from the standard Workload API. SEB refuses to start if
+the files are absent, requires a CA-valid client certificate, and permits a
+mission only when its sole URI SAN exactly matches the configured SPIFFE ID.
+
+Run `PYTHONPATH=. python3 proofs/prove_spiffe_mtls.py` (requires `openssl`). It
+creates ephemeral certificates and proves that an intended SVID is accepted
+while a CA-valid rogue SVID in the same trust domain is denied. This proves the
+host enforcement mechanism, not deployment of a production SPIRE control plane.
 
 ## Run
 
 ```bash
 python3 -m seb.api
 ```
+
+The service defaults to the real OPA backend and fails closed on connection,
+HTTP, JSON, schema, or contradictory-decision errors. For isolated development
+tests only, set both `SEB_ENVIRONMENT=development` and `SEB_POLICY_BACKEND=local`.
 
 Health:
 
@@ -77,4 +95,4 @@ Rollback this reference build by stopping its container and restoring the prior 
 
 ## Maturity
 
-`IMPLEMENTED_LOCAL / TESTED_LOCAL` after the included verification suite passes. It is not deployed, provider-proven or production-authorized.
+`IMPLEMENTED_LOCAL / TESTED_LOCAL` after the included verification suite passes. A hosted claim additionally requires: an immutable OPA image digest; exact Rego-to-ConfigMap byte/digest attestation; an OPA readiness readback; allow and deny API canaries; an OPA-stop canary proving zero provider calls and an `opa_unavailable_or_invalid` ledger decision; restart/persistence health; and rollback to the prior revision with readback. Source and local tests are not deployment proof.

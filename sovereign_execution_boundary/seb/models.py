@@ -114,6 +114,11 @@ class ProviderResponse:
     tokens: int
     latency_ms: int
     refusal: bool = False
+    requested_model: str | None = None
+    generation_id: str | None = None
+    downstream_provider: str | None = None
+    usage: dict[str, Any] = field(default_factory=dict)
+    cost_usd: float | None = None
 
 
 @dataclass(frozen=True)
@@ -133,3 +138,4 @@ class ExecutionResult:
     proof: tuple[str, ...]
     failure_class: FailureClass | None = None
     message: str = ""
+    provider_metadata: dict[str, Any] = field(default_factory=dict)

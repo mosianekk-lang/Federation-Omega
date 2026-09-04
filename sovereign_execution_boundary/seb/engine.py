@@ -9,12 +9,13 @@ from .models import (ExecutionResult, FailureClass, MissionIR, MissionState,
 from .completion import CompletionTheorem
 from .models import CompletionEvidence
 from .objective import ObjectiveContract
-from .policy import PolicyEngine
+from .policy import PolicyEngine, OpaPolicyEngine
 from .router import ProviderRouter
 
 
 class SovereignEngine:
-    def __init__(self, ledger: JsonlLedger, policy: PolicyEngine, router: ProviderRouter):
+    def __init__(self, ledger: JsonlLedger, policy: PolicyEngine | OpaPolicyEngine,
+                 router: ProviderRouter):
         self.ledger = ledger
         self.policy = policy
         self.router = router
@@ -26,7 +27,8 @@ class SovereignEngine:
 
     def execute(self, mission: MissionIR, prompt: str, schema: dict,
                 verifier: Callable[[dict], bool], *, contract: ObjectiveContract | None = None,
-                evidence_builder: Callable[[dict], CompletionEvidence] | None = None) -> ExecutionResult:
+                evidence_builder: Callable[[dict], CompletionEvidence] | None = None,
+                requested_model: str = "mock-model") -> ExecutionResult:
         try:
             mission.validate()
         except ValueError as exc:
@@ -45,7 +47,11 @@ class SovereignEngine:
                                    decision.reason)
         self.ledger.append(mission.mission_id, "MISSION_PROCESSING",
                            {"fingerprint": mission.fingerprint})
-        req = ProviderRequest(mission.mission_id, str(uuid4()), prompt, schema, "mock-model",
+        model = requested_model.strip()
+        if not model:
+            return ExecutionResult(mission.mission_id, MissionState.FAILED, None, None, 0, (),
+                                   FailureClass.SEMANTIC_FAILURE, "requested model is required")
+        req = ProviderRequest(mission.mission_id, str(uuid4()), prompt, schema, model,
                               mission.budget.max_tokens, mission.data_class)
         routed = self.router.route(req)
         for provider, kind, message in routed.failures:
@@ -83,9 +89,19 @@ class SovereignEngine:
                                        response.content, response.provider, routed.attempts,
                                        (completion.proof_hash,), FailureClass.SEMANTIC_FAILURE,
                                        ";".join(completion.defects))
+        metadata = {
+            "requested_model": response.requested_model or req.model,
+            "resolved_model": response.model,
+            "generation_id": response.generation_id,
+            "downstream_provider": response.downstream_provider,
+            "usage": response.usage,
+            "cost_usd": response.cost_usd,
+        }
         proof_event = self.ledger.append(mission.mission_id, "MISSION_COMPLETED",
-                                         {"provider": response.provider, "output": response.content})
+                                         {"provider": response.provider, "output": response.content,
+                                          "provider_metadata": metadata})
         self.ledger.verify()
         return ExecutionResult(mission.mission_id, MissionState.COMPLETED, response.content,
                                response.provider, routed.attempts,
-                               (decision.decision_id, proof_event.event_hash))
+                               (decision.decision_id, proof_event.event_hash),
+                               provider_metadata=metadata)
