@@ -1,0 +1,38 @@
+{
+  "contract_version": "1.1",
+  "mission": {
+    "id": "MODISA-FKCM-V1.1-20260904",
+    "goal": "Converge Federation Omega and Kim Dataverse into one event-driven cognitive mesh with exact BMF projection compatibility, without creating a duplicate sovereign plane.",
+    "environment": "LOCAL_SHADOW_READ_ONLY",
+    "governance": "A1 internal source candidate; no cloud/provider/KDV mutation; GEN1 remains fallback.",
+    "deployment": "HELD: source admission and provider transport require separate exact gates.",
+    "continuity": "Event-first; source leases; deterministic replay; CAS-only future writes; rollback to GEN1 read-only fallback."
+  },
+  "reuse": [
+    "FEDERATION-OMNI-MESH-V1",
+    "KDV-GEN2-FTSC-v0",
+    "BMF_SHADOW_EVENTS",
+    "FEDERATION_UNIFIED_CAPABILITY_GRAPH/EDGES",
+    "FEDERATION-MISSION-IR-V1",
+    "MODISA v3 receiver compiler"
+  ],
+  "new_sovereign_plane": false,
+  "external_effects_enabled": false,
+  "proof_required": [
+    "standalone unittest 28/28",
+    "repository projection unittest 30/30",
+    "compileall",
+    "actual persisted BMF dual-run 19 events/3 streams",
+    "3/3 provider-readback BMF projection hash equality",
+    "serialized restart/replay state+relation equality",
+    "source manifest",
+    "secret-pattern scan",
+    "hosted exact-head ProofOS/Airlock/Bubbles/Leak after source admission"
+  ],
+  "dual_run": {
+    "state": "PASS_LOCAL_LIVE_DATA",
+    "receipt": "receipts/FKCM_BMF_GEN2_DUALRUN_20260904.json",
+    "cutover_authorized": false,
+    "provider_effect": false
+  }
+}
