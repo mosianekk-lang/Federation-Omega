@@ -36,6 +36,7 @@ class ApiTests(unittest.TestCase):
         self.assertEqual(body["status"], "ok")
         self.assertTrue(body["ledger_valid"])
         self.assertFalse(body["external_effects"])
+        self.assertEqual(body["revision"], "local")
 
     def test_execute_mission(self):
         body = json.dumps({"mission_id":"api-1","objective":"test","prompt":"hello",
@@ -50,4 +51,3 @@ class ApiTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
-
