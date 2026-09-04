@@ -88,6 +88,40 @@ class GateDecision:
     reasons: tuple[str, ...] = field(default_factory=tuple)
 
 
+@dataclass(frozen=True)
+class RecoveryState:
+    """State for the Solve-Before-Report / Outcome-First escalation policy."""
+
+    issue_id: str
+    issue_summary: str
+    resolved: bool = False
+    verified: bool = False
+    solution_summary: str = ""
+    attempts: tuple[str, ...] = ()
+    exact_blocker: str = ""
+    best_next_route: str = ""
+    residual_risk: str = ""
+    material_residual_risk: bool = False
+    recovery_exhausted: bool = False
+    owner_decision_required: bool = False
+    owner_decision_request: str = ""
+    authority_expansion_required: bool = False
+    privacy_expansion_required: bool = False
+    irreversible_action_required: bool = False
+    objective_conflict: bool = False
+
+
+@dataclass(frozen=True)
+class OutcomeFirstDecision:
+    owner_visible: bool
+    human_required: bool
+    continue_recovery: bool
+    report_mode: str
+    headline: str
+    details: tuple[str, ...] = field(default_factory=tuple)
+    reasons: tuple[str, ...] = field(default_factory=tuple)
+
+
 def _rank(authority: str) -> int:
     return _AUTHORITY_RANK.get(authority, 99)
 
@@ -166,6 +200,94 @@ def evaluate(contract: HumanMissionContract, action: ActionProposal) -> GateDeci
         suppress_interrupt=suppress_interrupt,
         mode="AUTO_CONTINUE_SILENT" if suppress_interrupt else "AUTO_CONTINUE",
         reasons=("SAFE_WITHIN_HUMAN_MISSION_CONTRACT",),
+    )
+
+
+def outcome_first_decision(state: RecoveryState) -> OutcomeFirstDecision:
+    """Apply the Solve-Before-Report / Outcome-First escalation invariant.
+
+    Recoverable problems remain inside the system until a solution is verified
+    or a genuine owner-reserved escalation condition exists. Material risk is
+    never hidden, and an unverified repair is never reported as complete.
+    """
+
+    escalation_reasons: list[str] = []
+    if state.owner_decision_required:
+        escalation_reasons.append("OWNER_DECISION_REQUIRED")
+    if state.authority_expansion_required:
+        escalation_reasons.append("AUTHORITY_EXPANSION_REQUIRED")
+    if state.privacy_expansion_required:
+        escalation_reasons.append("PRIVACY_EXPANSION_REQUIRED")
+    if state.irreversible_action_required:
+        escalation_reasons.append("IRREVERSIBLE_ACTION_REQUIRED")
+    if state.objective_conflict:
+        escalation_reasons.append("OBJECTIVE_CONFLICT")
+    if state.material_residual_risk:
+        escalation_reasons.append("MATERIAL_RESIDUAL_RISK")
+    if state.recovery_exhausted:
+        escalation_reasons.append("RECOVERY_EXHAUSTED")
+
+    if state.resolved and state.verified:
+        details: list[str] = []
+        if state.solution_summary:
+            details.append(f"Solution: {state.solution_summary}")
+        if state.residual_risk:
+            details.append(f"Residual risk: {state.residual_risk}")
+        if escalation_reasons:
+            if state.owner_decision_request:
+                details.append(f"Owner decision: {state.owner_decision_request}")
+            return OutcomeFirstDecision(
+                owner_visible=True,
+                human_required=True,
+                continue_recovery=False,
+                report_mode="REPORT_OUTCOME_WITH_MATERIAL_ESCALATION",
+                headline=f"Resolved with residual decision: {state.issue_id}",
+                details=tuple(details),
+                reasons=tuple(escalation_reasons),
+            )
+        return OutcomeFirstDecision(
+            owner_visible=True,
+            human_required=False,
+            continue_recovery=False,
+            report_mode="REPORT_VERIFIED_SOLUTION_OUTCOME",
+            headline=f"Resolved: {state.issue_id}",
+            details=tuple(details),
+            reasons=("VERIFIED_SOLUTION",),
+        )
+
+    if not escalation_reasons:
+        return OutcomeFirstDecision(
+            owner_visible=False,
+            human_required=False,
+            continue_recovery=True,
+            report_mode="CONTINUE_RECOVERY_SILENT",
+            headline="",
+            details=(),
+            reasons=("UNRESOLVED_BUT_RECOVERABLE", "OWNER_INTERRUPTION_SUPPRESSED"),
+        )
+
+    details: list[str] = []
+    if state.solution_summary:
+        details.append(f"Best current outcome: {state.solution_summary}")
+    if state.attempts:
+        details.append(f"Repairs attempted: {'; '.join(state.attempts)}")
+    if state.exact_blocker:
+        details.append(f"Remaining blocker: {state.exact_blocker}")
+    if state.best_next_route:
+        details.append(f"Best next route: {state.best_next_route}")
+    if state.owner_decision_request:
+        details.append(f"Owner decision: {state.owner_decision_request}")
+    if state.residual_risk:
+        details.append(f"Residual risk: {state.residual_risk}")
+
+    return OutcomeFirstDecision(
+        owner_visible=True,
+        human_required=True,
+        continue_recovery=False,
+        report_mode="ESCALATE_PRECISE_UNRESOLVED_DECISION",
+        headline=f"Resolution needs owner decision: {state.issue_id}",
+        details=tuple(details),
+        reasons=tuple(escalation_reasons),
     )
 
 
