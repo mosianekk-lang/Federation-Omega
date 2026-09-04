@@ -1,0 +1,43 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "benchmarking/cfbe_omega/charge_omega_commercial_court_v1.py",
+        "tests/test_charge_omega_commercial_court_v1.py",
+        "governance/proofos_omega_policy_extension_charge_omega_commercial_v1.json"
+      ],
+      "reason": "CHARGE_OMEGA_V13_PAY_LAST_COMMERCIAL_PREPURCHASE_GATE"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "CHARGE_OMEGA_COMMERCIAL_COURT_V1",
+      "patterns": [
+        "benchmarking/cfbe_omega/charge_omega_commercial_court_v1.py",
+        "tests/test_charge_omega_commercial_court_v1.py",
+        "governance/proofos_omega_policy_extension_charge_omega_commercial_v1.json"
+      ],
+      "depends_on": ["CFBE"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "charge_omega_commercial_court_v1",
+      "kind": "unittest_glob",
+      "target": "test_charge_omega_commercial_court_v1.py",
+      "patterns": [
+        "benchmarking/cfbe_omega/charge_omega_commercial_court_v1.py",
+        "tests/test_charge_omega_commercial_court_v1.py",
+        "governance/proofos_omega_policy_extension_charge_omega_commercial_v1.json"
+      ],
+      "subsystems": ["CHARGE_OMEGA_COMMERCIAL_COURT_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
