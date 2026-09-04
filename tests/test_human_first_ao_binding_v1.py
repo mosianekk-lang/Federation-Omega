@@ -69,7 +69,7 @@ class HumanFirstAOBindingTests(unittest.TestCase):
         self.assertTrue(result.user_interrupt_required)
         self.assertIn("TEACH_BACK_REQUIRED", result.gate["reasons"])
 
-    def test_explicit_external_effect_is_held_and_missing_readback_is_visible(self):
+    def test_explicit_unapproved_external_effect_is_held_and_missing_readback_is_visible(self):
         runtime = HumanFirstAOHarmonicV3()
         contract = HumanMissionContract(
             mission_id="EXTERNAL-TEST",
@@ -83,14 +83,45 @@ class HumanFirstAOBindingTests(unittest.TestCase):
             description="Proposed external provider effect",
             authority_required="A2_EXTERNAL_REVERSIBLE",
             external_effect=True,
+            effect_class="SOURCE_GOVERNANCE_WRITE",
+            authorization_ref="OWNER:NOT-AUTHORIZED",
             readback_plan_present=False,
         )
         result = runtime.run_human_first_forest(
             self.context(), contract=contract, action=action
         )
         self.assertTrue(result.user_interrupt_required)
-        self.assertIn("EXTERNAL_EFFECT", result.gate["reasons"])
+        self.assertIn("EXTERNAL_EFFECT_REQUIRES_OWNER_AUTHORIZATION", result.gate["reasons"])
         self.assertIn("READBACK_PLAN_REQUIRED", result.gate["reasons"])
+
+    def test_scoped_preauthorized_reversible_external_effect_can_continue_without_repeat_prompt(self):
+        runtime = HumanFirstAOHarmonicV3()
+        contract = HumanMissionContract(
+            mission_id="EXTERNAL-PREAUTH-TEST",
+            owner="Kim Kagiso Mosiane",
+            intent="Execute the already-approved reversible source governance work",
+            success_conditions=("Write is exact, bounded and provider-read back",),
+            authority_ceiling="A2_EXTERNAL_REVERSIBLE",
+            authorized_external_effect_classes=("SOURCE_GOVERNANCE_WRITE",),
+            authorization_refs=("OWNER:PROCEED:20260904",),
+        )
+        action = ActionProposal(
+            action_id="EXTERNAL-PREAUTH-ACTION",
+            description="Apply the already-authorized reversible source governance write",
+            authority_required="A2_EXTERNAL_REVERSIBLE",
+            external_effect=True,
+            effect_class="SOURCE_GOVERNANCE_WRITE",
+            authorization_ref="OWNER:PROCEED:20260904",
+            readback_plan_present=True,
+            requested_owner_interrupt=True,
+        )
+        result = runtime.run_human_first_forest(
+            self.context(), contract=contract, action=action
+        )
+        self.assertFalse(result.user_interrupt_required)
+        self.assertTrue(result.gate["allow"])
+        self.assertTrue(result.gate["suppress_interrupt"])
+        self.assertEqual(result.gate["mode"], "AUTO_CONTINUE_SILENT")
 
     def test_restore_acceptance_declares_human_first_without_runtime_overclaim(self):
         acceptance = HumanFirstAOHarmonicV3().restore_acceptance_test()
