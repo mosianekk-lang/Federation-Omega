@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.17",
+  "version": "2.9.18",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -296,7 +296,8 @@
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT",
     "g0_identity_probe_workflow": ".github/workflows/fo-wif-semantic-canary-v2.yml",
-    "artifact_attestation_workflow": ".github/workflows/cfbe-hyperleverage-attestation-v1.yml"
+    "artifact_attestation_workflow": ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
+    "seb_deployment_workflow": ".github/workflows/seb-omega.yml"
   },
   "source_repository_role": "QUARANTINED_SOURCE_WITH_EXACT_AIRLOCKED_PROVIDER_GATEWAYS",
   "automation_repository_role": "SEPARATE_PRIVATE_EXECUTION_PLANE_OR_EXACT_AIRLOCKED_GATEWAY",
