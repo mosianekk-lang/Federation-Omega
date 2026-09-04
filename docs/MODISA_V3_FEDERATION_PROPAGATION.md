@@ -30,7 +30,7 @@ evidence or trust. A source/manifest/plan record is not a runtime receipt.
 ## Verification
 
 ```bash
-python -m pytest -q tests/test_modisa_v3_federation_propagation.py
+python -m unittest discover -s tests -p 'test_modisa_v3_federation_propagation.py' -v
 python -m compileall -q federation/modisa_v3_federation.py deployments/modisa_v3/source/modisa_v2
 ```
 
