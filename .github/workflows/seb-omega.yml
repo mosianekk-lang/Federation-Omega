@@ -35,7 +35,7 @@ jobs:
       - run: python -m compileall -q seb tests
       - run: python -m unittest discover -s tests -v
       - run: docker build --pull -t seb-omega:${{ github.sha }} .
-      - run: docker run --rm --read-only --tmpfs /tmp --tmpfs /app/data seb-omega:${{ github.sha }} -m unittest discover -s tests -v
+      - run: docker run --rm --read-only --tmpfs /tmp --tmpfs /app/data:rw,uid=65532,gid=65532,mode=1770 seb-omega:${{ github.sha }} -m unittest discover -s tests -v
       - uses: anchore/sbom-action@v0
         with:
           image: seb-omega:${{ github.sha }}
