@@ -1,0 +1,12 @@
+{
+  "schema": "MODISA_COGNITIVE_BINDING_POLICY_V1",
+  "version": "1.0.0",
+  "depends_on": [
+    "CFBE"
+  ],
+  "authority_ceiling": "A1",
+  "effect_class": "NO_EXTERNAL_EFFECT",
+  "source_commit": "1e300df555a44092ec54ef0681bd9fe5d6aeaf06",
+  "source_policy": "proofos_omega_policy_extension_bco_modisa_sol61_binding_v1",
+  "admission": "MERGED_PR_1029"
+}

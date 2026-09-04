@@ -1,0 +1,104 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "CFBE-SEB-REFERENCE-BUILD-20260904",
+    "version": 2,
+    "goal": "Deploy an operational objective-preserving Sovereign Execution Boundary without allowing partial artifacts to substitute for the outcome.",
+    "user": "Kim Kagiso Mosiane",
+    "workflow": "compile mission -> decide policy -> route provider -> verify semantics -> record proof -> commit or quarantine",
+    "data": "Validated MissionIR and purpose-limited provider responses; hash-chained JSONL event lineage.",
+    "interface": "Python API, HTTP API, container health endpoint",
+    "stack": "Python 3.11+ standard library; optional OpenRouter HTTP adapter; Docker",
+    "environment": "Local containerized reference runtime with external effects disabled",
+    "maturity": "PROD_HARDENED",
+    "governance": "Formation A2, zero recurring cost, no credentials, no production effects",
+    "failure": "Typed failures, bounded retry, failover, quarantine, cancellation and rollback",
+    "testing": "Unit, integration, API smoke, failure-first, idempotency, tamper and security tests",
+    "deployment": "Kubernetes and container definitions supplied; live production proof remains mandatory and open",
+    "continuity": "README, Formation spec, project memory, AI handoff, ledger replay"
+  },
+  "classification": ["Backend API", "AI Agent", "Automation", "Test Suite", "DevOps/Infra"],
+  "assumptions": {
+    "stack": "Python 3.11+ standard library",
+    "runtime": "Local process or hardened container",
+    "storage": "Local JSONL ledger; PostgreSQL remains the production extension",
+    "authentication": "External effects disabled; provider credentials absent during qualification",
+    "deployment": "Container definition supplied but no production deployment claimed"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: API-first reference foundation",
+      "backend": "seb.engine, seb.policy, seb.router, seb.providers, seb.effects",
+      "database": "Append-only JSONL ledger for dependency-free reference; PostgreSQL is production target",
+      "queue": "In-process serialized mission path; Temporal task queues are production target",
+      "worker": "SovereignEngine synchronous worker with provider adapters",
+      "scheduler": "NOT_APPLICABLE: no recurring automation in reference boundary",
+      "cache": "NOT_APPLICABLE: no policy or provider cache in reference boundary",
+      "storage": "Hash-chained local event ledger",
+      "authentication": "External effects disabled; provider key read only from environment when explicitly enabled"
+    },
+    "observability": {
+      "correlation_ids": "mission_id, request_id, decision_id and event hash",
+      "health_checks": "GET /health validates ledger integrity and effect state",
+      "structured_logs": "JSON HTTP access logs and structured ledger events",
+      "audit_logs": "Append-only hash-chained JSONL events",
+      "metrics_alerts": "Reference exposes state in ledger; OpenTelemetry/Prometheus adapter remains production extension"
+    },
+    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE"]
+  },
+  "testing": {
+    "unit": "Mission validation, policy, routing, ledger and effect broker",
+    "integration": "Engine-provider-ledger and live local HTTP server",
+    "e2e_or_smoke": "Health and mission execution endpoints",
+    "fixtures_mocks": "Programmable mock providers with typed injected failures",
+    "failure_first": "Outage, transient, refusal, malformed output, semantic failure, authorization, secret route, duplicate effect, failed readback and tamper",
+    "commands": ["python3 -m compileall -q seb tests", "python3 -m unittest discover -s tests -v"],
+    "results": "23/23 unittest cases passed in 1.027 seconds; compileall passed"
+  },
+  "delivery": {
+    "file_tree": "README.md, FORMATION_SPEC.md, PROJECT_MEMORY.md, AI_HANDOFF.md, BUILD_CONTRACT.json, Dockerfile, docker-compose.yml, pyproject.toml, seb/, tests/",
+    "exact_code_files": ["seb/models.py", "seb/ledger.py", "seb/policy.py", "seb/providers.py", "seb/router.py", "seb/effects.py", "seb/engine.py", "seb/api.py"],
+    "setup_commands": ["python3 --version"],
+    "run_commands": ["python3 -m seb.api"],
+    "test_commands": ["python3 -m compileall -q seb tests", "python3 -m unittest discover -s tests -v"],
+    "deploy_commands": ["docker compose build", "docker compose up -d"],
+    "rollback_commands": ["docker compose down", "restore prior verified release archive"],
+    "debugging": "README symptom/cause/resolution matrix"
+  },
+  "formation": {
+    "mission_id": "CFBE-SEB-REFERENCE-BUILD-20260904",
+    "mission_version": 2,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A2",
+    "effectful_permit": "LOCAL_BUILD_SINGLE_USE_PERMIT_CONSUMED",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "unavailable_capabilities": ["Authenticated OpenRouter runtime", "container runtime", "Kubernetes runtime", "Temporal runtime", "OPA runtime", "SPIFFE/SPIRE runtime", "production deployment"],
+    "safe_substitutes": ["Mock provider", "hash-chained ledger", "deterministic in-process policy engine", "local container definition"],
+    "closure_tests": ["provider-native no-effect canary", "Temporal replay canary", "OPA policy readback", "deployment health and rollback readback"]
+  },
+  "continuity": {
+    "idempotency": "SHA-256 mission/action/payload keys",
+    "checkpoints": "Every ledger event is a hash-chained checkpoint",
+    "resume_conditions": "Valid ledger chain and active mission not cancelled/quarantined",
+    "handoff_files": ["PROJECT_MEMORY.md", "AI_HANDOFF.md", "FORMATION_SPEC.md"],
+    "stop_switch": "process stop, mission cancellation, policy denial, semantic quarantine"
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": ["compileall PASS", "unittest 23/23 PASS", "HTTP health PASS", "HTTP mission execution PASS", "objective mutation/dilution/false-completion/replay guards PASS"],
+    "semantic_verification": "Local mock route, policy denial, provider failover, quarantine, idempotency, effect readback and ledger tamper controls verified",
+    "unresolved_defects": [],
+    "deployment_readback": "OPEN_REQUIRED: the owner objective requires operational deployment; no live runtime is available in this execution environment"
+  }
+}

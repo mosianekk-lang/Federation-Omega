@@ -1,0 +1,45 @@
+# SHADOW / DEVELOPMENT ONLY.
+# This file does not establish production deployment or provider authority.
+# Images must be replaced with immutable digests before any promotion.
+services:
+  postgres:
+    image: ${POSTGRES_IMAGE:?pin POSTGRES_IMAGE to an immutable tested version/digest}
+    environment:
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set a non-chat secret through the runtime secret mechanism}
+      POSTGRES_DB: federation
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 5s
+      timeout: 3s
+      retries: 20
+
+  nats:
+    image: ${NATS_IMAGE:?pin NATS_IMAGE to an immutable tested version/digest}
+    command: ["-js", "-m", "8222"]
+
+  temporal:
+    image: ${TEMPORAL_IMAGE:?pin TEMPORAL_IMAGE to an immutable tested version/digest}
+    environment:
+      DB: postgres12
+      POSTGRES_USER: postgres
+      POSTGRES_PWD: ${POSTGRES_PASSWORD}
+      POSTGRES_SEEDS: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  opa:
+    image: ${OPA_IMAGE:?pin OPA_IMAGE to an immutable tested version/digest}
+    command: ["run", "--server", "--log-format=json", "/policy"]
+    volumes:
+      - ../policy:/policy:ro
+
+  otel:
+    image: ${OTELCOL_IMAGE:?pin OTELCOL_IMAGE to an immutable tested version/digest}
+    command: ["--config=/etc/otelcol/config.yaml"]
+    volumes:
+      - ./otel-collector.yaml:/etc/otelcol/config.yaml:ro
+
+# SPIRE/Sigstore are deliberately excluded from automatic startup.
+# Establishing trust roots, workload attestators or signing identities is a
+# separately qualified security action. See ARCHITECTURE.md.
