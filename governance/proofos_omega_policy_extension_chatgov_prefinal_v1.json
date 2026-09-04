@@ -39,7 +39,7 @@
         "governance/proofos_omega_policy_extension_chatgov_prefinal_v1.json"
       ],
       "subsystems": ["CHATGOV_PREFINAL"],
-      "failure_class": "MISSION_COMPLETION_OR_CLAIM_INTEGRITY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
     },
@@ -53,7 +53,7 @@
         "governance/proofos_omega_policy_extension_chatgov_prefinal_v1.json"
       ],
       "subsystems": ["CHATGOV_PREFINAL"],
-      "failure_class": "LEARNING_OR_REPLAY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
     }
