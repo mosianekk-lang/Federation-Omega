@@ -1,0 +1,54 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.1.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/fkcm_v1/**",
+        "tests/test_fkcm_v1.py",
+        "governance/fkcm_v1_admission.json",
+        "governance/proofos_omega_policy_extension_fkcm_v1.json",
+        "docs/architecture/MODISA_FKCM_V1.md"
+      ],
+      "reason": "FEDERATION_KDV_COGNITIVE_MESH_STATE_TRUTH_ROUTING_AND_BMF_EQUIVALENCE_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FKCM_V1",
+      "patterns": [
+        "federation/fkcm_v1/**",
+        "tests/test_fkcm_v1.py",
+        "governance/fkcm_v1_admission.json",
+        "governance/proofos_omega_policy_extension_fkcm_v1.json",
+        "docs/architecture/MODISA_FKCM_V1.md"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "CFBE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fkcm_v1",
+      "kind": "unittest_glob",
+      "target": "test_fkcm_v1.py",
+      "patterns": [
+        "federation/fkcm_v1/**",
+        "tests/test_fkcm_v1.py",
+        "governance/fkcm_v1_admission.json",
+        "governance/proofos_omega_policy_extension_fkcm_v1.json",
+        "docs/architecture/MODISA_FKCM_V1.md"
+      ],
+      "subsystems": [
+        "FKCM_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}

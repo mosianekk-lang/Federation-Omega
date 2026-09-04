@@ -1,0 +1,67 @@
+{
+  "schema": "MODISA-FKCM-GOVERNANCE-1",
+  "name": "MODISA Federation-KDV Cognitive Mesh Convergence Kernel v1.1",
+  "architecture_mode": "ADDITIVE_CONVERGENCE_NOT_NEW_SOVEREIGN_PLANE",
+  "reuse": {
+    "routing": "FEDERATION-OMNI-MESH-V1",
+    "event_history": "BMF_SHADOW_EVENTS + KDV-GEN2 EVENT_LEDGER",
+    "state": "KDV-GEN2 CURRENT_STATE/CLAIM_ENVELOPES",
+    "capabilities": "FEDERATION_UNIFIED_CAPABILITY_GRAPH/EDGES",
+    "missions": "FEDERATION-MISSION-IR-V1 + MODISA v3 receiver compiler",
+    "context": "KDV-GEN2 MISSION_CAPSULES",
+    "policy": "KDV_PROJECTION_CONTRACT + MESH_ACCESS_POLICY",
+    "proof": "ProofOS/Airlock/Bubbles/Leak + KDV proof dimensions"
+  },
+  "unique_additions": [
+    "event-envelope convergence adapter",
+    "event-first bitemporal state and relation compiler",
+    "dependency-impact router",
+    "task-bounded context capsule compiler",
+    "shadow convergence court",
+    "ENTITY_RELATIONS derived projection contract",
+    "BMF exact projection-equivalence compiler",
+    "BMF stream-safe lineage/identity adapter",
+    "restart/replay equivalence receipt"
+  ],
+  "optional_topic_extensions": [
+    "entity.delta.v1",
+    "context.capsule.v1"
+  ],
+  "truth_boundary": {
+    "provider_effect": false,
+    "cloud_deployment": false,
+    "kdv_cutover": false,
+    "authority_inheritance": false,
+    "maturity_inheritance": false,
+    "new_master_created": false
+  },
+  "promotion_gates": [
+    "fresh signed source lease",
+    "pinned proof epoch",
+    "dual-run state equivalence",
+    "zero duplicate current-state keys",
+    "zero dangling entity relations",
+    "zero stale CURRENT claims",
+    "receiver-native regression and adversarial proof",
+    "provider transport readback for durable bus",
+    "restart/replay recovery",
+    "rollback to GEN1 read-only fallback",
+    "owner-value canary"
+  ],
+  "qualification": {
+    "standalone_tests": "28/28 PASS",
+    "repository_projection_tests": "30/30 PASS",
+    "real_bmf_events": 19,
+    "real_bmf_streams": 3,
+    "provider_readback_projection_hashes": "3/3 EXACT",
+    "gen2_state_facts": 52,
+    "restart_replay": "9+10 STATE_AND_RELATIONS_EQUAL",
+    "cutover_authorized": false,
+    "provider_effect": false
+  },
+  "caught_and_repaired_failure": {
+    "v1_defect": "BMF flat payload state semantics and BMF stream identity were not fully reproduced",
+    "repair": "exact BMF merge/unset ordering semantics + stream-derived entity identity + dual-run regression court",
+    "promotion_effect": "v1 promotion rejected; v1.1 required"
+  }
+}
