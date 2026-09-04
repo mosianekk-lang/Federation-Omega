@@ -1,0 +1,76 @@
+[project]
+name = "modisa-sovereign-legal-os"
+version = "3.0.0"
+description = "Proof-bound sovereign intelligence and durable orchestration OS with policy-gated effects and autonomous repair."
+readme = "README.md"
+requires-python = ">=3.11,<3.15"
+dependencies = [
+  "openai-agents>=0.22.0,<0.23",
+  "openai>=3.0.0,<4",
+  "fastapi>=0.116.0",
+  "uvicorn[standard]>=0.35.0",
+  "pydantic>=2.11.0",
+  "pydantic-settings>=2.10.0",
+  "cryptography>=43.0.0",
+  "PyJWT>=2.9.0",
+  "python-dotenv>=1.1.0",
+  "httpx>=0.28.0",
+  "PyYAML>=6.0.0",
+]
+
+[project.optional-dependencies]
+redis = [
+  "redis>=8.1.0,<9",
+]
+dev = [
+  "pytest>=8.4.0",
+  "pytest-asyncio>=1.1.0",
+  "ruff>=0.12.0",
+  "mypy>=1.17.0",
+]
+production = [
+  "openai-agents[sqlalchemy]>=0.22.0,<0.23",
+  "SQLAlchemy>=2.0.0",
+  "asyncpg>=0.30.0",
+  "psycopg[binary]>=3.2.0",
+  "temporalio>=1.16.0",
+  "redis>=8.1.0,<9",
+]
+
+[project.scripts]
+modisa-legal-v2 = "main:cli"
+modisa-redis-qualify = "modisa_v2.redis_qualification_cli:main"
+modisa-sovereign-v3 = "modisa_v2.sovereign_runtime_cli:main"
+
+[tool.pytest.ini_options]
+asyncio_mode = "auto"
+testpaths = ["tests"]
+pythonpath = ["."]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
+exclude = ["compat/upstream"]
+
+[tool.ruff.lint]
+select = ["E", "F", "I", "UP", "B", "SIM", "S"]
+ignore = ["E501", "S101", "S608"]
+
+[tool.mypy]
+python_version = "3.11"
+strict = true
+warn_unused_ignores = true
+
+[tool.setuptools]
+py-modules = ["main"]
+
+[tool.setuptools.packages.find]
+include = ["modisa_v2*"]
+
+[tool.setuptools.package-data]
+"modisa_v2" = ["redis_qualification_sources.json"]
+"modisa_v2.adapters" = ["upstream/evidenceops_v722/*.snapshot", "policies/*.json"]
+
+[build-system]
+requires = ["setuptools>=70"]
+build-backend = "setuptools.build_meta"
