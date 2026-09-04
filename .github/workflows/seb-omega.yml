@@ -106,7 +106,16 @@ jobs:
           json.dump(traffic,open('/tmp/seb-proof/pre-traffic.json','w'),sort_keys=True,separators=(',',':'))
           PY
           TAG=canary-${GITHUB_RUN_ID}
-          gcloud run deploy seb-omega --project sov-hybrid-suite --region us-central1 --image "${IMAGE_URI}@${IMAGE_DIGEST}" --no-traffic --tag "$TAG" --no-allow-unauthenticated --quiet
+          if python -c "import json,sys; sys.exit(0 if json.load(open('/tmp/seb-proof/pre.json')).get('metadata',{}).get('generation',0)==0 else 1)"; then
+            DEPLOY_MODE=PRIVATE_BOOTSTRAP
+            TRAFFIC_FLAGS=()
+          else
+            DEPLOY_MODE=ZERO_TRAFFIC_UPDATE
+            TRAFFIC_FLAGS=(--no-traffic)
+          fi
+          export DEPLOY_MODE
+          echo "DEPLOY_MODE=$DEPLOY_MODE" >> "$GITHUB_ENV"
+          gcloud run deploy seb-omega --project sov-hybrid-suite --region us-central1 --image "${IMAGE_URI}@${IMAGE_DIGEST}" "${TRAFFIC_FLAGS[@]}" --tag "$TAG" --no-allow-unauthenticated --quiet
           gcloud run services describe seb-omega --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/post.json
           export TAG
           python - <<'PY' >> "$GITHUB_ENV"
@@ -115,7 +124,8 @@ jobs:
           assert status.get('observedGeneration') == meta.get('generation'), (status.get('observedGeneration'),meta.get('generation'))
           row=next(x for x in status['traffic'] if x.get('tag')==os.environ['TAG'])
           revision=row['revisionName']; url=row['url']
-          assert row.get('percent',0)==0, row
+          expected=100 if os.environ['DEPLOY_MODE']=='PRIVATE_BOOTSTRAP' else 0
+          assert row.get('percent',0)==expected, (row,expected)
           ready=next(x for x in status.get('conditions',[]) if x.get('type')=='Ready')
           assert ready.get('status')=='True', ready
           print(f'CANARY_REVISION={revision}'); print(f'CANARY_URL={url}'); print(f'CANARY_TAG={os.environ["TAG"]}')
@@ -171,7 +181,7 @@ jobs:
           def load(name):
             p=root/name
             return json.loads(p.read_text()) if p.exists() else None
-          receipt={'schema':'SEB-OMEGA-CLOUD-RUN-PROOF-1','source_sha':os.getenv('GITHUB_SHA'),'image_digest':os.getenv('IMAGE_DIGEST'),'canary_revision':os.getenv('CANARY_REVISION'),'canary_url_hash':hashlib.sha256(os.getenv('CANARY_URL','').encode()).hexdigest(),'health':load('health.json'),'pre_traffic':load('pre-traffic.json'),'promotion_requested':os.getenv('INPUT_PROMOTE','false')=='true'}
+          receipt={'schema':'SEB-OMEGA-CLOUD-RUN-PROOF-1','source_sha':os.getenv('GITHUB_SHA'),'image_digest':os.getenv('IMAGE_DIGEST'),'deploy_mode':os.getenv('DEPLOY_MODE'),'canary_revision':os.getenv('CANARY_REVISION'),'canary_url_hash':hashlib.sha256(os.getenv('CANARY_URL','').encode()).hexdigest(),'health':load('health.json'),'pre_traffic':load('pre-traffic.json'),'promotion_requested':os.getenv('INPUT_PROMOTE','false')=='true'}
           receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
           root.mkdir(parents=True,exist_ok=True); (root/'receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
           PY
