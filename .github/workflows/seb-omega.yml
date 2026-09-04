@@ -76,11 +76,14 @@ jobs:
       - name: Verify explicit canary authority
         if: github.event_name == 'workflow_dispatch'
         run: test '${{ inputs.confirmation }}' = 'DEPLOY_SEB_OMEGA_ZERO_TRAFFIC'
-      - uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+      - id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: sov-hybrid-suite
           workload_identity_provider: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
           service_account: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+          token_format: id_token
+          id_token_audience: https://seb-omega-257649435135.us-central1.run.app
       - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
       - name: Build immutable image
         run: |
@@ -141,7 +144,8 @@ jobs:
           assert observed==expected, (observed,expected)
           PY
           SERVICE_URL=$(python -c "import json; print(json.load(open('/tmp/seb-proof/post.json'))['status']['url'])")
-          TOKEN=$(gcloud auth print-identity-token --audiences="$SERVICE_URL")
+          TOKEN='${{ steps.auth.outputs.id_token }}'
+          test -n "$TOKEN"
           curl --fail --silent --show-error -H "Authorization: Bearer $TOKEN" "$CANARY_URL/health" | tee /tmp/seb-proof/health.json
           unset TOKEN
           python - <<'PY'
