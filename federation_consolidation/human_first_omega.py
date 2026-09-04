@@ -1,8 +1,9 @@
 """Deterministic Human-First Omega constitutional gate.
 
 This module is deliberately provider-neutral. It decides whether a proposed
-operation may continue silently inside the A0/A1 internal envelope or must be
-held for human judgment. It does not itself execute provider effects.
+operation may continue silently inside the Human Mission Contract or must be
+held for human judgment. It does not itself execute provider effects or mint
+provider authority.
 """
 
 from __future__ import annotations
@@ -33,6 +34,8 @@ class HumanMissionContract:
     reversibility_required: bool = True
     proof_required: bool = True
     stop_conditions: tuple[str, ...] = ()
+    authorized_external_effect_classes: tuple[str, ...] = ()
+    authorization_refs: tuple[str, ...] = ()
 
     def validate(self) -> tuple[str, ...]:
         errors: list[str] = []
@@ -50,6 +53,10 @@ class HumanMissionContract:
             errors.append("INVALID_INTERRUPTION_BUDGET")
         if self.cognitive_budget_minutes < 0:
             errors.append("INVALID_COGNITIVE_BUDGET")
+        if any(not item.strip() for item in self.authorized_external_effect_classes):
+            errors.append("INVALID_AUTHORIZED_EFFECT_CLASS")
+        if any(not item.strip() for item in self.authorization_refs):
+            errors.append("INVALID_AUTHORIZATION_REF")
         return tuple(errors)
 
 
@@ -59,6 +66,8 @@ class ActionProposal:
     description: str
     authority_required: str = "A1_INTERNAL"
     external_effect: bool = False
+    effect_class: str = "NONE"
+    authorization_ref: str | None = None
     irreversible: bool = False
     material_objective_change: bool = False
     owner_only_fact_or_value_judgment: bool = False
@@ -81,6 +90,27 @@ class GateDecision:
 
 def _rank(authority: str) -> int:
     return _AUTHORITY_RANK.get(authority, 99)
+
+
+def _external_effect_is_preauthorized(
+    contract: HumanMissionContract, action: ActionProposal
+) -> bool:
+    """Return true only for an explicitly scoped owner-authorized effect.
+
+    The action cannot self-mint authority: both its effect class and its
+    authorization reference must already exist in the Human Mission Contract.
+    """
+
+    if not action.external_effect:
+        return False
+    if not action.effect_class or action.effect_class == "NONE":
+        return False
+    if not action.authorization_ref:
+        return False
+    return (
+        action.effect_class in contract.authorized_external_effect_classes
+        and action.authorization_ref in contract.authorization_refs
+    )
 
 
 def evaluate(contract: HumanMissionContract, action: ActionProposal) -> GateDecision:
@@ -111,7 +141,8 @@ def evaluate(contract: HumanMissionContract, action: ActionProposal) -> GateDeci
     if action.consequential:
         reasons.append("CONSEQUENTIAL_ACTION")
     if action.external_effect:
-        reasons.append("EXTERNAL_EFFECT")
+        if not _external_effect_is_preauthorized(contract, action):
+            reasons.append("EXTERNAL_EFFECT_REQUIRES_OWNER_AUTHORIZATION")
         if not action.readback_plan_present:
             reasons.append("READBACK_PLAN_REQUIRED")
     if action.teach_back_required:
@@ -186,8 +217,9 @@ def batch_requires_human(
 ) -> tuple[ActionProposal, ...]:
     """Return only proposals that genuinely require human judgment.
 
-    This supports decision bundling: safe operations continue without creating
-    approval fatigue, while owner-reserved decisions can be surfaced together.
+    This supports decision bundling: safe and explicitly pre-authorized
+    reversible operations can continue without approval fatigue, while genuine
+    owner-reserved decisions surface together.
     """
 
     return tuple(action for action in actions if evaluate(contract, action).human_required)
