@@ -1,0 +1,20 @@
+version: 2.0.0
+connector_activation:
+  required:
+    - registered_contract
+    - least_privilege_scopes
+    - opaque_secret_manager_reference
+    - bound_adapter
+    - current_health_canary_proof
+  forbidden:
+    - plaintext_secret_reference
+    - implicit_capability_promotion
+    - execution_without_contract
+consequential_action:
+  required:
+    - exact_parameter_digest
+    - matching_approval
+    - execution_reservation
+    - provider_action_id
+    - independent_provider_readback
+  uncertainty_rule: EXECUTION_UNCERTAIN_AND_NO_SILENT_RETRY

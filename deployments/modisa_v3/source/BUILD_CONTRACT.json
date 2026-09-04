@@ -1,0 +1,144 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "MODISA-ULTIMATE-V3-20260904",
+    "version": 1,
+    "goal": "Build the ultimate current-technology MODISA as a durable, proof-bound sovereign execution fabric without production deployment.",
+    "user": "Kim Kagiso Mosiane",
+    "workflow": "sealed v2.8 baseline -> current primary-documentation preflight -> immutable mission and durable execution synthesis -> adversarial qualification -> hash-bound v3.0 archive",
+    "data": "Public-safe source, synthetic fixtures and hashes only; no credentials, private evidence or provider responses.",
+    "interface": "FastAPI, legal CLI, sovereign-runtime CLI, plan-only Redis qualification CLI, Python package, case-level evaluation CLI, benchmark CLIs and source-only Apps Script adapter",
+    "stack": "Python 3.12, FastAPI, OpenAI Agents SDK, SQLite/WAL durable journal, Redis 8.1 client contract, Pydantic, cryptography, Google Secret Manager Python client contract and Apps Script V8",
+    "environment": "Isolated local offline qualification",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation-gated A0/A1 local work; immutable authority in MissionIR; signed target-bound approvals for effects; live providers, secret access, connector mutation and deployment remain held",
+    "failure": "Fail closed on invalid or cyclic mission IR, authority mismatch, missing or invalid proof, timeout, budget exhaustion, provider loss, approval mismatch or replay, uncertain effect result, event tampering, dependency deadlock and premature completion.",
+    "testing": "Static, unit, integration, smoke, behavioural, cross-language, failure-first, backup/restore and archive readback checks",
+    "deployment": "NOT_APPLICABLE: no exact hosted target or runtime identity was selected; deployment and external mutation remain a separately approved mission",
+    "continuity": "Deterministic archive builder, hash manifest, source provenance, project memory and AI handoff"
+  },
+  "classification": ["AI Agent", "Backend API", "Automation", "Integration Adapter", "Test Suite"],
+  "assumptions": {
+    "stack": "Python-first recovery retains the qualified architecture; Apps Script is a source-only migration adapter.",
+    "runtime": "Python 3.11+ and Apps Script V8; qualification used Python 3.12.13 and Node 24.19.0 mocks.",
+    "storage": "SQLite and local AES-256-GCM vault; webhook nonce uniqueness is selectable node-local SQLite or shared Redis.",
+    "authentication": "JWT roles/scopes/matter walls plus key-bound MODISA-HMAC-V2, exact numeric Google secret versions, timestamp/body bounds and fail-closed node-local or shared replay prevention.",
+    "deployment": "No target runtime, IAM principal, Apps Script project or hosted endpoint was selected or authorized."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: API, CLI and source adapter only",
+      "backend": "FastAPI service and deterministic domain services",
+      "database": "SQLite repository with transaction boundaries",
+      "queue": "Immutable dependency graphs plus SQLite/WAL event history, monotonic lease generations, expiry-bound compare-and-swap writes and exhaustive concurrent ready-set planning",
+      "worker": "SovereignOrchestrator, MissionIR, DurableJournal, PolicyKernel, EffectBroker, ProviderMesh, RepairController, IndependentVerifier, existing SovereignLegalRuntime, fenced DurableWorkflowStore, Outcome/FruitGate, DirectiveLedger, OrchestrationCompletenessController, EvidenceOpsV722Adapter and RedisQualificationRunner",
+      "scheduler": "Dependency-aware concurrent local scheduler; no hosted trigger or production scheduler is claimed",
+      "cache": "Thread-safe one-read in-memory cache for one allowlisted numeric secret version; no proof-aware result cache is enabled",
+      "storage": "Hash-chained SQLite/WAL mission journal, encrypted evidence vault, snapshots, mode-0600 node-local nonce state and optional shared Redis SET-NX-EX state",
+      "authentication": "JWT plus MODISA-HMAC-V2; exact mission/lane/effect-bound HMAC approval receipts; one-time approval consumption; strict Google Secret Manager resolution; default-deny external actions; no legacy fallback"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE",
+      "WEBHOOK_REPLAY_OR_SIGNATURE_FAILURE",
+      "WEBHOOK_BODY_LIMIT_FAILURE",
+      "SECRET_MANAGER_IDENTITY_CHECKSUM_IAM_OR_TIMEOUT_FAILURE",
+      "APPS_SCRIPT_SEMANTIC_RECEIPT_FAILURE",
+      "REDIS_NONCE_BACKEND_UNAVAILABLE_OR_UNCERTAIN",
+      "REDIS_REPLAY_OR_TTL_POLICY_FAILURE"
+      ,"STALE_OR_EXPIRED_WORKFLOW_FENCE"
+      ,"UNPROVEN_FRUIT_OR_OPEN_DIRECTIVE"
+      ,"EXECUTION_BUDGET_OR_OPEN_CIRCUIT"
+    ],
+    "observability": {
+      "correlation_ids": "matter, mission, workflow, proof, approval, action, webhook key and nonce hashes",
+      "health_checks": "FastAPI /health with configured/resolver/provider-proven separation plus typed Redis qualification gates, connector and chain verification",
+      "structured_logs": "typed audit and workflow events with no secret material",
+      "audit_logs": "hash-linked audit log and HMAC proof ledger",
+      "metrics_alerts": "Local p50/p95/throughput receipts, derived market-architecture matrix and directive-coverage states; no deployed alert backend or live vendor comparison is claimed"
+    }
+  },
+  "testing": {
+    "unit": "213 passed with one confidential-source canary skipped; 16 focused sovereign-runtime adversarial tests; 8/8 Apps Script Node shim tests",
+    "integration": "FastAPI, SQLite, shared fake Redis, evidence, approval/action, restore, P12, CFBE, fake Google Secret Manager, bounded-body and signed no-dispatch webhook paths",
+    "e2e_or_smoke": "Offline SDK construction, 19 independently executed behavioral cases, durable crash/replay, effect idempotency, two independent FastAPI apps sharing one fake Redis backend, synthetic failover, plan and sovereign CLIs, Python-to-Apps-Script vectors, wheel-resource, health/OpenAPI and archive readback",
+    "fixtures_mocks": "Temporary databases/vaults, synthetic secrets, thread-safe fake Redis backend/clients, two-dataset fake Redis cluster, fake observer/controller, fake Secret Manager clients/responses, typed permission/timeout/not-found exceptions, Apps Script service mocks and deterministic vectors",
+    "failure_first": "Invalid/cyclic mission IR, mission-id drift, missing proof, proof-digest mismatch, approval mismatch/replay, exactly-once effect collision, event-chain tampering, crash replay, provider loss/circuit quarantine, lane timeout, dependency deadlock, blocked-sibling isolation, budget exhaustion, plus inherited Redis, webhook, workflow-fence, source-drift and restore-integrity failures",
+    "commands": [
+      "uv lock --offline --check",
+      "python -m ruff check --no-cache .",
+      "python -m mypy --strict modisa_v2",
+      "python -m compileall -q modisa_v2 tests scripts evals",
+      "python -m pytest -q -p no:cacheprovider",
+      "python evals/run_local.py",
+      "node --test apps_script/modisa_hmac_v2/tests/*.test.mjs",
+      "python scripts/build_distributions.py",
+      "python scripts/build_manifest.py",
+      "python scripts/build_release_archive.py"
+      ,"PYTHONPATH=. python scripts/benchmark_runtime.py --iterations 5000",
+      "PYTHONPATH=. python scripts/benchmark_orchestration_completeness.py"
+      ,"PYTHONPATH=. python scripts/benchmark_sovereign_runtime.py"
+    ]
+  },
+  "delivery": {
+    "file_tree": "MANIFEST.sha256",
+    "exact_code_files": ["main.py", "modisa_v2/", "modisa_v2/sovereign_runtime.py", "modisa_v2/sovereign_runtime_cli.py", "modisa_v2/workflow.py", "modisa_v2/outcomes.py", "modisa_v2/orchestration_completeness.py", "modisa_v2/runtime_control.py", "modisa_v2/nonce_stores.py", "modisa_v2/redis_qualification.py", "modisa_v2/adapters/", "compat/upstream/evidenceops_v722/", "apps_script/modisa_hmac_v2/", "tests/", "evals/", "scripts/", "benchmarks/", "policies/", "ULTIMATE_VERSION.md", "V30_QUALIFICATION.md", "DOCUMENTATION_MANIFEST_V3.md", "FORMATION_COMPETENCY_CANDIDATE_V3.json"],
+    "setup_commands": ["uv sync --extra dev", "uv run python scripts/init_secrets.py --target .env.local", "OPTIONAL_UNQUALIFIED_HOSTED_PATH: uv pip install -r requirements-gcp.txt -r requirements-redis.txt"],
+    "run_commands": ["PORT=8421 uv run python main.py", "uv run modisa-sovereign-v3 demo --state state/sovereign-demo.sqlite3", "uv run modisa-redis-qualify"],
+    "test_commands": ["python -m pytest -q -p no:cacheprovider", "python evals/run_local.py", "node --test apps_script/modisa_hmac_v2/tests/*.test.mjs", "uv lock --offline --check"],
+    "deploy_commands": ["NOT_APPLICABLE: production promotion requires an exact target, runtime identity, secrets, canary, rollback and separate owner approval"],
+    "rollback_commands": ["Stop any candidate runtime; retain sealed v2.6 archive SHA-256 6159d0ab86e468ca77e63d5760a991e83ade4a8b11ca262619c0b0cfa2e44999 as the immutable verified baseline; restore only from a verified snapshot."],
+    "debugging": "Use health limitations, sanitized provider errors, workflow/proof-chain verification and typed audit events; never print credentials, tokens or secret resources."
+  },
+  "formation": {
+    "mission_id": "MODISA-ULTIMATE-V3-20260904",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1",
+    "effectful_permit": "A local A1 single-use build permit was consumed and is not persisted; no external-effect permit is implied",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "unavailable_capability": "Native full-chat export/telemetry, live model execution, Secret Manager IAM/ADC proof, Apps Script runtime proof, live Redis credentials/runtime, signed hosted provenance, A2A conformance and provider-backed recovery evidence",
+    "safe_substitute": "Bounded supplied-transcript audit, offline SDK construction, case-level deterministic evaluation, stale-worker race tests, fake-client Secret Manager tests, Apps Script Node parity, P12/CFBE adapters, shared fake-Redis atomicity and synthetic failover qualification",
+    "closure_test": "Native transcript export plus platform trace; separately authorized live identity/secret canary; signed live-evidence receipt with independent verification; hosted kill/restart recovery; signed isolated build provenance; authenticated A2A conformance. Deployment proof remains separate."
+  },
+  "continuity": {
+    "idempotency": "Immutable mission fingerprints, stable lane ids, effect keys, one-time approval receipts, transactional effect reservations, persistent proof digests, generation-fenced workflow updates, atomic budget reservations and atomic node-local/shared Redis nonces",
+    "checkpoints": "Hash-chained mission events, lane states, proof digests, effect reservations, consumed approvals, resume triggers, workflow versions, lease generations, evaluation receipts, benchmark receipts, source hashes, manifest and archive checksum",
+    "resume_conditions": "Verified hash/state, current unexpired lease generation, active target-bound verified authority, exact numeric secret version, unused authenticated nonce and newly observed topology epoch",
+    "handoff_files": ["ULTIMATE_VERSION.md", "V30_QUALIFICATION.md", "DOCUMENTATION_MANIFEST_V3.md", "FORMATION_COMPETENCY_CANDIDATE_V3.json", "CFBE_MARKET_LEADER_AUDIT.md", "V28_QUALIFICATION.md", "SOURCE_PROVENANCE.md", "RECOVERY_STATUS.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md"],
+    "stop_switch": "MODISA_EXTERNAL_ACTIONS_ENABLED=false and runtime termination"
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": {
+      "ruff": "PASS",
+      "mypy_strict": "PASS; 43 source files",
+      "compileall": "PASS",
+      "pytest": "213 passed, 1 confidential canary skipped",
+      "apps_script_node": "8/8 passed, including ASCII and UTF-8 vectors plus effect-free body dry-run",
+      "behavioural_evals": "19/19 declared pytest nodes independently executed and passed; per-case input/output hashes, durations, return codes and failure taxonomy retained",
+      "dependency_lock": "PASS for the 76-package core graph; optional Google hosted dependencies are explicitly outside this lock and were not qualified",
+      "package_build": "PASS; no-download v3.0.0 wheel and PKG-INFO-bearing source distribution built",
+      "wheel_readback": "PASS; extracted wheel runs plan CLI under python -S without optional Redis and contains qualifier source/hash resource plus pinned P12/CFBE resources",
+      "offline_health": "PASS; HTTP 200 degraded, v3.0.0, SDK present, API key absent, external actions false and Redis provider unproven",
+      "archive": "PASS BY FINAL SEAL PROCEDURE; deterministic ZIP contains exact sorted manifest set plus embedded MANIFEST.sha256; adjacent SHA-256 and fresh extraction readback are mandatory release gates"
+    },
+    "semantic_verification": "Every independent dependency-ready directive route is returned in one planning pass while a blocked external-trust sibling remains local and resumable. Silent omission, invented elements, missing proof, missing resume triggers, safeguard-bypass routes, unrelated targets and premature completion claims fail. Stale workflow owners and generations cannot update, heartbeat or complete after expiry/reassignment. Every behavioral case executes its declared node independently. Missing credentials select the offline route when live evidence is not required. Open directives and unproven/stale/contradicted fruit veto completion. Concurrent budget reservation cannot overcommit. Caller-selected Redis LIVE evidence cannot promote provider status without separately injected trusted authorization and live-evidence verifiers. Receipt publication is atomic no-overwrite. Provider storage and sensitive trace payload capture default off. No hosted agent, container, live Redis/provider/failover, Apps Script or cloud deployment is claimed.",
+    "unresolved_defects": []
+  }
+}
