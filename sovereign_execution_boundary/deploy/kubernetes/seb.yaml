@@ -11,16 +11,33 @@ spec:
       labels: {app: seb-api}
     spec:
       serviceAccountName: seb-api
+      volumes:
+        - name: opa-policy
+          configMap: {name: seb-opa-policy}
       containers:
         - name: api
           image: registry.example.invalid/seb-omega:1.0.0
           ports: [{containerPort: 8080}]
+          env:
+            - {name: SEB_POLICY_BACKEND, value: opa}
+            - {name: SEB_OPA_URL, value: "http://127.0.0.1:8181/v1/data/seb/decision"}
           readinessProbe: {httpGet: {path: /health, port: 8080}, initialDelaySeconds: 3, periodSeconds: 5}
           livenessProbe: {httpGet: {path: /health, port: 8080}, initialDelaySeconds: 10, periodSeconds: 10}
           securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true}
           resources:
             requests: {cpu: 100m, memory: 128Mi}
             limits: {cpu: 1, memory: 512Mi}
+        - name: opa
+          image: registry.example.invalid/opa@sha256:REPLACE_WITH_QUALIFIED_DIGEST
+          args: ["run", "--server", "--addr=127.0.0.1:8181", "/policies/seb.rego"]
+          ports: [{containerPort: 8181}]
+          volumeMounts:
+            - {name: opa-policy, mountPath: /policies, readOnly: true}
+          readinessProbe: {httpGet: {path: "/health?bundles", port: 8181}, initialDelaySeconds: 3, periodSeconds: 5}
+          securityContext: {allowPrivilegeEscalation: false, readOnlyRootFilesystem: true, runAsNonRoot: true}
+          resources:
+            requests: {cpu: 50m, memory: 64Mi}
+            limits: {cpu: 500m, memory: 256Mi}
 ---
 apiVersion: v1
 kind: Service
@@ -28,6 +45,45 @@ metadata: {name: seb-api}
 spec:
   selector: {app: seb-api}
   ports: [{port: 80, targetPort: 8080}]
+---
+apiVersion: v1
+kind: ConfigMap
+metadata: {name: seb-opa-policy}
+data:
+  seb.rego: |
+    # Generated from policy/seb.rego by the release pipeline; exact-byte digest must be attested.
+    package seb
+    default decision := {"allow": false, "reasons": ["policy_evaluation_failed"]}
+    authority_rank := {"A0": 0, "A1": 1, "A2": 2, "A3": 3, "A4": 4, "A5": 5}
+    reason contains "authority_exceeds_runtime" if {
+      authority_rank[input.mission.authority_class] > authority_rank[input.runtime.max_authority]
+    }
+    reason contains "external_effects_disabled" if {
+      input.request.external_effect == true
+      input.runtime.allow_external_effects != true
+    }
+    reason contains "tool_not_allowed" if {
+      input.request.tool != null
+      not input.request.tool in input.mission.allowed_tools
+    }
+    reason contains "effect_explicitly_prohibited" if {
+      input.request.tool != null
+      input.request.tool in input.mission.prohibited_effects
+    }
+    reason contains "secret_data_external_route_denied" if {
+      input.mission.data_class == "secret"
+      input.request.tool == "openrouter"
+    }
+    decision := {"allow": count(reason) == 0, "reasons": sort([r | reason[r]])} if {
+      input.mission.fingerprint != ""
+      input.mission.authority_class in object.keys(authority_rank)
+      input.runtime.max_authority in object.keys(authority_rank)
+      input.mission.data_class in {"public", "private", "legal", "secret"}
+      is_array(input.mission.allowed_tools)
+      is_array(input.mission.prohibited_effects)
+      is_boolean(input.request.external_effect)
+      is_boolean(input.runtime.allow_external_effects)
+    }
 ---
 apiVersion: v1
 kind: ServiceAccount
