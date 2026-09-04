@@ -1,0 +1,9 @@
+{
+  "schema": "SEB_OMEGA_MAIN_PROOF_TRIGGER_V1",
+  "state": "REQUESTED",
+  "merged_source_sha": "0894c104f8db66965b800167376afc3df0155d5d",
+  "no_tree_change_trigger_sha": "0b2ac47f40d693865cbf1fc6a066a6629b9f81f7",
+  "purpose": "Emit the path-scoped protected-main operational proof workflow after the API-mediated merge produced no run.",
+  "runtime_effect": false,
+  "traffic_change": false
+}
