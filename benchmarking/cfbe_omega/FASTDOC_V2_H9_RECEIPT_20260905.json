@@ -1,0 +1,44 @@
+{
+  "schema": "CFBE_FASTDOC_V2_H9_RECEIPT_1",
+  "date_local": "2026-09-05",
+  "receiver": "EvidenceOps document intelligence",
+  "corpus": {
+    "classification": "PRIVATE_391_PAGE_MIXED_LEGAL_EVIDENCE",
+    "page_count": 391,
+    "private_locator_committed": false,
+    "private_hash_committed": false
+  },
+  "environment": {
+    "platform": "Linux-x86_64",
+    "logical_cpu_count": 5,
+    "python": "3.13.5",
+    "pymupdf": "1.26.7",
+    "tesseract": "5.5.0"
+  },
+  "repetitions": 7,
+  "native_workers": 4,
+  "v2_batch_pages": 16,
+  "metrics": {
+    "v1_cold_native_index_median_seconds": 0.269979544,
+    "v2_cold_native_index_median_seconds": 0.245444148,
+    "v1_index_median_seconds": 0.112401767,
+    "v2_index_median_seconds": 0.085781392,
+    "v1_warm_reingest_median_seconds": 0.056630121,
+    "v2_warm_reingest_median_seconds": 0.016451464,
+    "v1_raw_fts_query_median_ms": 0.547216,
+    "v2_raw_fts_query_median_ms": 0.534606,
+    "v2_ttfr_median_seconds": 0.030505234,
+    "v1_selective_ocr_10_pages_seconds": 17.851562064,
+    "v2_selective_ocr_10_pages_seconds": 8.983319755,
+    "native_extracted_chars": 769169,
+    "v2_context_ceiling_chars": 24000,
+    "max_native_context_avoidance_ratio": 0.9687974944,
+    "v1_escalation_pages": 10,
+    "v2_escalation_pages": 10,
+    "post_ocr_nonempty_pages": 391
+  },
+  "decision": "H9_LOCAL_MATCHED_WORKLOAD_PASS",
+  "h10": "HELD_PENDING_LIVE_RECEIVER_BINDING_AND_OWNER_VALUE_READBACK",
+  "provider_effect": false,
+  "market_superiority_claim": false
+}
