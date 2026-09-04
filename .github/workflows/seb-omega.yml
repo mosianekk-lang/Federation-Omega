@@ -41,7 +41,7 @@ jobs:
           image: seb-omega:${{ github.sha }}
           format: spdx-json
           output-file: seb-omega.spdx.json
-      - uses: aquasecurity/trivy-action@0.28.0
+      - uses: aquasecurity/trivy-action@master
         with:
           image-ref: seb-omega:${{ github.sha }}
           severity: CRITICAL,HIGH
@@ -77,3 +77,4 @@ jobs:
       - name: Promote only after explicit request
         if: inputs.promote
         run: gcloud run services update-traffic seb-omega --project sov-hybrid-suite --region us-central1 --to-tags canary-${GITHUB_RUN_ID}=100
+
