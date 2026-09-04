@@ -9,7 +9,7 @@
 | Duplicate external effect | Idempotency key + verified readback | Effect tests |
 | Provider returns malformed output | Typed failure, quarantine, failover | Provider tests |
 | Ledger mutation | Hash-chain verification | Tamper test |
-| Workload impersonation | SPIFFE trust-domain validation | Identity test; live mTLS open |
+| Workload impersonation | CA-verified X.509-SVID mTLS plus exact URI-SAN allowlist | Same-domain rogue SVID negative proof; live SPIRE deployment open |
 | Policy service outage | Fail-closed adapter | Adapter contract; live OPA open |
 | Orchestrator upgrade drift | Objective fingerprint replay guard | Replay test; live Temporal open |
 

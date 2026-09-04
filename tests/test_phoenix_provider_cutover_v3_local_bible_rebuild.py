@@ -78,7 +78,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
 
         self.assertEqual(
-            [artifact_attestation],
+            [artifact_attestation, ".github/workflows/seb-omega.yml"],
             self.policy["attestations_write_workflow_allowlist"],
         )
         self.assertNotIn(provider_authority_recovery_probe, provider_mutators)

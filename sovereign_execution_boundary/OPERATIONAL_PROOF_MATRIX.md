@@ -9,7 +9,7 @@
 | OpenRouter structured-output route | yes | no credential | no | OPEN_REQUIRED |
 | OPA policy decision | adapter + Rego | contract only | no | OPEN_REQUIRED |
 | Temporal durable replay | contract | contract only | no | OPEN_REQUIRED |
-| SPIFFE/SPIRE identity | contract | contract only | no | OPEN_REQUIRED |
+| SPIFFE/SPIRE identity | mTLS + exact-SVID authorization | unit + ephemeral cryptographic proof | no SPIRE runtime | IMPLEMENTED_HOST_PROOF / LIVE_SPIRE_OPEN |
 | Container runtime | definition | unavailable | no | OPEN_REQUIRED |
 | Kubernetes deployment | manifests | schema not runtime | no | OPEN_REQUIRED |
 | Production canary/rollback | specified | no | no | OPEN_REQUIRED |
