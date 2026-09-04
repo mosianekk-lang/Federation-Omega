@@ -22,6 +22,11 @@ on:
         required: true
         default: false
         type: boolean
+      rehearse_rollback:
+        description: 'Shift 1% to the healthy canary, then prove exact traffic restoration'
+        required: true
+        default: false
+        type: boolean
 
 permissions:
   contents: read
@@ -43,6 +48,7 @@ jobs:
       - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: '3.12'
+      - run: python -m pip install -e '.[test]'
       - run: python -m compileall -q seb tests
       - run: python -m unittest discover -s tests -v
       - run: docker build --pull -t seb-omega:${{ github.sha }} .
@@ -67,6 +73,7 @@ jobs:
       group: seb-omega-cloud-run-deployment
       cancel-in-progress: false
     permissions:
+      attestations: write
       contents: read
       id-token: write
     steps:
@@ -75,7 +82,9 @@ jobs:
           persist-credentials: false
       - name: Verify explicit canary authority
         if: github.event_name == 'workflow_dispatch'
-        run: test '${{ inputs.confirmation }}' = 'DEPLOY_SEB_OMEGA_ZERO_TRAFFIC'
+        run: |
+          test '${{ inputs.confirmation }}' = 'DEPLOY_SEB_OMEGA_ZERO_TRAFFIC'
+          test '${{ inputs.promote }}:${{ inputs.rehearse_rollback }}' != 'true:true'
       - id: auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
@@ -88,6 +97,7 @@ jobs:
       - name: Build immutable image
         run: |
           set -euo pipefail
+          mkdir -p /tmp/seb-proof
           gcloud auth configure-docker africa-south1-docker.pkg.dev --quiet
           IMAGE_TAG=africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega:${GITHUB_SHA}
           docker build --pull -t "$IMAGE_TAG" sovereign_execution_boundary
@@ -96,6 +106,67 @@ jobs:
           [[ "$IMAGE" =~ ^sha256:[0-9a-f]{64}$ ]]
           echo "IMAGE_DIGEST=$IMAGE" >> "$GITHUB_ENV"
           echo "IMAGE_URI=africa-south1-docker.pkg.dev/sov-hybrid-suite/federation-omega/seb-omega" >> "$GITHUB_ENV"
+      - name: Generate SBOM for exact registry image
+        uses: anchore/sbom-action@e22c389904149dbc22b58101806040fa8d37a610
+        with:
+          image: ${{ env.IMAGE_URI }}@${{ env.IMAGE_DIGEST }}
+          format: spdx-json
+          output-file: /tmp/seb-proof/seb-omega.spdx.json
+          upload-artifact: false
+      - name: Attest exact registry image SBOM
+        id: attest-sbom
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-name: ${{ env.IMAGE_URI }}
+          subject-digest: ${{ env.IMAGE_DIGEST }}
+          predicate-type: https://spdx.dev/Document/v2.3
+          predicate-path: /tmp/seb-proof/seb-omega.spdx.json
+          push-to-registry: true
+          show-summary: true
+      - name: Verify registry SBOM attestation through GitHub CLI
+        env:
+          GH_TOKEN: ${{ github.token }}
+          SBOM_ATTESTATION_ID: ${{ steps.attest-sbom.outputs.attestation-id }}
+          SBOM_ATTESTATION_URL: ${{ steps.attest-sbom.outputs.attestation-url }}
+        run: |
+          set -euo pipefail
+          gh attestation verify "oci://${IMAGE_URI}@${IMAGE_DIGEST}" \
+            --repo "$GITHUB_REPOSITORY" \
+            --signer-workflow "$GITHUB_REPOSITORY/.github/workflows/seb-omega.yml" \
+            --predicate-type https://spdx.dev/Document/v2.3 \
+            --format json > /tmp/seb-proof/sbom-attestation-verify.json
+          python - <<'PY'
+          from pathlib import Path
+          import hashlib, json, os
+
+          proof = Path('/tmp/seb-proof')
+          verified = json.loads((proof/'sbom-attestation-verify.json').read_text())
+          expected = os.environ['IMAGE_DIGEST'].removeprefix('sha256:')
+          matched = False
+          for entry in verified if isinstance(verified, list) else []:
+              statement = entry.get('verificationResult', {}).get('statement', {})
+              if statement.get('predicateType') != 'https://spdx.dev/Document/v2.3':
+                  continue
+              for subject in statement.get('subject', []):
+                  if subject.get('name') == os.environ['IMAGE_URI'] and subject.get('digest', {}).get('sha256') == expected:
+                      matched = True
+                      break
+          if not matched:
+              raise SystemExit('verified SBOM attestation did not bind the exact registry image digest')
+          receipt = {
+              'schema': 'SEB_OMEGA_REGISTRY_SBOM_ATTESTATION_V1',
+              'state': 'VERIFIED',
+              'source_sha': os.environ['GITHUB_SHA'],
+              'image': f"{os.environ['IMAGE_URI']}@{os.environ['IMAGE_DIGEST']}",
+              'sbom_sha256': hashlib.sha256((proof/'seb-omega.spdx.json').read_bytes()).hexdigest(),
+              'attestation_id': os.environ['SBOM_ATTESTATION_ID'],
+              'attestation_url': os.environ['SBOM_ATTESTATION_URL'],
+              'verified_attestation_count': len(verified),
+          }
+          if not receipt['attestation_id'] or not receipt['attestation_url']:
+              raise SystemExit('GitHub attestation outputs were incomplete')
+          (proof/'sbom-attestation-receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n')
+          PY
       - name: Deploy immutable zero-traffic revision
         run: |
           set -euo pipefail
@@ -156,6 +227,40 @@ jobs:
           assert p.get('status')=='ok' and p.get('ledger_valid') is True and p.get('external_effects') is False, p
           assert p.get('revision')==os.environ['CANARY_REVISION'], (p,os.environ['CANARY_REVISION'])
           PY
+      - name: Rehearse bounded traffic rollback and restore exact allocation
+        if: github.event_name == 'workflow_dispatch' && inputs.rehearse_rollback
+        run: |
+          set -euo pipefail
+          test "$DEPLOY_MODE" = ZERO_TRAFFIC_UPDATE
+          TOOL=sovereign_execution_boundary/deployment/cloud_run_traffic_rehearsal.py
+          gcloud run services describe seb-omega --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/rehearsal-pre.json
+          python "$TOOL" plan /tmp/seb-proof/rehearsal-pre.json "$CANARY_REVISION" > /tmp/seb-proof/rehearsal.env
+          source /tmp/seb-proof/rehearsal.env
+          restore() {
+            local prior_status=$?
+            trap - EXIT
+            gcloud run services update-traffic seb-omega --project sov-hybrid-suite --region us-central1 --to-revisions "$BEFORE_SPEC" --quiet
+            gcloud run services describe seb-omega --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/rehearsal-restored.json
+            python "$TOOL" verify /tmp/seb-proof/rehearsal-pre.json /tmp/seb-proof/rehearsal-restored.json
+            return "$prior_status"
+          }
+          trap restore EXIT
+          gcloud run services update-traffic seb-omega --project sov-hybrid-suite --region us-central1 --to-revisions "$REHEARSAL_SPEC" --quiet
+          gcloud run services describe seb-omega --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/rehearsal-active.json
+          python - "$REHEARSAL_SPEC" <<'PY'
+          import json,sys
+          expected=dict(item.rsplit('=',1) for item in sys.argv[1].split(','))
+          expected={key:int(value) for key,value in expected.items()}
+          service=json.load(open('/tmp/seb-proof/rehearsal-active.json'))
+          actual={}
+          for row in service.get('status',{}).get('traffic',[]):
+              if row.get('revisionName') and int(row.get('percent') or 0):
+                  actual[row['revisionName']]=actual.get(row['revisionName'],0)+int(row['percent'])
+          assert actual==expected, (actual,expected)
+          assert actual.get(__import__('os').environ['CANARY_REVISION'])==1, actual
+          PY
+          restore
+          trap - EXIT
       - name: Promote only after explicit request
         if: github.event_name == 'workflow_dispatch' && inputs.promote
         run: |
@@ -190,12 +295,13 @@ jobs:
           def load(name):
             p=root/name
             return json.loads(p.read_text()) if p.exists() else None
-          receipt={'schema':'SEB-OMEGA-CLOUD-RUN-PROOF-1','source_sha':os.getenv('GITHUB_SHA'),'image_digest':os.getenv('IMAGE_DIGEST'),'deploy_mode':os.getenv('DEPLOY_MODE'),'canary_revision':os.getenv('CANARY_REVISION'),'canary_url_hash':hashlib.sha256(os.getenv('CANARY_URL','').encode()).hexdigest(),'health':load('health.json'),'pre_traffic':load('pre-traffic.json'),'promotion_requested':os.getenv('INPUT_PROMOTE','false')=='true'}
+          receipt={'schema':'SEB-OMEGA-CLOUD-RUN-PROOF-1','source_sha':os.getenv('GITHUB_SHA'),'image_digest':os.getenv('IMAGE_DIGEST'),'deploy_mode':os.getenv('DEPLOY_MODE'),'canary_revision':os.getenv('CANARY_REVISION'),'canary_url_hash':hashlib.sha256(os.getenv('CANARY_URL','').encode()).hexdigest(),'health':load('health.json'),'pre_traffic':load('pre-traffic.json'),'promotion_requested':os.getenv('INPUT_PROMOTE','false')=='true','rollback_rehearsal_requested':os.getenv('INPUT_REHEARSE_ROLLBACK','false')=='true','rollback_rehearsal':{'pre':load('rehearsal-pre.json'),'active':load('rehearsal-active.json'),'restored':load('rehearsal-restored.json')}}
           receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
           root.mkdir(parents=True,exist_ok=True); (root/'receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
           PY
         env:
           INPUT_PROMOTE: ${{ inputs.promote }}
+          INPUT_REHEARSE_ROLLBACK: ${{ inputs.rehearse_rollback }}
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         if: always()
         with:
