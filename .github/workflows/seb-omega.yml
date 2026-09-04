@@ -118,7 +118,7 @@ jobs:
           gcloud run deploy seb-omega --project sov-hybrid-suite --region us-central1 --image "${IMAGE_URI}@${IMAGE_DIGEST}" "${TRAFFIC_FLAGS[@]}" --tag "$TAG" --service-account superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com --no-allow-unauthenticated --quiet
           gcloud run services describe seb-omega --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/post.json
           export TAG
-          python - <<'PY' >> "$GITHUB_ENV"
+          python - <<'PY' > /tmp/seb-proof/runtime.env
           import json,os
           p=json.load(open('/tmp/seb-proof/post.json')); status=p['status']; meta=p['metadata']
           assert status.get('observedGeneration') == meta.get('generation'), (status.get('observedGeneration'),meta.get('generation'))
@@ -130,6 +130,8 @@ jobs:
           assert ready.get('status')=='True', ready
           print(f'CANARY_REVISION={revision}'); print(f'CANARY_URL={url}'); print(f'CANARY_TAG={os.environ["TAG"]}')
           PY
+          cat /tmp/seb-proof/runtime.env >> "$GITHUB_ENV"
+          source /tmp/seb-proof/runtime.env
           gcloud run revisions describe "$CANARY_REVISION" --project sov-hybrid-suite --region us-central1 --format=json > /tmp/seb-proof/revision.json
           python - <<'PY'
           import json,os
