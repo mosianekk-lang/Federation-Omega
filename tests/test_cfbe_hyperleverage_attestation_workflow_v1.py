@@ -47,7 +47,7 @@ class CfbeHyperleverageAttestationWorkflowTests(unittest.TestCase):
         self.assertIn(self.workflow_path, self.policy['active_workflow_allowlist'])
         self.assertEqual(['issues'], self.policy['allowed_events'][self.workflow_path])
         self.assertIn(self.workflow_path, self.policy['oidc_workflow_allowlist'])
-        self.assertEqual([self.workflow_path], self.policy['attestations_write_workflow_allowlist'])
+        self.assertIn(self.workflow_path, self.policy['attestations_write_workflow_allowlist'])
         self.assertIn(self.workflow_path, self.policy['execution_quarantine']['keep_active'])
 
     def test_no_other_workflow_has_attestations_write(self) -> None:
