@@ -1,0 +1,34 @@
+{
+  "schema": "FKPF_OMEGA_V3_MCP_BOUNDARIES_V1",
+  "target_generation": "MCP_2026-07-28_PLUS",
+  "truth_boundary": "These are capability/policy boundaries, not proof that a provider MCP server is deployed.",
+  "servers": [
+    {
+      "server_id": "mcp-legal",
+      "allowed_tools": ["source_read", "authority_research", "draft_internal", "artifact_qa"],
+      "denied_tools": ["send_email", "file_legal_submission", "accept_settlement", "withdraw_matter"],
+      "authority_ceiling": "A1_INTERNAL",
+      "effect_ceiling": "INTERNAL_REVERSIBLE",
+      "require_provider_readback": true,
+      "no_raw_secret_values": true
+    },
+    {
+      "server_id": "mcp-evidence",
+      "allowed_tools": ["source_read", "hash_verify", "provenance_read", "contradiction_analysis"],
+      "denied_tools": ["delete_evidence", "rewrite_original", "share_evidence_externally"],
+      "authority_ceiling": "A1_INTERNAL",
+      "effect_ceiling": "INTERNAL_REVERSIBLE",
+      "require_provider_readback": true,
+      "no_raw_secret_values": true
+    },
+    {
+      "server_id": "mcp-ops",
+      "allowed_tools": ["read_status", "run_internal_canary", "provider_readback", "reversible_reconcile"],
+      "denied_tools": ["iam_expand", "rotate_secret", "delete_resource", "enable_paid_service", "send_external"],
+      "authority_ceiling": "A2_PROVIDER_REVERSIBLE",
+      "effect_ceiling": "PROVIDER_REVERSIBLE",
+      "require_provider_readback": true,
+      "no_raw_secret_values": true
+    }
+  ]
+}

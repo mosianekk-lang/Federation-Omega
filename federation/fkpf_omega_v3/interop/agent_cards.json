@@ -1,0 +1,73 @@
+{
+  "schema": "FKPF_OMEGA_V3_A2A_AGENT_CARDS_V1",
+  "target_protocol": "A2A_1.0",
+  "truth_boundary": "Capability declarations are discovery contracts only; provider/runtime authority and operational maturity require separate readback.",
+  "agents": [
+    {
+      "name": "SOVARA",
+      "description": "Mission compilation, routing and convergence.",
+      "url": "https://federation.invalid/a2a/sovara",
+      "version": "3.0.0",
+      "protocolVersion": "1.0",
+      "skills": [
+        {"id": "mission_compile", "name": "Mission Compile", "description": "Compile owner objective into MissionIR"},
+        {"id": "route_select", "name": "Route Select", "description": "Select an eligible capability route"}
+      ]
+    },
+    {
+      "name": "CFBE",
+      "description": "Benchmark, challenge and evaluate Federation capability.",
+      "url": "https://federation.invalid/a2a/cfbe",
+      "version": "3.0.0",
+      "protocolVersion": "1.0",
+      "skills": [
+        {"id": "benchmark", "name": "Benchmark", "description": "Compare capability with current frontier"},
+        {"id": "independent_verify", "name": "Independent Verify", "description": "Independently evaluate proof and value"}
+      ]
+    },
+    {
+      "name": "EvidenceOps",
+      "description": "Source verification, provenance and contradiction control.",
+      "url": "https://federation.invalid/a2a/evidenceops",
+      "version": "3.0.0",
+      "protocolVersion": "1.0",
+      "skills": [
+        {"id": "source_verify", "name": "Source Verify", "description": "Verify source identity and provenance"},
+        {"id": "contradiction_detect", "name": "Contradiction Detect", "description": "Detect source-backed contradictions"}
+      ]
+    },
+    {
+      "name": "Lex",
+      "description": "Legal characterisation and adversarial legal assurance.",
+      "url": "https://federation.invalid/a2a/lex",
+      "version": "3.0.0",
+      "protocolVersion": "1.0",
+      "skills": [
+        {"id": "legal_characterise", "name": "Legal Characterise", "description": "Characterise legal issues without inventing factual proof"},
+        {"id": "pleading_assure", "name": "Pleading Assure", "description": "Adversarially review legal drafting"}
+      ]
+    },
+    {
+      "name": "ChatBridge",
+      "description": "Durable conversation continuity and propagation bootstrap.",
+      "url": "https://federation.invalid/a2a/chatbridge",
+      "version": "3.0.0",
+      "protocolVersion": "1.0",
+      "skills": [
+        {"id": "restore", "name": "Restore", "description": "Restore bounded canonical state"},
+        {"id": "propagation_pull", "name": "Propagation Pull", "description": "Pull missing applicable deltas on activation"}
+      ]
+    },
+    {
+      "name": "Sentinel",
+      "description": "Drift, stale-receiver and stranded-learning observer.",
+      "url": "https://federation.invalid/a2a/sentinel",
+      "version": "3.0.0",
+      "protocolVersion": "1.0",
+      "skills": [
+        {"id": "drift_detect", "name": "Drift Detect", "description": "Detect workflow and propagation drift"},
+        {"id": "stranded_learning", "name": "Stranded Learning", "description": "Detect undispositioned material deltas"}
+      ]
+    }
+  ]
+}

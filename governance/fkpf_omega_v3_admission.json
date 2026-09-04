@@ -1,0 +1,24 @@
+{
+  "schema": "FKPF_OMEGA_V3_SOURCE_ADMISSION_V1",
+  "version": "3.0.0",
+  "workstream": "federation-sovereign-cognitive-execution-fabric-v3",
+  "source_base": "3b47e77062242f224ab1d3eab993d53fd3f95147",
+  "coordination": {
+    "schema": "FEDERATION_COORDINATION_V1",
+    "writer_node": "NODE-CHAT-FKPF-OMEGA-V3-20260904-1900SAST",
+    "transaction_id": "TXN-FKPF-OMEGA-V3-SOURCE-ADMISSION-20260904-002",
+    "idempotency_key": "FKPF:OMEGA:V3:SOURCE:3B47E770:F29",
+    "turn_capture_id": "TC-20260904T194200+0200-FKPF-OMEGA-V3-LEASE-REPAIR-F29",
+    "lease_commit_sha": "97f4345022df84eb08aaeeec83fc96dd7bfeb58d",
+    "fencing_token": 29
+  },
+  "proof_boundary": {
+    "source_admission_only": true,
+    "provider_runtime_effect": false,
+    "external_effect": false,
+    "authority": "A1_INTERNAL_SOURCE_CI",
+    "temporal_nats_opa_spire_sigstore_otel_deployed": false,
+    "owner_value_proven": false
+  },
+  "promotion_rule": "MERGE_ONLY_EXACT_HEAD_AFTER_AIRLOCK_PROOFOS_BUBBLES_LEAK_AND_FOCUSED_FKPF_CI_PASS"
+}
