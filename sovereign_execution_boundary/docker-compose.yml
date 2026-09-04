@@ -1,0 +1,11 @@
+services:
+  seb:
+    build: .
+    ports: ["127.0.0.1:8080:8080"]
+    environment:
+      SEB_ENABLE_OPENROUTER: "0"
+    read_only: true
+    tmpfs: ["/app/data:size=64m,mode=0700"]
+    security_opt: ["no-new-privileges:true"]
+    cap_drop: ["ALL"]
+

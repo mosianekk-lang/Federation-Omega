@@ -1,0 +1,20 @@
+{
+  "contract": "FEDERATION-PROTECTION-KERNEL-1.0",
+  "asOf": "2026-09-04T20:30:00+02:00",
+  "claims": [
+    {"id":"C-KERNEL","state":"VERIFIED","classification":"IMPLEMENTED_LOCAL","pinpoint":"Objective authentication, anti-dilution and completion theorem compile and pass adversarial tests.","currentProof":true,"independentReadback":true},
+    {"id":"C-TESTED","state":"VERIFIED","classification":"TESTED_LOCAL","pinpoint":"23/23 unit, integration, API, failure and integrity tests passed.","currentProof":true,"independentReadback":true},
+    {"id":"C-DEPLOYMENT","state":"UNVERIFIED","classification":"NOT_DEPLOYED","pinpoint":"No container, Kubernetes, OPA, Temporal, SPIFFE or authenticated OpenRouter runtime is exposed here.","currentProof":true,"independentReadback":true},
+    {"id":"C-COMPLETION","state":"BLOCKED","classification":"OPEN_OPERATIONAL_REQUIREMENTS","pinpoint":"Operational objective remains active; local artifact is not accepted as its substitute.","currentProof":true,"independentReadback":true}
+  ],
+  "sources": [
+    {"id":"S-CODE","kind":"LOCAL_VERIFIED","pinpoint":"seb/*.py compileall PASS"},
+    {"id":"S-CONTRACT","kind":"LOCAL_VERIFIED","pinpoint":"BUILD_CONTRACT.json --require-proof PASS"},
+    {"id":"S-TESTS","kind":"LOCAL_VERIFIED","pinpoint":"unittest 23/23 PASS"},
+    {"id":"S-MATRIX","kind":"LOCAL_VERIFIED","pinpoint":"OPERATIONAL_PROOF_MATRIX.md"}
+  ],
+  "mission": {"objective":"Deploy an operational objective-preserving sovereign execution boundary.","objectivePreserved":true,"completionClaimed":false},
+  "authority": {"fullUserAuthorizationRecorded":true,"missingMachineAuthorityNotFabricated":true},
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}

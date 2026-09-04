@@ -45,6 +45,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             credential_policy["provider_deployment_workflow"],
             credential_policy["luno_observer_deployment_workflow"],
             credential_policy["gemini_provider_deployment_workflow"],
+            credential_policy["seb_deployment_workflow"],
             ".github/workflows/cios-production-lane.yml",
         }
         g0_identity_probe = credential_policy["g0_identity_probe_workflow"]
@@ -120,8 +121,9 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         self.assertTrue(BOUNDARY.exists())
         self.assertIn("PRIVATE_OPS_PLANE_REQUIRED", self.boundary)
         self.assertIn("not executable from the legacy public source repository", self.boundary)
-        self.assertIn("contains exactly four provider-deployment gateways", self.boundary)
+        self.assertIn("contains exactly five provider-deployment gateways", self.boundary)
         self.assertIn("deploy-gemini-gateway.yml", self.boundary)
+        self.assertIn("seb-omega.yml", self.boundary)
         self.assertIn("no provider rebuild or Library writeback is claimed", self.boundary)
 
     def test_rebuild_anchors_to_exact_predecessor_and_original_writer(self) -> None:
