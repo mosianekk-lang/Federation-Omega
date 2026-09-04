@@ -1,9 +1,11 @@
 from federation_consolidation.human_first_omega import (
     ActionProposal,
     HumanMissionContract,
+    RecoveryState,
     batch_requires_human,
     evaluate,
     human_value_score,
+    outcome_first_decision,
 )
 
 
@@ -211,3 +213,109 @@ def test_invalid_contract_blocks_execution():
     assert decision.human_required is True
     assert "INTENT_REQUIRED" in decision.reasons
     assert "SUCCESS_CONDITION_REQUIRED" in decision.reasons
+
+
+def test_recoverable_problem_is_not_dumped_on_owner_before_repair_exhaustion():
+    state = RecoveryState(
+        issue_id="CONNECTOR-TRANSIENT",
+        issue_summary="Temporary provider failure",
+        attempts=("retry-one",),
+        best_next_route="retry with alternate adapter",
+    )
+    decision = outcome_first_decision(state)
+    assert decision.owner_visible is False
+    assert decision.human_required is False
+    assert decision.continue_recovery is True
+    assert decision.report_mode == "CONTINUE_RECOVERY_SILENT"
+    assert decision.headline == ""
+
+
+def test_verified_solution_is_reported_as_outcome_not_problem():
+    state = RecoveryState(
+        issue_id="CONNECTOR-TRANSIENT",
+        issue_summary="Temporary provider failure",
+        resolved=True,
+        verified=True,
+        solution_summary="Alternate adapter restored provider readback",
+        attempts=("retry-one", "alternate-adapter"),
+    )
+    decision = outcome_first_decision(state)
+    assert decision.owner_visible is True
+    assert decision.human_required is False
+    assert decision.continue_recovery is False
+    assert decision.report_mode == "REPORT_VERIFIED_SOLUTION_OUTCOME"
+    assert decision.headline == "Resolved: CONNECTOR-TRANSIENT"
+    assert decision.details == ("Solution: Alternate adapter restored provider readback",)
+
+
+def test_unverified_repair_continues_recovery_instead_of_claiming_success():
+    state = RecoveryState(
+        issue_id="WRITE-UNKNOWN",
+        issue_summary="Provider write returned ambiguous state",
+        resolved=True,
+        verified=False,
+        solution_summary="Write retry returned 200 but native state is not read back yet",
+    )
+    decision = outcome_first_decision(state)
+    assert decision.owner_visible is False
+    assert decision.continue_recovery is True
+    assert decision.report_mode == "CONTINUE_RECOVERY_SILENT"
+
+
+def test_exhausted_recovery_escalates_precisely_with_attempts_and_next_route():
+    state = RecoveryState(
+        issue_id="AUTHORITY-GAP",
+        issue_summary="Current identity lacks required provider authority",
+        attempts=("primary-route", "existing-fallback"),
+        exact_blocker="No authorized identity can perform the required effect",
+        best_next_route="Owner may authorize a new provider identity binding",
+        recovery_exhausted=True,
+        owner_decision_required=True,
+        owner_decision_request="Authorize or decline the new provider identity binding",
+    )
+    decision = outcome_first_decision(state)
+    assert decision.owner_visible is True
+    assert decision.human_required is True
+    assert decision.continue_recovery is False
+    assert decision.report_mode == "ESCALATE_PRECISE_UNRESOLVED_DECISION"
+    assert "Repairs attempted: primary-route; existing-fallback" in decision.details
+    assert "Remaining blocker: No authorized identity can perform the required effect" in decision.details
+    assert "Owner decision: Authorize or decline the new provider identity binding" in decision.details
+
+
+def test_material_residual_risk_is_never_hidden_even_after_verified_solution():
+    state = RecoveryState(
+        issue_id="PARTIAL-RECOVERY",
+        issue_summary="Service recovered with remaining integrity risk",
+        resolved=True,
+        verified=True,
+        solution_summary="Primary service restored",
+        residual_risk="Historical queue integrity still requires adjudication",
+        material_residual_risk=True,
+        owner_decision_request="Choose whether to quarantine or adjudicate the historical queue",
+    )
+    decision = outcome_first_decision(state)
+    assert decision.owner_visible is True
+    assert decision.human_required is True
+    assert decision.report_mode == "REPORT_OUTCOME_WITH_MATERIAL_ESCALATION"
+    assert "MATERIAL_RESIDUAL_RISK" in decision.reasons
+    assert "Residual risk: Historical queue integrity still requires adjudication" in decision.details
+
+
+def test_authority_privacy_irreversibility_and_objective_conflict_force_escalation():
+    state = RecoveryState(
+        issue_id="BOUNDARY-TEST",
+        issue_summary="Recovery would cross multiple owner-reserved boundaries",
+        authority_expansion_required=True,
+        privacy_expansion_required=True,
+        irreversible_action_required=True,
+        objective_conflict=True,
+    )
+    decision = outcome_first_decision(state)
+    assert decision.human_required is True
+    assert set(decision.reasons) == {
+        "AUTHORITY_EXPANSION_REQUIRED",
+        "PRIVACY_EXPANSION_REQUIRED",
+        "IRREVERSIBLE_ACTION_REQUIRED",
+        "OBJECTIVE_CONFLICT",
+    }
