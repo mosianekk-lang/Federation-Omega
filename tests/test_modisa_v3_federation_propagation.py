@@ -38,6 +38,8 @@ class ModisaV3FederationPropagationTests(unittest.TestCase):
         self.assertIs(receipt["provider_effect"], False)
 
     def test_source_tree_ignores_generated_python_cache(self) -> None:
+        if PHOENIX_CORE_MANIFEST.is_file():
+            self.skipTest("Phoenix Core export intentionally excludes secret-detector and snapshot source segments")
         cache = ROOT / self.compiler.manifest["source"]["root"] / "modisa_v2" / "__pycache__"
         marker = cache / "airlock_probe.pyc"
         cache.mkdir(exist_ok=True)
@@ -68,6 +70,8 @@ class ModisaV3FederationPropagationTests(unittest.TestCase):
                 self.test_source_tree_is_content_addressed()
             with self.assertRaises(unittest.SkipTest):
                 self.test_every_source_module_exists()
+            with self.assertRaises(unittest.SkipTest):
+                self.test_source_tree_ignores_generated_python_cache()
 
     def test_manifest_rejects_non_additive_mode(self) -> None:
         candidate = copy.deepcopy(self.raw_manifest)
