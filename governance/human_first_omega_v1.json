@@ -8,7 +8,7 @@
   "mission": "Maximise human agency, comprehension, protected attention, creator focus, option value and verified mission success while keeping avoidable system work inside the system and preserving human authority over consequential decisions.",
   "authority_ceiling": "A1_INTERNAL_BY_DEFAULT",
   "external_effect_default": false,
-  "maturity": "SOURCE_AND_POLICY_CONTRACT_IMPLEMENTED_PROVIDER_RUNTIME_UNPROVEN",
+  "maturity": "SOURCE_POLICY_AND_FOREST_BINDING_IMPLEMENTED_PROVIDER_RUNTIME_UNPROVEN",
   "human_mission_contract": {
     "required_fields": [
       "mission_id",
@@ -122,10 +122,12 @@
     "deterministic_gate_source_present": true,
     "policy_as_code_present": true,
     "regression_tests_present": true,
+    "forest_first_source_binding_present": true,
+    "human_first_ao_wrapper_present": true,
     "provider_runtime_bound": false,
     "cross_surface_enforcement_proved": false,
     "human_value_improvement_measured": false,
     "external_authority_expanded": false
   },
-  "next_maturity_gate": "EXACT_HEAD_CI_PASS_THEN_BOUNDED_A1_SHADOW_THEN_MEASURED_OWNER_BURDEN_AND_INTENT_FIDELITY_CANARY_BEFORE_RUNTIME_PROMOTION"
+  "next_maturity_gate": "EXACT_HEAD_BINDING_CI_PASS_THEN_BOUNDED_A1_SHADOW_THEN_MEASURED_OWNER_BURDEN_AND_INTENT_FIDELITY_CANARY_BEFORE_RUNTIME_PROMOTION"
 }
