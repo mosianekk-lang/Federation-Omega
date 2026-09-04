@@ -37,7 +37,9 @@ class Handler(BaseHTTPRequestHandler):
     def do_GET(self) -> None:
         if self.path == "/health":
             self._json(200, {"status": "ok", "ledger_valid": self.engine.ledger.verify(),
-                             "external_effects": False})
+                             "external_effects": False,
+                             "service": os.getenv("K_SERVICE", "local"),
+                             "revision": os.getenv("K_REVISION", "local")})
         else:
             self._json(404, {"error": "not_found"})
 
@@ -77,4 +79,3 @@ def main() -> None:
 
 if __name__ == "__main__":
     main()
-
