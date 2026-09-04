@@ -1,0 +1,40 @@
+{
+  "mission_id": "CFBE-SEB-OMEGA-20260904",
+  "version": "1.0.0",
+  "status": "HARDENED_BUILD_NOT_OPERATIONAL",
+  "python": "3.12.13",
+  "verification": {
+    "compileall": "PASS",
+    "unittest": {"passed": 23, "failed": 0, "elapsed_seconds": 1.035},
+    "http_health": "PASS",
+    "http_mission_execution": "PASS",
+    "build_contract_require_proof": "PASS",
+    "objective_signature_and_supersession": "PASS",
+    "objective_mutation_and_requirement_dilution": "PASS_BLOCKED",
+    "artifact_as_operational_false_completion": "PASS_BLOCKED",
+    "durable_replay_drift": "PASS_BLOCKED",
+    "workload_trust_domain_violation": "PASS_BLOCKED",
+    "container_execution": "OPEN_DOCKER_PODMAN_UNAVAILABLE"
+  },
+  "boundaries": {
+    "openrouter_invoked": false,
+    "openrouter_credential_present": false,
+    "external_effects": false,
+    "production_deployed": false,
+    "kubernetes_runtime": "UNAVAILABLE",
+    "temporal_runtime": "UNAVAILABLE",
+    "opa_runtime": "UNAVAILABLE",
+    "spiffe_runtime": "UNAVAILABLE"
+  },
+  "unresolved_operational_requirements": [
+    "authenticated no-effect OpenRouter canary",
+    "native OPA policy-decision readback",
+    "Temporal durable replay and worker recovery canary",
+    "SPIFFE/SPIRE mTLS identity proof",
+    "signed container build with SBOM and vulnerability scan",
+    "Kubernetes health, canary promotion, native-effect and rollback readback"
+  ],
+  "completion_claimed": false,
+  "owner_action_required": false,
+  "manual_user_tasks": []
+}
