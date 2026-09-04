@@ -16,7 +16,8 @@ class ExecutionSpineTests(unittest.IsolatedAsyncioTestCase):
         starts={}; ends={}
         async def reader(task):
             starts[task.task_id]=time.monotonic(); await asyncio.sleep(.05); ends[task.task_id]=time.monotonic(); return {"task":task.task_id}
-        async def fanin(task): return {"joined":True}
+        async def fanin(task):
+            starts[task.task_id]=time.monotonic(); return {"joined":True}
         mission=Mission("m-par","parallel","a"*40,(
             Task("a","r:a","bubbles_command_bus","canary"),
             Task("b","r:b","bubbles_command_bus","canary"),
@@ -28,7 +29,7 @@ class ExecutionSpineTests(unittest.IsolatedAsyncioTestCase):
         self.assertEqual("COMPLETE_VERIFIED_LOCAL",cap.state)
         self.assertLess(abs(starts["a"]-starts["b"]),.03)
         self.assertLess(elapsed,.13)
-        self.assertGreaterEqual(starts["c"],min(ends["a"],ends["b"]))
+        self.assertGreaterEqual(starts["c"],max(ends["a"],ends["b"]))
 
     async def test_resume_hit_preserves_successful_work(self):
         calls={"a":0}
