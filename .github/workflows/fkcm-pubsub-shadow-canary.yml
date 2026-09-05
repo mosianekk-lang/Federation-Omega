@@ -377,3 +377,49 @@ jobs:
             fkcm-operator-route-probe.json
           if-no-files-found: ignore
           retention-days: 90
+
+  provider-canary-temp-iam:
+    if: github.event.issue.title == 'MODISA_FKCM_PUBSUB_TEMP_IAM_CANARY_V1' && github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Verify immutable temporary-IAM canary contract
+        run: |
+          set -euo pipefail
+          python tests/test_fkcm_temp_pubsub_iam_canary.py
+
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute one owner-authorized temporary least-privilege IAM provider court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m federation.fkcm_v1.temp_pubsub_iam_canary \
+            --execute \
+            --receipt-dir fkcm-temp-iam-proof \
+            --ttl-minutes 30
+
+      - name: Upload immutable provider and revocation receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fkcm-pubsub-temp-iam-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            fkcm-temp-iam-proof/*.json
+            fkcm-temp-iam-proof/admin-census/*.json
+          if-no-files-found: ignore
+          retention-days: 90
