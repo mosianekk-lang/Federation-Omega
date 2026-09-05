@@ -360,7 +360,7 @@ def default_kdv_surface_manifests() -> tuple[SurfaceManifest, ...]:
     """Compact current baseline; KDV remains the live registry for future surfaces."""
     return (
         SurfaceManifest("KDV", "Kim Dataverse", SurfaceClass.CANONICAL_STATE, ("READ", "WRITE", "RECONCILE"), "A1_INTERNAL", "P3_RESTRICTED", "GOOGLE_DRIVE_CONNECTOR", "KDV_FABRIC"),
-        SurfaceManifest("GOOGLE_DRIVE", "Google Drive", SurfaceClass.PROVIDER_DATA, ("READ", "WRITE", "SEARCH", "ARTIFACT"), "A1_INTERNAL", "P3_RESTRICTED", "GOOGLE_DRIVE_CONNECTOR", "APPS_SCRIPT_TRANSPORT"),
+        SurfaceManifest("GOOGLE_DRIVE", "Google Drive", SurfaceClass.PROVIDER_DATA, ("READ", "WRITE", "SEARCH", "ARTIFACT"), "A2_REVERSIBLE_EXTERNAL", "P3_RESTRICTED", "GOOGLE_DRIVE_CONNECTOR", "APPS_SCRIPT_TRANSPORT"),
         SurfaceManifest("GMAIL", "Gmail", SurfaceClass.COMMUNICATION, ("READ", "SEARCH", "LABEL", "SEND"), "A2_REVERSIBLE_EXTERNAL", "P2_PRIVATE", "GMAIL_CONNECTOR", "", explicit_communication_send_only=True),
         SurfaceManifest("GOOGLE_CALENDAR", "Google Calendar", SurfaceClass.SCHEDULING, ("READ", "SEARCH", "WRITE"), "A2_REVERSIBLE_EXTERNAL", "P2_PRIVATE", "GOOGLE_CALENDAR_CONNECTOR", ""),
         SurfaceManifest("GITHUB", "GitHub", SurfaceClass.SOURCE_CI, ("READ", "WRITE", "BRANCH", "PR", "CI"), "A2_REVERSIBLE_EXTERNAL", "P0_PUBLIC_REPO", "GITHUB_CONNECTOR", "KDV"),
