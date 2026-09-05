@@ -15,9 +15,6 @@ import uuid
 from datetime import datetime, timezone
 from typing import Any
 
-import google.auth
-from google.auth.transport.requests import AuthorizedSession
-
 SPREADSHEET_ID = os.environ.get(
     "GNS4_SPREADSHEET_ID",
     "1LSVjK9YK6u2CMrvetOcXpun4VQnOh5cE6b3w6z_KTHg",
@@ -37,7 +34,10 @@ def utcnow() -> str:
     return datetime.now(timezone.utc).isoformat().replace("+00:00", "Z")
 
 
-def _session() -> AuthorizedSession:
+def _session():
+    import google.auth
+    from google.auth.transport.requests import AuthorizedSession
+
     credentials, _ = google.auth.default(scopes=SCOPES)
     return AuthorizedSession(credentials)
 
@@ -46,7 +46,7 @@ def _url(path: str) -> str:
     return f"https://sheets.googleapis.com/v4/spreadsheets/{SPREADSHEET_ID}/{path}"
 
 
-def _get_values(session: AuthorizedSession, a1_range: str) -> list[list[str]]:
+def _get_values(session, a1_range: str) -> list[list[str]]:
     from urllib.parse import quote
 
     response = session.get(_url(f"values/{quote(a1_range, safe='!:$')}"), timeout=30)
@@ -54,7 +54,7 @@ def _get_values(session: AuthorizedSession, a1_range: str) -> list[list[str]]:
     return response.json().get("values", [])
 
 
-def _update_values(session: AuthorizedSession, a1_range: str, values: list[list[Any]]) -> None:
+def _update_values(session, a1_range: str, values: list[list[Any]]) -> None:
     from urllib.parse import quote
 
     response = session.put(
@@ -66,7 +66,7 @@ def _update_values(session: AuthorizedSession, a1_range: str, values: list[list[
     response.raise_for_status()
 
 
-def _append_values(session: AuthorizedSession, a1_range: str, values: list[list[Any]]) -> None:
+def _append_values(session, a1_range: str, values: list[list[Any]]) -> None:
     from urllib.parse import quote
 
     response = session.post(
@@ -105,7 +105,7 @@ def _find_candidate(values: list[list[str]]) -> tuple[int, list[str], dict[str, 
     return None
 
 
-def _claim(session: AuthorizedSession, sheet_row: int, idx: dict[str, int]) -> None:
+def _claim(session, sheet_row: int, idx: dict[str, int]) -> None:
     status_col = idx["status"] + 1
     column = _column_letter(status_col)
     claim = "CLAIMED_GNS4_HOSTED"
@@ -127,7 +127,7 @@ def _column_letter(number: int) -> str:
 
 
 def _finalize(
-    session: AuthorizedSession,
+    session,
     sheet_row: int,
     row: list[str],
     idx: dict[str, int],
@@ -152,7 +152,7 @@ def _finalize(
         raise RuntimeError("FINAL_SEMANTIC_READBACK_MISMATCH")
 
 
-def _append_proof(session: AuthorizedSession, result: dict[str, Any]) -> str:
+def _append_proof(session, result: dict[str, Any]) -> str:
     proof_id = "GNS4PROOF-" + str(uuid.uuid4())
     evidence = dict(result)
     evidence["proofId"] = proof_id
@@ -181,7 +181,7 @@ def _append_proof(session: AuthorizedSession, result: dict[str, Any]) -> str:
     return proof_id
 
 
-def _upsert_health(session: AuthorizedSession, result: dict[str, Any], proof_id: str) -> None:
+def _upsert_health(session, result: dict[str, Any], proof_id: str) -> None:
     component = "GNS4-HOSTED-WIF-WORKER"
     rows = _get_values(session, f"{HEALTH_SHEET}!A:P")
     target_row = None
@@ -213,7 +213,7 @@ def _upsert_health(session: AuthorizedSession, result: dict[str, Any], proof_id:
         _append_values(session, f"{HEALTH_SHEET}!A:P", health)
 
 
-def run_once(session: AuthorizedSession | None = None) -> dict[str, Any]:
+def run_once(session=None) -> dict[str, Any]:
     session = session or _session()
     values = _get_values(session, f"{QUEUE_SHEET}!A:N")
     candidate = _find_candidate(values)
