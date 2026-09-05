@@ -1,0 +1,49 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/fio_surface_access.py",
+        "tests/test_fio_surface_access_v15.py",
+        "governance/proofos_omega_policy_extension_fio_surface_access_v15.json",
+        "docs/architecture/FIO_OMEGA_SIR_SURFACE_ACCESS_V15.md"
+      ],
+      "reason": "FIO_OMEGA_SURFACE_ACCESS_AUTHORITY_AND_AUTOMATION_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FIO_OMEGA_SURFACE_ACCESS_V15",
+      "patterns": [
+        "federation/fio_surface_access.py",
+        "tests/test_fio_surface_access_v15.py",
+        "governance/proofos_omega_policy_extension_fio_surface_access_v15.json",
+        "docs/architecture/FIO_OMEGA_SIR_SURFACE_ACCESS_V15.md"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "FIO_OMEGA_SIR",
+        "SOVARA"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fio_omega_surface_access_v15",
+      "kind": "unittest_glob",
+      "target": "test_fio_surface_access_v15.py",
+      "patterns": [
+        "federation/fio_surface_access.py",
+        "tests/test_fio_surface_access_v15.py",
+        "governance/proofos_omega_policy_extension_fio_surface_access_v15.json"
+      ],
+      "subsystems": ["FIO_OMEGA_SURFACE_ACCESS_V15"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}
