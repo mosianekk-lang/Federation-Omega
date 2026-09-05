@@ -1,0 +1,59 @@
+{
+  "candidate": {
+    "authorization_gate_tests": "18/18 PASS",
+    "focused_python_tests": "41/41 PASS",
+    "full_repository_admission": "PENDING_EXACT_HEAD_CI",
+    "identity_lineage_tests": "12/12 PASS",
+    "javascript_syntax": "PASS",
+    "manifest_sha256": "65ec13a004338a6ab54baaddca8a3639db65c87660fd64e9af218e5ff53dd219",
+    "node_security_contract": "PASS",
+    "private_admin_source_gate": "SOURCE_REVIEW_PASS",
+    "public_gateway_source_gate": "SOURCE_REVIEW_PASS",
+    "python_compile": "PASS",
+    "two_plane_candidate_tests": "11/11 PASS"
+  },
+  "corrections": [
+    "same_project_hash_anchor_replaced_with_pinned_external_verifier_identity",
+    "provider_receipt_and_effect_permit_bound_to_transaction_request_and_before_after_hashes",
+    "one_use_permit_replay_ledger_added",
+    "non_reentrant_nested_lock_removed",
+    "no_change_provider_writes_and_permit_consumption_removed",
+    "backup_self_hash_and_exact_provider_readback_added",
+    "apply_and_rollback_post_effect_actions_bound",
+    "verifier_host_and_identity_pinned",
+    "authenticated_apps_script_api_redirects_rejected",
+    "audit_spreadsheet_id_made_explicit",
+    "public_gateway_explicit_oauth_scopes_removed",
+    "private_admin_cloud_platform_scope_removed"
+  ],
+  "live_apps_script_mutated": false,
+  "protected_backup_audit": {
+    "coverage_promotion": "PROMOTE_2X_BOUNDED_STATIC_DETECTION_ONLY",
+    "finding_counts": {
+      "CRITICAL": 15,
+      "HIGH": 5,
+      "INFO": 0,
+      "MEDIUM": 2
+    },
+    "finding_instances": 22,
+    "receipt_sha256": "1ba8063ad7d30a98e4c756c83964546b30f9b078de6208df9676bb293d7f003f",
+    "static_coverage_ratio_vs_prior_best_case": 5.333333,
+    "status": "SECURITY_HOLD",
+    "unique_finding_classes": 16
+  },
+  "provider_authority_proven": false,
+  "provider_deployment_performed": false,
+  "provider_mutation_authorized": false,
+  "receipt_sha256": "0021d34c6cd55cbfef9a98afe9183a217adfc58821c3afc2c3a882fb43b08bf1",
+  "schema": "SOVARA_APPS_SCRIPT_AUTHORITY_RECOVERY_V2_SOURCE_RECEIPT",
+  "source": {
+    "contract": "FO_GAS_FLEET_RESTORABLE_BACKUP",
+    "declared_source_sha256": "2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248",
+    "original_mutated": false,
+    "raw_wrapper_sha256": "3af2057a8fd0ee98fca08493f4b0e2405e86484c0663c53740af63c9f076082f",
+    "run_id": "FLEETWEEKLY-20260718-181318-5BXX66"
+  },
+  "truth_boundary": "Source candidate and deterministic local verification only; no live Google provider effect or authority claim.",
+  "verified_at": "2026-08-23T23:20:39+02:00",
+  "version": "2.0.0"
+}
