@@ -1,9 +1,10 @@
-"""Bubbles Adaptive Chat Governor Ω3.5.
+"""Bubbles Adaptive Chat Governor Ω3.7.
 
 Truth boundary: this package governs Bubbles workflows routed through it. It does
 not modify hidden ChatGPT context management, provider serving infrastructure,
-or connector calls that bypass this middleware. The continuity fabric preserves
-and resumes work across host turns; it does not claim hidden/background execution.
+or connector calls that bypass this middleware. Ω3.7 binds the admitted frontier
+controls into the existing ChatGov surface and makes explicit safe-read
+single-flight load-bearing inside ConnectorGateway without creating authority.
 """
 
 from .routing import MissionCompiler, MissionPlan, MemoryGovernor
@@ -71,6 +72,12 @@ from .performance_kernel import (
     WorkMetrics,
     performance_kernel_receipt,
 )
+from .frontier_binding_v1 import (
+    FrontierBindingReceipt,
+    FrontierControlPlane,
+    SAFE_SINGLEFLIGHT_EFFECTS,
+    frontier_binding_receipt,
+)
 
 __all__ = [
     "MissionCompiler", "MissionPlan", "MemoryGovernor", "ConnectorGateway",
@@ -94,6 +101,8 @@ __all__ = [
     "SkillPage", "SkillPager", "SpecialistCandidate", "SpecialistPlan",
     "ToolSchemaCache", "TraceToRegressionCompiler", "UnnecessaryWorkMeter",
     "WorkMetrics", "performance_kernel_receipt",
+    "FrontierBindingReceipt", "FrontierControlPlane", "SAFE_SINGLEFLIGHT_EFFECTS",
+    "frontier_binding_receipt",
 ]
 
-__version__ = "3.5.0"
+__version__ = "3.7.0"
