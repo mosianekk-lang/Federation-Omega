@@ -50,6 +50,12 @@ class FkcmPubSubShadowCanaryContract(unittest.TestCase):
         self.assertNotIn(WORKFLOW_PATH, self.policy.get("actions_write_workflow_allowlist", []))
         self.assertNotIn(WORKFLOW_PATH, self.policy.get("statuses_write_workflow_allowlist", []))
 
+    def test_service_usage_readback_uses_provider_field(self):
+        self.assertIn("--filter='config.name=pubsub.googleapis.com'", self.text)
+        self.assertIn("--format='value(config.name)'", self.text)
+        self.assertNotIn("--filter='NAME:pubsub.googleapis.com'", self.text)
+        self.assertNotIn("--format='value(NAME)'", self.text)
+
     def test_existing_topic_is_required_not_created(self):
         self.assertIn('gcloud pubsub topics describe "$TOPIC_ID"', self.text)
         self.assertNotIn("gcloud pubsub topics create", self.text)

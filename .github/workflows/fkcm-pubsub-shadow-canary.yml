@@ -70,7 +70,7 @@ jobs:
           test "$ACTUAL_PROJECT" = "$PROJECT_ID"
           test "$ACTUAL_NUMBER" = "$PROJECT_NUMBER"
 
-          PUBSUB_SERVICE="$(gcloud services list --enabled --project "$PROJECT_ID" --filter='NAME:pubsub.googleapis.com' --format='value(NAME)' --limit=1)"
+          PUBSUB_SERVICE="$(gcloud services list --enabled --project "$PROJECT_ID" --filter='config.name=pubsub.googleapis.com' --format='value(config.name)' --limit=1)"
           test "$PUBSUB_SERVICE" = "pubsub.googleapis.com"
 
           TOPIC_NAME="$(gcloud pubsub topics describe "$TOPIC_ID" --project "$PROJECT_ID" --format='value(name)')"
