@@ -13,6 +13,8 @@ WORKFLOW_PATH = ".github/workflows/fkcm-pubsub-shadow-canary.yml"
 class FkcmPubSubShadowCanaryContract(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not WORKFLOW.exists():
+            raise unittest.SkipTest("repository-only workflow contract is outside the Phoenix Core export")
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(AIRLOCK_POLICY.read_text(encoding="utf-8"))
 
