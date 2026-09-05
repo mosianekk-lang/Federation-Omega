@@ -6,6 +6,7 @@ import random
 import time
 from typing import Any, Callable, Dict, Optional
 
+from .frontier_binding_v1 import FrontierControlPlane, SAFE_SINGLEFLIGHT_EFFECTS
 from .routing import MissionPlan
 from .state import DurableState
 
@@ -17,10 +18,21 @@ def _sha(value: Any) -> str:
 
 
 class ConnectorGateway:
-    """Enforce routing, idempotency, retries, circuit breakers and semantic readback."""
+    """Enforce routing, idempotency, retries, circuits and semantic readback.
 
-    def __init__(self, state: DurableState) -> None:
+    Explicit NO_EFFECT / READ_ONLY operations additionally pass through the
+    load-bearing frontier single-flight coordinator. Existing callers preserve the
+    prior behavior because the default effect class is UNSPECIFIED and therefore
+    never enters the safe-read coalescing path.
+    """
+
+    def __init__(
+        self,
+        state: DurableState,
+        frontier: Optional[FrontierControlPlane] = None,
+    ) -> None:
         self.state = state
+        self.frontier = frontier or FrontierControlPlane()
 
     @staticmethod
     def idempotency_key(
@@ -49,6 +61,8 @@ class ConnectorGateway:
         retry_attempts: int = 3,
         retry_base_seconds: float = 0.15,
         retry_max_seconds: float = 2.0,
+        effect_class: str = "UNSPECIFIED",
+        use_frontier: bool = True,
     ) -> Dict[str, Any]:
         if connector not in plan.active_connectors:
             raise PermissionError(
@@ -64,61 +78,86 @@ class ConnectorGateway:
         if prior and prior["success"] and prior["semantic_ok"] and not force_revalidation:
             return {
                 "reused": True,
+                "reuse_source": "DURABLE_IDEMPOTENCY_RECEIPT",
                 "idempotency_key": key,
                 "payload": prior["payload"],
             }
 
-        started = time.time()
-        last_error = ""
-        for attempt in range(1, retry_attempts + 1):
-            try:
-                payload = fn()
-                semantic_ok = bool(semantic_check(payload)) if semantic_check else True
-                if not semantic_ok:
-                    raise ValueError("Semantic readback failed")
+        def execute_core() -> Dict[str, Any]:
+            started = time.time()
+            last_error = ""
+            for attempt in range(1, retry_attempts + 1):
+                try:
+                    payload = fn()
+                    semantic_ok = bool(semantic_check(payload)) if semantic_check else True
+                    if not semantic_ok:
+                        raise ValueError("Semantic readback failed")
 
-                elapsed_ms = (time.time() - started) * 1000.0
-                self.state.update_metric("connector.latency_ms", elapsed_ms)
-                self.state.update_metric("connector.failure_rate", 0.0)
-                self.state.circuit_success(connector)
-                self.state.save_receipt(
-                    key=key,
-                    mission_id=plan.mission_id,
-                    action=action,
-                    target=target,
-                    success=True,
-                    semantic_ok=True,
-                    payload=payload,
-                )
-                return {
-                    "reused": False,
-                    "idempotency_key": key,
-                    "payload": payload,
-                    "attempts": attempt,
-                    "latency_ms": round(elapsed_ms, 2),
-                }
-            except Exception as exc:
-                last_error = f"{type(exc).__name__}: {exc}"
-                self.state.circuit_failure(connector, last_error)
-                self.state.update_metric("connector.failure_rate", 1.0)
-                if attempt >= retry_attempts:
-                    break
-                delay = min(retry_max_seconds, retry_base_seconds * (2 ** (attempt - 1)))
-                delay *= 0.9 + random.random() * 0.2
-                time.sleep(delay)
+                    elapsed_ms = (time.time() - started) * 1000.0
+                    self.state.update_metric("connector.latency_ms", elapsed_ms)
+                    self.state.update_metric("connector.failure_rate", 0.0)
+                    self.state.circuit_success(connector)
+                    self.state.save_receipt(
+                        key=key,
+                        mission_id=plan.mission_id,
+                        action=action,
+                        target=target,
+                        success=True,
+                        semantic_ok=True,
+                        payload=payload,
+                    )
+                    return {
+                        "reused": False,
+                        "reuse_source": "EXECUTED",
+                        "idempotency_key": key,
+                        "payload": payload,
+                        "attempts": attempt,
+                        "latency_ms": round(elapsed_ms, 2),
+                    }
+                except Exception as exc:
+                    last_error = f"{type(exc).__name__}: {exc}"
+                    self.state.circuit_failure(connector, last_error)
+                    self.state.update_metric("connector.failure_rate", 1.0)
+                    if attempt >= retry_attempts:
+                        break
+                    delay = min(
+                        retry_max_seconds,
+                        retry_base_seconds * (2 ** (attempt - 1)),
+                    )
+                    delay *= 0.9 + random.random() * 0.2
+                    time.sleep(delay)
 
-        self.state.save_receipt(
-            key=key,
-            mission_id=plan.mission_id,
-            action=action,
-            target=target,
-            success=False,
-            semantic_ok=False,
-            payload={"error": last_error},
-        )
-        raise RuntimeError(
-            f"Connector execution failed after {retry_attempts} attempts: {last_error}"
-        )
+            self.state.save_receipt(
+                key=key,
+                mission_id=plan.mission_id,
+                action=action,
+                target=target,
+                success=False,
+                semantic_ok=False,
+                payload={"error": last_error},
+            )
+            raise RuntimeError(
+                f"Connector execution failed after {retry_attempts} attempts: {last_error}"
+            )
+
+        effect = str(effect_class).strip().upper()
+        if (
+            use_frontier
+            and not force_revalidation
+            and effect in SAFE_SINGLEFLIGHT_EFFECTS
+        ):
+            result = self.frontier.execute_safe_read(
+                key=key,
+                fn=execute_core,
+                effect_class=effect,
+            )
+            # A coalesced waiter receives the first caller's exact proof-bearing
+            # execution result.  No synthetic provider success is manufactured.
+            if self.frontier.singleflight.coalesced_waiters:
+                return {**result, "frontier_singleflight": True}
+            return {**result, "frontier_singleflight": True}
+
+        return {**execute_core(), "frontier_singleflight": False}
 
 
 class StallDetector:
