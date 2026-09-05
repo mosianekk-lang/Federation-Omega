@@ -10,6 +10,7 @@ on:
 
 permissions:
   contents: read
+  id-token: write
 
 concurrency:
   group: sovara-project-iam-bridge-${{ github.ref }}
@@ -19,6 +20,8 @@ env:
   PROJECT_ID: sov-hybrid-suite
   PROJECT_NUMBER: "257649435135"
   REQUEST_FILE: governance/sovara_project_iam_binding_request_v1.json
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   HAS_GCP_SA_KEY: ${{ secrets.GCP_SA_KEY != '' }}
   HAS_GCP_SERVICE_ACCOUNT_KEY: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY != '' }}
   HAS_GOOGLE_CREDENTIALS: ${{ secrets.GOOGLE_CREDENTIALS != '' }}
@@ -30,7 +33,7 @@ env:
 jobs:
   bridge:
     runs-on: ubuntu-latest
-    timeout-minutes: 12
+    timeout-minutes: 18
     steps:
       - name: Checkout without repository write credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -51,19 +54,38 @@ jobs:
           assert p.get('project_number') == '257649435135', p
           assert p.get('runtime_service_account') == 'superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com', p
           assert p.get('deployer_service_account') == 'superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com', p
-          expected={
+          mode=p.get('mode')
+          legacy_expected={
             ('roles/aiplatform.user','serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com'),
             ('roles/serviceusage.serviceUsageConsumer','serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com'),
             ('roles/run.developer','serviceAccount:superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com'),
           }
-          actual={(x.get('role'),x.get('member')) for x in p.get('required_bindings',[])}
-          assert actual == expected, {'actual':actual,'expected':expected}
-          mode=p.get('mode')
-          if mode == 'AUTHORITY_PROBE':
-              assert p.get('provider_mutation_allowed') is False, p
-          elif mode == 'APPLY_VERIFY':
+          if mode in {'AUTHORITY_PROBE','APPLY_VERIFY'}:
+              actual={(x.get('role'),x.get('member')) for x in p.get('required_bindings',[])}
+              assert actual == legacy_expected, {'actual':actual,'expected':legacy_expected}
+              if mode == 'AUTHORITY_PROBE':
+                  assert p.get('provider_mutation_allowed') is False, p
+              else:
+                  assert p.get('provider_mutation_allowed') is True, p
+          elif mode == 'FKCM_OPTION_A_CANARY':
               assert p.get('provider_mutation_allowed') is True, p
-              assert p.get('owner_authority') == 'EXPLICIT_CURRENT_CHAT_2026-08-29', p
+              assert p.get('owner_authority') == 'EXPLICIT_CURRENT_CHAT_2026-09-05_FKCM_OPTION_A', p
+              assert p.get('required_bindings') == [], p
+              assert p.get('topic_id') == 'evidenceops-heartbeat-events', p
+              role=p.get('temporary_role') or {}
+              expected_permissions={
+                'pubsub.subscriptions.create',
+                'pubsub.topics.attachSubscription',
+                'pubsub.subscriptions.get',
+                'pubsub.subscriptions.consume',
+                'pubsub.subscriptions.delete',
+                'pubsub.topics.publish',
+              }
+              assert set(role.get('included_permissions') or []) == expected_permissions, role
+              assert role.get('delete_after_canary') is True, role
+              assert p.get('temporary_binding_remove_after_canary') is True, p
+              assert p.get('existing_subscriptions_may_be_touched') is False, p
+              assert p.get('production_traffic_allowed') is False, p
           else:
               raise AssertionError(f'unsupported mode: {mode!r}')
           print(mode)
@@ -81,7 +103,7 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           credentials_json: ${{ secrets.GCP_SA_KEY }}
           token_format: access_token
-          access_token_lifetime: 600s
+          access_token_lifetime: 900s
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
           create_credentials_file: false
           export_environment_variables: false
@@ -95,7 +117,7 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           credentials_json: ${{ secrets.GCP_SERVICE_ACCOUNT_KEY }}
           token_format: access_token
-          access_token_lifetime: 600s
+          access_token_lifetime: 900s
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
           create_credentials_file: false
           export_environment_variables: false
@@ -109,7 +131,7 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           credentials_json: ${{ secrets.GOOGLE_CREDENTIALS }}
           token_format: access_token
-          access_token_lifetime: 600s
+          access_token_lifetime: 900s
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
           create_credentials_file: false
           export_environment_variables: false
@@ -123,7 +145,7 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           credentials_json: ${{ secrets.GOOGLE_SERVICE_ACCOUNT_KEY }}
           token_format: access_token
-          access_token_lifetime: 600s
+          access_token_lifetime: 900s
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
           create_credentials_file: false
           export_environment_variables: false
@@ -137,7 +159,7 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           credentials_json: ${{ secrets.GCP_CREDENTIALS }}
           token_format: access_token
-          access_token_lifetime: 600s
+          access_token_lifetime: 900s
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
           create_credentials_file: false
           export_environment_variables: false
@@ -151,7 +173,7 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           credentials_json: ${{ secrets.GOOGLE_GHA_CREDS_JSON }}
           token_format: access_token
-          access_token_lifetime: 600s
+          access_token_lifetime: 900s
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
           create_credentials_file: false
           export_environment_variables: false
@@ -165,17 +187,32 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
           credentials_json: ${{ secrets.GOOGLE_CLOUD_CREDENTIALS }}
           token_format: access_token
-          access_token_lifetime: 600s
+          access_token_lifetime: 900s
           access_token_scopes: https://www.googleapis.com/auth/cloud-platform
           create_credentials_file: false
           export_environment_variables: false
 
-      - name: Probe or apply exact three project IAM bindings
+      - name: Authenticate canonical deployer WIF for FKCM court
+        id: auth_deployer
+        if: ${{ steps.request.outputs.mode == 'FKCM_OPTION_A_CANARY' }}
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: access_token
+          access_token_lifetime: 900s
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform
+          create_credentials_file: false
+          export_environment_variables: false
+
+      - name: Execute exact IAM bridge transaction
         id: bridge
         shell: bash
         env:
           MODE: ${{ steps.request.outputs.mode }}
-          GOOGLE_ACCESS_TOKEN: ${{ steps.auth_gcp_sa.outputs.access_token || steps.auth_gcp_service_account.outputs.access_token || steps.auth_google_credentials.outputs.access_token || steps.auth_google_service_account.outputs.access_token || steps.auth_gcp_credentials.outputs.access_token || steps.auth_google_gha.outputs.access_token || steps.auth_google_cloud.outputs.access_token }}
+          ADMIN_ACCESS_TOKEN: ${{ steps.auth_gcp_sa.outputs.access_token || steps.auth_gcp_service_account.outputs.access_token || steps.auth_google_credentials.outputs.access_token || steps.auth_google_service_account.outputs.access_token || steps.auth_gcp_credentials.outputs.access_token || steps.auth_google_gha.outputs.access_token || steps.auth_google_cloud.outputs.access_token }}
+          DEPLOYER_ACCESS_TOKEN: ${{ steps.auth_deployer.outputs.access_token }}
           OUTCOME_GCP_SA_KEY: ${{ steps.auth_gcp_sa.outcome }}
           OUTCOME_GCP_SERVICE_ACCOUNT_KEY: ${{ steps.auth_gcp_service_account.outcome }}
           OUTCOME_GOOGLE_CREDENTIALS: ${{ steps.auth_google_credentials.outcome }}
@@ -187,157 +224,285 @@ jobs:
           set -euo pipefail
           set +x
           mkdir -p /tmp/sovara-project-iam
-          python3 - <<'PY'
+          python3 - "$REQUEST_FILE" <<'PY'
           from __future__ import annotations
-          import copy, hashlib, json, os, pathlib, urllib.error, urllib.request
+          import base64, copy, hashlib, json, os, pathlib, time, urllib.error, urllib.parse, urllib.request
           from datetime import datetime, timezone
 
           PROJECT='sov-hybrid-suite'
+          PROJECT_NUMBER='257649435135'
+          DEPLOYER='serviceAccount:superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com'
           MODE=os.environ['MODE']
-          TOKEN=os.environ.get('GOOGLE_ACCESS_TOKEN','')
-          ROUTES=(
-            'GCP_SA_KEY','GCP_SERVICE_ACCOUNT_KEY','GOOGLE_CREDENTIALS',
-            'GOOGLE_SERVICE_ACCOUNT_KEY','GCP_CREDENTIALS','GOOGLE_GHA_CREDS_JSON',
-            'GOOGLE_CLOUD_CREDENTIALS'
-          )
+          ADMIN=os.environ.get('ADMIN_ACCESS_TOKEN','')
+          DEPLOYER_TOKEN=os.environ.get('DEPLOYER_ACCESS_TOKEN','')
+          REQUEST=json.load(open(__import__('sys').argv[1], encoding='utf-8'))
+          ROUTES=('GCP_SA_KEY','GCP_SERVICE_ACCOUNT_KEY','GOOGLE_CREDENTIALS','GOOGLE_SERVICE_ACCOUNT_KEY','GCP_CREDENTIALS','GOOGLE_GHA_CREDS_JSON','GOOGLE_CLOUD_CREDENTIALS')
           outcomes={r:os.environ.get('OUTCOME_'+r,'skipped') for r in ROUTES}
           route=next((r for r in ROUTES if outcomes.get(r)=='success'), None)
-          required=[
-            ('roles/aiplatform.user','serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com'),
-            ('roles/serviceusage.serviceUsageConsumer','serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com'),
-            ('roles/run.developer','serviceAccount:superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com'),
-          ]
           out=pathlib.Path('/tmp/sovara-project-iam/IAM_BRIDGE_RECEIPT.json')
 
           def digest(obj):
               return hashlib.sha256(json.dumps(obj,sort_keys=True,separators=(',',':')).encode()).hexdigest()
 
-          def call(url, body):
-              data=json.dumps(body,separators=(',',':')).encode()
-              req=urllib.request.Request(url,data=data,method='POST',headers={
-                  'authorization':f'Bearer {TOKEN}',
+          def http(token, method, url, body=None, timeout=45):
+              data=None if body is None else json.dumps(body,separators=(',',':')).encode()
+              req=urllib.request.Request(url,data=data,method=method,headers={
+                  'authorization':f'Bearer {token}',
                   'content-type':'application/json',
                   'accept':'application/json',
                   'x-goog-user-project':PROJECT,
               })
               try:
-                  with urllib.request.urlopen(req,timeout=45) as r:
+                  with urllib.request.urlopen(req,timeout=timeout) as r:
                       raw=r.read().decode('utf-8','replace')
-                      return r.status, json.loads(raw) if raw else {}
+                      return int(r.status), json.loads(raw) if raw else {}
               except urllib.error.HTTPError as e:
                   raw=e.read().decode('utf-8','replace')
-                  try: body=json.loads(raw) if raw else {}
-                  except Exception: body={'message_sha256':hashlib.sha256(raw.encode()).hexdigest()}
-                  return e.code, body
+                  try: parsed=json.loads(raw) if raw else {}
+                  except Exception: parsed={}
+                  return int(e.code), parsed
+
+          def write_and_exit(receipt, code):
+              receipt['receipt_sha256']=digest(receipt)
+              out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+              raise SystemExit(code)
 
           receipt={
-            'schema':'SOVARA_PROJECT_IAM_BRIDGE_RECEIPT_V1',
+            'schema':'SOVARA_PROJECT_IAM_BRIDGE_RECEIPT_V2',
             'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
             'source_sha':os.environ.get('GITHUB_SHA',''),
             'mode':MODE,
             'project_id':PROJECT,
+            'project_number':PROJECT_NUMBER,
             'credential_alias_presence':{r:os.environ.get('HAS_'+r)=='true' for r in ROUTES},
             'auth_outcomes':outcomes,
             'selected_credential_alias':route,
             'secret_values_recorded':False,
             'service_account_key_created':False,
             'provider_mutation_performed':False,
-            'required_bindings':[{'role':r,'member':m} for r,m in required],
             'authority':{},
             'apply':{},
           }
-          if not TOKEN or not route:
-              receipt['state']='NO_EXISTING_GOOGLE_AUTH_ROUTE'
-              receipt['receipt_sha256']=digest(receipt)
-              out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-              raise SystemExit(2)
+          if not ADMIN or not route:
+              receipt['state']='NO_EXISTING_GOOGLE_ADMIN_AUTH_ROUTE'
+              write_and_exit(receipt,2)
 
           perm_url=f'https://cloudresourcemanager.googleapis.com/v1/projects/{PROJECT}:testIamPermissions'
-          status,perm=call(perm_url,{'permissions':['resourcemanager.projects.getIamPolicy','resourcemanager.projects.setIamPolicy']})
-          granted=set(perm.get('permissions') or []) if status==200 else set()
-          can_set='resourcemanager.projects.setIamPolicy' in granted
-          receipt['authority']={
-            'test_http_status':status,
-            'granted_permissions':sorted(granted),
-            'project_set_iam_policy':can_set,
-          }
-          if MODE=='AUTHORITY_PROBE':
-              receipt['state']='AUTHORITY_VERIFIED' if can_set else 'AUTHORITY_NOT_VERIFIED'
-              receipt['receipt_sha256']=digest(receipt)
-              out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-              raise SystemExit(0 if can_set else 3)
+          required_admin=['resourcemanager.projects.getIamPolicy','resourcemanager.projects.setIamPolicy']
+          if MODE=='FKCM_OPTION_A_CANARY':
+              required_admin += ['iam.roles.create','iam.roles.delete','iam.roles.get']
+          ps,payload=http(ADMIN,'POST',perm_url,{'permissions':required_admin})
+          granted=set(payload.get('permissions') or []) if ps==200 else set()
+          receipt['authority']={'test_http_status':ps,'granted_permissions':sorted(granted),'required_permissions':required_admin}
+          if not set(required_admin) <= granted:
+              receipt['state']='APPLY_BLOCKED_NO_VERIFIED_ADMIN_AUTHORITY'
+              write_and_exit(receipt,3)
 
-          if MODE!='APPLY_VERIFY' or not can_set:
-              receipt['state']='APPLY_BLOCKED_NO_VERIFIED_AUTHORITY'
-              receipt['receipt_sha256']=digest(receipt)
-              out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-              raise SystemExit(4)
+          if MODE=='AUTHORITY_PROBE':
+              receipt['state']='AUTHORITY_VERIFIED'
+              write_and_exit(receipt,0)
 
           get_url=f'https://cloudresourcemanager.googleapis.com/v1/projects/{PROJECT}:getIamPolicy'
           set_url=f'https://cloudresourcemanager.googleapis.com/v1/projects/{PROJECT}:setIamPolicy'
-          gs,pre=call(get_url,{})
-          if gs!=200 or not isinstance(pre.get('bindings'),list):
-              receipt['state']='PRE_POLICY_READ_FAILED'
-              receipt['apply']['pre_read_http_status']=gs
-              receipt['receipt_sha256']=digest(receipt)
-              out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-              raise SystemExit(5)
 
-          desired=copy.deepcopy(pre)
-          additions=[]
-          for role,member in required:
-              binding=next((b for b in desired['bindings'] if b.get('role')==role and not b.get('condition')),None)
-              if binding is None:
-                  binding={'role':role,'members':[]}
-                  desired['bindings'].append(binding)
-              members=binding.setdefault('members',[])
-              if member not in members:
-                  members.append(member); members.sort(); additions.append({'role':role,'member':member})
-          desired['bindings']=sorted(desired['bindings'],key=lambda b:(b.get('role',''),json.dumps(b.get('condition',{}),sort_keys=True)))
-          receipt['apply']['pre_policy_bindings_sha256']=digest(pre.get('bindings',[]))
-          receipt['apply']['planned_additions']=additions
+          if MODE=='APPLY_VERIFY':
+              required=[
+                ('roles/aiplatform.user','serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com'),
+                ('roles/serviceusage.serviceUsageConsumer','serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com'),
+                ('roles/run.developer',DEPLOYER),
+              ]
+              gs,pre=http(ADMIN,'POST',get_url,{})
+              if gs!=200 or not isinstance(pre.get('bindings'),list):
+                  receipt['state']='PRE_POLICY_READ_FAILED'; write_and_exit(receipt,4)
+              desired=copy.deepcopy(pre); additions=[]
+              for role,member in required:
+                  b=next((x for x in desired['bindings'] if x.get('role')==role and not x.get('condition')),None)
+                  if b is None:
+                      b={'role':role,'members':[]}; desired['bindings'].append(b)
+                  if member not in b.setdefault('members',[]):
+                      b['members'].append(member); b['members'].sort(); additions.append({'role':role,'member':member})
+              if additions:
+                  ss,_=http(ADMIN,'POST',set_url,{'policy':desired,'updateMask':'bindings,etag'})
+                  if ss!=200:
+                      receipt['state']='SET_IAM_POLICY_FAILED'; write_and_exit(receipt,5)
+                  receipt['provider_mutation_performed']=True
+              rs,post=http(ADMIN,'POST',get_url,{})
+              def present(role,member):
+                  return any(b.get('role')==role and not b.get('condition') and member in (b.get('members') or []) for b in (post.get('bindings') or []))
+              verified={f'{r}|{m}':present(r,m) for r,m in required}
+              receipt['apply']={'planned_additions':additions,'binding_readback':verified,'post_read_http_status':rs}
+              receipt['state']='VERIFIED' if rs==200 and all(verified.values()) else 'VERIFY_FAILED'
+              write_and_exit(receipt,0 if receipt['state']=='VERIFIED' else 6)
 
-          if additions:
-              ss,set_result=call(set_url,{'policy':desired,'updateMask':'bindings,etag'})
-              receipt['apply']['set_http_status']=ss
+          if MODE!='FKCM_OPTION_A_CANARY':
+              receipt['state']='UNSUPPORTED_MODE'; write_and_exit(receipt,7)
+          if not DEPLOYER_TOKEN:
+              receipt['state']='DEPLOYER_WIF_TOKEN_MISSING'; write_and_exit(receipt,8)
+
+          perms=list((REQUEST.get('temporary_role') or {}).get('included_permissions') or [])
+          topic_id=REQUEST['topic_id']
+          role_id=f"fkcmPubsubCanary{os.environ.get('GITHUB_RUN_ID','0')}"
+          role_name=f'projects/{PROJECT}/roles/{role_id}'
+          role_url=f'https://iam.googleapis.com/v1/{role_name}'
+          create_role_url=f'https://iam.googleapis.com/v1/projects/{PROJECT}/roles?roleId={urllib.parse.quote(role_id)}'
+          topic=f'projects/{PROJECT}/topics/{topic_id}'
+          event_id=f"fkcm-option-a-{os.environ.get('GITHUB_RUN_ID','0')}-{os.environ.get('GITHUB_RUN_ATTEMPT','1')}"
+          sub_id=f"fkcm-option-a-{os.environ.get('GITHUB_RUN_ID','0')}-{os.environ.get('GITHUB_RUN_ATTEMPT','1')}"
+          sub=f'projects/{PROJECT}/subscriptions/{sub_id}'
+          sub_url=f'https://pubsub.googleapis.com/v1/{sub}'
+          filter_value=f'attributes.eventId="{event_id}"'
+          receipt_hash=hashlib.sha256(f"{os.environ.get('GITHUB_SHA','')}:{event_id}:FKCM_OPTION_A".encode()).hexdigest()
+
+          ds,dp=http(DEPLOYER_TOKEN,'POST',perm_url,{'permissions':perms})
+          baseline=set(dp.get('permissions') or []) if ds==200 else set()
+          receipt['option_a']={
+              'temporary_role_id':role_id,
+              'temporary_role_permissions':sorted(perms),
+              'deployer_permissions_before':sorted(baseline),
+              'topic':topic,
+              'event_id':event_id,
+              'temporary_subscription':sub,
+              'existing_subscriptions_touched':False,
+              'production_traffic_changed':False,
+              'billing_configuration_changed':False,
+          }
+
+          role_created=False; binding_added=False; sub_created=False
+          canary_error=None; publish_id=''; consumer_id=''; cleanup={}
+          pre_policy=None
+          try:
+              cr,role_resp=http(ADMIN,'POST',create_role_url,{
+                  'role':{
+                      'title':f'FKCM PubSub Canary {os.environ.get("GITHUB_RUN_ID","0")}',
+                      'description':'Temporary six-permission FKCM provider court role; delete after one canary.',
+                      'includedPermissions':perms,
+                      'stage':'GA',
+                  }
+              })
+              if cr not in (200,201):
+                  raise RuntimeError(f'custom_role_create_failed:{cr}')
+              role_created=True
+              gs,pre_policy=http(ADMIN,'POST',get_url,{})
+              if gs!=200 or not isinstance(pre_policy.get('bindings'),list):
+                  raise RuntimeError(f'pre_policy_read_failed:{gs}')
+              desired=copy.deepcopy(pre_policy)
+              b=next((x for x in desired['bindings'] if x.get('role')==role_name and not x.get('condition')),None)
+              if b is None:
+                  b={'role':role_name,'members':[]}; desired['bindings'].append(b)
+              if DEPLOYER not in b.setdefault('members',[]):
+                  b['members'].append(DEPLOYER); b['members'].sort()
+              ss,_=http(ADMIN,'POST',set_url,{'policy':desired,'updateMask':'bindings,etag'})
               if ss!=200:
-                  receipt['state']='SET_IAM_POLICY_FAILED'
-                  receipt['receipt_sha256']=digest(receipt)
-                  out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-                  raise SystemExit(6)
-              receipt['provider_mutation_performed']=True
-          else:
-              receipt['apply']['set_http_status']='NOT_NEEDED_ALREADY_BOUND'
+                  raise RuntimeError(f'temporary_binding_set_failed:{ss}')
+              binding_added=True; receipt['provider_mutation_performed']=True
 
-          rs,post=call(get_url,{})
-          receipt['apply']['post_read_http_status']=rs
-          bindings=post.get('bindings',[]) if rs==200 else []
-          def present(role,member):
-              return any(b.get('role')==role and not b.get('condition') and member in (b.get('members') or []) for b in bindings)
-          verified={f'{role}|{member}':present(role,member) for role,member in required}
-          receipt['apply']['binding_readback']=verified
-          receipt['apply']['post_policy_bindings_sha256']=digest(bindings)
-          if rs==200 and all(verified.values()):
-              receipt['state']='VERIFIED'
-              receipt['receipt_sha256']=digest(receipt)
-              out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-              raise SystemExit(0)
+              # Wait for the exact six-permission binding to become effective.
+              effective=set()
+              for _ in range(15):
+                  ts,tp=http(DEPLOYER_TOKEN,'POST',perm_url,{'permissions':perms})
+                  effective=set(tp.get('permissions') or []) if ts==200 else set()
+                  if set(perms) <= effective: break
+                  time.sleep(2)
+              if not set(perms) <= effective:
+                  raise RuntimeError(f'temporary_permissions_not_effective:{sorted(set(perms)-effective)}')
+              receipt['option_a']['deployer_permissions_during']=sorted(effective)
 
-          # Roll back only bindings introduced by this run if verification fails.
-          rollback_success=False
-          if receipt['provider_mutation_performed']:
-              cs,current=call(get_url,{})
-              if cs==200:
-                  rollback=copy.deepcopy(pre)
-                  rollback['etag']=current.get('etag')
-                  bs,_=call(set_url,{'policy':rollback,'updateMask':'bindings,etag'})
-                  rollback_success=(bs==200)
-          receipt['apply']['rollback_attempted']=receipt['provider_mutation_performed']
-          receipt['apply']['rollback_success']=rollback_success
-          receipt['state']='VERIFY_FAILED_ROLLED_BACK' if rollback_success else 'VERIFY_FAILED'
-          receipt['receipt_sha256']=digest(receipt)
-          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-          raise SystemExit(7)
+              cs,cbody=http(DEPLOYER_TOKEN,'PUT',sub_url,{
+                  'topic':topic,'filter':filter_value,'ackDeadlineSeconds':20,
+                  'messageRetentionDuration':'600s','expirationPolicy':{'ttl':'86400s'}
+              })
+              if cs not in (200,201):
+                  raise RuntimeError(f'subscription_create_failed:{cs}')
+              sub_created=True
+              gs,gbody=http(DEPLOYER_TOKEN,'GET',sub_url)
+              if gs!=200 or gbody.get('topic')!=topic or gbody.get('filter')!=filter_value:
+                  raise RuntimeError(f'subscription_readback_failed:{gs}')
+
+              message={
+                  'schema':'MODISA-FKCM-PUBSUB-CANARY-1','eventId':event_id,'nodeId':'MODISA-FKCM-CANARY',
+                  'state':'SYNC_PENDING','receiptHash':receipt_hash,'providerAction':'NONE','publicSafe':True,'credentialsIncluded':False
+              }
+              data=base64.b64encode(json.dumps(message,sort_keys=True,separators=(',',':')).encode()).decode()
+              ps,pbody=http(DEPLOYER_TOKEN,'POST',f'https://pubsub.googleapis.com/v1/{topic}:publish',{
+                  'messages':[{'data':data,'attributes':{'eventId':event_id,'nodeId':'MODISA-FKCM-CANARY','receiptHash':receipt_hash}}]
+              })
+              ids=pbody.get('messageIds') or []
+              if ps!=200 or not ids:
+                  raise RuntimeError(f'publish_failed:{ps}')
+              publish_id=str(ids[0])
+
+              found=None; ack_id=''
+              for _ in range(15):
+                  pls,pull=http(DEPLOYER_TOKEN,'POST',f'{sub_url}:pull',{'maxMessages':1})
+                  received=pull.get('receivedMessages') or [] if pls==200 else []
+                  if received:
+                      candidate=received[0]; msg=candidate.get('message') or {}; attrs=msg.get('attributes') or {}
+                      try: decoded=json.loads(base64.b64decode(msg.get('data') or '').decode())
+                      except Exception: decoded={}
+                      if attrs.get('eventId')==event_id and attrs.get('receiptHash')==receipt_hash and decoded.get('eventId')==event_id and decoded.get('receiptHash')==receipt_hash:
+                          found=msg; ack_id=str(candidate.get('ackId') or ''); break
+                  time.sleep(2)
+              if not found:
+                  raise RuntimeError('consumer_readback_timeout')
+              consumer_id=str(found.get('messageId') or '')
+              if not consumer_id or consumer_id!=publish_id:
+                  raise RuntimeError(f'provider_message_id_mismatch:{publish_id}:{consumer_id}')
+              if ack_id:
+                  ats,_=http(DEPLOYER_TOKEN,'POST',f'{sub_url}:acknowledge',{'ackIds':[ack_id]})
+                  if ats not in (200,204): raise RuntimeError(f'ack_failed:{ats}')
+              receipt['option_a'].update({'provider_message_id':publish_id,'consumer_message_id':consumer_id,'consumer_readback':True})
+          except Exception as exc:
+              canary_error=f'{type(exc).__name__}:{exc}'
+          finally:
+              if sub_created:
+                  ds,_=http(DEPLOYER_TOKEN,'DELETE',sub_url)
+                  cleanup['subscription_delete_http_status']=ds
+              vds,_=http(DEPLOYER_TOKEN,'GET',sub_url)
+              cleanup['subscription_absent']=vds==404
+
+              # Remove only this run's temporary binding from the latest policy.
+              if binding_added:
+                  cs,current=http(ADMIN,'POST',get_url,{})
+                  if cs==200:
+                      cleaned=copy.deepcopy(current)
+                      new_bindings=[]
+                      for b in cleaned.get('bindings') or []:
+                          if b.get('role')==role_name and not b.get('condition'):
+                              members=[m for m in (b.get('members') or []) if m!=DEPLOYER]
+                              if members:
+                                  b=copy.deepcopy(b); b['members']=members; new_bindings.append(b)
+                          else:
+                              new_bindings.append(b)
+                      cleaned['bindings']=new_bindings
+                      ss,_=http(ADMIN,'POST',set_url,{'policy':cleaned,'updateMask':'bindings,etag'})
+                      cleanup['binding_remove_http_status']=ss
+              rs,post=http(ADMIN,'POST',get_url,{})
+              cleanup['binding_absent']=rs==200 and not any(b.get('role')==role_name and DEPLOYER in (b.get('members') or []) for b in (post.get('bindings') or []))
+
+              if role_created:
+                  dr,_=http(ADMIN,'DELETE',role_url)
+                  cleanup['role_delete_http_status']=dr
+              gr,grole=http(ADMIN,'GET',role_url)
+              cleanup['role_deleted_or_absent']=gr==404 or bool(grole.get('deleted') is True)
+
+              aps,ap=http(DEPLOYER_TOKEN,'POST',perm_url,{'permissions':perms})
+              after=set(ap.get('permissions') or []) if aps==200 else set()
+              cleanup['deployer_permissions_after']=sorted(after)
+              cleanup['permission_state_restored_to_baseline']=after==baseline
+              receipt['option_a']['cleanup']=cleanup
+
+          cleanup_ok=all([
+              cleanup.get('subscription_absent') is True,
+              cleanup.get('binding_absent') is True,
+              cleanup.get('role_deleted_or_absent') is True,
+              cleanup.get('permission_state_restored_to_baseline') is True,
+          ])
+          canary_ok=(canary_error is None and publish_id and consumer_id==publish_id)
+          receipt['state']='FKCM_OPTION_A_CANARY_AND_REVOCATION_VERIFIED' if canary_ok and cleanup_ok else 'FKCM_OPTION_A_FAILED_CLEANUP_VERIFIED' if cleanup_ok else 'FKCM_OPTION_A_FAILED_CLEANUP_INCOMPLETE'
+          receipt['option_a']['canary_error']=canary_error
+          receipt['option_a']['canary_verified']=bool(canary_ok)
+          receipt['option_a']['cleanup_verified']=bool(cleanup_ok)
+          write_and_exit(receipt,0 if canary_ok and cleanup_ok else 9)
           PY
 
       - name: Upload immutable redacted IAM receipt
