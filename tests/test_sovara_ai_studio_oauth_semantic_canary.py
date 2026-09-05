@@ -43,24 +43,36 @@ class SovaraAIStudioOAuthSemanticCanaryTests(unittest.TestCase):
         ):
             self.assertFalse(self.request[key], key)
 
-    def test_workflow_uses_keyless_oauth_not_api_key_or_secret_access(self) -> None:
-        self.assertIn("gcloud auth print-access-token", self.workflow)
+    def test_workflow_uses_keyless_scoped_oauth_not_api_key_or_secret_access(self) -> None:
+        self.assertIn("token_format: access_token", self.workflow)
+        self.assertIn("https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/generative-language.retriever", self.workflow)
+        self.assertIn("steps.google_auth.outputs.access_token", self.workflow)
         self.assertIn("Authorization: Bearer $ACCESS_TOKEN", self.workflow)
         self.assertIn("x-goog-user-project: $PROJECT_ID", self.workflow)
-        self.assertIn("generativelanguage.googleapis.com", self.workflow)
+        self.assertIn("generativelanguage.googleapis.com/v1/models", self.workflow)
+        self.assertIn("generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent", self.workflow)
         self.assertNotIn("gcloud secrets versions access", self.workflow)
         self.assertNotIn("x-goog-api-key", self.workflow)
         self.assertNotIn("GEMINI_API_KEY", self.workflow)
         self.assertNotIn("SECRET_ID", self.workflow)
 
+    def test_failure_path_retains_redacted_provider_diagnostics(self) -> None:
+        self.assertIn("models_list_http_status", self.workflow)
+        self.assertIn("generate_http_status", self.workflow)
+        self.assertIn("provider_error_message_sha256", self.workflow)
+        self.assertIn("provider_error_reasons", self.workflow)
+        self.assertIn("AI_STUDIO_SEMANTIC_RECEIPT.json", self.workflow)
+        self.assertIn("if-no-files-found: error", self.workflow)
+        self.assertNotIn("print(error_message)", self.workflow)
+
     def test_semantic_promotion_requires_exact_nonce_and_redacted_receipt(self) -> None:
-        self.assertIn("exact=(text==nonce)", self.workflow)
+        self.assertIn("exact=(generate_status==200 and text==nonce)", self.workflow)
         self.assertIn("'semantic_verified':exact", self.workflow)
         self.assertIn("'credential_value_recorded':False", self.workflow)
         self.assertIn("'secret_value_recorded':False", self.workflow)
         self.assertIn("'case_data_processed':False", self.workflow)
         self.assertIn("'provider_mutation_performed':False", self.workflow)
-        self.assertIn("AI_STUDIO_SEMANTIC_RECEIPT.json", self.workflow)
+        self.assertIn("PROVIDER_SEMANTIC_HELD", self.workflow)
 
     def test_repository_write_credentials_are_disabled(self) -> None:
         self.assertIn("persist-credentials: false", self.workflow)
