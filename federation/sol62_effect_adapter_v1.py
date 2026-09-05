@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from dataclasses import dataclass, field
 import time
-from typing import Any, Callable, Mapping, Sequence
+from typing import Any, Callable, Mapping
 
 from federation.fuse_serving_kernel_v1 import EffectReceipt, ServingLaneSpec
 from federation.mission_ir import MissionIR
@@ -81,7 +81,7 @@ class Sol62EffectExecutorV1:
     preparation, an execution fence and SOL dispatch authorization.
     """
 
-    version = "1.0.0"
+    version = "1.0.1"
 
     def __init__(
         self,
@@ -128,7 +128,7 @@ class Sol62EffectExecutorV1:
             raise RuntimeError("FUSE_SOL62_CONSEQUENTIAL_AUTHORITY_REQUIRED")
         return transition
 
-    def _mark_uncertain(self, effect_id: str, error: BaseException) -> None:
+    def _mark_uncertain(self, effect_id: str, error: Exception) -> None:
         row = self.runtime.control.db.execute(
             "SELECT state FROM effects WHERE effect_id=?", (effect_id,)
         ).fetchone()
@@ -209,7 +209,7 @@ class Sol62EffectExecutorV1:
 
         try:
             observation = ProviderEffectObservation.from_value(handler())
-        except BaseException as exc:
+        except Exception as exc:
             self._mark_uncertain(binding.effect_id, exc)
             raise
 
