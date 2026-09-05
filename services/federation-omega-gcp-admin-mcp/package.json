@@ -1,0 +1,28 @@
+{
+  "name": "federation-omega-gcp-admin-mcp",
+  "version": "0.2.2",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "build": "tsc -p tsconfig.json",
+    "start": "node dist/server.js",
+    "dev": "tsx src/server.ts",
+    "check": "tsc -p tsconfig.json --noEmit",
+    "test": "node --experimental-test-module-mocks --test test/*.test.mjs",
+    "test:deployment": "node --test test/deployment.test.mjs",
+    "test:smoke": "node --input-type=module -e \"import('./dist/toolNames.js').then(m=>{if(m.SERVER_VERSION!=='0.2.2'||m.healthPayload().proofBoundary!=='transport_liveness_only')process.exit(1)})\""
+  },
+  "dependencies": {
+    "@google-cloud/storage": "^7.16.0",
+    "@modelcontextprotocol/sdk": "^1.17.5",
+    "express": "^5.1.0",
+    "google-auth-library": "^10.3.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/express": "^5.0.3",
+    "@types/node": "^24.3.0",
+    "tsx": "^4.20.5",
+    "typescript": "^5.9.2"
+  }
+}
