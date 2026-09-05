@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "risk_rules": [
     {
       "risk": "R4_CORE",
@@ -24,8 +24,7 @@
       ],
       "depends_on": [
         "FEDERATION_CORE",
-        "FIO_OMEGA_SIR",
-        "SOVARA"
+        "CFBE"
       ]
     }
   ],
