@@ -63,6 +63,34 @@ class AppsScriptDeploymentProbeTests(unittest.TestCase):
             self.assertTrue(receipt["surfaces"]["x"]["ok"])
             self.assertIn("archon_apps_script_exact_deployment", receipt["surface_corrections"])
 
+    def test_augment_receipt_reuses_existing_exact_readback_without_duplicate_probe(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            path = Path(tmp) / "receipt.json"
+            correction = {
+                "schema": "BUBBLES-ARCHON-APPS-SCRIPT-DEPLOYMENT-PROBE-V1",
+                "mutation_attempted": False,
+                "credential_values_recorded": False,
+                "overall_classification": "DEPLOYMENT_PROVIDER_REACHABLE_ACTION_SEMANTICS_UNVERIFIED",
+            }
+            path.write_text(
+                json.dumps(
+                    {
+                        "schema": "BUBBLES-PROVIDER-SURFACE-PROBE-V1",
+                        "surface_corrections": {
+                            "archon_apps_script_exact_deployment": correction
+                        },
+                    }
+                ),
+                encoding="utf-8",
+            )
+            with patch("bubbles.apps_script_deployment_probe.run_probe") as probe:
+                receipt = augment_receipt(path)
+            probe.assert_not_called()
+            self.assertEqual(
+                correction,
+                receipt["surface_corrections"]["archon_apps_script_exact_deployment"],
+            )
+
 
 if __name__ == "__main__":
     unittest.main()

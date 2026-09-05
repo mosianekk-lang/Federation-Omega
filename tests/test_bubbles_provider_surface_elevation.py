@@ -1,8 +1,15 @@
 from __future__ import annotations
 
 import json
+import tempfile
+import time
 import unittest
+from pathlib import Path
 
+from bubbles.chat_governor_omega3.hosted_provider_readback_v1 import (
+    HOST_RECEIPT_SCHEMA,
+    HostedProviderReadbackAdapter,
+)
 from bubbles.platform_specialist_corps_extensions import build_provider_extended_corps
 from bubbles.provider_surface_probe import (
     ARCHON_SCRIPT_DEPLOYMENT_ID,
@@ -113,6 +120,71 @@ class ProviderSurfaceElevationTests(unittest.TestCase):
         self.assertEqual("BLOCKED_TRUSTED_TOKEN_BINDING", operator["classification"])
         self.assertFalse(operator["trusted_token_available"])
         self.assertFalse(receipt["mutation_attempted"])
+
+    @staticmethod
+    def _host_payload(*, mutation_attempted: bool = False) -> dict:
+        return {
+            "schema": "BUBBLES-PROVIDER-SURFACE-PROBE-V1",
+            "mutation_attempted": mutation_attempted,
+            "secret_values_recorded": False,
+            "surfaces": {"test": {"classification": "READ_ONLY_TEST"}},
+            "surface_corrections": {
+                "archon_apps_script_exact_deployment": {
+                    "schema": "BUBBLES-ARCHON-APPS-SCRIPT-DEPLOYMENT-PROBE-V1",
+                    "mutation_attempted": False,
+                    "credential_values_recorded": False,
+                    "overall_classification": "DEPLOYMENT_PROVIDER_REACHABLE_ACTION_SEMANTICS_UNVERIFIED",
+                }
+            },
+        }
+
+    def test_hosted_adapter_proves_fio_chatgov_frontier_singleflight(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            calls: list[int] = []
+
+            def reader():
+                calls.append(1)
+                time.sleep(0.05)
+                return self._host_payload()
+
+            adapter = HostedProviderReadbackAdapter(
+                state_path=str(Path(tmp) / "host.sqlite3"),
+                source_version="source-sha-1",
+                mission_currentness_ref="GITHUB_SHA:source-sha-1",
+                observed_at="2026-09-05T15:54:00+02:00",
+            )
+            payload, receipt = adapter.execute(reader, prove_singleflight=True)
+
+            self.assertEqual(1, len(calls))
+            self.assertEqual("BUBBLES-PROVIDER-SURFACE-PROBE-V1", payload["schema"])
+            self.assertEqual(HOST_RECEIPT_SCHEMA, receipt["schema"])
+            self.assertEqual("AUTO_ROUTE_SAFE_INTERNAL", receipt["fio_route"]["state"])
+            self.assertEqual("BUBBLES_PROVIDER_SURFACE_PROBE", receipt["fio_route"]["selected_adapter"])
+            self.assertTrue(receipt["singleflight_proof"]["verified"])
+            self.assertEqual(1, receipt["singleflight_proof"]["provider_execution_count"])
+            self.assertEqual(1, receipt["singleflight_proof"]["frontier_executions"])
+            self.assertGreaterEqual(receipt["singleflight_proof"]["coalesced_waiters"], 1)
+            self.assertTrue(receipt["host_binding_verified"])
+            self.assertTrue(receipt["semantic_readback_verified"])
+            self.assertFalse(receipt["provider_effect_authorized"])
+            self.assertFalse(receipt["provider_effect_performed"])
+            self.assertFalse(receipt["native_chatgpt_dispatch_proven"])
+            self.assertFalse(receipt["secret_values_recorded"])
+            self.assertEqual(64, len(receipt["receipt_sha256"]))
+
+    def test_hosted_adapter_rejects_semantic_mutation_signal(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            adapter = HostedProviderReadbackAdapter(
+                state_path=str(Path(tmp) / "host.sqlite3"),
+                source_version="source-sha-2",
+                mission_currentness_ref="GITHUB_SHA:source-sha-2",
+                observed_at="2026-09-05T15:54:00+02:00",
+            )
+            with self.assertRaisesRegex(RuntimeError, "Connector execution failed"):
+                adapter.execute(
+                    lambda: self._host_payload(mutation_attempted=True),
+                    prove_singleflight=False,
+                )
 
 
 if __name__ == "__main__":

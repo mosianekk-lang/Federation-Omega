@@ -154,7 +154,16 @@ def run_probe() -> dict[str, Any]:
 
 def augment_receipt(path: Path) -> dict[str, Any]:
     receipt = json.loads(path.read_text(encoding="utf-8")) if path.exists() else {}
-    receipt.setdefault("surface_corrections", {})["archon_apps_script_exact_deployment"] = run_probe()
+    corrections = receipt.setdefault("surface_corrections", {})
+    existing = corrections.get("archon_apps_script_exact_deployment")
+    if (
+        isinstance(existing, Mapping)
+        and existing.get("schema") == "BUBBLES-ARCHON-APPS-SCRIPT-DEPLOYMENT-PROBE-V1"
+        and existing.get("mutation_attempted") is False
+        and existing.get("credential_values_recorded") is False
+    ):
+        return receipt
+    corrections["archon_apps_script_exact_deployment"] = run_probe()
     path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     return receipt
 
