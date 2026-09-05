@@ -10,6 +10,7 @@ from federation.fuse_serving_kernel_v1 import (
     ContextContract,
     EffectReceipt,
     FUSEServingKernelV1,
+    PolicyDecisionReceipt,
     ServingLaneSpec,
 )
 from federation.mission_ir import MissionIR
@@ -47,6 +48,27 @@ def mission(
         max_cost_microunits=max_cost_microunits,
         latency_target_ms=latency_target_ms,
     )
+
+
+class AllowPolicyGate:
+    def authorize(self, *, mission: MissionIR, lane: ServingLaneSpec):
+        return PolicyDecisionReceipt.create(
+            decision="ALLOW",
+            policy_ref="git://fkpf/federation.rego@test",
+            input_sha256="a" * 64,
+            result_sha256="b" * 64,
+        )
+
+
+class DenyPolicyGate:
+    def authorize(self, *, mission: MissionIR, lane: ServingLaneSpec):
+        return PolicyDecisionReceipt.create(
+            decision="DENY",
+            policy_ref="git://fkpf/federation.rego@test",
+            input_sha256="c" * 64,
+            result_sha256="d" * 64,
+            reason="TEST_DENY",
+        )
 
 
 class FakeEffectExecutor:
@@ -157,13 +179,14 @@ class FUSEServingKernelTests(unittest.TestCase):
         self.assertEqual(receipt.lane_states["optional"], "FAILED")
         self.assertEqual(receipt.state, "COMPLETE")
 
-    def test_effectful_lane_requires_transactional_executor(self):
-        kernel = FUSEServingKernelV1(self.state)
+    def test_effectful_lane_requires_policy_gate(self):
+        called = []
+        kernel = FUSEServingKernelV1(self.state, effect_executor=FakeEffectExecutor())
         receipt = kernel.run(
             mission(
-                "effect-no-runtime",
+                "effect-no-policy",
                 effect_class="BOUNDED_EFFECT",
-                proof_requirements=("PROVIDER_READBACK",),
+                proof_requirements=("POLICY_ALLOW", "PROVIDER_READBACK"),
             ),
             context=self._verified_context(),
             lanes=(
@@ -172,7 +195,59 @@ class FUSEServingKernelTests(unittest.TestCase):
                     "provider_write",
                     effect_class="BOUNDED_EFFECT",
                     expected_target_state={"status": "PUBLISHED"},
-                    required_proof_axes=("PROVIDER_READBACK",),
+                    required_proof_axes=("POLICY_ALLOW", "PROVIDER_READBACK"),
+                ),
+            ),
+            handlers={"effect": lambda: called.append("ran")},
+        )
+        self.assertEqual(receipt.state, "HOLD_UAS")
+        self.assertEqual(receipt.lane_states["effect"], "FAILED")
+        self.assertEqual(called, [])
+
+    def test_policy_denial_blocks_before_effect_executor(self):
+        called = []
+        kernel = FUSEServingKernelV1(
+            self.state,
+            policy_gate=DenyPolicyGate(),
+            effect_executor=FakeEffectExecutor(),
+        )
+        receipt = kernel.run(
+            mission(
+                "effect-denied",
+                effect_class="BOUNDED_EFFECT",
+                proof_requirements=("POLICY_ALLOW", "PROVIDER_READBACK"),
+            ),
+            context=self._verified_context(),
+            lanes=(
+                ServingLaneSpec(
+                    "effect",
+                    "provider_write",
+                    effect_class="BOUNDED_EFFECT",
+                    expected_target_state={"status": "PUBLISHED"},
+                    required_proof_axes=("POLICY_ALLOW", "PROVIDER_READBACK"),
+                ),
+            ),
+            handlers={"effect": lambda: called.append("ran")},
+        )
+        self.assertEqual(receipt.state, "HOLD_UAS")
+        self.assertEqual(called, [])
+
+    def test_effectful_lane_requires_transactional_executor(self):
+        kernel = FUSEServingKernelV1(self.state, policy_gate=AllowPolicyGate())
+        receipt = kernel.run(
+            mission(
+                "effect-no-runtime",
+                effect_class="BOUNDED_EFFECT",
+                proof_requirements=("POLICY_ALLOW", "PROVIDER_READBACK"),
+            ),
+            context=self._verified_context(),
+            lanes=(
+                ServingLaneSpec(
+                    "effect",
+                    "provider_write",
+                    effect_class="BOUNDED_EFFECT",
+                    expected_target_state={"status": "PUBLISHED"},
+                    required_proof_axes=("POLICY_ALLOW", "PROVIDER_READBACK"),
                 ),
             ),
             handlers={"effect": lambda: {"dispatch": "would-run"}},
@@ -180,13 +255,17 @@ class FUSEServingKernelTests(unittest.TestCase):
         self.assertEqual(receipt.state, "HOLD_UAS")
         self.assertEqual(receipt.lane_states["effect"], "FAILED")
 
-    def test_effectful_lane_completes_only_after_verified_readback(self):
-        kernel = FUSEServingKernelV1(self.state, effect_executor=FakeEffectExecutor())
+    def test_effectful_lane_completes_only_after_policy_and_verified_readback(self):
+        kernel = FUSEServingKernelV1(
+            self.state,
+            policy_gate=AllowPolicyGate(),
+            effect_executor=FakeEffectExecutor(),
+        )
         receipt = kernel.run(
             mission(
                 "effect-verified",
                 effect_class="BOUNDED_EFFECT",
-                proof_requirements=("PROVIDER_READBACK",),
+                proof_requirements=("POLICY_ALLOW", "PROVIDER_READBACK"),
             ),
             context=self._verified_context(),
             lanes=(
@@ -195,13 +274,14 @@ class FUSEServingKernelTests(unittest.TestCase):
                     "provider_write",
                     effect_class="BOUNDED_EFFECT",
                     expected_target_state={"status": "PUBLISHED"},
-                    required_proof_axes=("PROVIDER_READBACK",),
+                    required_proof_axes=("POLICY_ALLOW", "PROVIDER_READBACK"),
                 ),
             ),
             handlers={"effect": lambda: {"dispatch": "performed"}},
         )
         self.assertEqual(receipt.state, "COMPLETE")
         self.assertEqual(receipt.lane_states["effect"], "COMPLETE")
+        self.assertIn("POLICY_ALLOW", receipt.proof_axes)
         self.assertIn("PROVIDER_READBACK", receipt.proof_axes)
         self.assertTrue(self.state.latest_checkpoint("effect-verified")["proof_bearing"])
 
@@ -297,12 +377,16 @@ class Sol62EffectAdapterTests(unittest.TestCase):
 
     def test_real_sol62_adapter_executes_verified_transition(self):
         adapter = self._prepare()
-        kernel = FUSEServingKernelV1(self.state, effect_executor=adapter)
+        kernel = FUSEServingKernelV1(
+            self.state,
+            policy_gate=AllowPolicyGate(),
+            effect_executor=adapter,
+        )
         receipt = kernel.run(
             mission(
                 "sol-effect",
                 effect_class="BOUNDED_EFFECT",
-                proof_requirements=("PROVIDER_READBACK",),
+                proof_requirements=("POLICY_ALLOW", "PROVIDER_READBACK"),
             ),
             context=ContextContract(
                 required_source_ids=("aiu-master",),
@@ -315,7 +399,7 @@ class Sol62EffectAdapterTests(unittest.TestCase):
                     "publish",
                     effect_class="BOUNDED_EFFECT",
                     expected_target_state={"status": "ok"},
-                    required_proof_axes=("PROVIDER_READBACK",),
+                    required_proof_axes=("POLICY_ALLOW", "PROVIDER_READBACK"),
                 ),
             ),
             handlers={
@@ -327,18 +411,23 @@ class Sol62EffectAdapterTests(unittest.TestCase):
             },
         )
         self.assertEqual(receipt.state, "COMPLETE")
+        self.assertIn("POLICY_ALLOW", receipt.proof_axes)
         self.assertIn("PROVIDER_READBACK", receipt.proof_axes)
         self.assertEqual(self.runtime.mission_state("sol-effect")["value"]["state"], "PUBLISHED")
         self.assertEqual(self.runtime.transition_status("publish")["value"]["status"], "VERIFIED")
 
     def test_sol62_readback_mismatch_holds_and_preserves_uncertain_effect(self):
         adapter = self._prepare("sol-mismatch")
-        kernel = FUSEServingKernelV1(self.state, effect_executor=adapter)
+        kernel = FUSEServingKernelV1(
+            self.state,
+            policy_gate=AllowPolicyGate(),
+            effect_executor=adapter,
+        )
         receipt = kernel.run(
             mission(
                 "sol-mismatch",
                 effect_class="BOUNDED_EFFECT",
-                proof_requirements=("PROVIDER_READBACK",),
+                proof_requirements=("POLICY_ALLOW", "PROVIDER_READBACK"),
             ),
             context=ContextContract(
                 required_source_ids=("aiu-master",),
@@ -351,7 +440,7 @@ class Sol62EffectAdapterTests(unittest.TestCase):
                     "publish",
                     effect_class="BOUNDED_EFFECT",
                     expected_target_state={"status": "ok"},
-                    required_proof_axes=("PROVIDER_READBACK",),
+                    required_proof_axes=("POLICY_ALLOW", "PROVIDER_READBACK"),
                 ),
             ),
             handlers={
