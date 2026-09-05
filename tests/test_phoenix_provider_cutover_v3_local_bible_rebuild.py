@@ -61,18 +61,22 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             ".github/workflows/nexus-direct-preflight.yml",
             ".github/workflows/nexus-direct-runtime-target.yml",
         }
+        scoped_read_only_oidc = {
+            ".github/workflows/fkcm-pubsub-shadow-canary.yml",
+            credential_policy["ai_studio_semantic_canary_workflow"],
+        }
         expected = deployment_gateways | {
             g0_identity_probe,
             provider_authority_recovery_probe,
             artifact_attestation,
-        } | fhu047_workflows | provider_mutators | nexus_read_only_preflights
+        } | fhu047_workflows | provider_mutators | nexus_read_only_preflights | scoped_read_only_oidc
         self.assertEqual(expected, set(self.policy["oidc_workflow_allowlist"]))
 
         scoped_non_deployment = {
             g0_identity_probe,
             provider_authority_recovery_probe,
             artifact_attestation,
-        } | fhu047_workflows | provider_mutators | nexus_read_only_preflights
+        } | fhu047_workflows | provider_mutators | nexus_read_only_preflights | scoped_read_only_oidc
         for workflow in scoped_non_deployment:
             self.assertIn(workflow, self.policy["active_workflow_allowlist"])
             self.assertIn(workflow, self.policy["execution_quarantine"]["keep_active"])
