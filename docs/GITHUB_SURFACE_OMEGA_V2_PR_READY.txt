@@ -1,0 +1,1 @@
+Candidate is ready for hosted exact-head admission after PR creation.

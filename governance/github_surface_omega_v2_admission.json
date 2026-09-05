@@ -1,0 +1,32 @@
+{
+  "schema": "FEDOMEGA-GITHUB-SURFACE-OMEGA-V2-ADMISSION-1",
+  "version": "1.0.0",
+  "mission": "github-surface-omega-market-harvest-v1",
+  "source_base": "f021543c21054301e6ad8dcfe065a5bce212a19f",
+  "fencing_token": 60,
+  "harvested_capability_count": 12,
+  "required_proof": [
+    "github_control_plane_v2_regressions",
+    "federation_omega_airlock",
+    "proofos_admission",
+    "bubbles_command_bus",
+    "public_repository_leak_guard"
+  ],
+  "hard_non_claims": [
+    "provider_main_ruleset_active",
+    "legacy_schedule_removal_complete",
+    "real_artifact_attestation_complete",
+    "code_scanning_merge_protection_active",
+    "provider_iam_changed",
+    "native_chatgpt_or_copilot_runtime_modified",
+    "owner_value_2x_proven"
+  ],
+  "provider_gates": {
+    "main_ruleset": "P0_ISSUE_146_PROVIDER_WRITE_REQUIRED",
+    "merge_queue": "NOT_AVAILABLE_USER_OWNED_PUBLIC_REPOSITORY",
+    "required_workflows": "ACCOUNT_SCOPE_DEPENDENT",
+    "code_scanning_merge_protection": "PROVIDER_CONFIGURATION_PENDING"
+  },
+  "execution_posture": "FOREGROUND_ONLY_NO_SCHEDULED_CONTINUATION",
+  "effect": "NONE"
+}
