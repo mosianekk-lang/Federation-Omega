@@ -65,16 +65,57 @@ jobs:
           }
           trap cleanup EXIT
 
-          ACTUAL_PROJECT="$(gcloud config get-value project 2>/dev/null)"
-          ACTUAL_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-          test "$ACTUAL_PROJECT" = "$PROJECT_ID"
-          test "$ACTUAL_NUMBER" = "$PROJECT_NUMBER"
+          echo "preflight=project"
+          gcloud projects describe "$PROJECT_ID" --format=json > /tmp/fkcm-pubsub-proof/project.json
+          python - <<'PY'
+          import json, os
+          value=json.load(open('/tmp/fkcm-pubsub-proof/project.json', encoding='utf-8'))
+          actual_id=str(value.get('projectId') or '')
+          actual_number=str(value.get('projectNumber') or '')
+          expected_id=os.environ['PROJECT_ID']
+          expected_number=os.environ['PROJECT_NUMBER']
+          if actual_id != expected_id:
+              raise SystemExit(f'project_id_mismatch actual={actual_id!r} expected={expected_id!r}')
+          if actual_number != expected_number:
+              raise SystemExit(f'project_number_mismatch actual={actual_number!r} expected={expected_number!r}')
+          print('project_readback=verified')
+          PY
+          ACTUAL_PROJECT="$PROJECT_ID"
+          ACTUAL_NUMBER="$PROJECT_NUMBER"
 
-          PUBSUB_SERVICE="$(gcloud services list --enabled --project "$PROJECT_ID" --filter='config.name=pubsub.googleapis.com' --format='value(config.name)' --limit=1)"
-          test "$PUBSUB_SERVICE" = "pubsub.googleapis.com"
+          echo "preflight=service_usage"
+          gcloud services list --enabled --project "$PROJECT_ID" --format=json > /tmp/fkcm-pubsub-proof/services.json
+          python - <<'PY'
+          import json
+          value=json.load(open('/tmp/fkcm-pubsub-proof/services.json', encoding='utf-8'))
+          names=set()
+          for item in value if isinstance(value, list) else []:
+              config=item.get('config') or {}
+              name=str(config.get('name') or item.get('name') or '')
+              if '/services/' in name:
+                  name=name.rsplit('/services/', 1)[-1]
+              if name:
+                  names.add(name)
+          expected='pubsub.googleapis.com'
+          if expected not in names:
+              raise SystemExit(f'pubsub_service_not_enabled observed_count={len(names)} expected={expected}')
+          print('service_usage_readback=verified')
+          PY
+          PUBSUB_SERVICE="pubsub.googleapis.com"
 
-          TOPIC_NAME="$(gcloud pubsub topics describe "$TOPIC_ID" --project "$PROJECT_ID" --format='value(name)')"
-          test "$TOPIC_NAME" = "projects/${PROJECT_ID}/topics/${TOPIC_ID}"
+          echo "preflight=topic"
+          gcloud pubsub topics describe "$TOPIC_ID" --project "$PROJECT_ID" --format=json > /tmp/fkcm-pubsub-proof/topic.json
+          python - <<'PY'
+          import json, os
+          value=json.load(open('/tmp/fkcm-pubsub-proof/topic.json', encoding='utf-8'))
+          actual=str(value.get('name') or '')
+          expected=f"projects/{os.environ['PROJECT_ID']}/topics/{os.environ['TOPIC_ID']}"
+          if actual != expected:
+              raise SystemExit(f'topic_name_mismatch actual={actual!r} expected={expected!r}')
+          print('topic_readback=verified')
+          PY
+          TOPIC_NAME="projects/${PROJECT_ID}/topics/${TOPIC_ID}"
+          echo "preflight=verified"
 
           gcloud pubsub subscriptions create "$SUB_ID" \
             --project "$PROJECT_ID" \
