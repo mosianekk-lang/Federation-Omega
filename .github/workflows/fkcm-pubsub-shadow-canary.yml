@@ -1,0 +1,218 @@
+name: MODISA FKCM PubSub Shadow Canary
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: fkcm-pubsub-shadow-canary
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  TOPIC_ID: evidenceops-heartbeat-events
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  provider-canary:
+    if: github.event.issue.title == 'MODISA_FKCM_PUBSUB_SHADOW_CANARY_V1' && github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+
+      - name: Verify immutable canary contract
+        run: |
+          set -euo pipefail
+          python tests/test_fkcm_pubsub_shadow_canary.py
+
+      - name: Authenticate through canonical keyless WIF
+        uses: google-github-actions/auth@v3
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@v2
+        with:
+          version: '>= 470.0.0'
+
+      - name: Publish and read back one bounded FKCM heartbeat
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/fkcm-pubsub-proof
+          EVENT_ID="fkcm-pubsub-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          SUB_ID="fkcm-shadow-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          NODE_ID="MODISA-FKCM-CANARY"
+          RECEIPT_HASH="$(printf '%s' "${GITHUB_SHA}:${EVENT_ID}:MODISA-FKCM-PUBSUB-CANARY-1" | sha256sum | awk '{print $1}')"
+          FILTER="attributes.eventId=\"${EVENT_ID}\""
+          export EVENT_ID NODE_ID RECEIPT_HASH
+          CLEANED=0
+
+          cleanup() {
+            if [[ "$CLEANED" != "1" ]]; then
+              gcloud pubsub subscriptions delete "$SUB_ID" --project "$PROJECT_ID" --quiet >/dev/null 2>&1 || true
+            fi
+          }
+          trap cleanup EXIT
+
+          ACTUAL_PROJECT="$(gcloud config get-value project 2>/dev/null)"
+          ACTUAL_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$ACTUAL_PROJECT" = "$PROJECT_ID"
+          test "$ACTUAL_NUMBER" = "$PROJECT_NUMBER"
+
+          PUBSUB_SERVICE="$(gcloud services list --enabled --project "$PROJECT_ID" --filter='NAME:pubsub.googleapis.com' --format='value(NAME)' --limit=1)"
+          test "$PUBSUB_SERVICE" = "pubsub.googleapis.com"
+
+          TOPIC_NAME="$(gcloud pubsub topics describe "$TOPIC_ID" --project "$PROJECT_ID" --format='value(name)')"
+          test "$TOPIC_NAME" = "projects/${PROJECT_ID}/topics/${TOPIC_ID}"
+
+          gcloud pubsub subscriptions create "$SUB_ID" \
+            --project "$PROJECT_ID" \
+            --topic "$TOPIC_ID" \
+            --message-filter "$FILTER" \
+            --ack-deadline 20 \
+            --message-retention-duration 10m \
+            --expiration-period 1d \
+            --quiet >/tmp/fkcm-pubsub-proof/subscription-create.txt
+
+          SUB_FILTER="$(gcloud pubsub subscriptions describe "$SUB_ID" --project "$PROJECT_ID" --format='value(filter)')"
+          test "$SUB_FILTER" = "$FILTER"
+
+          python - <<'PY' > /tmp/fkcm-pubsub-proof/message.json
+          import json, os
+          print(json.dumps({
+              "schema":"MODISA-FKCM-PUBSUB-CANARY-1",
+              "eventId":os.environ["EVENT_ID"],
+              "nodeId":os.environ["NODE_ID"],
+              "state":"SYNC_PENDING",
+              "receiptHash":os.environ["RECEIPT_HASH"],
+              "providerAction":"NONE",
+              "publicSafe":True,
+              "credentialsIncluded":False,
+          }, sort_keys=True, separators=(",", ":")))
+          PY
+
+          PUBLISH_JSON="$(gcloud pubsub topics publish "$TOPIC_ID" \
+            --project "$PROJECT_ID" \
+            --message "$(cat /tmp/fkcm-pubsub-proof/message.json)" \
+            --attribute "eventId=${EVENT_ID},nodeId=${NODE_ID},receiptHash=${RECEIPT_HASH}" \
+            --format=json)"
+          printf '%s\n' "$PUBLISH_JSON" > /tmp/fkcm-pubsub-proof/publish.json
+
+          PUBLISH_ID="$(python - <<'PY'
+          import json
+          value=json.load(open('/tmp/fkcm-pubsub-proof/publish.json', encoding='utf-8'))
+          ids=[]
+          if isinstance(value, dict): ids=value.get('messageIds') or value.get('message_ids') or []
+          elif isinstance(value, list) and value and isinstance(value[0], dict): ids=value[0].get('messageIds') or value[0].get('message_ids') or []
+          if not ids: raise SystemExit('provider message id missing')
+          print(ids[0])
+          PY
+          )"
+          test -n "$PUBLISH_ID"
+
+          FOUND=0
+          for attempt in $(seq 1 12); do
+            gcloud pubsub subscriptions pull "$SUB_ID" --project "$PROJECT_ID" --limit=1 --auto-ack --format=json \
+              > /tmp/fkcm-pubsub-proof/pull.json
+            if python - <<'PY'
+          import base64, json, os
+          value=json.load(open('/tmp/fkcm-pubsub-proof/pull.json', encoding='utf-8'))
+          if not isinstance(value, list) or not value:
+              raise SystemExit(1)
+          item=value[0]
+          msg=item.get('message', item)
+          attrs=msg.get('attributes') or {}
+          if attrs.get('eventId') != os.environ['EVENT_ID']:
+              raise SystemExit(1)
+          if attrs.get('nodeId') != os.environ['NODE_ID']:
+              raise SystemExit(1)
+          if attrs.get('receiptHash') != os.environ['RECEIPT_HASH']:
+              raise SystemExit(1)
+          raw=str(msg.get('data') or '')
+          candidates=[raw]
+          try:
+              candidates.append(base64.b64decode(raw).decode('utf-8'))
+          except Exception:
+              pass
+          if not any(os.environ['EVENT_ID'] in text and os.environ['RECEIPT_HASH'] in text for text in candidates):
+              raise SystemExit(1)
+          print(msg.get('messageId') or msg.get('message_id') or '')
+          PY
+            then
+              FOUND=1
+              break
+            fi
+            sleep 2
+          done
+          test "$FOUND" = "1"
+
+          CONSUMER_MESSAGE_ID="$(python - <<'PY'
+          import json
+          value=json.load(open('/tmp/fkcm-pubsub-proof/pull.json', encoding='utf-8'))
+          msg=value[0].get('message', value[0])
+          print(msg.get('messageId') or msg.get('message_id') or '')
+          PY
+          )"
+          test -n "$CONSUMER_MESSAGE_ID"
+          test "$CONSUMER_MESSAGE_ID" = "$PUBLISH_ID"
+
+          gcloud pubsub subscriptions delete "$SUB_ID" --project "$PROJECT_ID" --quiet
+          CLEANED=1
+          if gcloud pubsub subscriptions describe "$SUB_ID" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            echo "temporary subscription still exists" >&2
+            exit 1
+          fi
+
+          export ACTUAL_PROJECT ACTUAL_NUMBER PUBSUB_SERVICE TOPIC_NAME SUB_ID FILTER PUBLISH_ID CONSUMER_MESSAGE_ID
+          python - <<'PY'
+          import hashlib, json, os, pathlib
+          receipt={
+              "schema":"MODISA-FKCM-PUBSUB-PROVIDER-CANARY-1",
+              "state":"PROVIDER_PUBLISH_CONSUMER_READBACK_ROLLBACK_VERIFIED",
+              "source_sha":os.environ["GITHUB_SHA"],
+              "project_id":os.environ["ACTUAL_PROJECT"],
+              "project_number":os.environ["ACTUAL_NUMBER"],
+              "pubsub_api":"ENABLED",
+              "topic":os.environ["TOPIC_NAME"],
+              "event_id":os.environ["EVENT_ID"],
+              "node_id":os.environ["NODE_ID"],
+              "receipt_hash":os.environ["RECEIPT_HASH"],
+              "provider_message_id":os.environ["PUBLISH_ID"],
+              "consumer_message_id":os.environ["CONSUMER_MESSAGE_ID"],
+              "consumer_readback":True,
+              "provider_publish_ack":True,
+              "temporary_subscription":os.environ["SUB_ID"],
+              "temporary_subscription_filter":os.environ["FILTER"],
+              "temporary_subscription_deleted":True,
+              "existing_subscriptions_touched":False,
+              "topic_created":False,
+              "iam_mutation":False,
+              "secret_value_accessed":False,
+              "deployment_mutation":False,
+              "production_traffic_changed":False,
+              "kdv_cutover":False,
+              "provider_effect":"BOUNDED_PUBLIC_SAFE_HEARTBEAT",
+              "provider_usage_bounded":True,
+              "billing_configuration_changed":False,
+          }
+          canonical=json.dumps(receipt, sort_keys=True, separators=(",", ":"))
+          receipt["receipt_sha256"]=hashlib.sha256(canonical.encode()).hexdigest()
+          pathlib.Path('fkcm-pubsub-canary-receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n', encoding='utf-8')
+          PY
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fkcm-pubsub-shadow-canary-${{ github.run_id }}-${{ github.run_attempt }}
+          path: fkcm-pubsub-canary-receipt.json
+          retention-days: 90
