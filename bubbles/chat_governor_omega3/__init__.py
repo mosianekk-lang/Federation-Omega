@@ -29,6 +29,11 @@ from .emission_permit import (
     FinalResponsePermitAuthority,
     PermitValidation,
 )
+from .failure_regression import (
+    PreFinalRegressionCase,
+    classify_failure_reasons,
+    compile_prefinal_regression,
+)
 from .continuity import (
     CommandEnvelope,
     CommandState,
@@ -52,6 +57,7 @@ __all__ = [
     "FinalizationDecision", "GapState", "MissionClosureState", "PreFinalGate",
     "PreFinalReconcileResult", "TerminalState",
     "FinalResponsePermit", "FinalResponsePermitAuthority", "PermitValidation",
+    "PreFinalRegressionCase", "classify_failure_reasons", "compile_prefinal_regression",
     "CommandEnvelope", "CommandState", "ContinuityLaneSpec", "ContinuityLaneState",
     "ContinuityReceipt", "EffectClass", "LaneLease", "MultistreamContinuityFabric",
     "PathRole", "intent_sha256",
