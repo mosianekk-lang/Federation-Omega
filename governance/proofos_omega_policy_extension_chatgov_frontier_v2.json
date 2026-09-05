@@ -1,0 +1,108 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "2.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "bubbles/chat_governor_omega3/frontier_runtime.py",
+        "bubbles/chat_governor_omega3/performance_controls.py",
+        "bubbles/chat_governor_omega3/interop_frontier.py",
+        "bubbles/chat_governor_omega3/regression.py",
+        "bubbles/chat_governor_omega3/__init__.py",
+        "governance/proofos_omega_policy_extension_chatgov_frontier_v2.json"
+      ],
+      "reason": "CHATGOV_FRONTIER_RUNTIME_CONTROL_CHANGE"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "CHATGOV_FRONTIER",
+      "patterns": [
+        "bubbles/chat_governor_omega3/frontier_runtime.py",
+        "bubbles/chat_governor_omega3/performance_controls.py",
+        "bubbles/chat_governor_omega3/interop_frontier.py",
+        "bubbles/chat_governor_omega3/regression.py",
+        "bubbles/chat_governor_omega3/__init__.py",
+        "bubbles/chat_governor_omega3/README.md",
+        "benchmarking/cfbe_omega/CHAT_CFBE_AUDIT_20260905.md",
+        "governance/proofos_omega_policy_extension_chatgov_frontier_v2.json"
+      ],
+      "depends_on": ["FEDERATION_CORE", "CFBE"]
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        "bubbles/chat_governor_omega3/frontier_runtime.py",
+        "bubbles/chat_governor_omega3/performance_controls.py",
+        "bubbles/chat_governor_omega3/regression.py"
+      ],
+      "tests": [
+        "chatgov_frontier_runtime",
+        "chatgov_performance_controls",
+        "chatgov_integrity_regression"
+      ],
+      "evidence": "20260905_CURRENT_CHAT_CFBE_FRONTIER_AUDIT_AND_HARVEST"
+    }
+  ],
+  "tests": [
+    {
+      "id": "chatgov_frontier_runtime",
+      "kind": "unittest_module",
+      "target": "bubbles.chat_governor_omega3.test_frontier_runtime",
+      "patterns": [
+        "bubbles/chat_governor_omega3/frontier_runtime.py",
+        "bubbles/chat_governor_omega3/test_frontier_runtime.py",
+        "bubbles/chat_governor_omega3/__init__.py",
+        "governance/proofos_omega_policy_extension_chatgov_frontier_v2.json"
+      ],
+      "subsystems": ["CHATGOV_FRONTIER"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "chatgov_performance_controls",
+      "kind": "unittest_module",
+      "target": "bubbles.chat_governor_omega3.test_performance_controls",
+      "patterns": [
+        "bubbles/chat_governor_omega3/performance_controls.py",
+        "bubbles/chat_governor_omega3/test_performance_controls.py",
+        "governance/proofos_omega_policy_extension_chatgov_frontier_v2.json"
+      ],
+      "subsystems": ["CHATGOV_FRONTIER"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "chatgov_interop_frontier",
+      "kind": "unittest_module",
+      "target": "bubbles.chat_governor_omega3.test_interop_frontier",
+      "patterns": [
+        "bubbles/chat_governor_omega3/interop_frontier.py",
+        "bubbles/chat_governor_omega3/test_interop_frontier.py",
+        "governance/proofos_omega_policy_extension_chatgov_frontier_v2.json"
+      ],
+      "subsystems": ["CHATGOV_FRONTIER"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "chatgov_integrity_regression",
+      "kind": "unittest_module",
+      "target": "bubbles.chat_governor_omega3.test_regression",
+      "patterns": [
+        "bubbles/chat_governor_omega3/regression.py",
+        "bubbles/chat_governor_omega3/test_regression.py",
+        "governance/proofos_omega_policy_extension_chatgov_frontier_v2.json"
+      ],
+      "subsystems": ["CHATGOV_FRONTIER"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
