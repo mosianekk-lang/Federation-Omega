@@ -13,6 +13,8 @@ POLICY_PATH = ROOT / "governance/github_airlock_policy.json"
 class SovaraAIStudioAuthKeySemanticCanaryTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not WORKFLOW_PATH.exists():
+            raise unittest.SkipTest("repository-only workflow contract is outside the Phoenix Core export")
         cls.workflow = WORKFLOW_PATH.read_text(encoding="utf-8")
         cls.request = json.loads(REQUEST_PATH.read_text(encoding="utf-8"))
         cls.policy = json.loads(POLICY_PATH.read_text(encoding="utf-8"))

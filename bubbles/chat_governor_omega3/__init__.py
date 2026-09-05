@@ -1,4 +1,4 @@
-"""Bubbles Adaptive Chat Governor Ω3.4.
+"""Bubbles Adaptive Chat Governor Ω3.5.
 
 Truth boundary: this package governs Bubbles workflows routed through it. It does
 not modify hidden ChatGPT context management, provider serving infrastructure,
@@ -36,6 +36,41 @@ from .continuity import (
     PathRole,
     intent_sha256,
 )
+from .performance_kernel import (
+    DeltaCapsule,
+    DeltaCapsuleCompiler,
+    EfficiencyFinalDecision,
+    ElasticSpecialistPlanner,
+    FailureObservation,
+    HookContext,
+    HookDecision,
+    HookEvent,
+    HookReceipt,
+    HookResult,
+    HostBindingContract,
+    InformationGainDecision,
+    InformationGainStopRule,
+    LifecycleHookBus,
+    PendingWorkLedger,
+    PendingWrite,
+    PerformanceComparison,
+    PerformanceKernelReceipt,
+    PreFinalEfficiencyGate,
+    RegressionEnvelope,
+    RemainingWork,
+    SemanticReadCache,
+    SemanticSpan,
+    SkillDefinition,
+    SkillPage,
+    SkillPager,
+    SpecialistCandidate,
+    SpecialistPlan,
+    ToolSchemaCache,
+    TraceToRegressionCompiler,
+    UnnecessaryWorkMeter,
+    WorkMetrics,
+    performance_kernel_receipt,
+)
 
 __all__ = [
     "MissionCompiler", "MissionPlan", "MemoryGovernor", "ConnectorGateway",
@@ -49,6 +84,16 @@ __all__ = [
     "CommandEnvelope", "CommandState", "ContinuityLaneSpec", "ContinuityLaneState",
     "ContinuityReceipt", "EffectClass", "LaneLease", "MultistreamContinuityFabric",
     "PathRole", "intent_sha256",
+    "DeltaCapsule", "DeltaCapsuleCompiler", "EfficiencyFinalDecision",
+    "ElasticSpecialistPlanner", "FailureObservation", "HookContext", "HookDecision",
+    "HookEvent", "HookReceipt", "HookResult", "HostBindingContract",
+    "InformationGainDecision", "InformationGainStopRule", "LifecycleHookBus",
+    "PendingWorkLedger", "PendingWrite", "PerformanceComparison",
+    "PerformanceKernelReceipt", "PreFinalEfficiencyGate", "RegressionEnvelope",
+    "RemainingWork", "SemanticReadCache", "SemanticSpan", "SkillDefinition",
+    "SkillPage", "SkillPager", "SpecialistCandidate", "SpecialistPlan",
+    "ToolSchemaCache", "TraceToRegressionCompiler", "UnnecessaryWorkMeter",
+    "WorkMetrics", "performance_kernel_receipt",
 ]
 
-__version__ = "3.4.0"
+__version__ = "3.5.0"
