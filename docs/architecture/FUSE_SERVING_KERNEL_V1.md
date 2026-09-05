@@ -12,9 +12,10 @@ It binds one execution path around:
 2. mandatory canonical-context preflight;
 3. Bubbles Ω3 durable SQLite state and failed-lane-isolating DAG executor;
 4. lane-local proof envelopes with deterministic post-DAG aggregation;
-5. concrete SOL 6.2 transactional effect execution through `federation.sol62_effect_adapter_v1`;
-6. executable UAS runtime evaluation;
-7. proof-bearing terminal checkpoints and idempotent receipts.
+5. mandatory effect-policy authorization through a hash-bound policy receipt;
+6. concrete SOL 6.2 transactional effect execution through `federation.sol62_effect_adapter_v1`;
+7. executable UAS runtime evaluation;
+8. proof-bearing terminal checkpoints and idempotent receipts.
 
 ## Control flow
 
@@ -35,6 +36,9 @@ DURABLE PLAN + DAG
       +--> READ/INTERNAL lane --> lane-local evidence envelope
       |
       `--> EFFECT lane
+              |
+              v
+        POLICY GATE / OPA ALLOW
               |
               v
          SOL 6.2 PRE-REGISTERED TRANSITION
@@ -77,9 +81,9 @@ The kernel deliberately reuses, rather than replaces:
 - `bubbles.chat_governor_omega3.state.DurableState`
 - `bubbles.chat_governor_omega3.dag.DAGExecutor`
 - `federation.mission_ir.MissionIR`
+- `federation/fkpf_omega_v3/policy/federation.rego`
 - `sol_61_runtime.sol_62_runtime.Sol62Runtime`
 - `sol_61_runtime.fdof_v1.FederationDistributedOperatingFabric` as the broader provider-neutral fabric contract
-- FKPF/OPA policy as the intended policy plane
 - existing OpenTelemetry/A2A contracts as the intended telemetry and interoperability planes
 
 ## New invariant: retrieve before reasoning
@@ -96,17 +100,38 @@ A lane's `required_proof_axes` are requirements only. They are **not** added to 
 
 A no-effect/read-only handler must return the axes it actually established. An effectful lane must return them through a verified `EffectReceipt`. Missing lane proof fails the lane closed.
 
+`EffectReceipt` and `PolicyDecisionReceipt` digests are load-bearing; a caller cannot forge the `VERIFIED` or `ALLOW` label while changing the receipt body.
+
 ## New invariant: parallel workers do not share mutable proof state
 
 Each parallel lane returns a local FUSE evidence envelope containing its proof axes, proof references and logical tool trajectory. The coordinator aggregates those envelopes only after the DAG has finished.
 
 This means out-of-order worker completion cannot change the final proof projection or logical trajectory. The regression court deliberately finishes independent lanes in a different physical order and requires the final evidence projection to remain identical across repeated runs.
 
+## Policy enforcement
+
+Every `BOUNDED_EFFECT` and `CONSEQUENTIAL_EFFECT` lane requires an `EffectPolicyGate` and a valid `PolicyDecisionReceipt(decision="ALLOW")` **before** the transactional effect executor may run.
+
+`federation.opa_policy_adapter_v1.OPAHTTPPolicyGateV1` is the concrete v1 transport adapter for the existing FKPF Rego package `federation.fkpf_omega_v3`.
+
+The adapter:
+
+- does not reimplement the Rego allow rules;
+- POSTs the deployment-supplied input to `/v1/data/federation/fkpf_omega_v3/allow`;
+- binds the policy input and raw decision result into a FUSE receipt;
+- fails closed on policy `false`, missing result, malformed JSON, timeout or transport failure;
+- rejects secret-shaped policy input locally before transport;
+- never infers owner approval from `mission.owner_approval_required`.
+
+The helper `mission_effect_input(...)` maps FUSE effect classes into the effect/authority vocabulary already used by `federation.rego`. Identity ceilings and owner-approval evidence remain deployment inputs.
+
+The current `policy_ref` is a configured reference carried into the decision receipt. This source implementation does **not** prove that a serving OPA sidecar has loaded a particular signed bundle revision; provider/runtime bundle readback remains a separate promotion gate.
+
 ## SOL 6.2 effect adapter
 
 `federation.sol62_effect_adapter_v1.Sol62EffectExecutorV1` is the concrete v1 implementation of the kernel's `TransactionalEffectExecutor` boundary.
 
-It deliberately does **not** register missions or transitions and does not create authority leases. The caller/domain owner must pre-register the exact SOL 6.2 mission and transition contract.
+It deliberately does not register missions or transitions and does not create authority leases. The caller/domain owner must pre-register the exact SOL 6.2 mission and transition contract.
 
 For an effectful lane the adapter requires:
 
@@ -143,7 +168,7 @@ Declared cost or latency targets require actual observations. Missing telemetry 
 
 The same module provides a Wilson lower confidence-bound gate for promotion so a candidate cannot graduate from a small number of lucky runs.
 
-## Regression court
+## Regression courts
 
 The repository test discovery tree contains:
 
@@ -152,14 +177,25 @@ The repository test discovery tree contains:
   - stale canonical context;
   - unearned proof rejection;
   - optional-lane failure isolation;
-  - effect-executor requirement;
-  - verified effect readback;
+  - mandatory effect policy gate;
+  - policy denial before provider execution;
+  - mandatory effect executor;
+  - policy + verified effect readback;
   - real SOL 6.2 adapter verified transition;
   - SOL readback mismatch / `FAILED_UNCERTAIN` preservation;
   - required cost/latency telemetry;
   - Wilson confidence-bound promotion.
 - `tests/test_fuse_serving_kernel_concurrency_v1.py`
   - out-of-order parallel completion with deterministic proof aggregation.
+- `tests/test_fuse_opa_policy_adapter_v1.py`
+  - FKPF-compatible mission-effect input;
+  - OPA allow;
+  - policy deny;
+  - transport failure;
+  - pre-transport secret-shape denial.
+- `tests/test_fuse_receipt_integrity_v1.py`
+  - effect-receipt digest integrity;
+  - policy-receipt digest integrity.
 
 The new `federation/*.py` production paths are intentionally not yet declared as a new ProofOS subsystem. Existing ProofOS default-deny behavior therefore selects the full-federation `test_*.py` fallback for this first admission instead of allowing a new subsystem to self-select a narrower proof court.
 
@@ -169,10 +205,11 @@ A mission reaches `COMPLETE` only when:
 
 1. canonical context preflight passes;
 2. every required DAG lane completes;
-3. effectful lanes have SOL-backed verified target-state receipts;
-4. MissionIR proof requirements are observed;
-5. declared resource telemetry is present and within bounds;
-6. UAS returns `PASS`.
+3. every effectful lane has a valid policy `ALLOW` receipt;
+4. effectful lanes have SOL-backed verified target-state receipts;
+5. MissionIR proof requirements are observed;
+6. declared resource telemetry is present and within bounds;
+7. UAS returns `PASS`.
 
 Otherwise the bounded states are `HOLD_CONTEXT` or `HOLD_UAS`.
 
@@ -186,7 +223,7 @@ Even after deterministic repository admission, this work does **not** establish:
 - provider-hosted continuous serving runtime;
 - multi-region consensus;
 - universal exactly-once provider semantics;
-- current OPA bundle distribution/runtime enforcement;
+- live OPA bundle distribution, signed-bundle verification or sidecar runtime readback;
 - live OpenTelemetry export/evaluation backend;
 - live A2A endpoints;
 - market superiority;
