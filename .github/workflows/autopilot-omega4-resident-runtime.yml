@@ -1,0 +1,183 @@
+name: AutoPilot Omega4 Resident Runtime
+
+on:
+  pull_request:
+    paths:
+      - 'federation/autopilot_omega4_resident_runtime.py'
+      - 'tests/test_autopilot_omega4_resident_runtime.py'
+      - '.github/workflows/autopilot-omega4-resident-runtime.yml'
+      - 'scheduler/tasks.json'
+  schedule:
+    - cron: '7 * * * *'
+  workflow_run:
+    workflows: ["Bubbles Command Bus"]
+    types: [completed]
+  workflow_dispatch:
+    inputs:
+      force_due_tasks:
+        description: 'Force all admitted resident-safe handlers for this cycle'
+        required: false
+        default: false
+        type: boolean
+
+permissions:
+  actions: read
+  contents: read
+
+concurrency:
+  group: autopilot-omega4-resident-runtime
+  cancel-in-progress: false
+
+jobs:
+  contract:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Verify resident runtime contract
+        run: python -m unittest tests.test_autopilot_omega4_resident_runtime -v
+
+  resident-cycle:
+    needs: contract
+    if: >-
+      github.event_name != 'pull_request' &&
+      (
+        github.event_name != 'workflow_run' ||
+        (
+          github.event.workflow_run.conclusion == 'success' &&
+          github.event.workflow_run.event == 'push' &&
+          github.event.workflow_run.head_branch == 'main'
+        )
+      )
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    env:
+      GH_TOKEN: ${{ github.token }}
+      HOST_RUN_ID: ${{ github.run_id }}
+      HOST_TRIGGER: ${{ github.event_name }}
+      SOURCE_SHA: ${{ github.event_name == 'workflow_run' && github.event.workflow_run.head_sha || github.sha }}
+      FORCE_DUE_TASKS: ${{ github.event_name == 'workflow_dispatch' && inputs.force_due_tasks || false }}
+    steps:
+      - name: Checkout exact resident source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ env.SOURCE_SHA }}
+          persist-credentials: false
+
+      - uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+
+      - name: Restore latest durable resident state artifact
+        id: restore
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p autopilot-omega4-input autopilot-omega4-output
+          gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts?name=autopilot-omega4-resident-state&per_page=100" \
+            > autopilot-omega4-input/artifacts.json
+          artifact_id="$(python - <<'PY'
+          import json
+          from pathlib import Path
+
+          payload = json.loads(Path('autopilot-omega4-input/artifacts.json').read_text(encoding='utf-8'))
+          rows = [row for row in payload.get('artifacts', []) if row.get('expired') is False]
+          rows.sort(key=lambda row: row.get('created_at', ''), reverse=True)
+          print(rows[0]['id'] if rows else '')
+          PY
+          )"
+          if [ -n "$artifact_id" ]; then
+            gh api "/repos/${GITHUB_REPOSITORY}/actions/artifacts/${artifact_id}/zip" \
+              > autopilot-omega4-input/state.zip
+            unzip -q autopilot-omega4-input/state.zip -d autopilot-omega4-input/state
+            mapfile -t state_files < <(find autopilot-omega4-input/state -type f -name 'resident-state.json' -print)
+            test "${#state_files[@]}" -eq 1
+            cp "${state_files[0]}" autopilot-omega4-input/previous-state.json
+            echo 'restored=true' >> "$GITHUB_OUTPUT"
+          else
+            echo 'restored=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Execute admitted unattended resident cycle
+        shell: bash
+        run: |
+          set -euo pipefail
+          previous=()
+          if [ -f autopilot-omega4-input/previous-state.json ]; then
+            previous=(--previous-state autopilot-omega4-input/previous-state.json)
+          fi
+          force=()
+          if [ "${FORCE_DUE_TASKS}" = 'true' ]; then
+            force=(--force)
+          fi
+          python -m federation.autopilot_omega4_resident_runtime \
+            --root . \
+            --output-dir autopilot-omega4-output \
+            --host-provider github-actions \
+            --host-run-id "$HOST_RUN_ID" \
+            --source-sha "$SOURCE_SHA" \
+            --trigger "$HOST_TRIGGER" \
+            "${previous[@]}" \
+            "${force[@]}"
+
+      - name: Enforce autonomy truth boundary
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          from pathlib import Path
+
+          receipt = json.loads(Path('autopilot-omega4-output/resident-receipt.json').read_text(encoding='utf-8'))
+          state = json.loads(Path('autopilot-omega4-output/resident-state.json').read_text(encoding='utf-8'))
+          assert receipt['schema'] == 'CFBE_AUTOPILOT_OMEGA4_RESIDENT_RUNTIME_V1', receipt
+          assert receipt['host_provider'] == 'github-actions', receipt
+          assert receipt['host_run_id'] == os.environ['HOST_RUN_ID'], receipt
+          assert receipt['source_sha'] == os.environ['SOURCE_SHA'], receipt
+          assert receipt['failure_count'] == 0, receipt
+          assert receipt['external_effect_attempted'] is False, receipt
+          assert receipt['provider_mutation_attempted'] is False, receipt
+          assert receipt['stable_promotion_authorized'] is False, receipt
+          assert receipt['continuous_daemon_proven'] is False, receipt
+          assert receipt['zero_compute_wait_proven'] is False, receipt
+          assert receipt['full_autopilot_runtime_proven'] is False, receipt
+          assert state['external_effect_authority'] is False, state
+          assert receipt['next_state_sha256'] == state['state_sha256'], (receipt, state)
+          print('AUTOPILOT_OMEGA4_RESIDENT_CYCLE_VERIFIED')
+          PY
+
+      - name: Publish resident cycle summary
+        if: always() && hashFiles('autopilot-omega4-output/resident-receipt.json') != ''
+        shell: bash
+        run: |
+          echo '## AutoPilot Omega4 Resident Runtime' >> "$GITHUB_STEP_SUMMARY"
+          echo "State restored: ${{ steps.restore.outputs.restored }}" >> "$GITHUB_STEP_SUMMARY"
+          echo '```json' >> "$GITHUB_STEP_SUMMARY"
+          cat autopilot-omega4-output/resident-receipt.json >> "$GITHUB_STEP_SUMMARY"
+          echo '```' >> "$GITHUB_STEP_SUMMARY"
+
+      - name: Upload immutable resident cycle receipt
+        if: always() && hashFiles('autopilot-omega4-output/resident-receipt.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: autopilot-omega4-resident-receipt-${{ github.run_id }}-${{ github.run_attempt }}
+          path: autopilot-omega4-output/resident-receipt.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Persist resumable resident state
+        if: success() && hashFiles('autopilot-omega4-output/resident-state.json') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: autopilot-omega4-resident-state
+          path: autopilot-omega4-output/resident-state.json
+          if-no-files-found: error
+          retention-days: 90
