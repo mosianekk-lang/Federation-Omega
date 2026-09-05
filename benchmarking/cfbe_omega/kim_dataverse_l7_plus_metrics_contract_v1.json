@@ -1,0 +1,16 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_METRICS_CONTRACT_V1",
+  "metrics": {
+    "verified_completion_rate": "observed mission episodes only",
+    "avoidable_owner_interruption_rate": "owner interruptions classified as self-resolvable / total owner interruptions",
+    "maintenance_self_resolution_rate": "maintenance events autonomously resolved / maintenance events",
+    "recovery_self_resolution_rate": "recovery events autonomously resolved / recovery events",
+    "chat_dependency_rate": "episodes requiring a new chat turn to continue / episodes",
+    "global_stall_rate": "episodes where local provider/authority failure froze independent lanes / episodes",
+    "owner_attention_leverage": "verified value units / owner minutes",
+    "autonomy_debt": "count of avoidable human scheduler / retry / repair / restatement patterns"
+  },
+  "synthetic_can_satisfy_operational_metrics": false,
+  "shadow_can_satisfy_owner_value": false,
+  "provider_claim_requires_provider_native_readback": true
+}
