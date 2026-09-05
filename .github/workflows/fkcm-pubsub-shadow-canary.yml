@@ -18,6 +18,9 @@ env:
   TOPIC_ID: evidenceops-heartbeat-events
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  EVIDENCEOPS_INTERNAL_SERVICE: evidenceops-cloud-control-internal
+  EVIDENCEOPS_OPERATOR_SA: evidenceops-cloud-operator@sov-hybrid-suite.iam.gserviceaccount.com
+  REGION: africa-south1
 
 jobs:
   provider-canary:
@@ -117,14 +120,127 @@ jobs:
           TOPIC_NAME="projects/${PROJECT_ID}/topics/${TOPIC_ID}"
           echo "preflight=verified"
 
-          gcloud pubsub subscriptions create "$SUB_ID" \
+          if ! gcloud pubsub subscriptions create "$SUB_ID" \
             --project "$PROJECT_ID" \
             --topic "$TOPIC_ID" \
             --message-filter "$FILTER" \
             --ack-deadline 20 \
             --message-retention-duration 10m \
             --expiration-period 1d \
-            --quiet >/tmp/fkcm-pubsub-proof/subscription-create.txt
+            --quiet >/tmp/fkcm-pubsub-proof/subscription-create.txt 2>/tmp/fkcm-pubsub-proof/subscription-create.err; then
+            echo "direct_subscription_create=denied"
+            export SUB_ID FILTER
+            python - <<'PY'
+          from __future__ import annotations
+          import json, os, pathlib, subprocess, urllib.error, urllib.request
+          from typing import Any
+
+          project=os.environ['PROJECT_ID']
+          region=os.environ['REGION']
+          service=os.environ['EVIDENCEOPS_INTERNAL_SERVICE']
+          expected_sa=os.environ['EVIDENCEOPS_OPERATOR_SA']
+          root=pathlib.Path('/tmp/fkcm-pubsub-proof')
+
+          def run(args:list[str], timeout:int=45)->dict[str,Any]:
+              try:
+                  p=subprocess.run(args, text=True, capture_output=True, timeout=timeout)
+                  return {'ok':p.returncode==0,'code':p.returncode,'stdout':p.stdout.strip(),'stderr':p.stderr.strip()[:1200]}
+              except Exception as exc:
+                  return {'ok':False,'code':126,'stdout':'','stderr':f'{type(exc).__name__}: {exc}'}
+
+          service_read=run(['gcloud','run','services','describe',service,'--project',project,'--region',region,'--format=json'])
+          service_obj={}
+          if service_read['ok']:
+              try: service_obj=json.loads(service_read['stdout'])
+              except Exception: service_obj={}
+          actual_sa=str((((service_obj.get('spec') or {}).get('template') or {}).get('spec') or {}).get('serviceAccountName') or '')
+          url=str((service_obj.get('status') or {}).get('url') or '')
+          service_identity_verified=bool(service_read['ok'] and actual_sa==expected_sa and url.startswith('https://'))
+
+          identity={'ok':False,'code':None,'stderr':'service identity not verified'}
+          token=''
+          if service_identity_verified:
+              identity=run(['gcloud','auth','print-identity-token',f'--audiences={url}'])
+              if identity['ok']:
+                  token=identity['stdout'].strip()
+
+          def post(payload:dict[str,Any])->dict[str,Any]:
+              if not token:
+                  return {'ok':False,'http_status':None,'error':'NO_IDENTITY_TOKEN'}
+              req=urllib.request.Request(
+                  url.rstrip('/')+'/mcp',
+                  data=json.dumps(payload,separators=(',',':')).encode(),
+                  headers={'Authorization':'Bearer '+token,'Content-Type':'application/json'},
+                  method='POST',
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=45) as response:
+                      raw=response.read().decode('utf-8','replace')
+                      try: body=json.loads(raw)
+                      except Exception: body={'parse_error':True}
+                      return {'ok':200 <= response.status < 300,'http_status':response.status,'body':body}
+              except urllib.error.HTTPError as exc:
+                  return {'ok':False,'http_status':exc.code,'error':'HTTP_ERROR'}
+              except Exception as exc:
+                  return {'ok':False,'http_status':None,'error':type(exc).__name__}
+
+          initialize=post({'jsonrpc':'2.0','id':'fkcm-init','method':'initialize','params':{}})
+          listed=post({'jsonrpc':'2.0','id':'fkcm-tools','method':'tools/list','params':{}}) if initialize['ok'] else {'ok':False}
+          tools=[]
+          if listed.get('ok'):
+              try:
+                  tools=sorted(str(item.get('name')) for item in listed['body']['result']['tools'] if item.get('name'))
+              except Exception:
+                  tools=[]
+          status_result={'ok':False}
+          if 'omega_status' in tools:
+              status_result=post({'jsonrpc':'2.0','id':'fkcm-status','method':'tools/call','params':{'name':'omega_status','arguments':{}}})
+
+          status_summary={}
+          if status_result.get('ok'):
+              try:
+                  structured=status_result['body']['result'].get('structuredContent') or {}
+                  status_summary={
+                      'projectId':structured.get('projectId'),
+                      'region':structured.get('region'),
+                      'cloudRunCount':len(structured.get('cloudRun') or []),
+                      'enabledServiceCount':len(structured.get('enabledServices') or []),
+                      'policy':structured.get('policy') or {},
+                  }
+              except Exception:
+                  status_summary={}
+
+          route_verified=bool(service_identity_verified and identity.get('ok') and initialize.get('ok') and listed.get('ok') and status_result.get('ok'))
+          receipt={
+              'schema':'MODISA-FKCM-EVIDENCEOPS-OPERATOR-ROUTE-PROBE-1',
+              'state':'OPERATOR_ROUTE_READ_ONLY_VERIFIED' if route_verified else 'OPERATOR_ROUTE_READ_ONLY_NOT_VERIFIED',
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'project_id':project,
+              'region':region,
+              'service':service,
+              'expected_service_account':expected_sa,
+              'service_read_ok':bool(service_read['ok']),
+              'service_identity_verified':service_identity_verified,
+              'identity_token_minted':bool(identity.get('ok') and token),
+              'initialize_ok':bool(initialize.get('ok')),
+              'tools_list_ok':bool(listed.get('ok')),
+              'tool_names':tools,
+              'omega_status_ok':bool(status_result.get('ok')),
+              'status_summary':status_summary,
+              'direct_subscription_create_authorized':False,
+              'operator_mutation_invoked':False,
+              'existing_subscription_touched':False,
+              'iam_mutation':False,
+              'deployment_mutation':False,
+              'secret_value_accessed':False,
+              'provider_canary_complete':False,
+              'truth_boundary':'Read-only discovery of an already-deployed private EvidenceOps Cloud Run operator after direct temporary-subscription creation was denied. No operator mutation tool is invoked.',
+          }
+          pathlib.Path('fkcm-operator-route-probe.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt,indent=2,sort_keys=True))
+          raise SystemExit(42)
+          PY
+          fi
 
           SUB_FILTER="$(gcloud pubsub subscriptions describe "$SUB_ID" --project "$PROJECT_ID" --format='value(filter)')"
           test "$SUB_FILTER" = "$FILTER"
@@ -253,7 +369,11 @@ jobs:
           PY
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        if: always()
         with:
           name: fkcm-pubsub-shadow-canary-${{ github.run_id }}-${{ github.run_attempt }}
-          path: fkcm-pubsub-canary-receipt.json
+          path: |
+            fkcm-pubsub-canary-receipt.json
+            fkcm-operator-route-probe.json
+          if-no-files-found: ignore
           retention-days: 90
