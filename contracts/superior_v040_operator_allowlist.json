@@ -1,0 +1,20 @@
+{
+  "schema": "FEDERATION_OMEGA_SOURCE_ALLOWLIST_BINDING_V1",
+  "action": "DEPLOY_SUPERIOR_V040_CANARY",
+  "authorityClass": "A2",
+  "implementation": "operator_extensions/superior_v040/action.py",
+  "registrationAdapter": "operator_extensions/superior_v040/registry.py",
+  "tests": "tests/test_superior_v040_operator_extension.py",
+  "runtimeInstallation": "PENDING_PROVIDER_CANARY",
+  "externalEffectOnImport": false,
+  "promotionRequires": [
+    "Formation permit consumed",
+    "exact deployed allowlist readback contains DEPLOY_SUPERIOR_V040_CANARY",
+    "zero-traffic revision readback",
+    "idempotent replay proof",
+    "heartbeat proof",
+    "KDV append and readback proof",
+    "independent Watchman proof",
+    "rollback proof"
+  ]
+}
