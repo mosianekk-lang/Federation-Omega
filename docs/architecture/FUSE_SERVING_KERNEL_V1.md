@@ -1,6 +1,6 @@
 # FUSE Serving Kernel v1
 
-Status: `SOURCE_IMPLEMENTED / CI_AND_PROVIDER_PROMOTION_PENDING`
+Status: `SOURCE_IMPLEMENTED / EXACT_HEAD_CI_AND_PROVIDER_PROMOTION_PENDING`
 
 ## Purpose
 
@@ -11,9 +11,10 @@ It binds one execution path around:
 1. canonical `federation.mission_ir.MissionIR`;
 2. mandatory canonical-context preflight;
 3. Bubbles Ω3 durable SQLite state and failed-lane-isolating DAG executor;
-4. an injected transactional effect boundary intended for SOL 6.2/FDOF;
-5. executable UAS runtime evaluation;
-6. proof-bearing terminal checkpoints and idempotent receipts.
+4. lane-local proof envelopes with deterministic post-DAG aggregation;
+5. concrete SOL 6.2 transactional effect execution through `federation.sol62_effect_adapter_v1`;
+6. executable UAS runtime evaluation;
+7. proof-bearing terminal checkpoints and idempotent receipts.
 
 ## Control flow
 
@@ -31,11 +32,36 @@ DURABLE PLAN + DAG
       |
   independent lanes
       |
-      v
-TRANSACTIONAL EFFECT ADAPTER (only when needed)
+      +--> READ/INTERNAL lane --> lane-local evidence envelope
       |
-      v
-PROVIDER/TARGET READBACK
+      `--> EFFECT lane
+              |
+              v
+         SOL 6.2 PRE-REGISTERED TRANSITION
+              |
+              v
+      GATEWAY + WORKLOAD IDENTITY
+              |
+              v
+      DURABLE EFFECT/INTENT PREPARATION
+              |
+              v
+      EXECUTION FENCE + DISPATCH AUTHORITY
+              |
+              v
+          PROVIDER CALL
+              |
+              v
+      PROVIDER/TARGET READBACK
+              |
+              v
+      SOL VERIFIED TRANSITION COMMIT
+              |
+              v
+        lane-local evidence envelope
+              |
+              v
+DETERMINISTIC EVIDENCE AGGREGATION
       |
       v
 UAS RUNTIME EVALUATION
@@ -51,8 +77,8 @@ The kernel deliberately reuses, rather than replaces:
 - `bubbles.chat_governor_omega3.state.DurableState`
 - `bubbles.chat_governor_omega3.dag.DAGExecutor`
 - `federation.mission_ir.MissionIR`
-- `sol_61_runtime.sol_62_runtime.Sol62Runtime` through an effect adapter boundary
-- `sol_61_runtime.fdof_v1.FederationDistributedOperatingFabric` for provider-neutral executor routing
+- `sol_61_runtime.sol_62_runtime.Sol62Runtime`
+- `sol_61_runtime.fdof_v1.FederationDistributedOperatingFabric` as the broader provider-neutral fabric contract
 - FKPF/OPA policy as the intended policy plane
 - existing OpenTelemetry/A2A contracts as the intended telemetry and interoperability planes
 
@@ -70,11 +96,35 @@ A lane's `required_proof_axes` are requirements only. They are **not** added to 
 
 A no-effect/read-only handler must return the axes it actually established. An effectful lane must return them through a verified `EffectReceipt`. Missing lane proof fails the lane closed.
 
-## Effect boundary
+## New invariant: parallel workers do not share mutable proof state
 
-`BOUNDED_EFFECT` and `CONSEQUENTIAL_EFFECT` lanes require an injected `TransactionalEffectExecutor`.
+Each parallel lane returns a local FUSE evidence envelope containing its proof axes, proof references and logical tool trajectory. The coordinator aggregates those envelopes only after the DAG has finished.
 
-The kernel does not infer authority from MissionIR and does not perform provider effects on its own. The intended production adapter is SOL 6.2/FDOF, which already owns fencing, idempotency, target-state verification and provider-readback semantics.
+This means out-of-order worker completion cannot change the final proof projection or logical trajectory. The regression court deliberately finishes independent lanes in a different physical order and requires the final evidence projection to remain identical across repeated runs.
+
+## SOL 6.2 effect adapter
+
+`federation.sol62_effect_adapter_v1.Sol62EffectExecutorV1` is the concrete v1 implementation of the kernel's `TransactionalEffectExecutor` boundary.
+
+It deliberately does **not** register missions or transitions and does not create authority leases. The caller/domain owner must pre-register the exact SOL 6.2 mission and transition contract.
+
+For an effectful lane the adapter requires:
+
+1. matching FUSE MissionIR / SOL mission identity;
+2. matching operation and pinned source version;
+3. transition readiness;
+4. gateway admission;
+5. short-lived workload identity validation;
+6. durable idempotency/effect/intent preparation;
+7. an execution fence;
+8. SOL dispatch authorization;
+9. an actual provider observation with provider reference;
+10. exact expected readback;
+11. SOL proof verification and transactional state commit.
+
+If provider readback does not match, SOL keeps the mission from advancing and preserves the effect as `FAILED_UNCERTAIN`. If the provider handler fails after dispatch authorization, the adapter attempts to move an uncertain in-flight effect to the same recovery state rather than retrying blindly.
+
+Consequential transitions still require the action-bound SOL authority lease; FUSE cannot mint it.
 
 ## UAS runtime court
 
@@ -93,26 +143,47 @@ Declared cost or latency targets require actual observations. Missing telemetry 
 
 The same module provides a Wilson lower confidence-bound gate for promotion so a candidate cannot graduate from a small number of lucky runs.
 
+## Regression court
+
+The repository test discovery tree contains:
+
+- `tests/test_fuse_serving_kernel_v1.py`
+  - missing canonical context;
+  - stale canonical context;
+  - unearned proof rejection;
+  - optional-lane failure isolation;
+  - effect-executor requirement;
+  - verified effect readback;
+  - real SOL 6.2 adapter verified transition;
+  - SOL readback mismatch / `FAILED_UNCERTAIN` preservation;
+  - required cost/latency telemetry;
+  - Wilson confidence-bound promotion.
+- `tests/test_fuse_serving_kernel_concurrency_v1.py`
+  - out-of-order parallel completion with deterministic proof aggregation.
+
+The new `federation/*.py` production paths are intentionally not yet declared as a new ProofOS subsystem. Existing ProofOS default-deny behavior therefore selects the full-federation `test_*.py` fallback for this first admission instead of allowing a new subsystem to self-select a narrower proof court.
+
 ## Terminality
 
 A mission reaches `COMPLETE` only when:
 
 1. canonical context preflight passes;
 2. every required DAG lane completes;
-3. effectful lanes have verified target-state receipts;
+3. effectful lanes have SOL-backed verified target-state receipts;
 4. MissionIR proof requirements are observed;
-5. UAS returns `PASS`.
+5. declared resource telemetry is present and within bounds;
+6. UAS returns `PASS`.
 
 Otherwise the bounded states are `HOLD_CONTEXT` or `HOLD_UAS`.
 
 ## Current truth boundary
 
-This branch establishes source implementation and deterministic regression intent only.
+This branch establishes source implementation and exact-head regression intent. Until the current branch head passes the repository admission controls, the code remains unadmitted source.
 
-It does **not** establish:
+Even after deterministic repository admission, this work does **not** establish:
 
 - production cutover;
-- provider-hosted serving runtime;
+- provider-hosted continuous serving runtime;
 - multi-region consensus;
 - universal exactly-once provider semantics;
 - current OPA bundle distribution/runtime enforcement;
@@ -121,4 +192,4 @@ It does **not** establish:
 - market superiority;
 - sustained owner-value improvement.
 
-Those are separate promotion gates requiring exact-head CI and, where relevant, provider-native readback and sustained empirical evidence.
+Those are separate promotion gates requiring provider-native readback and sustained empirical evidence on the intended serving surface.
