@@ -110,15 +110,24 @@ class UASRuntimeEvaluator:
             tuple(evidence.actual_tool_sequence),
         )
 
+        cost_evidence_required = mission.max_cost_microunits is not None
+        latency_evidence_required = mission.latency_target_ms is not None
+        cost_evidence_present = evidence.cost_microunits is not None
+        latency_evidence_present = evidence.latency_ms is not None
+
         cost_ok = (
-            mission.max_cost_microunits is None
-            or evidence.cost_microunits is None
-            or int(evidence.cost_microunits) <= int(mission.max_cost_microunits)
+            not cost_evidence_required
+            or (
+                cost_evidence_present
+                and int(evidence.cost_microunits) <= int(mission.max_cost_microunits)
+            )
         )
         latency_ok = (
-            mission.latency_target_ms is None
-            or evidence.latency_ms is None
-            or int(evidence.latency_ms) <= int(mission.latency_target_ms)
+            not latency_evidence_required
+            or (
+                latency_evidence_present
+                and int(evidence.latency_ms) <= int(mission.latency_target_ms)
+            )
         )
 
         owner_burden_score = 1.0 / (1.0 + max(0, int(evidence.owner_interventions)))
@@ -158,9 +167,13 @@ class UASRuntimeEvaluator:
             blockers.append("SECURITY_VIOLATION_PRESENT")
         if evidence.regression_failures:
             blockers.append("REGRESSION_FAILURE_PRESENT")
-        if not cost_ok:
+        if cost_evidence_required and not cost_evidence_present:
+            blockers.append("COST_EVIDENCE_MISSING")
+        elif not cost_ok:
             blockers.append("COST_CEILING_EXCEEDED")
-        if not latency_ok:
+        if latency_evidence_required and not latency_evidence_present:
+            blockers.append("LATENCY_EVIDENCE_MISSING")
+        elif not latency_ok:
             blockers.append("LATENCY_TARGET_EXCEEDED")
         if not trajectory_ok:
             blockers.append("EXPECTED_TOOL_TRAJECTORY_NOT_OBSERVED")
