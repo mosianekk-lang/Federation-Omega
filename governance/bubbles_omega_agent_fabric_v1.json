@@ -1,0 +1,48 @@
+{
+  "schema": "BUBBLES-OMEGA-AGENT-FABRIC-V1",
+  "status": "SOURCE_CANDIDATE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "mission_controller": "BUBBLES-OMEGA-CONTROLLER",
+  "architecture": {
+    "agents": "bounded specialist reasoning/execution roles",
+    "bots": "deterministic queue, dedup, checkpoint, proof, retry, handoff and completion controls",
+    "scheduler": "dependency-aware DAG waves with global parallel limits, in-flight effect accounting and per-agent max_parallel capacity",
+    "effect_lanes": "maximum one effectful lane by default; running effect lanes consume the ceiling",
+    "completion": "every required task must have terminal SUCCESS; FAILURE/CONSTRAINT cannot be relabeled complete",
+    "receipt_privacy": "raw executor payloads remain process-local; durable receipts store proof references plus payload-key metadata only"
+  },
+  "integrations": {
+    "omega_one": "load balancing, DAG allocation, failure isolation and champion/challenger telemetry",
+    "cfbe": "benchmark snapshots and value/reliability comparison",
+    "realityguard": "mandatory preflight guard for future write-capable routes; optional for internal/read-only routes",
+    "jarvis": "mandatory independent semantic verification for future write-capable routes; verifier hook available for all tasks",
+    "bubbles_omega2": "existing capability discovery, squad formation, proof graph and anti-proliferation controls"
+  },
+  "non_negotiable_controls": [
+    "NO_HIDDEN_BACKGROUND_AGENT_CLAIM",
+    "NO_PROVIDER_AUTHORITY_INHERITANCE",
+    "NO_DIRECT_MAIN_WRITE",
+    "NO_EFFECT_WITHOUT_EXACT_ROUTE_BOUND_SINGLE_USE_PERMIT",
+    "NON_INTERNAL_PERMIT_CONSUMED_BEFORE_DISPATCH",
+    "WRITE_REQUIRES_GUARD_AND_INDEPENDENT_VERIFIER",
+    "GUARD_AND_VERIFIER_ERRORS_FAIL_CLOSED",
+    "PROVIDER_SUCCESS_REQUIRES_READBACK_EVIDENCE_REF",
+    "NO_RAW_EXECUTOR_PAYLOAD_IN_DURABLE_RECEIPT",
+    "NO_UNCHANGED_FAILED_ROUTE_RETRY",
+    "NO_DUPLICATE_EFFECT_FROM_REPLAY",
+    "MISSION_SCOPED_IDEMPOTENCY",
+    "PER_AGENT_PARALLEL_CAPACITY_ENFORCED",
+    "UNRESOLVED_CAPABILITY_GAPS_NOT_RELEASED_AS_READY_WORK",
+    "NO_EXECUTOR_SELF_CERTIFICATION_FOR_CONSEQUENTIAL_EFFECT",
+    "NO_COMPLETION_WITHOUT_REQUIRED_TASK_SUCCESS",
+    "UNRELATED_SAFE_LANES_CONTINUE_AFTER_FAILURE",
+    "SOURCE_TEST_RUNTIME_PROVIDER_AND_VALUE_STATES_REMAIN_SEPARATE"
+  ],
+  "runtime_boundary": {
+    "process_local_permit_idempotency_and_task_output_state": true,
+    "provider_write_promotion_requires_durable_external_ledger": true,
+    "default_write_capable_workers": 0
+  },
+  "truth_boundary": "This contract governs provider-neutral source/runtime orchestration. It does not prove native ChatGPT background workers, provider deployment, provider credentials, durable provider-write idempotency, external authority or completed external effects."
+}
