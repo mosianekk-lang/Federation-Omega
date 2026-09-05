@@ -10,19 +10,10 @@ on:
 
 permissions:
   contents: read
-  id-token: write
 
 concurrency:
   group: sovara-ai-studio-direct-semantic-canary-${{ github.ref }}
   cancel-in-progress: false
-
-env:
-  PROJECT_ID: sov-hybrid-suite
-  PROJECT_NUMBER: "257649435135"
-  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
-  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
-  MODEL: gemini-2.5-flash
-  REQUEST_FILE: governance/sovara_ai_studio_semantic_canary_request_v1.json
 
 jobs:
   semantic-canary:
@@ -35,7 +26,7 @@ jobs:
           persist-credentials: false
           fetch-depth: 1
 
-      - name: Validate zero-data OAuth request contract
+      - name: Validate zero-data auth-key request contract
         shell: bash
         run: |
           set -euo pipefail
@@ -46,148 +37,211 @@ jobs:
           assert p['execute'] is True,p
           assert p['project_id']=='sov-hybrid-suite',p
           assert p['project_number']=='257649435135',p
-          assert p['credential_mode']=='GOOGLE_OAUTH2_WIF_ACCESS_TOKEN',p
+          assert p['credential_mode']=='GEMINI_AUTHORIZATION_KEY_ENV_SECRET',p
+          assert p['credential_reference']=='GITHUB_ACTIONS_SECRET:GEMINI_API_KEY',p
           assert p['provider']=='GOOGLE_GEMINI_DEVELOPER_API',p
+          assert p['model_policy']['discovery_required'] is True,p
+          assert p['model_policy']['allow_dynamic_fallback'] is True,p
           for k in ('case_data_allowed','provider_mutation_allowed','iam_mutation_allowed','secret_mutation_allowed','secret_value_logging_allowed','deployment_allowed','traffic_change_allowed','external_communication_allowed'):
               assert p[k] is False,(k,p[k])
-          assert int(p['semantic_canary']['max_output_tokens']) <= 32,p
+          assert int(p['semantic_canary']['max_output_tokens']) <= 128,p
           PY
 
-      - name: Authenticate through existing keyless Google WIF with Gemini OAuth scopes
-        id: google_auth
-        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-          workload_identity_provider: ${{ env.WIF_PROVIDER }}
-          service_account: ${{ env.DEPLOYER_SA }}
-          token_format: access_token
-          access_token_scopes: https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/generative-language.retriever
-
-      - name: Install pinned Google Cloud CLI action
-        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
-        with:
-          project_id: ${{ env.PROJECT_ID }}
-
-      - name: Run direct Gemini Developer API OAuth diagnostics and semantic nonce canary
+      - name: Run Gemini Developer API auth-key discovery and exact-nonce canary
         shell: bash
         env:
-          ACCESS_TOKEN: ${{ steps.google_auth.outputs.access_token }}
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
         run: |
           set -euo pipefail
           set +x
           mkdir -p /tmp/sovara-ai-studio
-          test -n "$ACCESS_TOKEN"
-          echo "::add-mask::$ACCESS_TOKEN"
-          ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
-          OBSERVED_PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
-          test "$ACTIVE_ACCOUNT" = "$DEPLOYER_SA"
-          test "$OBSERVED_PROJECT_NUMBER" = "$PROJECT_NUMBER"
-
-          NONCE="SOVARA-AISTUDIO-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:12}"
-          export NONCE
-
-          MODELS_BODY=/tmp/sovara-ai-studio/models-response.json
-          GENERATE_BODY=/tmp/sovara-ai-studio/generate-response.json
-          GENERATE_HEADERS=/tmp/sovara-ai-studio/generate-headers.txt
-
-          MODELS_STATUS="$(curl --silent --show-error -o "$MODELS_BODY" -w '%{http_code}' \
-            -H "Authorization: Bearer $ACCESS_TOKEN" \
-            -H "x-goog-user-project: $PROJECT_ID" \
-            -H "Content-Type: application/json" \
-            "https://generativelanguage.googleapis.com/v1/models")"
-
-          GENERATE_STATUS="$(curl --silent --show-error -D "$GENERATE_HEADERS" -o "$GENERATE_BODY" -w '%{http_code}' \
-            -H "Authorization: Bearer $ACCESS_TOKEN" \
-            -H "x-goog-user-project: $PROJECT_ID" \
-            -H "Content-Type: application/json" \
-            -X POST \
-            -d "{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Return exactly this token and nothing else: ${NONCE}\"}]}],\"generationConfig\":{\"temperature\":0,\"maxOutputTokens\":32}}" \
-            "https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent")"
-
-          export MODELS_STATUS GENERATE_STATUS
           python3 - <<'PY'
-          import hashlib,json,os,re
+          from __future__ import annotations
+
+          import hashlib
+          import json
+          import os
+          import re
+          import sys
+          import urllib.error
+          import urllib.parse
+          import urllib.request
           from pathlib import Path
 
-          def read_json(path):
-              p=Path(path)
-              if not p.exists(): return {}
-              raw=p.read_text(encoding='utf-8',errors='replace')
-              try: return json.loads(raw)
-              except Exception: return {'raw_sha256':hashlib.sha256(raw.encode()).hexdigest()}
+          request_contract=json.load(open('governance/sovara_ai_studio_semantic_canary_request_v1.json',encoding='utf-8'))
+          key=os.environ.get('GEMINI_API_KEY','')
+          receipt_path=Path('/tmp/sovara-ai-studio/AI_STUDIO_SEMANTIC_RECEIPT.json')
+          base={
+              'schema':'SOVARA_AI_STUDIO_DIRECT_SEMANTIC_RECEIPT_V4',
+              'provider':'GOOGLE_GEMINI_DEVELOPER_API',
+              'transport':'DIRECT_GENERATIVELANGUAGE_API_AUTH_KEY',
+              'project_id':request_contract['project_id'],
+              'project_number':request_contract['project_number'],
+              'credential_mode':request_contract['credential_mode'],
+              'credential_reference':request_contract['credential_reference'],
+              'credential_present':bool(key),
+              'credential_value_recorded':False,
+              'credential_value_hashed':False,
+              'secret_value_recorded':False,
+              'case_data_processed':False,
+              'provider_mutation_performed':False,
+              'iam_mutation_performed':False,
+              'secret_mutation_performed':False,
+              'deployment_performed':False,
+              'traffic_change_performed':False,
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'run_id':os.environ.get('GITHUB_RUN_ID'),
+              'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT'),
+          }
 
-          models_body=read_json('/tmp/sovara-ai-studio/models-response.json')
-          body=read_json('/tmp/sovara-ai-studio/generate-response.json')
-          nonce=os.environ['NONCE']
-          models_status=int(os.environ['MODELS_STATUS'])
-          generate_status=int(os.environ['GENERATE_STATUS'])
-          parts=((body.get('candidates') or [{}])[0].get('content') or {}).get('parts') or [] if isinstance(body,dict) else []
-          text=''.join(str(p.get('text','')) for p in parts).strip()
-          exact=(generate_status==200 and text==nonce)
-          model_identity=(body.get('modelVersion') if isinstance(body,dict) else None) or os.environ.get('MODEL','gemini-2.5-flash')
-          request_id=(body.get('responseId') if isinstance(body,dict) else None) or (body.get('response_id') if isinstance(body,dict) else None)
-          headers=Path('/tmp/sovara-ai-studio/generate-headers.txt').read_text(encoding='utf-8',errors='replace') if Path('/tmp/sovara-ai-studio/generate-headers.txt').exists() else ''
-          if not request_id:
-              m=re.search(r'(?im)^x-request-id:\s*([^\r\n]+)',headers)
-              request_id=m.group(1).strip() if m else None
-          usage=body.get('usageMetadata') or {} if isinstance(body,dict) else {}
+          def seal_and_write(receipt:dict) -> None:
+              body=dict(receipt)
+              body.pop('receipt_sha256',None)
+              receipt['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+              receipt_path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+
+          if not key:
+              receipt={**base,'state':'CREDENTIAL_MISSING','semantic_verified':False,'models_list_http_status':None,'models_visible_count':0,'selected_model':None,'selected_model_source':None,'generate_http_status':None,'provider_model_version':None,'provider_request_id_or_equivalent':None,'nonce_sha256':None,'response_text_sha256':None,'usage_metadata':{}}
+              seal_and_write(receipt)
+              print(json.dumps({k:receipt[k] for k in ('state','semantic_verified','credential_present','selected_model','receipt_sha256')},sort_keys=True))
+              raise SystemExit('Gemini auth-key runtime secret unavailable; redacted receipt retained')
+
+          def provider_json(url:str, *, payload:dict|None=None) -> tuple[int,dict,dict[str,str]]:
+              data=None if payload is None else json.dumps(payload,separators=(',',':')).encode()
+              headers={'Content-Type':'application/json','x-goog-api-key':key}
+              req=urllib.request.Request(url,data=data,headers=headers,method='GET' if payload is None else 'POST')
+              try:
+                  with urllib.request.urlopen(req,timeout=60) as response:
+                      raw=response.read().decode('utf-8','replace')
+                      try: body=json.loads(raw) if raw else {}
+                      except Exception: body={'raw_sha256':hashlib.sha256(raw.encode()).hexdigest()}
+                      return int(response.status),body,{k.lower():v for k,v in response.headers.items()}
+              except urllib.error.HTTPError as exc:
+                  raw=exc.read().decode('utf-8','replace')
+                  try: body=json.loads(raw) if raw else {}
+                  except Exception: body={'raw_sha256':hashlib.sha256(raw.encode()).hexdigest()}
+                  return int(exc.code),body,{k.lower():v for k,v in exc.headers.items()}
+
+          # Provider-native discovery is mandatory; never infer current model availability from source labels.
+          models=[]
+          page_token=None
+          list_status=None
+          list_error={}
+          for _ in range(5):
+              query={'pageSize':'1000'}
+              if page_token:
+                  query['pageToken']=page_token
+              url='https://generativelanguage.googleapis.com/v1beta/models?'+urllib.parse.urlencode(query)
+              status,body,_=provider_json(url)
+              list_status=status
+              if status!=200:
+                  list_error=(body.get('error') or {}) if isinstance(body,dict) else {}
+                  break
+              models.extend(body.get('models') or [])
+              page_token=body.get('nextPageToken')
+              if not page_token:
+                  break
+
+          available=[]
+          rejected_terms=tuple(str(x).lower() for x in request_contract['model_policy'].get('reject_model_classes') or [])
+          for item in models:
+              if not isinstance(item,dict):
+                  continue
+              name=str(item.get('name') or '')
+              short=name.split('/',1)[-1]
+              methods=set(item.get('supportedGenerationMethods') or [])
+              if not name.startswith('models/gemini-') or 'generateContent' not in methods:
+                  continue
+              if any(term in short.lower() for term in rejected_terms):
+                  continue
+              available.append({'name':name,'short':short,'display_name':item.get('displayName'),'methods':sorted(methods)})
+
+          preferred=[str(x) for x in request_contract['model_policy'].get('preferred_models') or []]
+          selected=None
+          selected_source=None
+          available_by_short={x['short']:x for x in available}
+          for candidate in preferred:
+              if candidate in available_by_short:
+                  selected=available_by_short[candidate]
+                  selected_source='PREFERRED_PROVIDER_DISCOVERED'
+                  break
+
+          def version_score(short:str) -> tuple:
+              nums=tuple(int(x) for x in re.findall(r'\d+',short)[:3])
+              stable_penalty=1 if any(tag in short.lower() for tag in ('preview','exp','experimental')) else 0
+              latest_bonus=1 if short.endswith('-latest') else 0
+              flash_bonus=1 if '-flash' in short else 0
+              return (stable_penalty*-1,flash_bonus,nums,latest_bonus,short)
+
+          if selected is None and available and request_contract['model_policy'].get('allow_dynamic_fallback'):
+              selected=max(available,key=lambda x:version_score(x['short']))
+              selected_source='DYNAMIC_PROVIDER_DISCOVERY'
+
+          if list_status!=200 or selected is None:
+              err_message=str(list_error.get('message',''))
+              receipt={
+                  **base,
+                  'state':'MODEL_DISCOVERY_HELD',
+                  'semantic_verified':False,
+                  'models_list_http_status':list_status,
+                  'models_visible_count':len(available),
+                  'selected_model':selected['short'] if selected else None,
+                  'selected_model_source':selected_source,
+                  'generate_http_status':None,
+                  'provider_error_status':list_error.get('status'),
+                  'provider_error_code':list_error.get('code'),
+                  'provider_error_message_sha256':hashlib.sha256(err_message.encode()).hexdigest() if err_message else None,
+                  'provider_model_version':None,
+                  'provider_request_id_or_equivalent':None,
+                  'nonce_sha256':None,
+                  'response_text_sha256':None,
+                  'usage_metadata':{},
+              }
+              seal_and_write(receipt)
+              print(json.dumps({k:receipt[k] for k in ('state','semantic_verified','models_list_http_status','models_visible_count','selected_model','receipt_sha256')},sort_keys=True))
+              raise SystemExit('Gemini provider model discovery not verified; redacted receipt retained')
+
+          nonce=f"SOVARA-AISTUDIO-{os.environ.get('GITHUB_RUN_ID','local')}-{os.environ.get('GITHUB_RUN_ATTEMPT','0')}-{str(os.environ.get('GITHUB_SHA',''))[:12]}"
+          expected=nonce
+          payload={
+              'contents':[{'role':'user','parts':[{'text':f'Return exactly this token and nothing else: {expected}'}]}],
+              'generationConfig':{
+                  'temperature':request_contract['semantic_canary']['temperature'],
+                  'maxOutputTokens':request_contract['semantic_canary']['max_output_tokens'],
+              },
+          }
+          generate_url=f"https://generativelanguage.googleapis.com/v1beta/models/{selected['short']}:generateContent"
+          generate_status,body,headers=provider_json(generate_url,payload=payload)
+          parts=((((body.get('candidates') or [{}])[0].get('content') or {}).get('parts')) or []) if isinstance(body,dict) else []
+          text=''.join(str(part.get('text','')) for part in parts).strip()
+          exact=generate_status==200 and text==expected
           error=(body.get('error') or {}) if isinstance(body,dict) else {}
           error_message=str(error.get('message',''))
-          error_details=error.get('details') or []
-          error_reasons=[]
-          for d in error_details:
-              if isinstance(d,dict):
-                  reason=d.get('reason') or d.get('metadata',{}).get('reason')
-                  if reason: error_reasons.append(str(reason))
-          available_models=[]
-          if isinstance(models_body,dict):
-              for m in models_body.get('models') or []:
-                  name=m.get('name') if isinstance(m,dict) else None
-                  if name: available_models.append(name)
+          request_id=(body.get('responseId') if isinstance(body,dict) else None) or (body.get('response_id') if isinstance(body,dict) else None) or headers.get('x-request-id')
+          usage=(body.get('usageMetadata') or {}) if isinstance(body,dict) else {}
           receipt={
-            'schema':'SOVARA_AI_STUDIO_DIRECT_SEMANTIC_RECEIPT_V3',
-            'state':'VERIFIED_SCOPED' if exact else 'PROVIDER_SEMANTIC_HELD',
-            'semantic_verified':exact,
-            'provider':'GOOGLE_GEMINI_DEVELOPER_API',
-            'transport':'DIRECT_GENERATIVELANGUAGE_API_OAUTH2_WIF',
-            'project_id':'sov-hybrid-suite',
-            'project_number':'257649435135',
-            'credential_mode':'GOOGLE_OAUTH2_WIF_ACCESS_TOKEN_TRANSIENT',
-            'oauth_scopes_requested':['https://www.googleapis.com/auth/cloud-platform','https://www.googleapis.com/auth/generative-language.retriever'],
-            'credential_value_recorded':False,
-            'secret_value_recorded':False,
-            'case_data_processed':False,
-            'provider_mutation_performed':False,
-            'iam_mutation_performed':False,
-            'secret_mutation_performed':False,
-            'deployment_performed':False,
-            'traffic_change_performed':False,
-            'models_list_http_status':models_status,
-            'models_visible_count':len(available_models),
-            'requested_model_visible':any(x.endswith('/'+os.environ.get('MODEL','gemini-2.5-flash')) for x in available_models),
-            'generate_http_status':generate_status,
-            'provider_error_status':error.get('status'),
-            'provider_error_code':error.get('code'),
-            'provider_error_message_sha256':hashlib.sha256(error_message.encode()).hexdigest() if error_message else None,
-            'provider_error_reasons':sorted(set(error_reasons)),
-            'model_identity':model_identity,
-            'provider_request_id_or_equivalent':request_id,
-            'nonce_sha256':hashlib.sha256(nonce.encode()).hexdigest(),
-            'response_text_sha256':hashlib.sha256(text.encode()).hexdigest() if text else None,
-            'usage_metadata':{k:usage.get(k) for k in ('promptTokenCount','candidatesTokenCount','totalTokenCount','cachedContentTokenCount') if k in usage},
-            'source_sha':os.environ.get('GITHUB_SHA'),
-            'run_id':os.environ.get('GITHUB_RUN_ID'),
-            'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT'),
+              **base,
+              'state':'VERIFIED_SCOPED' if exact else 'PROVIDER_SEMANTIC_HELD',
+              'semantic_verified':exact,
+              'models_list_http_status':list_status,
+              'models_visible_count':len(available),
+              'selected_model':selected['short'],
+              'selected_model_source':selected_source,
+              'generate_http_status':generate_status,
+              'provider_error_status':error.get('status'),
+              'provider_error_code':error.get('code'),
+              'provider_error_message_sha256':hashlib.sha256(error_message.encode()).hexdigest() if error_message else None,
+              'provider_model_version':body.get('modelVersion') if isinstance(body,dict) else None,
+              'provider_request_id_or_equivalent':request_id,
+              'nonce_sha256':hashlib.sha256(nonce.encode()).hexdigest(),
+              'response_text_sha256':hashlib.sha256(text.encode()).hexdigest() if text else None,
+              'usage_metadata':{k:usage.get(k) for k in ('promptTokenCount','candidatesTokenCount','totalTokenCount','cachedContentTokenCount') if k in usage},
           }
-          receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
-          Path('/tmp/sovara-ai-studio/AI_STUDIO_SEMANTIC_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          print(json.dumps({k:receipt[k] for k in ('state','semantic_verified','models_list_http_status','models_visible_count','requested_model_visible','generate_http_status','provider_error_status','provider_error_code','provider_error_reasons','model_identity','provider_request_id_or_equivalent','receipt_sha256')},sort_keys=True))
+          seal_and_write(receipt)
+          print(json.dumps({k:receipt[k] for k in ('state','semantic_verified','models_list_http_status','models_visible_count','selected_model','selected_model_source','generate_http_status','provider_model_version','provider_request_id_or_equivalent','receipt_sha256')},sort_keys=True))
           if not exact:
-              raise SystemExit('Gemini provider semantic proof not verified; redacted diagnostic receipt retained')
+              raise SystemExit('Gemini provider semantic proof not verified; redacted receipt retained')
           PY
-
-          rm -f "$MODELS_BODY" "$GENERATE_BODY" "$GENERATE_HEADERS"
-          unset ACCESS_TOKEN
 
       - name: Upload immutable redacted semantic receipt
         if: always()
