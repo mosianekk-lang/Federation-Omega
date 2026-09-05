@@ -1,17 +1,6 @@
 #!/usr/bin/env bash
 set -euo pipefail
 
-# ARCHITRON / Google Native Scheduler v3 recovery helper.
-#
-# Safety contract:
-# - exact canonical ARCHITRON script only;
-# - authenticated human-owner clasp session required;
-# - read-only current-project manifest preflight before function invocation;
-# - no clasp push/deploy/create/clone operation exists in this helper;
-# - preserve a healthy singleton;
-# - install only once, only from a proof-readback-verified failed canary;
-# - require a second full canary contract after repair.
-
 TARGET_SCRIPT_ID="1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R"
 CANARY_FUNCTION="gasSchedulerCanaryV3"
 INSTALL_FUNCTION="gasSchedulerInstallV3"
@@ -29,6 +18,7 @@ work="$(mktemp -d)"
 cleanup() { rm -rf "$work"; }
 trap cleanup EXIT
 printf '{"scriptId":"%s","rootDir":"."}\n' "$TARGET_SCRIPT_ID" > "$work/.clasp.json"
+
 
 preflight_execution_api() {
   # Read current project source into a disposable directory. Never print source.
@@ -68,7 +58,6 @@ if missing:
 print('GNS3_PREFLIGHT_VERIFIED:executionApi=MYSELF:requiredScopes=present')
 PY2
 }
-
 run_remote() {
   local fn="$1"
   (cd "$work" && clasp run "$fn")
