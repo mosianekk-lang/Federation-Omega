@@ -12,6 +12,17 @@ from federation.mission_ir import MissionIR
 
 
 _DEFAULT_DECISION_PATH = "/v1/data/federation/fkpf_omega_v3/allow"
+_SECRET_KEYS = (
+    "authorization",
+    "password",
+    "passwd",
+    "secret",
+    "token",
+    "cookie",
+    "api_key",
+    "apikey",
+    "private_key",
+)
 
 
 def _stable_json(value: object) -> str:
@@ -20,6 +31,20 @@ def _stable_json(value: object) -> str:
 
 def _digest(value: object) -> str:
     return sha256(_stable_json(value).encode("utf-8")).hexdigest()
+
+
+def _contains_secret_shape(value: Any) -> bool:
+    if isinstance(value, Mapping):
+        for key, child in value.items():
+            lowered = str(key).strip().lower()
+            if any(secret in lowered for secret in _SECRET_KEYS):
+                return True
+            if _contains_secret_shape(child):
+                return True
+        return False
+    if isinstance(value, (list, tuple, set)):
+        return any(_contains_secret_shape(item) for item in value)
+    return False
 
 
 @dataclass(frozen=True, slots=True)
@@ -45,11 +70,11 @@ class OPAHTTPPolicyGateV1:
 
     Policy semantics remain in Rego. This adapter only transports an externally
     constructed, evidence-bound input to OPA and converts the response into a
-    hash-bound FUSE decision receipt. A transport failure or malformed response
-    fails closed as DENY; it never falls back to an allow decision.
+    hash-bound FUSE decision receipt. A transport failure, secret-shaped input or
+    malformed response fails closed as DENY; it never falls back to an allow.
     """
 
-    version = "1.0.0"
+    version = "1.0.1"
 
     def __init__(
         self,
@@ -90,6 +115,13 @@ class OPAHTTPPolicyGateV1:
                 policy_input={},
                 raw_result={"error": "EMPTY_POLICY_INPUT"},
                 reason="EMPTY_POLICY_INPUT",
+            )
+        if bool(policy_input.get("contains_raw_secret")) or _contains_secret_shape(policy_input):
+            return self._receipt(
+                decision="DENY",
+                policy_input={"redacted": True},
+                raw_result={"error": "RAW_SECRET_SHAPE_FORBIDDEN"},
+                reason="RAW_SECRET_SHAPE_FORBIDDEN",
             )
 
         body = _stable_json({"input": policy_input}).encode("utf-8")
