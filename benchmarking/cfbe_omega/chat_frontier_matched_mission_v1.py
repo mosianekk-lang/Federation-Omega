@@ -89,16 +89,18 @@ def run_matched_mission() -> MatchedMissionResult:
             result={"value": idx},
             proof_ref=f"proof://node-{idx}",
         )
-    reused_nodes = 0
+    cached_results = []
     for idx in range(3):
-        if cache.get(
+        item = cache.get(
             node_id=f"node-{idx}",
             input_payload={"input": idx},
             dependency_result_sha256s={},
             code_version="code-v1",
             source_version="source-v1",
-        ) is not None:
-            reused_nodes += 1
+        )
+        if item is not None:
+            cached_results.append(item)
+    reused_nodes = len(cached_results)
     if reused_nodes != 3 or cache.hits != 3:
         raise AssertionError("INCREMENTAL_REUSE_NOT_PROVEN")
 
@@ -186,8 +188,9 @@ def run_matched_mission() -> MatchedMissionResult:
     proof_ok = (
         first["semantic_verified"] is True
         and bool(first["proof_ref"])
-        and all(bool(row.proof_ref) for row in cache._entries.values())
+        and all(bool(row.proof_ref) for row in cached_results)
         and context_route.selected[0].mandatory
+        and bool(context_route.selected[0].proof_ref)
     )
 
     body = {
