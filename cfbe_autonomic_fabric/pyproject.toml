@@ -1,0 +1,13 @@
+[project]
+name = "cfbe-autonomic-fabric"
+version = "0.1.0"
+description = "Provider-neutral desired-state, capability-resolution and proof kernel for CFBE Omega"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+cfbe-acf = "cfbe_acf.cli:main"
+
+[tool.unittest]
+start-directory = "tests"
+

@@ -1,0 +1,24 @@
+{
+  "schema": "CFBE-ACF-DESIRED-STATE-V1",
+  "id": "cfbe-genesis-desired-v1",
+  "mission_id": "CFBE-ACF-EXAMPLE",
+  "mission_version": 1,
+  "nodes": [
+    {"id": "cfbe-omega", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-gcp", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-gas", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-github", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-ai-runtime", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-microsoft", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-kdv", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-evidenceops", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-federation-runtime", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-security-identity", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-data-knowledge", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-canva", "maximum_heartbeat_age_seconds": 3600},
+    {"id": "cfbe-communications", "maximum_heartbeat_age_seconds": 3600}
+  ],
+  "capabilities": [
+    {"provider_id": "github-read", "proof_action_id": "github-read-admission", "minimum_proof_stage": "SEMANTICALLY_VERIFIED"}
+  ]
+}

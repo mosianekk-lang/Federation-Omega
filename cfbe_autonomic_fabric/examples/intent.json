@@ -1,0 +1,18 @@
+{
+  "mission_id": "CFBE-ACF-EXAMPLE",
+  "mission_version": 1,
+  "proof_action_id": "github-read-admission",
+  "objective": "Read current repository provenance with semantic readback",
+  "required_capabilities": ["repository-read", "provenance-read"],
+  "constraints": {
+    "authority_class": "A0",
+    "maximum_incremental_cost": 0,
+    "maximum_user_burden": 0,
+    "effectful": false,
+    "require_semantic_readback": true,
+    "require_reversible": true,
+    "minimum_proof_stage": "TRANSPORT_PROVEN",
+    "maximum_age_seconds": 86400,
+    "dry_run": true
+  }
+}
