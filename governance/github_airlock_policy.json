@@ -121,10 +121,12 @@
     ".github/workflows/seb-omega.yml"
   ],
   "provider_mutation_workflow_allowlist": [
-    ".github/workflows/sol62-wif-hardening-lease.yml"
+    ".github/workflows/sol62-wif-hardening-lease.yml",
+    ".github/workflows/fkcm-pubsub-shadow-canary.yml"
   ],
   "provider_mutation_exact_issue_titles": {
-    ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901"
+    ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901",
+    ".github/workflows/fkcm-pubsub-shadow-canary.yml": "MODISA_FKCM_PUBSUB_TEMP_IAM_CANARY_V1"
   },
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"

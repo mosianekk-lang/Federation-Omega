@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.2.0",
+  "version": "1.3.1",
   "risk_rules": [
     {
       "risk": "R4_CORE",
@@ -8,12 +8,14 @@
         "federation/fkcm_v1/**",
         "tests/test_fkcm_v1.py",
         "tests/test_fkcm_pubsub_shadow_canary.py",
+        "tests/test_fkcm_temp_pubsub_iam_canary.py",
         ".github/workflows/fkcm-pubsub-shadow-canary.yml",
         "governance/fkcm_v1_admission.json",
         "governance/proofos_omega_policy_extension_fkcm_v1.json",
+        "governance/github_airlock_policy.json",
         "docs/architecture/MODISA_FKCM_V1.md"
       ],
-      "reason": "FEDERATION_KDV_COGNITIVE_MESH_STATE_TRUTH_ROUTING_BMF_EQUIVALENCE_AND_BOUNDED_PROVIDER_TRANSPORT_BOUNDARY"
+      "reason": "FEDERATION_KDV_COGNITIVE_MESH_STATE_TRUTH_ROUTING_BMF_EQUIVALENCE_BOUNDED_PROVIDER_TRANSPORT_OWNER_SCOPED_TEMPORARY_IAM_REVOCATION_AND_EXPLICIT_AIRLOCK_PROVIDER_MUTATION_GATING_BOUNDARY"
     }
   ],
   "subsystem_rules": [
@@ -23,9 +25,11 @@
         "federation/fkcm_v1/**",
         "tests/test_fkcm_v1.py",
         "tests/test_fkcm_pubsub_shadow_canary.py",
+        "tests/test_fkcm_temp_pubsub_iam_canary.py",
         ".github/workflows/fkcm-pubsub-shadow-canary.yml",
         "governance/fkcm_v1_admission.json",
         "governance/proofos_omega_policy_extension_fkcm_v1.json",
+        "governance/github_airlock_policy.json",
         "docs/architecture/MODISA_FKCM_V1.md"
       ],
       "depends_on": [
@@ -60,6 +64,22 @@
         "tests/test_fkcm_pubsub_shadow_canary.py",
         ".github/workflows/fkcm-pubsub-shadow-canary.yml",
         "governance/proofos_omega_policy_extension_fkcm_v1.json"
+      ],
+      "subsystems": ["FKCM_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "fkcm_pubsub_temp_iam_canary",
+      "kind": "unittest_glob",
+      "target": "test_fkcm_temp_pubsub_iam_canary.py",
+      "patterns": [
+        "federation/fkcm_v1/temp_pubsub_iam_canary.py",
+        "tests/test_fkcm_temp_pubsub_iam_canary.py",
+        ".github/workflows/fkcm-pubsub-shadow-canary.yml",
+        "governance/proofos_omega_policy_extension_fkcm_v1.json",
+        "governance/github_airlock_policy.json"
       ],
       "subsystems": ["FKCM_V1"],
       "failure_class": "SUBSYSTEM_REGRESSION",
