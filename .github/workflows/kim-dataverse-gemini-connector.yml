@@ -1,0 +1,142 @@
+name: Kim DataVerse Gemini Connector
+
+on:
+  push:
+    paths:
+      - "kim-dataverse-gemini-connector/**"
+      - ".github/workflows/kim-dataverse-gemini-connector.yml"
+  pull_request:
+    paths:
+      - "kim-dataverse-gemini-connector/**"
+  workflow_dispatch:
+    inputs:
+      operation:
+        type: choice
+        options: [preflight, deploy]
+        default: preflight
+        required: true
+      confirmation:
+        description: "For deploy only, enter DEPLOY_KIM_DATAVERSE_CONNECTOR"
+        required: false
+        type: string
+      promote:
+        description: "Route traffic to the new revision after health proof"
+        default: false
+        required: true
+        type: boolean
+
+permissions:
+  contents: read
+
+concurrency:
+  group: kim-dataverse-gemini-connector-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  REPOSITORY: federation-omega
+  SERVICE: kim-dataverse-gemini-connector
+  RUNTIME_SERVICE_ACCOUNT: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  DEPLOYER_SERVICE_ACCOUNT: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    defaults:
+      run:
+        working-directory: kim-dataverse-gemini-connector
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: "22"
+          cache: npm
+          cache-dependency-path: kim-dataverse-gemini-connector/package-lock.json
+      - run: npm ci --ignore-scripts
+      - run: npm test
+      - run: npm run smoke
+      - run: npm run validate:features
+
+  cloud-preflight:
+    if: github.event_name == 'workflow_dispatch'
+    needs: test
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@v4
+      - id: auth
+        uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Prove caller, billing, API, repository and least privilege
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud auth list --filter=status:ACTIVE --format='value(account)'
+          gcloud beta billing projects describe "$PROJECT_ID" --format='value(billingEnabled)'
+          gcloud services list --project "$PROJECT_ID" --enabled --filter='config.name:aiplatform.googleapis.com' --format='value(config.name)'
+          gcloud artifacts repositories describe "$REPOSITORY" --project "$PROJECT_ID" --location "$REGION" --format='value(name)'
+          gcloud iam service-accounts describe "$RUNTIME_SERVICE_ACCOUNT" --project "$PROJECT_ID" --format='value(email)'
+          gcloud projects get-iam-policy "$PROJECT_ID" --flatten='bindings[].members' --filter="bindings.members:serviceAccount:$RUNTIME_SERVICE_ACCOUNT AND bindings.role:roles/aiplatform.user" --format='value(bindings.role)'
+
+  deploy-canary:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'deploy' && inputs.confirmation == 'DEPLOY_KIM_DATAVERSE_CONNECTOR'
+    needs: [test, cloud-preflight]
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    environment: production
+    permissions:
+      contents: read
+      id-token: write
+    outputs:
+      revision: ${{ steps.deploy.outputs.revision }}
+      url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: google-github-actions/auth@v3
+        with:
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SERVICE_ACCOUNT }}
+      - uses: google-github-actions/setup-gcloud@v3
+      - name: Build immutable image
+        run: |
+          set -euo pipefail
+          IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$REPOSITORY/$SERVICE:${GITHUB_SHA}"
+          gcloud builds submit kim-dataverse-gemini-connector --project "$PROJECT_ID" --tag "$IMAGE"
+          echo "IMAGE=$IMAGE" >> "$GITHUB_ENV"
+      - id: deploy
+        name: Deploy zero-traffic private canary
+        run: |
+          set -euo pipefail
+          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE" --service-account "$RUNTIME_SERVICE_ACCOUNT" --no-allow-unauthenticated --ingress internal --no-traffic --max-instances 3 --concurrency 4 --timeout 300 --set-env-vars "KDV_PROVIDER=vertex,GOOGLE_CLOUD_PROJECT=$PROJECT_ID,GOOGLE_CLOUD_LOCATION=$REGION,KDV_DEFAULT_MODEL=gemini-2.5-flash"
+          REVISION="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestCreatedRevisionName)')"
+          URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+          test -n "$REVISION"
+          test -n "$URL"
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+      - name: Authenticated canary health proof
+        run: |
+          set -euo pipefail
+          TOKEN="$(gcloud auth print-identity-token --audiences="${{ steps.deploy.outputs.url }}")"
+          curl --fail --silent --show-error --header "Authorization: Bearer $TOKEN" "${{ steps.deploy.outputs.url }}/health"
+      - name: Optional traffic promotion
+        if: inputs.promote == true
+        run: gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions "${{ steps.deploy.outputs.revision }}=100"
+
+  invalid-deploy-confirmation:
+    if: github.event_name == 'workflow_dispatch' && inputs.operation == 'deploy' && inputs.confirmation != 'DEPLOY_KIM_DATAVERSE_CONNECTOR'
+    runs-on: ubuntu-latest
+    steps:
+      - run: |
+          echo "Deployment refused: exact confirmation is required."
+          exit 2

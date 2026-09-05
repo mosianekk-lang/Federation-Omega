@@ -1,0 +1,16 @@
+{
+  "name": "@kim-dataverse/gemini-evidenceops-connector",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "description": "Governed Gemini and EvidenceOps audio connector for Kim DataVerse.",
+  "engines": {"node": ">=22"},
+  "scripts": {
+    "start": "node src/server.mjs",
+    "test": "node --test --test-reporter=spec",
+    "test:coverage": "node --test --experimental-test-coverage",
+    "smoke": "node scripts/smoke.mjs",
+    "validate:features": "node scripts/validate-feature-registry.mjs"
+  },
+  "license": "UNLICENSED"
+}

@@ -1,0 +1,129 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "KIM-DATAVERSE-GEMINI-CONNECTOR-20260801",
+    "version": 9,
+    "goal": "Provide a secure, evidence-aware Gemini connector and reusable EvidenceOps transcription foundation.",
+    "user": "Kim DataVerse owner",
+    "workflow": "Private request -> validation -> one provider -> normalized evidence envelope -> immutable operational proof.",
+    "data": "Text prompts, inline audio or gs:// locators, transcript outputs and non-content operational metadata.",
+    "interface": "HTTP JSON endpoints /health, /ready, /metrics, /v1/capabilities, /v1/generate and /v1/transcribe.",
+    "stack": "Node.js 22 ESM, native HTTP/fetch, Docker, Cloud Run, Vertex AI or Gemini Developer API, GitHub Actions WIF.",
+    "environment": "Local test runtime and target Google Cloud project sov-hybrid-suite in africa-south1.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation permit per consequential action, single effectful GitHub WIF deployment path, truthful state separation.",
+    "failure": "Fail closed on invalid input, authorization, configuration, limits, identity, timeout and upstream failures.",
+    "testing": "Native Node unit/integration/smoke tests with fake providers and failure-first cases.",
+    "deployment": "Manual WIF workflow, read-only preflight, explicit confirmation, private zero-traffic canary, authenticated health proof, optional promotion.",
+    "continuity": "Body-bound idempotency, bounded in-memory checkpoints, Local Bible handoff and explicit stop signals."
+  },
+  "classification": {
+    "data_sensitivity": "Potential legal evidence and personal information",
+    "external_effects": "Gemini API calls and optional Cloud Run deployment",
+    "authority_class": "A1 local build; A2 repository publication and deployment",
+    "cost_boundary": "Zero cost for local build; cloud inference or deployment requires separate verified authorization"
+  },
+  "assumptions": {
+    "stack": "Node.js 22 and the native fetch implementation conform to the tested interfaces.",
+    "runtime": "The existing GitHub WIF provider and named service accounts are configuration claims until live preflight readback succeeds.",
+    "storage": "Callers provide controlled inline bytes or a permitted gs:// object; the connector persists no source media.",
+    "authentication": "Cloud Run remains private, IAM is the primary caller perimeter, and the runtime service account must independently possess Vertex prediction permission.",
+    "deployment": "Billing, API enablement, Artifact Registry, runtime IAM and deployer authority must all pass live preflight before deployment.",
+    "evidence": "Model-generated transcripts require human verification before evidentiary reliance."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: connector exposes a JSON API; a reviewer UI is a designed future component.",
+      "backend": "Node.js native HTTP request handler with provider, validation and evidence modules.",
+      "database": "NOT_APPLICABLE: v0.1 is stateless; persistent idempotency and case data are explicitly designed future features.",
+      "queue": "NOT_APPLICABLE: v0.1 rejects overload; asynchronous queueing is explicitly designed.",
+      "worker": "In-process bounded request executor with concurrency and daily limits.",
+      "scheduler": "NOT_APPLICABLE: no scheduled work in v0.1.",
+      "cache": "In-memory TTL idempotency cache and short-lived metadata access-token cache.",
+      "storage": "Caller-controlled inline bytes or generation-pinned future Cloud Storage; connector persists no source content.",
+      "authentication": "Private Cloud Run IAM, optional shared bearer secret, Vertex service identity or Developer API auth key."
+    },
+    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE"],
+    "effectful_path": "GitHub workflow_dispatch -> WIF deployer -> Artifact Registry/Cloud Run zero-traffic canary -> authenticated readback -> optional promotion.",
+    "observability": {
+      "correlation_ids": "Safe inbound or generated x-request-id returned and logged.",
+      "health_checks": "Separate liveness and configuration readiness endpoints plus canary health proof.",
+      "structured_logs": "JSON logs with secret/audio redaction and route, status, duration and provider fields.",
+      "audit_logs": "GitHub Actions, WIF and Cloud Audit Logs are external audit layers; application logs record bounded decisions.",
+      "metrics_alerts": "Local counters implemented; external SLO alerts remain DESIGNED and are not claimed."
+    }
+  },
+  "failure_modes": {
+    "INVALID_INPUT": "Return 400/413/422 before provider invocation.",
+    "AUTHORIZATION_FAILURE": "Return 401 for shared-token failure; Cloud Run IAM denies outside the container.",
+    "TIMEOUT": "Abort provider request and return normalized 504.",
+    "PARTIAL_WRITE": "No persistent application write; only completed responses enter the idempotency cache.",
+    "MISSING_CONFIGURATION": "Startup or readiness fails without required provider identity configuration.",
+    "EXTERNAL_API_FAILURE": "Return normalized 4xx/502 without credential echo or silent provider fallback."
+  },
+  "testing": {
+    "unit": "Provider authentication, endpoint construction, validation, integrity and error normalization tests.",
+    "integration": "Ephemeral HTTP server tests for routes, auth, limits, idempotency, quota and concurrency.",
+    "e2e_or_smoke": "Dependency-free local smoke script proves health and generation envelope through a fake provider.",
+    "fixtures_mocks": "Deterministic fake Gemini provider and fetch responses; no paid external call.",
+    "failure_first": "Invalid JSON, oversize body/audio, bad token, non-allowlisted model, concurrency, quota, idempotency conflict and provider denial.",
+    "commands": ["npm test", "npm run smoke", "npm run validate:features"],
+    "results": [
+      "2026-08-01: 13/13 Node tests passed with 89.03% line, 60.00% branch and 80.85% function coverage.",
+      "2026-08-01: dependency-free HTTP smoke test returned SMOKE_OK.",
+      "2026-08-01: feature registry validated 110 unique entries and 41 IMPLEMENTED states.",
+      "2026-08-01: credential-pattern scan returned no matching file."
+    ]
+  },
+  "delivery": {
+    "file_tree": "README, package manifest, src modules, tests, scripts, Dockerfile, Cloud Run manifest, GitHub workflow, docs and BUILD_CONTRACT.",
+    "exact_code_files": ["src/server.mjs", "src/app.mjs", "src/config.mjs", "src/core.mjs", "src/providers.mjs", "src/evidence.mjs", "src/capabilities.mjs"],
+    "setup_commands": ["npm install --ignore-scripts"],
+    "run_commands": ["KDV_PROVIDER=vertex GOOGLE_CLOUD_PROJECT=sov-hybrid-suite node src/server.mjs"],
+    "test_commands": ["npm test", "npm run smoke", "npm run validate:features"],
+    "deploy_commands": ["Use the manual Kim DataVerse Gemini Connector GitHub workflow with preflight before deploy."],
+    "rollback_commands": ["gcloud run services update-traffic kim-dataverse-gemini-connector --project sov-hybrid-suite --region africa-south1 --to-revisions PREVIOUS_REVISION=100"],
+    "debugging": "Use x-request-id across application JSON logs, GitHub job logs and Cloud Audit Logs; never log prompt, audio or credentials."
+  },
+  "formation": {
+    "mission_id": "KIM-DATAVERSE-GEMINI-CONNECTOR-20260801",
+    "mission_version": 9,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1",
+    "effectful_permit": "NOT_APPLICABLE: current contract covers authorized reversible local implementation; deployment requires a new single-use A2 permit.",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "stop_conditions": ["Owner stop request", "Unexpected cost", "Unproven caller identity", "Missing billing proof", "IAM scope expansion", "Secret exposure", "Semantic canary failure"],
+    "cancellation_behavior": "Abort current provider request where possible, do not promote traffic, preserve logs and previous revision.",
+    "claim_checks": ["Source is not deployment", "Health is not model access", "Hash is not authenticity", "Transcript is not verified evidence"]
+  },
+  "continuity": {
+    "idempotency": "TTL key plus canonical body hash; conflicting reuse returns 409.",
+    "checkpoints": "Completed response cache locally; workflow revision and provider readbacks externally; immutable Local Bible transaction for handoff.",
+    "resume_conditions": "Resume only from a matching mission version, verified source tree and last complete Local Bible transaction.",
+    "handoff_files": ["README.md", "BUILD_CONTRACT.json", "docs/ARCHITECTURE.md", "docs/LESSONS_LEARNED.json", "docs/feature-registry.json"],
+    "stop_switch": "SIGTERM/SIGINT locally; workflow cancellation before promotion; Formation stopRequested gate for subsequent actions."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": [
+      {"command": "npm run test:coverage", "status": "PASS", "tests": 13, "passed": 13, "failed": 0, "line_coverage_percent": 89.03},
+      {"command": "npm run smoke", "status": "PASS", "proof": "SMOKE_OK"},
+      {"command": "npm run validate:features", "status": "PASS", "feature_count": 110, "implemented_count": 41},
+      {"command": "credential-pattern scan", "status": "PASS", "matches": 0}
+    ],
+    "deployment_readback": null,
+    "semantic_verification": "Local fake-provider smoke proof confirms health and generation response semantics without a paid call; live Gemini semantics remain unproven.",
+    "unresolved_defects": ["Provider-side WIF, billing, IAM, live Gemini and deployment readbacks have not run"]
+  }
+}
