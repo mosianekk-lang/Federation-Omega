@@ -13,6 +13,8 @@ from federation.uas_runtime_v1 import EvaluationEvidence, UASRuntimeEvaluator
 
 _SCHEMA = "FUSE-SERVING-KERNEL-V1"
 _EFFECTFUL = {"BOUNDED_EFFECT", "CONSEQUENTIAL_EFFECT"}
+_META_KEY = "__fuse_meta__"
+_VALUE_KEY = "value"
 
 
 def _stable_json(value: object) -> str:
@@ -21,6 +23,19 @@ def _stable_json(value: object) -> str:
 
 def _digest(value: object) -> str:
     return sha256(_stable_json(value).encode("utf-8")).hexdigest()
+
+
+def _clean(values: Sequence[Any]) -> tuple[str, ...]:
+    return tuple(sorted({str(item).strip() for item in values if str(item).strip()}))
+
+
+def _logical_sequence(value: Any, fallback: str) -> tuple[str, ...]:
+    if isinstance(value, Mapping):
+        raw = value.get("tool_sequence", ())
+        sequence = tuple(str(item).strip() for item in raw if str(item).strip())
+        if sequence:
+            return sequence
+    return (fallback,)
 
 
 @dataclass(frozen=True, slots=True)
@@ -175,9 +190,13 @@ class FUSEServingKernelV1:
     V1 deliberately reuses canonical MissionIR, Bubbles durable state/DAG
     isolation and the executable UAS court. Effectful lanes require an injected
     transactional executor (intended for SOL 6.2/FDOF) and cannot self-authorize.
+
+    Parallel lanes return lane-local proof metadata. The coordinator aggregates
+    evidence only after DAG completion, eliminating shared mutable proof state
+    across worker threads and making the proof projection deterministic.
     """
 
-    version = "1.0.0"
+    version = "1.0.1"
 
     def __init__(
         self,
@@ -201,6 +220,49 @@ class FUSEServingKernelV1:
             action=lane.action,
             dependencies=list(lane.dependencies),
         )
+
+    @staticmethod
+    def _wrapped_result(
+        *,
+        value: Any,
+        proof_axes: Sequence[str],
+        proof_refs: Sequence[str],
+        tool_sequence: Sequence[str],
+    ) -> dict[str, Any]:
+        return {
+            _META_KEY: {
+                "proof_axes": list(_clean(tuple(proof_axes))),
+                "proof_refs": list(_clean(tuple(proof_refs))),
+                "tool_sequence": [str(item).strip() for item in tool_sequence if str(item).strip()],
+            },
+            _VALUE_KEY: value,
+        }
+
+    @staticmethod
+    def _aggregate_lane_evidence(
+        lane_specs: Sequence[ServingLaneSpec],
+        dag_result: Mapping[str, Any],
+    ) -> tuple[tuple[str, ...], tuple[str, ...], tuple[str, ...]]:
+        axes: set[str] = set()
+        refs: set[str] = set()
+        logical_sequence: list[str] = []
+        lanes = dict(dag_result["lanes"])
+        for spec in lane_specs:
+            payload = lanes.get(spec.lane_id, {})
+            if str(payload.get("state")) != LaneState.COMPLETE.value:
+                continue
+            result = payload.get("result")
+            if not isinstance(result, Mapping):
+                raise RuntimeError(f"FUSE_LANE_RESULT_ENVELOPE_MISSING:{spec.lane_id}")
+            meta = result.get(_META_KEY)
+            if not isinstance(meta, Mapping):
+                raise RuntimeError(f"FUSE_LANE_META_MISSING:{spec.lane_id}")
+            axes.update(str(x).strip() for x in meta.get("proof_axes", ()) if str(x).strip())
+            refs.update(str(x).strip() for x in meta.get("proof_refs", ()) if str(x).strip())
+            logical_sequence.extend(
+                str(x).strip() for x in meta.get("tool_sequence", ()) if str(x).strip()
+            )
+        return tuple(sorted(axes)), tuple(sorted(refs)), tuple(logical_sequence)
 
     def run(
         self,
@@ -274,10 +336,6 @@ class FUSEServingKernelV1:
             return FUSEServingReceipt(**body, receipt_sha256=_digest(body))
 
         dag_lanes = [self._lane(lane) for lane in lane_specs]
-        proof_axes: set[str] = set()
-        proof_refs: set[str] = set()
-        actual_tool_sequence: list[str] = []
-
         spec_by_id = {lane.lane_id: lane for lane in lane_specs}
         dag_handlers: dict[str, Callable[[Lane], Any]] = {}
 
@@ -288,7 +346,6 @@ class FUSEServingKernelV1:
 
             def make_handler(spec: ServingLaneSpec, fn: Callable[[], Any]) -> Callable[[Lane], Any]:
                 def execute(_: Lane) -> Any:
-                    actual_tool_sequence.append(spec.action)
                     effect = spec.effect_class.strip().upper()
                     if effect in _EFFECTFUL:
                         if self.effect_executor is None:
@@ -305,13 +362,16 @@ class FUSEServingKernelV1:
                                 "FUSE_EFFECT_REQUIRED_PROOF_MISSING:"
                                 + ",".join(sorted(missing_lane_axes))
                             )
-                        proof_axes.update(observed_axes)
-                        proof_refs.update(receipt.proof_refs)
-                        return {
-                            "effect_receipt_sha256": receipt.receipt_sha256,
-                            "provider_ref": receipt.provider_ref,
-                            "observed_state": dict(receipt.observed_state),
-                        }
+                        return self._wrapped_result(
+                            value={
+                                "effect_receipt_sha256": receipt.receipt_sha256,
+                                "provider_ref": receipt.provider_ref,
+                                "observed_state": dict(receipt.observed_state),
+                            },
+                            proof_axes=tuple(observed_axes),
+                            proof_refs=receipt.proof_refs,
+                            tool_sequence=(spec.action,),
+                        )
 
                     result = fn()
                     lane_axes: set[str] = set()
@@ -329,9 +389,12 @@ class FUSEServingKernelV1:
                             "FUSE_LANE_REQUIRED_PROOF_MISSING:"
                             + ",".join(sorted(missing_lane_axes))
                         )
-                    proof_axes.update(lane_axes)
-                    proof_refs.update(lane_refs)
-                    return result
+                    return self._wrapped_result(
+                        value=result,
+                        proof_axes=tuple(lane_axes),
+                        proof_refs=tuple(lane_refs),
+                        tool_sequence=_logical_sequence(result, spec.action),
+                    )
 
                 return execute
 
@@ -342,6 +405,10 @@ class FUSEServingKernelV1:
             lane_id: str(payload["state"])
             for lane_id, payload in dict(dag_result["lanes"]).items()
         }
+        proof_axes, proof_refs, actual_tool_sequence = self._aggregate_lane_evidence(
+            lane_specs,
+            dag_result,
+        )
 
         required_complete = all(
             lane_states.get(lane.lane_id) == LaneState.COMPLETE.value
@@ -366,9 +433,9 @@ class FUSEServingKernelV1:
             mission,
             EvaluationEvidence(
                 outcome_ok=required_complete,
-                proof_axes=tuple(sorted(proof_axes)),
+                proof_axes=proof_axes,
                 expected_tool_sequence=expected_tool_sequence,
-                actual_tool_sequence=tuple(actual_tool_sequence),
+                actual_tool_sequence=actual_tool_sequence,
                 critical_failures=critical_failures,
                 owner_interventions=max(0, owner_interventions),
                 cost_microunits=cost_microunits,
@@ -386,8 +453,8 @@ class FUSEServingKernelV1:
             "dag_receipt_sha256": str(dag_result["receipt_sha256"]),
             "uas_evaluation_sha256": evaluation.evaluation_sha256,
             "lane_states": lane_states,
-            "proof_axes": sorted(proof_axes),
-            "proof_refs": sorted(proof_refs),
+            "proof_axes": list(proof_axes),
+            "proof_refs": list(proof_refs),
             "truth_boundary": {
                 "provider_effect_inferred": False,
                 "authority_inherited": False,
@@ -408,8 +475,8 @@ class FUSEServingKernelV1:
             "dag_receipt_sha256": str(dag_result["receipt_sha256"]),
             "uas_evaluation_sha256": evaluation.evaluation_sha256,
             "lane_states": lane_states,
-            "proof_axes": tuple(sorted(proof_axes)),
-            "proof_refs": tuple(sorted(proof_refs)),
+            "proof_axes": proof_axes,
+            "proof_refs": proof_refs,
             "checkpoint_id": checkpoint_id,
         }
         receipt = FUSEServingReceipt(**body, receipt_sha256=_digest(body))
