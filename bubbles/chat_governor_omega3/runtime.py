@@ -6,6 +6,7 @@ import random
 import time
 from typing import Any, Callable, Dict, Optional
 
+from .currentness import CurrentnessDecision
 from .frontier_binding_v1 import FrontierControlPlane, SAFE_SINGLEFLIGHT_EFFECTS
 from .routing import MissionPlan
 from .state import DurableState
@@ -24,6 +25,12 @@ class ConnectorGateway:
     load-bearing frontier single-flight coordinator. Existing callers preserve the
     prior behavior because the default effect class is UNSPECIFIED and therefore
     never enters the safe-read coalescing path.
+
+    When a caller supplies a CurrentnessDecision, durable receipt reuse is allowed
+    only while that decision is CURRENT. A stale/invalid safe-read decision forces
+    real re-execution; a stale/invalid non-read decision fails closed before any
+    effectful handler can run. The gateway does not manufacture currentness or
+    authority when no decision is supplied.
     """
 
     def __init__(
@@ -63,6 +70,7 @@ class ConnectorGateway:
         retry_max_seconds: float = 2.0,
         effect_class: str = "UNSPECIFIED",
         use_frontier: bool = True,
+        currentness: Optional[CurrentnessDecision] = None,
     ) -> Dict[str, Any]:
         if connector not in plan.active_connectors:
             raise PermissionError(
@@ -73,14 +81,28 @@ class ConnectorGateway:
         if not self.state.circuit_allows(connector):
             raise RuntimeError(f"Circuit open for connector {connector}")
 
+        effect = str(effect_class).strip().upper()
+        currentness_state = currentness.state if currentness is not None else "UNSPECIFIED"
+        currentness_refresh_required = bool(currentness is not None and not currentness.reusable)
+        if currentness is not None and currentness.mission_id != plan.mission_id:
+            raise ValueError("CURRENTNESS_MISSION_MISMATCH")
+        if currentness_refresh_required and effect not in SAFE_SINGLEFLIGHT_EFFECTS:
+            raise RuntimeError(
+                "CURRENTNESS_REFRESH_REQUIRED_BEFORE_NON_READ:"
+                + str(currentness.stale_action or "REFRESH_REQUIRED")
+            )
+
         key = self.idempotency_key(plan.mission_id, action, target, source_version)
         prior = self.state.get_receipt(key)
-        if prior and prior["success"] and prior["semantic_ok"] and not force_revalidation:
+        reuse_allowed = not force_revalidation and not currentness_refresh_required
+        if prior and prior["success"] and prior["semantic_ok"] and reuse_allowed:
             return {
                 "reused": True,
                 "reuse_source": "DURABLE_IDEMPOTENCY_RECEIPT",
                 "idempotency_key": key,
                 "payload": prior["payload"],
+                "currentness_state": currentness_state,
+                "currentness_refresh_performed": False,
             }
 
         def execute_core() -> Dict[str, Any]:
@@ -113,6 +135,8 @@ class ConnectorGateway:
                         "payload": payload,
                         "attempts": attempt,
                         "latency_ms": round(elapsed_ms, 2),
+                        "currentness_state": currentness_state,
+                        "currentness_refresh_performed": currentness_refresh_required,
                     }
                 except Exception as exc:
                     last_error = f"{type(exc).__name__}: {exc}"
@@ -140,7 +164,6 @@ class ConnectorGateway:
                 f"Connector execution failed after {retry_attempts} attempts: {last_error}"
             )
 
-        effect = str(effect_class).strip().upper()
         if (
             use_frontier
             and not force_revalidation
