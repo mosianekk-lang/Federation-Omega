@@ -1,36 +1,33 @@
 {
   "schema": "SOVARA_PROJECT_IAM_BINDING_REQUEST_V1",
-  "request_id": "SOL62-EXISTING-GOOGLE-ADMIN-AUTHORITY-PROBE-20260901-003",
-  "mode": "AUTHORITY_PROBE",
+  "request_id": "MODISA-FKCM-OPTION-A-20260905-F42",
+  "mode": "FKCM_OPTION_A_CANARY",
   "execute": true,
-  "provider_mutation_allowed": false,
+  "provider_mutation_allowed": true,
   "project_id": "sov-hybrid-suite",
   "project_number": "257649435135",
   "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
   "deployer_service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
-  "required_bindings": [
-    {
-      "role": "roles/aiplatform.user",
-      "member": "serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com"
-    },
-    {
-      "role": "roles/serviceusage.serviceUsageConsumer",
-      "member": "serviceAccount:superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com"
-    },
-    {
-      "role": "roles/run.developer",
-      "member": "serviceAccount:superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com"
-    }
-  ],
-  "current_provider_evidence": {
-    "sol62_wif_hardening_run_id": "33468764570",
-    "wif_oidc_authentication_succeeded": true,
-    "deployer_identity": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
-    "missing_permission": "iam.workloadIdentityPoolProviders.update",
-    "provider_condition_update_performed": false,
-    "broad_binding_removal_performed": false
+  "required_bindings": [],
+  "topic_id": "evidenceops-heartbeat-events",
+  "temporary_role": {
+    "included_permissions": [
+      "pubsub.subscriptions.create",
+      "pubsub.topics.attachSubscription",
+      "pubsub.subscriptions.get",
+      "pubsub.subscriptions.consume",
+      "pubsub.subscriptions.delete",
+      "pubsub.topics.publish"
+    ],
+    "delete_after_canary": true
   },
-  "owner_authority": "EXPLICIT_CURRENT_CHAT_2026-09-01_SOL62_GOOGLE_MAX_AUTOMATION",
-  "purpose": "Read-only fallback discovery for SOL 6.2 Google maximum-automation integration: test whether any already-configured Federation Google credential alias authenticates successfully and already has project IAM change authority. No credential values may be emitted. This probe exists to reuse an existing owner/admin identity rather than create or grant a new broad administrator credential after the canonical deployer was provider-readback denied iam.workloadIdentityPoolProviders.update.",
-  "truth_boundary": "Authentication attempts and projects.testIamPermissions only. No IAM mutation, WIF mutation, secret-value logging, key creation, service-account creation, model inference, deployment, traffic change, case-data processing, email, publication, financial commitment or unrelated provider action is authorized by this request."
+  "temporary_binding_remove_after_canary": true,
+  "existing_subscriptions_may_be_touched": false,
+  "production_traffic_allowed": false,
+  "billing_configuration_change_allowed": false,
+  "secret_value_logging_allowed": false,
+  "service_account_key_creation_allowed": false,
+  "owner_authority": "EXPLICIT_CURRENT_CHAT_2026-09-05_FKCM_OPTION_A",
+  "purpose": "Create exactly one temporary project custom role containing only the six Pub/Sub permissions required for the FKCM transport court, bind it only to superior-logic-deployer, execute one filtered temporary-subscription publish-consume-readback-cleanup canary on the existing evidenceops-heartbeat-events topic, remove the binding, delete the temporary role, and verify the deployer permission state returns to its pre-canary baseline.",
+  "truth_boundary": "No existing subscription may be changed. No topic may be created. No deployment, traffic, billing, secret-value, service-account-key, WIF, email, legal, KDV serving or unrelated provider mutation is authorized. The temporary role and binding must be revoked even if the canary fails."
 }
