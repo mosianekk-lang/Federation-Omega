@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-SOVEREIGN-INTELLIGENCE-RUNTIME-OMEGA1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "canonical_name": "Federation Sovereign Intelligence Runtime Ω1",
   "role": "PROVIDER_NEUTRAL_INTELLIGENCE_RUNTIME_AND_COMPOSITION_SPINE",
   "owner": "Kim Kagiso Mosiane",
@@ -23,6 +23,8 @@
     "PINNED_PROOF_MAY_OVERFLOW_CONTEXT_BUDGET_BUT_MAY_NOT_BE_SILENTLY_DROPPED",
     "PROCESSOR_SELECTION_REQUIRES_LIVE_AVAILABILITY_AUTHORITY_AND_MEASURED_FITNESS",
     "STRONGER_REASONING_IS_ALLOCATED_DYNAMICALLY_BY_RISK_NOT_BY_VENDOR_PRESTIGE",
+    "PROVIDER_PRIVATE_CHAIN_OF_THOUGHT_IS_NOT_A_FEDERATION_CONTINUITY_DEPENDENCY",
+    "MECHANICAL_DATA_WORK_PREFERS_DETERMINISTIC_EFFECT_FREE_EXECUTION_OVER_MODEL_REASONING",
     "MISSION_COMPLETION_OUTRANKS_TURN_COMPLETION",
     "SOLVE_BEFORE_REPORT_WHEN_SAFE_AND_AUTHORIZED",
     "MATERIAL_CAPABILITY_CLAIMS_REQUIRE_PROOF_STATE",
@@ -37,7 +39,7 @@
       "ASTRA-G01": "ASYNC_TOOL_CALLING -> NONBLOCKING_TOOL_LANES",
       "ASTRA-G02": "MID_TURN_STEERING -> MISSION_STEERING_BUS",
       "ASTRA-G03": "DYNAMIC_REASONING_UPDATE -> ADAPTIVE_REASONING_CONTROLLER",
-      "ASTRA-G04": "PROGRAMMATIC_TOOL_CALLING -> DETERMINISTIC_TOOL_MICRORUNTIME",
+      "ASTRA-G04": "PROGRAMMATIC_TOOL_CALLING -> DETERMINISTIC_DATA_TOOL_MICRORUNTIME",
       "ASTRA-G05": "MULTI_AGENT_ORCHESTRATION -> SPECIALIST_DAG_AND_SWARM_COMPILER",
       "ASTRA-G06": "PERSISTED_REASONING -> PROVIDER_NEUTRAL_REASONING_CAPSULES",
       "ASTRA-G07": "COMPACTION -> CONTEXT_VIRTUALIZER",
@@ -56,6 +58,22 @@
       "ASTRA-G20": "EFFICIENCY -> PROCESSOR_MARKET_AND_COST_GOVERNOR"
     }
   },
+  "chatgpt_work_public_harness_harvest": {
+    "source_date": "2026-09-05",
+    "harvest_method": "CLEAN_ROOM_PUBLIC_MECHANISM_HARVEST",
+    "genes": {
+      "WORK-G01": "LONG_MULTI_STEP_DELIVERABLES -> MISSIONGRAPH_ARTIFACT_FOUNDRY_COMPLETION_GATE",
+      "WORK-G02": "CLOUD_BROWSER_REMOTE_COMPUTER -> SOVARA_REMOTE_EXECUTION_CELL",
+      "WORK-G03": "CONTINUE_AFTER_USER_LEAVES -> DURABLE_EXTERNAL_EXECUTOR_INDEPENDENT_OF_TURN_LIFETIME",
+      "WORK-G04": "PAUSE_FOR_INPUT_SIGNIN_CONFIRMATION -> HUMAN_FIRST_BOUNDARY_INTERRUPT_BROKER",
+      "WORK-G05": "SCHEDULE_TRIGGER_MONITOR -> FEDERATION_EVENT_TRIGGER_PLANE",
+      "WORK-G06": "CONNECTED_APPS_FILES -> CONNECTOR_NEUTRAL_RESOURCE_GRAPH",
+      "WORK-G07": "PROJECT_CONTEXT -> MISSION_WORKSPACE_CAPSULE",
+      "WORK-G08": "PROGRESS_STEERING_APPROVAL -> MISSION_STEERING_BUS_AND_CONSEQUENTIAL_GATE",
+      "WORK-G09": "FINISHED_BUSINESS_ARTIFACTS -> ARTIFACT_FOUNDRY_QUALITY_COURTS",
+      "WORK-G10": "DESKTOP_COMPUTER_USE -> SOVARA_COMPUTER_FABRIC_WITH_ACTION_LEASES"
+    }
+  },
   "runtime_components": {
     "mission_steering": "federation_sovereign_runtime.core.MissionSteeringController",
     "adaptive_reasoning": "federation_sovereign_runtime.core.AdaptiveReasoningController",
@@ -63,12 +81,16 @@
     "nonblocking_tools": "federation_sovereign_runtime.core.NonblockingToolBroker",
     "context_virtualization": "federation_sovereign_runtime.core.ContextVirtualizer",
     "alignment_monitor": "federation_sovereign_runtime.core.AlignmentSentinel",
+    "reasoning_continuity": "federation_sovereign_runtime.reasoning_capsule.ReasoningCapsule",
+    "deterministic_data_runtime": "federation_sovereign_runtime.tool_micro_runtime.DeterministicDataRuntime",
+    "work_public_profile": "federation_sovereign_runtime.work_profile.WORK_CAPABILITY_GENES",
     "ao_harmonic_binding": "federation_sovereign_runtime.federation_binding.FederationSovereignRuntimeBinding",
     "astra_public_profile": "federation_sovereign_runtime.astra_profile.public_astra_profile"
   },
   "provider_neutrality": {
     "astra_required_for_runtime": false,
     "openai_required_for_runtime": false,
+    "chatgpt_work_required_for_runtime": false,
     "processor_profiles_replaceable": true,
     "provider_selection_requires_measured_scores": true,
     "provider_availability_and_authorization_are_live_inputs": true,
@@ -92,6 +114,7 @@
     "native_chatgpt_modified": false,
     "gpt6_astra_api_invoked_by_this_tranche": false,
     "gpt6_astra_access_or_budget_proved": false,
+    "chatgpt_work_cloud_browser_control_proved": false,
     "provider_runtime_binding_proved": false,
     "universal_cross_surface_enforcement_proved": false,
     "federation_outperforms_gpt6_astra_proved": false,
@@ -103,9 +126,12 @@
     "FRESH_PROCESS_REHYDRATION",
     "ASYNC_TOOL_LANE_CANARY_WITH_READBACK",
     "MID_MISSION_STEERING_REPLAY",
+    "REASONING_CAPSULE_RESTORE_EQUIVALENCE",
+    "DETERMINISTIC_MICRORUNTIME_COURT",
     "PROCESSOR_MARKET_BLIND_EVAL",
     "CONTEXT_VIRTUALIZATION_LOSS_COURT",
     "PROVIDER_NEUTRAL_MULTI_MODEL_COHORT",
+    "REMOTE_EXECUTION_CELL_CANARY",
     "OWNER_BURDEN_AND_MISSION_SUCCESS_COHORT"
   ]
 }
