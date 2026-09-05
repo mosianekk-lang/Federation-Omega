@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.21",
+  "version": "2.9.22",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -44,6 +44,7 @@
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
     ".github/workflows/sol62-wif-hardening-lease.yml",
     ".github/workflows/sol62-google-surface-probe.yml",
+    ".github/workflows/sovara-ai-studio-semantic-canary.yml",
     ".github/workflows/kimmie-seed-199-bot-workforce.yml",
     ".github/workflows/nexus-direct-preflight.yml",
     ".github/workflows/nexus-direct-runtime-target.yml",
@@ -77,6 +78,7 @@
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": ["issues"],
     ".github/workflows/sol62-wif-hardening-lease.yml": ["issues"],
     ".github/workflows/sol62-google-surface-probe.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/sovara-ai-studio-semantic-canary.yml": ["push", "workflow_dispatch"],
     ".github/workflows/kimmie-seed-199-bot-workforce.yml": ["workflow_dispatch"],
     ".github/workflows/nexus-direct-preflight.yml": ["workflow_dispatch"],
     ".github/workflows/nexus-direct-runtime-target.yml": ["workflow_dispatch"],
@@ -96,6 +98,7 @@
     ".github/workflows/superior-logic-maturation-shadow.yml": ["main"],
     ".github/workflows/luno-observer-provider-binding.yml": ["main"],
     ".github/workflows/sol62-google-surface-probe.yml": ["main"],
+    ".github/workflows/sovara-ai-studio-semantic-canary.yml": ["main"],
     ".github/workflows/seb-omega.yml": ["main"]
   },
   "oidc_workflow_allowlist": [
@@ -108,6 +111,7 @@
     ".github/workflows/bubbles-provider-authority-recovery-probe.yml",
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
     ".github/workflows/sol62-wif-hardening-lease.yml",
+    ".github/workflows/sovara-ai-studio-semantic-canary.yml",
     ".github/workflows/nexus-direct-preflight.yml",
     ".github/workflows/nexus-direct-runtime-target.yml",
     ".github/workflows/seb-omega.yml"
@@ -179,6 +183,7 @@
     "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
     "sol62_wif_hardening_workflow": ".github/workflows/sol62-wif-hardening-lease.yml",
     "sol62_google_surface_probe_workflow": ".github/workflows/sol62-google-surface-probe.yml",
+    "ai_studio_semantic_canary_workflow": ".github/workflows/sovara-ai-studio-semantic-canary.yml",
     "provider_deployment_workflow_source_write": false,
     "provider_deployment_workflow_proof_destination": "GITHUB_ACTIONS_ARTIFACT",
     "g0_identity_probe_workflow": ".github/workflows/fo-wif-semantic-canary-v2.yml",
@@ -216,6 +221,7 @@
       ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
       ".github/workflows/sol62-wif-hardening-lease.yml",
       ".github/workflows/sol62-google-surface-probe.yml",
+      ".github/workflows/sovara-ai-studio-semantic-canary.yml",
       ".github/workflows/kimmie-seed-199-bot-workforce.yml",
       ".github/workflows/nexus-direct-preflight.yml",
       ".github/workflows/nexus-direct-runtime-target.yml",
