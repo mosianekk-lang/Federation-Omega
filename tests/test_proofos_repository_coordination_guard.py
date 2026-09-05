@@ -143,6 +143,46 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
         self.assertEqual("PASS", assessment["status"])
         self.assertEqual("LEASE_EXPIRED", assessment["state"])
 
+    def test_sparse_released_legacy_lease_does_not_permanently_deadlock_repo(self):
+        released = {
+            "schema": LEASE_SCHEMA,
+            "state": "RELEASED",
+            "fencing_token": 48,
+            "source_head": BASE,
+            "effect": "NONE",
+        }
+        assessment = self.assess(pr_body="ordinary PR body", lease_payload=released)
+        self.assertEqual("PASS", assessment["status"])
+        self.assertEqual("LEASE_RELEASED", assessment["state"])
+        self.assertEqual([], assessment["findings"])
+
+    def test_sparse_active_legacy_lease_remains_fail_closed(self):
+        active = {
+            "schema": LEASE_SCHEMA,
+            "state": "ACTIVE",
+            "fencing_token": 49,
+            "source_head": BASE,
+            "effect": "NONE",
+            "expires_at": "2026-09-02T23:19:04+02:00",
+        }
+        assessment = self.assess(pr_body="ordinary PR body", lease_payload=active)
+        self.assertEqual("FAIL", assessment["status"])
+        self.assertEqual("INVALID_LEASE", assessment["state"])
+        self.assertIn("LEASE_DESCRIPTOR_FIELD_MISSING", self.rules(assessment))
+
+    def test_released_lease_with_invalid_effect_still_fails_closed(self):
+        released = {
+            "schema": LEASE_SCHEMA,
+            "state": "RELEASED",
+            "fencing_token": 48,
+            "source_head": BASE,
+            "effect": "PROVIDER_MUTATION",
+        }
+        assessment = self.assess(pr_body="ordinary PR body", lease_payload=released)
+        self.assertEqual("FAIL", assessment["status"])
+        self.assertEqual("INVALID_RELEASED_LEASE", assessment["state"])
+        self.assertIn("LEASE_EFFECT_SCOPE_INVALID", self.rules(assessment))
+
     def test_bubbles_payload_can_carry_coordination_claim(self):
         body = json.dumps({
             "schema": "BUBBLES-CONTROL-COMMAND-V1",
