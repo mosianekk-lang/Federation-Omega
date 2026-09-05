@@ -1,0 +1,92 @@
+"""Federation Sovereign Intelligence Runtime Ω1.
+
+Provider-neutral composition spine for Federation intelligence. External models
+are replaceable cognitive processors; they do not become mission, truth, policy,
+or effect authorities.
+"""
+
+from .astra_profile import (
+    ASTRA_CAPABILITY_GENES,
+    ASTRA_CONTEXT_WINDOW,
+    ASTRA_KNOWLEDGE_CUTOFF,
+    ASTRA_MAX_OUTPUT_TOKENS,
+    ASTRA_MODEL_ID,
+    ASTRA_PUBLIC_CAPABILITIES,
+    ASTRA_REASONING_EFFORTS,
+    configuration_update_item,
+    public_astra_profile,
+    with_async_tool,
+)
+from .core import (
+    AdaptiveReasoningController,
+    AlignmentFinding,
+    AlignmentSentinel,
+    ContextCapsule,
+    ContextItem,
+    ContextVirtualizer,
+    MissionFrame,
+    MissionSteeringController,
+    NonblockingToolBroker,
+    ProcessorDecision,
+    ProcessorProfile,
+    ProcessorRequirement,
+    ReasoningConfiguration,
+    ReasoningEffort,
+    RUNTIME_ID,
+    RUNTIME_VERSION,
+    SovereignProcessorMarket,
+    SovereignRuntimeKernel,
+    SteeringDecision,
+    SteeringEvent,
+    SteeringKind,
+    ToolEffect,
+    ToolTicket,
+    WorkState,
+)
+from .federation_binding import (
+    FederationSovereignRuntimeBinding,
+    astra_air_binding,
+    astra_binding_catalog,
+)
+
+__all__ = [
+    "ASTRA_CAPABILITY_GENES",
+    "ASTRA_CONTEXT_WINDOW",
+    "ASTRA_KNOWLEDGE_CUTOFF",
+    "ASTRA_MAX_OUTPUT_TOKENS",
+    "ASTRA_MODEL_ID",
+    "ASTRA_PUBLIC_CAPABILITIES",
+    "ASTRA_REASONING_EFFORTS",
+    "AdaptiveReasoningController",
+    "AlignmentFinding",
+    "AlignmentSentinel",
+    "ContextCapsule",
+    "ContextItem",
+    "ContextVirtualizer",
+    "FederationSovereignRuntimeBinding",
+    "MissionFrame",
+    "MissionSteeringController",
+    "NonblockingToolBroker",
+    "ProcessorDecision",
+    "ProcessorProfile",
+    "ProcessorRequirement",
+    "ReasoningConfiguration",
+    "ReasoningEffort",
+    "RUNTIME_ID",
+    "RUNTIME_VERSION",
+    "SovereignProcessorMarket",
+    "SovereignRuntimeKernel",
+    "SteeringDecision",
+    "SteeringEvent",
+    "SteeringKind",
+    "ToolEffect",
+    "ToolTicket",
+    "WorkState",
+    "astra_air_binding",
+    "astra_binding_catalog",
+    "configuration_update_item",
+    "public_astra_profile",
+    "with_async_tool",
+]
+
+__version__ = RUNTIME_VERSION
