@@ -103,6 +103,7 @@
   },
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
+    ".github/workflows/sovara-project-iam-bridge.yml",
     ".github/workflows/cios-production-lane.yml",
     ".github/workflows/luno-observer-provider-binding.yml",
     ".github/workflows/deploy-gemini-gateway.yml",
