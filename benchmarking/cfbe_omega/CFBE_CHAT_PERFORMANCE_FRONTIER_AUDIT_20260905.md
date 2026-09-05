@@ -38,7 +38,7 @@ This score is a transparent engineering heuristic for this observed workstream, 
 | Owner-burden reduction | 8 | 50 | 78 | Owner still detects some orchestration inefficiency and stale-work conditions. |
 | Interoperability / skill portability | 6 | 67 | 82 | MissionIR/MCP/A2A direction is sound; selective skill loading needed. |
 
-**Observed chat score: ~66/100. Source architecture potential after this tranche: ~84/100.**
+**Observed chat score: ~66/100. Source architecture potential after this tranche: ~87/100.**
 
 The gap between those scores is the central finding: the estate already contains many high-grade components, but the chat surface does not consistently exploit them at the point where tool calls, context growth, specialist fan-out and finalization are decided.
 
