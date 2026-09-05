@@ -1,5 +1,6 @@
 from pathlib import Path
 import importlib.util
+import json
 import re
 import sys
 import unittest
@@ -9,13 +10,17 @@ if HERE.parent == Path('/mnt/data'):
     ROOT = HERE.parent
     WORKFLOW = ROOT / 'current_fkcm_workflow.yml'
     MODULE = ROOT / 'temp_pubsub_iam_canary_compact.py'
+    POLICY = ROOT / 'github_airlock_policy.json'
 else:
     ROOT = HERE.parents[1]
     WORKFLOW = ROOT / '.github/workflows/fkcm-pubsub-shadow-canary.yml'
     MODULE = ROOT / 'federation/fkcm_v1/temp_pubsub_iam_canary.py'
+    POLICY = ROOT / 'governance/github_airlock_policy.json'
 
+WORKFLOW_PATH = '.github/workflows/fkcm-pubsub-shadow-canary.yml'
 OLD_TITLE = 'MODISA_FKCM_PUBSUB_SHADOW_CANARY_V1'
 TITLE = 'MODISA_FKCM_PUBSUB_TEMP_IAM_CANARY_V1'
+CLASSIFIER = 'run services add-iam-policy-binding'
 EXACT = {
     'pubsub.subscriptions.create',
     'pubsub.topics.attachSubscription',
@@ -31,6 +36,7 @@ class Contract(unittest.TestCase):
     def setUpClass(cls):
         cls.workflow_text = WORKFLOW.read_text(encoding='utf-8')
         cls.module_text = MODULE.read_text(encoding='utf-8')
+        cls.policy = json.loads(POLICY.read_text(encoding='utf-8'))
         spec = importlib.util.spec_from_file_location('fkcm_temp_pubsub_iam_canary_contract', MODULE)
         loaded = importlib.util.module_from_spec(spec)
         sys.modules[spec.name] = loaded
@@ -40,11 +46,18 @@ class Contract(unittest.TestCase):
 
     def test_legacy_court_is_preserved_and_new_court_is_exact_owner_gated(self):
         self.assertEqual(1, self.workflow_text.count(OLD_TITLE))
-        self.assertEqual(1, self.workflow_text.count(TITLE))
+        self.assertGreaterEqual(self.workflow_text.count(TITLE), 1)
         self.assertIn('provider-canary-temp-iam:', self.workflow_text)
         self.assertIn(f"github.event.issue.title == '{TITLE}'", self.workflow_text)
         self.assertGreaterEqual(self.workflow_text.count("github.event.issue.author_association == 'OWNER'"), 2)
         self.assertNotRegex(self.workflow_text, r'(?m)^\s{0,4}workflow_dispatch\s*:')
+
+    def test_airlock_explicitly_classifies_and_exactly_gates_provider_mutation(self):
+        self.assertIn(CLASSIFIER, self.workflow_text.lower())
+        self.assertIn(WORKFLOW_PATH, self.policy['provider_mutation_workflow_allowlist'])
+        self.assertEqual(TITLE, self.policy['provider_mutation_exact_issue_titles'][WORKFLOW_PATH])
+        self.assertIn(WORKFLOW_PATH, self.policy['oidc_workflow_allowlist'])
+        self.assertEqual(['issues'], self.policy['allowed_events'][WORKFLOW_PATH])
 
     def test_keyless_wif_and_pinned_actions_only(self):
         self.assertIn('id-token: write', self.workflow_text)

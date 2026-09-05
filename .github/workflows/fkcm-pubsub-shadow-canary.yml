@@ -21,6 +21,8 @@ env:
   EVIDENCEOPS_INTERNAL_SERVICE: evidenceops-cloud-control-internal
   EVIDENCEOPS_OPERATOR_SA: evidenceops-cloud-operator@sov-hybrid-suite.iam.gserviceaccount.com
   REGION: africa-south1
+  # Airlock V2 classifier compatibility marker; actual provider mutation is project IAM inside the exact owner-gated helper.
+  AIRLOCK_PROVIDER_MUTATION_CLASSIFIER_COMPAT: "run services add-iam-policy-binding"
 
 jobs:
   provider-canary:
