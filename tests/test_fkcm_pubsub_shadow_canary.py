@@ -77,6 +77,27 @@ class FkcmPubSubShadowCanaryContract(unittest.TestCase):
         self.assertNotIn("evidenceops-heartbeat-operator --", self.text)
         self.assertNotIn("evidenceops-heartbeat-verifier --", self.text)
 
+    def test_operator_fallback_is_exact_and_read_only(self):
+        self.assertIn("evidenceops-cloud-control-internal", self.text)
+        self.assertIn("evidenceops-cloud-operator@sov-hybrid-suite.iam.gserviceaccount.com", self.text)
+        self.assertIn("direct_subscription_create=denied", self.text)
+        self.assertIn("gcloud','run','services','describe", self.text)
+        self.assertIn("gcloud','auth','print-identity-token", self.text)
+        self.assertIn("'method':'initialize'", self.text)
+        self.assertIn("'method':'tools/list'", self.text)
+        self.assertIn("'name':'omega_status'", self.text)
+        self.assertIn("'operator_mutation_invoked':False", self.text)
+        self.assertIn("'provider_canary_complete':False", self.text)
+        self.assertIn("Read-only discovery of an already-deployed private EvidenceOps Cloud Run operator", self.text)
+        self.assertNotIn("omega_execute_change", self.text)
+        self.assertNotIn("omega_publish_heartbeat", self.text)
+        self.assertNotIn("EXECUTE_SOVEREIGN_PROJECT_CHANGE", self.text)
+
+    def test_operator_probe_receipt_is_uploaded_on_failure(self):
+        self.assertIn("if: always()", self.text)
+        self.assertIn("fkcm-operator-route-probe.json", self.text)
+        self.assertIn("if-no-files-found: ignore", self.text)
+
     def test_publish_consume_and_message_id_equivalence(self):
         self.assertIn("gcloud pubsub topics publish", self.text)
         self.assertIn("gcloud pubsub subscriptions pull", self.text)
