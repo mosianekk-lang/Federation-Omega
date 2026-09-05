@@ -82,6 +82,59 @@ class ServingLaneSpec:
 
 
 @dataclass(frozen=True, slots=True)
+class PolicyDecisionReceipt:
+    decision: str
+    policy_ref: str
+    input_sha256: str
+    result_sha256: str
+    reason: str = ""
+    receipt_sha256: str = ""
+
+    def body(self) -> dict[str, str]:
+        return {
+            "decision": self.decision,
+            "policy_ref": self.policy_ref,
+            "input_sha256": self.input_sha256,
+            "result_sha256": self.result_sha256,
+            "reason": self.reason,
+        }
+
+    def validate(self) -> "PolicyDecisionReceipt":
+        if self.decision not in {"ALLOW", "DENY"}:
+            raise ValueError("FUSE_POLICY_DECISION_INVALID")
+        if not self.policy_ref or not self.input_sha256 or not self.result_sha256:
+            raise ValueError("FUSE_POLICY_RECEIPT_INCOMPLETE")
+        if _digest(self.body()) != self.receipt_sha256:
+            raise ValueError("FUSE_POLICY_RECEIPT_HASH_MISMATCH")
+        return self
+
+    @classmethod
+    def create(
+        cls,
+        *,
+        decision: str,
+        policy_ref: str,
+        input_sha256: str,
+        result_sha256: str,
+        reason: str = "",
+    ) -> "PolicyDecisionReceipt":
+        body = {
+            "decision": str(decision).strip().upper(),
+            "policy_ref": str(policy_ref).strip(),
+            "input_sha256": str(input_sha256).strip(),
+            "result_sha256": str(result_sha256).strip(),
+            "reason": str(reason).strip(),
+        }
+        return cls(**body, receipt_sha256=_digest(body)).validate()
+
+
+class EffectPolicyGate(Protocol):
+    """External policy decision boundary; the kernel cannot self-authorize."""
+
+    def authorize(self, *, mission: MissionIR, lane: ServingLaneSpec) -> PolicyDecisionReceipt: ...
+
+
+@dataclass(frozen=True, slots=True)
 class EffectReceipt:
     state: str
     observed_state: Mapping[str, Any]
@@ -89,6 +142,22 @@ class EffectReceipt:
     proof_refs: tuple[str, ...] = ()
     provider_ref: str = ""
     receipt_sha256: str = ""
+
+    def body(self) -> dict[str, Any]:
+        return {
+            "state": self.state,
+            "observed_state": dict(self.observed_state),
+            "proof_axes": sorted(set(self.proof_axes)),
+            "proof_refs": sorted(set(self.proof_refs)),
+            "provider_ref": self.provider_ref,
+        }
+
+    def validate(self) -> "EffectReceipt":
+        if self.state != "VERIFIED":
+            raise ValueError("FUSE_EFFECT_RECEIPT_NOT_VERIFIED")
+        if _digest(self.body()) != self.receipt_sha256:
+            raise ValueError("FUSE_EFFECT_RECEIPT_HASH_MISMATCH")
+        return self
 
     @classmethod
     def verified(
@@ -113,7 +182,7 @@ class EffectReceipt:
             proof_refs=tuple(body["proof_refs"]),
             provider_ref=provider_ref,
             receipt_sha256=_digest(body),
-        )
+        ).validate()
 
 
 class TransactionalEffectExecutor(Protocol):
@@ -187,28 +256,30 @@ class CanonicalContextPreflight:
 class FUSEServingKernelV1:
     """Composition facade over admitted Federation primitives.
 
-    V1 deliberately reuses canonical MissionIR, Bubbles durable state/DAG
-    isolation and the executable UAS court. Effectful lanes require an injected
-    transactional executor (intended for SOL 6.2/FDOF) and cannot self-authorize.
+    V1 deliberately reuses canonical MissionIR, Bubbles durable state/DAG,
+    an external policy gate and the executable UAS court. Effectful lanes require
+    both an ALLOW policy receipt and an injected transactional executor.
 
     Parallel lanes return lane-local proof metadata. The coordinator aggregates
     evidence only after DAG completion, eliminating shared mutable proof state
     across worker threads and making the proof projection deterministic.
     """
 
-    version = "1.0.1"
+    version = "1.1.0"
 
     def __init__(
         self,
         state: DurableState,
         *,
         evaluator: UASRuntimeEvaluator | None = None,
+        policy_gate: EffectPolicyGate | None = None,
         effect_executor: TransactionalEffectExecutor | None = None,
         max_workers: int = 4,
     ) -> None:
         self.state = state
         self.preflight = CanonicalContextPreflight(state)
         self.evaluator = evaluator or UASRuntimeEvaluator()
+        self.policy_gate = policy_gate
         self.effect_executor = effect_executor
         self.dag = DAGExecutor(state, max_workers=max_workers)
 
@@ -348,28 +419,38 @@ class FUSEServingKernelV1:
                 def execute(_: Lane) -> Any:
                     effect = spec.effect_class.strip().upper()
                     if effect in _EFFECTFUL:
+                        if self.policy_gate is None:
+                            raise RuntimeError("FUSE_EFFECT_POLICY_GATE_REQUIRED")
+                        policy = self.policy_gate.authorize(mission=mission, lane=spec).validate()
+                        if policy.decision != "ALLOW":
+                            reason = f":{policy.reason}" if policy.reason else ""
+                            raise RuntimeError("FUSE_EFFECT_POLICY_DENIED" + reason)
                         if self.effect_executor is None:
                             raise RuntimeError("FUSE_EFFECT_EXECUTOR_REQUIRED")
-                        receipt = self.effect_executor.execute(mission=mission, lane=spec, handler=fn)
-                        if receipt.state != "VERIFIED":
-                            raise RuntimeError("FUSE_EFFECT_NOT_VERIFIED")
+                        receipt = self.effect_executor.execute(mission=mission, lane=spec, handler=fn).validate()
                         if dict(receipt.observed_state) != dict(spec.expected_target_state):
                             raise RuntimeError("FUSE_EFFECT_TARGET_STATE_MISMATCH")
                         observed_axes = {str(x).strip() for x in receipt.proof_axes if str(x).strip()}
+                        observed_axes.add("POLICY_ALLOW")
                         missing_lane_axes = set(spec.required_proof_axes) - observed_axes
                         if missing_lane_axes:
                             raise RuntimeError(
                                 "FUSE_EFFECT_REQUIRED_PROOF_MISSING:"
                                 + ",".join(sorted(missing_lane_axes))
                             )
+                        policy_refs = (
+                            f"policy-receipt:{policy.receipt_sha256}",
+                            f"policy-ref:{policy.policy_ref}",
+                        )
                         return self._wrapped_result(
                             value={
                                 "effect_receipt_sha256": receipt.receipt_sha256,
+                                "policy_receipt_sha256": policy.receipt_sha256,
                                 "provider_ref": receipt.provider_ref,
                                 "observed_state": dict(receipt.observed_state),
                             },
                             proof_axes=tuple(observed_axes),
-                            proof_refs=receipt.proof_refs,
+                            proof_refs=tuple(receipt.proof_refs) + policy_refs,
                             tool_sequence=(spec.action,),
                         )
 
