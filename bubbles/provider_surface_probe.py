@@ -11,6 +11,11 @@ from typing import Any, Callable, Mapping
 import urllib.error
 import urllib.request
 
+from bubbles.apps_script_deployment_probe import run_probe as run_apps_script_deployment_probe
+from bubbles.chat_governor_omega3.hosted_provider_readback_v1 import (
+    execute_hosted_provider_readback,
+)
+
 
 FO_OPERATOR_URL = "https://federation-omega-operator-257649435135.africa-south1.run.app"
 ARCHON_ADMIN_URL = "https://archon-admin-plane-7ujkyfl36q-bq.a.run.app"
@@ -334,12 +339,33 @@ def main() -> int:
     parser = argparse.ArgumentParser(description="Run the Bubbles read-only Google/Federation provider surface probe.")
     parser.add_argument("--output", required=True)
     args = parser.parse_args()
-    receipt = run_probe(
-        direct_fo_token=os.environ.get("FO_ADMIN_TOKEN", ""),
-        direct_archon_token=os.environ.get("ARCHON_ADMIN_TOKEN", ""),
-    )
     path = Path(args.output)
     path.parent.mkdir(parents=True, exist_ok=True)
+
+    def provider_reader() -> dict[str, Any]:
+        receipt = run_probe(
+            direct_fo_token=os.environ.get("FO_ADMIN_TOKEN", ""),
+            direct_archon_token=os.environ.get("ARCHON_ADMIN_TOKEN", ""),
+        )
+        receipt.setdefault("surface_corrections", {})[
+            "archon_apps_script_exact_deployment"
+        ] = run_apps_script_deployment_probe()
+        return receipt
+
+    source_version = os.environ.get("GITHUB_SHA", "LOCAL")
+    mission_currentness_ref = os.environ.get(
+        "FUSE_MISSION_CURRENTNESS_REF",
+        f"GITHUB_SHA:{source_version}",
+    )
+    prove_singleflight = os.environ.get("GITHUB_ACTIONS", "").lower() == "true"
+    receipt, frontier_host_receipt = execute_hosted_provider_readback(
+        provider_reader,
+        state_path=str(path.with_name("chatgov-frontier-host.sqlite3")),
+        source_version=source_version,
+        mission_currentness_ref=mission_currentness_ref,
+        prove_singleflight=prove_singleflight,
+    )
+    receipt["frontier_host_receipt"] = frontier_host_receipt
     path.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(receipt, sort_keys=True))
     return 0
