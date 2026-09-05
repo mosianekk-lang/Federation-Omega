@@ -3,8 +3,8 @@ from __future__ import annotations
 """CFBE/FUSE AutoPilot Omega4 resident execution cycle.
 
 This module turns a bounded subset of the existing scheduler registry into
-actual unattended, proof-bearing work.  It deliberately reuses existing
-EvidenceOps/CFBE owners instead of introducing a second intelligence stack.
+actual unattended, proof-bearing work. It reuses existing EvidenceOps/CFBE
+owners instead of introducing a second intelligence stack.
 
 The runtime is safe by construction:
 - only explicitly allow-listed NO_EFFECT/read-only handlers can execute;
@@ -13,9 +13,9 @@ The runtime is safe by construction:
 - restoring state never authorizes an external effect;
 - completion is never inferred from dispatch alone.
 
-A hosting workflow may invoke this module on a timer or event.  That proves an
-unattended *host cycle* only after provider-native workflow readback; it does
-not by itself prove a continuously resident daemon, zero-compute wait, or full
+A hosting workflow may invoke this module on a timer or event. That proves an
+unattended host cycle only after provider-native workflow readback; it does not
+by itself prove a continuously resident daemon, zero-compute wait, or full
 provider-effect autonomy.
 """
 
@@ -126,15 +126,17 @@ def _capability_heartbeat(root: Path, output_dir: Path, task: dict[str, object])
         json.dumps(heartbeat, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
 
+    observed_at = datetime.now(timezone.utc).isoformat()
     system_db = output_dir / "evidenceops-heartbeat.db"
     system = EvidenceOpsHeartbeatSystem(str(system_db), repository_root=str(root))
     try:
         surface_index = system.index_surfaces(
             system.load_surface_registry(
                 str(root / "evidenceops/capability_heartbeat/surface_registry.json")
-            )
+            ),
+            observed_at=observed_at,
         )
-        reconciliation = system.reconcile()
+        reconciliation = system.reconcile(observed_at=observed_at)
     finally:
         system.close()
     system_report = {
@@ -275,7 +277,13 @@ def run_cycle(
             continue
         prior = previous_cursors.get(task_id, {})
         if isinstance(prior, dict) and prior.get("bucket") == bucket:
-            skipped.append({"task_id": task_id, "reason": "IDEMPOTENT_BUCKET_ALREADY_EXECUTED", "bucket": bucket})
+            skipped.append(
+                {
+                    "task_id": task_id,
+                    "reason": "IDEMPOTENT_BUCKET_ALREADY_EXECUTED",
+                    "bucket": bucket,
+                }
+            )
             continue
         if handler_spec.effect_class != "NO_EFFECT":
             held.append({"task_id": task_id, "reason": "RESIDENT_EFFECT_CLASS_NOT_ALLOWED"})
@@ -298,7 +306,7 @@ def run_cycle(
                 "last_result_sha256": result_hash,
                 "last_cycle_id": cycle_id,
             }
-        except Exception as exc:  # fail one lane without hiding sibling work
+        except Exception as exc:
             failures.append(
                 {
                     "task_id": task_id,
@@ -396,13 +404,18 @@ def main() -> int:
     (output_dir / "resident-state.json").write_text(
         json.dumps(state, indent=2, sort_keys=True) + "\n", encoding="utf-8"
     )
-    print(json.dumps({
-        "cycle_id": receipt["cycle_id"],
-        "executed_count": receipt["executed_count"],
-        "failure_count": receipt["failure_count"],
-        "receipt_sha256": receipt["receipt_sha256"],
-        "state_sha256": state["state_sha256"],
-    }, sort_keys=True))
+    print(
+        json.dumps(
+            {
+                "cycle_id": receipt["cycle_id"],
+                "executed_count": receipt["executed_count"],
+                "failure_count": receipt["failure_count"],
+                "receipt_sha256": receipt["receipt_sha256"],
+                "state_sha256": state["state_sha256"],
+            },
+            sort_keys=True,
+        )
+    )
     return 1 if receipt["failure_count"] else 0
 
 
