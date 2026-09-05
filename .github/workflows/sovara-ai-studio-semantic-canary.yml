@@ -1,0 +1,199 @@
+name: SOVARA AI Studio Direct Semantic Canary
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/sovara-ai-studio-semantic-canary.yml"
+      - "governance/sovara_ai_studio_semantic_canary_request_v1.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: sovara-ai-studio-direct-semantic-canary-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  MODEL: gemini-2.5-flash
+  REQUEST_FILE: governance/sovara_ai_studio_semantic_canary_request_v1.json
+
+jobs:
+  semantic-canary:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate zero-data OAuth request contract
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import json
+          p=json.load(open('governance/sovara_ai_studio_semantic_canary_request_v1.json',encoding='utf-8'))
+          assert p['schema']=='SOVARA_AI_STUDIO_SEMANTIC_CANARY_REQUEST_V1',p
+          assert p['execute'] is True,p
+          assert p['project_id']=='sov-hybrid-suite',p
+          assert p['project_number']=='257649435135',p
+          assert p['credential_mode']=='GOOGLE_OAUTH2_WIF_ACCESS_TOKEN',p
+          assert p['provider']=='GOOGLE_GEMINI_DEVELOPER_API',p
+          for k in ('case_data_allowed','provider_mutation_allowed','iam_mutation_allowed','secret_mutation_allowed','secret_value_logging_allowed','deployment_allowed','traffic_change_allowed','external_communication_allowed'):
+              assert p[k] is False,(k,p[k])
+          assert int(p['semantic_canary']['max_output_tokens']) <= 32,p
+          PY
+
+      - name: Authenticate through existing keyless Google WIF with Gemini OAuth scopes
+        id: google_auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/cloud-platform,https://www.googleapis.com/auth/generative-language.retriever
+
+      - name: Install pinned Google Cloud CLI action
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Run direct Gemini Developer API OAuth diagnostics and semantic nonce canary
+        shell: bash
+        env:
+          ACCESS_TOKEN: ${{ steps.google_auth.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/sovara-ai-studio
+          test -n "$ACCESS_TOKEN"
+          echo "::add-mask::$ACCESS_TOKEN"
+          ACTIVE_ACCOUNT="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          OBSERVED_PROJECT_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$ACTIVE_ACCOUNT" = "$DEPLOYER_SA"
+          test "$OBSERVED_PROJECT_NUMBER" = "$PROJECT_NUMBER"
+
+          NONCE="SOVARA-AISTUDIO-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}-${GITHUB_SHA:0:12}"
+          export NONCE
+
+          MODELS_BODY=/tmp/sovara-ai-studio/models-response.json
+          GENERATE_BODY=/tmp/sovara-ai-studio/generate-response.json
+          GENERATE_HEADERS=/tmp/sovara-ai-studio/generate-headers.txt
+
+          MODELS_STATUS="$(curl --silent --show-error -o "$MODELS_BODY" -w '%{http_code}' \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "x-goog-user-project: $PROJECT_ID" \
+            -H "Content-Type: application/json" \
+            "https://generativelanguage.googleapis.com/v1/models")"
+
+          GENERATE_STATUS="$(curl --silent --show-error -D "$GENERATE_HEADERS" -o "$GENERATE_BODY" -w '%{http_code}' \
+            -H "Authorization: Bearer $ACCESS_TOKEN" \
+            -H "x-goog-user-project: $PROJECT_ID" \
+            -H "Content-Type: application/json" \
+            -X POST \
+            -d "{\"contents\":[{\"role\":\"user\",\"parts\":[{\"text\":\"Return exactly this token and nothing else: ${NONCE}\"}]}],\"generationConfig\":{\"temperature\":0,\"maxOutputTokens\":32}}" \
+            "https://generativelanguage.googleapis.com/v1beta/models/${MODEL}:generateContent")"
+
+          export MODELS_STATUS GENERATE_STATUS
+          python3 - <<'PY'
+          import hashlib,json,os,re
+          from pathlib import Path
+
+          def read_json(path):
+              p=Path(path)
+              if not p.exists(): return {}
+              raw=p.read_text(encoding='utf-8',errors='replace')
+              try: return json.loads(raw)
+              except Exception: return {'raw_sha256':hashlib.sha256(raw.encode()).hexdigest()}
+
+          models_body=read_json('/tmp/sovara-ai-studio/models-response.json')
+          body=read_json('/tmp/sovara-ai-studio/generate-response.json')
+          nonce=os.environ['NONCE']
+          models_status=int(os.environ['MODELS_STATUS'])
+          generate_status=int(os.environ['GENERATE_STATUS'])
+          parts=((body.get('candidates') or [{}])[0].get('content') or {}).get('parts') or [] if isinstance(body,dict) else []
+          text=''.join(str(p.get('text','')) for p in parts).strip()
+          exact=(generate_status==200 and text==nonce)
+          model_identity=(body.get('modelVersion') if isinstance(body,dict) else None) or os.environ.get('MODEL','gemini-2.5-flash')
+          request_id=(body.get('responseId') if isinstance(body,dict) else None) or (body.get('response_id') if isinstance(body,dict) else None)
+          headers=Path('/tmp/sovara-ai-studio/generate-headers.txt').read_text(encoding='utf-8',errors='replace') if Path('/tmp/sovara-ai-studio/generate-headers.txt').exists() else ''
+          if not request_id:
+              m=re.search(r'(?im)^x-request-id:\s*([^\r\n]+)',headers)
+              request_id=m.group(1).strip() if m else None
+          usage=body.get('usageMetadata') or {} if isinstance(body,dict) else {}
+          error=(body.get('error') or {}) if isinstance(body,dict) else {}
+          error_message=str(error.get('message',''))
+          error_details=error.get('details') or []
+          error_reasons=[]
+          for d in error_details:
+              if isinstance(d,dict):
+                  reason=d.get('reason') or d.get('metadata',{}).get('reason')
+                  if reason: error_reasons.append(str(reason))
+          available_models=[]
+          if isinstance(models_body,dict):
+              for m in models_body.get('models') or []:
+                  name=m.get('name') if isinstance(m,dict) else None
+                  if name: available_models.append(name)
+          receipt={
+            'schema':'SOVARA_AI_STUDIO_DIRECT_SEMANTIC_RECEIPT_V3',
+            'state':'VERIFIED_SCOPED' if exact else 'PROVIDER_SEMANTIC_HELD',
+            'semantic_verified':exact,
+            'provider':'GOOGLE_GEMINI_DEVELOPER_API',
+            'transport':'DIRECT_GENERATIVELANGUAGE_API_OAUTH2_WIF',
+            'project_id':'sov-hybrid-suite',
+            'project_number':'257649435135',
+            'credential_mode':'GOOGLE_OAUTH2_WIF_ACCESS_TOKEN_TRANSIENT',
+            'oauth_scopes_requested':['https://www.googleapis.com/auth/cloud-platform','https://www.googleapis.com/auth/generative-language.retriever'],
+            'credential_value_recorded':False,
+            'secret_value_recorded':False,
+            'case_data_processed':False,
+            'provider_mutation_performed':False,
+            'iam_mutation_performed':False,
+            'secret_mutation_performed':False,
+            'deployment_performed':False,
+            'traffic_change_performed':False,
+            'models_list_http_status':models_status,
+            'models_visible_count':len(available_models),
+            'requested_model_visible':any(x.endswith('/'+os.environ.get('MODEL','gemini-2.5-flash')) for x in available_models),
+            'generate_http_status':generate_status,
+            'provider_error_status':error.get('status'),
+            'provider_error_code':error.get('code'),
+            'provider_error_message_sha256':hashlib.sha256(error_message.encode()).hexdigest() if error_message else None,
+            'provider_error_reasons':sorted(set(error_reasons)),
+            'model_identity':model_identity,
+            'provider_request_id_or_equivalent':request_id,
+            'nonce_sha256':hashlib.sha256(nonce.encode()).hexdigest(),
+            'response_text_sha256':hashlib.sha256(text.encode()).hexdigest() if text else None,
+            'usage_metadata':{k:usage.get(k) for k in ('promptTokenCount','candidatesTokenCount','totalTokenCount','cachedContentTokenCount') if k in usage},
+            'source_sha':os.environ.get('GITHUB_SHA'),
+            'run_id':os.environ.get('GITHUB_RUN_ID'),
+            'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT'),
+          }
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          Path('/tmp/sovara-ai-studio/AI_STUDIO_SEMANTIC_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({k:receipt[k] for k in ('state','semantic_verified','models_list_http_status','models_visible_count','requested_model_visible','generate_http_status','provider_error_status','provider_error_code','provider_error_reasons','model_identity','provider_request_id_or_equivalent','receipt_sha256')},sort_keys=True))
+          if not exact:
+              raise SystemExit('Gemini provider semantic proof not verified; redacted diagnostic receipt retained')
+          PY
+
+          rm -f "$MODELS_BODY" "$GENERATE_BODY" "$GENERATE_HEADERS"
+          unset ACCESS_TOKEN
+
+      - name: Upload immutable redacted semantic receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sovara-ai-studio-semantic-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/sovara-ai-studio/AI_STUDIO_SEMANTIC_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90

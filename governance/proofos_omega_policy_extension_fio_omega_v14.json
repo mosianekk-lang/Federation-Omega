@@ -1,0 +1,47 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/fio_omega_runtime.py",
+        "tests/test_fio_omega_runtime_v14.py",
+        "governance/proofos_omega_policy_extension_fio_omega_v14.json"
+      ],
+      "reason": "FIO_OMEGA_SIR_GOLDEN_CREATIVE_PATH_SOVEREIGN_RUNTIME_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FIO_OMEGA_SIR_V14",
+      "patterns": [
+        "federation/fio_omega_runtime.py",
+        "tests/test_fio_omega_runtime_v14.py",
+        "governance/proofos_omega_policy_extension_fio_omega_v14.json",
+        "docs/architecture/FIO_OMEGA_SIR_GOLDEN_CREATIVE_PATH_V14.md"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "CFBE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fio_omega_sir_v14",
+      "kind": "unittest_glob",
+      "target": "test_fio_omega_runtime_v14.py",
+      "patterns": [
+        "federation/fio_omega_runtime.py",
+        "tests/test_fio_omega_runtime_v14.py",
+        "governance/proofos_omega_policy_extension_fio_omega_v14.json"
+      ],
+      "subsystems": ["FIO_OMEGA_SIR_V14"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}
