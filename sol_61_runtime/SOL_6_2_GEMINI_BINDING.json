@@ -49,5 +49,13 @@
       "NO_CASE_DATA_PROCESSED"
     ]
   },
+  "probe_refresh": {
+    "requested_at_sast": "2026-09-05T06:20:00+02:00",
+    "reason": "SOVARA_GREEN_SEAT_REVALIDATION",
+    "scope": "READ_ONLY_ZERO_DATA_PROVIDER_SEMANTIC_CANARY",
+    "case_data_allowed": false,
+    "provider_mutation_allowed": false,
+    "credential_value_logging_allowed": false
+  },
   "truth_boundary": "SOL 6.2 is authenticated to the existing Google/Gemini control plane through short-lived WIF and the Gemini ADC runtime identity is provider-readback verified. The WIF provider trust condition remains broader than the hardened SOL execution contract, so model inference, provider mutation, deployment and traffic are fail-closed. This binding does not claim direct ChatGPT-to-Gemini UI access, provider-live Gemini inference, production deployment, continuous background execution or spend authority."
 }
