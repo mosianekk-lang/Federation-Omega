@@ -48,6 +48,14 @@ from .federation_binding import (
     astra_air_binding,
     astra_binding_catalog,
 )
+from .reasoning_capsule import ReasoningCapsule
+from .tool_micro_runtime import DeterministicDataRuntime, MicroRuntimeReceipt
+from .work_profile import (
+    WORK_CAPABILITY_GENES,
+    WORK_PUBLIC_SNAPSHOT_DATE,
+    WORK_PUBLIC_SOURCES,
+    WorkCapabilityGene,
+)
 
 __all__ = [
     "ASTRA_CAPABILITY_GENES",
@@ -63,13 +71,16 @@ __all__ = [
     "ContextCapsule",
     "ContextItem",
     "ContextVirtualizer",
+    "DeterministicDataRuntime",
     "FederationSovereignRuntimeBinding",
+    "MicroRuntimeReceipt",
     "MissionFrame",
     "MissionSteeringController",
     "NonblockingToolBroker",
     "ProcessorDecision",
     "ProcessorProfile",
     "ProcessorRequirement",
+    "ReasoningCapsule",
     "ReasoningConfiguration",
     "ReasoningEffort",
     "RUNTIME_ID",
@@ -81,6 +92,10 @@ __all__ = [
     "SteeringKind",
     "ToolEffect",
     "ToolTicket",
+    "WORK_CAPABILITY_GENES",
+    "WORK_PUBLIC_SNAPSHOT_DATE",
+    "WORK_PUBLIC_SOURCES",
+    "WorkCapabilityGene",
     "WorkState",
     "astra_air_binding",
     "astra_binding_catalog",
