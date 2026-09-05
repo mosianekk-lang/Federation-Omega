@@ -1,0 +1,35 @@
+{
+  "schema": "SOVARA_AI_STUDIO_SEMANTIC_CANARY_REQUEST_V1",
+  "request_id": "SOVARA-AISTUDIO-GREEN-20260905-001",
+  "execute": true,
+  "owner_directive": "ALL_SOVARA_AI_SEATS_GREEN",
+  "project_id": "sov-hybrid-suite",
+  "project_number": "257649435135",
+  "provider": "GOOGLE_GEMINI_DEVELOPER_API",
+  "model": "gemini-2.5-flash",
+  "credential_reference": "gemini-api-key",
+  "case_data_allowed": false,
+  "provider_mutation_allowed": false,
+  "iam_mutation_allowed": false,
+  "secret_mutation_allowed": false,
+  "secret_value_logging_allowed": false,
+  "deployment_allowed": false,
+  "traffic_change_allowed": false,
+  "external_communication_allowed": false,
+  "semantic_canary": {
+    "prompt_shape": "RETURN_EXACT_NONCE_ONLY",
+    "temperature": 0,
+    "max_output_tokens": 32,
+    "required_receipt_fields": [
+      "semantic_verified",
+      "model_identity",
+      "provider_request_id_or_equivalent",
+      "nonce_sha256",
+      "secret_value_recorded",
+      "case_data_processed",
+      "provider_mutation_performed"
+    ]
+  },
+  "promotion_rule": "GREEN only after provider-native exact-nonce semantic readback; failure remains visible and routes to autonomous repair.",
+  "truth_boundary": "This request authorizes one bounded zero-case-data provider semantic canary only. It does not authorize IAM mutation, secret mutation, deployment, production traffic, private/case data, external communication, or blanket provider spend."
+}
