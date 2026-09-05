@@ -8,7 +8,7 @@ from typing import Any, Callable, Mapping, Protocol, Sequence
 from bubbles.chat_governor_omega3.dag import DAGExecutor, Lane, LaneState
 from bubbles.chat_governor_omega3.state import DurableState
 from federation.mission_ir import MissionIR
-from federation.uas_runtime_v1 import EvaluationEvidence, UASEvaluation, UASRuntimeEvaluator
+from federation.uas_runtime_v1 import EvaluationEvidence, UASRuntimeEvaluator
 
 
 _SCHEMA = "FUSE-SERVING-KERNEL-V1"
@@ -267,8 +267,8 @@ class FUSEServingKernelV1:
                 "dag_receipt_sha256": "",
                 "uas_evaluation_sha256": empty_eval.evaluation_sha256,
                 "lane_states": {},
-                "proof_axes": [],
-                "proof_refs": [],
+                "proof_axes": (),
+                "proof_refs": (),
                 "checkpoint_id": checkpoint_id,
             }
             return FUSEServingReceipt(**body, receipt_sha256=_digest(body))
@@ -298,19 +298,41 @@ class FUSEServingKernelV1:
                             raise RuntimeError("FUSE_EFFECT_NOT_VERIFIED")
                         if dict(receipt.observed_state) != dict(spec.expected_target_state):
                             raise RuntimeError("FUSE_EFFECT_TARGET_STATE_MISMATCH")
-                        proof_axes.update(receipt.proof_axes)
+                        observed_axes = {str(x).strip() for x in receipt.proof_axes if str(x).strip()}
+                        missing_lane_axes = set(spec.required_proof_axes) - observed_axes
+                        if missing_lane_axes:
+                            raise RuntimeError(
+                                "FUSE_EFFECT_REQUIRED_PROOF_MISSING:"
+                                + ",".join(sorted(missing_lane_axes))
+                            )
+                        proof_axes.update(observed_axes)
                         proof_refs.update(receipt.proof_refs)
                         return {
                             "effect_receipt_sha256": receipt.receipt_sha256,
                             "provider_ref": receipt.provider_ref,
                             "observed_state": dict(receipt.observed_state),
                         }
+
                     result = fn()
+                    lane_axes: set[str] = set()
+                    lane_refs: set[str] = set()
                     if isinstance(result, Mapping):
-                        proof_axes.update(str(x).strip() for x in result.get("proof_axes", ()) if str(x).strip())
-                        proof_refs.update(str(x).strip() for x in result.get("proof_refs", ()) if str(x).strip())
-                    proof_axes.update(spec.required_proof_axes)
+                        lane_axes.update(
+                            str(x).strip() for x in result.get("proof_axes", ()) if str(x).strip()
+                        )
+                        lane_refs.update(
+                            str(x).strip() for x in result.get("proof_refs", ()) if str(x).strip()
+                        )
+                    missing_lane_axes = set(spec.required_proof_axes) - lane_axes
+                    if missing_lane_axes:
+                        raise RuntimeError(
+                            "FUSE_LANE_REQUIRED_PROOF_MISSING:"
+                            + ",".join(sorted(missing_lane_axes))
+                        )
+                    proof_axes.update(lane_axes)
+                    proof_refs.update(lane_refs)
                     return result
+
                 return execute
 
             dag_handlers[lane.lane_id] = make_handler(lane, raw_handler)
