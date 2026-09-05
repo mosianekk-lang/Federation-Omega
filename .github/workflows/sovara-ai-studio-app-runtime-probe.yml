@@ -1,0 +1,161 @@
+name: SOVARA AI Studio App Runtime Probe
+
+on:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/sovara-ai-studio-app-runtime-probe.yml"
+      - "governance/github_airlock_policy.json"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: sovara-ai-studio-app-runtime-probe-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  AI_STUDIO_APP_URL: https://ais-dev-f2kslg5xnk4uv46fucpjjl-220036659742.europe-west2.run.app
+  NX10_ORCHESTRATOR_URL: https://chatgpt-google-workspace-orchestrator-257649435135.us-west1.run.app
+
+jobs:
+  runtime-probe:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Probe public AI Studio app and NX10 orchestrator without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/sovara-aistudio-app
+          python3 - <<'PY'
+          import hashlib,json,os,re,ssl,urllib.error,urllib.parse,urllib.request
+          from pathlib import Path
+
+          TARGETS={
+            'AI_STUDIO_APP':os.environ['AI_STUDIO_APP_URL'].rstrip('/'),
+            'NX10_ORCHESTRATOR':os.environ['NX10_ORCHESTRATOR_URL'].rstrip('/'),
+          }
+          SAFE_PATHS=['/','/health','/api/health','/openapi.json','/docs']
+          ctx=ssl.create_default_context()
+
+          def fetch(url):
+              req=urllib.request.Request(url,method='GET',headers={'User-Agent':'SOVARA-AI-STUDIO-RUNTIME-PROBE/1.0','Accept':'*/*'})
+              try:
+                  with urllib.request.urlopen(req,timeout=20,context=ctx) as r:
+                      body=r.read(2_000_000)
+                      return {'status':r.status,'headers':dict(r.headers.items()),'body':body,'final_url':r.geturl()}
+              except urllib.error.HTTPError as e:
+                  body=e.read(2_000_000)
+                  return {'status':e.code,'headers':dict(e.headers.items()),'body':body,'final_url':e.geturl()}
+              except Exception as e:
+                  return {'status':0,'headers':{},'body':b'','final_url':url,'error_type':type(e).__name__,'error_sha256':hashlib.sha256(str(e).encode()).hexdigest()}
+
+          def safe_summary(result,base):
+              body=result.pop('body',b'')
+              ctype=str((result.get('headers') or {}).get('Content-Type',''))[:160]
+              text=body.decode('utf-8','replace') if body else ''
+              title=None
+              m=re.search(r'(?is)<title[^>]*>(.*?)</title>',text)
+              if m:
+                  title=re.sub(r'\s+',' ',m.group(1)).strip()[:200]
+              json_keys=[]
+              if 'json' in ctype.lower() or (text.lstrip().startswith('{') and len(text)<1_000_000):
+                  try:
+                      obj=json.loads(text)
+                      if isinstance(obj,dict): json_keys=sorted(str(k) for k in obj.keys())[:60]
+                  except Exception: pass
+              hints=[]
+              for pat in [r'(?i)["\'](/(?:api/)?(?:health|status|chat|generate|prompt|message|run|execute|models?)[A-Za-z0-9_./{}:-]*)["\']',r'(?i)https://generativelanguage\.googleapis\.com[^"\'\s<]*']:
+                  for hit in re.findall(pat,text):
+                      val=hit if isinstance(hit,str) else str(hit)
+                      if val not in hints: hints.append(val[:300])
+                      if len(hints)>=40: break
+                  if len(hints)>=40: break
+              scripts=[]
+              if 'html' in ctype.lower() or '<html' in text[:500].lower():
+                  for src in re.findall(r'(?is)<script[^>]+src=["\']([^"\']+)["\']',text):
+                      u=urllib.parse.urljoin(base+'/',src)
+                      if urllib.parse.urlparse(u).netloc==urllib.parse.urlparse(base).netloc and u not in scripts:
+                          scripts.append(u)
+                      if len(scripts)>=8: break
+              return {
+                'status':result.get('status'),
+                'final_url':result.get('final_url'),
+                'content_type':ctype,
+                'content_length':len(body),
+                'body_sha256':hashlib.sha256(body).hexdigest() if body else None,
+                'title':title,
+                'json_top_level_keys':json_keys,
+                'route_hints':hints,
+                'same_origin_script_urls':scripts,
+                'error_type':result.get('error_type'),
+                'error_sha256':result.get('error_sha256'),
+              }
+
+          receipt={
+            'schema':'SOVARA_AI_STUDIO_APP_RUNTIME_PROBE_V1',
+            'source_sha':os.environ.get('GITHUB_SHA'),
+            'run_id':os.environ.get('GITHUB_RUN_ID'),
+            'run_attempt':os.environ.get('GITHUB_RUN_ATTEMPT'),
+            'case_data_processed':False,
+            'credential_used':False,
+            'provider_mutation_performed':False,
+            'external_write_performed':False,
+            'targets':{},
+          }
+          for name,base in TARGETS.items():
+              t={'base_url':base,'paths':{},'script_assets':[]}
+              root_scripts=[]
+              for path in SAFE_PATHS:
+                  summary=safe_summary(fetch(base+path),base)
+                  t['paths'][path]=summary
+                  if path=='/': root_scripts=summary.get('same_origin_script_urls') or []
+              for script_url in root_scripts:
+                  s=safe_summary(fetch(script_url),base)
+                  t['script_assets'].append({
+                    'url':script_url,
+                    'status':s['status'],
+                    'content_length':s['content_length'],
+                    'body_sha256':s['body_sha256'],
+                    'route_hints':s['route_hints'],
+                  })
+              root=t['paths']['/']; health=t['paths']['/health']; apihealth=t['paths']['/api/health']
+              reachable=any((x.get('status') or 0) in range(200,500) for x in (root,health,apihealth))
+              healthy=any((x.get('status') or 0) in range(200,300) for x in (health,apihealth)) or ((root.get('status') or 0) in range(200,300))
+              t['runtime_reachable']=reachable
+              t['runtime_healthy_scoped']=healthy
+              receipt['targets'][name]=t
+          ai=receipt['targets']['AI_STUDIO_APP']
+          receipt['ai_studio_app_runtime_verified']=bool(ai['runtime_reachable'] and ai['runtime_healthy_scoped'])
+          receipt['state']='AI_STUDIO_APP_RUNTIME_VERIFIED_SCOPED' if receipt['ai_studio_app_runtime_verified'] else 'AI_STUDIO_APP_RUNTIME_NOT_VERIFIED'
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          Path('/tmp/sovara-aistudio-app/AI_STUDIO_APP_RUNTIME_RECEIPT.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({
+            'state':receipt['state'],
+            'ai_studio_app_runtime_verified':receipt['ai_studio_app_runtime_verified'],
+            'ai_root_status':ai['paths']['/']['status'],
+            'ai_health_status':ai['paths']['/health']['status'],
+            'ai_api_health_status':ai['paths']['/api/health']['status'],
+            'ai_route_hints':sorted(set(sum([x.get('route_hints',[]) for x in ai['paths'].values()],[])))[:20],
+            'receipt_sha256':receipt['receipt_sha256'],
+          },sort_keys=True))
+          if not receipt['ai_studio_app_runtime_verified']:
+              raise SystemExit('AI Studio app runtime not verified; diagnostic receipt retained')
+          PY
+
+      - name: Upload immutable redacted runtime receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: sovara-ai-studio-app-runtime-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/sovara-aistudio-app/AI_STUDIO_APP_RUNTIME_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
