@@ -23,6 +23,7 @@ _SECRET_KEYS = (
     "apikey",
     "private_key",
 )
+_CONTROL_KEYS = {"contains_raw_secret"}
 
 
 def _stable_json(value: object) -> str:
@@ -37,7 +38,7 @@ def _contains_secret_shape(value: Any) -> bool:
     if isinstance(value, Mapping):
         for key, child in value.items():
             lowered = str(key).strip().lower()
-            if any(secret in lowered for secret in _SECRET_KEYS):
+            if lowered not in _CONTROL_KEYS and any(secret in lowered for secret in _SECRET_KEYS):
                 return True
             if _contains_secret_shape(child):
                 return True
@@ -74,7 +75,7 @@ class OPAHTTPPolicyGateV1:
     malformed response fails closed as DENY; it never falls back to an allow.
     """
 
-    version = "1.0.1"
+    version = "1.0.2"
 
     def __init__(
         self,
