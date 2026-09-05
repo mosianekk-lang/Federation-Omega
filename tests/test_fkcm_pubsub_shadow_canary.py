@@ -8,6 +8,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github/workflows/fkcm-pubsub-shadow-canary.yml"
 AIRLOCK_POLICY = ROOT / "governance/github_airlock_policy.json"
 WORKFLOW_PATH = ".github/workflows/fkcm-pubsub-shadow-canary.yml"
+TEMP_IAM_TITLE = "MODISA_FKCM_PUBSUB_TEMP_IAM_CANARY_V1"
 
 
 class FkcmPubSubShadowCanaryContract(unittest.TestCase):
@@ -46,7 +47,13 @@ class FkcmPubSubShadowCanaryContract(unittest.TestCase):
         self.assertIn(WORKFLOW_PATH, self.policy["oidc_workflow_allowlist"])
         self.assertEqual(self.policy["allowed_events"][WORKFLOW_PATH], ["issues"])
         self.assertIn(WORKFLOW_PATH, self.policy["execution_quarantine"]["keep_active"])
-        self.assertNotIn(WORKFLOW_PATH, self.policy.get("provider_mutation_workflow_allowlist", []))
+        self.assertIn(WORKFLOW_PATH, self.policy.get("provider_mutation_workflow_allowlist", []))
+        self.assertEqual(
+            TEMP_IAM_TITLE,
+            self.policy.get("provider_mutation_exact_issue_titles", {}).get(WORKFLOW_PATH),
+        )
+        self.assertIn(TEMP_IAM_TITLE, self.text)
+        self.assertIn("run services add-iam-policy-binding", self.text.lower())
         self.assertNotIn(WORKFLOW_PATH, self.policy.get("actions_write_workflow_allowlist", []))
         self.assertNotIn(WORKFLOW_PATH, self.policy.get("statuses_write_workflow_allowlist", []))
 
@@ -103,7 +110,7 @@ class FkcmPubSubShadowCanaryContract(unittest.TestCase):
         self.assertIn("gcloud pubsub subscriptions pull", self.text)
         self.assertIn('test "$CONSUMER_MESSAGE_ID" = "$PUBLISH_ID"', self.text)
 
-    def test_no_high_risk_cloud_mutation_commands(self):
+    def test_no_high_risk_cloud_mutation_commands_in_legacy_job_surface(self):
         forbidden = [
             "gcloud projects add-iam-policy-binding",
             "gcloud iam service-accounts",
