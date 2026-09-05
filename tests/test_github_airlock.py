@@ -277,23 +277,34 @@ jobs:
         )
         self.assertIn("UNAUTHORISED_PROVIDER_MUTATION", self.rules(findings))
 
-    def test_sol62_wif_hardening_lease_is_exact_and_owner_gated(self):
-        workflow = ".github/workflows/sol62-wif-hardening-lease.yml"
-        title = "SOL62-WIF-HARDEN-20260901"
-        self.assertEqual([workflow], POLICY.get("provider_mutation_workflow_allowlist"))
-        self.assertEqual({workflow: title}, POLICY.get("provider_mutation_exact_issue_titles"))
-        self.assertIn(workflow, POLICY.get("oidc_workflow_allowlist"))
-        self.assertIn(workflow, POLICY.get("active_workflow_allowlist"))
-        self.assertIn(workflow, POLICY["execution_quarantine"]["keep_active"])
-        path = ROOT / workflow
-        self.assertTrue(path.is_file())
-        text = path.read_text(encoding="utf-8")
-        self.assertIn("github.event.issue.author_association == 'OWNER'", text)
-        self.assertIn(title, text)
-        self.assertIn("workload-identity-pools providers update-oidc", text)
-        self.assertIn("id-token: write", text)
-        self.assertIn("persist-credentials: false", text)
-        self.assertEqual([], AIRLOCK.analyse_workflow(workflow, text, POLICY))
+    def test_provider_mutation_gateways_are_exact_and_owner_gated(self):
+        sol62_workflow = ".github/workflows/sol62-wif-hardening-lease.yml"
+        sol62_title = "SOL62-WIF-HARDEN-20260901"
+        fkcm_workflow = ".github/workflows/fkcm-pubsub-shadow-canary.yml"
+        fkcm_title = "MODISA_FKCM_PUBSUB_TEMP_IAM_CANARY_V1"
+        expected_workflows = [sol62_workflow, fkcm_workflow]
+        expected_titles = {
+            sol62_workflow: sol62_title,
+            fkcm_workflow: fkcm_title,
+        }
+        self.assertEqual(expected_workflows, POLICY.get("provider_mutation_workflow_allowlist"))
+        self.assertEqual(expected_titles, POLICY.get("provider_mutation_exact_issue_titles"))
+        for workflow, title in expected_titles.items():
+            self.assertIn(workflow, POLICY.get("oidc_workflow_allowlist"))
+            self.assertIn(workflow, POLICY.get("active_workflow_allowlist"))
+            self.assertIn(workflow, POLICY["execution_quarantine"]["keep_active"])
+            path = ROOT / workflow
+            self.assertTrue(path.is_file())
+            text = path.read_text(encoding="utf-8")
+            self.assertIn("github.event.issue.author_association == 'OWNER'", text)
+            self.assertIn(title, text)
+            self.assertIn("id-token: write", text)
+            self.assertIn("persist-credentials: false", text)
+            self.assertEqual([], AIRLOCK.analyse_workflow(workflow, text, POLICY))
+        sol62_text = (ROOT / sol62_workflow).read_text(encoding="utf-8")
+        fkcm_text = (ROOT / fkcm_workflow).read_text(encoding="utf-8")
+        self.assertIn("workload-identity-pools providers update-oidc", sol62_text)
+        self.assertIn("run services add-iam-policy-binding", fkcm_text.lower())
         self.assertFalse((ROOT / ".github/workflows/fhu047-wif-least-privilege-apply-v1.yml").exists())
         self.assertFalse((ROOT / ".github/workflows/fhu047-admin-authority-graph-census-v2.yml").exists())
 
