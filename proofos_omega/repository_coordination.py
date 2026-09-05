@@ -124,6 +124,29 @@ def _lease_validation_findings(lease: Mapping[str, Any], policy: Mapping[str, An
     return findings
 
 
+def _released_lease_findings(lease: Mapping[str, Any]) -> list[CoordinationFinding]:
+    """Validate only the facts required to treat a lease as terminally released.
+
+    Historical writers produced some RELEASED descriptors before the full V2 field
+    contract was enforced. Those descriptors must not create a permanent repository
+    deadlock. This compatibility path does not apply to ACTIVE leases: every active
+    lease still passes the complete current required-field court.
+    """
+    findings: list[CoordinationFinding] = []
+    if lease.get("state") != "RELEASED":
+        findings.append(CoordinationFinding("LEASE_DESCRIPTOR_STATE_INVALID", str(lease.get("state"))))
+    try:
+        if int(lease.get("fencing_token", 0)) < 1:
+            raise ValueError
+    except (TypeError, ValueError):
+        findings.append(CoordinationFinding("LEASE_FENCING_TOKEN_INVALID", str(lease.get("fencing_token"))))
+    if not SHA40.fullmatch(str(lease.get("source_head", ""))):
+        findings.append(CoordinationFinding("LEASE_SOURCE_HEAD_INVALID", str(lease.get("source_head"))))
+    if lease.get("effect") != "NONE":
+        findings.append(CoordinationFinding("LEASE_EFFECT_SCOPE_INVALID", str(lease.get("effect"))))
+    return findings
+
+
 def evaluate_coordination(
     *,
     base_sha: str,
@@ -148,13 +171,20 @@ def evaluate_coordination(
     if lease is None:
         return _assessment("PASS", "NO_ACTIVE_V2_LEASE", lease_commit_sha, None, findings)
 
+    # A released lease is terminal and, by policy, must not block future work.
+    # Preserve a small integrity court around the release marker itself while
+    # intentionally avoiding ACTIVE-only metadata requirements.
+    if lease.get("state") == "RELEASED":
+        findings.extend(_released_lease_findings(lease))
+        if findings:
+            return _assessment("FAIL", "INVALID_RELEASED_LEASE", lease_commit_sha, lease, findings)
+        return _assessment("PASS", "LEASE_RELEASED", lease_commit_sha, lease, findings)
+
     findings.extend(_lease_validation_findings(lease, policy))
     if findings:
         return _assessment("FAIL", "INVALID_LEASE", lease_commit_sha, lease, findings)
 
     expires_at = _parse_time(str(lease["expires_at"]))
-    if lease["state"] == "RELEASED":
-        return _assessment("PASS", "LEASE_RELEASED", lease_commit_sha, lease, findings)
     if expires_at <= now_utc:
         return _assessment("PASS", "LEASE_EXPIRED", lease_commit_sha, lease, findings)
 
