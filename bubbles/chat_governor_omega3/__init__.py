@@ -24,17 +24,11 @@ from .pre_final import (
     PreFinalReconcileResult,
     TerminalState,
 )
+from .regression import ObservedIntegrityIncident, RegressionCandidate, TraceToRegressionBridge
 from .continuity import (
-    CommandEnvelope,
-    CommandState,
-    ContinuityLaneSpec,
-    ContinuityLaneState,
-    ContinuityReceipt,
-    EffectClass,
-    LaneLease,
-    MultistreamContinuityFabric,
-    PathRole,
-    intent_sha256,
+    CommandEnvelope, CommandState, ContinuityLaneSpec, ContinuityLaneState,
+    ContinuityReceipt, EffectClass, LaneLease, MultistreamContinuityFabric,
+    PathRole, intent_sha256,
 )
 from .performance_kernel import (
     DeltaCapsule,
@@ -81,6 +75,7 @@ __all__ = [
     "ChatGovPreFinalInterlock", "ClaimScanSnapshot", "ControlBinding",
     "FinalizationDecision", "GapState", "MissionClosureState", "PreFinalGate",
     "PreFinalReconcileResult", "TerminalState",
+    "ObservedIntegrityIncident", "RegressionCandidate", "TraceToRegressionBridge",
     "CommandEnvelope", "CommandState", "ContinuityLaneSpec", "ContinuityLaneState",
     "ContinuityReceipt", "EffectClass", "LaneLease", "MultistreamContinuityFabric",
     "PathRole", "intent_sha256",
