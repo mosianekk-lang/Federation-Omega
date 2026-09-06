@@ -22,10 +22,9 @@ jobs:
     steps:
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
-          # Two commits are enough for workflow_dispatch HEAD^ resolution.
-          # Exact comparison objects are fetched explicitly below; avoid hydrating
-          # the repository's entire branch/history estate on every admission run.
-          fetch-depth: 2
+          # Full repository history is required by the admitted BCO real first-parent
+          # calibration court. Exact comparison objects are still verified below.
+          fetch-depth: 0
           persist-credentials: false
 
       - name: Resolve admission comparison and provider provenance
