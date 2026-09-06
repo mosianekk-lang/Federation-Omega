@@ -1,7 +1,7 @@
 import math
 import unittest
 
-from federation_consolidation.strategic_secondary_brain import (
+from federation.orchestration.strategic_secondary_brain import (
     ActionDisposition,
     AuthorityClass,
     StrategicCompiler,
