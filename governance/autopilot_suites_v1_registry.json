@@ -1,0 +1,30 @@
+{
+  "authority_delta": "NONE",
+  "external_effect_default": false,
+  "invariants": [
+    "REUSE_EXISTING_AUTOPILOT_OWNERS",
+    "NO_DUPLICATE_SCHEDULER",
+    "NO_DUPLICATE_AUTHORITY_PLANE",
+    "NO_EFFECT_AUTHORITY_FROM_SUITE_SELECTION",
+    "PROVIDER_RUNTIME_REQUIRES_SEPARATE_PROOF"
+  ],
+  "maturity": "SOURCE_CANDIDATE_LOCAL_QUALIFIED_93_OF_93",
+  "schema": "FEDERATION-AUTOPILOT-SUITES-REGISTRY-V1",
+  "source_admission_base": "de8d9c8ab39793f4edbfa3a762dc5b20feaeae4c",
+  "source_epoch": "de8d9c8ab39793f4edbfa3a762dc5b20feaeae4c",
+  "suite_count": 11,
+  "suites": [
+    {"name":"EVENT WAKE MESH","purpose":"Provider/event -> exact affected mission wake; dedupe, debounce, invalidation.","slug":"event_wake_mesh"},
+    {"name":"DURABLE PARK / RESUME","purpose":"Persist mission checkpoint and wait predicate; resume exactly once on matching event.","slug":"durable_park_resume"},
+    {"name":"ADAPTIVE WAKE CADENCE","purpose":"Tighten or back off polling based on urgency, change probability, stability and cost.","slug":"adaptive_wake_cadence"},
+    {"name":"MISSION AIR TRAFFIC CONTROL","purpose":"Global mission WIP arbitration, priority ranking and conflict-domain serialization.","slug":"mission_air_traffic_control"},
+    {"name":"SCOPED AUTO-APPROVAL MEMORY","purpose":"Reusable exact mission-scoped reversible preauthorization with expiry/use/readback gates.","slug":"scoped_auto_approval_memory"},
+    {"name":"TRIGGER -> RECOVERY REFLEXES","purpose":"Failure/event fingerprints compile to bounded recovery chains with circuit breakers.","slug":"trigger_recovery_reflexes"},
+    {"name":"EXTERNAL WAIT STATE MACHINE","purpose":"Explicit WAITING_FOR_* lifecycle and deterministic event-driven resumption.","slug":"external_wait_state_machine"},
+    {"name":"OPPORTUNITY AUTOPILOT","purpose":"Discover reusable automation/opportunity experiments from repeated burden and bottlenecks.","slug":"opportunity_autopilot"},
+    {"name":"AUTONOMOUS DEADLINE ENGINE","purpose":"Backplan preparation work and cadence from future deadlines.","slug":"autonomous_deadline_engine"},
+    {"name":"PERSISTENT MISSION SANDBOX","purpose":"Isolated durable local mission workspace with quota, hashes, checkpoints and TTL cleanup.","slug":"persistent_mission_sandbox"},
+    {"name":"AUTOPILOT VALUE GOVERNOR","purpose":"Measure progress/noise/value and recommend promote/keep/backoff/suspend/merge.","slug":"autopilot_value_governor"}
+  ],
+  "version": "1.0.0"
+}
