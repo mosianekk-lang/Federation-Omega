@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-"""Build Phoenix exports with the user-scoped provider cutover v2 engine."""
+"""Build Phoenix exports with the retired-provider-effect v2 compatibility route."""
 
 from __future__ import annotations
 
@@ -41,18 +41,25 @@ def stage_ops_v2(root: Path, stage: Path, policy: dict) -> list[BASE.FileRecord]
         )
 
     cutover = root / "phoenix" / "provider_cutover_v2.py"
-    if not cutover.is_file():
-        raise RuntimeError(f"Provider cutover v2 missing: {cutover}")
-    BASE.copy_file(cutover, stage / "provider_cutover.py")
-    records.append(
-        BASE.FileRecord(
-            path="provider_cutover.py",
-            size=cutover.stat().st_size,
-            sha256=BASE.sha256_file(cutover),
-            classification="OPS_INCLUDED",
-            reason="USER_SCOPED_PROVIDER_CUTOVER_V2",
+    engine = root / "phoenix" / "provider_cutover_v2_engine.py"
+    for label, path in (("Provider cutover v2 wrapper", cutover), ("Provider cutover v2 engine", engine)):
+        if not path.is_file():
+            raise RuntimeError(f"{label} missing: {path}")
+
+    for source, export_path, reason in (
+        (cutover, "provider_cutover.py", "V2_PROVIDER_EFFECT_RETIRED_COMPATIBILITY_BOUNDARY"),
+        (engine, "provider_cutover_v2_engine.py", "V2_PRESERVED_DRY_RUN_ENGINE"),
+    ):
+        BASE.copy_file(source, stage / export_path)
+        records.append(
+            BASE.FileRecord(
+                path=export_path,
+                size=source.stat().st_size,
+                sha256=BASE.sha256_file(source),
+                classification="OPS_INCLUDED",
+                reason=reason,
+            )
         )
-    )
 
     actual = {item.path for item in records}
     missing = sorted(set(policy["ops"]["required_files"]) - actual)
