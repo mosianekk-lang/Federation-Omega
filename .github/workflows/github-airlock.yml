@@ -74,13 +74,21 @@ jobs:
             exit 1
           fi
           if [[ -n "$BASE_SHA" && ! "$BASE_SHA" =~ ^0+$ ]]; then
-            git fetch --no-tags --depth=1 origin "$BASE_SHA" "$HEAD_SHA"
+            if ! git cat-file -e "${BASE_SHA}^{commit}" 2>/dev/null || ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+              git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"
+            fi
             git cat-file -e "${BASE_SHA}^{commit}"
           else
-            git fetch --no-tags --depth=1 origin "$HEAD_SHA"
+            if ! git cat-file -e "${HEAD_SHA}^{commit}" 2>/dev/null; then
+              git fetch --no-tags origin "$HEAD_SHA"
+            fi
           fi
           git cat-file -e "${HEAD_SHA}^{commit}"
-          echo "EXACT_COMPARISON_OBJECTS_READY"
+          if [[ "$(git rev-parse --is-shallow-repository)" != "false" ]]; then
+            echo "AIRLOCK_FULL_HISTORY_REQUIRED: repository became shallow before proof courts" >&2
+            exit 1
+          fi
+          echo "EXACT_COMPARISON_OBJECTS_READY_FULL_HISTORY"
 
       - name: Enforce pull-request head ancestry
         if: github.event_name == 'pull_request' || github.event_name == 'merge_group'
