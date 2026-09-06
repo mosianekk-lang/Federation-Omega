@@ -19,7 +19,6 @@ from typing import Any, Iterable, Protocol, Sequence
 
 from federation.mission_ir import MissionIR
 
-
 SCHEMA = "BUBBLES-OMEGA-PROVIDER-AUTHORITY-FABRIC-V1"
 _AUTHORITY_ORDER = {"A0": 0, "A1": 1, "A2": 2, "A3": 3}
 
@@ -110,13 +109,8 @@ class AuthorityGrant:
 
     def validate(self) -> "AuthorityGrant":
         required = (
-            self.grant_id,
-            self.capability_id,
-            self.provider,
-            self.connector,
-            self.action,
-            self.authority_class,
-            self.mission_id,
+            self.grant_id, self.capability_id, self.provider, self.connector,
+            self.action, self.authority_class, self.mission_id,
         )
         if not all(str(item).strip() for item in required):
             raise ValueError("AUTHORITY_GRANT_REQUIRED_FIELD_MISSING")
@@ -147,6 +141,7 @@ class AuthorityLeaseDecision:
     expires_at_epoch: float | None = None
     provider_effect_authorized: bool = False
     secret_value_recorded: bool = False
+    resource_ref: str = ""
 
     def to_dict(self) -> dict[str, Any]:
         payload = asdict(self)
@@ -172,8 +167,7 @@ class ProviderAuthorityFabric:
 
     @staticmethod
     def _mission_allows_provider(mission: MissionIR, provider: str) -> bool:
-        item = mission.normalized()
-        provider = provider.strip()
+        item = mission.normalized(); provider = provider.strip()
         if provider in item.provider_denylist:
             return False
         if item.provider_allowlist and provider not in item.provider_allowlist:
@@ -184,6 +178,11 @@ class ProviderAuthorityFabric:
     def _authority_sufficient(required: str, actual: str) -> bool:
         return _AUTHORITY_ORDER[actual.upper()] >= _AUTHORITY_ORDER[required.upper()]
 
+    @staticmethod
+    def _decision(contract: CapabilityAuthorityContract, **kwargs) -> AuthorityLeaseDecision:
+        kwargs.setdefault("resource_ref", contract.resource_ref)
+        return AuthorityLeaseDecision(**kwargs)
+
     def resolve(
         self,
         mission: MissionIR,
@@ -192,60 +191,38 @@ class ProviderAuthorityFabric:
         now_epoch: float,
         grants: Sequence[AuthorityGrant] = (),
     ) -> AuthorityLeaseDecision:
-        mission = mission.normalized()
-        mission.validate()
-        contract.validate()
+        mission = mission.normalized(); mission.validate(); contract.validate()
 
         if contract.effect_class.upper() != mission.effect_class:
-            return AuthorityLeaseDecision(
-                schema=SCHEMA,
-                mission_id=mission.mission_id,
-                capability_id=contract.capability_id,
-                contract_sha256=contract.digest,
-                state=AuthorityState.DENIED.value,
-                provider=contract.provider,
-                connector=contract.connector,
-                action=contract.action,
+            return self._decision(contract,
+                schema=SCHEMA, mission_id=mission.mission_id, capability_id=contract.capability_id,
+                contract_sha256=contract.digest, state=AuthorityState.DENIED.value,
+                provider=contract.provider, connector=contract.connector, action=contract.action,
                 reason="MISSION_EFFECT_CLASS_MISMATCH",
             )
 
         if not self._mission_allows_provider(mission, contract.provider):
-            return AuthorityLeaseDecision(
-                schema=SCHEMA,
-                mission_id=mission.mission_id,
-                capability_id=contract.capability_id,
-                contract_sha256=contract.digest,
-                state=AuthorityState.DENIED.value,
-                provider=contract.provider,
-                connector=contract.connector,
-                action=contract.action,
+            return self._decision(contract,
+                schema=SCHEMA, mission_id=mission.mission_id, capability_id=contract.capability_id,
+                contract_sha256=contract.digest, state=AuthorityState.DENIED.value,
+                provider=contract.provider, connector=contract.connector, action=contract.action,
                 reason="MISSION_PROVIDER_POLICY_REJECTED",
             )
 
         if mission.max_cost_microunits is not None and contract.max_cost_microunits is not None:
             if contract.max_cost_microunits > mission.max_cost_microunits:
-                return AuthorityLeaseDecision(
-                    schema=SCHEMA,
-                    mission_id=mission.mission_id,
-                    capability_id=contract.capability_id,
-                    contract_sha256=contract.digest,
-                    state=AuthorityState.DENIED.value,
-                    provider=contract.provider,
-                    connector=contract.connector,
-                    action=contract.action,
+                return self._decision(contract,
+                    schema=SCHEMA, mission_id=mission.mission_id, capability_id=contract.capability_id,
+                    contract_sha256=contract.digest, state=AuthorityState.DENIED.value,
+                    provider=contract.provider, connector=contract.connector, action=contract.action,
                     reason="MISSION_COST_CEILING_EXCEEDED",
                 )
 
         if mission.effect_class in {"NO_EFFECT", "READ_ONLY"} and not mission.authority_requirements:
-            return AuthorityLeaseDecision(
-                schema=SCHEMA,
-                mission_id=mission.mission_id,
-                capability_id=contract.capability_id,
-                contract_sha256=contract.digest,
-                state=AuthorityState.NOT_REQUIRED.value,
-                provider=contract.provider,
-                connector=contract.connector,
-                action=contract.action,
+            return self._decision(contract,
+                schema=SCHEMA, mission_id=mission.mission_id, capability_id=contract.capability_id,
+                contract_sha256=contract.digest, state=AuthorityState.NOT_REQUIRED.value,
+                provider=contract.provider, connector=contract.connector, action=contract.action,
                 semantic_readback_route=contract.resource_ref,
                 reason="MISSION_DOES_NOT_REQUIRE_EFFECT_AUTHORITY",
             )
@@ -278,55 +255,33 @@ class ProviderAuthorityFabric:
             candidates.append(grant)
 
         if not candidates:
-            state = (
-                AuthorityState.APPROVAL_REQUIRED
-                if mission.owner_approval_required or mission.effect_class == "CONSEQUENTIAL_EFFECT"
-                else AuthorityState.PROVIDER_GATED
-            )
-            return AuthorityLeaseDecision(
-                schema=SCHEMA,
-                mission_id=mission.mission_id,
-                capability_id=contract.capability_id,
-                contract_sha256=contract.digest,
-                state=state.value,
-                provider=contract.provider,
-                connector=contract.connector,
-                action=contract.action,
+            state = AuthorityState.APPROVAL_REQUIRED if mission.owner_approval_required or mission.effect_class == "CONSEQUENTIAL_EFFECT" else AuthorityState.PROVIDER_GATED
+            return self._decision(contract,
+                schema=SCHEMA, mission_id=mission.mission_id, capability_id=contract.capability_id,
+                contract_sha256=contract.digest, state=state.value,
+                provider=contract.provider, connector=contract.connector, action=contract.action,
                 credential_reference=contract.credential_reference,
                 reason="NO_EXACT_FRESH_PROVIDER_NATIVE_GRANT",
             )
 
         chosen = max(candidates, key=lambda item: (item.expires_at_epoch, item.grant_id))
         if mission.owner_approval_required and not chosen.owner_approval_ref:
-            return AuthorityLeaseDecision(
-                schema=SCHEMA,
-                mission_id=mission.mission_id,
-                capability_id=contract.capability_id,
-                contract_sha256=contract.digest,
-                state=AuthorityState.APPROVAL_REQUIRED.value,
-                provider=contract.provider,
-                connector=contract.connector,
-                action=contract.action,
+            return self._decision(contract,
+                schema=SCHEMA, mission_id=mission.mission_id, capability_id=contract.capability_id,
+                contract_sha256=contract.digest, state=AuthorityState.APPROVAL_REQUIRED.value,
+                provider=contract.provider, connector=contract.connector, action=contract.action,
                 credential_reference=chosen.credential_reference,
                 semantic_readback_route=chosen.semantic_readback_route,
-                proof_refs=_clean(chosen.proof_refs),
-                reason="MISSION_OWNER_APPROVAL_REQUIRED",
+                proof_refs=_clean(chosen.proof_refs), reason="MISSION_OWNER_APPROVAL_REQUIRED",
                 expires_at_epoch=chosen.expires_at_epoch,
             )
 
-        return AuthorityLeaseDecision(
-            schema=SCHEMA,
-            mission_id=mission.mission_id,
-            capability_id=contract.capability_id,
-            contract_sha256=contract.digest,
-            state=AuthorityState.RESOLVED.value,
-            grant_id=chosen.grant_id,
-            provider=chosen.provider,
-            connector=chosen.connector,
-            action=chosen.action,
-            credential_reference=chosen.credential_reference,
-            semantic_readback_route=chosen.semantic_readback_route,
-            proof_refs=_clean(chosen.proof_refs),
+        return self._decision(contract,
+            schema=SCHEMA, mission_id=mission.mission_id, capability_id=contract.capability_id,
+            contract_sha256=contract.digest, state=AuthorityState.RESOLVED.value,
+            grant_id=chosen.grant_id, provider=chosen.provider, connector=chosen.connector,
+            action=chosen.action, credential_reference=chosen.credential_reference,
+            semantic_readback_route=chosen.semantic_readback_route, proof_refs=_clean(chosen.proof_refs),
             reason="EXACT_FRESH_PROVIDER_NATIVE_GRANT_RESOLVED",
             expires_at_epoch=chosen.expires_at_epoch,
             provider_effect_authorized=mission.effect_class == "BOUNDED_EFFECT",
@@ -335,10 +290,6 @@ class ProviderAuthorityFabric:
 
 
 __all__ = [
-    "AuthorityGrant",
-    "AuthorityGrantSource",
-    "AuthorityLeaseDecision",
-    "AuthorityState",
-    "CapabilityAuthorityContract",
-    "ProviderAuthorityFabric",
+    "AuthorityGrant", "AuthorityGrantSource", "AuthorityLeaseDecision", "AuthorityState",
+    "CapabilityAuthorityContract", "ProviderAuthorityFabric",
 ]
