@@ -21,7 +21,7 @@ from federation.execution_topology_compiler_v1 import ExecutionTopologyReceipt
 from federation.mission_ir import MissionIR
 
 SCHEMA = "FUSE-ACTION-ADMISSION-GATE-V1"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 
 def _instant(value: str) -> datetime:
@@ -128,6 +128,9 @@ class ActionAdmissionReceipt:
     reasons: tuple[str, ...]
     topology_receipt_digest: str
     receipt_digest: str
+    target_scope: str = ""
+    provider: str = ""
+    mutation_domain: str = ""
 
     @property
     def admitted(self) -> bool:
@@ -162,9 +165,8 @@ class ActionAdmissionGate:
         assignment = self._assignment(topology, request.unit_id)
         if assignment is None:
             reasons.append("TOPOLOGY_ASSIGNMENT_NOT_FOUND")
-        else:
-            if assignment.mutation_domain != request.mutation_domain:
-                reasons.append("ACTION_MUTATION_DOMAIN_MISMATCH")
+        elif assignment.mutation_domain != request.mutation_domain:
+            reasons.append("ACTION_MUTATION_DOMAIN_MISMATCH")
 
         ceiling = _MISSION_EFFECT_CEILING.get(mission.effect_class, -1)
         if _ACTION_EFFECT_LEVEL[request.effect_class] > ceiling:
@@ -235,6 +237,7 @@ class ActionAdmissionGate:
             "effect": request.effect_class.value,
             "target_scope": request.target_scope,
             "mutation_domain": request.mutation_domain,
+            "provider": request.provider,
             "worker_id": assignment.worker_id if assignment else "",
             "runtime_id": assignment.runtime_id if assignment else "",
             "grant_id": grant.grant_id if grant else "",
@@ -253,6 +256,9 @@ class ActionAdmissionGate:
             reasons=tuple(reasons),
             topology_receipt_digest=topology.receipt_digest,
             receipt_digest=_digest(material),
+            target_scope=request.target_scope,
+            provider=request.provider,
+            mutation_domain=request.mutation_domain,
         )
 
 
