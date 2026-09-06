@@ -6,9 +6,9 @@ git push implementation. Apply is accepted only from the canonical live-source
 guarded launcher, which sets ``FEDOMEGA_GUARDED_APPLY=1`` after authorization
 and current-source checks. Direct CLI apply is fail-closed.
 
-In the source repository the base engine is ``provider_cutover_v3.py``. In the
-exported Ops package it is copied beside this file as
-``provider_cutover_v3_base.py``.
+The v3 base path is now a fail-closed module boundary. Its preserved engine is
+opened for apply only inside this v3.1 call after the outer guarded-launcher
+context has been verified.
 """
 from __future__ import annotations
 
@@ -34,6 +34,7 @@ SPEC.loader.exec_module(V3)
 
 _SHA = re.compile(r"^[0-9a-fA-F]{40}$")
 GUARDED_APPLY_ENV = "FEDOMEGA_GUARDED_APPLY"
+DEFAULT_INTERNAL_APPLY_ENV = "FEDOMEGA_PHOENIX_V3_ENGINE_APPLY"
 
 
 def parse_remote_main_sha(refs: str) -> str | None:
@@ -79,6 +80,8 @@ def git_push_exact_lease(token: str, owner: str, repo: str, source: Path, replac
 
 
 V3.git_push = git_push_exact_lease
+if hasattr(V3, "ENGINE"):
+    V3.ENGINE.git_push = git_push_exact_lease
 
 
 def guarded_apply_context(argv: list[str] | None = None) -> bool:
@@ -93,7 +96,21 @@ def main() -> int:
         raise V3.CutoverError(
             "Direct Phoenix v3.1 --apply is prohibited; use provider_cutover_guarded.py so live-source and authorization guards are enforced"
         )
-    return V3.main()
+
+    internal_env = getattr(V3, "INTERNAL_APPLY_ENV", DEFAULT_INTERNAL_APPLY_ENV)
+    applying = "--apply" in sys.argv
+    existed = internal_env in os.environ
+    previous = os.environ.get(internal_env)
+    if applying:
+        os.environ[internal_env] = "1"
+    try:
+        return V3.main()
+    finally:
+        if applying:
+            if existed and previous is not None:
+                os.environ[internal_env] = previous
+            else:
+                os.environ.pop(internal_env, None)
 
 
 if __name__ == "__main__":
