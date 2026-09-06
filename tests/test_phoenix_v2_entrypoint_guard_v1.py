@@ -3,7 +3,6 @@ from __future__ import annotations
 import hashlib
 import importlib.util
 import sys
-import tempfile
 import unittest
 from pathlib import Path
 
@@ -20,7 +19,6 @@ def load(name: str, path: Path):
 
 
 V2 = load("phoenix_v2_entrypoint_guard_test", ROOT / "phoenix" / "provider_cutover_v2.py")
-EXPORT = load("phoenix_v2_export_guard_test", ROOT / "phoenix" / "build_exports_v2.py")
 
 
 class PhoenixV2EntrypointGuardTests(unittest.TestCase):
@@ -53,13 +51,15 @@ class PhoenixV2EntrypointGuardTests(unittest.TestCase):
         self.assertIn("V2_PROVIDER_EFFECT_RETIRED_COMPATIBILITY_BOUNDARY", source)
         self.assertIn("V2_PRESERVED_DRY_RUN_ENGINE", source)
 
-    def test_preserved_engine_identity_matches_original_v2_contract(self) -> None:
+    def test_preserved_engine_identity_matches_original_v2_blob(self) -> None:
         engine = ROOT / "phoenix" / "provider_cutover_v2_engine.py"
         self.assertTrue(engine.is_file())
-        text = engine.read_text(encoding="utf-8")
+        data = engine.read_bytes()
+        text = data.decode("utf-8")
         self.assertIn("Provider-authorised Federation Omega Phoenix cutover v2", text)
         self.assertIn('API_VERSION = "2026-03-10"', text)
-        self.assertEqual(hashlib.sha1(engine.read_bytes()).hexdigest(), "41a8e089c48f3772636b59521c47734a4ca98362")
+        header = f"blob {len(data)}\0".encode("ascii")
+        self.assertEqual(hashlib.sha1(header + data).hexdigest(), "41a8e089c48f3772636b59521c47734a4ca98362")
 
 
 if __name__ == "__main__":
