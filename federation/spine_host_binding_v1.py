@@ -16,11 +16,12 @@ from federation.autonomic_mission_spine_v1 import (
     SpineRunReceipt,
     SpineStage,
 )
+from federation.cfbe_chat_hyperperformance_v1 import EffectClass
 from federation.mission_ir import MissionIR
 from federation.mission_outcome_value_court_v1 import MissionOutcomeState
 
 SCHEMA = "FUSE-SPINE-HOST-BINDING-V1"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 
 
 def _stable(value: object) -> str:
@@ -91,7 +92,16 @@ class SpineHostBindingCourt:
     def _snapshot(run: SpineRunReceipt, stage: SpineStage):
         return next((x for x in run.snapshots if x.stage is stage), None)
 
-    def admit_action(self, mission: MissionIR, run: SpineRunReceipt, *, action_id: str) -> SpineHostBindingReceipt:
+    def admit_action(
+        self,
+        mission: MissionIR,
+        run: SpineRunReceipt,
+        *,
+        action_id: str,
+        expected_effect_class: EffectClass,
+        expected_target_scope: str,
+        expected_provider: str = "",
+    ) -> SpineHostBindingReceipt:
         mission.validate()
         reasons = self._base_reasons(mission, run)
         stage = self._snapshot(run, SpineStage.ACTIONS_ADMITTED)
@@ -100,8 +110,20 @@ class SpineHostBindingCourt:
         action = next((x for x in run.action_admissions if x.action_id == action_id), None)
         if action is None:
             reasons.append("SPINE_EXACT_ACTION_ADMISSION_REQUIRED")
-        elif not action.admitted:
-            reasons.append("SPINE_ACTION_NOT_ADMITTED")
+        else:
+            if not action.admitted:
+                reasons.append("SPINE_ACTION_NOT_ADMITTED")
+            if action.effect_class is not expected_effect_class:
+                reasons.append("SPINE_ACTION_EFFECT_CLASS_MISMATCH")
+            if not action.target_scope:
+                reasons.append("SPINE_ACTION_TARGET_NOT_BOUND")
+            elif action.target_scope != expected_target_scope:
+                reasons.append("SPINE_ACTION_TARGET_MISMATCH")
+            if expected_provider:
+                if not action.provider:
+                    reasons.append("SPINE_ACTION_PROVIDER_NOT_BOUND")
+                elif action.provider != expected_provider:
+                    reasons.append("SPINE_ACTION_PROVIDER_MISMATCH")
         return self._receipt(
             mission, HostBindingLevel.ACTION_DISPATCH, action_id, run,
             stage.snapshot_digest if stage else "", reasons,
