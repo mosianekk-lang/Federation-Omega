@@ -14,6 +14,10 @@ from bubbles.chat_governor_omega3 import (
     FrontierControlPlane,
     MissionPlan,
 )
+from bubbles.chat_governor_omega3.currentness import (
+    REFRESH_REQUIRED,
+    CurrentnessDecision,
+)
 from federation.fio_surface_access import (
     SurfaceAction,
     SurfaceAttestation,
@@ -27,6 +31,7 @@ from federation.fio_surface_access import (
 HOST_RECEIPT_SCHEMA = "BUBBLES-CHATGOV-FRONTIER-HOST-RECEIPT-V1"
 HOST_SURFACE_ID = "BUBBLES_PROVIDER_SURFACE_READBACK_HOST"
 HOST_ADAPTER_ID = "BUBBLES_PROVIDER_SURFACE_PROBE"
+HOST_CURRENTNESS_SUBJECT = "BUBBLES_PROVIDER_SURFACE_READBACK"
 
 
 def _stable_json(value: Any) -> str:
@@ -126,6 +131,13 @@ class HostedProviderReadbackAdapter:
     This class does not own provider authority and exposes no effectful operation.
     It exists only to route the pre-existing read-only provider probe through the
     admitted ChatGov ConnectorGateway / FrontierControlPlane path.
+
+    A host that can resolve KDV/provider currentness may supply a
+    ``currentness_supplier``. The supplier is called once per execute() and its
+    decision is then bound to the exact hosted semantic subject. If no trustworthy
+    supplier is attached, the adapter fails toward ``REFRESH_REQUIRED`` so the
+    safe provider read executes instead of silently reusing a durable receipt.
+    ``mission_currentness_ref`` remains documentary provenance only.
     """
 
     def __init__(
@@ -137,6 +149,7 @@ class HostedProviderReadbackAdapter:
         mission_id: str = "MISSION-FUSE-BUBBLES-HOST-ADOPTER-20260905-001",
         observed_at: str | None = None,
         singleflight_ttl_seconds: float = 60.0,
+        currentness_supplier: Callable[[], CurrentnessDecision] | None = None,
     ) -> None:
         self.state_path = str(state_path)
         self.source_version = str(source_version).strip() or "UNKNOWN_SOURCE"
@@ -148,6 +161,7 @@ class HostedProviderReadbackAdapter:
         if not self.mission_id:
             raise ValueError("HOST_ADAPTER_MISSION_ID_REQUIRED")
         self.observed_at = observed_at or datetime.now(timezone.utc).isoformat()
+        self.currentness_supplier = currentness_supplier
         self.frontier = FrontierControlPlane(
             singleflight_ttl_seconds=singleflight_ttl_seconds
         )
@@ -179,10 +193,26 @@ class HostedProviderReadbackAdapter:
         path.parent.mkdir(parents=True, exist_ok=True)
         return ConnectorGateway(DurableState(str(path)), frontier=self.frontier)
 
+    def _resolve_currentness(self) -> CurrentnessDecision:
+        if self.currentness_supplier is None:
+            return CurrentnessDecision(
+                state=REFRESH_REQUIRED,
+                mission_id=self.mission_id,
+                subject=HOST_CURRENTNESS_SUBJECT,
+                projection_id="HOST_CURRENTNESS_UNAVAILABLE",
+                stale_action="EXECUTE_PROVIDER_REFRESH",
+                reasons=("NO_TRUSTWORTHY_CURRENTNESS_SUPPLIER",),
+            )
+        decision = self.currentness_supplier()
+        if not isinstance(decision, CurrentnessDecision):
+            raise TypeError("HOST_CURRENTNESS_SUPPLIER_MUST_RETURN_DECISION")
+        return decision
+
     def _execute_one(
         self,
         gateway: ConnectorGateway,
         reader: Callable[[], Mapping[str, Any]],
+        currentness: CurrentnessDecision,
     ) -> dict[str, Any]:
         return gateway.execute(
             plan=self.plan,
@@ -196,6 +226,8 @@ class HostedProviderReadbackAdapter:
             retry_attempts=1,
             effect_class="READ_ONLY",
             use_frontier=True,
+            currentness=currentness,
+            currentness_subject=HOST_CURRENTNESS_SUBJECT,
         )
 
     def execute(
@@ -206,6 +238,7 @@ class HostedProviderReadbackAdapter:
     ) -> tuple[dict[str, Any], dict[str, Any]]:
         provider_executions = 0
         provider_lock = threading.Lock()
+        currentness = self._resolve_currentness()
 
         def counted_reader() -> Mapping[str, Any]:
             nonlocal provider_executions
@@ -223,7 +256,7 @@ class HostedProviderReadbackAdapter:
             def runner(gateway: ConnectorGateway) -> None:
                 try:
                     barrier.wait(timeout=5.0)
-                    result = self._execute_one(gateway, counted_reader)
+                    result = self._execute_one(gateway, counted_reader, currentness)
                     with result_lock:
                         results.append(result)
                 except BaseException as exc:
@@ -248,7 +281,9 @@ class HostedProviderReadbackAdapter:
             if len(results) != 2:
                 raise RuntimeError("HOSTED_SINGLEFLIGHT_RESULT_COUNT_INVALID")
         else:
-            results = [self._execute_one(self._gateway(), counted_reader)]
+            results = [
+                self._execute_one(self._gateway(), counted_reader, currentness)
+            ]
 
         payload_hashes = {
             _digest(result.get("payload"))
@@ -272,6 +307,14 @@ class HostedProviderReadbackAdapter:
         if prove_singleflight and not singleflight_verified:
             raise RuntimeError("HOSTED_FRONTIER_SINGLEFLIGHT_NOT_PROVEN")
 
+        currentness_anchor = str(
+            currentness.source_ref or currentness.projection_id or ""
+        ).strip()
+        currentness_contract_verified = bool(
+            currentness.mission_id == self.mission_id
+            and currentness.subject == HOST_CURRENTNESS_SUBJECT
+            and (not currentness.reusable or currentness_anchor)
+        )
         route_material = asdict(self.route)
         route_material["mode"] = self.route.mode.value
         frontier_receipt = asdict(self.frontier.receipt())
@@ -282,6 +325,12 @@ class HostedProviderReadbackAdapter:
                 "idempotency_key": result.get("idempotency_key"),
                 "attempts": result.get("attempts"),
                 "frontier_singleflight": result.get("frontier_singleflight"),
+                "currentness_state": result.get("currentness_state"),
+                "currentness_subject": result.get("currentness_subject"),
+                "currentness_anchor": result.get("currentness_anchor"),
+                "currentness_refresh_performed": result.get(
+                    "currentness_refresh_performed"
+                ),
             }
             for result in results
         ]
@@ -292,12 +341,26 @@ class HostedProviderReadbackAdapter:
             "host_job": "provider-surface-readback",
             "source_version": self.source_version,
             "mission_currentness_ref": self.mission_currentness_ref,
+            "mission_currentness_ref_authoritative": False,
+            "currentness_supplier_bound": self.currentness_supplier is not None,
+            "currentness_contract_verified": currentness_contract_verified,
+            "currentness_decision": {
+                "state": currentness.state,
+                "subject": currentness.subject,
+                "projection_id": currentness.projection_id,
+                "source_ref": currentness.source_ref,
+                "source_anchor": currentness_anchor,
+                "reusable": currentness.reusable,
+                "stale_action": currentness.stale_action,
+                "reasons": list(currentness.reasons),
+            },
             "effect_class": "READ_ONLY",
             "fio_route": route_material,
             "chatgov_gateway": {
                 "connector": self.route.selected_adapter,
                 "action": "provider_surface_readback",
                 "target": HOST_SURFACE_ID,
+                "currentness_subject": HOST_CURRENTNESS_SUBJECT,
                 "results": result_summaries,
             },
             "frontier_binding": frontier_receipt,
@@ -315,6 +378,7 @@ class HostedProviderReadbackAdapter:
             "host_binding_verified": bool(
                 self.route.auto_execute_internal
                 and all(caller_frontier_flags)
+                and currentness_contract_verified
                 and _semantic_readback_ok(payload)
             ),
             "provider_effect_authorized": False,
@@ -325,9 +389,13 @@ class HostedProviderReadbackAdapter:
             "truth_boundary": (
                 "This receipt proves the existing Bubbles GitHub Actions provider-readback "
                 "host invoked the read-only provider probe through FIO routing and ChatGov "
-                "ConnectorGateway/FrontierControlPlane. It does not prove native ChatGPT "
-                "tool-dispatch adoption, provider mutation authority, deployment, traffic "
-                "control, skill promotion, or FUSE source/runtime promotion."
+                "ConnectorGateway/FrontierControlPlane with an exact semantic currentness "
+                "contract. A caller-supplied currentness decision is not provider authority, "
+                "and this adapter does not query KDV itself. Without a trustworthy supplier, "
+                "the adapter deliberately executes a safe provider refresh instead of "
+                "durable stale reuse. It does not prove native ChatGPT tool-dispatch adoption, "
+                "provider mutation authority, deployment, traffic control, skill promotion, "
+                "or FUSE source/runtime promotion."
             ),
         }
         receipt = dict(base)
@@ -342,16 +410,19 @@ def execute_hosted_provider_readback(
     source_version: str,
     mission_currentness_ref: str,
     prove_singleflight: bool = False,
+    currentness_supplier: Callable[[], CurrentnessDecision] | None = None,
 ) -> tuple[dict[str, Any], dict[str, Any]]:
     return HostedProviderReadbackAdapter(
         state_path=state_path,
         source_version=source_version,
         mission_currentness_ref=mission_currentness_ref,
+        currentness_supplier=currentness_supplier,
     ).execute(reader, prove_singleflight=prove_singleflight)
 
 
 __all__ = [
     "HOST_ADAPTER_ID",
+    "HOST_CURRENTNESS_SUBJECT",
     "HOST_RECEIPT_SCHEMA",
     "HOST_SURFACE_ID",
     "HostedProviderReadbackAdapter",
