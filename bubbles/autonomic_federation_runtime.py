@@ -9,6 +9,7 @@ A thin execution lifecycle over existing Federation owners:
 - ProviderCellMesh: proof-adjusted provider selection and semantic readback
 - MissionProofPassport: mission evidence projection on the existing ledger
 - OwnerValueOptimizer: measured matched-cohort value decisions
+- AutonomicMissionSpine: non-bypassable stage receipts for dispatch/finality
 
 This module is not a background ChatGPT daemon and creates no provider identity,
 credential, IAM grant, billing authority, second scheduler, second memory root,
@@ -19,8 +20,10 @@ from dataclasses import asdict
 from pathlib import Path
 from typing import Any, Mapping, Sequence
 
+from federation.autonomic_mission_spine_v1 import SpineRunReceipt
 from federation.mission_ir import MissionIR
 from federation.sentinel_omega.owner_value_ingress import OwnerValueMissionRecord
+from federation.spine_host_binding_v1 import SpineHostBindingCourt
 from formation_omega.durable_mission_runtime_v1 import DurableMissionRuntimeV1
 from formation_omega.mission_convergence import ProofEntry, ProofStatus, WorkItem, WorkStatus
 
@@ -73,6 +76,7 @@ class BubblesAutonomicFederationRuntime:
         self.mesh = ProviderCellMesh(cells)
         self.passport = MissionProofPassport(self.durable)
         self.value = OwnerValueOptimizer(minimum_pairs=minimum_owner_value_pairs)
+        self.spine_binding = SpineHostBindingCourt()
 
     @staticmethod
     def _work_items() -> tuple[WorkItem, ...]:
@@ -86,7 +90,7 @@ class BubblesAutonomicFederationRuntime:
             WorkItem.create(
                 work_id=WORK_EXECUTION,
                 lane="provider",
-                objective="Dispatch through the best currently proven provider cell.",
+                objective="Dispatch through the best currently proven provider cell only after spine action admission.",
                 dependencies=(WORK_AUTHORITY,),
                 status=WorkStatus.PLANNED,
             ),
@@ -100,14 +104,14 @@ class BubblesAutonomicFederationRuntime:
             WorkItem.create(
                 work_id=WORK_PROOF,
                 lane="proof",
-                objective="Compile the mission proof passport without self-certification.",
+                objective="Compile the mission proof passport only after spine execution closure.",
                 dependencies=(WORK_READBACK,),
                 status=WorkStatus.PLANNED,
             ),
             WorkItem.create(
                 work_id=WORK_VALUE,
                 lane="value",
-                objective="Evaluate only measured matched owner-value cohorts.",
+                objective="Evaluate only measured owner value after spine outcome proof.",
                 dependencies=(WORK_PROOF,),
                 status=WorkStatus.PLANNED,
             ),
@@ -229,6 +233,26 @@ class BubblesAutonomicFederationRuntime:
     ) -> ProviderSelection:
         return self.mesh.select(mission, capability_id, health=health)
 
+    @staticmethod
+    def _provider_gate_receipt(mission: MissionIR, selection: ProviderSelection, state: str, reason: str) -> ProviderExecutionReceipt:
+        return ProviderExecutionReceipt(
+            schema="BUBBLES-OMEGA-PROVIDER-CELL-MESH-V1",
+            mission_id=mission.mission_id,
+            capability_id=selection.capability_id,
+            cell_id="",
+            provider="",
+            state=state,
+            operation_id="",
+            idempotency_key="",
+            transport_ok=False,
+            provider_native=False,
+            semantic_readback_verified=False,
+            effect_attempted=False,
+            effect_class=mission.effect_class,
+            provider_effect_authorized=False,
+            reason=reason,
+        )
+
     def execute_provider(
         self,
         mission: MissionIR,
@@ -238,7 +262,24 @@ class BubblesAutonomicFederationRuntime:
         payload: Mapping[str, Any],
         execute,
         readback,
+        spine_receipt: SpineRunReceipt,
+        action_id: str,
     ) -> ProviderExecutionReceipt:
+        binding = self.spine_binding.admit_action(mission, spine_receipt, action_id=action_id)
+        if not binding.admitted:
+            self.durable.update_work_status(
+                mission.mission_id,
+                WORK_EXECUTION,
+                WorkStatus.HELD,
+                result_refs=(f"spine-gate:{binding.receipt_digest}",),
+            )
+            return self._provider_gate_receipt(
+                mission,
+                selection,
+                "SPINE_GATED",
+                "AUTONOMIC_SPINE_ACTION_ADMISSION_REQUIRED:" + ",".join(binding.reasons),
+            )
+
         if selection.state != "SELECTED":
             self.durable.update_work_status(
                 mission.mission_id,
@@ -246,23 +287,7 @@ class BubblesAutonomicFederationRuntime:
                 WorkStatus.HELD,
                 result_refs=(f"provider-gate:{selection.reason}",),
             )
-            return ProviderExecutionReceipt(
-                schema="BUBBLES-OMEGA-PROVIDER-CELL-MESH-V1",
-                mission_id=mission.mission_id,
-                capability_id=selection.capability_id,
-                cell_id="",
-                provider="",
-                state="PROVIDER_GATED",
-                operation_id="",
-                idempotency_key="",
-                transport_ok=False,
-                provider_native=False,
-                semantic_readback_verified=False,
-                effect_attempted=False,
-                effect_class=mission.effect_class,
-                provider_effect_authorized=False,
-                reason=selection.reason,
-            )
+            return self._provider_gate_receipt(mission, selection, "PROVIDER_GATED", selection.reason)
 
         receipt = self.mesh.dispatch(
             mission,
@@ -276,7 +301,7 @@ class BubblesAutonomicFederationRuntime:
             mission.mission_id,
             PassportEventKind.PROVIDER_DISPATCH,
             state=receipt.state,
-            proof_refs=receipt.proof_refs,
+            proof_refs=receipt.proof_refs + (f"spine:{binding.receipt_digest}",),
             data={
                 "cell_id": receipt.cell_id,
                 "provider": receipt.provider,
@@ -285,6 +310,7 @@ class BubblesAutonomicFederationRuntime:
                 "cost_microunits": receipt.cost_microunits,
                 "latency_ms": receipt.latency_ms,
                 "provider_effect_authorized": receipt.provider_effect_authorized,
+                "spine_binding_receipt": binding.receipt_digest,
                 "reason": receipt.reason,
             },
             idempotency_key=f"DISPATCH:{receipt.idempotency_key}:{receipt.state}",
@@ -293,7 +319,7 @@ class BubblesAutonomicFederationRuntime:
         if receipt.state == "PROVIDER_SEMANTIC_READBACK_VERIFIED":
             refs = tuple(receipt.proof_refs) + tuple(
                 item for item in (receipt.result_ref, receipt.readback_ref, receipt.result_sha256) if item
-            )
+            ) + (f"spine:{binding.receipt_digest}",)
             self.durable.update_work_status(
                 mission.mission_id,
                 WORK_EXECUTION,
@@ -321,11 +347,12 @@ class BubblesAutonomicFederationRuntime:
                     "readback_ref": receipt.readback_ref,
                     "cost_microunits": receipt.cost_microunits,
                     "latency_ms": receipt.latency_ms,
+                    "spine_binding_receipt": binding.receipt_digest,
                 },
                 idempotency_key=f"READBACK:{receipt.idempotency_key}:{receipt.readback_ref}",
             )
             for axis, claim in (
-                ("execution", "Provider-native execution receipt bound to the mission."),
+                ("execution", "Provider-native execution receipt bound to the mission and AutonomicMissionSpine action admission."),
                 ("semantic_proof", "Provider-native semantic readback verified."),
                 ("independent_proof", "Readback route is distinct from source admission."),
             ):
@@ -360,11 +387,23 @@ class BubblesAutonomicFederationRuntime:
             )
         return receipt
 
-    def finalize_proof(self, mission_id: str) -> dict[str, Any]:
-        before = self.passport.snapshot(mission_id)
+    def finalize_proof(self, mission: MissionIR, *, spine_receipt: SpineRunReceipt) -> dict[str, Any]:
+        binding = self.spine_binding.admit_proof_finalization(mission, spine_receipt)
+        before = self.passport.snapshot(mission.mission_id)
+        if not binding.admitted:
+            self.durable.update_work_status(
+                mission.mission_id,
+                WORK_PROOF,
+                WorkStatus.HELD,
+                result_refs=(f"spine-gate:{binding.receipt_digest}",),
+            )
+            result = before.to_dict()
+            result["spine_binding_state"] = binding.state
+            result["spine_binding_reasons"] = list(binding.reasons)
+            return result
         if not before.authority_resolved or not before.semantic_readback_verified or before.hold_readback:
             self.durable.update_work_status(
-                mission_id,
+                mission.mission_id,
                 WORK_PROOF,
                 WorkStatus.HELD,
                 result_refs=("proof-gate:authority-or-semantic-readback",),
@@ -372,26 +411,27 @@ class BubblesAutonomicFederationRuntime:
             return before.to_dict()
 
         self.passport.record(
-            mission_id,
+            mission.mission_id,
             PassportEventKind.FINAL,
             state="VERIFIED",
-            proof_refs=before.proof_refs,
+            proof_refs=before.proof_refs + (f"spine:{binding.receipt_digest}",),
             data={
                 "authority_resolved": before.authority_resolved,
                 "semantic_readback_verified": before.semantic_readback_verified,
                 "external_effect_count": before.external_effect_count,
+                "spine_binding_receipt": binding.receipt_digest,
             },
-            idempotency_key=f"FINAL:{before.ledger_head_hash}",
+            idempotency_key=f"FINAL:{before.ledger_head_hash}:{binding.receipt_digest}",
         )
-        after = self.passport.snapshot(mission_id)
+        after = self.passport.snapshot(mission.mission_id)
         self.durable.update_work_status(
-            mission_id,
+            mission.mission_id,
             WORK_PROOF,
             WorkStatus.VERIFIED,
-            result_refs=(after.ledger_head_hash or "passport:verified",),
+            result_refs=(after.ledger_head_hash or "passport:verified", f"spine:{binding.receipt_digest}"),
         )
         self.durable.update_work_status(
-            mission_id,
+            mission.mission_id,
             WORK_VALUE,
             WorkStatus.READY,
         )
@@ -399,38 +439,86 @@ class BubblesAutonomicFederationRuntime:
 
     def evaluate_owner_value(
         self,
-        mission_id: str,
+        mission: MissionIR,
         records: Sequence[OwnerValueMissionRecord],
+        *,
+        spine_receipt: SpineRunReceipt,
     ) -> dict[str, Any]:
+        binding = self.spine_binding.admit_value_evaluation(mission, spine_receipt)
+        if not binding.admitted:
+            self.durable.update_work_status(
+                mission.mission_id,
+                WORK_VALUE,
+                WorkStatus.HELD,
+                result_refs=(f"spine-gate:{binding.receipt_digest}",),
+            )
+            return {
+                "state": "SPINE_GATED",
+                "owner_value_proven": False,
+                "spine_binding_receipt": binding.receipt_digest,
+                "spine_binding_reasons": list(binding.reasons),
+            }
         decision = self.value.evaluate(records)
         self.passport.record(
-            mission_id,
+            mission.mission_id,
             PassportEventKind.VALUE,
             state=decision.state,
-            proof_refs=decision.proof_refs,
+            proof_refs=decision.proof_refs + (f"spine:{binding.receipt_digest}",),
             data={
                 "measured_pair_count": decision.measured_pair_count,
                 "score": decision.score,
                 "champion": decision.champion,
                 "owner_value_proven": decision.owner_value_proven,
+                "spine_binding_receipt": binding.receipt_digest,
             },
-            idempotency_key=f"VALUE:{decision.state}:{decision.measured_pair_count}:{decision.score}",
+            idempotency_key=f"VALUE:{decision.state}:{decision.measured_pair_count}:{decision.score}:{binding.receipt_digest}",
         )
         if decision.state == "MEASURED_COHORT_EVALUATED":
             self.durable.update_work_status(
-                mission_id,
+                mission.mission_id,
                 WORK_VALUE,
-                WorkStatus.VERIFIED,
-                result_refs=decision.proof_refs or ("owner-value:measured",),
+                WorkStatus.READY,
+                result_refs=decision.proof_refs + (f"spine:{binding.receipt_digest}",),
             )
         else:
             self.durable.update_work_status(
-                mission_id,
+                mission.mission_id,
                 WORK_VALUE,
                 WorkStatus.HELD,
                 result_refs=("owner-value:data-gated",),
             )
-        return decision.to_dict()
+        result = decision.to_dict()
+        result["mission_value_finalized"] = False
+        result["spine_binding_receipt"] = binding.receipt_digest
+        return result
+
+    def finalize_owner_value(self, mission: MissionIR, *, spine_receipt: SpineRunReceipt) -> dict[str, Any]:
+        binding = self.spine_binding.admit_value_finalization(mission, spine_receipt)
+        passport = self.passport.snapshot(mission.mission_id)
+        if not binding.admitted:
+            self.durable.update_work_status(
+                mission.mission_id,
+                WORK_VALUE,
+                WorkStatus.HELD,
+                result_refs=(f"spine-gate:{binding.receipt_digest}",),
+            )
+            return {
+                "state": "SPINE_GATED",
+                "mission_value_finalized": False,
+                "spine_binding_reasons": list(binding.reasons),
+            }
+        self.durable.update_work_status(
+            mission.mission_id,
+            WORK_VALUE,
+            WorkStatus.VERIFIED,
+            result_refs=(f"spine:{binding.receipt_digest}",),
+        )
+        return {
+            "state": "MISSION_VALUE_FINALIZED",
+            "mission_value_finalized": True,
+            "owner_value_proven": passport.owner_value_proven,
+            "spine_binding_receipt": binding.receipt_digest,
+        }
 
     def status(self, mission_id: str) -> dict[str, Any]:
         projection = self.durable.project(mission_id)
@@ -456,6 +544,11 @@ class BubblesAutonomicFederationRuntime:
                 "provider_selection_is_provider_authority": False,
                 "proof_complete_is_owner_value": False,
                 "external_effect_requires_exact_authority_and_semantic_readback": True,
+                "provider_dispatch_requires_autonomic_spine_action_admission": True,
+                "proof_finalization_requires_autonomic_spine_execution_closure": True,
+                "owner_value_evaluation_requires_autonomic_spine_outcome_proof": True,
+                "mission_value_finalization_requires_autonomic_spine_value_observed": True,
+                "legacy_spine_bypass_flag_exists": False,
                 "second_scheduler_created": False,
                 "second_memory_root_created": False,
             },
