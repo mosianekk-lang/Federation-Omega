@@ -11,7 +11,7 @@ Core laws:
 """
 from __future__ import annotations
 
-from dataclasses import dataclass, field, replace
+from dataclasses import dataclass, replace
 from enum import Enum, IntEnum
 from hashlib import sha256
 import json
@@ -138,14 +138,16 @@ def propagate_evidence(
 ) -> EvidenceRef:
     """Create a downstream claim that can never exceed source admitted maturity."""
     source.validate()
-    requested = declared_maturity or source.admitted_maturity
+    source_proven = source.admitted_maturity
+    requested = declared_maturity or source_proven
+    requested = Maturity(min(requested, source_proven))
     return EvidenceRef(
         evidence_id=evidence_id,
         capability_id=source.capability_id,
         claim_kind=claim_kind,
         source_ref=source_ref,
         declared_maturity=requested,
-        source_maturity=source.admitted_maturity,
+        source_maturity=source_proven,
         fresh=source.fresh,
         independently_verified=False,
         metadata=(("derived_from", source.evidence_id), ("source_fingerprint", source.fingerprint)),
