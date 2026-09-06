@@ -11,17 +11,13 @@ from enum import Enum
 from hashlib import sha256
 import json
 
-from federation.autonomic_mission_spine_v1 import (
-    AutonomicMissionSpine,
-    SpineRunReceipt,
-    SpineStage,
-)
+from federation.autonomic_mission_spine_v1 import AutonomicMissionSpine, SpineRunReceipt, SpineStage
 from federation.cfbe_chat_hyperperformance_v1 import EffectClass
 from federation.mission_ir import MissionIR
 from federation.mission_outcome_value_court_v1 import MissionOutcomeState
 
 SCHEMA = "FUSE-SPINE-HOST-BINDING-V1"
-VERSION = "1.0.1"
+VERSION = "1.0.2"
 
 
 def _stable(value: object) -> str:
@@ -30,6 +26,15 @@ def _stable(value: object) -> str:
 
 def _digest(value: object) -> str:
     return "sha256:" + sha256(_stable(value).encode("utf-8")).hexdigest()
+
+
+def _mission_effect(mission: MissionIR) -> EffectClass:
+    return {
+        "NO_EFFECT": EffectClass.READ_ONLY,
+        "READ_ONLY": EffectClass.READ_ONLY,
+        "BOUNDED_EFFECT": EffectClass.INTERNAL_WRITE,
+        "CONSEQUENTIAL_EFFECT": EffectClass.EXTERNAL_EFFECT,
+    }[mission.effect_class]
 
 
 class HostBindingLevel(str, Enum):
@@ -98,8 +103,8 @@ class SpineHostBindingCourt:
         run: SpineRunReceipt,
         *,
         action_id: str,
-        expected_effect_class: EffectClass,
-        expected_target_scope: str,
+        expected_effect_class: EffectClass | None = None,
+        expected_target_scope: str = "",
         expected_provider: str = "",
     ) -> SpineHostBindingReceipt:
         mission.validate()
@@ -108,26 +113,27 @@ class SpineHostBindingCourt:
         if stage is None:
             reasons.append("SPINE_ACTIONS_ADMITTED_STAGE_REQUIRED")
         action = next((x for x in run.action_admissions if x.action_id == action_id), None)
+        effect = expected_effect_class or _mission_effect(mission)
+        provider = expected_provider
+        if not provider and len(mission.provider_allowlist) == 1:
+            provider = mission.provider_allowlist[0]
         if action is None:
             reasons.append("SPINE_EXACT_ACTION_ADMISSION_REQUIRED")
         else:
             if not action.admitted:
                 reasons.append("SPINE_ACTION_NOT_ADMITTED")
-            if action.effect_class is not expected_effect_class:
+            if action.effect_class is not effect:
                 reasons.append("SPINE_ACTION_EFFECT_CLASS_MISMATCH")
             if not action.target_scope:
                 reasons.append("SPINE_ACTION_TARGET_NOT_BOUND")
-            elif action.target_scope != expected_target_scope:
+            elif expected_target_scope and action.target_scope != expected_target_scope:
                 reasons.append("SPINE_ACTION_TARGET_MISMATCH")
-            if expected_provider:
+            if provider:
                 if not action.provider:
                     reasons.append("SPINE_ACTION_PROVIDER_NOT_BOUND")
-                elif action.provider != expected_provider:
+                elif action.provider != provider:
                     reasons.append("SPINE_ACTION_PROVIDER_MISMATCH")
-        return self._receipt(
-            mission, HostBindingLevel.ACTION_DISPATCH, action_id, run,
-            stage.snapshot_digest if stage else "", reasons,
-        )
+        return self._receipt(mission, HostBindingLevel.ACTION_DISPATCH, action_id, run, stage.snapshot_digest if stage else "", reasons)
 
     def admit_proof_finalization(self, mission: MissionIR, run: SpineRunReceipt) -> SpineHostBindingReceipt:
         mission.validate()
@@ -139,10 +145,7 @@ class SpineHostBindingCourt:
             reasons.append("SPINE_EXECUTION_CLOSURES_REQUIRED")
         elif any(not item.effect_verified for item in run.closures):
             reasons.append("SPINE_ALL_EFFECTS_NOT_VERIFIED")
-        return self._receipt(
-            mission, HostBindingLevel.PROOF_FINALIZATION, "", run,
-            stage.snapshot_digest if stage else "", reasons,
-        )
+        return self._receipt(mission, HostBindingLevel.PROOF_FINALIZATION, "", run, stage.snapshot_digest if stage else "", reasons)
 
     def admit_value_evaluation(self, mission: MissionIR, run: SpineRunReceipt) -> SpineHostBindingReceipt:
         mission.validate()
@@ -156,10 +159,7 @@ class SpineHostBindingCourt:
         elif run.outcome.state is MissionOutcomeState.HELD:
             reasons.append("SPINE_OUTCOME_HELD")
         qualifying = value_stage or stage
-        return self._receipt(
-            mission, HostBindingLevel.VALUE_EVALUATION, "", run,
-            qualifying.snapshot_digest if qualifying else "", reasons,
-        )
+        return self._receipt(mission, HostBindingLevel.VALUE_EVALUATION, "", run, qualifying.snapshot_digest if qualifying else "", reasons)
 
     def admit_value_finalization(self, mission: MissionIR, run: SpineRunReceipt) -> SpineHostBindingReceipt:
         mission.validate()
@@ -169,44 +169,22 @@ class SpineHostBindingCourt:
             reasons.append("SPINE_VALUE_OBSERVED_STAGE_REQUIRED")
         if run.outcome is None or not run.outcome.value_observed:
             reasons.append("SPINE_VALUE_OBSERVATION_REQUIRED")
-        return self._receipt(
-            mission, HostBindingLevel.VALUE_FINALIZATION, "", run,
-            stage.snapshot_digest if stage else "", reasons,
-        )
+        return self._receipt(mission, HostBindingLevel.VALUE_FINALIZATION, "", run, stage.snapshot_digest if stage else "", reasons)
 
     @staticmethod
-    def _receipt(
-        mission: MissionIR,
-        level: HostBindingLevel,
-        action_id: str,
-        run: SpineRunReceipt,
-        snapshot_digest: str,
-        reasons: list[str],
-    ) -> SpineHostBindingReceipt:
+    def _receipt(mission: MissionIR, level: HostBindingLevel, action_id: str, run: SpineRunReceipt, snapshot_digest: str, reasons: list[str]) -> SpineHostBindingReceipt:
         state = "HOST_BINDING_ADMITTED" if not reasons else "HOST_BINDING_HELD"
         material = {
-            "schema": SCHEMA,
-            "version": VERSION,
-            "mission_id": mission.mission_id,
-            "level": level.value,
-            "state": state,
-            "action_id": action_id,
-            "spine_run_digest": run.receipt_digest,
-            "snapshot": snapshot_digest,
+            "schema": SCHEMA, "version": VERSION, "mission_id": mission.mission_id,
+            "level": level.value, "state": state, "action_id": action_id,
+            "spine_run_digest": run.receipt_digest, "snapshot": snapshot_digest,
             "reasons": tuple(reasons),
         }
         return SpineHostBindingReceipt(
-            mission_id=mission.mission_id,
-            level=level,
-            state=state,
-            action_id=action_id,
-            spine_run_digest=run.receipt_digest,
-            qualifying_snapshot_digest=snapshot_digest,
-            reasons=tuple(reasons),
-            receipt_digest=_digest(material),
+            mission_id=mission.mission_id, level=level, state=state, action_id=action_id,
+            spine_run_digest=run.receipt_digest, qualifying_snapshot_digest=snapshot_digest,
+            reasons=tuple(reasons), receipt_digest=_digest(material),
         )
 
 
-__all__ = [
-    "SCHEMA", "VERSION", "HostBindingLevel", "SpineHostBindingReceipt", "SpineHostBindingCourt",
-]
+__all__ = ["SCHEMA", "VERSION", "HostBindingLevel", "SpineHostBindingReceipt", "SpineHostBindingCourt"]
