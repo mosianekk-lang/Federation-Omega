@@ -1,5 +1,5 @@
 {
-  "version": "1.0",
+  "version": "1.1",
   "timezone": "Africa/Johannesburg",
   "proof_rule": "DISPATCHED is not execution proof; completion requires readback or a proof receipt.",
   "tasks": [
@@ -122,6 +122,16 @@
       "state": "READY",
       "action": "Audit every EvidenceOps system, subsystem, AI agent and governed element for inherited full-project-control binding; automatically register missing elements and require identity, provider canary and semantic readback before PROVEN.",
       "proof_gate": "All build contracts and runtime manifests reference the canonical cloud capability plus current operator identity/canary/readback evidence"
+    },
+    {
+      "task_id": "EXT-014",
+      "title": "Strategic Secondary Brain continuous cognition",
+      "cadence": "hourly",
+      "priority": 100,
+      "state": "READY",
+      "action": "Reconcile new strategic signals into the FSED Strategic Signal Inbox; deduplicate and provenance-check; compile material deltas into falsifiable hypotheses, calibrated forecasts, opportunity records and proof-carrying action packets; automatically queue only A0/A1 reversible work and hold A2 effects for exact authority; require semantic readback and forecast calibration.",
+      "proof_gate": "StrategicPacket fingerprint plus exact private-ledger readback and calibration receipt",
+      "privacy_gate": "Do not publish competitor twins, crown-jewel forecasts, strategic reserve or private market intelligence into the public repository"
     }
   ]
 }
