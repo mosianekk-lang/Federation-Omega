@@ -206,6 +206,8 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
     def test_hosted_pull_request_honours_active_repository_lease(self):
         if not AIRLOCK_WORKFLOW.exists():
             self.skipTest("workflow-free export excludes repository coordination enforcement surface")
+        # A source update creates a fresh pull_request event, ensuring this hosted
+        # integration court evaluates current PR claim metadata rather than stale rerun payload.
         assessment = evaluate_hosted_pull_request(ROOT)
         self.assertEqual(
             "PASS",

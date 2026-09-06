@@ -33,14 +33,14 @@ class AirlockStaleBaseGuardTests(unittest.TestCase):
         self.assertIn("STALE_BASE_HEAD_REJECTED", self.text)
         self.assertIn("HEAD_ANCESTRY_VERIFIED", self.text)
 
-    def test_exact_comparison_objects_are_fetched_before_ancestry(self) -> None:
+    def test_exact_comparison_objects_are_verified_without_reshallowing_history(self) -> None:
         fetch_objects = self.text.index("name: Fetch exact comparison objects")
         ancestry = self.text.index("name: Enforce pull-request head ancestry")
-        self.assertIn(
-            'git fetch --no-tags --depth=1 origin "$BASE_SHA" "$HEAD_SHA"',
-            self.text,
-        )
+        self.assertIn('git fetch --no-tags origin "$BASE_SHA" "$HEAD_SHA"', self.text)
+        self.assertNotIn("git fetch --no-tags --depth=1 origin", self.text)
         self.assertIn('git cat-file -e "${HEAD_SHA}^{commit}"', self.text)
+        self.assertIn('git rev-parse --is-shallow-repository', self.text)
+        self.assertIn("AIRLOCK_FULL_HISTORY_REQUIRED", self.text)
         self.assertLess(fetch_objects, ancestry)
 
     def test_ancestry_runs_before_setup_and_regression_suites(self) -> None:
@@ -68,9 +68,9 @@ class AirlockStaleBaseGuardTests(unittest.TestCase):
         self.assertLess(setup_python, install)
         self.assertLess(install, first_tests)
 
-    def test_checkout_is_bounded_without_credentials(self) -> None:
-        self.assertIn("fetch-depth: 2", self.text)
-        self.assertNotIn("fetch-depth: 0", self.text)
+    def test_checkout_preserves_full_history_without_credentials(self) -> None:
+        self.assertIn("fetch-depth: 0", self.text)
+        self.assertNotIn("fetch-depth: 2", self.text)
         self.assertIn("persist-credentials: false", self.text)
 
     def test_early_failure_does_not_create_secondary_artifact_failure(self) -> None:
