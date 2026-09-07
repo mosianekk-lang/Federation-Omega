@@ -6,11 +6,18 @@ from bubbles.ai_bot_multistream_host_v1 import run_host_canary
 from bubbles.master_bible_portfolio_host_v1 import run_host_canary as run_portfolio_host_canary
 from bubbles.fuse_gcp_cloud_service_host_v1 import run_host_canary as run_fuse_gcp_host_canary
 from federation.bubbles_frontier_hyperperformance import WorkCell
+from federation.fuse_mbmpc_pilf_closure_bridge_v1 import PStage
 from benchmarking.cfbe_omega.bubbles_work_graph_adapter_v1 import (
     BubblesWorkNode,
     compile_work_graph,
     plan_bubbles_work_graph,
     shadow_place_bubbles_work,
+)
+from tests.test_bubbles_mbmpc_pilf_host_binding_v1 import (
+    _contract as _of50_contract,
+    _mission as _of50_mission,
+    _of50_request,
+    _runtime as _of50_runtime,
 )
 
 
@@ -207,6 +214,22 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertFalse(receipt["provider_execution_attempted"])
         self.assertFalse(receipt["external_effect"])
         self.assertEqual("NONE", receipt["authority_delta"])
+
+    def test_current_canonical_of50_is_load_bearing_in_existing_bubbles_contract(self):
+        result = _of50_runtime().finalize_mission_completion(
+            _of50_mission(),
+            spine_receipt=object(),
+            production_contract=_of50_contract(),
+            current_p_stage=PStage.P16_VALUE_OBSERVED,
+            satisfied_terminal_predicates=("TP-FINAL",),
+            production_stage_evidence_refs=("provider:production-stage:P16",),
+            of50_request=_of50_request(),
+        )
+        self.assertEqual("MISSION_COMPLETION_VERIFIED", result["state"])
+        self.assertTrue(result["mission_value_finalized"])
+        self.assertTrue(result["of50_receipt"]["completion_verified"])
+        self.assertTrue(result["truth_boundary"]["of50_current_canonical_completion_required"])
+        self.assertTrue(result["truth_boundary"]["of50_and_mbmpc_pilf_finality_are_conjunctive"])
 
     def test_fuse_gcp_is_hosted_by_existing_bubbles_contract(self):
         receipt = run_fuse_gcp_host_canary(source_ref="test:bubbles-command-bus-contract")
