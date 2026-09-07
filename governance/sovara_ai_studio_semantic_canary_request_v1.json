@@ -1,13 +1,21 @@
 {
   "schema": "SOVARA_AI_STUDIO_SEMANTIC_CANARY_REQUEST_V1",
-  "request_id": "SOVARA-AISTUDIO-GREEN-20260905-003",
+  "request_id": "SOVARA-AISTUDIO-GREEN-20260907-004",
   "execute": true,
   "owner_directive": "ALL_SOVARA_AI_SEATS_GREEN",
   "project_id": "sov-hybrid-suite",
   "project_number": "257649435135",
-  "provider": "GOOGLE_GEMINI_DEVELOPER_API",
-  "credential_mode": "GEMINI_AUTHORIZATION_KEY_ENV_SECRET",
-  "credential_reference": "GITHUB_ACTIONS_SECRET:GEMINI_API_KEY",
+  "provider": "GOOGLE_GEMINI_MULTI_ROUTE_CANARY",
+  "credential_mode": "GOOGLE_WIF_SECRET_MANAGER_TRANSIENT_ACCESS",
+  "credential_reference": "gcp_secret_name:gemini-api-key",
+  "credential_secret_name": "gemini-api-key",
+  "resolution_surface": "google_cloud",
+  "workload_identity_provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+  "service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+  "preferred_execution_order": [
+    "VERTEX_OAUTH_ADC",
+    "DEVELOPER_API_SECRET_MANAGER"
+  ],
   "case_data_allowed": false,
   "provider_mutation_allowed": false,
   "iam_mutation_allowed": false,
@@ -20,8 +28,8 @@
     "discovery_required": true,
     "require_generate_content": true,
     "preferred_models": [
-      "gemini-3.8-flash",
-      "gemini-3.7-flash",
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite",
       "gemini-flash-latest"
     ],
     "allow_dynamic_fallback": true,
@@ -33,10 +41,34 @@
       "aqa"
     ]
   },
+  "vertex_oauth_challenger": {
+    "enabled": true,
+    "credential_mode": "GOOGLE_WIF_OAUTH_ACCESS_TOKEN",
+    "location": "global",
+    "publisher": "google",
+    "preferred_models": [
+      "gemini-2.5-flash",
+      "gemini-2.5-flash-lite"
+    ],
+    "service_usage_permissions_required": [
+      "serviceusage.services.get",
+      "serviceusage.services.use"
+    ],
+    "vertex_permissions_required": [
+      "aiplatform.publisherModels.get",
+      "aiplatform.publisherModels.predict"
+    ]
+  },
+  "developer_api_secret_manager_fallback": {
+    "enabled": true,
+    "credential_mode": "GOOGLE_WIF_SECRET_MANAGER_TRANSIENT_ACCESS",
+    "credential_reference": "gcp_secret_name:gemini-api-key",
+    "credential_secret_name": "gemini-api-key"
+  },
   "semantic_canary": {
     "prompt_shape": "RETURN_EXACT_NONCE_ONLY",
     "temperature": 0,
-    "max_output_tokens": 128,
+    "max_output_tokens": 32,
     "required_receipt_fields": [
       "semantic_verified",
       "selected_model",
@@ -49,6 +81,6 @@
       "provider_mutation_performed"
     ]
   },
-  "promotion_rule": "Provider-semantic GREEN only after an exact zero-data nonce response through the authorization-key route. Model discovery is mandatory before selection; no stale hard-coded model may be treated as availability proof.",
-  "truth_boundary": "This request authorizes one bounded zero-case-data Gemini Developer API semantic canary using the pre-existing runtime-injected GEMINI_API_KEY reference. The workflow must never print, persist, hash, echo, return, or otherwise expose the credential value. It does not authorize API-key creation or rotation, secret access outside the injected runtime secret, IAM/WIF mutation, secret mutation, deployment, production traffic, private/case data, external communication, or unbounded provider spend."
+  "promotion_rule": "Provider-semantic GREEN only after an exact zero-data nonce response through the strongest currently authorized route, preferring Vertex AI OAuth/ADC and retaining the existing WIF-authenticated Secret Manager Developer API path as fallback when Vertex cannot be attempted. Model discovery/readback is mandatory before selection; no stale hard-coded model may be treated as availability proof.",
+  "truth_boundary": "This request authorizes one bounded zero-case-data Gemini semantic canary using the existing WIF-authenticated runtime only. Prefer a read-only Vertex AI OAuth/ADC preflight plus one exact nonce request when current serviceusage and publisher-model permissions permit it. Preserve any exact missing Vertex permission fail-closed without widening IAM. Retain the existing WIF-authenticated Google Secret Manager reference `gemini-api-key` only as a separate fallback challenger when the preferred Vertex route cannot be attempted. The workflow must never print, persist, hash, echo, return, or otherwise expose the credential value or OAuth bearer token. It does not authorize API-key creation or rotation, IAM/WIF mutation, secret mutation, deployment, production traffic, private/case data, external communication, or unbounded provider spend."
 }
