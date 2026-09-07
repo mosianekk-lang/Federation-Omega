@@ -11,10 +11,11 @@ A thin execution lifecycle over existing Federation owners:
 - OwnerValueOptimizer: measured matched-cohort value decisions
 - AutonomicMissionSpine: non-bypassable stage receipts for dispatch/finality
 - MissionEvolutionClosureBridge: MBMPC production + PILF learning debt finality
+- OF50ACEKernel: current-canonical mission-completion/terminal truth court
 
 This module is not a background ChatGPT daemon and creates no provider identity,
 credential, IAM grant, billing authority, second scheduler, second memory root,
-second proof plane, or replacement value court.
+second proof plane, replacement value court, or replacement OF50 controller.
 """
 
 from dataclasses import asdict
@@ -26,6 +27,7 @@ from federation.fuse_mbmpc_pilf_closure_bridge_v1 import (
     LearningEvidence, MissionEvolutionClosureBridge, MissionProductionContract, PStage,
 )
 from federation.mission_ir import MissionIR
+from federation.of50_ace_v1 import OF50ACEKernel, OF50CycleRequest
 from federation.sentinel_omega.owner_value_ingress import OwnerValueMissionRecord
 from federation.spine_host_binding_v1 import SpineHostBindingCourt
 from formation_omega.durable_mission_runtime_v1 import DurableMissionRuntimeV1
@@ -62,6 +64,7 @@ class BubblesAutonomicFederationRuntime:
         self.value = OwnerValueOptimizer(minimum_pairs=minimum_owner_value_pairs)
         self.spine_binding = SpineHostBindingCourt()
         self.production_learning = MissionEvolutionClosureBridge()
+        self.of50 = OF50ACEKernel()
 
     @staticmethod
     def _work_items() -> tuple[WorkItem, ...]:
@@ -215,6 +218,13 @@ class BubblesAutonomicFederationRuntime:
             "mission_value_finalized":False,"owner_value_proven":passport.owner_value_proven,
             "spine_binding_receipt":binding.receipt_digest}
 
+    @staticmethod
+    def _of50_record(receipt) -> dict[str, Any]:
+        record = asdict(receipt)
+        record["decision"] = receipt.decision.value
+        record["executor_state"] = receipt.executor_state.value
+        return record
+
     def finalize_mission_completion(
         self,
         mission: MissionIR,
@@ -224,6 +234,7 @@ class BubblesAutonomicFederationRuntime:
         current_p_stage: PStage,
         satisfied_terminal_predicates: Sequence[str],
         production_stage_evidence_refs: Sequence[str],
+        of50_request: OF50CycleRequest | None = None,
         learning_evidence: Sequence[LearningEvidence] = (),
     ) -> dict[str, Any]:
         binding = self.spine_binding.admit_value_finalization(mission, spine_receipt)
@@ -242,19 +253,40 @@ class BubblesAutonomicFederationRuntime:
         if value_item is None or value_item.status is not WorkStatus.VERIFIED:
             return {"state":"PRODUCTION_LEARNING_GATED","mission_value_finalized":False,
                 "reasons":["OWNER_VALUE_FINALIZATION_REQUIRED"]}
+
+        if of50_request is None:
+            return {"state":"OF50_GATED","mission_value_finalized":False,
+                "reasons":["OF50_CURRENT_CANONICAL_RECEIPT_REQUIRED"],
+                "truth_boundary":{"of50_current_canonical_completion_required":True}}
+        if of50_request.mission_id != mission.mission_id:
+            return {"state":"OF50_GATED","mission_value_finalized":False,
+                "reasons":["OF50_MISSION_ID_MISMATCH"],
+                "truth_boundary":{"of50_current_canonical_completion_required":True}}
+        of50_receipt = self.of50.evaluate(of50_request)
+        of50_record = self._of50_record(of50_receipt)
+        if not of50_receipt.completion_verified:
+            return {"state":"OF50_GATED","mission_value_finalized":False,
+                "reasons":["OF50_CURRENT_CANONICAL_COMPLETION_NOT_VERIFIED"],
+                "of50_receipt":of50_record,
+                "truth_boundary":{"of50_current_canonical_completion_required":True}}
+
         closure = self.production_learning.evaluate(
             contract=production_contract,
             current_p_stage=current_p_stage,
             satisfied_terminal_predicates=satisfied_terminal_predicates,
             learning_evidence=learning_evidence,
         )
+        done_allowed = bool(of50_receipt.completion_verified and closure.done_allowed)
         return {
-            "state":"MISSION_COMPLETION_VERIFIED" if closure.done_allowed else "PRODUCTION_LEARNING_GATED",
-            "mission_value_finalized":closure.done_allowed,
+            "state":"MISSION_COMPLETION_VERIFIED" if done_allowed else "PRODUCTION_LEARNING_GATED",
+            "mission_value_finalized":done_allowed,
+            "of50_receipt":of50_record,
             "production_learning_receipt":asdict(closure),
             "production_stage_evidence_refs":list(stage_refs),
             "spine_binding_receipt":binding.receipt_digest,
             "truth_boundary":{
+                "of50_current_canonical_completion_required":True,
+                "of50_and_mbmpc_pilf_finality_are_conjunctive":True,
                 "production_stage_evidence_consumed_not_self_certified":True,
                 "learning_propagation_is_receiver_adoption":False,
             },
@@ -273,6 +305,7 @@ class BubblesAutonomicFederationRuntime:
                 "proof_finalization_requires_autonomic_spine_execution_closure":True,
                 "owner_value_evaluation_requires_autonomic_spine_outcome_proof":True,
                 "owner_value_finalization_requires_autonomic_spine_value_observed":True,
+                "mission_completion_requires_current_canonical_of50":True,
                 "mission_completion_requires_mbmpc_pilf_closure":True,
                 "production_stage_requires_external_evidence_refs":True,
                 "legacy_spine_bypass_flag_exists":False,"second_scheduler_created":False,"second_memory_root_created":False}}
