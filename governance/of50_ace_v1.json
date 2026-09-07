@@ -1,0 +1,52 @@
+{
+  "schema": "FUSE-OF50-ACE-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "capability_id": "FUSE-OF50-ACE-V1",
+  "canonical_name": "FUSE Ω — OMEGA FORGE 50 AUTONOMOUS COMPLETION ENGINE",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "canonical_contract": {
+    "drive_id": "1h2-Xutm8AJ1Ic1cBdShoJzizs-LwquL0VjuYewt3VYU",
+    "marker": "[[FUSE-OF50-ACE-V1-20260907]]",
+    "integration_marker": "[[FUSE-OH50-AASK-ALPHA-OMEGA-FORMATION-INTEGRATION-20260907]]"
+  },
+  "composition": [
+    "OWNER_PROTECTION",
+    "AAREK",
+    "OH50_50_HORIZON_PREPASS",
+    "FORMATION_INNOVATION",
+    "ALPHA_TO_OMEGA_IF_IMPLEMENTATION_REQUIRED",
+    "EXECUTION",
+    "ACTION_SPECIFIC_SEMANTIC_READBACK",
+    "FAILURE_WIN_AND_ROUTE_MEMORY_LEARNING",
+    "MISSION_GENOME_IF_REUSABLE_WIN",
+    "OH50_RESCAN",
+    "MISSION_RECOMPILE",
+    "COMPLETE_VERIFIED"
+  ],
+  "role_separation": {
+    "OH50": "FORESIGHT_AND_SPECIALIST_FORMATION_ONLY",
+    "FORMATION_INNOVATION": "COMPETING_ROUTE_AND_CAPABILITY_HYPOTHESES_REUSE_VS_BUILD_FALSIFICATION",
+    "ALPHA_TO_OMEGA": "IMPLEMENTATION_LIFECYCLE",
+    "PROOFOS": "ACTION_SPECIFIC_PROOF_AND_ANTI_PROMOTION",
+    "FDOF_CHATBRIDGE": "COORDINATION_AND_CONTINUITY"
+  },
+  "must_not_create": ["PARALLEL_FOUNDRY", "PARALLEL_AUTHORITY_PLANE", "PARALLEL_TRUTH_STORE", "PARALLEL_PROOF_PLANE", "PARALLEL_SCHEDULER", "PARALLEL_MEMORY_ROOT", "UNPROVEN_PROVIDER_RUNTIME"],
+  "regression_requirements": [
+    "SILENT_OH50_BYPASS_FAILS",
+    "SILENT_FORMATION_BYPASS_FAILS",
+    "ALPHA_TO_OMEGA_BYPASS_WHEN_IMPLEMENTATION_REQUIRED_FAILS",
+    "OH50_PARALLEL_FOUNDRY_FAILS",
+    "SOURCE_OR_CI_AS_PROVIDER_RUNTIME_FAILS",
+    "UNCHANGED_FAILED_ROUTE_REPLAY_FAILS",
+    "MACHINE_RESOLVABLE_OWNER_OFFLOAD_FAILS",
+    "PREMATURE_COMPLETION_FAILS",
+    "MISSION_GENOME_REQUIRED_AFTER_REUSABLE_WIN",
+    "AUTHORITY_AND_PROOF_BOUNDARIES_CANNOT_WIDEN"
+  ],
+  "implementation": "federation/of50_ace_v1.py",
+  "formation_adapter": "evidenceops/innovation_engine/of50_adapter.py",
+  "alpha_omega_adapter": "systems/alpha-omega-turnkey/src/alpha_omega/of50_adapter.py",
+  "tests": "tests/test_of50_ace_v1.py",
+  "truth_boundary": "Source and CI prove deterministic composition semantics only. Provider acknowledgement, execution receipt, semantic readback, deployment, value, and operational maturity require independent provider/runtime proof."
+}
