@@ -5,6 +5,9 @@ memory root, scheduler, authority plane, runtime, provider execution, or adoptio
 It compiles supplied production and learning evidence into a deterministic closure
 receipt so an existing FUSE host can prevent mission completion when required
 production or learning/adoption debt remains.
+
+Repository admission is separately coordinated by FDOF. The module records the
+claim schema only as provenance metadata; it does not acquire or interpret leases.
 """
 from __future__ import annotations
 
@@ -16,6 +19,7 @@ from typing import Iterable, Sequence
 
 SCHEMA = "FUSE-MBMPC-PILF-CLOSURE-BRIDGE-V1"
 VERSION = "1.0.0"
+COORDINATION_CLAIM_SCHEMA = "FEDERATION_COORDINATION_V1"
 
 
 class PStage(IntEnum):
