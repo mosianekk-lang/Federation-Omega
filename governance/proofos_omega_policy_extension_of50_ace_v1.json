@@ -1,0 +1,52 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/of50_ace_v1.py",
+        "evidenceops/innovation_engine/of50_adapter.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/of50_adapter.py",
+        "tests/test_of50_ace_v1.py",
+        "governance/of50_ace_v1.json",
+        "governance/proofos_omega_policy_extension_of50_ace_v1.json"
+      ],
+      "reason": "FUSE_OF50_ACE_MATERIAL_MISSION_ANTI_BYPASS_AND_PROOF_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_OF50_ACE_V1",
+      "patterns": [
+        "federation/of50_ace_v1.py",
+        "evidenceops/innovation_engine/of50_adapter.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/of50_adapter.py",
+        "tests/test_of50_ace_v1.py",
+        "governance/of50_ace_v1.json",
+        "governance/proofos_omega_policy_extension_of50_ace_v1.json"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "of50_ace_v1",
+      "kind": "unittest_glob",
+      "target": "test_of50_ace_v1.py",
+      "patterns": [
+        "federation/of50_ace_v1.py",
+        "evidenceops/innovation_engine/of50_adapter.py",
+        "systems/alpha-omega-turnkey/src/alpha_omega/of50_adapter.py",
+        "tests/test_of50_ace_v1.py",
+        "governance/of50_ace_v1.json",
+        "governance/proofos_omega_policy_extension_of50_ace_v1.json"
+      ],
+      "subsystems": ["FUSE_OF50_ACE_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
