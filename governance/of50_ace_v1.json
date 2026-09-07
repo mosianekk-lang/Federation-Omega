@@ -1,13 +1,15 @@
 {
   "schema": "FUSE-OF50-ACE-GOVERNANCE-V1",
-  "version": "1.0.0",
-  "capability_id": "FUSE-OF50-ACE-V1",
+  "version": "1.1.0",
+  "capability_id": "FUSE-OF50-ACE-V1.1",
+  "legacy_capability_id": "FUSE-OF50-ACE-V1",
   "canonical_name": "FUSE Ω — OMEGA FORGE 50 AUTONOMOUS COMPLETION ENGINE",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect": false,
   "canonical_contract": {
     "drive_id": "1h2-Xutm8AJ1Ic1cBdShoJzizs-LwquL0VjuYewt3VYU",
-    "marker": "[[FUSE-OF50-ACE-V1-20260907]]",
+    "marker": "[[FUSE-OF50-ACE-V1.1-TERMINAL-PREDICATE-INTERLOCK-20260907]]",
+    "legacy_marker": "[[FUSE-OF50-ACE-V1-20260907]]",
     "integration_marker": "[[FUSE-OH50-AASK-ALPHA-OMEGA-FORMATION-INTEGRATION-20260907]]"
   },
   "composition": [
@@ -16,6 +18,9 @@
     "OH50_50_HORIZON_PREPASS",
     "FORMATION_INNOVATION",
     "ALPHA_TO_OMEGA_IF_IMPLEMENTATION_REQUIRED",
+    "TERMINAL_PREDICATE_LEDGER",
+    "EXECUTOR_AVAILABILITY_GATE",
+    "EXECUTOR_ACQUISITION_IF_REQUIRED",
     "EXECUTION",
     "ACTION_SPECIFIC_SEMANTIC_READBACK",
     "FAILURE_WIN_AND_ROUTE_MEMORY_LEARNING",
@@ -24,6 +29,34 @@
     "MISSION_RECOMPILE",
     "COMPLETE_VERIFIED"
   ],
+  "terminal_predicate_policy": {
+    "completion_rule": "ALL_REQUIRED_TERMINAL_PREDICATES_TRUE",
+    "executor_gate": "CALLABLE_NO_EFFECT_EXECUTION_PLUS_EXACT_IDENTITY_PLUS_ACTION_SPECIFIC_READBACK",
+    "causal_progress_priority": "EXPECTED_TERMINAL_PREDICATE_DELTA_FIRST",
+    "zero_delta_action_family_threshold": 2,
+    "progress_narration_requires": [
+      "TERMINAL_PREDICATE_CHANGED",
+      "PREVIOUSLY_IMPOSSIBLE_TERMINAL_ACTION_BECAME_CALLABLE",
+      "MATERIAL_NEW_EVIDENCE_CHANGED_OPTIMAL_ROUTE"
+    ],
+    "non_progress_evidence": [
+      "CONTROL_METADATA",
+      "QUEUE",
+      "SCHEDULE",
+      "SOURCE",
+      "CI",
+      "HEARTBEAT",
+      "GENERIC_HTTP"
+    ]
+  },
+  "strategic_gemini_reference_predicates": [
+    "GEM-TP-01:executor_callable",
+    "GEM-TP-02:provider_invoked",
+    "GEM-TP-03:provider_acknowledged",
+    "GEM-TP-04:substantive_response_present",
+    "GEM-TP-05:provider_receipt_present",
+    "GEM-TP-06:semantic_readback_verified"
+  ],
   "role_separation": {
     "OH50": "FORESIGHT_AND_SPECIALIST_FORMATION_ONLY",
     "FORMATION_INNOVATION": "COMPETING_ROUTE_AND_CAPABILITY_HYPOTHESES_REUSE_VS_BUILD_FALSIFICATION",
@@ -31,7 +64,15 @@
     "PROOFOS": "ACTION_SPECIFIC_PROOF_AND_ANTI_PROMOTION",
     "FDOF_CHATBRIDGE": "COORDINATION_AND_CONTINUITY"
   },
-  "must_not_create": ["PARALLEL_FOUNDRY", "PARALLEL_AUTHORITY_PLANE", "PARALLEL_TRUTH_STORE", "PARALLEL_PROOF_PLANE", "PARALLEL_SCHEDULER", "PARALLEL_MEMORY_ROOT", "UNPROVEN_PROVIDER_RUNTIME"],
+  "must_not_create": [
+    "PARALLEL_FOUNDRY",
+    "PARALLEL_AUTHORITY_PLANE",
+    "PARALLEL_TRUTH_STORE",
+    "PARALLEL_PROOF_PLANE",
+    "PARALLEL_SCHEDULER",
+    "PARALLEL_MEMORY_ROOT",
+    "UNPROVEN_PROVIDER_RUNTIME"
+  ],
   "regression_requirements": [
     "SILENT_OH50_BYPASS_FAILS",
     "SILENT_FORMATION_BYPASS_FAILS",
@@ -42,11 +83,18 @@
     "MACHINE_RESOLVABLE_OWNER_OFFLOAD_FAILS",
     "PREMATURE_COMPLETION_FAILS",
     "MISSION_GENOME_REQUIRED_AFTER_REUSABLE_WIN",
-    "AUTHORITY_AND_PROOF_BOUNDARIES_CANNOT_WIDEN"
+    "AUTHORITY_AND_PROOF_BOUNDARIES_CANNOT_WIDEN",
+    "TERMINAL_OBJECTIVE_EXECUTION_SURFACE_MISMATCH",
+    "AVAILABLE_TOOL_BIAS",
+    "CONTROL_PLANE_PROGRESS_SUBSTITUTION",
+    "PROGRESS_PROOF_INTERLOCK_FAILURE",
+    "ZERO_DELTA_ACTION_FAMILY_REPLAY",
+    "NARRATION_WITHOUT_CAUSAL_PROGRESS",
+    "EXECUTOR_ACQUISITION_BYPASS"
   ],
   "implementation": "federation/of50_ace_v1.py",
   "formation_adapter": "evidenceops/innovation_engine/of50_adapter.py",
   "alpha_omega_adapter": "systems/alpha-omega-turnkey/src/alpha_omega/of50_adapter.py",
   "tests": "tests/test_of50_ace_v1.py",
-  "truth_boundary": "Source and CI prove deterministic composition semantics only. Provider acknowledgement, execution receipt, semantic readback, deployment, value, and operational maturity require independent provider/runtime proof."
+  "truth_boundary": "Source and CI prove deterministic composition and terminal-predicate semantics only. Provider acknowledgement, execution receipt, substantive response, semantic readback, deployment, value, and operational maturity require independent provider/runtime proof."
 }
