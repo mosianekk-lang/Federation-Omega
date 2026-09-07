@@ -5,19 +5,18 @@ owner time and mission completion. It composes existing FUSE/ChatGov/Failure-to-
 semantics; it does not create a scheduler, authority plane, proof store, memory root,
 or provider runtime.
 
-The guard exists to make several failure-prevention rules machine-checkable:
+The guard makes failure-prevention rules machine-checkable, including:
+* dependency-scoped blocker radius and automatic safe-lane continuation;
+* immediate work before unrequested timer deferral;
+* changed-predicate retry and frozen build epochs;
+* no machine-resolvable owner offload;
+* owner-rescue prevention binding;
+* stale mission reconciliation;
+* completion only after required outcomes/lanes are proven; and
+* PRE_OWNER_PROMPT / PRE_FINAL_RESPONSE interception of excuse-shaped output or
+  platform-fault offload while safe materially different machine routes remain.
 
-* a blocker may stop only its lane and dependency descendants;
-* safe independent work must continue automatically;
-* immediate work may not be deferred to a timer merely because another lane is held;
-* an unchanged failed route may not be retried without a changed failure predicate;
-* a frozen source candidate may not be mutated while its admission court is active;
-* machine-resolvable work may not be handed back to the owner;
-* an owner rescue of a machine-detectable failure requires a prevention binding;
-* stale mission pointers must be reconciled before continuation;
-* completion may be claimed only after required outcomes and required lanes are proven.
-
-This module is effect-free. It only evaluates supplied state and emits a deterministic
+This module is effect-free. It evaluates supplied state and emits a deterministic
 receipt. Host enforcement is a separate proof dimension.
 """
 
@@ -27,11 +26,11 @@ from dataclasses import dataclass, field
 from enum import Enum
 from hashlib import sha256
 import json
-from typing import Iterable, Mapping, Sequence
+from typing import Mapping, Sequence
 
 
 SCHEMA = "FUSE-OWNER-PROTECTION-GUARD-V1"
-VERSION = "1.0.0"
+VERSION = "1.3.0"
 
 
 class LaneState(str, Enum):
@@ -51,6 +50,8 @@ class GuardDecision(str, Enum):
     HOLD_BUILD_EPOCH = "HOLD_BUILD_EPOCH"
     RECONCILE_MISSION_POINTER = "RECONCILE_MISSION_POINTER"
     PREVENTION_BINDING_REQUIRED = "PREVENTION_BINDING_REQUIRED"
+    INTERCEPT_ASSISTANT_OUTPUT = "INTERCEPT_ASSISTANT_OUTPUT"
+    ALLOW_STATUS_ONLY = "ALLOW_STATUS_ONLY"
     OWNER_DECISION_REQUIRED = "OWNER_DECISION_REQUIRED"
     BLOCKED_IRREDUCIBLY = "BLOCKED_IRREDUCIBLY"
     ALLOW_VERIFIED_COMPLETE = "ALLOW_VERIFIED_COMPLETE"
@@ -110,6 +111,17 @@ class OwnerProtectionSnapshot:
     exhaustion_evidence_ref: str = ""
     build_epoch: BuildEpochState = field(default_factory=BuildEpochState)
 
+    # v1.3 output-protection inputs. These are supplied by routed hosts/controllers;
+    # the guard does not infer provider authority or call providers itself.
+    owner_prompt_proposed: bool = False
+    status_only_requested: bool = False
+    proposed_owner_message: str = ""
+    assistant_excuse_signals: tuple[str, ...] = ()
+    platform_fault_signals: tuple[str, ...] = ()
+    known_safe_route_substitutions: tuple[str, ...] = ()
+    attempted_route_substitutions: tuple[str, ...] = ()
+    machine_routes_exhausted: bool = False
+
 
 @dataclass(frozen=True, slots=True)
 class OwnerProtectionReceipt:
@@ -137,7 +149,22 @@ def _digest(value: object) -> str:
 
 
 class OwnerProtectionGuard:
-    """Fail-closed owner-burden and mission-continuation guard."""
+    """Fail-closed owner-burden, continuation, and output-interception guard."""
+
+    _EXCUSE_PHRASES = (
+        "you need to",
+        "need you to",
+        "please retry",
+        "try again later",
+        "i cannot",
+        "i can't",
+        "cannot complete",
+        "can't complete",
+        "waiting for",
+        "blocked by",
+        "not available",
+        "unavailable",
+    )
 
     def evaluate(self, snapshot: OwnerProtectionSnapshot) -> OwnerProtectionReceipt:
         self._validate(snapshot)
@@ -236,16 +263,93 @@ class OwnerProtectionGuard:
         if snapshot.completion_claim_requested and not completion_verified:
             violations.append("PREMATURE_COMPLETION_CLAIM")
 
-        # Decision priority is intentional: identity and build-epoch integrity precede
-        # ordinary continuation; then prevention/ready work; completion comes only
-        # after all machine-resolvable work is exhausted.
+        untried_substitutions = tuple(
+            sorted(
+                set(snapshot.known_safe_route_substitutions)
+                - set(snapshot.attempted_route_substitutions)
+            )
+        )
+        for route in untried_substitutions:
+            violations.append(f"KNOWN_SUBSTITUTE_ROUTE_NOT_ATTEMPTED:{route}")
+
+        explicit_excuse_signals = tuple(
+            sorted(
+                {
+                    signal.strip()
+                    for signal in snapshot.assistant_excuse_signals
+                    if signal.strip()
+                }
+            )
+        )
+        platform_faults = tuple(
+            sorted(
+                {
+                    signal.strip()
+                    for signal in snapshot.platform_fault_signals
+                    if signal.strip()
+                }
+            )
+        )
+        message_signals = self._message_excuse_signals(snapshot.proposed_owner_message)
+        excuse_signals = tuple(sorted(set(explicit_excuse_signals) | set(message_signals)))
+
+        machine_debt_remains = bool(
+            ready
+            or snapshot.machine_resolvable_owner_tasks
+            or untried_substitutions
+            or (
+                (excuse_signals or platform_faults)
+                and not snapshot.machine_routes_exhausted
+            )
+        )
+
+        owner_surface_proposed = bool(
+            snapshot.final_response_requested
+            or snapshot.owner_prompt_proposed
+            or snapshot.proposed_owner_message.strip()
+        )
+
+        if owner_surface_proposed and machine_debt_remains and not snapshot.status_only_requested:
+            if excuse_signals:
+                violations.append(
+                    "ASSISTANT_EXCUSE_SURFACE_ATTEMPT:" + ",".join(excuse_signals)
+                )
+            if platform_faults:
+                violations.append(
+                    "PLATFORM_FAULT_OFFLOADED_TO_OWNER:" + ",".join(platform_faults)
+                )
+            violations.append("PRE_FINAL_RESPONSE_MACHINE_DEBT_REMAINS")
+
+        explanation_without_prevention = bool(
+            owner_surface_proposed
+            and (excuse_signals or platform_faults)
+            and not snapshot.status_only_requested
+            and not snapshot.prevention_evidence_ref.strip()
+            and machine_debt_remains
+        )
+        if explanation_without_prevention:
+            violations.append("EXPLANATION_WITHOUT_PREVENTION_BINDING")
+
+        output_intercept = bool(
+            owner_surface_proposed
+            and machine_debt_remains
+            and not snapshot.status_only_requested
+            and not completion_verified
+        )
+
+        # Decision priority: identity/build integrity and owner-rescue prevention first;
+        # then intercept excuse-shaped output before it reaches the owner.
         if stale_mission:
             decision = GuardDecision.RECONCILE_MISSION_POINTER
         elif build_epoch_violation:
             decision = GuardDecision.HOLD_BUILD_EPOCH
         elif prevention_missing:
             decision = GuardDecision.PREVENTION_BINDING_REQUIRED
-        elif ready or snapshot.machine_resolvable_owner_tasks:
+        elif output_intercept:
+            decision = GuardDecision.INTERCEPT_ASSISTANT_OUTPUT
+        elif snapshot.status_only_requested and owner_surface_proposed:
+            decision = GuardDecision.ALLOW_STATUS_ONLY
+        elif ready or snapshot.machine_resolvable_owner_tasks or untried_substitutions:
             decision = GuardDecision.CONTINUE_AUTOMATICALLY
         elif unchanged_retry:
             decision = GuardDecision.CHANGED_ROUTE_REQUIRED
@@ -256,6 +360,7 @@ class OwnerProtectionGuard:
         elif (
             snapshot.irreducible_blocker.strip()
             and snapshot.exhaustion_evidence_ref.strip()
+            and not untried_substitutions
             and all(
                 lane.terminal or lane.recovery_exhausted or lane.owner_only
                 for lane in snapshot.lanes
@@ -266,11 +371,16 @@ class OwnerProtectionGuard:
             decision = GuardDecision.CONTINUE_RECOVERY
 
         final_response_allowed = decision in {
+            GuardDecision.ALLOW_STATUS_ONLY,
             GuardDecision.ALLOW_VERIFIED_COMPLETE,
             GuardDecision.OWNER_DECISION_REQUIRED,
             GuardDecision.BLOCKED_IRREDUCIBLY,
         }
-        auto_continue_required = not final_response_allowed
+        auto_continue_required = decision not in {
+            GuardDecision.ALLOW_VERIFIED_COMPLETE,
+            GuardDecision.OWNER_DECISION_REQUIRED,
+            GuardDecision.BLOCKED_IRREDUCIBLY,
+        }
 
         material = {
             "schema": SCHEMA,
@@ -300,6 +410,15 @@ class OwnerProtectionGuard:
             final_response_allowed=final_response_allowed,
             auto_continue_required=auto_continue_required,
             receipt_digest=_digest(material),
+        )
+
+    @classmethod
+    def _message_excuse_signals(cls, message: str) -> tuple[str, ...]:
+        normalized = " ".join(message.lower().split())
+        if not normalized:
+            return ()
+        return tuple(
+            sorted(phrase for phrase in cls._EXCUSE_PHRASES if phrase in normalized)
         )
 
     @staticmethod

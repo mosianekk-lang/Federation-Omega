@@ -1,14 +1,14 @@
 {
   "schema": "FUSE_OWNER_PROTECTION_GUARD_ADMISSION_V1",
   "capability_id": "FUSE-OWNER-PROTECTION-GUARD-V1",
-  "version": "1.0.0",
-  "architecture_class": "NON_SOVEREIGN_CONTINUATION_AND_OWNER_BURDEN_GUARD",
-  "objective": "Prevent premature stopping, blocker spillover, unchanged-route retry loops, timed deferral of immediate work, CI head churn, stale mission continuation, machine-resolvable owner offload, and uncorrected owner-rescue incidents.",
+  "version": "1.3.0",
+  "architecture_class": "NON_SOVEREIGN_CONTINUATION_OWNER_BURDEN_AND_OUTPUT_INTERCEPTION_GUARD",
+  "objective": "Prevent premature stopping, blocker spillover, unchanged-route retry loops, timed deferral of immediate work, CI head churn, stale mission continuation, machine-resolvable owner offload, uncorrected owner-rescue incidents, and excuse/platform-fault output from reaching the owner before safe route exhaustion.",
   "owners": [
     "Human-First Omega",
-    "FUSE Omega Infinity",
+    "FUSE Omega Infinity / OF50-ACE",
     "ChatGov PRE_FINAL_RESPONSE",
-    "Failure-to-Operational-Win",
+    "Failure-to-Operational-Win / AAREK",
     "FDOF build-epoch coordination"
   ],
   "must_not_create": [
@@ -21,6 +21,7 @@
   ],
   "required_enforcement_points": [
     "MISSION_REBIND",
+    "PRE_ACTION_SELECTION",
     "POST_FAILURE_ROUTE_SELECTION",
     "PRE_SCHEDULE_DEFERRAL",
     "PRE_OWNER_PROMPT",
@@ -36,10 +37,24 @@
     "MACHINE_RESOLVABLE_WORK_NOT_OFFLOADED_TO_OWNER",
     "OWNER_RESCUE_REQUIRES_PREVENTION_BINDING",
     "STALE_MISSION_POINTER_FAILS_CLOSED_TO_RECONCILIATION",
-    "COMPLETION_REQUIRES_REQUIRED_OUTCOMES_AND_REQUIRED_LANES"
+    "COMPLETION_REQUIRES_REQUIRED_OUTCOMES_AND_REQUIRED_LANES",
+    "EXCUSE_SHAPED_OWNER_OUTPUT_INTERCEPTED_WHILE_MACHINE_DEBT_REMAINS",
+    "PLATFORM_FAULT_IS_ROUTE_CHANGE_SIGNAL_NOT_OBJECTIVE_FAILURE",
+    "KNOWN_SAFE_ROUTE_SUBSTITUTIONS_MUST_BE_ATTEMPTED_BEFORE_IRREDUCIBLE_BLOCK",
+    "STATUS_ONLY_RESPONSE_ALLOWED_ONLY_WHEN_EXPLICITLY_REQUESTED",
+    "SAFETY_PRIVACY_AUTHORITY_AND_EFFECT_GATES_NEVER_WEAKENED"
   ],
+  "output_surface_allow_conditions": [
+    "EXPLICIT_STATUS_ONLY_REQUEST",
+    "VERIFIED_COMPLETION",
+    "GENUINE_NON_DELEGABLE_OWNER_DECISION_AFTER_MACHINE_WORK_EXHAUSTED",
+    "PROVEN_IRREDUCIBLE_BLOCK_AFTER_SAFE_MATERIALLY_DIFFERENT_ROUTE_EXHAUSTION"
+  ],
+  "failure_fingerprint": "AI_ASSISTANT_EXCUSE_OR_PLATFORM_FAULT_OWNER_OFFLOAD",
+  "regression_id": "REG-OWNER-EXCUSE-001",
+  "playbook_rule": "CBPR-OWNER-PROTECTION-EXCUSE-INTERCEPT-001",
   "implementation": "federation/fuse_owner_protection_guard_v1.py",
   "regression_court": "tests/test_fuse_owner_protection_guard_v1.py",
-  "truth_boundary": "Source/test admission proves the deterministic guard only. Cross-host enforcement is proven separately at each actual mission executor or response emitter.",
-  "source_trigger": "Owner directive 2026-09-07 after Adobe Omega orchestration failures and timed-deferral/CI-loop incident."
+  "truth_boundary": "Source/test admission proves the deterministic guard only. Cross-host enforcement is proven separately at each actual mission executor or response emitter. Native ChatGPT product-wide interception is not claimed without host/provider behavioral proof.",
+  "source_trigger": "Owner directive 2026-09-07 after Strategic FUSE/Gemini orchestration narrated machine-resolvable provider-binding/platform friction instead of continuing internal route recovery."
 }
