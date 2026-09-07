@@ -2,9 +2,9 @@
 
 This adapter closes only the no-effect provider-read predicate for GAP-STRATFUSE-002.
 It uses the already-authenticated GitHub Actions WIF principal to perform GET-only
-Service Usage and Vertex publisher-model reads. It never calls generateContent,
-reads a Gemini secret, mutates IAM/provider state, deploys Cloud Run, shifts traffic,
-or authorizes spend.
+Service Usage and Model Garden publisher-model metadata reads. It never calls
+``generateContent``, reads a Gemini secret, mutates IAM/provider state, deploys
+Cloud Run, shifts traffic, or authorizes spend.
 """
 from __future__ import annotations
 
@@ -20,9 +20,11 @@ import urllib.error
 import urllib.request
 
 SCHEMA = "STRATEGIC-FUSE-VERTEX-DIRECT-WIF-A0-V1"
-VERSION = "1.0.0"
+VERSION = "1.0.1"
 ACTION = "READ_GEMINI_VERTEX_CAPABILITY"
 EXECUTOR_ROUTE = "GITHUB_ACTIONS_WIF_ADC_DIRECT_PROVIDER_READ"
+MODEL_METADATA_ROUTE = "MODEL_GARDEN_PUBLISHER_MODEL_GET"
+MODEL_METADATA_VIEW = "PUBLISHER_MODEL_VERSION_VIEW_BASIC"
 TARGET = {
     "project": "sov-hybrid-suite",
     "location": "global",
@@ -33,9 +35,13 @@ SERVICE_URL = (
     "https://serviceusage.googleapis.com/v1/projects/"
     f"{TARGET['project']}/services/aiplatform.googleapis.com"
 )
+# Google exposes generative inference under projects.locations.publishers.models,
+# but that resource does not provide a normal GET metadata method. Model Garden
+# metadata is read through publishers.models.get instead.
+MODEL_RESOURCE_NAME = f"publishers/google/models/{TARGET['model']}"
 MODEL_URL = (
-    "https://aiplatform.googleapis.com/v1/projects/"
-    f"{TARGET['project']}/locations/{TARGET['location']}/publishers/google/models/{TARGET['model']}"
+    "https://aiplatform.googleapis.com/v1/"
+    f"{MODEL_RESOURCE_NAME}?view={MODEL_METADATA_VIEW}"
 )
 
 
@@ -143,14 +149,9 @@ def run_direct_wif_a0(
             model_display_name = str(model.get("displayName") or "") or None
             model_launch_stage = str(model.get("launchStage") or "") or None
             model_actions = model.get("supportedActions")
-            expected_suffix = (
-                f"projects/{TARGET['project']}/locations/{TARGET['location']}/"
-                f"publishers/google/models/{TARGET['model']}"
-            )
             model_verified = bool(
                 model_status == 200
-                and model_name
-                and (model_name == expected_suffix or model_name.endswith("/" + expected_suffix))
+                and model_name == MODEL_RESOURCE_NAME
             )
     except Exception as exc:
         failure = _safe_error(exc)
@@ -187,6 +188,8 @@ def run_direct_wif_a0(
         "target": dict(TARGET),
         "service_url": SERVICE_URL,
         "model_url": MODEL_URL,
+        "model_metadata_route": MODEL_METADATA_ROUTE,
+        "model_metadata_view": MODEL_METADATA_VIEW,
         "provider_authenticated": provider_authenticated,
         "service_http_status": service_status,
         "service_state": service_state,
@@ -213,9 +216,9 @@ def run_direct_wif_a0(
         "failure_detail": failure,
         "failure_fingerprint": failure_fingerprint,
         "truth_boundary": (
-            "Success proves only an authenticated GET-only WIF/ADC read of the enabled Vertex AI service "
-            "and the exact publisher model metadata for the Strategic FUSE A0 target. It does not prove "
-            "Gemini inference, FSED binding, runtime autonomy, provider mutation, production promotion or COMPLETE_VERIFIED."
+            "Success proves only authenticated GET-only WIF/ADC readback of the enabled Vertex AI service "
+            "and Model Garden metadata for the exact publisher model. It does not prove Gemini inference, "
+            "FSED binding, runtime autonomy, provider mutation, production promotion or COMPLETE_VERIFIED."
         ),
     }
     material["receipt_sha256"] = _digest({k: v for k, v in material.items() if k not in {"recorded_at"}})
