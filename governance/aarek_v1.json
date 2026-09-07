@@ -1,0 +1,44 @@
+{
+  "schema": "FUSE_AAREK_ADMISSION_V1",
+  "capability_id": "FUSE-AAREK-V1.1",
+  "version": "1.1.0",
+  "architecture_class": "NON_SOVEREIGN_ASSURANCE_LEARNING_AND_EVOLUTION_KERNEL",
+  "objective": "Require real binding, execution, action-specific semantic readback, failure/win learning, changed-route recovery, regression/value proof, win-to-improvement spawning and mission recompilation until COMPLETE_VERIFIED.",
+  "canonical_contract": "Drive:18PihuE-OK9_8bB1wX6U0NK_WXDemSANLiK8MjDscZwk",
+  "markers": [
+    "[[FUSE-AAREK-V1-20260907]]",
+    "[[FUSE-AAREK-V1.1-RESOLVE-BEFORE-REPORT-20260907]]",
+    "[[FUSE-AAREK-V1.2-OH50-COMPANION-20260907]]"
+  ],
+  "reuses": [
+    "Failure-to-Operational-Win Kernel v2",
+    "Federation Failure Memory",
+    "Federation Route Memory",
+    "Federation Regression Lab",
+    "CFBE benchmark system",
+    "FDOF",
+    "ProofOS/JARVIS",
+    "Owner Protection",
+    "OF50-ACE"
+  ],
+  "must_not_create": [
+    "new authority plane",
+    "new scheduler",
+    "new canonical truth store",
+    "new proof store",
+    "new memory root",
+    "new provider runtime"
+  ],
+  "proof_rules": [
+    "SOURCE_CI_QUEUE_SCHEDULE_HEARTBEAT_DO_NOT_EQUAL_EXECUTION",
+    "ACTION_SPECIFIC_SEMANTIC_READBACK_REQUIRED",
+    "UNCHANGED_FAILED_ROUTE_RETRY_FORBIDDEN",
+    "BLOCKED_LANE_NOT_EQUAL_BLOCKED_MISSION",
+    "MACHINE_RESOLVABLE_WORK_NOT_OFFLOADED_TO_OWNER",
+    "VERIFIED_WIN_SPAWNS_NEXT_IMPROVEMENT",
+    "MISSION_RECOMPILES_UNTIL_REQUIRED_TERMINAL_PREDICATES_CLOSE"
+  ],
+  "implementation": "federation/aarek_v1.py",
+  "regression_court": "tests/test_aarek_v1.py",
+  "truth_boundary": "Source/test admission proves deterministic AAREK orchestration semantics only. It does not prove provider binding, provider execution, deployment, external effects, value, or operational maturity."
+}
