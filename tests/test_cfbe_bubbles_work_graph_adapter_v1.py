@@ -3,6 +3,7 @@ from __future__ import annotations
 import unittest
 
 from bubbles.ai_bot_multistream_host_v1 import run_host_canary
+from bubbles.master_bible_portfolio_host_v1 import run_host_canary as run_portfolio_host_canary
 from federation.bubbles_frontier_hyperperformance import WorkCell
 from benchmarking.cfbe_omega.bubbles_work_graph_adapter_v1 import (
     BubblesWorkNode,
@@ -190,6 +191,21 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
             "SOURCE_PRIMARY:PRIMARY_ROUTE_PREDICATE_CHANGED",
             receipt["retryable_failures"],
         )
+
+    def test_fuse_master_bible_portfolio_compiler_is_hosted_by_existing_bubbles_contract(self):
+        receipt = run_portfolio_host_canary(source_ref="test:bubbles-command-bus-contract")
+        self.assertEqual("HOST_BOUND_VERIFIED", receipt["state"])
+        self.assertTrue(receipt["host_binding_verified"])
+        portfolio = receipt["portfolio_receipt"]
+        self.assertEqual(2, portfolio["active_required_mission_count"])
+        self.assertEqual(1, portfolio["total_owner_only_debt"])
+        self.assertFalse(portfolio["portfolio_complete_verified"])
+        self.assertEqual("MISSION-ACTIVE-RUNTIME", portfolio["ready_wave"][0]["mission_id"])
+        self.assertEqual("GAP-ACTIVE-EXECUTOR", portfolio["ready_wave"][0]["gap_id"])
+        self.assertEqual("CAP-SHARED-TRACE", portfolio["shared_enablers"][0]["capability_id"])
+        self.assertFalse(receipt["provider_execution_attempted"])
+        self.assertFalse(receipt["external_effect"])
+        self.assertEqual("NONE", receipt["authority_delta"])
 
 
 if __name__ == "__main__":
