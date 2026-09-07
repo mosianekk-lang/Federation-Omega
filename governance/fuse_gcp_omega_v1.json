@@ -1,0 +1,19 @@
+{
+  "schema": "FUSE_GCP_OMEGA_GOVERNANCE_V1",
+  "version": "1.0.0",
+  "organ_id": "CELL-GCP-EXEC",
+  "parent_google_service_fabric": "FUSE-GAS-OMEGA-V4",
+  "formation_engine": "FORMATION-OMEGA",
+  "alpha_omega_engine": "systems/alpha-omega-turnkey",
+  "service_protocol": "FCSP_V1",
+  "default_effect_ceiling": "A1_INTERNAL",
+  "route_law": ["DIRECT_PROVIDER", "EXISTING_TRUSTED_OPERATOR", "MANAGED_GOOGLE_CLOUD_ROUTE", "BUILD_MINIMUM_DIFFERENTIATOR_LAST"],
+  "alpha_omega_stages": ["INTAKE", "DISCOVERY", "DECOMPOSITION", "ARCHITECTURE", "BUILD", "TEST", "DEPLOY", "VERIFY", "OPERATE", "MAINTAIN"],
+  "provider_effect_requirements": ["exact_mission", "exact_action", "exact_project", "exact_region_when_applicable", "exact_target", "exact_effect_class", "fresh_authority", "idempotency", "semantic_postcondition", "provider_native_readback", "rollback_when_required"],
+  "logical_worker_truth": {
+    "logical_bots_are_provider_workers": false,
+    "provider_worker_requires": ["runtime_identity", "assignment", "execution_or_heartbeat", "semantic_result_readback"]
+  },
+  "cannot_override": ["Human-First", "SOVARA", "FDOF", "Capability Truth", "Mission Admission", "Action Admission", "ProofOS", "JARVIS", "RealityGuard", "ChatGov", "FKPF", "CHARGE", "domain truth"],
+  "completion_boundary": "source_or_control_presence_never_implies_provider_running_or_continuous_service"
+}
