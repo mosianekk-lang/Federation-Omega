@@ -150,7 +150,7 @@ class AuroraOmegaV1Test(unittest.TestCase):
         state.critical_unknowns.add("provider identity")
         self.agent.add_evidence(state, Evidence("proof", "READBACK", "ok", True, True))
         decision = self.agent.completion_gate(state)
-        self.assertIn("CRITICAL_UNKNOWS_OPEN", decision.missing_requirements) if False else self.assertIn("CRITICAL_UNKNOWNS_OPEN", decision.missing_requirements)
+        self.assertIn("CRITICAL_UNKNOWNS_OPEN", decision.missing_requirements)
 
     def test_context_compaction_preserves_mission_truth_and_limits_event_window(self):
         state = self.mission()
