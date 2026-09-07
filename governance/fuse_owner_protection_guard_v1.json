@@ -1,0 +1,45 @@
+{
+  "schema": "FUSE_OWNER_PROTECTION_GUARD_ADMISSION_V1",
+  "capability_id": "FUSE-OWNER-PROTECTION-GUARD-V1",
+  "version": "1.0.0",
+  "architecture_class": "NON_SOVEREIGN_CONTINUATION_AND_OWNER_BURDEN_GUARD",
+  "objective": "Prevent premature stopping, blocker spillover, unchanged-route retry loops, timed deferral of immediate work, CI head churn, stale mission continuation, machine-resolvable owner offload, and uncorrected owner-rescue incidents.",
+  "owners": [
+    "Human-First Omega",
+    "FUSE Omega Infinity",
+    "ChatGov PRE_FINAL_RESPONSE",
+    "Failure-to-Operational-Win",
+    "FDOF build-epoch coordination"
+  ],
+  "must_not_create": [
+    "new authority plane",
+    "new scheduler",
+    "new canonical truth store",
+    "new proof store",
+    "new provider runtime",
+    "new memory root"
+  ],
+  "required_enforcement_points": [
+    "MISSION_REBIND",
+    "POST_FAILURE_ROUTE_SELECTION",
+    "PRE_SCHEDULE_DEFERRAL",
+    "PRE_OWNER_PROMPT",
+    "PRE_SOURCE_MUTATION_DURING_ADMISSION",
+    "PRE_FINAL_RESPONSE"
+  ],
+  "machine_rules": [
+    "BLOCKER_RADIUS_IS_DEPENDENCY_SCOPED",
+    "SAFE_INDEPENDENT_WORK_CONTINUES",
+    "IMMEDIATE_WORK_BEATS_UNREQUESTED_TIMER_DEFERRAL",
+    "UNCHANGED_FAILURE_ROUTE_RETRY_FORBIDDEN",
+    "ONE_BUILD_EPOCH_ONE_FROZEN_CANDIDATE_HEAD",
+    "MACHINE_RESOLVABLE_WORK_NOT_OFFLOADED_TO_OWNER",
+    "OWNER_RESCUE_REQUIRES_PREVENTION_BINDING",
+    "STALE_MISSION_POINTER_FAILS_CLOSED_TO_RECONCILIATION",
+    "COMPLETION_REQUIRES_REQUIRED_OUTCOMES_AND_REQUIRED_LANES"
+  ],
+  "implementation": "federation/fuse_owner_protection_guard_v1.py",
+  "regression_court": "tests/test_fuse_owner_protection_guard_v1.py",
+  "truth_boundary": "Source/test admission proves the deterministic guard only. Cross-host enforcement is proven separately at each actual mission executor or response emitter.",
+  "source_trigger": "Owner directive 2026-09-07 after Adobe Omega orchestration failures and timed-deferral/CI-loop incident."
+}
