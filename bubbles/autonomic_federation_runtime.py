@@ -10,6 +10,7 @@ A thin execution lifecycle over existing Federation owners:
 - MissionProofPassport: mission evidence projection on the existing ledger
 - OwnerValueOptimizer: measured matched-cohort value decisions
 - AutonomicMissionSpine: non-bypassable stage receipts for dispatch/finality
+- MissionEvolutionClosureBridge: MBMPC production + PILF learning debt finality
 
 This module is not a background ChatGPT daemon and creates no provider identity,
 credential, IAM grant, billing authority, second scheduler, second memory root,
@@ -21,6 +22,9 @@ from pathlib import Path
 from typing import Any, Mapping, Sequence
 
 from federation.autonomic_mission_spine_v1 import SpineRunReceipt
+from federation.fuse_mbmpc_pilf_closure_bridge_v1 import (
+    LearningEvidence, MissionEvolutionClosureBridge, MissionProductionContract, PStage,
+)
 from federation.mission_ir import MissionIR
 from federation.sentinel_omega.owner_value_ingress import OwnerValueMissionRecord
 from federation.spine_host_binding_v1 import SpineHostBindingCourt
@@ -57,6 +61,7 @@ class BubblesAutonomicFederationRuntime:
         self.passport = MissionProofPassport(self.durable)
         self.value = OwnerValueOptimizer(minimum_pairs=minimum_owner_value_pairs)
         self.spine_binding = SpineHostBindingCourt()
+        self.production_learning = MissionEvolutionClosureBridge()
 
     @staticmethod
     def _work_items() -> tuple[WorkItem, ...]:
@@ -204,9 +209,56 @@ class BubblesAutonomicFederationRuntime:
         binding=self.spine_binding.admit_value_finalization(mission,spine_receipt); passport=self.passport.snapshot(mission.mission_id)
         if not binding.admitted:
             self.durable.update_work_status(mission.mission_id,WORK_VALUE,WorkStatus.HELD,result_refs=(f"spine-gate:{binding.receipt_digest}",))
-            return {"state":"SPINE_GATED","mission_value_finalized":False,"spine_binding_reasons":list(binding.reasons)}
+            return {"state":"SPINE_GATED","owner_value_finalized":False,"mission_value_finalized":False,"spine_binding_reasons":list(binding.reasons)}
         self.durable.update_work_status(mission.mission_id,WORK_VALUE,WorkStatus.VERIFIED,result_refs=(f"spine:{binding.receipt_digest}",))
-        return {"state":"MISSION_VALUE_FINALIZED","mission_value_finalized":True,"owner_value_proven":passport.owner_value_proven,"spine_binding_receipt":binding.receipt_digest}
+        return {"state":"OWNER_VALUE_FINALIZED_PENDING_PRODUCTION_LEARNING_CLOSURE","owner_value_finalized":True,
+            "mission_value_finalized":False,"owner_value_proven":passport.owner_value_proven,
+            "spine_binding_receipt":binding.receipt_digest}
+
+    def finalize_mission_completion(
+        self,
+        mission: MissionIR,
+        *,
+        spine_receipt: SpineRunReceipt,
+        production_contract: MissionProductionContract,
+        current_p_stage: PStage,
+        satisfied_terminal_predicates: Sequence[str],
+        production_stage_evidence_refs: Sequence[str],
+        learning_evidence: Sequence[LearningEvidence] = (),
+    ) -> dict[str, Any]:
+        binding = self.spine_binding.admit_value_finalization(mission, spine_receipt)
+        if not binding.admitted:
+            return {"state":"SPINE_GATED","mission_value_finalized":False,
+                "spine_binding_receipt":binding.receipt_digest,"spine_binding_reasons":list(binding.reasons)}
+        if production_contract.mission_id != mission.mission_id:
+            return {"state":"PRODUCTION_LEARNING_GATED","mission_value_finalized":False,
+                "reasons":["MISSION_PRODUCTION_CONTRACT_ID_MISMATCH"]}
+        stage_refs = tuple(str(ref).strip() for ref in production_stage_evidence_refs if str(ref).strip())
+        if not stage_refs:
+            return {"state":"PRODUCTION_LEARNING_GATED","mission_value_finalized":False,
+                "reasons":["PRODUCTION_STAGE_EVIDENCE_REQUIRED"]}
+        projection = self.durable.project(mission.mission_id)
+        value_item = projection.work_items.get(WORK_VALUE)
+        if value_item is None or value_item.status is not WorkStatus.VERIFIED:
+            return {"state":"PRODUCTION_LEARNING_GATED","mission_value_finalized":False,
+                "reasons":["OWNER_VALUE_FINALIZATION_REQUIRED"]}
+        closure = self.production_learning.evaluate(
+            contract=production_contract,
+            current_p_stage=current_p_stage,
+            satisfied_terminal_predicates=satisfied_terminal_predicates,
+            learning_evidence=learning_evidence,
+        )
+        return {
+            "state":"MISSION_COMPLETION_VERIFIED" if closure.done_allowed else "PRODUCTION_LEARNING_GATED",
+            "mission_value_finalized":closure.done_allowed,
+            "production_learning_receipt":asdict(closure),
+            "production_stage_evidence_refs":list(stage_refs),
+            "spine_binding_receipt":binding.receipt_digest,
+            "truth_boundary":{
+                "production_stage_evidence_consumed_not_self_certified":True,
+                "learning_propagation_is_receiver_adoption":False,
+            },
+        }
 
     def status(self, mission_id: str) -> dict[str, Any]:
         projection=self.durable.project(mission_id); passport=self.passport.snapshot(mission_id)
@@ -220,7 +272,9 @@ class BubblesAutonomicFederationRuntime:
                 "provider_dispatch_requires_exact_authority_resource_target_match":True,
                 "proof_finalization_requires_autonomic_spine_execution_closure":True,
                 "owner_value_evaluation_requires_autonomic_spine_outcome_proof":True,
-                "mission_value_finalization_requires_autonomic_spine_value_observed":True,
+                "owner_value_finalization_requires_autonomic_spine_value_observed":True,
+                "mission_completion_requires_mbmpc_pilf_closure":True,
+                "production_stage_requires_external_evidence_refs":True,
                 "legacy_spine_bypass_flag_exists":False,"second_scheduler_created":False,"second_memory_root_created":False}}
 
 
