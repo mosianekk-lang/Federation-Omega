@@ -17,6 +17,7 @@ from federation.capability_truth_v1 import CapabilityTruthRecord, ClaimKind, Evi
 from federation.cfbe_chat_hyperperformance_v1 import EffectClass, RouteProfile, WorkUnit
 from federation.execution_readback_closure_v1 import ExecutionAttempt, SemanticReadback
 from federation.execution_topology_compiler_v1 import TopologyTask
+from federation.fuse_mbmpc_pilf_closure_bridge_v1 import MissionProductionContract, PStage
 from federation.live_worker_attestation_v1 import CapabilityEpoch, WorkerAttestation, WorkerState
 from federation.mission_capability_admission_v1 import MissionCapabilityRequirement
 from federation.mission_ir import MissionIR
@@ -184,6 +185,7 @@ class BubblesAutonomicFederationRuntimeTests(unittest.TestCase):
             self.assertEqual("VERIFIED", runtime.durable.ledger.verify()["state"])
             self.assertTrue(status["truth_boundary"]["provider_dispatch_requires_autonomic_spine_action_admission"])
             self.assertFalse(status["truth_boundary"]["legacy_spine_bypass_flag_exists"])
+            self.assertTrue(status["truth_boundary"]["mission_completion_requires_mbmpc_pilf_closure"])
 
     def test_provider_dispatch_without_spine_action_stage_is_fail_closed_and_never_calls_executor(self) -> None:
         with tempfile.TemporaryDirectory() as root:
@@ -244,7 +246,24 @@ class BubblesAutonomicFederationRuntimeTests(unittest.TestCase):
             final_run = run_spine(item, close=True, include_outcome=True)
             measured = runtime.evaluate_owner_value(item, (), spine_receipt=final_run)
             self.assertFalse(measured["mission_value_finalized"])
-            self.assertTrue(runtime.finalize_owner_value(item, spine_receipt=final_run)["mission_value_finalized"])
+            owner_value = runtime.finalize_owner_value(item, spine_receipt=final_run)
+            self.assertTrue(owner_value["owner_value_finalized"])
+            self.assertFalse(owner_value["mission_value_finalized"])
+            contract = MissionProductionContract(
+                mission_id=item.mission_id,
+                required_p_stage=PStage.P16_VALUE_OBSERVED,
+                required_terminal_predicates=("TP-FINAL",),
+            )
+            completion = runtime.finalize_mission_completion(
+                item,
+                spine_receipt=final_run,
+                production_contract=contract,
+                current_p_stage=PStage.P16_VALUE_OBSERVED,
+                satisfied_terminal_predicates=("TP-FINAL",),
+                production_stage_evidence_refs=("provider:production-stage:P16",),
+            )
+            self.assertEqual("MISSION_COMPLETION_VERIFIED", completion["state"])
+            self.assertTrue(completion["mission_value_finalized"])
 
 
 if __name__ == "__main__":
