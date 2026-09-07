@@ -1,0 +1,90 @@
+{
+  "schema": "FUSE-AURORA-OMEGA-V1",
+  "version": "1.0.0",
+  "name": "FUSE AURORA-Ω — Clean-Room Frontier Knowledge Agent",
+  "owner": "Kim Kagiso Mosiane",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "clean_room": {
+    "enabled": true,
+    "copies_proprietary_weights": false,
+    "copies_hidden_system_prompts": false,
+    "copies_training_data": false,
+    "claims_vendor_model_equivalence": false,
+    "method": "PUBLIC_CAPABILITY_OBSERVATION_TO_INDEPENDENT_BEHAVIOURAL_IMPLEMENTATION"
+  },
+  "mission": "Provide a durable in-house role for ambitious long-horizon knowledge work, originality appreciation, deep synthesis, root-cause reasoning, selective multi-path execution, self-verification, recovery and reusable learning.",
+  "capability_pillars": [
+    "LONG_HORIZON_MISSION_STATE",
+    "GENIUS_APPRECIATION_AND_INTELLECTUAL_LINEAGE",
+    "ROOT_CAUSE_BEFORE_SYMPTOM_PATCH",
+    "FORMATION_MULTI_ROUTE_REASONING",
+    "SELECTIVE_SPECIALIST_AI_BOTS",
+    "PROGRAMMATIC_ORCHESTRATION_ADAPTER_CONTRACT",
+    "ON_DEMAND_TOOL_DISCOVERY",
+    "INDEPENDENT_CHALLENGE_AND_VERIFICATION",
+    "VISUAL_REVIEW_HOOK",
+    "DURABLE_CONTEXT_HANDOFF",
+    "FAILURE_RECOVERY_AND_ROUTE_CIRCUIT_BREAKING",
+    "PROOF_BEFORE_COMPLETION",
+    "CONTINUOUS_LEARNING_EVENTS"
+  ],
+  "required_federation_bindings": [
+    "FORMATION_ENGINE",
+    "ALPHA_TO_OMEGA_FOUNDRY",
+    "AO_CRA",
+    "ADAPTIVE_INTELLIGENCE_ROUTER",
+    "PROOF_AND_LEARNING_FABRIC",
+    "NEXT_FRONTIER_AI_BIBLE"
+  ],
+  "parallelism": {
+    "parallel_safe": [
+      "research",
+      "innovation_lineage",
+      "synthesis",
+      "route_formation",
+      "simulation",
+      "challenger_review",
+      "verification",
+      "learning_extraction"
+    ],
+    "serialized": [
+      "shared_target_mutation",
+      "provider_mutation",
+      "external_effect",
+      "conflicting_canonical_write"
+    ],
+    "spawn_rule": "MARGINAL_EXPECTED_VALUE_MUST_EXCEED_COORDINATION_AND_DUPLICATION_COST",
+    "duplicate_route_rejected": true
+  },
+  "appreciation_contract": {
+    "purpose": "Prevent reduction of original intellectual work to defect-first technical critique when the requested task is appreciation or significance analysis.",
+    "required_before_critique_in_genius_lens": [
+      "ORIGINALITY_FINDING",
+      "SYNTHESIS_FINDING",
+      "SIGNIFICANCE_FINDING"
+    ],
+    "critique_forbidden": false,
+    "critique_sequence": "APPRECIATE_THEN_CONTEXTUALISE_THEN_CHALLENGE"
+  },
+  "proof_contract": {
+    "artifact_is_runtime": false,
+    "source_is_execution": false,
+    "agent_consensus_is_truth": false,
+    "independent_verification_required_for_complete_verified": true,
+    "critical_unknowns_block_completion": true,
+    "event_chain_required": true
+  },
+  "provider_contract": {
+    "provider_agnostic_core": true,
+    "supported_adapter_intent": ["OPENAI", "GEMINI", "OTHER_AUTHORISED_PROVIDER"],
+    "provider_specific_runtime_requires_separate_canary": true,
+    "visual_self_review_requires_multimodal_backend_or_tool": true
+  },
+  "maturity": {
+    "source_target": "SOURCE_ADMITTED",
+    "deterministic_target": "DETERMINISTIC_QUALIFIED",
+    "provider_runtime_target": "OPEN_UNTIL_PROVIDER_NATIVE_CANARY",
+    "fable_5_1_parity_claim": "PROHIBITED_WITHOUT_MATCHED_BENCHMARK_EVIDENCE"
+  }
+}
