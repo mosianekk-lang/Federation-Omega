@@ -6,4 +6,4 @@ pytest==8.4.1
 google-cloud-firestore>=2.21,<3
 openai>=2.36,<3
 # FastDoc v2 Core archive runtime dependency.
-PyMuPDF==1.26.7
+PyMuPDF==1.28.2
