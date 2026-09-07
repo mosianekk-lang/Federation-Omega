@@ -5,6 +5,9 @@ import unittest
 from bubbles.strategic_fuse_vertex_direct_wif_v1 import (
     ACTION,
     EXECUTOR_ROUTE,
+    MODEL_METADATA_ROUTE,
+    MODEL_METADATA_VIEW,
+    MODEL_RESOURCE_NAME,
     MODEL_URL,
     SERVICE_URL,
     TARGET,
@@ -19,11 +22,10 @@ class StrategicFuseVertexDirectWifTests(unittest.TestCase):
             return 200, {"name": "projects/257649435135/services/aiplatform.googleapis.com", "state": "ENABLED"}
         if url == MODEL_URL:
             return 200, {
-                "name": "projects/sov-hybrid-suite/locations/global/publishers/google/models/gemini-2.5-flash",
+                "name": "publishers/google/models/gemini-2.5-flash",
                 "versionId": "001",
-                "displayName": "Gemini 2.5 Flash",
                 "launchStage": "GA",
-                "supportedActions": ["generateContent"],
+                "supportedActions": {"viewRestApi": {}},
             }
         raise AssertionError(url)
 
@@ -42,6 +44,9 @@ class StrategicFuseVertexDirectWifTests(unittest.TestCase):
         self.assertTrue(receipt["provider_authenticated"])
         self.assertEqual("ENABLED", receipt["service_state"])
         self.assertEqual(200, receipt["model_http_status"])
+        self.assertEqual(MODEL_RESOURCE_NAME, receipt["model_readback"]["name"])
+        self.assertEqual(MODEL_METADATA_ROUTE, receipt["model_metadata_route"])
+        self.assertEqual(MODEL_METADATA_VIEW, receipt["model_metadata_view"])
         self.assertEqual(TARGET, receipt["target"])
         self.assertEqual(ACTION, receipt["action"])
         self.assertEqual(EXECUTOR_ROUTE, receipt["executor_route"])
@@ -58,6 +63,15 @@ class StrategicFuseVertexDirectWifTests(unittest.TestCase):
         self.assertFalse(receipt["secret_payload_accessed"])
         self.assertFalse(receipt["credential_value_recorded"])
         self.assertEqual("NONE", receipt["authority_delta"])
+
+    def test_model_metadata_url_uses_documented_model_garden_get_not_inference_resource(self):
+        self.assertEqual(
+            "https://aiplatform.googleapis.com/v1/publishers/google/models/"
+            "gemini-2.5-flash?view=PUBLISHER_MODEL_VERSION_VIEW_BASIC",
+            MODEL_URL,
+        )
+        self.assertNotIn("/projects/", MODEL_URL)
+        self.assertNotIn(":generateContent", MODEL_URL)
 
     def test_missing_token_is_preserved_as_hold(self):
         def missing():
@@ -98,12 +112,24 @@ class StrategicFuseVertexDirectWifTests(unittest.TestCase):
         def get(url, token):
             if url == SERVICE_URL:
                 return 200, {"state": "ENABLED"}
-            return 200, {"name": "projects/sov-hybrid-suite/locations/global/publishers/google/models/wrong"}
+            return 200, {"name": "publishers/google/models/wrong"}
         receipt = run_direct_wif_a0(
             source_ref="main:abc", token_fn=lambda: "token", principal_fn=lambda: "p", get_fn=get
         )
         self.assertEqual("HELD_VERTEX_MODEL_READBACK", receipt["state"])
         self.assertFalse(receipt["provider_native_capability_readback_verified"])
+
+    def test_project_scoped_inference_style_name_cannot_fake_metadata_success(self):
+        def get(url, token):
+            if url == SERVICE_URL:
+                return 200, {"state": "ENABLED"}
+            return 200, {
+                "name": "projects/sov-hybrid-suite/locations/global/publishers/google/models/gemini-2.5-flash"
+            }
+        receipt = run_direct_wif_a0(
+            source_ref="main:abc", token_fn=lambda: "token", principal_fn=lambda: "p", get_fn=get
+        )
+        self.assertEqual("HELD_VERTEX_MODEL_READBACK", receipt["state"])
 
     def test_403_model_read_is_authority_hold(self):
         def get(url, token):
