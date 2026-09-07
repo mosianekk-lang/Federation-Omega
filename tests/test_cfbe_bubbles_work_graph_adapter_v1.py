@@ -4,6 +4,7 @@ import unittest
 
 from bubbles.ai_bot_multistream_host_v1 import run_host_canary
 from bubbles.master_bible_portfolio_host_v1 import run_host_canary as run_portfolio_host_canary
+from bubbles.fuse_gcp_cloud_service_host_v1 import run_host_canary as run_fuse_gcp_host_canary
 from federation.bubbles_frontier_hyperperformance import WorkCell
 from benchmarking.cfbe_omega.bubbles_work_graph_adapter_v1 import (
     BubblesWorkNode,
@@ -204,6 +205,18 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertEqual("GAP-ACTIVE-EXECUTOR", portfolio["ready_wave"][0]["gap_id"])
         self.assertEqual("CAP-SHARED-TRACE", portfolio["shared_enablers"][0]["capability_id"])
         self.assertFalse(receipt["provider_execution_attempted"])
+        self.assertFalse(receipt["external_effect"])
+        self.assertEqual("NONE", receipt["authority_delta"])
+
+    def test_fuse_gcp_is_hosted_by_existing_bubbles_contract(self):
+        receipt = run_fuse_gcp_host_canary(source_ref="test:bubbles-command-bus-contract")
+        self.assertEqual("HOST_BOUND_VERIFIED", receipt["state"])
+        self.assertTrue(receipt["host_binding_verified"])
+        self.assertEqual("DIRECT_PROVIDER_READ", receipt["selected_route_id"])
+        self.assertEqual(10, len(receipt["alpha_omega_stages"]))
+        self.assertEqual(0, receipt["provider_native_worker_count"])
+        self.assertFalse(receipt["provider_execution_attempted"])
+        self.assertFalse(receipt["cloud_resource_mutation_attempted"])
         self.assertFalse(receipt["external_effect"])
         self.assertEqual("NONE", receipt["authority_delta"])
 
