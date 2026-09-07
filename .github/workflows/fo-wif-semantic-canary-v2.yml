@@ -157,6 +157,16 @@ jobs:
           Path('g0-output/adc-identity.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
+      - name: Run Strategic FUSE direct WIF Vertex A0 read
+        shell: bash
+        env:
+          SOURCE_REF: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          python -m bubbles.strategic_fuse_vertex_direct_wif_v1 \
+            --source-ref "$SOURCE_REF" \
+            --output g0-output/strategic-fuse-vertex-a0-direct-wif.json
+
       - name: Compile receiver-local workload identity receipt
         shell: bash
         env:
@@ -171,6 +181,7 @@ jobs:
           from pathlib import Path
           wif=json.load(open('g0-output/wif-identity.json',encoding='utf-8'))
           adc=json.load(open('g0-output/adc-identity.json',encoding='utf-8'))
+          a0=json.load(open('g0-output/strategic-fuse-vertex-a0-direct-wif.json',encoding='utf-8'))
           assert wif['state']=='WIF_IDENTITY_VERIFIED',wif
           assert adc['state']=='GITHUB_WIF_ADC_TRANSPORT_VERIFIED',adc
           r={
@@ -187,6 +198,8 @@ jobs:
             'region':os.environ['REGION'],
             'wif_identity':wif,
             'adc_transport':adc,
+            'strategic_fuse_vertex_a0':a0,
+            'direct_vertex_a0_verified':a0.get('state')=='VERTEX_A0_DIRECT_WIF_READBACK_VERIFIED',
             'deployment_readiness_proven':adc['gemini_deployment_ready'] and not bool(wif['deployment_readiness_gaps']),
             'security_hardening_complete':not bool(wif['security_hardening_gaps']),
             'long_lived_service_account_key_used':False,
@@ -209,6 +222,7 @@ jobs:
             g0-output/project-readback.json
             g0-output/gemini-plan.json
             g0-output/adc-identity.json
+            g0-output/strategic-fuse-vertex-a0-direct-wif.json
             g0-output/bubbles-cfbe-workload-identity-receipt-v1.json
           if-no-files-found: error
           retention-days: 90
