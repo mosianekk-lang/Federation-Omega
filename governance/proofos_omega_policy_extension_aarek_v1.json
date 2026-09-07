@@ -1,0 +1,46 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/aarek_v1.py",
+        "tests/test_aarek_v1.py",
+        "governance/aarek_v1.json",
+        "governance/proofos_omega_policy_extension_aarek_v1.json"
+      ],
+      "reason": "FUSE_AAREK_MATERIAL_MISSION_EXECUTION_READBACK_LEARNING_ANTI_BYPASS"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_AAREK_V1",
+      "patterns": [
+        "federation/aarek_v1.py",
+        "tests/test_aarek_v1.py",
+        "governance/aarek_v1.json",
+        "governance/proofos_omega_policy_extension_aarek_v1.json"
+      ],
+      "depends_on": ["FUSE_OF50_ACE_V1"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "aarek_v1",
+      "kind": "unittest_glob",
+      "target": "test_aarek_v1.py",
+      "patterns": [
+        "federation/aarek_v1.py",
+        "tests/test_aarek_v1.py",
+        "governance/aarek_v1.json",
+        "governance/proofos_omega_policy_extension_aarek_v1.json"
+      ],
+      "subsystems": ["FUSE_AAREK_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
