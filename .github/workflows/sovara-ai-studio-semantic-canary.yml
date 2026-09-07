@@ -46,7 +46,7 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Validate zero-data request contract
+      - name: Validate zero-data multi-route request contract
         shell: bash
         run: |
           set -euo pipefail
@@ -57,13 +57,20 @@ jobs:
           assert p['execute'] is True,p
           assert p['project_id']=='sov-hybrid-suite',p
           assert p['project_number']=='257649435135',p
+          assert p['provider']=='GOOGLE_GEMINI_MULTI_ROUTE_CANARY',p
           assert p['credential_mode']=='GOOGLE_WIF_SECRET_MANAGER_TRANSIENT_ACCESS',p
           assert p['credential_reference']=='gcp_secret_name:gemini-api-key',p
           assert p['credential_secret_name']=='gemini-api-key',p
           assert p['resolution_surface']=='google_cloud',p
           assert p['workload_identity_provider']=='projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github',p
           assert p['service_account']=='superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com',p
-          assert p['provider']=='GOOGLE_GEMINI_DEVELOPER_API',p
+          assert p['preferred_execution_order']==['VERTEX_OAUTH_ADC','DEVELOPER_API_SECRET_MANAGER'],p
+          assert p['vertex_oauth_challenger']['enabled'] is True,p
+          assert p['vertex_oauth_challenger']['location']=='global',p
+          assert p['vertex_oauth_challenger']['preferred_models'][0]=='gemini-2.5-flash',p
+          assert 'serviceusage.services.use' in p['vertex_oauth_challenger']['service_usage_permissions_required'],p
+          assert 'aiplatform.publisherModels.predict' in p['vertex_oauth_challenger']['vertex_permissions_required'],p
+          assert p['developer_api_secret_manager_fallback']['enabled'] is True,p
           assert p['model_policy']['discovery_required'] is True,p
           assert p['model_policy']['allow_dynamic_fallback'] is True,p
           for k in ('case_data_allowed','provider_mutation_allowed','iam_mutation_allowed','secret_mutation_allowed','secret_value_logging_allowed','deployment_allowed','traffic_change_allowed','external_communication_allowed'):
@@ -71,7 +78,7 @@ jobs:
           assert int(p['semantic_canary']['max_output_tokens']) <= 32,p
           PY
 
-      - name: Run Gemini Developer API discovery and exact-nonce canary
+      - name: Run Vertex OAuth challenger with Developer API fallback
         shell: bash
         run: |
           set -euo pipefail
