@@ -1,0 +1,1 @@
+F100 scope: existing WIF/ADC workflow + direct GET-only Strategic FUSE Vertex A0 adapter + focused regressions + ProofOS ownership. No provider mutation, inference, IAM/secret change, Cloud Run deployment, traffic shift, scheduler, daemon, or new authority plane.
