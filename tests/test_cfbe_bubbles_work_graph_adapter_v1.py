@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import unittest
 
+from bubbles.ai_bot_multistream_host_v1 import run_host_canary
 from federation.bubbles_frontier_hyperperformance import WorkCell
 from benchmarking.cfbe_omega.bubbles_work_graph_adapter_v1 import (
     BubblesWorkNode,
@@ -174,6 +175,21 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertEqual(receipt.state, "SHADOW_READY")
         self.assertTrue(all(item.selected_cell_ids == ("cell-b",) for item in receipt.placements))
         self.assertFalse(receipt.serving_route_changed)
+
+    def test_fuse_ai_bot_multistream_is_hosted_by_existing_bubbles_contract(self):
+        receipt = run_host_canary(source_ref="test:bubbles-command-bus-contract")
+        self.assertEqual("HOST_BOUND_VERIFIED", receipt["state"])
+        self.assertTrue(receipt["host_binding_verified"])
+        self.assertEqual(7, receipt["logical_bot_count"])
+        self.assertEqual(0, receipt["provider_native_worker_count"])
+        self.assertTrue(receipt["multipath_recovery_verified"])
+        self.assertFalse(receipt["provider_execution_attempted"])
+        self.assertFalse(receipt["external_effect"])
+        self.assertEqual("NONE", receipt["authority_delta"])
+        self.assertIn(
+            "SOURCE_PRIMARY:PRIMARY_ROUTE_PREDICATE_CHANGED",
+            receipt["retryable_failures"],
+        )
 
 
 if __name__ == "__main__":
