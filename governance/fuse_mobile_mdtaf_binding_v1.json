@@ -1,0 +1,32 @@
+{
+  "schema": "FUSE_MOBILE_MDTAF_BINDING_V1",
+  "version": "1.0.0",
+  "parent_capability": "FUSE-MOBILE-V1",
+  "parent_contract": "governance/fuse_mobile_v1.json",
+  "child_capability": "FUSE_MOBILE_DIGITAL_TWIN_ASSURANCE_FABRIC",
+  "child_contract": "governance/fuse_mobile_mdtaf_v1.json",
+  "binding": "MANDATORY_RELEASE_ASSURANCE_CHILD",
+  "applies_to": [
+    "CURRENT_FUSE_MOBILE_ANDROID",
+    "FUTURE_FUSE_MOBILE_ANDROID_RELEASES",
+    "FUTURE_FEDERATION_MOBILE_CLIENTS_WHEN_COMPATIBLE"
+  ],
+  "inheritance": {
+    "proof_before_claim": true,
+    "phoenix_airlock": true,
+    "proofos": true,
+    "ao_cra": true,
+    "formation_engine": true,
+    "alpha_to_omega_foundry": true,
+    "cost_governor": true,
+    "owner_reserved_external_effects": true
+  },
+  "release_rule": "A mobile release may not be described as verified merely because it compiles; MDTAF configured runtime gates and evidence must be evaluated for the exact artifact.",
+  "owner_reference_device_rule": "Kim's private owner-reference-device profile is a canonical fidelity target for current and future mobile assurance but is never stored in public canonical source.",
+  "truth_boundary": {
+    "binding_source_proves_runtime": false,
+    "virtual_device_proves_physical_device": false,
+    "provider_authority_inherited": false,
+    "physical_device_profile_public": false
+  }
+}
