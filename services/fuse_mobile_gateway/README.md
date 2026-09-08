@@ -26,9 +26,15 @@ Provider credentials are server-side only. The source-only manifest can advertis
 
 ## Authentication boundary
 
-F112 supplies a short-lived HMAC session codec and an identity-verifier interface. It does not invent an owner identity provider. The production runtime must bind a real verifier and a session signing secret from a protected server-side secret store. Without them, `/v1/session` returns a held/unbound result.
+The gateway source supplies a short-lived HMAC session codec and an identity-verifier interface. It does not invent an owner identity provider. The production runtime must bind a real verifier and a session signing secret from a protected server-side secret store. Without them, `/v1/session` returns a held/unbound result.
 
 The mobile client never receives provider secrets, Cloud Run admin tokens, service-account keys, OpenRouter keys, Gemini keys, or KDV credentials.
+
+## Source lineage
+
+The gateway implementation was built on F112 and carried forward under F113 because F112 expired before admission. F113 restacks the exact F112 gateway tree onto signed main `8776693d846117a22fcc1135e9c92a09e48050eb`, preserving the non-overlapping CANVA Ω-MAX delta. Exact lineage is recorded in `RESTACK_PROVENANCE.json`.
+
+Until F113 exact-head courts and signed-main readback complete, the strongest state is `GATEWAY_SOURCE_CANDIDATE_UNDER_ADMISSION`.
 
 ## Truth boundary
 
