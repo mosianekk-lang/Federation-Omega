@@ -81,6 +81,21 @@ class FuseMobileMdtafAdbBindingTests(unittest.TestCase):
             self.assertIn("does not match SDK_ROOT/platform-tools/adb", proc.stderr)
 
     def test_workflow_uses_exact_sdk_adb_not_ambient_command(self) -> None:
+        if not WORKFLOW.exists():
+            # Phoenix reduced exported-core intentionally omits repository workflow
+            # controls. Preserve semantic assurance before skipping only the
+            # unavailable workflow-text assertion: the exact-ADB resolver and
+            # smoke harness must still be exported and their behavioral tests
+            # in this class remain mandatory.
+            self.assertTrue(HELPER.is_file(), "reduced export lost exact SDK adb resolver")
+            self.assertTrue(SMOKE.is_file(), "reduced export lost Android smoke harness")
+            helper = HELPER.read_text(encoding="utf-8")
+            smoke = SMOKE.read_text(encoding="utf-8")
+            self.assertIn('EXPECTED_ADB="$SDK_ROOT/platform-tools/adb"', helper)
+            self.assertIn('ADB="$(bash "$SCRIPT_DIR/resolve_sdk_adb.sh")"', smoke)
+            self.assertIsNone(BARE_ADB.search(smoke), "reduced-export smoke harness contains bare ambient adb")
+            self.skipTest("workflow-free export excludes repository workflow controls")
+
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn('ADB="$SDK_ROOT/platform-tools/adb"', workflow)
         self.assertIn('ADB_BIN="$SDK_ROOT/platform-tools/adb"', workflow)

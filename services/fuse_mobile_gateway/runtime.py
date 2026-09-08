@@ -52,6 +52,12 @@ class IdentityVerifier(Protocol):
     async def verify(self, credential: str) -> VerifiedIdentity: ...
 
 
+class DeviceCredentialManagerProtocol(Protocol):
+    async def enroll(self, credential: str) -> tuple[VerifiedIdentity, str]: ...
+    async def verify(self, credential: str) -> VerifiedIdentity: ...
+    async def revoke(self, credential: str, *, expected_subject: str) -> None: ...
+
+
 class ChatExecutor(Protocol):
     async def execute(
         self,
@@ -193,6 +199,7 @@ class SessionCodec:
 class GatewayRuntime:
     session_codec: SessionCodec | None = None
     identity_verifier: IdentityVerifier = field(default_factory=DisabledIdentityVerifier)
+    device_manager: DeviceCredentialManagerProtocol | None = None
     health_provider: CapabilityHealthProvider = field(default_factory=SourceOnlyCapabilityHealth)
     chat_executor: ChatExecutor = field(default_factory=DisabledChatExecutor)
     source_scopes: tuple[str, ...] = ("KDV",)
@@ -205,13 +212,16 @@ class GatewayRuntime:
         return self.session_codec is not None and not isinstance(self.identity_verifier, DisabledIdentityVerifier)
 
     @property
+    def enrollment_ready(self) -> bool:
+        return self.session_codec is not None and self.device_manager is not None
+
+    @property
     def execution_ready(self) -> bool:
         return not isinstance(self.chat_executor, DisabledChatExecutor)
 
-    async def issue_session(self, credential: str) -> dict:
+    def _session_response(self, identity: VerifiedIdentity) -> dict:
         if self.session_codec is None:
             raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
-        identity = await self.identity_verifier.verify(credential)
         token, expires_epoch = self.session_codec.issue(identity)
         return {
             "schema": SESSION_SCHEMA,
@@ -220,6 +230,31 @@ class GatewayRuntime:
             "expires_at": datetime.fromtimestamp(expires_epoch, tz=timezone.utc).isoformat(),
             "subject": identity.subject,
         }
+
+    async def enroll_device(self, credential: str) -> dict:
+        if self.device_manager is None or self.session_codec is None:
+            raise RuntimeBindingError("OWNER_ENROLLMENT_UNBOUND")
+        identity, device_token = await self.device_manager.enroll(credential)
+        response = self._session_response(identity)
+        response.update(
+            {
+                "device_token": device_token,
+                "device_token_type": "FUSE-Device",
+                "device_token_recoverable": False,
+            }
+        )
+        return response
+
+    async def issue_session(self, credential: str) -> dict:
+        if self.session_codec is None:
+            raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
+        identity = await self.identity_verifier.verify(credential)
+        return self._session_response(identity)
+
+    async def revoke_device(self, identity: VerifiedIdentity, credential: str) -> None:
+        if self.device_manager is None:
+            raise RuntimeBindingError("DEVICE_REVOCATION_UNBOUND")
+        await self.device_manager.revoke(credential, expected_subject=identity.subject)
 
     def verify_session(self, token: str) -> VerifiedIdentity:
         if self.session_codec is None:
@@ -243,6 +278,7 @@ class GatewayRuntime:
                 "provider_credentials": "SERVER_SIDE_ONLY",
                 "private_data": "MINIMUM_SUFFICIENT_ROUTING",
                 "provider_health": "FRESH_READBACK_REQUIRED",
+                "device_credentials": "OPAQUE_HASHED_SERVER_SIDE_REVOCABLE",
             },
         )
 
