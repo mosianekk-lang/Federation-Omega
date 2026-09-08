@@ -29,27 +29,72 @@ export type FuseMessageRequest = {
   verification: 'NORMAL' | 'HIGH';
 };
 
-const gateway = process.env.EXPO_PUBLIC_FEDERATION_GATEWAY_URL;
+export type FuseChatResponse = {
+  text: string;
+  trace_id?: string;
+  status?: string;
+};
 
-export async function fetchCapabilityManifest(accessToken: string): Promise<FederationCapabilityManifest> {
-  if (!gateway) throw new Error('FEDERATION_GATEWAY_UNCONFIGURED');
-  const response = await fetch(`${gateway}/v1/capabilities`, {
-    headers: { Authorization: `Bearer ${accessToken}` },
-  });
-  if (!response.ok) throw new Error(`CAPABILITY_MANIFEST_FAILED:${response.status}`);
-  return response.json();
+export type FederationHealth = {
+  status: string;
+  version?: string;
+  source_head?: string;
+  checked_at?: string;
+};
+
+const configuredGateway = process.env.EXPO_PUBLIC_FEDERATION_GATEWAY_URL?.trim().replace(/\/+$/, '');
+
+export function federationGatewayConfigured(): boolean {
+  return Boolean(configuredGateway);
 }
 
-export async function sendFuseMessage(accessToken: string, request: FuseMessageRequest) {
-  if (!gateway) throw new Error('FEDERATION_GATEWAY_UNCONFIGURED');
-  const response = await fetch(`${gateway}/v1/chat`, {
+function gatewayUrl(): string {
+  if (!configuredGateway) throw new Error('FEDERATION_GATEWAY_UNCONFIGURED');
+  if (!configuredGateway.startsWith('https://') && !configuredGateway.startsWith('http://localhost')) {
+    throw new Error('FEDERATION_GATEWAY_INSECURE_URL');
+  }
+  return configuredGateway;
+}
+
+async function fetchJson<T>(path: string, options: RequestInit = {}, timeoutMs = 30_000): Promise<T> {
+  const controller = new AbortController();
+  const timeout = setTimeout(() => controller.abort(), timeoutMs);
+  try {
+    const response = await fetch(`${gatewayUrl()}${path}`, {
+      ...options,
+      signal: controller.signal,
+    });
+    if (!response.ok) throw new Error(`FEDERATION_GATEWAY_HTTP_${response.status}`);
+    return (await response.json()) as T;
+  } finally {
+    clearTimeout(timeout);
+  }
+}
+
+function bearer(accessToken: string): Record<string, string> {
+  if (!accessToken.trim()) throw new Error('FEDERATION_SESSION_REQUIRED');
+  return { Authorization: `Bearer ${accessToken}` };
+}
+
+export async function fetchFederationHealth(accessToken?: string): Promise<FederationHealth> {
+  return fetchJson<FederationHealth>('/v1/federation/health', {
+    headers: accessToken ? bearer(accessToken) : undefined,
+  }, 10_000);
+}
+
+export async function fetchCapabilityManifest(accessToken: string): Promise<FederationCapabilityManifest> {
+  return fetchJson<FederationCapabilityManifest>('/v1/capabilities', {
+    headers: bearer(accessToken),
+  });
+}
+
+export async function sendFuseMessage(accessToken: string, request: FuseMessageRequest): Promise<FuseChatResponse> {
+  return fetchJson<FuseChatResponse>('/v1/chat', {
     method: 'POST',
     headers: {
-      Authorization: `Bearer ${accessToken}`,
+      ...bearer(accessToken),
       'Content-Type': 'application/json',
     },
     body: JSON.stringify(request),
-  });
-  if (!response.ok) throw new Error(`FUSE_CHAT_FAILED:${response.status}`);
-  return response.json() as Promise<{ text: string; trace_id?: string }>;
+  }, 120_000);
 }

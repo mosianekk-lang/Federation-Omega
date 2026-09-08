@@ -1,0 +1,25 @@
+{
+  "expo": {
+    "name": "FUSE Mobile",
+    "slug": "fuse-mobile",
+    "version": "0.2.0",
+    "scheme": "fusemobile",
+    "orientation": "portrait",
+    "userInterfaceStyle": "dark",
+    "newArchEnabled": true,
+    "plugins": [
+      "expo-router",
+      "expo-secure-store"
+    ],
+    "android": {
+      "package": "com.federationomega.fusemobile"
+    },
+    "ios": {
+      "bundleIdentifier": "com.federationomega.fusemobile",
+      "supportsTablet": true
+    },
+    "experiments": {
+      "typedRoutes": true
+    }
+  }
+}
