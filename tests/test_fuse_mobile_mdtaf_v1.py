@@ -7,12 +7,15 @@ import tempfile
 import unittest
 from pathlib import Path
 
+from proofos_omega import ImpactCompiler, ProofPolicy, ProofSelector
+
 
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "mobile" / "fuse-mobile" / "lab"
 CONTRACT = ROOT / "governance" / "fuse_mobile_mdtaf_v1.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "fuse-mobile-android-build.yml"
 AIRLOCK_POLICY = ROOT / "governance" / "github_airlock_policy.json"
+PROOFOS_POLICY = ROOT / "governance" / "proofos_omega_policy_v1.json"
 APK_SHA = "a" * 64
 
 
@@ -82,32 +85,58 @@ class FuseMobileMdtafContractTests(unittest.TestCase):
     def test_permanent_contract_is_truth_bounded(self) -> None:
         data = json.loads(CONTRACT.read_text(encoding="utf-8"))
         self.assertEqual(data["schema"], "FUSE-MOBILE-MDTAF-V1")
+        self.assertEqual(data["version"], "1.2.0")
         self.assertEqual(data["authority_ceiling"], "A1_INTERNAL")
         self.assertFalse(data["external_effect_default"])
         self.assertTrue(data["truth_boundary"]["source_is_not_runtime"])
         self.assertTrue(data["truth_boundary"]["virtual_device_is_not_physical_device"])
+        self.assertTrue(data["truth_boundary"]["owner_device_profile_uses_progressive_fidelity"])
+        self.assertTrue(data["truth_boundary"]["consent_bound_real_data_is_allowed_when_material"])
+        self.assertTrue(data["truth_boundary"]["live_secret_clone_is_prohibited"])
         self.assertTrue(data["truth_boundary"]["offline_process_survival_alone_is_not_offline_proof"])
         self.assertTrue(data["truth_boundary"]["security_receipt_must_match_exercised_apk_hash"])
         self.assertFalse(data["owner_reference_device"]["public_source_storage_allowed"])
+        self.assertEqual(data["owner_reference_device"]["secret_boundary"]["clone_into_twin"], False)
+        self.assertIn("L4_CONSENT_BOUND_REAL_DATA_LAB", data["owner_reference_device"]["fidelity_ladder"])
+        self.assertIn("installed_application_inventory", data["owner_reference_device"]["l2_behavioral_ecology_twin"])
+        self.assertIn("selected_real_messages", data["owner_reference_device"]["l4_consent_bound_real_data_lab"])
         gates = set(data["minimum_release_gates"])
         self.assertIn("APK_SECURITY_SMOKE_HASH_MATCH", gates)
         self.assertIn("OFFLINE_FAULT_INJECTION_VERIFIED", gates)
         self.assertIn("NETWORK_RECOVERY_PASS", gates)
         self.assertIn("RECOVERY_RELAUNCH_PASS", gates)
 
-    def test_owner_capture_is_privacy_minimised(self) -> None:
-        source = (LAB / "capture_owner_device.py").read_text(encoding="utf-8").lower()
-        forbidden_commands = [
-            "pm list packages",
-            "content query",
-            "/sdcard",
-            "dumpsys account",
-            "dumpsys iphonesubinfo",
+    def test_owner_capture_supports_progressive_real_world_fidelity(self) -> None:
+        source = (LAB / "capture_owner_device.py").read_text(encoding="utf-8")
+        self.assertIn("--fidelity-level", source)
+        self.assertIn("--include-system-packages", source)
+        self.assertIn("--include-literal-identifiers", source)
+        self.assertIn("--real-content-sample", source)
+        self.assertIn("--acknowledge-sensitive-capture", source)
+        self.assertIn('"pm", "list", "packages"', source)
+        self.assertIn('"dumpsys", "account"', source)
+        self.assertIn('"content", "query"', source)
+        self.assertIn('"dumpsys", "iphonesubinfo"', source)
+        self.assertIn('"credentials_or_tokens_captured": False', source)
+        self.assertIn('"live_secret_clone_allowed": False', source)
+        self.assertIn("Sensitive Level-4 capture requires", source)
+
+    def test_proofos_maps_mdtaf_to_bounded_court_without_global_fallback(self) -> None:
+        policy = ProofPolicy.from_path(PROOFOS_POLICY)
+        paths = [
+            "mobile/fuse-mobile/lab/capture_owner_device.py",
+            "mobile/fuse-mobile/lab/run_android_smoke.sh",
+            "governance/fuse_mobile_mdtaf_v1.json",
+            "governance/proofos_omega_policy_extension_fuse_mobile_mdtaf_v1.json",
         ]
-        for token in forbidden_commands:
-            self.assertNotIn(token, source)
-        self.assertIn('"personal_data_captured": false', source)
-        self.assertIn('"hardware_unique_identifiers_captured": false', source)
+        impact = ImpactCompiler(policy).assess(paths)
+        manifest = ProofSelector(policy).compile_manifest(base_sha="1" * 40, head_sha="2" * 40, impact=impact)
+        selected = {item.test_id for item in manifest.selected_tests}
+        self.assertIn("FUSE_MOBILE_MDTAF", impact.direct_subsystems)
+        self.assertFalse(impact.unmapped_production_paths)
+        self.assertIn("fuse_mobile_mdtaf", selected)
+        self.assertNotIn("full_federation_fallback", selected)
+        self.assertTrue({"airlock_kernel", "source_provenance", "proofos_self"} <= selected)
 
     def test_smoke_harness_requires_verified_fault_and_recovery(self) -> None:
         source = (LAB / "run_android_smoke.sh").read_text(encoding="utf-8")

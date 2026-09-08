@@ -1,15 +1,18 @@
 {
   "schema": "FUSE-MOBILE-MDTAF-V1",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "owner": "Kim Kagiso Mosiane",
   "module_id": "FUSE_MOBILE_DIGITAL_TWIN_ASSURANCE_FABRIC",
-  "purpose": "Provide a permanent, reusable mobile digital-twin and device-assurance capability for FUSE Mobile and future Federation mobile clients.",
+  "purpose": "Provide a permanent, reusable, high-fidelity real-world mobile digital-twin and device-assurance capability for FUSE Mobile and future Federation mobile clients.",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "truth_boundary": {
     "source_is_not_runtime": true,
     "virtual_device_is_not_physical_device": true,
-    "owner_device_profile_is_not_personal_data_clone": true,
+    "owner_device_profile_uses_progressive_fidelity": true,
+    "consent_bound_real_data_is_allowed_when_material": true,
+    "literal_identifiers_require_demonstrated_test_value": true,
+    "live_secret_clone_is_prohibited": true,
     "release_requires_runtime_evidence": true,
     "provider_or_store_mutation_requires_separate_authority": true,
     "offline_process_survival_alone_is_not_offline_proof": true,
@@ -19,6 +22,7 @@
     "LOCAL_STATIC_AND_TYPE_ASSURANCE",
     "ANDROID_AVD_DIGITAL_TWIN",
     "OWNER_REFERENCE_DEVICE_PROFILE",
+    "REAL_WORLD_DEVICE_ECOLOGY_MODEL",
     "LIFECYCLE_AND_OFFLINE_FAULT_TESTS",
     "APK_CREDENTIAL_SCAN",
     "PERFORMANCE_AND_LOG_EVIDENCE",
@@ -29,11 +33,19 @@
   ],
   "owner_reference_device": {
     "role": "CANONICAL_BASELINE_DEVICE",
-    "profile_class": "PRIVATE_ENVIRONMENT_FINGERPRINT",
-    "capture_method": "ADB_NON_PERSONAL_DEVICE_CHARACTERISTICS_ONLY",
+    "profile_class": "PRIVATE_HIGH_FIDELITY_REAL_WORLD_LAB",
+    "capture_method": "ADB_PROGRESSIVE_FIDELITY_WITH_CONSENT_BOUND_ESCALATION",
     "public_source_storage_allowed": false,
-    "captured": [
+    "capture_principle": "Do not discard a variable solely because it is personal or sensitive. Classify it by behavioral value, sensitivity, minimum fidelity needed and containment method, then use the least-sensitive representation that preserves the behavior under study.",
+    "fidelity_ladder": [
+      "L1_ENVIRONMENTAL_TWIN",
+      "L2_BEHAVIORAL_ECOLOGY_TWIN",
+      "L3_CONTENT_STRUCTURE_TWIN",
+      "L4_CONSENT_BOUND_REAL_DATA_LAB"
+    ],
+    "l1_environmental_twin": [
       "manufacturer",
+      "brand",
       "model",
       "android_release",
       "android_sdk",
@@ -46,24 +58,75 @@
       "data_partition_capacity",
       "locale",
       "timezone",
-      "low_ram_flag"
+      "low_ram_flag",
+      "battery_state",
+      "thermal_state",
+      "sim_configuration",
+      "carrier_characteristics",
+      "wifi_cellular_vpn_dns_proxy_state",
+      "bluetooth_nfc_state",
+      "accessibility_state",
+      "work_profile_and_device_policy_state"
     ],
-    "never_capture": [
-      "imei",
-      "serial_number",
-      "phone_number",
-      "accounts",
-      "contacts",
-      "messages",
-      "photos",
-      "files",
-      "installed_app_inventory",
-      "advertising_id",
-      "credentials",
-      "tokens",
-      "application_private_data"
+    "l2_behavioral_ecology_twin": [
+      "installed_application_inventory",
+      "application_versions",
+      "permission_states",
+      "background_process_pressure",
+      "battery_optimization_state",
+      "notification_load_characteristics",
+      "account_provider_types",
+      "network_transition_patterns",
+      "storage_pressure",
+      "multitasking_and_foreground_activity_patterns"
     ],
-    "fidelity_rule": "Reproduce compatible OS/API, ABI, viewport, density, memory class, locale and lifecycle constraints in the virtual lab; validate OEM or hardware-specific behavior on a physical device when virtual fidelity is insufficient."
+    "l3_content_structure_twin": [
+      "contacts_count_and_field_shape",
+      "message_thread_and_message_volume",
+      "media_counts_types_sizes_and_metadata_shape",
+      "document_counts_types_sizes_and_folder_structure",
+      "application_private_data_structure_when_readable_and_test_relevant"
+    ],
+    "l4_consent_bound_real_data_lab": [
+      "selected_real_contacts",
+      "selected_real_messages",
+      "selected_real_media_or_documents",
+      "selected_application_private_data",
+      "literal_hardware_or_subscriber_identifiers_only_when_the_literal_value_is_required_to_reproduce_behavior"
+    ],
+    "real_data_capture_requires": [
+      "defined_test_or_research_hypothesis",
+      "minimum_real_subset_needed",
+      "private_non_repository_storage",
+      "access_and_provenance_receipt",
+      "explicit_sensitive_capture_acknowledgement"
+    ],
+    "secret_boundary": {
+      "clone_into_twin": false,
+      "classes": [
+        "passwords",
+        "private_keys",
+        "authentication_tokens",
+        "recovery_codes",
+        "signing_secrets",
+        "equivalent_live_credentials"
+      ],
+      "behavioral_substitutes": [
+        "delegated_authentication",
+        "scoped_test_credentials",
+        "short_lived_tokens",
+        "provider_native_test_accounts",
+        "secure_keystore_or_enclave_operations"
+      ]
+    },
+    "containment": [
+      "private storage only",
+      "encryption at rest and in transit where supported",
+      "narrow access scope",
+      "access and provenance receipts",
+      "no accidental inclusion in public source logs screenshots prompts or build artifacts"
+    ],
+    "fidelity_rule": "Continuously compare the physical owner device, owner digital twin, generic device matrix and cloud/physical test devices. When the real phone reveals a new behavior, capture the causal variables, reproduce them at the lowest fidelity that preserves the effect, create a deterministic regression and explicitly track any physical-only gap."
   },
   "release_verdicts": [
     "RELEASE_VERIFIED",
@@ -90,6 +153,7 @@
   ],
   "release_expansion_gates": [
     "OWNER_REFERENCE_PROFILE_APPLIED_OR_DECLARED_UNAVAILABLE",
+    "OWNER_REAL_WORLD_ECOLOGY_MODELED_OR_DECLARED_UNAVAILABLE",
     "CLOUD_VIRTUAL_DEVICE_MATRIX",
     "PHYSICAL_DEVICE_VALIDATION_FOR_SIGNIFICANT_RELEASE",
     "OWASP_MASVS_MASTG_REVIEW",
@@ -100,7 +164,7 @@
     "github_actions": "OWNER_DISPATCHED_READ_ONLY_COURT",
     "local_android_sdk": "SAFE_INTERNAL",
     "firebase_test_lab": "PROVIDER_GATED_OPTIONAL_UNTIL_AUTHORITY_READBACK",
-    "physical_owner_device": "OWNER_CONTROLLED_REFERENCE_TARGET"
+    "physical_owner_device": "OWNER_CONTROLLED_HIGH_FIDELITY_REFERENCE_TARGET"
   },
   "evidence_contract": {
     "runtime_outputs_are_artifacts_not_canonical_source": true,

@@ -2,65 +2,67 @@
 
 ## Mission
 
-Make mobile verification a permanent Federation capability so FUSE Mobile builds are exercised in a reproducible Android environment before owner installation, with proof-before-claim release gating and a private owner-reference-device baseline.
-
-## Fresh benchmark (2026-09-08)
-
-CFBE compared the current FUSE Mobile stack and the strongest practical mobile assurance routes.
-
-| Route | Device fidelity | Determinism | Automation | Fault control | Evidence | Cost posture | Role |
-|---|---:|---:|---:|---:|---:|---:|---|
-| Android SDK AVD + ADB | 7 | 10 | 10 | 9 | 9 | 10 | Core deterministic twin |
-| Firebase Test Lab virtual devices | 8 | 9 | 9 | 7 | 10 | 7 | Cloud matrix expansion |
-| Firebase Test Lab physical devices | 10 | 8 | 9 | 6 | 10 | 6 | Significant-release physical gate |
-| Expo/EAS Android build surface | 8 | 9 | 9 | 4 | 8 | 7 | Compatible build/distribution route |
-| Appium / external device clouds | 8-10 | 8 | 9 | 7 | 9 | 5 | Optional cross-platform/independent expansion |
-| OWASP MASVS/MASTG | N/A | 9 | 7 | N/A | 10 | 10 | Security assurance standard |
+Make mobile verification a permanent Federation capability so FUSE Mobile builds are exercised in reproducible Android environments before owner installation, while the owner’s real phone remains the canonical high-fidelity reference environment.
 
 ## Selected architecture
 
-MDTAF v1 composes rather than replaces the existing Android build court:
+`SOURCE -> BUILD ONCE -> APK SECURITY SCAN -> EXACT APK HASH BINDING -> API35 || API36 CLEAN AVD -> INSTALL -> LAUNCH -> RELAUNCH -> VERIFIED NETWORK LOSS -> OFFLINE LAUNCH -> VERIFIED NETWORK RECOVERY -> RECOVERY RELAUNCH -> LOG/ANR/CRASH SCAN -> SCREENSHOTS/MEMORY -> CERTIFICATE`
 
-`SOURCE -> EXPO/REACT NATIVE BUILD -> APK SECURITY SCAN -> EXACT APK HASH BINDING -> CLEAN AVD -> INSTALL -> LAUNCH -> RELAUNCH -> VERIFIED NETWORK LOSS -> OFFLINE LAUNCH -> VERIFIED NETWORK RECOVERY -> RECOVERY RELAUNCH -> LOG/ANR/CRASH SCAN -> SCREENSHOTS/MEMORY -> CERTIFICATE`
-
-Two current Android API targets (35 and 36) are used in the hosted virtual court. Expo SDK 55 currently compiles/targets Android API 36, so API 36 is the current target-surface court while API 35 supplies adjacent compatibility coverage.
+The same immutable APK is used across both hosted virtual-device lanes.
 
 ## Proof-integrity hardening
 
-F124 closes two pre-admission false-positive paths found by N-OMEGA V5 falsification:
+F124 closes the pre-admission false-positive paths found by N-OMEGA V5 falsification:
 
-1. process survival is not accepted as offline proof unless the harness first proves connectivity loss and later proves network recovery plus a successful recovery relaunch;
-2. a clean credential scan is not accepted unless the scan receipt SHA-256 exactly matches the APK SHA-256 exercised by the Android smoke court.
+1. process survival is not accepted as offline proof unless the harness proves connectivity loss and later proves network recovery plus a successful recovery relaunch;
+2. a clean APK security receipt is not accepted unless its SHA-256 exactly matches the APK SHA-256 exercised by the Android smoke court.
 
 Both boundaries are fail-closed and have behavioral negative regressions.
 
-## Why not one emulator only?
+## ProofOS integration
 
-Android virtual devices provide reproducibility and controllable lifecycle/network conditions, but they do not perfectly reproduce OEM firmware, radios, sensors, thermal behavior or every hardware quirk. Therefore MDTAF permanently separates:
+MDTAF is a first-class ProofOS subsystem through `governance/proofos_omega_policy_extension_fuse_mobile_mdtaf_v1.json`.
 
-1. deterministic local/hosted AVD proof;
-2. private owner-reference-device fidelity;
-3. cloud virtual-device matrix;
-4. physical-device release validation.
-
-A virtual pass cannot be promoted to physical-device proof.
+Changes to MDTAF production surfaces select the bounded `fuse_mobile_mdtaf` behavioral court while all hard-always-run Airlock, provenance and ProofOS invariants remain mandatory. Unrelated unmapped production paths still activate the full Federation fallback. This reduces admission latency without reducing proof strength.
 
 ## Owner-reference-device doctrine
 
-Kim's phone is the canonical reference target for current and future FUSE Mobile work. The profile is private and privacy-minimised. It records only engineering-relevant environment characteristics and explicitly excludes unique identifiers, accounts, content, credentials, tokens and application-private data.
+Kim’s physical Android phone is the canonical real-world fidelity baseline for current and future FUSE Mobile work.
 
-The digital twin reproduces the closest supported API/ABI/display/density/memory/regional constraints. Any non-reproducible OEM/hardware characteristics are reported as fidelity gaps and are tested on the physical reference device rather than guessed.
+MDTAF does **not** treat personal or sensitive variables as automatically irrelevant. It uses a progressive fidelity ladder:
+
+1. **L1 Environmental Twin** — hardware, Android/OEM state, display, memory, storage, locale, power, SIM/carrier and connectivity constraints.
+2. **L2 Behavioral Ecology Twin** — installed apps and versions, permission/background-pressure characteristics, account-provider types, storage/network behavior and realistic multitasking context.
+3. **L3 Content-Structure Twin** — contacts/messages/media/documents volumes, schemas, metadata shapes and other structural conditions that can expose real bugs without necessarily copying raw content.
+4. **L4 Consented Real-Data Lab** — selected real contacts, messages, media, documents, app-private data or literal identifiers when a defined test cannot be reproduced at lower fidelity.
+
+The principle is:
+
+`ENVIRONMENTAL FACT -> METADATA -> STRUCTURAL MODEL -> REPRESENTATIVE SAMPLE -> CONSENTED REAL CONTENT`
+
+Escalate only as far as needed to reproduce the behavior. Real-data evidence stays on a private evidence plane, outside public source and ordinary build artifacts.
+
+## Secret boundary
+
+Passwords, private keys, authentication tokens, recovery codes, signing secrets and equivalent live credentials are not cloned into the twin. Their behavioral effect is reproduced through delegated authentication, scoped test credentials, short-lived tokens, provider-native test accounts or secure keystore/enclave operations.
+
+This boundary protects credentials without stripping the lab of the real operational variables that matter.
+
+## Digital-twin learning loop
+
+`PHYSICAL OWNER DEVICE <-> OWNER DIGITAL TWIN <-> GENERIC DEVICE MATRIX <-> CLOUD/PHYSICAL TEST DEVICES`
+
+Whenever the real phone reveals a new behavior or failure:
+
+1. capture the causal variables;
+2. reproduce them at the lowest fidelity that preserves the effect;
+3. create a deterministic regression;
+4. add the condition to the MDTAF matrix;
+5. record any physical-only fidelity gap;
+6. propagate the learned capability to future FUSE Mobile releases.
 
 ## Expansion frontier
 
-The next MDTAF layers after v1 core admission are:
+After core admission, MDTAF advances through private owner-device enrolment/readback, cloud virtual and physical device matrices, OWASP MASVS/MASTG, accessibility, visual regression, startup/memory/jank performance, interruption/process-death recovery and deterministic conversion of exploratory failures into permanent regressions.
 
-- private owner-profile enrolment/readback;
-- Firebase Test Lab ARM virtual matrix;
-- physical-device release court;
-- OWASP MASVS/MASTG evidence checklist;
-- performance baseline regression;
-- accessibility/visual regression;
-- deterministic conversion of AI exploratory failures into regression cases.
-
-Provider-backed expansion remains cost/authority gated and is never inferred from stored configuration.
+Virtual-device proof is never promoted into physical-device proof without real physical execution evidence.
