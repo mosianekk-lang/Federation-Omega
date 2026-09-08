@@ -22,6 +22,7 @@ from federation.live_worker_attestation_v1 import CapabilityEpoch, WorkerAttesta
 from federation.mission_capability_admission_v1 import MissionCapabilityRequirement
 from federation.mission_ir import MissionIR
 from federation.mission_outcome_value_court_v1 import OutcomeEvidence, RequiredAction, ValueObservation
+from tests.test_bubbles_mbmpc_pilf_host_binding_v1 import _of50_request
 
 SOURCE = "b" * 40
 FRONTIER = f"main@{SOURCE}"
@@ -261,6 +262,7 @@ class BubblesAutonomicFederationRuntimeTests(unittest.TestCase):
                 current_p_stage=PStage.P16_VALUE_OBSERVED,
                 satisfied_terminal_predicates=("TP-FINAL",),
                 production_stage_evidence_refs=("provider:production-stage:P16",),
+                of50_request=_of50_request(mission_id=item.mission_id),
             )
             self.assertEqual("MISSION_COMPLETION_VERIFIED", completion["state"])
             self.assertTrue(completion["mission_value_finalized"])
