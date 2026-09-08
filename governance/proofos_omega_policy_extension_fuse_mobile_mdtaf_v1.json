@@ -61,7 +61,7 @@
         "tests/test_fuse_mobile_version_contract.py"
       ],
       "subsystems": ["FUSE_MOBILE_MDTAF"],
-      "failure_class": "RELEASE_IDENTITY_MISMATCH",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 120
     }
