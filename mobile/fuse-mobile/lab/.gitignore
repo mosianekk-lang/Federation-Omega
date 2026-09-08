@@ -1,0 +1,4 @@
+*.private.json
+owner-reference*.json
+mdtaf-evidence/
+*.log

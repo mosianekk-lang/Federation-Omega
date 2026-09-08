@@ -1,13 +1,18 @@
 from __future__ import annotations
 
 import json
+import subprocess
+import sys
+import tempfile
 import unittest
+import zipfile
 from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 MOBILE = ROOT / "mobile" / "fuse-mobile"
 WORKFLOW = ROOT / ".github" / "workflows" / "fuse-mobile-android-build.yml"
 POLICY = ROOT / "governance" / "github_airlock_policy.json"
+SCANNER = MOBILE / "lab" / "scan_apk.py"
 
 
 class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
@@ -36,6 +41,11 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         if not WORKFLOW.is_file():
             self.skipTest("GitHub workflow controls are outside the reduced Phoenix exported-core surface")
         return WORKFLOW.read_text()
+
+    def _scanner_path_or_skip_export(self) -> Path:
+        if not SCANNER.is_file():
+            self.skipTest("mobile build-lab scanner is outside the reduced Phoenix exported-core surface")
+        return SCANNER
 
     def test_hosted_build_court_is_owner_only_and_non_effectful(self) -> None:
         text = self._workflow_text_or_skip_export()
@@ -66,16 +76,47 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
             self.assertIn(required, text)
 
     def test_apk_credential_scan_is_archive_aware_and_fail_closed(self) -> None:
-        text = self._workflow_text_or_skip_export()
-        self.assertIn("zipfile.ZipFile", text)
-        self.assertIn("APK_CREDENTIAL_SCAN_CLEAN", text)
-        self.assertIn("fuse-mobile-apk-security-scan.json", text)
-        self.assertIn("apk_credential_scan_receipt_sha256", text)
-        self.assertIn("pem_private_key", text)
-        self.assertIn("openrouter_key", text)
-        self.assertIn("google_api_key", text)
-        self.assertNotIn("strings \"$APK\" | grep -E", text)
-        self.assertIn("raise SystemExit('Credential-like material detected in APK')", text)
+        workflow = self._workflow_text_or_skip_export()
+        scanner = self._scanner_path_or_skip_export().read_text(encoding="utf-8")
+        self.assertIn("python lab/scan_apk.py", workflow)
+        self.assertIn("--apk android/app/build/outputs/apk/debug/app-debug.apk", workflow)
+        self.assertIn("--output fuse-mobile-apk-security-scan.json", workflow)
+        self.assertIn("APK_CREDENTIAL_SCAN_CLEAN", workflow)
+        self.assertIn("fuse-mobile-apk-security-scan.json", workflow)
+        self.assertIn("apk_credential_scan_receipt_sha256", workflow)
+        self.assertNotIn("strings \"$APK\" | grep -E", workflow)
+
+        self.assertIn("with zipfile.ZipFile(apk) as archive", scanner)
+        self.assertIn('"pem_private_key"', scanner)
+        self.assertIn('"openrouter_key"', scanner)
+        self.assertIn('"google_api_key"', scanner)
+        self.assertIn('"APK_CREDENTIAL_SCAN_FAILED"', scanner)
+        self.assertIn("return 1 if matches else 0", scanner)
+        self.assertIn('"credential_values_recorded": False', scanner)
+
+    def test_apk_scanner_behavior_fails_closed_on_archive_member_secret(self) -> None:
+        scanner = self._scanner_path_or_skip_export()
+        with tempfile.TemporaryDirectory() as tmp:
+            apk = Path(tmp) / "fixture.apk"
+            receipt = Path(tmp) / "scan.json"
+            synthetic_marker = "sk-" + "or-v1-" + ("A" * 30)
+            with zipfile.ZipFile(apk, "w") as archive:
+                archive.writestr("assets/clean.txt", b"ordinary fixture")
+                archive.writestr("assets/leak.txt", synthetic_marker.encode("ascii"))
+            proc = subprocess.run(
+                [sys.executable, str(scanner), "--apk", str(apk), "--output", str(receipt)],
+                cwd=ROOT,
+                text=True,
+                capture_output=True,
+                check=False,
+            )
+            self.assertEqual(proc.returncode, 1, proc.stdout + proc.stderr)
+            payload = json.loads(receipt.read_text(encoding="utf-8"))
+            self.assertEqual(payload["state"], "APK_CREDENTIAL_SCAN_FAILED")
+            self.assertGreaterEqual(payload["archive_members_scanned"], 2)
+            self.assertTrue(any(item["pattern"] == "openrouter_key" for item in payload["matches"]))
+            self.assertFalse(payload["credential_values_recorded"])
+            self.assertNotIn(synthetic_marker, receipt.read_text(encoding="utf-8"))
 
     def test_airlock_explicitly_quarantines_build_workflow(self) -> None:
         if not POLICY.is_file():
