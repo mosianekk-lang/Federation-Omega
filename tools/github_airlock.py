@@ -120,7 +120,7 @@ def has_concurrency(text: str) -> bool:
 
 
 def has_provider_mutation(text: str) -> bool:
-    """Detect explicit cloud-control-plane mutation capability in a workflow."""
+    """Detect explicit cloud-control-plane or provider-artifact mutation capability."""
     normalized = re.sub(r"\s+", " ", text.lower())
     markers = (
         "workload-identity-pools providers update-oidc",
@@ -129,6 +129,9 @@ def has_provider_mutation(text: str) -> bool:
         "artifacts repositories add-iam-policy-binding",
         "artifacts repositories remove-iam-policy-binding",
         "bootstrap_github_wif.sh --apply",
+        "gcloud run deploy",
+        "docker push",
+        "run services update-traffic",
     )
     return any(marker in normalized for marker in markers)
 
@@ -236,6 +239,22 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
                 "CRITICAL",
                 "provider mutation gateway must use short-lived OIDC identity",
             ))
+        for marker in policy.get("provider_mutation_required_markers", {}).get(path, []):
+            if marker.lower() not in lower:
+                findings.append(Finding(
+                    path,
+                    "PROVIDER_MUTATION_REQUIRED_GUARD_MISSING",
+                    "CRITICAL",
+                    f"provider mutation workflow is missing required guard marker: {marker}",
+                ))
+        for marker in policy.get("provider_mutation_forbidden_markers", {}).get(path, []):
+            if marker.lower() in lower:
+                findings.append(Finding(
+                    path,
+                    "PROVIDER_MUTATION_FORBIDDEN_BEHAVIOR",
+                    "CRITICAL",
+                    f"provider mutation workflow contains forbidden behavior marker: {marker}",
+                ))
 
     if has_actions_write(text) and path not in actions_write_allowed:
         findings.append(Finding(
