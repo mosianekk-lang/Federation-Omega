@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.23",
+  "version": "2.9.24",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -49,7 +49,8 @@
     ".github/workflows/nexus-direct-preflight.yml",
     ".github/workflows/nexus-direct-runtime-target.yml",
     ".github/workflows/seb-omega.yml",
-    ".github/workflows/fuse-mobile-android-build.yml"
+    ".github/workflows/fuse-mobile-android-build.yml",
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
@@ -84,7 +85,8 @@
     ".github/workflows/nexus-direct-preflight.yml": ["workflow_dispatch"],
     ".github/workflows/nexus-direct-runtime-target.yml": ["workflow_dispatch"],
     ".github/workflows/seb-omega.yml": ["pull_request", "push", "workflow_dispatch"],
-    ".github/workflows/fuse-mobile-android-build.yml": ["issues"]
+    ".github/workflows/fuse-mobile-android-build.yml": ["issues"],
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": ["issues"]
   },
   "required_push_branches": {
     ".github/workflows/bubbles-command-bus.yml": ["main"],
@@ -116,17 +118,34 @@
     ".github/workflows/sovara-ai-studio-semantic-canary.yml",
     ".github/workflows/nexus-direct-preflight.yml",
     ".github/workflows/nexus-direct-runtime-target.yml",
-    ".github/workflows/seb-omega.yml"
+    ".github/workflows/seb-omega.yml",
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml"
   ],
   "attestations_write_workflow_allowlist": [
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
     ".github/workflows/seb-omega.yml"
   ],
   "provider_mutation_workflow_allowlist": [
-    ".github/workflows/sol62-wif-hardening-lease.yml"
+    ".github/workflows/sol62-wif-hardening-lease.yml",
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml"
   ],
   "provider_mutation_exact_issue_titles": {
-    ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901"
+    ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901",
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": "[FO-DISPATCH] FUSE_MOBILE_GATEWAY_ZERO_TRAFFIC_V1"
+  },
+  "provider_mutation_required_markers": {
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
+      "--no-allow-unauthenticated",
+      "public_invocation",
+      "production_traffic_changed",
+      "provider_mutation_performed"
+    ]
+  },
+  "provider_mutation_forbidden_markers": {
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
+      "--allow-unauthenticated",
+      "update-traffic --to-latest"
+    ]
   },
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
@@ -183,6 +202,7 @@
     "project_iam_bridge_workflow": ".github/workflows/sovara-project-iam-bridge.yml",
     "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
     "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
+    "fuse_mobile_gateway_deployment_workflow": ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml",
     "sol62_wif_hardening_workflow": ".github/workflows/sol62-wif-hardening-lease.yml",
     "sol62_google_surface_probe_workflow": ".github/workflows/sol62-google-surface-probe.yml",
     "ai_studio_semantic_canary_workflow": ".github/workflows/sovara-ai-studio-semantic-canary.yml",
@@ -228,7 +248,8 @@
       ".github/workflows/nexus-direct-preflight.yml",
       ".github/workflows/nexus-direct-runtime-target.yml",
       ".github/workflows/seb-omega.yml",
-      ".github/workflows/fuse-mobile-android-build.yml"
+      ".github/workflows/fuse-mobile-android-build.yml",
+      ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml"
     ],
     "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",
