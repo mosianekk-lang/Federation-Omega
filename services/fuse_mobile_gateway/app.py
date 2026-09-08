@@ -78,9 +78,21 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
             detail={"status": "HELD", "reason": error.code},
         ) from error
 
-    def session_identity(authorization: str | None):
+    def fuse_token(x_fuse_authorization: str | None, authorization: str | None) -> str:
+        """Keep Cloud Run IAM Authorization separate from FUSE application auth.
+
+        X-Fuse-Authorization is authoritative when present. Authorization remains a
+        local/non-Cloud-Run compatibility fallback so existing clients and tests do
+        not silently lose their contract.
+        """
         try:
-            return active.verify_session(bearer_token(authorization))
+            return bearer_token(x_fuse_authorization or authorization)
+        except RuntimeBindingError as error:
+            fail(error)
+
+    def session_identity(x_fuse_authorization: str | None, authorization: str | None):
+        try:
+            return active.verify_session(fuse_token(x_fuse_authorization, authorization))
         except RuntimeBindingError as error:
             fail(error)
 
@@ -101,9 +113,10 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
     @app.post("/v1/enroll")
     async def enroll(
         authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
         try:
-            credential = bearer_token(authorization)
+            credential = fuse_token(x_fuse_authorization, authorization)
             return await active.enroll_device(credential)
         except RuntimeBindingError as error:
             fail(error)
@@ -111,9 +124,10 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
     @app.post("/v1/session")
     async def create_session(
         authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
         try:
-            credential = bearer_token(authorization)
+            credential = fuse_token(x_fuse_authorization, authorization)
             return await active.issue_session(credential)
         except RuntimeBindingError as error:
             fail(error)
@@ -122,8 +136,9 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
     async def revoke_device(
         body: DeviceRevokeBody,
         authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(authorization)
+        identity = session_identity(x_fuse_authorization, authorization)
         try:
             await active.revoke_device(identity, body.device_token)
             return {"status": "REVOKED", "subject": identity.subject}
@@ -133,8 +148,9 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
     @app.get("/v1/federation/health")
     async def federation_health(
         authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(authorization)
+        identity = session_identity(x_fuse_authorization, authorization)
         manifest = await active.manifest(identity)
         capabilities = manifest.public_view()["capabilities"]
         return {
@@ -161,16 +177,18 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
     @app.get("/v1/capabilities")
     async def capabilities(
         authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(authorization)
+        identity = session_identity(x_fuse_authorization, authorization)
         return (await active.manifest(identity)).public_view()
 
     @app.post("/v1/chat")
     async def chat(
         body: ChatRequestBody,
         authorization: Annotated[str | None, Header()] = None,
+        x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(authorization)
+        identity = session_identity(x_fuse_authorization, authorization)
         try:
             request = MobileRequest(
                 intent=body.intent,
