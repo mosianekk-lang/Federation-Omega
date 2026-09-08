@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "risk_rules": [
     {
       "risk": "R3_SECURITY_ABI",
@@ -8,7 +8,7 @@
         "mobile/fuse-mobile/lab/**",
         "governance/fuse_mobile_mdtaf*.json",
         "governance/proofos_omega_policy_extension_fuse_mobile_mdtaf_v1.json",
-        "tests/test_fuse_mobile_mdtaf_v1.py",
+        "tests/test_fuse_mobile_mdtaf*.py",
         ".github/workflows/fuse-mobile-android-build.yml"
       ],
       "reason": "FUSE_MOBILE_MDTAF_RELEASE_ASSURANCE_DEVICE_TWIN_AND_REAL_WORLD_FIDELITY"
@@ -21,7 +21,7 @@
         "mobile/fuse-mobile/lab/**",
         "governance/fuse_mobile_mdtaf*.json",
         "governance/proofos_omega_policy_extension_fuse_mobile_mdtaf_v1.json",
-        "tests/test_fuse_mobile_mdtaf_v1.py",
+        "tests/test_fuse_mobile_mdtaf*.py",
         ".github/workflows/fuse-mobile-android-build.yml"
       ],
       "depends_on": []
@@ -32,12 +32,12 @@
     {
       "id": "fuse_mobile_mdtaf",
       "kind": "unittest_glob",
-      "target": "test_fuse_mobile_mdtaf_v1.py",
+      "target": "test_fuse_mobile_mdtaf*.py",
       "patterns": [
         "mobile/fuse-mobile/lab/**",
         "governance/fuse_mobile_mdtaf*.json",
         "governance/proofos_omega_policy_extension_fuse_mobile_mdtaf_v1.json",
-        "tests/test_fuse_mobile_mdtaf_v1.py",
+        "tests/test_fuse_mobile_mdtaf*.py",
         ".github/workflows/fuse-mobile-android-build.yml"
       ],
       "subsystems": ["FUSE_MOBILE_MDTAF"],

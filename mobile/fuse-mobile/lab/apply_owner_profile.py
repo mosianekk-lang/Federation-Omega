@@ -1,5 +1,11 @@
 #!/usr/bin/env python3
-"""Apply the reproducible subset of a private owner-device profile to an ADB target."""
+"""Apply the reproducible subset of a private owner-device profile to an ADB target.
+
+Both legacy V1 and progressive high-fidelity V2 owner profiles are accepted. The
+applicator never pretends that app ecology, real content, literal identifiers or
+other physical-only variables have been reproduced when the target AVD cannot
+faithfully express them; those variables remain explicit fidelity gaps.
+"""
 
 from __future__ import annotations
 
@@ -7,6 +13,9 @@ import argparse
 import json
 import subprocess
 from pathlib import Path
+from typing import Any
+
+SUPPORTED_PROFILE_SCHEMAS = {"FUSE_OWNER_DEVICE_PROFILE_V1", "FUSE_OWNER_DEVICE_PROFILE_V2"}
 
 
 def adb(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
@@ -20,6 +29,24 @@ def shell(*args: str, check: bool = True) -> subprocess.CompletedProcess[str]:
     return adb("shell", *args, check=check)
 
 
+def profile_secret_boundary_is_safe(profile: dict[str, Any]) -> bool:
+    schema = profile.get("schema")
+    if schema == "FUSE_OWNER_DEVICE_PROFILE_V1":
+        privacy = profile.get("privacy", {})
+        return (
+            privacy.get("credentials_or_tokens_captured") is False
+            and privacy.get("hardware_unique_identifiers_captured") is False
+        )
+    if schema == "FUSE_OWNER_DEVICE_PROFILE_V2":
+        controls = profile.get("capture_controls", {})
+        return (
+            controls.get("credentials_or_tokens_captured") is False
+            and controls.get("live_secret_clone_allowed") is False
+            and controls.get("public_repository_storage_allowed") is False
+        )
+    return False
+
+
 def main() -> int:
     parser = argparse.ArgumentParser()
     parser.add_argument("--profile", required=True)
@@ -27,10 +54,11 @@ def main() -> int:
     args = parser.parse_args()
 
     profile = json.loads(Path(args.profile).read_text(encoding="utf-8"))
-    if profile.get("schema") != "FUSE_OWNER_DEVICE_PROFILE_V1":
+    schema = profile.get("schema")
+    if schema not in SUPPORTED_PROFILE_SCHEMAS:
         raise SystemExit("Unsupported owner-device profile schema")
-    if profile.get("privacy", {}).get("personal_data_captured") is not False:
-        raise SystemExit("Refusing a profile that does not declare privacy-minimised capture")
+    if not profile_secret_boundary_is_safe(profile):
+        raise SystemExit("Refusing owner profile without a safe live-secret boundary")
 
     if adb("get-state").stdout.strip() != "device":
         raise SystemExit("ADB target is not ready")
@@ -77,16 +105,47 @@ def main() -> int:
     if owner_abi and owner_abi != target_abi:
         gaps.append(f"abi_mismatch_owner_{owner_abi}_target_{target_abi}")
 
+    high_fidelity_sections: list[str] = []
+    if schema == "FUSE_OWNER_DEVICE_PROFILE_V2":
+        for section in (
+            "power",
+            "connectivity",
+            "application_ecology",
+            "account_ecology",
+            "content_structure_counts",
+            "consent_bound_real_data",
+        ):
+            if section in profile:
+                high_fidelity_sections.append(section)
+
+        if "application_ecology" in profile:
+            gaps.append("application_ecology_requires_package_fixture_matrix_or_physical_validation")
+        if "account_ecology" in profile:
+            gaps.append("account_ecology_requires_identity_fixture_or_physical_validation")
+        if "content_structure_counts" in profile:
+            gaps.append("content_structure_requires_fixture_generation_or_physical_validation")
+        if "consent_bound_real_data" in profile:
+            gaps.append("consent_bound_real_data_requires_private_fixture_injection_or_physical_validation")
+        if "connectivity" in profile:
+            gaps.append("carrier_sim_vpn_dns_proxy_fidelity_requires_specialized_avd_or_physical_validation")
+        if "power" in profile:
+            gaps.append("battery_thermal_fidelity_requires_fault_injection_or_physical_validation")
+
     report = {
-        "schema": "FUSE_OWNER_PROFILE_APPLICATION_V1",
+        "schema": "FUSE_OWNER_PROFILE_APPLICATION_V2",
         "state": "OWNER_PROFILE_APPLIED_WITH_FIDELITY_REPORT",
+        "source_profile_schema": schema,
+        "source_fidelity_level": profile.get("fidelity_level"),
         "applied": applied,
-        "fidelity_gaps": gaps,
+        "high_fidelity_sections_observed": high_fidelity_sections,
+        "fidelity_gaps": sorted(set(gaps)),
         "owner_android_sdk": owner_sdk,
         "target_android_sdk": target_sdk,
         "owner_abi": owner_abi,
         "target_abi": target_abi,
-        "personal_data_used": False,
+        "sensitive_real_data_used_for_generic_avd_application": False,
+        "live_secret_material_used": False,
+        "truth_boundary": "A fidelity gap is preserved as evidence; unsupported real-world variables are never silently treated as reproduced.",
     }
     Path(args.report).write_text(json.dumps(report, indent=2, sort_keys=True) + "\n", encoding="utf-8")
     print(json.dumps(report, sort_keys=True))
