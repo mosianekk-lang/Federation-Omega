@@ -1,0 +1,133 @@
+{
+  "schema": "FUSE-MOBILE-MDTAF-V1",
+  "version": "1.1.0",
+  "owner": "Kim Kagiso Mosiane",
+  "module_id": "FUSE_MOBILE_DIGITAL_TWIN_ASSURANCE_FABRIC",
+  "purpose": "Provide a permanent, reusable mobile digital-twin and device-assurance capability for FUSE Mobile and future Federation mobile clients.",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "truth_boundary": {
+    "source_is_not_runtime": true,
+    "virtual_device_is_not_physical_device": true,
+    "owner_device_profile_is_not_personal_data_clone": true,
+    "release_requires_runtime_evidence": true,
+    "provider_or_store_mutation_requires_separate_authority": true,
+    "offline_process_survival_alone_is_not_offline_proof": true,
+    "security_receipt_must_match_exercised_apk_hash": true
+  },
+  "layers": [
+    "LOCAL_STATIC_AND_TYPE_ASSURANCE",
+    "ANDROID_AVD_DIGITAL_TWIN",
+    "OWNER_REFERENCE_DEVICE_PROFILE",
+    "LIFECYCLE_AND_OFFLINE_FAULT_TESTS",
+    "APK_CREDENTIAL_SCAN",
+    "PERFORMANCE_AND_LOG_EVIDENCE",
+    "CLOUD_VIRTUAL_DEVICE_MATRIX",
+    "PHYSICAL_DEVICE_RELEASE_VALIDATION",
+    "OWASP_MASVS_SECURITY_ASSURANCE",
+    "RELEASE_CERTIFICATION"
+  ],
+  "owner_reference_device": {
+    "role": "CANONICAL_BASELINE_DEVICE",
+    "profile_class": "PRIVATE_ENVIRONMENT_FINGERPRINT",
+    "capture_method": "ADB_NON_PERSONAL_DEVICE_CHARACTERISTICS_ONLY",
+    "public_source_storage_allowed": false,
+    "captured": [
+      "manufacturer",
+      "model",
+      "android_release",
+      "android_sdk",
+      "security_patch",
+      "abi",
+      "screen_size",
+      "screen_density",
+      "font_scale",
+      "ram_capacity",
+      "data_partition_capacity",
+      "locale",
+      "timezone",
+      "low_ram_flag"
+    ],
+    "never_capture": [
+      "imei",
+      "serial_number",
+      "phone_number",
+      "accounts",
+      "contacts",
+      "messages",
+      "photos",
+      "files",
+      "installed_app_inventory",
+      "advertising_id",
+      "credentials",
+      "tokens",
+      "application_private_data"
+    ],
+    "fidelity_rule": "Reproduce compatible OS/API, ABI, viewport, density, memory class, locale and lifecycle constraints in the virtual lab; validate OEM or hardware-specific behavior on a physical device when virtual fidelity is insufficient."
+  },
+  "release_verdicts": [
+    "RELEASE_VERIFIED",
+    "RELEASE_VERIFIED_WITH_DECLARED_LIMITATIONS",
+    "NOT_RELEASE_READY"
+  ],
+  "minimum_release_gates": [
+    "TYPECHECK_PASS",
+    "EXPO_DOCTOR_PASS",
+    "ANDROID_BUILD_PASS",
+    "APK_CREDENTIAL_SCAN_CLEAN",
+    "APK_SECURITY_SMOKE_HASH_MATCH",
+    "AVD_BOOT_PASS",
+    "APK_INSTALL_PASS",
+    "FIRST_LAUNCH_PASS",
+    "RELAUNCH_PASS",
+    "NETWORK_BASELINE_PASS",
+    "OFFLINE_FAULT_INJECTION_VERIFIED",
+    "OFFLINE_LAUNCH_PASS",
+    "NETWORK_RECOVERY_PASS",
+    "RECOVERY_RELAUNCH_PASS",
+    "NO_FATAL_CRASH_OR_ANR",
+    "EVIDENCE_RECEIPT_COMPLETE"
+  ],
+  "release_expansion_gates": [
+    "OWNER_REFERENCE_PROFILE_APPLIED_OR_DECLARED_UNAVAILABLE",
+    "CLOUD_VIRTUAL_DEVICE_MATRIX",
+    "PHYSICAL_DEVICE_VALIDATION_FOR_SIGNIFICANT_RELEASE",
+    "OWASP_MASVS_MASTG_REVIEW",
+    "PERFORMANCE_BASELINE_REGRESSION",
+    "ACCESSIBILITY_AND_VISUAL_REGRESSION"
+  ],
+  "execution_surfaces": {
+    "github_actions": "OWNER_DISPATCHED_READ_ONLY_COURT",
+    "local_android_sdk": "SAFE_INTERNAL",
+    "firebase_test_lab": "PROVIDER_GATED_OPTIONAL_UNTIL_AUTHORITY_READBACK",
+    "physical_owner_device": "OWNER_CONTROLLED_REFERENCE_TARGET"
+  },
+  "evidence_contract": {
+    "runtime_outputs_are_artifacts_not_canonical_source": true,
+    "required": [
+      "source_sha",
+      "apk_sha256",
+      "security_scan_apk_sha256",
+      "artifact_hash_binding_state",
+      "device_profile_class",
+      "android_api",
+      "boot_state",
+      "install_state",
+      "launch_state",
+      "relaunch_state",
+      "network_baseline_state",
+      "connectivity_loss_state",
+      "offline_state",
+      "network_recovery_state",
+      "recovery_launch_state",
+      "fatal_log_scan_state",
+      "screenshots",
+      "certificate"
+    ]
+  },
+  "ao_cra": {
+    "policy": "AO-CRA-FEDERATION-INHERITANCE-V1",
+    "open_builds_on_missing_physical_profile_or_provider_authority": true,
+    "workaround_is_not_deployment": true
+  }
+}
