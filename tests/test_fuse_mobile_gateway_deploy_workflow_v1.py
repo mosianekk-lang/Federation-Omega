@@ -57,10 +57,18 @@ class FuseMobileGatewayDeployWorkflowV1Tests(unittest.TestCase):
         text = self._workflow_or_skip_export()
         self.assertIn("services get-iam-policy", text)
         self.assertIn("projects get-iam-policy", text)
-        self.assertIn("print-identity-token", text)
+        self.assertIn("token_format: id_token", text)
+        self.assertIn(
+            "id_token_audience: https://fuse-mobile-gateway-257649435135.africa-south1.run.app",
+            text,
+        )
+        self.assertIn("ID_TOKEN: ${{ steps.auth.outputs.id_token }}", text)
+        self.assertNotIn("gcloud auth print-identity-token", text)
         self.assertIn("$CANARY_URL/health", text)
         self.assertIn("PRIVATE_GATEWAY_CANARY_DEPLOYED_SOURCE_READY", text)
         self.assertIn("deployment-receipt.json", text)
+        self.assertIn("Upload immutable provider proof, including partial evidence on failure", text)
+        self.assertIn("if: always()", text)
         self.assertIn("actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02", text)
 
     def test_airlock_classifies_and_constrains_fuse_mobile_deployment(self) -> None:
