@@ -42,6 +42,11 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
             self.skipTest("GitHub workflow controls are outside the reduced Phoenix exported-core surface")
         return WORKFLOW.read_text()
 
+    def _scanner_path_or_skip_export(self) -> Path:
+        if not SCANNER.is_file():
+            self.skipTest("mobile build-lab scanner is outside the reduced Phoenix exported-core surface")
+        return SCANNER
+
     def test_hosted_build_court_is_owner_only_and_non_effectful(self) -> None:
         text = self._workflow_text_or_skip_export()
         self.assertIn("FUSE_MOBILE_ANDROID_BUILD_V1", text)
@@ -72,7 +77,7 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
 
     def test_apk_credential_scan_is_archive_aware_and_fail_closed(self) -> None:
         workflow = self._workflow_text_or_skip_export()
-        scanner = SCANNER.read_text(encoding="utf-8")
+        scanner = self._scanner_path_or_skip_export().read_text(encoding="utf-8")
         self.assertIn("python lab/scan_apk.py", workflow)
         self.assertIn("--apk android/app/build/outputs/apk/debug/app-debug.apk", workflow)
         self.assertIn("--output fuse-mobile-apk-security-scan.json", workflow)
@@ -90,6 +95,7 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         self.assertIn('"credential_values_recorded": False', scanner)
 
     def test_apk_scanner_behavior_fails_closed_on_archive_member_secret(self) -> None:
+        scanner = self._scanner_path_or_skip_export()
         with tempfile.TemporaryDirectory() as tmp:
             apk = Path(tmp) / "fixture.apk"
             receipt = Path(tmp) / "scan.json"
@@ -98,7 +104,7 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
                 archive.writestr("assets/clean.txt", b"ordinary fixture")
                 archive.writestr("assets/leak.txt", synthetic_marker.encode("ascii"))
             proc = subprocess.run(
-                [sys.executable, str(SCANNER), "--apk", str(apk), "--output", str(receipt)],
+                [sys.executable, str(scanner), "--apk", str(apk), "--output", str(receipt)],
                 cwd=ROOT,
                 text=True,
                 capture_output=True,
