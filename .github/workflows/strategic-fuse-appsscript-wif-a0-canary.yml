@@ -1,0 +1,141 @@
+name: Strategic FUSE Apps Script WIF A0 Canary
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/strategic-fuse-appsscript-wif-a0-canary.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: strategic-fuse-appsscript-wif-a0-canary
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  APPS_SCRIPT_ID: 1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R
+  TARGET_SA: fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  appsscript-get-content-a0:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Checkout without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate exact already-shared identity through canonical WIF
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.TARGET_SA }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/script.projects.readonly
+
+      - name: GET-only Apps Script project content and compile non-secret receipt
+        shell: bash
+        env:
+          ACCESS_TOKEN: ${{ steps.auth.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          mkdir -p strategic-fuse-a0
+          python - <<'PY'
+          import hashlib, json, os, urllib.error, urllib.request
+          from pathlib import Path
+
+          script_id = os.environ['APPS_SCRIPT_ID']
+          token = os.environ['ACCESS_TOKEN']
+          url = f'https://script.googleapis.com/v1/projects/{script_id}/content'
+          req = urllib.request.Request(url, headers={'Authorization': f'Bearer {token}'})
+          http_status = None
+          raw = b''
+          error_body = ''
+          try:
+              with urllib.request.urlopen(req, timeout=30) as r:
+                  http_status = int(r.status)
+                  raw = r.read()
+          except urllib.error.HTTPError as exc:
+              http_status = int(exc.code)
+              error_body = exc.read(4096).decode('utf-8', 'replace')
+          except Exception as exc:
+              receipt = {
+                  'schema': 'STRATEGIC_FUSE_APPS_SCRIPT_WIF_A0_CANARY_V1',
+                  'state': 'TRANSPORT_ERROR',
+                  'project_id': os.environ['PROJECT_ID'],
+                  'target_service_account': os.environ['TARGET_SA'],
+                  'script_id': script_id,
+                  'http_status': None,
+                  'error_class': type(exc).__name__,
+                  'mutation_performed': False,
+                  'source_body_published': False,
+              }
+              Path('strategic-fuse-a0/receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n')
+              raise
+
+          receipt = {
+              'schema': 'STRATEGIC_FUSE_APPS_SCRIPT_WIF_A0_CANARY_V1',
+              'project_id': os.environ['PROJECT_ID'],
+              'target_service_account': os.environ['TARGET_SA'],
+              'script_id': script_id,
+              'http_status': http_status,
+              'mutation_performed': False,
+              'source_body_published': False,
+              'required_scope': 'script.projects.readonly',
+          }
+          if http_status != 200:
+              # Store only a bounded digest/classification of the error, never credentials or raw source.
+              receipt.update({
+                  'state': 'APPS_SCRIPT_GET_REJECTED',
+                  'error_sha256': hashlib.sha256(error_body.encode()).hexdigest(),
+                  'error_excerpt': error_body[:1000],
+              })
+              Path('strategic-fuse-a0/receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n')
+              raise SystemExit(f'Apps Script GET rejected: HTTP {http_status}')
+
+          body = json.loads(raw.decode('utf-8'))
+          files = body.get('files') or []
+          projections = []
+          for f in files:
+              name = str(f.get('name') or '')
+              typ = str(f.get('type') or '')
+              source = str(f.get('source') or '')
+              projections.append({
+                  'name': name,
+                  'type': typ,
+                  'source_sha256': hashlib.sha256(source.encode()).hexdigest(),
+                  'source_bytes': len(source.encode()),
+              })
+          projections.sort(key=lambda x: (x['name'], x['type']))
+          canonical = json.dumps(projections, sort_keys=True, separators=(',', ':')).encode()
+          names = {p['name'] for p in projections}
+          scheduler = next((p for p in projections if p['name'] == 'GoogleNativeSchedulerV3'), None)
+          receipt.update({
+              'state': 'APPS_SCRIPT_GET_CONTENT_VERIFIED',
+              'file_count': len(projections),
+              'projection_sha256': hashlib.sha256(canonical).hexdigest(),
+              'google_native_scheduler_v3_present': scheduler is not None,
+              'google_native_scheduler_v3_source_sha256': scheduler['source_sha256'] if scheduler else None,
+              'strategic_module_present': 'StrategicFuseSecondaryBrainGns4V1' in names,
+              'gatw_loader_present': 'GATWLoader' in names,
+              'provider_readback_verified': True,
+          })
+          Path('strategic-fuse-a0/receipt.json').write_text(json.dumps(receipt, indent=2, sort_keys=True)+'\n')
+          print(json.dumps({k: receipt[k] for k in receipt if k not in {'error_excerpt'}}, sort_keys=True))
+          PY
+
+      - name: Upload immutable sanitized A0 receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: strategic-fuse-appsscript-wif-a0-${{ github.run_id }}-${{ github.run_attempt }}
+          path: strategic-fuse-a0/receipt.json
+          if-no-files-found: error
+          retention-days: 30
