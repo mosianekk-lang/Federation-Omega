@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_MOBILE_V1_GOVERNANCE",
-  "version": "1.2.0",
+  "version": "1.2.1",
   "capability_id": "FUSE-MOBILE-V1",
   "role": "THIN_OWNER_CLIENT_AND_GATEWAY_CONTRACT",
   "constitutional_parent": "Human-First",
@@ -65,7 +65,8 @@
     "chat_executor_injection_required": true,
     "effect_hold_before_executor": true,
     "cloud_run_compatible_image": true,
-    "direct_privileged_execute_passthrough": false
+    "direct_privileged_execute_passthrough": false,
+    "f112_source_reused_under_f113_current_epoch": true
   },
   "runtime_contract": {
     "gateway_url_source_hardcoded": false,
@@ -86,5 +87,6 @@
     "RUNTIME_VERIFIED",
     "BEHAVIOR_VERIFIED"
   ],
-  "terminal_source_state": "F112_GATEWAY_SOURCE_ADMISSION_REQUIRED"
+  "current_source_epoch": "8776693d846117a22fcc1135e9c92a09e48050eb",
+  "terminal_source_state": "F113_GATEWAY_SOURCE_ADMISSION_REQUIRED"
 }
