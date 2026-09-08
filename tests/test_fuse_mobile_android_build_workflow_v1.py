@@ -25,8 +25,13 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         self.assertNotIn("newArchEnabled", app["expo"])
         self.assertEqual(app["expo"]["android"]["package"], "com.federationomega.fusemobile")
 
+    def _workflow_text_or_skip_export(self) -> str:
+        if not WORKFLOW.is_file():
+            self.skipTest("GitHub workflow controls are outside the reduced Phoenix exported-core surface")
+        return WORKFLOW.read_text()
+
     def test_hosted_build_court_is_owner_only_and_non_effectful(self) -> None:
-        text = WORKFLOW.read_text()
+        text = self._workflow_text_or_skip_export()
         self.assertIn("FUSE_MOBILE_ANDROID_BUILD_V1", text)
         self.assertIn("author_association == 'OWNER'", text)
         self.assertIn("contents: read", text)
@@ -37,7 +42,7 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         self.assertIn("persist-credentials: false", text)
 
     def test_build_court_generates_lock_and_real_apk_receipt(self) -> None:
-        text = WORKFLOW.read_text()
+        text = self._workflow_text_or_skip_export()
         for required in (
             "npm install --package-lock-only --ignore-scripts",
             "npm ci",
@@ -54,6 +59,8 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
             self.assertIn(required, text)
 
     def test_airlock_explicitly_quarantines_build_workflow(self) -> None:
+        if not POLICY.is_file():
+            self.skipTest("repository workflow governance is outside the reduced Phoenix exported-core surface")
         policy = json.loads(POLICY.read_text())
         path = ".github/workflows/fuse-mobile-android-build.yml"
         self.assertIn(path, policy["active_workflow_allowlist"])
