@@ -184,6 +184,8 @@ class FuseMobileMdtafContractTests(unittest.TestCase):
         self.assertIn('"network_recovery"', source)
 
     def test_mdtaf_reuses_existing_admitted_owner_dispatched_workflow(self) -> None:
+        if not WORKFLOW.exists():
+            self.skipTest("workflow-free export excludes repository workflow controls")
         workflow = WORKFLOW.read_text(encoding="utf-8")
         policy = json.loads(AIRLOCK_POLICY.read_text(encoding="utf-8"))
         path = ".github/workflows/fuse-mobile-android-build.yml"
