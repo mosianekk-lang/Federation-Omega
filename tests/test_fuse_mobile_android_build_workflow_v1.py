@@ -18,7 +18,9 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         self.assertEqual(deps["expo-router"], "~55.0.18")
         self.assertEqual(deps["expo-secure-store"], "~55.0.18")
         self.assertEqual(deps["react"], "19.2.0")
-        self.assertEqual(deps["react-native"], "0.83.0")
+        self.assertEqual(deps["react-dom"], "19.2.0")
+        self.assertEqual(deps["react-native"], "0.83.2")
+        self.assertEqual(deps["react-native-web"], "~0.21.0")
 
     def test_app_config_drops_invalid_new_arch_override(self) -> None:
         app = json.loads((MOBILE / "app.json").read_text())
