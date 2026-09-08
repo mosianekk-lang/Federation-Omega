@@ -2,11 +2,10 @@
   "expo": {
     "name": "FUSE Mobile",
     "slug": "fuse-mobile",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "scheme": "fusemobile",
     "orientation": "portrait",
     "userInterfaceStyle": "dark",
-    "newArchEnabled": true,
     "plugins": [
       "expo-router",
       "expo-secure-store"

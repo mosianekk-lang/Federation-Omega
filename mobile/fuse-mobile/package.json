@@ -1,6 +1,6 @@
 {
   "name": "fuse-mobile",
-  "version": "0.2.0",
+  "version": "0.2.1",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
@@ -8,19 +8,20 @@
     "android": "expo run:android",
     "ios": "expo run:ios",
     "typecheck": "tsc --noEmit",
+    "doctor": "npx expo-doctor",
     "export:android": "expo export --platform android",
-    "prebuild:android": "expo prebuild --platform android --no-install",
-    "android:apk": "expo prebuild --platform android && cd android && ./gradlew assembleDebug"
+    "prebuild:android": "expo prebuild --platform android --no-install --clean",
+    "android:apk": "expo prebuild --platform android --clean && cd android && ./gradlew assembleDebug --no-daemon"
   },
   "dependencies": {
     "expo": "~55.0.0",
-    "expo-router": "~6.0.0",
-    "expo-secure-store": "~15.0.0",
-    "react": "19.1.0",
-    "react-native": "0.82.0"
+    "expo-router": "~55.0.18",
+    "expo-secure-store": "~55.0.18",
+    "react": "19.2.0",
+    "react-native": "0.83.0"
   },
   "devDependencies": {
-    "@types/react": "~19.1.0",
+    "@types/react": "~19.2.0",
     "typescript": "~5.9.2"
   }
 }
