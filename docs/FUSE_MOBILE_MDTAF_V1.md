@@ -25,6 +25,10 @@ MDTAF is a first-class ProofOS subsystem through `governance/proofos_omega_polic
 
 Changes to MDTAF production surfaces select the bounded `fuse_mobile_mdtaf` behavioral court while all hard-always-run Airlock, provenance and ProofOS invariants remain mandatory. Unrelated unmapped production paths still activate the full Federation fallback. This reduces admission latency without reducing proof strength.
 
+## Coordination freshness invariant
+
+Hosted admission is fenced by the current repository lease, not by a historical lease snapshot. When the incumbent lease is renewed without changing writer, transaction, fencing token or source epoch, the pull request coordination claim must be refreshed to the new `turn_capture_id` and current lock-ref commit before the next hosted admission court. A stale claim fails closed; the correct recovery is to refresh the provider metadata and obtain a fresh exact-head court, never to weaken or bypass the coordination guard.
+
 ## Owner-reference-device doctrine
 
 Kim’s physical Android phone is the canonical real-world fidelity baseline for current and future FUSE Mobile work.
