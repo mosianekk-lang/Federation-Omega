@@ -36,12 +36,15 @@ jobs:
         with:
           persist-credentials: false
 
-      - name: Authenticate canonical keyless deployer
+      - name: Authenticate canonical keyless deployer and mint private-service ID token
+        id: auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.PROJECT_ID }}
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOYER_SA }}
+          token_format: id_token
+          id_token_audience: https://fuse-mobile-gateway-257649435135.africa-south1.run.app
 
       - name: Install pinned gcloud
         uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
@@ -207,6 +210,7 @@ jobs:
         env:
           SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
           TAG: ${{ steps.deploy.outputs.tag }}
+          ID_TOKEN: ${{ steps.auth.outputs.id_token }}
         run: |
           set -euo pipefail
           set +x
@@ -224,7 +228,7 @@ jobs:
           PY
           CANARY_URL="$(cat /tmp/fuse-mobile-canary-url)"
           test -n "$CANARY_URL"
-          ID_TOKEN="$(gcloud auth print-identity-token --audiences="$CANARY_URL")"
+          test -n "$ID_TOKEN"
           HTTP_CODE="$(curl --silent --show-error --output fuse-mobile-deploy-proof/health.json --write-out '%{http_code}' --header "Authorization: Bearer $ID_TOKEN" "$CANARY_URL/health")"
           unset ID_TOKEN
           test "$HTTP_CODE" = "200"
@@ -292,10 +296,11 @@ jobs:
           print(json.dumps({k:receipt[k] for k in ('state','service','revision','traffic_mode','new_revision_percent','public_invocation','production_traffic_changed')},sort_keys=True))
           PY
 
-      - name: Upload immutable provider proof
+      - name: Upload immutable provider proof, including partial evidence on failure
+        if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: fuse-mobile-gateway-private-canary-v1-${{ github.run_id }}-${{ github.run_attempt }}
-          if-no-files-found: error
+          if-no-files-found: warn
           retention-days: 90
           path: fuse-mobile-deploy-proof/
