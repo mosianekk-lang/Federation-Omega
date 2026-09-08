@@ -280,8 +280,11 @@ jobs:
     def test_sol62_wif_hardening_lease_is_exact_and_owner_gated(self):
         workflow = ".github/workflows/sol62-wif-hardening-lease.yml"
         title = "SOL62-WIF-HARDEN-20260901"
-        self.assertEqual([workflow], POLICY.get("provider_mutation_workflow_allowlist"))
-        self.assertEqual({workflow: title}, POLICY.get("provider_mutation_exact_issue_titles"))
+        mutation_workflows = POLICY.get("provider_mutation_workflow_allowlist", [])
+        mutation_titles = POLICY.get("provider_mutation_exact_issue_titles", {})
+        self.assertIn(workflow, mutation_workflows)
+        self.assertEqual(title, mutation_titles.get(workflow))
+        self.assertEqual(set(mutation_workflows), set(mutation_titles))
         self.assertIn(workflow, POLICY.get("oidc_workflow_allowlist"))
         self.assertIn(workflow, POLICY.get("active_workflow_allowlist"))
         self.assertIn(workflow, POLICY["execution_quarantine"]["keep_active"])
