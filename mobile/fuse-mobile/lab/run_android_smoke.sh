@@ -4,6 +4,9 @@ set -euo pipefail
 APK=""
 EVIDENCE_DIR="mdtaf-evidence"
 PACKAGE_ID="com.federationomega.fusemobile"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+ADB="$(bash "$SCRIPT_DIR/resolve_sdk_adb.sh")"
+test -x "$ADB"
 
 while [[ $# -gt 0 ]]; do
   case "$1" in
@@ -22,56 +25,56 @@ fi
 mkdir -p "$EVIDENCE_DIR"
 exec > >(tee "$EVIDENCE_DIR/smoke-console.log") 2>&1
 
-if [[ "$(adb get-state 2>/dev/null || true)" != "device" ]]; then
+if [[ "$("$ADB" get-state 2>/dev/null || true)" != "device" ]]; then
   echo "ADB target is not ready" >&2
   exit 3
 fi
 
-ADB_COUNT="$(adb devices | awk 'NR>1 && $2=="device" {count++} END {print count+0}')"
+ADB_COUNT="$("$ADB" devices | awk 'NR>1 && $2=="device" {count++} END {print count+0}')"
 if [[ "$ADB_COUNT" -ne 1 ]]; then
   echo "Expected exactly one ready ADB target, found $ADB_COUNT" >&2
-  adb devices -l || true
+  "$ADB" devices -l || true
   exit 3
 fi
 
 restore_connectivity() {
-  adb shell cmd connectivity airplane-mode disable >/dev/null 2>&1 || true
-  adb shell svc wifi enable >/dev/null 2>&1 || true
-  adb shell svc data enable >/dev/null 2>&1 || true
+  "$ADB" shell cmd connectivity airplane-mode disable >/dev/null 2>&1 || true
+  "$ADB" shell svc wifi enable >/dev/null 2>&1 || true
+  "$ADB" shell svc data enable >/dev/null 2>&1 || true
 }
 trap restore_connectivity EXIT
 
 network_reachable() {
-  adb shell ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1
+  "$ADB" shell ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1
 }
 
 launch_app() {
-  adb shell monkey -p "$PACKAGE_ID" -c android.intent.category.LAUNCHER 1 >/dev/null
+  "$ADB" shell monkey -p "$PACKAGE_ID" -c android.intent.category.LAUNCHER 1 >/dev/null
   sleep 5
-  adb shell pidof "$PACKAGE_ID" | tr -d '\r'
+  "$ADB" shell pidof "$PACKAGE_ID" | tr -d '\r'
 }
 
-adb logcat -c
-adb shell pm clear "$PACKAGE_ID" >/dev/null 2>&1 || true
-adb install -r -t "$APK"
-adb shell pm list packages "$PACKAGE_ID" | tee "$EVIDENCE_DIR/package-installed.txt"
+"$ADB" logcat -c
+"$ADB" shell pm clear "$PACKAGE_ID" >/dev/null 2>&1 || true
+"$ADB" install -r -t "$APK"
+"$ADB" shell pm list packages "$PACKAGE_ID" | tee "$EVIDENCE_DIR/package-installed.txt"
 
 FIRST_PID="$(launch_app)"
 if [[ -z "$FIRST_PID" ]]; then
   echo "First launch did not leave an application process" >&2
   exit 4
 fi
-adb exec-out screencap -p > "$EVIDENCE_DIR/first-launch.png"
-adb shell dumpsys activity activities > "$EVIDENCE_DIR/activity-first-launch.txt"
-adb shell dumpsys meminfo "$PACKAGE_ID" > "$EVIDENCE_DIR/meminfo-first-launch.txt"
+"$ADB" exec-out screencap -p > "$EVIDENCE_DIR/first-launch.png"
+"$ADB" shell dumpsys activity activities > "$EVIDENCE_DIR/activity-first-launch.txt"
+"$ADB" shell dumpsys meminfo "$PACKAGE_ID" > "$EVIDENCE_DIR/meminfo-first-launch.txt"
 
-adb shell am force-stop "$PACKAGE_ID"
+"$ADB" shell am force-stop "$PACKAGE_ID"
 SECOND_PID="$(launch_app)"
 if [[ -z "$SECOND_PID" ]]; then
   echo "Relaunch did not leave an application process" >&2
   exit 5
 fi
-adb exec-out screencap -p > "$EVIDENCE_DIR/relaunch.png"
+"$ADB" exec-out screencap -p > "$EVIDENCE_DIR/relaunch.png"
 
 NETWORK_BASELINE=0
 if network_reachable; then NETWORK_BASELINE=1; fi
@@ -83,11 +86,11 @@ fi
 AIRPLANE_CMD=0
 WIFI_OFF=0
 DATA_OFF=0
-if adb shell cmd connectivity airplane-mode enable >/dev/null 2>&1; then AIRPLANE_CMD=1; fi
-if adb shell svc wifi disable >/dev/null 2>&1; then WIFI_OFF=1; fi
-if adb shell svc data disable >/dev/null 2>&1; then DATA_OFF=1; fi
+if "$ADB" shell cmd connectivity airplane-mode enable >/dev/null 2>&1; then AIRPLANE_CMD=1; fi
+if "$ADB" shell svc wifi disable >/dev/null 2>&1; then WIFI_OFF=1; fi
+if "$ADB" shell svc data disable >/dev/null 2>&1; then DATA_OFF=1; fi
 sleep 3
-AIRPLANE_ON_RAW="$(adb shell cmd connectivity airplane-mode 2>/dev/null | tr -d '\r' || true)"
+AIRPLANE_ON_RAW="$("$ADB" shell cmd connectivity airplane-mode 2>/dev/null | tr -d '\r' || true)"
 AIRPLANE_ON="$(printf '%s' "$AIRPLANE_ON_RAW" | tr '[:upper:]' '[:lower:]')"
 OFFLINE_PING_BLOCKED=0
 if ! network_reachable; then OFFLINE_PING_BLOCKED=1; fi
@@ -100,19 +103,19 @@ if [[ "$CONNECTIVITY_LOSS" -ne 1 ]]; then
   exit 7
 fi
 
-adb shell am force-stop "$PACKAGE_ID"
+"$ADB" shell am force-stop "$PACKAGE_ID"
 OFFLINE_PID="$(launch_app)"
 if [[ -z "$OFFLINE_PID" ]]; then
   echo "Offline relaunch did not leave an application process" >&2
   exit 8
 fi
-adb exec-out screencap -p > "$EVIDENCE_DIR/offline-launch.png"
+"$ADB" exec-out screencap -p > "$EVIDENCE_DIR/offline-launch.png"
 
 restore_connectivity
 AIRPLANE_OFF=0
 RECOVERY_PING=0
 for _ in $(seq 1 30); do
-  AIRPLANE_OFF_RAW="$(adb shell cmd connectivity airplane-mode 2>/dev/null | tr -d '\r' || true)"
+  AIRPLANE_OFF_RAW="$("$ADB" shell cmd connectivity airplane-mode 2>/dev/null | tr -d '\r' || true)"
   AIRPLANE_OFF_NORMALIZED="$(printf '%s' "$AIRPLANE_OFF_RAW" | tr '[:upper:]' '[:lower:]')"
   if [[ "$AIRPLANE_OFF_NORMALIZED" == *"disabled"* ]]; then AIRPLANE_OFF=1; fi
   if network_reachable; then RECOVERY_PING=1; fi
@@ -126,20 +129,20 @@ if [[ "$NETWORK_RECOVERY" -ne 1 ]]; then
   exit 9
 fi
 
-adb shell am force-stop "$PACKAGE_ID"
+"$ADB" shell am force-stop "$PACKAGE_ID"
 RECOVERY_PID="$(launch_app)"
 if [[ -z "$RECOVERY_PID" ]]; then
   echo "Post-recovery relaunch did not leave an application process" >&2
   exit 10
 fi
-adb exec-out screencap -p > "$EVIDENCE_DIR/recovery-launch.png"
+"$ADB" exec-out screencap -p > "$EVIDENCE_DIR/recovery-launch.png"
 
-adb shell dumpsys package "$PACKAGE_ID" > "$EVIDENCE_DIR/package-dumpsys.txt"
-adb shell getprop > "$EVIDENCE_DIR/device-getprop.txt"
-adb shell wm size > "$EVIDENCE_DIR/device-wm-size.txt"
-adb shell wm density > "$EVIDENCE_DIR/device-wm-density.txt"
-adb shell dumpsys meminfo "$PACKAGE_ID" > "$EVIDENCE_DIR/meminfo-final.txt"
-adb logcat -d > "$EVIDENCE_DIR/logcat.txt"
+"$ADB" shell dumpsys package "$PACKAGE_ID" > "$EVIDENCE_DIR/package-dumpsys.txt"
+"$ADB" shell getprop > "$EVIDENCE_DIR/device-getprop.txt"
+"$ADB" shell wm size > "$EVIDENCE_DIR/device-wm-size.txt"
+"$ADB" shell wm density > "$EVIDENCE_DIR/device-wm-density.txt"
+"$ADB" shell dumpsys meminfo "$PACKAGE_ID" > "$EVIDENCE_DIR/meminfo-final.txt"
+"$ADB" logcat -d > "$EVIDENCE_DIR/logcat.txt"
 
 python - "$APK" "$EVIDENCE_DIR" "$PACKAGE_ID" "$FIRST_PID" "$SECOND_PID" "$OFFLINE_PID" "$RECOVERY_PID" "$NETWORK_BASELINE" "$CONNECTIVITY_LOSS" "$NETWORK_RECOVERY" "$AIRPLANE_CMD" "$WIFI_OFF" "$DATA_OFF" "$OFFLINE_PING_BLOCKED" "$AIRPLANE_OFF" "$RECOVERY_PING" <<'PY'
 import hashlib
