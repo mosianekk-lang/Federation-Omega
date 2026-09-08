@@ -11,7 +11,8 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 LAB = ROOT / "mobile" / "fuse-mobile" / "lab"
 CONTRACT = ROOT / "governance" / "fuse_mobile_mdtaf_v1.json"
-WORKFLOW = ROOT / ".github" / "workflows" / "fuse-mobile-mdtaf-v1.yml"
+WORKFLOW = ROOT / ".github" / "workflows" / "fuse-mobile-android-build.yml"
+AIRLOCK_POLICY = ROOT / "governance" / "github_airlock_policy.json"
 APK_SHA = "a" * 64
 
 
@@ -182,11 +183,19 @@ class FuseMobileMdtafContractTests(unittest.TestCase):
         self.assertIn('"connectivity_loss_verified"', source)
         self.assertIn('"network_recovery"', source)
 
-    def test_workflow_is_owner_dispatched_and_read_only(self) -> None:
+    def test_mdtaf_reuses_existing_admitted_owner_dispatched_workflow(self) -> None:
         workflow = WORKFLOW.read_text(encoding="utf-8")
+        policy = json.loads(AIRLOCK_POLICY.read_text(encoding="utf-8"))
+        path = ".github/workflows/fuse-mobile-android-build.yml"
+        self.assertIn(path, policy["active_workflow_allowlist"])
+        self.assertEqual(policy["allowed_events"][path], ["issues"])
+        self.assertIn("[FO-DISPATCH] FUSE_MOBILE_ANDROID_BUILD_V1", workflow)
+        self.assertIn("[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1", workflow)
         self.assertIn("permissions:\n  contents: read\n  issues: read", workflow)
         self.assertIn("github.event.issue.author_association == 'OWNER'", workflow)
         self.assertIn("persist-credentials: false", workflow)
+        self.assertNotIn(path, policy["oidc_workflow_allowlist"])
+        self.assertNotIn(path, policy["provider_mutation_workflow_allowlist"])
         self.assertNotIn("contents: write", workflow)
         self.assertNotIn("id-token: write", workflow)
 
