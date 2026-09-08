@@ -1,0 +1,49 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "2.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/cfbe_chat_hyperperformance_v2.py",
+        "tests/test_cfbe_chat_hyperperformance_v2.py",
+        "benchmarking/cfbe_omega/CFBE_CHAT_FRONTIER_AUDIT_V2_20260908.md",
+        "governance/proofos_omega_policy_extension_cfbe_chat_hyperperformance_v2.json"
+      ],
+      "reason": "CFBE_EXECUTE_BEFORE_REPORT_FAILURE_EVOLUTION_BULKHEAD_SINGLEFLIGHT_HEDGING_TRAJECTORY_AND_ALGORITHM_PROMOTION_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "CFBE_CHAT_HYPERPERFORMANCE_V2",
+      "patterns": [
+        "federation/cfbe_chat_hyperperformance_v2.py",
+        "tests/test_cfbe_chat_hyperperformance_v2.py",
+        "benchmarking/cfbe_omega/CFBE_CHAT_FRONTIER_AUDIT_V2_20260908.md",
+        "governance/proofos_omega_policy_extension_cfbe_chat_hyperperformance_v2.json"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "CFBE",
+        "CFBE_CHAT_HYPERPERFORMANCE_V1"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "cfbe_chat_hyperperformance_v2",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_chat_hyperperformance_v2.py",
+      "patterns": [
+        "federation/cfbe_chat_hyperperformance_v2.py",
+        "tests/test_cfbe_chat_hyperperformance_v2.py",
+        "governance/proofos_omega_policy_extension_cfbe_chat_hyperperformance_v2.json"
+      ],
+      "subsystems": ["CFBE_CHAT_HYPERPERFORMANCE_V2"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}
