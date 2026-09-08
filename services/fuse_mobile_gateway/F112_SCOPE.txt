@@ -1,0 +1,1 @@
+F112 scope: thin owner-facing gateway source only; no live provider call, no production traffic, no signing, no app-store publication.

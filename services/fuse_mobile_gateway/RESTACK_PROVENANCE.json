@@ -1,0 +1,15 @@
+{
+  "schema": "FUSE_MOBILE_GATEWAY_RESTACK_PROVENANCE_V1",
+  "fencing_token": 113,
+  "current_main_base": "8776693d846117a22fcc1135e9c92a09e48050eb",
+  "current_main_tree": "ed460263ed18c31270b35cd5b6c6ad3e30091f18",
+  "reused_f112_base": "26296699d7b5f78c77d9cbdcc7bb83b44059af08",
+  "reused_f112_head": "9b5e3baa5c968e8cf75845691e83e3cc6a6092db",
+  "reused_f112_tree": "69b81eb1082e20b8786cecd3861d8b6a000c95fd",
+  "f112_delta_files": 27,
+  "post_f112_main_delta_files": 4,
+  "post_f112_main_delta_scope": "CANVA_OMEGA_MAX_V1_ONLY",
+  "path_overlap": false,
+  "restack_strategy": "REUSE_F112_TREE_PLUS_CURRENT_MAIN_CANVA_BLOBS_THEN_CURRENT_EPOCH_TRUTH_REFRESH",
+  "provider_or_production_effect": false
+}
