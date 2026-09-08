@@ -254,7 +254,7 @@ def load_manifest(path):
 def changed_paths_from_git(repo_root,base_sha,head_sha):
     for v,n in ((base_sha,"base"),(head_sha,"head")):
         if not re.fullmatch(r"[0-9a-f]{40,64}",v): raise ImpactError(f"invalid {n} sha")
-    p=subprocess.run(["git","diff","--name-only","--diff-filter=ACMRTUXB",base_sha,head_sha],cwd=Path(repo_root),text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
+    p=subprocess.run(["git","diff","--name-only","--diff-filter=ACDMRTUXB",base_sha,head_sha],cwd=Path(repo_root),text=True,stdout=subprocess.PIPE,stderr=subprocess.PIPE,check=False)
     if p.returncode: raise ImpactError("git diff failed")
     paths=[x.strip() for x in p.stdout.splitlines() if x.strip()]
     if not paths: raise ImpactError("git diff returned no changed paths")
