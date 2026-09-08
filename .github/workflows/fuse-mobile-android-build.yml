@@ -1,0 +1,140 @@
+name: FUSE Mobile Android Build Court
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+
+concurrency:
+  group: fuse-mobile-android-build-v1
+  cancel-in-progress: false
+
+jobs:
+  android-build:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_ANDROID_BUILD_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout exact default-branch source without write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Set up Node 20.19
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20.19.x'
+
+      - name: Verify runner Android prerequisites
+        shell: bash
+        run: |
+          set -euo pipefail
+          node --version
+          npm --version
+          java -version
+          test -n "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+
+      - name: Resolve real dependency graph and generate lock
+        working-directory: mobile/fuse-mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          rm -f package-lock.json
+          npm install --package-lock-only --ignore-scripts
+          test -s package-lock.json
+          sha256sum package-lock.json | tee /tmp/fuse-mobile-lock.sha256
+
+      - name: Clean install and dependency health
+        working-directory: mobile/fuse-mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci
+          npx expo install --check
+          npm audit --audit-level=high
+
+      - name: Typecheck, Expo Doctor and Android export
+        working-directory: mobile/fuse-mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run typecheck
+          npx expo-doctor
+          npm run export:android
+
+      - name: Generate native Android project and build debug APK
+        working-directory: mobile/fuse-mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm run prebuild:android
+          test -x android/gradlew || chmod +x android/gradlew
+          (cd android && ./gradlew assembleDebug --no-daemon)
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          test -s "$APK"
+          sha256sum "$APK" | tee /tmp/fuse-mobile-apk.sha256
+
+      - name: Scan generated APK for embedded credential material
+        working-directory: mobile/fuse-mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          if strings "$APK" | grep -E '-----BEGIN (RSA |EC |)PRIVATE KEY-----|sk-or-v1-[A-Za-z0-9_-]{20,}|sk-[A-Za-z0-9_-]{24,}|AIza[0-9A-Za-z_-]{30,}' ; then
+            echo 'Credential-like material detected in APK' >&2
+            exit 1
+          fi
+
+      - name: Emit immutable Android build receipt
+        working-directory: mobile/fuse-mobile
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          lock = Path('package-lock.json')
+          apk = Path('android/app/build/outputs/apk/debug/app-debug.apk')
+          package = json.loads(Path('package.json').read_text(encoding='utf-8'))
+          receipt = {
+              'schema': 'FUSE_MOBILE_ANDROID_BUILD_RECEIPT_V1',
+              'state': 'ANDROID_DEBUG_APK_GENERATED_VERIFIED',
+              'source_sha': os.environ['SOURCE_SHA'],
+              'run_id': int(os.environ['RUN_ID']),
+              'run_attempt': int(os.environ['RUN_ATTEMPT']),
+              'app_version': package['version'],
+              'package_id': 'com.federationomega.fusemobile',
+              'lock_sha256': hashlib.sha256(lock.read_bytes()).hexdigest(),
+              'apk_sha256': hashlib.sha256(apk.read_bytes()).hexdigest(),
+              'apk_size_bytes': apk.stat().st_size,
+              'debug_signing_only': True,
+              'repository_write_performed': False,
+              'oidc_used': False,
+              'provider_effect_executed': False,
+              'production_traffic_changed': False,
+          }
+          Path('fuse-mobile-android-build-receipt.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+
+      - name: Upload lock, APK and proof receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-mobile-android-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            mobile/fuse-mobile/package-lock.json
+            mobile/fuse-mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            mobile/fuse-mobile/fuse-mobile-android-build-receipt.json
