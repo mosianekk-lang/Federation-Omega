@@ -1,0 +1,39 @@
+{
+  "schema": "FUSE_MOBILE_V1_GOVERNANCE",
+  "version": "1.0.0",
+  "capability_id": "FUSE-MOBILE-V1",
+  "role": "THIN_OWNER_CLIENT_AND_GATEWAY_CONTRACT",
+  "constitutional_parent": "Human-First",
+  "mission_router": "FUSE/OF50",
+  "effect_authority": "SOVARA",
+  "durability_fencing": "FDOF",
+  "surface_model_routing": "FIO",
+  "proof": ["ProofOS", "RealityGuard", "ChatGov"],
+  "knowledge": ["KDV", "Bible Sync Bus", "ChatBridge", "FKPF"],
+  "openrouter_reuse": [
+    "sovara/creative/openrouter_adapter.py",
+    "sovara/creative/openrouter_processor_mesh.py",
+    "bubbles/provider_cell_registry.py",
+    "sovereign_execution_boundary"
+  ],
+  "mobile_rules": {
+    "secrets_in_client": false,
+    "provider_keys_in_client": false,
+    "server_issued_capability_manifest": true,
+    "capability_status_requires_live_proof": true,
+    "consequential_effects_owner_gated": true,
+    "offline_drafts_may_be_local": true,
+    "native_chatgpt_binding_inherited": false,
+    "provider_runtime_inherited": false
+  },
+  "proof_states": [
+    "DESIGNED",
+    "IMPLEMENTED",
+    "TESTED",
+    "CONNECTED",
+    "DEPLOYED",
+    "RUNTIME_VERIFIED",
+    "BEHAVIOR_VERIFIED"
+  ],
+  "terminal_source_state": "SOURCE_ADMISSION_REQUIRED"
+}
