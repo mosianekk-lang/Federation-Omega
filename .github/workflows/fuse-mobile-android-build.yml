@@ -45,7 +45,7 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest tests.test_fuse_mobile_mdtaf_v1
+          python -m unittest tests.test_fuse_mobile_mdtaf_v1 tests.test_fuse_mobile_version_contract
 
       - name: Resolve real dependency graph and generate lock
         working-directory: mobile/fuse-mobile
@@ -190,6 +190,8 @@ jobs:
           test -x "$SDKMANAGER"
           test -x "$AVDMANAGER"
           "$SDKMANAGER" "platform-tools" "emulator" "system-images;android-${API_LEVEL};google_apis;x86_64"
+          ADB="$SDK_ROOT/platform-tools/adb"
+          test -x "$ADB"
           echo no | "$AVDMANAGER" create avd --force \
             --name "fuse-mdtaf-api-${API_LEVEL}" \
             --package "system-images;android-${API_LEVEL};google_apis;x86_64" \
@@ -203,29 +205,38 @@ jobs:
           set -euo pipefail
           mkdir -p mobile/fuse-mobile/mdtaf-evidence
           SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          test -n "$SDK_ROOT"
+          ADB="$SDK_ROOT/platform-tools/adb"
+          EMULATOR="$SDK_ROOT/emulator/emulator"
+          test -x "$ADB"
+          test -x "$EMULATOR"
+          ADB_BIN="$ADB" bash mobile/fuse-mobile/lab/resolve_sdk_adb.sh >/tmp/fuse-mdtaf-adb-path.txt
+          RESOLVED_ADB="$(cat /tmp/fuse-mdtaf-adb-path.txt)"
+          test "$RESOLVED_ADB" = "$(realpath -e "$ADB")"
+          ADB="$RESOLVED_ADB"
           sudo chmod 666 /dev/kvm 2>/dev/null || true
-          "$SDK_ROOT/emulator/emulator" \
+          "$EMULATOR" \
             -avd "fuse-mdtaf-api-${API_LEVEL}" \
             -no-window -no-audio -no-boot-anim -no-snapshot \
             -gpu swiftshader_indirect -memory 3072 -cores 2 \
             > "mobile/fuse-mobile/mdtaf-evidence/emulator-api-${API_LEVEL}.log" 2>&1 &
-          adb wait-for-device
+          "$ADB" wait-for-device
           ready=0
           for _ in $(seq 1 120); do
-            if [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
+            if [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
               ready=1
               break
             fi
             sleep 2
           done
           if [[ "$ready" -ne 1 ]]; then
-            adb devices -l || true
+            "$ADB" devices -l || true
             tail -200 "mobile/fuse-mobile/mdtaf-evidence/emulator-api-${API_LEVEL}.log" || true
             exit 1
           fi
-          adb shell input keyevent 82 || true
-          adb shell getprop ro.build.version.sdk | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-api.txt"
-          adb shell getprop ro.product.cpu.abi | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-abi.txt"
+          "$ADB" shell input keyevent 82 || true
+          "$ADB" shell getprop ro.build.version.sdk | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-api.txt"
+          "$ADB" shell getprop ro.product.cpu.abi | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-abi.txt"
 
       - name: Resolve exact shared APK and security receipt
         shell: bash
@@ -245,7 +256,11 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          bash lab/run_android_smoke.sh \
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          test -n "$SDK_ROOT"
+          ADB_BIN="$SDK_ROOT/platform-tools/adb"
+          test -x "$ADB_BIN"
+          ADB_BIN="$ADB_BIN" bash lab/run_android_smoke.sh \
             --apk mdtaf-evidence/app-debug.apk \
             --evidence-dir mdtaf-evidence
           python lab/certify.py \
