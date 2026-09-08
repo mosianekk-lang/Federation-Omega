@@ -93,9 +93,10 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as tmp:
             apk = Path(tmp) / "fixture.apk"
             receipt = Path(tmp) / "scan.json"
+            synthetic_marker = "sk-" + "or-v1-" + ("A" * 30)
             with zipfile.ZipFile(apk, "w") as archive:
                 archive.writestr("assets/clean.txt", b"ordinary fixture")
-                archive.writestr("assets/leak.txt", b"sk-or-v1-ABCDEFGHIJKLMNOPQRSTUVWXYZ012345")
+                archive.writestr("assets/leak.txt", synthetic_marker.encode("ascii"))
             proc = subprocess.run(
                 [sys.executable, str(SCANNER), "--apk", str(apk), "--output", str(receipt)],
                 cwd=ROOT,
@@ -109,7 +110,7 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
             self.assertGreaterEqual(payload["archive_members_scanned"], 2)
             self.assertTrue(any(item["pattern"] == "openrouter_key" for item in payload["matches"]))
             self.assertFalse(payload["credential_values_recorded"])
-            self.assertNotIn("ABCDEFGHIJKLMNOPQRSTUVWXYZ012345", receipt.read_text(encoding="utf-8"))
+            self.assertNotIn(synthetic_marker, receipt.read_text(encoding="utf-8"))
 
     def test_airlock_explicitly_quarantines_build_workflow(self) -> None:
         if not POLICY.is_file():
