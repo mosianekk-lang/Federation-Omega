@@ -1,0 +1,10 @@
+__pycache__/
+*.pyc
+.git/
+.github/
+mobile/
+tests/
+docs/
+releases/
+.env
+.env.*

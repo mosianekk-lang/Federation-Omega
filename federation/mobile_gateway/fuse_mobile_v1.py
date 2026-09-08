@@ -13,7 +13,7 @@ from typing import Mapping, Sequence
 
 CAPABILITY_ID = "FUSE-MOBILE-V1"
 SCHEMA = "FUSE-MOBILE-GATEWAY-V1"
-VERSION = "1.0.0"
+VERSION = "1.1.0"
 
 CONTROL_MANIFEST_DOC_ID = "1IdYLpiNXBiYTtWVrCHpaqLu33I_envbk2dtAdp6FRKY"
 WORKSTREAM_MANIFEST_DOC_ID = "12_tEikklvbgt_aIprsy_p-i1qXDsteuoepPxskqWwHA"
@@ -24,6 +24,9 @@ OPENROUTER_ADAPTER = "sovara.creative.openrouter_adapter"
 OPENROUTER_PROCESSOR_MESH = "sovara.creative.openrouter_processor_mesh"
 PROVIDER_CELL_REGISTRY = "bubbles.provider_cell_registry"
 SEB_PACKAGE = "sovereign_execution_boundary"
+RUNTIME_ELIGIBLE_HEALTH = frozenset(
+    {"HEALTHY", "RUNTIME_VERIFIED", "BEHAVIOR_VERIFIED", "HOSTED_VERIFIED", "VERIFIED_SCOPED"}
+)
 
 
 class EffectClass(str, Enum):
@@ -107,7 +110,10 @@ class RouteDecision:
 
 
 def _has_capability(manifest: FederationCapabilityManifest, prefix: str) -> bool:
-    return any(c.capability_id.startswith(prefix) and c.health not in {"OFFLINE", "FAILED"} for c in manifest.capabilities)
+    return any(
+        c.capability_id.startswith(prefix) and c.health in RUNTIME_ELIGIBLE_HEALTH
+        for c in manifest.capabilities
+    )
 
 
 def route_request(request: MobileRequest, manifest: FederationCapabilityManifest) -> RouteDecision:
