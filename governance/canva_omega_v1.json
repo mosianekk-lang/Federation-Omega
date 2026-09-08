@@ -1,0 +1,191 @@
+{
+  "schema": "FEDERATION-CANVA-VISUAL-INTELLIGENCE-V1",
+  "version": "1.0.0",
+  "capability_id": "CANVA-OMEGA-MAX-V1",
+  "name": "Canva Omega Max — Federation Visual Intelligence Plane",
+  "kind": "IN_PLACE_FEDERATION_VISUAL_INTELLIGENCE_EXTENSION",
+  "owner": "Kim Kagiso Mosiane",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "canonical_truth_store": false,
+  "constitutional_parent": "FUSE/HUMAN-FIRST",
+  "mission_router": "FUSE/OF50",
+  "scientific_challenger": "OMEGA-SCIENTIA",
+  "failure_learning": "FAILURE-TO-OPERATIONAL-WIN-V2",
+  "source_of_truth_rule": "Canva may visualise verified source-bound information but never becomes the canonical evidence, mission-state, authority or proof store.",
+  "universal_support": {
+    "mode": "REGISTRY_DRIVEN",
+    "contract": "Any current or future Federation system or service is eligible when it emits a typed VisualProjectionPacket containing system identity, source provenance, claims, proof state, authority, privacy and freshness.",
+    "known_system_families": [
+      "FUSE",
+      "OF50",
+      "OMEGA-SCIENTIA",
+      "AO-HARMONIC",
+      "FAILURE-TO-OPERATIONAL-WIN",
+      "EVIDENCEOPS",
+      "FORMATION",
+      "ALPHA-OMEGA",
+      "OMEGA-MAX",
+      "KIM-DATAVERSE",
+      "CHATBRIDGE",
+      "LOCAL-BIBLE",
+      "HUMAN-FIRST",
+      "SOVARA",
+      "BUBBLES",
+      "MODISA",
+      "JARVIS",
+      "FUSE-MOBILE"
+    ],
+    "known_provider_and_service_surfaces": [
+      "Google Drive",
+      "Google Docs",
+      "Google Sheets",
+      "GitHub",
+      "Google Cloud",
+      "Google Apps Script",
+      "Google AI Studio",
+      "Gemini",
+      "OpenAI Platform",
+      "Gmail",
+      "Microsoft Outlook",
+      "Microsoft 365",
+      "Canva",
+      "Adobe"
+    ],
+    "future_systems": "AUTOMATICALLY_ELIGIBLE_AFTER_REGISTRATION_AND_PACKET_VALIDATION"
+  },
+  "visual_projection_packet": {
+    "required": [
+      "system_id",
+      "source_refs",
+      "claims",
+      "proof_state",
+      "authority",
+      "privacy",
+      "freshness"
+    ],
+    "proof_states": [
+      "D0_DOCTRINE",
+      "I1_IMPLEMENTED",
+      "R2_RUNTIME_READBACK",
+      "B3_BEHAVIOR",
+      "V4_LONGITUDINAL_VALUE"
+    ],
+    "invariants": [
+      "visual output may not strengthen the supplied proof state",
+      "provider-current claims require fresh provider evidence when material",
+      "privacy and authority never inherit from adjacent systems",
+      "Canva output never becomes source truth merely because it is polished or approved"
+    ]
+  },
+  "production_pipeline": [
+    "MISSION_INTENT",
+    "SOURCE_AND_PROOF_RETRIEVAL",
+    "VISUAL_OPPORTUNITY_DETECTION",
+    "INFORMATION_MODEL",
+    "SURFACE_ROUTING",
+    "VISUAL_GRAMMAR_SELECTION",
+    "CANVA_PREPARE_OR_EDIT",
+    "GENERATE_OR_COMPOSE",
+    "VISUAL_QA",
+    "PROOF_LANGUAGE_QA",
+    "OWNER_GATE_IF_REQUIRED",
+    "COMMIT_OR_EXPORT",
+    "DESTINATION_READBACK",
+    "PATTERN_LEARNING",
+    "NEXT_BEST_VISUAL_PATH"
+  ],
+  "canva_capability_routes": {
+    "new_fixed_format_visual": "prepare-design-generation",
+    "new_doc_or_report": "generate-design or supported Canva document workflow",
+    "existing_design": "start-editing-transaction -> perform-editing-operations -> owner preview/approval -> commit-editing-transaction",
+    "reuse": "copy-design or visual-reference workflow before rebuild",
+    "template_reuse": "brand-template search/dataset/autofill only when template workflow is actually selected",
+    "resize": "resize-design",
+    "content_readback": "get-design / get-design-pages / get-design-content / transaction previews",
+    "presenter_notes": "get-presenter-notes when available and material"
+  },
+  "visual_output_family": [
+    "MASTER_VISUAL_ATLAS",
+    "MULTI_VOLUME_ILLUSTRATED_BIBLE",
+    "CHAPTER_CARDS",
+    "ARCHITECTURE_POSTERS",
+    "INFOGRAPHIC_LIBRARY",
+    "VISUAL_GLOSSARY",
+    "MATURITY_MAP",
+    "OPPORTUNITY_ATLAS",
+    "VISUAL_DESIGN_SYSTEM",
+    "EXECUTIVE_SUMMARY",
+    "OPERATOR_VIEW",
+    "EXPERT_VIEW"
+  ],
+  "visual_grammar": {
+    "architecture": "layered architecture / network map",
+    "process": "flow / lifecycle / state machine",
+    "science": "competing-hypothesis / causal / falsification map",
+    "evidence": "proof graph / source chain / claim state",
+    "maturity": "D0 -> I1 -> R2 -> B3 -> V4 ladder",
+    "governance": "authority rings / gates / boundaries",
+    "continuity": "timeline / ledger / restore graph",
+    "failure_learning": "detect -> preserve -> classify -> recall -> model causes -> falsify -> search -> simulate -> rank -> authorise -> execute -> readback -> regress -> soak -> value -> learn -> diffuse -> prevent",
+    "value": "human-outcome / owner-burden scorecard"
+  },
+  "quality_court": {
+    "required_checks": [
+      "source fidelity",
+      "scope completeness",
+      "visual clarity",
+      "expert depth",
+      "proof discipline",
+      "cross-linkage",
+      "design consistency",
+      "cognitive load",
+      "memorability",
+      "reusability",
+      "privacy",
+      "authority",
+      "freshness"
+    ],
+    "reject_if": [
+      "unsupported maturity is visually implied",
+      "source provenance is absent",
+      "restricted information is projected into an unauthorised surface",
+      "owner-gated consequential release lacks approval",
+      "a new design is materially worse than the proven incumbent pattern"
+    ]
+  },
+  "continuous_improvement": {
+    "loop": [
+      "inspect output",
+      "identify strongest and weakest pages",
+      "form competing explanations",
+      "compare against incumbent visual patterns",
+      "extract durable design lesson",
+      "store only on authorised user-controlled surfaces",
+      "apply to future comparable work",
+      "regression-test against prior strong output"
+    ],
+    "no_invisible_learning_claims": true,
+    "no_background_runtime_claims_without_external_worker_receipt": true
+  },
+  "n_directive_binding": {
+    "meaning": "Within an active visual mission, exact n continues the highest-value safe visual packet toward the mission terminal condition.",
+    "must_not": [
+      "invent provider authority",
+      "send or publish without the relevant owner gate",
+      "claim hidden Canva generation or background work",
+      "replace source truth with visual state"
+    ]
+  },
+  "maturity_chain": [
+    "SOURCE_IMPLEMENTED",
+    "LOCAL_TESTED",
+    "CONNECTOR_CAPABILITY_VERIFIED",
+    "CANVA_GENERATION_OR_EDIT_EXECUTED",
+    "DESIGN_READBACK_VERIFIED",
+    "REUSABLE_PATTERN_VERIFIED",
+    "BEHAVIORAL_COMMUNICATION_GAIN_VERIFIED",
+    "LONGITUDINAL_HUMAN_VALUE_VERIFIED"
+  ],
+  "terminal_condition": "The requested visual mission is complete only when the required design family exists at the proven scope, has been read back, passes source/proof/privacy/authority QA, and its remaining maturity or provider gaps are explicitly stated."
+}
