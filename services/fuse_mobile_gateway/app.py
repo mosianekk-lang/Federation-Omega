@@ -7,6 +7,7 @@ from pydantic import BaseModel, Field
 
 from federation.mobile_gateway.fuse_mobile_v1 import MobileRequest, Mode
 from services.fuse_mobile_gateway import VERSION
+from services.fuse_mobile_gateway.bindings import runtime_from_environment
 from services.fuse_mobile_gateway.runtime import (
     GatewayRuntime,
     RuntimeBindingError,
@@ -25,6 +26,10 @@ class ChatRequestBody(BaseModel):
     verification: str = Field(default="HIGH", pattern="^(NORMAL|HIGH)$")
 
 
+class DeviceRevokeBody(BaseModel):
+    device_token: str = Field(min_length=32, max_length=512)
+
+
 def _status_for(error: RuntimeBindingError) -> int:
     if error.code in {
         "AUTHORIZATION_REQUIRED",
@@ -34,14 +39,25 @@ def _status_for(error: RuntimeBindingError) -> int:
         "SESSION_SCOPE_INVALID",
         "SESSION_SUBJECT_MISSING",
         "SESSION_EXPIRED",
+        "OWNER_ENROLLMENT_INVALID",
+        "DEVICE_CREDENTIAL_INVALID",
+        "DEVICE_SUBJECT_MISMATCH",
     }:
         return 401
-    if error.code == "OWNER_EFFECT_APPROVAL_REQUIRED":
+    if error.code in {
+        "OWNER_EFFECT_APPROVAL_REQUIRED",
+        "OWNER_ENROLLMENT_ALREADY_CONSUMED",
+    }:
         return 409
     if error.code in {
         "IDENTITY_VERIFIER_UNBOUND",
         "SESSION_SIGNER_UNBOUND",
         "FEDERATION_EXECUTOR_UNBOUND",
+        "OWNER_ENROLLMENT_UNBOUND",
+        "DEVICE_REVOCATION_UNBOUND",
+        "RUNTIME_CONFIGURATION_INCOMPLETE",
+        "SESSION_SECRET_INVALID",
+        "CANONICAL_PROJECT_MISMATCH",
     }:
         return 503
     return 400
@@ -76,10 +92,21 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
             "service": "fuse-mobile-gateway",
             "version": VERSION,
             "status": "RUNTIME_READY" if runtime_ready else "SOURCE_READY_RUNTIME_BINDING_REQUIRED",
+            "enrollment_ready": active.enrollment_ready,
             "session_ready": active.session_ready,
             "execution_ready": active.execution_ready,
             "provider_credentials_in_client": False,
         }
+
+    @app.post("/v1/enroll")
+    async def enroll(
+        authorization: Annotated[str | None, Header()] = None,
+    ) -> dict:
+        try:
+            credential = bearer_token(authorization)
+            return await active.enroll_device(credential)
+        except RuntimeBindingError as error:
+            fail(error)
 
     @app.post("/v1/session")
     async def create_session(
@@ -88,6 +115,18 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         try:
             credential = bearer_token(authorization)
             return await active.issue_session(credential)
+        except RuntimeBindingError as error:
+            fail(error)
+
+    @app.post("/v1/device/revoke")
+    async def revoke_device(
+        body: DeviceRevokeBody,
+        authorization: Annotated[str | None, Header()] = None,
+    ) -> dict:
+        identity = session_identity(authorization)
+        try:
+            await active.revoke_device(identity, body.device_token)
+            return {"status": "REVOKED", "subject": identity.subject}
         except RuntimeBindingError as error:
             fail(error)
 
@@ -102,13 +141,20 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
             "status": "RUNTIME_READY" if active.execution_ready else "DEGRADED_EXECUTOR_UNBOUND",
             "version": VERSION,
             "subject": identity.subject,
+            "enrollment_ready": active.enrollment_ready,
             "session_ready": active.session_ready,
             "execution_ready": active.execution_ready,
             "capability_count": len(capabilities),
             "runtime_verified_capability_count": sum(
                 1
                 for capability in capabilities
-                if capability["health"] in {"RUNTIME_VERIFIED", "BEHAVIOR_VERIFIED", "HOSTED_VERIFIED", "VERIFIED_SCOPED", "HEALTHY"}
+                if capability["health"] in {
+                    "RUNTIME_VERIFIED",
+                    "BEHAVIOR_VERIFIED",
+                    "HOSTED_VERIFIED",
+                    "VERIFIED_SCOPED",
+                    "HEALTHY",
+                }
             ),
         }
 
@@ -150,4 +196,4 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
     return app
 
 
-app = create_app()
+app = create_app(runtime_from_environment())
