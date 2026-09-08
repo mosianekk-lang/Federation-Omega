@@ -22,6 +22,10 @@ env:
   RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
   ARTIFACT_REPOSITORY: federation-omega
   SERVICE: fuse-mobile-gateway
+  SESSION_SECRET_ID: fuse-mobile-session-signing-v1
+  OWNER_SUBJECT: owner:kim
+  KDV_RANGE: FUSE_MISSION_CURRENTNESS!A1:N100
+  VERTEX_MODEL: gemini-2.5-flash-lite
 
 jobs:
   deploy-private-canary:
@@ -29,7 +33,7 @@ jobs:
       github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_GATEWAY_ZERO_TRAFFIC_V1' &&
       github.event.issue.author_association == 'OWNER'
     runs-on: ubuntu-24.04
-    timeout-minutes: 25
+    timeout-minutes: 30
     steps:
       - name: Checkout exact signed-main source without repository write credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -51,7 +55,7 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Re-prove exact effective deployment authority
+      - name: Re-prove deploy and F128 runtime dependencies without mutation
         shell: bash
         run: |
           set -euo pipefail
@@ -60,27 +64,64 @@ jobs:
           PROJECT_NUMBER_OBSERVED="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
           test "$ACTIVE" = "$DEPLOYER_SA"
           test "$PROJECT_NUMBER_OBSERVED" = "$PROJECT_NUMBER"
+
           gcloud projects get-iam-policy "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/project-policy-pre.json
           gcloud artifacts repositories get-iam-policy "$ARTIFACT_REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/repository-policy-pre.json
           gcloud iam service-accounts get-iam-policy "$RUNTIME_SA" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/runtime-sa-policy-pre.json
+          gcloud secrets describe "$SESSION_SECRET_ID" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/session-secret.json
+          gcloud secrets get-iam-policy "$SESSION_SECRET_ID" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/session-secret-policy.json
+          gcloud secrets versions list "$SESSION_SECRET_ID" --project "$PROJECT_ID" --filter='state=ENABLED' --sort-by='~createTime' --limit=1 --format=json > fuse-mobile-deploy-proof/session-secret-enabled-version.json
+          gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/firestore-database.json
+
+          for API in run.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com sts.googleapis.com secretmanager.googleapis.com firestore.googleapis.com sheets.googleapis.com aiplatform.googleapis.com; do
+            test "$(gcloud services list --enabled --project "$PROJECT_ID" --filter="config.name=$API" --format='value(config.name)')" = "$API"
+          done
+
           python - <<'PY'
           import json, os
           from pathlib import Path
           deployer='serviceAccount:'+os.environ['DEPLOYER_SA']
+          runtime='serviceAccount:'+os.environ['RUNTIME_SA']
           pp=json.loads(Path('fuse-mobile-deploy-proof/project-policy-pre.json').read_text())
           rp=json.loads(Path('fuse-mobile-deploy-proof/repository-policy-pre.json').read_text())
           sp=json.loads(Path('fuse-mobile-deploy-proof/runtime-sa-policy-pre.json').read_text())
-          def has(policy,role,member):
+          sec=json.loads(Path('fuse-mobile-deploy-proof/session-secret-policy.json').read_text())
+          versions=json.loads(Path('fuse-mobile-deploy-proof/session-secret-enabled-version.json').read_text())
+          db=json.loads(Path('fuse-mobile-deploy-proof/firestore-database.json').read_text())
+
+          def has(policy, role, member):
               return any(b.get('role')==role and not b.get('condition') and member in (b.get('members') or []) for b in policy.get('bindings') or [])
-          assert has(pp,'roles/run.developer',deployer), 'effective Cloud Run developer authority missing'
-          assert has(pp,'roles/artifactregistry.writer',deployer) or has(rp,'roles/artifactregistry.writer',deployer), 'effective Artifact Registry writer authority missing'
-          assert has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer), 'effective runtime service-account user authority missing'
+          def any_role(policies, roles, member):
+              return any(has(policy, role, member) for policy in policies for role in roles)
+
+          run_developer=has(pp,'roles/run.developer',deployer)
+          ar_writer=has(pp,'roles/artifactregistry.writer',deployer) or has(rp,'roles/artifactregistry.writer',deployer)
+          sa_user=has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer)
+          runtime_secret=any_role([pp,sec], {'roles/secretmanager.secretAccessor','roles/secretmanager.admin'}, runtime)
+          runtime_firestore=any_role([pp], {'roles/datastore.user','roles/datastore.owner','roles/editor','roles/owner'}, runtime)
+
+          assert run_developer, 'effective Cloud Run developer authority missing'
+          assert ar_writer, 'effective Artifact Registry writer authority missing'
+          assert sa_user, 'effective runtime service-account user authority missing'
+          assert runtime_secret, 'runtime service account lacks pre-existing Secret Manager accessor authority'
+          assert runtime_firestore, 'runtime service account lacks pre-existing Firestore datastore authority'
+          assert versions, 'dedicated FUSE Mobile session secret has no enabled version'
+          assert str(db.get('name') or ''), 'default Firestore database is not provider-readable'
+
+          receipt={
+              'schema':'FUSE_MOBILE_F128_RUNTIME_DEPENDENCY_PREFLIGHT_V1',
+              'dedicated_session_secret_exists':True,
+              'dedicated_session_secret_enabled_version':True,
+              'runtime_secret_accessor':runtime_secret,
+              'runtime_firestore_authority':runtime_firestore,
+              'firestore_database_readback':True,
+              'iam_grant_performed':False,
+              'secret_created_or_rotated':False,
+              'secret_payload_accessed':False,
+              'provider_mutation_performed':False,
+          }
+          Path('fuse-mobile-deploy-proof/f128-runtime-preflight.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
           PY
-          for API in run.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com sts.googleapis.com; do
-            test "$(gcloud services list --enabled --project "$PROJECT_ID" --filter="config.name=$API" --format='value(config.name)')" = "$API"
-          done
-          gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/repository.json
-          gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/runtime-service-account.json
 
       - name: Capture pre-deployment service state
         id: pre
@@ -93,6 +134,21 @@ jobs:
             echo '{}' > fuse-mobile-deploy-proof/service-pre.json
             echo 'service_existed=false' >> "$GITHUB_OUTPUT"
           fi
+
+      - name: Generate one-use staging enrollment material without persistence
+        id: enrollment
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          ENROLLMENT="fme1_$(openssl rand -hex 32)"
+          echo "::add-mask::$ENROLLMENT"
+          printf '%s' "$ENROLLMENT" > /tmp/fuse-mobile-owner-enrollment
+          chmod 600 /tmp/fuse-mobile-owner-enrollment
+          ENROLLMENT_SHA256="$(printf '%s' "$ENROLLMENT" | sha256sum | awk '{print $1}')"
+          unset ENROLLMENT
+          echo "enrollment_sha256=$ENROLLMENT_SHA256" >> "$GITHUB_OUTPUT"
+          echo '{"session_secret_transport":"SECRET_MANAGER_EXISTING_VERSION","owner_enrollment":"EPHEMERAL_RUNNER_ONLY","iam_grant_performed":false,"secret_created_or_rotated":false}' > fuse-mobile-deploy-proof/runtime-material-boundary.json
 
       - name: Build and push immutable source-tagged gateway image
         id: image
@@ -108,13 +164,14 @@ jobs:
           gcloud artifacts docker images describe "$IMAGE" --format=json > fuse-mobile-deploy-proof/image.json
           echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
 
-      - name: Deploy private canary without production traffic promotion
+      - name: Deploy private F128 runtime canary without production traffic promotion
         id: deploy
         shell: bash
         env:
           IMAGE: ${{ steps.image.outputs.image }}
           SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
           SOURCE_SHA: ${{ github.sha }}
+          ENROLLMENT_SHA256: ${{ steps.enrollment.outputs.enrollment_sha256 }}
         run: |
           set -euo pipefail
           TAG="fm-${SOURCE_SHA:0:8}"
@@ -127,6 +184,8 @@ jobs:
             --port 8080
             --tag "$TAG"
             --no-allow-unauthenticated
+            --set-secrets "FUSE_MOBILE_SESSION_SECRET_B64=$SESSION_SECRET_ID:latest"
+            --set-env-vars "FUSE_MOBILE_OWNER_SUBJECT=$OWNER_SUBJECT,FUSE_MOBILE_OWNER_ENROLLMENT_SHA256=$ENROLLMENT_SHA256,FUSE_MOBILE_KDV_RANGE=$KDV_RANGE,FUSE_MOBILE_VERTEX_MODEL=$VERTEX_MODEL"
             --quiet
           )
           if [[ "$SERVICE_EXISTED" == "true" ]]; then
@@ -204,16 +263,14 @@ jobs:
           },indent=2,sort_keys=True)+'\n')
           PY
 
-      - name: Invoke provider-native private health canary
-        id: health
+      - name: Resolve private tagged canary URL
+        id: private_url
         shell: bash
         env:
           SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
           TAG: ${{ steps.deploy.outputs.tag }}
-          ID_TOKEN: ${{ steps.auth.outputs.id_token }}
         run: |
           set -euo pipefail
-          set +x
           python - <<'PY' > /tmp/fuse-mobile-canary-url
           import json, os
           s=json.load(open('fuse-mobile-deploy-proof/service-post.json'))
@@ -228,18 +285,96 @@ jobs:
           PY
           CANARY_URL="$(cat /tmp/fuse-mobile-canary-url)"
           test -n "$CANARY_URL"
+          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Prove F128 private runtime owner lifecycle KDV and Vertex ADC without paid inference
+        shell: bash
+        env:
+          CANARY_URL: ${{ steps.private_url.outputs.canary_url }}
+          ID_TOKEN: ${{ steps.auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          set +x
           test -n "$ID_TOKEN"
+          ENROLLMENT="$(cat /tmp/fuse-mobile-owner-enrollment)"
+          echo "::add-mask::$ENROLLMENT"
+
           HTTP_CODE="$(curl --silent --show-error --output fuse-mobile-deploy-proof/health.json --write-out '%{http_code}' --header "Authorization: Bearer $ID_TOKEN" "$CANARY_URL/health")"
-          unset ID_TOKEN
           test "$HTTP_CODE" = "200"
           python - <<'PY'
           import json
           h=json.load(open('fuse-mobile-deploy-proof/health.json'))
           assert h.get('ok') is True,h
           assert h.get('service')=='fuse-mobile-gateway',h
+          assert h.get('status')=='RUNTIME_READY',h
+          assert h.get('enrollment_ready') is True,h
+          assert h.get('session_ready') is True,h
+          assert h.get('execution_ready') is True,h
           assert h.get('provider_credentials_in_client') is False,h
           PY
-          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+          ENROLL_JSON="$(curl --silent --show-error --fail-with-body --request POST --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $ENROLLMENT" "$CANARY_URL/v1/enroll")"
+          unset ENROLLMENT
+          rm -f /tmp/fuse-mobile-owner-enrollment
+          DEVICE_TOKEN="$(printf '%s' "$ENROLL_JSON" | python -c 'import json,sys; print(json.load(sys.stdin)["device_token"])')"
+          echo "::add-mask::$DEVICE_TOKEN"
+          test -n "$DEVICE_TOKEN"
+          unset ENROLL_JSON
+
+          SESSION_JSON="$(curl --silent --show-error --fail-with-body --request POST --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $DEVICE_TOKEN" "$CANARY_URL/v1/session")"
+          SESSION_TOKEN="$(printf '%s' "$SESSION_JSON" | python -c 'import json,sys; print(json.load(sys.stdin)["access_token"])')"
+          echo "::add-mask::$SESSION_TOKEN"
+          test -n "$SESSION_TOKEN"
+          unset SESSION_JSON
+
+          curl --silent --show-error --fail-with-body --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $SESSION_TOKEN" "$CANARY_URL/v1/capabilities" > fuse-mobile-deploy-proof/capabilities.json
+          curl --silent --show-error --fail-with-body --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $SESSION_TOKEN" "$CANARY_URL/v1/federation/health" > fuse-mobile-deploy-proof/federation-health.json
+
+          EFFECT_CODE="$(curl --silent --show-error --output fuse-mobile-deploy-proof/effect-hold.json --write-out '%{http_code}' --request POST --header "Content-Type: application/json" --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $SESSION_TOKEN" --data '{"intent":"send an external message","mode":"EXECUTE","effect_class":"EXTERNAL_COMMUNICATION","verification":"HIGH"}' "$CANARY_URL/v1/chat")"
+          test "$EFFECT_CODE" = "409"
+
+          REVOKE_BODY="$(printf '{"device_token":"%s"}' "$DEVICE_TOKEN")"
+          curl --silent --show-error --fail-with-body --request POST --header "Content-Type: application/json" --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $SESSION_TOKEN" --data "$REVOKE_BODY" "$CANARY_URL/v1/device/revoke" > fuse-mobile-deploy-proof/revocation.json
+          unset REVOKE_BODY
+
+          REJECT_CODE="$(curl --silent --show-error --output fuse-mobile-deploy-proof/post-revocation-session.json --write-out '%{http_code}' --request POST --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $DEVICE_TOKEN" "$CANARY_URL/v1/session")"
+          test "$REJECT_CODE" = "401"
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          caps=json.load(open('fuse-mobile-deploy-proof/capabilities.json'))
+          fh=json.load(open('fuse-mobile-deploy-proof/federation-health.json'))
+          effect=json.load(open('fuse-mobile-deploy-proof/effect-hold.json'))
+          revoke=json.load(open('fuse-mobile-deploy-proof/revocation.json'))
+          post=json.load(open('fuse-mobile-deploy-proof/post-revocation-session.json'))
+          by_id={c['capability_id']:c for c in caps.get('capabilities') or []}
+          assert by_id['KDV']['health']=='RUNTIME_VERIFIED',by_id.get('KDV')
+          assert by_id['GOOGLE-VERTEX-GEMINI']['health']=='CONNECTED',by_id.get('GOOGLE-VERTEX-GEMINI')
+          assert fh.get('status')=='RUNTIME_READY',fh
+          assert fh.get('runtime_verified_capability_count',0) >= 1,fh
+          assert effect.get('detail',{}).get('reason')=='OWNER_EFFECT_APPROVAL_REQUIRED',effect
+          assert revoke.get('status')=='REVOKED',revoke
+          assert post.get('detail',{}).get('reason')=='DEVICE_CREDENTIAL_INVALID',post
+          receipt={
+              'schema':'FUSE_MOBILE_PRIVATE_RUNTIME_E2E_RECEIPT_V1',
+              'state':'PRIVATE_RUNTIME_AUTH_KDV_VERTEX_ADC_EFFECT_GATE_VERIFIED',
+              'owner_enrollment_verified':True,
+              'short_session_verified':True,
+              'kdv_runtime_verified':True,
+              'vertex_adc_connected':True,
+              'vertex_paid_semantic_inference_executed':False,
+              'effect_gate_verified':True,
+              'device_revocation_verified':True,
+              'post_revocation_rejection_verified':True,
+              'cloud_run_ingress_auth_separate_from_fuse_auth':True,
+              'plaintext_enrollment_persisted':False,
+              'device_token_persisted':False,
+              'session_token_persisted':False,
+          }
+          Path('fuse-mobile-deploy-proof/runtime-e2e-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          PY
+          unset DEVICE_TOKEN SESSION_TOKEN ID_TOKEN
 
       - name: Emit immutable private deployment receipt
         shell: bash
@@ -251,7 +386,7 @@ jobs:
           IMAGE: ${{ steps.image.outputs.image }}
           REVISION: ${{ steps.deploy.outputs.revision }}
           TRAFFIC_MODE: ${{ steps.deploy.outputs.traffic_mode }}
-          CANARY_URL: ${{ steps.health.outputs.canary_url }}
+          CANARY_URL: ${{ steps.private_url.outputs.canary_url }}
         run: |
           set -euo pipefail
           python - <<'PY'
@@ -261,9 +396,10 @@ jobs:
           health=json.load(open('fuse-mobile-deploy-proof/health.json'))
           traffic=json.load(open('fuse-mobile-deploy-proof/traffic-proof.json'))
           revision=json.load(open('fuse-mobile-deploy-proof/revision.json'))
+          e2e=json.load(open('fuse-mobile-deploy-proof/runtime-e2e-receipt.json'))
           receipt={
-              'schema':'FUSE_MOBILE_GATEWAY_PRIVATE_DEPLOYMENT_RECEIPT_V1',
-              'state':'PRIVATE_GATEWAY_CANARY_DEPLOYED_RUNTIME_READY' if health.get('status')=='RUNTIME_READY' else 'PRIVATE_GATEWAY_CANARY_DEPLOYED_SOURCE_READY',
+              'schema':'FUSE_MOBILE_GATEWAY_PRIVATE_DEPLOYMENT_RECEIPT_V2',
+              'state':'PRIVATE_GATEWAY_F128_RUNTIME_E2E_VERIFIED',
               'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
               'source_sha':os.environ['SOURCE_SHA'],
               'run_id':int(os.environ['RUN_ID']),
@@ -278,29 +414,38 @@ jobs:
               'image':os.environ['IMAGE'],
               'canary_url':os.environ['CANARY_URL'],
               'health_status':health.get('status'),
+              'enrollment_ready':health.get('enrollment_ready'),
               'session_ready':health.get('session_ready'),
               'execution_ready':health.get('execution_ready'),
+              'kdv_runtime_verified':e2e['kdv_runtime_verified'],
+              'vertex_adc_connected':e2e['vertex_adc_connected'],
+              'vertex_paid_semantic_inference_executed':False,
+              'effect_gate_verified':e2e['effect_gate_verified'],
+              'device_revocation_verified':e2e['device_revocation_verified'],
               'public_invocation':traffic['public_invocation'],
               'production_traffic_changed':traffic['production_traffic_changed'],
               'new_revision_percent':traffic['new_revision_percent'],
               'provider_mutation_performed':True,
+              'iam_grant_performed':False,
               'repository_write_performed':False,
               'long_lived_service_account_key_used':False,
-              'secret_payload_accessed':False,
-              'rollback_boundary':'PRIVATE_CANARY_REVISION_CAN_BE_REMOVED_OR_SERVICE_DELETED_IF NEW; NO TRAFFIC PROMOTION PERFORMED',
+              'session_secret_transport':'SECRET_MANAGER_EXISTING_VERSION',
+              'secret_created_or_rotated':False,
+              'secret_payload_readback_performed':False,
+              'rollback_boundary':'PRIVATE CANARY REVISION IS REVERSIBLE; NO TRAFFIC PROMOTION, IAM GRANT, SECRET CREATION OR SECRET ROTATION PERFORMED',
               'revision_spec_sha256':hashlib.sha256(json.dumps(revision.get('spec') or {},sort_keys=True,separators=(',',':')).encode()).hexdigest(),
           }
           raw=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
           receipt['receipt_sha256']=hashlib.sha256(raw).hexdigest()
           Path('fuse-mobile-deploy-proof/deployment-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-          print(json.dumps({k:receipt[k] for k in ('state','service','revision','traffic_mode','new_revision_percent','public_invocation','production_traffic_changed')},sort_keys=True))
+          print(json.dumps({k:receipt[k] for k in ('state','service','revision','traffic_mode','new_revision_percent','public_invocation','production_traffic_changed','kdv_runtime_verified','vertex_adc_connected')},sort_keys=True))
           PY
 
       - name: Upload immutable provider proof, including partial evidence on failure
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: fuse-mobile-gateway-private-canary-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          name: fuse-mobile-gateway-private-canary-v2-${{ github.run_id }}-${{ github.run_attempt }}
           if-no-files-found: warn
           retention-days: 90
           path: fuse-mobile-deploy-proof/
