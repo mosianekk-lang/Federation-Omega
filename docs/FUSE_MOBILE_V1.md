@@ -44,9 +44,11 @@ F111 adds:
 
 A dependency lock is still a separate reproducibility gap until generated and admitted from an actual package resolution. Preview/production build configuration does not prove that an APK/IPA was produced or signed.
 
-## F112 outer gateway source
+## F113 outer gateway source candidate
 
-F112 adds the minimum missing perimeter under `services/fuse_mobile_gateway`:
+The gateway implementation was originally built during F112, but F112 expired before PR admission. F113 reuses that exact gateway implementation on the current signed source epoch rather than rebuilding it.
+
+F113 carries the minimum missing perimeter under `services/fuse_mobile_gateway`:
 
 - Cloud Run-compatible FastAPI service;
 - public `/health` without privileged controls;
@@ -61,7 +63,7 @@ F112 adds the minimum missing perimeter under `services/fuse_mobile_gateway`:
 - consequential-effect hold before the execution adapter is called;
 - no privileged `/execute` passthrough.
 
-The source service is deliberately incomplete until a real owner identity verifier and real Federation chat executor are bound at runtime. Source presence does not manufacture those integrations.
+The restack preserves signed-main CANVA Ω-MAX files and records exact lineage in `services/fuse_mobile_gateway/RESTACK_PROVENANCE.json`. The source service is deliberately incomplete until a real owner identity verifier and real Federation chat executor are bound at runtime. Source presence does not manufacture those integrations.
 
 ## Security boundary
 
@@ -83,9 +85,9 @@ PR #1266 / F110 proved source admission of the provider-neutral gateway contract
 
 PR #1267 / F111 proved the client/build foundation on signed main `26296699d7b5f78c77d9cbdcc7bb83b44059af08`, tree `46db1cbd94245c3b8d5d1616fd8893b1b2a838be`, with exact-head Airlock/ProofOS, Bubbles and Leak Guard success. F111 is canonically released.
 
-F112 is the outer-gateway source candidate. Until its own exact-head CI and signed-main readback complete, its strongest state is `GATEWAY_SOURCE_CANDIDATE_UNDER_ADMISSION`.
+Current signed main before F113 is `8776693d846117a22fcc1135e9c92a09e48050eb`, tree `ed460263ed18c31270b35cd5b6c6ad3e30091f18`. F113 is the current-epoch outer-gateway restack candidate. Until its exact-head CI and signed-main readback complete, its strongest state is `GATEWAY_SOURCE_CANDIDATE_UNDER_ADMISSION`.
 
-F110/F111/F112 source work does **not** by itself prove a deployed gateway, owner identity provider, Google AI Studio semantic execution, Gemini/Vertex inference, OpenRouter provider execution, KDV runtime binding, streaming chat, Android/iOS installable build, app-store release, production traffic or owner-value superiority.
+F110/F111/F113 source work does **not** by itself prove a deployed gateway, owner identity provider, Google AI Studio semantic execution, Gemini/Vertex inference, OpenRouter provider execution, KDV runtime binding, streaming chat, Android/iOS installable build, app-store release, production traffic or owner-value superiority.
 
 The remaining maturity chain is:
 
