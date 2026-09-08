@@ -39,15 +39,19 @@ class FuseMobileClientContractV1Tests(unittest.TestCase):
         self.assertNotIn("AsyncStorage", session)
 
     def test_fuse_bar_is_bound_to_client_and_fails_closed_without_session(self) -> None:
+        client_path = MOBILE / "src" / "federation.ts"
+        self.assertTrue(client_path.is_file())
+        self.assertIn("FEDERATION_GATEWAY", client_path.read_text())
+
         ui_path = MOBILE / "app" / "index.tsx"
         if not ui_path.is_file():
             self.skipTest("FUSE Mobile UI is outside this reduced exported-core verification surface")
+
         ui = ui_path.read_text()
         self.assertIn("sendFuseMessage", ui)
         self.assertIn("loadSession", ui)
         self.assertIn("onPress={handleSend}", ui)
         self.assertIn("Gateway session required", ui)
-        self.assertIn("FEDERATION_GATEWAY", (MOBILE / "src" / "federation.ts").read_text())
 
     def test_build_profiles_separate_preview_and_production(self) -> None:
         eas = json.loads((MOBILE / "eas.json").read_text())
