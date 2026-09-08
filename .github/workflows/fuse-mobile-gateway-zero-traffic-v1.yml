@@ -1,0 +1,301 @@
+name: FUSE Mobile Gateway Private Canary Deployment v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: fuse-mobile-gateway-private-canary-v1
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_REPOSITORY: federation-omega
+  SERVICE: fuse-mobile-gateway
+
+jobs:
+  deploy-private-canary:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_GATEWAY_ZERO_TRAFFIC_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact signed-main source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless deployer
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Re-prove exact effective deployment authority
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p fuse-mobile-deploy-proof
+          ACTIVE="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          PROJECT_NUMBER_OBSERVED="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$ACTIVE" = "$DEPLOYER_SA"
+          test "$PROJECT_NUMBER_OBSERVED" = "$PROJECT_NUMBER"
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/project-policy-pre.json
+          gcloud artifacts repositories get-iam-policy "$ARTIFACT_REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/repository-policy-pre.json
+          gcloud iam service-accounts get-iam-policy "$RUNTIME_SA" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/runtime-sa-policy-pre.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          deployer='serviceAccount:'+os.environ['DEPLOYER_SA']
+          pp=json.loads(Path('fuse-mobile-deploy-proof/project-policy-pre.json').read_text())
+          rp=json.loads(Path('fuse-mobile-deploy-proof/repository-policy-pre.json').read_text())
+          sp=json.loads(Path('fuse-mobile-deploy-proof/runtime-sa-policy-pre.json').read_text())
+          def has(policy,role,member):
+              return any(b.get('role')==role and not b.get('condition') and member in (b.get('members') or []) for b in policy.get('bindings') or [])
+          assert has(pp,'roles/run.developer',deployer), 'effective Cloud Run developer authority missing'
+          assert has(pp,'roles/artifactregistry.writer',deployer) or has(rp,'roles/artifactregistry.writer',deployer), 'effective Artifact Registry writer authority missing'
+          assert has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer), 'effective runtime service-account user authority missing'
+          PY
+          for API in run.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com sts.googleapis.com; do
+            test "$(gcloud services list --enabled --project "$PROJECT_ID" --filter="config.name=$API" --format='value(config.name)')" = "$API"
+          done
+          gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/repository.json
+          gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/runtime-service-account.json
+
+      - name: Capture pre-deployment service state
+        id: pre
+        shell: bash
+        run: |
+          set -euo pipefail
+          if gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/service-pre.json 2>/dev/null; then
+            echo 'service_existed=true' >> "$GITHUB_OUTPUT"
+          else
+            echo '{}' > fuse-mobile-deploy-proof/service-pre.json
+            echo 'service_existed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Build and push immutable source-tagged gateway image
+        id: image
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-mobile-gateway:$SOURCE_SHA"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build --pull --file services/fuse_mobile_gateway/Dockerfile --tag "$IMAGE" .
+          docker push "$IMAGE"
+          gcloud artifacts docker images describe "$IMAGE" --format=json > fuse-mobile-deploy-proof/image.json
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy private canary without production traffic promotion
+        id: deploy
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          TAG="fm-${SOURCE_SHA:0:8}"
+          COMMON=(
+            "$SERVICE"
+            --image "$IMAGE"
+            --project "$PROJECT_ID"
+            --region "$REGION"
+            --service-account "$RUNTIME_SA"
+            --port 8080
+            --tag "$TAG"
+            --no-allow-unauthenticated
+            --quiet
+          )
+          if [[ "$SERVICE_EXISTED" == "true" ]]; then
+            gcloud run deploy "${COMMON[@]}" --no-traffic
+            TRAFFIC_MODE=EXISTING_SERVICE_ZERO_PERCENT_TAGGED
+          else
+            gcloud run deploy "${COMMON[@]}"
+            TRAFFIC_MODE=NEW_PRIVATE_FIRST_REVISION_CANARY
+          fi
+          gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/service-post.json
+          REVISION="$(python - <<'PY'
+          import json
+          s=json.load(open('fuse-mobile-deploy-proof/service-post.json'))
+          print(s.get('status',{}).get('latestCreatedRevisionName') or s.get('status',{}).get('latestReadyRevisionName') or '')
+          PY
+          )"
+          test -n "$REVISION"
+          gcloud run revisions describe "$REVISION" --region "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/revision.json
+          echo "revision=$REVISION" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG" >> "$GITHUB_OUTPUT"
+          echo "traffic_mode=$TRAFFIC_MODE" >> "$GITHUB_OUTPUT"
+
+      - name: Prove private IAM and unchanged production allocation
+        shell: bash
+        env:
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+          REVISION: ${{ steps.deploy.outputs.revision }}
+        run: |
+          set -euo pipefail
+          gcloud run services get-iam-policy "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/service-policy-post.json
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/project-policy-post.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          pre=json.loads(Path('fuse-mobile-deploy-proof/service-pre.json').read_text())
+          post=json.loads(Path('fuse-mobile-deploy-proof/service-post.json').read_text())
+          service_policy=json.loads(Path('fuse-mobile-deploy-proof/service-policy-post.json').read_text())
+          project_policy=json.loads(Path('fuse-mobile-deploy-proof/project-policy-post.json').read_text())
+          revision=os.environ['REVISION']
+          existed=os.environ['SERVICE_EXISTED']=='true'
+          public={'allUsers','allAuthenticatedUsers'}
+          def public_invoker(policy):
+              return any(
+                  b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'} and
+                  not b.get('condition') and public.intersection(set(b.get('members') or []))
+                  for b in policy.get('bindings') or []
+              )
+          assert not public_invoker(service_policy), 'service is publicly invokable'
+          assert not public_invoker(project_policy), 'project grants public Cloud Run invocation'
+          def allocation(service):
+              result={}
+              for t in service.get('status',{}).get('traffic') or []:
+                  name=t.get('revisionName')
+                  if name:
+                      result[name]=result.get(name,0)+int(t.get('percent') or 0)
+              return result
+          before=allocation(pre)
+          after=allocation(post)
+          new_percent=after.get(revision,0)
+          if existed:
+              assert new_percent==0, {'new_revision_percent':new_percent,'traffic':after}
+              for name,percent in before.items():
+                  assert after.get(name,0)==percent, {'revision':name,'before':percent,'after':after.get(name,0)}
+          else:
+              assert not before
+              assert new_percent in {0,100}, {'new_revision_percent':new_percent,'traffic':after}
+          Path('fuse-mobile-deploy-proof/traffic-proof.json').write_text(json.dumps({
+              'service_existed_before':existed,
+              'new_revision':revision,
+              'new_revision_percent':new_percent,
+              'pre_existing_allocation':before,
+              'post_allocation':after,
+              'public_invocation':False,
+              'production_traffic_changed':False,
+          },indent=2,sort_keys=True)+'\n')
+          PY
+
+      - name: Invoke provider-native private health canary
+        id: health
+        shell: bash
+        env:
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+          TAG: ${{ steps.deploy.outputs.tag }}
+        run: |
+          set -euo pipefail
+          set +x
+          python - <<'PY' > /tmp/fuse-mobile-canary-url
+          import json, os
+          s=json.load(open('fuse-mobile-deploy-proof/service-post.json'))
+          status=s.get('status') or {}
+          url=''
+          for item in status.get('traffic') or []:
+              if item.get('tag')==os.environ['TAG'] and item.get('url'):
+                  url=item['url']; break
+          if not url and os.environ['SERVICE_EXISTED']!='true':
+              url=status.get('url') or ''
+          print(url)
+          PY
+          CANARY_URL="$(cat /tmp/fuse-mobile-canary-url)"
+          test -n "$CANARY_URL"
+          ID_TOKEN="$(gcloud auth print-identity-token --audiences="$CANARY_URL")"
+          HTTP_CODE="$(curl --silent --show-error --output fuse-mobile-deploy-proof/health.json --write-out '%{http_code}' --header "Authorization: Bearer $ID_TOKEN" "$CANARY_URL/health")"
+          unset ID_TOKEN
+          test "$HTTP_CODE" = "200"
+          python - <<'PY'
+          import json
+          h=json.load(open('fuse-mobile-deploy-proof/health.json'))
+          assert h.get('ok') is True,h
+          assert h.get('service')=='fuse-mobile-gateway',h
+          assert h.get('provider_credentials_in_client') is False,h
+          PY
+          echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
+
+      - name: Emit immutable private deployment receipt
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+          SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
+          IMAGE: ${{ steps.image.outputs.image }}
+          REVISION: ${{ steps.deploy.outputs.revision }}
+          TRAFFIC_MODE: ${{ steps.deploy.outputs.traffic_mode }}
+          CANARY_URL: ${{ steps.health.outputs.canary_url }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib,json,os
+          from datetime import datetime,timezone
+          from pathlib import Path
+          health=json.load(open('fuse-mobile-deploy-proof/health.json'))
+          traffic=json.load(open('fuse-mobile-deploy-proof/traffic-proof.json'))
+          revision=json.load(open('fuse-mobile-deploy-proof/revision.json'))
+          receipt={
+              'schema':'FUSE_MOBILE_GATEWAY_PRIVATE_DEPLOYMENT_RECEIPT_V1',
+              'state':'PRIVATE_GATEWAY_CANARY_DEPLOYED_RUNTIME_READY' if health.get('status')=='RUNTIME_READY' else 'PRIVATE_GATEWAY_CANARY_DEPLOYED_SOURCE_READY',
+              'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
+              'source_sha':os.environ['SOURCE_SHA'],
+              'run_id':int(os.environ['RUN_ID']),
+              'run_attempt':int(os.environ['RUN_ATTEMPT']),
+              'project_id':os.environ['PROJECT_ID'],
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'region':os.environ['REGION'],
+              'service':os.environ['SERVICE'],
+              'service_existed_before':os.environ['SERVICE_EXISTED']=='true',
+              'traffic_mode':os.environ['TRAFFIC_MODE'],
+              'revision':os.environ['REVISION'],
+              'image':os.environ['IMAGE'],
+              'canary_url':os.environ['CANARY_URL'],
+              'health_status':health.get('status'),
+              'session_ready':health.get('session_ready'),
+              'execution_ready':health.get('execution_ready'),
+              'public_invocation':traffic['public_invocation'],
+              'production_traffic_changed':traffic['production_traffic_changed'],
+              'new_revision_percent':traffic['new_revision_percent'],
+              'provider_mutation_performed':True,
+              'repository_write_performed':False,
+              'long_lived_service_account_key_used':False,
+              'secret_payload_accessed':False,
+              'rollback_boundary':'PRIVATE_CANARY_REVISION_CAN_BE_REMOVED_OR_SERVICE_DELETED_IF NEW; NO TRAFFIC PROMOTION PERFORMED',
+              'revision_spec_sha256':hashlib.sha256(json.dumps(revision.get('spec') or {},sort_keys=True,separators=(',',':')).encode()).hexdigest(),
+          }
+          raw=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
+          receipt['receipt_sha256']=hashlib.sha256(raw).hexdigest()
+          Path('fuse-mobile-deploy-proof/deployment-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({k:receipt[k] for k in ('state','service','revision','traffic_mode','new_revision_percent','public_invocation','production_traffic_changed')},sort_keys=True))
+          PY
+
+      - name: Upload immutable provider proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-mobile-gateway-private-canary-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 90
+          path: fuse-mobile-deploy-proof/
