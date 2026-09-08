@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import tempfile
+import time
 import unittest
 from pathlib import Path
 
@@ -389,6 +390,10 @@ class HostedProviderCurrentnessBindingTests(unittest.TestCase):
 
             def reader():
                 calls.append(1)
+                # Keep the leader flight open long enough for the second
+                # barrier-released caller to enter the coalescing path. The
+                # proof is about shared execution, not scheduler luck.
+                time.sleep(0.05)
                 return provider_payload()
 
             _, receipt = adapter.execute(reader, prove_singleflight=True)

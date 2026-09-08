@@ -1,0 +1,13 @@
+{
+  "schema": "FUSE_MOBILE_GATEWAY_SOURCE_STATE_V1",
+  "state": "F113_GATEWAY_RESTACK_CANDIDATE_UNDER_ADMISSION",
+  "source_base": "8776693d846117a22fcc1135e9c92a09e48050eb",
+  "reused_f112_head": "9b5e3baa5c968e8cf75845691e83e3cc6a6092db",
+  "runtime_deployed": false,
+  "identity_runtime_verified": false,
+  "google_ai_studio_semantic_verified_for_mobile": false,
+  "openrouter_semantic_verified_for_mobile": false,
+  "kdv_runtime_verified_for_mobile": false,
+  "streaming_verified": false,
+  "installable_mobile_artifact_verified": false
+}

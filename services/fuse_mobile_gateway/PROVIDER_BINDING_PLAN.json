@@ -1,0 +1,38 @@
+{
+  "schema": "FUSE_MOBILE_PROVIDER_BINDING_PLAN_V1",
+  "version": "1.0.0",
+  "principle": "provider credentials and execution remain server-side and proof-specific",
+  "providers": [
+    {
+      "provider_id": "GOOGLE_AI_STUDIO",
+      "route": ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+      "current_source_state": "CONFIGURED",
+      "mobile_eligible_now": false,
+      "promotion_proof": "fresh provider-native dynamic-model-discovery exact-nonce semantic receipt",
+      "credential_location": "server/runtime secret only"
+    },
+    {
+      "provider_id": "GEMINI_VERTEX",
+      "route": "services/gemini_gateway",
+      "current_source_state": "PRIVATE_PROVIDER_CELL_PRESENT",
+      "mobile_eligible_now": false,
+      "promotion_proof": "fresh private revision health/ready/handshake provider receipt"
+    },
+    {
+      "provider_id": "OPENROUTER",
+      "route": "sovara.creative.openrouter_processor_mesh",
+      "current_source_state": "ADAPTER_AND_ROUTER_PRESENT",
+      "mobile_eligible_now": false,
+      "promotion_proof": "fresh action-specific provider semantic readback"
+    },
+    {
+      "provider_id": "KDV",
+      "route": "server-side source adapter",
+      "current_source_state": "CANONICAL_DATA_PLANE_REFERENCE_PRESENT",
+      "mobile_eligible_now": false,
+      "promotion_proof": "authenticated source-native retrieval plus provenance readback"
+    }
+  ],
+  "fallback_rule": "one provider failure must not fail the mission when another eligible route exists",
+  "private_data_rule": "provider eligibility depends on data classification; availability alone is insufficient"
+}
