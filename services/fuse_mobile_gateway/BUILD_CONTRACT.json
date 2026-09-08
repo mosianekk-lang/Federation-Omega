@@ -1,0 +1,47 @@
+{
+  "schema": "FUSE_MOBILE_GATEWAY_BUILD_CONTRACT_V1",
+  "version": "0.1.0",
+  "service": "fuse-mobile-gateway",
+  "role": "OWNER_FACING_THIN_PERIMETER",
+  "runtime": "Python 3.12 / FastAPI / Uvicorn",
+  "container": "services/fuse_mobile_gateway/Dockerfile",
+  "public_routes": [
+    "GET /health",
+    "POST /v1/session",
+    "GET /v1/federation/health",
+    "GET /v1/capabilities",
+    "POST /v1/chat"
+  ],
+  "internal_reuse": [
+    "FUSE/OF50/FIO/SOVARA/FDOF",
+    "KDV",
+    "services/gemini_gateway",
+    "ops/federation_omega_operator",
+    "SOVARA AI Studio semantic route",
+    "SOVARA OpenRouter processor mesh",
+    "SOVARA LiteLLM when runtime-proven",
+    "ProofOS"
+  ],
+  "security": {
+    "provider_secrets_in_client": false,
+    "provider_secrets_in_manifest": false,
+    "identity_verifier_required": true,
+    "session_signer_required": true,
+    "short_lived_session": true,
+    "configured_provider_is_routing_eligible": false,
+    "privileged_operator_passthrough": false,
+    "consequential_effects_owner_gated": true
+  },
+  "proof_boundary": {
+    "source_present": true,
+    "source_tests_required": true,
+    "cloud_deployed": false,
+    "owner_identity_runtime_verified": false,
+    "google_ai_studio_semantic_verified_for_mobile": false,
+    "gemini_vertex_semantic_verified_for_mobile": false,
+    "openrouter_semantic_verified_for_mobile": false,
+    "kdv_runtime_readback_verified": false,
+    "streaming_chat_verified": false,
+    "production_traffic": false
+  }
+}
