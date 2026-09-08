@@ -55,8 +55,7 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Re-prove deploy and F128 runtime dependency authority without mutation
-        id: preflight
+      - name: Re-prove deploy and F128 runtime dependencies without mutation
         shell: bash
         run: |
           set -euo pipefail
@@ -69,17 +68,9 @@ jobs:
           gcloud projects get-iam-policy "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/project-policy-pre.json
           gcloud artifacts repositories get-iam-policy "$ARTIFACT_REPOSITORY" --location "$REGION" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/repository-policy-pre.json
           gcloud iam service-accounts get-iam-policy "$RUNTIME_SA" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/runtime-sa-policy-pre.json
-
-          SECRET_EXISTS=false
-          if gcloud secrets describe "$SESSION_SECRET_ID" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/session-secret.json 2>/dev/null; then
-            SECRET_EXISTS=true
-            gcloud secrets get-iam-policy "$SESSION_SECRET_ID" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/session-secret-policy.json
-          else
-            echo '{}' > fuse-mobile-deploy-proof/session-secret.json
-            echo '{"bindings":[]}' > fuse-mobile-deploy-proof/session-secret-policy.json
-          fi
-          echo "secret_exists=$SECRET_EXISTS" >> "$GITHUB_OUTPUT"
-
+          gcloud secrets describe "$SESSION_SECRET_ID" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/session-secret.json
+          gcloud secrets get-iam-policy "$SESSION_SECRET_ID" --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/session-secret-policy.json
+          gcloud secrets versions list "$SESSION_SECRET_ID" --project "$PROJECT_ID" --filter='state=ENABLED' --sort-by='~createTime' --limit=1 --format=json > fuse-mobile-deploy-proof/session-secret-enabled-version.json
           gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" --format=json > fuse-mobile-deploy-proof/firestore-database.json
 
           for API in run.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com sts.googleapis.com secretmanager.googleapis.com firestore.googleapis.com sheets.googleapis.com aiplatform.googleapis.com; do
@@ -94,45 +85,43 @@ jobs:
           pp=json.loads(Path('fuse-mobile-deploy-proof/project-policy-pre.json').read_text())
           rp=json.loads(Path('fuse-mobile-deploy-proof/repository-policy-pre.json').read_text())
           sp=json.loads(Path('fuse-mobile-deploy-proof/runtime-sa-policy-pre.json').read_text())
-          secret_policy=json.loads(Path('fuse-mobile-deploy-proof/session-secret-policy.json').read_text())
-          secret_exists=os.environ.get('SECRET_EXISTS','false').lower()=='true'
+          sec=json.loads(Path('fuse-mobile-deploy-proof/session-secret-policy.json').read_text())
+          versions=json.loads(Path('fuse-mobile-deploy-proof/session-secret-enabled-version.json').read_text())
+          db=json.loads(Path('fuse-mobile-deploy-proof/firestore-database.json').read_text())
 
-          def has(policy,role,member):
+          def has(policy, role, member):
               return any(b.get('role')==role and not b.get('condition') and member in (b.get('members') or []) for b in policy.get('bindings') or [])
           def any_role(policies, roles, member):
               return any(has(policy, role, member) for policy in policies for role in roles)
 
-          assert has(pp,'roles/run.developer',deployer), 'effective Cloud Run developer authority missing'
-          assert has(pp,'roles/artifactregistry.writer',deployer) or has(rp,'roles/artifactregistry.writer',deployer), 'effective Artifact Registry writer authority missing'
-          assert has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer), 'effective runtime service-account user authority missing'
-
-          deployer_secret_admin=any_role([pp], {'roles/secretmanager.admin'}, deployer)
-          deployer_version_adder=deployer_secret_admin or any_role([pp,secret_policy], {'roles/secretmanager.secretVersionAdder'}, deployer)
-          runtime_secret_accessor=any_role([pp,secret_policy], {'roles/secretmanager.secretAccessor','roles/secretmanager.admin'}, runtime)
+          run_developer=has(pp,'roles/run.developer',deployer)
+          ar_writer=has(pp,'roles/artifactregistry.writer',deployer) or has(rp,'roles/artifactregistry.writer',deployer)
+          sa_user=has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer)
+          runtime_secret=any_role([pp,sec], {'roles/secretmanager.secretAccessor','roles/secretmanager.admin'}, runtime)
           runtime_firestore=any_role([pp], {'roles/datastore.user','roles/datastore.owner','roles/editor','roles/owner'}, runtime)
 
-          if secret_exists:
-              assert deployer_version_adder, 'session secret exists but deployer cannot add an ephemeral staging version'
-          else:
-              assert deployer_secret_admin, 'session secret absent and deployer lacks Secret Manager admin create authority'
-          assert runtime_secret_accessor, 'runtime service account lacks existing Secret Manager accessor authority'
-          assert runtime_firestore, 'runtime service account lacks existing Firestore datastore authority'
+          assert run_developer, 'effective Cloud Run developer authority missing'
+          assert ar_writer, 'effective Artifact Registry writer authority missing'
+          assert sa_user, 'effective runtime service-account user authority missing'
+          assert runtime_secret, 'runtime service account lacks pre-existing Secret Manager accessor authority'
+          assert runtime_firestore, 'runtime service account lacks pre-existing Firestore datastore authority'
+          assert versions, 'dedicated FUSE Mobile session secret has no enabled version'
+          assert str(db.get('name') or ''), 'default Firestore database is not provider-readable'
 
           receipt={
               'schema':'FUSE_MOBILE_F128_RUNTIME_DEPENDENCY_PREFLIGHT_V1',
-              'session_secret_exists':secret_exists,
-              'deployer_secret_admin':deployer_secret_admin,
-              'deployer_secret_version_adder':deployer_version_adder,
-              'runtime_secret_accessor':runtime_secret_accessor,
+              'dedicated_session_secret_exists':True,
+              'dedicated_session_secret_enabled_version':True,
+              'runtime_secret_accessor':runtime_secret,
               'runtime_firestore_authority':runtime_firestore,
+              'firestore_database_readback':True,
               'iam_grant_performed':False,
-              'provider_mutation_performed':False,
+              'secret_created_or_rotated':False,
               'secret_payload_accessed':False,
+              'provider_mutation_performed':False,
           }
           Path('fuse-mobile-deploy-proof/f128-runtime-preflight.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
           PY
-        env:
-          SECRET_EXISTS: ${{ steps.preflight.outputs.secret_exists }}
 
       - name: Capture pre-deployment service state
         id: pre
@@ -146,22 +135,12 @@ jobs:
             echo 'service_existed=false' >> "$GITHUB_OUTPUT"
           fi
 
-      - name: Prepare secret-safe ephemeral staging material
-        id: runtime_material
+      - name: Generate one-use staging enrollment material without persistence
+        id: enrollment
         shell: bash
-        env:
-          SECRET_EXISTS: ${{ steps.preflight.outputs.secret_exists }}
         run: |
           set -euo pipefail
           set +x
-          if [[ "$SECRET_EXISTS" != "true" ]]; then
-            gcloud secrets create "$SESSION_SECRET_ID" --project "$PROJECT_ID" --replication-policy=automatic --quiet
-          fi
-          SESSION_SECRET_B64="$(openssl rand -base64 48 | tr -d '\n')"
-          echo "::add-mask::$SESSION_SECRET_B64"
-          printf '%s' "$SESSION_SECRET_B64" | gcloud secrets versions add "$SESSION_SECRET_ID" --project "$PROJECT_ID" --data-file=- --quiet > /tmp/fuse-mobile-secret-version.txt
-          unset SESSION_SECRET_B64
-
           ENROLLMENT="fme1_$(openssl rand -hex 32)"
           echo "::add-mask::$ENROLLMENT"
           printf '%s' "$ENROLLMENT" > /tmp/fuse-mobile-owner-enrollment
@@ -169,7 +148,7 @@ jobs:
           ENROLLMENT_SHA256="$(printf '%s' "$ENROLLMENT" | sha256sum | awk '{print $1}')"
           unset ENROLLMENT
           echo "enrollment_sha256=$ENROLLMENT_SHA256" >> "$GITHUB_OUTPUT"
-          echo '{"session_secret_transport":"SECRET_MANAGER","enrollment_plaintext_persisted":false,"iam_grant_performed":false}' > fuse-mobile-deploy-proof/runtime-material-boundary.json
+          echo '{"session_secret_transport":"SECRET_MANAGER_EXISTING_VERSION","owner_enrollment":"EPHEMERAL_RUNNER_ONLY","iam_grant_performed":false,"secret_created_or_rotated":false}' > fuse-mobile-deploy-proof/runtime-material-boundary.json
 
       - name: Build and push immutable source-tagged gateway image
         id: image
@@ -192,7 +171,7 @@ jobs:
           IMAGE: ${{ steps.image.outputs.image }}
           SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
           SOURCE_SHA: ${{ github.sha }}
-          ENROLLMENT_SHA256: ${{ steps.runtime_material.outputs.enrollment_sha256 }}
+          ENROLLMENT_SHA256: ${{ steps.enrollment.outputs.enrollment_sha256 }}
         run: |
           set -euo pipefail
           TAG="fm-${SOURCE_SHA:0:8}"
@@ -308,8 +287,7 @@ jobs:
           test -n "$CANARY_URL"
           echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
 
-      - name: Prove F128 private runtime health and owner lifecycle without paid inference
-        id: e2e
+      - name: Prove F128 private runtime owner lifecycle KDV and Vertex ADC without paid inference
         shell: bash
         env:
           CANARY_URL: ${{ steps.private_url.outputs.canary_url }}
@@ -355,12 +333,13 @@ jobs:
           EFFECT_CODE="$(curl --silent --show-error --output fuse-mobile-deploy-proof/effect-hold.json --write-out '%{http_code}' --request POST --header "Content-Type: application/json" --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $SESSION_TOKEN" --data '{"intent":"send an external message","mode":"EXECUTE","effect_class":"EXTERNAL_COMMUNICATION","verification":"HIGH"}' "$CANARY_URL/v1/chat")"
           test "$EFFECT_CODE" = "409"
 
-          curl --silent --show-error --fail-with-body --request POST --header "Content-Type: application/json" --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $SESSION_TOKEN" --data "$(python -c 'import json,os; print(json.dumps({"device_token":os.environ["DEVICE_TOKEN"]}))')" "$CANARY_URL/v1/device/revoke" > fuse-mobile-deploy-proof/revocation.json
+          REVOKE_BODY="$(printf '{"device_token":"%s"}' "$DEVICE_TOKEN")"
+          curl --silent --show-error --fail-with-body --request POST --header "Content-Type: application/json" --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $SESSION_TOKEN" --data "$REVOKE_BODY" "$CANARY_URL/v1/device/revoke" > fuse-mobile-deploy-proof/revocation.json
+          unset REVOKE_BODY
 
           REJECT_CODE="$(curl --silent --show-error --output fuse-mobile-deploy-proof/post-revocation-session.json --write-out '%{http_code}' --request POST --header "Authorization: Bearer $ID_TOKEN" --header "X-Fuse-Authorization: Bearer $DEVICE_TOKEN" "$CANARY_URL/v1/session")"
           test "$REJECT_CODE" = "401"
 
-          export DEVICE_TOKEN
           python - <<'PY'
           import json
           from pathlib import Path
@@ -450,9 +429,10 @@ jobs:
               'iam_grant_performed':False,
               'repository_write_performed':False,
               'long_lived_service_account_key_used':False,
-              'session_secret_transport':'SECRET_MANAGER',
+              'session_secret_transport':'SECRET_MANAGER_EXISTING_VERSION',
+              'secret_created_or_rotated':False,
               'secret_payload_readback_performed':False,
-              'rollback_boundary':'PRIVATE CANARY REVISION AND STAGING SECRET VERSION ARE REVERSIBLE; NO TRAFFIC PROMOTION OR IAM GRANT PERFORMED',
+              'rollback_boundary':'PRIVATE CANARY REVISION IS REVERSIBLE; NO TRAFFIC PROMOTION, IAM GRANT, SECRET CREATION OR SECRET ROTATION PERFORMED',
               'revision_spec_sha256':hashlib.sha256(json.dumps(revision.get('spec') or {},sort_keys=True,separators=(',',':')).encode()).hexdigest(),
           }
           raw=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
