@@ -65,6 +65,18 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         ):
             self.assertIn(required, text)
 
+    def test_apk_credential_scan_is_archive_aware_and_fail_closed(self) -> None:
+        text = self._workflow_text_or_skip_export()
+        self.assertIn("zipfile.ZipFile", text)
+        self.assertIn("APK_CREDENTIAL_SCAN_CLEAN", text)
+        self.assertIn("fuse-mobile-apk-security-scan.json", text)
+        self.assertIn("apk_credential_scan_receipt_sha256", text)
+        self.assertIn("pem_private_key", text)
+        self.assertIn("openrouter_key", text)
+        self.assertIn("google_api_key", text)
+        self.assertNotIn("strings \"$APK\" | grep -E", text)
+        self.assertIn("raise SystemExit('Credential-like material detected in APK')", text)
+
     def test_airlock_explicitly_quarantines_build_workflow(self) -> None:
         if not POLICY.is_file():
             self.skipTest("repository workflow governance is outside the reduced Phoenix exported-core surface")

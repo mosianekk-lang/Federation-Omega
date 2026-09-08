@@ -19,6 +19,8 @@ env:
   REGION: africa-south1
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_REPOSITORY: federation-omega
   SLOS_RELEASE_SHA256: 979f4f6423920ed32d0a46f9eac069d92f045e350210f6ad3932ed8c90e7dd84
 
 jobs:
@@ -27,7 +29,7 @@ jobs:
       github.event.issue.title == '[FO-DISPATCH] SLOS_G0_READ_ONLY_AUTH_CANARY_V2' &&
       github.event.issue.author_association == 'OWNER'
     runs-on: ubuntu-24.04
-    timeout-minutes: 6
+    timeout-minutes: 8
     steps:
       - name: Checkout without repository write credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -46,7 +48,7 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Verify current WIF identity and isolate deploy-readiness gaps
+      - name: Verify current WIF identity and isolate legacy deploy-readiness gaps
         shell: bash
         run: |
           set -euo pipefail
@@ -97,12 +99,132 @@ jobs:
               'wif_binding':p['wif_binding'],
               'service_usage_consumer':p['service_usage_consumer'],
               'security_hardening_gaps':sorted(set(hardening)),
-              'deployment_readiness_gaps':deployment,
+              'legacy_resource_local_deployment_gaps':deployment,
               'identity_verified_independent_of_deploy_roles':True,
               'mutation_performed':False,
               'provider_effect_executed':False,
           }
           Path('g0-output/wif-identity.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          PY
+
+      - name: Resolve effective FUSE Mobile deployment authority without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          project=os.environ['PROJECT_ID']
+          region=os.environ['REGION']
+          deployer=f"serviceAccount:{os.environ['DEPLOYER_SA']}"
+          runtime=f"serviceAccount:{os.environ['RUNTIME_SA']}"
+          repo=os.environ['ARTIFACT_REPOSITORY']
+
+          def gcloud(*args):
+              p=subprocess.run(['gcloud',*args,'--project',project],text=True,capture_output=True)
+              return p.returncode,p.stdout.strip(),p.stderr.strip()
+
+          def policy(*args):
+              rc,out,err=gcloud(*args,'--format=json')
+              if rc != 0:
+                  return {'ok':False,'bindings':[],'error_class':'GCLOUD_READ_FAILED','stderr_sha256':__import__('hashlib').sha256(err.encode()).hexdigest()}
+              obj=json.loads(out or '{}')
+              return {'ok':True,'bindings':obj.get('bindings') or []}
+
+          def unconditional_member_has_role(p, role, member):
+              return any(
+                  b.get('role') == role and not b.get('condition') and member in (b.get('members') or [])
+                  for b in p.get('bindings') or []
+              )
+
+          project_policy=policy('projects','get-iam-policy',project)
+          repo_policy=policy('artifacts','repositories','get-iam-policy',repo,'--location',region)
+          runtime_policy=policy('iam','service-accounts','get-iam-policy',os.environ['RUNTIME_SA'])
+
+          project_run_developer=unconditional_member_has_role(project_policy,'roles/run.developer',deployer)
+          project_run_invoker=unconditional_member_has_role(project_policy,'roles/run.invoker',deployer) or unconditional_member_has_role(project_policy,'roles/run.servicesInvoker',deployer)
+          project_ar_writer=unconditional_member_has_role(project_policy,'roles/artifactregistry.writer',deployer)
+          project_sa_user=unconditional_member_has_role(project_policy,'roles/iam.serviceAccountUser',deployer)
+          repo_ar_writer=unconditional_member_has_role(repo_policy,'roles/artifactregistry.writer',deployer)
+          runtime_sa_user=unconditional_member_has_role(runtime_policy,'roles/iam.serviceAccountUser',deployer)
+
+          api_states={}
+          for api in ('run.googleapis.com','artifactregistry.googleapis.com','iamcredentials.googleapis.com','sts.googleapis.com'):
+              rc,out,_=gcloud('services','list','--enabled',f'--filter=config.name={api}','--format=value(config.name)')
+              api_states[api]=rc == 0 and api in out.splitlines()
+
+          rc,repo_desc,_=gcloud('artifacts','repositories','describe',repo,'--location',region,'--format=json(name,format,mode)')
+          repository_exists=rc == 0
+          rc,sa_desc,_=gcloud('iam','service-accounts','describe',os.environ['RUNTIME_SA'],'--format=json(email,disabled)')
+          runtime_sa_exists=rc == 0
+
+          effective_run_developer=project_run_developer
+          effective_invoke=project_run_developer or project_run_invoker
+          effective_ar_writer=project_ar_writer or repo_ar_writer
+          effective_sa_user=project_sa_user or runtime_sa_user
+          required_apis=all(api_states.values())
+          direct_deploy_ready=all((
+              effective_run_developer,
+              effective_ar_writer,
+              effective_sa_user,
+              repository_exists,
+              runtime_sa_exists,
+              required_apis,
+          ))
+          private_canary_invoke_ready=direct_deploy_ready and effective_invoke
+          missing=[]
+          if not effective_run_developer: missing.append('effective_cloud_run_developer')
+          if not effective_ar_writer: missing.append('effective_artifact_registry_writer')
+          if not effective_sa_user: missing.append('effective_runtime_service_account_user')
+          if not repository_exists: missing.append('artifact_repository_exists')
+          if not runtime_sa_exists: missing.append('runtime_service_account_exists')
+          if not required_apis: missing.append('required_apis')
+          if direct_deploy_ready and not private_canary_invoke_ready: missing.append('private_canary_invocation_authority')
+
+          receipt={
+              'schema':'FUSE_MOBILE_GOOGLE_DEPLOYMENT_AUTHORITY_V1',
+              'state':'FUSE_MOBILE_DIRECT_DEPLOY_READY' if direct_deploy_ready else 'FUSE_MOBILE_DIRECT_DEPLOY_HELD',
+              'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
+              'project_id':project,
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'region':region,
+              'active_account':os.environ['DEPLOYER_SA'],
+              'runtime_service_account':os.environ['RUNTIME_SA'],
+              'artifact_repository':repo,
+              'project_policy_readable':project_policy['ok'],
+              'artifact_repository_policy_readable':repo_policy['ok'],
+              'runtime_service_account_policy_readable':runtime_policy['ok'],
+              'project_run_developer':project_run_developer,
+              'project_run_invoker':project_run_invoker,
+              'project_artifact_registry_writer':project_ar_writer,
+              'project_service_account_user':project_sa_user,
+              'repository_artifact_registry_writer':repo_ar_writer,
+              'runtime_service_account_user':runtime_sa_user,
+              'effective_cloud_run_developer':effective_run_developer,
+              'effective_cloud_run_invoker':effective_invoke,
+              'effective_artifact_registry_writer':effective_ar_writer,
+              'effective_runtime_service_account_user':effective_sa_user,
+              'artifact_repository_exists':repository_exists,
+              'runtime_service_account_exists':runtime_sa_exists,
+              'api_states':api_states,
+              'direct_runner_build_push_deploy_ready':direct_deploy_ready,
+              'private_canary_invoke_ready':private_canary_invoke_ready,
+              'missing_controls':missing,
+              'conditional_bindings_not_promoted':True,
+              'provider_mutation_performed':False,
+              'secret_payload_accessed':False,
+          }
+          Path('g0-output/fuse-mobile-deploy-readiness.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({
+              'state':receipt['state'],
+              'direct_runner_build_push_deploy_ready':direct_deploy_ready,
+              'private_canary_invoke_ready':private_canary_invoke_ready,
+              'missing_controls':missing,
+          },sort_keys=True))
           PY
 
       - name: Verify ADC credential transport and isolate Gemini deployment readiness
@@ -180,6 +302,7 @@ jobs:
           import hashlib,json,os
           from pathlib import Path
           wif=json.load(open('g0-output/wif-identity.json',encoding='utf-8'))
+          deploy=json.load(open('g0-output/fuse-mobile-deploy-readiness.json',encoding='utf-8'))
           adc=json.load(open('g0-output/adc-identity.json',encoding='utf-8'))
           a0=json.load(open('g0-output/strategic-fuse-vertex-a0-direct-wif.json',encoding='utf-8'))
           assert wif['state']=='WIF_IDENTITY_VERIFIED',wif
@@ -197,10 +320,12 @@ jobs:
             'project_number':os.environ['PROJECT_NUMBER'],
             'region':os.environ['REGION'],
             'wif_identity':wif,
+            'fuse_mobile_deployment_authority':deploy,
             'adc_transport':adc,
             'strategic_fuse_vertex_a0':a0,
             'direct_vertex_a0_verified':a0.get('state')=='VERTEX_A0_DIRECT_WIF_READBACK_VERIFIED',
-            'deployment_readiness_proven':adc['gemini_deployment_ready'] and not bool(wif['deployment_readiness_gaps']),
+            'fuse_mobile_direct_deploy_ready':deploy['direct_runner_build_push_deploy_ready'],
+            'fuse_mobile_private_canary_invoke_ready':deploy['private_canary_invoke_ready'],
             'security_hardening_complete':not bool(wif['security_hardening_gaps']),
             'long_lived_service_account_key_used':False,
             'mutation_performed':False,
@@ -219,6 +344,7 @@ jobs:
           path: |
             g0-output/wif-plan.json
             g0-output/wif-identity.json
+            g0-output/fuse-mobile-deploy-readiness.json
             g0-output/project-readback.json
             g0-output/gemini-plan.json
             g0-output/adc-identity.json
