@@ -1,0 +1,153 @@
+from __future__ import annotations
+
+from typing import Annotated
+
+from fastapi import FastAPI, Header, HTTPException
+from pydantic import BaseModel, Field
+
+from federation.mobile_gateway.fuse_mobile_v1 import MobileRequest, Mode
+from services.fuse_mobile_gateway import VERSION
+from services.fuse_mobile_gateway.runtime import (
+    GatewayRuntime,
+    RuntimeBindingError,
+    bearer_token,
+    effect_from_string,
+)
+
+
+class ChatRequestBody(BaseModel):
+    intent: str = Field(min_length=1, max_length=100_000)
+    mode: Mode = Mode.AUTO
+    requested_sources: list[str] = Field(default_factory=list, max_length=32)
+    requested_models: list[str] = Field(default_factory=list, max_length=16)
+    requested_agents: list[str] = Field(default_factory=list, max_length=16)
+    effect_class: str = "READ_ONLY"
+    verification: str = Field(default="HIGH", pattern="^(NORMAL|HIGH)$")
+
+
+def _status_for(error: RuntimeBindingError) -> int:
+    if error.code in {
+        "AUTHORIZATION_REQUIRED",
+        "BEARER_TOKEN_REQUIRED",
+        "SESSION_MALFORMED",
+        "SESSION_SIGNATURE_INVALID",
+        "SESSION_SCOPE_INVALID",
+        "SESSION_SUBJECT_MISSING",
+        "SESSION_EXPIRED",
+    }:
+        return 401
+    if error.code == "OWNER_EFFECT_APPROVAL_REQUIRED":
+        return 409
+    if error.code in {
+        "IDENTITY_VERIFIER_UNBOUND",
+        "SESSION_SIGNER_UNBOUND",
+        "FEDERATION_EXECUTOR_UNBOUND",
+    }:
+        return 503
+    return 400
+
+
+def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
+    active = runtime or GatewayRuntime()
+    app = FastAPI(
+        title="FUSE Mobile Gateway",
+        version=VERSION,
+        docs_url=None,
+        redoc_url=None,
+    )
+
+    def fail(error: RuntimeBindingError) -> None:
+        raise HTTPException(
+            status_code=_status_for(error),
+            detail={"status": "HELD", "reason": error.code},
+        ) from error
+
+    def session_identity(authorization: str | None):
+        try:
+            return active.verify_session(bearer_token(authorization))
+        except RuntimeBindingError as error:
+            fail(error)
+
+    @app.get("/health")
+    async def health() -> dict:
+        runtime_ready = active.session_ready and active.execution_ready
+        return {
+            "ok": True,
+            "service": "fuse-mobile-gateway",
+            "version": VERSION,
+            "status": "RUNTIME_READY" if runtime_ready else "SOURCE_READY_RUNTIME_BINDING_REQUIRED",
+            "session_ready": active.session_ready,
+            "execution_ready": active.execution_ready,
+            "provider_credentials_in_client": False,
+        }
+
+    @app.post("/v1/session")
+    async def create_session(
+        authorization: Annotated[str | None, Header()] = None,
+    ) -> dict:
+        try:
+            credential = bearer_token(authorization)
+            return await active.issue_session(credential)
+        except RuntimeBindingError as error:
+            fail(error)
+
+    @app.get("/v1/federation/health")
+    async def federation_health(
+        authorization: Annotated[str | None, Header()] = None,
+    ) -> dict:
+        identity = session_identity(authorization)
+        manifest = await active.manifest(identity)
+        capabilities = manifest.public_view()["capabilities"]
+        return {
+            "status": "RUNTIME_READY" if active.execution_ready else "DEGRADED_EXECUTOR_UNBOUND",
+            "version": VERSION,
+            "subject": identity.subject,
+            "session_ready": active.session_ready,
+            "execution_ready": active.execution_ready,
+            "capability_count": len(capabilities),
+            "runtime_verified_capability_count": sum(
+                1
+                for capability in capabilities
+                if capability["health"] in {"RUNTIME_VERIFIED", "BEHAVIOR_VERIFIED", "HOSTED_VERIFIED", "VERIFIED_SCOPED", "HEALTHY"}
+            ),
+        }
+
+    @app.get("/v1/capabilities")
+    async def capabilities(
+        authorization: Annotated[str | None, Header()] = None,
+    ) -> dict:
+        identity = session_identity(authorization)
+        return (await active.manifest(identity)).public_view()
+
+    @app.post("/v1/chat")
+    async def chat(
+        body: ChatRequestBody,
+        authorization: Annotated[str | None, Header()] = None,
+    ) -> dict:
+        identity = session_identity(authorization)
+        try:
+            request = MobileRequest(
+                intent=body.intent,
+                mode=body.mode,
+                requested_sources=tuple(body.requested_sources),
+                requested_models=tuple(body.requested_models),
+                requested_agents=tuple(body.requested_agents),
+                effect_class=effect_from_string(body.effect_class),
+                verification=body.verification,
+            )
+            result = await active.execute(identity, request)
+            return {
+                "text": result.text,
+                "trace_id": result.trace_id,
+                "status": result.status,
+                "provider": result.provider,
+                "model": result.model,
+                "source_refs": list(result.source_refs),
+            }
+        except RuntimeBindingError as error:
+            fail(error)
+
+    return app
+
+
+app = create_app()

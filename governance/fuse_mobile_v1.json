@@ -1,6 +1,6 @@
 {
   "schema": "FUSE_MOBILE_V1_GOVERNANCE",
-  "version": "1.1.0",
+  "version": "1.2.0",
   "capability_id": "FUSE-MOBILE-V1",
   "role": "THIN_OWNER_CLIENT_AND_GATEWAY_CONTRACT",
   "constitutional_parent": "Human-First",
@@ -16,21 +16,36 @@
     "bubbles/provider_cell_registry.py",
     "sovereign_execution_boundary"
   ],
+  "google_ai_studio_reuse": [
+    ".github/workflows/sovara-ai-studio-semantic-canary.yml",
+    "governance/sovara_ai_studio_semantic_canary_request_v1.json",
+    "FUSE-AISTUDIO Omega v1",
+    "SOVARA/FIO provider routing"
+  ],
+  "internal_runtime_reuse": [
+    "services/gemini_gateway",
+    "ops/federation_omega_operator",
+    "SOVARA LiteLLM when provider deployment is proven",
+    "KDV/source adapters"
+  ],
   "mobile_rules": {
     "secrets_in_client": false,
     "provider_keys_in_client": false,
     "server_issued_capability_manifest": true,
     "capability_status_requires_live_proof": true,
+    "configured_status_is_routing_eligible": false,
     "consequential_effects_owner_gated": true,
     "offline_drafts_may_be_local": true,
     "short_lived_session_native_secure_store": true,
     "https_gateway_required_outside_localhost": true,
     "client_fails_closed_without_gateway_or_session": true,
+    "privileged_operator_exposed_directly_to_mobile": false,
     "native_chatgpt_binding_inherited": false,
     "provider_runtime_inherited": false,
     "production_signing_inherited": false
   },
   "client_build_contract": {
+    "f111_source_admitted_signed_main": true,
     "expo_app_config_present": true,
     "typescript_project_config_present": true,
     "eas_profiles_present": true,
@@ -41,10 +56,23 @@
     "installable_artifact_proven": false,
     "production_signing_proven": false
   },
+  "gateway_source_contract": {
+    "outer_perimeter_source_present": true,
+    "fail_closed_identity_verifier_interface": true,
+    "short_lived_signed_session_contract": true,
+    "dynamic_capability_manifest": true,
+    "provider_health_proof_separated": true,
+    "chat_executor_injection_required": true,
+    "effect_hold_before_executor": true,
+    "cloud_run_compatible_image": true,
+    "direct_privileged_execute_passthrough": false
+  },
   "runtime_contract": {
     "gateway_url_source_hardcoded": false,
     "gateway_runtime_proven": false,
     "owner_auth_issuer_proven": false,
+    "google_ai_studio_provider_execution_proven_for_mobile": false,
+    "gemini_vertex_provider_execution_proven_for_mobile": false,
     "kdv_runtime_readback_proven": false,
     "openrouter_provider_execution_proven": false,
     "streaming_chat_proven": false
@@ -58,5 +86,5 @@
     "RUNTIME_VERIFIED",
     "BEHAVIOR_VERIFIED"
   ],
-  "terminal_source_state": "F111_CLIENT_BUILD_ADMISSION_REQUIRED"
+  "terminal_source_state": "F112_GATEWAY_SOURCE_ADMISSION_REQUIRED"
 }
