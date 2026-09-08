@@ -18,19 +18,43 @@ Kim Dataverse is treated as a logical knowledge namespace over authorized source
 
 The first UI tranche implements the minimal FUSE surface: one FUSE Bar, progressive modes, a quiet premium dark shell and entry points for Federation, Creative, Research and Workspace. The client stays intentionally small; heavy orchestration remains behind the gateway.
 
+The F111 client/build tranche binds the FUSE Bar to the typed gateway client. A request can execute only when both a configured Federation Gateway URL and a valid server-issued session are present. Missing gateway/session state fails closed rather than falling back to a fake local response.
+
+## Client/build foundation
+
+F111 adds:
+
+- `app.json` with explicit Android/iOS application identity;
+- strict `tsconfig.json` and Expo declaration shim;
+- `eas.json` development, preview-APK and production profiles;
+- native `expo-secure-store` session persistence;
+- HTTPS enforcement outside localhost development;
+- UI-to-gateway message binding and trace display;
+- Android export/prebuild/APK scripts;
+- deterministic client/build governance tests;
+- generated-native/local-secret exclusions and public-only `.env.example`.
+
+A dependency lock is still a separate reproducibility gap until generated and admitted from an actual package resolution. Preview/production build configuration does not prove that an APK/IPA was produced or signed.
+
 ## Security boundary
 
 - no provider credentials in the app;
 - short-lived authenticated server sessions;
+- native secure storage for mobile session material;
 - server-side provider and source credentials;
 - consequential effects remain Human-First/SOVARA gated;
 - connection/configuration does not equal runtime proof;
-- mobile status labels must come from fresh capability/health readback.
+- mobile status labels must come from fresh capability/health readback;
+- `EXPO_PUBLIC_*` is restricted to genuinely public configuration such as the gateway URL.
 
 ## Current proof boundary
 
-This tranche proves source architecture and deterministic gateway routing only after its local/source CI courts pass. It does **not** prove a deployed gateway, OpenRouter provider execution, KDV runtime binding, Android/iOS installable build, app-store release, production traffic or owner-value superiority.
+PR #1266 / F110 proves source admission of the provider-neutral gateway contract and original Expo shell on signed main `4e4828833d06dc72f2bd8f5013f3f217745a3332`.
 
-The next maturity chain is:
+F111 is the successor client/build tranche. Until exact-head CI and signed-main readback complete, its strongest state is `SOURCE_CANDIDATE_UNDER_ADMISSION`.
 
-`SOURCE_ADMITTED -> GATEWAY_RUNTIME -> AUTHENTICATED_OWNER_SESSION -> REAL_SOURCE_READBACK -> REAL_PROVIDER_READBACK -> STREAMING_CHAT -> ANDROID_BUILD -> IOS_BUILD -> STAGING -> END_TO_END -> PRODUCTION_READY_VERIFIED`
+Neither F110 nor F111 by itself proves a deployed gateway, OpenRouter provider execution, KDV runtime binding, Android/iOS installable build, app-store release, production traffic or owner-value superiority.
+
+The remaining maturity chain is:
+
+`CLIENT_BUILD_SOURCE_ADMITTED -> GATEWAY_RUNTIME -> AUTHENTICATED_OWNER_SESSION -> REAL_SOURCE_READBACK -> REAL_PROVIDER_READBACK -> STREAMING_CHAT -> ANDROID_INSTALLABLE -> IOS_BUILD_PATH -> STAGING -> END_TO_END -> PRODUCTION_READY_VERIFIED`
