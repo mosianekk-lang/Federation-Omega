@@ -15,7 +15,8 @@ concurrency:
 jobs:
   android-build:
     if: >-
-      github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_ANDROID_BUILD_V1' &&
+      (github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_ANDROID_BUILD_V1' ||
+       github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1') &&
       github.event.issue.author_association == 'OWNER'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
@@ -38,6 +39,13 @@ jobs:
           npm --version
           java -version
           test -n "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
+
+      - name: Run MDTAF source contract tests when MDTAF is dispatched
+        if: github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_fuse_mobile_mdtaf_v1
 
       - name: Resolve real dependency graph and generate lock
         working-directory: mobile/fuse-mobile
@@ -84,60 +92,9 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python - <<'PY'
-          import hashlib
-          import json
-          import re
-          import zipfile
-          from pathlib import Path
-
-          apk = Path('android/app/build/outputs/apk/debug/app-debug.apk')
-          patterns = {
-              'pem_private_key': re.compile(rb'-----BEGIN (?:RSA |EC |OPENSSH )?PRIVATE KEY-----'),
-              'openrouter_key': re.compile(rb'sk-or-v1-[A-Za-z0-9_-]{20,}'),
-              'openai_style_key': re.compile(rb'sk-[A-Za-z0-9_-]{24,}'),
-              'google_api_key': re.compile(rb'AIza[0-9A-Za-z_-]{30,}'),
-              'github_pat': re.compile(rb'github_pat_[A-Za-z0-9_]{20,}'),
-              'aws_access_key': re.compile(rb'AKIA[0-9A-Z]{16}'),
-          }
-          matches = []
-
-          def scan(label: str, data: bytes) -> None:
-              for pattern_name, pattern in patterns.items():
-                  if pattern.search(data):
-                      matches.append({'location': label, 'pattern': pattern_name})
-
-          raw = apk.read_bytes()
-          scan('APK_RAW', raw)
-          members = 0
-          with zipfile.ZipFile(apk) as archive:
-              for info in archive.infolist():
-                  if info.is_dir():
-                      continue
-                  members += 1
-                  with archive.open(info, 'r') as handle:
-                      scan(info.filename, handle.read())
-
-          receipt = {
-              'schema': 'FUSE_MOBILE_APK_SECURITY_SCAN_V1',
-              'state': 'APK_CREDENTIAL_SCAN_CLEAN' if not matches else 'APK_CREDENTIAL_SCAN_FAILED',
-              'apk_sha256': hashlib.sha256(raw).hexdigest(),
-              'archive_members_scanned': members,
-              'pattern_names': sorted(patterns),
-              'matches': matches,
-              'credential_values_recorded': False,
-          }
-          Path('fuse-mobile-apk-security-scan.json').write_text(
-              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
-          )
-          print(json.dumps({
-              'state': receipt['state'],
-              'archive_members_scanned': members,
-              'match_count': len(matches),
-          }, sort_keys=True))
-          if matches:
-              raise SystemExit('Credential-like material detected in APK')
-          PY
+          python lab/scan_apk.py \
+            --apk android/app/build/outputs/apk/debug/app-debug.apk \
+            --output fuse-mobile-apk-security-scan.json
 
       - name: Emit immutable Android build receipt
         working-directory: mobile/fuse-mobile
@@ -156,7 +113,9 @@ jobs:
           scan_path = Path('fuse-mobile-apk-security-scan.json')
           package = json.loads(Path('package.json').read_text(encoding='utf-8'))
           scan = json.loads(scan_path.read_text(encoding='utf-8'))
+          apk_sha = hashlib.sha256(apk.read_bytes()).hexdigest()
           assert scan['state'] == 'APK_CREDENTIAL_SCAN_CLEAN', scan
+          assert scan['apk_sha256'] == apk_sha, {'scan_sha': scan['apk_sha256'], 'apk_sha': apk_sha}
           receipt = {
               'schema': 'FUSE_MOBILE_ANDROID_BUILD_RECEIPT_V1',
               'state': 'ANDROID_DEBUG_APK_GENERATED_VERIFIED',
@@ -166,9 +125,10 @@ jobs:
               'app_version': package['version'],
               'package_id': 'com.federationomega.fusemobile',
               'lock_sha256': hashlib.sha256(lock.read_bytes()).hexdigest(),
-              'apk_sha256': hashlib.sha256(apk.read_bytes()).hexdigest(),
+              'apk_sha256': apk_sha,
               'apk_size_bytes': apk.stat().st_size,
               'apk_credential_scan_state': scan['state'],
+              'apk_credential_scan_apk_sha256': scan['apk_sha256'],
               'apk_credential_scan_receipt_sha256': hashlib.sha256(scan_path.read_bytes()).hexdigest(),
               'debug_signing_only': True,
               'repository_write_performed': False,
@@ -193,3 +153,111 @@ jobs:
             mobile/fuse-mobile/android/app/build/outputs/apk/debug/app-debug.apk
             mobile/fuse-mobile/fuse-mobile-apk-security-scan.json
             mobile/fuse-mobile/fuse-mobile-android-build-receipt.json
+
+  mdtaf-avd:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    needs: android-build
+    runs-on: ubuntu-24.04
+    timeout-minutes: 50
+    strategy:
+      fail-fast: false
+      matrix:
+        api: [35, 36]
+    steps:
+      - name: Checkout exact default-branch source without write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Download exact shared Android build artifact
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: fuse-mobile-android-v1-${{ github.run_id }}-${{ github.run_attempt }}
+          path: mobile/fuse-mobile/mdtaf-build-input
+
+      - name: Provision clean Android virtual device
+        shell: bash
+        env:
+          API_LEVEL: ${{ matrix.api }}
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          test -n "$SDK_ROOT"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          AVDMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/avdmanager"
+          test -x "$SDKMANAGER"
+          test -x "$AVDMANAGER"
+          "$SDKMANAGER" "platform-tools" "emulator" "system-images;android-${API_LEVEL};google_apis;x86_64"
+          echo no | "$AVDMANAGER" create avd --force \
+            --name "fuse-mdtaf-api-${API_LEVEL}" \
+            --package "system-images;android-${API_LEVEL};google_apis;x86_64" \
+            --device "pixel_6"
+
+      - name: Boot AVD and prove readiness
+        shell: bash
+        env:
+          API_LEVEL: ${{ matrix.api }}
+        run: |
+          set -euo pipefail
+          mkdir -p mobile/fuse-mobile/mdtaf-evidence
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          sudo chmod 666 /dev/kvm 2>/dev/null || true
+          "$SDK_ROOT/emulator/emulator" \
+            -avd "fuse-mdtaf-api-${API_LEVEL}" \
+            -no-window -no-audio -no-boot-anim -no-snapshot \
+            -gpu swiftshader_indirect -memory 3072 -cores 2 \
+            > "mobile/fuse-mobile/mdtaf-evidence/emulator-api-${API_LEVEL}.log" 2>&1 &
+          adb wait-for-device
+          ready=0
+          for _ in $(seq 1 120); do
+            if [[ "$(adb shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
+              ready=1
+              break
+            fi
+            sleep 2
+          done
+          if [[ "$ready" -ne 1 ]]; then
+            adb devices -l || true
+            tail -200 "mobile/fuse-mobile/mdtaf-evidence/emulator-api-${API_LEVEL}.log" || true
+            exit 1
+          fi
+          adb shell input keyevent 82 || true
+          adb shell getprop ro.build.version.sdk | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-api.txt"
+          adb shell getprop ro.product.cpu.abi | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-abi.txt"
+
+      - name: Resolve exact shared APK and security receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          ROOT=mobile/fuse-mobile/mdtaf-build-input
+          APK="$(find "$ROOT" -type f -path '*/android/app/build/outputs/apk/debug/app-debug.apk' -print -quit)"
+          SCAN="$(find "$ROOT" -type f -name 'fuse-mobile-apk-security-scan.json' -print -quit)"
+          test -n "$APK" && test -s "$APK"
+          test -n "$SCAN" && test -s "$SCAN"
+          cp "$APK" mobile/fuse-mobile/mdtaf-evidence/app-debug.apk
+          cp "$SCAN" mobile/fuse-mobile/mdtaf-evidence/apk-security-scan.json
+          sha256sum mobile/fuse-mobile/mdtaf-evidence/app-debug.apk | tee mobile/fuse-mobile/mdtaf-evidence/apk.sha256
+
+      - name: Run deterministic lifecycle, fault and recovery court
+        working-directory: mobile/fuse-mobile
+        shell: bash
+        run: |
+          set -euo pipefail
+          bash lab/run_android_smoke.sh \
+            --apk mdtaf-evidence/app-debug.apk \
+            --evidence-dir mdtaf-evidence
+          python lab/certify.py \
+            --evidence-dir mdtaf-evidence \
+            --output mdtaf-evidence/fuse-mobile-mdtaf-certificate.json \
+            --source-sha "${GITHUB_SHA}"
+
+      - name: Upload immutable MDTAF device evidence
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-mobile-mdtaf-api-${{ matrix.api }}-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: mobile/fuse-mobile/mdtaf-evidence/
