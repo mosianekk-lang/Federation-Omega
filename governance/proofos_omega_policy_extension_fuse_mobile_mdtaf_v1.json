@@ -1,17 +1,20 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.1",
+  "version": "1.1.0",
   "risk_rules": [
     {
       "risk": "R3_SECURITY_ABI",
       "patterns": [
         "mobile/fuse-mobile/lab/**",
+        "mobile/fuse-mobile/app.json",
+        "mobile/fuse-mobile/package.json",
         "governance/fuse_mobile_mdtaf*.json",
         "governance/proofos_omega_policy_extension_fuse_mobile_mdtaf_v1.json",
         "tests/test_fuse_mobile_mdtaf*.py",
+        "tests/test_fuse_mobile_version_contract.py",
         ".github/workflows/fuse-mobile-android-build.yml"
       ],
-      "reason": "FUSE_MOBILE_MDTAF_RELEASE_ASSURANCE_DEVICE_TWIN_AND_REAL_WORLD_FIDELITY"
+      "reason": "FUSE_MOBILE_MDTAF_RELEASE_ASSURANCE_DEVICE_TWIN_AND_RELEASE_IDENTITY"
     }
   ],
   "subsystem_rules": [
@@ -19,9 +22,12 @@
       "subsystem": "FUSE_MOBILE_MDTAF",
       "patterns": [
         "mobile/fuse-mobile/lab/**",
+        "mobile/fuse-mobile/app.json",
+        "mobile/fuse-mobile/package.json",
         "governance/fuse_mobile_mdtaf*.json",
         "governance/proofos_omega_policy_extension_fuse_mobile_mdtaf_v1.json",
         "tests/test_fuse_mobile_mdtaf*.py",
+        "tests/test_fuse_mobile_version_contract.py",
         ".github/workflows/fuse-mobile-android-build.yml"
       ],
       "depends_on": []
@@ -44,6 +50,20 @@
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
+    },
+    {
+      "id": "fuse_mobile_version_contract",
+      "kind": "unittest_glob",
+      "target": "test_fuse_mobile_version_contract.py",
+      "patterns": [
+        "mobile/fuse-mobile/app.json",
+        "mobile/fuse-mobile/package.json",
+        "tests/test_fuse_mobile_version_contract.py"
+      ],
+      "subsystems": ["FUSE_MOBILE_MDTAF"],
+      "failure_class": "RELEASE_IDENTITY_MISMATCH",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
     }
   ]
 }
