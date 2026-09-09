@@ -44,7 +44,19 @@ restore_connectivity() {
 }
 trap restore_connectivity EXIT
 
-network_reachable() {
+capture_connectivity_state() {
+  local label="$1"
+  local expectation="$2"
+  local dump="$EVIDENCE_DIR/connectivity-${label}.txt"
+  local receipt="$EVIDENCE_DIR/connectivity-${label}.json"
+  "$ADB" shell dumpsys connectivity > "$dump"
+  python "$SCRIPT_DIR/probe_android_connectivity.py" \
+    --input "$dump" \
+    --expect "$expectation" \
+    --json-output "$receipt"
+}
+
+icmp_diagnostic() {
   "$ADB" shell ping -c 1 -W 2 8.8.8.8 >/dev/null 2>&1
 }
 
@@ -77,9 +89,11 @@ fi
 "$ADB" exec-out screencap -p > "$EVIDENCE_DIR/relaunch.png"
 
 NETWORK_BASELINE=0
-if network_reachable; then NETWORK_BASELINE=1; fi
+if capture_connectivity_state baseline online; then NETWORK_BASELINE=1; fi
+BASELINE_PING_DIAGNOSTIC=0
+if icmp_diagnostic; then BASELINE_PING_DIAGNOSTIC=1; fi
 if [[ "$NETWORK_BASELINE" -ne 1 ]]; then
-  echo "Cannot prove an online baseline before offline-fault injection" >&2
+  echo "Cannot prove a validated Android default-network baseline before offline-fault injection" >&2
   exit 6
 fi
 
@@ -92,10 +106,12 @@ if "$ADB" shell svc data disable >/dev/null 2>&1; then DATA_OFF=1; fi
 sleep 3
 AIRPLANE_ON_RAW="$("$ADB" shell cmd connectivity airplane-mode 2>/dev/null | tr -d '\r' || true)"
 AIRPLANE_ON="$(printf '%s' "$AIRPLANE_ON_RAW" | tr '[:upper:]' '[:lower:]')"
+OFFLINE_VALIDATED_ABSENT=0
+if capture_connectivity_state offline offline; then OFFLINE_VALIDATED_ABSENT=1; fi
 OFFLINE_PING_BLOCKED=0
-if ! network_reachable; then OFFLINE_PING_BLOCKED=1; fi
+if ! icmp_diagnostic; then OFFLINE_PING_BLOCKED=1; fi
 CONNECTIVITY_LOSS=0
-if [[ "$AIRPLANE_CMD" -eq 1 && "$AIRPLANE_ON" == *"enabled"* && "$OFFLINE_PING_BLOCKED" -eq 1 ]]; then
+if [[ "$AIRPLANE_CMD" -eq 1 && "$AIRPLANE_ON" == *"enabled"* && "$OFFLINE_VALIDATED_ABSENT" -eq 1 ]]; then
   CONNECTIVITY_LOSS=1
 fi
 if [[ "$CONNECTIVITY_LOSS" -ne 1 ]]; then
@@ -113,19 +129,21 @@ fi
 
 restore_connectivity
 AIRPLANE_OFF=0
-RECOVERY_PING=0
+RECOVERY_VALIDATED=0
+RECOVERY_PING_DIAGNOSTIC=0
 for _ in $(seq 1 30); do
   AIRPLANE_OFF_RAW="$("$ADB" shell cmd connectivity airplane-mode 2>/dev/null | tr -d '\r' || true)"
   AIRPLANE_OFF_NORMALIZED="$(printf '%s' "$AIRPLANE_OFF_RAW" | tr '[:upper:]' '[:lower:]')"
   if [[ "$AIRPLANE_OFF_NORMALIZED" == *"disabled"* ]]; then AIRPLANE_OFF=1; fi
-  if network_reachable; then RECOVERY_PING=1; fi
-  if [[ "$AIRPLANE_OFF" -eq 1 && "$RECOVERY_PING" -eq 1 ]]; then break; fi
+  if capture_connectivity_state recovery online; then RECOVERY_VALIDATED=1; fi
+  if icmp_diagnostic; then RECOVERY_PING_DIAGNOSTIC=1; fi
+  if [[ "$AIRPLANE_OFF" -eq 1 && "$RECOVERY_VALIDATED" -eq 1 ]]; then break; fi
   sleep 2
 done
 NETWORK_RECOVERY=0
-if [[ "$AIRPLANE_OFF" -eq 1 && "$RECOVERY_PING" -eq 1 ]]; then NETWORK_RECOVERY=1; fi
+if [[ "$AIRPLANE_OFF" -eq 1 && "$RECOVERY_VALIDATED" -eq 1 ]]; then NETWORK_RECOVERY=1; fi
 if [[ "$NETWORK_RECOVERY" -ne 1 ]]; then
-  echo "Network recovery was not verified after offline test" >&2
+  echo "Validated Android default-network recovery was not verified after offline test" >&2
   exit 9
 fi
 
@@ -144,7 +162,7 @@ fi
 "$ADB" shell dumpsys meminfo "$PACKAGE_ID" > "$EVIDENCE_DIR/meminfo-final.txt"
 "$ADB" logcat -d > "$EVIDENCE_DIR/logcat.txt"
 
-python - "$APK" "$EVIDENCE_DIR" "$PACKAGE_ID" "$FIRST_PID" "$SECOND_PID" "$OFFLINE_PID" "$RECOVERY_PID" "$NETWORK_BASELINE" "$CONNECTIVITY_LOSS" "$NETWORK_RECOVERY" "$AIRPLANE_CMD" "$WIFI_OFF" "$DATA_OFF" "$OFFLINE_PING_BLOCKED" "$AIRPLANE_OFF" "$RECOVERY_PING" <<'PY'
+python - "$APK" "$EVIDENCE_DIR" "$PACKAGE_ID" "$FIRST_PID" "$SECOND_PID" "$OFFLINE_PID" "$RECOVERY_PID" "$NETWORK_BASELINE" "$CONNECTIVITY_LOSS" "$NETWORK_RECOVERY" "$AIRPLANE_CMD" "$WIFI_OFF" "$DATA_OFF" "$OFFLINE_VALIDATED_ABSENT" "$AIRPLANE_OFF" "$RECOVERY_VALIDATED" "$BASELINE_PING_DIAGNOSTIC" "$OFFLINE_PING_BLOCKED" "$RECOVERY_PING_DIAGNOSTIC" <<'PY'
 import hashlib
 import json
 import re
@@ -163,10 +181,13 @@ first_pid, second_pid, offline_pid, recovery_pid = sys.argv[4:8]
     airplane_cmd,
     wifi_off,
     data_off,
-    offline_ping_blocked,
+    offline_validated_absent,
     airplane_off,
-    recovery_ping,
-) = [x == "1" for x in sys.argv[8:17]]
+    recovery_validated,
+    baseline_ping_diagnostic,
+    offline_ping_blocked,
+    recovery_ping_diagnostic,
+) = [x == "1" for x in sys.argv[8:20]]
 log = (evidence / "logcat.txt").read_text(encoding="utf-8", errors="replace")
 
 fatal_patterns = [
@@ -203,14 +224,26 @@ receipt = {
     "offline_launch_state": "PASS" if offline_pid else "FAIL",
     "network_recovery_state": "PASS" if network_recovery else "FAIL",
     "recovery_launch_state": "PASS" if recovery_pid else "FAIL",
+    "connectivity_probe": "ANDROID_ACTIVE_DEFAULT_NETWORK_INTERNET_VALIDATED",
     "connectivity_controls": {
         "airplane_mode_enable_supported": airplane_cmd,
         "wifi_disable_supported": wifi_off,
         "mobile_data_disable_supported": data_off,
-        "offline_ping_blocked": offline_ping_blocked,
+        "offline_validated_default_absent": offline_validated_absent,
         "airplane_mode_disable_readback": airplane_off,
-        "recovery_ping_succeeded": recovery_ping,
+        "recovery_validated_default_present": recovery_validated,
+        "baseline_ping_diagnostic_only": baseline_ping_diagnostic,
+        "offline_ping_blocked_diagnostic_only": offline_ping_blocked,
+        "recovery_ping_diagnostic_only": recovery_ping_diagnostic,
     },
+    "connectivity_evidence": [
+        "connectivity-baseline.txt",
+        "connectivity-baseline.json",
+        "connectivity-offline.txt",
+        "connectivity-offline.json",
+        "connectivity-recovery.txt",
+        "connectivity-recovery.json",
+    ],
     "fatal_or_anr_hits": fatal_hits[:50],
     "screenshots": [
         "first-launch.png",
