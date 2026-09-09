@@ -109,6 +109,7 @@ jobs:
       - name: Require exact bounded-read source before any provider build
         run: |
           set -euo pipefail
+          test -f ops/federation_omega_operator/Dockerfile
           test -f ops/federation_omega_operator/lib/apps_script_bounded_read.mjs
           grep -q 'READ_APPS_SCRIPT_PROJECT_BOUNDED' ops/federation_omega_operator/lib/contracts.mjs
           grep -q 'executeAppsScriptBoundedReadAction' ops/federation_omega_operator/lib/operator.mjs
@@ -116,12 +117,40 @@ jobs:
           npm --prefix ops/federation_omega_operator test
           npm --prefix ops/federation_omega_operator run check
 
-      - name: Build exact operator candidate from the admitted main head
+      - name: Re-prove pre-existing direct Artifact Registry writer authority without IAM mutation
+        run: |
+          set -euo pipefail
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > /tmp/strategic-read/project-policy.json
+          gcloud artifacts repositories get-iam-policy "$REPOSITORY" \
+            --location "$REGION" --project "$PROJECT_ID" --format=json \
+            > /tmp/strategic-read/repository-policy.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          member = 'serviceAccount:' + os.environ['DEPLOYER_SA']
+          project = json.loads(Path('/tmp/strategic-read/project-policy.json').read_text())
+          repository = json.loads(Path('/tmp/strategic-read/repository-policy.json').read_text())
+          def has(policy, role, member):
+              return any(
+                  b.get('role') == role and not b.get('condition') and member in (b.get('members') or [])
+                  for b in policy.get('bindings') or []
+              )
+          writer = has(project, 'roles/artifactregistry.writer', member) or has(repository, 'roles/artifactregistry.writer', member)
+          assert writer, 'ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED'
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
+              fh.write('ARTIFACT_REGISTRY_WRITER_PREEXISTING=true\n')
+          PY
+
+      - name: Build exact operator locally and push directly to Artifact Registry
         run: |
           set -euo pipefail
           IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${OPERATOR_SERVICE}:strategic-read-${GITHUB_SHA}"
-          gcloud builds submit ops/federation_omega_operator \
-            --project "$PROJECT_ID" --region "$REGION" --tag "$IMAGE_TAG" --quiet
+          gcloud auth configure-docker "${REGION}-docker.pkg.dev" --quiet
+          docker build --pull \
+            --file ops/federation_omega_operator/Dockerfile \
+            --tag "$IMAGE_TAG" \
+            ops/federation_omega_operator
+          docker push "$IMAGE_TAG"
           DIGEST="$(gcloud artifacts docker images describe "$IMAGE_TAG" \
             --project "$PROJECT_ID" --format='value(image_summary.digest)')"
           test -n "$DIGEST"
@@ -290,6 +319,9 @@ jobs:
             'serving_operator_audience_present':os.environ['SERVING_AUDIENCE_PRESENT'].lower() == 'true',
             'serving_oidc_principal_count':int(os.environ['SERVING_PRINCIPAL_COUNT']),
             'serving_secret_backed_env_count':int(os.environ['SERVING_SECRET_BACKED_ENV_COUNT']),
+            'artifact_registry_writer_preexisting':os.environ['ARTIFACT_REGISTRY_WRITER_PREEXISTING'].lower() == 'true',
+            'image_build_transport':'GITHUB_HOSTED_DOCKER_DIRECT_ARTIFACT_REGISTRY',
+            'cloud_build_staging_used':False,
             'candidate_revision':os.environ['CANDIDATE_REVISION'],
             'candidate_tag':os.environ['CANDIDATE_TAG'],
             'candidate_image_digest':os.environ['CANDIDATE_DIGEST'],
