@@ -62,6 +62,15 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         self.assertNotIn("git push", text)
         self.assertIn("persist-credentials: false", text)
 
+    def test_automatic_mdtaf_trigger_is_bounded_to_admitted_mobile_main_changes(self) -> None:
+        text = self._workflow_text_or_skip_export()
+        self.assertIn("branches: [main]", text)
+        self.assertIn('      - "mobile/fuse-mobile/**"', text)
+        self.assertIn('      - ".github/workflows/fuse-mobile-android-build.yml"', text)
+        self.assertIn('      - "governance/fuse_mobile_mdtaf_v1.json"', text)
+        self.assertNotIn("schedule:", text)
+        self.assertNotIn("workflow_dispatch:", text)
+
     def test_build_court_generates_lock_and_real_apk_receipt(self) -> None:
         text = self._workflow_text_or_skip_export()
         for required in (
