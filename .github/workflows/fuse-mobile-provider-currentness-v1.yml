@@ -1,0 +1,294 @@
+name: FUSE Mobile Provider Currentness V1
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - ".github/workflows/fuse-mobile-provider-currentness-v1.yml"
+      - "tests/test_fuse_mobile_provider_currentness_v1.py"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: fuse-mobile-provider-currentness-v1-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  SERVICE: fuse-mobile-gateway
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  READ_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
+jobs:
+  observe-provider-currentness:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate existing keyless WIF identity without provider mutation
+        id: wif_auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.READ_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud client
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Read Cloud Run and IAP currentness only
+        shell: bash
+        env:
+          WIF_AUTH_OUTCOME: ${{ steps.wif_auth.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          ROOT=/tmp/fuse-mobile-provider-currentness
+          mkdir -p "$ROOT"
+          for name in service run-policy iap-settings iap-policy; do
+            : > "$ROOT/$name.err"
+          done
+
+          SERVICE_RC=99
+          RUN_POLICY_RC=99
+          IAP_SETTINGS_RC=99
+          IAP_POLICY_RC=99
+
+          if [[ "$WIF_AUTH_OUTCOME" == "success" ]]; then
+            set +e
+            gcloud run services describe "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" --format=json \
+              > "$ROOT/service.json" 2> "$ROOT/service.err"
+            SERVICE_RC=$?
+
+            gcloud run services get-iam-policy "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" --format=json \
+              > "$ROOT/run-policy.json" 2> "$ROOT/run-policy.err"
+            RUN_POLICY_RC=$?
+
+            gcloud iap settings get \
+              --project "$PROJECT_ID" --resource-type=cloud-run --region "$REGION" --service "$SERVICE" --format=json \
+              > "$ROOT/iap-settings.json" 2> "$ROOT/iap-settings.err"
+            IAP_SETTINGS_RC=$?
+
+            gcloud iap web get-iam-policy \
+              --project "$PROJECT_ID" --resource-type=cloud-run --region "$REGION" --service "$SERVICE" --format=json \
+              > "$ROOT/iap-policy.json" 2> "$ROOT/iap-policy.err"
+            IAP_POLICY_RC=$?
+            set -e
+          fi
+
+          export ROOT SERVICE_RC RUN_POLICY_RC IAP_SETTINGS_RC IAP_POLICY_RC WIF_AUTH_OUTCOME
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+
+          def read_json(name):
+              path = root / name
+              if not path.exists():
+                  return {}
+              raw = path.read_text(encoding='utf-8', errors='replace').strip()
+              if not raw:
+                  return {}
+              try:
+                  value = json.loads(raw)
+                  return value if isinstance(value, dict) else {}
+              except Exception:
+                  return {}
+
+          def error_sha(name):
+              path = root / name
+              raw = path.read_bytes() if path.exists() else b''
+              return hashlib.sha256(raw).hexdigest() if raw else None
+
+          def sha(value):
+              return hashlib.sha256(str(value).encode('utf-8')).hexdigest()
+
+          def first_key(obj, names):
+              if isinstance(obj, dict):
+                  for key, value in obj.items():
+                      if key in names and value not in (None, ''):
+                          return value
+                  for value in obj.values():
+                      found = first_key(value, names)
+                      if found not in (None, ''):
+                          return found
+              elif isinstance(obj, list):
+                  for value in obj:
+                      found = first_key(value, names)
+                      if found not in (None, ''):
+                          return found
+              return None
+
+          service = read_json('service.json')
+          run_policy = read_json('run-policy.json')
+          iap_settings = read_json('iap-settings.json')
+          iap_policy = read_json('iap-policy.json')
+
+          service_rc = int(os.environ['SERVICE_RC'])
+          run_policy_rc = int(os.environ['RUN_POLICY_RC'])
+          iap_settings_rc = int(os.environ['IAP_SETTINGS_RC'])
+          iap_policy_rc = int(os.environ['IAP_POLICY_RC'])
+          auth_outcome = os.environ.get('WIF_AUTH_OUTCOME', '')
+          all_reads_ok = all(rc == 0 for rc in (service_rc, run_policy_rc, iap_settings_rc, iap_policy_rc))
+
+          if auth_outcome != 'success':
+              state = 'WIF_AUTH_FAILED'
+          elif all_reads_ok:
+              state = 'PROVIDER_READBACK_VERIFIED'
+          else:
+              state = 'PROVIDER_READBACK_PARTIAL_OR_DENIED'
+
+          public_invoker = False
+          run_bindings = []
+          for binding in run_policy.get('bindings') or []:
+              role = str(binding.get('role') or '')
+              members = [str(x) for x in (binding.get('members') or [])]
+              if role == 'roles/run.invoker' and any(m in {'allUsers', 'allAuthenticatedUsers'} for m in members):
+                  public_invoker = True
+              run_bindings.append({
+                  'role': role,
+                  'member_count': len(members),
+                  'member_sha256': sorted(sha(m) for m in members),
+              })
+
+          access = iap_settings.get('accessSettings') or iap_settings.get('access_settings') or {}
+          oauth = access.get('oauthSettings') or access.get('oauth_settings') or {}
+          client_id = str(oauth.get('clientId') or oauth.get('client_id') or '').strip()
+          programmatic = oauth.get('programmaticClients') or oauth.get('programmatic_clients') or []
+          if not isinstance(programmatic, list):
+              programmatic = []
+
+          iap_bindings = []
+          for binding in iap_policy.get('bindings') or []:
+              role = str(binding.get('role') or '')
+              members = [str(x) for x in (binding.get('members') or [])]
+              iap_bindings.append({
+                  'role': role,
+                  'member_count': len(members),
+                  'member_sha256': sorted(sha(m) for m in members),
+              })
+
+          service_name = first_key(service, {'name'})
+          latest_ready = first_key(service, {'latestReadyRevision', 'latestReadyRevisionName', 'latest_ready_revision'})
+          ingress = first_key(service, {'ingress'})
+          iap_enabled = first_key(service, {'iapEnabled', 'iap_enabled'})
+          invoker_iam_disabled = first_key(service, {'invokerIamDisabled', 'invoker_iam_disabled'})
+          default_uri_disabled = first_key(service, {'defaultUriDisabled', 'default_uri_disabled'})
+
+          receipt = {
+              'schema': 'FUSE_MOBILE_PROVIDER_CURRENTNESS_V1',
+              'source_sha': os.environ.get('GITHUB_SHA'),
+              'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
+              'state': state,
+              'target': {
+                  'project_id': os.environ.get('PROJECT_ID'),
+                  'project_number': os.environ.get('PROJECT_NUMBER'),
+                  'region': os.environ.get('REGION'),
+                  'service': os.environ.get('SERVICE'),
+              },
+              'auth': {
+                  'route': 'EXISTING_GITHUB_OIDC_WIF',
+                  'outcome': auth_outcome,
+                  'workload_identity_provider_sha256': sha(os.environ.get('WIF_PROVIDER', '')),
+                  'service_account_sha256': sha(os.environ.get('READ_SA', '')),
+                  'credential_value_recorded': False,
+              },
+              'read_status': {
+                  'service': service_rc,
+                  'run_policy': run_policy_rc,
+                  'iap_settings': iap_settings_rc,
+                  'iap_policy': iap_policy_rc,
+              },
+              'service_observation': {
+                  'service_name_sha256': sha(service_name) if service_name else None,
+                  'latest_ready_revision_sha256': sha(latest_ready) if latest_ready else None,
+                  'iap_enabled': iap_enabled,
+                  'ingress': ingress,
+                  'invoker_iam_disabled': invoker_iam_disabled,
+                  'default_uri_disabled': default_uri_disabled,
+                  'public_invoker_present': public_invoker if run_policy_rc == 0 else None,
+                  'run_policy_binding_count': len(run_bindings) if run_policy_rc == 0 else None,
+                  'run_policy_bindings': run_bindings if run_policy_rc == 0 else [],
+              },
+              'iap_observation': {
+                  'oauth_resource_client_id_present': bool(client_id) if iap_settings_rc == 0 else None,
+                  'oauth_resource_client_id_sha256': sha(client_id) if client_id and iap_settings_rc == 0 else None,
+                  'programmatic_client_count': len(programmatic) if iap_settings_rc == 0 else None,
+                  'programmatic_client_sha256': sorted(sha(x) for x in programmatic) if iap_settings_rc == 0 else [],
+                  'iap_policy_binding_count': len(iap_bindings) if iap_policy_rc == 0 else None,
+                  'iap_policy_bindings': iap_bindings if iap_policy_rc == 0 else [],
+              },
+              'error_sha256': {
+                  'service': error_sha('service.err'),
+                  'run_policy': error_sha('run-policy.err'),
+                  'iap_settings': error_sha('iap-settings.err'),
+                  'iap_policy': error_sha('iap-policy.err'),
+              },
+              'provider_mutation_performed': False,
+              'iam_mutation_performed': False,
+              'oauth_mutation_performed': False,
+              'secret_read_or_mutation_performed': False,
+              'traffic_change_performed': False,
+              'service_invocation_performed': False,
+              'model_inference_performed': False,
+          }
+
+          body = dict(receipt)
+          receipt['receipt_sha256'] = hashlib.sha256(
+              json.dumps(body, sort_keys=True, separators=(',', ':')).encode('utf-8')
+          ).hexdigest()
+
+          for key in (
+              'provider_mutation_performed',
+              'iam_mutation_performed',
+              'oauth_mutation_performed',
+              'secret_read_or_mutation_performed',
+              'traffic_change_performed',
+              'service_invocation_performed',
+              'model_inference_performed',
+          ):
+              assert receipt[key] is False
+          assert receipt['auth']['credential_value_recorded'] is False
+
+          out = root / 'PROVIDER_CURRENTNESS_RECEIPT.json'
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps({
+              'state': state,
+              'service_read_status': service_rc,
+              'run_policy_read_status': run_policy_rc,
+              'iap_settings_read_status': iap_settings_rc,
+              'iap_policy_read_status': iap_policy_rc,
+              'public_invoker_present': receipt['service_observation']['public_invoker_present'],
+              'programmatic_client_count': receipt['iap_observation']['programmatic_client_count'],
+              'provider_mutation_performed': False,
+              'model_inference_performed': False,
+          }, sort_keys=True))
+          PY
+
+      - name: Upload immutable redacted provider-currentness receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-mobile-provider-currentness-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-mobile-provider-currentness/PROVIDER_CURRENTNESS_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30
