@@ -518,6 +518,38 @@ def compile_runtime_receipt(
     )
     if provider_effect_observed:
         raise ParallelRuntimeError("PROVIDER_EFFECT_CANNOT_RECEIVE_NO_EFFECT_RUNTIME_RECEIPT")
+
+    planned_lanes = {lane.lane_id: lane for lane in plan.lanes}
+    result_lane_ids: set[str] = set()
+    for item in results:
+        if item.lane_id in result_lane_ids:
+            raise ParallelRuntimeError(f"DUPLICATE_RUNTIME_RESULT:{item.lane_id}")
+        result_lane_ids.add(item.lane_id)
+
+    unknown_lane_ids = sorted(result_lane_ids - planned_lanes.keys())
+    if unknown_lane_ids:
+        raise ParallelRuntimeError(
+            f"UNKNOWN_RUNTIME_RESULT:{','.join(unknown_lane_ids)}"
+        )
+
+    missing_lane_ids = sorted(planned_lanes.keys() - result_lane_ids)
+    if missing_lane_ids:
+        raise ParallelRuntimeError(
+            f"MISSING_RUNTIME_RESULT:{','.join(missing_lane_ids)}"
+        )
+
+    for item in results:
+        planned_lane = planned_lanes[item.lane_id]
+        if item.transition_id != planned_lane.transition_id:
+            raise ParallelRuntimeError(
+                f"RUNTIME_RESULT_TRANSITION_MISMATCH:{item.lane_id}"
+            )
+        if (
+            item.result.get("semantic_verified") is not True
+            or item.result.get("proof_valid") is not True
+        ):
+            raise ParallelRuntimeError(f"UNVERIFIED_RUNTIME_RESULT:{item.lane_id}")
+
     body = {
         "schema": SCHEMA,
         "mission_id": plan.mission_id,

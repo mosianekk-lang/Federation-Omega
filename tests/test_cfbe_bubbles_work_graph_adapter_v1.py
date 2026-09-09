@@ -192,6 +192,7 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertEqual(7, receipt["logical_bot_count"])
         self.assertEqual(0, receipt["provider_native_worker_count"])
         self.assertTrue(receipt["multipath_recovery_verified"])
+        self.assertIn("SOURCE_PRIMARY", receipt["selected_wave"])
         self.assertFalse(receipt["provider_execution_attempted"])
         self.assertFalse(receipt["external_effect"])
         self.assertEqual("NONE", receipt["authority_delta"])

@@ -1,0 +1,32 @@
+{
+  "contractId": "CFBE-VNEXT-MISSION-EXECUTION-KERNEL-V1",
+  "schema": "CFBE-VNEXT-MISSION-EXECUTION-KERNEL-1",
+  "status": "DETERMINISTIC_TESTED_LOCAL",
+  "authorityCeiling": "A1",
+  "externalEffectsDefault": false,
+  "purpose": "Mechanically preserve a finite owner outcome, version-fence work, authorize actions, invalidate stale proof, distinguish real automatic waiting, and block false completion.",
+  "invariants": [
+    "One immutable contract hash per mission version.",
+    "Optional improvements cannot enter the frozen denominator.",
+    "A revision increments exactly once and cancels stale permits and wait jobs.",
+    "Only an EXECUTE decision can issue a single-use action-bound permit.",
+    "Denied, cancelled and stale actions never invoke an executor.",
+    "Effect replays are idempotent and payload changes under one key fail closed.",
+    "Proof remains valid only for its exact mission version, claim, dependencies, authority, environment and age.",
+    "WAITING_AUTOMATICALLY requires a durable job, checkpoint, non-user wake subscription, resume action and readback endpoint.",
+    "COMPLETE_VERIFIED requires every frozen requirement, terminal fruit and terminal authority route.",
+    "A malformed coordination record never means the resource is free.",
+    "Zero discovered or executed tests cannot certify success.",
+    "Deletion-only changes remain visible to proof selection."
+  ],
+  "maturityBoundary": {
+    "currentTarget": "DETERMINISTIC_TESTED_LOCAL",
+    "notClaimed": ["REGISTERED", "PROVIDER_READY", "DEPLOYED", "BEHAVIOUR_PROVEN", "VALUE_PROVEN"]
+  },
+  "verification": {
+    "testModule": "tests.test_cfbe_vnext_mission_execution_kernel",
+    "minimumDiscoveredTests": 45,
+    "concurrencyStressIterations": 25,
+    "proofOSPolicyExtension": "governance/proofos_omega_policy_extension_cfbe_vnext_mission_kernel_v1.json"
+  }
+}
