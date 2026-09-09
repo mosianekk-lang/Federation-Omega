@@ -29,6 +29,8 @@ def embedded_python_blocks(text: str) -> list[str]:
 
 class StrategicFuseEmbeddedPythonCompileTests(unittest.TestCase):
     def test_every_embedded_python_block_compiles(self) -> None:
+        if not WORKFLOW.exists():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         blocks = embedded_python_blocks(WORKFLOW.read_text(encoding="utf-8"))
         self.assertGreater(len(blocks), 0, "NO_EMBEDDED_PYTHON_BLOCKS_FOUND")
         for index, block in enumerate(blocks, start=1):
