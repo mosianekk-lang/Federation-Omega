@@ -33,6 +33,9 @@ export type FuseChatResponse = {
   text: string;
   trace_id?: string;
   status?: string;
+  provider?: string;
+  model?: string;
+  source_refs?: string[];
 };
 
 export type FederationHealth = {
@@ -42,7 +45,33 @@ export type FederationHealth = {
   checked_at?: string;
 };
 
+export type FuseSessionResponse = {
+  access_token: string;
+  token_type: string;
+  expires_at: string;
+  subject: string;
+};
+
+export type FuseEnrollmentResponse = FuseSessionResponse & {
+  device_token: string;
+  device_token_type: string;
+  device_token_recoverable: boolean;
+  owner_identity_source?: string;
+};
+
 const configuredGateway = process.env.EXPO_PUBLIC_FEDERATION_GATEWAY_URL?.trim().replace(/\/+$/, '');
+
+export class FederationGatewayError extends Error {
+  readonly status: number;
+  readonly reason?: string;
+
+  constructor(status: number, reason?: string) {
+    super(reason ? `FEDERATION_GATEWAY_HTTP_${status}:${reason}` : `FEDERATION_GATEWAY_HTTP_${status}`);
+    this.name = 'FederationGatewayError';
+    this.status = status;
+    this.reason = reason;
+  }
+}
 
 export function federationGatewayConfigured(): boolean {
   return Boolean(configuredGateway);
@@ -56,45 +85,97 @@ function gatewayUrl(): string {
   return configuredGateway;
 }
 
-async function fetchJson<T>(path: string, options: RequestInit = {}, timeoutMs = 30_000): Promise<T> {
+function transportHeaders(iapIdentityToken: string, fuseCredential?: string): Record<string, string> {
+  if (!iapIdentityToken.trim()) throw new Error('IAP_ID_TOKEN_REQUIRED');
+  const headers: Record<string, string> = {
+    Authorization: `Bearer ${iapIdentityToken.trim()}`,
+  };
+  if (fuseCredential?.trim()) {
+    headers['X-Fuse-Authorization'] = `Bearer ${fuseCredential.trim()}`;
+  }
+  return headers;
+}
+
+async function fetchJson<T>(
+  path: string,
+  iapIdentityToken: string,
+  options: RequestInit = {},
+  fuseCredential?: string,
+  timeoutMs = 30_000,
+): Promise<T> {
   const controller = new AbortController();
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${gatewayUrl()}${path}`, {
       ...options,
+      headers: {
+        ...transportHeaders(iapIdentityToken, fuseCredential),
+        ...((options.headers as Record<string, string> | undefined) ?? {}),
+      },
       signal: controller.signal,
     });
-    if (!response.ok) throw new Error(`FEDERATION_GATEWAY_HTTP_${response.status}`);
-    return (await response.json()) as T;
+    const raw = await response.text();
+    let parsed: unknown;
+    if (raw) {
+      try {
+        parsed = JSON.parse(raw);
+      } catch {
+        parsed = undefined;
+      }
+    }
+    if (!response.ok) {
+      const detail = parsed && typeof parsed === 'object' && 'detail' in parsed
+        ? (parsed as { detail?: { reason?: string } }).detail
+        : undefined;
+      throw new FederationGatewayError(response.status, detail?.reason);
+    }
+    if (parsed === undefined) throw new Error('FEDERATION_GATEWAY_INVALID_JSON');
+    return parsed as T;
   } finally {
     clearTimeout(timeout);
   }
 }
 
-function bearer(accessToken: string): Record<string, string> {
-  if (!accessToken.trim()) throw new Error('FEDERATION_SESSION_REQUIRED');
-  return { Authorization: `Bearer ${accessToken}` };
+export async function enrollOwner(iapIdentityToken: string): Promise<FuseEnrollmentResponse> {
+  return fetchJson<FuseEnrollmentResponse>('/v1/enroll', iapIdentityToken, { method: 'POST' });
 }
 
-export async function fetchFederationHealth(accessToken?: string): Promise<FederationHealth> {
-  return fetchJson<FederationHealth>('/v1/federation/health', {
-    headers: accessToken ? bearer(accessToken) : undefined,
-  }, 10_000);
+export async function createFuseSession(
+  iapIdentityToken: string,
+  deviceToken: string,
+): Promise<FuseSessionResponse> {
+  if (!deviceToken.trim()) throw new Error('FEDERATION_DEVICE_REQUIRED');
+  return fetchJson<FuseSessionResponse>('/v1/session', iapIdentityToken, { method: 'POST' }, deviceToken);
 }
 
-export async function fetchCapabilityManifest(accessToken: string): Promise<FederationCapabilityManifest> {
-  return fetchJson<FederationCapabilityManifest>('/v1/capabilities', {
-    headers: bearer(accessToken),
-  });
+export async function fetchFederationHealth(
+  iapIdentityToken: string,
+  accessToken: string,
+): Promise<FederationHealth> {
+  return fetchJson<FederationHealth>('/v1/federation/health', iapIdentityToken, {}, accessToken, 10_000);
 }
 
-export async function sendFuseMessage(accessToken: string, request: FuseMessageRequest): Promise<FuseChatResponse> {
-  return fetchJson<FuseChatResponse>('/v1/chat', {
-    method: 'POST',
-    headers: {
-      ...bearer(accessToken),
-      'Content-Type': 'application/json',
+export async function fetchCapabilityManifest(
+  iapIdentityToken: string,
+  accessToken: string,
+): Promise<FederationCapabilityManifest> {
+  return fetchJson<FederationCapabilityManifest>('/v1/capabilities', iapIdentityToken, {}, accessToken);
+}
+
+export async function sendFuseMessage(
+  iapIdentityToken: string,
+  accessToken: string,
+  request: FuseMessageRequest,
+): Promise<FuseChatResponse> {
+  return fetchJson<FuseChatResponse>(
+    '/v1/chat',
+    iapIdentityToken,
+    {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(request),
     },
-    body: JSON.stringify(request),
-  }, 120_000);
+    accessToken,
+    120_000,
+  );
 }

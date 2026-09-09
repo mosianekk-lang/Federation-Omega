@@ -9,11 +9,13 @@ import secrets
 import time
 from dataclasses import dataclass
 from datetime import datetime, timezone
-from typing import Any, Protocol
+from typing import Any, Callable, Protocol
 from urllib.parse import quote
 
 import httpx
+from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.cloud import firestore
+from google.oauth2 import id_token as google_id_token
 
 from federation.mobile_gateway.fuse_mobile_v1 import (
     Capability,
@@ -32,6 +34,14 @@ from services.fuse_mobile_gateway.runtime import (
 from services.gemini_gateway.app import MetadataIdentity, VertexGeminiClient
 
 CANONICAL_PROJECT_ID = "sov-hybrid-suite"
+CANONICAL_PROJECT_NUMBER = "257649435135"
+CANONICAL_REGION = "africa-south1"
+CANONICAL_SERVICE = "fuse-mobile-gateway"
+IAP_ISSUER = "https://cloud.google.com/iap"
+IAP_CERTS_URL = "https://www.gstatic.com/iap/verify/public_key"
+IAP_EXPECTED_AUDIENCE = (
+    f"/projects/{CANONICAL_PROJECT_NUMBER}/locations/{CANONICAL_REGION}/services/{CANONICAL_SERVICE}"
+)
 DEFAULT_KDV_RANGE = "FUSE_MISSION_CURRENTNESS!A1:N100"
 DEVICE_TOKEN_PREFIX = "fmdv1_"
 SESSION_TOKEN_PREFIX = "fmsv1_"
@@ -63,6 +73,7 @@ class SessionRecord:
 
 class DeviceRepository(Protocol):
     async def consume_enrollment(self, *, enrollment_hash: str, subject: str, device_hash: str) -> None: ...
+    async def put_device(self, *, subject: str, device_hash: str) -> None: ...
     async def get_device(self, device_hash: str) -> DeviceRecord | None: ...
     async def revoke_device(self, device_hash: str) -> None: ...
 
@@ -101,11 +112,7 @@ class FirestoreDeviceRepository:
                 now = int(time.time())
                 tx.set(
                     enrollment_ref,
-                    {
-                        "consumed": True,
-                        "subject": subject,
-                        "consumed_at_epoch": now,
-                    },
+                    {"consumed": True, "subject": subject, "consumed_at_epoch": now},
                 )
                 tx.set(
                     device_ref,
@@ -113,10 +120,24 @@ class FirestoreDeviceRepository:
                         "subject": subject,
                         "active": True,
                         "issued_at_epoch": now,
+                        "identity_source": "ONE_USE_BOOTSTRAP",
                     },
                 )
 
             consume(transaction)
+
+        await asyncio.to_thread(write)
+
+    async def put_device(self, *, subject: str, device_hash: str) -> None:
+        def write() -> None:
+            self.client.collection(DEVICE_COLLECTION).document(device_hash).set(
+                {
+                    "subject": subject,
+                    "active": True,
+                    "issued_at_epoch": int(time.time()),
+                    "identity_source": "GOOGLE_IAP",
+                }
+            )
 
         await asyncio.to_thread(write)
 
@@ -193,43 +214,59 @@ class FirestoreSessionRepository:
 
 
 class DeviceCredentialManager:
-    """One-use owner enrollment followed by opaque, revocable device credentials."""
+    """Issue opaque revocable device credentials after a proven owner identity route."""
 
     def __init__(
         self,
         repository: DeviceRepository,
         *,
         owner_subject: str,
-        enrollment_sha256: str,
+        enrollment_sha256: str | None = None,
         token_factory=None,
     ) -> None:
         if not owner_subject.strip():
             raise ValueError("OWNER_SUBJECT_REQUIRED")
-        if not _is_sha256(enrollment_sha256):
-            raise ValueError("ENROLLMENT_SHA256_REQUIRED")
+        normalized_enrollment = (enrollment_sha256 or "").lower()
+        if normalized_enrollment and not _is_sha256(normalized_enrollment):
+            raise ValueError("ENROLLMENT_SHA256_INVALID")
         self.repository = repository
         self.owner_subject = owner_subject.strip()
-        self.enrollment_sha256 = enrollment_sha256.lower()
+        self.enrollment_sha256 = normalized_enrollment
         self._token_factory = token_factory or (lambda: DEVICE_TOKEN_PREFIX + secrets.token_urlsafe(32))
 
     @staticmethod
-    def _identity(subject: str, device_hash: str) -> VerifiedIdentity:
-        return VerifiedIdentity(subject, {"device_id": device_hash[:16], "device_hash": device_hash})
+    def _identity(subject: str, device_hash: str, *, source: str | None = None) -> VerifiedIdentity:
+        claims = {"device_id": device_hash[:16], "device_hash": device_hash}
+        if source:
+            claims["owner_identity_source"] = source
+        return VerifiedIdentity(subject, claims)
 
-    async def enroll(self, credential: str) -> tuple[VerifiedIdentity, str]:
-        observed = _sha256(credential)
-        if not hmac.compare_digest(observed, self.enrollment_sha256):
-            raise RuntimeBindingError("OWNER_ENROLLMENT_INVALID")
+    def _new_device(self) -> tuple[str, str]:
         device_token = str(self._token_factory())
         if not device_token.startswith(DEVICE_TOKEN_PREFIX) or len(device_token) < len(DEVICE_TOKEN_PREFIX) + 32:
             raise RuntimeBindingError("DEVICE_TOKEN_FACTORY_INVALID")
-        device_hash = _sha256(device_token)
+        return device_token, _sha256(device_token)
+
+    async def enroll(self, credential: str) -> tuple[VerifiedIdentity, str]:
+        if not self.enrollment_sha256:
+            raise RuntimeBindingError("OWNER_ENROLLMENT_UNBOUND")
+        observed = _sha256(credential)
+        if not hmac.compare_digest(observed, self.enrollment_sha256):
+            raise RuntimeBindingError("OWNER_ENROLLMENT_INVALID")
+        device_token, device_hash = self._new_device()
         await self.repository.consume_enrollment(
             enrollment_hash=self.enrollment_sha256,
             subject=self.owner_subject,
             device_hash=device_hash,
         )
-        return self._identity(self.owner_subject, device_hash), device_token
+        return self._identity(self.owner_subject, device_hash, source="ONE_USE_BOOTSTRAP"), device_token
+
+    async def enroll_verified(self, identity: VerifiedIdentity) -> tuple[VerifiedIdentity, str]:
+        if identity.subject != self.owner_subject:
+            raise RuntimeBindingError("OWNER_IDENTITY_MISMATCH")
+        device_token, device_hash = self._new_device()
+        await self.repository.put_device(subject=self.owner_subject, device_hash=device_hash)
+        return self._identity(self.owner_subject, device_hash, source="GOOGLE_IAP"), device_token
 
     async def verify(self, credential: str) -> VerifiedIdentity:
         if not credential.startswith(DEVICE_TOKEN_PREFIX):
@@ -247,12 +284,62 @@ class DeviceCredentialManager:
         await self.repository.revoke_device(_sha256(credential))
 
 
-class OpaqueSessionManager:
-    """Short-lived random bearer sessions backed by hash-only Firestore records.
+class IAPOwnerIdentityVerifier:
+    """Verify the signed IAP assertion for exactly one configured owner account."""
 
-    Every verification rechecks the bound device record. Revoking a device therefore
-    invalidates both future sessions and already-issued sessions on their next use.
-    """
+    def __init__(
+        self,
+        *,
+        owner_subject: str,
+        owner_email_sha256: str,
+        audience: str = IAP_EXPECTED_AUDIENCE,
+        verify_fn: Callable[[str, str], dict[str, Any]] | None = None,
+    ) -> None:
+        if not owner_subject.strip():
+            raise ValueError("OWNER_SUBJECT_REQUIRED")
+        if not _is_sha256(owner_email_sha256):
+            raise ValueError("OWNER_EMAIL_SHA256_REQUIRED")
+        if audience != IAP_EXPECTED_AUDIENCE:
+            raise ValueError("IAP_AUDIENCE_MISMATCH")
+        self.owner_subject = owner_subject.strip()
+        self.owner_email_sha256 = owner_email_sha256.lower()
+        self.audience = audience
+        self._verify_fn = verify_fn or self._verify_google_assertion
+
+    @staticmethod
+    def _verify_google_assertion(assertion: str, audience: str) -> dict[str, Any]:
+        return google_id_token.verify_token(
+            assertion,
+            GoogleAuthRequest(),
+            audience=audience,
+            certs_url=IAP_CERTS_URL,
+        )
+
+    async def verify_assertion(self, assertion: str) -> VerifiedIdentity:
+        if not assertion.strip():
+            raise RuntimeBindingError("IAP_ASSERTION_REQUIRED")
+        try:
+            payload = await asyncio.to_thread(self._verify_fn, assertion, self.audience)
+        except Exception as exc:
+            raise RuntimeBindingError("IAP_ASSERTION_INVALID") from exc
+        if str(payload.get("iss") or "") != IAP_ISSUER:
+            raise RuntimeBindingError("IAP_ISSUER_INVALID")
+        if str(payload.get("aud") or "") != self.audience:
+            raise RuntimeBindingError("IAP_AUDIENCE_INVALID")
+        email = str(payload.get("email") or "").strip().lower()
+        if not email or not hmac.compare_digest(_sha256(email), self.owner_email_sha256):
+            raise RuntimeBindingError("IAP_OWNER_EMAIL_INVALID")
+        iap_subject = str(payload.get("sub") or "").strip()
+        if not iap_subject:
+            raise RuntimeBindingError("IAP_SUBJECT_MISSING")
+        return VerifiedIdentity(
+            self.owner_subject,
+            {"auth_source": "GOOGLE_IAP", "iap_subject_sha256": _sha256(iap_subject)},
+        )
+
+
+class OpaqueSessionManager:
+    """Short-lived random bearer sessions backed by hash-only Firestore records."""
 
     def __init__(
         self,
@@ -280,7 +367,6 @@ class OpaqueSessionManager:
             raise RuntimeBindingError("SESSION_DEVICE_REVOKED")
         if record.subject != identity.subject:
             raise RuntimeBindingError("SESSION_SUBJECT_MISMATCH")
-
         token = str(self._token_factory())
         if not token.startswith(SESSION_TOKEN_PREFIX) or len(token) < len(SESSION_TOKEN_PREFIX) + 32:
             raise RuntimeBindingError("SESSION_TOKEN_FACTORY_INVALID")
@@ -395,11 +481,10 @@ class KDVSheetsReader:
         if not isinstance(values, list):
             raise RuntimeBindingError("KDV_VALUES_INVALID")
         rows, fresh, stale = self._rows(values)
-        observed_at = datetime.now(timezone.utc).isoformat()
         return KDVSnapshot(
             source_ref=f"KDV:{self.spreadsheet_id}:{self.range_name}",
             range_name=self.range_name,
-            observed_at=observed_at,
+            observed_at=datetime.now(timezone.utc).isoformat(),
             rows=rows,
             fresh_count=fresh,
             stale_count=stale,
@@ -428,7 +513,6 @@ class RuntimeCapabilityHealth:
         except Exception:
             vertex_health = "DEGRADED"
             vertex_authority = "ADC_UNVERIFIED"
-
         rendered: list[Capability] = []
         for capability in contracts:
             if capability.capability_id == "KDV":
@@ -496,18 +580,19 @@ class VertexKDVChatExecutor:
 
 
 def runtime_from_environment() -> GatewayRuntime:
-    """Bind production adapters only when the complete private runtime contract is configured."""
+    """Bind production adapters only when a complete private owner route is configured."""
 
-    required = {
-        "FUSE_MOBILE_OWNER_SUBJECT": os.getenv("FUSE_MOBILE_OWNER_SUBJECT", "").strip(),
-        "FUSE_MOBILE_OWNER_ENROLLMENT_SHA256": os.getenv("FUSE_MOBILE_OWNER_ENROLLMENT_SHA256", "").strip().lower(),
-    }
-    if not any(required.values()):
+    owner_subject = os.getenv("FUSE_MOBILE_OWNER_SUBJECT", "").strip()
+    enrollment_sha256 = os.getenv("FUSE_MOBILE_OWNER_ENROLLMENT_SHA256", "").strip().lower()
+    owner_email_sha256 = os.getenv("FUSE_MOBILE_OWNER_EMAIL_SHA256", "").strip().lower()
+    if not any((owner_subject, enrollment_sha256, owner_email_sha256)):
         return GatewayRuntime()
-    missing = [name for name, value in required.items() if not value]
-    if missing:
+    if not owner_subject or (not enrollment_sha256 and not owner_email_sha256):
         raise RuntimeBindingError("RUNTIME_CONFIGURATION_INCOMPLETE")
-
+    if enrollment_sha256 and not _is_sha256(enrollment_sha256):
+        raise RuntimeBindingError("RUNTIME_CONFIGURATION_INCOMPLETE")
+    if owner_email_sha256 and not _is_sha256(owner_email_sha256):
+        raise RuntimeBindingError("RUNTIME_CONFIGURATION_INCOMPLETE")
     project = os.getenv("GOOGLE_CLOUD_PROJECT", CANONICAL_PROJECT_ID).strip()
     if project != CANONICAL_PROJECT_ID:
         raise RuntimeBindingError("CANONICAL_PROJECT_MISMATCH")
@@ -517,8 +602,8 @@ def runtime_from_environment() -> GatewayRuntime:
     session_repository = FirestoreSessionRepository(client)
     manager = DeviceCredentialManager(
         device_repository,
-        owner_subject=required["FUSE_MOBILE_OWNER_SUBJECT"],
-        enrollment_sha256=required["FUSE_MOBILE_OWNER_ENROLLMENT_SHA256"],
+        owner_subject=owner_subject,
+        enrollment_sha256=enrollment_sha256 or None,
     )
     session_manager = OpaqueSessionManager(session_repository, device_repository)
     metadata_identity = MetadataIdentity()
@@ -527,10 +612,16 @@ def runtime_from_environment() -> GatewayRuntime:
         range_name=os.getenv("FUSE_MOBILE_KDV_RANGE", DEFAULT_KDV_RANGE).strip() or DEFAULT_KDV_RANGE,
     )
     vertex = VertexGeminiClient(metadata_identity)
-    return GatewayRuntime(
+    runtime = GatewayRuntime(
         session_manager=session_manager,
         identity_verifier=manager,
         device_manager=manager,
         health_provider=RuntimeCapabilityHealth(kdv, metadata_identity),
         chat_executor=VertexKDVChatExecutor(kdv, vertex),
     )
+    if owner_email_sha256:
+        runtime.owner_identity_verifier = IAPOwnerIdentityVerifier(
+            owner_subject=owner_subject,
+            owner_email_sha256=owner_email_sha256,
+        )
+    return runtime
