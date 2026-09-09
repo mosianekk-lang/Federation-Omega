@@ -5,8 +5,12 @@ TEXT = WORKFLOW.read_text(encoding='utf-8')
 LOW = TEXT.lower()
 
 REQUIRED = [
-    'workflow_dispatch:',
+    'issues:',
+    'types: [opened]',
+    "github.event.issue.title == '[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1'",
+    "github.event.issue.author_association == 'OWNER'",
     'id-token: write',
+    'issues: read',
     'superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com',
     'READ_APPS_SCRIPT_PROJECT_BOUNDED',
     '1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R',
@@ -27,9 +31,15 @@ REQUIRED = [
     "'secretValuesRecorded'",
     'SERVING_TRAFFIC_CHANGED',
     'CANDIDATE_NOT_ZERO_TRAFFIC_AT_END',
+    "'candidate_traffic_percent':0",
+    "'serving_traffic_unchanged':True",
+    "'iam_mutation_performed':False",
+    "'traffic_promotion_performed':False",
 ]
 
 FORBIDDEN = [
+    'workflow_dispatch:',
+    'inputs.confirmation',
     'fo_admin_token',
     'fo-operator-admin-token',
     'gcloud secrets versions access',
@@ -74,3 +84,9 @@ def test_no_raw_source_is_persisted_in_receipt():
     assert "'raw_source_persisted':False" in TEXT
     assert "'source_returned':False" in TEXT
     assert "'source' in x" in TEXT
+
+
+def test_provider_mutation_is_exact_owner_issue_gated():
+    assert "github.event.issue.author_association == 'OWNER'" in TEXT
+    assert "[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1" in TEXT
+    assert 'workflow_dispatch:' not in TEXT
