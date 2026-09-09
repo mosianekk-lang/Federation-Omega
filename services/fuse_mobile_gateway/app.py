@@ -39,6 +39,10 @@ def _status_for(error: RuntimeBindingError) -> int:
         "SESSION_SCOPE_INVALID",
         "SESSION_SUBJECT_MISSING",
         "SESSION_EXPIRED",
+        "SESSION_DEVICE_BINDING_REQUIRED",
+        "SESSION_DEVICE_REVOKED",
+        "SESSION_SUBJECT_MISMATCH",
+        "SESSION_INVALID",
         "OWNER_ENROLLMENT_INVALID",
         "DEVICE_CREDENTIAL_INVALID",
         "DEVICE_SUBJECT_MISMATCH",
@@ -56,7 +60,6 @@ def _status_for(error: RuntimeBindingError) -> int:
         "OWNER_ENROLLMENT_UNBOUND",
         "DEVICE_REVOCATION_UNBOUND",
         "RUNTIME_CONFIGURATION_INCOMPLETE",
-        "SESSION_SECRET_INVALID",
         "CANONICAL_PROJECT_MISMATCH",
     }:
         return 503
@@ -90,9 +93,9 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         except RuntimeBindingError as error:
             fail(error)
 
-    def session_identity(x_fuse_authorization: str | None, authorization: str | None):
+    async def session_identity(x_fuse_authorization: str | None, authorization: str | None):
         try:
-            return active.verify_session(fuse_token(x_fuse_authorization, authorization))
+            return await active.verify_session(fuse_token(x_fuse_authorization, authorization))
         except RuntimeBindingError as error:
             fail(error)
 
@@ -138,7 +141,7 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         authorization: Annotated[str | None, Header()] = None,
         x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(x_fuse_authorization, authorization)
+        identity = await session_identity(x_fuse_authorization, authorization)
         try:
             await active.revoke_device(identity, body.device_token)
             return {"status": "REVOKED", "subject": identity.subject}
@@ -150,7 +153,7 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         authorization: Annotated[str | None, Header()] = None,
         x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(x_fuse_authorization, authorization)
+        identity = await session_identity(x_fuse_authorization, authorization)
         manifest = await active.manifest(identity)
         capabilities = manifest.public_view()["capabilities"]
         return {
@@ -179,7 +182,7 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         authorization: Annotated[str | None, Header()] = None,
         x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(x_fuse_authorization, authorization)
+        identity = await session_identity(x_fuse_authorization, authorization)
         return (await active.manifest(identity)).public_view()
 
     @app.post("/v1/chat")
@@ -188,7 +191,7 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         authorization: Annotated[str | None, Header()] = None,
         x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
     ) -> dict:
-        identity = session_identity(x_fuse_authorization, authorization)
+        identity = await session_identity(x_fuse_authorization, authorization)
         try:
             request = MobileRequest(
                 intent=body.intent,

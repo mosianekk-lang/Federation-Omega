@@ -12,10 +12,13 @@ from fastapi.testclient import TestClient
 from services.fuse_mobile_gateway.app import create_app
 from services.fuse_mobile_gateway.bindings import (
     DEVICE_TOKEN_PREFIX,
+    SESSION_TOKEN_PREFIX,
     DeviceCredentialManager,
     DeviceRecord,
     KDVSnapshot,
     KDVSheetsReader,
+    OpaqueSessionManager,
+    SessionRecord,
     VertexKDVChatExecutor,
     runtime_from_environment,
 )
@@ -50,6 +53,28 @@ class InMemoryDeviceRepository:
         record = self.devices.get(device_hash)
         if record is not None:
             self.devices[device_hash] = DeviceRecord(subject=record.subject, active=False)
+
+
+class InMemorySessionRepository:
+    def __init__(self) -> None:
+        self.sessions: dict[str, SessionRecord] = {}
+        self.last_session_hash: str | None = None
+
+    async def put_session(
+        self,
+        *,
+        session_hash: str,
+        subject: str,
+        device_hash: str,
+        issued_at_epoch: int,
+        expires_at_epoch: int,
+    ) -> None:
+        del issued_at_epoch
+        self.sessions[session_hash] = SessionRecord(subject, device_hash, expires_at_epoch)
+        self.last_session_hash = session_hash
+
+    async def get_session(self, session_hash: str) -> SessionRecord | None:
+        return self.sessions.get(session_hash)
 
 
 class StaticHealth:
@@ -105,11 +130,14 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
         self.assertEqual(identity.subject, "owner:kim")
         self.assertEqual(issued, device_token)
         self.assertEqual(repository.last_enrollment_hash, expected_hash)
-        self.assertEqual(repository.last_device_hash, hashlib.sha256(device_token.encode()).hexdigest())
+        expected_device_hash = hashlib.sha256(device_token.encode()).hexdigest()
+        self.assertEqual(repository.last_device_hash, expected_device_hash)
+        self.assertEqual(identity.claims["device_hash"], expected_device_hash)
         self.assertNotEqual(repository.last_device_hash, device_token)
 
         verified = asyncio.run(manager.verify(device_token))
         self.assertEqual(verified.subject, "owner:kim")
+        self.assertEqual(verified.claims["device_hash"], expected_device_hash)
         with self.assertRaisesRegex(RuntimeBindingError, "OWNER_ENROLLMENT_ALREADY_CONSUMED"):
             asyncio.run(manager.enroll(bootstrap))
 
@@ -117,19 +145,60 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeBindingError, "DEVICE_CREDENTIAL_INVALID"):
             asyncio.run(manager.verify(device_token))
 
-    def test_gateway_enroll_session_and_revoke_flow_is_fail_closed(self) -> None:
+    def test_opaque_sessions_store_only_hash_expire_and_require_device_binding(self) -> None:
+        devices = InMemoryDeviceRepository()
+        sessions = InMemorySessionRepository()
+        device_hash = hashlib.sha256(b"device-a").hexdigest()
+        devices.devices[device_hash] = DeviceRecord("owner:kim", True)
+        now = [1_000]
+        token = SESSION_TOKEN_PREFIX + ("S" * 48)
+        manager = OpaqueSessionManager(
+            sessions,
+            devices,
+            ttl_seconds=900,
+            token_factory=lambda: token,
+            clock=lambda: now[0],
+        )
+        identity = VerifiedIdentity("owner:kim", {"device_hash": device_hash})
+        issued, expires = asyncio.run(manager.issue(identity))
+        self.assertEqual(issued, token)
+        self.assertEqual(expires, 1_900)
+        expected_hash = hashlib.sha256(token.encode()).hexdigest()
+        self.assertEqual(sessions.last_session_hash, expected_hash)
+        self.assertNotIn(token, sessions.sessions)
+        self.assertEqual(asyncio.run(manager.verify(token)).subject, "owner:kim")
+
+        now[0] = 1_900
+        with self.assertRaisesRegex(RuntimeBindingError, "SESSION_EXPIRED"):
+            asyncio.run(manager.verify(token))
+        with self.assertRaisesRegex(RuntimeBindingError, "SESSION_DEVICE_BINDING_REQUIRED"):
+            asyncio.run(manager.issue(VerifiedIdentity("owner:kim")))
+
+    def test_gateway_secretless_enroll_session_and_revoke_invalidates_existing_session(self) -> None:
         bootstrap = "owner-enrollment-" + ("Y" * 48)
         expected_hash = hashlib.sha256(bootstrap.encode()).hexdigest()
         device_token = DEVICE_TOKEN_PREFIX + ("E" * 48)
-        repository = InMemoryDeviceRepository()
+        session_tokens = iter(
+            [
+                SESSION_TOKEN_PREFIX + ("A" * 48),
+                SESSION_TOKEN_PREFIX + ("B" * 48),
+            ]
+        )
+        devices = InMemoryDeviceRepository()
+        sessions = InMemorySessionRepository()
         manager = DeviceCredentialManager(
-            repository,
+            devices,
             owner_subject="owner:kim",
             enrollment_sha256=expected_hash,
             token_factory=lambda: device_token,
         )
+        session_manager = OpaqueSessionManager(
+            sessions,
+            devices,
+            token_factory=lambda: next(session_tokens),
+        )
         runtime = GatewayRuntime(
-            session_codec=SessionCodec(b"fuse-mobile-runtime-test-secret-32bytes-minimum"),
+            session_manager=session_manager,
             identity_verifier=manager,
             device_manager=manager,
             health_provider=StaticHealth(),
@@ -142,23 +211,40 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
         payload = enroll.json()
         self.assertEqual(payload["device_token"], device_token)
         self.assertFalse(payload["device_token_recoverable"])
-        access = payload["access_token"]
+        enrollment_session = payload["access_token"]
+        self.assertTrue(enrollment_session.startswith(SESSION_TOKEN_PREFIX))
 
         session = client.post("/v1/session", headers={"Authorization": f"Bearer {device_token}"})
         self.assertEqual(session.status_code, 200, session.text)
+        existing_session = session.json()["access_token"]
         self.assertEqual(session.json()["subject"], "owner:kim")
+        before = client.get("/v1/federation/health", headers={"Authorization": f"Bearer {existing_session}"})
+        self.assertEqual(before.status_code, 200, before.text)
 
         revoke = client.post(
             "/v1/device/revoke",
-            headers={"Authorization": f"Bearer {access}"},
+            headers={"Authorization": f"Bearer {enrollment_session}"},
             json={"device_token": device_token},
         )
         self.assertEqual(revoke.status_code, 200, revoke.text)
         self.assertEqual(revoke.json()["status"], "REVOKED")
 
-        rejected = client.post("/v1/session", headers={"Authorization": f"Bearer {device_token}"})
-        self.assertEqual(rejected.status_code, 401, rejected.text)
-        self.assertEqual(rejected.json()["detail"]["reason"], "DEVICE_CREDENTIAL_INVALID")
+        rejected_existing = client.get(
+            "/v1/federation/health",
+            headers={"Authorization": f"Bearer {existing_session}"},
+        )
+        self.assertEqual(rejected_existing.status_code, 401, rejected_existing.text)
+        self.assertEqual(rejected_existing.json()["detail"]["reason"], "SESSION_DEVICE_REVOKED")
+
+        rejected_new = client.post("/v1/session", headers={"Authorization": f"Bearer {device_token}"})
+        self.assertEqual(rejected_new.status_code, 401, rejected_new.text)
+        self.assertEqual(rejected_new.json()["detail"]["reason"], "DEVICE_CREDENTIAL_INVALID")
+
+    def test_legacy_hmac_codec_remains_compatible_for_deterministic_tests(self) -> None:
+        codec = SessionCodec(b"fuse-mobile-runtime-test-secret-32bytes-minimum")
+        token, expires = codec.issue(VerifiedIdentity("owner:kim"), now=100)
+        self.assertEqual(expires, 1000)
+        self.assertEqual(codec.verify(token, now=999).subject, "owner:kim")
 
     def test_kdv_rows_preserve_freshness_and_do_not_flatten_expired_state(self) -> None:
         now = datetime(2026, 9, 9, 0, 10, tzinfo=timezone(timedelta(hours=2)))
@@ -213,7 +299,6 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
 
     def test_no_runtime_environment_preserves_source_only_fail_closed_state(self) -> None:
         env = {
-            "FUSE_MOBILE_SESSION_SECRET_B64": "",
             "FUSE_MOBILE_OWNER_SUBJECT": "",
             "FUSE_MOBILE_OWNER_ENROLLMENT_SHA256": "",
         }
