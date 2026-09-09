@@ -153,6 +153,24 @@ class FuseMobileMdtafSdkToolchainResolutionTests(unittest.TestCase):
         self.assertIn("SDKMANAGER", workflow)
         self.assertIn("AVDMANAGER", workflow)
 
+    def test_workflow_installs_emulator_before_exact_executable_preflight(self) -> None:
+        if not WORKFLOW.exists():
+            self.skipTest("workflow-free export excludes repository workflow controls")
+        workflow = WORKFLOW.read_text(encoding="utf-8")
+        provision = workflow.split(
+            "- name: Provision clean Android virtual device in stable AVD namespace", 1
+        )[1].split("- name: Boot AVD through bounded exact-SDK readiness court", 1)[0]
+        install = '"$SDKMANAGER" "platform-tools" "emulator"'
+        emulator_bind = 'EMULATOR="$SDK_ROOT/emulator/emulator"'
+        emulator_gate = '! -x "$ADB" || ! -x "$EMULATOR"'
+        self.assertIn(install, provision)
+        self.assertIn(emulator_bind, provision)
+        self.assertIn(emulator_gate, provision)
+        self.assertLess(provision.index(install), provision.index(emulator_bind))
+        self.assertLess(provision.index(emulator_bind), provision.index(emulator_gate))
+        self.assertIn("sdkmanager-install-api-${API_LEVEL}.log", provision)
+        self.assertIn("sdk-runtime-tools-missing-api-${API_LEVEL}.txt", provision)
+
 
 if __name__ == "__main__":
     unittest.main()
