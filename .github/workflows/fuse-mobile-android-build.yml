@@ -48,6 +48,7 @@ jobs:
           python -m unittest \
             tests.test_fuse_mobile_mdtaf_v1 \
             tests.test_fuse_mobile_mdtaf_avd_readiness \
+            tests.test_fuse_mobile_mdtaf_sdk_toolchain_resolution \
             tests.test_fuse_mobile_version_contract
 
       - name: Resolve real dependency graph and generate lock
@@ -187,14 +188,16 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p mobile/fuse-mobile/mdtaf-evidence
-          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
-          test -n "$SDK_ROOT"
-          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          AVDMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/avdmanager"
-          EMULATOR="$SDK_ROOT/emulator/emulator"
+          SDK_TOOLS_ENV="$RUNNER_TEMP/fuse-mobile-sdk-tools-${API_LEVEL}.env"
+          bash mobile/fuse-mobile/lab/resolve_android_sdk_tools.sh --output-env "$SDK_TOOLS_ENV"
+          # shellcheck disable=SC1090
+          source "$SDK_TOOLS_ENV"
           test -x "$SDKMANAGER"
           test -x "$AVDMANAGER"
+          EMULATOR="$SDK_ROOT/emulator/emulator"
           test -x "$EMULATOR"
+          printf '%s\n' "$CMDLINE_TOOLS_ROOT" > "mobile/fuse-mobile/mdtaf-evidence/cmdline-tools-root-api-${API_LEVEL}.txt"
+          printf '%s\n' "$CMDLINE_TOOLS_REVISION" > "mobile/fuse-mobile/mdtaf-evidence/cmdline-tools-revision-api-${API_LEVEL}.txt"
           ANDROID_AVD_HOME="$RUNNER_TEMP/fuse-mdtaf-avd-${API_LEVEL}"
           mkdir -p "$ANDROID_AVD_HOME"
           export ANDROID_AVD_HOME
