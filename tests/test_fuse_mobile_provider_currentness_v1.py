@@ -42,6 +42,8 @@ class FuseMobileProviderCurrentnessV1Tests(unittest.TestCase):
             'gcloud run services get-iam-policy "$SERVICE"',
             "gcloud iap settings get",
             "gcloud iap web get-iam-policy",
+            "gcloud services list --enabled",
+            "config.name=iap.googleapis.com",
         )
         for fragment in required:
             self.assertIn(fragment, self.text)
@@ -54,6 +56,9 @@ class FuseMobileProviderCurrentnessV1Tests(unittest.TestCase):
             "gcloud run services set-iam-policy",
             "gcloud iap web add-iam-policy-binding",
             "gcloud iap web set-iam-policy",
+            "gcloud iap settings set",
+            "gcloud services enable",
+            "gcloud services disable",
             "gcloud secrets",
             "gcloud builds submit",
             "docker push",
@@ -82,23 +87,50 @@ class FuseMobileProviderCurrentnessV1Tests(unittest.TestCase):
         self.assertIn("WIF_AUTH_FAILED", self.text)
         self.assertIn("PROVIDER_READBACK_PARTIAL_OR_DENIED", self.text)
         self.assertIn("PROVIDER_READBACK_VERIFIED", self.text)
+        self.assertIn("IAP_API_NOT_ENABLED", self.text)
+        self.assertIn("IAP_DISABLED_AT_CLOUD_RUN_SERVICE", self.text)
+        self.assertIn("IAP_READ_PERMISSION_DENIED", self.text)
+        self.assertIn("IAP_RESOURCE_NOT_FOUND", self.text)
         self.assertIn("workload_identity_provider_sha256", self.text)
         self.assertIn("service_account_sha256", self.text)
         self.assertIn("'credential_value_recorded': False", self.text)
+        self.assertIn("'raw_error_text_recorded': False", self.text)
         self.assertIn("'provider_mutation_performed': False", self.text)
         self.assertIn("'iam_mutation_performed': False", self.text)
         self.assertIn("'oauth_mutation_performed': False", self.text)
         self.assertIn("'secret_read_or_mutation_performed': False", self.text)
         self.assertIn("'traffic_change_performed': False", self.text)
+        self.assertNotIn("print(raw", self.text)
+
+    def test_classifies_iap_errors_without_persisting_raw_text(self) -> None:
+        for error_class in (
+            "PERMISSION_DENIED",
+            "SERVICE_USAGE_PERMISSION_DENIED",
+            "API_DISABLED",
+            "RESOURCE_NOT_FOUND",
+            "INVALID_ARGUMENT",
+            "AUTHENTICATION_FAILED",
+            "OTHER_ERROR",
+        ):
+            self.assertIn(error_class, self.text)
+        self.assertIn("error_sha256", self.text)
+        self.assertIn("'error_class':", self.text)
+        self.assertIn("raw_error_text_recorded", self.text)
+        self.assertIn("path: /tmp/fuse-mobile-provider-currentness/PROVIDER_CURRENTNESS_RECEIPT.json", self.text)
 
     def test_captures_private_ingress_and_iap_contract(self) -> None:
         self.assertIn("public_invoker_present", self.text)
-        self.assertIn("iap_enabled", self.text)
+        self.assertIn("iap_enabled_effective", self.text)
+        self.assertIn("iap_api_enabled", self.text)
         self.assertIn("ingress", self.text)
         self.assertIn("invoker_iam_disabled", self.text)
         self.assertIn("programmatic_client_count", self.text)
         self.assertIn("oauth_resource_client_id_present", self.text)
         self.assertIn("iap_policy_binding_count", self.text)
+        self.assertIn(
+            "iap_enabled_effective = (bool(raw_iap_enabled) if raw_iap_enabled is not None else False) if service_rc == 0 else None",
+            self.text,
+        )
 
     def test_actions_are_pinned_and_checkout_drops_write_credentials(self) -> None:
         self.assertIn("actions/checkout@11d5960a326750d5838078e36cf38b85af677262", self.text)
