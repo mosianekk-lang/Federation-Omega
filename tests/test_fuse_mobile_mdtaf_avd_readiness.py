@@ -127,7 +127,7 @@ class FuseMobileMdtafAvdReadinessTests(unittest.TestCase):
         workflow = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("ANDROID_AVD_HOME=", workflow)
         self.assertIn('>> "$GITHUB_ENV"', workflow)
-        self.assertIn("emulator -list-avds", workflow)
+        self.assertIn('"$EMULATOR" -list-avds', workflow)
         self.assertIn("boot_avd_bounded.sh", workflow)
         self.assertNotIn("wait-for-device", workflow)
 
