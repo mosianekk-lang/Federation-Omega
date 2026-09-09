@@ -75,6 +75,18 @@ class FuseMobileGatewayDeployWorkflowV1Tests(unittest.TestCase):
         self.assertNotIn("secretmanager.googleapis.com", text)
         self.assertNotIn("secretAccessor", text)
 
+    def test_kdv_and_vertex_visibility_require_exact_capability_readback(self) -> None:
+        text = self._workflow_or_skip_export()
+        self.assertIn("$CANARY_URL/v1/capabilities", text)
+        self.assertIn("data-provider-visibility.json", text)
+        self.assertIn("by_id.get('KDV')", text)
+        self.assertIn("kdv.get('health') == 'RUNTIME_VERIFIED'", text)
+        self.assertIn("by_id.get('GOOGLE-VERTEX-GEMINI')", text)
+        self.assertIn("vertex.get('health') == 'CONNECTED'", text)
+        self.assertIn("kdv_runtime_visibility_verified':True", text)
+        self.assertIn("vertex_adc_visibility_verified':True", text)
+        self.assertIn("vertex_semantic_inference':'HELD_UNPROVEN_NOT_EXECUTED'", text)
+
     def test_provider_native_health_and_iam_readback_are_required(self) -> None:
         text = self._workflow_or_skip_export()
         self.assertIn("services get-iam-policy", text)
