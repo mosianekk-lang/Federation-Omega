@@ -22,6 +22,7 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "id-token: write",
             "issues: read",
             "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+            "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
             "READ_APPS_SCRIPT_PROJECT_BOUNDED",
             "1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R",
             "OPERATOR_AUDIENCE",
@@ -34,6 +35,11 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "OPERATOR_HOST_SHA256",
             "roles/artifactregistry.writer",
             "ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED",
+            "roles/iam.serviceAccountUser",
+            "CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED",
+            "CANDIDATE_RUNTIME_IDENTITY_DRIFT",
+            "--service-account \"$CANDIDATE_RUNTIME_SA\"",
+            "CANDIDATE_RUNTIME_IDENTITY_MISMATCH",
             "gcloud auth configure-docker",
             "docker build --pull",
             "docker push \"$IMAGE_TAG\"",
@@ -60,12 +66,15 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "'serving_traffic_unchanged':True",
             "'provider_native_audience':True",
             "'artifact_registry_writer_preexisting':",
+            "'candidate_runtime_service_account':",
+            "'candidate_runtime_actas_preexisting':",
             "'image_build_transport':'GITHUB_HOSTED_DOCKER_DIRECT_ARTIFACT_REGISTRY'",
             "'cloud_build_staging_used':False",
             "'candidate_environment_closed_world':True",
             "'candidate_secret_backed_env_count':0",
             "'candidate_only_trust_binding':True",
             "'service_template_mutation_performed':True",
+            "'serving_revision_runtime_identity_mutation_performed':False",
             "'serving_revision_trust_mutation_performed':False",
             "'iam_mutation_performed':False",
             "'wif_mutation_performed':False",
@@ -115,13 +124,23 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         self.assertIn('gcloud artifacts docker images describe "$IMAGE_TAG"', self.text)
         self.assertLess(self.text.index('docker push "$IMAGE_TAG"'), self.text.index('gcloud run deploy "$OPERATOR_SERVICE"'))
 
-    def test_artifact_registry_writer_is_read_proven_before_push(self) -> None:
+    def test_existing_provider_authority_is_reproved_before_candidate_deploy(self) -> None:
         self.assertIn('gcloud projects get-iam-policy "$PROJECT_ID"', self.text)
         self.assertIn('gcloud artifacts repositories get-iam-policy "$REPOSITORY"', self.text)
+        self.assertIn('gcloud iam service-accounts describe "$CANDIDATE_RUNTIME_SA"', self.text)
+        self.assertIn('gcloud iam service-accounts get-iam-policy "$CANDIDATE_RUNTIME_SA"', self.text)
         self.assertIn("roles/artifactregistry.writer", self.text)
+        self.assertIn("roles/iam.serviceAccountUser", self.text)
         self.assertIn("ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED", self.text)
-        self.assertLess(self.text.index("ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED"), self.text.index('docker push "$IMAGE_TAG"'))
+        self.assertIn("CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED", self.text)
+        self.assertLess(self.text.index("CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED"), self.text.index('gcloud run deploy "$OPERATOR_SERVICE"'))
         self.assertNotIn("add-iam-policy-binding", self.low)
+
+    def test_candidate_uses_only_pre_authorized_runtime_identity(self) -> None:
+        self.assertIn("CANDIDATE_RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com", self.text)
+        self.assertIn('--service-account "$CANDIDATE_RUNTIME_SA"', self.text)
+        self.assertIn("CANDIDATE_RUNTIME_IDENTITY_MISMATCH", self.text)
+        self.assertNotIn('--service-account "fo-operator-sa@sov-hybrid-suite.iam.gserviceaccount.com"', self.text)
 
     def test_candidate_principal_is_exact_authenticated_deployer_only(self) -> None:
         self.assertIn("candidate_principals = deployer", self.text)
@@ -160,7 +179,6 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "--allow-unauthenticated",
             "allusers",
             "add-iam-policy-binding",
-            "roles/run.invoker",
             "projects.updatecontent",
             "workload-identity-pools providers update",
             "workload-identity-pools providers create",
