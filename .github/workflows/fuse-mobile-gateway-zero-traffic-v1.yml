@@ -56,6 +56,7 @@ jobs:
           project_id: ${{ env.PROJECT_ID }}
 
       - name: Re-prove deploy and F128 runtime dependencies without mutation
+        id: runtime_preflight
         shell: bash
         run: |
           set -euo pipefail
@@ -99,6 +100,8 @@ jobs:
           sa_user=has(pp,'roles/iam.serviceAccountUser',deployer) or has(sp,'roles/iam.serviceAccountUser',deployer)
           runtime_secret=any_role([pp,sec], {'roles/secretmanager.secretAccessor','roles/secretmanager.admin'}, runtime)
           runtime_firestore=any_role([pp], {'roles/datastore.user','roles/datastore.owner','roles/editor','roles/owner'}, runtime)
+          secret_version_name=str((versions[0] or {}).get('name') or '') if versions else ''
+          secret_version=secret_version_name.rsplit('/',1)[-1]
 
           assert run_developer, 'effective Cloud Run developer authority missing'
           assert ar_writer, 'effective Artifact Registry writer authority missing'
@@ -106,12 +109,14 @@ jobs:
           assert runtime_secret, 'runtime service account lacks pre-existing Secret Manager accessor authority'
           assert runtime_firestore, 'runtime service account lacks pre-existing Firestore datastore authority'
           assert versions, 'dedicated FUSE Mobile session secret has no enabled version'
+          assert secret_version and secret_version.isdigit(), 'exact enabled session secret version is not provider-readable'
           assert str(db.get('name') or ''), 'default Firestore database is not provider-readable'
 
           receipt={
               'schema':'FUSE_MOBILE_F128_RUNTIME_DEPENDENCY_PREFLIGHT_V1',
               'dedicated_session_secret_exists':True,
               'dedicated_session_secret_enabled_version':True,
+              'dedicated_session_secret_version':secret_version,
               'runtime_secret_accessor':runtime_secret,
               'runtime_firestore_authority':runtime_firestore,
               'firestore_database_readback':True,
@@ -122,6 +127,9 @@ jobs:
           }
           Path('fuse-mobile-deploy-proof/f128-runtime-preflight.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
           PY
+          SESSION_SECRET_VERSION="$(python -c 'import json; print(json.load(open("fuse-mobile-deploy-proof/f128-runtime-preflight.json"))["dedicated_session_secret_version"])')"
+          [[ "$SESSION_SECRET_VERSION" =~ ^[0-9]+$ ]]
+          echo "session_secret_version=$SESSION_SECRET_VERSION" >> "$GITHUB_OUTPUT"
 
       - name: Capture pre-deployment service state
         id: pre
@@ -138,9 +146,12 @@ jobs:
       - name: Generate one-use staging enrollment material without persistence
         id: enrollment
         shell: bash
+        env:
+          SESSION_SECRET_VERSION: ${{ steps.runtime_preflight.outputs.session_secret_version }}
         run: |
           set -euo pipefail
           set +x
+          [[ "$SESSION_SECRET_VERSION" =~ ^[0-9]+$ ]]
           ENROLLMENT="fme1_$(openssl rand -hex 32)"
           echo "::add-mask::$ENROLLMENT"
           printf '%s' "$ENROLLMENT" > /tmp/fuse-mobile-owner-enrollment
@@ -148,7 +159,7 @@ jobs:
           ENROLLMENT_SHA256="$(printf '%s' "$ENROLLMENT" | sha256sum | awk '{print $1}')"
           unset ENROLLMENT
           echo "enrollment_sha256=$ENROLLMENT_SHA256" >> "$GITHUB_OUTPUT"
-          echo '{"session_secret_transport":"SECRET_MANAGER_EXISTING_VERSION","owner_enrollment":"EPHEMERAL_RUNNER_ONLY","iam_grant_performed":false,"secret_created_or_rotated":false}' > fuse-mobile-deploy-proof/runtime-material-boundary.json
+          printf '{"session_secret_transport":"SECRET_MANAGER_EXACT_ENABLED_VERSION","session_secret_version":"%s","owner_enrollment":"EPHEMERAL_RUNNER_ONLY","iam_grant_performed":false,"secret_created_or_rotated":false}\n' "$SESSION_SECRET_VERSION" > fuse-mobile-deploy-proof/runtime-material-boundary.json
 
       - name: Build and push immutable source-tagged gateway image
         id: image
@@ -172,8 +183,10 @@ jobs:
           SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
           SOURCE_SHA: ${{ github.sha }}
           ENROLLMENT_SHA256: ${{ steps.enrollment.outputs.enrollment_sha256 }}
+          SESSION_SECRET_VERSION: ${{ steps.runtime_preflight.outputs.session_secret_version }}
         run: |
           set -euo pipefail
+          [[ "$SESSION_SECRET_VERSION" =~ ^[0-9]+$ ]]
           TAG="fm-${SOURCE_SHA:0:8}"
           COMMON=(
             "$SERVICE"
@@ -184,7 +197,7 @@ jobs:
             --port 8080
             --tag "$TAG"
             --no-allow-unauthenticated
-            --set-secrets "FUSE_MOBILE_SESSION_SECRET_B64=$SESSION_SECRET_ID:latest"
+            --set-secrets "FUSE_MOBILE_SESSION_SECRET_B64=$SESSION_SECRET_ID:$SESSION_SECRET_VERSION"
             --set-env-vars "FUSE_MOBILE_OWNER_SUBJECT=$OWNER_SUBJECT,FUSE_MOBILE_OWNER_ENROLLMENT_SHA256=$ENROLLMENT_SHA256,FUSE_MOBILE_KDV_RANGE=$KDV_RANGE,FUSE_MOBILE_VERTEX_MODEL=$VERTEX_MODEL"
             --quiet
           )
@@ -363,6 +376,7 @@ jobs:
               'short_session_verified':True,
               'kdv_runtime_verified':True,
               'vertex_adc_connected':True,
+              'vertex_semantic_inference_state':'HELD_UNPROVEN_NOT_EXECUTED',
               'vertex_paid_semantic_inference_executed':False,
               'effect_gate_verified':True,
               'device_revocation_verified':True,
@@ -387,8 +401,10 @@ jobs:
           REVISION: ${{ steps.deploy.outputs.revision }}
           TRAFFIC_MODE: ${{ steps.deploy.outputs.traffic_mode }}
           CANARY_URL: ${{ steps.private_url.outputs.canary_url }}
+          SESSION_SECRET_VERSION: ${{ steps.runtime_preflight.outputs.session_secret_version }}
         run: |
           set -euo pipefail
+          [[ "$SESSION_SECRET_VERSION" =~ ^[0-9]+$ ]]
           python - <<'PY'
           import hashlib,json,os
           from datetime import datetime,timezone
@@ -400,6 +416,7 @@ jobs:
           receipt={
               'schema':'FUSE_MOBILE_GATEWAY_PRIVATE_DEPLOYMENT_RECEIPT_V2',
               'state':'PRIVATE_GATEWAY_F128_RUNTIME_E2E_VERIFIED',
+              'source_ready_compatibility_state':'PRIVATE_GATEWAY_CANARY_DEPLOYED_SOURCE_READY',
               'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
               'source_sha':os.environ['SOURCE_SHA'],
               'run_id':int(os.environ['RUN_ID']),
@@ -419,6 +436,7 @@ jobs:
               'execution_ready':health.get('execution_ready'),
               'kdv_runtime_verified':e2e['kdv_runtime_verified'],
               'vertex_adc_connected':e2e['vertex_adc_connected'],
+              'vertex_semantic_inference_state':e2e['vertex_semantic_inference_state'],
               'vertex_paid_semantic_inference_executed':False,
               'effect_gate_verified':e2e['effect_gate_verified'],
               'device_revocation_verified':e2e['device_revocation_verified'],
@@ -429,7 +447,8 @@ jobs:
               'iam_grant_performed':False,
               'repository_write_performed':False,
               'long_lived_service_account_key_used':False,
-              'session_secret_transport':'SECRET_MANAGER_EXISTING_VERSION',
+              'session_secret_transport':'SECRET_MANAGER_EXACT_ENABLED_VERSION',
+              'session_secret_version':os.environ['SESSION_SECRET_VERSION'],
               'secret_created_or_rotated':False,
               'secret_payload_readback_performed':False,
               'rollback_boundary':'PRIVATE CANARY REVISION IS REVERSIBLE; NO TRAFFIC PROMOTION, IAM GRANT, SECRET CREATION OR SECRET ROTATION PERFORMED',
@@ -438,7 +457,7 @@ jobs:
           raw=json.dumps(receipt,sort_keys=True,separators=(',',':')).encode()
           receipt['receipt_sha256']=hashlib.sha256(raw).hexdigest()
           Path('fuse-mobile-deploy-proof/deployment-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
-          print(json.dumps({k:receipt[k] for k in ('state','service','revision','traffic_mode','new_revision_percent','public_invocation','production_traffic_changed','kdv_runtime_verified','vertex_adc_connected')},sort_keys=True))
+          print(json.dumps({k:receipt[k] for k in ('state','source_ready_compatibility_state','service','revision','traffic_mode','new_revision_percent','public_invocation','production_traffic_changed','kdv_runtime_verified','vertex_adc_connected','vertex_semantic_inference_state','session_secret_version')},sort_keys=True))
           PY
 
       - name: Upload immutable provider proof, including partial evidence on failure
