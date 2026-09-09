@@ -49,6 +49,7 @@ jobs:
             tests.test_fuse_mobile_mdtaf_v1 \
             tests.test_fuse_mobile_mdtaf_avd_readiness \
             tests.test_fuse_mobile_mdtaf_sdk_toolchain_resolution \
+            tests.test_fuse_mobile_mdtaf_emulator_host_dependencies \
             tests.test_fuse_mobile_version_contract
 
       - name: Resolve real dependency graph and generate lock
@@ -216,6 +217,23 @@ jobs:
             } > "$EVIDENCE_DIR/sdk-runtime-tools-missing-api-${API_LEVEL}.txt"
             echo "sdkmanager completed but exact platform-tools/emulator executables are unavailable" >&2
             exit 42
+          fi
+          QEMU="$SDK_ROOT/emulator/qemu/linux-x86_64/qemu-system-x86_64"
+          test -x "$QEMU"
+          printf 'ImageOS=%s\nImageVersion=%s\nKernel=%s\n' \
+            "${ImageOS:-UNKNOWN}" "${ImageVersion:-UNKNOWN}" "$(uname -r)" \
+            > "$EVIDENCE_DIR/runner-host-provenance-api-${API_LEVEL}.txt"
+          ldd "$QEMU" | tee "$EVIDENCE_DIR/emulator-host-libs-before-api-${API_LEVEL}.txt"
+          if grep -Fq 'libpulse.so.0 => not found' "$EVIDENCE_DIR/emulator-host-libs-before-api-${API_LEVEL}.txt"; then
+            sudo apt-get update -qq
+            sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends libpulse0
+          fi
+          dpkg-query -W -f='${Package}=${Version}\n' libpulse0 \
+            | tee "$EVIDENCE_DIR/emulator-host-package-provenance-api-${API_LEVEL}.txt"
+          ldd "$QEMU" | tee "$EVIDENCE_DIR/emulator-host-libs-after-api-${API_LEVEL}.txt"
+          if grep -Fq '=> not found' "$EVIDENCE_DIR/emulator-host-libs-after-api-${API_LEVEL}.txt"; then
+            echo "Android emulator still has unresolved host shared-library dependencies" >&2
+            exit 43
           fi
           "$EMULATOR" -version 2>&1 | head -n 4 > "$EVIDENCE_DIR/emulator-version-api-${API_LEVEL}.txt"
           AVD_NAME="fuse-mdtaf-api-${API_LEVEL}"
