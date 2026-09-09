@@ -15,6 +15,7 @@ from benchmarking.cfbe_omega.bubbles_work_graph_adapter_v1 import (
 )
 from tests.test_bubbles_mbmpc_pilf_host_binding_v1 import (
     _contract as _of50_contract,
+    _f130_terminal_pair,
     _mission as _of50_mission,
     _of50_request,
     _runtime as _of50_runtime,
@@ -169,6 +170,7 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertEqual(receipt.saturated_cell_ids, ("cell-a",))
         self.assertFalse(receipt.serving_route_changed)
         self.assertFalse(receipt.provider_effect_authorized)
+        self.assertFalse(receipt.financial_effect_authorized)
 
     def test_shadow_initial_occupancy_spills_work_without_route_change(self):
         cells = (
@@ -217,6 +219,7 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
         self.assertEqual("NONE", receipt["authority_delta"])
 
     def test_current_canonical_of50_is_load_bearing_in_existing_bubbles_contract(self):
+        snapshot, prepare = _f130_terminal_pair()
         result = _of50_runtime().finalize_mission_completion(
             _of50_mission(),
             spine_receipt=object(),
@@ -225,12 +228,17 @@ class BubblesWorkGraphAdapterTests(unittest.TestCase):
             satisfied_terminal_predicates=("TP-FINAL",),
             production_stage_evidence_refs=("provider:production-stage:P16",),
             of50_request=_of50_request(),
+            mission_runtime_snapshot=snapshot,
+            terminal_prepare_receipt=prepare,
+            mission_runtime_now_epoch=1001.0,
         )
         self.assertEqual("MISSION_COMPLETION_VERIFIED", result["state"])
         self.assertTrue(result["mission_value_finalized"])
         self.assertTrue(result["of50_receipt"]["completion_verified"])
+        self.assertEqual("COMPLETE_VERIFIED", result["f130_runtime_receipt"]["action"])
         self.assertTrue(result["truth_boundary"]["of50_current_canonical_completion_required"])
         self.assertTrue(result["truth_boundary"]["of50_and_mbmpc_pilf_finality_are_conjunctive"])
+        self.assertTrue(result["truth_boundary"]["mission_completion_requires_f130_terminal_commit"])
 
     def test_fuse_gcp_is_hosted_by_existing_bubbles_contract(self):
         receipt = run_fuse_gcp_host_canary(source_ref="test:bubbles-command-bus-contract")
