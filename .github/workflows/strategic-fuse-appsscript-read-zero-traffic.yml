@@ -56,7 +56,7 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
 
-      - name: Prove existing operator trust configuration and freeze serving baseline
+      - name: Derive candidate-only OIDC trust and freeze the serving baseline
         run: |
           set -euo pipefail
           mkdir -p /tmp/strategic-read
@@ -66,21 +66,30 @@ jobs:
           python - <<'PY'
           import hashlib, json, os
           from pathlib import Path
+          from urllib.parse import urlparse
 
           p = json.loads(Path('/tmp/strategic-read/service-before.json').read_text())
           containers = p.get('spec', {}).get('template', {}).get('spec', {}).get('containers', [])
           assert containers, 'OPERATOR_CONTAINER_MISSING'
           env_items = containers[0].get('env', [])
           direct = {x.get('name'): x.get('value') for x in env_items if x.get('name') and 'value' in x}
-          audience = (direct.get('OPERATOR_AUDIENCE') or '').strip()
-          principals = [x.strip().lower() for x in (direct.get('OIDC_ALLOWED_PRINCIPALS') or '').split(',') if x.strip()]
-          deployer = os.environ['DEPLOYER_SA'].lower()
-          assert audience, 'OPERATOR_AUDIENCE_PREEXISTING_REQUIRED'
-          assert principals, 'OIDC_ALLOWED_PRINCIPALS_PREEXISTING_REQUIRED'
-          assert deployer in principals, 'DEPLOYER_NOT_PREEXISTING_OIDC_PRINCIPAL'
-          print('::add-mask::' + audience)
+          serving_audience = (direct.get('OPERATOR_AUDIENCE') or '').strip()
+          serving_principals = [x.strip().lower() for x in (direct.get('OIDC_ALLOWED_PRINCIPALS') or '').split(',') if x.strip()]
+          serving_secret_backed_names = sorted(str(x.get('name') or '') for x in env_items if x.get('valueFrom'))
+          canonical_url = str(p.get('status', {}).get('url') or '').strip()
+          assert canonical_url, 'OPERATOR_CANONICAL_URL_MISSING'
+          assert canonical_url == os.environ['OPERATOR_URL'], 'OPERATOR_CANONICAL_URL_DRIFT'
+          parsed = urlparse(canonical_url)
+          assert parsed.scheme == 'https' and parsed.netloc.endswith('.run.app'), 'OPERATOR_CANONICAL_URL_INVALID'
+          deployer = os.environ['DEPLOYER_SA'].strip().lower()
+          assert deployer.endswith('.iam.gserviceaccount.com'), 'DEPLOYER_SERVICE_ACCOUNT_INVALID'
+          candidate_principals = deployer
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
-              fh.write('OPERATOR_AUDIENCE<<STRATEGIC_AUD_EOF\n' + audience + '\nSTRATEGIC_AUD_EOF\n')
+              fh.write('OPERATOR_AUDIENCE<<STRATEGIC_AUD_EOF\n' + canonical_url + '\nSTRATEGIC_AUD_EOF\n')
+              fh.write('CANDIDATE_OIDC_ALLOWED_PRINCIPALS=' + candidate_principals + '\n')
+              fh.write('SERVING_AUDIENCE_PRESENT=' + ('true' if serving_audience else 'false') + '\n')
+              fh.write('SERVING_PRINCIPAL_COUNT=' + str(len(serving_principals)) + '\n')
+              fh.write('SERVING_SECRET_BACKED_ENV_COUNT=' + str(len(serving_secret_backed_names)) + '\n')
           serving = sorted(
               ({'revision': x.get('revisionName'), 'percent': int(x.get('percent') or 0)}
                for x in p.get('status', {}).get('traffic', []) if int(x.get('percent') or 0) > 0),
@@ -115,13 +124,15 @@ jobs:
             echo "CANDIDATE_DIGEST=$DIGEST"
           } >> "$GITHUB_ENV"
 
-      - name: Deploy same service as tagged zero-traffic candidate without changing trust configuration
+      - name: Deploy tagged zero-traffic candidate with closed-world OIDC trust
         run: |
           set -euo pipefail
           TAG="strategic-read-${GITHUB_SHA:0:8}"
           gcloud run deploy "$OPERATOR_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" \
-            --image "$CANDIDATE_IMAGE" --no-traffic --tag "$TAG" --quiet
+            --image "$CANDIDATE_IMAGE" --no-traffic --tag "$TAG" \
+            --set-env-vars "OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}" \
+            --quiet
           echo "CANDIDATE_TAG=$TAG" >> "$GITHUB_ENV"
           gcloud run services describe "$OPERATOR_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" --format=json \
@@ -137,13 +148,12 @@ jobs:
           assert int(item.get('percent') or 0) == 0, 'CANDIDATE_TRAFFIC_NOT_ZERO'
           assert item.get('revisionName'), 'CANDIDATE_REVISION_MISSING'
           assert item.get('url'), 'CANDIDATE_URL_MISSING'
-          print('::add-mask::' + item['url'])
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
               fh.write('CANDIDATE_URL<<STRATEGIC_URL_EOF\n' + item['url'] + '\nSTRATEGIC_URL_EOF\n')
               fh.write('CANDIDATE_REVISION=' + item['revisionName'] + '\n')
           PY
 
-      - name: Prove candidate inherited the exact pre-existing trust gate
+      - name: Prove candidate trust is exact scoped and secretless
         run: |
           set -euo pipefail
           gcloud run revisions describe "$CANDIDATE_REVISION" \
@@ -155,10 +165,14 @@ jobs:
           p = json.loads(Path('/tmp/strategic-read/revision.json').read_text())
           containers = p.get('spec', {}).get('containers', [])
           assert containers, 'CANDIDATE_CONTAINER_MISSING'
-          direct = {x.get('name'): x.get('value') for x in containers[0].get('env', []) if x.get('name') and 'value' in x}
+          env_items = containers[0].get('env', [])
+          direct = {x.get('name'): x.get('value') for x in env_items if x.get('name') and 'value' in x}
+          secret_backed = [x for x in env_items if x.get('valueFrom')]
+          assert not secret_backed, 'CANDIDATE_SECRET_BACKED_ENV_FORBIDDEN'
+          assert set(direct) == {'OPERATOR_AUDIENCE', 'OIDC_ALLOWED_PRINCIPALS'}, f'CANDIDATE_ENV_NOT_CLOSED_WORLD:{sorted(direct)}'
           assert (direct.get('OPERATOR_AUDIENCE') or '').strip() == os.environ['OPERATOR_AUDIENCE'], 'CANDIDATE_AUDIENCE_DRIFT'
           allowed = [x.strip().lower() for x in (direct.get('OIDC_ALLOWED_PRINCIPALS') or '').split(',') if x.strip()]
-          assert os.environ['DEPLOYER_SA'].lower() in allowed, 'CANDIDATE_PRINCIPAL_DRIFT'
+          assert allowed == [os.environ['DEPLOYER_SA'].lower()], 'CANDIDATE_PRINCIPAL_DRIFT'
           PY
 
       - name: Mint one ephemeral OIDC token and verify STATUS before the Strategic read
@@ -263,10 +277,21 @@ jobs:
             'schema':'STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_RECEIPT_V1',
             'source_sha':os.environ['GITHUB_SHA'],
             'operator_service':os.environ['OPERATOR_SERVICE'],
+            'operator_audience':os.environ['OPERATOR_AUDIENCE'],
+            'serving_operator_audience_present':os.environ['SERVING_AUDIENCE_PRESENT'].lower() == 'true',
+            'serving_oidc_principal_count':int(os.environ['SERVING_PRINCIPAL_COUNT']),
+            'serving_secret_backed_env_count':int(os.environ['SERVING_SECRET_BACKED_ENV_COUNT']),
             'candidate_revision':os.environ['CANDIDATE_REVISION'],
             'candidate_tag':os.environ['CANDIDATE_TAG'],
             'candidate_image_digest':os.environ['CANDIDATE_DIGEST'],
             'candidate_traffic_percent':0,
+            'candidate_oidc_principal_count':1,
+            'candidate_oidc_principal_deployer_only':True,
+            'candidate_environment_closed_world':True,
+            'candidate_secret_backed_env_count':0,
+            'candidate_only_trust_binding':True,
+            'service_template_mutation_performed':True,
+            'serving_revision_trust_mutation_performed':False,
             'serving_traffic_unchanged':True,
             'auth_mode':status.get('authMode'),
             'principal':status.get('principal'),
@@ -282,7 +307,9 @@ jobs:
             'apps_script_mutation_attempted':False,
             'secret_values_recorded':False,
             'iam_mutation_performed':False,
+            'wif_mutation_performed':False,
             'traffic_promotion_performed':False,
+            'provider_effect_scope':'ZERO_TRAFFIC_CANDIDATE_REVISION_ONLY',
           }
           Path('/tmp/strategic-read/receipt.json').write_text(json.dumps(receipt,sort_keys=True,indent=2),encoding='utf-8')
           PY
