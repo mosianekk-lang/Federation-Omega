@@ -1,0 +1,32 @@
+{
+  "contractId": "CFBE-VNEXT-MULTISTREAM-EXECUTION-V1",
+  "schema": "CFBE-VNEXT-MULTISTREAM-EXECUTION-1",
+  "status": "DETERMINISTIC_TESTED_LOCAL",
+  "authorityCeiling": "A1_INTERNAL",
+  "externalEffectsDefault": false,
+  "purpose": "Execute independent mission streams and alternate paths concurrently, converge them through one proof-gated sovereign fan-in, and preserve the mission kernel's authority and completion invariants.",
+  "roles": ["ROUTE", "BUILDER", "FALSIFIER", "EVIDENCE", "WITNESS", "SENTINEL", "RECOVERY"],
+  "invariants": [
+    "The execution graph is immutable and bound to one mission contract and one Formation plan hash.",
+    "Only VERIFIED_LIVE capability attestations enter automatically compiled snapshots.",
+    "Ready waves exclude unresolved dependencies, unavailable capabilities, active collision keys and exhausted budgets.",
+    "Claim transactions recheck dependencies, concurrency, collisions and cumulative cost atomically.",
+    "Claims are single-owner, expiring and monotonically fenced.",
+    "Logical worker failure is contained to its path and does not cancel healthy siblings.",
+    "A verified result's producer is the current claimant and its distinct verifier matches the proof authority fingerprint.",
+    "Sovereign fan-in requires current independent proof and equal-or-better quality.",
+    "One mission-version effect group has at most one selected candidate.",
+    "Candidate selection never performs or authorizes an external effect.",
+    "An active execution graph blocks mission terminality.",
+    "A measured real-mission 2x claim requires at least 30 paired observations and a one-sided 95% bootstrap lower bound of at least 2x with quality, proof, security and cost preserved; synthetic workloads remain labeled SIMULATED_SCHEDULING_SPEEDUP_ONLY."
+  ],
+  "maturityBoundary": {
+    "currentTarget": "DETERMINISTIC_TESTED_LOCAL",
+    "notClaimed": ["REGISTERED", "PROVIDER_READY", "DEPLOYED", "BEHAVIOUR_PROVEN", "VALUE_PROVEN"]
+  },
+  "verification": {
+    "testModule": "tests.test_cfbe_vnext_multistream_execution",
+    "minimumPairedBenchmarkSamples": 30,
+    "proofOSPolicyExtension": "governance/proofos_omega_policy_extension_cfbe_vnext_mission_kernel_v1.json"
+  }
+}
