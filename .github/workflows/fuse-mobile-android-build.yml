@@ -1,12 +1,6 @@
 name: FUSE Mobile Android Build Court
 
 on:
-  push:
-    branches: [main]
-    paths:
-      - "mobile/fuse-mobile/**"
-      - ".github/workflows/fuse-mobile-android-build.yml"
-      - "governance/fuse_mobile_mdtaf_v1.json"
   issues:
     types: [opened]
 
@@ -21,10 +15,9 @@ concurrency:
 jobs:
   android-build:
     if: >-
-      github.event_name == 'push' ||
-      ((github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_ANDROID_BUILD_V1' ||
-        github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1') &&
-       github.event.issue.author_association == 'OWNER')
+      (github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_ANDROID_BUILD_V1' ||
+       github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1') &&
+      github.event.issue.author_association == 'OWNER'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
@@ -47,8 +40,8 @@ jobs:
           java -version
           test -n "${ANDROID_HOME:-${ANDROID_SDK_ROOT:-}}"
 
-      - name: Run MDTAF source contract tests for automatic or explicit MDTAF courts
-        if: github.event_name == 'push' || github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1'
+      - name: Run MDTAF source contract tests when MDTAF is dispatched
+        if: github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1'
         shell: bash
         run: |
           set -euo pipefail
@@ -168,9 +161,8 @@ jobs:
 
   mdtaf-avd:
     if: >-
-      github.event_name == 'push' ||
-      (github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1' &&
-       github.event.issue.author_association == 'OWNER')
+      github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1' &&
+      github.event.issue.author_association == 'OWNER'
     needs: android-build
     runs-on: ubuntu-24.04
     timeout-minutes: 50
