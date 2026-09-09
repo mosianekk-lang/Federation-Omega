@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.25",
+  "version": "2.9.26",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -48,6 +48,7 @@
     ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
     ".github/workflows/sol62-wif-hardening-lease.yml",
     ".github/workflows/sol62-google-surface-probe.yml",
+    ".github/workflows/sol-61-runtime-proof.yml",
     ".github/workflows/sovara-ai-studio-semantic-canary.yml",
     ".github/workflows/kimmie-seed-199-bot-workforce.yml",
     ".github/workflows/nexus-direct-preflight.yml",
@@ -167,6 +168,11 @@
       "push",
       "workflow_dispatch"
     ],
+    ".github/workflows/sol-61-runtime-proof.yml": [
+      "pull_request",
+      "push",
+      "workflow_dispatch"
+    ],
     ".github/workflows/sovara-ai-studio-semantic-canary.yml": [
       "push",
       "workflow_dispatch"
@@ -233,6 +239,9 @@
       "main"
     ],
     ".github/workflows/sol62-google-surface-probe.yml": [
+      "main"
+    ],
+    ".github/workflows/sol-61-runtime-proof.yml": [
       "main"
     ],
     ".github/workflows/sovara-ai-studio-semantic-canary.yml": [
@@ -399,6 +408,7 @@
       ".github/workflows/cfbe-hyperleverage-attestation-v1.yml",
       ".github/workflows/sol62-wif-hardening-lease.yml",
       ".github/workflows/sol62-google-surface-probe.yml",
+      ".github/workflows/sol-61-runtime-proof.yml",
       ".github/workflows/sovara-ai-studio-semantic-canary.yml",
       ".github/workflows/kimmie-seed-199-bot-workforce.yml",
       ".github/workflows/nexus-direct-preflight.yml",
