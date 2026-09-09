@@ -12,9 +12,12 @@ from fastapi.testclient import TestClient
 from services.fuse_mobile_gateway.app import create_app
 from services.fuse_mobile_gateway.bindings import (
     DEVICE_TOKEN_PREFIX,
+    IAP_EXPECTED_AUDIENCE,
+    IAP_ISSUER,
     SESSION_TOKEN_PREFIX,
     DeviceCredentialManager,
     DeviceRecord,
+    IAPOwnerIdentityVerifier,
     KDVSnapshot,
     KDVSheetsReader,
     OpaqueSessionManager,
@@ -44,6 +47,10 @@ class InMemoryDeviceRepository:
         self.consumed.add(enrollment_hash)
         self.devices[device_hash] = DeviceRecord(subject=subject, active=True)
         self.last_enrollment_hash = enrollment_hash
+        self.last_device_hash = device_hash
+
+    async def put_device(self, *, subject: str, device_hash: str) -> None:
+        self.devices[device_hash] = DeviceRecord(subject=subject, active=True)
         self.last_device_hash = device_hash
 
     async def get_device(self, device_hash: str) -> DeviceRecord | None:
@@ -145,6 +152,87 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
         with self.assertRaisesRegex(RuntimeBindingError, "DEVICE_CREDENTIAL_INVALID"):
             asyncio.run(manager.verify(device_token))
 
+    def test_iap_owner_enrollment_uses_signed_assertion_and_hash_only_device_state(self) -> None:
+        owner_email = "owner@example.com"
+        email_hash = hashlib.sha256(owner_email.encode()).hexdigest()
+        device_token = DEVICE_TOKEN_PREFIX + ("I" * 48)
+        session_token = SESSION_TOKEN_PREFIX + ("J" * 48)
+        devices = InMemoryDeviceRepository()
+        sessions = InMemorySessionRepository()
+        manager = DeviceCredentialManager(
+            devices,
+            owner_subject="owner:kim",
+            token_factory=lambda: device_token,
+        )
+
+        def verify(assertion: str, audience: str):
+            self.assertEqual(assertion, "signed-iap-assertion")
+            self.assertEqual(audience, IAP_EXPECTED_AUDIENCE)
+            return {
+                "iss": IAP_ISSUER,
+                "aud": audience,
+                "email": owner_email,
+                "sub": "accounts.google.com:owner-123",
+            }
+
+        runtime = GatewayRuntime(
+            session_manager=OpaqueSessionManager(sessions, devices, token_factory=lambda: session_token),
+            identity_verifier=manager,
+            owner_identity_verifier=IAPOwnerIdentityVerifier(
+                owner_subject="owner:kim",
+                owner_email_sha256=email_hash,
+                verify_fn=verify,
+            ),
+            device_manager=manager,
+            health_provider=StaticHealth(),
+            chat_executor=StaticExecutor(),
+        )
+        response = TestClient(create_app(runtime)).post(
+            "/v1/enroll",
+            headers={"X-Goog-IAP-JWT-Assertion": "signed-iap-assertion"},
+        )
+        self.assertEqual(response.status_code, 200, response.text)
+        payload = response.json()
+        self.assertEqual(payload["subject"], "owner:kim")
+        self.assertEqual(payload["owner_identity_source"], "GOOGLE_IAP")
+        self.assertEqual(payload["device_token"], device_token)
+        self.assertEqual(payload["access_token"], session_token)
+        expected_device_hash = hashlib.sha256(device_token.encode()).hexdigest()
+        self.assertEqual(devices.last_device_hash, expected_device_hash)
+        self.assertNotIn(device_token, devices.devices)
+        self.assertIn(expected_device_hash, devices.devices)
+
+    def test_iap_owner_enrollment_rejects_wrong_owner_email(self) -> None:
+        owner_hash = hashlib.sha256(b"owner@example.com").hexdigest()
+        devices = InMemoryDeviceRepository()
+        sessions = InMemorySessionRepository()
+        manager = DeviceCredentialManager(devices, owner_subject="owner:kim")
+        verifier = IAPOwnerIdentityVerifier(
+            owner_subject="owner:kim",
+            owner_email_sha256=owner_hash,
+            verify_fn=lambda assertion, audience: {
+                "iss": IAP_ISSUER,
+                "aud": audience,
+                "email": "other@example.com",
+                "sub": "other-subject",
+            },
+        )
+        runtime = GatewayRuntime(
+            session_manager=OpaqueSessionManager(sessions, devices),
+            identity_verifier=manager,
+            owner_identity_verifier=verifier,
+            device_manager=manager,
+            health_provider=StaticHealth(),
+            chat_executor=StaticExecutor(),
+        )
+        response = TestClient(create_app(runtime)).post(
+            "/v1/enroll",
+            headers={"X-Goog-IAP-JWT-Assertion": "signed-but-wrong-owner"},
+        )
+        self.assertEqual(response.status_code, 401, response.text)
+        self.assertEqual(response.json()["detail"]["reason"], "IAP_OWNER_EMAIL_INVALID")
+        self.assertEqual(devices.devices, {})
+
     def test_opaque_sessions_store_only_hash_expire_and_require_device_binding(self) -> None:
         devices = InMemoryDeviceRepository()
         sessions = InMemorySessionRepository()
@@ -179,10 +267,7 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
         expected_hash = hashlib.sha256(bootstrap.encode()).hexdigest()
         device_token = DEVICE_TOKEN_PREFIX + ("E" * 48)
         session_tokens = iter(
-            [
-                SESSION_TOKEN_PREFIX + ("A" * 48),
-                SESSION_TOKEN_PREFIX + ("B" * 48),
-            ]
+            [SESSION_TOKEN_PREFIX + ("A" * 48), SESSION_TOKEN_PREFIX + ("B" * 48)]
         )
         devices = InMemoryDeviceRepository()
         sessions = InMemorySessionRepository()
@@ -283,11 +368,7 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
             components = ("FUSE", "KDV")
 
         result = asyncio.run(
-            executor.execute(
-                request=Request(),
-                decision=Decision(),
-                identity=VerifiedIdentity("owner:kim"),
-            )
+            executor.execute(request=Request(), decision=Decision(), identity=VerifiedIdentity("owner:kim"))
         )
         self.assertEqual(result.trace_id, "provider-req-123")
         self.assertEqual(result.provider, "GOOGLE_VERTEX_AI_GEMINI")
@@ -301,10 +382,12 @@ class FuseMobileRuntimeBindingsV1Tests(unittest.TestCase):
         env = {
             "FUSE_MOBILE_OWNER_SUBJECT": "",
             "FUSE_MOBILE_OWNER_ENROLLMENT_SHA256": "",
+            "FUSE_MOBILE_OWNER_EMAIL_SHA256": "",
         }
         with patch.dict(os.environ, env, clear=False):
             runtime = runtime_from_environment()
         self.assertFalse(runtime.enrollment_ready)
+        self.assertFalse(runtime.iap_enrollment_ready)
         self.assertFalse(runtime.session_ready)
         self.assertFalse(runtime.execution_ready)
 
