@@ -13,6 +13,7 @@ import {
   validateGeminiCapabilityPayload,
   validateGeminiSemanticPayload,
 } from "./contracts.mjs";
+import { executeAppsScriptBoundedReadAction } from "./apps_script_bounded_read.mjs";
 
 export async function executeAction({ action, payload = {}, principal, adapter, env = process.env }) {
   if (!ALLOWED_ACTIONS.includes(action)) {
@@ -20,6 +21,9 @@ export async function executeAction({ action, payload = {}, principal, adapter, 
   }
   if (action === "STATUS") {
     return { httpStatus: 200, body: { ok: true, status: "OPERATOR_EXECUTE_READY", service: OPERATOR_IDENTITY, version: OPERATOR_VERSION, authMode: principal.mode, principal: principal.principal } };
+  }
+  if (action === "READ_APPS_SCRIPT_PROJECT_BOUNDED") {
+    return executeAppsScriptBoundedReadAction(adapter, payload);
   }
   if (action === "READ_CLOUD_RUN_SERVICE") {
     const target = validateCloudReadPayload(payload, env);
