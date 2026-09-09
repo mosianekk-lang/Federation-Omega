@@ -37,10 +37,12 @@ best_root=""
 shopt -s nullglob
 for candidate in "$CMDLINE_ROOT"/*; do
   [[ -d "$candidate" ]] || continue
-  # Convenience aliases such as `latest` are not stable provenance. Only
-  # concrete, non-symlink installations may satisfy the exact-toolchain court.
+  # Directory labels are not provenance. GitHub-hosted Ubuntu runners install
+  # the real command-line tools in a physical directory named `latest`, while
+  # other SDK layouts may expose version-labelled roots. Reject symlink aliases,
+  # then prove exact identity from source.properties Pkg.Revision plus realpath-
+  # bound sdkmanager+avdmanager from the same physical installation.
   [[ -L "$candidate" ]] && continue
-  [[ "$(basename "$candidate")" != "latest" ]] || continue
 
   sdkmanager="$candidate/bin/sdkmanager"
   avdmanager="$candidate/bin/avdmanager"
@@ -65,17 +67,21 @@ for candidate in "$CMDLINE_ROOT"/*; do
 done
 
 if [[ -z "$best_root" ]]; then
-  echo "no concrete Android cmdline-tools installation provides sdkmanager+avdmanager+valid Pkg.Revision" >&2
+  echo "no exact Android cmdline-tools installation provides same-root sdkmanager+avdmanager+valid Pkg.Revision" >&2
   exit 5
 fi
 
 SDKMANAGER="$best_root/bin/sdkmanager"
 AVDMANAGER="$best_root/bin/avdmanager"
+CMDLINE_TOOLS_LAYOUT_NAME="$(basename "$best_root")"
+CMDLINE_TOOLS_IDENTITY_SOURCE="source.properties:Pkg.Revision"
 
 emit() {
   printf 'SDK_ROOT=%s\n' "$SDK_ROOT"
   printf 'CMDLINE_TOOLS_ROOT=%s\n' "$best_root"
   printf 'CMDLINE_TOOLS_REVISION=%s\n' "$best_revision"
+  printf 'CMDLINE_TOOLS_LAYOUT_NAME=%s\n' "$CMDLINE_TOOLS_LAYOUT_NAME"
+  printf 'CMDLINE_TOOLS_IDENTITY_SOURCE=%s\n' "$CMDLINE_TOOLS_IDENTITY_SOURCE"
   printf 'SDKMANAGER=%s\n' "$SDKMANAGER"
   printf 'AVDMANAGER=%s\n' "$AVDMANAGER"
 }
