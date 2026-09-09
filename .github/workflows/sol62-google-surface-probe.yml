@@ -20,6 +20,11 @@ concurrency:
 env:
   HAS_GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY != '' }}
   AI_STUDIO_MODEL: gemini-2.5-flash
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  FUSE_MOBILE_SERVICE: fuse-mobile-gateway
+  HAS_GCP_READ_CREDENTIAL: ${{ secrets.GCP_SA_KEY != '' || secrets.GCP_SERVICE_ACCOUNT_KEY != '' || secrets.GOOGLE_CREDENTIALS != '' || secrets.GOOGLE_SERVICE_ACCOUNT_KEY != '' || secrets.GCP_CREDENTIALS != '' || secrets.GOOGLE_GHA_CREDS_JSON != '' || secrets.GOOGLE_CLOUD_CREDENTIALS != '' }}
 
 jobs:
   probe:
@@ -36,8 +41,153 @@ jobs:
         run: |
           set -euo pipefail
           mkdir -p /tmp/sol62-google
-          printf '{"schema":"SOL_6_2_GOOGLE_SURFACE_LIVE_RECEIPT_V1","source_sha":"%s","provider_mutation_performed":false,"credential_values_recorded":false}\n' "$GITHUB_SHA" > /tmp/sol62-google/SURFACE_RECEIPT.json
+          printf '{"schema":"SOL_6_2_GOOGLE_SURFACE_LIVE_RECEIPT_V2","source_sha":"%s","provider_mutation_performed":false,"credential_values_recorded":false}\n' "$GITHUB_SHA" > /tmp/sol62-google/SURFACE_RECEIPT.json
           python3 bubbles/apps_script_deployment_probe.py --receipt /tmp/sol62-google/SURFACE_RECEIPT.json
+
+      - name: Authenticate an already-configured Google read credential when present
+        id: gcp_read_auth
+        if: ${{ env.HAS_GCP_READ_CREDENTIAL == 'true' }}
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          credentials_json: ${{ secrets.GCP_SA_KEY || secrets.GCP_SERVICE_ACCOUNT_KEY || secrets.GOOGLE_CREDENTIALS || secrets.GOOGLE_SERVICE_ACCOUNT_KEY || secrets.GCP_CREDENTIALS || secrets.GOOGLE_GHA_CREDS_JSON || secrets.GOOGLE_CLOUD_CREDENTIALS }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud for read-only provider currentness
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Probe FUSE Mobile Cloud Run and IAP currentness without mutation
+        shell: bash
+        env:
+          CLOUD_AUTH_OUTCOME: ${{ steps.gcp_read_auth.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          mkdir -p /tmp/sol62-google/iap
+          : > /tmp/sol62-google/iap/service.err
+          : > /tmp/sol62-google/iap/settings.err
+          : > /tmp/sol62-google/iap/policy.err
+          SERVICE_RC=99
+          SETTINGS_RC=99
+          POLICY_RC=99
+          if [[ "$HAS_GCP_READ_CREDENTIAL" == "true" && "$CLOUD_AUTH_OUTCOME" == "success" ]]; then
+            set +e
+            gcloud run services describe "$FUSE_MOBILE_SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" --format=json \
+              > /tmp/sol62-google/iap/service.json 2> /tmp/sol62-google/iap/service.err
+            SERVICE_RC=$?
+            gcloud iap settings get \
+              --project "$PROJECT_ID" --resource-type=cloud-run --region "$REGION" --service "$FUSE_MOBILE_SERVICE" --format=json \
+              > /tmp/sol62-google/iap/settings.json 2> /tmp/sol62-google/iap/settings.err
+            SETTINGS_RC=$?
+            gcloud iap web get-iam-policy \
+              --project "$PROJECT_ID" --resource-type=cloud-run --region "$REGION" --service "$FUSE_MOBILE_SERVICE" --format=json \
+              > /tmp/sol62-google/iap/policy.json 2> /tmp/sol62-google/iap/policy.err
+            POLICY_RC=$?
+            set -e
+          fi
+          export SERVICE_RC SETTINGS_RC POLICY_RC
+          python3 - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          receipt_path=Path('/tmp/sol62-google/SURFACE_RECEIPT.json')
+          receipt=json.loads(receipt_path.read_text(encoding='utf-8'))
+          root=Path('/tmp/sol62-google/iap')
+
+          def read_json(name):
+              path=root/name
+              if not path.exists() or not path.read_text(encoding='utf-8',errors='replace').strip():
+                  return {}
+              try:
+                  return json.loads(path.read_text(encoding='utf-8'))
+              except Exception:
+                  return {}
+
+          def error_sha(name):
+              path=root/name
+              raw=path.read_bytes() if path.exists() else b''
+              return hashlib.sha256(raw).hexdigest() if raw else None
+
+          def sha(value):
+              return hashlib.sha256(str(value).encode()).hexdigest()
+
+          service=read_json('service.json')
+          settings=read_json('settings.json')
+          policy=read_json('policy.json')
+          access=settings.get('accessSettings') or settings.get('access_settings') or {}
+          oauth=access.get('oauthSettings') or access.get('oauth_settings') or {}
+          client_id=str(oauth.get('clientId') or oauth.get('client_id') or '').strip()
+          programmatic=oauth.get('programmaticClients') or oauth.get('programmatic_clients') or []
+          if not isinstance(programmatic,list):
+              programmatic=[]
+          safe_bindings=[]
+          for binding in policy.get('bindings') or []:
+              role=str(binding.get('role') or '')
+              members=[str(x) for x in (binding.get('members') or [])]
+              safe_bindings.append({
+                  'role':role,
+                  'member_count':len(members),
+                  'member_sha256':sorted(sha(x) for x in members),
+              })
+          auth_present=os.environ.get('HAS_GCP_READ_CREDENTIAL','').lower()=='true'
+          auth_outcome=os.environ.get('CLOUD_AUTH_OUTCOME','')
+          service_rc=int(os.environ.get('SERVICE_RC','99'))
+          settings_rc=int(os.environ.get('SETTINGS_RC','99'))
+          policy_rc=int(os.environ.get('POLICY_RC','99'))
+          state=(
+              'PROVIDER_READBACK_VERIFIED'
+              if auth_present and auth_outcome=='success' and service_rc==0 and settings_rc==0 and policy_rc==0
+              else 'AUTH_CREDENTIAL_MISSING'
+              if not auth_present
+              else 'PROVIDER_READBACK_PARTIAL_OR_DENIED'
+          )
+          safe={
+              'state':state,
+              'project_id':os.environ.get('PROJECT_ID'),
+              'project_number':os.environ.get('PROJECT_NUMBER'),
+              'region':os.environ.get('REGION'),
+              'service':os.environ.get('FUSE_MOBILE_SERVICE'),
+              'credential_alias_present':auth_present,
+              'auth_outcome':auth_outcome,
+              'service_read_status':service_rc,
+              'settings_read_status':settings_rc,
+              'policy_read_status':policy_rc,
+              'iap_enabled':service.get('iapEnabled'),
+              'ingress':service.get('ingress'),
+              'invoker_iam_disabled':service.get('invokerIamDisabled'),
+              'default_uri_disabled':service.get('defaultUriDisabled'),
+              'latest_ready_revision':service.get('latestReadyRevision'),
+              'oauth_resource_client_id_present':bool(client_id),
+              'oauth_resource_client_id_sha256':sha(client_id) if client_id else None,
+              'programmatic_client_count':len(programmatic),
+              'programmatic_client_sha256':sorted(sha(x) for x in programmatic),
+              'iap_policy_binding_count':len(safe_bindings),
+              'iap_policy_bindings':safe_bindings,
+              'service_error_sha256':error_sha('service.err'),
+              'settings_error_sha256':error_sha('settings.err'),
+              'policy_error_sha256':error_sha('policy.err'),
+              'oauth_client_secret_recorded':False,
+              'credential_value_recorded':False,
+              'provider_mutation_performed':False,
+              'iam_mutation_performed':False,
+              'oauth_mutation_performed':False,
+              'traffic_change_performed':False,
+          }
+          receipt.setdefault('surface_corrections',{})['fuse_mobile_cloud_run_iap']=safe
+          receipt_path.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({
+              'state':state,
+              'iap_enabled':safe['iap_enabled'],
+              'programmatic_client_count':safe['programmatic_client_count'],
+              'iap_policy_binding_count':safe['iap_policy_binding_count'],
+              'provider_mutation_performed':False,
+          },sort_keys=True))
+          PY
 
       - name: Probe AI Studio Gemini Developer API with bounded semantic nonce
         shell: bash
@@ -133,6 +283,12 @@ jobs:
           r['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
           assert r.get('provider_mutation_performed') is False
           assert r.get('credential_values_recorded') is False
+          iap=(r.get('surface_corrections',{}).get('fuse_mobile_cloud_run_iap') or {})
+          assert iap.get('provider_mutation_performed') is False
+          assert iap.get('iam_mutation_performed') is False
+          assert iap.get('oauth_mutation_performed') is False
+          assert iap.get('traffic_change_performed') is False
+          assert iap.get('oauth_client_secret_recorded') is False
           p.write_text(json.dumps(r,indent=2,sort_keys=True)+'\n',encoding='utf-8')
           PY
 
