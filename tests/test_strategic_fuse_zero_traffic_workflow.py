@@ -39,6 +39,7 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED",
             "CANDIDATE_RUNTIME_IDENTITY_DRIFT",
             "--service-account \"$CANDIDATE_RUNTIME_SA\"",
+            "--clear-secrets",
             "CANDIDATE_RUNTIME_IDENTITY_MISMATCH",
             "gcloud auth configure-docker",
             "docker build --pull",
@@ -138,6 +139,16 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         self.assertLess(self.text.index("CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED"), self.text.index('gcloud run deploy "$OPERATOR_SERVICE"'))
         self.assertNotIn("add-iam-policy-binding", self.low)
 
+    def test_candidate_clears_inherited_secret_bindings_before_creation(self) -> None:
+        deploy = self.text.index('gcloud run deploy "$OPERATOR_SERVICE"')
+        clear = self.text.index("--clear-secrets", deploy)
+        env = self.text.index("--set-env-vars", deploy)
+        self.assertLess(deploy, clear)
+        self.assertLess(clear, env)
+        self.assertEqual(1, self.text.count("--clear-secrets"))
+        self.assertNotIn("--set-secrets", self.text)
+        self.assertNotIn("--update-secrets", self.text)
+
     def test_candidate_uses_only_pre_authorized_runtime_identity(self) -> None:
         self.assertIn("CANDIDATE_RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com", self.text)
         self.assertIn('--service-account "$CANDIDATE_RUNTIME_SA"', self.text)
@@ -184,6 +195,8 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "gcloud secrets versions access",
             "${{ secrets.",
             "--update-env-vars",
+            "--set-secrets",
+            "--update-secrets",
             "run services update-traffic",
             "--to-revisions",
             "--to-tags",
