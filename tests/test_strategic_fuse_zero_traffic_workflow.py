@@ -46,6 +46,8 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "gcloud artifacts docker images describe \"$IMAGE_TAG\"",
             "--no-traffic",
             "--tag \"$TAG\"",
+            "TAG=\"sf-${GITHUB_SHA:0:8}\"",
+            "CLOUD_RUN_SERVICE_TAG_LENGTH_EXCEEDS_46",
             "--set-env-vars \"OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}\"",
             "CANDIDATE_SECRET_BACKED_ENV_FORBIDDEN",
             "CANDIDATE_ENV_NOT_CLOSED_WORLD",
@@ -163,6 +165,15 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             self.text,
         )
         self.assertLess(self.text.index("--set-env-vars"), self.text.index("/tmp/strategic-read/read-request.json"))
+
+    def test_cloud_run_candidate_tag_is_deterministic_and_within_provider_limit(self) -> None:
+        self.assertIn('TAG="sf-${GITHUB_SHA:0:8}"', self.text)
+        self.assertIn('if (( ${#OPERATOR_SERVICE} + ${#TAG} > 46 )); then', self.text)
+        self.assertIn("CLOUD_RUN_SERVICE_TAG_LENGTH_EXCEEDS_46", self.text)
+        self.assertNotIn('TAG="strategic-read-${GITHUB_SHA:0:8}"', self.text)
+        service = "federation-omega-operator"
+        tag = "sf-" + ("0" * 8)
+        self.assertLessEqual(len(service) + len(tag), 46)
 
     def test_forbidden_effect_routes_absent(self) -> None:
         forbidden = [

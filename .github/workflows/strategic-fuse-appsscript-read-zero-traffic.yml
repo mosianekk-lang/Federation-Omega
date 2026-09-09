@@ -174,7 +174,11 @@ jobs:
       - name: Deploy tagged zero-traffic candidate with explicit pre-authorized runtime identity
         run: |
           set -euo pipefail
-          TAG="strategic-read-${GITHUB_SHA:0:8}"
+          TAG="sf-${GITHUB_SHA:0:8}"
+          if (( ${#OPERATOR_SERVICE} + ${#TAG} > 46 )); then
+            echo "CLOUD_RUN_SERVICE_TAG_LENGTH_EXCEEDS_46" >&2
+            exit 1
+          fi
           gcloud run deploy "$OPERATOR_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" \
             --image "$CANDIDATE_IMAGE" --no-traffic --tag "$TAG" \
