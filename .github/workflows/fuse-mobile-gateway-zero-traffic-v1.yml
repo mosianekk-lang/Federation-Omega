@@ -325,6 +325,33 @@ jobs:
             -H "X-Fuse-Authorization: Bearer $EXISTING_SESSION" \
             "$CANARY_URL/v1/federation/health" > fuse-mobile-deploy-proof/federation-health-pre-revoke.json
 
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" \
+            -H "X-Fuse-Authorization: Bearer $EXISTING_SESSION" \
+            "$CANARY_URL/v1/capabilities" > fuse-mobile-deploy-proof/capabilities-pre-revoke.json
+
+          python - <<'PY'
+          import json
+          from pathlib import Path
+          capabilities=json.loads(Path('fuse-mobile-deploy-proof/capabilities-pre-revoke.json').read_text())
+          by_id={item.get('capability_id'): item for item in capabilities.get('capabilities') or []}
+          kdv=by_id.get('KDV') or {}
+          vertex=by_id.get('GOOGLE-VERTEX-GEMINI') or {}
+          assert kdv.get('health') == 'RUNTIME_VERIFIED', kdv
+          assert str(kdv.get('authority') or '').startswith('READ_ONLY;'), kdv
+          assert vertex.get('health') == 'CONNECTED', vertex
+          assert str(vertex.get('authority') or '').startswith('ADC:'), vertex
+          Path('fuse-mobile-deploy-proof/data-provider-visibility.json').write_text(json.dumps({
+              'kdv_capability_id':'KDV',
+              'kdv_runtime_visibility_verified':True,
+              'kdv_health':kdv.get('health'),
+              'vertex_capability_id':'GOOGLE-VERTEX-GEMINI',
+              'vertex_adc_visibility_verified':True,
+              'vertex_health':vertex.get('health'),
+              'vertex_semantic_inference':'HELD_UNPROVEN_NOT_EXECUTED',
+          },indent=2,sort_keys=True)+'\n')
+          PY
+
           REVOKE_JSON="$(printf '{"device_token":"%s"}' "$DEVICE_TOKEN")"
           curl --fail-with-body --silent --show-error \
             -X POST \
@@ -356,13 +383,15 @@ jobs:
           from pathlib import Path
           health=json.loads(Path('fuse-mobile-deploy-proof/health.json').read_text())
           fed=json.loads(Path('fuse-mobile-deploy-proof/federation-health-pre-revoke.json').read_text())
+          visibility=json.loads(Path('fuse-mobile-deploy-proof/data-provider-visibility.json').read_text())
           revoke=json.loads(Path('fuse-mobile-deploy-proof/revoke.json').read_text())
           old=json.loads(Path('/tmp/fuse-mobile-old-session-after-revoke.json').read_text())
           new=json.loads(Path('/tmp/fuse-mobile-new-session-after-revoke.json').read_text())
           assert health.get('session_ready') is True
           assert health.get('enrollment_ready') is True
           assert fed.get('subject') == 'owner:kim'
-          assert int(fed.get('capability_count') or 0) > 0
+          assert visibility.get('kdv_runtime_visibility_verified') is True
+          assert visibility.get('vertex_adc_visibility_verified') is True
           assert revoke.get('status') == 'REVOKED'
           assert old.get('detail',{}).get('reason') == 'SESSION_DEVICE_REVOKED'
           assert new.get('detail',{}).get('reason') == 'DEVICE_CREDENTIAL_INVALID'
@@ -375,7 +404,7 @@ jobs:
               'existing_session_invalid_after_device_revoke':True,
               'new_session_invalid_after_device_revoke':True,
               'kdv_runtime_visibility_verified':True,
-              'vertex_adc_visibility_only':True,
+              'vertex_adc_visibility_verified':True,
               'vertex_semantic_inference':'HELD_UNPROVEN_NOT_EXECUTED',
               'effect_execution':'HELD_NOT_EXECUTED',
               'session_secret_dependency':False,
@@ -414,6 +443,7 @@ jobs:
               'preflight':load('fuse-mobile-deploy-proof/f134-runtime-preflight.json'),
               'traffic':load('fuse-mobile-deploy-proof/traffic-proof.json'),
               'runtime_lifecycle':load('fuse-mobile-deploy-proof/runtime-lifecycle.json'),
+              'data_provider_visibility':load('fuse-mobile-deploy-proof/data-provider-visibility.json'),
               'public_invocation':False,
               'production_traffic_changed':False,
               'provider_mutation_performed':bool(os.environ.get('REVISION')),
