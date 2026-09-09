@@ -45,7 +45,10 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest tests.test_fuse_mobile_mdtaf_v1 tests.test_fuse_mobile_version_contract
+          python -m unittest \
+            tests.test_fuse_mobile_mdtaf_v1 \
+            tests.test_fuse_mobile_mdtaf_avd_readiness \
+            tests.test_fuse_mobile_version_contract
 
       - name: Resolve real dependency graph and generate lock
         working-directory: mobile/fuse-mobile
@@ -177,27 +180,7 @@ jobs:
           name: fuse-mobile-android-v1-${{ github.run_id }}-${{ github.run_attempt }}
           path: mobile/fuse-mobile/mdtaf-build-input
 
-      - name: Provision clean Android virtual device
-        shell: bash
-        env:
-          API_LEVEL: ${{ matrix.api }}
-        run: |
-          set -euo pipefail
-          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
-          test -n "$SDK_ROOT"
-          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
-          AVDMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/avdmanager"
-          test -x "$SDKMANAGER"
-          test -x "$AVDMANAGER"
-          "$SDKMANAGER" "platform-tools" "emulator" "system-images;android-${API_LEVEL};google_apis;x86_64"
-          ADB="$SDK_ROOT/platform-tools/adb"
-          test -x "$ADB"
-          echo no | "$AVDMANAGER" create avd --force \
-            --name "fuse-mdtaf-api-${API_LEVEL}" \
-            --package "system-images;android-${API_LEVEL};google_apis;x86_64" \
-            --device "pixel_6"
-
-      - name: Boot AVD and prove readiness
+      - name: Provision clean Android virtual device in stable AVD namespace
         shell: bash
         env:
           API_LEVEL: ${{ matrix.api }}
@@ -206,37 +189,50 @@ jobs:
           mkdir -p mobile/fuse-mobile/mdtaf-evidence
           SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
           test -n "$SDK_ROOT"
-          ADB="$SDK_ROOT/platform-tools/adb"
+          SDKMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/sdkmanager"
+          AVDMANAGER="$SDK_ROOT/cmdline-tools/latest/bin/avdmanager"
           EMULATOR="$SDK_ROOT/emulator/emulator"
-          test -x "$ADB"
+          test -x "$SDKMANAGER"
+          test -x "$AVDMANAGER"
           test -x "$EMULATOR"
+          ANDROID_AVD_HOME="$RUNNER_TEMP/fuse-mdtaf-avd-${API_LEVEL}"
+          mkdir -p "$ANDROID_AVD_HOME"
+          export ANDROID_AVD_HOME
+          echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
+          "$SDKMANAGER" "platform-tools" "emulator" "system-images;android-${API_LEVEL};google_apis;x86_64"
+          ADB="$SDK_ROOT/platform-tools/adb"
+          test -x "$ADB"
+          AVD_NAME="fuse-mdtaf-api-${API_LEVEL}"
+          echo no | "$AVDMANAGER" create avd --force \
+            --name "$AVD_NAME" \
+            --package "system-images;android-${API_LEVEL};google_apis;x86_64" \
+            --device "pixel_6"
+          test -s "$ANDROID_AVD_HOME/${AVD_NAME}.ini"
+          "$EMULATOR" -list-avds | tee "mobile/fuse-mobile/mdtaf-evidence/emulator-list-avds-provision-api-${API_LEVEL}.txt"
+          grep -Fx -- "$AVD_NAME" "mobile/fuse-mobile/mdtaf-evidence/emulator-list-avds-provision-api-${API_LEVEL}.txt" >/dev/null
+          printf '%s\n' "$ANDROID_AVD_HOME" > "mobile/fuse-mobile/mdtaf-evidence/android-avd-home-api-${API_LEVEL}.txt"
+
+      - name: Boot AVD through bounded exact-SDK readiness court
+        shell: bash
+        env:
+          API_LEVEL: ${{ matrix.api }}
+          EVIDENCE_DIR: mobile/fuse-mobile/mdtaf-evidence
+          DEVICE_TIMEOUT_SECONDS: '180'
+          BOOT_TIMEOUT_SECONDS: '240'
+          POLL_INTERVAL_SECONDS: '2'
+        run: |
+          set -euo pipefail
+          SDK_ROOT="${ANDROID_SDK_ROOT:-${ANDROID_HOME:-}}"
+          test -n "$SDK_ROOT"
+          ADB="$SDK_ROOT/platform-tools/adb"
+          test -x "$ADB"
           ADB_BIN="$ADB" bash mobile/fuse-mobile/lab/resolve_sdk_adb.sh >/tmp/fuse-mdtaf-adb-path.txt
           RESOLVED_ADB="$(cat /tmp/fuse-mdtaf-adb-path.txt)"
           test "$RESOLVED_ADB" = "$(realpath -e "$ADB")"
-          ADB="$RESOLVED_ADB"
+          test -n "${ANDROID_AVD_HOME:-}"
+          test -s "$ANDROID_AVD_HOME/fuse-mdtaf-api-${API_LEVEL}.ini"
           sudo chmod 666 /dev/kvm 2>/dev/null || true
-          "$EMULATOR" \
-            -avd "fuse-mdtaf-api-${API_LEVEL}" \
-            -no-window -no-audio -no-boot-anim -no-snapshot \
-            -gpu swiftshader_indirect -memory 3072 -cores 2 \
-            > "mobile/fuse-mobile/mdtaf-evidence/emulator-api-${API_LEVEL}.log" 2>&1 &
-          "$ADB" wait-for-device
-          ready=0
-          for _ in $(seq 1 120); do
-            if [[ "$("$ADB" shell getprop sys.boot_completed 2>/dev/null | tr -d '\r')" == "1" ]]; then
-              ready=1
-              break
-            fi
-            sleep 2
-          done
-          if [[ "$ready" -ne 1 ]]; then
-            "$ADB" devices -l || true
-            tail -200 "mobile/fuse-mobile/mdtaf-evidence/emulator-api-${API_LEVEL}.log" || true
-            exit 1
-          fi
-          "$ADB" shell input keyevent 82 || true
-          "$ADB" shell getprop ro.build.version.sdk | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-api.txt"
-          "$ADB" shell getprop ro.product.cpu.abi | tr -d '\r' | tee "mobile/fuse-mobile/mdtaf-evidence/android-abi.txt"
+          bash mobile/fuse-mobile/lab/boot_avd_bounded.sh
 
       - name: Resolve exact shared APK and security receipt
         shell: bash
