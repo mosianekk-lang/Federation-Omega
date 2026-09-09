@@ -230,12 +230,10 @@ jobs:
           fi
           dpkg-query -W -f='${Package}=${Version}\n' libpulse0 \
             | tee "$EVIDENCE_DIR/emulator-host-package-provenance-api-${API_LEVEL}.txt"
-          ldd "$QEMU" | tee "$EVIDENCE_DIR/emulator-host-libs-after-api-${API_LEVEL}.txt"
-          if grep -Fq '=> not found' "$EVIDENCE_DIR/emulator-host-libs-after-api-${API_LEVEL}.txt"; then
-            echo "Android emulator still has unresolved host shared-library dependencies" >&2
-            exit 43
-          fi
-          "$EMULATOR" -version 2>&1 | head -n 4 > "$EVIDENCE_DIR/emulator-version-api-${API_LEVEL}.txt"
+          bash mobile/fuse-mobile/lab/validate_emulator_host_dependencies.sh \
+            --sdk-root "$SDK_ROOT" \
+            --evidence-dir "$EVIDENCE_DIR" \
+            --api-level "$API_LEVEL"
           AVD_NAME="fuse-mdtaf-api-${API_LEVEL}"
           echo no | "$AVDMANAGER" create avd --force \
             --name "$AVD_NAME" \
