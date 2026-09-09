@@ -1,0 +1,292 @@
+name: Strategic FUSE Apps Script Read — Zero Traffic Candidate
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: strategic-fuse-appsscript-read-zero-traffic
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: "257649435135"
+  REGION: africa-south1
+  REPOSITORY: federation-omega
+  OPERATOR_SERVICE: federation-omega-operator
+  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  TARGET_SCRIPT_ID: 1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R
+  REQUIRED_ACTION: READ_APPS_SCRIPT_PROJECT_BOUNDED
+
+jobs:
+  strategic-read-canary:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - name: Fail closed unless owner issue trigger is bound to main
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = "refs/heads/main"
+
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Authenticate keylessly to the existing Google deployment identity
+        id: google-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+
+      - name: Prove existing operator trust configuration and freeze serving baseline
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/strategic-read
+          gcloud run services describe "$OPERATOR_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > /tmp/strategic-read/service-before.json
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          p = json.loads(Path('/tmp/strategic-read/service-before.json').read_text())
+          containers = p.get('spec', {}).get('template', {}).get('spec', {}).get('containers', [])
+          assert containers, 'OPERATOR_CONTAINER_MISSING'
+          env_items = containers[0].get('env', [])
+          direct = {x.get('name'): x.get('value') for x in env_items if x.get('name') and 'value' in x}
+          audience = (direct.get('OPERATOR_AUDIENCE') or '').strip()
+          principals = [x.strip().lower() for x in (direct.get('OIDC_ALLOWED_PRINCIPALS') or '').split(',') if x.strip()]
+          deployer = os.environ['DEPLOYER_SA'].lower()
+          assert audience, 'OPERATOR_AUDIENCE_PREEXISTING_REQUIRED'
+          assert principals, 'OIDC_ALLOWED_PRINCIPALS_PREEXISTING_REQUIRED'
+          assert deployer in principals, 'DEPLOYER_NOT_PREEXISTING_OIDC_PRINCIPAL'
+          print('::add-mask::' + audience)
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
+              fh.write('OPERATOR_AUDIENCE<<STRATEGIC_AUD_EOF\n' + audience + '\nSTRATEGIC_AUD_EOF\n')
+          serving = sorted(
+              {'revision': x.get('revisionName'), 'percent': int(x.get('percent') or 0)}
+              for x in p.get('status', {}).get('traffic', []) if int(x.get('percent') or 0) > 0
+          , key=lambda x: (x['revision'] or '', x['percent']))
+          raw = json.dumps(serving, sort_keys=True, separators=(',', ':')).encode()
+          Path('/tmp/strategic-read/serving-before.json').write_text(json.dumps(serving, sort_keys=True))
+          Path('/tmp/strategic-read/serving-before.sha256').write_text(hashlib.sha256(raw).hexdigest())
+          PY
+
+      - name: Require exact bounded-read source before any provider build
+        run: |
+          set -euo pipefail
+          test -f ops/federation_omega_operator/lib/apps_script_bounded_read.mjs
+          grep -q 'READ_APPS_SCRIPT_PROJECT_BOUNDED' ops/federation_omega_operator/lib/contracts.mjs
+          grep -q 'executeAppsScriptBoundedReadAction' ops/federation_omega_operator/lib/operator.mjs
+          node --check ops/federation_omega_operator/lib/apps_script_bounded_read.mjs
+          npm --prefix ops/federation_omega_operator test
+          npm --prefix ops/federation_omega_operator run check
+
+      - name: Build exact operator candidate from the admitted main head
+        run: |
+          set -euo pipefail
+          IMAGE_TAG="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${OPERATOR_SERVICE}:strategic-read-${GITHUB_SHA}"
+          gcloud builds submit ops/federation_omega_operator \
+            --project "$PROJECT_ID" --region "$REGION" --tag "$IMAGE_TAG" --quiet
+          DIGEST="$(gcloud artifacts docker images describe "$IMAGE_TAG" \
+            --project "$PROJECT_ID" --format='value(image_summary.digest)')"
+          test -n "$DIGEST"
+          IMAGE="${REGION}-docker.pkg.dev/${PROJECT_ID}/${REPOSITORY}/${OPERATOR_SERVICE}@${DIGEST}"
+          {
+            echo "CANDIDATE_IMAGE=$IMAGE"
+            echo "CANDIDATE_DIGEST=$DIGEST"
+          } >> "$GITHUB_ENV"
+
+      - name: Deploy same service as tagged zero-traffic candidate without changing trust configuration
+        run: |
+          set -euo pipefail
+          TAG="strategic-read-${GITHUB_SHA:0:8}"
+          gcloud run deploy "$OPERATOR_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" \
+            --image "$CANDIDATE_IMAGE" --no-traffic --tag "$TAG" --quiet
+          echo "CANDIDATE_TAG=$TAG" >> "$GITHUB_ENV"
+          gcloud run services describe "$OPERATOR_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > /tmp/strategic-read/service-candidate.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = json.loads(Path('/tmp/strategic-read/service-candidate.json').read_text())
+          tag = os.environ['CANDIDATE_TAG']
+          matches = [x for x in p.get('status', {}).get('traffic', []) if x.get('tag') == tag]
+          assert len(matches) == 1, 'TAGGED_CANDIDATE_NOT_UNIQUE'
+          item = matches[0]
+          assert int(item.get('percent') or 0) == 0, 'CANDIDATE_TRAFFIC_NOT_ZERO'
+          assert item.get('revisionName'), 'CANDIDATE_REVISION_MISSING'
+          assert item.get('url'), 'CANDIDATE_URL_MISSING'
+          print('::add-mask::' + item['url'])
+          with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
+              fh.write('CANDIDATE_URL<<STRATEGIC_URL_EOF\n' + item['url'] + '\nSTRATEGIC_URL_EOF\n')
+              fh.write('CANDIDATE_REVISION=' + item['revisionName'] + '\n')
+          PY
+
+      - name: Prove candidate inherited the exact pre-existing trust gate
+        run: |
+          set -euo pipefail
+          gcloud run revisions describe "$CANDIDATE_REVISION" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > /tmp/strategic-read/revision.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p = json.loads(Path('/tmp/strategic-read/revision.json').read_text())
+          containers = p.get('spec', {}).get('containers', [])
+          assert containers, 'CANDIDATE_CONTAINER_MISSING'
+          direct = {x.get('name'): x.get('value') for x in containers[0].get('env', []) if x.get('name') and 'value' in x}
+          assert (direct.get('OPERATOR_AUDIENCE') or '').strip() == os.environ['OPERATOR_AUDIENCE'], 'CANDIDATE_AUDIENCE_DRIFT'
+          allowed = [x.strip().lower() for x in (direct.get('OIDC_ALLOWED_PRINCIPALS') or '').split(',') if x.strip()]
+          assert os.environ['DEPLOYER_SA'].lower() in allowed, 'CANDIDATE_PRINCIPAL_DRIFT'
+          PY
+
+      - name: Mint one ephemeral OIDC token and verify STATUS before the Strategic read
+        run: |
+          set -euo pipefail
+          set +x
+          TOKEN="$(gcloud auth print-identity-token --audiences="$OPERATOR_AUDIENCE" --include-email)"
+          test -n "$TOKEN"
+          echo "::add-mask::$TOKEN"
+          printf '%s' '{"action":"STATUS","payload":{}}' > /tmp/strategic-read/status-request.json
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/strategic-read/status-request.json \
+            "$CANDIDATE_URL/execute" > /tmp/strategic-read/status.json
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=json.loads(Path('/tmp/strategic-read/status.json').read_text())
+          assert p.get('ok') is True, p
+          assert p.get('status') == 'OPERATOR_EXECUTE_READY', p
+          assert p.get('authMode') == 'GOOGLE_OIDC_ALLOWLIST', p
+          assert str(p.get('principal','')).lower() == os.environ['DEPLOYER_SA'].lower(), p
+          PY
+          unset TOKEN
+
+      - name: Execute exactly one bounded Strategic Apps Script project read
+        run: |
+          set -euo pipefail
+          set +x
+          TOKEN="$(gcloud auth print-identity-token --audiences="$OPERATOR_AUDIENCE" --include-email)"
+          test -n "$TOKEN"
+          echo "::add-mask::$TOKEN"
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          Path('/tmp/strategic-read/read-request.json').write_text(json.dumps({
+              'action': os.environ['REQUIRED_ACTION'],
+              'payload': {'scriptId': os.environ['TARGET_SCRIPT_ID']},
+          }, separators=(',', ':')), encoding='utf-8')
+          PY
+          curl --fail --silent --show-error \
+            -H "Authorization: Bearer $TOKEN" \
+            -H 'Content-Type: application/json' \
+            --data-binary @/tmp/strategic-read/read-request.json \
+            "$CANDIDATE_URL/execute" > /tmp/strategic-read/read.json
+          unset TOKEN
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          p=json.loads(Path('/tmp/strategic-read/read.json').read_text())
+          assert p.get('ok') is True, p
+          assert p.get('status') == 'APPS_SCRIPT_PROJECT_BOUNDED_READ_VERIFIED', p
+          assert p.get('scriptId') == os.environ['TARGET_SCRIPT_ID'], p
+          for key in ('rawSourcePersisted','sourceReturned','providerEffect','mutationAttempted','secretValuesRecorded'):
+              assert p.get(key) is False, (key,p.get(key))
+          assert isinstance(p.get('fileCount'), int) and p['fileCount'] > 0, p
+          assert isinstance(p.get('functionCount'), int) and p['functionCount'] > 0, p
+          assert isinstance(p.get('projectDigest'), str) and len(p['projectDigest']) == 64, p
+          assert isinstance(p.get('requiredFunctionsPresent'), dict), p
+          def contains_source(x):
+              if isinstance(x, dict):
+                  return 'source' in x or any(contains_source(v) for v in x.values())
+              if isinstance(x, list): return any(contains_source(v) for v in x)
+              return False
+          assert not contains_source(p), 'RAW_SOURCE_FIELD_PRESENT'
+          PY
+
+      - name: Prove normal serving traffic was unchanged and candidate remains zero traffic
+        run: |
+          set -euo pipefail
+          gcloud run services describe "$OPERATOR_SERVICE" \
+            --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > /tmp/strategic-read/service-after.json
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          before = json.loads(Path('/tmp/strategic-read/serving-before.json').read_text())
+          p = json.loads(Path('/tmp/strategic-read/service-after.json').read_text())
+          after = sorted(
+              ({'revision': x.get('revisionName'), 'percent': int(x.get('percent') or 0)}
+               for x in p.get('status', {}).get('traffic', []) if int(x.get('percent') or 0) > 0),
+              key=lambda x: (x['revision'] or '', x['percent']))
+          assert before == after, f'SERVING_TRAFFIC_CHANGED:{before!r}!={after!r}'
+          tag = os.environ['CANDIDATE_TAG']
+          tagged = [x for x in p.get('status', {}).get('traffic', []) if x.get('tag') == tag]
+          assert len(tagged) == 1 and int(tagged[0].get('percent') or 0) == 0, 'CANDIDATE_NOT_ZERO_TRAFFIC_AT_END'
+          raw = json.dumps(after, sort_keys=True, separators=(',', ':')).encode()
+          Path('/tmp/strategic-read/serving-after.sha256').write_text(hashlib.sha256(raw).hexdigest())
+          assert Path('/tmp/strategic-read/serving-before.sha256').read_text() == Path('/tmp/strategic-read/serving-after.sha256').read_text(), 'SERVING_TRAFFIC_DIGEST_CHANGED'
+          PY
+
+      - name: Emit bounded no-secret proof receipt
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          status=json.loads(Path('/tmp/strategic-read/status.json').read_text())
+          read=json.loads(Path('/tmp/strategic-read/read.json').read_text())
+          receipt={
+            'schema':'STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_RECEIPT_V1',
+            'source_sha':os.environ['GITHUB_SHA'],
+            'operator_service':os.environ['OPERATOR_SERVICE'],
+            'candidate_revision':os.environ['CANDIDATE_REVISION'],
+            'candidate_tag':os.environ['CANDIDATE_TAG'],
+            'candidate_image_digest':os.environ['CANDIDATE_DIGEST'],
+            'candidate_traffic_percent':0,
+            'serving_traffic_unchanged':True,
+            'auth_mode':status.get('authMode'),
+            'principal':status.get('principal'),
+            'action':os.environ['REQUIRED_ACTION'],
+            'script_id':read.get('scriptId'),
+            'file_count':read.get('fileCount'),
+            'function_count':read.get('functionCount'),
+            'project_digest':read.get('projectDigest'),
+            'required_functions_present':read.get('requiredFunctionsPresent'),
+            'raw_source_persisted':False,
+            'source_returned':False,
+            'provider_effect_from_apps_script_read':False,
+            'apps_script_mutation_attempted':False,
+            'secret_values_recorded':False,
+            'iam_mutation_performed':False,
+            'traffic_promotion_performed':False,
+          }
+          Path('/tmp/strategic-read/receipt.json').write_text(json.dumps(receipt,sort_keys=True,indent=2),encoding='utf-8')
+          PY
+
+      - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: strategic-fuse-appsscript-read-zero-traffic-${{ github.run_id }}
+          path: /tmp/strategic-read/receipt.json
+          if-no-files-found: error
+          retention-days: 30

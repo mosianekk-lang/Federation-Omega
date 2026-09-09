@@ -90,11 +90,13 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
 
         sol62_wif = credential_policy["sol62_wif_hardening_workflow"]
         fuse_mobile_gateway = credential_policy["fuse_mobile_gateway_deployment_workflow"]
-        self.assertEqual({sol62_wif, fuse_mobile_gateway}, provider_mutators)
+        strategic_apps_script_read = credential_policy["strategic_apps_script_read_workflow"]
+        self.assertEqual({sol62_wif, fuse_mobile_gateway, strategic_apps_script_read}, provider_mutators)
         self.assertEqual(
             {
                 sol62_wif: "SOL62-WIF-HARDEN-20260901",
                 fuse_mobile_gateway: "[FO-DISPATCH] FUSE_MOBILE_GATEWAY_ZERO_TRAFFIC_V1",
+                strategic_apps_script_read: "[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1",
             },
             self.policy["provider_mutation_exact_issue_titles"],
         )
