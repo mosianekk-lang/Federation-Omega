@@ -21,6 +21,7 @@ env:
   OPERATOR_SERVICE: federation-omega-operator
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  CANDIDATE_RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
   TARGET_SCRIPT_ID: 1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R
   REQUIRED_ACTION: READ_APPS_SCRIPT_PROJECT_BOUNDED
 
@@ -117,28 +118,38 @@ jobs:
           npm --prefix ops/federation_omega_operator test
           npm --prefix ops/federation_omega_operator run check
 
-      - name: Re-prove pre-existing direct Artifact Registry writer authority without IAM mutation
+      - name: Re-prove existing Artifact Registry writer and candidate runtime actAs authority without IAM mutation
         run: |
           set -euo pipefail
           gcloud projects get-iam-policy "$PROJECT_ID" --format=json > /tmp/strategic-read/project-policy.json
           gcloud artifacts repositories get-iam-policy "$REPOSITORY" \
             --location "$REGION" --project "$PROJECT_ID" --format=json \
             > /tmp/strategic-read/repository-policy.json
+          gcloud iam service-accounts describe "$CANDIDATE_RUNTIME_SA" \
+            --project "$PROJECT_ID" --format=json > /tmp/strategic-read/runtime-sa.json
+          gcloud iam service-accounts get-iam-policy "$CANDIDATE_RUNTIME_SA" \
+            --project "$PROJECT_ID" --format=json > /tmp/strategic-read/runtime-sa-policy.json
           python - <<'PY'
           import json, os
           from pathlib import Path
-          member = 'serviceAccount:' + os.environ['DEPLOYER_SA']
+          deployer = 'serviceAccount:' + os.environ['DEPLOYER_SA']
           project = json.loads(Path('/tmp/strategic-read/project-policy.json').read_text())
           repository = json.loads(Path('/tmp/strategic-read/repository-policy.json').read_text())
+          runtime = json.loads(Path('/tmp/strategic-read/runtime-sa.json').read_text())
+          runtime_policy = json.loads(Path('/tmp/strategic-read/runtime-sa-policy.json').read_text())
           def has(policy, role, member):
               return any(
                   b.get('role') == role and not b.get('condition') and member in (b.get('members') or [])
                   for b in policy.get('bindings') or []
               )
-          writer = has(project, 'roles/artifactregistry.writer', member) or has(repository, 'roles/artifactregistry.writer', member)
+          assert str(runtime.get('email') or '').lower() == os.environ['CANDIDATE_RUNTIME_SA'].lower(), 'CANDIDATE_RUNTIME_IDENTITY_DRIFT'
+          writer = has(project, 'roles/artifactregistry.writer', deployer) or has(repository, 'roles/artifactregistry.writer', deployer)
+          sa_user = has(project, 'roles/iam.serviceAccountUser', deployer) or has(runtime_policy, 'roles/iam.serviceAccountUser', deployer)
           assert writer, 'ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED'
+          assert sa_user, 'CANDIDATE_RUNTIME_ACTAS_PREEXISTING_REQUIRED'
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
               fh.write('ARTIFACT_REGISTRY_WRITER_PREEXISTING=true\n')
+              fh.write('CANDIDATE_RUNTIME_ACTAS_PREEXISTING=true\n')
           PY
 
       - name: Build exact operator locally and push directly to Artifact Registry
@@ -160,13 +171,14 @@ jobs:
             echo "CANDIDATE_DIGEST=$DIGEST"
           } >> "$GITHUB_ENV"
 
-      - name: Deploy tagged zero-traffic candidate with closed-world OIDC trust
+      - name: Deploy tagged zero-traffic candidate with explicit pre-authorized runtime identity
         run: |
           set -euo pipefail
           TAG="strategic-read-${GITHUB_SHA:0:8}"
           gcloud run deploy "$OPERATOR_SERVICE" \
             --project "$PROJECT_ID" --region "$REGION" \
             --image "$CANDIDATE_IMAGE" --no-traffic --tag "$TAG" \
+            --service-account "$CANDIDATE_RUNTIME_SA" \
             --set-env-vars "OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}" \
             --quiet
           echo "CANDIDATE_TAG=$TAG" >> "$GITHUB_ENV"
@@ -189,7 +201,7 @@ jobs:
               fh.write('CANDIDATE_REVISION=' + item['revisionName'] + '\n')
           PY
 
-      - name: Prove candidate trust is exact scoped and secretless
+      - name: Prove candidate runtime trust is exact scoped and secretless
         run: |
           set -euo pipefail
           gcloud run revisions describe "$CANDIDATE_REVISION" \
@@ -199,7 +211,10 @@ jobs:
           import json, os
           from pathlib import Path
           p = json.loads(Path('/tmp/strategic-read/revision.json').read_text())
-          containers = p.get('spec', {}).get('containers', [])
+          spec = p.get('spec', {})
+          actual_runtime = str(spec.get('serviceAccountName') or spec.get('serviceAccount') or '').strip().lower()
+          assert actual_runtime == os.environ['CANDIDATE_RUNTIME_SA'].lower(), f'CANDIDATE_RUNTIME_IDENTITY_MISMATCH:{actual_runtime}'
+          containers = spec.get('containers') or spec.get('template', {}).get('spec', {}).get('containers') or []
           assert containers, 'CANDIDATE_CONTAINER_MISSING'
           env_items = containers[0].get('env', [])
           direct = {x.get('name'): x.get('value') for x in env_items if x.get('name') and 'value' in x}
@@ -320,6 +335,8 @@ jobs:
             'serving_oidc_principal_count':int(os.environ['SERVING_PRINCIPAL_COUNT']),
             'serving_secret_backed_env_count':int(os.environ['SERVING_SECRET_BACKED_ENV_COUNT']),
             'artifact_registry_writer_preexisting':os.environ['ARTIFACT_REGISTRY_WRITER_PREEXISTING'].lower() == 'true',
+            'candidate_runtime_service_account':os.environ['CANDIDATE_RUNTIME_SA'],
+            'candidate_runtime_actas_preexisting':os.environ['CANDIDATE_RUNTIME_ACTAS_PREEXISTING'].lower() == 'true',
             'image_build_transport':'GITHUB_HOSTED_DOCKER_DIRECT_ARTIFACT_REGISTRY',
             'cloud_build_staging_used':False,
             'candidate_revision':os.environ['CANDIDATE_REVISION'],
@@ -332,6 +349,7 @@ jobs:
             'candidate_secret_backed_env_count':0,
             'candidate_only_trust_binding':True,
             'service_template_mutation_performed':True,
+            'serving_revision_runtime_identity_mutation_performed':False,
             'serving_revision_trust_mutation_performed':False,
             'serving_traffic_unchanged':True,
             'auth_mode':status.get('authMode'),
