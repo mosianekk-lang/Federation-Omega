@@ -53,6 +53,23 @@ class FuseMobileGatewayDeployWorkflowV1Tests(unittest.TestCase):
         self.assertIn("public_invocation':False", text)
         self.assertIn("new_percent in {0,100}", text)
 
+    def test_secretless_firestore_session_dependency_is_fail_closed(self) -> None:
+        text = self._workflow_or_skip_export()
+        self.assertIn("FIRESTORE_HASH_ONLY_OPAQUE", text)
+        self.assertIn("runtime_firestore_authority", text)
+        self.assertIn("firestore-database.json", text)
+        self.assertIn("existing_session_invalid_after_device_revoke", text)
+        self.assertIn("SESSION_DEVICE_REVOKED", text)
+        self.assertIn("PRIVATE_GATEWAY_F134_SECRETLESS_RUNTIME_E2E_VERIFIED", text)
+        self.assertIn("PRIVATE_GATEWAY_CANARY_DEPLOYED_SOURCE_READY", text)
+        self.assertIn("vertex_semantic_inference':'HELD_UNPROVEN_NOT_EXECUTED'", text)
+        self.assertNotIn("FUSE_MOBILE_SESSION_SECRET_B64", text)
+        self.assertNotIn("SESSION_SECRET_ID", text)
+        self.assertNotIn("--set-secrets", text)
+        self.assertNotIn("gcloud secrets", text)
+        self.assertNotIn("secretmanager.googleapis.com", text)
+        self.assertNotIn("secretAccessor", text)
+
     def test_provider_native_health_and_iam_readback_are_required(self) -> None:
         text = self._workflow_or_skip_export()
         self.assertIn("services get-iam-policy", text)
@@ -65,7 +82,6 @@ class FuseMobileGatewayDeployWorkflowV1Tests(unittest.TestCase):
         self.assertIn("ID_TOKEN: ${{ steps.auth.outputs.id_token }}", text)
         self.assertNotIn("gcloud auth print-identity-token", text)
         self.assertIn("$CANARY_URL/health", text)
-        self.assertIn("PRIVATE_GATEWAY_CANARY_DEPLOYED_SOURCE_READY", text)
         self.assertIn("deployment-receipt.json", text)
         self.assertIn("Upload immutable provider proof, including partial evidence on failure", text)
         self.assertIn("if: always()", text)
