@@ -58,6 +58,11 @@ class DeviceCredentialManagerProtocol(Protocol):
     async def revoke(self, credential: str, *, expected_subject: str) -> None: ...
 
 
+class SessionManagerProtocol(Protocol):
+    async def issue(self, identity: VerifiedIdentity) -> tuple[str, int]: ...
+    async def verify(self, token: str) -> VerifiedIdentity: ...
+
+
 class ChatExecutor(Protocol):
     async def execute(
         self,
@@ -147,6 +152,12 @@ def _b64decode(raw: str) -> bytes:
 
 
 class SessionCodec:
+    """Legacy deterministic HMAC codec retained for compatibility and unit courts.
+
+    Production FUSE Mobile runtime uses a stateful SessionManagerProtocol so a
+    previously-issued session can be invalidated when its bound device is revoked.
+    """
+
     def __init__(self, secret: bytes, *, ttl_seconds: int = DEFAULT_SESSION_TTL_SECONDS):
         if len(secret) < 32:
             raise ValueError("SESSION_SECRET_TOO_SHORT")
@@ -198,6 +209,7 @@ class SessionCodec:
 @dataclass
 class GatewayRuntime:
     session_codec: SessionCodec | None = None
+    session_manager: SessionManagerProtocol | None = None
     identity_verifier: IdentityVerifier = field(default_factory=DisabledIdentityVerifier)
     device_manager: DeviceCredentialManagerProtocol | None = None
     health_provider: CapabilityHealthProvider = field(default_factory=SourceOnlyCapabilityHealth)
@@ -208,21 +220,28 @@ class GatewayRuntime:
     tool_scopes: tuple[str, ...] = ("KDV", "PROOFOS", "ARTIFACTS")
 
     @property
+    def _session_backend_ready(self) -> bool:
+        return self.session_manager is not None or self.session_codec is not None
+
+    @property
     def session_ready(self) -> bool:
-        return self.session_codec is not None and not isinstance(self.identity_verifier, DisabledIdentityVerifier)
+        return self._session_backend_ready and not isinstance(self.identity_verifier, DisabledIdentityVerifier)
 
     @property
     def enrollment_ready(self) -> bool:
-        return self.session_codec is not None and self.device_manager is not None
+        return self._session_backend_ready and self.device_manager is not None
 
     @property
     def execution_ready(self) -> bool:
         return not isinstance(self.chat_executor, DisabledChatExecutor)
 
-    def _session_response(self, identity: VerifiedIdentity) -> dict:
-        if self.session_codec is None:
+    async def _session_response(self, identity: VerifiedIdentity) -> dict:
+        if self.session_manager is not None:
+            token, expires_epoch = await self.session_manager.issue(identity)
+        elif self.session_codec is not None:
+            token, expires_epoch = self.session_codec.issue(identity)
+        else:
             raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
-        token, expires_epoch = self.session_codec.issue(identity)
         return {
             "schema": SESSION_SCHEMA,
             "access_token": token,
@@ -232,10 +251,10 @@ class GatewayRuntime:
         }
 
     async def enroll_device(self, credential: str) -> dict:
-        if self.device_manager is None or self.session_codec is None:
+        if self.device_manager is None or not self._session_backend_ready:
             raise RuntimeBindingError("OWNER_ENROLLMENT_UNBOUND")
         identity, device_token = await self.device_manager.enroll(credential)
-        response = self._session_response(identity)
+        response = await self._session_response(identity)
         response.update(
             {
                 "device_token": device_token,
@@ -246,20 +265,22 @@ class GatewayRuntime:
         return response
 
     async def issue_session(self, credential: str) -> dict:
-        if self.session_codec is None:
+        if not self._session_backend_ready:
             raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
         identity = await self.identity_verifier.verify(credential)
-        return self._session_response(identity)
+        return await self._session_response(identity)
 
     async def revoke_device(self, identity: VerifiedIdentity, credential: str) -> None:
         if self.device_manager is None:
             raise RuntimeBindingError("DEVICE_REVOCATION_UNBOUND")
         await self.device_manager.revoke(credential, expected_subject=identity.subject)
 
-    def verify_session(self, token: str) -> VerifiedIdentity:
-        if self.session_codec is None:
-            raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
-        return self.session_codec.verify(token)
+    async def verify_session(self, token: str) -> VerifiedIdentity:
+        if self.session_manager is not None:
+            return await self.session_manager.verify(token)
+        if self.session_codec is not None:
+            return self.session_codec.verify(token)
+        raise RuntimeBindingError("SESSION_SIGNER_UNBOUND")
 
     async def manifest(self, identity: VerifiedIdentity) -> FederationCapabilityManifest:
         now = int(time.time())
@@ -279,6 +300,7 @@ class GatewayRuntime:
                 "private_data": "MINIMUM_SUFFICIENT_ROUTING",
                 "provider_health": "FRESH_READBACK_REQUIRED",
                 "device_credentials": "OPAQUE_HASHED_SERVER_SIDE_REVOCABLE",
+                "session_credentials": "OPAQUE_HASH_ONLY_DEVICE_BOUND_REVOCABLE",
             },
         )
 
