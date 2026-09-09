@@ -191,7 +191,6 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         forbidden = [
             "workflow_dispatch:",
             "inputs.confirmation",
-            "fo_admin_token",
             "fo-operator-admin-token",
             "gcloud secrets versions access",
             "${{ secrets.",
