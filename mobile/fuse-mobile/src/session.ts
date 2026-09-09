@@ -3,6 +3,9 @@ import * as SecureStore from 'expo-secure-store';
 const SESSION_KEY = 'fuse.mobile.access_token';
 const EXPIRY_KEY = 'fuse.mobile.access_token_expiry';
 const DEVICE_KEY = 'fuse.mobile.device_token';
+const STORE_OPTIONS = {
+  keychainAccessible: SecureStore.AFTER_FIRST_UNLOCK_THIS_DEVICE_ONLY,
+} as const;
 
 export type StoredSession = {
   accessToken: string;
@@ -17,7 +20,7 @@ export async function loadDeviceCredential(): Promise<string | null> {
 
 export async function saveDeviceCredential(deviceToken: string): Promise<void> {
   if (!deviceToken.trim()) throw new Error('DEVICE_TOKEN_REQUIRED');
-  await SecureStore.setItemAsync(DEVICE_KEY, deviceToken.trim());
+  await SecureStore.setItemAsync(DEVICE_KEY, deviceToken.trim(), STORE_OPTIONS);
 }
 
 export async function loadSession(): Promise<StoredSession | null> {
@@ -43,9 +46,9 @@ export async function loadSession(): Promise<StoredSession | null> {
 
 export async function saveSession(session: StoredSession): Promise<void> {
   if (!session.accessToken.trim()) throw new Error('SESSION_ACCESS_TOKEN_REQUIRED');
-  await SecureStore.setItemAsync(SESSION_KEY, session.accessToken.trim());
+  await SecureStore.setItemAsync(SESSION_KEY, session.accessToken.trim(), STORE_OPTIONS);
   if (session.expiresAt) {
-    await SecureStore.setItemAsync(EXPIRY_KEY, session.expiresAt);
+    await SecureStore.setItemAsync(EXPIRY_KEY, session.expiresAt, STORE_OPTIONS);
   } else {
     await SecureStore.deleteItemAsync(EXPIRY_KEY);
   }

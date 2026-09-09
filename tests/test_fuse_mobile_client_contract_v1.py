@@ -21,12 +21,16 @@ class FuseMobileClientContractV1Tests(unittest.TestCase):
         for forbidden in ("api_key", "openrouter_api_key", "sk-", "bearer "):
             self.assertNotIn(forbidden, raw)
 
-    def test_gateway_client_requires_external_config_and_bearer_session(self) -> None:
+    def test_gateway_client_requires_external_config_and_separates_transport_authority(self) -> None:
         client = (MOBILE / "src" / "federation.ts").read_text()
         self.assertIn("EXPO_PUBLIC_FEDERATION_GATEWAY_URL", client)
         self.assertIn("FEDERATION_GATEWAY_UNCONFIGURED", client)
         self.assertIn("FEDERATION_GATEWAY_INSECURE_URL", client)
-        self.assertIn("Authorization: `Bearer ${accessToken}`", client)
+        self.assertIn("Authorization: `Bearer ${iapIdentityToken.trim()}`", client)
+        self.assertIn("headers['X-Fuse-Authorization'] = `Bearer ${fuseCredential.trim()}`", client)
+        self.assertNotIn("Authorization: `Bearer ${accessToken}`", client)
+        self.assertIn("/v1/enroll", client)
+        self.assertIn("/v1/session", client)
         self.assertIn("/v1/capabilities", client)
         self.assertIn("/v1/chat", client)
         self.assertIn("/v1/federation/health", client)
@@ -38,7 +42,7 @@ class FuseMobileClientContractV1Tests(unittest.TestCase):
         self.assertIn("clearSession", session)
         self.assertNotIn("AsyncStorage", session)
 
-    def test_fuse_bar_is_bound_to_client_and_fails_closed_without_session(self) -> None:
+    def test_fuse_bar_is_bound_to_owner_connection_and_fails_closed_without_identity(self) -> None:
         client_path = MOBILE / "src" / "federation.ts"
         self.assertTrue(client_path.is_file())
         self.assertIn("FEDERATION_GATEWAY", client_path.read_text())
@@ -48,10 +52,11 @@ class FuseMobileClientContractV1Tests(unittest.TestCase):
             self.skipTest("FUSE Mobile UI is outside this reduced exported-core verification surface")
 
         ui = ui_path.read_text()
-        self.assertIn("sendFuseMessage", ui)
-        self.assertIn("loadSession", ui)
+        self.assertIn("sendOwnerFuseMessage", ui)
+        self.assertIn("restoreOwnerSession", ui)
+        self.assertIn("connectOwner", ui)
         self.assertIn("onPress={handleSend}", ui)
-        self.assertIn("Gateway session required", ui)
+        self.assertIn("Connect owner", ui)
 
     def test_build_profiles_separate_preview_and_production(self) -> None:
         eas = json.loads((MOBILE / "eas.json").read_text())
