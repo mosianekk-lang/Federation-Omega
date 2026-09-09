@@ -27,8 +27,11 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "OPERATOR_AUDIENCE",
             "OIDC_ALLOWED_PRINCIPALS",
             "CANDIDATE_OIDC_ALLOWED_PRINCIPALS",
+            "metadata_name = str(p.get('metadata', {}).get('name') or '').strip()",
+            "OPERATOR_SERVICE_IDENTITY_DRIFT",
             "canonical_url = str(p.get('status', {}).get('url') or '').strip()",
-            "OPERATOR_CANONICAL_URL_DRIFT",
+            "OPERATOR_CANONICAL_URL_SERVICE_BINDING_INVALID",
+            "OPERATOR_HOST_SHA256",
             "--no-traffic",
             "--tag \"$TAG\"",
             "--set-env-vars \"OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}\"",
@@ -49,6 +52,7 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "CANDIDATE_NOT_ZERO_TRAFFIC_AT_END",
             "'candidate_traffic_percent':0",
             "'serving_traffic_unchanged':True",
+            "'provider_native_audience':True",
             "'candidate_environment_closed_world':True",
             "'candidate_secret_backed_env_count':0",
             "'candidate_only_trust_binding':True",
@@ -62,18 +66,36 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         missing = [item for item in required if item not in self.text]
         self.assertFalse(missing, missing)
 
+    def test_stale_hardcoded_operator_url_is_not_runtime_authority(self) -> None:
+        self.assertNotIn("OPERATOR_URL:", self.text)
+        self.assertNotIn("OPERATOR_CANONICAL_URL_DRIFT", self.text)
+        self.assertNotIn("canonical_url == os.environ['OPERATOR_URL']", self.text)
+
+    def test_provider_native_service_identity_is_exact(self) -> None:
+        self.assertIn("metadata_name = str(p.get('metadata', {}).get('name') or '').strip()", self.text)
+        self.assertIn(
+            "assert metadata_name == os.environ['OPERATOR_SERVICE'], 'OPERATOR_SERVICE_IDENTITY_DRIFT'",
+            self.text,
+        )
+        self.assertIn("gcloud run services describe \"$OPERATOR_SERVICE\"", self.text)
+        self.assertIn("--project \"$PROJECT_ID\" --region \"$REGION\" --format=json", self.text)
+
+    def test_provider_native_audience_is_bounded_to_service_run_app_host(self) -> None:
+        self.assertIn("canonical_url = str(p.get('status', {}).get('url') or '').strip()", self.text)
+        self.assertIn("assert canonical_url, 'OPERATOR_CANONICAL_URL_MISSING'", self.text)
+        self.assertIn("expected_prefix = os.environ['OPERATOR_SERVICE'].lower() + '-'", self.text)
+        self.assertIn("assert parsed.scheme == 'https', 'OPERATOR_CANONICAL_URL_SCHEME_INVALID'", self.text)
+        self.assertIn("OPERATOR_CANONICAL_URL_AUTHORITY_INVALID", self.text)
+        self.assertIn("OPERATOR_CANONICAL_URL_SHAPE_INVALID", self.text)
+        self.assertIn("host.startswith(expected_prefix) and host.endswith('.run.app')", self.text)
+        self.assertIn("fh.write('OPERATOR_AUDIENCE<<STRATEGIC_AUD_EOF", self.text)
+
     def test_preexisting_application_trust_is_not_required(self) -> None:
         self.assertNotIn("OPERATOR_AUDIENCE_PREEXISTING_REQUIRED", self.text)
         self.assertNotIn("OIDC_ALLOWED_PRINCIPALS_PREEXISTING_REQUIRED", self.text)
         self.assertNotIn("DEPLOYER_NOT_PREEXISTING_OIDC_PRINCIPAL", self.text)
         self.assertIn("SERVING_AUDIENCE_PRESENT", self.text)
         self.assertIn("SERVING_PRINCIPAL_COUNT", self.text)
-
-    def test_candidate_audience_comes_from_provider_canonical_url(self) -> None:
-        self.assertIn("canonical_url = str(p.get('status', {}).get('url') or '').strip()", self.text)
-        self.assertIn("assert canonical_url == os.environ['OPERATOR_URL'], 'OPERATOR_CANONICAL_URL_DRIFT'", self.text)
-        self.assertIn("parsed.scheme == 'https' and parsed.netloc.endswith('.run.app')", self.text)
-        self.assertIn("fh.write('OPERATOR_AUDIENCE<<STRATEGIC_AUD_EOF", self.text)
 
     def test_candidate_principal_is_exact_authenticated_deployer_only(self) -> None:
         self.assertIn("candidate_principals = deployer", self.text)
