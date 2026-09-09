@@ -44,6 +44,13 @@ def _status_for(error: RuntimeBindingError) -> int:
         "SESSION_SUBJECT_MISMATCH",
         "SESSION_INVALID",
         "OWNER_ENROLLMENT_INVALID",
+        "OWNER_IDENTITY_MISMATCH",
+        "IAP_ASSERTION_REQUIRED",
+        "IAP_ASSERTION_INVALID",
+        "IAP_ISSUER_INVALID",
+        "IAP_AUDIENCE_INVALID",
+        "IAP_OWNER_EMAIL_INVALID",
+        "IAP_SUBJECT_MISSING",
         "DEVICE_CREDENTIAL_INVALID",
         "DEVICE_SUBJECT_MISMATCH",
     }:
@@ -58,6 +65,8 @@ def _status_for(error: RuntimeBindingError) -> int:
         "SESSION_SIGNER_UNBOUND",
         "FEDERATION_EXECUTOR_UNBOUND",
         "OWNER_ENROLLMENT_UNBOUND",
+        "OWNER_IAP_VERIFIER_UNBOUND",
+        "OWNER_IAP_ENROLLMENT_UNBOUND",
         "DEVICE_REVOCATION_UNBOUND",
         "RUNTIME_CONFIGURATION_INCOMPLETE",
         "CANONICAL_PROJECT_MISMATCH",
@@ -82,11 +91,10 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         ) from error
 
     def fuse_token(x_fuse_authorization: str | None, authorization: str | None) -> str:
-        """Keep Cloud Run IAM Authorization separate from FUSE application auth.
+        """Keep provider transport identity separate from FUSE application auth.
 
-        X-Fuse-Authorization is authoritative when present. Authorization remains a
-        local/non-Cloud-Run compatibility fallback so existing clients and tests do
-        not silently lose their contract.
+        X-Fuse-Authorization is authoritative for real private ingress. Authorization
+        remains a local/provider-canary compatibility fallback until IAP is enabled.
         """
         try:
             return bearer_token(x_fuse_authorization or authorization)
@@ -108,6 +116,7 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
             "version": VERSION,
             "status": "RUNTIME_READY" if runtime_ready else "SOURCE_READY_RUNTIME_BINDING_REQUIRED",
             "enrollment_ready": active.enrollment_ready,
+            "iap_enrollment_ready": active.iap_enrollment_ready,
             "session_ready": active.session_ready,
             "execution_ready": active.execution_ready,
             "provider_credentials_in_client": False,
@@ -117,8 +126,11 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
     async def enroll(
         authorization: Annotated[str | None, Header()] = None,
         x_fuse_authorization: Annotated[str | None, Header(alias="X-Fuse-Authorization")] = None,
+        x_goog_iap_jwt_assertion: Annotated[str | None, Header(alias="X-Goog-IAP-JWT-Assertion")] = None,
     ) -> dict:
         try:
+            if x_goog_iap_jwt_assertion:
+                return await active.enroll_iap_owner(x_goog_iap_jwt_assertion)
             credential = fuse_token(x_fuse_authorization, authorization)
             return await active.enroll_device(credential)
         except RuntimeBindingError as error:
@@ -161,6 +173,7 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
             "version": VERSION,
             "subject": identity.subject,
             "enrollment_ready": active.enrollment_ready,
+            "iap_enrollment_ready": active.iap_enrollment_ready,
             "session_ready": active.session_ready,
             "execution_ready": active.execution_ready,
             "capability_count": len(capabilities),
