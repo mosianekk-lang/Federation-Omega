@@ -140,6 +140,7 @@ class MultiStreamPlan:
     ranked_paths_by_stream: tuple[tuple[str, tuple[str, ...]], ...]
     selected_wave: tuple[str, ...]
     held_paths: tuple[tuple[str, str], ...]
+    declared_alternates: tuple[tuple[str, str, str], ...]
     logical_bot_cells: tuple[BotCell, ...]
     preempted_failures: tuple[str, ...]
     corroboration_required_per_stream: int
@@ -270,6 +271,22 @@ class FUSEAIBotMultiStreamFabric:
         selected = tuple(item.action.action_id for item in formation_plan.selected_wave)
         registry = tuple(sorted((path.path_id, path.stream_id, path.independent_group) for path in paths))
         held = tuple(sorted((path_id, reason) for path_id, reason in hold_by_path.items() if reason))
+        selected_set = set(selected)
+        held_set = {path_id for path_id, _ in held}
+        declared_alternates: list[tuple[str, str, str]] = []
+        for stream, ranked_path_ids in ranked_by_stream:
+            selected_primary = next(
+                (path_id for path_id in ranked_path_ids if path_id in selected_set),
+                None,
+            )
+            if selected_primary is None:
+                continue
+            declared_alternates.extend(
+                (path_id, stream, selected_primary)
+                for path_id in ranked_path_ids
+                if path_id not in selected_set and path_id not in held_set
+            )
+        alternates = tuple(sorted(declared_alternates))
         payload = {
             "schema": SCHEMA,
             "version": VERSION,
@@ -280,6 +297,7 @@ class FUSEAIBotMultiStreamFabric:
             "ranked_paths_by_stream": ranked_by_stream,
             "selected_wave": selected,
             "held_paths": held,
+            "declared_alternates": alternates,
             "bots": [(bot.bot_id, bot.role, bot.authority_ceiling) for bot in bots],
             "preemptions": [item.fingerprint for item in formation_plan.preemptions],
             "corroboration_required_per_stream": self.corroboration_required_per_stream,
@@ -295,6 +313,7 @@ class FUSEAIBotMultiStreamFabric:
             ranked_paths_by_stream=ranked_by_stream,
             selected_wave=selected,
             held_paths=held,
+            declared_alternates=alternates,
             logical_bot_cells=bots,
             preempted_failures=tuple(item.fingerprint for item in formation_plan.preemptions),
             corroboration_required_per_stream=self.corroboration_required_per_stream,
@@ -304,12 +323,19 @@ class FUSEAIBotMultiStreamFabric:
 
     def reconcile(self, plan: MultiStreamPlan, outcomes: Sequence[PathOutcome]) -> OmegaWitness:
         registry = {path_id: (stream_id, group) for path_id, stream_id, group in plan.path_registry}
+        selected = set(plan.selected_wave)
+        held = dict(plan.held_paths)
+        alternates = {
+            path_id: (stream_id, selected_primary)
+            for path_id, stream_id, selected_primary in plan.declared_alternates
+        }
         seen: set[str] = set()
         by_stream: dict[str, list[PathOutcome]] = {stream: [] for stream in plan.required_streams}
         negative: list[str] = []
         retryable: list[str] = []
         conflicts: list[str] = []
 
+        indexed_outcomes: dict[str, PathOutcome] = {}
         for outcome in outcomes:
             outcome.validate()
             if outcome.path_id in seen:
@@ -320,6 +346,28 @@ class FUSEAIBotMultiStreamFabric:
                 raise ValueError(f"UNKNOWN_PATH:{outcome.path_id}")
             if expected != (outcome.stream_id, outcome.independent_group):
                 raise ValueError(f"PATH_IDENTITY_CONFLICT:{outcome.path_id}")
+            indexed_outcomes[outcome.path_id] = outcome
+
+        for outcome in outcomes:
+            if outcome.path_id in held:
+                raise ValueError(
+                    f"OUTCOME_FROM_HELD_PATH:{outcome.path_id}:{held[outcome.path_id]}"
+                )
+            if outcome.path_id not in selected:
+                alternate = alternates.get(outcome.path_id)
+                if alternate is None:
+                    raise ValueError(f"OUTCOME_FROM_UNSELECTED_PATH:{outcome.path_id}")
+                stream_id, selected_primary = alternate
+                primary_outcome = indexed_outcomes.get(selected_primary)
+                if (
+                    outcome.stream_id != stream_id
+                    or primary_outcome is None
+                    or primary_outcome.state is not PathState.FAILED
+                ):
+                    raise ValueError(
+                        "ALTERNATE_REQUIRES_SELECTED_PATH_FAILURE:"
+                        f"{outcome.path_id}:{selected_primary}"
+                    )
             by_stream[outcome.stream_id].append(outcome)
             if outcome.critical_conflict:
                 conflicts.append(outcome.path_id)

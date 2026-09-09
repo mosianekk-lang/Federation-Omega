@@ -1,0 +1,66 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.1.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "benchmarking/cfbe_omega/mission_execution_kernel_vnext/*",
+        "tests/test_cfbe_vnext_mission_execution_kernel.py",
+        "tests/test_cfbe_vnext_multistream_execution.py",
+        "governance/proofos_omega_policy_extension_cfbe_vnext_mission_kernel_v1.json"
+      ],
+      "reason": "CFBE_VNEXT_MISSION_AUTHORITY_PROOF_WAITING_AND_TERMINALITY_KERNEL"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "CFBE_VNEXT_MISSION_EXECUTION_KERNEL_V1",
+      "patterns": [
+        "benchmarking/cfbe_omega/mission_execution_kernel_vnext/*",
+        "tests/test_cfbe_vnext_mission_execution_kernel.py",
+        "tests/test_cfbe_vnext_multistream_execution.py",
+        "governance/proofos_omega_policy_extension_cfbe_vnext_mission_kernel_v1.json"
+      ],
+      "depends_on": [
+        "CFBE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "cfbe_vnext_mission_execution_kernel_v1",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_vnext_mission_execution_kernel.py",
+      "patterns": [
+        "benchmarking/cfbe_omega/mission_execution_kernel_vnext/*",
+        "tests/test_cfbe_vnext_mission_execution_kernel.py",
+        "tests/test_cfbe_vnext_multistream_execution.py",
+        "governance/proofos_omega_policy_extension_cfbe_vnext_mission_kernel_v1.json"
+      ],
+      "subsystems": [
+        "CFBE_VNEXT_MISSION_EXECUTION_KERNEL_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "cfbe_vnext_multistream_execution_v1",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_vnext_multistream_execution.py",
+      "patterns": [
+        "benchmarking/cfbe_omega/mission_execution_kernel_vnext/*",
+        "tests/test_cfbe_vnext_multistream_execution.py",
+        "governance/proofos_omega_policy_extension_cfbe_vnext_mission_kernel_v1.json"
+      ],
+      "subsystems": [
+        "CFBE_VNEXT_MISSION_EXECUTION_KERNEL_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}

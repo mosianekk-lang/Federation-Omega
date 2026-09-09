@@ -9,6 +9,7 @@ from superior_logic.parallel_runtime import (
     BoundedParallelSelector,
     LaneCandidate,
     LaneEffect,
+    LaneExecutionResult,
     ParallelLaneExecutor,
     ParallelRuntimeError,
     compile_runtime_receipt,
@@ -345,6 +346,91 @@ class ParallelLaneExecutorTests(unittest.IsolatedAsyncioTestCase):
             route_runner,
         )
         self.assertEqual(winner["route_id"], "wins")
+
+
+class ParallelRuntimeReceiptTests(unittest.TestCase):
+    def setUp(self) -> None:
+        self.plan = BoundedParallelSelector(max_lanes=2).select(
+            mission_id="receipt-integrity",
+            candidates=(candidate("left"), candidate("right")),
+        )
+
+    def result(
+        self,
+        lane_id: str,
+        *,
+        transition_id: str | None = None,
+        semantic_verified: bool = True,
+        proof_valid: bool = True,
+    ) -> LaneExecutionResult:
+        return LaneExecutionResult(
+            lane_id=lane_id,
+            transition_id=transition_id or f"transition:{lane_id}",
+            result={
+                "provider_effect_performed": False,
+                "semantic_verified": semantic_verified,
+                "proof_valid": proof_valid,
+            },
+        )
+
+    def valid_results(self) -> tuple[LaneExecutionResult, ...]:
+        return (self.result("left"), self.result("right"))
+
+    def test_receipt_rejects_duplicate_lane_result(self) -> None:
+        with self.assertRaisesRegex(
+            ParallelRuntimeError,
+            "DUPLICATE_RUNTIME_RESULT:left",
+        ):
+            compile_runtime_receipt(
+                self.plan,
+                (*self.valid_results(), self.result("left")),
+            )
+
+    def test_receipt_rejects_missing_lane_result(self) -> None:
+        with self.assertRaisesRegex(
+            ParallelRuntimeError,
+            "MISSING_RUNTIME_RESULT:right",
+        ):
+            compile_runtime_receipt(self.plan, (self.result("left"),))
+
+    def test_receipt_rejects_unknown_lane_result(self) -> None:
+        with self.assertRaisesRegex(
+            ParallelRuntimeError,
+            "UNKNOWN_RUNTIME_RESULT:rogue",
+        ):
+            compile_runtime_receipt(
+                self.plan,
+                (*self.valid_results(), self.result("rogue")),
+            )
+
+    def test_receipt_rejects_mismatched_transition(self) -> None:
+        with self.assertRaisesRegex(
+            ParallelRuntimeError,
+            "RUNTIME_RESULT_TRANSITION_MISMATCH:left",
+        ):
+            compile_runtime_receipt(
+                self.plan,
+                (
+                    self.result("left", transition_id="transition:wrong"),
+                    self.result("right"),
+                ),
+            )
+
+    def test_receipt_rejects_each_unverified_result_state(self) -> None:
+        invalid_results = (
+            self.result("left", semantic_verified=False),
+            self.result("left", proof_valid=False),
+        )
+        for invalid_result in invalid_results:
+            with self.subTest(result=invalid_result.result):
+                with self.assertRaisesRegex(
+                    ParallelRuntimeError,
+                    "UNVERIFIED_RUNTIME_RESULT:left",
+                ):
+                    compile_runtime_receipt(
+                        self.plan,
+                        (invalid_result, self.result("right")),
+                    )
 
 
 if __name__ == "__main__":  # pragma: no cover
