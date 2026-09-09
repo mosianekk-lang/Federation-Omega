@@ -1,15 +1,19 @@
+import json
 from pathlib import Path
 import unittest
 
 
 ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW = ROOT / ".github" / "workflows" / "fuse-mobile-provider-currentness-v1.yml"
+POLICY = ROOT / "governance" / "github_airlock_policy.json"
+WORKFLOW_PATH = ".github/workflows/fuse-mobile-provider-currentness-v1.yml"
 
 
 class FuseMobileProviderCurrentnessV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.text = WORKFLOW.read_text(encoding="utf-8")
+        cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
 
     def test_uses_existing_mobile_wif_identity_and_no_json_secret_auth(self) -> None:
         self.assertIn("id-token: write", self.text)
@@ -107,6 +111,17 @@ class FuseMobileProviderCurrentnessV1Tests(unittest.TestCase):
         self.assertIn('".github/workflows/fuse-mobile-provider-currentness-v1.yml"', self.text)
         self.assertIn('"tests/test_fuse_mobile_provider_currentness_v1.py"', self.text)
         self.assertNotIn("issues:", self.text)
+
+    def test_airlock_binding_is_read_only_and_exact(self) -> None:
+        self.assertIn(WORKFLOW_PATH, self.policy["active_workflow_allowlist"])
+        self.assertEqual(
+            ["push", "workflow_dispatch"],
+            self.policy["allowed_events"][WORKFLOW_PATH],
+        )
+        self.assertEqual(["main"], self.policy["required_push_branches"][WORKFLOW_PATH])
+        self.assertIn(WORKFLOW_PATH, self.policy["oidc_workflow_allowlist"])
+        self.assertIn(WORKFLOW_PATH, self.policy["execution_quarantine"]["keep_active"])
+        self.assertNotIn(WORKFLOW_PATH, self.policy["provider_mutation_workflow_allowlist"])
 
 
 if __name__ == "__main__":
