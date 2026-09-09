@@ -43,6 +43,9 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
+      - name: Compile every embedded Python block before provider work
+        run: python -m unittest -v tests/test_strategic_fuse_embedded_python_compile.py
+
       - name: Authenticate keylessly to the existing Google deployment identity
         id: google-auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
@@ -79,9 +82,9 @@ jobs:
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
               fh.write('OPERATOR_AUDIENCE<<STRATEGIC_AUD_EOF\n' + audience + '\nSTRATEGIC_AUD_EOF\n')
           serving = sorted(
-              {'revision': x.get('revisionName'), 'percent': int(x.get('percent') or 0)}
-              for x in p.get('status', {}).get('traffic', []) if int(x.get('percent') or 0) > 0
-          , key=lambda x: (x['revision'] or '', x['percent']))
+              ({'revision': x.get('revisionName'), 'percent': int(x.get('percent') or 0)}
+               for x in p.get('status', {}).get('traffic', []) if int(x.get('percent') or 0) > 0),
+              key=lambda x: (x['revision'] or '', x['percent']))
           raw = json.dumps(serving, sort_keys=True, separators=(',', ':')).encode()
           Path('/tmp/strategic-read/serving-before.json').write_text(json.dumps(serving, sort_keys=True))
           Path('/tmp/strategic-read/serving-before.sha256').write_text(hashlib.sha256(raw).hexdigest())
