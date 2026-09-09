@@ -52,8 +52,13 @@ class IdentityVerifier(Protocol):
     async def verify(self, credential: str) -> VerifiedIdentity: ...
 
 
+class OwnerIdentityVerifier(Protocol):
+    async def verify_assertion(self, assertion: str) -> VerifiedIdentity: ...
+
+
 class DeviceCredentialManagerProtocol(Protocol):
     async def enroll(self, credential: str) -> tuple[VerifiedIdentity, str]: ...
+    async def enroll_verified(self, identity: VerifiedIdentity) -> tuple[VerifiedIdentity, str]: ...
     async def verify(self, credential: str) -> VerifiedIdentity: ...
     async def revoke(self, credential: str, *, expected_subject: str) -> None: ...
 
@@ -81,6 +86,12 @@ class DisabledIdentityVerifier:
     async def verify(self, credential: str) -> VerifiedIdentity:
         del credential
         raise RuntimeBindingError("IDENTITY_VERIFIER_UNBOUND")
+
+
+class DisabledOwnerIdentityVerifier:
+    async def verify_assertion(self, assertion: str) -> VerifiedIdentity:
+        del assertion
+        raise RuntimeBindingError("OWNER_IAP_VERIFIER_UNBOUND")
 
 
 class DisabledChatExecutor:
@@ -211,6 +222,7 @@ class GatewayRuntime:
     session_codec: SessionCodec | None = None
     session_manager: SessionManagerProtocol | None = None
     identity_verifier: IdentityVerifier = field(default_factory=DisabledIdentityVerifier)
+    owner_identity_verifier: OwnerIdentityVerifier = field(default_factory=DisabledOwnerIdentityVerifier)
     device_manager: DeviceCredentialManagerProtocol | None = None
     health_provider: CapabilityHealthProvider = field(default_factory=SourceOnlyCapabilityHealth)
     chat_executor: ChatExecutor = field(default_factory=DisabledChatExecutor)
@@ -230,6 +242,10 @@ class GatewayRuntime:
     @property
     def enrollment_ready(self) -> bool:
         return self._session_backend_ready and self.device_manager is not None
+
+    @property
+    def iap_enrollment_ready(self) -> bool:
+        return self.enrollment_ready and not isinstance(self.owner_identity_verifier, DisabledOwnerIdentityVerifier)
 
     @property
     def execution_ready(self) -> bool:
@@ -260,6 +276,22 @@ class GatewayRuntime:
                 "device_token": device_token,
                 "device_token_type": "FUSE-Device",
                 "device_token_recoverable": False,
+            }
+        )
+        return response
+
+    async def enroll_iap_owner(self, assertion: str) -> dict:
+        if not self.iap_enrollment_ready or self.device_manager is None:
+            raise RuntimeBindingError("OWNER_IAP_ENROLLMENT_UNBOUND")
+        identity = await self.owner_identity_verifier.verify_assertion(assertion)
+        identity, device_token = await self.device_manager.enroll_verified(identity)
+        response = await self._session_response(identity)
+        response.update(
+            {
+                "device_token": device_token,
+                "device_token_type": "FUSE-Device",
+                "device_token_recoverable": False,
+                "owner_identity_source": "GOOGLE_IAP",
             }
         )
         return response
@@ -301,6 +333,7 @@ class GatewayRuntime:
                 "provider_health": "FRESH_READBACK_REQUIRED",
                 "device_credentials": "OPAQUE_HASHED_SERVER_SIDE_REVOCABLE",
                 "session_credentials": "OPAQUE_HASH_ONLY_DEVICE_BOUND_REVOCABLE",
+                "private_transport": "GOOGLE_IAP_IDENTITY_PLUS_FUSE_SESSION",
             },
         )
 
