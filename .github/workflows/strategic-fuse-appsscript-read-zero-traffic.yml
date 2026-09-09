@@ -19,7 +19,6 @@ env:
   REGION: africa-south1
   REPOSITORY: federation-omega
   OPERATOR_SERVICE: federation-omega-operator
-  OPERATOR_URL: https://federation-omega-operator-257649435135.africa-south1.run.app
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   TARGET_SCRIPT_ID: 1z4wkTnk3TF3NG6T-1f5PsSl08-3SFUQw4STcYwsiPptdGSVrfSE-4r_R
@@ -56,7 +55,7 @@ jobs:
 
       - uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
 
-      - name: Derive candidate-only OIDC trust and freeze the serving baseline
+      - name: Derive provider-native candidate OIDC trust and freeze serving baseline
         run: |
           set -euo pipefail
           mkdir -p /tmp/strategic-read
@@ -69,6 +68,8 @@ jobs:
           from urllib.parse import urlparse
 
           p = json.loads(Path('/tmp/strategic-read/service-before.json').read_text())
+          metadata_name = str(p.get('metadata', {}).get('name') or '').strip()
+          assert metadata_name == os.environ['OPERATOR_SERVICE'], 'OPERATOR_SERVICE_IDENTITY_DRIFT'
           containers = p.get('spec', {}).get('template', {}).get('spec', {}).get('containers', [])
           assert containers, 'OPERATOR_CONTAINER_MISSING'
           env_items = containers[0].get('env', [])
@@ -78,14 +79,20 @@ jobs:
           serving_secret_backed_names = sorted(str(x.get('name') or '') for x in env_items if x.get('valueFrom'))
           canonical_url = str(p.get('status', {}).get('url') or '').strip()
           assert canonical_url, 'OPERATOR_CANONICAL_URL_MISSING'
-          assert canonical_url == os.environ['OPERATOR_URL'], 'OPERATOR_CANONICAL_URL_DRIFT'
           parsed = urlparse(canonical_url)
-          assert parsed.scheme == 'https' and parsed.netloc.endswith('.run.app'), 'OPERATOR_CANONICAL_URL_INVALID'
+          host = (parsed.hostname or '').lower()
+          expected_prefix = os.environ['OPERATOR_SERVICE'].lower() + '-'
+          assert parsed.scheme == 'https', 'OPERATOR_CANONICAL_URL_SCHEME_INVALID'
+          assert parsed.username is None and parsed.password is None and parsed.port is None, 'OPERATOR_CANONICAL_URL_AUTHORITY_INVALID'
+          assert parsed.path in ('', '/') and not parsed.params and not parsed.query and not parsed.fragment, 'OPERATOR_CANONICAL_URL_SHAPE_INVALID'
+          assert host.startswith(expected_prefix) and host.endswith('.run.app'), 'OPERATOR_CANONICAL_URL_SERVICE_BINDING_INVALID'
           deployer = os.environ['DEPLOYER_SA'].strip().lower()
           assert deployer.endswith('.iam.gserviceaccount.com'), 'DEPLOYER_SERVICE_ACCOUNT_INVALID'
           candidate_principals = deployer
+          host_digest = hashlib.sha256(host.encode('utf-8')).hexdigest()
           with open(os.environ['GITHUB_ENV'], 'a', encoding='utf-8') as fh:
               fh.write('OPERATOR_AUDIENCE<<STRATEGIC_AUD_EOF\n' + canonical_url + '\nSTRATEGIC_AUD_EOF\n')
+              fh.write('OPERATOR_HOST_SHA256=' + host_digest + '\n')
               fh.write('CANDIDATE_OIDC_ALLOWED_PRINCIPALS=' + candidate_principals + '\n')
               fh.write('SERVING_AUDIENCE_PRESENT=' + ('true' if serving_audience else 'false') + '\n')
               fh.write('SERVING_PRINCIPAL_COUNT=' + str(len(serving_principals)) + '\n')
@@ -278,6 +285,8 @@ jobs:
             'source_sha':os.environ['GITHUB_SHA'],
             'operator_service':os.environ['OPERATOR_SERVICE'],
             'operator_audience':os.environ['OPERATOR_AUDIENCE'],
+            'operator_host_sha256':os.environ['OPERATOR_HOST_SHA256'],
+            'provider_native_audience':True,
             'serving_operator_audience_present':os.environ['SERVING_AUDIENCE_PRESENT'].lower() == 'true',
             'serving_oidc_principal_count':int(os.environ['SERVING_PRINCIPAL_COUNT']),
             'serving_secret_backed_env_count':int(os.environ['SERVING_SECRET_BACKED_ENV_COUNT']),
