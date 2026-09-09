@@ -47,9 +47,13 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
             self.skipTest("mobile build-lab scanner is outside the reduced Phoenix exported-core surface")
         return SCANNER
 
-    def test_hosted_build_court_is_owner_only_and_non_effectful(self) -> None:
+    def test_hosted_build_court_is_admitted_main_push_or_owner_issue_and_non_effectful(self) -> None:
         text = self._workflow_text_or_skip_export()
         self.assertIn("FUSE_MOBILE_ANDROID_BUILD_V1", text)
+        self.assertIn("push:", text)
+        self.assertIn("branches: [main]", text)
+        self.assertIn('"mobile/fuse-mobile/**"', text)
+        self.assertIn("github.event_name == 'push'", text)
         self.assertIn("author_association == 'OWNER'", text)
         self.assertIn("contents: read", text)
         self.assertIn("issues: read", text)
@@ -124,7 +128,8 @@ class FuseMobileAndroidBuildWorkflowV1Tests(unittest.TestCase):
         policy = json.loads(POLICY.read_text())
         path = ".github/workflows/fuse-mobile-android-build.yml"
         self.assertIn(path, policy["active_workflow_allowlist"])
-        self.assertEqual(policy["allowed_events"][path], ["issues"])
+        self.assertEqual(policy["allowed_events"][path], ["issues", "push"])
+        self.assertEqual(policy["required_push_branches"][path], ["main"])
         self.assertIn(path, policy["execution_quarantine"]["keep_active"])
         self.assertNotIn(path, policy["oidc_workflow_allowlist"])
 
