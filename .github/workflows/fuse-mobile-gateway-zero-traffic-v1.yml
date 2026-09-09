@@ -138,7 +138,7 @@ jobs:
           ENROLLMENT_SHA256="$(printf '%s' "$ENROLLMENT" | sha256sum | awk '{print $1}')"
           unset ENROLLMENT
           echo "enrollment_sha256=$ENROLLMENT_SHA256" >> "$GITHUB_OUTPUT"
-          printf '%s\n' '{"session_transport":"FIRESTORE_HASH_ONLY_OPAQUE","owner_enrollment":"EPHEMERAL_RUNNER_ONLY","iam_grant_performed":false,"secret_dependency_required":false,"secret_created_or_rotated":false}' > fuse-mobile-deploy-proof/runtime-material-boundary.json
+          printf '%s\n' '{"session_transport":"FIRESTORE_HASH_ONLY_OPAQUE","owner_enrollment":"EPHEMERAL_RUNNER_ONLY","iam_grant_performed":false,"secret_dependency_required":false,"legacy_secret_binding_removal":"TARGETED_NO_PAYLOAD_READ","secret_created_or_rotated":false}' > fuse-mobile-deploy-proof/runtime-material-boundary.json
 
       - name: Build and push immutable source-tagged gateway image
         id: image
@@ -174,6 +174,7 @@ jobs:
             --port 8080
             --tag "$TAG"
             --no-allow-unauthenticated
+            --remove-secrets FUSE_MOBILE_SESSION_SECRET_B64
             --set-env-vars "FUSE_MOBILE_OWNER_SUBJECT=$OWNER_SUBJECT,FUSE_MOBILE_OWNER_ENROLLMENT_SHA256=$ENROLLMENT_SHA256,FUSE_MOBILE_KDV_RANGE=$KDV_RANGE,FUSE_MOBILE_VERTEX_MODEL=$VERTEX_MODEL"
             --quiet
           )
@@ -197,7 +198,7 @@ jobs:
           echo "tag=$TAG" >> "$GITHUB_OUTPUT"
           echo "traffic_mode=$TRAFFIC_MODE" >> "$GITHUB_OUTPUT"
 
-      - name: Prove private IAM and unchanged production allocation
+      - name: Prove private IAM unchanged traffic and legacy secret binding absent from candidate revision
         shell: bash
         env:
           SERVICE_EXISTED: ${{ steps.pre.outputs.service_existed }}
@@ -211,6 +212,7 @@ jobs:
           from pathlib import Path
           pre=json.loads(Path('fuse-mobile-deploy-proof/service-pre.json').read_text())
           post=json.loads(Path('fuse-mobile-deploy-proof/service-post.json').read_text())
+          revision_doc=json.loads(Path('fuse-mobile-deploy-proof/revision.json').read_text())
           service_policy=json.loads(Path('fuse-mobile-deploy-proof/service-policy-post.json').read_text())
           project_policy=json.loads(Path('fuse-mobile-deploy-proof/project-policy-post.json').read_text())
           revision=os.environ['REVISION']
@@ -224,6 +226,9 @@ jobs:
               )
           assert not public_invoker(service_policy), 'service is publicly invokable'
           assert not public_invoker(project_policy), 'project grants public Cloud Run invocation'
+          containers=((revision_doc.get('spec') or {}).get('containers') or (revision_doc.get('spec') or {}).get('template',{}).get('spec',{}).get('containers') or [])
+          env_names={str(item.get('name') or '') for container in containers for item in (container.get('env') or [])}
+          assert 'FUSE_MOBILE_SESSION_SECRET_B64' not in env_names, env_names
           def allocation(service):
               result={}
               for t in service.get('status',{}).get('traffic') or []:
@@ -249,6 +254,7 @@ jobs:
               'post_allocation':after,
               'public_invocation':False,
               'production_traffic_changed':False,
+              'legacy_session_secret_binding_present':False,
               'provider_mutation_performed':True,
           },indent=2,sort_keys=True)+'\n')
           PY
@@ -373,6 +379,7 @@ jobs:
               'vertex_semantic_inference':'HELD_UNPROVEN_NOT_EXECUTED',
               'effect_execution':'HELD_NOT_EXECUTED',
               'session_secret_dependency':False,
+              'legacy_session_secret_binding_present':False,
               'iam_grant_performed':False,
               'secret_created_or_rotated':False,
               'secret_payload_accessed':False,
