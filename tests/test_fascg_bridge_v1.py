@@ -1,6 +1,6 @@
 from __future__ import annotations
 import unittest
-from federation.fuse_autopilot_sentinel_bridge_v1 import CURRENT_BINDINGS, FuseAutopilotSentinelBridge, integration_manifest
+from benchmarking.cfbe_omega.fuse_autopilot_sentinel_bridge_v1 import CURRENT_BINDINGS, FuseAutopilotSentinelBridge, integration_manifest
 from benchmarking.cfbe_omega.autopilot_sentinel_cognitive_genome_v1 import AutonomyContext, InterventionCandidate, MissionHomeostasisState, SensingCandidate
 
 class A:

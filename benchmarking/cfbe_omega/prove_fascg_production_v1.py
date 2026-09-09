@@ -12,7 +12,7 @@ from benchmarking.cfbe_omega.fascg_production_runtime_v1 import (
 from benchmarking.cfbe_omega.fascg_aopgc_bridge_v1 import (
     ProductContractSpec, compile_aopgc_production_evidence,
 )
-from federation.fascg_provider_fabric_v1 import provider_fabric_manifest
+from benchmarking.cfbe_omega.fascg_provider_fabric_v1 import provider_fabric_manifest
 
 
 def main() -> int:

@@ -4,7 +4,7 @@ import unittest
 
 from benchmarking.cfbe_omega.autopilot_sentinel_cognitive_genome_v1 import GeneDomain
 from benchmarking.cfbe_omega.fascg_production_runtime_v1 import *
-from federation.fascg_provider_fabric_v1 import CURRENT_PROVIDER_BRIDGES, ProviderRouteSelector, provider_fabric_manifest
+from benchmarking.cfbe_omega.fascg_provider_fabric_v1 import CURRENT_PROVIDER_BRIDGES, ProviderRouteSelector, provider_fabric_manifest
 
 
 class ProductionRuntimeCourt(unittest.TestCase):

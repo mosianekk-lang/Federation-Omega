@@ -1,6 +1,6 @@
 import unittest
 
-from federation.fascg_provider_fabric_v1 import (
+from benchmarking.cfbe_omega.fascg_provider_fabric_v1 import (
     CapabilityNegotiator, NegotiationAdvertisement, provider_fabric_manifest,
 )
 
