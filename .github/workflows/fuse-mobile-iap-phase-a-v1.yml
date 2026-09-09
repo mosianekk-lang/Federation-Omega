@@ -1,0 +1,402 @@
+name: FUSE Mobile IAP Phase A v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: fuse-mobile-iap-phase-a-v1
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  SERVICE: fuse-mobile-gateway
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  IAP_SERVICE_AGENT: service-257649435135@gcp-sa-iap.iam.gserviceaccount.com
+  IAP_API: iap.googleapis.com
+
+jobs:
+  enable-iap-phase-a:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact admitted source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless deployer
+        id: auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud client
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute bounded IAP Phase A and provider-native readback
+        id: phase_a
+        continue-on-error: true
+        shell: bash
+        env:
+          WIF_AUTH_OUTCOME: ${{ steps.auth.outcome }}
+        run: |
+          set -u -o pipefail
+          set +x
+          ROOT=/tmp/fuse-mobile-iap-phase-a
+          mkdir -p "$ROOT"
+          for name in api-enable service-update iap-invoker service-pre service-post policy-pre policy-post project-number; do
+            : > "$ROOT/$name.err"
+          done
+
+          AUTH_OK=false
+          API_ENABLED_BEFORE=false
+          API_ENABLED_AFTER=false
+          IAP_ENABLED_BEFORE=false
+          IAP_ENABLED_AFTER=false
+          IAP_BINDING_BEFORE=false
+          IAP_BINDING_AFTER=false
+          PUBLIC_INVOKER_BEFORE=false
+          PUBLIC_INVOKER_AFTER=false
+          TRAFFIC_UNCHANGED=false
+
+          API_ENABLE_RC=99
+          SERVICE_UPDATE_RC=99
+          IAP_BINDING_RC=99
+          SERVICE_PRE_RC=99
+          SERVICE_POST_RC=99
+          POLICY_PRE_RC=99
+          POLICY_POST_RC=99
+          PROJECT_NUMBER_RC=99
+
+          if [[ "$WIF_AUTH_OUTCOME" == "success" ]]; then
+            AUTH_OK=true
+
+            gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)' \
+              > "$ROOT/project-number.txt" 2> "$ROOT/project-number.err"
+            PROJECT_NUMBER_RC=$?
+
+            gcloud run services describe "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" --format=json \
+              > "$ROOT/service-pre.json" 2> "$ROOT/service-pre.err"
+            SERVICE_PRE_RC=$?
+
+            gcloud run services get-iam-policy "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" --format=json \
+              > "$ROOT/policy-pre.json" 2> "$ROOT/policy-pre.err"
+            POLICY_PRE_RC=$?
+
+            gcloud services list --enabled --project "$PROJECT_ID" \
+              --filter="config.name=$IAP_API" --format='value(config.name)' \
+              > "$ROOT/iap-api-pre.txt" 2> "$ROOT/api-enable.err"
+            if grep -Fxq "$IAP_API" "$ROOT/iap-api-pre.txt"; then
+              API_ENABLED_BEFORE=true
+            fi
+
+            if [[ "$PROJECT_NUMBER_RC" -eq 0 ]] && [[ "$(cat "$ROOT/project-number.txt")" == "$PROJECT_NUMBER" ]] && \
+               [[ "$SERVICE_PRE_RC" -eq 0 ]] && [[ "$POLICY_PRE_RC" -eq 0 ]]; then
+              gcloud services enable "$IAP_API" \
+                --project "$PROJECT_ID" --quiet \
+                > "$ROOT/api-enable.out" 2> "$ROOT/api-enable.err"
+              API_ENABLE_RC=$?
+
+              if [[ "$API_ENABLE_RC" -eq 0 ]]; then
+                gcloud run services update "$SERVICE" \
+                  --project "$PROJECT_ID" --region "$REGION" --iap --quiet \
+                  > "$ROOT/service-update.out" 2> "$ROOT/service-update.err"
+                SERVICE_UPDATE_RC=$?
+              fi
+
+              if [[ "$SERVICE_UPDATE_RC" -eq 0 ]]; then
+                gcloud run services add-iam-policy-binding "$SERVICE" \
+                  --project "$PROJECT_ID" --region "$REGION" \
+                  --member="serviceAccount:$IAP_SERVICE_AGENT" \
+                  --role="roles/run.invoker" \
+                  --quiet \
+                  > "$ROOT/iap-invoker.out" 2> "$ROOT/iap-invoker.err"
+                IAP_BINDING_RC=$?
+              fi
+            fi
+
+            gcloud services list --enabled --project "$PROJECT_ID" \
+              --filter="config.name=$IAP_API" --format='value(config.name)' \
+              > "$ROOT/iap-api-post.txt" 2> "$ROOT/api-post.err"
+            if grep -Fxq "$IAP_API" "$ROOT/iap-api-post.txt"; then
+              API_ENABLED_AFTER=true
+            fi
+
+            gcloud run services describe "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" --format=json \
+              > "$ROOT/service-post.json" 2> "$ROOT/service-post.err"
+            SERVICE_POST_RC=$?
+
+            gcloud run services get-iam-policy "$SERVICE" \
+              --project "$PROJECT_ID" --region "$REGION" --format=json \
+              > "$ROOT/policy-post.json" 2> "$ROOT/policy-post.err"
+            POLICY_POST_RC=$?
+          fi
+
+          export ROOT AUTH_OK API_ENABLED_BEFORE API_ENABLED_AFTER IAP_ENABLED_BEFORE IAP_ENABLED_AFTER
+          export IAP_BINDING_BEFORE IAP_BINDING_AFTER PUBLIC_INVOKER_BEFORE PUBLIC_INVOKER_AFTER TRAFFIC_UNCHANGED
+          export API_ENABLE_RC SERVICE_UPDATE_RC IAP_BINDING_RC SERVICE_PRE_RC SERVICE_POST_RC
+          export POLICY_PRE_RC POLICY_POST_RC PROJECT_NUMBER_RC WIF_AUTH_OUTCOME
+
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root = Path(os.environ["ROOT"])
+
+          def read_json(name):
+              p = root / name
+              if not p.exists():
+                  return {}
+              try:
+                  value = json.loads(p.read_text(encoding="utf-8", errors="replace") or "{}")
+                  return value if isinstance(value, dict) else {}
+              except Exception:
+                  return {}
+
+          def first_key(obj, names):
+              if isinstance(obj, dict):
+                  for key, value in obj.items():
+                      if key in names and value not in (None, ""):
+                          return value
+                  for value in obj.values():
+                      found = first_key(value, names)
+                      if found not in (None, ""):
+                          return found
+              elif isinstance(obj, list):
+                  for value in obj:
+                      found = first_key(value, names)
+                      if found not in (None, ""):
+                          return found
+              return None
+
+          def policy_state(policy):
+              public = False
+              iap_agent = False
+              for binding in policy.get("bindings") or []:
+                  role = str(binding.get("role") or "")
+                  members = {str(x) for x in (binding.get("members") or [])}
+                  if role == "roles/run.invoker":
+                      if members & {"allUsers", "allAuthenticatedUsers"}:
+                          public = True
+                      if "serviceAccount:" + os.environ["IAP_SERVICE_AGENT"] in members:
+                          iap_agent = True
+              return public, iap_agent
+
+          def traffic_digest(service):
+              traffic = (service.get("status") or {}).get("traffic")
+              if traffic is None:
+                  traffic = first_key(service, {"traffic"})
+              return hashlib.sha256(
+                  json.dumps(traffic, sort_keys=True, separators=(",", ":")).encode("utf-8")
+              ).hexdigest()
+
+          def error_hash(name):
+              p = root / name
+              raw = p.read_bytes() if p.exists() else b""
+              return hashlib.sha256(raw).hexdigest() if raw else None
+
+          pre_service = read_json("service-pre.json")
+          post_service = read_json("service-post.json")
+          pre_policy = read_json("policy-pre.json")
+          post_policy = read_json("policy-post.json")
+
+          auth_ok = os.environ["WIF_AUTH_OUTCOME"] == "success"
+          api_before = os.environ["API_ENABLED_BEFORE"] == "true"
+          api_after = os.environ["API_ENABLED_AFTER"] == "true"
+          service_pre_ok = int(os.environ["SERVICE_PRE_RC"]) == 0
+          service_post_ok = int(os.environ["SERVICE_POST_RC"]) == 0
+          policy_pre_ok = int(os.environ["POLICY_PRE_RC"]) == 0
+          policy_post_ok = int(os.environ["POLICY_POST_RC"]) == 0
+
+          iap_before_raw = first_key(pre_service, {"iapEnabled", "iap_enabled"}) if service_pre_ok else None
+          iap_after_raw = first_key(post_service, {"iapEnabled", "iap_enabled"}) if service_post_ok else None
+          iap_before = bool(iap_before_raw) if iap_before_raw is not None else False
+          iap_after = bool(iap_after_raw) if iap_after_raw is not None else False
+
+          public_before, iap_binding_before = policy_state(pre_policy) if policy_pre_ok else (None, None)
+          public_after, iap_binding_after = policy_state(post_policy) if policy_post_ok else (None, None)
+
+          traffic_pre = traffic_digest(pre_service) if service_pre_ok else None
+          traffic_post = traffic_digest(post_service) if service_post_ok else None
+          traffic_unchanged = bool(traffic_pre and traffic_post and traffic_pre == traffic_post)
+
+          project_number_ok = (
+              int(os.environ["PROJECT_NUMBER_RC"]) == 0
+              and (root / "project-number.txt").read_text(encoding="utf-8", errors="replace").strip()
+              == os.environ["PROJECT_NUMBER"]
+          )
+
+          command_rc = {
+              "api_enable": int(os.environ["API_ENABLE_RC"]),
+              "service_iap_update": int(os.environ["SERVICE_UPDATE_RC"]),
+              "iap_service_agent_invoker_binding": int(os.environ["IAP_BINDING_RC"]),
+          }
+
+          verified = all([
+              auth_ok,
+              project_number_ok,
+              command_rc["api_enable"] == 0,
+              command_rc["service_iap_update"] == 0,
+              command_rc["iap_service_agent_invoker_binding"] == 0,
+              api_after,
+              iap_after,
+              iap_binding_after is True,
+              public_after is False,
+              traffic_unchanged,
+          ])
+
+          state = "PHASE_A_VERIFIED" if verified else "PHASE_A_HELD"
+          provider_changed = bool(
+              (api_after and not api_before)
+              or (iap_after and not iap_before)
+              or (iap_binding_after is True and iap_binding_before is not True)
+          )
+
+          receipt = {
+              "schema": "FUSE_MOBILE_IAP_PHASE_A_RECEIPT_V1",
+              "state": state,
+              "source_sha": os.environ.get("GITHUB_SHA"),
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+              "authorization": {
+                  "trigger": "[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1",
+                  "owner_issue_guard": True,
+                  "phase": "A",
+              },
+              "target": {
+                  "project_id": os.environ["PROJECT_ID"],
+                  "project_number": os.environ["PROJECT_NUMBER"],
+                  "region": os.environ["REGION"],
+                  "service": os.environ["SERVICE"],
+              },
+              "auth": {
+                  "route": "EXISTING_GITHUB_OIDC_WIF",
+                  "service_account_sha256": hashlib.sha256(
+                      os.environ["DEPLOYER_SA"].encode("utf-8")
+                  ).hexdigest(),
+                  "outcome": os.environ["WIF_AUTH_OUTCOME"],
+                  "credential_value_recorded": False,
+              },
+              "pre": {
+                  "iap_api_enabled": api_before,
+                  "cloud_run_iap_enabled": iap_before if service_pre_ok else None,
+                  "iap_service_agent_invoker_present": iap_binding_before,
+                  "public_invoker_present": public_before,
+                  "traffic_sha256": traffic_pre,
+              },
+              "post": {
+                  "iap_api_enabled": api_after,
+                  "cloud_run_iap_enabled": iap_after if service_post_ok else None,
+                  "iap_service_agent_invoker_present": iap_binding_after,
+                  "public_invoker_present": public_after,
+                  "traffic_sha256": traffic_post,
+              },
+              "command_status": command_rc,
+              "provider_mutation_performed": provider_changed,
+              "iam_mutation_performed": bool(
+                  iap_binding_after is True and iap_binding_before is not True
+              ),
+              "iam_mutation_scope": "IAP_SERVICE_AGENT_RUN_INVOKER_ONLY",
+              "oauth_mutation_performed": False,
+              "owner_access_grant_performed": False,
+              "programmatic_client_allowlist_mutation_performed": False,
+              "traffic_change_performed": not traffic_unchanged,
+              "public_access_enabled": bool(public_after),
+              "secret_read_or_mutation_performed": False,
+              "service_invocation_performed": False,
+              "model_inference_performed": False,
+              "raw_error_text_recorded": False,
+              "error_sha256": {
+                  "api_enable": error_hash("api-enable.err"),
+                  "service_update": error_hash("service-update.err"),
+                  "iap_invoker": error_hash("iap-invoker.err"),
+                  "service_post": error_hash("service-post.err"),
+                  "policy_post": error_hash("policy-post.err"),
+              },
+          }
+
+          body = dict(receipt)
+          receipt["receipt_sha256"] = hashlib.sha256(
+              json.dumps(body, sort_keys=True, separators=(",", ":")).encode("utf-8")
+          ).hexdigest()
+
+          assert receipt["oauth_mutation_performed"] is False
+          assert receipt["owner_access_grant_performed"] is False
+          assert receipt["programmatic_client_allowlist_mutation_performed"] is False
+          assert receipt["secret_read_or_mutation_performed"] is False
+          assert receipt["service_invocation_performed"] is False
+          assert receipt["model_inference_performed"] is False
+          assert receipt["raw_error_text_recorded"] is False
+          assert receipt["auth"]["credential_value_recorded"] is False
+
+          out = root / "PHASE_A_RECEIPT.json"
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8")
+          print(json.dumps({
+              "state": state,
+              "iap_api_enabled": api_after,
+              "cloud_run_iap_enabled": iap_after if service_post_ok else None,
+              "iap_service_agent_invoker_present": iap_binding_after,
+              "public_invoker_present": public_after,
+              "traffic_change_performed": receipt["traffic_change_performed"],
+              "oauth_mutation_performed": False,
+              "owner_access_grant_performed": False,
+              "provider_mutation_performed": provider_changed,
+          }, sort_keys=True))
+          raise SystemExit(0 if verified else 1)
+          PY
+
+      - name: Upload immutable redacted Phase-A receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-mobile-iap-phase-a-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-mobile-iap-phase-a/PHASE_A_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 30
+
+      - name: Enforce terminal Phase-A verification
+        if: always()
+        shell: bash
+        env:
+          PHASE_A_OUTCOME: ${{ steps.phase_a.outcome }}
+        run: |
+          set -euo pipefail
+          test "$PHASE_A_OUTCOME" = "success"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          receipt = json.loads(Path("/tmp/fuse-mobile-iap-phase-a/PHASE_A_RECEIPT.json").read_text())
+          assert receipt["state"] == "PHASE_A_VERIFIED"
+          assert receipt["post"]["iap_api_enabled"] is True
+          assert receipt["post"]["cloud_run_iap_enabled"] is True
+          assert receipt["post"]["iap_service_agent_invoker_present"] is True
+          assert receipt["post"]["public_invoker_present"] is False
+          assert receipt["traffic_change_performed"] is False
+          assert receipt["oauth_mutation_performed"] is False
+          assert receipt["owner_access_grant_performed"] is False
+          assert receipt["programmatic_client_allowlist_mutation_performed"] is False
+          PY
