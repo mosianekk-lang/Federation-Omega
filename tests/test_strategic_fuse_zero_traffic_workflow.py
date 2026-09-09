@@ -31,7 +31,9 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "OPERATOR_CANONICAL_URL_DRIFT",
             "--no-traffic",
             "--tag \"$TAG\"",
-            "--update-env-vars \"OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}\"",
+            "--set-env-vars \"OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}\"",
+            "CANDIDATE_SECRET_BACKED_ENV_FORBIDDEN",
+            "CANDIDATE_ENV_NOT_CLOSED_WORLD",
             "gcloud auth print-identity-token",
             "--include-email",
             "\"action\":\"STATUS\"",
@@ -47,6 +49,8 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "CANDIDATE_NOT_ZERO_TRAFFIC_AT_END",
             "'candidate_traffic_percent':0",
             "'serving_traffic_unchanged':True",
+            "'candidate_environment_closed_world':True",
+            "'candidate_secret_backed_env_count':0",
             "'candidate_only_trust_binding':True",
             "'service_template_mutation_performed':True",
             "'serving_revision_trust_mutation_performed':False",
@@ -79,14 +83,20 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             self.text,
         )
 
-    def test_candidate_trust_synthesis_is_single_zero_traffic_deploy_only(self) -> None:
-        self.assertEqual(1, self.text.count("--update-env-vars"))
+    def test_candidate_trust_synthesis_is_closed_world_zero_traffic_only(self) -> None:
+        self.assertEqual(1, self.text.count("--set-env-vars"))
+        self.assertNotIn("--update-env-vars", self.text)
         self.assertIn(
-            '--update-env-vars "OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}"',
+            '--set-env-vars "OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}"',
+            self.text,
+        )
+        self.assertIn("assert not secret_backed, 'CANDIDATE_SECRET_BACKED_ENV_FORBIDDEN'", self.text)
+        self.assertIn(
+            "assert set(direct) == {'OPERATOR_AUDIENCE', 'OIDC_ALLOWED_PRINCIPALS'}",
             self.text,
         )
         self.assertLess(
-            self.text.index("--update-env-vars"),
+            self.text.index("--set-env-vars"),
             self.text.index("/tmp/strategic-read/read-request.json"),
         )
 
@@ -98,6 +108,7 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "fo-operator-admin-token",
             "gcloud secrets versions access",
             "${{ secrets.",
+            "--update-env-vars",
             "run services update-traffic",
             "--to-revisions",
             "--to-tags",
