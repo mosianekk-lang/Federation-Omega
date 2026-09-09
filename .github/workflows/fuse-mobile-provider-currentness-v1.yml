@@ -50,7 +50,7 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Read Cloud Run and IAP currentness only
+      - name: Read Cloud Run and classify IAP currentness only
         shell: bash
         env:
           WIF_AUTH_OUTCOME: ${{ steps.wif_auth.outcome }}
@@ -59,7 +59,7 @@ jobs:
           set +x
           ROOT=/tmp/fuse-mobile-provider-currentness
           mkdir -p "$ROOT"
-          for name in service run-policy iap-settings iap-policy; do
+          for name in service run-policy iap-settings iap-policy iap-api; do
             : > "$ROOT/$name.err"
           done
 
@@ -67,6 +67,7 @@ jobs:
           RUN_POLICY_RC=99
           IAP_SETTINGS_RC=99
           IAP_POLICY_RC=99
+          IAP_API_RC=99
 
           if [[ "$WIF_AUTH_OUTCOME" == "success" ]]; then
             set +e
@@ -89,10 +90,15 @@ jobs:
               --project "$PROJECT_ID" --resource-type=cloud-run --region "$REGION" --service "$SERVICE" --format=json \
               > "$ROOT/iap-policy.json" 2> "$ROOT/iap-policy.err"
             IAP_POLICY_RC=$?
+
+            gcloud services list --enabled --project "$PROJECT_ID" \
+              --filter="config.name=iap.googleapis.com" --format="value(config.name)" \
+              > "$ROOT/iap-api.txt" 2> "$ROOT/iap-api.err"
+            IAP_API_RC=$?
             set -e
           fi
 
-          export ROOT SERVICE_RC RUN_POLICY_RC IAP_SETTINGS_RC IAP_POLICY_RC WIF_AUTH_OUTCOME
+          export ROOT SERVICE_RC RUN_POLICY_RC IAP_SETTINGS_RC IAP_POLICY_RC IAP_API_RC WIF_AUTH_OUTCOME
           python3 - <<'PY'
           import hashlib
           import json
@@ -115,10 +121,34 @@ jobs:
               except Exception:
                   return {}
 
+          def read_text(name):
+              path = root / name
+              return path.read_text(encoding='utf-8', errors='replace').strip() if path.exists() else ''
+
           def error_sha(name):
               path = root / name
               raw = path.read_bytes() if path.exists() else b''
               return hashlib.sha256(raw).hexdigest() if raw else None
+
+          def error_class(name, rc):
+              if rc == 0:
+                  return 'OK'
+              raw = read_text(name).lower()
+              if not raw:
+                  return 'NO_ERROR_TEXT'
+              if 'permission_denied' in raw or 'permission denied' in raw or 'does not have permission' in raw or 'required permission' in raw:
+                  return 'PERMISSION_DENIED'
+              if 'serviceusage.services.use' in raw:
+                  return 'SERVICE_USAGE_PERMISSION_DENIED'
+              if 'service_disabled' in raw or 'api has not been used' in raw or 'api is disabled' in raw or 'it is disabled' in raw:
+                  return 'API_DISABLED'
+              if 'not_found' in raw or 'not found' in raw or '404' in raw:
+                  return 'RESOURCE_NOT_FOUND'
+              if 'invalid_argument' in raw or 'invalid argument' in raw or 'unrecognized arguments' in raw:
+                  return 'INVALID_ARGUMENT'
+              if 'unauthenticated' in raw or 'invalid authentication credentials' in raw:
+                  return 'AUTHENTICATION_FAILED'
+              return 'OTHER_ERROR'
 
           def sha(value):
               return hashlib.sha256(str(value).encode('utf-8')).hexdigest()
@@ -148,15 +178,19 @@ jobs:
           run_policy_rc = int(os.environ['RUN_POLICY_RC'])
           iap_settings_rc = int(os.environ['IAP_SETTINGS_RC'])
           iap_policy_rc = int(os.environ['IAP_POLICY_RC'])
+          iap_api_rc = int(os.environ['IAP_API_RC'])
           auth_outcome = os.environ.get('WIF_AUTH_OUTCOME', '')
-          all_reads_ok = all(rc == 0 for rc in (service_rc, run_policy_rc, iap_settings_rc, iap_policy_rc))
 
-          if auth_outcome != 'success':
-              state = 'WIF_AUTH_FAILED'
-          elif all_reads_ok:
-              state = 'PROVIDER_READBACK_VERIFIED'
-          else:
-              state = 'PROVIDER_READBACK_PARTIAL_OR_DENIED'
+          error_classes = {
+              'service': error_class('service.err', service_rc),
+              'run_policy': error_class('run-policy.err', run_policy_rc),
+              'iap_settings': error_class('iap-settings.err', iap_settings_rc),
+              'iap_policy': error_class('iap-policy.err', iap_policy_rc),
+              'iap_api': error_class('iap-api.err', iap_api_rc),
+          }
+
+          api_text = read_text('iap-api.txt') if iap_api_rc == 0 else ''
+          iap_api_enabled = ('iap.googleapis.com' in {line.strip() for line in api_text.splitlines() if line.strip()}) if iap_api_rc == 0 else None
 
           public_invoker = False
           run_bindings = []
@@ -191,12 +225,30 @@ jobs:
           service_name = first_key(service, {'name'})
           latest_ready = first_key(service, {'latestReadyRevision', 'latestReadyRevisionName', 'latest_ready_revision'})
           ingress = first_key(service, {'ingress'})
-          iap_enabled = first_key(service, {'iapEnabled', 'iap_enabled'})
+          raw_iap_enabled = first_key(service, {'iapEnabled', 'iap_enabled'})
+          iap_enabled_effective = (bool(raw_iap_enabled) if raw_iap_enabled is not None else False) if service_rc == 0 else None
           invoker_iam_disabled = first_key(service, {'invokerIamDisabled', 'invoker_iam_disabled'})
           default_uri_disabled = first_key(service, {'defaultUriDisabled', 'default_uri_disabled'})
 
+          all_reads_ok = all(rc == 0 for rc in (service_rc, run_policy_rc, iap_settings_rc, iap_policy_rc, iap_api_rc))
+          if auth_outcome != 'success':
+              state = 'WIF_AUTH_FAILED'
+          elif iap_api_enabled is False:
+              state = 'IAP_API_NOT_ENABLED'
+          elif iap_enabled_effective is False:
+              state = 'IAP_DISABLED_AT_CLOUD_RUN_SERVICE'
+          elif all_reads_ok:
+              state = 'PROVIDER_READBACK_VERIFIED'
+          elif 'PERMISSION_DENIED' in {error_classes['iap_settings'], error_classes['iap_policy']}:
+              state = 'IAP_READ_PERMISSION_DENIED'
+          elif 'RESOURCE_NOT_FOUND' in {error_classes['iap_settings'], error_classes['iap_policy']}:
+              state = 'IAP_RESOURCE_NOT_FOUND'
+          else:
+              state = 'PROVIDER_READBACK_PARTIAL_OR_DENIED'
+
           receipt = {
               'schema': 'FUSE_MOBILE_PROVIDER_CURRENTNESS_V1',
+              'diagnostic_version': 2,
               'source_sha': os.environ.get('GITHUB_SHA'),
               'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
               'state': state,
@@ -218,11 +270,12 @@ jobs:
                   'run_policy': run_policy_rc,
                   'iap_settings': iap_settings_rc,
                   'iap_policy': iap_policy_rc,
+                  'iap_api': iap_api_rc,
               },
               'service_observation': {
                   'service_name_sha256': sha(service_name) if service_name else None,
                   'latest_ready_revision_sha256': sha(latest_ready) if latest_ready else None,
-                  'iap_enabled': iap_enabled,
+                  'iap_enabled': iap_enabled_effective,
                   'ingress': ingress,
                   'invoker_iam_disabled': invoker_iam_disabled,
                   'default_uri_disabled': default_uri_disabled,
@@ -231,19 +284,27 @@ jobs:
                   'run_policy_bindings': run_bindings if run_policy_rc == 0 else [],
               },
               'iap_observation': {
+                  'iap_api_enabled': iap_api_enabled,
                   'oauth_resource_client_id_present': bool(client_id) if iap_settings_rc == 0 else None,
                   'oauth_resource_client_id_sha256': sha(client_id) if client_id and iap_settings_rc == 0 else None,
                   'programmatic_client_count': len(programmatic) if iap_settings_rc == 0 else None,
                   'programmatic_client_sha256': sorted(sha(x) for x in programmatic) if iap_settings_rc == 0 else [],
                   'iap_policy_binding_count': len(iap_bindings) if iap_policy_rc == 0 else None,
                   'iap_policy_bindings': iap_bindings if iap_policy_rc == 0 else [],
+                  'error_class': {
+                      'settings': error_classes['iap_settings'],
+                      'policy': error_classes['iap_policy'],
+                      'api_listing': error_classes['iap_api'],
+                  },
               },
               'error_sha256': {
                   'service': error_sha('service.err'),
                   'run_policy': error_sha('run-policy.err'),
                   'iap_settings': error_sha('iap-settings.err'),
                   'iap_policy': error_sha('iap-policy.err'),
+                  'iap_api': error_sha('iap-api.err'),
               },
+              'raw_error_text_recorded': False,
               'provider_mutation_performed': False,
               'iam_mutation_performed': False,
               'oauth_mutation_performed': False,
@@ -266,6 +327,7 @@ jobs:
               'traffic_change_performed',
               'service_invocation_performed',
               'model_inference_performed',
+              'raw_error_text_recorded',
           ):
               assert receipt[key] is False
           assert receipt['auth']['credential_value_recorded'] is False
@@ -278,8 +340,14 @@ jobs:
               'run_policy_read_status': run_policy_rc,
               'iap_settings_read_status': iap_settings_rc,
               'iap_policy_read_status': iap_policy_rc,
+              'iap_api_read_status': iap_api_rc,
+              'iap_api_enabled': iap_api_enabled,
+              'iap_enabled': iap_enabled_effective,
+              'iap_settings_error_class': error_classes['iap_settings'],
+              'iap_policy_error_class': error_classes['iap_policy'],
               'public_invoker_present': receipt['service_observation']['public_invoker_present'],
               'programmatic_client_count': receipt['iap_observation']['programmatic_client_count'],
+              'raw_error_text_recorded': False,
               'provider_mutation_performed': False,
               'model_inference_performed': False,
           }, sort_keys=True))
