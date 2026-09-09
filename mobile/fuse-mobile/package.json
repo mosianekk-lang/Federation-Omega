@@ -14,6 +14,7 @@
     "android:apk": "expo prebuild --platform android --clean && cd android && ./gradlew assembleDebug --no-daemon"
   },
   "dependencies": {
+    "@react-native-google-signin/google-signin": "16.1.5",
     "expo": "~55.0.0",
     "expo-constants": "~55.0.17",
     "expo-font": "~55.0.8",

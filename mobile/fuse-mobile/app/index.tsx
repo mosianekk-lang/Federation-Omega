@@ -1,12 +1,14 @@
 import { useEffect, useMemo, useState } from 'react';
 import { Pressable, SafeAreaView, ScrollView, StyleSheet, Text, TextInput, View } from 'react-native';
 
-import { federationGatewayConfigured, sendFuseMessage, type FuseMode } from '../src/federation';
-import { loadSession, type StoredSession } from '../src/session';
+import { federationGatewayConfigured, type FuseMode } from '../src/federation';
+import { iapConfigured } from '../src/iap';
+import { connectOwner, restoreOwnerSession, sendOwnerFuseMessage } from '../src/ownerConnection';
+import type { StoredSession } from '../src/session';
 
 const modes: FuseMode[] = ['AUTO', 'THINK', 'CREATE', 'BUILD', 'RESEARCH'];
 
-type UiState = 'READY' | 'SESSION_REQUIRED' | 'SENDING' | 'ERROR';
+type UiState = 'READY' | 'SESSION_REQUIRED' | 'CONNECTING' | 'SENDING' | 'ERROR';
 
 export default function Home() {
   const [mode, setMode] = useState<FuseMode>('AUTO');
@@ -15,30 +17,55 @@ export default function Home() {
   const [uiState, setUiState] = useState<UiState>('SESSION_REQUIRED');
   const [result, setResult] = useState('');
   const [traceId, setTraceId] = useState<string | undefined>();
-  const canSend = useMemo(() => text.trim().length > 0 && uiState !== 'SENDING', [text, uiState]);
+  const canSend = useMemo(
+    () => text.trim().length > 0 && uiState === 'READY',
+    [text, uiState],
+  );
 
   useEffect(() => {
     let active = true;
-    loadSession()
+    restoreOwnerSession()
       .then((loaded) => {
         if (!active) return;
         setSession(loaded);
-        setUiState(loaded && federationGatewayConfigured() ? 'READY' : 'SESSION_REQUIRED');
+        setUiState(loaded && federationGatewayConfigured() && iapConfigured() ? 'READY' : 'SESSION_REQUIRED');
       })
       .catch(() => {
-        if (active) setUiState('ERROR');
+        if (active) setUiState('SESSION_REQUIRED');
       });
     return () => {
       active = false;
     };
   }, []);
 
+  async function handleConnect() {
+    if (uiState === 'CONNECTING') return;
+    if (!federationGatewayConfigured() || !iapConfigured()) {
+      setResult('FUSE private gateway transport is not configured in this build.');
+      setUiState('ERROR');
+      return;
+    }
+    setUiState('CONNECTING');
+    setResult('');
+    setTraceId(undefined);
+    try {
+      const connected = await connectOwner();
+      setSession(connected);
+      setResult('Owner connection verified. FUSE is ready.');
+      setUiState('READY');
+    } catch (error) {
+      setSession(null);
+      setResult(error instanceof Error ? error.message : 'OWNER_CONNECTION_FAILED');
+      setUiState('SESSION_REQUIRED');
+    }
+  }
+
   async function handleSend() {
     const intent = text.trim();
-    if (!intent || uiState === 'SENDING') return;
-    if (!session || !federationGatewayConfigured()) {
+    if (!intent || uiState !== 'READY') return;
+    if (!session || !federationGatewayConfigured() || !iapConfigured()) {
       setUiState('SESSION_REQUIRED');
-      setResult('A verified Federation Gateway session is required before FUSE can execute this request.');
+      setResult('Connect the owner identity before FUSE can execute this request.');
       return;
     }
 
@@ -46,7 +73,7 @@ export default function Home() {
     setResult('');
     setTraceId(undefined);
     try {
-      const response = await sendFuseMessage(session.accessToken, {
+      const response = await sendOwnerFuseMessage({
         intent,
         mode,
         verification: mode === 'FAST' ? 'NORMAL' : 'HIGH',
@@ -62,12 +89,14 @@ export default function Home() {
   }
 
   const statusText = uiState === 'READY'
-    ? 'Federation session ready'
-    : uiState === 'SENDING'
-      ? 'FUSE is working…'
-      : uiState === 'ERROR'
-        ? 'Gateway request needs attention'
-        : 'Gateway session required';
+    ? 'Private owner session ready'
+    : uiState === 'CONNECTING'
+      ? 'Verifying owner identity…'
+      : uiState === 'SENDING'
+        ? 'FUSE is working…'
+        : uiState === 'ERROR'
+          ? 'Gateway request needs attention'
+          : 'Owner connection required';
 
   return (
     <SafeAreaView style={styles.safe}>
@@ -79,6 +108,12 @@ export default function Home() {
         </View>
         <Text style={styles.status}>{statusText}</Text>
         <Text style={styles.hero}>What are we building today?</Text>
+
+        {uiState === 'SESSION_REQUIRED' || !session ? (
+          <Pressable onPress={handleConnect} style={styles.connect}>
+            <Text style={styles.connectText}>Connect owner</Text>
+          </Pressable>
+        ) : null}
 
         <ScrollView horizontal showsHorizontalScrollIndicator={false} contentContainerStyle={styles.modeRow}>
           {modes.map((item) => (
@@ -132,6 +167,8 @@ const styles = StyleSheet.create({
   owner: { color: '#8D93A1', fontSize: 16 },
   status: { color: '#7F8795', fontSize: 12, marginTop: 10 },
   hero: { color: '#F5F7FF', fontSize: 34, lineHeight: 41, fontWeight: '600', marginTop: 58, maxWidth: 330 },
+  connect: { marginTop: 22, alignSelf: 'flex-start', borderRadius: 20, backgroundColor: '#F5F7FF', paddingHorizontal: 18, paddingVertical: 10 },
+  connectText: { color: '#111216', fontSize: 13, fontWeight: '700' },
   modeRow: { gap: 8, paddingVertical: 26 },
   mode: { borderWidth: 1, borderColor: '#282B31', borderRadius: 20, paddingHorizontal: 14, paddingVertical: 8 },
   modeActive: { backgroundColor: '#F5F7FF', borderColor: '#F5F7FF' },
