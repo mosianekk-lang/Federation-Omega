@@ -319,13 +319,15 @@ jobs:
             -H "X-Fuse-Authorization: Bearer $EXISTING_SESSION" \
             "$CANARY_URL/v1/federation/health" > fuse-mobile-deploy-proof/federation-health-pre-revoke.json
 
+          REVOKE_JSON="$(printf '{"device_token":"%s"}' "$DEVICE_TOKEN")"
           curl --fail-with-body --silent --show-error \
             -X POST \
             -H 'Content-Type: application/json' \
             -H "Authorization: Bearer $ID_TOKEN" \
             -H "X-Fuse-Authorization: Bearer $ENROLL_SESSION" \
-            --data "$(python -c 'import json,os; print(json.dumps({"device_token":os.environ["DEVICE_TOKEN"]}))' DEVICE_TOKEN="$DEVICE_TOKEN")" \
+            --data "$REVOKE_JSON" \
             "$CANARY_URL/v1/device/revoke" > fuse-mobile-deploy-proof/revoke.json
+          unset REVOKE_JSON
 
           set +e
           curl --silent --show-error -o /tmp/fuse-mobile-old-session-after-revoke.json -w '%{http_code}' \
