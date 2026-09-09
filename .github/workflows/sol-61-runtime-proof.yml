@@ -5,30 +5,50 @@ on:
     branches: [main]
     paths:
       - "sol_61_runtime/**"
+      - "federation/sol62_fuse_bridge_v2.py"
+      - "federation/fuse_mission_runtime_interlock_v1.py"
+      - "benchmarking/cfbe_omega/mission_execution_kernel_vnext/core.py"
+      - "tests/test_sol62_fuse_bridge_v2.py"
       - ".github/workflows/sol-61-runtime-proof.yml"
+      - "governance/github_airlock_policy.json"
   pull_request:
     paths:
       - "sol_61_runtime/**"
+      - "federation/sol62_fuse_bridge_v2.py"
+      - "federation/fuse_mission_runtime_interlock_v1.py"
+      - "benchmarking/cfbe_omega/mission_execution_kernel_vnext/core.py"
+      - "tests/test_sol62_fuse_bridge_v2.py"
       - ".github/workflows/sol-61-runtime-proof.yml"
+      - "governance/github_airlock_policy.json"
   workflow_dispatch:
 
 permissions:
   contents: read
+
+concurrency:
+  group: sol-61-runtime-proof-${{ github.ref }}
+  cancel-in-progress: false
 
 jobs:
   proof:
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/setup-python@v5
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12"
       - name: Compile
-        run: python -m compileall -q sol_61_runtime
+        run: python -m compileall -q sol_61_runtime federation/sol62_fuse_bridge_v2.py tests/test_sol62_fuse_bridge_v2.py
       - name: Unit tests
         working-directory: sol_61_runtime
         run: python -m unittest -v test_runtime.py test_worker.py test_coordinator.py test_adaptive.py test_semantic_memory.py test_causal.py test_policy_kernel.py test_observability.py test_repair.py test_mission_autonomy.py test_provider_bridge.py test_provider_authority.py test_operator_activation.py test_live_authority.py
+      - name: Execute SOL 6.2 FUSE v2 adversarial and hosted bridge proof
+        run: python sol_61_runtime/prove_sol62_fuse_bridge_v2.py --output sol_61_runtime/artifacts/fuse-v2-host-proof
       - name: Execute provider-neutral runtime proof
         run: python sol_61_runtime/prove_runtime.py --output sol_61_runtime/artifacts/proof
       - name: Execute durable worker proof
@@ -83,6 +103,13 @@ jobs:
             receipt = json.loads((Path('sol_61_runtime/artifacts') / folder / filename).read_text())
             assert receipt['status'] == status and all(receipt['gates'].values())
             receipts[key] = receipt
+          fuse_v2 = json.loads(Path('sol_61_runtime/artifacts/fuse-v2-host-proof/sol62-fuse-v2-host-receipt.json').read_text())
+          assert fuse_v2['status'] == 'SOL62_FUSE_V2_HOSTED_SHADOW_VERIFIED'
+          assert all(fuse_v2['gates'].values())
+          assert fuse_v2['truth_boundary']['real_formation_kernel_exercised']
+          assert fuse_v2['truth_boundary']['real_sol62_strict_runtime_exercised']
+          assert fuse_v2['truth_boundary']['real_f130_interlock_exercised']
+          assert not fuse_v2['truth_boundary']['provider_effect_performed']
           live = receipts['live_authority']
           assert live['truth_boundary']['github_actions_execution']
           assert live['truth_boundary']['manifest_consolidated']
@@ -93,10 +120,11 @@ jobs:
           assert (root / 'canonical-live-authority-manifest.json').is_file()
           PY
       - name: Upload proof package
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sol-61-runtime-proof
           path: |
+            sol_61_runtime/artifacts/fuse-v2-host-proof
             sol_61_runtime/artifacts/proof
             sol_61_runtime/artifacts/worker-proof
             sol_61_runtime/artifacts/coordination-proof
