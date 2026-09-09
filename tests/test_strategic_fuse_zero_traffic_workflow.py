@@ -32,6 +32,12 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "canonical_url = str(p.get('status', {}).get('url') or '').strip()",
             "OPERATOR_CANONICAL_URL_SERVICE_BINDING_INVALID",
             "OPERATOR_HOST_SHA256",
+            "roles/artifactregistry.writer",
+            "ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED",
+            "gcloud auth configure-docker",
+            "docker build --pull",
+            "docker push \"$IMAGE_TAG\"",
+            "gcloud artifacts docker images describe \"$IMAGE_TAG\"",
             "--no-traffic",
             "--tag \"$TAG\"",
             "--set-env-vars \"OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}\"",
@@ -53,6 +59,9 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "'candidate_traffic_percent':0",
             "'serving_traffic_unchanged':True",
             "'provider_native_audience':True",
+            "'artifact_registry_writer_preexisting':",
+            "'image_build_transport':'GITHUB_HOSTED_DOCKER_DIRECT_ARTIFACT_REGISTRY'",
+            "'cloud_build_staging_used':False",
             "'candidate_environment_closed_world':True",
             "'candidate_secret_backed_env_count':0",
             "'candidate_only_trust_binding':True",
@@ -97,6 +106,23 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         self.assertIn("SERVING_AUDIENCE_PRESENT", self.text)
         self.assertIn("SERVING_PRINCIPAL_COUNT", self.text)
 
+    def test_build_transport_avoids_cloud_build_staging_bucket(self) -> None:
+        self.assertNotIn("gcloud builds submit", self.text)
+        self.assertNotIn("_cloudbuild/source", self.text)
+        self.assertIn("gcloud auth configure-docker", self.text)
+        self.assertIn("docker build --pull", self.text)
+        self.assertIn('docker push "$IMAGE_TAG"', self.text)
+        self.assertIn('gcloud artifacts docker images describe "$IMAGE_TAG"', self.text)
+        self.assertLess(self.text.index('docker push "$IMAGE_TAG"'), self.text.index('gcloud run deploy "$OPERATOR_SERVICE"'))
+
+    def test_artifact_registry_writer_is_read_proven_before_push(self) -> None:
+        self.assertIn('gcloud projects get-iam-policy "$PROJECT_ID"', self.text)
+        self.assertIn('gcloud artifacts repositories get-iam-policy "$REPOSITORY"', self.text)
+        self.assertIn("roles/artifactregistry.writer", self.text)
+        self.assertIn("ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED", self.text)
+        self.assertLess(self.text.index("ARTIFACT_REGISTRY_WRITER_PREEXISTING_REQUIRED"), self.text.index('docker push "$IMAGE_TAG"'))
+        self.assertNotIn("add-iam-policy-binding", self.low)
+
     def test_candidate_principal_is_exact_authenticated_deployer_only(self) -> None:
         self.assertIn("candidate_principals = deployer", self.text)
         self.assertIn("fh.write('CANDIDATE_OIDC_ALLOWED_PRINCIPALS=' + candidate_principals", self.text)
@@ -117,10 +143,7 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
             "assert set(direct) == {'OPERATOR_AUDIENCE', 'OIDC_ALLOWED_PRINCIPALS'}",
             self.text,
         )
-        self.assertLess(
-            self.text.index("--set-env-vars"),
-            self.text.index("/tmp/strategic-read/read-request.json"),
-        )
+        self.assertLess(self.text.index("--set-env-vars"), self.text.index("/tmp/strategic-read/read-request.json"))
 
     def test_forbidden_effect_routes_absent(self) -> None:
         forbidden = [
@@ -149,20 +172,11 @@ class StrategicFuseZeroTrafficWorkflowTests(unittest.TestCase):
         self.assertEqual(1, self.text.count("--data-binary @/tmp/strategic-read/read-request.json"))
 
     def test_status_precedes_strategic_read(self) -> None:
-        self.assertLess(
-            self.text.index("/tmp/strategic-read/status-request.json"),
-            self.text.index("/tmp/strategic-read/read-request.json"),
-        )
+        self.assertLess(self.text.index("/tmp/strategic-read/status-request.json"), self.text.index("/tmp/strategic-read/read-request.json"))
 
     def test_no_traffic_is_proven_before_and_after_read(self) -> None:
-        self.assertLess(
-            self.text.index("CANDIDATE_TRAFFIC_NOT_ZERO"),
-            self.text.index("/tmp/strategic-read/read-request.json"),
-        )
-        self.assertLess(
-            self.text.index("/tmp/strategic-read/read-request.json"),
-            self.text.index("CANDIDATE_NOT_ZERO_TRAFFIC_AT_END"),
-        )
+        self.assertLess(self.text.index("CANDIDATE_TRAFFIC_NOT_ZERO"), self.text.index("/tmp/strategic-read/read-request.json"))
+        self.assertLess(self.text.index("/tmp/strategic-read/read-request.json"), self.text.index("CANDIDATE_NOT_ZERO_TRAFFIC_AT_END"))
 
     def test_no_raw_source_is_persisted_in_receipt(self) -> None:
         self.assertIn("'project_digest':read.get('projectDigest')", self.text)
