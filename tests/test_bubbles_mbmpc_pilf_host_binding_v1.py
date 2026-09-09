@@ -11,6 +11,10 @@ from federation.fuse_mbmpc_pilf_closure_bridge_v1 import (
     MissionProductionContract,
     PStage,
 )
+from federation.fuse_mission_runtime_interlock_v1 import (
+    MissionRuntimeInterlock,
+    MissionRuntimeSnapshot,
+)
 from federation.of50_ace_v1 import (
     Authority,
     ExecutionProof,
@@ -63,6 +67,15 @@ class _Passport:
         return SimpleNamespace(owner_value_proven=True)
 
 
+class _F130Host:
+    def __init__(self):
+        self.interlock = MissionRuntimeInterlock()
+
+    def commit_terminal(self, snapshot, prepare, *, now_epoch):
+        decision = self.interlock.commit_terminal(snapshot, prepare, now_epoch=now_epoch)
+        return SimpleNamespace(checkpoint_id="f130:test-checkpoint", decision=decision)
+
+
 def _runtime(*, admitted=True, value_status=WorkStatus.VERIFIED):
     runtime = object.__new__(BubblesAutonomicFederationRuntime)
     runtime.spine_binding = _BindingCourt(admitted=admitted)
@@ -70,6 +83,7 @@ def _runtime(*, admitted=True, value_status=WorkStatus.VERIFIED):
     runtime.of50 = OF50ACEKernel()
     runtime.durable = _Durable(value_status=value_status)
     runtime.passport = _Passport()
+    runtime.mission_runtime = _F130Host()
     return runtime
 
 
@@ -134,6 +148,23 @@ def _of50_request(*, mission_id=MISSION_ID, complete=True):
     )
 
 
+def _f130_terminal_pair(*, mission_id=MISSION_ID, ledger_tail=900):
+    snapshot = MissionRuntimeSnapshot(
+        mission_id=mission_id,
+        current_mission_id=mission_id,
+        objective="verify mission finality",
+        contract_epoch=21,
+        ledger_tail=ledger_tail,
+        tasks=(),
+        proofs=(),
+        objective_satisfied=True,
+        completion_claim_requested=True,
+    )
+    decision = MissionRuntimeInterlock().decide(snapshot, now_epoch=1000.0)
+    assert decision.prepare is not None
+    return snapshot, decision.prepare
+
+
 def test_owner_value_finalization_no_longer_equals_mission_finality():
     runtime = _runtime()
     result = runtime.finalize_owner_value(_mission(), spine_receipt=object())
@@ -144,6 +175,32 @@ def test_owner_value_finalization_no_longer_equals_mission_finality():
 
 def test_host_finality_requires_of50_and_mbmpc_pilf_closure_and_external_stage_evidence():
     runtime = _runtime()
+    snapshot, prepare = _f130_terminal_pair()
+    result = runtime.finalize_mission_completion(
+        _mission(),
+        spine_receipt=object(),
+        production_contract=_contract(),
+        current_p_stage=PStage.P16_VALUE_OBSERVED,
+        satisfied_terminal_predicates=("TP-FINAL",),
+        production_stage_evidence_refs=("provider:production-stage:P16",),
+        of50_request=_of50_request(),
+        mission_runtime_snapshot=snapshot,
+        terminal_prepare_receipt=prepare,
+        mission_runtime_now_epoch=1001.0,
+    )
+    assert result["state"] == "MISSION_COMPLETION_VERIFIED"
+    assert result["mission_value_finalized"] is True
+    assert result["production_stage_evidence_refs"] == ["provider:production-stage:P16"]
+    assert result["of50_receipt"]["completion_verified"] is True
+    assert result["f130_runtime_receipt"]["action"] == "COMPLETE_VERIFIED"
+    assert result["truth_boundary"]["of50_current_canonical_completion_required"] is True
+    assert result["truth_boundary"]["of50_and_mbmpc_pilf_finality_are_conjunctive"] is True
+    assert result["truth_boundary"]["production_stage_evidence_consumed_not_self_certified"] is True
+    assert result["truth_boundary"]["mission_completion_requires_f130_terminal_commit"] is True
+
+
+def test_host_finality_is_f130_gated_without_terminal_prepare_and_fresh_snapshot():
+    runtime = _runtime()
     result = runtime.finalize_mission_completion(
         _mission(),
         spine_receipt=object(),
@@ -153,13 +210,10 @@ def test_host_finality_requires_of50_and_mbmpc_pilf_closure_and_external_stage_e
         production_stage_evidence_refs=("provider:production-stage:P16",),
         of50_request=_of50_request(),
     )
-    assert result["state"] == "MISSION_COMPLETION_VERIFIED"
-    assert result["mission_value_finalized"] is True
-    assert result["production_stage_evidence_refs"] == ["provider:production-stage:P16"]
-    assert result["of50_receipt"]["completion_verified"] is True
-    assert result["truth_boundary"]["of50_current_canonical_completion_required"] is True
-    assert result["truth_boundary"]["of50_and_mbmpc_pilf_finality_are_conjunctive"] is True
-    assert result["truth_boundary"]["production_stage_evidence_consumed_not_self_certified"] is True
+    assert result["state"] == "MISSION_RUNTIME_GATED"
+    assert result["mission_value_finalized"] is False
+    assert "F130_FRESH_WHOLE_MISSION_SNAPSHOT_REQUIRED" in result["f130_reason_codes"]
+    assert "F130_TERMINAL_PREPARE_RECEIPT_REQUIRED" in result["f130_reason_codes"]
 
 
 def test_host_finality_fails_closed_without_of50_receipt():
