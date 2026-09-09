@@ -212,16 +212,18 @@ class FuseMobileMdtafContractTests(unittest.TestCase):
         self.assertIn('"connectivity_loss_verified"', source)
         self.assertIn('"network_recovery"', source)
 
-    def test_mdtaf_reuses_existing_admitted_owner_dispatched_workflow(self) -> None:
+    def test_mdtaf_reuses_existing_admitted_bounded_push_or_owner_dispatched_workflow(self) -> None:
         if not WORKFLOW.exists():
             self.skipTest("workflow-free export excludes repository workflow controls")
         workflow = WORKFLOW.read_text(encoding="utf-8")
         policy = json.loads(AIRLOCK_POLICY.read_text(encoding="utf-8"))
         path = ".github/workflows/fuse-mobile-android-build.yml"
         self.assertIn(path, policy["active_workflow_allowlist"])
-        self.assertEqual(policy["allowed_events"][path], ["issues"])
+        self.assertEqual(policy["allowed_events"][path], ["issues", "push"])
+        self.assertEqual(policy["required_push_branches"][path], ["main"])
         self.assertIn("[FO-DISPATCH] FUSE_MOBILE_ANDROID_BUILD_V1", workflow)
         self.assertIn("[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1", workflow)
+        self.assertIn("branches: [main]", workflow)
         self.assertIn("permissions:\n  contents: read\n  issues: read", workflow)
         self.assertIn("github.event.issue.author_association == 'OWNER'", workflow)
         self.assertIn("persist-credentials: false", workflow)
