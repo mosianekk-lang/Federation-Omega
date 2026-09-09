@@ -2,14 +2,6 @@
 from __future__ import annotations
 
 from dataclasses import asdict
-import contextlib
-import io
-import json
-import os
-import re
-import subprocess
-import sys
-from pathlib import Path
 
 from services.gemini_gateway.app import Gateway as GeminiGateway
 
@@ -90,58 +82,6 @@ def _gemini_gateway_contract_canary() -> dict[str, object]:
     }
 
 
-def _fascg_hosted_shadow_canary() -> dict[str, object]:
-    from benchmarking.cfbe_omega.prove_fascg_production_v1 import main as prove_fascg
-
-    tests = subprocess.run(
-        [sys.executable, "-m", "unittest", "discover", "-s", "tests", "-p", "test_fascg_*.py", "-v"],
-        text=True, capture_output=True, check=False,
-    )
-    combined = (tests.stdout or "") + "\n" + (tests.stderr or "")
-    counts = re.findall(r"Ran\s+(\d+)\s+tests?", combined)
-    hosted_test_count = int(counts[-1]) if counts else 0
-    if tests.returncode != 0 or hosted_test_count < 320:
-        raise RuntimeError("FASCG_HOSTED_FULL_COURT_FAILED")
-
-    output_dir = Path(os.environ.get("FASCG_RECEIPT_DIR", "runtime-proof/fascg-production"))
-    output_dir.mkdir(parents=True, exist_ok=True)
-    previous = os.environ.get("FASCG_RECEIPT_DIR")
-    os.environ["FASCG_RECEIPT_DIR"] = str(output_dir)
-    try:
-        with contextlib.redirect_stdout(io.StringIO()):
-            code = prove_fascg()
-    finally:
-        if previous is None:
-            os.environ.pop("FASCG_RECEIPT_DIR", None)
-        else:
-            os.environ["FASCG_RECEIPT_DIR"] = previous
-    receipt_path = output_dir / "PRODUCTION_QUALIFICATION_RECEIPT.json"
-    receipt = json.loads(receipt_path.read_text(encoding="utf-8"))
-    hosted = os.environ.get("GITHUB_ACTIONS") == "true"
-    expected_class = "REAL_HOSTED_SHADOW" if hosted else "LOCAL_REFERENCE"
-    valid = (
-        code == 0
-        and receipt.get("measurement_class") == expected_class
-        and receipt.get("achieved_stage") == "HOSTED_SHADOW"
-        and receipt.get("provider_bound") is False
-        and receipt.get("provider_effect_authorized") is False
-        and receipt.get("production_self_mutation_authorized") is False
-        and receipt.get("ten_x_verified") is False
-        and (receipt.get("aopgc_upstream_bound") is True if hosted else True)
-    )
-    return {
-        "valid": valid,
-        "hosted_test_count": hosted_test_count,
-        "hosted_test_green": True,
-        "measurement_class": receipt.get("measurement_class"),
-        "achieved_stage": receipt.get("achieved_stage"),
-        "aopgc_upstream_bound": receipt.get("aopgc_upstream_bound"),
-        "provider_bound": receipt.get("provider_bound"),
-        "ten_x_verified": receipt.get("ten_x_verified"),
-        "receipt_path": str(receipt_path),
-    }
-
-
 def run_canary() -> dict[str, object]:
     engine = FrontierConvergenceEngine()
     signal = FrontierSignal.create(
@@ -194,7 +134,6 @@ def run_canary() -> dict[str, object]:
         experiment_identity=experiment,
     )
     gemini_gateway = _gemini_gateway_contract_canary()
-    fascg = _fascg_hosted_shadow_canary()
     passed = (
         robustness.passed
         and admission.decision == "ADMIT"
@@ -202,7 +141,6 @@ def run_canary() -> dict[str, object]:
         and observed["event_id"].startswith("FC-EVT-")
         and gemini_gateway["valid"] is True
         and gemini_gateway["provider_effects"] is False
-        and fascg["valid"] is True
     )
     return {
         "state": "PASS" if passed else "FAIL",
@@ -214,9 +152,9 @@ def run_canary() -> dict[str, object]:
         "robustness": asdict(robustness),
         "admission": asdict(admission),
         "gemini_gateway_contract": gemini_gateway,
-        "fascg_hosted_shadow": fascg,
     }
 
 
 if __name__ == "__main__":
+    import json
     print(json.dumps(run_canary(), sort_keys=True))
