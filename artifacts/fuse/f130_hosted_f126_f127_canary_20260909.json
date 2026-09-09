@@ -1,0 +1,11 @@
+{
+  "schema": "FUSE-F130-HOSTED-CANARY-CARRIER-V1",
+  "mission": "FUSE-F130-LOAD-BEARING-HOST-ADOPTION",
+  "carrier_only": true,
+  "merge_intended": false,
+  "source_main": "bc5065f5b6badf18dd347871645101a10e767213",
+  "fencing_token": 140,
+  "effect": "NONE",
+  "purpose": "Trigger the already-admitted Bubbles Command Bus READ-only f130_mission_runtime historical F126->F127 canary and retain an immutable hosted receipt.",
+  "truth_boundary": "This artifact is a disposable carrier and must never be merged as production source."
+}
