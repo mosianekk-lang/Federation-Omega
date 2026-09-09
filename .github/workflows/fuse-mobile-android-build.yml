@@ -187,33 +187,46 @@ jobs:
           API_LEVEL: ${{ matrix.api }}
         run: |
           set -euo pipefail
-          mkdir -p mobile/fuse-mobile/mdtaf-evidence
+          EVIDENCE_DIR="mobile/fuse-mobile/mdtaf-evidence"
+          mkdir -p "$EVIDENCE_DIR"
           SDK_TOOLS_ENV="$RUNNER_TEMP/fuse-mobile-sdk-tools-${API_LEVEL}.env"
           bash mobile/fuse-mobile/lab/resolve_android_sdk_tools.sh --output-env "$SDK_TOOLS_ENV"
           # shellcheck disable=SC1090
           source "$SDK_TOOLS_ENV"
           test -x "$SDKMANAGER"
           test -x "$AVDMANAGER"
-          EMULATOR="$SDK_ROOT/emulator/emulator"
-          test -x "$EMULATOR"
-          printf '%s\n' "$CMDLINE_TOOLS_ROOT" > "mobile/fuse-mobile/mdtaf-evidence/cmdline-tools-root-api-${API_LEVEL}.txt"
-          printf '%s\n' "$CMDLINE_TOOLS_REVISION" > "mobile/fuse-mobile/mdtaf-evidence/cmdline-tools-revision-api-${API_LEVEL}.txt"
+          printf '%s\n' "$SDK_ROOT" > "$EVIDENCE_DIR/sdk-root-api-${API_LEVEL}.txt"
+          printf '%s\n' "$CMDLINE_TOOLS_ROOT" > "$EVIDENCE_DIR/cmdline-tools-root-api-${API_LEVEL}.txt"
+          printf '%s\n' "$CMDLINE_TOOLS_REVISION" > "$EVIDENCE_DIR/cmdline-tools-revision-api-${API_LEVEL}.txt"
           ANDROID_AVD_HOME="$RUNNER_TEMP/fuse-mdtaf-avd-${API_LEVEL}"
           mkdir -p "$ANDROID_AVD_HOME"
           export ANDROID_AVD_HOME
           echo "ANDROID_AVD_HOME=$ANDROID_AVD_HOME" >> "$GITHUB_ENV"
-          "$SDKMANAGER" "platform-tools" "emulator" "system-images;android-${API_LEVEL};google_apis;x86_64"
+          "$SDKMANAGER" "platform-tools" "emulator" "system-images;android-${API_LEVEL};google_apis;x86_64" \
+            2>&1 | tee "$EVIDENCE_DIR/sdkmanager-install-api-${API_LEVEL}.log"
           ADB="$SDK_ROOT/platform-tools/adb"
-          test -x "$ADB"
+          EMULATOR="$SDK_ROOT/emulator/emulator"
+          if [[ ! -x "$ADB" || ! -x "$EMULATOR" ]]; then
+            {
+              echo "SDK_ROOT=$SDK_ROOT"
+              echo "ADB=$ADB"
+              echo "EMULATOR=$EMULATOR"
+              ls -la "$SDK_ROOT/platform-tools" 2>&1 || true
+              ls -la "$SDK_ROOT/emulator" 2>&1 || true
+            } > "$EVIDENCE_DIR/sdk-runtime-tools-missing-api-${API_LEVEL}.txt"
+            echo "sdkmanager completed but exact platform-tools/emulator executables are unavailable" >&2
+            exit 42
+          fi
+          "$EMULATOR" -version 2>&1 | head -n 4 > "$EVIDENCE_DIR/emulator-version-api-${API_LEVEL}.txt"
           AVD_NAME="fuse-mdtaf-api-${API_LEVEL}"
           echo no | "$AVDMANAGER" create avd --force \
             --name "$AVD_NAME" \
             --package "system-images;android-${API_LEVEL};google_apis;x86_64" \
             --device "pixel_6"
           test -s "$ANDROID_AVD_HOME/${AVD_NAME}.ini"
-          "$EMULATOR" -list-avds | tee "mobile/fuse-mobile/mdtaf-evidence/emulator-list-avds-provision-api-${API_LEVEL}.txt"
-          grep -Fx -- "$AVD_NAME" "mobile/fuse-mobile/mdtaf-evidence/emulator-list-avds-provision-api-${API_LEVEL}.txt" >/dev/null
-          printf '%s\n' "$ANDROID_AVD_HOME" > "mobile/fuse-mobile/mdtaf-evidence/android-avd-home-api-${API_LEVEL}.txt"
+          "$EMULATOR" -list-avds | tee "$EVIDENCE_DIR/emulator-list-avds-provision-api-${API_LEVEL}.txt"
+          grep -Fx -- "$AVD_NAME" "$EVIDENCE_DIR/emulator-list-avds-provision-api-${API_LEVEL}.txt" >/dev/null
+          printf '%s\n' "$ANDROID_AVD_HOME" > "$EVIDENCE_DIR/android-avd-home-api-${API_LEVEL}.txt"
 
       - name: Boot AVD through bounded exact-SDK readiness court
         shell: bash
