@@ -62,6 +62,18 @@ class FuseMobileMdtafSdkToolchainResolutionTests(unittest.TestCase):
             self.assertEqual(values["CMDLINE_TOOLS_REVISION"], "19.0")
             self.assertEqual(Path(values["CMDLINE_TOOLS_ROOT"]), chosen.resolve())
 
+    def test_physical_latest_directory_is_accepted_by_exact_revision_metadata(self) -> None:
+        with tempfile.TemporaryDirectory() as tmp:
+            sdk = self._sdk(Path(tmp))
+            chosen = self._install(sdk, "latest", "12.0")
+            proc = self._run(sdk)
+            self.assertEqual(proc.returncode, 0, proc.stderr)
+            values = self._parse(proc.stdout)
+            self.assertEqual(Path(values["CMDLINE_TOOLS_ROOT"]), chosen.resolve())
+            self.assertEqual(values["CMDLINE_TOOLS_LAYOUT_NAME"], "latest")
+            self.assertEqual(values["CMDLINE_TOOLS_REVISION"], "12.0")
+            self.assertEqual(values["CMDLINE_TOOLS_IDENTITY_SOURCE"], "source.properties:Pkg.Revision")
+
     def test_latest_symlink_is_not_provenance_and_is_ignored(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             sdk = self._sdk(Path(tmp))
@@ -86,14 +98,14 @@ class FuseMobileMdtafSdkToolchainResolutionTests(unittest.TestCase):
             self.assertNotEqual(proc.returncode, 0)
             self.assertIn("cmdline-tools directory is missing", proc.stderr)
 
-    def test_tools_must_come_from_same_concrete_installation(self) -> None:
+    def test_tools_must_come_from_same_exact_installation(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
             sdk = self._sdk(Path(tmp))
             self._install(sdk, "17.0-a", "17.0", avdmanager=False)
             self._install(sdk, "17.0-b", "17.0", sdkmanager=False)
             proc = self._run(sdk)
             self.assertNotEqual(proc.returncode, 0)
-            self.assertIn("no concrete Android cmdline-tools installation", proc.stderr)
+            self.assertIn("no exact Android cmdline-tools installation", proc.stderr)
 
     def test_invalid_revision_is_ignored(self) -> None:
         with tempfile.TemporaryDirectory() as tmp:
@@ -125,10 +137,12 @@ class FuseMobileMdtafSdkToolchainResolutionTests(unittest.TestCase):
             self.assertEqual(proc.returncode, 0, proc.stderr)
             written = self._parse(receipt.read_text(encoding="utf-8"))
             self.assertEqual(written["CMDLINE_TOOLS_REVISION"], "20.0")
+            self.assertEqual(written["CMDLINE_TOOLS_LAYOUT_NAME"], "20.0")
+            self.assertEqual(written["CMDLINE_TOOLS_IDENTITY_SOURCE"], "source.properties:Pkg.Revision")
             self.assertEqual(Path(written["SDKMANAGER"]), (chosen / "bin" / "sdkmanager").resolve())
             self.assertEqual(Path(written["AVDMANAGER"]), (chosen / "bin" / "avdmanager").resolve())
 
-    def test_workflow_binds_resolver_and_forbids_latest_alias(self) -> None:
+    def test_workflow_binds_resolver_and_forbids_direct_latest_path(self) -> None:
         if not WORKFLOW.exists():
             self.skipTest("workflow-free export excludes repository workflow controls")
         workflow = WORKFLOW.read_text(encoding="utf-8")
