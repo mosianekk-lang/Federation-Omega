@@ -1,7 +1,6 @@
 from __future__ import annotations
 
 import asyncio
-import base64
 import hashlib
 import hmac
 import json
@@ -24,10 +23,10 @@ from federation.mobile_gateway.fuse_mobile_v1 import (
     default_capability_contracts,
 )
 from services.fuse_mobile_gateway.runtime import (
+    DEFAULT_SESSION_TTL_SECONDS,
     ExecutionResult,
     GatewayRuntime,
     RuntimeBindingError,
-    SessionCodec,
     VerifiedIdentity,
 )
 from services.gemini_gateway.app import MetadataIdentity, VertexGeminiClient
@@ -35,12 +34,18 @@ from services.gemini_gateway.app import MetadataIdentity, VertexGeminiClient
 CANONICAL_PROJECT_ID = "sov-hybrid-suite"
 DEFAULT_KDV_RANGE = "FUSE_MISSION_CURRENTNESS!A1:N100"
 DEVICE_TOKEN_PREFIX = "fmdv1_"
+SESSION_TOKEN_PREFIX = "fmsv1_"
 DEVICE_COLLECTION = "fuse_mobile_devices"
 ENROLLMENT_COLLECTION = "fuse_mobile_enrollments"
+SESSION_COLLECTION = "fuse_mobile_sessions"
 
 
 def _sha256(value: str) -> str:
     return hashlib.sha256(value.encode("utf-8")).hexdigest()
+
+
+def _is_sha256(value: str) -> bool:
+    return len(value) == 64 and all(ch in "0123456789abcdef" for ch in value.lower())
 
 
 @dataclass(frozen=True)
@@ -49,10 +54,31 @@ class DeviceRecord:
     active: bool
 
 
+@dataclass(frozen=True)
+class SessionRecord:
+    subject: str
+    device_hash: str
+    expires_at_epoch: int
+
+
 class DeviceRepository(Protocol):
     async def consume_enrollment(self, *, enrollment_hash: str, subject: str, device_hash: str) -> None: ...
     async def get_device(self, device_hash: str) -> DeviceRecord | None: ...
     async def revoke_device(self, device_hash: str) -> None: ...
+
+
+class SessionRepository(Protocol):
+    async def put_session(
+        self,
+        *,
+        session_hash: str,
+        subject: str,
+        device_hash: str,
+        issued_at_epoch: int,
+        expires_at_epoch: int,
+    ) -> None: ...
+
+    async def get_session(self, session_hash: str) -> SessionRecord | None: ...
 
 
 class FirestoreDeviceRepository:
@@ -116,6 +142,56 @@ class FirestoreDeviceRepository:
         await asyncio.to_thread(write)
 
 
+class FirestoreSessionRepository:
+    """Persist only SHA-256 session-token hashes and revocation-relevant metadata."""
+
+    def __init__(self, client: firestore.Client):
+        self.client = client
+
+    async def put_session(
+        self,
+        *,
+        session_hash: str,
+        subject: str,
+        device_hash: str,
+        issued_at_epoch: int,
+        expires_at_epoch: int,
+    ) -> None:
+        def write() -> None:
+            self.client.collection(SESSION_COLLECTION).document(session_hash).set(
+                {
+                    "subject": subject,
+                    "device_hash": device_hash,
+                    "issued_at_epoch": issued_at_epoch,
+                    "expires_at_epoch": expires_at_epoch,
+                }
+            )
+
+        await asyncio.to_thread(write)
+
+    async def get_session(self, session_hash: str) -> SessionRecord | None:
+        def read() -> SessionRecord | None:
+            snapshot = self.client.collection(SESSION_COLLECTION).document(session_hash).get()
+            if not snapshot.exists:
+                return None
+            data = snapshot.to_dict() or {}
+            subject = str(data.get("subject") or "")
+            device_hash = str(data.get("device_hash") or "")
+            try:
+                expires_at_epoch = int(data.get("expires_at_epoch") or 0)
+            except (TypeError, ValueError):
+                return None
+            if not subject or not _is_sha256(device_hash) or expires_at_epoch <= 0:
+                return None
+            return SessionRecord(
+                subject=subject,
+                device_hash=device_hash.lower(),
+                expires_at_epoch=expires_at_epoch,
+            )
+
+        return await asyncio.to_thread(read)
+
+
 class DeviceCredentialManager:
     """One-use owner enrollment followed by opaque, revocable device credentials."""
 
@@ -129,12 +205,16 @@ class DeviceCredentialManager:
     ) -> None:
         if not owner_subject.strip():
             raise ValueError("OWNER_SUBJECT_REQUIRED")
-        if len(enrollment_sha256) != 64 or any(ch not in "0123456789abcdef" for ch in enrollment_sha256.lower()):
+        if not _is_sha256(enrollment_sha256):
             raise ValueError("ENROLLMENT_SHA256_REQUIRED")
         self.repository = repository
         self.owner_subject = owner_subject.strip()
         self.enrollment_sha256 = enrollment_sha256.lower()
         self._token_factory = token_factory or (lambda: DEVICE_TOKEN_PREFIX + secrets.token_urlsafe(32))
+
+    @staticmethod
+    def _identity(subject: str, device_hash: str) -> VerifiedIdentity:
+        return VerifiedIdentity(subject, {"device_id": device_hash[:16], "device_hash": device_hash})
 
     async def enroll(self, credential: str) -> tuple[VerifiedIdentity, str]:
         observed = _sha256(credential)
@@ -149,7 +229,7 @@ class DeviceCredentialManager:
             subject=self.owner_subject,
             device_hash=device_hash,
         )
-        return VerifiedIdentity(self.owner_subject, {"device_id": device_hash[:16]}), device_token
+        return self._identity(self.owner_subject, device_hash), device_token
 
     async def verify(self, credential: str) -> VerifiedIdentity:
         if not credential.startswith(DEVICE_TOKEN_PREFIX):
@@ -158,13 +238,80 @@ class DeviceCredentialManager:
         record = await self.repository.get_device(device_hash)
         if record is None or not record.active:
             raise RuntimeBindingError("DEVICE_CREDENTIAL_INVALID")
-        return VerifiedIdentity(record.subject, {"device_id": device_hash[:16]})
+        return self._identity(record.subject, device_hash)
 
     async def revoke(self, credential: str, *, expected_subject: str) -> None:
         identity = await self.verify(credential)
         if identity.subject != expected_subject:
             raise RuntimeBindingError("DEVICE_SUBJECT_MISMATCH")
         await self.repository.revoke_device(_sha256(credential))
+
+
+class OpaqueSessionManager:
+    """Short-lived random bearer sessions backed by hash-only Firestore records.
+
+    Every verification rechecks the bound device record. Revoking a device therefore
+    invalidates both future sessions and already-issued sessions on their next use.
+    """
+
+    def __init__(
+        self,
+        repository: SessionRepository,
+        devices: DeviceRepository,
+        *,
+        ttl_seconds: int = DEFAULT_SESSION_TTL_SECONDS,
+        token_factory=None,
+        clock=None,
+    ) -> None:
+        if ttl_seconds <= 0 or ttl_seconds > 3600:
+            raise ValueError("SESSION_TTL_OUT_OF_RANGE")
+        self.repository = repository
+        self.devices = devices
+        self.ttl_seconds = ttl_seconds
+        self._token_factory = token_factory or (lambda: SESSION_TOKEN_PREFIX + secrets.token_urlsafe(32))
+        self._clock = clock or (lambda: int(time.time()))
+
+    async def issue(self, identity: VerifiedIdentity) -> tuple[str, int]:
+        device_hash = str(identity.claims.get("device_hash") or "").lower()
+        if not _is_sha256(device_hash):
+            raise RuntimeBindingError("SESSION_DEVICE_BINDING_REQUIRED")
+        record = await self.devices.get_device(device_hash)
+        if record is None or not record.active:
+            raise RuntimeBindingError("SESSION_DEVICE_REVOKED")
+        if record.subject != identity.subject:
+            raise RuntimeBindingError("SESSION_SUBJECT_MISMATCH")
+
+        token = str(self._token_factory())
+        if not token.startswith(SESSION_TOKEN_PREFIX) or len(token) < len(SESSION_TOKEN_PREFIX) + 32:
+            raise RuntimeBindingError("SESSION_TOKEN_FACTORY_INVALID")
+        issued_at = int(self._clock())
+        expires_at = issued_at + self.ttl_seconds
+        await self.repository.put_session(
+            session_hash=_sha256(token),
+            subject=identity.subject,
+            device_hash=device_hash,
+            issued_at_epoch=issued_at,
+            expires_at_epoch=expires_at,
+        )
+        return token, expires_at
+
+    async def verify(self, token: str) -> VerifiedIdentity:
+        if not token.startswith(SESSION_TOKEN_PREFIX) or len(token) < len(SESSION_TOKEN_PREFIX) + 32:
+            raise RuntimeBindingError("SESSION_INVALID")
+        session = await self.repository.get_session(_sha256(token))
+        if session is None:
+            raise RuntimeBindingError("SESSION_INVALID")
+        if session.expires_at_epoch <= int(self._clock()):
+            raise RuntimeBindingError("SESSION_EXPIRED")
+        device = await self.devices.get_device(session.device_hash)
+        if device is None or not device.active:
+            raise RuntimeBindingError("SESSION_DEVICE_REVOKED")
+        if device.subject != session.subject:
+            raise RuntimeBindingError("SESSION_SUBJECT_MISMATCH")
+        return VerifiedIdentity(
+            session.subject,
+            {"device_id": session.device_hash[:16], "device_hash": session.device_hash},
+        )
 
 
 @dataclass(frozen=True)
@@ -348,21 +495,10 @@ class VertexKDVChatExecutor:
         )
 
 
-def _decode_session_secret(raw: str) -> bytes:
-    try:
-        secret = base64.urlsafe_b64decode(raw + "=" * (-len(raw) % 4))
-    except Exception as exc:
-        raise RuntimeBindingError("SESSION_SECRET_INVALID") from exc
-    if len(secret) < 32:
-        raise RuntimeBindingError("SESSION_SECRET_INVALID")
-    return secret
-
-
 def runtime_from_environment() -> GatewayRuntime:
     """Bind production adapters only when the complete private runtime contract is configured."""
 
     required = {
-        "FUSE_MOBILE_SESSION_SECRET_B64": os.getenv("FUSE_MOBILE_SESSION_SECRET_B64", "").strip(),
         "FUSE_MOBILE_OWNER_SUBJECT": os.getenv("FUSE_MOBILE_OWNER_SUBJECT", "").strip(),
         "FUSE_MOBILE_OWNER_ENROLLMENT_SHA256": os.getenv("FUSE_MOBILE_OWNER_ENROLLMENT_SHA256", "").strip().lower(),
     }
@@ -376,13 +512,15 @@ def runtime_from_environment() -> GatewayRuntime:
     if project != CANONICAL_PROJECT_ID:
         raise RuntimeBindingError("CANONICAL_PROJECT_MISMATCH")
 
-    session_codec = SessionCodec(_decode_session_secret(required["FUSE_MOBILE_SESSION_SECRET_B64"]))
-    repository = FirestoreDeviceRepository(firestore.Client(project=project))
+    client = firestore.Client(project=project)
+    device_repository = FirestoreDeviceRepository(client)
+    session_repository = FirestoreSessionRepository(client)
     manager = DeviceCredentialManager(
-        repository,
+        device_repository,
         owner_subject=required["FUSE_MOBILE_OWNER_SUBJECT"],
         enrollment_sha256=required["FUSE_MOBILE_OWNER_ENROLLMENT_SHA256"],
     )
+    session_manager = OpaqueSessionManager(session_repository, device_repository)
     metadata_identity = MetadataIdentity()
     kdv = KDVSheetsReader(
         metadata_identity,
@@ -390,7 +528,7 @@ def runtime_from_environment() -> GatewayRuntime:
     )
     vertex = VertexGeminiClient(metadata_identity)
     return GatewayRuntime(
-        session_codec=session_codec,
+        session_manager=session_manager,
         identity_verifier=manager,
         device_manager=manager,
         health_provider=RuntimeCapabilityHealth(kdv, metadata_identity),
