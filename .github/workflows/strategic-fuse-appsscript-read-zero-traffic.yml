@@ -1,15 +1,12 @@
 name: Strategic FUSE Apps Script Read — Zero Traffic Candidate
 
 on:
-  workflow_dispatch:
-    inputs:
-      confirmation:
-        description: Type EXECUTE_STRATEGIC_APPS_SCRIPT_READ_ZERO_TRAFFIC
-        required: true
-        type: string
+  issues:
+    types: [opened]
 
 permissions:
   contents: read
+  issues: read
   id-token: write
 
 concurrency:
@@ -30,15 +27,15 @@ env:
 
 jobs:
   strategic-read-canary:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1' &&
+      github.event.issue.author_association == 'OWNER'
     runs-on: ubuntu-latest
     timeout-minutes: 35
     steps:
-      - name: Fail closed unless explicitly dispatched from main
-        env:
-          CONFIRMATION: ${{ inputs.confirmation }}
+      - name: Fail closed unless owner issue trigger is bound to main
         run: |
           set -euo pipefail
-          test "$CONFIRMATION" = "EXECUTE_STRATEGIC_APPS_SCRIPT_READ_ZERO_TRAFFIC"
           test "$GITHUB_REF" = "refs/heads/main"
 
       - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
