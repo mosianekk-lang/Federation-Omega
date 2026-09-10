@@ -66,6 +66,29 @@ def _parse_lease_message(message: str) -> dict[str, Any]:
     return payload
 
 
+def _normalise_ref(value: str) -> str:
+    value = str(value or "").strip()
+    if value.startswith("refs/"):
+        return value
+    if value.startswith("heads/"):
+        return "refs/" + value
+    return "refs/heads/" + value.lstrip("/")
+
+
+def _resolve_current_lease_ref_head(repo_root: Path, lease_ref: str) -> str:
+    """Resolve the provider-visible canonical lock ref without mutating it."""
+    canonical = _normalise_ref(lease_ref)
+    try:
+        output = _run_git(repo_root, ["ls-remote", "--refs", "origin", canonical])
+    except RuntimeError as exc:
+        raise ValueError("CANONICAL_LEASE_REF_READBACK_FAILED") from exc
+    rows = [line.split() for line in output.splitlines() if line.strip()]
+    exact = [parts[0] for parts in rows if len(parts) >= 2 and parts[1] == canonical]
+    if len(exact) != 1 or not SHA40.fullmatch(exact[0]):
+        raise ValueError("CANONICAL_LEASE_REF_UNRESOLVED")
+    return exact[0]
+
+
 def _load_predecessor_lease(repo_root: Path, predecessor_lease_sha: str) -> dict[str, Any]:
     try:
         _run_git(repo_root, ["cat-file", "-e", f"{predecessor_lease_sha}^{{commit}}"])
@@ -111,11 +134,12 @@ def build_lease_commit_spec(
 ) -> dict[str, Any]:
     """Build a fail-closed successor lease commit spec.
 
-    The returned tree_sha is derived from the declared source_head. The exact
-    predecessor commit must resolve to an explicit RELEASED or ABORTED lease;
-    wall-clock expiry of an ACTIVE lease is not terminal authority. The caller
-    must also supply provider-readback proof for the Turn_Capture write-ahead.
-    This function creates no provider authority and mutates no ref itself.
+    The predecessor must be the exact provider-visible current canonical lock-ref
+    head and must resolve to an explicit RELEASED or ABORTED lease. A stale
+    historical terminal commit cannot authorize a successor after the lock ref has
+    advanced. The source tree is derived from source_head, and the Turn_Capture
+    reference must be independently read back. This function mutates no provider
+    state and grants no provider authority.
     """
 
     root = Path(repo_root)
@@ -139,6 +163,12 @@ def build_lease_commit_spec(
         raise ValueError("PREDECESSOR_LEASE_SHA_INVALID")
 
     _validate_capture_witness(lease, turn_capture_witness, policy_payload)
+
+    canonical_ref = str(policy_payload.get("lease_ref") or "")
+    current_ref_head = _resolve_current_lease_ref_head(root, canonical_ref)
+    if current_ref_head != predecessor_sha:
+        raise ValueError("PREDECESSOR_LEASE_NOT_CURRENT_LOCK_REF")
+
     predecessor = _validate_terminal_predecessor(root, lease, predecessor_sha)
 
     try:
@@ -158,7 +188,8 @@ def build_lease_commit_spec(
     )
     return {
         "schema": SCHEMA,
-        "lease_ref": str(policy_payload.get("lease_ref", "")),
+        "lease_ref": canonical_ref,
+        "current_lease_ref_head": current_ref_head,
         "source_head": source_head,
         "tree_sha": source_tree,
         "parent_sha": predecessor_sha,
