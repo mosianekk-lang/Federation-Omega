@@ -6,7 +6,7 @@ from typing import Any,Mapping,Protocol
 import httpx
 from fastapi import APIRouter,Header,HTTPException
 from pydantic import BaseModel,ConfigDict,Field
-from aegis_edge_bridge import EdgeBridgeError,submit_posture
+from services.fuse_mobile_gateway.aegis_edge_bridge import EdgeBridgeError,submit_posture
 class SessionIdentity(Protocol):
     subject:str; claims:Mapping[str,Any]
 class SessionRuntime(Protocol):

@@ -1,5 +1,5 @@
 from __future__ import annotations
-import json,re,unittest
+import importlib,json,re,unittest
 from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 class AegisOmegaUnifiedContractTests(unittest.TestCase):
@@ -10,6 +10,10 @@ class AegisOmegaUnifiedContractTests(unittest.TestCase):
     def test_gateway_requires_fuse_session_and_private_server_identity(self):
         adapter=(ROOT/'services/fuse_mobile_gateway/aegis_edge_adapter.py').read_text(); bridge=(ROOT/'services/fuse_mobile_gateway/aegis_edge_bridge.py').read_text(); self.assertIn('runtime.verify_session',adapter); self.assertIn('FUSE_AEGIS_PRIVATE_URL',adapter); self.assertIn('fetch_id_token',adapter); self.assertIn('evidence_chain_valid',adapter); self.assertIn('provider_effect_performed',adapter); self.assertIn('case_id',bridge)
         for secret in ('GEMINI_API_KEY','OPENAI_API_KEY','AEGIS_HMAC_SECRET'): self.assertNotIn(secret,adapter); self.assertNotIn(secret,bridge)
+    def test_gateway_adapter_imports_through_real_package_path(self):
+        module=importlib.import_module('services.fuse_mobile_gateway.aegis_edge_adapter')
+        self.assertTrue(callable(module.build_aegis_edge_router))
+        self.assertEqual(module.EdgeBridgeError.__module__,'services.fuse_mobile_gateway.aegis_edge_bridge')
     def test_android_native_module_is_bounded_posture_only(self):
         native=(ROOT/'mobile/fuse-mobile/modules/aegis-edge-posture/android/src/main/java/expo/modules/aegisedgeposture/AegisEdgePostureModule.kt').read_text(); self.assertIn('SECURITY_PATCH',native); self.assertIn('isDeviceSecure',native); self.assertIn('FLAG_DEBUGGABLE',native)
         for forbidden in ('READ_SMS','READ_CONTACTS','ACCESS_FINE_LOCATION','QUERY_ALL_PACKAGES','VpnService','AccessibilityService'): self.assertNotIn(forbidden,native)
