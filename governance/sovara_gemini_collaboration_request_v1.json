@@ -1,6 +1,6 @@
 {
   "schema": "SOVARA_GEMINI_COLLABORATION_REQUEST_V1",
-  "request_id": "SSX-G0-PROVIDER-CENSUS-20260901-002",
+  "request_id": "FUSE-MOBILE-PHASE-A-ADMIN-AUTHORITY-CENSUS-20260910-001",
   "mode": "G0_READ_ONLY_VERIFY",
   "execute": true,
   "promote": false,
@@ -17,15 +17,31 @@
     "service_usage_consumer_binding",
     "deployer_cloud_run_developer_binding"
   ],
+  "fuse_mobile_phase_a_context": {
+    "mission": "FUSE_MOBILE_COMPLETE_VERIFIED_V1",
+    "source_main_sha": "28d04d704225fcac90df4714392c7bd1b7f8bae5",
+    "provider_currentness_run_id": "34422976465",
+    "provider_currentness_artifact_id": "10131596226",
+    "provider_currentness_artifact_sha256": "c318c21ee5ecfbffd2823632d9930bec7fd6fb53e2e898a273a1caf609728742",
+    "permission_receipt_sha256": "506c970b50e43124cd973c577b6dd349d5454dbb1fc8166cac55ead58d104dcc",
+    "iap_api_enabled": false,
+    "cloud_run_iap_enabled": false,
+    "public_invoker_present": false,
+    "deployer_granted_permissions": [
+      "run.services.update",
+      "run.services.setIamPolicy"
+    ],
+    "deployer_missing_permissions": [
+      "serviceusage.services.enable"
+    ]
+  },
   "prior_provider_evidence": {
-    "latest_wif_run_id": "33465241806",
-    "latest_wif_source_sha": "820333924dd94b18abace5c8ba0c3a1f9d267ef6",
+    "latest_wif_run_id": "34415319068",
+    "latest_wif_source_sha": "9cd95c9f6c7608ffc1cd2b19e6d7cb05aa7de7cf",
     "oidc_exchange_succeeded": true,
     "hardened_wif_contract_verified": false,
     "observed_wif_condition_class": "REPOSITORY_NAME_ONLY_TRUST",
     "expected_wif_condition_class": "REPOSITORY_ID_OWNER_ID_MAIN_REF_EXACT_WORKFLOW_EVENT_BOUND",
-    "adc_reference_run_id": "33267811046",
-    "adc_reference_source_sha": "efd8e2df237f0f14d2c66224a1c815095032dd2f",
     "runtime_service_account": "superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com",
     "runtime_service_account_exists": true,
     "deployer_service_account_user": true,
@@ -35,6 +51,6 @@
       "deployer_cloud_run_developer_binding"
     ]
   },
-  "purpose": "Run the repaired drift-aware read-only Google/Gemini authority census on current SOVARA x SOL 6.2 serving main. Preserve the live broader WIF trust policy as adverse evidence rather than promoting it, continue only read-only IAM/ADC inspection, and verify whether the prior exact three ADC gaps still remain.",
-  "truth_boundary": "Read-only verification only. A successful OIDC exchange under a broader-than-approved WIF policy is not hardened WIF verification. No IAM or API mutation, WIF policy change, service-account role binding, service-account creation, key creation, secret access, model inference, case-data processing, image build, deployment, traffic change, external communication, publication, spend, destructive effect, stable promotion or full-autopilot claim is authorized. If the ADC gap set differs from the expected three controls, fail closed and preserve the new provider readback as the next truth input."
+  "purpose": "Run the already-admitted drift-aware read-only SOVARA x SOL 6.2 admin authority graph census as a reusable Strategic FUSE provider-discovery carrier for FUSE Mobile Phase A. In addition to the existing project-IAM authority observations, determine whether any already-reachable owner/admin service-account route has serviceusage.services.enable so the IAP API can be enabled without granting broader permanent authority to the ordinary deployer.",
+  "truth_boundary": "Read-only verification only. The census may inspect IAM policy, service-account trust/delegation edges and provider-native testIamPermissions responses. It must not enable any API, mutate IAM, alter WIF policy, bind a role, create a service account or key, access secret payloads, invoke a model, process case data, build or deploy an image, change traffic, communicate externally, publish, spend, or promote a runtime. serviceusage.services.enable is evidence only in this G0 request; possession of the permission does not itself authorize a provider mutation."
 }
