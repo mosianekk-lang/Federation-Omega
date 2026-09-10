@@ -113,11 +113,3 @@ When an unadmitted direct push or unsafe writer is discovered:
 ## Truth boundary
 
 Repository-local controls detect, quarantine and evidence policy violations. They become fully preventative only when GitHub platform rulesets require the Airlock `admission` check before `main` can change.
-
-## CFBE Parallel Prompt Fabric v4 compatible overlay
-
-- After the mandatory v2 bootstrap succeeds, load `governance/federation_node_bootstrap_v3.json`, `governance/federation_n_directive_v3.yaml`, `governance/cfbe_parallel_mission_compiler_v4.json` and `governance/cfbe_prompt_scientist_v1.json` when they exist on the current admitted `main` head. v3 is a later compatible additive overlay; `FEDOMEGA-N-DIRECTIVE-V2` version 2.1.0 remains the rollback and historical compatibility contract.
-- For every non-trivial mission under the v3 overlay, compile unfinished work into a finite dependency DAG, calculate the critical path, form collision-keyed work packets and execute the maximum useful parallelism only for independent effect-free work. Canonical writes, shared-target mutations, provider mutations, external effects and authority-sensitive changes remain serialised; provider/external-effect packets remain held under the `A1_INTERNAL` ceiling unless separately authorised.
-- Repeated identical deterministic failure fingerprints must open the affected circuit on the second occurrence and require a materially different route. A blocked lane must not stop eligible independent safe lanes.
-- The CFBE Prompt Scientist may diagnose prompt friction and form P1/P2/P3 challengers, but promotion requires measured superiority, green regressions, preservation of every constitutional invariant and rollback to the incumbent. It may optimize orchestration, routing, context and prompt structure; it may not weaken authority, security, privacy, proof, provider-native readback, rollback, owner-reserved consequential controls or no-trust-transfer boundaries, and it must not claim model-weight self-retraining.
-- `10x` is a measurable performance target, never a source- or prompt-presence claim. The proof ladder remains `HYPOTHESIS -> DESIGNED -> SOURCE_PRESENT -> TESTED -> ADMITTED -> MERGED -> DEPLOYED -> RUNTIME_VERIFIED -> BEHAVIOR_VERIFIED -> PRODUCTION_VERIFIED`; each state requires its own evidence and provider/runtime states require applicable native readback.
