@@ -11,6 +11,7 @@ dependencies = [
   "google-cloud-firestore>=2.20,<3",
   "mcp>=2.2,<3",
   "PyJWT[crypto]>=2.9,<3",
+  "pywin32==312; sys_platform == 'win32'",
   "uvicorn>=0.30,<1",
 ]
 
