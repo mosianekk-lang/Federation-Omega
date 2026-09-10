@@ -300,6 +300,8 @@ jobs:
               assert apply.get('mode') == 'apply', apply
               assert apply.get('state') == 'APPLIED_AND_VERIFIED', apply
               assert apply.get('mutation_performed') is True, apply
+              assert apply.get('broad_repository_name_binding_effective') is False, apply
+              assert apply.get('broad_repository_attribute_mapped') is False, apply
 
           assert verify.get('mode') == 'verify', verify
           assert verify.get('state') == 'VERIFIED', verify
@@ -307,7 +309,11 @@ jobs:
           assert verify.get('condition_match') is True, verify
           assert verify.get('mapping_match') is True, verify
           assert verify.get('exact_repository_id_binding_present') is True, verify
-          assert verify.get('broad_repository_name_binding_present') is False, verify
+          assert verify.get('broad_repository_attribute_mapped') is False, verify
+          assert verify.get('broad_repository_name_binding_effective') is False, verify
+          if verify.get('broad_repository_name_binding_present'):
+              assert verify.get('legacy_broad_repository_name_binding_inert') is True, verify
+          assert verify.get('physical_legacy_binding_removal_required') is False, verify
           assert verify.get('required_mutations') == [], verify
 
           final = {
@@ -323,7 +329,11 @@ jobs:
               'event_surface_bound_per_workflow': True,
               'trust_contract_sha256': verify['trust_contract_sha256'],
               'exact_repository_id_binding_present': True,
-              'broad_repository_name_binding_present': False,
+              'broad_repository_name_binding_present': bool(verify.get('broad_repository_name_binding_present')),
+              'broad_repository_attribute_mapped': False,
+              'broad_repository_name_binding_effective': False,
+              'legacy_broad_repository_name_binding_inert': bool(verify.get('legacy_broad_repository_name_binding_inert')),
+              'physical_legacy_binding_removal_required': False,
               'rollback_capability_armed': plan.get('state') == 'HARDENING_REQUIRED',
               'rollback_performed': False,
               'raw_provider_persisted_in_artifact': False,
