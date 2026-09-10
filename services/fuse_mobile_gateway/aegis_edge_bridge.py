@@ -39,8 +39,11 @@ def posture_events(*,device_hash,posture):
 class EdgeBridgeReceipt:
     request_id:str; payload_sha256:str; pseudonymous_device_id:str; event_count:int; case_id:str|None; provider_state_verified:bool; provider_effect_performed:bool; status:str
 async def submit_posture(*,subject,device_hash,posture,sink,allow_provider_effect=False):
-    request_id,payload_hash=request_identity(subject=subject,device_hash=device_hash,posture=posture); events=posture_events(device_hash=device_hash,posture=posture); result=dict(await sink(request_id,events)); effect=result.get('provider_effect_performed') is True
+    request_id,payload_hash=request_identity(subject=subject,device_hash=device_hash,posture=posture); events=posture_events(device_hash=device_hash,posture=posture); device_id=pseudonymous_device_id(device_hash)
+    if not events:
+        return EdgeBridgeReceipt(request_id,payload_hash,device_id,0,None,False,False,'NO_CHANGE')
+    result=dict(await sink(request_id,events)); effect=result.get('provider_effect_performed') is True
     if effect and not allow_provider_effect: raise EdgeBridgeError('EDGE_SINK_UNEXPECTED_PROVIDER_EFFECT')
     if result.get('request_id') not in {None,request_id}: raise EdgeBridgeError('EDGE_SINK_REQUEST_ID_MISMATCH')
     case_id=str(result.get('case_id') or '').strip() or None; provider_state_verified=result.get('provider_state_verified') is True
-    return EdgeBridgeReceipt(request_id,payload_hash,pseudonymous_device_id(device_hash),len(events),case_id,provider_state_verified,effect,str(result.get('status') or 'ACCEPTED'))
+    return EdgeBridgeReceipt(request_id,payload_hash,device_id,len(events),case_id,provider_state_verified,effect,str(result.get('status') or 'ACCEPTED'))

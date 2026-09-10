@@ -23,6 +23,7 @@ class CloudRunAegisSink:
         if not self.base_url.startswith('https://'): raise ValueError('AEGIS_EDGE_PRIVATE_HTTPS_REQUIRED')
         self.timeout_seconds=timeout_seconds
     async def __call__(self,request_id,events):
+        if not events: raise RuntimeError('AEGIS_EDGE_EMPTY_PROVIDER_WRITE_FORBIDDEN')
         try:
             from google.auth.transport.requests import Request as GoogleAuthRequest
             from google.oauth2 import id_token as google_id_token
@@ -35,7 +36,7 @@ class CloudRunAegisSink:
         async with httpx.AsyncClient(timeout=self.timeout_seconds) as client: readback=await client.get(f'{self.base_url}/v1/cases/{case_id}',headers={'Authorization':f'Bearer {token}'})
         readback.raise_for_status(); case=readback.json(); state_verified=bool(case.get('evidence_chain_valid') is True and case.get('assessment',{}).get('case_id')==case_id)
         if not state_verified: raise RuntimeError('AEGIS_EDGE_PROVIDER_STATE_UNVERIFIED')
-        return {'request_id':request_id,'status':str(body.get('disposition') or 'ACCEPTED'),'case_id':case_id,'provider_state_verified':True,'provider_effect_performed':False}
+        return {'request_id':request_id,'status':str(body.get('disposition') or 'ACCEPTED'),'case_id':case_id,'provider_state_verified':True,'provider_effect_performed':True,'provider_effect_class':'REMOTE_CASE_STATE_WRITE_AND_READBACK'}
 def sink_from_environment():
     url=os.getenv('FUSE_AEGIS_PRIVATE_URL','').strip(); return CloudRunAegisSink(url) if url else DisabledAegisSink()
 def _bearer(value):
