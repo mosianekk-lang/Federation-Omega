@@ -6,6 +6,7 @@ on:
     paths:
       - ".github/workflows/fuse-mobile-provider-currentness-v1.yml"
       - "tests/test_fuse_mobile_provider_currentness_v1.py"
+      - "tests/test_fuse_mobile_provider_permission_census_v1.py"
   workflow_dispatch:
 
 permissions:
@@ -353,10 +354,161 @@ jobs:
           }, sort_keys=True))
           PY
 
+      - name: Read exact Phase-A permissions only
+        shell: bash
+        env:
+          WIF_AUTH_OUTCOME: ${{ steps.wif_auth.outcome }}
+        run: |
+          set -euo pipefail
+          set +x
+          ROOT=/tmp/fuse-mobile-provider-currentness
+          mkdir -p "$ROOT"
+          export ROOT WIF_AUTH_OUTCOME
+          ACCESS_TOKEN=""
+          if [[ "$WIF_AUTH_OUTCOME" == "success" ]]; then
+            ACCESS_TOKEN="$(gcloud auth print-access-token)"
+            echo "::add-mask::$ACCESS_TOKEN"
+          fi
+          export ACCESS_TOKEN
+          python3 - <<'PY'
+          import hashlib
+          import json
+          import os
+          import urllib.error
+          import urllib.request
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root = Path(os.environ['ROOT'])
+          project = os.environ['PROJECT_ID']
+          region = os.environ['REGION']
+          service = os.environ['SERVICE']
+          token = os.environ.get('ACCESS_TOKEN', '')
+          auth_outcome = os.environ.get('WIF_AUTH_OUTCOME', '')
+
+          project_permissions = ['serviceusage.services.enable']
+          run_permissions = ['run.services.update', 'run.services.setIamPolicy']
+
+          def sha(value):
+              return hashlib.sha256(str(value).encode('utf-8')).hexdigest()
+
+          def test_permissions(url, requested):
+              payload = {'permissions': requested}
+              data = json.dumps(payload, separators=(',', ':')).encode('utf-8')
+              if not token:
+                  raw = b''
+                  return {
+                      'http_status': 0,
+                      'granted': [],
+                      'response_sha256': hashlib.sha256(raw).hexdigest(),
+                  }
+              req = urllib.request.Request(
+                  url,
+                  data=data,
+                  method='POST',
+                  headers={
+                      'authorization': f'Bearer {token}',
+                      'content-type': 'application/json',
+                      'x-goog-user-project': project,
+                  },
+              )
+              try:
+                  with urllib.request.urlopen(req, timeout=30) as response:
+                      raw = response.read()
+                      body = json.loads(raw.decode('utf-8', 'replace')) if raw else {}
+                      granted = body.get('permissions') or []
+                      return {
+                          'http_status': int(response.status),
+                          'granted': [str(x) for x in granted if str(x) in requested],
+                          'response_sha256': hashlib.sha256(raw).hexdigest(),
+                      }
+              except urllib.error.HTTPError as exc:
+                  raw = exc.read()
+                  return {
+                      'http_status': int(exc.code),
+                      'granted': [],
+                      'response_sha256': hashlib.sha256(raw).hexdigest(),
+                  }
+              except Exception as exc:
+                  raw = type(exc).__name__.encode('utf-8')
+                  return {
+                      'http_status': 0,
+                      'granted': [],
+                      'response_sha256': hashlib.sha256(raw).hexdigest(),
+                  }
+
+          project_url = f'https://cloudresourcemanager.googleapis.com/v1/projects/{project}:testIamPermissions'
+          run_url = f'https://run.googleapis.com/v2/projects/{project}/locations/{region}/services/{service}:testIamPermissions'
+
+          project_result = test_permissions(project_url, project_permissions)
+          run_result = test_permissions(run_url, run_permissions)
+          tested = project_permissions + run_permissions
+          granted = sorted(set(project_result['granted'] + run_result['granted']))
+          missing = [permission for permission in tested if permission not in granted]
+          statuses = [project_result['http_status'], run_result['http_status']]
+          phase_a_state = 'READY' if not missing and all(status == 200 for status in statuses) else 'PERMISSION_HELD'
+
+          receipt = {
+              'schema': 'FUSE_MOBILE_PHASE_A_PERMISSION_CENSUS_V1',
+              'source_sha': os.environ.get('GITHUB_SHA'),
+              'recorded_at_utc': datetime.now(timezone.utc).isoformat(),
+              'target': {
+                  'project_id': project,
+                  'project_number': os.environ.get('PROJECT_NUMBER'),
+                  'region': region,
+                  'service': service,
+              },
+              'auth': {
+                  'route': 'EXISTING_GITHUB_OIDC_WIF',
+                  'outcome': auth_outcome,
+                  'service_account_sha256': sha(os.environ.get('READ_SA', '')),
+                  'credential_value_recorded': False,
+              },
+              'tested_permissions': tested,
+              'granted_permissions': granted,
+              'missing_permissions': missing,
+              'http_status': {
+                  'project_test_iam_permissions': project_result['http_status'],
+                  'cloud_run_service_test_iam_permissions': run_result['http_status'],
+              },
+              'response_sha256': {
+                  'project_test_iam_permissions': project_result['response_sha256'],
+                  'cloud_run_service_test_iam_permissions': run_result['response_sha256'],
+              },
+              'phase_a_state': phase_a_state,
+              'raw_response_body_recorded': False,
+              'provider_mutation_performed': False,
+              'iam_mutation_performed': False,
+              'api_mutation_performed': False,
+              'traffic_change_performed': False,
+              'secret_access_performed': False,
+              'model_inference_performed': False,
+          }
+          body = dict(receipt)
+          receipt['receipt_sha256'] = hashlib.sha256(
+              json.dumps(body, sort_keys=True, separators=(',', ':')).encode('utf-8')
+          ).hexdigest()
+          out = root / 'PHASE_A_PERMISSION_RECEIPT.json'
+          out.write_text(json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8')
+          print(json.dumps({
+              'schema': receipt['schema'],
+              'phase_a_state': phase_a_state,
+              'tested_permissions': tested,
+              'granted_permissions': granted,
+              'missing_permissions': missing,
+              'http_status': receipt['http_status'],
+              'receipt_sha256': receipt['receipt_sha256'],
+              'provider_mutation_performed': False,
+          }, sort_keys=True))
+          PY
+          unset ACCESS_TOKEN
+
       - name: Upload immutable redacted provider-currentness receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: fuse-mobile-provider-currentness-${{ github.run_id }}-${{ github.run_attempt }}
-          path: /tmp/fuse-mobile-provider-currentness/PROVIDER_CURRENTNESS_RECEIPT.json
+          path: |
+            /tmp/fuse-mobile-provider-currentness/PROVIDER_CURRENTNESS_RECEIPT.json
+            /tmp/fuse-mobile-provider-currentness/PHASE_A_PERMISSION_RECEIPT.json
           if-no-files-found: error
           retention-days: 30
