@@ -96,6 +96,8 @@ class AegisOmegaProviderWorkflowV2Tests(unittest.TestCase):
             "final_equivalence_verified",
             "ephemeral_secret_deleted",
             "ephemeral_image_deleted",
+            "firestore_provider_state_cleaned",
+            "FIRESTORE_CLEANUP_VERIFIED",
         ):
             self.assertIn(marker, value)
         self.assertIn("assert final_ok, receipt", value)
@@ -106,8 +108,20 @@ class AegisOmegaProviderWorkflowV2Tests(unittest.TestCase):
         self.assertIn("requires_human_approval", value)
         self.assertIn("approval_required", value)
         self.assertIn("evidence_chain_valid", value)
-        self.assertIn("provider_canary_evidence_case_retained", value)
+        self.assertIn("provider_canary_evidence_artifact_retained", value)
+        self.assertIn("firestore_provider_state_cleaned", value)
+        self.assertNotIn("provider_canary_evidence_case_retained", value)
         self.assertIn("No production traffic promotion, model inference or external user effect.", value)
+
+    def test_synthetic_firestore_state_is_deleted_and_read_back_absent(self):
+        value = self.text()
+        self.assertIn('"aegis_cases/$CASE_ID"', value)
+        self.assertIn('"aegis_outbox/$CASE_ID"', value)
+        self.assertIn('"aegis_requests/$REQUEST_DOC_ID"', value)
+        self.assertIn('hashlib.sha256(os.environ["REQUEST_ID"].encode("utf-8")).hexdigest()', value)
+        self.assertIn('READBACK_CODE', value)
+        self.assertIn('if [[ "$READBACK_CODE" != "404" ]]', value)
+        self.assertIn("and os.environ.get('FIRESTORE_CLEANUP_VERIFIED')=='true'", value)
 
     def test_airlock_policy_admits_exact_provider_gateway(self):
         policy = json.loads(POLICY.read_text(encoding="utf-8"))
