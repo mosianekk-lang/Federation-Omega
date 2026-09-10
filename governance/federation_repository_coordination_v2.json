@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-REPOSITORY-COORDINATION-V2",
-  "version": "2.2.0",
+  "version": "2.2.1",
   "owner": "Kim Kagiso Mosiane",
   "purpose": "Make the existing cooperative repository critical section machine-verifiable inside the already-admitted Federation Omega Airlock without creating another scheduler, store, authority plane or private credential dependency.",
   "lease_ref": "refs/heads/locks/fdof-repository-critical-section",
@@ -18,10 +18,12 @@
     "commit_tree_source": "EXACT_DECLARED_SOURCE_HEAD_TREE",
     "commit_parent_source": "CURRENT_LOCK_REF_COMMIT",
     "predecessor_terminal_precondition": "EXPLICIT_RELEASED_OR_ABORTED_PROVIDER_READBACK",
+    "provider_current_lock_ref_precondition": "GIT_LS_REMOTE_EXACT_REF_MATCH",
     "turn_capture_precondition": "PROVIDER_READBACK_VERIFIED_EXACT_ID",
     "fail_closed_on_source_tree_resolution_error": true,
     "fail_closed_on_capture_witness_mismatch": true,
     "fail_closed_on_nonterminal_predecessor": true,
+    "fail_closed_on_stale_terminal_predecessor": true,
     "provider_effect_authorized": false
   },
   "required_lease_fields": [
@@ -81,5 +83,5 @@
     "lock_ref_is_not_source_authority": true,
     "lock_ref_is_not_provider_effect_authority": true
   },
-  "truth_boundary": "This court fails closed for every ACTIVE lease, including an ACTIVE lease whose expires_at has passed. Expiry is scheduling metadata, not a terminal transition. Only an explicit RELEASED or ABORTED descriptor is terminal. The canonical issuer must resolve the exact predecessor lease commit and prove that predecessor is explicitly terminal before producing a successor commit spec. GitHub main is still not provider-enforced by a ruleset/branch protection, so this cooperative court does not make bypass technically impossible at the provider layer; provider-enforced Main Airlock remains separate."
+  "truth_boundary": "This court fails closed for every ACTIVE lease, including an ACTIVE lease whose expires_at has passed. Expiry is scheduling metadata, not a terminal transition. Only an explicit RELEASED or ABORTED descriptor is terminal. The canonical issuer must first resolve the provider-visible canonical lock ref, require the supplied predecessor SHA to equal that exact current head, then prove that predecessor is explicitly terminal before producing a successor commit spec. GitHub main is still not provider-enforced by a ruleset/branch protection, so this cooperative court does not make bypass technically impossible at the provider layer; provider-enforced Main Airlock remains separate."
 }
