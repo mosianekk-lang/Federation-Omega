@@ -12,6 +12,8 @@ WORKFLOW_PATH = ".github/workflows/fuse-mobile-provider-currentness-v1.yml"
 class FuseMobileProviderCurrentnessV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not WORKFLOW.is_file():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
 
