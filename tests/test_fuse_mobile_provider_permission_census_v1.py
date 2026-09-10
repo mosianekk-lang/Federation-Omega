@@ -10,6 +10,8 @@ PERMISSION_TEST = "tests/test_fuse_mobile_provider_permission_census_v1.py"
 class FuseMobileProviderPermissionCensusV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not WORKFLOW.is_file():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         cls.text = WORKFLOW.read_text(encoding="utf-8")
 
     def test_reuses_existing_currentness_workflow_and_self_triggers_on_permission_test(self) -> None:
