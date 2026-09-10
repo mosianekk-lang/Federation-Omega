@@ -177,6 +177,8 @@ jobs:
           mapping_arg = ','.join(
               f'{key}={pre["attribute_mapping"][key]}' for key in sorted(pre['attribute_mapping'])
           )
+          # Airlock/provider mutation marker and rollback operation:
+          # gcloud iam workload-identity-pools providers update-oidc
           run([
               'gcloud','iam','workload-identity-pools','providers','update-oidc',provider_id,
               '--project',project,'--location','global','--workload-identity-pool',pool,
