@@ -20,6 +20,9 @@ EXACT_PRINCIPAL="principalSet://iam.googleapis.com/${POOL_RESOURCE}/attribute.re
 BROAD_PRINCIPAL="principalSet://iam.googleapis.com/${POOL_RESOURCE}/attribute.repository/mosianekk-lang/Federation-Omega"
 EXPECTED_MAPPING="google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.repository_owner_id=assertion.repository_owner_id,attribute.ref=assertion.ref,attribute.event_name=assertion.event_name,attribute.workflow_ref=assertion.workflow_ref"
 APPLY_CONFIRMATION="HARDEN_SOVARA_CANONICAL_WIF_V1"
+CONVERGENCE_MAX_ATTEMPTS="${SOVARA_WIF_CONVERGENCE_MAX_ATTEMPTS:-6}"
+CONVERGENCE_INITIAL_DELAY_SECONDS="${SOVARA_WIF_CONVERGENCE_INITIAL_DELAY_SECONDS:-2}"
+CONVERGENCE_MAX_DELAY_SECONDS="${SOVARA_WIF_CONVERGENCE_MAX_DELAY_SECONDS:-10}"
 
 MODE="plan"
 case "${1:-}" in
@@ -48,6 +51,11 @@ attribute.repository. Therefore a legacy policy member keyed by
 attribute.repository is reported as PRESENT_BUT_INERT, not silently hidden, and
 cannot satisfy verification if the provider maps attribute.repository again.
 
+Provider update acknowledgement is not semantic readback. Apply mode therefore
+waits for bounded provider-native describe convergence before declaring success;
+transient stale reads do not trigger premature rollback, while timeout still
+fails closed so the surrounding transaction can restore the captured prestate.
+
 This script does not enable APIs, create service accounts, grant project roles,
 modify Cloud Run/Artifact Registry, access secrets, run model inference, or
 change application traffic.
@@ -64,6 +72,20 @@ done
 if [[ ",$EXPECTED_MAPPING," == *",attribute.repository="* ]]; then
   echo "Canonical mapping must not export attribute.repository." >&2
   exit 12
+fi
+if [[ ! "$CONVERGENCE_MAX_ATTEMPTS" =~ ^[0-9]+$ ]] || ((CONVERGENCE_MAX_ATTEMPTS < 1)); then
+  echo "SOVARA_WIF_CONVERGENCE_MAX_ATTEMPTS must be a positive integer." >&2
+  exit 13
+fi
+for delay_value in "$CONVERGENCE_INITIAL_DELAY_SECONDS" "$CONVERGENCE_MAX_DELAY_SECONDS"; do
+  if [[ ! "$delay_value" =~ ^[0-9]+$ ]]; then
+    echo "WIF convergence delays must be non-negative integers." >&2
+    exit 14
+  fi
+done
+if ((CONVERGENCE_INITIAL_DELAY_SECONDS > CONVERGENCE_MAX_DELAY_SECONDS)); then
+  echo "Initial WIF convergence delay cannot exceed the maximum delay." >&2
+  exit 15
 fi
 
 read_value() { "$@" 2>/dev/null || true; }
@@ -172,6 +194,8 @@ PY
 }
 
 load_authorized_trust_contract
+CONVERGENCE_ATTEMPTS_USED=1
+CONVERGENCE_REACHED=false
 
 collect_state() {
   ACTIVE_ACCOUNT="$(read_value gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
@@ -220,6 +244,32 @@ PY
   [[ "$BROAD_BINDING_EFFECTIVE" == false ]] || REQUIRED+=("RENDER_BROAD_REPOSITORY_NAME_BINDING_INERT")
 }
 
+wait_for_provider_convergence() {
+  local attempt=1
+  local delay="$CONVERGENCE_INITIAL_DELAY_SECONDS"
+  CONVERGENCE_REACHED=false
+  while ((attempt <= CONVERGENCE_MAX_ATTEMPTS)); do
+    collect_state
+    CONVERGENCE_ATTEMPTS_USED="$attempt"
+    if ((${#REQUIRED[@]} == 0)); then
+      CONVERGENCE_REACHED=true
+      return 0
+    fi
+    if ((attempt == CONVERGENCE_MAX_ATTEMPTS)); then
+      break
+    fi
+    sleep "$delay"
+    if ((delay < CONVERGENCE_MAX_DELAY_SECONDS)); then
+      delay=$((delay * 2))
+      if ((delay > CONVERGENCE_MAX_DELAY_SECONDS)); then
+        delay="$CONVERGENCE_MAX_DELAY_SECONDS"
+      fi
+    fi
+    attempt=$((attempt + 1))
+  done
+  return 1
+}
+
 emit_receipt() {
   local state="$1"
   local mutation="${2:-false}"
@@ -261,6 +311,8 @@ r={
   'observed_mapping_sha256':'${OBSERVED_MAPPING_SHA}',
   'required_mutations':${required_json},
   'mutation_performed':'${mutation}' == 'true',
+  'convergence_attempts_used':${CONVERGENCE_ATTEMPTS_USED},
+  'convergence_reached':'${CONVERGENCE_REACHED}' == 'true',
   'api_enablement_performed':False,
   'project_role_binding_performed':False,
   'service_account_created':False,
@@ -284,6 +336,7 @@ fi
 
 if [[ "$MODE" == "verify" ]]; then
   if ((${#REQUIRED[@]} != 0)); then emit_receipt "NOT_VERIFIED" false; exit 1; fi
+  CONVERGENCE_REACHED=true
   emit_receipt "VERIFIED" false
   exit 0
 fi
@@ -325,9 +378,11 @@ if [[ "$CONDITION_MATCH" != true || "$MAPPING_MATCH" != true || "$BROAD_BINDING_
     --attribute-condition="$EXPECTED_CONDITION"
 fi
 
-collect_state
-if ((${#REQUIRED[@]} != 0)); then
-  emit_receipt "APPLIED_BUT_VERIFICATION_FAILED" true
+# update-oidc can acknowledge the provider operation before subsequent describe
+# calls converge on the new condition/mapping. Treat command acknowledgement as an
+# intermediate state only; bounded semantic provider readback is the commit court.
+if ! wait_for_provider_convergence; then
+  emit_receipt "APPLIED_BUT_CONVERGENCE_TIMEOUT" true
   exit 8
 fi
 emit_receipt "APPLIED_AND_VERIFIED" true
