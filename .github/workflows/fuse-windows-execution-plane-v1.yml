@@ -48,6 +48,9 @@ jobs:
         with:
           python-version: "3.12"
 
+      - name: Install hash-locked relay test dependencies
+        run: python -m pip install --require-hashes -r windows_federation_plane/requirements-relay.lock
+
       - name: Run Windows failure-first court
         run: ./windows_federation_plane/scripts/Test-FederationWindowsPlane.ps1
 

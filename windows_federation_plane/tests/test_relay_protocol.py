@@ -220,15 +220,15 @@ class RelayProtocolTests(unittest.TestCase):
             )
 
     def test_idempotent_same_task_submission_and_collision_rejection(self):
-        task_id = self.relay.submit_task(device_id=self.credential.device_id, task=task())
-        self.assertEqual(task_id, self.relay.submit_task(device_id=self.credential.device_id, task=task()))
+        task_id = self.relay.submit_task(device_id=self.credential.device_id, task=task(), now=NOW)
+        self.assertEqual(task_id, self.relay.submit_task(device_id=self.credential.device_id, task=task(), now=NOW))
         changed = task()
         changed["correlation_id"] = "corr-2"
         with self.assertRaisesRegex(ValueError, "TASK_ID_COLLISION"):
-            self.relay.submit_task(device_id=self.credential.device_id, task=changed)
+            self.relay.submit_task(device_id=self.credential.device_id, task=changed, now=NOW)
 
     def test_poll_leases_and_expired_lease_can_be_reissued(self):
-        self.relay.submit_task(device_id=self.credential.device_id, task=task())
+        self.relay.submit_task(device_id=self.credential.device_id, task=task(), now=NOW)
         first = self.relay.poll(device_id=self.credential.device_id, now=NOW)
         self.assertIsNotNone(first)
         self.assertIsNone(self.relay.poll(device_id=self.credential.device_id, now=NOW + timedelta(seconds=30)))
@@ -244,11 +244,11 @@ class RelayProtocolTests(unittest.TestCase):
             device_label="other-device",
             now=NOW,
         )
-        self.relay.submit_task(device_id=self.credential.device_id, task=task())
+        self.relay.submit_task(device_id=self.credential.device_id, task=task(), now=NOW)
         self.assertIsNone(self.relay.poll(device_id=other.device_id, now=NOW))
 
     def test_completion_requires_live_exact_lease_and_matching_receipt(self):
-        self.relay.submit_task(device_id=self.credential.device_id, task=task())
+        self.relay.submit_task(device_id=self.credential.device_id, task=task(), now=NOW)
         leased_task, lease = self.relay.poll(device_id=self.credential.device_id, now=NOW)
         with self.assertRaisesRegex(ValueError, "LEASE_TOKEN_INVALID"):
             self.relay.complete(
@@ -279,7 +279,7 @@ class RelayProtocolTests(unittest.TestCase):
         self.assertEqual(len(status["receipt_sha256"]), 64)
 
     def test_exact_completed_receipt_is_idempotent(self):
-        self.relay.submit_task(device_id=self.credential.device_id, task=task())
+        self.relay.submit_task(device_id=self.credential.device_id, task=task(), now=NOW)
         _, lease = self.relay.poll(device_id=self.credential.device_id, now=NOW)
         expected = receipt()
         first = self.relay.complete(
