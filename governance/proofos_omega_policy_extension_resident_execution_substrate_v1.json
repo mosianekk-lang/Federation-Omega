@@ -6,7 +6,9 @@
       "risk": "R4_CORE",
       "patterns": [
         "federation/resident_execution_substrate_v1.py",
+        "federation/firestore_atomic_document_backend_v1.py",
         "tests/test_resident_execution_substrate_v1.py",
+        "tests/test_firestore_atomic_document_backend_v1.py",
         "governance/proofos_omega_policy_extension_resident_execution_substrate_v1.json"
       ],
       "reason": "PROVIDER_NEUTRAL_RESIDENT_EXECUTION_IDEMPOTENCY_FENCING_BACKPRESSURE_CACHE_RECONCILIATION"
@@ -17,7 +19,9 @@
       "subsystem": "FUSE_RESIDENT_EXECUTION_SUBSTRATE_V1",
       "patterns": [
         "federation/resident_execution_substrate_v1.py",
+        "federation/firestore_atomic_document_backend_v1.py",
         "tests/test_resident_execution_substrate_v1.py",
+        "tests/test_firestore_atomic_document_backend_v1.py",
         "governance/proofos_omega_policy_extension_resident_execution_substrate_v1.json"
       ],
       "depends_on": [
@@ -36,6 +40,22 @@
       "patterns": [
         "federation/resident_execution_substrate_v1.py",
         "tests/test_resident_execution_substrate_v1.py",
+        "governance/proofos_omega_policy_extension_resident_execution_substrate_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_RESIDENT_EXECUTION_SUBSTRATE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "fuse_firestore_atomic_document_backend_v1",
+      "kind": "unittest_glob",
+      "target": "test_firestore_atomic_document_backend_v1.py",
+      "patterns": [
+        "federation/firestore_atomic_document_backend_v1.py",
+        "tests/test_firestore_atomic_document_backend_v1.py",
         "governance/proofos_omega_policy_extension_resident_execution_substrate_v1.json"
       ],
       "subsystems": [
