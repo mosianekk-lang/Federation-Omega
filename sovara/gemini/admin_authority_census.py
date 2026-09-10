@@ -24,6 +24,7 @@ CANDIDATE_ROLES = {
 ADMIN_TEST_PERMISSIONS = [
     "resourcemanager.projects.getIamPolicy",
     "resourcemanager.projects.setIamPolicy",
+    "serviceusage.services.enable",
 ]
 DEPLOYMENT_PROJECT_PERMISSIONS = [
     "run.services.create",
@@ -250,11 +251,13 @@ def main() -> int:
             "test_iam_http_status": status,
             "granted_permissions": granted,
             "project_set_iam_policy": "resourcemanager.projects.setIamPolicy" in granted,
+            "serviceusage_services_enable": "serviceusage.services.enable" in granted,
         }
 
     starts = {DEPLOYER_SA} | direct_wif_nodes
     delegation_tests: list[dict[str, object]] = []
     verified_paths: list[dict[str, object]] = []
+    verified_serviceusage_paths: list[dict[str, object]] = []
     for start in sorted(starts):
         queue: deque[tuple[str, tuple[str, ...]]] = deque([(start, (start,))])
         visited_paths: set[tuple[str, ...]] = set()
@@ -277,10 +280,13 @@ def main() -> int:
                         "test_iam_http_status": status,
                         "granted_permissions": granted,
                         "project_set_iam_policy": "resourcemanager.projects.setIamPolicy" in granted,
+                        "serviceusage_services_enable": "serviceusage.services.enable" in granted,
                     }
                     delegation_tests.append(result)
                     if result["project_set_iam_policy"] and target in service_roles:
                         verified_paths.append(result)
+                    if result["serviceusage_services_enable"] and target in service_roles:
+                        verified_serviceusage_paths.append(result)
                 if target not in path:
                     queue.append((target, new_path))
 
@@ -293,9 +299,18 @@ def main() -> int:
     }
     adc_role_state["all_three_project_bindings_present"] = all(adc_role_state.values())
 
+    reusable_admin_service_accounts = sorted({
+        principal for principal, result in direct_tests.items()
+        if result["project_set_iam_policy"]
+    } | {str(x["target"]) for x in verified_paths})
+    reusable_serviceusage_enable_accounts = sorted({
+        principal for principal, result in direct_tests.items()
+        if result["serviceusage_services_enable"]
+    } | {str(x["target"]) for x in verified_serviceusage_paths})
+
     receipt = {
         "schema": "SOVARA_PROJECT_IAM_AUTHORITY_GRAPH_V1",
-        "schema_revision": 2,
+        "schema_revision": 3,
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         "project_id": PROJECT,
         "project_number": PROJECT_NUMBER,
@@ -320,10 +335,12 @@ def main() -> int:
         "direct_current_wif_admin_candidates": sorted(direct_wif_nodes & set(service_roles)),
         "delegation_tests": delegation_tests,
         "verified_admin_delegation_paths": verified_paths,
-        "verified_reusable_admin_service_accounts": sorted({
-            principal for principal, result in direct_tests.items()
-            if result["project_set_iam_policy"]
-        } | {str(x["target"]) for x in verified_paths}),
+        "verified_serviceusage_enable_delegation_paths": verified_serviceusage_paths,
+        "verified_reusable_admin_service_accounts": reusable_admin_service_accounts,
+        "verified_reusable_serviceusage_enable_service_accounts": reusable_serviceusage_enable_accounts,
+        "phase_a_api_enable_authority_ready": bool(reusable_serviceusage_enable_accounts),
+        "phase_a_api_enable_permission": "serviceusage.services.enable",
+        "phase_a_api_enable_permission_observation_only": True,
         "adc_project_role_state": adc_role_state,
         "deployer_deployment_permissions": deployment_permissions,
         "private_gateway_canary_preflight_ready": (
@@ -331,6 +348,8 @@ def main() -> int:
             and deployment_permissions["deployment_permissions_verified"]
         ),
         "provider_mutation_performed": False,
+        "iam_mutation_performed": False,
+        "api_mutation_performed": False,
         "credential_values_recorded": False,
         "secret_payload_accessed": False,
     }
@@ -343,9 +362,12 @@ def main() -> int:
         "candidate_binding_count": receipt["candidate_binding_count"],
         "admin_service_account_count": receipt["admin_service_account_count"],
         "verified_reusable_admin_service_accounts": receipt["verified_reusable_admin_service_accounts"],
+        "verified_reusable_serviceusage_enable_service_accounts": receipt["verified_reusable_serviceusage_enable_service_accounts"],
+        "phase_a_api_enable_authority_ready": receipt["phase_a_api_enable_authority_ready"],
         "adc_project_role_state": receipt["adc_project_role_state"],
         "deployer_deployment_permissions": receipt["deployer_deployment_permissions"],
         "private_gateway_canary_preflight_ready": receipt["private_gateway_canary_preflight_ready"],
+        "provider_mutation_performed": receipt["provider_mutation_performed"],
         "receipt_sha256": receipt["receipt_sha256"],
     }, sort_keys=True))
     return 0
