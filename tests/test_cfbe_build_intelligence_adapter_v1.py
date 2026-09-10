@@ -141,6 +141,44 @@ class BuildIntelligenceAdapterTests(unittest.TestCase):
                 estate=estate(enode("repo")), actions=(action("test"),), executor_bindings=(binding, binding)
             )
 
+    def test_receipt_binds_executor_contract_and_proof(self):
+        left = ExecutorBinding(
+            "route", ExecutorKind.LOCAL, "local", sha256(b"contract-a").hexdigest(),
+            ("proof:a",), True, True,
+        )
+        right = ExecutorBinding(
+            "route", ExecutorKind.LOCAL, "local", sha256(b"contract-b").hexdigest(),
+            ("proof:b",), True, True,
+        )
+        left_receipt = BuildIntelligenceAdapter().compile(
+            estate=estate(enode("repo")), actions=(action("test"),), executor_bindings=(left,)
+        )[3]
+        right_receipt = BuildIntelligenceAdapter().compile(
+            estate=estate(enode("repo")), actions=(action("test"),), executor_bindings=(right,)
+        )[3]
+        self.assertNotEqual(left_receipt.receipt_digest, right_receipt.receipt_digest)
+
+    def test_receipt_binds_topology_capability(self):
+        left = action("test")
+        right = BuildAction(
+            "test", "repo", "test", ("python", "-m", "unittest"), {"src": H},
+            capability_id="different-capability",
+        )
+        adapter = BuildIntelligenceAdapter()
+        left_receipt = adapter.compile(estate=estate(enode("repo")), actions=(left,), executor_bindings=())[3]
+        right_receipt = adapter.compile(estate=estate(enode("repo")), actions=(right,), executor_bindings=())[3]
+        self.assertNotEqual(left_receipt.receipt_digest, right_receipt.receipt_digest)
+
+    def test_receipt_binds_scheduling_metadata(self):
+        left = action("test")
+        right = BuildAction(
+            "test", "repo", "test", ("python", "-m", "unittest"), {"src": H}, priority=99,
+        )
+        adapter = BuildIntelligenceAdapter()
+        left_receipt = adapter.compile(estate=estate(enode("repo")), actions=(left,), executor_bindings=())[3]
+        right_receipt = adapter.compile(estate=estate(enode("repo")), actions=(right,), executor_bindings=())[3]
+        self.assertNotEqual(left_receipt.receipt_digest, right_receipt.receipt_digest)
+
     def test_protected_creative_change_requires_override(self):
         env = CreativeFreedomEnvelope(protected_paths=frozenset({"ui/brand.css"}))
         with self.assertRaisesRegex(PermissionError, "PROTECTED_CREATIVE_PATH"):
