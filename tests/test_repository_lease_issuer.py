@@ -13,6 +13,8 @@ from proofos_omega.repository_lease_issuer import (
     load_policy,
 )
 
+LOCK_REF = "refs/heads/locks/fdof-repository-critical-section"
+
 
 def run_git(root: Path, *args: str) -> str:
     process = subprocess.run(
@@ -67,38 +69,51 @@ def predecessor_commit(root: Path, source_head: str, *, state: str = "RELEASED",
     return run_git(root, "commit-tree", tree, "-p", source_head, "-m", message)
 
 
+def publish_lock(root: Path, sha: str) -> None:
+    run_git(root, "push", "-q", "--force", "origin", f"{sha}:{LOCK_REF}")
+
+
 class RepositoryLeaseIssuerTests(unittest.TestCase):
     def setUp(self) -> None:
         self.policy = load_policy()
 
     def make_repo(self) -> tuple[tempfile.TemporaryDirectory, Path, str, str]:
         td = tempfile.TemporaryDirectory()
-        root = Path(td.name)
+        base = Path(td.name)
+        origin = base / "origin.git"
+        root = base / "work"
+        subprocess.run(["git", "init", "--bare", "-q", str(origin)], check=True)
+        root.mkdir()
         run_git(root, "init", "-q")
         run_git(root, "config", "user.name", "Lease Issuer Test")
         run_git(root, "config", "user.email", "lease-issuer-test@example.invalid")
+        run_git(root, "remote", "add", "origin", str(origin))
         (root / "seed.txt").write_text("source\n", encoding="utf-8")
         run_git(root, "add", "seed.txt")
         run_git(root, "commit", "-q", "-m", "source")
         head = run_git(root, "rev-parse", "HEAD")
         tree = run_git(root, "show", "-s", "--format=%T", head)
+        run_git(root, "push", "-q", "origin", f"{head}:refs/heads/main")
         return td, root, head, tree
 
-    def test_policy_requires_tree_capture_and_explicit_terminal_predecessor(self):
+    def test_policy_requires_current_ref_tree_capture_and_explicit_terminal_predecessor(self):
         contract = self.policy["lease_issuer_contract"]
         self.assertEqual("EXACT_DECLARED_SOURCE_HEAD_TREE", contract["commit_tree_source"])
         self.assertEqual("PROVIDER_READBACK_VERIFIED_EXACT_ID", contract["turn_capture_precondition"])
+        self.assertEqual("EXACT_PROVIDER_VISIBLE_CANONICAL_LOCK_REF_HEAD", contract["predecessor_current_ref_precondition"])
         self.assertEqual("EXPLICIT_RELEASED_OR_ABORTED_PROVIDER_READBACK", contract["predecessor_terminal_precondition"])
         self.assertTrue(contract["fail_closed_on_nonterminal_predecessor"])
+        self.assertTrue(contract["fail_closed_on_stale_predecessor_ref"])
         self.assertEqual(
             "proofos_omega.repository_lease_issuer.build_lease_commit_spec",
             contract["canonical_issuer"],
         )
 
-    def test_commit_spec_uses_declared_source_head_tree_and_terminal_predecessor(self):
+    def test_commit_spec_uses_declared_source_tree_and_current_terminal_predecessor(self):
         td, root, head, tree = self.make_repo()
         try:
             predecessor = predecessor_commit(root, head, state="RELEASED", token=17)
+            publish_lock(root, predecessor)
             spec = build_lease_commit_spec(
                 root,
                 lease(head, token=18),
@@ -110,6 +125,7 @@ class RepositoryLeaseIssuerTests(unittest.TestCase):
             self.assertEqual(head, spec["source_head"])
             self.assertEqual(tree, spec["tree_sha"])
             self.assertEqual(predecessor, spec["parent_sha"])
+            self.assertEqual(predecessor, spec["current_lease_ref_head"])
             self.assertEqual("RELEASED", spec["predecessor_state"])
             self.assertEqual(17, spec["predecessor_fencing_token"])
             self.assertTrue(spec["message"].startswith(LEASE_SCHEMA + "\n"))
@@ -117,10 +133,11 @@ class RepositoryLeaseIssuerTests(unittest.TestCase):
         finally:
             td.cleanup()
 
-    def test_aborted_predecessor_is_terminal(self):
+    def test_aborted_current_predecessor_is_terminal(self):
         td, root, head, _ = self.make_repo()
         try:
             predecessor = predecessor_commit(root, head, state="ABORTED", token=17)
+            publish_lock(root, predecessor)
             spec = build_lease_commit_spec(
                 root,
                 lease(head, token=18),
@@ -132,10 +149,28 @@ class RepositoryLeaseIssuerTests(unittest.TestCase):
         finally:
             td.cleanup()
 
-    def test_active_predecessor_fails_even_if_wall_clock_expired(self):
+    def test_stale_historical_released_sha_is_rejected_when_current_ref_advanced_to_active(self):
+        td, root, head, _ = self.make_repo()
+        try:
+            released = predecessor_commit(root, head, state="RELEASED", token=17)
+            current_active = predecessor_commit(root, released, state="ACTIVE", token=18)
+            publish_lock(root, current_active)
+            with self.assertRaisesRegex(ValueError, "PREDECESSOR_LEASE_NOT_CURRENT_LOCK_REF"):
+                build_lease_commit_spec(
+                    root,
+                    lease(head, token=19),
+                    predecessor_lease_sha=released,
+                    turn_capture_witness=witness(),
+                    policy=self.policy,
+                )
+        finally:
+            td.cleanup()
+
+    def test_current_active_predecessor_fails_even_if_caller_supplies_exact_current_sha(self):
         td, root, head, _ = self.make_repo()
         try:
             predecessor = predecessor_commit(root, head, state="ACTIVE", token=17)
+            publish_lock(root, predecessor)
             with self.assertRaisesRegex(ValueError, "PREDECESSOR_LEASE_NOT_TERMINAL"):
                 build_lease_commit_spec(
                     root,
@@ -147,10 +182,26 @@ class RepositoryLeaseIssuerTests(unittest.TestCase):
         finally:
             td.cleanup()
 
-    def test_fencing_token_must_advance_past_terminal_predecessor(self):
+    def test_missing_provider_visible_canonical_ref_fails_closed(self):
+        td, root, head, _ = self.make_repo()
+        try:
+            predecessor = predecessor_commit(root, head, state="RELEASED", token=17)
+            with self.assertRaisesRegex(ValueError, "CANONICAL_LEASE_REF_UNRESOLVED"):
+                build_lease_commit_spec(
+                    root,
+                    lease(head, token=18),
+                    predecessor_lease_sha=predecessor,
+                    turn_capture_witness=witness(),
+                    policy=self.policy,
+                )
+        finally:
+            td.cleanup()
+
+    def test_fencing_token_must_advance_past_current_terminal_predecessor(self):
         td, root, head, _ = self.make_repo()
         try:
             predecessor = predecessor_commit(root, head, state="RELEASED", token=18)
+            publish_lock(root, predecessor)
             with self.assertRaisesRegex(ValueError, "LEASE_FENCING_TOKEN_NOT_MONOTONIC"):
                 build_lease_commit_spec(
                     root,
@@ -162,7 +213,7 @@ class RepositoryLeaseIssuerTests(unittest.TestCase):
         finally:
             td.cleanup()
 
-    def test_capture_id_mismatch_fails_closed_before_commit_spec(self):
+    def test_capture_id_mismatch_fails_closed_before_provider_ref_read(self):
         td, root, head, _ = self.make_repo()
         try:
             with self.assertRaisesRegex(ValueError, "TURN_CAPTURE_ID_MISMATCH"):
@@ -176,7 +227,7 @@ class RepositoryLeaseIssuerTests(unittest.TestCase):
         finally:
             td.cleanup()
 
-    def test_unverified_capture_fails_closed_before_commit_spec(self):
+    def test_unverified_capture_fails_closed_before_provider_ref_read(self):
         td, root, head, _ = self.make_repo()
         try:
             with self.assertRaisesRegex(ValueError, "TURN_CAPTURE_REFERENCE_UNVERIFIED"):
