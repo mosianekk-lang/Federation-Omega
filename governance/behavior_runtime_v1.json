@@ -1,0 +1,27 @@
+{
+  "schema": "FUSE-BEHAVIOR-RUNTIME-V1",
+  "version": "1.1.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "model_weight_mutation": false,
+  "self_promotion": false,
+  "promotion_requires": [
+    "matched_cohort",
+    "matched_sample_count",
+    "frozen_holdout",
+    "nonblank_evidence_refs",
+    "finite_metrics",
+    "nonnegative_minimum_gain",
+    "regression_green",
+    "shadow_complete",
+    "canary_complete",
+    "no_correctness_regression",
+    "no_proof_regression",
+    "no_owner_burden_regression",
+    "no_recovery_regression",
+    "minimum_measured_gain",
+    "rollback_ref"
+  ],
+  "semantic_done_requires_nonblank_proof": true,
+  "autonomy_error_budget_fail_closed": true,
+  "negative_error_budget_values_rejected": true
+}
