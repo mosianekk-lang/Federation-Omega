@@ -5,8 +5,12 @@
     {
       "risk": "R4_CORE",
       "patterns": [
+        ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
         "federation/cfbe_build_intelligence_adapter_v1.py",
+        "federation/cfbe_compatibility_propagation_v1.py",
         "tests/test_cfbe_build_intelligence_adapter_v1.py",
+        "tests/test_cfbe_build_intelligence_reusable_workflow_v1.py",
+        "tests/test_cfbe_compatibility_propagation_v1.py",
         "governance/proofos_omega_policy_extension_cfbe_build_intelligence_adapter_v1.json"
       ],
       "reason": "CFBE_BUILD_INTELLIGENCE_CONTENT_ADDRESSED_ADAPTER_TO_EXISTING_FUSE_PROOF_SPINE"
@@ -16,8 +20,12 @@
     {
       "subsystem": "CFBE_BUILD_INTELLIGENCE_ADAPTER_V1",
       "patterns": [
+        ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
         "federation/cfbe_build_intelligence_adapter_v1.py",
+        "federation/cfbe_compatibility_propagation_v1.py",
         "tests/test_cfbe_build_intelligence_adapter_v1.py",
+        "tests/test_cfbe_build_intelligence_reusable_workflow_v1.py",
+        "tests/test_cfbe_compatibility_propagation_v1.py",
         "governance/proofos_omega_policy_extension_cfbe_build_intelligence_adapter_v1.json"
       ],
       "depends_on": [
@@ -35,6 +43,39 @@
       "patterns": [
         "federation/cfbe_build_intelligence_adapter_v1.py",
         "tests/test_cfbe_build_intelligence_adapter_v1.py",
+        "governance/proofos_omega_policy_extension_cfbe_build_intelligence_adapter_v1.json"
+      ],
+      "subsystems": [
+        "CFBE_BUILD_INTELLIGENCE_ADAPTER_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "cfbe_compatibility_propagation_v1",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_compatibility_propagation_v1.py",
+      "patterns": [
+        "federation/cfbe_compatibility_propagation_v1.py",
+        "tests/test_cfbe_compatibility_propagation_v1.py",
+        "governance/proofos_omega_policy_extension_cfbe_build_intelligence_adapter_v1.json"
+      ],
+      "subsystems": [
+        "CFBE_BUILD_INTELLIGENCE_ADAPTER_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "cfbe_build_intelligence_reusable_workflow_v1",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_build_intelligence_reusable_workflow_v1.py",
+      "patterns": [
+        ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
+        "governance/github_airlock_policy.json",
+        "tests/test_cfbe_build_intelligence_reusable_workflow_v1.py",
         "governance/proofos_omega_policy_extension_cfbe_build_intelligence_adapter_v1.json"
       ],
       "subsystems": [

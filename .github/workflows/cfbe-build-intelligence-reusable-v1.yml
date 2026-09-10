@@ -46,7 +46,10 @@ jobs:
         run: |
           set -euo pipefail
           python -m compileall -q federation/cfbe_build_intelligence_adapter_v1.py federation/cfbe_compatibility_propagation_v1.py
-          python -m unittest -v tests.test_cfbe_build_intelligence_adapter_v1 tests.test_cfbe_compatibility_propagation_v1
+          python -m unittest -v \
+            tests.test_cfbe_build_intelligence_adapter_v1 \
+            tests.test_cfbe_compatibility_propagation_v1 \
+            tests.test_cfbe_build_intelligence_reusable_workflow_v1
 
       - name: Generate source manifest SBOM and provenance statement
         shell: bash

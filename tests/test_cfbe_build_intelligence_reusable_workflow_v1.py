@@ -39,9 +39,10 @@ class ReusableWorkflowContractTests(unittest.TestCase):
         self.assertIn("provenance.intoto.json", TEXT)
         self.assertIn("sha256sum proof/*.json", TEXT)
 
-    def test_workflow_runs_both_focused_courts(self):
+    def test_workflow_runs_all_focused_courts(self):
         self.assertIn("tests.test_cfbe_build_intelligence_adapter_v1", TEXT)
         self.assertIn("tests.test_cfbe_compatibility_propagation_v1", TEXT)
+        self.assertIn("tests.test_cfbe_build_intelligence_reusable_workflow_v1", TEXT)
 
     def test_airlock_admits_only_reusable_read_only_event(self):
         policy = json.loads(POLICY.read_text(encoding="utf-8"))
