@@ -86,19 +86,10 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
             trust_contract_hash(self.paths, self.allowed_events),
         )
         self.assertIn(f'EXPECTED_OIDC_WORKFLOW_COUNT={EXPECTED_COUNT}', self.source)
-        self.assertIn(
-            f'EXPECTED_OIDC_WORKFLOW_SET_SHA256="{EXPECTED_SET_SHA256}"',
-            self.source,
-        )
-        self.assertIn(
-            f'EXPECTED_TRUST_CONTRACT_SHA256="{EXPECTED_TRUST_CONTRACT_SHA256}"',
-            self.source,
-        )
+        self.assertIn(f'EXPECTED_OIDC_WORKFLOW_SET_SHA256="{EXPECTED_SET_SHA256}"', self.source)
+        self.assertIn(f'EXPECTED_TRUST_CONTRACT_SHA256="{EXPECTED_TRUST_CONTRACT_SHA256}"', self.source)
         self.assertIn("policy.get('allowed_events')", self.source)
-        self.assertIn(
-            "Airlock OIDC trust contract drifted; refusing silent WIF trust expansion/contraction.",
-            self.source,
-        )
+        self.assertIn("Airlock OIDC trust contract drifted; refusing silent WIF trust expansion/contraction.", self.source)
 
     def test_event_surface_drift_changes_full_contract_hash_but_not_refs_hash(self) -> None:
         mutated = {path: list(events) for path, events in self.allowed_events.items()}
@@ -107,12 +98,8 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         if extra in mutated[target]:
             extra = "push"
         mutated[target].append(extra)
-        refs_before = hashlib.sha256(
-            ("\n".join(sorted(self.refs)) + "\n").encode()
-        ).hexdigest()
-        refs_after = hashlib.sha256(
-            ("\n".join(sorted(workflow_refs(self.paths))) + "\n").encode()
-        ).hexdigest()
+        refs_before = hashlib.sha256(("\n".join(sorted(self.refs)) + "\n").encode()).hexdigest()
+        refs_after = hashlib.sha256(("\n".join(sorted(workflow_refs(self.paths))) + "\n").encode()).hexdigest()
         self.assertEqual(refs_before, refs_after)
         self.assertNotEqual(
             trust_contract_hash(self.paths, self.allowed_events),
@@ -130,10 +117,7 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         for path in self.paths:
             self.assertIn(path, self.allowed_events)
             self.assertTrue(self.allowed_events[path])
-            self.assertEqual(
-                len(self.allowed_events[path]),
-                len(set(self.allowed_events[path])),
-            )
+            self.assertEqual(len(self.allowed_events[path]), len(set(self.allowed_events[path])))
 
     def test_exact_repository_id_binding_replaces_broad_repository_name_binding(self) -> None:
         self.assertIn("attribute.repository_id/${REPOSITORY_ID}", self.source)
@@ -143,10 +127,13 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         self.assertIn("service-accounts add-iam-policy-binding", self.source)
         self.assertIn("service-accounts remove-iam-policy-binding", self.source)
 
-    def test_apply_requires_explicit_narrow_confirmation(self) -> None:
+    def test_apply_requires_explicit_narrow_confirmation_only_when_mutation_is_needed(self) -> None:
         self.assertIn('APPLY_CONFIRMATION="HARDEN_SOVARA_CANONICAL_WIF_V1"', self.source)
         self.assertIn("SOVARA_WIF_HARDENING_APPROVAL", self.source)
         self.assertIn("Refusing mutation without", self.source)
+        no_op = self.source.index('if ((${#REQUIRED[@]} == 0)); then\n  emit_receipt "ALREADY_HARDENED" false')
+        approval = self.source.index('if [[ "${SOVARA_WIF_HARDENING_APPROVAL:-}" != "$APPLY_CONFIRMATION" ]]')
+        self.assertLess(no_op, approval)
 
     def test_source_cannot_expand_provider_or_application_authority(self) -> None:
         forbidden = (
