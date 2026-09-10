@@ -1,12 +1,10 @@
 """FUSE Autonomic Completion Kernel v5.
 
-
 This module makes recurrence explicit.  It can continue multiple internal cycles
 in one process and can queue re-entry when a persistent runner is available.
 It never claims a future invocation happened merely because a prompt requested it.
 """
 from __future__ import annotations
-
 
 from dataclasses import asdict, dataclass, field
 from enum import StrEnum
@@ -15,13 +13,10 @@ import json
 from typing import Callable, Iterable, Mapping, Sequence
 from concurrent.futures import ThreadPoolExecutor
 
-
 from .federation_learning_v1 import FederationLearningLedger, LearningEvent
 from .prompt_scientist_v2 import PromptGenome, PromptRunMetrics, PromptScientistV2
 from .run_store_v1 import Checkpoint, RunStore
 from .commercial_maturity_v1 import CommercialMaturityController, DEFAULT_STAGES
-
-
 
 
 class RuntimeMode(StrEnum):
@@ -34,7 +29,15 @@ class TerminalState(StrEnum):
 
 COMMERCIAL_LADDER=("DESIGNED","SOURCE_COMPLETE","LOCAL_TESTED","INTEGRATION_TESTED","SIMULATION_VERIFIED","SECURITY_QUALIFIED","PERFORMANCE_QUALIFIED","PROVIDER_SHADOW","CANARY","PROVIDER_LIVE","RELIABILITY_PROVEN","RECOVERY_PROVEN","OBSERVABILITY_READY","COST_QUALIFIED","SUPPLY_CHAIN_QUALIFIED","DOCUMENTED","OPERATIONS_READY","RELEASE_CANDIDATE","PRODUCTION_VERIFIED","COMMERCIAL_READY_VERIFIED","VALUE_PROVEN")
 
-
+# V11 broadens concurrency only for packet classes that remain bounded,
+# reversible/read-only, and collision-key isolated.  Shared/canonical/provider
+# mutation and consequential effects remain serialized and authority-gated.
+PARALLEL_SAFE_EFFECT_CLASSES=frozenset({
+    "READ_ONLY", "LOCAL_REVERSIBLE", "BUILD_TEST", "CI_VALIDATION", "PROVIDER_READ"
+})
+OWNER_EFFECT_CLASSES=frozenset({
+    "PROVIDER_MUTATION", "EXTERNAL_EFFECT", "IAM_SECURITY_MUTATION", "PRODUCTION_TRAFFIC", "SPEND"
+})
 
 
 @dataclass(frozen=True, slots=True)
@@ -46,12 +49,9 @@ class WorkPacket:
     owner_reserved: bool = False
     done: bool = False
 
-
     @property
     def parallel_eligible(self) -> bool:
-        return self.effect_class == "READ_ONLY" and not self.owner_reserved
-
-
+        return self.effect_class in PARALLEL_SAFE_EFFECT_CLASSES and not self.owner_reserved
 
 
 @dataclass(frozen=True, slots=True)
@@ -69,8 +69,6 @@ class ExecutionContext:
     commercial_applicable_gates: tuple[str, ...] = ()
 
 
-
-
 @dataclass(frozen=True, slots=True)
 class CycleTelemetry:
     cycle: int
@@ -81,8 +79,6 @@ class CycleTelemetry:
     output_class: str
     terminal: bool
     evidence_refs: tuple[str,...] = ()
-
-
 
 
 @dataclass(frozen=True, slots=True)
@@ -99,12 +95,8 @@ class CycleResult:
     recompile_required: bool = False
 
 
-
-
 def _sha(v: object) -> str:
     return sha256(json.dumps(v,sort_keys=True,separators=(",",":"),default=str).encode()).hexdigest()
-
-
 
 
 class AutonomicCompletionKernel:
@@ -114,29 +106,32 @@ class AutonomicCompletionKernel:
         self.mission_recompiler=mission_recompiler
         self.commercial_evidence_provider=commercial_evidence_provider
 
-
     @staticmethod
     def _ready(ctx: ExecutionContext) -> list[WorkPacket]:
         done={p.packet_id for p in ctx.packets if p.done}
         return [p for p in ctx.packets if not p.done and set(p.dependencies)<=done]
 
-
     @staticmethod
     def _wave(ctx: ExecutionContext, ready: Sequence[WorkPacket]) -> list[WorkPacket]:
         if not ready: return []
-        owner=[p for p in ready if p.owner_reserved or p.effect_class in {"PROVIDER_MUTATION","EXTERNAL_EFFECT"}]
+        owner=[p for p in ready if p.owner_reserved or p.effect_class in OWNER_EFFECT_CLASSES]
         if owner and not ctx.owner_effect_authority:
             ready=[p for p in ready if p not in owner]
-        serial=[p for p in ready if not p.parallel_eligible]
-        if serial: return [serial[0]]
-        wave=[]; occupied=set()
-        for p in ready:
-            keys=set(p.collision_keys)
-            if keys & occupied: continue
-            wave.append(p); occupied |= keys
-            if len(wave)>=ctx.maximum_parallelism: break
-        return wave
 
+        # Prefer a useful collision-safe parallel wave when one exists.  Serial
+        # packets remain queued and cannot inherit authority from parallel work.
+        parallel=[p for p in ready if p.parallel_eligible]
+        if parallel:
+            wave=[]; occupied=set()
+            for p in parallel:
+                keys=set(p.collision_keys)
+                if keys & occupied: continue
+                wave.append(p); occupied |= keys
+                if len(wave)>=ctx.maximum_parallelism: break
+            return wave
+
+        serial=[p for p in ready if not p.parallel_eligible]
+        return [serial[0]] if serial else []
 
     @staticmethod
     def _advance(ctx: ExecutionContext, executed: Iterable[str]) -> ExecutionContext:
@@ -150,14 +145,12 @@ class AutonomicCompletionKernel:
             dict(ctx.commercial_evidence),ctx.commercial_applicable_gates,
         )
 
-
     @staticmethod
     def _commercial_court(ctx: ExecutionContext):
         if ctx.target_state != "COMMERCIAL_READY_VERIFIED":
             return None
         applicable = ctx.commercial_applicable_gates or DEFAULT_STAGES
         return CommercialMaturityController(tuple(applicable)).evaluate(ctx.commercial_evidence)
-
 
     def run_cycle(self, ctx: ExecutionContext, *, cycle: int, packet_executor: Callable[[WorkPacket], tuple[bool,str]], force_platform_boundary: bool=False) -> CycleResult:
         ready=self._ready(ctx); wave=self._wave(ctx,ready)
@@ -184,7 +177,7 @@ class AutonomicCompletionKernel:
         remaining=[p.packet_id for p in ready_after]
         all_done=all(p.done for p in new_ctx.packets)
         owner_blocked=bool(ready_after) and not self._wave(new_ctx,ready_after) and all(
-            (p.owner_reserved or p.effect_class in {"PROVIDER_MUTATION","EXTERNAL_EFFECT"}) and not new_ctx.owner_effect_authority
+            (p.owner_reserved or p.effect_class in OWNER_EFFECT_CLASSES) and not new_ctx.owner_effect_authority
             for p in ready_after
         )
         terminal_state=""; maturity_gaps=(); recompile_required=False
@@ -211,14 +204,14 @@ class AutonomicCompletionKernel:
         else:
             out=OutputClass.PROGRESS_UPDATE
 
-
         # Automatic prompt-science pass after every material cycle.  Promotion is
         # evidence-gated: without a matched evaluator the incumbent is retained.
         total_packets=max(1,len(new_ctx.packets)); done_packets=sum(1 for p in new_ctx.packets if p.done)
+        parallelizable=sum(1 for p in ready if p.parallel_eligible)
         cycle_metrics=PromptRunMetrics(
             prompt_version=new_ctx.prompt_genome.version, mission_class=new_ctx.mission_class,
             completion_ratio=done_packets/total_packets, correctness=1.0, proof_completeness=1.0,
-            execution_efficiency=1.0, parallelizable_packets=len(ready), achieved_parallelism=len(wave),
+            execution_efficiency=1.0, parallelizable_packets=parallelizable, achieved_parallelism=len(wave),
             owner_interventions=1 if out is OutputClass.OWNER_DECISION else 0,
             output_boundary_stop=out is OutputClass.RESUME_CAPSULE,
             persistent_runner_available=new_ctx.runtime_mode is RuntimeMode.PERSISTENT_RUNNER,
@@ -242,12 +235,11 @@ class AutonomicCompletionKernel:
                 promotion_state="PROMPT_CHALLENGERS_SHADOW_REQUIRED"
                 promotion_reason="MATCHED_EVALUATOR_UNAVAILABLE"
 
-
         state={"mission_id":new_ctx.mission_id,"cycle":cycle,"target_state":new_ctx.target_state,"current_maturity":new_ctx.current_maturity,"prompt_version":new_ctx.prompt_genome.version,"packets":[asdict(p) for p in new_ctx.packets],"terminal_state":terminal_state,"prompt_promotion_state":promotion_state,"commercial_evidence":dict(new_ctx.commercial_evidence),"maturity_gaps":maturity_gaps,"recompile_required":recompile_required}
         prev=self.store.read(new_ctx.mission_id)
         checkpoint=self.store.put(new_ctx.mission_id,state,expected_version=None if prev is None else prev.version)
         event_id=f"LEARN-{new_ctx.mission_id}-{checkpoint.version}-{checkpoint.state_sha256[:10]}"
-        event=LearningEvent(event_id,"CURRENT_RUN",new_ctx.mission_id,new_ctx.mission_class,new_ctx.prompt_genome.version,dict(new_ctx.prompt_genome.genes),new_ctx.current_maturity,"MISSION_CYCLE","EXECUTE_READY_WAVE","EXECUTE_READY_WAVE",parallelism_available=len(ready),parallelism_achieved=max(1,len(wave)) if wave else 0,prompt_mutation=tuple(prompt_mutation),algorithm_mutation=("THREADPOOL_FANOUT_FANIN",) if len(wave)>1 else (),evidence_refs=tuple(evidence)+(f"PROMPT:{promotion_state}:{promotion_reason}",),receiver_compatibility=("CFBE","STRATEGIC_FUSE","FORMATION","PROMPT_SCIENTIST"),rollback_ref=f"PROMPT:{new_ctx.prompt_genome.parent_version or new_ctx.prompt_genome.version}",promotion_state=promotion_state)
+        event=LearningEvent(event_id,"CURRENT_RUN",new_ctx.mission_id,new_ctx.mission_class,new_ctx.prompt_genome.version,dict(new_ctx.prompt_genome.genes),new_ctx.current_maturity,"MISSION_CYCLE","EXECUTE_READY_WAVE","EXECUTE_READY_WAVE",parallelism_available=parallelizable,parallelism_achieved=max(1,len(wave)) if wave else 0,prompt_mutation=tuple(prompt_mutation),algorithm_mutation=("THREADPOOL_FANOUT_FANIN_V11",) if len(wave)>1 else (),evidence_refs=tuple(evidence)+(f"PROMPT:{promotion_state}:{promotion_reason}",),receiver_compatibility=("CFBE","STRATEGIC_FUSE","FORMATION","PROMPT_SCIENTIST"),rollback_ref=f"PROMPT:{new_ctx.prompt_genome.parent_version or new_ctx.prompt_genome.version}",promotion_state=promotion_state)
         self.learning.append(event); self.store.append_learning(event_id,new_ctx.mission_id,event.body())
         reentry_id=""; capsule=None
         if not terminal_state and new_ctx.runtime_mode is RuntimeMode.PERSISTENT_RUNNER:
@@ -256,7 +248,6 @@ class AutonomicCompletionKernel:
             capsule={"mission_id":new_ctx.mission_id,"checkpoint_version":checkpoint.version,"checkpoint_sha256":checkpoint.state_sha256,"verified_state":new_ctx.current_maturity,"next_ready_packets":remaining,"prompt_version":new_ctx.prompt_genome.version,"learning_event_ids":[event_id],"maturity_gaps":maturity_gaps,"recompile_required":recompile_required,"continuation_instruction":"RECOMPILE_MATURITY_GAPS_AND_EXECUTE" if recompile_required else "CONSUME_CHECKPOINT_AND_EXECUTE_NEXT_READY_WAVE"}
         telemetry=CycleTelemetry(cycle,len(ready),len(executed),len(wave),0,out.value,bool(terminal_state),tuple(evidence))
         return CycleResult(new_ctx,telemetry,checkpoint,tuple(remaining),event_id,reentry_id,capsule,terminal_state,maturity_gaps,recompile_required)
-
 
     def execute_until_boundary(self, ctx: ExecutionContext, packet_executor: Callable[[WorkPacket], tuple[bool,str]], *, max_cycles: int=100, force_platform_boundary_at: int | None=None) -> list[CycleResult]:
         results=[]; current=ctx
@@ -272,13 +263,12 @@ class AutonomicCompletionKernel:
             # progress output is explicitly non-terminal: continue in the same run.
         return results
 
-
     @staticmethod
     def prompt_metrics(results: Sequence[CycleResult]) -> PromptRunMetrics:
         if not results: raise ValueError("RESULTS_REQUIRED")
         total_packets=len(results[0].context.packets)
         done=sum(1 for p in results[-1].context.packets if p.done)
-        parallelizable=max((r.telemetry.ready_packets for r in results),default=0)
+        parallelizable=max((sum(1 for p in r.context.packets if not p.done and p.parallel_eligible) for r in results),default=0)
         achieved=max((r.telemetry.achieved_parallelism for r in results),default=1)
         final=results[-1]
         return PromptRunMetrics(
