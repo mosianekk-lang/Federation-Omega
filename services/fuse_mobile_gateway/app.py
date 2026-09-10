@@ -8,6 +8,7 @@ from pydantic import BaseModel, Field
 from federation.mobile_gateway.fuse_mobile_v1 import MobileRequest, Mode
 from services.fuse_mobile_gateway import VERSION
 from services.fuse_mobile_gateway.bindings import runtime_from_environment
+from services.fuse_mobile_gateway.aegis_edge_adapter import build_aegis_edge_router, sink_from_environment
 from services.fuse_mobile_gateway.runtime import (
     GatewayRuntime,
     RuntimeBindingError,
@@ -83,6 +84,7 @@ def create_app(runtime: GatewayRuntime | None = None) -> FastAPI:
         docs_url=None,
         redoc_url=None,
     )
+    app.include_router(build_aegis_edge_router(active, sink_from_environment()))
 
     def fail(error: RuntimeBindingError) -> None:
         raise HTTPException(

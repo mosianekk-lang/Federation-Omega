@@ -1,0 +1,100 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "services/aegis_omega/**",
+        ".github/workflows/aegis-omega-zero-traffic-v1.yml",
+        "governance/aegis_omega_airlock_delta_v1.json",
+        "governance/proofos_omega_policy_extension_aegis_omega_v1.json",
+        "governance/github_airlock_policy.json",
+        "tests/test_aegis_omega_deploy_workflow_v1.py",
+        "tests/test_aegis_omega_unified_contract_v1.py"
+      ],
+      "reason": "AEGIS_OMEGA_DEFENSIVE_ADVERSARIAL_PROVIDER_RUNTIME_AND_PROOF_CORE"
+    },
+    {
+      "risk": "R3_SECURITY_ABI",
+      "patterns": [
+        "mobile/fuse-mobile/src/aegis*.ts",
+        "mobile/fuse-mobile/src/Aegis*.tsx",
+        "mobile/fuse-mobile/modules/aegis-edge-posture/**",
+        "mobile/fuse-mobile/app/index.tsx",
+        "services/fuse_mobile_gateway/aegis_edge_*.py",
+        "services/fuse_mobile_gateway/app.py",
+        "tests/test_aegis_omega_unified_contract_v1.py"
+      ],
+      "reason": "AEGIS_EDGE_OWNER_TRIGGERED_MOBILE_SECURITY_ABI_AND_PRIVATE_GATEWAY_BRIDGE"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "AEGIS_OMEGA",
+      "patterns": [
+        "services/aegis_omega/**",
+        ".github/workflows/aegis-omega-zero-traffic-v1.yml",
+        "governance/aegis_omega_airlock_delta_v1.json",
+        "governance/proofos_omega_policy_extension_aegis_omega_v1.json",
+        "governance/github_airlock_policy.json",
+        "tests/test_aegis_omega_deploy_workflow_v1.py",
+        "tests/test_aegis_omega_unified_contract_v1.py"
+      ],
+      "depends_on": ["SOL62", "CFBE"]
+    },
+    {
+      "subsystem": "AEGIS_EDGE",
+      "patterns": [
+        "mobile/fuse-mobile/src/aegis*.ts",
+        "mobile/fuse-mobile/src/Aegis*.tsx",
+        "mobile/fuse-mobile/modules/aegis-edge-posture/**",
+        "mobile/fuse-mobile/app/index.tsx",
+        "services/fuse_mobile_gateway/aegis_edge_*.py",
+        "services/fuse_mobile_gateway/app.py",
+        "tests/test_aegis_omega_unified_contract_v1.py"
+      ],
+      "depends_on": ["AEGIS_OMEGA", "FUSE_MOBILE_MDTAF"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "aegis_omega_unified_contract",
+      "kind": "unittest_glob",
+      "target": "test_aegis_omega_unified_contract_v1.py",
+      "patterns": [
+        "services/aegis_omega/**",
+        "mobile/fuse-mobile/src/aegis*.ts",
+        "mobile/fuse-mobile/src/Aegis*.tsx",
+        "mobile/fuse-mobile/modules/aegis-edge-posture/**",
+        "mobile/fuse-mobile/app/index.tsx",
+        "services/fuse_mobile_gateway/aegis_edge_*.py",
+        "services/fuse_mobile_gateway/app.py",
+        "governance/aegis_omega_airlock_delta_v1.json",
+        "governance/proofos_omega_policy_extension_aegis_omega_v1.json",
+        "governance/github_airlock_policy.json",
+        "tests/test_aegis_omega_unified_contract_v1.py"
+      ],
+      "subsystems": ["AEGIS_OMEGA", "AEGIS_EDGE"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 300
+    },
+    {
+      "id": "aegis_omega_provider_workflow",
+      "kind": "unittest_glob",
+      "target": "test_aegis_omega_deploy_workflow_v1.py",
+      "patterns": [
+        ".github/workflows/aegis-omega-zero-traffic-v1.yml",
+        "governance/aegis_omega_airlock_delta_v1.json",
+        "governance/github_airlock_policy.json",
+        "tests/test_aegis_omega_deploy_workflow_v1.py"
+      ],
+      "subsystems": ["AEGIS_OMEGA"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
