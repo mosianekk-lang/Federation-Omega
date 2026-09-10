@@ -4,13 +4,20 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "federation-windows-plane"
-version = "1.0.0"
+version = "1.1.0"
 description = "Least-privilege Windows execution plane for Federation Omega"
 requires-python = ">=3.11"
-dependencies = []
+dependencies = [
+  "google-cloud-firestore>=2.20,<3",
+  "mcp>=2.2,<3",
+  "PyJWT[crypto]>=2.9,<3",
+  "uvicorn>=0.30,<1",
+]
 
 [project.scripts]
 federation-windows = "federation_windows_plane.cli:main"
+federation-windows-agent = "federation_windows_plane.relay_agent:main"
+federation-windows-relay = "federation_windows_plane.mcp_service:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
