@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-REPOSITORY-COORDINATION-V2",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "owner": "Kim Kagiso Mosiane",
   "purpose": "Make the existing cooperative repository critical section machine-verifiable inside the already-admitted Federation Omega Airlock without creating another scheduler, store, authority plane or private credential dependency.",
   "lease_ref": "refs/heads/locks/fdof-repository-critical-section",
@@ -17,11 +17,13 @@
     "canonical_issuer": "proofos_omega.repository_lease_issuer.build_lease_commit_spec",
     "commit_tree_source": "EXACT_DECLARED_SOURCE_HEAD_TREE",
     "commit_parent_source": "CURRENT_LOCK_REF_COMMIT",
+    "predecessor_current_ref_precondition": "EXACT_PROVIDER_VISIBLE_CANONICAL_LOCK_REF_HEAD",
     "predecessor_terminal_precondition": "EXPLICIT_RELEASED_OR_ABORTED_PROVIDER_READBACK",
     "turn_capture_precondition": "PROVIDER_READBACK_VERIFIED_EXACT_ID",
     "fail_closed_on_source_tree_resolution_error": true,
     "fail_closed_on_capture_witness_mismatch": true,
     "fail_closed_on_nonterminal_predecessor": true,
+    "fail_closed_on_stale_predecessor_ref": true,
     "provider_effect_authorized": false
   },
   "required_lease_fields": [
@@ -81,5 +83,5 @@
     "lock_ref_is_not_source_authority": true,
     "lock_ref_is_not_provider_effect_authority": true
   },
-  "truth_boundary": "This court fails closed for every ACTIVE lease, including an ACTIVE lease whose expires_at has passed. Expiry is scheduling metadata, not a terminal transition. Only an explicit RELEASED or ABORTED descriptor is terminal. The canonical issuer must resolve the exact predecessor lease commit and prove that predecessor is explicitly terminal before producing a successor commit spec. GitHub main is still not provider-enforced by a ruleset/branch protection, so this cooperative court does not make bypass technically impossible at the provider layer; provider-enforced Main Airlock remains separate."
+  "truth_boundary": "Every ACTIVE lease fails closed until an explicit RELEASED or ABORTED transition. Expiry is scheduling metadata, not terminal authority. A successor issuer must first resolve the exact provider-visible canonical lock-ref head and require predecessor_lease_sha to equal that current head; only then may it accept the predecessor if its descriptor is explicitly RELEASED or ABORTED and the new fencing token is strictly greater. A historical terminal commit is not reusable authority after the canonical lock ref advances. GitHub main still lacks provider-enforced ruleset/branch protection, so provider-enforced Main Airlock remains separate."
 }
