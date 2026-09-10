@@ -9,13 +9,17 @@ ROOT = Path(__file__).resolve().parents[1]
 G0_TEMPLATE = ROOT / "governance" / "sovara_gemini_g0_authority_census_request_template_v1.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "sovara-litellm-v2-3-provider-admission.yml"
 BOOTSTRAP = ROOT / "sovara" / "gemini" / "bootstrap_gateway.sh"
+CENSUS = ROOT / "sovara" / "gemini" / "admin_authority_census.py"
+LIVE_REQUEST = ROOT / "governance" / "sovara_gemini_collaboration_request_v1.json"
 
 
 class SovaraGeminiG0AuthorityCensusTests(unittest.TestCase):
     def setUp(self) -> None:
         self.request = json.loads(G0_TEMPLATE.read_text(encoding="utf-8"))
+        self.live_request = json.loads(LIVE_REQUEST.read_text(encoding="utf-8"))
         self.workflow = WORKFLOW.read_text(encoding="utf-8")
         self.bootstrap = BOOTSTRAP.read_text(encoding="utf-8")
+        self.census = CENSUS.read_text(encoding="utf-8")
 
     def test_dormant_g0_template_is_read_only_authority_census(self) -> None:
         self.assertEqual(self.request["mode"], "G0_READ_ONLY_VERIFY")
@@ -76,6 +80,30 @@ class SovaraGeminiG0AuthorityCensusTests(unittest.TestCase):
         self.assertNotIn("provider_mutation_allowed') is True", census_block.split("elif mode == 'G1_ADC_APPLY_VERIFY'", 1)[0])
         self.assertIn("provider_admission_attempted == false", self.workflow)
         self.assertIn("model_inference_performed == false", self.workflow)
+
+    def test_mobile_phase_a_permission_is_observed_not_executed(self) -> None:
+        self.assertIn('"serviceusage.services.enable"', self.census)
+        self.assertIn('"serviceusage_services_enable"', self.census)
+        self.assertIn('"verified_reusable_serviceusage_enable_service_accounts"', self.census)
+        self.assertIn('"phase_a_api_enable_authority_ready"', self.census)
+        self.assertIn('"phase_a_api_enable_permission_observation_only": True', self.census)
+        self.assertIn('"provider_mutation_performed": False', self.census)
+        self.assertIn('"iam_mutation_performed": False', self.census)
+        self.assertIn('"api_mutation_performed": False', self.census)
+        self.assertNotIn('gcloud services enable', self.census)
+
+    def test_live_mobile_request_keeps_g0_read_only_boundary(self) -> None:
+        self.assertEqual(self.live_request["mode"], "G0_READ_ONLY_VERIFY")
+        self.assertEqual(self.live_request["g0_objective"], "ADMIN_AUTHORITY_GRAPH_CENSUS")
+        self.assertFalse(self.live_request["provider_mutation_allowed"])
+        self.assertFalse(self.live_request["model_inference_allowed"])
+        self.assertFalse(self.live_request["promote"])
+        context = self.live_request["fuse_mobile_phase_a_context"]
+        self.assertEqual(context["deployer_missing_permissions"], ["serviceusage.services.enable"])
+        self.assertFalse(context["iap_api_enabled"])
+        self.assertFalse(context["cloud_run_iap_enabled"])
+        self.assertFalse(context["public_invoker_present"])
+        self.assertIn("serviceusage.services.enable", self.live_request["truth_boundary"])
 
 
 if __name__ == "__main__":
