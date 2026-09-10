@@ -1,0 +1,49 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/resident_execution_substrate_v1.py",
+        "tests/test_resident_execution_substrate_v1.py",
+        "governance/proofos_omega_policy_extension_resident_execution_substrate_v1.json"
+      ],
+      "reason": "PROVIDER_NEUTRAL_RESIDENT_EXECUTION_IDEMPOTENCY_FENCING_BACKPRESSURE_CACHE_RECONCILIATION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_RESIDENT_EXECUTION_SUBSTRATE_V1",
+      "patterns": [
+        "federation/resident_execution_substrate_v1.py",
+        "tests/test_resident_execution_substrate_v1.py",
+        "governance/proofos_omega_policy_extension_resident_execution_substrate_v1.json"
+      ],
+      "depends_on": [
+        "FUSE_AUTONOMIC_COMPLETION_V5",
+        "SOL62",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_resident_execution_substrate_v1",
+      "kind": "unittest_glob",
+      "target": "test_resident_execution_substrate_v1.py",
+      "patterns": [
+        "federation/resident_execution_substrate_v1.py",
+        "tests/test_resident_execution_substrate_v1.py",
+        "governance/proofos_omega_policy_extension_resident_execution_substrate_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_RESIDENT_EXECUTION_SUBSTRATE_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
