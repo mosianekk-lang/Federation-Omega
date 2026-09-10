@@ -11,9 +11,9 @@ SCRIPT = ROOT / "ops" / "harden_sovara_provider_wif_v1.sh"
 POLICY = ROOT / "governance" / "github_airlock_policy.json"
 REPOSITORY_SLUG = "mosianekk-lang/Federation-Omega"
 MAIN_REF = "refs/heads/main"
-EXPECTED_COUNT = 18
-EXPECTED_SET_SHA256 = "65e4cc0a148c4a0d7f0fa646692f369becc7d47db7aa68591371fa593de1c07c"
-EXPECTED_TRUST_CONTRACT_SHA256 = "98a3ca770f05b91b425b335f5b1ea7210b139a916fc3a90e30bb3881a54db391"
+EXPECTED_COUNT = 19
+EXPECTED_SET_SHA256 = "8fa0450fdf8b69913b11e42d37fb10ece6da2d3d9ffac731ac8eb063d7ccd2ec"
+EXPECTED_TRUST_CONTRACT_SHA256 = "38fa68df85d793f5491f480ddcf04e46e6e9ffc50dcf1abd67e934714ff98b1e"
 
 
 def workflow_refs(paths: list[str]) -> list[str]:

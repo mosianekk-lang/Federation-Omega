@@ -12,7 +12,7 @@ Protected assets are the repository checkout, task intent, task and result integ
 4. GitHub stores the receipt as a short-retention artifact.
 5. An independent reader verifies the run, job, artifact, runner, task hash, result hash, and source SHA.
 
-The issued-by value is a policy label, not cryptographic identity. An owner workstation remains outside the trusted execution boundary until a separately authenticated transport is proven.
+The issued-by value is a policy label, not cryptographic identity. Version 1.1 adds cryptographic transport identity: exact-issuer/audience OAuth for MCP and derived HMAC credentials for the outbound Windows agent. The owner workstation remains outside the proven production boundary until its live enrollment and receipt are read back.
 
 ## Threats and controls
 
@@ -28,6 +28,11 @@ The issued-by value is a policy label, not cryptographic identity. An owner work
 | Runner compromise | Ephemeral hosted runner, no secrets, read-only effect, 15-minute timeout | A compromised provider runner could forge local output; provider metadata/readback reduces but cannot eliminate this risk |
 | Denial of service or queue starvation | Concurrency key, bounded timeout, no cancellation of an active run | GitHub runner availability is external |
 | Accidental authority expansion | Default read-only effect, explicit governance record, separate owner-host/provider tranches | Future write-capable tasks require a new threat model and authorization |
+| Forged ChatGPT caller | JWT signature, issuer, audience, expiry, client identity and `fuse.windows` scope validation | Security depends on the selected authorization server and its client registration |
+| Forged workstation | Single-use enrollment, derived per-device secret, canonical request signature and constant-time comparison | Root-key compromise requires rotation of all device credentials |
+| Replay or concurrent lease | Firestore create-once nonce record and transactional lease update | Nonce documents require a provider TTL policy for automatic cleanup |
+| Cloud Run instance loss | No in-memory authority state; Firestore is canonical | Regional provider failure remains external; backup/restore must be exercised before production certification |
+| Device credential theft | Windows DPAPI current-user protection and revocable device record | Malware running as the same Windows user remains in the workstation trust boundary |
 
 ## Promotion rule
 
