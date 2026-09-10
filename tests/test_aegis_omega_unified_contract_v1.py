@@ -15,6 +15,13 @@ class AegisOmegaUnifiedContractTests(unittest.TestCase):
     def test_android_native_module_is_bounded_posture_only(self):
         native=(ROOT/'mobile/fuse-mobile/modules/aegis-edge-posture/android/src/main/java/expo/modules/aegisedgeposture/AegisEdgePostureModule.kt').read_text(); self.assertIn('SECURITY_PATCH',native); self.assertIn('isDeviceSecure',native); self.assertIn('FLAG_DEBUGGABLE',native)
         for forbidden in ('READ_SMS','READ_CONTACTS','ACCESS_FINE_LOCATION','QUERY_ALL_PACKAGES','VpnService','AccessibilityService'): self.assertNotIn(forbidden,native)
+    def test_edge_core_guards_strict_index_access(self):
+        core=(ROOT/'mobile/fuse-mobile/src/aegisEdgeCore.ts').read_text()
+        self.assertIn("const major = match?.[1];",core)
+        self.assertIn("return major ?? text.slice(0, 16);",core)
+        self.assertIn("if (!yearText || !monText) return null;",core)
+        self.assertNotIn("return match ? match[1] : text.slice(0, 16);",core)
+        self.assertNotIn("const [year, mon] = month.split('-').map(Number);",core)
     def test_backend_stays_defensive_and_auto_promotion_is_false(self):
         api=(ROOT/'services/aegis_omega/src/aegis_omega/api.py').read_text(); policy=(ROOT/'services/aegis_omega/src/aegis_omega/policy.py').read_text(); self.assertIn('defensive-only',api); self.assertIn('automatic_model_promotion',api); self.assertIn('high_impact_response_requires_human_approval',api); self.assertRegex(policy,re.compile(r'approval_required'))
     def test_proofos_extension_maps_source_core_and_defers_provider_epoch(self):
