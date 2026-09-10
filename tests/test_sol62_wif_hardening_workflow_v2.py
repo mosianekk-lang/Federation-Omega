@@ -90,16 +90,35 @@ class Sol62WifHardeningWorkflowV2Tests(unittest.TestCase):
         ):
             self.assertIn(fragment, workflow)
 
-    def test_post_apply_contract_requires_v3_event_surface_and_exact_principals(self) -> None:
+    def test_post_apply_contract_requires_v3_event_surface_and_effective_least_privilege(self) -> None:
         workflow = self.require_workflow()
         self.assertIn("SOVARA_WIF_HARDENING_V3", workflow)
         self.assertNotIn("SOVARA_WIF_HARDENING_V1', apply", workflow)
-        self.assertIn("event_surface_bound_per_workflow", workflow)
-        self.assertIn("trust_contract_sha256", workflow)
-        self.assertIn("exact_repository_id_binding_present", workflow)
-        self.assertIn("broad_repository_name_binding_present", workflow)
-        self.assertIn("required_mutations", workflow)
+        for fragment in (
+            "event_surface_bound_per_workflow",
+            "trust_contract_sha256",
+            "exact_repository_id_binding_present",
+            "broad_repository_name_binding_present",
+            "broad_repository_attribute_mapped",
+            "broad_repository_name_binding_effective",
+            "legacy_broad_repository_name_binding_inert",
+            "physical_legacy_binding_removal_required",
+            "required_mutations",
+        ):
+            self.assertIn(fragment, workflow)
+        self.assertIn("assert verify.get('broad_repository_attribute_mapped') is False", workflow)
+        self.assertIn("assert verify.get('broad_repository_name_binding_effective') is False", workflow)
+        self.assertIn("assert verify.get('legacy_broad_repository_name_binding_inert') is True", workflow)
+        self.assertNotIn("assert verify.get('broad_repository_name_binding_present') is False", workflow)
         self.assertIn("'schema':'SOVARA_WIF_HARDENING_V3'", self.hardener)
+
+    def test_changed_route_does_not_replay_known_denied_physical_removal(self) -> None:
+        workflow = self.require_workflow()
+        apply_section = self.hardener.split("# Establish the exact repository-ID binding", 1)[1]
+        self.assertNotIn("remove-iam-policy-binding", apply_section)
+        self.assertIn("RENDER_BROAD_REPOSITORY_NAME_BINDING_INERT", self.hardener)
+        self.assertIn("BROAD_BINDING_EFFECTIVE", self.hardener)
+        self.assertIn("BROAD_REPOSITORY_ATTRIBUTE_MAPPED", self.hardener)
 
     def test_failure_receipts_are_uploaded_without_private_raw_prestate(self) -> None:
         workflow = self.require_workflow()

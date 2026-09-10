@@ -139,13 +139,48 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
                 len(set(self.allowed_events[path])),
             )
 
-    def test_exact_repository_id_binding_replaces_broad_repository_name_binding(self) -> None:
+    def test_exact_repository_binding_is_required_and_legacy_repository_binding_is_modeled(self) -> None:
         self.assertIn("attribute.repository_id/${REPOSITORY_ID}", self.source)
         self.assertIn("attribute.repository/mosianekk-lang/Federation-Omega", self.source)
         self.assertIn("ADD_EXACT_REPOSITORY_ID_WIF_BINDING", self.source)
-        self.assertIn("REMOVE_BROAD_REPOSITORY_NAME_WIF_BINDING", self.source)
+        self.assertIn("RENDER_BROAD_REPOSITORY_NAME_BINDING_INERT", self.source)
         self.assertIn("service-accounts add-iam-policy-binding", self.source)
-        self.assertIn("service-accounts remove-iam-policy-binding", self.source)
+        self.assertNotIn("service-accounts remove-iam-policy-binding", self.source)
+
+    def test_canonical_mapping_never_exports_legacy_repository_attribute(self) -> None:
+        expected_line = next(
+            line for line in self.source.splitlines() if line.startswith("EXPECTED_MAPPING=")
+        )
+        self.assertNotIn("attribute.repository=", expected_line)
+        self.assertIn("Canonical mapping must not export attribute.repository.", self.source)
+        self.assertIn("'attribute.repository' in m", self.source)
+
+    def test_broad_binding_presence_is_distinct_from_effective_authority(self) -> None:
+        for fragment in (
+            'BROAD_BINDING_EFFECTIVE=false',
+            'LEGACY_BROAD_BINDING_INERT=false',
+            'if [[ "$BROAD_BINDING" == true && "$BROAD_REPOSITORY_ATTRIBUTE_MAPPED" == true ]]',
+            'BROAD_BINDING_EFFECTIVE=true',
+            'elif [[ "$BROAD_BINDING" == true && "$BROAD_REPOSITORY_ATTRIBUTE_MAPPED" == false ]]',
+            'LEGACY_BROAD_BINDING_INERT=true',
+            "'broad_repository_name_binding_present'",
+            "'broad_repository_attribute_mapped'",
+            "'broad_repository_name_binding_effective'",
+            "'legacy_broad_repository_name_binding_inert'",
+        ):
+            self.assertIn(fragment, self.source)
+
+    def test_adversarial_broad_binding_is_fail_closed_only_when_attribute_is_mapped(self) -> None:
+        self.assertIn(
+            '[[ "$BROAD_BINDING_EFFECTIVE" == false ]] || REQUIRED+=("RENDER_BROAD_REPOSITORY_NAME_BINDING_INERT")',
+            self.source,
+        )
+        self.assertIn(
+            'if [[ "$CONDITION_MATCH" != true || "$MAPPING_MATCH" != true || "$BROAD_BINDING_EFFECTIVE" == true ]]; then',
+            self.source,
+        )
+        self.assertIn("attribute.repository is not mapped", self.source)
+        self.assertIn("cannot satisfy verification if the provider maps attribute.repository again", self.source)
 
     def test_one_use_workflow_invokes_hardener_through_bash(self) -> None:
         if self.workflow_source is None:
@@ -179,12 +214,12 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         for fragment in forbidden:
             self.assertNotIn(fragment, self.source)
 
-    def test_safe_ordering_establishes_exact_binding_then_hardens_then_removes_broad(self) -> None:
+    def test_safe_ordering_establishes_exact_binding_before_provider_hardening(self) -> None:
         add_exact = self.source.index('if [[ "$EXACT_BINDING" != true ]]')
-        update_provider = self.source.index('if [[ "$CONDITION_MATCH" != true || "$MAPPING_MATCH" != true ]]')
-        remove_broad = self.source.index('if [[ "$BROAD_BINDING" == true ]]')
+        update_provider = self.source.index(
+            'if [[ "$CONDITION_MATCH" != true || "$MAPPING_MATCH" != true || "$BROAD_BINDING_EFFECTIVE" == true ]]'
+        )
         self.assertLess(add_exact, update_provider)
-        self.assertLess(update_provider, remove_broad)
 
     def test_verify_is_fail_closed_and_receipt_separates_mutation(self) -> None:
         self.assertIn('emit_receipt "NOT_VERIFIED" false; exit 1', self.source)
@@ -195,6 +230,7 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         self.assertIn("'authorized_workflow_set_sha256':'${AUTHORIZED_WORKFLOW_SET_SHA}'", self.source)
         self.assertIn("'trust_contract_sha256':'${TRUST_CONTRACT_SHA}'", self.source)
         self.assertIn("'mutation_performed':'${mutation}' == 'true'", self.source)
+        self.assertIn("'physical_legacy_binding_removal_required':False", self.source)
         self.assertIn("'project_role_binding_performed':False", self.source)
         self.assertIn("'model_inference_performed':False", self.source)
         self.assertIn("'traffic_change_performed':False", self.source)
