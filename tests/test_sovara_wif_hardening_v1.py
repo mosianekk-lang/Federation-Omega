@@ -146,6 +146,8 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         self.assertIn("service-accounts remove-iam-policy-binding", self.source)
 
     def test_one_use_workflow_invokes_hardener_through_bash(self) -> None:
+        if self.workflow_source is None:
+            self.skipTest("workflow-free export excludes repository workflow controls")
         self.assertIn(
             "bash ./ops/harden_sovara_provider_wif_v1.sh --apply",
             self.workflow_source,
