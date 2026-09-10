@@ -46,6 +46,21 @@ class BehaviorRuntimeTests(unittest.TestCase):
         decision = reg.promote("B2", evidence("B1"), evidence("B2", .8, shadow_complete=False))
         self.assertEqual(decision.state, "RETAIN")
 
+    def test_owner_burden_regression_veto(self):
+        reg = BehaviorRegistry(sealed("B1")); reg.register(sealed("B2", "B1", "B1"))
+        decision = reg.promote("B2", evidence("B1", .5), evidence("B2", .9, owner_burden=.1))
+        self.assertEqual(decision.reason, "OWNER_BURDEN_OR_RECOVERY_REGRESSION")
+
+    def test_recovery_regression_veto(self):
+        reg = BehaviorRegistry(sealed("B1")); reg.register(sealed("B2", "B1", "B1"))
+        decision = reg.promote("B2", evidence("B1", .5), evidence("B2", .9, recovery=.9))
+        self.assertEqual(decision.reason, "OWNER_BURDEN_OR_RECOVERY_REGRESSION")
+
+    def test_rollback_required_for_promotion(self):
+        reg = BehaviorRegistry(sealed("B1")); reg.register(sealed("B2", "B1", ""))
+        decision = reg.promote("B2", evidence("B1", .5), evidence("B2", .9))
+        self.assertEqual(decision.reason, "ROLLBACK_REQUIRED")
+
     def test_hard_regression_veto_beats_score(self):
         reg = BehaviorRegistry(sealed("B1")); reg.register(sealed("B2", "B1", "B1"))
         decision = reg.promote("B2", evidence("B1"), evidence("B2", .95, correctness=.99))
