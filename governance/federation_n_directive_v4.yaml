@@ -1,0 +1,38 @@
+policy_id: FEDOMEGA-N-DIRECTIVE-V4
+version: 4.0.1
+state: SOURCE_CANDIDATE_EXACT_HEAD_GATED
+predecessor: FEDOMEGA-N-DIRECTIVE-V3@3.0.0
+meaning:
+  input: n
+  contract:
+    - resume exact latest VERIFIED checkpoint
+    - fresh-read only volatile state required for next decision
+    - recompile unfinished objective into dependency DAG
+    - identify critical path and all dependency-ready packets
+    - execute maximum collision-safe parallelism
+    - serialize only shared-target, canonical, provider, spend or authority-sensitive operations
+    - verify, falsify, read back and persist evidence
+    - capture one privacy-minimised Federation Learning Event per material cycle
+    - collect PromptRunMetrics automatically
+    - generate P0/P1/P2/P3 prompt-gene challengers
+    - promote only measured winners with green regression and rollback
+    - recompile affected mission policy
+    - execute the next ready wave immediately
+    - progress output is non-terminal and must not itself stop execution
+    - do not emit another n-directive when runtime can continue
+    - after two identical deterministic failures open circuit and require materially different route
+    - stop only at verified terminal state, irreducible owner decision, safety boundary, or genuine external/platform boundary
+runtime_reentry:
+  current_run: continue internal cycles until terminality or hard boundary
+  persistent_runner: persist checkpoint and enqueue exact reentry
+  no_persistent_runner: emit RESUME_CAPSULE only when platform forces termination
+truth_boundary:
+  prompt_is_not_runtime: true
+  future_turn_execution_must_not_be_claimed_without_runner_receipt: true
+  ten_x_is_measured_not_asserted: true
+
+
+commercial_maturity_integrity:
+  packet_completion_does_not_promote_commercial_ready: true
+  explicit_maturity_court_required: true
+  missing_or_failed_gates: RECOMPILE_AND_CONTINUE
