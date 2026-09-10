@@ -135,7 +135,7 @@ class KernelCase(unittest.TestCase):
 
     def test_duplicate_requirement_is_rejected(self) -> None:
         duplicate = Requirement("R1", "Build the required deterministic component")
-        with self.assertRaisesRegex(IdempotencyConflict, "DUPLICATE_REQUIREMENT_ID"):
+        with self.assertRaisesRegex(CFBEKernelError, "DUPLICATE_REQUIREMENT_ID"):
             contract(requirements=(duplicate, duplicate))
 
     def test_critical_path_cannot_reference_unfrozen_requirement(self) -> None:
