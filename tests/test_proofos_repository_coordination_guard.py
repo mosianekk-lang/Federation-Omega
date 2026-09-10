@@ -85,9 +85,14 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
     def rules(self, assessment):
         return {item["rule"] for item in assessment["findings"]}
 
-    def test_governance_contract_is_bounded(self):
+    def test_governance_contract_is_bounded_and_requires_terminal_predecessor(self):
         self.assertEqual(DEFAULT_LEASE_REF, self.policy["lease_ref"])
         self.assertTrue(self.policy["write_ahead_capture_required"])
+        self.assertEqual(["RELEASED", "ABORTED"], self.policy["terminal_states"])
+        self.assertEqual(
+            "EXPLICIT_RELEASED_OR_ABORTED_PROVIDER_READBACK",
+            self.policy["lease_issuer_contract"]["predecessor_terminal_precondition"],
+        )
         self.assertFalse(self.policy["provider_branch_protection_equivalent"])
         self.assertFalse(self.policy["provider_ruleset_equivalent"])
         self.assertFalse(self.policy["provider_authority_created"])
@@ -135,13 +140,14 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
         self.assertEqual("FAIL", assessment["status"])
         self.assertIn("ACTIVE_LEASE_TREE_MISMATCH", self.rules(assessment))
 
-    def test_expired_lease_does_not_block_future_work(self):
+    def test_expired_active_lease_remains_fail_closed_until_explicit_terminal(self):
         assessment = self.assess(
             pr_body="ordinary PR body",
             lease_payload=lease(expires_at="2026-09-02T22:49:30+02:00"),
         )
-        self.assertEqual("PASS", assessment["status"])
-        self.assertEqual("LEASE_EXPIRED", assessment["state"])
+        self.assertEqual("FAIL", assessment["status"])
+        self.assertEqual("EXPIRED_ACTIVE_LEASE_REQUIRES_TERMINAL_TRANSITION", assessment["state"])
+        self.assertIn("ACTIVE_LEASE_EXPIRED_NOT_TERMINAL", self.rules(assessment))
 
     def test_sparse_released_legacy_lease_does_not_permanently_deadlock_repo(self):
         released = {
@@ -154,6 +160,19 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
         assessment = self.assess(pr_body="ordinary PR body", lease_payload=released)
         self.assertEqual("PASS", assessment["status"])
         self.assertEqual("LEASE_RELEASED", assessment["state"])
+        self.assertEqual([], assessment["findings"])
+
+    def test_aborted_lease_is_explicit_terminal_state(self):
+        aborted = {
+            "schema": LEASE_SCHEMA,
+            "state": "ABORTED",
+            "fencing_token": 49,
+            "source_head": BASE,
+            "effect": "NONE",
+        }
+        assessment = self.assess(pr_body="ordinary PR body", lease_payload=aborted)
+        self.assertEqual("PASS", assessment["status"])
+        self.assertEqual("LEASE_ABORTED", assessment["state"])
         self.assertEqual([], assessment["findings"])
 
     def test_sparse_active_legacy_lease_remains_fail_closed(self):
@@ -170,7 +189,7 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
         self.assertEqual("INVALID_LEASE", assessment["state"])
         self.assertIn("LEASE_DESCRIPTOR_FIELD_MISSING", self.rules(assessment))
 
-    def test_released_lease_with_invalid_effect_still_fails_closed(self):
+    def test_terminal_lease_with_invalid_effect_still_fails_closed(self):
         released = {
             "schema": LEASE_SCHEMA,
             "state": "RELEASED",
@@ -180,7 +199,7 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
         }
         assessment = self.assess(pr_body="ordinary PR body", lease_payload=released)
         self.assertEqual("FAIL", assessment["status"])
-        self.assertEqual("INVALID_RELEASED_LEASE", assessment["state"])
+        self.assertEqual("INVALID_TERMINAL_LEASE", assessment["state"])
         self.assertIn("LEASE_EFFECT_SCOPE_INVALID", self.rules(assessment))
 
     def test_bubbles_payload_can_carry_coordination_claim(self):
@@ -206,8 +225,6 @@ class RepositoryCoordinationV2Tests(unittest.TestCase):
     def test_hosted_pull_request_honours_active_repository_lease(self):
         if not AIRLOCK_WORKFLOW.exists():
             self.skipTest("workflow-free export excludes repository coordination enforcement surface")
-        # A source update creates a fresh pull_request event, ensuring this hosted
-        # integration court evaluates current PR claim metadata rather than stale rerun payload.
         assessment = evaluate_hosted_pull_request(ROOT)
         self.assertEqual(
             "PASS",
