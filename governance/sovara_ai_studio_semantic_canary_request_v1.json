@@ -8,6 +8,17 @@
   "provider": "GOOGLE_GEMINI_DEVELOPER_API",
   "credential_mode": "GEMINI_AUTHORIZATION_KEY_ENV_SECRET",
   "credential_reference": "GITHUB_ACTIONS_SECRET:GEMINI_API_KEY",
+  "fallback_route": {
+    "enabled": true,
+    "provider": "GOOGLE_VERTEX_AI",
+    "credential_mode": "GITHUB_WIF_ADC",
+    "workload_identity_provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
+    "service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "location": "global",
+    "model": "gemini-2.5-flash",
+    "required_permission": "aiplatform.endpoints.predict",
+    "permission_preflight_required": true
+  },
   "case_data_allowed": false,
   "provider_mutation_allowed": false,
   "iam_mutation_allowed": false,
@@ -49,6 +60,6 @@
       "provider_mutation_performed"
     ]
   },
-  "promotion_rule": "Provider-semantic GREEN only after an exact zero-data nonce response through the authorization-key route. Model discovery is mandatory before selection; no stale hard-coded model may be treated as availability proof.",
-  "truth_boundary": "This request authorizes one bounded zero-case-data Gemini Developer API semantic canary using the pre-existing runtime-injected GEMINI_API_KEY reference. The workflow must never print, persist, hash, echo, return, or otherwise expose the credential value. It does not authorize API-key creation or rotation, secret access outside the injected runtime secret, IAM/WIF mutation, secret mutation, deployment, production traffic, private/case data, external communication, or unbounded provider spend."
+  "promotion_rule": "Provider-semantic GREEN only after one exact zero-private-data nonce response. Prefer the existing Developer API key route when callable; otherwise use the current keyless WIF/ADC Vertex fallback only after aiplatform.endpoints.predict is provider-verified. No stale model label or source/config alone closes the gate.",
+  "truth_boundary": "This request authorizes one bounded zero-private-data Gemini semantic canary through either the pre-existing injected GEMINI_API_KEY Developer API route or, when that key is absent, the exact keyless WIF/ADC Vertex fallback named above. It does not authorize API-key creation/rotation, IAM/WIF mutation, secret payload access, deployment, traffic mutation, private/case data, external communication, destructive action, or unbounded spend."
 }
