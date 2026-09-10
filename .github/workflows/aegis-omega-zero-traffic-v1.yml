@@ -408,6 +408,35 @@ jobs:
             gcloud artifacts docker images delete "$IMAGE" --project "$PROJECT_ID" --quiet --delete-tags >/dev/null 2>&1 || rollback_ok=false
           fi
 
+          FIRESTORE_CLEANUP_VERIFIED=false
+          if [[ -n "${CASE_ID:-}" && -n "${REQUEST_ID:-}" ]]; then
+            REQUEST_DOC_ID="$(REQUEST_ID="$REQUEST_ID" python - <<'PY'
+          import hashlib, os
+          print("r_" + hashlib.sha256(os.environ["REQUEST_ID"].encode("utf-8")).hexdigest())
+          PY
+            )"
+            ACCESS_TOKEN="$(gcloud auth print-access-token)"
+            FIRESTORE_CLEANUP_VERIFIED=true
+            for DOCUMENT in               "aegis_cases/$CASE_ID"               "aegis_outbox/$CASE_ID"               "aegis_requests/$REQUEST_DOC_ID"; do
+              URL="https://firestore.googleapis.com/v1/projects/$PROJECT_ID/databases/(default)/documents/$DOCUMENT"
+              DELETE_CODE="$(curl --silent --show-error --output /tmp/firestore-delete.json                 --write-out '%{http_code}' --request DELETE                 -H "Authorization: Bearer $ACCESS_TOKEN" "$URL")"
+              if [[ "$DELETE_CODE" != "200" && "$DELETE_CODE" != "404" ]]; then
+                FIRESTORE_CLEANUP_VERIFIED=false
+                rollback_ok=false
+              fi
+              READBACK_CODE="$(curl --silent --show-error --output /tmp/firestore-readback.json                 --write-out '%{http_code}'                 -H "Authorization: Bearer $ACCESS_TOKEN" "$URL")"
+              if [[ "$READBACK_CODE" != "404" ]]; then
+                FIRESTORE_CLEANUP_VERIFIED=false
+                rollback_ok=false
+              fi
+            done
+          elif [[ -z "${CASE_ID:-}" && -z "${REQUEST_ID:-}" ]]; then
+            FIRESTORE_CLEANUP_VERIFIED=true
+          else
+            rollback_ok=false
+          fi
+          echo "firestore_cleanup_verified=$FIRESTORE_CLEANUP_VERIFIED"             > aegis-provider-proof/firestore-cleanup-readback.txt
+
           if [[ "${PRODUCTION_SERVICE_EXISTED:-}" == "true" ]]; then
             gcloud run services describe "$PRODUCTION_SERVICE" --region "$REGION" --project "$PROJECT_ID" \
               --format=json > aegis-provider-proof/production-service-final.json || rollback_ok=false
@@ -442,7 +471,7 @@ jobs:
             rollback_ok=false
           fi
 
-          ROLLBACK_OK="$rollback_ok" CANARY_SERVICE_ABSENT="$CANARY_SERVICE_ABSENT" CANARY_SECRET_ABSENT="$CANARY_SECRET_ABSENT" IMAGE_ABSENT="$IMAGE_ABSENT" python - <<'PY'
+          ROLLBACK_OK="$rollback_ok" CANARY_SERVICE_ABSENT="$CANARY_SERVICE_ABSENT" CANARY_SECRET_ABSENT="$CANARY_SECRET_ABSENT" IMAGE_ABSENT="$IMAGE_ABSENT" FIRESTORE_CLEANUP_VERIFIED="$FIRESTORE_CLEANUP_VERIFIED" python - <<'PY'
           import json, os
           from pathlib import Path
 
@@ -492,6 +521,9 @@ jobs:
               and os.environ.get('CANARY_SERVICE_ABSENT')=='true'
               and os.environ.get('CANARY_SECRET_ABSENT')=='true'
               and os.environ.get('IMAGE_ABSENT')=='true'
+              and os.environ.get('FIRESTORE_CLEANUP_VERIFIED')=='true'
+              and bool(os.environ.get('CASE_ID'))
+              and bool(os.environ.get('REQUEST_ID'))
               and production_equivalent
               and production_iam_equivalent
               and project_iam_equivalent
@@ -511,7 +543,8 @@ jobs:
               'candidate_b_normal_traffic_percent':0,
               'firestore_cross_revision_persistence_verified':bool(os.environ.get('CASE_ID')),
               'human_approval_gate_verified':bool(os.environ.get('CASE_ID')),
-              'provider_canary_evidence_case_retained':bool(os.environ.get('CASE_ID')),
+              'provider_canary_evidence_artifact_retained':bool(os.environ.get('CASE_ID')),
+              'firestore_provider_state_cleaned':os.environ.get('FIRESTORE_CLEANUP_VERIFIED')=='true',
               'provider_canary_request_id':os.environ.get('REQUEST_ID') or None,
               'provider_canary_case_id':os.environ.get('CASE_ID') or None,
               'canary_service_deleted':os.environ.get('CANARY_SERVICE_ABSENT')=='true',
@@ -528,7 +561,7 @@ jobs:
               'fuse_external_effect_performed':False,
               'secret_payload_logged':False,
               'secret_payload_read_back':False,
-              'truth_boundary':'One synthetic defensive Firestore case is retained as immutable provider evidence. The isolated Cloud Run canary service, its revisions/tags/IAM, ephemeral secret and unique image are deleted, and production service/project IAM plus production traffic are provider-read back unchanged. No production traffic promotion, model inference or external user effect.'
+              'truth_boundary':'Synthetic defensive evidence is retained only in the immutable Actions artifact. The three canary-created Firestore documents, isolated Cloud Run service, revisions/tags/IAM, ephemeral secret and unique image are deleted and provider-read back absent; production service/project IAM and production traffic are read back unchanged. No production traffic promotion, model inference or external user effect.'
           }
           Path('aegis-provider-proof/final-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
           assert final_ok, receipt
