@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+from dataclasses import asdict
 from datetime import datetime, timezone
 import hashlib
 import json
@@ -43,7 +44,8 @@ class WindowsPlane:
             "github_actions": os.environ.get("GITHUB_ACTIONS") == "true",
             "github_run_id": os.environ.get("GITHUB_RUN_ID"),
             "github_run_attempt": os.environ.get("GITHUB_RUN_ATTEMPT"),
-            "github_sha": os.environ.get("GITHUB_SHA"),
+            "source_sha": os.environ.get("FEDERATION_SOURCE_SHA") or os.environ.get("GITHUB_SHA"),
+            "github_event_sha": os.environ.get("GITHUB_SHA"),
         }
 
     def execute(self, task: TaskEnvelope) -> TaskReceipt:
@@ -86,6 +88,7 @@ class WindowsPlane:
             started_at=started,
             completed_at=utc_now(),
             runner=self._runner_identity(),
+            task=asdict(task),
             result=result,
             task_sha256=task_sha256(task),
             result_sha256=_sha256_json(result),

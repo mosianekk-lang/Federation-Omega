@@ -19,6 +19,8 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertNotIn("id-token: write", source)
         self.assertIn("persist-credentials: false", source)
         self.assertIn("timeout-minutes: 15", source)
+        self.assertIn("github.event.pull_request.head.sha || github.sha", source)
+        self.assertIn("verify_receipt_mapping", source)
         self.assertNotIn("actions/checkout@v", source)
         self.assertNotIn("actions/setup-python@v", source)
         self.assertNotIn("actions/upload-artifact@v", source)
@@ -35,6 +37,15 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertEqual(data["parent_controller"], "FUSE-OMEGA-INFINITY")
         self.assertFalse(data["creates_new_sovereign_plane"])
         self.assertEqual(data["provider_effect"], "NONE_UNTIL_SEPARATELY_AUTHORIZED")
+
+    def test_airlock_admits_only_the_bounded_workflow_events(self):
+        workflow = ".github/workflows/fuse-windows-execution-plane-v1.yml"
+        policy = json.loads((ROOT / "governance/github_airlock_policy.json").read_text(encoding="utf-8"))
+        self.assertIn(workflow, policy["active_workflow_allowlist"])
+        self.assertIn(workflow, policy["execution_quarantine"]["keep_active"])
+        self.assertEqual(policy["allowed_events"][workflow], ["pull_request", "workflow_dispatch"])
+        self.assertNotIn(workflow, policy["oidc_workflow_allowlist"])
+        self.assertNotIn(workflow, policy["provider_mutation_workflow_allowlist"])
 
 
 if __name__ == "__main__":

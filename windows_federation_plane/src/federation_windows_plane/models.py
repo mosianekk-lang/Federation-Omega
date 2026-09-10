@@ -106,6 +106,7 @@ class TaskReceipt:
     started_at: str
     completed_at: str
     runner: Mapping[str, Any]
+    task: Mapping[str, Any]
     result: Mapping[str, Any]
     task_sha256: str
     result_sha256: str
@@ -127,3 +128,46 @@ def task_sha256(task: TaskEnvelope) -> str:
         asdict(task), sort_keys=True, separators=(",", ":")
     ).encode("utf-8")
     return hashlib.sha256(encoded).hexdigest()
+
+
+def verify_receipt_mapping(
+    receipt: Mapping[str, Any], *, expected_source_sha: str | None = None
+) -> None:
+    required = {
+        "schema", "task_id", "correlation_id", "task_type", "state",
+        "started_at", "completed_at", "runner", "task", "result",
+        "task_sha256", "result_sha256", "effect", "truth_boundary",
+    }
+    missing = sorted(required - set(receipt))
+    unknown = sorted(set(receipt) - required)
+    if missing:
+        raise ValueError("RECEIPT_FIELDS_MISSING:" + ",".join(missing))
+    if unknown:
+        raise ValueError("UNKNOWN_RECEIPT_FIELDS:" + ",".join(unknown))
+    if receipt["schema"] != "FEDERATION-WINDOWS-RECEIPT-V1":
+        raise ValueError("RECEIPT_SCHEMA_INVALID")
+    if receipt["state"] != "COMPLETED_VERIFIED_LOCAL":
+        raise ValueError("RECEIPT_STATE_INVALID")
+    if receipt["effect"] != "READ_ONLY":
+        raise ValueError("UNEXPECTED_EFFECT")
+    runner = receipt["runner"]
+    if not isinstance(runner, Mapping) or runner.get("os") != "Windows":
+        raise ValueError("WINDOWS_RUNNER_NOT_PROVEN")
+    if runner.get("github_actions") is not True:
+        raise ValueError("GITHUB_ACTIONS_HOST_NOT_PROVEN")
+    if expected_source_sha and runner.get("source_sha") != expected_source_sha:
+        raise ValueError("EXACT_SOURCE_SHA_MISMATCH")
+    task = receipt["task"]
+    result = receipt["result"]
+    if not isinstance(task, Mapping) or not isinstance(result, Mapping):
+        raise ValueError("RECEIPT_HASH_INPUT_INVALID")
+    task_hash = hashlib.sha256(
+        json.dumps(task, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    result_hash = hashlib.sha256(
+        json.dumps(result, sort_keys=True, separators=(",", ":")).encode("utf-8")
+    ).hexdigest()
+    if receipt["task_sha256"] != task_hash:
+        raise ValueError("TASK_HASH_MISMATCH")
+    if receipt["result_sha256"] != result_hash:
+        raise ValueError("RESULT_HASH_MISMATCH")

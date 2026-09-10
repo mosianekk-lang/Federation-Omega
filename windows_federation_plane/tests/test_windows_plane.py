@@ -8,6 +8,7 @@ import tempfile
 import unittest
 
 from federation_windows_plane import TaskEnvelope, WindowsPlane
+from federation_windows_plane.models import verify_receipt_mapping
 
 
 def iso(dt: datetime) -> str:
@@ -35,11 +36,28 @@ class WindowsPlaneTests(unittest.TestCase):
         return TaskEnvelope.from_mapping(raw)
 
     def test_health_receipt_is_hash_bound(self):
-        receipt = WindowsPlane(self.root, require_windows=False).execute(self.task())
+        task = self.task()
+        receipt = WindowsPlane(self.root, require_windows=False).execute(task)
         expected = hashlib.sha256(json.dumps(receipt.result, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
         self.assertEqual(receipt.result_sha256, expected)
-        self.assertEqual(len(receipt.task_sha256), 64)
+        expected_task = hashlib.sha256(json.dumps(task.__dict__, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
+        self.assertEqual(receipt.task_sha256, expected_task)
+        self.assertEqual(receipt.task, task.__dict__)
         self.assertFalse(receipt.result["arbitrary_command_execution"])
+
+    def test_receipt_verifier_rejects_hash_tampering(self):
+        receipt = WindowsPlane(self.root, require_windows=False).execute(self.task()).to_dict()
+        receipt["runner"] = dict(receipt["runner"], os="Windows", github_actions=True, source_sha="a" * 40)
+        verify_receipt_mapping(receipt, expected_source_sha="a" * 40)
+        receipt["result"] = dict(receipt["result"], status="tampered")
+        with self.assertRaisesRegex(ValueError, "RESULT_HASH_MISMATCH"):
+            verify_receipt_mapping(receipt, expected_source_sha="a" * 40)
+
+    def test_receipt_verifier_rejects_wrong_source(self):
+        receipt = WindowsPlane(self.root, require_windows=False).execute(self.task()).to_dict()
+        receipt["runner"] = dict(receipt["runner"], os="Windows", github_actions=True, source_sha="a" * 40)
+        with self.assertRaisesRegex(ValueError, "EXACT_SOURCE_SHA_MISMATCH"):
+            verify_receipt_mapping(receipt, expected_source_sha="b" * 40)
 
     def test_inventory_is_privacy_minimized(self):
         result = WindowsPlane(self.root, require_windows=False).execute(self.task("inventory")).result

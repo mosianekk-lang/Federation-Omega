@@ -32,6 +32,8 @@ jobs:
   windows-plane:
     runs-on: windows-latest
     timeout-minutes: 15
+    env:
+      FEDERATION_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
     defaults:
       run:
         shell: pwsh
@@ -64,14 +66,8 @@ jobs:
 
       - name: Verify immutable semantic receipt
         run: |
-          $receipt = Get-Content windows_federation_plane/receipts/hosted-windows-receipt.json -Raw | ConvertFrom-Json
-          if ($receipt.schema -ne 'FEDERATION-WINDOWS-RECEIPT-V1') { throw 'RECEIPT_SCHEMA_INVALID' }
-          if ($receipt.state -ne 'COMPLETED_VERIFIED_LOCAL') { throw 'RECEIPT_STATE_INVALID' }
-          if ($receipt.runner.os -ne 'Windows') { throw 'WINDOWS_RUNNER_NOT_PROVEN' }
-          if (-not $receipt.runner.github_actions) { throw 'GITHUB_ACTIONS_HOST_NOT_PROVEN' }
-          if ($receipt.effect -ne 'READ_ONLY') { throw 'UNEXPECTED_EFFECT' }
-          if ($receipt.task_sha256 -notmatch '^[0-9a-f]{64}$') { throw 'TASK_HASH_INVALID' }
-          if ($receipt.result_sha256 -notmatch '^[0-9a-f]{64}$') { throw 'RESULT_HASH_INVALID' }
+          $env:PYTHONPATH = "$PWD/windows_federation_plane/src"
+          python -c "import json,sys; from federation_windows_plane.models import verify_receipt_mapping; verify_receipt_mapping(json.load(open(sys.argv[1], encoding='utf-8')), expected_source_sha=sys.argv[2])" windows_federation_plane/receipts/hosted-windows-receipt.json $env:FEDERATION_SOURCE_SHA
 
       - name: Upload Windows execution receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
