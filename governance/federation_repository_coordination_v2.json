@@ -1,11 +1,12 @@
 {
   "schema": "FEDERATION-REPOSITORY-COORDINATION-V2",
-  "version": "2.1.0",
+  "version": "2.2.0",
   "owner": "Kim Kagiso Mosiane",
   "purpose": "Make the existing cooperative repository critical section machine-verifiable inside the already-admitted Federation Omega Airlock without creating another scheduler, store, authority plane or private credential dependency.",
   "lease_ref": "refs/heads/locks/fdof-repository-critical-section",
   "lease_schema": "FEDERATION_REPOSITORY_LEASE_V2",
   "claim_schema": "FEDERATION_COORDINATION_V1",
+  "terminal_states": ["RELEASED", "ABORTED"],
   "initial_scope": "repository:*",
   "lease_descriptor_location": "HEAD_COMMIT_MESSAGE_ON_EXISTING_LOCK_REF",
   "write_ahead_capture_required": true,
@@ -16,9 +17,11 @@
     "canonical_issuer": "proofos_omega.repository_lease_issuer.build_lease_commit_spec",
     "commit_tree_source": "EXACT_DECLARED_SOURCE_HEAD_TREE",
     "commit_parent_source": "CURRENT_LOCK_REF_COMMIT",
+    "predecessor_terminal_precondition": "EXPLICIT_RELEASED_OR_ABORTED_PROVIDER_READBACK",
     "turn_capture_precondition": "PROVIDER_READBACK_VERIFIED_EXACT_ID",
     "fail_closed_on_source_tree_resolution_error": true,
     "fail_closed_on_capture_witness_mismatch": true,
+    "fail_closed_on_nonterminal_predecessor": true,
     "provider_effect_authorized": false
   },
   "required_lease_fields": [
@@ -51,7 +54,8 @@
   ],
   "admission_rules": {
     "no_active_v2_lease": "PASS_WITHOUT_COORDINATION_PROMOTION",
-    "released_or_expired_lease": "PASS_WITHOUT_COORDINATION_PROMOTION",
+    "released_or_aborted_lease": "PASS_WITHOUT_COORDINATION_PROMOTION",
+    "expired_active_lease": "FAIL_UNTIL_EXPLICIT_RELEASED_OR_ABORTED",
     "active_unexpired_lease": "PR_MUST_CLAIM_EXACT_LEASE",
     "active_lease_source_head_mismatch": "FAIL",
     "active_lease_tree_mismatch": "FAIL",
@@ -77,5 +81,5 @@
     "lock_ref_is_not_source_authority": true,
     "lock_ref_is_not_provider_effect_authority": true
   },
-  "truth_boundary": "This court can fail hosted Airlock proof when an active cooperative lease is bypassed. The canonical issuer additionally makes the lease commit tree derive from the declared source_head and requires a provider-readback Turn_Capture witness before producing a commit spec. Because GitHub main is not yet provider-enforced by a ruleset/branch protection, this still does not make bypass technically impossible at the provider layer. Provider-enforced Main Airlock remains a separate owner-authorized gate."
+  "truth_boundary": "This court fails closed for every ACTIVE lease, including an ACTIVE lease whose expires_at has passed. Expiry is scheduling metadata, not a terminal transition. Only an explicit RELEASED or ABORTED descriptor is terminal. The canonical issuer must resolve the exact predecessor lease commit and prove that predecessor is explicitly terminal before producing a successor commit spec. GitHub main is still not provider-enforced by a ruleset/branch protection, so this cooperative court does not make bypass technically impossible at the provider layer; provider-enforced Main Airlock remains separate."
 }
