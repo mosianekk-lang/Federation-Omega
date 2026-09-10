@@ -1,0 +1,106 @@
+name: CFBE Build Intelligence Reusable v1
+
+on:
+  workflow_call:
+    inputs:
+      source_sha:
+        description: Exact source commit to validate
+        required: true
+        type: string
+      artifact_name:
+        description: Proof artifact name
+        required: false
+        default: cfbe-build-intelligence-proof
+        type: string
+
+permissions:
+  contents: read
+
+concurrency:
+  group: cfbe-build-intelligence-${{ github.workflow }}-${{ inputs.source_sha }}
+  cancel-in-progress: false
+
+jobs:
+  deterministic-court:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+
+      - name: Configure Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: '3.12'
+          cache: pip
+
+      - name: Verify exact source identity
+        shell: bash
+        env:
+          EXPECTED_SOURCE_SHA: ${{ inputs.source_sha }}
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "${EXPECTED_SOURCE_SHA}"
+
+      - name: Run deterministic adapter courts
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m compileall -q federation/cfbe_build_intelligence_adapter_v1.py federation/cfbe_compatibility_propagation_v1.py
+          python -m unittest -v \
+            tests.test_cfbe_build_intelligence_adapter_v1 \
+            tests.test_cfbe_compatibility_propagation_v1 \
+            tests.test_cfbe_build_intelligence_reusable_workflow_v1
+
+      - name: Generate source manifest SBOM and provenance statement
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          REPOSITORY: ${{ github.repository }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        run: |
+          set -euo pipefail
+          mkdir -p proof
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+
+          files = [
+              Path('federation/cfbe_build_intelligence_adapter_v1.py'),
+              Path('federation/cfbe_compatibility_propagation_v1.py'),
+              Path('tests/test_cfbe_build_intelligence_adapter_v1.py'),
+              Path('tests/test_cfbe_compatibility_propagation_v1.py'),
+          ]
+          components = []
+          for path in files:
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              components.append({'path': str(path), 'sha256': digest})
+          manifest = {'schema': 'CFBE-SOURCE-MANIFEST-V1', 'source_sha': os.environ['SOURCE_SHA'], 'files': components}
+          sbom = {
+              'bomFormat': 'CycloneDX', 'specVersion': '1.5', 'version': 1,
+              'metadata': {'component': {'type': 'application', 'name': 'cfbe-build-intelligence-adapter'}},
+              'components': [{'type': 'file', 'name': item['path'], 'hashes': [{'alg': 'SHA-256', 'content': item['sha256']}]} for item in components],
+          }
+          provenance = {
+              '_type': 'https://in-toto.io/Statement/v1',
+              'subject': [{'name': os.environ['REPOSITORY'], 'digest': {'gitCommit': os.environ['SOURCE_SHA']}}],
+              'predicateType': 'https://slsa.dev/provenance/v1',
+              'predicate': {'runDetails': {'builder': {'id': 'github-actions'}, 'metadata': {'invocationId': os.environ['RUN_ID'] + ':' + os.environ['RUN_ATTEMPT']}}},
+          }
+          Path('proof/source-manifest.json').write_text(json.dumps(manifest, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+          Path('proof/sbom.cdx.json').write_text(json.dumps(sbom, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+          Path('proof/provenance.intoto.json').write_text(json.dumps(provenance, sort_keys=True, indent=2) + '\n', encoding='utf-8')
+          PY
+          sha256sum proof/*.json > proof/SHA256SUMS
+
+      - name: Upload immutable proof inputs
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: ${{ inputs.artifact_name }}-${{ inputs.source_sha }}
+          path: proof/
+          if-no-files-found: error
+          retention-days: 14
