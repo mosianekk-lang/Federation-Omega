@@ -14,6 +14,8 @@ TITLE = "[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1"
 class FuseMobileIapPhaseAV1ContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not WORKFLOW.is_file():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.lower = cls.text.lower()
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
