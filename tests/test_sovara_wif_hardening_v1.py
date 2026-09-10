@@ -56,7 +56,9 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SCRIPT.read_text(encoding="utf-8")
-        cls.workflow_source = WORKFLOW.read_text(encoding="utf-8")
+        cls.workflow_source = (
+            WORKFLOW.read_text(encoding="utf-8") if WORKFLOW.exists() else None
+        )
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.paths = cls.policy["oidc_workflow_allowlist"]
         cls.allowed_events = cls.policy["allowed_events"]
@@ -146,6 +148,8 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         self.assertIn("service-accounts remove-iam-policy-binding", self.source)
 
     def test_one_use_workflow_invokes_hardener_through_bash(self) -> None:
+        if self.workflow_source is None:
+            self.skipTest("workflow-free export excludes repository workflow controls")
         self.assertIn(
             "bash ./ops/harden_sovara_provider_wif_v1.sh --apply",
             self.workflow_source,
