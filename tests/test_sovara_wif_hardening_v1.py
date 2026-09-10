@@ -9,6 +9,7 @@ from pathlib import Path
 ROOT = Path(__file__).resolve().parents[1]
 SCRIPT = ROOT / "ops" / "harden_sovara_provider_wif_v1.sh"
 POLICY = ROOT / "governance" / "github_airlock_policy.json"
+WORKFLOW = ROOT / ".github" / "workflows" / "sol62-wif-hardening-lease.yml"
 REPOSITORY_SLUG = "mosianekk-lang/Federation-Omega"
 MAIN_REF = "refs/heads/main"
 EXPECTED_COUNT = 19
@@ -55,6 +56,7 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SCRIPT.read_text(encoding="utf-8")
+        cls.workflow_source = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.paths = cls.policy["oidc_workflow_allowlist"]
         cls.allowed_events = cls.policy["allowed_events"]
@@ -142,6 +144,16 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
         self.assertIn("REMOVE_BROAD_REPOSITORY_NAME_WIF_BINDING", self.source)
         self.assertIn("service-accounts add-iam-policy-binding", self.source)
         self.assertIn("service-accounts remove-iam-policy-binding", self.source)
+
+    def test_one_use_workflow_invokes_hardener_through_bash(self) -> None:
+        self.assertIn(
+            "bash ./ops/harden_sovara_provider_wif_v1.sh --apply",
+            self.workflow_source,
+        )
+        self.assertIn(
+            "bash ./ops/harden_sovara_provider_wif_v1.sh --verify",
+            self.workflow_source,
+        )
 
     def test_apply_requires_explicit_narrow_confirmation(self) -> None:
         self.assertIn('APPLY_CONFIRMATION="HARDEN_SOVARA_CANONICAL_WIF_V1"', self.source)

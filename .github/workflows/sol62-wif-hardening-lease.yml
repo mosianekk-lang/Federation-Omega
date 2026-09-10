@@ -53,9 +53,9 @@ jobs:
           test "${{ github.event.issue.title }}" = "$EXACT_TRIGGER_TITLE"
           test "${{ github.event.issue.author_association }}" = "OWNER"
           SOVARA_WIF_HARDENING_APPROVAL=HARDEN_SOVARA_CANONICAL_WIF_V1 \
-            ./ops/harden_sovara_provider_wif_v1.sh --apply \
+            bash ./ops/harden_sovara_provider_wif_v1.sh --apply \
             | tee /tmp/sol62-wif/WIF_HARDEN_APPLY.json
-          ./ops/harden_sovara_provider_wif_v1.sh --verify \
+          bash ./ops/harden_sovara_provider_wif_v1.sh --verify \
             | tee /tmp/sol62-wif/WIF_HARDEN_VERIFY.json
           python3 - <<'PY'
           import hashlib, json
