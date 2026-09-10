@@ -6,6 +6,8 @@ import unittest
 
 ROOT = Path(__file__).parents[1]
 WORKFLOW = ROOT / ".github/workflows/cfbe-build-intelligence-reusable-v1.yml"
+if not WORKFLOW.exists():
+    raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
 TEXT = WORKFLOW.read_text(encoding="utf-8")
 POLICY = ROOT / "governance/github_airlock_policy.json"
 WORKFLOW_PATH = ".github/workflows/cfbe-build-intelligence-reusable-v1.yml"
