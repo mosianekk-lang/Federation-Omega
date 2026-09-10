@@ -1,0 +1,10 @@
+{
+  "schema": "CFBE-PROMPT-SCIENTIST-V2",
+  "version": "2.0.0",
+  "state": "SOURCE_CANDIDATE_EXACT_HEAD_GATED",
+  "purpose": "Execution-evidence prompt-gene evolution with automatic telemetry collection, matched challenger evaluation, Federation Learning callbacks and commercial-maturity vetoes.",
+  "challengers": ["P0_INCUMBENT", "P1_CAUSAL_PATCH", "P2_PERFORMANCE_CHALLENGER", "P3_STRUCTURAL_CHALLENGER"],
+  "immutable": ["OWNER_AUTHORITY", "PROOF_FLOOR", "SECURITY_FLOOR", "PRIVACY_FLOOR", "TRUTH_BOUNDARIES", "PROVIDER_NATIVE_PROOF", "ROLLBACK_REQUIREMENTS"],
+  "promotion": {"measured": true, "green_regression_required": true, "commercial_maturity_regression_veto": true, "rollback_required": true},
+  "private_chain_of_thought_persisted": false
+}
