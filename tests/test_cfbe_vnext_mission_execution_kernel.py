@@ -35,7 +35,7 @@ from benchmarking.cfbe_omega.mission_execution_kernel_vnext import (
 )
 
 
-NOW = datetime(2026, 9, 9, 1, 30, tzinfo=timezone.utc)
+NOW = datetime.now(timezone.utc)
 
 
 def contract(

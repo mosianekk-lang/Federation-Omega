@@ -4,7 +4,9 @@ from pathlib import Path
 ROOT=Path(__file__).resolve().parents[1]
 class AegisOmegaUnifiedContractTests(unittest.TestCase):
     def test_edge_client_is_owner_triggered_and_minimized(self):
-        check=(ROOT/'mobile/fuse-mobile/src/aegisSecurityCheck.ts').read_text(); card=(ROOT/'mobile/fuse-mobile/src/AegisSecurityCheckCard.tsx').read_text()
+        check_path=ROOT/'mobile/fuse-mobile/src/aegisSecurityCheck.ts'; card_path=ROOT/'mobile/fuse-mobile/src/AegisSecurityCheckCard.tsx'
+        if not check_path.is_file() or not card_path.is_file(): self.skipTest('workflow-free export excludes FUSE Mobile UI/native surfaces')
+        check=check_path.read_text(); card=card_path.read_text()
         for forbidden in ('setInterval(','BackgroundFetch','TaskManager','AccessibilityService','startLocationUpdates','contacts','installed_apps','app_list'): self.assertNotIn(forbidden,check)
         self.assertIn('runOwnerTriggeredAegisSecurityCheck',check); self.assertIn('Run AEGIS security check',card); self.assertIn('No background monitoring',card); self.assertIn('provider_state_verified',check); self.assertIn('case_id?: string | null',check)
     def test_gateway_requires_fuse_session_and_private_server_identity(self):
@@ -13,7 +15,9 @@ class AegisOmegaUnifiedContractTests(unittest.TestCase):
     def test_gateway_adapter_imports_through_real_package_path(self):
         module=importlib.import_module('services.fuse_mobile_gateway.aegis_edge_adapter'); self.assertTrue(callable(module.build_aegis_edge_router)); self.assertEqual(module.EdgeBridgeError.__module__,'services.fuse_mobile_gateway.aegis_edge_bridge')
     def test_android_native_module_is_bounded_posture_only(self):
-        native=(ROOT/'mobile/fuse-mobile/modules/aegis-edge-posture/android/src/main/java/expo/modules/aegisedgeposture/AegisEdgePostureModule.kt').read_text(); self.assertIn('SECURITY_PATCH',native); self.assertIn('isDeviceSecure',native); self.assertIn('FLAG_DEBUGGABLE',native)
+        native_path=ROOT/'mobile/fuse-mobile/modules/aegis-edge-posture/android/src/main/java/expo/modules/aegisedgeposture/AegisEdgePostureModule.kt'
+        if not native_path.is_file(): self.skipTest('workflow-free export excludes FUSE Mobile UI/native surfaces')
+        native=native_path.read_text(); self.assertIn('SECURITY_PATCH',native); self.assertIn('isDeviceSecure',native); self.assertIn('FLAG_DEBUGGABLE',native)
         for forbidden in ('READ_SMS','READ_CONTACTS','ACCESS_FINE_LOCATION','QUERY_ALL_PACKAGES','VpnService','AccessibilityService'): self.assertNotIn(forbidden,native)
     def test_edge_core_guards_strict_index_access(self):
         core=(ROOT/'mobile/fuse-mobile/src/aegisEdgeCore.ts').read_text()
