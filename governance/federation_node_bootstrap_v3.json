@@ -1,0 +1,119 @@
+{
+  "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
+  "version": "3.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
+  "required_before_substantive_work": true,
+  "predecessor_bootstrap": "governance/federation_node_bootstrap_v2.json",
+  "predecessor_must_pass": true,
+  "inherited_policies": [
+    "FEDOMEGA-SURFACE-AWARENESS-V1",
+    "FEDOMEGA-AWARENESS-BOOTSTRAP-V1",
+    "FEDOMEGA-N-DIRECTIVE-V2",
+    "FEDOMEGA-N-DIRECTIVE-V3",
+    "CFBE-PARALLEL-MISSION-COMPILER-V4",
+    "CFBE-PROMPT-SCIENTIST-V1",
+    "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1",
+    "AO-CRA-FEDERATION-INHERITANCE-V1",
+    "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
+    "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1"
+  ],
+  "required_contracts": {
+    "n_directive": "governance/federation_n_directive_v3.yaml",
+    "mission_compiler": "governance/cfbe_parallel_mission_compiler_v4.json",
+    "prompt_scientist": "governance/cfbe_prompt_scientist_v1.json",
+    "ao_cra": "governance/ao_cra_federation_inheritance_v1.json"
+  },
+  "required_engines": {
+    "formation_engine": "REQUIRED",
+    "alpha_omega_foundry": "REQUIRED",
+    "ao_cra": "REQUIRED",
+    "mission_compiler_v4": "REQUIRED_FOR_NONTRIVIAL_MISSIONS",
+    "parallel_scheduler": "REQUIRED_WHEN_TWO_OR_MORE_INDEPENDENT_EFFECT_FREE_PACKETS_EXIST",
+    "prompt_scientist_v1": "REQUIRED_WHEN_PROMPT_FRICTION_OR_REPEATED_MISSION_FAILURE_IS_OBSERVED",
+    "innovation_frontier": "REQUIRED",
+    "continuous_learning": "REQUIRED"
+  },
+  "required_sequence": [
+    "PASS_FEDOMEGA_NODE_BOOTSTRAP_V2",
+    "LOAD_CURRENT_GITHUB_MAIN_HEAD",
+    "VERIFY_V3_CONTRACTS_ARE_ON_CURRENT_ADMITTED_MAIN",
+    "LOAD_LATEST_VERIFIED_CHECKPOINT",
+    "FRESH_READ_VOLATILE_SOURCE_PROVIDER_AND_ROUTE_STATE",
+    "FORMATION_INTENT_LOCK_AND_OBJECTIVE_MEANS_SEPARATION",
+    "AO_CRA_BOUNDARY_TO_BUILD_PREFLIGHT",
+    "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
+    "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
+    "COMPILE_FINITE_DEPENDENCY_DAG",
+    "CALCULATE_CRITICAL_PATH",
+    "FORM_COLLISION_SAFE_WORK_PACKETS",
+    "EXECUTE_MAXIMUM_USEFUL_EFFECT_FREE_PARALLELISM",
+    "SERIALIZE_CANONICAL_SHARED_TARGET_PROVIDER_AND_EXTERNAL_EFFECT_MUTATIONS",
+    "TEST_FALSIFY_AND_READ_BACK_MATERIAL_RESULTS",
+    "CIRCUIT_BREAK_SECOND_IDENTICAL_DETERMINISTIC_FAILURE",
+    "REPAIR_AND_BIND_REGRESSION",
+    "EVALUATE_PROMPT_FRICTION_WHERE_APPLICABLE",
+    "PROMOTE_ONLY_MEASURED_GREEN_PROMPT_CHALLENGER",
+    "RECORD_TERMINAL_LEARNING_AND_MEASURED_VALUE",
+    "ASSESS_MATURITY_WITH_PROOF_LADDER",
+    "CONTINUE_NEXT_ELIGIBLE_SAFE_PACKET"
+  ],
+  "parallelism": {
+    "maximum_useful_not_maximal_blind": true,
+    "effect_free_independent_work_may_parallelize": true,
+    "collision_keys_required": true,
+    "dependencies_required": true,
+    "canonical_writes_serialized": true,
+    "shared_target_mutations_serialized": true,
+    "provider_mutations_serialized": true,
+    "external_effects_serialized": true,
+    "provider_and_external_effect_default_under_a1": "HELD_EXTERNAL_AUTHORITY"
+  },
+  "prompt_evolution": {
+    "incumbent_preserved": true,
+    "challenger_families": ["P1_MINIMUM_CORRECTION", "P2_PERFORMANCE", "P3_STRUCTURAL"],
+    "measured_evidence_required": true,
+    "green_regression_required": true,
+    "critical_regression_absolute_veto": true,
+    "constitutional_invariants_mutable": false,
+    "rollback_required": true,
+    "model_weight_self_retraining_claimed": false
+  },
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "external_effect_default": false,
+    "trust_inheritance": false,
+    "consequential_actions_owner_reserved": true,
+    "provider_native_readback_required": true,
+    "secret_values_recorded": false
+  },
+  "proof_ladder": [
+    "HYPOTHESIS",
+    "DESIGNED",
+    "SOURCE_PRESENT",
+    "TESTED",
+    "ADMITTED",
+    "MERGED",
+    "DEPLOYED",
+    "RUNTIME_VERIFIED",
+    "BEHAVIOR_VERIFIED",
+    "PRODUCTION_VERIFIED"
+  ],
+  "activation": {
+    "v2_is_rollback_contract": true,
+    "v3_may_not_activate_from_branch_source_alone": true,
+    "requires_exact_head_airlock": true,
+    "requires_source_provenance": true,
+    "requires_public_leak_guard": true,
+    "requires_merged_main_readback": true,
+    "master_bible_reconciliation_required": true
+  },
+  "truth_boundary": {
+    "source_presence_is_runtime": false,
+    "merge_is_provider_deployment": false,
+    "parallelism_transfers_authority": false,
+    "prompt_self_score_is_sufficient_for_promotion": false,
+    "ten_x_is_measured_target_only": true
+  },
+  "failure_state": "BOOTSTRAP_V3_BLOCKED_FAIL_CLOSED"
+}
