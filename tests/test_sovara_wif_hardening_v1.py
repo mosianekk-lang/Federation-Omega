@@ -56,7 +56,7 @@ class SovaraWifHardeningV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
         cls.source = SCRIPT.read_text(encoding="utf-8")
-        cls.workflow_source = WORKFLOW.read_text(encoding="utf-8")
+        cls.workflow_source = (\n            WORKFLOW.read_text(encoding="utf-8") if WORKFLOW.exists() else None\n        )
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.paths = cls.policy["oidc_workflow_allowlist"]
         cls.allowed_events = cls.policy["allowed_events"]
