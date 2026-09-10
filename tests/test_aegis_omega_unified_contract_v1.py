@@ -28,10 +28,14 @@ class AegisOmegaUnifiedContractTests(unittest.TestCase):
         self.assertNotIn("const [year, mon] = month.split('-').map(Number);",core)
     def test_backend_stays_defensive_and_auto_promotion_is_false(self):
         api=(ROOT/'services/aegis_omega/src/aegis_omega/api.py').read_text(); policy=(ROOT/'services/aegis_omega/src/aegis_omega/policy.py').read_text(); self.assertIn('defensive-only',api); self.assertIn('automatic_model_promotion',api); self.assertIn('high_impact_response_requires_human_approval',api); self.assertRegex(policy,re.compile(r'approval_required'))
-    def test_proofos_extension_maps_source_core_and_defers_provider_epoch(self):
+    def test_proofos_extension_maps_source_core_and_provider_gateway(self):
         ext=json.loads((ROOT/'governance/proofos_omega_policy_extension_aegis_omega_v1.json').read_text()); flat=json.dumps(ext,sort_keys=True)
-        for marker in ('services/aegis_omega/**','mobile/fuse-mobile/modules/aegis-edge-posture/**','services/fuse_mobile_gateway/aegis_edge_*.py','mobile/fuse-mobile/app/index.tsx','services/fuse_mobile_gateway/app.py'): self.assertIn(marker,flat)
-        self.assertIn('AEGIS_OMEGA',flat); self.assertIn('AEGIS_EDGE',flat)
-        self.assertNotIn('aegis_omega_provider_workflow',flat)
-        self.assertNotIn('.github/workflows/aegis-omega-zero-traffic-v1.yml',flat)
+        for marker in ('services/aegis_omega/**','mobile/fuse-mobile/modules/aegis-edge-posture/**','services/fuse_mobile_gateway/aegis_edge_*.py','mobile/fuse-mobile/app/index.tsx','.github/workflows/aegis-omega-zero-traffic-v1.yml','tests/test_aegis_omega_deploy_workflow_v2.py'): self.assertIn(marker,flat)
+        self.assertIn('AEGIS_OMEGA',flat); self.assertIn('AEGIS_EDGE',flat); self.assertIn('aegis_omega_provider_workflow_v2',flat)
+        workflow_path=ROOT/'.github/workflows/aegis-omega-zero-traffic-v1.yml'
+        if workflow_path.is_file():
+            workflow=workflow_path.read_text()
+            self.assertIn('AEGIS Omega Private Zero-Traffic Canary v2',workflow)
+            self.assertIn('--no-traffic',workflow)
+            self.assertNotIn('update-traffic --to-latest',workflow)
 if __name__=='__main__': unittest.main()
