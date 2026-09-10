@@ -262,6 +262,13 @@ if [[ "$MODE" == "verify" ]]; then
   exit 0
 fi
 
+# --apply is idempotent and proof-truthful. If the exact hardened state is already
+# present, there is no mutation to authorize or claim.
+if ((${#REQUIRED[@]} == 0)); then
+  emit_receipt "ALREADY_HARDENED" false
+  exit 0
+fi
+
 if [[ "${SOVARA_WIF_HARDENING_APPROVAL:-}" != "$APPLY_CONFIRMATION" ]]; then
   emit_receipt "APPROVAL_REQUIRED" false
   echo "Refusing mutation without SOVARA_WIF_HARDENING_APPROVAL=${APPLY_CONFIRMATION}" >&2
