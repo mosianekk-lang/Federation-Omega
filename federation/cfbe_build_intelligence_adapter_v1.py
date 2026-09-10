@@ -18,7 +18,7 @@ from federation.cfbe_chat_hyperperformance_v1 import EffectClass, RouteProfile, 
 from federation.execution_topology_compiler_v1 import TopologyTask
 
 SCHEMA = "CFBE-BUILD-INTELLIGENCE-ADAPTER-V1"
-VERSION = "0.1.0"
+VERSION = "0.1.1"
 _SHA256_RE = re.compile(r"^(?:sha256:)?([0-9a-f]{64})$")
 
 
@@ -310,14 +310,62 @@ class BuildIntelligenceAdapter:
         routes = tuple(binding.to_route_profile() for binding in executor_bindings)
         if len({item.route_id for item in routes}) != len(routes):
             raise ValueError("DUPLICATE_EXECUTOR_BINDING")
+        work_unit_material = [
+            {
+                "unit_id": item.unit_id,
+                "surface": item.surface,
+                "operation": item.operation,
+                "input_fingerprint": item.input_fingerprint,
+                "deps": list(item.deps),
+                "effect_class": item.effect_class.value,
+                "batch_key": item.batch_key,
+                "cacheable": item.cacheable,
+                "freshness_key": item.freshness_key,
+                "estimated_ms": item.estimated_ms,
+                "priority": item.priority,
+                "value_weight": item.value_weight,
+                "privacy_class": item.privacy_class,
+                "owner_only": item.owner_only,
+                "semantic_key": item.semantic_key,
+            }
+            for item in units
+        ]
+        topology_material = [
+            {
+                "unit_id": item.unit.unit_id,
+                "capability_id": item.capability_id,
+                "mutation_domain": item.mutation_domain,
+            }
+            for item in tasks
+        ]
+        route_material = [
+            {
+                "binding_id": binding.binding_id,
+                "kind": binding.kind.value,
+                "surface": binding.surface,
+                "observed_contract_sha256": _sha256(
+                    binding.observed_contract_sha256, field_name="EXECUTOR_CONTRACT"
+                ),
+                "proof_refs": list(binding.proof_refs),
+                "available": binding.available,
+                "fresh": binding.fresh,
+                "direct": binding.direct,
+                "success_rate": binding.success_rate,
+                "semantic_readback_rate": binding.semantic_readback_rate,
+                "p95_ms": binding.p95_ms,
+                "unit_cost": binding.unit_cost,
+                "circuit_open": binding.circuit_open,
+            }
+            for binding in executor_bindings
+        ]
         receipt_material = {
             "schema": SCHEMA,
             "version": VERSION,
             "source_epoch": _sha256(estate.source_epoch_sha256, field_name="SOURCE_EPOCH"),
             "estate_graph": estate.graph_digest,
-            "work_units": [(item.unit_id, item.semantic_key) for item in units],
-            "topology_tasks": len(tasks),
-            "routes": [item.route_id for item in routes],
+            "work_units": work_unit_material,
+            "topology_tasks": topology_material,
+            "executor_bindings": route_material,
             "authority_granted": False,
         }
         receipt = BuildAdapterReceipt(
