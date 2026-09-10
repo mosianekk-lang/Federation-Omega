@@ -310,7 +310,7 @@ def main() -> int:
 
     receipt = {
         "schema": "SOVARA_PROJECT_IAM_AUTHORITY_GRAPH_V1",
-        "schema_revision": 3,
+        "schema_revision": 2,
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         "project_id": PROJECT,
         "project_number": PROJECT_NUMBER,
