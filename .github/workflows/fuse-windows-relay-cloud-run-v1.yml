@@ -169,6 +169,8 @@ jobs:
             "service_url": os.environ.get("SERVICE_URL"),
             "active_revision": os.environ.get("ACTIVE_REVISION"),
             "previous_revision": os.environ.get("PREVIOUS_REVISION"),
+            "provider_mutation_performed": bool(os.environ.get("IMAGE_DIGEST_URI")),
+            "production_traffic_changed": bool(os.environ.get("ACTIVE_REVISION")),
             "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
             "secret_value_recorded": False,
             "oauth_value_recorded": False,
