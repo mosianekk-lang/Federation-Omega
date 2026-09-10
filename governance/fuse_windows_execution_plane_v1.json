@@ -1,0 +1,20 @@
+{
+  "schema": "FUSE-WINDOWS-EXECUTION-PLANE-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "parent_controller": "FUSE-OMEGA-INFINITY",
+  "continuation_controller": "N-OMEGA-V9.1",
+  "authority_and_fencing": ["FORMATION", "SOVARA", "FDOF", "SOL-6.2"],
+  "proof": ["ProofOS", "RealityGuard", "GitHub Actions receipt readback"],
+  "creates_new_sovereign_plane": false,
+  "execution_profiles": {
+    "hosted_ephemeral_windows": "PRIMARY_DEPLOYABLE_ZERO_RECURRING_COST",
+    "owner_workstation": "SOURCE_READY_REQUIRES_CONNECTED_WINDOWS_BOOTSTRAP_AUTHORITY"
+  },
+  "task_effect_ceiling": "READ_ONLY",
+  "provider_effect": "NONE_UNTIL_SEPARATELY_AUTHORIZED",
+  "arbitrary_command_execution": false,
+  "secrets_in_source": false,
+  "manual_user_tasks": [],
+  "truth_boundary": "A successful GitHub Windows receipt proves the hosted ephemeral plane only. It does not prove installation or execution on the owner's workstation."
+}

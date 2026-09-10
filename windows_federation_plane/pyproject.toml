@@ -1,0 +1,19 @@
+[build-system]
+requires = ["setuptools>=68"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "federation-windows-plane"
+version = "1.0.0"
+description = "Least-privilege Windows execution plane for Federation Omega"
+requires-python = ">=3.11"
+dependencies = []
+
+[project.scripts]
+federation-windows = "federation_windows_plane.cli:main"
+
+[tool.setuptools]
+package-dir = {"" = "src"}
+
+[tool.setuptools.packages.find]
+where = ["src"]

@@ -1,0 +1,79 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "MISSION-FUSE-WINDOWS-EXECUTION-PLANE-20260910",
+    "version": 1,
+    "goal": "Deliver a commercially hardened Windows Federation execution plane with hosted runtime proof and a safe owner-workstation adapter.",
+    "user": "Kim Kagiso Mosiane",
+    "workflow": "typed task -> policy gate -> Windows execution -> hash-bound receipt -> artifact -> semantic readback",
+    "data": "privacy-minimized task envelope, bounded result and receipt; no secrets or raw private evidence",
+    "interface": "Python CLI, PowerShell entrypoint, GitHub Actions workflow",
+    "stack": "Python 3.11+, PowerShell 7, Windows, GitHub Actions",
+    "environment": "GitHub-hosted windows-latest; optional separately bound Windows 11 workstation",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "FUSE parent; N-OMEGA continuation; Formation/SOVARA/FDOF authority; SOL 6.2 recovery; ProofOS/RealityGuard proof",
+    "failure": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE"],
+    "testing": "unit, source integration, Windows hosted smoke, permission and path boundary tests",
+    "deployment": "FDOF-fenced GitHub PR followed by Windows workflow job and artifact readback",
+    "continuity": "receipt identity, source SHA, correlation ID, bounded task TTL, idempotent read-only effects and handoff files"
+  },
+  "classification": ["CLI", "Automation", "DevOps/Infra", "Test Suite"],
+  "assumptions": {
+    "stack": "Python standard library plus PowerShell 7; no runtime package dependencies",
+    "runtime": "GitHub-hosted Windows is the deployable baseline; owner-workstation binding remains a separate authority event",
+    "storage": "JSON receipts are bounded workflow artifacts retained for seven days",
+    "authentication": "GitHub workflow identity is sufficient for the hosted read-only plane; Google Cloud must use OIDC/WIF if later added",
+    "deployment": "The repository admits changes through an FDOF-fenced pull request and proves them on windows-latest"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: operator interface is CLI/workflow",
+      "backend": "federation_windows_plane Python execution core",
+      "database": "NOT_APPLICABLE: receipts are immutable workflow artifacts",
+      "queue": "GitHub Actions job queue",
+      "worker": "GitHub-hosted Windows runner or separately bound Windows host",
+      "scheduler": "NOT_APPLICABLE: owner/event invocation only; no new recurring scheduler",
+      "cache": "NOT_APPLICABLE: no task result cache",
+      "storage": "bounded JSON receipt artifact retained seven days",
+      "authentication": "GitHub dispatch/PR authorization for the hosted profile; workflow token contents read-only; task issuer is a policy label, not a cryptographic credential"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
+    "observability": {
+      "correlation_ids": "task_id plus correlation_id plus GitHub run and attempt",
+      "health_checks": "health task and Windows semantic verification step",
+      "structured_logs": "JSON CLI output and failure output",
+      "audit_logs": "GitHub job plus immutable receipt artifact",
+      "metrics_alerts": "workflow conclusion, duration and receipt fields; alerts remain existing GitHub notifications"
+    }
+  },
+  "testing": {
+    "unit": "windows_federation_plane/tests/test_windows_plane.py",
+    "integration": "tests/test_fuse_windows_execution_plane_v1.py",
+    "e2e_or_smoke": "FUSE Windows Execution Plane v1 workflow health task",
+    "fixtures_mocks": "temporary workspaces and deterministic envelopes",
+    "failure_first": "expiry, issuer, effect, unknown task, unknown field, absolute path and path escape",
+    "commands": ["PYTHONPATH=windows_federation_plane/src python -m unittest discover -s windows_federation_plane/tests -v", "python -m unittest discover -s tests -p 'test_fuse_windows_execution_plane_v1.py' -v"]
+  },
+  "delivery": {
+    "file_tree": "windows_federation_plane/, governance/fuse_windows_execution_plane_v1.json, tests/test_fuse_windows_execution_plane_v1.py, .github/workflows/fuse-windows-execution-plane-v1.yml",
+    "exact_code_files": ["windows_federation_plane/src/federation_windows_plane/models.py", "windows_federation_plane/src/federation_windows_plane/policy.py", "windows_federation_plane/src/federation_windows_plane/executor.py", "windows_federation_plane/src/federation_windows_plane/cli.py", "windows_federation_plane/scripts/Invoke-FederationWindowsTask.ps1", "windows_federation_plane/scripts/Test-FederationWindowsPlane.ps1"],
+    "setup_commands": ["python -m pip install -e windows_federation_plane"],
+    "run_commands": ["federation-windows --workspace . --task health"],
+    "test_commands": ["PYTHONPATH=windows_federation_plane/src python -m unittest discover -s windows_federation_plane/tests -v", "python -m unittest discover -s tests -p 'test_fuse_windows_execution_plane_v1.py' -v"],
+    "deploy_commands": ["source-admit through FDOF-fenced pull request; workflow executes on pull_request"],
+    "rollback_commands": ["revert the source-admission commit; no persistent provider state exists"],
+    "debugging": "README symptom/cause/resolution table"
+  },
+  "formation": {"mission_id":"MISSION-FUSE-WINDOWS-EXECUTION-PLANE-20260910","mission_version":1,"gate_decision":"EXECUTE","authority_class":"A1_LOCAL_BUILD_A2_SOURCE_A3_PROVIDER_SEPARATE","effectful_permit":"FORMATION_PERMIT_REQUIRED_AT_EXECUTION","single_effectful_path":true},
+  "watchman": {"unavailable_capability":"owner-workstation remote bootstrap","safe_substitute":"GitHub-hosted ephemeral Windows runner","closure_test":"owner-workstation receipt independently read back"},
+  "continuity": {"idempotency":"read-only operations are idempotent in effect; task and correlation IDs plus TTL bound retries without claiming durable replay prevention","checkpoints":"source SHA, job ID, attempt, artifact ID, task SHA and result SHA","resume_conditions":"fresh main/FDOF plus terminal prior job state","handoff_files":["README.md","THREAT_MODEL.md","FORMATION_SPEC.md","PROJECT_MEMORY.md","AI_HANDOFF.md","BUILD_CONTRACT.json"],"stop_switch":"owner stop, stale mission, FDOF collision, test failure, unexpected effect or receipt mismatch"},
+  "states": {"designed":true,"implemented":true,"tested":true,"registered":false,"authorized":true,"ready":true,"deployed":false,"proven":false},
+  "proof": {"test_results":["11/11 execution-core tests passed locally on 2026-09-10","4/4 source-integration tests passed locally on 2026-09-10","10/10 pre-existing BEF Windows regression tests passed locally on 2026-09-10","MODISA Code-Forge 3.3 contract validator passed"],"deployment_readback":null,"semantic_verification":"Local semantic checks passed; hosted Windows proof remains required","unresolved_defects":["source not admitted","hosted Windows receipt not yet read back"]}
+}
