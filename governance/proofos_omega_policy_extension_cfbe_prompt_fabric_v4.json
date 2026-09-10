@@ -1,0 +1,93 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/cfbe_prompt_compiler_v4.py",
+        "federation/cfbe_prompt_scientist_v1.py",
+        "governance/cfbe_parallel_mission_compiler_v4.json",
+        "governance/cfbe_prompt_scientist_v1.json",
+        "governance/federation_n_directive_v3.yaml",
+        "governance/federation_node_bootstrap_v3.json",
+        "governance/proofos_omega_policy_extension_cfbe_prompt_fabric_v4.json",
+        "tests/test_cfbe_prompt_compiler_v4.py",
+        "tests/test_cfbe_prompt_scientist_v1.py",
+        "tests/test_federation_n_directive_v3_contract.py",
+        "docs/architecture/CFBE_PARALLEL_PROMPT_FABRIC_V4.md",
+        "AGENTS.md",
+        ".github/copilot-instructions.md"
+      ],
+      "reason": "CFBE_PROMPT_FABRIC_V4_MISSION_COMPILATION_PARALLELISM_PROMPT_EVOLUTION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "CFBE_PROMPT_FABRIC_V4",
+      "patterns": [
+        "federation/cfbe_prompt_compiler_v4.py",
+        "federation/cfbe_prompt_scientist_v1.py",
+        "governance/cfbe_parallel_mission_compiler_v4.json",
+        "governance/cfbe_prompt_scientist_v1.json",
+        "governance/federation_n_directive_v3.yaml",
+        "governance/federation_node_bootstrap_v3.json",
+        "governance/proofos_omega_policy_extension_cfbe_prompt_fabric_v4.json",
+        "tests/test_cfbe_prompt_compiler_v4.py",
+        "tests/test_cfbe_prompt_scientist_v1.py",
+        "tests/test_federation_n_directive_v3_contract.py",
+        "docs/architecture/CFBE_PARALLEL_PROMPT_FABRIC_V4.md",
+        "AGENTS.md",
+        ".github/copilot-instructions.md"
+      ],
+      "depends_on": ["CFBE"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "cfbe_prompt_compiler_v4",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_prompt_compiler_v4.py",
+      "patterns": [
+        "federation/cfbe_prompt_compiler_v4.py",
+        "governance/cfbe_parallel_mission_compiler_v4.json",
+        "tests/test_cfbe_prompt_compiler_v4.py"
+      ],
+      "subsystems": ["CFBE_PROMPT_FABRIC_V4", "CFBE"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "cfbe_prompt_scientist_v1",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_prompt_scientist_v1.py",
+      "patterns": [
+        "federation/cfbe_prompt_scientist_v1.py",
+        "governance/cfbe_prompt_scientist_v1.json",
+        "tests/test_cfbe_prompt_scientist_v1.py"
+      ],
+      "subsystems": ["CFBE_PROMPT_FABRIC_V4", "CFBE"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "federation_n_directive_v3_contract",
+      "kind": "unittest_glob",
+      "target": "test_federation_n_directive_v3_contract.py",
+      "patterns": [
+        "governance/federation_n_directive_v3.yaml",
+        "governance/federation_node_bootstrap_v3.json",
+        "governance/cfbe_parallel_mission_compiler_v4.json",
+        "governance/cfbe_prompt_scientist_v1.json",
+        "tests/test_federation_n_directive_v3_contract.py"
+      ],
+      "subsystems": ["CFBE_PROMPT_FABRIC_V4", "CFBE"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
