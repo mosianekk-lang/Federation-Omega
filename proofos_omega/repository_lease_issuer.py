@@ -80,6 +80,25 @@ def _load_predecessor_lease(repo_root: Path, predecessor_lease_sha: str) -> dict
     )
 
 
+def _resolve_current_provider_lock_ref(
+    repo_root: Path,
+    lease_ref: str,
+) -> str:
+    """Resolve the exact provider-visible canonical lock ref, fail closed."""
+    try:
+        output = _run_git(repo_root, ["ls-remote", "--refs", "origin", lease_ref])
+    except RuntimeError as exc:
+        raise ValueError("CURRENT_LOCK_REF_UNRESOLVED") from exc
+    matches: list[str] = []
+    for line in output.splitlines():
+        fields = line.split()
+        if len(fields) == 2 and fields[1] == lease_ref and SHA40.fullmatch(fields[0]):
+            matches.append(fields[0])
+    if len(matches) != 1:
+        raise ValueError("CURRENT_LOCK_REF_UNRESOLVED")
+    return matches[0]
+
+
 def _validate_terminal_predecessor(
     repo_root: Path,
     lease: Mapping[str, Any],
@@ -112,8 +131,9 @@ def build_lease_commit_spec(
     """Build a fail-closed successor lease commit spec.
 
     The returned tree_sha is derived from the declared source_head. The exact
-    predecessor commit must resolve to an explicit RELEASED or ABORTED lease;
-    wall-clock expiry of an ACTIVE lease is not terminal authority. The caller
+    predecessor commit must equal the provider-visible canonical lock-ref head
+    and resolve to an explicit RELEASED or ABORTED lease; wall-clock expiry of
+    an ACTIVE lease is not terminal authority. The caller
     must also supply provider-readback proof for the Turn_Capture write-ahead.
     This function creates no provider authority and mutates no ref itself.
     """
@@ -139,6 +159,10 @@ def build_lease_commit_spec(
         raise ValueError("PREDECESSOR_LEASE_SHA_INVALID")
 
     _validate_capture_witness(lease, turn_capture_witness, policy_payload)
+    lease_ref = str(policy_payload.get("lease_ref", ""))
+    provider_lock_ref_sha = _resolve_current_provider_lock_ref(root, lease_ref)
+    if predecessor_sha != provider_lock_ref_sha:
+        raise ValueError("PREDECESSOR_LEASE_NOT_CURRENT_LOCK_REF")
     predecessor = _validate_terminal_predecessor(root, lease, predecessor_sha)
 
     try:
@@ -158,12 +182,13 @@ def build_lease_commit_spec(
     )
     return {
         "schema": SCHEMA,
-        "lease_ref": str(policy_payload.get("lease_ref", "")),
+        "lease_ref": lease_ref,
         "source_head": source_head,
         "tree_sha": source_tree,
         "parent_sha": predecessor_sha,
         "predecessor_state": str(predecessor["state"]),
         "predecessor_fencing_token": int(predecessor["fencing_token"]),
+        "provider_lock_ref_sha": provider_lock_ref_sha,
         "message": message,
         "turn_capture_id": str(lease["turn_capture_id"]),
         "capture_witness": {
