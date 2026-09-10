@@ -1,0 +1,40 @@
+{
+  "current_slice": "SOURCE_PROTOCOL_AND_FAILURE_FIRST_COURT",
+  "future_transport_binding": [
+    "TLS hosted relay",
+    "durable transactional queue/lease store",
+    "ChatGPT MCP OAuth/bearer boundary",
+    "Windows DPAPI or equivalent local secret protection",
+    "provider-native health/readback",
+    "hostile-path canary and rollback drill"
+  ],
+  "identity": {
+    "device_authentication": "HMAC_SHA256_REQUEST_SIGNATURE",
+    "enrollment": "ONE_TIME_HIGH_ENTROPY_TOKEN",
+    "production_secret_storage_required": true,
+    "replay_protection": true,
+    "request_time_window_seconds": 60
+  },
+  "network_posture": {
+    "agent_transport": "OUTBOUND_ONLY",
+    "chatgpt_mcp_endpoint_deployed": false,
+    "owner_workstation_inbound_listener": false,
+    "public_relay_deployed": false
+  },
+  "objective": "Remove third-party remote-desktop bootstrap as a critical dependency by owning the Windows agent relay/enrollment control plane.",
+  "provider_effect": "NONE_IN_THIS_SOURCE_SLICE",
+  "schema": "FUSE-WINDOWS-SOVEREIGN-RELAY-GOVERNANCE-V1",
+  "task_boundary": {
+    "allowlisted_tasks": [
+      "health",
+      "inventory",
+      "hash_workspace_file"
+    ],
+    "arbitrary_filesystem_write": false,
+    "arbitrary_shell": false,
+    "effect_ceiling": "READ_ONLY",
+    "package_install": false
+  },
+  "truth_boundary": "Passing source tests proves protocol invariants only. It does not prove a live public relay, ChatGPT connection, owner-workstation enrollment, production security, or owner value.",
+  "version": "1.0.0"
+}
