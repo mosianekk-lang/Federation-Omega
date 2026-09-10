@@ -17,6 +17,8 @@ class ReusableWorkflowContractTests(unittest.TestCase):
         self.assertNotIn("workflow_dispatch:", TEXT)
         self.assertNotIn("schedule:", TEXT)
         self.assertIn("permissions:\n  contents: read", TEXT)
+        self.assertIn("concurrency:", TEXT)
+        self.assertIn("cancel-in-progress: false", TEXT)
         self.assertNotIn("contents: write", TEXT)
         self.assertNotIn("id-token: write", TEXT)
 
