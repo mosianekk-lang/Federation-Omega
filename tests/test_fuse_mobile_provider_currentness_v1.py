@@ -118,7 +118,9 @@ class FuseMobileProviderCurrentnessV1Tests(unittest.TestCase):
         self.assertIn("error_sha256", self.text)
         self.assertIn("'error_class':", self.text)
         self.assertIn("raw_error_text_recorded", self.text)
-        self.assertIn("path: /tmp/fuse-mobile-provider-currentness/PROVIDER_CURRENTNESS_RECEIPT.json", self.text)
+        self.assertIn("path: |", self.text)
+        self.assertIn("/tmp/fuse-mobile-provider-currentness/PROVIDER_CURRENTNESS_RECEIPT.json", self.text)
+        self.assertIn("/tmp/fuse-mobile-provider-currentness/PHASE_A_PERMISSION_RECEIPT.json", self.text)
 
     def test_captures_private_ingress_and_iap_contract(self) -> None:
         self.assertIn("public_invoker_present", self.text)
