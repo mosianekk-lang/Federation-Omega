@@ -1,0 +1,40 @@
+{
+  "commercial_maturity": {
+    "auto_continue_with_mission_recompiler": true,
+    "explicit_court_required": true,
+    "missing_gates_recompile": true,
+    "packet_completion_is_not_commercial_proof": true
+  },
+  "learning": {
+    "chain_of_thought": false,
+    "event_schema": "FUSE-FEDERATION-LEARNING-EVENT-V1"
+  },
+  "output_classes": [
+    "PROGRESS_UPDATE",
+    "OWNER_DECISION",
+    "TERMINAL_REPORT",
+    "RESUME_CAPSULE"
+  ],
+  "parallelism": {
+    "fan_in_on_dependencies": true,
+    "fan_out_independent_reads": true,
+    "serialize_effects": true
+  },
+  "runtime_law": "PROMPT_NOT_EQUAL_RUNTIME",
+  "schema": "FUSE-AUTONOMIC-COMPLETION-FABRIC-V5",
+  "state": "SOURCE_CANDIDATE_EXACT_HEAD_GATED",
+  "ten_x": {
+    "matched_denominator_required": true,
+    "target_only": true
+  },
+  "terminal_states": [
+    "COMPLETE_VERIFIED",
+    "PRODUCTION_VERIFIED",
+    "COMMERCIAL_READY_VERIFIED",
+    "OBJECTIVE_EXHAUSTED",
+    "IRREDUCIBLE_OWNER_DECISION",
+    "IRREDUCIBLE_EXTERNAL_BOUNDARY",
+    "SAFETY_OR_AUTHORITY_BOUNDARY"
+  ],
+  "version": "5.0.1"
+}

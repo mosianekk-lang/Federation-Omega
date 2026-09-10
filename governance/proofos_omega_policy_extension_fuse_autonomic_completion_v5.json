@@ -1,0 +1,96 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/autonomic_completion_v5.py",
+        "federation/run_store_v1.py",
+        "federation/prompt_scientist_v2.py",
+        "federation/federation_learning_v1.py",
+        "federation/commercial_maturity_v1.py",
+        "federation/__init__.py",
+        "governance/federation_n_directive_v4.yaml",
+        "governance/cfbe_prompt_scientist_v2.json",
+        "governance/fuse_autonomic_completion_v5.json",
+        "governance/proofos_omega_policy_extension_fuse_autonomic_completion_v5.json",
+        "tests/test_autonomic_completion_v5.py",
+        "tests/test_benchmark_v5.py",
+        "tests/test_commercial_maturity_v1.py",
+        "tests/test_federation_learning_v1.py",
+        "tests/test_governance_contracts.py",
+        "tests/test_prompt_scientist_v2.py",
+        "tests/test_run_store_v1.py",
+        "tests/test_fuse_autonomic_completion_v5_contract.py",
+        "benchmark_v5.py",
+        "stability_and_benchmark.py",
+        "docs/architecture/FUSE_AUTONOMIC_COMPLETION_FABRIC_V5.md",
+        "prompts/FUSE_AUTONOMIC_COMPLETION_KERNEL_V5_MASTER.md"
+      ],
+      "reason": "FUSE_AUTONOMIC_COMPLETION_V5_RUNTIME_REENTRY_PROMPT_EVOLUTION_FEDERATION_LEARNING_COMMERCIAL_MATURITY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_AUTONOMIC_COMPLETION_V5",
+      "patterns": [
+        "federation/autonomic_completion_v5.py",
+        "federation/run_store_v1.py",
+        "federation/prompt_scientist_v2.py",
+        "federation/federation_learning_v1.py",
+        "federation/commercial_maturity_v1.py",
+        "federation/__init__.py",
+        "governance/federation_n_directive_v4.yaml",
+        "governance/cfbe_prompt_scientist_v2.json",
+        "governance/fuse_autonomic_completion_v5.json",
+        "governance/proofos_omega_policy_extension_fuse_autonomic_completion_v5.json",
+        "tests/test_*v5*.py",
+        "tests/test_commercial_maturity_v1.py",
+        "tests/test_federation_learning_v1.py",
+        "tests/test_governance_contracts.py",
+        "tests/test_prompt_scientist_v2.py",
+        "tests/test_run_store_v1.py",
+        "benchmark_v5.py",
+        "stability_and_benchmark.py",
+        "docs/architecture/FUSE_AUTONOMIC_COMPLETION_FABRIC_V5.md",
+        "prompts/FUSE_AUTONOMIC_COMPLETION_KERNEL_V5_MASTER.md"
+      ],
+      "depends_on": ["CFBE", "FEDERATION_CORE"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_autonomic_completion_v5_contract",
+      "kind": "unittest_glob",
+      "target": "test_fuse_autonomic_completion_v5_contract.py",
+      "patterns": [
+        "federation/autonomic_completion_v5.py",
+        "federation/run_store_v1.py",
+        "federation/prompt_scientist_v2.py",
+        "federation/federation_learning_v1.py",
+        "federation/commercial_maturity_v1.py",
+        "federation/__init__.py",
+        "governance/federation_n_directive_v4.yaml",
+        "governance/cfbe_prompt_scientist_v2.json",
+        "governance/fuse_autonomic_completion_v5.json",
+        "governance/proofos_omega_policy_extension_fuse_autonomic_completion_v5.json",
+        "tests/test_autonomic_completion_v5.py",
+        "tests/test_benchmark_v5.py",
+        "tests/test_commercial_maturity_v1.py",
+        "tests/test_federation_learning_v1.py",
+        "tests/test_governance_contracts.py",
+        "tests/test_prompt_scientist_v2.py",
+        "tests/test_run_store_v1.py",
+        "tests/test_fuse_autonomic_completion_v5_contract.py",
+        "benchmark_v5.py",
+        "stability_and_benchmark.py"
+      ],
+      "subsystems": ["FUSE_AUTONOMIC_COMPLETION_V5", "CFBE", "FEDERATION_CORE"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
