@@ -79,10 +79,11 @@ class FuseMobileIapPhaseAV1ContractTests(unittest.TestCase):
             '"model_inference_performed": False',
             '"raw_error_text_recorded": False',
             '"credential_value_recorded": False',
-            '"state": "PHASE_A_VERIFIED"',
         )
         for marker in required:
             self.assertIn(marker, self.text)
+        self.assertIn('state = "PHASE_A_VERIFIED" if verified else "PHASE_A_HELD"', self.text)
+        self.assertIn('"state": state', self.text)
         self.assertIn("traffic_unchanged", self.text)
         self.assertIn('members & {"allUsers", "allAuthenticatedUsers"}', self.text)
 
