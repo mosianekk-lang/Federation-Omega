@@ -1,0 +1,15 @@
+# AEGIS-Ω source validation only.
+# Production/provider deployment is intentionally excluded from Cloud Build and
+# must use the FDOF/Phoenix-admitted owner-only private canary workflow.
+steps:
+  - name: python:3.13
+    entrypoint: bash
+    args:
+      - -c
+      - >-
+        pip install -e . pytest &&
+        python scripts/verify_release.py
+  - name: gcr.io/cloud-builders/docker
+    args: ['build', '-t', 'aegis-omega-validation:$COMMIT_SHA', '.']
+options:
+  logging: CLOUD_LOGGING_ONLY
