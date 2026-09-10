@@ -1,3 +1,5 @@
+import unittest
+
 import pytest
 
 from federation.resident_execution_substrate_v1 import (
@@ -148,3 +150,29 @@ def test_desired_state_reconciler_is_managed_field_bounded():
     assert result.state == "DRIFT_DETECTED"
     assert result.actions == ("SET:image",)
     assert "owner" not in result.drift
+
+
+class ResidentExecutionSubstrateUnittestBridge(unittest.TestCase):
+    """Expose the focused pytest functions to ProofOS's unittest_glob runner."""
+
+    test_provider_contract_conformance_court = staticmethod(
+        test_provider_contract_conformance_court
+    )
+    test_work_issue_is_idempotent_but_semantic_collision_fails_closed = staticmethod(
+        test_work_issue_is_idempotent_but_semantic_collision_fails_closed
+    )
+    test_lease_fencing_blocks_foreign_and_stale_workers = staticmethod(
+        test_lease_fencing_blocks_foreign_and_stale_workers
+    )
+    test_uncertain_effect_requires_readback_state_before_verified_success = staticmethod(
+        test_uncertain_effect_requires_readback_state_before_verified_success
+    )
+    test_admission_applies_capacity_queue_and_saturation_backpressure = staticmethod(
+        test_admission_applies_capacity_queue_and_saturation_backpressure
+    )
+    test_negative_cache_requires_determinism_and_invalidates_by_epoch = staticmethod(
+        test_negative_cache_requires_determinism_and_invalidates_by_epoch
+    )
+    test_desired_state_reconciler_is_managed_field_bounded = staticmethod(
+        test_desired_state_reconciler_is_managed_field_bounded
+    )
