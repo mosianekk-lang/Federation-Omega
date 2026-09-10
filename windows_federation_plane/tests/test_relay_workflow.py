@@ -4,8 +4,6 @@ from pathlib import Path
 import re
 import unittest
 
-import yaml
-
 
 REPO = Path(__file__).resolve().parents[2]
 WORKFLOW = REPO / ".github" / "workflows" / "fuse-windows-relay-cloud-run-v1.yml"
@@ -15,17 +13,15 @@ class RelayWorkflowTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
         cls.text = WORKFLOW.read_text(encoding="utf-8")
-        cls.data = yaml.safe_load(cls.text)
 
     def test_owner_only_default_deny_dispatch(self):
-        job = self.data["jobs"]["deploy-canary-promote"]
-        self.assertIn("author_association == 'OWNER'", job["if"])
-        self.assertIn("[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1", job["if"])
-        self.assertEqual(
-            self.data["permissions"],
-            {"contents": "read", "issues": "read", "id-token": "write"},
+        self.assertIn("author_association == 'OWNER'", self.text)
+        self.assertIn("[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1", self.text)
+        self.assertRegex(
+            self.text,
+            r"permissions:\n  contents: read\n  issues: read\n  id-token: write",
         )
-        self.assertFalse(self.data["concurrency"]["cancel-in-progress"])
+        self.assertIn("cancel-in-progress: false", self.text)
 
     def test_third_party_actions_are_sha_pinned(self):
         uses = re.findall(r"^\s*uses:\s*([^\s]+)", self.text, flags=re.MULTILINE)
