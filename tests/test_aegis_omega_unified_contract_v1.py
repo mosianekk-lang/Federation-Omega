@@ -11,16 +11,16 @@ class AegisOmegaUnifiedContractTests(unittest.TestCase):
         adapter=(ROOT/'services/fuse_mobile_gateway/aegis_edge_adapter.py').read_text(); bridge=(ROOT/'services/fuse_mobile_gateway/aegis_edge_bridge.py').read_text(); self.assertIn('runtime.verify_session',adapter); self.assertIn('FUSE_AEGIS_PRIVATE_URL',adapter); self.assertIn('fetch_id_token',adapter); self.assertIn('evidence_chain_valid',adapter); self.assertIn('provider_effect_performed',adapter); self.assertIn('case_id',bridge)
         for secret in ('GEMINI_API_KEY','OPENAI_API_KEY','AEGIS_HMAC_SECRET'): self.assertNotIn(secret,adapter); self.assertNotIn(secret,bridge)
     def test_gateway_adapter_imports_through_real_package_path(self):
-        module=importlib.import_module('services.fuse_mobile_gateway.aegis_edge_adapter')
-        self.assertTrue(callable(module.build_aegis_edge_router))
-        self.assertEqual(module.EdgeBridgeError.__module__,'services.fuse_mobile_gateway.aegis_edge_bridge')
+        module=importlib.import_module('services.fuse_mobile_gateway.aegis_edge_adapter'); self.assertTrue(callable(module.build_aegis_edge_router)); self.assertEqual(module.EdgeBridgeError.__module__,'services.fuse_mobile_gateway.aegis_edge_bridge')
     def test_android_native_module_is_bounded_posture_only(self):
         native=(ROOT/'mobile/fuse-mobile/modules/aegis-edge-posture/android/src/main/java/expo/modules/aegisedgeposture/AegisEdgePostureModule.kt').read_text(); self.assertIn('SECURITY_PATCH',native); self.assertIn('isDeviceSecure',native); self.assertIn('FLAG_DEBUGGABLE',native)
         for forbidden in ('READ_SMS','READ_CONTACTS','ACCESS_FINE_LOCATION','QUERY_ALL_PACKAGES','VpnService','AccessibilityService'): self.assertNotIn(forbidden,native)
     def test_backend_stays_defensive_and_auto_promotion_is_false(self):
         api=(ROOT/'services/aegis_omega/src/aegis_omega/api.py').read_text(); policy=(ROOT/'services/aegis_omega/src/aegis_omega/policy.py').read_text(); self.assertIn('defensive-only',api); self.assertIn('automatic_model_promotion',api); self.assertIn('high_impact_response_requires_human_approval',api); self.assertRegex(policy,re.compile(r'approval_required'))
-    def test_proofos_extension_maps_every_new_production_family(self):
+    def test_proofos_extension_maps_source_core_and_defers_provider_epoch(self):
         ext=json.loads((ROOT/'governance/proofos_omega_policy_extension_aegis_omega_v1.json').read_text()); flat=json.dumps(ext,sort_keys=True)
-        for marker in ('services/aegis_omega/**','.github/workflows/aegis-omega-zero-traffic-v1.yml','mobile/fuse-mobile/modules/aegis-edge-posture/**','services/fuse_mobile_gateway/aegis_edge_*.py','mobile/fuse-mobile/app/index.tsx','services/fuse_mobile_gateway/app.py'): self.assertIn(marker,flat)
+        for marker in ('services/aegis_omega/**','mobile/fuse-mobile/modules/aegis-edge-posture/**','services/fuse_mobile_gateway/aegis_edge_*.py','mobile/fuse-mobile/app/index.tsx','services/fuse_mobile_gateway/app.py'): self.assertIn(marker,flat)
         self.assertIn('AEGIS_OMEGA',flat); self.assertIn('AEGIS_EDGE',flat)
+        self.assertNotIn('aegis_omega_provider_workflow',flat)
+        self.assertNotIn('.github/workflows/aegis-omega-zero-traffic-v1.yml',flat)
 if __name__=='__main__': unittest.main()
