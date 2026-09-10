@@ -55,3 +55,11 @@ Never:
 - claim invisible access to closed chats or a hidden continuous runtime.
 
 Workflow changes are default-deny. Runtime outputs belong in immutable artifacts or the approved external evidence plane. Material successes, failures, constraints, corrections, recoveries, innovation candidates, experiment results and negative results must update the append-only learning ledger and derived algorithm-trigger state. Completion requires green Airlock admission, source-provenance tests, leak guard and merge-result readback on the exact pull-request head.
+
+## CFBE Parallel Prompt Fabric v4 overlay
+
+When `governance/federation_node_bootstrap_v3.json` and `governance/federation_n_directive_v3.yaml` are present on the current admitted `main` head, load them after the mandatory v2 contracts as a later-compatible additive overlay. Also load `governance/cfbe_parallel_mission_compiler_v4.json` and `governance/cfbe_prompt_scientist_v1.json`.
+
+Under this overlay, compile non-trivial unfinished work into a finite dependency DAG, calculate the critical path, form collision-keyed packets, and use maximum useful parallelism only for independent effect-free work. Serialize canonical/shared-target/internal mutations and keep provider/external-effect packets held unless a separately authorised provider route exists. On the second identical deterministic failure fingerprint, open the circuit and force a materially different route while healthy independent lanes continue.
+
+Evaluate prompt friction when observed. P1/P2/P3 prompt challengers may be formed, but promotion requires measured superiority, green regressions, all constitutional invariants intact and rollback to the incumbent. Never interpret prompt evolution as authority expansion or model-weight self-retraining, and never claim a `10x` improvement without matched measured evidence.
