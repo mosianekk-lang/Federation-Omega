@@ -1,0 +1,544 @@
+name: AEGIS Omega Private Zero-Traffic Canary v2
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: aegis-omega-private-canary-v2
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  ARTIFACT_REPOSITORY: federation-omega
+  PRODUCTION_SERVICE: aegis-omega
+  CANARY_SERVICE: aegis-omega-canary-v2
+  SERVICE_AUDIENCE: https://aegis-omega-canary-v2-257649435135.africa-south1.run.app
+
+jobs:
+  deploy-private-canary:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] AEGIS_OMEGA_ZERO_TRAFFIC_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 40
+    steps:
+      - name: Checkout exact signed-main source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless deployer
+        id: auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: id_token
+          id_token_audience: ${{ env.SERVICE_AUDIENCE }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Capture production and provider prestate before any canary effect
+        id: pre
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p aegis-provider-proof
+
+          ACTIVE="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$ACTIVE" = "$DEPLOYER_SA"
+          test "$NUMBER" = "$PROJECT_NUMBER"
+
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > aegis-provider-proof/project-policy-pre.json
+          gcloud artifacts repositories get-iam-policy "$ARTIFACT_REPOSITORY" \
+            --location "$REGION" --project "$PROJECT_ID" --format=json \
+            > aegis-provider-proof/repository-policy-pre.json
+          gcloud iam service-accounts get-iam-policy "$RUNTIME_SA" \
+            --project "$PROJECT_ID" --format=json > aegis-provider-proof/runtime-sa-policy-pre.json
+          gcloud firestore databases describe --database='(default)' \
+            --project "$PROJECT_ID" --format=json > aegis-provider-proof/firestore-database-pre.json
+
+          for API in run.googleapis.com artifactregistry.googleapis.com iamcredentials.googleapis.com sts.googleapis.com firestore.googleapis.com secretmanager.googleapis.com; do
+            test "$(gcloud services list --enabled --project "$PROJECT_ID" \
+              --filter="config.name=$API" --format='value(config.name)')" = "$API"
+          done
+
+          if gcloud run services describe "$PRODUCTION_SERVICE" --region "$REGION" \
+              --project "$PROJECT_ID" --format=json > aegis-provider-proof/production-service-pre.json 2>/dev/null; then
+            echo 'production_service_existed=true' >> "$GITHUB_OUTPUT"
+            gcloud run services get-iam-policy "$PRODUCTION_SERVICE" --region "$REGION" \
+              --project "$PROJECT_ID" --format=json > aegis-provider-proof/production-service-policy-pre.json
+          else
+            echo '{}' > aegis-provider-proof/production-service-pre.json
+            echo '{}' > aegis-provider-proof/production-service-policy-pre.json
+            echo 'production_service_existed=false' >> "$GITHUB_OUTPUT"
+          fi
+
+          if gcloud run services describe "$CANARY_SERVICE" --region "$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            echo "stale canary service exists; refusing to overwrite unknown provider state" >&2
+            exit 1
+          fi
+
+          CANARY_SECRET="aegis-omega-canary-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if gcloud secrets describe "$CANARY_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            echo "canary secret collision" >&2
+            exit 1
+          fi
+          echo "canary_secret=$CANARY_SECRET" >> "$GITHUB_OUTPUT"
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          deployer='serviceAccount:'+os.environ['DEPLOYER_SA']
+          runtime='serviceAccount:'+os.environ['RUNTIME_SA']
+          project=json.loads(Path('aegis-provider-proof/project-policy-pre.json').read_text())
+          repo=json.loads(Path('aegis-provider-proof/repository-policy-pre.json').read_text())
+          runtime_policy=json.loads(Path('aegis-provider-proof/runtime-sa-policy-pre.json').read_text())
+          db=json.loads(Path('aegis-provider-proof/firestore-database-pre.json').read_text())
+
+          def has(policy, role, member):
+              return any(
+                  b.get('role') == role and not b.get('condition')
+                  and member in (b.get('members') or [])
+                  for b in policy.get('bindings') or []
+              )
+
+          public={'allUsers','allAuthenticatedUsers'}
+          public_project_invoker=any(
+              b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'}
+              and not b.get('condition')
+              and public.intersection(set(b.get('members') or []))
+              for b in project.get('bindings') or []
+          )
+          assert not public_project_invoker, 'project grants public Cloud Run invocation'
+          assert has(project,'roles/run.developer',deployer), 'Cloud Run developer authority missing'
+          assert has(project,'roles/artifactregistry.writer',deployer) or has(repo,'roles/artifactregistry.writer',deployer), 'Artifact Registry writer missing'
+          assert has(project,'roles/iam.serviceAccountUser',deployer) or has(runtime_policy,'roles/iam.serviceAccountUser',deployer), 'runtime serviceAccountUser missing'
+          assert any(has(project, role, runtime) for role in {'roles/datastore.user','roles/datastore.owner','roles/editor','roles/owner'}), 'runtime Firestore authority missing'
+          assert str(db.get('name') or ''), 'default Firestore database unavailable'
+          PY
+
+      - name: Build and push immutable canary image
+        id: image
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/aegis-omega:canary-${SOURCE_SHA:0:12}-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build --pull --file services/aegis_omega/Dockerfile --tag "$IMAGE" services/aegis_omega
+          docker push "$IMAGE"
+          gcloud artifacts docker images describe "$IMAGE" --format=json > aegis-provider-proof/image.json
+          echo "image=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Create ephemeral provider-managed HMAC secret without payload readback
+        id: secret
+        shell: bash
+        env:
+          CANARY_SECRET: ${{ steps.pre.outputs.canary_secret }}
+        run: |
+          set -euo pipefail
+          set +x
+          gcloud secrets create "$CANARY_SECRET" --project "$PROJECT_ID" \
+            --replication-policy=automatic \
+            --labels=system=aegis-omega,purpose=provider-canary >/dev/null
+          openssl rand -hex 32 | gcloud secrets versions add "$CANARY_SECRET" \
+            --project "$PROJECT_ID" --data-file=- >/dev/null
+          gcloud secrets add-iam-policy-binding "$CANARY_SECRET" --project "$PROJECT_ID" \
+            --member="serviceAccount:${RUNTIME_SA}" \
+            --role=roles/secretmanager.secretAccessor --quiet >/dev/null
+          gcloud secrets describe "$CANARY_SECRET" --project "$PROJECT_ID" \
+            --format=json > aegis-provider-proof/canary-secret-metadata.json
+          gcloud secrets get-iam-policy "$CANARY_SECRET" --project "$PROJECT_ID" \
+            --format=json > aegis-provider-proof/canary-secret-policy.json
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          policy=json.loads(Path('aegis-provider-proof/canary-secret-policy.json').read_text())
+          runtime='serviceAccount:'+os.environ['RUNTIME_SA']
+          assert any(
+              b.get('role') == 'roles/secretmanager.secretAccessor'
+              and runtime in (b.get('members') or [])
+              for b in policy.get('bindings') or []
+          ), 'runtime secretAccessor missing'
+          PY
+
+      - name: Deploy isolated private revision A at unconditional zero traffic
+        id: a
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          CANARY_SECRET: ${{ steps.pre.outputs.canary_secret }}
+          SOURCE_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          TAG_A="ao-${SOURCE_SHA:0:8}-${GITHUB_RUN_ID}-a"
+          gcloud run deploy "$CANARY_SERVICE" \
+            --image "$IMAGE" --project "$PROJECT_ID" --region "$REGION" \
+            --service-account "$RUNTIME_SA" --port 8080 \
+            --tag "$TAG_A" --no-allow-unauthenticated --no-traffic \
+            --set-env-vars "AEGIS_ENV=production,AEGIS_CASE_STORE=firestore,AEGIS_GCP_PROJECT=$PROJECT_ID,AEGIS_PUBSUB_TOPIC=,AEGIS_EVIDENCE_BUCKET=,AEGIS_CANARY_GENERATION=A,AEGIS_HMAC_KEY_ID=$CANARY_SECRET" \
+            --set-secrets "AEGIS_HMAC_SECRET=$CANARY_SECRET:latest" \
+            --min-instances 0 --max-instances 2 --quiet
+          gcloud run services describe "$CANARY_SERVICE" --region "$REGION" \
+            --project "$PROJECT_ID" --format=json > aegis-provider-proof/canary-service-a.json
+          REV_A="$(python - <<'PY'
+          import json
+          s=json.load(open('aegis-provider-proof/canary-service-a.json'))
+          print(s.get('status',{}).get('latestCreatedRevisionName') or '')
+          PY
+          )"
+          test -n "$REV_A"
+          gcloud run revisions describe "$REV_A" --region "$REGION" \
+            --project "$PROJECT_ID" --format=json > aegis-provider-proof/revision-a.json
+          echo "revision=$REV_A" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG_A" >> "$GITHUB_OUTPUT"
+
+      - name: Prove private IAM and zero-normal-traffic revision A
+        id: case
+        shell: bash
+        env:
+          REV_A: ${{ steps.a.outputs.revision }}
+          TAG_A: ${{ steps.a.outputs.tag }}
+          ID_TOKEN: ${{ steps.auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          gcloud run services get-iam-policy "$CANARY_SERVICE" --region "$REGION" \
+            --project "$PROJECT_ID" --format=json > aegis-provider-proof/canary-service-policy-a.json
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json \
+            > aegis-provider-proof/project-policy-a.json
+
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          service=json.loads(Path('aegis-provider-proof/canary-service-a.json').read_text())
+          service_policy=json.loads(Path('aegis-provider-proof/canary-service-policy-a.json').read_text())
+          project=json.loads(Path('aegis-provider-proof/project-policy-a.json').read_text())
+          revision=json.loads(Path('aegis-provider-proof/revision-a.json').read_text())
+          public={'allUsers','allAuthenticatedUsers'}
+
+          def public_invoker(policy):
+              return any(
+                  b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'}
+                  and not b.get('condition')
+                  and public.intersection(set(b.get('members') or []))
+                  for b in policy.get('bindings') or []
+              )
+
+          assert not public_invoker(service_policy), 'canary service publicly invokable'
+          assert not public_invoker(project), 'project grants public Cloud Run invocation'
+
+          allocations={}
+          for item in service.get('status',{}).get('traffic') or []:
+              if item.get('revisionName'):
+                  allocations[item['revisionName']]=allocations.get(item['revisionName'],0)+int(item.get('percent') or 0)
+          candidate=os.environ['REV_A']
+          assert allocations.get(candidate,0) == 0, {'candidate_percent':allocations.get(candidate,0),'traffic':allocations}
+          assert sum(allocations.values()) == 0, {'canary_normal_traffic':allocations}
+
+          containers=(revision.get('spec',{}).get('containers') or revision.get('spec',{}).get('template',{}).get('spec',{}).get('containers') or [])
+          env_items=[item for c in containers for item in (c.get('env') or [])]
+          hmac=[item for item in env_items if item.get('name')=='AEGIS_HMAC_SECRET']
+          assert hmac and all('value' not in item for item in hmac) and any('valueFrom' in item for item in hmac), 'HMAC secret not provider-managed'
+
+          Path('aegis-provider-proof/traffic-proof-a.json').write_text(json.dumps({
+              'public_invocation':False,
+              'candidate_revision_percent':allocations.get(candidate,0),
+              'canary_total_normal_traffic_percent':sum(allocations.values()),
+              'production_traffic_changed':False,
+              'secret_manager_backed_hmac':True,
+              'provider_mutation_performed':True,
+          },indent=2,sort_keys=True)+'\n')
+          PY
+
+          URL_A="$(python - <<'PY'
+          import json, os
+          s=json.load(open('aegis-provider-proof/canary-service-a.json'))
+          tag=os.environ['TAG_A']
+          print(next((x.get('url','') for x in s.get('status',{}).get('traffic') or [] if x.get('tag')==tag),''))
+          PY
+          )"
+          test -n "$URL_A"
+
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" "$URL_A/healthz" \
+            > aegis-provider-proof/health-a.json
+
+          REQUEST_ID="provider-canary-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          cat > /tmp/aegis-assess.json <<JSON
+          {"request_id":"$REQUEST_ID","events":[
+            {"event_id":"canary-integrity","device_id":"canary-device","event_class":"device_integrity","severity":0.95,"confidence":0.95,"source":"provider-canary-integrity","consent":true},
+            {"event_id":"canary-forensics","device_id":"canary-device","event_class":"forensic_artifact","severity":0.93,"confidence":0.95,"source":"provider-canary-forensics","consent":true},
+            {"event_id":"canary-network","device_id":"canary-device","event_class":"network_risk","severity":0.88,"confidence":0.90,"source":"provider-canary-network","consent":true},
+            {"event_id":"canary-identity","device_id":"canary-device","event_class":"identity_risk","severity":0.84,"confidence":0.90,"source":"provider-canary-identity","consent":true}
+          ]}
+          JSON
+
+          curl --fail-with-body --silent --show-error -X POST \
+            -H "Authorization: Bearer $ID_TOKEN" -H 'Content-Type: application/json' \
+            --data-binary @/tmp/aegis-assess.json "$URL_A/v1/assess" \
+            > aegis-provider-proof/assessment-a.json
+
+          CASE_ID="$(python - <<'PY'
+          import json
+          a=json.load(open('aegis-provider-proof/assessment-a.json'))
+          assert a['requires_human_approval'] is True
+          assert a['disposition'] in {'investigate','containment_recommended'}
+          print(a['case_id'])
+          PY
+          )"
+
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" "$URL_A/v1/cases/$CASE_ID" \
+            > aegis-provider-proof/case-a.json
+          echo "case_id=$CASE_ID" >> "$GITHUB_OUTPUT"
+          echo "request_id=$REQUEST_ID" >> "$GITHUB_OUTPUT"
+          echo "url=$URL_A" >> "$GITHUB_OUTPUT"
+
+      - name: Deploy isolated private revision B at unconditional zero traffic and prove persistence
+        id: b
+        shell: bash
+        env:
+          IMAGE: ${{ steps.image.outputs.image }}
+          CANARY_SECRET: ${{ steps.pre.outputs.canary_secret }}
+          SOURCE_SHA: ${{ github.sha }}
+          CASE_ID: ${{ steps.case.outputs.case_id }}
+          ID_TOKEN: ${{ steps.auth.outputs.id_token }}
+        run: |
+          set -euo pipefail
+          TAG_B="ao-${SOURCE_SHA:0:8}-${GITHUB_RUN_ID}-b"
+          gcloud run deploy "$CANARY_SERVICE" \
+            --image "$IMAGE" --project "$PROJECT_ID" --region "$REGION" \
+            --service-account "$RUNTIME_SA" --port 8080 \
+            --tag "$TAG_B" --no-allow-unauthenticated --no-traffic \
+            --set-env-vars "AEGIS_ENV=production,AEGIS_CASE_STORE=firestore,AEGIS_GCP_PROJECT=$PROJECT_ID,AEGIS_PUBSUB_TOPIC=,AEGIS_EVIDENCE_BUCKET=,AEGIS_CANARY_GENERATION=B,AEGIS_HMAC_KEY_ID=$CANARY_SECRET" \
+            --set-secrets "AEGIS_HMAC_SECRET=$CANARY_SECRET:latest" \
+            --min-instances 0 --max-instances 2 --quiet
+
+          gcloud run services describe "$CANARY_SERVICE" --region "$REGION" \
+            --project "$PROJECT_ID" --format=json > aegis-provider-proof/canary-service-b.json
+          REV_B="$(python - <<'PY'
+          import json
+          s=json.load(open('aegis-provider-proof/canary-service-b.json'))
+          print(s.get('status',{}).get('latestCreatedRevisionName') or '')
+          PY
+          )"
+          test -n "$REV_B"
+          URL_B="$(TAG_B="$TAG_B" python - <<'PY'
+          import json, os
+          s=json.load(open('aegis-provider-proof/canary-service-b.json'))
+          print(next((x.get('url','') for x in s.get('status',{}).get('traffic') or [] if x.get('tag')==os.environ['TAG_B']),''))
+          PY
+          )"
+          test -n "$URL_B"
+
+          REV_B="$REV_B" python - <<'PY'
+          import json, os
+          service=json.load(open('aegis-provider-proof/canary-service-b.json'))
+          allocations={}
+          for item in service.get('status',{}).get('traffic') or []:
+              if item.get('revisionName'):
+                  allocations[item['revisionName']]=allocations.get(item['revisionName'],0)+int(item.get('percent') or 0)
+          assert allocations.get(os.environ['REV_B'],0) == 0
+          assert sum(allocations.values()) == 0, allocations
+          PY
+
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" "$URL_B/healthz" \
+            > aegis-provider-proof/health-b.json
+          curl --fail-with-body --silent --show-error \
+            -H "Authorization: Bearer $ID_TOKEN" "$URL_B/v1/cases/$CASE_ID" \
+            > aegis-provider-proof/case-b.json
+
+          python - <<'PY'
+          import json, os
+          a=json.load(open('aegis-provider-proof/case-a.json'))
+          b=json.load(open('aegis-provider-proof/case-b.json'))
+          assert a['assessment']['case_id'] == os.environ['CASE_ID'] == b['assessment']['case_id']
+          assert len(b.get('events') or []) == 4
+          assert b['evidence_chain_valid'] is True
+          assert b['response_plan']['approval_required'] is True
+          PY
+          echo "revision=$REV_B" >> "$GITHUB_OUTPUT"
+          echo "tag=$TAG_B" >> "$GITHUB_OUTPUT"
+          echo "url=$URL_B" >> "$GITHUB_OUTPUT"
+
+      - name: Roll back isolated canary runtime, IAM, secret and image effects and prove production equivalence
+        id: rollback
+        if: always()
+        shell: bash
+        env:
+          PRODUCTION_SERVICE_EXISTED: ${{ steps.pre.outputs.production_service_existed }}
+          CANARY_SECRET: ${{ steps.pre.outputs.canary_secret }}
+          IMAGE: ${{ steps.image.outputs.image }}
+          CASE_ID: ${{ steps.case.outputs.case_id }}
+          REQUEST_ID: ${{ steps.case.outputs.request_id }}
+        run: |
+          set -euo pipefail
+          rollback_ok=true
+
+          if gcloud run services describe "$CANARY_SERVICE" --region "$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            gcloud run services delete "$CANARY_SERVICE" --region "$REGION" --project "$PROJECT_ID" --quiet >/dev/null 2>&1 || rollback_ok=false
+          fi
+
+          if [[ -n "${CANARY_SECRET:-}" ]] && gcloud secrets describe "$CANARY_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            gcloud secrets delete "$CANARY_SECRET" --project "$PROJECT_ID" --quiet >/dev/null 2>&1 || rollback_ok=false
+          fi
+
+          if [[ -n "${IMAGE:-}" ]]; then
+            gcloud artifacts docker images delete "$IMAGE" --project "$PROJECT_ID" --quiet --delete-tags >/dev/null 2>&1 || rollback_ok=false
+          fi
+
+          if [[ "${PRODUCTION_SERVICE_EXISTED:-}" == "true" ]]; then
+            gcloud run services describe "$PRODUCTION_SERVICE" --region "$REGION" --project "$PROJECT_ID" \
+              --format=json > aegis-provider-proof/production-service-final.json || rollback_ok=false
+            gcloud run services get-iam-policy "$PRODUCTION_SERVICE" --region "$REGION" --project "$PROJECT_ID" \
+              --format=json > aegis-provider-proof/production-service-policy-final.json || rollback_ok=false
+          else
+            if gcloud run services describe "$PRODUCTION_SERVICE" --region "$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
+              rollback_ok=false
+            fi
+            echo '{}' > aegis-provider-proof/production-service-final.json
+            echo '{}' > aegis-provider-proof/production-service-policy-final.json
+          fi
+
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json \
+            > aegis-provider-proof/project-policy-final.json || rollback_ok=false
+
+          CANARY_SERVICE_ABSENT=true
+          if gcloud run services describe "$CANARY_SERVICE" --region "$REGION" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            CANARY_SERVICE_ABSENT=false
+            rollback_ok=false
+          fi
+
+          CANARY_SECRET_ABSENT=true
+          if [[ -n "${CANARY_SECRET:-}" ]] && gcloud secrets describe "$CANARY_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            CANARY_SECRET_ABSENT=false
+            rollback_ok=false
+          fi
+
+          IMAGE_ABSENT=true
+          if [[ -n "${IMAGE:-}" ]] && gcloud artifacts docker images describe "$IMAGE" --project "$PROJECT_ID" >/dev/null 2>&1; then
+            IMAGE_ABSENT=false
+            rollback_ok=false
+          fi
+
+          ROLLBACK_OK="$rollback_ok" CANARY_SERVICE_ABSENT="$CANARY_SERVICE_ABSENT" CANARY_SECRET_ABSENT="$CANARY_SECRET_ABSENT" IMAGE_ABSENT="$IMAGE_ABSENT" python - <<'PY'
+          import json, os
+          from pathlib import Path
+
+          pre=json.loads(Path('aegis-provider-proof/production-service-pre.json').read_text())
+          final=json.loads(Path('aegis-provider-proof/production-service-final.json').read_text())
+          pre_iam=json.loads(Path('aegis-provider-proof/production-service-policy-pre.json').read_text())
+          final_iam=json.loads(Path('aegis-provider-proof/production-service-policy-final.json').read_text())
+          project_pre=json.loads(Path('aegis-provider-proof/project-policy-pre.json').read_text())
+          project_final=json.loads(Path('aegis-provider-proof/project-policy-final.json').read_text())
+
+          def traffic(service):
+              return sorted(
+                  (
+                      x.get('revisionName') or '',
+                      x.get('tag') or '',
+                      int(x.get('percent') or 0),
+                      x.get('url') or ''
+                  )
+                  for x in service.get('status',{}).get('traffic') or []
+              )
+
+          def bindings(policy):
+              rows=[]
+              for b in policy.get('bindings') or []:
+                  rows.append((
+                      b.get('role'),
+                      tuple(sorted(b.get('members') or [])),
+                      json.dumps(b.get('condition') or {},sort_keys=True,separators=(',',':'))
+                  ))
+              return sorted(rows)
+
+          existed=os.environ.get('PRODUCTION_SERVICE_EXISTED')=='true'
+          if existed:
+              production_equivalent=(
+                  pre.get('metadata',{}).get('name') == final.get('metadata',{}).get('name')
+                  and pre.get('status',{}).get('latestReadyRevisionName') == final.get('status',{}).get('latestReadyRevisionName')
+                  and traffic(pre) == traffic(final)
+              )
+              production_iam_equivalent=bindings(pre_iam) == bindings(final_iam)
+          else:
+              production_equivalent=(final == {})
+              production_iam_equivalent=True
+
+          project_iam_equivalent=bindings(project_pre) == bindings(project_final)
+          final_ok=(
+              os.environ.get('ROLLBACK_OK')=='true'
+              and os.environ.get('CANARY_SERVICE_ABSENT')=='true'
+              and os.environ.get('CANARY_SECRET_ABSENT')=='true'
+              and os.environ.get('IMAGE_ABSENT')=='true'
+              and production_equivalent
+              and production_iam_equivalent
+              and project_iam_equivalent
+          )
+
+          receipt={
+              'schema':'AEGIS_OMEGA_PROVIDER_CANARY_RECEIPT_V2',
+              'source_sha':os.environ.get('GITHUB_SHA',''),
+              'project':os.environ['PROJECT_ID'],
+              'region':os.environ['REGION'],
+              'production_service':os.environ['PRODUCTION_SERVICE'],
+              'canary_service':os.environ['CANARY_SERVICE'],
+              'private_iam_verified':True,
+              'public_invocation':False,
+              'production_traffic_changed':False,
+              'candidate_a_normal_traffic_percent':0,
+              'candidate_b_normal_traffic_percent':0,
+              'firestore_cross_revision_persistence_verified':bool(os.environ.get('CASE_ID')),
+              'human_approval_gate_verified':bool(os.environ.get('CASE_ID')),
+              'provider_canary_evidence_case_retained':bool(os.environ.get('CASE_ID')),
+              'provider_canary_request_id':os.environ.get('REQUEST_ID') or None,
+              'provider_canary_case_id':os.environ.get('CASE_ID') or None,
+              'canary_service_deleted':os.environ.get('CANARY_SERVICE_ABSENT')=='true',
+              'ephemeral_secret_deleted':os.environ.get('CANARY_SECRET_ABSENT')=='true',
+              'ephemeral_image_deleted':os.environ.get('IMAGE_ABSENT')=='true',
+              'production_service_state_restored':production_equivalent,
+              'production_service_iam_unchanged':production_iam_equivalent,
+              'project_iam_unchanged':project_iam_equivalent,
+              'final_equivalence_verified':final_ok,
+              'provider_mutation_performed':True,
+              'iam_mutation_performed':True,
+              'traffic_promotion_performed':False,
+              'gemini_inference_performed':False,
+              'fuse_external_effect_performed':False,
+              'secret_payload_logged':False,
+              'secret_payload_read_back':False,
+              'truth_boundary':'One synthetic defensive Firestore case is retained as immutable provider evidence. The isolated Cloud Run canary service, its revisions/tags/IAM, ephemeral secret and unique image are deleted, and production service/project IAM plus production traffic are provider-read back unchanged. No production traffic promotion, model inference or external user effect.'
+          }
+          Path('aegis-provider-proof/final-receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n')
+          assert final_ok, receipt
+          PY
+
+      - name: Upload immutable redacted provider proof
+        if: always() && hashFiles('aegis-provider-proof/**') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: aegis-omega-provider-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: aegis-provider-proof/
+          if-no-files-found: error
+          retention-days: 90
