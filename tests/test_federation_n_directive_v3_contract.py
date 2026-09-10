@@ -38,16 +38,15 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertFalse(contract["truth_boundary"]["stored_source_proves_runtime"])
         self.assertEqual(contract["failure_recovery"]["same_fingerprint_threshold"], 2)
 
-    def test_root_agent_contract_and_copilot_activate_later_compatible_v3_overlay(self):
-        agents = (ROOT / "AGENTS.md").read_text()
-        copilot = (ROOT / ".github/copilot-instructions.md").read_text()
-        for text in (agents, copilot):
-            self.assertIn("FEDOMEGA-N-DIRECTIVE-V2", text)
-            self.assertIn("federation_n_directive_v3.yaml", text)
-            self.assertIn("cfbe_parallel_mission_compiler_v4.json", text)
-            self.assertIn("cfbe_prompt_scientist_v1.json", text)
-            self.assertIn("later compatible", text.lower())
-            self.assertIn("10x", text)
+    def test_architecture_contract_records_v3_composition_without_global_instruction_dependency(self):
+        text = (ROOT / "docs/architecture/CFBE_PARALLEL_PROMPT_FABRIC_V4.md").read_text()
+        self.assertIn("CFBE Parallel Prompt Fabric v4", text)
+        self.assertIn("FEDOMEGA-N-DIRECTIVE-V3", text)
+        self.assertIn("FEDOMEGA-N-DIRECTIVE-V2@2.1.0", text)
+        self.assertIn("rollback/historical compatibility", text)
+        self.assertIn("Prompt Scientist", text)
+        self.assertIn("PRODUCTION_VERIFIED", text)
+        self.assertIn("10x", text)
 
     def test_node_bootstrap_v3_composes_v2_and_requires_v3_engines(self):
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
