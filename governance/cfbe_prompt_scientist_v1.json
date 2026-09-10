@@ -1,0 +1,35 @@
+{
+  "schema": "CFBE-PROMPT-SCIENTIST-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
+  "authority_ceiling": "A1_INTERNAL",
+  "purpose": "Bounded prompt compiler, evaluator and evolutionary optimizer using measured mission outcomes rather than prompt length or self-certification.",
+  "score_weights": {
+    "completion": 25, "correctness": 20, "proof": 15, "execution_efficiency": 10, "parallel_utilization": 10, "owner_burden": 5, "recovery": 5, "context_efficiency": 5, "creative_freedom": 5
+  },
+  "diagnoses": [
+    "INTENT_DILUTION", "EXECUTION_DILUTION", "CONTEXT_OVERLOAD", "MISROUTING", "MISSED_PARALLELISM", "OVER_PARALLELISM", "DEPENDENCY_ERROR", "REPEATED_FAILURE", "PREMATURE_STOP", "STATUS_THEATRE", "PROOF_FAILURE", "OWNER_BURDEN", "PROMPT_CONFLICT", "TOOL_UNDERUSE", "TOOL_OVERUSE", "LEARNING_FAILURE"
+  ],
+  "challenger_tournament": {
+    "P0": "incumbent", "P1": "smallest causal correction", "P2": "performance optimized challenger", "P3": "structurally different challenger"
+  },
+  "mission_profiles": ["BUILD", "DEBUG", "REFACTOR", "RESEARCH", "CFBE_HARVEST", "SECURITY", "TEST", "DEPLOY", "INCIDENT_RECOVERY", "PROVIDER_INTEGRATION", "DOCUMENT_EVIDENCE", "MOBILE", "CLOUD", "ARCHITECTURE"],
+  "promotion": {
+    "minimum_score_delta": 3.0,
+    "requires_incumbent_evidence": true,
+    "requires_challenger_evidence": true,
+    "requires_green_regression": true,
+    "critical_regression_is_absolute_veto": true,
+    "requires_all_constitutional_invariants": true,
+    "rollback_to_incumbent_required": true,
+    "prompt_length_is_not_rewarded": true
+  },
+  "allowed_evolution": ["prompt wording and ordering", "mission-specific specialization", "routing preference", "packet sizing", "context reduction", "tool selection", "algorithm portfolio selection", "compiler optimization", "tested procedure promotion"],
+  "immutable_boundaries": ["authority", "security", "privacy", "proof-before-claim", "provider-native verification", "rollback", "owner-reserved consequential controls", "no trust transfer"],
+  "truth_boundary": {
+    "autonomous_model_weight_retraining_claimed": false,
+    "unmeasured_intelligence_gain_claimed": false,
+    "self_evaluation_alone_can_promote": false
+  }
+}
