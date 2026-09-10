@@ -1,0 +1,53 @@
+{
+  "schema": "CFBE-PARALLEL-MISSION-COMPILER-V4",
+  "version": "4.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "objective": "Compile finite owner objectives into proof-oriented dependency DAGs and execute the maximum useful collision-safe parallelism without transferring authority.",
+  "constitutional_invariants": [
+    "PROOF_BEFORE_CLAIM", "AIRLOCK_ADMISSION", "SOURCE_PROVENANCE", "SECRET_NON_DISCLOSURE", "MINIMUM_AUTHORITY", "PROVIDER_NATIVE_READBACK", "ROLLBACK_REQUIRED", "NO_TRUST_TRANSFER", "OWNER_RESERVED_CONSEQUENTIAL_EFFECTS", "CREATIVE_FREEDOM_WITHIN_INVARIANTS"
+  ],
+  "lanes": [
+    "LANE-A-REPOSITORY_SOURCE_INTELLIGENCE", "LANE-B-ARCHITECTURE_IMPLEMENTATION", "LANE-C-BUILD_COMPILER_RUNTIME", "LANE-D-TEST_SIMULATION", "LANE-E-SECURITY_REDTEAM_FALSIFICATION", "LANE-F-PROVIDER_DEPLOYMENT_READINESS", "LANE-G-CFBE_FRONTIER_BENCHMARK", "LANE-H-DOCUMENTATION_PROOF_LEARNING"
+  ],
+  "mission_graph_fields": [
+    "MISSION_ID", "TARGET_STATE", "CURRENT_VERIFIED_STATE", "DELIVERABLES", "ACCEPTANCE_TESTS", "PROOF_REQUIREMENTS", "DEPENDENCIES", "PARALLELIZABLE_PACKETS", "SERIALIZED_PACKETS", "EXTERNAL_EFFECT_BOUNDARIES", "ROLLBACK_PATH", "CRITICAL_PATH"
+  ],
+  "packet_fields": [
+    "PACKET_ID", "LANE_ID", "INPUT_FINGERPRINT", "EXPECTED_OUTPUT", "DEPENDENCIES", "COLLISION_KEYS", "ACCEPTANCE_TEST", "PROOF_TYPE", "ROLLBACK_POINTER"
+  ],
+  "parallelism": {
+    "eligible": ["independent read-only discovery", "evidence mapping", "architecture analysis", "effect-free simulation", "effect-free testing", "red-team analysis", "learning extraction"],
+    "serialized": ["canonical writes", "shared-target mutations", "provider mutations", "external effects", "authority-sensitive changes"],
+    "provider_and_external_packets_under_a1": "HELD_EXTERNAL_AUTHORITY",
+    "blocked_dependency_propagation": "HELD_DEPENDENCY"
+  },
+  "critical_path_priority": ["critical blocker", "blocker-removing infrastructure", "correctness and security", "build and test acceleration", "deployment verification", "high-value enhancements", "cosmetics"],
+  "cfbe_frontier": {
+    "C0": "strongest verified reuse route", "C1": "optimized existing route", "C2": "composed complementary route", "C3": "clean-slate materially different route", "C4": "highest-information reversible experiment", "ten_x_semantics": "MEASURED_TARGET_NOT_PROMPT_CLAIM"
+  },
+  "failure_recovery": {
+    "loop": ["DETECT", "PRESERVE_FAILURE", "CLASSIFY", "LOCATE_CAUSE", "GENERATE_REPAIR_CANDIDATES", "SELECT_MIN_SAFE_REPAIR", "APPLY", "RETEST", "REGRESSION_TEST", "READ_BACK", "LEARN"],
+    "same_fingerprint_threshold": 2,
+    "threshold_action": "MATERIALLY_DIFFERENT_ROUTE_REQUIRED"
+  },
+  "proof_ladder": ["HYPOTHESIS", "DESIGNED", "SOURCE_PRESENT", "TESTED", "ADMITTED", "MERGED", "DEPLOYED", "RUNTIME_VERIFIED", "BEHAVIOR_VERIFIED", "PRODUCTION_VERIFIED"],
+  "version_propagation": {
+    "requires": ["receiver compatibility", "green receiver regression", "rollback readiness"],
+    "forbids": "uncontrolled global replacement"
+  },
+  "composition": {
+    "existing_kernel": "benchmarking.cfbe_omega.mission_execution_kernel_vnext.MissionExecutionKernel",
+    "existing_multistream": "benchmarking.cfbe_omega.mission_execution_kernel_vnext.MultiStreamExecutionBridge",
+    "adapter_scope": "effect-free READY read packets only",
+    "does_not_create_second_sovereign_scheduler": true
+  },
+  "truth_boundary": {
+    "stored_source_proves_runtime": false,
+    "stored_source_proves_provider_effect": false,
+    "model_weight_self_retraining_claimed": false,
+    "production_verification_requires_provider_native_readback": true
+  }
+}

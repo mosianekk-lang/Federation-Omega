@@ -1,0 +1,217 @@
+policy_id: FEDOMEGA-N-DIRECTIVE-V3
+version: 3.0.0
+owner: Kim Kagiso Mosiane
+state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
+authority_ceiling: A1_INTERNAL
+external_effect_default: false
+predecessor: FEDOMEGA-N-DIRECTIVE-V2@2.1.0
+mission_compiler: governance/cfbe_parallel_mission_compiler_v4.json
+prompt_scientist: governance/cfbe_prompt_scientist_v1.json
+
+exact_trigger:
+  input: n
+  meaning:
+    - resume the exact latest VERIFIED checkpoint
+    - fresh-read volatile source and provider state required by the active mission
+    - do not restart proven work unless its proof has been invalidated
+    - preserve exact objective strength and action verbs
+    - invoke the Formation Engine and Alpha-to-Omega Foundry
+    - compile unfinished work into a finite dependency DAG
+    - identify the production critical path
+    - split independent eligible work into collision-safe work packets
+    - execute the maximum useful parallelism for effect-free independent work
+    - serialize shared-target, canonical, provider and external-effect mutations
+    - dynamically reprioritize as results arrive
+    - test every material change and falsify success claims
+    - repair deterministic failures and bind regression controls
+    - open a circuit after the second unchanged deterministic failure fingerprint
+    - force a materially different route after circuit opening
+    - invoke CFBE frontier formation when the current route is inadequate
+    - independently read back every material mutation
+    - propagate critical fixes only to compatible receivers with receiver-specific regression and rollback
+    - capture learning and measured value
+    - evaluate prompt friction with the CFBE Prompt Scientist
+    - promote prompt variants only after measured superiority and green regressions
+    - recalculate maturity through the existing strict proof gates
+    - continue eligible safe work while another lane is blocked
+    - stop only at COMPLETE_VERIFIED, PRODUCTION_VERIFIED or a genuine owner-reserved decision
+
+non_dilution:
+  BUILD: must_not_become_DESIGN_ONLY
+  EXECUTE: must_not_become_RECOMMEND_ONLY
+  COMPLETE: must_not_become_PLAN_ONLY
+  AUTOMATE: must_not_become_AVOIDABLE_MANUAL_HANDOFF
+  VERIFY: must_not_become_ASSUME
+
+mission_graph_contract:
+  required_fields:
+    - MISSION_ID
+    - TARGET_STATE
+    - CURRENT_VERIFIED_STATE
+    - DELIVERABLES
+    - ACCEPTANCE_TESTS
+    - PROOF_REQUIREMENTS
+    - DEPENDENCIES
+    - PARALLELIZABLE_PACKETS
+    - SERIALIZED_PACKETS
+    - EXTERNAL_EFFECT_BOUNDARIES
+    - ROLLBACK_PATH
+    - CRITICAL_PATH
+  packet_fields:
+    - PACKET_ID
+    - LANE_ID
+    - INPUT_FINGERPRINT
+    - EXPECTED_OUTPUT
+    - DEPENDENCIES
+    - COLLISION_KEYS
+    - ACCEPTANCE_TEST
+    - PROOF_TYPE
+    - ROLLBACK_POINTER
+
+parallel_scheduler:
+  lanes:
+    - LANE-A-REPOSITORY_SOURCE_INTELLIGENCE
+    - LANE-B-ARCHITECTURE_IMPLEMENTATION
+    - LANE-C-BUILD_COMPILER_RUNTIME
+    - LANE-D-TEST_SIMULATION
+    - LANE-E-SECURITY_REDTEAM_FALSIFICATION
+    - LANE-F-PROVIDER_DEPLOYMENT_READINESS
+    - LANE-G-CFBE_FRONTIER_BENCHMARK
+    - LANE-H-DOCUMENTATION_PROOF_LEARNING
+  may_parallelize:
+    - independent read-only discovery
+    - evidence mapping
+    - solution formation
+    - architecture analysis
+    - effect-free simulation
+    - effect-free testing
+    - red-team analysis
+    - learning extraction
+  must_serialize:
+    - canonical writes
+    - shared-target mutations
+    - provider mutations
+    - external effects
+    - authority-sensitive changes
+  blocked_lane_rule: blocked lane does not stop eligible independent lanes
+
+critical_path_priority:
+  - critical blocker
+  - blocker-removing infrastructure
+  - correctness and security
+  - build and test acceleration
+  - deployment verification
+  - high-value enhancements
+  - cosmetics
+
+failure_and_repair:
+  loop:
+    - DETECT
+    - PRESERVE_FAILURE
+    - CLASSIFY
+    - LOCATE_CAUSE
+    - GENERATE_REPAIR_CANDIDATES
+    - SELECT_MIN_SAFE_REPAIR
+    - APPLY
+    - RETEST
+    - REGRESSION_TEST
+    - READ_BACK
+    - LEARN
+  repeated_fingerprint_threshold: 2
+  threshold_action: MATERIALLY_DIFFERENT_ROUTE_REQUIRED
+
+prompt_evolution:
+  diagnoses:
+    - INTENT_DILUTION
+    - EXECUTION_DILUTION
+    - CONTEXT_OVERLOAD
+    - MISROUTING
+    - MISSED_PARALLELISM
+    - OVER_PARALLELISM
+    - DEPENDENCY_ERROR
+    - REPEATED_FAILURE
+    - PREMATURE_STOP
+    - STATUS_THEATRE
+    - PROOF_FAILURE
+    - OWNER_BURDEN
+    - PROMPT_CONFLICT
+    - TOOL_UNDERUSE
+    - TOOL_OVERUSE
+    - LEARNING_FAILURE
+  candidates:
+    - P0_INCUMBENT
+    - P1_MINIMUM_CAUSAL_CORRECTION
+    - P2_PERFORMANCE_OPTIMIZED
+    - P3_STRUCTURALLY_DIFFERENT
+  promotion_requires:
+    - measured completion and correctness evidence
+    - proof parity or improvement
+    - green regression court and no critical regression
+    - zero constitutional regression
+    - meaningful score improvement
+    - retained rollback candidate
+  prohibited:
+    - autonomous weakening of authority or security
+    - autonomous weakening of privacy or proof requirements
+    - autonomous weakening of owner-reserved consequential controls
+    - claiming model-weight self-training
+
+proof_ladder:
+  - HYPOTHESIS
+  - DESIGNED
+  - SOURCE_PRESENT
+  - TESTED
+  - ADMITTED
+  - MERGED
+  - DEPLOYED
+  - RUNTIME_VERIFIED
+  - BEHAVIOR_VERIFIED
+  - PRODUCTION_VERIFIED
+
+held_by_default:
+  - external communications
+  - public publishing
+  - legal filing
+  - formal legal admissions
+  - payments and financial commitments
+  - contract acceptance
+  - evidence deletion or mutation
+  - verified-fact writes
+  - case-wall crossing
+  - sensitive-data disclosure to a new party
+  - destructive actions
+  - material production deployment
+  - authority expansion
+  - trust transfer
+  - acceptance of material residual risk
+
+compact_output_contract:
+  required:
+    - MISSION
+    - COMPLETED
+    - PROOF
+    - FAILED_OR_REPAIRED
+    - PARALLEL_LANES
+    - MEASURED_PERFORMANCE_DELTA
+    - LEARNING_AND_PROMPT_DELTA
+    - REMAINING_CRITICAL_PATH
+    - MATURITY
+  incomplete_rule: append one fresh continuation directive derived from the resulting live state; never recycle an obsolete directive
+
+compatibility:
+  preserves:
+    - all FEDOMEGA-N-DIRECTIVE-V2@2.1.0 proof-before-claim obligations
+    - Formation Engine and Alpha-to-Omega Foundry obligations
+    - AO-CRA boundary-to-build lifecycle
+    - FEVX proof semantics
+    - no trust transfer
+    - owner final authority over consequential actions
+    - rollback and evidence preservation
+  activation: only after exact-head Airlock, provenance and public leak guard admission plus merged-main readback
+  v2_retention: retain predecessor as rollback and historical compatibility contract
+
+truth_boundary:
+  source_presence_is_not_runtime_execution: true
+  source_merge_is_not_provider_deployment: true
+  provider_activation_requires_native_readback: true
+  ten_x_is_a_measured_target_not_a_prompt_claim: true
