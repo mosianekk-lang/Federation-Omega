@@ -65,23 +65,30 @@ function coarseOsMajor(value: string | number): string {
   const text = String(value).trim();
   if (!text) return 'unknown';
   const match = text.match(/^(\d+)/);
-  return match ? match[1] : text.slice(0, 16);
+  const major = match?.[1];
+  return major ?? text.slice(0, 16);
 }
 
 function patchMonth(value?: string | null): string | null {
   if (!value) return null;
   const match = value.trim().match(PATCH);
   if (!match) throw new Error('EDGE_SECURITY_PATCH_INVALID');
-  const month = Number(match[2]);
+  const year = match[1];
+  const monthText = match[2];
+  if (!year || !monthText) throw new Error('EDGE_SECURITY_PATCH_INVALID');
+  const month = Number(monthText);
   if (month < 1 || month > 12) throw new Error('EDGE_SECURITY_PATCH_INVALID');
-  return `${match[1]}-${match[2]}`;
+  return `${year}-${monthText}`;
 }
 
 function appMajorMinor(value?: string | null): string | null {
   if (!value) return null;
   const match = value.trim().match(SEMVER_PREFIX);
   if (!match) throw new Error('EDGE_APP_VERSION_INVALID');
-  return `${match[1]}.${match[2]}`;
+  const major = match[1];
+  const minor = match[2];
+  if (!major || !minor) throw new Error('EDGE_APP_VERSION_INVALID');
+  return `${major}.${minor}`;
 }
 
 function boolOrNull(value: boolean | null | undefined): boolean | null {
@@ -131,7 +138,13 @@ export function buildAegisEdgePosture(facts: DeviceFacts): AegisEdgePosture {
 
 function monthsOld(month: string | null, collectedAt: string): number | null {
   if (!month) return null;
-  const [year, mon] = month.split('-').map(Number);
+  const match = month.match(/^(\d{4})-(\d{2})$/);
+  if (!match) return null;
+  const yearText = match[1];
+  const monText = match[2];
+  if (!yearText || !monText) return null;
+  const year = Number(yearText);
+  const mon = Number(monText);
   const now = new Date(collectedAt);
   return Math.max(0, (now.getUTCFullYear() - year) * 12 + (now.getUTCMonth() + 1 - mon));
 }
