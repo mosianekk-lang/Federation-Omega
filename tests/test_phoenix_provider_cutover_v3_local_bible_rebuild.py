@@ -63,6 +63,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         }
         scoped_read_only_oidc = {
             ".github/workflows/fkcm-pubsub-shadow-canary.yml",
+            ".github/workflows/fuse-mobile-provider-currentness-v1.yml",
             credential_policy["ai_studio_semantic_canary_workflow"],
         }
         expected = deployment_gateways | {
