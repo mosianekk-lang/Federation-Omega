@@ -5,6 +5,7 @@ import { federationGatewayConfigured, type FuseMode } from '../src/federation';
 import { iapConfigured } from '../src/iap';
 import { connectOwner, restoreOwnerSession, sendOwnerFuseMessage } from '../src/ownerConnection';
 import type { StoredSession } from '../src/session';
+import { AegisSecurityCheckCard } from '../src/AegisSecurityCheckCard';
 
 const modes: FuseMode[] = ['AUTO', 'THINK', 'CREATE', 'BUILD', 'RESEARCH'];
 
@@ -147,6 +148,8 @@ export default function Home() {
             {traceId ? <Text style={styles.trace}>Trace {traceId}</Text> : null}
           </View>
         ) : null}
+
+        <AegisSecurityCheckCard />
 
         <View style={styles.quickGrid}>
           {['Federation', 'Creative', 'Research', 'Workspace'].map((label) => (
