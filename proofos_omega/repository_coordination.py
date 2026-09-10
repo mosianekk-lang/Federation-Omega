@@ -14,6 +14,7 @@ CLAIM_SCHEMA = "FEDERATION_COORDINATION_V1"
 DEFAULT_LEASE_REF = "refs/heads/locks/fdof-repository-critical-section"
 DEFAULT_POLICY = Path(__file__).resolve().parents[1] / "governance" / "federation_repository_coordination_v2.json"
 SHA40 = re.compile(r"^[0-9a-f]{40}$")
+TERMINAL_STATES = frozenset({"RELEASED", "ABORTED"})
 
 
 @dataclass(frozen=True)
@@ -105,7 +106,7 @@ def _lease_validation_findings(lease: Mapping[str, Any], policy: Mapping[str, An
     for field in policy.get("required_lease_fields", []):
         if field not in lease or lease.get(field) in (None, "", []):
             findings.append(CoordinationFinding("LEASE_DESCRIPTOR_FIELD_MISSING", str(field)))
-    if lease.get("state") not in {"ACTIVE", "RELEASED"}:
+    if lease.get("state") not in ({"ACTIVE"} | set(TERMINAL_STATES)):
         findings.append(CoordinationFinding("LEASE_DESCRIPTOR_STATE_INVALID", str(lease.get("state"))))
     try:
         if int(lease.get("fencing_token", 0)) < 1:
@@ -124,16 +125,10 @@ def _lease_validation_findings(lease: Mapping[str, Any], policy: Mapping[str, An
     return findings
 
 
-def _released_lease_findings(lease: Mapping[str, Any]) -> list[CoordinationFinding]:
-    """Validate only the facts required to treat a lease as terminally released.
-
-    Historical writers produced some RELEASED descriptors before the full V2 field
-    contract was enforced. Those descriptors must not create a permanent repository
-    deadlock. This compatibility path does not apply to ACTIVE leases: every active
-    lease still passes the complete current required-field court.
-    """
+def _terminal_lease_findings(lease: Mapping[str, Any]) -> list[CoordinationFinding]:
+    """Validate the minimum facts required to treat a descriptor as terminal."""
     findings: list[CoordinationFinding] = []
-    if lease.get("state") != "RELEASED":
+    if lease.get("state") not in TERMINAL_STATES:
         findings.append(CoordinationFinding("LEASE_DESCRIPTOR_STATE_INVALID", str(lease.get("state"))))
     try:
         if int(lease.get("fencing_token", 0)) < 1:
@@ -165,28 +160,32 @@ def evaluate_coordination(
         lease = parse_lease_message(lease_message)
     except (ValueError, json.JSONDecodeError) as exc:
         findings.append(CoordinationFinding("LEASE_DESCRIPTOR_MALFORMED", str(exc)))
-        lease = None
         return _assessment("FAIL", "MALFORMED_LEASE", lease_commit_sha, None, findings)
 
     if lease is None:
         return _assessment("PASS", "NO_ACTIVE_V2_LEASE", lease_commit_sha, None, findings)
 
-    # A released lease is terminal and, by policy, must not block future work.
-    # Preserve a small integrity court around the release marker itself while
-    # intentionally avoiding ACTIVE-only metadata requirements.
-    if lease.get("state") == "RELEASED":
-        findings.extend(_released_lease_findings(lease))
+    state = str(lease.get("state") or "")
+    if state in TERMINAL_STATES:
+        findings.extend(_terminal_lease_findings(lease))
         if findings:
-            return _assessment("FAIL", "INVALID_RELEASED_LEASE", lease_commit_sha, lease, findings)
-        return _assessment("PASS", "LEASE_RELEASED", lease_commit_sha, lease, findings)
+            return _assessment("FAIL", "INVALID_TERMINAL_LEASE", lease_commit_sha, lease, findings)
+        return _assessment("PASS", f"LEASE_{state}", lease_commit_sha, lease, findings)
 
     findings.extend(_lease_validation_findings(lease, policy))
     if findings:
         return _assessment("FAIL", "INVALID_LEASE", lease_commit_sha, lease, findings)
 
+    # Expiry alone is never a terminal transition. An ACTIVE lease remains
+    # fail-closed until the canonical ref carries an explicit RELEASED/ABORTED
+    # descriptor. This prevents silent writer overlap after wall-clock expiry.
     expires_at = _parse_time(str(lease["expires_at"]))
     if expires_at <= now_utc:
-        return _assessment("PASS", "LEASE_EXPIRED", lease_commit_sha, lease, findings)
+        findings.append(CoordinationFinding(
+            "ACTIVE_LEASE_EXPIRED_NOT_TERMINAL",
+            "lease expires_at has passed but state is still ACTIVE; explicit RELEASED or ABORTED transition required",
+        ))
+        return _assessment("FAIL", "EXPIRED_ACTIVE_LEASE_REQUIRES_TERMINAL_TRANSITION", lease_commit_sha, lease, findings)
 
     if str(lease["source_head"]) != str(base_sha):
         findings.append(CoordinationFinding(
@@ -208,7 +207,7 @@ def evaluate_coordination(
     if claim is None:
         findings.append(CoordinationFinding(
             "ACTIVE_REPOSITORY_LEASE_UNCLAIMED",
-            "an unexpired repository lease exists but this PR does not claim it",
+            "an active repository lease exists but this PR does not claim it",
         ))
         return _assessment("FAIL", "ACTIVE_LEASE_UNCLAIMED", lease_commit_sha, lease, findings)
 
@@ -261,8 +260,8 @@ def evaluate_coordination(
         ))
 
     status = "PASS" if not findings else "FAIL"
-    state = "ACTIVE_LEASE_CLAIM_VERIFIED" if status == "PASS" else "ACTIVE_LEASE_CLAIM_REJECTED"
-    return _assessment(status, state, lease_commit_sha, lease, findings)
+    result_state = "ACTIVE_LEASE_CLAIM_VERIFIED" if status == "PASS" else "ACTIVE_LEASE_CLAIM_REJECTED"
+    return _assessment(status, result_state, lease_commit_sha, lease, findings)
 
 
 def _assessment(
