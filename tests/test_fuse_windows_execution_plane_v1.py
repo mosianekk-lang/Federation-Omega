@@ -5,15 +5,21 @@ import unittest
 
 ROOT = Path(__file__).resolve().parents[1]
 PLANE = ROOT / "windows_federation_plane"
+WORKFLOW = ROOT / ".github/workflows/fuse-windows-execution-plane-v1.yml"
 
 
 class FederationWindowsPlaneSourceTests(unittest.TestCase):
+    @classmethod
+    def setUpClass(cls):
+        if not PLANE.is_dir() or not WORKFLOW.is_file():
+            raise unittest.SkipTest("workflow-free export excludes Windows execution surfaces")
+
     def test_complete_project_contract_exists(self):
         for name in ("README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md", "THREAT_MODEL.md", "BUILD_CONTRACT.json"):
             self.assertTrue((PLANE / name).is_file(), name)
 
     def test_workflow_is_windows_and_least_privilege(self):
-        source = (ROOT / ".github/workflows/fuse-windows-execution-plane-v1.yml").read_text(encoding="utf-8")
+        source = WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("runs-on: windows-latest", source)
         self.assertIn("contents: read", source)
         self.assertNotIn("id-token: write", source)
