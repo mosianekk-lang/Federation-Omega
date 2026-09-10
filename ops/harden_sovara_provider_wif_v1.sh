@@ -8,12 +8,16 @@ PROVIDER_ID="${PROVIDER_ID:-github}"
 DEPLOYER_SA="${DEPLOYER_SA:-superior-logic-deployer@${PROJECT_ID}.iam.gserviceaccount.com}"
 REPOSITORY_ID="1292795464"
 OWNER_ID="261966700"
-CANONICAL_WORKFLOW="mosianekk-lang/Federation-Omega/.github/workflows/sovara-litellm-v2-3-provider-admission.yml@refs/heads/main"
+REPOSITORY_SLUG="mosianekk-lang/Federation-Omega"
+MAIN_REF="refs/heads/main"
+EXPECTED_OIDC_WORKFLOW_COUNT=18
+EXPECTED_OIDC_WORKFLOW_SET_SHA256="65e4cc0a148c4a0d7f0fa646692f369becc7d47db7aa68591371fa593de1c07c"
+SCRIPT_DIR="$(cd -- "$(dirname -- "${BASH_SOURCE[0]}")" && pwd)"
+AIRLOCK_POLICY="${AIRLOCK_POLICY:-${SCRIPT_DIR}/../governance/github_airlock_policy.json}"
 POOL_RESOURCE="projects/${PROJECT_NUMBER}/locations/global/workloadIdentityPools/${POOL_ID}"
 EXACT_PRINCIPAL="principalSet://iam.googleapis.com/${POOL_RESOURCE}/attribute.repository_id/${REPOSITORY_ID}"
 BROAD_PRINCIPAL="principalSet://iam.googleapis.com/${POOL_RESOURCE}/attribute.repository/mosianekk-lang/Federation-Omega"
-EXPECTED_CONDITION="assertion.repository_id=='${REPOSITORY_ID}' && assertion.repository_owner_id=='${OWNER_ID}' && assertion.ref=='refs/heads/main' && assertion.job_workflow_ref=='${CANONICAL_WORKFLOW}' && (assertion.event_name=='workflow_dispatch' || assertion.event_name=='push')"
-EXPECTED_MAPPING="google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.repository_owner_id=assertion.repository_owner_id,attribute.ref=assertion.ref,attribute.event_name=assertion.event_name,attribute.workflow_ref=assertion.job_workflow_ref"
+EXPECTED_MAPPING="google.subject=assertion.sub,attribute.repository_id=assertion.repository_id,attribute.repository_owner_id=assertion.repository_owner_id,attribute.ref=assertion.ref,attribute.event_name=assertion.event_name,attribute.workflow_ref=assertion.workflow_ref"
 APPLY_CONFIRMATION="HARDEN_SOVARA_CANONICAL_WIF_V1"
 
 MODE="plan"
@@ -30,6 +34,10 @@ Usage: ops/harden_sovara_provider_wif_v1.sh [--plan|--verify|--apply]
 --apply  Apply only that hardening delta. Requires:
          SOVARA_WIF_HARDENING_APPROVAL=HARDEN_SOVARA_CANONICAL_WIF_V1
 
+The trust condition is fail-closed to the current, source-reviewed Airlock OIDC
+workflow set on refs/heads/main. The workflow-set hash is pinned so later Airlock
+changes cannot silently widen provider trust without a new reviewed hardener.
+
 This script does not enable APIs, create service accounts, grant project roles,
 modify Cloud Run/Artifact Registry, access secrets, run model inference, or
 change application traffic.
@@ -39,9 +47,10 @@ USAGE
   *) echo "Unknown mode: ${1}" >&2; exit 2 ;;
 esac
 
-for bin in gcloud python3; do
+for bin in gcloud python3 sha256sum; do
   command -v "$bin" >/dev/null 2>&1 || { echo "Missing required command: $bin" >&2; exit 1; }
 done
+[[ -f "$AIRLOCK_POLICY" ]] || { echo "Airlock policy is not readable: $AIRLOCK_POLICY" >&2; exit 9; }
 
 read_value() { "$@" 2>/dev/null || true; }
 
@@ -62,6 +71,44 @@ import sys
 print(','.join(sorted(x.strip() for x in sys.argv[1].split(',') if x.strip())))
 PY
 }
+
+load_authorized_workflows() {
+  local rows
+  rows="$(python3 - "$AIRLOCK_POLICY" "$REPOSITORY_SLUG" "$MAIN_REF" <<'PY'
+import json,re,sys
+from pathlib import Path
+policy=json.loads(Path(sys.argv[1]).read_text(encoding='utf-8'))
+slug=sys.argv[2]
+main_ref=sys.argv[3]
+paths=policy.get('oidc_workflow_allowlist') or []
+if not isinstance(paths,list) or not paths:
+    raise SystemExit('OIDC_WORKFLOW_ALLOWLIST_EMPTY')
+if len(paths) != len(set(paths)):
+    raise SystemExit('OIDC_WORKFLOW_ALLOWLIST_DUPLICATE')
+for path in paths:
+    if not isinstance(path,str) or not re.fullmatch(r'\.github/workflows/[A-Za-z0-9._/-]+\.(?:yml|yaml)', path):
+        raise SystemExit(f'OIDC_WORKFLOW_PATH_INVALID:{path!r}')
+    print(f'{slug}/{path}@{main_ref}')
+PY
+  )"
+  mapfile -t AUTHORIZED_WORKFLOW_REFS <<<"$rows"
+  ((${#AUTHORIZED_WORKFLOW_REFS[@]} > 0)) || { echo "No authorized OIDC workflows resolved." >&2; exit 9; }
+
+  AUTHORIZED_WORKFLOW_SET_SHA="$(printf '%s\n' "${AUTHORIZED_WORKFLOW_REFS[@]}" | LC_ALL=C sort | sha256sum | awk '{print $1}')"
+  if [[ "${#AUTHORIZED_WORKFLOW_REFS[@]}" -ne "$EXPECTED_OIDC_WORKFLOW_COUNT" || "$AUTHORIZED_WORKFLOW_SET_SHA" != "$EXPECTED_OIDC_WORKFLOW_SET_SHA256" ]]; then
+    echo "Airlock OIDC workflow set drifted; refusing silent WIF trust expansion/contraction." >&2
+    exit 10
+  fi
+
+  WORKFLOW_REF_LIST_CEL="$(printf '%s\n' "${AUTHORIZED_WORKFLOW_REFS[@]}" | python3 -c 'import sys; xs=[x.strip() for x in sys.stdin if x.strip()]; print("["+",".join("'"'"'"+x+"'"'"'" for x in xs)+"]")')"
+  EXPECTED_CONDITION="assertion.repository_id=='${REPOSITORY_ID}' && assertion.repository_owner_id=='${OWNER_ID}' && assertion.ref=='${MAIN_REF}' && assertion.workflow_ref in ${WORKFLOW_REF_LIST_CEL}"
+  if ((${#EXPECTED_CONDITION} > 4096)); then
+    echo "Generated WIF condition exceeds Google Cloud 4096-character limit." >&2
+    exit 11
+  fi
+}
+
+load_authorized_workflows
 
 collect_state() {
   ACTIVE_ACCOUNT="$(read_value gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
@@ -112,7 +159,7 @@ emit_receipt() {
   python3 - <<PY
 import hashlib,json
 r={
-  'schema':'SOVARA_WIF_HARDENING_V1',
+  'schema':'SOVARA_WIF_HARDENING_V2',
   'mode':'${MODE}',
   'state':'${state}',
   'project_id':'${PROJECT_ID}',
@@ -124,6 +171,10 @@ r={
   'mapping_match':'${MAPPING_MATCH}' == 'true',
   'exact_repository_id_binding_present':'${EXACT_BINDING}' == 'true',
   'broad_repository_name_binding_present':'${BROAD_BINDING}' == 'true',
+  'authorized_workflow_count':${#AUTHORIZED_WORKFLOW_REFS[@]},
+  'authorized_workflow_set_sha256':'${AUTHORIZED_WORKFLOW_SET_SHA}',
+  'condition_length':${#EXPECTED_CONDITION},
+  'workflow_claim':'workflow_ref',
   'expected_condition_sha256':'${EXPECTED_CONDITION_SHA}',
   'observed_condition_sha256':'${OBSERVED_CONDITION_SHA}',
   'expected_mapping_sha256':'${EXPECTED_MAPPING_SHA}',
