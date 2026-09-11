@@ -35,7 +35,7 @@ class FuseMobileMdtafApi36PackageFaultTests(unittest.TestCase):
         source = SMOKE.read_text(encoding="utf-8")
         self.assertIn("cmd connectivity airplane-mode enable", source)
         self.assertIn("OFFLINE_FAULT_MODE=\"DEVICE_WIDE_RADIO\"", source)
-        self.assertIn("PACKAGE_FIREWALL_FALLBACK=1", source)
+        self.assertIn("PACKAGE_FIREWALL_USED=1", source)
         self.assertIn('run_android_package_network_fault.sh" apply', source)
         self.assertIn('run_android_package_network_fault.sh" restore', source)
         self.assertIn('"offline_fault_mode"', source)
