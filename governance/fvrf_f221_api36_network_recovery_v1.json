@@ -1,0 +1,34 @@
+{
+  "schema": "FVRF-F221-API36-NETWORK-RECOVERY-V1",
+  "version": "1.0.0",
+  "source_main": "1c573b68b7f89cf0abe106a0a271b2a29ead019f",
+  "observed_failure": {
+    "run_id": 34561497835,
+    "job_id": 103147072044,
+    "source_sha": "87ab55a5437f11742c2fe0653239dff310bdac65",
+    "apk_sha256": "481dabb116d7bcbcf308007924aca5ea929b8cba1814e86f8f331dbcd7780f95",
+    "fingerprint": "API36_CONNECTIVITY_LOSS_INJECTION_NOT_EFFECTIVE",
+    "cause": "validated Ethernet default network remained online after airplane-mode plus Wi-Fi/data disable"
+  },
+  "changed_route": "PACKAGE_UID_FIREWALL_DENY_WITH_OEM_DENY_3",
+  "source_effect_only": true,
+  "provider_effect": false,
+  "truth_boundary": {
+    "preserve_api35_device_wide_path": true,
+    "fallback_only_after_device_wide_fault_not_verified": true,
+    "package_firewall_is_package_uid_scoped": true,
+    "package_firewall_is_not_device_wide_offline_proof": true,
+    "package_firewall_readback_is_not_provider_backend_proof": true,
+    "api36_runtime_requires_separate_provider_hosted_court": true
+  },
+  "required_readback": [
+    "chain:enabled",
+    "com.federationomega.fusemobile:deny",
+    "offline app launch pid",
+    "com.federationomega.fusemobile:allow",
+    "chain:disabled",
+    "validated default network recovery",
+    "recovery relaunch",
+    "no fatal crash or ANR"
+  ]
+}
