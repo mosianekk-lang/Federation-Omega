@@ -18,7 +18,10 @@ class RoleMatrixTests(unittest.TestCase):
         for k in ('provider_request_id','input_sha256','prompt_sha256','response_text_sha256','usage_metadata','latency_ms','receipt_sha256','semantic_verified'): self.assertIn(k,s)
     def test_no_hidden_chain_of_thought_request(self): self.assertIn('Do not reveal hidden chain-of-thought',(ROOT/'scripts/run_gemini_role_matrix.py').read_text())
     def test_workflow_reuses_existing_allowlisted_path(self):
-        s=(ROOT/'.github/workflows/sovara-ai-studio-semantic-canary.yml').read_text(); self.assertIn('Run bounded portable reasoning role matrix',s); self.assertIn('scripts/run_gemini_role_matrix.py',s)
+        path=ROOT/'.github/workflows/sovara-ai-studio-semantic-canary.yml'
+        if not path.exists():
+            self.skipTest('workflow-free export excludes repository workflow controls')
+        s=path.read_text(encoding='utf-8'); self.assertIn('Run bounded portable reasoning role matrix',s); self.assertIn('scripts/run_gemini_role_matrix.py',s)
     def test_no_new_gemini_workflow(self): self.assertFalse((ROOT/'.github/workflows/fuse-gemini-role-matrix.yml').exists())
 
 if __name__=='__main__': unittest.main()
