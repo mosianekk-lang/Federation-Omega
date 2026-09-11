@@ -1,0 +1,40 @@
+name: FUSE AI-OS bootstrap v0.1
+on:
+  pull_request:
+    paths:
+      - 'fuse_aios/**'
+      - '.github/workflows/fuse-aios-bootstrap-v0-1.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  linux-source-court:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate candidate
+        run: python fuse_aios/tests/validate_candidate.py --root fuse_aios
+      - name: Build source receipt
+        run: bash fuse_aios/build/build-minimal.sh
+  windows-preflight:
+    runs-on: windows-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - name: Validate candidate
+        shell: pwsh
+        run: python fuse_aios/tests/validate_candidate.py --root fuse_aios
+      - name: Windows execution preflight
+        shell: pwsh
+        run: ./fuse_aios/windows/Invoke-FuseAiosPreflight.ps1 -Root ./fuse_aios
