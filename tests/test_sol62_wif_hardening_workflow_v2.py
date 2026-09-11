@@ -120,11 +120,15 @@ class Sol62WifHardeningWorkflowV2Tests(unittest.TestCase):
 
     def test_rollback_restores_exact_prestate_after_detected_effect(self) -> None:
         workflow = self.require_workflow()
+        rollback = workflow.split("rollback_to_prestate() {", 1)[1].split("handle_failure() {", 1)[0]
+        rollback_semantics = " ".join(
+            rollback.replace("'", " ").replace('"', " ").replace(",", " ").split()
+        )
+        self.assertIn("gcloud iam workload-identity-pools providers update-oidc", rollback_semantics)
         for fragment in (
             "rollback_to_prestate()",
             "add-iam-policy-binding",
             "remove-iam-policy-binding",
-            "workload-identity-pools','providers','update-oidc",
             "ROLLBACK_EQUIVALENT",
             "ROLLBACK_EQUIVALENCE_FAILED",
             "condition_restored",
