@@ -238,7 +238,7 @@ jobs:
     def test_mutable_action_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/public-repository-leak-guard.yml",
-            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: read\nconcurrency:\n  group: x\njobs:\n  x:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          persist-credentials: false\n",
+            "name: Guard\non:\n  pull_request:\npermissions:\n  contents: read\nconcurrency:\n  group: x\njobs:\n  test:\n    steps:\n      - uses: actions/checkout@v4\n        with:\n          persist-credentials: false\n",
             POLICY,
         )
         self.assertIn("MUTABLE_ACTION_REFERENCE", self.rules(findings))
@@ -293,9 +293,16 @@ jobs:
         text = path.read_text(encoding="utf-8")
         self.assertIn("github.event.issue.author_association == 'OWNER'", text)
         self.assertIn(title, text)
-        self.assertIn("workload-identity-pools providers update-oidc", text)
         self.assertIn("id-token: write", text)
         self.assertIn("persist-credentials: false", text)
+        self.assertIn("readback_effect_state()", text)
+        self.assertIn("PRESTATE_EQUIVALENT_NO_ROLLBACK", text)
+        self.assertIn("PROVIDER_EFFECT_DETECTED", text)
+        self.assertIn("EFFECT_STATE_UNCERTAIN", text)
+        self.assertIn('handle_failure "$apply_status" "AMBIGUOUS_APPLY"', text)
+        self.assertIn("MUTATION_ACKNOWLEDGED=true", text)
+        self.assertIn('if [[ "$effect_window" == "NO_EFFECT" ]]', text)
+        self.assertNotIn("ROLLBACK_NEEDED=true", text)
         self.assertEqual([], AIRLOCK.analyse_workflow(workflow, text, POLICY))
         self.assertFalse((ROOT / ".github/workflows/fhu047-wif-least-privilege-apply-v1.yml").exists())
         self.assertFalse((ROOT / ".github/workflows/fhu047-admin-authority-graph-census-v2.yml").exists())
