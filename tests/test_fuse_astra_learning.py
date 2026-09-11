@@ -5,13 +5,13 @@ from fuse_astra_semantic_kernel.learning import AdaptiveRouteAdvisor, OutcomeLed
 from fuse_astra_semantic_kernel.planner import GlobalCapabilityCompiler, ImplementationMeta, RoutePolicy
 
 
-def impl(cap, name, provider, cost, quality=0.9, local=False, proof=True):
+def impl(cap, name, provider, cost, quality=0.9, local=False, proof=True, latency=100.0):
     return Implementation(
         impl_id=name,
         capability_id=cap,
         provider=provider,
         quality=quality,
-        latency_ms=100.0,
+        latency_ms=latency,
         cost_units=cost,
         sovereignty=1.0 if local else 0.5,
         maturity=Maturity.LOCAL_COMPONENT,
@@ -61,8 +61,8 @@ class LearningAdvisorTests(unittest.TestCase):
         compiler = GlobalCapabilityCompiler(
             self.registry,
             [
-                ImplementationMeta(impl("CK.STATE", "fast", "vendor-a", 0.4, quality=0.9)),
-                ImplementationMeta(impl("CK.STATE", "cheap", "vendor-b", 0.1, quality=0.9)),
+                ImplementationMeta(impl("CK.STATE", "fast", "vendor-a", 0.4, quality=0.9, latency=50)),
+                ImplementationMeta(impl("CK.STATE", "cheap", "vendor-b", 0.1, quality=0.9, latency=500)),
             ],
         )
         advice = AdaptiveRouteAdvisor(compiler, OutcomeLedger()).advise("coding", self.profile)
