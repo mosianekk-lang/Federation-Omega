@@ -6,6 +6,7 @@ import {
   type FuseChatResponse,
   type FuseMessageRequest,
 } from './federation';
+import { captureEvolutionOutcome, type EvolutionReceipt } from './evolutionRuntime';
 import { getIapIdentityToken } from './iap';
 import {
   clearAccessSession,
@@ -22,6 +23,8 @@ const REFRESHABLE_SESSION_REASONS = new Set([
   'SESSION_DEVICE_BINDING_REQUIRED',
 ]);
 
+let lastEvolutionReceipt: EvolutionReceipt | null = null;
+
 function storedFromResponse(
   response: { access_token: string; expires_at: string },
   deviceToken?: string,
@@ -33,13 +36,55 @@ function storedFromResponse(
   };
 }
 
+function failureClass(error: unknown): string {
+  if (error instanceof FederationGatewayError) {
+    return `GATEWAY_HTTP_${error.status}${error.reason ? `:${error.reason}` : ''}`;
+  }
+  if (error instanceof Error && error.name) return error.name;
+  return 'UNCLASSIFIED_CLIENT_FAILURE';
+}
+
+function captureOwnerEvolution(input: Parameters<typeof captureEvolutionOutcome>[0]): EvolutionReceipt | null {
+  try {
+    lastEvolutionReceipt = captureEvolutionOutcome(input);
+    return lastEvolutionReceipt;
+  } catch {
+    return null;
+  }
+}
+
+export function getLastOwnerEvolutionReceipt(): EvolutionReceipt | null {
+  return lastEvolutionReceipt;
+}
+
 export async function connectOwner(): Promise<StoredSession> {
-  const iapIdentityToken = await getIapIdentityToken(true);
-  const enrollment = await enrollOwner(iapIdentityToken);
-  await saveDeviceCredential(enrollment.device_token);
-  const session = storedFromResponse(enrollment, enrollment.device_token);
-  await saveSession(session);
-  return session;
+  const started = Date.now();
+  try {
+    const iapIdentityToken = await getIapIdentityToken(true);
+    const enrollment = await enrollOwner(iapIdentityToken);
+    await saveDeviceCredential(enrollment.device_token);
+    const session = storedFromResponse(enrollment, enrollment.device_token);
+    await saveSession(session);
+    captureOwnerEvolution({
+      kind: 'SUCCESS',
+      operation: 'OWNER_CONNECT',
+      status: 'OWNER_ENROLLED',
+      evidenceRefs: ['PROVIDER:OWNER_ENROLLMENT_READBACK'],
+      latencyMs: Date.now() - started,
+      successfulTechnique: 'governed owner enrollment and device-bound session establishment',
+    });
+    return session;
+  } catch (error) {
+    captureOwnerEvolution({
+      kind: 'FAILURE',
+      operation: 'OWNER_CONNECT',
+      status: 'OWNER_CONNECT_FAILED',
+      evidenceRefs: [`LOCAL:${failureClass(error)}`],
+      latencyMs: Date.now() - started,
+      failureClass: failureClass(error),
+    });
+    throw error;
+  }
 }
 
 async function refreshFromDevice(deviceToken: string): Promise<StoredSession> {
@@ -70,7 +115,7 @@ export async function ensureOwnerSession(): Promise<StoredSession> {
   return refreshFromDevice(deviceToken);
 }
 
-export async function sendOwnerFuseMessage(
+async function sendOwnerFuseMessageWithRefresh(
   request: FuseMessageRequest,
   signal?: AbortSignal,
 ): Promise<FuseChatResponse> {
@@ -88,5 +133,47 @@ export async function sendOwnerFuseMessage(
     session = await refreshFromDevice(deviceToken);
     iapIdentityToken = await getIapIdentityToken(false);
     return sendFuseMessage(iapIdentityToken, session.accessToken, request, signal);
+  }
+}
+
+export async function sendOwnerFuseMessage(
+  request: FuseMessageRequest,
+  signal?: AbortSignal,
+): Promise<FuseChatResponse> {
+  const started = Date.now();
+  try {
+    const response = await sendOwnerFuseMessageWithRefresh(request, signal);
+    captureOwnerEvolution({
+      kind: 'SUCCESS',
+      operation: 'FUSE_REQUEST',
+      mode: request.mode,
+      status: response.status ?? 'OK',
+      evidenceRefs: response.trace_id
+        ? [`TRACE:${response.trace_id}`]
+        : [`PROVIDER:CHAT_READBACK:${response.status ?? 'OK'}`],
+      latencyMs: Date.now() - started,
+      successfulTechnique: `${request.mode} governed gateway route with provider readback`,
+      requirements: [
+        'preserve request cancellation support',
+        'preserve provider/source/trace proof visibility when returned',
+      ],
+    });
+    return response;
+  } catch (error) {
+    const cancelled = Boolean(signal?.aborted);
+    captureOwnerEvolution({
+      kind: cancelled ? 'BLOCKED' : 'FAILURE',
+      operation: 'FUSE_REQUEST',
+      mode: request.mode,
+      status: cancelled ? 'REQUEST_CANCELLED' : 'REQUEST_FAILED',
+      evidenceRefs: [cancelled ? 'LOCAL:USER_CANCELLED_REQUEST' : `LOCAL:${failureClass(error)}`],
+      latencyMs: Date.now() - started,
+      failureClass: cancelled ? 'USER_CANCELLED' : failureClass(error),
+      requirements: [
+        'preserve request cancellation support',
+        'retry only through bounded governed routes',
+      ],
+    });
+    throw error;
   }
 }
