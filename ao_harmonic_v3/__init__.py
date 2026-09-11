@@ -74,6 +74,19 @@ from .intelligence_router import (
     ProviderIntelligenceBinding,
     RouterOutcome,
 )
+from .openai_frontier_v2 import (
+    ASTRA,
+    LUNA,
+    SOL,
+    AsyncToolResult,
+    AstraReasoningContinuation,
+    AstraSteeringIntent,
+    FrontierResponsesPayloadBuilder,
+    FrontierToolGate,
+    OpenAIFrontierBindingCatalog,
+    OpenAIModelProfile,
+    OpenAIWorkloadClass,
+)
 from .jarvis_ao5 import (
     CapabilityRealityState,
     ExecutionState,
@@ -156,10 +169,21 @@ __all__ = [
     "OpenAI56BindingCatalog",
     "ProviderIntelligenceBinding",
     "RouterOutcome",
+    "OpenAIWorkloadClass",
+    "OpenAIModelProfile",
+    "OpenAIFrontierBindingCatalog",
+    "FrontierToolGate",
+    "FrontierResponsesPayloadBuilder",
+    "AstraSteeringIntent",
+    "AstraReasoningContinuation",
+    "AsyncToolResult",
+    "LUNA",
+    "SOL",
+    "ASTRA",
     "JarvisAO5Engine",
     "ForensicRunRequest",
     "ForensicRunResult",
     "ExecutionState",
     "CapabilityRealityState",
 ]
-__version__ = "3.3.0"
+__version__ = "3.4.0"
