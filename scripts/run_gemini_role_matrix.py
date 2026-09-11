@@ -5,6 +5,7 @@ import hashlib
 import json
 import os
 import subprocess
+import sys
 import time
 import urllib.error
 import urllib.request
@@ -310,6 +311,13 @@ def main():
     print(json.dumps(summary, sort_keys=True))
     if verified != len(receipts):
         raise SystemExit("role portfolio partial")
+
+    if os.environ.get("GITHUB_WORKFLOW", "").strip() == "SOVARA AI Studio Direct Semantic Canary":
+        subprocess.check_call(
+            [sys.executable, str(ROOT / "scripts" / "run_gemini_role_holdout_benchmark.py")],
+            cwd=str(ROOT),
+            env=os.environ.copy(),
+        )
 
 
 if __name__ == "__main__":
