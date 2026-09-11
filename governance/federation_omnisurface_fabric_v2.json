@@ -1,0 +1,52 @@
+{
+  "schema": "FEDERATION-OMNISURFACE-FABRIC-V2",
+  "version": "2.0.0",
+  "mission": "Unify current and future Federation surfaces under capability-based routing without vendor sovereignty or authority inheritance.",
+  "protocol_spine": {
+    "mcp": "2026-07-28",
+    "a2a": "1.0",
+    "event_envelope": "CloudEvents-compatible provider event envelope",
+    "direct_adapters": ["RESPONSES_API", "REST", "WEBSOCKET", "CONNECTED_PLUGIN", "FEDERATION_NATIVE"]
+  },
+  "routing_order": [
+    "MISSION_IR",
+    "CAPABILITY_REQUIREMENTS",
+    "SURFACE_DISCOVERY",
+    "PROVIDER_IDENTITY_AND_AUTHORITY_READBACK",
+    "COST_PRIVACY_REGION_EFFECT_GATES",
+    "MINIMUM_SUFFICIENT_ROUTE",
+    "FDOF_LEASE_AND_IDEMPOTENCY",
+    "EXECUTION_BY_EXISTING_PROVIDER_ADAPTER_IF_AUTHORIZED",
+    "PROVIDER_NATIVE_READBACK",
+    "PROOFOS_REALITYGUARD_SEMANTIC_VERIFICATION",
+    "CHECKPOINT_AND_LEARN"
+  ],
+  "event_fabric": {
+    "google_cloud": ["Eventarc", "Pub/Sub", "Workflows", "Cloud Run"],
+    "google_workspace": ["Workspace Events API where supported", "provider-specific watches/change notifications"],
+    "github": ["webhooks", "Actions"],
+    "market_observation": ["Luno WebSocket feed read-only"]
+  },
+  "effect_policy": {
+    "observe": "automatic when authenticated/authorized and privacy rules permit",
+    "internal": "automatic inside Federation execution boundary",
+    "draft": "automatic where reversible and provider readback exists",
+    "reversible_write": "requires exact provider authority, idempotency, rollback and semantic readback",
+    "consequential": "owner/effect permit remains mandatory where existing Federation policy requires it",
+    "financial": "autonomous live trading/transfers/orders are out of scope; Luno and LONA remain observation/research/backtest only"
+  },
+  "future_surface_admission": {
+    "no_core_code_edit_required": true,
+    "accepted_discovery_families": ["MCP/2026-07-28", "A2A/1.0", "FEDERATION_NATIVE", "REST"],
+    "requires": ["provider identity", "endpoint fingerprint", "capability advertisement", "proof refs", "authority ceiling", "readback contract"],
+    "authority_inheritance": false,
+    "maturity_inheritance": false
+  },
+  "truth_boundary": {
+    "registry_entry_proves_connection": false,
+    "connector_presence_proves_scope": false,
+    "source_admission_proves_provider_execution": false,
+    "http_success_proves_semantic_success": false,
+    "model_consensus_proves_truth": false
+  }
+}
