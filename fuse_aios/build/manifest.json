@@ -5,7 +5,7 @@
   "architectures": ["x86_64", "arm64"],
   "required_tools": ["python3", "sha256sum"],
   "initramfs_build_tools": ["static-busybox", "cpio", "gzip"],
-  "future_boot_tools": ["qemu-system-x86_64", "qemu-system-aarch64"],
-  "network_policy": "build steps must declare network use; sovereign release path uses pinned mirrors",
-  "artifacts": ["build-receipt.json", "fuse-aios-initramfs.cpio.gz", "x86_64-boot-receipt.json", "arm64-boot-receipt.json", "cpu-inference-receipt.json"]
+  "boot_tools": ["qemu-system-x86_64", "qemu-system-aarch64"],
+  "network_policy": "build steps must declare network use; sovereign release path uses pinned mirrors; bootstrap guest boot courts use no virtual NIC",
+  "artifacts": ["build-receipt.json", "fuse-aios-initramfs.cpio.gz", "x86_64-boot-receipt.json", "arm64-boot-receipt.json", "x86_64-vm-rollback-receipt.json", "arm64-vm-rollback-receipt.json", "cpu-inference-receipt.json"]
 }

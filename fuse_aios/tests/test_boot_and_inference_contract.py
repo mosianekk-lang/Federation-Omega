@@ -7,8 +7,19 @@ class TestBootAndInferenceContract(unittest.TestCase):
         self.assertEqual(set(c['architectures']), {'x86_64','arm64'})
         self.assertEqual(c['sentinel'],'FUSE_AIOS_BOOT_OK')
         self.assertEqual(c['truth_on_pass'],'EMULATED_BOOT_SENTINEL_PROVED')
-    def test_init_has_exact_sentinel(self):
-        self.assertIn('FUSE_AIOS_BOOT_OK', (ROOT/'rootfs/init').read_text())
+    def test_init_has_health_and_failure_sentinels(self):
+        text=(ROOT/'rootfs/init').read_text()
+        self.assertIn('FUSE_AIOS_BOOT_OK', text)
+        self.assertIn('FUSE_AIOS_HEALTH_FAIL', text)
+    def test_initramfs_builder_versions_health_mode(self):
+        text=(ROOT/'build/build-initramfs.sh').read_text()
+        self.assertIn('FUSE_AIOS_BOOT_MODE', text)
+        self.assertIn('FUSE_AIOS_RELEASE_VERSION', text)
+    def test_qemu_rollback_court_is_truth_bounded(self):
+        text=(ROOT/'update/run_vm_artifact_rollback.sh').read_text()
+        self.assertIn('VM_ARTIFACT_ROLLBACK_PROVED', text)
+        self.assertIn('real_block_device_rollback_proved', text)
+        self.assertIn('FUSE_AIOS_HEALTH_FAIL', text)
     def test_cpu_inference_smoke(self):
         p=subprocess.run([sys.executable,str(ROOT/'ai/inference_smoke.py'),'--model',str(ROOT/'ai/smoke-model.json')],capture_output=True,text=True,check=True)
         r=json.loads(p.stdout); self.assertEqual(r['status'],'PASS'); self.assertFalse(r['llm_or_framework_runtime_proved'])

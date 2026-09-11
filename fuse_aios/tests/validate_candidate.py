@@ -7,7 +7,7 @@ REQUIRED = [
     'architecture/CFBE-CAPABILITY-MATRIX.json','build/manifest.json',
     'boot/boot-contract.json','build/build-initramfs.sh','boot/run-qemu-smoke.sh',
     'rootfs/init','ai/smoke-model.json','ai/inference_smoke.py',
-    'update/transactional_host.py','update/run_transactional_court.py'
+    'update/transactional_host.py','update/run_transactional_court.py','update/run_vm_artifact_rollback.sh'
 ]
 def main():
     ap=argparse.ArgumentParser(); ap.add_argument('--root',required=True); ns=ap.parse_args(); root=pathlib.Path(ns.root)

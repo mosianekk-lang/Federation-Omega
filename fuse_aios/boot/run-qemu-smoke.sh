@@ -1,17 +1,22 @@
 #!/usr/bin/env bash
 set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
-ARCH=""; KERNEL=""; INITRAMFS=""; EVIDENCE_DIR="${ROOT}/out/boot-evidence"
+ARCH=""; KERNEL=""; INITRAMFS=""; EVIDENCE_DIR="${ROOT}/out/boot-evidence"; EXPECTED_SENTINEL="FUSE_AIOS_BOOT_OK"; LABEL=""
 while [[ $# -gt 0 ]]; do
   case "$1" in
     --arch) ARCH="${2:-}"; shift 2 ;;
     --kernel) KERNEL="${2:-}"; shift 2 ;;
     --initramfs) INITRAMFS="${2:-}"; shift 2 ;;
     --evidence-dir) EVIDENCE_DIR="${2:-}"; shift 2 ;;
+    --expect-sentinel) EXPECTED_SENTINEL="${2:-}"; shift 2 ;;
+    --label) LABEL="${2:-}"; shift 2 ;;
     *) echo "unknown argument: $1" >&2; exit 2 ;;
   esac
 done
 [[ "$ARCH" == x86_64 || "$ARCH" == arm64 ]] || { echo 'arch must be x86_64 or arm64' >&2; exit 2; }
+[[ "$EXPECTED_SENTINEL" == FUSE_AIOS_BOOT_OK || "$EXPECTED_SENTINEL" == FUSE_AIOS_HEALTH_FAIL ]] || { echo 'unsupported expected sentinel' >&2; exit 2; }
+LABEL="${LABEL:-$ARCH}"
+[[ "$LABEL" =~ ^[A-Za-z0-9._-]+$ ]] || { echo 'label contains unsupported characters' >&2; exit 2; }
 [[ -s "$KERNEL" && -s "$INITRAMFS" ]] || { echo 'kernel and initramfs must exist and be non-empty' >&2; exit 42; }
 if [[ "$ARCH" == x86_64 ]]; then
   QEMU=qemu-system-x86_64
@@ -42,28 +47,29 @@ if [[ ! -r "$KERNEL" ]]; then
   fi
 fi
 [[ -r "$BOOT_KERNEL" && -s "$BOOT_KERNEL" ]] || { echo 'staged kernel is not readable and non-empty' >&2; exit 45; }
-LOG="$EVIDENCE_DIR/${ARCH}-serial.log"; RECEIPT="$EVIDENCE_DIR/${ARCH}-boot-receipt.json"
+LOG="$EVIDENCE_DIR/${LABEL}-serial.log"; RECEIPT="$EVIDENCE_DIR/${LABEL}-boot-receipt.json"
 "$QEMU" -machine "$MACHINE" "${CPU[@]}" -m 256 -smp 1 -nographic -no-reboot -nic none \
   -kernel "$BOOT_KERNEL" -initrd "$INITRAMFS" \
   -append "console=$CONSOLE,115200 panic=-1 $EARLY" >"$LOG" 2>&1 &
 PID=$!
 FOUND=0
 for _ in $(seq 1 180); do
-  if grep -Fq 'FUSE_AIOS_BOOT_OK' "$LOG" 2>/dev/null; then FOUND=1; break; fi
+  if grep -Fq "$EXPECTED_SENTINEL" "$LOG" 2>/dev/null; then FOUND=1; break; fi
   if ! kill -0 "$PID" 2>/dev/null; then break; fi
   sleep 0.25
 done
 if kill -0 "$PID" 2>/dev/null; then kill "$PID" 2>/dev/null || true; fi
 wait "$PID" 2>/dev/null || true
-[[ "$FOUND" == 1 ]] || { cat "$LOG" >&2; echo 'boot sentinel not observed' >&2; exit 44; }
-python3 - "$ARCH" "$BOOT_KERNEL" "$INITRAMFS" "$LOG" "$RECEIPT" "$QEMU" "${FUSE_AIOS_SOURCE_SHA:-UNKNOWN}" "$KERNEL_STAGED" "$(basename "$KERNEL")" <<'PY'
+[[ "$FOUND" == 1 ]] || { cat "$LOG" >&2; echo "expected boot sentinel not observed: $EXPECTED_SENTINEL" >&2; exit 44; }
+python3 - "$ARCH" "$BOOT_KERNEL" "$INITRAMFS" "$LOG" "$RECEIPT" "$QEMU" "${FUSE_AIOS_SOURCE_SHA:-UNKNOWN}" "$KERNEL_STAGED" "$(basename "$KERNEL")" "$EXPECTED_SENTINEL" "$LABEL" <<'PY'
 import hashlib, json, pathlib, subprocess, sys
-arch,kernel,initramfs,log,receipt,qemu,source_sha,kernel_staged,kernel_source_name=sys.argv[1:]
+arch,kernel,initramfs,log,receipt,qemu,source_sha,kernel_staged,kernel_source_name,expected,label=sys.argv[1:]
 def sha(p): return hashlib.sha256(pathlib.Path(p).read_bytes()).hexdigest()
 version=subprocess.check_output([qemu,'--version'],text=True,errors='replace').splitlines()[0]
 out={
     'schema':'FUSE-AIOS-QEMU-BOOT-RECEIPT-V1',
     'source_sha':source_sha,
+    'label':label,
     'arch':arch,
     'kernel_sha256':sha(kernel),
     'kernel_source_name':kernel_source_name,
@@ -72,7 +78,9 @@ out={
     'serial_log_sha256':sha(log),
     'qemu_version':version,
     'network_devices':'NONE',
-    'sentinel':'FUSE_AIOS_BOOT_OK',
+    'expected_sentinel':expected,
+    'observed_sentinel':expected,
+    'boot_health':'HEALTHY' if expected == 'FUSE_AIOS_BOOT_OK' else 'EXPECTED_HEALTH_FAILURE_SIGNAL',
     'truth':'EMULATED_BOOT_SENTINEL_PROVED',
     'physical_hardware_proved':False
 }

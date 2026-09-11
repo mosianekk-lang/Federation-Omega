@@ -3,6 +3,14 @@ set -eu
 /bin/busybox --install -s /bin
 /bin/mount -t proc proc /proc 2>/dev/null || true
 /bin/mount -t sysfs sysfs /sys 2>/dev/null || true
-echo "FUSE_AIOS_BOOT_OK arch=$(/bin/uname -m) pid=$$"
+MODE="$(/bin/cat /etc/fuse-aios-boot-mode 2>/dev/null || echo healthy)"
+VERSION="$(/bin/cat /etc/fuse-aios-release 2>/dev/null || echo unknown)"
+ARCH="$(/bin/uname -m)"
+if [ "$MODE" = "fail_health" ]; then
+  echo "FUSE_AIOS_HEALTH_FAIL version=$VERSION arch=$ARCH pid=$$"
+  /bin/sync
+  while true; do /bin/busybox sleep 3600; done
+fi
+echo "FUSE_AIOS_BOOT_OK version=$VERSION arch=$ARCH pid=$$"
 /bin/sync
 while true; do /bin/busybox sleep 3600; done
