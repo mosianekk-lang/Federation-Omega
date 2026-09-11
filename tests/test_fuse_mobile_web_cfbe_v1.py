@@ -93,3 +93,72 @@ def test_no_web_identity_or_session_secret_is_hardcoded() -> None:
     assert "private_key" not in lowered
     assert "refresh_token" not in lowered
     assert "sk-" not in lowered
+
+
+def test_anthropic_harvest_registry_has_42_unique_genes() -> None:
+    source = read("src/anthropicCfbe.ts")
+    ids = re.findall(r'id: "(ANTH-\d{3})"', source)
+    assert len(ids) == 42
+    assert len(set(ids)) == 42
+    assert ids[0] == "ANTH-001"
+    assert ids[-1] == "ANTH-042"
+
+
+def test_anthropic_harvest_runtime_primitives_are_present() -> None:
+    source = read("src/anthropicCfbe.ts")
+    required = {
+        "discoverDeferredTools",
+        "selectProgressiveSkills",
+        "screenUntrustedContext",
+        "classifyActionRisk",
+        "compactSessionEvents",
+        "buildResearchFanout",
+        "chooseModelLane",
+        "createMissionCheckpoint",
+        "evaluateObservedOutcome",
+        "compileDeviceCapability",
+        "capBlastRadius",
+        "gateSubagentHandoff",
+        "harvestDisposition",
+    }
+    for name in required:
+        assert f"function {name}" in source
+
+
+def test_anthropic_harvest_effect_gate_is_fail_closed() -> None:
+    source = read("src/anthropicCfbe.ts")
+    assert 'const deny = effect === "PRIVILEGED" && secretSignal' in source
+    assert 'requiresOwnerApproval: !deny' in source
+    assert "dangerously-skip-permissions" not in source
+
+
+def test_anthropic_harvest_context_screen_and_truth_boundary() -> None:
+    source = read("src/anthropicCfbe.ts")
+    doc = read("CFBE_ANTHROPIC_DEEP_HARVEST_V1.md")
+    for marker in ['"instruction-override"', '"secret-request"', '"authority-escalation"']:
+        assert marker in source
+    assert "[UNTRUSTED_CONTEXT:" in source
+    assert '"RUNTIME_GATED"' in source
+    assert '"PROVIDER_GATED"' in source
+    assert "Still requires empirical/provider proof" in doc
+    assert "No gene may be promoted merely because a file exists" in doc
+
+
+def test_anthropic_harvest_context_efficiency_and_outcome_truth() -> None:
+    source = read("src/anthropicCfbe.ts")
+    for marker in ["deferredSchema", "bodyRef", "resourceRefs", "semantic-token-overlap"]:
+        assert marker in source
+    assert "claim-observation-mismatch" in source
+    assert "observedState" in source
+
+
+def test_anthropic_harvest_device_contract_defaults_to_owner_presence() -> None:
+    source = read("src/anthropicCfbe.ts")
+    assert "requiresOwnerPresence: input.requiresOwnerPresence ?? true" in source
+    assert "maxConcurrentActions: Math.max(1" in source
+
+
+def test_anthropic_harvest_embeds_no_provider_secret_material() -> None:
+    joined = "\n".join([read("src/anthropicCfbe.ts"), read("CFBE_ANTHROPIC_DEEP_HARVEST_V1.md")])
+    for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY="]:
+        assert token not in joined
