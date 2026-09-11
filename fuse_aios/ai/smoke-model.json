@@ -1,0 +1,14 @@
+{
+  "schema": "FUSE-AIOS-TINY-NN-V1",
+  "name": "xor-smoke",
+  "hidden_weights": [[20.0, 20.0], [-20.0, -20.0]],
+  "hidden_bias": [-10.0, 30.0],
+  "output_weights": [20.0, 20.0],
+  "output_bias": -30.0,
+  "cases": [
+    {"input": [0.0, 0.0], "expected": 0},
+    {"input": [1.0, 0.0], "expected": 1},
+    {"input": [0.0, 1.0], "expected": 1},
+    {"input": [1.0, 1.0], "expected": 0}
+  ]
+}

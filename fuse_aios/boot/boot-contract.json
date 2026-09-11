@@ -1,0 +1,22 @@
+{
+  "schema": "FUSE-AIOS-BOOT-CONTRACT-V1",
+  "version": "0.1.0",
+  "sentinel": "FUSE_AIOS_BOOT_OK",
+  "timeout_seconds": 45,
+  "architectures": {
+    "x86_64": {
+      "qemu": "qemu-system-x86_64",
+      "machine": "q35,accel=tcg",
+      "console": "ttyS0",
+      "kernel_env": "FUSE_AIOS_KERNEL_X86_64"
+    },
+    "arm64": {
+      "qemu": "qemu-system-aarch64",
+      "machine": "virt,accel=tcg",
+      "cpu": "cortex-a57",
+      "console": "ttyAMA0",
+      "kernel_env": "FUSE_AIOS_KERNEL_ARM64"
+    }
+  },
+  "truth_on_pass": "EMULATED_BOOT_SENTINEL_PROVED"
+}
