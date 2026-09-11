@@ -1,0 +1,44 @@
+{
+  "schema": "FEDERATION-ASTRA-CAPABILITY-PROFILE-V1",
+  "version": "1.0.0",
+  "status": "SOURCE_ADMISSION_CANDIDATE_NO_PROVIDER_RUNTIME_CLAIM",
+  "model": {
+    "provider": "OPENAI",
+    "api_model_id": "gpt-6-astra",
+    "surface": "RESPONSES_API",
+    "knowledge_cutoff": "2026-04-30",
+    "context_window_tokens": 1050000,
+    "max_output_tokens": 128000,
+    "reasoning_efforts": ["low", "medium", "high", "xhigh", "max"],
+    "unsupported_reasoning_efforts": ["none"]
+  },
+  "tool_capabilities": {
+    "web_search": true,
+    "file_search": true,
+    "image_generation": true,
+    "code_interpreter": true,
+    "hosted_shell": true,
+    "apply_patch": true,
+    "skills": true,
+    "computer_use": true,
+    "mcp": true,
+    "async_tool_calling": true,
+    "mid_turn_steering": true,
+    "reasoning_configuration_update": true
+  },
+  "federation_binding": {
+    "async_tool_calling": "Formation mission graph + FDOF call/lease ledger",
+    "mid_turn_steering": "N-OMEGA steering continuation",
+    "reasoning_configuration_update": "Adaptive Intelligence Router feedback escalation/de-escalation",
+    "computer_use": "Windows Federation Plane / provider computer-use adapter behind effect gates",
+    "hosted_shell_apply_patch": "ARCHITECT-OMEGA code/test/repair lane",
+    "mcp": "OmniSurface capability gateway; provider identity and tool effect remain separately authorized"
+  },
+  "truth_boundary": {
+    "source_profile_proves_provider_availability": false,
+    "provider_binding_proves_api_authority": false,
+    "source_merge_proves_runtime_execution": false,
+    "model_output_proves_completion": false,
+    "provider_safety_monitoring_replaces_internal_proof": false
+  }
+}
