@@ -1,0 +1,52 @@
+{
+  "schema": "CFBE_GITHUB_SURFACE_MARKET_HARVEST_V1",
+  "recorded_at": "2026-09-05T22:52:00+02:00",
+  "mission": "github-surface-omega-market-harvest-v1",
+  "benchmark_organizations": [
+    "GitHub",
+    "GitLab",
+    "Microsoft Azure DevOps",
+    "Harness",
+    "Buildkite",
+    "SLSA",
+    "OpenSSF Scorecard"
+  ],
+  "harvested_genes": [
+    "provider_ruleset_admission",
+    "immutable_action_references",
+    "zero_schedule_default",
+    "oidc_explicit_registration_and_concurrency",
+    "pull_request_target_zero_trust",
+    "agent_tool_least_privilege",
+    "agent_mcp_explicit_registration",
+    "policy_scorecard",
+    "slsa_artifact_attestation_target",
+    "change_aware_proof_selection",
+    "composite_human_agent_provider_identity_target",
+    "protected_resource_branch_control_target"
+  ],
+  "reuse": [
+    "tools/github_control_plane.py",
+    "ProofOS",
+    "Federation Omega Airlock",
+    "FDOF repository fencing",
+    "CODEOWNERS",
+    "SECURITY.md"
+  ],
+  "new_source_differentiators": [
+    "GitHub Control Plane v2 market-frontier ratchet",
+    "whole-estate source-control scorecard",
+    "custom-agent least-privilege validator",
+    "Copilot-hook registration gate",
+    "read-only Federation GitHub Guardian profile",
+    "ProofOS binding for the new control-plane court"
+  ],
+  "current_provider_limitations": [
+    "main branch provider protection is absent",
+    "repository rulesets are absent",
+    "legacy scheduled workflow definitions remain on current main until separately converged and admitted",
+    "merge queue is not available for a user-owned public repository under current GitHub availability",
+    "real artifact attestation and SLSA release proof remain unexecuted"
+  ],
+  "truth_boundary": "Benchmark-derived source implementation only; no market superiority, provider protection, deployment, runtime, or 2x owner-value claim."
+}

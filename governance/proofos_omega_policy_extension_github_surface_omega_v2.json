@@ -1,0 +1,20 @@
+{
+  "schema": "FEDERATION_PROOFOS_OMEGA_POLICY_EXTENSION_V1",
+  "policy_id": "GITHUB_SURFACE_OMEGA_V2",
+  "version": "1.0.0",
+  "tier": "R4_CORE",
+  "depends_on": ["FEDERATION_CORE"],
+  "production_paths": [
+    "tools/github_control_plane.py",
+    "governance/github_control_plane_policy.json",
+    ".github/agents/federation-github-guardian.agent.md"
+  ],
+  "proofs": [
+    {
+      "proof_id": "github_surface_omega_v2_regression",
+      "kind": "unittest_glob",
+      "target": "test_github_control_plane.py"
+    }
+  ],
+  "truth_boundary": "Source/control-plane admission only. No provider ruleset, attestation, deployment, schedule, IAM, runtime maturity or owner-value promotion is conferred by this extension."
+}

@@ -4,6 +4,8 @@ on:
   pull_request:
     paths:
       - '.github/workflows/**'
+      - '.github/agents/**'
+      - '.github/hooks/**'
       - '.github/CODEOWNERS'
       - '.gitignore'
       - 'governance/github_control_plane_policy.json'
@@ -13,6 +15,8 @@ on:
     branches: [main]
     paths:
       - '.github/workflows/**'
+      - '.github/agents/**'
+      - '.github/hooks/**'
       - '.github/CODEOWNERS'
       - '.gitignore'
       - 'governance/github_control_plane_policy.json'
@@ -44,7 +48,7 @@ jobs:
       - name: Run control-plane regression tests
         run: python -m unittest discover -s tests -p 'test_github_control_plane.py' -v
 
-      - name: Enforce changed-workflow authority policy
+      - name: Enforce changed GitHub control-surface policy
         env:
           EVENT_NAME: ${{ github.event_name }}
           BASE_SHA: ${{ github.event.pull_request.base.sha || github.event.before }}
