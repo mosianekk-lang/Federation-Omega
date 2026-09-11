@@ -37,7 +37,17 @@ if [[ "$ADB_COUNT" -ne 1 ]]; then
   exit 3
 fi
 
+PACKAGE_FIREWALL_USED=0
+PACKAGE_FIREWALL_ACTIVE=0
+PACKAGE_FIREWALL_RECOVERY=0
+OFFLINE_FAULT_MODE="DEVICE_WIDE_RADIO"
+
 restore_connectivity() {
+  if [[ "$PACKAGE_FIREWALL_ACTIVE" -eq 1 ]]; then
+    bash "$SCRIPT_DIR/run_android_package_network_fault.sh" restore \
+      --package "$PACKAGE_ID" --evidence-dir "$EVIDENCE_DIR" >/dev/null 2>&1 || true
+    PACKAGE_FIREWALL_ACTIVE=0
+  fi
   "$ADB" shell cmd connectivity airplane-mode disable >/dev/null 2>&1 || true
   "$ADB" shell svc wifi enable >/dev/null 2>&1 || true
   "$ADB" shell svc data enable >/dev/null 2>&1 || true
@@ -113,10 +123,20 @@ if ! icmp_diagnostic; then OFFLINE_PING_BLOCKED=1; fi
 CONNECTIVITY_LOSS=0
 if [[ "$AIRPLANE_CMD" -eq 1 && "$AIRPLANE_ON" == *"enabled"* && "$OFFLINE_VALIDATED_ABSENT" -eq 1 ]]; then
   CONNECTIVITY_LOSS=1
-fi
-if [[ "$CONNECTIVITY_LOSS" -ne 1 ]]; then
-  echo "Connectivity-loss injection was not verified; refusing offline PASS" >&2
-  exit 7
+else
+  # Android API 36 hosted emulators can retain a validated Ethernet default network even when
+  # radio controls are disabled. Change mechanism rather than replaying the ineffective route:
+  # use the platform ConnectivityService OEM deny chain to deny this package UID only.
+  OFFLINE_FAULT_MODE="PACKAGE_UID_FIREWALL_DENY"
+  PACKAGE_FIREWALL_USED=1
+  PACKAGE_FIREWALL_ACTIVE=1
+  if bash "$SCRIPT_DIR/run_android_package_network_fault.sh" apply \
+      --package "$PACKAGE_ID" --evidence-dir "$EVIDENCE_DIR"; then
+    CONNECTIVITY_LOSS=1
+  else
+    echo "Connectivity-loss injection was not verified; refusing offline PASS" >&2
+    exit 7
+  fi
 fi
 
 "$ADB" shell am force-stop "$PACKAGE_ID"
@@ -127,6 +147,16 @@ if [[ -z "$OFFLINE_PID" ]]; then
 fi
 "$ADB" exec-out screencap -p > "$EVIDENCE_DIR/offline-launch.png"
 
+if [[ "$PACKAGE_FIREWALL_USED" -eq 1 ]]; then
+  if bash "$SCRIPT_DIR/run_android_package_network_fault.sh" restore \
+      --package "$PACKAGE_ID" --evidence-dir "$EVIDENCE_DIR"; then
+    PACKAGE_FIREWALL_RECOVERY=1
+    PACKAGE_FIREWALL_ACTIVE=0
+  else
+    echo "Package-network recovery was not verified after offline test" >&2
+    exit 9
+  fi
+fi
 restore_connectivity
 AIRPLANE_OFF=0
 RECOVERY_VALIDATED=0
@@ -141,9 +171,13 @@ for _ in $(seq 1 30); do
   sleep 2
 done
 NETWORK_RECOVERY=0
-if [[ "$AIRPLANE_OFF" -eq 1 && "$RECOVERY_VALIDATED" -eq 1 ]]; then NETWORK_RECOVERY=1; fi
+if [[ "$AIRPLANE_OFF" -eq 1 && "$RECOVERY_VALIDATED" -eq 1 ]]; then
+  if [[ "$PACKAGE_FIREWALL_USED" -eq 0 || "$PACKAGE_FIREWALL_RECOVERY" -eq 1 ]]; then
+    NETWORK_RECOVERY=1
+  fi
+fi
 if [[ "$NETWORK_RECOVERY" -ne 1 ]]; then
-  echo "Validated Android default-network recovery was not verified after offline test" >&2
+  echo "Validated Android network recovery was not verified after offline test" >&2
   exit 9
 fi
 
@@ -162,7 +196,7 @@ fi
 "$ADB" shell dumpsys meminfo "$PACKAGE_ID" > "$EVIDENCE_DIR/meminfo-final.txt"
 "$ADB" logcat -d > "$EVIDENCE_DIR/logcat.txt"
 
-python - "$APK" "$EVIDENCE_DIR" "$PACKAGE_ID" "$FIRST_PID" "$SECOND_PID" "$OFFLINE_PID" "$RECOVERY_PID" "$NETWORK_BASELINE" "$CONNECTIVITY_LOSS" "$NETWORK_RECOVERY" "$AIRPLANE_CMD" "$WIFI_OFF" "$DATA_OFF" "$OFFLINE_VALIDATED_ABSENT" "$AIRPLANE_OFF" "$RECOVERY_VALIDATED" "$BASELINE_PING_DIAGNOSTIC" "$OFFLINE_PING_BLOCKED" "$RECOVERY_PING_DIAGNOSTIC" <<'PY'
+python - "$APK" "$EVIDENCE_DIR" "$PACKAGE_ID" "$FIRST_PID" "$SECOND_PID" "$OFFLINE_PID" "$RECOVERY_PID" "$NETWORK_BASELINE" "$CONNECTIVITY_LOSS" "$NETWORK_RECOVERY" "$AIRPLANE_CMD" "$WIFI_OFF" "$DATA_OFF" "$OFFLINE_VALIDATED_ABSENT" "$AIRPLANE_OFF" "$RECOVERY_VALIDATED" "$BASELINE_PING_DIAGNOSTIC" "$OFFLINE_PING_BLOCKED" "$RECOVERY_PING_DIAGNOSTIC" "$OFFLINE_FAULT_MODE" "$PACKAGE_FIREWALL_USED" "$PACKAGE_FIREWALL_RECOVERY" <<'PY'
 import hashlib
 import json
 import re
@@ -188,6 +222,9 @@ first_pid, second_pid, offline_pid, recovery_pid = sys.argv[4:8]
     offline_ping_blocked,
     recovery_ping_diagnostic,
 ) = [x == "1" for x in sys.argv[8:20]]
+offline_fault_mode = sys.argv[20]
+package_firewall_used = sys.argv[21] == "1"
+package_firewall_recovery = sys.argv[22] == "1"
 log = (evidence / "logcat.txt").read_text(encoding="utf-8", errors="replace")
 
 fatal_patterns = [
@@ -224,7 +261,12 @@ receipt = {
     "offline_launch_state": "PASS" if offline_pid else "FAIL",
     "network_recovery_state": "PASS" if network_recovery else "FAIL",
     "recovery_launch_state": "PASS" if recovery_pid else "FAIL",
-    "connectivity_probe": "ANDROID_ACTIVE_DEFAULT_NETWORK_INTERNET_VALIDATED",
+    "offline_fault_mode": offline_fault_mode,
+    "connectivity_probe": (
+        "PACKAGE_UID_FIREWALL_DENY_WITH_EXACT_READBACK"
+        if package_firewall_used
+        else "ANDROID_ACTIVE_DEFAULT_NETWORK_INTERNET_VALIDATED"
+    ),
     "connectivity_controls": {
         "airplane_mode_enable_supported": airplane_cmd,
         "wifi_disable_supported": wifi_off,
@@ -232,6 +274,8 @@ receipt = {
         "offline_validated_default_absent": offline_validated_absent,
         "airplane_mode_disable_readback": airplane_off,
         "recovery_validated_default_present": recovery_validated,
+        "package_firewall_fallback": package_firewall_used,
+        "package_firewall_recovery": package_firewall_recovery,
         "baseline_ping_diagnostic_only": baseline_ping_diagnostic,
         "offline_ping_blocked_diagnostic_only": offline_ping_blocked,
         "recovery_ping_diagnostic_only": recovery_ping_diagnostic,
@@ -244,6 +288,11 @@ receipt = {
         "connectivity-recovery.txt",
         "connectivity-recovery.json",
     ],
+    "truth_boundary": {
+        "package_firewall_mode_is_package_uid_scoped": package_firewall_used,
+        "package_firewall_mode_is_not_device_wide_offline_proof": package_firewall_used,
+        "offline_process_survival_alone_is_not_offline_proof": True,
+    },
     "fatal_or_anr_hits": fatal_hits[:50],
     "screenshots": [
         "first-launch.png",
