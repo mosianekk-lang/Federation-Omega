@@ -38,7 +38,7 @@ class OpenAIWorkloadClass(str, Enum):
 
 @dataclass(frozen=True)
 class OpenAIModelProfile:
-    profile_id: str
+    profile_key: str
     model_id: str
     workload_class: OpenAIWorkloadClass
     supported_efforts: tuple[str, ...]
@@ -52,7 +52,7 @@ class OpenAIModelProfile:
 
 
 LUNA = OpenAIModelProfile(
-    profile_id="OPENAI-GPT56-LUNA-V1",
+    profile_key="OPENAI-GPT56-LUNA-V1",
     model_id="gpt-5.6-luna",
     workload_class=OpenAIWorkloadClass.BULK,
     supported_efforts=("none", "low", "medium", "high", "xhigh", "max"),
@@ -66,7 +66,7 @@ LUNA = OpenAIModelProfile(
 )
 
 SOL = OpenAIModelProfile(
-    profile_id="OPENAI-GPT56-SOL-V1",
+    profile_key="OPENAI-GPT56-SOL-V1",
     model_id="gpt-5.6-sol",
     workload_class=OpenAIWorkloadClass.BALANCED,
     supported_efforts=("low", "medium", "high", "xhigh", "max"),
@@ -80,7 +80,7 @@ SOL = OpenAIModelProfile(
 )
 
 ASTRA = OpenAIModelProfile(
-    profile_id="OPENAI-GPT6-ASTRA-V1",
+    profile_key="OPENAI-GPT6-ASTRA-V1",
     model_id="gpt-6-astra",
     workload_class=OpenAIWorkloadClass.HARD_END_TO_END,
     supported_efforts=("low", "medium", "high", "xhigh", "max"),
@@ -176,7 +176,7 @@ class OpenAIFrontierBindingCatalog:
             else CostClass.C1_MICRO_SERVERLESS
         )
         return ProviderIntelligenceBinding(
-            binding_id=f"{profile.profile_id}::{assessment.desired_tier.value}",
+            binding_id=f"{profile.profile_key}::{assessment.desired_tier.value}",
             provider="OPENAI",
             surface="RESPONSES_API",
             tier=assessment.desired_tier,
