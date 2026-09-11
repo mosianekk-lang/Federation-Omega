@@ -1,0 +1,17 @@
+{
+  "schema": "FUSE_PRODUCT_RELEASE_FACTORY_GOVERNANCE_V1",
+  "authority_ceiling": "A1_INTERNAL_SOURCE_CI",
+  "provider_effect_authorized": false,
+  "external_publication_authorized": false,
+  "spend_authorized": false,
+  "destructive_effect_authorized": false,
+  "purpose": "Compile deterministic source-level product, release, installer, update, feature-flag, trust, tenant/auth and support contracts without claiming provider deployment or runtime success.",
+  "proof_boundary": {
+    "source": "eligible after exact-head admission",
+    "installer": "unproven until signed artifact plus clean install/upgrade/uninstall/rollback",
+    "website": "unproven until provider deployment plus semantic readback",
+    "secure_update": "unproven until root/signature/rotation/rollback-attack tests",
+    "owner_workstation": "unproven without live host attestation",
+    "commercial_value": "unproven without owner/customer evidence"
+  }
+}
