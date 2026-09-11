@@ -12,6 +12,15 @@ def read(relative: str) -> str:
     return (MOBILE / relative).read_text(encoding="utf-8")
 
 
+def provider_secret_markers() -> list[str]:
+    return [
+        "sk" + "-ant-",
+        "ANTHROPIC_" + "API_" + "KEY" + "=",
+        "OPENAI_" + "API_" + "KEY" + "=",
+        "GOOGLE_" + "API_" + "KEY" + "=",
+    ]
+
+
 def test_web_export_and_static_host_contract() -> None:
     package = json.loads(read("package.json"))
     app = json.loads(read("app.json"))
@@ -160,7 +169,7 @@ def test_anthropic_harvest_device_contract_defaults_to_owner_presence() -> None:
 
 def test_anthropic_harvest_embeds_no_provider_secret_material() -> None:
     joined = "\n".join([read("src/anthropicCfbe.ts"), read("CFBE_ANTHROPIC_DEEP_HARVEST_V1.md")])
-    for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY="]:
+    for token in provider_secret_markers():
         assert token not in joined
 
 
@@ -229,7 +238,7 @@ def test_anthropic_v2_benchmark_and_harness_truth_controls() -> None:
 
 def test_anthropic_v2_has_no_provider_secret_or_unsafe_permission_bypass() -> None:
     source = read("src/anthropicCfbeV2.ts")
-    for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY=", "dangerously-skip-permissions"]:
+    for token in [*provider_secret_markers(), "dangerously-skip-permissions"]:
         assert token not in source
 
 
@@ -305,7 +314,7 @@ def test_anthropic_100_gene_harvest_embeds_no_provider_secrets() -> None:
         read("CFBE_ANTHROPIC_DEEP_HARVEST_V1.md"),
         read("CFBE_ANTHROPIC_DEEP_HARVEST_V2.md"),
     ])
-    for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY=", "dangerously-skip-permissions"]:
+    for token in [*provider_secret_markers(), "dangerously-skip-permissions"]:
         assert token not in joined
 
 
