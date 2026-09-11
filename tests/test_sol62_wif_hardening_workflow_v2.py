@@ -67,16 +67,61 @@ class Sol62WifHardeningWorkflowV2Tests(unittest.TestCase):
         self.assertIn("assert apply.get('mode') == 'plan'", workflow)
         self.assertIn("assert apply.get('mutation_performed') is False", workflow)
 
-    def test_rollback_is_armed_before_mutating_apply_and_restores_exact_prestate(self) -> None:
+    def test_failed_apply_classifies_effect_before_any_mutating_rollback(self) -> None:
         workflow = self.require_workflow()
-        armed = workflow.index("ROLLBACK_NEEDED=true")
+        handler = workflow.split("handle_failure() {", 1)[1].split(
+            'test "${{ github.event.issue.title }}"', 1
+        )[0]
+        self.assertIn("readback_effect_state", handler)
+        self.assertIn("effect_status=$?", handler)
+        self.assertIn('if [[ $effect_status -eq 0 ]]', handler)
+        self.assertIn('if [[ $effect_status -eq 10 ]]', handler)
+        self.assertIn('if [[ "$effect_window" == "NO_EFFECT" ]]', handler)
+        self.assertIn("rollback_to_prestate", handler)
+        self.assertLess(handler.index("readback_effect_state"), handler.index("rollback_to_prestate"))
+        no_effect_branch = handler.split('if [[ $effect_status -eq 0 ]]', 1)[1].split(
+            'if [[ $effect_status -eq 10 ]]', 1
+        )[0]
+        self.assertNotIn("rollback_to_prestate", no_effect_branch)
+        external_drift_branch = handler.split('if [[ "$effect_window" == "NO_EFFECT" ]]', 1)[1].split("fi", 1)[0]
+        self.assertNotIn("rollback_to_prestate", external_drift_branch)
+        uncertain_branch = handler.split('echo "WIF effect state uncertain', 1)[1].split("exit 98", 1)[0]
+        self.assertNotIn("rollback_to_prestate", uncertain_branch)
+
+    def test_readback_classifier_is_provider_read_only(self) -> None:
+        workflow = self.require_workflow()
+        classifier = workflow.split("readback_effect_state() {", 1)[1].split(
+            "rollback_to_prestate() {", 1
+        )[0]
+        self.assertIn("providers','describe'", classifier)
+        self.assertIn("service-accounts','get-iam-policy'", classifier)
+        self.assertIn("PRESTATE_EQUIVALENT_NO_ROLLBACK", classifier)
+        self.assertIn("PROVIDER_EFFECT_DETECTED", classifier)
+        self.assertIn("EFFECT_STATE_UNCERTAIN", classifier)
+        for mutator in (
+            "add-iam-policy-binding",
+            "remove-iam-policy-binding",
+            "providers','update-oidc'",
+            "gcloud services enable",
+        ):
+            self.assertNotIn(mutator, classifier)
+
+    def test_mutation_ack_is_armed_only_after_successful_apply_return(self) -> None:
+        workflow = self.require_workflow()
         apply = workflow.index("bash ./ops/harden_sovara_provider_wif_v1.sh --apply")
-        disarmed = workflow.index("ROLLBACK_NEEDED=false", armed + 1)
-        self.assertLess(armed, apply)
-        self.assertLess(apply, disarmed)
+        failure_gate = workflow.index("if [[ $apply_status -ne 0 ]]", apply)
+        acknowledged = workflow.index("MUTATION_ACKNOWLEDGED=true", apply)
+        self.assertLess(apply, failure_gate)
+        self.assertLess(failure_gate, acknowledged)
+        self.assertIn('handle_failure "$apply_status" "AMBIGUOUS_APPLY"', workflow)
+        self.assertIn("trap 'handle_failure \"$?\" \"ACKED_APPLY\"' ERR", workflow)
+        self.assertIn("trap 'handle_failure \"$?\" \"NO_EFFECT\"' ERR", workflow)
+        self.assertNotIn("ROLLBACK_NEEDED=true", workflow)
+
+    def test_rollback_restores_exact_prestate_after_detected_effect(self) -> None:
+        workflow = self.require_workflow()
         for fragment in (
             "rollback_to_prestate()",
-            "trap on_error ERR",
             "add-iam-policy-binding",
             "remove-iam-policy-binding",
             "workload-identity-pools','providers','update-oidc",
@@ -86,6 +131,8 @@ class Sol62WifHardeningWorkflowV2Tests(unittest.TestCase):
             "mapping_restored",
             "exact_binding_restored",
             "broad_binding_restored",
+            "effect_classification': 'PROVIDER_EFFECT_DETECTED'",
+            "rollback_invoked': True",
             "exit 97",
         ):
             self.assertIn(fragment, workflow)
@@ -119,6 +166,7 @@ class Sol62WifHardeningWorkflowV2Tests(unittest.TestCase):
         self.assertIn("RENDER_BROAD_REPOSITORY_NAME_BINDING_INERT", self.hardener)
         self.assertIn("BROAD_BINDING_EFFECTIVE", self.hardener)
         self.assertIn("BROAD_REPOSITORY_ATTRIBUTE_MAPPED", self.hardener)
+        self.assertIn("readback_effect_state", workflow)
 
     def test_failure_receipts_are_uploaded_without_private_raw_prestate(self) -> None:
         workflow = self.require_workflow()
