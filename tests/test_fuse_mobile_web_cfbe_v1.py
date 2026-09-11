@@ -231,3 +231,79 @@ def test_anthropic_v2_has_no_provider_secret_or_unsafe_permission_bypass() -> No
     source = read("src/anthropicCfbeV2.ts")
     for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY=", "dangerously-skip-permissions"]:
         assert token not in source
+
+
+def test_anthropic_v3_completes_100_unique_genes() -> None:
+    sources = "\n".join([
+        read("src/anthropicCfbe.ts"),
+        read("src/anthropicCfbeV2.ts"),
+        read("src/anthropicCfbeV3.ts"),
+    ])
+    ids = re.findall(r'id: "(ANTH-\d{3})"', sources)
+    assert len(ids) == 100
+    assert len(set(ids)) == 100
+    assert ids == [f"ANTH-{number:03d}" for number in range(1, 101)]
+
+
+def test_anthropic_v3_contains_physical_ai_and_long_horizon_controls() -> None:
+    source = read("src/anthropicCfbeV3.ts")
+    required = {
+        "compileDeviceManifest",
+        "validateDeviceWrite",
+        "planObserveAdjustLoop",
+        "validateParallelDevicePlan",
+        "shouldCompileDeterministicRoutine",
+        "createAsyncMission",
+        "recoverAsyncMission",
+        "createProgressHeartbeat",
+        "buildSelfTestPlan",
+        "visualVerificationRequirement",
+        "rootCauseRepairGate",
+        "contextCachePolicy",
+        "hydrateMissionContext",
+        "executionHandHealthDecision",
+        "approvalFatigueRisk",
+        "containmentForOperator",
+        "securityPrimitiveDecision",
+        "validateEgressCredential",
+        "inspectionPolicyForReturn",
+        "normalizeEvalEnvironment",
+        "bootstrapRealTaskEval",
+        "aggregateOutcomeGraders",
+        "providerLifecycleDecision",
+        "anthropicV3Disposition",
+    }
+    for name in required:
+        assert f"function {name}" in source
+
+
+def test_anthropic_v3_enforces_device_and_egress_safety() -> None:
+    source = read("src/anthropicCfbeV3.ts")
+    assert "below-driver-safety-minimum" in source
+    assert "above-driver-safety-maximum" in source
+    assert "credential-environment-provenance-mismatch" in source
+    assert "credential-audience-mismatch" in source
+    assert "credential-expired" in source
+    assert 'if (input.containsSecrets) return "QUARANTINE"' in source
+
+
+def test_anthropic_v3_preserves_truth_and_recovery_boundaries() -> None:
+    source = read("src/anthropicCfbeV3.ts")
+    doc = read("CFBE_ANTHROPIC_DEEP_HARVEST_V2.md")
+    assert "symptom-only-repair-rejected" in source
+    assert "CHECKPOINT_AND_STOP" in source
+    assert "PROVIDER_GATED" in source
+    assert "No maturity label can advance from prose" in doc
+    assert "Physical writes remain proof- and authority-gated" in doc
+
+
+def test_anthropic_100_gene_harvest_embeds_no_provider_secrets() -> None:
+    joined = "\n".join([
+        read("src/anthropicCfbe.ts"),
+        read("src/anthropicCfbeV2.ts"),
+        read("src/anthropicCfbeV3.ts"),
+        read("CFBE_ANTHROPIC_DEEP_HARVEST_V1.md"),
+        read("CFBE_ANTHROPIC_DEEP_HARVEST_V2.md"),
+    ])
+    for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY=", "dangerously-skip-permissions"]:
+        assert token not in joined
