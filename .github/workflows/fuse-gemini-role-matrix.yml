@@ -1,0 +1,78 @@
+name: FUSE Gemini Portable Reasoning Role Matrix
+
+on:
+  workflow_dispatch:
+  push:
+    branches: ["main"]
+    paths:
+      - ".github/workflows/fuse-gemini-role-matrix.yml"
+      - "governance/fuse_gemini_role_matrix_request_v1.json"
+      - "scripts/run_gemini_role_matrix.py"
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: fuse-gemini-role-matrix-${{ github.ref }}
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  ROLE_MATRIX_OUT: /tmp/fuse-gemini-role-matrix
+
+jobs:
+  role-matrix:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    steps:
+      - name: Checkout exact source without write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+          fetch-depth: 1
+
+      - name: Validate role-matrix no-effect contract
+        run: |
+          python3 - <<'PY'
+          import json
+          p=json.load(open("governance/fuse_gemini_role_matrix_request_v1.json",encoding="utf-8"))
+          assert p["schema"]=="FUSE_GEMINI_ROLE_MATRIX_REQUEST_V1"
+          assert p["provider"]=="GOOGLE_VERTEX_AI"
+          assert p["transport"]=="VERTEX_WIF_ADC"
+          assert len(p["roles"])==8 and len(set(p["roles"]))==8
+          assert 1 <= int(p["max_parallel_requests"]) <= 4
+          for k in ("case_data_allowed","provider_mutation_allowed","iam_mutation_allowed","secret_mutation_allowed","deployment_allowed","traffic_change_allowed","external_communication_allowed"):
+              assert p[k] is False,(k,p[k])
+          PY
+
+      - name: Authenticate canonical keyless WIF
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Execute bounded eight-role provider cohort
+        run: |
+          set -euo pipefail
+          set +x
+          python3 scripts/run_gemini_role_matrix.py
+
+      - name: Upload immutable redacted role receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-gemini-role-matrix-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-gemini-role-matrix/*.json
+          if-no-files-found: error
+          retention-days: 90
