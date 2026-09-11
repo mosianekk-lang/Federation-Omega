@@ -162,3 +162,72 @@ def test_anthropic_harvest_embeds_no_provider_secret_material() -> None:
     joined = "\n".join([read("src/anthropicCfbe.ts"), read("CFBE_ANTHROPIC_DEEP_HARVEST_V1.md")])
     for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY="]:
         assert token not in joined
+
+
+def test_anthropic_v2_extends_genome_to_72_unique_genes() -> None:
+    v1 = read("src/anthropicCfbe.ts")
+    v2 = read("src/anthropicCfbeV2.ts")
+    ids = re.findall(r'id: "(ANTH-\d{3})"', v1 + "\n" + v2)
+    assert len(ids) == 72
+    assert len(set(ids)) == 72
+    assert ids == [f"ANTH-{number:03d}" for number in range(1, 73)]
+
+
+def test_anthropic_v2_contains_deep_runtime_controls() -> None:
+    source = read("src/anthropicCfbeV2.ts")
+    required = {
+        "chooseAdvisorDelegation",
+        "chooseAdaptiveEffort",
+        "chooseExecutionLocus",
+        "chooseToolset",
+        "planContextPressure",
+        "planMemoryAccess",
+        "evaluateOutcomeIteration",
+        "chooseContainmentProfile",
+        "twoStageActionGate",
+        "researchSuitability",
+        "scoreResearchRubric",
+        "planCitationAudit",
+        "budgetToolResult",
+        "harnessSimplificationCandidates",
+        "benchmarkNoiseDecision",
+        "validateParallelCodeShards",
+        "compileDeviceCommand",
+        "deviceRecoveryDecision",
+        "incidentToRegressionCase",
+        "anthropicV2Disposition",
+    }
+    for name in required:
+        assert f"function {name}" in source
+    assert "class VersionedMemoryStore" in source
+    assert "class AgentDefinitionStore" in source
+
+
+def test_anthropic_v2_memory_and_containment_are_fail_closed() -> None:
+    source = read("src/anthropicCfbeV2.ts")
+    assert "persistent-memory-poisoning-risk" in source
+    assert "memory-write-requires-trusted-input" in source
+    assert 'secrets: "ABSENT"' in source
+    assert 'network: "PROXY_ENFORCED"' in source
+    assert "outside-containment-boundary" in source
+
+
+def test_anthropic_v2_device_write_defaults_to_owner_presence() -> None:
+    source = read("src/anthropicCfbeV2.ts")
+    assert 'const write = input.kind === "WRITE"' in source
+    assert "requiresOwnerPresence: write" in source
+    assert 'return "STOP_AND_ESCALATE"' in source
+
+
+def test_anthropic_v2_benchmark_and_harness_truth_controls() -> None:
+    source = read("src/anthropicCfbeV2.ts")
+    assert "delta-clears-noise-and-practicality-floor" in source
+    assert "delta-not-distinguishable-from-noise-or-too-small" in source
+    assert "measuredBenefit" in source
+    assert "maintenanceCost" in source
+
+
+def test_anthropic_v2_has_no_provider_secret_or_unsafe_permission_bypass() -> None:
+    source = read("src/anthropicCfbeV2.ts")
+    for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY=", "dangerously-skip-permissions"]:
+        assert token not in source
