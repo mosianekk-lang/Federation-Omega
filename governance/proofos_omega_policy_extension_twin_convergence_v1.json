@@ -1,0 +1,46 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/living_state/twin_convergence.py",
+        "tests/test_twin_convergence.py",
+        "governance/cfbe_estate_map_20260905_0038z.json",
+        "governance/proofos_omega_policy_extension_twin_convergence_v1.json"
+      ],
+      "reason": "CAPABILITY_TWIN_TO_LIVING_STATE_CONVERGENCE_AND_WHOLE_ESTATE_TRUTH_CLASSIFICATION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FEDERATION_LIVING_STATE_TWIN_CONVERGENCE_V1",
+      "patterns": [
+        "federation/living_state/twin_convergence.py",
+        "tests/test_twin_convergence.py",
+        "governance/cfbe_estate_map_20260905_0038z.json",
+        "governance/proofos_omega_policy_extension_twin_convergence_v1.json"
+      ],
+      "depends_on": ["EVIDENCEOPS"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "federation_living_state_twin_convergence_v1",
+      "kind": "unittest_glob",
+      "target": "test_twin_convergence.py",
+      "patterns": [
+        "federation/living_state/twin_convergence.py",
+        "tests/test_twin_convergence.py",
+        "governance/cfbe_estate_map_20260905_0038z.json",
+        "governance/proofos_omega_policy_extension_twin_convergence_v1.json"
+      ],
+      "subsystems": ["EVIDENCEOPS", "FEDERATION_LIVING_STATE_TWIN_CONVERGENCE_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
