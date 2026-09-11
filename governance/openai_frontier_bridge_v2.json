@@ -1,0 +1,36 @@
+{
+  "schema": "FEDERATION-OPENAI-FRONTIER-BRIDGE-V2",
+  "version": "2.0.0",
+  "source_checked": "2026-09-11",
+  "status": "SOURCE_ADMISSION_CANDIDATE_PROVIDER_EXECUTION_SEPARATE",
+  "purpose": "Bind GPT-6 Astra, GPT-5.6 Sol and GPT-5.6 Luna into the existing Adaptive Intelligence Router without replacing AIR, Cost Governor, FDOF, OmniSurface, ProofOS or effect authority.",
+  "model_lanes": {
+    "BULK": {"model": "gpt-5.6-luna", "intent": "cost-sensitive high-volume work", "hard_rule": "cannot be forced below AIR minimum quality floor"},
+    "BALANCED": {"model": "gpt-5.6-sol", "intent": "balanced professional reasoning and execution"},
+    "HARD_END_TO_END": {"model": "gpt-6-astra", "intent": "hardest end-to-end work, complex reasoning, coding, research and computer-use capable workflows"}
+  },
+  "astra_primitives": {
+    "async_tool_calling": "function/custom tools only; original call_id bound to FDOF mission correlation",
+    "mid_turn_steering": "WebSocket response.steer intent; single-agent; no conversation-bound or automatic-compaction mode",
+    "configuration_update": "Astra standard single-agent reasoning effort transition while request-level effort remains stable",
+    "prompt_cache": "strict key and 30m ttl support",
+    "computer_shell_patch_mcp_image": "explicit FrontierToolGate permit required; disabled by default"
+  },
+  "payload_policy": {
+    "base_builder": "AdaptiveIntelligenceRouter.to_openai_responses_payload",
+    "additive_fields": ["tools", "tool_choice", "parallel_tool_calls", "prompt_cache_key", "prompt_cache_options"],
+    "sampling_escape_hatch": false,
+    "astra_unsupported_parameters_forwarded": false
+  },
+  "truth_boundary": {
+    "source_binding_proves_model_availability": false,
+    "payload_construction_proves_provider_execution": false,
+    "router_authorisation_proves_tool_effect_authority": false,
+    "response_steer_accepted_proves_update_applied": false,
+    "async_tool_call_proves_tool_completed": false,
+    "provider_output_proves_mission_completion": false
+  },
+  "external_effects": false,
+  "provider_execution": false,
+  "authority_minting": false
+}
