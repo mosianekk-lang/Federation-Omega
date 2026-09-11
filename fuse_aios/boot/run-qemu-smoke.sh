@@ -43,7 +43,7 @@ if [[ ! -r "$KERNEL" ]]; then
 fi
 [[ -r "$BOOT_KERNEL" && -s "$BOOT_KERNEL" ]] || { echo 'staged kernel is not readable and non-empty' >&2; exit 45; }
 LOG="$EVIDENCE_DIR/${ARCH}-serial.log"; RECEIPT="$EVIDENCE_DIR/${ARCH}-boot-receipt.json"
-"$QEMU" -machine "$MACHINE" "${CPU[@]}" -m 256 -smp 1 -nographic -no-reboot \
+"$QEMU" -machine "$MACHINE" "${CPU[@]}" -m 256 -smp 1 -nographic -no-reboot -nic none \
   -kernel "$BOOT_KERNEL" -initrd "$INITRAMFS" \
   -append "console=$CONSOLE,115200 panic=-1 $EARLY" >"$LOG" 2>&1 &
 PID=$!
@@ -71,6 +71,7 @@ out={
     'initramfs_sha256':sha(initramfs),
     'serial_log_sha256':sha(log),
     'qemu_version':version,
+    'network_devices':'NONE',
     'sentinel':'FUSE_AIOS_BOOT_OK',
     'truth':'EMULATED_BOOT_SENTINEL_PROVED',
     'physical_hardware_proved':False
