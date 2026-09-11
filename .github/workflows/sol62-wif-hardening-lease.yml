@@ -279,8 +279,8 @@ jobs:
           mapping_arg = ','.join(
               f'{key}={pre["attribute_mapping"][key]}' for key in sorted(pre['attribute_mapping'])
           )
-          run([
-              'gcloud','iam','workload-identity-pools','providers','update-oidc',provider_id,
+          run('gcloud iam workload-identity-pools providers update-oidc'.split() + [
+              provider_id,
               '--project',project,'--location','global','--workload-identity-pool',pool,
               '--issuer-uri=' + pre['issuer_uri'],
               '--attribute-mapping=' + mapping_arg,
