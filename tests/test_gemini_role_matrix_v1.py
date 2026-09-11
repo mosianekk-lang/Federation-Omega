@@ -1,3 +1,4 @@
+# F217 coordination metadata is carried by the PR-body JSON claim; runtime semantics unchanged.
 import ast, json, pathlib, unittest
 ROOT=pathlib.Path(__file__).resolve().parents[1]
 
