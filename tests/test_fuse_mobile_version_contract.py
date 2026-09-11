@@ -9,6 +9,7 @@ ROOT = Path(__file__).resolve().parents[1]
 APP_JSON = ROOT / "mobile" / "fuse-mobile" / "app.json"
 PACKAGE_JSON = ROOT / "mobile" / "fuse-mobile" / "package.json"
 SEMVER = re.compile(r"^\d+\.\d+\.\d+$")
+EXPECTED_RELEASE_VERSION = "0.3.0"
 
 
 class FuseMobileVersionContractTests(unittest.TestCase):
@@ -17,7 +18,7 @@ class FuseMobileVersionContractTests(unittest.TestCase):
         package = json.loads(PACKAGE_JSON.read_text(encoding="utf-8"))
         self.assertRegex(app["version"], SEMVER)
         self.assertEqual(app["version"], package["version"])
-        self.assertEqual(app["version"], "0.2.3")
+        self.assertEqual(app["version"], EXPECTED_RELEASE_VERSION)
 
     def test_release_application_identifiers_remain_canonical(self) -> None:
         app = json.loads(APP_JSON.read_text(encoding="utf-8"))["expo"]
