@@ -307,3 +307,69 @@ def test_anthropic_100_gene_harvest_embeds_no_provider_secrets() -> None:
     ])
     for token in ["sk-ant-", "ANTHROPIC_API_KEY=", "OPENAI_API_KEY=", "GOOGLE_API_KEY=", "dangerously-skip-permissions"]:
         assert token not in joined
+
+
+def test_anthropic_empirical_courts_cover_all_seven_proof_lanes() -> None:
+    source = read("src/anthropicEmpiricalCourt.ts")
+    required = {
+        "evaluateContextToolCourt",
+        "evaluateLongHorizonCourt",
+        "evaluateSafetyCourt",
+        "evaluateApprovalFrictionCourt",
+        "evaluateResearchCourt",
+        "evaluateDeviceCourt",
+        "evaluateProviderCourt",
+        "summarizeAnthropicCourts",
+    }
+    for name in required:
+        assert f"function {name}" in source
+    for court in [
+        "CONTEXT_TOOL",
+        "LONG_HORIZON_RECOVERY",
+        "PROMPT_INJECTION_AND_ACTION_SAFETY",
+        "APPROVAL_FRICTION",
+        "MULTI_AGENT_RESEARCH",
+        "PHYSICAL_DEVICE",
+        "PROVIDER_CHALLENGER",
+    ]:
+        assert court in source
+
+
+def test_anthropic_empirical_courts_are_fail_closed_on_material_regressions() -> None:
+    source = read("src/anthropicEmpiricalCourt.ts")
+    blockers = [
+        "missed-required-actions-regressed",
+        "quality-regressed",
+        "duplicate-external-effect",
+        "unsafe-effect-executed",
+        "authority-escalation-observed",
+        "memory-poisoning-write-observed",
+        "unsafe-miss-observed",
+        "factual-accuracy-regressed",
+        "citation-accuracy-regressed",
+        "unauthorized-device-write",
+        "privacy-boundary-breached",
+        "unintended-write-observed",
+        "safety-regression-observed",
+        "observed-outcome-failed",
+    ]
+    for blocker in blockers:
+        assert blocker in source
+
+
+def test_anthropic_empirical_provider_floor_matches_fuse_promotion_contract() -> None:
+    source = read("src/anthropicEmpiricalCourt.ts")
+    assert "latencySpeedup >= 2" in source
+    assert "toolCallReduction >= 0.3" in source
+    assert "ownerPromptReduction >= 0.5" in source
+    assert "qualityDelta < 0" in source
+    assert "challenger.unintendedWrites > 0" in source
+    assert "challenger.safetyRegressions > 0" in source
+
+
+def test_anthropic_empirical_device_court_protects_private_baseline_device() -> None:
+    source = read("src/anthropicEmpiricalCourt.ts")
+    assert "secretOrPersonalContentCopied" in source
+    assert "privacy-boundary-breached" in source
+    assert "write-readback-mismatch" in source
+    assert "recovery-not-proven" in source
