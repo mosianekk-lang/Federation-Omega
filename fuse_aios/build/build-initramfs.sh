@@ -3,6 +3,7 @@ set -euo pipefail
 ROOT="$(cd "$(dirname "${BASH_SOURCE[0]}")/.." && pwd)"
 BUSYBOX_BIN="${BUSYBOX_BIN:-}"
 OUTPUT="${1:-$ROOT/out/fuse-aios-initramfs.cpio.gz}"
+OUTPUT="$(realpath -m "$OUTPUT")"
 [[ -n "$BUSYBOX_BIN" && -x "$BUSYBOX_BIN" ]] || { echo 'BUSYBOX_BIN must point to an executable static BusyBox' >&2; exit 42; }
 if ldd "$BUSYBOX_BIN" 2>&1 | grep -q '=>'; then
   echo 'BUSYBOX_BIN must be statically linked for the sovereign bootstrap initramfs' >&2
