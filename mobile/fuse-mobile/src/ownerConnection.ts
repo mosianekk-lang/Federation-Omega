@@ -70,12 +70,16 @@ export async function ensureOwnerSession(): Promise<StoredSession> {
   return refreshFromDevice(deviceToken);
 }
 
-export async function sendOwnerFuseMessage(request: FuseMessageRequest): Promise<FuseChatResponse> {
+export async function sendOwnerFuseMessage(
+  request: FuseMessageRequest,
+  signal?: AbortSignal,
+): Promise<FuseChatResponse> {
   let session = await ensureOwnerSession();
   let iapIdentityToken = await getIapIdentityToken(false);
   try {
-    return await sendFuseMessage(iapIdentityToken, session.accessToken, request);
+    return await sendFuseMessage(iapIdentityToken, session.accessToken, request, signal);
   } catch (error) {
+    if (signal?.aborted) throw error;
     if (!(error instanceof FederationGatewayError) || error.status !== 401 || !error.reason) throw error;
     if (!REFRESHABLE_SESSION_REASONS.has(error.reason)) throw error;
     const deviceToken = session.deviceToken ?? await loadDeviceCredential();
@@ -83,6 +87,6 @@ export async function sendOwnerFuseMessage(request: FuseMessageRequest): Promise
     await clearAccessSession();
     session = await refreshFromDevice(deviceToken);
     iapIdentityToken = await getIapIdentityToken(false);
-    return sendFuseMessage(iapIdentityToken, session.accessToken, request);
+    return sendFuseMessage(iapIdentityToken, session.accessToken, request, signal);
   }
 }
