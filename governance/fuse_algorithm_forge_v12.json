@@ -1,0 +1,48 @@
+{
+  "schema": "FUSE-ALGORITHM-FORGE-V12",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "model_weight_mutation": false,
+  "self_promotion": false,
+  "single_learning_root": "FEDERATION_LEARNING",
+  "integrates_with": [
+    "FUSE_AUTONOMIC_COMPLETION_V5",
+    "CFBE_PROMPT_SCIENTIST_V2",
+    "FEDERATION_LEARNING_V1",
+    "FUSE_BEHAVIOR_RUNTIME_V1"
+  ],
+  "protected_invariants": [
+    "NO_FALSE_MATURITY",
+    "NO_SECRET_EXPOSURE",
+    "OWNER_AUTHORITY",
+    "PRIVACY_FLOOR",
+    "PROOF_FLOOR",
+    "ROLLBACK_REQUIREMENTS",
+    "SECURITY_FLOOR",
+    "TRUTH_BOUNDARIES"
+  ],
+  "primary_metric": "ACCEPTED_PRODUCTION_OR_COMMERCIAL_TERMINAL_PREDICATES_PER_OWNER_HOUR",
+  "promotion_ladder": [
+    "CANDIDATE",
+    "OFFLINE_EVAL",
+    "HOLDOUT",
+    "SHADOW",
+    "CANARY",
+    "PRODUCTION_OBSERVATION",
+    "BEHAVIOR_PROVEN"
+  ],
+  "promotion_requires": [
+    "frozen_visible_eval",
+    "frozen_adversarial_eval",
+    "untouched_holdout",
+    "matched_corpus",
+    "matched_sample_count",
+    "hard_floors_green",
+    "pareto_non_dominated",
+    "minimum_measured_gain",
+    "rollback_ref",
+    "nonblank_evidence_refs"
+  ],
+  "ten_x_target_only": true
+}

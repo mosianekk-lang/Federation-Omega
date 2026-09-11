@@ -1,0 +1,55 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/algorithm_forge_v12.py",
+        "tests/test_algorithm_forge_v12.py",
+        "governance/fuse_algorithm_forge_v12.json",
+        "governance/proofos_omega_policy_extension_fuse_algorithm_forge_v12.json"
+      ],
+      "reason": "FUSE_ALGORITHM_FORGE_V12_PROMPT_ALGORITHM_ROUTE_LEARNING_AND_PROMOTION_GATES"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_ALGORITHM_FORGE_V12",
+      "patterns": [
+        "federation/algorithm_forge_v12.py",
+        "tests/test_algorithm_forge_v12.py",
+        "governance/fuse_algorithm_forge_v12.json",
+        "governance/proofos_omega_policy_extension_fuse_algorithm_forge_v12.json"
+      ],
+      "depends_on": [
+        "FUSE_AUTONOMIC_COMPLETION_V5",
+        "CFBE",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_algorithm_forge_v12_contract",
+      "kind": "unittest_glob",
+      "target": "test_algorithm_forge_v12.py",
+      "patterns": [
+        "federation/algorithm_forge_v12.py",
+        "tests/test_algorithm_forge_v12.py",
+        "governance/fuse_algorithm_forge_v12.json",
+        "governance/proofos_omega_policy_extension_fuse_algorithm_forge_v12.json"
+      ],
+      "subsystems": [
+        "FUSE_ALGORITHM_FORGE_V12",
+        "FUSE_AUTONOMIC_COMPLETION_V5",
+        "CFBE",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
