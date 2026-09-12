@@ -93,6 +93,66 @@ jobs:
           test -n "$DIGEST"
           echo "IMAGE_DIGEST_URI=$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-windows-relay@$DIGEST" >> "$GITHUB_ENV"
 
+      - name: Exact-image localhost differential before provider deployment
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOCAL_CONTAINER="fuse-relay-local-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          LOCAL_PORT=18080
+          LOCAL_CREDENTIAL_PATH=/run/fuse/gcp-credentials.json
+          cleanup_local_container() {
+            docker rm --force "$LOCAL_CONTAINER" >/dev/null 2>&1 || true
+          }
+          trap cleanup_local_container EXIT
+
+          test -n "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          test -f "$GOOGLE_APPLICATION_CREDENTIALS"
+          docker pull "$IMAGE_DIGEST_URI"
+          docker run --detach --name "$LOCAL_CONTAINER" \
+            --publish "127.0.0.1:${LOCAL_PORT}:8080" \
+            --env "GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
+            --env 'FUSE_AGENT_ONLY_BOOTSTRAP=true' \
+            --env 'FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY' \
+            --env "GOOGLE_APPLICATION_CREDENTIALS=$LOCAL_CREDENTIAL_PATH" \
+            --volume "$GOOGLE_APPLICATION_CREDENTIALS:$LOCAL_CREDENTIAL_PATH:ro" \
+            "$IMAGE_DIGEST_URI" >/dev/null
+
+          HEALTH_CODE='000'
+          for attempt in $(seq 1 30); do
+            HEALTH_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 \
+              --output /tmp/fuse-relay-local-health.json --write-out '%{http_code}' \
+              "http://127.0.0.1:${LOCAL_PORT}/healthz" || true)"
+            [[ "$HEALTH_CODE" == '200' ]] && break
+            docker inspect --format='{{.State.Running}}' "$LOCAL_CONTAINER" | grep -Fx true >/dev/null || break
+            sleep 1
+          done
+          docker logs "$LOCAL_CONTAINER" > /tmp/fuse-relay-local-startup.log 2>&1 || true
+          test "$HEALTH_CODE" = '200'
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); raise SystemExit(0 if d.get("status")=="ok" and d.get("device_auth")=="ECDSA_P256" else 1)' /tmp/fuse-relay-local-health.json
+
+          NODE_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 \
+            --output /tmp/fuse-relay-local-node.html --write-out '%{http_code}' \
+            "http://127.0.0.1:${LOCAL_PORT}/node")"
+          test "$NODE_CODE" = '200'
+          grep -F 'CONNECT THIS PC' /tmp/fuse-relay-local-node.html >/dev/null
+
+          MCP_CODE="$(curl --location --silent --show-error --connect-timeout 2 --max-time 5 \
+            --output /tmp/fuse-relay-local-mcp.txt --write-out '%{http_code}' \
+            "http://127.0.0.1:${LOCAL_PORT}/mcp" || true)"
+          case "$MCP_CODE" in 401|403|404) ;; *) echo "LOCAL_MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 71 ;; esac
+
+          docker exec "$LOCAL_CONTAINER" python -c 'import json; from federation_windows_plane.mcp_service import server_from_env; s=server_from_env(); rs=getattr(s,"_custom_starlette_routes",()); print(json.dumps(sorted({str(getattr(r,"path","")) for r in rs if getattr(r,"path",None)}),separators=(",",":")))' > /tmp/fuse-relay-local-routes.json
+          python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node"}; raise SystemExit(0 if need.issubset(set(r)) else 1)' /tmp/fuse-relay-local-routes.json
+
+          echo 'LOCAL_IMAGE_DIFFERENTIAL_CHECKED=true' >> "$GITHUB_ENV"
+          echo "LOCAL_HEALTH_CODE=$HEALTH_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_NODE_CODE=$NODE_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_MCP_CODE=$MCP_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_HEALTH_SHA256=$(sha256sum /tmp/fuse-relay-local-health.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "LOCAL_NODE_SHA256=$(sha256sum /tmp/fuse-relay-local-node.html | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "LOCAL_ROUTES_SHA256=$(sha256sum /tmp/fuse-relay-local-routes.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "LOCAL_STARTUP_LOG_SHA256=$(sha256sum /tmp/fuse-relay-local-startup.log | cut -d' ' -f1)" >> "$GITHUB_ENV"
+
       - name: Deploy isolated-first-service or zero-traffic existing-service canary
         shell: bash
         run: |
@@ -296,7 +356,7 @@ jobs:
           from datetime import datetime,timezone
           truth=lambda name: os.environ.get(name,'').lower()=='true'
           body = {
-              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V26",
+              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V27",
               "source_sha": os.environ.get("GITHUB_SHA"),
               "project_id": os.environ["PROJECT_ID"],
               "region": os.environ["REGION"],
@@ -311,6 +371,14 @@ jobs:
               "secret_manager_required": False,
               "cloud_build_required": False,
               "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
+              "local_image_differential_checked": truth("LOCAL_IMAGE_DIFFERENTIAL_CHECKED"),
+              "local_health_code": os.environ.get("LOCAL_HEALTH_CODE"),
+              "local_node_code": os.environ.get("LOCAL_NODE_CODE"),
+              "local_mcp_code": os.environ.get("LOCAL_MCP_CODE"),
+              "local_health_sha256": os.environ.get("LOCAL_HEALTH_SHA256"),
+              "local_node_sha256": os.environ.get("LOCAL_NODE_SHA256"),
+              "local_routes_sha256": os.environ.get("LOCAL_ROUTES_SHA256"),
+              "local_startup_log_sha256": os.environ.get("LOCAL_STARTUP_LOG_SHA256"),
               "canary_url": os.environ.get("CANARY_URL"),
               "semantic_url": os.environ.get("SEMANTIC_URL"),
               "canary_revision": os.environ.get("CANARY_REVISION"),
