@@ -1,0 +1,134 @@
+{
+  "schema": "CFBE_BCO_PRIME_VERSION_INDEX_V1",
+  "indexVersion": "1.0.0",
+  "generatedAt": "2026-09-02T10:38:55Z",
+  "repository": "mosianekk-lang/Federation-Omega",
+  "baseBranch": "main",
+  "baseCommit": "62b6bccec96e39472997cf8620f7f151f2d91c75",
+  "runtimeState": "ON_DEMAND_GOVERNED",
+  "authorityBoundary": {
+    "deploymentAuthorized": false,
+    "providerEffectsAuthorized": false,
+    "stableSelfPromotionAuthorized": false,
+    "manualUserTasks": []
+  },
+  "commonArchivePreflight": {
+    "pathTraversal": "PASS",
+    "duplicateMembers": "PASS",
+    "symlinks": "PASS",
+    "compressionSafety": "PASS",
+    "credentialPatternHits": 0,
+    "emailAddressHits": 0
+  },
+  "versions": [
+    {
+      "version": "1.0.0",
+      "name": "BCO-Prime Chat Forensics v1",
+      "role": "SOURCE_LINEAGE",
+      "status": "ACCOUNTED_IN_V2_ARCHIVE",
+      "standaloneArchive": false,
+      "sourcePathInV2": "upstream/benchmarking/cfbe_omega/bco_prime_chat_forensics_v1.py",
+      "sourceSha256": "067950e2fc4436992875e3514404b680bc68636e1342bb51b0832e0d1575fad9",
+      "verification": "Covered by the v2 regression suite."
+    },
+    {
+      "version": "2.0.0",
+      "name": "BCO-Prime Chat Forensics v2",
+      "role": "CANONICAL_SEALED_RELEASE",
+      "status": "VERIFIED",
+      "repositoryPath": "releases/cfbe_bco_prime/archives/CFBE_BCO_PRIME_CHAT_FORENSICS_V2_0_0.zip",
+      "bytes": 159915,
+      "sha256": "e7bc80b11cf6f82ebc84f757a1c62015f4e3fc15979aa18767921b5c4866cf1a",
+      "sourceSha256": "6865ab5906181cd0e5d2443398b3f3f6a696fab7e35ab0bd939bed927d2c136e",
+      "tests": {"passed": 36, "failed": 0, "errors": 0},
+      "modisaBuildContract": "PASS",
+      "privateArchiveExactReadback": "PASS"
+    },
+    {
+      "version": "3.0.0-rc1",
+      "name": "BCO-Prime Successor v3 RC1",
+      "role": "SUPERSEDED_RELEASE_CANDIDATE",
+      "status": "KNOWN_FAILED_THIN_TOPOLOGY",
+      "repositoryPath": "releases/cfbe_bco_prime/superseded/CFBE_BCO_PRIME_SUCCESSOR_V3_0_0_RC.zip",
+      "bytes": 111306,
+      "sha256": "59982881db5a0e36317bbc3e673a95dc07f04c59d3de121f46078b9bc42ab4e4",
+      "tests": {"passed": 50, "failed": 1, "errors": 2},
+      "failureBoundary": "The adjacent native CFF engine and dependency were absent from the thin archive.",
+      "promotionAuthorized": false
+    },
+    {
+      "version": "3.0.0-rc2",
+      "name": "BCO-Prime Successor v3 RC2",
+      "role": "SUPERSEDED_RELEASE_CANDIDATE",
+      "status": "VERIFIED_THEN_SUPERSEDED",
+      "repositoryPath": "releases/cfbe_bco_prime/superseded/CFBE_BCO_PRIME_SUCCESSOR_V3_0_0_RC2.zip",
+      "bytes": 203262,
+      "sha256": "f6e1c7809094b88a57174baa2fe66356ba9b757f170c3d362470d0e27f6ec88f",
+      "tests": {"passed": 53, "failed": 0, "errors": 0},
+      "promotionAuthorized": false
+    },
+    {
+      "version": "3.0.0",
+      "name": "BCO-Prime Successor v3",
+      "role": "CANONICAL_SEALED_RELEASE",
+      "status": "VERIFIED",
+      "repositoryPath": "releases/cfbe_bco_prime/archives/CFBE_BCO_PRIME_SUCCESSOR_V3_0_0.zip",
+      "bytes": 203665,
+      "sha256": "4dc2a02c8501a2042fd09a58c51a61045f9c7aa07864f75d10b59a6d8953903e",
+      "sourceSha256": "4d36ddc47fa56a631406184f2d8d5f292c79a1fe3ffdff20d6073a4d93b4317a",
+      "tests": {"passed": 53, "failed": 0, "errors": 0},
+      "verifierReceiptSha256": "0a7442d865a0dbec288735760412b7d7a69c2000ba426cdea8eee877093823eb",
+      "modisaBuildContract": "PASS",
+      "realityGuard": {"decision": "PASS", "controlScore": 100.0},
+      "privateArchiveExactReadback": "PASS"
+    },
+    {
+      "version": "3.1.0",
+      "name": "BCO-Prime Successor v3.1",
+      "role": "CANONICAL_SEALED_RELEASE",
+      "status": "VERIFIED",
+      "repositoryPath": "releases/cfbe_bco_prime/archives/CFBE_BCO_PRIME_SUCCESSOR_V3_1_0.zip",
+      "bytes": 467292,
+      "sha256": "601c04d6cc6833b9c0fe74fe099a15c36c33152701744b80afbc7d7b8cd53a99",
+      "sourceSha256": "111e37d3f6d990819f5d7ce6463cf62babb13aa3cdbb20db1490ec9366211a26",
+      "embeddedV3Sha256": "4dc2a02c8501a2042fd09a58c51a61045f9c7aa07864f75d10b59a6d8953903e",
+      "tests": {"passed": 67, "failed": 0, "errors": 0},
+      "verifierReceiptSha256": "e91c8ca784e5e3853aa89de4d764733ae98bf6e3c044e771e2a82df9e433e94e",
+      "modisaBuildContract": "PASS",
+      "realityGuard": {"decision": "PASS", "controlScore": 100.0},
+      "privateArchiveExactReadback": "PASS"
+    },
+    {
+      "version": "4-mainline",
+      "name": "BCO-Prime Anticipatory Institution v4",
+      "role": "EVOLVING_REPOSITORY_SOURCE",
+      "status": "ACTIVE_ON_DEMAND_LOCAL",
+      "sealedReleaseArchive": false,
+      "sourceCommit": "62b6bccec96e39472997cf8620f7f151f2d91c75",
+      "sourceFiles": [
+        {
+          "path": "benchmarking/cfbe_omega/bco_prime_anticipatory_institution_v4.py",
+          "gitBlobSha1": "545a80398cf0a479321ea697f8ed4c28c4e6747a",
+          "sha256": "3cada8deb311b9fcefe04990c0063086b0e623884591d23fe3359d258c04d0c8"
+        },
+        {
+          "path": "benchmarking/cfbe_omega/bco_prime_v4_strategic_genome_bridge.py",
+          "gitBlobSha1": "5f25ddc80340f368c76f7a1e93acea710a59346e",
+          "sha256": "937024053bf593a03ffa59b21dea301f9ab2ce8c7fd86e684ba4669aa3e3f33c"
+        }
+      ],
+      "focusedTests": {"passed": 20, "failed": 0, "errors": 0},
+      "onDemandHealth": "PASS",
+      "headStatus": {"context": "phoenix-freeze/verified", "state": "success"},
+      "providerEffectsAuthorized": false,
+      "stableSelfPromotionAuthorized": false
+    }
+  ],
+  "accountingConclusion": {
+    "canonicalSealedArchives": 3,
+    "supersededReleaseCandidates": 2,
+    "sourceOnlyLineages": 1,
+    "evolvingMainlineVersions": 1,
+    "allKnownVersionsAccounted": true
+  }
+}
