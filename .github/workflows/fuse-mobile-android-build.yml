@@ -26,7 +26,7 @@ jobs:
         github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1') &&
        github.event.issue.author_association == 'OWNER')
     runs-on: ubuntu-24.04
-    timeout-minutes: 35
+    timeout-minutes: 40
     steps:
       - name: Checkout exact default-branch source without write credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
@@ -57,6 +57,7 @@ jobs:
             tests.test_fuse_mobile_mdtaf_avd_readiness \
             tests.test_fuse_mobile_mdtaf_sdk_toolchain_resolution \
             tests.test_fuse_mobile_mdtaf_emulator_host_dependencies \
+            tests.test_fuse_mobile_mdtaf_semantic_ui_v1 \
             tests.test_fuse_mobile_version_contract
 
       - name: Resolve real dependency graph and generate lock
@@ -78,7 +79,7 @@ jobs:
           npx expo install --check
           npm audit --audit-level=high
 
-      - name: Typecheck, Expo Doctor and Android export
+      - name: Typecheck Expo Doctor and Android export
         working-directory: mobile/fuse-mobile
         shell: bash
         run: |
@@ -87,16 +88,21 @@ jobs:
           npx expo-doctor
           npm run export:android
 
-      - name: Generate native Android project and build debug APK
+      - name: Generate native Android project and build standalone release-variant test APK
         working-directory: mobile/fuse-mobile
         shell: bash
         run: |
           set -euo pipefail
           npm run prebuild:android
           test -x android/gradlew || chmod +x android/gradlew
-          (cd android && ./gradlew assembleDebug --no-daemon)
-          APK=android/app/build/outputs/apk/debug/app-debug.apk
+          (cd android && ./gradlew assembleRelease --no-daemon)
+          APK=android/app/build/outputs/apk/release/app-release.apk
           test -s "$APK"
+          unzip -Z1 "$APK" > /tmp/fuse-mobile-apk-members.txt
+          grep -Fx 'assets/index.android.bundle' /tmp/fuse-mobile-apk-members.txt >/dev/null
+          BUNDLE_BYTES="$(unzip -p "$APK" assets/index.android.bundle | wc -c | tr -d ' ')"
+          test "$BUNDLE_BYTES" -gt 1024
+          printf 'EMBEDDED_JS_BUNDLE_PRESENT bytes=%s\n' "$BUNDLE_BYTES" | tee /tmp/fuse-mobile-bundle-proof.txt
           sha256sum "$APK" | tee /tmp/fuse-mobile-apk.sha256
 
       - name: Scan generated APK and archive members for embedded credential material
@@ -105,7 +111,7 @@ jobs:
         run: |
           set -euo pipefail
           python lab/scan_apk.py \
-            --apk android/app/build/outputs/apk/debug/app-debug.apk \
+            --apk android/app/build/outputs/apk/release/app-release.apk \
             --output fuse-mobile-apk-security-scan.json
 
       - name: Emit immutable Android build receipt
@@ -118,19 +124,24 @@ jobs:
         run: |
           set -euo pipefail
           python - <<'PY'
-          import hashlib, json, os
+          import hashlib, json, os, zipfile
           from pathlib import Path
           lock = Path('package-lock.json')
-          apk = Path('android/app/build/outputs/apk/debug/app-debug.apk')
+          apk = Path('android/app/build/outputs/apk/release/app-release.apk')
           scan_path = Path('fuse-mobile-apk-security-scan.json')
           package = json.loads(Path('package.json').read_text(encoding='utf-8'))
           scan = json.loads(scan_path.read_text(encoding='utf-8'))
           apk_sha = hashlib.sha256(apk.read_bytes()).hexdigest()
+          with zipfile.ZipFile(apk) as archive:
+              members = set(archive.namelist())
+              assert 'assets/index.android.bundle' in members, 'EMBEDDED_JS_BUNDLE_MISSING'
+              bundle_bytes = len(archive.read('assets/index.android.bundle'))
+          assert bundle_bytes > 1024, bundle_bytes
           assert scan['state'] == 'APK_CREDENTIAL_SCAN_CLEAN', scan
           assert scan['apk_sha256'] == apk_sha, {'scan_sha': scan['apk_sha256'], 'apk_sha': apk_sha}
           receipt = {
-              'schema': 'FUSE_MOBILE_ANDROID_BUILD_RECEIPT_V1',
-              'state': 'ANDROID_DEBUG_APK_GENERATED_VERIFIED',
+              'schema': 'FUSE_MOBILE_ANDROID_BUILD_RECEIPT_V2',
+              'state': 'ANDROID_STANDALONE_TEST_APK_GENERATED_VERIFIED',
               'source_sha': os.environ['SOURCE_SHA'],
               'run_id': int(os.environ['RUN_ID']),
               'run_attempt': int(os.environ['RUN_ATTEMPT']),
@@ -139,10 +150,15 @@ jobs:
               'lock_sha256': hashlib.sha256(lock.read_bytes()).hexdigest(),
               'apk_sha256': apk_sha,
               'apk_size_bytes': apk.stat().st_size,
+              'build_variant': 'release',
+              'embedded_js_bundle': True,
+              'embedded_js_bundle_path': 'assets/index.android.bundle',
+              'embedded_js_bundle_bytes': bundle_bytes,
               'apk_credential_scan_state': scan['state'],
               'apk_credential_scan_apk_sha256': scan['apk_sha256'],
               'apk_credential_scan_receipt_sha256': hashlib.sha256(scan_path.read_bytes()).hexdigest(),
-              'debug_signing_only': True,
+              'production_signing_proven': False,
+              'test_artifact_only': True,
               'repository_write_performed': False,
               'oidc_used': False,
               'provider_effect_executed': False,
@@ -154,7 +170,7 @@ jobs:
           print(json.dumps(receipt, sort_keys=True))
           PY
 
-      - name: Upload lock, APK and proof receipts
+      - name: Upload lock standalone APK and proof receipts
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: fuse-mobile-android-v1-${{ github.run_id }}-${{ github.run_attempt }}
@@ -162,7 +178,7 @@ jobs:
           retention-days: 14
           path: |
             mobile/fuse-mobile/package-lock.json
-            mobile/fuse-mobile/android/app/build/outputs/apk/debug/app-debug.apk
+            mobile/fuse-mobile/android/app/build/outputs/apk/release/app-release.apk
             mobile/fuse-mobile/fuse-mobile-apk-security-scan.json
             mobile/fuse-mobile/fuse-mobile-android-build-receipt.json
 
@@ -239,9 +255,7 @@ jobs:
           dpkg-query -W -f='${Package}=${Version}\n' libpulse0 \
             | tee "$EVIDENCE_DIR/emulator-host-package-provenance-api-${API_LEVEL}.txt"
           bash mobile/fuse-mobile/lab/validate_emulator_host_dependencies.sh \
-            --sdk-root "$SDK_ROOT" \
-            --evidence-dir "$EVIDENCE_DIR" \
-            --api-level "$API_LEVEL"
+            --sdk-root "$SDK_ROOT" --evidence-dir "$EVIDENCE_DIR" --api-level "$API_LEVEL"
           AVD_NAME="fuse-mdtaf-api-${API_LEVEL}"
           echo no | "$AVDMANAGER" create avd --force \
             --name "$AVD_NAME" \
@@ -267,27 +281,30 @@ jobs:
           ADB="$SDK_ROOT/platform-tools/adb"
           test -x "$ADB"
           ADB_BIN="$ADB" bash mobile/fuse-mobile/lab/resolve_sdk_adb.sh >/tmp/fuse-mdtaf-adb-path.txt
-          RESOLVED_ADB="$(cat /tmp/fuse-mdtaf-adb-path.txt)"
-          test "$RESOLVED_ADB" = "$(realpath -e "$ADB")"
+          test "$(cat /tmp/fuse-mdtaf-adb-path.txt)" = "$(realpath -e "$ADB")"
           test -n "${ANDROID_AVD_HOME:-}"
           test -s "$ANDROID_AVD_HOME/fuse-mdtaf-api-${API_LEVEL}.ini"
           sudo chmod 666 /dev/kvm 2>/dev/null || true
           bash mobile/fuse-mobile/lab/boot_avd_bounded.sh
 
-      - name: Resolve exact shared APK and security receipt
+      - name: Resolve exact shared standalone APK and security receipt
         shell: bash
         run: |
           set -euo pipefail
           ROOT=mobile/fuse-mobile/mdtaf-build-input
-          APK="$(find "$ROOT" -type f -path '*/android/app/build/outputs/apk/debug/app-debug.apk' -print -quit)"
+          APK="$(find "$ROOT" -type f -path '*/android/app/build/outputs/apk/release/app-release.apk' -print -quit)"
           SCAN="$(find "$ROOT" -type f -name 'fuse-mobile-apk-security-scan.json' -print -quit)"
+          BUILD_RECEIPT="$(find "$ROOT" -type f -name 'fuse-mobile-android-build-receipt.json' -print -quit)"
           test -n "$APK" && test -s "$APK"
           test -n "$SCAN" && test -s "$SCAN"
-          cp "$APK" mobile/fuse-mobile/mdtaf-evidence/app-debug.apk
+          test -n "$BUILD_RECEIPT" && test -s "$BUILD_RECEIPT"
+          unzip -Z1 "$APK" | grep -Fx 'assets/index.android.bundle' >/dev/null
+          cp "$APK" mobile/fuse-mobile/mdtaf-evidence/app-release.apk
           cp "$SCAN" mobile/fuse-mobile/mdtaf-evidence/apk-security-scan.json
-          sha256sum mobile/fuse-mobile/mdtaf-evidence/app-debug.apk | tee mobile/fuse-mobile/mdtaf-evidence/apk.sha256
+          cp "$BUILD_RECEIPT" mobile/fuse-mobile/mdtaf-evidence/android-build-receipt.json
+          sha256sum mobile/fuse-mobile/mdtaf-evidence/app-release.apk | tee mobile/fuse-mobile/mdtaf-evidence/apk.sha256
 
-      - name: Run deterministic lifecycle, fault and recovery court
+      - name: Run deterministic lifecycle fault recovery and semantic UI court
         working-directory: mobile/fuse-mobile
         shell: bash
         run: |
@@ -297,7 +314,7 @@ jobs:
           ADB_BIN="$SDK_ROOT/platform-tools/adb"
           test -x "$ADB_BIN"
           ADB_BIN="$ADB_BIN" bash lab/run_android_smoke.sh \
-            --apk mdtaf-evidence/app-debug.apk \
+            --apk mdtaf-evidence/app-release.apk \
             --evidence-dir mdtaf-evidence
           python lab/certify.py \
             --evidence-dir mdtaf-evidence \

@@ -28,6 +28,7 @@ def main() -> int:
     evidence = Path(args.evidence_dir)
     smoke = load(evidence / "smoke-receipt.json")
     security = load(evidence / "apk-security-scan.json")
+    build = load(evidence / "android-build-receipt.json")
     owner_profile = load(evidence / "owner-profile-application.json")
     cloud_matrix = load(evidence / "cloud-device-matrix.json")
     physical = load(evidence / "physical-device-validation.json")
@@ -36,25 +37,35 @@ def main() -> int:
 
     smoke_apk_sha = smoke.get("apk_sha256") if smoke else None
     security_apk_sha = security.get("apk_sha256") if security else None
+    build_apk_sha = build.get("apk_sha256") if build else None
     artifact_hash_binding = bool(
         isinstance(smoke_apk_sha, str)
         and isinstance(security_apk_sha, str)
+        and isinstance(build_apk_sha, str)
         and smoke_apk_sha
-        and security_apk_sha
-        and smoke_apk_sha == security_apk_sha
+        and smoke_apk_sha == security_apk_sha == build_apk_sha
     )
 
     required = {
         "android_smoke": bool(smoke and smoke.get("state") == "ANDROID_SMOKE_PASS"),
         "apk_credential_scan": bool(security and security.get("state") == "APK_CREDENTIAL_SCAN_CLEAN"),
         "artifact_hash_binding": artifact_hash_binding,
+        "embedded_js_bundle": bool(
+            build and build.get("embedded_js_bundle") is True
+            and smoke and smoke.get("embedded_js_bundle_state") == "PASS"
+        ),
         "first_launch": bool(smoke and smoke.get("first_launch_state") == "PASS"),
+        "semantic_ui_first_launch": bool(smoke and smoke.get("first_launch_ui_state") == "PASS"),
         "relaunch": bool(smoke and smoke.get("relaunch_state") == "PASS"),
+        "semantic_ui_relaunch": bool(smoke and smoke.get("relaunch_ui_state") == "PASS"),
         "network_baseline": bool(smoke and smoke.get("network_baseline_state") == "PASS"),
         "connectivity_loss_verified": bool(smoke and smoke.get("connectivity_loss_state") == "PASS"),
         "offline_launch": bool(smoke and smoke.get("offline_launch_state") == "PASS"),
+        "semantic_ui_offline_launch": bool(smoke and smoke.get("offline_launch_ui_state") == "PASS"),
         "network_recovery": bool(smoke and smoke.get("network_recovery_state") == "PASS"),
         "recovery_launch": bool(smoke and smoke.get("recovery_launch_state") == "PASS"),
+        "semantic_ui_recovery_launch": bool(smoke and smoke.get("recovery_launch_ui_state") == "PASS"),
+        "no_react_boot_error": bool(smoke and smoke.get("react_boot_error_state") == "PASS"),
         "no_fatal_or_anr": bool(smoke and not smoke.get("fatal_or_anr_hits")),
     }
 
@@ -64,6 +75,7 @@ def main() -> int:
         "physical_device_validation": bool(physical and physical.get("state") == "PASS"),
         "owasp_masvs_review": bool(masvs and masvs.get("state") == "PASS"),
         "performance_regression": bool(performance and performance.get("state") == "PASS"),
+        "production_signing": bool(build and build.get("production_signing_proven") is True),
     }
 
     failed_required = sorted(k for k, ok in required.items() if not ok)
@@ -77,11 +89,12 @@ def main() -> int:
         verdict = "RELEASE_VERIFIED"
 
     certificate = {
-        "schema": "FUSE_MOBILE_MDTAF_RELEASE_CERTIFICATE_V1",
+        "schema": "FUSE_MOBILE_MDTAF_RELEASE_CERTIFICATE_V2",
         "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
         "source_sha": args.source_sha,
         "apk_sha256": smoke_apk_sha,
         "security_scan_apk_sha256": security_apk_sha,
+        "build_receipt_apk_sha256": build_apk_sha,
         "artifact_hash_binding_state": "PASS" if artifact_hash_binding else "FAIL",
         "verdict": verdict,
         "required_gates": required,
@@ -89,6 +102,9 @@ def main() -> int:
         "expansion_gates": expansion,
         "declared_limitations": limitations,
         "truth_boundary": {
+            "activity_process_liveness_alone_is_not_semantic_ui_proof": True,
+            "embedded_js_bundle_required_for_detached_artifact": True,
+            "release_variant_test_artifact_is_not_production_signing": True,
             "virtual_device_is_not_physical_device": True,
             "source_is_not_runtime": True,
             "offline_process_survival_alone_is_not_offline_proof": True,
