@@ -1,0 +1,160 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "FEDERATION-ESTATE-DELTA-REGISTER-20260827",
+    "version": 2,
+    "goal": "Provide a public-safe immutable Federation estate delta contract and deterministic source-only routing for federation census and provider observation.",
+    "user": "Kim Kagiso Mosiane and governed Federation operators",
+    "workflow": "validate a bounded external census-genesis source bundle, structurally validate later append-only event types and their hash chain, and select one exact A0 observation route without runtime activation",
+    "data": "public-safe JSON contracts, redacted aliases, canonical SHA-256 hashes and externally stored immutable census transactions",
+    "interface": "Python library functions and versioned JSON contracts",
+    "stack": "Python 3.11+ standard library and JSON Schema 2020-12 contract",
+    "environment": "Federation-Omega source checkout; generated transactions remain in an approved external immutable evidence plane",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation Engine, EvidenceOps proof-before-claim, Superior Logic v3.2 and ECASP, MODISA Code-Forge 3.3, zero-cost and no-trust-transfer controls",
+    "failure": "fail closed on tamper, chain gap, private material, totality promotion, route ambiguity, authority expansion, cost, burden or runtime activation claim",
+    "testing": "healthy and failure-first unit tests, adjacent Federation regressions, compilation, JSON parsing, diff checks and public leak guard",
+    "deployment": "source-only draft PR; no merge, workflow, runtime deployment, provider call or evidence-plane mutation in this mission",
+    "continuity": "canonical event hashes, sequence fencing, correction events, quarantined registry collision and explicit external-publication pending state"
+  },
+  "classification": "SOURCE_ONLY_GOVERNANCE_AND_VALIDATOR",
+  "assumptions": {
+    "stack": "Python 3.11 or newer",
+    "runtime": "repository checkout for deterministic validation only",
+    "storage": "generated transactions are stored outside canonical source in an approved immutable evidence plane",
+    "authentication": "NOT_APPLICABLE: the source validator and selector perform no provider authentication",
+    "deployment": "NOT_APPLICABLE_THIS_MISSION: publication is limited to a reversible branch and draft PR"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: JSON read models are sufficient",
+      "backend": "estate_delta_transaction validator, chain verifier and exact-intent selector",
+      "database": "NOT_APPLICABLE: this source layer validates externally persisted append-only events",
+      "queue": "NOT_APPLICABLE: no queued or background execution",
+      "worker": "NOT_APPLICABLE: caller invokes deterministic library functions",
+      "scheduler": "NOT_APPLICABLE: no recurring automation",
+      "cache": "NOT_APPLICABLE: hashes derive from current canonical JSON bytes",
+      "storage": "JSON Schema, source catalog and public-safe pending pointer",
+      "authentication": "NOT_APPLICABLE: no credential, token exchange or provider action"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
+    "observability": {
+      "correlation_ids": "mission_id, transaction_id, sequence, event_hash, proof_action_id and route_definition_hash",
+      "health_checks": "schema parsing, chain verification, pointer validation and two exact route canaries",
+      "structured_logs": "caller-owned canonical validation results with no private identifiers",
+      "audit_logs": "external immutable transaction plus source and route catalog hashes",
+      "metrics_alerts": "named boundaries, open contradictions, chain failures, route ambiguity and runtime-binding gap"
+    }
+  },
+  "testing": {
+    "unit": "transaction integrity, projections, privacy, completion guard, route validation and exact selection",
+    "integration": "public pointer, schema, route catalog and existing Federation truth-boundary regressions",
+    "e2e_or_smoke": "build a bounded genesis transaction, reopen and verify it, then select both A0 source routes",
+    "fixtures_mocks": "in-memory public-safe census transaction and checked-in source-only route catalog",
+    "failure_first": "tamper, private locator, secret-shaped value, short known-private identifier collision, source-byte substitution or role swap, totality promotion, missing hold, wrong boundary count, ambiguous intent, unknown intent, effectful escalation and runtime activation claim",
+    "commands": [
+      "python -m unittest -v tests.test_estate_delta_transaction",
+      "python -m unittest -v tests.test_federation_capability_twin tests.test_ao_cra_federation_inheritance tests.test_awareness_hash_domain_contract tests.test_awareness_hash_domain_reconciler tests.test_phoenix_provider_cutover_v3_surface_awareness tests.test_federation_resource_discovery",
+      "python -m unittest -v tests.test_ecasp tests.test_oops_acme tests.test_slrk",
+      "python -m evidenceops.security.public_repository_leak_guard",
+      "python \"${MODISA_BUILD_CONTRACT_VALIDATOR:?resolved by governed MODISA runner}\" --require-proof federation_consolidation/estate_delta_BUILD_CONTRACT.json",
+      "python -m py_compile federation_consolidation/estate_delta_transaction.py tests/test_estate_delta_transaction.py",
+      "python -m json.tool federation_consolidation/data/estate_delta_transaction_v1.schema.json",
+      "python -m json.tool federation_consolidation/data/estate_observation_route_catalog_v1.json",
+      "python -c \"from pathlib import Path; files=[Path(p) for p in ('federation_consolidation/estate_delta_transaction.py','federation_consolidation/estate_delta_BUILD_CONTRACT.json','federation_consolidation/data/estate_delta_transaction_v1.schema.json','federation_consolidation/data/estate_observation_route_catalog_v1.json','governance/federation_estate_delta_register_public_v1.json','tests/test_estate_delta_transaction.py')]; assert not [(str(p),i) for p in files for i,line in enumerate(p.read_text().splitlines(),1) if line.endswith((' ','\\t'))]\"",
+      "git diff --check"
+    ]
+  },
+  "delivery": {
+    "file_tree": "one validator module, one event schema, one A0 route catalog, one public-safe pointer, one build contract and focused tests",
+    "exact_code_files": [
+      "federation_consolidation/estate_delta_transaction.py",
+      "federation_consolidation/estate_delta_BUILD_CONTRACT.json",
+      "federation_consolidation/data/estate_delta_transaction_v1.schema.json",
+      "federation_consolidation/data/estate_observation_route_catalog_v1.json",
+      "governance/federation_estate_delta_register_public_v1.json",
+      "tests/test_estate_delta_transaction.py"
+    ],
+    "setup_commands": ["No dependency installation required"],
+    "run_commands": ["Import federation_consolidation.estate_delta_transaction from a governed caller"],
+    "test_commands": [
+      "python -m unittest -v tests.test_estate_delta_transaction",
+      "python -m unittest -v tests.test_federation_capability_twin tests.test_ao_cra_federation_inheritance tests.test_awareness_hash_domain_contract tests.test_awareness_hash_domain_reconciler tests.test_phoenix_provider_cutover_v3_surface_awareness tests.test_federation_resource_discovery",
+      "python -m unittest -v tests.test_ecasp tests.test_oops_acme tests.test_slrk",
+      "python -m evidenceops.security.public_repository_leak_guard",
+      "python \"${MODISA_BUILD_CONTRACT_VALIDATOR:?resolved by governed MODISA runner}\" --require-proof federation_consolidation/estate_delta_BUILD_CONTRACT.json",
+      "python -m py_compile federation_consolidation/estate_delta_transaction.py tests/test_estate_delta_transaction.py",
+      "git diff --check"
+    ],
+    "deploy_commands": ["No deployment is authorized; retain the source candidate in a draft PR"],
+    "rollback_commands": ["Close the draft PR and abandon its purpose branch; no runtime or evidence state changes"],
+    "debugging": "Inspect validation error class, exact field path, event hash, route catalog hash and activation state; never inspect private values"
+  },
+  "formation": {
+    "mission_id": "FEDERATION-ESTATE-DELTA-REGISTER-20260827",
+    "mission_version": 2,
+    "gate_decision": "EXECUTE",
+    "gate_decision_scope": "DETERMINISTIC_LOCAL_SOURCE_BUILD_ONLY_NO_EXTERNAL_EFFECT_AUTHORITY",
+    "authority_class": "A1_INTERNAL_SOURCE_PREPARATION",
+    "effectful_permit": "FRESH_EPHEMERAL_PERMIT_REQUIRED_BEFORE_BRANCH_OR_DRAFT_PR_WRITE_NOT_STORED_IN_CANONICAL_SOURCE",
+    "authority_class_ceiling": "A1",
+    "permit_storage": "EPHEMERAL_EXTERNAL_NOT_CANONICAL_SOURCE",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "policy": "hold unproven routes, unresolved totality, private material, cost, burden and any runtime or provider authority claim",
+    "release_gates": [
+      "documentation preflight",
+      "Formation permit",
+      "Superior Logic and ECASP bounded-claim gate",
+      "unit and adjacent regression tests",
+      "MODISA contract validation",
+      "public leak guard",
+      "exact-head branch and draft PR readback"
+    ]
+  },
+  "continuity": {
+    "idempotency": "canonical JSON hashes make identical transaction and route definitions deterministic",
+    "checkpoints": "source hash set, event chain head, route catalog hash, branch head and draft PR exact-head readback",
+    "resume_conditions": "resume when the external evidence plane is authorized or the private selector can be independently rebound and read back",
+    "handoff_files": [
+      "federation_consolidation/estate_delta_BUILD_CONTRACT.json",
+      "governance/federation_estate_delta_register_public_v1.json"
+    ],
+    "stop_switch": "close the draft PR and do not bind the catalog into a runtime selector"
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": false,
+    "registered": false,
+    "authorized": false,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": "NOT_STORED_IN_CANONICAL_SOURCE: execute delivery.test_commands on the exact pull-request head and retain results in the approved evidence plane",
+    "deployment_readback": null,
+    "semantic_verification": "REQUIRED_ON_EXACT_HEAD: verify the generic contract, census-genesis source-bundle projection, supporting-payload hashes, public aliases, collision build, privacy boundary and exact A0 routes without inferring publication, runtime activation or provider execution",
+    "unresolved_defects": [],
+    "known_scope_limits": [
+      "GENESIS_ONLY_SOURCE_BUNDLE_SEMANTICS: later append-only event types receive structural and hash-chain validation only",
+      "AO-CRA-FEDREG-COLLISION-001: both private continuity projections remain quarantined and unselected pending governed readback",
+      "ROUTE_RUNTIME_BINDING_PENDING: the exact A0 source routes and current-main discovery adapter are not bound to a provider runtime"
+    ],
+    "known_activation_obligations": [
+      "publish and independently read back a generated census transaction in an approved external immutable evidence plane",
+      "resolve or explicitly supersede the quarantined continuity registry collision",
+      "bind both route intents into the private runtime selector and prove semantic readback",
+      "reconcile rather than silently compete with unmerged PR 618 if it is later admitted"
+    ]
+  }
+}

@@ -1,0 +1,42 @@
+{
+  "schema": "FEDERATION-ESTATE-DELTA-REGISTER-PUBLIC-1",
+  "version": "1.0.0",
+  "register_id": "FEDERATION-ESTATE-DELTA-REGISTER",
+  "classification": "PUBLIC_SAFE_CONTRACT_PRIVATE_POINTERS_REDACTED",
+  "transaction_contract_path": "federation_consolidation/data/estate_delta_transaction_v1.schema.json",
+  "validator_path": "federation_consolidation/estate_delta_transaction.py",
+  "route_catalog_path": "federation_consolidation/data/estate_observation_route_catalog_v1.json",
+  "route_registration_state": "SOURCE_IMPLEMENTED_RUNTIME_UNVERIFIED",
+  "route_discovery_adapter_state": "ADAPTER_REQUIRED_NOT_RUNTIME_BOUND",
+  "registry_collision_state": "QUARANTINED_REGISTRY_COLLISION",
+  "registry_collision_build_id": "AO-CRA-FEDREG-COLLISION-001",
+  "cfbe_compatibility_state": "REFERENCE_ONLY_UNMERGED",
+  "private_artifact_alias": "FEDERATION_ESTATE_DELTA_PRIVATE_V1",
+  "publication_state": "PREPARED_EXTERNAL_PUBLICATION_PENDING",
+  "current_transaction": null,
+  "current_transaction_contract": {
+    "required_fields": [
+      "transaction_id",
+      "sequence",
+      "observed_at",
+      "canonical_status",
+      "event_hash",
+      "availability"
+    ],
+    "allowed_availability": "APPROVED_EXTERNAL_IMMUTABLE_EVIDENCE_PLANE"
+  },
+  "rules": {
+    "append_only": true,
+    "correction_events_replace_rewrites": true,
+    "latest_provider_native_readback_wins": true,
+    "historical_claims_retained_as_lineage": true,
+    "unresolved_boundaries_required_for_partial_state": true,
+    "totality_inference_allowed": false,
+    "provider_authority_inferred_from_storage": false
+  },
+  "credential_value_recorded": false,
+  "private_provider_identifier_recorded": false,
+  "private_locator_recorded": false,
+  "provider_mutation_performed": false,
+  "truth_boundary": "This source contract locates and validates a future external immutable census transaction. It is not the transaction, does not prove publication or provider execution, and must remain PREPARED until an approved external artifact is written and independently read back."
+}
