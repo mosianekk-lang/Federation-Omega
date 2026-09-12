@@ -46,6 +46,9 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIsNotNone(isolated_deploy)
         self.assertNotIn("--no-traffic", isolated_deploy.group(0))
         self.assertIn("--min 0 --max 1", isolated_deploy.group(0))
+        self.assertIn("--ingress all", isolated_deploy.group(0))
+        self.assertIn("--default-url", isolated_deploy.group(0))
+        self.assertIn("--no-invoker-iam-check", isolated_deploy.group(0))
         self.assertIn("PRODUCTION_SERVICE_UNEXPECTEDLY_CREATED", self.text)
         self.assertIn("PRODUCTION_ISOLATION_CHECKED=true", self.text)
         self.assertIn("CANARY_DELETE_POINTER=gcloud run services delete", self.text)
@@ -93,7 +96,6 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn('CANDIDATE_URLS=("$CANARY_URL" "$SERVICE_URL" "$DETERMINISTIC_URL")', self.text)
         self.assertIn("for attempt in $(seq 1 12)", self.text)
         self.assertIn("--connect-timeout 5 --max-time 10", self.text)
-        self.assertIn("HEALTH_ROUTE_DIFFERENTIAL_FAILED", self.text)
         self.assertIn("HEALTH_ROUTE_DIFFERENTIAL_CHECKED=true", self.text)
         self.assertIn('echo "SEMANTIC_URL=$SEMANTIC_URL" >> "$GITHUB_ENV"', self.text)
         self.assertIn('"$SEMANTIC_URL/mcp"', self.text)
@@ -102,7 +104,21 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn('"$SEMANTIC_URL/node/native-bootstrap.ps1"', self.text)
         self.assertNotIn('curl --fail --silent --show-error "$CANARY_URL/healthz"', self.text)
 
-    def test_receipt_binds_exact_source_provider_image_revision_and_topology(self):
+    def test_edge_app_differential_falsifies_edge_vs_application_without_iam_widening(self):
+        self.assertIn("EDGE_APP_DIFFERENTIAL_CHECKED=true", self.text)
+        self.assertIn('gcloud run services proxy "$TARGET_SERVICE"', self.text)
+        self.assertIn("PROXY_PORT=18081", self.text)
+        self.assertIn("EDGE_ACCESS_OR_INGRESS_404_APP_HEALTH_VIA_AUTH_PROXY", self.text)
+        self.assertIn("APPLICATION_ROUTE_OR_PROXY_PATH_UNHEALTHY", self.text)
+        self.assertIn("AUTHENTICATED_PROXY_UNCALLABLE", self.text)
+        self.assertIn("run.googleapis.com/ingress", self.text)
+        self.assertIn("run.googleapis.com/default-url-disabled", self.text)
+        self.assertIn("run.googleapis.com/invoker-iam-disabled", self.text)
+        self.assertIn("gcloud logging read", self.text)
+        self.assertNotIn("set-iam-policy", self.text)
+        self.assertNotIn("add-iam-policy-binding", self.text)
+
+    def test_receipt_binds_exact_source_provider_image_revision_topology_and_differential(self):
         self.assertIn('"schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V26"', self.text)
         for field in (
             '"source_sha"',
@@ -114,6 +130,14 @@ class RelayWorkflowTests(unittest.TestCase):
             '"deployment_topology"',
             '"production_service_present"',
             '"health_route_differential_checked"',
+            '"edge_app_differential_checked"',
+            '"edge_health_code"',
+            '"proxy_health_code"',
+            '"edge_failure_class"',
+            '"ingress_setting"',
+            '"default_url_disabled"',
+            '"invoker_iam_disabled"',
+            '"request_log_count"',
         ):
             self.assertIn(field, self.text)
 

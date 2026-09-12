@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: fuse-windows-relay-cloud-run-v26
+  group: fuse-windows-relay-cloud-run-v27
   cancel-in-progress: false
 
 env:
@@ -125,7 +125,9 @@ jobs:
               echo "ISOLATED_CANARY_ALREADY_EXISTS:$TARGET_SERVICE" >&2
               exit 67
             fi
-            gcloud run deploy "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" --port 8080 --cpu 1 --memory 512Mi --min 0 --max 1 --concurrency 20 --no-invoker-iam-check --set-env-vars="$ENVVARS" --quiet
+            # The isolated canary is the intended owner-facing browser entry point.
+            # Make its network intent explicit instead of inheriting project defaults.
+            gcloud run deploy "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" --port 8080 --cpu 1 --memory 512Mi --min 0 --max 1 --concurrency 20 --ingress all --default-url --no-invoker-iam-check --set-env-vars="$ENVVARS" --quiet
             SERVICE_URL="$(gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
             if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
               gcloud run services update "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --update-env-vars="FUSE_MCP_RESOURCE_URL=$SERVICE_URL/mcp" --quiet
@@ -142,7 +144,7 @@ jobs:
           echo "CANARY_URL=$CANARY_URL" >> "$GITHUB_ENV"
           echo "CANARY_REVISION=$CANARY_REVISION" >> "$GITHUB_ENV"
 
-      - name: Semantic bounded canary
+      - name: Semantic bounded canary and edge-app differential
         shell: bash
         run: |
           set -euo pipefail
@@ -151,7 +153,9 @@ jobs:
           SEMANTIC_URL=''
           HEALTH=''
           HEALTH_TRACE=''
+          EDGE_HEALTH_CODE=''
           declare -A SEEN_URLS=()
+
           for attempt in $(seq 1 12); do
             for candidate in "${CANDIDATE_URLS[@]}"; do
               [[ -n "$candidate" ]] || continue
@@ -161,6 +165,7 @@ jobs:
               SEEN_URLS["$candidate"]=1
               CODE="$(curl --silent --show-error --connect-timeout 5 --max-time 10 --output /tmp/fuse-relay-health-body --write-out '%{http_code}' "$candidate/healthz" || true)"
               BODY="$(cat /tmp/fuse-relay-health-body 2>/dev/null || true)"
+              EDGE_HEALTH_CODE="$CODE"
               HEALTH_TRACE="${HEALTH_TRACE}${attempt}:${candidate}:${CODE};"
               if [[ "$CODE" == '200' ]] && python3 -c 'import json,sys; d=json.load(sys.stdin); raise SystemExit(0 if d.get("status")=="ok" and d.get("device_auth")=="ECDSA_P256" else 1)' <<<"$BODY"; then
                 SEMANTIC_URL="$candidate"
@@ -170,14 +175,75 @@ jobs:
             done
             sleep 5
           done
+
           if [[ -z "$SEMANTIC_URL" ]]; then
-            echo "HEALTH_ROUTE_DIFFERENTIAL_FAILED:$HEALTH_TRACE" >&2
-            exit 52
+            echo 'EDGE_APP_DIFFERENTIAL_CHECKED=true' >> "$GITHUB_ENV"
+            echo "EDGE_HEALTH_CODE=${EDGE_HEALTH_CODE:-UNKNOWN}" >> "$GITHUB_ENV"
+
+            gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/fuse-relay-service.json
+            python3 - <<'PY' >> "$GITHUB_ENV"
+          import json
+          d=json.load(open('/tmp/fuse-relay-service.json', encoding='utf-8'))
+          a=(d.get('metadata') or {}).get('annotations') or {}
+          print('INGRESS_SETTING='+str(a.get('run.googleapis.com/ingress','')))
+          print('DEFAULT_URL_DISABLED='+str(a.get('run.googleapis.com/default-url-disabled','')))
+          print('INVOKER_IAM_DISABLED='+str(a.get('run.googleapis.com/invoker-iam-disabled','')))
+          PY
+
+            PROXY_PORT=18081
+            PROXY_CODE=''
+            PROXY_HEALTH=''
+            gcloud run services proxy "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --port "$PROXY_PORT" >/tmp/fuse-relay-proxy.log 2>&1 &
+            PROXY_PID=$!
+            cleanup_proxy() {
+              kill "$PROXY_PID" >/dev/null 2>&1 || true
+              wait "$PROXY_PID" >/dev/null 2>&1 || true
+            }
+            trap cleanup_proxy EXIT
+            sleep 2
+
+            if ! kill -0 "$PROXY_PID" >/dev/null 2>&1; then
+              echo 'PROXY_HEALTH_CODE=UNAVAILABLE' >> "$GITHUB_ENV"
+              echo 'EDGE_FAILURE_CLASS=AUTHENTICATED_PROXY_UNCALLABLE' >> "$GITHUB_ENV"
+              echo "EDGE_APP_DIFFERENTIAL_FAILED:AUTHENTICATED_PROXY_UNCALLABLE:$HEALTH_TRACE" >&2
+              exit 55
+            fi
+
+            for proxy_attempt in $(seq 1 12); do
+              PROXY_CODE="$(curl --silent --show-error --connect-timeout 3 --max-time 8 --output /tmp/fuse-relay-proxy-health --write-out '%{http_code}' "http://127.0.0.1:${PROXY_PORT}/healthz" || true)"
+              PROXY_BODY="$(cat /tmp/fuse-relay-proxy-health 2>/dev/null || true)"
+              if [[ "$PROXY_CODE" == '200' ]] && python3 -c 'import json,sys; d=json.load(sys.stdin); raise SystemExit(0 if d.get("status")=="ok" and d.get("device_auth")=="ECDSA_P256" else 1)' <<<"$PROXY_BODY"; then
+                PROXY_HEALTH="$PROXY_BODY"
+                break
+              fi
+              sleep 2
+            done
+            echo "PROXY_HEALTH_CODE=${PROXY_CODE:-UNKNOWN}" >> "$GITHUB_ENV"
+
+            # Read only bounded request metadata; absence or denied log read is evidence, not a reason to widen IAM.
+            REQUEST_LOG_COUNT="$(gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=$TARGET_SERVICE AND httpRequest.requestUrl:\"/healthz\"" --project "$PROJECT_ID" --freshness=20m --limit=20 --format='value(timestamp)' 2>/dev/null | sed '/^$/d' | wc -l | tr -d ' ' || true)"
+            echo "REQUEST_LOG_COUNT=${REQUEST_LOG_COUNT:-UNKNOWN}" >> "$GITHUB_ENV"
+
+            if [[ -n "$PROXY_HEALTH" ]]; then
+              echo 'EDGE_FAILURE_CLASS=EDGE_ACCESS_OR_INGRESS_404_APP_HEALTH_VIA_AUTH_PROXY' >> "$GITHUB_ENV"
+              echo "EDGE_APP_DIFFERENTIAL_FAILED:EDGE_ACCESS_OR_INGRESS_404_APP_HEALTH_VIA_AUTH_PROXY:$HEALTH_TRACE" >&2
+              exit 53
+            fi
+
+            echo 'EDGE_FAILURE_CLASS=APPLICATION_ROUTE_OR_PROXY_PATH_UNHEALTHY' >> "$GITHUB_ENV"
+            echo "EDGE_APP_DIFFERENTIAL_FAILED:APPLICATION_ROUTE_OR_PROXY_PATH_UNHEALTHY:edge=${EDGE_HEALTH_CODE:-UNKNOWN}:proxy=${PROXY_CODE:-UNKNOWN}:$HEALTH_TRACE" >&2
+            exit 54
           fi
+
           echo "SEMANTIC_URL=$SEMANTIC_URL" >> "$GITHUB_ENV"
           echo 'HEALTH_ROUTE_DIFFERENTIAL_CHECKED=true' >> "$GITHUB_ENV"
+          echo 'EDGE_APP_DIFFERENTIAL_CHECKED=true' >> "$GITHUB_ENV"
+          echo 'EDGE_FAILURE_CLASS=NONE' >> "$GITHUB_ENV"
+          echo "EDGE_HEALTH_CODE=200" >> "$GITHUB_ENV"
+          echo "PROXY_HEALTH_CODE=NOT_NEEDED" >> "$GITHUB_ENV"
           test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])' <<<"$HEALTH")" = ok
           test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["device_auth"])' <<<"$HEALTH")" = ECDSA_P256
+
           MCP_CODE="$(curl --silent --output /dev/null --write-out '%{http_code}' "$SEMANTIC_URL/mcp")"
           case "$MCP_CODE" in 401|403|404) ;; *) echo "MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 51 ;; esac
           echo 'MCP_FAIL_CLOSED_CHECKED=true' >> "$GITHUB_ENV"
@@ -255,6 +321,14 @@ jobs:
               "zero_traffic_checked": truth("ZERO_TRAFFIC_CHECKED"),
               "production_isolation_checked": truth("PRODUCTION_ISOLATION_CHECKED"),
               "health_route_differential_checked": truth("HEALTH_ROUTE_DIFFERENTIAL_CHECKED"),
+              "edge_app_differential_checked": truth("EDGE_APP_DIFFERENTIAL_CHECKED"),
+              "edge_health_code": os.environ.get("EDGE_HEALTH_CODE"),
+              "proxy_health_code": os.environ.get("PROXY_HEALTH_CODE"),
+              "edge_failure_class": os.environ.get("EDGE_FAILURE_CLASS"),
+              "ingress_setting": os.environ.get("INGRESS_SETTING"),
+              "default_url_disabled": os.environ.get("DEFAULT_URL_DISABLED"),
+              "invoker_iam_disabled": os.environ.get("INVOKER_IAM_DISABLED"),
+              "request_log_count": os.environ.get("REQUEST_LOG_COUNT"),
               "mcp_fail_closed_checked": truth("MCP_FAIL_CLOSED_CHECKED"),
               "browser_entrypoint_checked": truth("BROWSER_ENTRYPOINT_CHECKED"),
               "secret_value_recorded": False,
