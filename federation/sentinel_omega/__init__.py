@@ -6,6 +6,17 @@ from .heartbeat_precursor import (
     HeartbeatCadenceForecaster,
     HeartbeatCadenceProfile,
 )
+from .market_leader_convergence import (
+    EventOrchestrationDecision,
+    EventOrchestrationEngine,
+    EventOrchestrationRule,
+    IncidentContext,
+    MarketLeaderRepairConvergence,
+    OrchestrationAction,
+    RepairWorkPacket,
+    RepairWorkStage,
+    RootCauseToRepairCompiler,
+)
 from .observability_causal_fabric import (
     AdaptiveBaselineDetector,
     IncidentCorrelator,
@@ -37,21 +48,36 @@ from .precursor_outcome import (
     PrecursorPrediction,
     ResolvedPrecursorOutcome,
 )
+from .repair_binding import (
+    BoundRepairPlan,
+    ProviderAuthorityEvidence,
+    RepairBindingState,
+    RepairRunbook,
+    RepairRunbookRegistry,
+    SentinelRepairBinder,
+)
 from .topology_correlation import SentinelObservabilityCausalFabric
 
 __all__ = [
     "AdaptiveBaselineDetector",
+    "BoundRepairPlan",
     "CadenceState",
     "CompiledOwnerValuePair",
+    "EventOrchestrationDecision",
+    "EventOrchestrationEngine",
+    "EventOrchestrationRule",
     "GitHubWorkflowRunAdapter",
     "HeartbeatCadenceAssessment",
     "HeartbeatCadenceForecaster",
     "HeartbeatCadenceProfile",
     "HeartbeatObservationAdapter",
+    "IncidentContext",
     "IncidentCorrelator",
+    "MarketLeaderRepairConvergence",
     "MultiWindowSLOGuard",
     "NormalizedObservation",
     "ObservationIngressBatch",
+    "OrchestrationAction",
     "OwnerValueMissionObservationAdapter",
     "OwnerValueMissionRecord",
     "OwnerValuePairCompiler",
@@ -62,10 +88,18 @@ __all__ = [
     "PrecursorOutcomeResolver",
     "PrecursorPrediction",
     "ProjectionDriftObservationAdapter",
+    "ProviderAuthorityEvidence",
     "QueueObservationAdapter",
+    "RepairBindingState",
+    "RepairRunbook",
+    "RepairRunbookRegistry",
+    "RepairWorkPacket",
+    "RepairWorkStage",
     "ResolvedPrecursorOutcome",
+    "RootCauseToRepairCompiler",
     "SemanticObservationNormalizer",
     "SentinelObservabilityCausalFabric",
+    "SentinelRepairBinder",
     "SignalKind",
     "SLOWindowSample",
 ]
