@@ -3,6 +3,7 @@ from __future__ import annotations
 import json
 import os
 import subprocess
+import tempfile
 import unittest
 from datetime import datetime, timezone
 from pathlib import Path
@@ -163,21 +164,38 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         body = "Summary\n<!-- FEDERATION_COORDINATION_V2\n" + json.dumps(claim(a)) + "\n-->"
         self.assertEqual("A", extract_claim(body)["lease_id"])
 
+    def test_workflow_free_export_without_origin_is_explicitly_not_applicable(self):
+        prior_event_path = os.environ.get("GITHUB_EVENT_PATH")
+        try:
+            with tempfile.TemporaryDirectory() as td:
+                root = Path(td)
+                event_path = root / "event.json"
+                event_path.write_text(
+                    json.dumps({"pull_request": {"base": {"sha": BASE}, "head": {"sha": "2" * 40}, "body": ""}}),
+                    encoding="utf-8",
+                )
+                os.environ["GITHUB_EVENT_PATH"] = str(event_path)
+                result = evaluate_hosted_pull_request_v3(root)
+        finally:
+            if prior_event_path is None:
+                os.environ.pop("GITHUB_EVENT_PATH", None)
+            else:
+                os.environ["GITHUB_EVENT_PATH"] = prior_event_path
+        self.assertEqual("NOT_APPLICABLE", result["status"])
+        self.assertEqual("V3_HOSTED_PROVIDER_NOT_APPLICABLE_NO_ORIGIN", result["state"])
+        self.assertFalse(result["provider_effect_authorized"])
+
     @unittest.skipUnless(
         os.environ.get("GITHUB_ACTIONS") == "true" and os.environ.get("GITHUB_EVENT_NAME") == "pull_request",
         "hosted scoped coordination court runs only on GitHub pull_request",
     )
     def test_hosted_pull_request_honours_scoped_registry(self):
-        origin = subprocess.run(
-            ["git", "remote", "get-url", "origin"],
-            cwd=ROOT,
-            text=True,
-            capture_output=True,
-            check=False,
-        )
-        if origin.returncode != 0 or not origin.stdout.strip():
-            self.skipTest("V3_HOSTED_PROVIDER_NOT_APPLICABLE_NO_ORIGIN")
         result = evaluate_hosted_pull_request_v3(ROOT)
+        self.assertNotEqual(
+            "V3_HOSTED_PROVIDER_NOT_APPLICABLE_NO_ORIGIN",
+            result["state"],
+            "GitHub pull_request checkout must expose a usable provider origin",
+        )
         self.assertEqual("PASS", result["status"], json.dumps(result, indent=2, sort_keys=True))
 
 
