@@ -329,3 +329,113 @@ jobs:
           if-no-files-found: error
           retention-days: 14
           path: mobile/fuse-mobile/mdtaf-evidence/
+
+  web-pwa:
+    if: >-
+      github.event_name == 'push' ||
+      (github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_MDTAF_V1' &&
+       github.event.issue.author_association == 'OWNER')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 20
+    steps:
+      - name: Checkout exact default-branch source without write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Set up Node 20.19
+        uses: actions/setup-node@49933ea5288caeca8642d1e84afbd3f7d6820020
+        with:
+          node-version: '20.19.x'
+
+      - name: Run source contracts and export exact Web PWA
+        shell: bash
+        run: |
+          set -euo pipefail
+          python -m unittest tests.test_fuse_mobile_web_cfbe_v1
+          cd mobile/fuse-mobile
+          rm -f package-lock.json
+          npm install --package-lock-only --ignore-scripts
+          npm ci
+          npm run typecheck
+          npx expo-doctor
+          npm run verify:web
+          test -s dist-web/index.html
+          test -s dist-web/manifest.webmanifest
+          test -s dist-web/sw.js
+
+      - name: Render exact Web PWA and require semantic FUSE UI
+        working-directory: mobile/fuse-mobile
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          RUN_ID: ${{ github.run_id }}
+          RUN_ATTEMPT: ${{ github.run_attempt }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          BROWSER="$(command -v google-chrome || command -v chromium || command -v chromium-browser || true)"
+          test -n "$BROWSER"
+          "$BROWSER" --version | tee web-browser-version.txt
+          python3 -m http.server 4173 --directory dist-web > web-http-server.log 2>&1 &
+          SERVER_PID=$!
+          cleanup() { kill "$SERVER_PID" >/dev/null 2>&1 || true; }
+          trap cleanup EXIT
+          READY=0
+          for _ in $(seq 1 30); do
+            if curl --fail --silent --show-error http://127.0.0.1:4173/ >/dev/null; then READY=1; break; fi
+            sleep 1
+          done
+          test "$READY" -eq 1
+          "$BROWSER" --headless=new --no-sandbox --disable-gpu --virtual-time-budget=12000 \
+            --dump-dom http://127.0.0.1:4173/ > web-rendered-dom.html
+          grep -Eiq 'FUSE' web-rendered-dom.html
+          grep -Eiq 'Connect owner|Ask FUSE|LIVE DIAGNOSTICS|Proof-before-claim|Owner connection required' web-rendered-dom.html
+          python - <<'PY'
+          import hashlib, json, os
+          from pathlib import Path
+          manifest = json.loads(Path('dist-web/manifest.webmanifest').read_text(encoding='utf-8'))
+          sw = Path('dist-web/sw.js').read_text(encoding='utf-8').lower()
+          dom = Path('web-rendered-dom.html').read_text(encoding='utf-8', errors='replace')
+          assert manifest.get('display') == 'standalone', manifest
+          assert manifest.get('start_url') == '/', manifest
+          assert 'authorization' in sw and 'x-fuse-authorization' in sw
+          assert "request.method !== 'get'" in sw
+          assert 'url.origin !== self.location.origin' in sw
+          semantic = any(marker.lower() in dom.lower() for marker in (
+              'Connect owner', 'Ask FUSE', 'LIVE DIAGNOSTICS', 'Proof-before-claim', 'Owner connection required'
+          ))
+          assert 'fuse' in dom.lower() and semantic
+          def sha(path): return hashlib.sha256(Path(path).read_bytes()).hexdigest()
+          receipt = {
+              'schema': 'FUSE_MOBILE_WEB_PWA_RUNTIME_RECEIPT_V1',
+              'state': 'WEB_PWA_RENDERED_SEMANTIC_PASS',
+              'source_sha': os.environ['SOURCE_SHA'],
+              'run_id': int(os.environ['RUN_ID']),
+              'run_attempt': int(os.environ['RUN_ATTEMPT']),
+              'index_sha256': sha('dist-web/index.html'),
+              'manifest_sha256': sha('dist-web/manifest.webmanifest'),
+              'service_worker_sha256': sha('dist-web/sw.js'),
+              'rendered_dom_sha256': sha('web-rendered-dom.html'),
+              'semantic_fuse_ui': True,
+              'authorized_api_cache_bypass_contract': True,
+              'hosted_provider_runtime_proven': False,
+              'provider_effect_executed': False,
+          }
+          Path('fuse-mobile-web-pwa-runtime-receipt.json').write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + '\n', encoding='utf-8'
+          )
+          print(json.dumps(receipt, sort_keys=True))
+          PY
+
+      - name: Upload immutable Web PWA evidence
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-mobile-web-pwa-${{ github.run_id }}-${{ github.run_attempt }}
+          if-no-files-found: error
+          retention-days: 14
+          path: |
+            mobile/fuse-mobile/dist-web/
+            mobile/fuse-mobile/web-rendered-dom.html
+            mobile/fuse-mobile/web-browser-version.txt
+            mobile/fuse-mobile/web-http-server.log
+            mobile/fuse-mobile/fuse-mobile-web-pwa-runtime-receipt.json
