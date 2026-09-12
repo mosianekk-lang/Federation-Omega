@@ -20,7 +20,10 @@ from proofos_omega.repository_coordination_v3 import (
     load_policy,
     normalize_write_set,
     parse_registry_message,
+    reclaim_lease,
     scopes_overlap,
+    transition_recovery,
+    validate_fence,
     write_set_digest,
 )
 
@@ -96,6 +99,13 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         self.assertEqual("GIT_REF_FAST_FORWARD_CAS", self.policy["registry_transaction_model"]["provider"])
         self.assertFalse(self.policy["registry_transaction_model"]["work_duration_serialized"])
 
+    def test_v31_policy_declares_recovery_and_stale_fence_law(self):
+        self.assertEqual("3.1.0", self.policy["version"])
+        recovery = self.policy["recovery_lifecycle"]
+        self.assertEqual(["ACTIVE", "SUSPECT", "ORPHANED", "RECLAIMABLE"], recovery["nonterminal_states"])
+        self.assertTrue(self.policy["proof_boundary"]["orphan_recovery_canary_required"])
+        self.assertTrue(self.policy["proof_boundary"]["stale_fence_rejection_canary_required"])
+
     def test_registry_parses(self):
         self.assertEqual(REGISTRY_SCHEMA, parse_registry_message(message(registry()))["schema"])
 
@@ -150,6 +160,120 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         result = self.assess(["cfbe/x.py"], "legacy", registry(a, generation=11))
         self.assertEqual("FAIL", result["status"])
         self.assertIn("V3_ACTIVE_EXPIRED_NOT_TERMINAL", self.rules(result))
+
+    def test_recovery_cannot_mark_suspect_before_expiry(self):
+        a = lease("A", ["mobile/**"], 11, "NODE-A")
+        result = transition_recovery(
+            registry(a, generation=11),
+            "A",
+            expected_fencing_token=11,
+            actor="RECOVERY-WATCHER",
+            target_state="SUSPECT",
+            now=NOW,
+            policy=self.policy,
+        )
+        self.assertEqual("FAIL", result["status"])
+        self.assertEqual("V3_RECOVERY_NOT_EXPIRED", result["state"])
+
+    def test_recovery_lifecycle_requires_independent_reclaimer_and_permanently_fences_old_writer(self):
+        a = lease("A", ["mobile/**"], 11, "NODE-A", expires="2026-09-02T22:49:30+02:00")
+        reg = registry(a, generation=11)
+
+        suspect = transition_recovery(
+            reg,
+            "A",
+            expected_fencing_token=11,
+            actor="RECOVERY-WATCHER",
+            target_state="SUSPECT",
+            now=NOW,
+            policy=self.policy,
+        )
+        self.assertEqual("PASS", suspect["status"])
+        self.assertEqual(12, suspect["registry"]["generation"])
+        self.assertEqual("SUSPECT", suspect["registry"]["active_leases"][0]["state"])
+        self.assertEqual("FAIL", can_acquire(suspect["registry"], ["mobile/app.py"], now=NOW, policy=self.policy)["status"])
+
+        orphaned = transition_recovery(
+            suspect["registry"],
+            "A",
+            expected_fencing_token=11,
+            actor="RECOVERY-WATCHER",
+            target_state="ORPHANED",
+            now=NOW,
+            policy=self.policy,
+        )
+        self.assertEqual("PASS", orphaned["status"])
+        self.assertEqual(13, orphaned["registry"]["generation"])
+
+        self_reclaimable = transition_recovery(
+            orphaned["registry"],
+            "A",
+            expected_fencing_token=11,
+            actor="NODE-A",
+            target_state="RECLAIMABLE",
+            now=NOW,
+            policy=self.policy,
+        )
+        self.assertEqual("FAIL", self_reclaimable["status"])
+        self.assertEqual("V3_RECOVERY_INDEPENDENT_ACTOR_REQUIRED", self_reclaimable["state"])
+
+        reclaimable = transition_recovery(
+            orphaned["registry"],
+            "A",
+            expected_fencing_token=11,
+            actor="RECOVERY-JUDGE",
+            target_state="RECLAIMABLE",
+            now=NOW,
+            policy=self.policy,
+        )
+        self.assertEqual("PASS", reclaimable["status"])
+        self.assertEqual(14, reclaimable["registry"]["generation"])
+        self.assertEqual("RECLAIMABLE", reclaimable["registry"]["active_leases"][0]["state"])
+
+        blocked_claim = self.assess(["mobile/app.py"], json.dumps(claim(reclaimable["registry"]["active_leases"][0])), reclaimable["registry"])
+        self.assertEqual("FAIL", blocked_claim["status"])
+        self.assertIn("V3_OWN_LEASE_NOT_ACTIVE_STATE", self.rules(blocked_claim))
+
+        replacement = lease("A-R1", ["mobile/**"], 15, "NODE-R")
+        reclaimed = reclaim_lease(
+            reclaimable["registry"],
+            "A",
+            replacement,
+            expected_fencing_token=11,
+            actor="RECOVERY-JUDGE",
+            now=NOW,
+            policy=self.policy,
+        )
+        self.assertEqual("PASS", reclaimed["status"])
+        self.assertEqual(15, reclaimed["registry"]["generation"])
+        self.assertEqual("ACTIVE", reclaimed["registry"]["active_leases"][0]["state"])
+        self.assertEqual([11], reclaimed["registry"]["stale_fencing_tokens"])
+        self.assertEqual("FAIL", validate_fence(reclaimed["registry"], "A", 11)["status"])
+        self.assertEqual("V3_STALE_FENCE_REJECTED", validate_fence(reclaimed["registry"], "A", 11)["state"])
+        self.assertEqual("PASS", validate_fence(reclaimed["registry"], "A-R1", 15)["status"])
+
+    def test_reclaim_requires_same_write_set_and_next_generation_fence(self):
+        a = lease("A", ["mobile/**"], 11, "NODE-A", expires="2026-09-02T22:49:30+02:00")
+        reg = registry(a, generation=11)
+        suspect = transition_recovery(reg, "A", expected_fencing_token=11, actor="R", target_state="SUSPECT", now=NOW, policy=self.policy)["registry"]
+        orphaned = transition_recovery(suspect, "A", expected_fencing_token=11, actor="R", target_state="ORPHANED", now=NOW, policy=self.policy)["registry"]
+        reclaimable = transition_recovery(orphaned, "A", expected_fencing_token=11, actor="JUDGE", target_state="RECLAIMABLE", now=NOW, policy=self.policy)["registry"]
+
+        bad_scope = lease("A-R1", ["cfbe/**"], 15, "NODE-R")
+        result = reclaim_lease(reclaimable, "A", bad_scope, expected_fencing_token=11, actor="JUDGE", now=NOW, policy=self.policy)
+        self.assertEqual("V3_RECLAIM_WRITE_SET_CHANGED", result["state"])
+
+        bad_fence = lease("A-R1", ["mobile/**"], 16, "NODE-R")
+        result = reclaim_lease(reclaimable, "A", bad_fence, expected_fencing_token=11, actor="JUDGE", now=NOW, policy=self.policy)
+        self.assertEqual("V3_RECLAIM_FENCE_NOT_MONOTONIC", result["state"])
+
+    def test_stale_fence_tombstone_cannot_be_reused_by_active_lease(self):
+        a = lease("A", ["mobile/**"], 11, "NODE-A")
+        reg = registry(a, generation=12)
+        reg["stale_fencing_tokens"] = [11]
+        result = self.assess(["docs/x.md"], "legacy", reg)
+        self.assertEqual("FAIL", result["status"])
+        self.assertIn("V3_STALE_FENCE_REUSED", self.rules(result))
 
     def test_acquire_preflight_disjoint_pass_overlap_fails(self):
         a = lease("A", ["mobile/**"], 11, "NODE-A")
