@@ -1,4 +1,4 @@
-name: FUSE Windows Relay Cloud Run v2.4
+name: FUSE Windows Relay Cloud Run v2.6
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: fuse-windows-relay-cloud-run-v25
+  group: fuse-windows-relay-cloud-run-v26
   cancel-in-progress: false
 
 env:
@@ -27,7 +27,7 @@ env:
   ALLOW_PRODUCTION_PROMOTION: 'false'
 
 jobs:
-  deploy-zero-traffic-canary:
+  deploy-bounded-canary:
     if: >-
       (github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V2' ||
        github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1') &&
@@ -93,29 +93,56 @@ jobs:
           test -n "$DIGEST"
           echo "IMAGE_DIGEST_URI=$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-windows-relay@$DIGEST" >> "$GITHUB_ENV"
 
-      - name: Deploy zero-traffic tagged canary
+      - name: Deploy isolated-first-service or zero-traffic existing-service canary
         shell: bash
         run: |
           set -euo pipefail
-          PREVIOUS="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
-          echo "PREVIOUS_REVISION=$PREVIOUS" >> "$GITHUB_ENV"
           ENVVARS="FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"
           if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
             ENVVARS="FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"
           fi
-          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" --port 8080 --cpu 1 --memory 512Mi --min 0 --max 3 --concurrency 20 --no-traffic --tag relay-canary --no-invoker-iam-check --set-env-vars="$ENVVARS" --quiet
-          SERVICE_URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
-          CANARY_URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[?tag==`relay-canary`].url)')"
-          CANARY_REVISION="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[?tag==`relay-canary`].revisionName)')"
-          test -n "$SERVICE_URL" && test -n "$CANARY_URL" && test -n "$CANARY_REVISION"
-          if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
-            gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --no-traffic --tag relay-canary --update-env-vars="FUSE_MCP_RESOURCE_URL=$SERVICE_URL/mcp" --quiet
+
+          echo 'PRODUCTION_TRAFFIC_CHANGED=false' >> "$GITHUB_ENV"
+          if gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(metadata.name)' >/dev/null 2>&1; then
+            TARGET_SERVICE="$SERVICE"
+            PREVIOUS="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
+            echo 'PRODUCTION_SERVICE_PRESENT=true' >> "$GITHUB_ENV"
+            echo 'DEPLOYMENT_TOPOLOGY=TAGGED_ZERO_TRAFFIC_EXISTING_SERVICE' >> "$GITHUB_ENV"
+            echo 'CANARY_DELETE_POINTER=' >> "$GITHUB_ENV"
+            gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" --port 8080 --cpu 1 --memory 512Mi --min 0 --max 3 --concurrency 20 --no-traffic --tag relay-canary --no-invoker-iam-check --set-env-vars="$ENVVARS" --quiet
+            SERVICE_URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+            if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
+              gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --no-traffic --tag relay-canary --update-env-vars="FUSE_MCP_RESOURCE_URL=$SERVICE_URL/mcp" --quiet
+            fi
+            CANARY_URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[?tag==`relay-canary`].url)')"
+            CANARY_REVISION="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[?tag==`relay-canary`].revisionName)')"
+          else
+            TARGET_SERVICE="${SERVICE}-canary-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+            PREVIOUS=''
+            echo 'PRODUCTION_SERVICE_PRESENT=false' >> "$GITHUB_ENV"
+            echo 'DEPLOYMENT_TOPOLOGY=ISOLATED_CANARY_SERVICE_WHEN_PRODUCTION_ABSENT' >> "$GITHUB_ENV"
+            if gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(metadata.name)' >/dev/null 2>&1; then
+              echo "ISOLATED_CANARY_ALREADY_EXISTS:$TARGET_SERVICE" >&2
+              exit 67
+            fi
+            gcloud run deploy "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" --port 8080 --cpu 1 --memory 512Mi --min 0 --max 1 --concurrency 20 --no-invoker-iam-check --set-env-vars="$ENVVARS" --quiet
+            SERVICE_URL="$(gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+            if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
+              gcloud run services update "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --update-env-vars="FUSE_MCP_RESOURCE_URL=$SERVICE_URL/mcp" --quiet
+            fi
+            CANARY_URL="$(gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
+            CANARY_REVISION="$(gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')"
+            printf 'CANARY_DELETE_POINTER=gcloud run services delete %q --project %q --region %q --quiet\n' "$TARGET_SERVICE" "$PROJECT_ID" "$REGION" >> "$GITHUB_ENV"
           fi
+
+          test -n "$SERVICE_URL" && test -n "$CANARY_URL" && test -n "$CANARY_REVISION"
+          echo "TARGET_SERVICE=$TARGET_SERVICE" >> "$GITHUB_ENV"
+          echo "PREVIOUS_REVISION=$PREVIOUS" >> "$GITHUB_ENV"
           echo "SERVICE_URL=$SERVICE_URL" >> "$GITHUB_ENV"
           echo "CANARY_URL=$CANARY_URL" >> "$GITHUB_ENV"
           echo "CANARY_REVISION=$CANARY_REVISION" >> "$GITHUB_ENV"
 
-      - name: Semantic zero-traffic canary
+      - name: Semantic bounded canary
         shell: bash
         run: |
           set -euo pipefail
@@ -132,19 +159,32 @@ jobs:
             curl --fail --silent --show-error "$CANARY_URL/node/native-bootstrap.ps1" | grep -F 'NonExportable' >/dev/null
             echo 'BROWSER_ENTRYPOINT_CHECKED=true' >> "$GITHUB_ENV"
           fi
-          ACTIVE="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
-          test "$ACTIVE" != "$CANARY_REVISION"
-          echo 'ZERO_TRAFFIC_CHECKED=true' >> "$GITHUB_ENV"
+
+          if [[ "$PRODUCTION_SERVICE_PRESENT" == 'true' ]]; then
+            ACTIVE="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
+            test "$ACTIVE" != "$CANARY_REVISION"
+            echo 'ZERO_TRAFFIC_CHECKED=true' >> "$GITHUB_ENV"
+            echo 'PRODUCTION_ISOLATION_CHECKED=true' >> "$GITHUB_ENV"
+          else
+            if gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(metadata.name)' >/dev/null 2>&1; then
+              echo 'PRODUCTION_SERVICE_UNEXPECTEDLY_CREATED' >&2
+              exit 68
+            fi
+            test "$(gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')" = "$CANARY_REVISION"
+            echo 'ZERO_TRAFFIC_CHECKED=false' >> "$GITHUB_ENV"
+            echo 'PRODUCTION_ISOLATION_CHECKED=true' >> "$GITHUB_ENV"
+          fi
 
       - name: Optional explicitly authorised production promotion
-        if: env.ALLOW_PRODUCTION_PROMOTION == 'true'
+        if: env.ALLOW_PRODUCTION_PROMOTION == 'true' && env.PRODUCTION_SERVICE_PRESENT == 'true'
         shell: bash
         run: |
           set -euo pipefail
           gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions="$CANARY_REVISION=100" --quiet
+          echo 'PRODUCTION_TRAFFIC_CHANGED=true' >> "$GITHUB_ENV"
 
       - name: Roll back explicitly authorised promotion on failure
-        if: failure() && env.PREVIOUS_REVISION != '' && env.ALLOW_PRODUCTION_PROMOTION == 'true'
+        if: failure() && env.PRODUCTION_SERVICE_PRESENT == 'true' && env.PREVIOUS_REVISION != '' && env.ALLOW_PRODUCTION_PROMOTION == 'true'
         shell: bash
         run: |
           set -euo pipefail
@@ -161,11 +201,14 @@ jobs:
           from datetime import datetime,timezone
           truth=lambda name: os.environ.get(name,'').lower()=='true'
           body = {
-              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V25",
+              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V26",
               "source_sha": os.environ.get("GITHUB_SHA"),
               "project_id": os.environ["PROJECT_ID"],
               "region": os.environ["REGION"],
               "service": os.environ["SERVICE"],
+              "target_service": os.environ.get("TARGET_SERVICE"),
+              "deployment_topology": os.environ.get("DEPLOYMENT_TOPOLOGY"),
+              "production_service_present": truth("PRODUCTION_SERVICE_PRESENT"),
               "bootstrap_mode": os.environ.get("BOOTSTRAP_MODE"),
               "device_auth_mode": os.environ.get("DEVICE_AUTH_MODE"),
               "build_mechanism": os.environ.get("BUILD_MECHANISM"),
@@ -176,9 +219,11 @@ jobs:
               "canary_url": os.environ.get("CANARY_URL"),
               "canary_revision": os.environ.get("CANARY_REVISION"),
               "previous_revision": os.environ.get("PREVIOUS_REVISION"),
+              "canary_delete_pointer": os.environ.get("CANARY_DELETE_POINTER"),
               "provider_mutation_performed": bool(os.environ.get("IMAGE_DIGEST_URI")),
-              "production_traffic_changed": os.environ.get("ALLOW_PRODUCTION_PROMOTION") == "true",
+              "production_traffic_changed": truth("PRODUCTION_TRAFFIC_CHANGED"),
               "zero_traffic_checked": truth("ZERO_TRAFFIC_CHECKED"),
+              "production_isolation_checked": truth("PRODUCTION_ISOLATION_CHECKED"),
               "mcp_fail_closed_checked": truth("MCP_FAIL_CLOSED_CHECKED"),
               "browser_entrypoint_checked": truth("BROWSER_ENTRYPOINT_CHECKED"),
               "secret_value_recorded": False,
