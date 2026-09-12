@@ -22,17 +22,23 @@ APK_SHA = "a" * 64
 class FuseMobileMdtafContractTests(unittest.TestCase):
     def _valid_smoke(self) -> dict[str, object]:
         return {
-            "schema": "FUSE_MOBILE_MDTAF_SMOKE_RECEIPT_V1",
+            "schema": "FUSE_MOBILE_MDTAF_SMOKE_RECEIPT_V2",
             "state": "ANDROID_SMOKE_PASS",
             "apk_sha256": APK_SHA,
+            "embedded_js_bundle_state": "PASS",
             "install_state": "PASS",
             "first_launch_state": "PASS",
+            "first_launch_ui_state": "PASS",
             "relaunch_state": "PASS",
+            "relaunch_ui_state": "PASS",
             "network_baseline_state": "PASS",
             "connectivity_loss_state": "PASS",
             "offline_launch_state": "PASS",
+            "offline_launch_ui_state": "PASS",
             "network_recovery_state": "PASS",
             "recovery_launch_state": "PASS",
+            "recovery_launch_ui_state": "PASS",
+            "react_boot_error_state": "PASS",
             "fatal_or_anr_hits": [],
         }
 
@@ -44,11 +50,22 @@ class FuseMobileMdtafContractTests(unittest.TestCase):
             "matches": [],
         }
 
+    def _valid_build(self) -> dict[str, object]:
+        return {
+            "schema": "FUSE_MOBILE_ANDROID_BUILD_RECEIPT_V2",
+            "state": "ANDROID_STANDALONE_TEST_APK_GENERATED_VERIFIED",
+            "apk_sha256": APK_SHA,
+            "embedded_js_bundle": True,
+            "production_signing_proven": False,
+            "test_artifact_only": True,
+        }
+
     def _run_certificate(
         self,
         *,
         smoke: dict[str, object] | None = None,
         security: dict[str, object] | None = None,
+        build: dict[str, object] | None = None,
     ) -> tuple[subprocess.CompletedProcess[str], dict[str, object]]:
         with tempfile.TemporaryDirectory() as tmp:
             evidence = Path(tmp) / "evidence"
@@ -59,6 +76,10 @@ class FuseMobileMdtafContractTests(unittest.TestCase):
             )
             (evidence / "apk-security-scan.json").write_text(
                 json.dumps(security if security is not None else self._valid_security()),
+                encoding="utf-8",
+            )
+            (evidence / "android-build-receipt.json").write_text(
+                json.dumps(build if build is not None else self._valid_build()),
                 encoding="utf-8",
             )
             output = Path(tmp) / "certificate.json"
@@ -153,6 +174,12 @@ class FuseMobileMdtafContractTests(unittest.TestCase):
         self.assertEqual(proc.returncode, 0, proc.stderr or proc.stdout)
         self.assertEqual(certificate["verdict"], "RELEASE_VERIFIED_WITH_DECLARED_LIMITATIONS")
         self.assertEqual(certificate["artifact_hash_binding_state"], "PASS")
+        self.assertTrue(certificate["required_gates"]["embedded_js_bundle"])
+        self.assertTrue(certificate["required_gates"]["semantic_ui_first_launch"])
+        self.assertTrue(certificate["required_gates"]["semantic_ui_relaunch"])
+        self.assertTrue(certificate["required_gates"]["semantic_ui_offline_launch"])
+        self.assertTrue(certificate["required_gates"]["semantic_ui_recovery_launch"])
+        self.assertTrue(certificate["required_gates"]["no_react_boot_error"])
         self.assertTrue(certificate["required_gates"]["connectivity_loss_verified"])
         self.assertTrue(certificate["required_gates"]["network_recovery"])
         self.assertTrue(certificate["required_gates"]["recovery_launch"])
