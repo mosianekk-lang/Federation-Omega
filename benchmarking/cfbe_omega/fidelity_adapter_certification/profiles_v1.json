@@ -1,0 +1,148 @@
+{
+  "schema": "CFBE-OMEGA-FIDELITY-ADAPTER-PROFILES-V1",
+  "version": "1.0.0",
+  "canonicalContract": {
+    "schema": "CFBE-OMEGA-FIDELITY-ADAPTER-CANONICAL-CONTRACT-V1",
+    "objective": "Certify equivalent read-only adapter fidelity without changing canonical systems or inheriting provider authority.",
+    "controls": {
+      "canonicalPreserved": true,
+      "providerMutationAllowed": false,
+      "authorityInheritanceAllowed": false,
+      "credentialInheritanceAllowed": false,
+      "userBurdenAllowed": false,
+      "recurringCostAllowed": false,
+      "fullDoctrineRollbackPreserved": true
+    },
+    "requiredCapabilities": [
+      "metadata-discovery",
+      "content-readback",
+      "authority-isolation",
+      "effect-free-shadow"
+    ]
+  },
+  "platforms": [
+    {
+      "platformId": "github",
+      "exactScope": "Connected GitHub repository metadata, branch discovery, commit comparison, authenticated profile, and file read tools; no merge or provider write.",
+      "discoveryRef": "runtime-tool-contract-set:github-read@2026-08-30",
+      "connectorContractSha256": "63f7b31b99e6a591cf3b81a10e48eea12f3d6ba9a83b4cadf8cf5a79887c6047",
+      "readTools": [
+        "mcp__codex_apps__github_get_repo",
+        "mcp__codex_apps__github_compare_commits",
+        "mcp__codex_apps__github_fetch_file",
+        "mcp__codex_apps__github_get_profile",
+        "mcp__codex_apps__github_search_branches"
+      ],
+      "adapterRoute": {
+        "adapterId": "github-readonly-fidelity-adapter-v1",
+        "provides": ["metadata-discovery", "content-readback", "authority-isolation", "effect-free-shadow"],
+        "maturityState": "DETERMINISTIC_TESTED",
+        "evidence": {
+          "sourceRef": "profiles_v1.json:github",
+          "testRef": "tests:test_cfbe_fidelity_adapter_certification_wave1",
+          "rollbackRef": "rollback:discard-generated-scorecard"
+        },
+        "authorityCeiling": "A1",
+        "recurringCost": 0,
+        "userBurden": 0,
+        "externalEffectRequired": false,
+        "preservesCanonicalSource": true,
+        "fidelityEvidenceRef": "cfbe-kernel:ACCEPT_ZERO_DILUTION",
+        "priority": 1
+      }
+    },
+    {
+      "platformId": "google-drive",
+      "exactScope": "Connected Google Drive profile, metadata search, file metadata, and bounded file read tools; no Drive write.",
+      "discoveryRef": "runtime-tool-contract-set:google-drive-read@2026-08-30",
+      "connectorContractSha256": "5dc46fe974b36eac2b85e29718a317686a25c0e77531379107cb8025356f852b",
+      "readTools": [
+        "mcp__codex_apps__google_drive_get_profile",
+        "mcp__codex_apps__google_drive_search",
+        "mcp__codex_apps__google_drive_fetch",
+        "mcp__codex_apps__google_drive_get_file_metadata"
+      ],
+      "adapterRoute": {
+        "adapterId": "google-drive-readonly-fidelity-adapter-v1",
+        "provides": ["metadata-discovery", "content-readback", "authority-isolation", "effect-free-shadow"],
+        "maturityState": "DETERMINISTIC_TESTED",
+        "evidence": {
+          "sourceRef": "profiles_v1.json:google-drive",
+          "testRef": "tests:test_cfbe_fidelity_adapter_certification_wave1",
+          "rollbackRef": "rollback:discard-generated-scorecard"
+        },
+        "authorityCeiling": "A1",
+        "recurringCost": 0,
+        "userBurden": 0,
+        "externalEffectRequired": false,
+        "preservesCanonicalSource": true,
+        "fidelityEvidenceRef": "cfbe-kernel:ACCEPT_ZERO_DILUTION",
+        "priority": 1
+      }
+    },
+    {
+      "platformId": "gmail",
+      "exactScope": "Connected Gmail profile, message search, message read, and thread read tools; no draft, send, label, archive, or Trash action.",
+      "discoveryRef": "runtime-tool-contract-set:gmail-read@2026-08-30",
+      "connectorContractSha256": "d86147d2c7edd8f99183c167fa1333bd52ab7361ced726293fd63194a9cf2571",
+      "readTools": [
+        "mcp__codex_apps__gmail_get_profile",
+        "mcp__codex_apps__gmail_search_emails",
+        "mcp__codex_apps__gmail_read_email",
+        "mcp__codex_apps__gmail_read_email_thread"
+      ],
+      "adapterRoute": {
+        "adapterId": "gmail-readonly-fidelity-adapter-v1",
+        "provides": ["metadata-discovery", "content-readback", "authority-isolation", "effect-free-shadow"],
+        "maturityState": "DETERMINISTIC_TESTED",
+        "evidence": {
+          "sourceRef": "profiles_v1.json:gmail",
+          "testRef": "tests:test_cfbe_fidelity_adapter_certification_wave1",
+          "rollbackRef": "rollback:discard-generated-scorecard"
+        },
+        "authorityCeiling": "A1",
+        "recurringCost": 0,
+        "userBurden": 0,
+        "externalEffectRequired": false,
+        "preservesCanonicalSource": true,
+        "fidelityEvidenceRef": "cfbe-kernel:ACCEPT_ZERO_DILUTION",
+        "priority": 1
+      }
+    },
+    {
+      "platformId": "canva",
+      "exactScope": "Connected Canva design search, metadata, text-content, and bounded design fetch tools; no design mutation.",
+      "discoveryRef": "runtime-tool-contract-set:canva-read@2026-08-30",
+      "connectorContractSha256": "aed58317f2b4b5d637ea84d5547c599d7fc98803cd69a6fd2ade74989f0bc6d2",
+      "readTools": [
+        "mcp__codex_apps__canva_search",
+        "mcp__codex_apps__canva_get_design",
+        "mcp__codex_apps__canva_get_design_content",
+        "mcp__codex_apps__canva_fetch"
+      ],
+      "adapterRoute": {
+        "adapterId": "canva-readonly-fidelity-adapter-v1",
+        "provides": ["metadata-discovery", "content-readback", "authority-isolation", "effect-free-shadow"],
+        "maturityState": "DETERMINISTIC_TESTED",
+        "evidence": {
+          "sourceRef": "profiles_v1.json:canva",
+          "testRef": "tests:test_cfbe_fidelity_adapter_certification_wave1",
+          "rollbackRef": "rollback:discard-generated-scorecard"
+        },
+        "authorityCeiling": "A1",
+        "recurringCost": 0,
+        "userBurden": 0,
+        "externalEffectRequired": false,
+        "preservesCanonicalSource": true,
+        "fidelityEvidenceRef": "cfbe-kernel:ACCEPT_ZERO_DILUTION",
+        "priority": 1
+      }
+    }
+  ],
+  "truthBoundary": {
+    "profileSourceIsRuntimeProof": false,
+    "liveReadCanaryRequiresSeparateObservation": true,
+    "providerMutationAuthorized": false,
+    "stablePromotionAllowed": false
+  }
+}
