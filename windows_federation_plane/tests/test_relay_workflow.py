@@ -65,7 +65,7 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn('"production_traffic_changed": truth("PRODUCTION_TRAFFIC_CHANGED")', self.text)
 
     def test_agent_only_is_secret_manager_independent(self):
-        self.assertIn("FUSE Windows Relay Cloud Run v2.5", self.text)
+        self.assertIn("FUSE Windows Relay Cloud Run v2.4", self.text)
         self.assertIn("DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY", self.text)
         self.assertIn('"secret_manager_required": False', self.text)
         self.assertNotIn("--set-secrets=", self.text)
