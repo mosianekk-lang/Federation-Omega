@@ -1,0 +1,76 @@
+{
+  "schema": "BCO_PRIME_CHAT_FORENSICS_V2",
+  "version": "2.0.0",
+  "authority": "A1_LOCAL_INTERNAL",
+  "status": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": false
+  },
+  "composition": {
+    "canonicalCoreCount": 100,
+    "legacyChatForensicsCount": 24,
+    "metaOperationCount": 2,
+    "metaSafeSubsetReady": true,
+    "metaFullRuntimeReady": false,
+    "metaSourceSha256": "0f04e5a1e08159325563432695ce3c6d1faec294324c45df327b831f9fdb1902",
+    "cffEngineOperationCount": 8,
+    "totalRegisteredCount": 134,
+    "v1CompatibilityPreserved": true,
+    "v1_1TruthRepairEmbedded": true
+  },
+  "truthRepairs": [
+    "strict canonical JSON without default string coercion",
+    "methodology assets separated from incident evidence",
+    "explicit terminal lifecycle state machine",
+    "contradiction-aware confidence calibration",
+    "pinned-ref plus hash-matched readback durability proof",
+    "seven-file CFF output-set validation",
+    "native CFF engine readiness fails closed"
+  ],
+  "knownRuntimeBoundaries": [
+    "The exact rank_strategies algorithm and manifest are exposed as a source-hash-bound safe subset.",
+    "The full meta-executive runtime fails closed because its three imported federation dependencies are absent from the harvested snapshot."
+  ],
+  "namespaces": {
+    "core": "BCO-PRIME-CAP-*",
+    "legacyChatForensics": "BCO-PRIME-CFF-CAP-*",
+    "meta": [
+      "BCO-PRIME-META-MANIFEST",
+      "BCO-PRIME-META-STRATEGY-TOURNAMENT"
+    ],
+    "cffEngine": [
+      "CFF-V2-SEMANTIC",
+      "CFF-V2-JSD",
+      "CFF-V2-ENTROPY",
+      "CFF-V2-ENSEMBLE",
+      "CFF-V2-SHIELD",
+      "CFF-V2-VALIDATE-LEDGER",
+      "CFF-V2-VALIDATE-CAPSULE",
+      "CFF-V2-RUN-NATIVE-AUDIT"
+    ]
+  },
+  "effectBoundary": {
+    "externalMutationAuthorized": false,
+    "localNativeAuditWriteOnly": true,
+    "publishAuthorized": false,
+    "mergeAuthorized": false,
+    "deployAuthorized": false,
+    "registerAuthorized": false
+  },
+  "verification": {
+    "selectedUnitIntegrationTestsPassed": 27,
+    "canonicalCoreRoutesExecuted": 100,
+    "nativeCffOutputFilesValidated": 7,
+    "nativeCffLedgerValidated": true,
+    "nativeChatBridge11Validated": true,
+    "fullMetaRuntimeDependencyClosure": false
+  },
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}

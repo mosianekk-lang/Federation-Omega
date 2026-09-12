@@ -1,0 +1,20 @@
+{
+  "contract": "FEDERATION-PROTECTION-KERNEL-1.0",
+  "decision": "PASS",
+  "controlScore": 100.0,
+  "controlCount": 10,
+  "passingControls": ["AT-1", "CB-1", "CF-1", "DG-1", "DL-1", "FC-1", "FW-1", "MG-1", "RG-1", "SC-1"],
+  "blockers": [],
+  "warnings": [],
+  "staleArtifacts": [],
+  "missingTerminalFruit": [],
+  "canonicalContinuityState": "ACTIVE_LOCAL",
+  "promotable": true,
+  "releaseEligible": true,
+  "releaseAuthorized": false,
+  "authorityGranted": false,
+  "authorityInterpretation": "RealityGuard validated truth and release eligibility but did not grant provider, deployment, registration or promotion authority.",
+  "kernelRegressionTests": {"passed": 15, "failed": 0},
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}

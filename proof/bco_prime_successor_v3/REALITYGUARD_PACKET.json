@@ -1,0 +1,118 @@
+{
+  "contract": "FEDERATION-PROTECTION-KERNEL-1.0",
+  "asOf": "2026-09-01T14:40:00+02:00",
+  "sources": [
+    {"id": "S1", "kind": "SOURCE_MANIFEST", "current": true},
+    {"id": "S2", "kind": "EXHAUSTIVE_VERIFIER_RECEIPT", "current": true},
+    {"id": "S3", "kind": "MODISA_BUILD_CONTRACT", "current": true},
+    {"id": "S4", "kind": "TEST_EXECUTION", "current": true}
+  ],
+  "claims": [
+    {
+      "id": "C1",
+      "classification": "FACT",
+      "state": "VERIFIED",
+      "material": true,
+      "sourceRefs": ["S1"],
+      "pinpoint": "lineage.sealedV2Archive and files",
+      "currentProof": true,
+      "independentReadback": true,
+      "unresolvedContradictions": []
+    },
+    {
+      "id": "C2",
+      "classification": "FACT",
+      "state": "VERIFIED",
+      "material": true,
+      "sourceRefs": ["S2", "S4"],
+      "pinpoint": "receipt_sha256:0a7442d865a0dbec288735760412b7d7a69c2000ba426cdea8eee877093823eb and 53/53",
+      "currentProof": true,
+      "independentReadback": true,
+      "unresolvedContradictions": []
+    },
+    {
+      "id": "C3",
+      "classification": "FACT",
+      "state": "VERIFIED",
+      "material": true,
+      "sourceRefs": ["S2", "S3"],
+      "pinpoint": "fullMetaRuntimeState=BLOCKED_WITH_ROUTE; safeSubsetReady=true",
+      "currentProof": true,
+      "independentReadback": true,
+      "unresolvedContradictions": []
+    },
+    {
+      "id": "C4",
+      "classification": "FACT",
+      "state": "VERIFIED",
+      "material": true,
+      "sourceRefs": ["S1", "S2", "S3"],
+      "pinpoint": "runtimeState=ON_DEMAND_GOVERNED; providerEffectAuthorized=false; stablePromotionAuthorized=false",
+      "currentProof": true,
+      "independentReadback": true,
+      "unresolvedContradictions": []
+    }
+  ],
+  "changedClaimIds": [],
+  "artifacts": [
+    {
+      "id": "A1",
+      "claimIds": ["C1", "C2", "C3", "C4"],
+      "regeneratedAfterChange": true,
+      "readbackVerified": true,
+      "integrityHash": "sha256:86addcd76f9b786df1df1845669d4829db3cec1488872f7bf0f2120569ffb7fb"
+    }
+  ],
+  "mission": {
+    "objective": "Deliver the verified isolated BCO-Prime successor v3 package without altering sealed v2 or expanding runtime authority.",
+    "sufficientEvidence": true,
+    "immaterialResearchActive": false,
+    "deliverables": [{"id": "D1", "dominant": true, "state": "ACTIVE"}],
+    "lanes": [
+      {"id": "L1", "kind": "SUPPORT", "state": "ACTIVE"},
+      {"id": "L2", "kind": "RECOVERY", "state": "ACTIVE"}
+    ]
+  },
+  "challenge": {
+    "required": true,
+    "risk": "HIGH",
+    "performed": true,
+    "independent": true,
+    "contradictionsSearched": true,
+    "counterexamplesSearched": true,
+    "unresolvedHighRiskFindings": [],
+    "proofRef": "sha256:0a7442d865a0dbec288735760412b7d7a69c2000ba426cdea8eee877093823eb"
+  },
+  "deadlines": [],
+  "transaction": {
+    "requiredArtifactIds": ["A1"],
+    "candidateArtifactIds": ["A1"],
+    "promotionRequested": true,
+    "atomic": true
+  },
+  "fruit": {
+    "expected": ["source-manifest-frozen", "exhaustive-proof-passed"],
+    "observed": ["source-manifest-frozen", "exhaustive-proof-passed"],
+    "completionClaimed": true,
+    "independentReadback": true
+  },
+  "learning": {
+    "materialFailure": true,
+    "learningCompleteClaimed": true,
+    "incidentRecorded": true,
+    "controlPatched": true,
+    "regressionPassed": true,
+    "realCanaryPassed": true,
+    "valueMeasured": true,
+    "independentVerification": true
+  },
+  "continuity": {
+    "claimedState": "ACTIVE_LOCAL",
+    "capsuleValidated": true,
+    "successorRestoreVerified": false,
+    "deltaReceiptHashBound": false,
+    "originAcknowledged": false,
+    "freshAuthorityReadback": false
+  },
+  "authority": {"externalMutationRequested": false}
+}
