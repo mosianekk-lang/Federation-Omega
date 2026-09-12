@@ -73,6 +73,18 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn("BROWSER_ENTRYPOINT_CHECKED=true", self.text)
         self.assertIn("MCP_FAIL_CLOSED_CHECKED=true", self.text)
 
+    def test_cloud_run_env_satisfies_relay_server_project_precondition(self):
+        self.assertIn(
+            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"',
+            self.text,
+        )
+        self.assertIn(
+            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"',
+            self.text,
+        )
+        self.assertEqual(self.text.count("GOOGLE_CLOUD_PROJECT=$PROJECT_ID"), 2)
+        self.assertIn('--set-env-vars="$ENVVARS"', self.text)
+
     def test_receipt_binds_exact_source_provider_image_revision_and_topology(self):
         self.assertIn('"schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V26"', self.text)
         for field in (
