@@ -43,7 +43,7 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         agent = (PLANE / "src/federation_windows_plane/relay_agent.py").read_text(encoding="utf-8")
         self.assertIn("public_key_spki_b64", mcp); self.assertIn("ECDSA_P256", mcp); self.assertIn("crypto.subtle.sign", mcp)
         self.assertIn("auth_mode\": \"ECDSA_P256", relay); self.assertIn("ECDSASigner.verify_spki_b64", relay); self.assertIn("DEVICE_PUBLIC_KEY_REQUIRED", relay)
-        self.assertIn("SOFTWARE_DPAPI_LOWER_ASSURANCE", agent); self.assertIn("ec.generate_private_key", agent); self.assertNotIn("device_secret", agent)
+        self.assertIn("SOFTWARE_DPAPI_LOWER_ASSURANCE", agent); self.assertIn("ec.generate_private_key", agent); self.assertIn("LEGACY_HMAC_CREDENTIAL_REENROLL_REQUIRED", agent); self.assertNotIn('"device_secret":', agent)
 
     def test_no_arbitrary_command_surface(self):
         source = (PLANE / "src/federation_windows_plane/executor.py").read_text(encoding="utf-8")
