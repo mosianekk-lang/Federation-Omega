@@ -1,4 +1,4 @@
-name: FUSE Windows Relay Cloud Run v2.2
+name: FUSE Windows Relay Cloud Run v2.3
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: fuse-windows-relay-cloud-run-v22
+  group: fuse-windows-relay-cloud-run-v23
   cancel-in-progress: false
 
 env:
@@ -70,18 +70,32 @@ jobs:
             exit 43
           fi
 
-      - name: Qualify existing durable relay prerequisites
+      - name: Qualify prerequisites and bootstrap bounded relay root secret
         shell: bash
         run: |
           set -euo pipefail
-          # Provider qualification is read-only. This workflow must not grant IAM,
-          # enable APIs, create Firestore, create secrets, or mutate TTL policy.
+          # Provider qualification remains fail-closed. The only creation permitted
+          # here is the exact WOAF relay root secret when it is absent. No API
+          # enablement, IAM grant, Firestore creation, TTL mutation, or broad setup.
           gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" --project "$PROJECT_ID" --location "$REGION" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:ARTIFACT_REPOSITORY' >&2; exit 61; }
           gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:FIRESTORE_DATABASE' >&2; exit 62; }
-          gcloud secrets describe "$ROOT_SECRET" --project "$PROJECT_ID" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:ROOT_SECRET' >&2; exit 63; }
           gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT_ID" --format='value(email)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:RUNTIME_IDENTITY' >&2; exit 64; }
           gcloud builds list --project "$PROJECT_ID" --limit=1 --format='value(id)' >/dev/null || { echo 'RELAY_PREREQ_UNCALLABLE:CLOUD_BUILD_READ' >&2; exit 65; }
           gcloud run services list --project "$PROJECT_ID" --region "$REGION" --limit=1 --format='value(metadata.name)' >/dev/null || { echo 'RELAY_PREREQ_UNCALLABLE:CLOUD_RUN_READ' >&2; exit 66; }
+
+          if gcloud secrets describe "$ROOT_SECRET" --project "$PROJECT_ID" --format='value(name)' >/dev/null 2>&1; then
+            echo 'ROOT_SECRET_CREATED=false' >> "$GITHUB_ENV"
+            ENABLED="$(gcloud secrets versions list "$ROOT_SECRET" --project "$PROJECT_ID" --filter='state=ENABLED' --format='value(name)' --limit=1)"
+            test -n "$ENABLED" || { echo 'RELAY_PREREQ_INVALID:ROOT_SECRET_NO_ENABLED_VERSION' >&2; exit 67; }
+          else
+            set +x
+            gcloud secrets create "$ROOT_SECRET" --project "$PROJECT_ID" --replication-policy=automatic --labels=system=fuse-woaf,purpose=relay-root >/dev/null || { echo 'RELAY_ROOT_SECRET_CREATE_NOT_AUTHORIZED' >&2; exit 68; }
+            echo 'ROOT_SECRET_CREATED=true' >> "$GITHUB_ENV"
+            python3 - <<'PY' | gcloud secrets versions add "$ROOT_SECRET" --project "$PROJECT_ID" --data-file=- >/dev/null
+          import secrets
+          print(secrets.token_urlsafe(64), end='')
+          PY
+          fi
           echo 'PROVIDER_PREREQS_QUALIFIED=true' >> "$GITHUB_ENV"
 
       - name: Build immutable relay image
@@ -148,6 +162,14 @@ jobs:
           set -euo pipefail
           gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions="$PREVIOUS_REVISION=100" --quiet
 
+      - name: Roll back newly-created relay root secret on failed canary
+        if: failure() && env.ROOT_SECRET_CREATED == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud secrets delete "$ROOT_SECRET" --project "$PROJECT_ID" --quiet
+          echo 'ROOT_SECRET_ROLLED_BACK=true' >> "$GITHUB_ENV"
+
       - name: Emit redacted receipt
         if: always()
         shell: bash
@@ -166,11 +188,13 @@ jobs:
               "service": os.environ["SERVICE"],
               "bootstrap_mode": os.environ.get("BOOTSTRAP_MODE"),
               "provider_prereqs_qualified": truth("PROVIDER_PREREQS_QUALIFIED"),
+              "root_secret_created": truth("ROOT_SECRET_CREATED"),
+              "root_secret_rolled_back": truth("ROOT_SECRET_ROLLED_BACK"),
               "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
               "canary_url": os.environ.get("CANARY_URL"),
               "canary_revision": os.environ.get("CANARY_REVISION"),
               "previous_revision": os.environ.get("PREVIOUS_REVISION"),
-              "provider_mutation_performed": bool(os.environ.get("IMAGE_DIGEST_URI")),
+              "provider_mutation_performed": truth("ROOT_SECRET_CREATED") or bool(os.environ.get("IMAGE_DIGEST_URI")),
               "production_traffic_changed": os.environ.get("ALLOW_PRODUCTION_PROMOTION") == "true",
               "zero_traffic_checked": truth("ZERO_TRAFFIC_CHECKED"),
               "mcp_fail_closed_checked": truth("MCP_FAIL_CLOSED_CHECKED"),
