@@ -1,0 +1,39 @@
+name: Verify Federation Omega GCP Admin MCP v0.2.2
+
+on:
+  pull_request:
+    paths:
+      - 'services/federation-omega-gcp-admin-mcp/**'
+      - '.github/workflows/verify-gcp-admin-mcp-v022.yml'
+      - '.github/workflows/release-gcp-admin-mcp-v022.yml'
+  push:
+    branches: ['release/gcp-admin-mcp-v0.2.2-20260817']
+    paths:
+      - 'services/federation-omega-gcp-admin-mcp/**'
+      - '.github/workflows/verify-gcp-admin-mcp-v022.yml'
+      - '.github/workflows/release-gcp-admin-mcp-v022.yml'
+
+permissions:
+  contents: read
+
+jobs:
+  verify:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@11bd71901bbe5b1630ceea73d27597364c9af683
+        with:
+          persist-credentials: false
+      - name: Verify source, behavior, deployment controls and manifest
+        working-directory: services/federation-omega-gcp-admin-mcp
+        run: |
+          set -euo pipefail
+          npm ci --ignore-scripts
+          npm run check
+          npm test
+          npm run build
+          npm run test:smoke
+          bash -n bootstrap.sh
+          bash -n ops/verify_gcp_admin_mcp_wif.sh
+          python3 -c 'import yaml; yaml.safe_load(open("cloudbuild.v022.yaml", encoding="utf-8"))'
+          sha256sum -c RELEASE_MANIFEST.sha256
