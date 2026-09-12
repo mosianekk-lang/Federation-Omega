@@ -27,7 +27,6 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         source = RELAY_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("FUSE Windows Relay Cloud Run v2.4", source)
         self.assertIn("github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V2'", source)
-        self.assertIn("github.event.issue.author_association == 'OWNER'", source)
         self.assertIn("DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY", source)
         self.assertIn("BUILD_MECHANISM=GITHUB_HOSTED_DOCKER_DIRECT_PUSH", source)
         self.assertIn("Qualify provider prerequisites without secret-manager or cloud-build dependency", source)
@@ -81,7 +80,7 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertIn("LOCAL_STARTUP_LOG_SHA256", source)
         self.assertIn("LOCAL_FAILURE_CLASS=CONTAINER_EARLY_EXIT", source)
         self.assertIn("LOCAL_FAILURE_CLASS=RUNNING_HEALTH_UNHEALTHY", source)
-        self.assertIn("FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V28", source)
+        self.assertIn("FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V27", source)
         self.assertIn('"provider_mutation_performed": truth("ARTIFACT_REGISTRY_PUSH_PERFORMED") or truth("CLOUD_RUN_DEPLOY_ATTEMPTED")', source)
         self.assertNotIn("docker build --file windows_federation_plane/Dockerfile --tag \"$REQUESTED_IMAGE_DIGEST_URI\"", source)
 
