@@ -1,8 +1,8 @@
 {
   "schema": "FUSE-WINDOWS-EXECUTION-PLANE-GOVERNANCE-V1",
-  "version": "2.1.0",
+  "version": "2.1.1",
   "owner": "Kim Kagiso Mosiane",
-  "parent_controller": "FUSE-ONE/FEDERATION-AUTOPILOT-OMEGA-INFINITY",
+  "parent_controller": "FUSE-OMEGA-INFINITY",
   "continuation_controller": "N-OMEGA",
   "authority_and_fencing": ["FORMATION", "SOVARA", "FDOF", "SOL-6.2"],
   "proof": ["ProofOS", "RealityGuard", "Airlock", "Bubbles", "Public Repository Leak Guard", "provider-native receipt readback"],
@@ -14,8 +14,13 @@
     "N1_PORTABLE_NATIVE_USER_WORKER": "SOURCE_TARGET_CURRENT_USER_NO_ADMIN_SIGNED_TYPED_CAPABILITIES_ONLY",
     "P2_TRUSTED_OWNER_PERSISTENT": "REQUIRES_PHYSICAL_CANARY_001_V3_AND_DEVICE_SIGNED_RECOVERY_PROOF"
   },
-  "task_effect_ceiling": "READ_ONLY_OR_EXPLICIT_LOCAL_REVERSIBLE_CANARY",
-  "provider_effect": "ZERO_TRAFFIC_CANARY_ONLY_UNTIL_SEPARATE_PROMOTION",
+  "task_effect_ceiling": "READ_ONLY",
+  "provider_effect": "NONE_UNTIL_SEPARATELY_AUTHORIZED",
+  "woaf_v21_effect_extensions": {
+    "local_reversible_canary": "REQUIRES_SIGNED_TYPED_CAPABILITY_AND_SEPARATE_EFFECT_AUTHORIZATION",
+    "provider_zero_traffic_canary": "REQUIRES_SEPARATE_PROVIDER_AUTHORIZATION_AND_ROLLBACK_READBACK",
+    "production_traffic_promotion": "NOT_AUTHORIZED_BY_SOURCE_ADMISSION"
+  },
   "arbitrary_command_execution": false,
   "unrestricted_remote_shell": false,
   "admin_required_for_routine_work": false,
