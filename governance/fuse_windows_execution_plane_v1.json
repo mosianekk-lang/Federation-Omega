@@ -1,20 +1,55 @@
 {
-  "schema": "FUSE-WINDOWS-EXECUTION-PLANE-GOVERNANCE-V1",
-  "version": "1.0.0",
-  "owner": "Kim Kagiso Mosiane",
-  "parent_controller": "FUSE-OMEGA-INFINITY",
-  "continuation_controller": "N-OMEGA-V9.1",
-  "authority_and_fencing": ["FORMATION", "SOVARA", "FDOF", "SOL-6.2"],
-  "proof": ["ProofOS", "RealityGuard", "GitHub Actions receipt readback"],
+  "arbitrary_command_execution": false,
+  "authority_and_fencing": [
+    "FORMATION",
+    "SOVARA",
+    "FDOF",
+    "SOL-6.2"
+  ],
+  "continuation_controller": "N-OMEGA-V12",
   "creates_new_sovereign_plane": false,
   "execution_profiles": {
     "hosted_ephemeral_windows": "PRIMARY_DEPLOYABLE_ZERO_RECURRING_COST",
     "owner_workstation": "SOURCE_READY_REQUIRES_CONNECTED_WINDOWS_BOOTSTRAP_AUTHORITY"
   },
-  "task_effect_ceiling": "READ_ONLY",
-  "provider_effect": "NONE_UNTIL_SEPARATELY_AUTHORIZED",
-  "arbitrary_command_execution": false,
-  "secrets_in_source": false,
   "manual_user_tasks": [],
-  "truth_boundary": "A successful GitHub Windows receipt proves the hosted ephemeral plane only. It does not prove installation or execution on the owner's workstation."
+  "owner": "Kim Kagiso Mosiane",
+  "parent_controller": "FUSE-OMEGA-INFINITY",
+  "proof": [
+    "ProofOS",
+    "RealityGuard",
+    "GitHub Actions receipt readback"
+  ],
+  "provider_effect": "NONE_UNTIL_SEPARATELY_AUTHORIZED",
+  "schema": "FUSE-WINDOWS-EXECUTION-PLANE-GOVERNANCE-V1",
+  "secrets_in_source": false,
+  "specialized_task_contracts": {
+    "product_lifecycle_court": {
+      "allowed_effects": [
+        "create/modify/delete FUSE test files below ephemeral runner LocalAppData/FUSE/ControlCenter",
+        "temporary files below runner temp"
+      ],
+      "artifact_path": "product/windows_lifecycle/FUSE_TwoVersion_Windows_Lifecycle_Court_R10.zip",
+      "artifact_sha256": "55dec3033c284f0329fba4d4059d7749eaebf4fca408648dd83d000f69445a2a",
+      "code_signing_proven": false,
+      "effect_ceiling": "LOCAL_REVERSIBLE_DISPOSABLE_HOST_USER_SCOPE",
+      "forbidden_effects": [
+        "owner workstation claim",
+        "code-signing claim",
+        "provider mutation",
+        "IAM mutation",
+        "production traffic",
+        "secret access",
+        "external communication",
+        "arbitrary command input"
+      ],
+      "host_requirement": "GITHUB_HOSTED_EPHEMERAL_WINDOWS",
+      "owner_pc_proven": false,
+      "receipt_schema": "FUSE_TWO_VERSION_WINDOWS_LIFECYCLE_RECEIPT_V1",
+      "required_end_state": "NO_FUSE_CONTROLCENTER_INSTALL_ROOT_RESIDUE"
+    }
+  },
+  "task_effect_ceiling": "READ_ONLY",
+  "truth_boundary": "A successful product_lifecycle_court receipt may prove only the sealed R9/R10 lifecycle on GitHub-hosted ephemeral Windows. It does not prove owner-workstation execution, code signing, secure update, public distribution, deployed website, customer value, or commercial maturity.",
+  "version": "1.1.0-candidate"
 }
