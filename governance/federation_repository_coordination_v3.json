@@ -1,0 +1,75 @@
+{
+  "schema": "FEDERATION-REPOSITORY-COORDINATION-V3",
+  "version": "3.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "purpose": "Replace long-lived repository-wide serialization with a short-CAS scoped lease registry: disjoint write sets may execute concurrently while overlapping or repository-global writes remain fail-closed and serialized.",
+  "mode": "DUAL_COMPATIBILITY",
+  "legacy_v2_ref": "refs/heads/locks/fdof-repository-critical-section",
+  "registry_ref": "refs/heads/locks/fdof-v3-scoped-registry",
+  "registry_schema": "FEDERATION_FDOF_REGISTRY_V3",
+  "lease_schema": "FEDERATION_SCOPED_LEASE_V3",
+  "claim_schema": "FEDERATION_COORDINATION_V2",
+  "legacy_unscoped_compatibility": true,
+  "activation_rule": "ACTIVE legacy V2 lease remains absolute; when V2 is explicit terminal, V3 scoped registry controls overlap admission. Legacy unscoped PRs are tolerated only when they overlap no active V3 lease during migration and receive no scoped-authority promotion.",
+  "registry_transaction_model": {
+    "provider": "GIT_REF_FAST_FORWARD_CAS",
+    "critical_section_duration": "ACQUIRE_OR_RELEASE_TRANSACTION_ONLY",
+    "work_duration_serialized": false,
+    "acquire_precondition": "FRESH_REGISTRY_HEAD_PLUS_NO_ACTIVE_OVERLAP",
+    "update_precondition": "NEW_REGISTRY_COMMIT_PARENT_EQUALS_FRESH_PROVIDER_VISIBLE_REGISTRY_HEAD",
+    "race_behavior": "NON_FAST_FORWARD_FAILS_CLOSED_THEN_REREAD_AND_RECOMPILE",
+    "lease_fencing_token": "STRICTLY_INCREASING_REGISTRY_GENERATION_AT_ACQUIRE",
+    "expiry_semantics": "EXPIRY_NEVER_RELEASES; EXPLICIT_REGISTRY_RELEASE_OR_ABORT_REQUIRED"
+  },
+  "scope_grammar": {
+    "repository_global": "repository:*",
+    "exact_file": "path/to/file.ext",
+    "directory_prefix": "path/to/directory/**",
+    "normalization": "UTF8_FORWARD_SLASH_NO_LEADING_SLASH",
+    "conflict": "exact equality OR directory-prefix containment OR repository:*",
+    "disjoint": "no conflict relation between any pair of scopes"
+  },
+  "required_scoped_lease_fields": ["schema","lease_id","state","fencing_token","writer_node","system","workstream","transaction_id","idempotency_key","source_head","source_tree","write_set","write_set_digest","acquired_at","expires_at","turn_capture_id","effect","authority"],
+  "required_scoped_claim_fields": ["schema","lease_id","writer_node","system","workstream","transaction_id","idempotency_key","source_head","turn_capture_id","registry_ref","fencing_token","write_set_digest"],
+  "repository_global_paths": ["proofos_omega/repository_coordination.py","proofos_omega/repository_coordination_v3.py","governance/federation_repository_coordination_v2.json","governance/federation_repository_coordination_v3.json",".github/workflows/github-airlock.yml","governance/proofos_omega_registry.json"],
+  "admission_rules": {
+    "active_v2_global_lease": "V2_EXACT_CLAIM_REQUIRED_GLOBAL_SERIALIZATION",
+    "v2_explicit_terminal": "EVALUATE_V3_REGISTRY",
+    "v3_claimed_own_lease": "ACTUAL_PR_PATHS_MUST_BE_COVERED_BY_OWN_WRITE_SET",
+    "foreign_disjoint_v3_lease": "PASS_CONCURRENTLY",
+    "foreign_overlapping_v3_lease": "FAIL",
+    "repository_global_lease": "CONFLICTS_WITH_ALL",
+    "repository_global_path": "REQUIRES_repository:*_LEASE",
+    "expired_active_v3_lease": "REMAINS_ACTIVE_UNTIL_EXPLICIT_REGISTRY_RELEASE_OR_ABORT",
+    "registry_contains_overlapping_active_leases": "FAIL_REGISTRY_CORRUPTION",
+    "legacy_unscoped_pr_no_conflict": "PASS_COMPATIBILITY_WITHOUT_SCOPED_AUTHORITY_PROMOTION"
+  },
+  "merge_time_revalidation": {
+    "required": true,
+    "fresh_main_required": true,
+    "fresh_registry_required": true,
+    "own_lease_must_still_be_active": true,
+    "actual_write_set_must_still_match": true,
+    "conflict_rescan_required": true,
+    "affected_proof_courts_required": true,
+    "exact_expected_head_required": true
+  },
+  "proof_boundary": {
+    "source_admission_is_not_runtime": true,
+    "scoped_registry_provider_canary_required_before_operational_promotion": true,
+    "disjoint_multiwriter_canary_required": true,
+    "overlap_rejection_canary_required": true,
+    "orphan_recovery_canary_required": true,
+    "provider_branch_protection_equivalent": false,
+    "provider_ruleset_equivalent": false
+  },
+  "security": {
+    "public_safe_metadata_only": true,
+    "raw_secrets_allowed": false,
+    "credential_material_allowed": false,
+    "registry_is_source_coordination_only": true,
+    "registry_is_not_provider_effect_authority": true,
+    "unknown_spend_fails_closed": true
+  },
+  "truth_boundary": "V3 does not weaken source safety. It moves serialization from the entire work duration to the short registry CAS used for acquire/release. Concurrent work is allowed only for provider-visible ACTIVE leases whose declared write sets are pairwise disjoint. Overlap, repository-global paths, malformed state, expired-but-still-active leases, stale claims, write-set escape, registry races, or uncertain authority fail closed. Legacy V2 remains absolute while ACTIVE during migration."
+}
