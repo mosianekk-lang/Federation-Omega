@@ -43,6 +43,13 @@ class WoafV21ProofOSMappingTests(unittest.TestCase):
         self.assertNotIn("full_federation_fallback", selected)
         self.assertFalse(manifest.selector_state["fallback_full_suite_activated"])
 
+    def test_woaf_proof_ids_are_registered_in_combined_policy(self):
+        policy, _, _ = compile_for(WOAF_PRODUCTION_PATHS)
+        registered = set(policy.tests)
+        self.assertIn("woaf_v21_source_contract", registered)
+        self.assertIn("woaf_v21_proofos_mapping", registered)
+        self.assertIn("full_federation_fallback", registered)
+
     def test_unknown_production_path_still_fails_safe_to_full_fallback(self):
         _, impact, manifest = compile_for(["future_woaf_unknown/new_runtime.py"])
         selected = {item.test_id for item in manifest.selected_tests}
