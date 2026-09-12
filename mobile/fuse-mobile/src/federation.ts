@@ -102,8 +102,11 @@ async function fetchJson<T>(
   options: RequestInit = {},
   fuseCredential?: string,
   timeoutMs = 30_000,
+  externalSignal?: AbortSignal,
 ): Promise<T> {
   const controller = new AbortController();
+  const onExternalAbort = () => controller.abort();
+  externalSignal?.addEventListener('abort', onExternalAbort, { once: true });
   const timeout = setTimeout(() => controller.abort(), timeoutMs);
   try {
     const response = await fetch(`${gatewayUrl()}${path}`, {
@@ -133,6 +136,7 @@ async function fetchJson<T>(
     return parsed as T;
   } finally {
     clearTimeout(timeout);
+    externalSignal?.removeEventListener('abort', onExternalAbort);
   }
 }
 
@@ -166,6 +170,7 @@ export async function sendFuseMessage(
   iapIdentityToken: string,
   accessToken: string,
   request: FuseMessageRequest,
+  signal?: AbortSignal,
 ): Promise<FuseChatResponse> {
   return fetchJson<FuseChatResponse>(
     '/v1/chat',
@@ -177,5 +182,6 @@ export async function sendFuseMessage(
     },
     accessToken,
     120_000,
+    signal,
   );
 }
