@@ -85,7 +85,7 @@ class RelayWorkflowTests(unittest.TestCase):
             'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"',
             self.text,
         )
-        self.assertEqual(self.text.count("GOOGLE_CLOUD_PROJECT=$PROJECT_ID"), 2)
+        self.assertEqual(self.text.count("GOOGLE_CLOUD_PROJECT=$PROJECT_ID"), 3)
         self.assertIn('--set-env-vars="$ENVVARS"', self.text)
 
     def test_health_route_differential_is_bounded_and_drives_semantic_checks(self):
@@ -118,11 +118,34 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertNotIn("set-iam-policy", self.text)
         self.assertNotIn("add-iam-policy-binding", self.text)
 
+    def test_exact_image_localhost_differential_precedes_cloud_run_deployment(self):
+        local_step = "Exact-image localhost differential before provider deployment"
+        deploy_step = "Deploy isolated-first-service or zero-traffic existing-service canary"
+        self.assertIn(local_step, self.text)
+        self.assertLess(self.text.index(local_step), self.text.index(deploy_step))
+        self.assertIn('docker pull "$IMAGE_DIGEST_URI"', self.text)
+        self.assertIn('"$IMAGE_DIGEST_URI" >/dev/null', self.text)
+        self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/healthz"', self.text)
+        self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/node"', self.text)
+        self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/mcp"', self.text)
+        self.assertIn("LOCAL_MCP_FAIL_CLOSED_REQUIRED", self.text)
+        self.assertIn("_custom_starlette_routes", self.text)
+        self.assertNotIn("--network host", self.text)
+        self.assertNotIn("cat \"$GOOGLE_APPLICATION_CREDENTIALS\"", self.text)
+
     def test_receipt_binds_exact_source_provider_image_revision_topology_and_differential(self):
-        self.assertIn('"schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V26"', self.text)
+        self.assertIn('"schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V27"', self.text)
         for field in (
             '"source_sha"',
             '"image_digest_uri"',
+            '"local_image_differential_checked"',
+            '"local_health_code"',
+            '"local_node_code"',
+            '"local_mcp_code"',
+            '"local_health_sha256"',
+            '"local_node_sha256"',
+            '"local_routes_sha256"',
+            '"local_startup_log_sha256"',
             '"canary_revision"',
             '"canary_url"',
             '"semantic_url"',
