@@ -59,6 +59,32 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertIn('"cloud_build_required": False', source)
         self.assertIn('"secret_value_recorded": False', source)
 
+    def test_relay_exact_digest_diagnostic_is_immutable_fail_closed_and_evidence_rich(self):
+        if not RELAY_WORKFLOW.is_file(): self.skipTest("workflow-free export excludes relay provider surface")
+        source = RELAY_WORKFLOW.read_text(encoding="utf-8")
+        digest = "sha256:e24acd4e93a4efd7956bcce0f0452bba9b2f987de98b0316a86fc4335014b29d"
+        self.assertIn("[FO-DISPATCH] FUSE_WINDOWS_RELAY_EXACT_DIGEST_DIAGNOSTIC_V1", source)
+        self.assertIn("EXACT_DIGEST_DIAGNOSTIC=true", source)
+        self.assertIn(f"EXPECTED_PACKET_DIGEST='{digest}'", source)
+        self.assertIn("REQUESTED_IMAGE_DIGEST_URI", source)
+        self.assertIn("REQUESTED_IMAGE_DIGEST", source)
+        self.assertIn("IMMUTABLE_DIGEST_PULL_NO_REBUILD", source)
+        self.assertIn("docker image inspect", source)
+        self.assertIn("gcloud artifacts docker images describe \"$REQUESTED_IMAGE_DIGEST_URI\"", source)
+        self.assertIn("ARTIFACT_REGISTRY_PUSH_PERFORMED=false", source)
+        self.assertIn("LOCAL_IMAGE_DIFFERENTIAL_ATTEMPTED=true", source)
+        self.assertIn("LOCAL_CONTAINER_STATUS", source)
+        self.assertIn("LOCAL_CONTAINER_EXIT_CODE", source)
+        self.assertIn("LOCAL_STATUS_SHA256", source)
+        self.assertIn("LOCAL_LISTENING_SHA256", source)
+        self.assertIn("LOCAL_ROUTES_SHA256", source)
+        self.assertIn("LOCAL_STARTUP_LOG_SHA256", source)
+        self.assertIn("LOCAL_FAILURE_CLASS=CONTAINER_EARLY_EXIT", source)
+        self.assertIn("LOCAL_FAILURE_CLASS=RUNNING_HEALTH_UNHEALTHY", source)
+        self.assertIn("FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V28", source)
+        self.assertIn('"provider_mutation_performed": truth("ARTIFACT_REGISTRY_PUSH_PERFORMED") or truth("CLOUD_RUN_DEPLOY_ATTEMPTED")', source)
+        self.assertNotIn("docker build --file windows_federation_plane/Dockerfile --tag \"$REQUESTED_IMAGE_DIGEST_URI\"", source)
+
     def test_agent_and_browser_source_bind_public_key_auth(self):
         mcp = (PLANE / "src/federation_windows_plane/mcp_service.py").read_text(encoding="utf-8")
         relay = (PLANE / "src/federation_windows_plane/firestore_relay.py").read_text(encoding="utf-8")
