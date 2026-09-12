@@ -1,8 +1,10 @@
 from __future__ import annotations
 
 import json
+import os
 import unittest
 from datetime import datetime, timezone
+from pathlib import Path
 
 from proofos_omega.repository_coordination_v3 import (
     CLAIM_SCHEMA,
@@ -11,6 +13,7 @@ from proofos_omega.repository_coordination_v3 import (
     REGISTRY_SCHEMA,
     can_acquire,
     evaluate,
+    evaluate_hosted_pull_request_v3,
     extract_claim,
     load_policy,
     normalize_write_set,
@@ -19,6 +22,7 @@ from proofos_omega.repository_coordination_v3 import (
     write_set_digest,
 )
 
+ROOT = Path(__file__).resolve().parents[1]
 BASE = "1" * 40
 REGISTRY_SHA = "9" * 40
 NOW = datetime(2026, 9, 2, 20, 50, tzinfo=timezone.utc)
@@ -157,6 +161,14 @@ class FDOFV3ScopedRegistryTests(unittest.TestCase):
         a = lease("A", ["mobile/**"], 11, "NODE-A")
         body = "Summary\n<!-- FEDERATION_COORDINATION_V2\n" + json.dumps(claim(a)) + "\n-->"
         self.assertEqual("A", extract_claim(body)["lease_id"])
+
+    @unittest.skipUnless(
+        os.environ.get("GITHUB_ACTIONS") == "true" and os.environ.get("GITHUB_EVENT_NAME") == "pull_request",
+        "hosted scoped coordination court runs only on GitHub pull_request",
+    )
+    def test_hosted_pull_request_honours_scoped_registry(self):
+        result = evaluate_hosted_pull_request_v3(ROOT)
+        self.assertEqual("PASS", result["status"], json.dumps(result, indent=2, sort_keys=True))
 
 
 if __name__ == "__main__":
