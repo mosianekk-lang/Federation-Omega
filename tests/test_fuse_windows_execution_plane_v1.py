@@ -25,7 +25,7 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
     def test_relay_provider_route_is_asymmetric_secretless_and_cloudbuild_independent(self):
         if not RELAY_WORKFLOW.is_file(): self.skipTest("workflow-free export excludes relay provider surface")
         source = RELAY_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("FUSE Windows Relay Cloud Run v2.5", source)
+        self.assertIn("FUSE Windows Relay Cloud Run v2.4", source)
         self.assertIn("github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V2'", source)
         self.assertIn("github.event.issue.author_association == 'OWNER'", source)
         self.assertIn("DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY", source)
