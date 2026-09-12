@@ -16,18 +16,14 @@ class RelayWorkflowTests(unittest.TestCase):
 
     def test_owner_only_default_deny_dispatch(self):
         self.assertIn("author_association == 'OWNER'", self.text)
-        self.assertIn("[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1", self.text)
-        self.assertRegex(
-            self.text,
-            r"permissions:\n  contents: read\n  issues: read\n  id-token: write",
-        )
+        self.assertIn("[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V2", self.text)
+        self.assertRegex(self.text, r"permissions:\n  contents: read\n  issues: read\n  id-token: write")
         self.assertIn("cancel-in-progress: false", self.text)
 
     def test_third_party_actions_are_sha_pinned(self):
         uses = re.findall(r"^\s*uses:\s*([^\s]+)", self.text, flags=re.MULTILINE)
         self.assertTrue(uses)
-        for action in uses:
-            self.assertRegex(action, r"@[0-9a-f]{40}$")
+        for action in uses: self.assertRegex(action, r"@[0-9a-f]{40}$")
         self.assertIn("persist-credentials: false", self.text)
 
     def test_canary_precedes_promotion_and_has_rollback(self):
@@ -38,11 +34,17 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn("if: failure() && env.PREVIOUS_REVISION != ''", self.text)
         self.assertLess(self.text.index("$CANARY_URL/healthz"), self.text.index("$CANARY_REVISION=100"))
 
-    def test_secrets_are_provider_managed_and_receipt_is_redacted(self):
-        self.assertIn("--set-secrets=\"FUSE_RELAY_ROOT_SECRET=$ROOT_SECRET:latest\"", self.text)
+    def test_agent_only_is_secret_manager_independent(self):
+        self.assertIn("FUSE Windows Relay Cloud Run v2.4", self.text)
+        self.assertIn("DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY", self.text)
+        self.assertIn('"secret_manager_required": False', self.text)
+        self.assertNotIn("--set-secrets=", self.text)
+        self.assertNotIn("gcloud secrets", self.text)
+        self.assertNotIn("add-iam-policy-binding", self.text)
+        self.assertNotIn("gcloud services enable", self.text)
         self.assertIn('"secret_value_recorded": False', self.text)
-        self.assertNotIn("echo $FUSE_RELAY_ROOT_SECRET", self.text)
+        self.assertIn("BROWSER_ENTRYPOINT_CHECKED=true", self.text)
+        self.assertIn("MCP_FAIL_CLOSED_CHECKED=true", self.text)
 
 
-if __name__ == "__main__":
-    unittest.main()
+if __name__ == "__main__": unittest.main()
