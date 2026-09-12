@@ -25,6 +25,10 @@ env:
   ROOT_SECRET: fuse-windows-relay-root
   OIDC_ISSUER: ${{ vars.FUSE_OIDC_ISSUER }}
   OIDC_JWKS_URL: ${{ vars.FUSE_OIDC_JWKS_URL }}
+  # The WOAF bootstrap mission is zero-traffic by default. Production traffic
+  # promotion is a separate consequential predicate and stays disabled unless
+  # a later, explicitly authorised provider action sets this to true.
+  ALLOW_PRODUCTION_PROMOTION: 'false'
 
 jobs:
   deploy-zero-traffic-canary:
@@ -134,6 +138,23 @@ jobs:
           ACTIVE="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
           test "$ACTIVE" != "$CANARY_REVISION"
 
+      - name: Optional explicitly authorised production promotion
+        if: env.ALLOW_PRODUCTION_PROMOTION == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          # This path exists to preserve the legacy rollback contract, but is
+          # disabled for the WOAF bootstrap mission. The bootstrap dispatch
+          # never sets ALLOW_PRODUCTION_PROMOTION=true.
+          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions="$CANARY_REVISION=100" --quiet
+
+      - name: Roll back explicitly authorised promotion on failure
+        if: failure() && env.PREVIOUS_REVISION != '' && env.ALLOW_PRODUCTION_PROMOTION == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions="$PREVIOUS_REVISION=100" --quiet
+
       - name: Emit redacted receipt
         if: always()
         shell: bash
@@ -143,10 +164,29 @@ jobs:
           python3 - <<'PY'
           import hashlib,json,os
           from datetime import datetime,timezone
-          body={"schema":"FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V2","source_sha":os.environ.get("GITHUB_SHA"),"project_id":os.environ["PROJECT_ID"],"region":os.environ["REGION"],"service":os.environ["SERVICE"],"bootstrap_mode":os.environ.get("BOOTSTRAP_MODE"),"image_digest_uri":os.environ.get("IMAGE_DIGEST_URI"),"canary_url":os.environ.get("CANARY_URL"),"canary_revision":os.environ.get("CANARY_REVISION"),"previous_revision":os.environ.get("PREVIOUS_REVISION"),"provider_mutation_performed":bool(os.environ.get("IMAGE_DIGEST_URI")),"production_traffic_changed":False,"mcp_fail_closed_checked":True,"browser_entrypoint_checked":os.environ.get("BOOTSTRAP_MODE")=="AGENT_ONLY_BOOTSTRAP","secret_value_recorded":False,"oauth_value_recorded":False,"recorded_at_utc":datetime.now(timezone.utc).isoformat()}
-          body["receipt_sha256"]=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+          body = {
+              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V2",
+              "source_sha": os.environ.get("GITHUB_SHA"),
+              "project_id": os.environ["PROJECT_ID"],
+              "region": os.environ["REGION"],
+              "service": os.environ["SERVICE"],
+              "bootstrap_mode": os.environ.get("BOOTSTRAP_MODE"),
+              "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
+              "canary_url": os.environ.get("CANARY_URL"),
+              "canary_revision": os.environ.get("CANARY_REVISION"),
+              "previous_revision": os.environ.get("PREVIOUS_REVISION"),
+              "provider_mutation_performed": bool(os.environ.get("IMAGE_DIGEST_URI")),
+              "production_traffic_changed": os.environ.get("ALLOW_PRODUCTION_PROMOTION") == "true",
+              "mcp_fail_closed_checked": True,
+              "browser_entrypoint_checked": os.environ.get("BOOTSTRAP_MODE") == "AGENT_ONLY_BOOTSTRAP",
+              "secret_value_recorded": False,
+              "oauth_value_recorded": False,
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+          }
+          body["receipt_sha256"] = hashlib.sha256(json.dumps(body,sort_keys=True,separators=(",",":")).encode()).hexdigest()
           open('/tmp/fuse-windows-relay-receipt/receipt.json','w').write(json.dumps(body,indent=2,sort_keys=True)+'\n')
           PY
+
       - name: Upload deployment receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
