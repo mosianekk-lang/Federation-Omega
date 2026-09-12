@@ -1,0 +1,27 @@
+{
+  "title": "Progressive Multi-Stream Workflow",
+  "description": "Build a proof-bound workflow runtime that evaluates materially different routes, runs safe independent streams concurrently, serializes shared or external effects, learns from each cycle and reuses only independently verified capabilities.",
+  "users": ["owner"],
+  "outcomes": [
+    "productive progressive workflow",
+    "safe bounded parallel execution",
+    "measured compounding reuse"
+  ],
+  "required_capabilities": [
+    "formation route tournament",
+    "dependency-aware multi-stream scheduler",
+    "proof and learning ledger",
+    "checkpoint and recovery plane"
+  ],
+  "existing_capabilities": [
+    "Alpha-Omega turnkey engine",
+    "Formation Innovation Engine",
+    "AO-CRA boundary-to-build kernel"
+  ],
+  "constraints": [
+    "no provider effect without exact authority",
+    "no speed claim without matched measurements"
+  ],
+  "preferred_surfaces": ["local_package", "github", "google_drive"],
+  "desired_effect": "INTERNAL"
+}
