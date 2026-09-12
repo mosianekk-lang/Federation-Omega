@@ -1,0 +1,116 @@
+{
+  "schema": "FEDOMEGA-APPS-SCRIPT-AUTHORITY-RECOVERY-2",
+  "version": "2.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "source": {
+    "contract": "FO_GAS_FLEET_RESTORABLE_BACKUP",
+    "run_id": "FLEETWEEKLY-20260718-181318-5BXX66",
+    "declared_source_sha256": "2e80636313ba1942ac80d0de687bf465d1472f998a0bc071d5e2d93adfe33248",
+    "raw_wrapper_sha256": "3af2057a8fd0ee98fca08493f4b0e2405e86484c0663c53740af63c9f076082f",
+    "declared_hash_state": "ALGORITHM_UNSPECIFIED_UNVERIFIED",
+    "original_mutated": false
+  },
+  "canonical_target": {
+    "project_id": "sov-hybrid-suite",
+    "project_number": "257649435135",
+    "role": "CANONICAL_PROVIDER_AUTHORITY_TARGET"
+  },
+  "non_authority_lineages": [
+    {
+      "project_number": "516699068552",
+      "role": "LEGACY_CLOUDOPS_TRANSPORT_ONLY",
+      "provider_authority_inherited": false
+    },
+    {
+      "project_number": "516690968552",
+      "role": "CLOUDOPS_OAUTH_CONSUMER_ONLY",
+      "provider_authority_inherited": false
+    },
+    {
+      "project_number": "979287460558",
+      "role": "FOGAS_OAUTH_CONSUMER_ONLY",
+      "provider_authority_inherited": false
+    }
+  ],
+  "architecture": {
+    "public_gateway": {
+      "web_handlers": 2,
+      "allowed_actions": [
+        "STATUS",
+        "CHALLENGE"
+      ],
+      "explicit_oauth_scopes": [],
+      "provider_mutation_surface": false,
+      "authentication": "HMAC_SHA256_EXACT_ENVELOPE",
+      "replay_control": "LOCKED_BOUNDED_DURABLE_NONCE_HASH_LEDGER"
+    },
+    "private_admin": {
+      "public_web_handlers": 0,
+      "route_class": "APPS_SCRIPT_ADMIN_COMPOSITE",
+      "source_manager": "NAMESPACED_BACKUP_FIRST_ARCHON_V2",
+      "external_admission": "PINNED_HTTPS_HOST_AND_VERIFIER_IDENTITY",
+      "same_project_property_is_independent_authority_anchor": false,
+      "effect_permit": "ONE_USE_TRANSACTION_REQUEST_BEFORE_AFTER_HASH_BOUND",
+      "backup": "V2_SELF_HASHED_EXACT_PROVIDER_READBACK",
+      "audit_spreadsheet": "EXPLICIT_ID_REQUIRED"
+    }
+  },
+  "invariants": [
+    "one_global_web_router_per_project",
+    "public_gateway_has_no_provider_mutation_authority",
+    "private_admin_has_no_public_web_entry",
+    "static_or_default_approval_is_prohibited",
+    "raw_authentication_persistence_is_prohibited",
+    "resource_target_oauth_consumer_and_transport_are_separate",
+    "transport_success_never_grants_provider_authority",
+    "same_project_hash_storage_is_not_independent_verification",
+    "provider_receipt_and_effect_permit_bind_exact_transaction_and_source_hashes",
+    "effect_permit_is_one_use",
+    "no_change_returns_before_provider_write_or_permit_consumption",
+    "backup_readback_precedes_source_mutation",
+    "source_and_deployment_readback_are_action_specific",
+    "rollback_is_separately_permit_bound"
+  ],
+  "local_verification": {
+    "authorization_gate_tests": 18,
+    "authorization_gate_tests_passed": true,
+    "public_gateway_source_gate": "SOURCE_REVIEW_PASS",
+    "private_admin_source_gate": "SOURCE_REVIEW_PASS",
+    "node_security_contract": "PASS",
+    "javascript_syntax": "PASS",
+    "python_compile": "PASS",
+    "protected_backup_audit": {
+      "status": "SECURITY_HOLD",
+      "finding_instances": 22,
+      "finding_counts": {
+        "CRITICAL": 15,
+        "HIGH": 5,
+        "MEDIUM": 2,
+        "INFO": 0
+      },
+      "unique_finding_classes": 16,
+      "static_coverage_ratio_vs_prior_best_case": 5.333333,
+      "coverage_promotion": "PROMOTE_2X_BOUNDED_STATIC_DETECTION_ONLY"
+    }
+  },
+  "promotion_gates": [
+    "exact_head_repository_admission",
+    "clean_project_namespace_and_scope_audit",
+    "negative_signature_timestamp_target_payload_and_replay_canaries",
+    "canonical_target_consumer_principal_and_composite_route_proof",
+    "pinned_external_verifier_identity_and_challenge_readback",
+    "read_only_source_and_deployment_inventory",
+    "reversible_non_serving_source_canary",
+    "v2_backup_exact_readback",
+    "source_hash_and_immutable_version_readback",
+    "deployment_config_and_external_semantic_readback_when_applicable",
+    "separately_permitted_rollback_canary",
+    "bounded_serving_cutover_and_soak"
+  ],
+  "current_state": "TWO_PLANE_SOURCE_CANDIDATE_VERIFIED_PROVIDER_DEPLOYMENT_UNEXECUTED",
+  "provider_authority_proven": false,
+  "provider_mutation_authorized": false,
+  "provider_deployment_performed": false,
+  "live_apps_script_mutated": false,
+  "truth_boundary": "Public-safe source and deterministic local verification only. No Google token, principal, consumer/API relationship, live Apps Script project, source mutation, deployment, IAM, secret, traffic or provider-semantic effect is claimed."
+}
