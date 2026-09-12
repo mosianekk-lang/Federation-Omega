@@ -1,0 +1,57 @@
+{
+  "contract_id": "KDV-FEDERATED-DISCOVERY-1.0-PUBLIC",
+  "derived_from": "KDV-FEDERATED-DISCOVERY-1.0",
+  "owner": "Kim Kagiso Mosiane",
+  "classification": "PUBLIC_SAFE_MAP_PRIVATE_POINTERS_REDACTED",
+  "objective": "Make KDV searches resolve the logical Kim DataVerse and every registered physical service surface through one evidence-preserving discovery graph without a hidden priority order.",
+  "privacy_rule": "Private provider IDs, account identifiers, credentials, evidence bodies and repository secrets are never published here. Resolve private pointers only through the authorised KDV bridge or ChatBridge adapter.",
+  "no_global_total_order": true,
+  "surface_registry": [
+    {"surface_id":"kdv-private-bridge","title":"KIM DATAVERSE private canonical bridge","class":"CANONICAL_INTELLIGENCE_GRAPH","proof_state":"PRIVATE_PROVIDER_BOUND_FULL_ESTATE_BINDING_SEPARATE"},
+    {"surface_id":"secondary-brain","title":"Secondary Brain and Kim DataVerse","class":"KNOWLEDGE_FABRIC","proof_state":"REGISTERED_PRIVATE_BRIDGE"},
+    {"surface_id":"google-drive","title":"Google Drive, Docs and Sheets","class":"SOURCE_AND_CANONICAL_STORE","proof_state":"PROVIDER_ROUTE_VERIFIED"},
+    {"surface_id":"github","title":"GitHub repositories, pull requests and Actions","class":"CODE_AND_PROVENANCE","proof_state":"PROVIDER_ROUTE_VERIFIED_REQUIRED_CHECK_ENFORCEMENT_SEPARATE"},
+    {"surface_id":"federation-omega","title":"Federation Omega","class":"ORCHESTRATOR","proof_state":"BOUNDED_OPERATOR_HEALTH_VERIFIED"},
+    {"surface_id":"google-cloud","title":"Google Cloud runtime plane","class":"RUNTIME","proof_state":"PARTIAL_PROVIDER_READBACK_AUTHORITY_REQUIRED"},
+    {"surface_id":"google-apps-script","title":"Google Apps Script","class":"AUTOMATION","proof_state":"SOURCE_PRESENT_PROVIDER_DEPLOYMENT_SEPARATE"},
+    {"surface_id":"openai-platform","title":"OpenAI Platform","class":"AI_PROVIDER","proof_state":"BOUNDED_PROVIDER_CONTEXT_ADAPTER_GAPS_REMAIN"},
+    {"surface_id":"google-speech","title":"Google Speech","class":"SPEECH_PROVIDER","proof_state":"OWNER_CONFIRMED_PROVIDER_INVENTORY_SEPARATE"},
+    {"surface_id":"google-ai-studio","title":"Google AI Studio and Gemini experiments","class":"AI_EXPERIMENT","proof_state":"OWNER_CONFIRMED_PROJECT_INVENTORY_SEPARATE"},
+    {"surface_id":"gmail","title":"Gmail","class":"COMMUNICATION_AND_SOURCE","proof_state":"SESSION_CONNECTOR_ROUTE_AVAILABLE"},
+    {"surface_id":"outlook","title":"Microsoft Outlook","class":"COMMUNICATION_AND_SOURCE","proof_state":"SESSION_CONNECTOR_ROUTE_AVAILABLE"},
+    {"surface_id":"canva","title":"Canva","class":"CREATIVE_OUTPUT","proof_state":"PLUGIN_ROUTE_AVAILABLE_PROVIDER_BOUNDNESS_SEPARATE"},
+    {"surface_id":"adobe","title":"Adobe creative surfaces","class":"CREATIVE_OUTPUT","proof_state":"PLUGIN_ROUTE_AVAILABLE_PROVIDER_BOUNDNESS_SEPARATE"},
+    {"surface_id":"chatgpt-codex","title":"ChatGPT and Codex chats","class":"WORK_SURFACE","proof_state":"CURRENT_SESSION_ACTIVE_NATIVE_EVENT_STREAM_SEPARATE"},
+    {"surface_id":"chatgpt-library","title":"ChatGPT Library","class":"DURABLE_CONTINUITY","proof_state":"PROVIDER_ROUTE_VERIFIED"},
+    {"surface_id":"chatbridge","title":"ChatBridge universal registry and adapters","class":"CONTINUITY_ROUTER","proof_state":"KDV_ADAPTER_REGISTERED"},
+    {"surface_id":"evidenceops","title":"EvidenceOps","class":"EVIDENCE_AND_PROOF","proof_state":"SOURCE_AND_LOCAL_TRANSACTION_VERIFIED_PROVIDER_SCOPE_VARIES"},
+    {"surface_id":"modisa","title":"MODISA build engine","class":"BUILD_ENGINE","proof_state":"SOURCE_IMPLEMENTED_HOSTING_SEPARATE"},
+    {"surface_id":"psy-dataverse","title":"PsyDataverse","class":"SPECIALIST_KNOWLEDGE_REGISTERS","proof_state":"REGISTERED_FRESH_DELTA_REQUIRED"},
+    {"surface_id":"master-live-bible","title":"Master and Live Bible fabric","class":"HUMAN_READABLE_PROJECTION","proof_state":"REGISTERED_MUST_NOT_OUTRANK_EVIDENCE"},
+    {"surface_id":"local-runtime","title":"Authorised local workstation and containers","class":"LOCAL_RUNTIME","proof_state":"NON_CANONICAL_ADAPTER_BOUNDNESS_SEPARATE"},
+    {"surface_id":"microsoft-dataverse","title":"Microsoft Dataverse parity route","class":"OPTIONAL_DATA_PLATFORM","proof_state":"OPTIONAL_UNBOUND_NOT_CANONICAL"}
+  ],
+  "search_lanes": [
+    {"lane_id":"KDV-CANONICAL","surfaces":["kdv-private-bridge","secondary-brain","chatbridge","master-live-bible","psy-dataverse"]},
+    {"lane_id":"SOURCE-EVIDENCE","surfaces":["google-drive","gmail","outlook"]},
+    {"lane_id":"CODE-PROVENANCE","surfaces":["github","evidenceops","modisa"]},
+    {"lane_id":"RUNTIME-AUTOMATION","surfaces":["federation-omega","google-cloud","google-apps-script","local-runtime"]},
+    {"lane_id":"AI-SPEECH","surfaces":["openai-platform","google-speech","google-ai-studio"]},
+    {"lane_id":"CREATIVE-PUBLISHING","surfaces":["canva","adobe"]},
+    {"lane_id":"CONTINUITY-SEARCH","surfaces":["chatgpt-codex","chatgpt-library","chatbridge"]}
+  ],
+  "routing": {
+    "selection": "request_specific_capability_and_authority_gates",
+    "parallelism": "bounded_independent_lanes_only",
+    "freshness": "present_tense_claims_require_query_time_provider_read",
+    "payload_control": "project_fields_paginate_and_keep_each_tool_result_bounded",
+    "evidence_precedence": ["provider_readback_or_receipt","qualified_runtime_attestation","signed_source_and_CI","append_only_KDV_receipt","mutable_projection","historical_human_projection"],
+    "evidence_precedence_is_not_platform_priority": true
+  },
+  "coverage_manifest_required": ["searched","verified_as_of","stale","unavailable","unauthorised","unregistered","pagination_closed"],
+  "future_surface_admission": {
+    "states": ["DISCOVERED","IDENTITY_VERIFIED","CAPABILITY_VERIFIED","ROUTE_VERIFIED","READBACK_VERIFIED","REGISTERED","DEPRECATED","RETRACTED"],
+    "rule": "No surface is silently inherited. Promotion is versioned, source-anchored and readback-gated."
+  },
+  "totality_rule": "Never claim every KDV system was searched unless the registered set is closed for the query, pagination is complete and every unavailable or unauthorised surface is named."
+}

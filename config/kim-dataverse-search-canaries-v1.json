@@ -1,0 +1,50 @@
+{
+  "suite_id": "KDV-FEDERATED-SEARCH-CANARY-1.0",
+  "contract_id": "KDV-FEDERATED-DISCOVERY-1.0",
+  "cases": [
+    {
+      "id": "KDV-Q-001",
+      "query": "What is KDV?",
+      "must_include": ["canonical intelligence graph", "federated physical surfaces", "KIM DATAVERSE — Private Canonical Bridge v2.0", "no hidden priority order"],
+      "must_not_claim": ["Microsoft Dataverse is the canonical KDV", "all surfaces are live-bound"]
+    },
+    {
+      "id": "KDV-Q-002",
+      "query": "Search KDV for the latest runtime state",
+      "must_select_lanes": ["KDV-CANONICAL", "CODE-PROVENANCE", "RUNTIME-AUTOMATION"],
+      "must_apply": ["fresh provider read", "source/runtime/provider dimensions", "coverage manifest"]
+    },
+    {
+      "id": "KDV-Q-003",
+      "query": "Find every KDV record about a named case",
+      "must_select_lanes": ["KDV-CANONICAL", "SOURCE-EVIDENCE", "CONTINUITY-SEARCH"],
+      "must_apply": ["preserve matter walls", "pointers not raw-evidence duplication", "closed pagination or explicit partial label"]
+    },
+    {
+      "id": "KDV-Q-004",
+      "query": "Which KDV route should do this work?",
+      "must_apply": ["capability gates", "request-specific scoring", "multi-path fallback", "no global total order"]
+    },
+    {
+      "id": "KDV-Q-005",
+      "query": "A new provider appeared during the audit",
+      "must_apply": ["DISCOVERED candidate event", "identity verification", "capability verification", "truth boundary", "readback before REGISTERED"]
+    },
+    {
+      "id": "KDV-Q-006",
+      "query": "Use the KDV workbook's current SHA",
+      "must_apply": ["stored SHA is AS_OF", "fresh GitHub default-branch read", "do not rewrite historical attestation"]
+    },
+    {
+      "id": "KDV-Q-007",
+      "query": "Search everything in KDV",
+      "must_apply": ["registered-surface closure check", "pagination closure", "unavailable/unauthorized list", "no totality claim when any lane is unresolved"]
+    },
+    {
+      "id": "KDV-Q-008",
+      "query": "KDV includes Google Drive, Cloud, OpenAI / Google Speech, GitHub, Canva, Apps Script and Google AI Studio",
+      "must_include": ["google-drive", "google-cloud", "openai-platform", "google-speech", "github", "canva", "google-apps-script", "google-ai-studio"],
+      "must_preserve": ["user-supplied membership", "provider-proof distinctions"]
+    }
+  ]
+}
