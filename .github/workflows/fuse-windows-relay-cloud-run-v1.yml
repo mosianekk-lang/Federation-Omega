@@ -146,17 +146,46 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          HEALTH="$(curl --fail --silent --show-error "$CANARY_URL/healthz")"
+          DETERMINISTIC_URL="https://${TARGET_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"
+          CANDIDATE_URLS=("$CANARY_URL" "$SERVICE_URL" "$DETERMINISTIC_URL")
+          SEMANTIC_URL=''
+          HEALTH=''
+          HEALTH_TRACE=''
+          declare -A SEEN_URLS=()
+          for attempt in $(seq 1 12); do
+            for candidate in "${CANDIDATE_URLS[@]}"; do
+              [[ -n "$candidate" ]] || continue
+              if [[ -n "${SEEN_URLS[$candidate]:-}" && "$attempt" -eq 1 ]]; then
+                continue
+              fi
+              SEEN_URLS["$candidate"]=1
+              CODE="$(curl --silent --show-error --connect-timeout 5 --max-time 10 --output /tmp/fuse-relay-health-body --write-out '%{http_code}' "$candidate/healthz" || true)"
+              BODY="$(cat /tmp/fuse-relay-health-body 2>/dev/null || true)"
+              HEALTH_TRACE="${HEALTH_TRACE}${attempt}:${candidate}:${CODE};"
+              if [[ "$CODE" == '200' ]] && python3 -c 'import json,sys; d=json.load(sys.stdin); raise SystemExit(0 if d.get("status")=="ok" and d.get("device_auth")=="ECDSA_P256" else 1)' <<<"$BODY"; then
+                SEMANTIC_URL="$candidate"
+                HEALTH="$BODY"
+                break 2
+              fi
+            done
+            sleep 5
+          done
+          if [[ -z "$SEMANTIC_URL" ]]; then
+            echo "HEALTH_ROUTE_DIFFERENTIAL_FAILED:$HEALTH_TRACE" >&2
+            exit 52
+          fi
+          echo "SEMANTIC_URL=$SEMANTIC_URL" >> "$GITHUB_ENV"
+          echo 'HEALTH_ROUTE_DIFFERENTIAL_CHECKED=true' >> "$GITHUB_ENV"
           test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])' <<<"$HEALTH")" = ok
           test "$(python3 -c 'import json,sys; print(json.load(sys.stdin)["device_auth"])' <<<"$HEALTH")" = ECDSA_P256
-          MCP_CODE="$(curl --silent --output /dev/null --write-out '%{http_code}' "$CANARY_URL/mcp")"
+          MCP_CODE="$(curl --silent --output /dev/null --write-out '%{http_code}' "$SEMANTIC_URL/mcp")"
           case "$MCP_CODE" in 401|403|404) ;; *) echo "MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 51 ;; esac
           echo 'MCP_FAIL_CLOSED_CHECKED=true' >> "$GITHUB_ENV"
           if [[ "$BOOTSTRAP_MODE" == 'AGENT_ONLY_BOOTSTRAP' ]]; then
-            curl --fail --silent --show-error "$CANARY_URL/node" | grep -F 'CONNECT THIS PC' >/dev/null
-            curl --fail --silent --show-error "$CANARY_URL/node/worker.js" | grep -F 'B0_EPHEMERAL_LOW_TRUST' >/dev/null
-            curl --fail --silent --show-error "$CANARY_URL/node/worker.js" | grep -F 'ECDSA' >/dev/null
-            curl --fail --silent --show-error "$CANARY_URL/node/native-bootstrap.ps1" | grep -F 'NonExportable' >/dev/null
+            curl --fail --silent --show-error "$SEMANTIC_URL/node" | grep -F 'CONNECT THIS PC' >/dev/null
+            curl --fail --silent --show-error "$SEMANTIC_URL/node/worker.js" | grep -F 'B0_EPHEMERAL_LOW_TRUST' >/dev/null
+            curl --fail --silent --show-error "$SEMANTIC_URL/node/worker.js" | grep -F 'ECDSA' >/dev/null
+            curl --fail --silent --show-error "$SEMANTIC_URL/node/native-bootstrap.ps1" | grep -F 'NonExportable' >/dev/null
             echo 'BROWSER_ENTRYPOINT_CHECKED=true' >> "$GITHUB_ENV"
           fi
 
@@ -217,6 +246,7 @@ jobs:
               "cloud_build_required": False,
               "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
               "canary_url": os.environ.get("CANARY_URL"),
+              "semantic_url": os.environ.get("SEMANTIC_URL"),
               "canary_revision": os.environ.get("CANARY_REVISION"),
               "previous_revision": os.environ.get("PREVIOUS_REVISION"),
               "canary_delete_pointer": os.environ.get("CANARY_DELETE_POINTER"),
@@ -224,6 +254,7 @@ jobs:
               "production_traffic_changed": truth("PRODUCTION_TRAFFIC_CHANGED"),
               "zero_traffic_checked": truth("ZERO_TRAFFIC_CHECKED"),
               "production_isolation_checked": truth("PRODUCTION_ISOLATION_CHECKED"),
+              "health_route_differential_checked": truth("HEALTH_ROUTE_DIFFERENTIAL_CHECKED"),
               "mcp_fail_closed_checked": truth("MCP_FAIL_CLOSED_CHECKED"),
               "browser_entrypoint_checked": truth("BROWSER_ENTRYPOINT_CHECKED"),
               "secret_value_recorded": False,
