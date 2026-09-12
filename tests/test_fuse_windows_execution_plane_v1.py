@@ -37,6 +37,8 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
             self.skipTest("workflow-free export excludes relay provider surface")
         source = RELAY_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("FUSE Windows Relay Cloud Run v2.3", source)
+        self.assertIn("github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V2'", source)
+        self.assertIn("github.event.issue.author_association == 'OWNER'", source)
         self.assertIn("Qualify prerequisites and bootstrap bounded relay root secret", source)
         self.assertIn("gcloud artifacts repositories describe", source)
         self.assertIn("gcloud firestore databases describe", source)
