@@ -1,0 +1,44 @@
+{
+  "schema": "FEDERATION-ARTIFACT-FABRIC-GOVERNANCE-3",
+  "version": "3.0.0",
+  "owner_authority": "KIM_KAGISO_MOSIANE",
+  "terminal_standard": "FULLY_ESTABLISHED",
+  "canonical_delivery_requirement": "OWNER_PRIVATE_DRIVE_ADAPTER",
+  "public_source_boundary": {
+    "exact_provider_ids_allowed": false,
+    "credential_values_allowed": false,
+    "secret_bearing_source_allowed": false,
+    "hidden_reasoning_allowed": false,
+    "provider_authority_inherited": false
+  },
+  "transaction_lifecycle": [
+    "RECEIVED", "QUARANTINED", "VALIDATED", "DRIVE_WRITE_PENDING",
+    "DRIVE_WRITTEN", "READBACK_VERIFIED", "REGISTRY_COMMITTED",
+    "RECEIPT_SIGNED", "DELIVERED"
+  ],
+  "non_terminal_states": ["HOLD", "FAILED", "DEAD_LETTER"],
+  "mandatory_controls": [
+    "EXACT_BYTE_CONTENT_IDENTITY", "SECRET_AND_HIDDEN_REASONING_REJECTION",
+    "MIME_AND_EXTENSION_VALIDATION", "BOUNDED_ARCHIVE_INSPECTION",
+    "CONTENT_ADDRESSED_IDEMPOTENCY", "TRANSACTIONAL_EVENT_LEDGER",
+    "GENERATION_FENCING", "PRIVATE_PROVIDER_READBACK",
+    "REGISTRY_SEMANTIC_READBACK", "DETACHED_RECEIPT_SIGNING",
+    "HASH_LINKED_EVENT_CHAIN", "MERKLE_ROOT_GENERATION",
+    "CRASH_SAFE_RESUME", "DEAD_LETTER_AND_EXPLICIT_REARM",
+    "DRIFT_RECONCILIATION", "RETENTION_CLASSIFICATION",
+    "NO_AUTOMATIC_EXTERNAL_SEND"
+  ],
+  "retention_classes": [
+    "EVIDENCE_IMMUTABLE", "CANONICAL", "OPERATIONAL",
+    "DRAFT", "TEMPORARY", "QUARANTINED"
+  ],
+  "provider_promotion_gates": [
+    "PRIVATE_EXECUTOR_IDENTITY", "EXACT_STORAGE_TARGET_READBACK",
+    "ASYMMETRIC_OR_KMS_SIGNER", "TRANSACTION_STORE_PERSISTENCE",
+    "DRIVE_CHANGE_OBSERVER", "DEAD_LETTER_REPLAY", "ROLLBACK_EXERCISE",
+    "EXACT_BYTE_RESTORE", "SUSTAINED_SOAK", "JARVIS_ASSURANCE",
+    "CFBE_VALUE_ACCEPTANCE", "SENTINEL_CURRENT_HEALTH",
+    "CANONICAL_STATE_SYNCHRONIZATION"
+  ],
+  "truth_boundary": "Source, deterministic tests and a bounded Drive canary do not prove an always-on private runtime, immutable external anchor, provider outage recovery or sustained production operation."
+}
