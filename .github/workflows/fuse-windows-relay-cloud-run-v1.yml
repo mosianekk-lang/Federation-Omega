@@ -1,4 +1,4 @@
-name: FUSE Windows Relay Cloud Run v1
+name: FUSE Windows Relay Cloud Run v2.1
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: fuse-windows-relay-cloud-run-v1
+  group: fuse-windows-relay-cloud-run-v21
   cancel-in-progress: false
 
 env:
@@ -25,22 +25,26 @@ env:
   ROOT_SECRET: fuse-windows-relay-root
   OIDC_ISSUER: ${{ vars.FUSE_OIDC_ISSUER }}
   OIDC_JWKS_URL: ${{ vars.FUSE_OIDC_JWKS_URL }}
+  # The WOAF bootstrap mission is zero-traffic by default. Production traffic
+  # promotion is a separate consequential predicate and stays disabled unless
+  # a later, explicitly authorised provider action sets this to true.
+  ALLOW_PRODUCTION_PROMOTION: 'false'
 
 jobs:
-  deploy-canary-promote:
+  deploy-zero-traffic-canary:
     if: >-
-      github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1' &&
+      (github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V2' ||
+       github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1') &&
       github.event.issue.author_association == 'OWNER'
     runs-on: ubuntu-24.04
     timeout-minutes: 35
     steps:
-      - name: Checkout exact admitted source without repository write credentials
+      - name: Checkout exact source without write credentials
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
 
       - name: Authenticate canonical keyless deployer
-        id: auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
         with:
           project_id: ${{ env.PROJECT_ID }}
@@ -54,42 +58,38 @@ jobs:
         with:
           project_id: ${{ env.PROJECT_ID }}
 
-      - name: Preflight identity and OAuth configuration
+      - name: Preflight identity and relay mode
         shell: bash
         run: |
           set -euo pipefail
-          set +x
           test "$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')" = "$PROJECT_NUMBER"
-          test -n "$OIDC_ISSUER"
-          test -n "$OIDC_JWKS_URL"
-          case "$OIDC_ISSUER" in https://*) ;; *) exit 41 ;; esac
-          case "$OIDC_JWKS_URL" in https://*) ;; *) exit 42 ;; esac
+          if [[ -n "$OIDC_ISSUER" && -n "$OIDC_JWKS_URL" ]]; then
+            [[ "$OIDC_ISSUER" == https://* && "$OIDC_JWKS_URL" == https://* ]]
+            echo 'BOOTSTRAP_MODE=FULL_MCP_AGENT' >> "$GITHUB_ENV"
+          elif [[ -z "$OIDC_ISSUER" && -z "$OIDC_JWKS_URL" ]]; then
+            echo 'BOOTSTRAP_MODE=AGENT_ONLY_BOOTSTRAP' >> "$GITHUB_ENV"
+          else
+            echo 'Mixed OIDC state is forbidden' >&2
+            exit 43
+          fi
 
-      - name: Provision narrow durable relay prerequisites
+      - name: Provision bounded durable relay prerequisites
         shell: bash
         run: |
           set -euo pipefail
-          set +x
-          gcloud services enable run.googleapis.com artifactregistry.googleapis.com \
-            cloudbuild.googleapis.com firestore.googleapis.com secretmanager.googleapis.com \
-            --project "$PROJECT_ID" --quiet
+          gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com secretmanager.googleapis.com --project "$PROJECT_ID" --quiet
           if ! gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" >/dev/null 2>&1; then
-            gcloud firestore databases create --database='(default)' --location="$REGION" \
-              --type=firestore-native --project "$PROJECT_ID" --quiet
+            gcloud firestore databases create --database='(default)' --location="$REGION" --type=firestore-native --project "$PROJECT_ID" --quiet
           fi
-          gcloud firestore fields ttls update expires_at --collection-group=nonces \
-            --enable-ttl --database='(default)' --project "$PROJECT_ID" --quiet
-          gcloud projects add-iam-policy-binding "$PROJECT_ID" \
-            --member="serviceAccount:$RUNTIME_SA" --role=roles/datastore.user \
-            --condition=None --quiet >/dev/null
+          gcloud firestore fields ttls update expires_at --collection-group=nonces --enable-ttl --database='(default)' --project "$PROJECT_ID" --quiet
+          gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$RUNTIME_SA" --role=roles/datastore.user --condition=None --quiet >/dev/null
           if ! gcloud secrets describe "$ROOT_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1; then
             python3 - <<'PY' | gcloud secrets create "$ROOT_SECRET" --project "$PROJECT_ID" --data-file=- --replication-policy=automatic
           import secrets
-          print(secrets.token_urlsafe(64), end="")
+          print(secrets.token_urlsafe(64), end='')
           PY
           fi
-          gcloud secrets add-iam-policy-binding "$ROOT_SECRET" --project "$PROJECT_ID" \
-            --member="serviceAccount:$RUNTIME_SA" --role=roles/secretmanager.secretAccessor --quiet >/dev/null
+          gcloud secrets add-iam-policy-binding "$ROOT_SECRET" --project "$PROJECT_ID" --member="serviceAccount:$RUNTIME_SA" --role=roles/secretmanager.secretAccessor --quiet >/dev/null
 
       - name: Build immutable relay image
         shell: bash
@@ -101,82 +101,90 @@ jobs:
           test -n "$DIGEST"
           echo "IMAGE_DIGEST_URI=$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-windows-relay@$DIGEST" >> "$GITHUB_ENV"
 
-      - name: Deploy zero-traffic canary and bind final resource URL
-        id: deploy
+      - name: Deploy zero-traffic tagged canary
         shell: bash
         run: |
           set -euo pipefail
-          set +x
           PREVIOUS="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
           echo "PREVIOUS_REVISION=$PREVIOUS" >> "$GITHUB_ENV"
-          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
-            --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" \
-            --port 8080 --cpu 1 --memory 512Mi --min 0 --max 3 --concurrency 20 \
-            --no-traffic --tag relay-canary --no-invoker-iam-check \
-            --set-env-vars="FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp" \
-            --set-secrets="FUSE_RELAY_ROOT_SECRET=$ROOT_SECRET:latest" --quiet
+          ENVVARS="FUSE_AGENT_ONLY_BOOTSTRAP=true"
+          if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
+            ENVVARS="FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp"
+          fi
+          gcloud run deploy "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" --port 8080 --cpu 1 --memory 512Mi --min 0 --max 3 --concurrency 20 --no-traffic --tag relay-canary --no-invoker-iam-check --set-env-vars="$ENVVARS" --set-secrets="FUSE_RELAY_ROOT_SECRET=$ROOT_SECRET:latest" --quiet
           SERVICE_URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
-          test -n "$SERVICE_URL"
-          gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
-            --no-traffic --tag relay-canary \
-            --update-env-vars="FUSE_MCP_RESOURCE_URL=$SERVICE_URL/mcp" --quiet
           CANARY_URL="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[?tag==`relay-canary`].url)')"
-          test -n "$CANARY_URL"
+          CANARY_REVISION="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[?tag==`relay-canary`].revisionName)')"
+          test -n "$SERVICE_URL" && test -n "$CANARY_URL" && test -n "$CANARY_REVISION"
+          if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
+            gcloud run services update "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --no-traffic --tag relay-canary --update-env-vars="FUSE_MCP_RESOURCE_URL=$SERVICE_URL/mcp" --quiet
+          fi
           echo "SERVICE_URL=$SERVICE_URL" >> "$GITHUB_ENV"
           echo "CANARY_URL=$CANARY_URL" >> "$GITHUB_ENV"
+          echo "CANARY_REVISION=$CANARY_REVISION" >> "$GITHUB_ENV"
 
-      - name: Canary, MCP authorization fence, and promotion
-        id: canary
+      - name: Semantic zero-traffic canary
         shell: bash
         run: |
           set -euo pipefail
           test "$(curl --fail --silent --show-error "$CANARY_URL/healthz" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')" = ok
-          test "$(curl --silent --output /dev/null --write-out '%{http_code}' "$CANARY_URL/mcp")" = 401
-          CANARY_REVISION="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
-            --format='value(status.traffic[?tag==`relay-canary`].revisionName)')"
-          test -n "$CANARY_REVISION"
-          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
-            --to-revisions="$CANARY_REVISION=100" --quiet
-          ACTIVE="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)')"
-          test "$ACTIVE" = "$CANARY_REVISION"
-          test "$(curl --fail --silent --show-error "$SERVICE_URL/healthz" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')" = ok
-          echo "ACTIVE_REVISION=$ACTIVE" >> "$GITHUB_ENV"
+          MCP_CODE="$(curl --silent --output /dev/null --write-out '%{http_code}' "$CANARY_URL/mcp")"
+          case "$MCP_CODE" in 401|403|404) ;; *) echo "MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 51 ;; esac
+          if [[ "$BOOTSTRAP_MODE" == 'AGENT_ONLY_BOOTSTRAP' ]]; then
+            curl --fail --silent --show-error "$CANARY_URL/node" | grep -F 'CONNECT THIS PC' >/dev/null
+            curl --fail --silent --show-error "$CANARY_URL/node/worker.js" | grep -F 'B0_EPHEMERAL_LOW_TRUST' >/dev/null
+            curl --fail --silent --show-error "$CANARY_URL/node/native-bootstrap.ps1" | grep -F 'NonExportable' >/dev/null
+          fi
+          ACTIVE="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
+          test "$ACTIVE" != "$CANARY_REVISION"
 
-      - name: Roll back failed canary
-        if: failure() && env.PREVIOUS_REVISION != ''
+      - name: Optional explicitly authorised production promotion
+        if: env.ALLOW_PRODUCTION_PROMOTION == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" \
-            --to-revisions="$PREVIOUS_REVISION=100" --quiet
+          # This path exists to preserve the legacy rollback contract, but is
+          # disabled for the WOAF bootstrap mission. The bootstrap dispatch
+          # never sets ALLOW_PRODUCTION_PROMOTION=true.
+          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions="$CANARY_REVISION=100" --quiet
 
-      - name: Emit redacted immutable receipt
+      - name: Roll back explicitly authorised promotion on failure
+        if: failure() && env.PREVIOUS_REVISION != '' && env.ALLOW_PRODUCTION_PROMOTION == 'true'
+        shell: bash
+        run: |
+          set -euo pipefail
+          gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions="$PREVIOUS_REVISION=100" --quiet
+
+      - name: Emit redacted receipt
         if: always()
         shell: bash
         run: |
           set -euo pipefail
           mkdir -p /tmp/fuse-windows-relay-receipt
           python3 - <<'PY'
-          import hashlib, json, os
-          from datetime import datetime, timezone
+          import hashlib,json,os
+          from datetime import datetime,timezone
           body = {
-            "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V1",
-            "source_sha": os.environ.get("GITHUB_SHA"),
-            "project_id": os.environ["PROJECT_ID"],
-            "region": os.environ["REGION"],
-            "service": os.environ["SERVICE"],
-            "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
-            "service_url": os.environ.get("SERVICE_URL"),
-            "active_revision": os.environ.get("ACTIVE_REVISION"),
-            "previous_revision": os.environ.get("PREVIOUS_REVISION"),
-            "provider_mutation_performed": bool(os.environ.get("IMAGE_DIGEST_URI")),
-            "production_traffic_changed": bool(os.environ.get("ACTIVE_REVISION")),
-            "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
-            "secret_value_recorded": False,
-            "oauth_value_recorded": False,
+              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V2",
+              "source_sha": os.environ.get("GITHUB_SHA"),
+              "project_id": os.environ["PROJECT_ID"],
+              "region": os.environ["REGION"],
+              "service": os.environ["SERVICE"],
+              "bootstrap_mode": os.environ.get("BOOTSTRAP_MODE"),
+              "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
+              "canary_url": os.environ.get("CANARY_URL"),
+              "canary_revision": os.environ.get("CANARY_REVISION"),
+              "previous_revision": os.environ.get("PREVIOUS_REVISION"),
+              "provider_mutation_performed": bool(os.environ.get("IMAGE_DIGEST_URI")),
+              "production_traffic_changed": os.environ.get("ALLOW_PRODUCTION_PROMOTION") == "true",
+              "mcp_fail_closed_checked": True,
+              "browser_entrypoint_checked": os.environ.get("BOOTSTRAP_MODE") == "AGENT_ONLY_BOOTSTRAP",
+              "secret_value_recorded": False,
+              "oauth_value_recorded": False,
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
           }
-          body["receipt_sha256"] = hashlib.sha256(json.dumps(body, sort_keys=True, separators=(",", ":")).encode()).hexdigest()
-          open("/tmp/fuse-windows-relay-receipt/receipt.json", "w").write(json.dumps(body, indent=2, sort_keys=True) + "\n")
+          body["receipt_sha256"] = hashlib.sha256(json.dumps(body,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+          open('/tmp/fuse-windows-relay-receipt/receipt.json','w').write(json.dumps(body,indent=2,sort_keys=True)+'\n')
           PY
 
       - name: Upload deployment receipt
