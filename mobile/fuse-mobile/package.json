@@ -1,15 +1,18 @@
 {
   "name": "fuse-mobile",
-  "version": "0.2.3",
+  "version": "0.3.0",
   "private": true,
   "main": "expo-router/entry",
   "scripts": {
     "start": "expo start",
     "android": "expo run:android",
     "ios": "expo run:ios",
+    "web": "expo start --web",
     "typecheck": "tsc --noEmit",
     "doctor": "npx expo-doctor",
     "export:android": "expo export --platform android",
+    "export:web": "expo export --platform web",
+    "verify:web": "expo export --platform web --output-dir dist-web",
     "prebuild:android": "expo prebuild --platform android --no-install --clean",
     "android:apk": "expo prebuild --platform android --clean && cd android && ./gradlew assembleDebug --no-daemon"
   },

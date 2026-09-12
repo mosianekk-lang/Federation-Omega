@@ -1,0 +1,20 @@
+{
+  "name": "FUSE Mobile",
+  "short_name": "FUSE",
+  "description": "Sovereign Federation workspace for research, creation, building and governed execution.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "background_color": "#090A0C",
+  "theme_color": "#090A0C",
+  "orientation": "any",
+  "categories": ["productivity", "utilities"],
+  "icons": [
+    {
+      "src": "/fuse-icon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml",
+      "purpose": "any maskable"
+    }
+  ]
+}
