@@ -6,6 +6,7 @@ import unittest
 ROOT = Path(__file__).resolve().parents[1]
 PLANE = ROOT / "windows_federation_plane"
 WORKFLOW = ROOT / ".github/workflows/fuse-windows-execution-plane-v1.yml"
+RELAY_WORKFLOW = ROOT / ".github/workflows/fuse-windows-relay-cloud-run-v1.yml"
 
 
 class FederationWindowsPlaneSourceTests(unittest.TestCase):
@@ -30,6 +31,30 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertNotIn("actions/checkout@v", source)
         self.assertNotIn("actions/setup-python@v", source)
         self.assertNotIn("actions/upload-artifact@v", source)
+
+    def test_relay_provider_route_qualifies_existing_prerequisites_without_iam_widening(self):
+        if not RELAY_WORKFLOW.is_file():
+            self.skipTest("workflow-free export excludes relay provider surface")
+        source = RELAY_WORKFLOW.read_text(encoding="utf-8")
+        self.assertIn("FUSE Windows Relay Cloud Run v2.2", source)
+        self.assertIn("Qualify existing durable relay prerequisites", source)
+        self.assertIn("gcloud artifacts repositories describe", source)
+        self.assertIn("gcloud firestore databases describe", source)
+        self.assertIn("gcloud secrets describe", source)
+        self.assertIn("gcloud builds list", source)
+        self.assertIn("gcloud run services list", source)
+        for forbidden in (
+            "gcloud services enable",
+            "add-iam-policy-binding",
+            "firestore databases create",
+            "fields ttls update",
+            "secrets create",
+        ):
+            self.assertNotIn(forbidden, source)
+        self.assertIn("provider_prereqs_qualified", source)
+        self.assertIn("MCP_FAIL_CLOSED_CHECKED=true", source)
+        self.assertIn("BROWSER_ENTRYPOINT_CHECKED=true", source)
+        self.assertIn("ZERO_TRAFFIC_CHECKED=true", source)
 
     def test_no_arbitrary_command_surface(self):
         source = (PLANE / "src/federation_windows_plane/executor.py").read_text(encoding="utf-8")
