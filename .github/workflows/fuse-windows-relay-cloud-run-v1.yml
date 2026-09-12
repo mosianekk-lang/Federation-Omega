@@ -269,8 +269,6 @@ jobs:
               echo "ISOLATED_CANARY_ALREADY_EXISTS:$TARGET_SERVICE" >&2
               exit 67
             fi
-            # The isolated canary is the intended owner-facing browser entry point.
-            # Make its network intent explicit instead of inheriting project defaults.
             gcloud run deploy "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --image "$IMAGE_DIGEST_URI" --service-account "$RUNTIME_SA" --port 8080 --cpu 1 --memory 512Mi --min 0 --max 1 --concurrency 20 --ingress all --default-url --no-invoker-iam-check --set-env-vars="$ENVVARS" --quiet
             SERVICE_URL="$(gcloud run services describe "$TARGET_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.url)')"
             if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
@@ -364,7 +362,6 @@ jobs:
             done
             echo "PROXY_HEALTH_CODE=${PROXY_CODE:-UNKNOWN}" >> "$GITHUB_ENV"
 
-            # Read only bounded request metadata; absence or denied log read is evidence, not a reason to widen IAM.
             REQUEST_LOG_COUNT="$(gcloud logging read "resource.type=cloud_run_revision AND resource.labels.service_name=$TARGET_SERVICE AND httpRequest.requestUrl:\"/healthz\"" --project "$PROJECT_ID" --freshness=20m --limit=20 --format='value(timestamp)' 2>/dev/null | sed '/^$/d' | wc -l | tr -d ' ' || true)"
             echo "REQUEST_LOG_COUNT=${REQUEST_LOG_COUNT:-UNKNOWN}" >> "$GITHUB_ENV"
 
@@ -440,7 +437,7 @@ jobs:
           from datetime import datetime,timezone
           truth=lambda name: os.environ.get(name,'').lower()=='true'
           body = {
-              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V28",
+              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V27",
               "source_sha": os.environ.get("GITHUB_SHA"),
               "project_id": os.environ["PROJECT_ID"],
               "region": os.environ["REGION"],
