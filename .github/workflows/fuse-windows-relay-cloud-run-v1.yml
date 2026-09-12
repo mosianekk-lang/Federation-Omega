@@ -1,4 +1,4 @@
-name: FUSE Windows Relay Cloud Run v2.5
+name: FUSE Windows Relay Cloud Run v2.4
 
 on:
   issues:
