@@ -1,0 +1,153 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "CFBE-ACF-GENESIS-20260826",
+    "version": 1,
+    "goal": "Create a provider-neutral autonomic capability fabric production foundation for CFBE.",
+    "user": "Owner and final authority",
+    "workflow": "ingest estate snapshot, compile intent, resolve route, reconcile desired state, verify proof, publish through governed review",
+    "data": "public-safe typed JSON, SQLite state, hashes, receipts and blockers",
+    "interface": "Python library and CLI",
+    "stack": "Python standard library and SQLite",
+    "environment": "local deterministic runtime first; provider adapters separately gated",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation single-use permits, one effectful path, proof-before-promotion",
+    "failure": "fail closed with typed exceptions, atomic rollback, blockers and truthful state",
+    "testing": "unit, integration, failure-first, idempotency, backup and restore",
+    "deployment": "reversible GitHub branch and pull request; no production deployment in local build",
+    "continuity": "SQLite checkpoints, backup/restore, project memory and AI handoff"
+  },
+  "classification": ["Library", "CLI", "Database System", "Automation", "Data Pipeline"],
+  "assumptions": {
+    "stack": "Python standard library only",
+    "runtime": "Python 3.11 or newer",
+    "storage": "Local SQLite for Genesis; provider persistence separately gated",
+    "authentication": "Supplied only by separately authorized adapters and never stored here",
+    "deployment": "Reversible review branch before any provider deployment"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: CLI and library are the requested Genesis interfaces",
+      "backend": "cfbe_acf compiler, resolver, trusted permit authority, proof kernel, reconciler and runtime",
+      "database": "SQLite with foreign keys, WAL, mission registry, atomic authority/reservation transaction, global effect lease, fenced execution journal, signed state checkpoints, pinned store identity, rollback-resistant external HTTPS CAS anchor and signed provenance backup",
+      "queue": "Fenced PENDING/COMMITTED/UNKNOWN execution journal and global cross-contract effect lease; external durable broker remains a provider gate",
+      "worker": "On-demand governed runtime; durable worker identity remains unproven",
+      "scheduler": "NOT_APPLICABLE: no scheduler is promoted in Genesis local source",
+      "cache": "NOT_APPLICABLE: deterministic SQLite readback is sufficient for Genesis",
+      "storage": "SQLite plus public-safe JSON fixtures",
+      "authentication": "No provider credentials stored; local HMAC reference authorities prove behavior while production identities remain external"
+    },
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
+    "observability": {
+      "correlation_ids": "CloudEvent id and W3C traceparent",
+      "health_checks": "runtime health, active blocker state, SQLite integrity, application row/chain verification, independently keyed checkpoint validation, pinned store identity and external CAS-anchor equality",
+      "structured_logs": "canonical JSON CloudEvents with W3C trace context",
+      "audit_logs": "hash-chained events, immutable attested receipts and runtime-keyed event/state checkpoints",
+      "metrics_alerts": "blocker counts and heartbeat freshness; external alert transport not yet deployed"
+    }
+  },
+  "testing": {
+    "unit": "compiler, resolver, proof and validation tests",
+    "integration": "Estate Twin plus SQLite plus runtime observation",
+    "e2e_or_smoke": "CLI init, ingest, plan, reconcile and health",
+    "fixtures_mocks": "public-safe 13-node snapshot and deterministic observation adapter",
+    "failure_first": "fake and replayed permits, mission supersession and stop/reservation races, same- and cross-contract concurrent effects, ambiguous persistence, injected/forged proof, provider tokens, self-consistent tampering, event and checkpoint truncation, checkpoint auto-reseal, cross-store identity substitution, anchor redirect, chronology, blocker lifecycle and signed restore provenance",
+    "commands": [
+      "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python -m unittest discover -s tests -v"
+    ],
+    "results": [
+      {
+        "scope": "local candidate after two independent adversarial reviews",
+        "state": "PASS",
+        "tests": 44,
+        "failures": 0,
+        "command": "PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python -m unittest discover -s tests -v"
+      }
+    ]
+  },
+  "delivery": {
+    "file_tree": "cfbe_autonomic_fabric package, examples, tests and governance documents",
+    "exact_code_files": [
+      "cfbe_acf/util.py",
+      "cfbe_acf/models.py",
+      "cfbe_acf/anchor.py",
+      "cfbe_acf/authority.py",
+      "cfbe_acf/store.py",
+      "cfbe_acf/twin.py",
+      "cfbe_acf/compiler.py",
+      "cfbe_acf/resolver.py",
+      "cfbe_acf/proof.py",
+      "cfbe_acf/reconciler.py",
+      "cfbe_acf/runtime.py",
+      "cfbe_acf/cli.py"
+    ],
+    "setup_commands": ["PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python -m cfbe_acf --help"],
+    "run_commands": ["PYTHONPATH=. python -m cfbe_acf --db state.sqlite init"],
+    "test_commands": ["PYTHONDONTWRITEBYTECODE=1 PYTHONPATH=. python -m unittest discover -s tests -v"],
+    "deploy_commands": ["NOT_IN_PACKAGE: use an authorized GitHub connector to create a reversible review branch and draft pull request"],
+    "rollback_commands": ["Close the unmerged pull request and delete only the bounded branch if rollback is authorized"],
+    "debugging": "Run health, SQLite integrity_check, tests and inspect blockers before retry"
+  },
+  "formation": {
+    "mission_id": "CFBE-ACF-GENESIS-20260826",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1",
+    "effectful_permit": "SIGNED_EXPIRING_SINGLE_USE_CONTRACT_BOUND_BEHAVIOR_TESTED_LOCALLY",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "unavailable_capabilities": ["production Formation, JARVIS and Sentinel identities", "provider identities", "deployed rollback-resistant anchor service", "durable broker", "production scheduler", "provider-native idempotency", "provider-native semantic canaries"],
+    "preserved_core": "deterministic local Estate Twin, compiler, resolver, proof and reconciliation",
+    "closure_tests": ["provider identity readback", "provider canary", "recovery proof", "measured soak"]
+  },
+  "continuity": {
+    "idempotency": "full-contract SHA-256 keys, provider idempotency propagation, atomic per-contract fences, one global effect lease and UNKNOWN ambiguity holds",
+    "checkpoints": "Explicit one-time empty-state Genesis provisioning, pre-write integrity verification inside write locks, SQLite transactions, application hashes, store/checkpoint-bound HMAC event/state roots, independently pinned store identity, redirect-disabled external HTTPS CAS trusted anchor and signed provenance-bound backup",
+    "resume_conditions": "current mission, current source fingerprint and successful integrity readback",
+    "handoff_files": ["README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md"],
+    "stop_switch": "Formation stop or mission supersession prevents further effectful execution"
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": false,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": [
+      {
+        "scope": "actual Genesis candidate",
+        "state": "PASS",
+        "tests": 44,
+        "failures": 0,
+        "includes": ["unit", "integration", "failure-first", "signed permit", "atomic mission stop", "global effect lease", "ambiguity hold", "attested proof", "explicit empty-state provisioning", "pre-write integrity lock", "signed checkpoint", "external HTTPS CAS anchor", "redirect rejection", "unanchored-health hold", "pinned store identity", "cross-store substitution", "auto-reseal rejection", "tamper", "signed backup", "restore", "security"]
+      },
+      {
+        "scope": "CLI smoke plus library backup/restore",
+        "state": "PASS",
+        "commands": 5,
+        "sqlite_integrity": "ok"
+      }
+    ],
+    "deployment_readback": null,
+    "semantic_verification": {
+      "scope": "LOCAL_CANDIDATE_ONLY",
+      "state": "VERIFIED",
+      "fruit": "13 stale node heartbeats plus one unverified provider generated 14 durable blockers and no completion claim; repaired heartbeat blockers are explicitly superseded",
+      "provider_runtime_proven": false
+    },
+    "unresolved_defects": []
+  }
+}
