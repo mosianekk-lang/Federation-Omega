@@ -1,0 +1,13 @@
+{
+  "mission_id":"MISSION-FCC-ULTIMATE-COMPLETION-20260910-001",
+  "observed_at":"2026-09-10T19:05:30Z",
+  "surfaces":{
+    "px116_cloud_clock":{"state":"PROVIDER_PROCESS_HEARTBEAT_LIVE","evidence":"PX120_Heartbeat through 2026-09-10T18:45:12Z","does_not_prove":["command_consumption","deploy","model_inference"]},
+    "px120_command_consumer":{"state":"STALE","evidence":"FUSE-COMPLETION-PX120-CANARY-20260910T032703Z remains PENDING without processedAt/result","next":"do not repeat unchanged canary"},
+    "px122_relay":{"state":"RECOVERY_CANARY_READY_UNCONSUMED","evidence":"stale >37-day zero-attempt diagnostic cancelled; FCC-PX122-PROVE-20260910T185800Z-001 remains READY","next":"wait for changed relay/consumer epoch"},
+    "apps_script_bridge":{"state":"FRESH_PING_READY_UNCONSUMED","evidence":"FCC-BRIDGE-PING-20260910T190500Z-001 remains READY","next":"provider/native processor required"},
+    "direct_ai_studio":{"state":"NO_CALLABLE_EXECUTOR_IN_CURRENT_CHAT","next":"use first qualified provider route with semantic response metadata"},
+    "windows_fio":{"state":"NO_ADDRESSABLE_HOST_EXECUTOR_IN_CURRENT_CHAT","next":"consume bounded v4 PowerShell carrier through existing Windows agent when addressable"}
+  },
+  "truth_boundary":"Heartbeat/queue/source/configuration are not semantic runtime completion."
+}
