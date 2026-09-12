@@ -1,0 +1,17 @@
+{
+  "name": "federation-omega-operator",
+  "version": "1.1.0",
+  "private": true,
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "check": "node --check src/wif-inventory.js && node --check src/operator-service.js && node --check src/http-app.js && node --check src/server.js",
+    "check:contract": "node scripts/check-build-contract.mjs",
+    "test": "node --test"
+  },
+  "dependencies": {
+    "google-auth-library": "10.5.0"
+  }
+}

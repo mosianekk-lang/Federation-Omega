@@ -1,0 +1,108 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "FED-OPERATOR-SOURCE-OF-TRUTH-RECOVERY-20260822",
+    "version": 12,
+    "goal": "Repository-managed credential-safe operator preserving five live actions and adding READ_WIF_INVENTORY.",
+    "user": "Kagiso Kim Mosiane and authorized Federation Omega operators",
+    "workflow": ["read contract", "authenticate", "validate", "execute allowlisted route", "sanitize", "audit and respond"],
+    "data": {"inputs": ["action", "bounded payload", "requestId"], "transforms": ["validation", "Google REST read", "safe projection"], "persistence": ["NOT_APPLICABLE: stateless"], "lineage": ["requestId", "checkedAt", "SHA-256"]},
+    "interface": ["HTTP JSON API", "Cloud Run container"],
+    "stack": ["Node.js 20+", "node:http", "google-auth-library 10.5.0"],
+    "environment": ["local deterministic tests", "Cloud Run candidate"],
+    "maturity": "PROD_FOUNDATION",
+    "governance": ["Formation", "documentation-first", "five-minute gate", "50-horizon foresight", "WATCHMAN"],
+    "failure": ["fail closed", "stable public errors", "no raw dependency bodies"],
+    "testing": ["13 node:test cases", "syntax checks", "source leak guard"],
+    "deployment": ["image-only canary after separate A2 permit", "no deployment claimed"],
+    "continuity": ["README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md"]
+  },
+  "classification": ["Backend API", "Automation", "DevOps/Infra", "Test Suite"],
+  "assumptions": {
+    "stack": "Node.js ESM with one pinned production dependency",
+    "runtime": "Node.js 20+ on Cloud Run",
+    "storage": "stateless; GitHub intended source of truth",
+    "authentication": "timing-safe admin token and Application Default Credentials",
+    "deployment": "image-only reversible canary after live adapter reconciliation"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: JSON API only",
+      "backend": ["http-app", "operator-service", "wif-inventory", "server"],
+      "database": "NOT_APPLICABLE: no mutable state",
+      "queue": "NOT_APPLICABLE: deployment backend isolated",
+      "worker": "NOT_APPLICABLE: request-scoped reads",
+      "scheduler": "NOT_APPLICABLE: no scheduled work",
+      "cache": "NOT_APPLICABLE: fresh reads required",
+      "storage": ["GitHub source", "provider systems authoritative"],
+      "authentication": ["x-fo-admin-token", "ADC", "fixed project/region"]
+    },
+    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE"],
+    "observability": {
+      "correlation_ids": ["request ID"],
+      "health_checks": ["GET /health", "GET /"],
+      "structured_logs": ["operator_started", "operator_request"],
+      "audit_logs": ["action, requestId, outcome, code, duration; no payload"],
+      "metrics_alerts": ["derive latency, timeout, dependency, and 5xx alerts"]
+    }
+  },
+  "testing": {
+    "unit": ["WIF pagination, sanitizers, errors, bounds"],
+    "integration": ["six mocked action paths"],
+    "e2e_or_smoke": ["ephemeral HTTP health, auth, execute, invalid JSON"],
+    "fixtures_mocks": ["Cloud Run env secret", "Build substitution secret", "WIF credential material"],
+    "failure_first": ["permission", "project/region/build", "adapter", "timeout", "schema", "leak"],
+    "commands": ["node --test", "node scripts/check-build-contract.mjs"]
+  },
+  "delivery": {
+    "file_tree": ["src/", "test/", "scripts/", "Dockerfile", "package.json", "BUILD_CONTRACT.json", "README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md"],
+    "exact_code_files": ["src/wif-inventory.js", "src/operator-service.js", "src/http-app.js", "src/server.js", "scripts/check-build-contract.mjs"],
+    "setup_commands": ["node --version", "npm install --ignore-scripts"],
+    "run_commands": ["PROJECT_ID=sov-hybrid-suite REGION=africa-south1 ADMIN_TOKEN=$ADMIN_TOKEN node src/server.js"],
+    "test_commands": ["node --check src/*.js", "node --test", "node scripts/check-build-contract.mjs"],
+    "deploy_commands": ["BLOCKED_WITH_ROUTE: reconcile adapter and obtain A2 permit", "gcloud builds submit . --tag africa-south1-docker.pkg.dev/sov-hybrid-suite/fo-runtime/federation-omega-operator:candidate-$GIT_SHA"],
+    "rollback_commands": ["gcloud run services update-traffic federation-omega-operator --region africa-south1 --to-revisions $PREVIOUS_REVISION=100 --project sov-hybrid-suite"],
+    "debugging": [
+      {"symptom": "PROJECT_ID_INVALID", "cause": "bad project config", "fix": "set fixed project ID"},
+      {"symptom": "DEPENDENCY_PERMISSION_DENIED", "cause": "missing read permission", "fix": "review documented list/get permissions only"},
+      {"symptom": "DEPENDENCY_TIMEOUT", "cause": "provider timeout", "fix": "inspect redacted logs and retry after recovery"},
+      {"symptom": "DEPLOYMENT_ADAPTER_REQUIRED", "cause": "live backend unindexed", "fix": "reconcile build/source; do not guess"}
+    ]
+  },
+  "formation": {
+    "mission_id": "FED-OPERATOR-CONTINUITY-20260822",
+    "mission_version": 12,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1",
+    "effectful_permit": "LOCAL_SINGLE_USE_PERMIT_CONSUMED_NO_EXTERNAL_EFFECT",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "status": "SUBSTITUTED",
+    "removed_capabilities": ["unproven production deploy backend"],
+    "lawful_substitutes": ["validated adapter boundary fails closed"]
+  },
+  "continuity": {
+    "idempotency": ["reads are side-effect-free", "deploy contract requires idempotencyKey"],
+    "checkpoints": ["source hashes", "13-test receipt", "contract validation", "draft head"],
+    "resume_conditions": ["resume from exact draft head", "no deploy before adapter and permit"],
+    "handoff_files": ["README.md", "FORMATION_SPEC.md", "PROJECT_MEMORY.md", "AI_HANDOFF.md", "BUILD_CONTRACT.json"],
+    "stop_switch": ["Formation denial", "user supersession", "doc invalidation", "credential signal", "time cutoff"]
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": false,
+    "deployed": false,
+    "proven": false
+  },
+  "proof": {
+    "test_results": ["13/13 tests", "4/4 syntax", "source leak guard"],
+    "deployment_readback": [],
+    "semantic_verification": ["six-action contract and bounded WIF semantics passed locally"],
+    "unresolved_defects": ["production deploy backend/image source unindexed", "container install and live permission canary unproven"]
+  }
+}
