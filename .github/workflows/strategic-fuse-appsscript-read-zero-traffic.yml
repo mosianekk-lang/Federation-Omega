@@ -183,7 +183,7 @@ jobs:
             --project "$PROJECT_ID" --region "$REGION" \
             --image "$CANDIDATE_IMAGE" --no-traffic --tag "$TAG" \
             --service-account "$CANDIDATE_RUNTIME_SA" \
-            --remove-secrets "FO_ADMIN_TOKEN" \
+            --clear-secrets \
             --set-env-vars "OPERATOR_AUDIENCE=${OPERATOR_AUDIENCE},OIDC_ALLOWED_PRINCIPALS=${CANDIDATE_OIDC_ALLOWED_PRINCIPALS}" \
             --quiet
           echo "CANDIDATE_TAG=$TAG" >> "$GITHUB_ENV"
