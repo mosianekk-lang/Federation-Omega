@@ -1,0 +1,11 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_STATUS_V1",
+  "source_controls": "IMPLEMENTED_CANDIDATE",
+  "level5_source": "CANDIDATE",
+  "level6_source": "CANDIDATE",
+  "level7_operational": "UNPROVEN",
+  "level8_operational": "UNPROVEN",
+  "level9_plus": "RESEARCH_ONLY",
+  "next_automatic_lane": "REPAIR_CURRENT_SERVING_PHOENIX_AND_ADMIT_EXACT_HEAD",
+  "owner_gate": "GOOGLE_WIF_HARDENING_SEPARATE_AND_LANE_LOCAL"
+}

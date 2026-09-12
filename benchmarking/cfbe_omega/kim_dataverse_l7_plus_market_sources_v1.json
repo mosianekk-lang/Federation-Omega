@@ -1,0 +1,18 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_MARKET_SOURCES_V1",
+  "reference_patterns": [
+    "durable checkpoint and resume",
+    "event-driven workflow wake",
+    "zero-compute waits",
+    "agent/workflow separation",
+    "guardrails and human approval gates",
+    "gateway-enforced identity and policy",
+    "trace/evaluation loops",
+    "sandbox isolation",
+    "A/B champion-challenger evaluation",
+    "cross-process durable workers"
+  ],
+  "harvest_policy": "PUBLIC_ARCHITECTURAL_PATTERNS_ONLY",
+  "vendor_superiority_claim": false,
+  "proprietary_source_harvested": false
+}

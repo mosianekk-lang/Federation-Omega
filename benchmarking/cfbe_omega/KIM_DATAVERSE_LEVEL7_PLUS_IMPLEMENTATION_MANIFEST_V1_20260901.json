@@ -1,0 +1,60 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_IMPLEMENTATION_MANIFEST_V1",
+  "programme_issue": 1019,
+  "maturity_claim": "SOURCE_AND_CONTROL_PLANE_CANDIDATE_ONLY",
+  "components": [
+    "kim_dataverse_level7_plus_v1",
+    "kim_dataverse_autonomic_control_fabric_v1",
+    "kim_dataverse_institutional_twin_v1",
+    "kim_dataverse_constitutional_evolution_v1",
+    "kim_dataverse_persistent_carrier_contract_v1",
+    "kim_dataverse_causal_value_learning_v1",
+    "kim_dataverse_institutional_qualification_v1",
+    "kim_dataverse_level8_frontier_v1",
+    "kim_dataverse_institutional_bridge_v1"
+  ],
+  "implemented_control_planes": {
+    "objective_ecology": true,
+    "resource_economy": true,
+    "autonomy_debt": true,
+    "owner_interruption_firewall": true,
+    "unified_autonomic_event_classes": true,
+    "institutional_digital_twin": true,
+    "architectural_entropy_recommendation": true,
+    "constitutional_amendment_court": true,
+    "capability_market": true,
+    "persistent_carrier_qualification": true,
+    "causal_strategy_comparison": true,
+    "owner_attention_leverage": true,
+    "empirical_level7_qualification": true,
+    "multi_timescale_objective_planning": true,
+    "information_value_budgeting": true
+  },
+  "empirical_holds": [
+    "PERSISTENT_NO_CHAT_CONTINUITY_REQUIRES_OBSERVED_RESUME_RECEIPTS",
+    "MAINTENANCE_SELF_RESOLUTION_REQUIRES_REAL_EPISODES",
+    "RECOVERY_SELF_RESOLUTION_REQUIRES_REAL_EPISODES",
+    "OWNER_INTERRUPTION_REDUCTION_REQUIRES_REAL_EPISODES",
+    "SUSTAINED_OWNER_VALUE_REQUIRES_PROSPECTIVE_PAIRS",
+    "PROVIDER_NATIVE_CLAIMS_REQUIRE_PROVIDER_READBACK",
+    "LEVEL7_OPERATIONAL_MATURITY_NOT_SELF_DECLARED"
+  ],
+  "authority": {
+    "external_effect_authorized": false,
+    "provider_effect_authorized": false,
+    "iam_wif_mutation_authorized": false,
+    "financial_authority": false,
+    "publication_authority": false,
+    "destructive_authority": false,
+    "constitutional_self_promotion": false
+  },
+  "architecture_invariants": [
+    "one SOL authority constitution",
+    "no duplicate scheduler",
+    "no duplicate memory root",
+    "no duplicate provider executor",
+    "mission maintenance recovery and evolution are event classes not separate sovereign autopilots",
+    "blocked authority lane never freezes independent internal lanes",
+    "chat is cockpit not required persistent execution carrier"
+  ]
+}

@@ -1,0 +1,15 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_IDENTITY_V1",
+  "programme": "KIM_DATAVERSE_AUTONOMIC_INSTITUTIONAL_EVOLUTION",
+  "levels": {
+    "5": "INSTITUTIONAL_INTELLIGENCE",
+    "6": "SELF_EVOLVING_INSTITUTION",
+    "7": "SOVEREIGN_DIGITAL_ORGANIZATION",
+    "8": "EVIDENCE_GOVERNED_ADAPTIVE_INSTITUTION",
+    "9_plus": "AUTHORITY_NEUTRAL_FRONTIER_RESEARCH"
+  },
+  "current_source_claim": "LEVEL6_SOURCE_CANDIDATE",
+  "current_operational_claim": "LEVEL7_NOT_YET_EMPIRICALLY_PROVEN",
+  "external_effect_authorized": false,
+  "authority_inherited": false
+}
