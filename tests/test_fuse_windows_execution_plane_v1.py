@@ -22,19 +22,41 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertIn("persist-credentials: false", source); self.assertIn("timeout-minutes: 15", source); self.assertIn("github.event.pull_request.head.sha || github.sha", source); self.assertIn("verify_receipt_mapping", source)
         self.assertNotIn("actions/checkout@v", source); self.assertNotIn("actions/setup-python@v", source); self.assertNotIn("actions/upload-artifact@v", source)
 
-    def test_relay_provider_route_is_asymmetric_and_secret_manager_independent(self):
+    def test_relay_provider_route_is_asymmetric_secretless_and_cloudbuild_independent(self):
         if not RELAY_WORKFLOW.is_file(): self.skipTest("workflow-free export excludes relay provider surface")
         source = RELAY_WORKFLOW.read_text(encoding="utf-8")
         self.assertIn("FUSE Windows Relay Cloud Run v2.4", source)
         self.assertIn("github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V2'", source)
         self.assertIn("github.event.issue.author_association == 'OWNER'", source)
         self.assertIn("DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY", source)
-        self.assertIn("Qualify provider prerequisites without secret-manager dependency", source)
-        for required in ("gcloud artifacts repositories describe","gcloud firestore databases describe","gcloud builds list","gcloud run services list","MCP_FAIL_CLOSED_CHECKED=true","BROWSER_ENTRYPOINT_CHECKED=true","ZERO_TRAFFIC_CHECKED=true"):
+        self.assertIn("BUILD_MECHANISM=GITHUB_HOSTED_DOCKER_DIRECT_PUSH", source)
+        self.assertIn("Qualify provider prerequisites without secret-manager or cloud-build dependency", source)
+        for required in (
+            "gcloud artifacts repositories describe",
+            "gcloud firestore databases describe",
+            "gcloud run services list",
+            "gcloud auth configure-docker",
+            "docker build --file windows_federation_plane/Dockerfile",
+            "docker push \"$IMAGE\"",
+            "MCP_FAIL_CLOSED_CHECKED=true",
+            "BROWSER_ENTRYPOINT_CHECKED=true",
+            "ZERO_TRAFFIC_CHECKED=true",
+        ):
             self.assertIn(required, source)
-        for forbidden in ("gcloud services enable","add-iam-policy-binding","firestore databases create","fields ttls update","gcloud secrets","--set-secrets="):
+        for forbidden in (
+            "gcloud services enable",
+            "add-iam-policy-binding",
+            "firestore databases create",
+            "fields ttls update",
+            "gcloud secrets",
+            "--set-secrets=",
+            "gcloud builds submit",
+            "gcloud builds list",
+            "cloudbuild.googleapis.com",
+        ):
             self.assertNotIn(forbidden, source)
         self.assertIn('"secret_manager_required": False', source)
+        self.assertIn('"cloud_build_required": False', source)
         self.assertIn('"secret_value_recorded": False', source)
 
     def test_agent_and_browser_source_bind_public_key_auth(self):
