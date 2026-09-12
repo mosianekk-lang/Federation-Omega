@@ -1,0 +1,77 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
+        "governance/fuse_windows_execution_plane_v1.json",
+        "governance/proofos_omega_policy_extension_woaf_v21.json",
+        "windows_federation_plane/**",
+        "phoenix/export_policy.json"
+      ],
+      "reason": "WOAF_TRUST_SPINE_RELAY_AND_PROOF_MAPPING_SECURITY_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "WOAF_V21",
+      "patterns": [
+        ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
+        "governance/fuse_windows_execution_plane_v1.json",
+        "governance/proofos_omega_policy_extension_woaf_v21.json",
+        "windows_federation_plane/**",
+        "phoenix/export_policy.json"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
+        "governance/fuse_windows_execution_plane_v1.json",
+        "windows_federation_plane/**",
+        "phoenix/export_policy.json"
+      ],
+      "tests": [
+        "woaf_v21_source_contract",
+        "woaf_v21_proofos_mapping"
+      ],
+      "evidence": "F237_AIRLOCK_UNMAPPED_PRODUCTION_FALLBACK_20260912"
+    }
+  ],
+  "tests": [
+    {
+      "id": "woaf_v21_source_contract",
+      "kind": "unittest_glob",
+      "target": "test_fuse_windows_execution_plane_v1.py",
+      "patterns": [
+        ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
+        "governance/fuse_windows_execution_plane_v1.json",
+        "windows_federation_plane/**"
+      ],
+      "subsystems": ["WOAF_V21"],
+      "failure_class": "SECURITY_VIOLATION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "woaf_v21_proofos_mapping",
+      "kind": "unittest_glob",
+      "target": "test_proofos_woaf_v21_mapping.py",
+      "patterns": [
+        "governance/proofos_omega_policy_extension_woaf_v21.json",
+        ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
+        "governance/fuse_windows_execution_plane_v1.json",
+        "windows_federation_plane/**",
+        "phoenix/export_policy.json"
+      ],
+      "subsystems": ["WOAF_V21"],
+      "failure_class": "SELECTOR_ESCAPE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    }
+  ]
+}
