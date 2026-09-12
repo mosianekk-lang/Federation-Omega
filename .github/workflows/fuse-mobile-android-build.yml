@@ -232,6 +232,13 @@ jobs:
           ADB="$SDK_ROOT/platform-tools/adb"
           EMULATOR="$SDK_ROOT/emulator/emulator"
           if [[ ! -x "$ADB" || ! -x "$EMULATOR" ]]; then
+            {
+              echo "SDK_ROOT=$SDK_ROOT"
+              echo "ADB=$ADB"
+              echo "EMULATOR=$EMULATOR"
+              ls -la "$SDK_ROOT/platform-tools" 2>&1 || true
+              ls -la "$SDK_ROOT/emulator" 2>&1 || true
+            } > "$EVIDENCE_DIR/sdk-runtime-tools-missing-api-${API_LEVEL}.txt"
             echo "sdkmanager completed but exact platform-tools/emulator executables are unavailable" >&2
             exit 42
           fi
