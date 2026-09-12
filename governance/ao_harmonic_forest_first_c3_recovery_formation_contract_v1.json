@@ -1,0 +1,81 @@
+{
+  "schema": "FOREST-FIRST-C3-RECOVERY-FORMATION-COMPATIBILITY-V1",
+  "version": "1.0.0",
+  "status": "SOURCE_CONTRACT_NO_MIGRATION",
+  "sources": {
+    "OMEGA_AUTOFIX": {
+      "canonical_drive_id": "1Qz1xIAn5SDN8tGD5qT8e004A6H2LBLplx208EYt9SH0",
+      "target_role": "CONTINUITY_ANTI_STALL_AND_RECOVERY_POLICY"
+    },
+    "MODISA_CONTINUUM": {
+      "canonical_drive_id": "1O_1TAQJRlpBuGjSysmb6KAnUAIkG7JPdDa_fPc3ZS5E",
+      "target_role": "FORMATION_READBACK_AND_PROMOTION_DISCIPLINE"
+    }
+  },
+  "shared_kernel": {
+    "implementation": "ao_harmonic_v3.failure_win_v2.FailureToOperationalWinKernelV2",
+    "role": "PROVIDER_NEUTRAL_FAILURE_RECOVERY_PROOF_SUBSTRATE",
+    "execution_authority_granted": false,
+    "provider_authority_granted": false,
+    "portable_failure_fingerprint_shared_across_compatible_receivers": true,
+    "receiver_local_failure_fingerprint_preserved": true
+  },
+  "omega_autofix_invariants": [
+    "READBACK_BEFORE_RETRY",
+    "BLOCK_ONLY_SMALLEST_DEPENDENT_LANE",
+    "MATERIALLY_DIFFERENT_ROUTE_AFTER_FAILED_ROUTE",
+    "ANTI_THRASH_NO_IDENTICAL_RETRY_LOOP",
+    "FAILED_ROUTE_IS_NOT_FAILED_OBJECTIVE",
+    "FACTUAL_AND_SOURCE_AUTHORITY_NOT_OVERRIDDEN"
+  ],
+  "modisa_invariants": [
+    "PROOF_BEFORE_CLAIM",
+    "EVERY_WRITE_REQUIRES_READBACK",
+    "DOWNSTREAM_PROPAGATION_REQUIRES_ACKNOWLEDGEMENT_OR_EXPLICIT_PARTIAL_STATE",
+    "ADOPTION_STATE_SEPARATE_FROM_MATURITY_STATE",
+    "NO_PROMOTION_STATE_SKIP",
+    "ROLLBACK_REQUIRED_FOR_PROMOTION",
+    "OWNER_AUTHORITY_PRESERVED_FOR_EXTERNAL_BINDING_OR_IRREVERSIBLE_ACTION"
+  ],
+  "formation_primitives": {
+    "implementation": "formation_omega.powerhouse.FormationOmega",
+    "surface_readback": "formation_omega.powerhouse.SurfaceReadback",
+    "release_gate": "formation_omega.powerhouse.ReleaseGate",
+    "role": "PUBLIC_SAFE_A1_INTERNAL_FORMATION_AND_READBACK_GATE",
+    "formation_omega_system_identity_absorbed_by_c3": false
+  },
+  "compatibility_rules": [
+    "NORMALIZED_RECOVERY_RECEIPT_MAY_COMPARE_PORTABLE_OUTCOME_BUT_MUST_NOT_ERASE_RECEIVER_IDENTITY",
+    "UNCHANGED_OR_NON_ROLLBACK_ROUTE_MUST_NOT_BE_SELECTED_AS_RECOVERY",
+    "MATERIAL_ROUTE_FAILURE_MAY_QUARANTINE_ROUTE_WITHOUT_TERMINATING_OBJECTIVE",
+    "FORMATION_RELEASE_REQUIRES_SEMANTIC_READBACK_AND_ROLLBACK",
+    "SOURCE_SHADOW_MAY_NOT_PROMOTE_PROVIDER_RUNTIME_OR_OPERATIONAL_MATURITY"
+  ],
+  "shadow_requirements": {
+    "required_scenarios": 5,
+    "authority_ceiling": "A1_INTERNAL",
+    "external_effect": false,
+    "must_test": [
+      "SAME_PORTABLE_FAILURE_FINGERPRINT_WITH_DISTINCT_LOCAL_FINGERPRINT",
+      "NORMALIZED_RECOVERY_RECEIPT_EQUIVALENCE",
+      "UNCHANGED_RETRY_STILL_PROHIBITED",
+      "ROUTE_FAILURE_NOT_OBJECTIVE_FAILURE",
+      "ROLLBACK_AND_FORMATION_RELEASE_GATE"
+    ]
+  },
+  "forbidden_promotions": [
+    "AUTOFIX_POLICY_TO_PROVIDER_AUTHORITY",
+    "MODISA_DOCTRINE_TO_RUNTIME_MATURITY",
+    "FAILURE_WIN_SOURCE_RESULT_TO_OPERATIONAL_WIN_WITHOUT_COMPLETE_PROOF_GRAPH_AND_SOAK",
+    "FORMATION_RELEASE_DECISION_TO_EXTERNAL_EFFECT_WITHOUT_SEPARATE_AUTHORITY",
+    "C3_SOURCE_SHADOW_TO_SYSTEM_RETIREMENT"
+  ],
+  "truth_boundary": {
+    "canonical_drive_docs_modified": false,
+    "runtime_rewired": false,
+    "physical_migration_executed": false,
+    "provider_runtime_proved": false,
+    "provider_effect": false,
+    "system_retirement_allowed": false
+  }
+}

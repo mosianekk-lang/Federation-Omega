@@ -1,0 +1,57 @@
+{
+  "schema": "FOREST-FIRST-MIGRATION-CONTRACTS-V1",
+  "version": "1.0.0",
+  "status": "PROPOSED_NON_DESTRUCTIVE",
+  "base_main_sha": "413862511ae9c8be5d14b42be553967767bec6dc",
+  "global_preconditions": [
+    "fresh_main_readback",
+    "current_system_inventory",
+    "current_dependency_inventory",
+    "proof_boundary_inventory",
+    "rollback_plan",
+    "no_direct_main_write"
+  ],
+  "phases": [
+    {"id":"P0","name":"FREEZE_AND_INVENTORY","effect":"NONE","actions":["record_authority_map","record_compatibility_manifest","record_dependency_contract","record_migration_contracts"],"exit_gates":["all_27_registered_systems_accounted_for","no_delete_or_runtime_rewire"]},
+    {"id":"P1","name":"INTERFACE_CONSOLIDATION","effect":"SOURCE_ONLY","actions":["define_common_interfaces","add_alias_resolution","add_deprecation_metadata_without_removal"],"exit_gates":["existing_callers_resolve","domain_authority_unchanged","independent_assurance_unchanged"]},
+    {"id":"P2","name":"SHADOW_EQUIVALENCE","effect":"A1_INTERNAL_NO_EXTERNAL_EFFECT","actions":["run_legacy_and_target_paths_on_same_sanitized_inputs","compare_decisions_and_proof_boundaries","measure_owner_burden_and_complexity"],"exit_gates":["no_safety_regression","no_truth_authority_regression","no_owner_burden_increase","material_behavior_differences_explained"]},
+    {"id":"P3","name":"DUAL_RUN_COMPATIBILITY","effect":"BOUNDED_INTERNAL","actions":["route_selected_real_internal_work_through_legacy_and_target","preserve_both_receipts","verify_rollback"],"exit_gates":["repeat_success_threshold_met","rollback_proved","no_new_single_point_of_failure"]},
+    {"id":"P4","name":"SOURCE_CONSOLIDATION","effect":"SOURCE_ONLY","actions":["move_shared_primitives_to_target_modules","retain_legacy_import_shims","mark_authority_supersession"],"exit_gates":["consumer_search_clean","tests_pass","exact_head_admission_pass","historical_paths_preserved"]},
+    {"id":"P5","name":"ALIAS_SUPERSESSION","effect":"CONTROL_PLANE","actions":["make_new_target_canonical_for_future_routing","retain_legacy_aliases","update_restore_manifests"],"exit_gates":["independent_restore_success","no_maturity_inheritance","registry_and_source_readback_match"]},
+    {"id":"P6","name":"OPTIONAL_RETIREMENT","effect":"CONTROLLED","actions":["retire_only_unused_sovereign_identity","never_delete_evidence_or_historical_lineage"],"exit_gates":["zero_live_consumers","retention_requirements_met","rollback_or_archive_available","explicit_retirement_receipt"]}
+  ],
+  "system_specific_contracts": {
+    "Superior Logic Doctrine": {"target":"Forest-First reasoning policy library","physical_action_before_P4":"NONE"},
+    "KAIO Ω": {"target":"LEX advanced advocacy profile","physical_action_before_P4":"NONE"},
+    "KIOAS": {"target":"Directive-to-machine-contract compiler","physical_action_before_P4":"NONE"},
+    "Ω-AUTOFIX": {"target":"Failure Recovery & Operational Learning","physical_action_before_P4":"NONE"},
+    "Modisa Continuum": {"target":"Formation self-correction module","physical_action_before_P4":"NONE"},
+    "AEON-Ω": {"target":"Historical compatibility profile","physical_action_before_P6":"NONE"},
+    "Next Frontier AI Bible / Ω-SCIENTIA": {"target":"Split canonical knowledge from scientific falsification organ","physical_action_before_P4":"NONE"},
+    "IPEP": {"target":"Prospective validation lab","physical_action_before_P4":"NONE"},
+    "SIF AI": {"target":"State/registry administration module","physical_action_before_P4":"NONE"},
+    "CASEFORGE-Ω": {"target":"EvidenceOps scientific validation lab","physical_action_before_P4":"NONE"},
+    "FORMATION-OMEGA Unified Powerhouse": {"target":"Formation engine identity","physical_action_before_P4":"NONE"}
+  },
+  "rollback_policy": {
+    "every_phase_reversible_until_P6": true,
+    "legacy_identifiers_retained": true,
+    "historical_proof_never_rewritten": true,
+    "failed_migration_is_telemetry_not_reason_to_weaken_gates": true
+  },
+  "success_metrics": [
+    "top_level_authority_count_reduced_without_capability_loss",
+    "duplicate_reasoning_authority_reduced",
+    "restore_complexity_reduced",
+    "owner_prompt_engineering_burden_reduced",
+    "proof_boundary_violations_zero",
+    "independent_assurance_preserved",
+    "decision_quality_not_degraded",
+    "runtime_provider_claims_remain_exactly_scoped"
+  ],
+  "truth_boundary": {
+    "migration_executed": false,
+    "runtime_changed": false,
+    "provider_effect": false
+  }
+}

@@ -1,0 +1,85 @@
+{
+  "schema": "FOREST-FIRST-C4-HIGH-COUPLING-POLICY-CONTRACT-V1",
+  "version": "1.0.0",
+  "status": "SOURCE_CONTRACT_NO_MIGRATION",
+  "base_main_sha": "e1cb9b3344043e4423821728c624ac194ffcbcbe",
+  "objective": "Validate a non-destructive authority consolidation in which Superior Logic contributes reasoning policies/invariants to the Forest-First Cognitive Kernel while CASEFORGE remains the EvidenceOps scientific-validation laboratory, without moving or retiring either runtime family.",
+  "target_relationship": {
+    "Superior Logic Doctrine": {
+      "target_role": "FOREST_FIRST_REASONING_POLICY_AND_INVARIANT_LIBRARY",
+      "target_layer": "COGNITIVE_KERNEL",
+      "standalone_runtime_preserved_during_c4": true,
+      "provider_runtime_maturity_inherited": false
+    },
+    "CASEFORGE-Ω": {
+      "target_role": "EVIDENCEOPS_SCIENTIFIC_VALIDATION_LABORATORY",
+      "target_layer": "EVIDENCE_TRUTH",
+      "canonical_superior_logic_maturation_host": "evidenceops.caseforge.maturation_shadow_cli",
+      "provider_runtime_maturity_inherited": false
+    }
+  },
+  "authority_map": {
+    "mission_objective_and_cognitive_policy": "FOREST_FIRST_COGNITIVE_KERNEL",
+    "scientific_falsification_and_blind_validation": "CASEFORGE_EVIDENCEOPS",
+    "evidence_truth_and_release_integrity": "EVIDENCEOPS_TRUTHGRID_JFRIE",
+    "provider_or_external_effect": "SOVARA_OR_OWNER_RESERVED_EFFECT_AUTHORITY",
+    "independent_assurance": "SENTINEL_CFBE_JARVIS_REALITYGUARD"
+  },
+  "source_bindings": {
+    "superior_logic_runtime": {"path":"superior_logic/runtime.py","sha":"4a20aea27b7fd3cfdd8a38cb59e30e11ec440a32"},
+    "superior_logic_maturation_wrapper": {"path":"tools/superior_logic_maturation_shadow.py","sha":"7b50d028dee89a2e569b9e87e0ecdaac5d16de66"},
+    "caseforge_maturation_cli": {"path":"evidenceops/caseforge/maturation_shadow_cli.py","sha":"ce0c8e58f28de92e3f789c5fc7853cfb7a038b2c"},
+    "caseforge_maturation_runtime": {"path":"evidenceops/caseforge/maturation_shadow_runtime.py","sha":"aa9c487491706a28c3e36df6e9404ae34900c00a"},
+    "caseforge_scientia": {"path":"evidenceops/caseforge/scientia.py","sha":"0c73ca71b8f969884bd8300993c089069ae66926"},
+    "caseforge_blind_runner": {"path":"evidenceops/caseforge/blind_runner.py","sha":"e8ae25ed993501b6fea30a90aa631c4d50367e71"},
+    "caseforge_replication": {"path":"evidenceops/caseforge/replication.py","sha":"70363f0da14e3a1aad2c8437a3dd94680454ccd2"},
+    "caseforge_core": {"path":"evidenceops/caseforge/core.py","sha":"5f4c9f609d161cc2dbdaf6f5ebb4d1022eb15fb9"},
+    "caseforge_openai_adapter": {"path":"evidenceops/caseforge/openai_provider_adapter.py","sha":"e68ade34f4177e58ed57cc0e4a86cb95dece306f"},
+    "maturation_workflow": {"path":".github/workflows/superior-logic-maturation-shadow.yml","sha":"de40c1e9a489cdd03088c1fc6539c0dab82dc21f","repository_shell_only":true}
+  },
+  "forbidden_transitions": [
+    "SUPERIOR_LOGIC_POLICY_SELF_CERTIFIES_SCIENTIFIC_VALIDITY",
+    "CASEFORGE_ASSUMES_MISSION_OBJECTIVE_OR_HUMAN_SOVEREIGNTY",
+    "CASEFORGE_OVERWRITES_EVIDENCEOPS_TRUTH_OR_JFRIE_RELEASE_AUTHORITY",
+    "SUPERIOR_LOGIC_OR_CASEFORGE_INHERITS_PROVIDER_EFFECT_PROOF_FROM_THE_OTHER",
+    "POLICY_ABSORPTION_RETIRES_SUPERIOR_LOGIC_RUNTIME_WITHOUT_DUAL_RUN_PROOF",
+    "CASEFORGE_VALIDATION_RESULT_BECOMES_EXTERNAL_EFFECT_AUTHORITY",
+    "LEGACY_PROOF_OR_MATURITY_IS_REWRITTEN_DURING_CONSOLIDATION"
+  ],
+  "required_scenarios": [
+    "C4-WRAPPER-HOST-COMPATIBILITY",
+    "C4-POLICY-COMPLETION-BOUNDARY",
+    "C4-SCIENTIFIC-FALSIFICATION",
+    "C4-BLIND-EVALUATION-SEPARATION",
+    "C4-PROVIDER-READBACK-SEPARATION",
+    "C4-INDEPENDENT-REPLICATION",
+    "C4-AUTHORITY-NON-TAKEOVER",
+    "C4-INDEPENDENT-ASSURANCE-NO-SPOF",
+    "C4-LEGACY-IDENTITY-COMPATIBILITY",
+    "C4-ROLLBACK-AND-LINEAGE"
+  ],
+  "promotion_gate": {
+    "required_runs": 10,
+    "authority_ceiling": "A1_INTERNAL",
+    "external_effect": false,
+    "independent_assurance_required": true,
+    "automatic_source_move": false,
+    "automatic_runtime_rewire": false,
+    "automatic_retirement": false
+  },
+  "rollback": {
+    "legacy_runtime_sources_preserved": true,
+    "legacy_identity_resolution_preserved": true,
+    "historical_proof_never_rewritten": true,
+    "rollback_before_physical_migration": "DROP_C4_COMPATIBILITY_LAYER_AND_RESTORE_PRE_C4_ROUTING"
+  },
+  "truth_boundary": {
+    "runtime_changed": false,
+    "provider_runtime_proved": false,
+    "physical_migration_executed": false,
+    "system_retirement_executed": false,
+    "authority_transferred": false,
+    "maturity_inherited": false,
+    "provider_effect": false
+  }
+}

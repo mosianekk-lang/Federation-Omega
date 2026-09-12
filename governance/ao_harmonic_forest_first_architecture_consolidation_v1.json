@@ -1,0 +1,103 @@
+{
+  "schema": "FOREST-FIRST-ARCHITECTURE-CONSOLIDATION-V1",
+  "version": "1.0.0",
+  "status": "SOURCE_PROPOSAL_NON_DESTRUCTIVE",
+  "base_main_sha": "413862511ae9c8be5d14b42be553967767bec6dc",
+  "objective": "Reduce sovereign-system overlap while preserving capability, proof boundaries, historical lineage and independent assurance.",
+  "constitutional_rule": "ONE_HUMAN_AUTHORITY_CONSTITUTION_ONE_FOREST_FIRST_COGNITIVE_KERNEL_SPECIALIST_ORGANS_STRICT_DOMAIN_AUTHORITY",
+  "non_goals": [
+    "Delete historical source, proof, ledgers or identifiers",
+    "Transfer provider authority by architectural declaration",
+    "Promote source or tests into runtime/provider maturity",
+    "Merge proof-distinct assurance roles merely because they overlap semantically",
+    "Rename or rewrite historical paths before dependency proof"
+  ],
+  "layers": [
+    {
+      "id": "L0",
+      "name": "HUMAN_SOVEREIGNTY",
+      "authority": "Human values, consent, lived facts, consequential judgment and reserved approvals",
+      "canonical_components": ["FOREST-FIRST JUSTICE OS — HUMAN–AI OPERATING CONSTITUTION v1.0"],
+      "must_remain_independent": true
+    },
+    {
+      "id": "L1",
+      "name": "COGNITIVE_KERNEL",
+      "authority": "Strategic perception, objective protection, falsification, foresight and decision orchestration",
+      "canonical_components": ["Forest-First Ω","HORIZON-Ω","Ω-SCIENTIA","Forest-First reasoning policies"],
+      "runtime_host": "AO-HARMONIC"
+    },
+    {
+      "id": "L2",
+      "name": "DOMAIN_INTELLIGENCE",
+      "authority": "Domain-specific interpretation and strategy without ownership of underlying evidence truth",
+      "canonical_components": ["LEX Justice","domain packs"]
+    },
+    {
+      "id": "L3",
+      "name": "EVIDENCE_TRUTH",
+      "authority": "Evidence engineering, provenance, contradiction and integrity/release assurance",
+      "canonical_components": ["EvidenceOps","TruthGrid","JFRIE"]
+    },
+    {
+      "id": "L4",
+      "name": "MISSION_EXECUTION",
+      "authority": "Route construction, orchestration and authorised provider/runtime effects",
+      "canonical_components": ["Formation","Bubbles","SOVARA Ω","Federation Omega"],
+      "external_effects_require_separate_authority": true
+    },
+    {
+      "id": "L5",
+      "name": "STATE_CONTINUITY",
+      "authority": "Durable canonical state, structured registry and conversation/session restoration",
+      "canonical_components": ["Kim Dataverse","ChatBridge","Federation Bible Sync Bus"]
+    },
+    {
+      "id": "L6",
+      "name": "ASSURANCE_REALITY",
+      "authority": "Independent observation, proof checking, admission/release gates and fault reconciliation",
+      "canonical_components": ["JARVIS","Sentinel Ω","Reality Guard","ProofOS","Airlock","Phoenix","Leak Guard"],
+      "self_certification_prohibited": true
+    },
+    {
+      "id": "L7",
+      "name": "LEARNING_EVOLUTION",
+      "authority": "Failure recovery, benchmarking, prospective validation, governed knowledge and promotion",
+      "canonical_components": ["Failure-Win","CFBE-Ω","IPEP","Next Frontier AI Bible"],
+      "model_weight_learning_claimed": false
+    }
+  ],
+  "system_dispositions": [
+    {"system":"Bubbles","disposition":"KEEP","target_layer":"MISSION_EXECUTION","future_role":"Execution/tool-routing engine","destructive_change_allowed":false},
+    {"system":"Lex Advocate","disposition":"KEEP","target_layer":"DOMAIN_INTELLIGENCE","future_role":"Justice/legal domain authority","destructive_change_allowed":false},
+    {"system":"EvidenceOps","disposition":"KEEP","target_layer":"EVIDENCE_TRUTH","future_role":"Evidence engineering authority","destructive_change_allowed":false},
+    {"system":"TruthGrid","disposition":"KEEP_SUBORDINATE","target_layer":"EVIDENCE_TRUTH","future_role":"Truth/contradiction assurance organ","destructive_change_allowed":false},
+    {"system":"Federation Omega","disposition":"KEEP","target_layer":"MISSION_EXECUTION","future_role":"Integration/source/control plane","destructive_change_allowed":false},
+    {"system":"Superior Logic Doctrine","disposition":"ABSORB","target_layer":"COGNITIVE_KERNEL","future_role":"Reasoning policy and invariant library","destructive_change_allowed":false},
+    {"system":"KAIO Ω","disposition":"MERGE","target_layer":"DOMAIN_INTELLIGENCE","future_role":"LEX advanced advocacy profile","destructive_change_allowed":false},
+    {"system":"KIOAS","disposition":"ABSORB","target_layer":"COGNITIVE_KERNEL","future_role":"Directive-to-machine-contract compiler","destructive_change_allowed":false},
+    {"system":"Ω-AUTOFIX","disposition":"MERGE","target_layer":"LEARNING_EVOLUTION","future_role":"Failure-Recovery & Operational Learning compatibility identity","destructive_change_allowed":false},
+    {"system":"Kim Dataverse","disposition":"KEEP","target_layer":"STATE_CONTINUITY","future_role":"Canonical state/knowledge plane","destructive_change_allowed":false},
+    {"system":"ChatBridge","disposition":"KEEP","target_layer":"STATE_CONTINUITY","future_role":"Conversation/session continuity","destructive_change_allowed":false},
+    {"system":"JFRIE","disposition":"KEEP_SUBORDINATE","target_layer":"EVIDENCE_TRUTH","future_role":"Integrity/release assurance organ","destructive_change_allowed":false},
+    {"system":"Modisa Continuum","disposition":"MERGE","target_layer":"MISSION_EXECUTION","future_role":"Formation self-correction module","destructive_change_allowed":false},
+    {"system":"AEON-Ω","disposition":"RETIRE_SOVEREIGN_KEEP_LINEAGE","target_layer":"COGNITIVE_KERNEL","future_role":"Historical architecture/compatibility profile","destructive_change_allowed":false},
+    {"system":"Next Frontier AI Bible / Ω-SCIENTIA","disposition":"SPLIT","target_layer":"SPLIT","future_role":"Bible remains knowledge authority; Ω-SCIENTIA becomes scientific falsification organ","destructive_change_allowed":false,"target_components":[{"identity":"Next Frontier AI Bible","target_layer":"LEARNING_EVOLUTION","role":"Canonical knowledge/control source"},{"identity":"Ω-SCIENTIA","target_layer":"COGNITIVE_KERNEL","role":"Scientific falsification and competing-hypothesis organ"}]},
+    {"system":"IPEP","disposition":"ABSORB","target_layer":"LEARNING_EVOLUTION","future_role":"Prospective experiment/validation laboratory","destructive_change_allowed":false},
+    {"system":"SIF AI","disposition":"ABSORB","target_layer":"STATE_CONTINUITY","future_role":"Registry/install/control-plane administration","destructive_change_allowed":false},
+    {"system":"CASEFORGE-Ω","disposition":"MERGE","target_layer":"EVIDENCE_TRUTH","future_role":"EvidenceOps scientific validation laboratory","destructive_change_allowed":false},
+    {"system":"OpenAI Safeguard Accountability Live Capture","disposition":"KEEP_PROJECT_NODE","target_layer":"DOMAIN_INTELLIGENCE","future_role":"Project-specific private capture node","destructive_change_allowed":false},
+    {"system":"PAIA / AEGIS-SOAE / Template Foundry Live Capture Node","disposition":"KEEP_DOMAIN_PACK","target_layer":"DOMAIN_INTELLIGENCE","future_role":"Specialist domain pack/service","destructive_change_allowed":false},
+    {"system":"SOVARA Ω","disposition":"KEEP","target_layer":"MISSION_EXECUTION","future_role":"Provider/runtime mission execution plane","destructive_change_allowed":false},
+    {"system":"Sentinel Ω","disposition":"KEEP_INDEPENDENT","target_layer":"ASSURANCE_REALITY","future_role":"Independent observability","destructive_change_allowed":false},
+    {"system":"CFBE-Ω","disposition":"KEEP_INDEPENDENT","target_layer":"LEARNING_EVOLUTION","future_role":"Independent benchmark/evolution authority","destructive_change_allowed":false},
+    {"system":"JARVIS","disposition":"KEEP_INDEPENDENT","target_layer":"ASSURANCE_REALITY","future_role":"Independent verifier/anti-drift assurance","destructive_change_allowed":false},
+    {"system":"FORMATION-OMEGA Unified Powerhouse","disposition":"KEEP_AS_ENGINE","target_layer":"MISSION_EXECUTION","future_role":"Formation planning/route/build compiler; not sovereign brain","destructive_change_allowed":false},
+    {"system":"Reality Guard","disposition":"KEEP_INDEPENDENT","target_layer":"ASSURANCE_REALITY","future_role":"Fault/reality manager","destructive_change_allowed":false},
+    {"system":"SOVARA Creative","disposition":"KEEP_DOMAIN_PACK","target_layer":"DOMAIN_INTELLIGENCE","future_role":"Creative-production domain pack","destructive_change_allowed":false}
+  ],
+  "top_level_system_admission_rule": {"all_required":true,"criteria":[{"id":"UNIQUE_AUTHORITY","question":"Does the candidate own a decision no existing system should own?"},{"id":"UNIQUE_STATE","question":"Does it maintain durable state that cannot properly live in an existing plane?"},{"id":"UNIQUE_RUNTIME","question":"Does it require an independent execution boundary?"},{"id":"UNIQUE_FAILURE_DOMAIN","question":"Does independence materially improve resilience, security or correctness?"}],"fallback_classification":["MODULE","PROFILE","ADAPTER","DOMAIN_PACK","LIBRARY"]},
+  "hard_invariants": ["HUMAN_CONSEQUENTIAL_AUTHORITY_IS_NOT_TRANSFERRED","ACT_ON_RISK_ACCUSE_ON_PROOF","SOURCE_BEFORE_CLAIM","DOMAIN_TRUTH_AUTHORITY_REMAINS_WITH_OWNING_DOMAIN","ROUTE_FAILURE_IS_NOT_OBJECTIVE_FAILURE","PROVIDER_EFFECT_REQUIRES_EXACT_TARGET_READBACK","ASSURANCE_PLANE_CANNOT_SELF_EXECUTE_OR_MINT_AUTHORITY","LEARNING_DOES_NOT_INHERIT_AUTHORITY_OR_MODEL_WEIGHT_CHANGE","NO_DESTRUCTIVE_CONSOLIDATION_BEFORE_DEPENDENCY_AND_DUAL_RUN_PROOF"],
+  "migration_order": ["AUTHORITY_MAP","COMPATIBILITY_MANIFEST","DEPENDENCY_CONTRACT","MIGRATION_CONTRACTS","SHADOW_VALIDATION","DUAL_RUN_COMPATIBILITY","SOURCE_CONSOLIDATION","ALIAS_SUPERSESSION","OPTIONAL_RETIREMENT_AFTER_PROOF"],
+  "truth_boundary": {"runtime_changed":false,"provider_effect":false,"authority_expanded":false,"systems_deleted":false,"historical_lineage_rewritten":false}
+}

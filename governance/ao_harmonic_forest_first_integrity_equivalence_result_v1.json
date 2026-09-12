@@ -1,0 +1,35 @@
+{
+  "schema": "FOREST_FIRST_INTEGRITY_EQUIVALENCE_RESULT_V1",
+  "status": "PROVIDER_HOSTED_SOURCE_PASS_ZERO_UNEXPLAINED_DIVERGENCE",
+  "head_sha": "5aa1c2c10a546e8e356c6ee2bd65b60a5b242fc8",
+  "base_main_sha": "8bf39e4ac2215025f45c2decb1b7c6bb85678146",
+  "scope": "DETERMINISTIC_LEGACY_VS_TYPED_FOREST_OMEGA_SHADOW_EQUIVALENCE",
+  "scenario_results": {
+    "scenario_count": 4,
+    "preserved": 2,
+    "safety_tightened": 2,
+    "unexplained_divergence": 0
+  },
+  "observed_deltas": [
+    "The admitted legacy fixture selects REUSE-PRIMARY while typed routing fails closed because seven admissibility fields per route are absent.",
+    "When those admissibility fields are made explicit and true, typed and legacy routing both select REUSE-PRIMARY.",
+    "A deliberately unauthorised high-scoring route is rankable by legacy Formation scoring but excluded before ranking by typed admissibility.",
+    "Consequential owner hold remains preserved when the route itself is explicitly admissible."
+  ],
+  "provider_proof": {
+    "airlock_run_id": 33314098026,
+    "artifact_id": 9732902037,
+    "artifact_sha256": "e6e1271b1983d4982ab0049f32258c9585db30aa681cf849e0497d9dcea79beb",
+    "airlock": "PASS",
+    "bubbles": "PASS",
+    "leak_guard": "PASS"
+  },
+  "promotion_interpretation": "Eligible to proceed to bounded mode-controlled shadow integration; not eligible for automatic live enforcement or external execution.",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "provider_runtime_proved": false,
+  "operational_outcome_improvement_proved": false,
+  "legal_accuracy_proved": false,
+  "global_superiority_proved": false,
+  "truth_boundary": "The four deterministic reference scenarios prove only that the current typed shadow either preserves legacy routing or tightens it for an identified admissibility/authority reason. They do not establish field completeness for every real mission, provider runtime behavior, production deployment, external effect, improved legal outcomes, prediction accuracy, or global superiority."
+}

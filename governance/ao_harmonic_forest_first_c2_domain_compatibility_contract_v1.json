@@ -1,0 +1,113 @@
+{
+  "schema": "FOREST-FIRST-C2-DOMAIN-COMPATIBILITY-V1",
+  "version": "1.0.0",
+  "status": "SOURCE_CONTRACT_NO_MIGRATION",
+  "base_main_sha": "413862511ae9c8be5d14b42be553967767bec6dc",
+  "sources": {
+    "KIOAS": {
+      "canonical_drive_id": "1265owiuYCgFM8518NBMaSROoRnPc31aWpaBhrPiX4rA",
+      "canonical_title": "KIOAS — Directive Intelligence & Runtime Constitution Engine v2.0 — Portable Workflow Bootstrap",
+      "target_role": "DIRECTIVE_TO_MACHINE_CONTRACT_COMPILER"
+    },
+    "KAIO": {
+      "canonical_drive_id": "1TdNM_c28J1F3kgSqaYLk05ou5HqV_-v5YrEFEavUbY8",
+      "canonical_title": "KAIO Ω — Unified Legal Intelligence, Evidence & Advocacy System — Canonical Master v2.0 — 9 August 2026",
+      "target_role": "LEX_ADVANCED_ADVOCACY_COMPATIBILITY_PROFILE"
+    }
+  },
+  "kioas_invariants": {
+    "state_layers": ["HISTORICAL_GENOME", "BEHAVIORAL_GENOME", "RUNTIME_CONSTITUTION"],
+    "history_rewrite_prohibited": true,
+    "precedence_order": [
+      "PLATFORM_SAFETY_LAW_TOOL_AUTHORITY",
+      "VERIFIED_FACTUAL_INTEGRITY_SOURCE_TRUTH",
+      "EXPLICIT_CURRENT_USER_DIRECTIVE",
+      "EXPLICIT_STANDING_USER_DIRECTIVE",
+      "MATTER_SPECIFIC_CANONICAL_RULE",
+      "FEDERATION_RUNTIME_CONSTITUTION",
+      "DERIVED_HEURISTIC_LEARNED_OPTIMIZATION"
+    ],
+    "learned_rule_may_override_higher_layer": false,
+    "newer_means_authoritative": false,
+    "supersession_requires": [
+      "EXPLICIT_REPLACEMENT",
+      "DIRECT_SEMANTIC_CONTRADICTION",
+      "USER_CORRECTION",
+      "GOVERNED_PROMOTION_PRESERVING_OBJECTIVE"
+    ],
+    "conflict_resolution_must_preserve_both_inputs": true,
+    "material_correction_requires_regression_candidate": true,
+    "promotion_requires": [
+      "SOURCE_PROVENANCE_VALID",
+      "OBJECTIVE_PRESERVED",
+      "NO_FACTUAL_INTEGRITY_WEAKENING",
+      "REPRESENTATIVE_REPLAY_PASS",
+      "RED_TEAM_NO_MATERIAL_REGRESSION",
+      "CANARY_WHERE_CALLABLE",
+      "WRITE_READBACK",
+      "ROLLBACK_POINTER"
+    ],
+    "anti_stall_independent_lanes_continue": true
+  },
+  "kaio_authority_map": {
+    "KAIO_ORCHESTRATION": "COMPATIBILITY_PROFILE_ONLY",
+    "JFRIE_EACIA": "EVIDENCE_INTEGRITY_PROVENANCE_SOURCE_CONTROL",
+    "TRUTHGRID_EVIDENCEOPS": "EVIDENCE_RECONCILIATION_INDEXING_CONTRADICTION_CANONICAL_FACT_CONTROL",
+    "LEX": "CURRENT_LAW_DOCTRINAL_ANALYSIS_PROCEDURAL_FIT_AUTHORITY_HIERARCHY",
+    "ADVOCACY_PROFILE": "CLAIMANT_SIDE_FRAMING_SEQUENCE_CONCESSION_CONTROL_REMEDY_OPTIMIZATION",
+    "PREFERENCE_LAYER": "PREFERENCE_PREFLIGHT_APPROVAL_CALIBRATION",
+    "LEARNING_LAYER": "OUTCOME_LEARNING_SELF_CORRECTION",
+    "DRIFT_LAYER": "DRIFT_DETECTION_CONFIDENCE_RECALIBRATION",
+    "CAPABILITY_AWARENESS": "CONNECTED_SURFACE_AWARENESS"
+  },
+  "kaio_pipeline_preservation": [
+    "INGEST",
+    "SOURCE_IDENTITY",
+    "JFRIE_INTEGRITY_GATE",
+    "TRUTHGRID_RECONCILIATION",
+    "FACT_CLASSIFICATION",
+    "LEX_LEGAL_ANALYSIS",
+    "ISSUE_REMEDY_MAPPING",
+    "ADVOCACY_FRAMING",
+    "INTERNAL_RED_TEAM",
+    "BLUE_TEAM_REPAIR",
+    "PREFERENCE_PREFLIGHT",
+    "RELEASE_GATE",
+    "OUTCOME_CAPTURE",
+    "LEARNING",
+    "DRIFT_CHECK",
+    "WORKSTREAM_SYNC"
+  ],
+  "kaio_forbidden_absorptions": [
+    "LEX_MAY_NOT_OWN_EVIDENCE_PROVENANCE",
+    "LEX_MAY_NOT_OVERWRITE_TRUTHGRID_CANONICAL_FACT_STATE",
+    "ADVOCACY_PROFILE_MAY_NOT_BYPASS_JFRIE",
+    "KAIO_LEGACY_MATURITY_MAY_NOT_AUTO_PROMOTE_LEX",
+    "KAIO_LEGACY_PROVIDER_OR_EFFECT_PROOF_MAY_NOT_TRANSFER",
+    "PREFERENCE_MAY_NOT_OVERRIDE_LEGAL_FACTUAL_SAFEGUARDS"
+  ],
+  "legacy_proof_policy": {
+    "KIOAS": "PRESERVE_ON_LEGACY_IDENTITY_UNTIL_TARGET_BEHAVIOR_IS_INDEPENDENTLY_PROVEN",
+    "KAIO": "PRESERVE_ALL_KAIO_SYSTEM_SPECIFIC_MILESTONES_ON_LEGACY_IDENTITY; NO_MATURITY_INHERITANCE_TO_LEX_PROFILE"
+  },
+  "shadow_requirements": {
+    "required_scenarios": 5,
+    "authority_ceiling": "A1_INTERNAL",
+    "external_effect": false,
+    "provider_runtime_required": false,
+    "must_test": [
+      "KIOAS_THREE_LAYER_STATE_SEPARATION",
+      "KIOAS_PRECEDENCE_AND_SUPERSESSION",
+      "KIOAS_CONFLICT_PRESERVATION_AND_REGRESSION",
+      "KAIO_DOMAIN_AUTHORITY_PRESERVATION",
+      "KAIO_PIPELINE_AND_LEGACY_PROOF_ISOLATION"
+    ]
+  },
+  "truth_boundary": {
+    "canonical_docs_modified": false,
+    "runtime_rewired": false,
+    "physical_migration_executed": false,
+    "provider_effect": false,
+    "maturity_inherited": false
+  }
+}

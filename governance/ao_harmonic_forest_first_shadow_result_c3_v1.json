@@ -1,0 +1,63 @@
+{
+  "schema": "FOREST-FIRST-SHADOW-RESULT-C3-V1",
+  "version": "1.0.0",
+  "shadow_id": "FOREST-FIRST-CONSOLIDATION-C3-RECOVERY-FORMATION-SHADOW-V1",
+  "cohort": "C3_RECOVERY_FORMATION",
+  "base_main_sha": "d6603e980ed5ad9c7c111a1561cf745de7c7b4c9",
+  "source_head_under_test": "e36994cb2da6fa2158615b6943b4a90e600efb87",
+  "execution_class": "GITHUB_ACTIONS_PROVIDER_HOSTED_A1_INTERNAL_SOURCE_COMPATIBILITY_SHADOW",
+  "scenario_count": 5,
+  "scenario_contracts": [
+    "C3-SHARED-PORTABLE-FINGERPRINT",
+    "C3-RECOVERY-RECEIPT-EQUIVALENCE",
+    "C3-UNCHANGED-RETRY-PROHIBITED",
+    "C3-ROUTE-FAILURE-NOT-OBJECTIVE-FAILURE",
+    "C3-ROLLBACK-AND-FORMATION-RELEASE"
+  ],
+  "functional_result": "PASS",
+  "canonical_binding": "tests/test_ao_harmonic_v3.py::test_forest_first_c3_shadow_preserves_recovery_and_formation_boundaries",
+  "admission": {
+    "github_airlock_run_id": 33288108031,
+    "artifact_id": 9725082124,
+    "artifact_sha256": "df487d5ca98b3d9e263bd57fe36127859deab19efd333125ff03ed29f0f4e57a",
+    "manifest_sha256": "fce69b29db68420e651b0a1efc2e3f8ebc9bf79a2b3bae499e0a1100b9636833",
+    "report_sha256": "b227de9ecd8142f9f25a174a6ce849bb3bcdd0c943867f92d88cc997f799df1a",
+    "shadow_calibration_receipt_sha256": "d48c7bc02dc62aef3713ca7748ca34a04ec661667493a7a30401bd3d25ac6ccc",
+    "source_provenance_receipt_sha256": "51a39bb07475104a029cbd80c90a4981479acfb4ca6d4ea63428c080af970313",
+    "blocking_proofs_passed": 14,
+    "blocking_failures": 0,
+    "ao_harmonic_core": "PASS",
+    "phoenix_cutover_v3": "PASS",
+    "cfbe_frontier_binding": "PASS",
+    "sovara_provider_execution": "PASS",
+    "sovara_provider_recovery": "PASS",
+    "superior_logic_autonomous": "PASS",
+    "superior_logic_shadow": "PASS",
+    "unmapped_production_paths": [],
+    "fallback_full_suite_activated": false,
+    "shadow_escape_candidates": []
+  },
+  "recovery_formation_checks": {
+    "portable_failure_fingerprint_shared": true,
+    "receiver_local_failure_identity_preserved": true,
+    "normalized_recovery_receipts_equivalent": true,
+    "unchanged_retry_prohibited": true,
+    "material_route_failure_does_not_terminate_objective": true,
+    "formation_release_requires_semantic_readback": true,
+    "formation_release_requires_rollback": true,
+    "failure_win_operational_maturity_inherited": false,
+    "authority_transfer": false
+  },
+  "proof_policy": {
+    "provider_runtime_proved": false,
+    "provider_effect": false,
+    "physical_migration_executed": false,
+    "system_retirement_allowed": false,
+    "omega_autofix_runtime_replaced": false,
+    "modisa_runtime_replaced": false,
+    "formation_omega_identity_absorbed": false
+  },
+  "independent_assurance_review": "PENDING",
+  "promotion_state": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+  "truth_boundary": "GitHub-hosted source compatibility and admission proof only. This proves the bounded C3 composition of existing Failure-Win and Formation primitives under A1/no-effect constraints; it does not prove provider runtime replacement, operational self-healing maturity, external effect, physical migration, system retirement or authority transfer."
+}

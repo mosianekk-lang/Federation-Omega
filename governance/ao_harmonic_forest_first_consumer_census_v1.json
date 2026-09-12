@@ -1,0 +1,47 @@
+{
+  "schema": "FOREST-FIRST-CONSUMER-CENSUS-V1",
+  "version": "1.0.0",
+  "status": "BOUNDED_CURRENT_MAIN_SEARCH_NOT_EXHAUSTIVE",
+  "source_main_sha": "413862511ae9c8be5d14b42be553967767bec6dc",
+  "purpose": "Estimate current-main source coupling for consolidation candidates before any physical migration.",
+  "method": {
+    "search_surface": "GitHub current main code search plus direct file readback",
+    "limitations": [
+      "Name-based search can miss indirection, generated references, Drive-only dependencies and runtime dynamic loading.",
+      "Zero direct hits means no direct current-main name hits in this bounded search, not proof of zero consumers.",
+      "Historical branches, external providers and private runtime consumers remain separate."
+    ]
+  },
+  "candidates": [
+    {"system":"Superior Logic Doctrine","target":"Forest-First reasoning policy library","coupling":"HIGH","evidence":["governance/superior_logic_maturation_shadow_failure_win_001.json","governance/superior_logic_gemini_frontier_convergence_v1.json","governance/superior_logic_maturation_shadow_v1.json","frontier_convergence/service.py","evidenceops/caseforge/maturation_shadow_runtime.py","tests/test_autonomous_maturation.py",".github/workflows/superior-logic-maturation-shadow.yml"],"migration_order":"LATE","required_before_source_move":["semantic consumer inventory","workflow dependency diff","shadow equivalence","dual-run","rollback"]},
+    {"system":"KAIO Ω","target":"LEX advanced advocacy profile","coupling":"LOW_TO_MEDIUM","evidence":["ops/ARCHITRON_SEMANTIC_DISPATCH_REPAIR.md","docs/FEDERATED_COGNITIVE_INSTITUTION_OMEGA_V1.md","tests/test_federation_evolution_program.py"],"migration_order":"EARLY_COMPATIBILITY","required_before_source_move":["LEX authority mapping","call-site inventory","shadow equivalence"]},
+    {"system":"KIOAS","target":"Directive-to-machine-contract compiler","coupling":"LOW_DIRECT_NAME_HITS","evidence":["governance/source_readmission_after_kioas_containment_20260826.json"],"migration_order":"EARLY_COMPATIBILITY","required_before_source_move":["Drive/capsule dependency inventory","directive identity preservation","restore test"]},
+    {"system":"Ω-AUTOFIX","target":"Failure Recovery & Operational Learning","coupling":"MEDIUM_EXISTING_FAILURE_WIN_COUPLING","evidence":["tests/test_autofix_failure_win_v2.py","tests/test_phoenix_provider_cutover_v3_cfre_command_bus_admission.py","sovara/creative/capability_foundry.py"],"migration_order":"MIDDLE","required_before_source_move":["failure fingerprint compatibility","recovery receipt equivalence","real failure shadow","rollback"]},
+    {"system":"Modisa Continuum","target":"Formation self-correction module","coupling":"MEDIUM","evidence":["evidenceops/capital_intelligence_os/verify_release.py","tests/test_federation_evolution_program.py"],"migration_order":"MIDDLE","required_before_source_move":["Formation API fit","release dependency inventory","dual-run"]},
+    {"system":"AEON-Ω","target":"Historical architecture/compatibility profile","coupling":"NO_DIRECT_NAME_HITS_IN_BOUNDED_CURRENT_MAIN_SEARCH","evidence":[],"migration_order":"EARLY_AUTHORITY_ONLY","required_before_source_move":["historical branch search","Drive dependency search","restore alias test"]},
+    {"system":"Next Frontier AI Bible / Ω-SCIENTIA","target":"Split knowledge authority from Forest-First scientific organ","coupling":"SPLIT_EXISTING_NATIVE_OMEGA_SCIENTIA","evidence":["ao_harmonic_v3/science_and_routes.py::OmegaScientia","ao_harmonic_v3/runtime.py","ao_harmonic_v3/forest_omega.py"],"migration_order":"EARLY_AUTHORITY_SPLIT_NO_CODE_MOVE","required_before_source_move":["Bible authority preservation","scientific organ API contract","no knowledge-to-runtime maturity inheritance"]},
+    {"system":"IPEP","target":"Prospective validation laboratory","coupling":"NO_DIRECT_NAME_HITS_IN_BOUNDED_CURRENT_MAIN_SEARCH","evidence":[],"migration_order":"EARLY_AUTHORITY_ONLY","required_before_source_move":["Drive ledger dependency inventory","experiment identity preservation","promotion gate equivalence"]},
+    {"system":"SIF AI","target":"State/registry administration module","coupling":"NO_DIRECT_NAME_HITS_IN_BOUNDED_CURRENT_MAIN_SEARCH","evidence":[],"migration_order":"EARLY_AUTHORITY_ONLY","required_before_source_move":["Drive registry dependency inventory","install-queue compatibility","restore test"]},
+    {"system":"CASEFORGE-Ω","target":"EvidenceOps scientific validation laboratory","coupling":"HIGH","evidence":["evidenceops/caseforge/maturation_shadow_cli.py","tools/superior_logic_maturation_shadow.py","frontier_convergence/os_core.py","formation_omega/convergence_supervisor.py","tests/test_caseforge_failure_win_v2.py","tests/test_behavioral_convergence_factory.py"],"migration_order":"LATE","required_before_source_move":["EvidenceOps API boundary","Superior Logic cross-coupling map","Formation cross-coupling map","shadow equivalence","dual-run","rollback"]},
+    {"system":"FORMATION-OMEGA Unified Powerhouse","target":"Formation engine identity","coupling":"VERY_HIGH","evidence":["formation_omega/convergence_supervisor.py","formation_omega/reconciliation_fabric_v2.py","governance/formation_omega_reconciliation_fabric_v2.json","governance/formation_omega_mission_convergence_engine_v1.json","tests/test_formation_omega_public_api.py","tests/test_formation_omega_reconciliation_fabric_v2.py","tests/test_formation_omega_convergence_supervisor.py","tests/test_formation_omega_autonomic_fabric.py"],"migration_order":"LAST","required_before_source_move":["public API freeze","full consumer graph","proof graph preservation","shadow equivalence","dual-run","rollback","exact-head admission"]}
+  ],
+  "recommended_sequence": [
+    "AEON-Ω authority-only compatibility",
+    "IPEP authority-only laboratory classification",
+    "SIF AI authority-only registry classification",
+    "Next Frontier/Ω-SCIENTIA authority split without code move",
+    "KIOAS compatibility resolver",
+    "KAIO→LEX compatibility profile",
+    "Ω-AUTOFIX→Failure-Win dual-run",
+    "Modisa→Formation self-correction dual-run",
+    "Superior Logic policy extraction after consumer/workflow map",
+    "CASEFORGE→EvidenceOps validation lab after cross-coupling map",
+    "FORMATION-OMEGA source consolidation last"
+  ],
+  "truth_boundary": {
+    "consumer_inventory_complete": false,
+    "physical_migration_executed": false,
+    "runtime_changed": false,
+    "provider_effect": false
+  }
+}
