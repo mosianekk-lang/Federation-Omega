@@ -352,7 +352,21 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          python -m unittest tests.test_fuse_mobile_web_cfbe_v1
+          python - <<'PY'
+          import inspect
+          from tests import test_fuse_mobile_web_cfbe_v1 as suite
+          cases = [
+              (name, fn)
+              for name, fn in inspect.getmembers(suite, inspect.isfunction)
+              if name.startswith('test_')
+          ]
+          assert cases, 'NO_WEB_CFBE_TESTS_DISCOVERED'
+          for name, fn in cases:
+              assert not inspect.signature(fn).parameters, f'{name}: fixture parameters unsupported in stdlib harness'
+              fn()
+              print(f'PASS {name}')
+          print(f'WEB_CFBE_SOURCE_CONTRACT_PASS count={len(cases)}')
+          PY
           cd mobile/fuse-mobile
           rm -f package-lock.json
           npm install --package-lock-only --ignore-scripts
