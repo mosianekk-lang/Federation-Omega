@@ -17,11 +17,13 @@ from .relay_protocol import (
     canonical_json,
     sha256_hex,
     sign_request,
+    signing_payload,
     validate_receipt_mapping,
     validate_task_mapping,
     _parse_utc_z,
     _require_id,
 )
+from .trust_spine_v21 import ECDSASigner
 
 
 def _now() -> datetime:
@@ -36,10 +38,25 @@ def _token(size: int = 32) -> str:
     return base64.urlsafe_b64encode(secrets.token_bytes(size)).decode("ascii").rstrip("=")
 
 
-def _assert_receipt_matches_task(
-    receipt: Mapping[str, Any], task: Mapping[str, Any]
-) -> None:
-    """Reject receipts that substitute any part of the authorized task envelope."""
+class PublicDeviceCredential:
+    def __init__(self, *, device_id: str, public_key_spki_b64: str, enrolled_at: str, generation: int = 1):
+        self.device_id = device_id
+        self.public_key_spki_b64 = public_key_spki_b64
+        self.enrolled_at = enrolled_at
+        self.generation = generation
+
+    def public_dict(self) -> dict[str, Any]:
+        return {
+            "schema": "FUSE-WINDOWS-DEVICE-CREDENTIAL-V2",
+            "device_id": self.device_id,
+            "public_key_spki_b64": self.public_key_spki_b64,
+            "device_generation": self.generation,
+            "auth_mode": "ECDSA_P256",
+            "enrolled_at": self.enrolled_at,
+        }
+
+
+def _assert_receipt_matches_task(receipt: Mapping[str, Any], task: Mapping[str, Any]) -> None:
     receipt_task = receipt.get("task")
     if not isinstance(receipt_task, Mapping):
         raise ValueError("RECEIPT_TASK_MISSING")
@@ -48,23 +65,28 @@ def _assert_receipt_matches_task(
 
 
 class FirestoreRelay:
-    """Durable relay using Firestore transactions and a Cloud Run injected root key."""
+    """Durable relay with one-time enrollment and per-device request authentication.
+
+    AGENT_ONLY_BOOTSTRAP uses device-held P-256 keys and requires no provider root secret.
+    A legacy HMAC root may still be supplied for backwards-compatible callers, but it is not
+    required by the sovereign browser/native path.
+    """
 
     def __init__(
         self,
         *,
         project: str,
-        root_secret: str,
+        root_secret: str | None = None,
         namespace: str = "fuse_windows_relay_v1",
         enrollment_ttl_seconds: int = 300,
         request_skew_seconds: int = 60,
         lease_ttl_seconds: int = 120,
         client: firestore.Client | None = None,
     ) -> None:
-        if len(root_secret) < 32:
+        if root_secret is not None and len(root_secret) < 32:
             raise ValueError("RELAY_ROOT_SECRET_TOO_SHORT")
         self.client = client or firestore.Client(project=project)
-        self.root_secret = root_secret.encode("utf-8")
+        self.root_secret = root_secret.encode("utf-8") if root_secret else None
         self.root = self.client.collection(namespace)
         self.enrollment_ttl = timedelta(seconds=enrollment_ttl_seconds)
         self.request_skew = timedelta(seconds=request_skew_seconds)
@@ -74,6 +96,8 @@ class FirestoreRelay:
         return self.root.document("state").collection(name)
 
     def _device_secret(self, device_id: str) -> str:
+        if self.root_secret is None:
+            raise ValueError("LEGACY_ROOT_SECRET_UNAVAILABLE")
         digest = hmac.new(self.root_secret, ("device:" + device_id).encode(), hashlib.sha256).digest()
         return base64.urlsafe_b64encode(digest).decode("ascii").rstrip("=")
 
@@ -96,10 +120,32 @@ class FirestoreRelay:
             expires_at=_z(expires),
         )
 
-    def enroll(self, *, enrollment_id: str, enrollment_token: str, device_label: str) -> DeviceCredential:
+    def enroll(
+        self,
+        *,
+        enrollment_id: str,
+        enrollment_token: str,
+        device_label: str,
+        public_key_spki_b64: str | None = None,
+    ) -> PublicDeviceCredential | DeviceCredential:
         current = _now()
         _require_id(enrollment_id, "ENROLLMENT_ID")
         _require_id(device_label, "DEVICE_LABEL")
+        if public_key_spki_b64:
+            # Parse/verify the public-key encoding without requiring possession of a private key here.
+            if not ECDSASigner.verify_spki_b64(public_key_spki_b64, b"fuse-key-format-check", "AA"):
+                # verify_spki_b64 also tests a signature, so use serialization for structural validation.
+                try:
+                    from cryptography.hazmat.primitives import serialization
+                    key = serialization.load_der_public_key(base64.urlsafe_b64decode(public_key_spki_b64 + "=" * (-len(public_key_spki_b64) % 4)))
+                    from cryptography.hazmat.primitives.asymmetric import ec
+                    if not isinstance(key, ec.EllipticCurvePublicKey) or key.curve.name != "secp256r1":
+                        raise ValueError("DEVICE_PUBLIC_KEY_INVALID")
+                except Exception as exc:
+                    raise ValueError("DEVICE_PUBLIC_KEY_INVALID") from exc
+        elif self.root_secret is None:
+            raise ValueError("DEVICE_PUBLIC_KEY_REQUIRED")
+
         enrollment = self._collection("enrollments").document(enrollment_id)
         device_id = "dev_" + sha256_hex(canonical_json({
             "enrollment_id": enrollment_id,
@@ -126,12 +172,21 @@ class FirestoreRelay:
             txn.set(device, {
                 "device_id": device_id,
                 "label_sha256": sha256_hex(device_label.encode()),
+                "public_key_spki_b64": public_key_spki_b64,
+                "auth_mode": "ECDSA_P256" if public_key_spki_b64 else "HMAC_LEGACY",
+                "device_generation": 1,
                 "enrolled_at": current,
                 "last_seen_at": None,
                 "disabled": False,
             })
 
         use_grant(transaction)
+        if public_key_spki_b64:
+            return PublicDeviceCredential(
+                device_id=device_id,
+                public_key_spki_b64=public_key_spki_b64,
+                enrolled_at=_z(current),
+            )
         return DeviceCredential(
             schema="FUSE-WINDOWS-DEVICE-CREDENTIAL-V1",
             device_id=device_id,
@@ -152,15 +207,22 @@ class FirestoreRelay:
             raise ValueError("REQUEST_TIMESTAMP_INVALID") from exc
         if abs(current - signed_at) > self.request_skew:
             raise ValueError("REQUEST_TIMESTAMP_OUTSIDE_WINDOW")
-        device = self._collection("devices").document(device_id).get()
-        if not device.exists or (device.to_dict() or {}).get("disabled"):
+        snapshot = self._collection("devices").document(device_id).get()
+        record = snapshot.to_dict() or {}
+        if not snapshot.exists or record.get("disabled"):
             raise ValueError("DEVICE_UNKNOWN")
-        expected = sign_request(
-            self._device_secret(device_id), method=method, path=path,
-            timestamp=timestamp, nonce=nonce, body=body,
-        )
-        if not hmac.compare_digest(expected, signature):
-            raise ValueError("REQUEST_SIGNATURE_INVALID")
+        if record.get("auth_mode") == "ECDSA_P256":
+            public_key = str(record.get("public_key_spki_b64") or "")
+            payload = signing_payload(method=method, path=path, timestamp=timestamp, nonce=nonce, body=body)
+            if not ECDSASigner.verify_spki_b64(public_key, payload, signature):
+                raise ValueError("REQUEST_SIGNATURE_INVALID")
+        else:
+            expected = sign_request(
+                self._device_secret(device_id), method=method, path=path,
+                timestamp=timestamp, nonce=nonce, body=body,
+            )
+            if not hmac.compare_digest(expected, signature):
+                raise ValueError("REQUEST_SIGNATURE_INVALID")
         nonce_id = sha256_hex((device_id + ":" + nonce).encode())
         try:
             self._collection("nonces").document(nonce_id).create({
@@ -172,118 +234,64 @@ class FirestoreRelay:
         self._collection("devices").document(device_id).update({"last_seen_at": current})
 
     def submit_task(self, *, device_id: str, task: Mapping[str, Any], now: datetime | None = None) -> str:
-        current = now or _now()
-        _require_id(device_id, "DEVICE_ID")
-        validate_task_mapping(task, now=current)
+        current = now or _now(); _require_id(device_id, "DEVICE_ID"); validate_task_mapping(task, now=current)
         device = self._collection("devices").document(device_id).get()
-        if not device.exists or (device.to_dict() or {}).get("disabled"):
-            raise ValueError("DEVICE_UNKNOWN")
-        task_id = str(task["task_id"])
-        ref = self._collection("tasks").document(task_id)
-        payload = {
-            "task": dict(task), "device_id": device_id, "created_at": current,
-            "completed": False, "lease_token_digest": None, "lease_expires_at": None,
-        }
-        try:
-            ref.create(payload)
+        if not device.exists or (device.to_dict() or {}).get("disabled"): raise ValueError("DEVICE_UNKNOWN")
+        task_id = str(task["task_id"]); ref = self._collection("tasks").document(task_id)
+        payload = {"task": dict(task), "device_id": device_id, "created_at": current, "completed": False, "lease_token_digest": None, "lease_expires_at": None}
+        try: ref.create(payload)
         except AlreadyExists:
             existing = ref.get().to_dict() or {}
-            if existing.get("device_id") != device_id or canonical_json(existing.get("task")) != canonical_json(dict(task)):
-                raise ValueError("TASK_ID_COLLISION")
+            if existing.get("device_id") != device_id or canonical_json(existing.get("task")) != canonical_json(dict(task)): raise ValueError("TASK_ID_COLLISION")
         return task_id
 
     def poll(self, *, device_id: str, now: datetime | None = None):
-        current = now or _now()
-        query = self._collection("tasks").where("device_id", "==", device_id).limit(100)
+        current = now or _now(); query = self._collection("tasks").where("device_id", "==", device_id).limit(100)
         for snapshot in query.stream():
-            if (snapshot.to_dict() or {}).get("completed"):
-                continue
-            ref = snapshot.reference
-            transaction = self.client.transaction()
-            lease_token = _token(32)
-
+            if (snapshot.to_dict() or {}).get("completed"): continue
+            ref = snapshot.reference; transaction = self.client.transaction(); lease_token = _token(32)
             @firestore.transactional
             def try_lease(txn):
-                fresh = ref.get(transaction=txn)
-                record = fresh.to_dict() or {}
-                expiry = record.get("lease_expires_at")
-                if record.get("completed") or (isinstance(expiry, datetime) and current < expiry):
-                    return None
+                fresh = ref.get(transaction=txn); record = fresh.to_dict() or {}; expiry = record.get("lease_expires_at")
+                if record.get("completed") or (isinstance(expiry, datetime) and current < expiry): return None
                 lease_expires = current + self.lease_ttl
-                txn.update(ref, {
-                    "lease_token_digest": sha256_hex(lease_token.encode()),
-                    "lease_expires_at": lease_expires,
-                    "leased_at": current,
-                })
+                txn.update(ref, {"lease_token_digest": sha256_hex(lease_token.encode()), "lease_expires_at": lease_expires, "leased_at": current})
                 return record.get("task"), lease_expires
-
             leased = try_lease(transaction)
             if leased:
                 task, expiry = leased
-                return dict(task), RelayLease(
-                    schema="FUSE-WINDOWS-RELAY-LEASE-V1",
-                    task_id=str(task["task_id"]), device_id=device_id,
-                    lease_token=lease_token, leased_at=_z(current), expires_at=_z(expiry),
-                )
+                return dict(task), RelayLease(schema="FUSE-WINDOWS-RELAY-LEASE-V1", task_id=str(task["task_id"]), device_id=device_id, lease_token=lease_token, leased_at=_z(current), expires_at=_z(expiry))
         return None
 
     def complete(self, *, device_id: str, task_id: str, lease_token: str, receipt: Mapping[str, Any]):
-        validate_receipt_mapping(receipt)
-        current = _now()
-        ref = self._collection("tasks").document(task_id)
-        transaction = self.client.transaction()
-
+        validate_receipt_mapping(receipt); current = _now(); ref = self._collection("tasks").document(task_id); transaction = self.client.transaction()
         @firestore.transactional
         def finish(txn):
             snapshot = ref.get(transaction=txn)
-            if not snapshot.exists:
-                raise ValueError("TASK_UNKNOWN")
+            if not snapshot.exists: raise ValueError("TASK_UNKNOWN")
             record = snapshot.to_dict() or {}
-            if record.get("device_id") != device_id:
-                raise ValueError("TASK_DEVICE_MISMATCH")
+            if record.get("device_id") != device_id: raise ValueError("TASK_DEVICE_MISMATCH")
             if record.get("completed"):
-                if canonical_json(record.get("receipt")) == canonical_json(dict(receipt)):
-                    return dict(receipt)
+                if canonical_json(record.get("receipt")) == canonical_json(dict(receipt)): return dict(receipt)
                 raise ValueError("TASK_ALREADY_COMPLETED")
             expiry = record.get("lease_expires_at")
-            if not isinstance(expiry, datetime) or current >= expiry:
-                raise ValueError("LEASE_EXPIRED")
-            if not hmac.compare_digest(
-                sha256_hex(lease_token.encode()), str(record.get("lease_token_digest") or "")
-            ):
-                raise ValueError("LEASE_TOKEN_INVALID")
+            if not isinstance(expiry, datetime) or current >= expiry: raise ValueError("LEASE_EXPIRED")
+            if not hmac.compare_digest(sha256_hex(lease_token.encode()), str(record.get("lease_token_digest") or "")): raise ValueError("LEASE_TOKEN_INVALID")
             task = record.get("task") or {}
-            if any(receipt.get(k) != task.get(k) for k in ("task_id", "correlation_id", "task_type")):
-                raise ValueError("RECEIPT_TASK_BINDING_MISMATCH")
+            if any(receipt.get(k) != task.get(k) for k in ("task_id", "correlation_id", "task_type")): raise ValueError("RECEIPT_TASK_BINDING_MISMATCH")
             _assert_receipt_matches_task(receipt, task)
-            txn.update(ref, {"completed": True, "completed_at": current, "receipt": dict(receipt)})
-            return dict(receipt)
-
+            txn.update(ref, {"completed": True, "completed_at": current, "receipt": dict(receipt)}); return dict(receipt)
         return finish(transaction)
 
     def status(self, task_id: str) -> dict[str, Any]:
-        _require_id(task_id, "TASK_ID")
-        snapshot = self._collection("tasks").document(task_id).get()
-        if not snapshot.exists:
-            raise ValueError("TASK_UNKNOWN")
-        record = snapshot.to_dict() or {}
-        receipt = record.get("receipt")
-        return {
-            "task_id": task_id,
-            "device_id": record.get("device_id"),
-            "completed": bool(record.get("completed")),
-            "receipt_sha256": sha256_hex(canonical_json(receipt)) if receipt else None,
-            "effect": "READ_ONLY",
-        }
+        _require_id(task_id, "TASK_ID"); snapshot = self._collection("tasks").document(task_id).get()
+        if not snapshot.exists: raise ValueError("TASK_UNKNOWN")
+        record = snapshot.to_dict() or {}; receipt = record.get("receipt")
+        return {"task_id": task_id, "device_id": record.get("device_id"), "completed": bool(record.get("completed")), "receipt_sha256": sha256_hex(canonical_json(receipt)) if receipt else None, "effect": "READ_ONLY"}
 
     def list_devices(self) -> list[dict[str, Any]]:
         devices = []
         for snapshot in self._collection("devices").limit(100).stream():
             record = snapshot.to_dict() or {}
-            devices.append({
-                "device_id": record.get("device_id"),
-                "enrolled_at": _z(record["enrolled_at"]) if record.get("enrolled_at") else None,
-                "last_seen_at": _z(record["last_seen_at"]) if record.get("last_seen_at") else None,
-                "disabled": bool(record.get("disabled")),
-            })
+            devices.append({"device_id": record.get("device_id"), "auth_mode": record.get("auth_mode"), "device_generation": record.get("device_generation"), "enrolled_at": _z(record["enrolled_at"]) if record.get("enrolled_at") else None, "last_seen_at": _z(record["last_seen_at"]) if record.get("last_seen_at") else None, "disabled": bool(record.get("disabled"))})
         return devices
