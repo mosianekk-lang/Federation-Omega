@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-REPOSITORY-COORDINATION-V3",
-  "version": "3.0.0",
+  "version": "3.1.0",
   "owner": "Kim Kagiso Mosiane",
   "purpose": "Replace long-lived repository-wide serialization with a short-CAS scoped lease registry: disjoint write sets may execute concurrently while overlapping or repository-global writes remain fail-closed and serialized.",
   "mode": "DUAL_COMPATIBILITY",
@@ -21,6 +21,16 @@
     "lease_fencing_token": "STRICTLY_INCREASING_REGISTRY_GENERATION_AT_ACQUIRE",
     "expiry_semantics": "EXPIRY_NEVER_RELEASES; EXPLICIT_REGISTRY_RELEASE_OR_ABORT_REQUIRED"
   },
+  "recovery_lifecycle": {
+    "nonterminal_states": ["ACTIVE", "SUSPECT", "ORPHANED", "RECLAIMABLE"],
+    "transition_order": ["ACTIVE->SUSPECT", "SUSPECT->ORPHANED", "ORPHANED->RECLAIMABLE"],
+    "expiry_rule": "EXPIRY_ONLY_MAKES_ACTIVE_ELIGIBLE_FOR_EXPLICIT_SUSPECT_TRANSITION; IT NEVER RELEASES OR RECLAIMS",
+    "orphan_recovery_rule": "ORPHANED->RECLAIMABLE REQUIRES AN INDEPENDENT RECOVERY ACTOR DIFFERENT FROM THE ORIGINAL WRITER",
+    "generic_acquire_rule": "ACTIVE,SUSPECT,ORPHANED,RECLAIMABLE ALL RETAIN WRITE-SET EXCLUSIVITY UNTIL EXPLICIT RECLAIM OR TERMINAL RELEASE/ABORT",
+    "reclaim_rule": "RECLAIMABLE MAY BE REPLACED ONLY BY AN EXPLICIT ACTIVE LEASE WITH FENCING_TOKEN EQUAL TO THE NEXT REGISTRY GENERATION AND THE SAME WRITE SET",
+    "stale_fence_rule": "RECLAIM RECORDS THE RETIRED FENCING TOKEN AS A PERMANENT TOMBSTONE; ANY FUTURE REUSE OR PRESENTATION OF THAT TOKEN FAILS CLOSED",
+    "source_truth_rule": "RECOVERY CHANGES SOURCE COORDINATION ONLY AND DOES NOT GRANT PROVIDER EFFECT AUTHORITY"
+  },
   "scope_grammar": {
     "repository_global": "repository:*",
     "exact_file": "path/to/file.ext",
@@ -40,9 +50,11 @@
     "foreign_overlapping_v3_lease": "FAIL",
     "repository_global_lease": "CONFLICTS_WITH_ALL",
     "repository_global_path": "REQUIRES_repository:*_LEASE",
-    "expired_active_v3_lease": "REMAINS_ACTIVE_UNTIL_EXPLICIT_REGISTRY_RELEASE_OR_ABORT",
+    "expired_active_v3_lease": "REMAINS_ACTIVE_UNTIL_EXPLICIT_REGISTRY_RELEASE_OR_ABORT_OR_EXPLICIT_RECOVERY_TRANSITION",
     "registry_contains_overlapping_active_leases": "FAIL_REGISTRY_CORRUPTION",
-    "legacy_unscoped_pr_no_conflict": "PASS_COMPATIBILITY_WITHOUT_SCOPED_AUTHORITY_PROMOTION"
+    "legacy_unscoped_pr_no_conflict": "PASS_COMPATIBILITY_WITHOUT_SCOPED_AUTHORITY_PROMOTION",
+    "recovery_nonterminal_conflict": "SUSPECT_ORPHANED_RECLAIMABLE_RETAIN_SCOPE_EXCLUSIVITY",
+    "stale_fencing_token": "FAIL_PERMANENTLY"
   },
   "merge_time_revalidation": {
     "required": true,
@@ -60,6 +72,7 @@
     "disjoint_multiwriter_canary_required": true,
     "overlap_rejection_canary_required": true,
     "orphan_recovery_canary_required": true,
+    "stale_fence_rejection_canary_required": true,
     "provider_branch_protection_equivalent": false,
     "provider_ruleset_equivalent": false
   },
@@ -71,5 +84,5 @@
     "registry_is_not_provider_effect_authority": true,
     "unknown_spend_fails_closed": true
   },
-  "truth_boundary": "V3 does not weaken source safety. It moves serialization from the entire work duration to the short registry CAS used for acquire/release. Concurrent work is allowed only for provider-visible ACTIVE leases whose declared write sets are pairwise disjoint. Overlap, repository-global paths, malformed state, expired-but-still-active leases, stale claims, write-set escape, registry races, or uncertain authority fail closed. Legacy V2 remains absolute while ACTIVE during migration."
+  "truth_boundary": "V3 does not weaken source safety. It moves serialization from the entire work duration to the short registry CAS used for acquire/release/recovery transitions. Concurrent work is allowed only for provider-visible ACTIVE leases whose declared write sets are pairwise disjoint. SUSPECT, ORPHANED and RECLAIMABLE leases remain scope-blocking until an explicit reclaim creates a newer ACTIVE fence. Overlap, repository-global paths, malformed state, expired-but-still-active leases, stale claims, stale fencing tokens, write-set escape, registry races, or uncertain authority fail closed. Legacy V2 remains absolute while ACTIVE during migration."
 }
