@@ -1,4 +1,4 @@
-name: FUSE Windows Relay Cloud Run v2.4
+name: FUSE Windows Relay Cloud Run v2.5
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: fuse-windows-relay-cloud-run-v24
+  group: fuse-windows-relay-cloud-run-v25
   cancel-in-progress: false
 
 env:
@@ -69,24 +69,26 @@ jobs:
             exit 43
           fi
 
-      - name: Qualify provider prerequisites without secret-manager dependency
+      - name: Qualify provider prerequisites without secret-manager or cloud-build dependency
         shell: bash
         run: |
           set -euo pipefail
           gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" --project "$PROJECT_ID" --location "$REGION" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:ARTIFACT_REPOSITORY' >&2; exit 61; }
           gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:FIRESTORE_DATABASE' >&2; exit 62; }
           gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT_ID" --format='value(email)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:RUNTIME_IDENTITY' >&2; exit 64; }
-          gcloud builds list --project "$PROJECT_ID" --limit=1 --format='value(id)' >/dev/null || { echo 'RELAY_PREREQ_UNCALLABLE:CLOUD_BUILD_READ' >&2; exit 65; }
           gcloud run services list --project "$PROJECT_ID" --region "$REGION" --limit=1 --format='value(metadata.name)' >/dev/null || { echo 'RELAY_PREREQ_UNCALLABLE:CLOUD_RUN_READ' >&2; exit 66; }
           echo 'PROVIDER_PREREQS_QUALIFIED=true' >> "$GITHUB_ENV"
           echo 'DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY' >> "$GITHUB_ENV"
+          echo 'BUILD_MECHANISM=GITHUB_HOSTED_DOCKER_DIRECT_PUSH' >> "$GITHUB_ENV"
 
-      - name: Build immutable relay image
+      - name: Build immutable relay image and push directly to Artifact Registry
         shell: bash
         run: |
           set -euo pipefail
           IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-windows-relay:$GITHUB_SHA"
-          gcloud builds submit windows_federation_plane --project "$PROJECT_ID" --tag "$IMAGE" --quiet
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          docker build --file windows_federation_plane/Dockerfile --tag "$IMAGE" windows_federation_plane
+          docker push "$IMAGE"
           DIGEST="$(gcloud artifacts docker images describe "$IMAGE" --project "$PROJECT_ID" --format='value(image_summary.digest)')"
           test -n "$DIGEST"
           echo "IMAGE_DIGEST_URI=$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-windows-relay@$DIGEST" >> "$GITHUB_ENV"
@@ -159,15 +161,17 @@ jobs:
           from datetime import datetime,timezone
           truth=lambda name: os.environ.get(name,'').lower()=='true'
           body = {
-              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V24",
+              "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V25",
               "source_sha": os.environ.get("GITHUB_SHA"),
               "project_id": os.environ["PROJECT_ID"],
               "region": os.environ["REGION"],
               "service": os.environ["SERVICE"],
               "bootstrap_mode": os.environ.get("BOOTSTRAP_MODE"),
               "device_auth_mode": os.environ.get("DEVICE_AUTH_MODE"),
+              "build_mechanism": os.environ.get("BUILD_MECHANISM"),
               "provider_prereqs_qualified": truth("PROVIDER_PREREQS_QUALIFIED"),
               "secret_manager_required": False,
+              "cloud_build_required": False,
               "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
               "canary_url": os.environ.get("CANARY_URL"),
               "canary_revision": os.environ.get("CANARY_REVISION"),
