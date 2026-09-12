@@ -31,10 +31,10 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn("TAGGED_ZERO_TRAFFIC_EXISTING_SERVICE", self.text)
         self.assertIn("--no-traffic --tag relay-canary", self.text)
         self.assertIn("/healthz", self.text)
-        self.assertIn("$CANARY_URL/mcp", self.text)
+        self.assertIn("$SEMANTIC_URL/mcp", self.text)
         self.assertIn("--to-revisions=\"$CANARY_REVISION=100\"", self.text)
         self.assertIn("if: failure() && env.PRODUCTION_SERVICE_PRESENT == 'true'", self.text)
-        self.assertLess(self.text.index("$CANARY_URL/healthz"), self.text.index("$CANARY_REVISION=100"))
+        self.assertLess(self.text.index("$candidate/healthz"), self.text.index("$CANARY_REVISION=100"))
 
     def test_absent_service_uses_separate_isolated_canary_without_fake_zero_traffic(self):
         self.assertIn("ISOLATED_CANARY_SERVICE_WHEN_PRODUCTION_ABSENT", self.text)
@@ -85,6 +85,23 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertEqual(self.text.count("GOOGLE_CLOUD_PROJECT=$PROJECT_ID"), 2)
         self.assertIn('--set-env-vars="$ENVVARS"', self.text)
 
+    def test_health_route_differential_is_bounded_and_drives_semantic_checks(self):
+        self.assertIn(
+            'DETERMINISTIC_URL="https://${TARGET_SERVICE}-${PROJECT_NUMBER}.${REGION}.run.app"',
+            self.text,
+        )
+        self.assertIn('CANDIDATE_URLS=("$CANARY_URL" "$SERVICE_URL" "$DETERMINISTIC_URL")', self.text)
+        self.assertIn("for attempt in $(seq 1 12)", self.text)
+        self.assertIn("--connect-timeout 5 --max-time 10", self.text)
+        self.assertIn("HEALTH_ROUTE_DIFFERENTIAL_FAILED", self.text)
+        self.assertIn("HEALTH_ROUTE_DIFFERENTIAL_CHECKED=true", self.text)
+        self.assertIn('echo "SEMANTIC_URL=$SEMANTIC_URL" >> "$GITHUB_ENV"', self.text)
+        self.assertIn('"$SEMANTIC_URL/mcp"', self.text)
+        self.assertIn('"$SEMANTIC_URL/node"', self.text)
+        self.assertIn('"$SEMANTIC_URL/node/worker.js"', self.text)
+        self.assertIn('"$SEMANTIC_URL/node/native-bootstrap.ps1"', self.text)
+        self.assertNotIn('curl --fail --silent --show-error "$CANARY_URL/healthz"', self.text)
+
     def test_receipt_binds_exact_source_provider_image_revision_and_topology(self):
         self.assertIn('"schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V26"', self.text)
         for field in (
@@ -92,9 +109,11 @@ class RelayWorkflowTests(unittest.TestCase):
             '"image_digest_uri"',
             '"canary_revision"',
             '"canary_url"',
+            '"semantic_url"',
             '"target_service"',
             '"deployment_topology"',
             '"production_service_present"',
+            '"health_route_differential_checked"',
         ):
             self.assertIn(field, self.text)
 
