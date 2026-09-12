@@ -1,4 +1,4 @@
-name: FUSE Windows Relay Cloud Run v2.1
+name: FUSE Windows Relay Cloud Run v2.2
 
 on:
   issues:
@@ -10,7 +10,7 @@ permissions:
   id-token: write
 
 concurrency:
-  group: fuse-windows-relay-cloud-run-v21
+  group: fuse-windows-relay-cloud-run-v22
   cancel-in-progress: false
 
 env:
@@ -25,9 +25,6 @@ env:
   ROOT_SECRET: fuse-windows-relay-root
   OIDC_ISSUER: ${{ vars.FUSE_OIDC_ISSUER }}
   OIDC_JWKS_URL: ${{ vars.FUSE_OIDC_JWKS_URL }}
-  # The WOAF bootstrap mission is zero-traffic by default. Production traffic
-  # promotion is a separate consequential predicate and stays disabled unless
-  # a later, explicitly authorised provider action sets this to true.
   ALLOW_PRODUCTION_PROMOTION: 'false'
 
 jobs:
@@ -73,23 +70,19 @@ jobs:
             exit 43
           fi
 
-      - name: Provision bounded durable relay prerequisites
+      - name: Qualify existing durable relay prerequisites
         shell: bash
         run: |
           set -euo pipefail
-          gcloud services enable run.googleapis.com artifactregistry.googleapis.com cloudbuild.googleapis.com firestore.googleapis.com secretmanager.googleapis.com --project "$PROJECT_ID" --quiet
-          if ! gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" >/dev/null 2>&1; then
-            gcloud firestore databases create --database='(default)' --location="$REGION" --type=firestore-native --project "$PROJECT_ID" --quiet
-          fi
-          gcloud firestore fields ttls update expires_at --collection-group=nonces --enable-ttl --database='(default)' --project "$PROJECT_ID" --quiet
-          gcloud projects add-iam-policy-binding "$PROJECT_ID" --member="serviceAccount:$RUNTIME_SA" --role=roles/datastore.user --condition=None --quiet >/dev/null
-          if ! gcloud secrets describe "$ROOT_SECRET" --project "$PROJECT_ID" >/dev/null 2>&1; then
-            python3 - <<'PY' | gcloud secrets create "$ROOT_SECRET" --project "$PROJECT_ID" --data-file=- --replication-policy=automatic
-          import secrets
-          print(secrets.token_urlsafe(64), end='')
-          PY
-          fi
-          gcloud secrets add-iam-policy-binding "$ROOT_SECRET" --project "$PROJECT_ID" --member="serviceAccount:$RUNTIME_SA" --role=roles/secretmanager.secretAccessor --quiet >/dev/null
+          # Provider qualification is read-only. This workflow must not grant IAM,
+          # enable APIs, create Firestore, create secrets, or mutate TTL policy.
+          gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" --project "$PROJECT_ID" --location "$REGION" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:ARTIFACT_REPOSITORY' >&2; exit 61; }
+          gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:FIRESTORE_DATABASE' >&2; exit 62; }
+          gcloud secrets describe "$ROOT_SECRET" --project "$PROJECT_ID" --format='value(name)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:ROOT_SECRET' >&2; exit 63; }
+          gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT_ID" --format='value(email)' >/dev/null || { echo 'RELAY_PREREQ_MISSING:RUNTIME_IDENTITY' >&2; exit 64; }
+          gcloud builds list --project "$PROJECT_ID" --limit=1 --format='value(id)' >/dev/null || { echo 'RELAY_PREREQ_UNCALLABLE:CLOUD_BUILD_READ' >&2; exit 65; }
+          gcloud run services list --project "$PROJECT_ID" --region "$REGION" --limit=1 --format='value(metadata.name)' >/dev/null || { echo 'RELAY_PREREQ_UNCALLABLE:CLOUD_RUN_READ' >&2; exit 66; }
+          echo 'PROVIDER_PREREQS_QUALIFIED=true' >> "$GITHUB_ENV"
 
       - name: Build immutable relay image
         shell: bash
@@ -130,22 +123,22 @@ jobs:
           test "$(curl --fail --silent --show-error "$CANARY_URL/healthz" | python3 -c 'import json,sys; print(json.load(sys.stdin)["status"])')" = ok
           MCP_CODE="$(curl --silent --output /dev/null --write-out '%{http_code}' "$CANARY_URL/mcp")"
           case "$MCP_CODE" in 401|403|404) ;; *) echo "MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 51 ;; esac
+          echo 'MCP_FAIL_CLOSED_CHECKED=true' >> "$GITHUB_ENV"
           if [[ "$BOOTSTRAP_MODE" == 'AGENT_ONLY_BOOTSTRAP' ]]; then
             curl --fail --silent --show-error "$CANARY_URL/node" | grep -F 'CONNECT THIS PC' >/dev/null
             curl --fail --silent --show-error "$CANARY_URL/node/worker.js" | grep -F 'B0_EPHEMERAL_LOW_TRUST' >/dev/null
             curl --fail --silent --show-error "$CANARY_URL/node/native-bootstrap.ps1" | grep -F 'NonExportable' >/dev/null
+            echo 'BROWSER_ENTRYPOINT_CHECKED=true' >> "$GITHUB_ENV"
           fi
           ACTIVE="$(gcloud run services describe "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.traffic[0].revisionName)' 2>/dev/null || true)"
           test "$ACTIVE" != "$CANARY_REVISION"
+          echo 'ZERO_TRAFFIC_CHECKED=true' >> "$GITHUB_ENV"
 
       - name: Optional explicitly authorised production promotion
         if: env.ALLOW_PRODUCTION_PROMOTION == 'true'
         shell: bash
         run: |
           set -euo pipefail
-          # This path exists to preserve the legacy rollback contract, but is
-          # disabled for the WOAF bootstrap mission. The bootstrap dispatch
-          # never sets ALLOW_PRODUCTION_PROMOTION=true.
           gcloud run services update-traffic "$SERVICE" --project "$PROJECT_ID" --region "$REGION" --to-revisions="$CANARY_REVISION=100" --quiet
 
       - name: Roll back explicitly authorised promotion on failure
@@ -164,6 +157,7 @@ jobs:
           python3 - <<'PY'
           import hashlib,json,os
           from datetime import datetime,timezone
+          truth=lambda name: os.environ.get(name,'').lower()=='true'
           body = {
               "schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V2",
               "source_sha": os.environ.get("GITHUB_SHA"),
@@ -171,14 +165,16 @@ jobs:
               "region": os.environ["REGION"],
               "service": os.environ["SERVICE"],
               "bootstrap_mode": os.environ.get("BOOTSTRAP_MODE"),
+              "provider_prereqs_qualified": truth("PROVIDER_PREREQS_QUALIFIED"),
               "image_digest_uri": os.environ.get("IMAGE_DIGEST_URI"),
               "canary_url": os.environ.get("CANARY_URL"),
               "canary_revision": os.environ.get("CANARY_REVISION"),
               "previous_revision": os.environ.get("PREVIOUS_REVISION"),
               "provider_mutation_performed": bool(os.environ.get("IMAGE_DIGEST_URI")),
               "production_traffic_changed": os.environ.get("ALLOW_PRODUCTION_PROMOTION") == "true",
-              "mcp_fail_closed_checked": True,
-              "browser_entrypoint_checked": os.environ.get("BOOTSTRAP_MODE") == "AGENT_ONLY_BOOTSTRAP",
+              "zero_traffic_checked": truth("ZERO_TRAFFIC_CHECKED"),
+              "mcp_fail_closed_checked": truth("MCP_FAIL_CLOSED_CHECKED"),
+              "browser_entrypoint_checked": truth("BROWSER_ENTRYPOINT_CHECKED"),
               "secret_value_recorded": False,
               "oauth_value_recorded": False,
               "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
