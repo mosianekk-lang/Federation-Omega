@@ -1,0 +1,54 @@
+{
+  "contract": "RUNTIME_PROOF_RECONCILER_OMEGA_V1",
+  "version": "1.0.0",
+  "status": "SOURCE_CANDIDATE",
+  "objective": "Convert explicit BEF/ChatBridge runtime receipts into a monotonic, fail-closed proof ladder without promoting rendered-DOM evidence into provider-native hidden-event truth.",
+  "proof_ladder": [
+    "NO_RUNTIME_PROOF",
+    "SOURCE_ADMITTED",
+    "NATIVE_HOST_BUILT",
+    "NATIVE_HOST_REGISTERED",
+    "BROWSER_BOUND",
+    "LIVE_DELIVERY",
+    "OBSERVABLE_DPF_VERIFIED",
+    "ROLLBACK_VERIFIED",
+    "RESILIENCE_VERIFIED"
+  ],
+  "accepted_receipt_schemas": [
+    "FEDERATION-RUNTIME-PROOF-SOURCE-ADMISSION-1",
+    "SOVARA-BEF-CHATBRIDGE-WINDOWS-CANARY-BOOTSTRAP-1",
+    "SOVARA-BEF-CHATBRIDGE-WINDOWS-RUNTIME-READBACK-1",
+    "BEF_OBSERVABLE_SCOPE_EVIDENCE",
+    "SOVARA-BEF-CHATBRIDGE-WINDOWS-ROLLBACK-1",
+    "SOVARA-BEF-CHATBRIDGE-WINDOWS-RESILIENCE-1"
+  ],
+  "invariants": [
+    "proof_stage_is_monotonic_and_contiguous",
+    "unsupported_receipt_schema_fails_closed",
+    "extension_identity_drift_cannot_promote_runtime_state",
+    "live_delivery_requires_encrypted_spool_receipt_and_envelope_hash",
+    "observable_dpf_requires_gap_free_rendered_scope",
+    "provider_native_hidden_events_are_never_inferred",
+    "rollback_preserves_evidence_spool",
+    "resilience_requires_three_repetitions_recovery_and_fresh_readback",
+    "reconciliation_receipt_chain_is_deterministic_and_order_sensitive"
+  ],
+  "source_files": [
+    "formation_omega/runtime_proof_reconciler.py",
+    "formation_omega/__init__.py",
+    "tests/test_formation_omega_runtime_proof_reconciler.py",
+    "docs/RUNTIME_PROOF_RECONCILER_OMEGA_V1.md"
+  ],
+  "proof_boundary": {
+    "source_candidate_proves_workstation_execution": false,
+    "source_candidate_proves_live_delivery": false,
+    "source_candidate_proves_provider_native_hidden_events": false,
+    "runtime_receipts_required_for_runtime_promotion": true,
+    "provider_native_complete_is_hard_false_for_rendered_dom_lane": true
+  },
+  "testing": {
+    "framework": "python_stdlib_unittest",
+    "focused_test_count": 11,
+    "hosted_admission_pending": true
+  }
+}
