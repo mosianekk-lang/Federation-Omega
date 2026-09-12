@@ -15,7 +15,7 @@ permissions:
   issues: read
 
 concurrency:
-  group: fuse-mobile-android-build-v1
+  group: fuse-mobile-android-build-${{ github.sha }}
   cancel-in-progress: false
 
 jobs:
