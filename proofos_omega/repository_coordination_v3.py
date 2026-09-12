@@ -261,9 +261,23 @@ def _git(root: Path, args: list[str]) -> str:
     return p.stdout.strip()
 
 
+def _origin_available(root: Path) -> bool:
+    p = subprocess.run(["git","remote","get-url","origin"],cwd=root,text=True,capture_output=True)
+    return p.returncode == 0 and bool(p.stdout.strip())
+
+
 def evaluate_hosted_pull_request_v3(repo_root: Path | None = None) -> dict[str, Any]:
     root = Path(repo_root or Path(__file__).resolve().parents[1])
     policy = load_policy()
+    if not _origin_available(root):
+        return _result(
+            "NOT_APPLICABLE",
+            "V3_HOSTED_PROVIDER_NOT_APPLICABLE_NO_ORIGIN",
+            "",
+            None,
+            (),
+            [Finding("V3_HOSTED_PROVIDER_NOT_APPLICABLE_NO_ORIGIN", "provider git origin unavailable")],
+        )
     event = json.loads(Path(os.environ["GITHUB_EVENT_PATH"]).read_text(encoding="utf-8"))
     pr = event.get("pull_request") or {}
     base = str((pr.get("base") or {}).get("sha") or "")
