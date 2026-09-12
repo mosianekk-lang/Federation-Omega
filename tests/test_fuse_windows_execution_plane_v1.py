@@ -32,25 +32,31 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertNotIn("actions/setup-python@v", source)
         self.assertNotIn("actions/upload-artifact@v", source)
 
-    def test_relay_provider_route_qualifies_existing_prerequisites_without_iam_widening(self):
+    def test_relay_provider_route_bootstraps_only_bounded_root_secret_without_iam_widening(self):
         if not RELAY_WORKFLOW.is_file():
             self.skipTest("workflow-free export excludes relay provider surface")
         source = RELAY_WORKFLOW.read_text(encoding="utf-8")
-        self.assertIn("FUSE Windows Relay Cloud Run v2.2", source)
-        self.assertIn("Qualify existing durable relay prerequisites", source)
+        self.assertIn("FUSE Windows Relay Cloud Run v2.3", source)
+        self.assertIn("Qualify prerequisites and bootstrap bounded relay root secret", source)
         self.assertIn("gcloud artifacts repositories describe", source)
         self.assertIn("gcloud firestore databases describe", source)
-        self.assertIn("gcloud secrets describe", source)
         self.assertIn("gcloud builds list", source)
         self.assertIn("gcloud run services list", source)
+        self.assertIn('gcloud secrets create "$ROOT_SECRET"', source)
+        self.assertIn('gcloud secrets versions add "$ROOT_SECRET"', source)
+        self.assertIn('gcloud secrets delete "$ROOT_SECRET"', source)
+        self.assertIn("ROOT_SECRET_CREATED=true", source)
+        self.assertIn("ROOT_SECRET_ROLLED_BACK=true", source)
+        self.assertIn('"root_secret_created": truth("ROOT_SECRET_CREATED")', source)
+        self.assertIn('"root_secret_rolled_back": truth("ROOT_SECRET_ROLLED_BACK")', source)
         for forbidden in (
             "gcloud services enable",
             "add-iam-policy-binding",
             "firestore databases create",
             "fields ttls update",
-            "secrets create",
         ):
             self.assertNotIn(forbidden, source)
+        self.assertNotIn("echo $FUSE_RELAY_ROOT_SECRET", source)
         self.assertIn("provider_prereqs_qualified", source)
         self.assertIn("MCP_FAIL_CLOSED_CHECKED=true", source)
         self.assertIn("BROWSER_ENTRYPOINT_CHECKED=true", source)
