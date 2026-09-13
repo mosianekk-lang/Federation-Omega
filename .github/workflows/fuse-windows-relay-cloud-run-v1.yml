@@ -208,18 +208,24 @@ jobs:
           MCP_CODE="$(curl --location --silent --show-error --connect-timeout 2 --max-time 5 \
             --output /tmp/fuse-relay-local-mcp.txt --write-out '%{http_code}' \
             "http://127.0.0.1:${LOCAL_PORT}/mcp" || true)"
+          PAIR_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 \
+            -X POST -H 'content-type: application/json' -d '{}' \
+            --output /tmp/fuse-relay-local-pair.json --write-out '%{http_code}' \
+            "http://127.0.0.1:${LOCAL_PORT}/agent/enroll/start" || true)"
 
           capture_local_evidence
           echo "LOCAL_HEALTH_CODE=$HEALTH_CODE" >> "$GITHUB_ENV"
           echo "LOCAL_NODE_CODE=$NODE_CODE" >> "$GITHUB_ENV"
           echo "LOCAL_MCP_CODE=$MCP_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_PAIR_CODE=$PAIR_CODE" >> "$GITHUB_ENV"
           if [[ -f /tmp/fuse-relay-local-health.json ]]; then echo "LOCAL_HEALTH_SHA256=$(sha256sum /tmp/fuse-relay-local-health.json | cut -d' ' -f1)" >> "$GITHUB_ENV"; fi
           if [[ -f /tmp/fuse-relay-local-node.html ]]; then echo "LOCAL_NODE_SHA256=$(sha256sum /tmp/fuse-relay-local-node.html | cut -d' ' -f1)" >> "$GITHUB_ENV"; fi
           if [[ -f /tmp/fuse-relay-local-mcp.txt ]]; then echo "LOCAL_MCP_SHA256=$(sha256sum /tmp/fuse-relay-local-mcp.txt | cut -d' ' -f1)" >> "$GITHUB_ENV"; fi
+          if [[ -f /tmp/fuse-relay-local-pair.json ]]; then echo "LOCAL_PAIR_SHA256=$(sha256sum /tmp/fuse-relay-local-pair.json | cut -d' ' -f1)" >> "$GITHUB_ENV"; fi
 
           if [[ "$LOCAL_CONTAINER_RUNNING" != 'true' ]]; then
             echo 'LOCAL_FAILURE_CLASS=CONTAINER_EARLY_EXIT' >> "$GITHUB_ENV"
-            echo "LOCAL_CONTAINER_EARLY_EXIT:status=$LOCAL_CONTAINER_STATUS:exit=$LOCAL_CONTAINER_EXIT_CODE:health=$HEALTH_CODE:node=$NODE_CODE:mcp=$MCP_CODE" >&2
+            echo "LOCAL_CONTAINER_EARLY_EXIT:status=$LOCAL_CONTAINER_STATUS:exit=$LOCAL_CONTAINER_EXIT_CODE:health=$HEALTH_CODE:node=$NODE_CODE:mcp=$MCP_CODE:pair=$PAIR_CODE" >&2
             exit 72
           fi
           if [[ "$HEALTH_CODE" != '200' ]]; then
@@ -231,7 +237,8 @@ jobs:
           test "$NODE_CODE" = '200'
           grep -F 'CONNECT THIS PC' /tmp/fuse-relay-local-node.html >/dev/null
           case "$MCP_CODE" in 401|403|404) ;; *) echo "LOCAL_MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 71 ;; esac
-          python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node"}; raise SystemExit(0 if need.issubset(set(r)) else 1)' /tmp/fuse-relay-local-evidence/routes.json
+          case "$PAIR_CODE" in 400|401|403) ;; *) echo "LOCAL_PAIR_ROUTE_CALLABILITY_REQUIRED:$PAIR_CODE" >&2; exit 74 ;; esac
+          python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node","/agent/enroll/start","/agent/enroll/complete","/agent/runtime/poll","/agent/runtime/complete"}; raise SystemExit(0 if need.issubset(set(r)) else 1)' /tmp/fuse-relay-local-evidence/routes.json
 
           echo 'LOCAL_FAILURE_CLASS=NONE' >> "$GITHUB_ENV"
           echo 'LOCAL_IMAGE_DIFFERENTIAL_CHECKED=true' >> "$GITHUB_ENV"
@@ -466,9 +473,11 @@ jobs:
               "local_health_code": os.environ.get("LOCAL_HEALTH_CODE"),
               "local_node_code": os.environ.get("LOCAL_NODE_CODE"),
               "local_mcp_code": os.environ.get("LOCAL_MCP_CODE"),
+              "local_pair_code": os.environ.get("LOCAL_PAIR_CODE"),
               "local_health_sha256": os.environ.get("LOCAL_HEALTH_SHA256"),
               "local_node_sha256": os.environ.get("LOCAL_NODE_SHA256"),
               "local_mcp_sha256": os.environ.get("LOCAL_MCP_SHA256"),
+              "local_pair_sha256": os.environ.get("LOCAL_PAIR_SHA256"),
               "local_status_sha256": os.environ.get("LOCAL_STATUS_SHA256"),
               "local_listening_sha256": os.environ.get("LOCAL_LISTENING_SHA256"),
               "local_routes_sha256": os.environ.get("LOCAL_ROUTES_SHA256"),

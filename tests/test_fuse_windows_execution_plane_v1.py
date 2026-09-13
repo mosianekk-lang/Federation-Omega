@@ -92,6 +92,11 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertIn("auth_mode\": \"ECDSA_P256", relay); self.assertIn("ECDSASigner.verify_spki_b64", relay); self.assertIn("DEVICE_PUBLIC_KEY_REQUIRED", relay)
         self.assertIn("SOFTWARE_DPAPI_LOWER_ASSURANCE", agent); self.assertIn("ec.generate_private_key", agent); self.assertIn("LEGACY_HMAC_CREDENTIAL_REENROLL_REQUIRED", agent); self.assertNotIn('"device_secret":', agent)
 
+    def test_runtime_server_entrypoint_delegates_to_pairing_bridge(self):
+        mcp = (PLANE / "src/federation_windows_plane/mcp_service.py").read_text(encoding="utf-8")
+        self.assertIn("from .pairing_service import server_from_env as pairing_server_from_env", mcp)
+        self.assertIn("return pairing_server_from_env()", mcp)
+
     def test_no_arbitrary_command_surface(self):
         source = (PLANE / "src/federation_windows_plane/executor.py").read_text(encoding="utf-8")
         for forbidden in ("subprocess", "os.system", "shell=True", "Invoke-Expression"): self.assertNotIn(forbidden, source)
