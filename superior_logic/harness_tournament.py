@@ -56,13 +56,14 @@ class HarnessOutcome:
     median_cost: float
     owner_interventions: float
     tool_round_trips: float
+    outcome_value: float
     evidence_refs: tuple[str, ...]
 
     def validate(self):
         if not self.genome_id or not self.task_set_id or not self.acceptance_hash or self.sample_size < 1 or self.median_wall_seconds <= 0:
             raise ValueError("HARNESS_OUTCOME_IDENTITY_OR_SAMPLE_INVALID")
-        if min(self.median_cost, self.owner_interventions, self.tool_round_trips) < 0:
-            raise ValueError("HARNESS_OUTCOME_NEGATIVE_BURDEN")
+        if min(self.median_cost, self.owner_interventions, self.tool_round_trips, self.outcome_value) < 0:
+            raise ValueError("HARNESS_OUTCOME_NEGATIVE_BURDEN_OR_VALUE")
         for name in ("accepted_task_rate", "verified_readback_rate", "regression_escape_rate"):
             if not 0 <= getattr(self, name) <= 1:
                 raise ValueError(f"{name.upper()}_OUTSIDE_UNIT_INTERVAL")
@@ -80,7 +81,7 @@ class HarnessOutcome:
             latency_ms=self.median_wall_seconds * 1000,
             cost=self.median_cost,
             owner_burden=self.owner_interventions + 0.1 * self.tool_round_trips,
-            outcome_value=quality / self.median_wall_seconds,
+            outcome_value=self.outcome_value,
             evidence_refs=self.evidence_refs,
             measured=True,
         )
