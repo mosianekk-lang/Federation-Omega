@@ -320,7 +320,8 @@
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": "[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1",
     ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": "[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1",
     ".github/workflows/aegis-omega-zero-traffic-v1.yml": "[FO-DISPATCH] AEGIS_OMEGA_ZERO_TRAFFIC_V1",
-    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": "[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1"
+    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": "[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1",
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": "MACHINE_DISPATCH_ONLY__NO_ISSUE_TRIGGER"
   },
   "provider_mutation_required_markers": {
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
