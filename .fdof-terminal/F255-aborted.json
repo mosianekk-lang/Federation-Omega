@@ -1,0 +1,1 @@
+{"schema":"FEDERATION_REPOSITORY_LEASE_TERMINAL_RECEIPT_V1","lease_id":"F255","state":"ABORTED","terminal_reason":"ACTIVE_EXPIRED_BEFORE_SOURCE_ADMISSION__STALE_GLOBAL_LEASE_BLOCKING_UNRELATED_CODEFORGE_AIRLOCK__EXPLICIT_ABORT_FOR_RECOVERY","source_admitted":false,"provider_executed":false,"application_source_changed":false}
