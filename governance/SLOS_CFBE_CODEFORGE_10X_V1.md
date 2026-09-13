@@ -1,6 +1,6 @@
 # SLOS CFBE CodeForge 10x — Coding Intelligence Convergence v1
 
-Status: SOURCE CANDIDATE / LOCAL UNIT-TESTED / PROVIDER-LIVE VALUE PROOF OPEN  
+Status: SOURCE CANDIDATE / LOCAL TARGETED TESTED / PROVIDER-LIVE VALUE PROOF OPEN  
 Date: 2026-09-13  
 Authority boundary: SLOS mission/cognition and proof policy remain sovereign; SOVARA/SOL remain the external provider/effect authority plane.
 
@@ -39,9 +39,9 @@ SLOS is already unusually strong in mission fidelity, authority separation, proo
 9. CFBE/Failure-Win/Opportunity Discovery — challenger evaluation, failure learning and missing-capability discovery.
 10. Bubbles/FUSE context and capability-search patterns — selective tool/context loading instead of whole-estate prompt inflation.
 
-### BUILD SMALLEST RESIDUAL GAP — THIS WAVE
+### BUILD SMALLEST RESIDUAL GAP — IMPLEMENTED IN THIS SOURCE WAVE
 
-`superior_logic/codeforge.py` adds one provider-neutral specialist organ:
+`superior_logic/codeforge.py` adds a provider-neutral coding specialist organ:
 
 - deterministic repository Merkle index;
 - Python AST + generic symbol/import extraction;
@@ -54,7 +54,25 @@ SLOS is already unusually strong in mission fidelity, authority separation, proo
 - harvest-before-invent CapabilityAcquirer with licence/provenance/security gates;
 - same-task 10x Verified Engineering Throughput court.
 
-It intentionally does **not** add another provider executor, scheduler, mission authority, memory root, external-effect plane or automatic code-graft mechanism.
+`superior_logic/architecture_genome.py` adds proof-aware architecture composition:
+
+- mission capability requirements rather than vendor/product names drive selection;
+- multi-pattern composition is bounded by risk, proof strength, complexity, reversibility and component count;
+- failure-domain diversity improves scoring;
+- declared incompatibilities fail closed;
+- champion/challenger architecture selection requires a material score/coverage advantage;
+- the initial provider-neutral genome covers hybrid retrieval, mission-DAG agents, durable workflows, CQRS/event sourcing, model routing, MCP, A2A, independent assurance, local-first degraded operation and sandboxed code cells.
+
+`superior_logic/skill_forge.py` adds proof-gated portable skill formation:
+
+- repeated accepted, regression-free, proof-bearing mission trajectories are required before a skill can be proposed;
+- stable common procedure steps are extracted rather than memorizing one run;
+- output can render an Agent-Skills-style `SKILL.md` contract;
+- at least two independent replay proofs are required for `ADOPT_CANDIDATE` under the default court;
+- any replay regression rejects promotion;
+- skills inherit no tools, credentials, provider authority or deployment maturity.
+
+These modules intentionally do **not** add another provider executor, scheduler, mission authority, memory root, external-effect plane or automatic code-graft mechanism.
 
 ## Next high-value harvest waves
 
@@ -70,17 +88,17 @@ Compose existing sandbox + Windows plane + Git worktree/branch isolation into co
 
 Bind Explorer, Architect, Implementer, Tester, Security, Performance and Independent Verifier specialists to MissionIR nodes. Independent mutation lanes require disjoint conflict domains/worktrees. Fan-in requires diff arbitration and verification; provider/repository merge remains separately authorized.
 
-### Wave 5 — SkillForge
+### Wave 5 — SkillForge empirical closure
 
-Adopt the open Agent Skills `SKILL.md` convention as a portable capability package. A successful trajectory may propose a skill only after replay, regression and value proof. Skills load progressively; they do not automatically gain tools, credentials or provider authority.
+The source candidate now exists. Next proof is replay over real coding trajectories, skill portability across at least two compatible agent runtimes where available, progressive-disclosure/context-cost measurement, and regression/value comparison against no-skill baselines.
 
 ### Wave 6 — Verification Supercourt
 
 Pluggable syntax/compile, lint, type, unit, integration, property/fuzz, mutation, browser/UI, security/SAST, dependency, performance and reproducible-build checks. Risk determines minimum court; domain rules may be stricter. A passing process exit alone is not semantic acceptance.
 
-### Wave 7 — Architecture Genome
+### Wave 7 — Architecture Genome empirical closure
 
-Create a proof-indexed architecture-pattern registry for agent systems, RAG, durable workflows, event sourcing, actor systems, CQRS, multi-model routing, state machines, knowledge graphs, retrieval pipelines, safety/assurance and deployment topologies. Selection optimizes mission fit, reversibility, failure domains, proof and lifecycle cost rather than novelty.
+The source candidate now exists. Next proof is to benchmark its selected compositions against hand-designed and current-incumbent architectures on the same bounded AI-system build tasks, with acceptance quality, latency/cost, failure-domain, rollback and owner-burden evidence.
 
 ### Wave 8 — Autonomous Capability Closure
 
@@ -104,10 +122,21 @@ Use at least 30 matched real engineering missions. Preserve task-set identity an
 
 `TenXEngineeringCourt` computes VET as quality × velocity × owner-burden efficiency × tool efficiency × cost efficiency. A 10x multiplier with a quality/readback regression is rejected. Fewer than 30 paired observations is `INSUFFICIENT_PAIRED_SAMPLE`.
 
+## Proof status in this source wave
+
+- CodeForge targeted local unit court: 12/12 PASS.
+- Architecture Genome + SkillForge targeted local unit court: 5/5 PASS.
+- Python compile verification for the new source/test modules: PASS.
+- MissionIR constructor/lane contract: provider readback matched the CodeForge bridge, including `GOVERNANCE`.
+- ProofOS mapping now includes all three new SLOS modules and both targeted test files.
+- Repository CI/Airlock/Leak Guard/Bubbles remain the authoritative next admission gates on the current PR head.
+
+Local tests prove source behavior only. They do not prove hosted runtime performance, vendor superiority, 10x engineering value, automatic capability acquisition, live multi-agent fleet performance or stable promotion.
+
 ## Truth boundary
 
-This source wave is not a claim that SLOS is 10x better than Codex, Cursor, Claude Code, Copilot, Jules, Kiro or Devin. It establishes a coding-specific control surface and a falsifiable 10x court. Market superiority requires matched real-task evidence, current provider/runtime identity, independent readback, sufficient sample size and no hard regression.
+This source wave is not a claim that SLOS is 10x better than Codex, Cursor, Claude Code, Copilot, Jules, Kiro or Devin. It establishes a coding-specific control surface, proof-aware architecture selection, proof-gated reusable skill formation and a falsifiable 10x court. Market superiority requires matched real-task evidence, current provider/runtime identity, independent readback, sufficient sample size and no hard regression.
 
 ## Promotion path
 
-LOCAL_UNIT_TESTED -> REPOSITORY_CI_PROVEN -> SHADOW_REAL_MISSIONS -> PAIRED_EMPIRICAL_VALUE -> SCOPED_10X_VERIFIED (only if the court passes).
+LOCAL_TARGETED_TESTED -> REPOSITORY_CI_PROVEN -> SHADOW_REAL_MISSIONS -> PAIRED_EMPIRICAL_VALUE -> SCOPED_10X_VERIFIED (only if the court passes).
