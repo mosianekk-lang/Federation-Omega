@@ -24,7 +24,7 @@ class HarnessTournamentTests(unittest.TestCase):
         )
 
     def outcome(self, gid: str, *, accepted: float, readback: float, regression: float,
-                seconds: float, cost: float, owner: float, tools: float):
+                seconds: float, cost: float, owner: float, tools: float, outcome_value: float = 1.0):
         return HarnessOutcome(
             genome_id=gid,
             task_set_id="tasks-v1",
@@ -37,6 +37,7 @@ class HarnessTournamentTests(unittest.TestCase):
             median_cost=cost,
             owner_interventions=owner,
             tool_round_trips=tools,
+            outcome_value=outcome_value,
             evidence_refs=(f"proof:{gid}",),
         )
 
@@ -60,12 +61,45 @@ class HarnessTournamentTests(unittest.TestCase):
         )
         self.assertTrue(exp.fingerprint)
 
+    def test_value_receipt_keeps_outcome_value_separate_from_latency(self):
+        genome = self.genome("model-a", "terminal-v1")
+        outcome = self.outcome(
+            genome.genome_id,
+            accepted=.9,
+            readback=.9,
+            regression=.01,
+            seconds=200,
+            cost=1,
+            owner=.5,
+            tools=5,
+            outcome_value=.8,
+        )
+        receipt = outcome.value_receipt()
+        self.assertEqual(receipt.outcome_value, .8)
+        self.assertEqual(receipt.latency_ms, 200000)
+
+    def test_negative_outcome_value_fails_closed(self):
+        genome = self.genome("model-a", "terminal-v1")
+        outcome = self.outcome(
+            genome.genome_id,
+            accepted=.9,
+            readback=.9,
+            regression=.01,
+            seconds=100,
+            cost=1,
+            owner=.5,
+            tools=5,
+            outcome_value=-.1,
+        )
+        with self.assertRaisesRegex(ValueError, "NEGATIVE_BURDEN_OR_VALUE"):
+            outcome.validate()
+
     def test_unique_pareto_winner_advances_without_quality_regression(self):
         incumbent = self.genome("model-a", "terminal-v1")
         challenger = self.genome("model-a", "terminal-v2")
         outcomes = (
-            self.outcome(incumbent.genome_id, accepted=.90, readback=.90, regression=.02, seconds=100, cost=2, owner=1, tools=10),
-            self.outcome(challenger.genome_id, accepted=.95, readback=.95, regression=.01, seconds=60, cost=1, owner=.5, tools=6),
+            self.outcome(incumbent.genome_id, accepted=.90, readback=.90, regression=.02, seconds=100, cost=2, owner=1, tools=10, outcome_value=.8),
+            self.outcome(challenger.genome_id, accepted=.95, readback=.95, regression=.01, seconds=60, cost=1, owner=.5, tools=6, outcome_value=.9),
         )
         verdict = HarnessTournament().compare(
             outcomes,
@@ -80,8 +114,8 @@ class HarnessTournamentTests(unittest.TestCase):
         incumbent = self.genome("model-a", "terminal-v1")
         challenger = self.genome("model-a", "terminal-v2")
         outcomes = (
-            self.outcome(incumbent.genome_id, accepted=.90, readback=.90, regression=.01, seconds=100, cost=2, owner=1, tools=10),
-            self.outcome(challenger.genome_id, accepted=.80, readback=.95, regression=.01, seconds=10, cost=.1, owner=0, tools=1),
+            self.outcome(incumbent.genome_id, accepted=.90, readback=.90, regression=.01, seconds=100, cost=2, owner=1, tools=10, outcome_value=.8),
+            self.outcome(challenger.genome_id, accepted=.80, readback=.95, regression=.01, seconds=10, cost=.1, owner=0, tools=1, outcome_value=1.0),
         )
         verdict = HarnessTournament().compare(
             outcomes,
