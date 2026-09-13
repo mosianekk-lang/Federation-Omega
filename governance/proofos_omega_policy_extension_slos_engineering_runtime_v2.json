@@ -1,0 +1,132 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "2.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "superior_logic/engineering_runtime.py",
+        "superior_logic/runtime_bridge.py",
+        "superior_logic/finalization_kernel.py",
+        "superior_logic/engineering_operator.py",
+        "governance/SLOS_ENGINEERING_RUNTIME_FINALIZATION_V2.md",
+        "governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json"
+      ],
+      "reason": "SLOS_SHARED_ENGINEERING_RUNTIME_REPOGRAPH_WORKSPACE_FLEET_VERIFICATION_CAPABILITY_CLOSURE_AND_FEDERATION_RUNTIME_BINDING"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "SUPERIOR_LOGIC",
+      "patterns": [
+        "superior_logic/engineering_runtime.py",
+        "superior_logic/runtime_bridge.py",
+        "superior_logic/finalization_kernel.py",
+        "governance/SLOS_ENGINEERING_RUNTIME_FINALIZATION_V2.md",
+        "governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json",
+        "tests/test_slos_engineering_runtime_v2.py",
+        "tests/test_slos_finalization_kernel_v1.py",
+        "tests/test_slos_engineering_runtime_proofos_mapping_v1.py",
+        "superior_logic/engineering_operator.py",
+        "tests/test_slos_engineering_runtime_adversarial_v1.py",
+        "tests/test_slos_engineering_operator_v1.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "AO_HARMONIC"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "slos_engineering_runtime_v2",
+      "kind": "unittest_glob",
+      "target": "test_slos_engineering_runtime_v2.py",
+      "patterns": [
+        "superior_logic/engineering_runtime.py",
+        "superior_logic/runtime_bridge.py",
+        "tests/test_slos_engineering_runtime_v2.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_finalization_kernel_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_finalization_kernel_v1.py",
+      "patterns": [
+        "superior_logic/finalization_kernel.py",
+        "superior_logic/architecture_genome.py",
+        "superior_logic/engineering_runtime.py",
+        "tests/test_slos_finalization_kernel_v1.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_engineering_runtime_proofos_mapping_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_engineering_runtime_proofos_mapping_v1.py",
+      "patterns": [
+        "governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json",
+        "governance/SLOS_ENGINEERING_RUNTIME_FINALIZATION_V2.md",
+        "superior_logic/engineering_runtime.py",
+        "superior_logic/runtime_bridge.py",
+        "superior_logic/finalization_kernel.py",
+        "tests/test_slos_engineering_runtime_proofos_mapping_v1.py",
+        "superior_logic/engineering_operator.py",
+        "tests/test_slos_engineering_operator_v1.py",
+        "tests/test_slos_engineering_runtime_adversarial_v1.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SELECTOR_ESCAPE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_engineering_runtime_adversarial_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_engineering_runtime_adversarial_v1.py",
+      "patterns": [
+        "superior_logic/engineering_runtime.py",
+        "superior_logic/runtime_bridge.py",
+        "superior_logic/finalization_kernel.py",
+        "tests/test_slos_engineering_runtime_adversarial_v1.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SECURITY_VIOLATION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_engineering_operator_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_engineering_operator_v1.py",
+      "patterns": [
+        "superior_logic/engineering_operator.py",
+        "superior_logic/finalization_kernel.py",
+        "superior_logic/engineering_runtime.py",
+        "tests/test_slos_engineering_operator_v1.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
