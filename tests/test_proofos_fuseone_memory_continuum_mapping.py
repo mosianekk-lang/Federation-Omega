@@ -10,6 +10,8 @@ ROOT = Path(__file__).resolve().parents[1]
 POLICY = ROOT / "governance" / "proofos_omega_policy_v1.json"
 BASE = "1" * 40
 HEAD = "2" * 40
+MEMORY_IMPLEMENTATION = ROOT / "federation_consolidation" / "fuseone_memory_continuum.py"
+MEMORY_FOCUSED_TEST = ROOT / "tests" / "test_fuseone_memory_continuum.py"
 
 MEMORY_PRODUCTION_PATHS = [
     "federation_consolidation/fuseone_memory_continuum.py",
@@ -45,6 +47,16 @@ class FuseOneMemoryContinuumProofOSMappingTests(unittest.TestCase):
         self.assertIn("fuseone_memory_continuum_v1_source_contract", registered)
         self.assertIn("fuseone_memory_continuum_v1_proofos_mapping", registered)
         self.assertIn("full_federation_fallback", registered)
+
+    def test_memory_source_contract_bootstraps_only_while_target_is_absent(self):
+        policy, _, _ = compile_for(MEMORY_PRODUCTION_PATHS)
+        source_contract = policy.tests["fuseone_memory_continuum_v1_source_contract"]
+        self.assertTrue(source_contract.optional_if_missing)
+        if MEMORY_IMPLEMENTATION.exists():
+            self.assertTrue(
+                MEMORY_FOCUSED_TEST.exists(),
+                "Memory implementation must not exist without its focused source contract",
+            )
 
     def test_unknown_production_path_still_fails_safe_to_full_fallback(self):
         unknown = "future_fuseone_memory_unknown/new_runtime.py"
