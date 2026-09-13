@@ -24,11 +24,13 @@ class HarnessTournamentTests(unittest.TestCase):
         )
 
     def outcome(self, gid: str, *, accepted: float, readback: float, regression: float,
-                seconds: float, cost: float, owner: float, tools: float, outcome_value: float = 1.0):
+                seconds: float, cost: float, owner: float, tools: float,
+                outcome_value: float = 1.0, comparison_fingerprint: str = "cohort-v1"):
         return HarnessOutcome(
             genome_id=gid,
             task_set_id="tasks-v1",
             acceptance_hash="accept-v1",
+            comparison_fingerprint=comparison_fingerprint,
             sample_size=20,
             accepted_task_rate=accepted,
             verified_readback_rate=readback,
@@ -46,11 +48,10 @@ class HarnessTournamentTests(unittest.TestCase):
         b = self.genome("model-a", "terminal-v1")
         self.assertEqual(a.genome_id, b.genome_id)
 
-    def test_experiment_compiler_binds_harness_parameters(self):
-        genome = self.genome("model-a", "terminal-v1")
-        exp = HarnessExperimentCompiler.compile(
-            genome,
-            implementation_sha256="impl",
+    def test_experiment_compiler_separates_candidate_identity_from_common_cohort(self):
+        a = self.genome("model-a", "terminal-v1")
+        b = self.genome("model-a", "terminal-v2")
+        common = dict(
             source_sha256="source",
             inputs={"task_set": "tasks-v1"},
             environment={"python": "3.13"},
@@ -59,7 +60,10 @@ class HarnessTournamentTests(unittest.TestCase):
             controls={"acceptance_hash": "accept-v1"},
             authority={"ceiling": "A1_INTERNAL"},
         )
-        self.assertTrue(exp.fingerprint)
+        exp_a = HarnessExperimentCompiler.compile(a, implementation_sha256="impl-a", **common)
+        exp_b = HarnessExperimentCompiler.compile(b, implementation_sha256="impl-b", **common)
+        self.assertNotEqual(exp_a.fingerprint, exp_b.fingerprint)
+        self.assertEqual(exp_a.comparison_fingerprint, exp_b.comparison_fingerprint)
 
     def test_value_receipt_keeps_outcome_value_separate_from_latency(self):
         genome = self.genome("model-a", "terminal-v1")
@@ -93,6 +97,22 @@ class HarnessTournamentTests(unittest.TestCase):
         )
         with self.assertRaisesRegex(ValueError, "NEGATIVE_BURDEN_OR_VALUE"):
             outcome.validate()
+
+    def test_comparison_cohort_mismatch_is_not_comparable(self):
+        incumbent = self.genome("model-a", "terminal-v1")
+        challenger = self.genome("model-a", "terminal-v2")
+        outcomes = (
+            self.outcome(incumbent.genome_id, accepted=.9, readback=.9, regression=.01, seconds=100, cost=2, owner=1, tools=10, comparison_fingerprint="cohort-a"),
+            self.outcome(challenger.genome_id, accepted=.95, readback=.95, regression=.01, seconds=60, cost=1, owner=.5, tools=6, comparison_fingerprint="cohort-b"),
+        )
+        verdict = HarnessTournament().compare(
+            outcomes,
+            incumbent_genome_id=incumbent.genome_id,
+            minimum_quality=.7,
+            minimum_reliability=.7,
+        )
+        self.assertFalse(verdict.comparable)
+        self.assertEqual(verdict.reason, "EXPERIMENT_IDENTITY_MISMATCH")
 
     def test_unique_pareto_winner_advances_without_quality_regression(self):
         incumbent = self.genome("model-a", "terminal-v1")
