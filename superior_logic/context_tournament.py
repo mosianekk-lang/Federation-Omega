@@ -3,7 +3,7 @@ from __future__ import annotations
 import hashlib
 import json
 from dataclasses import dataclass
-from typing import Iterable, Mapping, Sequence
+from typing import Iterable, Sequence
 
 
 def _canon(value) -> bytes:
@@ -103,6 +103,8 @@ class ContextTournament:
         missing = tuple(sorted(set(required) - set(by_id)))
         if missing:
             raise ValueError(f"MANDATORY_CONTEXT_MISSING:{','.join(missing)}")
+        if len(required) > max_items:
+            raise ValueError("MANDATORY_CONTEXT_EXCEEDS_ITEM_LIMIT")
 
         selected: list[ContextCandidate] = []
         used = 0
@@ -194,7 +196,13 @@ class ContextPolicyVerdict:
 
 
 class ContextPolicyCourt:
-    """Matched-task context-policy comparison; no superiority from unmatched runs."""
+    """Matched-task Pareto comparison; efficiency cannot compensate for quality regression."""
+
+    @staticmethod
+    def _ratio(incumbent: float, challenger: float) -> float:
+        if challenger == 0:
+            return float("inf") if incumbent > 0 else 1.0
+        return incumbent / challenger
 
     def compare(self, incumbent: ContextOutcome, challenger: ContextOutcome) -> ContextPolicyVerdict:
         incumbent.validate()
@@ -210,19 +218,39 @@ class ContextPolicyCourt:
             or challenger.verified_readback_rate < incumbent.verified_readback_rate
             or challenger.regression_escape_rate > incumbent.regression_escape_rate
         )
-        token_ratio = (
-            incumbent.median_context_tokens / challenger.median_context_tokens
-            if challenger.median_context_tokens > 0
-            else float("inf")
-        )
+        token_ratio = self._ratio(incumbent.median_context_tokens, challenger.median_context_tokens)
         velocity_ratio = incumbent.median_wall_seconds / challenger.median_wall_seconds
         if quality_regression:
             return ContextPolicyVerdict(incumbent.policy_id, True, "QUALITY_OR_READBACK_REGRESSION", True, token_ratio, velocity_ratio)
         if challenger.sample_size < 10 or incumbent.sample_size < 10:
             return ContextPolicyVerdict(None, True, "INSUFFICIENT_PAIRED_SAMPLE", False, token_ratio, velocity_ratio)
-        if token_ratio > 1.0 or velocity_ratio > 1.0:
+
+        challenger_no_worse = (
+            challenger.median_context_tokens <= incumbent.median_context_tokens
+            and challenger.median_wall_seconds <= incumbent.median_wall_seconds
+        )
+        challenger_strictly_better = (
+            challenger.median_context_tokens < incumbent.median_context_tokens
+            or challenger.median_wall_seconds < incumbent.median_wall_seconds
+        )
+        incumbent_no_worse = (
+            incumbent.median_context_tokens <= challenger.median_context_tokens
+            and incumbent.median_wall_seconds <= challenger.median_wall_seconds
+        )
+        incumbent_strictly_better = (
+            incumbent.median_context_tokens < challenger.median_context_tokens
+            or incumbent.median_wall_seconds < challenger.median_wall_seconds
+        )
+        if challenger_no_worse and challenger_strictly_better:
             return ContextPolicyVerdict(challenger.policy_id, True, "CHALLENGER_ADVANCES", False, token_ratio, velocity_ratio)
-        return ContextPolicyVerdict(incumbent.policy_id, True, "KEEP_INCUMBENT", False, token_ratio, velocity_ratio)
+        if incumbent_no_worse and incumbent_strictly_better:
+            return ContextPolicyVerdict(incumbent.policy_id, True, "KEEP_INCUMBENT", False, token_ratio, velocity_ratio)
+        if (
+            challenger.median_context_tokens == incumbent.median_context_tokens
+            and challenger.median_wall_seconds == incumbent.median_wall_seconds
+        ):
+            return ContextPolicyVerdict(incumbent.policy_id, True, "KEEP_INCUMBENT_NO_MATERIAL_GAIN", False, token_ratio, velocity_ratio)
+        return ContextPolicyVerdict(None, True, "PARETO_TRADEOFF", False, token_ratio, velocity_ratio)
 
 
 __all__ = [
