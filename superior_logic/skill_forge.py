@@ -55,6 +55,8 @@ class SkillReplay:
     independent: bool
     regression_free: bool
     evidence_ref: str
+    actor_id: str = ""
+    trust_domain: str = ""
 
 
 @dataclass(frozen=True, slots=True)
@@ -77,8 +79,11 @@ class SkillForge:
     """Form portable skills only from repeated proven trajectories.
 
     V2 hardening adds preconditions, negative examples, verification requirements,
-    expiry and an explicit no-effect-authority inheritance rule. Skill formation
-    never grants provider, repository, IAM, deployment, traffic or spend authority.
+    expiry and explicit no-effect-authority inheritance. The legacy replay evaluator
+    is retained for admitted R1 compatibility; hardened replay promotion adds actor
+    and trust-domain provenance so a same-lane alias cannot self-declare independent.
+    Skill formation never grants provider, repository, IAM, deployment, traffic or
+    spend authority.
     """
 
     def propose(
@@ -105,11 +110,54 @@ class SkillForge:
         return SkillCandidate(_slug(name), description.strip(), steps, missions, refs, "CANDIDATE", _hash(body))
 
     def evaluate(self, skill: SkillCandidate, replays: Iterable[SkillReplay], *, min_independent: int = 2) -> str:
+        """R1-compatible replay evaluation; retained to avoid breaking admitted callers."""
         rows = list(replays)
         good = [row for row in rows if row.passed and row.independent and row.regression_free and row.evidence_ref]
         if any(not row.regression_free for row in rows):
             return "REJECT_REGRESSION"
         return "ADOPT_CANDIDATE" if len(good) >= min_independent else "HOLD_MORE_REPLAY"
+
+    def evaluate_hardened(
+        self,
+        skill: SkillCandidate,
+        replays: Iterable[SkillReplay],
+        *,
+        implementation_actor_id: str,
+        implementation_trust_domain: str,
+        min_independent: int = 2,
+    ) -> str:
+        """V2 replay court requiring provenance-bound independence.
+
+        The boolean ``independent`` remains necessary but is no longer sufficient:
+        a qualifying replay must come from a different actor and trust domain than
+        the implementation lane and must carry evidence. This court evaluates proof
+        only; it grants no effect authority.
+        """
+        actor = implementation_actor_id.strip()
+        trust = implementation_trust_domain.strip()
+        if not actor:
+            raise ValueError("IMPLEMENTATION_ACTOR_REQUIRED")
+        if not trust:
+            raise ValueError("IMPLEMENTATION_TRUST_DOMAIN_REQUIRED")
+        if min_independent < 1:
+            raise ValueError("MIN_INDEPENDENT_REPLAY_INVALID")
+
+        rows = list(replays)
+        if any(not row.regression_free for row in rows):
+            return "REJECT_REGRESSION"
+        good = [
+            row
+            for row in rows
+            if row.passed
+            and row.independent
+            and row.regression_free
+            and bool(row.evidence_ref)
+            and bool(row.actor_id.strip())
+            and bool(row.trust_domain.strip())
+            and row.actor_id != actor
+            and row.trust_domain != trust
+        ]
+        return "ADOPT_CANDIDATE" if len(good) >= min_independent else "HOLD_INDEPENDENT_REPLAY_INCOMPLETE"
 
     def harden(
         self,
