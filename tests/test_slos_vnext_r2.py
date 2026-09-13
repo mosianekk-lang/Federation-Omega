@@ -188,7 +188,19 @@ class EvolutionLabTests(unittest.TestCase):
 
 
 class FinalizationShapeIntegrationTests(unittest.TestCase):
-    def test_blueprint_carries_engineering_shape_without_effect(self):
+    @staticmethod
+    def repository_files():
+        return {"superior_logic/x.py": "def repository_intelligence():\n    pass\n"}
+
+    def compile(self, directive):
+        return SLOSFinalizationKernel().compile(
+            directive,
+            repository_files=self.repository_files(),
+            toolchain={"python": "3.12"},
+            dependencies={},
+        )
+
+    def test_blueprint_carries_engineering_shape_without_effect_authority(self):
         directive = FinalizationDirective(
             mission_id="shape-final",
             base_revision="abc",
@@ -197,14 +209,57 @@ class FinalizationShapeIntegrationTests(unittest.TestCase):
             risk="LOW",
             estimated_tasks=1,
         )
-        blueprint = SLOSFinalizationKernel().compile(
-            directive,
-            repository_files={"superior_logic/x.py": "def repository_intelligence():\n    pass\n"},
-            toolchain={"python": "3.12"},
-            dependencies={},
-        )
-        self.assertIn(blueprint.engineering_shape, {"DIRECT", "PLAN_ACT", "FLEET", "HOLD"})
+        blueprint = self.compile(directive)
+        self.assertEqual(blueprint.engineering_shape, "DIRECT")
+        self.assertTrue(blueprint.mutation_planned)
+        self.assertFalse(blueprint.effect_authority_granted)
+        self.assertIn("ACCEPTANCE_INTEGRITY", blueprint.required_final_proofs)
         self.assertTrue(blueprint.blueprint_sha256)
+
+    def test_hold_shape_compiles_mutation_free_plan(self):
+        directive = FinalizationDirective(
+            mission_id="shape-hold",
+            base_revision="abc",
+            objective="improve repository intelligence",
+            required_capabilities=("repository_intelligence",),
+            risk="HIGH",
+            estimated_tasks=3,
+            external_effects=True,
+            authority_ready=False,
+        )
+        blueprint = self.compile(directive)
+        self.assertEqual(blueprint.engineering_shape, "HOLD")
+        self.assertFalse(blueprint.mutation_planned)
+        self.assertFalse(blueprint.effect_authority_granted)
+
+    def test_direct_and_fleet_shapes_compile_distinct_topologies(self):
+        direct = self.compile(
+            FinalizationDirective(
+                mission_id="shape-direct",
+                base_revision="abc",
+                objective="improve repository intelligence",
+                required_capabilities=("repository_intelligence",),
+                risk="LOW",
+                estimated_tasks=1,
+            )
+        )
+        fleet = self.compile(
+            FinalizationDirective(
+                mission_id="shape-fleet",
+                base_revision="abc",
+                objective="improve repository intelligence",
+                required_capabilities=("repository_intelligence",),
+                risk="CRITICAL",
+                estimated_tasks=7,
+            )
+        )
+        self.assertEqual(direct.engineering_shape, "DIRECT")
+        self.assertEqual(fleet.engineering_shape, "FLEET")
+        self.assertNotEqual(direct.fleet_plan_sha256, fleet.fleet_plan_sha256)
+        self.assertTrue(direct.mutation_planned)
+        self.assertTrue(fleet.mutation_planned)
+        self.assertFalse(direct.effect_authority_granted)
+        self.assertFalse(fleet.effect_authority_granted)
 
 
 if __name__ == "__main__":
