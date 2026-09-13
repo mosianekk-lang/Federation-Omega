@@ -1,6 +1,7 @@
 import unittest
 
 from superior_logic.acceptance_integrity import AcceptanceDomain, AcceptanceIntegrityCourt, AcceptanceWitness
+from superior_logic.engineering_operator import SLOSEngineeringOperator
 from superior_logic.evolution_lab import EvolutionLab
 from superior_logic.finalization_kernel import FinalizationDirective, SLOSFinalizationKernel
 from superior_logic.harness_tournament import HarnessGenome
@@ -50,12 +51,12 @@ class OpportunityAdapterTests(unittest.TestCase):
 
 
 class AcceptanceIntegrityTests(unittest.TestCase):
-    def _witness(self, witness_id, domain, actor, passed=True, relation="INDEPENDENT"):
+    def _witness(self, witness_id, domain, actor, passed=True, relation="INDEPENDENT", trust_domain=None):
         return AcceptanceWitness(
             witness_id=witness_id,
             domain=domain,
             actor_id=actor,
-            trust_domain=f"trust-{actor}",
+            trust_domain=trust_domain or f"trust-{actor}",
             passed=passed,
             evidence_refs=(f"proof:{witness_id}",) if passed else (),
             relation_to_implementation=relation,
@@ -64,6 +65,7 @@ class AcceptanceIntegrityTests(unittest.TestCase):
     def test_implementation_lane_cannot_self_accept(self):
         verdict = AcceptanceIntegrityCourt().evaluate(
             implementation_actor_id="impl",
+            implementation_trust_domain="trust-impl",
             witnesses=(
                 self._witness("t", AcceptanceDomain.TEST, "impl"),
                 self._witness("p", AcceptanceDomain.PROOF, "proof"),
@@ -73,10 +75,35 @@ class AcceptanceIntegrityTests(unittest.TestCase):
         self.assertFalse(verdict.accepted)
         self.assertIn("TEST", verdict.missing_domains)
         self.assertIn("t", verdict.non_independent_witnesses)
+        self.assertFalse(verdict.effect_authority_granted)
+
+    def test_same_trust_domain_aliases_cannot_self_accept(self):
+        verdict = AcceptanceIntegrityCourt().evaluate(
+            implementation_actor_id="impl",
+            implementation_trust_domain="lane-a",
+            witnesses=(
+                self._witness("t", AcceptanceDomain.TEST, "tester-alias", trust_domain="lane-a"),
+                self._witness("p", AcceptanceDomain.PROOF, "proof-alias", trust_domain="lane-a"),
+                self._witness("r", AcceptanceDomain.READBACK, "readback-alias", trust_domain="lane-a"),
+            ),
+        )
+        self.assertFalse(verdict.accepted)
+        self.assertEqual(set(verdict.missing_domains), {"TEST", "PROOF", "READBACK"})
+        self.assertEqual(set(verdict.non_independent_witnesses), {"t", "p", "r"})
+        self.assertEqual(verdict.independent_trust_domains, ())
+
+    def test_implementation_trust_domain_is_required(self):
+        with self.assertRaisesRegex(ValueError, "IMPLEMENTATION_TRUST_DOMAIN_REQUIRED"):
+            AcceptanceIntegrityCourt().evaluate(
+                implementation_actor_id="impl",
+                implementation_trust_domain="",
+                witnesses=(),
+            )
 
     def test_independent_domains_pass(self):
         verdict = AcceptanceIntegrityCourt().evaluate(
             implementation_actor_id="impl",
+            implementation_trust_domain="trust-impl",
             witnesses=(
                 self._witness("t", AcceptanceDomain.TEST, "tester"),
                 self._witness("p", AcceptanceDomain.PROOF, "proof"),
@@ -85,6 +112,46 @@ class AcceptanceIntegrityTests(unittest.TestCase):
         )
         self.assertTrue(verdict.accepted)
         self.assertEqual(verdict.status, "ACCEPTANCE_INTEGRITY_PASSED")
+        self.assertEqual(
+            set(verdict.independent_trust_domains),
+            {"trust-tester", "trust-proof", "trust-readback"},
+        )
+        self.assertFalse(verdict.effect_authority_granted)
+
+    def test_operator_binds_implementation_trust_domain(self):
+        request = {
+            "implementation_actor_id": "impl",
+            "implementation_trust_domain": "lane-impl",
+            "witnesses": [
+                {
+                    "witness_id": "t",
+                    "domain": "TEST",
+                    "actor_id": "tester",
+                    "trust_domain": "lane-test",
+                    "passed": True,
+                    "evidence_refs": ["proof:t"],
+                },
+                {
+                    "witness_id": "p",
+                    "domain": "PROOF",
+                    "actor_id": "proof",
+                    "trust_domain": "lane-proof",
+                    "passed": True,
+                    "evidence_refs": ["proof:p"],
+                },
+                {
+                    "witness_id": "r",
+                    "domain": "READBACK",
+                    "actor_id": "readback",
+                    "trust_domain": "lane-readback",
+                    "passed": True,
+                    "evidence_refs": ["proof:r"],
+                },
+            ],
+        }
+        receipt = SLOSEngineeringOperator().assess_acceptance(request)
+        self.assertEqual(receipt.status, "ACCEPTANCE_INTEGRITY_PASSED")
+        self.assertFalse(receipt.payload["effect_authority_granted"])
 
 
 class EvolutionLabTests(unittest.TestCase):
