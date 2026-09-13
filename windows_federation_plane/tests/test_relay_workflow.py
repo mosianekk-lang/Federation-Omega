@@ -129,6 +129,7 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/node"', self.text)
         self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/mcp"', self.text)
         self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/agent/enroll/start"', self.text)
+        self.assertIn("LOCAL_PAIR_RESPONSE_MISSING", self.text)
         self.assertIn("LOCAL_PAIR_ROUTE_HANDLER_REQUIRED", self.text)
         self.assertIn("PAIRING_GRANT_ID_INVALID", self.text)
         self.assertIn("LOCAL_MCP_FAIL_CLOSED_REQUIRED", self.text)
