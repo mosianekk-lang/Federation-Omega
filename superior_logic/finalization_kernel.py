@@ -203,10 +203,14 @@ class SLOSFinalizationKernel:
             internal=internal_capabilities,
             external=external_capabilities,
         ) if best.residual_gaps else None
+        # Preserve the admitted R1 11-proof ABI. R2 replaces two generic
+        # obligations with stronger, more specific courts rather than appending
+        # two new slots: ENGINEERING_SHAPE subsumes generic CODING_FLEET topology
+        # proof; ACCEPTANCE_INTEGRITY subsumes generic INDEPENDENT_ASSURANCE.
         final_proofs = (
             "SOURCE_ADMISSION", "LEAK_GUARD", "AIRLOCK", "REPOGRAPH", "WORKSPACE_FORGE",
-            "CODING_FLEET", "VERIFICATION_SUPERCOURT", "CAPABILITY_CLOSURE", "ROLLBACK",
-            "SEMANTIC_READBACK", "INDEPENDENT_ASSURANCE", "ENGINEERING_SHAPE", "ACCEPTANCE_INTEGRITY",
+            "ENGINEERING_SHAPE", "VERIFICATION_SUPERCOURT", "CAPABILITY_CLOSURE", "ROLLBACK",
+            "SEMANTIC_READBACK", "ACCEPTANCE_INTEGRITY",
         )
         body = {
             "mission_id": directive.mission_id,
