@@ -133,7 +133,7 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn("PAIRING_GRANT_ID_INVALID", self.text)
         self.assertIn("LOCAL_MCP_FAIL_CLOSED_REQUIRED", self.text)
         self.assertIn('from federation_windows_plane.mcp_service import server_from_env', self.text)
-        for route in ("/agent/enroll/start", "/agent/enroll/complete", "/agent/runtime/poll", "/agent/runtime/complete"):
+        for route in ("/mcp", "/agent/enroll/start", "/agent/enroll/complete", "/agent/runtime/poll", "/agent/runtime/complete"):
             self.assertIn(route, self.text)
         self.assertIn("_custom_starlette_routes", self.text)
         self.assertNotIn("--network host", self.text)
