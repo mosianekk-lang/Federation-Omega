@@ -13,6 +13,7 @@ HEAD = "2" * 40
 
 WOAF_PRODUCTION_PATHS = [
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
+    ".github/workflows/fuse-windows-h1-provider-relay-v1.yml",
     "governance/fuse_windows_execution_plane_v1.json",
     "governance/proofos_omega_policy_extension_woaf_v21.json",
     "windows_federation_plane/src/federation_windows_plane/mcp_service.py",
@@ -39,6 +40,7 @@ class WoafV21ProofOSMappingTests(unittest.TestCase):
         self.assertIn("WOAF_V21", impact.direct_subsystems)
         self.assertFalse(impact.unmapped_production_paths)
         self.assertIn("woaf_v21_source_contract", selected)
+        self.assertIn("woaf_h1_provider_relay_contract", selected)
         self.assertIn("woaf_v21_proofos_mapping", selected)
         self.assertNotIn("full_federation_fallback", selected)
         self.assertFalse(manifest.selector_state["fallback_full_suite_activated"])
@@ -47,8 +49,18 @@ class WoafV21ProofOSMappingTests(unittest.TestCase):
         policy, _, _ = compile_for(WOAF_PRODUCTION_PATHS)
         registered = set(policy.tests)
         self.assertIn("woaf_v21_source_contract", registered)
+        self.assertIn("woaf_h1_provider_relay_contract", registered)
         self.assertIn("woaf_v21_proofos_mapping", registered)
         self.assertIn("full_federation_fallback", registered)
+
+    def test_provider_native_relay_path_selects_bounded_contract_not_global_fallback(self):
+        _, impact, manifest = compile_for([".github/workflows/fuse-windows-h1-provider-relay-v1.yml"])
+        selected = {item.test_id for item in manifest.selected_tests}
+        self.assertEqual(("WOAF_V21",), impact.direct_subsystems)
+        self.assertFalse(impact.unmapped_production_paths)
+        self.assertIn("woaf_h1_provider_relay_contract", selected)
+        self.assertIn("woaf_v21_proofos_mapping", selected)
+        self.assertNotIn("full_federation_fallback", selected)
 
     def test_unknown_production_path_still_fails_safe_to_full_fallback(self):
         _, impact, manifest = compile_for(["future_woaf_unknown/new_runtime.py"])
