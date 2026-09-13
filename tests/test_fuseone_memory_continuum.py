@@ -157,6 +157,13 @@ class MemoryContinuumTests(unittest.TestCase):
         b = restored.context_projection(intent_ids=("INTENT:FUSE-ONE",))
         self.assertEqual([x["memory_id"] for x in a], [x["memory_id"] for x in b])
 
+    def test_17_source_admission_module_is_provider_neutral_stdlib(self):
+        # The canonical memory kernel must not acquire a hidden provider SDK/network dependency at source admission.
+        import federation_consolidation.fuseone_memory_continuum as module
+        source = Path(module.__file__).read_text(encoding="utf-8").lower()
+        forbidden = ("import requests", "from requests", "import openai", "from openai", "google.cloud", "boto3", "anthropic")
+        self.assertFalse(any(token in source for token in forbidden))
+
 
 if __name__ == "__main__":
     unittest.main(verbosity=2)
