@@ -36,6 +36,7 @@
       "subsystems": [
         "FUSEONE_MEMORY_CONTINUUM_V1"
       ],
+      "optional_if_missing": true,
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 120
