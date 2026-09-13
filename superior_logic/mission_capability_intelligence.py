@@ -60,8 +60,7 @@ class ExecutionSurface:
     genome: MachineGenome | None = None
 
     def supports(self, required: Iterable[str]) -> bool:
-        available = set(self.capabilities)
-        return set(required) <= available
+        return set(required) <= set(self.capabilities)
 
     @property
     def machine_native_execution_proven(self) -> bool:
@@ -98,32 +97,26 @@ class ResourcePlan:
 class MissionCapabilityIntelligence:
     """Deterministic no-effect resource/capability preflight.
 
-    This component only ranks declared execution surfaces. It does not discover
-    credentials, install software, dispatch jobs, mutate infrastructure, or grant
-    effect authority. A Windows surface counts as executed only when the caller
-    supplies a current machine-native proof reference at EXECUTION_PROVEN or above.
+    A surface is usable only when capability, authority, currentness and a machine-native
+    execution proof all agree. This component never dispatches work or grants effects.
     """
 
     @staticmethod
     def _rank(surface: ExecutionSurface, request: MissionResourceRequest) -> tuple[int, ...]:
         preferred = len(set(surface.capabilities) & set(request.preferred_capabilities))
-        owner_bonus = 1 if (request.prefer_owner_controlled and surface.owner_controlled) else 0
-        privacy_bonus = 1 if (request.privacy_sensitive and surface.owner_controlled) else 0
+        owner_bonus = 1 if request.prefer_owner_controlled and surface.owner_controlled else 0
+        privacy_bonus = 1 if request.privacy_sensitive and surface.owner_controlled else 0
         return (
+            int(surface.readiness),
             owner_bonus,
             privacy_bonus,
-            int(surface.readiness),
             preferred,
             surface.throughput_rank,
             -surface.latency_rank,
             -surface.cost_rank,
         )
 
-    def compile(
-        self,
-        request: MissionResourceRequest,
-        surfaces: Iterable[ExecutionSurface],
-    ) -> ResourcePlan:
+    def compile(self, request: MissionResourceRequest, surfaces: Iterable[ExecutionSurface]) -> ResourcePlan:
         if not request.mission_id.strip():
             raise ValueError("mission_id required")
         required = tuple(sorted(set(request.required_capabilities)))
@@ -136,35 +129,21 @@ class MissionCapabilityIntelligence:
         qualified: list[ExecutionSurface] = []
         reasons: list[str] = []
         for row in rows:
-            if not row.current:
+            eligible = (
+                row.current
+                and row.supports(required)
+                and required_auth <= set(row.authority_actions)
+                and row.machine_native_execution_proven
+            )
+            if eligible:
+                qualified.append(row)
+            else:
                 rejected.append(row.surface_id)
-                continue
-            if not row.supports(required):
-                rejected.append(row.surface_id)
-                continue
-            if not required_auth <= set(row.authority_actions):
-                rejected.append(row.surface_id)
-                continue
-            if row.readiness < SurfaceReadiness.EXECUTION_PROVEN or not row.proof_ref.strip():
-                rejected.append(row.surface_id)
-                continue
-            qualified.append(row)
 
         qualified.sort(key=lambda row: (self._rank(row, request), row.surface_id), reverse=True)
-        selected: tuple[ExecutionSurface, ...] = tuple(qualified[:1])
-
-        owner_heavy = any(
-            row.owner_controlled
-            and row.machine_native_execution_proven
-            and row.supports(required)
-            for row in rows
-            if row.current
-        )
-        windows_proven = any(
-            row.surface_type.upper().startswith("WINDOWS")
-            and row.machine_native_execution_proven
-            for row in selected
-        )
+        selected = tuple(qualified[:1])
+        owner_heavy = any(row.owner_controlled for row in qualified)
+        windows_proven = any(row.surface_type.upper().startswith("WINDOWS") for row in selected)
 
         gaps: list[str] = []
         if not selected:
