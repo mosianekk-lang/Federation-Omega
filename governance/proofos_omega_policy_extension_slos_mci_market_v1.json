@@ -1,0 +1,63 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "superior_logic/mission_capability_intelligence.py",
+        "superior_logic/market_composite_benchmark.py",
+        "superior_logic/engineering_operator.py",
+        "governance/proofos_omega_policy_extension_slos_mci_market_v1.json"
+      ],
+      "reason": "SLOS_MISSION_CAPABILITY_RESOURCE_PREFLIGHT_AND_MARKET_COMPOSITE_EVALUATION_NO_EFFECT"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "SUPERIOR_LOGIC",
+      "patterns": [
+        "superior_logic/mission_capability_intelligence.py",
+        "superior_logic/market_composite_benchmark.py",
+        "superior_logic/engineering_operator.py",
+        "governance/proofos_omega_policy_extension_slos_mci_market_v1.json",
+        "tests/test_slos_mission_capability_intelligence_v1.py",
+        "tests/test_slos_market_composite_benchmark_v1.py"
+      ],
+      "depends_on": ["FEDERATION_CORE", "AO_HARMONIC"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "slos_mission_capability_intelligence_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_mission_capability_intelligence_v1.py",
+      "patterns": [
+        "superior_logic/mission_capability_intelligence.py",
+        "superior_logic/engineering_operator.py",
+        "governance/proofos_omega_policy_extension_slos_mci_market_v1.json",
+        "tests/test_slos_mission_capability_intelligence_v1.py"
+      ],
+      "subsystems": ["SUPERIOR_LOGIC"],
+      "failure_class": "RESOURCE_PLACEMENT_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_market_composite_benchmark_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_market_composite_benchmark_v1.py",
+      "patterns": [
+        "superior_logic/market_composite_benchmark.py",
+        "superior_logic/engineering_operator.py",
+        "governance/proofos_omega_policy_extension_slos_mci_market_v1.json",
+        "tests/test_slos_market_composite_benchmark_v1.py"
+      ],
+      "subsystems": ["SUPERIOR_LOGIC"],
+      "failure_class": "BENCHMARK_INTEGRITY_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
