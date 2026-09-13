@@ -33,7 +33,12 @@ class ContextCandidate:
     evidence_refs: tuple[str, ...] = ()
 
     def validate(self) -> None:
-        if not self.candidate_id.strip() or not self.source_class.strip() or not self.source_ref.strip():
+        if (
+            not self.candidate_id.strip()
+            or not self.source_class.strip()
+            or not self.source_ref.strip()
+            or not self.revision.strip()
+        ):
             raise ValueError("CONTEXT_IDENTITY_REQUIRED")
         if self.token_cost < 0:
             raise ValueError("NEGATIVE_CONTEXT_COST")
@@ -165,6 +170,7 @@ class ContextOutcome:
     policy_id: str
     task_set_id: str
     acceptance_hash: str
+    comparison_fingerprint: str
     sample_size: int
     accepted_task_rate: float
     verified_readback_rate: float
@@ -174,7 +180,12 @@ class ContextOutcome:
     evidence_refs: tuple[str, ...]
 
     def validate(self) -> None:
-        if not self.policy_id or not self.task_set_id or not self.acceptance_hash:
+        if (
+            not self.policy_id
+            or not self.task_set_id
+            or not self.acceptance_hash
+            or not self.comparison_fingerprint
+        ):
             raise ValueError("CONTEXT_OUTCOME_IDENTITY_REQUIRED")
         if self.sample_size < 1 or self.median_context_tokens < 0 or self.median_wall_seconds <= 0:
             raise ValueError("CONTEXT_OUTCOME_METRICS_INVALID")
@@ -210,6 +221,7 @@ class ContextPolicyCourt:
         comparable = (
             incumbent.task_set_id == challenger.task_set_id
             and incumbent.acceptance_hash == challenger.acceptance_hash
+            and incumbent.comparison_fingerprint == challenger.comparison_fingerprint
         )
         if not comparable:
             return ContextPolicyVerdict(None, False, "EXPERIMENT_IDENTITY_MISMATCH", False, 0.0, 0.0)
