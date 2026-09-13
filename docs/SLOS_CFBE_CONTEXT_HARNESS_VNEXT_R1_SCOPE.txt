@@ -1,0 +1,4 @@
+context_tournament.py
+harness_tournament.py
+test_slos_context_tournament_vnext.py
+test_slos_harness_tournament_vnext.py
