@@ -94,12 +94,19 @@ class OperatorTests(unittest.TestCase):
                 sys.modules["superior_logic.codeforge"] = old
 
     def test_tenx_requires_codeforge_when_absent(self):
-        old = sys.modules.pop("superior_logic.codeforge", None)
+        # Simulate a genuinely unavailable module even when codeforge.py exists
+        # in the consolidated candidate. A None sys.modules entry makes Python
+        # fail the relative import instead of re-importing the on-disk module.
+        marker = object()
+        old = sys.modules.get("superior_logic.codeforge", marker)
+        sys.modules["superior_logic.codeforge"] = None
         try:
-            with self.assertRaises(RuntimeError):
+            with self.assertRaisesRegex(RuntimeError, "CODEFORGE_REQUIRED_FOR_TENX_COURT"):
                 SLOSEngineeringOperator().assess_tenx({}, {})
         finally:
-            if old is not None:
+            if old is marker:
+                sys.modules.pop("superior_logic.codeforge", None)
+            else:
                 sys.modules["superior_logic.codeforge"] = old
 
 
