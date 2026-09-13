@@ -181,6 +181,7 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     provider_mutation_allowed = set(policy.get("provider_mutation_workflow_allowlist", []))
     actions_write_allowed = set(policy.get("actions_write_workflow_allowlist", []))
     statuses_write_allowed = set(policy.get("statuses_write_workflow_allowlist", []))
+    machine_dispatch_allowed = set(policy.get("provider_mutation_machine_dispatch_workflow_allowlist", []))
 
     if path not in active:
         findings.append(Finding(
@@ -223,15 +224,33 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
                 "HIGH",
                 "leased provider-mutation gateway contains no recognized provider mutation",
             ))
-        expected_title = policy.get("provider_mutation_exact_issue_titles", {}).get(path)
-        owner_guard = "github.event.issue.author_association == 'OWNER'"
-        if not expected_title or expected_title not in text or owner_guard not in text:
-            findings.append(Finding(
-                path,
-                "PROVIDER_MUTATION_TRIGGER_DRIFT",
-                "CRITICAL",
-                "provider mutation must be bound to the exact leased issue title and OWNER association",
-            ))
+        if path in machine_dispatch_allowed:
+            observed_events = workflow_events(text)
+            if observed_events != {"workflow_dispatch"}:
+                findings.append(Finding(
+                    path,
+                    "PROVIDER_MUTATION_MACHINE_TRIGGER_DRIFT",
+                    "CRITICAL",
+                    "machine-dispatched provider mutation gateway must expose only workflow_dispatch",
+                ))
+            for marker in policy.get("provider_mutation_machine_dispatch_required_markers", {}).get(path, []):
+                if marker.lower() not in lower:
+                    findings.append(Finding(
+                        path,
+                        "PROVIDER_MUTATION_MACHINE_GUARD_MISSING",
+                        "CRITICAL",
+                        f"machine-dispatched provider mutation workflow is missing required guard marker: {marker}",
+                    ))
+        else:
+            expected_title = policy.get("provider_mutation_exact_issue_titles", {}).get(path)
+            owner_guard = "github.event.issue.author_association == 'OWNER'"
+            if not expected_title or expected_title not in text or owner_guard not in text:
+                findings.append(Finding(
+                    path,
+                    "PROVIDER_MUTATION_TRIGGER_DRIFT",
+                    "CRITICAL",
+                    "provider mutation must be bound to the exact leased issue title and OWNER association",
+                ))
         if not has_oidc_write(text):
             findings.append(Finding(
                 path,
@@ -473,3 +492,4 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
+

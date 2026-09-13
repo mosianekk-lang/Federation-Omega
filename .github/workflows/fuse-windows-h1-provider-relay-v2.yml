@@ -1,0 +1,288 @@
+name: FUSE Windows H1 Provider Relay v2
+
+on:
+  workflow_dispatch:
+    inputs:
+      packet_id:
+        description: Exact Mission Bus packet
+        required: true
+        type: string
+      source_sha:
+        description: Exact admitted F258 source commit
+        required: true
+        type: string
+      provider_passport_json:
+        description: Redacted action-specific provider passport
+        required: true
+        type: string
+      provider_passport_sha256:
+        description: SHA-256 of the exact passport JSON bytes
+        required: true
+        type: string
+
+permissions:
+  contents: read
+  id-token: write
+
+concurrency:
+  group: fuse-windows-h1-provider-relay-v2
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  REGION: africa-south1
+  PRODUCTION_SERVICE: fuse-windows-relay
+  ARTIFACT_REPOSITORY: federation-omega
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  WINDOWS_POLICY_EPOCH: FUSE_WINDOWS_H1_TPM_PAIRING_V1
+  EXPECTED_PACKET_ID: PKT-V5-WINDOWS-H1-TPM-PAIRING-PROVIDER-001
+  ADMITTED_SOURCE_SHA: 8125c6997830c97649c379d68e957da0afcaa091
+
+jobs:
+  provider-relay-court:
+    runs-on: ubuntu-24.04
+    timeout-minutes: 30
+    steps:
+      - name: Checkout exact admitted source without write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ inputs.source_sha }}
+          persist-credentials: false
+
+      - name: Validate exact action-specific provider passport
+        env:
+          PACKET_ID: ${{ inputs.packet_id }}
+          SOURCE_SHA: ${{ inputs.source_sha }}
+          PASSPORT_JSON: ${{ inputs.provider_passport_json }}
+          PASSPORT_SHA256: ${{ inputs.provider_passport_sha256 }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$PACKET_ID" = "$EXPECTED_PACKET_ID"
+          test "$SOURCE_SHA" = "$ADMITTED_SOURCE_SHA"
+          test "$(git rev-parse HEAD)" = "$ADMITTED_SOURCE_SHA"
+          test "$(printf '%s' "$PASSPORT_JSON" | sha256sum | cut -d' ' -f1)" = "$PASSPORT_SHA256"
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import os
+          import re
+
+          p = json.loads(os.environ["PASSPORT_JSON"])
+          exact = {
+              "schema": "FUSE-SURFACE-CAPABILITY-PASSPORT-V1",
+              "packet_id": os.environ["PACKET_ID"],
+              "action": "FUSE_WINDOWS_H1_PROVIDER_RELAY_V2",
+              "source_sha": os.environ["SOURCE_SHA"],
+              "project_id": os.environ["PROJECT_ID"],
+              "region": os.environ["REGION"],
+              "authority_class": "A2_REVERSIBLE_ISOLATED_CANARY",
+              "provider_effect_authorized": True,
+              "rollback_required": True,
+              "public_ingress": False,
+              "iam_mutation": False,
+              "customer_traffic": False,
+              "gcp_heavy_compute": "DENY",
+              "max_cpu": 1,
+              "max_memory_mib": 512,
+              "max_instances": 1,
+          }
+          for key, value in exact.items():
+              if p.get(key) != value:
+                  raise SystemExit(f"PASSPORT_FIELD_MISMATCH:{key}")
+          if not re.fullmatch(r"[0-9a-f]{64}", os.environ["PASSPORT_SHA256"]):
+              raise SystemExit("PASSPORT_SHA256_INVALID")
+          parse = lambda s: dt.datetime.fromisoformat(s.replace("Z", "+00:00"))
+          now = dt.datetime.now(dt.timezone.utc)
+          issued, expires = parse(p["issued_at"]), parse(p["expires_at"])
+          if not (issued <= now < expires <= issued + dt.timedelta(hours=1)):
+              raise SystemExit("PASSPORT_TIME_WINDOW_INVALID")
+          PY
+          echo "PASSPORT_ID=$PASSPORT_SHA256" >> "$GITHUB_ENV"
+          echo "PASSPORT_VALIDATED=true" >> "$GITHUB_ENV"
+
+      - name: Authenticate canonical keyless deployer
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud client
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Provider identity and traffic prestate
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')" = "$PROJECT_NUMBER"
+          gcloud artifacts repositories describe "$ARTIFACT_REPOSITORY" --project "$PROJECT_ID" --location "$REGION" --format='value(name)' >/dev/null
+          gcloud firestore databases describe --database='(default)' --project "$PROJECT_ID" --format='value(name)' >/dev/null
+          gcloud iam service-accounts describe "$RUNTIME_SA" --project "$PROJECT_ID" --format='value(email)' >/dev/null
+          CANARY_SERVICE="fuse-windows-h1-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          if gcloud run services describe "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            echo "CANARY_NAME_COLLISION:$CANARY_SERVICE" >&2
+            exit 61
+          fi
+          if gcloud run services describe "$PRODUCTION_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='json(status.traffic)' > /tmp/production-before.json 2>/dev/null; then
+            echo "PRODUCTION_SERVICE_PRESENT=true" >> "$GITHUB_ENV"
+          else
+            printf '{"state":"ABSENT"}\n' > /tmp/production-before.json
+            echo "PRODUCTION_SERVICE_PRESENT=false" >> "$GITHUB_ENV"
+          fi
+          echo "PRODUCTION_BEFORE_SHA256=$(sha256sum /tmp/production-before.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "CANARY_SERVICE=$CANARY_SERVICE" >> "$GITHUB_ENV"
+          echo "PROVIDER_PREREQS_QUALIFIED=true" >> "$GITHUB_ENV"
+
+      - name: Build exact admitted source on GitHub runner and publish immutable image
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$ADMITTED_SOURCE_SHA"
+          gcloud auth configure-docker "$REGION-docker.pkg.dev" --quiet
+          IMAGE="$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-windows-relay:h1-$ADMITTED_SOURCE_SHA-${GITHUB_RUN_ID}"
+          docker build --file windows_federation_plane/Dockerfile --tag "$IMAGE" windows_federation_plane
+          docker push "$IMAGE"
+          DIGEST="$(gcloud artifacts docker images describe "$IMAGE" --project "$PROJECT_ID" --format='value(image_summary.digest)')"
+          test -n "$DIGEST"
+          echo "IMAGE_DIGEST_URI=$REGION-docker.pkg.dev/$PROJECT_ID/$ARTIFACT_REPOSITORY/fuse-windows-relay@$DIGEST" >> "$GITHUB_ENV"
+          echo "VERIFIED_IMAGE_DIGEST=$DIGEST" >> "$GITHUB_ENV"
+          echo "ARTIFACT_REGISTRY_PUSH_PERFORMED=true" >> "$GITHUB_ENV"
+
+      - name: Deploy unique internal-only authenticated canary
+        shell: bash
+        run: |
+          set -euo pipefail
+          ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY,FUSE_WINDOWS_SOURCE_EPOCH=$ADMITTED_SOURCE_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"
+          gcloud run deploy "$CANARY_SERVICE" \
+            --project "$PROJECT_ID" \
+            --region "$REGION" \
+            --image "$IMAGE_DIGEST_URI" \
+            --service-account "$RUNTIME_SA" \
+            --port 8080 \
+            --cpu 1 \
+            --memory 512Mi \
+            --min 0 \
+            --max 1 \
+            --concurrency 20 \
+            --ingress internal \
+            --no-default-url \
+            --set-env-vars="$ENVVARS" \
+            --quiet
+          REVISION="$(gcloud run services describe "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='value(status.latestReadyRevisionName)')"
+          test -n "$REVISION"
+          echo "CANARY_REVISION=$REVISION" >> "$GITHUB_ENV"
+          echo "CLOUD_RUN_DEPLOY_PERFORMED=true" >> "$GITHUB_ENV"
+
+      - name: Authenticated provider semantic court
+        shell: bash
+        run: |
+          set -euo pipefail
+          PORT=18082
+          gcloud run services proxy "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" --port "$PORT" >/tmp/h1-proxy.log 2>&1 &
+          PROXY_PID=$!
+          cleanup_proxy() { kill "$PROXY_PID" >/dev/null 2>&1 || true; wait "$PROXY_PID" >/dev/null 2>&1 || true; }
+          trap cleanup_proxy EXIT
+          HEALTH_CODE=000
+          for _ in $(seq 1 18); do
+            HEALTH_CODE="$(curl --silent --show-error --connect-timeout 3 --max-time 8 --output /tmp/h1-health.json --write-out '%{http_code}' "http://127.0.0.1:$PORT/healthz" || true)"
+            [[ "$HEALTH_CODE" == 200 ]] && break
+            sleep 3
+          done
+          test "$HEALTH_CODE" = 200
+          python3 -c 'import json; d=json.load(open("/tmp/h1-health.json")); assert d.get("status")=="ok" and d.get("device_auth")=="ECDSA_P256"'
+          NODE_CODE="$(curl --silent --show-error --output /tmp/h1-node.html --write-out '%{http_code}' "http://127.0.0.1:$PORT/node")"
+          test "$NODE_CODE" = 200
+          grep -F "CONNECT THIS PC" /tmp/h1-node.html >/dev/null
+          MCP_CODE="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$PORT/mcp")"
+          case "$MCP_CODE" in 401|403|404) ;; *) exit 71 ;; esac
+          PAIR_CODE="$(curl --silent -X POST -H 'content-type: application/json' -d '{}' --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$PORT/agent/enroll/start")"
+          case "$PAIR_CODE" in 400|401|403) ;; *) exit 72 ;; esac
+          echo "HEALTH_CODE=$HEALTH_CODE" >> "$GITHUB_ENV"
+          echo "NODE_CODE=$NODE_CODE" >> "$GITHUB_ENV"
+          echo "MCP_CODE=$MCP_CODE" >> "$GITHUB_ENV"
+          echo "PAIR_CODE=$PAIR_CODE" >> "$GITHUB_ENV"
+          echo "HEALTH_SHA256=$(sha256sum /tmp/h1-health.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "NODE_SHA256=$(sha256sum /tmp/h1-node.html | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "RELAY_PROVIDER_VERIFIED=true" >> "$GITHUB_ENV"
+
+      - name: Delete isolated canary and verify production traffic invariance
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          if [[ -n "${CANARY_SERVICE:-}" ]] && gcloud run services describe "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            gcloud run services delete "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" --quiet
+          fi
+          if [[ -n "${CANARY_SERVICE:-}" ]] && gcloud run services describe "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" >/dev/null 2>&1; then
+            echo "CANARY_CLEANUP_FAILED" >&2
+            exit 81
+          fi
+          if gcloud run services describe "$PRODUCTION_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format='json(status.traffic)' > /tmp/production-after.json 2>/dev/null; then
+            :
+          else
+            printf '{"state":"ABSENT"}\n' > /tmp/production-after.json
+          fi
+          AFTER="$(sha256sum /tmp/production-after.json | cut -d' ' -f1)"
+          test "$AFTER" = "$PRODUCTION_BEFORE_SHA256"
+          echo "PRODUCTION_AFTER_SHA256=$AFTER" >> "$GITHUB_ENV"
+          echo "PRODUCTION_TRAFFIC_UNCHANGED=true" >> "$GITHUB_ENV"
+          echo "CANARY_CLEANUP_VERIFIED=true" >> "$GITHUB_ENV"
+
+      - name: Emit redacted provider receipt
+        if: always()
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/h1-provider-receipt
+          python3 - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          truth=lambda n: os.environ.get(n,"").lower()=="true"
+          r={
+            "schema":"FUSE-WINDOWS-H1-PROVIDER-RECEIPT-V2",
+            "packet_id":os.environ["EXPECTED_PACKET_ID"],
+            "passport_sha256":os.environ.get("PASSPORT_ID"),
+            "source_sha":os.environ["ADMITTED_SOURCE_SHA"],
+            "image_digest":os.environ.get("VERIFIED_IMAGE_DIGEST"),
+            "canary_service":os.environ.get("CANARY_SERVICE"),
+            "canary_revision":os.environ.get("CANARY_REVISION"),
+            "provider_prereqs_qualified":truth("PROVIDER_PREREQS_QUALIFIED"),
+            "relay_provider_verified":truth("RELAY_PROVIDER_VERIFIED"),
+            "production_before_sha256":os.environ.get("PRODUCTION_BEFORE_SHA256"),
+            "production_after_sha256":os.environ.get("PRODUCTION_AFTER_SHA256"),
+            "production_traffic_unchanged":truth("PRODUCTION_TRAFFIC_UNCHANGED"),
+            "canary_cleanup_verified":truth("CANARY_CLEANUP_VERIFIED"),
+            "health_code":os.environ.get("HEALTH_CODE"),
+            "node_code":os.environ.get("NODE_CODE"),
+            "mcp_code":os.environ.get("MCP_CODE"),
+            "pair_code":os.environ.get("PAIR_CODE"),
+            "health_sha256":os.environ.get("HEALTH_SHA256"),
+            "node_sha256":os.environ.get("NODE_SHA256"),
+            "gcp_heavy_compute":"DENY",
+            "heavy_compute_performed":False,
+            "public_ingress":False,
+            "iam_mutation_performed":False,
+            "customer_traffic_effect":False,
+            "secret_value_recorded":False,
+            "recorded_at_utc":datetime.now(timezone.utc).isoformat(),
+          }
+          r["receipt_sha256"]=hashlib.sha256(json.dumps(r,sort_keys=True,separators=(",",":")).encode()).hexdigest()
+          open("/tmp/h1-provider-receipt/receipt.json","w",encoding="utf-8").write(json.dumps(r,indent=2,sort_keys=True)+"\n")
+          PY
+
+      - name: Upload provider receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-windows-h1-provider-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/h1-provider-receipt/receipt.json
+          if-no-files-found: error
+          retention-days: 30
