@@ -1,7 +1,8 @@
 from __future__ import annotations
 
-import hashlib, json
-from dataclasses import asdict, dataclass
+import hashlib
+import json
+from dataclasses import dataclass
 from typing import Iterable, Mapping
 
 from .architecture_genome import ArchitectureGenome, ArchitecturePattern, ArchitectureRequirement, core_ai_patterns
@@ -15,10 +16,11 @@ from .engineering_runtime import (
     SpecialistRole,
     WorkspaceMode,
 )
+from .opportunity_adapter import EngineeringOpportunityAdapter, MissionProfile
 
 
-def _sha(v):
-    return hashlib.sha256(json.dumps(v, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
+def _sha(value):
+    return hashlib.sha256(json.dumps(value, sort_keys=True, separators=(",", ":"), default=str).encode()).hexdigest()
 
 
 @dataclass(frozen=True, slots=True)
@@ -29,6 +31,11 @@ class FinalizationDirective:
     required_capabilities: tuple[str, ...]
     optional_capabilities: tuple[str, ...] = ()
     risk: str = "HIGH"
+    unknown_count: int = 0
+    estimated_tasks: int = 0
+    external_effects: bool = False
+    authority_ready: bool = True
+    independent_verification_required: bool = True
 
 
 @dataclass(frozen=True, slots=True)
@@ -43,10 +50,16 @@ class FinalizationBlueprint:
     closure_residual: tuple[str, ...]
     required_final_proofs: tuple[str, ...]
     blueprint_sha256: str
+    engineering_shape: str = "PLAN_ACT"
 
 
 class SLOSFinalizationKernel:
-    """Compiles one engineering mission across perception, architecture, workspace, fleet, closure and final proof."""
+    """Compile one engineering mission across perception, selection, execution shape and proof.
+
+    The kernel remains a no-effect compiler. vNext R2 adds explicit engineering-shape
+    selection while preserving ArchitectureGenome, RepoGraph, workspace, fleet,
+    capability-closure and existing proof authorities.
+    """
 
     ENGINEERING_PATTERNS = (
         ArchitecturePattern("REPOGRAPH_ENGINE", ("repository_intelligence", "impact_analysis"), .85, .15, .35, .95, ("INDEX",)),
@@ -54,6 +67,12 @@ class SLOSFinalizationKernel:
         ArchitecturePattern("CONFLICT_SAFE_CODING_FLEET", ("coding_fleet", "parallelism"), .80, .20, .45, .90, ("SCHEDULER",)),
         ArchitecturePattern("VERIFICATION_SUPERCOURT", ("verification_supercourt", "semantic_readback"), .90, .10, .40, .95, ("ASSURANCE",)),
         ArchitecturePattern("AUTONOMOUS_CAPABILITY_CLOSURE", ("capability_closure", "capability_discovery"), .80, .20, .45, .90, ("FOUNDRY",)),
+        ArchitecturePattern("CONTEXT_TOURNAMENT", ("context_selection", "context_budgeting"), .85, .10, .25, .95, ("CONTEXT",)),
+        ArchitecturePattern("HARNESS_TOURNAMENT", ("harness_selection", "paired_evaluation"), .85, .10, .30, .95, ("EVALUATION",)),
+        ArchitecturePattern("EVOLUTION_LAB", ("evolution_lab", "challenger_generation"), .80, .15, .30, .95, ("EXPERIMENT",)),
+        ArchitecturePattern("ENGINEERING_OPPORTUNITY_ADAPTER", ("engineering_shape", "opportunity_ranking"), .90, .10, .20, .95, ("PLANNER",)),
+        ArchitecturePattern("ACCEPTANCE_INTEGRITY", ("acceptance_integrity", "independent_acceptance"), .95, .05, .20, .95, ("ASSURANCE",)),
+        ArchitecturePattern("SKILLFORGE_V2", ("skill_formation", "skill_replay", "skill_expiry"), .85, .10, .25, .95, ("LEARNING",)),
     )
 
     def compile(
@@ -81,6 +100,23 @@ class SLOSFinalizationKernel:
             raise ValueError("no architecture option")
         best = options[0]
         target_paths = RepoGraph().ranked_context(graph, directive.objective, limit=8)
+
+        inferred_subsystems = tuple(sorted({path.split("/", 1)[0] for path in target_paths if path}))
+        estimated_tasks = directive.estimated_tasks if directive.estimated_tasks > 0 else max(1, min(8, len(target_paths) or 1))
+        shape = EngineeringOpportunityAdapter().choose_shape(
+            MissionProfile(
+                mission_id=directive.mission_id,
+                changed_paths=tuple(target_paths),
+                subsystems=inferred_subsystems,
+                risk=directive.risk.upper(),
+                unknown_count=max(directive.unknown_count, len(best.residual_gaps)),
+                estimated_tasks=estimated_tasks,
+                external_effects=directive.external_effects,
+                authority_ready=directive.authority_ready,
+                independent_verification_required=directive.independent_verification_required,
+            )
+        )
+
         workspace = PreparedWorkspaceForge().plan(
             base_revision=directive.base_revision,
             repo_graph_sha256=graph.graph_sha256,
@@ -113,6 +149,7 @@ class SLOSFinalizationKernel:
             "repo": graph.graph_sha256,
             "architecture": best.pattern_ids,
             "residual": best.residual_gaps,
+            "engineering_shape": shape.shape.value,
             "workspace": workspace.workspace_id,
             "fleet": fleet.plan_sha256,
             "closure": closure.action.value if closure else "NOT_REQUIRED",
@@ -120,14 +157,15 @@ class SLOSFinalizationKernel:
             "proofs": final_proofs,
         }
         return FinalizationBlueprint(
-            directive.mission_id,
-            graph.graph_sha256,
-            best.pattern_ids,
-            best.residual_gaps,
-            workspace.workspace_id,
-            fleet.plan_sha256,
-            closure.action.value if closure else "NOT_REQUIRED",
-            closure.residual if closure else (),
-            final_proofs,
-            _sha(body),
+            mission_id=directive.mission_id,
+            repo_graph_sha256=graph.graph_sha256,
+            architecture_patterns=best.pattern_ids,
+            architecture_residual=best.residual_gaps,
+            workspace_id=workspace.workspace_id,
+            fleet_plan_sha256=fleet.plan_sha256,
+            closure_action=closure.action.value if closure else "NOT_REQUIRED",
+            closure_residual=closure.residual if closure else (),
+            required_final_proofs=final_proofs,
+            blueprint_sha256=_sha(body),
+            engineering_shape=shape.shape.value,
         )
