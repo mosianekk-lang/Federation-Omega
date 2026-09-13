@@ -1,15 +1,17 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "risk_rules": [
     {
       "risk": "R2_SHARED",
       "patterns": [
         "superior_logic/codeforge.py",
+        "superior_logic/architecture_genome.py",
+        "superior_logic/skill_forge.py",
         "governance/SLOS_CFBE_CODEFORGE_10X_V1.md",
         "governance/proofos_omega_policy_extension_slos_codeforge_v1.json"
       ],
-      "reason": "SLOS_CODEFORGE_SHARED_ENGINEERING_INTELLIGENCE_AND_CAPABILITY_ACQUISITION"
+      "reason": "SLOS_CODEFORGE_SHARED_ENGINEERING_INTELLIGENCE_ARCHITECTURE_SELECTION_SKILL_FORMATION_AND_CAPABILITY_ACQUISITION"
     }
   ],
   "subsystem_rules": [
@@ -17,9 +19,12 @@
       "subsystem": "SUPERIOR_LOGIC",
       "patterns": [
         "superior_logic/codeforge.py",
+        "superior_logic/architecture_genome.py",
+        "superior_logic/skill_forge.py",
         "governance/SLOS_CFBE_CODEFORGE_10X_V1.md",
         "governance/proofos_omega_policy_extension_slos_codeforge_v1.json",
-        "tests/test_slos_codeforge_v1.py"
+        "tests/test_slos_codeforge_v1.py",
+        "tests/test_slos_architecture_skill_v1.py"
       ],
       "depends_on": ["FEDERATION_CORE", "AO_HARMONIC"]
     }
@@ -35,6 +40,22 @@
         "governance/SLOS_CFBE_CODEFORGE_10X_V1.md",
         "governance/proofos_omega_policy_extension_slos_codeforge_v1.json",
         "tests/test_slos_codeforge_v1.py"
+      ],
+      "subsystems": ["SUPERIOR_LOGIC"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_architecture_skill_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_architecture_skill_v1.py",
+      "patterns": [
+        "superior_logic/architecture_genome.py",
+        "superior_logic/skill_forge.py",
+        "governance/SLOS_CFBE_CODEFORGE_10X_V1.md",
+        "governance/proofos_omega_policy_extension_slos_codeforge_v1.json",
+        "tests/test_slos_architecture_skill_v1.py"
       ],
       "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
