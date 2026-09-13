@@ -11,18 +11,36 @@ from superior_logic.context_tournament import (
 
 
 class ContextTournamentTests(unittest.TestCase):
-    def candidate(self, cid: str, tokens: int, relevance: float, uniqueness: float = .5):
+    def candidate(self, cid: str, tokens: int, relevance: float, uniqueness: float = .5, revision: str = "abc123"):
         return ContextCandidate(
             candidate_id=cid,
             source_class="REPOGRAPH",
             source_ref=f"repo:{cid}",
-            revision="abc123",
+            revision=revision,
             token_cost=tokens,
             relevance=relevance,
             uniqueness=uniqueness,
             proof_strength=.9,
             freshness=1.0,
             evidence_refs=(f"proof:{cid}",),
+        )
+
+    def outcome(self, policy: str, *, task_set: str = "tasks", acceptance: str = "accept",
+                cohort: str = "cohort-v1", sample: int = 20, accepted: float = .9,
+                readback: float = .9, regression: float = 0.0, tokens: float = 1000,
+                seconds: float = 10):
+        return ContextOutcome(
+            policy,
+            task_set,
+            acceptance,
+            cohort,
+            sample,
+            accepted,
+            readback,
+            regression,
+            tokens,
+            seconds,
+            (f"proof:{policy}",),
         )
 
     def test_budgeted_selection_is_deterministic(self):
@@ -37,6 +55,10 @@ class ContextTournamentTests(unittest.TestCase):
         self.assertEqual(first.selected_ids, ("a", "b"))
         self.assertEqual(first.selection_sha256, second.selection_sha256)
         self.assertLessEqual(first.total_tokens, 1000)
+
+    def test_context_revision_is_required(self):
+        with self.assertRaisesRegex(ValueError, "CONTEXT_IDENTITY_REQUIRED"):
+            self.candidate("a", 100, .9, revision="").validate()
 
     def test_mandatory_context_fails_closed_when_budget_too_small(self):
         with self.assertRaisesRegex(ValueError, "MANDATORY_CONTEXT_EXCEEDS_BUDGET"):
@@ -57,29 +79,36 @@ class ContextTournamentTests(unittest.TestCase):
             )
 
     def test_quality_regression_blocks_context_challenger(self):
-        incumbent = ContextOutcome("inc", "tasks", "accept", 20, .9, .95, .01, 10000, 100, ("i",))
-        challenger = ContextOutcome("new", "tasks", "accept", 20, .85, .95, .01, 4000, 60, ("c",))
+        incumbent = self.outcome("inc", accepted=.9, readback=.95, regression=.01, tokens=10000, seconds=100)
+        challenger = self.outcome("new", accepted=.85, readback=.95, regression=.01, tokens=4000, seconds=60)
         verdict = ContextPolicyCourt().compare(incumbent, challenger)
         self.assertEqual(verdict.winner, "inc")
         self.assertTrue(verdict.quality_regression)
 
     def test_identity_mismatch_is_not_comparable(self):
-        incumbent = ContextOutcome("inc", "tasks-a", "accept", 20, .9, .9, .0, 1000, 10, ("i",))
-        challenger = ContextOutcome("new", "tasks-b", "accept", 20, .9, .9, .0, 500, 9, ("c",))
+        incumbent = self.outcome("inc", task_set="tasks-a")
+        challenger = self.outcome("new", task_set="tasks-b", tokens=500, seconds=9)
+        verdict = ContextPolicyCourt().compare(incumbent, challenger)
+        self.assertFalse(verdict.comparable)
+        self.assertEqual(verdict.reason, "EXPERIMENT_IDENTITY_MISMATCH")
+
+    def test_comparison_cohort_mismatch_is_not_comparable(self):
+        incumbent = self.outcome("inc", cohort="cohort-a")
+        challenger = self.outcome("new", cohort="cohort-b", tokens=500, seconds=9)
         verdict = ContextPolicyCourt().compare(incumbent, challenger)
         self.assertFalse(verdict.comparable)
         self.assertEqual(verdict.reason, "EXPERIMENT_IDENTITY_MISMATCH")
 
     def test_challenger_must_be_pareto_better_on_context_and_velocity(self):
-        incumbent = ContextOutcome("inc", "tasks", "accept", 20, .9, .9, .0, 1000, 10, ("i",))
-        challenger = ContextOutcome("new", "tasks", "accept", 20, .9, .9, .0, 500, 9, ("c",))
+        incumbent = self.outcome("inc", tokens=1000, seconds=10)
+        challenger = self.outcome("new", tokens=500, seconds=9)
         verdict = ContextPolicyCourt().compare(incumbent, challenger)
         self.assertEqual(verdict.winner, "new")
         self.assertEqual(verdict.reason, "CHALLENGER_ADVANCES")
 
     def test_efficiency_tradeoff_does_not_create_false_winner(self):
-        incumbent = ContextOutcome("inc", "tasks", "accept", 20, .9, .9, .0, 1000, 10, ("i",))
-        challenger = ContextOutcome("new", "tasks", "accept", 20, .9, .9, .0, 500, 30, ("c",))
+        incumbent = self.outcome("inc", tokens=1000, seconds=10)
+        challenger = self.outcome("new", tokens=500, seconds=30)
         verdict = ContextPolicyCourt().compare(incumbent, challenger)
         self.assertIsNone(verdict.winner)
         self.assertEqual(verdict.reason, "PARETO_TRADEOFF")
