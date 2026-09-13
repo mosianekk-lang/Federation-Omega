@@ -16,7 +16,7 @@ from .engineering_runtime import (
     SpecialistRole,
     WorkspaceMode,
 )
-from .opportunity_adapter import EngineeringOpportunityAdapter, MissionProfile
+from .opportunity_adapter import EngineeringOpportunityAdapter, EngineeringShape, MissionProfile
 
 
 def _sha(value):
@@ -51,14 +51,16 @@ class FinalizationBlueprint:
     required_final_proofs: tuple[str, ...]
     blueprint_sha256: str
     engineering_shape: str = "PLAN_ACT"
+    mutation_planned: bool = False
+    effect_authority_granted: bool = False
 
 
 class SLOSFinalizationKernel:
     """Compile one engineering mission across perception, selection, execution shape and proof.
 
-    The kernel remains a no-effect compiler. vNext R2 adds explicit engineering-shape
-    selection while preserving ArchitectureGenome, RepoGraph, workspace, fleet,
-    capability-closure and existing proof authorities.
+    The kernel remains a no-effect compiler. vNext R2 makes engineering shape alter
+    the actual task topology rather than merely labelling a fixed fleet. HOLD is
+    fail-closed and mutation-free; no compiled shape grants external-effect authority.
     """
 
     ENGINEERING_PATTERNS = (
@@ -74,6 +76,72 @@ class SLOSFinalizationKernel:
         ArchitecturePattern("ACCEPTANCE_INTEGRITY", ("acceptance_integrity", "independent_acceptance"), .95, .05, .20, .95, ("ASSURANCE",)),
         ArchitecturePattern("SKILLFORGE_V2", ("skill_formation", "skill_replay", "skill_expiry"), .85, .10, .25, .95, ("LEARNING",)),
     )
+
+    @staticmethod
+    def _tasks_for_shape(shape: EngineeringShape, target_paths: tuple[str, ...]) -> tuple[FleetTask, ...]:
+        if shape == EngineeringShape.HOLD:
+            return (
+                FleetTask(
+                    "diagnose",
+                    SpecialistRole.EXPLORER,
+                    target_paths,
+                    mutation=False,
+                    proof_obligations=("REPO_GRAPH", "AUTHORITY_GAP"),
+                ),
+                FleetTask(
+                    "verify_hold",
+                    SpecialistRole.VERIFIER,
+                    (),
+                    depends_on=("diagnose",),
+                    mutation=False,
+                    proof_obligations=("HOLD_REASON", "NO_EFFECT"),
+                ),
+            )
+        if shape == EngineeringShape.DIRECT:
+            return (
+                FleetTask(
+                    "implement",
+                    SpecialistRole.IMPLEMENTER,
+                    target_paths,
+                    mutation=True,
+                    proof_obligations=("PATCH_DIGEST", "WORKSPACE_ID"),
+                ),
+                FleetTask(
+                    "test",
+                    SpecialistRole.TESTER,
+                    (),
+                    depends_on=("implement",),
+                    mutation=False,
+                    proof_obligations=("SUPERCOURT",),
+                ),
+                FleetTask(
+                    "verify",
+                    SpecialistRole.VERIFIER,
+                    (),
+                    depends_on=("test",),
+                    mutation=False,
+                    proof_obligations=("INDEPENDENT_READBACK",),
+                ),
+            )
+        if shape == EngineeringShape.FLEET:
+            return (
+                FleetTask("explore", SpecialistRole.EXPLORER, target_paths, mutation=False, proof_obligations=("REPO_GRAPH",)),
+                FleetTask("architect", SpecialistRole.ARCHITECT, target_paths, depends_on=("explore",), mutation=False, proof_obligations=("ARCHITECTURE_OPTION",)),
+                FleetTask("implement", SpecialistRole.IMPLEMENTER, target_paths, depends_on=("architect",), mutation=True, proof_obligations=("PATCH_DIGEST", "WORKSPACE_ID")),
+                FleetTask("test", SpecialistRole.TESTER, (), depends_on=("implement",), mutation=False, proof_obligations=("SUPERCOURT",)),
+                FleetTask("security", SpecialistRole.SECURITY, target_paths, depends_on=("implement",), mutation=False, proof_obligations=("SECURITY_COURT",)),
+                FleetTask("performance", SpecialistRole.PERFORMANCE, target_paths, depends_on=("implement",), mutation=False, proof_obligations=("PERFORMANCE_COURT",)),
+                FleetTask("verify", SpecialistRole.VERIFIER, (), depends_on=("test", "security", "performance"), mutation=False, proof_obligations=("INDEPENDENT_READBACK",)),
+                FleetTask("integrate", SpecialistRole.INTEGRATOR, (), depends_on=("verify",), mutation=False, proof_obligations=("TERMINAL_TRUTH",)),
+            )
+        return (
+            FleetTask("explore", SpecialistRole.EXPLORER, target_paths, mutation=False, proof_obligations=("REPO_GRAPH",)),
+            FleetTask("architect", SpecialistRole.ARCHITECT, target_paths, depends_on=("explore",), mutation=False, proof_obligations=("ARCHITECTURE_OPTION",)),
+            FleetTask("implement", SpecialistRole.IMPLEMENTER, target_paths, depends_on=("architect",), mutation=True, proof_obligations=("PATCH_DIGEST", "WORKSPACE_ID")),
+            FleetTask("test", SpecialistRole.TESTER, (), depends_on=("implement",), mutation=False, proof_obligations=("SUPERCOURT",)),
+            FleetTask("verify", SpecialistRole.VERIFIER, (), depends_on=("test",), mutation=False, proof_obligations=("INDEPENDENT_READBACK",)),
+            FleetTask("integrate", SpecialistRole.INTEGRATOR, (), depends_on=("verify",), mutation=False, proof_obligations=("TERMINAL_TRUTH",)),
+        )
 
     def compile(
         self,
@@ -117,22 +185,18 @@ class SLOSFinalizationKernel:
             )
         )
 
+        mutation_paths = target_paths or ("superior_logic/",)
+        tasks = self._tasks_for_shape(shape.shape, mutation_paths)
+        mutation_planned = any(task.mutation for task in tasks)
         workspace = PreparedWorkspaceForge().plan(
             base_revision=directive.base_revision,
             repo_graph_sha256=graph.graph_sha256,
             toolchain=toolchain,
             dependencies=dependencies,
-            writable_paths=target_paths or ("superior_logic/",),
+            writable_paths=mutation_paths if mutation_planned else (),
             mode=WorkspaceMode.PREPARED,
         )
-        fleet = CodingFleetPlanner().plan((
-            FleetTask("explore", SpecialistRole.EXPLORER, target_paths, mutation=False, proof_obligations=("REPO_GRAPH",)),
-            FleetTask("architect", SpecialistRole.ARCHITECT, target_paths, depends_on=("explore",), mutation=False, proof_obligations=("ARCHITECTURE_OPTION",)),
-            FleetTask("implement", SpecialistRole.IMPLEMENTER, target_paths, depends_on=("architect",), mutation=True, proof_obligations=("PATCH_DIGEST", "WORKSPACE_ID")),
-            FleetTask("test", SpecialistRole.TESTER, (), depends_on=("implement",), mutation=False, proof_obligations=("SUPERCOURT",)),
-            FleetTask("verify", SpecialistRole.VERIFIER, (), depends_on=("test",), mutation=False, proof_obligations=("INDEPENDENT_READBACK",)),
-            FleetTask("integrate", SpecialistRole.INTEGRATOR, (), depends_on=("verify",), mutation=False, proof_obligations=("TERMINAL_TRUTH",)),
-        ))
+        fleet = CodingFleetPlanner().plan(tasks)
         closure = AutonomousCapabilityClosure().decide(
             gap_id=f"{directive.mission_id}:architecture-residual",
             required=best.residual_gaps,
@@ -142,7 +206,7 @@ class SLOSFinalizationKernel:
         final_proofs = (
             "SOURCE_ADMISSION", "LEAK_GUARD", "AIRLOCK", "REPOGRAPH", "WORKSPACE_FORGE",
             "CODING_FLEET", "VERIFICATION_SUPERCOURT", "CAPABILITY_CLOSURE", "ROLLBACK",
-            "SEMANTIC_READBACK", "INDEPENDENT_ASSURANCE",
+            "SEMANTIC_READBACK", "INDEPENDENT_ASSURANCE", "ENGINEERING_SHAPE", "ACCEPTANCE_INTEGRITY",
         )
         body = {
             "mission_id": directive.mission_id,
@@ -150,6 +214,8 @@ class SLOSFinalizationKernel:
             "architecture": best.pattern_ids,
             "residual": best.residual_gaps,
             "engineering_shape": shape.shape.value,
+            "mutation_planned": mutation_planned,
+            "effect_authority_granted": False,
             "workspace": workspace.workspace_id,
             "fleet": fleet.plan_sha256,
             "closure": closure.action.value if closure else "NOT_REQUIRED",
@@ -168,4 +234,6 @@ class SLOSFinalizationKernel:
             required_final_proofs=final_proofs,
             blueprint_sha256=_sha(body),
             engineering_shape=shape.shape.value,
+            mutation_planned=mutation_planned,
+            effect_authority_granted=False,
         )
