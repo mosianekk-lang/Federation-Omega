@@ -41,7 +41,7 @@ class SkillForgeV2Tests(unittest.TestCase):
                 authority_ceiling="A2_PROVIDER_EFFECT",
             )
 
-    def test_replay_rule_remains_independent(self):
+    def test_legacy_replay_rule_remains_backward_compatible(self):
         skill = self.candidate()
         result = SkillForge().evaluate(
             skill,
@@ -51,6 +51,57 @@ class SkillForgeV2Tests(unittest.TestCase):
             ),
         )
         self.assertEqual(result, "ADOPT_CANDIDATE")
+
+    def test_hardened_replay_requires_actor_and_trust_provenance(self):
+        skill = self.candidate()
+        result = SkillForge().evaluate_hardened(
+            skill,
+            (
+                SkillReplay("r1", True, True, True, "proof:r1"),
+                SkillReplay("r2", True, True, True, "proof:r2"),
+            ),
+            implementation_actor_id="impl",
+            implementation_trust_domain="lane-impl",
+        )
+        self.assertEqual(result, "HOLD_INDEPENDENT_REPLAY_INCOMPLETE")
+
+    def test_hardened_replay_rejects_same_trust_domain_aliases(self):
+        skill = self.candidate()
+        result = SkillForge().evaluate_hardened(
+            skill,
+            (
+                SkillReplay("r1", True, True, True, "proof:r1", "judge-a", "lane-impl"),
+                SkillReplay("r2", True, True, True, "proof:r2", "judge-b", "lane-impl"),
+            ),
+            implementation_actor_id="impl",
+            implementation_trust_domain="lane-impl",
+        )
+        self.assertEqual(result, "HOLD_INDEPENDENT_REPLAY_INCOMPLETE")
+
+    def test_hardened_replay_accepts_distinct_external_trust_domains(self):
+        skill = self.candidate()
+        result = SkillForge().evaluate_hardened(
+            skill,
+            (
+                SkillReplay("r1", True, True, True, "proof:r1", "judge-a", "lane-a"),
+                SkillReplay("r2", True, True, True, "proof:r2", "judge-b", "lane-b"),
+            ),
+            implementation_actor_id="impl",
+            implementation_trust_domain="lane-impl",
+        )
+        self.assertEqual(result, "ADOPT_CANDIDATE")
+
+    def test_hardened_replay_preserves_regression_veto(self):
+        skill = self.candidate()
+        result = SkillForge().evaluate_hardened(
+            skill,
+            (
+                SkillReplay("r1", True, True, False, "proof:r1", "judge-a", "lane-a"),
+            ),
+            implementation_actor_id="impl",
+            implementation_trust_domain="lane-impl",
+        )
+        self.assertEqual(result, "REJECT_REGRESSION")
 
 
 if __name__ == "__main__":
