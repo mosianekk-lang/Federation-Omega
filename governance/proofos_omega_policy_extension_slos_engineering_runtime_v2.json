@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "2.2.0",
+  "version": "2.3.0",
   "risk_rules": [
     {
       "risk": "R2_SHARED",
@@ -14,10 +14,12 @@
         "superior_logic/evolution_lab.py",
         "superior_logic/opportunity_adapter.py",
         "superior_logic/acceptance_integrity.py",
+        "superior_logic/mission_capability_intelligence.py",
+        "superior_logic/market_composite_benchmark.py",
         "governance/SLOS_ENGINEERING_RUNTIME_FINALIZATION_V2.md",
         "governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json"
       ],
-      "reason": "SLOS_SHARED_ENGINEERING_RUNTIME_REPOGRAPH_WORKSPACE_FLEET_VERIFICATION_CAPABILITY_CLOSURE_CONTEXT_HARNESS_EVOLUTION_OPPORTUNITY_AND_ACCEPTANCE_SELECTION"
+      "reason": "SLOS_SHARED_ENGINEERING_RUNTIME_REPOGRAPH_WORKSPACE_FLEET_VERIFICATION_CAPABILITY_CLOSURE_CONTEXT_HARNESS_EVOLUTION_OPPORTUNITY_ACCEPTANCE_RESOURCE_PREFLIGHT_AND_MARKET_COMPOSITE_EVALUATION"
     }
   ],
   "subsystem_rules": [
@@ -33,6 +35,8 @@
         "superior_logic/evolution_lab.py",
         "superior_logic/opportunity_adapter.py",
         "superior_logic/acceptance_integrity.py",
+        "superior_logic/mission_capability_intelligence.py",
+        "superior_logic/market_composite_benchmark.py",
         "governance/SLOS_ENGINEERING_RUNTIME_FINALIZATION_V2.md",
         "governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json",
         "tests/test_slos_engineering_runtime_v2.py",
@@ -43,12 +47,11 @@
         "tests/test_slos_context_tournament_vnext.py",
         "tests/test_slos_harness_tournament_vnext.py",
         "tests/test_slos_context_harness_vnext_smoke.py",
-        "tests/test_slos_vnext_r2.py"
+        "tests/test_slos_vnext_r2.py",
+        "tests/test_slos_mission_capability_intelligence_v1.py",
+        "tests/test_slos_market_composite_benchmark_v1.py"
       ],
-      "depends_on": [
-        "FEDERATION_CORE",
-        "AO_HARMONIC"
-      ]
+      "depends_on": ["FEDERATION_CORE", "AO_HARMONIC"]
     }
   ],
   "historical_associations": [],
@@ -57,14 +60,8 @@
       "id": "slos_engineering_runtime_v2",
       "kind": "unittest_glob",
       "target": "test_slos_engineering_runtime_v2.py",
-      "patterns": [
-        "superior_logic/engineering_runtime.py",
-        "superior_logic/runtime_bridge.py",
-        "tests/test_slos_engineering_runtime_v2.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/engineering_runtime.py", "superior_logic/runtime_bridge.py", "tests/test_slos_engineering_runtime_v2.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
@@ -73,16 +70,8 @@
       "id": "slos_finalization_kernel_v1",
       "kind": "unittest_glob",
       "target": "test_slos_finalization_kernel_v1.py",
-      "patterns": [
-        "superior_logic/finalization_kernel.py",
-        "superior_logic/architecture_genome.py",
-        "superior_logic/engineering_runtime.py",
-        "superior_logic/opportunity_adapter.py",
-        "tests/test_slos_finalization_kernel_v1.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/finalization_kernel.py", "superior_logic/architecture_genome.py", "superior_logic/engineering_runtime.py", "superior_logic/opportunity_adapter.py", "tests/test_slos_finalization_kernel_v1.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
@@ -103,17 +92,19 @@
         "superior_logic/evolution_lab.py",
         "superior_logic/opportunity_adapter.py",
         "superior_logic/acceptance_integrity.py",
+        "superior_logic/mission_capability_intelligence.py",
+        "superior_logic/market_composite_benchmark.py",
         "tests/test_slos_engineering_runtime_proofos_mapping_v1.py",
         "tests/test_slos_engineering_operator_v1.py",
         "tests/test_slos_engineering_runtime_adversarial_v1.py",
         "tests/test_slos_context_tournament_vnext.py",
         "tests/test_slos_harness_tournament_vnext.py",
         "tests/test_slos_context_harness_vnext_smoke.py",
-        "tests/test_slos_vnext_r2.py"
+        "tests/test_slos_vnext_r2.py",
+        "tests/test_slos_mission_capability_intelligence_v1.py",
+        "tests/test_slos_market_composite_benchmark_v1.py"
       ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SELECTOR_ESCAPE",
       "block_scope": "GLOBAL",
       "timeout_seconds": 180
@@ -122,16 +113,8 @@
       "id": "slos_engineering_runtime_adversarial_v1",
       "kind": "unittest_glob",
       "target": "test_slos_engineering_runtime_adversarial_v1.py",
-      "patterns": [
-        "superior_logic/engineering_runtime.py",
-        "superior_logic/runtime_bridge.py",
-        "superior_logic/finalization_kernel.py",
-        "superior_logic/acceptance_integrity.py",
-        "tests/test_slos_engineering_runtime_adversarial_v1.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/engineering_runtime.py", "superior_logic/runtime_bridge.py", "superior_logic/finalization_kernel.py", "superior_logic/acceptance_integrity.py", "tests/test_slos_engineering_runtime_adversarial_v1.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SECURITY_VIOLATION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
@@ -140,18 +123,8 @@
       "id": "slos_engineering_operator_v1",
       "kind": "unittest_glob",
       "target": "test_slos_engineering_operator_v1.py",
-      "patterns": [
-        "superior_logic/engineering_operator.py",
-        "superior_logic/finalization_kernel.py",
-        "superior_logic/engineering_runtime.py",
-        "superior_logic/evolution_lab.py",
-        "superior_logic/opportunity_adapter.py",
-        "superior_logic/acceptance_integrity.py",
-        "tests/test_slos_engineering_operator_v1.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/engineering_operator.py", "superior_logic/finalization_kernel.py", "superior_logic/engineering_runtime.py", "superior_logic/evolution_lab.py", "superior_logic/opportunity_adapter.py", "superior_logic/acceptance_integrity.py", "superior_logic/mission_capability_intelligence.py", "superior_logic/market_composite_benchmark.py", "tests/test_slos_engineering_operator_v1.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
@@ -160,13 +133,8 @@
       "id": "slos_context_tournament_vnext",
       "kind": "unittest_glob",
       "target": "test_slos_context_tournament_vnext.py",
-      "patterns": [
-        "superior_logic/context_tournament.py",
-        "tests/test_slos_context_tournament_vnext.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/context_tournament.py", "tests/test_slos_context_tournament_vnext.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
@@ -175,13 +143,8 @@
       "id": "slos_harness_tournament_vnext",
       "kind": "unittest_glob",
       "target": "test_slos_harness_tournament_vnext.py",
-      "patterns": [
-        "superior_logic/harness_tournament.py",
-        "tests/test_slos_harness_tournament_vnext.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/harness_tournament.py", "tests/test_slos_harness_tournament_vnext.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
@@ -190,14 +153,8 @@
       "id": "slos_context_harness_vnext_smoke",
       "kind": "unittest_glob",
       "target": "test_slos_context_harness_vnext_smoke.py",
-      "patterns": [
-        "superior_logic/context_tournament.py",
-        "superior_logic/harness_tournament.py",
-        "tests/test_slos_context_harness_vnext_smoke.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/context_tournament.py", "superior_logic/harness_tournament.py", "tests/test_slos_context_harness_vnext_smoke.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
@@ -206,18 +163,29 @@
       "id": "slos_vnext_r2",
       "kind": "unittest_glob",
       "target": "test_slos_vnext_r2.py",
-      "patterns": [
-        "superior_logic/evolution_lab.py",
-        "superior_logic/opportunity_adapter.py",
-        "superior_logic/acceptance_integrity.py",
-        "superior_logic/finalization_kernel.py",
-        "superior_logic/engineering_operator.py",
-        "tests/test_slos_vnext_r2.py"
-      ],
-      "subsystems": [
-        "SUPERIOR_LOGIC"
-      ],
+      "patterns": ["superior_logic/evolution_lab.py", "superior_logic/opportunity_adapter.py", "superior_logic/acceptance_integrity.py", "superior_logic/finalization_kernel.py", "superior_logic/engineering_operator.py", "tests/test_slos_vnext_r2.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
       "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_mission_capability_intelligence_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_mission_capability_intelligence_v1.py",
+      "patterns": ["superior_logic/mission_capability_intelligence.py", "superior_logic/engineering_operator.py", "tests/test_slos_mission_capability_intelligence_v1.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
+      "failure_class": "RESOURCE_PLACEMENT_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_market_composite_benchmark_v1",
+      "kind": "unittest_glob",
+      "target": "test_slos_market_composite_benchmark_v1.py",
+      "patterns": ["superior_logic/market_composite_benchmark.py", "superior_logic/engineering_operator.py", "tests/test_slos_market_composite_benchmark_v1.py"],
+      "subsystems": ["SUPERIOR_LOGIC"],
+      "failure_class": "BENCHMARK_INTEGRITY_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
     }
