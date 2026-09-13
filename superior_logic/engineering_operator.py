@@ -113,6 +113,7 @@ class SLOSEngineeringOperator:
         required = tuple(str(value) for value in request.get("required_domains", ("TEST", "PROOF", "READBACK")))
         verdict = AcceptanceIntegrityCourt().evaluate(
             implementation_actor_id=str(request["implementation_actor_id"]),
+            implementation_trust_domain=str(request["implementation_trust_domain"]),
             witnesses=witnesses,
             required_domains=required,
         )
