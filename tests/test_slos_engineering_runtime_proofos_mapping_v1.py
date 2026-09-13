@@ -23,6 +23,9 @@ class MappingTests(unittest.TestCase):
             'superior_logic/finalization_kernel.py',
             'superior_logic/context_tournament.py',
             'superior_logic/harness_tournament.py',
+            'superior_logic/evolution_lab.py',
+            'superior_logic/opportunity_adapter.py',
+            'superior_logic/acceptance_integrity.py',
             'governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json',
         }
         self.assertTrue(required <= patterns)
@@ -41,10 +44,12 @@ class MappingTests(unittest.TestCase):
             'slos_context_tournament_vnext',
             'slos_harness_tournament_vnext',
             'slos_context_harness_vnext_smoke',
+            'slos_vnext_r2',
         }
         self.assertTrue(required <= set(courts))
         self.assertEqual(courts['slos_context_tournament_vnext']['subsystems'], ['SUPERIOR_LOGIC'])
         self.assertEqual(courts['slos_harness_tournament_vnext']['subsystems'], ['SUPERIOR_LOGIC'])
+        self.assertEqual(courts['slos_vnext_r2']['subsystems'], ['SUPERIOR_LOGIC'])
 
     def test_no_unbounded_repository_wildcard(self):
         p = json.loads(POLICY.read_text())
