@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "2.0.0",
+  "version": "2.1.0",
   "risk_rules": [
     {
       "risk": "R2_SHARED",
@@ -9,10 +9,12 @@
         "superior_logic/runtime_bridge.py",
         "superior_logic/finalization_kernel.py",
         "superior_logic/engineering_operator.py",
+        "superior_logic/context_tournament.py",
+        "superior_logic/harness_tournament.py",
         "governance/SLOS_ENGINEERING_RUNTIME_FINALIZATION_V2.md",
         "governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json"
       ],
-      "reason": "SLOS_SHARED_ENGINEERING_RUNTIME_REPOGRAPH_WORKSPACE_FLEET_VERIFICATION_CAPABILITY_CLOSURE_AND_FEDERATION_RUNTIME_BINDING"
+      "reason": "SLOS_SHARED_ENGINEERING_RUNTIME_REPOGRAPH_WORKSPACE_FLEET_VERIFICATION_CAPABILITY_CLOSURE_CONTEXT_AND_HARNESS_SELECTION"
     }
   ],
   "subsystem_rules": [
@@ -22,14 +24,19 @@
         "superior_logic/engineering_runtime.py",
         "superior_logic/runtime_bridge.py",
         "superior_logic/finalization_kernel.py",
+        "superior_logic/engineering_operator.py",
+        "superior_logic/context_tournament.py",
+        "superior_logic/harness_tournament.py",
         "governance/SLOS_ENGINEERING_RUNTIME_FINALIZATION_V2.md",
         "governance/proofos_omega_policy_extension_slos_engineering_runtime_v2.json",
         "tests/test_slos_engineering_runtime_v2.py",
         "tests/test_slos_finalization_kernel_v1.py",
         "tests/test_slos_engineering_runtime_proofos_mapping_v1.py",
-        "superior_logic/engineering_operator.py",
         "tests/test_slos_engineering_runtime_adversarial_v1.py",
-        "tests/test_slos_engineering_operator_v1.py"
+        "tests/test_slos_engineering_operator_v1.py",
+        "tests/test_slos_context_tournament_vnext.py",
+        "tests/test_slos_harness_tournament_vnext.py",
+        "tests/test_slos_context_harness_vnext_smoke.py"
       ],
       "depends_on": [
         "FEDERATION_CORE",
@@ -82,10 +89,15 @@
         "superior_logic/engineering_runtime.py",
         "superior_logic/runtime_bridge.py",
         "superior_logic/finalization_kernel.py",
-        "tests/test_slos_engineering_runtime_proofos_mapping_v1.py",
         "superior_logic/engineering_operator.py",
+        "superior_logic/context_tournament.py",
+        "superior_logic/harness_tournament.py",
+        "tests/test_slos_engineering_runtime_proofos_mapping_v1.py",
         "tests/test_slos_engineering_operator_v1.py",
-        "tests/test_slos_engineering_runtime_adversarial_v1.py"
+        "tests/test_slos_engineering_runtime_adversarial_v1.py",
+        "tests/test_slos_context_tournament_vnext.py",
+        "tests/test_slos_harness_tournament_vnext.py",
+        "tests/test_slos_context_harness_vnext_smoke.py"
       ],
       "subsystems": [
         "SUPERIOR_LOGIC"
@@ -120,6 +132,52 @@
         "superior_logic/finalization_kernel.py",
         "superior_logic/engineering_runtime.py",
         "tests/test_slos_engineering_operator_v1.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_context_tournament_vnext",
+      "kind": "unittest_glob",
+      "target": "test_slos_context_tournament_vnext.py",
+      "patterns": [
+        "superior_logic/context_tournament.py",
+        "tests/test_slos_context_tournament_vnext.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_harness_tournament_vnext",
+      "kind": "unittest_glob",
+      "target": "test_slos_harness_tournament_vnext.py",
+      "patterns": [
+        "superior_logic/harness_tournament.py",
+        "tests/test_slos_harness_tournament_vnext.py"
+      ],
+      "subsystems": [
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "slos_context_harness_vnext_smoke",
+      "kind": "unittest_glob",
+      "target": "test_slos_context_harness_vnext_smoke.py",
+      "patterns": [
+        "superior_logic/context_tournament.py",
+        "superior_logic/harness_tournament.py",
+        "tests/test_slos_context_harness_vnext_smoke.py"
       ],
       "subsystems": [
         "SUPERIOR_LOGIC"
