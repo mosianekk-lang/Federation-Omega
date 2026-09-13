@@ -237,7 +237,8 @@ jobs:
           test "$NODE_CODE" = '200'
           grep -F 'CONNECT THIS PC' /tmp/fuse-relay-local-node.html >/dev/null
           case "$MCP_CODE" in 401|403|404) ;; *) echo "LOCAL_MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 71 ;; esac
-          case "$PAIR_CODE" in 400|401|403) ;; *) echo "LOCAL_PAIR_ROUTE_CALLABILITY_REQUIRED:$PAIR_CODE" >&2; exit 74 ;; esac
+          test "$PAIR_CODE" = '401' || { echo "LOCAL_PAIR_ROUTE_HANDLER_REQUIRED:$PAIR_CODE" >&2; exit 74; }
+          python3 -c 'import json,sys; d=json.load(open(sys.argv[1],encoding="utf-8")); raise SystemExit(0 if d.get("state")=="FAILED_CLOSED" and d.get("error")=="PAIRING_GRANT_ID_INVALID" else 1)' /tmp/fuse-relay-local-pair.json
           python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node","/agent/enroll/start","/agent/enroll/complete","/agent/runtime/poll","/agent/runtime/complete"}; raise SystemExit(0 if need.issubset(set(r)) else 1)' /tmp/fuse-relay-local-evidence/routes.json
 
           echo 'LOCAL_FAILURE_CLASS=NONE' >> "$GITHUB_ENV"
