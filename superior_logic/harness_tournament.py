@@ -5,7 +5,7 @@ import json
 from dataclasses import asdict, dataclass
 from typing import Iterable, Sequence
 
-from frontier_convergence.core import ExperimentIdentityCompiler, FinOpsParetoRouter, ValueReceipt
+from frontier_convergence.core import ExperimentIdentity, ExperimentIdentityCompiler, FinOpsParetoRouter, ValueReceipt
 
 
 def _sha(value) -> str:
@@ -44,10 +44,22 @@ class HarnessGenome:
 
 
 @dataclass(frozen=True, slots=True)
+class HarnessExperiment:
+    genome_id: str
+    experiment: ExperimentIdentity
+    comparison_fingerprint: str
+
+    @property
+    def fingerprint(self) -> str:
+        return self.experiment.fingerprint
+
+
+@dataclass(frozen=True, slots=True)
 class HarnessOutcome:
     genome_id: str
     task_set_id: str
     acceptance_hash: str
+    comparison_fingerprint: str
     sample_size: int
     accepted_task_rate: float
     verified_readback_rate: float
@@ -60,7 +72,14 @@ class HarnessOutcome:
     evidence_refs: tuple[str, ...]
 
     def validate(self):
-        if not self.genome_id or not self.task_set_id or not self.acceptance_hash or self.sample_size < 1 or self.median_wall_seconds <= 0:
+        if (
+            not self.genome_id
+            or not self.task_set_id
+            or not self.acceptance_hash
+            or not self.comparison_fingerprint
+            or self.sample_size < 1
+            or self.median_wall_seconds <= 0
+        ):
             raise ValueError("HARNESS_OUTCOME_IDENTITY_OR_SAMPLE_INVALID")
         if min(self.median_cost, self.owner_interventions, self.tool_round_trips, self.outcome_value) < 0:
             raise ValueError("HARNESS_OUTCOME_NEGATIVE_BURDEN_OR_VALUE")
@@ -88,10 +107,12 @@ class HarnessOutcome:
 
 
 class HarnessExperimentCompiler:
+    """Bind candidate-specific experiment identity plus a treatment-independent comparison cohort."""
+
     @staticmethod
     def compile(genome: HarnessGenome, *, implementation_sha256: str, source_sha256: str,
-                inputs, environment, observation_window: str, cost_latency_context, controls, authority):
-        return ExperimentIdentityCompiler.compile(
+                inputs, environment, observation_window: str, cost_latency_context, controls, authority) -> HarnessExperiment:
+        experiment = ExperimentIdentityCompiler.compile(
             implementation_sha256=implementation_sha256,
             source_sha256=source_sha256,
             inputs=inputs,
@@ -101,6 +122,20 @@ class HarnessExperimentCompiler:
             cost_latency_context=cost_latency_context,
             controls=controls,
             authority=authority,
+        )
+        cohort = {
+            "source_sha256": source_sha256.strip(),
+            "inputs": inputs,
+            "environment": environment,
+            "observation_window": observation_window.strip(),
+            "cost_latency_context": cost_latency_context,
+            "controls": controls,
+            "authority": authority,
+        }
+        return HarnessExperiment(
+            genome_id=genome.genome_id,
+            experiment=experiment,
+            comparison_fingerprint=_sha(cohort),
         )
 
 
@@ -122,7 +157,10 @@ class HarnessTournament:
             raise ValueError("HARNESS_TOURNAMENT_NEEDS_TWO_OUTCOMES")
         for row in outcomes:
             row.validate()
-        identities = {(x.task_set_id, x.acceptance_hash) for x in outcomes}
+        identities = {
+            (x.task_set_id, x.acceptance_hash, x.comparison_fingerprint)
+            for x in outcomes
+        }
         if len(identities) != 1:
             return HarnessVerdict(False, (), (), "EXPERIMENT_IDENTITY_MISMATCH", _sha(sorted(identities)))
         if any(x.sample_size < minimum_sample for x in outcomes):
@@ -147,4 +185,11 @@ class HarnessTournament:
         return HarnessVerdict(True, pareto_ids, regressions, reason, _sha(body))
 
 
-__all__ = ["HarnessExperimentCompiler", "HarnessGenome", "HarnessOutcome", "HarnessTournament", "HarnessVerdict"]
+__all__ = [
+    "HarnessExperiment",
+    "HarnessExperimentCompiler",
+    "HarnessGenome",
+    "HarnessOutcome",
+    "HarnessTournament",
+    "HarnessVerdict",
+]
