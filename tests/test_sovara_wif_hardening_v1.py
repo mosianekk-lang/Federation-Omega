@@ -17,9 +17,9 @@ POLICY = ROOT / "governance" / "github_airlock_policy.json"
 WORKFLOW = ROOT / ".github" / "workflows" / "sol62-wif-hardening-lease.yml"
 REPOSITORY_SLUG = "mosianekk-lang/Federation-Omega"
 MAIN_REF = "refs/heads/main"
-EXPECTED_COUNT = 19
-EXPECTED_SET_SHA256 = "8fa0450fdf8b69913b11e42d37fb10ece6da2d3d9ffac731ac8eb063d7ccd2ec"
-EXPECTED_TRUST_CONTRACT_SHA256 = "38fa68df85d793f5491f480ddcf04e46e6e9ffc50dcf1abd67e934714ff98b1e"
+EXPECTED_COUNT = 20
+EXPECTED_SET_SHA256 = "47620c1bcaee54dfe2e542b73339aa4f20d9e77927be7e5e446fa897b1e5b227"
+EXPECTED_TRUST_CONTRACT_SHA256 = "8943882546143162e5ca34e17a7aaf10c98c3cac17290ac463c8fbed8503c85c"
 
 
 FAKE_GCLOUD = r'''#!/usr/bin/env python3
