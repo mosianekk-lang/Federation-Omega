@@ -53,15 +53,19 @@ class AcceptanceIntegrityVerdict:
     missing_domains: tuple[str, ...]
     failed_domains: tuple[str, ...]
     non_independent_witnesses: tuple[str, ...]
+    independent_trust_domains: tuple[str, ...]
+    effect_authority_granted: bool
     verdict_sha256: str
 
 
 class AcceptanceIntegrityCourt:
-    """Prevents the implementation lane from grading its own acceptance.
+    """Prevents the implementation lane or an alias inside it from grading itself.
 
     The court only evaluates supplied evidence. It does not create proof, execute
-    provider readback, or mutate source. Required domains remain caller-selected so
-    provider/readback/rollback requirements can stay receiver-specific.
+    provider readback, mutate source, or grant effect authority. Independence is
+    fail-closed across both actor identity and trust domain: changing an actor ID
+    inside the implementation trust domain cannot turn same-lane evidence into an
+    independent acceptance witness.
     """
 
     DEFAULT_REQUIRED = (
@@ -74,11 +78,16 @@ class AcceptanceIntegrityCourt:
         self,
         *,
         implementation_actor_id: str,
+        implementation_trust_domain: str,
         witnesses: Sequence[AcceptanceWitness],
         required_domains: Iterable[AcceptanceDomain | str] = DEFAULT_REQUIRED,
     ) -> AcceptanceIntegrityVerdict:
-        if not implementation_actor_id.strip():
+        implementation_actor = implementation_actor_id.strip()
+        implementation_trust = implementation_trust_domain.strip()
+        if not implementation_actor:
             raise ValueError("IMPLEMENTATION_ACTOR_REQUIRED")
+        if not implementation_trust:
+            raise ValueError("IMPLEMENTATION_TRUST_DOMAIN_REQUIRED")
         required = tuple(sorted({AcceptanceDomain(value).value for value in required_domains}))
         if not required:
             raise ValueError("AT_LEAST_ONE_ACCEPTANCE_DOMAIN_REQUIRED")
@@ -93,13 +102,17 @@ class AcceptanceIntegrityCourt:
         independent = [
             row
             for row in witnesses
-            if row.actor_id != implementation_actor_id and row.relation_to_implementation == "INDEPENDENT"
+            if row.actor_id != implementation_actor
+            and row.trust_domain != implementation_trust
+            and row.relation_to_implementation == "INDEPENDENT"
         ]
         non_independent = tuple(
             sorted(
                 row.witness_id
                 for row in witnesses
-                if row.actor_id == implementation_actor_id or row.relation_to_implementation != "INDEPENDENT"
+                if row.actor_id == implementation_actor
+                or row.trust_domain == implementation_trust
+                or row.relation_to_implementation != "INDEPENDENT"
             )
         )
         covered = tuple(sorted({AcceptanceDomain(row.domain).value for row in independent if row.passed}))
@@ -113,6 +126,7 @@ class AcceptanceIntegrityCourt:
             )
         )
         missing = tuple(sorted(set(required) - set(covered)))
+        independent_trust_domains = _clean(row.trust_domain for row in independent)
 
         accepted = not missing and not failed
         if failed:
@@ -123,13 +137,16 @@ class AcceptanceIntegrityCourt:
             status = "ACCEPTANCE_INTEGRITY_PASSED"
 
         body = {
-            "implementation_actor_id": implementation_actor_id,
+            "implementation_actor_id": implementation_actor,
+            "implementation_trust_domain": implementation_trust,
             "required_domains": required,
             "witnesses": tuple(sorted((row.witness_id, asdict(row)) for row in witnesses)),
             "covered": covered,
             "missing": missing,
             "failed": failed,
             "non_independent": non_independent,
+            "independent_trust_domains": independent_trust_domains,
+            "effect_authority_granted": False,
             "status": status,
         }
         return AcceptanceIntegrityVerdict(
@@ -139,6 +156,8 @@ class AcceptanceIntegrityCourt:
             missing_domains=missing,
             failed_domains=failed,
             non_independent_witnesses=non_independent,
+            independent_trust_domains=independent_trust_domains,
+            effect_authority_granted=False,
             verdict_sha256=_sha(body),
         )
 
