@@ -77,14 +77,19 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn("MCP_FAIL_CLOSED_CHECKED=true", self.text)
 
     def test_cloud_run_env_satisfies_relay_server_project_precondition(self):
+        self.assertIn("WINDOWS_POLICY_EPOCH: FUSE_WINDOWS_H1_TPM_PAIRING_V1", self.text)
         self.assertIn(
-            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"',
+            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"',
             self.text,
         )
         self.assertIn(
-            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"',
+            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"',
             self.text,
         )
+        self.assertIn('--env "FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA"', self.text)
+        self.assertIn('--env "FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"', self.text)
+        self.assertGreaterEqual(self.text.count("FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA"), 3)
+        self.assertGreaterEqual(self.text.count("FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"), 3)
         self.assertEqual(self.text.count("GOOGLE_CLOUD_PROJECT=$PROJECT_ID"), 3)
         self.assertIn('--set-env-vars="$ENVVARS"', self.text)
 
