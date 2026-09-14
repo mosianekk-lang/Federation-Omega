@@ -94,6 +94,11 @@ from .powerhouse import (
     ReleaseGate,
     SurfaceReadback,
 )
+from .runtime_proof_reconciler import (
+    RuntimeProofReconciler,
+    RuntimeProofSnapshot,
+    RuntimeProofStage,
+)
 from .source_convergence import (
     AdmissionPlan,
     AdmissionState,
@@ -208,6 +213,9 @@ __all__ = [
     "RouteAttempt",
     "RouteOutcome",
     "RouteRetryDecision",
+    "RuntimeProofReconciler",
+    "RuntimeProofSnapshot",
+    "RuntimeProofStage",
     "ScenarioOption",
     "SourceCapabilitySnapshot",
     "SourceConvergenceClass",
