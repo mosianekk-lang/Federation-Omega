@@ -1,0 +1,15 @@
+{
+  "schema": "BCO_PRIME_SUCCESSOR_V3",
+  "version": "3.0.0",
+  "canonical_core_capability_count_unchanged": 100,
+  "components": [
+    "BCO_PRIME_FLIGHT_RECORDER_V3",
+    "BCO_PRIME_HARVESTING_FABRIC_V1",
+    "BCO_PRIME_ADAPTIVE_INTELLIGENCE_V1"
+  ],
+  "external_effect_authorized": false,
+  "stable_policy_promotion_authorized": false,
+  "runtime_state": "ON_DEMAND_GOVERNED",
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}
