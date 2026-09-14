@@ -51,8 +51,22 @@ jobs:
       - name: Install hash-locked relay test dependencies
         run: python -m pip install --require-hashes -r windows_federation_plane/requirements-relay.lock
 
-      - name: Run Windows failure-first court
+      - name: Run Windows failure-first court and native trunk proof
         run: ./windows_federation_plane/scripts/Test-FederationWindowsPlane.ps1
+
+      - name: Upload native Windows trunk exact bytes and proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-windows-native-trunk-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            windows_federation_plane/native/out/Fuse.Windows.Native.exe
+            windows_federation_plane/native/out/Fuse.Windows.Native.dll
+            windows_federation_plane/native/out/Fuse.Windows.Native.deps.json
+            windows_federation_plane/native/out/Fuse.Windows.Native.runtimeconfig.json
+            windows_federation_plane/native/artifacts/fuse-windows-native.zip
+            windows_federation_plane/native/artifacts/native-build-proof.json
+          if-no-files-found: error
+          retention-days: 30
 
       - name: Execute allowlisted Windows task
         env:
