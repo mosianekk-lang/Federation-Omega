@@ -105,6 +105,25 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         for forbidden in ("subprocess", "os.system", "shell=True", "Invoke-Expression"): self.assertNotIn(forbidden, source)
         cli = (PLANE / "src/federation_windows_plane/cli.py").read_text(encoding="utf-8"); self.assertNotIn('"--envelope"', cli)
 
+    def test_secure_tunnel_profile_is_private_typed_and_supervised(self):
+        tunnel = (PLANE / "src/federation_windows_plane/tunnel_service.py").read_text(encoding="utf-8")
+        installer = (PLANE / "scripts/Install-FuseWindowsTunnel.ps1").read_text(encoding="utf-8")
+        runner = (PLANE / "scripts/Run-FuseWindowsTunnel.ps1").read_text(encoding="utf-8")
+        repair = (PLANE / "scripts/Repair-FuseWindowsTunnel.ps1").read_text(encoding="utf-8")
+        for required in ("transport=\"stdio\"", "READ_ONLY_TOOLS", "hash_workspace_file", "ToolAnnotations"):
+            self.assertIn(required, tunnel)
+        for forbidden in ("subprocess", "os.system", "shell=True", "0.0.0.0", "streamable-http"):
+            self.assertNotIn(forbidden, tunnel)
+        for required in ("ConvertFrom-SecureString", "RunLevel Limited", "RestartCount 10", "tunnel-client"):
+            self.assertIn(required, installer)
+        scripts = installer + runner + repair + (PLANE / "scripts/Test-FuseWindowsTunnel.ps1").read_text(encoding="utf-8")
+        self.assertNotIn("Invoke-Expression", scripts)
+        self.assertNotIn("$env:OS", scripts)
+        self.assertEqual(scripts.count("[Environment]::OSVersion.Platform"), 4)
+        self.assertIn("CONTROL_PLANE_API_KEY = $null", runner)
+        self.assertIn("'Suspend'", repair)
+        self.assertIn("'Rollback'", repair)
+
     def test_governance_is_additive(self):
         data = json.loads((ROOT / "governance/fuse_windows_execution_plane_v1.json").read_text(encoding="utf-8"))
         self.assertEqual(data["parent_controller"], "FUSE-OMEGA-INFINITY"); self.assertFalse(data["creates_new_sovereign_plane"]); self.assertEqual(data["provider_effect"], "NONE_UNTIL_SEPARATELY_AUTHORIZED")

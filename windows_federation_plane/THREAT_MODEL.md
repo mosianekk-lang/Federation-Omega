@@ -33,7 +33,11 @@ The issued-by value is a policy label, not cryptographic identity. Version 1.1 a
 | Replay or concurrent lease | Firestore create-once nonce record and transactional lease update | Nonce documents require a provider TTL policy for automatic cleanup |
 | Cloud Run instance loss | No in-memory authority state; Firestore is canonical | Regional provider failure remains external; backup/restore must be exercised before production certification |
 | Device credential theft | Windows DPAPI current-user protection and revocable device record | Malware running as the same Windows user remains in the workstation trust boundary |
+| Tunnel runtime-key disclosure | Key accepted as `SecureString` or inherited environment only; DPAPI current-user encryption; user-only ACL; never written to logs or profile arguments | Same-user malware and process-memory inspection remain inside the endpoint trust boundary |
+| Public MCP exposure | Direct profile uses stdio and the official outbound-only Secure MCP Tunnel client; no workstation listener | OpenAI control-plane availability and tunnel/workspace permissions remain provider boundaries |
+| Supervisor persistence abuse | Limited current-user scheduled task, fixed runner path, fixed profile, RemoteSigned policy, no elevation, explicit stop switch | A compromised current user can replace user-owned files; source-signing enforcement is a later promotion gate |
+| Installer supply-chain substitution | Python dependencies are installed from the hash lock; tunnel-client path must already resolve locally; no mutable binary download is embedded | The externally obtained tunnel-client binary must be verified through its official distribution channel |
 
 ## Promotion rule
 
-Hosted verification requires exact-head source courts, a successful Windows job, an artifact receipt, semantic field checks, and independent hash verification. Commercial readiness additionally requires an authenticated owner-host transport, durable replay/idempotency proof where effects are introduced, soak/SLO evidence, disaster recovery, and rollback exercise. Source presence alone proves none of these.
+Hosted verification requires exact-head source courts, a successful Windows job, an artifact receipt, semantic field checks, and independent hash verification. Tunnel production proof additionally requires `doctor` success, a running supervised task, ChatGPT tool discovery, an exact health receipt from the physical endpoint, persistence after logon/restart, and an exercised stop/rollback path. Source presence alone proves none of these.

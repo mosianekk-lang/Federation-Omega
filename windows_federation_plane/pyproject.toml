@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "federation-windows-plane"
-version = "1.2.0"
+version = "1.3.0"
 description = "Least-privilege Windows execution plane for Federation Omega"
 requires-python = ">=3.11"
 dependencies = [
@@ -19,6 +19,7 @@ dependencies = [
 federation-windows = "federation_windows_plane.cli:main"
 federation-windows-agent = "federation_windows_plane.relay_agent:main"
 federation-windows-relay = "federation_windows_plane.pairing_service:main"
+federation-windows-tunnel = "federation_windows_plane.tunnel_service:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}
