@@ -95,8 +95,17 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
         fuse_mobile_iap_phase_a = credential_policy["fuse_mobile_iap_phase_a_workflow"]
         aegis_omega_provider = credential_policy["aegis_omega_provider_workflow"]
         fuse_windows_relay = credential_policy["fuse_windows_relay_deployment_workflow"]
+        fuse_windows_h1_provider_relay = ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
         self.assertEqual(
-            {sol62_wif, fuse_mobile_gateway, strategic_apps_script_read, fuse_mobile_iap_phase_a, aegis_omega_provider, fuse_windows_relay},
+            {
+                sol62_wif,
+                fuse_mobile_gateway,
+                strategic_apps_script_read,
+                fuse_mobile_iap_phase_a,
+                aegis_omega_provider,
+                fuse_windows_relay,
+                fuse_windows_h1_provider_relay,
+            },
             provider_mutators,
         )
         self.assertEqual(
@@ -107,6 +116,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
                 fuse_mobile_iap_phase_a: "[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1",
                 aegis_omega_provider: "[FO-DISPATCH] AEGIS_OMEGA_ZERO_TRAFFIC_V1",
                 fuse_windows_relay: "[FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1",
+                fuse_windows_h1_provider_relay: "MACHINE_DISPATCH_ONLY__NO_ISSUE_TRIGGER",
             },
             self.policy["provider_mutation_exact_issue_titles"],
         )
