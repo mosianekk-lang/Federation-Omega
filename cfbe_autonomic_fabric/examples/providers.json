@@ -1,0 +1,22 @@
+{
+  "providers": [
+    {
+      "id": "github-read",
+      "state": "VERIFIED_LIVE",
+      "capabilities": ["repository-read", "provenance-read"],
+      "authority_ceiling": "A0",
+      "proof_stage": "SEMANTICALLY_VERIFIED",
+      "observed_at": "2026-08-26T17:10:02Z",
+      "cost_class": "INCLUDED",
+      "reversible": true,
+      "semantic_readback": true,
+      "failure_domain": "github",
+      "strategy": "REUSE",
+      "risk": 0,
+      "owner_burden": 0,
+      "effectful": false,
+      "proof_refs": ["public-repository-readback"]
+    }
+  ]
+}
+

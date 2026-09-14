@@ -1,0 +1,57 @@
+{
+  "schema": "CFBE-ACF-ESTATE-SNAPSHOT-V1",
+  "snapshot_at": "2026-08-26T17:15:00Z",
+  "assets": [
+    {"id": "cfbe-omega", "class": "benchmark-control", "state": "ACTIVE_PARTIAL"},
+    {"id": "cfbe-gcp", "class": "provider-cell", "state": "RUNTIME_GATED"},
+    {"id": "cfbe-gas", "class": "provider-cell", "state": "RUNTIME_GATED"},
+    {"id": "cfbe-github", "class": "provider-cell", "state": "ACTIVE_PARTIAL"},
+    {"id": "cfbe-ai-runtime", "class": "provider-cell", "state": "PROVIDER_PARTIAL"},
+    {"id": "cfbe-microsoft", "class": "provider-cell", "state": "MIXED_CONNECTIVITY"},
+    {"id": "cfbe-kdv", "class": "knowledge-cell", "state": "CONTROL_BOUND"},
+    {"id": "cfbe-evidenceops", "class": "evidence-cell", "state": "CONTROL_BOUND"},
+    {"id": "cfbe-federation-runtime", "class": "runtime-cell", "state": "CONTROL_BOUND"},
+    {"id": "cfbe-security-identity", "class": "control-cell", "state": "MIXED"},
+    {"id": "cfbe-data-knowledge", "class": "control-cell", "state": "MIXED"},
+    {"id": "cfbe-canva", "class": "design-cell", "state": "READ_CONNECTED"},
+    {"id": "cfbe-communications", "class": "communications-cell", "state": "READ_CONNECTED"}
+  ],
+  "edges": [
+    {"id": "edge-cfbe-github", "source_id": "cfbe-omega", "target_id": "cfbe-github", "kind": "benchmarks"},
+    {"id": "edge-cfbe-kdv", "source_id": "cfbe-omega", "target_id": "cfbe-kdv", "kind": "projects-state"},
+    {"id": "edge-runtime-ai", "source_id": "cfbe-federation-runtime", "target_id": "cfbe-ai-runtime", "kind": "routes"}
+  ],
+  "providers": [
+    {
+      "id": "github-read",
+      "state": "VERIFIED_LIVE",
+      "capabilities": ["repository-read", "provenance-read"],
+      "authority_ceiling": "A0",
+      "proof_stage": "SEMANTICALLY_VERIFIED",
+      "observed_at": "2026-08-26T17:10:02Z",
+      "cost_class": "INCLUDED",
+      "reversible": true,
+      "semantic_readback": true,
+      "failure_domain": "github",
+      "strategy": "REUSE",
+      "effectful": false,
+      "proof_refs": ["public-repository-readback"]
+    }
+  ],
+  "heartbeats": [
+    {"id": "hb-cfbe-omega", "node_id": "cfbe-omega", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "TRANSPORT_PROVEN"},
+    {"id": "hb-cfbe-gcp", "node_id": "cfbe-gcp", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "DISCOVERED"},
+    {"id": "hb-cfbe-gas", "node_id": "cfbe-gas", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "TRANSPORT_PROVEN"},
+    {"id": "hb-cfbe-github", "node_id": "cfbe-github", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "SEMANTICALLY_VERIFIED"},
+    {"id": "hb-cfbe-ai-runtime", "node_id": "cfbe-ai-runtime", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "CONFIGURED"},
+    {"id": "hb-cfbe-microsoft", "node_id": "cfbe-microsoft", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "DISCOVERED"},
+    {"id": "hb-cfbe-kdv", "node_id": "cfbe-kdv", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "SEMANTICALLY_VERIFIED"},
+    {"id": "hb-cfbe-evidenceops", "node_id": "cfbe-evidenceops", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "SOURCE_PRESENT"},
+    {"id": "hb-cfbe-federation-runtime", "node_id": "cfbe-federation-runtime", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "SOURCE_PRESENT"},
+    {"id": "hb-cfbe-security-identity", "node_id": "cfbe-security-identity", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "CONFIGURED"},
+    {"id": "hb-cfbe-data-knowledge", "node_id": "cfbe-data-knowledge", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "SOURCE_PRESENT"},
+    {"id": "hb-cfbe-canva", "node_id": "cfbe-canva", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "TRANSPORT_PROVEN"},
+    {"id": "hb-cfbe-communications", "node_id": "cfbe-communications", "observed_at": "2026-08-22T19:44:00Z", "proof_stage": "TRANSPORT_PROVEN"}
+  ]
+}
+
