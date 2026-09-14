@@ -1,0 +1,59 @@
+{
+  "schema": "FOREST-FIRST-SHADOW-RESULT-C1-V1",
+  "version": "1.0.0",
+  "shadow_id": "FOREST-FIRST-CONSOLIDATION-C1-AUTHORITY-SHADOW-V1",
+  "cohort": "C1_AUTHORITY_ONLY",
+  "source_head_under_test": "c893915c80da0697a82e76f7afdf3233d5fa0e9d",
+  "execution_class": "DETERMINISTIC_LOCAL_A1_INTERNAL_SOURCE_COMPATIBILITY_SHADOW",
+  "provider_hosted_shadow_proved": false,
+  "scenario_count": 3,
+  "scenarios": [
+    {
+      "scenario_id": "C1-RESTORE-COMPATIBILITY",
+      "pass_state": true,
+      "checks": {
+        "aeon_legacy_resolves": true,
+        "ipep_legacy_resolves": true,
+        "sif_legacy_resolves": true,
+        "split_legacy_resolves": true
+      }
+    },
+    {
+      "scenario_id": "C1-AUTHORITY-BOUNDARY",
+      "pass_state": true,
+      "checks": {
+        "aeon_no_authority_inheritance": true,
+        "ipep_no_maturity_inheritance": true,
+        "sif_no_external_effect": true,
+        "bible_target_is_learning_evolution": true,
+        "scientia_target_is_cognitive_kernel": true,
+        "split_identity_does_not_inherit_authority": true
+      }
+    },
+    {
+      "scenario_id": "C1-SCIENTIA-SEPARATION",
+      "pass_state": true,
+      "checks": {
+        "scientia_callable": true,
+        "falsifiers_preserved": true,
+        "competing_explanation_question_present": true,
+        "knowledge_and_runtime_layers_distinct": true
+      }
+    }
+  ],
+  "test_receipt": {
+    "focused_tests": 4,
+    "passed": 4,
+    "failed": 0
+  },
+  "pass": true,
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "provider_runtime_proved": false,
+  "physical_migration_executed": false,
+  "system_retirement_allowed": false,
+  "maturity_inheritance": false,
+  "independent_assurance_review": "PENDING",
+  "promotion_state": "SHADOW_PASS_PENDING_INDEPENDENT_ASSURANCE",
+  "truth_boundary": "DETERMINISTIC_SOURCE_COMPATIBILITY_SHADOW_NOT_PROVIDER_RUNTIME_OR_OPERATIONAL_MATURITY"
+}
