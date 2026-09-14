@@ -10,12 +10,14 @@ import secrets
 import threading
 from typing import Any, Mapping
 
+from .models import validate_heavy_sha256_parameters
+
 
 TASK_SCHEMA = "FEDERATION-WINDOWS-TASK-V1"
 RECEIPT_SCHEMA = "FEDERATION-WINDOWS-RECEIPT-V1"
 RELAY_ENROLLMENT_SCHEMA = "FUSE-WINDOWS-RELAY-ENROLLMENT-V1"
 RELAY_LEASE_SCHEMA = "FUSE-WINDOWS-RELAY-LEASE-V1"
-ALLOWED_TASKS = frozenset({"health", "inventory", "hash_workspace_file"})
+ALLOWED_TASKS = frozenset({"health", "inventory", "hash_workspace_file", "heavy_sha256"})
 ALLOWED_EFFECT = "READ_ONLY"
 
 
@@ -80,8 +82,18 @@ def validate_task_mapping(task: Mapping[str, Any], *, now: datetime | None = Non
         raise ValueError("TASK_TYPE_NOT_ALLOWLISTED")
     if task.get("effect", ALLOWED_EFFECT) != ALLOWED_EFFECT:
         raise ValueError("TASK_EFFECT_NOT_AUTHORIZED")
-    if not isinstance(task.get("parameters") or {}, Mapping):
+    parameters = task.get("parameters") or {}
+    if not isinstance(parameters, Mapping):
         raise ValueError("TASK_PARAMETERS_OBJECT_REQUIRED")
+    if task["task_type"] in {"health", "inventory"} and parameters:
+        raise ValueError("TASK_PARAMETERS_NOT_ALLOWED")
+    if task["task_type"] == "hash_workspace_file":
+        if set(parameters) != {"relative_path"}:
+            raise ValueError("HASH_TASK_REQUIRES_ONLY_RELATIVE_PATH")
+        if not isinstance(parameters.get("relative_path"), str):
+            raise ValueError("RELATIVE_PATH_INVALID")
+    if task["task_type"] == "heavy_sha256":
+        validate_heavy_sha256_parameters(parameters)
     issued = _parse_utc_z(str(task["issued_at"]), "TASK_ISSUED_AT")
     expires = _parse_utc_z(str(task["expires_at"]), "TASK_EXPIRES_AT")
     current = now or utc_now()

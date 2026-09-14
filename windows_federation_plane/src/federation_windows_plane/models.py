@@ -9,7 +9,23 @@ from typing import Any, Mapping
 
 
 ID_PATTERN = re.compile(r"^[A-Za-z0-9][A-Za-z0-9._:-]{0,127}$")
-ALLOWED_TASKS = frozenset({"health", "inventory", "hash_workspace_file"})
+ALLOWED_TASKS = frozenset({"health", "inventory", "hash_workspace_file", "heavy_sha256"})
+HEAVY_SHA256_PARAMETER_KEYS = frozenset(
+    {
+        "bytes_per_round",
+        "rounds",
+        "requested_workers",
+        "requested_memory_mb",
+        "max_seconds",
+        "seed_hex",
+    }
+)
+HEAVY_SHA256_MAX_BYTES_PER_ROUND = 64 * 1024 * 1024
+HEAVY_SHA256_MAX_ROUNDS = 64
+HEAVY_SHA256_MAX_TOTAL_BYTES = 2 * 1024 * 1024 * 1024
+HEAVY_SHA256_MAX_REQUESTED_WORKERS = 16
+HEAVY_SHA256_MAX_REQUESTED_MEMORY_MB = 1024
+HEAVY_SHA256_MAX_SECONDS = 300
 
 
 def utc_now() -> str:
@@ -23,6 +39,38 @@ def parse_utc(value: str) -> datetime:
     if parsed.tzinfo is None:
         raise ValueError("TIMESTAMP_TIMEZONE_REQUIRED")
     return parsed.astimezone(timezone.utc)
+
+
+def validate_heavy_sha256_parameters(parameters: Mapping[str, Any]) -> dict[str, Any]:
+    if set(parameters) != HEAVY_SHA256_PARAMETER_KEYS:
+        raise ValueError("HEAVY_SHA256_REQUIRES_EXACT_PARAMETERS")
+
+    typed: dict[str, Any] = {}
+    bounded_ints = (
+        ("bytes_per_round", HEAVY_SHA256_MAX_BYTES_PER_ROUND),
+        ("rounds", HEAVY_SHA256_MAX_ROUNDS),
+        ("requested_workers", HEAVY_SHA256_MAX_REQUESTED_WORKERS),
+        ("requested_memory_mb", HEAVY_SHA256_MAX_REQUESTED_MEMORY_MB),
+        ("max_seconds", HEAVY_SHA256_MAX_SECONDS),
+    )
+    for key, upper_bound in bounded_ints:
+        value = parameters.get(key)
+        if type(value) is not int:
+            raise ValueError(f"HEAVY_SHA256_{key.upper()}_TYPE_INVALID")
+        if value <= 0 or value > upper_bound:
+            raise ValueError(f"HEAVY_SHA256_{key.upper()}_OUT_OF_RANGE")
+        typed[key] = value
+
+    seed_hex = parameters.get("seed_hex")
+    if not isinstance(seed_hex, str) or not re.fullmatch(r"[0-9a-fA-F]{64}", seed_hex):
+        raise ValueError("HEAVY_SHA256_SEED_HEX_INVALID")
+    typed["seed_hex"] = seed_hex.lower()
+
+    total_bytes = typed["bytes_per_round"] * typed["rounds"]
+    if total_bytes > HEAVY_SHA256_MAX_TOTAL_BYTES:
+        raise ValueError("HEAVY_SHA256_TOTAL_BYTES_LIMIT_EXCEEDED")
+    typed["total_bytes"] = total_bytes
+    return typed
 
 
 @dataclass(frozen=True)
