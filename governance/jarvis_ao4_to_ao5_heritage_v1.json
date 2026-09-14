@@ -1,0 +1,48 @@
+{
+  "schema_version": "JARVIS-AO4-HERITAGE-INTEGRATION-1.0",
+  "heritage_source": {
+    "title": "JARVIS ΑΩ4 — ALPHA-OMEGA ABSOLUTE FORENSIC COMMAND ENGINE",
+    "engine_id": "JARVIS-ALPHA-OMEGA-4",
+    "version": "ΑΩ4.0",
+    "source_sha256": "d9224810f40ba48e7cdf4451953448546e6abb320cef9a838f0ade5dd72b07aa",
+    "raw_bytes": 42408,
+    "crlf_count": 2024,
+    "line_count": 2025,
+    "classification": "USER_SUPPLIED_HERITAGE_OPERATING_SPECIFICATION"
+  },
+  "current_authority": {
+    "engine_id": "JARVIS-ALPHA-OMEGA-5-SOVEREIGN",
+    "canonical_raw_sha256": "773ee295b2ae3f2182afc47bcc94c676c1e6464face0176504ff8763c9616443",
+    "policy": "AO4_MAY_ADD_PROVENANCE_AND_COMPATIBILITY_ONLY;MUST_NOT_REPLACE_WEAKEN_OR_DOWNGRADE_AO5"
+  },
+  "integration": {
+    "mode": "RECONCILE_NOT_REBUILD",
+    "ao4_parts": 53,
+    "ao5_sections": 55,
+    "adopted_genes": [
+      "legacy stream aliases",
+      "legacy path aliases",
+      "exact heritage source identity",
+      "AO4-to-AO5 semantic section map",
+      "legacy command continuity"
+    ],
+    "rejected_as_regression": [
+      "replacing AO5 canonical source",
+      "reducing AO5 30-stream fabric to AO4 25-stream fabric",
+      "reducing AO5 20-invariant kernel",
+      "removing AO5 capability-reality ladder",
+      "removing AO5 state machine or performance success gate"
+    ]
+  },
+  "proof_boundary": {
+    "external_effects": false,
+    "provider_authority": false,
+    "credential_authority": false,
+    "deployment_claim": false,
+    "promotion_gate": "existing Federation Airlock + Bubbles + Leak Guard + merged-main readback"
+  },
+  "failure_learning": {
+    "classification": "PREVENTED_DOWNGRADE_AND_CONTINUITY_GAP",
+    "learning": "Older engines should be integrated through source-hash-bound heritage adapters and semantic alias maps rather than copied over current engines."
+  }
+}
