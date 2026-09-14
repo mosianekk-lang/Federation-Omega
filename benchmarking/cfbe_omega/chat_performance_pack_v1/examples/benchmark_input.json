@@ -1,0 +1,1 @@
+{"scope":"local-pack-readiness","dimensions":[{"id":"recovery","weight":0.25,"score":9,"state":"VERIFIED"},{"id":"ledger","weight":0.25,"score":9,"state":"VERIFIED"},{"id":"context","weight":0.20,"score":9,"state":"VERIFIED"},{"id":"canary","weight":0.20,"score":9,"state":"VERIFIED"},{"id":"provider_integration","weight":0.10,"score":8,"state":"DESIGN"}]}

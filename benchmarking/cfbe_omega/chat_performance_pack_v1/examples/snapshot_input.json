@@ -1,0 +1,1 @@
+{"snapshot_id":"example-1","producer_id":"recovery-controller","mission_id":"mission-1","generation":1,"created_at":1788534000,"expires_at":1788537600,"source_epochs":{"drive":"rev-1","github":"sha-1"},"coverage":{"drive":true,"github":true,"ledger":true},"state":"VERIFIED"}
