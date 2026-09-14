@@ -1,0 +1,16 @@
+{
+  "schema": "FUSE-AIOS-CFBE-MATRIX-V1",
+  "version": "0.1.0",
+  "capabilities": [
+    {"id":"CAP-001","name":"upstream-linux-base","disposition":"ADOPT","proof_gate":"pinned source + config + reproducible build"},
+    {"id":"CAP-002","name":"transactional-host-updates","disposition":"REIMPLEMENT_CLEANROOM","proof_gate":"state-machine + VM rollback test"},
+    {"id":"CAP-003","name":"oci-container-runtime","disposition":"WRAP","proof_gate":"rootless workload smoke test"},
+    {"id":"CAP-004","name":"kvm-qemu-virtualization","disposition":"WRAP","proof_gate":"x86_64/arm64 boot receipts"},
+    {"id":"CAP-005","name":"wasm-wasi-sandbox","disposition":"WRAP","proof_gate":"sandbox capability-denial tests"},
+    {"id":"CAP-006","name":"local-ai-gateway","disposition":"REIMPLEMENT_CLEANROOM","proof_gate":"offline CPU inference + API smoke"},
+    {"id":"CAP-007","name":"sigstore-slsa-compatible-provenance","disposition":"ADOPT","proof_gate":"self-host/offline verification path"},
+    {"id":"CAP-008","name":"accelerator-adapter-contract","disposition":"REIMPLEMENT_CLEANROOM","proof_gate":"real-hardware receipts per backend"},
+    {"id":"CAP-009","name":"permissioned-agent-os","disposition":"REIMPLEMENT_CLEANROOM","proof_gate":"deny-by-default capability tests"},
+    {"id":"CAP-010","name":"windows-heavy-validation-plane","disposition":"WRAP","proof_gate":"GitHub-hosted windows receipt; owner-PC remains separate"}
+  ]
+}

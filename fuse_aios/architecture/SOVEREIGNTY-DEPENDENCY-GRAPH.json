@@ -1,0 +1,20 @@
+{
+  "schema": "FUSE-AIOS-SOVEREIGNTY-GRAPH-V1",
+  "version": "0.1.0",
+  "core_planes": {
+    "boot": {"must_work_offline": true, "mandatory_saas": false},
+    "build": {"must_work_from_pinned_or_mirrored_inputs": true},
+    "trust": {"fuse_controlled_root": true, "public_transparency_service_required": false},
+    "update": {"transactional": true, "rollback_required": true},
+    "identity_policy": {"local_authority_path_required": true},
+    "telemetry": {"local_first": true, "external_export_optional": true},
+    "ai_inference": {"local_cpu_path_required": true, "accelerators_optional": true},
+    "agents": {"least_privilege": true, "host_root_default": false}
+  },
+  "replaceable_adapters": [
+    "cuda", "rocm", "oneapi-sycl", "opencl-vulkan", "onnx-runtime",
+    "pytorch", "jax", "tensorflow", "llama.cpp", "vllm", "cloud-model-providers"
+  ],
+  "tier1_architectures": ["x86_64", "arm64"],
+  "tier2_architectures": ["riscv64"]
+}

@@ -4,6 +4,7 @@ on:
   pull_request:
     paths:
       - "windows_federation_plane/**"
+      - "fuse_aios/**"
       - ".github/workflows/fuse-windows-execution-plane-v1.yml"
       - "governance/fuse_windows_execution_plane_v1.json"
       - "tests/test_fuse_windows_execution_plane_v1.py"
@@ -42,18 +43,14 @@ jobs:
         uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
         with:
           persist-credentials: false
-
       - name: Set up Python
         uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
         with:
           python-version: "3.12"
-
       - name: Install hash-locked relay test dependencies
         run: python -m pip install --require-hashes -r windows_federation_plane/requirements-relay.lock
-
       - name: Run Windows failure-first court
         run: ./windows_federation_plane/scripts/Test-FederationWindowsPlane.ps1
-
       - name: Execute allowlisted Windows task
         env:
           REQUESTED_TASK: ${{ inputs.task || 'health' }}
@@ -66,12 +63,10 @@ jobs:
           } else {
             ./windows_federation_plane/scripts/Invoke-FederationWindowsTask.ps1 -Task $task -ReceiptPath windows_federation_plane/receipts/hosted-windows-receipt.json
           }
-
       - name: Verify immutable semantic receipt
         run: |
           $env:PYTHONPATH = "$PWD/windows_federation_plane/src"
           python -c "import json,sys; from federation_windows_plane.models import verify_receipt_mapping; verify_receipt_mapping(json.load(open(sys.argv[1], encoding='utf-8')), expected_source_sha=sys.argv[2])" windows_federation_plane/receipts/hosted-windows-receipt.json $env:FEDERATION_SOURCE_SHA
-
       - name: Upload Windows execution receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
@@ -79,3 +74,143 @@ jobs:
           path: windows_federation_plane/receipts/hosted-windows-receipt.json
           if-no-files-found: error
           retention-days: 7
+
+  aios-x86-boot:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 15
+    env:
+      FUSE_AIOS_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Validate AI-OS source and inference contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD)" = "$FUSE_AIOS_SOURCE_SHA"
+          python fuse_aios/tests/validate_candidate.py --root fuse_aios
+          python -m unittest discover -s fuse_aios/tests -p 'test_boot_and_inference_contract.py' -v
+          python fuse_aios/ai/inference_smoke.py --model fuse_aios/ai/smoke-model.json
+      - name: Install provider QEMU and bootstrap kernel tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qemu-system-x86 busybox-static cpio linux-image-virtual
+          mkdir -p fuse_aios/out/boot-evidence
+          { echo "runner_image=${ImageOS:-UNKNOWN}/${ImageVersion:-UNKNOWN}"; echo "runner_kernel=$(uname -r)"; echo "source_sha=${FUSE_AIOS_SOURCE_SHA}"; qemu-system-x86_64 --version | head -n 1; dpkg-query -W -f='${Package}=${Version}\n' qemu-system-x86 busybox-static cpio linux-image-virtual; } | tee fuse_aios/out/boot-evidence/x86_64-package-provenance.txt
+      - name: Build deterministic AI-OS initramfs
+        shell: bash
+        run: BUSYBOX_BIN=/bin/busybox SOURCE_DATE_EPOCH=0 bash fuse_aios/build/build-initramfs.sh fuse_aios/out/fuse-aios-initramfs.cpio.gz
+      - name: Boot FUSE AI-OS x86_64 under QEMU
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1)"; test -s "$KERNEL"
+          bash fuse_aios/boot/run-qemu-smoke.sh --arch x86_64 --kernel "$KERNEL" --initramfs fuse_aios/out/fuse-aios-initramfs.cpio.gz --evidence-dir fuse_aios/out/boot-evidence
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('fuse_aios/out/boot-evidence/x86_64-boot-receipt.json').read_text()); assert r['truth']=='EMULATED_BOOT_SENTINEL_PROVED'; assert r['source_sha']==os.environ['FUSE_AIOS_SOURCE_SHA']; assert r['physical_hardware_proved'] is False
+          print('FUSE_AIOS_X86_64_QEMU_BOOT_VERIFIED')
+          PY
+      - name: Run x86_64 VM transactional rollback court
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1)"; test -s "$KERNEL"
+          BUSYBOX_BIN=/bin/busybox bash fuse_aios/update/run_vm_artifact_rollback.sh --arch x86_64 --kernel "$KERNEL" --evidence-dir fuse_aios/out/boot-evidence
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('fuse_aios/out/boot-evidence/x86_64-vm-rollback-receipt.json').read_text()); assert r['status']=='PASS'; assert r['truth']=='VM_ARTIFACT_ROLLBACK_PROVED'; assert r['source_sha']==os.environ['FUSE_AIOS_SOURCE_SHA']; assert r['real_block_device_rollback_proved'] is False
+          print('FUSE_AIOS_X86_64_VM_ARTIFACT_ROLLBACK_VERIFIED')
+          PY
+      - name: Upload immutable AI-OS x86_64 boot proof
+        if: always() && hashFiles('fuse_aios/out/boot-evidence/*') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-aios-x86-boot-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            fuse_aios/out/boot-evidence/
+            fuse_aios/out/fuse-aios-initramfs.cpio.gz
+          if-no-files-found: error
+          retention-days: 30
+
+  aios-arm64-boot:
+    if: github.event_name == 'pull_request'
+    runs-on: ubuntu-24.04-arm
+    timeout-minutes: 15
+    env:
+      FUSE_AIOS_SOURCE_SHA: ${{ github.event.pull_request.head.sha || github.sha }}
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@a26af69be951a213d495a4c3e4e4022e16d87065
+        with:
+          python-version: "3.12"
+      - name: Validate ARM64 AI-OS source and inference contracts
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(uname -m)" = "aarch64"; test "$(git rev-parse HEAD)" = "$FUSE_AIOS_SOURCE_SHA"
+          python fuse_aios/tests/validate_candidate.py --root fuse_aios
+          python -m unittest discover -s fuse_aios/tests -p 'test_boot_and_inference_contract.py' -v
+          python fuse_aios/ai/inference_smoke.py --model fuse_aios/ai/smoke-model.json
+      - name: Install ARM64 provider QEMU and bootstrap kernel tools
+        shell: bash
+        run: |
+          set -euo pipefail
+          sudo apt-get update -qq
+          sudo env DEBIAN_FRONTEND=noninteractive apt-get install -y --no-install-recommends qemu-system-arm busybox-static cpio linux-image-virtual
+          mkdir -p fuse_aios/out/boot-evidence
+          { echo "runner_image=${ImageOS:-UNKNOWN}/${ImageVersion:-UNKNOWN}"; echo "runner_arch=$(uname -m)"; echo "runner_kernel=$(uname -r)"; echo "source_sha=${FUSE_AIOS_SOURCE_SHA}"; qemu-system-aarch64 --version | head -n 1; dpkg-query -W -f='${Package}=${Version}\n' qemu-system-arm busybox-static cpio linux-image-virtual; } | tee fuse_aios/out/boot-evidence/arm64-package-provenance.txt
+      - name: Build deterministic ARM64 AI-OS initramfs
+        shell: bash
+        run: BUSYBOX_BIN=/bin/busybox SOURCE_DATE_EPOCH=0 bash fuse_aios/build/build-initramfs.sh fuse_aios/out/fuse-aios-initramfs-arm64.cpio.gz
+      - name: Boot FUSE AI-OS ARM64 under QEMU
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1)"; test -s "$KERNEL"
+          bash fuse_aios/boot/run-qemu-smoke.sh --arch arm64 --kernel "$KERNEL" --initramfs fuse_aios/out/fuse-aios-initramfs-arm64.cpio.gz --evidence-dir fuse_aios/out/boot-evidence
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('fuse_aios/out/boot-evidence/arm64-boot-receipt.json').read_text()); assert r['truth']=='EMULATED_BOOT_SENTINEL_PROVED'; assert r['source_sha']==os.environ['FUSE_AIOS_SOURCE_SHA']; assert r['physical_hardware_proved'] is False
+          print('FUSE_AIOS_ARM64_QEMU_BOOT_VERIFIED')
+          PY
+      - name: Run ARM64 VM transactional rollback court
+        shell: bash
+        run: |
+          set -euo pipefail
+          KERNEL="$(ls -1 /boot/vmlinuz-* | sort -V | tail -n 1)"; test -s "$KERNEL"
+          BUSYBOX_BIN=/bin/busybox bash fuse_aios/update/run_vm_artifact_rollback.sh --arch arm64 --kernel "$KERNEL" --evidence-dir fuse_aios/out/boot-evidence
+          python - <<'PY'
+          import json, os
+          from pathlib import Path
+          r=json.loads(Path('fuse_aios/out/boot-evidence/arm64-vm-rollback-receipt.json').read_text()); assert r['status']=='PASS'; assert r['truth']=='VM_ARTIFACT_ROLLBACK_PROVED'; assert r['source_sha']==os.environ['FUSE_AIOS_SOURCE_SHA']; assert r['real_block_device_rollback_proved'] is False
+          print('FUSE_AIOS_ARM64_VM_ARTIFACT_ROLLBACK_VERIFIED')
+          PY
+      - name: Upload immutable AI-OS ARM64 boot proof
+        if: always() && hashFiles('fuse_aios/out/boot-evidence/*') != ''
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-aios-arm64-boot-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            fuse_aios/out/boot-evidence/
+            fuse_aios/out/fuse-aios-initramfs-arm64.cpio.gz
+          if-no-files-found: error
+          retention-days: 30
