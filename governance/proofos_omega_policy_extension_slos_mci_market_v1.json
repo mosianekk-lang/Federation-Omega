@@ -40,7 +40,7 @@
         "tests/test_slos_mission_capability_intelligence_v1.py"
       ],
       "subsystems": ["SUPERIOR_LOGIC"],
-      "failure_class": "RESOURCE_PLACEMENT_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
     },
@@ -55,7 +55,7 @@
         "tests/test_slos_market_composite_benchmark_v1.py"
       ],
       "subsystems": ["SUPERIOR_LOGIC"],
-      "failure_class": "BENCHMARK_INTEGRITY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
     }
