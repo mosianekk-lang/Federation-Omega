@@ -25,7 +25,7 @@ internal sealed class NativeIdentity : IDisposable
         CngKey key;
         if (CngKey.Exists(keyName, Provider))
         {
-            key = CngKey.Open(keyName, Provider, CngKeyOpenOptions.UserKey);
+            key = CngKey.Open(keyName, Provider);
         }
         else
         {
@@ -44,6 +44,12 @@ internal sealed class NativeIdentity : IDisposable
 
     public byte[] Sign(byte[] payload) => _ecdsa.SignData(
         payload,
+        HashAlgorithmName.SHA256,
+        DSASignatureFormat.Rfc3279DerSequence);
+
+    public bool Verify(byte[] payload, byte[] signature) => _ecdsa.VerifyData(
+        payload,
+        signature,
         HashAlgorithmName.SHA256,
         DSASignatureFormat.Rfc3279DerSequence);
 
