@@ -537,7 +537,8 @@
       ".github/workflows/aegis-omega-zero-traffic-v1.yml",
       ".github/workflows/fuse-windows-execution-plane-v1.yml",
       ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
-      ".github/workflows/cfbe-build-intelligence-reusable-v1.yml"
+      ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
+      ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
