@@ -1,5 +1,4 @@
 using System.Security.Cryptography;
-using System.Text;
 using System.Text.Json;
 using System.Text.RegularExpressions;
 
@@ -17,9 +16,9 @@ internal static class CanonicalJson
         return stream.ToArray();
     }
 
-    public static string Sha256Hex(JsonElement value) => Convert.ToHexStringLower(SHA256.HashData(Bytes(value)));
+    public static string Sha256Hex(JsonElement value) => Convert.ToHexString(SHA256.HashData(Bytes(value))).ToLowerInvariant();
 
-    public static string Sha256Hex(byte[] value) => Convert.ToHexStringLower(SHA256.HashData(value));
+    public static string Sha256Hex(byte[] value) => Convert.ToHexString(SHA256.HashData(value)).ToLowerInvariant();
 
     private static void Write(Utf8JsonWriter writer, JsonElement value)
     {
@@ -102,7 +101,7 @@ internal sealed class NativeTaskEnvelope
         var missing = ExpectedFields.Where(n => !root.TryGetProperty(n, out _)).OrderBy(n => n, StringComparer.Ordinal).ToArray();
         if (missing.Length > 0) throw new InvalidDataException("MISSING_ENVELOPE_FIELDS:" + string.Join(',', missing));
 
-        var envelope = new NativeTaskEnvelope
+        return new NativeTaskEnvelope
         {
             Schema = ReadString(root, "schema"),
             TaskId = ReadString(root, "task_id"),
@@ -115,7 +114,6 @@ internal sealed class NativeTaskEnvelope
             Effect = ReadString(root, "effect"),
             Raw = root.Clone()
         };
-        return envelope;
     }
 
     public void Validate(DateTimeOffset now)
@@ -203,4 +201,11 @@ internal sealed class NativeTaskEnvelope
 internal static class Base64Url
 {
     public static string Encode(byte[] bytes) => Convert.ToBase64String(bytes).TrimEnd('=').Replace('+', '-').Replace('/', '_');
+
+    public static byte[] Decode(string value)
+    {
+        var normalized = value.Replace('-', '+').Replace('_', '/');
+        normalized += new string('=', (4 - normalized.Length % 4) % 4);
+        return Convert.FromBase64String(normalized);
+    }
 }
