@@ -79,11 +79,11 @@ internal static class NativeExecutor
         }
 
         using var finalHasher = IncrementalHash.CreateHash(HashAlgorithmName.SHA256);
+        var indexBytes = new byte[4];
         for (var round = 0; round < rounds; round++)
         {
-            Span<byte> index = stackalloc byte[4];
-            BinaryPrimitives.WriteInt32LittleEndian(index, round);
-            finalHasher.AppendData(index);
+            BinaryPrimitives.WriteInt32LittleEndian(indexBytes, round);
+            finalHasher.AppendData(indexBytes);
             finalHasher.AppendData(roundDigests[round]);
         }
         var digest = Convert.ToHexString(finalHasher.GetHashAndReset()).ToLowerInvariant();
