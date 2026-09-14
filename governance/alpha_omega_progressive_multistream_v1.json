@@ -1,0 +1,96 @@
+{
+  "schema": "ALPHA-OMEGA-PROGRESSIVE-MULTISTREAM-V1",
+  "version": "1.0.0",
+  "owner": "Kim Kagiso Mosiane",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "purpose": "Turn Formation Innovation route competition into productive proof-bound parallel work, progressive completion and measured compounding reuse without widening authority.",
+  "source": {
+    "package": "systems/alpha-omega-turnkey",
+    "implementation": "systems/alpha-omega-turnkey/src/alpha_omega/progressive.py",
+    "tests": "systems/alpha-omega-turnkey/tests/test_progressive.py",
+    "cli_mode": "alpha-omega --progressive --simulate-safe"
+  },
+  "formation_paths": [
+    "REUSE_OPTIMISE",
+    "COMPOSE_EXTEND",
+    "MATERIAL_NEW",
+    "REVERSIBLE_EXPERIMENT"
+  ],
+  "stream_contract": {
+    "parallel": [
+      "surface and capability discovery",
+      "evidence and unknown mapping",
+      "constraint classification",
+      "eligible route evaluation",
+      "independent component builds",
+      "healthy-path and failure-path testing",
+      "red-team review",
+      "learning and opportunity extraction"
+    ],
+    "serialized": [
+      "collision-key writes",
+      "shared-target mutation",
+      "canonical fan-in",
+      "provider effect lane",
+      "consequential promotion"
+    ],
+    "max_parallelism_is_bounded": true,
+    "dependency_closure_required": true,
+    "failure_and_hold_propagation_explicit": true
+  },
+  "reliability": {
+    "stable_mission_path_stream_unit_and_wave_ids": true,
+    "hash_linked_learning_ledger": true,
+    "deterministic_result_fan_in": true,
+    "repeated_failure_opens_circuit": true,
+    "materially_different_route_after_open_circuit": true,
+    "checkpoint_each_material_wave": true,
+    "missing_executor_is_failure": true,
+    "missing_proof_is_failure": true
+  },
+  "compounding": {
+    "build_success_alone_is_reusable": false,
+    "reusable_admission_requires": [
+      "healthy_path_test",
+      "failure_and_idempotency_test",
+      "red_team_review",
+      "capability_assurance_fan_in",
+      "proof_reference"
+    ],
+    "later_cycle": [
+      "verify proof freshness and compatibility",
+      "run regression",
+      "avoid redundant build and duplicated assurance work"
+    ],
+    "work_units_avoided_may_be_reported_from_plan_diff": true,
+    "speedup_requires_complete_matched_capability_cycles": true,
+    "local_low_sample_measurement_cannot_be_generalised": true
+  },
+  "provider_boundary": {
+    "provider_units_held_by_default": true,
+    "explicit_effect_class_admission_required": true,
+    "one_effectful_lane_per_wave": true,
+    "source_or_local_canary_proves_provider_runtime": false,
+    "provider_promotion_requires_identity_semantic_readback_health_persistence_and_rollback": true
+  },
+  "deployment_ladder": [
+    "SOURCE_IMPLEMENTED",
+    "DETERMINISTIC_TESTED",
+    "LOCAL_A1_MULTISTREAM_CANARY_VERIFIED",
+    "CONTROL_PLANE_REGISTERED",
+    "SHADOW_PROVIDER_DISABLED",
+    "READ_ONLY_PROVIDER_CANARY",
+    "REVERSIBLE_EFFECT_CANARY",
+    "BOUNDED_RELEASE",
+    "SUSTAINED_PROVEN"
+  ],
+  "truth_boundary": {
+    "hidden_runtime_claimed": false,
+    "provider_authority_created": false,
+    "automatic_paid_scale_claimed": false,
+    "parallelism_guarantees_wall_clock_speedup": false,
+    "measured_local_wave_ratio_is_provider_or_estate_slo": false,
+    "compounding_claim_requires_later_measured_cycles": true
+  }
+}
