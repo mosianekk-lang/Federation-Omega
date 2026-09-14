@@ -137,6 +137,8 @@ class WindowsPlane:
                 produced = 0
                 counter = 0
                 while produced < bytes_per_round:
+                    if time.perf_counter() > deadline:
+                        raise RuntimeError("HEAVY_SHA256_DEADLINE_EXCEEDED")
                     block_size = min(HASH_CHECKPOINT_BYTES, bytes_per_round - produced)
                     block, counter = _deterministic_bytes(
                         seed, round_index=round_index, counter=counter, byte_count=block_size
