@@ -1,0 +1,99 @@
+{
+  "schema": "FEDERATION-WHOLE-ESTATE-CURRENT-MAP-V1",
+  "source_commit_sha": "cfb8612f0cde1a39bb139339c54d66e6e05ac822",
+  "observed_at_utc": "2026-09-05T00:38:07+00:00",
+  "freshness_ttl_seconds": 3600,
+  "registered_system_count": 23,
+  "counts": {
+    "GREEN": 1,
+    "UNBOUND": 1,
+    "DORMANT": 0,
+    "STALE": 0,
+    "UNMEASURED": 21
+  },
+  "admitted_twins": [
+    {
+      "system_id": "FEDERATION_OMEGA",
+      "status": "GREEN",
+      "runtime_state": "RUNTIME_VERIFIED",
+      "semantic_state": "RUNTIME_SEMANTIC_VERIFIED",
+      "readback_state": "RUNTIME_READBACK",
+      "proof_ref": "github-actions:run:33933532155/job:101216872007",
+      "facts": [
+        "Google provider authentication verified against project 257649435135",
+        "federation-omega-operator Cloud Run service read succeeded with latest ready revision and 100 percent traffic",
+        "authenticated operator STATUS returned HTTP 200 with body_ok true",
+        "authenticated operator READ_CLOUD_RUN_SERVICE for architron9 returned HTTP 200 with body_ok true"
+      ],
+      "provider_readback_ref": "",
+      "provider_verified_claimed": false
+    },
+    {
+      "system_id": "ARCHITRON",
+      "status": "UNBOUND",
+      "runtime_state": "RUNTIME_PARTIAL",
+      "semantic_state": "DETERMINISTIC_TESTED",
+      "readback_state": "RUNTIME_READBACK",
+      "proof_ref": "github-actions:run:33933532155/job:101216872007",
+      "facts": [
+        "architron9 Cloud Run service read succeeded",
+        "latest ready revision architron9-00027-ssm observed",
+        "100 percent traffic observed on that revision",
+        "Federation Omega operator read of the architron9 service returned HTTP 200 with body_ok true",
+        "no direct Architron semantic invocation was admitted by this receipt"
+      ],
+      "provider_readback_ref": "",
+      "provider_verified_claimed": false
+    }
+  ],
+  "diagnostic_probes_not_promoted_to_twins": [
+    {
+      "system_ids": ["EVIDENCEOPS", "MODISA"],
+      "proof_ref": "github-actions:run:33933359429/job:101216367666",
+      "state": "OPERATOR_ROUTE_READ_ONLY_NOT_VERIFIED",
+      "facts": [
+        "project readback verified",
+        "Pub/Sub service enabled readback verified",
+        "topic readback verified",
+        "direct temporary subscription creation denied",
+        "EvidenceOps service read failed",
+        "service identity was not verified",
+        "identity token was not minted",
+        "MCP initialize, tools/list and omega_status did not succeed",
+        "provider_canary_complete false",
+        "no operator mutation, IAM mutation or deployment mutation occurred"
+      ],
+      "status_effect": "NONE"
+    }
+  ],
+  "unmeasured_systems": [
+    "CASEFORGE",
+    "CHATBRIDGE",
+    "CORPUS_FACTORY",
+    "DIRECT_RUNTIME",
+    "EVIDENCEOPS",
+    "EVI",
+    "HEARTBEAT_MESH",
+    "IN_PLACE_AUDIT",
+    "JFRIE",
+    "KAIO",
+    "KIM_DATAVERSE",
+    "LEX_OMEGA",
+    "MASTER_BIBLE",
+    "MATTER_LEDGER",
+    "MODISA",
+    "OMEGA_MAX",
+    "SECONDARY_BRAIN",
+    "SECURE_CAPABILITY_BOX",
+    "SUPERIOR_LOGIC",
+    "TRUTHGRID",
+    "VERITAS"
+  ],
+  "truth_boundary": {
+    "source_registration_promoted_to_runtime": false,
+    "failed_probe_promoted_to_runtime": false,
+    "provider_verified_claimed_without_provider_semantic_proof": false,
+    "dormancy_inferred_without_explicit_usage_zero": false,
+    "external_effect": false
+  }
+}
