@@ -3,13 +3,79 @@ from __future__ import annotations
 from dataclasses import dataclass
 from datetime import datetime, timedelta, timezone
 from pathlib import Path
+import sys
+import types
 import unittest
 
-from federation_windows_plane.pairing_service import (
-    BOUND_REQUEST_SCHEMA, EXECUTION_LEASE_SCHEMA, PAIRING_AUTH_MODE,
-    POSTURE_SCHEMA, RESULT_ATTESTATION_SCHEMA, ZERO_CHAIN, PairingRuntime,
-    _body_json,
-)
+try:
+    from federation_windows_plane.pairing_service import (
+        BOUND_REQUEST_SCHEMA, EXECUTION_LEASE_SCHEMA, PAIRING_AUTH_MODE,
+        POSTURE_SCHEMA, RESULT_ATTESTATION_SCHEMA, ZERO_CHAIN, PairingRuntime,
+        _body_json,
+    )
+except ModuleNotFoundError as exc:
+    if exc.name not in {"google", "mcp", "starlette", "pydantic"}:
+        raise
+
+    def _module(name: str) -> types.ModuleType:
+        mod = sys.modules.get(name)
+        if mod is None:
+            mod = types.ModuleType(name)
+            sys.modules[name] = mod
+        return mod
+
+    _module("google")
+    _module("google.api_core")
+    google_api_core_exceptions = _module("google.api_core.exceptions")
+    google_api_core_exceptions.AlreadyExists = type("AlreadyExists", (Exception,), {})
+    _module("google.cloud")
+    google_cloud_firestore = _module("google.cloud.firestore")
+    google_cloud_firestore.Client = object
+    google_cloud_firestore.transactional = lambda fn: fn
+
+    _module("mcp")
+    _module("mcp.server")
+    _module("mcp.server.auth")
+    _module("mcp.server.auth.middleware")
+    mcp_auth_provider = _module("mcp.server.auth.provider")
+    mcp_auth_context = _module("mcp.server.auth.middleware.auth_context")
+    mcp_auth_context.get_access_token = lambda: None
+    mcp_auth_settings = _module("mcp.server.auth.settings")
+    mcp_auth_settings.AuthSettings = type("AuthSettings", (), {"__init__": lambda self, **kwargs: None})
+    mcp_auth_provider.AccessToken = type("AccessToken", (), {"__init__": lambda self, **kwargs: None})
+    mcp_auth_provider.TokenVerifier = type("TokenVerifier", (), {})
+    mcp_server_module = _module("mcp.server.mcpserver")
+    mcp_types_module = _module("mcp.types")
+
+    class _MCPServer:
+        def __init__(self, *args, **kwargs): pass
+        def tool(self, *args, **kwargs):
+            return lambda fn: fn
+        def custom_route(self, *args, **kwargs):
+            return lambda fn: fn
+
+    class _ToolAnnotations:
+        def __init__(self, **kwargs): pass
+
+    mcp_server_module.MCPServer = _MCPServer
+    mcp_types_module.ToolAnnotations = _ToolAnnotations
+
+    _module("starlette")
+    starlette_requests = _module("starlette.requests")
+    starlette_requests.Request = object
+    starlette_responses = _module("starlette.responses")
+    starlette_responses.JSONResponse = type("JSONResponse", (), {"__init__": lambda self, *args, **kwargs: None})
+    starlette_responses.HTMLResponse = type("HTMLResponse", (), {"__init__": lambda self, *args, **kwargs: None})
+    starlette_responses.PlainTextResponse = type("PlainTextResponse", (), {"__init__": lambda self, *args, **kwargs: None})
+
+    pydantic_module = _module("pydantic")
+    pydantic_module.AnyHttpUrl = str
+
+    from federation_windows_plane.pairing_service import (
+        BOUND_REQUEST_SCHEMA, EXECUTION_LEASE_SCHEMA, PAIRING_AUTH_MODE,
+        POSTURE_SCHEMA, RESULT_ATTESTATION_SCHEMA, ZERO_CHAIN, PairingRuntime,
+        _body_json,
+    )
 from federation_windows_plane.relay_protocol import canonical_json, sha256_hex, signing_payload
 from federation_windows_plane.trust_spine_v21 import ECDSASigner
 
@@ -100,6 +166,18 @@ class PairingTests(unittest.TestCase):
             g=self.p.issue_pairing_grant(now=NOW); a=dict(device_generation=1,source_epoch=SOURCE,policy_epoch=POLICY);a[k]=v
             with self.assertRaisesRegex(PermissionError,code):
                 self.p.start_pairing(pairing_grant_id=g["pairing_grant_id"],pairing_token=g["pairing_token"],device_label="owner-v6",public_key_spki_b64=self.k.public_spki_b64(),now=NOW,**a)
+
+    def test_unconfigured_epochs_fail_closed_before_grant_validation(self):
+        for runtime, code in ((PairingRuntime(relay=self.r, store=self.s, source_epoch="", policy_epoch=POLICY), "PAIRING_SOURCE_EPOCH_UNCONFIGURED"),
+                              (PairingRuntime(relay=self.r, store=self.s, source_epoch=SOURCE, policy_epoch=""), "PAIRING_POLICY_EPOCH_UNCONFIGURED")):
+            with self.assertRaisesRegex(RuntimeError, code):
+                runtime.start_pairing(pairing_grant_id="", pairing_token="", device_label="owner-v6",
+                    public_key_spki_b64=self.k.public_spki_b64(), device_generation=1, source_epoch=SOURCE, policy_epoch=POLICY, now=NOW)
+
+    def test_configured_epochs_then_empty_grant_fails_with_grant_id_invalid(self):
+        with self.assertRaisesRegex(ValueError, "PAIRING_GRANT_ID_INVALID"):
+            self.p.start_pairing(pairing_grant_id="", pairing_token="", device_label="owner-v6",
+                public_key_spki_b64=self.k.public_spki_b64(), device_generation=1, source_epoch=SOURCE, policy_epoch=POLICY, now=NOW)
 
     def test_nonce_replay_and_bound_generation_source_policy(self):
         _,_,x=self.pair(); b=self.bind(x); self.auth(x,b,nonce="same")
