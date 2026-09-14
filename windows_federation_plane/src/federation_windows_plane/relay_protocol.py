@@ -6,6 +6,7 @@ import base64
 import hashlib
 import hmac
 import json
+import re
 import secrets
 import threading
 from typing import Any, Mapping
@@ -15,7 +16,7 @@ TASK_SCHEMA = "FEDERATION-WINDOWS-TASK-V1"
 RECEIPT_SCHEMA = "FEDERATION-WINDOWS-RECEIPT-V1"
 RELAY_ENROLLMENT_SCHEMA = "FUSE-WINDOWS-RELAY-ENROLLMENT-V1"
 RELAY_LEASE_SCHEMA = "FUSE-WINDOWS-RELAY-LEASE-V1"
-ALLOWED_TASKS = frozenset({"health", "inventory", "hash_workspace_file"})
+ALLOWED_TASKS = frozenset({"health", "inventory", "hash_workspace_file", "heavy_sha256"})
 ALLOWED_EFFECT = "READ_ONLY"
 
 
@@ -56,6 +57,64 @@ def _parse_utc_z(value: str, label: str) -> datetime:
     return parsed.astimezone(timezone.utc)
 
 
+def _require_int(parameters: Mapping[str, Any], name: str) -> int:
+    value = parameters.get(name)
+    if isinstance(value, bool) or not isinstance(value, int):
+        raise ValueError(f"TASK_PARAMETER_INTEGER_REQUIRED:{name}")
+    return value
+
+
+def _validate_task_parameters(task_type: str, parameters: Mapping[str, Any]) -> None:
+    if task_type in {"health", "inventory"}:
+        if parameters:
+            raise ValueError("TASK_PARAMETERS_MUST_BE_EMPTY")
+        return
+    if task_type == "hash_workspace_file":
+        if set(parameters) != {"relative_path"}:
+            raise ValueError("HASH_PARAMETERS_INVALID")
+        relative = parameters.get("relative_path")
+        if not isinstance(relative, str) or not relative or len(relative) > 1024 or "\x00" in relative:
+            raise ValueError("RELATIVE_PATH_INVALID")
+        return
+    if task_type == "heavy_sha256":
+        expected = {
+            "bytes_per_round",
+            "rounds",
+            "requested_workers",
+            "requested_memory_mb",
+            "max_seconds",
+            "seed_hex",
+        }
+        unknown = sorted(set(parameters) - expected)
+        missing = sorted(expected - set(parameters))
+        if unknown:
+            raise ValueError("UNKNOWN_HEAVY_PARAMETERS:" + ",".join(unknown))
+        if missing:
+            raise ValueError("MISSING_HEAVY_PARAMETERS:" + ",".join(missing))
+        bytes_per_round = _require_int(parameters, "bytes_per_round")
+        rounds = _require_int(parameters, "rounds")
+        workers = _require_int(parameters, "requested_workers")
+        memory_mb = _require_int(parameters, "requested_memory_mb")
+        max_seconds = _require_int(parameters, "max_seconds")
+        seed_hex = parameters.get("seed_hex")
+        if not 1 <= bytes_per_round <= 64 * 1024 * 1024:
+            raise ValueError("BYTES_PER_ROUND_OUT_OF_RANGE")
+        if not 1 <= rounds <= 64:
+            raise ValueError("ROUNDS_OUT_OF_RANGE")
+        if bytes_per_round * rounds > 2 * 1024 * 1024 * 1024:
+            raise ValueError("TOTAL_BYTES_EXCEEDS_2_GIB")
+        if not 1 <= workers <= 16:
+            raise ValueError("REQUESTED_WORKERS_OUT_OF_RANGE")
+        if not 64 <= memory_mb <= 1024:
+            raise ValueError("REQUESTED_MEMORY_MB_OUT_OF_RANGE")
+        if not 1 <= max_seconds <= 300:
+            raise ValueError("MAX_SECONDS_OUT_OF_RANGE")
+        if not isinstance(seed_hex, str) or re.fullmatch(r"[0-9a-fA-F]{64}", seed_hex) is None:
+            raise ValueError("SEED_HEX_INVALID")
+        return
+    raise ValueError("TASK_TYPE_NOT_ALLOWLISTED")
+
+
 def validate_task_mapping(task: Mapping[str, Any], *, now: datetime | None = None) -> None:
     if not isinstance(task, Mapping):
         raise ValueError("TASK_OBJECT_REQUIRED")
@@ -80,8 +139,10 @@ def validate_task_mapping(task: Mapping[str, Any], *, now: datetime | None = Non
         raise ValueError("TASK_TYPE_NOT_ALLOWLISTED")
     if task.get("effect", ALLOWED_EFFECT) != ALLOWED_EFFECT:
         raise ValueError("TASK_EFFECT_NOT_AUTHORIZED")
-    if not isinstance(task.get("parameters") or {}, Mapping):
+    parameters = task.get("parameters") or {}
+    if not isinstance(parameters, Mapping):
         raise ValueError("TASK_PARAMETERS_OBJECT_REQUIRED")
+    _validate_task_parameters(str(task["task_type"]), parameters)
     issued = _parse_utc_z(str(task["issued_at"]), "TASK_ISSUED_AT")
     expires = _parse_utc_z(str(task["expires_at"]), "TASK_EXPIRES_AT")
     current = now or utc_now()
