@@ -11,7 +11,13 @@ from federation_windows_plane.relay_protocol import SovereignRelay, sign_request
 NOW = datetime(2026, 9, 10, 19, 30, 0, tzinfo=timezone.utc)
 
 
-def task(task_id: str = "task-1", *, task_type: str = "health", effect: str = "READ_ONLY"):
+def task(
+    task_id: str = "task-1",
+    *,
+    task_type: str = "health",
+    effect: str = "READ_ONLY",
+    parameters: dict | None = None,
+):
     return {
         "schema": "FEDERATION-WINDOWS-TASK-V1",
         "task_id": task_id,
@@ -20,7 +26,7 @@ def task(task_id: str = "task-1", *, task_type: str = "health", effect: str = "R
         "task_type": task_type,
         "issued_at": "2026-09-10T19:30:00Z",
         "expires_at": "2026-09-10T19:35:00Z",
-        "parameters": {},
+        "parameters": parameters or {},
         "effect": effect,
     }
 
@@ -193,6 +199,24 @@ class RelayProtocolTests(unittest.TestCase):
             self.relay.submit_task(device_id=self.credential.device_id, task=task(task_type="shell"))
         with self.assertRaisesRegex(ValueError, "TASK_EFFECT_NOT_AUTHORIZED"):
             self.relay.submit_task(device_id=self.credential.device_id, task=task(effect="WRITE"))
+
+    def test_typed_heavy_sha256_task_is_accepted_by_queue(self):
+        parameters = {
+            "bytes_per_round": 1024 * 1024,
+            "rounds": 2,
+            "requested_workers": 4,
+            "requested_memory_mb": 256,
+            "max_seconds": 30,
+            "seed_hex": "cd" * 32,
+        }
+        self.relay.submit_task(
+            device_id=self.credential.device_id,
+            task=task(task_type="heavy_sha256", parameters=parameters),
+            now=NOW,
+        )
+        polled, _ = self.relay.poll(device_id=self.credential.device_id, now=NOW)
+        self.assertEqual(polled["task_type"], "heavy_sha256")
+        self.assertEqual(polled["parameters"], parameters)
 
     def test_expired_and_unknown_field_tasks_are_rejected(self):
         expired = task()

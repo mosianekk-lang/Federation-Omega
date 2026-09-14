@@ -35,6 +35,18 @@ class WindowsPlaneTests(unittest.TestCase):
         raw.update(changes)
         return TaskEnvelope.from_mapping(raw)
 
+    def heavy_parameters(self, **changes):
+        params = {
+            "bytes_per_round": 1024 * 1024,
+            "rounds": 2,
+            "requested_workers": 4,
+            "requested_memory_mb": 256,
+            "max_seconds": 30,
+            "seed_hex": "ab" * 32,
+        }
+        params.update(changes)
+        return params
+
     def test_health_receipt_is_hash_bound(self):
         task = self.task()
         receipt = WindowsPlane(self.root, require_windows=False).execute(task)
@@ -72,6 +84,38 @@ class WindowsPlaneTests(unittest.TestCase):
         ).result
         self.assertEqual(result["relative_path"], "sample.txt")
         self.assertEqual(result["sha256"], hashlib.sha256(b"federation").hexdigest())
+
+    def test_heavy_sha256_is_deterministic_and_governed(self):
+        plane = WindowsPlane(self.root, require_windows=False)
+        first = plane.execute(self.task("heavy_sha256", self.heavy_parameters())).result
+        second = plane.execute(self.task("heavy_sha256", self.heavy_parameters())).result
+        self.assertEqual(first["final_sha256"], second["final_sha256"])
+        self.assertEqual(first["total_bytes"], 2 * 1024 * 1024)
+        self.assertEqual(first["rounds"], 2)
+        self.assertTrue(first["resource_governor_bound"])
+        self.assertTrue(first["generated_in_memory"])
+        self.assertFalse(first["filesystem_used"])
+        self.assertFalse(first["network_used"])
+        self.assertFalse(first["shell_process_used"])
+        self.assertFalse(first["gpu_used"])
+        self.assertGreater(first["granted_workers"], 0)
+        self.assertLessEqual(first["granted_workers"], first["requested_workers"])
+
+    def test_heavy_sha256_rejects_extra_or_malformed_parameters(self):
+        with self.assertRaisesRegex(ValueError, "HEAVY_SHA256_REQUIRES_EXACT_PARAMETERS"):
+            WindowsPlane(self.root, require_windows=False).execute(
+                self.task("heavy_sha256", self.heavy_parameters(extra=1))
+            )
+        with self.assertRaisesRegex(ValueError, "HEAVY_SHA256_BYTES_PER_ROUND_TYPE_INVALID"):
+            WindowsPlane(self.root, require_windows=False).execute(
+                self.task("heavy_sha256", self.heavy_parameters(bytes_per_round="1048576"))
+            )
+
+    def test_heavy_sha256_rejects_total_byte_overflow(self):
+        with self.assertRaisesRegex(ValueError, "HEAVY_SHA256_TOTAL_BYTES_LIMIT_EXCEEDED"):
+            WindowsPlane(self.root, require_windows=False).execute(
+                self.task("heavy_sha256", self.heavy_parameters(bytes_per_round=64 * 1024 * 1024, rounds=33))
+            )
 
     def test_path_escape_is_denied(self):
         with self.assertRaisesRegex(ValueError, "PATH_ESCAPE_DENIED"):

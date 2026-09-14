@@ -3,7 +3,7 @@ from __future__ import annotations
 from pathlib import Path
 from typing import Any, Mapping
 
-from .models import TaskEnvelope
+from .models import TaskEnvelope, validate_heavy_sha256_parameters
 
 
 MAX_HASH_BYTES = 32 * 1024 * 1024
@@ -40,4 +40,6 @@ class ExecutionPolicy:
             if candidate.stat().st_size > MAX_HASH_BYTES:
                 raise ValueError("HASH_TARGET_TOO_LARGE")
             return {"path": candidate, "relative_path": candidate.relative_to(self.workspace).as_posix()}
+        if task.task_type == "heavy_sha256":
+            return validate_heavy_sha256_parameters(task.parameters)
         raise ValueError("TASK_TYPE_NOT_IMPLEMENTED")
