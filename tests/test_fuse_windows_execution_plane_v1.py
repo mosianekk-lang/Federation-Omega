@@ -64,6 +64,7 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         digest = "sha256:e24acd4e93a4efd7956bcce0f0452bba9b2f987de98b0316a86fc4335014b29d"
         self.assertIn("[FO-DISPATCH] FUSE_WINDOWS_RELAY_EXACT_DIGEST_DIAGNOSTIC_V1", source)
         self.assertIn("EXACT_DIGEST_DIAGNOSTIC=true", source)
+        self.assertIn("PAIRING_ROUTE_EXPECTED=false", source)
         self.assertIn(f"EXPECTED_PACKET_DIGEST='{digest}'", source)
         self.assertIn("REQUESTED_IMAGE_DIGEST_URI", source)
         self.assertIn("REQUESTED_IMAGE_DIGEST", source)
@@ -81,6 +82,8 @@ class FederationWindowsPlaneSourceTests(unittest.TestCase):
         self.assertIn("LOCAL_FAILURE_CLASS=CONTAINER_EARLY_EXIT", source)
         self.assertIn("LOCAL_FAILURE_CLASS=RUNNING_HEALTH_UNHEALTHY", source)
         self.assertIn("FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V27", source)
+        self.assertIn('"pairing_route_expected": truth("PAIRING_ROUTE_EXPECTED")', source)
+        self.assertIn('"pairing_court_mode": os.environ.get("PAIRING_COURT_MODE")', source)
         self.assertIn('"provider_mutation_performed": truth("ARTIFACT_REGISTRY_PUSH_PERFORMED") or truth("CLOUD_RUN_DEPLOY_ATTEMPTED")', source)
         self.assertNotIn("docker build --file windows_federation_plane/Dockerfile --tag \"$REQUESTED_IMAGE_DIGEST_URI\"", source)
 

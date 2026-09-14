@@ -79,17 +79,17 @@ class RelayWorkflowTests(unittest.TestCase):
     def test_cloud_run_env_satisfies_relay_server_project_precondition(self):
         self.assertIn("WINDOWS_POLICY_EPOCH: FUSE_WINDOWS_H1_TPM_PAIRING_V1", self.text)
         self.assertIn(
-            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"',
+            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"',
             self.text,
         )
         self.assertIn(
-            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"',
+            'ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"',
             self.text,
         )
-        self.assertIn('--env "FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA"', self.text)
-        self.assertIn('--env "FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"', self.text)
-        self.assertGreaterEqual(self.text.count("FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA"), 3)
-        self.assertGreaterEqual(self.text.count("FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"), 3)
+        self.assertIn('if [[ "$PAIRING_ROUTE_EXPECTED" == \'true\' ]]; then', self.text)
+        self.assertIn('ENVVARS="$ENVVARS,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"', self.text)
+        self.assertIn('PAIRING_LOCAL_ENV+=(--env "FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA")', self.text)
+        self.assertIn('PAIRING_LOCAL_ENV+=(--env "FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH")', self.text)
         self.assertEqual(self.text.count("GOOGLE_CLOUD_PROJECT=$PROJECT_ID"), 3)
         self.assertIn('--set-env-vars="$ENVVARS"', self.text)
 
@@ -133,7 +133,9 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/healthz"', self.text)
         self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/node"', self.text)
         self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/mcp"', self.text)
-        self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/agent/enroll/start"', self.text)
+        self.assertIn("PAIRING_ROUTE_EXPECTED", self.text)
+        self.assertIn("PAIRING_COURT_MODE=CANDIDATE_PAIRING_RUNTIME_REQUIRED", self.text)
+        self.assertIn("PAIRING_COURT_MODE=HISTORICAL_EXACT_DIGEST_NO_PAIRING_REQUIRED", self.text)
         self.assertIn("LOCAL_PAIR_RESPONSE_MISSING", self.text)
         self.assertIn("LOCAL_PAIR_CONTRACT_OBSERVED", self.text)
         self.assertIn("PAIRING_GRANT_ID_INVALID", self.text)
@@ -145,11 +147,24 @@ class RelayWorkflowTests(unittest.TestCase):
         self.assertNotIn("--network host", self.text)
         self.assertNotIn("cat \"$GOOGLE_APPLICATION_CREDENTIALS\"", self.text)
 
+    def test_exact_digest_historical_mode_keeps_legacy_local_court(self):
+        self.assertIn("echo 'PAIRING_ROUTE_EXPECTED=false' >> \"$GITHUB_ENV\"", self.text)
+        self.assertIn('python3 -c \'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node","/mcp"}; raise SystemExit(0 if need.issubset(set(r)) else 1)\' /tmp/fuse-relay-local-evidence/routes.json', self.text)
+
+    def test_candidate_build_mode_requires_pairing_routes_and_epochs(self):
+        self.assertIn("echo 'PAIRING_ROUTE_EXPECTED=true' >> \"$GITHUB_ENV\"", self.text)
+        self.assertIn('"http://127.0.0.1:${LOCAL_PORT}/agent/enroll/start"', self.text)
+        self.assertIn('python3 -c \'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node","/mcp","/agent/enroll/start","/agent/enroll/complete","/agent/runtime/poll","/agent/runtime/complete"}; raise SystemExit(0 if need.issubset(set(r)) else 1)\' /tmp/fuse-relay-local-evidence/routes.json', self.text)
+        self.assertIn('PAIRING_LOCAL_ENV+=(--env "FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA")', self.text)
+        self.assertIn('PAIRING_LOCAL_ENV+=(--env "FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH")', self.text)
+
     def test_receipt_binds_exact_source_provider_image_revision_topology_and_differential(self):
         self.assertIn('"schema": "FUSE-WINDOWS-RELAY-DEPLOYMENT-RECEIPT-V27"', self.text)
         for field in (
             '"source_sha"',
             '"image_digest_uri"',
+            '"pairing_route_expected"',
+            '"pairing_court_mode"',
             '"local_image_differential_checked"',
             '"local_health_code"',
             '"local_node_code"',

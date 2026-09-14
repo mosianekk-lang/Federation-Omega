@@ -86,10 +86,12 @@ jobs:
             test "$REQUESTED_IMAGE_DIGEST" = "$EXPECTED_PACKET_DIGEST"
             test "$REQUESTED_IMAGE_DIGEST_URI" = "$EXPECTED_PACKET_URI"
             echo 'EXACT_DIGEST_DIAGNOSTIC=true' >> "$GITHUB_ENV"
+            echo 'PAIRING_ROUTE_EXPECTED=false' >> "$GITHUB_ENV"
             echo "REQUESTED_IMAGE_DIGEST=$REQUESTED_IMAGE_DIGEST" >> "$GITHUB_ENV"
             echo "REQUESTED_IMAGE_DIGEST_URI=$REQUESTED_IMAGE_DIGEST_URI" >> "$GITHUB_ENV"
           else
             echo 'EXACT_DIGEST_DIAGNOSTIC=false' >> "$GITHUB_ENV"
+            echo 'PAIRING_ROUTE_EXPECTED=true' >> "$GITHUB_ENV"
             echo 'REQUESTED_IMAGE_DIGEST=' >> "$GITHUB_ENV"
             echo 'REQUESTED_IMAGE_DIGEST_URI=' >> "$GITHUB_ENV"
           fi
@@ -183,15 +185,19 @@ jobs:
           test -n "${GOOGLE_APPLICATION_CREDENTIALS:-}"
           test -f "$GOOGLE_APPLICATION_CREDENTIALS"
           docker pull "$IMAGE_DIGEST_URI"
+          PAIRING_LOCAL_ENV=()
+          if [[ "$PAIRING_ROUTE_EXPECTED" == 'true' ]]; then
+            PAIRING_LOCAL_ENV+=(--env "FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA")
+            PAIRING_LOCAL_ENV+=(--env "FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH")
+          fi
           docker run --detach --name "$LOCAL_CONTAINER" \
             --publish "127.0.0.1:${LOCAL_PORT}:8080" \
             --env "GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
             --env 'FUSE_AGENT_ONLY_BOOTSTRAP=true' \
             --env 'FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY' \
-            --env "FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA" \
-            --env "FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH" \
             --env "GOOGLE_APPLICATION_CREDENTIALS=$LOCAL_CREDENTIAL_PATH" \
             --volume "$GOOGLE_APPLICATION_CREDENTIALS:$LOCAL_CREDENTIAL_PATH:ro" \
+            "${PAIRING_LOCAL_ENV[@]}" \
             "$IMAGE_DIGEST_URI" >/dev/null
           echo 'LOCAL_IMAGE_DIFFERENTIAL_ATTEMPTED=true' >> "$GITHUB_ENV"
 
@@ -211,10 +217,13 @@ jobs:
           MCP_CODE="$(curl --location --silent --show-error --connect-timeout 2 --max-time 5 \
             --output /tmp/fuse-relay-local-mcp.txt --write-out '%{http_code}' \
             "http://127.0.0.1:${LOCAL_PORT}/mcp" || true)"
-          PAIR_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 \
-            -X POST -H 'content-type: application/json' -d '{}' \
-            --output /tmp/fuse-relay-local-pair.json --write-out '%{http_code}' \
-            "http://127.0.0.1:${LOCAL_PORT}/agent/enroll/start" || true)"
+          PAIR_CODE='NOT_REQUIRED'
+          if [[ "$PAIRING_ROUTE_EXPECTED" == 'true' ]]; then
+            PAIR_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 \
+              -X POST -H 'content-type: application/json' -d '{}' \
+              --output /tmp/fuse-relay-local-pair.json --write-out '%{http_code}' \
+              "http://127.0.0.1:${LOCAL_PORT}/agent/enroll/start" || true)"
+          fi
 
           capture_local_evidence
           echo "LOCAL_HEALTH_CODE=$HEALTH_CODE" >> "$GITHUB_ENV"
@@ -240,9 +249,15 @@ jobs:
           test "$NODE_CODE" = '200'
           grep -F 'CONNECT THIS PC' /tmp/fuse-relay-local-node.html >/dev/null
           case "$MCP_CODE" in 401|403|404) ;; *) echo "LOCAL_MCP_FAIL_CLOSED_REQUIRED:$MCP_CODE" >&2; exit 71 ;; esac
-          test -f /tmp/fuse-relay-local-pair.json || { echo "LOCAL_PAIR_RESPONSE_MISSING" >&2; exit 75; }
-          python3 -c 'import json,sys; status,path=sys.argv[1:3]; d=json.load(open(path,encoding="utf-8")); state=d.get("state"); error=d.get("error"); ok=status=="401" and state=="FAILED_CLOSED" and error=="PAIRING_GRANT_ID_INVALID"; print(f"LOCAL_PAIR_CONTRACT_OBSERVED:status={status}:state={state}:error={error}", file=sys.stderr) if not ok else None; raise SystemExit(0 if ok else 74)' "$PAIR_CODE" /tmp/fuse-relay-local-pair.json
-          python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node","/mcp","/agent/enroll/start","/agent/enroll/complete","/agent/runtime/poll","/agent/runtime/complete"}; raise SystemExit(0 if need.issubset(set(r)) else 1)' /tmp/fuse-relay-local-evidence/routes.json
+          if [[ "$PAIRING_ROUTE_EXPECTED" == 'true' ]]; then
+            test -f /tmp/fuse-relay-local-pair.json || { echo "LOCAL_PAIR_RESPONSE_MISSING" >&2; exit 75; }
+            python3 -c 'import json,sys; status,path=sys.argv[1:3]; d=json.load(open(path,encoding="utf-8")); state=d.get("state"); error=d.get("error"); ok=status=="401" and state=="FAILED_CLOSED" and error=="PAIRING_GRANT_ID_INVALID"; print(f"LOCAL_PAIR_CONTRACT_OBSERVED:status={status}:state={state}:error={error}", file=sys.stderr) if not ok else None; raise SystemExit(0 if ok else 74)' "$PAIR_CODE" /tmp/fuse-relay-local-pair.json
+            python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node","/mcp","/agent/enroll/start","/agent/enroll/complete","/agent/runtime/poll","/agent/runtime/complete"}; raise SystemExit(0 if need.issubset(set(r)) else 1)' /tmp/fuse-relay-local-evidence/routes.json
+            echo 'PAIRING_COURT_MODE=CANDIDATE_PAIRING_RUNTIME_REQUIRED' >> "$GITHUB_ENV"
+          else
+            python3 -c 'import json,sys; r=json.load(open(sys.argv[1],encoding="utf-8")); need={"/healthz","/node","/mcp"}; raise SystemExit(0 if need.issubset(set(r)) else 1)' /tmp/fuse-relay-local-evidence/routes.json
+            echo 'PAIRING_COURT_MODE=HISTORICAL_EXACT_DIGEST_NO_PAIRING_REQUIRED' >> "$GITHUB_ENV"
+          fi
 
           echo 'LOCAL_FAILURE_CLASS=NONE' >> "$GITHUB_ENV"
           echo 'LOCAL_IMAGE_DIFFERENTIAL_CHECKED=true' >> "$GITHUB_ENV"
@@ -251,9 +266,15 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"
+          ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_AGENT_ONLY_BOOTSTRAP=true,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"
+          if [[ "$PAIRING_ROUTE_EXPECTED" == 'true' ]]; then
+            ENVVARS="$ENVVARS,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"
+          fi
           if [[ "$BOOTSTRAP_MODE" == 'FULL_MCP_AGENT' ]]; then
-            ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"
+            ENVVARS="GOOGLE_CLOUD_PROJECT=$PROJECT_ID,FUSE_OIDC_ISSUER=$OIDC_ISSUER,FUSE_OIDC_JWKS_URL=$OIDC_JWKS_URL,FUSE_MCP_RESOURCE_URL=https://bootstrap.invalid/mcp,FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY"
+            if [[ "$PAIRING_ROUTE_EXPECTED" == 'true' ]]; then
+              ENVVARS="$ENVVARS,FUSE_WINDOWS_SOURCE_EPOCH=$GITHUB_SHA,FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH"
+            fi
           fi
 
           echo 'PRODUCTION_TRAFFIC_CHANGED=false' >> "$GITHUB_ENV"
@@ -460,6 +481,8 @@ jobs:
               "device_auth_mode": os.environ.get("DEVICE_AUTH_MODE"),
               "build_mechanism": os.environ.get("BUILD_MECHANISM"),
               "exact_digest_diagnostic": truth("EXACT_DIGEST_DIAGNOSTIC"),
+              "pairing_route_expected": truth("PAIRING_ROUTE_EXPECTED"),
+              "pairing_court_mode": os.environ.get("PAIRING_COURT_MODE"),
               "requested_image_digest": os.environ.get("REQUESTED_IMAGE_DIGEST"),
               "verified_image_digest": os.environ.get("VERIFIED_IMAGE_DIGEST"),
               "provider_prereqs_qualified": truth("PROVIDER_PREREQS_QUALIFIED"),
