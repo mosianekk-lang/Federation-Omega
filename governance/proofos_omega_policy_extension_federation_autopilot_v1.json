@@ -1,0 +1,48 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/federation_autopilot_runtime.py",
+        "governance/federation_autopilot_v1.json",
+        "governance/proofos_omega_policy_extension_federation_autopilot_v1.json"
+      ],
+      "reason": "FEDERATION_AUTOPILOT_UNATTENDED_OPERATIONS_CONTROL_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FEDERATION_AUTOPILOT",
+      "patterns": [
+        "federation/federation_autopilot_runtime.py",
+        "tests/test_federation_autopilot_runtime.py",
+        "governance/federation_autopilot_v1.json",
+        "governance/proofos_omega_policy_extension_federation_autopilot_v1.json"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "CFBE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "federation_autopilot_v1",
+      "kind": "unittest_glob",
+      "target": "test_federation_autopilot_runtime.py",
+      "patterns": [
+        "federation/federation_autopilot_runtime.py",
+        "tests/test_federation_autopilot_runtime.py",
+        "governance/federation_autopilot_v1.json",
+        "governance/proofos_omega_policy_extension_federation_autopilot_v1.json"
+      ],
+      "subsystems": ["FEDERATION_AUTOPILOT"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
