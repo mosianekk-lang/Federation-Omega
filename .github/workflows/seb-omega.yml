@@ -65,7 +65,7 @@ jobs:
           exit-code: '1'
 
   zero-traffic-canary:
-    if: github.event_name == 'push' || github.event_name == 'workflow_dispatch'
+    if: github.event_name == 'workflow_dispatch'
     needs: qualify
     runs-on: ubuntu-latest
     environment: seb-omega-canary
