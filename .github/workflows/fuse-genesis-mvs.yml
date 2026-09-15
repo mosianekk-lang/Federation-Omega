@@ -29,6 +29,43 @@ jobs:
         shell: pwsh
         run: ./genesis/Build-Genesis.ps1
 
+      - name: Prove Genesis under per-binary network block
+        shell: pwsh
+        run: |
+          $ErrorActionPreference = 'Stop'
+          $exe = (Resolve-Path 'genesis/out/A/bin/fuse-genesis.exe').Path
+          $offlineRoot = Join-Path $PWD 'genesis/out/offline-runtime-canary'
+          $ruleBase = "FUSE-Genesis-MVS-$env:GITHUB_RUN_ID-$env:GITHUB_RUN_ATTEMPT"
+
+          New-NetFirewallRule -DisplayName "$ruleBase-out" -Direction Outbound -Program $exe -Action Block -Profile Any | Out-Null
+          New-NetFirewallRule -DisplayName "$ruleBase-in" -Direction Inbound -Program $exe -Action Block -Profile Any | Out-Null
+
+          try {
+            & $exe --self-court
+            if ($LASTEXITCODE -ne 0) { throw 'OFFLINE_SELF_COURT_FAILED' }
+
+            & $exe --mvs-canary $offlineRoot
+            if ($LASTEXITCODE -ne 0) { throw 'OFFLINE_MVS_CANARY_FAILED' }
+
+            & $exe --mvs-canary $offlineRoot
+            if ($LASTEXITCODE -ne 0) { throw 'OFFLINE_DUPLICATE_COURT_FAILED' }
+
+            [ordered]@{
+              schema = 'FUSE-GENESIS-NETWORK-BLOCKED-RUNTIME-COURT-V1'
+              executable_sha256 = (Get-FileHash -Algorithm SHA256 -LiteralPath $exe).Hash.ToLowerInvariant()
+              outbound_block = $true
+              inbound_block = $true
+              self_court = 'PASS'
+              mvs_crash_recovery = 'PASS'
+              duplicate_effect = 'PASS'
+              owner_pc_physical_proof = $false
+            } | ConvertTo-Json -Depth 4 | Set-Content genesis/out/network-blocked-runtime-court.json -Encoding utf8NoBOM
+          }
+          finally {
+            Remove-NetFirewallRule -DisplayName "$ruleBase-out" -ErrorAction SilentlyContinue
+            Remove-NetFirewallRule -DisplayName "$ruleBase-in" -ErrorAction SilentlyContinue
+          }
+
       - name: Upload exact proof artifacts
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
