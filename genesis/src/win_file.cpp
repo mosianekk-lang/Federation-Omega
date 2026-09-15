@@ -1,0 +1,15 @@
+#define WIN32_LEAN_AND_MEAN
+#define NOMINMAX
+#include <windows.h>
+#include "fuse/capability.h"
+#include <filesystem>
+#include <algorithm>
+namespace fuse {
+Status read_all_handle(HANDLE h,Buffer*out){if(!out)return Status::InvalidArgument;LARGE_INTEGER sz{};if(!GetFileSizeEx(h,&sz)||sz.QuadPart<0)return Status::FileReadFailed;out->resize((size_t)sz.QuadPart);u64 off=0;while(off<(u64)out->size()){DWORD n=0,want=(DWORD)std::min<u64>(0x40000000ull,out->size()-off);if(!ReadFile(h,out->data()+off,want,&n,nullptr)||n==0)return Status::FileReadFailed;off+=n;}return Status::Ok;}
+Status write_all_handle(HANDLE h,ByteSpan b){u64 off=0;while(off<b.size){DWORD n=0,want=(DWORD)std::min<u64>(0x40000000ull,b.size-off);if(!WriteFile(h,b.data+off,want,&n,nullptr)||n==0)return Status::FileWriteFailed;off+=n;}return Status::Ok;}
+Status file_identity_handle(HANDLE h,FileIdentity*out){if(!out)return Status::InvalidArgument;FILE_ID_INFO i{};if(!GetFileInformationByHandleEx(h,FileIdInfo,&i,sizeof(i)))return Status::FileIdentityFailed;out->volume_serial=i.VolumeSerialNumber;bytes_copy(out->file_id.data(),i.FileId.Identifier,16);return Status::Ok;}
+Status file_read_path(const std::wstring&p,Buffer*out){HANDLE h=CreateFileW(p.c_str(),GENERIC_READ,FILE_SHARE_READ,nullptr,OPEN_EXISTING,FILE_ATTRIBUTE_NORMAL,nullptr);if(h==INVALID_HANDLE_VALUE)return GetLastError()==ERROR_FILE_NOT_FOUND?Status::FileNotFound:Status::FileOpenFailed;auto st=read_all_handle(h,out);CloseHandle(h);return st;}
+Status file_write_durable(const std::wstring&p,ByteSpan b,bool create_new){HANDLE h=CreateFileW(p.c_str(),GENERIC_WRITE|GENERIC_READ,0,nullptr,create_new?CREATE_NEW:CREATE_ALWAYS,FILE_ATTRIBUTE_NORMAL|FILE_FLAG_WRITE_THROUGH,nullptr);if(h==INVALID_HANDLE_VALUE)return Status::FileOpenFailed;auto st=write_all_handle(h,b);if(st==Status::Ok&&!FlushFileBuffers(h))st=Status::FileFlushFailed;CloseHandle(h);return st;}
+Status file_hash_handle(HANDLE h,FileHashResult*out){if(!out)return Status::InvalidArgument;FileIdentity before{},after{};auto st=file_identity_handle(h,&before);if(st!=Status::Ok)return st;LARGE_INTEGER z{};if(!SetFilePointerEx(h,z,nullptr,FILE_BEGIN))return Status::FileReadFailed;Sha256Stream hs{};if((st=sha256_stream_begin(&hs))!=Status::Ok)return st;std::vector<u8> buf(1024*1024);u64 total=0;for(;;){DWORD n=0;if(!ReadFile(h,buf.data(),(DWORD)buf.size(),&n,nullptr)){sha256_stream_abort(&hs);return Status::FileReadFailed;}if(!n)break;if((st=sha256_stream_update(&hs,{buf.data(),n}))!=Status::Ok){sha256_stream_abort(&hs);return st;}total+=n;}if((st=sha256_stream_finish(&hs,&out->digest))!=Status::Ok)return st;if((st=file_identity_handle(h,&after))!=Status::Ok)return st;if(!(before==after))return Status::FileChangedDuringRead;out->identity=after;out->size=total;return Status::Ok;}
+Status ensure_directory(const std::wstring&p){std::error_code ec;std::filesystem::create_directories(p,ec);return ec?Status::FileWriteFailed:Status::Ok;}bool path_exists(const std::wstring&p){DWORD a=GetFileAttributesW(p.c_str());return a!=INVALID_FILE_ATTRIBUTES;}
+}

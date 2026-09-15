@@ -1,0 +1,9 @@
+#include "fuse/crypto.h"
+#pragma comment(lib,"bcrypt.lib")
+namespace fuse {
+Status sha256_stream_begin(Sha256Stream*c){if(!c)return Status::InvalidArgument;DWORD got=0;if(BCryptOpenAlgorithmProvider(&c->alg,BCRYPT_SHA256_ALGORITHM,nullptr,0)<0)return Status::CryptoError;if(BCryptGetProperty(c->alg,BCRYPT_OBJECT_LENGTH,(PUCHAR)&c->object_size,sizeof(c->object_size),&got,0)<0){sha256_stream_abort(c);return Status::CryptoError;}c->object=(PUCHAR)HeapAlloc(GetProcessHeap(),0,c->object_size);if(!c->object){sha256_stream_abort(c);return Status::MemoryFailed;}if(BCryptCreateHash(c->alg,&c->hash,c->object,c->object_size,nullptr,0,0)<0){sha256_stream_abort(c);return Status::CryptoError;}c->active=true;return Status::Ok;}
+Status sha256_stream_update(Sha256Stream*c,ByteSpan s){if(!c||!c->active||(!s.data&&s.size))return Status::InvalidArgument;u64 off=0;while(off<s.size){ULONG n=(ULONG)(((s.size-off)>0xffffffffull)?0xffffffffull:(s.size-off));if(BCryptHashData(c->hash,(PUCHAR)(s.data+off),n,0)<0)return Status::CryptoError;off+=n;}return Status::Ok;}
+Status sha256_stream_finish(Sha256Stream*c,Digest256*out){if(!c||!c->active||!out)return Status::InvalidArgument;auto ns=BCryptFinishHash(c->hash,out->bytes.data(),32,0);sha256_stream_abort(c);return ns<0?Status::CryptoError:Status::Ok;}
+void sha256_stream_abort(Sha256Stream*c){if(!c)return;if(c->hash)BCryptDestroyHash(c->hash);if(c->object)HeapFree(GetProcessHeap(),0,c->object);if(c->alg)BCryptCloseAlgorithmProvider(c->alg,0);*c=Sha256Stream{};}
+Status sha256(ByteSpan s,Digest256*out){Sha256Stream c{};auto st=sha256_stream_begin(&c);if(st!=Status::Ok)return st;if((st=sha256_stream_update(&c,s))!=Status::Ok){sha256_stream_abort(&c);return st;}return sha256_stream_finish(&c,out);}Status random_bytes(MutableByteSpan s){if(!s.data&&s.size)return Status::InvalidArgument;return BCryptGenRandom(nullptr,s.data,(ULONG)s.size,BCRYPT_USE_SYSTEM_PREFERRED_RNG)<0?Status::CryptoError:Status::Ok;}
+}
