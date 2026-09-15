@@ -39,6 +39,8 @@ class BubblesProviderKMSMetadataReaderTests(unittest.TestCase):
 
     def test_kms_job_uses_only_read_metadata_and_public_key_operations(self):
         for required in (
+            "services','list",
+            "config.name=cloudkms.googleapis.com",
             "kms','keyrings','list",
             "kms','keys','list",
             "kms','keys','versions','list",
@@ -74,6 +76,23 @@ class BubblesProviderKMSMetadataReaderTests(unittest.TestCase):
         ):
             self.assertNotIn(forbidden, self.kms)
 
+    def test_denial_classifier_is_bounded_and_raw_error_is_not_persisted(self):
+        for marker in (
+            "def classify_error(stderr:str)",
+            "API_DISABLED_OR_NOT_USED",
+            "PERMISSION_DENIED",
+            "RESOURCE_OR_LOCATION_INVALID",
+            "OTHER_REDACTED_ERROR",
+            "cloudkms_api_enabled",
+            "cloudkms_service_error_sha256",
+            "cloudkms_service_error_class",
+            "keyrings_error_class",
+            "'raw_error_recorded':False",
+        ):
+            self.assertIn(marker, self.kms)
+        self.assertNotIn("'stderr':p.stderr", self.kms)
+        self.assertNotIn("'stderr':p.stderr.strip", self.kms)
+
     def test_receipt_hard_floors_remain_false(self):
         for marker in (
             "'secret_values_recorded':False",
@@ -91,10 +110,18 @@ class BubblesProviderKMSMetadataReaderTests(unittest.TestCase):
     def test_locations_and_candidate_contract_are_exact(self):
         self.assertIn("locations=('global','africa-south1')", self.kms)
         self.assertIn("'query':'KMS_P256_SIGNERS'", self.kms)
-        self.assertIn("'schema':'FUSE-PROVIDER-METADATA-RECEIPT-V1'", self.kms)
-        self.assertIn("'classification':'", self.kms.replace("classification=", "'classification':'"))
+        self.assertIn("'schema':'FUSE-PROVIDER-METADATA-RECEIPT-V2'", self.kms)
         self.assertIn("candidate_count", self.kms)
         self.assertIn("visible_enabled_p256_version_count", self.kms)
+        for state in (
+            "KMS_API_DISABLED_OR_NOT_ENABLED",
+            "KMS_METADATA_PERMISSION_DENIED",
+            "REUSABLE_P256_CANDIDATES_FOUND",
+            "NO_REUSABLE_P256_CANDIDATES",
+            "P256_VERSIONS_VISIBLE_PUBLIC_KEY_READ_INCOMPLETE",
+            "KMS_METADATA_READ_PARTIAL_OR_DENIED",
+        ):
+            self.assertIn(state, self.kms)
 
 
 if __name__ == "__main__":
