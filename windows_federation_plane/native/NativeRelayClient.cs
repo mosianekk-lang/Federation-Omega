@@ -208,32 +208,6 @@ internal sealed class NativeRelayClient : IDisposable
             };
             return NativeExecutor.Execute(native);
         }
-        if (task.TaskType == "hash_workspace_file")
-        {
-            var relative = ReadString(task.Parameters, "relative_path");
-            if (Path.IsPathRooted(relative) || relative.Contains('\0')) throw new InvalidDataException("RELATIVE_PATH_INVALID");
-            var root = Path.GetFullPath(_workspace).TrimEnd(Path.DirectorySeparatorChar, Path.AltDirectorySeparatorChar) + Path.DirectorySeparatorChar;
-            var target = Path.GetFullPath(Path.Combine(_workspace, relative));
-            if (!target.StartsWith(root, StringComparison.OrdinalIgnoreCase)) throw new InvalidDataException("WORKSPACE_ESCAPE_BLOCKED");
-            var info = new FileInfo(target);
-            if (!info.Exists) throw new FileNotFoundException("WORKSPACE_FILE_NOT_FOUND");
-            if ((info.Attributes & FileAttributes.ReparsePoint) != 0) throw new InvalidDataException("REPARSE_POINT_BLOCKED");
-            if (info.Length > 10L * 1024 * 1024 * 1024) throw new InvalidDataException("FILE_SIZE_LIMIT");
-            using var stream = new FileStream(target, FileMode.Open, FileAccess.Read, FileShare.Read, 1024 * 1024, FileOptions.SequentialScan);
-            var digest = Convert.ToHexString(SHA256.HashData(stream)).ToLowerInvariant();
-            return new Dictionary<string, object?>
-            {
-                ["status"] = "hashed",
-                ["path_disclosed"] = false,
-                ["name"] = info.Name,
-                ["size_bytes"] = info.Length,
-                ["sha256"] = digest,
-                ["filesystem_usage"] = true,
-                ["network_usage"] = false,
-                ["shell_process_usage"] = false,
-                ["external_effect"] = false
-            };
-        }
         throw new InvalidDataException("TASK_TYPE_NOT_ALLOWLISTED");
     }
 
@@ -409,7 +383,7 @@ internal sealed class NativeRelayClient : IDisposable
         };
         private static readonly HashSet<string> AllowedTypes = new(StringComparer.Ordinal)
         {
-            "health", "inventory", "hash_workspace_file", "heavy_sha256"
+            "health", "inventory", "heavy_sha256"
         };
 
         public required string Schema { get; init; }
@@ -461,12 +435,6 @@ internal sealed class NativeRelayClient : IDisposable
             if (TaskType is "health" or "inventory")
             {
                 if (Parameters.EnumerateObject().Any()) throw new InvalidDataException("TASK_PARAMETERS_MUST_BE_EMPTY");
-            }
-            else if (TaskType == "hash_workspace_file")
-            {
-                var names = Parameters.EnumerateObject().Select(p => p.Name).ToArray();
-                if (names.Length != 1 || names[0] != "relative_path") throw new InvalidDataException("HASH_PARAMETERS_INVALID");
-                _ = ReadString(Parameters, "relative_path");
             }
             else
             {
