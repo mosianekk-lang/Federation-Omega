@@ -11,8 +11,11 @@ DECL_IO(court_fil_001);DECL_IO(court_fil_002);DECL_IO(court_fil_003);DECL_IO(cou
 DECL_IO(court_wrt_001);DECL_IO(court_wrt_002);DECL_IO(court_wrt_003);DECL_IO(court_wrt_004);DECL_IO(court_wrt_005);DECL_IO(court_wrt_006);DECL_IO(court_wrt_007);
 #undef DECL_IO
 
-// Frozen 48-court compatibility overload only. Production code includes transaction.h directly.
+// Frozen 48-court compatibility only. Production units include transaction.h directly.
 inline Status nonce_claim(Runtime*r,const Digest256&task,const Digest256&nonce){static const Id128 mission=id_from_seed("GENESIS-FROZEN-SEC-MISSION");return nonce_claim(r,mission,1,task,nonce);}
+inline Status frozen_court_task_marker(Runtime*r,const PreparedAction*a,EventType type){FcbWriter w{};auto st=fcb_begin(&w,(u16)(0x4000+(u32)type),0);if(st!=Status::Ok)return st;if((st=fcb_put_bytes(&w,1,FcbType::DIGEST256,{a->task_digest.bytes.data(),32}))!=Status::Ok)return st;Buffer p;if((st=fcb_finish(&w,&p,nullptr))!=Status::Ok)return st;return append_event(r,a->mission_id,a->mission_version,type,{p.data(),(u64)p.size()});}
+inline Status frozen_court_permit_issue(Runtime*r,const PreparedAction*a,ExecutionPermit*out){TaskSecurityProjection p{};auto st=project_task(r,a->mission_id,a->mission_version,a->task_digest,&p);if(st!=Status::Ok)return st;if(!p.mission_created&&(st=frozen_court_task_marker(r,a,EventType::MISSION_CREATED))!=Status::Ok)return st;if(!p.task_received&&(st=frozen_court_task_marker(r,a,EventType::TASK_RECEIVED))!=Status::Ok)return st;if(!p.task_validated&&(st=frozen_court_task_marker(r,a,EventType::TASK_VALIDATED))!=Status::Ok)return st;if(!p.nonce_claimed){Digest256 n{};if((st=sha256({a->task_digest.bytes.data(),32},&n))!=Status::Ok)return st;if((st=nonce_claim(r,a->mission_id,a->mission_version,a->task_digest,n))!=Status::Ok)return st;}if(!p.idempotency_claimed){Digest256 i{};if((st=sha256({a->effect_id.bytes.data(),32},&i))!=Status::Ok)return st;if((st=idempotency_claim(r,a->mission_id,a->mission_version,a->task_digest,i))!=Status::Ok)return st;}if(!p.action_prepared&&(st=frozen_court_task_marker(r,a,EventType::ACTION_PREPARED))!=Status::Ok)return st;return permit_issue(r,a,out);}
+#define permit_issue(r,a,out) frozen_court_permit_issue((r),(a),(out))
 
 #define court_fmt_001 (+[](CourtContext*c)->CourtResult{return fmt_case("FMT-001",c);})
 #define court_fmt_002 (+[](CourtContext*c)->CourtResult{return fmt_case("FMT-002",c);})
