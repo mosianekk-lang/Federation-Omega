@@ -1,5 +1,9 @@
 import json
+import os
 from pathlib import Path
+import subprocess
+import sys
+import textwrap
 import unittest
 
 from tools.github_airlock import analyse_workflow
@@ -9,6 +13,7 @@ ROOT = Path(__file__).resolve().parents[1]
 WORKFLOW_PATH = ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml"
 TARGET_WORKFLOW = "fuse-windows-h1-provider-relay-v2.yml"
 PHOENIX_PATH = ".github/workflows/phoenix-emergency-freeze.yml"
+RUNS_PATH = Path("/tmp/windows-h1-workflow-runs.json")
 
 
 class WindowsH1MachineDispatchAdapterTests(unittest.TestCase):
@@ -29,6 +34,28 @@ class WindowsH1MachineDispatchAdapterTests(unittest.TestCase):
                 self.policy,
             )
         }
+
+    def _selector_code(self):
+        marker = "            if python3 - <<'PY' > /tmp/windows-h1-run-match.tsv\n"
+        start = self.workflow.index(marker) + len(marker)
+        end = self.workflow.index("\n          PY\n", start)
+        return textwrap.dedent(self.workflow[start:end])
+
+    def _run_selector(self, runs):
+        RUNS_PATH.write_text(json.dumps({"workflow_runs": runs}), encoding="utf-8")
+        env = os.environ.copy()
+        env["DISPATCHED_AT"] = "2026-09-15T02:53:08Z"
+        env["EXPECTED_CONTROL_SHA"] = "a" * 40
+        try:
+            return subprocess.run(
+                [sys.executable, "-c", self._selector_code()],
+                text=True,
+                capture_output=True,
+                env=env,
+                timeout=10,
+            )
+        finally:
+            RUNS_PATH.unlink(missing_ok=True)
 
     def test_adapter_is_distinct_dispatch_only_actions_writer(self):
         self.assertIn(WORKFLOW_PATH, self.policy["active_workflow_allowlist"])
@@ -82,6 +109,41 @@ class WindowsH1MachineDispatchAdapterTests(unittest.TestCase):
         )
         for marker in required:
             self.assertIn(marker, self.workflow)
+
+    def test_run_attribution_uses_deterministic_json_parsing_and_fails_on_ambiguity(self):
+        required = (
+            "/tmp/windows-h1-workflow-runs.json",
+            "json.load(handle)",
+            "created >= os.environ['DISPATCHED_AT']",
+            "head_sha == os.environ['EXPECTED_CONTROL_SHA']",
+            "event == 'workflow_dispatch'",
+            "RUN_IDENTITY_AMBIGUOUS",
+            "len(candidates) != 1",
+            "TARGET_RUN_CREATED_AT",
+            "EXACT_CREATED_AT_PLUS_CONTROL_SHA_UNIQUE_MATCH",
+            "FUSE-WINDOWS-SCSF-MACHINE-DISPATCH-RECEIPT-V2",
+        )
+        for marker in required:
+            self.assertIn(marker, self.workflow)
+        self.assertNotIn("--jq --arg since", self.workflow)
+        self.assertNotIn("| head -n 1", self.workflow)
+
+    def test_embedded_selector_returns_only_exact_post_dispatch_control_match(self):
+        result = self._run_selector([
+            {"id": 41, "created_at": "2026-09-15T02:53:07Z", "head_sha": "a" * 40, "event": "workflow_dispatch"},
+            {"id": 42, "created_at": "2026-09-15T02:53:08Z", "head_sha": "a" * 40, "event": "workflow_dispatch"},
+            {"id": 43, "created_at": "2026-09-15T02:53:09Z", "head_sha": "b" * 40, "event": "workflow_dispatch"},
+        ])
+        self.assertEqual(result.returncode, 0, result.stderr)
+        self.assertEqual(result.stdout.strip(), "42\t" + "a" * 40 + "\t2026-09-15T02:53:08Z")
+
+    def test_embedded_selector_rejects_ambiguous_exact_matches(self):
+        result = self._run_selector([
+            {"id": 42, "created_at": "2026-09-15T02:53:08Z", "head_sha": "a" * 40, "event": "workflow_dispatch"},
+            {"id": 44, "created_at": "2026-09-15T02:53:09Z", "head_sha": "a" * 40, "event": "workflow_dispatch"},
+        ])
+        self.assertEqual(result.returncode, 4)
+        self.assertIn("RUN_IDENTITY_AMBIGUOUS:42,44", result.stderr)
 
     def test_adapter_cannot_alias_provider_gateway(self):
         self.assertIn("provider_effect_performed_by_adapter': False", self.workflow)
