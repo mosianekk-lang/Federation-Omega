@@ -22,12 +22,14 @@ env:
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   IAP_SERVICE_AGENT: service-257649435135@gcp-sa-iap.iam.gserviceaccount.com
   IAP_API: iap.googleapis.com
+  KMS_API: cloudkms.googleapis.com
 
 jobs:
   enable-iap-phase-a:
     if: >-
       github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1' &&
-      github.event.issue.author_association == 'OWNER'
+      github.event.issue.author_association == 'OWNER' &&
+      !contains(github.event.issue.body, 'FUSE_ACTION=ENABLE_CLOUDKMS_API_ONLY')
     runs-on: ubuntu-24.04
     timeout-minutes: 15
     steps:
@@ -399,4 +401,219 @@ jobs:
           assert receipt["oauth_mutation_performed"] is False
           assert receipt["owner_access_grant_performed"] is False
           assert receipt["programmatic_client_allowlist_mutation_performed"] is False
+          PY
+
+  enable-cloudkms-api-only:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1' &&
+      github.event.issue.author_association == 'OWNER' &&
+      contains(github.event.issue.body, 'FUSE_ACTION=ENABLE_CLOUDKMS_API_ONLY')
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout exact admitted source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless deployer
+        id: kms_auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Install pinned gcloud client
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Enable exact Cloud KMS API and verify provider state
+        id: kms_enable
+        continue-on-error: true
+        shell: bash
+        env:
+          WIF_AUTH_OUTCOME: ${{ steps.kms_auth.outcome }}
+        run: |
+          set -u -o pipefail
+          set +x
+          ROOT=/tmp/fuse-kms-api-enable
+          mkdir -p "$ROOT"
+          : > "$ROOT/project-number.err"
+          : > "$ROOT/pre.err"
+          : > "$ROOT/enable.err"
+          : > "$ROOT/post.err"
+          : > "$ROOT/rollback.err"
+
+          API_ENABLED_BEFORE=false
+          API_ENABLED_AFTER=false
+          MUTATION_PERFORMED=false
+          ROLLBACK_PERFORMED=false
+          PROJECT_NUMBER_RC=99
+          PRE_READ_RC=99
+          ENABLE_RC=99
+          POST_READ_RC=99
+          ROLLBACK_RC=99
+
+          if [[ "$WIF_AUTH_OUTCOME" == "success" ]]; then
+            gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)' \
+              > "$ROOT/project-number.txt" 2> "$ROOT/project-number.err"
+            PROJECT_NUMBER_RC=$?
+
+            gcloud services list --enabled --project "$PROJECT_ID" \
+              --filter="config.name=$KMS_API" --format='value(config.name)' \
+              > "$ROOT/pre.txt" 2> "$ROOT/pre.err"
+            PRE_READ_RC=$?
+            if [[ "$PRE_READ_RC" -eq 0 ]] && grep -Fxq "$KMS_API" "$ROOT/pre.txt"; then
+              API_ENABLED_BEFORE=true
+            fi
+
+            if [[ "$PROJECT_NUMBER_RC" -eq 0 ]] && [[ "$(cat "$ROOT/project-number.txt")" == "$PROJECT_NUMBER" ]] && [[ "$PRE_READ_RC" -eq 0 ]]; then
+              if [[ "$API_ENABLED_BEFORE" == "true" ]]; then
+                ENABLE_RC=0
+              else
+                gcloud services enable "$KMS_API" --project "$PROJECT_ID" --quiet \
+                  > "$ROOT/enable.out" 2> "$ROOT/enable.err"
+                ENABLE_RC=$?
+                if [[ "$ENABLE_RC" -eq 0 ]]; then MUTATION_PERFORMED=true; fi
+              fi
+            fi
+
+            gcloud services list --enabled --project "$PROJECT_ID" \
+              --filter="config.name=$KMS_API" --format='value(config.name)' \
+              > "$ROOT/post.txt" 2> "$ROOT/post.err"
+            POST_READ_RC=$?
+            if [[ "$POST_READ_RC" -eq 0 ]] && grep -Fxq "$KMS_API" "$ROOT/post.txt"; then
+              API_ENABLED_AFTER=true
+            fi
+
+            if [[ "$MUTATION_PERFORMED" == "true" ]] && [[ "$API_ENABLED_AFTER" != "true" ]]; then
+              gcloud services disable "$KMS_API" --project "$PROJECT_ID" --quiet \
+                > "$ROOT/rollback.out" 2> "$ROOT/rollback.err"
+              ROLLBACK_RC=$?
+              if [[ "$ROLLBACK_RC" -eq 0 ]]; then ROLLBACK_PERFORMED=true; fi
+            fi
+          fi
+
+          export ROOT API_ENABLED_BEFORE API_ENABLED_AFTER MUTATION_PERFORMED ROLLBACK_PERFORMED
+          export PROJECT_NUMBER_RC PRE_READ_RC ENABLE_RC POST_READ_RC ROLLBACK_RC WIF_AUTH_OUTCOME
+          python3 - <<'PY'
+          import hashlib, json, os
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          root=Path(os.environ['ROOT'])
+          def error_hash(name):
+              p=root/name
+              raw=p.read_bytes() if p.exists() else b''
+              return hashlib.sha256(raw).hexdigest() if raw else None
+
+          project_number_ok=(
+              int(os.environ['PROJECT_NUMBER_RC'])==0 and
+              (root/'project-number.txt').read_text(encoding='utf-8',errors='replace').strip()==os.environ['PROJECT_NUMBER']
+          )
+          before=os.environ['API_ENABLED_BEFORE']=='true'
+          after=os.environ['API_ENABLED_AFTER']=='true'
+          mutated=os.environ['MUTATION_PERFORMED']=='true'
+          rolled_back=os.environ['ROLLBACK_PERFORMED']=='true'
+          verified=(
+              os.environ['WIF_AUTH_OUTCOME']=='success' and project_number_ok and
+              int(os.environ['PRE_READ_RC'])==0 and int(os.environ['ENABLE_RC'])==0 and
+              int(os.environ['POST_READ_RC'])==0 and after
+          )
+          state='CLOUDKMS_API_ENABLE_VERIFIED' if verified else 'CLOUDKMS_API_ENABLE_HELD'
+          receipt={
+              'schema':'FUSE-CLOUDKMS-API-ENABLE-RECEIPT-V1',
+              'state':state,
+              'source_sha':os.environ.get('GITHUB_SHA'),
+              'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
+              'authorization':{
+                  'trigger':'[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1',
+                  'action_marker':'FUSE_ACTION=ENABLE_CLOUDKMS_API_ONLY',
+                  'owner_issue_guard':True,
+                  'authority_class':'A2_REVERSIBLE_PROVIDER_CONFIGURATION',
+              },
+              'target':{
+                  'project_id':os.environ['PROJECT_ID'],
+                  'project_number':os.environ['PROJECT_NUMBER'],
+                  'service':'cloudkms.googleapis.com',
+              },
+              'auth':{
+                  'route':'EXISTING_GITHUB_OIDC_WIF',
+                  'service_account_sha256':hashlib.sha256(os.environ['DEPLOYER_SA'].encode()).hexdigest(),
+                  'outcome':os.environ['WIF_AUTH_OUTCOME'],
+                  'credential_value_recorded':False,
+              },
+              'pre':{'service_enabled':before},
+              'post':{'service_enabled':after},
+              'command_status':{
+                  'project_number_read':int(os.environ['PROJECT_NUMBER_RC']),
+                  'prestate_read':int(os.environ['PRE_READ_RC']),
+                  'service_enable':int(os.environ['ENABLE_RC']),
+                  'poststate_read':int(os.environ['POST_READ_RC']),
+                  'rollback_disable':int(os.environ['ROLLBACK_RC']),
+              },
+              'provider_mutation_performed':mutated or rolled_back,
+              'service_enablement_performed':mutated,
+              'rollback_performed':rolled_back,
+              'rollback_only_on_failed_postread':True,
+              'iam_mutation_performed':False,
+              'kms_key_operation_performed':False,
+              'secret_read_or_mutation_performed':False,
+              'deployment_performed':False,
+              'traffic_change_performed':False,
+              'customer_effect':False,
+              'owner_pc_effect':False,
+              'raw_error_text_recorded':False,
+              'error_sha256':{
+                  'project_number':error_hash('project-number.err'),
+                  'prestate':error_hash('pre.err'),
+                  'enable':error_hash('enable.err'),
+                  'poststate':error_hash('post.err'),
+                  'rollback':error_hash('rollback.err'),
+              },
+          }
+          body=dict(receipt)
+          receipt['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          out=root/'CLOUDKMS_API_ENABLE_RECEIPT.json'
+          out.write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps({'state':state,'pre_enabled':before,'post_enabled':after,'service_enablement_performed':mutated,'rollback_performed':rolled_back},sort_keys=True))
+          raise SystemExit(0 if verified else 1)
+          PY
+
+      - name: Upload immutable Cloud KMS API enablement receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-cloudkms-api-enable-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-kms-api-enable/CLOUDKMS_API_ENABLE_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce terminal Cloud KMS API enablement verification
+        if: always()
+        shell: bash
+        env:
+          KMS_ENABLE_OUTCOME: ${{ steps.kms_enable.outcome }}
+        run: |
+          set -euo pipefail
+          test "$KMS_ENABLE_OUTCOME" = "success"
+          python3 - <<'PY'
+          import json
+          from pathlib import Path
+          receipt=json.loads(Path('/tmp/fuse-kms-api-enable/CLOUDKMS_API_ENABLE_RECEIPT.json').read_text())
+          assert receipt['state']=='CLOUDKMS_API_ENABLE_VERIFIED'
+          assert receipt['target']['service']=='cloudkms.googleapis.com'
+          assert receipt['post']['service_enabled'] is True
+          assert receipt['iam_mutation_performed'] is False
+          assert receipt['kms_key_operation_performed'] is False
+          assert receipt['secret_read_or_mutation_performed'] is False
+          assert receipt['deployment_performed'] is False
+          assert receipt['traffic_change_performed'] is False
+          assert receipt['owner_pc_effect'] is False
+          assert receipt['raw_error_text_recorded'] is False
           PY
