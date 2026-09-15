@@ -75,3 +75,5 @@ jobs:
             genesis/out/**
           if-no-files-found: warn
           retention-days: 30
+
+# lineage-restack exact-head court trigger: d912e23f9c481c07b524c2aba6a95efb48dd4253
