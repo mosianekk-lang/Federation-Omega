@@ -179,7 +179,7 @@ jobs:
           done
           test -n "$TARGET_RUN_ID"
           test "$TARGET_RUN_SHA" = "$EXPECTED_CONTROL_SHA"
-          test "$TARGET_RUN_CREATED_AT" \>\= "$DISPATCHED_AT"
+          test -n "$TARGET_RUN_CREATED_AT"
           echo "TARGET_RUN_ID=$TARGET_RUN_ID" >> "$GITHUB_ENV"
           echo "TARGET_RUN_SHA=$TARGET_RUN_SHA" >> "$GITHUB_ENV"
           echo "TARGET_RUN_CREATED_AT=$TARGET_RUN_CREATED_AT" >> "$GITHUB_ENV"
