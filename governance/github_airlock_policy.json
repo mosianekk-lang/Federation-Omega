@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.35",
+  "version": "2.9.36",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -63,7 +63,8 @@
     ".github/workflows/fuse-windows-execution-plane-v1.yml",
     ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
-    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -228,6 +229,9 @@
     ],
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": [
       "workflow_dispatch"
+    ],
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": [
+      "issues"
     ]
   },
   "required_push_branches": {
@@ -446,6 +450,34 @@
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
   ],
+  "actions_dispatch_workflow_allowlist": [
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml"
+  ],
+  "actions_dispatch_exact_issue_titles": {
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": "[FO-DISPATCH] FUSE_WINDOWS_SCSF_RENDEZVOUS_PROVIDER_V1"
+  },
+  "actions_dispatch_required_markers": {
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": [
+      "TARGET_WORKFLOW: fuse-windows-h1-provider-relay-v2.yml",
+      "EXPECTED_PACKET_ID: PKT-V5-WINDOWS-SCSF-RENDEZVOUS-PROVIDER-001",
+      "EXPECTED_SOURCE_SHA: f22a627a841dd7297a137a56eb29d2b5de9acf9c",
+      "FUSE-SURFACE-CAPABILITY-PASSPORT-V1",
+      "github.event.issue.author_association == 'OWNER'",
+      "/actions/workflows/${TARGET_WORKFLOW}/dispatches",
+      "provider_effect_performed_by_adapter': False",
+      "provider_credentials_accessed_by_adapter': False",
+      "owner_pc_effect_performed_by_adapter': False"
+    ]
+  },
+  "actions_dispatch_forbidden_markers": {
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": [
+      "/enable",
+      "/disable",
+      "id-token: write",
+      "gcloud run deploy",
+      "--allow-unauthenticated"
+    ]
+  },
   "statuses_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
   ],
@@ -455,6 +487,9 @@
       "gh api -x put",
       "gh api --method post",
       "gh api -x post"
+    ],
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": [
+      "gh api --method post"
     ]
   },
   "forbidden_repository_mutations": [
@@ -558,7 +593,8 @@
       ".github/workflows/fuse-windows-execution-plane-v1.yml",
       ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
       ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
-      ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
+      ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
+      ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
