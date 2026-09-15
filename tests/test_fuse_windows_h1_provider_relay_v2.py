@@ -14,7 +14,12 @@ class WindowsH1ProviderRelayV2Tests(unittest.TestCase):
         self.assertIn("workflow_dispatch:", self.text)
         self.assertNotIn("issues:", self.text)
         self.assertIn("ref: ${{ inputs.source_sha }}", self.text)
-        self.assertIn("ADMITTED_SOURCE_SHA: 8125c6997830c97649c379d68e957da0afcaa091", self.text)
+        self.assertIn("description: Exact admitted F274 source commit", self.text)
+        self.assertIn("ADMITTED_SOURCE_SHA: f22a627a841dd7297a137a56eb29d2b5de9acf9c", self.text)
+        self.assertIn("EXPECTED_PACKET_ID: PKT-V5-WINDOWS-SCSF-RENDEZVOUS-PROVIDER-001", self.text)
+        self.assertIn("WINDOWS_POLICY_EPOCH: FUSE_WINDOWS_SCSF_HARDWARE_ADAPTIVE_CNG_V1", self.text)
+        self.assertNotIn("FUSE_WINDOWS_H1_TPM_PAIRING_V1", self.text)
+        self.assertNotIn("PKT-V5-WINDOWS-H1-TPM-PAIRING-PROVIDER-001", self.text)
         self.assertIn('test "$(git rev-parse HEAD)" = "$ADMITTED_SOURCE_SHA"', self.text)
 
     def test_action_specific_passport_is_hashed_typed_and_time_bounded(self):

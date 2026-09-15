@@ -8,7 +8,7 @@ on:
         required: true
         type: string
       source_sha:
-        description: Exact admitted F258 source commit
+        description: Exact admitted F274 source commit
         required: true
         type: string
       provider_passport_json:
@@ -37,9 +37,9 @@ env:
   WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
   DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
   RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
-  WINDOWS_POLICY_EPOCH: FUSE_WINDOWS_H1_TPM_PAIRING_V1
-  EXPECTED_PACKET_ID: PKT-V5-WINDOWS-H1-TPM-PAIRING-PROVIDER-001
-  ADMITTED_SOURCE_SHA: 8125c6997830c97649c379d68e957da0afcaa091
+  WINDOWS_POLICY_EPOCH: FUSE_WINDOWS_SCSF_HARDWARE_ADAPTIVE_CNG_V1
+  EXPECTED_PACKET_ID: PKT-V5-WINDOWS-SCSF-RENDEZVOUS-PROVIDER-001
+  ADMITTED_SOURCE_SHA: f22a627a841dd7297a137a56eb29d2b5de9acf9c
 
 jobs:
   provider-relay-court:
