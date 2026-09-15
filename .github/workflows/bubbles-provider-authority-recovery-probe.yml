@@ -303,6 +303,23 @@ jobs:
           expected_number=os.environ['EXPECTED_PROJECT_NUMBER']
           locations=('global','africa-south1')
 
+          def classify_error(stderr:str)->str|None:
+              text=(stderr or '').lower()
+              if not text:
+                  return None
+              if any(marker in text for marker in (
+                  'has not been used in project',
+                  'is disabled',
+                  'access not configured',
+                  'service cloudkms.googleapis.com is disabled',
+              )):
+                  return 'API_DISABLED_OR_NOT_USED'
+              if ('permission' in text and 'denied' in text) or 'permission_denied' in text or 'does not have permission' in text:
+                  return 'PERMISSION_DENIED'
+              if any(marker in text for marker in ('not found','invalid argument','invalid location','location is invalid')):
+                  return 'RESOURCE_OR_LOCATION_INVALID'
+              return 'OTHER_REDACTED_ERROR'
+
           def run(args:list[str], timeout:int=45)->dict[str,Any]:
               p=subprocess.run(args,text=True,capture_output=True,timeout=timeout)
               return {
@@ -310,6 +327,7 @@ jobs:
                   'exit_code':p.returncode,
                   'stdout':p.stdout.strip(),
                   'stderr_sha256':hashlib.sha256(p.stderr.encode()).hexdigest() if p.stderr else None,
+                  'stderr_class':classify_error(p.stderr),
               }
 
           def gcloud(*args:str, timeout:int=45)->dict[str,Any]:
@@ -327,6 +345,10 @@ jobs:
           if str(project_obj.get('projectNumber') or '') != expected_number:
               raise SystemExit('PROJECT_NUMBER_MISMATCH')
 
+          service_result=gcloud('services','list','--enabled','--filter=config.name=cloudkms.googleapis.com','--format=json(config.name,state)')
+          service_rows=parsed(service_result)
+          cloudkms_api_enabled=bool(service_result.get('ok') and isinstance(service_rows,list) and len(service_rows)>0)
+
           location_status={}
           candidates=[]
           visible_versions=[]
@@ -335,6 +357,7 @@ jobs:
               location_status[location]={
                   'keyrings_list_ok':bool(rings_result['ok']),
                   'keyrings_error_sha256':rings_result.get('stderr_sha256'),
+                  'keyrings_error_class':rings_result.get('stderr_class'),
               }
               rings=parsed(rings_result)
               for ring_obj in rings if isinstance(rings,list) else []:
@@ -390,7 +413,14 @@ jobs:
                               })
 
           readable_locations=sum(1 for v in location_status.values() if v['keyrings_list_ok'])
-          if readable_locations==len(locations) and candidates:
+          denial_classes={str(v.get('keyrings_error_class') or '') for v in location_status.values() if not v['keyrings_list_ok']}
+          if service_result.get('ok') and not cloudkms_api_enabled:
+              classification='KMS_API_DISABLED_OR_NOT_ENABLED'
+          elif denial_classes and denial_classes == {'PERMISSION_DENIED'}:
+              classification='KMS_METADATA_PERMISSION_DENIED'
+          elif 'API_DISABLED_OR_NOT_USED' in denial_classes:
+              classification='KMS_API_DISABLED_OR_NOT_ENABLED'
+          elif readable_locations==len(locations) and candidates:
               classification='REUSABLE_P256_CANDIDATES_FOUND'
           elif readable_locations==len(locations) and not visible_versions:
               classification='NO_REUSABLE_P256_CANDIDATES'
@@ -400,7 +430,7 @@ jobs:
               classification='KMS_METADATA_READ_PARTIAL_OR_DENIED'
 
           receipt={
-              'schema':'FUSE-PROVIDER-METADATA-RECEIPT-V1',
+              'schema':'FUSE-PROVIDER-METADATA-RECEIPT-V2',
               'query':'KMS_P256_SIGNERS',
               'recorded_at_utc':datetime.now(timezone.utc).isoformat(),
               'source_sha':os.environ.get('GITHUB_SHA'),
@@ -408,6 +438,10 @@ jobs:
               'project_number':expected_number,
               'locations':list(locations),
               'classification':classification,
+              'cloudkms_service_read_ok':bool(service_result.get('ok')),
+              'cloudkms_api_enabled':cloudkms_api_enabled,
+              'cloudkms_service_error_sha256':service_result.get('stderr_sha256'),
+              'cloudkms_service_error_class':service_result.get('stderr_class'),
               'location_status':location_status,
               'visible_enabled_p256_version_count':len(visible_versions),
               'candidate_count':len(candidates),
@@ -422,12 +456,13 @@ jobs:
               'customer_effect':False,
               'owner_pc_effect':False,
               'raw_public_pem_recorded':False,
-              'truth_boundary':'Read-only Cloud KMS metadata and public-key fingerprint discovery. No secret/private key access and no provider mutation.',
+              'raw_error_recorded':False,
+              'truth_boundary':'Read-only Cloud KMS/Service Usage metadata and public-key fingerprint discovery. Provider errors are reduced to SHA-256 plus bounded enum only; no raw error, secret/private key access, or provider mutation.',
           }
           body=dict(receipt)
           receipt['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
           Path('provider-metadata-output/receipt.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
-          print(json.dumps({'classification':classification,'candidate_count':len(candidates),'visible_enabled_p256_version_count':len(visible_versions),'provider_mutation_performed':False},sort_keys=True))
+          print(json.dumps({'classification':classification,'cloudkms_api_enabled':cloudkms_api_enabled,'candidate_count':len(candidates),'provider_mutation_performed':False},sort_keys=True))
           PY
 
       - name: Upload immutable KMS metadata receipt
