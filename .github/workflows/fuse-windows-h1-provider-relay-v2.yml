@@ -103,6 +103,7 @@ jobs:
           PY
           echo "PASSPORT_ID=$PASSPORT_SHA256" >> "$GITHUB_ENV"
           echo "PASSPORT_VALIDATED=true" >> "$GITHUB_ENV"
+          echo "CONTROL_SHA=$GITHUB_SHA" >> "$GITHUB_ENV"
 
       - name: Authenticate canonical keyless deployer
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
@@ -156,6 +157,65 @@ jobs:
           echo "VERIFIED_IMAGE_DIGEST=$DIGEST" >> "$GITHUB_ENV"
           echo "ARTIFACT_REGISTRY_PUSH_PERFORMED=true" >> "$GITHUB_ENV"
 
+      - name: Exact-image local semantic differential
+        shell: bash
+        run: |
+          set -euo pipefail
+          LOCAL_CONTAINER="fuse-h1-local-${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}"
+          LOCAL_PORT=18082
+          HOST_CREDS=/tmp/fuse-h1-gcp-credentials.json
+          CONTAINER_CREDS=/tmp/fuse-h1-gcp-credentials.json
+          test -n "${GOOGLE_APPLICATION_CREDENTIALS:-}"
+          test -f "$GOOGLE_APPLICATION_CREDENTIALS"
+          cp "$GOOGLE_APPLICATION_CREDENTIALS" "$HOST_CREDS"
+          chmod 0444 "$HOST_CREDS"
+          cleanup_local() {
+            docker logs "$LOCAL_CONTAINER" > /tmp/h1-local-startup.log 2>&1 || true
+            docker rm --force "$LOCAL_CONTAINER" >/dev/null 2>&1 || true
+            rm -f "$HOST_CREDS"
+          }
+          trap cleanup_local EXIT
+          AUTH_ENV=()
+          if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_URL:-}" ]]; then AUTH_ENV+=(--env "ACTIONS_ID_TOKEN_REQUEST_URL=$ACTIONS_ID_TOKEN_REQUEST_URL"); fi
+          if [[ -n "${ACTIONS_ID_TOKEN_REQUEST_TOKEN:-}" ]]; then AUTH_ENV+=(--env "ACTIONS_ID_TOKEN_REQUEST_TOKEN=$ACTIONS_ID_TOKEN_REQUEST_TOKEN"); fi
+          docker run --detach --name "$LOCAL_CONTAINER" \
+            --publish "127.0.0.1:${LOCAL_PORT}:8080" \
+            --env "GOOGLE_CLOUD_PROJECT=$PROJECT_ID" \
+            --env 'FUSE_AGENT_ONLY_BOOTSTRAP=true' \
+            --env 'FUSE_DEVICE_AUTH_MODE=ECDSA_P256_PUBLIC_KEY' \
+            --env "FUSE_WINDOWS_SOURCE_EPOCH=$ADMITTED_SOURCE_SHA" \
+            --env "FUSE_WINDOWS_POLICY_EPOCH=$WINDOWS_POLICY_EPOCH" \
+            --env "GOOGLE_APPLICATION_CREDENTIALS=$CONTAINER_CREDS" \
+            --volume "$HOST_CREDS:$CONTAINER_CREDS:ro" \
+            "${AUTH_ENV[@]}" \
+            "$IMAGE_DIGEST_URI" >/dev/null
+          HEALTH_CODE=000
+          for _ in $(seq 1 30); do
+            HEALTH_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 --output /tmp/h1-local-health.json --write-out '%{http_code}' "http://127.0.0.1:$LOCAL_PORT/healthz" || true)"
+            [[ "$HEALTH_CODE" == 200 ]] && break
+            docker inspect --format='{{.State.Running}}' "$LOCAL_CONTAINER" 2>/dev/null | grep -Fx true >/dev/null || break
+            sleep 1
+          done
+          if [[ "$HEALTH_CODE" != 200 ]]; then
+            docker logs "$LOCAL_CONTAINER" >&2 || true
+            exit 73
+          fi
+          python3 -c 'import json; d=json.load(open("/tmp/h1-local-health.json")); assert d.get("status")=="ok" and d.get("device_auth")=="ECDSA_P256"'
+          NODE_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 --output /tmp/h1-local-node.html --write-out '%{http_code}' "http://127.0.0.1:$LOCAL_PORT/node")"
+          test "$NODE_CODE" = 200
+          grep -F "CONNECT THIS PC" /tmp/h1-local-node.html >/dev/null
+          MCP_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 --output /tmp/h1-local-mcp.txt --write-out '%{http_code}' "http://127.0.0.1:$LOCAL_PORT/mcp" || true)"
+          case "$MCP_CODE" in 401|403|404) ;; *) exit 74 ;; esac
+          PAIR_CODE="$(curl --silent --show-error --connect-timeout 2 --max-time 5 -X POST -H 'content-type: application/json' -d '{}' --output /tmp/h1-local-pair.json --write-out '%{http_code}' "http://127.0.0.1:$LOCAL_PORT/agent/enroll/start" || true)"
+          case "$PAIR_CODE" in 400|401|403) ;; *) exit 75 ;; esac
+          echo "LOCAL_HEALTH_CODE=$HEALTH_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_NODE_CODE=$NODE_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_MCP_CODE=$MCP_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_PAIR_CODE=$PAIR_CODE" >> "$GITHUB_ENV"
+          echo "LOCAL_HEALTH_SHA256=$(sha256sum /tmp/h1-local-health.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "LOCAL_NODE_SHA256=$(sha256sum /tmp/h1-local-node.html | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "LOCAL_SEMANTICS_VERIFIED=true" >> "$GITHUB_ENV"
+
       - name: Deploy unique internal-only authenticated canary
         shell: bash
         run: |
@@ -181,37 +241,49 @@ jobs:
           echo "CANARY_REVISION=$REVISION" >> "$GITHUB_ENV"
           echo "CLOUD_RUN_DEPLOY_PERFORMED=true" >> "$GITHUB_ENV"
 
-      - name: Authenticated provider semantic court
+      - name: Provider readiness and config readback
         shell: bash
         run: |
           set -euo pipefail
-          PORT=18082
-          gcloud run services proxy "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" --port "$PORT" >/tmp/h1-proxy.log 2>&1 &
-          PROXY_PID=$!
-          cleanup_proxy() { kill "$PROXY_PID" >/dev/null 2>&1 || true; wait "$PROXY_PID" >/dev/null 2>&1 || true; }
-          trap cleanup_proxy EXIT
-          HEALTH_CODE=000
-          for _ in $(seq 1 18); do
-            HEALTH_CODE="$(curl --silent --show-error --connect-timeout 3 --max-time 8 --output /tmp/h1-health.json --write-out '%{http_code}' "http://127.0.0.1:$PORT/healthz" || true)"
-            [[ "$HEALTH_CODE" == 200 ]] && break
-            sleep 3
-          done
-          test "$HEALTH_CODE" = 200
-          python3 -c 'import json; d=json.load(open("/tmp/h1-health.json")); assert d.get("status")=="ok" and d.get("device_auth")=="ECDSA_P256"'
-          NODE_CODE="$(curl --silent --show-error --output /tmp/h1-node.html --write-out '%{http_code}' "http://127.0.0.1:$PORT/node")"
-          test "$NODE_CODE" = 200
-          grep -F "CONNECT THIS PC" /tmp/h1-node.html >/dev/null
-          MCP_CODE="$(curl --silent --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$PORT/mcp")"
-          case "$MCP_CODE" in 401|403|404) ;; *) exit 71 ;; esac
-          PAIR_CODE="$(curl --silent -X POST -H 'content-type: application/json' -d '{}' --output /dev/null --write-out '%{http_code}' "http://127.0.0.1:$PORT/agent/enroll/start")"
-          case "$PAIR_CODE" in 400|401|403) ;; *) exit 72 ;; esac
-          echo "HEALTH_CODE=$HEALTH_CODE" >> "$GITHUB_ENV"
-          echo "NODE_CODE=$NODE_CODE" >> "$GITHUB_ENV"
-          echo "MCP_CODE=$MCP_CODE" >> "$GITHUB_ENV"
-          echo "PAIR_CODE=$PAIR_CODE" >> "$GITHUB_ENV"
-          echo "HEALTH_SHA256=$(sha256sum /tmp/h1-health.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
-          echo "NODE_SHA256=$(sha256sum /tmp/h1-node.html | cut -d' ' -f1)" >> "$GITHUB_ENV"
-          echo "RELAY_PROVIDER_VERIFIED=true" >> "$GITHUB_ENV"
+          gcloud run services describe "$CANARY_SERVICE" --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/h1-provider-service.json
+          gcloud run revisions describe "$CANARY_REVISION" --project "$PROJECT_ID" --region "$REGION" --format=json > /tmp/h1-provider-revision.json
+          python3 - <<'PY'
+          import json
+          import os
+
+          service = json.load(open('/tmp/h1-provider-service.json', encoding='utf-8'))
+          revision = json.load(open('/tmp/h1-provider-revision.json', encoding='utf-8'))
+          latest = str((service.get('status') or {}).get('latestReadyRevisionName') or '')
+          if latest != os.environ['CANARY_REVISION']:
+              raise SystemExit('CANARY_LATEST_READY_REVISION_MISMATCH')
+          conditions = (revision.get('status') or {}).get('conditions') or []
+          ready = any(str(c.get('type')) == 'Ready' and str(c.get('status')).lower() == 'true' for c in conditions)
+          if not ready:
+              raise SystemExit('CANARY_REVISION_NOT_READY')
+          service_text = json.dumps(service, sort_keys=True)
+          revision_text = json.dumps(revision, sort_keys=True)
+          combined = service_text + revision_text
+          for value, label in (
+              (os.environ['RUNTIME_SA'], 'RUNTIME_SERVICE_ACCOUNT'),
+              (os.environ['ADMITTED_SOURCE_SHA'], 'SOURCE_EPOCH'),
+              (os.environ['WINDOWS_POLICY_EPOCH'], 'POLICY_EPOCH'),
+              (os.environ['VERIFIED_IMAGE_DIGEST'], 'IMAGE_DIGEST'),
+          ):
+              if value not in combined:
+                  raise SystemExit(label + '_READBACK_MISSING')
+          annotations = (service.get('metadata') or {}).get('annotations') or {}
+          if annotations.get('run.googleapis.com/ingress') != 'internal':
+              raise SystemExit('CANARY_INGRESS_READBACK_INVALID')
+          default_disabled = str(annotations.get('run.googleapis.com/default-url-disabled') or '').lower() == 'true'
+          status_url = str((service.get('status') or {}).get('url') or '')
+          if not default_disabled and status_url:
+              raise SystemExit('CANARY_DEFAULT_URL_NOT_DISABLED')
+          PY
+          echo "PROVIDER_RUNTIME_READY=true" >> "$GITHUB_ENV"
+          echo "PROVIDER_CONFIG_VERIFIED=true" >> "$GITHUB_ENV"
+          echo "PROVIDER_HTTP_ROUTE_VERIFIED=false" >> "$GITHUB_ENV"
+          echo "PROVIDER_SERVICE_SHA256=$(sha256sum /tmp/h1-provider-service.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
+          echo "PROVIDER_REVISION_SHA256=$(sha256sum /tmp/h1-provider-revision.json | cut -d' ' -f1)" >> "$GITHUB_ENV"
 
       - name: Delete isolated canary and verify production traffic invariance
         if: always()
@@ -247,31 +319,40 @@ jobs:
           from datetime import datetime, timezone
           truth=lambda n: os.environ.get(n,"").lower()=="true"
           r={
-            "schema":"FUSE-WINDOWS-H1-PROVIDER-RECEIPT-V2",
+            "schema":"FUSE-WINDOWS-H1-PROVIDER-RECEIPT-V3",
             "packet_id":os.environ["EXPECTED_PACKET_ID"],
             "passport_sha256":os.environ.get("PASSPORT_ID"),
-            "source_sha":os.environ["ADMITTED_SOURCE_SHA"],
+            "runtime_source_sha":os.environ["ADMITTED_SOURCE_SHA"],
+            "control_sha":os.environ.get("CONTROL_SHA"),
+            "source_currentness_relation":"RUNTIME_SOURCE_PINNED__CONTROL_SHA_SEPARATE",
             "image_digest":os.environ.get("VERIFIED_IMAGE_DIGEST"),
             "canary_service":os.environ.get("CANARY_SERVICE"),
             "canary_revision":os.environ.get("CANARY_REVISION"),
             "provider_prereqs_qualified":truth("PROVIDER_PREREQS_QUALIFIED"),
-            "relay_provider_verified":truth("RELAY_PROVIDER_VERIFIED"),
+            "exact_image_local_semantics_verified":truth("LOCAL_SEMANTICS_VERIFIED"),
+            "provider_runtime_ready":truth("PROVIDER_RUNTIME_READY"),
+            "provider_config_verified":truth("PROVIDER_CONFIG_VERIFIED"),
+            "provider_http_route_verified":truth("PROVIDER_HTTP_ROUTE_VERIFIED"),
+            "provider_proof_scope":"EXACT_IMAGE_LOCAL_SEMANTICS_PLUS_INTERNAL_CLOUD_RUN_READINESS_CONFIG",
             "production_before_sha256":os.environ.get("PRODUCTION_BEFORE_SHA256"),
             "production_after_sha256":os.environ.get("PRODUCTION_AFTER_SHA256"),
             "production_traffic_unchanged":truth("PRODUCTION_TRAFFIC_UNCHANGED"),
             "canary_cleanup_verified":truth("CANARY_CLEANUP_VERIFIED"),
-            "health_code":os.environ.get("HEALTH_CODE"),
-            "node_code":os.environ.get("NODE_CODE"),
-            "mcp_code":os.environ.get("MCP_CODE"),
-            "pair_code":os.environ.get("PAIR_CODE"),
-            "health_sha256":os.environ.get("HEALTH_SHA256"),
-            "node_sha256":os.environ.get("NODE_SHA256"),
+            "local_health_code":os.environ.get("LOCAL_HEALTH_CODE"),
+            "local_node_code":os.environ.get("LOCAL_NODE_CODE"),
+            "local_mcp_code":os.environ.get("LOCAL_MCP_CODE"),
+            "local_pair_code":os.environ.get("LOCAL_PAIR_CODE"),
+            "local_health_sha256":os.environ.get("LOCAL_HEALTH_SHA256"),
+            "local_node_sha256":os.environ.get("LOCAL_NODE_SHA256"),
+            "provider_service_sha256":os.environ.get("PROVIDER_SERVICE_SHA256"),
+            "provider_revision_sha256":os.environ.get("PROVIDER_REVISION_SHA256"),
             "gcp_heavy_compute":"DENY",
             "heavy_compute_performed":False,
             "public_ingress":False,
             "iam_mutation_performed":False,
             "customer_traffic_effect":False,
             "secret_value_recorded":False,
+            "owner_pc_internet_reachability":"OPEN_UNPROVEN",
             "recorded_at_utc":datetime.now(timezone.utc).isoformat(),
           }
           r["receipt_sha256"]=hashlib.sha256(json.dumps(r,sort_keys=True,separators=(",",":")).encode()).hexdigest()
@@ -282,7 +363,7 @@ jobs:
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: fuse-windows-h1-provider-v2-${{ github.run_id }}-${{ github.run_attempt }}
+          name: fuse-windows-h1-provider-v3-${{ github.run_id }}-${{ github.run_attempt }}
           path: /tmp/h1-provider-receipt/receipt.json
           if-no-files-found: error
           retention-days: 30

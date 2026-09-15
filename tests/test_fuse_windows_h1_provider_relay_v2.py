@@ -21,6 +21,7 @@ class WindowsH1ProviderRelayV2Tests(unittest.TestCase):
         self.assertNotIn("FUSE_WINDOWS_H1_TPM_PAIRING_V1", self.text)
         self.assertNotIn("PKT-V5-WINDOWS-H1-TPM-PAIRING-PROVIDER-001", self.text)
         self.assertIn('test "$(git rev-parse HEAD)" = "$ADMITTED_SOURCE_SHA"', self.text)
+        self.assertIn('echo "CONTROL_SHA=$GITHUB_SHA"', self.text)
 
     def test_action_specific_passport_is_hashed_typed_and_time_bounded(self):
         for token in (
@@ -58,16 +59,32 @@ class WindowsH1ProviderRelayV2Tests(unittest.TestCase):
         self.assertEqual(self.text.count("--format='json(status.traffic)'"), 2)
         self.assertNotIn("--format=json > /tmp/production", self.text)
 
-    def test_semantic_fail_closed_court_uses_authenticated_proxy(self):
+    def test_semantic_proof_is_decomposed_without_impossible_external_proxy(self):
         for token in (
-            'gcloud run services proxy "$CANARY_SERVICE"',
+            "Exact-image local semantic differential",
+            "docker run --detach",
             "/healthz",
             "/node",
             "/mcp",
             "/agent/enroll/start",
-            "RELAY_PROVIDER_VERIFIED=true",
+            "LOCAL_SEMANTICS_VERIFIED=true",
+            "Provider readiness and config readback",
+            "gcloud run revisions describe",
+            "PROVIDER_RUNTIME_READY=true",
+            "PROVIDER_CONFIG_VERIFIED=true",
+            "PROVIDER_HTTP_ROUTE_VERIFIED=false",
+            "EXACT_IMAGE_LOCAL_SEMANTICS_PLUS_INTERNAL_CLOUD_RUN_READINESS_CONFIG",
+            '"owner_pc_internet_reachability":"OPEN_UNPROVEN"',
         ):
             self.assertIn(token, self.text)
+        self.assertNotIn('gcloud run services proxy "$CANARY_SERVICE"', self.text)
+        self.assertNotIn("RELAY_PROVIDER_VERIFIED=true", self.text)
+
+    def test_runtime_source_and_control_currentness_are_distinct_receipt_fields(self):
+        self.assertIn('"runtime_source_sha":os.environ["ADMITTED_SOURCE_SHA"]', self.text)
+        self.assertIn('"control_sha":os.environ.get("CONTROL_SHA")', self.text)
+        self.assertIn('"source_currentness_relation":"RUNTIME_SOURCE_PINNED__CONTROL_SHA_SEPARATE"', self.text)
+        self.assertIn('"provider_http_route_verified":truth("PROVIDER_HTTP_ROUTE_VERIFIED")', self.text)
 
     def test_gcp_is_light_control_plane_only(self):
         self.assertIn('"gcp_heavy_compute":"DENY"', self.text)
