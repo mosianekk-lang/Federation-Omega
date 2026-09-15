@@ -243,12 +243,12 @@ internal sealed class NativeRelayClient : IDisposable
         if (File.Exists(statePath))
         {
             using var existingDocument = JsonDocument.Parse(File.ReadAllText(statePath, Encoding.UTF8));
-            var root = existingDocument.RootElement;
-            if (ReadString(root, "schema") != "FUSE-WINDOWS-NATIVE-RELAY-DEVICE-V1") throw new InvalidDataException("DEVICE_STATE_SCHEMA_INVALID");
-            if (ReadString(root, "relay_origin_sha256") != _originSha256) throw new InvalidDataException("RELAY_ORIGIN_DRIFT_REENROLL_REQUIRED");
-            var publicKey = ReadString(root, "public_key_spki_b64");
+            var existingRoot = existingDocument.RootElement;
+            if (ReadString(existingRoot, "schema") != "FUSE-WINDOWS-NATIVE-RELAY-DEVICE-V1") throw new InvalidDataException("DEVICE_STATE_SCHEMA_INVALID");
+            if (ReadString(existingRoot, "relay_origin_sha256") != _originSha256) throw new InvalidDataException("RELAY_ORIGIN_DRIFT_REENROLL_REQUIRED");
+            var publicKey = ReadString(existingRoot, "public_key_spki_b64");
             if (publicKey != _identity.PublicSpkiBase64Url) throw new InvalidDataException("DEVICE_IDENTITY_DRIFT_REENROLL_REQUIRED");
-            return new DeviceState(ReadString(root, "device_id"), publicKey, ReadString(root, "enrolled_at"));
+            return new DeviceState(ReadString(existingRoot, "device_id"), publicKey, ReadString(existingRoot, "enrolled_at"));
         }
         if (string.IsNullOrWhiteSpace(enrollmentFile)) throw new InvalidDataException("ONE_TIME_ENROLLMENT_FILE_REQUIRED");
         var enrollmentPath = Path.GetFullPath(enrollmentFile);
