@@ -180,6 +180,7 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
     oidc_allowed = set(policy.get("oidc_workflow_allowlist", []))
     provider_mutation_allowed = set(policy.get("provider_mutation_workflow_allowlist", []))
     actions_write_allowed = set(policy.get("actions_write_workflow_allowlist", []))
+    actions_dispatch_allowed = set(policy.get("actions_dispatch_workflow_allowlist", []))
     statuses_write_allowed = set(policy.get("statuses_write_workflow_allowlist", []))
     machine_dispatch_allowed = set(policy.get("provider_mutation_machine_dispatch_workflow_allowlist", []))
 
@@ -275,12 +276,13 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
                     f"provider mutation workflow contains forbidden behavior marker: {marker}",
                 ))
 
-    if has_actions_write(text) and path not in actions_write_allowed:
+    all_actions_write_allowed = actions_write_allowed | actions_dispatch_allowed
+    if has_actions_write(text) and path not in all_actions_write_allowed:
         findings.append(Finding(
             path,
             "UNAUTHORISED_ACTIONS_WRITE",
             "CRITICAL",
-            "workflow can mutate the Actions registry but is not the quarantine controller",
+            "workflow can mutate the Actions registry but is not an approved Actions writer",
         ))
 
     if has_statuses_write(text) and path not in statuses_write_allowed:
@@ -372,6 +374,68 @@ def analyse_workflow(path: str, text: str, policy: dict) -> list[Finding]:
                 "CRITICAL",
                 "privileged controller is not limited to the workflow registry boundary",
             ))
+
+    if path in actions_dispatch_allowed:
+        if not has_actions_write(text):
+            findings.append(Finding(
+                path,
+                "ACTIONS_DISPATCH_WRITER_MISSING_ACTIONS_WRITE",
+                "CRITICAL",
+                "dispatch-only writer requires actions: write",
+            ))
+        if not has_permission(text, "contents", "read") or has_contents_write(text):
+            findings.append(Finding(
+                path,
+                "ACTIONS_DISPATCH_WRITER_SOURCE_AUTHORITY",
+                "CRITICAL",
+                "dispatch-only writer must have contents: read and no source-write authority",
+            ))
+        if has_oidc_write(text):
+            findings.append(Finding(
+                path,
+                "ACTIONS_DISPATCH_WRITER_OIDC_AUTHORITY",
+                "CRITICAL",
+                "dispatch-only writer must not mint provider OIDC identity",
+            ))
+        if provider_mutation or path in provider_mutation_allowed:
+            findings.append(Finding(
+                path,
+                "ACTIONS_DISPATCH_WRITER_PROVIDER_AUTHORITY",
+                "CRITICAL",
+                "dispatch-only writer must not carry provider-mutation authority",
+            ))
+        expected_title = policy.get("actions_dispatch_exact_issue_titles", {}).get(path)
+        owner_guard = "github.event.issue.author_association == 'OWNER'"
+        if not expected_title or expected_title not in text or owner_guard not in text:
+            findings.append(Finding(
+                path,
+                "ACTIONS_DISPATCH_TRIGGER_DRIFT",
+                "CRITICAL",
+                "dispatch-only writer must be bound to its exact issue title and OWNER association",
+            ))
+        if "/actions/workflows/" not in lower or "/dispatches" not in lower:
+            findings.append(Finding(
+                path,
+                "ACTIONS_DISPATCH_ENDPOINT_DRIFT",
+                "CRITICAL",
+                "dispatch-only writer must target only the workflow-dispatch endpoint",
+            ))
+        for marker in policy.get("actions_dispatch_required_markers", {}).get(path, []):
+            if marker.lower() not in lower:
+                findings.append(Finding(
+                    path,
+                    "ACTIONS_DISPATCH_REQUIRED_GUARD_MISSING",
+                    "CRITICAL",
+                    f"dispatch-only writer is missing required guard marker: {marker}",
+                ))
+        for marker in policy.get("actions_dispatch_forbidden_markers", {}).get(path, []):
+            if marker.lower() in lower:
+                findings.append(Finding(
+                    path,
+                    "ACTIONS_DISPATCH_FORBIDDEN_BEHAVIOR",
+                    "CRITICAL",
+                    f"dispatch-only writer contains forbidden behavior marker: {marker}",
+                ))
 
     if path in statuses_write_allowed:
         if not has_statuses_write(text):
@@ -492,4 +556,3 @@ def main() -> int:
 
 if __name__ == "__main__":
     raise SystemExit(main())
-
