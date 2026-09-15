@@ -229,7 +229,7 @@ class PairingTests(unittest.TestCase):
         with self.assertRaisesRegex(ValueError,"JSON_BODY_REQUIRED"): _body_json(b"{")
         with self.assertRaisesRegex(ValueError,"JSON_OBJECT_REQUIRED"): _body_json(b"[]")
         root=Path(__file__).resolve().parents[2]; py=(root/"windows_federation_plane"/"pyproject.toml").read_text(); src=(root/"windows_federation_plane"/"src"/"federation_windows_plane"/"pairing_service.py").read_text().lower()
-        self.assertIn('federation-windows-relay = "federation_windows_plane.pairing_service:main"',py)
+        self.assertIn('federation-windows-relay = "federation_windows_plane.combined_service:main"',py)
         self.assertNotIn('custom_route("/mcp"',src)
         for denied in ("subprocess.run","os.system","powershell","cmd.exe"): self.assertNotIn(denied,src)
 
