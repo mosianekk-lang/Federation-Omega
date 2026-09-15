@@ -1,11 +1,17 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-CONTROL-PLANE-V1",
-  "version": "1.0.1",
-  "mode": "RATCHET_TO_ZERO_WRITERS",
+  "version": "2.0.0",
+  "mode": "MARKET_FRONTIER_RATCHET",
   "default_workflow_permissions": {
     "contents": "read"
   },
   "allowed_contents_write_workflows": [],
+  "allowed_scheduled_workflows": [],
+  "allowed_pull_request_target_workflows": [],
+  "allowed_oidc_workflows": [],
+  "allowed_privileged_agent_profiles": [],
+  "allowed_agent_mcp_profiles": [],
+  "allowed_copilot_hook_files": [],
   "forbidden_pattern_exceptions": {
     ".github/workflows/phoenix-emergency-freeze.yml": [
       "gh api --method PUT"
@@ -34,9 +40,125 @@
     "workflow_run"
   ],
   "forbid_pull_request_target_with_oidc": true,
+  "forbid_pull_request_target_for_changed_files": true,
   "forbid_workflow_run_with_write_permissions": true,
+  "forbid_workflow_run_with_oidc": true,
+  "forbid_scheduled_workflows_for_changed_files": true,
+  "forbid_scheduled_oidc": true,
+  "require_concurrency_for_oidc": true,
   "require_checkout_persist_credentials_false_for_changed_workflows": true,
+  "require_action_sha_pinning_for_changed_workflows": true,
+  "require_explicit_permissions_for_changed_workflows": true,
+  "forbid_write_all_permissions": true,
+  "require_manual_agent_invocation": true,
+  "require_github_copilot_agent_target": true,
   "strict_full_repository_scan": false,
+  "harvested_frontier_genes": [
+    {
+      "gene_id": "GHF-001",
+      "capability": "provider ruleset admission",
+      "source": "GitHub rulesets/code-scanning merge protection",
+      "state": "SOURCE_TARGET_PROVIDER_ACTIVATION_PENDING"
+    },
+    {
+      "gene_id": "GHF-002",
+      "capability": "immutable third-party Action references",
+      "source": "OpenSSF Scorecard pinned-dependencies control",
+      "state": "CHANGED_SURFACE_ENFORCED"
+    },
+    {
+      "gene_id": "GHF-003",
+      "capability": "zero scheduled execution by default",
+      "source": "owner policy + least-running-surface control",
+      "state": "CHANGED_SURFACE_ENFORCED_LEGACY_CONVERGENCE_PENDING"
+    },
+    {
+      "gene_id": "GHF-004",
+      "capability": "OIDC workflow explicit registration and concurrency scope",
+      "source": "Buildkite/GitHub OIDC least-trust pattern",
+      "state": "CHANGED_SURFACE_ENFORCED"
+    },
+    {
+      "gene_id": "GHF-005",
+      "capability": "pull_request_target zero-trust ratchet",
+      "source": "OpenSSF dangerous-workflow model",
+      "state": "CHANGED_SURFACE_ENFORCED"
+    },
+    {
+      "gene_id": "GHF-006",
+      "capability": "agent tool least privilege and manual invocation",
+      "source": "GitHub Copilot custom agents + GitLab agent tool governance",
+      "state": "SOURCE_ENFORCED"
+    },
+    {
+      "gene_id": "GHF-007",
+      "capability": "agent MCP explicit registration",
+      "source": "GitHub Copilot MCP governance",
+      "state": "SOURCE_ENFORCED"
+    },
+    {
+      "gene_id": "GHF-008",
+      "capability": "policy scorecard with auditable binary dimensions",
+      "source": "Harness OPA scorecards",
+      "state": "SOURCE_ENFORCED"
+    },
+    {
+      "gene_id": "GHF-009",
+      "capability": "SLSA build provenance + artifact attestation target",
+      "source": "GitHub artifact attestations/SLSA v1",
+      "state": "TARGET_REGISTERED_IMPLEMENTATION_PENDING"
+    },
+    {
+      "gene_id": "GHF-010",
+      "capability": "change-aware dynamic proof selection",
+      "source": "Buildkite dynamic pipelines + existing ProofOS selector",
+      "state": "COMPOSE_WITH_PROOFOS_EXISTING"
+    },
+    {
+      "gene_id": "GHF-011",
+      "capability": "composite human/agent/provider identity receipts",
+      "source": "GitLab composite identity",
+      "state": "TARGET_REGISTERED"
+    },
+    {
+      "gene_id": "GHF-012",
+      "capability": "protected-resource branch control",
+      "source": "Azure DevOps branch control checks",
+      "state": "COMPOSE_WITH_SOVARA_FDOF_TARGET"
+    }
+  ],
+  "estate_targets": {
+    "scheduled_workflows": 0,
+    "pull_request_target_workflows": 0,
+    "unregistered_oidc_workflows": 0,
+    "mutable_action_references": 0,
+    "missing_explicit_permissions": 0,
+    "checkout_credentials_not_isolated": 0,
+    "privileged_without_concurrency": 0,
+    "agent_governance_findings": 0,
+    "unregistered_copilot_hooks": 0
+  },
+  "provider_targets": {
+    "main_ruleset_active": true,
+    "direct_updates_blocked": true,
+    "force_pushes_blocked": true,
+    "deletion_blocked": true,
+    "pull_request_required": true,
+    "required_status_contexts": [
+      "admission",
+      "contract",
+      "scan"
+    ],
+    "code_scanning_merge_protection": "TARGET_WHEN_PROVIDER_CONFIGURATION_AVAILABLE",
+    "required_workflows": "TARGET_WHEN_ACCOUNT_SCOPE_SUPPORTS_IT",
+    "merge_queue": "UNAVAILABLE_FOR_USER_OWNED_PUBLIC_REPOSITORY"
+  },
+  "supply_chain_targets": {
+    "artifact_attestations": "RELEASE_ARTIFACTS",
+    "sbom_attestation": "RELEASE_ARTIFACTS",
+    "slsa_build_level": 3,
+    "verification": "gh attestation verify bound to vetted reusable workflow"
+  },
   "target_state": {
     "repository_state_is_runtime_database": false,
     "automated_direct_main_writers": 0,

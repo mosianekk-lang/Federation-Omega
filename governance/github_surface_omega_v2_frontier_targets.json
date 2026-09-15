@@ -1,0 +1,38 @@
+{
+  "schema": "FEDOMEGA_GITHUB_SURFACE_FRONTIER_TARGETS_V1",
+  "version": "1.0.0",
+  "source_control_targets": {
+    "scheduled_workflows": 0,
+    "pull_request_target_workflows": 0,
+    "mutable_action_references": 0,
+    "unregistered_oidc_workflows": 0,
+    "checkout_credentials_not_isolated": 0,
+    "missing_explicit_permissions": 0,
+    "agent_governance_findings": 0,
+    "unregistered_copilot_hooks": 0
+  },
+  "provider_targets": {
+    "main_ruleset_active": true,
+    "direct_update_rejected": true,
+    "force_push_rejected": true,
+    "deletion_rejected": true,
+    "pull_request_required": true,
+    "required_status_checks_exact": true,
+    "code_scanning_merge_protection": "WHEN_PROVIDER_CONFIGURATION_PROVEN",
+    "merge_queue": "NOT_APPLICABLE_TO_CURRENT_USER_OWNED_PUBLIC_REPOSITORY"
+  },
+  "supply_chain_targets": {
+    "release_artifact_attested": true,
+    "release_sbom_attested": true,
+    "slsa_build_level_target": 3,
+    "independent_attestation_verification": true
+  },
+  "intelligence_targets": {
+    "change_aware_proof_selection": true,
+    "read_only_github_guardian": true,
+    "agent_tool_least_privilege": true,
+    "composite_identity_receipts": "FUTURE_PROVIDER_BINDING_TARGET",
+    "policy_scorecard": true
+  },
+  "truth_boundary": "Targets are acceptance criteria, not current provider/runtime claims."
+}
