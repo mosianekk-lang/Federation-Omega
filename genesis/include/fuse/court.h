@@ -11,6 +11,9 @@ DECL_IO(court_fil_001);DECL_IO(court_fil_002);DECL_IO(court_fil_003);DECL_IO(cou
 DECL_IO(court_wrt_001);DECL_IO(court_wrt_002);DECL_IO(court_wrt_003);DECL_IO(court_wrt_004);DECL_IO(court_wrt_005);DECL_IO(court_wrt_006);DECL_IO(court_wrt_007);
 #undef DECL_IO
 
+// Frozen 48-court compatibility overload only. Production code includes transaction.h directly.
+inline Status nonce_claim(Runtime*r,const Digest256&task,const Digest256&nonce){static const Id128 mission=id_from_seed("GENESIS-FROZEN-SEC-MISSION");return nonce_claim(r,mission,1,task,nonce);}
+
 #define court_fmt_001 (+[](CourtContext*c)->CourtResult{return fmt_case("FMT-001",c);})
 #define court_fmt_002 (+[](CourtContext*c)->CourtResult{return fmt_case("FMT-002",c);})
 #define court_fmt_003 (+[](CourtContext*c)->CourtResult{return fmt_case("FMT-003",c);})
