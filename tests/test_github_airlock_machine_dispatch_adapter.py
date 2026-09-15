@@ -83,6 +83,24 @@ class WindowsH1MachineDispatchAdapterTests(unittest.TestCase):
         for marker in required:
             self.assertIn(marker, self.workflow)
 
+    def test_run_attribution_uses_deterministic_json_parsing_and_fails_on_ambiguity(self):
+        required = (
+            "/tmp/windows-h1-workflow-runs.json",
+            "json.load(handle)",
+            "created >= os.environ['DISPATCHED_AT']",
+            "head_sha == os.environ['EXPECTED_CONTROL_SHA']",
+            "event == 'workflow_dispatch'",
+            "RUN_IDENTITY_AMBIGUOUS",
+            "len(candidates) != 1",
+            "TARGET_RUN_CREATED_AT",
+            "EXACT_CREATED_AT_PLUS_CONTROL_SHA_UNIQUE_MATCH",
+            "FUSE-WINDOWS-SCSF-MACHINE-DISPATCH-RECEIPT-V2",
+        )
+        for marker in required:
+            self.assertIn(marker, self.workflow)
+        self.assertNotIn("--jq --arg since", self.workflow)
+        self.assertNotIn("| head -n 1", self.workflow)
+
     def test_adapter_cannot_alias_provider_gateway(self):
         self.assertIn("provider_effect_performed_by_adapter': False", self.workflow)
         self.assertIn("provider_credentials_accessed_by_adapter': False", self.workflow)
