@@ -16,5 +16,9 @@
     <PublishSingleFile>false</PublishSingleFile>
     <SelfContained>false</SelfContained>
     <UseAppHost>true</UseAppHost>
+    <FederationSourceSha Condition="'$(FederationSourceSha)' == ''">UNBOUND_SOURCE</FederationSourceSha>
   </PropertyGroup>
+  <ItemGroup>
+    <AssemblyMetadata Include="FederationSourceSha" Value="$(FederationSourceSha)" />
+  </ItemGroup>
 </Project>
