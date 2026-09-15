@@ -2,12 +2,12 @@
   "contract_version": "3.3",
   "mission": {
     "id": "MISSION-FUSE-WINDOWS-EXECUTION-PLANE-20260910",
-    "version": 2,
-    "goal": "Deliver a FUSE-owned authenticated Windows processing relay with no Remote Desktop Commander production dependency.",
+    "version": 3,
+    "goal": "Deliver a FUSE-owned authenticated Windows processing relay and direct OpenAI Secure MCP Tunnel profile with no Remote Desktop Commander production dependency.",
     "user": "Kim Kagiso Mosiane",
-    "workflow": "ChatGPT OAuth -> MCP tool -> Firestore task -> outbound signed Windows poll -> policy gate -> hash-bound receipt -> semantic readback",
+    "workflow": "ChatGPT -> OpenAI Secure MCP Tunnel -> private stdio MCP -> Windows policy gate -> hash-bound receipt; canonical cloud-relay route remains available",
     "data": "privacy-minimized task envelope, bounded result and receipt; no secrets or raw private evidence",
-    "interface": "Streamable HTTP MCP, signed agent HTTPS routes, Python CLI, PowerShell entrypoint, GitHub Actions workflow",
+    "interface": "Private stdio MCP, Streamable HTTP MCP, signed agent HTTPS routes, Python CLI, current-user PowerShell supervisor and GitHub Actions workflow",
     "stack": "Python 3.11+, MCP Python SDK v2, Firestore, Cloud Run, OAuth 2.1/OIDC, PowerShell 7, Windows, GitHub Actions",
     "environment": "Google Cloud Run relay plus outbound Windows 11 agent; GitHub-hosted windows-latest remains the ephemeral validation plane",
     "maturity": "PROD_FOUNDATION",
@@ -28,14 +28,14 @@
   "architecture": {
     "components": {
       "frontend": "NOT_APPLICABLE: operator interface is CLI/workflow",
-      "backend": "FUSE MCP server plus signed agent transport and federation_windows_plane execution core",
+      "backend": "FUSE private stdio and hosted MCP servers plus signed agent transport and the shared federation_windows_plane execution core",
       "database": "Google Firestore transaction store",
       "queue": "Firestore task and lease records",
       "worker": "Outbound-only owner Windows agent; GitHub-hosted Windows remains a validation runner",
-      "scheduler": "NOT_APPLICABLE: owner/event invocation only; no new recurring scheduler",
+      "scheduler": "Windows Task Scheduler limited current-user logon trigger supervises the direct tunnel client; no task-work scheduler is introduced",
       "cache": "NOT_APPLICABLE: no task result cache",
       "storage": "Firestore operational state plus bounded immutable deployment receipt artifact",
-      "authentication": "OAuth 2.1/OIDC for MCP; one-time enrollment and derived HMAC device identity for the agent; GitHub OIDC/WIF for deployment"
+      "authentication": "OpenAI tunnel identity plus scoped runtime key for private stdio; OAuth 2.1/OIDC for hosted MCP; one-time enrollment and signed device identity for the relay agent; GitHub OIDC/WIF for deployment"
     },
     "failure_modes": [
       "INVALID_INPUT",
@@ -54,7 +54,7 @@
     }
   },
   "testing": {
-    "unit": "windows_federation_plane/tests/test_windows_plane.py, test_relay_protocol.py and test_mcp_service.py",
+    "unit": "windows_federation_plane/tests/test_windows_plane.py, test_relay_protocol.py, test_mcp_service.py and test_tunnel_service.py",
     "integration": "tests/test_fuse_windows_execution_plane_v1.py",
     "e2e_or_smoke": "FUSE Windows Execution Plane v1 workflow health task",
     "fixtures_mocks": "temporary workspaces and deterministic envelopes",
@@ -63,17 +63,17 @@
   },
   "delivery": {
     "file_tree": "windows_federation_plane/, governance/fuse_windows_execution_plane_v1.json, governance/fuse_windows_sovereign_relay_v1.json, .github/workflows/fuse-windows-execution-plane-v1.yml and fuse-windows-relay-cloud-run-v1.yml",
-    "exact_code_files": ["windows_federation_plane/src/federation_windows_plane/models.py", "windows_federation_plane/src/federation_windows_plane/policy.py", "windows_federation_plane/src/federation_windows_plane/executor.py", "windows_federation_plane/src/federation_windows_plane/relay_protocol.py", "windows_federation_plane/src/federation_windows_plane/firestore_relay.py", "windows_federation_plane/src/federation_windows_plane/oidc_auth.py", "windows_federation_plane/src/federation_windows_plane/mcp_service.py", "windows_federation_plane/src/federation_windows_plane/relay_agent.py"],
+    "exact_code_files": ["windows_federation_plane/src/federation_windows_plane/models.py", "windows_federation_plane/src/federation_windows_plane/policy.py", "windows_federation_plane/src/federation_windows_plane/executor.py", "windows_federation_plane/src/federation_windows_plane/relay_protocol.py", "windows_federation_plane/src/federation_windows_plane/firestore_relay.py", "windows_federation_plane/src/federation_windows_plane/oidc_auth.py", "windows_federation_plane/src/federation_windows_plane/mcp_service.py", "windows_federation_plane/src/federation_windows_plane/relay_agent.py", "windows_federation_plane/src/federation_windows_plane/tunnel_service.py", "windows_federation_plane/scripts/Install-FuseWindowsTunnel.ps1", "windows_federation_plane/scripts/Run-FuseWindowsTunnel.ps1", "windows_federation_plane/scripts/Test-FuseWindowsTunnel.ps1", "windows_federation_plane/scripts/Repair-FuseWindowsTunnel.ps1"],
     "setup_commands": ["python -m pip install -e windows_federation_plane"],
-    "run_commands": ["federation-windows --workspace . --task health"],
-    "test_commands": ["PYTHONPATH=windows_federation_plane/src python -m unittest discover -s windows_federation_plane/tests -v", "python -m unittest discover -s tests -p 'test_fuse_windows_execution_plane_v1.py' -v"],
+    "run_commands": ["federation-windows --workspace . --task health", "federation-windows-tunnel --workspace C:\\FUSE\\workspaces"],
+    "test_commands": ["PYTHONPATH=windows_federation_plane/src python -m unittest discover -s windows_federation_plane/tests -v", "python -m unittest discover -s tests -p 'test_fuse_windows_execution_plane_v1.py' -v", "powershell -File windows_federation_plane/scripts/Test-FuseWindowsTunnel.ps1"],
     "deploy_commands": ["source-admit through FDOF-fenced pull request; create owner-only dispatch issue titled [FO-DISPATCH] FUSE_WINDOWS_RELAY_CLOUD_RUN_V1"],
-    "rollback_commands": ["workflow restores the previous Cloud Run revision on failed canary; source rollback is a revert"],
+    "rollback_commands": ["workflow restores the previous Cloud Run revision on failed canary; direct tunnel uses Repair-FuseWindowsTunnel.ps1 -Action Rollback; source rollback is a revert"],
     "debugging": "README symptom/cause/resolution table"
   },
   "formation": {"mission_id":"MISSION-FUSE-WINDOWS-EXECUTION-PLANE-20260910","mission_version":1,"gate_decision":"EXECUTE","authority_class":"A1_LOCAL_BUILD_A2_SOURCE_A3_PROVIDER_SEPARATE","effectful_permit":"FORMATION_PERMIT_REQUIRED_AT_EXECUTION","single_effectful_path":true},
   "watchman": {"unavailable_capability":"an admitted OAuth issuer/client configuration and first owner-workstation enrollment","safe_substitute":"source-complete relay plus GitHub-hosted Windows validation","closure_test":"authenticated ChatGPT tool call, owner-workstation heartbeat and exact task receipt independently read back"},
   "continuity": {"idempotency":"read-only operations are idempotent in effect; task and correlation IDs plus TTL bound retries without claiming durable replay prevention","checkpoints":"source SHA, job ID, attempt, artifact ID, task SHA and result SHA","resume_conditions":"fresh main/FDOF plus terminal prior job state","handoff_files":["README.md","THREAT_MODEL.md","FORMATION_SPEC.md","PROJECT_MEMORY.md","AI_HANDOFF.md","BUILD_CONTRACT.json"],"stop_switch":"owner stop, stale mission, FDOF collision, test failure, unexpected effect or receipt mismatch"},
-  "states": {"designed":true,"implemented":true,"tested":true,"registered":false,"authorized":true,"ready":true,"deployed":false,"proven":false},
-  "proof": {"test_results":["34/34 component tests passed locally on 2026-09-10","OAuth audience, agent body binding, replay, lease, DPAPI and prior execution regressions passed","dependency hash lock generated"],"deployment_readback":null,"semantic_verification":"Local semantic checks passed; provider and owner-workstation proof remain required","unresolved_defects":["F194 repository writer lease prevents source admission", "OAuth issuer/JWKS repository variables are not yet provider-proven", "Cloud Run deployment and ChatGPT custom app connection not yet executed", "owner workstation not yet enrolled"]}
+  "states": {"designed":true,"implemented":true,"tested":true,"registered":false,"authorized":true,"ready":false,"deployed":false,"proven":false},
+  "proof": {"test_results":["34/34 prior component tests passed locally on 2026-09-10","18/18 dependency-free execution-core and Secure MCP Tunnel tests passed locally on 2026-09-14","10/10 repository source-policy tests passed after live-preflight repair on 2026-09-14","MODISA BUILD_CONTRACT v3.3 validator passed","RealityGuard ten-control protection kernel passed at 100 percent without release authorization","secret-safe MosianeKK-LPT preflight proved Windows NT 10.0.26200, Python and FUSE root availability","live preflight exposed missing $env:OS; direct scripts repaired to use the platform API and regression court updated","dependency hash lock retained"],"deployment_readback":null,"semantic_verification":"Direct stdio tool policy, command quoting, receipt binding, path confinement and endpoint capability preflight passed; Windows installer, tunnel-provider and ChatGPT readback remain required","unresolved_defects":["public branch publication awaits explicit owner approval after egress guard blocked push", "exact-head pull-request admission and Windows CI pending", "tunnel-client is not installed on MosianeKK-LPT", "OpenAI tunnel identity and scoped runtime key handles are absent", "ChatGPT developer-mode tunnel association not provider-proven", "physical install, health, persistence and rollback canary pending"]}
 }

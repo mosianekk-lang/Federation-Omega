@@ -8,3 +8,6 @@
 - Cancellation: any owner stop, stale mission version, FDOF collision, source drift, permission loss, test failure, receipt mismatch or unexpected effect.
 - Terminal fruit: source admitted; Windows-hosted job executed; artifact receipt read back; runner OS and effect verified; rollback route preserved.
 - Owner workstation is a separate predicate and is not required to prove the hosted plane.
+- Direct private bridge: official Secure MCP Tunnel client -> local stdio MCP -> existing WindowsPlane policy and receipt core.
+- Direct bridge authority: local package build is A1; source admission is A2; tunnel creation/association, runtime key use and ChatGPT app connection are separate provider-authority predicates.
+- Direct bridge promotion: exact-source Windows canary, tunnel doctor, supervised persistence, ChatGPT discovery, physical-host health receipt and rollback proof.

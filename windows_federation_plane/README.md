@@ -1,4 +1,4 @@
-# FUSE Windows Execution Plane v1.1
+# FUSE Windows Execution Plane v1.3
 
 This additive Federation component provides a real, bounded Windows execution surface without creating a second scheduler, authority root, proof plane or memory system.
 
@@ -6,6 +6,7 @@ This additive Federation component provides a real, bounded Windows execution su
 
 1. **Hosted ephemeral Windows** — `windows-latest` GitHub Actions worker with read-only repository permissions, a 15-minute timeout, typed task selection, failure-first tests, and an immutable JSON receipt artifact.
 2. **Owner-workstation relay** — the same task engine behind an outbound-only agent, a FUSE-owned Streamable HTTP MCP endpoint, OAuth 2.1/OIDC verification, Firestore transactions, request signing, replay rejection, leases, idempotent completion and DPAPI-protected device credentials.
+3. **OpenAI Secure MCP Tunnel** — the execution core as a private stdio MCP server, supervised as a current-user scheduled task. The official tunnel client makes the only internet connection, outbound to OpenAI; the Windows host has no MCP listener and exposes only `health`, `inventory`, and `hash_workspace_file`.
 
 The hosted profile needs no permanent machine or subscription. The owner-workstation profile is not called installed until the Cloud Run service, ChatGPT connection, enrollment, machine heartbeat and task receipt are independently read back.
 
@@ -24,6 +25,8 @@ The hosted profile needs no permanent machine or subscription. The owner-worksta
 - workstation requests use per-device HMAC credentials derived from a Cloud Run root secret and are replay-protected in Firestore;
 - the Windows credential is encrypted for the current Windows user with DPAPI;
 - the workstation opens only outbound HTTPS connections; no RDP or inbound workstation listener is required.
+- the Secure MCP Tunnel runtime key is DPAPI-encrypted for the current user and its file ACL is reduced to that user;
+- the tunnel profile is validated with `tunnel-client doctor`, restarts with bounded backoff, and has a file-based stop switch plus previous-release rollback.
 
 The `issued_by` field is a policy label, not a cryptographic credential. The owner-workstation profile therefore remains unbound until a separately authorized authenticated transport is proven. Read-only tasks are TTL-bounded and idempotent in effect, but v1 does not claim a durable cross-run replay cache.
 The v1 CLI deliberately does not accept a caller-supplied envelope; it constructs the allowlisted envelope inside the authenticated invocation boundary.
@@ -66,9 +69,35 @@ federation-windows-agent --workspace C:\FUSE\workspaces
 
 The enrollment values are consumed once. The resulting device credential is DPAPI-encrypted and subsequent polling is autonomous.
 
+## Direct private ChatGPT bridge
+
+This is the lowest-infrastructure route when ChatGPT or Codex should call the owner Windows node directly. It follows OpenAI's Secure MCP Tunnel stdio profile and does not create a public endpoint.
+
+Prerequisites are a current Python 3.11+ runtime, the official `tunnel-client`, a Platform `tunnel_id`, a runtime API key with Tunnels Read + Use, and ChatGPT developer-mode access. Keep the key out of the command line and source tree. The installer accepts a `SecureString` or an already-scoped `CONTROL_PLANE_API_KEY` environment variable, encrypts it with current-user DPAPI, builds a hash-locked virtual environment, initializes and diagnoses the profile, registers a limited current-user logon task, and starts it.
+
+```powershell
+$key = Read-Host 'OpenAI tunnel runtime key' -AsSecureString
+.\windows_federation_plane\scripts\Install-FuseWindowsTunnel.ps1 `
+  -TunnelId 'tunnel_0123456789abcdef0123456789abcdef' `
+  -ControlPlaneApiKey $key `
+  -Workspace 'C:\FUSE\workspaces'
+```
+
+The source and installer do not create an OpenAI tunnel, grant workspace permissions, or connect the ChatGPT app. Those are provider-authority steps and require native readback. Once provider inputs already exist on an authorized machine, installation and supervision require no administrator elevation or recurring user action.
+
+Canary and recovery:
+
+```powershell
+.\windows_federation_plane\scripts\Test-FuseWindowsTunnel.ps1
+.\windows_federation_plane\scripts\Repair-FuseWindowsTunnel.ps1 -Action Restart
+.\windows_federation_plane\scripts\Repair-FuseWindowsTunnel.ps1 -Action Suspend
+.\windows_federation_plane\scripts\Repair-FuseWindowsTunnel.ps1 -Action Rollback
+```
+
 ## Rollback
 
 For source rollback, revert the admission commit. For a failed provider canary, the deployment workflow returns traffic to the previously active revision. Disable a workstation by revoking its Firestore device record and stopping its agent service; rotate the root Secret Manager version to invalidate all derived device credentials.
+For the direct tunnel profile, `Repair-FuseWindowsTunnel.ps1 -Action Suspend` creates the local stop switch and stops the scheduled task. `-Action Rollback` switches to the retained prior release, rebuilds the stdio profile, and restarts supervision.
 
 ## Debugging
 
@@ -79,3 +108,6 @@ For source rollback, revert the admission commit. For a failed provider canary, 
 | `PATH_ESCAPE_DENIED` | File target escaped workspace | Supply a repository-relative path inside the checkout |
 | `TASK_EXPIRED` | Stale envelope | Issue a fresh FDOF-bound envelope |
 | Missing receipt artifact | Task or verification failed | Inspect the exact Windows job; never infer success |
+| `CONTROL_PLANE_API_KEY_REQUIRED` | No scoped tunnel runtime key was supplied | Resolve it through an authorized secret surface; never paste it into source or chat |
+| `TUNNEL_PROFILE_DOCTOR_FAILED` | Tunnel identity, permissions, network, or stdio startup failed | Run the canary and inspect `tunnel-client doctor --explain` |
+| Scheduled task repeatedly exits | Tunnel client or local stdio server is unhealthy | Inspect `supervisor.jsonl`, run the canary, then restart or roll back |
