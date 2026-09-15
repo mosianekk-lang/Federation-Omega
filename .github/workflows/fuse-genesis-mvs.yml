@@ -1,0 +1,40 @@
+name: FUSE Genesis MVS Court
+
+on:
+  push:
+    branches: [fuse-genesis-mvs-001]
+    paths:
+      - "genesis/**"
+      - ".github/workflows/fuse-genesis-mvs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuse-genesis-mvs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  genesis:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Build twice, execute frozen 48-court, run crash-recovery MVS
+        shell: pwsh
+        run: ./genesis/Build-Genesis.ps1
+
+      - name: Upload exact proof artifacts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-genesis-mvs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            genesis/out/**
+          if-no-files-found: warn
+          retention-days: 30
