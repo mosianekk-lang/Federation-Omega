@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.35",
+  "version": "2.9.36",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -63,225 +63,73 @@
     ".github/workflows/fuse-windows-execution-plane-v1.yml",
     ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
-    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml"
   ],
   "allowed_events": {
-    ".github/workflows/github-airlock.yml": [
-      "pull_request",
-      "merge_group",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/public-repository-leak-guard.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/phoenix-emergency-freeze.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/bubbles-command-bus.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/bubbles-browser-runtime-canary.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/autopilot-operational-witness.yml": [
-      "workflow_run"
-    ],
-    ".github/workflows/fdof-hosted-state-export-v1.yml": [
-      "issues"
-    ],
-    ".github/workflows/fdof-hosted-state-restore-v1.yml": [
-      "workflow_run"
-    ],
-    ".github/workflows/bco-provider-readback-continuity.yml": [
-      "workflow_run"
-    ],
-    ".github/workflows/caseforge-provider-readback-canary.yml": [
-      "push"
-    ],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/bubbles-provider-authority-recovery-probe.yml": [
-      "issues",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/evidenceops-pst-corpus-v2-extract.yml": [
-      "issues",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/sovara-project-iam-bridge.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/cios-production-lane.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/frontier-runtime-qualification.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/bco-prime-shadow-qualification.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/cfbe-observed-current-qualification.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/superior-logic-maturation-shadow.yml": [
-      "push",
-      "schedule",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/luno-observer-provider-binding.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/deploy-gemini-gateway.yml": [
-      "workflow_dispatch"
-    ],
-    ".github/workflows/fo-wif-semantic-canary-v2.yml": [
-      "issues"
-    ],
-    ".github/workflows/fkcm-pubsub-shadow-canary.yml": [
-      "issues"
-    ],
-    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": [
-      "issues"
-    ],
-    ".github/workflows/sol62-wif-hardening-lease.yml": [
-      "issues"
-    ],
-    ".github/workflows/sol62-google-surface-probe.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/sovara-ai-studio-semantic-canary.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/kimmie-seed-199-bot-workforce.yml": [
-      "workflow_dispatch"
-    ],
-    ".github/workflows/nexus-direct-preflight.yml": [
-      "workflow_dispatch"
-    ],
-    ".github/workflows/nexus-direct-runtime-target.yml": [
-      "workflow_dispatch"
-    ],
-    ".github/workflows/seb-omega.yml": [
-      "workflow_dispatch"
-    ],
-    ".github/workflows/seb-omega-qualification.yml": [
-      "pull_request",
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/fuse-mobile-android-build.yml": [
-      "issues",
-      "push"
-    ],
-    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
-      "issues"
-    ],
-    ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": [
-      "issues"
-    ],
-    ".github/workflows/fuse-mobile-provider-currentness-v1.yml": [
-      "push",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": [
-      "issues"
-    ],
-    ".github/workflows/aegis-omega-zero-traffic-v1.yml": [
-      "issues"
-    ],
-    ".github/workflows/fuse-windows-execution-plane-v1.yml": [
-      "pull_request",
-      "workflow_dispatch"
-    ],
-    ".github/workflows/cfbe-build-intelligence-reusable-v1.yml": [
-      "workflow_call"
-    ],
-    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": [
-      "issues"
-    ],
-    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": [
-      "workflow_dispatch"
-    ]
+    ".github/workflows/github-airlock.yml": ["pull_request", "merge_group", "push", "workflow_dispatch"],
+    ".github/workflows/public-repository-leak-guard.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/phoenix-emergency-freeze.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/bubbles-command-bus.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/bubbles-browser-runtime-canary.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/autopilot-operational-witness.yml": ["workflow_run"],
+    ".github/workflows/fdof-hosted-state-export-v1.yml": ["issues"],
+    ".github/workflows/fdof-hosted-state-restore-v1.yml": ["workflow_run"],
+    ".github/workflows/bco-provider-readback-continuity.yml": ["workflow_run"],
+    ".github/workflows/caseforge-provider-readback-canary.yml": ["push"],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/bubbles-provider-authority-recovery-probe.yml": ["issues", "workflow_dispatch"],
+    ".github/workflows/evidenceops-pst-corpus-v2-extract.yml": ["issues", "workflow_dispatch"],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/sovara-project-iam-bridge.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/cios-production-lane.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/frontier-runtime-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/bco-prime-shadow-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/cfbe-observed-current-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/superior-logic-maturation-shadow.yml": ["push", "schedule", "workflow_dispatch"],
+    ".github/workflows/luno-observer-provider-binding.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/deploy-gemini-gateway.yml": ["workflow_dispatch"],
+    ".github/workflows/fo-wif-semantic-canary-v2.yml": ["issues"],
+    ".github/workflows/fkcm-pubsub-shadow-canary.yml": ["issues"],
+    ".github/workflows/cfbe-hyperleverage-attestation-v1.yml": ["issues"],
+    ".github/workflows/sol62-wif-hardening-lease.yml": ["issues"],
+    ".github/workflows/sol62-google-surface-probe.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/sovara-ai-studio-semantic-canary.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/kimmie-seed-199-bot-workforce.yml": ["workflow_dispatch"],
+    ".github/workflows/nexus-direct-preflight.yml": ["workflow_dispatch"],
+    ".github/workflows/nexus-direct-runtime-target.yml": ["workflow_dispatch"],
+    ".github/workflows/seb-omega.yml": ["workflow_dispatch"],
+    ".github/workflows/seb-omega-qualification.yml": ["pull_request", "push", "workflow_dispatch"],
+    ".github/workflows/fuse-mobile-android-build.yml": ["issues", "push"],
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": ["issues"],
+    ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": ["issues"],
+    ".github/workflows/fuse-mobile-provider-currentness-v1.yml": ["push", "workflow_dispatch"],
+    ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": ["issues"],
+    ".github/workflows/aegis-omega-zero-traffic-v1.yml": ["issues"],
+    ".github/workflows/fuse-windows-execution-plane-v1.yml": ["pull_request", "workflow_dispatch"],
+    ".github/workflows/cfbe-build-intelligence-reusable-v1.yml": ["workflow_call"],
+    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": ["issues"],
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": ["workflow_dispatch"],
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": ["issues"]
   },
   "required_push_branches": {
-    ".github/workflows/bubbles-command-bus.yml": [
-      "main"
-    ],
-    ".github/workflows/bubbles-browser-runtime-canary.yml": [
-      "main"
-    ],
-    ".github/workflows/caseforge-provider-readback-canary.yml": [
-      "main"
-    ],
-    ".github/workflows/pfrd-omega-operator-auth-probe.yml": [
-      "main"
-    ],
-    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": [
-      "main"
-    ],
-    ".github/workflows/sovara-project-iam-bridge.yml": [
-      "main"
-    ],
-    ".github/workflows/cios-production-lane.yml": [
-      "main"
-    ],
-    ".github/workflows/frontier-runtime-qualification.yml": [
-      "main"
-    ],
-    ".github/workflows/bco-prime-shadow-qualification.yml": [
-      "main"
-    ],
-    ".github/workflows/cfbe-observed-current-qualification.yml": [
-      "main"
-    ],
-    ".github/workflows/superior-logic-maturation-shadow.yml": [
-      "main"
-    ],
-    ".github/workflows/luno-observer-provider-binding.yml": [
-      "main"
-    ],
-    ".github/workflows/sol62-google-surface-probe.yml": [
-      "main"
-    ],
-    ".github/workflows/sovara-ai-studio-semantic-canary.yml": [
-      "main"
-    ],
-    ".github/workflows/seb-omega-qualification.yml": [
-      "main"
-    ],
-    ".github/workflows/fuse-mobile-android-build.yml": [
-      "main"
-    ],
-    ".github/workflows/fuse-mobile-provider-currentness-v1.yml": [
-      "main"
-    ]
+    ".github/workflows/bubbles-command-bus.yml": ["main"],
+    ".github/workflows/bubbles-browser-runtime-canary.yml": ["main"],
+    ".github/workflows/caseforge-provider-readback-canary.yml": ["main"],
+    ".github/workflows/pfrd-omega-operator-auth-probe.yml": ["main"],
+    ".github/workflows/sovara-litellm-v2-3-provider-admission.yml": ["main"],
+    ".github/workflows/sovara-project-iam-bridge.yml": ["main"],
+    ".github/workflows/cios-production-lane.yml": ["main"],
+    ".github/workflows/frontier-runtime-qualification.yml": ["main"],
+    ".github/workflows/bco-prime-shadow-qualification.yml": ["main"],
+    ".github/workflows/cfbe-observed-current-qualification.yml": ["main"],
+    ".github/workflows/superior-logic-maturation-shadow.yml": ["main"],
+    ".github/workflows/luno-observer-provider-binding.yml": ["main"],
+    ".github/workflows/sol62-google-surface-probe.yml": ["main"],
+    ".github/workflows/sovara-ai-studio-semantic-canary.yml": ["main"],
+    ".github/workflows/seb-omega-qualification.yml": ["main"],
+    ".github/workflows/fuse-mobile-android-build.yml": ["main"],
+    ".github/workflows/fuse-mobile-provider-currentness-v1.yml": ["main"]
   },
   "oidc_workflow_allowlist": [
     ".github/workflows/sovara-litellm-v2-3-provider-admission.yml",
@@ -330,132 +178,60 @@
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": "MACHINE_DISPATCH_ONLY__NO_ISSUE_TRIGGER"
   },
   "provider_mutation_required_markers": {
-    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
-      "--no-allow-unauthenticated",
-      "public_invocation",
-      "production_traffic_changed",
-      "provider_mutation_performed"
-    ],
-    ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": [
-      "--no-traffic",
-      "candidate_traffic_percent",
-      "serving_traffic_unchanged",
-      "iam_mutation_performed",
-      "traffic_promotion_performed"
-    ],
-    ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": [
-      "gcloud services enable",
-      "iap.googleapis.com",
-      "gcloud run services update",
-      "--iap",
-      "gcp-sa-iap.iam.gserviceaccount.com",
-      "roles/run.invoker",
-      "public_invoker_present",
-      "traffic_change_performed",
-      "oauth_mutation_performed",
-      "owner_access_grant_performed"
-    ],
-    ".github/workflows/aegis-omega-zero-traffic-v1.yml": [
-      "--no-allow-unauthenticated",
-      "public_invocation",
-      "production_traffic_changed",
-      "provider_mutation_performed",
-      "gcloud secrets create",
-      "gcloud secrets add-iam-policy-binding"
-    ],
-    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": [
-      "--no-traffic",
-      "--no-invoker-iam-check",
-      "--to-revisions",
-      "PREVIOUS_REVISION",
-      "OIDC_ISSUER",
-      "OIDC_JWKS_URL",
-      "provider_mutation_performed",
-      "production_traffic_changed"
-    ],
-    ".github/workflows/seb-omega.yml": [
-      "DEPLOY_SEB_OMEGA_ZERO_TRAFFIC",
-      "--no-allow-unauthenticated",
-      "--no-traffic",
-      "pre-traffic.json",
-      "gh attestation verify",
-      "OPENROUTER_API_KEY"
-    ],
-    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": [
-      "FUSE-SURFACE-CAPABILITY-PASSPORT-V1",
-      "provider_passport_json",
-      "provider_passport_sha256",
-      "PASSPORT_FIELD_MISMATCH",
-      "PASSPORT_TIME_WINDOW_INVALID",
-      "ref: ${{ inputs.source_sha }}",
-      "f22a627a841dd7297a137a56eb29d2b5de9acf9c",
-      "--ingress internal",
-      "--no-default-url",
-      "CANARY_CLEANUP_VERIFIED=true",
-      "PRODUCTION_TRAFFIC_UNCHANGED=true",
-      "\"gcp_heavy_compute\":\"DENY\"",
-      "production-before.json",
-      "production-after.json"
-    ]
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": ["--no-allow-unauthenticated", "public_invocation", "production_traffic_changed", "provider_mutation_performed"],
+    ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": ["--no-traffic", "candidate_traffic_percent", "serving_traffic_unchanged", "iam_mutation_performed", "traffic_promotion_performed"],
+    ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": ["gcloud services enable", "iap.googleapis.com", "gcloud run services update", "--iap", "gcp-sa-iap.iam.gserviceaccount.com", "roles/run.invoker", "public_invoker_present", "traffic_change_performed", "oauth_mutation_performed", "owner_access_grant_performed"],
+    ".github/workflows/aegis-omega-zero-traffic-v1.yml": ["--no-allow-unauthenticated", "public_invocation", "production_traffic_changed", "provider_mutation_performed", "gcloud secrets create", "gcloud secrets add-iam-policy-binding"],
+    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": ["--no-traffic", "--no-invoker-iam-check", "--to-revisions", "PREVIOUS_REVISION", "OIDC_ISSUER", "OIDC_JWKS_URL", "provider_mutation_performed", "production_traffic_changed"],
+    ".github/workflows/seb-omega.yml": ["DEPLOY_SEB_OMEGA_ZERO_TRAFFIC", "--no-allow-unauthenticated", "--no-traffic", "pre-traffic.json", "gh attestation verify", "OPENROUTER_API_KEY"],
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": ["FUSE-SURFACE-CAPABILITY-PASSPORT-V1", "provider_passport_json", "provider_passport_sha256", "PASSPORT_FIELD_MISMATCH", "PASSPORT_TIME_WINDOW_INVALID", "ref: ${{ inputs.source_sha }}", "f22a627a841dd7297a137a56eb29d2b5de9acf9c", "--ingress internal", "--no-default-url", "CANARY_CLEANUP_VERIFIED=true", "PRODUCTION_TRAFFIC_UNCHANGED=true", "\"gcp_heavy_compute\":\"DENY\"", "production-before.json", "production-after.json"]
   },
   "provider_mutation_forbidden_markers": {
-    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
-      "--allow-unauthenticated",
-      "update-traffic --to-latest"
-    ],
-    ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": [
-      "--allow-unauthenticated",
-      "update-traffic --to-latest",
-      "gcloud secrets versions access",
-      "add-iam-policy-binding",
-      "--update-env-vars",
-      "allusers"
-    ],
-    ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": [
-      "--allow-unauthenticated",
-      "update-traffic",
-      "gcloud run deploy",
-      "gcloud iap web add-iam-policy-binding",
-      "gcloud iap oauth-clients",
-      "gcloud secrets versions access",
-      "--update-env-vars",
-      "--set-env-vars"
-    ],
-    ".github/workflows/aegis-omega-zero-traffic-v1.yml": [
-      "--allow-unauthenticated",
-      "update-traffic --to-latest"
-    ],
-    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": [
-      "--allow-unauthenticated",
-      "update-traffic --to-latest",
-      "gcloud secrets versions access",
-      "allUsers"
-    ],
-    ".github/workflows/seb-omega.yml": [
-      "--allow-unauthenticated",
-      "gcloud secrets versions access",
-      "allUsers"
-    ],
-    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": [
-      "--allow-unauthenticated",
-      "--no-invoker-iam-check",
-      "--ingress all",
-      "run services update-traffic"
-    ]
+    ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": ["--allow-unauthenticated", "update-traffic --to-latest"],
+    ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": ["--allow-unauthenticated", "update-traffic --to-latest", "gcloud secrets versions access", "add-iam-policy-binding", "--update-env-vars", "allusers"],
+    ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": ["--allow-unauthenticated", "update-traffic", "gcloud run deploy", "gcloud iap web add-iam-policy-binding", "gcloud iap oauth-clients", "gcloud secrets versions access", "--update-env-vars", "--set-env-vars"],
+    ".github/workflows/aegis-omega-zero-traffic-v1.yml": ["--allow-unauthenticated", "update-traffic --to-latest"],
+    ".github/workflows/fuse-windows-relay-cloud-run-v1.yml": ["--allow-unauthenticated", "update-traffic --to-latest", "gcloud secrets versions access", "allUsers"],
+    ".github/workflows/seb-omega.yml": ["--allow-unauthenticated", "gcloud secrets versions access", "allUsers"],
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": ["--allow-unauthenticated", "--no-invoker-iam-check", "--ingress all", "run services update-traffic"]
   },
   "actions_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
   ],
+  "actions_dispatch_workflow_allowlist": [
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml"
+  ],
+  "actions_dispatch_exact_issue_titles": {
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": "[FO-DISPATCH] FUSE_WINDOWS_SCSF_RENDEZVOUS_PROVIDER_V1"
+  },
+  "actions_dispatch_required_markers": {
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": [
+      "TARGET_WORKFLOW: fuse-windows-h1-provider-relay-v2.yml",
+      "EXPECTED_PACKET_ID: PKT-V5-WINDOWS-SCSF-RENDEZVOUS-PROVIDER-001",
+      "EXPECTED_SOURCE_SHA: f22a627a841dd7297a137a56eb29d2b5de9acf9c",
+      "FUSE-SURFACE-CAPABILITY-PASSPORT-V1",
+      "github.event.issue.author_association == 'OWNER'",
+      "/actions/workflows/${TARGET_WORKFLOW}/dispatches",
+      "provider_effect_performed_by_adapter': False",
+      "provider_credentials_accessed_by_adapter': False",
+      "owner_pc_effect_performed_by_adapter': False"
+    ]
+  },
+  "actions_dispatch_forbidden_markers": {
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": [
+      "/enable",
+      "/disable",
+      "id-token: write",
+      "gcloud run deploy",
+      "--allow-unauthenticated"
+    ]
+  },
   "statuses_write_workflow_allowlist": [
     ".github/workflows/phoenix-emergency-freeze.yml"
   ],
   "forbidden_pattern_exceptions": {
-    ".github/workflows/phoenix-emergency-freeze.yml": [
-      "gh api --method put",
-      "gh api -x put",
-      "gh api --method post",
-      "gh api -x post"
-    ]
+    ".github/workflows/phoenix-emergency-freeze.yml": ["gh api --method put", "gh api -x put", "gh api --method post", "gh api -x post"],
+    ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml": ["gh api --method post"]
   },
   "forbidden_repository_mutations": [
     "git push",
@@ -470,22 +246,14 @@
     "gh api -x patch",
     "gh api -x delete"
   ],
-  "forbidden_source_paths": [
-    "deployment_receipts/",
-    "runtime-receipts/",
-    "workflow-state/"
-  ],
+  "forbidden_source_paths": ["deployment_receipts/", "runtime-receipts/", "workflow-state/"],
   "maximum_workflow_files_changed_per_pull_request": 3,
   "require_immutable_action_shas": true,
   "require_checkout_credentials_disabled": true,
   "require_concurrency": true,
   "proof_destination": "GITHUB_ACTIONS_ARTIFACT_OR_EXTERNAL_APPEND_ONLY_STORE",
   "provider_credential_reference_policy": {
-    "admitted_source_contracts": [
-      "governance/sovara_provider_credential_reference_v1.json",
-      "ops/sovara_provider_credential_reference.py",
-      "federation/capital_execution/venues/LUNO_OBSERVER_BINDING_CONTRACT.json"
-    ],
+    "admitted_source_contracts": ["governance/sovara_provider_credential_reference_v1.json", "ops/sovara_provider_credential_reference.py", "federation/capital_execution/venues/LUNO_OBSERVER_BINDING_CONTRACT.json"],
     "secret_values_in_source": false,
     "secret_values_in_workflow_payloads": false,
     "secret_values_in_logs": false,
@@ -558,11 +326,10 @@
       ".github/workflows/fuse-windows-execution-plane-v1.yml",
       ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
       ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
-      ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
+      ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
+      ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml"
     ],
-    "provider_managed_active": [
-      "dynamic/dependabot/dependabot-updates"
-    ],
+    "provider_managed_active": ["dynamic/dependabot/dependabot-updates"],
     "provider_managed_control_plane": "DEPENDABOT_REPOSITORY_SETTINGS",
     "all_other_workflows": "DISABLED_MANUALLY",
     "provider_readback_required": true,
@@ -573,29 +340,7 @@
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml"
   ],
   "provider_mutation_machine_dispatch_required_markers": {
-    ".github/workflows/seb-omega.yml": [
-      "DEPLOY_SEB_OMEGA_ZERO_TRAFFIC",
-      "OPENROUTER_API_KEY",
-      "--no-allow-unauthenticated",
-      "--no-traffic",
-      "gh attestation verify",
-      "pre-traffic.json"
-    ],
-    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": [
-      "FUSE-SURFACE-CAPABILITY-PASSPORT-V1",
-      "provider_passport_json",
-      "provider_passport_sha256",
-      "PASSPORT_FIELD_MISMATCH",
-      "PASSPORT_TIME_WINDOW_INVALID",
-      "ref: ${{ inputs.source_sha }}",
-      "f22a627a841dd7297a137a56eb29d2b5de9acf9c",
-      "--ingress internal",
-      "--no-default-url",
-      "CANARY_CLEANUP_VERIFIED=true",
-      "PRODUCTION_TRAFFIC_UNCHANGED=true",
-      "\"gcp_heavy_compute\":\"DENY\"",
-      "production-before.json",
-      "production-after.json"
-    ]
+    ".github/workflows/seb-omega.yml": ["DEPLOY_SEB_OMEGA_ZERO_TRAFFIC", "OPENROUTER_API_KEY", "--no-allow-unauthenticated", "--no-traffic", "gh attestation verify", "pre-traffic.json"],
+    ".github/workflows/fuse-windows-h1-provider-relay-v2.yml": ["FUSE-SURFACE-CAPABILITY-PASSPORT-V1", "provider_passport_json", "provider_passport_sha256", "PASSPORT_FIELD_MISMATCH", "PASSPORT_TIME_WINDOW_INVALID", "ref: ${{ inputs.source_sha }}", "f22a627a841dd7297a137a56eb29d2b5de9acf9c", "--ingress internal", "--no-default-url", "CANARY_CLEANUP_VERIFIED=true", "PRODUCTION_TRAFFIC_UNCHANGED=true", "\"gcp_heavy_compute\":\"DENY\"", "production-before.json", "production-after.json"]
   }
 }
