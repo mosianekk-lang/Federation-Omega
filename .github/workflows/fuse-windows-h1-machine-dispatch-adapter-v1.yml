@@ -1,0 +1,196 @@
+name: FUSE Windows H1 Machine Dispatch Adapter v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  actions: write
+  contents: read
+  issues: read
+
+concurrency:
+  group: fuse-windows-h1-machine-dispatch-adapter-v1
+  cancel-in-progress: false
+
+env:
+  TARGET_WORKFLOW: fuse-windows-h1-provider-relay-v2.yml
+  EXPECTED_TITLE: '[FO-DISPATCH] FUSE_WINDOWS_SCSF_RENDEZVOUS_PROVIDER_V1'
+  EXPECTED_PACKET_ID: PKT-V5-WINDOWS-SCSF-RENDEZVOUS-PROVIDER-001
+  EXPECTED_SOURCE_SHA: f22a627a841dd7297a137a56eb29d2b5de9acf9c
+  PROJECT_ID: sov-hybrid-suite
+  REGION: africa-south1
+  EXPECTED_CONTROL_SHA: ${{ github.sha }}
+
+jobs:
+  dispatch-exact-provider-gateway:
+    if: github.event.issue.title == '[FO-DISPATCH] FUSE_WINDOWS_SCSF_RENDEZVOUS_PROVIDER_V1' && github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 5
+    steps:
+      - name: Validate exact redacted dispatch envelope
+        env:
+          ISSUE_BODY: ${{ github.event.issue.body }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          mapfile -t PACKET_LINES < <(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^PACKET_ID=//p')
+          mapfile -t SOURCE_LINES < <(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^SOURCE_SHA=//p')
+          mapfile -t PASSPORT_B64_LINES < <(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^PROVIDER_PASSPORT_JSON_B64=//p')
+          mapfile -t PASSPORT_SHA_LINES < <(printf '%s\n' "$ISSUE_BODY" | sed -n 's/^PROVIDER_PASSPORT_SHA256=//p')
+          test "${#PACKET_LINES[@]}" -eq 1
+          test "${#SOURCE_LINES[@]}" -eq 1
+          test "${#PASSPORT_B64_LINES[@]}" -eq 1
+          test "${#PASSPORT_SHA_LINES[@]}" -eq 1
+
+          PACKET_ID="${PACKET_LINES[0]}"
+          SOURCE_SHA="${SOURCE_LINES[0]}"
+          PASSPORT_B64="${PASSPORT_B64_LINES[0]}"
+          PASSPORT_SHA256="${PASSPORT_SHA_LINES[0]}"
+
+          test "$PACKET_ID" = "$EXPECTED_PACKET_ID"
+          test "$SOURCE_SHA" = "$EXPECTED_SOURCE_SHA"
+          [[ "$PASSPORT_SHA256" =~ ^[0-9a-f]{64}$ ]]
+          [[ "$PASSPORT_B64" =~ ^[A-Za-z0-9+/=]+$ ]]
+          printf '%s' "$PASSPORT_B64" | base64 --decode > /tmp/windows-h1-passport.json
+          test "$(sha256sum /tmp/windows-h1-passport.json | cut -d' ' -f1)" = "$PASSPORT_SHA256"
+
+          python3 - <<'PY'
+          import datetime as dt
+          import json
+          import os
+
+          with open('/tmp/windows-h1-passport.json', encoding='utf-8') as handle:
+              p = json.load(handle)
+          exact = {
+              'schema': 'FUSE-SURFACE-CAPABILITY-PASSPORT-V1',
+              'packet_id': os.environ['EXPECTED_PACKET_ID'],
+              'action': 'FUSE_WINDOWS_H1_PROVIDER_RELAY_V2',
+              'source_sha': os.environ['EXPECTED_SOURCE_SHA'],
+              'project_id': os.environ['PROJECT_ID'],
+              'region': os.environ['REGION'],
+              'authority_class': 'A2_REVERSIBLE_ISOLATED_CANARY',
+              'provider_effect_authorized': True,
+              'rollback_required': True,
+              'public_ingress': False,
+              'iam_mutation': False,
+              'customer_traffic': False,
+              'gcp_heavy_compute': 'DENY',
+              'max_cpu': 1,
+              'max_memory_mib': 512,
+              'max_instances': 1,
+          }
+          allowed = set(exact) | {'issued_at', 'expires_at'}
+          if set(p) != allowed:
+              raise SystemExit('PASSPORT_FIELDS_NOT_EXACT')
+          for key, value in exact.items():
+              if p.get(key) != value:
+                  raise SystemExit(f'PASSPORT_FIELD_MISMATCH:{key}')
+          parse = lambda s: dt.datetime.fromisoformat(str(s).replace('Z', '+00:00'))
+          issued = parse(p['issued_at'])
+          expires = parse(p['expires_at'])
+          now = dt.datetime.now(dt.timezone.utc)
+          if not (issued <= now < expires <= issued + dt.timedelta(hours=1)):
+              raise SystemExit('PASSPORT_TIME_WINDOW_INVALID')
+          PY
+
+          echo "PACKET_ID=$PACKET_ID" >> "$GITHUB_ENV"
+          echo "SOURCE_SHA=$SOURCE_SHA" >> "$GITHUB_ENV"
+          echo "PASSPORT_SHA256=$PASSPORT_SHA256" >> "$GITHUB_ENV"
+
+      - name: Dispatch exact admitted SCSF provider gateway
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          DISPATCHED_AT="$(date -u +%Y-%m-%dT%H:%M:%SZ)"
+          export DISPATCHED_AT
+          python3 - <<'PY'
+          import json
+          import os
+          with open('/tmp/windows-h1-passport.json', encoding='utf-8') as handle:
+              passport = json.load(handle)
+          payload = {
+              'ref': 'main',
+              'inputs': {
+                  'packet_id': os.environ['PACKET_ID'],
+                  'source_sha': os.environ['SOURCE_SHA'],
+                  'provider_passport_json': json.dumps(passport, sort_keys=True, separators=(',', ':')),
+                  'provider_passport_sha256': os.environ['PASSPORT_SHA256'],
+              },
+          }
+          with open('/tmp/windows-h1-dispatch.json', 'w', encoding='utf-8') as handle:
+              json.dump(payload, handle, sort_keys=True, separators=(',', ':'))
+          PY
+          gh api --method POST \
+            -H 'Accept: application/vnd.github+json' \
+            -H 'X-GitHub-Api-Version: 2022-11-28' \
+            "/repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/dispatches" \
+            --input /tmp/windows-h1-dispatch.json
+          echo "DISPATCH_ACCEPTED=true" >> "$GITHUB_ENV"
+          echo "DISPATCHED_AT=$DISPATCHED_AT" >> "$GITHUB_ENV"
+
+      - name: Read back exact workflow-dispatch run identity
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: bash
+        run: |
+          set -euo pipefail
+          TARGET_RUN_ID=''
+          TARGET_RUN_SHA=''
+          for _ in $(seq 1 20); do
+            readarray -t FOUND < <(gh api \
+              -H 'Accept: application/vnd.github+json' \
+              -H 'X-GitHub-Api-Version: 2022-11-28' \
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/runs?event=workflow_dispatch&branch=main&per_page=10" \
+              --jq --arg since "$DISPATCHED_AT" --arg control "$EXPECTED_CONTROL_SHA" '.workflow_runs[] | select(.created_at >= $since and .head_sha == $control) | [.id,.head_sha] | @tsv' | head -n 1)
+            if [[ "${#FOUND[@]}" -eq 1 && -n "${FOUND[0]}" ]]; then
+              TARGET_RUN_ID="${FOUND[0]%%$'\t'*}"
+              TARGET_RUN_SHA="${FOUND[0]#*$'\t'}"
+              break
+            fi
+            sleep 3
+          done
+          test -n "$TARGET_RUN_ID"
+          test "$TARGET_RUN_SHA" = "$EXPECTED_CONTROL_SHA"
+          echo "TARGET_RUN_ID=$TARGET_RUN_ID" >> "$GITHUB_ENV"
+          echo "TARGET_RUN_SHA=$TARGET_RUN_SHA" >> "$GITHUB_ENV"
+          printf 'SCSF_PROVIDER_DISPATCH_ACCEPTED run_id=%s control_sha=%s passport_sha256=%s\n' \
+            "$TARGET_RUN_ID" "$TARGET_RUN_SHA" "$PASSPORT_SHA256"
+
+      - name: Emit bounded dispatch receipt
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/windows-h1-dispatch-receipt
+          python3 - <<'PY'
+          import json
+          import os
+          receipt = {
+              'schema': 'FUSE-WINDOWS-SCSF-MACHINE-DISPATCH-RECEIPT-V1',
+              'target_workflow': os.environ['TARGET_WORKFLOW'],
+              'packet_id': os.environ['PACKET_ID'],
+              'source_sha': os.environ['SOURCE_SHA'],
+              'control_sha': os.environ['EXPECTED_CONTROL_SHA'],
+              'passport_sha256': os.environ['PASSPORT_SHA256'],
+              'dispatch_accepted': os.environ.get('DISPATCH_ACCEPTED') == 'true',
+              'target_run_id': os.environ.get('TARGET_RUN_ID'),
+              'target_run_sha': os.environ.get('TARGET_RUN_SHA'),
+              'provider_effect_performed_by_adapter': False,
+              'provider_credentials_accessed_by_adapter': False,
+              'owner_pc_effect_performed_by_adapter': False,
+              'gcp_heavy_compute': 'DENY',
+          }
+          with open('/tmp/windows-h1-dispatch-receipt/receipt.json', 'w', encoding='utf-8') as handle:
+              json.dump(receipt, handle, sort_keys=True, indent=2)
+              handle.write('\n')
+          PY
+
+      - name: Upload dispatch receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-windows-scsf-dispatch-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/windows-h1-dispatch-receipt/receipt.json
+          if-no-files-found: error
+          retention-days: 30
