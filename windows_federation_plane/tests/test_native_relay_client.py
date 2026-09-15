@@ -245,6 +245,16 @@ class NativeRelayClientHostedCourt(unittest.TestCase):
         self.assertIn("UNKNOWN_HEAVY_PARAMETERS", result.stderr)
         self.assertEqual(relay.state.completions, [])
 
+    def test_remote_hash_workspace_file_is_not_allowlisted(self):
+        task = heavy_task(task_id="f274-pruned-file-hash")
+        task["task_type"] = "hash_workspace_file"
+        task["parameters"] = {"relative_path": "outside-surface.txt"}
+        with _RelayHarness(task) as relay:
+            result = self._run(relay.url, enrollment=self._enrollment_file(relay.url))
+        self.assertEqual(result.returncode, 2)
+        self.assertIn("TASK_TYPE_NOT_ALLOWLISTED", result.stderr)
+        self.assertEqual(relay.state.completions, [])
+
     def test_write_effect_fails_closed_without_completion(self):
         with _RelayHarness(heavy_task(effect="WRITE")) as relay:
             result = self._run(relay.url, enrollment=self._enrollment_file(relay.url))
