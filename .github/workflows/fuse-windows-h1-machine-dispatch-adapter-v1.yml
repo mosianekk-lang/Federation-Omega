@@ -139,25 +139,52 @@ jobs:
           set -euo pipefail
           TARGET_RUN_ID=''
           TARGET_RUN_SHA=''
+          TARGET_RUN_CREATED_AT=''
           for _ in $(seq 1 20); do
-            readarray -t FOUND < <(gh api \
+            gh api \
               -H 'Accept: application/vnd.github+json' \
               -H 'X-GitHub-Api-Version: 2022-11-28' \
-              "/repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/runs?event=workflow_dispatch&branch=main&per_page=10" \
-              --jq --arg since "$DISPATCHED_AT" --arg control "$EXPECTED_CONTROL_SHA" '.workflow_runs[] | select(.created_at >= $since and .head_sha == $control) | [.id,.head_sha] | @tsv' | head -n 1)
-            if [[ "${#FOUND[@]}" -eq 1 && -n "${FOUND[0]}" ]]; then
-              TARGET_RUN_ID="${FOUND[0]%%$'\t'*}"
-              TARGET_RUN_SHA="${FOUND[0]#*$'\t'}"
+              "/repos/${GITHUB_REPOSITORY}/actions/workflows/${TARGET_WORKFLOW}/runs?event=workflow_dispatch&branch=main&per_page=20" \
+              > /tmp/windows-h1-workflow-runs.json
+            if python3 - <<'PY' > /tmp/windows-h1-run-match.tsv
+          import json
+          import os
+          import sys
+
+          with open('/tmp/windows-h1-workflow-runs.json', encoding='utf-8') as handle:
+              payload = json.load(handle)
+          candidates = []
+          for run in payload.get('workflow_runs') or []:
+              created = str(run.get('created_at') or '')
+              head_sha = str(run.get('head_sha') or '')
+              event = str(run.get('event') or '')
+              if event == 'workflow_dispatch' and created >= os.environ['DISPATCHED_AT'] and head_sha == os.environ['EXPECTED_CONTROL_SHA']:
+                  candidates.append((int(run['id']), head_sha, created))
+          if not candidates:
+              raise SystemExit(3)
+          if len(candidates) != 1:
+              print('RUN_IDENTITY_AMBIGUOUS:' + ','.join(str(row[0]) for row in candidates), file=sys.stderr)
+              raise SystemExit(4)
+          row = candidates[0]
+          print(f'{row[0]}\t{row[1]}\t{row[2]}')
+          PY
+            then
+              IFS=$'\t' read -r TARGET_RUN_ID TARGET_RUN_SHA TARGET_RUN_CREATED_AT < /tmp/windows-h1-run-match.tsv
               break
+            else
+              rc=$?
+              if [[ "$rc" -eq 4 ]]; then exit 64; fi
             fi
             sleep 3
           done
           test -n "$TARGET_RUN_ID"
           test "$TARGET_RUN_SHA" = "$EXPECTED_CONTROL_SHA"
+          test "$TARGET_RUN_CREATED_AT" \>\= "$DISPATCHED_AT"
           echo "TARGET_RUN_ID=$TARGET_RUN_ID" >> "$GITHUB_ENV"
           echo "TARGET_RUN_SHA=$TARGET_RUN_SHA" >> "$GITHUB_ENV"
-          printf 'SCSF_PROVIDER_DISPATCH_ACCEPTED run_id=%s control_sha=%s passport_sha256=%s\n' \
-            "$TARGET_RUN_ID" "$TARGET_RUN_SHA" "$PASSPORT_SHA256"
+          echo "TARGET_RUN_CREATED_AT=$TARGET_RUN_CREATED_AT" >> "$GITHUB_ENV"
+          printf 'SCSF_PROVIDER_DISPATCH_ACCEPTED run_id=%s control_sha=%s created_at=%s passport_sha256=%s\n' \
+            "$TARGET_RUN_ID" "$TARGET_RUN_SHA" "$TARGET_RUN_CREATED_AT" "$PASSPORT_SHA256"
 
       - name: Emit bounded dispatch receipt
         shell: bash
@@ -168,7 +195,7 @@ jobs:
           import json
           import os
           receipt = {
-              'schema': 'FUSE-WINDOWS-SCSF-MACHINE-DISPATCH-RECEIPT-V1',
+              'schema': 'FUSE-WINDOWS-SCSF-MACHINE-DISPATCH-RECEIPT-V2',
               'target_workflow': os.environ['TARGET_WORKFLOW'],
               'packet_id': os.environ['PACKET_ID'],
               'source_sha': os.environ['SOURCE_SHA'],
@@ -177,6 +204,8 @@ jobs:
               'dispatch_accepted': os.environ.get('DISPATCH_ACCEPTED') == 'true',
               'target_run_id': os.environ.get('TARGET_RUN_ID'),
               'target_run_sha': os.environ.get('TARGET_RUN_SHA'),
+              'target_run_created_at': os.environ.get('TARGET_RUN_CREATED_AT'),
+              'run_attribution': 'EXACT_CREATED_AT_PLUS_CONTROL_SHA_UNIQUE_MATCH',
               'provider_effect_performed_by_adapter': False,
               'provider_credentials_accessed_by_adapter': False,
               'owner_pc_effect_performed_by_adapter': False,
@@ -190,7 +219,7 @@ jobs:
       - name: Upload dispatch receipt
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
-          name: fuse-windows-scsf-dispatch-${{ github.run_id }}-${{ github.run_attempt }}
+          name: fuse-windows-scsf-dispatch-v2-${{ github.run_id }}-${{ github.run_attempt }}
           path: /tmp/windows-h1-dispatch-receipt/receipt.json
           if-no-files-found: error
           retention-days: 30
