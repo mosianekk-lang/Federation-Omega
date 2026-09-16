@@ -1,0 +1,43 @@
+name: FUSE LOGOS MEVS Court
+
+on:
+  push:
+    branches:
+      - fuse-logos-mevs-001
+    paths:
+      - "logos/**"
+      - ".github/workflows/fuse-logos-mevs.yml"
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: fuse-logos-mevs-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  logos-mevs:
+    runs-on: windows-latest
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact source
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Dual-build, 38-court, replay and network-blocked proof
+        shell: pwsh
+        run: ./logos/Build-Logos.ps1
+      - name: Upload LOGOS proof package
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-logos-mevs-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            logos/out/A/bin/logos.exe
+            logos/out/B-different-path-length-xxxxxxxxxxxxxxxx/bin/logos.exe
+            logos/out/source-tree.material
+            logos/out/logos-build-receipt.json
+            logos/out/A/court/acceptance/receipts/mevs-receipt.json
+            logos/out/network-blocked/acceptance/receipts/mevs-receipt.json
+          if-no-files-found: error
+          retention-days: 30
