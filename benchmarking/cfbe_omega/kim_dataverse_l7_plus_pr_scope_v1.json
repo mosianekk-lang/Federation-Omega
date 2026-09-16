@@ -1,0 +1,8 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_PR_SCOPE_V1",
+  "purpose": "Level 7+ institutional autonomy source/control programme",
+  "expected_external_effect": false,
+  "expected_provider_mutation": false,
+  "expected_iam_wif_mutation": false,
+  "operational_level7_claim": false
+}

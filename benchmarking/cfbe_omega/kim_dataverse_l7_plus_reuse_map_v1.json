@@ -1,0 +1,16 @@
+{
+  "schema": "KIM_DATAVERSE_LEVEL7_PLUS_REUSE_MAP_V1",
+  "reuse": {
+    "SOL_6_2": ["authority", "fencing", "idempotency", "verified_reality", "terminality"],
+    "BCO_PRIME": ["metacognition", "strategy_tournament", "challenge", "topology_recommendation"],
+    "COGNITIVE_POLICY_MARKET": ["independent_challengers", "counterfactual_stress", "advisory_admission"],
+    "BUBBLES": ["work_cells", "parallelism", "engineering_cell", "dynamic_workforce"],
+    "SOVARA": ["provider_routing", "provider_failure_isolation", "semantic_readback", "provider_recovery"],
+    "PROOFOS": ["independent_courts", "default_deny", "proof_selection"],
+    "SENTINEL": ["observation_ingress", "precursor_detection", "owner_value_ingress"],
+    "AUTOFIX_FAILURE_WIN": ["repair", "failure_genome", "recurrence_prevention", "lane_local_recovery"],
+    "CFBE": ["benchmarking", "reuse_first", "champion_challenger", "value_foundry", "evolution"],
+    "DURABLE_RUNTIME": ["cross_process_resume", "checkpoint", "result_index", "idempotent_replay"]
+  },
+  "new_duplicate_control_plane_count": 0
+}

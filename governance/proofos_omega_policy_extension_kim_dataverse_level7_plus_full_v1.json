@@ -1,0 +1,51 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "benchmarking/cfbe_omega/kim_dataverse_*",
+        "benchmarking/cfbe_omega/KIM_DATAVERSE_LEVEL7_PLUS_*",
+        "governance/KIM_DATAVERSE_AUTONOMIC_OPERATING_DOCTRINE_V1_20260901.md",
+        "governance/proofos_omega_policy_extension_kim_dataverse_level7_plus_full_v1.json",
+        "tests/test_kim_dataverse_*.py"
+      ],
+      "reason": "KIM_DATAVERSE_LEVEL7_PLUS_INSTITUTIONAL_AUTONOMY_CONSTITUTIONAL_CONTROL"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "KIM_DATAVERSE_LEVEL7_PLUS",
+      "patterns": [
+        "benchmarking/cfbe_omega/kim_dataverse_*",
+        "benchmarking/cfbe_omega/KIM_DATAVERSE_LEVEL7_PLUS_*",
+        "governance/KIM_DATAVERSE_AUTONOMIC_OPERATING_DOCTRINE_V1_20260901.md",
+        "governance/proofos_omega_policy_extension_kim_dataverse_level7_plus_full_v1.json",
+        "tests/test_kim_dataverse_*.py"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "kim_dataverse_level7_plus_full_v1",
+      "kind": "unittest_glob",
+      "target": "test_kim_dataverse_*.py",
+      "patterns": [
+        "benchmarking/cfbe_omega/kim_dataverse_*",
+        "benchmarking/cfbe_omega/KIM_DATAVERSE_LEVEL7_PLUS_*",
+        "governance/KIM_DATAVERSE_AUTONOMIC_OPERATING_DOCTRINE_V1_20260901.md",
+        "governance/proofos_omega_policy_extension_kim_dataverse_level7_plus_full_v1.json",
+        "tests/test_kim_dataverse_*.py"
+      ],
+      "subsystems": [
+        "KIM_DATAVERSE_LEVEL7_PLUS"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 240
+    }
+  ]
+}
