@@ -41,3 +41,5 @@ jobs:
             logos/out/network-blocked/acceptance/receipts/mevs-receipt.json
           if-no-files-found: error
           retention-days: 30
+
+# trigger: exact-head hosted LOGOS-MEVS court
