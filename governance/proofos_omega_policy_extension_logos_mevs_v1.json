@@ -1,0 +1,71 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "logos/**",
+        "governance/logos_mevs_proof_v1.json",
+        "governance/proofos_omega_policy_extension_logos_mevs_v1.json"
+      ],
+      "reason": "FUSE_LOGOS_CANONICAL_KNOWLEDGE_SUBSTRATE_AND_PROOF_BINDING"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_LOGOS_MEVS_V1",
+      "patterns": [
+        "logos/**",
+        "governance/logos_mevs_proof_v1.json",
+        "governance/proofos_omega_policy_extension_logos_mevs_v1.json",
+        "tests/test_logos_mevs_source_contract.py",
+        "tests/test_proofos_logos_mevs_mapping.py"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        "logos/**",
+        "governance/logos_mevs_proof_v1.json",
+        "governance/proofos_omega_policy_extension_logos_mevs_v1.json"
+      ],
+      "tests": [
+        "logos_mevs_v1_source_contract",
+        "logos_mevs_v1_proofos_mapping"
+      ],
+      "evidence": "LOGOS_MEVS_HOSTED_WINDOWS_RUN_35126451961_ARTIFACT_10459562115"
+    }
+  ],
+  "tests": [
+    {
+      "id": "logos_mevs_v1_source_contract",
+      "kind": "unittest_glob",
+      "target": "test_logos_mevs_source_contract.py",
+      "patterns": [
+        "logos/**",
+        "governance/logos_mevs_proof_v1.json"
+      ],
+      "subsystems": ["FUSE_LOGOS_MEVS_V1"],
+      "failure_class": "SOURCE_INTEGRITY_FAILURE",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "logos_mevs_v1_proofos_mapping",
+      "kind": "unittest_glob",
+      "target": "test_proofos_logos_mevs_mapping.py",
+      "patterns": [
+        "logos/**",
+        "governance/logos_mevs_proof_v1.json",
+        "governance/proofos_omega_policy_extension_logos_mevs_v1.json"
+      ],
+      "subsystems": ["FUSE_LOGOS_MEVS_V1"],
+      "failure_class": "SELECTOR_ESCAPE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    }
+  ]
+}
