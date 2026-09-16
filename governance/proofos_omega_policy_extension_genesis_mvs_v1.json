@@ -1,0 +1,68 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "genesis/**",
+        "governance/proofos_omega_policy_extension_genesis_mvs_v1.json"
+      ],
+      "reason": "GENESIS_NATIVE_COLD_STATE_EXECUTION_ROOT_SECURITY_AND_RECOVERY_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "GENESIS_MVS",
+      "patterns": [
+        "genesis/**",
+        "governance/proofos_omega_policy_extension_genesis_mvs_v1.json"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        "genesis/**",
+        "governance/proofos_omega_policy_extension_genesis_mvs_v1.json"
+      ],
+      "tests": [
+        "genesis_mvs_source_contract",
+        "genesis_mvs_proofos_mapping"
+      ],
+      "evidence": "PR1566_HOSTED_WINDOWS_PROOF_PLUS_AIRLOCK_UNMAPPED_GENESIS_BUILD_SCRIPT_20260916"
+    }
+  ],
+  "tests": [
+    {
+      "id": "genesis_mvs_source_contract",
+      "kind": "unittest_glob",
+      "target": "test_genesis_mvs_source_contract.py",
+      "patterns": [
+        "genesis/**"
+      ],
+      "subsystems": [
+        "GENESIS_MVS"
+      ],
+      "failure_class": "SECURITY_VIOLATION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "genesis_mvs_proofos_mapping",
+      "kind": "unittest_glob",
+      "target": "test_proofos_genesis_mvs_mapping.py",
+      "patterns": [
+        "genesis/**",
+        "governance/proofos_omega_policy_extension_genesis_mvs_v1.json"
+      ],
+      "subsystems": [
+        "GENESIS_MVS"
+      ],
+      "failure_class": "SELECTOR_ESCAPE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    }
+  ]
+}
