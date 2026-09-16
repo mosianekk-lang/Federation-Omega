@@ -18,13 +18,23 @@ from bootstrap_service import (
     publish_delta as publish_delta_impl,
     state,
 )
+from chatgpt_context import (
+    compact_bootstrap_result,
+    get_corpus_coverage_impl,
+    get_current_state_impl,
+    resume_mission_impl,
+)
 
 mcp = FastMCP(
     "Federation Respawn Memory",
     instructions=(
         "Recover canonical Federation context before rebuilding prior work. "
-        "Use bootstrap_spawn at the beginning of Bubbles/Lex/Federation work; "
+        "Use bootstrap_spawn at the beginning of FUSE/Federation work; "
+        "use resume_federation_mission for n/continue/proceed/restore requests; "
+        "use get_current_federation_state before claiming a capability exists now; "
+        "use get_federation_corpus_coverage before claiming complete/all-chat history; "
         "use already_solved before designing a solution that may already exist. "
+        "Prefer thin task-specific context over full Bible dumps. "
         "Never infer provider-side completion from repository state."
     ),
     stateless_http=True,
@@ -49,7 +59,13 @@ WRITE_NONDESTRUCTIVE = ToolAnnotations(
 @mcp.tool(annotations=READ_ONLY)
 def federation_health() -> Dict[str, Any]:
     """Use this when you need proof that the Federation respawn service is alive and know how many systems it recognizes."""
-    return health_impl()
+    result = dict(health_impl())
+    result["chatgpt_native_context"] = {
+        "enabled": True,
+        "contract": "FUSE_CHATGPT_THIN_SHIM_V1",
+        "write_mode": "existing_governed_publish_delta_only",
+    }
+    return result
 
 
 @mcp.tool(annotations=READ_ONLY)
@@ -59,9 +75,11 @@ def bootstrap_spawn(
     chat_ref: Optional[str] = None,
     objective: Optional[str] = None,
     terms: Optional[List[str]] = None,
+    compact: bool = True,
+    max_bible_chars: int = 12000,
 ) -> Dict[str, Any]:
-    """Use this at the start of a Bubbles, Lex Advocate, or Federation-system spawn to recover prior canonical context before doing new work."""
-    return bootstrap_impl(
+    """Use this at the start of FUSE/Federation work to recover prior canonical context before doing new work. Compact mode is the ChatGPT default and returns a thin task-specific Bible excerpt rather than a full Bible dump."""
+    result = bootstrap_impl(
         SpawnRequest(
             system=system,
             matter=matter,
@@ -69,6 +87,13 @@ def bootstrap_spawn(
             objective=objective,
             terms=terms or [],
         )
+    )
+    if not compact:
+        return result
+    return compact_bootstrap_result(
+        result,
+        terms=[system, matter or "", objective or "", *(terms or [])],
+        max_bible_chars=max(2000, min(max_bible_chars, 50000)),
     )
 
 
@@ -88,6 +113,68 @@ def already_solved(
             terms=terms or [],
         )
     )
+
+
+@mcp.tool(annotations=READ_ONLY)
+def get_current_federation_state(
+    query: str = "",
+    system: Optional[str] = None,
+    matter: Optional[str] = None,
+    limit: int = 20,
+) -> Dict[str, Any]:
+    """Use this before saying a FUSE/Federation capability exists NOW or is live/current. It separates strict current evidence from merely verified historical/source evidence and fails closed when currentness is unproven."""
+    provider_projection: Dict[str, Any] = {}
+    if system:
+        try:
+            raw = bootstrap_impl(
+                SpawnRequest(system=system, matter=matter, objective=query or None, terms=[])
+            )
+            compacted = compact_bootstrap_result(
+                raw,
+                terms=[system, matter or "", query],
+                max_bible_chars=6000,
+            )
+            provider = compacted.get("provider_context")
+            if isinstance(provider, dict):
+                provider_projection = provider
+        except Exception as exc:
+            provider_projection = {
+                "available": False,
+                "reason": f"provider_current_state_lookup_failed:{type(exc).__name__}",
+            }
+    return get_current_state_impl(
+        query=query,
+        system=system,
+        matter=matter,
+        limit=max(1, min(limit, 50)),
+        provider_projection=provider_projection,
+    )
+
+
+@mcp.tool(annotations=READ_ONLY)
+def resume_federation_mission(
+    system: str,
+    mission: str,
+    matter: Optional[str] = None,
+    chat_ref: Optional[str] = None,
+    terms: Optional[List[str]] = None,
+    max_bible_chars: int = 12000,
+) -> Dict[str, Any]:
+    """Use for n, continue, proceed, restore, resume, or equivalent FUSE/Federation requests. Returns a thin continuation packet with current-state proof, already-solved candidates, conflicts, coverage truth, provider projection, and the next evidence-bounded action."""
+    return resume_mission_impl(
+        system=system,
+        mission=mission,
+        matter=matter,
+        chat_ref=chat_ref,
+        terms=terms or [],
+        max_bible_chars=max(2000, min(max_bible_chars, 50000)),
+    )
+
+
+@mcp.tool(annotations=READ_ONLY)
+def get_federation_corpus_coverage() -> Dict[str, Any]:
+    """Use before saying Total Recall/Federation has complete or all-chat ChatGPT history. Returns explicit corpus-coverage truth and fails closed when native account-wide totality is not proven."""
+    return get_corpus_coverage_impl()
 
 
 @mcp.tool(name="search", annotations=READ_ONLY)
