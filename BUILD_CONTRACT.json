@@ -1,0 +1,190 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "CFBE-BCO-V4-COMPAT-20260902",
+    "version": 1,
+    "goal": "Deliver a deterministic additive BCΩ-PRIME v4 compatibility adapter over the exact v3.1 registry interface, with strict JSON validation, unchanged inherited receipts, no authority expansion, focused regression proof, and complete MODISA handoff.",
+    "user": "Kim Kagiso Mosiane as owner and local operator",
+    "workflow": "Validate one local request, delegate inherited operations unchanged to v3.1 or compile one of three v4 decision-support outputs, emit a canonical hash-bound receipt, and stop.",
+    "data": "Finite JSON-compatible mission observations, strategy/capability/utilization/demand signals, strategic-genome records, inherited v3.1 local state, source identities, manifests and deterministic receipts.",
+    "interface": "Python library with health, manifest and execute methods plus an on-demand command-line interface.",
+    "stack": "Python 3.12 standard library plus the exact materialized BCO-Prime v3.1 and v4 local module closure; no new third-party dependency.",
+    "environment": "Isolated local filesystem, one invoking process, no network, provider, scheduler, daemon, credential, deployment or recurring runtime.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation A1 local build permit, documentation-first ALLOW_CYCLE, inherited v3.1 authority controls, v4 non-sovereign truth boundary, MODISA validation and fail-closed dependency handling.",
+    "failure": "Typed rejection or BLOCKED_WITH_ROUTE for invalid JSON shape, unknown fields, strict scalar/range failure, non-finite numbers, authority/effect requests, unknown operations, missing exact v3.1 closure, inherited path/trust/engine holds, or receipt-integrity mismatch.",
+    "testing": "Syntax, 23 focused adapter unit/integration/determinism/failure/security/injected-registry-integrity tests, 20 v4 source tests, 67 sealed v3.1 tests, CLI semantic readback, MODISA proof validation and additive-file restore hash comparison.",
+    "deployment": "NOT_APPLICABLE: no merge, deployment, registration, provider mutation, background activation or stable promotion is authorized.",
+    "continuity": "Pinned main/source hashes, deterministic receipts, documentation gate packet, BUILD_CONTRACT, README, Formation specification, project memory, AI handoff and reproducible local verification commands."
+  },
+  "classification": [
+    "Library",
+    "CLI",
+    "Integration Adapter",
+    "Test Suite",
+    "Decision-Support Compiler"
+  ],
+  "assumptions": {
+    "stack": "Python 3.12 can import the repository-local packages used by the exact v3.1 and v4 sources.",
+    "runtime": "The caller invokes one bounded local process and supplies plain JSON-compatible inputs; no work survives process return.",
+    "storage": "The adapter adds no state root. A caller-selected local workspace is passed to the exact v3.1 registry and remains governed by v3.1 controls.",
+    "authentication": "No provider authentication exists. Source identity is bound to fresh pre-publication main ceb5cf36d1e608d0520a23114fe4bfc08eab644a and exact SHA-256 pins.",
+    "deployment": "The artifact remains local or on an isolated review branch. Merge, registration, deployment and provider activation require separate authority and readback."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: supported surfaces are a Python API and CLI.",
+      "backend": "BcoPrimeV4CompatibilityAdapter validates and dispatches three v4 operations or delegates every inherited operation once to v3.1 without wrapping its receipt.",
+      "database": "NOT_APPLICABLE: the adapter creates no database; inherited v3.1 local stores remain separately governed.",
+      "queue": "NOT_APPLICABLE: request handling is synchronous and bounded.",
+      "worker": "The invoking Python process performs validation, delegation or pure compilation and terminates.",
+      "scheduler": "NOT_APPLICABLE: no schedule, daemon, automation or recurring task exists.",
+      "cache": "NOT_APPLICABLE: outputs are recomputed deterministically; no cache or freshness bypass exists.",
+      "storage": "Caller-selected contained local workspace for the inherited registry; adapter source, tests, contract and handoff files are immutable build artifacts.",
+      "authentication": "Exact source identity and inherited v3.1 trust controls; no credentials, tokens or provider authority are used."
+    },
+    "state_model": "REQUESTED -> VALIDATED -> DELEGATED_OR_COMPILED -> RECEIPT_RETURNED, or REJECTED / BLOCKED_WITH_ROUTE. No adapter state remains after return.",
+    "transaction_boundary": "One synchronous method call. V4 operations are pure; inherited operations retain the exact v3.1 transaction, cancellation, locking and rollback boundaries.",
+    "failure_modes": [
+      "INVALID_INPUT",
+      "AUTHORIZATION_FAILURE",
+      "TIMEOUT",
+      "PARTIAL_WRITE",
+      "MISSING_CONFIGURATION",
+      "EXTERNAL_API_FAILURE"
+    ],
+    "failure_controls": {
+      "INVALID_INPUT": "String-keyed JSON-only normalization, explicit field allowlists, required fields, strict Boolean/integer/finite numeric validation, ranges and bounded counts.",
+      "AUTHORIZATION_FAILURE": "Normalized truthy authority, dispatch, provider-effect, source-mutation, deployment, registration and executable-effect keys are rejected at any depth.",
+      "TIMEOUT": "No network, retry, scheduler or unbounded loop is added; lists and counts are bounded and one call stops on the first failure.",
+      "PARTIAL_WRITE": "V4 operations do not write. Inherited v3.1 writes are delegated unchanged to its existing atomic, lock, cancellation and hash-chain controls.",
+      "MISSING_CONFIGURATION": "Absent exact v3.1 closure raises V31_REGISTRY_UNAVAILABLE; materialized hash mismatch raises V31_REGISTRY_INTEGRITY_MISMATCH; injected registries require the exact source-hash attestation and validated inherited surfaces.",
+      "EXTERNAL_API_FAILURE": "NOT_APPLICABLE: the adapter has no external API or provider client; inherited optional engine absence remains an explicit v3.1 hold."
+    },
+    "observability": {
+      "correlation_ids": "Mission ID, operation, input SHA-256, source main SHA and deterministic receipt SHA-256 bind each v4 request.",
+      "health_checks": "health reports inherited health, core invariant, v3.1/v4 operation counts, compatibility mode, source main and all zero-authority fields.",
+      "structured_logs": "NOT_APPLICABLE: no daemon emits logs; canonical JSON CLI output and receipts are the structured event surface.",
+      "audit_logs": "Each v4 execution returns a namespace, operation, input digest, output, authority flags and receipt digest; inherited receipts remain unchanged.",
+      "metrics_alerts": "NOT_APPLICABLE: no persistent runtime exists; tests assert counts, hashes, holds, delegation and authority boundaries."
+    }
+  },
+  "testing": {
+    "unit": "Health, manifest, source bindings, operation count and self-consistent hash tests.",
+    "integration": "Actual v3.1 registry delegation, v4 decision compilation and strategic-genome preparation through one adapter instance.",
+    "e2e_or_smoke": "CLI manifest readback from a temporary workspace and exact schema/hash/authority assertions.",
+    "fixtures_mocks": "Deterministic plain-JSON mission, graph, metacognitive state, strategies, capabilities, utilization, demand and genome records; no provider mock.",
+    "failure_first": "Unknown operation, non-object payload, missing/unknown fields, non-finite number, Boolean-as-integer, authority-key request, external-effect hold and inherited path traversal.",
+    "commands": [
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m py_compile benchmarking/cfbe_omega/bco_prime_v4_v31_compatibility_adapter.py",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v tests.test_bco_prime_v4_v31_compatibility_adapter",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v tests.test_bco_prime_anticipatory_institution_v4 tests.test_bco_prime_v4_strategic_genome_bridge",
+      "Run the sealed 67-test v3.1 unittest discovery from its original baseline root so the adjacent cff_unpacked fixture resolves.",
+      "python3 /root/.codex/skills/remote-skills/validate-modisa-build-contracts/scripts/validate_build_contract.py BUILD_CONTRACT.json --require-proof"
+    ]
+  },
+  "delivery": {
+    "file_tree": [
+      "benchmarking/cfbe_omega/bco_prime_v4_v31_compatibility_adapter.py",
+      "tests/test_bco_prime_v4_v31_compatibility_adapter.py",
+      "BUILD_CONTRACT.json",
+      "docs/architecture/BCO_PRIME_V4_V31_COMPATIBILITY_ADAPTER.md",
+      "docs/handoffs/bco_prime_v4_v31_compatibility/FORMATION_SPEC.md",
+      "docs/handoffs/bco_prime_v4_v31_compatibility/PROJECT_MEMORY.md",
+      "docs/handoffs/bco_prime_v4_v31_compatibility/AI_HANDOFF.md",
+      "proof/bco_prime_v4_v31_compatibility/DOCUMENTATION_GATE_PACKET.json",
+      "benchmarking/cfbe_omega/bco_prime_successor_v3_1.py",
+      "governance/BCO_PRIME_BASELINE_REGISTRY_V3_1.json",
+      "proof/bco_prime_successor_v3_1/SOURCE_MANIFEST.json",
+      "proof/bco_prime_successor_v3_1/RELEASE_PROOF.json"
+    ],
+    "exact_code_files": [
+      "benchmarking/cfbe_omega/bco_prime_v4_v31_compatibility_adapter.py",
+      "tests/test_bco_prime_v4_v31_compatibility_adapter.py"
+    ],
+    "setup_commands": [
+      "Materialize the exact v3.1 and v4 repository-local dependency closure below one importable root.",
+      "Verify the pinned main and three source SHA-256 identities in docs/architecture/BCO_PRIME_V4_V31_COMPATIBILITY_ADAPTER.md.",
+      "Use Python 3.12; no package installation is required by the adapter."
+    ],
+    "run_commands": [
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m benchmarking.cfbe_omega.bco_prime_v4_v31_compatibility_adapter --workspace-root /tmp/bco-prime-v4 health",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m benchmarking.cfbe_omega.bco_prime_v4_v31_compatibility_adapter --workspace-root /tmp/bco-prime-v4 manifest",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m benchmarking.cfbe_omega.bco_prime_v4_v31_compatibility_adapter --workspace-root /tmp/bco-prime-v4 run BCO-PRIME-V4-MANIFEST --payload-json '{}'"
+    ],
+    "test_commands": [
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v tests.test_bco_prime_v4_v31_compatibility_adapter",
+      "PYTHONDONTWRITEBYTECODE=1 python3 -m unittest -v tests.test_bco_prime_anticipatory_institution_v4 tests.test_bco_prime_v4_strategic_genome_bridge",
+      "python3 /root/.codex/skills/remote-skills/validate-modisa-build-contracts/scripts/validate_build_contract.py BUILD_CONTRACT.json --require-proof"
+    ],
+    "deploy_commands": [
+      "NOT_APPLICABLE: no deployment is authorized; an isolated branch or draft PR is review storage, not deployment."
+    ],
+    "rollback_commands": [
+      "Revert or remove only the adapter, focused test, BUILD_CONTRACT and four handoff documents on the isolated branch.",
+      "Return the runtime entrypoint to the pinned v3.1 registry; no data migration or provider compensation is needed."
+    ],
+    "debugging": {
+      "V31_REGISTRY_UNAVAILABLE": "Materialize the exact v3.1 dependency closure with registry SHA-256 111e37d3f6d990819f5d7ce6463cf62babb13aa3cdbb20db1490ec9366211a26 or inject a conforming registry with the exact source-hash attestation; reject inherited surface/hash mismatch.",
+      "authority_or_executable_effect_rejected": "Remove the authority request; external observations may be supplied only through documented external_effect fields and always remain non-authorizing.",
+      "unknown_operation": "Use the manifest operation lists; inherited unknown operations intentionally fail in v3.1.",
+      "CFF_fixture_absent": "Run the sealed v3.1 suite in its original layout with adjacent cff_unpacked; do not classify fixture absence as an adapter regression.",
+      "receipt_hash_mismatch": "Stop, verify source identities and canonical JSON inputs, restore the additive files from a hash-matched copy, then rerun all proof commands."
+    }
+  },
+  "formation": {
+    "mission_id": "CFBE-BCO-V4-COMPAT-20260902",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1_LOCAL_INTERNAL",
+    "effectful_permit": "A1-LOCAL-BUILD single-use parent Formation permit for the isolated cfbe_bco_v4_compat_build workspace only.",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "blocked_capability": "Provider execution, dispatch, network access, credential use, source mutation at runtime, merge, deployment, registration, scheduler creation, background activation and stable self-promotion.",
+    "blocker": "The v4 sources and this adapter are decision-support-only; the local A1 permit does not grant repository, provider, deployment or stable-promotion authority.",
+    "safe_substitute": "Pure local v4 compilation, strategic preparation, exact v3.1 delegation, deterministic receipts, isolated review storage and explicit BLOCKED_WITH_ROUTE dependency reporting.",
+    "closure_test": "Obtain a separate action-specific Formation permit, verify current source/provider state, perform one bounded effect, and independently read back the requested world-state change; this contract itself can never grant that authority."
+  },
+  "continuity": {
+    "idempotency": "Canonical sorted JSON, deterministic v4 compilers, exact delegation, source pins and input/receipt SHA-256 values make repeated pure requests reproducible without duplicate effects.",
+    "checkpoints": "Pinned main and component hashes, documentation gate packet, focused/v4/v3.1 test results, BUILD_CONTRACT, CLI readback, additive-file hashes and handoff documents.",
+    "resume_conditions": "Fresh-read source identity, verify all pinned hashes and exact v3.1 closure, rerun documentation and Formation gates if scope changed, then rerun syntax, focused, v4, v3.1, MODISA, CLI and restore checks.",
+    "handoff_files": [
+      "docs/architecture/BCO_PRIME_V4_V31_COMPATIBILITY_ADAPTER.md",
+      "docs/handoffs/bco_prime_v4_v31_compatibility/FORMATION_SPEC.md",
+      "docs/handoffs/bco_prime_v4_v31_compatibility/PROJECT_MEMORY.md",
+      "docs/handoffs/bco_prime_v4_v31_compatibility/AI_HANDOFF.md",
+      "BUILD_CONTRACT.json",
+      "proof/bco_prime_v4_v31_compatibility/DOCUMENTATION_GATE_PACKET.json"
+    ],
+    "stop_switch": "Terminate the invoking process or stop calling the adapter. No queue, worker, scheduler, lease, network session or recurring task remains active."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": true
+  },
+  "proof": {
+    "test_results": [
+      "23 of 23 focused adapter unit, integration, determinism, failure-first, security and injected-registry-integrity tests passed.",
+      "20 of 20 existing v4 institution and strategic-genome tests passed.",
+      "67 of 67 sealed v3.1 baseline tests pass in the original baseline layout with its adjacent CFF fixture closure.",
+      "Combined discovery passed 107 of 110; the three non-passing inherited CFF engine tests report only the expected absent adjacent cff_unpacked fixture in the combined layout, not an adapter behavior regression."
+    ],
+    "semantic_verification": [
+      "health preserves canonical core count 100, inherits v3.1 health and adds exactly three v4 operations.",
+      "An inherited v3.1 manifest operation returns the exact same v3.1 receipt through the adapter and directly through the base registry.",
+      "V4 decision and genome outputs are deterministic, hash-bound and keep dispatch, provider-effect and stable-promotion authority false.",
+      "Authority requests, non-finite inputs, Boolean coercion, unknown fields/operations and path traversal fail closed; external-effect observations produce a hold rather than authority.",
+      "CLI manifest readback binds fresh pre-publication main ceb5cf36d1e608d0520a23114fe4bfc08eab644a and the exact component SHA-256 values."
+    ],
+    "deployment_readback": "NOT_APPLICABLE: no deployment, registration, merge, provider mutation or background activation is authorized or claimed.",
+    "unresolved_defects": []
+  }
+}

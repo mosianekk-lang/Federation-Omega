@@ -1,0 +1,73 @@
+{
+  "schema": "BCO_PRIME_SUCCESSOR_RELEASE_PROOF_V3",
+  "version": "3.0.0",
+  "missionId": "CFBE-BCO-AUTOPILOT-20260901",
+  "sourceManifest": {
+    "path": "proof/bco_prime_successor_v3/SOURCE_MANIFEST.json",
+    "sha256": "86addcd76f9b786df1df1845669d4829db3cec1488872f7bf0f2120569ffb7fb",
+    "fileCount": 18
+  },
+  "lineage": {
+    "sealedV2Sha256": "e7bc80b11cf6f82ebc84f757a1c62015f4e3fc15979aa18767921b5c4866cf1a",
+    "sealedV2State": "SEALED_UNCHANGED",
+    "canonicalCoreCount": 100,
+    "canonicalCoreInvariantPreserved": true
+  },
+  "verification": {
+    "syntaxCompilation": "PASS",
+    "repositoryTests": {"passed": 53, "failed": 0},
+    "standaloneExhaustiveVerifier": {
+      "state": "PASS",
+      "receiptSha256": "0a7442d865a0dbec288735760412b7d7a69c2000ba426cdea8eee877093823eb",
+      "canonicalCoreRoutes": 100,
+      "legacyRoutes": 24,
+      "v2MetaRoutes": 2,
+      "expectedBlockedEngineRoutes": 8,
+      "successorRoutes": 14
+    },
+    "modisaBuildContract": {"valid": true, "errors": []},
+    "realityGuard": {
+      "decision": "PASS",
+      "controlScore": 100.0,
+      "controlsPassed": 10,
+      "kernelRegressionTestsPassed": 15,
+      "releaseEligible": true,
+      "releaseAuthorized": false
+    }
+  },
+  "proofDiscoveredRepairs": [
+    "adaptive candidate identity, evidence and reversibility validation",
+    "case- and punctuation-normalized shadow effect-key escape detection",
+    "standalone release-verifier repository-root bootstrap",
+    "release archive topology preserving the verified adjacent CFF dependency"
+  ],
+  "releaseCandidate": {
+    "name": "CFBE_BCO_PRIME_SUCCESSOR_V3_0_0_RC2.zip",
+    "sha256": "f6e1c7809094b88a57174baa2fe66356ba9b757f170c3d362470d0e27f6ec88f",
+    "topology": "upstream_and_cff_unpacked_siblings",
+    "freshExtraction": {
+      "state": "PASS",
+      "sourceHashesPassed": 18,
+      "repositoryTestsPassed": 53,
+      "inheritedCffIntegrationPassed": true,
+      "exhaustiveVerifierPassed": true,
+      "modisaPassed": true,
+      "realityGuardPassed": true
+    }
+  },
+  "knownBoundary": {
+    "fullMetaRuntimeState": "BLOCKED_WITH_ROUTE",
+    "safeSubsetReady": true,
+    "closureTest": "Supply genuine MISSION_IR, DURABLE_MISSION_RUNTIME and PROOF_OS local artifacts with exact SHA-256 pins and pass their native suites.",
+    "exactBackendCauseOfOriginalChatFailure": "UNVERIFIED"
+  },
+  "runtimeState": "ON_DEMAND_GOVERNED",
+  "packageState": "RELEASE_CANDIDATE_FRESH_EXTRACTION_PASS",
+  "privatePersistenceState": "NOT_YET_PERFORMED",
+  "providerEffectAuthorized": false,
+  "stablePromotionAuthorized": false,
+  "deploymentState": "NOT_DEPLOYED",
+  "registrationState": "NOT_REGISTERED",
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}
