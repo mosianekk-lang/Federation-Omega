@@ -30,7 +30,13 @@ import json
 from types import MappingProxyType
 from typing import Any, Mapping
 
-from federation.aarek_v1 import AarekKernel, AarekReceipt, MissionSnapshot
+from federation.aarek_v1 import (
+    AarekKernel,
+    AarekReceipt,
+    AarekState,
+    Decision as AarekDecision,
+    MissionSnapshot,
+)
 from federation.of50_ace_v1 import (
     AlphaOmegaPacket,
     FormationDecision,
@@ -167,6 +173,14 @@ class RuntimeConvergenceBinder:
             raise ValueError("AAREK_RECEIPT_DIGEST_INVALID")
         _require_equal("AAREK_RECEIPT_MISSION", of50_request.mission_id, aarek_receipt.mission_id)
 
+        aarek_completion_verified = bool(
+            aarek_receipt.state is AarekState.COMPLETE_VERIFIED
+            and aarek_receipt.decision is AarekDecision.ALLOW_COMPLETE_VERIFIED
+            and not aarek_receipt.auto_continue_required
+        )
+        if of50_request.completion_requested and not aarek_completion_verified:
+            raise ValueError("AAREK_COMPLETION_NOT_VERIFIED")
+
         supplied = of50_request.aarek_receipt_ref.strip()
         if supplied and supplied != aarek_receipt.receipt_digest:
             raise ValueError("AAREK_RECEIPT_REF_SUBSTITUTION")
@@ -180,8 +194,8 @@ class RuntimeConvergenceBinder:
                 artifact_ref=aarek_receipt.receipt_digest,
                 artifact_digest=aarek_receipt.receipt_digest,
                 limitations=(
-                    "AAREK is effect-free.",
-                    "AAREK receipt does not prove provider execution.",
+                    "AAREK kernel invocation is receipt-bound.",
+                    "AAREK is effect-free and does not prove provider execution.",
                 ),
             )
         ]
@@ -279,6 +293,7 @@ class RuntimeConvergenceBinder:
         request_digest = _object_digest(bound_request)
         truth_boundary = MappingProxyType({
             "aarek_execution_verified": True,
+            "aarek_completion_verified": aarek_completion_verified,
             "oh50_producer_execution_verified": False,
             "formation_foundry_execution_verified": False,
             "alpha_omega_runtime_execution_verified": False,
