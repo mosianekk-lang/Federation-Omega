@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.36",
+  "version": "2.9.37",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -56,6 +56,7 @@
     ".github/workflows/seb-omega-qualification.yml",
     ".github/workflows/fuse-mobile-android-build.yml",
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml",
+    ".github/workflows/federation-respawn-private-canary-v1.yml",
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml",
     ".github/workflows/fuse-mobile-provider-currentness-v1.yml",
     ".github/workflows/fuse-mobile-iap-phase-a-v1.yml",
@@ -204,6 +205,9 @@
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
       "issues"
     ],
+    ".github/workflows/federation-respawn-private-canary-v1.yml": [
+      "issues"
+    ],
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": [
       "issues"
     ],
@@ -302,6 +306,7 @@
     ".github/workflows/nexus-direct-runtime-target.yml",
     ".github/workflows/seb-omega.yml",
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml",
+    ".github/workflows/federation-respawn-private-canary-v1.yml",
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml",
     ".github/workflows/fuse-mobile-provider-currentness-v1.yml",
     ".github/workflows/fuse-mobile-iap-phase-a-v1.yml",
@@ -316,6 +321,7 @@
   "provider_mutation_workflow_allowlist": [
     ".github/workflows/sol62-wif-hardening-lease.yml",
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml",
+    ".github/workflows/federation-respawn-private-canary-v1.yml",
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml",
     ".github/workflows/fuse-mobile-iap-phase-a-v1.yml",
     ".github/workflows/aegis-omega-zero-traffic-v1.yml",
@@ -326,6 +332,7 @@
   "provider_mutation_exact_issue_titles": {
     ".github/workflows/sol62-wif-hardening-lease.yml": "SOL62-WIF-HARDEN-20260901",
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": "[FO-DISPATCH] FUSE_MOBILE_GATEWAY_ZERO_TRAFFIC_V1",
+    ".github/workflows/federation-respawn-private-canary-v1.yml": "[FO-DISPATCH] FEDERATION_RESPAWN_PRIVATE_CANARY_V1",
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": "[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1",
     ".github/workflows/fuse-mobile-iap-phase-a-v1.yml": "[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1",
     ".github/workflows/aegis-omega-zero-traffic-v1.yml": "[FO-DISPATCH] AEGIS_OMEGA_ZERO_TRAFFIC_V1",
@@ -339,6 +346,13 @@
       "public_invocation",
       "production_traffic_changed",
       "provider_mutation_performed"
+    ],
+    ".github/workflows/federation-respawn-private-canary-v1.yml": [
+      "--no-allow-unauthenticated",
+      "public_invocation",
+      "provider_mutation_performed",
+      "FEDERATION_PROVIDER_WRITES=false",
+      "google_workspace_provider_readback"
     ],
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": [
       "--no-traffic",
@@ -406,6 +420,14 @@
     ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml": [
       "--allow-unauthenticated",
       "update-traffic --to-latest"
+    ],
+    ".github/workflows/federation-respawn-private-canary-v1.yml": [
+      "--allow-unauthenticated",
+      "update-traffic --to-latest",
+      "gcloud projects add-iam-policy-binding",
+      "gcloud run services add-iam-policy-binding",
+      "gcloud services enable",
+      "gcloud secrets versions access"
     ],
     ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml": [
       "--allow-unauthenticated",
@@ -534,6 +556,7 @@
     "luno_observer_deployment_workflow": ".github/workflows/luno-observer-provider-binding.yml",
     "gemini_provider_deployment_workflow": ".github/workflows/deploy-gemini-gateway.yml",
     "fuse_mobile_gateway_deployment_workflow": ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml",
+    "federation_respawn_deployment_workflow": ".github/workflows/federation-respawn-private-canary-v1.yml",
     "strategic_apps_script_read_workflow": ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml",
     "sol62_wif_hardening_workflow": ".github/workflows/sol62-wif-hardening-lease.yml",
     "sol62_google_surface_probe_workflow": ".github/workflows/sol62-google-surface-probe.yml",
@@ -586,6 +609,7 @@
       ".github/workflows/seb-omega-qualification.yml",
       ".github/workflows/fuse-mobile-android-build.yml",
       ".github/workflows/fuse-mobile-gateway-zero-traffic-v1.yml",
+      ".github/workflows/federation-respawn-private-canary-v1.yml",
       ".github/workflows/strategic-fuse-appsscript-read-zero-traffic.yml",
       ".github/workflows/fuse-mobile-provider-currentness-v1.yml",
       ".github/workflows/fuse-mobile-iap-phase-a-v1.yml",
