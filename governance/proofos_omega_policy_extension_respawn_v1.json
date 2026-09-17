@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "risk_rules": [
     {
       "risk": "R2_SHARED",
@@ -10,9 +10,10 @@
         "respawn/mcp_server.py",
         "respawn/test_chatgpt_context.py",
         "respawn/Dockerfile",
+        ".github/workflows/federation-respawn-private-canary-v1.yml",
         "governance/proofos_omega_policy_extension_respawn_v1.json"
       ],
-      "reason": "RESPAWN_CHATGPT_CONTEXT_AND_PROOF_OWNERSHIP_RUNTIME"
+      "reason": "RESPAWN_CHATGPT_CONTEXT_AND_PRIVATE_PROVIDER_CANARY_RUNTIME"
     }
   ],
   "subsystem_rules": [
@@ -24,8 +25,10 @@
         "respawn/mcp_server.py",
         "respawn/test_chatgpt_context.py",
         "respawn/Dockerfile",
+        ".github/workflows/federation-respawn-private-canary-v1.yml",
         "governance/proofos_omega_policy_extension_respawn_v1.json",
-        "tests/test_respawn_chatgpt_context_contract.py"
+        "tests/test_respawn_chatgpt_context_contract.py",
+        "tests/test_respawn_private_canary_workflow.py"
       ],
       "depends_on": [
         "FEDERATION_CORE"
@@ -46,6 +49,22 @@
         "respawn/Dockerfile",
         "governance/proofos_omega_policy_extension_respawn_v1.json",
         "tests/test_respawn_chatgpt_context_contract.py"
+      ],
+      "subsystems": [
+        "RESPAWN"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "respawn_private_canary_workflow_contract",
+      "kind": "unittest_glob",
+      "target": "test_respawn_private_canary_workflow.py",
+      "patterns": [
+        ".github/workflows/federation-respawn-private-canary-v1.yml",
+        "governance/proofos_omega_policy_extension_respawn_v1.json",
+        "tests/test_respawn_private_canary_workflow.py"
       ],
       "subsystems": [
         "RESPAWN"
