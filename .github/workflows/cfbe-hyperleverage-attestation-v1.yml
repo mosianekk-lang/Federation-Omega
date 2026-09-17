@@ -14,6 +14,16 @@ concurrency:
   group: cfbe-hyperleverage-artifact-attestation-v1
   cancel-in-progress: false
 
+env:
+  FOUNDRY_DISPATCH_TITLE: '[CFBE-DISPATCH] FOUNDRY_V06_COMMERCIAL_PROOF'
+  FOUNDRY_SOURCE_DRIVE_ID: 1zBBTq_mLUPpk08IgUQ8GUO_w2_3k1Av9
+  FOUNDRY_SOURCE_ARCHIVE: CFBE_Alpha_Omega_Foundry_v0_6.zip
+  FOUNDRY_SOURCE_SHA256: 3c67a67bd99f760fc3bf1801b5f485c7a100d7cfc7be8d4cdfb5153330babe20
+  PROJECT_ID: sov-hybrid-suite
+  REGION: africa-south1
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+
 jobs:
   attest:
     if: >-
@@ -144,5 +154,494 @@ jobs:
         with:
           name: cfbe-hyperleverage-100-attestation-${{ github.run_id }}-${{ github.run_attempt }}
           path: cfbe-attestation/
+          if-no-files-found: error
+          retention-days: 90
+
+  foundry-v06-stage:
+    name: Stage and attest Foundry v0.6 source
+    if: >-
+      github.event.issue.title == '[CFBE-DISPATCH] FOUNDRY_V06_COMMERCIAL_PROOF' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 12
+    steps:
+      - name: Checkout exact main source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+
+      - name: Authenticate short-lived Drive reader through canonical WIF
+        id: drive-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          token_format: access_token
+          access_token_scopes: https://www.googleapis.com/auth/drive.readonly
+          create_credentials_file: true
+          export_environment_variables: true
+
+      - name: Fetch exact private Drive artifact and verify bytes
+        shell: bash
+        env:
+          DRIVE_TOKEN: ${{ steps.drive-auth.outputs.access_token }}
+        run: |
+          set -euo pipefail
+          set +x
+          test -n "${DRIVE_TOKEN:-}"
+          mkdir -p /tmp/cfbe-foundry-v06
+          curl --fail --silent --show-error --location \
+            -H "Authorization: Bearer ${DRIVE_TOKEN}" \
+            "https://www.googleapis.com/drive/v3/files/${FOUNDRY_SOURCE_DRIVE_ID}?alt=media" \
+            --output "/tmp/cfbe-foundry-v06/${FOUNDRY_SOURCE_ARCHIVE}"
+          python3 - <<'PY'
+          import hashlib, os, pathlib, zipfile
+          p=pathlib.Path('/tmp/cfbe-foundry-v06') / os.environ['FOUNDRY_SOURCE_ARCHIVE']
+          actual=hashlib.sha256(p.read_bytes()).hexdigest()
+          expected=os.environ['FOUNDRY_SOURCE_SHA256']
+          assert actual == expected, (actual, expected)
+          with zipfile.ZipFile(p) as z:
+              assert z.testzip() is None
+          print('FOUNDRY_DRIVE_SOURCE_VERIFIED', actual, p.stat().st_size)
+          PY
+
+      - name: Attest exact Foundry source archive
+        id: foundry-source-attest
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: /tmp/cfbe-foundry-v06/CFBE_Alpha_Omega_Foundry_v0_6.zip
+          push-to-registry: false
+          show-summary: true
+
+      - name: Seal stage receipt
+        shell: bash
+        env:
+          ATTESTATION_ID: ${{ steps.foundry-source-attest.outputs.attestation-id }}
+          ATTESTATION_URL: ${{ steps.foundry-source-attest.outputs.attestation-url }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          p=pathlib.Path('/tmp/cfbe-foundry-v06') / os.environ['FOUNDRY_SOURCE_ARCHIVE']
+          r={
+            'schema':'CFBE_FOUNDRY_V06_SOURCE_STAGE_RECEIPT_V1',
+            'state':'SOURCE_BYTES_VERIFIED_AND_ATTESTED',
+            'source_sha':os.environ['GITHUB_SHA'],
+            'artifact_sha256':hashlib.sha256(p.read_bytes()).hexdigest(),
+            'drive_file_id':os.environ['FOUNDRY_SOURCE_DRIVE_ID'],
+            'attestation_id':os.environ.get('ATTESTATION_ID'),
+            'attestation_url':os.environ.get('ATTESTATION_URL'),
+            'credential_value_recorded':False,
+            'provider_mutation_performed':False,
+            'traffic_change_performed':False,
+          }
+          body=dict(r)
+          r['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          pathlib.Path('/tmp/cfbe-foundry-v06/source-stage-receipt.json').write_text(json.dumps(r,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({k:r[k] for k in ('state','artifact_sha256','receipt_sha256')},sort_keys=True))
+          PY
+
+      - name: Upload immutable Foundry source proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cfbe-foundry-source-v06-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/cfbe-foundry-v06/
+          if-no-files-found: error
+          retention-days: 30
+
+  foundry-v06-linux-proof:
+    name: Foundry v0.6 Linux proof / py${{ matrix.python }}
+    if: >-
+      github.event.issue.title == '[CFBE-DISPATCH] FOUNDRY_V06_COMMERCIAL_PROOF' &&
+      github.event.issue.author_association == 'OWNER'
+    needs: foundry-v06-stage
+    strategy:
+      fail-fast: false
+      matrix:
+        python: ['3.11', '3.13']
+    runs-on: ubuntu-24.04
+    timeout-minutes: 35
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+        with:
+          python-version: ${{ matrix.python }}
+      - name: Download staged source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cfbe-foundry-source-v06-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/cfbe-source
+      - name: Verify, extract and run proof court
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, os, pathlib, zipfile
+          archive=pathlib.Path('/tmp/cfbe-source') / os.environ['FOUNDRY_SOURCE_ARCHIVE']
+          actual=hashlib.sha256(archive.read_bytes()).hexdigest()
+          assert actual == os.environ['FOUNDRY_SOURCE_SHA256'], actual
+          zipfile.ZipFile(archive).extractall('.')
+          PY
+          cd CFBE_Alpha_Omega_Foundry_v0_6
+          python -m compileall -q cfbe_ao tests
+          python -m unittest discover -s tests -v
+          python -m cfbe_ao doctor
+          python -m cfbe_ao commercial-audit --root . --tests-passed
+          python - <<'PY'
+          import hashlib,json,os,pathlib,platform
+          r={
+            'schema':'CFBE_FOUNDRY_V06_LINUX_PROOF_V1',
+            'state':'VERIFIED',
+            'python':platform.python_version(),
+            'platform':platform.platform(),
+            'source_archive_sha256':os.environ['FOUNDRY_SOURCE_SHA256'],
+            'compileall':True,
+            'unittest':True,
+            'doctor':True,
+            'commercial_audit_executed':True,
+          }
+          r['receipt_sha256']=hashlib.sha256(json.dumps(r,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          pathlib.Path('../linux-proof-'+platform.python_version()+'.json').write_text(json.dumps(r,indent=2,sort_keys=True)+'\n')
+          PY
+      - name: Upload Linux proof receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cfbe-foundry-linux-py${{ matrix.python }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: linux-proof-*.json
+          if-no-files-found: error
+          retention-days: 90
+
+  foundry-v06-windows-package:
+    name: Foundry v0.6 Windows installer proof
+    if: >-
+      github.event.issue.title == '[CFBE-DISPATCH] FOUNDRY_V06_COMMERCIAL_PROOF' &&
+      github.event.issue.author_association == 'OWNER'
+    needs: foundry-v06-linux-proof
+    runs-on: windows-2025
+    timeout-minutes: 50
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+        with:
+          python-version: '3.13'
+      - name: Download staged source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cfbe-foundry-source-v06-${{ github.run_id }}-${{ github.run_attempt }}
+          path: ${{ runner.temp }}\cfbe-source
+      - name: Verify and extract source
+        shell: pwsh
+        run: |
+          $ErrorActionPreference='Stop'
+          $archive=Join-Path $env:RUNNER_TEMP "cfbe-source\$env:FOUNDRY_SOURCE_ARCHIVE"
+          $actual=(Get-FileHash $archive -Algorithm SHA256).Hash.ToLower()
+          if ($actual -ne $env:FOUNDRY_SOURCE_SHA256) { throw "archive hash mismatch: $actual" }
+          Expand-Archive -Path $archive -DestinationPath . -Force
+      - name: Install Inno Setup 6
+        shell: pwsh
+        run: choco install innosetup -y --no-progress
+      - name: Build executable and setup package
+        shell: pwsh
+        working-directory: CFBE_Alpha_Omega_Foundry_v0_6
+        run: ./installer/windows/build.ps1 -BuildInstaller
+      - name: Silent per-user installation canary
+        shell: pwsh
+        working-directory: CFBE_Alpha_Omega_Foundry_v0_6
+        run: |
+          $ErrorActionPreference='Stop'
+          $installer=Get-ChildItem dist\CFBE-Alpha-Omega-Foundry-Setup-*.exe | Select-Object -First 1
+          if (-not $installer) { throw 'installer missing' }
+          $target=Join-Path $env:RUNNER_TEMP 'cfbe-foundry-installed'
+          & $installer.FullName /VERYSILENT /SUPPRESSMSGBOXES /NORESTART /DIR="$target"
+          if ($LASTEXITCODE -ne 0) { throw "installer exit $LASTEXITCODE" }
+          $doctor=& (Join-Path $target 'cfbe-ao.exe') doctor | Out-String
+          $doctor | Out-File -Encoding utf8 dist\windows-installer-doctor.json
+          if ($doctor -notmatch '"status"\s*:\s*"READY_LOCAL"') { throw 'installed executable doctor failed' }
+          $setupHash=(Get-FileHash $installer.FullName -Algorithm SHA256).Hash.ToLower()
+          $exeHash=(Get-FileHash dist\cfbe-ao.exe -Algorithm SHA256).Hash.ToLower()
+          @{
+            schema='CFBE_FOUNDRY_V06_WINDOWS_INSTALL_PROOF_V1'
+            state='WINDOWS_INSTALLER_VERIFIED'
+            setup_sha256=$setupHash
+            exe_sha256=$exeHash
+            installed_doctor=$true
+            source_archive_sha256=$env:FOUNDRY_SOURCE_SHA256
+          } | ConvertTo-Json | Out-File -Encoding utf8 dist\windows-install-proof.json
+      - name: Upload Windows distribution proof
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cfbe-foundry-windows-v06-${{ github.run_id }}-${{ github.run_attempt }}
+          path: |
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/cfbe-ao.exe
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/cfbe-ao.exe.sha256
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/CFBE-Alpha-Omega-Foundry-Setup-*.exe
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/CFBE-Alpha-Omega-Foundry-Setup-*.exe.sha256
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/windows-exe-doctor.json
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/windows-installer-doctor.json
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/windows-install-proof.json
+            CFBE_Alpha_Omega_Foundry_v0_6/dist/*.whl
+          if-no-files-found: error
+          retention-days: 90
+
+  foundry-v06-google-proof:
+    name: Foundry v0.6 Google / AI Studio readback
+    if: >-
+      github.event.issue.title == '[CFBE-DISPATCH] FOUNDRY_V06_COMMERCIAL_PROOF' &&
+      github.event.issue.author_association == 'OWNER'
+    needs: foundry-v06-linux-proof
+    runs-on: ubuntu-24.04
+    timeout-minutes: 25
+    steps:
+      - name: Checkout exact main source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: main
+          fetch-depth: 1
+          persist-credentials: false
+      - name: Set up Python
+        uses: actions/setup-python@e797f83bcb11b83ae66e0230d6156d7c80228e7c
+        with:
+          python-version: '3.13'
+      - name: Download staged source
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          name: cfbe-foundry-source-v06-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/cfbe-source
+      - name: Extract exact Foundry source
+        shell: bash
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, os, pathlib, zipfile
+          archive=pathlib.Path('/tmp/cfbe-source') / os.environ['FOUNDRY_SOURCE_ARCHIVE']
+          actual=hashlib.sha256(archive.read_bytes()).hexdigest()
+          assert actual == os.environ['FOUNDRY_SOURCE_SHA256']
+          zipfile.ZipFile(archive).extractall('.')
+          PY
+      - name: Probe Apps Script current deployment semantics
+        id: apps-script
+        continue-on-error: true
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cfbe-google
+          printf '{"schema":"CFBE_FOUNDRY_GOOGLE_SURFACE_RECEIPT_V1","source_sha":"%s","provider_mutation_performed":false,"credential_values_recorded":false}\n' "$GITHUB_SHA" > /tmp/cfbe-google/surface.json
+          python3 bubbles/apps_script_deployment_probe.py --receipt /tmp/cfbe-google/surface.json
+      - name: Run Gemini Developer API semantic canary when credential is configured
+        id: gemini
+        continue-on-error: true
+        shell: bash
+        working-directory: CFBE_Alpha_Omega_Foundry_v0_6
+        env:
+          GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
+        run: |
+          set -euo pipefail
+          set +x
+          if [[ -z "${GEMINI_API_KEY:-}" ]]; then
+            printf '{"state":"CREDENTIAL_MISSING","semantic_verified":false,"credential_value_recorded":false,"provider_mutation_performed":false}\n' > /tmp/cfbe-google/gemini.json
+            exit 0
+          fi
+          python -m cfbe_ao gemini-canary --model gemini-2.5-flash > /tmp/cfbe-google/gemini.json
+      - name: Authenticate canonical Google Cloud deployer through WIF
+        id: cloud-auth
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+          create_credentials_file: true
+          export_environment_variables: true
+      - name: Install pinned Google Cloud CLI
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+      - name: Cloud Run provider-native readback
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          gcloud run services list --project "$PROJECT_ID" --region "$REGION" --format=json \
+            > /tmp/cfbe-google/cloud-services.json 2>/tmp/cfbe-google/cloud-services.err
+          rc=$?
+          set -e
+          RC="$rc" python3 - <<'PY' > /tmp/cfbe-google/cloud.json
+          import hashlib,json,os,pathlib
+          raw=pathlib.Path('/tmp/cfbe-google/cloud-services.json').read_bytes()
+          err=pathlib.Path('/tmp/cfbe-google/cloud-services.err').read_bytes()
+          rc=int(os.environ['RC'])
+          try:
+              data=json.loads(raw or b'[]') if rc == 0 else []
+          except Exception:
+              data=[]
+          print(json.dumps({
+            'state':'PROVIDER_READBACK_VERIFIED' if rc == 0 else 'PROVIDER_READBACK_DENIED_OR_FAILED',
+            'provider_readback':rc == 0,
+            'service_count':len(data),
+            'payload_sha256':hashlib.sha256(raw).hexdigest() if raw else None,
+            'error_sha256':hashlib.sha256(err).hexdigest() if err else None,
+            'provider_mutation_performed':False,
+            'credential_value_recorded':False,
+          },sort_keys=True))
+          PY
+      - name: Seal combined redacted Google receipt
+        if: always()
+        shell: bash
+        env:
+          APPS_SCRIPT_OUTCOME: ${{ steps.apps-script.outcome }}
+          GEMINI_OUTCOME: ${{ steps.gemini.outcome }}
+        run: |
+          set -euo pipefail
+          python3 - <<'PY'
+          import hashlib,json,os,pathlib
+          root=pathlib.Path('/tmp/cfbe-google')
+          def load(name, fallback):
+              p=root/name
+              if not p.exists(): return fallback
+              try: return json.loads(p.read_text())
+              except Exception: return fallback
+          out=load('surface.json', {'schema':'CFBE_FOUNDRY_GOOGLE_SURFACE_RECEIPT_V1'})
+          out['apps_script_probe_outcome']=os.environ.get('APPS_SCRIPT_OUTCOME')
+          out['gemini_step_outcome']=os.environ.get('GEMINI_OUTCOME')
+          out['gemini']=load('gemini.json', {'state':'NO_RECEIPT','semantic_verified':False})
+          out['cloud_run']=load('cloud.json', {'state':'NO_RECEIPT','provider_readback':False})
+          out['provider_mutation_performed']=False
+          out['traffic_change_performed']=False
+          out['credential_values_recorded']=False
+          body=dict(out); body.pop('receipt_sha256',None)
+          out['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          (root/'CFBE_GOOGLE_SURFACE_RECEIPT.json').write_text(json.dumps(out,indent=2,sort_keys=True)+'\n')
+          print(json.dumps({
+            'apps_script_probe_outcome':out['apps_script_probe_outcome'],
+            'gemini_state':out['gemini'].get('state'),
+            'gemini_semantic_verified':out['gemini'].get('semantic_verified'),
+            'cloud_run_state':out['cloud_run'].get('state'),
+            'cloud_run_provider_readback':out['cloud_run'].get('provider_readback'),
+            'receipt_sha256':out['receipt_sha256'],
+          },sort_keys=True))
+          PY
+      - name: Upload immutable Google surface proof
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cfbe-foundry-google-v06-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/cfbe-google/CFBE_GOOGLE_SURFACE_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
+
+  foundry-v06-completion-court:
+    name: Foundry v0.6 completion court
+    if: >-
+      always() &&
+      github.event.issue.title == '[CFBE-DISPATCH] FOUNDRY_V06_COMMERCIAL_PROOF' &&
+      github.event.issue.author_association == 'OWNER'
+    needs: [foundry-v06-stage, foundry-v06-linux-proof, foundry-v06-windows-package, foundry-v06-google-proof]
+    runs-on: ubuntu-24.04
+    timeout-minutes: 10
+    steps:
+      - name: Checkout source without persisted credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+      - name: Download all proof artifacts from this run
+        uses: actions/download-artifact@d3f86a106a0bac45b974a628896c90dbdf5c8093
+        with:
+          path: /tmp/cfbe-proof
+          pattern: cfbe-foundry-*
+          merge-multiple: false
+      - name: Evaluate proof court
+        id: court
+        shell: bash
+        env:
+          STAGE_RESULT: ${{ needs.foundry-v06-stage.result }}
+          LINUX_RESULT: ${{ needs.foundry-v06-linux-proof.result }}
+          WINDOWS_RESULT: ${{ needs.foundry-v06-windows-package.result }}
+          GOOGLE_RESULT: ${{ needs.foundry-v06-google-proof.result }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cfbe-completion
+          python3 - <<'PY'
+          import hashlib, json, os, pathlib
+          root=pathlib.Path('/tmp/cfbe-proof')
+          windows=list(root.rglob('windows-install-proof.json'))
+          google=list(root.rglob('CFBE_GOOGLE_SURFACE_RECEIPT.json'))
+          source=list(root.rglob('source-stage-receipt.json'))
+          linux=list(root.rglob('linux-proof-*.json'))
+          def one(paths):
+              if not paths: return None
+              return json.loads(paths[0].read_text(encoding='utf-8-sig'))
+          wr=one(windows)
+          gr=one(google)
+          sr=one(source)
+          linux_receipts=[json.loads(p.read_text(encoding='utf-8-sig')) for p in linux]
+          core_ok=(
+              os.environ.get('STAGE_RESULT')=='success' and
+              os.environ.get('LINUX_RESULT')=='success' and
+              os.environ.get('WINDOWS_RESULT')=='success' and
+              sr is not None and sr.get('artifact_sha256')==os.environ['FOUNDRY_SOURCE_SHA256'] and
+              len(linux_receipts)>=2 and all(x.get('state')=='VERIFIED' for x in linux_receipts) and
+              wr is not None and wr.get('state')=='WINDOWS_INSTALLER_VERIFIED'
+          )
+          google_readback=bool(gr and (gr.get('cloud_run') or {}).get('provider_readback'))
+          gemini_verified=bool(gr and (gr.get('gemini') or {}).get('semantic_verified'))
+          state=(
+              'COMMERCIAL_INSTALLER_VERIFIED_GOOGLE_SURFACES_VERIFIED'
+              if core_ok and google_readback and gemini_verified
+              else 'COMMERCIAL_INSTALLER_VERIFIED_GOOGLE_PARTIAL'
+              if core_ok and google_readback
+              else 'COMMERCIAL_INSTALLER_VERIFIED_EXTERNAL_SURFACES_HELD'
+              if core_ok
+              else 'PROOF_COURT_FAILED'
+          )
+          r={
+            'schema':'CFBE_FOUNDRY_V06_COMPLETION_RECEIPT_V1',
+            'state':state,
+            'source_sha':os.environ['GITHUB_SHA'],
+            'source_archive_sha256':os.environ['FOUNDRY_SOURCE_SHA256'],
+            'stage_job':os.environ.get('STAGE_RESULT'),
+            'linux_job':os.environ.get('LINUX_RESULT'),
+            'windows_job':os.environ.get('WINDOWS_RESULT'),
+            'google_job':os.environ.get('GOOGLE_RESULT'),
+            'linux_receipt_count':len(linux_receipts),
+            'windows_installer_verified':bool(wr and wr.get('state')=='WINDOWS_INSTALLER_VERIFIED'),
+            'windows_setup_sha256':wr.get('setup_sha256') if wr else None,
+            'windows_exe_sha256':wr.get('exe_sha256') if wr else None,
+            'google_cloud_readback_verified':google_readback,
+            'gemini_semantic_verified':gemini_verified,
+            'apps_script_probe_outcome':gr.get('apps_script_probe_outcome') if gr else None,
+            'provider_mutation_performed':False,
+            'traffic_change_performed':False,
+          }
+          body=dict(r)
+          r['receipt_sha256']=hashlib.sha256(json.dumps(body,sort_keys=True,separators=(',',':')).encode()).hexdigest()
+          out=pathlib.Path('/tmp/cfbe-completion/CFBE_FOUNDRY_V06_COMPLETION_RECEIPT.json')
+          out.write_text(json.dumps(r,indent=2,sort_keys=True)+'\n')
+          print(json.dumps(r,sort_keys=True))
+          if not core_ok:
+              raise SystemExit('Foundry v0.6 core commercial proof court failed')
+          PY
+      - name: Attest Windows setup artifact when present
+        if: ${{ needs.foundry-v06-windows-package.result == 'success' }}
+        uses: actions/attest@1e69f48acb82d1966a394da916b4c1698aa569d6
+        with:
+          subject-path: /tmp/cfbe-proof/cfbe-foundry-windows-v06-*/CFBE-Alpha-Omega-Foundry-Setup-*.exe
+          push-to-registry: false
+          show-summary: true
+      - name: Upload completion court receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cfbe-foundry-completion-v06-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/cfbe-completion/
           if-no-files-found: error
           retention-days: 90
