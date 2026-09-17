@@ -1,0 +1,65 @@
+{
+  "schema": "FEDERATION-AUTOPILOT-CONTRACT-V1",
+  "version": "1.0.0",
+  "purpose": "Continue Federation operations while the owner is absent without creating a new sovereign scheduler, truth plane or authority root.",
+  "composition": [
+    "CFBE Full-Autopilot + Meta-Cognition Fabric v1",
+    "Bubbles Autopilot Orchestrator + Creative Focus Shield",
+    "FKPF Omega v3 propagation/currentness",
+    "FDOF durable mission/lease/proof/value surfaces",
+    "Sentinel observability and stranded-learning detection",
+    "Human-First Omega owner authority boundary",
+    "Autopilot Operational Witness Fabric"
+  ],
+  "scheduler": {
+    "primary": "CHATGPT_SCHEDULED_AUTOMATION_HOURLY",
+    "minimum_frequency": "HOURLY",
+    "missed_run_policy": "CATCH_UP_FROM_CANONICAL_STATE_THEN_RESUME",
+    "notify_owner": "ONLY_MATERIAL_RESULT_OR_IRREDUCIBLE_OWNER_TRIGGER"
+  },
+  "unattended_allowed": [
+    "A0_OBSERVE",
+    "A1_INTERNAL_ANALYSIS",
+    "A1_DRAFTING",
+    "A1_INDEXING",
+    "A1_BENCHMARKING",
+    "A1_TESTING",
+    "A1_PROPAGATION_CATCHUP",
+    "A1_REVERSIBLE_INTERNAL_CONTROL_WRITES",
+    "REVERSIBLE_EXTERNAL_ONLY_WHEN_PREAUTHORIZED_AND_PROVIDER_READBACK_EXISTS"
+  ],
+  "unattended_denied": [
+    "EMAIL_SEND",
+    "LEGAL_FILE_OR_SERVE",
+    "SETTLEMENT_OR_CONCESSION",
+    "IAM_OR_ROLE_CHANGE",
+    "SECRET_OR_CREDENTIAL_CHANGE",
+    "BILLING_OR_SPEND",
+    "DELETE_OR_DESTRUCTIVE",
+    "PUBLICATION_OR_EXTERNAL_POST",
+    "PRODUCTION_TRAFFIC_CUTOVER",
+    "CALENDAR_WRITE"
+  ],
+  "cycle": [
+    "READ_CANONICAL_PROPAGATION_HEAD",
+    "COMPARE_LOCAL_WATERMARK_AND_CATCH_UP",
+    "READ_PENDING_MISSIONS_COMMANDS_FAILURES_AND_HOLDS",
+    "DEDUPE_AND_RANK_BY_CFBE_VALUE",
+    "EXECUTE_ALL_SAFE_READY_A0_A1_LANES",
+    "ISOLATE_BLOCKED_LANES_AND_REROUTE_WHERE_PROVEN",
+    "PROBE_PROVIDER_AFTER_EFFECT_UNKNOWN_BEFORE_RETRY",
+    "REQUIRE_PROVIDER_NATIVE_READBACK_FOR_EXTERNAL_EFFECT",
+    "WRITE_PROOF_AND_VALUE_RECEIPTS",
+    "PROPAGATE_NEW_REUSABLE_LEARNING",
+    "QUEUE_EXACT_OWNER_TRIGGERS",
+    "CHECKPOINT_AND_SCHEDULE_NEXT_TICK"
+  ],
+  "truth_boundary": {
+    "scheduled_automation_is_runtime": true,
+    "source_presence_proves_runtime": false,
+    "cross_chat_invisible_mutation": false,
+    "owner_authority_inherited": false,
+    "provider_authority_inherited": false,
+    "value_claim_requires_measurement": true
+  }
+}
