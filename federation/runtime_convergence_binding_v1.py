@@ -17,12 +17,17 @@ one mission/objective/authority envelope, and then evaluates OF50.
 It deliberately does NOT claim that validating OH50/Formation/Alpha→Omega objects
 proves those producers executed. Those stages remain STRUCTURALLY_BOUND until
 their own producer-attested receipts are supplied by later bindings.
+
+FRCB is not a terminal-completion authority. OF50 stage completion is exposed
+explicitly as ``of50_completion_verified`` while ``completion_verified`` remains a
+terminal-safe alias that cannot become true in v1 without an F130 terminal commit.
 """
 
 from dataclasses import asdict, dataclass, replace
 from enum import Enum
 from hashlib import sha256
 import json
+from types import MappingProxyType
 from typing import Any, Mapping
 
 from federation.aarek_v1 import AarekKernel, AarekReceipt, MissionSnapshot
@@ -68,9 +73,46 @@ class RuntimeConvergenceReceipt:
     stages: tuple[StageBinding, ...]
     bound_request_digest: str
     of50_receipt_digest: str
-    completion_verified: bool
+    of50_completion_verified: bool
+    f130_terminal_completion_verified: bool
+    provider_execution_verified: bool
     receipt_digest: str
     truth_boundary: Mapping[str, bool]
+
+    @property
+    def completion_verified(self) -> bool:
+        """Terminal-safe compatibility alias.
+
+        FRCB v1 cannot independently authorize whole-mission completion, so this
+        alias follows only F130 terminal completion and therefore remains false in
+        v1 even if the embedded OF50 court reports its own completion as verified.
+        """
+        return self.f130_terminal_completion_verified
+
+    def deterministic_payload(self) -> Mapping[str, object]:
+        return {
+            "schema": self.schema,
+            "version": self.version,
+            "capability_id": self.capability_id,
+            "mission_id": self.mission_id,
+            "objective": self.objective,
+            "authority_ceiling": self.authority_ceiling,
+            "stages": [asdict(item) for item in self.stages],
+            "bound_request_digest": self.bound_request_digest,
+            "of50_receipt_digest": self.of50_receipt_digest,
+            "of50_completion_verified": self.of50_completion_verified,
+            "f130_terminal_completion_verified": self.f130_terminal_completion_verified,
+            "provider_execution_verified": self.provider_execution_verified,
+            "truth_boundary": dict(self.truth_boundary),
+        }
+
+    def verify(self) -> bool:
+        return bool(
+            self.schema == SCHEMA
+            and self.version == VERSION
+            and self.capability_id == CAPABILITY_ID
+            and self.receipt_digest == _digest(self.deterministic_payload())
+        )
 
 
 @dataclass(frozen=True, slots=True)
@@ -235,14 +277,17 @@ class RuntimeConvergenceBinder:
         of50_receipt = self.of50.evaluate(bound_request)
 
         request_digest = _object_digest(bound_request)
-        truth_boundary = {
+        truth_boundary = MappingProxyType({
             "aarek_execution_verified": True,
             "oh50_producer_execution_verified": False,
             "formation_foundry_execution_verified": False,
             "alpha_omega_runtime_execution_verified": False,
+            "provider_execution_verified": False,
             "provider_execution_inherited": False,
+            "of50_stage_completion_verified": bool(of50_receipt.completion_verified),
+            "f130_terminal_completion_verified": False,
             "authority_widened": False,
-        }
+        })
         material = {
             "schema": SCHEMA,
             "version": VERSION,
@@ -253,8 +298,10 @@ class RuntimeConvergenceBinder:
             "stages": [asdict(item) for item in stages],
             "bound_request_digest": request_digest,
             "of50_receipt_digest": of50_receipt.receipt_digest,
-            "completion_verified": of50_receipt.completion_verified,
-            "truth_boundary": truth_boundary,
+            "of50_completion_verified": bool(of50_receipt.completion_verified),
+            "f130_terminal_completion_verified": False,
+            "provider_execution_verified": False,
+            "truth_boundary": dict(truth_boundary),
         }
         convergence = RuntimeConvergenceReceipt(
             schema=SCHEMA,
@@ -266,10 +313,14 @@ class RuntimeConvergenceBinder:
             stages=tuple(stages),
             bound_request_digest=request_digest,
             of50_receipt_digest=of50_receipt.receipt_digest,
-            completion_verified=of50_receipt.completion_verified,
+            of50_completion_verified=bool(of50_receipt.completion_verified),
+            f130_terminal_completion_verified=False,
+            provider_execution_verified=False,
             receipt_digest=_digest(material),
             truth_boundary=truth_boundary,
         )
+        if not convergence.verify():
+            raise ValueError("FRCB_RECEIPT_SELF_VERIFICATION_FAILED")
         return RuntimeConvergenceResult(
             aarek_receipt=aarek_receipt,
             bound_request=bound_request,
