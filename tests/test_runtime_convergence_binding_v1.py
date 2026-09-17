@@ -3,7 +3,7 @@ from __future__ import annotations
 from dataclasses import replace
 import unittest
 
-from federation.aarek_v1 import MissionSnapshot
+from federation.aarek_v1 import Evidence as AarekEvidence, EvidenceKind as AarekEvidenceKind, MissionSnapshot
 from federation.of50_ace_v1 import (
     Authority,
     ExecutionProof,
@@ -68,6 +68,24 @@ def request(**overrides) -> OF50CycleRequest:
     return OF50CycleRequest(**base)
 
 
+def completion_request(**overrides) -> OF50CycleRequest:
+    base = dict(
+        execution_proof=ExecutionProof(
+            executed=True,
+            proof_tier=ProofTier.LOCAL_RUNTIME,
+            execution_ref="exec:1",
+            semantic_readback_ref="semantic:1",
+        ),
+        objective_satisfied=True,
+        proven_outcomes=("O1",),
+        oh50_rescan_ref="rescan:1",
+        mission_recompiled=True,
+        completion_requested=True,
+    )
+    base.update(overrides)
+    return request(**base)
+
+
 def snapshot(**overrides) -> MissionSnapshot:
     base = dict(
         mission_id=MISSION,
@@ -76,6 +94,19 @@ def snapshot(**overrides) -> MissionSnapshot:
     )
     base.update(overrides)
     return MissionSnapshot(**base)
+
+
+def complete_aarek_snapshot(**overrides) -> MissionSnapshot:
+    base = dict(
+        evidence=(
+            AarekEvidence(AarekEvidenceKind.BINDING, "binding:1", action_specific=True),
+            AarekEvidence(AarekEvidenceKind.EXECUTION, "execution:1", action_specific=True),
+            AarekEvidence(AarekEvidenceKind.SEMANTIC_READBACK, "readback:1", action_specific=True),
+        ),
+        mission_recompiled=True,
+    )
+    base.update(overrides)
+    return snapshot(**base)
 
 
 class RuntimeConvergenceBindingTests(unittest.TestCase):
@@ -87,7 +118,9 @@ class RuntimeConvergenceBindingTests(unittest.TestCase):
         self.assertEqual(result.aarek_receipt.receipt_digest, result.bound_request.aarek_receipt_ref)
         self.assertTrue(result.aarek_receipt.receipt_digest.startswith("sha256:"))
         self.assertFalse(result.convergence_receipt.completion_verified)
+        self.assertFalse(result.convergence_receipt.f130_terminal_completion_verified)
         self.assertTrue(result.convergence_receipt.truth_boundary["aarek_execution_verified"])
+        self.assertTrue(result.convergence_receipt.verify())
 
     def test_caller_cannot_substitute_aarek_reference(self):
         with self.assertRaisesRegex(ValueError, "AAREK_RECEIPT_REF_SUBSTITUTION"):
@@ -130,6 +163,36 @@ class RuntimeConvergenceBindingTests(unittest.TestCase):
         self.assertEqual(BindingState.STRUCTURALLY_BOUND, stages["OH50"].state)
         self.assertEqual(BindingState.STRUCTURALLY_BOUND, stages["FORMATION_INNOVATION"].state)
         self.assertEqual(BindingState.NOT_REQUIRED, stages["ALPHA_OMEGA_IF_REQUIRED"].state)
+
+    def test_completion_request_requires_aarek_complete_verified(self):
+        with self.assertRaisesRegex(ValueError, "AAREK_COMPLETION_NOT_VERIFIED"):
+            self.binder.evaluate(aarek_snapshot=snapshot(), of50_request=completion_request())
+
+    def test_of50_completion_cannot_be_promoted_to_frcb_terminal_completion(self):
+        result = self.binder.evaluate(
+            aarek_snapshot=complete_aarek_snapshot(),
+            of50_request=completion_request(),
+        )
+        self.assertTrue(result.of50_receipt.completion_verified)
+        self.assertTrue(result.convergence_receipt.of50_completion_verified)
+        self.assertTrue(result.convergence_receipt.truth_boundary["aarek_completion_verified"])
+        self.assertFalse(result.convergence_receipt.f130_terminal_completion_verified)
+        self.assertFalse(result.convergence_receipt.provider_execution_verified)
+        self.assertFalse(result.convergence_receipt.completion_verified)
+
+    def test_receipt_self_verification_rejects_tamper(self):
+        result = self.binder.evaluate(aarek_snapshot=snapshot(), of50_request=request())
+        self.assertTrue(result.convergence_receipt.verify())
+        tampered = replace(
+            result.convergence_receipt,
+            of50_receipt_digest="sha256:" + ("0" * 64),
+        )
+        self.assertFalse(tampered.verify())
+
+    def test_truth_boundary_is_immutable(self):
+        result = self.binder.evaluate(aarek_snapshot=snapshot(), of50_request=request())
+        with self.assertRaises(TypeError):
+            result.convergence_receipt.truth_boundary["aarek_execution_verified"] = False  # type: ignore[index]
 
     def test_convergence_receipt_is_deterministic_for_same_inputs(self):
         left = self.binder.evaluate(aarek_snapshot=snapshot(), of50_request=request())
