@@ -105,15 +105,26 @@ jobs:
           },indent=2,sort_keys=True)+'\n')
           PY
 
-      - name: Capture pre-deployment service state
+      - name: Capture pre-deployment service and IAM state
         id: pre
         shell: bash
         run: |
           set -euo pipefail
           if gcloud run services describe "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/service-pre.json 2>/dev/null; then
             echo 'service_existed=true' >> "$GITHUB_OUTPUT"
+            gcloud run services get-iam-policy "$SERVICE" --region "$REGION" --project "$PROJECT_ID" --format=json > respawn-deploy-proof/service-policy-pre.json
+            python - <<'PY'
+          import json
+          from pathlib import Path
+          p=json.loads(Path('respawn-deploy-proof/service-policy-pre.json').read_text())
+          public={'allUsers','allAuthenticatedUsers'}
+          for b in p.get('bindings') or []:
+              if b.get('role') in {'roles/run.invoker','roles/run.servicesInvoker'} and public.intersection(set(b.get('members') or [])):
+                  raise SystemExit('existing federation-respawn service has public invocation; refuse to mutate IAM in canary')
+          PY
           else
             echo '{}' > respawn-deploy-proof/service-pre.json
+            echo '{}' > respawn-deploy-proof/service-policy-pre.json
             echo 'service_existed=false' >> "$GITHUB_OUTPUT"
           fi
 
@@ -189,6 +200,7 @@ jobs:
           from pathlib import Path
           pre=json.loads(Path('respawn-deploy-proof/service-pre.json').read_text())
           post=json.loads(Path('respawn-deploy-proof/service-post.json').read_text())
+          service_policy_pre=json.loads(Path('respawn-deploy-proof/service-policy-pre.json').read_text())
           service_policy=json.loads(Path('respawn-deploy-proof/service-policy-post.json').read_text())
           project_policy=json.loads(Path('respawn-deploy-proof/project-policy-post.json').read_text())
           revision=os.environ['REVISION']
@@ -202,6 +214,13 @@ jobs:
               )
           assert not public_invoker(service_policy), 'service is publicly invokable'
           assert not public_invoker(project_policy), 'project grants public Cloud Run invocation'
+          if existed:
+              def normalize(policy):
+                  p=dict(policy)
+                  p.pop('etag',None)
+                  p.pop('version',None)
+                  return p
+              assert normalize(service_policy_pre) == normalize(service_policy), 'existing service IAM changed during canary'
           def allocation(service):
               result={}
               for item in service.get('status',{}).get('traffic') or []:
@@ -233,14 +252,20 @@ jobs:
           },indent=2,sort_keys=True)+'\n')
           PY
 
-      - name: Resolve private candidate URL
+      - name: Resolve private candidate and canonical service URLs
         id: endpoint
         shell: bash
         env:
           TAG: ${{ steps.deploy.outputs.tag }}
         run: |
           set -euo pipefail
-          python - <<'PY' > /tmp/respawn-canary-url
+          SERVICE_URL="$(python - <<'PY'
+          import json
+          s=json.load(open('respawn-deploy-proof/service-post.json'))
+          print((s.get('status') or {}).get('url') or '')
+          PY
+          )"
+          CANARY_URL="$(python - <<'PY'
           import json, os
           s=json.load(open('respawn-deploy-proof/service-post.json'))
           status=s.get('status') or {}
@@ -248,12 +273,12 @@ jobs:
           for item in status.get('traffic') or []:
               if item.get('tag') == os.environ['TAG'] and item.get('url'):
                   url=item['url']; break
-          if not url:
-              url=status.get('url') or ''
-          print(url)
+          print(url or status.get('url') or '')
           PY
-          CANARY_URL="$(cat /tmp/respawn-canary-url)"
+          )"
+          test -n "$SERVICE_URL"
           test -n "$CANARY_URL"
+          echo "service_url=$SERVICE_URL" >> "$GITHUB_OUTPUT"
           echo "canary_url=$CANARY_URL" >> "$GITHUB_OUTPUT"
 
       - name: Mint one-run private candidate identity token
@@ -264,7 +289,7 @@ jobs:
           workload_identity_provider: ${{ env.WIF_PROVIDER }}
           service_account: ${{ env.DEPLOYER_SA }}
           token_format: id_token
-          id_token_audience: ${{ steps.endpoint.outputs.canary_url }}
+          id_token_audience: ${{ steps.endpoint.outputs.service_url }}
 
       - name: Install Respawn MCP client dependencies
         shell: bash
@@ -403,6 +428,7 @@ jobs:
         shell: bash
         env:
           CANARY_URL: ${{ steps.endpoint.outputs.canary_url }}
+          SERVICE_URL: ${{ steps.endpoint.outputs.service_url }}
           REVISION: ${{ steps.deploy.outputs.revision }}
           TRAFFIC_MODE: ${{ steps.deploy.outputs.traffic_mode }}
           IMAGE: ${{ steps.image.outputs.image }}
@@ -422,6 +448,7 @@ jobs:
               'region':os.environ['REGION'],
               'service':os.environ['SERVICE'],
               'revision':os.environ['REVISION'],
+              'service_url':os.environ['SERVICE_URL'],
               'canary_url':os.environ['CANARY_URL'],
               'mcp_url':os.environ['CANARY_URL'].rstrip('/')+'/mcp',
               'traffic_mode':os.environ['TRAFFIC_MODE'],
@@ -451,7 +478,7 @@ jobs:
           PY
 
       - name: Upload immutable Respawn provider proof
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: federation-respawn-private-canary-${{ github.run_id }}-${{ github.run_attempt }}
           path: |
