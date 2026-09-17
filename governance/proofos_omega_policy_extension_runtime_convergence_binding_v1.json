@@ -24,7 +24,11 @@
         "governance/proofos_omega_policy_extension_runtime_convergence_binding_v1.json",
         "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V1.md"
       ],
-      "depends_on": ["FEDERATION_CORE"]
+      "depends_on": [
+        "FEDERATION_CORE",
+        "FUSE_AAREK_V1",
+        "FUSE_OF50_ACE_V1"
+      ]
     }
   ],
   "historical_associations": [],
@@ -40,7 +44,7 @@
         "governance/proofos_omega_policy_extension_runtime_convergence_binding_v1.json"
       ],
       "subsystems": ["FUSE_RUNTIME_CONVERGENCE_BINDING_V1"],
-      "failure_class": "RUNTIME_BINDING_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 180
     },
@@ -53,7 +57,7 @@
         "governance/runtime_convergence_binding_v1.json"
       ],
       "subsystems": ["FUSE_RUNTIME_CONVERGENCE_BINDING_V1"],
-      "failure_class": "DEPENDENCY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 180
     },
@@ -66,7 +70,7 @@
         "governance/runtime_convergence_binding_v1.json"
       ],
       "subsystems": ["FUSE_RUNTIME_CONVERGENCE_BINDING_V1"],
-      "failure_class": "DEPENDENCY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 240
     }
