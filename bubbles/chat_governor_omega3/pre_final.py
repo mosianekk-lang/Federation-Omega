@@ -245,8 +245,9 @@ class PreFinalGate:
                 lines = [line.strip() for line in candidate.splitlines() if line.strip()]
                 has_banner = bool(lines) and lines[0] == presentation.banner
                 has_terminal_line = presentation.terminal_line in lines[:4]
-                if not has_banner or not has_terminal_line:
-                    reasons.append("NONTERMINAL_PRESENTATION_BANNER_REQUIRED")
+                has_next_line = presentation.next_line in lines[:6]
+                if not has_banner or not has_terminal_line or not has_next_line:
+                    reasons.append("NONTERMINAL_PRESENTATION_PREFIX_REQUIRED")
                     rewrite_required = True
                     safe_statements.extend((presentation.banner, presentation.terminal_line, presentation.next_line))
 
