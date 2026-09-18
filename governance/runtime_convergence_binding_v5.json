@@ -1,0 +1,55 @@
+{
+  "schema": "FUSE-RUNTIME-CONVERGENCE-BINDING-GOVERNANCE-V5",
+  "version": "5.0.0",
+  "capability_id": "FUSE-FRCB-005",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "purpose": "Bind one fresh FDOF route-selection plus SOL 6.2 transition fence into the convergence chain as time-bounded capability activation evidence without promoting provider execution.",
+  "canonical_role": "ADAPTER_AND_RECEIPT_BINDING_ONLY",
+  "reuses": [
+    "FUSE-FRCB-004",
+    "FDOF v1",
+    "SOL 6.2 execution fencing",
+    "FUSE-OF50-ACE-CURRENT"
+  ],
+  "must_not_create": [
+    "NEW_SCHEDULER",
+    "NEW_AUTHORITY_PLANE",
+    "NEW_PROOF_PLANE",
+    "NEW_MEMORY_ROOT",
+    "NEW_FOUNDRY",
+    "NEW_PROVIDER_RUNTIME",
+    "NEW_TOP_LEVEL_CONTROLLER"
+  ],
+  "hard_rules": [
+    "FDOF_ROUTE_MUST_BIND_EXACT_MISSION_TRANSITION_OPERATION_AND_TARGET",
+    "FDOF_EXECUTOR_MUST_BE_FRESH_AND_HEALTHY",
+    "FDOF_HEALTH_MUST_CARRY_PROOF_REFERENCE",
+    "SOL62_EVENT_CHAIN_MUST_VERIFY",
+    "LIVE_TRANSITION_FENCE_MUST_BIND_SELECTED_EXECUTOR",
+    "ACTIVATION_RECEIPT_EXPIRES_WITH_TRANSITION_FENCE",
+    "ALPHA_OMEGA_RUNTIME_TARGET_MUST_MATCH_FDOF_TARGET_WHEN_PACKET_PRESENT",
+    "CAPABILITY_ACTIVATION_IS_NOT_PROVIDER_DISPATCH",
+    "CAPABILITY_ACTIVATION_IS_NOT_PROVIDER_EXECUTION",
+    "CAPABILITY_ACTIVATION_IS_NOT_PROVIDER_SEMANTIC_READBACK",
+    "FDOF_DOES_NOT_CREATE_PROVIDER_AUTHORITY",
+    "F130_REMAINS_TERMINAL_AUTHORITY"
+  ],
+  "v5_promoted_stage": "FDOF_CAPABILITY_ROUTE_AND_FENCE",
+  "v5_unverified_stages": [
+    "PROVIDER_DISPATCH",
+    "PROVIDER_EFFECT",
+    "PROVIDER_SEMANTIC_READBACK",
+    "F130_TERMINAL_COMMIT"
+  ],
+  "truth_boundary": {
+    "fdof_route_and_fence_activation_can_be_proven": true,
+    "activation_is_perpetual": false,
+    "provider_dispatch_proven": false,
+    "provider_execution_proven": false,
+    "provider_semantic_readback_proven": false,
+    "provider_authority_created": false,
+    "f130_terminal_completion_proven": false,
+    "native_chatgpt_interception_proven": false
+  }
+}
