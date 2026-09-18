@@ -1,5 +1,6 @@
 from hashlib import sha256
 from pathlib import Path
+import json
 import subprocess
 import tempfile
 import unittest
@@ -186,6 +187,17 @@ class VirtualExecutorCourt(unittest.TestCase):
                     current_main_sha=before,proposal=proposal,lease=lease,checks=checks,
                 )
             self.assertEqual(before,_git(bare,"rev-parse","refs/heads/main"))
+
+    def test_manifest_requires_protected_admission_by_default(self):
+        root=Path(__file__).resolve().parents[1]
+        m=json.loads((root/"governance/fuse_forge_convergence_v1.json").read_text())
+        route=m["source_admission_route"]
+        self.assertEqual("PROTECTED_LOCAL_GIT_CAS",route["default"])
+        self.assertEqual("FORBIDDEN",route["generic_git_main_mutation"])
+        self.assertEqual("FORBIDDEN",route["raw_git_dir_override_on_mutator"])
+        self.assertTrue(route["post_mutation_readback_required"])
+        self.assertTrue(route["rollback_required"])
+        self.assertFalse(route["provider_native_protection_equivalence_claim"])
 
     def test_failed_worker_blocks_optionality_promotion(self):
         with tempfile.TemporaryDirectory() as d:
