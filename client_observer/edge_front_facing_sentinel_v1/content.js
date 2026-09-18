@@ -31,7 +31,7 @@
 
   function shaLikeFingerprint(text) {
     // Privacy-preserving transport identifier only; not a cryptographic proof.
-    return "sha256:local-fnv32-" + simpleHash(text);
+    return "opaque:fnv32:" + simpleHash(text);
   }
 
   function visibleText(node) {
