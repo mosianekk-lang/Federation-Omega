@@ -1,0 +1,47 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [{
+    "risk": "R4_CORE",
+    "patterns": [
+      "respawn/work_plane_cloud_service_v1.py",
+      "deployments/work_plane/Dockerfile",
+      ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+      "governance/fuse_work_plane_cloud_service_v1.json",
+      "tests/test_work_plane_cloud_service_v1.py",
+      "governance/proofos_omega_policy_extension_work_plane_cloud_service_v1.json",
+      "governance/github_airlock_policy.json"
+    ],
+    "reason": "FUSE_WORK_PLANE_PRIVATE_GCP_GENERATION_CAS_CARRIER"
+  }],
+  "subsystem_rules": [{
+    "subsystem": "FUSE_WORK_PLANE_CLOUD_SERVICE_V1",
+    "patterns": [
+      "respawn/work_plane_cloud_service_v1.py",
+      "deployments/work_plane/Dockerfile",
+      ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+      "governance/fuse_work_plane_cloud_service_v1.json",
+      "tests/test_work_plane_cloud_service_v1.py",
+      "governance/proofos_omega_policy_extension_work_plane_cloud_service_v1.json"
+    ],
+    "depends_on": ["FUSE_WORK_PLANE_RESPAWN_GCS_V1_1", "FEDERATION_CORE"]
+  }],
+  "tests": [{
+    "id": "work_plane_cloud_service_v1",
+    "kind": "unittest_glob",
+    "target": "test_work_plane_cloud_service_v1.py",
+    "patterns": [
+      "respawn/work_plane_cloud_service_v1.py",
+      "deployments/work_plane/Dockerfile",
+      ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+      "governance/fuse_work_plane_cloud_service_v1.json",
+      "tests/test_work_plane_cloud_service_v1.py",
+      "governance/proofos_omega_policy_extension_work_plane_cloud_service_v1.json",
+      "governance/github_airlock_policy.json"
+    ],
+    "subsystems": ["FUSE_WORK_PLANE_CLOUD_SERVICE_V1", "FEDERATION_CORE"],
+    "failure_class": "SUBSYSTEM_REGRESSION",
+    "block_scope": "GLOBAL",
+    "timeout_seconds": 300
+  }]
+}
