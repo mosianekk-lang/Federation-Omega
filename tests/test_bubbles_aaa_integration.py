@@ -30,7 +30,9 @@ def test_existing_bubbles_recovery_contract_is_preserved():
     assert execution["kind"] == "LOCAL_CHAT_FAILURE_RECOVERY"
     assert execution["recovery"]["failure_class"] == "TRANSPORT_INTERRUPTION"
     assert execution["recovery"]["must_continue"] is True
-    assert execution["recovery"]["next_automated_action"] == "RETRY_SAME_ATOMIC_ACTION"
+    assert execution["recovery"]["next_automated_action"] == "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST"
+    assert execution["hypercube"]["triggered"] is True
+    assert execution["hypercube"]["auto_continue_intent"] is True
     assert execution["aaa"]["schema"] == "EVIDENCEOPS-CHAT-FAILURE-AAA-1"
     assert len(execution["aaa"]["receipt_sha256"]) == 64
 
@@ -56,7 +58,9 @@ def test_aaa_suppresses_unchanged_failed_route_without_breaking_contract():
     execution = receipt["execution"]
     assert execution["kind"] == "LOCAL_CHAT_FAILURE_RECOVERY"
     assert execution["recovery"]["failure_class"] == "TRANSPORT_INTERRUPTION"
-    assert execution["recovery"]["next_automated_action"] == "DISCOVER_MATERIALLY_DIFFERENT_ROUTE"
+    assert execution["recovery"]["next_automated_action"] == "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST"
+    assert execution["recovery"]["checkpoint"]["aaa_distinct_route_required"] is True
+    assert execution["hypercube"]["triggered"] is True
     actions = [step["action"] for step in execution["recovery"]["recovery_steps"]]
     assert "SUPPRESS_UNCHANGED_FAILED_ROUTE" in actions
     assert "DISCOVER_MATERIALLY_DIFFERENT_ROUTE" in actions
