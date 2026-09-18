@@ -145,7 +145,7 @@ def _rewrite_effective_recovery(
     retry_allowed: bool,
 ) -> dict[str, Any]:
     effective = json.loads(json.dumps(recovery))
-    if retry_allowed or effective.get("next_automated_action") != "RETRY_SAME_ATOMIC_ACTION":
+    if retry_allowed:
         return effective
 
     steps = list(effective.get("recovery_steps") or [])
@@ -180,7 +180,11 @@ def _rewrite_effective_recovery(
 
     effective["recovery_steps"] = rewritten
     if inserted_distinct_route:
-        effective["next_automated_action"] = "DISCOVER_MATERIALLY_DIFFERENT_ROUTE"
+        checkpoint = effective.get("checkpoint")
+        if isinstance(checkpoint, dict):
+            checkpoint["aaa_distinct_route_required"] = True
+        if effective.get("next_automated_action") != "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST":
+            effective["next_automated_action"] = "DISCOVER_MATERIALLY_DIFFERENT_ROUTE"
     return effective
 
 

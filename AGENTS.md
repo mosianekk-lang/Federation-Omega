@@ -54,6 +54,8 @@ If the private manifest cannot be resolved or its hash does not match, fail clos
 - Material innovation work must also preserve `INNOVATION_CANDIDATE`, `EXPERIMENT_RESULT` and `NEGATIVE_RESULT` events where applicable.
 - Learning events must be append-only, hash-linked, evidence-referenced and stored in an immutable artifact or the approved external append-only evidence plane.
 - Every failure must preserve the original failure evidence, receive a deterministic classification, select the smallest safe repair, and bind a regression test after successful recovery.
+- Every machine-recoverable error, silent long-running execution state, or incomplete progress report must also trigger CFRE→Hypercube improvement harvesting: preserve the checkpoint, classify the execution state, generate materially different recovery/challenger routes, continue unaffected lanes, and remeasure after repair.
+- Explicit owner/user stop overrides automatic continuation. Repository/runtime code must not claim native ChatGPT UI observation unless a bound host supplies the relevant telemetry.
 - A repeated failure fingerprint must open the affected circuit and require a materially different route.
 - Every success must record proof and measurable value; repeated success may create a route-confidence candidate but must never transfer trust to another workflow.
 - Every constraint must update the constraint register and activate the strongest safe fallback route.
