@@ -142,7 +142,7 @@ class PreFinalGateTests(unittest.TestCase):
         )
         self.assertFalse(blocked.allow_final)
         self.assertTrue(blocked.rewrite_required)
-        self.assertIn("NONTERMINAL_PRESENTATION_BANNER_REQUIRED", blocked.reasons)
+        self.assertIn("NONTERMINAL_PRESENTATION_PREFIX_REQUIRED", blocked.reasons)
 
         allowed = self.gate.evaluate(
             mission=mission,
