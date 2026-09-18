@@ -1,40 +1,73 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
-  "risk_rules": [{
-    "risk": "R4_CORE",
-    "patterns": [
-      "federation/fuse_forge_source_protection_v1.py",
-      "governance/fuse_forge_convergence_v1.json",
-      "tests/test_fuse_forge_source_protection_v1.py",
-      "governance/proofos_omega_policy_extension_fuse_forge_source_protection_v1.json"
-    ],
-    "reason": "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_AND_MERGE_ADMISSION"
-  }],
-  "subsystem_rules": [{
-    "subsystem": "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1",
-    "patterns": [
-      "federation/fuse_forge_source_protection_v1.py",
-      "governance/fuse_forge_convergence_v1.json",
-      "tests/test_fuse_forge_source_protection_v1.py",
-      "governance/proofos_omega_policy_extension_fuse_forge_source_protection_v1.json"
-    ],
-    "depends_on": ["FEDERATION_CORE"]
-  }],
+  "version": "1.1.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/fuse_forge_source_protection_v1.py",
+        "federation/fuse_forge_virtual_executor_v1.py",
+        "governance/fuse_forge_convergence_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_forge_source_protection_v1.json",
+        "tests/test_fuse_forge_source_protection_v1.py",
+        "tests/test_fuse_forge_virtual_executor_v1.py"
+      ],
+      "reason": "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_AND_MERGE_ADMISSION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1",
+      "patterns": [
+        "federation/fuse_forge_source_protection_v1.py",
+        "federation/fuse_forge_virtual_executor_v1.py",
+        "governance/fuse_forge_convergence_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_forge_source_protection_v1.json",
+        "tests/test_fuse_forge_source_protection_v1.py",
+        "tests/test_fuse_forge_virtual_executor_v1.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
   "historical_associations": [],
-  "tests": [{
-    "id": "fuse_forge_source_protection_v1",
-    "kind": "unittest_glob",
-    "target": "test_fuse_forge_source_protection_v1.py",
-    "patterns": [
-      "federation/fuse_forge_source_protection_v1.py",
-      "governance/fuse_forge_convergence_v1.json",
-      "tests/test_fuse_forge_source_protection_v1.py",
-      "governance/proofos_omega_policy_extension_fuse_forge_source_protection_v1.json"
-    ],
-    "subsystems": ["FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1","FEDERATION_CORE"],
-    "failure_class": "SUBSYSTEM_REGRESSION",
-    "block_scope": "GLOBAL",
-    "timeout_seconds": 240
-  }]
+  "tests": [
+    {
+      "id": "fuse_forge_protected_source_admission_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_forge_virtual_executor_v1.py",
+      "patterns": [
+        "federation/fuse_forge_virtual_executor_v1.py",
+        "tests/test_fuse_forge_virtual_executor_v1.py",
+        "governance/fuse_forge_convergence_v1.json",
+        "governance/proofos_omega_policy_extension_fuse_forge_source_protection_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "fuse_forge_source_protection_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_forge_source_protection_v1.py",
+      "patterns": [
+        "federation/fuse_forge_source_protection_v1.py",
+        "governance/fuse_forge_convergence_v1.json",
+        "tests/test_fuse_forge_source_protection_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_forge_source_protection_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
 }
