@@ -1,0 +1,77 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/f130_authoritative_snapshot_compiler_v1.py",
+        "federation/runtime_convergence_binding_v7.py",
+        "formation_omega/durable_mission_runtime_v1.py",
+        "formation_omega/mission_convergence.py",
+        "bubbles/mission_proof_passport.py",
+        "federation/fuse_mission_runtime_interlock_v1.py",
+        "tests/test_runtime_convergence_binding_v7.py",
+        "governance/runtime_convergence_binding_v7.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v7.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V7.md"
+      ],
+      "reason": "FUSE_AUTHORITATIVE_WHOLE_MISSION_SNAPSHOT_AND_F130_RUNTIME_CONVERGENCE_V7"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_F130_AUTHORITATIVE_SNAPSHOT_V1",
+      "patterns": [
+        "federation/f130_authoritative_snapshot_compiler_v1.py",
+        "formation_omega/durable_mission_runtime_v1.py",
+        "formation_omega/mission_convergence.py",
+        "bubbles/mission_proof_passport.py",
+        "federation/fuse_mission_runtime_interlock_v1.py"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE"
+      ]
+    },
+    {
+      "subsystem": "FUSE_RUNTIME_CONVERGENCE_BINDING_V7",
+      "patterns": [
+        "federation/runtime_convergence_binding_v7.py",
+        "tests/test_runtime_convergence_binding_v7.py",
+        "governance/runtime_convergence_binding_v7.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v7.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V7.md"
+      ],
+      "depends_on": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V6",
+        "FUSE_F130_AUTHORITATIVE_SNAPSHOT_V1",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "runtime_convergence_binding_v7",
+      "kind": "unittest_glob",
+      "target": "test_runtime_convergence_binding_v7.py",
+      "patterns": [
+        "federation/f130_authoritative_snapshot_compiler_v1.py",
+        "federation/runtime_convergence_binding_v7.py",
+        "formation_omega/durable_mission_runtime_v1.py",
+        "formation_omega/mission_convergence.py",
+        "bubbles/mission_proof_passport.py",
+        "federation/fuse_mission_runtime_interlock_v1.py",
+        "tests/test_runtime_convergence_binding_v7.py",
+        "governance/runtime_convergence_binding_v7.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v7.json"
+      ],
+      "subsystems": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V7"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 360
+    }
+  ]
+}
