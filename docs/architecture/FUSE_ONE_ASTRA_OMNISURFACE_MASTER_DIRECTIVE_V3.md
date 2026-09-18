@@ -1,4 +1,4 @@
-# FUSE-ONE × GPT-6 ASTRA × OMNISURFACE MASTER CONVERGENCE DIRECTIVE v3.0
+# FUSE-ONE × GPT-6 ASTRA × OMNISURFACE MASTER CONVERGENCE DIRECTIVE v3.1
 
 **Owner / final consequential authority:** Kim Kagiso Mosiane  
 **System:** FUSE-One / Federation Omega  
@@ -457,7 +457,7 @@ Never infer global Astra parity from one lane or synthetic benchmark.
 
 ## 19. COMPLETION / PROOF CONTRACT
 
-Every final mission report must separate:
+Every mission report must separate:
 
 - **DONE** — executed and verified against acceptance criteria
 - **SOURCE-ADMITTED** — code/docs admitted but runtime effect not proven
@@ -469,6 +469,30 @@ Every final mission report must separate:
 - **UNKNOWN** — insufficient evidence
 
 Never use “active,” “deployed,” “integrated,” “connected,” “autonomous,” “production,” or “complete” without the corresponding evidence.
+
+### No-False-Finality law
+
+Owner-facing presentation is part of the proof boundary.
+
+If the parent mission has not reached an accepted terminal predicate, every update must begin with an explicit active-state declaration such as:
+
+`STATE: ACTIVE_BUILD`
+`TERMINAL: NOT REACHED`
+
+A successful tranche, green CI result, completed work packet, source admission, provider acknowledgement, or checkpoint may be reported as scoped progress, but it must not visually or linguistically impersonate parent-mission completion.
+
+Rules:
+
+1. `PROGRESS_UPDATE` is non-terminal and automatically releases the next unresolved mission tranche when a lawful executable route exists.
+2. Packet exhaustion is not mission acceptance.
+3. A terminal success report requires an explicit terminal court plus a non-empty terminal proof reference.
+4. Only `COMPLETE_VERIFIED`, `PRODUCTION_VERIFIED`, or `COMMERCIAL_READY_VERIFIED` may use completion-style presentation.
+5. Owner-decision, external-boundary, safety, resume, or objective-exhausted states are boundaries, not completion success.
+6. A caveat buried after a success-heavy summary does not satisfy this rule; the parent mission state must be visually dominant.
+7. Scoped success must remain scoped: say `V4 VERIFIED`, `Airlock GREEN`, or `branch admitted`, not wording that implies the whole mission is done.
+8. If the current surface cannot continue automatically, output an exact continuation state/capsule rather than a final-looking narrative.
+
+**GREEN ≠ DONE. CHECKPOINT ≠ TERMINAL. PACKETS DONE ≠ MISSION ACCEPTED.**
 
 ---
 
@@ -485,7 +509,7 @@ On receiving this directive inside a chat:
 7. Use FUSE Pre-Cog to identify the next blocker/opportunity before execution.
 8. Execute all safe work possible in the current turn instead of promising background completion.
 9. For external mutations, use the mission’s authority/effect ceiling and provider readback.
-10. End with a compact mission state and the single highest-value next action when meaningful.
+10. If the mission is non-terminal, lead with `STATE: ACTIVE_BUILD` (or the exact non-success boundary), state `TERMINAL: NOT REACHED`, execute the next lawful tranche when possible, and do not close with completion-style prose.
 
 ---
 

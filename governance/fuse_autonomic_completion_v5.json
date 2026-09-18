@@ -36,5 +36,26 @@
     "IRREDUCIBLE_EXTERNAL_BOUNDARY",
     "SAFETY_OR_AUTHORITY_BOUNDARY"
   ],
-  "version": "5.0.1"
+  "version": "5.0.2",
+  "finality_presentation": {
+    "packet_completion_is_not_terminal_acceptance": true,
+    "explicit_terminal_court_required_for_noncommercial_success": true,
+    "terminal_report_requires_terminal_proof_ref": true,
+    "progress_update_forces_active_build_state": true,
+    "progress_update_must_not_use_completion_style": true,
+    "green_tranche_auto_releases_next_unresolved_tranche": true,
+    "owner_facing_status_must_lead_with_state": true,
+    "active_state_terminal_line": "TERMINAL: NOT REACHED",
+    "success_terminal_states": [
+      "COMPLETE_VERIFIED",
+      "PRODUCTION_VERIFIED",
+      "COMMERCIAL_READY_VERIFIED"
+    ],
+    "non_success_boundaries": [
+      "OBJECTIVE_EXHAUSTED",
+      "IRREDUCIBLE_OWNER_DECISION",
+      "IRREDUCIBLE_EXTERNAL_BOUNDARY",
+      "SAFETY_OR_AUTHORITY_BOUNDARY"
+    ]
+  }
 }

@@ -19,6 +19,7 @@ import re
 from typing import Any, Iterable, Mapping, Optional
 
 from .state import DurableState
+from federation.finality_guard_v1 import FalseFinalityError, FinalityPresentationGuard
 
 
 MATERIAL_MATURITY_RE = re.compile(
@@ -139,6 +140,8 @@ class MissionClosureState:
     irreducible_blocker: str = ""
     exhaustion_evidence_ref: str = ""
     resumable_checkpoint_ref: str = ""
+    terminal_proof_ref: str = ""
+    response_emission_requested: bool = True
     currently_executable_work: bool = False
     outcome_first_continue_recovery: bool = False
 
@@ -176,10 +179,13 @@ def _stable_hash(value: Any) -> str:
 
 
 class PreFinalGate:
-    """Fail-closed mission-closure and claim-integrity Stop gate."""
+    """Fail-closed mission-closure, claim-integrity and finality-presentation gate."""
 
-    version = "1.0.0"
+    version = "1.1.0"
     enforcement_point = "PRE_FINAL_RESPONSE"
+
+    def __init__(self, presentation_guard: FinalityPresentationGuard | None = None) -> None:
+        self.presentation_guard = presentation_guard or FinalityPresentationGuard()
 
     def evaluate(
         self,
@@ -200,6 +206,50 @@ class PreFinalGate:
         safe_statements: list[str] = []
         missing_controls: list[str] = []
         rewrite_required = False
+
+        presentation = None
+        if mission.response_emission_requested:
+            try:
+                if mission.terminal_state is TerminalState.VERIFIED_COMPLETE:
+                    presentation = self.presentation_guard.classify(
+                        output_class="TERMINAL_REPORT",
+                        terminal_state="COMPLETE_VERIFIED",
+                        terminal_proof_ref=mission.terminal_proof_ref,
+                    )
+                elif mission.terminal_state is TerminalState.OWNER_DECISION_REQUIRED:
+                    presentation = self.presentation_guard.classify(
+                        output_class="OWNER_DECISION",
+                        terminal_state="IRREDUCIBLE_OWNER_DECISION",
+                    )
+                elif mission.terminal_state in {
+                    TerminalState.ACTIVE_TURN_BOUNDARY,
+                    TerminalState.BLOCKED_IRREDUCIBLY,
+                    TerminalState.LEGAL_OR_SAFETY_PROHIBITION,
+                }:
+                    presentation = self.presentation_guard.classify(
+                        output_class="RESUME_CAPSULE",
+                        terminal_state=mission.terminal_state.value,
+                    )
+                else:
+                    presentation = self.presentation_guard.classify(
+                        output_class="PROGRESS_UPDATE",
+                        terminal_state="",
+                    )
+            except FalseFinalityError as exc:
+                reasons.append(f"FALSE_FINALITY_BLOCK:{exc}")
+                rewrite_required = True
+                presentation = self.presentation_guard.classify(output_class="PROGRESS_UPDATE")
+
+            candidate = (candidate_response or "").strip()
+            if candidate and presentation is not None and not presentation.completion_style_allowed:
+                lines = [line.strip() for line in candidate.splitlines() if line.strip()]
+                has_banner = bool(lines) and lines[0] == presentation.banner
+                has_terminal_line = presentation.terminal_line in lines[:4]
+                has_next_line = presentation.next_line in lines[:6]
+                if not has_banner or not has_terminal_line or not has_next_line:
+                    reasons.append("NONTERMINAL_PRESENTATION_PREFIX_REQUIRED")
+                    rewrite_required = True
+                    safe_statements.extend((presentation.banner, presentation.terminal_line, presentation.next_line))
 
         if MATERIAL_MATURITY_RE.search(candidate_response or "") and not scans:
             reasons.append("MATERIAL_MATURITY_CLAIM_SCAN_REQUIRED")
@@ -402,6 +452,8 @@ class ChatGovPreFinalInterlock:
                 "event": "PRE_FINAL_RESPONSE_DECISION",
                 "gate_version": self.gate.version,
                 "terminal_state": mission.terminal_state.value,
+                "terminal_proof_ref": mission.terminal_proof_ref,
+                "response_emission_requested": mission.response_emission_requested,
                 "objective_satisfied": mission.objective_satisfied,
                 "actionable_gap_count": actionable_count,
                 "decision": asdict(decision),
@@ -409,6 +461,7 @@ class ChatGovPreFinalInterlock:
             proof_bearing=bool(
                 decision.allow_final
                 and mission.terminal_state is TerminalState.VERIFIED_COMPLETE
+                and bool(mission.terminal_proof_ref.strip())
             ),
         )
         self.state.update_metric(

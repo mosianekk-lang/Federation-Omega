@@ -547,6 +547,12 @@ class MissionRuntimeInterlock:
                 owner_decision_request=(snapshot.genuine_owner_decisions[0] if snapshot.genuine_owner_decisions else ""),
                 irreducible_blocker=snapshot.irreducible_blocker,
                 exhaustion_evidence_ref=snapshot.exhaustion_evidence_ref,
+                # This is the F130 internal terminal authorization court, not
+                # owner-facing response emission.  The terminal proof is the
+                # post-CAS MissionRuntimeDecision receipt, so requiring that
+                # proof before commit would be circular.  Actual outward
+                # emission remains response_emission_requested=True in ChatGov.
+                response_emission_requested=False,
                 currently_executable_work=bool(facts["machine_work_exists"]),
                 outcome_first_continue_recovery=bool(facts["machine_work_exists"] and not facts["terminal_ready"]),
             ),
