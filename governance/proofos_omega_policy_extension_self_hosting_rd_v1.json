@@ -1,16 +1,20 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "risk_rules": [
     {
       "risk": "R4_CORE",
       "patterns": [
         "governance/self_hosting_rd_court_v1.json",
+        "governance/self_hosting_rd_challenger_v1.json",
         "governance/proofos_omega_policy_extension_self_hosting_rd_v1.json",
+        "federation/self_hosting_rd_challenger_v1.py",
         "tests/test_self_hosting_rd_court_v1.py",
-        "docs/architecture/SELF_HOSTING_RD_COURT_V1.md"
+        "tests/test_self_hosting_rd_challenger_v1.py",
+        "docs/architecture/SELF_HOSTING_RD_COURT_V1.md",
+        "docs/architecture/SELF_HOSTING_RD_CHALLENGER_V1.md"
       ],
-      "reason": "SELF_HOSTING_RD_SOURCE_PROMOTION_AND_RECURSIVE_SOVEREIGNTY_BOUNDARY"
+      "reason": "SELF_HOSTING_RD_SOURCE_PROMOTION_RECURSIVE_SOVEREIGNTY_AND_BOUNDED_CHALLENGER_EXECUTION"
     }
   ],
   "subsystem_rules": [
@@ -22,10 +26,18 @@
         "tests/test_self_hosting_rd_court_v1.py",
         "docs/architecture/SELF_HOSTING_RD_COURT_V1.md"
       ],
-      "depends_on": [
-        "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1",
-        "FEDERATION_CORE"
-      ]
+      "depends_on": ["FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1","FEDERATION_CORE"]
+    },
+    {
+      "subsystem": "SELF_HOSTING_RD_CHALLENGER_V1",
+      "patterns": [
+        "federation/self_hosting_rd_challenger_v1.py",
+        "governance/self_hosting_rd_challenger_v1.json",
+        "tests/test_self_hosting_rd_challenger_v1.py",
+        "docs/architecture/SELF_HOSTING_RD_CHALLENGER_V1.md",
+        "governance/proofos_omega_policy_extension_self_hosting_rd_v1.json"
+      ],
+      "depends_on": ["SELF_HOSTING_RD_COURT_V1","FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1","FEDERATION_CORE"]
     }
   ],
   "historical_associations": [],
@@ -40,14 +52,26 @@
         "tests/test_self_hosting_rd_court_v1.py",
         "docs/architecture/SELF_HOSTING_RD_COURT_V1.md"
       ],
-      "subsystems": [
-        "SELF_HOSTING_RD_COURT_V1",
-        "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1",
-        "FEDERATION_CORE"
-      ],
+      "subsystems": ["SELF_HOSTING_RD_COURT_V1","FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1","FEDERATION_CORE"],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 180
+    },
+    {
+      "id": "self_hosting_rd_challenger_v1",
+      "kind": "unittest_glob",
+      "target": "test_self_hosting_rd_challenger_v1.py",
+      "patterns": [
+        "federation/self_hosting_rd_challenger_v1.py",
+        "governance/self_hosting_rd_challenger_v1.json",
+        "tests/test_self_hosting_rd_challenger_v1.py",
+        "docs/architecture/SELF_HOSTING_RD_CHALLENGER_V1.md",
+        "governance/proofos_omega_policy_extension_self_hosting_rd_v1.json"
+      ],
+      "subsystems": ["SELF_HOSTING_RD_CHALLENGER_V1","SELF_HOSTING_RD_COURT_V1","FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1","FEDERATION_CORE"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
     }
   ]
 }
