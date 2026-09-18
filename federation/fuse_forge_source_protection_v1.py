@@ -76,6 +76,7 @@ class SourceProposal:
     author: str
     changed_paths: tuple[str,...]
     signed_head: bool
+    signature_evidence_ref: str=""
     direct_main_write: bool=False
     dependencies: tuple[str,...]=()
 
@@ -101,6 +102,8 @@ class MergePermit:
     fencing_token: int
     required_checks: tuple[str,...]
     changed_paths_sha256: str
+    signature_evidence_sha256: str
+    checks_sha256: str
     external_effect_authorized: bool
     permit_sha256: str
 
@@ -152,6 +155,8 @@ class SovereignSourceProtection:
             reasons.append("DIRECT_MAIN_WRITE_FORBIDDEN")
         if self.policy.require_signed_head and not proposal.signed_head:
             reasons.append("SIGNED_HEAD_REQUIRED")
+        elif self.policy.require_signed_head and not proposal.signature_evidence_ref.strip():
+            reasons.append("SIGNED_HEAD_EVIDENCE_REQUIRED")
         if self.policy.require_fresh_main_cas and proposal.base_sha != current_main_sha:
             reasons.append("STALE_MAIN_CAS")
         if self.policy.require_active_fence and lease.state.upper() != "ACTIVE":
@@ -180,6 +185,11 @@ class SovereignSourceProtection:
                 "fencing_token":lease.fencing_token,
                 "required_checks":self.policy.required_checks,
                 "changed_paths_sha256":_digest(sorted(proposal.changed_paths)),
+                "signature_evidence_sha256":_digest(proposal.signature_evidence_ref),
+                "checks_sha256":_digest([
+                    {"check_id":c.check_id,"state":c.state,"evidence_ref":c.evidence_ref}
+                    for c in sorted(checks,key=lambda row:row.check_id)
+                ]),
                 "external_effect_authorized":False,
             }
             permit=MergePermit(**body,permit_sha256=_digest(body))
