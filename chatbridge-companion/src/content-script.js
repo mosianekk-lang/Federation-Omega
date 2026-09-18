@@ -2,18 +2,27 @@
   "use strict";
 
   const core = globalThis.ChatBridgeCore;
-  if (!core || globalThis.__chatBridgeCompanionLoaded) return;
+  const frontCore = globalThis.ChatBridgeFrontStatus;
+  if (!core || !frontCore || globalThis.__chatBridgeCompanionLoaded) return;
   globalThis.__chatBridgeCompanionLoaded = true;
 
   let checkpointTimer = null;
   let periodicTimer = null;
+  let frontStatusTimer = null;
   let captureInFlight = false;
+  let frontTracker = null;
+  let lastOwnerStopAt = -Infinity;
   let settings = {
     autoSend: true,
     maxReplayChars: 28000,
     tokenThreshold: 65000,
     messageThreshold: 80,
-    captureIntervalMs: 30000
+    captureIntervalMs: 30000,
+    frontStatusEnabled: true,
+    frontStatusPollMs: 5000,
+    stallThresholdMs: 90000,
+    incompleteGraceMs: 15000,
+    ownerStopSuppressMs: 15000
   };
 
   function status(message, kind, timeoutMs) {
@@ -39,6 +48,134 @@
       messages,
       terminalNotice: core.findLimitNotice(document)
     });
+  }
+
+  function visible(node) {
+    if (!node || !(node instanceof Element)) return false;
+    const style = getComputedStyle(node);
+    if (style.display === "none" || style.visibility === "hidden" || Number(style.opacity || "1") === 0) return false;
+    const rect = node.getBoundingClientRect();
+    return rect.width > 0 && rect.height > 0;
+  }
+
+  function isStopControl(node) {
+    if (!node || !(node instanceof Element)) return false;
+    const button = node.closest("button");
+    if (!button) return false;
+    const testId = String(button.getAttribute("data-testid") || "").toLowerCase();
+    const aria = String(button.getAttribute("aria-label") || "").toLowerCase();
+    const text = String(button.textContent || "").trim().toLowerCase();
+    return (
+      testId.includes("stop")
+      || aria.includes("stop")
+      || /^(stop|stop generating|stop response)$/.test(text)
+    );
+  }
+
+  function findStopControl() {
+    const explicit = document.querySelector(
+      "button[data-testid='stop-button'], button[data-testid*='stop'], button[aria-label*='Stop'], button[aria-label*='stop']"
+    );
+    if (explicit && visible(explicit)) return explicit;
+    return Array.from(document.querySelectorAll("main button, form button"))
+      .find((button) => visible(button) && isStopControl(button)) || null;
+  }
+
+  function frontContentSignature() {
+    const assistants = Array.from(document.querySelectorAll("[data-message-author-role='assistant']"));
+    const recentAssistants = assistants.slice(-3).map((node) => core.normalizeText(node.textContent || "").slice(-2400));
+    const toolRows = Array.from(
+      document.querySelectorAll("main button, main [role='button'], main [data-testid], main [aria-live]")
+    ).filter((node) => {
+      if (!visible(node)) return false;
+      const text = core.normalizeText(node.textContent || "");
+      return /(called tool|working|searching|thinking|analyzing|analysing|executing|reading|writing|running|generating|loading)/i.test(text);
+    }).slice(-8).map((node) => core.normalizeText(node.textContent || "").slice(0, 500));
+    return core.fnv1a(JSON.stringify({
+      assistantCount: assistants.length,
+      recentAssistants,
+      toolRows
+    }));
+  }
+
+  function responseInflightSnapshot() {
+    const stopControl = findStopControl();
+    const busy = Array.from(document.querySelectorAll("main [aria-busy='true'], main [role='progressbar']"))
+      .some((node) => visible(node));
+    return {
+      responseInflight: Boolean(stopControl || busy),
+      stopButtonVisible: Boolean(stopControl)
+    };
+  }
+
+  async function emitFrontStatus(frontEvent) {
+    const packet = currentPacket();
+    const message = {
+      type: "CHATBRIDGE_FRONT_STATUS",
+      packet,
+      frontStatus: {
+        schema: frontEvent.schema,
+        eventKind: frontEvent.eventKind,
+        eventId: frontEvent.eventId,
+        observedAtMs: frontEvent.observedAtMs,
+        noProgressMs: frontEvent.noProgressMs,
+        responseInflight: frontEvent.responseInflight,
+        stopButtonVisible: frontEvent.stopButtonVisible,
+        ownerVisibleProgress: frontEvent.ownerVisibleProgress,
+        stage: frontEvent.stage,
+        reason: frontEvent.reason,
+        contentSignature: frontEvent.contentSignature
+      }
+    };
+    const result = await chrome.runtime.sendMessage(message);
+    if (!result || !result.ok) throw new Error(result && result.error || "FRONT_STATUS_CAPTURE_FAILED");
+
+    if (frontEvent.eventKind === frontCore.SILENT_LONG_RUNNING_EXECUTION) {
+      status("Hypercube detected silent execution — recovery signal captured", "error", 12000);
+    } else if (frontEvent.eventKind === frontCore.INCOMPLETE_PROGRESS_REPORTING) {
+      status("Hypercube detected incomplete progress — improvement/continue trigger captured", "error", 12000);
+    } else if (frontEvent.eventKind === frontCore.USER_INTERRUPTION) {
+      status("ChatBridge observed explicit stop — automatic recovery suppressed", "info", 8000);
+    }
+    return result;
+  }
+
+  function ensureFrontTracker() {
+    if (!frontTracker) {
+      frontTracker = frontCore.createTracker({
+        stallThresholdMs: settings.stallThresholdMs,
+        incompleteGraceMs: settings.incompleteGraceMs,
+        ownerStopSuppressMs: settings.ownerStopSuppressMs
+      });
+    } else {
+      frontTracker.configure({
+        stallThresholdMs: settings.stallThresholdMs,
+        incompleteGraceMs: settings.incompleteGraceMs,
+        ownerStopSuppressMs: settings.ownerStopSuppressMs
+      });
+    }
+    return frontTracker;
+  }
+
+  function observeFrontStatus(reason) {
+    if (!settings.frontStatusEnabled) return;
+    const tracker = ensureFrontTracker();
+    const inflight = responseInflightSnapshot();
+    const observedAtMs = Date.now();
+    const result = tracker.observe({
+      observedAtMs,
+      responseInflight: inflight.responseInflight,
+      stopButtonVisible: inflight.stopButtonVisible,
+      ownerVisibleProgress: true,
+      stage: "CHATGPT_FRONTEND_GENERATION",
+      reason: reason || "OBSERVE",
+      contentSignature: frontContentSignature()
+    });
+    for (const event of result.events) {
+      emitFrontStatus(event).catch((error) => {
+        status(`Hypercube front-status capture failed: ${String(error.message || error)}`, "error", 10000);
+      });
+    }
   }
 
   async function checkpoint(reason) {
@@ -198,6 +335,12 @@
     status("ChatBridge Ω4.9 ledger export created", "ready", 10000);
   }
 
+  document.addEventListener("click", (event) => {
+    if (!isStopControl(event.target)) return;
+    lastOwnerStopAt = Date.now();
+    ensureFrontTracker().markOwnerStop(lastOwnerStopAt);
+  }, true);
+
   document.addEventListener("keydown", (event) => {
     if (!event.altKey || !event.shiftKey) return;
     if (event.code === "KeyB") {
@@ -212,15 +355,23 @@
 
   chrome.runtime.sendMessage({type: "CHATBRIDGE_SETTINGS"}).then((result) => {
     if (result && result.ok) settings = Object.assign(settings, result.settings);
+    ensureFrontTracker();
     sendPendingPackets().catch((error) => status(String(error.message || error), "error", 10000));
     scheduleCheckpoint("INITIAL_LOAD");
+    observeFrontStatus("INITIAL_LOAD");
     clearInterval(periodicTimer);
     periodicTimer = setInterval(() => checkpoint("PERIODIC_WRITE_AHEAD").catch(() => {}), Math.max(10000, Number(settings.captureIntervalMs) || 30000));
+    clearInterval(frontStatusTimer);
+    frontStatusTimer = setInterval(
+      () => observeFrontStatus("FRONT_STATUS_POLL"),
+      Math.max(1000, Number(settings.frontStatusPollMs) || 5000)
+    );
   });
 
   const observer = new MutationObserver(() => {
     decorateLimitBanner();
     scheduleCheckpoint("DOM_CHANGE");
+    observeFrontStatus("DOM_CHANGE");
   });
   observer.observe(document.documentElement, {subtree: true, childList: true, characterData: true});
   document.addEventListener("visibilitychange", () => {
