@@ -1,0 +1,48 @@
+{
+  "schema": "FUSE-RUNTIME-CONVERGENCE-BINDING-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "capability_id": "FUSE-FRCB-001",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "purpose": "Bind actual mandatory-stage outputs into the existing OF50 completion chain so reference strings cannot substitute for execution.",
+  "canonical_role": "ADAPTER_AND_RECEIPT_BINDING_ONLY",
+  "reuses": [
+    "FUSE-AAREK-V1.1",
+    "FUSE-OF50-ACE-CURRENT",
+    "OH50 SwarmManifest",
+    "EvidenceOps Formation Innovation",
+    "Alpha-Omega Turnkey"
+  ],
+  "must_not_create": [
+    "NEW_SCHEDULER",
+    "NEW_AUTHORITY_PLANE",
+    "NEW_PROOF_PLANE",
+    "NEW_MEMORY_ROOT",
+    "NEW_FOUNDRY",
+    "NEW_PROVIDER_RUNTIME",
+    "NEW_TOP_LEVEL_CONTROLLER"
+  ],
+  "hard_rules": [
+    "REFERENCE_IS_NOT_EXECUTION",
+    "NONEMPTY_ID_IS_NOT_VALID_RECEIPT",
+    "MISSION_IDENTITY_MUST_MATCH",
+    "OBJECTIVE_IDENTITY_MUST_MATCH",
+    "AUTHORITY_MUST_NOT_WIDEN",
+    "BUILD_REQUIRED_REQUIRES_ALPHA_OMEGA_PACKET",
+    "STRUCTURAL_BINDING_MUST_NOT_BE_DESCRIBED_AS_PRODUCER_EXECUTION"
+  ],
+  "v1_proven_stage": "AAREK_REAL_INVOCATION",
+  "v1_structural_only_stages": [
+    "OH50",
+    "FORMATION_INNOVATION",
+    "ALPHA_OMEGA_IF_REQUIRED"
+  ],
+  "truth_boundary": {
+    "aarek_execution_can_be_proven_by_this_binding": true,
+    "oh50_execution_proven_by_typed_manifest": false,
+    "formation_execution_proven_by_decision_object": false,
+    "alpha_omega_execution_proven_by_packet": false,
+    "provider_execution_inherited": false,
+    "runtime_binding_is_provider_authority": false
+  }
+}
