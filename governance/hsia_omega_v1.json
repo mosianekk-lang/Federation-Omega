@@ -1,0 +1,70 @@
+{
+  "schema": "FUSE-HSIA-OMEGA-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "system": "HSIA-OMEGA",
+  "kind": "FRONTIER_CONVERGENCE_CFBE_EXTENSION",
+  "objective": "Daily changed-state intelligence assimilation across 100 companies, 100 algorithms/mechanisms, 100 patent/research exemplars and 100 authoritative intelligence sources; discover missing FUSE capabilities and compile proof-gated durable closure work.",
+  "corpus_targets": {
+    "companies": 100,
+    "algorithms": 100,
+    "patent_papers": 100,
+    "intelligence_sources": 100
+  },
+  "cadence": {
+    "daily": "CHANGED_STATE_REFRESH",
+    "weekly": "FULL_400_NODE_REBASELINE",
+    "monthly": "PATENT_FAMILY_CITATION_RIGHTS_FTO_REVIEW"
+  },
+  "five_d": [
+    "DISCOVER",
+    "EXTRACT_MECHANISM",
+    "IDENTIFY_WHY_IT_WORKS",
+    "REMOVE_VENDOR_SPECIFIC_NOISE",
+    "COMPARE_COMPOSE"
+  ],
+  "dispositions": [
+    "REUSE",
+    "EXTEND",
+    "COMPOSE",
+    "REPURPOSE",
+    "BUILD_RESIDUAL",
+    "REJECT"
+  ],
+  "reuse_before_invention": true,
+  "changed_state_first": true,
+  "source_mutation_serialized_by_fdof": true,
+  "global_propagation_requires": [
+    "PROVENANCE",
+    "RIGHTS_OR_FTO_GATE",
+    "NON_REGRESSION",
+    "RECEIVER_LOCAL_OR_NATURAL_EVIDENCE_AS_REQUIRED"
+  ],
+  "propagation_targets": [
+    "Harvest Genome",
+    "Opportunity Radar",
+    "Desired State",
+    "Capability Federation Map",
+    "Route Memory",
+    "Learning Ledger",
+    "Shared Learnings",
+    "System/receiver projections",
+    "Global receiver bootstrap"
+  ],
+  "authority": {
+    "ceiling": "A1_INTERNAL",
+    "provider_effects": false,
+    "iam": false,
+    "secrets": false,
+    "billing": false,
+    "public_traffic": false,
+    "device_customer_effects": false
+  },
+  "non_duplication": {
+    "new_controller": false,
+    "new_scheduler": false,
+    "new_memory_root": false,
+    "new_proof_plane": false,
+    "new_authority_plane": false
+  },
+  "chat_role": "DETACHABLE_CLIENT_ONLY"
+}\n
