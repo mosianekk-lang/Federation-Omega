@@ -1,0 +1,49 @@
+{
+  "schema": "FUSE-RUNTIME-CONVERGENCE-BINDING-GOVERNANCE-V3",
+  "version": "3.0.0",
+  "capability_id": "FUSE-FRCB-003",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "purpose": "Promote Formation Innovation only when an EvidenceOps FoundryCycleResult is PASSED, its internal chain proof verifies, and its exact receipt digest is the FormationDecision foundry reference consumed by OF50.",
+  "canonical_role": "ADAPTER_AND_RECEIPT_BINDING_ONLY",
+  "reuses": [
+    "FUSE-FRCB-002",
+    "EvidenceOps FoundryCycleResult",
+    "EvidenceOps Formation OF50 adapter",
+    "FUSE-OF50-ACE-CURRENT"
+  ],
+  "must_not_create": [
+    "NEW_SCHEDULER",
+    "NEW_AUTHORITY_PLANE",
+    "NEW_PROOF_PLANE",
+    "NEW_MEMORY_ROOT",
+    "NEW_FOUNDRY",
+    "NEW_PROVIDER_RUNTIME",
+    "NEW_TOP_LEVEL_CONTROLLER"
+  ],
+  "hard_rules": [
+    "FOUNDRY_CYCLE_STATUS_MUST_BE_PASSED",
+    "PASSED_WITH_HELD_GATES_MUST_NOT_PROMOTE",
+    "FOUNDRY_PROOF_SHA256_MUST_RECOMPUTE",
+    "REGISTRY_LEARNING_AND_EVOLUTION_CHAINS_MUST_VERIFY",
+    "FORMATION_DECISION_MUST_BIND_EXACT_FOUNDRY_RECEIPT_SHA256",
+    "SAME_CYCLE_ID_WITH_DIFFERENT_BODY_MUST_NOT_SUBSTITUTE",
+    "FORMATION_AUTHORITY_MUST_REMAIN_A1_INTERNAL",
+    "FORMATION_EXTERNAL_EFFECT_MUST_REMAIN_FALSE",
+    "FOUNDRY_RECEIPT_HAS_NO_NATIVE_MISSION_ID",
+    "F130_REMAINS_TERMINAL_AUTHORITY"
+  ],
+  "v3_promoted_stage": "FORMATION_FOUNDRY_CYCLE_RECEIPT",
+  "v3_structural_only_stages": [
+    "ALPHA_OMEGA_IF_REQUIRED"
+  ],
+  "truth_boundary": {
+    "formation_local_foundry_cycle_integrity_can_be_proven": true,
+    "formation_mission_identity_native_to_foundry_receipt": false,
+    "formation_independent_external_attestation_proven": false,
+    "alpha_omega_execution_proven": false,
+    "provider_execution_proven": false,
+    "f130_terminal_completion_proven": false,
+    "native_chatgpt_interception_proven": false
+  }
+}
