@@ -230,8 +230,22 @@ class RuntimeConvergenceBinderV2:
             "truth_boundary": dict(truth_boundary),
         }
         receipt = RuntimeConvergenceReceiptV2(
-            **material,
+            schema=SCHEMA,
+            version=VERSION,
+            capability_id=CAPABILITY_ID,
+            mission_id=of50_request.mission_id,
+            objective=of50_request.objective,
+            authority_ceiling=of50_request.authority_ceiling,
+            stages=tuple(stages),
+            v1_receipt_digest=v1_result.convergence_receipt.receipt_digest,
+            oh50_producer_receipt_digest=oh50_producer_receipt.receipt_digest,
+            oh50_manifest_digest=observed_manifest_digest,
+            of50_receipt_digest=v1_result.of50_receipt.receipt_digest,
+            of50_completion_verified=bool(v1_result.of50_receipt.completion_verified),
+            f130_terminal_completion_verified=False,
+            provider_execution_verified=False,
             receipt_digest=_digest(material),
+            truth_boundary=truth_boundary,
         )
         if not receipt.verify():
             raise ValueError("FRCB_V2_RECEIPT_SELF_VERIFICATION_FAILED")
