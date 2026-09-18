@@ -98,6 +98,8 @@ class LocalGitRepositoryAdapter:
             raise ValueError("FORGE_GIT_TARGET_COMMIT_MISSING")
 
     def apply_permit(self, permit: MergePermit) -> GitMutationReceipt:
+        if not isinstance(permit, MergePermit):
+            raise PermissionError("FORGE_GIT_PERMIT_REQUIRED")
         if not SovereignSourceProtection.verify_permit(permit):
             raise PermissionError("FORGE_GIT_PERMIT_INVALID")
         if permit.external_effect_authorized:
