@@ -190,7 +190,7 @@ class AdaptiveBottleneckRuntime:
             and previous_state_signature == current_state_signature
             and not invalidation_changed
         )
-        negative_cache = self._negative_cached(fingerprint)
+        negative_cache = self._negative_cached(fingerprint) and not invalidation_changed
         champion = self._champion(fingerprint)
         resolution: BottleneckResolution | None = None
         selected_route_id: str | None = None
