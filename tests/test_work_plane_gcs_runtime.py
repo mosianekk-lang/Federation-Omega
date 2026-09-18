@@ -139,6 +139,21 @@ class GoogleStorageJsonTransportTests(unittest.TestCase):
         self.assertEqual(b'{"ok":true}',raw)
         self.assertEqual({"alt":"media","generation":"41"},s.calls[1][2]["params"])
 
+    def test_read_provider_failure_is_phase_status_only(self):
+        s=_FakeSession([_FakeResponse(403,json_body={"error":{"message":"sensitive-provider-detail"}})])
+        c=GoogleStorageGenerationClient(session=s)
+        with self.assertRaisesRegex(RuntimeError,r"^GCS_METADATA_GET_HTTP_403$"):
+            c.read("bucket","dir/state.json")
+
+    def test_read_media_provider_failure_is_phase_status_only(self):
+        s=_FakeSession([
+            _FakeResponse(200,json_body={"generation":"41"}),
+            _FakeResponse(403,json_body={"error":{"message":"sensitive-provider-detail"}}),
+        ])
+        c=GoogleStorageGenerationClient(session=s)
+        with self.assertRaisesRegex(RuntimeError,r"^GCS_MEDIA_GET_HTTP_403$"):
+            c.read("bucket","dir/state.json")
+
     def test_put_carries_exact_generation_precondition_and_object_name(self):
         s=_FakeSession([_FakeResponse(200,json_body={"generation":"42"})])
         c=GoogleStorageGenerationClient(session=s)
@@ -155,6 +170,12 @@ class GoogleStorageJsonTransportTests(unittest.TestCase):
         c=GoogleStorageGenerationClient(session=s)
         with self.assertRaisesRegex(CasConflict,"GENERATION_CONFLICT"):
             c.put("bucket","dir/state.json",b"{}",if_generation_match=7)
+
+    def test_put_provider_failure_is_phase_status_only(self):
+        s=_FakeSession([_FakeResponse(403,json_body={"error":{"message":"sensitive-provider-detail"}})])
+        c=GoogleStorageGenerationClient(session=s)
+        with self.assertRaisesRegex(RuntimeError,r"^GCS_MEDIA_PUT_HTTP_403$"):
+            c.put("bucket","dir/state.json",b"{}",if_generation_match=0)
 
     def test_transport_source_has_no_google_api_python_client_dependency(self):
         source=(Path(__file__).resolve().parents[1]/"respawn"/"work_plane_gcs_runtime.py").read_text()
