@@ -1,0 +1,85 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "evidenceops/build_system/chat_failure_resilience.py",
+        "evidenceops/build_system/aaa_chat_resilience.py",
+        "evidenceops/build_system/CHAT_FAILURE_RESILIENCE_CONTRACT.json",
+        "evidenceops/build_system/tests/test_chat_failure_resilience.py",
+        "evidenceops/build_system/tests/test_aaa_chat_resilience.py",
+        "tests/test_hypercube_chat_recovery_v1.py",
+        "governance/fuse_hypercube_bottleneck_resolver_v1.json",
+        "governance/proofos_omega_policy_extension_hypercube_chat_recovery_v1.json",
+        "docs/architecture/FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1.md",
+        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
+        "doctrine/ACME-001-v3.0.md",
+        "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
+        "AGENTS.md",
+        "evidenceops/build_system/runtime_controls.py",
+        "bubbles/command_bus_base.py",
+        "tests/test_bubbles_command_bus.py",
+        "tests/test_bubbles_aaa_integration.py",
+        "tests/test_autofix_failure_win_v2.py"
+      ],
+      "reason": "HYPERCUBE_SILENT_LONG_RUNNING_AND_INCOMPLETE_REPORTING_AUTO_HARVEST_RECOVERY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_HYPERCUBE_CHAT_RECOVERY_V1",
+      "patterns": [
+        "evidenceops/build_system/chat_failure_resilience.py",
+        "evidenceops/build_system/aaa_chat_resilience.py",
+        "evidenceops/build_system/CHAT_FAILURE_RESILIENCE_CONTRACT.json",
+        "tests/test_hypercube_chat_recovery_v1.py",
+        "governance/proofos_omega_policy_extension_hypercube_chat_recovery_v1.json",
+        "evidenceops/build_system/runtime_controls.py",
+        "bubbles/command_bus_base.py",
+        "tests/test_bubbles_command_bus.py",
+        "tests/test_bubbles_aaa_integration.py",
+        "tests/test_autofix_failure_win_v2.py"
+      ],
+      "depends_on": [
+        "FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1",
+        "EVIDENCEOPS",
+        "SUPERIOR_LOGIC",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "hypercube_chat_recovery_v1",
+      "kind": "unittest_glob",
+      "target": "test_hypercube_chat_recovery_v1.py",
+      "patterns": [
+        "evidenceops/build_system/chat_failure_resilience.py",
+        "evidenceops/build_system/aaa_chat_resilience.py",
+        "evidenceops/build_system/CHAT_FAILURE_RESILIENCE_CONTRACT.json",
+        "tests/test_hypercube_chat_recovery_v1.py",
+        "governance/fuse_hypercube_bottleneck_resolver_v1.json",
+        "governance/proofos_omega_policy_extension_hypercube_chat_recovery_v1.json",
+        "docs/architecture/FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1.md",
+        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
+        "doctrine/ACME-001-v3.0.md",
+        "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
+        "AGENTS.md",
+        "evidenceops/build_system/runtime_controls.py",
+        "bubbles/command_bus_base.py",
+        "tests/test_bubbles_command_bus.py",
+        "tests/test_bubbles_aaa_integration.py",
+        "tests/test_autofix_failure_win_v2.py"
+      ],
+      "subsystems": [
+        "FUSE_HYPERCUBE_CHAT_RECOVERY_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}

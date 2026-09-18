@@ -1,6 +1,6 @@
 {
   "schema": "FUSE-HYPERCUBE-BOTTLENECK-RESOLUTION-GOVERNANCE-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "capability_id": "FUSE-HYPERCUBE-HBR-001",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect": false,
@@ -102,7 +102,13 @@
     "PROMOTION_REQUIRES_NON_REGRESSION_AND_POSITIVE_MEASURED_VALUE",
     "RECURRING_SHARED_BOTTLENECKS_BECOME_REUSABLE_CAPABILITY_OR_PRODUCT_FEATURE_CANDIDATES",
     "COMMERCIAL_PRODUCT_UPLIFT_IS_MEASURED_ALONGSIDE_TECHNICAL_RELIEF",
-    "SYSTEM_MUST_REMEASURE_AFTER_EACH_FIX_AND_CONTINUE_IF_THE_CONSTRAINT_STILL_DOMINATES"
+    "SYSTEM_MUST_REMEASURE_AFTER_EACH_FIX_AND_CONTINUE_IF_THE_CONSTRAINT_STILL_DOMINATES",
+    "MACHINE_RECOVERABLE_ERRORS_AUTOMATICALLY_TRIGGER_HYPERCUBE_HARVEST",
+    "INCOMPLETE_PROGRESS_REPORTING_AUTOMATICALLY_TRIGGERS_HYPERCUBE_HARVEST",
+    "SILENT_LONG_RUNNING_EXECUTION_IS_A_BOTTLENECK_SIGNAL",
+    "STALLED_LANE_MUST_NOT_FREEZE_UNAFFECTED_LANES",
+    "HOST_PROGRESS_CHANNEL_SHOULD_SURFACE_COMPACT_STATE_WHEN_AVAILABLE",
+    "EXPLICIT_OWNER_STOP_OVERRIDES_AUTO_CONTINUATION"
   ],
   "commercial_outcome_dimensions": [
     "throughput",
@@ -130,6 +136,16 @@
     "external_effect_execution_authorized": false,
     "provider_authority_created": false,
     "stable_self_promotion_allowed": false,
-    "commercial_superiority_claim_requires_real_measurement": true
+    "commercial_superiority_claim_requires_real_measurement": true,
+    "chat_native_ui_observation_requires_host_telemetry": true,
+    "native_chatgpt_ui_control_created": false
+  },
+  "auto_trigger_sources": {
+    "chatFailureResilience": "evidenceops/build_system/chat_failure_resilience.py",
+    "silentLongRunningExecution": true,
+    "incompleteProgressReporting": true,
+    "machineRecoverableErrors": true,
+    "unresolvedOpenWorkWithStoppingSignal": true,
+    "explicitOwnerStopOverrides": true
   }
 }
