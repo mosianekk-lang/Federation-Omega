@@ -1,0 +1,78 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/runtime_convergence_binding_v1.py",
+        "tests/test_runtime_convergence_binding_v1.py",
+        "governance/runtime_convergence_binding_v1.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v1.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V1.md"
+      ],
+      "reason": "FUSE_RUNTIME_STAGE_RECEIPT_SUBSTITUTION_AND_COMPLETION_ANTI_BYPASS"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_RUNTIME_CONVERGENCE_BINDING_V1",
+      "patterns": [
+        "federation/runtime_convergence_binding_v1.py",
+        "tests/test_runtime_convergence_binding_v1.py",
+        "governance/runtime_convergence_binding_v1.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v1.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V1.md"
+      ],
+      "depends_on": [
+        "FEDERATION_CORE",
+        "FUSE_AAREK_V1",
+        "FUSE_OF50_ACE_V1"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "runtime_convergence_binding_v1",
+      "kind": "unittest_glob",
+      "target": "test_runtime_convergence_binding_v1.py",
+      "patterns": [
+        "federation/runtime_convergence_binding_v1.py",
+        "tests/test_runtime_convergence_binding_v1.py",
+        "governance/runtime_convergence_binding_v1.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v1.json"
+      ],
+      "subsystems": ["FUSE_RUNTIME_CONVERGENCE_BINDING_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "runtime_convergence_aarek_dependency_v1",
+      "kind": "unittest_glob",
+      "target": "test_aarek_v1.py",
+      "patterns": [
+        "federation/runtime_convergence_binding_v1.py",
+        "governance/runtime_convergence_binding_v1.json"
+      ],
+      "subsystems": ["FUSE_RUNTIME_CONVERGENCE_BINDING_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "runtime_convergence_of50_dependency_v1",
+      "kind": "unittest_glob",
+      "target": "test_of50_ace_v1.py",
+      "patterns": [
+        "federation/runtime_convergence_binding_v1.py",
+        "governance/runtime_convergence_binding_v1.json"
+      ],
+      "subsystems": ["FUSE_RUNTIME_CONVERGENCE_BINDING_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}
