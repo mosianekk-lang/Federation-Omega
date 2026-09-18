@@ -35,18 +35,22 @@
   "issue": 714,
   "kind": "ADDITIVE_SOVEREIGN_EVOLUTION_LAYER",
   "new_capabilities": [
+    "bounded_discovery_planner",
+    "capability_gap_mission_compiler",
     "capability_genome",
     "causal_attribution",
-    "evidence_economics",
-    "shadow_tournament",
-    "vertical_horizontal_architectural_evolution_modes",
-    "constitutional_architectural_owner_gate",
-    "receiver_local_horizontal_transfer_gate",
+    "changed_state_frontier_refresh",
     "chaos_recovery_court",
-    "value_realization_receipt",
+    "constitutional_architectural_owner_gate",
+    "daily_sovereign_intelligence_assimilation",
+    "evidence_economics",
     "evidence_virtualization",
-    "bounded_discovery_planner",
-    "stage20_bridge"
+    "proof_gated_global_propagation",
+    "receiver_local_horizontal_transfer_gate",
+    "shadow_tournament",
+    "stage20_bridge",
+    "value_realization_receipt",
+    "vertical_horizontal_architectural_evolution_modes"
   ],
   "non_duplication": {
     "new_chat_recovery_system": false,
@@ -96,5 +100,26 @@
     "internal_canary_proves_production": false,
     "source_proves_live_provider": false
   },
-  "version": "1.0.0"
-}
+  "version": "1.0.0",
+  "hsia_omega": {
+    "schema": "FUSE-HSIA-OMEGA-V1",
+    "version": "1.0.0",
+    "runtime": "benchmarking/cfbe_omega/hsia_omega_v1.py",
+    "governance": "governance/hsia_omega_v1.json",
+    "daily_target_per_corpus": 100,
+    "corpora": [
+      "COMPANY",
+      "ALGORITHM",
+      "PATENT_PAPER",
+      "INTELLIGENCE_SOURCE"
+    ],
+    "changed_state_first": true,
+    "source_mutation_serialized_by_fdof": true,
+    "external_effect_default": false,
+    "stable_global_promotion_default": false,
+    "extends": [
+      "FRONTIER_CONVERGENCE_OS_V1",
+      "CFBE_SCIENTIFIC_CAPABILITY_COMPILER"
+    ]
+  }
+}\n
