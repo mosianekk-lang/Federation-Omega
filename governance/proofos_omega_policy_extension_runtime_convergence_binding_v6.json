@@ -1,0 +1,72 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "sol_61_runtime/fdof_provider_bridge_v1.py",
+        "sol_61_runtime/fdof_frcb_provider_execution_v1.py",
+        "federation/fdof_provider_execution_binding_v1.py",
+        "federation/runtime_convergence_binding_v6.py",
+        "tests/test_runtime_convergence_binding_v6.py",
+        "governance/runtime_convergence_binding_v6.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v6.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V6.md"
+      ],
+      "reason": "FUSE_PROVIDER_EXECUTION_READBACK_AND_RUNTIME_CONVERGENCE_BINDING_V6"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_FDOF_PROVIDER_EXECUTION_READBACK_V1",
+      "patterns": [
+        "sol_61_runtime/fdof_provider_bridge_v1.py",
+        "sol_61_runtime/fdof_frcb_provider_execution_v1.py",
+        "federation/fdof_provider_execution_binding_v1.py"
+      ],
+      "depends_on": [
+        "FUSE_FDOF_CAPABILITY_ACTIVATION_V1",
+        "FEDERATION_CORE"
+      ]
+    },
+    {
+      "subsystem": "FUSE_RUNTIME_CONVERGENCE_BINDING_V6",
+      "patterns": [
+        "federation/runtime_convergence_binding_v6.py",
+        "tests/test_runtime_convergence_binding_v6.py",
+        "governance/runtime_convergence_binding_v6.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v6.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V6.md"
+      ],
+      "depends_on": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V5",
+        "FUSE_FDOF_PROVIDER_EXECUTION_READBACK_V1",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "runtime_convergence_binding_v6",
+      "kind": "unittest_glob",
+      "target": "test_runtime_convergence_binding_v6.py",
+      "patterns": [
+        "sol_61_runtime/fdof_provider_bridge_v1.py",
+        "sol_61_runtime/fdof_frcb_provider_execution_v1.py",
+        "federation/fdof_provider_execution_binding_v1.py",
+        "federation/runtime_convergence_binding_v6.py",
+        "tests/test_runtime_convergence_binding_v6.py",
+        "governance/runtime_convergence_binding_v6.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v6.json"
+      ],
+      "subsystems": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V6"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 360
+    }
+  ]
+}

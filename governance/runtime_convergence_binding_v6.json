@@ -1,0 +1,57 @@
+{
+  "schema": "FUSE-RUNTIME-CONVERGENCE-BINDING-GOVERNANCE-V6",
+  "version": "6.0.0",
+  "capability_id": "FUSE-FRCB-006",
+  "authority_ceiling": "A1_INTERNAL",
+  "purpose": "Promote provider execution only when an exact V5 route/fence activation is followed by accepted provider dispatch plus provider-native semantic readback that matches the expected state.",
+  "canonical_role": "ADAPTER_AND_RECEIPT_BINDING_ONLY",
+  "reuses": [
+    "FUSE-FRCB-005",
+    "FDOF FederationProviderBridge",
+    "SOL 6.2 route/lease/fence state",
+    "existing provider adapters and readback functions"
+  ],
+  "must_not_create": [
+    "NEW_PROVIDER_RUNTIME",
+    "NEW_AUTHORITY_PLANE",
+    "NEW_SCHEDULER",
+    "NEW_MEMORY_ROOT",
+    "NEW_PROOF_ROOT",
+    "NEW_TERMINAL_AUTHORITY"
+  ],
+  "hard_rules": [
+    "DISPATCH_ACCEPTED_IS_REQUIRED_FOR_FRCB_V6_PROMOTION",
+    "DISPATCH_REJECTION_IS_NOT_EXECUTION",
+    "PROVIDER_NATIVE_READBACK_IS_REQUIRED",
+    "READBACK_PROVIDER_CORRELATION_IS_REQUIRED",
+    "READBACK_MUST_MATCH_EXPECTED_SEMANTIC_STATE",
+    "EXECUTION_REQUEST_MUST_MATCH_V5_MISSION_ROUTE_TRANSITION_EXECUTOR_PROVIDER_OPERATION_TARGET",
+    "EXECUTION_MUST_BIND_EXACT_V5_ACTIVATION_RECEIPT",
+    "EXECUTION_MUST_OCCUR_WITHIN_THE_V5_FENCE_WINDOW",
+    "FDOF_EVENT_CHAIN_MUST_VERIFY",
+    "EXECUTION_ID_AND_IDEMPOTENCY_KEY_MUST_BE_NONBLANK",
+    "PROVIDER_EXECUTION_PROOF_IS_NOT_F130_TERMINAL_COMPLETION",
+    "F130_REMAINS_TERMINAL_AUTHORITY"
+  ],
+  "promotion": {
+    "from": "CAPABILITY_ROUTE_FENCE_VERIFIED",
+    "to": "PROVIDER_EXECUTION_READBACK_VERIFIED",
+    "requires": [
+      "dispatch_accepted",
+      "provider_native_readback",
+      "expected_semantic_state_match",
+      "provider_correlation",
+      "exact_activation_binding",
+      "verified_fdof_event_chain"
+    ]
+  },
+  "truth_boundary": {
+    "provider_dispatch_can_be_proven": true,
+    "provider_execution_can_be_proven": true,
+    "provider_native_semantic_readback_can_be_proven": true,
+    "provider_authority_created_by_v6": false,
+    "whole_mission_snapshot_proven": false,
+    "f130_terminal_completion_proven": false,
+    "native_chatgpt_interception_proven": false
+  }
+}
