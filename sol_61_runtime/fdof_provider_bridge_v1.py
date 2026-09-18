@@ -13,7 +13,7 @@ except ImportError:
     from sol_62_frontier_primitives import ConstraintError, FenceError, digest
 
 
-FDOF_PROVIDER_BRIDGE_VERSION = "1.0.0"
+FDOF_PROVIDER_BRIDGE_VERSION = "1.1.0"
 
 
 @dataclass(frozen=True)
@@ -82,7 +82,7 @@ class FederationProviderBridge:
     def _register_schema(self) -> None:
         self.control.register_schema(
             "fdof.provider_execution",
-            1,
+            2,
             {
                 "required": [
                     "execution_id",
@@ -99,6 +99,10 @@ class FederationProviderBridge:
                 "dispatch_is_not_verification": True,
                 "provider_native_readback_required_for_verified": True,
                 "uncertain_effects_are_not_blindly_retried": True,
+                "dispatch_rejection_is_not_execution": True,
+                "verified_requires_provider_native_readback": True,
+                "verified_requires_expected_semantic_state": True,
+                "readback_must_bind_durable_dispatch": True,
             },
         )
 
@@ -186,7 +190,7 @@ class FederationProviderBridge:
                 raise ConstraintError("EXECUTION_ID_REUSED_WITH_DIFFERENT_REQUEST")
             if prior["idempotency_key"] != request.idempotency_key:
                 raise ConstraintError("IDEMPOTENCY_BINDING_MISMATCH")
-            if prior["state"] in {"VERIFIED", "DISPATCH_REPORTED", "EFFECT_UNKNOWN"}:
+            if prior["state"] in {"VERIFIED", "DISPATCH_REPORTED", "EFFECT_UNKNOWN", "DISPATCH_REJECTED"}:
                 return dict(prior)
 
         body = {
@@ -227,6 +231,27 @@ class FederationProviderBridge:
 
         if receipt.execution_id != request.execution_id or receipt.provider != request.provider:
             raise ConstraintError("DISPATCH_RECEIPT_BINDING_MISMATCH")
+        if not receipt.accepted and not receipt.effect_uncertain:
+            rejected = {
+                **body,
+                "state": "DISPATCH_REJECTED",
+                "provider_request_id": receipt.provider_request_id,
+                "dispatch_accepted": False,
+                "dispatch_summary": dict(receipt.summary),
+                "updated_at_epoch": now_epoch,
+            }
+            self._put_state(request.execution_id, rejected)
+            self.control.append_event(
+                request.mission_id,
+                "FDOF_PROVIDER_DISPATCH_REJECTED",
+                {
+                    "execution_id": request.execution_id,
+                    "provider": request.provider,
+                    "provider_request_id": receipt.provider_request_id,
+                },
+            )
+            return rejected
+
         dispatched = {
             **body,
             "state": "EFFECT_UNKNOWN" if receipt.effect_uncertain else "DISPATCH_REPORTED",
@@ -265,16 +290,42 @@ class FederationProviderBridge:
         if adapter is None:
             raise ConstraintError("PROVIDER_ADAPTER_NOT_REGISTERED")
 
+        if dispatch_receipt.execution_id != request.execution_id or dispatch_receipt.provider != request.provider:
+            raise ConstraintError("DISPATCH_RECEIPT_BINDING_MISMATCH")
+        durable_provider_request_id = str(current.get("provider_request_id") or "")
+        if durable_provider_request_id and dispatch_receipt.provider_request_id != durable_provider_request_id:
+            raise ConstraintError("DISPATCH_RECEIPT_PROVIDER_REQUEST_MISMATCH")
+        if "dispatch_accepted" in current and bool(dispatch_receipt.accepted) != bool(current["dispatch_accepted"]):
+            raise ConstraintError("DISPATCH_RECEIPT_ACCEPTANCE_MISMATCH")
+
         readback = adapter.readback(request, dispatch_receipt)
         if readback.execution_id != request.execution_id or readback.provider != request.provider:
             raise ConstraintError("READBACK_RECEIPT_BINDING_MISMATCH")
-        if not readback.verified:
+
+        provider_native = readback.evidence.get("provider_native") is True
+        correlation_present = bool(str(readback.provider_correlation_id or "").strip())
+        expected_matches = all(
+            (
+                readback.semantic_state if key == "state" else readback.evidence.get(key)
+            ) == expected
+            for key, expected in request.expected_readback.items()
+        )
+        readback_verified = bool(
+            readback.verified
+            and provider_native
+            and correlation_present
+            and expected_matches
+        )
+        if not readback_verified:
             unresolved = {
                 **current,
                 "state": "EFFECT_UNKNOWN",
                 "semantic_state": readback.semantic_state,
                 "provider_correlation_id": readback.provider_correlation_id,
                 "readback_evidence": dict(readback.evidence),
+                "readback_provider_native": provider_native,
+                "readback_expected_match": expected_matches,
+                "readback_correlation_present": correlation_present,
                 "updated_at_epoch": now_epoch,
             }
             self._put_state(request.execution_id, unresolved)
@@ -286,6 +337,9 @@ class FederationProviderBridge:
             "semantic_state": readback.semantic_state,
             "provider_correlation_id": readback.provider_correlation_id,
             "readback_evidence": dict(readback.evidence),
+            "readback_provider_native": True,
+            "readback_expected_match": True,
+            "readback_correlation_present": True,
             "updated_at_epoch": now_epoch,
         }
         self._put_state(request.execution_id, verified)
