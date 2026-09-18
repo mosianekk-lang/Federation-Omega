@@ -55,6 +55,20 @@ class AdaptiveResponseTests(unittest.TestCase):
         self.assertEqual(AdaptiveAction.REUSE_CHAMPION,d.action)
         self.assertEqual("R-CHAMP",d.selected_route_id)
 
+    def test_material_invalidation_reopens_negative_cached_champion(self):
+        rt=AdaptiveBottleneckRuntime()
+        rt.load_memory(route_memory=[
+            {"RouteId":"R-RECOVERED","FailureFingerprint":"FP2B","State":"CHAMPION","Confidence":"HIGH"},
+            {"RouteId":"R-OLD","FailureFingerprint":"FP2B","State":"NEGATIVE_CACHED","InvalidationKey":"OLD"},
+        ])
+        d=rt.decide(
+            signal=signal(),fingerprint="FP2B",current_state_signature="NEW",
+            previous_state_signature="OLD",invalidation_changed=True
+        )
+        self.assertEqual(AdaptiveAction.REUSE_CHAMPION,d.action)
+        self.assertEqual("R-RECOVERED",d.selected_route_id)
+        self.assertFalse(d.negative_cache_hit)
+
     def test_second_same_semantic_failure_forces_changed_mechanism(self):
         d=AdaptiveBottleneckRuntime().decide(
             signal=signal(),fingerprint="FP3",current_state_signature="S3",
