@@ -1,21 +1,23 @@
 {
   "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "risk_rules": [
     {
       "risk": "R4_CORE",
       "patterns": [
+        "docs/architecture/FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1.md",
+        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
+        "doctrine/ACME-001-v3.0.md",
+        "governance/fuse_hypercube_bottleneck_resolver_v1.json",
+        "governance/proofos_omega_policy_extension_hypercube_bottleneck_resolver_v1.json",
+        "governance/slos_hyperperformance_programme_v1.json",
+        "superior_logic/__init__.py",
+        "superior_logic/hypercube_adaptive_response.py",
         "superior_logic/hypercube_bottleneck_resolver.py",
         "superior_logic/hyperperformance.py",
         "superior_logic/opportunity_discovery.py",
-        "superior_logic/__init__.py",
-        "tests/test_hypercube_bottleneck_resolver_v1.py",
-        "governance/fuse_hypercube_bottleneck_resolver_v1.json",
-        "governance/slos_hyperperformance_programme_v1.json",
-        "governance/proofos_omega_policy_extension_hypercube_bottleneck_resolver_v1.json",
-        "docs/architecture/FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1.md",
-        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
-        "doctrine/ACME-001-v3.0.md"
+        "tests/test_hypercube_adaptive_response_v1.py",
+        "tests/test_hypercube_bottleneck_resolver_v1.py"
       ],
       "reason": "HYPERCUBE_BOTTLENECK_DEEP_SEEK_MARKET_COMPOSITE_INVENTION_AND_COMMERCIAL_UPLIFT"
     }
@@ -24,13 +26,15 @@
     {
       "subsystem": "FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1",
       "patterns": [
+        "docs/architecture/FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1.md",
+        "governance/fuse_hypercube_bottleneck_resolver_v1.json",
+        "governance/proofos_omega_policy_extension_hypercube_bottleneck_resolver_v1.json",
+        "superior_logic/hypercube_adaptive_response.py",
         "superior_logic/hypercube_bottleneck_resolver.py",
         "superior_logic/hyperperformance.py",
         "superior_logic/opportunity_discovery.py",
-        "tests/test_hypercube_bottleneck_resolver_v1.py",
-        "governance/fuse_hypercube_bottleneck_resolver_v1.json",
-        "governance/proofos_omega_policy_extension_hypercube_bottleneck_resolver_v1.json",
-        "docs/architecture/FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1.md"
+        "tests/test_hypercube_adaptive_response_v1.py",
+        "tests/test_hypercube_bottleneck_resolver_v1.py"
       ],
       "depends_on": [
         "SUPERIOR_LOGIC",
@@ -41,6 +45,24 @@
   ],
   "historical_associations": [],
   "tests": [
+    {
+      "id": "hypercube_adaptive_response_v1",
+      "kind": "unittest_glob",
+      "target": "test_hypercube_adaptive_response_v1.py",
+      "patterns": [
+        "superior_logic/hypercube_adaptive_response.py",
+        "superior_logic/hyperperformance.py",
+        "tests/test_hypercube_adaptive_response_v1.py",
+        "governance/proofos_omega_policy_extension_hypercube_bottleneck_resolver_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1",
+        "SUPERIOR_LOGIC"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    },
     {
       "id": "hypercube_bottleneck_resolver_v1",
       "kind": "unittest_glob",
