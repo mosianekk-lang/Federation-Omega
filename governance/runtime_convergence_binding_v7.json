@@ -1,0 +1,76 @@
+{
+  "schema": "FUSE-RUNTIME-CONVERGENCE-BINDING-GOVERNANCE-V7",
+  "version": "7.0.0",
+  "capability_id": "FUSE-FRCB-007",
+  "authority_ceiling": "A1_INTERNAL",
+  "purpose": "Compile current durable mission evidence into the existing F130 MissionRuntimeSnapshot and make pre-commit recompilation mandatory so stale caller snapshots cannot become terminal truth.",
+  "canonical_role": "AUTHORITATIVE_SNAPSHOT_COMPILER_AND_F130_BINDING_ONLY",
+  "reuses": [
+    "FUSE-FRCB-006",
+    "DurableMissionRuntimeV1",
+    "ConvergenceLedger",
+    "MissionProjection",
+    "MissionProofPassport",
+    "FUSE MissionRuntimeInterlock/F130"
+  ],
+  "must_not_create": [
+    "NEW_TERMINAL_AUTHORITY",
+    "NEW_MISSION_TRUTH_STORE",
+    "NEW_PROOF_ROOT",
+    "NEW_SCHEDULER",
+    "NEW_PROVIDER_RUNTIME",
+    "NEW_AUTHORITY_PLANE"
+  ],
+  "hard_rules": [
+    "CALLER_SUPPLIED_TERMINAL_TASKS_AND_PROOF_BINDINGS_ARE_NOT_EVIDENCE_ROOT",
+    "DURABLE_LEDGER_MUST_VERIFY",
+    "PASSPORT_LEDGER_HEAD_MUST_MATCH_CURRENT_DURABLE_LEDGER",
+    "V6_PROVIDER_EXECUTION_AND_READBACK_MUST_VERIFY",
+    "EVERY_REQUIRED_DONE_TASK_MUST_HAVE_A_CURRENT_PROOF_BINDING",
+    "VERIFIED_DURABLE_WORK_WITHOUT_RESULT_REFS_MUST_NOT_BECOME_DONE",
+    "PENDING_DURABLE_REQUESTS_BLOCK_TERMINALITY",
+    "MISSION_PROJECTION_MUST_BE_CLOSABLE",
+    "MISSION_PROOF_PASSPORT_MUST_BE_COMPLETE",
+    "OBJECTIVE_SATISFACTION_IS_DERIVED_NOT_CALLER_ASSERTED",
+    "F130_PREPARE_USES_AUTHORITATIVELY_COMPILED_SNAPSHOT",
+    "F130_COMMIT_RECOMPILES_CURRENT_DURABLE_STATE_BEFORE_COMMIT",
+    "ANY_LEDGER_PROJECTION_PASSPORT_OR_V6_DRIFT_AFTER_PREPARE_BLOCKS_COMMIT",
+    "F130_REMAINS_THE_ONLY_TERMINAL_COMMIT_AUTHORITY"
+  ],
+  "authoritative_inputs": [
+    "durable mission ledger",
+    "current MissionProjection",
+    "current MissionProofPassport projection",
+    "FRCB V6 provider-execution/readback receipt"
+  ],
+  "derived_f130_fields": [
+    "mission_id",
+    "current_mission_id",
+    "objective",
+    "contract_epoch",
+    "ledger_tail",
+    "tasks",
+    "proofs",
+    "objective_satisfied",
+    "completion_claim_requested"
+  ],
+  "replay_resistance": {
+    "prepare_binds": [
+      "compiler_receipt_digest",
+      "ledger_head_hash",
+      "projection_sha256",
+      "epoch_id",
+      "F130 prepare receipt"
+    ],
+    "commit_requires_current_recompile": true,
+    "drift_action": "FAIL_CLOSED_BEFORE_F130_COMMIT"
+  },
+  "truth_boundary": {
+    "authoritative_snapshot_compilation_can_be_proven": true,
+    "stale_snapshot_replay_can_be_blocked": true,
+    "f130_prepare_and_commit_can_be_bound_to_current_durable_state": true,
+    "native_chatgpt_interception_proven": false,
+    "provider_effect_authority_created": false,
+    "second_terminal_authority_created": false
+  }
+}
