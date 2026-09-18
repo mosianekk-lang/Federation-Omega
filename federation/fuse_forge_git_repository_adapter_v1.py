@@ -63,12 +63,18 @@ class LocalGitRepositoryAdapter:
         self.repo=Path(repository).resolve()
         if not self.repo.exists():
             raise ValueError("FORGE_GIT_REPOSITORY_NOT_FOUND")
-        top=self._git("rev-parse","--show-toplevel",check=False)
-        if top.returncode != 0:
+        probe=self._git("rev-parse","--is-bare-repository",check=False)
+        if probe.returncode != 0 or probe.stdout.strip() not in {"true","false"}:
             raise ValueError("FORGE_GIT_REPOSITORY_INVALID")
-        observed=Path(top.stdout.strip()).resolve()
-        if observed != self.repo:
-            raise ValueError("FORGE_GIT_REPOSITORY_ROOT_MISMATCH")
+        self.is_bare=probe.stdout.strip()=="true"
+        if self.is_bare:
+            git_dir=self._git("rev-parse","--absolute-git-dir").stdout.strip()
+            if Path(git_dir).resolve() != self.repo:
+                raise ValueError("FORGE_GIT_REPOSITORY_ROOT_MISMATCH")
+        else:
+            top=self._git("rev-parse","--show-toplevel").stdout.strip()
+            if Path(top).resolve() != self.repo:
+                raise ValueError("FORGE_GIT_REPOSITORY_ROOT_MISMATCH")
 
     def _git(self,*args: str,check: bool=True) -> subprocess.CompletedProcess[str]:
         import os
@@ -83,8 +89,8 @@ class LocalGitRepositoryAdapter:
 
     @property
     def repository_fingerprint(self) -> str:
-        git_dir=self._git("rev-parse","--git-dir").stdout.strip()
-        return _digest({"root":str(self.repo),"git_dir":git_dir})
+        git_dir=self._git("rev-parse","--absolute-git-dir").stdout.strip()
+        return _digest({"root":str(self.repo),"git_dir":str(Path(git_dir).resolve()),"bare":self.is_bare})
 
     def read_main(self) -> str:
         out=self._git("rev-parse",_MAIN_REF).stdout.strip()
