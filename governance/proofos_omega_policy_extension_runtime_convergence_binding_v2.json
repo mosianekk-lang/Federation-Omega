@@ -1,0 +1,58 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        "federation/oh50_producer_adapter_v1.py",
+        "federation/runtime_convergence_binding_v2.py",
+        "tests/test_runtime_convergence_binding_v2.py",
+        "governance/runtime_convergence_binding_v2.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v2.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V2.md"
+      ],
+      "reason": "FUSE_OH50_PRODUCER_RECEIPT_AND_RUNTIME_CONVERGENCE_BINDING_V2"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_RUNTIME_CONVERGENCE_BINDING_V2",
+      "patterns": [
+        "federation/oh50_producer_adapter_v1.py",
+        "federation/runtime_convergence_binding_v2.py",
+        "tests/test_runtime_convergence_binding_v2.py",
+        "governance/runtime_convergence_binding_v2.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v2.json",
+        "docs/architecture/FUSE_RUNTIME_CONVERGENCE_BINDING_V2.md"
+      ],
+      "depends_on": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V1",
+        "FUSE_OF50_ACE_V1",
+        "AO_HARMONIC",
+        "FEDERATION_CORE"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "runtime_convergence_binding_v2",
+      "kind": "unittest_glob",
+      "target": "test_runtime_convergence_binding_v2.py",
+      "patterns": [
+        "federation/oh50_producer_adapter_v1.py",
+        "federation/runtime_convergence_binding_v2.py",
+        "tests/test_runtime_convergence_binding_v2.py",
+        "governance/runtime_convergence_binding_v2.json",
+        "governance/proofos_omega_policy_extension_runtime_convergence_binding_v2.json"
+      ],
+      "subsystems": [
+        "FUSE_RUNTIME_CONVERGENCE_BINDING_V2"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    }
+  ]
+}
