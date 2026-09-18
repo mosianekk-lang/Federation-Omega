@@ -22,7 +22,15 @@
         "bubbles/command_bus_base.py",
         "tests/test_bubbles_command_bus.py",
         "tests/test_bubbles_aaa_integration.py",
-        "tests/test_autofix_failure_win_v2.py"
+        "tests/test_autofix_failure_win_v2.py",
+        "client_observer/__init__.py",
+        "client_observer/front_facing_status_observer_v1.py",
+        "client_observer/front_facing_status_host_v1.py",
+        "client_observer/edge_front_facing_sentinel_v1/manifest.json",
+        "client_observer/edge_front_facing_sentinel_v1/background.js",
+        "client_observer/edge_front_facing_sentinel_v1/content.js",
+        "tests/test_front_facing_status_observer_v1.py",
+        "benchmarking/cfbe_omega/convergence_fabric_v2_capability_closure_matrix_v1.json"
       ],
       "reason": "HYPERCUBE_SILENT_LONG_RUNNING_AND_INCOMPLETE_REPORTING_AUTO_HARVEST_RECOVERY"
     }
@@ -40,7 +48,15 @@
         "bubbles/command_bus_base.py",
         "tests/test_bubbles_command_bus.py",
         "tests/test_bubbles_aaa_integration.py",
-        "tests/test_autofix_failure_win_v2.py"
+        "tests/test_autofix_failure_win_v2.py",
+        "client_observer/__init__.py",
+        "client_observer/front_facing_status_observer_v1.py",
+        "client_observer/front_facing_status_host_v1.py",
+        "client_observer/edge_front_facing_sentinel_v1/manifest.json",
+        "client_observer/edge_front_facing_sentinel_v1/background.js",
+        "client_observer/edge_front_facing_sentinel_v1/content.js",
+        "tests/test_front_facing_status_observer_v1.py",
+        "benchmarking/cfbe_omega/convergence_fabric_v2_capability_closure_matrix_v1.json"
       ],
       "depends_on": [
         "FUSE_HYPERCUBE_BOTTLENECK_RESOLVER_V1",
@@ -72,7 +88,36 @@
         "bubbles/command_bus_base.py",
         "tests/test_bubbles_command_bus.py",
         "tests/test_bubbles_aaa_integration.py",
-        "tests/test_autofix_failure_win_v2.py"
+        "tests/test_autofix_failure_win_v2.py",
+        "client_observer/__init__.py",
+        "client_observer/front_facing_status_observer_v1.py",
+        "client_observer/front_facing_status_host_v1.py",
+        "client_observer/edge_front_facing_sentinel_v1/manifest.json",
+        "client_observer/edge_front_facing_sentinel_v1/background.js",
+        "client_observer/edge_front_facing_sentinel_v1/content.js",
+        "tests/test_front_facing_status_observer_v1.py",
+        "benchmarking/cfbe_omega/convergence_fabric_v2_capability_closure_matrix_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_HYPERCUBE_CHAT_RECOVERY_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
+    },
+    {
+      "id": "front_facing_status_observer_v1",
+      "kind": "unittest_glob",
+      "target": "test_front_facing_status_observer_v1.py",
+      "patterns": [
+        "client_observer/__init__.py",
+        "client_observer/front_facing_status_observer_v1.py",
+        "client_observer/front_facing_status_host_v1.py",
+        "client_observer/edge_front_facing_sentinel_v1/manifest.json",
+        "client_observer/edge_front_facing_sentinel_v1/background.js",
+        "client_observer/edge_front_facing_sentinel_v1/content.js",
+        "tests/test_front_facing_status_observer_v1.py",
+        "benchmarking/cfbe_omega/convergence_fabric_v2_capability_closure_matrix_v1.json"
       ],
       "subsystems": [
         "FUSE_HYPERCUBE_CHAT_RECOVERY_V1"
