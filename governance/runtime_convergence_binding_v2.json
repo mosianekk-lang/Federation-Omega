@@ -1,0 +1,49 @@
+{
+  "schema": "FUSE-RUNTIME-CONVERGENCE-BINDING-GOVERNANCE-V2",
+  "version": "2.0.0",
+  "capability_id": "FUSE-FRCB-002",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "purpose": "Promote OH50 from structural presence to verified in-process producer invocation bound to the exact SwarmManifest consumed by OF50.",
+  "canonical_role": "ADAPTER_AND_RECEIPT_BINDING_ONLY",
+  "reuses": [
+    "FUSE-FRCB-001",
+    "HORIZON-OMEGA-V1",
+    "formation_omega.autonomic_fabric.MissionSwarmPlanner",
+    "FUSE-OF50-ACE-CURRENT"
+  ],
+  "must_not_create": [
+    "NEW_SCHEDULER",
+    "NEW_AUTHORITY_PLANE",
+    "NEW_PROOF_PLANE",
+    "NEW_MEMORY_ROOT",
+    "NEW_FOUNDRY",
+    "NEW_PROVIDER_RUNTIME",
+    "NEW_TOP_LEVEL_CONTROLLER"
+  ],
+  "hard_rules": [
+    "REFERENCE_IS_NOT_EXECUTION",
+    "OH50_MANIFEST_MUST_HAVE_EXACTLY_50_HORIZONS",
+    "OH50_PRODUCER_RECEIPT_MUST_SELF_VERIFY",
+    "OH50_PRODUCER_RECEIPT_MUST_BIND_EXACT_MANIFEST_DIGEST",
+    "MISSION_OBJECTIVE_AUTHORITY_AND_HOST_ALGORITHM_MUST_MATCH",
+    "PREDICTION_MUST_NOT_BE_PROMOTED_TO_FACT",
+    "IN_PROCESS_PRODUCER_INVOCATION_IS_NOT_INDEPENDENT_ATTESTATION",
+    "OH50_PRODUCER_INVOCATION_IS_NOT_PROVIDER_EXECUTION",
+    "F130_REMAINS_TERMINAL_AUTHORITY"
+  ],
+  "v2_promoted_stage": "OH50_PRODUCER_INVOCATION",
+  "v2_structural_only_stages": [
+    "FORMATION_INNOVATION",
+    "ALPHA_OMEGA_IF_REQUIRED"
+  ],
+  "truth_boundary": {
+    "oh50_in_process_producer_invocation_can_be_proven": true,
+    "oh50_independent_attestation_proven": false,
+    "formation_execution_proven": false,
+    "alpha_omega_execution_proven": false,
+    "provider_execution_proven": false,
+    "f130_terminal_completion_proven": false,
+    "native_chatgpt_interception_proven": false
+  }
+}
