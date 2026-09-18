@@ -107,6 +107,35 @@ class VirtualExecutorCourt(unittest.TestCase):
                 ))
             self.assertEqual(before,_git(bare,"rev-parse","refs/heads/main"))
 
+    def test_git_c_main_commit_is_blocked(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            work=root/"mainrepo"
+            work.mkdir()
+            subprocess.run(["git","init","-b","main",str(work)],check=True,capture_output=True)
+            _git(work,"config","user.name","FUSE Court")
+            _git(work,"config","user.email","fuse@example.invalid")
+            (work/"value.txt").write_text("A\n")
+            _git(work,"add","value.txt")
+            ex=VirtualForgeExecutor(root,profile())
+            with self.assertRaisesRegex(PermissionError,"PROTECTED_MAIN_MUTATION"):
+                ex.run(VirtualTask(
+                    "raw-main-commit",
+                    ("git","-C","mainrepo","commit","-m","bypass"),
+                    cwd=".",
+                ))
+
+    def test_git_push_head_to_main_is_blocked(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            ex=VirtualForgeExecutor(root,profile())
+            with self.assertRaisesRegex(PermissionError,"PROTECTED_MAIN_MUTATION"):
+                ex.run(VirtualTask(
+                    "raw-main-push",
+                    ("git","push","origin","HEAD:main"),
+                    cwd=".",
+                ))
+
     def test_protected_source_admission_dogfoods_f295_f296(self):
         with tempfile.TemporaryDirectory() as d:
             root=Path(d)
