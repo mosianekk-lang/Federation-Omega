@@ -69,6 +69,17 @@ class PreFinalGateTests(unittest.TestCase):
             "VERIFIED_COMPLETE_WITHOUT_OBJECTIVE_SATISFACTION", blocked.reasons
         )
 
+    def test_internal_terminal_authorization_does_not_require_post_commit_presentation_proof(self) -> None:
+        decision = self.gate.evaluate(
+            mission=self.mission(
+                terminal_state=TerminalState.VERIFIED_COMPLETE,
+                objective_satisfied=True,
+                response_emission_requested=False,
+            )
+        )
+        self.assertTrue(decision.allow_final)
+        self.assertEqual("ALLOW_VERIFIED_COMPLETE", decision.mode)
+
     def test_verified_complete_without_terminal_proof_ref_is_blocked(self) -> None:
         decision = self.gate.evaluate(
             mission=self.mission(
