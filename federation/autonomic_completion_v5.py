@@ -213,7 +213,11 @@ class AutonomicCompletionKernel:
             else:
                 maturity_gaps=tuple(acceptance.gaps) if acceptance is not None and acceptance.gaps else ("TERMINAL_ACCEPTANCE_COURT_REQUIRED",)
                 recompile_required=True
-                out=OutputClass.PROGRESS_UPDATE
+                out=(
+                    OutputClass.RESUME_CAPSULE
+                    if force_platform_boundary and new_ctx.runtime_mode is RuntimeMode.NO_PERSISTENT_RUNNER
+                    else OutputClass.PROGRESS_UPDATE
+                )
         elif owner_blocked:
             terminal_state=TerminalState.IRREDUCIBLE_OWNER_DECISION.value; out=OutputClass.OWNER_DECISION
         elif force_platform_boundary and new_ctx.runtime_mode is RuntimeMode.NO_PERSISTENT_RUNNER:
