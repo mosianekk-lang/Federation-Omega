@@ -1,0 +1,155 @@
+name: FUSE Work Plane Storage Authority Census v1
+
+on:
+  issues:
+    types: [opened]
+
+permissions:
+  contents: read
+  issues: read
+  id-token: write
+
+concurrency:
+  group: fuse-work-plane-storage-authority-census-v1
+  cancel-in-progress: false
+
+env:
+  PROJECT_ID: sov-hybrid-suite
+  PROJECT_NUMBER: '257649435135'
+  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
+  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  RUNTIME_SA: superior-logic-runtime@sov-hybrid-suite.iam.gserviceaccount.com
+  STATE_BUCKET: fo-control-plane-sov-hybrid-suite
+
+jobs:
+  storage-authority-census:
+    if: >-
+      github.event.issue.title == '[FO-DISPATCH] WORK_PLANE_STORAGE_AUTHORITY_CENSUS_V1' &&
+      github.event.issue.author_association == 'OWNER'
+    runs-on: ubuntu-24.04
+    timeout-minutes: 8
+    steps:
+      - name: Checkout exact signed-main source without repository write credentials
+        uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          persist-credentials: false
+
+      - name: Authenticate canonical keyless deployer
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned gcloud
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Read current project and bucket IAM without mutation
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p storage-authority-proof
+          ACTIVE="$(gcloud auth list --filter=status:ACTIVE --format='value(account)' | head -n1)"
+          OBSERVED_NUMBER="$(gcloud projects describe "$PROJECT_ID" --format='value(projectNumber)')"
+          test "$ACTIVE" = "$DEPLOYER_SA"
+          test "$OBSERVED_NUMBER" = "$PROJECT_NUMBER"
+          gcloud projects get-iam-policy "$PROJECT_ID" --format=json > storage-authority-proof/project-policy.json
+          gcloud storage buckets get-iam-policy "gs://$STATE_BUCKET" --format=json > storage-authority-proof/bucket-policy.json
+          gcloud storage buckets describe "gs://$STATE_BUCKET" --format=json > storage-authority-proof/bucket.json
+
+      - name: Compile redacted runtime-storage authority receipt
+        shell: bash
+        env:
+          SOURCE_SHA: ${{ github.sha }}
+          ISSUE_NUMBER: ${{ github.event.issue.number }}
+        run: |
+          set -euo pipefail
+          python - <<'PY'
+          import hashlib, json, os, subprocess
+          from pathlib import Path
+
+          runtime='serviceAccount:'+os.environ['RUNTIME_SA']
+          project=json.load(open('storage-authority-proof/project-policy.json',encoding='utf-8'))
+          bucket_policy=json.load(open('storage-authority-proof/bucket-policy.json',encoding='utf-8'))
+          bucket=json.load(open('storage-authority-proof/bucket.json',encoding='utf-8'))
+          required={'storage.objects.get','storage.objects.create','storage.objects.delete'}
+
+          def bindings_for(policy):
+              out=[]
+              for b in policy.get('bindings') or []:
+                  if runtime not in (b.get('members') or []):
+                      continue
+                  cond=b.get('condition') or None
+                  out.append({
+                      'role':str(b.get('role') or ''),
+                      'conditional':bool(cond),
+                      'condition_sha256':hashlib.sha256(json.dumps(cond,sort_keys=True,separators=(',',':')).encode()).hexdigest() if cond else None,
+                  })
+              return out
+
+          project_bindings=bindings_for(project)
+          bucket_bindings=bindings_for(bucket_policy)
+          unconditional=sorted({x['role'] for x in project_bindings+bucket_bindings if not x['conditional'] and x['role']})
+          conditional=sorted({x['role'] for x in project_bindings+bucket_bindings if x['conditional'] and x['role']})
+
+          role_permissions={}
+          role_read_failures=[]
+          for role in unconditional:
+              cmd=['gcloud','iam','roles','describe']
+              if role.startswith('roles/'):
+                  cmd.append(role)
+              elif role.startswith('projects/'+os.environ['PROJECT_ID']+'/roles/'):
+                  cmd += [role.rsplit('/',1)[-1],'--project',os.environ['PROJECT_ID']]
+              else:
+                  role_read_failures.append(role)
+                  continue
+              cmd += ['--format=json']
+              p=subprocess.run(cmd,text=True,capture_output=True)
+              if p.returncode != 0:
+                  role_read_failures.append(role)
+                  continue
+              data=json.loads(p.stdout or '{}')
+              role_permissions[role]=sorted(set(data.get('includedPermissions') or []))
+
+          effective_unconditional=set()
+          for perms in role_permissions.values():
+              effective_unconditional.update(perms)
+          required_state={p:(p in effective_unconditional) for p in sorted(required)}
+          receipt={
+              'schema':'FUSE_WORK_PLANE_STORAGE_AUTHORITY_CENSUS_V1',
+              'source_sha':os.environ['SOURCE_SHA'],
+              'issue_number':int(os.environ['ISSUE_NUMBER']),
+              'project_id':os.environ['PROJECT_ID'],
+              'project_number':os.environ['PROJECT_NUMBER'],
+              'runtime_service_account':os.environ['RUNTIME_SA'],
+              'state_bucket':os.environ['STATE_BUCKET'],
+              'bucket_name_verified':bucket.get('name')==os.environ['STATE_BUCKET'],
+              'runtime_project_bindings':project_bindings,
+              'runtime_bucket_bindings':bucket_bindings,
+              'unconditional_runtime_roles':unconditional,
+              'conditional_runtime_roles':conditional,
+              'role_description_failures':sorted(role_read_failures),
+              'required_unconditional_permissions':required_state,
+              'required_unconditional_permissions_complete':all(required_state.values()),
+              'observed_provider_failure':'GCS_METADATA_GET_HTTP_403',
+              'provider_failure_proves_effective_storage_objects_get_for_canary_object':False,
+              'iam_mutation_performed':False,
+              'provider_data_mutation_performed':False,
+              'secret_payload_accessed':False,
+              'raw_policy_emitted':False,
+          }
+          canonical=json.dumps(receipt,sort_keys=True,separators=(',',':'))
+          receipt['receipt_sha256']=hashlib.sha256(canonical.encode()).hexdigest()
+          Path('storage-authority-proof/runtime-storage-authority.json').write_text(json.dumps(receipt,indent=2,sort_keys=True)+'\n',encoding='utf-8')
+          print(json.dumps(receipt,sort_keys=True))
+          PY
+
+      - name: Upload immutable redacted authority receipt
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: work-plane-storage-authority-${{ github.run_id }}-${{ github.run_attempt }}
+          path: storage-authority-proof/runtime-storage-authority.json
+          if-no-files-found: error
+          retention-days: 30
