@@ -17,6 +17,7 @@ from .federation_learning_v1 import FederationLearningLedger, LearningEvent
 from .prompt_scientist_v2 import PromptGenome, PromptRunMetrics, PromptScientistV2
 from .run_store_v1 import Checkpoint, RunStore
 from .commercial_maturity_v1 import CommercialMaturityController, DEFAULT_STAGES
+from .finality_guard_v1 import FinalityPresentationGuard, TerminalAcceptance
 
 
 class RuntimeMode(StrEnum):
@@ -93,6 +94,10 @@ class CycleResult:
     terminal_state: str = ""
     maturity_gaps: tuple[str, ...] = ()
     recompile_required: bool = False
+    terminal_proof_ref: str = ""
+    presentation_state: str = ""
+    completion_style_allowed: bool = False
+    mission_must_continue: bool = True
 
 
 def _sha(v: object) -> str:
@@ -100,11 +105,13 @@ def _sha(v: object) -> str:
 
 
 class AutonomicCompletionKernel:
-    def __init__(self, store: RunStore, learning: FederationLearningLedger, scientist: PromptScientistV2 | None = None, *, prompt_evaluator: Callable[[PromptGenome, object], PromptRunMetrics] | None = None, prompt_fixtures: Sequence[object] = (), mission_recompiler: Callable[[ExecutionContext, tuple[str, ...]], ExecutionContext] | None = None, commercial_evidence_provider: Callable[[ExecutionContext], Mapping[str, bool]] | None = None):
+    def __init__(self, store: RunStore, learning: FederationLearningLedger, scientist: PromptScientistV2 | None = None, *, prompt_evaluator: Callable[[PromptGenome, object], PromptRunMetrics] | None = None, prompt_fixtures: Sequence[object] = (), mission_recompiler: Callable[[ExecutionContext, tuple[str, ...]], ExecutionContext] | None = None, commercial_evidence_provider: Callable[[ExecutionContext], Mapping[str, bool]] | None = None, terminal_acceptance_provider: Callable[[ExecutionContext], TerminalAcceptance] | None = None, finality_guard: FinalityPresentationGuard | None = None):
         self.store=store; self.learning=learning; self.scientist=scientist or PromptScientistV2()
         self.prompt_evaluator=prompt_evaluator; self.prompt_fixtures=tuple(prompt_fixtures)
         self.mission_recompiler=mission_recompiler
         self.commercial_evidence_provider=commercial_evidence_provider
+        self.terminal_acceptance_provider=terminal_acceptance_provider
+        self.finality_guard=finality_guard or FinalityPresentationGuard()
 
     @staticmethod
     def _ready(ctx: ExecutionContext) -> list[WorkPacket]:
@@ -180,7 +187,7 @@ class AutonomicCompletionKernel:
             (p.owner_reserved or p.effect_class in OWNER_EFFECT_CLASSES) and not new_ctx.owner_effect_authority
             for p in ready_after
         )
-        terminal_state=""; maturity_gaps=(); recompile_required=False
+        terminal_state=""; maturity_gaps=(); recompile_required=False; terminal_proof_ref=""
         commercial_court=self._commercial_court(new_ctx)
         if all_done and commercial_court is not None:
             if commercial_court.state == "COMMERCIAL_READY_VERIFIED":
@@ -189,14 +196,28 @@ class AutonomicCompletionKernel:
                     "COMMERCIAL_READY_VERIFIED",new_ctx.owner_effect_authority,new_ctx.maximum_parallelism,
                     dict(new_ctx.commercial_evidence),new_ctx.commercial_applicable_gates,
                 )
-                terminal_state=TerminalState.COMMERCIAL_READY_VERIFIED.value; out=OutputClass.TERMINAL_REPORT
+                terminal_state=TerminalState.COMMERCIAL_READY_VERIFIED.value
+                terminal_proof_ref="commercial-maturity-court:sha256:"+_sha(asdict(commercial_court))
+                out=OutputClass.TERMINAL_REPORT
             else:
                 maturity_gaps=tuple(commercial_court.failed + commercial_court.missing)
                 recompile_required=True
                 out=OutputClass.PROGRESS_UPDATE
         elif all_done:
-            terminal_state=TerminalState.COMPLETE_VERIFIED.value
-            out=OutputClass.TERMINAL_REPORT
+            acceptance = self.terminal_acceptance_provider(new_ctx) if self.terminal_acceptance_provider is not None else None
+            if acceptance is not None and acceptance.verified:
+                acceptance=acceptance.validate_for_target(new_ctx.target_state)
+                terminal_state=acceptance.state
+                terminal_proof_ref=acceptance.proof_ref
+                out=OutputClass.TERMINAL_REPORT
+            else:
+                maturity_gaps=tuple(acceptance.gaps) if acceptance is not None and acceptance.gaps else ("TERMINAL_ACCEPTANCE_COURT_REQUIRED",)
+                recompile_required=True
+                out=(
+                    OutputClass.RESUME_CAPSULE
+                    if force_platform_boundary and new_ctx.runtime_mode is RuntimeMode.NO_PERSISTENT_RUNNER
+                    else OutputClass.PROGRESS_UPDATE
+                )
         elif owner_blocked:
             terminal_state=TerminalState.IRREDUCIBLE_OWNER_DECISION.value; out=OutputClass.OWNER_DECISION
         elif force_platform_boundary and new_ctx.runtime_mode is RuntimeMode.NO_PERSISTENT_RUNNER:
@@ -235,7 +256,7 @@ class AutonomicCompletionKernel:
                 promotion_state="PROMPT_CHALLENGERS_SHADOW_REQUIRED"
                 promotion_reason="MATCHED_EVALUATOR_UNAVAILABLE"
 
-        state={"mission_id":new_ctx.mission_id,"cycle":cycle,"target_state":new_ctx.target_state,"current_maturity":new_ctx.current_maturity,"prompt_version":new_ctx.prompt_genome.version,"packets":[asdict(p) for p in new_ctx.packets],"terminal_state":terminal_state,"prompt_promotion_state":promotion_state,"commercial_evidence":dict(new_ctx.commercial_evidence),"maturity_gaps":maturity_gaps,"recompile_required":recompile_required}
+        state={"mission_id":new_ctx.mission_id,"cycle":cycle,"target_state":new_ctx.target_state,"current_maturity":new_ctx.current_maturity,"prompt_version":new_ctx.prompt_genome.version,"packets":[asdict(p) for p in new_ctx.packets],"terminal_state":terminal_state,"terminal_proof_ref":terminal_proof_ref,"prompt_promotion_state":promotion_state,"commercial_evidence":dict(new_ctx.commercial_evidence),"maturity_gaps":maturity_gaps,"recompile_required":recompile_required}
         prev=self.store.read(new_ctx.mission_id)
         checkpoint=self.store.put(new_ctx.mission_id,state,expected_version=None if prev is None else prev.version)
         event_id=f"LEARN-{new_ctx.mission_id}-{checkpoint.version}-{checkpoint.state_sha256[:10]}"
@@ -246,8 +267,23 @@ class AutonomicCompletionKernel:
             reentry_id=self.store.enqueue_reentry(new_ctx.mission_id,checkpoint,{"next_ready_packets":remaining,"prompt_version":new_ctx.prompt_genome.version,"maturity_gaps":maturity_gaps,"recompile_required":recompile_required})
         elif out is OutputClass.RESUME_CAPSULE:
             capsule={"mission_id":new_ctx.mission_id,"checkpoint_version":checkpoint.version,"checkpoint_sha256":checkpoint.state_sha256,"verified_state":new_ctx.current_maturity,"next_ready_packets":remaining,"prompt_version":new_ctx.prompt_genome.version,"learning_event_ids":[event_id],"maturity_gaps":maturity_gaps,"recompile_required":recompile_required,"continuation_instruction":"RECOMPILE_MATURITY_GAPS_AND_EXECUTE" if recompile_required else "CONSUME_CHECKPOINT_AND_EXECUTE_NEXT_READY_WAVE"}
+        presentation=self.finality_guard.classify(
+            output_class=out.value,
+            terminal_state=terminal_state,
+            terminal_proof_ref=terminal_proof_ref,
+            next_ready_packets=remaining,
+            maturity_gaps=maturity_gaps,
+            recompile_required=recompile_required,
+        )
         telemetry=CycleTelemetry(cycle,len(ready),len(executed),len(wave),0,out.value,bool(terminal_state),tuple(evidence))
-        return CycleResult(new_ctx,telemetry,checkpoint,tuple(remaining),event_id,reentry_id,capsule,terminal_state,maturity_gaps,recompile_required)
+        return CycleResult(
+            new_ctx,telemetry,checkpoint,tuple(remaining),event_id,reentry_id,capsule,
+            terminal_state,maturity_gaps,recompile_required,
+            terminal_proof_ref,
+            presentation.state.value,
+            presentation.completion_style_allowed,
+            presentation.mission_must_continue,
+        )
 
     def execute_until_boundary(self, ctx: ExecutionContext, packet_executor: Callable[[WorkPacket], tuple[bool,str]], *, max_cycles: int=100, force_platform_boundary_at: int | None=None) -> list[CycleResult]:
         results=[]; current=ctx

@@ -1,4 +1,4 @@
-# FUSE Autonomic Completion Fabric v5.0.1
+# FUSE Autonomic Completion Fabric v5.0.2
 
 
 ## Core change
@@ -35,3 +35,27 @@ The first v5 benchmark is deliberately narrow: synthetic missions with repeated 
 
 
 Packet completion and commercial maturity are now separate state domains. Completing the current DAG never promotes `COMMERCIAL_READY_VERIFIED` unless the commercial maturity court passes every applicable evidence gate. Missing/failed gates emit `recompile_required`; an available mission recompiler may materialize the missing gates and continue within the same run.
+
+
+## v5.0.2 No-False-Finality integrity
+
+A second state domain now protects owner-facing finality:
+
+- packet completion is execution progress, not mission acceptance;
+- non-commercial success requires an explicit terminal acceptance court;
+- a terminal report requires a non-empty terminal proof reference;
+- progress outputs are classified as `ACTIVE_BUILD` and cannot use completion-style presentation;
+- commercial success emits a deterministic maturity-court proof reference before terminal-style output is legal;
+- owner-decision and resume states remain active mission boundaries rather than completion success.
+
+The guard is implemented in `federation/finality_guard_v1.py` and is invoked inside
+`AutonomicCompletionKernel.run_cycle`. This moves the rule out of prose and into the
+runtime path that produces the mission state.
+
+A successful tranche therefore does not end the parent mission. It either releases the
+next ready wave, triggers mission recompilation for unresolved terminal predicates, queues
+persistent re-entry, or emits an exact resume/owner boundary. Only a verified terminal
+court may stop the mission as success.
+
+**Invariant:** `GREEN != DONE`, `CHECKPOINT != TERMINAL`, and
+`PACKETS_DONE != MISSION_ACCEPTED`.

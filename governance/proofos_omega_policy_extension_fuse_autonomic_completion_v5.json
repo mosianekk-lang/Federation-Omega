@@ -26,9 +26,21 @@
         "benchmark_v5.py",
         "stability_and_benchmark.py",
         "docs/architecture/FUSE_AUTONOMIC_COMPLETION_FABRIC_V5.md",
-        "prompts/FUSE_AUTONOMIC_COMPLETION_KERNEL_V5_MASTER.md"
+        "prompts/FUSE_AUTONOMIC_COMPLETION_KERNEL_V5_MASTER.md",
+        "federation/finality_guard_v1.py",
+        "tests/test_no_false_finality_v1.py",
+        "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
+        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md",
+        "federation/fuse_mission_runtime_interlock_v1.py",
+        "bubbles/autonomic_federation_runtime.py",
+        "tests/test_bubbles_mbmpc_pilf_host_binding_v1.py",
+        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py"
       ],
-      "reason": "FUSE_AUTONOMIC_COMPLETION_V5_RUNTIME_REENTRY_PROMPT_EVOLUTION_FEDERATION_LEARNING_COMMERCIAL_MATURITY"
+      "reason": "FUSE_AUTONOMIC_COMPLETION_V5_RUNTIME_REENTRY_PROMPT_EVOLUTION_FEDERATION_LEARNING_COMMERCIAL_MATURITY_NO_FALSE_FINALITY"
     }
   ],
   "subsystem_rules": [
@@ -54,9 +66,24 @@
         "benchmark_v5.py",
         "stability_and_benchmark.py",
         "docs/architecture/FUSE_AUTONOMIC_COMPLETION_FABRIC_V5.md",
-        "prompts/FUSE_AUTONOMIC_COMPLETION_KERNEL_V5_MASTER.md"
+        "prompts/FUSE_AUTONOMIC_COMPLETION_KERNEL_V5_MASTER.md",
+        "federation/finality_guard_v1.py",
+        "tests/test_no_false_finality_v1.py",
+        "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
+        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md",
+        "federation/fuse_mission_runtime_interlock_v1.py",
+        "bubbles/autonomic_federation_runtime.py",
+        "tests/test_bubbles_mbmpc_pilf_host_binding_v1.py",
+        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py"
       ],
-      "depends_on": ["CFBE", "FEDERATION_CORE"]
+      "depends_on": [
+        "CFBE",
+        "FEDERATION_CORE"
+      ]
     }
   ],
   "historical_associations": [],
@@ -85,12 +112,81 @@
         "tests/test_run_store_v1.py",
         "tests/test_fuse_autonomic_completion_v5_contract.py",
         "benchmark_v5.py",
-        "stability_and_benchmark.py"
+        "stability_and_benchmark.py",
+        "federation/finality_guard_v1.py",
+        "tests/test_no_false_finality_v1.py",
+        "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
+        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md",
+        "federation/fuse_mission_runtime_interlock_v1.py",
+        "bubbles/autonomic_federation_runtime.py",
+        "tests/test_bubbles_mbmpc_pilf_host_binding_v1.py",
+        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py"
       ],
-      "subsystems": ["FUSE_AUTONOMIC_COMPLETION_V5", "CFBE", "FEDERATION_CORE"],
+      "subsystems": [
+        "FUSE_AUTONOMIC_COMPLETION_V5",
+        "CFBE",
+        "FEDERATION_CORE"
+      ],
       "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 180
+    },
+    {
+      "id": "fuse_no_false_finality_v1",
+      "kind": "unittest_glob",
+      "target": "test_no_false_finality_v1.py",
+      "patterns": [
+        "federation/autonomic_completion_v5.py",
+        "federation/finality_guard_v1.py",
+        "federation/__init__.py",
+        "governance/fuse_autonomic_completion_v5.json",
+        "governance/proofos_omega_policy_extension_fuse_autonomic_completion_v5.json",
+        "tests/test_no_false_finality_v1.py",
+        "prompts/FUSE_AUTONOMIC_COMPLETION_KERNEL_V5_MASTER.md",
+        "docs/architecture/FUSE_AUTONOMIC_COMPLETION_FABRIC_V5.md",
+        "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
+        "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md",
+        "federation/fuse_mission_runtime_interlock_v1.py",
+        "bubbles/autonomic_federation_runtime.py",
+        "tests/test_bubbles_mbmpc_pilf_host_binding_v1.py",
+        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_AUTONOMIC_COMPLETION_V5",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "GENERAL_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 180
+    },
+    {
+      "id": "fuse_no_false_finality_f130_v1",
+      "kind": "unittest_glob",
+      "target": "test_cfbe_bubbles_work_graph_adapter_v1.py",
+      "patterns": [
+        "federation/finality_guard_v1.py",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "federation/fuse_mission_runtime_interlock_v1.py",
+        "bubbles/autonomic_federation_runtime.py",
+        "tests/test_no_false_finality_v1.py",
+        "tests/test_bubbles_mbmpc_pilf_host_binding_v1.py",
+        "tests/test_cfbe_bubbles_work_graph_adapter_v1.py"
+      ],
+      "subsystems": [
+        "FUSE_AUTONOMIC_COMPLETION_V5",
+        "FEDERATION_CORE"
+      ],
+      "failure_class": "GENERAL_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 240
     }
   ]
 }
