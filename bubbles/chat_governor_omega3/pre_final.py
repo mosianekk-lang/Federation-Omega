@@ -141,6 +141,7 @@ class MissionClosureState:
     exhaustion_evidence_ref: str = ""
     resumable_checkpoint_ref: str = ""
     terminal_proof_ref: str = ""
+    response_emission_requested: bool = True
     currently_executable_work: bool = False
     outcome_first_continue_recovery: bool = False
 
@@ -206,46 +207,48 @@ class PreFinalGate:
         missing_controls: list[str] = []
         rewrite_required = False
 
-        try:
-            if mission.terminal_state is TerminalState.VERIFIED_COMPLETE:
-                presentation = self.presentation_guard.classify(
-                    output_class="TERMINAL_REPORT",
-                    terminal_state="COMPLETE_VERIFIED",
-                    terminal_proof_ref=mission.terminal_proof_ref,
-                )
-            elif mission.terminal_state is TerminalState.OWNER_DECISION_REQUIRED:
-                presentation = self.presentation_guard.classify(
-                    output_class="OWNER_DECISION",
-                    terminal_state="IRREDUCIBLE_OWNER_DECISION",
-                )
-            elif mission.terminal_state in {
-                TerminalState.ACTIVE_TURN_BOUNDARY,
-                TerminalState.BLOCKED_IRREDUCIBLY,
-                TerminalState.LEGAL_OR_SAFETY_PROHIBITION,
-            }:
-                presentation = self.presentation_guard.classify(
-                    output_class="RESUME_CAPSULE",
-                    terminal_state=mission.terminal_state.value,
-                )
-            else:
-                presentation = self.presentation_guard.classify(
-                    output_class="PROGRESS_UPDATE",
-                    terminal_state="",
-                )
-        except FalseFinalityError as exc:
-            reasons.append(f"FALSE_FINALITY_BLOCK:{exc}")
-            rewrite_required = True
-            presentation = self.presentation_guard.classify(output_class="PROGRESS_UPDATE")
-
-        candidate = (candidate_response or "").strip()
-        if candidate and not presentation.completion_style_allowed:
-            lines = [line.strip() for line in candidate.splitlines() if line.strip()]
-            has_banner = bool(lines) and lines[0] == presentation.banner
-            has_terminal_line = presentation.terminal_line in lines[:4]
-            if not has_banner or not has_terminal_line:
-                reasons.append("NONTERMINAL_PRESENTATION_BANNER_REQUIRED")
+        presentation = None
+        if mission.response_emission_requested:
+            try:
+                if mission.terminal_state is TerminalState.VERIFIED_COMPLETE:
+                    presentation = self.presentation_guard.classify(
+                        output_class="TERMINAL_REPORT",
+                        terminal_state="COMPLETE_VERIFIED",
+                        terminal_proof_ref=mission.terminal_proof_ref,
+                    )
+                elif mission.terminal_state is TerminalState.OWNER_DECISION_REQUIRED:
+                    presentation = self.presentation_guard.classify(
+                        output_class="OWNER_DECISION",
+                        terminal_state="IRREDUCIBLE_OWNER_DECISION",
+                    )
+                elif mission.terminal_state in {
+                    TerminalState.ACTIVE_TURN_BOUNDARY,
+                    TerminalState.BLOCKED_IRREDUCIBLY,
+                    TerminalState.LEGAL_OR_SAFETY_PROHIBITION,
+                }:
+                    presentation = self.presentation_guard.classify(
+                        output_class="RESUME_CAPSULE",
+                        terminal_state=mission.terminal_state.value,
+                    )
+                else:
+                    presentation = self.presentation_guard.classify(
+                        output_class="PROGRESS_UPDATE",
+                        terminal_state="",
+                    )
+            except FalseFinalityError as exc:
+                reasons.append(f"FALSE_FINALITY_BLOCK:{exc}")
                 rewrite_required = True
-                safe_statements.extend((presentation.banner, presentation.terminal_line, presentation.next_line))
+                presentation = self.presentation_guard.classify(output_class="PROGRESS_UPDATE")
+
+            candidate = (candidate_response or "").strip()
+            if candidate and presentation is not None and not presentation.completion_style_allowed:
+                lines = [line.strip() for line in candidate.splitlines() if line.strip()]
+                has_banner = bool(lines) and lines[0] == presentation.banner
+                has_terminal_line = presentation.terminal_line in lines[:4]
+                if not has_banner or not has_terminal_line:
+                    reasons.append("NONTERMINAL_PRESENTATION_BANNER_REQUIRED")
+                    rewrite_required = True
+                    safe_statements.extend((presentation.banner, presentation.terminal_line, presentation.next_line))
 
         if MATERIAL_MATURITY_RE.search(candidate_response or "") and not scans:
             reasons.append("MATERIAL_MATURITY_CLAIM_SCAN_REQUIRED")
@@ -449,6 +452,7 @@ class ChatGovPreFinalInterlock:
                 "gate_version": self.gate.version,
                 "terminal_state": mission.terminal_state.value,
                 "terminal_proof_ref": mission.terminal_proof_ref,
+                "response_emission_requested": mission.response_emission_requested,
                 "objective_satisfied": mission.objective_satisfied,
                 "actionable_gap_count": actionable_count,
                 "decision": asdict(decision),
