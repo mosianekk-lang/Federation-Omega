@@ -1,65 +1,90 @@
 {
-  "schema": "SOVARA_AI_STUDIO_SEMANTIC_CANARY_REQUEST_V1",
-  "request_id": "AURORA-CFBE-SEMANTIC-20260907-001",
-  "execute": true,
-  "owner_directive": "ALL_SOVARA_AI_SEATS_GREEN",
-  "project_id": "sov-hybrid-suite",
-  "project_number": "257649435135",
-  "provider": "GOOGLE_GEMINI_DEVELOPER_API",
+  "case_data_allowed": false,
   "credential_mode": "GEMINI_AUTHORIZATION_KEY_ENV_SECRET",
   "credential_reference": "GITHUB_ACTIONS_SECRET:GEMINI_API_KEY",
+  "deployment_allowed": false,
+  "execute": true,
+  "external_communication_allowed": false,
   "fallback_route": {
-    "enabled": true,
-    "provider": "GOOGLE_VERTEX_AI",
     "credential_mode": "GITHUB_WIF_ADC",
-    "workload_identity_provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github",
-    "service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "enabled": true,
     "location": "global",
     "model": "gemini-2.5-flash",
+    "permission_preflight_required": true,
+    "provider": "GOOGLE_VERTEX_AI",
     "required_permission": "aiplatform.endpoints.predict",
-    "permission_preflight_required": true
+    "service_account": "superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com",
+    "workload_identity_provider": "projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github"
   },
-  "case_data_allowed": false,
-  "provider_mutation_allowed": false,
   "iam_mutation_allowed": false,
-  "secret_mutation_allowed": false,
-  "secret_value_logging_allowed": false,
-  "deployment_allowed": false,
-  "traffic_change_allowed": false,
-  "external_communication_allowed": false,
   "model_policy": {
+    "allow_dynamic_fallback": true,
     "discovery_required": true,
-    "require_generate_content": true,
     "preferred_models": [
       "gemini-3.8-flash",
       "gemini-3.7-flash",
       "gemini-flash-latest"
     ],
-    "allow_dynamic_fallback": true,
     "reject_model_classes": [
       "embedding",
       "tts",
       "image",
       "robotics",
       "aqa"
-    ]
+    ],
+    "require_generate_content": true
   },
+  "negative_cache": {
+    "failure_fingerprint": "GEMINI_LEGACY_FREE_TEXT_NONCE_RETURNED_1",
+    "unchanged_free_text_retry_forbidden": true
+  },
+  "owner_directive": "HYPERCUBE_FAIL_FORWARD_STRUCTURED_RECOVERY",
+  "project_id": "sov-hybrid-suite",
+  "project_number": "257649435135",
+  "promotion_rule": "GREEN only after one structured zero-private-data response has status VERIFIED and exact nonce, plus provider request/model/usage receipt.",
+  "provider": "GOOGLE_GEMINI_DEVELOPER_API",
+  "provider_mutation_allowed": false,
+  "request_id": "HYPERCUBE-GEMINI-STRUCTURED-SEMANTIC-20260918-001",
+  "schema": "SOVARA_AI_STUDIO_SEMANTIC_CANARY_REQUEST_V1",
+  "secret_mutation_allowed": false,
+  "secret_value_logging_allowed": false,
   "semantic_canary": {
-    "prompt_shape": "RETURN_EXACT_NONCE_ONLY",
-    "temperature": 0,
     "max_output_tokens": 128,
+    "prompt_shape": "STRUCTURED_JSON_SCHEMA_NONCE",
     "required_receipt_fields": [
       "semantic_verified",
       "selected_model",
       "provider_model_version",
       "provider_request_id_or_equivalent",
       "nonce_sha256",
+      "structured_status",
+      "structured_nonce_sha256",
       "credential_value_recorded",
       "secret_value_recorded",
       "case_data_processed",
       "provider_mutation_performed"
-    ]
+    ],
+    "response_mime_type": "application/json",
+    "response_schema": {
+      "properties": {
+        "nonce": {
+          "type": "STRING"
+        },
+        "status": {
+          "enum": [
+            "VERIFIED"
+          ],
+          "type": "STRING"
+        }
+      },
+      "required": [
+        "status",
+        "nonce"
+      ],
+      "type": "OBJECT"
+    },
+    "temperature": 0
   },
-  "promotion_rule": "Provider-semantic GREEN only after one exact zero-private-data nonce response. Prefer the existing Developer API key route when callable; otherwise use the current keyless WIF/ADC Vertex fallback only after aiplatform.endpoints.predict is provider-verified. No stale model label or source/config alone closes the gate.",
-  "truth_boundary": "This request authorizes one bounded zero-private-data Gemini semantic canary through either the pre-existing injected GEMINI_API_KEY Developer API route or, when that key is absent, the exact keyless WIF/ADC Vertex fallback named above. It does not authorize API-key creation/rotation, IAM/WIF mutation, secret payload access, deployment, traffic mutation, private/case data, external communication, destructive action, or unbounded spend."
+  "traffic_change_allowed": false,
+  "truth_boundary": "One bounded structured Gemini semantic canary only. No IAM/WIF/secret/deployment/traffic/case-data/external-communication effect."
 }
