@@ -14,10 +14,15 @@ from pathlib import Path
 import subprocess
 import time
 
+from .fuse_forge_git_repository_adapter_v1 import GitMutationReceipt, GitRollbackReceipt, LocalGitRepositoryAdapter
+from .fuse_forge_source_protection_v1 import CheckResult, LeaseFence, SourceProposal, SovereignSourceProtection
+
 SCHEMA = "FUSE-FORGE-VIRTUAL-EXECUTOR-V1"
 VERSION = "1.0.0"
 _ALLOWED_BINARIES = {"python", "python3", "git"}
 _FORBIDDEN_ENV_MARKERS = ("TOKEN", "SECRET", "PASSWORD", "PRIVATE_KEY", "CREDENTIAL")
+_PROTECTED_MAIN_REF = "refs/heads/main"
+_GIT_MAIN_MUTATORS = {"update-ref", "branch", "checkout", "switch", "reset", "merge", "rebase", "commit", "cherry-pick", "push"}
 
 
 def _digest(value: object) -> str:
@@ -105,10 +110,34 @@ class VirtualForgeExecutor:
         self.root.mkdir(parents=True, exist_ok=True)
         self.profile = profile
 
+    def _enforce_protected_main_boundary(self, task: VirtualTask, cwd: Path) -> None:
+        if Path(task.argv[0]).name.lower() != "git":
+            return
+        argv=tuple(str(x) for x in task.argv[1:])
+        mutating=any(token in _GIT_MAIN_MUTATORS for token in argv)
+        if not mutating:
+            return
+        lowered={token.lower() for token in argv}
+        explicit_main=(
+            _PROTECTED_MAIN_REF in argv
+            or "main" in lowered
+            or any(token.endswith(":refs/heads/main") for token in argv)
+        )
+        if explicit_main:
+            raise PermissionError("PROTECTED_MAIN_MUTATION_REQUIRES_FORGE_ADAPTER")
+        probe=subprocess.run(
+            ["git","-C",str(cwd),"symbolic-ref","--quiet","--short","HEAD"],
+            capture_output=True,text=True,check=False,
+            env={"PATH":os.environ.get("PATH",""),"GIT_TERMINAL_PROMPT":"0"},
+        )
+        if probe.returncode == 0 and probe.stdout.strip() == "main":
+            raise PermissionError("PROTECTED_MAIN_MUTATION_REQUIRES_FORGE_ADAPTER")
+
     def run(self, task: VirtualTask) -> VirtualTaskReceipt:
         task.validate()
         cwd = _path(self.root, task.cwd)
         cwd.mkdir(parents=True, exist_ok=True)
+        self._enforce_protected_main_boundary(task, cwd)
         env = {"PATH": os.environ.get("PATH", ""), "PYTHONNOUSERSITE": "1"}
         env.update(dict(task.environment))
         start_ns = time.time_ns()
@@ -140,6 +169,74 @@ class VirtualForgeExecutor:
             argv=("git", "init", "--bare", rel),
             cwd=".",
         ))
+
+    def protected_source_admission(
+        self,
+        *,
+        repository_relative_path: str,
+        current_main_sha: str,
+        proposal: SourceProposal,
+        lease: LeaseFence,
+        checks: tuple[CheckResult, ...],
+    ) -> tuple[ProtectedSourceAdmissionReceipt, GitMutationReceipt]:
+        target=_path(self.root, repository_relative_path)
+        guard=SovereignSourceProtection()
+        decision=guard.evaluate(
+            current_main_sha=current_main_sha,
+            proposal=proposal,
+            lease=lease,
+            checks=checks,
+        )
+        if not decision.allowed or decision.permit is None:
+            raise PermissionError("FORGE_PROTECTED_SOURCE_ADMISSION_HELD")
+        adapter=LocalGitRepositoryAdapter(target)
+        if adapter.read_main() != current_main_sha:
+            raise RuntimeError("FORGE_EXECUTOR_MAIN_READBACK_MISMATCH")
+        mutation=adapter.apply_permit(decision.permit)
+        receipt=ProtectedSourceAdmissionReceipt(
+            schema="FUSE-FORGE-PROTECTED-SOURCE-ADMISSION-RECEIPT-V1",
+            executor_id=self.profile.executor_id,
+            proposal_id=proposal.proposal_id,
+            protection_receipt_sha256=decision.receipt_sha256,
+            permit_sha256=decision.permit.permit_sha256,
+            git_mutation_receipt_sha256=mutation.receipt_sha256,
+            before_sha=mutation.before_sha,
+            after_sha=mutation.after_sha,
+            state="PROTECTED_LOCAL_GIT_ADMISSION_READBACK_VERIFIED",
+            provider_native_protection_proof=False,
+            physical_device_proof=False,
+            persistent_host_proof=False,
+        )
+        return receipt,mutation
+
+    def protected_source_rollback(
+        self,
+        *,
+        repository_relative_path: str,
+        mutation_receipt: GitMutationReceipt,
+    ) -> GitRollbackReceipt:
+        target=_path(self.root, repository_relative_path)
+        return LocalGitRepositoryAdapter(target).rollback(mutation_receipt)
+
+
+@dataclass(frozen=True, slots=True)
+class ProtectedSourceAdmissionReceipt:
+    schema: str
+    executor_id: str
+    proposal_id: str
+    protection_receipt_sha256: str
+    permit_sha256: str
+    git_mutation_receipt_sha256: str
+    before_sha: str
+    after_sha: str
+    state: str
+    provider_native_protection_proof: bool
+    physical_device_proof: bool
+    persistent_host_proof: bool
+
+    @property
+    def receipt_digest(self) -> str:
+        return _digest(asdict(self))
 
 
 @dataclass(frozen=True, slots=True)
