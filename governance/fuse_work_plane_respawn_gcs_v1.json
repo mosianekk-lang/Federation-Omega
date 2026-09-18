@@ -1,0 +1,33 @@
+{
+  "adapter": "respawn/work_plane_gcs_runtime.py",
+  "authority_ceiling": "A1_INTERNAL",
+  "core_runtime": "federation/fuse_work_plane_runtime_v1.py",
+  "durable_backend": "GCS_SINGLE_OBJECT_GENERATION_CAS",
+  "external_effect_default": false,
+  "hard_floors": [
+    "generation precondition on every mutating bundle commit",
+    "read-only projection never advances generation",
+    "stale actor commit rejected by core fence",
+    "uncertain external effect requires exact effect readback before retry",
+    "no arbitrary shell operation",
+    "no provider/IAM/secret/billing/public-traffic authority inherited from source"
+  ],
+  "optional_runtime_environment": {
+    "FUSE_WORK_PLANE_OBJECT": "work-plane/runtime-v1.json"
+  },
+  "production_activation_authorized": false,
+  "proof_boundary": {
+    "local_tests_prove_provider_authority": false,
+    "provider_deployment_proves_persistent_24x7": false,
+    "single_host_proves_cross_host_dr": false,
+    "source_admission_proves_provider_deployment": false
+  },
+  "provider_effect_authorized_by_source": false,
+  "provider_transport": "GOOGLE_AUTH_AUTHORIZED_SESSION_JSON_API",
+  "required_runtime_environment": [
+    "FUSE_WORK_PLANE_BUCKET"
+  ],
+  "schema": "FUSE-WORK-PLANE-RESPAWN-GCS-V1",
+  "source_of_truth": "FUSE_WORK_PLANE_MISSION_BUS_EVENTS",
+  "version": "1.1.0"
+}
