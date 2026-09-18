@@ -170,7 +170,7 @@
     {
       "id": "fuse_no_false_finality_f130_v1",
       "kind": "unittest_glob",
-      "target": "test_bubbles_mbmpc_pilf_host_binding_v1.py",
+      "target": "test_cfbe_bubbles_work_graph_adapter_v1.py",
       "patterns": [
         "federation/finality_guard_v1.py",
         "bubbles/chat_governor_omega3/pre_final.py",
