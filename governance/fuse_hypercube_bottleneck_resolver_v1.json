@@ -1,0 +1,135 @@
+{
+  "schema": "FUSE-HYPERCUBE-BOTTLENECK-RESOLUTION-GOVERNANCE-V1",
+  "version": "1.0.0",
+  "capability_id": "FUSE-HYPERCUBE-HBR-001",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "inheritance_scope": "ALL_CURRENT_AND_FUTURE_FUSE_FEDERATION_SYSTEMS_WHEN_BOUND_TO_HYPERCUBE",
+  "purpose": "Turn recurring bottlenecks into aggressively harvested, benchmarked, commercially valuable capability improvements rather than stop at diagnosis.",
+  "operating_loop": [
+    "SEEK",
+    "FIND",
+    "MEASURE",
+    "ROOT_CAUSE",
+    "HARVEST_INTERNAL",
+    "HARVEST_MARKET_MECHANISMS",
+    "COMPOSE",
+    "INVENT_RESIDUAL_IF_NEEDED",
+    "PARETO_RANK",
+    "SHADOW_BENCHMARK",
+    "BUILD",
+    "PROVE",
+    "MEASURE_COMMERCIAL_UPLIFT",
+    "REGISTER_REUSABLE_CAPABILITY",
+    "REPEAT_UNTIL_NON_DOMINANT"
+  ],
+  "mandatory_bottleneck_classes": [
+    "SERIAL_DEPENDENCY",
+    "CI_FEEDBACK",
+    "QUEUE_CAPACITY",
+    "PROOF_EVIDENCE",
+    "PROVIDER_RUNTIME",
+    "AUTHORITY",
+    "MANUAL_OWNER_BURDEN",
+    "ARCHITECTURAL_DUPLICATION",
+    "COST_RESOURCE",
+    "EXTERNAL_BOUNDARY",
+    "UNKNOWN"
+  ],
+  "clean_room_market_mechanisms": [
+    {
+      "source_family": "GitHub + Graphite",
+      "harvested_mechanism": "stack-aware bottom-up merge queues, cascading rebase, queue-aware batching and speculative parallel validation",
+      "vendor_code_copied": false
+    },
+    {
+      "source_family": "Buildkite",
+      "harvested_mechanism": "dynamic pipeline generation, concurrency groups, resource-fit queues and adaptive rerouting",
+      "vendor_code_copied": false
+    },
+    {
+      "source_family": "Bazel + BuildBuddy",
+      "harvested_mechanism": "content-addressed caching, remote execution, warm workers, action deduplication and elastic executor pools",
+      "vendor_code_copied": false
+    },
+    {
+      "source_family": "Temporal",
+      "harvested_mechanism": "durable workflow replay and exact resume after process/network/infrastructure failure",
+      "vendor_code_copied": false
+    },
+    {
+      "source_family": "Modern test-intelligence systems",
+      "harvested_mechanism": "change-impact proof/test selection with safe fallback to broader validation",
+      "vendor_code_copied": false
+    },
+    {
+      "source_family": "OpenTelemetry",
+      "harvested_mechanism": "vendor-neutral trace/metric/log correlation for unknown-unknown bottleneck localization",
+      "vendor_code_copied": false
+    },
+    {
+      "source_family": "DORA",
+      "harvested_mechanism": "throughput/instability scorecard so local speed does not degrade delivery quality",
+      "vendor_code_copied": false
+    },
+    {
+      "source_family": "Champion/challenger experimentation",
+      "harvested_mechanism": "reversible paired shadow trials against frozen acceptance and value oracles",
+      "vendor_code_copied": false
+    }
+  ],
+  "route_families": [
+    "REUSE",
+    "EXTEND",
+    "COMPOSE",
+    "REPURPOSE",
+    "BUILD_RESIDUAL",
+    "MARKET_COMPOSITE",
+    "INVENT_ALGORITHM",
+    "RETIRE_REDUNDANCY",
+    "REJECT"
+  ],
+  "algorithmic_laws": [
+    "BOTTLENECK_REPORTING_IS_NOT_COMPLETION",
+    "DETECTION_AUTOMATICALLY_RELEASES_RESOLUTION_COMPILATION",
+    "INTERNAL_REUSE_IS_EVALUATED_BEFORE_NEW_BUILD",
+    "CLEAN_ROOM_MARKET_MECHANISMS_MAY_BE_COMBINED_WITH_INTERNAL_CAPABILITIES",
+    "SEVERE_OR_LOW_COVERAGE_BOTTLENECKS_MUST_RETAIN_AN_INVENTION_CHALLENGER",
+    "DOMINATED_ROUTES_MUST_NOT_CROWD_OUT_PARETO_EFFICIENT_ALTERNATIVES",
+    "ROUTE_PORTFOLIO_MUST_PRESERVE_MECHANISM_DIVERSITY",
+    "EXTERNAL_BOUNDARIES_MUST_NOT_BE_CIRCUMVENTED",
+    "NO_PROVIDER_AUTHORITY_IS_CREATED_BY_HYPERCUBE",
+    "PROMOTION_REQUIRES_NON_REGRESSION_AND_POSITIVE_MEASURED_VALUE",
+    "RECURRING_SHARED_BOTTLENECKS_BECOME_REUSABLE_CAPABILITY_OR_PRODUCT_FEATURE_CANDIDATES",
+    "COMMERCIAL_PRODUCT_UPLIFT_IS_MEASURED_ALONGSIDE_TECHNICAL_RELIEF",
+    "SYSTEM_MUST_REMEASURE_AFTER_EACH_FIX_AND_CONTINUE_IF_THE_CONSTRAINT_STILL_DOMINATES"
+  ],
+  "commercial_outcome_dimensions": [
+    "throughput",
+    "latency",
+    "quality",
+    "reliability",
+    "owner_burden",
+    "operating_cost",
+    "evidence_strength",
+    "differentiation",
+    "commercial_leverage",
+    "reuse_value"
+  ],
+  "promotion_contract": {
+    "deterministic_court_required": true,
+    "shadow_or_common_mission_benchmark_required": true,
+    "frozen_acceptance_oracle_required": true,
+    "proof_before_claim": true,
+    "automatic_stable_self_promotion": false,
+    "provider_effect_authority": false
+  },
+  "truth_boundary": {
+    "bottleneck_detection_and_route_compilation_can_be_automated": true,
+    "market_mechanism_harvest_is_clean_room_only": true,
+    "external_effect_execution_authorized": false,
+    "provider_authority_created": false,
+    "stable_self_promotion_allowed": false,
+    "commercial_superiority_claim_requires_real_measurement": true
+  }
+}
