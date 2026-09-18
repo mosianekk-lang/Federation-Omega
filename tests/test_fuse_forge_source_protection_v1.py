@@ -16,7 +16,8 @@ MERGE="3"*40
 def proposal(**overrides):
     data=dict(
         proposal_id="P1",base_sha=MAIN,head_sha=HEAD,author="owner",
-        changed_paths=("a.py","tests/test_a.py"),signed_head=True,direct_main_write=False,
+        changed_paths=("a.py","tests/test_a.py"),signed_head=True,
+        signature_evidence_ref="signature:verified",direct_main_write=False,
     )
     data.update(overrides)
     return SourceProposal(**data)
@@ -50,6 +51,19 @@ class ForgeProtectionTests(unittest.TestCase):
     def test_unsigned_head_rejected(self):
         d=self.guard.evaluate(current_main_sha=MAIN,proposal=proposal(signed_head=False),lease=lease(),checks=checks())
         self.assertIn("SIGNED_HEAD_REQUIRED",d.reasons)
+
+    def test_signature_without_evidence_rejected(self):
+        d=self.guard.evaluate(
+            current_main_sha=MAIN,
+            proposal=proposal(signature_evidence_ref=""),
+            lease=lease(),checks=checks(),
+        )
+        self.assertIn("SIGNED_HEAD_EVIDENCE_REQUIRED",d.reasons)
+
+    def test_permit_binds_check_and_signature_evidence(self):
+        d=self.guard.evaluate(current_main_sha=MAIN,proposal=proposal(),lease=lease(),checks=checks())
+        self.assertEqual(64,len(d.permit.signature_evidence_sha256))
+        self.assertEqual(64,len(d.permit.checks_sha256))
 
     def test_stale_main_rejected(self):
         d=self.guard.evaluate(current_main_sha="4"*40,proposal=proposal(),lease=lease(source_head="4"*40),checks=checks())
