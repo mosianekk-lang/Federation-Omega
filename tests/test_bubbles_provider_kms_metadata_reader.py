@@ -16,6 +16,8 @@ SOVARA_TITLE = "SOVARA_GCP_AUTHORITY_PROBE_V2"
 class BubblesProviderKMSMetadataReaderTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not WORKFLOW.exists():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.probe = cls.text.split("  probe:\n", 1)[1].split("\n  kms-p256-metadata:\n", 1)[0]

@@ -17,6 +17,8 @@ KMS_API = "cloudkms.googleapis.com"
 class FuseKMSApiEnableV1Tests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not WORKFLOW.exists():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
         cls.iap = cls.text.split("  enable-iap-phase-a:\n", 1)[1].split("\n  enable-cloudkms-api-only:\n", 1)[0]
