@@ -15,7 +15,7 @@
     "providerEffects": 0,
     "canaryReceiptSha256": "cf901888050edc42924d3ce4510f1d4b539d57640c61c474ad2f4f588a24877d"
   },
-  "purpose": "Detect chat/runtime failure signatures, preserve active mission state, diagnose likely dependency classes, and select a bounded recovery route without treating a failed response as mission completion.",
+  "purpose": "Detect chat/runtime failure signatures, including silent long-running execution and incomplete progress reporting; preserve active mission state; auto-trigger Hypercube improvement/harvest; and select a bounded continuation route without treating a failed, stalled, or invisible response as mission completion.",
   "extends": [
     "evidenceops/build_system/objective_completion_guard.py",
     "docs/ict/CHAT_AUDIT_REMEDIATION_STANDARD.md"
@@ -23,6 +23,8 @@
   "failureClasses": [
     "TRANSPORT_INTERRUPTION",
     "SERVER_GENERATION_FAILURE",
+    "INCOMPLETE_PROGRESS_REPORTING",
+    "SILENT_LONG_RUNNING_EXECUTION",
     "STALL_TIMEOUT",
     "CONTEXT_PRESSURE",
     "TOOL_OR_CONNECTOR_FAILURE",
@@ -42,11 +44,23 @@
     "Use only equivalent authorized alternate routes; authority is never inferred or inherited.",
     "Respect an explicit user stop/cancel and preserve state for later resume.",
     "A route-exhausted state is blocked, not complete.",
-    "Do not claim control of ChatGPT client transport, provider service state or browser/network repair without native evidence."
+    "Do not claim control of ChatGPT client transport, provider service state or browser/network repair without native evidence.",
+    "A machine-recoverable error, stall, or incomplete progress report automatically triggers Hypercube bottleneck harvesting.",
+    "Silent long-running execution with no owner-visible progress is an active defect, not a reason to wait indefinitely.",
+    "Classify the active execution state before retrying: HEALTHY_RUNNING, WAITING_EXTERNAL, QUEUED, STALLED, DEADLOCKED, or TOOL_TIMEOUT.",
+    "Continue unaffected mission lanes while repairing or replacing a stalled lane.",
+    "If the host supports progress emission, surface compact owner-visible state and next action during long-running recovery.",
+    "Explicit user stop/cancel always outranks Hypercube auto-continuation."
   ],
   "recoveryLadder": [
     "PERSIST_MISSION_CHECKPOINT",
     "VERIFY_MISSION_NOT_COMPLETE",
+    "EMIT_MINIMAL_OWNER_VISIBLE_PROGRESS_WHEN_SUPPORTED",
+    "COMPILE_MATERIALLY_DIFFERENT_ROUTE",
+    "CONTINUE_UNAFFECTED_MISSION_LANES",
+    "ISOLATE_STALLED_EXECUTION_LANE",
+    "CLASSIFY_ACTIVE_EXECUTION_STATE",
+    "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST_ON_MACHINE_RECOVERABLE_FAILURE",
     "READBACK_UNCERTAIN_EFFECTS_WHEN_APPLICABLE",
     "RETRY_SAME_ATOMIC_ACTION_WHEN_SAFE",
     "RESUME_FROM_LAST_PROVEN_CHECKPOINT",
@@ -70,7 +84,8 @@
       "SHARED_COOPERATIVE_CANCELLATION",
       "DISTINCT_ROUTE_CIRCUIT_BREAKER",
       "HASH_VERIFIED_HANDOFF_PERSISTENCE",
-      "JOURNALED_TERMINAL_DELIVERY"
+      "JOURNALED_TERMINAL_DELIVERY",
+      "BOUND_HOST_SILENT_PROGRESS_WATCHDOG"
     ],
     "terminalUnacknowledgedState": "ORPHANED_UNACKNOWLEDGED"
   },
@@ -81,7 +96,9 @@
       "generate deterministic resume/idempotency keys",
       "select recovery routes",
       "prevent premature completion",
-      "drive recovery when an authorized executor invokes it"
+      "drive recovery when an authorized executor invokes it",
+      "emit one sanitized stall event per no-progress epoch when a bound host supplies telemetry",
+      "auto-bind machine-recoverable failure events to deterministic Hypercube resolution"
     ],
     "cannotByItselfDo": [
       "repair OpenAI/ChatGPT WebSocket infrastructure",
@@ -89,16 +106,40 @@
       "restart or reauthenticate a browser session without an authorized client executor",
       "guarantee a third-party provider is available",
       "perform external effects merely because a recovery route is described",
-      "prove ChatGPT-native or private execution-plane binding from local tests"
+      "prove ChatGPT-native or private execution-plane binding from local tests",
+      "observe a native ChatGPT Stop button without bound-host telemetry",
+      "guarantee owner-visible progress emission when the host provides no progress channel"
     ]
   },
   "acceptance": {
     "focusedTest": "evidenceops/build_system/tests/test_chat_failure_resilience.py",
     "airlockBinding": "tests/test_phoenix_provider_cutover_v3_chat_failure_resilience.py",
-    "minimumFocusedTests": 21,
+    "minimumFocusedTests": 24,
     "requiredGates": [
       "Federation Omega Airlock",
       "Public Repository Leak Guard"
     ]
+  },
+  "version": "1.1.0",
+  "hypercubeIntegration": {
+    "capabilityId": "FUSE-HYPERCUBE-HBR-001",
+    "triggerClasses": [
+      "SILENT_LONG_RUNNING_EXECUTION",
+      "INCOMPLETE_PROGRESS_REPORTING",
+      "STALL_TIMEOUT",
+      "TOOL_OR_CONNECTOR_FAILURE",
+      "RATE_OR_CAPACITY_LIMIT",
+      "CONTEXT_PRESSURE",
+      "AUTH_OR_SESSION_FAILURE",
+      "TRANSPORT_INTERRUPTION",
+      "SERVER_GENERATION_FAILURE",
+      "FILE_OR_ATTACHMENT_FAILURE",
+      "CLIENT_RESOURCE_FAILURE",
+      "UNKNOWN_CHAT_FAILURE"
+    ],
+    "autoContinueDefault": true,
+    "explicitUserStopOverrides": true,
+    "storesResolutionInCheckpoint": true,
+    "externalEffectAuthority": false
   }
 }

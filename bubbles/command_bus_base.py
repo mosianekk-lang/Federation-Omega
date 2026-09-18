@@ -112,9 +112,28 @@ def _chat_failure_recovery(request: ActionRequest) -> dict[str, object]:
         mission_packet=mission,
     )
 
+    effective = aaa["effective_recovery"]
+    checkpoint = effective.get("checkpoint") if isinstance(effective, dict) else None
+    hypercube_resolution = (
+        checkpoint.get("hypercube_resolution")
+        if isinstance(checkpoint, dict)
+        else None
+    )
+
     return {
         "kind": "LOCAL_CHAT_FAILURE_RECOVERY",
-        "recovery": aaa["effective_recovery"],
+        "recovery": effective,
+        "hypercube": {
+            "triggered": bool(
+                isinstance(checkpoint, dict)
+                and checkpoint.get("hypercube_improvement_triggered") is True
+            ),
+            "auto_continue_intent": bool(
+                isinstance(checkpoint, dict)
+                and checkpoint.get("auto_continue_intent") is True
+            ),
+            "resolution": hypercube_resolution,
+        },
         "aaa": {
             "schema": aaa["schema"],
             "route_retry": aaa["aaa_route_retry"],
