@@ -34,6 +34,8 @@ Version: `2026.08.15-5`. Scope: failures observed in or logically exposed by the
 | RG-028 | Reactive-only correction | A failure can wait until the owner notices and asks again | Invoke the guard automatically at pre-action and material-cycle boundaries |
 | RG-029 | Correction-debt orphaning | Correcting one statement fixes every artifact that inherited it | Invalidate dependents and repair them in dependency order before promotion |
 | RG-030 | Ungoverned self-upgrade | A system may improve and promote itself because the change sounds beneficial | Require bounded triggers, current environment proof, preservation checks, regression/healthy tests, rollback and separate Formation permits |
+| RG-031 | Premature finality presentation | A polished progress checkpoint or green tranche means the parent mission is finished | Force owner-facing `STATE` + terminal line; prohibit completion-style output until an explicit terminal court and proof ref exist |
+| RG-032 | Success-report stop substitution | Reporting a successful intermediate tranche is a valid reason to stop execution | Treat progress as a continuation trigger; automatically release the next unresolved lawful tranche or emit an exact continuation boundary |
 
 ## Higher-order manifestations now exposed
 
@@ -49,5 +51,7 @@ Version: `2026.08.15-5`. Scope: failures observed in or logically exposed by the
 10. **Algorithm accretion:** every correction creates another named engine, registry or skill even though an existing capability could be patched or composed.
 11. **Stale-federation inheritance:** an old inventory is treated as the current capability estate, causing duplicate builds or routing to retired surfaces.
 12. **Connector-output overload:** a broad retrieval succeeds at the provider but exceeds the consumer transport boundary, and the resulting absence is misreported as “not found.”
+13. **Final-looking checkpoint:** visual polish, success-heavy wording and a closing paragraph cause an active mission to be perceived as complete even when a caveat says otherwise.
+14. **Green-stop reflex:** a successful stage changes the assistant from execution mode into report mode instead of releasing the next unresolved stage.
 
-These manifestations are protected by state caps, evidence freshness, provenance, independent readback, scope denominators, owner-only acceptance, semantic capability deduplication, gap-proofed construction, material-cycle invocation, capability preservation, correction-debt ordering and no-self-promotion gates.
+These manifestations are protected by state caps, evidence freshness, provenance, independent readback, scope denominators, owner-only acceptance, semantic capability deduplication, gap-proofed construction, material-cycle invocation, capability preservation, correction-debt ordering, no-self-promotion gates, explicit parent-mission state banners, terminal-proof-gated presentation and automatic continuation after non-terminal green tranches.
