@@ -1,6 +1,6 @@
 {
   "schema": "FUSE-FORGE-CONVERGENCE-V1",
-  "version": "1.2.0",
+  "version": "1.3.0",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "source_of_truth": "FUSE_ONE_EXISTING_CONTROL_PLANES",
@@ -71,5 +71,21 @@
       "rollback_required": true,
       "provider_native_protection_equivalence_claim": false
     }
+  },
+  "source_admission_route": {
+    "default": "PROTECTED_LOCAL_GIT_CAS",
+    "executor": "FUSE-VIRTUAL-FORGE-001",
+    "permit_engine": "FUSE-FORGE-SOVEREIGN-PROTECTION-001",
+    "repository_adapter": "FUSE-FORGE-LOCAL-GIT-ADAPTER-001",
+    "generic_git_main_mutation": "FORBIDDEN",
+    "raw_git_dir_override_on_mutator": "FORBIDDEN",
+    "required_checks": [
+      "admission",
+      "contract",
+      "scan"
+    ],
+    "post_mutation_readback_required": true,
+    "rollback_required": true,
+    "provider_native_protection_equivalence_claim": false
   }
 }
