@@ -20,8 +20,18 @@
   "model_policy": {
     "allow_dynamic_fallback": true,
     "discovery_required": true,
-    "preferred_models": ["gemini-3.8-flash","gemini-3.7-flash","gemini-flash-latest"],
-    "reject_model_classes": ["embedding","tts","image","robotics","aqa"],
+    "preferred_models": [
+      "gemini-3.8-flash",
+      "gemini-3.7-flash",
+      "gemini-flash-latest"
+    ],
+    "reject_model_classes": [
+      "embedding",
+      "tts",
+      "image",
+      "robotics",
+      "aqa"
+    ],
     "require_generate_content": true
   },
   "negative_cache": {
@@ -41,14 +51,36 @@
   "semantic_canary": {
     "max_output_tokens": 128,
     "prompt_shape": "STRUCTURED_JSON_SCHEMA_NONCE",
-    "required_receipt_fields": ["semantic_verified","selected_model","provider_model_version","provider_request_id_or_equivalent","nonce_sha256","structured_status","structured_nonce_sha256","credential_value_recorded","secret_value_recorded","case_data_processed","provider_mutation_performed"],
+    "required_receipt_fields": [
+      "semantic_verified",
+      "selected_model",
+      "provider_model_version",
+      "provider_request_id_or_equivalent",
+      "nonce_sha256",
+      "structured_status",
+      "structured_nonce_sha256",
+      "credential_value_recorded",
+      "secret_value_recorded",
+      "case_data_processed",
+      "provider_mutation_performed"
+    ],
     "response_mime_type": "application/json",
     "response_schema": {
       "properties": {
-        "nonce": {"type": "STRING"},
-        "status": {"enum": ["VERIFIED"],"type": "STRING"}
+        "nonce": {
+          "type": "STRING"
+        },
+        "status": {
+          "enum": [
+            "VERIFIED"
+          ],
+          "type": "STRING"
+        }
       },
-      "required": ["status","nonce"],
+      "required": [
+        "status",
+        "nonce"
+      ],
       "type": "OBJECT"
     },
     "temperature": 0
