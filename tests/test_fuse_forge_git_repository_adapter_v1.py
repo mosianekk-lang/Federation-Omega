@@ -22,20 +22,22 @@ def run(repo: Path, *args: str) -> str:
 class ForgeGitAdapterTests(unittest.TestCase):
     def setUp(self):
         self.tmp=tempfile.TemporaryDirectory()
-        self.repo=Path(self.tmp.name)/"repo"
-        self.repo.mkdir()
-        subprocess.run(["git","init","-b","main",str(self.repo)],check=True,capture_output=True)
-        run(self.repo,"config","user.name","FUSE Court")
-        run(self.repo,"config","user.email","fuse@example.invalid")
-        (self.repo/"value.txt").write_text("A\n")
-        run(self.repo,"add","value.txt")
-        run(self.repo,"commit","-m","A")
-        self.before=run(self.repo,"rev-parse","refs/heads/main")
-        run(self.repo,"checkout","-b","candidate")
-        (self.repo/"value.txt").write_text("B\n")
-        run(self.repo,"add","value.txt")
-        run(self.repo,"commit","-m","B")
-        self.head=run(self.repo,"rev-parse","HEAD")
+        self.work=Path(self.tmp.name)/"work"
+        self.work.mkdir()
+        subprocess.run(["git","init","-b","main",str(self.work)],check=True,capture_output=True)
+        run(self.work,"config","user.name","FUSE Court")
+        run(self.work,"config","user.email","fuse@example.invalid")
+        (self.work/"value.txt").write_text("A\n")
+        run(self.work,"add","value.txt")
+        run(self.work,"commit","-m","A")
+        self.before=run(self.work,"rev-parse","refs/heads/main")
+        run(self.work,"checkout","-b","candidate")
+        (self.work/"value.txt").write_text("B\n")
+        run(self.work,"add","value.txt")
+        run(self.work,"commit","-m","B")
+        self.head=run(self.work,"rev-parse","HEAD")
+        self.repo=Path(self.tmp.name)/"repo.git"
+        subprocess.run(["git","clone","--bare",str(self.work),str(self.repo)],check=True,capture_output=True)
         self.guard=SovereignSourceProtection()
         self.adapter=LocalGitRepositoryAdapter(self.repo)
 
@@ -59,6 +61,10 @@ class ForgeGitAdapterTests(unittest.TestCase):
         )
         self.assertTrue(decision.allowed)
         return decision.permit
+
+    def test_court_uses_real_bare_git_repository(self):
+        self.assertEqual("true",run(self.repo,"rev-parse","--is-bare-repository"))
+        self.assertTrue(self.adapter.is_bare)
 
     def test_real_git_atomic_cas_and_exact_readback(self):
         receipt=self.adapter.apply_permit(self.permit())
