@@ -34,7 +34,7 @@ def compile_of50_formation_decision(
     authority = str(body.get("authority_ceiling") or Authority.A1_INTERNAL.value)
     if authority != Authority.A1_INTERNAL.value:
         raise ValueError("Formation Innovation adapter requires A1_INTERNAL ceiling")
-    cycle_ref = str(body.get("cycle_id") or body.get("receipt_sha256") or "").strip()
+    cycle_ref = str(body.get("receipt_sha256") or body.get("cycle_id") or "").strip()
     if not cycle_ref:
         raise ValueError("foundry cycle reference is required")
     routes = tuple(
