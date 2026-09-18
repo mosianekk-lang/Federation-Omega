@@ -174,8 +174,17 @@ class FormationFoundryBinder:
             "truth_boundary": dict(truth_boundary),
         }
         receipt = FormationFoundryBindingReceipt(
-            **material,
+            schema=SCHEMA,
+            version=VERSION,
+            producer_id=PRODUCER_ID,
+            mission_id=mission_id,
+            cycle_id=foundry_result.cycle_id,
+            foundry_receipt_sha256=receipt_sha,
+            proof_sha256=str(foundry_result.proof["proof_sha256"]),
+            decision_foundry_cycle_ref=formation_decision.foundry_cycle_ref,
+            authority_ceiling=formation_decision.authority_ceiling,
             receipt_digest=_digest(material),
+            truth_boundary=truth_boundary,
         )
         if not receipt.verify():
             raise ValueError("FORMATION_FOUNDRY_BINDING_RECEIPT_SELF_VERIFICATION_FAILED")
