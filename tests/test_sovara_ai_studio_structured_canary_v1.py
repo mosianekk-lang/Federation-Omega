@@ -20,13 +20,18 @@ class Court(unittest.TestCase):
         self.assertEqual(["status","nonce"],c["response_schema"]["required"])
         self.assertTrue(R["negative_cache"]["unchanged_free_text_retry_forbidden"])
     def test_workflow_uses_schema(self):
-        for token in ("responseMimeType':'application/json'","responseSchema':response_schema","parsed.get('status')=='VERIFIED'","parsed.get('nonce')==nonce","'acceptance_mode':'STRUCTURED_JSON_SCHEMA_V1'"):
+        for token in ("responseMimeType':'application/json'","responseSchema':response_schema",
+                      "parsed.get('status')=='VERIFIED'","parsed.get('nonce')==nonce",
+                      "'acceptance_mode':'STRUCTURED_JSON_SCHEMA_V1'"):
             self.assertIn(token,W)
         self.assertNotIn("exact=status==200 and text==expected",W)
     def test_zero_effect(self):
-        for bad in ("gcloud services enable","add-iam-policy-binding","gcloud run deploy","gcloud run services update-traffic","gcloud secrets versions access","git push","git commit"):
+        for bad in ("gcloud services enable","add-iam-policy-binding","gcloud run deploy",
+                    "gcloud run services update-traffic","gcloud secrets versions access","git push","git commit"):
             self.assertNotIn(bad,W)
-        for k in ("case_data_allowed","provider_mutation_allowed","iam_mutation_allowed","secret_mutation_allowed","deployment_allowed","traffic_change_allowed","external_communication_allowed"):
+        for k in ("case_data_allowed","provider_mutation_allowed","iam_mutation_allowed",
+                  "secret_mutation_allowed","deployment_allowed","traffic_change_allowed",
+                  "external_communication_allowed"):
             self.assertFalse(R[k],k)
     def test_actions_pinned(self):
         refs=re.findall(r"uses:\s*([^\s]+)",W)
