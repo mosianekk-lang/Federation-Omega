@@ -52,17 +52,34 @@ class PreFinalGateTests(unittest.TestCase):
             mission=self.mission(
                 terminal_state=TerminalState.VERIFIED_COMPLETE,
                 objective_satisfied=True,
+                terminal_proof_ref="proof:terminal:verified",
             )
         )
         self.assertTrue(allowed.allow_final)
         self.assertEqual("ALLOW_VERIFIED_COMPLETE", allowed.mode)
 
         blocked = self.gate.evaluate(
-            mission=self.mission(terminal_state=TerminalState.VERIFIED_COMPLETE)
+            mission=self.mission(
+                terminal_state=TerminalState.VERIFIED_COMPLETE,
+                terminal_proof_ref="proof:terminal:verified",
+            )
         )
         self.assertFalse(blocked.allow_final)
         self.assertIn(
             "VERIFIED_COMPLETE_WITHOUT_OBJECTIVE_SATISFACTION", blocked.reasons
+        )
+
+    def test_verified_complete_without_terminal_proof_ref_is_blocked(self) -> None:
+        decision = self.gate.evaluate(
+            mission=self.mission(
+                terminal_state=TerminalState.VERIFIED_COMPLETE,
+                objective_satisfied=True,
+            )
+        )
+        self.assertFalse(decision.allow_final)
+        self.assertTrue(decision.rewrite_required)
+        self.assertTrue(
+            any(reason.startswith("FALSE_FINALITY_BLOCK:") for reason in decision.reasons)
         )
 
     def test_owner_decision_must_be_precise(self) -> None:
@@ -99,6 +116,30 @@ class PreFinalGateTests(unittest.TestCase):
                 resumable_checkpoint_ref="cp-1",
                 currently_executable_work=False,
             )
+        )
+        self.assertTrue(allowed.allow_final)
+
+    def test_active_turn_boundary_requires_active_state_banner_when_response_exists(self) -> None:
+        mission = self.mission(
+            terminal_state=TerminalState.ACTIVE_TURN_BOUNDARY,
+            resumable_checkpoint_ref="cp-1",
+            currently_executable_work=False,
+        )
+        blocked = self.gate.evaluate(
+            mission=mission,
+            candidate_response="V5 is green and everything looks good.",
+        )
+        self.assertFalse(blocked.allow_final)
+        self.assertTrue(blocked.rewrite_required)
+        self.assertIn("NONTERMINAL_PRESENTATION_BANNER_REQUIRED", blocked.reasons)
+
+        allowed = self.gate.evaluate(
+            mission=mission,
+            candidate_response=(
+                "STATE: ACTIVE_RESUME_REQUIRED\n"
+                "TERMINAL: NOT REACHED\n"
+                "NEXT: consume the verified checkpoint and continue the mission"
+            ),
         )
         self.assertTrue(allowed.allow_final)
 
@@ -264,6 +305,7 @@ class PreFinalInterlockTests(unittest.TestCase):
             objective="Verified completion",
             terminal_state=TerminalState.VERIFIED_COMPLETE,
             objective_satisfied=True,
+            terminal_proof_ref="proof:terminal:checkpoint",
         )
         result = self.interlock.before_final_response(mission=mission)
         self.assertTrue(result.final_response_allowed)
