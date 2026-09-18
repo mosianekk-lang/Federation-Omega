@@ -469,6 +469,76 @@ def _feature_set(signal: BottleneckSignal, selected: ResolutionCandidate) -> tup
     return tuple(sorted(features))
 
 
+@dataclass(frozen=True, slots=True)
+class BottleneckBenchmark:
+    candidate_id: str
+    baseline_throughput: float
+    candidate_throughput: float
+    baseline_latency: float
+    candidate_latency: float
+    baseline_failure_rate: float
+    candidate_failure_rate: float
+    baseline_owner_burden: float
+    candidate_owner_burden: float
+    baseline_cost: float
+    candidate_cost: float
+    baseline_commercial_value: float
+    candidate_commercial_value: float
+    acceptance_passed: bool
+    proof_refs: tuple[str, ...]
+
+    def validate(self) -> "BottleneckBenchmark":
+        if not self.candidate_id.strip():
+            raise ValueError("HYPERCUBE_BENCHMARK_CANDIDATE_REQUIRED")
+        if not self.proof_refs:
+            raise ValueError("HYPERCUBE_BENCHMARK_PROOF_REQUIRED")
+        for name in (
+            "baseline_throughput",
+            "candidate_throughput",
+            "baseline_latency",
+            "candidate_latency",
+            "baseline_failure_rate",
+            "candidate_failure_rate",
+            "baseline_owner_burden",
+            "candidate_owner_burden",
+            "baseline_cost",
+            "candidate_cost",
+            "baseline_commercial_value",
+            "candidate_commercial_value",
+        ):
+            value = float(getattr(self, name))
+            if value < 0:
+                raise ValueError(f"HYPERCUBE_BENCHMARK_{name.upper()}_NEGATIVE")
+        return self
+
+
+@dataclass(frozen=True, slots=True)
+class BottleneckPromotionVerdict:
+    candidate_id: str
+    decision: str
+    value_score: float
+    throughput_gain: float
+    latency_reduction: float
+    failure_reduction: float
+    owner_burden_reduction: float
+    cost_reduction: float
+    commercial_gain: float
+    reason_codes: tuple[str, ...]
+    proof_refs: tuple[str, ...]
+
+
+def _relative_gain(candidate: float, baseline: float) -> float:
+    if baseline <= 0:
+        return 1.0 if candidate > baseline else 0.0
+    return (candidate - baseline) / baseline
+
+
+def _relative_reduction(candidate: float, baseline: float) -> float:
+    if baseline <= 0:
+        return 0.0 if candidate <= baseline else -1.0
+    return (baseline - candidate) / baseline
+
+
 class HypercubeBottleneckResolver:
     """Detect, harvest, compose, invent and rank bottleneck-removal routes."""
 
@@ -573,7 +643,11 @@ class HypercubeBottleneckResolver:
         # challenger even when a simpler candidate currently ranks first.
         force_invention = bottleneck_score >= 0.65 or signal.internal_coverage < 0.30
         invention = next(
-            (item for item in ranked if item.family is RouteFamily.INVENT_ALGORITHM),
+            (
+                item
+                for item in sorted(unique.values(), key=lambda row: (-row.score, row.candidate_id))
+                if item.family is RouteFamily.INVENT_ALGORITHM
+            ),
             None,
         )
         if force_invention and invention is not None and all(
@@ -671,10 +745,105 @@ class HypercubeBottleneckResolver:
             )
         )
 
+    def judge_benchmark(self, benchmark: BottleneckBenchmark) -> BottleneckPromotionVerdict:
+        """Promote only measured, non-regressive bottleneck improvements."""
+        benchmark = benchmark.validate()
+        throughput_gain = _relative_gain(
+            benchmark.candidate_throughput,
+            benchmark.baseline_throughput,
+        )
+        latency_reduction = _relative_reduction(
+            benchmark.candidate_latency,
+            benchmark.baseline_latency,
+        )
+        failure_reduction = _relative_reduction(
+            benchmark.candidate_failure_rate,
+            benchmark.baseline_failure_rate,
+        )
+        burden_reduction = _relative_reduction(
+            benchmark.candidate_owner_burden,
+            benchmark.baseline_owner_burden,
+        )
+        cost_reduction = _relative_reduction(
+            benchmark.candidate_cost,
+            benchmark.baseline_cost,
+        )
+        commercial_gain = _relative_gain(
+            benchmark.candidate_commercial_value,
+            benchmark.baseline_commercial_value,
+        )
+
+        hard_regression = bool(
+            not benchmark.acceptance_passed
+            or benchmark.candidate_failure_rate > benchmark.baseline_failure_rate + 0.01
+            or (
+                throughput_gain < -0.03
+                and latency_reduction < -0.03
+                and commercial_gain <= 0
+            )
+        )
+        value_score = round(
+            0.26 * throughput_gain
+            + 0.18 * latency_reduction
+            + 0.16 * failure_reduction
+            + 0.12 * burden_reduction
+            + 0.10 * cost_reduction
+            + 0.18 * commercial_gain,
+            9,
+        )
+        reasons: list[str] = []
+        if not benchmark.acceptance_passed:
+            reasons.append("FROZEN_ACCEPTANCE_ORACLE_FAILED")
+        if benchmark.candidate_failure_rate > benchmark.baseline_failure_rate + 0.01:
+            reasons.append("FAILURE_RATE_REGRESSION")
+        if commercial_gain > 0:
+            reasons.append("COMMERCIAL_VALUE_IMPROVED")
+        if throughput_gain > 0:
+            reasons.append("THROUGHPUT_IMPROVED")
+        if latency_reduction > 0:
+            reasons.append("LATENCY_IMPROVED")
+        if burden_reduction > 0:
+            reasons.append("OWNER_BURDEN_REDUCED")
+        if cost_reduction > 0:
+            reasons.append("COST_REDUCED")
+        if failure_reduction > 0:
+            reasons.append("RELIABILITY_IMPROVED")
+
+        if hard_regression:
+            decision = "REJECT"
+        elif value_score >= 0.03 and (
+            throughput_gain > 0.02
+            or latency_reduction > 0.02
+            or commercial_gain > 0.02
+            or burden_reduction > 0.05
+            or cost_reduction > 0.05
+        ):
+            decision = "PROMOTE_CANDIDATE"
+            reasons.append("MEASURED_NONREGRESSIVE_POSITIVE_VALUE")
+        else:
+            decision = "HOLD_FOR_MORE_EVIDENCE"
+            reasons.append("VALUE_DELTA_NOT_YET_DECISIVE")
+
+        return BottleneckPromotionVerdict(
+            candidate_id=benchmark.candidate_id,
+            decision=decision,
+            value_score=value_score,
+            throughput_gain=round(throughput_gain, 9),
+            latency_reduction=round(latency_reduction, 9),
+            failure_reduction=round(failure_reduction, 9),
+            owner_burden_reduction=round(burden_reduction, 9),
+            cost_reduction=round(cost_reduction, 9),
+            commercial_gain=round(commercial_gain, 9),
+            reason_codes=tuple(reasons),
+            proof_refs=tuple(sorted(set(benchmark.proof_refs))),
+        )
+
 
 __all__ = [
     "AUTHORITY_CEILING",
+    "BottleneckBenchmark",
     "BottleneckKind",
+    "BottleneckPromotionVerdict",
     "BottleneckResolution",
     "BottleneckSignal",
     "HypercubeBottleneckResolver",
