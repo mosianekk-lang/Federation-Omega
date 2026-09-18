@@ -1,22 +1,62 @@
 {
   "schema": "FUSE-FORGE-CONVERGENCE-V1",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "authority_ceiling": "A1_INTERNAL",
   "external_effect_default": false,
   "source_of_truth": "FUSE_ONE_EXISTING_CONTROL_PLANES",
-  "runtime_hard_dependencies": ["PYTHON", "GIT"],
-  "optional_witness_surfaces": ["GITHUB", "GITLAB", "AZURE_DEVOPS", "BITBUCKET"],
+  "runtime_hard_dependencies": [
+    "PYTHON",
+    "GIT"
+  ],
+  "optional_witness_surfaces": [
+    "GITHUB",
+    "GITLAB",
+    "AZURE_DEVOPS",
+    "BITBUCKET"
+  ],
   "virtual_executor": {
     "identity": "FUSE-VIRTUAL-FORGE-001",
     "class": "EPHEMERAL_VIRTUAL_GENERAL_EXECUTOR",
     "physical_device_claim": false,
     "persistent_host_claim": false,
-    "capabilities": ["git", "python", "build", "test", "artifact", "proof", "recovery"]
+    "capabilities": [
+      "artifact",
+      "build",
+      "git",
+      "proof",
+      "python",
+      "recovery",
+      "source_protection",
+      "test"
+    ]
   },
   "physical_windows": {
     "required_for_forge_inner_loop": false,
     "separate_capability_court": true
   },
-  "mutation_roots": ["HUMAN_OWNER", "SOVARA_SOL62", "FDOF"],
-  "proof_rule": "NO_MATURITY_INHERITANCE"
+  "mutation_roots": [
+    "HUMAN_OWNER",
+    "SOVARA_SOL62",
+    "FDOF"
+  ],
+  "proof_rule": "NO_MATURITY_INHERITANCE",
+  "source_protection": {
+    "identity": "FUSE-FORGE-SOVEREIGN-PROTECTION-001",
+    "provider_neutral": true,
+    "github_admin_required": false,
+    "core_effect_authority": false,
+    "merge_effect_owner": "FDOF_OR_AUTHORIZED_REPOSITORY_ADAPTER",
+    "mechanisms": [
+      "SIGNED_HEAD_VALIDATION",
+      "FRESH_MAIN_CAS",
+      "FENCED_WRITER_LEASE",
+      "REQUIRED_PROOF_COURTS",
+      "DETERMINISTIC_DEPENDENCY_MERGE_QUEUE",
+      "MERGE_PERMIT_DIGEST",
+      "POST_MERGE_READBACK",
+      "ROLLBACK_TARGET",
+      "APPEND_ONLY_AUDIT_RECEIPT"
+    ],
+    "provider_native_protection_equivalence_claim": false
+  }
 }
