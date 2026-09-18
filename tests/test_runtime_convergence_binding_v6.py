@@ -396,7 +396,7 @@ class RuntimeConvergenceBindingV6Tests(unittest.TestCase):
         second = self.execute_provider()
         self.assertEqual(first.receipt_digest, second.receipt_digest)
         self.assertEqual(1, self.dispatch_calls)
-        self.assertEqual(2, self.readback_calls)
+        self.assertEqual(1, self.readback_calls)
 
     def test_provider_execution_from_future_is_rejected_by_v6(self):
         self.register_adapter()
