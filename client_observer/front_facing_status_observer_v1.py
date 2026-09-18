@@ -65,7 +65,7 @@ class FrontFacingSnapshot:
             raise ValueError("FRONT_FACING_OBSERVED_MONOTONIC_INVALID")
         if self.visible_output_length < 0:
             raise ValueError("FRONT_FACING_OUTPUT_LENGTH_INVALID")
-        if self.visible_output_fingerprint and not self.visible_output_fingerprint.startswith("sha256:"):
+        if self.visible_output_fingerprint and not self.visible_output_fingerprint.startswith(("sha256:", "opaque:")):
             raise ValueError("FRONT_FACING_OUTPUT_FINGERPRINT_INVALID")
         return self
 
@@ -189,7 +189,8 @@ class FrontFacingStatusObserver:
                 "status": snapshot.status_text,
                 "fingerprint": snapshot.visible_output_fingerprint,
                 "failure": explicit_error,
-                "stall_epoch": int(no_progress // max(1.0, self.stall_seconds)),
+                "silent_inflight": silent_inflight,
+                "incomplete_reporting": incomplete_reporting,
             })
             if key != self._last_failure_key:
                 aaa = evaluate_failure_with_aaa(
