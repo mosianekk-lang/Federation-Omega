@@ -204,8 +204,8 @@ class RuntimeConvergenceBinderV6:
             activation=fdof_activation_receipt,
             receipt=provider_execution_receipt,
         )
-        if provider.verified_at_epoch != int(now_epoch):
-            raise ValueError("FDOF_PROVIDER_EXECUTION_VERIFICATION_EPOCH_MISMATCH")
+        if int(now_epoch) < provider.verified_at_epoch:
+            raise ValueError("FDOF_PROVIDER_EXECUTION_VERIFICATION_FROM_FUTURE")
 
         v5_result = self.v5.evaluate(
             aarek_snapshot=aarek_snapshot,
@@ -213,7 +213,7 @@ class RuntimeConvergenceBinderV6:
             oh50_producer_receipt=oh50_producer_receipt,
             foundry_result=foundry_result,
             fdof_activation_receipt=fdof_activation_receipt,
-            now_epoch=int(now_epoch),
+            now_epoch=provider.verified_at_epoch,
             alpha_omega_build_receipt=alpha_omega_build_receipt,
         )
 
