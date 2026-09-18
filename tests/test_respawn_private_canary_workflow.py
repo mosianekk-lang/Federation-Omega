@@ -13,6 +13,8 @@ UPLOAD_SHA = "ea165f8d65b6e75b540449e92b4886f43607fa02"
 class RespawnPrivateCanaryWorkflowContractTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls) -> None:
+        if not WORKFLOW.exists():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         cls.text = WORKFLOW.read_text(encoding="utf-8")
         cls.policy = json.loads(POLICY.read_text(encoding="utf-8"))
 
