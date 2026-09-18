@@ -24,7 +24,7 @@
       "tests/test_work_plane_cloud_service_v1.py",
       "governance/proofos_omega_policy_extension_work_plane_cloud_service_v1.json"
     ],
-    "depends_on": ["FUSE_WORK_PLANE_RESPAWN_GCS_V1_1", "FEDERATION_CORE"]
+    "depends_on": ["FUSE_WORK_PLANE_RESPAWN_GCS_V1", "FEDERATION_CORE"]
   }],
   "tests": [{
     "id": "work_plane_cloud_service_v1",
