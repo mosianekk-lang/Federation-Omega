@@ -5,6 +5,7 @@ from typing import Iterable, Sequence
 
 from .digital_twin import FederationDigitalTwin, RouteCandidate
 from .evidence_distillation import EvidenceDistiller, EvidenceReceipt
+from .hypercube_adaptive_response import AdaptiveBottleneckRuntime, AdaptiveResponseDecision
 from .hypercube_bottleneck_resolver import (
     BottleneckKind,
     BottleneckResolution,
@@ -50,6 +51,7 @@ class HyperperformanceController:
         self.distiller = EvidenceDistiller()
         self.opportunity_discovery = OpportunityDiscoveryEngine()
         self.bottlenecks = HypercubeBottleneckResolver()
+        self.adaptive_responses = AdaptiveBottleneckRuntime(resolver=self.bottlenecks)
 
     def plan(
         self,
@@ -123,6 +125,44 @@ class HyperperformanceController:
     ) -> tuple[BottleneckResolution, ...]:
         """Resolve supplied bottlenecks through Hypercube's harvest/compose/invent loop."""
         return self.bottlenecks.resolve_many(signals)
+
+    def adaptive_bottleneck_response(
+        self,
+        *,
+        signal: BottleneckSignal,
+        fingerprint: str,
+        current_state_signature: str,
+        previous_state_signature: str | None = None,
+        same_semantic_failures: int = 0,
+        invalidation_changed: bool = False,
+        external_wait: bool = False,
+        hard_gate: bool = False,
+        route_memory: Sequence[dict[str, object]] = (),
+        failure_memory: Sequence[dict[str, object]] = (),
+        learning_memory: Sequence[dict[str, object]] = (),
+    ) -> AdaptiveResponseDecision:
+        """Select the next bottleneck action from learned route/failure memory.
+
+        The runtime remains effect-free.  It suppresses unchanged retries, reuses a
+        proven champion when valid, forces a changed mechanism after recurrence,
+        escalates persistent gaps into harvest/build-residual, and emits learning-ready
+        deterministic decisions.  Existing authority/effect planes still own execution.
+        """
+        self.adaptive_responses.load_memory(
+            route_memory=route_memory,
+            failure_memory=failure_memory,
+            learning_memory=learning_memory,
+        )
+        return self.adaptive_responses.decide(
+            signal=signal,
+            fingerprint=fingerprint,
+            current_state_signature=current_state_signature,
+            previous_state_signature=previous_state_signature,
+            same_semantic_failures=same_semantic_failures,
+            invalidation_changed=invalidation_changed,
+            external_wait=external_wait,
+            hard_gate=hard_gate,
+        )
 
     def discover_and_resolve_bottlenecks(
         self,
