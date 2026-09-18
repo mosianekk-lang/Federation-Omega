@@ -1,0 +1,54 @@
+{
+  "schema": "FUSE-RUNTIME-CONVERGENCE-BINDING-GOVERNANCE-V4",
+  "version": "4.0.0",
+  "capability_id": "FUSE-FRCB-004",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect": false,
+  "purpose": "Promote Alpha-Omega only to verified local BUILD maturity when the existing Turnkey Engine has produced the local package and current artifact readback matches content-addressed receipt hashes.",
+  "canonical_role": "ADAPTER_AND_RECEIPT_BINDING_ONLY",
+  "reuses": [
+    "FUSE-FRCB-003",
+    "AlphaOmegaEngine.execute_local_build",
+    "AlphaOmegaPacket",
+    "FUSE-OF50-ACE-CURRENT"
+  ],
+  "must_not_create": [
+    "NEW_SCHEDULER",
+    "NEW_AUTHORITY_PLANE",
+    "NEW_PROOF_PLANE",
+    "NEW_MEMORY_ROOT",
+    "NEW_FOUNDRY",
+    "NEW_PROVIDER_RUNTIME",
+    "NEW_TOP_LEVEL_CONTROLLER"
+  ],
+  "hard_rules": [
+    "BUILD_PLAN_AND_PACKET_IDENTITY_MUST_MATCH",
+    "LOCAL_BUILD_STATE_MUST_BE_LOCAL_OPERATIONAL_PACKAGE_BUILT",
+    "EXPECTED_LOCAL_BUILD_ARTIFACTS_MUST_EXIST",
+    "CURRENT_ARTIFACT_READBACK_HASHES_MUST_MATCH_RECEIPT",
+    "PACKET_DIGEST_SUBSTITUTION_MUST_FAIL",
+    "LOCAL_BUILD_MUST_NOT_PROMOTE_TEST",
+    "LOCAL_BUILD_MUST_NOT_PROMOTE_PROVIDER_DEPLOYMENT",
+    "LOCAL_BUILD_MUST_NOT_PROMOTE_PROVIDER_SEMANTIC_READBACK",
+    "LOCAL_BUILD_MUST_NOT_PROMOTE_OPERATIONAL_RUNTIME",
+    "F130_REMAINS_TERMINAL_AUTHORITY"
+  ],
+  "v4_promoted_stage": "ALPHA_OMEGA_LOCAL_BUILD_RECEIPT",
+  "v4_unverified_lifecycle_stages": [
+    "TEST",
+    "PROVIDER_DEPLOY",
+    "PROVIDER_VERIFY",
+    "OPERATE",
+    "SEMANTIC_READBACK"
+  ],
+  "truth_boundary": {
+    "alpha_omega_local_build_and_current_artifact_readback_can_be_proven": true,
+    "alpha_omega_test_proven": false,
+    "alpha_omega_provider_deployment_proven": false,
+    "provider_execution_proven": false,
+    "provider_semantic_readback_proven": false,
+    "operational_runtime_proven": false,
+    "f130_terminal_completion_proven": false,
+    "native_chatgpt_interception_proven": false
+  }
+}
