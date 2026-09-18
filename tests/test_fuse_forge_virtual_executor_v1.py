@@ -1,5 +1,6 @@
 from hashlib import sha256
 from pathlib import Path
+import subprocess
 import tempfile
 import unittest
 
@@ -7,6 +8,7 @@ from federation.fuse_forge_virtual_executor_v1 import (
     VirtualExecutorProfile, VirtualForgeExecutor, VirtualTask,
     github_optionality_court,
 )
+from federation.fuse_forge_source_protection_v1 import CheckResult, LeaseFence, SourceProposal
 
 
 def profile():
@@ -14,8 +16,36 @@ def profile():
         executor_id="FUSE-VIRTUAL-FORGE-001",
         runtime_class="EPHEMERAL_VIRTUAL_GENERAL_EXECUTOR",
         os_family="PORTABLE_POSIX",
-        capabilities=("git","python","build","test","artifact","proof","recovery"),
+        capabilities=("git","python","build","test","artifact","proof","recovery","source_protection","local_git_cas"),
     )
+
+
+def _git(repo: Path, *args: str) -> str:
+    p=subprocess.run(["git","-C",str(repo),*args],text=True,capture_output=True,check=False)
+    if p.returncode != 0:
+        raise RuntimeError(f"git failed: {args}: {p.stderr}")
+    return p.stdout.strip()
+
+
+def _protected_bare_repo(root: Path) -> tuple[Path,str,str]:
+    work=root/"work"
+    work.mkdir()
+    subprocess.run(["git","init","-b","main",str(work)],check=True,capture_output=True)
+    _git(work,"config","user.name","FUSE Dogfood")
+    _git(work,"config","user.email","fuse@example.invalid")
+    (work/"value.txt").write_text("A\n")
+    _git(work,"add","value.txt")
+    _git(work,"commit","-m","A")
+    before=_git(work,"rev-parse","refs/heads/main")
+    _git(work,"checkout","-b","candidate")
+    (work/"value.txt").write_text("B\n")
+    _git(work,"add","value.txt")
+    _git(work,"commit","-m","B")
+    head=_git(work,"rev-parse","HEAD")
+    bare=root/"repos"/"protected.git"
+    bare.parent.mkdir()
+    subprocess.run(["git","clone","--bare",str(work),str(bare)],check=True,capture_output=True)
+    return bare,before,head
 
 
 class VirtualExecutorCourt(unittest.TestCase):
@@ -63,6 +93,70 @@ class VirtualExecutorCourt(unittest.TestCase):
             c=github_optionality_court(git_receipt=g,worker_receipt=w,artifact_digest=a)
             self.assertFalse(c.github_runtime_required)
             self.assertEqual(c.decision,"GITHUB_RUNTIME_OPTIONAL_LOCAL_VERIFIED")
+
+    def test_raw_main_update_ref_is_blocked_by_executor(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            bare,before,head=_protected_bare_repo(root)
+            ex=VirtualForgeExecutor(root,profile())
+            with self.assertRaisesRegex(PermissionError,"PROTECTED_MAIN_MUTATION"):
+                ex.run(VirtualTask(
+                    "raw-main-update",
+                    ("git","update-ref","refs/heads/main",head,before),
+                    cwd=str(bare.relative_to(root)),
+                ))
+            self.assertEqual(before,_git(bare,"rev-parse","refs/heads/main"))
+
+    def test_protected_source_admission_dogfoods_f295_f296(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            bare,before,head=_protected_bare_repo(root)
+            ex=VirtualForgeExecutor(root,profile())
+            proposal=SourceProposal(
+                proposal_id="DOGFOOD-1",base_sha=before,head_sha=head,author="FUSE",
+                changed_paths=("value.txt",),signed_head=True,
+                signature_evidence_ref="dogfood-signature:verified",
+            )
+            lease=LeaseFence(lease_id="FDOG",fencing_token=1,state="ACTIVE",source_head=before)
+            checks=tuple(CheckResult(x,"PASS",f"dogfood-proof:{x}") for x in ("admission","contract","scan"))
+            receipt,mutation=ex.protected_source_admission(
+                repository_relative_path=str(bare.relative_to(root)),
+                current_main_sha=before,proposal=proposal,lease=lease,checks=checks,
+            )
+            self.assertEqual("PROTECTED_LOCAL_GIT_ADMISSION_READBACK_VERIFIED",receipt.state)
+            self.assertFalse(receipt.provider_native_protection_proof)
+            self.assertFalse(receipt.physical_device_proof)
+            self.assertFalse(receipt.persistent_host_proof)
+            self.assertEqual(head,_git(bare,"rev-parse","refs/heads/main"))
+            rollback=ex.protected_source_rollback(
+                repository_relative_path=str(bare.relative_to(root)),
+                mutation_receipt=mutation,
+            )
+            self.assertEqual("LOCAL_GIT_ROLLBACK_READBACK_VERIFIED",rollback.state)
+            self.assertEqual(before,_git(bare,"rev-parse","refs/heads/main"))
+
+    def test_failed_proof_check_blocks_before_git_mutation(self):
+        with tempfile.TemporaryDirectory() as d:
+            root=Path(d)
+            bare,before,head=_protected_bare_repo(root)
+            ex=VirtualForgeExecutor(root,profile())
+            proposal=SourceProposal(
+                proposal_id="DOGFOOD-HELD",base_sha=before,head_sha=head,author="FUSE",
+                changed_paths=("value.txt",),signed_head=True,
+                signature_evidence_ref="dogfood-signature:verified",
+            )
+            lease=LeaseFence(lease_id="FDOG",fencing_token=1,state="ACTIVE",source_head=before)
+            checks=(
+                CheckResult("admission","PASS","proof:a"),
+                CheckResult("contract","FAIL","proof:c"),
+                CheckResult("scan","PASS","proof:s"),
+            )
+            with self.assertRaisesRegex(PermissionError,"ADMISSION_HELD"):
+                ex.protected_source_admission(
+                    repository_relative_path=str(bare.relative_to(root)),
+                    current_main_sha=before,proposal=proposal,lease=lease,checks=checks,
+                )
+            self.assertEqual(before,_git(bare,"rev-parse","refs/heads/main"))
 
     def test_failed_worker_blocks_optionality_promotion(self):
         with tempfile.TemporaryDirectory() as d:
