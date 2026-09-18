@@ -55,10 +55,10 @@ class ChallengerTaskSpec:
         binary = Path(self.argv[0]).name.lower()
         if binary not in {"python", "python3"}:
             raise PermissionError("CHALLENGER_BINARY_NOT_ALLOWED")
-        if self.argv[1] != "-m" or self.argv[2] not in _ALLOWED_MODULES:
-            raise PermissionError("CHALLENGER_PYTHON_MODULE_NOT_ALLOWED")
         if "-c" in self.argv:
             raise PermissionError("CHALLENGER_INLINE_CODE_FORBIDDEN")
+        if self.argv[1] != "-m" or self.argv[2] not in _ALLOWED_MODULES:
+            raise PermissionError("CHALLENGER_PYTHON_MODULE_NOT_ALLOWED")
         if not (1 <= self.timeout_seconds <= 900):
             raise ValueError("CHALLENGER_TIMEOUT_OUT_OF_RANGE")
         for token in self.argv:
