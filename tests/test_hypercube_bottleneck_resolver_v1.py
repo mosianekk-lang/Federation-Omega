@@ -1,5 +1,7 @@
 from __future__ import annotations
 
+import json
+from pathlib import Path
 import unittest
 
 from superior_logic.digital_twin import CapabilityEdge, FederationDigitalTwin
@@ -8,6 +10,7 @@ from superior_logic.hypercube_bottleneck_resolver import (
     BottleneckKind,
     BottleneckSignal,
     HypercubeBottleneckResolver,
+    MARKET_PATTERNS,
     RouteFamily,
 )
 from superior_logic.hyperperformance import HyperperformanceController
@@ -38,6 +41,43 @@ def signal(**overrides) -> BottleneckSignal:
     )
     base.update(overrides)
     return BottleneckSignal(**base)
+
+
+ROOT = Path(__file__).resolve().parents[1]
+
+
+class HypercubeGovernanceContractTests(unittest.TestCase):
+    def test_market_harvest_is_mechanism_only_and_clean_room(self):
+        self.assertGreaterEqual(len(MARKET_PATTERNS), 8)
+        self.assertTrue(all(item.clean_room_only for item in MARKET_PATTERNS))
+        families = {item.source_family for item in MARKET_PATTERNS}
+        self.assertIn("GitHub + Graphite", families)
+        self.assertIn("Bazel + BuildBuddy", families)
+        self.assertIn("Temporal", families)
+        self.assertIn("OpenTelemetry", families)
+
+    def test_governance_requires_commercial_uplift_and_no_external_authority(self):
+        data = json.loads(
+            (ROOT / "governance" / "fuse_hypercube_bottleneck_resolver_v1.json").read_text()
+        )
+        self.assertEqual("FUSE-HYPERCUBE-HBR-001", data["capability_id"])
+        self.assertFalse(data["external_effect"])
+        self.assertTrue(data["promotion_contract"]["proof_before_claim"])
+        self.assertFalse(data["promotion_contract"]["automatic_stable_self_promotion"])
+        self.assertIn("commercial_leverage", data["commercial_outcome_dimensions"])
+        self.assertIn(
+            "SYSTEM_MUST_REMEASURE_AFTER_EACH_FIX_AND_CONTINUE_IF_THE_CONSTRAINT_STILL_DOMINATES",
+            data["algorithmic_laws"],
+        )
+
+    def test_master_directive_and_acme_inherit_bottleneck_to_advantage_law(self):
+        directive = (
+            ROOT / "docs" / "architecture" / "FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md"
+        ).read_text(encoding="utf-8")
+        acme = (ROOT / "doctrine" / "ACME-001-v3.0.md").read_text(encoding="utf-8")
+        self.assertIn("HYPERCUBE BOTTLENECK-TO-COMMERCIAL-ADVANTAGE LOOP", directive)
+        self.assertIn("Hypercube Bottleneck-to-Advantage Gate", acme)
+        self.assertIn("F27 bottleneck reported without resolution harvest", acme)
 
 
 class HypercubeBottleneckResolverTests(unittest.TestCase):
