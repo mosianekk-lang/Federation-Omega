@@ -31,7 +31,10 @@
         "tests/test_no_false_finality_v1.py",
         "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
         "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
-        "doctrine/ACME-001-v3.0.md"
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md"
       ],
       "reason": "FUSE_AUTONOMIC_COMPLETION_V5_RUNTIME_REENTRY_PROMPT_EVOLUTION_FEDERATION_LEARNING_COMMERCIAL_MATURITY_NO_FALSE_FINALITY"
     }
@@ -64,7 +67,10 @@
         "tests/test_no_false_finality_v1.py",
         "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
         "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
-        "doctrine/ACME-001-v3.0.md"
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md"
       ],
       "depends_on": [
         "CFBE",
@@ -103,7 +109,10 @@
         "tests/test_no_false_finality_v1.py",
         "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
         "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
-        "doctrine/ACME-001-v3.0.md"
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md"
       ],
       "subsystems": [
         "FUSE_AUTONOMIC_COMPLETION_V5",
@@ -129,7 +138,10 @@
         "docs/architecture/FUSE_AUTONOMIC_COMPLETION_FABRIC_V5.md",
         "docs/architecture/FUSE_ONE_ASTRA_OMNISURFACE_MASTER_DIRECTIVE_V3.md",
         "realityguard_v0.4.0/docs/FAILURE_TAXONOMY.md",
-        "doctrine/ACME-001-v3.0.md"
+        "doctrine/ACME-001-v3.0.md",
+        "bubbles/chat_governor_omega3/pre_final.py",
+        "bubbles/chat_governor_omega3/test_pre_final.py",
+        "bubbles/chat_governor_omega3/README.md"
       ],
       "subsystems": [
         "FUSE_AUTONOMIC_COMPLETION_V5",
