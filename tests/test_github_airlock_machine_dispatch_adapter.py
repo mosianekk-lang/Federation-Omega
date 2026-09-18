@@ -19,6 +19,8 @@ RUNS_PATH = Path("/tmp/windows-h1-workflow-runs.json")
 class WindowsH1MachineDispatchAdapterTests(unittest.TestCase):
     @classmethod
     def setUpClass(cls):
+        if not (ROOT / WORKFLOW_PATH).is_file() or not (ROOT / PHOENIX_PATH).is_file():
+            raise unittest.SkipTest("workflow-free export excludes repository workflow controls")
         cls.policy = json.loads(
             (ROOT / "governance/github_airlock_policy.json").read_text(encoding="utf-8")
         )
