@@ -77,6 +77,16 @@ def execute_and_verify_for_frcb(
     )
     if dispatched.get("state") == "DISPATCH_REJECTED":
         raise ValueError("FDOF_PROVIDER_DISPATCH_REJECTED")
+
+    if dispatched.get("state") == "VERIFIED":
+        status = bridge.fdof.status(now_epoch=int(now_epoch))
+        return build_fdof_provider_execution_receipt(
+            activation=activation,
+            execution_state=dispatched,
+            fdof_status=status,
+            verified_at_epoch=int(dispatched.get("updated_at_epoch") or now_epoch),
+        )
+
     if dispatched.get("dispatch_accepted") is not True:
         raise ValueError("FDOF_PROVIDER_DISPATCH_NOT_ACCEPTED")
     provider_request_id = str(dispatched.get("provider_request_id") or "").strip()
