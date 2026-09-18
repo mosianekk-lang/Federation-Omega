@@ -405,6 +405,41 @@ def _make_candidate(
     )
 
 
+def _dominates(left: ResolutionCandidate, right: ResolutionCandidate) -> bool:
+    benefits = (
+        "expected_relief",
+        "throughput_gain",
+        "latency_gain",
+        "quality_gain",
+        "reliability_gain",
+        "commercial_gain",
+        "differentiation_gain",
+        "evidence_gain",
+        "reversibility",
+        "novelty",
+    )
+    penalties = ("implementation_cost", "time_to_value", "risk", "owner_burden")
+    no_worse = all(getattr(left, name) >= getattr(right, name) for name in benefits) and all(
+        getattr(left, name) <= getattr(right, name) for name in penalties
+    )
+    strictly_better = any(getattr(left, name) > getattr(right, name) for name in benefits) or any(
+        getattr(left, name) < getattr(right, name) for name in penalties
+    )
+    return bool(no_worse and strictly_better)
+
+
+def _pareto_front(candidates: Sequence[ResolutionCandidate]) -> tuple[ResolutionCandidate, ...]:
+    front = []
+    for candidate in candidates:
+        if any(
+            other.candidate_id != candidate.candidate_id and _dominates(other, candidate)
+            for other in candidates
+        ):
+            continue
+        front.append(candidate)
+    return tuple(sorted(front, key=lambda item: (-item.score, item.candidate_id)))
+
+
 def _feature_set(signal: BottleneckSignal, selected: ResolutionCandidate) -> tuple[str, ...]:
     features = {
         "Always-on bottleneck radar",
@@ -515,9 +550,12 @@ class HypercubeBottleneckResolver:
                 )
             )
 
-        # Deduplicate exact candidate IDs and rank.
+        # Deduplicate exact candidate IDs, then keep a Pareto-efficient frontier
+        # before score ranking.  Dominated "faster but worse everywhere" routes cannot
+        # crowd out commercially stronger alternatives.
         unique = {candidate.candidate_id: candidate for candidate in candidates}
-        ranked = sorted(unique.values(), key=lambda item: (-item.score, item.candidate_id))
+        pareto = _pareto_front(tuple(unique.values()))
+        ranked = list(pareto or tuple(sorted(unique.values(), key=lambda item: (-item.score, item.candidate_id))))
 
         # Diversity court: top portfolio should not be one mechanism family only.
         portfolio: list[ResolutionCandidate] = []
@@ -530,6 +568,22 @@ class HypercubeBottleneckResolver:
                 seen_families.add(candidate.family)
         if not portfolio:
             raise ValueError("HYPERCUBE_NO_RESOLUTION_CANDIDATE")
+
+        # Severe / weakly covered constraints always retain a clean-room invention
+        # challenger even when a simpler candidate currently ranks first.
+        force_invention = bottleneck_score >= 0.65 or signal.internal_coverage < 0.30
+        invention = next(
+            (item for item in ranked if item.family is RouteFamily.INVENT_ALGORITHM),
+            None,
+        )
+        if force_invention and invention is not None and all(
+            item.candidate_id != invention.candidate_id for item in portfolio
+        ):
+            if len(portfolio) >= 6:
+                portfolio[-1] = invention
+            else:
+                portfolio.append(invention)
+            portfolio.sort(key=lambda item: (-item.score, item.candidate_id))
 
         selected = portfolio[0]
         invention_required = bool(
