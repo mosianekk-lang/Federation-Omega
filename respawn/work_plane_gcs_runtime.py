@@ -25,7 +25,7 @@ from urllib.parse import quote
 from federation.fuse_work_plane_runtime_v1 import JsonlEventStore, WorkPlaneRuntime
 
 BUNDLE_SCHEMA = "FUSE-WORK-PLANE-GCS-BUNDLE-V1"
-ADAPTER_VERSION = "1.1.0"
+ADAPTER_VERSION = "1.1.1"
 
 
 def _canonical(value: Any) -> bytes:
@@ -65,6 +65,8 @@ class GoogleStorageGenerationClient:
     Uses google-auth AuthorizedSession plus raw JSON API calls.  This avoids a
     google-api-python-client runtime dependency and reuses the google-auth stack
     already present through the repository's existing Google provider libraries.
+    Provider failures are reduced to phase + HTTP status only so diagnostics are
+    actionable without echoing provider payloads, object metadata, or credentials.
     """
 
     API_ROOT = "https://storage.googleapis.com/storage/v1"
@@ -90,8 +92,13 @@ class GoogleStorageGenerationClient:
         )
 
     @staticmethod
-    def _raise(response: Any) -> None:
-        response.raise_for_status()
+    def _raise(response: Any, *, phase: str) -> None:
+        status = int(getattr(response, "status_code", 0) or 0)
+        if status < 400:
+            return
+        # Deliberately do not include provider body/message: those can contain
+        # resource details. Phase + status is sufficient for route discrimination.
+        raise RuntimeError(f"GCS_{phase}_HTTP_{status}")
 
     def read(self, bucket: str, object_name: str) -> tuple[int, bytes | None]:
         path = self._object_path(bucket, object_name)
@@ -102,7 +109,7 @@ class GoogleStorageGenerationClient:
         )
         if int(getattr(meta, "status_code", 0)) == 404:
             return 0, None
-        self._raise(meta)
+        self._raise(meta, phase="METADATA_GET")
         payload = meta.json()
         generation = int(payload["generation"])
         media = self.session.get(
@@ -110,7 +117,7 @@ class GoogleStorageGenerationClient:
             params={"alt": "media", "generation": str(generation)},
             timeout=30,
         )
-        self._raise(media)
+        self._raise(media, phase="MEDIA_GET")
         return generation, bytes(media.content)
 
     def put(self, bucket: str, object_name: str, payload: bytes, *, if_generation_match: int) -> int:
@@ -128,7 +135,7 @@ class GoogleStorageGenerationClient:
         )
         if int(getattr(response, "status_code", 0)) == 412:
             raise CasConflict("GENERATION_CONFLICT")
-        self._raise(response)
+        self._raise(response, phase="MEDIA_PUT")
         return int(response.json()["generation"])
 
 
