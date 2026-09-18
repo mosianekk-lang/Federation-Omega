@@ -10,6 +10,13 @@ from .autonomic_completion_v5 import (
     TerminalState,
 )
 from .federation_learning_v1 import FederationLearningLedger, LearningEvent
+from .finality_guard_v1 import (
+    FalseFinalityError,
+    FinalityPresentationDecision,
+    FinalityPresentationGuard,
+    MissionPresentationState,
+    TerminalAcceptance,
+)
 from .prompt_scientist_v2 import PromptGenome, PromptScientistV2
 from .run_store_v1 import RunStore
 
@@ -18,6 +25,9 @@ __all__ = [
     "AutonomicCompletionKernel",
     "CycleTelemetry",
     "ExecutionContext",
+    "FalseFinalityError",
+    "FinalityPresentationDecision",
+    "FinalityPresentationGuard",
     "FederationLearningLedger",
     "LearningEvent",
     "OutputClass",
@@ -25,5 +35,7 @@ __all__ = [
     "PromptScientistV2",
     "RunStore",
     "RuntimeMode",
+    "MissionPresentationState",
+    "TerminalAcceptance",
     "TerminalState",
 ]
