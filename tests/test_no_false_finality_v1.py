@@ -129,6 +129,33 @@ class AutonomicKernelNoFalseFinalityTests(unittest.TestCase):
             self.assertEqual(result.maturity_gaps, ("TERMINAL_ACCEPTANCE_COURT_REQUIRED",))
             self.assertEqual(result.terminal_proof_ref, "")
 
+    def test_nonterminal_packet_exhaustion_at_platform_boundary_emits_resume_not_finality(self):
+        with tempfile.TemporaryDirectory() as td:
+            kernel = self.kernel(td)
+            ctx = ExecutionContext(
+                "NFF-RESUME",
+                "BUILD",
+                "COMPLETE_VERIFIED",
+                RuntimeMode.NO_PERSISTENT_RUNNER,
+                genome(),
+                (WorkPacket("BUILD"),),
+            )
+            result = kernel.run_cycle(
+                ctx,
+                cycle=1,
+                packet_executor=lambda p: (True, "proof:build"),
+                force_platform_boundary=True,
+            )
+            self.assertEqual(result.terminal_state, "")
+            self.assertEqual(result.telemetry.output_class, OutputClass.RESUME_CAPSULE.value)
+            self.assertIsNotNone(result.resume_capsule)
+            self.assertEqual(
+                result.presentation_state,
+                MissionPresentationState.ACTIVE_RESUME_REQUIRED.value,
+            )
+            self.assertFalse(result.completion_style_allowed)
+            self.assertTrue(result.mission_must_continue)
+
     def test_explicit_terminal_court_can_release_terminal_report(self):
         with tempfile.TemporaryDirectory() as td:
             def terminal_court(ctx):
