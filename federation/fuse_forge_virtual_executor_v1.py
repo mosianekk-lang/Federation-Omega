@@ -121,12 +121,20 @@ class VirtualForgeExecutor:
         explicit_main=(
             _PROTECTED_MAIN_REF in argv
             or "main" in lowered
-            or any(token.endswith(":refs/heads/main") for token in argv)
+            or any(token.endswith(":refs/heads/main") or token.endswith(":main") for token in argv)
         )
         if explicit_main:
             raise PermissionError("PROTECTED_MAIN_MUTATION_REQUIRES_FORGE_ADAPTER")
+        effective_cwd=cwd
+        if "-C" in argv:
+            i=argv.index("-C")
+            if i+1 >= len(argv):
+                raise ValueError("GIT_C_DIRECTORY_REQUIRED")
+            effective_cwd=_path(cwd,argv[i+1])
+        if any(token.startswith("--git-dir") for token in argv):
+            raise PermissionError("PROTECTED_GIT_DIR_OVERRIDE_REQUIRES_FORGE_ADAPTER")
         probe=subprocess.run(
-            ["git","-C",str(cwd),"symbolic-ref","--quiet","--short","HEAD"],
+            ["git","-C",str(effective_cwd),"symbolic-ref","--quiet","--short","HEAD"],
             capture_output=True,text=True,check=False,
             env={"PATH":os.environ.get("PATH",""),"GIT_TERMINAL_PROMPT":"0"},
         )
