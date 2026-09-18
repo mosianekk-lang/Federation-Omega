@@ -91,6 +91,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
 
         sol62_wif = credential_policy["sol62_wif_hardening_workflow"]
         fuse_mobile_gateway = credential_policy["fuse_mobile_gateway_deployment_workflow"]
+        federation_respawn = credential_policy["federation_respawn_deployment_workflow"]
         strategic_apps_script_read = credential_policy["strategic_apps_script_read_workflow"]
         fuse_mobile_iap_phase_a = credential_policy["fuse_mobile_iap_phase_a_workflow"]
         aegis_omega_provider = credential_policy["aegis_omega_provider_workflow"]
@@ -101,6 +102,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             {
                 sol62_wif,
                 fuse_mobile_gateway,
+                federation_respawn,
                 strategic_apps_script_read,
                 fuse_mobile_iap_phase_a,
                 aegis_omega_provider,
@@ -114,6 +116,7 @@ class LocalBibleRebuildBoundaryTests(unittest.TestCase):
             {
                 sol62_wif: "SOL62-WIF-HARDEN-20260901",
                 fuse_mobile_gateway: "[FO-DISPATCH] FUSE_MOBILE_GATEWAY_ZERO_TRAFFIC_V1",
+                federation_respawn: "[FO-DISPATCH] FEDERATION_RESPAWN_PRIVATE_CANARY_V1",
                 strategic_apps_script_read: "[FO-DISPATCH] STRATEGIC_FUSE_APPS_SCRIPT_READ_ZERO_TRAFFIC_V1",
                 fuse_mobile_iap_phase_a: "[FO-DISPATCH] FUSE_MOBILE_IAP_PHASE_A_V1",
                 aegis_omega_provider: "[FO-DISPATCH] AEGIS_OMEGA_ZERO_TRAFFIC_V1",
