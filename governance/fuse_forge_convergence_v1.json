@@ -1,0 +1,22 @@
+{
+  "schema": "FUSE-FORGE-CONVERGENCE-V1",
+  "version": "1.0.0",
+  "authority_ceiling": "A1_INTERNAL",
+  "external_effect_default": false,
+  "source_of_truth": "FUSE_ONE_EXISTING_CONTROL_PLANES",
+  "runtime_hard_dependencies": ["PYTHON", "GIT"],
+  "optional_witness_surfaces": ["GITHUB", "GITLAB", "AZURE_DEVOPS", "BITBUCKET"],
+  "virtual_executor": {
+    "identity": "FUSE-VIRTUAL-FORGE-001",
+    "class": "EPHEMERAL_VIRTUAL_GENERAL_EXECUTOR",
+    "physical_device_claim": false,
+    "persistent_host_claim": false,
+    "capabilities": ["git", "python", "build", "test", "artifact", "proof", "recovery"]
+  },
+  "physical_windows": {
+    "required_for_forge_inner_loop": false,
+    "separate_capability_court": true
+  },
+  "mutation_roots": ["HUMAN_OWNER", "SOVARA_SOL62", "FDOF"],
+  "proof_rule": "NO_MATURITY_INHERITANCE"
+}
