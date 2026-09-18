@@ -1,0 +1,86 @@
+{
+  "schema": "FUSE-SELF-HOSTING-RD-COURT-CONTROL-V1",
+  "version": "1.0.0",
+  "state": "SOURCE_CANDIDATE",
+  "purpose": "Govern bounded self-hosting R&D and in-house development challengers without creating a second controller, scheduler, truth plane, proof plane, or source authority.",
+  "owner_goal_boundary": "OPTIMIZE_MEANS_NEVER_REDEFINE_OWNER_END",
+  "clean_room_boundary": {
+    "owned_source": true,
+    "public_mechanisms": true,
+    "authorized_interfaces": true,
+    "private_or_restricted_bypass": false,
+    "credential_or_access_control_bypass": false
+  },
+  "reuse_required": [
+    "FUSE_FORGE_SOVEREIGN_SOURCE_PROTECTION_V1",
+    "HYPERCUBE",
+    "FPPRE",
+    "SICF",
+    "AECL",
+    "FUSE_WORK_PLANE",
+    "REALITY_JUDGE"
+  ],
+  "forbidden_duplicate_roots": [
+    "controller",
+    "scheduler",
+    "mission_bus",
+    "memory_root",
+    "proof_root",
+    "source_authority",
+    "judge"
+  ],
+  "terminal_predicates": [
+    "EXACT_SOURCE_CURRENTNESS",
+    "REPRODUCIBLE_BUILD",
+    "CHALLENGER_READY",
+    "MATCHED_EVAL",
+    "QUALITY_NONNEGATIVE",
+    "DEPENDENCY_EXIT",
+    "DISCONNECTED_REBUILD",
+    "ROLLBACK_READY",
+    "OWNER_VALUE_GAIN",
+    "INDEPENDENT_JUDGE_ACK"
+  ],
+  "hard_floors": {
+    "no_unintended_writes": true,
+    "no_authority_expansion": true,
+    "no_privacy_regression": true,
+    "no_safety_regression": true,
+    "no_owner_goal_redefinition": true,
+    "no_maturity_inheritance": true
+  },
+  "challenger_contract": {
+    "minimum_scope": true,
+    "reuse_before_build": true,
+    "compose_before_residual": true,
+    "source_independent_tests_required": true,
+    "matched_incumbent_comparison_required": true,
+    "negative_courts_required": true,
+    "rollback_package_required": true,
+    "dependency_exit_test_required": true,
+    "disconnected_rebuild_test_required": true
+  },
+  "promotion": {
+    "fdof_required_for_source": true,
+    "source_admission_proves_runtime": false,
+    "runtime_proof_proves_value": false,
+    "builder_may_self_promote": false,
+    "independent_judge_required": true,
+    "owner_gate_only_if_irreducible": true
+  },
+  "effects": {
+    "provider_effect_authorized_by_source": false,
+    "provider_mutation_authorized_by_source": false,
+    "production_activation_authorized_by_source": false,
+    "public_invocation_authorized_by_source": false,
+    "iam_mutation_authorized_by_source": false
+  },
+  "proof_boundary": {
+    "control_contract": "SOURCE_CANDIDATE",
+    "source_admitted": false,
+    "runtime_executed": false,
+    "production_active": false,
+    "value_verified": false,
+    "natural_cohort_verified": false
+  }
+}
