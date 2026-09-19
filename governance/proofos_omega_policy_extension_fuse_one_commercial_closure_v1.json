@@ -44,7 +44,7 @@
       "subsystems": [
         "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
       ],
-      "failure_class": "COMMERCIAL_FALSE_READINESS_OR_CLOSURE_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 240
     },
@@ -59,7 +59,7 @@
       "subsystems": [
         "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
       ],
-      "failure_class": "PRODUCT_RELEASE_DEPENDENCY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 240
     },
@@ -74,7 +74,7 @@
       "subsystems": [
         "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
       ],
-      "failure_class": "PRODUCTION_GENESIS_DEPENDENCY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 240
     },
@@ -89,7 +89,7 @@
       "subsystems": [
         "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
       ],
-      "failure_class": "HYPERCUBE_DEPENDENCY_REGRESSION",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "GLOBAL",
       "timeout_seconds": 240
     }
