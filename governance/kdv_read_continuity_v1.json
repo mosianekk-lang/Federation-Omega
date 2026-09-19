@@ -1,0 +1,37 @@
+{
+  "schema": "FUSE-KDV-READ-CONTINUITY-CONTROL-V1",
+  "version": "1.0.0",
+  "state": "SOURCE_CANDIDATE",
+  "architecture_mode": "ADDITIVE_NONAUTHORITATIVE_READ_CONTINUITY",
+  "reuse": [
+    "FKCM_V1",
+    "KDV_SCHEMA_CONTRACT",
+    "KDV_PROJECTION_CONTRACT",
+    "SOVARA-SOVEREIGN-BACKUP-PIPELINE-1"
+  ],
+  "new_sovereign_plane": false,
+  "canonical_source_replaced": false,
+  "read_modes": ["AS_OF_ONLY"],
+  "present_tense_rule": "FRESH_PROVIDER_OR_CANONICAL_READ_REQUIRED",
+  "package": {
+    "deterministic_archive": true,
+    "metadata_manifest": true,
+    "event_log": true,
+    "schema_sha256_bound": true,
+    "source_revision_bound": true,
+    "projection_replay_hash_bound": true
+  },
+  "authority": {
+    "write_method_exposed": false,
+    "write_authority": false,
+    "provider_effect_authorized": false,
+    "canonical_authority": false,
+    "cutover_authorized": false
+  },
+  "maturity_boundary": {
+    "source_tests_prove_live_google_capture": false,
+    "provider_read_at_capture_must_be_separately_proven": true,
+    "restored_snapshot_never_proves_current_now": true,
+    "as_of_read_continuity_can_be_source_tested": true
+  }
+}
