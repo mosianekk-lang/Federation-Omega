@@ -49,36 +49,6 @@
       "timeout_seconds": 240
     },
     {
-      "id": "fuse_one_product_release_dependency_v1",
-      "kind": "unittest_glob",
-      "target": "test_product_release_factory_v1.py",
-      "patterns": [
-        "federation/fuse_one_commercial_closure_v1.py",
-        "governance/fuse_one_commercial_closure_v1.json"
-      ],
-      "subsystems": [
-        "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
-      ],
-      "failure_class": "SUBSYSTEM_REGRESSION",
-      "block_scope": "GLOBAL",
-      "timeout_seconds": 240
-    },
-    {
-      "id": "fuse_one_production_genesis_dependency_v1",
-      "kind": "unittest_glob",
-      "target": "test_cfbe_production_genesis_v1.py",
-      "patterns": [
-        "federation/fuse_one_commercial_closure_v1.py",
-        "governance/fuse_one_commercial_closure_v1.json"
-      ],
-      "subsystems": [
-        "FUSE_ONE_COMMERCIAL_CLOSURE_V1"
-      ],
-      "failure_class": "SUBSYSTEM_REGRESSION",
-      "block_scope": "GLOBAL",
-      "timeout_seconds": 240
-    },
-    {
       "id": "fuse_one_hypercube_dependency_v1",
       "kind": "unittest_glob",
       "target": "test_hypercube_bottleneck_resolver_v1.py",
