@@ -71,8 +71,9 @@ def _disposition(constraint: PlatformConstraint) -> ConstraintDisposition:
         return ConstraintDisposition.HOLD_EXECUTION
     if constraint.kind is ConstraintKind.PLATFORM_FORMAT:
         return ConstraintDisposition.TRANSCODE
+    if constraint.kind is ConstraintKind.MODEL_CAPABILITY:
+        return ConstraintDisposition.BUILD_RESIDUAL
     if constraint.kind in {
-        ConstraintKind.MODEL_CAPABILITY,
         ConstraintKind.TOOL_FEATURE,
         ConstraintKind.DEVICE,
     }:
@@ -88,7 +89,7 @@ def _disposition(constraint: PlatformConstraint) -> ConstraintDisposition:
         ConstraintKind.POLICY,
         ConstraintKind.PRIVACY,
     }:
-        return ConstraintDisposition.BUILD_RESIDUAL
+        return ConstraintDisposition.ROUTE_AROUND
     return ConstraintDisposition.ROUTE_AROUND
 
 
