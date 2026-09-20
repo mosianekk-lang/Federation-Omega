@@ -5,6 +5,12 @@ import json
 from pathlib import Path
 import unittest
 
+ROOT=Path(__file__).resolve().parents[1]
+if not (ROOT/"federation_consolidation/sovara_sovereign_backup.py").exists():
+    raise unittest.SkipTest(
+        "Phoenix Core export intentionally excludes federation_consolidation backup source"
+    )
+
 from evidenceops.kim_dataverse.projection_contract import ProjectionContractError
 from federation.fkcm_v1.models import (
     Authority,
@@ -20,7 +26,6 @@ from federation.kdv_read_continuity_v1 import (
 from federation_consolidation.sovara_sovereign_backup import BackupError
 
 
-ROOT=Path(__file__).resolve().parents[1]
 SCHEMA_MANIFEST=ROOT/"config/kim-dataverse-schema-manifest-omega47-v1.json"
 
 
