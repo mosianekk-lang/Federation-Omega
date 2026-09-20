@@ -5,15 +5,18 @@ import json
 import subprocess
 import unittest
 
+ROOT=Path(__file__).resolve().parents[1]
+if not (ROOT/"federation_consolidation/sovara_sovereign_backup.py").exists():
+    raise unittest.SkipTest(
+        "Phoenix Core export intentionally excludes federation_consolidation backup source"
+    )
+
 from federation.work_plane_disconnected_rebuild_v1 import (
     TARGET_PATHS,
     build_source_snapshot,
     collect_source_files,
     execute_disconnected_rebuild,
 )
-
-
-ROOT=Path(__file__).resolve().parents[1]
 
 
 def current_head() -> str:
