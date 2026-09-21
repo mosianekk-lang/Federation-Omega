@@ -149,12 +149,12 @@ jobs:
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           & .\dist\FUSE-Sovereign-Platform.exe --fetch-updates
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
-          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-status | Tee-Object -FilePath EXE_FCOA_STATUS_RECEIPT.json
+          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-status --output-file EXE_FCOA_STATUS_RECEIPT.json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $s = Get-Content -Raw EXE_FCOA_STATUS_RECEIPT.json | ConvertFrom-Json
           if ($s.agent_id -ne "FCOA-OMEGA") { throw "FCOA_EXE_ID_FAIL" }
           if ($s.llm_providers -notcontains "fuse-test-llm") { throw "FCOA_EXE_LLM_BINDING_FAIL" }
-          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-think "verify frozen cognition" | Tee-Object -FilePath EXE_FCOA_LLM_RECEIPT.json
+          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-think "verify frozen cognition" --output-file EXE_FCOA_LLM_RECEIPT.json
           if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
           $r = Get-Content -Raw EXE_FCOA_LLM_RECEIPT.json | ConvertFrom-Json
           if ($r.provider_id -ne "fuse-test-llm") { throw "FCOA_EXE_PROVIDER_FAIL" }
