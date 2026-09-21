@@ -132,6 +132,15 @@
       "action": "Reconcile new strategic signals into the FSED Strategic Signal Inbox; deduplicate and provenance-check; compile material deltas into falsifiable hypotheses, calibrated forecasts, opportunity records and proof-carrying action packets; automatically queue only A0/A1 reversible work and hold A2 effects for exact authority; require semantic readback and forecast calibration.",
       "proof_gate": "StrategicPacket fingerprint plus exact private-ledger readback and calibration receipt",
       "privacy_gate": "Do not publish competitor twins, crown-jewel forecasts, strategic reserve or private market intelligence into the public repository"
+    },
+    {
+      "task_id": "EXT-015",
+      "title": "Toka public capability parity and re-harvest watch",
+      "cadence": "hourly",
+      "priority": 96,
+      "state": "READY",
+      "action": "Read only the official public Toka mission/platform sources; verify all 41 mapped public signals and safe transforms; re-run CFBE/Hypercube clean-room compilation while any terminal predicate is open; after convergence remain in delta-watch mode. Never perform surveillance, intrusion, physical-entry, weapon, credential, provider, deployment or other external effects.",
+      "proof_gate": "Public-source hashes, 41-signal parity, restricted-transform validation, CFBE DNA count, Hypercube pattern count and report SHA-256"
     }
   ]
 }
