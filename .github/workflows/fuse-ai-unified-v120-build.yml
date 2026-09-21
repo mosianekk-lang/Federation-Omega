@@ -13,8 +13,11 @@ jobs:
       - name: Decode exact unified source payload
         shell: pwsh
         run: |
-          $payload = Get-Content -Raw .\build_payloads\fuse_ai_unified_v1_2_0_rc1_source.zip.b64
-          [IO.File]::WriteAllBytes("fuse-unified-source.zip", [Convert]::FromBase64String($payload.Trim()))
+          $payload = (Get-Content -Raw .\build_payloads\fuse_ai_unified_v1_2_0_rc1_source.zip.b64).Trim()
+          if ($payload.Length -ne 67972) { throw "UNIFIED_BASE64_LENGTH_FAIL:$($payload.Length)" }
+          [IO.File]::WriteAllBytes("fuse-unified-source.zip", [Convert]::FromBase64String($payload))
+          $hash = (Get-FileHash .\fuse-unified-source.zip -Algorithm SHA256).Hash.ToLower()
+          if ($hash -ne "43d1d4a422447bc009181137a2a5228c3c150e6c464226c37ac2c848440d6e3f") { throw "UNIFIED_SOURCE_SHA_FAIL:$hash" }
           New-Item -ItemType Directory -Force -Path .\product | Out-Null
           Expand-Archive -Path .\fuse-unified-source.zip -DestinationPath .\product -Force
           if (-not (Test-Path .\product\fuse_unified_v1_2_src\localllm\main.go)) { throw "UNIFIED_SOURCE_DECODE_FAIL" }
