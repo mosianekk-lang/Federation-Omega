@@ -170,7 +170,8 @@
           "external_effect": true
         }
       ]
-    },\n    {
+    },
+    {
       "source_id": "toka-public-capability-harvest",
       "system": "FUSE Toka Public Capability Harvest",
       "evidence_paths": [
