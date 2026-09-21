@@ -177,6 +177,14 @@ def launch_gui():
     root.mainloop()
 
 
+def _emit(value: dict, output_file: str = "") -> None:
+    payload = json.dumps(value, indent=2, sort_keys=True, default=str)
+    if output_file:
+        with open(output_file, "w", encoding="utf-8") as handle:
+            handle.write(payload + "\n")
+    print(payload)
+
+
 def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--self-test", action="store_true")
@@ -185,31 +193,32 @@ def main():
     parser.add_argument("--fcoa-think", type=str, default="")
     parser.add_argument("--model", type=str, default="")
     parser.add_argument("--allow-unverified-commit", action="store_true")
+    parser.add_argument("--output-file", type=str, default="")
     args = parser.parse_args()
     require_verified = not args.allow_unverified_commit
     if args.self_test:
-        print(json.dumps(self_test(), sort_keys=True))
+        _emit(self_test(), args.output_file)
         return 0
     if args.fetch_updates:
         try:
-            print(json.dumps(fetch_updates(require_verified), indent=2, sort_keys=True))
+            _emit(fetch_updates(require_verified), args.output_file)
             return 0
         except UpdateError as exc:
-            print(json.dumps({"state": "REJECTED", "error": str(exc)}, sort_keys=True))
+            _emit({"state": "REJECTED", "error": str(exc)}, args.output_file)
             return 2
     if args.fcoa_status:
         try:
-            print(json.dumps(fcoa_status(require_verified), indent=2, sort_keys=True, default=str))
+            _emit(fcoa_status(require_verified), args.output_file)
             return 0
         except Exception as exc:
-            print(json.dumps({"state": "REJECTED", "error": str(exc)}, sort_keys=True))
+            _emit({"state": "REJECTED", "error": str(exc)}, args.output_file)
             return 2
     if args.fcoa_think:
         try:
-            print(json.dumps(fcoa_think(args.fcoa_think, require_verified=require_verified, model=args.model), indent=2, sort_keys=True, default=str))
+            _emit(fcoa_think(args.fcoa_think, require_verified=require_verified, model=args.model), args.output_file)
             return 0
         except LLMGatewayError as exc:
-            print(json.dumps({"state": "NO_QUALIFIED_LLM_PROVIDER", "error": str(exc)}, sort_keys=True))
+            _emit({"state": "NO_QUALIFIED_LLM_PROVIDER", "error": str(exc)}, args.output_file)
             return 3
     launch_gui()
     return 0
