@@ -1,0 +1,215 @@
+name: FUSE Sovereign Platform v0.4 FCOA Build
+on:
+  workflow_dispatch:
+  push:
+    branches: ["build/fuse-sovereign-platform-v040-fcoa"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Restore v0.2 exact source base
+        shell: pwsh
+        run: |
+          $url = "https://raw.githubusercontent.com/mosianekk-lang/Federation-Omega/00ce2e2f84e245596735aad86c92fa5aca8d8204/build_payloads/fuse_sovereign_capability_platform_v0_2_windows_src.zip.b64"
+          $payload = (Invoke-WebRequest -UseBasicParsing -Uri $url).Content.Trim()
+          [IO.File]::WriteAllBytes("fuse-source.zip", [Convert]::FromBase64String($payload))
+          New-Item -ItemType Directory -Force -Path .\products\fuse_sovereign_capability_platform_v0_4 | Out-Null
+          Expand-Archive -Path .\fuse-source.zip -DestinationPath .\products\fuse_sovereign_capability_platform_v0_4 -Force
+
+      - name: Apply verified v0.3 update bridge overlay
+        shell: pwsh
+        run: |
+          $root = ".\products\fuse_sovereign_capability_platform_v0_4"
+          $base = "https://raw.githubusercontent.com/mosianekk-lang/Federation-Omega/8efe8e0be7ee791c69bbb9f13df4243ea63e4fb3/build_payloads/fuse_sovereign_v0_3"
+          Invoke-WebRequest -UseBasicParsing "$base/update.py" -OutFile "$root\fuse_sovereign\update.py"
+          Invoke-WebRequest -UseBasicParsing "$base/test_updates.py" -OutFile "$root\tests\test_updates.py"
+
+      - name: Apply v0.4 FCOA bridge overlay
+        shell: pwsh
+        run: |
+          $root = ".\products\fuse_sovereign_capability_platform_v0_4"
+          Copy-Item .\build_payloads\fuse_sovereign_v0_4\llm_gateway.py "$root\fuse_sovereign\llm_gateway.py" -Force
+          Copy-Item .\build_payloads\fuse_sovereign_v0_4\fcoa_bridge.py "$root\fuse_sovereign\fcoa_bridge.py" -Force
+          Copy-Item .\build_payloads\fuse_sovereign_v0_4\app.py "$root\app.py" -Force
+          Copy-Item .\build_payloads\fuse_sovereign_v0_4\test_fcoa_bridge.py "$root\tests\test_fcoa_bridge.py" -Force
+          Copy-Item .\build_payloads\fuse_sovereign_v0_4\README.md "$root\README.md" -Force
+          Copy-Item .\build_payloads\fuse_sovereign_v0_4\installer.iss "$root\installer.iss" -Force
+          Add-Content -Path "$root\fuse_sovereign\__init__.py" -Value "from .update import *"
+          Add-Content -Path "$root\fuse_sovereign\__init__.py" -Value "from .llm_gateway import *"
+          Add-Content -Path "$root\fuse_sovereign\__init__.py" -Value "from .fcoa_bridge import *"
+          (Get-Content -Raw "$root\pyproject.toml").Replace('version = "0.1.0"','version = "0.4.0"') | Set-Content "$root\pyproject.toml"
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller pytest
+
+      - name: Unit tests
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: python -m pytest -q
+
+      - name: Source self-test without model binding
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: |
+          python app.py --self-test | Tee-Object -FilePath SOURCE_SELFTEST.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $r = Get-Content -Raw SOURCE_SELFTEST.json | ConvertFrom-Json
+          if ($r.fcoa_agent_id -ne "FCOA-OMEGA") { throw "FCOA_IDENTITY_FAIL" }
+          if ($r.fcoa_bridge -ne "PASS") { throw "FCOA_BRIDGE_FAIL" }
+
+      - name: Live verified FUSE update and FCOA bootstrap
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: |
+          python app.py --fetch-updates | Tee-Object -FilePath LIVE_UPDATE_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $u = Get-Content -Raw LIVE_UPDATE_RECEIPT.json | ConvertFrom-Json
+          if ($u.verified_commit -ne $true) { throw "FUSE_COMMIT_NOT_VERIFIED" }
+          if ($u.sequence -lt 2) { throw "FCOA_UPDATE_SEQUENCE_NOT_ACTIVE" }
+          if ($u.llm_context.fcoa_agent_id -ne "FCOA-OMEGA") { throw "FCOA_UPDATE_CONTEXT_MISSING" }
+          python app.py --fcoa-status | Tee-Object -FilePath FCOA_STATUS_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $s = Get-Content -Raw FCOA_STATUS_RECEIPT.json | ConvertFrom-Json
+          if ($s.agent_id -ne "FCOA-OMEGA") { throw "FCOA_STATUS_ID_FAIL" }
+          if ($s.work_plane_id -ne "WP-FCOA-BOOTSTRAP-001") { throw "FCOA_WORK_PLANE_FAIL" }
+          if ($s.passport_id -ne "ECP-FCOA-OMEGA-V1-001") { throw "FCOA_PASSPORT_FAIL" }
+          if ($s.authority_boundary -ne "MISSION_SCOPED_NO_INHERITANCE") { throw "FCOA_AUTHORITY_BOUNDARY_FAIL" }
+
+      - name: Start local OpenAI-compatible cognition endpoint
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: |
+          @'
+          import json
+          from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+          class H(BaseHTTPRequestHandler):
+              def do_POST(self):
+                  if self.path != "/v1/chat/completions":
+                      self.send_response(404); self.end_headers(); return
+                  n = int(self.headers.get("Content-Length","0"))
+                  body = json.loads(self.rfile.read(n).decode())
+                  messages = body.get("messages") or []
+                  system = messages[0].get("content","") if messages else ""
+                  user = messages[-1].get("content","") if messages else ""
+                  ok = "FCOA-OMEGA" in system and "WP-FCOA-BOOTSTRAP-001" in system and '"sequence": 2' in system
+                  if not ok:
+                      self.send_response(400); self.end_headers(); self.wfile.write(b"bad context"); return
+                  payload = {
+                    "id":"fcoa-cognition-court",
+                    "created":1,
+                    "choices":[{"message":{"role":"assistant","content":"FCOA_LLM_GATEWAY_CONTEXT_VERIFIED:"+user}}],
+                    "usage":{"prompt_tokens":1,"completion_tokens":1,"total_tokens":2}
+                  }
+                  raw = json.dumps(payload).encode()
+                  self.send_response(200)
+                  self.send_header("Content-Type","application/json")
+                  self.send_header("Content-Length",str(len(raw)))
+                  self.end_headers()
+                  self.wfile.write(raw)
+              def log_message(self,*args): pass
+          ThreadingHTTPServer(("127.0.0.1",18080),H).serve_forever()
+          '@ | Set-Content .\test_llm_server.py
+          $p = Start-Process python -ArgumentList ".\test_llm_server.py" -PassThru
+          "FCOA_TEST_LLM_PID=$($p.Id)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FUSE_LLM_BASE_URL=http://127.0.0.1:18080" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FUSE_LLM_MODEL=fuse-test-model" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          "FUSE_LLM_PROVIDER_ID=fuse-test-llm" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Start-Sleep -Seconds 2
+
+      - name: Source FCOA cognition transport court
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: |
+          python app.py --fcoa-think "verify source cognition" | Tee-Object -FilePath SOURCE_FCOA_LLM_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $r = Get-Content -Raw SOURCE_FCOA_LLM_RECEIPT.json | ConvertFrom-Json
+          if ($r.provider_id -ne "fuse-test-llm") { throw "FCOA_SOURCE_PROVIDER_FAIL" }
+          if ($r.text -notlike "FCOA_LLM_GATEWAY_CONTEXT_VERIFIED:*") { throw "FCOA_SOURCE_CONTEXT_FAIL" }
+
+      - name: Build Windows EXE
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name FUSE-Sovereign-Platform app.py
+
+      - name: EXE self-test and FCOA access
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: |
+          & .\dist\FUSE-Sovereign-Platform.exe --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\dist\FUSE-Sovereign-Platform.exe --fetch-updates
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-status | Tee-Object -FilePath EXE_FCOA_STATUS_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $s = Get-Content -Raw EXE_FCOA_STATUS_RECEIPT.json | ConvertFrom-Json
+          if ($s.agent_id -ne "FCOA-OMEGA") { throw "FCOA_EXE_ID_FAIL" }
+          if ($s.llm_providers -notcontains "fuse-test-llm") { throw "FCOA_EXE_LLM_BINDING_FAIL" }
+          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-think "verify frozen cognition" | Tee-Object -FilePath EXE_FCOA_LLM_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          $r = Get-Content -Raw EXE_FCOA_LLM_RECEIPT.json | ConvertFrom-Json
+          if ($r.provider_id -ne "fuse-test-llm") { throw "FCOA_EXE_PROVIDER_FAIL" }
+          if ($r.text -notlike "FCOA_LLM_GATEWAY_CONTEXT_VERIFIED:*") { throw "FCOA_EXE_CONTEXT_FAIL" }
+
+      - name: Locate or install Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          if (-not (Test-Path $iscc)) { throw "ISCC_NOT_FOUND" }
+
+      - name: Build installer
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss'
+
+      - name: Build receipt
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_4
+        run: |
+          $exe = Get-FileHash .\dist\FUSE-Sovereign-Platform.exe -Algorithm SHA256
+          $setup = Get-FileHash .\installer-dist\FUSE-Sovereign-Platform-Setup.exe -Algorithm SHA256
+          $u = Get-Content -Raw .\LIVE_UPDATE_RECEIPT.json | ConvertFrom-Json
+          $f = Get-Content -Raw .\EXE_FCOA_STATUS_RECEIPT.json | ConvertFrom-Json
+          $receipt = [ordered]@{
+            schema = "FUSE-SOVEREIGN-WINDOWS-FCOA-BUILD-RECEIPT-V1"
+            version = "0.4.0"
+            os = "windows-latest"
+            exe_sha256 = $exe.Hash.ToLower()
+            installer_sha256 = $setup.Hash.ToLower()
+            signed = $false
+            unit_tests = "PASS"
+            source_self_test = "PASS"
+            llm_update_fetch = "PASS"
+            fcoa_bootstrap = "PASS"
+            fcoa_agent_id = $f.agent_id
+            fcoa_work_plane = $f.work_plane_id
+            fcoa_passport = $f.passport_id
+            update_sequence = $u.sequence
+            update_source_commit = $u.source_commit
+            update_source_verified = $u.verified_commit
+            fcoa_llm_transport = "PASS_TEST_ENDPOINT"
+            truth_boundary = "LLM transport/context integration is proven against a deterministic local OpenAI-compatible test endpoint; frontier-model intelligence is not claimed."
+            authority_boundary = $f.authority_boundary
+          }
+          $receipt | ConvertTo-Json | Set-Content .\BUILD_RECEIPT.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fuse-sovereign-platform-windows-v0.4.0-fcoa
+          path: |
+            products/fuse_sovereign_capability_platform_v0_4/dist/FUSE-Sovereign-Platform.exe
+            products/fuse_sovereign_capability_platform_v0_4/installer-dist/FUSE-Sovereign-Platform-Setup.exe
+            products/fuse_sovereign_capability_platform_v0_4/BUILD_RECEIPT.json
+            products/fuse_sovereign_capability_platform_v0_4/LIVE_UPDATE_RECEIPT.json
+            products/fuse_sovereign_capability_platform_v0_4/EXE_FCOA_STATUS_RECEIPT.json
+            products/fuse_sovereign_capability_platform_v0_4/EXE_FCOA_LLM_RECEIPT.json
