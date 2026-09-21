@@ -99,6 +99,23 @@ class TokaPublicCapabilityHarvestTests(unittest.TestCase):
         self.assertEqual("hourly", task["cadence"])
         self.assertEqual("READY", task["state"])
 
+    def test_proofos_extension_maps_every_toka_changed_surface(self):
+        path = ROOT / "governance" / "proofos_omega_policy_extension_toka_public_harvest_v1.json"
+        extension = json.loads(path.read_text(encoding="utf-8"))
+        mapped = set(extension["risk_rules"][0]["patterns"])
+        required = {
+            "benchmarking/cfbe_omega/toka_public_capability_harvest_v1.py",
+            "docs/architecture/FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1.md",
+            "evidenceops/capability_heartbeat/sources.json",
+            "governance/toka_public_capability_harvest_v1.json",
+            "governance/proofos_omega_policy_extension_toka_public_harvest_v1.json",
+            "scheduler/run_scheduler.py",
+            "scheduler/tasks.json",
+            "superior_logic/hypercube_bottleneck_resolver.py",
+            "tests/test_toka_public_capability_harvest_v1.py",
+        }
+        self.assertTrue(required.issubset(mapped))
+
 
 if __name__ == "__main__":
     unittest.main()
