@@ -1,43 +1,53 @@
 {
-  "artifacts":[{"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},{"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},{"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},{"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0"},{"kind":"surface-census","name":"FCOA Multi-Surface Reachability & Control Census","version":"1.0.0"}],
+  "artifacts": [
+    {"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},
+    {"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},
+    {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},
+    {"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0"},
+    {"kind":"surface-census","name":"FCOA Multi-Surface Reachability & Control Census","version":"1.0.0"},
+    {"kind":"routing-policy","name":"FUSE Global Constraint Re-route","version":"1.0.0"}
+  ],
   "authority_class":"FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
   "capability_deltas":[
-    "FCOA-Ω now distinguishes device activity, route reachability and GUI-control qualification as separate states; one connector failure can never by itself produce a DEVICE_OFFLINE or capability-absent claim.",
-    "User-visible or screenshot-observed Windows activity is recorded as OBSERVED_ACTIVE evidence, while control reachability is independently tested across direct GUI/computer-use, remote terminal, local device helper, LocalLLM bridge, VM/browser and other qualified routes.",
-    "When a terminal route is reachable but no GUI action is exposed, FCOA automatically bootstraps the FCOA Device-Control helper or Win32 SendInput/screen-capture mechanism instead of declaring GUI control unavailable.",
-    "If no route is currently reachable, FCOA must classify ACTIVE_BUT_NOT_CURRENTLY_REACHABLE or UNKNOWN_NOT_ABSENT as appropriate, complete an estate census, and harvest/bind a changed mechanism before making an absence claim.",
-    "The registered Remote Desktop Commander state is route-specific evidence only; it must not override contradictory fresh evidence from other surfaces."
+    "All FUSE work now treats task limits, quotas, rate limits, concurrency ceilings, storage ceilings and provider-capacity messages as route constraints rather than mission-terminal failures.",
+    "Constraint interception maps into the existing OF50 friction lineage as RATE_OR_QUOTA_PRESSURE and forces CHANGED_ROUTE_REQUIRED while preserving the mission objective and terminal predicates.",
+    "For active-task limits, FUSE first reuses a semantically equivalent existing automation, then may consolidate only exact-equivalent duplicates, then tries FUSE/provider/local schedulers; otherwise the mission is retained in a durable queue without owner burden.",
+    "Repeated recurrence on the same constrained route forbids unchanged retry and requires a different route family or mechanism.",
+    "Automatic re-routing may never pause/delete unrelated work merely to free capacity, and it never widens provider/external-effect authority."
   ],
   "channel":"stable",
-  "issued_at":"2026-09-21T19:48:00Z",
+  "issued_at":"2026-09-21T21:33:00Z",
   "llm_context":{
-    "fcoa_agent_id":"FCOA-OMEGA","surface_census_profile":"FCOA_SURFACE_CENSUS_V1","core_rule":"ROUTE_OFFLINE_NE_DEVICE_OFFLINE",
-    "visibility_rule":"USER_OR_SCREENSHOT_VISIBLE_ACTIVE_IS_DEVICE_ACTIVITY_EVIDENCE_NOT_CONTROL_REACHABILITY_PROOF",
-    "absence_rule":"ONE_CONNECTOR_FAILURE_NE_CAPABILITY_ABSENT",
-    "route_order":"DIRECT_GUI>COMPUTER_USE>LOCAL_HELPER>REMOTE_TERMINAL_HELPER>REMOTE_TERMINAL_WIN32>LOCALLLM_BRIDGE>VM_GUI",
-    "terminal_fallback":"START_FCOA_DEVICE_CONTROL_HELPER_OR_USE_WIN32_SENDINPUT_AND_SCREEN_CAPTURE",
-    "changed_mechanism_rule":"REPEATED_OR_BLOCKED_ROUTE_REQUIRES_NEW_ROUTE_OR_MECHANISM_NOT_BLIND_RETRY",
-    "physical_control_truth":"FULL_KEYBOARD_MOUSE_CONTROL_IS_CLAIMED_ONLY_AFTER_A_REACHABLE_AUTHORIZED_ROUTE_AND_SCREEN_FOREGROUND_CURSOR_READBACK_PROVE_IT",
-    "current_observation":"WINDOWS_11_OBSERVED_ACTIVE_BY_USER_SCREENSHOT; REMOTE_DESKTOP_COMMANDER_ROUTE_CURRENTLY_UNREACHABLE",
-    "external_effect_rule":"Keyboard/mouse reachability does not enlarge provider/external authority."
+    "global_constraint_router":"FUSE_GLOBAL_CONSTRAINT_REROUTE_V1",
+    "of50_mapping":"FrictionClass.RATE_OR_QUOTA_PRESSURE -> CycleDecision.CHANGED_ROUTE_REQUIRED",
+    "trigger_classes":["ACTIVE_TASK_LIMIT","RATE_LIMIT","QUOTA_EXHAUSTED","CONCURRENCY_LIMIT","STORAGE_LIMIT","PROVIDER_CAPACITY","GENERIC_CAPACITY"],
+    "mission_rule":"CONSTRAINTS_CHANGE_ROUTE_NOT_OBJECTIVE",
+    "automation_limit_rule":"REUSE_EQUIVALENT_EXISTING_TASK > CONSOLIDATE_ONLY_EXACT_EQUIVALENTS > FUSE_INTERNAL_SCHEDULER > PROVIDER_NATIVE_SCHEDULER > LOCAL_SCHEDULER > DURABLE_QUEUE",
+    "general_route_rule":"REUSE>REBIND>REPAIR>EXTEND>COMPOSE>ALTERNATE_PROVIDER>LOCAL_RUNTIME>HARVEST>BUILD_MINIMUM>DURABLE_QUEUE",
+    "recurrence_rule":"SECOND_SAME_CONSTRAINT_ON_SAME_ROUTE_REQUIRES_CHANGED_ROUTE_FAMILY",
+    "owner_burden_rule":"DO_NOT_OFFLOAD_MACHINE_WORK_WHILE_SAFE_MACHINE_ROUTE_EXISTS",
+    "unrelated_work_rule":"NEVER_PAUSE_OR_DELETE_UNRELATED_WORK_TO_FREE_CAPACITY_AUTOMATICALLY",
+    "truth_rule":"A_LIMIT_MESSAGE_PROVES_A_SURFACE_CONSTRAINT_NOT_MISSION_IMPOSSIBILITY",
+    "external_effect_rule":"REROUTING_DOES_NOT_WIDEN_EXTERNAL_EFFECT_AUTHORITY"
   },
   "min_client_version":"0.4.0",
   "route_deltas":[
-    "Before any device-offline or GUI-capability-absent conclusion, run the multi-surface census and preserve route-scoped evidence separately.",
-    "A failed direct ping marks only that route UNREACHABLE; if Windows is user/screenshot-observed active, state becomes OBSERVED_ACTIVE_BUT_CONTROL_ROUTE_UNREACHABLE rather than DEVICE_OFFLINE.",
-    "If any terminal/process route is reachable, automatically bootstrap the FCOA Device-Control helper or a bounded Win32 input bridge and verify with screen/cursor/foreground readback.",
-    "If a direct computer-use/GUI connector becomes available, qualify it independently and prefer it ahead of terminal fallbacks.",
-    "If no current control route is reachable, build/bind an outbound device bridge rather than asking the owner to repeat routine troubleshooting; owner action is requested only when no safe machine path exists.",
-    "Never claim full keyboard/mouse access from source/build proof alone; require live authorized route readback."
+    "Intercept limit/quota/capacity errors before user-visible terminal failure and classify the exact constraint.",
+    "Preserve mission identity, objective, schedule/condition semantics, privacy and effect authority while selecting a changed route.",
+    "For automation-cap errors, prefer equivalent task reuse; consolidate only semantically identical duplicates; never auto-disable unrelated tasks.",
+    "For rate/quota/provider capacity, use a qualified alternate provider/local runtime or changed scheduling mechanism; do not blindly retry the same family after recurrence.",
+    "If no semantically equivalent live route exists, append the mission to the durable mission queue and continue route harvesting/capacity recovery without converting it into a manual owner task.",
+    "A constraint message is evidence about one execution surface; it is not evidence that the mission or capability is impossible."
   ],
-  "schema":"FUSE_UPDATE_MANIFEST_V1","sequence":6,
-  "summary":"Correct FCOA device-reachability logic so connector-specific failure can never be mistaken for Windows/device absence; add multi-surface census and automatic GUI-control fallback/harvest routing.",
+  "schema":"FUSE_UPDATE_MANIFEST_V1",
+  "sequence":7,
+  "summary":"Make quota/limit/capacity messages a global automatic re-routing trigger across FUSE while preserving mission semantics, unrelated work and authority boundaries.",
   "valid_until":"2026-10-21T23:59:59Z",
   "warnings":[
-    "The supplied screenshot proves Windows 11 is visibly active, but does not by itself prove that this chat can inject input into that session.",
-    "Remote Desktop Commander currently reports no connected device available to this chat; that is now classified as a route-specific outage, not a device-offline fact.",
-    "Live full keyboard/mouse control remains unproven until one authorized control route is reachable and passes benign input/readback verification."
+    "Platform-specific hard limits still exist; FUSE re-routes around them when a qualified alternate route exists but cannot change the platform's own quota.",
+    "Unrelated active automations are never paused or deleted automatically simply to free a slot.",
+    "Durable queue state preserves work but is not a completion claim."
   ],
-  "llm_context_sha256":"491fd30fcaf5f7020653f40f32f6f1ae2813be457d2b26bfc3076c3a3036863c",
-  "manifest_body_sha256":"0beb480a94de6c4c1f85de4514491861a29cec936cd408ca0631f64376126495"
+  "llm_context_sha256":"7b3225c63856329c370329f4914bf81bbd2ee0b40ceb1a2e9be651ab9c17ea16",
+  "manifest_body_sha256":"534aa9f871d1e4b4480f9bb38ef7b8027e3dce99dbe207f6b97d55e24adcbf80"
 }
