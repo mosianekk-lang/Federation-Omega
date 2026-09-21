@@ -159,6 +159,12 @@ jobs:
           $r = Get-Content -Raw EXE_FCOA_LLM_RECEIPT.json | ConvertFrom-Json
           if ($r.provider_id -ne "fuse-test-llm") { throw "FCOA_EXE_PROVIDER_FAIL" }
           if ($r.text -notlike "FCOA_LLM_GATEWAY_CONTEXT_VERIFIED:*") { throw "FCOA_EXE_CONTEXT_FAIL" }
+          $evidence = Join-Path $env:RUNNER_TEMP "fcoa-v04-evidence"
+          New-Item -ItemType Directory -Force -Path $evidence | Out-Null
+          Copy-Item .\EXE_SELFTEST_RECEIPT.json (Join-Path $evidence "EXE_SELFTEST_RECEIPT.json") -Force
+          Copy-Item .\EXE_UPDATE_RECEIPT.json (Join-Path $evidence "EXE_UPDATE_RECEIPT.json") -Force
+          Copy-Item .\EXE_FCOA_STATUS_RECEIPT.json (Join-Path $evidence "EXE_FCOA_STATUS_RECEIPT.json") -Force
+          Copy-Item .\EXE_FCOA_LLM_RECEIPT.json (Join-Path $evidence "EXE_FCOA_LLM_RECEIPT.json") -Force
 
       - name: Locate or install Inno Setup
         shell: pwsh
@@ -179,7 +185,8 @@ jobs:
           $exe = Get-FileHash .\dist\FUSE-Sovereign-Platform.exe -Algorithm SHA256
           $setup = Get-FileHash .\installer-dist\FUSE-Sovereign-Platform-Setup.exe -Algorithm SHA256
           $u = Get-Content -Raw .\LIVE_UPDATE_RECEIPT.json | ConvertFrom-Json
-          $f = Get-Content -Raw .\EXE_FCOA_STATUS_RECEIPT.json | ConvertFrom-Json
+          $evidence = Join-Path $env:RUNNER_TEMP "fcoa-v04-evidence"
+          $f = Get-Content -Raw (Join-Path $evidence "EXE_FCOA_STATUS_RECEIPT.json") | ConvertFrom-Json
           $receipt = [ordered]@{
             schema = "FUSE-SOVEREIGN-WINDOWS-FCOA-BUILD-RECEIPT-V1"
             version = "0.4.0"
