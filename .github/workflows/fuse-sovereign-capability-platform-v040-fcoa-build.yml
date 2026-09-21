@@ -182,11 +182,26 @@ jobs:
         shell: pwsh
         working-directory: products/fuse_sovereign_capability_platform_v0_4
         run: |
+          & .\dist\FUSE-Sovereign-Platform.exe --self-test --output-file FINAL_EXE_SELFTEST_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\dist\FUSE-Sovereign-Platform.exe --fetch-updates --output-file FINAL_EXE_UPDATE_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-status --output-file FINAL_EXE_FCOA_STATUS_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+          & .\dist\FUSE-Sovereign-Platform.exe --fcoa-think "final receipt cognition" --output-file FINAL_EXE_FCOA_LLM_RECEIPT.json
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
           $exe = Get-FileHash .\dist\FUSE-Sovereign-Platform.exe -Algorithm SHA256
           $setup = Get-FileHash .\installer-dist\FUSE-Sovereign-Platform-Setup.exe -Algorithm SHA256
-          $u = Get-Content -Raw .\LIVE_UPDATE_RECEIPT.json | ConvertFrom-Json
-          $evidence = Join-Path $env:RUNNER_TEMP "fcoa-v04-evidence"
-          $f = Get-Content -Raw (Join-Path $evidence "EXE_FCOA_STATUS_RECEIPT.json") | ConvertFrom-Json
+          $u = Get-Content -Raw .\FINAL_EXE_UPDATE_RECEIPT.json | ConvertFrom-Json
+          $f = Get-Content -Raw .\FINAL_EXE_FCOA_STATUS_RECEIPT.json | ConvertFrom-Json
+          $l = Get-Content -Raw .\FINAL_EXE_FCOA_LLM_RECEIPT.json | ConvertFrom-Json
+          if ($f.agent_id -ne "FCOA-OMEGA") { throw "FINAL_FCOA_ID_FAIL" }
+          if ($f.authority_boundary -ne "MISSION_SCOPED_NO_INHERITANCE") { throw "FINAL_FCOA_AUTHORITY_FAIL" }
+          if ($u.verified_commit -ne $true -or $u.sequence -lt 2) { throw "FINAL_FUSE_UPDATE_FAIL" }
+          if ($l.provider_id -ne "fuse-test-llm") { throw "FINAL_LLM_PROVIDER_FAIL" }
+          if ($l.text -notlike "FCOA_LLM_GATEWAY_CONTEXT_VERIFIED:*") { throw "FINAL_LLM_CONTEXT_FAIL" }
+
           $receipt = [ordered]@{
             schema = "FUSE-SOVEREIGN-WINDOWS-FCOA-BUILD-RECEIPT-V1"
             version = "0.4.0"
@@ -205,6 +220,7 @@ jobs:
             update_source_commit = $u.source_commit
             update_source_verified = $u.verified_commit
             fcoa_llm_transport = "PASS_TEST_ENDPOINT"
+            fcoa_llm_provider = $l.provider_id
             truth_boundary = "LLM transport/context integration is proven against a deterministic local OpenAI-compatible test endpoint; frontier-model intelligence is not claimed."
             authority_boundary = $f.authority_boundary
           }
