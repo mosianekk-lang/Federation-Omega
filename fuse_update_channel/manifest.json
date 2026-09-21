@@ -1,62 +1,56 @@
 {
   "artifacts": [
-    {
-      "kind": "source",
-      "name": "Federation-Omega",
-      "ref": "main",
-      "repository": "mosianekk-lang/Federation-Omega"
-    },
-    {
-      "kind": "source",
-      "name": "FUSE Sovereign Capability Platform",
-      "version": "0.4.0"
-    },
-    {
-      "kind": "policy",
-      "name": "FCOA Internal Super-Admin Profile",
-      "version": "1.0.0"
-    }
+    {"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},
+    {"kind":"source","name":"FUSE Sovereign Capability Platform","version":"0.4.0"},
+    {"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},
+    {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"}
   ],
   "authority_class": "FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
   "capability_deltas": [
-    "FCOA-Ω is promoted to estate-wide FUSE Internal Super-Admin over all current and future FUSE-owned capabilities discovered through the capability registry.",
-    "FCOA may automatically census, orchestrate, compose, test, repair, upgrade, deploy, rollback, recover, and retire FUSE-owned systems within valid leases/fences and mission scope.",
-    "FCOA may administer FUSE model/runtime registries, update channels, Alpha-Omega, Formation Innovation, Hypercube/CFBE, Sovereign Plane, LocalLLM, Creative Studio, mission/work buses, proof/Judge, automation, recovery, and capability brokers.",
-    "Third-party/provider actions remain limited by real credentials/permissions and provider policy; no credentials, authority, lease release, or external approvals may be fabricated.",
-    "External human-facing messaging, publication, spending, destructive provider actions, and account/IAM changes remain separately effect-gated unless explicitly authorized for that mission."
+    "FCOA-Ω is a bidirectional node on the existing CFBE Bible Memory Fabric; it does not create a second memory root.",
+    "FCOA consumes portable verified global memory events and current verified projections for cognition, routing and recovery.",
+    "FCOA may propose global intelligence updates with source/proof/causal lineage; an FCOA-authored inference cannot self-promote to canonical verified truth.",
+    "Accepted FCOA intelligence updates require independent verification and are fanned out to all active registered FUSE receiver systems with digest-bound ACK/convergence tracking.",
+    "Newly registered FUSE systems automatically enter the receiver set for subsequent global updates; P2/P3/P4 private raw content remains domain-local."
   ],
   "channel": "stable",
-  "issued_at": "2026-09-21T18:10:00Z",
+  "issued_at": "2026-09-21T19:03:00Z",
   "llm_context": {
-    "fcoa_agent_id": "FCOA-OMEGA",
-    "fcoa_passport": "ECP-FCOA-OMEGA-V1-001",
-    "fcoa_work_plane": "WP-FCOA-BOOTSTRAP-001",
-    "admin_profile": "FCOA_INTERNAL_SUPER_ADMIN_V1",
-    "capability_scope": "ALL_REGISTERED_FUSE_OWNED_CURRENT_AND_FUTURE",
-    "automation_mode": "AUTO_CENSUS_AUTO_ROUTE_AUTO_COMPOSE_AUTO_REPAIR_AUTO_DEPLOY_AUTO_RECOVER",
-    "routing_doctrine": "REUSE>REBIND>REPAIR>EXTEND>COMPOSE>HARVEST>BUILD_MINIMUM",
-    "internal_effect_ceiling": "FUSE_INTERNAL_ADMIN",
-    "external_effect_rule": "Real provider authority plus mission effect authorization required; no fabricated credentials/permissions/lease release.",
-    "communications_rule": "No external human-facing message/publication unless mission explicitly authorizes it.",
-    "fence_rule": "Active foreign source fences are joined or waited out; never overwritten merely by admin rank.",
-    "proof_rule": "Source/build/test/deploy/runtime/behaviour/value/Judge maturity remain separate."
+    "fcoa_agent_id":"FCOA-OMEGA",
+    "fcoa_passport":"ECP-FCOA-OMEGA-V1-001",
+    "fcoa_work_plane":"WP-FCOA-BOOTSTRAP-001",
+    "admin_profile":"FCOA_INTERNAL_SUPER_ADMIN_V1",
+    "memory_node_profile":"FCOA_BMF_NODE_V1",
+    "memory_fabric":"CFBE_BIBLE_MEMORY_FABRIC_V1",
+    "memory_role":"BIDIRECTIONAL_CONSUMER_PRODUCER_NOT_MEMORY_ROOT",
+    "memory_ingest_scope":"PORTABLE_GLOBAL_VERIFIED_ONLY",
+    "intelligence_publish_scope":"PROPOSE_THEN_INDEPENDENT_VERIFY_THEN_GLOBAL_FANOUT",
+    "receiver_scope":"ALL_ACTIVE_REGISTERED_FUSE_SYSTEMS_DYNAMIC",
+    "receiver_ack_rule":"DIGEST_BOUND_ACK_AND_CONVERGENCE_TRACKING",
+    "self_canonicalization_rule":"FCOA_CANNOT_VERIFY_ITS_OWN_PROPOSAL",
+    "privacy_rule":"P1_PORTABLE_METADATA_GLOBAL; P2_P3_P4_RAW_CONTENT_DOMAIN_LOCAL",
+    "truth_hierarchy":"IMMUTABLE_EVENT_TRUTH>CURRENT_VERIFIED_PROJECTION>DERIVED_INTERPRETATION",
+    "external_effect_rule":"Memory state and intelligence updates never inherit provider/external effect authority."
   },
-  "llm_context_sha256": "1bf2b2f95e6734a63c611c0d708498b7b038acbc34a84ab1d83f87b232698748",
-  "manifest_body_sha256": "39d6ce9da436c7b840d5189bdf35d42e7b108dd0b3a7e9fa2499239bbc68fe5f",
-  "min_client_version": "0.4.0",
-  "route_deltas": [
-    "FCOA capability census uses dynamic registry discovery rather than a fixed allowlist.",
-    "Any FUSE-owned capability matching a mission may be invoked automatically under FCOA Internal Super-Admin authority.",
-    "Missing FUSE capability routes through REUSE, REBIND, REPAIR, EXTEND, COMPOSE, HARVEST, then BUILD_MINIMUM before owner intervention.",
-    "Repeated same-mechanism failures trigger changed-mechanism recompilation rather than blind retry.",
-    "Provider/external effects are delegated only to currently qualified executors with matching credential, authority, privacy, cost, and effect envelopes."
+  "min_client_version":"0.4.0",
+  "route_deltas":[
+    "Before substantial FCOA reasoning, consume fresh verified FUSE update/current-memory context where available.",
+    "Every material FCOA learning/update is compiled with source refs, proof refs, causal parents, idempotency identity and privacy/truth class.",
+    "Unverified FCOA outputs remain DERIVED_INTERPRETATION and are not broadcast as canonical truth.",
+    "Independent ACCEPT verification promotes an update to DERIVED_VERIFIED; only then may global receiver fanout begin.",
+    "Global fanout targets all active registered FUSE systems dynamically and tracks per-receiver digest-bound ACKs until converged.",
+    "Memory/fanout failure does not rewrite immutable event truth and does not grant external-effect authority."
   ],
-  "schema": "FUSE_UPDATE_MANIFEST_V1",
-  "sequence": 3,
-  "summary": "Promote existing FCOA-Ω to estate-wide FUSE Internal Super-Admin with dynamic capability discovery and autonomous administration while preserving real provider/effect/fence authority boundaries.",
-  "valid_until": "2026-10-21T23:59:59Z",
-  "warnings": [
-    "Internal super-admin authority applies to FUSE-owned control/execution surfaces; it is not a bypass for third-party platform controls or unavailable credentials.",
-    "External consequential actions remain separately effect-gated."
-  ]
+  "schema":"FUSE_UPDATE_MANIFEST_V1",
+  "sequence":4,
+  "summary":"Bind FCOA-Ω into the canonical CFBE Bible Memory and intelligence fabric as a bidirectional verified consumer/producer with global receiver fanout and convergence tracking.",
+  "valid_until":"2026-10-21T23:59:59Z",
+  "warnings":[
+    "FCOA is not a second memory root; immutable event truth and existing canonical fabric controls remain authoritative.",
+    "FCOA cannot self-verify its own intelligence proposal into canonical truth.",
+    "Global memory carries minimum necessary portable metadata/pointers; sensitive raw content remains domain-local.",
+    "Memory state never grants provider credentials, external messaging/publication, spending, IAM or destructive-effect authority."
+  ],
+  "llm_context_sha256":"37239fdd54d2676c6581c6e47b6ec33b04d2c71d26d97d79f6c0308c327532e8",
+  "manifest_body_sha256":"d43268548eb68586af7219f4a8512a026282e617c8f5bef625d232e82a64c089"
 }
