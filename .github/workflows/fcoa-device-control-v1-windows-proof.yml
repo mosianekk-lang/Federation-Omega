@@ -1,0 +1,72 @@
+name: FCOA Device Control Windows Proof
+on:
+  workflow_dispatch:
+  push:
+    branches: ["build/fcoa-device-control-v1-windows"]
+
+jobs:
+  prove:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decode exact device-control source
+        shell: pwsh
+        run: |
+          $payload = Get-Content -Raw .\federation\fcoa\device_control_v1\SOURCE.zip.b64
+          [IO.File]::WriteAllBytes("fcoa-device-control-src.zip", [Convert]::FromBase64String($payload.Trim()))
+          New-Item -ItemType Directory -Force -Path .\fcoa-device-control | Out-Null
+          Expand-Archive -Path .\fcoa-device-control-src.zip -DestinationPath .\fcoa-device-control -Force
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.2'
+
+      - name: Unit policy and audit court
+        shell: pwsh
+        working-directory: fcoa-device-control
+        run: go test -count=1 ./...
+
+      - name: Build Windows helper
+        shell: pwsh
+        working-directory: fcoa-device-control
+        run: |
+          $env:CGO_ENABLED="0"
+          go build -trimpath -ldflags="-s -w -H=windowsgui -buildid=" -o FCOA-Device-Control.exe .
+
+      - name: Native Windows self-test
+        shell: pwsh
+        working-directory: fcoa-device-control
+        run: |
+          & .\FCOA-Device-Control.exe --self-test
+          if ($LASTEXITCODE -ne 0) { throw "FCOA_DEVICE_CONTROL_SELFTEST_FAILED" }
+
+      - name: Binary and source receipt
+        shell: pwsh
+        working-directory: fcoa-device-control
+        run: |
+          $exe = Get-FileHash .\FCOA-Device-Control.exe -Algorithm SHA256
+          $src = Get-FileHash ..\fcoa-device-control-src.zip -Algorithm SHA256
+          $receipt = [ordered]@{
+            schema = "FCOA-DEVICE-CONTROL-WINDOWS-PROOF-V1"
+            agent_id = "FCOA-OMEGA"
+            profile = "FCOA_DEVICE_CONTROL_V1"
+            os = "windows-latest"
+            unit_policy_audit_court = "PASS"
+            native_windows_selftest = "PASS"
+            native_probe = "SCREEN_CAPTURE_PLUS_CURSOR_MOVE_RESTORE"
+            keyboard_sendinput = "COMPILED_NOT_EFFECTFULLY_TYPED_IN_CI"
+            source_sha256 = $src.Hash.ToLower()
+            exe_sha256 = $exe.Hash.ToLower()
+            physical_owner_pc_runtime = "UNPROVEN_DEVICE_OFFLINE"
+            hardware_usb_hid = "NOT_DEPLOYED"
+            secure_desktop_bypass = $false
+          }
+          $receipt | ConvertTo-Json | Set-Content .\WINDOWS_PROOF_RECEIPT.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fcoa-device-control-v1-windows
+          path: |
+            fcoa-device-control/FCOA-Device-Control.exe
+            fcoa-device-control/WINDOWS_PROOF_RECEIPT.json
