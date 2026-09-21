@@ -68,7 +68,14 @@ class TokaPublicCapabilityHarvestTests(unittest.TestCase):
         self.assertTrue({spec["pattern_id"] for spec in specs}.issubset(ids))
 
     def test_synthetic_full_source_parity_reaches_terminal_state(self):
-        synthetic = {"all": " ".join(phrase for row in PUBLIC_SIGNALS for phrase in row[3])}
+        corpus = " ".join(phrase for row in PUBLIC_SIGNALS for phrase in row[3])
+        synthetic = {
+            "mission": corpus,
+            "home": corpus,
+            "about": corpus,
+            "platform_2026": corpus,
+            "company_2026": corpus,
+        }
         report = evaluate_source_text(synthetic)
         self.assertEqual(41, report["covered_count"])
         self.assertTrue(report["terminal"])
