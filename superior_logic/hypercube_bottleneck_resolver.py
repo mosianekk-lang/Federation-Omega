@@ -139,6 +139,16 @@ MARKET_PATTERNS: tuple[MarketPattern, ...] = (
     ),
 )
 
+# Public clean-room capability corpora may contribute mechanism-level market patterns
+# without becoming a scheduler, authority plane, provider runtime, or truth root.
+from benchmarking.cfbe_omega.toka_public_capability_harvest_v1 import (
+    hypercube_pattern_specs as _toka_public_pattern_specs,
+)
+
+MARKET_PATTERNS = MARKET_PATTERNS + tuple(
+    MarketPattern(**spec) for spec in _toka_public_pattern_specs()
+)
+
 
 @dataclass(frozen=True, slots=True)
 class BottleneckSignal:
