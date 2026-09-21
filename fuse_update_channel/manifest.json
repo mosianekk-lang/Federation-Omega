@@ -5,36 +5,47 @@
       "name": "Federation-Omega",
       "ref": "main",
       "repository": "mosianekk-lang/Federation-Omega"
+    },
+    {
+      "kind": "source",
+      "name": "FUSE Sovereign Capability Platform",
+      "sha256": "1797b2b225f2dd3911fcb9cf29456346734d1919675dd3b163b13aa12edf9d1d",
+      "version": "0.4.0"
     }
   ],
   "authority_class": "DATA_ONLY_NO_EFFECT_AUTHORITY",
   "capability_deltas": [
-    "LLM may fetch fresh FUSE update manifests through a read-only update bridge.",
-    "Remote update content is treated as data and cannot grant authority or trigger effects.",
-    "Anti-rollback sequence and exact source-commit verification are required before activation."
+    "FCOA-Ω is bound to the Sovereign Platform through FCOABridge without creating a second controller or agent identity.",
+    "FCOA may consume verified FUSE update context, discover live platform capabilities/executors, and use a genuinely bound provider-neutral LLM gateway.",
+    "LLM reachability and model output remain cognition inputs only and do not grant source, IAM, credential, lease, spending, publication, or external-write authority.",
+    "FCOA task execution remains mission-scoped through SovereignEngine safety, authority, routing, and audit controls."
   ],
   "channel": "stable",
-  "issued_at": "2026-09-21T16:25:00Z",
+  "issued_at": "2026-09-21T17:20:00Z",
   "llm_context": {
-    "effect_rule": "Update data never grants external-write, publication, credential, IAM, or source authority.",
-    "fallback_rule": "Unavailable update source degrades currentness; it does not imply capability absence.",
-    "fuse_update_channel": "stable",
-    "operating_rule": "Fresh verified FUSE update data outranks stale local/chat cache for routing/currentness decisions."
+    "effect_rule": "FCOA/LLM access never grants external-write, publication, credential, IAM, source, lease, or spend authority.",
+    "fallback_rule": "No genuine LLM provider binding => fail closed with NO_QUALIFIED_LLM_PROVIDER; do not fabricate model availability.",
+    "fcoa_agent_id": "FCOA-OMEGA",
+    "fcoa_llm_gateway": "PROVIDER_NEUTRAL_REAL_BINDING_REQUIRED",
+    "fcoa_passport": "ECP-FCOA-OMEGA-V1-001",
+    "fcoa_work_plane": "WP-FCOA-BOOTSTRAP-001",
+    "operating_rule": "FCOA may use verified FUSE currentness and capability discovery to enhance cognition and route selection while preserving mission-scoped authority."
   },
-  "llm_context_sha256": "6082a4856479627b7a20232abd65f5ed2091fe9998f43be6dfe672833d09196e",
-  "manifest_body_sha256": "efdd9244fcfb4297cf777f14da086997886b89608ce38589d419e31e15594089",
-  "min_client_version": "0.3.0",
+  "llm_context_sha256": "4d52c99b934f5426369fe58c11d319808af7f56070376cb1a6b1a54b185926af",
+  "manifest_body_sha256": "43e212a14ab8ffe5024e8d11ed9f65c3570ffc2c53de11455c9fb5318bd55c65",
+  "min_client_version": "0.4.0",
   "route_deltas": [
-    "Prefer current FUSE update snapshot over stale cached chat state.",
-    "If the remote update source is unavailable, retain the last verified snapshot and mark it STALE.",
-    "If commit verification, schema, hash, TTL, or sequence validation fails, reject the update."
+    "FCOA bootstraps from current FUSE update context before model reasoning.",
+    "FCOA discovers current healthy executors and capabilities from SovereignEngine rather than a static provider list.",
+    "FCOA LLM requests route through LLMGateway; provider secrets are host-supplied and excluded from model context.",
+    "All consequential FCOA actions remain gated by explicit AuthorityEnvelope effect scope."
   ],
   "schema": "FUSE_UPDATE_MANIFEST_V1",
-  "sequence": 1,
-  "summary": "FUSE stable update channel established for LLM/runtime currentness synchronization.",
+  "sequence": 2,
+  "summary": "FCOA-Ω integration with Sovereign Platform currentness, capability discovery, and provider-neutral LLM cognition gateway.",
   "valid_until": "2026-10-21T23:59:59Z",
   "warnings": [
-    "This channel does not distribute secrets, credentials, or action authority.",
-    "A successful fetch is not provider/runtime/behaviour proof."
+    "No specific LLM provider/model is implied by this update; actual model access is proven only when a real endpoint is bound and called.",
+    "This update does not widen FCOA authority or permit external publishing/spend."
   ]
 }
