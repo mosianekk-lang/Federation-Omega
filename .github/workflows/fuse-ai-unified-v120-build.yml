@@ -1,0 +1,266 @@
+name: FUSE AI Unified v1.2.0-rc1 Windows Build
+on:
+  workflow_dispatch:
+  push:
+    branches: ["build/fuse-ai-unified-v120"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decode exact unified source payload
+        shell: pwsh
+        run: |
+          $payload = Get-Content -Raw .\build_payloads\fuse_ai_unified_v1_2_0_rc1_source.zip.b64
+          [IO.File]::WriteAllBytes("fuse-unified-source.zip", [Convert]::FromBase64String($payload.Trim()))
+          New-Item -ItemType Directory -Force -Path .\product | Out-Null
+          Expand-Archive -Path .\fuse-unified-source.zip -DestinationPath .\product -Force
+          if (-not (Test-Path .\product\fuse_unified_v1_2_src\localllm\main.go)) { throw "UNIFIED_SOURCE_DECODE_FAIL" }
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: '1.23.2'
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Python build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller pytest
+
+      - name: Source courts
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src
+        run: |
+          Push-Location .\sovereign
+          python -m pytest -q
+          python .\sidecar_server.py --self-test | Tee-Object -FilePath ..\SOVEREIGN_SELFTEST.json
+          Pop-Location
+
+          Push-Location .\localllm
+          go test ./...
+          node --check .\ui\app.js
+          Pop-Location
+
+          $s = Get-Content -Raw .\SOVEREIGN_SELFTEST.json | ConvertFrom-Json
+          if ($s.agent -ne "FCOA-OMEGA") { throw "FCOA_SOURCE_IDENTITY_FAIL" }
+          if ($s.version -ne "1.2.0-rc1") { throw "UNIFIED_SOURCE_VERSION_FAIL" }
+
+      - name: Build Sovereign FCOA sidecar EXE
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src/sovereign
+        run: |
+          pyinstaller --noconfirm --clean --onefile --noconsole --name "FUSE Sovereign FCOA Bridge" sidecar_server.py
+          New-Item -ItemType Directory -Force -Path ..\dist | Out-Null
+          Copy-Item ".\dist\FUSE Sovereign FCOA Bridge.exe" "..\dist\FUSE Sovereign FCOA Bridge.exe" -Force
+
+      - name: Build LocalLLM UI EXE
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src/localllm
+        env:
+          CGO_ENABLED: '0'
+          GOOS: windows
+          GOARCH: amd64
+        run: |
+          go build -trimpath -ldflags "-s -w -H=windowsgui -buildid=" -o "..\dist\FUSE LocalLLM.exe" .
+
+      - name: Start deterministic OpenAI-compatible FCOA cognition court
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src
+        run: |
+          @'
+          import json
+          from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
+
+          class H(BaseHTTPRequestHandler):
+              def do_POST(self):
+                  if self.path != "/v1/chat/completions":
+                      self.send_response(404); self.end_headers(); return
+                  n = int(self.headers.get("Content-Length", "0"))
+                  body = json.loads(self.rfile.read(n).decode("utf-8"))
+                  messages = body.get("messages") or []
+                  system = messages[0].get("content", "") if messages else ""
+                  user = messages[-1].get("content", "") if messages else ""
+                  ok = (
+                      "FCOA-OMEGA" in system
+                      and "WP-FCOA-BOOTSTRAP-001" in system
+                      and "ECP-FCOA-OMEGA-V1-001" in system
+                      and '"sequence": 2' in system
+                      and "MISSION_SCOPED_NO_INHERITANCE" in system
+                  )
+                  if not ok:
+                      raw = json.dumps({"error": "FCOA_CONTEXT_MISSING"}).encode()
+                      self.send_response(400)
+                      self.send_header("Content-Type", "application/json")
+                      self.send_header("Content-Length", str(len(raw)))
+                      self.end_headers()
+                      self.wfile.write(raw)
+                      return
+                  payload = {
+                      "id": "fuse-ai-unified-court",
+                      "created": 1,
+                      "choices": [{"message": {"role": "assistant", "content": "FCOA_UNIFIED_CONTEXT_VERIFIED:" + user}}],
+                      "usage": {"prompt_tokens": 1, "completion_tokens": 1, "total_tokens": 2},
+                  }
+                  raw = json.dumps(payload).encode()
+                  self.send_response(200)
+                  self.send_header("Content-Type", "application/json")
+                  self.send_header("Content-Length", str(len(raw)))
+                  self.end_headers()
+                  self.wfile.write(raw)
+              def log_message(self, *args): pass
+
+          ThreadingHTTPServer(("127.0.0.1", 19080), H).serve_forever()
+          '@ | Set-Content .\test_llm_server.py
+          $p = Start-Process python -ArgumentList ".\test_llm_server.py" -PassThru
+          "TEST_LLM_PID=$($p.Id)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          Start-Sleep -Seconds 2
+
+      - name: Start Sovereign FCOA sidecar
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src
+        run: |
+          $env:FUSE_SOVEREIGN_PORT = "18998"
+          $env:FUSE_LOCALLLM_BASE_URL = "http://127.0.0.1:18999"
+          $env:FUSE_LLM_BASE_URL = "http://127.0.0.1:19080"
+          $env:FUSE_LLM_MODEL = "fuse-test-model"
+          $env:FUSE_LLM_PROVIDER_ID = "fuse-test-llm"
+          $p = Start-Process ".\dist\FUSE Sovereign FCOA Bridge.exe" -ArgumentList "--serve","--port","18998" -PassThru
+          "SIDECAR_PID=$($p.Id)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          for ($i=0; $i -lt 40; $i++) {
+            try {
+              $h = Invoke-RestMethod -Uri "http://127.0.0.1:18998/healthz" -TimeoutSec 2
+              if ($h.status -eq "ok") { exit 0 }
+            } catch {}
+            Start-Sleep -Milliseconds 500
+          }
+          throw "SIDECAR_HEALTH_TIMEOUT"
+
+      - name: Start unified LocalLLM UI runtime
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src
+        run: |
+          $env:FUSE_PORT = "18999"
+          $env:FUSE_SOVEREIGN_PORT = "18998"
+          $env:FUSE_NO_OPEN = "1"
+          $env:FUSE_LLM_BASE_URL = "http://127.0.0.1:19080"
+          $env:FUSE_LLM_MODEL = "fuse-test-model"
+          $env:FUSE_LLM_PROVIDER_ID = "fuse-test-llm"
+          $p = Start-Process ".\dist\FUSE LocalLLM.exe" -PassThru
+          "LOCALLLM_PID=$($p.Id)" | Out-File -FilePath $env:GITHUB_ENV -Encoding utf8 -Append
+          for ($i=0; $i -lt 60; $i++) {
+            try {
+              $v = Invoke-RestMethod -Uri "http://127.0.0.1:18999/api/version" -TimeoutSec 2
+              if ($v.version -eq "1.2.0-rc1") { exit 0 }
+            } catch {}
+            Start-Sleep -Milliseconds 500
+          }
+          throw "LOCALLLM_UI_TIMEOUT"
+
+      - name: Unified UI + FCOA integration court
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src
+        run: |
+          $version = Invoke-RestMethod -Uri "http://127.0.0.1:18999/api/version" -TimeoutSec 10
+          if ($version.version -ne "1.2.0-rc1") { throw "UNIFIED_VERSION_FAIL" }
+
+          $sovereign = Invoke-RestMethod -Uri "http://127.0.0.1:18999/api/sovereign/status" -TimeoutSec 20
+          if (-not $sovereign.state.ready) { throw "SOVEREIGN_PLANE_NOT_READY" }
+
+          $fcoa = Invoke-RestMethod -Uri "http://127.0.0.1:18999/api/fcoa/status" -TimeoutSec 30
+          if ($fcoa.agent_id -ne "FCOA-OMEGA") { throw "FCOA_ID_FAIL" }
+          if ($fcoa.work_plane_id -ne "WP-FCOA-BOOTSTRAP-001") { throw "FCOA_WORK_PLANE_FAIL" }
+          if ($fcoa.passport_id -ne "ECP-FCOA-OMEGA-V1-001") { throw "FCOA_PASSPORT_FAIL" }
+          if ($fcoa.authority_boundary -ne "MISSION_SCOPED_NO_INHERITANCE") { throw "FCOA_AUTHORITY_FAIL" }
+          if ($fcoa.fuse_update.sequence -lt 2) { throw "FUSE_UPDATE_SEQUENCE_FAIL" }
+          if ($fcoa.fuse_update.verified_commit -ne $true) { throw "FUSE_UPDATE_VERIFY_FAIL" }
+
+          $body = @{
+            prompt = "prove unified chat integration"
+            mission_id = "MISSION-FCOA-UNIFIED-WINDOWS-COURT-001"
+            request_id = "REQ-FCOA-UNIFIED-WINDOWS-001"
+            model = "fuse-test-model"
+            preferred_provider = "fuse-test-llm"
+          } | ConvertTo-Json -Depth 8
+
+          $think = Invoke-RestMethod -Method POST -Uri "http://127.0.0.1:18999/api/fcoa/think" -ContentType "application/json" -Body $body -TimeoutSec 60
+          if ($think.provider_id -ne "fuse-test-llm") { throw "FCOA_PROVIDER_FAIL" }
+          if ($think.text -notlike "FCOA_UNIFIED_CONTEXT_VERIFIED:*") { throw "FCOA_CONTEXT_FAIL" }
+
+          $html = (Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:18999/" -TimeoutSec 10).Content
+          if ($html -notmatch "FCOA / Sovereign") { throw "UI_FCOA_SELECTOR_MISSING" }
+          if ($html -notmatch "Local LLM") { throw "UI_LOCAL_SELECTOR_MISSING" }
+
+          $apps = (Invoke-WebRequest -UseBasicParsing -Uri "http://127.0.0.1:18999/app.js" -TimeoutSec 10).Content
+          if ($apps -notmatch "/api/fcoa/think") { throw "UI_FCOA_ROUTE_MISSING" }
+          if ($apps -notmatch "/api/sovereign/status") { throw "UI_SOVEREIGN_ROUTE_MISSING" }
+
+          [ordered]@{
+            schema = "FUSE-AI-UNIFIED-INTEGRATION-COURT-V1"
+            version = $version.version
+            fcoa_agent_id = $fcoa.agent_id
+            fcoa_work_plane = $fcoa.work_plane_id
+            fcoa_passport = $fcoa.passport_id
+            authority_boundary = $fcoa.authority_boundary
+            update_sequence = $fcoa.fuse_update.sequence
+            update_source_commit = $fcoa.fuse_update.source_commit
+            update_source_verified = $fcoa.fuse_update.verified_commit
+            llm_provider = $think.provider_id
+            cognition = $think.text
+            ui_mode_selector = "PASS"
+            local_llm_route_preserved = "PASS"
+            sovereign_plane = "PASS"
+          } | ConvertTo-Json -Depth 8 | Set-Content .\UNIFIED_INTEGRATION_RECEIPT.json
+
+      - name: Build unified installer
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) { choco install innosetup -y --no-progress }
+          if (-not (Test-Path $iscc)) { throw "ISCC_NOT_FOUND" }
+          & $iscc .\installer.iss
+
+      - name: Final binary and receipt verification
+        shell: pwsh
+        working-directory: product/fuse_unified_v1_2_src
+        run: |
+          $local = Get-FileHash ".\dist\FUSE LocalLLM.exe" -Algorithm SHA256
+          $side = Get-FileHash ".\dist\FUSE Sovereign FCOA Bridge.exe" -Algorithm SHA256
+          $setup = Get-FileHash ".\installer-dist\FUSE-AI-Unified-Setup.exe" -Algorithm SHA256
+          $court = Get-Content -Raw .\UNIFIED_INTEGRATION_RECEIPT.json | ConvertFrom-Json
+          if ($court.ui_mode_selector -ne "PASS") { throw "COURT_UI_FAIL" }
+          if ($court.sovereign_plane -ne "PASS") { throw "COURT_SOVEREIGN_FAIL" }
+          [ordered]@{
+            schema = "FUSE-AI-UNIFIED-WINDOWS-BUILD-RECEIPT-V1"
+            version = "1.2.0-rc1"
+            source_tests = "PASS"
+            go_tests = "PASS"
+            javascript_syntax = "PASS"
+            windows_unified_court = "PASS"
+            localllm_sha256 = $local.Hash.ToLower()
+            sovereign_sidecar_sha256 = $side.Hash.ToLower()
+            installer_sha256 = $setup.Hash.ToLower()
+            fcoa_agent_id = $court.fcoa_agent_id
+            update_sequence = $court.update_sequence
+            update_source_verified = $court.update_source_verified
+            ui_primary_frontdoor = "FUSE LocalLLM web UI"
+            chat_modes = @("FCOA / Sovereign", "Local LLM")
+            truth_boundary = "Unified UI, Sovereign/FCOA routing, verified update currentness and OpenAI-compatible cognition transport are proven on Windows against a deterministic test LLM endpoint. Physical owner-PC install, exact owner GGUF inference quality and trusted code signing remain separate."
+            signed = $false
+          } | ConvertTo-Json -Depth 8 | Set-Content .\BUILD_RECEIPT.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fuse-ai-unified-v1.2.0-rc1-windows
+          path: |
+            product/fuse_unified_v1_2_src/dist/FUSE LocalLLM.exe
+            product/fuse_unified_v1_2_src/dist/FUSE Sovereign FCOA Bridge.exe
+            product/fuse_unified_v1_2_src/installer-dist/FUSE-AI-Unified-Setup.exe
+            product/fuse_unified_v1_2_src/UNIFIED_INTEGRATION_RECEIPT.json
+            product/fuse_unified_v1_2_src/BUILD_RECEIPT.json
