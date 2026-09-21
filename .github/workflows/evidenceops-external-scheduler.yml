@@ -75,6 +75,7 @@ jobs:
             scheduler/runtime/heartbeat-system.json
             scheduler/runtime/objective-completion.json
             scheduler/runtime/cloud-capability-inheritance.json
+            scheduler/runtime/toka-public-harvest.json
           retention-days: 90
 
       - name: Comment on scheduler control issue
