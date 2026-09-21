@@ -1,0 +1,91 @@
+name: FUSE Sovereign Platform Windows Build
+on:
+  workflow_dispatch:
+  push:
+    branches: ["build/fuse-sovereign-platform-v020-windows"]
+
+jobs:
+  build:
+    runs-on: windows-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Decode exact source payload
+        shell: pwsh
+        run: |
+          $payload = Get-Content -Raw .\build_payloads\fuse_sovereign_capability_platform_v0_2_windows_src.zip.b64
+          [IO.File]::WriteAllBytes("fuse-source.zip", [Convert]::FromBase64String($payload))
+          New-Item -ItemType Directory -Force -Path .\products\fuse_sovereign_capability_platform_v0_2 | Out-Null
+          Expand-Archive -Path .\fuse-source.zip -DestinationPath .\products\fuse_sovereign_capability_platform_v0_2 -Force
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install build dependencies
+        shell: pwsh
+        run: |
+          python -m pip install --upgrade pip
+          python -m pip install pyinstaller pytest
+
+      - name: Unit tests
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_2
+        run: python -m pytest -q
+
+      - name: Source self-test
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_2
+        run: python app.py --self-test
+
+      - name: Build Windows EXE
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_2
+        run: pyinstaller --noconfirm --clean --onefile --windowed --name FUSE-Sovereign-Platform app.py
+
+      - name: EXE self-test
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_2
+        run: |
+          & .\dist\FUSE-Sovereign-Platform.exe --self-test
+          if ($LASTEXITCODE -ne 0) { exit $LASTEXITCODE }
+
+      - name: Locate or install Inno Setup
+        shell: pwsh
+        run: |
+          $iscc = "C:\Program Files (x86)\Inno Setup 6\ISCC.exe"
+          if (-not (Test-Path $iscc)) {
+            choco install innosetup -y --no-progress
+          }
+          if (-not (Test-Path $iscc)) { throw "ISCC_NOT_FOUND" }
+
+      - name: Build installer
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_2
+        run: '& "C:\Program Files (x86)\Inno Setup 6\ISCC.exe" installer.iss'
+
+      - name: Build receipt
+        shell: pwsh
+        working-directory: products/fuse_sovereign_capability_platform_v0_2
+        run: |
+          $exe = Get-FileHash .\dist\FUSE-Sovereign-Platform.exe -Algorithm SHA256
+          $setup = Get-FileHash .\installer-dist\FUSE-Sovereign-Platform-Setup.exe -Algorithm SHA256
+          $receipt = [ordered]@{
+            schema = "FUSE-SOVEREIGN-WINDOWS-BUILD-RECEIPT-V1"
+            version = "0.2.0"
+            os = "windows-latest"
+            exe_sha256 = $exe.Hash.ToLower()
+            installer_sha256 = $setup.Hash.ToLower()
+            signed = $false
+            self_test = "PASS"
+            unit_tests = "PASS"
+          }
+          $receipt | ConvertTo-Json | Set-Content .\BUILD_RECEIPT.json
+
+      - uses: actions/upload-artifact@v4
+        with:
+          name: fuse-sovereign-platform-windows-v0.2.0
+          path: |
+            products/fuse_sovereign_capability_platform_v0_2/dist/FUSE-Sovereign-Platform.exe
+            products/fuse_sovereign_capability_platform_v0_2/installer-dist/FUSE-Sovereign-Platform-Setup.exe
+            products/fuse_sovereign_capability_platform_v0_2/BUILD_RECEIPT.json
