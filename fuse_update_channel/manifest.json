@@ -1,53 +1,43 @@
 {
-  "artifacts": [
-    {"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},
-    {"kind":"source","name":"FUSE Sovereign Capability Platform","version":"0.4.0"},
-    {"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},
-    {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},
-    {"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0","source_sha256":"7315aab34e5fcbf94db09edf59f5279eda974c15cb854871efa0212080c56a81","exe_sha256":"c84d04b34a3d2c8106ab1febfc7dfa9d8e62aceba746117bde177d877177b4b8"}
-  ],
+  "artifacts":[{"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},{"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},{"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},{"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0"},{"kind":"surface-census","name":"FCOA Multi-Surface Reachability & Control Census","version":"1.0.0"}],
   "authority_class":"FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
   "capability_deltas":[
-    "FCOA-Ω gains a Windows-native Device-Control Limb for authorized screen, cursor, mouse, keyboard and foreground-window interaction on the owner-controlled PC.",
-    "Virtual environments use direct structured adapters first and may fall back to the same desktop input limb when a graphical surface is the only qualified route.",
-    "Device control is localhost-only, mission-leased, TTL-bounded, auditable and pause/emergency-stop capable.",
-    "Consequential external effects such as messaging, publication, spending, IAM/account changes or destructive provider actions still require a matching mission authority receipt.",
-    "The limb does not bypass Windows secure desktop/UAC, fabricate credentials, or override active foreign source fences."
+    "FCOA-Ω now distinguishes device activity, route reachability and GUI-control qualification as separate states; one connector failure can never by itself produce a DEVICE_OFFLINE or capability-absent claim.",
+    "User-visible or screenshot-observed Windows activity is recorded as OBSERVED_ACTIVE evidence, while control reachability is independently tested across direct GUI/computer-use, remote terminal, local device helper, LocalLLM bridge, VM/browser and other qualified routes.",
+    "When a terminal route is reachable but no GUI action is exposed, FCOA automatically bootstraps the FCOA Device-Control helper or Win32 SendInput/screen-capture mechanism instead of declaring GUI control unavailable.",
+    "If no route is currently reachable, FCOA must classify ACTIVE_BUT_NOT_CURRENTLY_REACHABLE or UNKNOWN_NOT_ABSENT as appropriate, complete an estate census, and harvest/bind a changed mechanism before making an absence claim.",
+    "The registered Remote Desktop Commander state is route-specific evidence only; it must not override contradictory fresh evidence from other surfaces."
   ],
   "channel":"stable",
-  "issued_at":"2026-09-21T19:30:00Z",
+  "issued_at":"2026-09-21T19:48:00Z",
   "llm_context":{
-    "fcoa_agent_id":"FCOA-OMEGA",
-    "fcoa_work_plane":"WP-FCOA-BOOTSTRAP-001",
-    "device_control_profile":"FCOA_DEVICE_CONTROL_V1",
-    "physical_environment":"WINDOWS_OS_INPUT_INJECTION_ON_AUTHORIZED_DEVICE",
-    "virtual_environment":"DIRECT_ADAPTER_FIRST_THEN_DESKTOP_INPUT_FALLBACK",
-    "device_capabilities":["device.screen.read","device.cursor.read","device.pointer.move","device.pointer.click","device.pointer.scroll","device.keyboard.key","device.keyboard.text","device.window.foreground.read"],
-    "transport":"LOCALHOST_ONLY",
-    "session":"MISSION_SCOPED_SHORT_TTL_LEASE",
-    "audit":"HASH_CHAINED",
-    "emergency_stop":"LOCAL_HOST_CONTROL",
-    "secure_desktop_bypass":false,
-    "external_effect_rule":"Consequential effects require separate mission authority receipt; physical input access does not enlarge external authority.",
-    "hardware_hid_rule":"True USB-HID/KVM hardware emulation is a separate optional limb and is not deployed by this update."
+    "fcoa_agent_id":"FCOA-OMEGA","surface_census_profile":"FCOA_SURFACE_CENSUS_V1","core_rule":"ROUTE_OFFLINE_NE_DEVICE_OFFLINE",
+    "visibility_rule":"USER_OR_SCREENSHOT_VISIBLE_ACTIVE_IS_DEVICE_ACTIVITY_EVIDENCE_NOT_CONTROL_REACHABILITY_PROOF",
+    "absence_rule":"ONE_CONNECTOR_FAILURE_NE_CAPABILITY_ABSENT",
+    "route_order":"DIRECT_GUI>COMPUTER_USE>LOCAL_HELPER>REMOTE_TERMINAL_HELPER>REMOTE_TERMINAL_WIN32>LOCALLLM_BRIDGE>VM_GUI",
+    "terminal_fallback":"START_FCOA_DEVICE_CONTROL_HELPER_OR_USE_WIN32_SENDINPUT_AND_SCREEN_CAPTURE",
+    "changed_mechanism_rule":"REPEATED_OR_BLOCKED_ROUTE_REQUIRES_NEW_ROUTE_OR_MECHANISM_NOT_BLIND_RETRY",
+    "physical_control_truth":"FULL_KEYBOARD_MOUSE_CONTROL_IS_CLAIMED_ONLY_AFTER_A_REACHABLE_AUTHORIZED_ROUTE_AND_SCREEN_FOREGROUND_CURSOR_READBACK_PROVE_IT",
+    "current_observation":"WINDOWS_11_OBSERVED_ACTIVE_BY_USER_SCREENSHOT; REMOTE_DESKTOP_COMMANDER_ROUTE_CURRENTLY_UNREACHABLE",
+    "external_effect_rule":"Keyboard/mouse reachability does not enlarge provider/external authority."
   },
   "min_client_version":"0.4.0",
   "route_deltas":[
-    "Prefer semantic/direct API or browser/VM adapters for virtual environments; use physical desktop input only when it is the best qualified route or direct adapters are absent.",
-    "Before any physical input, acquire a short-lived FCOA device lease bound to mission, device, allowed effects and optional foreground-window allowlist.",
-    "Read screen/foreground state before effectful input; reject stale, expired, mismatched or unqualified sessions.",
-    "All device-control commands append hash-chained audit events and support pause/emergency-stop.",
-    "Owner-PC live execution remains unproven while the registered remote device is offline; do not infer physical runtime from source/build proof."
+    "Before any device-offline or GUI-capability-absent conclusion, run the multi-surface census and preserve route-scoped evidence separately.",
+    "A failed direct ping marks only that route UNREACHABLE; if Windows is user/screenshot-observed active, state becomes OBSERVED_ACTIVE_BUT_CONTROL_ROUTE_UNREACHABLE rather than DEVICE_OFFLINE.",
+    "If any terminal/process route is reachable, automatically bootstrap the FCOA Device-Control helper or a bounded Win32 input bridge and verify with screen/cursor/foreground readback.",
+    "If a direct computer-use/GUI connector becomes available, qualify it independently and prefer it ahead of terminal fallbacks.",
+    "If no current control route is reachable, build/bind an outbound device bridge rather than asking the owner to repeat routine troubleshooting; owner action is requested only when no safe machine path exists.",
+    "Never claim full keyboard/mouse access from source/build proof alone; require live authorized route readback."
   ],
-  "schema":"FUSE_UPDATE_MANIFEST_V1",
-  "sequence":5,
-  "summary":"Add FCOA-Ω Device-Control Limb for governed virtual and physical Windows interaction with screen, keyboard and mouse capabilities.",
+  "schema":"FUSE_UPDATE_MANIFEST_V1","sequence":6,
+  "summary":"Correct FCOA device-reachability logic so connector-specific failure can never be mistaken for Windows/device absence; add multi-surface census and automatic GUI-control fallback/harvest routing.",
   "valid_until":"2026-10-21T23:59:59Z",
   "warnings":[
-    "The current owner PC relay MosianeKK-LPT is offline; live physical input on that device is not yet proven.",
-    "This is OS-level Windows input injection, not a physical USB-HID/KVM device.",
-    "No secure-desktop/UAC bypass or provider-authority bypass is provided."
+    "The supplied screenshot proves Windows 11 is visibly active, but does not by itself prove that this chat can inject input into that session.",
+    "Remote Desktop Commander currently reports no connected device available to this chat; that is now classified as a route-specific outage, not a device-offline fact.",
+    "Live full keyboard/mouse control remains unproven until one authorized control route is reachable and passes benign input/readback verification."
   ],
-  "llm_context_sha256":"7f19d0ad7b6781348c5128727d96a99cac498beaf83d6d5c3ca82f107a9950bd",
-  "manifest_body_sha256":"81a059e2c56949dd3d78c018817320fb0925260eb4b2685b181145293954f38e"
+  "llm_context_sha256":"491fd30fcaf5f7020653f40f32f6f1ae2813be457d2b26bfc3076c3a3036863c",
+  "manifest_body_sha256":"0beb480a94de6c4c1f85de4514491861a29cec936cd408ca0631f64376126495"
 }
