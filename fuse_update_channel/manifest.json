@@ -3,54 +3,51 @@
     {"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},
     {"kind":"source","name":"FUSE Sovereign Capability Platform","version":"0.4.0"},
     {"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},
-    {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"}
+    {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},
+    {"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0","source_sha256":"7315aab34e5fcbf94db09edf59f5279eda974c15cb854871efa0212080c56a81","exe_sha256":"c84d04b34a3d2c8106ab1febfc7dfa9d8e62aceba746117bde177d877177b4b8"}
   ],
-  "authority_class": "FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
-  "capability_deltas": [
-    "FCOA-Ω is a bidirectional node on the existing CFBE Bible Memory Fabric; it does not create a second memory root.",
-    "FCOA consumes portable verified global memory events and current verified projections for cognition, routing and recovery.",
-    "FCOA may propose global intelligence updates with source/proof/causal lineage; an FCOA-authored inference cannot self-promote to canonical verified truth.",
-    "Accepted FCOA intelligence updates require independent verification and are fanned out to all active registered FUSE receiver systems with digest-bound ACK/convergence tracking.",
-    "Newly registered FUSE systems automatically enter the receiver set for subsequent global updates; P2/P3/P4 private raw content remains domain-local."
+  "authority_class":"FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
+  "capability_deltas":[
+    "FCOA-Ω gains a Windows-native Device-Control Limb for authorized screen, cursor, mouse, keyboard and foreground-window interaction on the owner-controlled PC.",
+    "Virtual environments use direct structured adapters first and may fall back to the same desktop input limb when a graphical surface is the only qualified route.",
+    "Device control is localhost-only, mission-leased, TTL-bounded, auditable and pause/emergency-stop capable.",
+    "Consequential external effects such as messaging, publication, spending, IAM/account changes or destructive provider actions still require a matching mission authority receipt.",
+    "The limb does not bypass Windows secure desktop/UAC, fabricate credentials, or override active foreign source fences."
   ],
-  "channel": "stable",
-  "issued_at": "2026-09-21T19:03:00Z",
-  "llm_context": {
+  "channel":"stable",
+  "issued_at":"2026-09-21T19:30:00Z",
+  "llm_context":{
     "fcoa_agent_id":"FCOA-OMEGA",
-    "fcoa_passport":"ECP-FCOA-OMEGA-V1-001",
     "fcoa_work_plane":"WP-FCOA-BOOTSTRAP-001",
-    "admin_profile":"FCOA_INTERNAL_SUPER_ADMIN_V1",
-    "memory_node_profile":"FCOA_BMF_NODE_V1",
-    "memory_fabric":"CFBE_BIBLE_MEMORY_FABRIC_V1",
-    "memory_role":"BIDIRECTIONAL_CONSUMER_PRODUCER_NOT_MEMORY_ROOT",
-    "memory_ingest_scope":"PORTABLE_GLOBAL_VERIFIED_ONLY",
-    "intelligence_publish_scope":"PROPOSE_THEN_INDEPENDENT_VERIFY_THEN_GLOBAL_FANOUT",
-    "receiver_scope":"ALL_ACTIVE_REGISTERED_FUSE_SYSTEMS_DYNAMIC",
-    "receiver_ack_rule":"DIGEST_BOUND_ACK_AND_CONVERGENCE_TRACKING",
-    "self_canonicalization_rule":"FCOA_CANNOT_VERIFY_ITS_OWN_PROPOSAL",
-    "privacy_rule":"P1_PORTABLE_METADATA_GLOBAL; P2_P3_P4_RAW_CONTENT_DOMAIN_LOCAL",
-    "truth_hierarchy":"IMMUTABLE_EVENT_TRUTH>CURRENT_VERIFIED_PROJECTION>DERIVED_INTERPRETATION",
-    "external_effect_rule":"Memory state and intelligence updates never inherit provider/external effect authority."
+    "device_control_profile":"FCOA_DEVICE_CONTROL_V1",
+    "physical_environment":"WINDOWS_OS_INPUT_INJECTION_ON_AUTHORIZED_DEVICE",
+    "virtual_environment":"DIRECT_ADAPTER_FIRST_THEN_DESKTOP_INPUT_FALLBACK",
+    "device_capabilities":["device.screen.read","device.cursor.read","device.pointer.move","device.pointer.click","device.pointer.scroll","device.keyboard.key","device.keyboard.text","device.window.foreground.read"],
+    "transport":"LOCALHOST_ONLY",
+    "session":"MISSION_SCOPED_SHORT_TTL_LEASE",
+    "audit":"HASH_CHAINED",
+    "emergency_stop":"LOCAL_HOST_CONTROL",
+    "secure_desktop_bypass":false,
+    "external_effect_rule":"Consequential effects require separate mission authority receipt; physical input access does not enlarge external authority.",
+    "hardware_hid_rule":"True USB-HID/KVM hardware emulation is a separate optional limb and is not deployed by this update."
   },
   "min_client_version":"0.4.0",
   "route_deltas":[
-    "Before substantial FCOA reasoning, consume fresh verified FUSE update/current-memory context where available.",
-    "Every material FCOA learning/update is compiled with source refs, proof refs, causal parents, idempotency identity and privacy/truth class.",
-    "Unverified FCOA outputs remain DERIVED_INTERPRETATION and are not broadcast as canonical truth.",
-    "Independent ACCEPT verification promotes an update to DERIVED_VERIFIED; only then may global receiver fanout begin.",
-    "Global fanout targets all active registered FUSE systems dynamically and tracks per-receiver digest-bound ACKs until converged.",
-    "Memory/fanout failure does not rewrite immutable event truth and does not grant external-effect authority."
+    "Prefer semantic/direct API or browser/VM adapters for virtual environments; use physical desktop input only when it is the best qualified route or direct adapters are absent.",
+    "Before any physical input, acquire a short-lived FCOA device lease bound to mission, device, allowed effects and optional foreground-window allowlist.",
+    "Read screen/foreground state before effectful input; reject stale, expired, mismatched or unqualified sessions.",
+    "All device-control commands append hash-chained audit events and support pause/emergency-stop.",
+    "Owner-PC live execution remains unproven while the registered remote device is offline; do not infer physical runtime from source/build proof."
   ],
   "schema":"FUSE_UPDATE_MANIFEST_V1",
-  "sequence":4,
-  "summary":"Bind FCOA-Ω into the canonical CFBE Bible Memory and intelligence fabric as a bidirectional verified consumer/producer with global receiver fanout and convergence tracking.",
+  "sequence":5,
+  "summary":"Add FCOA-Ω Device-Control Limb for governed virtual and physical Windows interaction with screen, keyboard and mouse capabilities.",
   "valid_until":"2026-10-21T23:59:59Z",
   "warnings":[
-    "FCOA is not a second memory root; immutable event truth and existing canonical fabric controls remain authoritative.",
-    "FCOA cannot self-verify its own intelligence proposal into canonical truth.",
-    "Global memory carries minimum necessary portable metadata/pointers; sensitive raw content remains domain-local.",
-    "Memory state never grants provider credentials, external messaging/publication, spending, IAM or destructive-effect authority."
+    "The current owner PC relay MosianeKK-LPT is offline; live physical input on that device is not yet proven.",
+    "This is OS-level Windows input injection, not a physical USB-HID/KVM device.",
+    "No secure-desktop/UAC bypass or provider-authority bypass is provided."
   ],
-  "llm_context_sha256":"37239fdd54d2676c6581c6e47b6ec33b04d2c71d26d97d79f6c0308c327532e8",
-  "manifest_body_sha256":"d43268548eb68586af7219f4a8512a026282e617c8f5bef625d232e82a64c089"
+  "llm_context_sha256":"7f19d0ad7b6781348c5128727d96a99cac498beaf83d6d5c3ca82f107a9950bd",
+  "manifest_body_sha256":"81a059e2c56949dd3d78c018817320fb0925260eb4b2685b181145293954f38e"
 }
