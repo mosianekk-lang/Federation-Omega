@@ -1,0 +1,12 @@
+{
+  "schema":"FUSE-GLOBAL-CONSTRAINT-REROUTE-PROFILE-V1",
+  "scope":"ALL_FUSE_WORK",
+  "host_lineage":["OF50-ACE","Alpha-Omega","FDOF","FCOA","LocalLLM"],
+  "friction_class":"RATE_OR_QUOTA_PRESSURE",
+  "cycle_decision":"CHANGED_ROUTE_REQUIRED",
+  "preserve_mission":true,
+  "pause_unrelated_work":false,
+  "owner_action_while_safe_route_exists":false,
+  "recurrence_rule":"SECOND_SAME_FAILURE_REQUIRES_CHANGED_ROUTE_FAMILY",
+  "durable_queue_is_completion":false
+}
