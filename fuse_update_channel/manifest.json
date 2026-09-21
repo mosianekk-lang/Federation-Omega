@@ -9,43 +9,54 @@
     {
       "kind": "source",
       "name": "FUSE Sovereign Capability Platform",
-      "sha256": "1797b2b225f2dd3911fcb9cf29456346734d1919675dd3b163b13aa12edf9d1d",
       "version": "0.4.0"
+    },
+    {
+      "kind": "policy",
+      "name": "FCOA Internal Super-Admin Profile",
+      "version": "1.0.0"
     }
   ],
-  "authority_class": "DATA_ONLY_NO_EFFECT_AUTHORITY",
+  "authority_class": "FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
   "capability_deltas": [
-    "FCOA-Ω is bound to the Sovereign Platform through FCOABridge without creating a second controller or agent identity.",
-    "FCOA may consume verified FUSE update context, discover live platform capabilities/executors, and use a genuinely bound provider-neutral LLM gateway.",
-    "LLM reachability and model output remain cognition inputs only and do not grant source, IAM, credential, lease, spending, publication, or external-write authority.",
-    "FCOA task execution remains mission-scoped through SovereignEngine safety, authority, routing, and audit controls."
+    "FCOA-Ω is promoted to estate-wide FUSE Internal Super-Admin over all current and future FUSE-owned capabilities discovered through the capability registry.",
+    "FCOA may automatically census, orchestrate, compose, test, repair, upgrade, deploy, rollback, recover, and retire FUSE-owned systems within valid leases/fences and mission scope.",
+    "FCOA may administer FUSE model/runtime registries, update channels, Alpha-Omega, Formation Innovation, Hypercube/CFBE, Sovereign Plane, LocalLLM, Creative Studio, mission/work buses, proof/Judge, automation, recovery, and capability brokers.",
+    "Third-party/provider actions remain limited by real credentials/permissions and provider policy; no credentials, authority, lease release, or external approvals may be fabricated.",
+    "External human-facing messaging, publication, spending, destructive provider actions, and account/IAM changes remain separately effect-gated unless explicitly authorized for that mission."
   ],
   "channel": "stable",
-  "issued_at": "2026-09-21T17:20:00Z",
+  "issued_at": "2026-09-21T18:10:00Z",
   "llm_context": {
-    "effect_rule": "FCOA/LLM access never grants external-write, publication, credential, IAM, source, lease, or spend authority.",
-    "fallback_rule": "No genuine LLM provider binding => fail closed with NO_QUALIFIED_LLM_PROVIDER; do not fabricate model availability.",
     "fcoa_agent_id": "FCOA-OMEGA",
-    "fcoa_llm_gateway": "PROVIDER_NEUTRAL_REAL_BINDING_REQUIRED",
     "fcoa_passport": "ECP-FCOA-OMEGA-V1-001",
     "fcoa_work_plane": "WP-FCOA-BOOTSTRAP-001",
-    "operating_rule": "FCOA may use verified FUSE currentness and capability discovery to enhance cognition and route selection while preserving mission-scoped authority."
+    "admin_profile": "FCOA_INTERNAL_SUPER_ADMIN_V1",
+    "capability_scope": "ALL_REGISTERED_FUSE_OWNED_CURRENT_AND_FUTURE",
+    "automation_mode": "AUTO_CENSUS_AUTO_ROUTE_AUTO_COMPOSE_AUTO_REPAIR_AUTO_DEPLOY_AUTO_RECOVER",
+    "routing_doctrine": "REUSE>REBIND>REPAIR>EXTEND>COMPOSE>HARVEST>BUILD_MINIMUM",
+    "internal_effect_ceiling": "FUSE_INTERNAL_ADMIN",
+    "external_effect_rule": "Real provider authority plus mission effect authorization required; no fabricated credentials/permissions/lease release.",
+    "communications_rule": "No external human-facing message/publication unless mission explicitly authorizes it.",
+    "fence_rule": "Active foreign source fences are joined or waited out; never overwritten merely by admin rank.",
+    "proof_rule": "Source/build/test/deploy/runtime/behaviour/value/Judge maturity remain separate."
   },
-  "llm_context_sha256": "4d52c99b934f5426369fe58c11d319808af7f56070376cb1a6b1a54b185926af",
-  "manifest_body_sha256": "43e212a14ab8ffe5024e8d11ed9f65c3570ffc2c53de11455c9fb5318bd55c65",
+  "llm_context_sha256": "1bf2b2f95e6734a63c611c0d708498b7b038acbc34a84ab1d83f87b232698748",
+  "manifest_body_sha256": "39d6ce9da436c7b840d5189bdf35d42e7b108dd0b3a7e9fa2499239bbc68fe5f",
   "min_client_version": "0.4.0",
   "route_deltas": [
-    "FCOA bootstraps from current FUSE update context before model reasoning.",
-    "FCOA discovers current healthy executors and capabilities from SovereignEngine rather than a static provider list.",
-    "FCOA LLM requests route through LLMGateway; provider secrets are host-supplied and excluded from model context.",
-    "All consequential FCOA actions remain gated by explicit AuthorityEnvelope effect scope."
+    "FCOA capability census uses dynamic registry discovery rather than a fixed allowlist.",
+    "Any FUSE-owned capability matching a mission may be invoked automatically under FCOA Internal Super-Admin authority.",
+    "Missing FUSE capability routes through REUSE, REBIND, REPAIR, EXTEND, COMPOSE, HARVEST, then BUILD_MINIMUM before owner intervention.",
+    "Repeated same-mechanism failures trigger changed-mechanism recompilation rather than blind retry.",
+    "Provider/external effects are delegated only to currently qualified executors with matching credential, authority, privacy, cost, and effect envelopes."
   ],
   "schema": "FUSE_UPDATE_MANIFEST_V1",
-  "sequence": 2,
-  "summary": "FCOA-Ω integration with Sovereign Platform currentness, capability discovery, and provider-neutral LLM cognition gateway.",
+  "sequence": 3,
+  "summary": "Promote existing FCOA-Ω to estate-wide FUSE Internal Super-Admin with dynamic capability discovery and autonomous administration while preserving real provider/effect/fence authority boundaries.",
   "valid_until": "2026-10-21T23:59:59Z",
   "warnings": [
-    "No specific LLM provider/model is implied by this update; actual model access is proven only when a real endpoint is bound and called.",
-    "This update does not widen FCOA authority or permit external publishing/spend."
+    "Internal super-admin authority applies to FUSE-owned control/execution surfaces; it is not a bypass for third-party platform controls or unavailable credentials.",
+    "External consequential actions remain separately effect-gated."
   ]
 }
