@@ -1,13 +1,16 @@
 [build-system]
 requires=["setuptools>=75","wheel"]
 build-backend="setuptools.build_meta"
+
 [project]
 name="fuse-toka"
-version="0.1.0"
+version="0.1.1"
 description="FUSE-owned clean-room intelligence, investigations and operational-awareness desktop product foundation"
 requires-python=">=3.11"
-dependencies=[]
+dependencies=["cryptography==46.0.0"]
+
 [project.scripts]
 fuse-toka="fuse_toka.cli:main"
+
 [tool.setuptools.packages.find]
 where=["src"]
