@@ -6,16 +6,24 @@
     {
       "source_id": "federation-omega",
       "system": "Federation Omega",
-      "evidence_paths": ["ops/WIF_ACTIVATION_EDGE.md", "evidenceops/secure_capability_box/secure_capability_box/connectors/federation_omega.py"],
+      "evidence_paths": [
+        "ops/WIF_ACTIVATION_EDGE.md",
+        "evidenceops/secure_capability_box/secure_capability_box/connectors/federation_omega.py"
+      ],
       "capabilities": [
         {
           "capability_id": "federation-omega-operator",
           "name": "Federation Omega governed operator route",
-          "tags": ["external-execution", "integration", "readback", "deploy"],
+          "tags": [
+            "external-execution",
+            "integration",
+            "readback",
+            "deploy"
+          ],
           "route": "federation-omega-operator",
           "state": "RUNTIME_DEPENDENT",
           "proof_level": "CONNECTOR_READBACK",
-          "quality": 0.90,
+          "quality": 0.9,
           "safety": 0.92,
           "reuse": 0.86,
           "cost": 0,
@@ -27,12 +35,20 @@
     {
       "source_id": "secondary-brain",
       "system": "Secondary Brain / Kim DataVerse",
-      "evidence_paths": ["evidenceops/runtime/kim_dataverse_inplace_bridge.json", "evidenceops/runtime_service/active_manifest.json"],
+      "evidence_paths": [
+        "evidenceops/runtime/kim_dataverse_inplace_bridge.json",
+        "evidenceops/runtime_service/active_manifest.json"
+      ],
       "capabilities": [
         {
           "capability_id": "secondary-brain-context",
           "name": "Canonical context and prior-solution discovery",
-          "tags": ["context", "discover", "provenance", "reuse"],
+          "tags": [
+            "context",
+            "discover",
+            "provenance",
+            "reuse"
+          ],
           "route": "kim-dataverse-in-place-bridge",
           "state": "VERIFY_ONLY",
           "proof_level": "LEDGER_READBACK",
@@ -48,18 +64,27 @@
     {
       "source_id": "modisa",
       "system": "MODISA",
-      "evidence_paths": [".github/workflows/modisa-legal-v2-autopilot.yml", "evidenceops/fevx_mcoe/POLICY.yaml"],
+      "evidence_paths": [
+        ".github/workflows/modisa-legal-v2-autopilot.yml",
+        "evidenceops/fevx_mcoe/POLICY.yaml"
+      ],
       "capabilities": [
         {
           "capability_id": "modisa-system-forge",
           "name": "Complete system architecture and build repair",
-          "tags": ["architecture", "improve", "quality", "recovery", "test"],
+          "tags": [
+            "architecture",
+            "improve",
+            "quality",
+            "recovery",
+            "test"
+          ],
           "route": "modisa-code-forge",
           "state": "EXECUTABLE_NOW",
           "proof_level": "TESTED",
           "quality": 0.95,
           "safety": 0.94,
-          "reuse": 0.90,
+          "reuse": 0.9,
           "cost": 0,
           "authority_class": "A1",
           "external_effect": false
@@ -69,12 +94,24 @@
     {
       "source_id": "evidenceops",
       "system": "EvidenceOps",
-      "evidence_paths": ["evidenceops/innovation_engine/live_lane_registry.json", "evidenceops/fevx_mcoe/POLICY.yaml"],
+      "evidence_paths": [
+        "evidenceops/innovation_engine/live_lane_registry.json",
+        "evidenceops/fevx_mcoe/POLICY.yaml"
+      ],
       "capabilities": [
         {
           "capability_id": "evidenceops-proof-router",
           "name": "Evidence, provenance, continuity and semantic verification",
-          "tags": ["compare", "continuity", "discover", "heartbeat", "provenance", "readback", "reuse", "verify"],
+          "tags": [
+            "compare",
+            "continuity",
+            "discover",
+            "heartbeat",
+            "provenance",
+            "readback",
+            "reuse",
+            "verify"
+          ],
           "route": "evidenceops-proof-router",
           "state": "EXECUTABLE_NOW",
           "proof_level": "INDEPENDENT_READBACK",
@@ -90,12 +127,22 @@
     {
       "source_id": "superior-logic",
       "system": "Superior Logic",
-      "evidence_paths": ["superior_logic/slrk.py", "superior_logic/runtime.py"],
+      "evidence_paths": [
+        "superior_logic/slrk.py",
+        "superior_logic/runtime.py"
+      ],
       "capabilities": [
         {
           "capability_id": "superior-logic-router",
           "name": "Capability assessment and claim-versus-proof routing",
-          "tags": ["compare", "discover", "quality", "rank", "reuse", "verify"],
+          "tags": [
+            "compare",
+            "discover",
+            "quality",
+            "rank",
+            "reuse",
+            "verify"
+          ],
           "route": "superior-logic-runtime",
           "state": "EXECUTABLE_NOW",
           "proof_level": "TESTED",
@@ -111,12 +158,21 @@
     {
       "source_id": "connector-foundry",
       "system": "EvidenceOps Connector Foundry",
-      "evidence_paths": ["evidenceops/connector_foundry/conformance.py", "evidenceops/connector_foundry/ects-report-20260801-001.json"],
+      "evidence_paths": [
+        "evidenceops/connector_foundry/conformance.py",
+        "evidenceops/connector_foundry/ects-report-20260801-001.json"
+      ],
       "capabilities": [
         {
           "capability_id": "connector-foundry-reuse",
           "name": "Existing connector discovery and conformance verification",
-          "tags": ["discover", "integration", "readback", "reuse", "verify"],
+          "tags": [
+            "discover",
+            "integration",
+            "readback",
+            "reuse",
+            "verify"
+          ],
           "route": "connector-foundry",
           "state": "EXECUTABLE_NOW",
           "proof_level": "CONNECTOR_READBACK",
@@ -132,18 +188,26 @@
     {
       "source_id": "secure-capability-box",
       "system": "Secure Capability Box",
-      "evidence_paths": ["evidenceops/secure_capability_box/BUILD_CONTRACT.json", "evidenceops/secure_capability_box/secure_capability_box/broker.py"],
+      "evidence_paths": [
+        "evidenceops/secure_capability_box/BUILD_CONTRACT.json",
+        "evidenceops/secure_capability_box/secure_capability_box/broker.py"
+      ],
       "capabilities": [
         {
           "capability_id": "secure-capability-broker",
           "name": "Short-lived least-privilege credential capability route",
-          "tags": ["authentication", "integration", "security", "secrets"],
+          "tags": [
+            "authentication",
+            "integration",
+            "security",
+            "secrets"
+          ],
           "route": "secure-capability-broker",
           "state": "RUNTIME_DEPENDENT",
           "proof_level": "TESTED",
           "quality": 0.91,
           "safety": 0.98,
-          "reuse": 0.90,
+          "reuse": 0.9,
           "cost": 0,
           "authority_class": "A1",
           "external_effect": true
@@ -153,21 +217,71 @@
     {
       "source_id": "evidenceops-google-cloud",
       "system": "EvidenceOps Permanent Google Cloud Capability",
-      "evidence_paths": ["evidenceops/cloud_capability/contract.json", "evidenceops/cloud_capability/capability.py", "evidenceops/cloud_control/bootstrap_evidenceops_cloud.sh"],
+      "evidence_paths": [
+        "evidenceops/cloud_capability/contract.json",
+        "evidenceops/cloud_capability/capability.py",
+        "evidenceops/cloud_control/bootstrap_evidenceops_cloud.sh"
+      ],
       "capabilities": [
         {
           "capability_id": "evidenceops-full-project-control",
           "name": "Inherited full Google Cloud project discovery, administration, automation, deployment, repair, rollback and readback",
-          "tags": ["admin", "automation", "cloud", "deploy", "discover", "iam", "integration", "readback", "recovery"],
+          "tags": [
+            "admin",
+            "automation",
+            "cloud",
+            "deploy",
+            "discover",
+            "iam",
+            "integration",
+            "readback",
+            "recovery"
+          ],
           "route": "evidenceops-cloud-operator-via-secure-capability-box",
           "state": "RUNTIME_DEPENDENT",
           "proof_level": "TESTED",
           "quality": 0.96,
           "safety": 0.95,
-          "reuse": 1.0,
+          "reuse": 1,
           "cost": 0,
           "authority_class": "A4",
           "external_effect": true
+        }
+      ]
+    },
+    {
+      "source_id": "toka-public-capability-harvest",
+      "system": "FUSE Toka Public Capability Harvest",
+      "evidence_paths": [
+        "benchmarking/cfbe_omega/toka_public_capability_harvest_v1.py",
+        "governance/toka_public_capability_harvest_v1.json",
+        "docs/architecture/FUSE_TOKA_PUBLIC_CAPABILITY_HARVEST_V1.md"
+      ],
+      "capabilities": [
+        {
+          "capability_id": "toka-public-clean-room-harvest",
+          "name": "Public operational-intelligence capability discovery, safe transformation and clean-room composition",
+          "tags": [
+            "discover",
+            "compare",
+            "intelligence",
+            "forensics",
+            "integration",
+            "interoperability",
+            "provenance",
+            "security",
+            "reuse",
+            "verify"
+          ],
+          "route": "cfbe-hypercube-toka-public-harvest",
+          "state": "VERIFY_ONLY",
+          "proof_level": "TESTED",
+          "quality": 0.92,
+          "safety": 0.99,
+          "reuse": 0.96,
+          "cost": 0,
+          "authority_class": "A0",
+          "external_effect": false
         }
       ]
     }
