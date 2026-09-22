@@ -1,0 +1,116 @@
+{
+  "schema": "FOREST-FIRST-C5-FORMATION-ENGINE-CONTRACT-V1",
+  "version": "1.0.0",
+  "status": "PROPOSED_SOURCE_SHADOW_NO_EFFECT",
+  "cohort": "C5_FORMATION_LAST",
+  "objective": "Preserve Formation-Omega capabilities while making Formation the canonical mission-execution engine identity without granting sovereign cognitive authority.",
+  "target_identity": {
+    "legacy_identity": "FORMATION-OMEGA Unified Powerhouse",
+    "canonical_identity": "Formation",
+    "authority_layer": "MISSION_EXECUTION",
+    "role": "Formation planning, route construction, mission convergence and build compiler",
+    "keep_as_engine": true,
+    "sovereign_cognitive_authority": false
+  },
+  "public_api_freeze": {
+    "required_exports": [
+      "AAAError",
+      "AAACycleReport",
+      "AutonomicMissionFabric",
+      "CapabilityCentrality",
+      "ChangeCapsule",
+      "ClosureLock",
+      "ConstitutionKernel",
+      "CounterfactualPlanner",
+      "EvidenceWeightedCouncil",
+      "FederatedCognitiveInstitution",
+      "FormationOmega",
+      "FractalDelegationGuard",
+      "InstitutionalImmuneSystem",
+      "InstitutionalMemory",
+      "MissionConvergenceEngine",
+      "MissionDeduplicator",
+      "MissionGenesisEngine",
+      "MissionSpec",
+      "MissionSwarmPlanner",
+      "MonotonicClosureGate",
+      "MultiTimescalePlanner",
+      "PolicyEvolutionLab",
+      "PortfolioAllocator",
+      "ProofDirectedScheduler",
+      "ProofState",
+      "RecursiveImprovementGate",
+      "ReleaseGate",
+      "RobustScenarioPlanner",
+      "SourceConvergenceClass",
+      "StrategicGenomeLibrary",
+      "StrategicObjectiveEcology",
+      "SurfaceReadback",
+      "classify_convergence",
+      "choose_operational_route",
+      "resolve_current_truth"
+    ],
+    "deletion_allowed": false,
+    "rename_requires_separate_proof": true
+  },
+  "required_shadow_scenarios": [
+    "C5-PUBLIC-API-FREEZE",
+    "C5-MISSION-CONVERGENCE",
+    "C5-PROOF-CLOSURE",
+    "C5-AUTONOMIC-AUTHORITY",
+    "C5-INDEPENDENT-WITNESS",
+    "C5-MONOTONIC-CLOSURE",
+    "C5-SOURCE-CONVERGENCE",
+    "C5-RECONCILIATION",
+    "C5-STRATEGIC-ECOLOGY",
+    "C5-AUTHORITY-IDENTITY"
+  ],
+  "full_repository_regression": {
+    "command": "python -m unittest discover -s tests -p test_formation_omega_*.py -v",
+    "required": true,
+    "repository_shell_only": true,
+    "provider_effect_required": false
+  },
+  "special_checks": [
+    "public_api_freeze",
+    "proof_graph_equivalence",
+    "reconciliation_behavior_preserved",
+    "strategic_ecology_preserved",
+    "autonomic_behavior_preserved",
+    "rollback",
+    "exact_head_admission_before_any_supersession"
+  ],
+  "physical_action_before_p4": "NONE",
+  "source_actions": {
+    "delete_formation_package": false,
+    "rename_public_api": false,
+    "move_provider_authority": false,
+    "preserve_legacy_identity": true
+  },
+  "prohibited_claims": [
+    "provider_runtime_from_source_shadow",
+    "physical_migration_from_source_shadow",
+    "system_retirement_from_source_shadow",
+    "authority_inheritance",
+    "maturity_inheritance",
+    "cognitive_sovereignty_transfer",
+    "external_effect"
+  ],
+  "promotion_gate": {
+    "required_runs": 10,
+    "all_shadow_scenarios_pass": true,
+    "full_formation_regression_pass": true,
+    "exact_head_airlock_pass": true,
+    "bubbles_pass": true,
+    "leak_guard_pass": true,
+    "independent_assurance_review_required_for_dual_run": true
+  },
+  "truth_boundary": {
+    "runtime_changed": false,
+    "provider_effect": false,
+    "authority_expanded": false,
+    "maturity_inherited": false,
+    "physical_migration_executed": false,
+    "system_retirement_allowed": false
+  }
+}

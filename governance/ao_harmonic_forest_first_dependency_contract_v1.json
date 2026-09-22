@@ -1,0 +1,47 @@
+{
+  "schema": "FOREST-FIRST-DEPENDENCY-CONTRACT-V1",
+  "version": "1.0.0",
+  "status": "PROPOSED_NON_EFFECTFUL",
+  "base_main_sha": "413862511ae9c8be5d14b42be553967767bec6dc",
+  "authority_edges": [
+    {"from":"HUMAN_SOVEREIGNTY","to":"COGNITIVE_KERNEL","relationship":"OBJECTIVE_VALUES_CONSENT_CONSEQUENTIAL_AUTHORITY","authority_transfer":false},
+    {"from":"COGNITIVE_KERNEL","to":"DOMAIN_INTELLIGENCE","relationship":"REQUEST_DOMAIN_INTERPRETATION","authority_transfer":false},
+    {"from":"COGNITIVE_KERNEL","to":"EVIDENCE_TRUTH","relationship":"REQUEST_FACT_PROVENANCE_CONTRADICTION_AND_RELEASE_ASSURANCE","authority_transfer":false},
+    {"from":"COGNITIVE_KERNEL","to":"MISSION_EXECUTION","relationship":"SELECT_AND_REQUEST_AUTHORISED_ROUTE","authority_transfer":false},
+    {"from":"MISSION_EXECUTION","to":"ASSURANCE_REALITY","relationship":"SUBMIT_EFFECT_AND_PROOF_FOR_INDEPENDENT_VERIFICATION","authority_transfer":false},
+    {"from":"ASSURANCE_REALITY","to":"MISSION_EXECUTION","relationship":"HOLD_CHALLENGE_OR_VERIFY_NO_EXECUTION_AUTHORITY","authority_transfer":false},
+    {"from":"STATE_CONTINUITY","to":"ALL","relationship":"SUPPLY_CANONICAL_STATE_POINTERS_AND_RESTORE_CONTEXT","authority_transfer":false},
+    {"from":"ALL","to":"STATE_CONTINUITY","relationship":"WRITE_BACK_MATERIAL_VERIFIED_DELTAS","authority_transfer":false},
+    {"from":"LEARNING_EVOLUTION","to":"COGNITIVE_KERNEL","relationship":"SUPPLY_PROOF_GATED_LESSONS_BENCHMARKS_AND_REGRESSIONS","authority_transfer":false},
+    {"from":"COGNITIVE_KERNEL","to":"LEARNING_EVOLUTION","relationship":"SUBMIT_DECISIONS_FAILURES_OUTCOMES_AND_LESSON_CANDIDATES","authority_transfer":false}
+  ],
+  "component_boundaries": {
+    "AO-HARMONIC": {"classification":"RUNTIME_HOST","may_own_domain_truth":false,"may_execute_external_effects_by_itself":false},
+    "Forest-First Ω": {"classification":"COGNITIVE_KERNEL","may_mint_provider_authority":false,"may_self_certify":false},
+    "Ω-SCIENTIA": {"classification":"SCIENTIFIC_FALSIFICATION_ORGAN","runtime_host":"AO-HARMONIC","target_layer":"COGNITIVE_KERNEL","may_own_canonical_bible_knowledge":false,"may_mint_domain_or_provider_authority":false},
+    "Next Frontier AI Bible": {"classification":"CANONICAL_KNOWLEDGE_SOURCE","target_layer":"LEARNING_EVOLUTION","may_execute":false,"may_transfer_knowledge_source_status_into_runtime_maturity":false},
+    "LEX": {"classification":"DOMAIN_INTELLIGENCE","owns":"LEGAL_INTERPRETATION","does_not_own":["EVIDENCE_PROVENANCE","PROVIDER_EFFECT"]},
+    "EvidenceOps": {"classification":"EVIDENCE_ENGINEERING","owns":"EVIDENCE_PROCESSING_AND_PROVENANCE"},
+    "TruthGrid": {"classification":"TRUTH_ASSURANCE","owns":"CONTRADICTION_AND_TRUTH_CLASS_ASSURANCE"},
+    "JFRIE": {"classification":"RELEASE_INTEGRITY","owns":"JURISDICTION_EVIDENCE_RELEASE_INTEGRITY"},
+    "Bubbles": {"classification":"EXECUTION_ORCHESTRATOR","may_mint_authority":false},
+    "SOVARA Ω": {"classification":"PROVIDER_RUNTIME","external_effects":"ACTION_SPECIFIC_AUTHORITY_AND_READBACK_REQUIRED"},
+    "Federation Omega": {"classification":"INTEGRATION_SOURCE_CONTROL","source_merge_is_runtime_proof":false},
+    "Kim Dataverse": {"classification":"CANONICAL_STATE","may_overwrite_domain_truth":false},
+    "ChatBridge": {"classification":"CONTINUITY_TRANSPORT","restore_is_truth_proof":false},
+    "JARVIS": {"classification":"INDEPENDENT_ASSURANCE","may_execute":false},
+    "Sentinel Ω": {"classification":"INDEPENDENT_OBSERVER","may_execute":false},
+    "Reality Guard": {"classification":"FAULT_REALITY_MANAGER","may_mint_authority":false},
+    "CFBE-Ω": {"classification":"INDEPENDENT_BENCHMARK","may_self_promote_target":false}
+  },
+  "forbidden_edges": [
+    {"from":"COGNITIVE_KERNEL","to":"EVIDENCE_TRUTH","transition":"OVERWRITE_CANONICAL_FACT"},
+    {"from":"DOMAIN_INTELLIGENCE","to":"EVIDENCE_TRUTH","transition":"OVERWRITE_PROVENANCE_OR_FACT"},
+    {"from":"ASSURANCE_REALITY","to":"MISSION_EXECUTION","transition":"EXECUTE_EXTERNAL_EFFECT"},
+    {"from":"LEARNING_EVOLUTION","to":"ANY","transition":"INHERIT_PROVIDER_OR_DOMAIN_AUTHORITY"},
+    {"from":"STATE_CONTINUITY","to":"ANY","transition":"INFER_CURRENT_TRUTH_FROM_STALE_POINTER"},
+    {"from":"ANY","to":"HUMAN_SOVEREIGNTY","transition":"SILENTLY_OVERRIDE_RESERVED_CONSEQUENTIAL_DECISION"}
+  ],
+  "freshness_rule": "CURRENT_PROVIDER_OR_DOMAIN_NATIVE_READBACK_OUTRANKS_REGISTRY_PROJECTION_AND_PRIOR_SUMMARY",
+  "truth_boundary": {"runtime_binding_changed":false,"external_effect":false}
+}

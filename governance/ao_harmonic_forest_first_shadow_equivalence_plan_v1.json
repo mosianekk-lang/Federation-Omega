@@ -1,0 +1,159 @@
+{
+  "schema": "FOREST-FIRST-SHADOW-EQUIVALENCE-PLAN-V1",
+  "version": "1.4.0",
+  "status": "C1_C2_C3_C4_C5_PROVIDER_HOSTED_SOURCE_SHADOW_PASS_PENDING_INDEPENDENT_ASSURANCE",
+  "base_main_sha": "9307cb7a1445122c1e4432db9afabda8fbb01fbd",
+  "exact_head_sha": "6f5e5438c5a5fdce0e1fef426a174c9d746c7823",
+  "objective": "Demonstrate that target architecture preserves or improves bounded capability while preserving authority/proof boundaries and reducing conceptual/owner burden.",
+  "global_acceptance": {
+    "all_required": true,
+    "criteria": [
+      "functional_result_equivalent_or_better",
+      "truth_and_domain_authority_unchanged",
+      "proof_scope_not_inflated",
+      "independent_assurance_preserved",
+      "owner_burden_not_increased",
+      "rollback_path_present",
+      "legacy_identity_still_resolves"
+    ],
+    "prohibited_claims": [
+      "provider_effect_from_shadow",
+      "maturity_inheritance",
+      "global_superiority",
+      "system_retirement_before_dual_run",
+      "model_weight_learning"
+    ]
+  },
+  "cohorts": [
+    {
+      "id": "C1_AUTHORITY_ONLY",
+      "systems": ["AEON-Ω", "IPEP", "SIF AI", "Next Frontier AI Bible / Ω-SCIENTIA"],
+      "shadow_type": "CONTROL_AND_RESTORE_SHADOW",
+      "inputs": "sanitized governance/restore scenarios",
+      "target": "new layer classification and compatibility resolver",
+      "effect": "A1_INTERNAL_NO_EXTERNAL_EFFECT",
+      "required_runs": 3,
+      "special_checks": ["historical_identity_preserved", "canonical_knowledge_authority_preserved", "scientia_runtime_separate_from_bible", "no_registry_loss"]
+    },
+    {
+      "id": "C2_DOMAIN_COMPATIBILITY",
+      "systems": ["KIOAS", "KAIO Ω"],
+      "shadow_type": "INTERFACE_AND_DOMAIN_SHADOW",
+      "inputs": "sanitized directive compilation and legal-advocacy routing scenarios",
+      "target": "KIOAS compiler role and KAIO→LEX advocacy profile",
+      "effect": "A1_INTERNAL_NO_EXTERNAL_EFFECT",
+      "required_runs": 5,
+      "special_checks": ["directive_semantics_preserved", "legal_domain_authority_remains_LEX", "no_evidence_truth_override", "legacy_calls_resolve"]
+    },
+    {
+      "id": "C3_RECOVERY_FORMATION",
+      "systems": ["Ω-AUTOFIX", "Modisa Continuum"],
+      "shadow_type": "DUAL_RECOVERY_ROUTE_SHADOW",
+      "inputs": "historical/synthetic failure and self-correction fixtures",
+      "target": "Failure-Win recovery and Formation self-correction modules",
+      "effect": "A1_INTERNAL_NO_EXTERNAL_EFFECT",
+      "required_runs": 5,
+      "special_checks": ["same_failure_fingerprint", "recovery_receipt_equivalence", "unchanged_retry_still_prohibited", "route_failure_not_objective_failure", "rollback"]
+    },
+    {
+      "id": "C4_HIGH_COUPLING_POLICY_VALIDATION",
+      "systems": ["Superior Logic Doctrine", "CASEFORGE-Ω"],
+      "shadow_type": "FULL_CONSUMER_AWARE_SHADOW",
+      "inputs": "existing regression fixtures plus sanitized real-mission-derived controls",
+      "target": "Forest policy library and EvidenceOps validation lab",
+      "effect": "A1_INTERNAL_NO_EXTERNAL_EFFECT",
+      "required_runs": 10,
+      "special_checks": ["workflow_compatibility", "cross_coupling_preserved", "scientific_falsification_preserved", "no_new_single_point_of_failure", "rollback"]
+    },
+    {
+      "id": "C5_FORMATION_LAST",
+      "systems": ["FORMATION-OMEGA Unified Powerhouse"],
+      "shadow_type": "PUBLIC_API_AND_PROOF_GRAPH_SHADOW",
+      "inputs": "full Formation public API/regression suite and bounded real mission scenarios",
+      "target": "Formation engine canonical identity",
+      "effect": "A1_INTERNAL_NO_EXTERNAL_EFFECT",
+      "required_runs": 10,
+      "special_checks": ["public_api_freeze", "proof_graph_equivalence", "reconciliation_behavior_preserved", "strategic_ecology_preserved", "autonomic_behavior_preserved", "rollback", "exact_head_admission_before_any_supersession"]
+    }
+  ],
+  "cohort_status": {
+    "C1_AUTHORITY_ONLY": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C2_DOMAIN_COMPATIBILITY": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C3_RECOVERY_FORMATION": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C4_HIGH_COUPLING_POLICY_VALIDATION": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE",
+    "C5_FORMATION_LAST": "PROVIDER_HOSTED_SOURCE_PASS_PENDING_INDEPENDENT_ASSURANCE"
+  },
+  "proof_receipts": {
+    "C1_C2": {
+      "github_airlock_run_id": 33287881028,
+      "artifact_id": 9725010593,
+      "artifact_sha256": "54d16bd48d7b0e07a5a7ac7d442cf8f2e8ba4a21fbdfb2c7c58affd501b3eba5",
+      "proofos_manifest_sha256": "7ef8291f619fdef9edf9937b4603b89de033d8782079e6b32aa664bc5fb3907a",
+      "proofos_report_sha256": "f2afe4eee194d49d6cadec52322f8b647f527f35e576bf0248ff36010019596c",
+      "shadow_calibration_receipt_sha256": "4d09b38fa591f63b1c42c20211185ada66a5209c937f1866c13a1e9cddaa77db",
+      "blocking_proofs_passed": 14,
+      "blocking_failures": 0,
+      "unmapped_production_paths": 0,
+      "fallback_full_suite_activated": false,
+      "shadow_escape_candidates": 0
+    },
+    "C3": {
+      "github_airlock_run_id": 33288108031,
+      "artifact_id": 9725082124,
+      "artifact_sha256": "df487d5ca98b3d9e263bd57fe36127859deab19efd333125ff03ed29f0f4e57a",
+      "proofos_manifest_sha256": "fce69b29db68420e651b0a1efc2e3f8ebc9bf79a2b3bae499e0a1100b9636833",
+      "proofos_report_sha256": "b227de9ecd8142f9f25a174a6ce849bb3bcdd0c943867f92d88cc997f799df1a",
+      "shadow_calibration_receipt_sha256": "d48c7bc02dc62aef3713ca7748ca34a04ec661667493a7a30401bd3d25ac6ccc",
+      "source_provenance_receipt_sha256": "51a39bb07475104a029cbd80c90a4981479acfb4ca6d4ea63428c080af970313",
+      "blocking_proofs_passed": 14,
+      "blocking_failures": 0,
+      "unmapped_production_paths": 0,
+      "fallback_full_suite_activated": false,
+      "shadow_escape_candidates": 0
+    },
+    "C4": {
+      "github_airlock_run_id": 33299030822,
+      "artifact_id": 9728325751,
+      "artifact_sha256": "9efeb84ae421353c827adabd4dde5f45a873afde36745d46e98f67a64b954762",
+      "proofos_manifest_sha256": "38c4a14153ba79e11017c7c56878e4d55e8da3f7b25dba9838612d9f2093370f",
+      "proofos_report_sha256": "1267c71fcc149f9b3a7aae1f3709d5074f9cbc20359be952216d5bc8007af384",
+      "shadow_calibration_receipt_sha256": "29e74a7d6f02a56d5c65e4961776b7e98cf46bf5cec14cb45184ca2ed5cf7b15",
+      "source_provenance_receipt_sha256": "e496bbf9f3a4d0cf48f1f03a85dcc294d8baa9956ecb4cf3a5071c80c9fe1eb5",
+      "blocking_proofs_passed": 16,
+      "blocking_failures": 0,
+      "unmapped_production_paths": 0,
+      "fallback_full_suite_activated": false,
+      "shadow_escape_candidates": 0
+    },
+    "C5": {
+      "github_airlock_run_id": 33303243470,
+      "artifact_id": 9729627032,
+      "artifact_sha256": "8612ecf56fbc5401148732a54693e32bdb35e00758652541980413649304e9ef",
+      "proofos_manifest_sha256": "59b8688812a72b49b487c00a1430dc711663896f039cce7ce7d78822438cdfad",
+      "proofos_report_sha256": "112a1c097c83296fdbb55df996579b626543a4455e9a154d7741fcd3c3600226",
+      "shadow_calibration_receipt_sha256": "392eace5d275193f5b26e1917a758e3d9902d52b260738f37a0a6baff3de83fb",
+      "source_provenance_receipt_sha256": "c5f71cf67283ee7f478690c1d8b0493b46f86017c3b955d31c096c520a0b945c",
+      "blocking_proofs_passed": 16,
+      "blocking_failures": 0,
+      "unmapped_production_paths": 0,
+      "fallback_full_suite_activated": false,
+      "shadow_escape_candidates": 0
+    }
+  },
+  "measurement_fields": ["functional_pass", "decision_delta", "proof_boundary_delta", "authority_boundary_delta", "owner_interruption_count", "manual_debug_steps", "latency_ms_if_measured", "complexity_units_removed", "rollback_pass", "unexpected_behavior"],
+  "promotion_gate": {
+    "to_dual_run_requires": ["required_runs_met", "all_acceptance_criteria_pass", "no_unresolved_high_severity_delta", "independent_assurance_review"],
+    "automatic_source_move": false,
+    "automatic_retirement": false
+  },
+  "truth_boundary": {
+    "shadow_run_executed": true,
+    "shadow_scope": ["C1_AUTHORITY_ONLY", "C2_DOMAIN_COMPATIBILITY", "C3_RECOVERY_FORMATION", "C4_HIGH_COUPLING_POLICY_VALIDATION", "C5_FORMATION_LAST"],
+    "provider_hosted_source_shadow_proved": true,
+    "provider_runtime_shadow_proved": false,
+    "independent_assurance_review": "PENDING",
+    "physical_migration_executed": false,
+    "runtime_changed": false,
+    "provider_effect": false
+  }
+}

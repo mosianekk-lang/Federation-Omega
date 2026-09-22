@@ -1,6 +1,9 @@
 import unittest
 
+from ao_harmonic_v3.architecture_consolidation import ArchitectureConsolidationRegistry
+from ao_harmonic_v3.architecture_shadow import run_authority_only_shadow
 from ao_harmonic_v3.benchmark import run_benchmark
+from ao_harmonic_v3.domain_compatibility_shadow import run_c2_domain_compatibility_shadow
 from ao_harmonic_v3.event_bus import EventBus
 from ao_harmonic_v3.evolution import (
     ArchitectureComponent,
@@ -13,6 +16,7 @@ from ao_harmonic_v3.evolution import (
     PolicyEvolution,
 )
 from ao_harmonic_v3.graphs import MissionGraph, ProofGraph, StateFabric
+from ao_harmonic_v3.high_coupling_policy_shadow import run_c4_high_coupling_policy_shadow
 from ao_harmonic_v3.models import (
     FederationEvent,
     Maturity,
@@ -23,6 +27,7 @@ from ao_harmonic_v3.models import (
     RiskClass,
     TruthState,
 )
+from ao_harmonic_v3.recovery_formation_shadow import run_c3_recovery_formation_shadow
 from ao_harmonic_v3.resource_market import ResourceMarket, ResourceRequest
 from ao_harmonic_v3.runtime import (
     AOHarmonicV3,
@@ -255,6 +260,89 @@ class AOHarmonicV3Tests(unittest.TestCase):
         self.assertEqual(acceptance["status"], "SOURCE_IMPLEMENTED")
         self.assertFalse(acceptance["runtime_verified"])
         self.assertFalse(acceptance["external_effect_default"])
+
+    def test_forest_first_consolidation_never_inherits_authority_or_maturity(self):
+        registry = ArchitectureConsolidationRegistry()
+        superior = registry.resolve("Superior Logic Doctrine")
+        self.assertEqual(superior.target_authority_layer, "COGNITIVE_KERNEL")
+        self.assertFalse(superior.proof_inherited)
+        self.assertFalse(superior.authority_inherited)
+        self.assertFalse(superior.maturity_inherited)
+        self.assertFalse(superior.external_effect)
+        self.assertEqual(
+            set(registry.independent_systems()),
+            {"Sentinel Ω", "CFBE-Ω", "JARVIS", "Reality Guard"},
+        )
+        self.assertTrue(
+            registry.transition_forbidden(
+                "ASSURANCE_REALITY", "MISSION_EXECUTION", "EXECUTE_EXTERNAL_EFFECT"
+            )
+        )
+
+    def test_forest_first_c1_shadow_remains_non_migratory(self):
+        report = run_authority_only_shadow()
+        self.assertTrue(report["pass"])
+        self.assertEqual(report["scenario_count"], 3)
+        self.assertEqual(report["authority_ceiling"], "A1_INTERNAL")
+        self.assertFalse(report["external_effect"])
+        self.assertFalse(report["provider_runtime_proved"])
+        self.assertFalse(report["physical_migration_executed"])
+        self.assertFalse(report["system_retirement_allowed"])
+        self.assertFalse(report["maturity_inheritance"])
+
+    def test_forest_first_c2_shadow_preserves_domain_authority(self):
+        report = run_c2_domain_compatibility_shadow()
+        self.assertTrue(report["pass"])
+        self.assertEqual(report["scenario_count"], 5)
+        self.assertEqual(report["authority_ceiling"], "A1_INTERNAL")
+        self.assertFalse(report["external_effect"])
+        self.assertFalse(report["provider_runtime_proved"])
+        self.assertFalse(report["physical_migration_executed"])
+        self.assertFalse(report["legacy_kioas_proof_inherited"])
+        self.assertFalse(report["legacy_kaio_maturity_inherited_to_lex"])
+        authority = next(
+            row
+            for row in report["scenarios"]
+            if row["scenario_id"] == "C2-KAIO-DOMAIN-AUTHORITY"
+        )
+        self.assertTrue(authority["checks"]["jfrie_remains_integrity_owner"])
+        self.assertTrue(authority["checks"]["truthgrid_evidenceops_remain_fact_owner"])
+        self.assertTrue(authority["checks"]["lex_remains_legal_owner"])
+        self.assertTrue(authority["checks"]["no_route_transfers_authority"])
+
+    def test_forest_first_c3_shadow_preserves_recovery_and_formation_boundaries(self):
+        report = run_c3_recovery_formation_shadow()
+        self.assertTrue(report["pass"])
+        self.assertEqual(report["scenario_count"], 5)
+        self.assertEqual(report["authority_ceiling"], "A1_INTERNAL")
+        self.assertFalse(report["external_effect"])
+        self.assertFalse(report["provider_runtime_proved"])
+        self.assertFalse(report["physical_migration_executed"])
+        self.assertFalse(report["system_retirement_allowed"])
+        self.assertFalse(report["failure_win_operational_maturity_inherited"])
+        rows = {row["scenario_id"]: row for row in report["scenarios"]}
+        self.assertTrue(rows["C3-SHARED-PORTABLE-FINGERPRINT"]["checks"]["portable_fingerprint_shared"])
+        self.assertTrue(rows["C3-UNCHANGED-RETRY-PROHIBITED"]["checks"]["unchanged_route_not_selected"])
+        self.assertTrue(rows["C3-ROUTE-FAILURE-NOT-OBJECTIVE-FAILURE"]["checks"]["failed_incumbent_route_does_not_end_objective"])
+        self.assertTrue(rows["C3-ROLLBACK-AND-FORMATION-RELEASE"]["checks"]["formation_release_denied_without_rollback"])
+
+    def test_forest_first_c4_shadow_preserves_policy_validation_boundaries(self):
+        report = run_c4_high_coupling_policy_shadow()
+        self.assertTrue(report["pass"])
+        self.assertEqual(report["scenario_count"], 10)
+        self.assertEqual(report["authority_ceiling"], "A1_INTERNAL")
+        self.assertFalse(report["external_effect"])
+        self.assertFalse(report["provider_runtime_proved"])
+        self.assertFalse(report["physical_migration_executed"])
+        self.assertFalse(report["system_retirement_allowed"])
+        self.assertFalse(report["superior_logic_runtime_rewired"])
+        self.assertFalse(report["caseforge_authority_expanded"])
+        self.assertFalse(report["maturity_inheritance"])
+        rows = {row["scenario_id"]: row for row in report["scenarios"]}
+        self.assertTrue(rows["C4-SCIENTIFIC-FALSIFICATION"]["checks"]["missing_falsifier_fails_closed"])
+        self.assertTrue(rows["C4-BLIND-EVALUATION-SEPARATION"]["checks"]["answer_key_leak_is_rejected"])
+        self.assertTrue(rows["C4-PROVIDER-READBACK-SEPARATION"]["checks"]["provider_verified_without_readback_fails"])
+        self.assertTrue(rows["C4-INDEPENDENT-ASSURANCE-NO-SPOF"]["checks"]["independent_assurance_preserved"])
 
     def test_v3_synthetic_reference_benchmark_beats_v2_reference(self):
         result = run_benchmark()
