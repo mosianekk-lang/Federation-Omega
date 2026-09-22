@@ -1,6 +1,13 @@
 from pathlib import Path
 from datetime import datetime, timezone
 import json
+import sys
+
+REPOSITORY_ROOT = Path(__file__).resolve().parents[1]
+if str(REPOSITORY_ROOT) not in sys.path:
+    sys.path.insert(0, str(REPOSITORY_ROOT))
+
+from federation.durable_scheduler_virtual_org_v1 import VirtualOrgDurableQueue
 
 ROOT = Path("virtual-org")
 STATUS = ROOT / "status"
@@ -8,7 +15,9 @@ RUNTIME = ROOT / "runtime"
 STATUS.mkdir(parents=True, exist_ok=True)
 RUNTIME.mkdir(parents=True, exist_ok=True)
 
-now = datetime.now(timezone.utc).isoformat()
+now_dt = datetime.now(timezone.utc)
+now = now_dt.isoformat()
+durable_bus = VirtualOrgDurableQueue(REPOSITORY_ROOT).tick(now=now_dt)
 registry_path = ROOT / "lane-registry.json"
 registry = json.loads(registry_path.read_text(encoding="utf-8")) if registry_path.exists() else {"lanes": []}
 
@@ -23,7 +32,10 @@ cycle = {
     "blocked_count": len(blocked),
     "top_lane": top.get("lane_id") if top else None,
     "top_next_action": top.get("next_action") if top else None,
-    "state": "CYCLE_COMPLETE"
+    "state": "CYCLE_COMPLETE",
+    "durable_bus_state": "ACTIVE",
+    "durable_bus_processed_count": durable_bus["processed_count"],
+    "durable_bus_report_sha256": durable_bus["report_sha256"]
 }
 payload = json.dumps(cycle, indent=2)
 (STATUS / "latest-cycle.json").write_text(payload, encoding="utf-8")
@@ -37,5 +49,7 @@ Updated: {now}
 - Blocked lanes: {len(blocked)}
 - Highest-value lane: {cycle['top_lane']}
 - Next action: {cycle['top_next_action']}
+- Durable bus processed: {durable_bus['processed_count']}
+- Durable bus report: {durable_bus['report_sha256']}
 """
 (STATUS / "latest-brief.md").write_text(summary, encoding="utf-8")

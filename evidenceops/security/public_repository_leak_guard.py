@@ -25,10 +25,11 @@ SAFE_PLACEHOLDER_PREFIXES = (
 )
 
 ID_ASSIGNMENT = re.compile(
-    r"(?i)(spreadsheet_id|parent_folder_id|drive_file_id|google_drive_file_id|"
+    r"(?i)(?<![A-Za-z0-9_])"
+    r"(spreadsheet_id|parent_folder_id|drive_file_id|google_drive_file_id|"
     r"file_id|folder_id|document_id|gmail_message_id|spreadsheetId|"
     r"parentFolderId|driveFileId|googleDriveFileId|fileId|folderId|documentId)"
-    r"\s*[=:]\s*[\"']([^\"']+)[\"']"
+    r"(?![A-Za-z0-9_])\s*[=:]\s*[\"']([^\"']+)[\"']"
 )
 
 PROVIDER_ASSIGNMENT = re.compile(

@@ -1,1 +1,1 @@
-from .fcoa_memory_node import *\n
+from .fcoa_memory_node import *
