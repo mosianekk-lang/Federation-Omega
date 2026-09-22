@@ -1,0 +1,30 @@
+{
+  "schema": "FUSE-CROSS-ESTATE-CAPABILITY-CENSUS-V1",
+  "observed_at": "2026-09-22T07:20:00+02:00",
+  "source_main": "05f9b14cf0506316042fcf59cd699c2b8ccaa4ee",
+  "classification_order": ["LIVE","LIVE_PARTIAL","BOUND_PARTIAL","SOURCE_ONLY","PROVIDER_READBACK_REQUIRED","CONNECTOR_UNAVAILABLE","ADMIN_DISABLED"],
+  "capabilities": [
+    {"id":"GOOGLE_FGSP","surface":"FUSE-GAS","state":"BOUND_PARTIAL","route":"FUSE_GOOGLE_SERVICE_REQUEST_RECEIPT","priority":"P0"},
+    {"id":"GAS_NATIVE_SCHEDULER_V4","surface":"Apps Script","state":"LIVE_PARTIAL","priority":"P1"},
+    {"id":"FCOA_GAS_NATIVE_PROJECT","surface":"Apps Script","state":"BOUND_PARTIAL","priority":"P1"},
+    {"id":"GEMINI_COLLABORATION_BUS","surface":"Gemini","state":"BOUND_PARTIAL","priority":"P0"},
+    {"id":"STRATEGIC_VERTEX_WIF_A0","surface":"Google Cloud/Vertex","state":"PROVIDER_READBACK_REQUIRED","priority":"P1"},
+    {"id":"AI_STUDIO_FOUNDRY","surface":"Google AI Studio","state":"BOUND_PARTIAL","priority":"P0"},
+    {"id":"GOOGLE_DRIVE_CONTROL_FABRIC","surface":"Google Drive","state":"LIVE","priority":"P0"},
+    {"id":"GMAIL_TELEMETRY_SENSOR","surface":"Gmail","state":"LIVE","priority":"P2"},
+    {"id":"CANVA_OMEGA","surface":"Canva","state":"LIVE","priority":"P0"},
+    {"id":"FCX_COPILOT_PRO","surface":"Copilot","state":"SOURCE_ONLY","priority":"P2"},
+    {"id":"GCP_GENERAL_DIRECT_CONNECTOR","surface":"Google Cloud","state":"CONNECTOR_UNAVAILABLE","priority":"P1"},
+    {"id":"BIGQUERY_CONNECTOR","surface":"Google Cloud/BigQuery","state":"ADMIN_DISABLED","priority":"P3"},
+    {"id":"FUSE_EDGE_MAILBOX","surface":"Windows/Drive","state":"BOUND_PARTIAL","priority":"P0"}
+  ],
+  "global_rule": "FRESH_CENSUS_BEFORE_ABSENT; CONNECTOR_UNAVAILABLE_NE_CAPABILITY_ABSENT; MATURITY_DOES_NOT_INHERIT",
+  "promotion": {
+    "google_abi": "FGSP_V1",
+    "multi_model": "BLIND_FIRST_PASS_CROSS_EXAM_EVIDENCE_RESOLUTION",
+    "creative": "EXISTING_DESIGN_FIRST",
+    "scheduler": "GITHUB_LIVE_PRIMARY_PLUS_GAS_REQUALIFICATION_CANDIDATE",
+    "provider_introspection": "WIF_ADC_A0_BEFORE_SECRET_ROUTE",
+    "windows": "EDGE_MAILBOX_REUSE_CANDIDATE"
+  }
+}
