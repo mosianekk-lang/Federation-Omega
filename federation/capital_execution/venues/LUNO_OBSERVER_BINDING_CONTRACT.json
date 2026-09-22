@@ -1,6 +1,6 @@
 {
   "schema": "FEDERATION-LUNO-OBSERVER-BINDING-CONTRACT-1",
-  "version": "1.2.1",
+  "version": "1.2.2",
   "project": "sov-hybrid-suite",
   "region": "africa-south1",
   "service": "federation-luno-observer",
@@ -26,6 +26,19 @@
     "method_science": "Ω-SCIENTIST",
     "consequential_external_action_requires_owner_approval": true,
     "provider_state_must_match_readback": true
+  },
+  "provider_authority_binding": {
+    "source": "GITHUB_REPOSITORY_VARIABLES_AFTER_PRIVATE_OPS_MATERIALIZATION",
+    "workload_identity_provider_variable": "FEDOMEGA_GCP_WIF_PROVIDER",
+    "deployer_service_account_variable": "FEDOMEGA_GCP_DEPLOYER_SA",
+    "provider_identity_hardcoded_in_source": false,
+    "missing_binding_state": "PROVIDER_AUTHORITY_NOT_ESTABLISHED",
+    "configured_binding_state": "PROVIDER_AUTHORITY_CONFIGURED_UNVERIFIED",
+    "verified_binding_state": "PROVIDER_AUTHORITY_VERIFIED",
+    "provider_native_verification_required": "ops/bootstrap_github_wif.sh --verify",
+    "verified_receipt_required": "FEDOMEGA-WIF-CLOUD-VERIFIED",
+    "raw_identity_values_in_provider_receipt": false,
+    "identity_hashes_in_provider_receipt": true
   },
   "credential_binding": {
     "legacy_secret_names_accepted": false,
@@ -69,6 +82,9 @@
   },
   "states": [
     "SOURCE_IMPLEMENTED_PROVIDER_UNBOUND",
+    "PROVIDER_AUTHORITY_NOT_ESTABLISHED",
+    "PROVIDER_AUTHORITY_CONFIGURED_UNVERIFIED",
+    "PROVIDER_AUTHORITY_VERIFIED",
     "PUBLIC_MARKET_PROVIDER_VERIFIED",
     "CREDENTIAL_PERMISSION_PROOF_REQUIRED",
     "OBSERVER_BOUND",
@@ -84,6 +100,7 @@
     "NO_SCHEDULER_OR_AUTONOMOUS_EXECUTION_LOOP",
     "SHADOW_MODE_REMAINS_THE_CAPITAL_CEILING",
     "PUBLIC_PROVIDER_SUCCESS_DOES_NOT_IMPLY_ACCOUNT_BINDING",
-    "JARVIS_AO5_REALITYGUARD_CONTROLS_PROVIDER_STATE_CLAIMS"
+    "JARVIS_AO5_REALITYGUARD_CONTROLS_PROVIDER_STATE_CLAIMS",
+    "PROVIDER_IDENTITY_IS_EXTERNALIZED_AND_PROVIDER_VERIFIED_BEFORE_USE"
   ]
 }

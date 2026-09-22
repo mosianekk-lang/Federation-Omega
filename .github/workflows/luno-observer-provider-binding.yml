@@ -38,8 +38,8 @@ env:
   PROJECT_NUMBER: "257649435135"
   REGION: africa-south1
   AR_REPOSITORY: federation-omega
-  WIF_PROVIDER: projects/257649435135/locations/global/workloadIdentityPools/github-federation-omega/providers/github
-  DEPLOYER_SA: superior-logic-deployer@sov-hybrid-suite.iam.gserviceaccount.com
+  WIF_PROVIDER: ${{ vars.FEDOMEGA_GCP_WIF_PROVIDER }}
+  DEPLOYER_SA: ${{ vars.FEDOMEGA_GCP_DEPLOYER_SA }}
   OBSERVER_SA: luno-observer@sov-hybrid-suite.iam.gserviceaccount.com
   PUBLIC_SERVICE: federation-luno-market-observer
   ACCOUNT_SERVICE: federation-luno-account-observer
@@ -86,6 +86,20 @@ jobs:
           ref: ${{ github.sha }}
           persist-credentials: false
 
+      - name: Resolve repository-scoped provider authority
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/luno-observer
+          printf 'REPOSITORY_VARIABLES\n' > /tmp/luno-observer/provider-authority-source.txt
+          if [[ -z "${WIF_PROVIDER:-}" || -z "${DEPLOYER_SA:-}" ]]; then
+            printf 'PROVIDER_AUTHORITY_NOT_ESTABLISHED\n' > /tmp/luno-observer/provider-authority-state.txt
+            echo "Required repository variables FEDOMEGA_GCP_WIF_PROVIDER and FEDOMEGA_GCP_DEPLOYER_SA are not both configured." >&2
+            exit 1
+          fi
+          printf 'PROVIDER_AUTHORITY_CONFIGURED_UNVERIFIED\n' > /tmp/luno-observer/provider-authority-state.txt
+          printf '%s' "$WIF_PROVIDER" | sha256sum | awk '{print $1}' > /tmp/luno-observer/wif-provider-sha256.txt
+          printf '%s' "$DEPLOYER_SA" | sha256sum | awk '{print $1}' > /tmp/luno-observer/deployer-sa-sha256.txt
+
       - name: Authenticate through established keyless WIF
         id: google-auth
         uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
@@ -108,6 +122,7 @@ jobs:
           assert value['mutation_performed'] is False, value
           PY
           test "$(gcloud config get-value project)" = "$PROJECT_ID"
+          printf 'PROVIDER_AUTHORITY_VERIFIED\n' > /tmp/luno-observer/provider-authority-state.txt
 
       - name: Discover dedicated observer prerequisites without reading credential values
         run: |
@@ -266,6 +281,10 @@ jobs:
               'schema':'FEDERATION-LUNO-OBSERVER-PROVIDER-RECEIPT-1',
               'source_sha':os.environ.get('GITHUB_SHA',''),
               'project':'sov-hybrid-suite','region':'africa-south1',
+              'provider_authority_state':text('provider-authority-state.txt','PROVIDER_AUTHORITY_NOT_EVALUATED'),
+              'provider_authority_source':text('provider-authority-source.txt','UNBOUND'),
+              'wif_provider_sha256':text('wif-provider-sha256.txt') or None,
+              'deployer_sa_sha256':text('deployer-sa-sha256.txt') or None,
               'public_state':text('public-state.txt','PUBLIC_PROVIDER_CANARY_NOT_COMPLETED'),
               'public_revision':text('public-revision.txt'),
               'account_state':text('account-state.txt','CREDENTIAL_PERMISSION_PROOF_REQUIRED'),
@@ -292,7 +311,7 @@ jobs:
           if [[ -f luno-observer-provider-receipt.json ]]; then
             cat luno-observer-provider-receipt.json
           else
-            echo '{"schema":"FEDERATION-LUNO-OBSERVER-PROVIDER-RECEIPT-1","public_state":"RECEIPT_BUILD_FAILED","account_state":"UNVERIFIED","financial_effects":false,"write_operations":false}'
+            echo '{"schema":"FEDERATION-LUNO-OBSERVER-PROVIDER-RECEIPT-1","provider_authority_state":"RECEIPT_BUILD_FAILED","public_state":"RECEIPT_BUILD_FAILED","account_state":"UNVERIFIED","financial_effects":false,"write_operations":false}'
           fi
 
       - uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
