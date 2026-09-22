@@ -1,0 +1,45 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "fuse_update_channel/manifest.json",
+        "tests/test_fuse_update_channel_manifest_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_update_channel_v1.json"
+      ],
+      "reason": "STABLE_FUSE_UPDATE_CHANNEL_CONTRACT"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_UPDATE_CHANNEL_V1",
+      "patterns": [
+        "fuse_update_channel/manifest.json",
+        "tests/test_fuse_update_channel_manifest_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_update_channel_v1.json"
+      ],
+      "depends_on": []
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_update_channel_manifest_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_update_channel_manifest_v1.py",
+      "patterns": [
+        "fuse_update_channel/manifest.json",
+        "tests/test_fuse_update_channel_manifest_v1.py",
+        "governance/proofos_omega_policy_extension_fuse_update_channel_v1.json"
+      ],
+      "subsystems": [
+        "FUSE_UPDATE_CHANNEL_V1"
+      ],
+      "failure_class": "UPDATE_CHANNEL_CONTRACT_FAILURE",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    }
+  ]
+}
