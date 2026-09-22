@@ -8,6 +8,7 @@ on:
       - "governance/sovara_ai_studio_semantic_canary_request_v1.json"
       - "governance/fuse_gemini_role_matrix_request_v1.json"
       - "scripts/run_gemini_role_matrix.py"
+      - "scripts/run_gemini_role_holdout_benchmark.py"
   workflow_dispatch:
 
 permissions:
