@@ -54,6 +54,10 @@ jobs:
           assert f['required_permission']=='aiplatform.endpoints.predict'
           assert int(p['semantic_canary']['max_output_tokens']) <= 128
           for k in ('case_data_allowed','provider_mutation_allowed','iam_mutation_allowed','secret_mutation_allowed','secret_value_logging_allowed','deployment_allowed','traffic_change_allowed','external_communication_allowed'): assert p[k] is False
+          r=json.load(open('governance/fuse_gemini_role_matrix_request_v1.json',encoding='utf-8'))
+          assert r['schema']=='FUSE_GEMINI_ROLE_MATRIX_REQUEST_V1' and r['transport']=='VERTEX_WIF_ADC'
+          assert len(r['roles'])==8 and len(set(r['roles']))==8 and 1 <= int(r['max_parallel_requests']) <= 4
+          for k in ('case_data_allowed','provider_mutation_allowed','iam_mutation_allowed','secret_mutation_allowed','deployment_allowed','traffic_change_allowed','external_communication_allowed'): assert r[k] is False
           PY
 
       - name: Authenticate canonical keyless WIF
@@ -137,11 +141,27 @@ jobs:
           if not exact: raise SystemExit('Provider structured semantic proof not verified; redacted receipt retained')
           PY
 
+      - name: Run bounded portable reasoning role matrix
+        shell: bash
+        run: |
+          set -euo pipefail
+          set +x
+          python3 scripts/run_gemini_role_matrix.py
+
       - name: Upload immutable redacted semantic receipt
         if: always()
         uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
         with:
           name: sovara-ai-studio-semantic-${{ github.run_id }}-${{ github.run_attempt }}
           path: /tmp/sovara-ai-studio/AI_STUDIO_SEMANTIC_RECEIPT.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Upload immutable redacted role receipts
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: fuse-gemini-role-matrix-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/fuse-gemini-role-matrix/*.json
           if-no-files-found: error
           retention-days: 90
