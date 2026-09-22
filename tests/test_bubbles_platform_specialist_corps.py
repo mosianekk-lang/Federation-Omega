@@ -2,6 +2,8 @@ from __future__ import annotations
 
 import unittest
 
+from federation.capability_truth_v1 import CapabilitySurfaceState
+
 from bubbles.platform_specialist_corps import (
     CapabilityRequest,
     PlatformCapabilitySnapshot,
@@ -122,6 +124,125 @@ class PlatformSpecialistCorpsTests(unittest.TestCase):
             ("AO-CRA:PLATFORM:Microsoft Dataverse:CAPABILITY_SNAPSHOT",),
             dataverse.ao_cra_builds,
         )
+
+
+    def test_shared_currentness_live_preserves_verified_route(self) -> None:
+        request = CapabilityRequest("update a design", frozenset({"design", "visual"}))
+        snapshots = {
+            "Canva": PlatformCapabilitySnapshot(
+                platform="Canva",
+                state=SurfaceState.VERIFIED_OPERATIONAL,
+                connector_connected=True,
+                provider_identity_verified=True,
+                read_verified=True,
+                write_verified=True,
+                semantic_readback_verified=True,
+                native_ai_callable=True,
+                native_ai_readback_verified=True,
+            )
+        }
+        decisions = self.corps.route_with_currentness(
+            request,
+            snapshots,
+            {"Canva": CapabilitySurfaceState.LIVE},
+        )
+        canva = next(item for item in decisions if item.platform == "Canva")
+        self.assertTrue(canva.selected)
+        self.assertEqual("SHARED_CAPABILITY_TRUTH_LIVE", canva.reason)
+
+    def test_stale_shared_currentness_blocks_even_verified_platform_snapshot(self) -> None:
+        request = CapabilityRequest("update a design", frozenset({"design", "visual"}))
+        snapshots = {
+            "Canva": PlatformCapabilitySnapshot(
+                platform="Canva",
+                state=SurfaceState.VERIFIED_OPERATIONAL,
+                connector_connected=True,
+                provider_identity_verified=True,
+                read_verified=True,
+                write_verified=True,
+                semantic_readback_verified=True,
+                native_ai_callable=True,
+                native_ai_readback_verified=True,
+            )
+        }
+        canva = next(
+            item for item in self.corps.route_with_currentness(
+                request,
+                snapshots,
+                {"Canva": CapabilitySurfaceState.STALE_REQUALIFICATION_REQUIRED},
+            )
+            if item.platform == "Canva"
+        )
+        self.assertFalse(canva.selected)
+        self.assertEqual("STALE_REQUALIFICATION_REQUIRED", canva.mode)
+        self.assertIn("REQUALIFY_CURRENTNESS", canva.ao_cra_builds[-1])
+
+    def test_missing_shared_currentness_requires_refresh_not_absence(self) -> None:
+        request = CapabilityRequest("inspect structured data", frozenset({"database", "structured_data"}))
+        dataverse = next(
+            item for item in self.corps.route_with_currentness(request, {}, {})
+            if item.platform == "Microsoft Dataverse"
+        )
+        self.assertFalse(dataverse.selected)
+        self.assertEqual("CURRENTNESS_REQUIRED", dataverse.mode)
+        self.assertIn("CURRENTNESS_REFRESH", dataverse.ao_cra_builds[-1])
+
+    def test_absent_after_estate_census_routes_to_harvest_or_build(self) -> None:
+        request = CapabilityRequest("inspect structured data", frozenset({"database", "structured_data"}))
+        dataverse = next(
+            item for item in self.corps.route_with_currentness(
+                request,
+                {},
+                {"Microsoft Dataverse": CapabilitySurfaceState.ABSENT_AFTER_ESTATE_CENSUS},
+            )
+            if item.platform == "Microsoft Dataverse"
+        )
+        self.assertFalse(dataverse.selected)
+        self.assertIn("HARVEST_OR_BUILD", dataverse.ao_cra_builds[-1])
+
+    def test_live_currentness_cannot_upgrade_missing_platform_snapshot(self) -> None:
+        request = CapabilityRequest("inspect structured data", frozenset({"database", "structured_data"}))
+        dataverse = next(
+            item for item in self.corps.route_with_currentness(
+                request,
+                {},
+                {"Microsoft Dataverse": CapabilitySurfaceState.LIVE},
+            )
+            if item.platform == "Microsoft Dataverse"
+        )
+        self.assertFalse(dataverse.selected)
+        self.assertEqual("UNVERIFIED", dataverse.mode)
+
+    def test_owner_gate_survives_live_currentness(self) -> None:
+        request = CapabilityRequest(
+            "send external email",
+            frozenset({"email", "communications"}),
+            consequential=True,
+        )
+        snapshots = {
+            "Gmail": PlatformCapabilitySnapshot(
+                platform="Gmail",
+                state=SurfaceState.VERIFIED_OPERATIONAL,
+                connector_connected=True,
+                provider_identity_verified=True,
+                read_verified=True,
+                write_verified=True,
+                semantic_readback_verified=True,
+                native_ai_callable=False,
+                native_ai_readback_verified=False,
+            )
+        }
+        gmail = next(
+            item for item in self.corps.route_with_currentness(
+                request,
+                snapshots,
+                {"Gmail": CapabilitySurfaceState.LIVE},
+            )
+            if item.platform == "Gmail"
+        )
+        self.assertFalse(gmail.selected)
+        self.assertTrue(gmail.owner_gate)
+        self.assertEqual("OWNER_GATE_REQUIRED", gmail.reason)
 
 
 if __name__ == "__main__":
