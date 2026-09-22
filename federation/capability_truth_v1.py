@@ -602,4 +602,12 @@ __all__ = [
     "capability_truth_index",
     "digest",
     "propagate_evidence",
+    "AdapterAvailability",
+    "AdapterObservation",
+    "AdapterRouteDecision",
+    "CapabilityCurrentnessFabric",
+    "CapabilityCurrentnessSnapshot",
+    "CapabilityRouteRequirement",
+    "CapabilitySurfaceState",
+    "PrivacyClass",
 ]
