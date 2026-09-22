@@ -1,6 +1,6 @@
 {
   "policy_id": "FEDOMEGA-GITHUB-AIRLOCK-V2",
-  "version": "2.9.37",
+  "version": "2.9.38",
   "mode": "DEFAULT_DENY_WITH_EXECUTION_QUARANTINE",
   "required_platform_controls": {
     "target_branch": "main",
@@ -66,7 +66,8 @@
     ".github/workflows/fuse-windows-relay-cloud-run-v1.yml",
     ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
     ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
-    ".github/workflows/work-plane-private-gcp-canary-v1.yml"
+    ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+    ".github/workflows/evidenceops-external-scheduler.yml"
   ],
   "allowed_events": {
     ".github/workflows/github-airlock.yml": [
@@ -240,6 +241,11 @@
     ],
     ".github/workflows/work-plane-private-gcp-canary-v1.yml": [
       "issues"
+    ],
+    ".github/workflows/evidenceops-external-scheduler.yml": [
+      "schedule",
+      "workflow_dispatch",
+      "push"
     ]
   },
   "required_push_branches": {
@@ -292,6 +298,9 @@
       "main"
     ],
     ".github/workflows/fuse-mobile-provider-currentness-v1.yml": [
+      "main"
+    ],
+    ".github/workflows/evidenceops-external-scheduler.yml": [
       "main"
     ]
   },
@@ -642,7 +651,8 @@
       ".github/workflows/cfbe-build-intelligence-reusable-v1.yml",
       ".github/workflows/fuse-windows-h1-provider-relay-v2.yml",
       ".github/workflows/fuse-windows-h1-machine-dispatch-adapter-v1.yml",
-      ".github/workflows/work-plane-private-gcp-canary-v1.yml"
+      ".github/workflows/work-plane-private-gcp-canary-v1.yml",
+      ".github/workflows/evidenceops-external-scheduler.yml"
     ],
     "provider_managed_active": [
       "dynamic/dependabot/dependabot-updates"
