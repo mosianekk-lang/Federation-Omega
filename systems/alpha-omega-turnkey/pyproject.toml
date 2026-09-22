@@ -1,7 +1,7 @@
 [project]
 name = "alpha-omega-turnkey-engine"
-version = "1.0.0"
-description = "Zero-touch concept-to-operational-system build orchestrator"
+version = "1.1.0"
+description = "Proof-bound concept-to-system engine with Formation-driven multi-path planning and safe multi-stream execution"
 requires-python = ">=3.11"
 dependencies = []
 
