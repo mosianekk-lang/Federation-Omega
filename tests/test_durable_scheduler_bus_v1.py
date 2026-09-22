@@ -1,9 +1,11 @@
 from datetime import datetime, timezone, timedelta
 import unittest
+from unittest.mock import patch
 
 from federation.durable_scheduler_bus_v1 import (
     DurableMission, ScheduleKind, default_handlers, due, next_route_family
 )
+from scheduler.github_issue_bus import GitHubIssueDurableWorker
 
 
 class DurableSchedulerBusV1Tests(unittest.TestCase):
@@ -62,6 +64,29 @@ class DurableSchedulerBusV1Tests(unittest.TestCase):
 
     def test_digest_stable(self):
         self.assertEqual(self.mission().digest, self.mission().digest)
+
+    def test_issue_discovery_uses_search_api_not_first_issue_page(self):
+        worker = GitHubIssueDurableWorker("owner/repo", "token")
+        observed = {}
+
+        def fake_request(url, token, **kwargs):
+            observed["url"] = url
+            observed["token"] = token
+            return {
+                "items": [
+                    {"number": 1648, "title": "[FUSE-MISSION] Durable Scheduler Canary 001"},
+                    {"number": 99, "title": "ordinary issue"},
+                ]
+            }
+
+        with patch("scheduler.github_issue_bus._request", side_effect=fake_request):
+            rows = worker.list_open()
+
+        self.assertIn("/search/issues?", observed["url"])
+        self.assertIn("repo%3Aowner%2Frepo", observed["url"])
+        self.assertIn("is%3Aissue", observed["url"])
+        self.assertEqual("token", observed["token"])
+        self.assertEqual([1648], [row["number"] for row in rows])
 
     def test_required_identity(self):
         with self.assertRaises(ValueError):

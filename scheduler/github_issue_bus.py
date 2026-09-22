@@ -2,6 +2,7 @@ from __future__ import annotations
 import json
 import os
 import urllib.request
+import urllib.parse
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -87,10 +88,21 @@ class GitHubIssueDurableWorker:
         self.handlers = default_handlers()
 
     def list_open(self):
-        data = _request(self.base + "/issues?state=open&per_page=100&sort=created&direction=asc", self.token)
+        # Use the Search API rather than the first page of /issues. Large FUSE
+        # repositories routinely have >100 open issues, and durable missions
+        # must not disappear simply because their issue number falls outside
+        # the first page.
+        query = f'repo:{self.repository} is:issue is:open in:title "{TITLE_PREFIX}"'
+        url = "https://api.github.com/search/issues?" + urllib.parse.urlencode({
+            "q": query,
+            "per_page": 100,
+            "sort": "created",
+            "order": "asc",
+        })
+        data = _request(url, self.token)
         return [
-            item for item in data
-            if "pull_request" not in item and str(item.get("title", "")).startswith(TITLE_PREFIX)
+            item for item in (data.get("items") or [])
+            if str(item.get("title", "")).startswith(TITLE_PREFIX)
         ]
 
     def comment(self, number: int, text: str):
