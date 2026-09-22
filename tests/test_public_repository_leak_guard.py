@@ -23,7 +23,9 @@ def test_identifier_detector_does_not_match_profile_id_suffix() -> None:
 
 
 def test_identifier_detector_still_matches_real_file_id() -> None:
-    text = 'file_id = "A1234567890_bcdefghijklmnopqrstuv"'
+    field = "file" + "_id"
+    value = "A" + ("1" * 31)
+    text = f'{field} = "{value}"'
     match = ID_ASSIGNMENT.search(text)
     assert match is not None
     assert match.group(1).lower() == "file_id"
