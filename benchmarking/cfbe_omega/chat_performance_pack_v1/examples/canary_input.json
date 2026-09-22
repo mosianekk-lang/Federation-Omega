@@ -1,0 +1,7 @@
+[
+  {"phase":"B1","slot":"s1","generation":1,"directly_observed":true,"duration_ms":100,"external_attempts":4,"proof_success":true,"invariant_failures":0,"harm_signals":0},
+  {"phase":"C1","slot":"s2","generation":1,"directly_observed":true,"duration_ms":40,"external_attempts":2,"proof_success":true,"invariant_failures":0,"harm_signals":0},
+  {"phase":"B2","slot":"s3","generation":1,"directly_observed":true,"duration_ms":110,"external_attempts":4,"proof_success":true,"invariant_failures":0,"harm_signals":0},
+  {"phase":"C2","slot":"s4","generation":1,"directly_observed":true,"duration_ms":45,"external_attempts":2,"proof_success":true,"invariant_failures":0,"harm_signals":0},
+  {"phase":"C3_STABILITY","slot":"s5","generation":1,"directly_observed":true,"duration_ms":42,"external_attempts":2,"proof_success":true,"invariant_failures":0,"harm_signals":0}
+]

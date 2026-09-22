@@ -1,0 +1,90 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "M-CFBE-CHAT-AUDIT-BUILD-20260904-V1",
+    "version": 1,
+    "goal": "Build a proof-gated local performance-control foundation for chat and agent workstreams.",
+    "user": "Kim Kagiso Mosiane",
+    "workflow": "audit -> benchmark -> snapshot -> ledger -> capsule -> canary -> proof",
+    "data": "Canonical JSON packets and SQLite receipts; no secrets persisted.",
+    "interface": "Python API and command-line interface.",
+    "stack": "Python 3.11 standard library and SQLite.",
+    "environment": "Local reversible runtime; provider integration excluded.",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation-gated A0/A1 scope with proof-state separation.",
+    "failure": "Fail closed on invalid input, stale snapshots, fence conflicts, proof loss, stream risk and missing metrics.",
+    "testing": "Unit, integration and CLI smoke tests with failure-first cases.",
+    "deployment": "No deployment in this mission; deploy command is an explicit no-op boundary.",
+    "continuity": "SQLite checkpoints, deterministic digests, handoff files and stop switch."
+  },
+  "classification": "LOCAL_PROD_FOUNDATION_NOT_DEPLOYED",
+  "assumptions": {
+    "stack": "Python 3.11+ standard library",
+    "runtime": "Single local process with SQLite locking; multi-host deployment requires an external durable database/runtime.",
+    "storage": "Local filesystem and SQLite WAL",
+    "authentication": "Snapshot HMAC key supplied via environment; no provider authentication",
+    "deployment": "Out of scope until separate owner authorization and provider-native canary"
+  },
+  "architecture": {
+    "components": {
+      "frontend": "CLI JSON interface",
+      "backend": "cfbe_chatperf Python package",
+      "database": "SQLite receipt ledger",
+      "queue": "Generation/slot receipt identity and controller lifecycle",
+      "worker": "Caller-owned deterministic execution",
+      "scheduler": "External scheduler adapter boundary; none created",
+      "cache": "Stable context capsule and source-epoch digest",
+      "storage": "Filesystem artifacts plus SQLite",
+      "authentication": "HMAC producer signature with environment-provided key"
+    },
+    "failure_modes": ["INVALID_INPUT","AUTHORIZATION_FAILURE","TIMEOUT","PARTIAL_WRITE","MISSING_CONFIGURATION","EXTERNAL_API_FAILURE"],
+    "observability": {
+      "correlation_ids": "mission_id, snapshot_id, task_id, generation and slot",
+      "health_checks": "CLI smoke plus ledger-chain and snapshot verification",
+      "structured_logs": "JSON CLI results",
+      "audit_logs": "Append-only hash-chained receipts",
+      "metrics_alerts": "Canary duration/call ratios, proof parity, invariant failures and harm signals"
+    }
+  },
+  "testing": {
+    "unit": "Six module test files",
+    "integration": "Ledger transaction/chain and snapshot/canary lifecycles",
+    "e2e_or_smoke": "CLI stream, benchmark and canary examples",
+    "fixtures_mocks": "Temporary SQLite databases and deterministic JSON fixtures",
+    "failure_first": "Tamper, stale, overflow, duplicate, fence, proof-loss, harm and missing-state tests",
+    "commands": ["PYTHONPATH=src python -m unittest discover -s tests -v", "PYTHONPATH=src python -m cfbe_chatperf.cli stream examples/stream_input.json"]
+  },
+  "delivery": {
+    "file_tree": "README, contract, governance/memory/handoff, src package, tests, examples and docs",
+    "exact_code_files": ["src/cfbe_chatperf/canonical.py","src/cfbe_chatperf/recovery_snapshot.py","src/cfbe_chatperf/ledger_head.py","src/cfbe_chatperf/context_capsule.py","src/cfbe_chatperf/canary_controller.py","src/cfbe_chatperf/benchmark.py","src/cfbe_chatperf/stream_guard.py","src/cfbe_chatperf/cli.py"],
+    "setup_commands": ["python -m pip install -e ."],
+    "run_commands": ["cfbe-chatperf --help"],
+    "test_commands": ["PYTHONPATH=src python -m unittest discover -s tests -v"],
+    "deploy_commands": ["NO_DEPLOYMENT_AUTHORIZED: integrate only after a fresh Formation permit and provider canary"],
+    "rollback_commands": ["Remove the not-yet-integrated package or restore the prior adapter; preserve ledger evidence"],
+    "debugging": "Run one failing test, inspect JSON issue codes and verify ledger chain; do not retry unchanged provider routes."
+  },
+  "formation": {
+    "mission_id": "M-CFBE-CHAT-AUDIT-BUILD-20260904-V1",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1",
+    "effectful_permit": "LOCAL-BUILD-PERMIT-CONSUMED",
+    "single_effectful_path": true
+  },
+  "watchman": {"preconditions":"Documentation gate ALLOW_CYCLE","stop_conditions":["user supersession","secret exposure","test failure","contract rejection","provider mismatch"],"rollback":"Local artifact is removable; provider state remains untouched."},
+  "continuity": {
+    "idempotency": "Unique task_id/generation/slot and identical-retry acceptance",
+    "checkpoints": "Signed snapshots and hash-chained SQLite head",
+    "resume_conditions": "Valid signature, freshness, coverage, generation and ledger fence",
+    "handoff_files": ["PROJECT_MEMORY.md","AI_HANDOFF.md","BUILD_CONTRACT.json"],
+    "stop_switch": "Caller stops on any HOLD/REJECT/QUARANTINE or user supersession"
+  },
+  "states": {"designed":true,"implemented":true,"tested":true,"registered":false,"authorized":true,"ready":true,"deployed":false,"proven":true},
+  "proof": {
+    "test_results": "47/47 unit tests PASS; compileall PASS; stream, benchmark and synthetic canary CLI smoke paths PASS on 2026-09-04.",
+    "semantic_verification": "Tamper/stale/coverage/generation snapshot rejection, fenced idempotent ledger and chain verification, byte-budget capsule, strict five-phase canary, evidence-state score split and stream quarantine were exercised. Synthetic fixture results do not establish provider performance.",
+    "deployment_readback": "NOT_APPLICABLE_NOT_DEPLOYED",
+    "unresolved_defects": []
+  }
+}
