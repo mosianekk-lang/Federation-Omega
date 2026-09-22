@@ -1,0 +1,20 @@
+{
+  "schema": "FCOA-INTERNAL-SUPER-ADMIN-PROFILE-V1",
+  "agent_id": "FCOA-OMEGA",
+  "passport_id": "ECP-FCOA-OMEGA-V1-001",
+  "work_plane_id": "WP-FCOA-BOOTSTRAP-001",
+  "inheritance": "ALL_REGISTERED_FUSE_OWNED_CURRENT_AND_FUTURE",
+  "internal_admin_actions": [
+    "CENSUS", "READ", "ROUTE", "COMPOSE", "TEST", "REPAIR", "UPGRADE", "CONFIGURE",
+    "DEPLOY", "ROLLBACK", "RECOVER", "RETIRE", "MODEL_ADMIN", "RUNTIME_ADMIN",
+    "UPDATE_ADMIN", "WORKPLANE_ADMIN", "MISSION_ADMIN", "JUDGE_ADMIN"
+  ],
+  "routing_doctrine": ["REUSE", "REBIND", "REPAIR", "EXTEND", "COMPOSE", "HARVEST", "BUILD_MINIMUM"],
+  "external_effect_gates": [
+    "EXTERNAL_MESSAGE", "EXTERNAL_PUBLISH", "SPEND", "IAM_CHANGE",
+    "DESTRUCTIVE_PROVIDER", "ACCOUNT_CHANGE"
+  ],
+  "foreign_fence_rule": "JOIN_OR_WAIT",
+  "provider_rule": "REAL_CREDENTIAL_PLUS_PROVIDER_AUTHORITY_PLUS_MISSION_EFFECT_SCOPE",
+  "owner_action_policy": "NO_OWNER_ACTION_WHILE_SAFE_MACHINE_ROUTE_EXISTS"
+}
