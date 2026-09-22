@@ -207,6 +207,27 @@ class CIOSRC8ProductionLaneTests(unittest.TestCase):
             path = self.source_file(f"evidenceops/capital_intelligence_os/{name}")
             self.assertIsInstance(json.loads(path.read_text(encoding="utf-8")), dict)
 
+    def test_main_push_discovery_is_provider_native_and_zero_mutation(self) -> None:
+        workflow = self.source_file(
+            ".github/workflows/cios-production-lane.yml"
+        ).read_text(encoding="utf-8")
+        discovery = workflow.split("\n  provider-discovery:\n", 1)[1].split(
+            "\n  provider:\n", 1
+        )[0]
+        self.assertIn("github.event_name == 'push'", discovery)
+        self.assertIn('"gcloud", "secrets", "describe"', discovery)
+        self.assertIn('"gcloud", "billing", "projects", "describe"', discovery)
+        self.assertIn('"provider_mutation_attempted": False', discovery)
+        self.assertIn('"secret_version_access_attempted": False', discovery)
+        for forbidden in (
+            "gcloud builds",
+            "gcloud run deploy",
+            "update-traffic",
+            "secrets versions access",
+        ):
+            with self.subTest(forbidden=forbidden):
+                self.assertNotIn(forbidden, discovery)
+
 
 if __name__ == "__main__":
     unittest.main()

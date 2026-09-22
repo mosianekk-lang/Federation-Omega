@@ -84,6 +84,178 @@ jobs:
           npm --prefix ops/federation_omega_operator test
           npm --prefix ops/federation_omega_operator run check
 
+  provider-discovery:
+    if: ${{ github.event_name == 'push' && github.ref == 'refs/heads/main' }}
+    needs: source-admission
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: read
+      id-token: write
+    steps:
+      - uses: actions/checkout@11d5960a326750d5838078e36cf38b85af677262
+        with:
+          ref: ${{ github.sha }}
+          persist-credentials: false
+
+      - name: Authenticate read-only discovery through repository-scoped WIF
+        id: google-auth
+        continue-on-error: true
+        uses: google-github-actions/auth@7c6bc770dae815cd3e89ee6cdf493a5fab2cc093
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+          workload_identity_provider: ${{ env.WIF_PROVIDER }}
+          service_account: ${{ env.DEPLOYER_SA }}
+
+      - name: Install pinned Google Cloud CLI action
+        id: setup-gcloud
+        continue-on-error: true
+        uses: google-github-actions/setup-gcloud@e427ad8a34f8676edf47cf7d7925499adf3eb74f
+        with:
+          project_id: ${{ env.PROJECT_ID }}
+
+      - name: Read exact provider authority without mutation
+        if: always()
+        env:
+          AUTH_OUTCOME: ${{ steps.google-auth.outcome }}
+          GCLOUD_OUTCOME: ${{ steps.setup-gcloud.outcome }}
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/cios-discovery
+          python - <<'PY'
+          import hashlib
+          import json
+          import os
+          import subprocess
+          from datetime import datetime, timezone
+          from pathlib import Path
+
+          project = os.environ["PROJECT_ID"]
+          region = os.environ["REGION"]
+          commands = {
+              "operator_service": [
+                  "gcloud", "run", "services", "describe", os.environ["OPERATOR_SERVICE"],
+                  "--project", project, "--region", region,
+                  "--format=json(metadata.name,status.url,status.latestReadyRevisionName,status.traffic,spec.template.spec.serviceAccountName,spec.template.spec.containers.image,spec.template.spec.containers.env.name)",
+              ],
+              "cios_service": [
+                  "gcloud", "run", "services", "describe", os.environ["CIOS_SERVICE"],
+                  "--project", project, "--region", region,
+                  "--format=json(metadata.name,status.url,status.latestReadyRevisionName,status.traffic,spec.template.spec.serviceAccountName,spec.template.spec.containers.image,spec.template.spec.containers.env.name)",
+              ],
+              "cloud_sql": [
+                  "gcloud", "sql", "instances", "describe", "cios-postgres",
+                  "--project", project,
+                  "--format=json(name,connectionName,region,databaseVersion,state,settings.backupConfiguration,settings.storageAutoResize,settings.deletionProtectionEnabled)",
+              ],
+              "artifact_registry": [
+                  "gcloud", "artifacts", "repositories", "describe", os.environ["REPOSITORY"],
+                  "--project", project, "--location", region,
+                  "--format=json(name,format,mode,createTime,updateTime)",
+              ],
+              "cios_runtime_identity": [
+                  "gcloud", "iam", "service-accounts", "describe", os.environ["CIOS_RUNTIME_SERVICE_ACCOUNT"],
+                  "--project", project, "--format=json(name,email,disabled,oauth2ClientId)",
+              ],
+              "deployer_identity": [
+                  "gcloud", "iam", "service-accounts", "describe", os.environ["DEPLOYER_SA"],
+                  "--project", project, "--format=json(name,email,disabled,oauth2ClientId)",
+              ],
+              "wif_provider": [
+                  "gcloud", "iam", "workload-identity-pools", "providers", "describe", "github",
+                  "--project", project, "--location", "global",
+                  "--workload-identity-pool", "github-federation-omega",
+                  "--format=json(name,state,disabled,attributeMapping,attributeCondition,oidc.issuerUri)",
+              ],
+              "billing_binding": [
+                  "gcloud", "billing", "projects", "describe", project,
+                  "--format=json(name,projectId,billingAccountName,billingEnabled)",
+              ],
+          }
+          for label, secret in {
+              "database_secret": os.environ["CIOS_DATABASE_SECRET"],
+              "audit_database_secret": os.environ["CIOS_AUDIT_DATABASE_SECRET"],
+              "bearer_secret": os.environ["CIOS_BEARER_SECRET"],
+          }.items():
+              commands[label] = [
+                  "gcloud", "secrets", "describe", secret, "--project", project,
+                  "--format=json(name,createTime,replication,labels)",
+              ]
+
+          observations = {}
+          for label, command in commands.items():
+              try:
+                  process = subprocess.run(command, text=True, capture_output=True, timeout=90)
+                  payload = None
+                  if process.stdout.strip():
+                      try:
+                          payload = json.loads(process.stdout)
+                      except json.JSONDecodeError:
+                          payload = {"non_json_output_sha256": hashlib.sha256(process.stdout.encode()).hexdigest()}
+                  observations[label] = {
+                      "ok": process.returncode == 0,
+                      "exit_code": process.returncode,
+                      "payload": payload,
+                      "error": process.stderr.strip()[-500:] if process.returncode else None,
+                  }
+              except Exception as exc:
+                  observations[label] = {
+                      "ok": False,
+                      "exit_code": None,
+                      "payload": None,
+                      "error": type(exc).__name__,
+                  }
+
+          all_reads_ok = all(item["ok"] for item in observations.values())
+          receipt = {
+              "schema": "CIOS-PROVIDER-AUTHORITY-DISCOVERY-1",
+              "recorded_at_utc": datetime.now(timezone.utc).isoformat(),
+              "repository": os.environ["GITHUB_REPOSITORY"],
+              "source_sha": os.environ["GITHUB_SHA"],
+              "ref": os.environ["GITHUB_REF"],
+              "run_id": os.environ["GITHUB_RUN_ID"],
+              "wif_authenticated": os.environ.get("AUTH_OUTCOME") == "success",
+              "gcloud_available": os.environ.get("GCLOUD_OUTCOME") == "success",
+              "all_reads_ok": all_reads_ok,
+              "status": "PROVIDER_DISCOVERY_COMPLETE" if all_reads_ok else "PROVIDER_DISCOVERY_PARTIAL",
+              "observations": observations,
+              "provider_mutation_attempted": False,
+              "secret_version_access_attempted": False,
+              "secret_values_recorded": False,
+              "production_claim": False,
+          }
+          receipt["receipt_sha256"] = hashlib.sha256(
+              json.dumps(receipt, sort_keys=True, separators=(",", ":")).encode()
+          ).hexdigest()
+          Path("/tmp/cios-discovery/provider-authority.json").write_text(
+              json.dumps(receipt, indent=2, sort_keys=True) + "\n", encoding="utf-8"
+          )
+          print(json.dumps({
+              "status": receipt["status"],
+              "source_sha": receipt["source_sha"],
+              "wif_authenticated": receipt["wif_authenticated"],
+              "all_reads_ok": receipt["all_reads_ok"],
+              "receipt_sha256": receipt["receipt_sha256"],
+              "secret_values_recorded": False,
+          }, sort_keys=True))
+          PY
+
+      - name: Upload provider-native discovery receipt
+        if: always()
+        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02
+        with:
+          name: cios-provider-discovery-${{ github.run_id }}-${{ github.run_attempt }}
+          path: /tmp/cios-discovery/provider-authority.json
+          if-no-files-found: error
+          retention-days: 90
+
+      - name: Enforce discovery transport truth
+        if: always()
+        run: |
+          set -euo pipefail
+          jq -e '.wif_authenticated == true and .gcloud_available == true' \
+            /tmp/cios-discovery/provider-authority.json >/dev/null
+
   provider:
     if: ${{ github.event_name == 'workflow_dispatch' }}
     needs: source-admission
