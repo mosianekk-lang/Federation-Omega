@@ -1,0 +1,91 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R4_CORE",
+      "patterns": [
+        ".github/workflows/evidenceops-external-scheduler.yml",
+        "governance/github_airlock_policy.json",
+        "governance/proofos_omega_policy_extension_scheduler_gateway_v1.json",
+        "tests/test_scheduler_gateway_admission_v1.py"
+      ],
+      "reason": "SCHEDULED_EXECUTION_GATEWAY_AUTHORITY_TRIGGER_AND_DURABILITY_BOUNDARY"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "SCHEDULER_GATEWAY_ADMISSION_V1",
+      "patterns": [
+        ".github/workflows/evidenceops-external-scheduler.yml",
+        "governance/github_airlock_policy.json",
+        "governance/proofos_omega_policy_extension_scheduler_gateway_v1.json",
+        "tests/test_scheduler_gateway_admission_v1.py"
+      ],
+      "depends_on": [
+        "DURABLE_SCHEDULER_BUS_V1"
+      ]
+    }
+  ],
+  "historical_associations": [
+    {
+      "patterns": [
+        ".github/workflows/evidenceops-external-scheduler.yml",
+        "governance/github_airlock_policy.json"
+      ],
+      "tests": [
+        "scheduler_gateway_airlock_contract_v1",
+        "durable_scheduler_bus_v1_core",
+        "scheduler_gateway_proofos_mapping_v1"
+      ],
+      "evidence": "PR1650_PR1651_BROAD_PROOFOS_FALLBACK_SPLIT_FORMATION_20260922"
+    }
+  ],
+  "tests": [
+    {
+      "id": "scheduler_gateway_airlock_contract_v1",
+      "kind": "unittest_glob",
+      "target": "test_scheduler_gateway_admission_v1.py",
+      "patterns": [
+        ".github/workflows/evidenceops-external-scheduler.yml",
+        "governance/github_airlock_policy.json"
+      ],
+      "subsystems": [
+        "SCHEDULER_GATEWAY_ADMISSION_V1"
+      ],
+      "failure_class": "AUTHORITY_OR_TRIGGER_REGRESSION",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "durable_scheduler_bus_v1_core",
+      "kind": "unittest_glob",
+      "target": "test_durable_scheduler_bus_v1.py",
+      "patterns": [
+        ".github/workflows/evidenceops-external-scheduler.yml"
+      ],
+      "subsystems": [
+        "SCHEDULER_GATEWAY_ADMISSION_V1",
+        "DURABLE_SCHEDULER_BUS_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 120
+    },
+    {
+      "id": "scheduler_gateway_proofos_mapping_v1",
+      "kind": "unittest_glob",
+      "target": "test_scheduler_gateway_admission_v1.py",
+      "patterns": [
+        "governance/proofos_omega_policy_extension_scheduler_gateway_v1.json",
+        "tests/test_scheduler_gateway_admission_v1.py"
+      ],
+      "subsystems": [
+        "SCHEDULER_GATEWAY_ADMISSION_V1"
+      ],
+      "failure_class": "SELECTOR_ESCAPE",
+      "block_scope": "GLOBAL",
+      "timeout_seconds": 120
+    }
+  ]
+}
