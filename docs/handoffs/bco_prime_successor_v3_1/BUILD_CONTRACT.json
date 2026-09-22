@@ -1,0 +1,142 @@
+{
+  "contract_version": "3.3",
+  "mission": {
+    "id": "CFBE-BCO-V3-1-20260901",
+    "version": 1,
+    "goal": "Deliver a separate, proof-gated BCO-Prime v3.1 release with trust-pinned signed baselines, deterministic drift, privacy-first incremental capability extraction, sticky regression quarantine and shadow-only repair planning while preserving sealed predecessors.",
+    "user": "Kim Kagiso Mosiane as owner and local operator",
+    "workflow": "Verify a signed baseline against an external trust fingerprint, compare complete local state, scan authorized local sources, classify drift and holds, generate a non-executable repair plan, append one scoreboard event and return a hash-bound receipt.",
+    "data": "Contained local files, complete predecessor archive manifest, policy/capability/test/result baselines, semantic Capability DNA, occurrence identities, scanner holds, drift events, scoreboards and proof receipts.",
+    "interface": "Python library and command-line interface",
+    "stack": "Python 3.12 standard library plus the unchanged inherited v2/v3 modules and verified adjacent CFF dependency",
+    "environment": "Isolated local filesystem with one on-demand process, no network crawler, provider adapter, daemon or deployment",
+    "maturity": "PROD_FOUNDATION",
+    "governance": "Formation A1 local authority, documentation gate, JARVIS target mode, zero-harm preflight, RealityGuard, ProofOS, external trust-root requirement, sticky quarantine and no stable promotion.",
+    "failure": "Typed rejection, hold, quarantine or cancellation for invalid scalar types, effect escape, signature/trust/replay failure, incomplete coverage, path/symlink/root/file races, budgets, secrets, licences, dependency gaps, test/result drift, concurrency and rollback mismatch.",
+    "testing": "Syntax, 67 repository tests, standalone exhaustive route proof, signature/tamper/replay, privacy/licence, path/race/concurrency, cancellation, sticky quarantine, strict coercion, fresh extraction, package integrity, MODISA and RealityGuard.",
+    "deployment": "NOT_APPLICABLE: deployment, registration, provider mutation, recurring execution and stable promotion are not authorized.",
+    "continuity": "Signed baseline, append-only scoreboard, source/archive manifests, package and receipt hashes, README, architecture, Formation specification, project memory, AI handoff and ChatBridge."
+  },
+  "classification": ["CLI", "Library", "Data Pipeline", "Test Suite", "Local Audit Ledger", "Integrity Monitor"],
+  "assumptions": {
+    "stack": "Python 3.12 standard library; Linux flock is available for local writer serialization.",
+    "runtime": "The caller invokes one bounded process and supplies exact roots, mission version and external signer fingerprint.",
+    "storage": "Baseline, scoreboard, pointer and proof stay below caller-selected local roots.",
+    "authentication": "Source authority is explicitly scoped; baseline trust is an externally supplied public-key fingerprint. No provider credentials are used.",
+    "deployment": "The artifact is packaged for private retrieval only. Provider activation requires a separate authority cycle and semantic readback."
+  },
+  "architecture": {
+    "components": {
+      "frontend": "NOT_APPLICABLE: the supported surface is a CLI and Python library.",
+      "backend": "SuccessorRegistryV31 strictly dispatches nine additive operations and delegates every inherited namespace.",
+      "database": "Append-only hash-chained local scoreboard JSONL plus atomic baseline and control-pointer JSON.",
+      "queue": "NOT_APPLICABLE: dispatch is synchronous and bounded.",
+      "worker": "The invoking Python process runs one locked cycle; no worker survives return.",
+      "scheduler": "NOT_APPLICABLE: no schedule or background daemon is created.",
+      "cache": "NOT_APPLICABLE: every integrity check rehashes in-scope files; cursor state only resumes extraction.",
+      "storage": "Contained local roots with safe relative paths, no-follow reads, size/count/depth limits and atomic replacement.",
+      "authentication": "External trust-root fingerprint, baseline generation and parent hash authenticate comparison state; source ID, tenant and matter bind scans."
+    },
+    "state_model": "REQUESTED -> TRUST_VERIFIED -> COMPARED -> SCANNED -> SCORED -> COMMITTED, or SIGNATURE_HOLD, PARTIAL, SECRET_HOLD, LICENSE_HOLD, HOLD, QUARANTINED, CANCELLED, CONFLICT or ROLLED_BACK_CONTROL_POINTER_ONLY.",
+    "transaction_boundary": "One nonblocking interprocess cycle lock; cancellation checks before lock, compare, candidate and commit; one O_APPEND+fsync scoreboard event is the commit.",
+    "failure_modes": ["INVALID_INPUT", "AUTHORIZATION_FAILURE", "TIMEOUT", "PARTIAL_WRITE", "MISSING_CONFIGURATION", "EXTERNAL_API_FAILURE"],
+    "failure_controls": {
+      "INVALID_INPUT": "Strict Boolean/integer/finite JSON checks, normalized effect-key denial, schema/range/path validation and deterministic ordering.",
+      "AUTHORIZATION_FAILURE": "Missing external signer fingerprint, bad generation/parent, source bindings, secret/licence hold and external effects fail closed.",
+      "TIMEOUT": "Budgets, cancellation checkpoints, no unbounded retry and on-demand stop prevent runaway work.",
+      "PARTIAL_WRITE": "Atomic baseline/pointer replacement, locked scoreboard append, fsync and complete chain verification reject truncation.",
+      "MISSING_CONFIGURATION": "Missing trust, signing seed, cursor key for partial resume or bounded root returns an exact hold or BLOCKED_WITH_ROUTE.",
+      "EXTERNAL_API_FAILURE": "NOT_APPLICABLE: no external API exists; network/provider requests are rejected before dispatch."
+    },
+    "observability": {
+      "correlation_ids": "Mission, mission version, cycle ID, baseline body hash, scanner scope hash and scoreboard event hash.",
+      "health_checks": "Canonical core=100, v3=14, v3.1=9, runtime on demand and all effect/promotion flags false.",
+      "structured_logs": "Hash-bound operation receipts and canonical JSON scoreboard events.",
+      "audit_logs": "Signed baseline envelope, complete predecessor manifest, drift receipt, scan diff, shadow plan and append-only scoreboard.",
+      "metrics_alerts": "Coverage, scanned files/bytes, holds, drift classes, hard veto count, score and quarantine state; no remote sink."
+    }
+  },
+  "testing": {
+    "unit": "Lamport signing/verification, secure hashing, secret/licence detection, semantic DNA, cursor HMAC, drift classes, score and repair plan.",
+    "integration": "Registry inheritance, all nine v3.1 routes, governed cycle, scoreboard append, cancellation and control-pointer rollback.",
+    "e2e_or_smoke": "CLI health and standalone verifier across 100 core, 24 legacy, 2 meta, 8 expected-blocked engine, 14 v3 and 9 v3.1 routes.",
+    "fixtures_mocks": "Temporary roots, ZIP predecessors, signed baselines, safe/secret/licence sources, tampered cursors/signatures and interprocess lock contention.",
+    "failure_first": "Signature tamper/substitution/replay, signer absence, ZIP duplicates/traversal, symlinks, partial coverage, secret metadata, licence compounds, hard regressions, sticky quarantine, effect-key variants, string Boolean coercion and verifier seed length.",
+    "commands": [
+      "python -m compileall -q benchmarking tests scripts",
+      "python -m unittest discover -s tests -p 'test_*.py'",
+      "python scripts/verify_bco_prime_successor_v3_1.py --workspace-root ./v31-proof",
+      "python /root/.codex/skills/remote-skills/validate-modisa-build-contracts/scripts/validate_build_contract.py BUILD_CONTRACT.json --require-proof"
+    ]
+  },
+  "delivery": {
+    "file_tree": "Inherited upstream and cff_unpacked siblings plus four v3.1 modules, manifest, exhaustive verifier, four v3.1 test files, architecture, policy, baseline, proof and three handoff documents.",
+    "exact_code_files": [
+      "benchmarking/cfbe_omega/bco_prime_baseline_registry_v3_1.py",
+      "benchmarking/cfbe_omega/bco_prime_drift_harvest_v3_1.py",
+      "benchmarking/cfbe_omega/bco_prime_cycle_v3_1.py",
+      "benchmarking/cfbe_omega/bco_prime_successor_v3_1.py",
+      "scripts/verify_bco_prime_successor_v3_1.py"
+    ],
+    "setup_commands": ["Use Python 3.12 or later; no third-party package installation is required."],
+    "run_commands": ["python -m benchmarking.cfbe_omega.bco_prime_successor_v3_1 --workspace-root ./v31-workspace health"],
+    "test_commands": ["python -m unittest discover -s tests -p 'test_*.py'", "python scripts/verify_bco_prime_successor_v3_1.py --workspace-root ./v31-proof"],
+    "deploy_commands": ["NOT_APPLICABLE: deployment is outside authority."],
+    "rollback_commands": ["Stop v3.1 invocation and select the sealed v3.0 package; the optional rollback operation changes only a verified local control pointer."],
+    "debugging": {
+      "SIGNATURE_OR_BASELINE_HOLD": "Verify the external fingerprint, generation, parent, body and envelope hashes; never trust a replacement key from the baseline.",
+      "PARTIAL_OR_UNKNOWN": "Complete the bounded scan or resume with a valid signed cursor; do not claim deletion or no-drift.",
+      "SECRET_HOLD": "Exclude the held source from DNA; no raw secret/path/symbol data is emitted.",
+      "LICENSE_HOLD": "Supply compatible authoritative dependency licence evidence or keep the capability quarantined.",
+      "CONCURRENT_CYCLE_CONFLICT": "Preserve the active cycle and retry only after its lock is released; never duplicate a commit.",
+      "QUARANTINED": "Repair and independently retest under a new mission; this system cannot auto-clear quarantine."
+    }
+  },
+  "formation": {
+    "mission_id": "CFBE-BCO-V3-1-20260901",
+    "mission_version": 1,
+    "gate_decision": "EXECUTE",
+    "authority_class": "A1_LOCAL_INTERNAL",
+    "effectful_permit": "Single-use Formation permits gate each isolated local write, test, package and private persistence action.",
+    "single_effectful_path": true
+  },
+  "watchman": {
+    "blocked_capability": "Untrusted baseline signing, partial no-drift, automated repair application, monitored-source mutation, network/provider effect, deployment, registration and stable promotion.",
+    "blocker": "The runtime has no external signer authority, provider executor or deployment authority; held or partial evidence cannot be promoted.",
+    "safe_substitute": "Trust-pinned verification, local complete comparison, privacy-first extraction, sticky quarantine and declarative shadow repair planning.",
+    "closure_test": "Supply an authorized one-time signing seed, persist its public fingerprint in a separate trusted receipt, complete every scan, pass all tests and obtain separate provider authority with semantic readback."
+  },
+  "continuity": {
+    "idempotency": "Pure receipts are deterministic; cycle IDs, one lock, baseline generation, hash chains and control-pointer hashes reject duplicate or stale effects.",
+    "checkpoints": "Signed baseline, scanner cursor, cycle scoreboard, source/archive/package manifests, Formation packet, release receipt and ChatBridge.",
+    "resume_conditions": "Verify sealed lineage, package/source manifests, external signer fingerprint, scoreboard chain and current mission version, then rerun the suite.",
+    "handoff_files": ["docs/handoffs/bco_prime_successor_v3_1/FORMATION_SPEC.md", "docs/handoffs/bco_prime_successor_v3_1/PROJECT_MEMORY.md", "docs/handoffs/bco_prime_successor_v3_1/AI_HANDOFF.md"],
+    "stop_switch": "Terminate the invoking process. No worker, scheduler, queue, lease, network session or recurring task remains active."
+  },
+  "states": {
+    "designed": true,
+    "implemented": true,
+    "tested": true,
+    "registered": false,
+    "authorized": true,
+    "ready": true,
+    "deployed": false,
+    "proven": true
+  },
+  "proof": {
+    "test_results": [
+      "67 of 67 repository tests passed, including all 53 predecessor tests.",
+      "The standalone verifier passed 100 core, 24 legacy, 2 v2 meta, 8 expected-blocked engine, 14 v3 and 9 v3.1 routes.",
+      "Concurrent flight appends, effect-key variants, strict scalar types, trust-root substitution, signature tamper/replay, privacy/licence holds, partial scans, cancellation, sticky quarantine and rollback mismatch are permanent regressions.",
+      "The first verifier signing fixture was correctly rejected for a 31-byte seed; the repaired fixture uses the exact required 32 bytes."
+    ],
+    "deployment_readback": "NOT_APPLICABLE: no deployment or provider mutation is authorized.",
+    "semantic_verification": [
+      "Health preserves canonical core=100, v3=14 and adds exactly 9 v3.1 operations.",
+      "A clean trust-pinned complete baseline produces NO_DRIFT and PASS; partial, tampered and hard-regression cases veto.",
+      "Secret-bearing files emit no DNA/content/raw metadata, and all repair candidates remain declarative executable=false.",
+      "Cycle cancellation prevents commit; rollback changes only the local control pointer."
+    ],
+    "unresolved_defects": []
+  }
+}

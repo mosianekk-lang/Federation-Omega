@@ -1,0 +1,27 @@
+{
+  "schema": "BCO_PRIME_CHAT_FORENSICS_V1",
+  "version": "1.0.0",
+  "mode": "A1_INTERNAL_ZERO_MANUAL_NO_EFFECT",
+  "extends": "BCO_PRIME_CAPABILITY_FABRIC_V1",
+  "canonical_core_capability_count_unchanged": 100,
+  "capability_count": 24,
+  "manual_user_tasks": [],
+  "owner_action_required": false,
+  "external_effect": false,
+  "provider_effect_authorized": false,
+  "stable_self_promotion_authorized": false,
+  "domains": [
+    {"name": "acquisition", "operations": ["bind_conversation_identity", "inventory_sources", "rank_sources", "capability_probe"]},
+    {"name": "normalization", "operations": ["scope_filter", "fallback_route", "canonical_hash", "event_chain"]},
+    {"name": "completion", "operations": ["timestamp_coverage", "terminal_event", "blank_turn", "trace_lineage"]},
+    {"name": "failure", "operations": ["finalization_failure", "checkpoint_gap", "workload_pressure", "connector_pressure"]},
+    {"name": "proof", "operations": ["error_provenance", "provider_durability", "claim_fruit", "cff_status"]},
+    {"name": "recovery", "operations": ["shield_state", "recovery_plan", "audit_receipt", "harvest_summary"]}
+  ],
+  "truth_boundary": [
+    "analyzes supplied evidence only",
+    "does not claim access to hidden prompts, native telemetry, or server-side causes",
+    "does not dispatch browser or provider effects",
+    "does not alter the canonical BCO-Prime 100-capability invariant"
+  ]
+}

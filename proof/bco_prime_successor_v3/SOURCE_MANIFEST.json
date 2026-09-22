@@ -1,0 +1,47 @@
+{
+  "schema": "BCO_PRIME_SUCCESSOR_SOURCE_MANIFEST_V3",
+  "version": "3.0.0",
+  "generatedAt": "2026-09-01T14:40:00+02:00",
+  "missionId": "CFBE-BCO-AUTOPILOT-20260901",
+  "lineage": {
+    "sealedV2Archive": {
+      "name": "CFBE_BCO_PRIME_CHAT_FORENSICS_V2_0_0.zip",
+      "sha256": "e7bc80b11cf6f82ebc84f757a1c62015f4e3fc15979aa18767921b5c4866cf1a",
+      "state": "SEALED_UNCHANGED"
+    },
+    "canonicalCoreSha256": "58cb8a59caf63cee9ba4dc3e07de732bbd2f727c2ccd8c7fb961a919406b6cf9",
+    "legacyV1Sha256": "067950e2fc4436992875e3514404b680bc68636e1342bb51b0832e0d1575fad9",
+    "v2ImplementationSha256": "6865ab5906181cd0e5d2443398b3f3f6a696fab7e35ab0bd939bed927d2c136e",
+    "cffEngineSha256": "e56e002e7e0c5e95cc0b5cc13279f12da6e45fd8eb137156f5f661f0cf67e016",
+    "cffDependencySha256": "6226812cbf69335cfb74e3be244d107202eb065019321767411cdb951f1bbe7b",
+    "releaseTopology": "upstream_and_cff_unpacked_siblings"
+  },
+  "files": [
+    {"path": "README.md", "sha256": "2f300fd7750342ccd3ccf620399d53e0a5e6d27855dbd9ccc1ea1f732afcee45"},
+    {"path": "BUILD_CONTRACT.json", "sha256": "48d991ea18d2229b212887768ecd9c57e29da4be0153d58a49222532ba6762e0"},
+    {"path": "benchmarking/cfbe_omega/bco_prime_flight_recorder_v3.py", "sha256": "fe252fa8df3e02f90325f4adf0e97764ac5e803204589d23333ab08b6a3cb137"},
+    {"path": "benchmarking/cfbe_omega/bco_prime_harvesting_fabric_v1.py", "sha256": "2b38da88b6e8c3ec56dea1623f02630effbf99e2501be5ec7b86573bf352a561"},
+    {"path": "benchmarking/cfbe_omega/bco_prime_adaptive_intelligence_v1.py", "sha256": "5bd51c60ee9929e76dd3303454c5c4a3e15ef7aa73894b2861527467416d22bb"},
+    {"path": "benchmarking/cfbe_omega/bco_prime_successor_v3.py", "sha256": "4d36ddc47fa56a631406184f2d8d5f292c79a1fe3ffdff20d6073a4d93b4317a"},
+    {"path": "benchmarking/cfbe_omega/BCO_PRIME_SUCCESSOR_V3.json", "sha256": "302815dff12ab772a0af43d370299761a02441cfdfca22db12b8b324e02c31c6"},
+    {"path": "scripts/verify_bco_prime_successor_v3.py", "sha256": "5055840dd4d1c8e112f436dbf3bb88696afccbf55014606562e258b73efbe986"},
+    {"path": "tests/test_bco_prime_flight_recorder_v3.py", "sha256": "14a853af7719611bfacf08d05fe32575c8b19693d33c6d93dfa50e32f117ea42"},
+    {"path": "tests/test_bco_prime_harvesting_fabric_v1.py", "sha256": "2a03212dea316fbdedfa71d5521677eb7ccea64c226deb462676ee8d07717f18"},
+    {"path": "tests/test_bco_prime_adaptive_intelligence_v1.py", "sha256": "2c4a368c5112504c3a3ad51d0c395b03f4c02e7df30c29b8c9ac9e66a43564d6"},
+    {"path": "tests/test_bco_prime_successor_v3.py", "sha256": "e662c730ffd8707069e854dc009c6f48e9ae22b25200690e9389fb6694e35606"},
+    {"path": "tests/test_bco_prime_release_verifier_v3.py", "sha256": "a6956cc78b5af57fe7284e915b0638e5d82b799922bcbc7083773be51ee807fa"},
+    {"path": "docs/architecture/BCO_PRIME_SUCCESSOR_V3.md", "sha256": "5cc1485154e24e818744c68b981f59f9b8cf217f2d2e219acc75a312b7274a90"},
+    {"path": "docs/handoffs/bco_prime_successor_v3/FORMATION_SPEC.md", "sha256": "267ce568f0df961f498a4504042f805ad9ba00ddf29533be4f1d04d1f2645be3"},
+    {"path": "docs/handoffs/bco_prime_successor_v3/PROJECT_MEMORY.md", "sha256": "125ca659c2cfe21a4da75229213f51c439230766b5c074f9b0907ae865b31e79"},
+    {"path": "docs/handoffs/bco_prime_successor_v3/AI_HANDOFF.md", "sha256": "a630cf53a197d3b2bae306b74840d891e5947f451318be05c36e720d9f95c1ab"},
+    {"path": "governance/proofos_omega_policy_extension_bco_prime_successor_v3.json", "sha256": "aee1b209f84e91aec445524de8bde3ea3c30a61768863f2d48363bb6e9a84209"}
+  ],
+  "fileCount": 18,
+  "canonicalCoreCount": 100,
+  "successorOperationCount": 14,
+  "runtimeState": "ON_DEMAND_GOVERNED",
+  "providerEffectAuthorized": false,
+  "stablePromotionAuthorized": false,
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}

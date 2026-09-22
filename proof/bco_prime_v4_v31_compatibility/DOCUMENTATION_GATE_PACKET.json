@@ -1,0 +1,136 @@
+{
+  "cycle": {
+    "id": "DOC-CFBE-BCO-V4-COMPAT-20260902-01",
+    "missionId": "CFBE-BCO-V4-COMPAT-20260902",
+    "missionVersion": 1,
+    "inputHash": "sha256:705cbcea033b43453c559dbeb618091f4a1833beca635e0eab0493c7bd3b27a2",
+    "selectedRoute": "ISOLATED_LOCAL_PYTHON_BUILD",
+    "routeCapabilities": [
+      {
+        "name": "LOCAL_FILESYSTEM",
+        "applicable": true,
+        "requiredDocumentationCategories": ["LOCAL_FILESYSTEM_SAFETY"]
+      },
+      {
+        "name": "PYTHON_3_12",
+        "applicable": true,
+        "requiredDocumentationCategories": ["PYTHON_RUNTIME", "V31_COMPATIBILITY_CONTRACT", "V4_DECISION_CONTRACT"]
+      },
+      {
+        "name": "MODISA_VALIDATOR",
+        "applicable": true,
+        "requiredDocumentationCategories": ["MODISA_BUILD_CONTRACT"]
+      }
+    ],
+    "routeCapabilityBindingComplete": true,
+    "routeCapabilitySnapshotHash": "sha256:69667a542f638f9ef47c7bf357be6f3e851afb0271041375fe76a0c9be39c00e",
+    "preflightRouteCapabilitySnapshotHash": "sha256:69667a542f638f9ef47c7bf357be6f3e851afb0271041375fe76a0c9be39c00e",
+    "firstTaskActionStarted": false
+  },
+  "requirements": [
+    {"category": "LOCAL_FILESYSTEM_SAFETY", "applicable": true},
+    {"category": "PYTHON_RUNTIME", "applicable": true},
+    {"category": "V31_COMPATIBILITY_CONTRACT", "applicable": true},
+    {"category": "V4_DECISION_CONTRACT", "applicable": true},
+    {"category": "MODISA_BUILD_CONTRACT", "applicable": true}
+  ],
+  "documents": [
+    {
+      "id": "MODISA-CODE-FORGE-V3-3",
+      "title": "MODISA Code-Forge v3.3 Contract",
+      "category": "LOCAL_FILESYSTEM_SAFETY",
+      "source": "/root/.codex/skills/remote-skills/skill-6a630f628e5c8191b18621fffd24f5a1/references/code-forge-contract.md",
+      "versionOrDate": "3.3",
+      "state": "READ_COMPLETE",
+      "applicable": true,
+      "totalUnits": 1,
+      "readUnits": 1,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:9b081025ca791b5fb7e03ae8984682ebc5df5698f0aca2034260599230d5a5f0",
+      "temporallyUnstable": false
+    },
+    {
+      "id": "PYTHON-LOCAL-RUNTIME",
+      "title": "BCO-Prime v3.1 build contract runtime declaration",
+      "category": "PYTHON_RUNTIME",
+      "source": "/workspace/scratch/c96efc8486a3/v31-drift-canary.ZWNhqr/upstream/BUILD_CONTRACT.json",
+      "versionOrDate": "3.3 / 2026-09-01 baseline",
+      "state": "READ_COMPLETE",
+      "applicable": true,
+      "totalUnits": 142,
+      "readUnits": 142,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:57dfd0add7c8424d61714bb778c081d8bc5e684ef90a043c44abe12e7cf68101",
+      "temporallyUnstable": false
+    },
+    {
+      "id": "BCO-PRIME-V31-REGISTRY",
+      "title": "BCO-Prime successor v3.1 registry source contract",
+      "category": "V31_COMPATIBILITY_CONTRACT",
+      "source": "/workspace/scratch/c96efc8486a3/v31-drift-canary.ZWNhqr/upstream/benchmarking/cfbe_omega/bco_prime_successor_v3_1.py",
+      "versionOrDate": "3.1.0",
+      "state": "READ_COMPLETE",
+      "applicable": true,
+      "totalUnits": 286,
+      "readUnits": 286,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:111e37d3f6d990819f5d7ce6463cf62babb13aa3cdbb20db1490ec9366211a26",
+      "temporallyUnstable": false
+    },
+    {
+      "id": "BCO-PRIME-V4-INSTITUTION",
+      "title": "BCO-Prime v4 anticipatory institution source contract",
+      "category": "V4_DECISION_CONTRACT",
+      "source": "/workspace/scratch/c96efc8486a3/cfbe-reactivation-readback.6eXap4/github-v4/benchmarking/cfbe_omega/bco_prime_anticipatory_institution_v4.py",
+      "versionOrDate": "v4 source readback 2026-09-02",
+      "state": "READ_COMPLETE",
+      "applicable": true,
+      "totalUnits": 819,
+      "readUnits": 819,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:3cada8deb311b9fcefe04990c0063086b0e623884591d23fe3359d258c04d0c8",
+      "temporallyUnstable": false
+    },
+    {
+      "id": "BCO-PRIME-V4-GENOME-BRIDGE",
+      "title": "BCO-Prime v4 strategic genome bridge source contract",
+      "category": "V4_DECISION_CONTRACT",
+      "source": "/workspace/scratch/c96efc8486a3/cfbe-reactivation-readback.6eXap4/github-v4/benchmarking/cfbe_omega/bco_prime_v4_strategic_genome_bridge.py",
+      "versionOrDate": "v4 source readback 2026-09-02",
+      "state": "READ_COMPLETE",
+      "applicable": true,
+      "totalUnits": 115,
+      "readUnits": 115,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:937024053bf593a03ffa59b21dea301f9ab2ce8c7fd86e684ba4669aa3e3f33c",
+      "temporallyUnstable": false
+    },
+    {
+      "id": "MODISA-BUILD-SCHEMA",
+      "title": "MODISA BUILD_CONTRACT.json schema",
+      "category": "MODISA_BUILD_CONTRACT",
+      "source": "/root/.codex/skills/remote-skills/validate-modisa-build-contracts/references/build-contract-schema.md",
+      "versionOrDate": "3.3",
+      "state": "READ_COMPLETE",
+      "applicable": true,
+      "totalUnits": 1,
+      "readUnits": 1,
+      "requiredReferencesResolved": true,
+      "bytesAvailable": true,
+      "contentHash": "sha256:95031d328e319987b424156c8d8dc01cc8284a9cb77a430109ac27eb4e14239b",
+      "temporallyUnstable": false
+    }
+  ],
+  "competencyAssessment": {
+    "performed": true,
+    "decision": "NO_CHANGE",
+    "authorityExpansion": false,
+    "recurringCost": 0,
+    "reason": "This bounded adapter reuses existing interface and governance patterns; no reusable skill change is justified."
+  }
+}

@@ -1,0 +1,23 @@
+{
+  "schema": "BCO_PRIME_SUCCESSOR_V3_1",
+  "version": "3.1.0",
+  "predecessorArchiveSha256": "4dc2a02c8501a2042fd09a58c51a61045f9c7aa07864f75d10b59a6d8953903e",
+  "canonicalCoreCapabilityCountUnchanged": 100,
+  "v3OperationCountUnchanged": 14,
+  "v3_1OperationCount": 9,
+  "components": [
+    "BCO_PRIME_BASELINE_REGISTRY_V3_1",
+    "BCO_PRIME_DRIFT_HARVEST_V3_1",
+    "BCO_PRIME_GOVERNED_CYCLE_V3_1",
+    "BCO_PRIME_SUCCESSOR_V3_1"
+  ],
+  "baselineTrustRootRequired": true,
+  "baselineAutoAdvanceAuthorized": false,
+  "quarantineAutoClearAuthorized": false,
+  "sourceMutationAuthorized": false,
+  "providerEffectAuthorized": false,
+  "stablePromotionAuthorized": false,
+  "runtimeState": "ON_DEMAND_GOVERNED",
+  "manualUserTasks": [],
+  "ownerActionRequired": false
+}
