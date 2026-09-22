@@ -47,15 +47,35 @@ def changed_paths(base: str, head: str) -> list[tuple[str, str]]:
 
 
 def workflow_events(text: str) -> set[str]:
+    """Return only triggers declared beneath the top-level on mapping.
+
+    Permission keys such as permissions: issues: write must never be
+    interpreted as workflow events.
+    """
     known = {
         "pull_request", "pull_request_target", "push", "schedule",
         "workflow_run", "workflow_dispatch", "workflow_call", "merge_group",
         "issues", "issue_comment", "repository_dispatch",
     }
+    inline = re.search(r"(?m)^on\s*:\s*\[(?P<items>[^\]]*)\]\s*$", text)
+    if inline:
+        return {
+            item.strip().strip("'\"")
+            for item in inline.group("items").split(",")
+            if item.strip().strip("'\"") in known
+        }
+
+    block = re.search(
+        r"(?ms)^on\s*:\s*\n(?P<body>(?:^[ \t]+.*(?:\n|$))*)",
+        text,
+    )
+    if not block:
+        return set()
+    body = block.group("body")
     return {
         event
         for event in known
-        if re.search(rf"(?m)^\s{{0,4}}{re.escape(event)}\s*:", text)
+        if re.search(rf"(?m)^ {{2}}{re.escape(event)}\s*:", body)
     }
 
 
