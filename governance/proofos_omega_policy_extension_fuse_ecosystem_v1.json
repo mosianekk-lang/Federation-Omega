@@ -1,0 +1,49 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "federation/fuse_ecosystem_v1.py",
+        "tests/test_fuse_ecosystem_v1.py",
+        "governance/fuse_ecosystem_v1.json",
+        "docs/FUSE_ECOSYSTEM_V1.md",
+        "governance/proofos_omega_policy_extension_fuse_ecosystem_v1.json"
+      ],
+      "reason": "FUSE_ECOSYSTEM_PROVIDER_NEUTRAL_SERVICE_FACADE"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FUSE_ECOSYSTEM_V1",
+      "patterns": [
+        "federation/fuse_ecosystem_v1.py",
+        "tests/test_fuse_ecosystem_v1.py",
+        "governance/fuse_ecosystem_v1.json",
+        "docs/FUSE_ECOSYSTEM_V1.md",
+        "governance/proofos_omega_policy_extension_fuse_ecosystem_v1.json"
+      ],
+      "depends_on": ["FUSE_CAPABILITY_TRUTH_V1"]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fuse_ecosystem_v1",
+      "kind": "unittest_glob",
+      "target": "test_fuse_ecosystem_v1.py",
+      "patterns": [
+        "federation/fuse_ecosystem_v1.py",
+        "tests/test_fuse_ecosystem_v1.py",
+        "governance/fuse_ecosystem_v1.json",
+        "docs/FUSE_ECOSYSTEM_V1.md",
+        "governance/proofos_omega_policy_extension_fuse_ecosystem_v1.json"
+      ],
+      "subsystems": ["FUSE_ECOSYSTEM_V1","FUSE_CAPABILITY_TRUTH_V1"],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
