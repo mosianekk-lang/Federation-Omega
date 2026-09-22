@@ -1,4 +1,4 @@
-from evidenceops.security.public_repository_leak_guard import OPENAI_KEY_PATTERN
+from evidenceops.security.public_repository_leak_guard import ID_ASSIGNMENT, OPENAI_KEY_PATTERN
 
 
 def test_detects_project_scoped_openai_key_pattern() -> None:
@@ -15,3 +15,15 @@ def test_ignores_short_or_placeholder_values() -> None:
     assert OPENAI_KEY_PATTERN.search("OPENAI_API_KEY") is None
     assert OPENAI_KEY_PATTERN.search("REDACTED") is None
     assert OPENAI_KEY_PATTERN.search("sk" + "-short") is None
+
+
+def test_identifier_detector_does_not_match_profile_id_suffix() -> None:
+    text = 'PROFILE_ID = "FCOA_INTERNAL_SUPER_ADMIN_V1"'
+    assert ID_ASSIGNMENT.search(text) is None
+
+
+def test_identifier_detector_still_matches_real_file_id() -> None:
+    text = 'file_id = "A1234567890_bcdefghijklmnopqrstuv"'
+    match = ID_ASSIGNMENT.search(text)
+    assert match is not None
+    assert match.group(1).lower() == "file_id"
