@@ -3,6 +3,13 @@ from dataclasses import dataclass, field
 from enum import Enum
 from typing import Iterable, Mapping
 
+from federation.capability_truth_v1 import (
+    AdapterRouteDecision,
+    CapabilityCurrentnessFabric,
+    CapabilityRouteRequirement,
+    CapabilitySurfaceState,
+)
+
 
 class Scope(str, Enum):
     FUSE_OWNED = "FUSE_OWNED"
@@ -93,6 +100,22 @@ class FCOAAdminRegistry:
         return tuple(r for r in self.all() if r.scope == Scope.FUSE_OWNED)
 
 
+@dataclass(frozen=True)
+class FCOACurrentnessGateDecision:
+    state: str
+    capability_id: str
+    surface_state: str
+    selected_adapter: str = ""
+    provider: str = ""
+    reasons: tuple[str, ...] = ()
+
+    @property
+    def qualified(self) -> bool:
+        return self.state == "QUALIFIED"
+
+
+
+
 class FCOASuperAdmin:
     AGENT_ID = "FCOA-OMEGA"
     PROFILE_ID = "FCOA_INTERNAL_SUPER_ADMIN_V1"
@@ -140,3 +163,136 @@ class FCOASuperAdmin:
 
     def next_route(self, failure_count_same_mechanism: int) -> str:
         return "CHANGED_MECHANISM_RECOMPILE" if failure_count_same_mechanism >= 2 else "AUTO_ROUTE"
+
+
+    def currentness_gate(
+        self,
+        fabric: CapabilityCurrentnessFabric,
+        requirement: CapabilityRouteRequirement,
+        *,
+        now: str,
+        census_complete: bool = False,
+    ) -> FCOACurrentnessGateDecision:
+        requirement.validate()
+        snapshot = fabric.snapshot(
+            requirement.capability_id,
+            now=now,
+            requirement=requirement,
+            census_complete=census_complete,
+        )
+        ranked = fabric.rank(requirement, now=now)
+        selected = next((item for item in ranked if item.selected), None)
+        if selected is not None:
+            return FCOACurrentnessGateDecision(
+                "QUALIFIED",
+                requirement.capability_id,
+                snapshot.state.value,
+                selected.adapter_id,
+                selected.provider,
+                ("CURRENTNESS_AND_ROUTE_REQUIREMENTS_PROVEN",),
+            )
+
+        if snapshot.state is CapabilitySurfaceState.STALE_REQUALIFICATION_REQUIRED:
+            reason = "CURRENTNESS_STALE_REQUALIFICATION_REQUIRED"
+            state = "REBIND_OR_REQUALIFY"
+        elif snapshot.state is CapabilitySurfaceState.ABSENT_AFTER_ESTATE_CENSUS:
+            reason = "CAPABILITY_ABSENT_AFTER_ESTATE_CENSUS"
+            state = "HARVEST_OR_BUILD"
+        elif snapshot.state is CapabilitySurfaceState.UNKNOWN_NOT_ABSENT:
+            reason = "CURRENTNESS_UNKNOWN_NOT_ABSENT"
+            state = "CENSUS_REQUIRED"
+        else:
+            reason = "NO_QUALIFIED_FRESH_ADAPTER"
+            state = "REBIND_OR_REQUALIFY"
+        route_reasons = tuple(
+            sorted({
+                reason,
+                *(
+                    r
+                    for item in ranked
+                    for r in item.reasons
+                ),
+            })
+        )
+        return FCOACurrentnessGateDecision(
+            state,
+            requirement.capability_id,
+            snapshot.state.value,
+            reasons=route_reasons,
+        )
+
+    def authorize_with_currentness(
+        self,
+        capability_id: str,
+        action: AdminAction,
+        mission: MissionAuthority,
+        *,
+        fabric: CapabilityCurrentnessFabric,
+        requirement: CapabilityRouteRequirement,
+        now: str,
+        requested_effect: str = "READ_ONLY",
+        lease: LeaseState | None = None,
+        census_complete: bool = False,
+    ) -> tuple[AdminDecision, FCOACurrentnessGateDecision]:
+        rec = self.registry.get(capability_id)
+        if rec is None:
+            gate = self.currentness_gate(
+                fabric,
+                requirement,
+                now=now,
+                census_complete=census_complete,
+            )
+            return (
+                AdminDecision(
+                    "HARVEST_OR_BUILD",
+                    "CAPABILITY_NOT_REGISTERED",
+                    capability_id,
+                    action=action.value,
+                ),
+                gate,
+            )
+
+        # FUSE-owned internal administration retains its existing authority path.
+        # Provider/external routing must additionally pass fresh Capability Truth.
+        if rec.scope is Scope.FUSE_OWNED:
+            admin = self.authorize(
+                capability_id,
+                action,
+                mission,
+                requested_effect=requested_effect,
+                lease=lease,
+            )
+            gate = self.currentness_gate(
+                fabric,
+                requirement,
+                now=now,
+                census_complete=census_complete,
+            )
+            return admin, gate
+
+        gate = self.currentness_gate(
+            fabric,
+            requirement,
+            now=now,
+            census_complete=census_complete,
+        )
+        if not gate.qualified:
+            return (
+                AdminDecision(
+                    gate.state,
+                    ";".join(gate.reasons) or "CURRENTNESS_GATE_FAILED",
+                    capability_id,
+                    rec.executor_id,
+                    action.value,
+                ),
+                gate,
+            )
+
+        admin = self.authorize(
+            capability_id,
+            action,
+            mission,
+            requested_effect=requested_effect,
+            lease=lease,
+        )
+        return admin, gate
