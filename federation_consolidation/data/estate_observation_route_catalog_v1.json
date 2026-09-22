@@ -1,0 +1,86 @@
+{
+  "schema": "FEDERATION-ESTATE-OBSERVATION-ROUTES-1",
+  "version": "1.0.0",
+  "publication_state": "SOURCE_IMPLEMENTED_RUNTIME_UNVERIFIED",
+  "registry_collision_state": "QUARANTINED_REGISTRY_COLLISION",
+  "registry_collision_note": "Two private continuity registry projections disagree; both remain preserved, unselected and non-authoritative pending governed readback.",
+  "registry_collision_build": {
+    "build_id": "AO-CRA-FEDREG-COLLISION-001",
+    "state": "UNRESOLVED_ENGINEERING_BUILD",
+    "owner_engine": "FORMATION_ENGINE",
+    "private_projection_aliases": ["FEDERATION_CONTINUITY_REGISTRY_A", "FEDERATION_CONTINUITY_REGISTRY_B"],
+    "private_projection_version_state": "WITHHELD_PENDING_AUTHORIZED_READBACK",
+    "private_projection_hash_state": "WITHHELD_PENDING_AUTHORIZED_READBACK",
+    "disagreement_state": "CONTENT_AND_SUPERSESSION_UNRESOLVED",
+    "desired_capability": "Resolve one current continuity projection without deleting or trusting either candidate by presence alone.",
+    "dependencies": ["CURRENT_LOGICAL_HASH_READBACK", "PRIVATE_ALIAS_RESOLUTION", "SUPERSESSION_EVIDENCE"],
+    "workaround": "QUARANTINE_BOTH_NO_SELECTION",
+    "implementation_tasks": ["Resolve both private aliases in one authorized read-only session.", "Compare versions, logical hashes, scope and supersession evidence.", "Preserve the non-selected projection and publish only a public-safe resolution state."],
+    "security_privacy_limits": ["NO_PRIVATE_POINTER_IN_PUBLIC_SOURCE", "NO_SECRET_VALUE_ACCESS", "NO_TRUST_TRANSFER"],
+    "tests": ["BOTH_ALIASES_READ_BACK", "LOGICAL_HASHES_RECOMPUTED", "NON_SELECTED_PROJECTION_PRESERVED"],
+    "acceptance_criteria": ["One projection is selected only by current source or explicit supersession evidence.", "The rejected projection remains preserved and queryable.", "No route, provider or execution authority is inherited from resolution."],
+    "next_executable_action": "Run an authorized A0 read-only logical-hash comparison through the private alias resolver.",
+    "capability_change_trigger": "Both aliases and current logical hashes are available in one governed read-only session.",
+    "closure_proof": "Current source-native readback or explicit owner supersession selects one projection while proving preservation of the other.",
+    "authority_ceiling": "A0"
+  },
+  "selector_contract": {
+    "normalization": "UNICODE_CASEFOLD_TRIM_COLLAPSE_WHITESPACE",
+    "match": "EXACT_NORMALIZED_INTENT_ONLY",
+    "unknown_intent": "NO_SOURCE_ROUTE",
+    "ambiguous_intent": "AMBIGUOUS_SOURCE_ROUTE",
+    "provider_execution_inherited": false
+  },
+  "cfbe_compatibility": {
+    "reference_state": "REFERENCE_ONLY_UNMERGED",
+    "reference_pr": 618,
+    "reference_head_sha": "90bfb9b43a9d1c2abade2b8269339342a3357d5a",
+    "estate_snapshot_schema": "CFBE-ACF-ESTATE-SNAPSHOT-V1",
+    "compiled_intent_schema": "CFBE-ACF-COMPILED-INTENT-V1",
+    "provider_projection_state": "SOURCE_REGISTERED_NOT_RUNTIME_BOUND",
+    "static_route_hash_is_runtime_fingerprint": false,
+    "proof_receipt_inherited": false
+  },
+  "route_discovery_adapter": {
+    "source_path": "federation_resource_discovery.py",
+    "discovery_order": ["capabilities", "commands", "source", "receipts"],
+    "binding_state": "ADAPTER_REQUIRED_NOT_RUNTIME_BOUND",
+    "route_exhaustion_inherited": false,
+    "provider_execution_inherited": false,
+    "proof_receipt_inherited": false
+  },
+  "routes": [
+    {
+      "route_id": "FEDERATION_CENSUS_A0",
+      "intents": ["estate census", "federation census", "federation estate census"],
+      "capability": "federation-census",
+      "proof_action_id": "FEDERATION-CENSUS-A0-READBACK",
+      "authority_ceiling": "A0",
+      "effectful": false,
+      "dry_run": true,
+      "maximum_incremental_cost": 0,
+      "maximum_user_burden": 0,
+      "recurring_cost": 0,
+      "activation_state": "SOURCE_REGISTERED_NOT_RUNTIME_BOUND",
+      "proof_stage": "DISCOVERED",
+      "required_readbacks": ["BOUNDED_SCOPE_DECLARATION", "PAGINATION_CLOSURE_OR_BOUNDARY", "SOURCE_HASHES", "UNRESOLVED_BOUNDARIES"],
+      "prohibited_actions": ["COMMUNICATION", "DEPLOYMENT", "IAM_MUTATION", "MODEL_CALL", "PROVIDER_MUTATION", "TOKEN_EXCHANGE"]
+    },
+    {
+      "route_id": "PROVIDER_OBSERVATION_A0",
+      "intents": ["provider observation", "provider status observation", "provider verification observation"],
+      "capability": "provider-observation",
+      "proof_action_id": "PROVIDER-OBSERVATION-A0-READBACK",
+      "authority_ceiling": "A0",
+      "effectful": false,
+      "dry_run": true,
+      "maximum_incremental_cost": 0,
+      "maximum_user_burden": 0,
+      "recurring_cost": 0,
+      "activation_state": "SOURCE_REGISTERED_NOT_RUNTIME_BOUND",
+      "proof_stage": "DISCOVERED",
+      "required_readbacks": ["AUTHENTICATION_STATE", "CONFIGURATION_STATE", "PROVIDER_NATIVE_READBACK", "SEMANTIC_EXECUTION_STATE", "TRANSPORT_STATE"],
+      "prohibited_actions": ["COMMUNICATION", "DEPLOYMENT", "IAM_MUTATION", "MODEL_CALL", "PROVIDER_MUTATION", "TOKEN_EXCHANGE"]
+    }
+  ]
+}

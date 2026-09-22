@@ -1,0 +1,197 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "urn:federation-omega:estate-delta-transaction:v1",
+  "title": "Federation Estate Delta Transaction v1",
+  "type": "object",
+  "additionalProperties": false,
+  "required": ["body", "integrity"],
+  "$defs": {
+    "sha256": {"type": "string", "pattern": "^[0-9a-f]{64}$"},
+    "utcTimestamp": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?Z$"
+    },
+    "safeId": {"type": "string", "pattern": "^[A-Z0-9][A-Z0-9._:/-]{2,127}$"},
+    "missionId": {"type": "string", "pattern": "^FEDERATION-ESTATE-[A-Z0-9-]{3,64}-[0-9]{8}$"},
+    "transactionId": {"type": "string", "pattern": "^FEDERATION-ESTATE-(?:CENSUS|DELTA|CORRECTION)-[0-9]{8}-[0-9]{3}$"},
+    "baselineId": {"type": "string", "pattern": "^EFSL-[0-9]{8}-[0-9]{3}$"},
+    "sourceId": {"type": "string", "pattern": "^SRC:[A-Z][A-Z0-9-]{2,47}-[0-9]{8}$"},
+    "snapshotId": {"type": "string", "pattern": "^SNAP:[A-Z][A-Z0-9-]{2,63}-[0-9]{3}$"},
+    "subjectId": {"type": "string", "pattern": "^(?:SURFACE|PROVIDER):[A-Z][A-Z0-9-]{1,63}$"},
+    "boundaryId": {"type": "string", "pattern": "^BOUNDARY:[A-Z][A-Z0-9-]{1,79}$"},
+    "contradictionId": {"type": "string", "pattern": "^CONTRADICTION:[A-Z][A-Z0-9-]{1,79}$"},
+    "input": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["source_id", "source_class", "observed_at", "content_sha256", "locator_state", "proof_state"],
+      "properties": {
+        "source_id": {"$ref": "#/$defs/sourceId"},
+        "source_class": {
+          "enum": ["DERIVED_CENSUS_MANIFEST", "FIDELITY_REPORT", "BOUNDED_CLAIM_GATE", "TOTALITY_REJECTION_GATE", "DRIFT_READBACK"]
+        },
+        "observed_at": {"$ref": "#/$defs/utcTimestamp"},
+        "content_sha256": {"$ref": "#/$defs/sha256"},
+        "locator_state": {"enum": ["BUNDLED_IMMUTABLE", "PRIVATE_POINTER_WITHHELD", "SESSION_ARTIFACT_NOT_PUBLISHED"]},
+        "proof_state": {"enum": ["READBACK_VERIFIED", "DERIVED_VERIFIED", "HISTORICAL_UNRESOLVED"]}
+      }
+    },
+    "metric": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["name", "value"],
+      "properties": {
+        "name": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,63}$"},
+        "value": {"type": ["string", "integer", "number", "boolean", "null"]}
+      }
+    },
+    "surfaceSnapshot": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["snapshot_id", "subject_id", "surface", "evidence_class", "observed_at", "proof_state", "state", "input_source_ids", "metrics", "boundary_ids"],
+      "properties": {
+        "snapshot_id": {"$ref": "#/$defs/snapshotId"},
+        "subject_id": {"$ref": "#/$defs/subjectId"},
+        "surface": {"enum": ["GITHUB", "GOOGLE_DRIVE", "LIBRARY", "GMAIL", "CLOUD_CONTROL", "CAPABILITY_FABRIC", "CANVA", "SITES", "AUTOMATIONS", "GEMINI"]},
+        "evidence_class": {"enum": ["PROVIDER_NATIVE_READBACK", "CONNECTED_APP_READBACK", "REPOSITORY_EXACT_HEAD", "PRIVATE_CORPUS_CENSUS", "DERIVED_ABSENCE_OF_REQUIRED_PROOF", "HISTORICAL_CLAIM"]},
+        "observed_at": {"$ref": "#/$defs/utcTimestamp"},
+        "proof_state": {"enum": ["READBACK_VERIFIED", "ACTIVE_SCOPED", "PARTIAL_PROVEN", "UNVERIFIED", "HISTORICAL_UNRESOLVED"]},
+        "state": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,95}$"},
+        "input_source_ids": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"$ref": "#/$defs/sourceId"}},
+        "metrics": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/metric"}},
+        "boundary_ids": {"type": "array", "uniqueItems": true, "items": {"$ref": "#/$defs/boundaryId"}}
+      }
+    },
+    "projection": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["subject_id", "state", "proof_state", "selection_rule", "winning_snapshot_id", "hold"],
+      "properties": {
+        "subject_id": {"$ref": "#/$defs/subjectId"},
+        "state": {"type": "string", "pattern": "^[A-Z][A-Z0-9_]{2,95}$"},
+        "proof_state": {"enum": ["READBACK_VERIFIED", "ACTIVE_SCOPED", "PARTIAL_PROVEN", "UNVERIFIED"]},
+        "selection_rule": {"enum": ["LATEST_PROVIDER_NATIVE_READBACK", "HIGHEST_CURRENT_EVIDENCE", "NO_PROVIDER_READBACK_HOLD"]},
+        "winning_snapshot_id": {"oneOf": [{"$ref": "#/$defs/snapshotId"}, {"type": "null"}]},
+        "hold": {"type": "boolean"}
+      }
+    },
+    "boundary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["boundary_id", "description", "state", "material_to_totality", "closure_evidence", "avoidable_user_task"],
+      "properties": {
+        "boundary_id": {"$ref": "#/$defs/boundaryId"},
+        "description": {"type": "string", "minLength": 1},
+        "state": {"const": "OPEN"},
+        "material_to_totality": {"const": true},
+        "closure_evidence": {"type": "string", "minLength": 1},
+        "avoidable_user_task": {"const": false}
+      }
+    },
+    "contradiction": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contradiction_id", "subject_id", "earlier_claim", "current_snapshot_id", "disposition", "affects_totality"],
+      "properties": {
+        "contradiction_id": {"$ref": "#/$defs/contradictionId"},
+        "subject_id": {"$ref": "#/$defs/subjectId"},
+        "earlier_claim": {"type": "string", "minLength": 1},
+        "current_snapshot_id": {"$ref": "#/$defs/snapshotId"},
+        "disposition": {"enum": ["SUPERSEDED_RETAINED", "OPEN_CONFLICT"]},
+        "affects_totality": {"type": "boolean"}
+      }
+    }
+  },
+  "properties": {
+    "body": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "transaction_id", "register_id", "sequence", "event_type", "mission_id", "authority", "occurred_at", "observed_at", "artifact_classification", "scope", "lineage", "inputs", "surface_snapshots", "projections", "contradictions", "unresolved_boundaries", "effects", "privacy", "completion"],
+      "properties": {
+        "schema": {"const": "FEDERATION-ESTATE-DELTA-TRANSACTION-1"},
+        "transaction_id": {"$ref": "#/$defs/transactionId"},
+        "register_id": {"const": "FEDERATION-ESTATE-DELTA-REGISTER"},
+        "sequence": {"type": "integer", "minimum": 1},
+        "event_type": {"enum": ["CENSUS_SNAPSHOT", "CENSUS_DELTA", "CORRECTION", "SUPERSESSION"]},
+        "mission_id": {"$ref": "#/$defs/missionId"},
+        "authority": {"const": "A0_READ_ONLY"},
+        "occurred_at": {"$ref": "#/$defs/utcTimestamp"},
+        "observed_at": {"$ref": "#/$defs/utcTimestamp"},
+        "artifact_classification": {"const": "PUBLIC_SAFE_PRIVATE_POINTERS_REDACTED"},
+        "scope": {
+          "type": "object", "additionalProperties": false,
+          "required": ["scope_label", "claim_text", "canonical_status", "totality_claimed", "expected_sources", "inspected_to_end", "all_expected_bounded_sources_enumerated"],
+          "properties": {
+            "scope_label": {"const": "CONNECTED_CALLABLE_BOUNDED_CENSUS"},
+            "claim_text": {"type": "string", "minLength": 1},
+            "canonical_status": {"const": "PARTIAL_PROVEN"},
+            "totality_claimed": {"const": false},
+            "expected_sources": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+            "inspected_to_end": {"type": "array", "minItems": 1, "uniqueItems": true, "items": {"type": "string", "minLength": 1}},
+            "all_expected_bounded_sources_enumerated": {"type": "boolean"}
+          }
+        },
+        "lineage": {
+          "type": "object", "additionalProperties": false,
+          "required": ["previous_transaction_id", "historical_baselines"],
+          "properties": {
+            "previous_transaction_id": {"oneOf": [{"$ref": "#/$defs/transactionId"}, {"type": "null"}]},
+            "historical_baselines": {
+              "type": "array", "items": {
+                "type": "object", "additionalProperties": false,
+                "required": ["baseline_id", "claimed_sha256", "verification_state", "chain_parent"],
+                "properties": {
+                  "baseline_id": {"$ref": "#/$defs/baselineId"},
+                  "claimed_sha256": {"$ref": "#/$defs/sha256"},
+                  "verification_state": {"const": "HISTORICAL_REFERENCE_UNRESOLVED"},
+                  "chain_parent": {"const": false}
+                }
+              }
+            }
+          }
+        },
+        "inputs": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/input"}},
+        "surface_snapshots": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/surfaceSnapshot"}},
+        "projections": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/projection"}},
+        "contradictions": {"type": "array", "items": {"$ref": "#/$defs/contradiction"}},
+        "unresolved_boundaries": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/boundary"}},
+        "effects": {
+          "type": "object", "additionalProperties": false,
+          "required": ["mutation_count", "external_effect_count", "provider_mutation_performed", "email_sent", "cost_incurred"],
+          "properties": {
+            "mutation_count": {"const": 0}, "external_effect_count": {"const": 0},
+            "provider_mutation_performed": {"const": false}, "email_sent": {"const": false}, "cost_incurred": {"const": 0}
+          }
+        },
+        "privacy": {
+          "type": "object", "additionalProperties": false,
+          "required": ["credential_value_recorded", "private_provider_identifier_recorded", "private_locator_count", "redaction_policy"],
+          "properties": {
+            "credential_value_recorded": {"const": false}, "private_provider_identifier_recorded": {"const": false},
+            "private_locator_count": {"const": 0}, "redaction_policy": {"const": "ALIASES_COUNTS_STATES_AND_HASHES_ONLY"}
+          }
+        },
+        "completion": {
+          "type": "object", "additionalProperties": false,
+          "required": ["status", "totality_allowed", "unresolved_boundary_count", "unresolved_contradiction_count", "independent_check_state", "truth_boundary"],
+          "properties": {
+            "status": {"const": "PARTIAL_PROVEN"}, "totality_allowed": {"const": false},
+            "unresolved_boundary_count": {"type": "integer", "minimum": 1},
+            "unresolved_contradiction_count": {"type": "integer", "minimum": 0},
+            "independent_check_state": {"enum": ["PASSED_BOUNDED_SCOPE", "OPEN"]},
+            "truth_boundary": {"type": "string", "minLength": 1}
+          }
+        }
+      }
+    },
+    "integrity": {
+      "type": "object", "additionalProperties": false,
+      "required": ["canonicalization", "body_sha256", "previous_event_hash", "event_hash"],
+      "properties": {
+        "canonicalization": {"const": "UTF8_JSON_SORT_KEYS_COMPACT_SEPARATORS_ENSURE_ASCII_FALSE"},
+        "body_sha256": {"$ref": "#/$defs/sha256"},
+        "previous_event_hash": {"oneOf": [{"$ref": "#/$defs/sha256"}, {"type": "null"}]},
+        "event_hash": {"$ref": "#/$defs/sha256"}
+      }
+    }
+  }
+}
