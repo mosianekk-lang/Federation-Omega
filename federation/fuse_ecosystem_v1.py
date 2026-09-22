@@ -70,6 +70,49 @@ class EcosystemMissionSpec:
         return self
 
 
+class DynamicRerouteTrigger(str, Enum):
+    CHECKPOINT = "CHECKPOINT"
+    CURRENTNESS_CHANGED = "CURRENTNESS_CHANGED"
+    PROVIDER_HEALTH_CHANGED = "PROVIDER_HEALTH_CHANGED"
+    CAPABILITY_QUALIFIED = "CAPABILITY_QUALIFIED"
+    CONSTRAINT = "CONSTRAINT"
+    FAILURE = "FAILURE"
+    LEASE_FENCE_CHANGED = "LEASE_FENCE_CHANGED"
+    OWNER_PRIORITY_CHANGED = "OWNER_PRIORITY_CHANGED"
+
+
+class DynamicRouteElectionState(str, Enum):
+    KEEP_CURRENT = "KEEP_CURRENT"
+    RESELECTED = "RESELECTED"
+    DURABLE_HOLD = "DURABLE_HOLD"
+    TERMINAL_NOOP = "TERMINAL_NOOP"
+
+
+DYNAMIC_REROUTE_TRIGGERS: tuple[DynamicRerouteTrigger, ...] = tuple(DynamicRerouteTrigger)
+
+
+@dataclass(frozen=True, slots=True)
+class DynamicRouteContext:
+    trigger: DynamicRerouteTrigger
+    route_epoch: int = 0
+    nonterminal: bool = True
+    excluded_failure_domains: Mapping[str, tuple[str, ...]] = field(default_factory=dict)
+    metadata: Mapping[str, str] = field(default_factory=dict)
+
+
+@dataclass(frozen=True, slots=True)
+class DynamicRouteElection:
+    mission_id: str
+    state: DynamicRouteElectionState
+    trigger: DynamicRerouteTrigger
+    route_epoch: int
+    plan: "EcosystemPlan"
+    changed_capabilities: tuple[str, ...]
+    preserve_mission_identity: bool = True
+    preserve_checkpoint: bool = True
+    preserve_fence: bool = True
+    reason: str = ""
+
 @dataclass(frozen=True, slots=True)
 class CapabilitySelection:
     capability_id: str
@@ -132,8 +175,15 @@ class FuseEcosystemKernel:
         for spec in self.services.values():
             spec.validate()
 
-    def compile(self, mission: EcosystemMissionSpec, *, now: str) -> EcosystemPlan:
+    def compile(
+        self,
+        mission: EcosystemMissionSpec,
+        *,
+        now: str,
+        excluded_failure_domains: Mapping[str, tuple[str, ...]] | None = None,
+    ) -> EcosystemPlan:
         mission.validate()
+        excluded_failure_domains = dict(excluded_failure_domains or {})
         required_specs: list[EcosystemServiceSpec] = []
         for service_id in mission.service_ids:
             spec = self.services.get(service_id)
@@ -159,6 +209,9 @@ class FuseEcosystemKernel:
                     effect_class=mission.effect_class,
                     privacy_class=mission.privacy_class,
                     require_callable=True,
+                    excluded_failure_domains=tuple(
+                        excluded_failure_domains.get(capability_id, ())
+                    ),
                 )
                 ranked = self.fabric.rank(req, now=now)
                 observations = {
@@ -197,6 +250,74 @@ class FuseEcosystemKernel:
             authority_class=mission.authority_class,
             effect_class=mission.effect_class,
             privacy_class=mission.privacy_class,
+        )
+
+
+    @staticmethod
+    def _primary_map(plan: EcosystemPlan | None) -> dict[str, str]:
+        if plan is None:
+            return {}
+        return {
+            selection.capability_id: selection.primary_adapter
+            for selection in plan.selections
+        }
+
+    def re_elect(
+        self,
+        mission: EcosystemMissionSpec,
+        *,
+        now: str,
+        context: DynamicRouteContext,
+        prior_plan: EcosystemPlan | None = None,
+    ) -> DynamicRouteElection:
+        """Recompile only the route while preserving durable mission semantics."""
+        mission.validate()
+
+        if not context.nonterminal:
+            terminal_plan = prior_plan or self.compile(mission, now=now)
+            return DynamicRouteElection(
+                mission_id=mission.mission_id,
+                state=DynamicRouteElectionState.TERMINAL_NOOP,
+                trigger=context.trigger,
+                route_epoch=context.route_epoch,
+                plan=terminal_plan,
+                changed_capabilities=(),
+                reason="TERMINAL_MISSION_NOT_REROUTED",
+            )
+
+        new_plan = self.compile(
+            mission,
+            now=now,
+            excluded_failure_domains=context.excluded_failure_domains,
+        )
+        before = self._primary_map(prior_plan)
+        after = self._primary_map(new_plan)
+        changed = tuple(
+            sorted(
+                capability_id
+                for capability_id in set(before) | set(after)
+                if before.get(capability_id) != after.get(capability_id)
+            )
+        )
+
+        if not new_plan.executable:
+            state = DynamicRouteElectionState.DURABLE_HOLD
+            reason = "NO_FULLY_QUALIFIED_ROUTE_PRESERVE_DURABLE_MISSION"
+        elif prior_plan is not None and not changed:
+            state = DynamicRouteElectionState.KEEP_CURRENT
+            reason = "CURRENT_ROUTE_REMAINS_STRONGEST_QUALIFIED"
+        else:
+            state = DynamicRouteElectionState.RESELECTED
+            reason = "STRONGEST_QUALIFIED_ROUTE_REELECTED"
+
+        return DynamicRouteElection(
+            mission_id=mission.mission_id,
+            state=state,
+            trigger=context.trigger,
+            route_epoch=context.route_epoch + 1,
+            plan=new_plan,
+            changed_capabilities=changed,
+            reason=reason,
         )
 
 
@@ -350,6 +471,11 @@ FUSE_ECOSYSTEM_SERVICES: dict[str, EcosystemServiceSpec] = {
 
 __all__ = [
     "CapabilitySelection",
+    "DynamicRerouteTrigger",
+    "DynamicRouteContext",
+    "DynamicRouteElection",
+    "DynamicRouteElectionState",
+    "DYNAMIC_REROUTE_TRIGGERS",
     "EcosystemMissionSpec",
     "EcosystemPlane",
     "EcosystemPlan",
