@@ -16,6 +16,7 @@ from evidenceops.capability_heartbeat import CapabilityHeartbeatEngine
 from evidenceops.capability_heartbeat.system import EvidenceOpsHeartbeatSystem
 from evidenceops.build_system.objective_completion_guard import evaluate as evaluate_completion
 from evidenceops.cloud_capability.inheritance import audit_inheritance
+from scheduler.github_issue_bus import run_from_env as run_durable_issue_bus
 
 CRON_TO_MODE = {
     "17 * * * *": "hourly",
@@ -182,6 +183,8 @@ def main() -> int:
         encoding="utf-8",
     )
 
+    durable_bus = run_durable_issue_bus("scheduler/runtime/durable-bus.json")
+
     print("# EvidenceOps External Scheduler")
     print(f"Mode: {mode}")
     print(f"Tasks selected: {len(assessments)}")
@@ -207,6 +210,10 @@ def main() -> int:
         f"Cloud capability inheritance: all-bound={cloud_capability['all_bound']} | "
         f"contracts={len(cloud_capability['build_contracts_checked'])} | "
         f"missing={len(cloud_capability['missing_bindings'])}"
+    )
+    print(
+        f"Durable mission bus: state={durable_bus.get('state', 'UNKNOWN')} | "
+        f"processed={durable_bus.get('processed_count', 0)}"
     )
     return 0
 
