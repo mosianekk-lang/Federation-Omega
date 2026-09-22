@@ -22,6 +22,15 @@ on:
           - daily_2200_sast
           - weekly_monday_0700_sast
 
+  push:
+    branches: [main]
+    paths:
+      - 'federation/durable_scheduler_bus_v1.py'
+      - 'scheduler/github_issue_bus.py'
+      - 'scheduler/run_scheduler.py'
+      - 'tests/test_durable_scheduler_bus_v1.py'
+      - '.github/workflows/evidenceops-external-scheduler.yml'
+
 permissions:
   contents: read
   issues: write
@@ -60,6 +69,7 @@ jobs:
           test -s scheduler/runtime/heartbeat-system.json
           test -s scheduler/runtime/objective-completion.json
           test -s scheduler/runtime/cloud-capability-inheritance.json
+          test -s scheduler/runtime/durable-bus.json
 
       - name: Publish workflow summary
         run: cat scheduler/runtime/summary.txt >> "$GITHUB_STEP_SUMMARY"
@@ -75,6 +85,7 @@ jobs:
             scheduler/runtime/heartbeat-system.json
             scheduler/runtime/objective-completion.json
             scheduler/runtime/cloud-capability-inheritance.json
+            scheduler/runtime/durable-bus.json
           retention-days: 90
 
       - name: Comment on scheduler control issue
