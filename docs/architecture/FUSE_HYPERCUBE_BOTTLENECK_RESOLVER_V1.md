@@ -263,3 +263,59 @@ It does not itself:
 - self-promote a challenger.
 
 Those remain governed by the existing effect and admission planes.
+
+
+## Error / incomplete-reporting trigger inheritance
+
+Hypercube is now bound to the existing EvidenceOps Chat Failure Resilience Engine (CFRE Ω).
+
+When CFRE observes a machine-recoverable failure, it stores a deterministic Hypercube resolution inside the recovery checkpoint and sets the recovery intent to continue automatically.
+
+New explicit failure classes include:
+
+- `SILENT_LONG_RUNNING_EXECUTION`
+- `INCOMPLETE_PROGRESS_REPORTING`
+
+Structured signals may include:
+
+- `no_progress_seconds >= 60`;
+- response/tool work still in flight;
+- a visible running/stop indicator supplied by a bound host;
+- owner-visible progress absent;
+- incomplete-report/open-work flags.
+
+The machine-recoverable path is:
+
+```text
+failure / silent execution / incomplete report
+    ↓
+CFRE classification
+    ↓
+checkpoint + idempotency
+    ↓
+Hypercube bottleneck resolution
+    ↓
+internal + market harvest
+    ↓
+stall-state classification
+    ↓
+isolate failed lane
+    ↓
+continue unaffected work
+    ↓
+materially different challenger route
+    ↓
+compact owner-visible progress where supported
+    ↓
+resume from last proven checkpoint
+```
+
+AAA route memory remains active: an unchanged failed route is suppressed even when Hypercube is the first recovery action.
+
+An explicit owner stop/cancel is absolute and suppresses Hypercube auto-continuation.
+
+### Platform truth boundary
+
+Repository code cannot see or control native ChatGPT UI state by itself. Native UI signals such as a Stop button, streaming state, or render progress are actionable only when a bound host supplies those observations to CFRE.
+
+This prevents the doctrine from becoming an invisible-runtime claim.

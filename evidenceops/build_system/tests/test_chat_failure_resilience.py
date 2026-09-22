@@ -24,6 +24,7 @@ from evidenceops.build_system.runtime_controls import (
     IntegrityError,
     NoSafeRoute,
     PolicyDenied,
+    ProgressWatchdog,
     Route,
     RuntimePolicy,
 )
@@ -87,6 +88,69 @@ class ChatFailureResilienceTests(unittest.TestCase):
         self.assertEqual("AUTOMATED_RECOVERY", receipt.recovery_mode)
         self.assertEqual("PERSIST_MISSION_CHECKPOINT", receipt.recovery_steps[0].action)
         self.assertFalse(receipt.provider_effects_claimed)
+
+    def test_static_inflight_response_auto_triggers_hypercube_and_continues(self):
+        receipt = evaluate_failure({
+            "event_id": "silent-ui-30min",
+            "message": "Response has stopped changing; still generating",
+            "no_progress_seconds": 1800,
+            "response_inflight": True,
+            "stop_button_visible": True,
+            "owner_visible_progress": False,
+            "active_directive": "continue until terminal proof",
+            "next_pending_action": "continue V6/V7 work",
+            "affected_missions": 3,
+        }, mission_packet=open_mission_packet())
+        self.assertEqual("SILENT_LONG_RUNNING_EXECUTION", receipt.failure_class)
+        self.assertTrue(receipt.must_continue)
+        self.assertEqual("AUTOMATED_RECOVERY", receipt.recovery_mode)
+        self.assertEqual(
+            "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST",
+            receipt.next_automated_action,
+        )
+        self.assertTrue(receipt.checkpoint["hypercube_improvement_triggered"])
+        resolution = receipt.checkpoint["hypercube_resolution"]
+        self.assertEqual("RESOLUTION_READY", resolution["action_state"])
+        self.assertTrue(resolution["portfolio"])
+        self.assertTrue(resolution["market_harvest"])
+        self.assertTrue(resolution["system_upgrade_candidate"])
+        actions = [step.action for step in receipt.recovery_steps]
+        self.assertIn("TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST", actions)
+        self.assertIn("CLASSIFY_ACTIVE_EXECUTION_STATE", actions)
+        self.assertIn("CONTINUE_UNAFFECTED_MISSION_LANES", actions)
+        self.assertIn("COMPILE_MATERIALLY_DIFFERENT_ROUTE", actions)
+        self.assertIn("EMIT_MINIMAL_OWNER_VISIBLE_PROGRESS", actions)
+
+    def test_incomplete_reporting_is_an_improvement_and_auto_continue_trigger(self):
+        receipt = evaluate_failure({
+            "event_id": "incomplete-report",
+            "message": "Progress not shown while open work remains",
+            "incomplete_reporting": True,
+            "reporting_open_work": True,
+            "mission_complete": False,
+            "owner_visible_progress": False,
+            "next_pending_action": "continue active mission",
+        }, mission_packet=open_mission_packet())
+        self.assertEqual("INCOMPLETE_PROGRESS_REPORTING", receipt.failure_class)
+        self.assertTrue(receipt.must_continue)
+        self.assertTrue(receipt.checkpoint["hypercube_improvement_triggered"])
+        self.assertTrue(receipt.checkpoint["auto_continue_intent"])
+        self.assertEqual(
+            "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST",
+            receipt.next_automated_action,
+        )
+
+    def test_explicit_user_stop_never_becomes_hypercube_auto_continue(self):
+        receipt = evaluate_failure({
+            "message": "user cancelled",
+            "no_progress_seconds": 1800,
+            "response_inflight": True,
+            "owner_visible_progress": False,
+        })
+        self.assertEqual("USER_INTERRUPTION", receipt.failure_class)
+        self.assertFalse(receipt.must_continue)
+        self.assertFalse(receipt.checkpoint["hypercube_improvement_triggered"])
+        self.assertEqual("WAIT_FOR_USER_RESUME", receipt.next_automated_action)
 
     def test_network_offline_strongly_supports_transport_failure(self):
         candidates = classify_failure({"message": "request failed", "network_online": False})
@@ -200,6 +264,75 @@ class ChatFailureResilienceTests(unittest.TestCase):
             on_disk = json.loads(path.read_text(encoding="utf-8"))
             self.assertEqual(receipt.receipt_sha256, on_disk["latest_receipt_sha256"])
             self.assertEqual(receipt.checkpoint["resume_token"], on_disk["latest_checkpoint"]["resume_token"])
+
+    def test_progress_watchdog_emits_once_per_stall_epoch_and_rearms_on_progress(self):
+        clock = [0.0]
+        events = []
+        watchdog = ProgressWatchdog(
+            60,
+            events.append,
+            clock=lambda: clock[0],
+        )
+        watchdog.start(
+            stage="provider-readback",
+            last_visible_text="waiting",
+            response_inflight=True,
+            stop_button_visible=True,
+            owner_visible_progress=False,
+        )
+        clock[0] = 61.0
+        first = watchdog.check()
+        self.assertIsNotNone(first)
+        self.assertEqual(1, len(events))
+        self.assertEqual("provider-readback", first["stage"])
+        self.assertTrue(first["response_inflight"])
+        self.assertTrue(first["stop_button_visible"])
+        self.assertFalse(first["owner_visible_progress"])
+        self.assertTrue(first["incomplete_reporting"])
+
+        # Same no-progress epoch is not spammed on every heartbeat.
+        clock[0] = 120.0
+        self.assertIsNone(watchdog.check())
+        self.assertEqual(1, len(events))
+
+        # Material progress rearms the watchdog for a later independent stall.
+        watchdog.mark_progress(last_visible_text="new output")
+        clock[0] = 181.0
+        second = watchdog.check()
+        self.assertIsNotNone(second)
+        self.assertEqual(2, len(events))
+        self.assertNotEqual(first["event_id"], second["event_id"])
+
+    def test_progress_watchdog_can_feed_cfre_hypercube_automatically(self):
+        clock = [0.0]
+        receipts = []
+        watchdog = ProgressWatchdog(
+            30,
+            lambda event: receipts.append(evaluate_failure(event)),
+            clock=lambda: clock[0],
+        )
+        watchdog.start(
+            stage="long-running-tool",
+            response_inflight=True,
+            stop_button_visible=True,
+            owner_visible_progress=False,
+        )
+        clock[0] = 31.0
+        # The watchdog threshold may be shorter than CFRE's generic 60s stall threshold,
+        # so advance to a material stall before checking.
+        clock[0] = 61.0
+        watchdog.check()
+        self.assertEqual(1, len(receipts))
+        receipt = receipts[0]
+        self.assertIn(
+            receipt.failure_class,
+            {"SILENT_LONG_RUNNING_EXECUTION", "INCOMPLETE_PROGRESS_REPORTING"},
+        )
+        self.assertEqual(
+            "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST",
+            receipt.next_automated_action,
+        )
+        self.assertTrue(receipt.checkpoint["hypercube_improvement_triggered"])
 
     def test_background_heartbeat_runs_without_caller_polling_and_stops(self):
         heartbeats = []

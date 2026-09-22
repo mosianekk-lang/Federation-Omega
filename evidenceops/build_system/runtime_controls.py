@@ -146,6 +146,136 @@ class HeartbeatScheduler:
         return not thread.is_alive()
 
 
+class ProgressWatchdog:
+    """Convert bound-host no-progress telemetry into one recovery event per stall epoch.
+
+    The watchdog does not inspect ChatGPT or browser UI by itself.  A bound host must
+    feed progress/UI observations.  Once the no-progress threshold is crossed it emits
+    a sanitized CFRE-compatible event exactly once until material progress resumes.
+    """
+
+    def __init__(
+        self,
+        threshold_seconds: float,
+        callback: Callable[[dict[str, Any]], None],
+        *,
+        identity: str = SYSTEM_IDENTITY,
+        clock: Callable[[], float] = time.monotonic,
+    ) -> None:
+        if threshold_seconds <= 0:
+            raise ValueError("threshold_seconds must be positive")
+        self.threshold_seconds = float(threshold_seconds)
+        self.callback = callback
+        self.identity = identity
+        self.clock = clock
+        self._lock = threading.Lock()
+        now = float(self.clock())
+        self._active = False
+        self._started_at = now
+        self._last_progress_at = now
+        self._alerted_progress_at: float | None = None
+        self._stage = ""
+        self._last_visible_text = ""
+        self._response_inflight = False
+        self._stop_button_visible = False
+        self._owner_visible_progress = True
+        self._event_sequence = 0
+
+    def start(
+        self,
+        *,
+        stage: str = "",
+        last_visible_text: str = "",
+        response_inflight: bool = True,
+        stop_button_visible: bool = False,
+        owner_visible_progress: bool = True,
+    ) -> None:
+        with self._lock:
+            now = float(self.clock())
+            self._active = True
+            self._started_at = now
+            self._last_progress_at = now
+            self._alerted_progress_at = None
+            self._stage = str(stage)
+            self._last_visible_text = str(last_visible_text)
+            self._response_inflight = bool(response_inflight)
+            self._stop_button_visible = bool(stop_button_visible)
+            self._owner_visible_progress = bool(owner_visible_progress)
+
+    def mark_progress(
+        self,
+        *,
+        stage: str | None = None,
+        last_visible_text: str | None = None,
+        owner_visible_progress: bool | None = None,
+    ) -> None:
+        with self._lock:
+            if not self._active:
+                return
+            self._last_progress_at = float(self.clock())
+            self._alerted_progress_at = None
+            if stage is not None:
+                self._stage = str(stage)
+            if last_visible_text is not None:
+                self._last_visible_text = str(last_visible_text)
+            if owner_visible_progress is not None:
+                self._owner_visible_progress = bool(owner_visible_progress)
+
+    def observe(
+        self,
+        *,
+        response_inflight: bool | None = None,
+        stop_button_visible: bool | None = None,
+        owner_visible_progress: bool | None = None,
+        stage: str | None = None,
+        last_visible_text: str | None = None,
+    ) -> None:
+        with self._lock:
+            if response_inflight is not None:
+                self._response_inflight = bool(response_inflight)
+            if stop_button_visible is not None:
+                self._stop_button_visible = bool(stop_button_visible)
+            if owner_visible_progress is not None:
+                self._owner_visible_progress = bool(owner_visible_progress)
+            if stage is not None:
+                self._stage = str(stage)
+            if last_visible_text is not None:
+                self._last_visible_text = str(last_visible_text)
+
+    def stop(self) -> None:
+        with self._lock:
+            self._active = False
+            self._response_inflight = False
+
+    def check(self) -> dict[str, Any] | None:
+        with self._lock:
+            if not self._active:
+                return None
+            now = float(self.clock())
+            no_progress = max(0.0, now - self._last_progress_at)
+            if no_progress < self.threshold_seconds:
+                return None
+            if self._alerted_progress_at == self._last_progress_at:
+                return None
+            self._alerted_progress_at = self._last_progress_at
+            self._event_sequence += 1
+            event = {
+                "event_id": f"{self.identity}-STALL-{self._event_sequence}",
+                "message": "Silent long-running execution watchdog threshold exceeded",
+                "stage": self._stage,
+                "last_visible_text": self._last_visible_text,
+                "no_progress_seconds": round(no_progress, 6),
+                "response_inflight": self._response_inflight,
+                "stop_button_visible": self._stop_button_visible,
+                "owner_visible_progress": self._owner_visible_progress,
+                "incomplete_reporting": not self._owner_visible_progress,
+                "progress_state_unknown": True,
+                "watchdog_identity": self.identity,
+            }
+        self.callback(event)
+        return event
+
+
 class CancellationToken:
     """A shared cooperative cancellation token persisted in SQLite."""
 
@@ -461,6 +591,7 @@ __all__ = [
     "IntegrityError",
     "NoSafeRoute",
     "PolicyDenied",
+    "ProgressWatchdog",
     "Route",
     "RuntimePolicy",
 ]

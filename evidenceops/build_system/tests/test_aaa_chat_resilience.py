@@ -21,8 +21,10 @@ def test_unchanged_failed_route_changes_effective_recovery_to_distinct_route():
             ],
         }
     )
-    assert receipt["base_recovery"]["next_automated_action"] == "RETRY_SAME_ATOMIC_ACTION"
-    assert receipt["effective_recovery"]["next_automated_action"] == "DISCOVER_MATERIALLY_DIFFERENT_ROUTE"
+    assert receipt["base_recovery"]["next_automated_action"] == "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST"
+    assert receipt["effective_recovery"]["next_automated_action"] == "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST"
+    assert receipt["effective_recovery"]["checkpoint"]["aaa_distinct_route_required"] is True
+    assert receipt["effective_recovery"]["checkpoint"]["hypercube_improvement_triggered"] is True
     actions = [step["action"] for step in receipt["effective_recovery"]["recovery_steps"]]
     assert "SUPPRESS_UNCHANGED_FAILED_ROUTE" in actions
     assert "DISCOVER_MATERIALLY_DIFFERENT_ROUTE" in actions
@@ -51,7 +53,7 @@ def test_changed_preconditions_keep_bounded_retry_available():
     )
     assert receipt["aaa_route_retry"]["retry_allowed"] is True
     assert receipt["aaa_route_retry"]["material_precondition_change"] is True
-    assert receipt["effective_recovery"]["next_automated_action"] == "RETRY_SAME_ATOMIC_ACTION"
+    assert receipt["effective_recovery"]["next_automated_action"] == "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST"
 
 
 def test_checkpoint_memory_makes_second_unchanged_failure_self_suppressing():
@@ -74,7 +76,8 @@ def test_checkpoint_memory_makes_second_unchanged_failure_self_suppressing():
         previous_checkpoint=checkpoint,
     )
     assert second["aaa_route_retry"]["retry_allowed"] is False
-    assert second["effective_recovery"]["next_automated_action"] == "DISCOVER_MATERIALLY_DIFFERENT_ROUTE"
+    assert second["effective_recovery"]["next_automated_action"] == "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST"
+    assert second["effective_recovery"]["checkpoint"]["aaa_distinct_route_required"] is True
     assert second["aaa_route_memory_count"] == 1
 
 

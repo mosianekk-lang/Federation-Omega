@@ -1,0 +1,30 @@
+{
+  "manifest_version": 3,
+  "name": "FUSE Front-Facing Status Sentinel",
+  "version": "1.0.0",
+  "description": "FUSE-owned local observer for front-facing ChatGPT status and stall telemetry. Sends sanitized state only to the local FUSE loopback host.",
+  "permissions": [
+    "storage"
+  ],
+  "host_permissions": [
+    "https://chatgpt.com/*",
+    "http://127.0.0.1:8765/*"
+  ],
+  "background": {
+    "service_worker": "background.js"
+  },
+  "content_scripts": [
+    {
+      "matches": [
+        "https://chatgpt.com/*"
+      ],
+      "js": [
+        "content.js"
+      ],
+      "run_at": "document_idle"
+    }
+  ],
+  "action": {
+    "default_title": "FUSE Status Sentinel"
+  }
+}

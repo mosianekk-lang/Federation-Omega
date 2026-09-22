@@ -28,6 +28,8 @@ LEDGER_SCHEMA = "EVIDENCEOPS-CHAT-FAILURE-LEDGER-1"
 FAILURE_CLASSES = (
     "TRANSPORT_INTERRUPTION",
     "SERVER_GENERATION_FAILURE",
+    "SILENT_LONG_RUNNING_EXECUTION",
+    "INCOMPLETE_PROGRESS_REPORTING",
     "STALL_TIMEOUT",
     "CONTEXT_PRESSURE",
     "TOOL_OR_CONNECTOR_FAILURE",
@@ -46,6 +48,8 @@ CLASS_PRIORITY: dict[str, int] = {
     "AUTH_OR_SESSION_FAILURE": 100,
     "RATE_OR_CAPACITY_LIMIT": 95,
     "TOOL_OR_CONNECTOR_FAILURE": 90,
+    "SILENT_LONG_RUNNING_EXECUTION": 88,
+    "INCOMPLETE_PROGRESS_REPORTING": 87,
     "FILE_OR_ATTACHMENT_FAILURE": 85,
     "TRANSPORT_INTERRUPTION": 80,
     "CONTEXT_PRESSURE": 75,
@@ -71,6 +75,23 @@ PATTERNS: dict[str, tuple[str, ...]] = {
         r"something went wrong",
         r"internal server",
         r"failed to (?:generate|produce) (?:an )?answer",
+    ),
+    "SILENT_LONG_RUNNING_EXECUTION": (
+        r"still generating",
+        r"response (?:has )?stopped changing",
+        r"no visible progress",
+        r"static response",
+        r"stop button",
+        r"black square",
+        r"silent long[- ]running",
+    ),
+    "INCOMPLETE_PROGRESS_REPORTING": (
+        r"incomplete report(?:ing)?",
+        r"no status update",
+        r"no progress indicator",
+        r"unclear (?:what|whether) .*running",
+        r"progress not shown",
+        r"report(?:ed|ing) .* without continuing",
     ),
     "STALL_TIMEOUT": (
         r"waiting for (?:the )?complete answer",
@@ -140,6 +161,21 @@ DEPENDENCIES: dict[str, tuple[str, ...]] = {
         "model serving path",
         "ChatGPT orchestration service",
         "tool-result integration path when tools are active",
+    ),
+    "SILENT_LONG_RUNNING_EXECUTION": (
+        "owner-visible progress channel",
+        "stream progress/heartbeat",
+        "active tool/model execution state",
+        "stall watchdog",
+        "alternate execution lanes",
+        "Hypercube improvement trigger",
+    ),
+    "INCOMPLETE_PROGRESS_REPORTING": (
+        "parent mission state",
+        "open actionable work",
+        "owner-visible progress prefix",
+        "Hypercube improvement trigger",
+        "automatic continuation route",
     ),
     "STALL_TIMEOUT": (
         "stream progress/heartbeat",
@@ -263,12 +299,50 @@ def classify_failure(event: dict[str, Any]) -> tuple[FailureCandidate, ...]:
             scores[failure_class] = min(0.98, 0.70 + 0.08 * (len(hits) - 1))
             evidence[failure_class] = [f"regex:{pattern}" for pattern in hits]
 
+    # Explicit owner/user stop always outranks machine recovery signals.
+    if "USER_INTERRUPTION" in scores or event.get("user_stop") is True:
+        scores["USER_INTERRUPTION"] = 1.0
+        evidence.setdefault("USER_INTERRUPTION", []).append("owner_stop_precedence")
+
     no_progress = event.get("no_progress_seconds")
     if isinstance(no_progress, (int, float)) and not isinstance(no_progress, bool) and no_progress >= 60:
         scores["STALL_TIMEOUT"] = max(
             scores.get("STALL_TIMEOUT", 0.0), min(0.95, 0.70 + no_progress / 1200)
         )
         evidence.setdefault("STALL_TIMEOUT", []).append(f"no_progress_seconds:{no_progress}")
+
+        if (
+            event.get("response_inflight") is True
+            and event.get("owner_visible_progress") is False
+        ) or event.get("stop_button_visible") is True:
+            scores["SILENT_LONG_RUNNING_EXECUTION"] = max(
+                scores.get("SILENT_LONG_RUNNING_EXECUTION", 0.0),
+                min(0.99, 0.80 + no_progress / 1800),
+            )
+            evidence.setdefault("SILENT_LONG_RUNNING_EXECUTION", []).extend(
+                (
+                    f"no_progress_seconds:{no_progress}",
+                    f"response_inflight:{bool(event.get('response_inflight'))}",
+                    f"stop_button_visible:{bool(event.get('stop_button_visible'))}",
+                    f"owner_visible_progress:{bool(event.get('owner_visible_progress'))}",
+                )
+            )
+
+    if (
+        event.get("incomplete_reporting") is True
+        or event.get("progress_state_unknown") is True
+        or event.get("assistant_stopping_with_open_work") is True
+        or (
+            event.get("reporting_open_work") is True
+            and event.get("mission_complete") is not True
+        )
+    ):
+        scores["INCOMPLETE_PROGRESS_REPORTING"] = max(
+            scores.get("INCOMPLETE_PROGRESS_REPORTING", 0.0), 0.93
+        )
+        evidence.setdefault("INCOMPLETE_PROGRESS_REPORTING", []).append(
+            "structured_signal:open_work_not_visibly_continued"
+        )
 
     turns = event.get("conversation_turns")
     if isinstance(turns, int) and not isinstance(turns, bool) and turns >= 100:
@@ -327,6 +401,11 @@ def build_checkpoint(event: dict[str, Any], previous: dict[str, Any] | None = No
         "tool_call_id": event.get("tool_call_id") or previous.get("tool_call_id"),
         "conversation_id": event.get("conversation_id") or previous.get("conversation_id"),
         "source_turn_id": event.get("source_turn_id") or previous.get("source_turn_id"),
+        "no_progress_seconds": event.get("no_progress_seconds"),
+        "response_inflight": event.get("response_inflight"),
+        "stop_button_visible": event.get("stop_button_visible"),
+        "owner_visible_progress": event.get("owner_visible_progress"),
+        "incomplete_reporting": event.get("incomplete_reporting"),
         "captured_at": _now(),
     }
     identity_material = {
@@ -345,6 +424,111 @@ def build_checkpoint(event: dict[str, Any], previous: dict[str, Any] | None = No
         {"resume": checkpoint["resume_token"], "pending": checkpoint["next_pending_action"]}
     )
     return checkpoint
+
+
+def _clip(value: float) -> float:
+    return max(0.0, min(1.0, float(value)))
+
+
+def _hypercube_resolution_for_failure(
+    event: dict[str, Any],
+    failure_class: str,
+) -> dict[str, Any] | None:
+    if failure_class == "USER_INTERRUPTION" or event.get("mission_complete") is True:
+        return None
+
+    # Lazy import avoids making the chat-resilience package a hard dependency root.
+    from superior_logic.hypercube_bottleneck_resolver import (
+        BottleneckKind,
+        BottleneckSignal,
+        HypercubeBottleneckResolver,
+    )
+
+    kind = {
+        "SILENT_LONG_RUNNING_EXECUTION": BottleneckKind.PROVIDER_RUNTIME,
+        "INCOMPLETE_PROGRESS_REPORTING": BottleneckKind.MANUAL_OWNER_BURDEN,
+        "STALL_TIMEOUT": BottleneckKind.PROVIDER_RUNTIME,
+        "TOOL_OR_CONNECTOR_FAILURE": BottleneckKind.PROVIDER_RUNTIME,
+        "RATE_OR_CAPACITY_LIMIT": BottleneckKind.QUEUE_CAPACITY,
+        "CONTEXT_PRESSURE": BottleneckKind.COST_RESOURCE,
+        "AUTH_OR_SESSION_FAILURE": BottleneckKind.AUTHORITY,
+        "TRANSPORT_INTERRUPTION": BottleneckKind.EXTERNAL_BOUNDARY,
+        "SERVER_GENERATION_FAILURE": BottleneckKind.EXTERNAL_BOUNDARY,
+        "FILE_OR_ATTACHMENT_FAILURE": BottleneckKind.PROOF_EVIDENCE,
+        "CLIENT_RESOURCE_FAILURE": BottleneckKind.COST_RESOURCE,
+        "UNKNOWN_CHAT_FAILURE": BottleneckKind.UNKNOWN,
+    }.get(failure_class, BottleneckKind.UNKNOWN)
+
+    no_progress = event.get("no_progress_seconds")
+    no_progress_seconds = (
+        float(no_progress)
+        if isinstance(no_progress, (int, float)) and not isinstance(no_progress, bool)
+        else 0.0
+    )
+    stall = _clip(no_progress_seconds / 1800.0)
+    failure_count = event.get("failure_count")
+    recurrence = _clip(
+        float(failure_count) / 3.0
+        if isinstance(failure_count, int) and not isinstance(failure_count, bool)
+        else (0.65 if failure_class in {"SILENT_LONG_RUNNING_EXECUTION", "STALL_TIMEOUT"} else 0.35)
+    )
+    owner_visible = event.get("owner_visible_progress")
+    incomplete = bool(
+        event.get("incomplete_reporting")
+        or event.get("progress_state_unknown")
+        or event.get("assistant_stopping_with_open_work")
+    )
+    external_boundary = failure_class in {
+        "TRANSPORT_INTERRUPTION",
+        "SERVER_GENERATION_FAILURE",
+        "RATE_OR_CAPACITY_LIMIT",
+        "AUTH_OR_SESSION_FAILURE",
+    }
+
+    evidence_refs = [
+        f"failure_class:{failure_class}",
+        f"event_id:{event.get('event_id') or 'derived'}",
+    ]
+    if no_progress_seconds:
+        evidence_refs.append(f"no_progress_seconds:{int(no_progress_seconds)}")
+    if event.get("tool_call_id"):
+        evidence_refs.append(f"tool_call_id:{event['tool_call_id']}")
+    if event.get("stop_button_visible") is True:
+        evidence_refs.append("ui_signal:stop_button_visible")
+    if owner_visible is False:
+        evidence_refs.append("ui_signal:owner_visible_progress_false")
+
+    signal = BottleneckSignal(
+        bottleneck_id=f"CHAT-RECOVERY:{failure_class}:{_stable_sha256(evidence_refs)[:12]}",
+        kind=kind,
+        summary=(
+            str(event.get("message") or event.get("status") or event.get("stage") or failure_class)
+            + " — auto-harvest recovery and product-improvement routes"
+        ),
+        evidence_refs=tuple(evidence_refs),
+        throughput_drag=_clip(max(0.55, stall)),
+        latency_share=_clip(max(0.55, stall)),
+        queue_wait_share=_clip(0.80 if failure_class == "RATE_OR_CAPACITY_LIMIT" else 0.40 + 0.35 * stall),
+        failure_recurrence=recurrence,
+        dependency_centrality=_clip(float(event.get("dependency_centrality") or 0.72)),
+        owner_burden=_clip(0.90 if owner_visible is False or incomplete else 0.55),
+        cost_pressure=_clip(float(event.get("cost_pressure") or (0.65 if no_progress_seconds >= 300 else 0.35))),
+        proof_gap=_clip(0.80 if failure_class in {"INCOMPLETE_PROGRESS_REPORTING", "UNKNOWN_CHAT_FAILURE"} else 0.50),
+        risk=_clip(float(event.get("risk") or 0.35)),
+        commercial_leverage=_clip(float(event.get("commercial_leverage") or 0.80)),
+        differentiation_potential=_clip(float(event.get("differentiation_potential") or 0.78)),
+        internal_coverage=_clip(float(event.get("internal_coverage") or 0.68)),
+        external_boundary=external_boundary,
+        affected_missions=max(1, int(event.get("affected_missions") or 1)),
+        internal_capabilities=(
+            "CFRE_OMEGA",
+            "AAA_ROUTE_MEMORY",
+            "HYPERCUBE_HBR_001",
+            "ACME_NON_ABANDONMENT",
+            "BUBBLES_CONTINUITY",
+        ),
+    )
+    return asdict(HypercubeBottleneckResolver().resolve(signal))
 
 
 def _steps_for(failure_class: str, event: dict[str, Any], checkpoint: dict[str, Any]) -> tuple[RecoveryStep, ...]:
@@ -368,7 +552,86 @@ def _steps_for(failure_class: str, event: dict[str, Any], checkpoint: dict[str, 
         ),
     ]
 
+    if failure_class != "USER_INTERRUPTION":
+        steps.append(
+            RecoveryStep(
+                3,
+                "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST",
+                "HYPERCUBE_BOTTLENECK_TO_ADVANTAGE",
+                True,
+                True,
+                rationale=(
+                    "Every machine-recoverable error, stall or incomplete report is also "
+                    "an improvement signal: harvest internal/market alternatives, compose "
+                    "challengers and continue through the strongest lawful route."
+                ),
+            )
+        )
+
     if failure_class in {
+        "SILENT_LONG_RUNNING_EXECUTION",
+        "INCOMPLETE_PROGRESS_REPORTING",
+    }:
+        steps.extend(
+            [
+                RecoveryStep(
+                    4,
+                    "CLASSIFY_ACTIVE_EXECUTION_STATE",
+                    "STALL_WATCHDOG",
+                    True,
+                    True,
+                    rationale=(
+                        "Distinguish HEALTHY_RUNNING, WAITING_EXTERNAL, QUEUED, STALLED, "
+                        "DEADLOCKED and TOOL_TIMEOUT before retrying."
+                    ),
+                ),
+                RecoveryStep(
+                    5,
+                    "ISOLATE_STALLED_EXECUTION_LANE",
+                    "ANTI_STALL_ROUTING",
+                    True,
+                    True,
+                    rationale="Do not let one invisible/stalled lane block independent work.",
+                ),
+                RecoveryStep(
+                    6,
+                    "CONTINUE_UNAFFECTED_MISSION_LANES",
+                    "DEPENDENCY_SAFE_PARALLEL_CONTINUATION",
+                    True,
+                    True,
+                    rationale="Continue useful work while the stalled lane is repaired or replaced.",
+                ),
+                RecoveryStep(
+                    7,
+                    "COMPILE_MATERIALLY_DIFFERENT_ROUTE",
+                    "HYPERCUBE_ROUTE_CHALLENGER",
+                    True,
+                    True,
+                    rationale="Harvest and build a materially different route rather than stare at a silent execution.",
+                ),
+                RecoveryStep(
+                    8,
+                    "EMIT_MINIMAL_OWNER_VISIBLE_PROGRESS",
+                    "OWNER_PROGRESS_CHANNEL",
+                    True,
+                    True,
+                    rationale=(
+                        "If the host supports progress emission, surface compact state/next-action "
+                        "rather than leaving the owner with a static screen."
+                    ),
+                ),
+                RecoveryStep(
+                    9,
+                    "RESUME_FROM_LAST_PROVEN_CHECKPOINT",
+                    "STATEFUL_REPLAY",
+                    True,
+                    True,
+                    stop_on_success=True,
+                    rationale="Resume from proof-bearing state without regenerating completed work.",
+                ),
+            ]
+        )
+    elif failure_class in {
         "TRANSPORT_INTERRUPTION",
         "SERVER_GENERATION_FAILURE",
         "STALL_TIMEOUT",
@@ -553,6 +816,16 @@ def evaluate_failure(
     candidates = classify_failure(event)
     primary = candidates[0]
     checkpoint = build_checkpoint(event, previous_checkpoint)
+    hypercube_resolution = _hypercube_resolution_for_failure(
+        event,
+        primary.failure_class,
+    )
+    if hypercube_resolution is not None:
+        checkpoint["hypercube_improvement_triggered"] = True
+        checkpoint["hypercube_resolution"] = hypercube_resolution
+        checkpoint["auto_continue_intent"] = True
+    else:
+        checkpoint["hypercube_improvement_triggered"] = False
 
     if mission_packet is not None:
         completion = evaluate_completion(mission_packet)
@@ -578,10 +851,13 @@ def evaluate_failure(
         next_action = "WAIT_FOR_NEW_MACHINE_AUTHORITY_OR_CAPABILITY"
     else:
         recovery_mode = "AUTOMATED_RECOVERY"
-        next_action = next(
-            (step.action for step in steps if step.order >= 3),
-            "DISCOVER_LOWEST_RISK_RECOVERY_ROUTE",
-        )
+        if hypercube_resolution is not None:
+            next_action = "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST"
+        else:
+            next_action = next(
+                (step.action for step in steps if step.order >= 3),
+                "DISCOVER_LOWEST_RISK_RECOVERY_ROUTE",
+            )
 
     body = {
         "schema": SCHEMA,

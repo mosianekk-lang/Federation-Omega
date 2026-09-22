@@ -41,7 +41,12 @@ class OmegaAutofixFailureWinV2ReceiverCanaryTests(unittest.TestCase):
         self.assertEqual("SUCCESS", receipt["state"])
         recovery = receipt["execution"]["recovery"]
         self.assertEqual("TOOL_OR_CONNECTOR_FAILURE", recovery["failure_class"])
-        self.assertEqual("READBACK_TOOL_OUTCOME_BEFORE_RETRY", recovery["next_automated_action"])
+        self.assertEqual("TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST", recovery["next_automated_action"])
+        self.assertIn(
+            "READBACK_TOOL_OUTCOME_BEFORE_RETRY",
+            [step["action"] for step in recovery["recovery_steps"]],
+        )
+        self.assertTrue(receipt["execution"]["hypercube"]["triggered"])
         self.assertFalse(receipt["execution"]["provider_effects"])
 
         incumbent = PerformanceVector(quality=8, reliability=8, proof=8, speed=2, owner_burden=1)

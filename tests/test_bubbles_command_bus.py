@@ -284,7 +284,13 @@ class BubblesCommandBusTests(unittest.TestCase):
         recovery = receipt["execution"]["recovery"]
         self.assertEqual("TRANSPORT_INTERRUPTION", recovery["failure_class"])
         self.assertTrue(recovery["must_continue"])
-        self.assertEqual("RETRY_SAME_ATOMIC_ACTION", recovery["next_automated_action"])
+        self.assertEqual("TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST", recovery["next_automated_action"])
+        self.assertTrue(receipt["execution"]["hypercube"]["triggered"])
+        self.assertTrue(receipt["execution"]["hypercube"]["auto_continue_intent"])
+        self.assertEqual(
+            "RESOLUTION_READY",
+            receipt["execution"]["hypercube"]["resolution"]["action_state"],
+        )
         self.assertFalse(receipt["execution"]["provider_effects"])
 
     def test_chat_failure_recovery_uses_readback_before_tool_timeout_replay(self):
@@ -296,12 +302,34 @@ class BubblesCommandBusTests(unittest.TestCase):
         }))
         recovery = receipt["execution"]["recovery"]
         self.assertEqual("TOOL_OR_CONNECTOR_FAILURE", recovery["failure_class"])
-        self.assertEqual("READBACK_TOOL_OUTCOME_BEFORE_RETRY", recovery["next_automated_action"])
+        self.assertEqual("TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST", recovery["next_automated_action"])
+        self.assertTrue(receipt["execution"]["hypercube"]["triggered"])
         actions = [step["action"] for step in recovery["recovery_steps"]]
         self.assertLess(
             actions.index("READBACK_TOOL_OUTCOME_BEFORE_RETRY"),
             actions.index("DISCOVER_EQUIVALENT_AUTHORIZED_ROUTE"),
         )
+
+    def test_chat_failure_recovery_promotes_silent_ui_stall_to_hypercube(self):
+        receipt = self.run_command(self.recovery_command({
+            "event_id": "silent-command-bus",
+            "message": "Response has stopped changing; still generating",
+            "no_progress_seconds": 1800,
+            "response_inflight": True,
+            "stop_button_visible": True,
+            "owner_visible_progress": False,
+            "next_pending_action": "continue active work",
+        }))
+        self.assertEqual("SUCCESS", receipt["state"])
+        recovery = receipt["execution"]["recovery"]
+        self.assertEqual("SILENT_LONG_RUNNING_EXECUTION", recovery["failure_class"])
+        self.assertEqual(
+            "TRIGGER_HYPERCUBE_BOTTLENECK_HARVEST",
+            recovery["next_automated_action"],
+        )
+        self.assertTrue(receipt["execution"]["hypercube"]["triggered"])
+        self.assertTrue(receipt["execution"]["hypercube"]["auto_continue_intent"])
+        self.assertTrue(receipt["execution"]["hypercube"]["resolution"]["portfolio"])
 
     def test_chat_failure_recovery_respects_explicit_user_stop(self):
         receipt = self.run_command(self.recovery_command({"message": "user cancelled"}))
