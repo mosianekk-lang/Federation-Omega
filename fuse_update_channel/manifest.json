@@ -5,49 +5,60 @@
     {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},
     {"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0"},
     {"kind":"surface-census","name":"FCOA Multi-Surface Reachability & Control Census","version":"1.0.0"},
-    {"kind":"routing-policy","name":"FUSE Global Constraint Re-route","version":"1.0.0"}
+    {"kind":"routing-policy","name":"FUSE Global Constraint Re-route","version":"1.0.0"},
+    {"kind":"durable-scheduler","name":"FUSE Durable Scheduler Bus","version":"1.0.0","live_canary_issue":1648},
+    {"kind":"governance-prompt","name":"FUSE Alpha-Omega + Formation 60-Minute Finality Prompt","version":"1.0.0","path":"governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md"},
+    {"kind":"capability-truth","name":"FUSE Cross-Estate Capability Currentness Fabric","version":"1.0.0","main_sha":"dc2f675c770c9ccc953b2222dcbd9be5c2a4c880"},
+    {"kind":"fcoa-routing-gate","name":"FCOA Capability Truth Currentness Gate","version":"1.0.0","main_sha":"644e1eb44d3e28acccae1ad558c44507d092c64a"}
   ],
   "authority_class":"FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
   "capability_deltas":[
-    "All FUSE work now treats task limits, quotas, rate limits, concurrency ceilings, storage ceilings and provider-capacity messages as route constraints rather than mission-terminal failures.",
-    "Constraint interception maps into the existing OF50 friction lineage as RATE_OR_QUOTA_PRESSURE and forces CHANGED_ROUTE_REQUIRED while preserving the mission objective and terminal predicates.",
-    "For active-task limits, FUSE first reuses a semantically equivalent existing automation, then may consolidate only exact-equivalent duplicates, then tries FUSE/provider/local schedulers; otherwise the mission is retained in a durable queue without owner burden.",
-    "Repeated recurrence on the same constrained route forbids unchanged retry and requires a different route family or mechanism.",
-    "Automatic re-routing may never pause/delete unrelated work merely to free capacity, and it never widens provider/external-effect authority."
+    "The live durable scheduler remains the primary ChatGPT-independent no-effect execution route; canary issue #1648 succeeded, received a machine receipt and closed automatically.",
+    "Capability Truth now includes cross-estate TTL/currentness, adapter availability, authority/effect/privacy fit, failure-domain exclusion and ranked provider redundancy.",
+    "FCOA provider/external routing is fail-closed on fresh qualified Capability Truth before existing credential, effect and fence authority checks run.",
+    "Provider-backed CROSS_ESTATE_CURRENTNESS and CROSS_ESTATE_ROUTE_SCORECARD projections are the live routing substrate for FCOA and Alpha-Omega.",
+    "Google Sheets/Apps Script gateway persistence is currently callable for durable queue/checkpoint writes, but the native unattended consumer remains unproven; a 2026-09-22 no-effect GAS_SELFTEST canary is still PENDING with no result receipt.",
+    "Google and Microsoft identity/calendar/mail read surfaces are independently live; Canva and Adobe form complementary creative production failure domains; OpenAI Platform exposes encrypted key bootstrap targets without returning raw key material."
   ],
   "channel":"stable",
-  "issued_at":"2026-09-21T21:33:00Z",
+  "issued_at":"2026-09-22T06:45:00Z",
   "llm_context":{
+    "fcoa_agent_id":"FCOA-OMEGA",
     "global_constraint_router":"FUSE_GLOBAL_CONSTRAINT_REROUTE_V1",
-    "of50_mapping":"FrictionClass.RATE_OR_QUOTA_PRESSURE -> CycleDecision.CHANGED_ROUTE_REQUIRED",
-    "trigger_classes":["ACTIVE_TASK_LIMIT","RATE_LIMIT","QUOTA_EXHAUSTED","CONCURRENCY_LIMIT","STORAGE_LIMIT","PROVIDER_CAPACITY","GENERIC_CAPACITY"],
-    "mission_rule":"CONSTRAINTS_CHANGE_ROUTE_NOT_OBJECTIVE",
-    "automation_limit_rule":"REUSE_EQUIVALENT_EXISTING_TASK > CONSOLIDATE_ONLY_EXACT_EQUIVALENTS > FUSE_INTERNAL_SCHEDULER > PROVIDER_NATIVE_SCHEDULER > LOCAL_SCHEDULER > DURABLE_QUEUE",
-    "general_route_rule":"REUSE>REBIND>REPAIR>EXTEND>COMPOSE>ALTERNATE_PROVIDER>LOCAL_RUNTIME>HARVEST>BUILD_MINIMUM>DURABLE_QUEUE",
-    "recurrence_rule":"SECOND_SAME_CONSTRAINT_ON_SAME_ROUTE_REQUIRES_CHANGED_ROUTE_FAMILY",
-    "owner_burden_rule":"DO_NOT_OFFLOAD_MACHINE_WORK_WHILE_SAFE_MACHINE_ROUTE_EXISTS",
-    "unrelated_work_rule":"NEVER_PAUSE_OR_DELETE_UNRELATED_WORK_TO_FREE_CAPACITY_AUTOMATICALLY",
-    "truth_rule":"A_LIMIT_MESSAGE_PROVES_A_SURFACE_CONSTRAINT_NOT_MISSION_IMPOSSIBILITY",
-    "external_effect_rule":"REROUTING_DOES_NOT_WIDEN_EXTERNAL_EFFECT_AUTHORITY"
+    "durable_scheduler":"FUSE_DURABLE_SCHEDULER_BUS_V1",
+    "durable_scheduler_live_canary":"ISSUE_1648_SUCCEEDED_AND_CLOSED",
+    "finality_prompt":"governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md",
+    "capability_truth_currentness":"FUSE_CAPABILITY_TRUTH_CURRENTNESS_V1",
+    "capability_currentness_main":"dc2f675c770c9ccc953b2222dcbd9be5c2a4c880",
+    "fcoa_currentness_gate":"FCOA_CURRENTNESS_GATE_V1",
+    "fcoa_currentness_gate_main":"644e1eb44d3e28acccae1ad558c44507d092c64a",
+    "provider_projection":"FCOA_GAS:CROSS_ESTATE_CURRENTNESS+CROSS_ESTATE_ROUTE_SCORECARD",
+    "routing_order":"FRESH_CENSUS>MATURITY>CURRENTNESS>CALLABILITY>AUTHORITY_EFFECT_PRIVACY>FAILURE_DOMAIN>RANKED_ADAPTER",
+    "lazy_refresh_rule":"REFRESH_ONLY_REQUIRED_CAPABILITY_WHEN_TTL_STALE_OR_PRIMARY_ROUTE_FAILS",
+    "absence_rule":"UNKNOWN_NOT_ABSENT_UNTIL_RELEVANT_ESTATE_CENSUS_COMPLETE",
+    "failure_domain_rule":"REPEATED_SAME_SEMANTIC_FAILURE_MAY_EXCLUDE_PRIOR_FAILURE_DOMAIN",
+    "google_scheduler_state":"GATEWAY_QUEUE_PERSISTENCE_LIVE_NATIVE_CONSUMER_UNPROVEN",
+    "external_effect_rule":"CURRENTNESS_AND_ROUTING_NEVER_GRANT_EXTERNAL_AUTHORITY"
   },
   "min_client_version":"0.4.0",
   "route_deltas":[
-    "Intercept limit/quota/capacity errors before user-visible terminal failure and classify the exact constraint.",
-    "Preserve mission identity, objective, schedule/condition semantics, privacy and effect authority while selecting a changed route.",
-    "For automation-cap errors, prefer equivalent task reuse; consolidate only semantically identical duplicates; never auto-disable unrelated tasks.",
-    "For rate/quota/provider capacity, use a qualified alternate provider/local runtime or changed scheduling mechanism; do not blindly retry the same family after recurrence.",
-    "If no semantically equivalent live route exists, append the mission to the durable mission queue and continue route harvesting/capacity recovery without converting it into a manual owner task.",
-    "A constraint message is evidence about one execution surface; it is not evidence that the mission or capability is impossible."
+    "Before FCOA chooses a provider/external executor, require a fresh qualified Capability Truth adapter; stale, source-only, connector-unavailable or authority-mismatched routes are ineligible.",
+    "Prefer independent provider redundancy where semantics match: Google/Microsoft for identity, calendar and mail telemetry; Canva/Adobe for creative production; GitHub/Google-native candidate for durable scheduling.",
+    "Use lazy currentness refresh instead of constant polling: refresh the needed capability when its TTL expires or the selected route fails.",
+    "A direct connector outage is route-scoped evidence, not capability absence; alternate adapters remain eligible if fresh and qualified.",
+    "Google GAS gateway rows may be used for durable checkpoint/queue persistence only while native execution remains unproven; do not promote the scheduler until a fresh result/heartbeat proves the consumer.",
+    "Use the Alpha-Omega/Formation 60-minute prompt for aggressive finality while preserving proof, authority and durable mission continuity."
   ],
   "schema":"FUSE_UPDATE_MANIFEST_V1",
-  "sequence":7,
-  "summary":"Make quota/limit/capacity messages a global automatic re-routing trigger across FUSE while preserving mission semantics, unrelated work and authority boundaries.",
-  "valid_until":"2026-10-21T23:59:59Z",
+  "sequence":8,
+  "summary":"Promote durable scheduler finality, cross-estate Capability Truth currentness, and FCOA fail-closed currentness routing into the stable FUSE update fabric.",
+  "valid_until":"2026-10-22T23:59:59Z",
   "warnings":[
-    "Platform-specific hard limits still exist; FUSE re-routes around them when a qualified alternate route exists but cannot change the platform's own quota.",
-    "Unrelated active automations are never paused or deleted automatically simply to free a slot.",
-    "Durable queue state preserves work but is not a completion claim."
+    "The no-effect durable scheduler path is live; effectful durable handlers remain separately authority-gated.",
+    "The 2026-09-22 Apps Script GAS_SELFTEST canary is persisted but not yet consumed; Google-native unattended execution remains unproven.",
+    "Windows owner-PC keyboard/mouse live control remains a separate runtime proof boundary.",
+    "Teams, SharePoint and other installable connectors remain unbound until explicit owner connection."
   ],
-  "llm_context_sha256":"7b3225c63856329c370329f4914bf81bbd2ee0b40ceb1a2e9be651ab9c17ea16",
-  "manifest_body_sha256":"534aa9f871d1e4b4480f9bb38ef7b8027e3dce99dbe207f6b97d55e24adcbf80"
+  "llm_context_sha256":"a14c34444a5acf65aa07812d3e757978803c4f8b15072f048eaa7f1328ec16b0",
+  "manifest_body_sha256":"576fe310b914ac613e0203c786d2bb3a10c94308c10ee9d76a2ab27f5219ec0a"
 }
