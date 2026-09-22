@@ -66,7 +66,7 @@ def workflow_events(text: str) -> set[str]:
         }
 
     block = re.search(
-        r"(?ms)^on\s*:\s*\n(?P<body>(?:^[ \t]+.*(?:\n|$))*)",
+        r"(?m)^on\s*:\s*\n(?P<body>(?:^[ \t]+.*(?:\n|$))*)",
         text,
     )
     if not block:
