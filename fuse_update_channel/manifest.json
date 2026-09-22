@@ -1,53 +1,96 @@
 {
   "artifacts": [
-    {"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},
-    {"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},
-    {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},
-    {"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0"},
-    {"kind":"surface-census","name":"FCOA Multi-Surface Reachability & Control Census","version":"1.0.0"},
-    {"kind":"routing-policy","name":"FUSE Global Constraint Re-route","version":"1.0.0"}
+    {
+      "kind": "source",
+      "name": "Federation-Omega",
+      "ref": "main",
+      "repository": "mosianekk-lang/Federation-Omega"
+    },
+    {
+      "kind": "policy",
+      "name": "FCOA Internal Super-Admin Profile",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "memory-node",
+      "name": "FCOA Canonical Memory & Intelligence Fabric Node",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "device-control",
+      "name": "FCOA Device-Control Limb",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "surface-census",
+      "name": "FCOA Multi-Surface Reachability & Control Census",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "routing-policy",
+      "name": "FUSE Global Constraint Re-route",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "durable-scheduler",
+      "name": "FUSE Durable Scheduler Bus",
+      "version": "1.0.0",
+      "live_canary_issue": 1648
+    },
+    {
+      "kind": "governance-prompt",
+      "name": "FUSE Alpha-Omega + Formation 60-Minute Finality Prompt",
+      "version": "1.0.0",
+      "path": "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md"
+    }
   ],
-  "authority_class":"FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
-  "capability_deltas":[
-    "All FUSE work now treats task limits, quotas, rate limits, concurrency ceilings, storage ceilings and provider-capacity messages as route constraints rather than mission-terminal failures.",
-    "Constraint interception maps into the existing OF50 friction lineage as RATE_OR_QUOTA_PRESSURE and forces CHANGED_ROUTE_REQUIRED while preserving the mission objective and terminal predicates.",
-    "For active-task limits, FUSE first reuses a semantically equivalent existing automation, then may consolidate only exact-equivalent duplicates, then tries FUSE/provider/local schedulers; otherwise the mission is retained in a durable queue without owner burden.",
-    "Repeated recurrence on the same constrained route forbids unchanged retry and requires a different route family or mechanism.",
-    "Automatic re-routing may never pause/delete unrelated work merely to free capacity, and it never widens provider/external-effect authority."
+  "authority_class": "FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
+  "capability_deltas": [
+    "FUSE now has a live provider-independent durable scheduling route outside ChatGPT Automations: the approved Superior Logic scheduled gateway can execute no-effect durable missions and write provider-backed receipts.",
+    "Durable mission discovery uses GitHub Search rather than only the first 100 open issues, preventing mission invisibility in large repositories.",
+    "Canary issue #1648 reached SUCCEEDED through GITHUB-SCHEDULER-V1, received a machine receipt and closed automatically; this is live end-to-end proof of alternate scheduling.",
+    "The canonical Alpha-Omega + Formation 60-Minute Finality Prompt is admitted for reuse by FCOA, LocalLLM and other update-aware FUSE controllers.",
+    "The prompt mandates multi-stream execution, changed-mechanism recovery, Formation harvesting before new builds, durable transport, proof-before-claim, and minimal owner burden."
   ],
-  "channel":"stable",
-  "issued_at":"2026-09-21T21:33:00Z",
-  "llm_context":{
-    "global_constraint_router":"FUSE_GLOBAL_CONSTRAINT_REROUTE_V1",
-    "of50_mapping":"FrictionClass.RATE_OR_QUOTA_PRESSURE -> CycleDecision.CHANGED_ROUTE_REQUIRED",
-    "trigger_classes":["ACTIVE_TASK_LIMIT","RATE_LIMIT","QUOTA_EXHAUSTED","CONCURRENCY_LIMIT","STORAGE_LIMIT","PROVIDER_CAPACITY","GENERIC_CAPACITY"],
-    "mission_rule":"CONSTRAINTS_CHANGE_ROUTE_NOT_OBJECTIVE",
-    "automation_limit_rule":"REUSE_EQUIVALENT_EXISTING_TASK > CONSOLIDATE_ONLY_EXACT_EQUIVALENTS > FUSE_INTERNAL_SCHEDULER > PROVIDER_NATIVE_SCHEDULER > LOCAL_SCHEDULER > DURABLE_QUEUE",
-    "general_route_rule":"REUSE>REBIND>REPAIR>EXTEND>COMPOSE>ALTERNATE_PROVIDER>LOCAL_RUNTIME>HARVEST>BUILD_MINIMUM>DURABLE_QUEUE",
-    "recurrence_rule":"SECOND_SAME_CONSTRAINT_ON_SAME_ROUTE_REQUIRES_CHANGED_ROUTE_FAMILY",
-    "owner_burden_rule":"DO_NOT_OFFLOAD_MACHINE_WORK_WHILE_SAFE_MACHINE_ROUTE_EXISTS",
-    "unrelated_work_rule":"NEVER_PAUSE_OR_DELETE_UNRELATED_WORK_TO_FREE_CAPACITY_AUTOMATICALLY",
-    "truth_rule":"A_LIMIT_MESSAGE_PROVES_A_SURFACE_CONSTRAINT_NOT_MISSION_IMPOSSIBILITY",
-    "external_effect_rule":"REROUTING_DOES_NOT_WIDEN_EXTERNAL_EFFECT_AUTHORITY"
+  "channel": "stable",
+  "issued_at": "2026-09-22T04:05:00Z",
+  "llm_context": {
+    "global_constraint_router": "FUSE_GLOBAL_CONSTRAINT_REROUTE_V1",
+    "durable_scheduler": "FUSE_DURABLE_SCHEDULER_BUS_V1",
+    "durable_scheduler_host": "SUPERIOR_LOGIC_MATURATION_SHADOW_APPROVED_GATEWAY",
+    "durable_scheduler_live_canary": "ISSUE_1648_SUCCEEDED_AND_CLOSED",
+    "durable_scheduler_worker": "GITHUB-SCHEDULER-V1",
+    "durable_scheduler_route": "GITHUB_SCHEDULED_EXECUTOR",
+    "durable_scheduler_canary_mission_digest": "sha256:72d15ca82bd522605fd37ff72c365b84827ece7561e36e629e9e7de9e3a8b2cb",
+    "durable_scheduler_canary_receipt_digest": "sha256:f42e23a93fc5d3850f4444fd841f7248361bd20de1aef18cf827ef48d0943aa1",
+    "durable_scheduler_artifact_digest": "sha256:72af815db2930479aa1979ce0af609800f0ec44b452d78e4e4e8ea2ef4792020",
+    "finality_prompt": "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md",
+    "finality_target_minutes": 60,
+    "execution_mode": "ALPHA_OMEGA_MULTI_STREAM_PLUS_FORMATION_HARVEST_PLUS_FCOA",
+    "mission_rule": "RECOVERABLE_FAILURES_CHANGE_ROUTE_NOT_OBJECTIVE",
+    "transport_rule": "CHAT_IS_DETACHABLE_AND_NEVER_THE_SOLE_EXECUTION_PLANE",
+    "owner_burden_rule": "NO_OWNER_ACTION_WHILE_SAFE_MACHINE_ROUTE_EXISTS",
+    "truth_rule": "DO_NOT_TRADE_PROOF_FOR_THE_CLOCK",
+    "external_effect_rule": "REROUTING_AND_INTERNAL_ADMIN_DO_NOT_WIDEN_EXTERNAL_EFFECT_AUTHORITY"
   },
-  "min_client_version":"0.4.0",
-  "route_deltas":[
-    "Intercept limit/quota/capacity errors before user-visible terminal failure and classify the exact constraint.",
-    "Preserve mission identity, objective, schedule/condition semantics, privacy and effect authority while selecting a changed route.",
-    "For automation-cap errors, prefer equivalent task reuse; consolidate only semantically identical duplicates; never auto-disable unrelated tasks.",
-    "For rate/quota/provider capacity, use a qualified alternate provider/local runtime or changed scheduling mechanism; do not blindly retry the same family after recurrence.",
-    "If no semantically equivalent live route exists, append the mission to the durable mission queue and continue route harvesting/capacity recovery without converting it into a manual owner task.",
-    "A constraint message is evidence about one execution surface; it is not evidence that the mission or capability is impossible."
+  "min_client_version": "0.4.0",
+  "route_deltas": [
+    "On a ChatGPT automation/task-cap error, preserve the mission and use the live durable scheduler route rather than returning the platform cap as the mission-level outcome.",
+    "Search all open durable mission issues through a pagination-safe/search-safe mechanism before concluding the queue is empty.",
+    "Use the Alpha-Omega/Formation 60-minute prompt as the default aggressive-finality orchestration profile when the owner requests all work to be completed rapidly and automatically.",
+    "Run independent workstreams concurrently, but merge state only after proof and readback converge.",
+    "Formation must search for reusable mechanisms before any residual build; the second same-semantic failure requires a changed route family.",
+    "If an external authority remains irreducible, retain the mission durably and state the exact missing predicate without fabricating completion."
   ],
-  "schema":"FUSE_UPDATE_MANIFEST_V1",
-  "sequence":7,
-  "summary":"Make quota/limit/capacity messages a global automatic re-routing trigger across FUSE while preserving mission semantics, unrelated work and authority boundaries.",
-  "valid_until":"2026-10-21T23:59:59Z",
-  "warnings":[
-    "Platform-specific hard limits still exist; FUSE re-routes around them when a qualified alternate route exists but cannot change the platform's own quota.",
-    "Unrelated active automations are never paused or deleted automatically simply to free a slot.",
-    "Durable queue state preserves work but is not a completion claim."
+  "schema": "FUSE_UPDATE_MANIFEST_V1",
+  "sequence": 8,
+  "summary": "Promote the live durable scheduler canary and Alpha-Omega + Formation 60-Minute Finality Prompt into the stable FUSE update fabric.",
+  "valid_until": "2026-10-22T23:59:59Z",
+  "warnings": [
+    "The 60-minute value is a hard execution target, not permission to fabricate terminality when an external provider or authority cannot satisfy a predicate.",
+    "The durable scheduler proof covers the admitted no-effect mission path; effectful missions remain separately authority-gated.",
+    "Windows owner-PC keyboard/mouse live control remains a separate runtime proof boundary."
   ],
-  "llm_context_sha256":"7b3225c63856329c370329f4914bf81bbd2ee0b40ceb1a2e9be651ab9c17ea16",
-  "manifest_body_sha256":"534aa9f871d1e4b4480f9bb38ef7b8027e3dce99dbe207f6b97d55e24adcbf80"
+  "llm_context_sha256": "fb9471d88c63dd54e001f7b64fa0d6a87aae6962fcc3d7b2c68b512caf9d13fc",
+  "manifest_body_sha256": "3935403ece5017cee2fd0e0c73276bf0a77e387aeb80fe8dc5653164628d1583"
 }
