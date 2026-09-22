@@ -1,0 +1,26 @@
+{
+  "schema": "FEDERATION-ARTIFACT-FABRIC-SOURCE-MANIFEST-GIT-1",
+  "component": "federation_artifact_fabric_v3",
+  "version": "3.0.0",
+  "integrity_model": "GIT_BLOB_SHA1",
+  "source_branch": "feat/federation-artifact-fabric-v3",
+  "manifest_scope": "15 component source, documentation, governance and test blobs; this manifest excludes itself to avoid self-reference",
+  "entries": [
+    {"path":"README_ARTIFACT_FABRIC_V3.md","git_blob_sha1":"b8d8a67263350f47d05f4bc9b62bf064547b58f7"},
+    {"path":"docs/artifact-fabric/DEPLOYMENT_PLAN.md","git_blob_sha1":"2f08f6ff222e29ac71c8c898ad83b243c6ed5952"},
+    {"path":"docs/artifact-fabric/FEDERATION_ARTIFACT_FABRIC_V3.md","git_blob_sha1":"3bc07c5b523b7805fb6a9c08e1559ae3480686cb"},
+    {"path":"federation_artifact_fabric_v3/BUILD_CONTRACT.json","git_blob_sha1":"6a6b40e67dce8ea271e9825f7991e00a0bdf94b7"},
+    {"path":"federation_artifact_fabric_v3/__init__.py","git_blob_sha1":"4e1370826da0ed645f21007f2e0957fc9f53f2e8"},
+    {"path":"federation_artifact_fabric_v3/adapters.py","git_blob_sha1":"6b10b4a0cb36030ff1f0b74666dd32c3c5a74ba4"},
+    {"path":"federation_artifact_fabric_v3/canonical.py","git_blob_sha1":"af6986cb87ba26161c52e07dae6ebfff9a2c1632"},
+    {"path":"federation_artifact_fabric_v3/gateway.py","git_blob_sha1":"9ebce6b010d1dfc3ce54ca0ea9527e2ee1f1b2c7"},
+    {"path":"federation_artifact_fabric_v3/ledger.py","git_blob_sha1":"022678072b1efa2b9f88b7a7c65031bf98d46847"},
+    {"path":"federation_artifact_fabric_v3/migration.py","git_blob_sha1":"f14ccfc5df2cd918e68e9e1500fbed6afbfd2288"},
+    {"path":"federation_artifact_fabric_v3/model.py","git_blob_sha1":"6df1a9f11a4f52f5cf00516b61285acfcc6782b8"},
+    {"path":"federation_artifact_fabric_v3/reconcile.py","git_blob_sha1":"2db9e9f5f8e2b69959e0373ae777e3c25ec14486"},
+    {"path":"federation_artifact_fabric_v3/security.py","git_blob_sha1":"16e1bf3c091adf39ccc443884a802ef2945e0d3b"},
+    {"path":"governance/federation_artifact_fabric_v3.json","git_blob_sha1":"aa65cef619cea9d7cea6025989a998a8f66a724a"},
+    {"path":"tests/test_phoenix_provider_cutover_v3_artifact_fabric.py","git_blob_sha1":"e136fdd45997bc89a6f5ff8de2b99a13bbad3e1a"}
+  ],
+  "truth_boundary": "Git blob identities provide exact repository-byte provenance. They are not provider deployment, external immutable anchoring or production runtime proof."
+}
