@@ -164,6 +164,40 @@ jobs:
         self.assertIn("REPOSITORY_WRITE_AUTHORITY", rules)
         self.assertIn("UNAUTHORISED_OIDC", rules)
 
+    def test_permissions_issues_write_is_not_trigger(self):
+        text = """name: Durable Scheduler
+on:
+  schedule:
+    - cron: '17 * * * *'
+  workflow_dispatch:
+  push:
+    branches: [main]
+permissions:
+  contents: read
+  issues: write
+concurrency:
+  group: durable-scheduler
+jobs:
+  x:
+    steps: []
+"""
+        self.assertEqual(
+            {"schedule", "workflow_dispatch", "push"},
+            AIRLOCK.workflow_events(text),
+        )
+
+    def test_evidenceops_external_scheduler_contract_passes(self):
+        workflow = ".github/workflows/evidenceops-external-scheduler.yml"
+        self.assertIn(workflow, POLICY["active_workflow_allowlist"])
+        self.assertEqual(
+            {"schedule", "workflow_dispatch", "push"},
+            set(POLICY["allowed_events"][workflow]),
+        )
+        self.assertEqual(["main"], POLICY["required_push_branches"][workflow])
+        self.assertIn(workflow, POLICY["execution_quarantine"]["keep_active"])
+        text = (ROOT / workflow).read_text(encoding="utf-8")
+        self.assertEqual([], AIRLOCK.analyse_workflow(workflow, text, POLICY))
+
     def test_unlisted_workflow_is_rejected(self):
         findings = AIRLOCK.analyse_workflow(
             ".github/workflows/new-bot.yml",
