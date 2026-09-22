@@ -158,6 +158,36 @@ Includes:
 - MCP/A2A-compatible provider-neutral contracts;
 - clean-room harvest/build residual route.
 
+## Market-composite capability map
+
+This map captures public product-level mechanisms only. FUSE implementations remain clean-room and provider-neutral.
+
+| Market pattern | Representative market strength | FUSE ecosystem implementation |
+|---|---|---|
+| Deep research | OpenAI deep research/agent; Perplexity research | research.deep + citation/provenance + enterprise knowledge adapters |
+| Research-to-action | OpenAI agent combining browser, terminal, API/connectors | agent.action route hierarchy: native API -> connector -> terminal -> browser -> GUI |
+| Enterprise agent platform | Google Gemini Enterprise Agent Platform | Alpha-Omega/FCOA + Capability Truth + managed provider adapters + Work Plane |
+| Open agent interoperability | Google A2A; Anthropic MCP ecosystem | agent.message / capability.mcp / capability.a2a provider-neutral contracts |
+| Agent identity/gateway | Google Agent Identity/Gateway/Model Armor | authority envelopes + Capability Truth + security policy/effect gates |
+| Multi-agent systems | Google multi-agent platform; Microsoft multi-agent systems | agent.multi + bounded specialist streams + durable handoff |
+| Model choice / council | Google Model Garden; Perplexity multi-model orchestration | model.council + model.route + model.evaluate + disagreement preservation |
+| Agentic coding | Claude Code; GitHub Copilot agent mode | code.agentic + plan/edit/test/checkpoint/review + provider challenger adapters |
+| Checkpoints / rewind | Claude Code checkpoints | durable source checkpoints + rollback + mission checkpoints |
+| Subagents / hooks | Claude Code subagents/hooks/background tasks | specialist agents + hookable proof/test stages + durable background executor |
+| Computer use | OpenAI agent; Anthropic computer use | FCOA Device-Control + browser/VM/terminal/GUI route hierarchy |
+| Low-code workflows | Microsoft Copilot Studio/Power Platform | enterprise.workflow + Apps Script + future Power Automate adapter |
+| Enterprise connectors | Microsoft Power Platform; OpenAI apps/connectors | Capability Marketplace + provider connector adapters |
+| Enterprise knowledge | Google Gemini Enterprise; Perplexity Enterprise | knowledge.enterprise + Drive/KDV + provider knowledge adapters |
+| Creative conversation | Canva AI; Adobe Firefly AI Assistant | creative.studio + Canva existing-design-first + Adobe high-fidelity production |
+| Multimodal media | Adobe Firefly image/video/audio/vector; Canva AI | creative image/video/audio/vector/layout services |
+| Interactive design/code | Canva Code | artifact/code workspace + creative/code composition |
+| Lifecycle observability | Google Agent Platform; Microsoft admin/ROI tools | observability.agent + trace/quality/cost/drift/ROI |
+| Agent marketplace | Google Agent Marketplace; Canva app ecosystem | marketplace.capability + currentness/install/connect state |
+| Provider-safe secrets | enterprise agent security patterns | encrypted key bootstrap + host-side secret handles |
+| Durable autonomy | long-running coding/agent systems | Durable Scheduler + event memory + checkpoint/resume + changed-route recovery |
+
+The rule is **mechanism harvest, not product imitation**: extract the valuable capability, define its acceptance criteria, implement against FUSE-owned/provider-neutral contracts, and keep provider-specific implementations replaceable.
+
 ## Non-negotiable runtime law
 
 A mission never chooses a provider first.
