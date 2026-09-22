@@ -1,0 +1,16 @@
+{
+  "schema": "CFBE_GITHUB_SURFACE_PERFORMANCE_HYPOTHESIS_V1",
+  "version": "1.0.0",
+  "hypothesis": "A smaller trusted execution kernel plus change-aware ProofOS selection and zero scheduled maintenance will reduce GitHub control-plane waste and owner burden without reducing proof quality.",
+  "primary_metrics": [
+    "workflow_runs_per_accepted_change",
+    "compute_minutes_per_accepted_change",
+    "median_time_to_exact_head_green",
+    "duplicate_or_superseded_pr_count",
+    "scheduled_run_count",
+    "privileged_workflow_count",
+    "owner_interventions_per_accepted_change"
+  ],
+  "promotion_gate": "No 2x claim until matched before/after missions show >=50% improvement in a composite of duplicated runs, proof latency and owner interventions with equal or stronger proof outcome.",
+  "truth_boundary": "Prospective hypothesis only."
+}

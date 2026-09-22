@@ -1,0 +1,19 @@
+{
+  "schema": "CFBE_GITHUB_SURFACE_CAPABILITY_MAP_V1",
+  "version": "1.0.0",
+  "capabilities": {
+    "provider_prevention": {"state": "PROVIDER_GATED", "resolver": "issue#146"},
+    "workflow_policy_ratchet": {"state": "SOURCE_IMPLEMENTED", "owner": "github_control_plane"},
+    "workflow_estate_scorecard": {"state": "SOURCE_IMPLEMENTED", "owner": "github_control_plane"},
+    "agent_tool_governance": {"state": "SOURCE_IMPLEMENTED", "owner": "github_control_plane"},
+    "copilot_hook_governance": {"state": "SOURCE_IMPLEMENTED", "owner": "github_control_plane"},
+    "read_only_github_guardian": {"state": "SOURCE_IMPLEMENTED", "owner": "github-copilot-profile"},
+    "change_aware_proof_selection": {"state": "REUSE_EXISTING_PROOFOS", "owner": "ProofOS"},
+    "repository_fencing": {"state": "REUSE_EXISTING_FDOF", "owner": "FDOF"},
+    "artifact_attestation": {"state": "TARGET_REGISTERED_PROVIDER_PROOF_PENDING", "owner": "GitHub Actions/SLSA"},
+    "sbom_attestation": {"state": "TARGET_REGISTERED_PROVIDER_PROOF_PENDING", "owner": "GitHub Actions/SLSA"},
+    "composite_agent_identity": {"state": "TARGET_REGISTERED_PROVIDER_BINDING_PENDING", "owner": "FDOF/SOVARA"},
+    "legacy_schedule_convergence": {"state": "SEPARATE_SOURCE_CONVERGENCE_REQUIRED", "owner": "GitHub Control Plane/FDOF"}
+  },
+  "non_duplication": "Reuse existing control-plane, ProofOS, Airlock, FDOF and governance paths; do not create another scheduler, proof plane, registry or authority root."
+}

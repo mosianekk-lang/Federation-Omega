@@ -1,5 +1,7 @@
 # Federation Omega authority and safety ownership
 /.github/workflows/ @mosianekk-lang
+/.github/agents/ @mosianekk-lang
+/.github/hooks/ @mosianekk-lang
 /.github/CODEOWNERS @mosianekk-lang
 /governance/ @mosianekk-lang
 /tools/github_control_plane.py @mosianekk-lang
