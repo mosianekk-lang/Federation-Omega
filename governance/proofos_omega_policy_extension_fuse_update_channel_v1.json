@@ -37,7 +37,7 @@
       "subsystems": [
         "FUSE_UPDATE_CHANNEL_V1"
       ],
-      "failure_class": "UPDATE_CHANNEL_CONTRACT_FAILURE",
+      "failure_class": "SUBSYSTEM_REGRESSION",
       "block_scope": "SUBSYSTEM",
       "timeout_seconds": 120
     }
