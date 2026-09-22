@@ -1,0 +1,19 @@
+{
+  "schema": "FUSE_DURABLE_MISSION_V1",
+  "mission_id": "MISSION-FUSE-DURABLE-SCHEDULER-CANARY-001",
+  "idempotency_key": "FUSE-DURABLE-SCHEDULER-CANARY-001",
+  "task_type": "NO_EFFECT_CANARY",
+  "objective": "Prove FUSE can preserve and execute a durable mission independently of ChatGPT Automations through the admitted Virtual Organization scheduler.",
+  "schedule_kind": "IMMEDIATE",
+  "not_before": "",
+  "interval_seconds": 0,
+  "authority_class": "A0_INTERNAL",
+  "effect_class": "NO_EFFECT",
+  "required_capabilities": [],
+  "payload": {
+    "expected_effects": "NONE",
+    "proof_target": "VIRTUAL_ORG_RUNTIME_RECEIPT"
+  },
+  "max_attempts": 3,
+  "source_epoch": "b3d504219936e4b396455a76106fe33626dae666"
+}
