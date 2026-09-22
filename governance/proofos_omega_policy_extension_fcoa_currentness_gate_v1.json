@@ -1,0 +1,48 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R3_SHARED_CRITICAL",
+      "patterns": [
+        "federation/fcoa/admin_v1/fcoa_admin.py",
+        "tests/test_fcoa_currentness_gate_v1.py",
+        "governance/proofos_omega_policy_extension_fcoa_currentness_gate_v1.json"
+      ],
+      "reason": "FCOA_PROVIDER_ROUTE_CURRENTNESS_AND_AUTHORITY_COMPOSITION"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "FCOA_CURRENTNESS_GATE_V1",
+      "patterns": [
+        "federation/fcoa/admin_v1/fcoa_admin.py",
+        "tests/test_fcoa_currentness_gate_v1.py",
+        "governance/proofos_omega_policy_extension_fcoa_currentness_gate_v1.json"
+      ],
+      "depends_on": [
+        "FUSE_CAPABILITY_TRUTH_V1"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "fcoa_currentness_gate_v1",
+      "kind": "unittest_glob",
+      "target": "test_fcoa_currentness_gate_v1.py",
+      "patterns": [
+        "federation/fcoa/admin_v1/fcoa_admin.py",
+        "tests/test_fcoa_currentness_gate_v1.py",
+        "governance/proofos_omega_policy_extension_fcoa_currentness_gate_v1.json"
+      ],
+      "subsystems": [
+        "FCOA_CURRENTNESS_GATE_V1",
+        "FUSE_CAPABILITY_TRUTH_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
