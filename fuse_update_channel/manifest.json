@@ -1,20 +1,76 @@
 {
   "artifacts": [
-    {"kind":"source","name":"Federation-Omega","ref":"main","repository":"mosianekk-lang/Federation-Omega"},
-    {"kind":"policy","name":"FCOA Internal Super-Admin Profile","version":"1.0.0"},
-    {"kind":"memory-node","name":"FCOA Canonical Memory & Intelligence Fabric Node","version":"1.0.0"},
-    {"kind":"device-control","name":"FCOA Device-Control Limb","version":"1.0.0"},
-    {"kind":"surface-census","name":"FCOA Multi-Surface Reachability & Control Census","version":"1.0.0"},
-    {"kind":"routing-policy","name":"FUSE Global Constraint Re-route","version":"1.0.0"},
-    {"kind":"durable-scheduler","name":"FUSE Durable Scheduler Bus","version":"1.0.0","live_canary_issue":1648},
-    {"kind":"governance-prompt","name":"FUSE Alpha-Omega + Formation 60-Minute Finality Prompt","version":"1.0.0","path":"governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md"},
-    {"kind":"capability-truth","name":"FUSE Cross-Estate Capability Currentness Fabric","version":"1.0.0","main_sha":"dc2f675c770c9ccc953b2222dcbd9be5c2a4c880"},
-    {"kind":"fcoa-routing-gate","name":"FCOA Capability Truth Currentness Gate","version":"1.0.0","main_sha":"644e1eb44d3e28acccae1ad558c44507d092c64a"},
-    {"kind":"platform-routing","name":"Platform Specialist Corps Shared Currentness","version":"1.0.0","main_sha":"9cff71d0c7559ff9d2b1dad03ff6bc082a72a45a"},
-    {"kind":"ecosystem","name":"FUSE Ecosystem","version":"1.0.0","main_sha":"dbf89ac1ff4c00c75ae6de4e9a5d3721e5274f79","path":"governance/fuse_ecosystem_v1.json"}
+    {
+      "kind": "source",
+      "name": "Federation-Omega",
+      "ref": "main",
+      "repository": "mosianekk-lang/Federation-Omega"
+    },
+    {
+      "kind": "policy",
+      "name": "FCOA Internal Super-Admin Profile",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "memory-node",
+      "name": "FCOA Canonical Memory & Intelligence Fabric Node",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "device-control",
+      "name": "FCOA Device-Control Limb",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "surface-census",
+      "name": "FCOA Multi-Surface Reachability & Control Census",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "routing-policy",
+      "name": "FUSE Global Constraint Re-route",
+      "version": "1.0.0"
+    },
+    {
+      "kind": "durable-scheduler",
+      "name": "FUSE Durable Scheduler Bus",
+      "version": "1.0.0",
+      "live_canary_issue": 1648
+    },
+    {
+      "kind": "governance-prompt",
+      "name": "FUSE Alpha-Omega + Formation 60-Minute Finality Prompt",
+      "version": "1.0.0",
+      "path": "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md"
+    },
+    {
+      "kind": "capability-truth",
+      "name": "FUSE Cross-Estate Capability Currentness Fabric",
+      "version": "1.0.0",
+      "main_sha": "dc2f675c770c9ccc953b2222dcbd9be5c2a4c880"
+    },
+    {
+      "kind": "fcoa-routing-gate",
+      "name": "FCOA Capability Truth Currentness Gate",
+      "version": "1.0.0",
+      "main_sha": "644e1eb44d3e28acccae1ad558c44507d092c64a"
+    },
+    {
+      "kind": "platform-routing",
+      "name": "Platform Specialist Corps Shared Currentness",
+      "version": "1.0.0",
+      "main_sha": "9cff71d0c7559ff9d2b1dad03ff6bc082a72a45a"
+    },
+    {
+      "kind": "ecosystem",
+      "name": "FUSE Ecosystem",
+      "version": "1.0.0",
+      "main_sha": "dbf89ac1ff4c00c75ae6de4e9a5d3721e5274f79",
+      "path": "governance/fuse_ecosystem_v1.json"
+    }
   ],
-  "authority_class":"FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
-  "capability_deltas":[
+  "authority_class": "FUSE_INTERNAL_SUPER_ADMIN_WITH_EFFECT_GATES",
+  "capability_deltas": [
     "FUSE Ecosystem v1 is the umbrella provider-neutral product/runtime facade over the existing Federation; it does not create a new sovereign controller.",
     "Sixteen provider-neutral ecosystem services now cover deep research, agent action, multi-agent orchestration, model council, agentic coding, creative studio, data analytics, enterprise workflows, enterprise knowledge, durable memory, computer/device control, security, observability, capability marketplace, artifact workspace and enterprise communications.",
     "Mission routing now starts from logical ecosystem services and required capabilities, then uses shared Capability Truth/currentness to choose primary and backup adapters across independent provider failure domains.",
@@ -22,28 +78,48 @@
     "The market-composite map clean-room harvests public capability mechanisms such as deep research, browser/API/terminal/computer action, multi-agent systems, model councils, subagents/hooks/checkpoints, MCP/A2A-style interoperability, low-code workflows, creative orchestration, observability and capability marketplaces into replaceable FUSE contracts.",
     "Existing provider-backed projections CROSS_ESTATE_CURRENTNESS and CROSS_ESTATE_ROUTE_SCORECARD remain the runtime truth source for adapter maturity and redundancy."
   ],
-  "channel":"stable",
-  "issued_at":"2026-09-22T07:50:00Z",
-  "llm_context":{
-    "fuse_product_identity":"FUSE_ECOSYSTEM_V1",
-    "ecosystem_main":"dbf89ac1ff4c00c75ae6de4e9a5d3721e5274f79",
-    "ecosystem_contract":"governance/fuse_ecosystem_v1.json",
-    "ecosystem_document":"docs/FUSE_ECOSYSTEM_V1.md",
-    "ecosystem_services":["research.deep","agent.action","agent.multi","model.council","code.agentic","creative.studio","data.analytics","enterprise.workflow","knowledge.enterprise","memory.continuum","device.computer","security.agent","observability.agent","marketplace.capability","artifact.workspace","communications.enterprise"],
-    "execution_controllers":"ALPHA_OMEGA+FORMATION+FCOA_OMEGA",
-    "capability_truth_currentness":"FUSE_CAPABILITY_TRUTH_CURRENTNESS_V1",
-    "platform_specialist_currentness":"SHARED_CAPABILITY_TRUTH_CURRENTNESS",
-    "durable_scheduler":"FUSE_DURABLE_SCHEDULER_BUS_V1",
-    "memory_fabric":"CFBE_BIBLE_MEMORY_FABRIC_V1",
-    "experience_target":"FUSE_AI_LOCALLLM_UNIFIED_SHELL",
-    "routing_law":"SERVICE>CAPABILITY>FRESH_TRUTH>AUTHORITY_EFFECT_PRIVACY>FAILURE_DOMAIN>PRIMARY_BACKUP>EXECUTE>READBACK>PROOF",
-    "market_composite_rule":"HARVEST_PUBLIC_MECHANISM_NOT_PROPRIETARY_IMPLEMENTATION",
-    "provider_rule":"PROVIDERS_ARE_REPLACEABLE_ADAPTERS_NOT_PRODUCT_BOUNDARIES",
-    "owner_burden_rule":"NO_OWNER_ACTION_WHILE_SAFE_MACHINE_ROUTE_EXISTS",
-    "external_effect_rule":"ECOSYSTEM_ROUTING_NEVER_GRANTS_EXTERNAL_AUTHORITY"
+  "channel": "stable",
+  "issued_at": "2026-09-22T07:50:00Z",
+  "llm_context": {
+    "fuse_product_identity": "FUSE_ECOSYSTEM_V1",
+    "ecosystem_main": "dbf89ac1ff4c00c75ae6de4e9a5d3721e5274f79",
+    "ecosystem_contract": "governance/fuse_ecosystem_v1.json",
+    "ecosystem_document": "docs/FUSE_ECOSYSTEM_V1.md",
+    "ecosystem_services": [
+      "research.deep",
+      "agent.action",
+      "agent.multi",
+      "model.council",
+      "code.agentic",
+      "creative.studio",
+      "data.analytics",
+      "enterprise.workflow",
+      "knowledge.enterprise",
+      "memory.continuum",
+      "device.computer",
+      "security.agent",
+      "observability.agent",
+      "marketplace.capability",
+      "artifact.workspace",
+      "communications.enterprise"
+    ],
+    "execution_controllers": "ALPHA_OMEGA+FORMATION+FCOA_OMEGA",
+    "capability_truth_currentness": "FUSE_CAPABILITY_TRUTH_CURRENTNESS_V1",
+    "platform_specialist_currentness": "SHARED_CAPABILITY_TRUTH_CURRENTNESS",
+    "durable_scheduler": "FUSE_DURABLE_SCHEDULER_BUS_V1",
+    "memory_fabric": "CFBE_BIBLE_MEMORY_FABRIC_V1",
+    "experience_target": "FUSE_AI_LOCALLLM_UNIFIED_SHELL",
+    "routing_law": "SERVICE>CAPABILITY>FRESH_TRUTH>AUTHORITY_EFFECT_PRIVACY>FAILURE_DOMAIN>PRIMARY_BACKUP>EXECUTE>READBACK>PROOF",
+    "market_composite_rule": "HARVEST_PUBLIC_MECHANISM_NOT_PROPRIETARY_IMPLEMENTATION",
+    "provider_rule": "PROVIDERS_ARE_REPLACEABLE_ADAPTERS_NOT_PRODUCT_BOUNDARIES",
+    "owner_burden_rule": "NO_OWNER_ACTION_WHILE_SAFE_MACHINE_ROUTE_EXISTS",
+    "external_effect_rule": "ECOSYSTEM_ROUTING_NEVER_GRANT_EXTERNAL_AUTHORITY",
+    "fcoa_currentness_gate": "FCOA_CURRENTNESS_GATE_V1",
+    "fcoa_currentness_gate_main": "644e1eb44d3e28acccae1ad558c44507d092c64a",
+    "durable_scheduler_live_canary": "ISSUE_1648_SUCCEEDED_AND_CLOSED"
   },
-  "min_client_version":"0.4.0",
-  "route_deltas":[
+  "min_client_version": "0.4.0",
+  "route_deltas": [
     "Resolve every substantial mission through FUSE Ecosystem service IDs before considering a vendor/provider route.",
     "Use Capability Truth/currentness and the route scorecard to select a primary adapter plus independent backups where the service requires failure-domain diversity.",
     "Prefer existing FUSE capabilities and clean-room market-composite mechanism harvest before building residual capability.",
@@ -51,16 +127,16 @@
     "For agentic coding use plan/edit/test/checkpoint/review loops; for research require citation/provenance; for creative work prefer existing assets then task-classified Canva/Adobe routes; for enterprise workflows use durable/event-driven providers; for computer use require live readback.",
     "Never promote an ecosystem service to LIVE from source admission alone; action-specific currentness and semantic readback remain mandatory."
   ],
-  "schema":"FUSE_UPDATE_MANIFEST_V1",
-  "sequence":9,
-  "summary":"Promote FUSE Ecosystem v1 as the umbrella provider-neutral market-composite product/runtime facade across the Federation.",
-  "valid_until":"2026-10-22T23:59:59Z",
-  "warnings":[
+  "schema": "FUSE_UPDATE_MANIFEST_V1",
+  "sequence": 9,
+  "summary": "Promote FUSE Ecosystem v1 as the umbrella provider-neutral market-composite product/runtime facade across the Federation.",
+  "valid_until": "2026-10-22T23:59:59Z",
+  "warnings": [
     "FUSE Ecosystem v1 is a service facade over existing controllers, not a new controller.",
     "Individual service maturity remains capability-specific; ecosystem admission does not make stale/source-only provider adapters live.",
     "Effectful external actions, credentials, IAM, publishing, spending and human-facing messages remain separately authority-gated.",
     "Gemini task-specific execution, Google-native unattended scheduling, Windows live physical control and Copilot runtime remain separate open proof boundaries."
   ],
-  "llm_context_sha256":"7313e93832753b1afddfc29e1a6d147ddfb60d6612e7287e86cd87861ab5d6d6",
-  "manifest_body_sha256":"020b0f989c375f1c6b5d1b3bf95d173a7b40ed11269e29282e6e9d8ec2b2b64a"
+  "llm_context_sha256": "0d92660b145572e7be2e09d2cb25aa4f856f789a9bea62436cd5456279a7e578",
+  "manifest_body_sha256": "12f72be4303e3bb7a3d42326d9e401011e990d0ae571fb5194ef48fb232eae53"
 }
