@@ -16,6 +16,8 @@ from federation.fuse_ecosystem_v1 import (
     DynamicRouteContext,
     DynamicRouteElectionState,
     EcosystemMissionSpec,
+    EcosystemPlane,
+    EcosystemServiceSpec,
     FUSE_ECOSYSTEM_SERVICES,
     FuseEcosystemKernel,
 )
@@ -186,17 +188,24 @@ class FuseEcosystemV1Tests(unittest.TestCase):
         fabric=CapabilityCurrentnessFabric((
             obs("identity.resolve","google","google",effects=("READ_ONLY",),authority=("READ",)),
             obs("identity.resolve","microsoft","microsoft",effects=("READ_ONLY",),authority=("READ",)),
-            obs("mail.telemetry","gmail","google",effects=("READ_ONLY",),authority=("READ",)),
-            obs("mail.telemetry","outlook","microsoft",effects=("READ_ONLY",),authority=("READ",)),
-            obs("calendar.read","gcal","google",effects=("READ_ONLY",),authority=("READ",)),
-            obs("calendar.read","ocal","microsoft",effects=("READ_ONLY",),authority=("READ",)),
         ))
-        kernel=FuseEcosystemKernel(fabric)
+        services={
+            "test.identity": EcosystemServiceSpec(
+                "test.identity",
+                EcosystemPlane.COMMUNICATION,
+                ("identity.resolve",),
+                required_maturity=Maturity.PROVIDER_READBACK,
+                min_failure_domains=1,
+            )
+        }
+        kernel=FuseEcosystemKernel(fabric,services=services)
         mission=EcosystemMissionSpec(
-            "dyn-2",("communications.enterprise",),
+            "dyn-2",("test.identity",),
             authority_class="READ",effect_class="READ_ONLY",
         )
         prior=kernel.compile(mission,now=NOW)
+        prior_primary=prior.selections[0].primary_adapter
+        failed_domain="microsoft" if prior_primary=="microsoft" else "google"
         election=kernel.re_elect(
             mission,
             now=NOW,
@@ -204,16 +213,18 @@ class FuseEcosystemV1Tests(unittest.TestCase):
                 DynamicRerouteTrigger.FAILURE,
                 route_epoch=2,
                 excluded_failure_domains={
-                    "identity.resolve":("microsoft",),
-                    "mail.telemetry":("microsoft",),
-                    "calendar.read":("microsoft",),
+                    "identity.resolve":(failed_domain,),
                 },
             ),
             prior_plan=prior,
         )
         self.assertTrue(election.plan.executable)
         self.assertEqual(DynamicRouteElectionState.RESELECTED,election.state)
-        self.assertTrue(election.changed_capabilities)
+        self.assertEqual(("identity.resolve",),election.changed_capabilities)
+        self.assertNotEqual(
+            prior_primary,
+            election.plan.selections[0].primary_adapter,
+        )
 
     def test_no_qualified_route_enters_durable_hold_without_losing_identity(self):
         kernel=FuseEcosystemKernel(CapabilityCurrentnessFabric())
