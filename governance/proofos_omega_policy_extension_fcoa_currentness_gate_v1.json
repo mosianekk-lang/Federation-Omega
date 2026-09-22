@@ -3,7 +3,7 @@
   "version": "1.0.0",
   "risk_rules": [
     {
-      "risk": "R3_SHARED_CRITICAL",
+      "risk": "R3_SECURITY_ABI",
       "patterns": [
         "federation/fcoa/admin_v1/fcoa_admin.py",
         "tests/test_fcoa_currentness_gate_v1.py",
