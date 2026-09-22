@@ -1,0 +1,48 @@
+{
+  "schema": "FEDERATION-PROOFOS-OMEGA-ADDITIVE-EXTENSION-V1",
+  "version": "1.0.0",
+  "risk_rules": [
+    {
+      "risk": "R2_SHARED",
+      "patterns": [
+        "bubbles/platform_specialist_corps.py",
+        "tests/test_bubbles_platform_specialist_corps.py",
+        "governance/proofos_omega_policy_extension_platform_specialist_currentness_v1.json"
+      ],
+      "reason": "PLATFORM_SPECIALIST_CORPS_SHARED_CURRENTNESS_ROUTING"
+    }
+  ],
+  "subsystem_rules": [
+    {
+      "subsystem": "PLATFORM_SPECIALIST_CURRENTNESS_V1",
+      "patterns": [
+        "bubbles/platform_specialist_corps.py",
+        "tests/test_bubbles_platform_specialist_corps.py",
+        "governance/proofos_omega_policy_extension_platform_specialist_currentness_v1.json"
+      ],
+      "depends_on": [
+        "FUSE_CAPABILITY_TRUTH_V1"
+      ]
+    }
+  ],
+  "historical_associations": [],
+  "tests": [
+    {
+      "id": "platform_specialist_currentness_v1",
+      "kind": "unittest_glob",
+      "target": "test_bubbles_platform_specialist_corps.py",
+      "patterns": [
+        "bubbles/platform_specialist_corps.py",
+        "tests/test_bubbles_platform_specialist_corps.py",
+        "governance/proofos_omega_policy_extension_platform_specialist_currentness_v1.json"
+      ],
+      "subsystems": [
+        "PLATFORM_SPECIALIST_CURRENTNESS_V1",
+        "FUSE_CAPABILITY_TRUTH_V1"
+      ],
+      "failure_class": "SUBSYSTEM_REGRESSION",
+      "block_scope": "SUBSYSTEM",
+      "timeout_seconds": 180
+    }
+  ]
+}
