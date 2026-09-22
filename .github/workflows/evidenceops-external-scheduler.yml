@@ -55,6 +55,8 @@ jobs:
         env:
           EVENT_SCHEDULE: ${{ github.event.schedule }}
           INPUT_MODE: ${{ inputs.mode }}
+          GH_TOKEN: ${{ github.token }}
+          GITHUB_REPOSITORY: ${{ github.repository }}
         run: |
           set -euo pipefail
           mkdir -p scheduler/runtime
@@ -85,6 +87,7 @@ jobs:
             scheduler/runtime/heartbeat-system.json
             scheduler/runtime/objective-completion.json
             scheduler/runtime/cloud-capability-inheritance.json
+            scheduler/runtime/durable-bus.json
           retention-days: 90
 
       - name: Comment on scheduler control issue
