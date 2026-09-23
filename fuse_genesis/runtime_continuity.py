@@ -3,7 +3,7 @@ from dataclasses import dataclass
 from hashlib import sha256
 import base64, json, re, sqlite3
 from pathlib import Path
-from typing import Any, Callable, Mapping
+from typing import Any, Mapping, Sequence
 from cryptography.exceptions import InvalidSignature
 from cryptography.hazmat.primitives import hashes, serialization
 from cryptography.hazmat.primitives.asymmetric import padding
@@ -118,9 +118,34 @@ class RsaDispatchVerifier:
         except (ValueError,TypeError,InvalidSignature):
             return False
 
+@dataclass(frozen=True,slots=True)
+class ProviderAuthorityReceipt:
+    authority_ref:str
+    provider_event_id:str
+    verified:bool=True
+
+    def __post_init__(self):
+        _required(self.authority_ref,"AUTHORITY_REF")
+        _required(self.provider_event_id,"PROVIDER_EVENT_ID")
+        if self.verified is not True:
+            raise ContinuityError("PROVIDER_AUTHORITY_RECEIPT_NOT_VERIFIED")
+
+class ProviderAuthorityVerifier:
+    """Immutable exact-pair authority readback set prepared by a trusted provider adapter."""
+    def __init__(self,receipts:Sequence[ProviderAuthorityReceipt]):
+        self._pairs=frozenset((r.authority_ref,r.provider_event_id) for r in receipts)
+    def verify(self,authority_ref:str,provider_event_id:str):
+        return (str(authority_ref),str(provider_event_id)) in self._pairs
+
 class DispatchIngress:
-    """Durable admission. Authority must be verified by the provider adapter."""
-    def __init__(self,path):
+    """Durable admission with constructor-bound trust verifiers; per-call verifier injection is forbidden."""
+    def __init__(self,path,*,signature_verifier:RsaDispatchVerifier,authority_verifier:ProviderAuthorityVerifier):
+        if type(signature_verifier) is not RsaDispatchVerifier:
+            raise ContinuityError("RSA_DISPATCH_VERIFIER_REQUIRED")
+        if type(authority_verifier) is not ProviderAuthorityVerifier:
+            raise ContinuityError("PROVIDER_AUTHORITY_VERIFIER_REQUIRED")
+        self.signature_verifier=signature_verifier
+        self.authority_verifier=authority_verifier
         self.path=Path(path)
         self.db=sqlite3.connect(str(self.path),isolation_level=None,timeout=5)
         self.db.row_factory=sqlite3.Row
@@ -135,8 +160,7 @@ class DispatchIngress:
     def row(self,dispatch_id):
         r=self.db.execute("SELECT * FROM dispatches WHERE dispatch_id=?",(dispatch_id,)).fetchone()
         return dict(r) if r else None
-    def accept(self,envelope:DispatchEnvelope,payload:Mapping[str,Any],*,current_epoch_digest:str,now:int,
-               authority_verifier:Callable[[str,str],bool],signature_verifier:Callable[[DispatchEnvelope],bool]):
+    def accept(self,envelope:DispatchEnvelope,payload:Mapping[str,Any],*,current_epoch_digest:str,now:int):
         envelope.validate()
         _hex64(current_epoch_digest,"CURRENT_EPOCH_DIGEST")
         if now<envelope.issued_at or now>=envelope.expires_at:
@@ -147,9 +171,9 @@ class DispatchIngress:
             raise DispatchRejected("PAYLOAD_HASH_MISMATCH")
         if not envelope.signature_key_id or envelope.signature_algorithm!="RSA_SHA256" or not envelope.signature_b64:
             raise SignatureRejected("SIGNED_GAS_DISPATCH_REQUIRED")
-        if signature_verifier(envelope) is not True:
+        if self.signature_verifier.verify(envelope) is not True:
             raise SignatureRejected("DISPATCH_SIGNATURE_INVALID")
-        if authority_verifier(envelope.authority_ref,envelope.provider_event_id) is not True:
+        if self.authority_verifier.verify(envelope.authority_ref,envelope.provider_event_id) is not True:
             raise DispatchRejected("PROVIDER_AUTHORITY_READBACK_REQUIRED")
         existing=self.db.execute(
             "SELECT * FROM dispatches WHERE dispatch_id=? OR idempotency_key=?",
