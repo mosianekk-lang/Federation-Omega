@@ -140,6 +140,25 @@ Never pause/delete unrelated work merely to free capacity.
 
 ---
 
+## 3A--3. TERMINAL DELIVERY ASSURANCE
+
+`EXECUTION_COMPLETE != OWNER_DELIVERY_ACKNOWLEDGED`.
+
+Reuse the existing CFRE `DeliveryJournal`. Before or with the first terminal owner-facing delivery attempt, freeze the terminal result as an artifact or durable reconstructable pointer, bind its immutable hash and transaction identity, and journal the delivery.
+
+If the chat/client dies after the work completed but before verified owner delivery:
+- mark the delivery `ORPHANED_UNACKNOWLEDGED`;
+- do **not** rerun completed mission effects;
+- preserve the identical result artifact/hash;
+- allow a healthy current/successor client to redeliver that same artifact under the same transaction identity;
+- transition the existing transaction to `ACKNOWLEDGED` only after verified delivery;
+- reject any attempt to bind different result content to the same transaction.
+
+Every bootstrap/rebind scans pending orphaned terminal results after currentness and effect reconciliation. A pending result is delivery debt, not execution debt.
+
+An acknowledged result may be summarized or referenced later, but must never be regenerated as if the original effectful mission had not run.
+
+---
 ## 3A--2. CLIENT LIVENESS SUPERVISOR / SILENT FAILURE
 
 Do not rely on error banners. Track each request through a durable lifecycle journal:
