@@ -1,6 +1,6 @@
 {
   "schema": "FEDOMEGA-NODE-BOOTSTRAP-V3",
-  "version": "3.1.0",
+  "version": "3.2.0",
   "owner": "Kim Kagiso Mosiane",
   "state": "CANDIDATE_PENDING_EXACT_HEAD_ADMISSION",
   "required_before_substantive_work": true,
@@ -52,6 +52,7 @@
     "CALCULATE_CRITICAL_PATH",
     "FORM_COLLISION_SAFE_WORK_PACKETS",
     "COMPILE_BLOCKER_ENVELOPES_AND_COLLISION_DOMAINS",
+    "CLASSIFY_CHAT_TRANSPORT_INTERRUPTION_AND_RECONCILE_UNKNOWN_EFFECTS_BEFORE_RETRY",
     "ASSERT_GLOBAL_STALL_ONLY_IF_READY_SET_EMPTY_AND_ALL_NONTERMINAL_REQUIRED_NODES_SHARE_CAUSAL_BLOCKER",
     "WORK_STEAL_ALL_DISJOINT_READY_NODES",
     "PREPARE_BUILD_TEST_BRANCH_PR_FOR_DISJOINT_SOURCE_WORK_WHILE_MAIN_ADMISSION_IS_HELD",
@@ -243,5 +244,34 @@
       "missing_required_runtime_provider_semantic_behaviour_production_value_proof"
     ],
     "fleet_complete_only_when": "EVERY_CURRENT_REQUIRED_OWNING_BIBLE_TERMINAL_OR_LEGITIMATELY_SUPERSEDED_WITH_CURRENT_PROOF"
+  },
+  "chat_transport_continuity": {
+    "policy_id": "FUSE-CHAT-TRANSPORT-CONTINUITY-V1",
+    "observed_signature": "Connection interrupted. Waiting for the complete answer",
+    "classifier": "TRANSPORT_INTERRUPTION",
+    "secondary_classifier": "STALL_TIMEOUT",
+    "invariant": "Chat response-stream transport loss is a client-route failure, never proof that the mission stopped or that the in-flight action had no effect.",
+    "no_response_ne_no_effect": true,
+    "mandatory_sequence": [
+      "persist current mission checkpoint and pending action identity",
+      "freeze blind replay of any action whose effect state is unknown",
+      "read back FDOF/effect/provider/mission receipts for any possibly in-flight tool or external action",
+      "classify pending action as NO_EFFECT_PROVEN, EFFECT_COMMITTED, EFFECT_UNKNOWN, or RESPONSE_ONLY",
+      "if EFFECT_COMMITTED resume after the committed result without replay",
+      "if NO_EFFECT_PROVEN or RESPONSE_ONLY resume the same atomic action using idempotency identity",
+      "if EFFECT_UNKNOWN quarantine only that effect lane and work-steal all disjoint READY work",
+      "rebind or create/reuse a healthy successor/durable client route",
+      "fence the stale client from duplicate commit once another route has a verified continuation receipt",
+      "semantic fan-in the first verified continuation result exactly once"
+    ],
+    "forbidden": [
+      "treat interrupted stream as mission complete",
+      "treat interrupted stream as proof of no effect",
+      "blindly resend an effectful atomic action",
+      "wait indefinitely on the interrupted chat while another safe route exists",
+      "ask owner to copy/paste persisted mission state"
+    ],
+    "owner_action_required_while_safe_route_exists": false,
+    "full_runtime_proof_requires": "LIVE_CLIENT_INTERRUPTION_TO_EFFECT_READBACK_TO_REBIND_TO_CONTINUED_MISSION_CANARY"
   }
 }
