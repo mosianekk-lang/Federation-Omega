@@ -127,6 +127,32 @@ parallel_scheduler:
   anti_head_of_line_rule: idle qualified capacity with READY work is a routing defect and triggers immediate work-steal
 
 
+chat_capacity_continuity:
+  invariant: interactive chat context or weighted-token capacity is a route transition, never mission stop
+  semantic_detection: provider wording independent
+  on_pressure:
+    - checkpoint current mission state
+    - flush durable egress
+    - mark client draining and nonauthoritative
+    - JOIN/REUSE same mission
+    - automatically create or reuse one successor when a live client carrier supports it
+    - otherwise continue through another qualified durable executor
+    - restore a compact capacity-safe working set while full history remains external
+  owner_click_copy_paste_required: false
+
+bible_fleet_completion:
+  fleet_source: current OWN_DOMAIN_CANONICAL rows plus registered Bible nodes
+  future_owning_bibles_auto_inherit: true
+  hydration: metadata/index first; mission-relevant Bible slices only
+  compiler: existing Master Bible Mission Production Compiler
+  semantic_dedupe: JOIN/REUSE existing Work Plane Mission Bus and FDOF identities
+  cross_bible_dependency_graph: required
+  completion_debt:
+    - unresolved Next_Action
+    - unmet terminal predicate
+    - missing required binding runtime provider semantic behaviour production or value proof
+  fleet_complete_only_when: every current required owning Bible is terminal or legitimately superseded with current proof
+
 blocker_containment:
   policy_id: FUSE-BLOCKER-CONTAINMENT-V1
   failure_class: CFAIL-20260919-029
