@@ -15,6 +15,10 @@
     messageThreshold: 80,
     captureIntervalMs: 30000
   };
+  let autoHandoffInFlight = false;
+  let autoHandoffComplete = false;
+  let autoHandoffLastAttemptAt = 0;
+  const AUTO_HANDOFF_RETRY_MS = 60000;
 
   function status(message, kind, timeoutMs) {
     let chip = document.querySelector("[data-chatbridge-status]");
@@ -41,15 +45,22 @@
     });
   }
 
-  async function checkpoint(reason) {
+  async function checkpoint(reason, options) {
     if (captureInFlight) return null;
     captureInFlight = true;
     try {
       const packet = currentPacket();
       const result = await chrome.runtime.sendMessage({type: "CHATBRIDGE_CAPTURE", packet, reason});
       if (!result || !result.ok) throw new Error(result && result.error || "CAPTURE_FAILED");
-      if (core.shouldPreempt(packet.metrics, settings)) status("ChatBridge Ω4.9 checkpoint verified — migration ready", "ready");
-      return {packet, result};
+      const captured = {packet, result};
+      if (!(options && options.suppressAuto) && core.shouldAutoHandoff(packet, settings)) {
+        const triggerReason = packet.terminalNotice ? "TERMINAL_LIMIT_DETECTED" : "PRE_LIMIT_PRESSURE";
+        status("ChatBridge Ω4.9 capacity pressure — automatic handoff starting", "ready", 10000);
+        queueMicrotask(() => triggerAutomaticHandoff(captured, triggerReason).catch((error) => {
+          status(`ChatBridge automatic handoff retry armed: ${String(error.message || error)}`, "error", 12000);
+        }));
+      }
+      return captured;
     } finally {
       captureInFlight = false;
     }
@@ -69,16 +80,41 @@
     return candidates.find((node) => node.querySelector("button")) || candidates[0] || null;
   }
 
-  async function startSuccessor() {
-    const captured = await checkpoint("SUCCESSOR_REQUEST");
-    if (!captured) throw new Error("CAPTURE_BUSY");
+  async function openSuccessorForCapture(captured, reason) {
+    if (!captured || !captured.packet) throw new Error("CAPTURE_REQUIRED");
     const result = await chrome.runtime.sendMessage({
       type: "CHATBRIDGE_OPEN",
-      conversationKey: captured.packet.conversationKey
+      conversationKey: captured.packet.conversationKey,
+      reason: reason || "CAPACITY_HANDOFF"
     });
     if (!result || !result.ok) throw new Error(result && result.error || "OPEN_FAILED");
-    status(`ChatBridge successor opened with ${result.packetCount} replay packets`, "ready", 10000);
+    status(
+      `ChatBridge successor ${result.reused ? "reused" : "opened"} with ${result.packetCount} replay packets`,
+      "ready",
+      10000
+    );
     return result;
+  }
+
+  async function triggerAutomaticHandoff(captured, reason) {
+    if (!captured || autoHandoffComplete || autoHandoffInFlight) return null;
+    const now = Date.now();
+    if (now - autoHandoffLastAttemptAt < AUTO_HANDOFF_RETRY_MS) return null;
+    autoHandoffInFlight = true;
+    autoHandoffLastAttemptAt = now;
+    try {
+      const result = await openSuccessorForCapture(captured, reason || "CAPACITY_HANDOFF");
+      autoHandoffComplete = true;
+      return result;
+    } finally {
+      autoHandoffInFlight = false;
+    }
+  }
+
+  async function startSuccessor() {
+    const captured = await checkpoint("SUCCESSOR_REQUEST", {suppressAuto: true});
+    if (!captured) throw new Error("CAPTURE_BUSY");
+    return openSuccessorForCapture(captured, "MANUAL_FALLBACK");
   }
 
   function decorateLimitBanner() {
@@ -88,8 +124,8 @@
     button.type = "button";
     button.dataset.chatbridgeStart = "true";
     button.className = "chatbridge-start-button";
-    button.textContent = "Start successor via ChatBridge Ω4.9";
-    button.setAttribute("aria-label", "Capture this rendered conversation and open a ChatBridge successor chat");
+    button.textContent = "Retry successor via ChatBridge Ω4.9";
+    button.setAttribute("aria-label", "Retry the automatic ChatBridge successor handoff for this rendered conversation");
     button.addEventListener("click", async () => {
       button.disabled = true;
       button.textContent = "Capturing full rendered ledger…";
@@ -98,7 +134,7 @@
         button.textContent = "ChatBridge successor opened";
       } catch (error) {
         button.disabled = false;
-        button.textContent = "Start successor via ChatBridge Ω4.9";
+        button.textContent = "Retry successor via ChatBridge Ω4.9";
         status(`ChatBridge handoff failed: ${String(error.message || error)}`, "error", 10000);
       }
     });

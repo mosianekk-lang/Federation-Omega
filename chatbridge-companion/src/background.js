@@ -269,6 +269,28 @@ async function handleMessage(request, sender) {
   if (request.type === "CHATBRIDGE_OPEN") {
     const ledger = await loadLedger(request.conversationKey);
     if (!ledger) throw new Error("LEDGER_NOT_FOUND");
+
+    const priorStored = await chrome.storage.session.get("pendingChatBridgeTransfer");
+    const prior = priorStored.pendingChatBridgeTransfer;
+    if (prior && prior.conversationKey === ledger.conversationKey && prior.currentIndex < prior.prompts.length) {
+      let targetStillOpen = false;
+      if (prior.targetTabId != null) {
+        try {
+          await chrome.tabs.get(prior.targetTabId);
+          targetStillOpen = true;
+        } catch (_) {}
+      }
+      if (targetStillOpen) {
+        return {
+          ok: true,
+          reused: true,
+          transferId: prior.transferId,
+          tabId: prior.targetTabId,
+          packetCount: prior.prompts.length
+        };
+      }
+    }
+
     const stored = await chrome.storage.local.get("chatbridgeSettings");
     const settings = Object.assign({}, DEFAULTS, stored.chatbridgeSettings || {});
     const prompts = core.buildReplayPrompts(ledger, settings.maxReplayChars);
@@ -279,13 +301,14 @@ async function handleMessage(request, sender) {
       prompts,
       currentIndex: 0,
       targetTabId: null,
+      reason: String(request.reason || "UNSPECIFIED"),
       createdAt: new Date().toISOString()
     };
     await chrome.storage.session.set({pendingChatBridgeTransfer: pending});
     const tab = await chrome.tabs.create({url: pending.targetUrl, active: true});
     pending.targetTabId = tab.id;
     await chrome.storage.session.set({pendingChatBridgeTransfer: pending});
-    return {ok: true, transferId: pending.transferId, tabId: tab.id, packetCount: prompts.length};
+    return {ok: true, reused: false, transferId: pending.transferId, tabId: tab.id, packetCount: prompts.length};
   }
 
   if (request.type === "CHATBRIDGE_GET_PENDING") {

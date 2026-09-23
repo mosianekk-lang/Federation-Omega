@@ -3,8 +3,11 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const core = require("../src/bridge-core.js");
 
-test("detects the current maximum-length warning", () => {
+test("detects current maximum-length and weighted-token warnings", () => {
   assert.equal(core.isLimitNotice("You've reached the maximum length for this conversation, but you can keep talking by starting a new chat."), true);
+  assert.equal(core.isLimitNotice("You've hit max weighted tokens for this chat"), true);
+  assert.equal(core.isLimitNotice("Maximum weighted tokens for this chat"), true);
+  assert.equal(core.isLimitNotice("weighted token limit"), true);
   assert.equal(core.isLimitNotice("Ordinary response text about a long project."), false);
 });
 
@@ -60,4 +63,10 @@ test("pre-emption is deterministic", () => {
   assert.equal(core.shouldPreempt({estimatedRenderedTokens: 65000, renderedMessageCount: 1}, {}), true);
   assert.equal(core.shouldPreempt({estimatedRenderedTokens: 100, renderedMessageCount: 80}, {}), true);
   assert.equal(core.shouldPreempt({estimatedRenderedTokens: 100, renderedMessageCount: 2}, {}), false);
+});
+
+test("automatic handoff is mandatory for pre-limit pressure or a terminal notice", () => {
+  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 65000, renderedMessageCount: 1}}, {}), true);
+  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 100, renderedMessageCount: 2}, terminalNotice: "You've hit max weighted tokens for this chat"}, {}), true);
+  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 100, renderedMessageCount: 2}, terminalNotice: ""}, {}), false);
 });

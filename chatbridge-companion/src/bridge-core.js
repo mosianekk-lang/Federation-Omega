@@ -11,7 +11,10 @@
     /reached the maximum length for this conversation/i,
     /maximum (?:conversation|context) length/i,
     /conversation (?:is |has become )?too long/i,
-    /keep talking by starting a new chat/i
+    /keep talking by starting a new chat/i,
+    /you(?:'|’)ve hit max weighted tokens for this chat/i,
+    /max(?:imum)? weighted tokens(?: for this chat)?/i,
+    /weighted token(?:s)? (?:limit|maximum|cap)/i
   ];
 
   function normalizeText(value) {
@@ -285,6 +288,11 @@
     return Number(metrics.estimatedRenderedTokens) >= tokenThreshold || Number(metrics.renderedMessageCount) >= messageThreshold;
   }
 
+  function shouldAutoHandoff(packet, settings) {
+    const current = packet || {};
+    return Boolean(normalizeText(current.terminalNotice || "")) || shouldPreempt(current.metrics || {}, settings);
+  }
+
   return Object.freeze({
     PACKET_SCHEMA,
     LEDGER_SCHEMA,
@@ -306,6 +314,7 @@
     missingRanges,
     latestTranscriptEvents,
     buildReplayPrompts,
-    shouldPreempt
+    shouldPreempt,
+    shouldAutoHandoff
   });
 });
