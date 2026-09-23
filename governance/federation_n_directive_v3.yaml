@@ -1,5 +1,5 @@
 policy_id: FEDOMEGA-N-DIRECTIVE-V3
-version: 3.3.0
+version: 3.4.0
 owner: Kim Kagiso Mosiane
 state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
 authority_ceiling: A1_INTERNAL
@@ -361,3 +361,84 @@ truth_boundary:
   source_merge_is_not_provider_deployment: true
   provider_activation_requires_native_readback: true
   ten_x_is_a_measured_target_not_a_prompt_claim: true
+
+estate_resolution:
+  policy_id: FUSE-ESTATE-RESOLUTION-START433
+  required_before_material_provider_choice_build_or_no_access_claim: true
+  service: estate.resolve
+  capability_state_machine:
+    - CAP-00_UNKNOWN
+    - CAP-10_TOOL_SCHEMA_KNOWN
+    - CAP-20_CONNECTOR_DISCOVERED
+    - CAP-30_AUTH_OR_SESSION_VALID
+    - CAP-40_ROUTE_CALLABLE
+    - CAP-50_ROUTE_EXECUTED
+    - CAP-60_READBACK_VERIFIED
+    - CAP-70_OBJECTIVE_COMPLETE
+  terminal_no_access_requires:
+    - BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED
+    - GENUINE_HARD_SAFETY_OR_PLATFORM_BOUNDARY
+  provider_neutral_runtime_inputs:
+    - Execution Capability Passport
+    - Execution Surface Graph
+    - Capability Federation Map
+    - FIO Surface Authority
+    - Route Memory
+    - Failure Memory
+  local_chat_binding_failure_is_estate_absence: false
+  strategic_task_service: strategy.intelligence
+
+mission_route_portfolio_v2:
+  policy_id: FUSE-MISSION-ROUTE-PORTFOLIO-V2
+  generate_multiple_feasible_portfolios_after_hard_gates: true
+  preserve_incumbent_lkg: true
+  preserve_bounded_pareto_nondominated_challengers: true
+  route_name_diversity_is_failure_independence: false
+  unknown_shared_dependency_counts_as_independent_redundancy: false
+  failure_domain_vector:
+    - provider_company
+    - provider_account_or_project
+    - credential_or_auth_chain
+    - network_or_region
+    - host_or_runtime
+    - queue_or_scheduler
+    - state_store
+    - code_or_release_lineage
+    - model_or_runtime_family
+    - owner_only_gate
+  portfolio_min_cut_required_for_critical_missions: true
+  score: PORTFOLIO_SCORE_V2
+  hysteresis_required: true
+  safe_shadow_or_hedge_effect_free_only: true
+  post_execution_actual_vs_predicted_calibration_required: true
+  degraded_route_replaces_smallest_affected_subgraph: true
+
+more_trigger:
+  input: more
+  semantic_version: BOOTSTRAP_MORE_V2
+  policy_id: FUSE-MORE-AUTONOMOUS-CONVERGENCE-V2
+  cycle:
+    - fresh_read
+    - join_reuse
+    - estate_resolve
+    - auto_sync
+    - auto_repair
+    - auto_converge
+    - missionir_dag_ready_collisions
+    - portfolio_v2_tournament
+    - safe_dispatch_work_steal
+    - auto_harvest_true_residuals
+    - auto_audit
+    - matched_frontier_market_benchmark_when_material
+    - compose_or_build_minimum_residual_if_trailing
+    - verify_readback
+    - learning_regret_update
+    - auto_continue
+  wait_for_another_more_while_safe_ready_work_exists: false
+  best_in_market_self_certification_forbidden: true
+  best_in_market_requires_current_matched_external_evidence_and_independent_proof: true
+  stop_only_at:
+    - terminal_predicates_and_required_proof
+    - irreducible_owner_only_authority_or_consent
+    - all_lawful_routes_exhausted_durable_hold
+    - no_positive_value_action
