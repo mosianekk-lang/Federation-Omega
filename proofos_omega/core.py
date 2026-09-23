@@ -78,8 +78,8 @@ class ProofManifest:
     def verify(self): return sha256_json(self.deterministic_payload())==self.manifest_sha256
 @dataclass(frozen=True)
 class TestExecutionResult:
-    test_id:str; status:str; returncode:int; elapsed_seconds:float; proof_key:str; stdout_sha256:str; stderr_sha256:str; failure_class:str; block_scope:str; reused_from_cache:bool=False
-    def to_dict(self): return {"test_id":self.test_id,"status":self.status,"returncode":self.returncode,"elapsed_seconds":round(self.elapsed_seconds,6),"proof_key":self.proof_key,"stdout_sha256":self.stdout_sha256,"stderr_sha256":self.stderr_sha256,"failure_class":self.failure_class,"block_scope":self.block_scope,"reused_from_cache":self.reused_from_cache}
+    test_id:str; status:str; returncode:int; elapsed_seconds:float; proof_key:str; stdout_sha256:str; stderr_sha256:str; failure_class:str; block_scope:str; reused_from_cache:bool=False; diagnostic_returncode:int|None=None; repeatability:str="NOT_RUN"
+    def to_dict(self): return {"test_id":self.test_id,"status":self.status,"returncode":self.returncode,"elapsed_seconds":round(self.elapsed_seconds,6),"proof_key":self.proof_key,"stdout_sha256":self.stdout_sha256,"stderr_sha256":self.stderr_sha256,"failure_class":self.failure_class,"block_scope":self.block_scope,"reused_from_cache":self.reused_from_cache,"diagnostic_returncode":self.diagnostic_returncode,"repeatability":self.repeatability}
 @dataclass(frozen=True)
 class AdmissionReport:
     manifest_sha256:str; results:tuple[TestExecutionResult,...]; blocking_failures:tuple[str,...]; scoped_failures:tuple[str,...]; status:str; report_sha256:str
@@ -206,6 +206,13 @@ class ProofCache:
         if result.status!="PASS": return
         p=self._path(result.proof_key); tmp=p.with_suffix(".tmp"); tmp.write_text(canonical_json(result.to_dict())+"\n"); os.replace(tmp,p)
 
+def classify_repeatability(primary_returncode:int, diagnostic_returncode:int|None)->str:
+    if primary_returncode==0: return "NOT_NEEDED"
+    if diagnostic_returncode is None: return "UNPROBED"
+    if diagnostic_returncode==0: return "NONDETERMINISTIC_RERUN_PASS"
+    if diagnostic_returncode==124: return "RERUN_TIMEOUT"
+    return "REPRODUCIBLE_FAIL"
+
 class ProofRunner:
     def __init__(self,*,policy,repo_root,cache=None): self.policy=policy; self.repo_root=Path(repo_root); self.cache=cache
     def runtime_identity(self): return {"python":sys.version.split()[0],"platform":sys.platform,"policy":self.policy.version}
@@ -233,9 +240,18 @@ class ProofRunner:
                 start=time.monotonic()
                 try:
                     p=subprocess.run(self._argv(t),cwd=self.repo_root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=t.timeout_seconds,check=False,env={**os.environ,"PYTHONDONTWRITEBYTECODE":"1"})
-                    r=TestExecutionResult(t.test_id,"PASS" if p.returncode==0 else "FAIL",p.returncode,time.monotonic()-start,key,sha256_bytes(p.stdout),sha256_bytes(p.stderr),t.failure_class,t.block_scope)
+                    diagnostic_rc=None
+                    repeatability="NOT_NEEDED"
+                    if p.returncode!=0:
+                        try:
+                            probe=subprocess.run(self._argv(t),cwd=self.repo_root,stdout=subprocess.PIPE,stderr=subprocess.PIPE,timeout=t.timeout_seconds,check=False,env={**os.environ,"PYTHONDONTWRITEBYTECODE":"1"})
+                            diagnostic_rc=probe.returncode
+                        except subprocess.TimeoutExpired:
+                            diagnostic_rc=124
+                        repeatability=classify_repeatability(p.returncode,diagnostic_rc)
+                    r=TestExecutionResult(t.test_id,"PASS" if p.returncode==0 else "FAIL",p.returncode,time.monotonic()-start,key,sha256_bytes(p.stdout),sha256_bytes(p.stderr),t.failure_class,t.block_scope,False,diagnostic_rc,repeatability)
                 except subprocess.TimeoutExpired as e:
-                    r=TestExecutionResult(t.test_id,"FAIL_TIMEOUT",124,time.monotonic()-start,key,sha256_bytes(e.stdout or b""),sha256_bytes(e.stderr or b""),t.failure_class,t.block_scope)
+                    r=TestExecutionResult(t.test_id,"FAIL_TIMEOUT",124,time.monotonic()-start,key,sha256_bytes(e.stdout or b""),sha256_bytes(e.stderr or b""),t.failure_class,t.block_scope,False,None,"PRIMARY_TIMEOUT")
             results.append(r)
             if r.status=="PASS" and self.cache: self.cache.store(r)
             elif not (r.status.startswith("PASS") or r.status.startswith("SKIPPED")):

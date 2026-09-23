@@ -8,6 +8,8 @@ from contextlib import redirect_stderr
 from types import SimpleNamespace
 from unittest.mock import patch
 
+from proofos_omega.core import TestExecutionResult, classify_repeatability
+
 from proofos_omega.cli import (
     _DIAGNOSTIC_MAX_CHARS,
     _diagnostic_argv,
@@ -179,6 +181,32 @@ class ProofOSFailureDiagnosticsTests(unittest.TestCase):
         self.assertIn("[diagnostic rerun timed out]", output)
         self.assertNotIn("hunter2", output)
         self.assertIn("password=[REDACTED]", output)
+
+
+    def test_authoritative_failure_repeatability_is_typed_not_promoted(self) -> None:
+        self.assertEqual("NOT_NEEDED", classify_repeatability(0, None))
+        self.assertEqual("UNPROBED", classify_repeatability(1, None))
+        self.assertEqual("NONDETERMINISTIC_RERUN_PASS", classify_repeatability(1, 0))
+        self.assertEqual("REPRODUCIBLE_FAIL", classify_repeatability(1, 1))
+        self.assertEqual("RERUN_TIMEOUT", classify_repeatability(1, 124))
+        result = TestExecutionResult(
+            "full_federation_fallback",
+            "FAIL",
+            1,
+            1.0,
+            "proof",
+            "a" * 64,
+            "b" * 64,
+            "GENERAL_REGRESSION",
+            "GLOBAL",
+            False,
+            0,
+            "NONDETERMINISTIC_RERUN_PASS",
+        )
+        payload = result.to_dict()
+        self.assertEqual("FAIL", payload["status"])
+        self.assertEqual(0, payload["diagnostic_returncode"])
+        self.assertEqual("NONDETERMINISTIC_RERUN_PASS", payload["repeatability"])
 
 
 if __name__ == "__main__":
