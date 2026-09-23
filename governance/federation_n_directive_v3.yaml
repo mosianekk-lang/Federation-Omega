@@ -1,5 +1,5 @@
 policy_id: FEDOMEGA-N-DIRECTIVE-V3
-version: 3.6.0
+version: 3.7.0
 owner: Kim Kagiso Mosiane
 state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
 authority_ceiling: A1_INTERNAL
@@ -132,6 +132,34 @@ parallel_scheduler:
 
 
 
+
+
+delivery_proof_tiers:
+  policy_id: FUSE-DELIVERY-PROOF-TIERS-V1
+  tiers:
+    D0_RESULT_READY: immutable result artifact or pointer exists
+    D1_DELIVERY_JOURNALED: DeliveryJournal transaction exact-read succeeds
+    D2_CURRENT_CLIENT_RENDER_VERIFIED: identical result or pointer is verified on the current authorized client/surface
+    D3_EXPLICIT_OWNER_INTERACTION_CONFIRMED: explicit owner interaction references the result
+  default_delivery_complete_tier: D2_CURRENT_CLIENT_RENDER_VERIFIED
+  journal_acknowledged_maps_to: D2_CURRENT_CLIENT_RENDER_VERIFIED
+  human_read_inferred_from_render: false
+  D3_required_for_normal_delivery_complete: false
+  bootstrap_pending_delivery_scan: true
+  exact_hash_visible_on_current_client_may_ack_without_duplicate_redelivery: true
+  pending_priority:
+    - explicit owner requested result
+    - critical/security result
+    - mission terminal result
+    - material failure/hold result
+    - high owner value result
+    - routine completion result
+    - low-value progress result
+  privacy:
+    authorized_surface_only: true
+    preserve_matter_walls: true
+    minimum_necessary_payload: true
+    large_sensitive_artifact_prefer_pointer_hash: true
 
 terminal_delivery_assurance:
   policy_id: FUSE-TERMINAL-DELIVERY-ASSURANCE-V1
