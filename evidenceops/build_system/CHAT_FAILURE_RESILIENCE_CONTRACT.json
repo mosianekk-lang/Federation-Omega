@@ -100,5 +100,22 @@
       "Federation Omega Airlock",
       "Public Repository Leak Guard"
     ]
+  },
+  "terminalDeliveryAssurance": {
+    "policyId": "FUSE-TERMINAL-DELIVERY-ASSURANCE-V1",
+    "executionCompleteIsDeliveryAcknowledged": false,
+    "states": [
+      "RESULT_READY",
+      "ORPHANED_UNACKNOWLEDGED",
+      "ACKNOWLEDGED"
+    ],
+    "transactionIdentityImmutable": true,
+    "artifactHashImmutable": true,
+    "redeliveryMayAcknowledgeExistingOrphan": true,
+    "redeliveryMayRerunUnderlyingEffect": false,
+    "pendingSweepRequired": true,
+    "ownerVisibleAcknowledgementRequiredForDeliveryComplete": true,
+    "successorClientMayRedeliverSameArtifact": true,
+    "staleClientAcknowledgementAcceptedOnlyIfArtifactTransactionAndCurrentDeliveryPolicyMatch": true
   }
 }
