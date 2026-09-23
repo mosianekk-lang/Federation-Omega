@@ -16,13 +16,15 @@
     "FEDOMEGA-CONTINUOUS-LEARNING-TRIGGERS-V1",
     "AO-CRA-FEDERATION-INHERITANCE-V1",
     "FEDERATION-PRE-REVENUE-COST-GOVERNOR-V1",
-    "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1"
+    "FEDERATION-ADAPTIVE-INTELLIGENCE-ROUTER-V1",
+    "N_OMEGA_AGENTIC_FRONTIER_V1"
   ],
   "required_contracts": {
     "n_directive": "governance/federation_n_directive_v3.yaml",
     "mission_compiler": "governance/cfbe_parallel_mission_compiler_v4.json",
     "prompt_scientist": "governance/cfbe_prompt_scientist_v1.json",
-    "ao_cra": "governance/ao_cra_federation_inheritance_v1.json"
+    "ao_cra": "governance/ao_cra_federation_inheritance_v1.json",
+    "frontier_compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py"
   },
   "required_engines": {
     "formation_engine": "REQUIRED",
@@ -32,7 +34,8 @@
     "parallel_scheduler": "REQUIRED_WHEN_TWO_OR_MORE_INDEPENDENT_EFFECT_FREE_PACKETS_EXIST",
     "prompt_scientist_v1": "REQUIRED_WHEN_PROMPT_FRICTION_OR_REPEATED_MISSION_FAILURE_IS_OBSERVED",
     "innovation_frontier": "REQUIRED",
-    "continuous_learning": "REQUIRED"
+    "continuous_learning": "REQUIRED",
+    "agentic_frontier_compiler": "REQUIRED_FOR_NONTRIVIAL_MISSIONS"
   },
   "required_sequence": [
     "PASS_FEDOMEGA_NODE_BOOTSTRAP_V2",
@@ -44,6 +47,7 @@
     "AO_CRA_BOUNDARY_TO_BUILD_PREFLIGHT",
     "FORMATION_COMPETING_ROUTE_GENERATION_AND_RANKING",
     "ALPHA_OMEGA_SOLUTION_SPECIFICATION_AND_GENOME",
+    "COMPILE_FRONTIER_CAPABILITY_SUPERSTACK",
     "COMPILE_FINITE_DEPENDENCY_DAG",
     "CALCULATE_CRITICAL_PATH",
     "FORM_COLLISION_SAFE_WORK_PACKETS",
@@ -71,7 +75,11 @@
   },
   "prompt_evolution": {
     "incumbent_preserved": true,
-    "challenger_families": ["P1_MINIMUM_CORRECTION", "P2_PERFORMANCE", "P3_STRUCTURAL"],
+    "challenger_families": [
+      "P1_MINIMUM_CORRECTION",
+      "P2_PERFORMANCE",
+      "P3_STRUCTURAL"
+    ],
     "measured_evidence_required": true,
     "green_regression_required": true,
     "critical_regression_absolute_veto": true,
@@ -115,5 +123,13 @@
     "prompt_self_score_is_sufficient_for_promotion": false,
     "ten_x_is_measured_target_only": true
   },
-  "failure_state": "BOOTSTRAP_V3_BLOCKED_FAIL_CLOSED"
+  "failure_state": "BOOTSTRAP_V3_BLOCKED_FAIL_CLOSED",
+  "frontier_capability_adoption": {
+    "compiler": "benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py",
+    "capability_gene_range": "AGF-001..AGF-053",
+    "latest_clean_room_residual_range": "AGF-041..AGF-053",
+    "automatically_select_by_mission_profile": true,
+    "provider_model_authority": "PROPOSAL_ONLY",
+    "runtime_provider_and_owner_value_proof_separate": true
+  }
 }
