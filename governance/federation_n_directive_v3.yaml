@@ -48,8 +48,8 @@ exact_trigger:
 
 frontier_capability_adoption:
   compiler: benchmarking/cfbe_omega/n_omega_agentic_frontier_v1.py
-  full_gene_range: AGF-001..AGF-053
-  latest_clean_room_residuals: AGF-041..AGF-053
+  full_gene_range: AGF-001..AGF-063
+  latest_clean_room_residuals: AGF-054..AGF-063
   auto_select:
     - long_running
     - multi_agent
