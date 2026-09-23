@@ -63,6 +63,7 @@ class MissionProfile:
     requires_adaptive_computer_use: bool = False
     requires_hypothesis_evolution: bool = False
     requires_strict_self_verification: bool = False
+    requires_harness_simplification: bool = False
     requires_artifact_production: bool = False
     requires_local_multimodal: bool = False
 
@@ -229,6 +230,8 @@ class AgenticFrontierCompiler:
             selected.update({"AGF-006","AGF-023","AGF-049","AGF-050"})
         if mission.requires_strict_self_verification:
             selected.add("AGF-050")
+        if mission.requires_harness_simplification:
+            selected.add("AGF-051")
         if mission.requires_artifact_production:
             selected.update({"AGF-038","AGF-052"})
         if mission.requires_local_multimodal:
