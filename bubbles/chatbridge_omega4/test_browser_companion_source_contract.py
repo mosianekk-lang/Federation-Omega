@@ -25,10 +25,10 @@ def _extension_id(manifest_key: str) -> str:
 
 
 class BrowserCompanionSourceContractTests(unittest.TestCase):
-    def test_manifest_matches_admitted_v030_and_stays_browser_bounded(self) -> None:
+    def test_manifest_matches_v031_and_stays_browser_bounded(self) -> None:
         manifest = json.loads((COMPANION / "manifest.json").read_text(encoding="utf-8"))
         self.assertEqual(manifest["manifest_version"], 3)
-        self.assertEqual(manifest["version"], "0.3.0")
+        self.assertEqual(manifest["version"], "0.3.1")
         self.assertEqual(
             manifest["permissions"],
             ["storage", "unlimitedStorage", "downloads"],
@@ -71,17 +71,35 @@ class BrowserCompanionSourceContractTests(unittest.TestCase):
         self.assertNotIn("WebSocket", background)
         self.assertNotIn("sendNativeMessage", background)
 
-    def test_terminal_capture_precedes_successor_open(self) -> None:
+    def test_capacity_capture_and_durable_egress_precede_successor_open(self) -> None:
         content = (COMPANION / "src" / "content-script.js").read_text(
             encoding="utf-8"
         )
+
+        checkpoint_start = content.index("async function checkpoint")
+        checkpoint_end = content.index("function scheduleCheckpoint")
+        checkpoint_body = content[checkpoint_start:checkpoint_end]
+        self.assertIn('type: "CHATBRIDGE_CAPTURE"', checkpoint_body)
+        self.assertIn("const captured = {packet, result}", checkpoint_body)
+        self.assertLess(
+            checkpoint_body.index("const captured = {packet, result}"),
+            checkpoint_body.index("triggerAutomaticHandoff(captured"),
+        )
+
+        open_start = content.index("async function openSuccessorForCapture")
+        open_end = content.index("async function triggerAutomaticHandoff")
+        open_body = content[open_start:open_end]
+        self.assertIn('reason: "CAPACITY_HANDOFF_PREDETACH"', open_body)
+        self.assertLess(
+            open_body.index('type: "CHATBRIDGE_EDGE_EGRESS_STATUS"'),
+            open_body.index('type: "CHATBRIDGE_OPEN"'),
+        )
+
         start = content.index("async function startSuccessor")
         end = content.index("function decorateLimitBanner")
         successor_body = content[start:end]
-        self.assertLess(
-            successor_body.index('await checkpoint("SUCCESSOR_REQUEST")'),
-            successor_body.index('type: "CHATBRIDGE_OPEN"'),
-        )
+        self.assertIn('await checkpoint("SUCCESSOR_REQUEST", {suppressAuto: true})', successor_body)
+        self.assertIn('openSuccessorForCapture(captured, "CAPACITY_HANDOFF_MANUAL_RETRY")', successor_body)
         self.assertIn('checkpoint("TERMINAL_WARNING_DETECTED")', content)
         self.assertIn('checkpoint("PERIODIC_WRITE_AHEAD")', content)
         self.assertIn('checkpoint("VISIBILITY_HIDDEN")', content)

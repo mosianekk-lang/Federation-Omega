@@ -11,7 +11,10 @@
     /reached the maximum length for this conversation/i,
     /maximum (?:conversation|context) length/i,
     /conversation (?:is |has become )?too long/i,
-    /keep talking by starting a new chat/i
+    /keep talking by starting a new chat/i,
+    /you(?:'|’)ve hit max weighted tokens for this chat/i,
+    /max(?:imum)? weighted tokens(?: for this chat)?/i,
+    /weighted token(?:s)? (?:limit|maximum|cap)/i
   ];
 
   function normalizeText(value) {
@@ -279,10 +282,65 @@
     }));
   }
 
+  function buildWorkingSetPrompts(ledger, options) {
+    const opts = options || {};
+    const maxChars = Math.max(6000, Number(opts.maxChars) || 12000);
+    const maxEvents = Math.max(4, Number(opts.maxEvents) || 12);
+    const events = latestTranscriptEvents(ledger);
+    const manifest = ledger.manifest || {};
+    const archive = {
+      conversationKey: String(ledger.conversationKey || ""),
+      namespaceKey: String(ledger.namespaceKey || ""),
+      restoreMode: String(manifest.restoreMode || "BOUNDED_MULTIPATH_MULTISTREAM_RESTORE"),
+      integrityState: String(manifest.integrityState || "UNVERIFIED"),
+      coverageState: String(manifest.coverageState || "UNVERIFIED"),
+      firstSourceSequence: manifest.firstSourceSequence == null ? null : Number(manifest.firstSourceSequence),
+      lastSourceSequence: manifest.lastSourceSequence == null ? null : Number(manifest.lastSourceSequence),
+      capturedEventCount: Number(manifest.capturedEventCount || 0),
+      chainHeadSha256: String(manifest.chainHeadSha256 || ""),
+      terminalObserved: Boolean(manifest.terminalObserved),
+      missingRanges: manifest.missingRanges || [],
+      unresolvedArtifactCount: Array.isArray(manifest.unresolvedArtifacts) ? manifest.unresolvedArtifacts.length : 0
+    };
+    const header = [
+      "CHATBRIDGE Ω4.9 — CAPACITY-SAFE WORKING-SET RESTORE",
+      "",
+      "This successor chat is a detachable client, not the mission authority.",
+      "The full rendered transcript remains in the governed external ledger/archive; do not ask the owner to paste or replay history.",
+      "Fresh-read START:FUSE_ONE and current canonical/provider state, JOIN the existing mission/checkpoint, and resume only the highest-value unresolved action.",
+      "The recent turns below are a bounded working projection, not a complete transcript."
+    ].join("\n");
+    const trailerPrefix = "\n\nARCHIVE MANIFEST\n";
+    const trailer = trailerPrefix + canonicalJson(archive);
+    const budget = Math.max(1000, maxChars - header.length - trailer.length - 4);
+    const selected = [];
+    let used = 0;
+    for (let index = events.length - 1; index >= 0 && selected.length < maxEvents; index -= 1) {
+      const line = transcriptLine(events[index]);
+      if (selected.length && used + line.length + 2 > budget) break;
+      if (!selected.length && line.length > budget) {
+        selected.unshift(line.slice(Math.max(0, line.length - budget)));
+        used = budget;
+        break;
+      }
+      selected.unshift(line);
+      used += line.length + 2;
+    }
+    const body = selected.length ? selected.join("\n\n") : "(No rendered message events were available; restore from canonical mission state.)";
+    let text = header + "\n\nRECENT WORKING SET\n" + body + trailer;
+    if (text.length > maxChars) text = text.slice(0, maxChars);
+    return [{packetIndex: 1, packetCount: 1, text}];
+  }
+
   function shouldPreempt(metrics, settings) {
     const tokenThreshold = Number(settings && settings.tokenThreshold) || 65000;
     const messageThreshold = Number(settings && settings.messageThreshold) || 80;
     return Number(metrics.estimatedRenderedTokens) >= tokenThreshold || Number(metrics.renderedMessageCount) >= messageThreshold;
+  }
+
+  function shouldAutoHandoff(packet, settings) {
+    const current = packet || {};
+    return Boolean(normalizeText(current.terminalNotice || "")) || shouldPreempt(current.metrics || {}, settings);
   }
 
   return Object.freeze({
@@ -306,6 +364,8 @@
     missingRanges,
     latestTranscriptEvents,
     buildReplayPrompts,
-    shouldPreempt
+    buildWorkingSetPrompts,
+    shouldPreempt,
+    shouldAutoHandoff
   });
 });

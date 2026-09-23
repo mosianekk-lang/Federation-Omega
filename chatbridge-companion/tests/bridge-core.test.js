@@ -3,8 +3,11 @@ const test = require("node:test");
 const assert = require("node:assert/strict");
 const core = require("../src/bridge-core.js");
 
-test("detects the current maximum-length warning", () => {
+test("detects current maximum-length and weighted-token warnings", () => {
   assert.equal(core.isLimitNotice("You've reached the maximum length for this conversation, but you can keep talking by starting a new chat."), true);
+  assert.equal(core.isLimitNotice("You've hit max weighted tokens for this chat"), true);
+  assert.equal(core.isLimitNotice("Maximum weighted tokens for this chat"), true);
+  assert.equal(core.isLimitNotice("weighted token limit"), true);
   assert.equal(core.isLimitNotice("Ordinary response text about a long project."), false);
 });
 
@@ -60,4 +63,50 @@ test("pre-emption is deterministic", () => {
   assert.equal(core.shouldPreempt({estimatedRenderedTokens: 65000, renderedMessageCount: 1}, {}), true);
   assert.equal(core.shouldPreempt({estimatedRenderedTokens: 100, renderedMessageCount: 80}, {}), true);
   assert.equal(core.shouldPreempt({estimatedRenderedTokens: 100, renderedMessageCount: 2}, {}), false);
+});
+
+test("automatic handoff is mandatory for pre-limit pressure or a terminal notice", () => {
+  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 65000, renderedMessageCount: 1}}, {}), true);
+  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 100, renderedMessageCount: 2}, terminalNotice: "You've hit max weighted tokens for this chat"}, {}), true);
+  assert.equal(core.shouldAutoHandoff({metrics: {estimatedRenderedTokens: 100, renderedMessageCount: 2}, terminalNotice: ""}, {}), false);
+});
+
+test("capacity-safe restore keeps full history external and sends only a bounded recent working set", () => {
+  const events = [];
+  for (let i = 1; i <= 100; i += 1) {
+    events.push({
+      eventId: "e" + i,
+      appendSequence: i,
+      sourceSequence: i,
+      sourceMessageId: "m" + i,
+      eventType: "MESSAGE",
+      role: i % 2 ? "user" : "assistant",
+      content: "turn-" + i + "-" + "X".repeat(900)
+    });
+  }
+  const ledger = {
+    conversationKey: "capacity-old",
+    namespaceKey: "fuse-chat-capacity-continuity",
+    manifest: {
+      restoreMode: "EXACT_SINGLE_PATH_TRANSCRIPT_RESTORE",
+      integrityState: "HASH_CHAIN_VERIFIED",
+      coverageState: "COMPLETE_RENDERED_MESSAGE_RANGE",
+      firstSourceSequence: 1,
+      lastSourceSequence: 100,
+      capturedEventCount: 100,
+      chainHeadSha256: "a".repeat(64),
+      terminalObserved: true,
+      missingRanges: [],
+      unresolvedArtifacts: []
+    },
+    events
+  };
+  const prompts = core.buildWorkingSetPrompts(ledger, {maxChars: 12000, maxEvents: 8});
+  assert.equal(prompts.length, 1);
+  assert.ok(prompts[0].text.length <= 12000);
+  assert.match(prompts[0].text, /CAPACITY-SAFE WORKING-SET RESTORE/);
+  assert.match(prompts[0].text, /full rendered transcript remains in the governed external ledger/i);
+  assert.match(prompts[0].text, /turn-100-/);
+  assert.doesNotMatch(prompts[0].text, /turn-1-/);
+  assert.match(prompts[0].text, /ARCHIVE MANIFEST/);
 });
