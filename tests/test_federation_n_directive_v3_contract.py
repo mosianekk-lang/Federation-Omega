@@ -13,7 +13,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
         required = (
             "policy_id: FEDOMEGA-N-DIRECTIVE-V3",
-            "version: 3.6.0",
+            "version: 3.7.0",
             "authority_ceiling: A1_INTERNAL",
             "external_effect_default: false",
             "compile unfinished work into a finite dependency DAG",
@@ -42,7 +42,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
             self.assertIn(required, text)
 
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.6.0")
+        self.assertEqual(bootstrap["version"], "3.7.0")
         self.assertTrue(bootstrap["parallelism"]["blocker_scope_locality_required"])
         self.assertTrue(bootstrap["parallelism"]["global_stall_requires_empty_ready_set_and_universal_causal_dependency"])
         self.assertTrue(bootstrap["parallelism"]["branch_prepare_build_test_pr_may_continue_while_main_admission_is_held"])
@@ -147,6 +147,25 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         self.assertIn("ORPHANED_UNACKNOWLEDGED", prompt)
         self.assertIn("delivery debt, not execution debt", prompt)
 
+    def test_delivery_proof_tiers_do_not_infer_human_read(self):
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        tiers = bootstrap["delivery_proof_tiers"]
+        self.assertEqual(tiers["default_delivery_complete_tier"], "D2_CURRENT_CLIENT_RENDER_VERIFIED")
+        self.assertEqual(tiers["journal_acknowledged_maps_to"], "D2_CURRENT_CLIENT_RENDER_VERIFIED")
+        self.assertFalse(tiers["human_read_inferred_from_render"])
+        self.assertFalse(tiers["D3_required_for_normal_delivery_complete"])
+        self.assertTrue(tiers["privacy"]["matter_wall_preserved"])
+
+        directive = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn("delivery_proof_tiers:", directive)
+        self.assertIn("human_read_inferred_from_render: false", directive)
+        self.assertIn("bootstrap_pending_delivery_scan: true", directive)
+
+        prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("DELIVERY PROOF TIERS / CROSS-SESSION RESULT HYDRATION", prompt)
+        self.assertIn("D3_EXPLICIT_OWNER_INTERACTION_CONFIRMED", prompt)
+        self.assertIn("not proof the human personally read", prompt)
+
     def test_compiler_contract_is_safe_by_default(self):
         contract = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
         self.assertEqual(contract["authority_ceiling"], "A1_INTERNAL")
@@ -217,7 +236,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
 
     def test_estate_resolution_portfolio_v2_and_more_v2_are_bootstrap_bound(self):
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.6.0")
+        self.assertEqual(bootstrap["version"], "3.7.0")
         self.assertEqual(bootstrap["estate_resolution"]["service_id"], "estate.resolve")
         self.assertFalse(bootstrap["estate_resolution"]["first_route_failure_is_estate_absence"])
         self.assertIn("BLK-90_AUTHORIZED_ROUTE_SPACE_EXHAUSTED", bootstrap["estate_resolution"]["blocker_states"])
