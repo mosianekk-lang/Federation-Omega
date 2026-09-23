@@ -1,5 +1,5 @@
 policy_id: FEDOMEGA-N-DIRECTIVE-V3
-version: 3.1.0
+version: 3.2.0
 owner: Kim Kagiso Mosiane
 state: CANDIDATE_PENDING_EXACT_HEAD_ADMISSION
 authority_ceiling: A1_INTERNAL
@@ -41,6 +41,8 @@ exact_trigger:
     - before any WAITING or BLOCKED mission status, prove the ready set is empty or work-steal all disjoint ready nodes
     - GLOBAL_STALL is invalid unless every remaining required nonterminal node causally depends on the same irreducible blocker and no safe preparation/proof/recovery lane exists
     - a foreign source fence may hold canonical admission for an intersecting write set but must not stop disjoint branch preparation, build, test, proof, PR, provider-read or non-source work
+    - transport interruption requires effect readback before replay whenever tool or external effect completion is uncertain
+    - transport interruption must reroute/rebind rather than wait indefinitely when another safe route exists
     - stop only at COMPLETE_VERIFIED, PRODUCTION_VERIFIED or a genuine owner-reserved decision
 
 
@@ -126,6 +128,31 @@ parallel_scheduler:
   global_stall_rule: GLOBAL_STALL requires empty READY set plus universal causal dependency on one irreducible blocker
   anti_head_of_line_rule: idle qualified capacity with READY work is a routing defect and triggers immediate work-steal
 
+
+
+chat_transport_continuity:
+  policy_id: FUSE-CHAT-TRANSPORT-CONTINUITY-V1
+  observed_signature: Connection interrupted. Waiting for the complete answer
+  primary_class: TRANSPORT_INTERRUPTION
+  secondary_class: STALL_TIMEOUT
+  invariant: response-stream interruption is client-route failure, not mission stop and not proof of no effect
+  no_response_ne_no_effect: true
+  on_interrupt:
+    - persist mission checkpoint and pending action identity
+    - freeze blind replay when effect state is unknown
+    - read back FDOF effect provider and mission receipts for possibly in-flight actions
+    - classify pending action as NO_EFFECT_PROVEN EFFECT_COMMITTED EFFECT_UNKNOWN or RESPONSE_ONLY
+    - if EFFECT_COMMITTED resume after committed result without replay
+    - if NO_EFFECT_PROVEN or RESPONSE_ONLY resume same atomic action with idempotency identity
+    - if EFFECT_UNKNOWN quarantine only that effect lane and work-steal all disjoint READY work
+    - rebind to a healthy successor or durable client route
+    - fence stale client from duplicate commit after verified takeover
+    - semantic fan-in first verified continuation exactly once
+  forbidden:
+    - blind resend of effectful action
+    - indefinite wait on interrupted chat while safe route exists
+    - owner copy paste of persisted mission state
+  owner_action_required_while_safe_route_exists: false
 
 chat_capacity_continuity:
   invariant: interactive chat context or weighted-token capacity is a route transition, never mission stop
