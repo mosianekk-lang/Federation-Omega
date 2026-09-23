@@ -1,8 +1,12 @@
-import pathlib,tempfile,unittest
+import base64,pathlib,tempfile,unittest
+from dataclasses import replace
+from cryptography.hazmat.primitives import hashes,serialization
+from cryptography.hazmat.primitives.asymmetric import padding,rsa
 
 from fuse_genesis.runtime_continuity import (
-    ContinuityError,DispatchCollision,DispatchEnvelope,DispatchIngress,DispatchRejected,
-    EffectCollision,EffectExecutor,EffectJournal,UnknownEffect,assess_runtime,payload_digest
+    ContinuityError,DispatchCollision,DispatchEnvelope,DispatchIngress,DispatchRejected,SignatureRejected,
+    EffectCollision,EffectExecutor,EffectJournal,UnknownEffect,EffectFenceLost,RsaDispatchVerifier,
+    assess_runtime,payload_digest
 )
 
 EPOCH="a"*64
@@ -14,7 +18,9 @@ def envelope(**kw):
         mission_id="MISSION-1",scheduler_id="GOOGLE_APPS_SCRIPT",
         source_epoch_digest=EPOCH,payload_sha256=payload_digest(PAYLOAD),
         authority_ref="GOOGLE_APPS_SCRIPT:TRIGGER:gasSchedulerRunV3",
-        provider_event_id="GAS-EVENT-1",issued_at=100,expires_at=200,effect_class="A1_INTERNAL"
+        provider_event_id="GAS-EVENT-1",issued_at=100,expires_at=200,
+        signature_key_id="gas-key-1",signature_algorithm="RSA_SHA256",signature_b64="AA==",
+        effect_class="A1_INTERNAL"
     )
     v.update(kw)
     return DispatchEnvelope(**v)
@@ -37,42 +43,42 @@ class T(unittest.TestCase):
     def test_05_expired_dispatch_rejected(self):
         d=DispatchIngress(self.root/"i.db")
         with self.assertRaisesRegex(DispatchRejected,"EXPIRED"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=200,authority_verifier=lambda a,e:True)
+            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=200,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
         d.close()
     def test_06_stale_epoch_rejected(self):
         d=DispatchIngress(self.root/"i.db")
         with self.assertRaisesRegex(DispatchRejected,"STALE_SOURCE_EPOCH"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest="b"*64,now=120,authority_verifier=lambda a,e:True)
+            d.accept(envelope(),PAYLOAD,current_epoch_digest="b"*64,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
         d.close()
     def test_07_payload_mismatch_rejected(self):
         d=DispatchIngress(self.root/"i.db")
         with self.assertRaisesRegex(DispatchRejected,"PAYLOAD_HASH_MISMATCH"):
-            d.accept(envelope(),{"kind":"other"},current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True)
+            d.accept(envelope(),{"kind":"other"},current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
         d.close()
     def test_08_authority_readback_required(self):
         d=DispatchIngress(self.root/"i.db")
         with self.assertRaisesRegex(DispatchRejected,"AUTHORITY_READBACK"):
-            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:False)
+            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:False,signature_verifier=lambda e:True)
         d.close()
     def test_09_accept_success(self):
         d=DispatchIngress(self.root/"i.db")
-        row=d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True)
+        row=d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
         self.assertEqual(row["task_id"],"TASK-1"); d.close()
     def test_10_dispatch_replay_idempotent(self):
         d=DispatchIngress(self.root/"i.db"); e=envelope()
-        a=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True)
-        b=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=121,authority_verifier=lambda a,e:True)
+        a=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+        b=d.accept(e,PAYLOAD,current_epoch_digest=EPOCH,now=121,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
         self.assertEqual(a["semantic_sha256"],b["semantic_sha256"]); d.close()
     def test_11_dispatch_collision(self):
         d=DispatchIngress(self.root/"i.db")
-        d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True)
+        d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
         p2={"kind":"noop","value":2}
         with self.assertRaises(DispatchCollision):
-            d.accept(envelope(dispatch_id="DISPATCH-2",payload_sha256=payload_digest(p2)),p2,current_epoch_digest=EPOCH,now=121,authority_verifier=lambda a,e:True)
+            d.accept(envelope(dispatch_id="DISPATCH-2",payload_sha256=payload_digest(p2)),p2,current_epoch_digest=EPOCH,now=121,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
         d.close()
     def test_12_dispatch_persists_restart(self):
         p=self.root/"i.db"; d=DispatchIngress(p)
-        d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True); d.close()
+        d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,authority_verifier=lambda a,e:True,signature_verifier=lambda e:True); d.close()
         d=DispatchIngress(p); self.assertEqual(d.row("DISPATCH-1")["scheduler_id"],"GOOGLE_APPS_SCRIPT"); d.close()
 
     def test_13_effect_prepare(self):
@@ -148,5 +154,85 @@ class T(unittest.TestCase):
         self.assertIn("UNKNOWN_EFFECT",assess_runtime(last_heartbeat=100,now=105,max_gap_seconds=10,pending_tasks=0,oldest_task_age_seconds=0,effect_state="UNKNOWN").reasons)
     def test_32_watchdog_bad_gap(self):
         with self.assertRaises(ContinuityError): assess_runtime(last_heartbeat=1,now=2,max_gap_seconds=0,pending_tasks=0,oldest_task_age_seconds=0)
+
+
+    def test_33_unsigned_dispatch_rejected(self):
+        d=DispatchIngress(self.root/"i.db")
+        with self.assertRaisesRegex(SignatureRejected,"SIGNED_GAS_DISPATCH_REQUIRED"):
+            d.accept(envelope(signature_b64=""),PAYLOAD,current_epoch_digest=EPOCH,now=120,
+                     authority_verifier=lambda a,e:True,signature_verifier=lambda e:True)
+        d.close()
+
+    def test_34_signature_verifier_must_return_exact_true(self):
+        d=DispatchIngress(self.root/"i.db")
+        with self.assertRaisesRegex(SignatureRejected,"DISPATCH_SIGNATURE_INVALID"):
+            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,
+                     authority_verifier=lambda a,e:True,signature_verifier=lambda e:"truthy")
+        d.close()
+
+    def test_35_authority_verifier_must_return_exact_true(self):
+        d=DispatchIngress(self.root/"i.db")
+        with self.assertRaisesRegex(DispatchRejected,"AUTHORITY_READBACK"):
+            d.accept(envelope(),PAYLOAD,current_epoch_digest=EPOCH,now=120,
+                     authority_verifier=lambda a,e:"truthy",signature_verifier=lambda e:True)
+        d.close()
+
+    def test_36_rsa_dispatch_signature_valid(self):
+        key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+        pub=key.public_key().public_bytes(serialization.Encoding.PEM,serialization.PublicFormat.SubjectPublicKeyInfo)
+        e=envelope(signature_b64="")
+        sig=key.sign(e.signing_bytes,padding.PKCS1v15(),hashes.SHA256())
+        e=replace(e,signature_b64=base64.b64encode(sig).decode())
+        self.assertTrue(RsaDispatchVerifier({"gas-key-1":pub}).verify(e))
+
+    def test_37_rsa_dispatch_signature_tamper_fails(self):
+        key=rsa.generate_private_key(public_exponent=65537,key_size=2048)
+        pub=key.public_key().public_bytes(serialization.Encoding.PEM,serialization.PublicFormat.SubjectPublicKeyInfo)
+        e=envelope(signature_b64="")
+        sig=key.sign(e.signing_bytes,padding.PKCS1v15(),hashes.SHA256())
+        signed=replace(e,signature_b64=base64.b64encode(sig).decode())
+        tampered=replace(signed,task_id="TASK-2")
+        self.assertFalse(RsaDispatchVerifier({"gas-key-1":pub}).verify(tampered))
+
+    def test_38_string_false_readback_is_rejected(self):
+        j=EffectJournal(self.root/"e.db"); j.prepare("E1","K1",{},1); j.mark_unknown("E1",2,"timeout")
+        with self.assertRaisesRegex(ContinuityError,"APPLIED_FLAG_MUST_BE_BOOLEAN"):
+            j.readback("E1",applied="false",now=3,evidence={"applied":"false"})
+        j.close()
+
+    def test_39_effect_executor_string_false_cannot_false_green(self):
+        j=EffectJournal(self.root/"e.db"); x=EffectExecutor(j)
+        with self.assertRaisesRegex(ContinuityError,"APPLIED_FLAG_MUST_BE_BOOLEAN"):
+            x.execute(effect_id="E1",idempotency_key="K1",request={},now=1,
+                      effect_fn=lambda:{"ok":1},readback_fn=lambda:{"applied":"false"})
+        j.close()
+
+    def test_40_required_effect_guard_missing(self):
+        j=EffectJournal(self.root/"e.db"); calls=[]
+        with self.assertRaisesRegex(EffectFenceLost,"GUARD_REQUIRED"):
+            EffectExecutor(j).execute(effect_id="E1",idempotency_key="K1",request={},now=1,
+                effect_fn=lambda:calls.append(1),readback_fn=lambda:{"applied":False},
+                require_execution_guard=True)
+        self.assertEqual(calls,[]); j.close()
+
+    def test_41_stale_effect_guard_blocks_effect_start(self):
+        j=EffectJournal(self.root/"e.db"); calls=[]
+        with self.assertRaisesRegex(EffectFenceLost,"NOT_CURRENT"):
+            EffectExecutor(j).execute(effect_id="E1",idempotency_key="K1",request={},now=1,
+                effect_fn=lambda:calls.append(1),readback_fn=lambda:{"applied":False},
+                execution_guard=lambda:False,require_execution_guard=True)
+        self.assertEqual(calls,[]); j.close()
+
+    def test_42_fence_loss_after_effect_forces_readback(self):
+        j=EffectJournal(self.root/"e.db"); calls=[]; guard_calls=[]
+        def guard():
+            guard_calls.append(1)
+            return len(guard_calls)==1
+        r=EffectExecutor(j).execute(effect_id="E1",idempotency_key="K1",request={},now=1,
+             effect_fn=lambda:calls.append(1) or {"ok":1},
+             readback_fn=lambda:{"applied":True,"provider_receipt":"R1"},
+             execution_guard=guard,require_execution_guard=True)
+        self.assertEqual(r["state"],"READBACK_RECOVERED_AFTER_FENCE_LOSS")
+        self.assertEqual(calls,[1]); self.assertEqual(j.row("E1")["state"],"READBACK_VERIFIED"); j.close()
 
 if __name__=="__main__": unittest.main(verbosity=2)

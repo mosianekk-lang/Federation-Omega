@@ -1,18 +1,23 @@
 from __future__ import annotations
 from dataclasses import dataclass
 from hashlib import sha256
-import json, re, sqlite3
+import base64, json, re, sqlite3
 from pathlib import Path
 from typing import Any, Callable, Mapping
+from cryptography.exceptions import InvalidSignature
+from cryptography.hazmat.primitives import hashes, serialization
+from cryptography.hazmat.primitives.asymmetric import padding
 
 SCHEMA="FUSE-GENESIS-RUNTIME-CONTINUITY-V1"
 HEX64=re.compile(r"^[0-9a-f]{64}$")
 
 class ContinuityError(ValueError): pass
 class DispatchRejected(ContinuityError): pass
+class SignatureRejected(DispatchRejected): pass
 class DispatchCollision(ContinuityError): pass
 class EffectCollision(ContinuityError): pass
 class UnknownEffect(ContinuityError): pass
+class EffectFenceLost(UnknownEffect): pass
 
 def canon(x): return json.dumps(x,sort_keys=True,separators=(",",":"),ensure_ascii=False)
 def digest(x): return sha256(canon(x).encode()).hexdigest()
@@ -25,6 +30,18 @@ def _hex64(v,label):
     value=str(v).lower()
     if not HEX64.fullmatch(value): raise ContinuityError(f"{label}_INVALID")
     return value
+
+def _strict_applied(value):
+    if value is True: return True
+    if value is False: return False
+    raise ContinuityError("APPLIED_FLAG_MUST_BE_BOOLEAN")
+
+def _require_guard(execution_guard):
+    if execution_guard is None:
+        raise EffectFenceLost("EXECUTION_FENCE_GUARD_REQUIRED")
+    if execution_guard() is not True:
+        raise EffectFenceLost("EXECUTION_FENCE_NOT_CURRENT")
+    return True
 
 @dataclass(frozen=True,slots=True)
 class DispatchEnvelope:
@@ -39,6 +56,9 @@ class DispatchEnvelope:
     provider_event_id:str
     issued_at:int
     expires_at:int
+    signature_key_id:str=""
+    signature_algorithm:str=""
+    signature_b64:str=""
     effect_class:str="A1_INTERNAL"
 
     def validate(self):
@@ -60,16 +80,43 @@ class DispatchEnvelope:
         return self
 
     @property
-    def semantic_sha256(self):
+    def signing_payload(self):
         self.validate()
-        return digest({
+        return {
             "dispatch_id":self.dispatch_id,"task_id":self.task_id,
             "idempotency_key":self.idempotency_key,"mission_id":self.mission_id,
             "scheduler_id":self.scheduler_id,"source_epoch_digest":self.source_epoch_digest,
             "payload_sha256":self.payload_sha256,"authority_ref":self.authority_ref,
             "provider_event_id":self.provider_event_id,"issued_at":self.issued_at,
             "expires_at":self.expires_at,"effect_class":self.effect_class,
-        })
+        }
+
+    @property
+    def signing_bytes(self):
+        return canon(self.signing_payload).encode("utf-8")
+
+    @property
+    def semantic_sha256(self):
+        return digest(self.signing_payload)
+
+class RsaDispatchVerifier:
+    """Public-key verifier for GAS-issued RSA-SHA256 envelopes; private keys never enter Genesis."""
+    def __init__(self,public_keys:Mapping[str,str|bytes]):
+        self.public_keys=dict(public_keys)
+    def verify(self,envelope:DispatchEnvelope):
+        if envelope.signature_algorithm!="RSA_SHA256":
+            return False
+        if not envelope.signature_key_id or envelope.signature_key_id not in self.public_keys:
+            return False
+        try:
+            sig=base64.b64decode(envelope.signature_b64,validate=True)
+            pem=self.public_keys[envelope.signature_key_id]
+            if isinstance(pem,str): pem=pem.encode("utf-8")
+            key=serialization.load_pem_public_key(pem)
+            key.verify(sig,envelope.signing_bytes,padding.PKCS1v15(),hashes.SHA256())
+            return True
+        except (ValueError,TypeError,InvalidSignature):
+            return False
 
 class DispatchIngress:
     """Durable admission. Authority must be verified by the provider adapter."""
@@ -89,7 +136,7 @@ class DispatchIngress:
         r=self.db.execute("SELECT * FROM dispatches WHERE dispatch_id=?",(dispatch_id,)).fetchone()
         return dict(r) if r else None
     def accept(self,envelope:DispatchEnvelope,payload:Mapping[str,Any],*,current_epoch_digest:str,now:int,
-               authority_verifier:Callable[[str,str],bool]):
+               authority_verifier:Callable[[str,str],bool],signature_verifier:Callable[[DispatchEnvelope],bool]):
         envelope.validate()
         _hex64(current_epoch_digest,"CURRENT_EPOCH_DIGEST")
         if now<envelope.issued_at or now>=envelope.expires_at:
@@ -98,7 +145,11 @@ class DispatchIngress:
             raise DispatchRejected("STALE_SOURCE_EPOCH")
         if payload_digest(payload)!=envelope.payload_sha256:
             raise DispatchRejected("PAYLOAD_HASH_MISMATCH")
-        if not authority_verifier(envelope.authority_ref,envelope.provider_event_id):
+        if not envelope.signature_key_id or envelope.signature_algorithm!="RSA_SHA256" or not envelope.signature_b64:
+            raise SignatureRejected("SIGNED_GAS_DISPATCH_REQUIRED")
+        if signature_verifier(envelope) is not True:
+            raise SignatureRejected("DISPATCH_SIGNATURE_INVALID")
+        if authority_verifier(envelope.authority_ref,envelope.provider_event_id) is not True:
             raise DispatchRejected("PROVIDER_AUTHORITY_READBACK_REQUIRED")
         existing=self.db.execute(
             "SELECT * FROM dispatches WHERE dispatch_id=? OR idempotency_key=?",
@@ -161,6 +212,7 @@ class EffectJournal:
     def readback(self,effect_id,*,applied:bool,now:int,evidence:Mapping[str,Any]):
         row=self.row(effect_id)
         if not row: raise KeyError(effect_id)
+        applied=_strict_applied(applied)
         if applied:
             return self._state(effect_id,"READBACK_VERIFIED",now,readback=dict(evidence))
         if row["state"] in {"UNKNOWN","EXECUTING"}:
@@ -176,32 +228,43 @@ class EffectExecutor:
     """Exactly-once coordinator for one external effect identity."""
     def __init__(self,journal:EffectJournal):
         self.journal=journal
-    def execute(self,*,effect_id,idempotency_key,request,now,effect_fn,readback_fn):
+    def execute(self,*,effect_id,idempotency_key,request,now,effect_fn,readback_fn,execution_guard=None,require_execution_guard=False):
         row=self.journal.prepare(effect_id,idempotency_key,request,now)
         if row["state"]=="READBACK_VERIFIED":
             return {"state":"IDEMPOTENT_REPLAY","effect":row}
         if row["state"] in {"UNKNOWN","EXECUTING"}:
             observed=readback_fn()
-            row=self.journal.readback(effect_id,applied=bool(observed.get("applied")),now=now,evidence=observed)
+            row=self.journal.readback(effect_id,applied=_strict_applied(observed.get("applied")),now=now,evidence=observed)
             if row["state"]=="READBACK_VERIFIED":
                 return {"state":"READBACK_RECOVERED","effect":row}
         if not self.journal.retry_allowed(effect_id):
             if self.journal.row(effect_id)["state"]=="APPLIED":
                 observed=readback_fn()
-                row=self.journal.readback(effect_id,applied=bool(observed.get("applied")),now=now,evidence=observed)
+                row=self.journal.readback(effect_id,applied=_strict_applied(observed.get("applied")),now=now,evidence=observed)
                 if row["state"]=="READBACK_VERIFIED":
                     return {"state":"READBACK_RECOVERED","effect":row}
             if not self.journal.retry_allowed(effect_id):
                 raise UnknownEffect("EFFECT_NOT_RETRYABLE_WITHOUT_READBACK")
+        if require_execution_guard:
+            _require_guard(execution_guard)
+        elif execution_guard is not None and execution_guard() is not True:
+            raise EffectFenceLost("EXECUTION_FENCE_NOT_CURRENT")
         self.journal.start(effect_id,now)
         try:
             result=effect_fn()
         except Exception as exc:
             self.journal.mark_unknown(effect_id,now,str(exc))
             raise
+        if execution_guard is not None and execution_guard() is not True:
+            self.journal.mark_unknown(effect_id,now,"EXECUTION_FENCE_LOST_AFTER_EFFECT_CALL")
+            observed=readback_fn()
+            row=self.journal.readback(effect_id,applied=_strict_applied(observed.get("applied")),now=now,evidence=observed)
+            if row["state"]=="READBACK_VERIFIED":
+                return {"state":"READBACK_RECOVERED_AFTER_FENCE_LOSS","effect":row,"result":result}
+            raise EffectFenceLost("FENCE_LOST_EFFECT_READBACK_REQUIRED")
         self.journal.mark_applied(effect_id,result,now)
         observed=readback_fn()
-        row=self.journal.readback(effect_id,applied=bool(observed.get("applied")),now=now,evidence=observed)
+        row=self.journal.readback(effect_id,applied=_strict_applied(observed.get("applied")),now=now,evidence=observed)
         if row["state"]!="READBACK_VERIFIED":
             raise UnknownEffect("POST_EFFECT_READBACK_NOT_VERIFIED")
         return {"state":"EXECUTED_AND_VERIFIED","effect":row,"result":result}
