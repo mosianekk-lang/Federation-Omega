@@ -163,7 +163,7 @@ class EffectJournal:
         if not row: raise KeyError(effect_id)
         if applied:
             return self._state(effect_id,"READBACK_VERIFIED",now,readback=dict(evidence))
-        if row["state"]=="UNKNOWN":
+        if row["state"] in {"UNKNOWN","EXECUTING"}:
             return self._state(effect_id,"PREPARED",now,readback=dict(evidence))
         return self._state(effect_id,"UNKNOWN",now,readback=dict(evidence))
     def compensate(self,effect_id,now,evidence):
@@ -180,7 +180,7 @@ class EffectExecutor:
         row=self.journal.prepare(effect_id,idempotency_key,request,now)
         if row["state"]=="READBACK_VERIFIED":
             return {"state":"IDEMPOTENT_REPLAY","effect":row}
-        if row["state"]=="UNKNOWN":
+        if row["state"] in {"UNKNOWN","EXECUTING"}:
             observed=readback_fn()
             row=self.journal.readback(effect_id,applied=bool(observed.get("applied")),now=now,evidence=observed)
             if row["state"]=="READBACK_VERIFIED":
