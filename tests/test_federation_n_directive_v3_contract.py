@@ -13,7 +13,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         text = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
         required = (
             "policy_id: FEDOMEGA-N-DIRECTIVE-V3",
-            "version: 3.1.0",
+            "version: 3.2.0",
             "authority_ceiling: A1_INTERNAL",
             "external_effect_default: false",
             "compile unfinished work into a finite dependency DAG",
@@ -42,7 +42,7 @@ class NDirectiveV3ContractTests(unittest.TestCase):
             self.assertIn(required, text)
 
         bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
-        self.assertEqual(bootstrap["version"], "3.1.0")
+        self.assertEqual(bootstrap["version"], "3.2.0")
         self.assertTrue(bootstrap["parallelism"]["blocker_scope_locality_required"])
         self.assertTrue(bootstrap["parallelism"]["global_stall_requires_empty_ready_set_and_universal_causal_dependency"])
         self.assertTrue(bootstrap["parallelism"]["branch_prepare_build_test_pr_may_continue_while_main_admission_is_held"])
@@ -68,6 +68,25 @@ class NDirectiveV3ContractTests(unittest.TestCase):
         prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
         self.assertIn("CHAT-CAPACITY CONTINUITY", prompt)
         self.assertIn("FEDERATION BIBLE FLEET COMPLETION", prompt)
+
+    def test_transport_interruption_is_effect_safe_and_never_global_stall(self):
+        bootstrap = json.loads((ROOT / "governance/federation_node_bootstrap_v3.json").read_text())
+        transport = bootstrap["chat_transport_continuity"]
+        self.assertEqual(transport["classifier"], "TRANSPORT_INTERRUPTION")
+        self.assertTrue(transport["no_response_ne_no_effect"])
+        self.assertFalse(transport["owner_action_required_while_safe_route_exists"])
+        self.assertIn("freeze blind replay of any action whose effect state is unknown", transport["mandatory_sequence"])
+        self.assertIn("read back FDOF/effect/provider/mission receipts for any possibly in-flight tool or external action", transport["mandatory_sequence"])
+
+        directive = (ROOT / "governance/federation_n_directive_v3.yaml").read_text()
+        self.assertIn("chat_transport_continuity:", directive)
+        self.assertIn("no_response_ne_no_effect: true", directive)
+        self.assertIn("work-steal all disjoint READY work", directive)
+
+        prompt = (ROOT / "governance/FUSE_ALPHA_OMEGA_FORMATION_60_MIN_FINALITY_PROMPT_V1.md").read_text()
+        self.assertIn("CHAT TRANSPORT INTERRUPTION CONTINUITY", prompt)
+        self.assertIn("NO_RESPONSE != NO_EFFECT", prompt)
+        self.assertIn("Connection interrupted. Waiting for the complete answer", prompt)
 
     def test_compiler_contract_is_safe_by_default(self):
         contract = json.loads((ROOT / "governance/cfbe_parallel_mission_compiler_v4.json").read_text())
